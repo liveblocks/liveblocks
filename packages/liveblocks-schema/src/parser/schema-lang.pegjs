@@ -99,12 +99,12 @@ DefinitionList
 
 
 Definition
-  = ObjectTypeDef
+  = ObjectTypeDefinition
 
 
-ObjectTypeDef
+ObjectTypeDefinition
   = TYPE name:TypeName EQ? obj:ObjectLiteralExpr
-    { return ast.objectTypeDef(name, obj, rng()) }
+    { return ast.objectTypeDefinition(name, obj, rng()) }
 
 
 ObjectLiteralExpr
@@ -127,24 +127,24 @@ FieldDef
     }
 
 
-StringKeyword
+StringType
   = _ 'String' EOK
-    { return ast.stringKeyword() }
+    { return ast.stringType() }
 
 
-IntKeyword
+IntType
   = _ 'Int' EOK
-    { return ast.intKeyword() }
+    { return ast.intType() }
 
 
-FloatKeyword
+FloatType
   = _ 'Float' EOK
-    { return ast.floatKeyword() }
+    { return ast.floatType() }
 
 
-BooleanKeyword
+BooleanType
   = _ 'Boolean' EOK
-    { return ast.booleanKeyword() }
+    { return ast.booleanType() }
 
 
 LiveObjectKeyword
@@ -153,21 +153,17 @@ LiveObjectKeyword
 
 TypeExpr
   = ObjectLiteralExpr
-  / BuiltInScalarType
-  / LiveTypeExpr
+  / BuiltInScalar
+  / LiveObjectTypeExpr
   / TypeRef
   // / Literal
 
 
-BuiltInScalarType
-  = StringKeyword
-  / IntKeyword
-  / FloatKeyword
-  / BooleanKeyword
-
-
-LiveTypeExpr
-  = LiveObjectTypeExpr
+BuiltInScalar
+  = StringType
+  / IntType
+  / FloatType
+  / BooleanType
 
 
 LiveObjectTypeExpr

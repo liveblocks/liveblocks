@@ -57,20 +57,20 @@ describe("syntactic parser", () => {
       `,
 
       ast.document([
-        ast.objectTypeDef(
+        ast.objectTypeDefinition(
           ast.typeName("Foo"),
           ast.objectLiteralExpr([
-            ast.fieldDef(ast.identifier("cx"), false, ast.floatKeyword()),
-            ast.fieldDef(ast.identifier("cy"), false, ast.floatKeyword()),
-            ast.fieldDef(ast.identifier("r"), false, ast.floatKeyword()),
+            ast.fieldDef(ast.identifier("cx"), false, ast.floatType()),
+            ast.fieldDef(ast.identifier("cy"), false, ast.floatType()),
+            ast.fieldDef(ast.identifier("r"), false, ast.floatType()),
           ])
         ),
 
-        ast.objectTypeDef(
+        ast.objectTypeDefinition(
           ast.typeName("Foo"),
           ast.objectLiteralExpr([
-            ast.fieldDef(ast.identifier("version"), false, ast.intKeyword()),
-            ast.fieldDef(ast.identifier("version"), false, ast.intKeyword()),
+            ast.fieldDef(ast.identifier("version"), false, ast.intType()),
+            ast.fieldDef(ast.identifier("version"), false, ast.intType()),
             ast.fieldDef(
               ast.identifier("mycircle"),
               true,
@@ -84,7 +84,10 @@ describe("syntactic parser", () => {
           ])
         ),
 
-        ast.objectTypeDef(ast.typeName("abc"), ast.objectLiteralExpr([])),
+        ast.objectTypeDefinition(
+          ast.typeName("abc"),
+          ast.objectLiteralExpr([])
+        ),
       ])
     );
   });

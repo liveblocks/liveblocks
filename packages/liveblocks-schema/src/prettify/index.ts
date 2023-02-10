@@ -21,19 +21,19 @@ export function prettify(node: Node): string {
     case "Document":
       return node.definitions.map(prettify).join("\n\n");
 
-    case "BooleanKeyword":
+    case "BooleanType":
       return "Boolean";
 
-    case "StringKeyword":
+    case "StringType":
       return "String";
 
-    case "IntKeyword":
+    case "IntType":
       return "Int";
 
-    case "FloatKeyword":
+    case "FloatType":
       return "Float";
 
-    case "ObjectTypeDef":
+    case "ObjectTypeDefinition":
       return [
         `type ${prettify(node.name)} {`,
         ...node.obj.fields.map((field) => `  ${prettify(field)}`),

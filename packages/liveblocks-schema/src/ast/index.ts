@@ -24,61 +24,51 @@ function assertRange(
   );
 }
 
-export function isBuiltInScalarType(node: Node): node is BuiltInScalarType {
+export function isBuiltInScalar(node: Node): node is BuiltInScalar {
   return (
-    node._kind === "StringKeyword" ||
-    node._kind === "IntKeyword" ||
-    node._kind === "FloatKeyword" ||
-    node._kind === "BooleanKeyword"
+    node._kind === "StringType" ||
+    node._kind === "IntType" ||
+    node._kind === "FloatType" ||
+    node._kind === "BooleanType"
   );
 }
 
 export function isDefinition(node: Node): node is Definition {
-  return node._kind === "ObjectTypeDef";
-}
-
-export function isLiveTypeExpr(node: Node): node is LiveTypeExpr {
-  return node._kind === "LiveObjectTypeExpr";
+  return node._kind === "ObjectTypeDefinition";
 }
 
 export function isTypeExpr(node: Node): node is TypeExpr {
   return (
+    node._kind === "LiveObjectTypeExpr" ||
     node._kind === "ObjectLiteralExpr" ||
     node._kind === "TypeRef" ||
-    isBuiltInScalarType(node) ||
-    isLiveTypeExpr(node)
+    isBuiltInScalar(node)
   );
 }
 
-export type BuiltInScalarType =
-  | StringKeyword
-  | IntKeyword
-  | FloatKeyword
-  | BooleanKeyword;
+export type BuiltInScalar = StringType | IntType | FloatType | BooleanType;
 
-export type Definition = ObjectTypeDef;
-
-export type LiveTypeExpr = LiveObjectTypeExpr;
+export type Definition = ObjectTypeDefinition;
 
 export type TypeExpr =
-  | BuiltInScalarType
-  | LiveTypeExpr
+  | BuiltInScalar
+  | LiveObjectTypeExpr
   | ObjectLiteralExpr
   | TypeRef;
 
 export type Range = [number, number];
 
 export type Node =
-  | BooleanKeyword
+  | BooleanType
   | Document
   | FieldDef
-  | FloatKeyword
+  | FloatType
   | Identifier
-  | IntKeyword
+  | IntType
   | LiveObjectTypeExpr
   | ObjectLiteralExpr
-  | ObjectTypeDef
-  | StringKeyword
+  | ObjectTypeDefinition
+  | StringType
   | TypeName
   | TypeRef;
 
@@ -93,23 +83,23 @@ export function isRange(thing: unknown): thing is Range {
 
 export function isNode(node: Node): node is Node {
   return (
-    node._kind === "BooleanKeyword" ||
+    node._kind === "BooleanType" ||
     node._kind === "Document" ||
     node._kind === "FieldDef" ||
-    node._kind === "FloatKeyword" ||
+    node._kind === "FloatType" ||
     node._kind === "Identifier" ||
-    node._kind === "IntKeyword" ||
+    node._kind === "IntType" ||
     node._kind === "LiveObjectTypeExpr" ||
     node._kind === "ObjectLiteralExpr" ||
-    node._kind === "ObjectTypeDef" ||
-    node._kind === "StringKeyword" ||
+    node._kind === "ObjectTypeDefinition" ||
+    node._kind === "StringType" ||
     node._kind === "TypeName" ||
     node._kind === "TypeRef"
   );
 }
 
-export type BooleanKeyword = {
-  _kind: "BooleanKeyword";
+export type BooleanType = {
+  _kind: "BooleanType";
   dummy_: string | null;
   range: Range;
 };
@@ -128,8 +118,8 @@ export type FieldDef = {
   range: Range;
 };
 
-export type FloatKeyword = {
-  _kind: "FloatKeyword";
+export type FloatType = {
+  _kind: "FloatType";
   dummy_: string | null;
   range: Range;
 };
@@ -140,8 +130,8 @@ export type Identifier = {
   range: Range;
 };
 
-export type IntKeyword = {
-  _kind: "IntKeyword";
+export type IntType = {
+  _kind: "IntType";
   dummy_: string | null;
   range: Range;
 };
@@ -158,15 +148,15 @@ export type ObjectLiteralExpr = {
   range: Range;
 };
 
-export type ObjectTypeDef = {
-  _kind: "ObjectTypeDef";
+export type ObjectTypeDefinition = {
+  _kind: "ObjectTypeDefinition";
   name: TypeName;
   obj: ObjectLiteralExpr;
   range: Range;
 };
 
-export type StringKeyword = {
-  _kind: "StringKeyword";
+export type StringType = {
+  _kind: "StringType";
   dummy_: string | null;
   range: Range;
 };
@@ -183,22 +173,22 @@ export type TypeRef = {
   range: Range;
 };
 
-export function booleanKeyword(
+export function booleanType(
   dummy_: string | null = null,
   range: Range = [0, 0]
-): BooleanKeyword {
+): BooleanType {
   DEBUG &&
     (() => {
       assert(
         dummy_ === null || typeof dummy_ === "string",
-        `Invalid value for "dummy_" arg in "BooleanKeyword" call.\nExpected: string?\nGot:      ${JSON.stringify(
+        `Invalid value for "dummy_" arg in "BooleanType" call.\nExpected: string?\nGot:      ${JSON.stringify(
           dummy_
         )}`
       );
-      assertRange(range, "BooleanKeyword");
+      assertRange(range, "BooleanType");
     })();
   return {
-    _kind: "BooleanKeyword",
+    _kind: "BooleanType",
     dummy_,
     range,
   };
@@ -264,22 +254,22 @@ export function fieldDef(
   };
 }
 
-export function floatKeyword(
+export function floatType(
   dummy_: string | null = null,
   range: Range = [0, 0]
-): FloatKeyword {
+): FloatType {
   DEBUG &&
     (() => {
       assert(
         dummy_ === null || typeof dummy_ === "string",
-        `Invalid value for "dummy_" arg in "FloatKeyword" call.\nExpected: string?\nGot:      ${JSON.stringify(
+        `Invalid value for "dummy_" arg in "FloatType" call.\nExpected: string?\nGot:      ${JSON.stringify(
           dummy_
         )}`
       );
-      assertRange(range, "FloatKeyword");
+      assertRange(range, "FloatType");
     })();
   return {
-    _kind: "FloatKeyword",
+    _kind: "FloatType",
     dummy_,
     range,
   };
@@ -303,22 +293,22 @@ export function identifier(name: string, range: Range = [0, 0]): Identifier {
   };
 }
 
-export function intKeyword(
+export function intType(
   dummy_: string | null = null,
   range: Range = [0, 0]
-): IntKeyword {
+): IntType {
   DEBUG &&
     (() => {
       assert(
         dummy_ === null || typeof dummy_ === "string",
-        `Invalid value for "dummy_" arg in "IntKeyword" call.\nExpected: string?\nGot:      ${JSON.stringify(
+        `Invalid value for "dummy_" arg in "IntType" call.\nExpected: string?\nGot:      ${JSON.stringify(
           dummy_
         )}`
       );
-      assertRange(range, "IntKeyword");
+      assertRange(range, "IntType");
     })();
   return {
-    _kind: "IntKeyword",
+    _kind: "IntType",
     dummy_,
     range,
   };
@@ -367,51 +357,51 @@ export function objectLiteralExpr(
   };
 }
 
-export function objectTypeDef(
+export function objectTypeDefinition(
   name: TypeName,
   obj: ObjectLiteralExpr,
   range: Range = [0, 0]
-): ObjectTypeDef {
+): ObjectTypeDefinition {
   DEBUG &&
     (() => {
       assert(
         name._kind === "TypeName",
-        `Invalid value for "name" arg in "ObjectTypeDef" call.\nExpected: TypeName\nGot:      ${JSON.stringify(
+        `Invalid value for "name" arg in "ObjectTypeDefinition" call.\nExpected: TypeName\nGot:      ${JSON.stringify(
           name
         )}`
       );
       assert(
         obj._kind === "ObjectLiteralExpr",
-        `Invalid value for "obj" arg in "ObjectTypeDef" call.\nExpected: ObjectLiteralExpr\nGot:      ${JSON.stringify(
+        `Invalid value for "obj" arg in "ObjectTypeDefinition" call.\nExpected: ObjectLiteralExpr\nGot:      ${JSON.stringify(
           obj
         )}`
       );
-      assertRange(range, "ObjectTypeDef");
+      assertRange(range, "ObjectTypeDefinition");
     })();
   return {
-    _kind: "ObjectTypeDef",
+    _kind: "ObjectTypeDefinition",
     name,
     obj,
     range,
   };
 }
 
-export function stringKeyword(
+export function stringType(
   dummy_: string | null = null,
   range: Range = [0, 0]
-): StringKeyword {
+): StringType {
   DEBUG &&
     (() => {
       assert(
         dummy_ === null || typeof dummy_ === "string",
-        `Invalid value for "dummy_" arg in "StringKeyword" call.\nExpected: string?\nGot:      ${JSON.stringify(
+        `Invalid value for "dummy_" arg in "StringType" call.\nExpected: string?\nGot:      ${JSON.stringify(
           dummy_
         )}`
       );
-      assertRange(range, "StringKeyword");
+      assertRange(range, "StringType");
     })();
   return {
-    _kind: "StringKeyword",
+    _kind: "StringType",
     dummy_,
     range,
   };
@@ -454,16 +444,16 @@ export function typeRef(name: TypeName, range: Range = [0, 0]): TypeRef {
 }
 
 interface Visitor<TContext> {
-  BooleanKeyword?(node: BooleanKeyword, context: TContext): void;
+  BooleanType?(node: BooleanType, context: TContext): void;
   Document?(node: Document, context: TContext): void;
   FieldDef?(node: FieldDef, context: TContext): void;
-  FloatKeyword?(node: FloatKeyword, context: TContext): void;
+  FloatType?(node: FloatType, context: TContext): void;
   Identifier?(node: Identifier, context: TContext): void;
-  IntKeyword?(node: IntKeyword, context: TContext): void;
+  IntType?(node: IntType, context: TContext): void;
   LiveObjectTypeExpr?(node: LiveObjectTypeExpr, context: TContext): void;
   ObjectLiteralExpr?(node: ObjectLiteralExpr, context: TContext): void;
-  ObjectTypeDef?(node: ObjectTypeDef, context: TContext): void;
-  StringKeyword?(node: StringKeyword, context: TContext): void;
+  ObjectTypeDefinition?(node: ObjectTypeDefinition, context: TContext): void;
+  StringType?(node: StringType, context: TContext): void;
   TypeName?(node: TypeName, context: TContext): void;
   TypeRef?(node: TypeRef, context: TContext): void;
 }
@@ -483,8 +473,8 @@ export function visit<TNode extends Node, TContext>(
   context?: TContext
 ): TNode {
   switch (node._kind) {
-    case "BooleanKeyword":
-      visitor.BooleanKeyword?.(node, context);
+    case "BooleanType":
+      visitor.BooleanType?.(node, context);
       break;
 
     case "Document":
@@ -498,16 +488,16 @@ export function visit<TNode extends Node, TContext>(
       visit(node.type, visitor, context);
       break;
 
-    case "FloatKeyword":
-      visitor.FloatKeyword?.(node, context);
+    case "FloatType":
+      visitor.FloatType?.(node, context);
       break;
 
     case "Identifier":
       visitor.Identifier?.(node, context);
       break;
 
-    case "IntKeyword":
-      visitor.IntKeyword?.(node, context);
+    case "IntType":
+      visitor.IntType?.(node, context);
       break;
 
     case "LiveObjectTypeExpr":
@@ -520,14 +510,14 @@ export function visit<TNode extends Node, TContext>(
       node.fields.forEach((f) => visit(f, visitor, context));
       break;
 
-    case "ObjectTypeDef":
-      visitor.ObjectTypeDef?.(node, context);
+    case "ObjectTypeDefinition":
+      visitor.ObjectTypeDefinition?.(node, context);
       visit(node.name, visitor, context);
       visit(node.obj, visitor, context);
       break;
 
-    case "StringKeyword":
-      visitor.StringKeyword?.(node, context);
+    case "StringType":
+      visitor.StringType?.(node, context);
       break;
 
     case "TypeName":

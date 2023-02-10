@@ -6,34 +6,23 @@
 # This is used to generate the AST TypeScript module.
 #
 
-@BuiltInScalarType:
-    | StringKeyword
-    | IntKeyword
-    | FloatKeyword
-    | BooleanKeyword
+@BuiltInScalar:
+    | StringType
+    | IntType
+    | FloatType
+    | BooleanType
 
 
 # A custom user-defined type definition
 @Definition:
-    | ObjectTypeDef
-
-
-# @Literal:
-#     # | FloatLiteral
-#     # | IntLiteral
-#     | StringLiteral
-
-
-@LiveTypeExpr:
-    # | LiveListTypeExpr
-    # | LiveMapTypeExpr
-    | LiveObjectTypeExpr
+    | ObjectTypeDefinition
 
 
 @TypeExpr:
     # | @Literal
-    | @BuiltInScalarType
-    | @LiveTypeExpr
+    # | ScalarDefinition
+    | @BuiltInScalar
+    | LiveObjectTypeExpr
     | ObjectLiteralExpr
     | TypeRef
 
@@ -75,7 +64,7 @@ ObjectLiteralExpr:
 
 
 # e.g. type Circle { cx: Number; cy: Number; r: Float }
-ObjectTypeDef:
+ObjectTypeDefinition:
     name  TypeName
     obj   ObjectLiteralExpr
 
@@ -85,17 +74,17 @@ ObjectTypeDef:
 #     rawValue  string
 
 
-StringKeyword:
+StringType:
     dummy_  string?
 
 
-IntKeyword:
+IntType:
     dummy_  string?
 
 
-FloatKeyword:
+FloatType:
     dummy_  string?
 
 
-BooleanKeyword:
+BooleanType:
     dummy_  string?

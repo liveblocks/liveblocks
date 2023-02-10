@@ -5,13 +5,13 @@ import type {
   Document,
   LiveObjectTypeExpr,
   ObjectLiteralExpr,
-  ObjectTypeDef,
+  ObjectTypeDefinition,
   Range,
   TypeExpr,
   TypeName,
   TypeRef,
 } from "../ast";
-import { isBuiltInScalarType, visit } from "../ast";
+import { isBuiltInScalar, visit } from "../ast";
 import { assertNever } from "../lib/assert";
 import type { ErrorReporter } from "../lib/error-reporting";
 
@@ -106,7 +106,8 @@ function checkLiveObjectTypeExpr(
 ): void {
   // Check that the payload of a LiveObject type is an object type
   if (
-    context.registeredTypes.get(node.of.name.name)?._kind !== "ObjectTypeDef"
+    context.registeredTypes.get(node.of.name.name)?._kind !==
+    "ObjectTypeDefinition"
   ) {
     context.report(
       "Not an object type",
@@ -201,7 +202,7 @@ function checkNoForbiddenRefs(
   context: Context,
   forbidden: Set<string>
 ): void {
-  if (isBuiltInScalarType(typeExpr)) {
+  if (isBuiltInScalar(typeExpr)) {
     return;
   }
 
@@ -241,7 +242,10 @@ function checkNoForbiddenRefs(
   }
 }
 
-function checkObjectTypeDef(def: ObjectTypeDef, context: Context): void {
+function checkObjectTypeDefinition(
+  def: ObjectTypeDefinition,
+  context: Context
+): void {
   // Checks to make sure there are no self-references in object definitions
   checkNoForbiddenRefs(def.obj, context, new Set([def.name.name]));
 }
@@ -303,7 +307,7 @@ export type CheckedDocument = {
   /**
    * Direct access to the root "Storage" definition.
    */
-  root: ObjectTypeDef;
+  root: ObjectTypeDefinition;
 
   /**
    * Look up the Definition of a user-defined type by a Reference to it. This
@@ -325,7 +329,7 @@ export function check(
       Document: checkDocument,
       LiveObjectTypeExpr: checkLiveObjectTypeExpr,
       ObjectLiteralExpr: checkObjectLiteralExpr,
-      ObjectTypeDef: checkObjectTypeDef,
+      ObjectTypeDefinition: checkObjectTypeDefinition,
       TypeName: checkTypeName,
       TypeRef: checkTypeRef,
     },
@@ -341,7 +345,7 @@ export function check(
     // ast: doc,
     // types: context.registeredTypes,
 
-    root: context.registeredTypes.get("Storage") as ObjectTypeDef,
+    root: context.registeredTypes.get("Storage") as ObjectTypeDefinition,
     getDefinition(ref: TypeRef): Definition {
       const def = context.registeredTypes.get(ref.name.name);
       if (def === undefined) {

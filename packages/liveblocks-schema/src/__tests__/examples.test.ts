@@ -61,7 +61,7 @@ describe("examples", () => {
       .map((f) =>
         declareJestTest(f)(path.basename(f), async () => {
           expect(parseAndCheck(await readExample(f)).root).toEqual({
-            _kind: "ObjectTypeDef",
+            _kind: "ObjectTypeDefinition",
             name: {
               _kind: "TypeName",
               name: "Storage",
