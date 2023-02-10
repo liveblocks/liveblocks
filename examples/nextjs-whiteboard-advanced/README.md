@@ -44,8 +44,8 @@ Alternatively, you can set up your project manually:
 
 - Install all dependencies with `npm install`
 - Create an account on [liveblocks.io](https://liveblocks.io/dashboard)
-- Copy your **REPLACE_TYPE** key from the [dashboard](https://liveblocks.io/dashboard/apikeys)
-- Create an `.env.local` file and add your **REPLACE_TYPE** key as the `REPLACE_KEY` environment variable
+- Copy your **secret** key from the [dashboard](https://liveblocks.io/dashboard/apikeys)
+- Create an `.env.local` file and add your **secret** key as the `LIVEBLOCKS_SECRET_KEY` environment variable
 - Run `npm run dev` and go to [http://localhost:3000](http://localhost:3000)
 
 </details>
@@ -72,6 +72,6 @@ This will download the example and ask permission to open your browser, enabling
 
 <p></p>
 
-After forking [this example](https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/nextjs-whiteboard-advanced) on CodeSandbox, create the `REPLACE_KEY` environment variable as a [secret](https://codesandbox.io/docs/secrets).
+After forking [this example](https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/nextjs-whiteboard-advanced) on CodeSandbox, create the `LIVEBLOCKS_SECRET_KEY` environment variable as a [secret](https://codesandbox.io/docs/secrets).
 
 </details>
