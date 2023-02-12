@@ -19,7 +19,7 @@ export async function fetchApiEndpoint<T = unknown>(
     const response = await fetch(`${ENDPOINT_BASE_URL}${url}`, fetchOptions);
     const body = await response.json();
 
-    if (!response.ok) {
+    if (!response.ok || body.error) {
       if (body.error?.code && body.error?.message && body.error?.suggestion) {
         console.warn(body.error);
         return { error: body.error };

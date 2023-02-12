@@ -14,7 +14,7 @@ export async function getUser(userId: string): Promise<User | null> {
   const user = users.find((user) => user.id === userId);
 
   if (!user) {
-    console.error(`
+    console.warn(`
 ERROR: User "${userId}" was not found. 
 
 Check that you've added the user to data/users.ts, for example:
