@@ -21,7 +21,7 @@ export async function fetchApiEndpoint<T = unknown>(
 
     if (!response.ok) {
       if (body.error?.code && body.error?.message && body.error?.suggestion) {
-        console.error(body.error);
+        console.warn(body.error);
         return { error: body.error };
       }
 
@@ -32,9 +32,9 @@ export async function fetchApiEndpoint<T = unknown>(
         }`,
         suggestion: "Please try again",
       };
-      console.log(error);
+      console.warn(error);
       if ("error" in body) {
-        console.error(body.error);
+        console.warn(body.error);
       }
       return { error };
     }
@@ -42,7 +42,7 @@ export async function fetchApiEndpoint<T = unknown>(
     return { data: body };
   } catch (err: any) {
     if (err?.code && err?.message && err?.suggestion) {
-      console.error(err);
+      console.warn(err);
       return { error: err as ErrorData };
     }
 
@@ -51,7 +51,7 @@ export async function fetchApiEndpoint<T = unknown>(
       message: `Error when calling ${url}`,
       suggestion: "Please try again",
     };
-    console.error(error);
+    console.warn(error);
     return { error };
   }
 }
