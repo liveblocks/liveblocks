@@ -45,7 +45,6 @@ export function ShareDialogInviteGroup({
 
     if (error) {
       setErrorMessage(error?.suggestion);
-
       return;
     }
 
