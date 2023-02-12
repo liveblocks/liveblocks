@@ -26,7 +26,7 @@ Check that you've added the user to data/users.ts, for example:
 },
  
 `);
-    throw new Error("User not found");
+    return null;
   }
 
   const color = getRandom(colors, userId);
