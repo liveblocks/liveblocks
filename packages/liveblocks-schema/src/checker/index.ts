@@ -3,7 +3,7 @@ import original_didyoumean from "didyoumean";
 import type {
   Definition,
   Document,
-  LiveObjectTypeExpr,
+  FieldDef,
   ObjectLiteralExpr,
   ObjectTypeDefinition,
   Range,
@@ -13,10 +13,11 @@ import type {
 } from "../ast";
 import { isBuiltInScalar, visit } from "../ast";
 import { assertNever } from "../lib/assert";
+import DefaultMap from "../lib/DefaultMap";
 import type { ErrorReporter } from "../lib/error-reporting";
 
 function quote(value: string): string {
-  return JSON.stringify(value);
+  return `'${value.replace(/'/g, "\\'")}'`;
 }
 
 const TYPENAME_REGEX = /^[A-Z_]/;
@@ -33,12 +34,24 @@ const RESERVED_TYPENAMES_REGEX = /^Live|^(Presence|Array)$/i;
 class Context {
   errorReporter: ErrorReporter;
 
-  // A registry of user-defined types by their identifier names
+  // A registry of user-defined types by their identifier names. Defined during
+  // the first checkDocument pass.
   registeredTypes: Map<string, Definition>;
+
+  // Reverse lookup table, to find which type definitions depend on which other
+  // type definitions. Defined during the first checkDocument pass.
+  usedBy: DefaultMap<string, Set<string>>;
+
+  // Set of types that (directly or indirectly) have Live constructs in their
+  // field definitions. As such, these types can only be used by other Live
+  // types. Defined during the first checkDocument pass.
+  liveOnlyTypes: Set<string>;
 
   constructor(errorReporter: ErrorReporter) {
     this.errorReporter = errorReporter;
     this.registeredTypes = new Map();
+    this.usedBy = new DefaultMap(() => new Set());
+    this.liveOnlyTypes = new Set();
   }
 
   //
@@ -83,11 +96,9 @@ function dupes<T>(items: Iterable<T>, keyFn: (item: T) => string): [T, T][] {
   return dupes;
 }
 
-function checkObjectLiteralExpr(
-  obj: ObjectLiteralExpr,
-  context: Context
-): void {
-  for (const [first, second] of dupes(obj.fields, (f) => f.name.name)) {
+function checkNoDuplicateFields(fieldDefs: FieldDef[], context: Context): void {
+  // Check for any duplicate field names
+  for (const [first, second] of dupes(fieldDefs, (f) => f.name.name)) {
     context.report(
       `A field named ${quote(
         first.name.name
@@ -100,21 +111,17 @@ function checkObjectLiteralExpr(
   }
 }
 
-function checkLiveObjectTypeExpr(
-  node: LiveObjectTypeExpr,
+function checkObjectLiteralExpr(
+  obj: ObjectLiteralExpr,
   context: Context
 ): void {
-  // Check that the payload of a LiveObject type is an object type
-  if (
-    context.registeredTypes.get(node.of.name.name)?._kind !==
-    "ObjectTypeDefinition"
-  ) {
-    context.report(
-      "Not an object type",
-      ["LiveObject expressions can only wrap object types"],
-      node.of.range
-    );
-    return undefined;
+  checkNoDuplicateFields(obj.fields, context);
+
+  // Check that none of the fields here use a "live" reference
+  for (const field of obj.fields) {
+    if (field.type._kind === "TypeRef" && field.type.asLiveObject) {
+      context.report(`Cannot use a LiveObject here`, [], field.type.range);
+    }
   }
 }
 
@@ -159,8 +166,8 @@ function didyoumean(value: string, alternatives: string[]): string[] {
   }
 }
 
-function checkTypeRef(node: TypeRef, context: Context): void {
-  const name = node.name.name;
+function checkTypeRefTargetExists(node: TypeRef, context: Context): void {
+  const name = node.ref.name;
   const typeDef = context.registeredTypes.get(name);
   if (typeDef === undefined) {
     // If we land here, it means there's an unknown type reference. Possibly
@@ -168,7 +175,7 @@ function checkTypeRef(node: TypeRef, context: Context): void {
     // Let's be friendly to them and assist them with fixing the problem,
     // especially around common mistakes.
     let alternatives: string[] = didyoumean(
-      node.name.name,
+      node.ref.name,
       BUILTINS.concat(Array.from(context.registeredTypes.keys()))
     );
 
@@ -195,24 +202,67 @@ function checkTypeRef(node: TypeRef, context: Context): void {
   }
 }
 
-// FIXME(nvie) Other examples: Boolean, LiveXxx, Regex, List, Email
+function checkLiveObjectPayloadIsObjectType(
+  typeRef: TypeRef,
+  context: Context
+): void {
+  // Check that the payload of a LiveObject type is an object type
+  if (
+    typeRef.asLiveObject &&
+    context.registeredTypes.get(typeRef.ref.name)?._kind !==
+      "ObjectTypeDefinition"
+  ) {
+    context.report(
+      "Not an object type",
+      ["LiveObject can only be used on object types"],
+      typeRef.ref.range
+    );
+    return undefined;
+  }
+}
+
+function checkTypeRef(ref: TypeRef, context: Context): void {
+  checkTypeRefTargetExists(ref, context);
+
+  checkLiveObjectPayloadIsObjectType(ref, context);
+
+  //
+  // For each definition, first ensure that it and annotate whether or not they
+  // are usable in "live contexts" only. For example, in a definition like:
+  //
+  //   type Foo {
+  //     a: LiveObject<Bar>  // or LiveList, or ...
+  //   }
+  //
+  // It should be impossible to refer to Foo as a "normal" type, without
+  // wrapping it in a Live<...> wrapper itself.
+  //
+  checkLiveRefs(ref, context);
+}
 
 function checkNoForbiddenRefs(
-  typeExpr: TypeExpr,
+  node: ObjectTypeDefinition | TypeExpr,
   context: Context,
   forbidden: Set<string>
 ): void {
-  if (isBuiltInScalar(typeExpr)) {
+  if (isBuiltInScalar(node)) {
     return;
   }
 
-  switch (typeExpr._kind) {
-    case "LiveObjectTypeExpr":
-      checkNoForbiddenRefs(typeExpr.of, context, forbidden);
+  switch (node._kind) {
+    case "ObjectTypeDefinition":
+      for (const field of node.fields) {
+        // TODO for later. Allow _some_ self-references. For example, if
+        // `field.optional`, then it'd be perfectly fine to use
+        // self-references. But for reasons unrelated to the technical parsing,
+        // we're currently not allowing them. See
+        // https://github.com/liveblocks/liveblocks.io/issues/910 for context.
+        checkNoForbiddenRefs(field.type, context, forbidden);
+      }
       break;
 
     case "ObjectLiteralExpr":
-      for (const field of typeExpr.fields) {
+      for (const field of node.fields) {
         // TODO for later. Allow _some_ self-references. For example, if
         // `field.optional`, then it'd be perfectly fine to use
         // self-references. But for reasons unrelated to the technical parsing,
@@ -223,25 +273,41 @@ function checkNoForbiddenRefs(
       break;
 
     case "TypeRef": {
-      if (forbidden.has(typeExpr.name.name)) {
+      if (forbidden.has(node.ref.name)) {
         context.report(
-          `Cyclical reference detected: ${quote(typeExpr.name.name)}`,
+          `Cyclical reference detected: ${quote(node.ref.name)}`,
           [],
-          typeExpr.range
+          node.range
         );
       }
 
-      const def = context.registeredTypes.get(typeExpr.name.name);
+      const def = context.registeredTypes.get(node.ref.name);
       if (def !== undefined) {
         const s = new Set(forbidden);
-        s.add(typeExpr.name.name);
-        checkNoForbiddenRefs(def.obj, context, s);
+        s.add(node.ref.name);
+        checkNoForbiddenRefs(def, context, s);
       }
       break;
     }
 
     default:
-      return assertNever(typeExpr, "Unhandled case");
+      return assertNever(node, "Unhandled case");
+  }
+}
+
+function checkLiveRefs(typeRef: TypeRef, context: Context): void {
+  // If the type referenced here requires a live context, this must be written
+  // as a LiveObject<> wrapper.
+  if (context.liveOnlyTypes.has(typeRef.ref.name) && !typeRef.asLiveObject) {
+    context.report(
+      `Type ${quote(
+        typeRef.ref.name
+      )} can only be used as a Live type. Did you mean to write 'LiveObject<${
+        typeRef.ref.name
+      }>'?`,
+      [],
+      typeRef.range
+    );
   }
 }
 
@@ -249,14 +315,15 @@ function checkObjectTypeDefinition(
   def: ObjectTypeDefinition,
   context: Context
 ): void {
+  checkNoDuplicateFields(def.fields, context);
+
   // Checks to make sure there are no self-references in object definitions
-  checkNoForbiddenRefs(def.obj, context, new Set([def.name.name]));
+  checkNoForbiddenRefs(def, context, new Set([def.name.name]));
 }
 
 function checkDocument(doc: Document, context: Context): void {
   // Now, first add all definitions to the global registry
   for (const def of doc.definitions) {
-    // FIXME(nvie) Factor out into checkDefinition?
     const name = def.name.name;
     const existing = context.registeredTypes.get(name);
     if (existing !== undefined) {
@@ -275,6 +342,26 @@ function checkDocument(doc: Document, context: Context): void {
     } else {
       // All good, let's register it!
       context.registeredTypes.set(name, def);
+
+      // Also, while registering it, quickly search all subnodes to see if any
+      // of its field definitions use a Live wrapper. If so, we should mark the
+      // object type definition to require a Live type.
+      visit(
+        def,
+        {
+          // TODO: Add all other future LiveXxxTypeExprs here, too
+          // TODO: Would be nicer if we could use a NodeGroup as a visitor
+          //       function directly, perhaps?
+          //       i.e. LiveTypeExpr: () => { ... }?
+          TypeRef: (typeRef) => {
+            if (typeRef.asLiveObject) {
+              context.liveOnlyTypes.add(def.name.name);
+            }
+            context.usedBy.getOrCreate(typeRef.ref.name).add(def.name.name);
+          },
+        },
+        null
+      );
     }
   }
 
@@ -286,10 +373,24 @@ function checkDocument(doc: Document, context: Context): void {
         "which indicated the root of the storage. You can declare a schema like this:",
         "",
         "  type Storage {",
-        "    // Your fields here",
+        "    # Your fields here",
         "  }",
       ]
     );
+  }
+
+  // Now that we know which types are "live only", we'll need to do another
+  // quick pass to let that requirements infect all of their (indirect)
+  // dependencies too
+  const queue = [...context.liveOnlyTypes];
+  let curr: string | undefined;
+  while ((curr = queue.pop()) !== undefined) {
+    context.usedBy.get(curr)?.forEach((dependant) => {
+      if (!context.liveOnlyTypes.has(dependant)) {
+        context.liveOnlyTypes.add(dependant);
+        queue.push(dependant);
+      }
+    });
   }
 }
 
@@ -330,7 +431,6 @@ export function check(
     doc,
     {
       Document: checkDocument,
-      LiveObjectTypeExpr: checkLiveObjectTypeExpr,
       ObjectLiteralExpr: checkObjectLiteralExpr,
       ObjectTypeDefinition: checkObjectTypeDefinition,
       TypeName: checkTypeName,
@@ -349,10 +449,10 @@ export function check(
     // types: context.registeredTypes,
 
     root: context.registeredTypes.get("Storage") as ObjectTypeDefinition,
-    getDefinition(ref: TypeRef): Definition {
-      const def = context.registeredTypes.get(ref.name.name);
+    getDefinition(typeRef: TypeRef): Definition {
+      const def = context.registeredTypes.get(typeRef.ref.name);
       if (def === undefined) {
-        throw new Error(`Unknown type name "${ref.name.name}"`);
+        throw new Error(`Unknown type name "${typeRef.ref.name}"`);
       }
       return def;
     },

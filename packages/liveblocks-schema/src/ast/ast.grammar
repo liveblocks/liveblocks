@@ -22,15 +22,15 @@
     # | @Literal
     # | ScalarDefinition
     | @BuiltInScalar
-    | LiveObjectTypeExpr
     | ObjectLiteralExpr
     | TypeRef
 
 
-# Reference to a custom, user-defined, type. Not a built-in, not
-# a "LiveObject". Things like "Circle", "BlogPost", etc.
+# Reference to a custom, user-defined, type. Not a built-in. Things like
+# "Circle", "BlogPost", "LiveObject<Circle>", "LiveObject<BlogPost>", etc.
 TypeRef:
-    name  TypeName
+    ref           TypeName
+    asLiveObject  boolean
 
 
 Document:
@@ -53,11 +53,6 @@ Identifier:
     name  string
 
 
-# e.g. "LiveObject<Shape>"
-LiveObjectTypeExpr:
-    of  TypeRef
-
-
 # e.g. { cx: Number; cy: Number; r: Float }
 ObjectLiteralExpr:
     fields  FieldDef*
@@ -65,8 +60,8 @@ ObjectLiteralExpr:
 
 # e.g. type Circle { cx: Number; cy: Number; r: Float }
 ObjectTypeDefinition:
-    name  TypeName
-    obj   ObjectLiteralExpr
+    name    TypeName
+    fields  FieldDef*
 
 
 # StringLiteral:

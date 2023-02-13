@@ -57,37 +57,28 @@ describe("syntactic parser", () => {
       `,
 
       ast.document([
-        ast.objectTypeDefinition(
-          ast.typeName("Foo"),
-          ast.objectLiteralExpr([
-            ast.fieldDef(ast.identifier("cx"), false, ast.floatType()),
-            ast.fieldDef(ast.identifier("cy"), false, ast.floatType()),
-            ast.fieldDef(ast.identifier("r"), false, ast.floatType()),
-          ])
-        ),
+        ast.objectTypeDefinition(ast.typeName("Foo"), [
+          ast.fieldDef(ast.identifier("cx"), false, ast.floatType()),
+          ast.fieldDef(ast.identifier("cy"), false, ast.floatType()),
+          ast.fieldDef(ast.identifier("r"), false, ast.floatType()),
+        ]),
 
-        ast.objectTypeDefinition(
-          ast.typeName("Foo"),
-          ast.objectLiteralExpr([
-            ast.fieldDef(ast.identifier("version"), false, ast.intType()),
-            ast.fieldDef(ast.identifier("version"), false, ast.intType()),
-            ast.fieldDef(
-              ast.identifier("mycircle"),
-              true,
-              ast.liveObjectTypeExpr(ast.typeRef(ast.typeName("Bar")))
-            ),
-            ast.fieldDef(
-              ast.identifier("someField"),
-              false,
-              ast.typeRef(ast.typeName("_undefinedThing_"))
-            ),
-          ])
-        ),
+        ast.objectTypeDefinition(ast.typeName("Foo"), [
+          ast.fieldDef(ast.identifier("version"), false, ast.intType()),
+          ast.fieldDef(ast.identifier("version"), false, ast.intType()),
+          ast.fieldDef(
+            ast.identifier("mycircle"),
+            true,
+            ast.typeRef(ast.typeName("Bar"), true)
+          ),
+          ast.fieldDef(
+            ast.identifier("someField"),
+            false,
+            ast.typeRef(ast.typeName("_undefinedThing_"), false)
+          ),
+        ]),
 
-        ast.objectTypeDefinition(
-          ast.typeName("abc"),
-          ast.objectLiteralExpr([])
-        ),
+        ast.objectTypeDefinition(ast.typeName("abc"), []),
       ])
     );
   });

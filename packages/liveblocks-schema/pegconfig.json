@@ -19,8 +19,6 @@
     "IdentifierList": "ast.Identifier[]",
     "IntType": "ast.IntType",
     "IntTypeList": "ast.IntType[]",
-    "LiveObjectTypeExpr": "ast.LiveObjectTypeExpr",
-    "LiveObjectTypeExprList": "ast.LiveObjectTypeExpr[]",
     "Node": "ast.Node",
     "NodeList": "ast.Node[]",
     "ObjectLiteralExpr": "ast.ObjectLiteralExpr",

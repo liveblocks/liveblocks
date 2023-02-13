@@ -36,15 +36,12 @@ export function prettify(node: Node): string {
     case "ObjectTypeDefinition":
       return [
         `type ${prettify(node.name)} {`,
-        ...node.obj.fields.map((field) => `  ${prettify(field)}`),
+        ...node.fields.map((field) => `  ${prettify(field)}`),
         "}",
       ].join("\n");
 
     case "ObjectLiteralExpr":
       return `{ ${node.fields.map(prettify).join(", ")} }`;
-
-    case "LiveObjectTypeExpr":
-      return `LiveObject<${prettify(node.of)}>`;
 
     case "Identifier":
       return node.name;
@@ -53,7 +50,9 @@ export function prettify(node: Node): string {
       return node.name;
 
     case "TypeRef":
-      return prettify(node.name);
+      return node.asLiveObject
+        ? `LiveObject<${prettify(node.ref)}>`
+        : prettify(node.ref);
 
     case "FieldDef":
       return `${prettify(node.name)}${node.optional ? "?" : ""}: ${prettify(

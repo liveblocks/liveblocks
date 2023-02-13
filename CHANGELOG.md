@@ -1,3 +1,14 @@
+# 0.0.8
+
+- Fix: enforce correct semantics for Live object hierarchies
+- AST changes:
+  - Stop using `ObjectLiteralExpr` under `ObjectTypeDefinition`. Even though
+    their syntax is literally the same, they still have different semantics when
+    it comes to Live object types, so make them separate nodes.
+  - Remove the `LiveObjectTypeExpr` node type. Live objects wrappers are more
+    like "modifiers" of object type reference than they are a composition. The
+    AST now reflects that more naturally.
+
 # 0.0.7
 
 - Add `Boolean` built-in scalar type

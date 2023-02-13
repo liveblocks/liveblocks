@@ -1,0 +1,14 @@
+type Storage {
+  foo: LiveObject<Foo>
+  color: Color
+}
+
+type Foo {
+  bar: LiveObject<Color>
+}
+
+type Color {
+  r: Int
+  g: Int
+  b: Int
+}

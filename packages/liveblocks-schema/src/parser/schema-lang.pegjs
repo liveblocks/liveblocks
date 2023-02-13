@@ -103,8 +103,8 @@ Definition
 
 
 ObjectTypeDefinition
-  = TYPE name:TypeName EQ? obj:ObjectLiteralExpr
-    { return ast.objectTypeDefinition(name, obj, rng()) }
+  = TYPE name:TypeName EQ? LCURLY fields:FieldDefList? RCURLY
+    { return ast.objectTypeDefinition(name, fields ?? [], rng()) }
 
 
 ObjectLiteralExpr
@@ -154,7 +154,6 @@ LiveObjectKeyword
 TypeExpr
   = ObjectLiteralExpr
   / BuiltInScalar
-  / LiveObjectTypeExpr
   / TypeRef
   // / Literal
 
@@ -166,14 +165,11 @@ BuiltInScalar
   / BooleanType
 
 
-LiveObjectTypeExpr
-  = LiveObjectKeyword LT of:TypeRef GT
-    { return ast.liveObjectTypeExpr(of, rng()) }
-
-
 TypeRef
-  = !LiveObjectKeyword name:TypeName
-    { return ast.typeRef(name, rng()) }
+  = LiveObjectKeyword LT name:TypeName GT
+    { return ast.typeRef(name, true, rng()) }
+  / !LiveObjectKeyword name:TypeName
+    { return ast.typeRef(name, false, rng()) }
 
 
 // Literal

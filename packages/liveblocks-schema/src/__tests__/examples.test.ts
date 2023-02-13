@@ -67,7 +67,7 @@ describe("examples", () => {
               name: "Storage",
               range: expect.anything(),
             },
-            obj: expect.anything(),
+            fields: expect.anything(),
             range: expect.anything(),
           });
         })

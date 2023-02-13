@@ -1,0 +1,10 @@
+type Storage {
+  foo: Foo
+  #    ^^^ Should be wrapped in LiveObject
+}
+
+type Foo {
+  bar: LiveObject<Bar>
+}
+
+type Bar {}

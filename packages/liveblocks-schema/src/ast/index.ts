@@ -39,7 +39,6 @@ export function isDefinition(node: Node): node is Definition {
 
 export function isTypeExpr(node: Node): node is TypeExpr {
   return (
-    node._kind === "LiveObjectTypeExpr" ||
     node._kind === "ObjectLiteralExpr" ||
     node._kind === "TypeRef" ||
     isBuiltInScalar(node)
@@ -50,11 +49,7 @@ export type BuiltInScalar = StringType | IntType | FloatType | BooleanType;
 
 export type Definition = ObjectTypeDefinition;
 
-export type TypeExpr =
-  | BuiltInScalar
-  | LiveObjectTypeExpr
-  | ObjectLiteralExpr
-  | TypeRef;
+export type TypeExpr = BuiltInScalar | ObjectLiteralExpr | TypeRef;
 
 export type Range = [number, number];
 
@@ -65,7 +60,6 @@ export type Node =
   | FloatType
   | Identifier
   | IntType
-  | LiveObjectTypeExpr
   | ObjectLiteralExpr
   | ObjectTypeDefinition
   | StringType
@@ -89,7 +83,6 @@ export function isNode(node: Node): node is Node {
     node._kind === "FloatType" ||
     node._kind === "Identifier" ||
     node._kind === "IntType" ||
-    node._kind === "LiveObjectTypeExpr" ||
     node._kind === "ObjectLiteralExpr" ||
     node._kind === "ObjectTypeDefinition" ||
     node._kind === "StringType" ||
@@ -136,12 +129,6 @@ export type IntType = {
   range: Range;
 };
 
-export type LiveObjectTypeExpr = {
-  _kind: "LiveObjectTypeExpr";
-  of: TypeRef;
-  range: Range;
-};
-
 export type ObjectLiteralExpr = {
   _kind: "ObjectLiteralExpr";
   fields: FieldDef[];
@@ -151,7 +138,7 @@ export type ObjectLiteralExpr = {
 export type ObjectTypeDefinition = {
   _kind: "ObjectTypeDefinition";
   name: TypeName;
-  obj: ObjectLiteralExpr;
+  fields: FieldDef[];
   range: Range;
 };
 
@@ -169,7 +156,8 @@ export type TypeName = {
 
 export type TypeRef = {
   _kind: "TypeRef";
-  name: TypeName;
+  ref: TypeName;
+  asLiveObject: boolean;
   range: Range;
 };
 
@@ -314,27 +302,6 @@ export function intType(
   };
 }
 
-export function liveObjectTypeExpr(
-  of: TypeRef,
-  range: Range = [0, 0]
-): LiveObjectTypeExpr {
-  DEBUG &&
-    (() => {
-      assert(
-        of._kind === "TypeRef",
-        `Invalid value for "of" arg in "LiveObjectTypeExpr" call.\nExpected: TypeRef\nGot:      ${JSON.stringify(
-          of
-        )}`
-      );
-      assertRange(range, "LiveObjectTypeExpr");
-    })();
-  return {
-    _kind: "LiveObjectTypeExpr",
-    of,
-    range,
-  };
-}
-
 export function objectLiteralExpr(
   fields: FieldDef[] = [],
   range: Range = [0, 0]
@@ -359,7 +326,7 @@ export function objectLiteralExpr(
 
 export function objectTypeDefinition(
   name: TypeName,
-  obj: ObjectLiteralExpr,
+  fields: FieldDef[] = [],
   range: Range = [0, 0]
 ): ObjectTypeDefinition {
   DEBUG &&
@@ -371,9 +338,10 @@ export function objectTypeDefinition(
         )}`
       );
       assert(
-        obj._kind === "ObjectLiteralExpr",
-        `Invalid value for "obj" arg in "ObjectTypeDefinition" call.\nExpected: ObjectLiteralExpr\nGot:      ${JSON.stringify(
-          obj
+        Array.isArray(fields) &&
+          fields.every((item) => item._kind === "FieldDef"),
+        `Invalid value for "fields" arg in "ObjectTypeDefinition" call.\nExpected: FieldDef*\nGot:      ${JSON.stringify(
+          fields
         )}`
       );
       assertRange(range, "ObjectTypeDefinition");
@@ -381,7 +349,7 @@ export function objectTypeDefinition(
   return {
     _kind: "ObjectTypeDefinition",
     name,
-    obj,
+    fields,
     range,
   };
 }
@@ -425,20 +393,31 @@ export function typeName(name: string, range: Range = [0, 0]): TypeName {
   };
 }
 
-export function typeRef(name: TypeName, range: Range = [0, 0]): TypeRef {
+export function typeRef(
+  ref: TypeName,
+  asLiveObject: boolean,
+  range: Range = [0, 0]
+): TypeRef {
   DEBUG &&
     (() => {
       assert(
-        name._kind === "TypeName",
-        `Invalid value for "name" arg in "TypeRef" call.\nExpected: TypeName\nGot:      ${JSON.stringify(
-          name
+        ref._kind === "TypeName",
+        `Invalid value for "ref" arg in "TypeRef" call.\nExpected: TypeName\nGot:      ${JSON.stringify(
+          ref
+        )}`
+      );
+      assert(
+        typeof asLiveObject === "boolean",
+        `Invalid value for "asLiveObject" arg in "TypeRef" call.\nExpected: boolean\nGot:      ${JSON.stringify(
+          asLiveObject
         )}`
       );
       assertRange(range, "TypeRef");
     })();
   return {
     _kind: "TypeRef",
-    name,
+    ref,
+    asLiveObject,
     range,
   };
 }
@@ -450,7 +429,6 @@ interface Visitor<TContext> {
   FloatType?(node: FloatType, context: TContext): void;
   Identifier?(node: Identifier, context: TContext): void;
   IntType?(node: IntType, context: TContext): void;
-  LiveObjectTypeExpr?(node: LiveObjectTypeExpr, context: TContext): void;
   ObjectLiteralExpr?(node: ObjectLiteralExpr, context: TContext): void;
   ObjectTypeDefinition?(node: ObjectTypeDefinition, context: TContext): void;
   StringType?(node: StringType, context: TContext): void;
@@ -500,11 +478,6 @@ export function visit<TNode extends Node, TContext>(
       visitor.IntType?.(node, context);
       break;
 
-    case "LiveObjectTypeExpr":
-      visitor.LiveObjectTypeExpr?.(node, context);
-      visit(node.of, visitor, context);
-      break;
-
     case "ObjectLiteralExpr":
       visitor.ObjectLiteralExpr?.(node, context);
       node.fields.forEach((f) => visit(f, visitor, context));
@@ -513,7 +486,7 @@ export function visit<TNode extends Node, TContext>(
     case "ObjectTypeDefinition":
       visitor.ObjectTypeDefinition?.(node, context);
       visit(node.name, visitor, context);
-      visit(node.obj, visitor, context);
+      node.fields.forEach((f) => visit(f, visitor, context));
       break;
 
     case "StringType":
@@ -526,7 +499,7 @@ export function visit<TNode extends Node, TContext>(
 
     case "TypeRef":
       visitor.TypeRef?.(node, context);
-      visit(node.name, visitor, context);
+      visit(node.ref, visitor, context);
       break;
   }
 
