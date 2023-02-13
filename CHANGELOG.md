@@ -1,5 +1,6 @@
 # 0.0.8
 
+- Fix: remove `dummy` fields on built-in scalar type nodes (no longer needed)
 - Fix: enforce correct semantics for Live object hierarchies
 - AST changes:
   - Stop using `ObjectLiteralExpr` under `ObjectTypeDefinition`. Even though

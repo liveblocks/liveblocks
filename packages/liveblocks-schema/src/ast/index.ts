@@ -93,7 +93,7 @@ export function isNode(node: Node): node is Node {
 
 export type BooleanType = {
   _kind: "BooleanType";
-  dummy_: string | null;
+
   range: Range;
 };
 
@@ -113,7 +113,7 @@ export type FieldDef = {
 
 export type FloatType = {
   _kind: "FloatType";
-  dummy_: string | null;
+
   range: Range;
 };
 
@@ -125,7 +125,7 @@ export type Identifier = {
 
 export type IntType = {
   _kind: "IntType";
-  dummy_: string | null;
+
   range: Range;
 };
 
@@ -144,7 +144,7 @@ export type ObjectTypeDefinition = {
 
 export type StringType = {
   _kind: "StringType";
-  dummy_: string | null;
+
   range: Range;
 };
 
@@ -161,23 +161,13 @@ export type TypeRef = {
   range: Range;
 };
 
-export function booleanType(
-  dummy_: string | null = null,
-  range: Range = [0, 0]
-): BooleanType {
+export function booleanType(range: Range = [0, 0]): BooleanType {
   DEBUG &&
     (() => {
-      assert(
-        dummy_ === null || typeof dummy_ === "string",
-        `Invalid value for "dummy_" arg in "BooleanType" call.\nExpected: string?\nGot:      ${JSON.stringify(
-          dummy_
-        )}`
-      );
       assertRange(range, "BooleanType");
     })();
   return {
     _kind: "BooleanType",
-    dummy_,
     range,
   };
 }
@@ -242,23 +232,13 @@ export function fieldDef(
   };
 }
 
-export function floatType(
-  dummy_: string | null = null,
-  range: Range = [0, 0]
-): FloatType {
+export function floatType(range: Range = [0, 0]): FloatType {
   DEBUG &&
     (() => {
-      assert(
-        dummy_ === null || typeof dummy_ === "string",
-        `Invalid value for "dummy_" arg in "FloatType" call.\nExpected: string?\nGot:      ${JSON.stringify(
-          dummy_
-        )}`
-      );
       assertRange(range, "FloatType");
     })();
   return {
     _kind: "FloatType",
-    dummy_,
     range,
   };
 }
@@ -281,23 +261,13 @@ export function identifier(name: string, range: Range = [0, 0]): Identifier {
   };
 }
 
-export function intType(
-  dummy_: string | null = null,
-  range: Range = [0, 0]
-): IntType {
+export function intType(range: Range = [0, 0]): IntType {
   DEBUG &&
     (() => {
-      assert(
-        dummy_ === null || typeof dummy_ === "string",
-        `Invalid value for "dummy_" arg in "IntType" call.\nExpected: string?\nGot:      ${JSON.stringify(
-          dummy_
-        )}`
-      );
       assertRange(range, "IntType");
     })();
   return {
     _kind: "IntType",
-    dummy_,
     range,
   };
 }
@@ -354,23 +324,13 @@ export function objectTypeDefinition(
   };
 }
 
-export function stringType(
-  dummy_: string | null = null,
-  range: Range = [0, 0]
-): StringType {
+export function stringType(range: Range = [0, 0]): StringType {
   DEBUG &&
     (() => {
-      assert(
-        dummy_ === null || typeof dummy_ === "string",
-        `Invalid value for "dummy_" arg in "StringType" call.\nExpected: string?\nGot:      ${JSON.stringify(
-          dummy_
-        )}`
-      );
       assertRange(range, "StringType");
     })();
   return {
     _kind: "StringType",
-    dummy_,
     range,
   };
 }

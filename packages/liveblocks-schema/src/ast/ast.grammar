@@ -70,16 +70,16 @@ ObjectTypeDefinition:
 
 
 StringType:
-    dummy_  string?
+    # no fields
 
 
 IntType:
-    dummy_  string?
+    # no fields
 
 
 FloatType:
-    dummy_  string?
+    # no fields
 
 
 BooleanType:
-    dummy_  string?
+    # no fields
