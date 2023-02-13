@@ -94,7 +94,7 @@ export async function updateUserAccess(
   if (!user) {
     return {
       error: {
-        code: 400,
+        code: 200,
         message: "User not found",
         suggestion: "Check that you've used the correct user id",
       },
