@@ -120,7 +120,7 @@ function checkObjectLiteralExpr(
   // Check that none of the fields here use a "live" reference
   for (const field of obj.fields) {
     if (field.type._kind === "TypeRef" && field.type.asLiveObject) {
-      context.report(`Cannot use a LiveObject here`, [], field.type.range);
+      context.report("Cannot use a LiveObject here", [], field.type.range);
     }
   }
 }
