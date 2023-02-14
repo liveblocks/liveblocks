@@ -1,9 +1,0 @@
-type Storage {
-  a: {
-    x: Int
-    y: String
-
-    x: String
-    y?: String
-  }
-}

@@ -1,6 +1,6 @@
 type Storage {
   x: 42ndStreet
+     ^ Type names should start with an uppercase character
 }
 
 type 42ndStreet {}
-#    ^ Type must start with an uppercase char

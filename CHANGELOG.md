@@ -1,7 +1,8 @@
 # 0.0.8
 
-- Fix: remove `dummy` fields on built-in scalar type nodes (no longer needed)
+- Cleaner and more consistent error messages
 - Fix: enforce correct semantics for Live object hierarchies
+- Fix: fail on unused type definitions
 - AST changes:
   - Stop using `ObjectLiteralExpr` under `ObjectTypeDefinition`. Even though
     their syntax is literally the same, they still have different semantics when
@@ -9,7 +10,10 @@
   - Remove the `LiveObjectTypeExpr` node type. Live objects wrappers are more
     like "modifiers" of object type reference than they are a composition. The
     AST now reflects that more naturally.
-- Allow multiple test cases per file (for more natural grouping)
+  - Fix: remove `dummy` fields on built-in scalar type nodes (no longer needed)
+- Improved unit test ergonomics
+  - Allow multiple test cases per file (for more natural grouping)
+  - Use inline error annotations to assert error messages
 
 # 0.0.7
 

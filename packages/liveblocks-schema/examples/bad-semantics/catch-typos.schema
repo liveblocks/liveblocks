@@ -1,7 +1,30 @@
-type Storage {
-  a: string
-  b: boolean
-  x: int
-  y: float
-  z: number
-}
+type Storage { s: striNG }
+                  ^ Unknown type 'striNG'. Did you mean 'String'?
+---
+type Storage { s: strniG }
+                  ^ Unknown type 'strniG'. Did you mean 'String'?
+---
+type Storage { b: booLeaN }
+                  ^ Unknown type 'booLeaN'. Did you mean 'Boolean'?
+---
+type Storage { i: iNt }
+                  ^ Unknown type 'iNt'. Did you mean 'Int'?
+---
+type Storage { f: floAt }
+                  ^ Unknown type 'floAt'. Did you mean 'Float'?
+---
+# Special error messaging for "numbers"
+type Storage { n: nuMbeR }
+                  ^ Unknown type 'nuMbeR'. Did you mean 'Float' or 'Int'?
+---
+# Special error messaging for "numbers"
+type Storage { n: Number }
+                  ^ Unknown type 'Number'. Did you mean 'Float' or 'Int'?
+---
+# Special error messaging for "numbers"
+type Storage { n: nuM }
+                  ^ Unknown type 'nuM'. Did you mean 'Float' or 'Int'?
+---
+# Special error messaging for "numbers"
+type Storage { l: Num }
+                  ^ Unknown type 'Num'. Did you mean 'Float' or 'Int'?

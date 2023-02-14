@@ -1,3 +1,4 @@
 type X {
   a: LiveObject<Int, Int>       // Too many params
+                   ^ Expected ">" but "," found
 }

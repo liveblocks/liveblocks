@@ -2,5 +2,10 @@ type Thing { x: Int }
 
 type Storage {
   a: LiveObject<Int>
+                ^^^ Type 'Int' is not an object type
   b: LiveObject<Thing>
 }
+---
+type Thing {}
+type Storage { bad: LiveObject<String> }
+                               ^^^^^^ Type 'String' is not an object type. Did you mean 'Thing'?

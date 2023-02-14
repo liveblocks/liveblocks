@@ -1,5 +1,8 @@
 type X { 😈: String }
+         ^ Expected "}" or <identifier> but "***" found
 ---
 type X { 123: String }
+         ^ Expected "}" or <identifier> but "1" found
 ---
 type X { $foo: String }
+         ^ Expected "}" or <identifier> but "$" found

@@ -191,7 +191,7 @@ export class ErrorReporter {
     }
   }
 
-  *iterParseError(message: string, range?: Range): Generator<string> {
+  *iterLongParseError(message: string, range?: Range): Generator<string> {
     this.#hasErrors = true;
     const [startOffset, endOffset] = range ?? [undefined, undefined];
 
@@ -205,23 +205,40 @@ export class ErrorReporter {
     yield "";
   }
 
-  getParseError(message: string, range?: Range): string {
-    return Array.from(this.iterParseError(message, range)).join("\n");
+  *iterShortError(message: string, range?: Range): Generator<string> {
+    this.#hasErrors = true;
+    const [startOffset] = range ?? [undefined, undefined];
+
+    if (startOffset !== undefined) {
+      // Strip the trailing period from the message, if any
+      if (message.endsWith(".")) {
+        message = message.slice(0, -1);
+      }
+
+      const start = this.lineInfo(startOffset);
+      yield `${message} (at ${start.line1}:${start.column1})`;
+    } else {
+      yield message;
+    }
+  }
+
+  getShortParseError(message: string, range?: Range): string {
+    return Array.from(this.iterShortError(message, range)).join("\n");
   }
 
   throwParseError(message: string, range?: Range): never {
-    const err = new Error(this.getParseError(message, range));
+    const err = new Error(this.getShortParseError(message, range));
     err.name = "ParseError";
     throw err;
   }
 
   printParseError(message: string, range?: Range): void {
-    for (const line of this.iterParseError(message, range)) {
+    for (const line of this.iterLongParseError(message, range)) {
       console.log(line);
     }
   }
 
-  *iterSemanticError(
+  *iterLongSemanticError(
     title: string,
     description: (string | null)[],
     range?: Range
@@ -257,22 +274,12 @@ export class ErrorReporter {
     yield "";
   }
 
-  getSemanticError(
-    title: string,
-    description: (string | null)[],
-    range?: Range
-  ): string {
-    return Array.from(this.iterSemanticError(title, description, range)).join(
-      "\n"
-    );
+  getShortSemanticError(title: string, range?: Range): string {
+    return Array.from(this.iterShortError(title, range)).join("\n");
   }
 
-  throwSemanticError(
-    title: string,
-    description: (string | null)[],
-    range?: Range
-  ): void /* throws */ {
-    const err = new Error(this.getSemanticError(title, description, range));
+  throwSemanticError(title: string, range?: Range): never {
+    const err = new Error(this.getShortSemanticError(title, range));
     err.name = "SemanticError";
     throw err;
   }
@@ -282,7 +289,7 @@ export class ErrorReporter {
     description: (string | null)[],
     range?: Range
   ): void {
-    for (const line of this.iterSemanticError(title, description, range)) {
+    for (const line of this.iterLongSemanticError(title, description, range)) {
       console.log(line);
     }
   }

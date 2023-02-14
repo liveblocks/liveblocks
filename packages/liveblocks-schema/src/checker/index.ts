@@ -72,10 +72,10 @@ class Context {
     }
   }
 
-  report(title: string, description: (string | null)[], range?: Range): void {
+  report(title: string, range?: Range): void {
     // FIXME(nvie) Don't throw on the first error! Collect a few (max 3?) and then throw as one error.
     // this.errorReporter.printSemanticError(title, description, range);
-    this.errorReporter.throwSemanticError(title, description, range);
+    this.errorReporter.throwSemanticError(title, range);
   }
 }
 
@@ -105,7 +105,6 @@ function checkNoDuplicateFields(fieldDefs: FieldDef[], context: Context): void {
       )} is defined multiple times (on line ${context.lineno(
         first.name.range
       )} and ${context.lineno(second.name.range)})`,
-      [],
       second.name.range
     );
   }
@@ -120,7 +119,7 @@ function checkObjectLiteralExpr(
   // Check that none of the fields here use a "live" reference
   for (const field of obj.fields) {
     if (field.type._kind === "TypeRef" && field.type.asLiveObject) {
-      context.report("Cannot use a LiveObject here", [], field.type.range);
+      context.report("Cannot use a LiveObject here", field.type.range);
     }
   }
 }
@@ -129,7 +128,6 @@ function checkTypeName(node: TypeName, context: Context): void {
   if (!TYPENAME_REGEX.test(node.name)) {
     context.report(
       "Type names should start with an uppercase character",
-      [],
       node.range
     );
   }
@@ -138,14 +136,12 @@ function checkTypeName(node: TypeName, context: Context): void {
 
   if (BUILTINS.some((bname) => bname === node.name)) {
     context.report(
-      `Type name ${quote(node.name)} is a built-in type`,
-      [],
+      `Name ${quote(node.name)} is a built-in and cannot be redefined`,
       node.range
     );
   } else if (RESERVED_TYPENAMES_REGEX.test(node.name)) {
     context.report(
-      `Type name ${quote(node.name)} is reserved for future use`,
-      [],
+      `Name ${quote(node.name)} is reserved for future use`,
       node.range
     );
   }
@@ -169,37 +165,37 @@ function didyoumean(value: string, alternatives: string[]): string[] {
 function checkTypeRefTargetExists(node: TypeRef, context: Context): void {
   const name = node.ref.name;
   const typeDef = context.registeredTypes.get(name);
-  if (typeDef === undefined) {
-    // If we land here, it means there's an unknown type reference. Possibly
-    // caused by misspellings or people trying to learn/play with the language.
-    // Let's be friendly to them and assist them with fixing the problem,
-    // especially around common mistakes.
-    let alternatives: string[] = didyoumean(
-      node.ref.name,
-      BUILTINS.concat(Array.from(context.registeredTypes.keys()))
-    );
-
-    if (alternatives.length === 0) {
-      // It can be expected that people will try to put "number" in as a type,
-      // because that's TypeScript's syntax. If there is no custom type name
-      // found that closely matches this typo, then try to suggest one more thing
-      // to nudge them.
-      alternatives = /^num(ber)?$/i.test(name)
-        ? ["Float", "Int"]
-        : [
-            /* no alternatives */
-          ];
-    }
-
-    const suggestion =
-      alternatives.length > 0
-        ? `. Did you mean ${alternatives
-            .map((alt) => quote(alt))
-            .join(" or ")}?`
-        : "";
-
-    context.report(`Unknown type ${quote(name)}` + suggestion, [], node.range);
+  if (typeDef !== undefined) {
+    return;
   }
+
+  // If we land here, it means there's an unknown type reference. Possibly
+  // caused by misspellings or people trying to learn/play with the language.
+  // Let's be friendly to them and assist them with fixing the problem,
+  // especially around common mistakes.
+  let alternatives: string[] = didyoumean(
+    node.ref.name,
+    BUILTINS.concat(Array.from(context.registeredTypes.keys()))
+  );
+
+  if (alternatives.length === 0) {
+    // It can be expected that people will try to put "number" in as a type,
+    // because that's TypeScript's syntax. If there is no custom type name
+    // found that closely matches this typo, then try to suggest one more thing
+    // to nudge them.
+    alternatives = /^num(ber)?$/i.test(name)
+      ? ["Float", "Int"]
+      : [
+          /* no alternatives */
+        ];
+  }
+
+  const suggestion =
+    alternatives.length > 0
+      ? `. Did you mean ${alternatives.map((alt) => quote(alt)).join(" or ")}?`
+      : "";
+
+  context.report(`Unknown type ${quote(name)}` + suggestion, node.ref.range);
 }
 
 function checkLiveObjectPayloadIsObjectType(
@@ -212,9 +208,18 @@ function checkLiveObjectPayloadIsObjectType(
     context.registeredTypes.get(typeRef.ref.name)?._kind !==
       "ObjectTypeDefinition"
   ) {
+    const alternatives: string[] = didyoumean(
+      typeRef.ref.name,
+      Array.from(context.registeredTypes)
+        .filter(([, def]) => def._kind === "ObjectTypeDefinition")
+        .map(([key]) => key)
+    );
+
     context.report(
-      "Not an object type",
-      ["LiveObject can only be used on object types"],
+      `Type ${quote(typeRef.ref.name)} is not an object type` +
+        (alternatives.length > 0
+          ? `. Did you mean ${alternatives.map(quote).join(" or ")}?`
+          : ""),
       typeRef.ref.range
     );
     return undefined;
@@ -222,9 +227,9 @@ function checkLiveObjectPayloadIsObjectType(
 }
 
 function checkTypeRef(ref: TypeRef, context: Context): void {
-  checkTypeRefTargetExists(ref, context);
-
   checkLiveObjectPayloadIsObjectType(ref, context);
+
+  checkTypeRefTargetExists(ref, context);
 
   //
   // For each definition, first ensure that it and annotate whether or not they
@@ -276,7 +281,6 @@ function checkNoForbiddenRefs(
       if (forbidden.has(node.ref.name)) {
         context.report(
           `Cyclical reference detected: ${quote(node.ref.name)}`,
-          [],
           node.range
         );
       }
@@ -305,7 +309,6 @@ function checkLiveRefs(typeRef: TypeRef, context: Context): void {
       )} can only be used as a Live type. Did you mean to write 'LiveObject<${
         typeRef.ref.name
       }>'?`,
-      [],
       typeRef.range
     );
   }
@@ -333,10 +336,6 @@ function checkDocument(doc: Document, context: Context): void {
         )} is defined multiple times (on line ${context.lineno(
           existing.name.range
         )} and ${context.lineno(def.name.range)})`,
-        [
-          "You cannot declare types multiple times.",
-          "Please remove the duplicate definition, or use a different name.",
-        ],
         def.name.range
       );
     } else {
@@ -363,20 +362,6 @@ function checkDocument(doc: Document, context: Context): void {
         null
       );
     }
-  }
-
-  if (!context.registeredTypes.has("Storage")) {
-    context.errorReporter.throwSemanticError(
-      'Missing root definition "Storage"',
-      [
-        'Every Liveblocks schema requires at least one type definition named "Storage",',
-        "which indicated the root of the storage. You can declare a schema like this:",
-        "",
-        "  type Storage {",
-        "    # Your fields here",
-        "  }",
-      ]
-    );
   }
 
   // Now that we know which types are "live only", we'll need to do another
@@ -438,6 +423,21 @@ export function check(
     },
     context
   );
+
+  if (!context.registeredTypes.has("Storage")) {
+    context.errorReporter.throwSemanticError(
+      "Missing root object type definition named 'Storage'"
+    );
+  }
+
+  for (const [key, def] of context.registeredTypes) {
+    if (key !== "Storage" && !context.usedBy.has(key)) {
+      context.report(
+        `Type ${quote(def.name.name)} is defined but never used`,
+        def.name.range
+      );
+    }
+  }
 
   if (context.errorReporter.hasErrors) {
     throw new Error("There were errors");

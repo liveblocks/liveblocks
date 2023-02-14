@@ -1,4 +1,5 @@
 type Storage { 
   /* We support no such
+  ^ Expected "}" or <identifier> but "/" found
      multi-line comments */
 }

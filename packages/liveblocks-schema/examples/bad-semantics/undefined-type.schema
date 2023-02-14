@@ -2,5 +2,6 @@ type Thing { name: String }
 type Storage {
   thing: Thing,
   huh: Thang,
+       ^^^^^ Unknown type 'Thang'. Did you mean 'Thing'?
   nested: { nested: { nested: Thang } }
 }

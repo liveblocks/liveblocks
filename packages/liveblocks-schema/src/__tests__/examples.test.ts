@@ -31,6 +31,15 @@ function readExamplesSync(filename: string): string[] {
   return fs.readFileSync(filename, { encoding: "utf-8" }).split("---\n");
 }
 
+function escapeRegex(value: string): string {
+  return (
+    value
+      .replace(/[/\-\\^$*+?.()|[\]{}]/g, "\\$&")
+      // Interpret "***" as a wildcard
+      .replace("\\*\\*\\*", ".*")
+  );
+}
+
 function declareJestTest(filename: string) {
   const basename = path.basename(filename);
   return /\bskip\b/i.test(basename)
@@ -40,9 +49,9 @@ function declareJestTest(filename: string) {
     : it;
 }
 
-type TestSrc = readonly [string, string, string];
-//                         /        |        \
-//                    File path  Test name  Contents
+type TestSrc = readonly [string, string, string, RegExp | undefined];
+//                         /        |        \        \
+//                    File path  Test name  Contents  Expected error message
 
 describe("examples", () => {
   const exampleFiles: string[] = Array.from(
@@ -53,16 +62,43 @@ describe("examples", () => {
   // own.
   const exampleTests: readonly TestSrc[] = exampleFiles.flatMap((filename) => {
     const chunks = readExamplesSync(filename);
-    return chunks.map(
-      (content, index) =>
-        [
-          filename,
-          chunks.length > 1
-            ? `${path.basename(filename)} [${index + 1}/${chunks.length}]`
-            : path.basename(filename),
-          content,
-        ] as const
-    );
+    return chunks.map((content, index) => {
+      // Now remove all lines starting with "^", and interpret them as inline
+      // error annotations
+      let errmsg: RegExp | undefined;
+      const lines = content.split("\n");
+      for (let i = 0; i < lines.length - 1; i++) {
+        const line = lines[i];
+        const annotation = line.match(/^(\s*)[\^]+([|]?)\s*(.*)$/);
+        if (annotation) {
+          const lineno1 = i;
+          const column1 = annotation[1].length + 1;
+          const noPosOrNoExactPosition = annotation[2] !== "";
+          const expectedErrorText =
+            annotation[3] || "<no expected error message>";
+          errmsg = new RegExp(
+            "^" +
+              escapeRegex(
+                noPosOrNoExactPosition
+                  ? `${expectedErrorText}***`
+                  : `${expectedErrorText} (at ${lineno1}:${column1})`
+              ) +
+              "$"
+          );
+          lines.splice(i, 1);
+          break;
+        }
+      }
+      content = lines.join("\n");
+      return [
+        filename,
+        chunks.length > 1
+          ? `${path.basename(filename)} [${index + 1}/${chunks.length}]`
+          : path.basename(filename),
+        content,
+        errmsg,
+      ] as const;
+    });
   });
 
   //
@@ -77,8 +113,16 @@ describe("examples", () => {
   describe("good examples", () => {
     exampleTests
       .filter(([f]) => f.includes("/good/"))
-      .map(([f, name, content]) =>
+      .map(([f, name, content, expectedError]) =>
         declareJestTest(f)(name, () => {
+          if (expectedError) {
+            throw new Error(
+              `Unexpected error annotation found in test file "${path.basename(
+                f
+              )}" (files in good/ are not expected to fail)`
+            );
+          }
+
           expect(parseAndCheck(content).root).toEqual({
             _kind: "ObjectTypeDefinition",
             name: {
@@ -96,7 +140,7 @@ describe("examples", () => {
   describe("parses syntactically, but still not valid", () => {
     exampleTests
       .filter(([f]) => f.includes("/bad-semantics/"))
-      .map(([f, name, content]) =>
+      .map(([f, name, content, expectedError]) =>
         declareJestTest(f)(name, () => {
           // Parsing should work syntactically
           expect(parseOnly(content)).toEqual({
@@ -105,13 +149,21 @@ describe("examples", () => {
             range: expect.anything(),
           });
 
+          if (!expectedError) {
+            throw new Error(
+              `Missing expected error annotation test file "${path.basename(
+                f
+              )}"`
+            );
+          }
+
           // Should fail during semantic checking phase. Either this is
           // a regression in the type checker, or we'll need to move this
           // example file to the "good/" directory.
           //
           // TODO Check for specific error type + message here
           //
-          expect(() => parseAndCheck(content)).toThrow();
+          expect(() => parseAndCheck(content)).toThrow(expectedError);
         })
       );
   });
@@ -119,13 +171,21 @@ describe("examples", () => {
   describe("should fail to parse syntax", () => {
     exampleTests
       .filter(([f]) => f.includes("/bad-syntax/"))
-      .map(([f, name, content]) =>
+      .map(([f, name, content, expectedError]) =>
         declareJestTest(f)(name, () => {
+          if (!expectedError) {
+            throw new Error(
+              `Missing expected error annotation test file "${path.basename(
+                f
+              )}"`
+            );
+          }
+
           // Parsing should not even work syntactically
           //
           // TODO Check for specific error type + message here
           //
-          expect(() => parseOnly(content)).toThrow(/Parse error/);
+          expect(() => parseOnly(content)).toThrow(expectedError);
         })
       );
   });

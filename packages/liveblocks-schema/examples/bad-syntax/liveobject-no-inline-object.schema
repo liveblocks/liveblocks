@@ -1,3 +1,4 @@
 type Foo {
   bad: LiveObject<{ x: Int }>
+                  ^ Expected <type name> but "{" found
 }

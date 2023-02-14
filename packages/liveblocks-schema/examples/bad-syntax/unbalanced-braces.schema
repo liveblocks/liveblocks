@@ -1,1 +1,2 @@
 type Foo {
+          ^| Expected "}" or <identifier> but end of input found

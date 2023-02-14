@@ -1,6 +1,0 @@
-type Storage {
-  i: number
-  j: Number
-  k: num
-  l: Num
-}
