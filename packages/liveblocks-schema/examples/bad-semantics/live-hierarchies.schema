@@ -1,0 +1,39 @@
+type Storage {
+  foo: Foo
+  #    ^^^ Should be wrapped in LiveObject
+}
+
+type Foo { bar: LiveObject<Bar> }
+type Bar {}
+
+---
+
+type Storage {
+  aFooLive: { foo: Foo }
+  #                ^^^ Should be wrapped in LiveObject
+}
+
+type Foo { bar: Bar }
+type Bar { qux: LiveObject<Qux> }
+type Qux {}
+
+---
+
+type Storage {
+  a: { b: { c: { d: LiveObject<Foo> } } }
+  #                 ^^^^^^^^^^^^^^^
+  #                 Cannot use LiveObject in an object literal like this?
+}
+
+type Foo {}
+
+---
+
+type Storage {
+  a: { b: { c: { d: Foo } } }
+  #                 ^^^
+  #                 Cannot use LiveObject in an object literal like this?
+}
+
+type Foo { x: LiveObject<Bar> }
+type Bar {}

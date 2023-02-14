@@ -1,3 +1,7 @@
 type X {
   a: Int<String>
 }
+---
+type X {
+  a: String<Int>
+}

@@ -1,3 +1,5 @@
-type X {
-  😈: String
-}
+type X { 😈: String }
+---
+type X { 123: String }
+---
+type X { $foo: String }

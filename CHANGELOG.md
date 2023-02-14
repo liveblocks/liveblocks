@@ -9,6 +9,7 @@
   - Remove the `LiveObjectTypeExpr` node type. Live objects wrappers are more
     like "modifiers" of object type reference than they are a composition. The
     AST now reflects that more naturally.
+- Allow multiple test cases per file (for more natural grouping)
 
 # 0.0.7
 

@@ -1,7 +1,0 @@
-type Storage {
-  a: { b: { c: { d: LiveObject<Foo> } } }
-  #                 ^^^^^^^^^^^^^^^
-  #                 Cannot use LiveObject in an object literal like this?
-}
-
-type Foo {}

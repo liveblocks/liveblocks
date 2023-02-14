@@ -27,9 +27,8 @@ function* readFiles(dirpath: string): IterableIterator<string> {
  * leave comments describing the test, if something needs to be clarified about
  * it.
  */
-async function readExample(f: string): Promise<string> {
-  // TODO: Strip off preamble
-  return fs.promises.readFile(f, { encoding: "utf-8" });
+function readExamplesSync(filename: string): string[] {
+  return fs.readFileSync(filename, { encoding: "utf-8" }).split("---\n");
 }
 
 function declareJestTest(filename: string) {
@@ -41,10 +40,30 @@ function declareJestTest(filename: string) {
     : it;
 }
 
+type TestSrc = readonly [string, string, string];
+//                         /        |        \
+//                    File path  Test name  Contents
+
 describe("examples", () => {
   const exampleFiles: string[] = Array.from(
     readFiles(path.join(__dirname, "../../examples"))
   );
+
+  // Each file can consist of multiple "sections", each being a test of its
+  // own.
+  const exampleTests: readonly TestSrc[] = exampleFiles.flatMap((filename) => {
+    const chunks = readExamplesSync(filename);
+    return chunks.map(
+      (content, index) =>
+        [
+          filename,
+          chunks.length > 1
+            ? `${path.basename(filename)} [${index + 1}/${chunks.length}]`
+            : path.basename(filename),
+          content,
+        ] as const
+    );
+  });
 
   //
   // Dynamically generate test cases for each example file found on disk. The
@@ -56,11 +75,11 @@ describe("examples", () => {
   //
 
   describe("good examples", () => {
-    exampleFiles
-      .filter((f) => f.includes("/good/"))
-      .map((f) =>
-        declareJestTest(f)(path.basename(f), async () => {
-          expect(parseAndCheck(await readExample(f)).root).toEqual({
+    exampleTests
+      .filter(([f]) => f.includes("/good/"))
+      .map(([f, name, content]) =>
+        declareJestTest(f)(name, () => {
+          expect(parseAndCheck(content).root).toEqual({
             _kind: "ObjectTypeDefinition",
             name: {
               _kind: "TypeName",
@@ -75,14 +94,12 @@ describe("examples", () => {
   });
 
   describe("parses syntactically, but still not valid", () => {
-    exampleFiles
-      .filter((f) => f.includes("/bad-semantics/"))
-      .map((f) =>
-        declareJestTest(f)(path.basename(f), async () => {
-          const input = await readExample(f);
-
+    exampleTests
+      .filter(([f]) => f.includes("/bad-semantics/"))
+      .map(([f, name, content]) =>
+        declareJestTest(f)(name, () => {
           // Parsing should work syntactically
-          expect(parseOnly(input)).toEqual({
+          expect(parseOnly(content)).toEqual({
             _kind: "Document",
             definitions: expect.anything(),
             range: expect.anything(),
@@ -94,24 +111,22 @@ describe("examples", () => {
           //
           // TODO Check for specific error type + message here
           //
-          expect(() => parseAndCheck(input)).toThrow();
+          expect(() => parseAndCheck(content)).toThrow();
         })
       );
   });
 
   describe("should fail to parse syntax", () => {
-    exampleFiles
-      .filter((f) => f.includes("/bad-syntax/"))
-      .map((f) => {
-        declareJestTest(f)(path.basename(f), async () => {
-          const input = await readExample(f);
-
+    exampleTests
+      .filter(([f]) => f.includes("/bad-syntax/"))
+      .map(([f, name, content]) =>
+        declareJestTest(f)(name, () => {
           // Parsing should not even work syntactically
           //
           // TODO Check for specific error type + message here
           //
-          expect(() => parseOnly(input)).toThrow(/Parse error/);
-        });
-      });
+          expect(() => parseOnly(content)).toThrow(/Parse error/);
+        })
+      );
   });
 });

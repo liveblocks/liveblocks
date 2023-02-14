@@ -1,0 +1,16 @@
+# Direct ref cycles
+type Foo { foo: Foo }
+type Storage { foo: Foo }
+---
+# Indirect ref cycles
+type Storage { moo: Moo }
+type Moo { boo: Boo }
+type Boo { zoo: Zoo }
+type Zoo { moo: Moo }  # Cycle closed here
+---
+# Indirect but broken ref cycles
+type Storage { moo: Moo }
+type Moo { boo: Boo }
+type Boo { zoo: Zoo }
+type Zoo { moo?: Moo }
+#             ^ TODO: This should eventually be fine when we properly support self-references
