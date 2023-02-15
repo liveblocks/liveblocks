@@ -27,7 +27,7 @@ This example shows how to build collaborative data visualization with [Liveblock
 
 Run the following command to try this example locally:
 
-```shell
+```bash
 npx create-liveblocks-app@latest --example react-dashboard --no-api-key --no-vercel
 ```
 
@@ -62,7 +62,7 @@ Alternatively, you can set up your project manually:
 
 To both deploy on [Vercel](https://vercel.com), and run the example locally, use the following command:
 
-```shell
+```bash
 npx create-liveblocks-app@latest --example react-dashboard --vercel
 ```
 

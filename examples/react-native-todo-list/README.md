@@ -23,7 +23,7 @@ As users edit the list, changes will be automatically persisted and synced—all
 
 Run the following command to try this example locally:
 
-```shell
+```bash
 npx create-liveblocks-app@latest --example react-native-todo-list --no-api-key --no-vercel
 ```
 
@@ -60,7 +60,7 @@ Alternatively, you can set up your project manually:
 
 To both deploy on [Vercel](https://vercel.com), and run the example locally, use the following command:
 
-```shell
+```bash
 npx create-liveblocks-app@latest --example react-native-todo-list --vercel
 ```
 

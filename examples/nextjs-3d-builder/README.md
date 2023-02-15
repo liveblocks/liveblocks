@@ -29,7 +29,7 @@ This example shows how to build a collaborative 3D builder with [Liveblocks](htt
 
 Run the following command to try this example locally:
 
-```shell
+```bash
 npx create-liveblocks-app@latest --example nextjs-3d-builder --api-key
 ```
 
@@ -59,7 +59,7 @@ Alternatively, you can set up your project manually:
 
 To both deploy on [Vercel](https://vercel.com), and run the example locally, use the following command:
 
-```shell
+```bash
 npx create-liveblocks-app@latest --example nextjs-3d-builder --vercel
 ```
 

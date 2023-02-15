@@ -25,7 +25,7 @@ This example shows how to build an advanced collaborative spreadsheet with [Live
 
 Run the following command to try this example locally:
 
-```shell
+```bash
 npx create-liveblocks-app@latest --example nextjs-spreadsheet-advanced --api-key
 ```
 
@@ -55,7 +55,7 @@ Alternatively, you can set up your project manually:
 
 To both deploy on [Vercel](https://vercel.com), and run the example locally, use the following command:
 
-```shell
+```bash
 npx create-liveblocks-app@latest --example nextjs-spreadsheet-advanced --vercel
 ```
 
