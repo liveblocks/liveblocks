@@ -1,7 +1,47 @@
-type Thing { name: String }
+type Thing { }
 type Storage {
   thing: Thing,
   huh: Thang,
        ^^^^^ Unknown type 'Thang'. Did you mean 'Thing'?
-  nested: { nested: { nested: Thang } }
 }
+---
+type Thing { }
+type Storage {
+  nested: { nested: { nested: Thang } }
+                              ^^^^^ Unknown type 'Thang'. Did you mean 'Thing'?
+}
+---
+type Storage {
+  x: LiveObject<Foo>
+                ^^^ Type 'Foo' is not an object type
+}
+---
+type Storage {
+  x: LiveObject<Foo>
+                ^^^ Type 'Foo' is not an object type. Did you mean 'Fou'?
+}
+type Fou {}
+---
+type Storage {
+  x: LiveObject<Strong>
+                ^^^^^^ Type 'Strong' is not an object type
+}
+---
+type Storage {
+  x: LiveObject<Number>
+                ^^^^^^ Type 'Number' is not an object type
+}
+---
+type Strang { }
+type Storage { thing: Strong }
+                      ^^^^^^ Unknown type 'Strong'. Did you mean 'String'?
+---
+type Storage { thing: Starage }
+                      ^^^^^^^ Unknown type 'Starage'. Did you mean 'Storage'?
+---
+type Strang { }
+type Storage { thing: LiveObject<Strong> }
+                                 ^^^^^^ Type 'Strong' is not an object type. Did you mean 'Strang'?
+---
+type Storage { thing: LiveObject<Starage> }
+                                 ^^^^^^^ Type 'Starage' is not an object type. Did you mean 'Storage'?

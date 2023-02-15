@@ -1,6 +1,9 @@
 type Storage { s: striNG }
                   ^ Unknown type 'striNG'. Did you mean 'String'?
 ---
+type Storage { s: Strong }
+                  ^ Unknown type 'Strong'. Did you mean 'String'?
+---
 type Storage { s: strniG }
                   ^ Unknown type 'strniG'. Did you mean 'String'?
 ---
