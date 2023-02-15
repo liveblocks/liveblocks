@@ -306,9 +306,9 @@ function checkLiveRefs(typeRef: TypeRef, context: Context): void {
     context.report(
       `Type ${quote(
         typeRef.ref.name
-      )} can only be used as a Live type. Did you mean to write 'LiveObject<${
-        typeRef.ref.name
-      }>'?`,
+      )} can only be used as a Live type. Did you mean to write ${quote(
+        `LiveObject<${typeRef.ref.name}>`
+      )}?`,
       typeRef.range
     );
   }
