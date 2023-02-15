@@ -1,3 +1,7 @@
+# 0.0.9
+
+- Fix: some ugly error messages making incorrect suggestions
+
 # 0.0.8
 
 - Cleaner and more consistent error messages

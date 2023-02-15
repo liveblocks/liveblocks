@@ -11,37 +11,55 @@ type Storage {
                               ^^^^^ Unknown type 'Thang'. Did you mean 'Thing'?
 }
 ---
+type Thing { }
+type Than { }
+type Storage { x: Thang }
+                  ^^^^^ Unknown type 'Thang'. Did you mean 'Thing'?
+                                                            ##### Definition order can matter
+---
+type Than { }
+type Thing { }
+type Storage { x: Thang }
+                  ^^^^^ Unknown type 'Thang'. Did you mean 'Than'?
+                                                            ##### Definition order can matter
+---
 type Storage {
   x: LiveObject<Foo>
-                ^^^ Type 'Foo' is not an object type
+                ^^^ Unknown object type 'Foo'
 }
 ---
 type Storage {
   x: LiveObject<Foo>
-                ^^^ Type 'Foo' is not an object type. Did you mean 'Fou'?
+                ^^^ Unknown object type 'Foo'. Did you mean 'Fou'?
 }
 type Fou {}
 ---
 type Storage {
   x: LiveObject<Strong>
-                ^^^^^^ Type 'Strong' is not an object type
+                ^^^^^^ Unknown object type 'Strong'
+                       # Should *not* suggest 'String' here
 }
 ---
 type Storage {
   x: LiveObject<Number>
-                ^^^^^^ Type 'Number' is not an object type
+                ^^^^^^ Unknown object type 'Number'
+                       # Should also *not* suggest 'Float' or 'Int' here
 }
 ---
 type Strang { }
 type Storage { thing: Strong }
-                      ^^^^^^ Unknown type 'Strong'. Did you mean 'String'?
+                      ^^^^^^ Unknown type 'Strong'. Did you mean 'Strang'?
+                                                                  ###### Should suggest custom type, not built-in String
 ---
 type Storage { thing: Starage }
-                      ^^^^^^^ Unknown type 'Starage'. Did you mean 'Storage'?
+                      ^^^^^^^ Unknown type 'Starage'
+                                            ####### Should *not* suggest 'Storage' (= anti-pattern)
 ---
 type Strang { }
 type Storage { thing: LiveObject<Strong> }
-                                 ^^^^^^ Type 'Strong' is not an object type. Did you mean 'Strang'?
+                                 ^^^^^^ Unknown object type 'Strong'. Did you mean 'Strang'?
+                                                                                    ###### Should suggest custom type, not built-in
 ---
 type Storage { thing: LiveObject<Starage> }
-                                 ^^^^^^^ Type 'Starage' is not an object type. Did you mean 'Storage'?
+                                 ^^^^^^^ Unknown object type 'Starage'
+                                                              ####### Should *not* suggest 'Storage' (= anti-pattern)
