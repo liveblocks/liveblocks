@@ -36,32 +36,35 @@ type Storage = {
   edges: FlowState["edges"];
 };
 
-const useStore = create<WithLiveblocks<FlowState, {}, EnsureJson<Storage>>>()(liveblocks((set, get) => ({
-    nodes,
-    edges,
-    onNodesChange: (changes: NodeChange[]) => {
-      set({
-        nodes: applyNodeChanges(changes, get().nodes),
-      });
-    },
-    onEdgesChange: (changes: EdgeChange[]) => {
-      set({
-        edges: applyEdgeChanges(changes, get().edges),
-      });
-    },
-    onConnect: (connection: Connection) => {
-      set({
-        edges: addEdge(connection, get().edges),
-      });
-    },
-  }),
-  {
-    client,
-    storageMapping: {
-      nodes: true,
-      edges: true,
-    },
-  }
-  ));
+const useStore = create<WithLiveblocks<FlowState, {}, EnsureJson<Storage>>>()(
+  liveblocks(
+    (set, get) => ({
+      nodes,
+      edges,
+      onNodesChange: (changes: NodeChange[]) => {
+        set({
+          nodes: applyNodeChanges(changes, get().nodes),
+        });
+      },
+      onEdgesChange: (changes: EdgeChange[]) => {
+        set({
+          edges: applyEdgeChanges(changes, get().edges),
+        });
+      },
+      onConnect: (connection: Connection) => {
+        set({
+          edges: addEdge(connection, get().edges),
+        });
+      },
+    }),
+    {
+      client,
+      storageMapping: {
+        nodes: true,
+        edges: true,
+      },
+    }
+  )
+);
 
 export default useStore;
