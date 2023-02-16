@@ -1,0 +1,221 @@
+---
+meta:
+  title: "Upgrading to 0.19"
+  parentTitle: "Guides"
+  description: "Guide to upgrade to Liveblocks version 0.19"
+---
+
+```bash
+npm update @liveblocks/client@0.19 @liveblocks/react@0.19
+```
+
+In the Liveblocks 0.19 release, we’re adding support for Zustand v4 to
+`@liveblocks/zustand`. Zustand v4 brings greatly improved TypeScript types to
+its APIs, enabling us to enhance the quality of our types, bringing it in line
+with our React package.
+
+This release also brings several changes to `@liveblocks/react`, which improve
+rendering performance and stability. We have also refactored our internal
+packages to increase code sharing.
+
+Let’s take a look!
+
+## Changes in @liveblocks/react [#react]
+
+### Improvements to useOther [#useOther]
+
+Now, `useOther` will not rerender if tracked users have already left the room,
+preventing child components from re-rendering before the parent can unmount
+them. Additionally, `useOther` now requires a
+[selector](/docs/api-reference/liveblocks-react#selectors-receive-immutable-data)
+function argument. You will need to replace instances of `useOther` that do not
+use a selector in your codebase.
+
+#### Previously ❌ [@hidden]
+
+```tsx
+const other = useOther(id); // 👈 does not includes a selector
+```
+
+#### Now ✅ [@hidden]
+
+```tsx
+const other = useOther(id, (other) => other); // 👈 requires a selector
+```
+
+### Stale props support for React 17 [#stale-props]
+
+We've added support to prevent the "zombie-child" scenario. To avoid this issue,
+we enforce passing the `unstable_batchedUpdates` prop to `RoomProvider`.
+
+<Banner title="You may not need this">
+
+This section only applies if you are using React 17 or lower. You do not need to
+do anything if you are using React 18 or higher.
+
+</Banner>
+
+```tsx highlight="2,8"
+// ⚠️ Only if you’re using React 17 or lower
+import { unstable_batchedUpdates }
+from "react-dom"; // 👈
+<RoomProvider
+  id="my-room"
+  initialPresence={...}
+  initialStorage={...}
+  unstable_batchedUpdates={unstable_batchedUpdates}
+>
+  <App />
+</RoomProvider>
+```
+
+For additional context, see the
+[troubleshooting guide](/docs/guides/troubleshooting#stale-props-zombie-child)
+
+### New shouldInitiallyConnect prop [#react-shouldInitiallyConnect]
+
+We added a new property `shouldInitiallyConnect` to `RoomProvider`, which lets
+you control whether or not the room connects to Liveblock servers. By default,
+it will check the `typeof window` to determine if it should connect. When using
+SSR, you can set it to `false` to prevent the room from connecting to Liveblocks
+servers.
+
+```tsx highlight="4"
+<RoomProvider
+  id="room"
+  initialPresence={{}}
+  shouldInitiallyConnect={false} // 👈 control initial connection to Liveblocks
+>
+  <App />
+</RoomProvider>
+```
+
+### Addition of @liveblocks-core package [#liveblocks-core]
+
+We restructured our internal packages to increase code sharing. You may notice a
+new dependency in your dependency tree: `@liveblocks/core`. It contains private
+APIs that aren't intended for direct consumption.
+
+## Changes in @liveblocks/client [#client]
+
+Similar to the [` shouldInitiallyConnect prop`](#react-shouldInitiallyConnect)
+in `@liveblocks/react`, we added a `shouldInitiallyConnect`option
+to`client.enter`. The default value is `true`. You may want to set it to `false`
+when using SSR, or if you would prefer to establish the WebSocket connection
+later.
+
+```tsx
+client.enter("room", {
+  initialPresence: {},
+  shouldInitiallyConnect: false, // 👈 for SSR using the @liveblocks/client package
+});
+```
+
+## Changes in @liveblocks/redux [#redux]
+
+### liveblocksEnhancer is now the default export [#liveblocksEnhancer]
+
+The main export has been renamed, so you will need to update your imports and
+use of the enhancer:
+
+#### Previously ❌ [@hidden]
+
+`import { enhancer } from "@liveblocks/redux";`
+
+#### Now ✅ [@hidden]
+
+`import { liveblocksEnhancer } from "@liveblocks/redux";`
+
+### enterRoom now accepts a second argument to set the initial state [#enterRoom]
+
+The second argument to `state.liveblocks.enterRoom()` to send in an explicit
+initial state is no longer supported. It will use the state in your Redux store,
+for consistency and ease of use.
+
+#### Previously ❌ [@hidden]
+
+```ts
+useEffect(() => {
+  enterRoom("room-id", {
+    todos: [],
+  });
+});
+```
+
+#### Now ✅ [@hidden]
+
+```ts
+useEffect(() => {
+  enterRoom("room-id");
+});
+```
+
+## Changes in @liveblocks/zustand [#zustand]
+
+In 0.19 we added support for Zustand v4 (specifically v4.1.3 or higher) and will
+no longer support Zustand v4.1.2 or lower. This is because Zustand v4.1.3 brings
+greatly improved TypeScript types to its APIs, and consequently, we can improve
+our internal types. To migrate, make the following code changes:
+
+- `npm update @liveblocks/client@0.19 @liveblocks/zustand@0.19`
+- Change these imports, if applicable:
+  ```diff
+  -import { middleware } from "@liveblocks/zustand";
+  +import { liveblocks } from "@liveblocks/zustand";
+  ```
+  and
+  ```diff
+  -import type { LiveblocksState } from "@liveblocks/zustand";
+  +import type { WithLiveblocks } from "@liveblocks/zustand";
+  ```
+  and rename accordingly.
+- Change the pattern:
+  ```ts
+  create(liveblocks<MyState, ...>(...))
+  ```
+  to the Zustand v4 recommended pattern:
+  ```ts
+  create<WithLiveblocks<MyState, ...>>()(liveblocks(...))
+  ```
+  To be clear:
+  1. First, move the type annotation away from the `liveblocks` middleware call,
+     and onto the `create` call.
+  2. Next, wrap your `MyState` type in a `WithLiveblocks<...>` wrapper. This
+     will make sure the injected `liveblocks` property on your Zustand state
+     will be correctly typed.
+  3. Finally, make sure to add the extra call `()` wrapper, needed by Zustand v4
+     now:
+     ```ts
+     create<WithLiveblocks<MyState, ...>>()(liveblocks(...))
+     //                                  ^^ Not a typo
+     ```
+- Remove the second argument to `state.liveblocks.enterRoom()`: it no longer
+  takes an explicit initial state. Instead, it's automatically be populated from
+  your Zustand state.
+
+## Changes for all liveblocks packages [#all]
+
+All packages now provide an isReadOnly flag on user instances. It is available
+when by calling `getSelf()` and `getOthers`. `isReadOnly` is true when storage
+is read-only, as well as when a user has `read` permission to the `room` and
+`write` permission to `presence`.
+
+```ts highlight="3,5"
+const me = room.getSelf();
+
+me.isReadOnly; // boolean
+
+const others = room.getOthers();
+for (const other of others) {
+  other.isReadOnly; // boolean
+}
+```
+
+See the [room management guide](/docs/guides/managing-rooms-users-permissions)
+for more information.
+
+That’s it!
+
+If you run into issues with these new patterns and you need help, please
+[let us know](https://github.com/liveblocks/liveblocks/discussions/504). We’re
+here to help!
