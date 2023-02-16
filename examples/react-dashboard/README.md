@@ -25,8 +25,53 @@ This example shows how to build collaborative data visualization with [Liveblock
 
 ## Getting started
 
+Run the following command to try this example locally:
+
+```bash
+npx create-liveblocks-app@latest --example react-dashboard --no-api-key --no-vercel
+```
+
+This will download the example and install the example. Next, you must:
+
+- Create an account on [liveblocks.io](https://liveblocks.io/dashboard)
+- Copy your **public** key from the [dashboard](https://liveblocks.io/dashboard/apikeys)
+- Replace `pk_YOUR_PUBLIC_KEY` in [`liveblocks.config.js`](./liveblocks.config.js) with your **public** key
+- Run `npm run build` and open `http://localhost:3000` in your browser
+
+### Manual setup
+
+<details><summary>Read more</summary>
+
+<p></p>
+
+Alternatively, you can set up your project manually:
+
 - Install all dependencies with `npm install`
 - Create an account on [liveblocks.io](https://liveblocks.io/dashboard)
 - Copy your **public** key from the [dashboard](https://liveblocks.io/dashboard/apikeys)
-- Replace `pk_YOUR_PUBLIC_KEY` in [`liveblocks.config.js`](./src/liveblocks.config.js) by your **public** key
-- Run `npm run start` and and go to [http://localhost:3000](http://localhost:3000)
+- Replace `pk_YOUR_PUBLIC_KEY` in [`liveblocks.config.js`](./liveblocks.config.js) with your **public** key
+- Run `npm run build` and open `http://localhost:3000` in your browser
+
+</details>
+
+### Deploy on Vercel
+
+<details><summary>Read more</summary>
+
+<p></p>
+
+To both deploy on [Vercel](https://vercel.com), and run the example locally, use the following command:
+
+```bash
+npx create-liveblocks-app@latest --example react-dashboard --vercel
+```
+
+This will download the example and ask permission to open your browser, enabling you to deploy to Vercel. Next, you must:
+
+- Create an account on [liveblocks.io](https://liveblocks.io/dashboard)
+- Copy your **public** key from the [dashboard](https://liveblocks.io/dashboard/apikeys)
+- Replace `pk_YOUR_PUBLIC_KEY` in [`liveblocks.config.js`](./liveblocks.config.js) with your **public** key
+- Push a commit to update the Vercel demo with the key
+- Run `npm run build` and open `http://localhost:3000` in your browser
+
+</details>
