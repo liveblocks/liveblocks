@@ -11,6 +11,9 @@ jobs:
       - name: Say hello
         run: echo Hello world!
 
+      - name: Checkout
+        uses: actions/checkout@v3
+
       - name: Setup Node.js environment
         uses: actions/setup-node@v3.6.0
         with:
