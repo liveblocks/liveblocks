@@ -1,10 +1,10 @@
 name: Release packages
 
 on:
-  - workflow_dispatch
-  - push:
-      branches:
-        - feat/automatic-deploy
+  workflow_dispatch
+  push:
+    branches:
+      - feat/automatic-deploy
 
 inputs:
   version:
