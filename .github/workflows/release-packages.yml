@@ -13,6 +13,7 @@ on:
 
 jobs:
   setup:
+    needs: test
     runs-on: ubuntu-latest
 
     steps:
@@ -35,3 +36,5 @@ jobs:
 
       - name: Build all packages
         run: npm run build
+
+      - name: Release packages
