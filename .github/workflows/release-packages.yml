@@ -20,20 +20,10 @@ jobs:
         run: echo Hello world!
 
       - name: Say version
-        run: echo ${{inputs.version}}
+        run: echo "${{github.event.inputs.version}}"
 
       - name: Checkout
         uses: actions/checkout@v3
-
-      - name: git
-        run: |
-          # setup the username and email. I tend to use 'GitHub Actions Bot' with no email by default
-          git --version
-          git config user.name "GitHub Actions Bot"
-          git config user.email "<>"
-
-      - name: Say current tag
-        run: git describe --tags --abbrev=0
 
       - name: Setup Node.js environment
         uses: actions/setup-node@v3.6.0
