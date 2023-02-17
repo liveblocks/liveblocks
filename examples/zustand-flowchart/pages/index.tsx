@@ -3,7 +3,12 @@ import ReactFlow, { Controls, MiniMap } from "reactflow";
 import useStore from "../src/store";
 import { useRouter } from "next/router";
 
+/**
+ * This example shows how to build a collaborative flowchart
+ * using Liveblocks, Zustand and React Flow
+ */
 export default function Index() {
+  // The store is defined in src/store.ts
   const {
     liveblocks: { enterRoom, leaveRoom, isStorageLoading },
     nodes,
@@ -14,6 +19,8 @@ export default function Index() {
   } = useStore();
 
   const roomId = useOverrideRoomId("nextjs-flow-chart");
+
+  // Enter the Liveblocks room on load
   useEffect(() => {
     enterRoom(roomId);
     return () => leaveRoom(roomId);

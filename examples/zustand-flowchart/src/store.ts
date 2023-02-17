@@ -18,9 +18,10 @@ import type { WithLiveblocks } from "@liveblocks/zustand";
 import nodes from "./nodes";
 import edges from "./edges";
 
+// Create a Liveblocks client with your API key
 const client = createClient({
   publicApiKey: process.env.NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY as string,
-  throttle: 16,
+  throttle: 16, // Updates every 16ms === 60fps animation
 });
 
 type FlowState = {
@@ -36,11 +37,15 @@ type Storage = {
   edges: FlowState["edges"];
 };
 
+// Define your fully-typed Zustand store
 const useStore = create<WithLiveblocks<FlowState, {}, EnsureJson<Storage>>>()(
   liveblocks(
     (set, get) => ({
+      // Initial values for nodes and edges
       nodes,
       edges,
+
+      // Apply changes to React Flow when the flowchart is interacted with
       onNodesChange: (changes: NodeChange[]) => {
         set({
           nodes: applyNodeChanges(changes, get().nodes),
@@ -58,7 +63,10 @@ const useStore = create<WithLiveblocks<FlowState, {}, EnsureJson<Storage>>>()(
       },
     }),
     {
+      // Add Liveblocks client
       client,
+
+      // Define the store properties that should be shared in real-time
       storageMapping: {
         nodes: true,
         edges: true,
