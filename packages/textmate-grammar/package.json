@@ -1,0 +1,20 @@
+{
+  "name": "@liveblocks/textmate-grammar",
+  "version": "0.0.8",
+  "description": "TextMate grammar for the Liveblocks schema language",
+  "main": "./grammar/liveblocks-schema.tmLanguage.json",
+  "files": [
+    "grammar/**",
+    "README.md"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/liveblocks/liveblocks-schema.git"
+  },
+  "keywords": [
+    "liveblocks",
+    "schema",
+    "language",
+    "textmate-grammar"
+  ]
+}
