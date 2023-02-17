@@ -1,16 +1,15 @@
 name: Release packages
 
 on:
-  workflow_dispatch
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version"
+        required: false
+        default: "No version provided"
   push:
     branches:
       - feat/automatic-deploy
-
-inputs:
-  version:
-    description: "Version"
-    required: false
-    default: "No version provided"
 
 jobs:
   setup:
