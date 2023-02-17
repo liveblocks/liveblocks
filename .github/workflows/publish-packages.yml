@@ -13,13 +13,10 @@ on:
 
 jobs:
   setup:
-    needs: test
+    # TODO: add dependency on all tests passing?
     runs-on: ubuntu-latest
 
     steps:
-      - name: Say hello
-        run: echo Hello world!
-
       - name: Say version
         run: echo "${{github.event.inputs.version}}"
 
