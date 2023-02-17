@@ -18,6 +18,11 @@ import type { WithLiveblocks } from "@liveblocks/zustand";
 import nodes from "./nodes";
 import edges from "./edges";
 
+/**
+ * This file contains the Zustand store & Liveblocks middleware
+ * https://liveblocks.io/docs/api-reference/liveblocks-zustand
+ */
+
 // Create a Liveblocks client with your API key
 const client = createClient({
   publicApiKey: process.env.NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY as string,
