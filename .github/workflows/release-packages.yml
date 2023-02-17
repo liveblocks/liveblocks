@@ -5,6 +5,12 @@ on:
     branches:
       - feat/automatic-deploy
 
+inputs:
+  version:
+    description: "Version"
+    required: false
+    default: "No version provided"
+
 jobs:
   setup:
     runs-on: ubuntu-latest
@@ -13,8 +19,14 @@ jobs:
       - name: Say hello
         run: echo Hello world!
 
+      - name: Say version
+        run: echo ${{inputs.version}}
+
       - name: Checkout
         uses: actions/checkout@v3
+
+      - name: Say current tag
+        run: echo tag=${GITHUB_REF#refs/*/}
 
       - name: Setup Node.js environment
         uses: actions/setup-node@v3.6.0
