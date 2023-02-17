@@ -1,4 +1,4 @@
-name: Release packages
+name: Publish packages
 
 on:
   workflow_dispatch:
@@ -37,4 +37,5 @@ jobs:
       - name: Build all packages
         run: npm run build
 
-      - name: Release packages
+      - name: Publish packages
+        run: echo
