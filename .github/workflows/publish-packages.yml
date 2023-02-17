@@ -11,9 +11,12 @@ on:
     branches:
       - feat/automatic-deploy
 
+  # TODO: add dependency on all tests passing?
+  # workflow_run:
+  #   workflows: [Tests]
+
 jobs:
   setup:
-    # TODO: add dependency on all tests passing?
     runs-on: ubuntu-latest
 
     steps:
