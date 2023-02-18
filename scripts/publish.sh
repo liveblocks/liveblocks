@@ -12,6 +12,10 @@ PACKAGE_DIRS=(
 )
 PRIMARY_PKG=${PACKAGE_DIRS[0]}
 
+err () {
+    echo "$@" >&2
+}
+
 VERSION=
 TAG=
 while getopts V:t:h flag; do

@@ -1,3 +1,6 @@
+#!/bin/sh
+set -eu
+
 PACKAGE_DIRS=(
     "packages/liveblocks-core"
     "packages/liveblocks-client"
@@ -6,6 +9,11 @@ PACKAGE_DIRS=(
     "packages/liveblocks-redux"
     "packages/liveblocks-zustand"
 )
+
+err () {
+    echo "$@" >&2
+}
+
 
 usage () {
     err "usage: release.sh [-V <version>] [-t <tag>] [-h]"
