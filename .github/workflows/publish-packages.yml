@@ -1,12 +1,13 @@
 name: Publish packages
 
 on:
-  workflow_dispatch:
-    inputs:
-      version:
-        description: Version
-        required: false
-        default: No version provided
+  # TODO: for later use
+  # workflow_dispatch:
+  #   inputs:
+  #     version:
+  #       description: Version
+  #       required: false
+  #       default: No version provided
   push:
     branches:
       - feat/automatic-deploy
@@ -20,9 +21,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Say version
-        run: echo "${{github.event.inputs.version}}"
-
       - name: Checkout
         uses: actions/checkout@v3
 
@@ -38,4 +36,6 @@ jobs:
         run: npm run build
 
       - name: Publish packages
-        run: echo
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: ./scripts/publish
