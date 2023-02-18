@@ -29,6 +29,8 @@ jobs:
         with:
           node-version: 16.17.1
 
+      # TODO: ensure version & tag don't exist in npm
+
       - name: Install dependencies
         run: npm install
 
@@ -36,6 +38,8 @@ jobs:
         run: npm run build
 
       - name: Publish packages
+        # setup-node created .npmrc file to publish to npm
+        # https://docs.github.com/en/actions/publishing-packages/publishing-nodejs-packages#publishing-packages-to-the-npm-registry
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: ./scripts/publish
+        run: ./scripts/publish # todo add version & tag
