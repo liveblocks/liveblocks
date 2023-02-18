@@ -12,7 +12,7 @@ on:
     branches:
       - feat/automatic-deploy
 
-  # TODO: add dependency on all tests passing?
+  # TODO: add dependency on all tests passing
   # workflow_run:
   #   workflows: [Tests]
 
