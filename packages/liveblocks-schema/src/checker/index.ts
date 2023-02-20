@@ -429,7 +429,9 @@ function decideStaticOrLive(doc: Document, context: Context): void {
         },
         null
       );
-    } catch {}
+    } catch {
+      // Ignore
+    }
   }
 
   // Otherwise, it's static only if all references to it don't use LiveObject<>

@@ -1,7 +1,7 @@
 import type * as AST from "../../ast";
-import { check } from "..";
 import { ErrorReporter } from "../../lib/error-reporting";
 import { parseDocument } from "../../parser";
+import { check } from "..";
 
 describe("checker", () => {
   it("type checking a full document", () => {
