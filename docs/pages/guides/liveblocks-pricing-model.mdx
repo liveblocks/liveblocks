@@ -1,0 +1,128 @@
+---
+meta:
+  title: "Liveblocks 1.0 Pricing Model"
+  parentTitle: "Guides"
+  description: "Explanation of Liveblocks 1.0 pricing model and implementation"
+---
+
+With the release of Liveblocks 1.0, we included new pricing plans that are based
+on monthly active users (MAU). This guide will help you understand how to use
+the new pricing plans by providing guidance on the migration to Liveblocks 1.0
+and how to include a `userId` into the `authorize` option if you use it.
+
+## What is a Monthly Active User (MAU) vs. a connection? [#mau-vs-connection]
+
+In versions before 1.0 we used the number of connections to determine pricing
+segments. We counted each time a user connected to a Liveblocks room from a
+physical device as a connection. While this approximated the number of users, it
+did not account for short-lived connections and was sometimes hard to predict.
+We introduced pricing based on Monthly Active Users (MAU) to reflect the value
+that Liveblocks offers to our customers.
+
+A monthly active user can be defined as:
+
+- Each unique `userId` that connects to a Liveblocks room at least once a month
+  (if using authorization)
+- Each unique cookie that connects to a Liveblocks room at least once a month
+  (if not using authorization)
+
+## How does authorization work with MAU? [#authorization]
+
+In `@liveblocks/node`, we made the field `userId` in the `authroize` option
+mandatory. This `userId` is used to track MAU associated with a Liveblocks
+account. Each `userId` will count as 1 MAU. To make sure you begin to track MAU
+as intended, first update `@liveblocks/node`.
+
+```bash
+npm update @liveblocks/node@1.0
+```
+
+Then, update your `authorize` option to include the `userId` field.
+
+```ts highlight="16,20"
+import { authorize } from "@liveblocks/node";
+
+// Replace this key with your secret key provided at
+// https://liveblocks.io/dashboard/projects/{projectId}/apikeys
+const secret = "sk_prod_xxxxxxxxxxxxxxxxxxxxxxxx";
+
+export default async function auth(req, res) {
+  /**
+   * Implement your own security here.
+   *
+   * It's your responsibility to ensure that the caller of this endpoint
+   * is a valid user by validating the cookies or authentication headers
+   * and that it has access to the requested room.
+   */
+  const room = req.body.room;
+  const response = await authorize({
+    room,
+    secret,
+    // Corresponds to the UserMeta[id] type defined in liveblocks.config.ts
+    userId: "123",
+    groupIds: ["456"], // Optional
+    userInfo: {
+      // Optional, corresponds to the UserMeta[info] type defined in liveblocks.config.ts
+      name: "Ada Lovelace",
+      color: "red",
+    },
+  });
+  return res.status(response.status).end(response.body);
+}
+```
+
+<Banner title="Using a secret key with authorization">
+  To use the `authorize` option, you need your backend endpoint. Your Liveblocks
+  dashboard contains the secret key required to use the authorize option.
+</Banner>
+
+To learn more about authorization and authentication in your Liveblocks
+application, check out our [Authentication Guide](/docs/guides/authentication).
+
+## How is MAU calculated using a public key? [#public-key]
+
+To use Liveblocks 1.0 without authorization, you must update your Liveblocks
+packages to 1.0. We will count each connection as one MAU if you do not update
+your packages to 1.0. Once the pacakages are updated, a cookie will be set on
+the client to track when a new user connects to a room. This cookie will track
+MAU associated with a Liveblocks account and expire after 30 days.
+
+Inside the `createClient` function, you will use your public key instead of a
+private key.
+
+```ts file="liveblocks.config.ts" highlight="4"
+import { createClient } from "@liveblocks/client";
+
+const client = createClient({
+  publicApiKey: "pk_prod_xxxxxxxxxxxxxxxxxxxxxxxx",
+});
+```
+
+To illustrate how counting MAU works without a `userId`, consider the following:
+
+If you have one user who connects to a Liveblocks room that does not enforce
+authorization, you will be billed for 1 MAU. That same person can reaccess a
+room the next day, and MAU would not increase. The cookie will expire at the end
+of the 30-day billing cycle, and the user will be counted as a new MAU.
+Liveblocks will count that anonymous user as 2 MAU if packages are not updated.
+
+## Development Use [#development-use]
+
+While working in development mode, you will not be billed for MAU. However, you
+will still need to include a `userId` in the `authorize` option if you use it.
+We are currently working on updating our dashboard to reflect the number of MAU
+for development use.
+
+## How to migrate to Liveblocks 1.0 [#migration]
+
+To update to Liveblocks 1.0, you will need to update your Liveblocks packages:
+
+```bash
+npm update @liveblocks/node @liveblocks/client @liveblocks/react
+```
+
+You will then pick one of the two methods outlined above for tracking MAU:
+[authorization](#authorization) or [public](#public-key). After completing these
+steps to take advantage of the new pricing model, you should review the
+[Liveblocks 1.0 Upgrade Guide](/docs/guides/upgrading/1.0) for additional
+details on migrating Liveblocks 1.0.

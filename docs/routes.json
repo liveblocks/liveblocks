@@ -130,6 +130,10 @@
             "path": "/guides/schema-validation/syntax"
           }
         ]
+      },
+      {
+        "title": "Liveblocks 1.0 Pricing Model",
+        "path": "/guides/liveblocks-pricing-model"
       }
     ]
   },
