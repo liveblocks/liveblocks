@@ -1,0 +1,19 @@
+type Storage {
+  thing1: Thing
+          ^^^^^ Type 'Thing' already referenced as 'LiveObject<Thing>' on line 3. You cannot mix these references
+  thing2: LiveObject<Thing>
+}
+
+type Thing {
+  name: String
+}
+---
+type Storage {
+  thing1: LiveObject<Thing>
+  thing2: Thing
+          ^^^^^ Type 'Thing' already referenced as 'LiveObject<Thing>' on line 2. You cannot mix these references
+}
+
+type Thing {
+  name: String
+}

@@ -57,28 +57,40 @@ describe("syntactic parser", () => {
       `,
 
       ast.document([
-        ast.objectTypeDefinition(ast.typeName("Foo"), [
-          ast.fieldDef(ast.identifier("cx"), false, ast.floatType()),
-          ast.fieldDef(ast.identifier("cy"), false, ast.floatType()),
-          ast.fieldDef(ast.identifier("r"), false, ast.floatType()),
-        ]),
+        ast.objectTypeDefinition(
+          ast.typeName("Foo"),
+          [
+            ast.fieldDef(ast.identifier("cx"), false, ast.floatType()),
+            ast.fieldDef(ast.identifier("cy"), false, ast.floatType()),
+            ast.fieldDef(ast.identifier("r"), false, ast.floatType()),
+          ],
+          false /* always false during the parsing phase */
+        ),
 
-        ast.objectTypeDefinition(ast.typeName("Foo"), [
-          ast.fieldDef(ast.identifier("version"), false, ast.intType()),
-          ast.fieldDef(ast.identifier("version"), false, ast.intType()),
-          ast.fieldDef(
-            ast.identifier("mycircle"),
-            true,
-            ast.typeRef(ast.typeName("Bar"), true)
-          ),
-          ast.fieldDef(
-            ast.identifier("someField"),
-            false,
-            ast.typeRef(ast.typeName("_undefinedThing_"), false)
-          ),
-        ]),
+        ast.objectTypeDefinition(
+          ast.typeName("Foo"),
+          [
+            ast.fieldDef(ast.identifier("version"), false, ast.intType()),
+            ast.fieldDef(ast.identifier("version"), false, ast.intType()),
+            ast.fieldDef(
+              ast.identifier("mycircle"),
+              true,
+              ast.typeRef(ast.typeName("Bar"), true)
+            ),
+            ast.fieldDef(
+              ast.identifier("someField"),
+              false,
+              ast.typeRef(ast.typeName("_undefinedThing_"), false)
+            ),
+          ],
+          false /* always false during the parsing phase */
+        ),
 
-        ast.objectTypeDefinition(ast.typeName("abc"), []),
+        ast.objectTypeDefinition(
+          ast.typeName("abc"),
+          [],
+          false /* always false during the parsing phase */
+        ),
       ])
     );
   });

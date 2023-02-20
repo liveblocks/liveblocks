@@ -139,6 +139,7 @@ export type ObjectTypeDefinition = {
   _kind: "ObjectTypeDefinition";
   name: TypeName;
   fields: FieldDef[];
+  isStatic: boolean;
   range: Range;
 };
 
@@ -296,7 +297,8 @@ export function objectLiteralExpr(
 
 export function objectTypeDefinition(
   name: TypeName,
-  fields: FieldDef[] = [],
+  fields: FieldDef[],
+  isStatic: boolean,
   range: Range = [0, 0]
 ): ObjectTypeDefinition {
   DEBUG &&
@@ -314,12 +316,19 @@ export function objectTypeDefinition(
           fields
         )}`
       );
+      assert(
+        typeof isStatic === "boolean",
+        `Invalid value for "isStatic" arg in "ObjectTypeDefinition" call.\nExpected: boolean\nGot:      ${JSON.stringify(
+          isStatic
+        )}`
+      );
       assertRange(range, "ObjectTypeDefinition");
     })();
   return {
     _kind: "ObjectTypeDefinition",
     name,
     fields,
+    isStatic,
     range,
   };
 }
