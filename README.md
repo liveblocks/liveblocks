@@ -8,7 +8,7 @@
 </p>
 <p align="center">
   <a href="https://twitter.com/liveblocks">
-    <img src="https://img.shields.io/twitter/follow/liveblocks?style=flat&label=%40liveblocks&logo=twitter&color=0bf&logoColor=fff" alt="Twitter" />
+    <img src="https://img.shields.io/badge/liveblocks-message?style=flat&logo=twitter&color=555&logoColor=fff" alt="Twitter" />
   </a>
   <a href="https://discord.gg/X4YWJuH9VY">
     <img src="https://img.shields.io/discord/913109211746009108?style=flat&label=discord&logo=discord&color=85f&logoColor=fff" alt="Discord" />
