@@ -29,7 +29,6 @@ usage () {
 
 VERSION=
 TAG=
-
 while getopts V:t:h flag; do
     case "$flag" in
         V) VERSION=$OPTARG;;
@@ -37,6 +36,7 @@ while getopts V:t:h flag; do
         *) usage; exit 2;;
     esac
 done
+shift $(($OPTIND - 1))
 
 if [ "$#" -ne 0 ]; then
     err "Unknown arguments: $@"
@@ -60,15 +60,32 @@ check_is_valid_tag () {
     fi
 }
 
-update_package_versions () {
+# transforms packages/liveblocks-core to @liveblocks/core
+get_package_name () {
     PKGDIR="$1"
     PKGNAME="$(basename "$PKGDIR")"
     PKGNAME="${PKGNAME#liveblocks-}"
     PKGNAME="@liveblocks/$PKGNAME"
-
-    echo "==> Updating package.json version for $PKGNAME"
-    ( cd "$PKGDIR" && npm version "$VERSION" --no-git-tag-version )
+    echo "$PKGNAME"
 }
 
-# Do we want to install liveblocks packages used by liveblocks packages to the
-# new versions? ex: @liveblocks/react@1.0.0 using @liveblocks/client@1.0.0
+update_package_version () {
+    echo "==> Updating package.json at path $1"
+
+    PACKAGE_DIR="$1"
+    PKGNAME="$(get_package_name "$PACKAGE_DIR")"
+
+    echo "==> Updating package.json version for $PKGNAME"
+    ( cd "$PKGDIR" && npm version "$2" --no-git-tag-version )
+}
+
+
+
+for PKGDIR in "${PACKAGE_DIRS[@]}"; do
+    VERSION_AND_TAG="$VERSION"
+    if [ -n "$TAG" ]; then
+        VERSION_AND_TAG="$VERSION_AND_TAG-$TAG"
+    fi
+    update_package_version "$PKGDIR" "$VERSION_AND_TAG"
+done
+
