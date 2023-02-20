@@ -9,6 +9,7 @@
   allowed. (Consequence of now having `isStatic` at the object type definition
   level.)
 - Fix: some ugly error messages making incorrect suggestions
+- Fix: tweak error message for circular references
 
 # 0.0.8
 

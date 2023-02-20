@@ -312,7 +312,7 @@ function checkNoForbiddenRefs(
     case "TypeRef": {
       if (forbidden.has(node.ref.name)) {
         context.report(
-          `Cyclical reference detected: ${quote(node.ref.name)}`,
+          `Circular reference ${quote(node.ref.name)} not yet supported`,
           node.range
         );
       }
