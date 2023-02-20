@@ -6,7 +6,7 @@ The major release of 1.0 marks the maturity of Liveblocks. We added additional
 features to Webhooks, enhancements to the `Room` class, and more. The primary
 change you should note is the transition to making the `userId` mandatory in the
 `authorize` option. This change is in line with the
-[value-based pricing model](https://liveblocks.io/pricing).
+[new pricing model](https://liveblocks.io/pricing).
 
 Let’s take a look at the changes below!
 
@@ -68,7 +68,7 @@ room.subscribe("storage-status", (status) => {
 });
 ```
 
-#### Room.reconnect
+#### Room.reconnect [#reconnect]
 
 You can use `room.reconnect()` to close the room connection and try to
 [reconnect](/docs/api-reference/liveblocks-client#Room.reconnect).
@@ -110,10 +110,10 @@ Liveblocks and not from a malicious source. Check out our
 
 ## Changes for all liveblocks packages [#all]
 
-When upgrading to 1.0, the primary breaking change to consider is updating your
-`authorize` option to include the now mandatory `userId` field. This change
-reflects our value-based pricing model based on Monthly Active Users instead of
-connections.
+When upgrading to 1.0, the primary breaking change to consider is updating the
+`authorize` option to include the now-mandatory `userId` field if you use
+`@liveblocks/node`. This change reflects our new pricing model based on Monthly
+Active Users instead of connections.
 
 ### Step 1: Update your liveblocks packages [#step1]
 
