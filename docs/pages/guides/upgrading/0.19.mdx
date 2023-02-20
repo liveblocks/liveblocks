@@ -15,8 +15,8 @@ its APIs, enabling us to enhance the quality of our types, bringing it in line
 with our React package.
 
 This release also brings several changes to `@liveblocks/react`, which improve
-rendering performance and stability. We have also refactored our internal
-packages to increase code sharing.
+rendering performance and stability. Additionally, we have refactored our
+internal packages to increase code sharing.
 
 Let’s take a look!
 
@@ -34,7 +34,7 @@ use a selector in your codebase.
 #### Previously ❌ [@hidden]
 
 ```tsx
-const other = useOther(id); // 👈 does not includes a selector
+const other = useOther(id); // 👈 does not include a selector
 ```
 
 #### Now ✅ [@hidden]
@@ -57,8 +57,7 @@ do anything if you are using React 18 or higher.
 
 ```tsx highlight="2,8"
 // ⚠️ Only if you’re using React 17 or lower
-import { unstable_batchedUpdates }
-from "react-dom"; // 👈
+import { unstable_batchedUpdates } from "react-dom"; // 👈
 <RoomProvider
   id="my-room"
   initialPresence={...}
@@ -120,16 +119,20 @@ use of the enhancer:
 
 #### Previously ❌ [@hidden]
 
-`import { enhancer } from "@liveblocks/redux";`
+```ts
+import { enhancer } from "@liveblocks/redux";
+```
 
 #### Now ✅ [@hidden]
 
-`import { liveblocksEnhancer } from "@liveblocks/redux";`
+```ts
+import { liveblocksEnhancer } from "@liveblocks/redux";
+```
 
 ### enterRoom now accepts a second argument to set the initial state [#enterRoom]
 
-The second argument to `state.liveblocks.enterRoom()` to send in an explicit
-initial state is no longer supported. It will use the state in your Redux store,
+You no longer need to supply a second argument to`state.liveblocks.enterRoom()`
+to pass an explicit initial state. It will use the state in your Redux store,
 for consistency and ease of use.
 
 #### Previously ❌ [@hidden]
@@ -158,37 +161,52 @@ greatly improved TypeScript types to its APIs, and consequently, we can improve
 our internal types. To migrate, make the following code changes:
 
 - `npm update @liveblocks/client@0.19 @liveblocks/zustand@0.19`
-- Change these imports, if applicable:
-  ```diff
-  -import { middleware } from "@liveblocks/zustand";
-  +import { liveblocks } from "@liveblocks/zustand";
-  ```
-  and
-  ```diff
-  -import type { LiveblocksState } from "@liveblocks/zustand";
-  +import type { WithLiveblocks } from "@liveblocks/zustand";
-  ```
-  and rename accordingly.
+- Change these imports, if applicable, and rename accordingly:
+
+#### Previously ❌ [@hidden]
+
+```ts
+import { middleware } from "@liveblocks/zustand";
+import type { LiveblocksState } from "@liveblocks/zustand";
+```
+
+### Now ✅ [@hidden]
+
+```ts
+import { liveblocks } from "@liveblocks/zustand";
+import type { WithLiveblocks } from "@liveblocks/zustand";
+```
+
 - Change the pattern:
-  ```ts
-  create(liveblocks<MyState, ...>(...))
-  ```
-  to the Zustand v4 recommended pattern:
-  ```ts
-  create<WithLiveblocks<MyState, ...>>()(liveblocks(...))
-  ```
-  To be clear:
-  1. First, move the type annotation away from the `liveblocks` middleware call,
-     and onto the `create` call.
-  2. Next, wrap your `MyState` type in a `WithLiveblocks<...>` wrapper. This
-     will make sure the injected `liveblocks` property on your Zustand state
-     will be correctly typed.
-  3. Finally, make sure to add the extra call `()` wrapper, needed by Zustand v4
-     now:
-     ```ts
-     create<WithLiveblocks<MyState, ...>>()(liveblocks(...))
-     //                                  ^^ Not a typo
-     ```
+
+#### Previously ❌ [@hidden]
+
+```ts
+create(liveblocks<MyState, ...>(...))
+```
+
+to the Zustand v4 recommended pattern:
+
+### Now ✅ [@hidden]
+
+```ts
+create<WithLiveblocks<MyState, ...>>()(liveblocks(...))
+```
+
+To be clear:
+
+1. First, move the type annotation away from the `liveblocks` middleware call,
+   and onto the `create` call.
+2. Next, wrap your `MyState` type in a `WithLiveblocks<...>` wrapper. This will
+   make sure the injected `liveblocks` property on your Zustand state will be
+   correctly typed.
+3. Finally, make sure to add the extra call `()` wrapper, needed by Zustand v4
+   now:
+   ```ts
+   create<WithLiveblocks<MyState, ...>>()(liveblocks(...))
+   //                                  ^^ Not a typo
+   ```
+
 - Remove the second argument to `state.liveblocks.enterRoom()`: it no longer
   takes an explicit initial state. Instead, it's automatically be populated from
   your Zustand state.
@@ -196,8 +214,8 @@ our internal types. To migrate, make the following code changes:
 ## Changes for all liveblocks packages [#all]
 
 All packages now provide an isReadOnly flag on user instances. It is available
-when by calling `getSelf()` and `getOthers`. `isReadOnly` is true when storage
-is read-only, as well as when a user has `read` permission to the `room` and
+by calling `getSelf()` and `getOthers`. `isReadOnly` is true when storage is
+read-only, as well as when a user has `read` permission to the `room` and
 `write` permission to `presence`.
 
 ```ts highlight="3,5"
@@ -216,5 +234,6 @@ for more information.
 
 That’s it!
 
-If you run into issues with these new patterns and you need help, please
-[let us know](/contact)! We’re here to help!
+If you run into issues with these new patterns and you need help, please let us
+know [by email](mailto:support.liveblocks.io) or by joining our
+[Discord community](/discord)! We’re here to help!

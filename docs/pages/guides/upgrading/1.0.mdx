@@ -1,11 +1,18 @@
+---
+meta:
+  title: "Upgrading to 1.0"
+  parentTitle: "Guides"
+  description: "Guide to upgrade to Liveblocks version 1.0"
+---
+
 ```bash
 npm update @liveblocks/client@1.0 @liveblocks/node@1.0
 ```
 
 The major release of 1.0 marks the maturity of Liveblocks. We added additional
-features to Webhooks, enhancements to the `Room` class, and more. The primary
-change you should note is the transition to making the `userId` mandatory in the
-`authorize` option. This change is in line with the
+features to [Webhooks](/docs/guides/webhooks), enhancements to the `Room` class,
+and more. The primary change you should note is the transition to making the
+`userId` mandatory in the `authorize` option. This change is in line with the
 [new pricing model](https://liveblocks.io/pricing).
 
 Let’s take a look at the changes below!
@@ -47,8 +54,8 @@ The different storage statuses are:
 
 #### Room.subscribe [#subscribe]
 
-Use `Room.`subscribe` to subscribe to storage status changes. This method
-returns an unsubscribe function.
+Use `Room.subscribe` to subscribe to storage status changes. This method returns
+an unsubscribe function.
 
 ```ts
 room.subscribe("storage-status", (status) => {
@@ -77,21 +84,21 @@ You can use `room.reconnect()` to close the room connection and try to
 
 ### Update the authorize option [#authorize]
 
-We have updated the `authorize` option to make `userId` mandatory. This change
+We have updated the `authorize` method to make `userId` mandatory. This change
 ties into our new [pricing model](https://liveblocks.io/pricing), which is based
-on Monthly Active Users instead of connections. We use `userId` to track MAU
-associated with a Liveblocks account.
+on Monthly Active Users (MAU) instead of connections. We use `userId` to track
+MAU associated with a Liveblocks account.
 
-If you do not use the `authorize` option, a cookie will be set on the client to
-track the user. This cookie will be used to track MAU associated with a
+If you do not use the `authorize` function, a cookie will be set on the client
+to track the user. This cookie will be used to track MAU associated with a
 Liveblocks account and will expire after 30 days.
 
-### Webhooks Enhancements [#webhooks]
+### Webhooks enhancements [#webhooks]
 
 We have added two new events to our Webhook functionality: `RoomCreatedEvent`
 and `RoomDeletedEvent`. We have also added a `WebhookHandler` class to make it
-easier to verify event requests from Liveblock's Webhook functionality. It also
-provides fully typed `WebhookEvents.`
+easier to verify event requests from Liveblock's Webhooks functionality. It also
+provides fully typed `WebhookEvents`.
 
 ```ts
 import { WebhookHandler } from "@liveblocks/node";
@@ -157,5 +164,6 @@ export default async function auth(req, res) {
 
 That’s it!
 
-If you have issues with these new patterns and need help, please
-[let us know](/contact)! We’re here to help!
+If you have issues with these new patterns and need help, please let us know
+[by email](mailto:support@liveblocks.io) or by joining our
+[Discord Community](/discord)! We’re here to help!
