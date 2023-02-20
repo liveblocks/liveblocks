@@ -1,6 +1,6 @@
 ---
 meta:
-  title: "Liveblocks 1.0 Pricing Model"
+  title: "Liveblocks 1.0 pricing model"
   parentTitle: "Guides"
   description: "Explanation of Liveblocks 1.0 pricing model and implementation"
 ---
@@ -28,7 +28,7 @@ A monthly active user can be defined as:
 
 ## How does authorization work with MAU? [#authorization]
 
-In `@liveblocks/node`, we made the field `userId` in the `authroize` option
+In `@liveblocks/node`, we made the field `userId` in the `authorize` option
 mandatory. This `userId` is used to track MAU associated with a Liveblocks
 account. Each `userId` will count as 1 MAU. To make sure you begin to track MAU
 as intended, first update `@liveblocks/node`.
@@ -73,7 +73,7 @@ export default async function auth(req, res) {
 
 <Banner title="Using a secret key with authorization">
   To use the `authorize` option, you need your backend endpoint. Your Liveblocks
-  dashboard contains the secret key required to use the authorize option.
+  dashboard contains the secret key required to use the `authorize` option.
 </Banner>
 
 To learn more about authorization and authentication in your Liveblocks
@@ -81,11 +81,12 @@ application, check out our [Authentication Guide](/docs/guides/authentication).
 
 ## How is MAU calculated using a public key? [#public-key]
 
-To use Liveblocks 1.0 without authorization, you must update your Liveblocks
-packages to 1.0. We will count each connection as one MAU if you do not update
-your packages to 1.0. Once the pacakages are updated, a cookie will be set on
-the client to track when a new user connects to a room. This cookie will track
-MAU associated with a Liveblocks account and expire after 30 days.
+To take advantage of Liveblocks 1.0 pricing without authorization, you must
+update your Liveblocks packages to 1.0. We will count each connection as one MAU
+if you do not update your packages to 1.0. Once the packages are updated, a
+cookie will be set on the client to track when a new user connects to a room.
+This cookie will track MAU associated with a Liveblocks account and expire after
+30 days.
 
 Inside the `createClient` function, you will use your public key instead of a
 private key.
