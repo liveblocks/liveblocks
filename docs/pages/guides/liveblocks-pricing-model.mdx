@@ -1,12 +1,12 @@
 ---
 meta:
-  title: "Liveblocks 1.0 pricing model"
+  title: "Pricing"
   parentTitle: "Guides"
   description: "Explanation of Liveblocks 1.0 pricing model and implementation"
 ---
 
 With the release of Liveblocks 1.0, we included new pricing plans that are based
-on monthly active users (MAU). This guide will help you understand how to use
+on Monthly Active Users (MAU). This guide will help you understand how to use
 the new pricing plans by providing guidance on the migration to Liveblocks 1.0
 and how to include a `userId` into the `authorize` option if you use it.
 
@@ -14,17 +14,17 @@ and how to include a `userId` into the `authorize` option if you use it.
 
 In versions before 1.0 we used the number of connections to determine pricing
 segments. We counted each time a user connected to a Liveblocks room from a
-physical device as a connection. While this approximated the number of users, it
-did not account for short-lived connections and was sometimes hard to predict.
-We introduced pricing based on Monthly Active Users (MAU) to reflect the value
-that Liveblocks offers to our customers.
+physical device as a connection. We introduced pricing based on Monthly Active
+Users (MAU) to reflect the value that Liveblocks offers to our customers. MAU
+makes pricing more predictable for our users by associating connections to
+users.
 
 A monthly active user can be defined as:
 
-- Each unique `userId` that connects to a Liveblocks room at least once a month
-  (if using authorization)
-- Each unique cookie that connects to a Liveblocks room at least once a month
-  (if not using authorization)
+- A `userId` that connects to a Liveblocks room at least once a month (if using
+  authorization)
+- An anonymous user who connects to a Liveblocks room, at least once a month who
+  can be identified by a cookie (if not using authorization)
 
 ## How does authorization work with MAU? [#authorization]
 
@@ -123,7 +123,7 @@ npm update @liveblocks/node @liveblocks/client @liveblocks/react
 ```
 
 You will then pick one of the two methods outlined above for tracking MAU:
-[authorization](#authorization) or [public](#public-key). After completing these
-steps to take advantage of the new pricing model, you should review the
-[Liveblocks 1.0 Upgrade Guide](/docs/guides/upgrading/1.0) for additional
+[authorization](#authorization) or [public key](#public-key). After completing
+these steps to take advantage of the new pricing model, you should review the
+[Liveblocks 1.0 upgrade guide](/docs/guides/upgrading/1.0) for additional
 details on migrating Liveblocks 1.0.
