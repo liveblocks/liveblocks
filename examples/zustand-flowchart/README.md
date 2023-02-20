@@ -26,7 +26,7 @@ This example shows how to build a collaborative flowchart with
 [Zustand](https://github.com/pmndrs/zustand),
 [React Flow](https://reactflow.dev/) and [Next.js](https://nextjs.org/).
 
-<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/flowchart.png" width="536" alt="Collaborative Flowchart" />
+<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/collaborative-flowchart.png" width="536" alt="Collaborative Flowchart" />
 
 ## Getting started
 
