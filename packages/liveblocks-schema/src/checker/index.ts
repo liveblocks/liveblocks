@@ -490,11 +490,20 @@ function decideStaticOrLive(doc: Document, context: Context): void {
   }
 }
 
+/**
+ * The resulting AST, after the checking phase. In this datastructure, you can
+ * assume that all references are intact and semantically correct.
+ */
 export type CheckedDocument = {
   /**
    * Direct access to the root "Storage" definition.
    */
-  root: ObjectTypeDefinition;
+  readonly root: ObjectTypeDefinition;
+
+  /**
+   * The list of all definitions.
+   */
+  readonly definitions: readonly Definition[];
 
   /**
    * Look up the Definition of a user-defined type by a Reference to it. This
@@ -553,6 +562,7 @@ export function check(
 
   return {
     root: context.registeredTypes.get("Storage") as ObjectTypeDefinition,
+    definitions: Array.from(context.registeredTypes.values()),
     getDefinition(typeRef: TypeRef): Definition {
       const def = context.registeredTypes.get(typeRef.ref.name);
       if (def === undefined) {

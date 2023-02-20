@@ -74,6 +74,7 @@ describe("checker", () => {
         ],
         range,
       },
+      definitions: expect.any(Array),
       getDefinition: expect.anything(),
     });
 
