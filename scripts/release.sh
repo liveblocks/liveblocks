@@ -36,7 +36,7 @@ while getopts V:t:h flag; do
         *) usage; exit 2;;
     esac
 done
-shift $(($OPTIND - 1))
+shift "$(($OPTIND - 1))"
 
 if [ "$#" -ne 0 ]; then
     err "Unknown arguments: $@"
