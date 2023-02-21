@@ -33,6 +33,19 @@ import {
 import type { JsonStorageUpdate } from "./_updatesUtils";
 import { serializeUpdateToJson } from "./_updatesUtils";
 
+/**
+ * Deep-clones a JSON-serializable value.
+ *
+ * NOTE: We should be able to replace `deepClone` by `structuredClone` once
+ * we've upgraded to Node 18.
+ */
+function deepClone<T extends Json>(items: T): T {
+  // NOTE: In this case, the combination of JSON.parse() and JSON.stringify
+  // won't lead to type unsafety, so this use case is okay.
+  // eslint-disable-next-line no-restricted-syntax
+  return JSON.parse(JSON.stringify(items)) as T;
+}
+
 function makeRoomToken(actor: number, scopes: string[]): RoomAuthToken {
   return {
     appId: "my-app",
@@ -182,7 +195,7 @@ export async function prepareRoomWithStorage<
 
   const getStoragePromise = machine.getStorage();
 
-  const clonedItems = structuredClone(items);
+  const clonedItems = deepClone(items);
   machine.onMessage(
     serverMessage({
       type: ServerMsgCode.INITIAL_STORAGE_STATE,

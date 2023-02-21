@@ -121,9 +121,9 @@ function applyStateChanges<T extends JsonObject>(
   state: T,
   applyChanges: () => void
 ): { oldState: T; newState: T } {
-  const oldState = structuredClone(state);
+  const oldState = JSON.parse(JSON.stringify(state)) as T;
   applyChanges();
-  const newState = structuredClone(state);
+  const newState = JSON.parse(JSON.stringify(state)) as T;
   return { oldState, newState };
 }
 
