@@ -39,6 +39,7 @@ jobs:
           node-version: 16.17.1
 
   install-dependencies:
+    needs: setup
     runs-on: ubuntu-latest
 
     steps:
