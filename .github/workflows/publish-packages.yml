@@ -27,13 +27,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Get current branch
-        id: check_step
-        run: |
-          raw=$(git branch -r --contains ${{ github.ref }})
-          branch=${raw##*/}
-          echo "::set-output name=branch::$branch"
-          echo "Branch is $branch."
+      - name: Echo branch
+        run: echo "${{ github.event.base_ref }}"
 
       - name: Testing running a script
         run: ./scripts/test-running-script.sh
