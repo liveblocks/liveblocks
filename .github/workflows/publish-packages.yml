@@ -30,7 +30,7 @@ jobs:
       - name: Echo branch
         run: echo "${{ github.event.base_ref }}"
 
-      - name: Set output
+      - name: Set tag
         id: vars
         run: echo "tag=${GITHUB_REF#refs/*/}" >> $GITHUB_OUTPUT
       - name: Check output
@@ -39,6 +39,9 @@ jobs:
         run: |
           echo $RELEASE_VERSION
           echo ${{ steps.vars.outputs.tag }}
+
+      - name: Do dummy commit
+        run: git commit --allow-empty -m "Bump to ${{steps.vars.outputs.tag}}"
 
       - name: Testing running a script
         run: ./scripts/test-running-script.sh
