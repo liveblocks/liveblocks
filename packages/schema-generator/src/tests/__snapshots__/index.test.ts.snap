@@ -1473,7 +1473,7 @@ exports[`inferType correctly infers the "BASIC_MERGE" schema 1`] = `
                   "value": {
                     "fields": Map {
                       "b" => {
-                        "optional": false,
+                        "optional": true,
                         "value": {
                           "names": Map {
                             "B" => 1,
@@ -1488,7 +1488,7 @@ exports[`inferType correctly infers the "BASIC_MERGE" schema 1`] = `
                         },
                       },
                       "a" => {
-                        "optional": false,
+                        "optional": true,
                         "value": {
                           "names": Map {
                             "A" => 1,
@@ -1573,7 +1573,7 @@ exports[`inferType correctly infers the "BASIC_MERGE" schema 1`] = `
                   "value": {
                     "fields": Map {
                       "b" => {
-                        "optional": false,
+                        "optional": true,
                         "value": {
                           "names": Map {
                             "B" => 1,
@@ -1588,7 +1588,7 @@ exports[`inferType correctly infers the "BASIC_MERGE" schema 1`] = `
                         },
                       },
                       "a" => {
-                        "optional": false,
+                        "optional": true,
                         "value": {
                           "names": Map {
                             "A" => 1,
@@ -1663,7 +1663,7 @@ exports[`inferType correctly infers the "BASIC_MERGE" schema 1`] = `
             "value": {
               "fields": Map {
                 "b" => {
-                  "optional": false,
+                  "optional": true,
                   "value": {
                     "names": Map {
                       "B" => 1,
@@ -1678,7 +1678,7 @@ exports[`inferType correctly infers the "BASIC_MERGE" schema 1`] = `
                   },
                 },
                 "a" => {
-                  "optional": false,
+                  "optional": true,
                   "value": {
                     "names": Map {
                       "A" => 1,
@@ -1760,7 +1760,7 @@ exports[`inferType correctly infers the "BASIC_MERGE" schema 1`] = `
             "value": {
               "fields": Map {
                 "b" => {
-                  "optional": false,
+                  "optional": true,
                   "value": {
                     "names": Map {
                       "B" => 1,
@@ -1775,7 +1775,7 @@ exports[`inferType correctly infers the "BASIC_MERGE" schema 1`] = `
                   },
                 },
                 "a" => {
-                  "optional": false,
+                  "optional": true,
                   "value": {
                     "names": Map {
                       "A" => 1,
@@ -1838,7 +1838,7 @@ exports[`inferType correctly infers the "BASIC_MERGE" schema 1`] = `
       "Mesh" => {
         "fields": Map {
           "b" => {
-            "optional": false,
+            "optional": true,
             "value": {
               "names": Map {
                 "B" => 1,
@@ -1853,7 +1853,7 @@ exports[`inferType correctly infers the "BASIC_MERGE" schema 1`] = `
             },
           },
           "a" => {
-            "optional": false,
+            "optional": true,
             "value": {
               "names": Map {
                 "A" => 1,
@@ -1892,7 +1892,7 @@ exports[`inferType correctly infers the "BASIC_MERGE" schema 1`] = `
                   "value": {
                     "fields": Map {
                       "b" => {
-                        "optional": false,
+                        "optional": true,
                         "value": {
                           "names": Map {
                             "B" => 1,
@@ -1907,7 +1907,7 @@ exports[`inferType correctly infers the "BASIC_MERGE" schema 1`] = `
                         },
                       },
                       "a" => {
-                        "optional": false,
+                        "optional": true,
                         "value": {
                           "names": Map {
                             "A" => 1,
@@ -1992,7 +1992,7 @@ exports[`inferType correctly infers the "BASIC_MERGE" schema 1`] = `
                   "value": {
                     "fields": Map {
                       "b" => {
-                        "optional": false,
+                        "optional": true,
                         "value": {
                           "names": Map {
                             "B" => 1,
@@ -2007,7 +2007,7 @@ exports[`inferType correctly infers the "BASIC_MERGE" schema 1`] = `
                         },
                       },
                       "a" => {
-                        "optional": false,
+                        "optional": true,
                         "value": {
                           "names": Map {
                             "A" => 1,
@@ -2082,7 +2082,7 @@ exports[`inferType correctly infers the "BASIC_MERGE" schema 1`] = `
             "value": {
               "fields": Map {
                 "b" => {
-                  "optional": false,
+                  "optional": true,
                   "value": {
                     "names": Map {
                       "B" => 1,
@@ -2097,7 +2097,7 @@ exports[`inferType correctly infers the "BASIC_MERGE" schema 1`] = `
                   },
                 },
                 "a" => {
-                  "optional": false,
+                  "optional": true,
                   "value": {
                     "names": Map {
                       "A" => 1,
@@ -2179,7 +2179,7 @@ exports[`inferType correctly infers the "BASIC_MERGE" schema 1`] = `
             "value": {
               "fields": Map {
                 "b" => {
-                  "optional": false,
+                  "optional": true,
                   "value": {
                     "names": Map {
                       "B" => 1,
@@ -2194,7 +2194,7 @@ exports[`inferType correctly infers the "BASIC_MERGE" schema 1`] = `
                   },
                 },
                 "a" => {
-                  "optional": false,
+                  "optional": true,
                   "value": {
                     "names": Map {
                       "A" => 1,
@@ -2257,7 +2257,7 @@ exports[`inferType correctly infers the "BASIC_MERGE" schema 1`] = `
       {
         "fields": Map {
           "b" => {
-            "optional": false,
+            "optional": true,
             "value": {
               "names": Map {
                 "B" => 1,
@@ -2272,7 +2272,7 @@ exports[`inferType correctly infers the "BASIC_MERGE" schema 1`] = `
             },
           },
           "a" => {
-            "optional": false,
+            "optional": true,
             "value": {
               "names": Map {
                 "A" => 1,
@@ -2307,7 +2307,7 @@ exports[`inferType correctly infers the "BASIC_MERGE" schema 1`] = `
           "value": {
             "fields": Map {
               "b" => {
-                "optional": false,
+                "optional": true,
                 "value": {
                   "names": Map {
                     "B" => 1,
@@ -2322,7 +2322,7 @@ exports[`inferType correctly infers the "BASIC_MERGE" schema 1`] = `
                 },
               },
               "a" => {
-                "optional": false,
+                "optional": true,
                 "value": {
                   "names": Map {
                     "A" => 1,
@@ -2406,7 +2406,7 @@ exports[`inferType correctly infers the "BASIC_MERGE" schema 1`] = `
               "value": {
                 "fields": Map {
                   "b" => {
-                    "optional": false,
+                    "optional": true,
                     "value": {
                       "names": Map {
                         "B" => 1,
@@ -2421,7 +2421,7 @@ exports[`inferType correctly infers the "BASIC_MERGE" schema 1`] = `
                     },
                   },
                   "a" => {
-                    "optional": false,
+                    "optional": true,
                     "value": {
                       "names": Map {
                         "A" => 1,
@@ -2527,7 +2527,7 @@ exports[`inferType correctly infers the "BASIC_MERGE" schema 1`] = `
         "value": {
           "fields": Map {
             "b" => {
-              "optional": false,
+              "optional": true,
               "value": {
                 "names": Map {
                   "B" => 1,
@@ -2542,7 +2542,7 @@ exports[`inferType correctly infers the "BASIC_MERGE" schema 1`] = `
               },
             },
             "a" => {
-              "optional": false,
+              "optional": true,
               "value": {
                 "names": Map {
                   "A" => 1,
@@ -2572,7 +2572,7 @@ exports[`inferType correctly infers the "BASIC_MERGE" schema 1`] = `
         "value": {
           "fields": Map {
             "b" => {
-              "optional": false,
+              "optional": true,
               "value": {
                 "names": Map {
                   "B" => 1,
@@ -2587,7 +2587,7 @@ exports[`inferType correctly infers the "BASIC_MERGE" schema 1`] = `
               },
             },
             "a" => {
-              "optional": false,
+              "optional": true,
               "value": {
                 "names": Map {
                   "A" => 1,
@@ -2621,7 +2621,7 @@ exports[`inferType correctly infers the "BASIC_MERGE" schema 1`] = `
           "value": {
             "fields": Map {
               "b" => {
-                "optional": false,
+                "optional": true,
                 "value": {
                   "names": Map {
                     "B" => 1,
@@ -2636,7 +2636,7 @@ exports[`inferType correctly infers the "BASIC_MERGE" schema 1`] = `
                 },
               },
               "a" => {
-                "optional": false,
+                "optional": true,
                 "value": {
                   "names": Map {
                     "A" => 1,
@@ -2706,7 +2706,7 @@ exports[`inferType correctly infers the "BASIC_MERGE" schema 1`] = `
               "value": {
                 "fields": Map {
                   "b" => {
-                    "optional": false,
+                    "optional": true,
                     "value": {
                       "names": Map {
                         "B" => 1,
@@ -2721,7 +2721,7 @@ exports[`inferType correctly infers the "BASIC_MERGE" schema 1`] = `
                     },
                   },
                   "a" => {
-                    "optional": false,
+                    "optional": true,
                     "value": {
                       "names": Map {
                         "A" => 1,
@@ -2813,7 +2813,7 @@ exports[`inferType correctly infers the "BASIC_MERGE" schema 1`] = `
         "value": {
           "fields": Map {
             "b" => {
-              "optional": false,
+              "optional": true,
               "value": {
                 "names": Map {
                   "B" => 1,
@@ -2828,7 +2828,7 @@ exports[`inferType correctly infers the "BASIC_MERGE" schema 1`] = `
               },
             },
             "a" => {
-              "optional": false,
+              "optional": true,
               "value": {
                 "names": Map {
                   "A" => 1,
@@ -2857,7 +2857,7 @@ exports[`inferType correctly infers the "BASIC_MERGE" schema 1`] = `
     {
       "fields": Map {
         "b" => {
-          "optional": false,
+          "optional": true,
           "value": {
             "names": Map {
               "B" => 1,
@@ -2872,7 +2872,7 @@ exports[`inferType correctly infers the "BASIC_MERGE" schema 1`] = `
           },
         },
         "a" => {
-          "optional": false,
+          "optional": true,
           "value": {
             "names": Map {
               "A" => 1,
@@ -2901,7 +2901,7 @@ exports[`inferType correctly infers the "BASIC_MERGE" schema 1`] = `
         "value": {
           "fields": Map {
             "b" => {
-              "optional": false,
+              "optional": true,
               "value": {
                 "names": Map {
                   "B" => 1,
@@ -2916,7 +2916,7 @@ exports[`inferType correctly infers the "BASIC_MERGE" schema 1`] = `
               },
             },
             "a" => {
-              "optional": false,
+              "optional": true,
               "value": {
                 "names": Map {
                   "A" => 1,
@@ -2957,7 +2957,7 @@ exports[`inferType correctly infers the "BASIC_MERGE" schema 1`] = `
                 "value": {
                   "fields": Map {
                     "b" => {
-                      "optional": false,
+                      "optional": true,
                       "value": {
                         "names": Map {
                           "B" => 1,
@@ -2972,7 +2972,7 @@ exports[`inferType correctly infers the "BASIC_MERGE" schema 1`] = `
                       },
                     },
                     "a" => {
-                      "optional": false,
+                      "optional": true,
                       "value": {
                         "names": Map {
                           "A" => 1,
@@ -3057,7 +3057,7 @@ exports[`inferType correctly infers the "BASIC_MERGE" schema 1`] = `
                 "value": {
                   "fields": Map {
                     "b" => {
-                      "optional": false,
+                      "optional": true,
                       "value": {
                         "names": Map {
                           "B" => 1,
@@ -3072,7 +3072,7 @@ exports[`inferType correctly infers the "BASIC_MERGE" schema 1`] = `
                       },
                     },
                     "a" => {
-                      "optional": false,
+                      "optional": true,
                       "value": {
                         "names": Map {
                           "A" => 1,
@@ -3147,7 +3147,7 @@ exports[`inferType correctly infers the "BASIC_MERGE" schema 1`] = `
           "value": {
             "fields": Map {
               "b" => {
-                "optional": false,
+                "optional": true,
                 "value": {
                   "names": Map {
                     "B" => 1,
@@ -3162,7 +3162,7 @@ exports[`inferType correctly infers the "BASIC_MERGE" schema 1`] = `
                 },
               },
               "a" => {
-                "optional": false,
+                "optional": true,
                 "value": {
                   "names": Map {
                     "A" => 1,
@@ -3244,7 +3244,7 @@ exports[`inferType correctly infers the "BASIC_MERGE" schema 1`] = `
           "value": {
             "fields": Map {
               "b" => {
-                "optional": false,
+                "optional": true,
                 "value": {
                   "names": Map {
                     "B" => 1,
@@ -3259,7 +3259,7 @@ exports[`inferType correctly infers the "BASIC_MERGE" schema 1`] = `
                 },
               },
               "a" => {
-                "optional": false,
+                "optional": true,
                 "value": {
                   "names": Map {
                     "A" => 1,
@@ -3322,7 +3322,7 @@ exports[`inferType correctly infers the "BASIC_MERGE" schema 1`] = `
     {
       "fields": Map {
         "b" => {
-          "optional": false,
+          "optional": true,
           "value": {
             "names": Map {
               "B" => 1,
@@ -3337,7 +3337,7 @@ exports[`inferType correctly infers the "BASIC_MERGE" schema 1`] = `
           },
         },
         "a" => {
-          "optional": false,
+          "optional": true,
           "value": {
             "names": Map {
               "A" => 1,
@@ -3676,7 +3676,7 @@ exports[`inferType correctly infers the "BASIC_MERGE" schema ast 1`] = `
               0,
             ],
           },
-          "optional": false,
+          "optional": true,
           "range": [
             0,
             0,
@@ -3699,7 +3699,7 @@ exports[`inferType correctly infers the "BASIC_MERGE" schema ast 1`] = `
               0,
             ],
           },
-          "optional": false,
+          "optional": true,
           "range": [
             0,
             0,
@@ -3754,8 +3754,8 @@ type Stroke {
 }
 
 type Mesh {
-  b: Int
-  a: Int
+  b?: Int
+  a?: Int
 }"
 `;
 
