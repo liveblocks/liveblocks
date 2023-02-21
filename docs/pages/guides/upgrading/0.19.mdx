@@ -97,7 +97,7 @@ APIs that aren't intended for direct consumption.
 
 ## Changes in @liveblocks/client [#client]
 
-Similar to the [` shouldInitiallyConnect`](#react-shouldInitiallyConnect) prop 
+Similar to the [` shouldInitiallyConnect`](#react-shouldInitiallyConnect) prop
 in `@liveblocks/react`, we added a `shouldInitiallyConnect`option
 to`client.enter`. The default value is `true`. You may want to set it to `false`
 when using SSR, or if you would prefer to establish the WebSocket connection
@@ -177,15 +177,13 @@ import { liveblocks } from "@liveblocks/zustand";
 import type { WithLiveblocks } from "@liveblocks/zustand";
 ```
 
-- Change the pattern:
+- Change the pattern to the Zustand v4 recommended pattern:
 
 #### Previously ❌ [@hidden]
 
 ```ts
 create(liveblocks<MyState, ...>(...))
 ```
-
-to the Zustand v4 recommended pattern:
 
 ### Now ✅ [@hidden]
 
@@ -213,7 +211,7 @@ To be clear:
 
 ## Changes for all liveblocks packages [#all]
 
-All packages now provide an isReadOnly flag on user instances. It is available
+All packages now provide an `isReadOnly` flag on user instances. It is available
 by calling `getSelf()` and `getOthers`. `isReadOnly` is true when storage is
 read-only, as well as when a user has `read` permission to the `room` and
 `write` permission to `presence`.
@@ -235,5 +233,5 @@ for more information.
 That’s it!
 
 If you run into issues with these new patterns and you need help, please let us
-know [by email](mailto:support.liveblocks.io) or by joining our
+know [by email](mailto:support@liveblocks.io) or by joining our
 [Discord community](/discord)! We’re here to help!
