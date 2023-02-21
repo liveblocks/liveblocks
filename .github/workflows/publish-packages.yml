@@ -21,6 +21,18 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Set up Homebrew
+        id: set-up-homebrew
+        uses: Homebrew/actions/setup-homebrew@master
+
+      - name: Install moreutils
+        run: brew install moreutils
+
+      - name: Install git-toolbelt
+        run:
+          brew install fzf && brew tap nvie/tap && brew install
+          nvie/tap/git-toolbelt
+
       - name: Checkout
         uses: actions/checkout@v3
 
@@ -52,4 +64,4 @@ jobs:
         # https://docs.github.com/en/actions/publishing-packages/publishing-nodejs-packages#publishing-packages-to-the-npm-registry
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: ./scripts/publish # todo add version & tag
+        run: ./scripts/publish.sh # todo add version & tag
