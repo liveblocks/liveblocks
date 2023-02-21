@@ -16,15 +16,14 @@ err () {
 
 
 usage () {
-    err "usage: release.sh [-V <version>] [-t <tag>] [-h]"
+    err "usage: release.sh [-V <version>] [-h]"
     err
     err ""
     err "Create a release for the CI to publish."
     err
     err "Options:"
     err "-V <version>  Set version to publish (default: prompt)"
-    err "-t <tag>      Sets the tag to use on NPM (default: latest)"
-    err "-h            Show this help"
+    err "Example: 1.0.0 or 1.0.1-beta1"
 }
 
 VERSION=
@@ -105,19 +104,12 @@ commit_to_git () {
     ) )
 }
 
-
-# TODO: check branch
-
-VERSION_AND_TAG=
 for PKGDIR in "${PACKAGE_DIRS[@]}"; do
-    VERSION_AND_TAG="$VERSION"
-    if [ -n "$TAG" ]; then
-        VERSION_AND_TAG="$VERSION_AND_TAG-$TAG"
-    fi
-    update_package_version "$PKGDIR" "$VERSION_AND_TAG"
+    update_package_version "$PKGDIR" "$VERSION"
 done
 
 # Update package-lock.json with newly bumped versions
 npm install
-commit_to_git "Bump to $VERSION_AND_TAG" "package-lock.json" "packages/"
+commit_to_git "Bump to $VERSION" "package-lock.json" "packages/"
+git push
 
