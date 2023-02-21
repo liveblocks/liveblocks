@@ -115,14 +115,14 @@ Verification of events is critical to ensure that the events are coming from
 Liveblocks and not from a malicious source. Check out our
 [Webhooks guide](https://liveblocks.io/docs/guides/webhooks) for more details.
 
-## Changes for all liveblocks packages [#all]
+## Changes for all Liveblocks packages [#all]
 
 When upgrading to 1.0, the primary breaking change to consider is updating the
 `authorize` option to include the now-mandatory `userId` field if you use
 `@liveblocks/node`. This change reflects our new pricing model based on Monthly
 Active Users instead of connections.
 
-### Step 1: Update your liveblocks packages [#step1]
+### Step 1: Update your Liveblocks packages [#step1]
 
 ```bash
 npm update @liveblocks/client@1.0 @liveblocks/react@1.0 @liveblocks/node@1.0
