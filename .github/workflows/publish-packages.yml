@@ -24,11 +24,13 @@ jobs:
       #     brew install fzf && brew tap nvie/tap && brew install
       #     nvie/tap/git-toolbelt
 
-      - name: Checkout
-        uses: actions/checkout@v3
-
       - name: Echo branch
         run: echo "${{ github.event.base_ref }}"
+
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.base_ref }}
 
       - name: Set tag
         id: vars
