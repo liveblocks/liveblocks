@@ -33,6 +33,16 @@ import {
 import type { JsonStorageUpdate } from "./_updatesUtils";
 import { serializeUpdateToJson } from "./_updatesUtils";
 
+function makeRoomToken(actor: number, scopes: string[]): RoomAuthToken {
+  return {
+    appId: "my-app",
+    roomId: "my-room",
+    id: "user1",
+    actor,
+    scopes,
+  };
+}
+
 /**
  * Deep-clones a JSON-serializable value.
  *
@@ -44,16 +54,6 @@ function deepClone<T extends Json>(items: T): T {
   // won't lead to type unsafety, so this use case is okay.
   // eslint-disable-next-line no-restricted-syntax
   return JSON.parse(JSON.stringify(items)) as T;
-}
-
-function makeRoomToken(actor: number, scopes: string[]): RoomAuthToken {
-  return {
-    appId: "my-app",
-    roomId: "my-room",
-    id: "user1",
-    actor,
-    scopes,
-  };
 }
 
 export class MockWebSocket implements WebSocket {
