@@ -8,7 +8,7 @@ meta:
 With the release of Liveblocks 1.0, we included new pricing plans that are based
 on Monthly Active Users (MAU). This guide will help you understand how to use
 the new pricing plans by providing guidance on the migration to Liveblocks 1.0
-and how to include a `userId` into the `authorize` option if you use it.
+and how to include a `userId` into the `authorize` method if you use it.
 
 ## What is a Monthly Active User (MAU) vs. a connection? [#mau-vs-connection]
 
@@ -37,7 +37,7 @@ as intended, first update `@liveblocks/node`.
 npm update @liveblocks/node@1.0
 ```
 
-Then, update your `authorize` option to include the `userId` field.
+Then, update your `authorize` function to include the `userId` field.
 
 ```ts highlight="16,20"
 import { authorize } from "@liveblocks/node";
@@ -72,8 +72,9 @@ export default async function auth(req, res) {
 ```
 
 <Banner title="Using a secret key with authorization">
-  To use the `authorize` option, you need your backend endpoint. Your Liveblocks
-  dashboard contains the secret key required to use the `authorize` option.
+  To use the `authorize` method, you need to have your own back-end endpoint
+  which handles authentication. Your Liveblocks dashboard contains the secret
+  key required to use the `authorize` option.
 </Banner>
 
 To learn more about authorization and authentication in your Liveblocks
@@ -116,7 +117,7 @@ for development use.
 
 ## How to migrate to Liveblocks 1.0 [#migration]
 
-To update to Liveblocks 1.0, you will need to update your Liveblocks packages:
+To update to Liveblocks 1.0, you will need to update your liveblocks packages:
 
 ```bash
 npm update @liveblocks/node @liveblocks/client @liveblocks/react
