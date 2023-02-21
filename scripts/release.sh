@@ -72,16 +72,7 @@ get_package_name_from_dir(){
     ( cd "$1" && jq -r .name package.json )
 }
 
-update_package_version () {
-    PACKAGE_DIR="$1"
-    PKGNAME="$(get_package_name_from_dir "$PACKAGE_DIR")"
-
-    echo "==> Updating package.json version for $PKGNAME"
-    ( cd "$PKGDIR" && npm version "$2" --no-git-tag-version && update_to_dependencies_to_new_package_versions "$2" )
-}
-
-# TOCHECK: is this possible to do without jq?
-update_to_dependencies_to_new_package_versions(){
+update_dependencies_to_new_package_versions(){
     for pkgname in $( all_published_pkgnames ); do
       for key in dependencies devDependencies peerDependencies; do
           currversion="$(jq -r ".${key}.\"${pkgname}\"" package.json)"
@@ -90,6 +81,14 @@ update_to_dependencies_to_new_package_versions(){
           fi
       done
     done
+}
+
+update_package_version () {
+    PACKAGE_DIR="$1"
+    PKGNAME="$(get_package_name_from_dir "$PACKAGE_DIR")"
+
+    echo "==> Updating package.json version for $PKGNAME"
+    ( cd "$PKGDIR" && npm version "$2" --no-git-tag-version && update_dependencies_to_new_package_versions "$2" )
 }
 
 commit_to_git () {
