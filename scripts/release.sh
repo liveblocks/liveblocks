@@ -93,9 +93,22 @@ update_to_dependencies_to_new_package_versions(){
     done
 }
 
+commit_to_git () {
+    msg="$1"
+    shift 1
+    ( cd "$ROOT" && (
+        git reset --quiet HEAD
+        git add "$@"
+        if git is-dirty -i; then
+            git commit -m "$msg"
+        fi
+    ) )
+}
+
 
 # TODO: check branch
 
+VERSION_AND_TAG=
 for PKGDIR in "${PACKAGE_DIRS[@]}"; do
     VERSION_AND_TAG="$VERSION"
     if [ -n "$TAG" ]; then
@@ -104,5 +117,7 @@ for PKGDIR in "${PACKAGE_DIRS[@]}"; do
     update_package_version "$PKGDIR" "$VERSION_AND_TAG"
 done
 
-
+# Update package-lock.json with newly bumped versions
+npm install
+commit_to_git "Bump to $VERSION_AND_TAG" "package-lock.json" "packages/"
 
