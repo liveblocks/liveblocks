@@ -97,7 +97,7 @@ Liveblocks account and will expire after 30 days.
 
 We have added two new events to our Webhooks functionality: `RoomCreatedEvent`
 and `RoomDeletedEvent`. We have also added a `WebhookHandler` class to make it
-easier to verify event requests from Liveblock's Webhooks functionality. It also
+easier to verify event requests from Liveblock’s Webhooks functionality. It also
 provides fully typed `WebhookEvents`.
 
 ```ts
@@ -141,7 +141,7 @@ export default async function auth(req, res) {
   /**
    * Implement your own security here.
    *
-   * It's your responsibility to ensure that the caller of this endpoint
+   * It’s your responsibility to ensure that the caller of this endpoint
    * is a valid user by validating the cookies or authentication headers
    * and that it has access to the requested room.
    */

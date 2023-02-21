@@ -45,7 +45,7 @@ const other = useOther(id, (other) => other); // 👈 requires a selector
 
 ### Stale props support for React 17 [#stale-props]
 
-We've added support to prevent the "zombie-child" scenario. To avoid this issue,
+We’ve added support to prevent the "zombie-child" scenario. To avoid this issue,
 we enforce passing the `unstable_batchedUpdates` prop to `RoomProvider`.
 
 <Banner title="You may not need this">
@@ -93,7 +93,7 @@ servers.
 
 We restructured our internal packages to increase code sharing. You may notice a
 new dependency in your dependency tree: `@liveblocks/core`. It contains private
-APIs that aren't intended for direct consumption.
+APIs that aren’t intended for direct consumption.
 
 ## Changes in @liveblocks/client [#client]
 
@@ -206,7 +206,7 @@ To be clear:
    ```
 
 - Remove the second argument to `state.liveblocks.enterRoom()`: it no longer
-  takes an explicit initial state. Instead, it's automatically be populated from
+  takes an explicit initial state. Instead, it’s automatically be populated from
   your Zustand state.
 
 ## Changes for all liveblocks packages [#all]
