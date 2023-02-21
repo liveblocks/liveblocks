@@ -27,6 +27,9 @@ jobs:
       - name: Check jq
         run: jq --version
 
+      - name: Check git cli
+        run: echo TOKEN EXISTS? ${{ secrets.GITHUB_TOKEN }}
+
       - name: Setup Node.js environment
         uses: actions/setup-node@v3.6.0
         with:
