@@ -30,6 +30,16 @@ jobs:
       - name: Echo branch
         run: echo "${{ github.event.base_ref }}"
 
+      - name: Set output
+        id: vars
+        run: echo "tag=${GITHUB_REF#refs/*/}" >> $GITHUB_OUTPUT
+      - name: Check output
+        env:
+          RELEASE_VERSION: ${{ steps.vars.outputs.tag }}
+        run: |
+          echo $RELEASE_VERSION
+          echo ${{ steps.vars.outputs.tag }}
+
       - name: Testing running a script
         run: ./scripts/test-running-script.sh
 
