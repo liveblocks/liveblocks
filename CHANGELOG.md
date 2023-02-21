@@ -11,6 +11,7 @@
 - Expose all Definitions in `CheckedDocument`, not just the root
 - Fix: some ugly error messages making incorrect suggestions
 - Fix: tweak error message for circular references
+- Fix: record range info on built-ins
 
 # 0.0.8
 

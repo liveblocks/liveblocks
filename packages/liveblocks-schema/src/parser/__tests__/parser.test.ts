@@ -94,4 +94,37 @@ describe("syntactic parser", () => {
       ])
     );
   });
+
+  it("large document (snapshot test)", () => {
+    expect(
+      parse(
+        `
+      # Comment
+      // Another comment
+
+      type Color { r: Int, g: Int, b: Int }
+
+      type Circle {
+        cx: Float
+        cy: Float
+        r: Float
+        fill?: Color
+        stroke?: Color
+        third?: { r: Int, g: Int, b: Int }
+      }
+
+      type Foo {}
+      type Foo {          // Double type defs are syntactically valid
+        version: Int
+        version: Int      // Double field defs are syntactically valid
+        mycircle?: LiveObject<Bar>
+        //                    ^^^ Will parse the syntax, even though semantically incorrect
+        someField: _undefinedThing_
+      }
+
+      type abc {}         // Lowercased type names are syntactically valid
+      `
+      )
+    ).toMatchSnapshot();
+  });
 });

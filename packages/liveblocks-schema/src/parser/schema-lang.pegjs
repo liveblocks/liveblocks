@@ -130,22 +130,22 @@ FieldDef
 
 StringType
   = _ 'String' EOK
-    { return ast.stringType() }
+    { return ast.stringType(rng()) }
 
 
 IntType
   = _ 'Int' EOK
-    { return ast.intType() }
+    { return ast.intType(rng()) }
 
 
 FloatType
   = _ 'Float' EOK
-    { return ast.floatType() }
+    { return ast.floatType(rng()) }
 
 
 BooleanType
   = _ 'Boolean' EOK
-    { return ast.booleanType() }
+    { return ast.booleanType(rng()) }
 
 
 LiveObjectKeyword
