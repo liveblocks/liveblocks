@@ -36,6 +36,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
+      - name: Testing running a script
+        run: ./scripts/test-running-script.sh
+
       - name: Setup Node.js environment
         uses: actions/setup-node@v3.6.0
         with:
@@ -43,9 +46,6 @@ jobs:
 
       - name: Install dependencies
         run: npm install
-
-      - name: Testing running a script
-        run: ../../scripts/test-running-script.sh
 
       - name: Preparing release
         run: echo This is where we run "release.sh"
