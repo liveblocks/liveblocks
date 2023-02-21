@@ -2,12 +2,10 @@ name: Publish packages
 
 on:
   push:
+    # possibly could be improved with a proper regex
+    # ex: https://stackoverflow.com/a/58869470
     tags:
-      - v1.*
-
-  # TODO: add dependency on all tests passing
-  # workflow_run:
-  #   workflows: [Tests]
+      - v*.*.*
 
 jobs:
   setup:
@@ -28,6 +26,14 @@ jobs:
 
       - name: Checkout
         uses: actions/checkout@v3
+
+      - name: Get current branch
+        id: check_step
+        run: |
+          raw=$(git branch -r --contains ${{ github.ref }})
+          branch=${raw##*/}
+          echo "::set-output name=branch::$branch"
+          echo "Branch is $branch."
 
       - name: Testing running a script
         run: ./scripts/test-running-script.sh -V 1.0.0 -t beta
