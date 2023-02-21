@@ -46,7 +46,7 @@ export function combineInferredFields(
       // Should never happen
       invariant(isNotUndefined(combinedChild));
 
-      combined.set(key, combinedChild);
+      combined.set(key, { ...combinedChild, optional: true });
       continue;
     }
 
