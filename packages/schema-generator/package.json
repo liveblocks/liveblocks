@@ -1,0 +1,42 @@
+{
+  "name": "@liveblocks/schema-generator",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Helper to infer a liveblocks schema ast from plain lson data",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "generate-ast": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsup",
+    "lint": "eslint src/",
+    "format": "eslint --fix src/ ; prettier --write src/",
+    "test": "jest --verbose --no-coverage"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/liveblocks/liveblocks-schema.git"
+  },
+  "keywords": [
+    "liveblocks",
+    "schema",
+    "validation",
+    "language",
+    "parser"
+  ],
+  "devDependencies": {
+    "@liveblocks/eslint-config": "*",
+    "@liveblocks/jest-config": "*",
+    "@types/jest": "^29.4.0",
+    "@types/pluralize": "^0.0.29"
+  },
+  "dependencies": {
+    "@liveblocks/core": "^1.0.0",
+    "@liveblocks/schema": "*",
+    "pluralize": "^8.0.0",
+    "prettier": "^2.8.3",
+    "typescript": "^4.9.5"
+  },
+  "sideEffects": false
+}
