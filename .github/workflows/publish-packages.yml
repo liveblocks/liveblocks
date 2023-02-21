@@ -1,16 +1,9 @@
 name: Publish packages
 
 on:
-  # TODO: for later use
-  # workflow_dispatch:
-  #   inputs:
-  #     version:
-  #       description: Version
-  #       required: false
-  #       default: No version provided
   push:
-    branches:
-      - feat/automatic-deploy
+    tags:
+      - v1.*
 
   # TODO: add dependency on all tests passing
   # workflow_run:
