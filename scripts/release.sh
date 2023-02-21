@@ -60,26 +60,41 @@ check_is_valid_tag () {
     fi
 }
 
-# transforms packages/liveblocks-core to @liveblocks/core
-get_package_name () {
-    PKGDIR="$1"
-    PKGNAME="$(basename "$PKGDIR")"
-    PKGNAME="${PKGNAME#liveblocks-}"
-    PKGNAME="@liveblocks/$PKGNAME"
-    echo "$PKGNAME"
+
+ROOT="$(git rev-parse --show-toplevel)"
+
+all_published_pkgnames () {
+    for pkgdir in ${PACKAGE_DIRS[@]}; do
+        jq -r .name "$ROOT/$pkgdir/package.json"
+    done
+}
+
+get_package_name_from_dir(){
+    ( cd "$1" && jq -r .name package.json )
 }
 
 update_package_version () {
-    echo "==> Updating package.json at path $1"
-
     PACKAGE_DIR="$1"
-    PKGNAME="$(get_package_name "$PACKAGE_DIR")"
+    PKGNAME="$(get_package_name_from_dir "$PACKAGE_DIR")"
 
     echo "==> Updating package.json version for $PKGNAME"
-    ( cd "$PKGDIR" && npm version "$2" --no-git-tag-version )
+    ( cd "$PKGDIR" && npm version "$2" --no-git-tag-version && update_to_dependencies_to_new_package_versions "$2" )
+}
+
+# TOCHECK: is this possible to do without jq?
+update_to_dependencies_to_new_package_versions(){
+    for pkgname in $( all_published_pkgnames ); do
+      for key in dependencies devDependencies peerDependencies; do
+          currversion="$(jq -r ".${key}.\"${pkgname}\"" package.json)"
+          if [ "$currversion" != "null" -a "$currversion" != '*' ]; then
+              jq ".${key}.\"${pkgname}\" = \"$1\"" package.json | sponge package.json
+          fi
+      done
+    done
 }
 
 
+# TODO: check branch
 
 for PKGDIR in "${PACKAGE_DIRS[@]}"; do
     VERSION_AND_TAG="$VERSION"
@@ -88,4 +103,6 @@ for PKGDIR in "${PACKAGE_DIRS[@]}"; do
     fi
     update_package_version "$PKGDIR" "$VERSION_AND_TAG"
 done
+
+
 
