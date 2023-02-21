@@ -43,16 +43,6 @@ function makeRoomToken(actor: number, scopes: string[]): RoomAuthToken {
   };
 }
 
-/**
- * Deep-clones a JSON-serializable value.
- */
-function deepClone<T extends Json>(items: T): T {
-  // NOTE: In this case, the combination of JSON.parse() and JSON.stringify
-  // won't lead to type unsafety, so this use case is okay.
-  // eslint-disable-next-line no-restricted-syntax
-  return JSON.parse(JSON.stringify(items));
-}
-
 export class MockWebSocket implements WebSocket {
   CONNECTING = 0;
   OPEN = 1;
@@ -192,7 +182,7 @@ export async function prepareRoomWithStorage<
 
   const getStoragePromise = machine.getStorage();
 
-  const clonedItems = deepClone(items);
+  const clonedItems = structuredClone(items);
   machine.onMessage(
     serverMessage({
       type: ServerMsgCode.INITIAL_STORAGE_STATE,
