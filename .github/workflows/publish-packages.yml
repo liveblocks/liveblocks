@@ -45,19 +45,19 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-  prepare-release:
-    runs-on: ubuntu-latest
+  # prepare-release:
+  #   runs-on: ubuntu-latest
 
-    - name: Preparing release
-      run: echo This is where we run "release.sh"
-    - name: Building all packages
-      run: npm run build
+  #   - name: Preparing release
+  #     run: echo This is where we run "release.sh"
+  #   - name: Building all packages
+  #     run: npm run build
 
-  publish:
-    runs-on: ubuntu-latest
-    - name: Publish packages
-      # setup-node created .npmrc file to publish to npm
-      # https://docs.github.com/en/actions/publishing-packages/publishing-nodejs-packages#publishing-packages-to-the-npm-registry
-      env:
-        NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-      run: echo this is where we run "publish.sh" # todo add version & tag
+  # publish:
+  #   runs-on: ubuntu-latest
+  #   - name: Publish packages
+  #     # setup-node created .npmrc file to publish to npm
+  #     # https://docs.github.com/en/actions/publishing-packages/publishing-nodejs-packages#publishing-packages-to-the-npm-registry
+  #     env:
+  #       NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+  #     run: echo this is where we run "publish.sh" # todo add version & tag
