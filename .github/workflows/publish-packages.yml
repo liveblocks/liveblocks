@@ -12,17 +12,17 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Set up Homebrew
-        id: set-up-homebrew
-        uses: Homebrew/actions/setup-homebrew@master
+      # - name: Set up Homebrew
+      #   id: set-up-homebrew
+      #   uses: Homebrew/actions/setup-homebrew@master
 
-      - name: Install moreutils
-        run: brew install moreutils
+      # - name: Install moreutils
+      #   run: brew install moreutils
 
-      - name: Install git-toolbelt
-        run:
-          brew install fzf && brew tap nvie/tap && brew install
-          nvie/tap/git-toolbelt
+      # - name: Install git-toolbelt
+      #   run:
+      #     brew install fzf && brew tap nvie/tap && brew install
+      #     nvie/tap/git-toolbelt
 
       - name: Checkout
         uses: actions/checkout@v3
@@ -36,7 +36,7 @@ jobs:
           echo "Branch is $branch."
 
       - name: Testing running a script
-        run: ./scripts/test-running-script.sh -V 1.0.0 -t beta
+        run: ./scripts/test-running-script.sh
 
       - name: Setup Node.js environment
         uses: actions/setup-node@v3.6.0
