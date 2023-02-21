@@ -1,5 +1,5 @@
 import { inferStorageType } from "..";
-import { inferSchema, schemaToAst } from "../schema";
+import { inferSchema, inferredSchemaToAst } from "../schema";
 import { PlainLsonObject } from "../types";
 import { prettify } from "@liveblocks/schema/src/prettify";
 
@@ -8,26 +8,7 @@ const EMPTY: PlainLsonObject = {
   data: {},
 };
 
-const SINGLE_SCALAR_ATTRIBUTE: PlainLsonObject = {
-  liveblocksType: "LiveObject",
-  data: {
-    a: 1,
-  },
-};
-
-const SINGLE_LIVE_OBJECT_ATTRIBUTE: PlainLsonObject = {
-  liveblocksType: "LiveObject",
-  data: {
-    a: {
-      liveblocksType: "LiveObject",
-      data: {
-        name: "John",
-      },
-    },
-  },
-};
-
-const BASIC_OBJECT: PlainLsonObject = {
+const BASIC_LIVE_OBJECT: PlainLsonObject = {
   liveblocksType: "LiveObject",
   data: {
     fills: {
@@ -50,12 +31,58 @@ const BASIC_OBJECT: PlainLsonObject = {
   },
 };
 
+const BASIC_MERGE: PlainLsonObject = {
+  liveblocksType: "LiveObject",
+  data: {
+    fills: {
+      liveblocksType: "LiveObject",
+      data: {
+        mesh: { b: 1 },
+        sole: "#808960",
+        stripes: "#e3fccb",
+        laces: "#c3f4bb",
+      },
+    },
+    strokes: {
+      liveblocksType: "LiveObject",
+      data: {
+        mesh: { a: 1 },
+        sole: "#800000",
+        laces: "#00ff00",
+      },
+    },
+  },
+};
+
+const BASIC_UNMERGEABLE: PlainLsonObject = {
+  liveblocksType: "LiveObject",
+  data: {
+    fills: {
+      liveblocksType: "LiveObject",
+      data: {
+        mesh: { a: 1 },
+        sole: "#808960",
+        stripes: "#e3fccb",
+        laces: "#c3f4bb",
+      },
+    },
+    strokes: {
+      liveblocksType: "LiveObject",
+      data: {
+        mesh: { a: "something" },
+        sole: "#800000",
+        laces: "#00ff00",
+      },
+    },
+  },
+};
+
 describe("inferType", () => {
   const testCases = {
     EMPTY,
-    SINGLE_SCALAR_ATTRIBUTE,
-    SINGLE_LIVE_OBJECT_ATTRIBUTE,
-    BASIC_OBJECT,
+    BASIC_MERGE,
+    BASIC_UNMERGEABLE,
+    BASIC_LIVE_OBJECT,
   };
 
   Object.entries(testCases).forEach(([name, schema]) => {
@@ -69,14 +96,14 @@ describe("inferType", () => {
 
     it(`correctly infers the "${name}" schema ast`, () => {
       expect(
-        schemaToAst(inferSchema(inferStorageType(schema)))
+        inferredSchemaToAst(inferSchema(inferStorageType(schema)))
       ).toMatchSnapshot();
     });
 
     // Just here for debugging
     it(`correctly infers the "${name}" schema text`, () => {
       expect(
-        prettify(schemaToAst(inferSchema(inferStorageType(schema))))
+        prettify(inferredSchemaToAst(inferSchema(inferStorageType(schema))))
       ).toMatchSnapshot();
     });
   });

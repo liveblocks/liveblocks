@@ -128,6 +128,7 @@ function assignNameOrMerge(schema: InferredSchema, type: InferredRootType) {
     if (combined) {
       replaceRootType(schema, existingType, combined);
       replaceRootType(schema, type, combined);
+      schema.rootNames.set(name, combined);
       return;
     }
   }
@@ -135,7 +136,7 @@ function assignNameOrMerge(schema: InferredSchema, type: InferredRootType) {
   // Try Name2, Name3, etc. until we find a name that doesn't conflict.
   let suffix = 2;
   while (true) {
-    const name = `${type.type}${suffix}`;
+    const name = `${orderedNames[0]}${suffix}`;
     if (!schema.rootNames.has(name)) {
       schema.rootNames.set(name, type);
       return;
@@ -170,7 +171,7 @@ export function inferSchema(inferredStorage: InferredLiveObjectType) {
   return schema;
 }
 
-export function schemaToAst(schema: InferredSchema): AST.Document {
+export function inferredSchemaToAst(schema: InferredSchema): AST.Document {
   return {
     _kind: "Document",
     definitions: Array.from(schema.rootTypes.values()).map((rootType) =>

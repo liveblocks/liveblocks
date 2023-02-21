@@ -1,7 +1,12 @@
 import { JsonObject } from "@liveblocks/core";
 import { PartialBy } from "./utils/types";
-import { inferLsonFields, InferredFields, inferredFieldsToAst } from "./fields";
-import { generateNames, ScoredNames } from "./names";
+import {
+  combineInferredFields,
+  inferLsonFields,
+  InferredFields,
+  inferredFieldsToAst,
+} from "./fields";
+import { generateNames, mergeScoredNames, ScoredNames } from "./names";
 import { ChildContext } from "./types";
 import { AST } from "@liveblocks/schema";
 import { InferredSchema } from "./schema";
@@ -29,6 +34,22 @@ export function inferObjectType(
   });
 
   return inferred as InferredObjectType;
+}
+
+export function combineInferredObjectTypes(
+  a: InferredObjectType,
+  b: InferredObjectType
+): InferredObjectType | undefined {
+  const combinedFields = combineInferredFields(a.fields, b.fields);
+  if (!combinedFields) {
+    return undefined;
+  }
+
+  return {
+    names: mergeScoredNames(a.names, b.names),
+    type: "Object",
+    fields: combinedFields,
+  };
 }
 
 export function inferredObjectTypeToAst(

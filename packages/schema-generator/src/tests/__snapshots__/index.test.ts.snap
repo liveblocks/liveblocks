@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`inferType correctly infers the "BASIC_OBJECT" schema 1`] = `
+exports[`inferType correctly infers the "BASIC_LIVE_OBJECT" schema 1`] = `
 {
   "rootNames": BidirectionalMap {
     "_map": Map {
@@ -1012,7 +1012,7 @@ exports[`inferType correctly infers the "BASIC_OBJECT" schema 1`] = `
 }
 `;
 
-exports[`inferType correctly infers the "BASIC_OBJECT" schema ast 1`] = `
+exports[`inferType correctly infers the "BASIC_LIVE_OBJECT" schema ast 1`] = `
 {
   "_kind": "Document",
   "definitions": [
@@ -1300,7 +1300,7 @@ exports[`inferType correctly infers the "BASIC_OBJECT" schema ast 1`] = `
 }
 `;
 
-exports[`inferType correctly infers the "BASIC_OBJECT" schema text 1`] = `
+exports[`inferType correctly infers the "BASIC_LIVE_OBJECT" schema text 1`] = `
 "type Storage {
   fills: LiveObject<Fill>
   strokes: LiveObject<Stroke>
@@ -1320,7 +1320,7 @@ type Stroke {
 }"
 `;
 
-exports[`inferType correctly infers the "BASIC_OBJECT" type 1`] = `
+exports[`inferType correctly infers the "BASIC_LIVE_OBJECT" type 1`] = `
 {
   "atomic": true,
   "fields": Map {
@@ -1456,6 +1456,4545 @@ exports[`inferType correctly infers the "BASIC_OBJECT" type 1`] = `
 }
 `;
 
+exports[`inferType correctly infers the "BASIC_MERGE" schema 1`] = `
+{
+  "rootNames": BidirectionalMap {
+    "_map": Map {
+      "Storage" => {
+        "atomic": true,
+        "fields": Map {
+          "fills" => {
+            "optional": false,
+            "value": {
+              "atomic": false,
+              "fields": Map {
+                "mesh" => {
+                  "optional": false,
+                  "value": {
+                    "fields": Map {
+                      "b" => {
+                        "optional": false,
+                        "value": {
+                          "names": Map {
+                            "B" => 1,
+                            "MeshB" => 0.5,
+                            "FillMeshB" => 0.25,
+                            "StorageFillMeshB" => 0.125,
+                          },
+                          "type": "Integer",
+                          "values": Set {
+                            1,
+                          },
+                        },
+                      },
+                      "a" => {
+                        "optional": false,
+                        "value": {
+                          "names": Map {
+                            "A" => 1,
+                            "MeshA" => 0.5,
+                            "StrokeMeshA" => 0.25,
+                            "StorageStrokeMeshA" => 0.125,
+                          },
+                          "type": "Integer",
+                          "values": Set {
+                            1,
+                          },
+                        },
+                      },
+                    },
+                    "names": Map {
+                      "Mesh" => 2,
+                      "FillMesh" => 0.5,
+                      "StorageFillMesh" => 0.25,
+                      "StrokeMesh" => 0.5,
+                      "StorageStrokeMesh" => 0.25,
+                    },
+                    "type": "Object",
+                  },
+                },
+                "sole" => {
+                  "optional": false,
+                  "value": {
+                    "names": Map {
+                      "Sole" => 1,
+                      "FillSole" => 0.5,
+                      "StorageFillSole" => 0.25,
+                    },
+                    "type": "String",
+                    "values": Set {
+                      "#808960",
+                    },
+                  },
+                },
+                "stripes" => {
+                  "optional": false,
+                  "value": {
+                    "names": Map {
+                      "Stripe" => 1,
+                      "FillStripe" => 0.5,
+                      "StorageFillStripe" => 0.25,
+                    },
+                    "type": "String",
+                    "values": Set {
+                      "#e3fccb",
+                    },
+                  },
+                },
+                "laces" => {
+                  "optional": false,
+                  "value": {
+                    "names": Map {
+                      "Lace" => 1,
+                      "FillLace" => 0.5,
+                      "StorageFillLace" => 0.25,
+                    },
+                    "type": "String",
+                    "values": Set {
+                      "#c3f4bb",
+                    },
+                  },
+                },
+              },
+              "names": Map {
+                "Fill" => 1,
+                "StorageFill" => 0.5,
+              },
+              "type": "LiveObject",
+            },
+          },
+          "strokes" => {
+            "optional": false,
+            "value": {
+              "atomic": false,
+              "fields": Map {
+                "mesh" => {
+                  "optional": false,
+                  "value": {
+                    "fields": Map {
+                      "b" => {
+                        "optional": false,
+                        "value": {
+                          "names": Map {
+                            "B" => 1,
+                            "MeshB" => 0.5,
+                            "FillMeshB" => 0.25,
+                            "StorageFillMeshB" => 0.125,
+                          },
+                          "type": "Integer",
+                          "values": Set {
+                            1,
+                          },
+                        },
+                      },
+                      "a" => {
+                        "optional": false,
+                        "value": {
+                          "names": Map {
+                            "A" => 1,
+                            "MeshA" => 0.5,
+                            "StrokeMeshA" => 0.25,
+                            "StorageStrokeMeshA" => 0.125,
+                          },
+                          "type": "Integer",
+                          "values": Set {
+                            1,
+                          },
+                        },
+                      },
+                    },
+                    "names": Map {
+                      "Mesh" => 2,
+                      "FillMesh" => 0.5,
+                      "StorageFillMesh" => 0.25,
+                      "StrokeMesh" => 0.5,
+                      "StorageStrokeMesh" => 0.25,
+                    },
+                    "type": "Object",
+                  },
+                },
+                "sole" => {
+                  "optional": false,
+                  "value": {
+                    "names": Map {
+                      "Sole" => 1,
+                      "StrokeSole" => 0.5,
+                      "StorageStrokeSole" => 0.25,
+                    },
+                    "type": "String",
+                    "values": Set {
+                      "#800000",
+                    },
+                  },
+                },
+                "laces" => {
+                  "optional": false,
+                  "value": {
+                    "names": Map {
+                      "Lace" => 1,
+                      "StrokeLace" => 0.5,
+                      "StorageStrokeLace" => 0.25,
+                    },
+                    "type": "String",
+                    "values": Set {
+                      "#00ff00",
+                    },
+                  },
+                },
+              },
+              "names": Map {
+                "Stroke" => 1,
+                "StorageStroke" => 0.5,
+              },
+              "type": "LiveObject",
+            },
+          },
+        },
+        "names": Map {
+          "Storage" => 1,
+        },
+        "type": "LiveObject",
+      },
+      "Fill" => {
+        "atomic": false,
+        "fields": Map {
+          "mesh" => {
+            "optional": false,
+            "value": {
+              "fields": Map {
+                "b" => {
+                  "optional": false,
+                  "value": {
+                    "names": Map {
+                      "B" => 1,
+                      "MeshB" => 0.5,
+                      "FillMeshB" => 0.25,
+                      "StorageFillMeshB" => 0.125,
+                    },
+                    "type": "Integer",
+                    "values": Set {
+                      1,
+                    },
+                  },
+                },
+                "a" => {
+                  "optional": false,
+                  "value": {
+                    "names": Map {
+                      "A" => 1,
+                      "MeshA" => 0.5,
+                      "StrokeMeshA" => 0.25,
+                      "StorageStrokeMeshA" => 0.125,
+                    },
+                    "type": "Integer",
+                    "values": Set {
+                      1,
+                    },
+                  },
+                },
+              },
+              "names": Map {
+                "Mesh" => 2,
+                "FillMesh" => 0.5,
+                "StorageFillMesh" => 0.25,
+                "StrokeMesh" => 0.5,
+                "StorageStrokeMesh" => 0.25,
+              },
+              "type": "Object",
+            },
+          },
+          "sole" => {
+            "optional": false,
+            "value": {
+              "names": Map {
+                "Sole" => 1,
+                "FillSole" => 0.5,
+                "StorageFillSole" => 0.25,
+              },
+              "type": "String",
+              "values": Set {
+                "#808960",
+              },
+            },
+          },
+          "stripes" => {
+            "optional": false,
+            "value": {
+              "names": Map {
+                "Stripe" => 1,
+                "FillStripe" => 0.5,
+                "StorageFillStripe" => 0.25,
+              },
+              "type": "String",
+              "values": Set {
+                "#e3fccb",
+              },
+            },
+          },
+          "laces" => {
+            "optional": false,
+            "value": {
+              "names": Map {
+                "Lace" => 1,
+                "FillLace" => 0.5,
+                "StorageFillLace" => 0.25,
+              },
+              "type": "String",
+              "values": Set {
+                "#c3f4bb",
+              },
+            },
+          },
+        },
+        "names": Map {
+          "Fill" => 1,
+          "StorageFill" => 0.5,
+        },
+        "type": "LiveObject",
+      },
+      "Stroke" => {
+        "atomic": false,
+        "fields": Map {
+          "mesh" => {
+            "optional": false,
+            "value": {
+              "fields": Map {
+                "b" => {
+                  "optional": false,
+                  "value": {
+                    "names": Map {
+                      "B" => 1,
+                      "MeshB" => 0.5,
+                      "FillMeshB" => 0.25,
+                      "StorageFillMeshB" => 0.125,
+                    },
+                    "type": "Integer",
+                    "values": Set {
+                      1,
+                    },
+                  },
+                },
+                "a" => {
+                  "optional": false,
+                  "value": {
+                    "names": Map {
+                      "A" => 1,
+                      "MeshA" => 0.5,
+                      "StrokeMeshA" => 0.25,
+                      "StorageStrokeMeshA" => 0.125,
+                    },
+                    "type": "Integer",
+                    "values": Set {
+                      1,
+                    },
+                  },
+                },
+              },
+              "names": Map {
+                "Mesh" => 2,
+                "FillMesh" => 0.5,
+                "StorageFillMesh" => 0.25,
+                "StrokeMesh" => 0.5,
+                "StorageStrokeMesh" => 0.25,
+              },
+              "type": "Object",
+            },
+          },
+          "sole" => {
+            "optional": false,
+            "value": {
+              "names": Map {
+                "Sole" => 1,
+                "StrokeSole" => 0.5,
+                "StorageStrokeSole" => 0.25,
+              },
+              "type": "String",
+              "values": Set {
+                "#800000",
+              },
+            },
+          },
+          "laces" => {
+            "optional": false,
+            "value": {
+              "names": Map {
+                "Lace" => 1,
+                "StrokeLace" => 0.5,
+                "StorageStrokeLace" => 0.25,
+              },
+              "type": "String",
+              "values": Set {
+                "#00ff00",
+              },
+            },
+          },
+        },
+        "names": Map {
+          "Stroke" => 1,
+          "StorageStroke" => 0.5,
+        },
+        "type": "LiveObject",
+      },
+      "Mesh" => {
+        "fields": Map {
+          "b" => {
+            "optional": false,
+            "value": {
+              "names": Map {
+                "B" => 1,
+                "MeshB" => 0.5,
+                "FillMeshB" => 0.25,
+                "StorageFillMeshB" => 0.125,
+              },
+              "type": "Integer",
+              "values": Set {
+                1,
+              },
+            },
+          },
+          "a" => {
+            "optional": false,
+            "value": {
+              "names": Map {
+                "A" => 1,
+                "MeshA" => 0.5,
+                "StrokeMeshA" => 0.25,
+                "StorageStrokeMeshA" => 0.125,
+              },
+              "type": "Integer",
+              "values": Set {
+                1,
+              },
+            },
+          },
+        },
+        "names": Map {
+          "Mesh" => 2,
+          "FillMesh" => 0.5,
+          "StorageFillMesh" => 0.25,
+          "StrokeMesh" => 0.5,
+          "StorageStrokeMesh" => 0.25,
+        },
+        "type": "Object",
+      },
+    },
+    "_reverseMap": Map {
+      {
+        "atomic": true,
+        "fields": Map {
+          "fills" => {
+            "optional": false,
+            "value": {
+              "atomic": false,
+              "fields": Map {
+                "mesh" => {
+                  "optional": false,
+                  "value": {
+                    "fields": Map {
+                      "b" => {
+                        "optional": false,
+                        "value": {
+                          "names": Map {
+                            "B" => 1,
+                            "MeshB" => 0.5,
+                            "FillMeshB" => 0.25,
+                            "StorageFillMeshB" => 0.125,
+                          },
+                          "type": "Integer",
+                          "values": Set {
+                            1,
+                          },
+                        },
+                      },
+                      "a" => {
+                        "optional": false,
+                        "value": {
+                          "names": Map {
+                            "A" => 1,
+                            "MeshA" => 0.5,
+                            "StrokeMeshA" => 0.25,
+                            "StorageStrokeMeshA" => 0.125,
+                          },
+                          "type": "Integer",
+                          "values": Set {
+                            1,
+                          },
+                        },
+                      },
+                    },
+                    "names": Map {
+                      "Mesh" => 2,
+                      "FillMesh" => 0.5,
+                      "StorageFillMesh" => 0.25,
+                      "StrokeMesh" => 0.5,
+                      "StorageStrokeMesh" => 0.25,
+                    },
+                    "type": "Object",
+                  },
+                },
+                "sole" => {
+                  "optional": false,
+                  "value": {
+                    "names": Map {
+                      "Sole" => 1,
+                      "FillSole" => 0.5,
+                      "StorageFillSole" => 0.25,
+                    },
+                    "type": "String",
+                    "values": Set {
+                      "#808960",
+                    },
+                  },
+                },
+                "stripes" => {
+                  "optional": false,
+                  "value": {
+                    "names": Map {
+                      "Stripe" => 1,
+                      "FillStripe" => 0.5,
+                      "StorageFillStripe" => 0.25,
+                    },
+                    "type": "String",
+                    "values": Set {
+                      "#e3fccb",
+                    },
+                  },
+                },
+                "laces" => {
+                  "optional": false,
+                  "value": {
+                    "names": Map {
+                      "Lace" => 1,
+                      "FillLace" => 0.5,
+                      "StorageFillLace" => 0.25,
+                    },
+                    "type": "String",
+                    "values": Set {
+                      "#c3f4bb",
+                    },
+                  },
+                },
+              },
+              "names": Map {
+                "Fill" => 1,
+                "StorageFill" => 0.5,
+              },
+              "type": "LiveObject",
+            },
+          },
+          "strokes" => {
+            "optional": false,
+            "value": {
+              "atomic": false,
+              "fields": Map {
+                "mesh" => {
+                  "optional": false,
+                  "value": {
+                    "fields": Map {
+                      "b" => {
+                        "optional": false,
+                        "value": {
+                          "names": Map {
+                            "B" => 1,
+                            "MeshB" => 0.5,
+                            "FillMeshB" => 0.25,
+                            "StorageFillMeshB" => 0.125,
+                          },
+                          "type": "Integer",
+                          "values": Set {
+                            1,
+                          },
+                        },
+                      },
+                      "a" => {
+                        "optional": false,
+                        "value": {
+                          "names": Map {
+                            "A" => 1,
+                            "MeshA" => 0.5,
+                            "StrokeMeshA" => 0.25,
+                            "StorageStrokeMeshA" => 0.125,
+                          },
+                          "type": "Integer",
+                          "values": Set {
+                            1,
+                          },
+                        },
+                      },
+                    },
+                    "names": Map {
+                      "Mesh" => 2,
+                      "FillMesh" => 0.5,
+                      "StorageFillMesh" => 0.25,
+                      "StrokeMesh" => 0.5,
+                      "StorageStrokeMesh" => 0.25,
+                    },
+                    "type": "Object",
+                  },
+                },
+                "sole" => {
+                  "optional": false,
+                  "value": {
+                    "names": Map {
+                      "Sole" => 1,
+                      "StrokeSole" => 0.5,
+                      "StorageStrokeSole" => 0.25,
+                    },
+                    "type": "String",
+                    "values": Set {
+                      "#800000",
+                    },
+                  },
+                },
+                "laces" => {
+                  "optional": false,
+                  "value": {
+                    "names": Map {
+                      "Lace" => 1,
+                      "StrokeLace" => 0.5,
+                      "StorageStrokeLace" => 0.25,
+                    },
+                    "type": "String",
+                    "values": Set {
+                      "#00ff00",
+                    },
+                  },
+                },
+              },
+              "names": Map {
+                "Stroke" => 1,
+                "StorageStroke" => 0.5,
+              },
+              "type": "LiveObject",
+            },
+          },
+        },
+        "names": Map {
+          "Storage" => 1,
+        },
+        "type": "LiveObject",
+      } => "Storage",
+      {
+        "atomic": false,
+        "fields": Map {
+          "mesh" => {
+            "optional": false,
+            "value": {
+              "fields": Map {
+                "b" => {
+                  "optional": false,
+                  "value": {
+                    "names": Map {
+                      "B" => 1,
+                      "MeshB" => 0.5,
+                      "FillMeshB" => 0.25,
+                      "StorageFillMeshB" => 0.125,
+                    },
+                    "type": "Integer",
+                    "values": Set {
+                      1,
+                    },
+                  },
+                },
+                "a" => {
+                  "optional": false,
+                  "value": {
+                    "names": Map {
+                      "A" => 1,
+                      "MeshA" => 0.5,
+                      "StrokeMeshA" => 0.25,
+                      "StorageStrokeMeshA" => 0.125,
+                    },
+                    "type": "Integer",
+                    "values": Set {
+                      1,
+                    },
+                  },
+                },
+              },
+              "names": Map {
+                "Mesh" => 2,
+                "FillMesh" => 0.5,
+                "StorageFillMesh" => 0.25,
+                "StrokeMesh" => 0.5,
+                "StorageStrokeMesh" => 0.25,
+              },
+              "type": "Object",
+            },
+          },
+          "sole" => {
+            "optional": false,
+            "value": {
+              "names": Map {
+                "Sole" => 1,
+                "FillSole" => 0.5,
+                "StorageFillSole" => 0.25,
+              },
+              "type": "String",
+              "values": Set {
+                "#808960",
+              },
+            },
+          },
+          "stripes" => {
+            "optional": false,
+            "value": {
+              "names": Map {
+                "Stripe" => 1,
+                "FillStripe" => 0.5,
+                "StorageFillStripe" => 0.25,
+              },
+              "type": "String",
+              "values": Set {
+                "#e3fccb",
+              },
+            },
+          },
+          "laces" => {
+            "optional": false,
+            "value": {
+              "names": Map {
+                "Lace" => 1,
+                "FillLace" => 0.5,
+                "StorageFillLace" => 0.25,
+              },
+              "type": "String",
+              "values": Set {
+                "#c3f4bb",
+              },
+            },
+          },
+        },
+        "names": Map {
+          "Fill" => 1,
+          "StorageFill" => 0.5,
+        },
+        "type": "LiveObject",
+      } => "Fill",
+      {
+        "atomic": false,
+        "fields": Map {
+          "mesh" => {
+            "optional": false,
+            "value": {
+              "fields": Map {
+                "b" => {
+                  "optional": false,
+                  "value": {
+                    "names": Map {
+                      "B" => 1,
+                      "MeshB" => 0.5,
+                      "FillMeshB" => 0.25,
+                      "StorageFillMeshB" => 0.125,
+                    },
+                    "type": "Integer",
+                    "values": Set {
+                      1,
+                    },
+                  },
+                },
+                "a" => {
+                  "optional": false,
+                  "value": {
+                    "names": Map {
+                      "A" => 1,
+                      "MeshA" => 0.5,
+                      "StrokeMeshA" => 0.25,
+                      "StorageStrokeMeshA" => 0.125,
+                    },
+                    "type": "Integer",
+                    "values": Set {
+                      1,
+                    },
+                  },
+                },
+              },
+              "names": Map {
+                "Mesh" => 2,
+                "FillMesh" => 0.5,
+                "StorageFillMesh" => 0.25,
+                "StrokeMesh" => 0.5,
+                "StorageStrokeMesh" => 0.25,
+              },
+              "type": "Object",
+            },
+          },
+          "sole" => {
+            "optional": false,
+            "value": {
+              "names": Map {
+                "Sole" => 1,
+                "StrokeSole" => 0.5,
+                "StorageStrokeSole" => 0.25,
+              },
+              "type": "String",
+              "values": Set {
+                "#800000",
+              },
+            },
+          },
+          "laces" => {
+            "optional": false,
+            "value": {
+              "names": Map {
+                "Lace" => 1,
+                "StrokeLace" => 0.5,
+                "StorageStrokeLace" => 0.25,
+              },
+              "type": "String",
+              "values": Set {
+                "#00ff00",
+              },
+            },
+          },
+        },
+        "names": Map {
+          "Stroke" => 1,
+          "StorageStroke" => 0.5,
+        },
+        "type": "LiveObject",
+      } => "Stroke",
+      {
+        "fields": Map {
+          "b" => {
+            "optional": false,
+            "value": {
+              "names": Map {
+                "B" => 1,
+                "MeshB" => 0.5,
+                "FillMeshB" => 0.25,
+                "StorageFillMeshB" => 0.125,
+              },
+              "type": "Integer",
+              "values": Set {
+                1,
+              },
+            },
+          },
+          "a" => {
+            "optional": false,
+            "value": {
+              "names": Map {
+                "A" => 1,
+                "MeshA" => 0.5,
+                "StrokeMeshA" => 0.25,
+                "StorageStrokeMeshA" => 0.125,
+              },
+              "type": "Integer",
+              "values": Set {
+                1,
+              },
+            },
+          },
+        },
+        "names": Map {
+          "Mesh" => 2,
+          "FillMesh" => 0.5,
+          "StorageFillMesh" => 0.25,
+          "StrokeMesh" => 0.5,
+          "StorageStrokeMesh" => 0.25,
+        },
+        "type": "Object",
+      } => "Mesh",
+    },
+  },
+  "rootTypeReferences": Map {
+    {
+      "atomic": false,
+      "fields": Map {
+        "mesh" => {
+          "optional": false,
+          "value": {
+            "fields": Map {
+              "b" => {
+                "optional": false,
+                "value": {
+                  "names": Map {
+                    "B" => 1,
+                    "MeshB" => 0.5,
+                    "FillMeshB" => 0.25,
+                    "StorageFillMeshB" => 0.125,
+                  },
+                  "type": "Integer",
+                  "values": Set {
+                    1,
+                  },
+                },
+              },
+              "a" => {
+                "optional": false,
+                "value": {
+                  "names": Map {
+                    "A" => 1,
+                    "MeshA" => 0.5,
+                    "StrokeMeshA" => 0.25,
+                    "StorageStrokeMeshA" => 0.125,
+                  },
+                  "type": "Integer",
+                  "values": Set {
+                    1,
+                  },
+                },
+              },
+            },
+            "names": Map {
+              "Mesh" => 2,
+              "FillMesh" => 0.5,
+              "StorageFillMesh" => 0.25,
+              "StrokeMesh" => 0.5,
+              "StorageStrokeMesh" => 0.25,
+            },
+            "type": "Object",
+          },
+        },
+        "sole" => {
+          "optional": false,
+          "value": {
+            "names": Map {
+              "Sole" => 1,
+              "FillSole" => 0.5,
+              "StorageFillSole" => 0.25,
+            },
+            "type": "String",
+            "values": Set {
+              "#808960",
+            },
+          },
+        },
+        "stripes" => {
+          "optional": false,
+          "value": {
+            "names": Map {
+              "Stripe" => 1,
+              "FillStripe" => 0.5,
+              "StorageFillStripe" => 0.25,
+            },
+            "type": "String",
+            "values": Set {
+              "#e3fccb",
+            },
+          },
+        },
+        "laces" => {
+          "optional": false,
+          "value": {
+            "names": Map {
+              "Lace" => 1,
+              "FillLace" => 0.5,
+              "StorageFillLace" => 0.25,
+            },
+            "type": "String",
+            "values": Set {
+              "#c3f4bb",
+            },
+          },
+        },
+      },
+      "names": Map {
+        "Fill" => 1,
+        "StorageFill" => 0.5,
+      },
+      "type": "LiveObject",
+    } => Set {
+      {
+        "optional": false,
+        "value": {
+          "atomic": false,
+          "fields": Map {
+            "mesh" => {
+              "optional": false,
+              "value": {
+                "fields": Map {
+                  "b" => {
+                    "optional": false,
+                    "value": {
+                      "names": Map {
+                        "B" => 1,
+                        "MeshB" => 0.5,
+                        "FillMeshB" => 0.25,
+                        "StorageFillMeshB" => 0.125,
+                      },
+                      "type": "Integer",
+                      "values": Set {
+                        1,
+                      },
+                    },
+                  },
+                  "a" => {
+                    "optional": false,
+                    "value": {
+                      "names": Map {
+                        "A" => 1,
+                        "MeshA" => 0.5,
+                        "StrokeMeshA" => 0.25,
+                        "StorageStrokeMeshA" => 0.125,
+                      },
+                      "type": "Integer",
+                      "values": Set {
+                        1,
+                      },
+                    },
+                  },
+                },
+                "names": Map {
+                  "Mesh" => 2,
+                  "FillMesh" => 0.5,
+                  "StorageFillMesh" => 0.25,
+                  "StrokeMesh" => 0.5,
+                  "StorageStrokeMesh" => 0.25,
+                },
+                "type": "Object",
+              },
+            },
+            "sole" => {
+              "optional": false,
+              "value": {
+                "names": Map {
+                  "Sole" => 1,
+                  "FillSole" => 0.5,
+                  "StorageFillSole" => 0.25,
+                },
+                "type": "String",
+                "values": Set {
+                  "#808960",
+                },
+              },
+            },
+            "stripes" => {
+              "optional": false,
+              "value": {
+                "names": Map {
+                  "Stripe" => 1,
+                  "FillStripe" => 0.5,
+                  "StorageFillStripe" => 0.25,
+                },
+                "type": "String",
+                "values": Set {
+                  "#e3fccb",
+                },
+              },
+            },
+            "laces" => {
+              "optional": false,
+              "value": {
+                "names": Map {
+                  "Lace" => 1,
+                  "FillLace" => 0.5,
+                  "StorageFillLace" => 0.25,
+                },
+                "type": "String",
+                "values": Set {
+                  "#c3f4bb",
+                },
+              },
+            },
+          },
+          "names": Map {
+            "Fill" => 1,
+            "StorageFill" => 0.5,
+          },
+          "type": "LiveObject",
+        },
+      },
+    },
+    {
+      "fields": Map {
+        "b" => {
+          "optional": false,
+          "value": {
+            "names": Map {
+              "B" => 1,
+              "MeshB" => 0.5,
+              "FillMeshB" => 0.25,
+              "StorageFillMeshB" => 0.125,
+            },
+            "type": "Integer",
+            "values": Set {
+              1,
+            },
+          },
+        },
+      },
+      "names": Map {
+        "Mesh" => 1,
+        "FillMesh" => 0.5,
+        "StorageFillMesh" => 0.25,
+      },
+      "type": "Object",
+    } => Set {
+      {
+        "optional": false,
+        "value": {
+          "fields": Map {
+            "b" => {
+              "optional": false,
+              "value": {
+                "names": Map {
+                  "B" => 1,
+                  "MeshB" => 0.5,
+                  "FillMeshB" => 0.25,
+                  "StorageFillMeshB" => 0.125,
+                },
+                "type": "Integer",
+                "values": Set {
+                  1,
+                },
+              },
+            },
+            "a" => {
+              "optional": false,
+              "value": {
+                "names": Map {
+                  "A" => 1,
+                  "MeshA" => 0.5,
+                  "StrokeMeshA" => 0.25,
+                  "StorageStrokeMeshA" => 0.125,
+                },
+                "type": "Integer",
+                "values": Set {
+                  1,
+                },
+              },
+            },
+          },
+          "names": Map {
+            "Mesh" => 2,
+            "FillMesh" => 0.5,
+            "StorageFillMesh" => 0.25,
+            "StrokeMesh" => 0.5,
+            "StorageStrokeMesh" => 0.25,
+          },
+          "type": "Object",
+        },
+      },
+      {
+        "optional": false,
+        "value": {
+          "fields": Map {
+            "b" => {
+              "optional": false,
+              "value": {
+                "names": Map {
+                  "B" => 1,
+                  "MeshB" => 0.5,
+                  "FillMeshB" => 0.25,
+                  "StorageFillMeshB" => 0.125,
+                },
+                "type": "Integer",
+                "values": Set {
+                  1,
+                },
+              },
+            },
+            "a" => {
+              "optional": false,
+              "value": {
+                "names": Map {
+                  "A" => 1,
+                  "MeshA" => 0.5,
+                  "StrokeMeshA" => 0.25,
+                  "StorageStrokeMeshA" => 0.125,
+                },
+                "type": "Integer",
+                "values": Set {
+                  1,
+                },
+              },
+            },
+          },
+          "names": Map {
+            "Mesh" => 2,
+            "FillMesh" => 0.5,
+            "StorageFillMesh" => 0.25,
+            "StrokeMesh" => 0.5,
+            "StorageStrokeMesh" => 0.25,
+          },
+          "type": "Object",
+        },
+      },
+    },
+    {
+      "atomic": false,
+      "fields": Map {
+        "mesh" => {
+          "optional": false,
+          "value": {
+            "fields": Map {
+              "b" => {
+                "optional": false,
+                "value": {
+                  "names": Map {
+                    "B" => 1,
+                    "MeshB" => 0.5,
+                    "FillMeshB" => 0.25,
+                    "StorageFillMeshB" => 0.125,
+                  },
+                  "type": "Integer",
+                  "values": Set {
+                    1,
+                  },
+                },
+              },
+              "a" => {
+                "optional": false,
+                "value": {
+                  "names": Map {
+                    "A" => 1,
+                    "MeshA" => 0.5,
+                    "StrokeMeshA" => 0.25,
+                    "StorageStrokeMeshA" => 0.125,
+                  },
+                  "type": "Integer",
+                  "values": Set {
+                    1,
+                  },
+                },
+              },
+            },
+            "names": Map {
+              "Mesh" => 2,
+              "FillMesh" => 0.5,
+              "StorageFillMesh" => 0.25,
+              "StrokeMesh" => 0.5,
+              "StorageStrokeMesh" => 0.25,
+            },
+            "type": "Object",
+          },
+        },
+        "sole" => {
+          "optional": false,
+          "value": {
+            "names": Map {
+              "Sole" => 1,
+              "StrokeSole" => 0.5,
+              "StorageStrokeSole" => 0.25,
+            },
+            "type": "String",
+            "values": Set {
+              "#800000",
+            },
+          },
+        },
+        "laces" => {
+          "optional": false,
+          "value": {
+            "names": Map {
+              "Lace" => 1,
+              "StrokeLace" => 0.5,
+              "StorageStrokeLace" => 0.25,
+            },
+            "type": "String",
+            "values": Set {
+              "#00ff00",
+            },
+          },
+        },
+      },
+      "names": Map {
+        "Stroke" => 1,
+        "StorageStroke" => 0.5,
+      },
+      "type": "LiveObject",
+    } => Set {
+      {
+        "optional": false,
+        "value": {
+          "atomic": false,
+          "fields": Map {
+            "mesh" => {
+              "optional": false,
+              "value": {
+                "fields": Map {
+                  "b" => {
+                    "optional": false,
+                    "value": {
+                      "names": Map {
+                        "B" => 1,
+                        "MeshB" => 0.5,
+                        "FillMeshB" => 0.25,
+                        "StorageFillMeshB" => 0.125,
+                      },
+                      "type": "Integer",
+                      "values": Set {
+                        1,
+                      },
+                    },
+                  },
+                  "a" => {
+                    "optional": false,
+                    "value": {
+                      "names": Map {
+                        "A" => 1,
+                        "MeshA" => 0.5,
+                        "StrokeMeshA" => 0.25,
+                        "StorageStrokeMeshA" => 0.125,
+                      },
+                      "type": "Integer",
+                      "values": Set {
+                        1,
+                      },
+                    },
+                  },
+                },
+                "names": Map {
+                  "Mesh" => 2,
+                  "FillMesh" => 0.5,
+                  "StorageFillMesh" => 0.25,
+                  "StrokeMesh" => 0.5,
+                  "StorageStrokeMesh" => 0.25,
+                },
+                "type": "Object",
+              },
+            },
+            "sole" => {
+              "optional": false,
+              "value": {
+                "names": Map {
+                  "Sole" => 1,
+                  "StrokeSole" => 0.5,
+                  "StorageStrokeSole" => 0.25,
+                },
+                "type": "String",
+                "values": Set {
+                  "#800000",
+                },
+              },
+            },
+            "laces" => {
+              "optional": false,
+              "value": {
+                "names": Map {
+                  "Lace" => 1,
+                  "StrokeLace" => 0.5,
+                  "StorageStrokeLace" => 0.25,
+                },
+                "type": "String",
+                "values": Set {
+                  "#00ff00",
+                },
+              },
+            },
+          },
+          "names": Map {
+            "Stroke" => 1,
+            "StorageStroke" => 0.5,
+          },
+          "type": "LiveObject",
+        },
+      },
+    },
+    {
+      "fields": Map {
+        "a" => {
+          "optional": false,
+          "value": {
+            "names": Map {
+              "A" => 1,
+              "MeshA" => 0.5,
+              "StrokeMeshA" => 0.25,
+              "StorageStrokeMeshA" => 0.125,
+            },
+            "type": "Integer",
+            "values": Set {
+              1,
+            },
+          },
+        },
+      },
+      "names": Map {
+        "Mesh" => 1,
+        "StrokeMesh" => 0.5,
+        "StorageStrokeMesh" => 0.25,
+      },
+      "type": "Object",
+    } => Set {
+      {
+        "optional": false,
+        "value": {
+          "fields": Map {
+            "b" => {
+              "optional": false,
+              "value": {
+                "names": Map {
+                  "B" => 1,
+                  "MeshB" => 0.5,
+                  "FillMeshB" => 0.25,
+                  "StorageFillMeshB" => 0.125,
+                },
+                "type": "Integer",
+                "values": Set {
+                  1,
+                },
+              },
+            },
+            "a" => {
+              "optional": false,
+              "value": {
+                "names": Map {
+                  "A" => 1,
+                  "MeshA" => 0.5,
+                  "StrokeMeshA" => 0.25,
+                  "StorageStrokeMeshA" => 0.125,
+                },
+                "type": "Integer",
+                "values": Set {
+                  1,
+                },
+              },
+            },
+          },
+          "names": Map {
+            "Mesh" => 2,
+            "FillMesh" => 0.5,
+            "StorageFillMesh" => 0.25,
+            "StrokeMesh" => 0.5,
+            "StorageStrokeMesh" => 0.25,
+          },
+          "type": "Object",
+        },
+      },
+    },
+    {
+      "fields": Map {
+        "b" => {
+          "optional": false,
+          "value": {
+            "names": Map {
+              "B" => 1,
+              "MeshB" => 0.5,
+              "FillMeshB" => 0.25,
+              "StorageFillMeshB" => 0.125,
+            },
+            "type": "Integer",
+            "values": Set {
+              1,
+            },
+          },
+        },
+        "a" => {
+          "optional": false,
+          "value": {
+            "names": Map {
+              "A" => 1,
+              "MeshA" => 0.5,
+              "StrokeMeshA" => 0.25,
+              "StorageStrokeMeshA" => 0.125,
+            },
+            "type": "Integer",
+            "values": Set {
+              1,
+            },
+          },
+        },
+      },
+      "names": Map {
+        "Mesh" => 2,
+        "FillMesh" => 0.5,
+        "StorageFillMesh" => 0.25,
+        "StrokeMesh" => 0.5,
+        "StorageStrokeMesh" => 0.25,
+      },
+      "type": "Object",
+    } => Set {
+      {
+        "optional": false,
+        "value": {
+          "fields": Map {
+            "b" => {
+              "optional": false,
+              "value": {
+                "names": Map {
+                  "B" => 1,
+                  "MeshB" => 0.5,
+                  "FillMeshB" => 0.25,
+                  "StorageFillMeshB" => 0.125,
+                },
+                "type": "Integer",
+                "values": Set {
+                  1,
+                },
+              },
+            },
+            "a" => {
+              "optional": false,
+              "value": {
+                "names": Map {
+                  "A" => 1,
+                  "MeshA" => 0.5,
+                  "StrokeMeshA" => 0.25,
+                  "StorageStrokeMeshA" => 0.125,
+                },
+                "type": "Integer",
+                "values": Set {
+                  1,
+                },
+              },
+            },
+          },
+          "names": Map {
+            "Mesh" => 2,
+            "FillMesh" => 0.5,
+            "StorageFillMesh" => 0.25,
+            "StrokeMesh" => 0.5,
+            "StorageStrokeMesh" => 0.25,
+          },
+          "type": "Object",
+        },
+      },
+    },
+  },
+  "rootTypes": Set {
+    {
+      "atomic": true,
+      "fields": Map {
+        "fills" => {
+          "optional": false,
+          "value": {
+            "atomic": false,
+            "fields": Map {
+              "mesh" => {
+                "optional": false,
+                "value": {
+                  "fields": Map {
+                    "b" => {
+                      "optional": false,
+                      "value": {
+                        "names": Map {
+                          "B" => 1,
+                          "MeshB" => 0.5,
+                          "FillMeshB" => 0.25,
+                          "StorageFillMeshB" => 0.125,
+                        },
+                        "type": "Integer",
+                        "values": Set {
+                          1,
+                        },
+                      },
+                    },
+                    "a" => {
+                      "optional": false,
+                      "value": {
+                        "names": Map {
+                          "A" => 1,
+                          "MeshA" => 0.5,
+                          "StrokeMeshA" => 0.25,
+                          "StorageStrokeMeshA" => 0.125,
+                        },
+                        "type": "Integer",
+                        "values": Set {
+                          1,
+                        },
+                      },
+                    },
+                  },
+                  "names": Map {
+                    "Mesh" => 2,
+                    "FillMesh" => 0.5,
+                    "StorageFillMesh" => 0.25,
+                    "StrokeMesh" => 0.5,
+                    "StorageStrokeMesh" => 0.25,
+                  },
+                  "type": "Object",
+                },
+              },
+              "sole" => {
+                "optional": false,
+                "value": {
+                  "names": Map {
+                    "Sole" => 1,
+                    "FillSole" => 0.5,
+                    "StorageFillSole" => 0.25,
+                  },
+                  "type": "String",
+                  "values": Set {
+                    "#808960",
+                  },
+                },
+              },
+              "stripes" => {
+                "optional": false,
+                "value": {
+                  "names": Map {
+                    "Stripe" => 1,
+                    "FillStripe" => 0.5,
+                    "StorageFillStripe" => 0.25,
+                  },
+                  "type": "String",
+                  "values": Set {
+                    "#e3fccb",
+                  },
+                },
+              },
+              "laces" => {
+                "optional": false,
+                "value": {
+                  "names": Map {
+                    "Lace" => 1,
+                    "FillLace" => 0.5,
+                    "StorageFillLace" => 0.25,
+                  },
+                  "type": "String",
+                  "values": Set {
+                    "#c3f4bb",
+                  },
+                },
+              },
+            },
+            "names": Map {
+              "Fill" => 1,
+              "StorageFill" => 0.5,
+            },
+            "type": "LiveObject",
+          },
+        },
+        "strokes" => {
+          "optional": false,
+          "value": {
+            "atomic": false,
+            "fields": Map {
+              "mesh" => {
+                "optional": false,
+                "value": {
+                  "fields": Map {
+                    "b" => {
+                      "optional": false,
+                      "value": {
+                        "names": Map {
+                          "B" => 1,
+                          "MeshB" => 0.5,
+                          "FillMeshB" => 0.25,
+                          "StorageFillMeshB" => 0.125,
+                        },
+                        "type": "Integer",
+                        "values": Set {
+                          1,
+                        },
+                      },
+                    },
+                    "a" => {
+                      "optional": false,
+                      "value": {
+                        "names": Map {
+                          "A" => 1,
+                          "MeshA" => 0.5,
+                          "StrokeMeshA" => 0.25,
+                          "StorageStrokeMeshA" => 0.125,
+                        },
+                        "type": "Integer",
+                        "values": Set {
+                          1,
+                        },
+                      },
+                    },
+                  },
+                  "names": Map {
+                    "Mesh" => 2,
+                    "FillMesh" => 0.5,
+                    "StorageFillMesh" => 0.25,
+                    "StrokeMesh" => 0.5,
+                    "StorageStrokeMesh" => 0.25,
+                  },
+                  "type": "Object",
+                },
+              },
+              "sole" => {
+                "optional": false,
+                "value": {
+                  "names": Map {
+                    "Sole" => 1,
+                    "StrokeSole" => 0.5,
+                    "StorageStrokeSole" => 0.25,
+                  },
+                  "type": "String",
+                  "values": Set {
+                    "#800000",
+                  },
+                },
+              },
+              "laces" => {
+                "optional": false,
+                "value": {
+                  "names": Map {
+                    "Lace" => 1,
+                    "StrokeLace" => 0.5,
+                    "StorageStrokeLace" => 0.25,
+                  },
+                  "type": "String",
+                  "values": Set {
+                    "#00ff00",
+                  },
+                },
+              },
+            },
+            "names": Map {
+              "Stroke" => 1,
+              "StorageStroke" => 0.5,
+            },
+            "type": "LiveObject",
+          },
+        },
+      },
+      "names": Map {
+        "Storage" => 1,
+      },
+      "type": "LiveObject",
+    },
+    {
+      "atomic": false,
+      "fields": Map {
+        "mesh" => {
+          "optional": false,
+          "value": {
+            "fields": Map {
+              "b" => {
+                "optional": false,
+                "value": {
+                  "names": Map {
+                    "B" => 1,
+                    "MeshB" => 0.5,
+                    "FillMeshB" => 0.25,
+                    "StorageFillMeshB" => 0.125,
+                  },
+                  "type": "Integer",
+                  "values": Set {
+                    1,
+                  },
+                },
+              },
+              "a" => {
+                "optional": false,
+                "value": {
+                  "names": Map {
+                    "A" => 1,
+                    "MeshA" => 0.5,
+                    "StrokeMeshA" => 0.25,
+                    "StorageStrokeMeshA" => 0.125,
+                  },
+                  "type": "Integer",
+                  "values": Set {
+                    1,
+                  },
+                },
+              },
+            },
+            "names": Map {
+              "Mesh" => 2,
+              "FillMesh" => 0.5,
+              "StorageFillMesh" => 0.25,
+              "StrokeMesh" => 0.5,
+              "StorageStrokeMesh" => 0.25,
+            },
+            "type": "Object",
+          },
+        },
+        "sole" => {
+          "optional": false,
+          "value": {
+            "names": Map {
+              "Sole" => 1,
+              "FillSole" => 0.5,
+              "StorageFillSole" => 0.25,
+            },
+            "type": "String",
+            "values": Set {
+              "#808960",
+            },
+          },
+        },
+        "stripes" => {
+          "optional": false,
+          "value": {
+            "names": Map {
+              "Stripe" => 1,
+              "FillStripe" => 0.5,
+              "StorageFillStripe" => 0.25,
+            },
+            "type": "String",
+            "values": Set {
+              "#e3fccb",
+            },
+          },
+        },
+        "laces" => {
+          "optional": false,
+          "value": {
+            "names": Map {
+              "Lace" => 1,
+              "FillLace" => 0.5,
+              "StorageFillLace" => 0.25,
+            },
+            "type": "String",
+            "values": Set {
+              "#c3f4bb",
+            },
+          },
+        },
+      },
+      "names": Map {
+        "Fill" => 1,
+        "StorageFill" => 0.5,
+      },
+      "type": "LiveObject",
+    },
+    {
+      "atomic": false,
+      "fields": Map {
+        "mesh" => {
+          "optional": false,
+          "value": {
+            "fields": Map {
+              "b" => {
+                "optional": false,
+                "value": {
+                  "names": Map {
+                    "B" => 1,
+                    "MeshB" => 0.5,
+                    "FillMeshB" => 0.25,
+                    "StorageFillMeshB" => 0.125,
+                  },
+                  "type": "Integer",
+                  "values": Set {
+                    1,
+                  },
+                },
+              },
+              "a" => {
+                "optional": false,
+                "value": {
+                  "names": Map {
+                    "A" => 1,
+                    "MeshA" => 0.5,
+                    "StrokeMeshA" => 0.25,
+                    "StorageStrokeMeshA" => 0.125,
+                  },
+                  "type": "Integer",
+                  "values": Set {
+                    1,
+                  },
+                },
+              },
+            },
+            "names": Map {
+              "Mesh" => 2,
+              "FillMesh" => 0.5,
+              "StorageFillMesh" => 0.25,
+              "StrokeMesh" => 0.5,
+              "StorageStrokeMesh" => 0.25,
+            },
+            "type": "Object",
+          },
+        },
+        "sole" => {
+          "optional": false,
+          "value": {
+            "names": Map {
+              "Sole" => 1,
+              "StrokeSole" => 0.5,
+              "StorageStrokeSole" => 0.25,
+            },
+            "type": "String",
+            "values": Set {
+              "#800000",
+            },
+          },
+        },
+        "laces" => {
+          "optional": false,
+          "value": {
+            "names": Map {
+              "Lace" => 1,
+              "StrokeLace" => 0.5,
+              "StorageStrokeLace" => 0.25,
+            },
+            "type": "String",
+            "values": Set {
+              "#00ff00",
+            },
+          },
+        },
+      },
+      "names": Map {
+        "Stroke" => 1,
+        "StorageStroke" => 0.5,
+      },
+      "type": "LiveObject",
+    },
+    {
+      "fields": Map {
+        "b" => {
+          "optional": false,
+          "value": {
+            "names": Map {
+              "B" => 1,
+              "MeshB" => 0.5,
+              "FillMeshB" => 0.25,
+              "StorageFillMeshB" => 0.125,
+            },
+            "type": "Integer",
+            "values": Set {
+              1,
+            },
+          },
+        },
+        "a" => {
+          "optional": false,
+          "value": {
+            "names": Map {
+              "A" => 1,
+              "MeshA" => 0.5,
+              "StrokeMeshA" => 0.25,
+              "StorageStrokeMeshA" => 0.125,
+            },
+            "type": "Integer",
+            "values": Set {
+              1,
+            },
+          },
+        },
+      },
+      "names": Map {
+        "Mesh" => 2,
+        "FillMesh" => 0.5,
+        "StorageFillMesh" => 0.25,
+        "StrokeMesh" => 0.5,
+        "StorageStrokeMesh" => 0.25,
+      },
+      "type": "Object",
+    },
+  },
+}
+`;
+
+exports[`inferType correctly infers the "BASIC_MERGE" schema ast 1`] = `
+{
+  "_kind": "Document",
+  "definitions": [
+    {
+      "_kind": "ObjectTypeDefinition",
+      "fields": [
+        {
+          "_kind": "FieldDef",
+          "name": {
+            "_kind": "Identifier",
+            "name": "fills",
+            "range": [
+              0,
+              0,
+            ],
+          },
+          "optional": false,
+          "range": [
+            0,
+            0,
+          ],
+          "type": {
+            "_kind": "TypeRef",
+            "asLiveObject": true,
+            "range": [
+              0,
+              0,
+            ],
+            "ref": {
+              "_kind": "TypeName",
+              "name": "Fill",
+              "range": [
+                0,
+                0,
+              ],
+            },
+          },
+        },
+        {
+          "_kind": "FieldDef",
+          "name": {
+            "_kind": "Identifier",
+            "name": "strokes",
+            "range": [
+              0,
+              0,
+            ],
+          },
+          "optional": false,
+          "range": [
+            0,
+            0,
+          ],
+          "type": {
+            "_kind": "TypeRef",
+            "asLiveObject": true,
+            "range": [
+              0,
+              0,
+            ],
+            "ref": {
+              "_kind": "TypeName",
+              "name": "Stroke",
+              "range": [
+                0,
+                0,
+              ],
+            },
+          },
+        },
+      ],
+      "name": {
+        "_kind": "TypeName",
+        "name": "Storage",
+        "range": [
+          0,
+          0,
+        ],
+      },
+      "range": [
+        0,
+        0,
+      ],
+    },
+    {
+      "_kind": "ObjectTypeDefinition",
+      "fields": [
+        {
+          "_kind": "FieldDef",
+          "name": {
+            "_kind": "Identifier",
+            "name": "mesh",
+            "range": [
+              0,
+              0,
+            ],
+          },
+          "optional": false,
+          "range": [
+            0,
+            0,
+          ],
+          "type": {
+            "_kind": "TypeRef",
+            "asLiveObject": false,
+            "range": [
+              0,
+              0,
+            ],
+            "ref": {
+              "_kind": "TypeName",
+              "name": "Mesh",
+              "range": [
+                0,
+                0,
+              ],
+            },
+          },
+        },
+        {
+          "_kind": "FieldDef",
+          "name": {
+            "_kind": "Identifier",
+            "name": "sole",
+            "range": [
+              0,
+              0,
+            ],
+          },
+          "optional": false,
+          "range": [
+            0,
+            0,
+          ],
+          "type": {
+            "_kind": "StringType",
+            "range": [
+              0,
+              0,
+            ],
+          },
+        },
+        {
+          "_kind": "FieldDef",
+          "name": {
+            "_kind": "Identifier",
+            "name": "stripes",
+            "range": [
+              0,
+              0,
+            ],
+          },
+          "optional": false,
+          "range": [
+            0,
+            0,
+          ],
+          "type": {
+            "_kind": "StringType",
+            "range": [
+              0,
+              0,
+            ],
+          },
+        },
+        {
+          "_kind": "FieldDef",
+          "name": {
+            "_kind": "Identifier",
+            "name": "laces",
+            "range": [
+              0,
+              0,
+            ],
+          },
+          "optional": false,
+          "range": [
+            0,
+            0,
+          ],
+          "type": {
+            "_kind": "StringType",
+            "range": [
+              0,
+              0,
+            ],
+          },
+        },
+      ],
+      "name": {
+        "_kind": "TypeName",
+        "name": "Fill",
+        "range": [
+          0,
+          0,
+        ],
+      },
+      "range": [
+        0,
+        0,
+      ],
+    },
+    {
+      "_kind": "ObjectTypeDefinition",
+      "fields": [
+        {
+          "_kind": "FieldDef",
+          "name": {
+            "_kind": "Identifier",
+            "name": "mesh",
+            "range": [
+              0,
+              0,
+            ],
+          },
+          "optional": false,
+          "range": [
+            0,
+            0,
+          ],
+          "type": {
+            "_kind": "TypeRef",
+            "asLiveObject": false,
+            "range": [
+              0,
+              0,
+            ],
+            "ref": {
+              "_kind": "TypeName",
+              "name": "Mesh",
+              "range": [
+                0,
+                0,
+              ],
+            },
+          },
+        },
+        {
+          "_kind": "FieldDef",
+          "name": {
+            "_kind": "Identifier",
+            "name": "sole",
+            "range": [
+              0,
+              0,
+            ],
+          },
+          "optional": false,
+          "range": [
+            0,
+            0,
+          ],
+          "type": {
+            "_kind": "StringType",
+            "range": [
+              0,
+              0,
+            ],
+          },
+        },
+        {
+          "_kind": "FieldDef",
+          "name": {
+            "_kind": "Identifier",
+            "name": "laces",
+            "range": [
+              0,
+              0,
+            ],
+          },
+          "optional": false,
+          "range": [
+            0,
+            0,
+          ],
+          "type": {
+            "_kind": "StringType",
+            "range": [
+              0,
+              0,
+            ],
+          },
+        },
+      ],
+      "name": {
+        "_kind": "TypeName",
+        "name": "Stroke",
+        "range": [
+          0,
+          0,
+        ],
+      },
+      "range": [
+        0,
+        0,
+      ],
+    },
+    {
+      "_kind": "ObjectTypeDefinition",
+      "fields": [
+        {
+          "_kind": "FieldDef",
+          "name": {
+            "_kind": "Identifier",
+            "name": "b",
+            "range": [
+              0,
+              0,
+            ],
+          },
+          "optional": false,
+          "range": [
+            0,
+            0,
+          ],
+          "type": {
+            "_kind": "IntType",
+            "range": [
+              0,
+              0,
+            ],
+          },
+        },
+        {
+          "_kind": "FieldDef",
+          "name": {
+            "_kind": "Identifier",
+            "name": "a",
+            "range": [
+              0,
+              0,
+            ],
+          },
+          "optional": false,
+          "range": [
+            0,
+            0,
+          ],
+          "type": {
+            "_kind": "IntType",
+            "range": [
+              0,
+              0,
+            ],
+          },
+        },
+      ],
+      "name": {
+        "_kind": "TypeName",
+        "name": "Mesh",
+        "range": [
+          0,
+          0,
+        ],
+      },
+      "range": [
+        0,
+        0,
+      ],
+    },
+  ],
+  "range": [
+    0,
+    0,
+  ],
+}
+`;
+
+exports[`inferType correctly infers the "BASIC_MERGE" schema text 1`] = `
+"type Storage {
+  fills: LiveObject<Fill>
+  strokes: LiveObject<Stroke>
+}
+
+type Fill {
+  mesh: Mesh
+  sole: String
+  stripes: String
+  laces: String
+}
+
+type Stroke {
+  mesh: Mesh
+  sole: String
+  laces: String
+}
+
+type Mesh {
+  b: Int
+  a: Int
+}"
+`;
+
+exports[`inferType correctly infers the "BASIC_MERGE" type 1`] = `
+{
+  "atomic": true,
+  "fields": Map {
+    "fills" => {
+      "optional": false,
+      "value": {
+        "atomic": false,
+        "fields": Map {
+          "mesh" => {
+            "optional": false,
+            "value": {
+              "fields": Map {
+                "b" => {
+                  "optional": false,
+                  "value": {
+                    "names": Map {
+                      "B" => 1,
+                      "MeshB" => 0.5,
+                      "FillMeshB" => 0.25,
+                      "StorageFillMeshB" => 0.125,
+                    },
+                    "type": "Integer",
+                    "values": Set {
+                      1,
+                    },
+                  },
+                },
+              },
+              "names": Map {
+                "Mesh" => 1,
+                "FillMesh" => 0.5,
+                "StorageFillMesh" => 0.25,
+              },
+              "type": "Object",
+            },
+          },
+          "sole" => {
+            "optional": false,
+            "value": {
+              "names": Map {
+                "Sole" => 1,
+                "FillSole" => 0.5,
+                "StorageFillSole" => 0.25,
+              },
+              "type": "String",
+              "values": Set {
+                "#808960",
+              },
+            },
+          },
+          "stripes" => {
+            "optional": false,
+            "value": {
+              "names": Map {
+                "Stripe" => 1,
+                "FillStripe" => 0.5,
+                "StorageFillStripe" => 0.25,
+              },
+              "type": "String",
+              "values": Set {
+                "#e3fccb",
+              },
+            },
+          },
+          "laces" => {
+            "optional": false,
+            "value": {
+              "names": Map {
+                "Lace" => 1,
+                "FillLace" => 0.5,
+                "StorageFillLace" => 0.25,
+              },
+              "type": "String",
+              "values": Set {
+                "#c3f4bb",
+              },
+            },
+          },
+        },
+        "names": Map {
+          "Fill" => 1,
+          "StorageFill" => 0.5,
+        },
+        "type": "LiveObject",
+      },
+    },
+    "strokes" => {
+      "optional": false,
+      "value": {
+        "atomic": false,
+        "fields": Map {
+          "mesh" => {
+            "optional": false,
+            "value": {
+              "fields": Map {
+                "a" => {
+                  "optional": false,
+                  "value": {
+                    "names": Map {
+                      "A" => 1,
+                      "MeshA" => 0.5,
+                      "StrokeMeshA" => 0.25,
+                      "StorageStrokeMeshA" => 0.125,
+                    },
+                    "type": "Integer",
+                    "values": Set {
+                      1,
+                    },
+                  },
+                },
+              },
+              "names": Map {
+                "Mesh" => 1,
+                "StrokeMesh" => 0.5,
+                "StorageStrokeMesh" => 0.25,
+              },
+              "type": "Object",
+            },
+          },
+          "sole" => {
+            "optional": false,
+            "value": {
+              "names": Map {
+                "Sole" => 1,
+                "StrokeSole" => 0.5,
+                "StorageStrokeSole" => 0.25,
+              },
+              "type": "String",
+              "values": Set {
+                "#800000",
+              },
+            },
+          },
+          "laces" => {
+            "optional": false,
+            "value": {
+              "names": Map {
+                "Lace" => 1,
+                "StrokeLace" => 0.5,
+                "StorageStrokeLace" => 0.25,
+              },
+              "type": "String",
+              "values": Set {
+                "#00ff00",
+              },
+            },
+          },
+        },
+        "names": Map {
+          "Stroke" => 1,
+          "StorageStroke" => 0.5,
+        },
+        "type": "LiveObject",
+      },
+    },
+  },
+  "names": Map {
+    "Storage" => 1,
+  },
+  "type": "LiveObject",
+}
+`;
+
+exports[`inferType correctly infers the "BASIC_UNMERGEABLE" schema 1`] = `
+{
+  "rootNames": BidirectionalMap {
+    "_map": Map {
+      "Storage" => {
+        "atomic": true,
+        "fields": Map {
+          "fills" => {
+            "optional": false,
+            "value": {
+              "atomic": false,
+              "fields": Map {
+                "mesh" => {
+                  "optional": false,
+                  "value": {
+                    "fields": Map {
+                      "a" => {
+                        "optional": false,
+                        "value": {
+                          "names": Map {
+                            "A" => 1,
+                            "MeshA" => 0.5,
+                            "FillMeshA" => 0.25,
+                            "StorageFillMeshA" => 0.125,
+                          },
+                          "type": "Integer",
+                          "values": Set {
+                            1,
+                          },
+                        },
+                      },
+                    },
+                    "names": Map {
+                      "Mesh" => 1,
+                      "FillMesh" => 0.5,
+                      "StorageFillMesh" => 0.25,
+                    },
+                    "type": "Object",
+                  },
+                },
+                "sole" => {
+                  "optional": false,
+                  "value": {
+                    "names": Map {
+                      "Sole" => 1,
+                      "FillSole" => 0.5,
+                      "StorageFillSole" => 0.25,
+                    },
+                    "type": "String",
+                    "values": Set {
+                      "#808960",
+                    },
+                  },
+                },
+                "stripes" => {
+                  "optional": false,
+                  "value": {
+                    "names": Map {
+                      "Stripe" => 1,
+                      "FillStripe" => 0.5,
+                      "StorageFillStripe" => 0.25,
+                    },
+                    "type": "String",
+                    "values": Set {
+                      "#e3fccb",
+                    },
+                  },
+                },
+                "laces" => {
+                  "optional": false,
+                  "value": {
+                    "names": Map {
+                      "Lace" => 1,
+                      "FillLace" => 0.5,
+                      "StorageFillLace" => 0.25,
+                    },
+                    "type": "String",
+                    "values": Set {
+                      "#c3f4bb",
+                    },
+                  },
+                },
+              },
+              "names": Map {
+                "Fill" => 1,
+                "StorageFill" => 0.5,
+              },
+              "type": "LiveObject",
+            },
+          },
+          "strokes" => {
+            "optional": false,
+            "value": {
+              "atomic": false,
+              "fields": Map {
+                "mesh" => {
+                  "optional": false,
+                  "value": {
+                    "fields": Map {
+                      "a" => {
+                        "optional": false,
+                        "value": {
+                          "names": Map {
+                            "A" => 1,
+                            "MeshA" => 0.5,
+                            "StrokeMeshA" => 0.25,
+                            "StorageStrokeMeshA" => 0.125,
+                          },
+                          "type": "String",
+                          "values": Set {
+                            "something",
+                          },
+                        },
+                      },
+                    },
+                    "names": Map {
+                      "Mesh" => 1,
+                      "StrokeMesh" => 0.5,
+                      "StorageStrokeMesh" => 0.25,
+                    },
+                    "type": "Object",
+                  },
+                },
+                "sole" => {
+                  "optional": false,
+                  "value": {
+                    "names": Map {
+                      "Sole" => 1,
+                      "StrokeSole" => 0.5,
+                      "StorageStrokeSole" => 0.25,
+                    },
+                    "type": "String",
+                    "values": Set {
+                      "#800000",
+                    },
+                  },
+                },
+                "laces" => {
+                  "optional": false,
+                  "value": {
+                    "names": Map {
+                      "Lace" => 1,
+                      "StrokeLace" => 0.5,
+                      "StorageStrokeLace" => 0.25,
+                    },
+                    "type": "String",
+                    "values": Set {
+                      "#00ff00",
+                    },
+                  },
+                },
+              },
+              "names": Map {
+                "Stroke" => 1,
+                "StorageStroke" => 0.5,
+              },
+              "type": "LiveObject",
+            },
+          },
+        },
+        "names": Map {
+          "Storage" => 1,
+        },
+        "type": "LiveObject",
+      },
+      "Fill" => {
+        "atomic": false,
+        "fields": Map {
+          "mesh" => {
+            "optional": false,
+            "value": {
+              "fields": Map {
+                "a" => {
+                  "optional": false,
+                  "value": {
+                    "names": Map {
+                      "A" => 1,
+                      "MeshA" => 0.5,
+                      "FillMeshA" => 0.25,
+                      "StorageFillMeshA" => 0.125,
+                    },
+                    "type": "Integer",
+                    "values": Set {
+                      1,
+                    },
+                  },
+                },
+              },
+              "names": Map {
+                "Mesh" => 1,
+                "FillMesh" => 0.5,
+                "StorageFillMesh" => 0.25,
+              },
+              "type": "Object",
+            },
+          },
+          "sole" => {
+            "optional": false,
+            "value": {
+              "names": Map {
+                "Sole" => 1,
+                "FillSole" => 0.5,
+                "StorageFillSole" => 0.25,
+              },
+              "type": "String",
+              "values": Set {
+                "#808960",
+              },
+            },
+          },
+          "stripes" => {
+            "optional": false,
+            "value": {
+              "names": Map {
+                "Stripe" => 1,
+                "FillStripe" => 0.5,
+                "StorageFillStripe" => 0.25,
+              },
+              "type": "String",
+              "values": Set {
+                "#e3fccb",
+              },
+            },
+          },
+          "laces" => {
+            "optional": false,
+            "value": {
+              "names": Map {
+                "Lace" => 1,
+                "FillLace" => 0.5,
+                "StorageFillLace" => 0.25,
+              },
+              "type": "String",
+              "values": Set {
+                "#c3f4bb",
+              },
+            },
+          },
+        },
+        "names": Map {
+          "Fill" => 1,
+          "StorageFill" => 0.5,
+        },
+        "type": "LiveObject",
+      },
+      "Mesh" => {
+        "fields": Map {
+          "a" => {
+            "optional": false,
+            "value": {
+              "names": Map {
+                "A" => 1,
+                "MeshA" => 0.5,
+                "FillMeshA" => 0.25,
+                "StorageFillMeshA" => 0.125,
+              },
+              "type": "Integer",
+              "values": Set {
+                1,
+              },
+            },
+          },
+        },
+        "names": Map {
+          "Mesh" => 1,
+          "FillMesh" => 0.5,
+          "StorageFillMesh" => 0.25,
+        },
+        "type": "Object",
+      },
+      "Stroke" => {
+        "atomic": false,
+        "fields": Map {
+          "mesh" => {
+            "optional": false,
+            "value": {
+              "fields": Map {
+                "a" => {
+                  "optional": false,
+                  "value": {
+                    "names": Map {
+                      "A" => 1,
+                      "MeshA" => 0.5,
+                      "StrokeMeshA" => 0.25,
+                      "StorageStrokeMeshA" => 0.125,
+                    },
+                    "type": "String",
+                    "values": Set {
+                      "something",
+                    },
+                  },
+                },
+              },
+              "names": Map {
+                "Mesh" => 1,
+                "StrokeMesh" => 0.5,
+                "StorageStrokeMesh" => 0.25,
+              },
+              "type": "Object",
+            },
+          },
+          "sole" => {
+            "optional": false,
+            "value": {
+              "names": Map {
+                "Sole" => 1,
+                "StrokeSole" => 0.5,
+                "StorageStrokeSole" => 0.25,
+              },
+              "type": "String",
+              "values": Set {
+                "#800000",
+              },
+            },
+          },
+          "laces" => {
+            "optional": false,
+            "value": {
+              "names": Map {
+                "Lace" => 1,
+                "StrokeLace" => 0.5,
+                "StorageStrokeLace" => 0.25,
+              },
+              "type": "String",
+              "values": Set {
+                "#00ff00",
+              },
+            },
+          },
+        },
+        "names": Map {
+          "Stroke" => 1,
+          "StorageStroke" => 0.5,
+        },
+        "type": "LiveObject",
+      },
+      "StrokeMesh" => {
+        "fields": Map {
+          "a" => {
+            "optional": false,
+            "value": {
+              "names": Map {
+                "A" => 1,
+                "MeshA" => 0.5,
+                "StrokeMeshA" => 0.25,
+                "StorageStrokeMeshA" => 0.125,
+              },
+              "type": "String",
+              "values": Set {
+                "something",
+              },
+            },
+          },
+        },
+        "names": Map {
+          "Mesh" => 1,
+          "StrokeMesh" => 0.5,
+          "StorageStrokeMesh" => 0.25,
+        },
+        "type": "Object",
+      },
+    },
+    "_reverseMap": Map {
+      {
+        "atomic": true,
+        "fields": Map {
+          "fills" => {
+            "optional": false,
+            "value": {
+              "atomic": false,
+              "fields": Map {
+                "mesh" => {
+                  "optional": false,
+                  "value": {
+                    "fields": Map {
+                      "a" => {
+                        "optional": false,
+                        "value": {
+                          "names": Map {
+                            "A" => 1,
+                            "MeshA" => 0.5,
+                            "FillMeshA" => 0.25,
+                            "StorageFillMeshA" => 0.125,
+                          },
+                          "type": "Integer",
+                          "values": Set {
+                            1,
+                          },
+                        },
+                      },
+                    },
+                    "names": Map {
+                      "Mesh" => 1,
+                      "FillMesh" => 0.5,
+                      "StorageFillMesh" => 0.25,
+                    },
+                    "type": "Object",
+                  },
+                },
+                "sole" => {
+                  "optional": false,
+                  "value": {
+                    "names": Map {
+                      "Sole" => 1,
+                      "FillSole" => 0.5,
+                      "StorageFillSole" => 0.25,
+                    },
+                    "type": "String",
+                    "values": Set {
+                      "#808960",
+                    },
+                  },
+                },
+                "stripes" => {
+                  "optional": false,
+                  "value": {
+                    "names": Map {
+                      "Stripe" => 1,
+                      "FillStripe" => 0.5,
+                      "StorageFillStripe" => 0.25,
+                    },
+                    "type": "String",
+                    "values": Set {
+                      "#e3fccb",
+                    },
+                  },
+                },
+                "laces" => {
+                  "optional": false,
+                  "value": {
+                    "names": Map {
+                      "Lace" => 1,
+                      "FillLace" => 0.5,
+                      "StorageFillLace" => 0.25,
+                    },
+                    "type": "String",
+                    "values": Set {
+                      "#c3f4bb",
+                    },
+                  },
+                },
+              },
+              "names": Map {
+                "Fill" => 1,
+                "StorageFill" => 0.5,
+              },
+              "type": "LiveObject",
+            },
+          },
+          "strokes" => {
+            "optional": false,
+            "value": {
+              "atomic": false,
+              "fields": Map {
+                "mesh" => {
+                  "optional": false,
+                  "value": {
+                    "fields": Map {
+                      "a" => {
+                        "optional": false,
+                        "value": {
+                          "names": Map {
+                            "A" => 1,
+                            "MeshA" => 0.5,
+                            "StrokeMeshA" => 0.25,
+                            "StorageStrokeMeshA" => 0.125,
+                          },
+                          "type": "String",
+                          "values": Set {
+                            "something",
+                          },
+                        },
+                      },
+                    },
+                    "names": Map {
+                      "Mesh" => 1,
+                      "StrokeMesh" => 0.5,
+                      "StorageStrokeMesh" => 0.25,
+                    },
+                    "type": "Object",
+                  },
+                },
+                "sole" => {
+                  "optional": false,
+                  "value": {
+                    "names": Map {
+                      "Sole" => 1,
+                      "StrokeSole" => 0.5,
+                      "StorageStrokeSole" => 0.25,
+                    },
+                    "type": "String",
+                    "values": Set {
+                      "#800000",
+                    },
+                  },
+                },
+                "laces" => {
+                  "optional": false,
+                  "value": {
+                    "names": Map {
+                      "Lace" => 1,
+                      "StrokeLace" => 0.5,
+                      "StorageStrokeLace" => 0.25,
+                    },
+                    "type": "String",
+                    "values": Set {
+                      "#00ff00",
+                    },
+                  },
+                },
+              },
+              "names": Map {
+                "Stroke" => 1,
+                "StorageStroke" => 0.5,
+              },
+              "type": "LiveObject",
+            },
+          },
+        },
+        "names": Map {
+          "Storage" => 1,
+        },
+        "type": "LiveObject",
+      } => "Storage",
+      {
+        "atomic": false,
+        "fields": Map {
+          "mesh" => {
+            "optional": false,
+            "value": {
+              "fields": Map {
+                "a" => {
+                  "optional": false,
+                  "value": {
+                    "names": Map {
+                      "A" => 1,
+                      "MeshA" => 0.5,
+                      "FillMeshA" => 0.25,
+                      "StorageFillMeshA" => 0.125,
+                    },
+                    "type": "Integer",
+                    "values": Set {
+                      1,
+                    },
+                  },
+                },
+              },
+              "names": Map {
+                "Mesh" => 1,
+                "FillMesh" => 0.5,
+                "StorageFillMesh" => 0.25,
+              },
+              "type": "Object",
+            },
+          },
+          "sole" => {
+            "optional": false,
+            "value": {
+              "names": Map {
+                "Sole" => 1,
+                "FillSole" => 0.5,
+                "StorageFillSole" => 0.25,
+              },
+              "type": "String",
+              "values": Set {
+                "#808960",
+              },
+            },
+          },
+          "stripes" => {
+            "optional": false,
+            "value": {
+              "names": Map {
+                "Stripe" => 1,
+                "FillStripe" => 0.5,
+                "StorageFillStripe" => 0.25,
+              },
+              "type": "String",
+              "values": Set {
+                "#e3fccb",
+              },
+            },
+          },
+          "laces" => {
+            "optional": false,
+            "value": {
+              "names": Map {
+                "Lace" => 1,
+                "FillLace" => 0.5,
+                "StorageFillLace" => 0.25,
+              },
+              "type": "String",
+              "values": Set {
+                "#c3f4bb",
+              },
+            },
+          },
+        },
+        "names": Map {
+          "Fill" => 1,
+          "StorageFill" => 0.5,
+        },
+        "type": "LiveObject",
+      } => "Fill",
+      {
+        "fields": Map {
+          "a" => {
+            "optional": false,
+            "value": {
+              "names": Map {
+                "A" => 1,
+                "MeshA" => 0.5,
+                "FillMeshA" => 0.25,
+                "StorageFillMeshA" => 0.125,
+              },
+              "type": "Integer",
+              "values": Set {
+                1,
+              },
+            },
+          },
+        },
+        "names": Map {
+          "Mesh" => 1,
+          "FillMesh" => 0.5,
+          "StorageFillMesh" => 0.25,
+        },
+        "type": "Object",
+      } => "Mesh",
+      {
+        "atomic": false,
+        "fields": Map {
+          "mesh" => {
+            "optional": false,
+            "value": {
+              "fields": Map {
+                "a" => {
+                  "optional": false,
+                  "value": {
+                    "names": Map {
+                      "A" => 1,
+                      "MeshA" => 0.5,
+                      "StrokeMeshA" => 0.25,
+                      "StorageStrokeMeshA" => 0.125,
+                    },
+                    "type": "String",
+                    "values": Set {
+                      "something",
+                    },
+                  },
+                },
+              },
+              "names": Map {
+                "Mesh" => 1,
+                "StrokeMesh" => 0.5,
+                "StorageStrokeMesh" => 0.25,
+              },
+              "type": "Object",
+            },
+          },
+          "sole" => {
+            "optional": false,
+            "value": {
+              "names": Map {
+                "Sole" => 1,
+                "StrokeSole" => 0.5,
+                "StorageStrokeSole" => 0.25,
+              },
+              "type": "String",
+              "values": Set {
+                "#800000",
+              },
+            },
+          },
+          "laces" => {
+            "optional": false,
+            "value": {
+              "names": Map {
+                "Lace" => 1,
+                "StrokeLace" => 0.5,
+                "StorageStrokeLace" => 0.25,
+              },
+              "type": "String",
+              "values": Set {
+                "#00ff00",
+              },
+            },
+          },
+        },
+        "names": Map {
+          "Stroke" => 1,
+          "StorageStroke" => 0.5,
+        },
+        "type": "LiveObject",
+      } => "Stroke",
+      {
+        "fields": Map {
+          "a" => {
+            "optional": false,
+            "value": {
+              "names": Map {
+                "A" => 1,
+                "MeshA" => 0.5,
+                "StrokeMeshA" => 0.25,
+                "StorageStrokeMeshA" => 0.125,
+              },
+              "type": "String",
+              "values": Set {
+                "something",
+              },
+            },
+          },
+        },
+        "names": Map {
+          "Mesh" => 1,
+          "StrokeMesh" => 0.5,
+          "StorageStrokeMesh" => 0.25,
+        },
+        "type": "Object",
+      } => "StrokeMesh",
+    },
+  },
+  "rootTypeReferences": Map {
+    {
+      "atomic": false,
+      "fields": Map {
+        "mesh" => {
+          "optional": false,
+          "value": {
+            "fields": Map {
+              "a" => {
+                "optional": false,
+                "value": {
+                  "names": Map {
+                    "A" => 1,
+                    "MeshA" => 0.5,
+                    "FillMeshA" => 0.25,
+                    "StorageFillMeshA" => 0.125,
+                  },
+                  "type": "Integer",
+                  "values": Set {
+                    1,
+                  },
+                },
+              },
+            },
+            "names": Map {
+              "Mesh" => 1,
+              "FillMesh" => 0.5,
+              "StorageFillMesh" => 0.25,
+            },
+            "type": "Object",
+          },
+        },
+        "sole" => {
+          "optional": false,
+          "value": {
+            "names": Map {
+              "Sole" => 1,
+              "FillSole" => 0.5,
+              "StorageFillSole" => 0.25,
+            },
+            "type": "String",
+            "values": Set {
+              "#808960",
+            },
+          },
+        },
+        "stripes" => {
+          "optional": false,
+          "value": {
+            "names": Map {
+              "Stripe" => 1,
+              "FillStripe" => 0.5,
+              "StorageFillStripe" => 0.25,
+            },
+            "type": "String",
+            "values": Set {
+              "#e3fccb",
+            },
+          },
+        },
+        "laces" => {
+          "optional": false,
+          "value": {
+            "names": Map {
+              "Lace" => 1,
+              "FillLace" => 0.5,
+              "StorageFillLace" => 0.25,
+            },
+            "type": "String",
+            "values": Set {
+              "#c3f4bb",
+            },
+          },
+        },
+      },
+      "names": Map {
+        "Fill" => 1,
+        "StorageFill" => 0.5,
+      },
+      "type": "LiveObject",
+    } => Set {
+      {
+        "optional": false,
+        "value": {
+          "atomic": false,
+          "fields": Map {
+            "mesh" => {
+              "optional": false,
+              "value": {
+                "fields": Map {
+                  "a" => {
+                    "optional": false,
+                    "value": {
+                      "names": Map {
+                        "A" => 1,
+                        "MeshA" => 0.5,
+                        "FillMeshA" => 0.25,
+                        "StorageFillMeshA" => 0.125,
+                      },
+                      "type": "Integer",
+                      "values": Set {
+                        1,
+                      },
+                    },
+                  },
+                },
+                "names": Map {
+                  "Mesh" => 1,
+                  "FillMesh" => 0.5,
+                  "StorageFillMesh" => 0.25,
+                },
+                "type": "Object",
+              },
+            },
+            "sole" => {
+              "optional": false,
+              "value": {
+                "names": Map {
+                  "Sole" => 1,
+                  "FillSole" => 0.5,
+                  "StorageFillSole" => 0.25,
+                },
+                "type": "String",
+                "values": Set {
+                  "#808960",
+                },
+              },
+            },
+            "stripes" => {
+              "optional": false,
+              "value": {
+                "names": Map {
+                  "Stripe" => 1,
+                  "FillStripe" => 0.5,
+                  "StorageFillStripe" => 0.25,
+                },
+                "type": "String",
+                "values": Set {
+                  "#e3fccb",
+                },
+              },
+            },
+            "laces" => {
+              "optional": false,
+              "value": {
+                "names": Map {
+                  "Lace" => 1,
+                  "FillLace" => 0.5,
+                  "StorageFillLace" => 0.25,
+                },
+                "type": "String",
+                "values": Set {
+                  "#c3f4bb",
+                },
+              },
+            },
+          },
+          "names": Map {
+            "Fill" => 1,
+            "StorageFill" => 0.5,
+          },
+          "type": "LiveObject",
+        },
+      },
+    },
+    {
+      "fields": Map {
+        "a" => {
+          "optional": false,
+          "value": {
+            "names": Map {
+              "A" => 1,
+              "MeshA" => 0.5,
+              "FillMeshA" => 0.25,
+              "StorageFillMeshA" => 0.125,
+            },
+            "type": "Integer",
+            "values": Set {
+              1,
+            },
+          },
+        },
+      },
+      "names": Map {
+        "Mesh" => 1,
+        "FillMesh" => 0.5,
+        "StorageFillMesh" => 0.25,
+      },
+      "type": "Object",
+    } => Set {
+      {
+        "optional": false,
+        "value": {
+          "fields": Map {
+            "a" => {
+              "optional": false,
+              "value": {
+                "names": Map {
+                  "A" => 1,
+                  "MeshA" => 0.5,
+                  "FillMeshA" => 0.25,
+                  "StorageFillMeshA" => 0.125,
+                },
+                "type": "Integer",
+                "values": Set {
+                  1,
+                },
+              },
+            },
+          },
+          "names": Map {
+            "Mesh" => 1,
+            "FillMesh" => 0.5,
+            "StorageFillMesh" => 0.25,
+          },
+          "type": "Object",
+        },
+      },
+    },
+    {
+      "atomic": false,
+      "fields": Map {
+        "mesh" => {
+          "optional": false,
+          "value": {
+            "fields": Map {
+              "a" => {
+                "optional": false,
+                "value": {
+                  "names": Map {
+                    "A" => 1,
+                    "MeshA" => 0.5,
+                    "StrokeMeshA" => 0.25,
+                    "StorageStrokeMeshA" => 0.125,
+                  },
+                  "type": "String",
+                  "values": Set {
+                    "something",
+                  },
+                },
+              },
+            },
+            "names": Map {
+              "Mesh" => 1,
+              "StrokeMesh" => 0.5,
+              "StorageStrokeMesh" => 0.25,
+            },
+            "type": "Object",
+          },
+        },
+        "sole" => {
+          "optional": false,
+          "value": {
+            "names": Map {
+              "Sole" => 1,
+              "StrokeSole" => 0.5,
+              "StorageStrokeSole" => 0.25,
+            },
+            "type": "String",
+            "values": Set {
+              "#800000",
+            },
+          },
+        },
+        "laces" => {
+          "optional": false,
+          "value": {
+            "names": Map {
+              "Lace" => 1,
+              "StrokeLace" => 0.5,
+              "StorageStrokeLace" => 0.25,
+            },
+            "type": "String",
+            "values": Set {
+              "#00ff00",
+            },
+          },
+        },
+      },
+      "names": Map {
+        "Stroke" => 1,
+        "StorageStroke" => 0.5,
+      },
+      "type": "LiveObject",
+    } => Set {
+      {
+        "optional": false,
+        "value": {
+          "atomic": false,
+          "fields": Map {
+            "mesh" => {
+              "optional": false,
+              "value": {
+                "fields": Map {
+                  "a" => {
+                    "optional": false,
+                    "value": {
+                      "names": Map {
+                        "A" => 1,
+                        "MeshA" => 0.5,
+                        "StrokeMeshA" => 0.25,
+                        "StorageStrokeMeshA" => 0.125,
+                      },
+                      "type": "String",
+                      "values": Set {
+                        "something",
+                      },
+                    },
+                  },
+                },
+                "names": Map {
+                  "Mesh" => 1,
+                  "StrokeMesh" => 0.5,
+                  "StorageStrokeMesh" => 0.25,
+                },
+                "type": "Object",
+              },
+            },
+            "sole" => {
+              "optional": false,
+              "value": {
+                "names": Map {
+                  "Sole" => 1,
+                  "StrokeSole" => 0.5,
+                  "StorageStrokeSole" => 0.25,
+                },
+                "type": "String",
+                "values": Set {
+                  "#800000",
+                },
+              },
+            },
+            "laces" => {
+              "optional": false,
+              "value": {
+                "names": Map {
+                  "Lace" => 1,
+                  "StrokeLace" => 0.5,
+                  "StorageStrokeLace" => 0.25,
+                },
+                "type": "String",
+                "values": Set {
+                  "#00ff00",
+                },
+              },
+            },
+          },
+          "names": Map {
+            "Stroke" => 1,
+            "StorageStroke" => 0.5,
+          },
+          "type": "LiveObject",
+        },
+      },
+    },
+    {
+      "fields": Map {
+        "a" => {
+          "optional": false,
+          "value": {
+            "names": Map {
+              "A" => 1,
+              "MeshA" => 0.5,
+              "StrokeMeshA" => 0.25,
+              "StorageStrokeMeshA" => 0.125,
+            },
+            "type": "String",
+            "values": Set {
+              "something",
+            },
+          },
+        },
+      },
+      "names": Map {
+        "Mesh" => 1,
+        "StrokeMesh" => 0.5,
+        "StorageStrokeMesh" => 0.25,
+      },
+      "type": "Object",
+    } => Set {
+      {
+        "optional": false,
+        "value": {
+          "fields": Map {
+            "a" => {
+              "optional": false,
+              "value": {
+                "names": Map {
+                  "A" => 1,
+                  "MeshA" => 0.5,
+                  "StrokeMeshA" => 0.25,
+                  "StorageStrokeMeshA" => 0.125,
+                },
+                "type": "String",
+                "values": Set {
+                  "something",
+                },
+              },
+            },
+          },
+          "names": Map {
+            "Mesh" => 1,
+            "StrokeMesh" => 0.5,
+            "StorageStrokeMesh" => 0.25,
+          },
+          "type": "Object",
+        },
+      },
+    },
+  },
+  "rootTypes": Set {
+    {
+      "atomic": true,
+      "fields": Map {
+        "fills" => {
+          "optional": false,
+          "value": {
+            "atomic": false,
+            "fields": Map {
+              "mesh" => {
+                "optional": false,
+                "value": {
+                  "fields": Map {
+                    "a" => {
+                      "optional": false,
+                      "value": {
+                        "names": Map {
+                          "A" => 1,
+                          "MeshA" => 0.5,
+                          "FillMeshA" => 0.25,
+                          "StorageFillMeshA" => 0.125,
+                        },
+                        "type": "Integer",
+                        "values": Set {
+                          1,
+                        },
+                      },
+                    },
+                  },
+                  "names": Map {
+                    "Mesh" => 1,
+                    "FillMesh" => 0.5,
+                    "StorageFillMesh" => 0.25,
+                  },
+                  "type": "Object",
+                },
+              },
+              "sole" => {
+                "optional": false,
+                "value": {
+                  "names": Map {
+                    "Sole" => 1,
+                    "FillSole" => 0.5,
+                    "StorageFillSole" => 0.25,
+                  },
+                  "type": "String",
+                  "values": Set {
+                    "#808960",
+                  },
+                },
+              },
+              "stripes" => {
+                "optional": false,
+                "value": {
+                  "names": Map {
+                    "Stripe" => 1,
+                    "FillStripe" => 0.5,
+                    "StorageFillStripe" => 0.25,
+                  },
+                  "type": "String",
+                  "values": Set {
+                    "#e3fccb",
+                  },
+                },
+              },
+              "laces" => {
+                "optional": false,
+                "value": {
+                  "names": Map {
+                    "Lace" => 1,
+                    "FillLace" => 0.5,
+                    "StorageFillLace" => 0.25,
+                  },
+                  "type": "String",
+                  "values": Set {
+                    "#c3f4bb",
+                  },
+                },
+              },
+            },
+            "names": Map {
+              "Fill" => 1,
+              "StorageFill" => 0.5,
+            },
+            "type": "LiveObject",
+          },
+        },
+        "strokes" => {
+          "optional": false,
+          "value": {
+            "atomic": false,
+            "fields": Map {
+              "mesh" => {
+                "optional": false,
+                "value": {
+                  "fields": Map {
+                    "a" => {
+                      "optional": false,
+                      "value": {
+                        "names": Map {
+                          "A" => 1,
+                          "MeshA" => 0.5,
+                          "StrokeMeshA" => 0.25,
+                          "StorageStrokeMeshA" => 0.125,
+                        },
+                        "type": "String",
+                        "values": Set {
+                          "something",
+                        },
+                      },
+                    },
+                  },
+                  "names": Map {
+                    "Mesh" => 1,
+                    "StrokeMesh" => 0.5,
+                    "StorageStrokeMesh" => 0.25,
+                  },
+                  "type": "Object",
+                },
+              },
+              "sole" => {
+                "optional": false,
+                "value": {
+                  "names": Map {
+                    "Sole" => 1,
+                    "StrokeSole" => 0.5,
+                    "StorageStrokeSole" => 0.25,
+                  },
+                  "type": "String",
+                  "values": Set {
+                    "#800000",
+                  },
+                },
+              },
+              "laces" => {
+                "optional": false,
+                "value": {
+                  "names": Map {
+                    "Lace" => 1,
+                    "StrokeLace" => 0.5,
+                    "StorageStrokeLace" => 0.25,
+                  },
+                  "type": "String",
+                  "values": Set {
+                    "#00ff00",
+                  },
+                },
+              },
+            },
+            "names": Map {
+              "Stroke" => 1,
+              "StorageStroke" => 0.5,
+            },
+            "type": "LiveObject",
+          },
+        },
+      },
+      "names": Map {
+        "Storage" => 1,
+      },
+      "type": "LiveObject",
+    },
+    {
+      "atomic": false,
+      "fields": Map {
+        "mesh" => {
+          "optional": false,
+          "value": {
+            "fields": Map {
+              "a" => {
+                "optional": false,
+                "value": {
+                  "names": Map {
+                    "A" => 1,
+                    "MeshA" => 0.5,
+                    "FillMeshA" => 0.25,
+                    "StorageFillMeshA" => 0.125,
+                  },
+                  "type": "Integer",
+                  "values": Set {
+                    1,
+                  },
+                },
+              },
+            },
+            "names": Map {
+              "Mesh" => 1,
+              "FillMesh" => 0.5,
+              "StorageFillMesh" => 0.25,
+            },
+            "type": "Object",
+          },
+        },
+        "sole" => {
+          "optional": false,
+          "value": {
+            "names": Map {
+              "Sole" => 1,
+              "FillSole" => 0.5,
+              "StorageFillSole" => 0.25,
+            },
+            "type": "String",
+            "values": Set {
+              "#808960",
+            },
+          },
+        },
+        "stripes" => {
+          "optional": false,
+          "value": {
+            "names": Map {
+              "Stripe" => 1,
+              "FillStripe" => 0.5,
+              "StorageFillStripe" => 0.25,
+            },
+            "type": "String",
+            "values": Set {
+              "#e3fccb",
+            },
+          },
+        },
+        "laces" => {
+          "optional": false,
+          "value": {
+            "names": Map {
+              "Lace" => 1,
+              "FillLace" => 0.5,
+              "StorageFillLace" => 0.25,
+            },
+            "type": "String",
+            "values": Set {
+              "#c3f4bb",
+            },
+          },
+        },
+      },
+      "names": Map {
+        "Fill" => 1,
+        "StorageFill" => 0.5,
+      },
+      "type": "LiveObject",
+    },
+    {
+      "fields": Map {
+        "a" => {
+          "optional": false,
+          "value": {
+            "names": Map {
+              "A" => 1,
+              "MeshA" => 0.5,
+              "FillMeshA" => 0.25,
+              "StorageFillMeshA" => 0.125,
+            },
+            "type": "Integer",
+            "values": Set {
+              1,
+            },
+          },
+        },
+      },
+      "names": Map {
+        "Mesh" => 1,
+        "FillMesh" => 0.5,
+        "StorageFillMesh" => 0.25,
+      },
+      "type": "Object",
+    },
+    {
+      "atomic": false,
+      "fields": Map {
+        "mesh" => {
+          "optional": false,
+          "value": {
+            "fields": Map {
+              "a" => {
+                "optional": false,
+                "value": {
+                  "names": Map {
+                    "A" => 1,
+                    "MeshA" => 0.5,
+                    "StrokeMeshA" => 0.25,
+                    "StorageStrokeMeshA" => 0.125,
+                  },
+                  "type": "String",
+                  "values": Set {
+                    "something",
+                  },
+                },
+              },
+            },
+            "names": Map {
+              "Mesh" => 1,
+              "StrokeMesh" => 0.5,
+              "StorageStrokeMesh" => 0.25,
+            },
+            "type": "Object",
+          },
+        },
+        "sole" => {
+          "optional": false,
+          "value": {
+            "names": Map {
+              "Sole" => 1,
+              "StrokeSole" => 0.5,
+              "StorageStrokeSole" => 0.25,
+            },
+            "type": "String",
+            "values": Set {
+              "#800000",
+            },
+          },
+        },
+        "laces" => {
+          "optional": false,
+          "value": {
+            "names": Map {
+              "Lace" => 1,
+              "StrokeLace" => 0.5,
+              "StorageStrokeLace" => 0.25,
+            },
+            "type": "String",
+            "values": Set {
+              "#00ff00",
+            },
+          },
+        },
+      },
+      "names": Map {
+        "Stroke" => 1,
+        "StorageStroke" => 0.5,
+      },
+      "type": "LiveObject",
+    },
+    {
+      "fields": Map {
+        "a" => {
+          "optional": false,
+          "value": {
+            "names": Map {
+              "A" => 1,
+              "MeshA" => 0.5,
+              "StrokeMeshA" => 0.25,
+              "StorageStrokeMeshA" => 0.125,
+            },
+            "type": "String",
+            "values": Set {
+              "something",
+            },
+          },
+        },
+      },
+      "names": Map {
+        "Mesh" => 1,
+        "StrokeMesh" => 0.5,
+        "StorageStrokeMesh" => 0.25,
+      },
+      "type": "Object",
+    },
+  },
+}
+`;
+
+exports[`inferType correctly infers the "BASIC_UNMERGEABLE" schema ast 1`] = `
+{
+  "_kind": "Document",
+  "definitions": [
+    {
+      "_kind": "ObjectTypeDefinition",
+      "fields": [
+        {
+          "_kind": "FieldDef",
+          "name": {
+            "_kind": "Identifier",
+            "name": "fills",
+            "range": [
+              0,
+              0,
+            ],
+          },
+          "optional": false,
+          "range": [
+            0,
+            0,
+          ],
+          "type": {
+            "_kind": "TypeRef",
+            "asLiveObject": true,
+            "range": [
+              0,
+              0,
+            ],
+            "ref": {
+              "_kind": "TypeName",
+              "name": "Fill",
+              "range": [
+                0,
+                0,
+              ],
+            },
+          },
+        },
+        {
+          "_kind": "FieldDef",
+          "name": {
+            "_kind": "Identifier",
+            "name": "strokes",
+            "range": [
+              0,
+              0,
+            ],
+          },
+          "optional": false,
+          "range": [
+            0,
+            0,
+          ],
+          "type": {
+            "_kind": "TypeRef",
+            "asLiveObject": true,
+            "range": [
+              0,
+              0,
+            ],
+            "ref": {
+              "_kind": "TypeName",
+              "name": "Stroke",
+              "range": [
+                0,
+                0,
+              ],
+            },
+          },
+        },
+      ],
+      "name": {
+        "_kind": "TypeName",
+        "name": "Storage",
+        "range": [
+          0,
+          0,
+        ],
+      },
+      "range": [
+        0,
+        0,
+      ],
+    },
+    {
+      "_kind": "ObjectTypeDefinition",
+      "fields": [
+        {
+          "_kind": "FieldDef",
+          "name": {
+            "_kind": "Identifier",
+            "name": "mesh",
+            "range": [
+              0,
+              0,
+            ],
+          },
+          "optional": false,
+          "range": [
+            0,
+            0,
+          ],
+          "type": {
+            "_kind": "TypeRef",
+            "asLiveObject": false,
+            "range": [
+              0,
+              0,
+            ],
+            "ref": {
+              "_kind": "TypeName",
+              "name": "Mesh",
+              "range": [
+                0,
+                0,
+              ],
+            },
+          },
+        },
+        {
+          "_kind": "FieldDef",
+          "name": {
+            "_kind": "Identifier",
+            "name": "sole",
+            "range": [
+              0,
+              0,
+            ],
+          },
+          "optional": false,
+          "range": [
+            0,
+            0,
+          ],
+          "type": {
+            "_kind": "StringType",
+            "range": [
+              0,
+              0,
+            ],
+          },
+        },
+        {
+          "_kind": "FieldDef",
+          "name": {
+            "_kind": "Identifier",
+            "name": "stripes",
+            "range": [
+              0,
+              0,
+            ],
+          },
+          "optional": false,
+          "range": [
+            0,
+            0,
+          ],
+          "type": {
+            "_kind": "StringType",
+            "range": [
+              0,
+              0,
+            ],
+          },
+        },
+        {
+          "_kind": "FieldDef",
+          "name": {
+            "_kind": "Identifier",
+            "name": "laces",
+            "range": [
+              0,
+              0,
+            ],
+          },
+          "optional": false,
+          "range": [
+            0,
+            0,
+          ],
+          "type": {
+            "_kind": "StringType",
+            "range": [
+              0,
+              0,
+            ],
+          },
+        },
+      ],
+      "name": {
+        "_kind": "TypeName",
+        "name": "Fill",
+        "range": [
+          0,
+          0,
+        ],
+      },
+      "range": [
+        0,
+        0,
+      ],
+    },
+    {
+      "_kind": "ObjectTypeDefinition",
+      "fields": [
+        {
+          "_kind": "FieldDef",
+          "name": {
+            "_kind": "Identifier",
+            "name": "a",
+            "range": [
+              0,
+              0,
+            ],
+          },
+          "optional": false,
+          "range": [
+            0,
+            0,
+          ],
+          "type": {
+            "_kind": "IntType",
+            "range": [
+              0,
+              0,
+            ],
+          },
+        },
+      ],
+      "name": {
+        "_kind": "TypeName",
+        "name": "Mesh",
+        "range": [
+          0,
+          0,
+        ],
+      },
+      "range": [
+        0,
+        0,
+      ],
+    },
+    {
+      "_kind": "ObjectTypeDefinition",
+      "fields": [
+        {
+          "_kind": "FieldDef",
+          "name": {
+            "_kind": "Identifier",
+            "name": "mesh",
+            "range": [
+              0,
+              0,
+            ],
+          },
+          "optional": false,
+          "range": [
+            0,
+            0,
+          ],
+          "type": {
+            "_kind": "TypeRef",
+            "asLiveObject": false,
+            "range": [
+              0,
+              0,
+            ],
+            "ref": {
+              "_kind": "TypeName",
+              "name": "StrokeMesh",
+              "range": [
+                0,
+                0,
+              ],
+            },
+          },
+        },
+        {
+          "_kind": "FieldDef",
+          "name": {
+            "_kind": "Identifier",
+            "name": "sole",
+            "range": [
+              0,
+              0,
+            ],
+          },
+          "optional": false,
+          "range": [
+            0,
+            0,
+          ],
+          "type": {
+            "_kind": "StringType",
+            "range": [
+              0,
+              0,
+            ],
+          },
+        },
+        {
+          "_kind": "FieldDef",
+          "name": {
+            "_kind": "Identifier",
+            "name": "laces",
+            "range": [
+              0,
+              0,
+            ],
+          },
+          "optional": false,
+          "range": [
+            0,
+            0,
+          ],
+          "type": {
+            "_kind": "StringType",
+            "range": [
+              0,
+              0,
+            ],
+          },
+        },
+      ],
+      "name": {
+        "_kind": "TypeName",
+        "name": "Stroke",
+        "range": [
+          0,
+          0,
+        ],
+      },
+      "range": [
+        0,
+        0,
+      ],
+    },
+    {
+      "_kind": "ObjectTypeDefinition",
+      "fields": [
+        {
+          "_kind": "FieldDef",
+          "name": {
+            "_kind": "Identifier",
+            "name": "a",
+            "range": [
+              0,
+              0,
+            ],
+          },
+          "optional": false,
+          "range": [
+            0,
+            0,
+          ],
+          "type": {
+            "_kind": "StringType",
+            "range": [
+              0,
+              0,
+            ],
+          },
+        },
+      ],
+      "name": {
+        "_kind": "TypeName",
+        "name": "StrokeMesh",
+        "range": [
+          0,
+          0,
+        ],
+      },
+      "range": [
+        0,
+        0,
+      ],
+    },
+  ],
+  "range": [
+    0,
+    0,
+  ],
+}
+`;
+
+exports[`inferType correctly infers the "BASIC_UNMERGEABLE" schema text 1`] = `
+"type Storage {
+  fills: LiveObject<Fill>
+  strokes: LiveObject<Stroke>
+}
+
+type Fill {
+  mesh: Mesh
+  sole: String
+  stripes: String
+  laces: String
+}
+
+type Mesh {
+  a: Int
+}
+
+type Stroke {
+  mesh: StrokeMesh
+  sole: String
+  laces: String
+}
+
+type StrokeMesh {
+  a: String
+}"
+`;
+
+exports[`inferType correctly infers the "BASIC_UNMERGEABLE" type 1`] = `
+{
+  "atomic": true,
+  "fields": Map {
+    "fills" => {
+      "optional": false,
+      "value": {
+        "atomic": false,
+        "fields": Map {
+          "mesh" => {
+            "optional": false,
+            "value": {
+              "fields": Map {
+                "a" => {
+                  "optional": false,
+                  "value": {
+                    "names": Map {
+                      "A" => 1,
+                      "MeshA" => 0.5,
+                      "FillMeshA" => 0.25,
+                      "StorageFillMeshA" => 0.125,
+                    },
+                    "type": "Integer",
+                    "values": Set {
+                      1,
+                    },
+                  },
+                },
+              },
+              "names": Map {
+                "Mesh" => 1,
+                "FillMesh" => 0.5,
+                "StorageFillMesh" => 0.25,
+              },
+              "type": "Object",
+            },
+          },
+          "sole" => {
+            "optional": false,
+            "value": {
+              "names": Map {
+                "Sole" => 1,
+                "FillSole" => 0.5,
+                "StorageFillSole" => 0.25,
+              },
+              "type": "String",
+              "values": Set {
+                "#808960",
+              },
+            },
+          },
+          "stripes" => {
+            "optional": false,
+            "value": {
+              "names": Map {
+                "Stripe" => 1,
+                "FillStripe" => 0.5,
+                "StorageFillStripe" => 0.25,
+              },
+              "type": "String",
+              "values": Set {
+                "#e3fccb",
+              },
+            },
+          },
+          "laces" => {
+            "optional": false,
+            "value": {
+              "names": Map {
+                "Lace" => 1,
+                "FillLace" => 0.5,
+                "StorageFillLace" => 0.25,
+              },
+              "type": "String",
+              "values": Set {
+                "#c3f4bb",
+              },
+            },
+          },
+        },
+        "names": Map {
+          "Fill" => 1,
+          "StorageFill" => 0.5,
+        },
+        "type": "LiveObject",
+      },
+    },
+    "strokes" => {
+      "optional": false,
+      "value": {
+        "atomic": false,
+        "fields": Map {
+          "mesh" => {
+            "optional": false,
+            "value": {
+              "fields": Map {
+                "a" => {
+                  "optional": false,
+                  "value": {
+                    "names": Map {
+                      "A" => 1,
+                      "MeshA" => 0.5,
+                      "StrokeMeshA" => 0.25,
+                      "StorageStrokeMeshA" => 0.125,
+                    },
+                    "type": "String",
+                    "values": Set {
+                      "something",
+                    },
+                  },
+                },
+              },
+              "names": Map {
+                "Mesh" => 1,
+                "StrokeMesh" => 0.5,
+                "StorageStrokeMesh" => 0.25,
+              },
+              "type": "Object",
+            },
+          },
+          "sole" => {
+            "optional": false,
+            "value": {
+              "names": Map {
+                "Sole" => 1,
+                "StrokeSole" => 0.5,
+                "StorageStrokeSole" => 0.25,
+              },
+              "type": "String",
+              "values": Set {
+                "#800000",
+              },
+            },
+          },
+          "laces" => {
+            "optional": false,
+            "value": {
+              "names": Map {
+                "Lace" => 1,
+                "StrokeLace" => 0.5,
+                "StorageStrokeLace" => 0.25,
+              },
+              "type": "String",
+              "values": Set {
+                "#00ff00",
+              },
+            },
+          },
+        },
+        "names": Map {
+          "Stroke" => 1,
+          "StorageStroke" => 0.5,
+        },
+        "type": "LiveObject",
+      },
+    },
+  },
+  "names": Map {
+    "Storage" => 1,
+  },
+  "type": "LiveObject",
+}
+`;
+
 exports[`inferType correctly infers the "EMPTY" schema 1`] = `
 {
   "rootNames": BidirectionalMap {
@@ -1531,566 +6070,6 @@ exports[`inferType correctly infers the "EMPTY" type 1`] = `
 {
   "atomic": true,
   "fields": Map {},
-  "names": Map {
-    "Storage" => 1,
-  },
-  "type": "LiveObject",
-}
-`;
-
-exports[`inferType correctly infers the "SINGLE_LIVE_OBJECT_ATTRIBUTE" schema 1`] = `
-{
-  "rootNames": BidirectionalMap {
-    "_map": Map {
-      "Storage" => {
-        "atomic": true,
-        "fields": Map {
-          "a" => {
-            "optional": false,
-            "value": {
-              "atomic": false,
-              "fields": Map {
-                "name" => {
-                  "optional": false,
-                  "value": {
-                    "names": Map {
-                      "Name" => 1,
-                      "AName" => 0.5,
-                      "StorageAName" => 0.25,
-                    },
-                    "type": "String",
-                    "values": Set {
-                      "John",
-                    },
-                  },
-                },
-              },
-              "names": Map {
-                "A" => 1,
-                "StorageA" => 0.5,
-              },
-              "type": "LiveObject",
-            },
-          },
-        },
-        "names": Map {
-          "Storage" => 1,
-        },
-        "type": "LiveObject",
-      },
-      "A" => {
-        "atomic": false,
-        "fields": Map {
-          "name" => {
-            "optional": false,
-            "value": {
-              "names": Map {
-                "Name" => 1,
-                "AName" => 0.5,
-                "StorageAName" => 0.25,
-              },
-              "type": "String",
-              "values": Set {
-                "John",
-              },
-            },
-          },
-        },
-        "names": Map {
-          "A" => 1,
-          "StorageA" => 0.5,
-        },
-        "type": "LiveObject",
-      },
-    },
-    "_reverseMap": Map {
-      {
-        "atomic": true,
-        "fields": Map {
-          "a" => {
-            "optional": false,
-            "value": {
-              "atomic": false,
-              "fields": Map {
-                "name" => {
-                  "optional": false,
-                  "value": {
-                    "names": Map {
-                      "Name" => 1,
-                      "AName" => 0.5,
-                      "StorageAName" => 0.25,
-                    },
-                    "type": "String",
-                    "values": Set {
-                      "John",
-                    },
-                  },
-                },
-              },
-              "names": Map {
-                "A" => 1,
-                "StorageA" => 0.5,
-              },
-              "type": "LiveObject",
-            },
-          },
-        },
-        "names": Map {
-          "Storage" => 1,
-        },
-        "type": "LiveObject",
-      } => "Storage",
-      {
-        "atomic": false,
-        "fields": Map {
-          "name" => {
-            "optional": false,
-            "value": {
-              "names": Map {
-                "Name" => 1,
-                "AName" => 0.5,
-                "StorageAName" => 0.25,
-              },
-              "type": "String",
-              "values": Set {
-                "John",
-              },
-            },
-          },
-        },
-        "names": Map {
-          "A" => 1,
-          "StorageA" => 0.5,
-        },
-        "type": "LiveObject",
-      } => "A",
-    },
-  },
-  "rootTypeReferences": Map {
-    {
-      "atomic": false,
-      "fields": Map {
-        "name" => {
-          "optional": false,
-          "value": {
-            "names": Map {
-              "Name" => 1,
-              "AName" => 0.5,
-              "StorageAName" => 0.25,
-            },
-            "type": "String",
-            "values": Set {
-              "John",
-            },
-          },
-        },
-      },
-      "names": Map {
-        "A" => 1,
-        "StorageA" => 0.5,
-      },
-      "type": "LiveObject",
-    } => Set {
-      {
-        "optional": false,
-        "value": {
-          "atomic": false,
-          "fields": Map {
-            "name" => {
-              "optional": false,
-              "value": {
-                "names": Map {
-                  "Name" => 1,
-                  "AName" => 0.5,
-                  "StorageAName" => 0.25,
-                },
-                "type": "String",
-                "values": Set {
-                  "John",
-                },
-              },
-            },
-          },
-          "names": Map {
-            "A" => 1,
-            "StorageA" => 0.5,
-          },
-          "type": "LiveObject",
-        },
-      },
-    },
-  },
-  "rootTypes": Set {
-    {
-      "atomic": true,
-      "fields": Map {
-        "a" => {
-          "optional": false,
-          "value": {
-            "atomic": false,
-            "fields": Map {
-              "name" => {
-                "optional": false,
-                "value": {
-                  "names": Map {
-                    "Name" => 1,
-                    "AName" => 0.5,
-                    "StorageAName" => 0.25,
-                  },
-                  "type": "String",
-                  "values": Set {
-                    "John",
-                  },
-                },
-              },
-            },
-            "names": Map {
-              "A" => 1,
-              "StorageA" => 0.5,
-            },
-            "type": "LiveObject",
-          },
-        },
-      },
-      "names": Map {
-        "Storage" => 1,
-      },
-      "type": "LiveObject",
-    },
-    {
-      "atomic": false,
-      "fields": Map {
-        "name" => {
-          "optional": false,
-          "value": {
-            "names": Map {
-              "Name" => 1,
-              "AName" => 0.5,
-              "StorageAName" => 0.25,
-            },
-            "type": "String",
-            "values": Set {
-              "John",
-            },
-          },
-        },
-      },
-      "names": Map {
-        "A" => 1,
-        "StorageA" => 0.5,
-      },
-      "type": "LiveObject",
-    },
-  },
-}
-`;
-
-exports[`inferType correctly infers the "SINGLE_LIVE_OBJECT_ATTRIBUTE" schema ast 1`] = `
-{
-  "_kind": "Document",
-  "definitions": [
-    {
-      "_kind": "ObjectTypeDefinition",
-      "fields": [
-        {
-          "_kind": "FieldDef",
-          "name": {
-            "_kind": "Identifier",
-            "name": "a",
-            "range": [
-              0,
-              0,
-            ],
-          },
-          "optional": false,
-          "range": [
-            0,
-            0,
-          ],
-          "type": {
-            "_kind": "TypeRef",
-            "asLiveObject": true,
-            "range": [
-              0,
-              0,
-            ],
-            "ref": {
-              "_kind": "TypeName",
-              "name": "A",
-              "range": [
-                0,
-                0,
-              ],
-            },
-          },
-        },
-      ],
-      "name": {
-        "_kind": "TypeName",
-        "name": "Storage",
-        "range": [
-          0,
-          0,
-        ],
-      },
-      "range": [
-        0,
-        0,
-      ],
-    },
-    {
-      "_kind": "ObjectTypeDefinition",
-      "fields": [
-        {
-          "_kind": "FieldDef",
-          "name": {
-            "_kind": "Identifier",
-            "name": "name",
-            "range": [
-              0,
-              0,
-            ],
-          },
-          "optional": false,
-          "range": [
-            0,
-            0,
-          ],
-          "type": {
-            "_kind": "StringType",
-            "range": [
-              0,
-              0,
-            ],
-          },
-        },
-      ],
-      "name": {
-        "_kind": "TypeName",
-        "name": "A",
-        "range": [
-          0,
-          0,
-        ],
-      },
-      "range": [
-        0,
-        0,
-      ],
-    },
-  ],
-  "range": [
-    0,
-    0,
-  ],
-}
-`;
-
-exports[`inferType correctly infers the "SINGLE_LIVE_OBJECT_ATTRIBUTE" schema text 1`] = `
-"type Storage {
-  a: LiveObject<A>
-}
-
-type A {
-  name: String
-}"
-`;
-
-exports[`inferType correctly infers the "SINGLE_LIVE_OBJECT_ATTRIBUTE" type 1`] = `
-{
-  "atomic": true,
-  "fields": Map {
-    "a" => {
-      "optional": false,
-      "value": {
-        "atomic": false,
-        "fields": Map {
-          "name" => {
-            "optional": false,
-            "value": {
-              "names": Map {
-                "Name" => 1,
-                "AName" => 0.5,
-                "StorageAName" => 0.25,
-              },
-              "type": "String",
-              "values": Set {
-                "John",
-              },
-            },
-          },
-        },
-        "names": Map {
-          "A" => 1,
-          "StorageA" => 0.5,
-        },
-        "type": "LiveObject",
-      },
-    },
-  },
-  "names": Map {
-    "Storage" => 1,
-  },
-  "type": "LiveObject",
-}
-`;
-
-exports[`inferType correctly infers the "SINGLE_SCALAR_ATTRIBUTE" schema 1`] = `
-{
-  "rootNames": BidirectionalMap {
-    "_map": Map {
-      "Storage" => {
-        "atomic": true,
-        "fields": Map {
-          "a" => {
-            "optional": false,
-            "value": {
-              "names": Map {
-                "A" => 1,
-                "StorageA" => 0.5,
-              },
-              "type": "Integer",
-              "values": Set {
-                1,
-              },
-            },
-          },
-        },
-        "names": Map {
-          "Storage" => 1,
-        },
-        "type": "LiveObject",
-      },
-    },
-    "_reverseMap": Map {
-      {
-        "atomic": true,
-        "fields": Map {
-          "a" => {
-            "optional": false,
-            "value": {
-              "names": Map {
-                "A" => 1,
-                "StorageA" => 0.5,
-              },
-              "type": "Integer",
-              "values": Set {
-                1,
-              },
-            },
-          },
-        },
-        "names": Map {
-          "Storage" => 1,
-        },
-        "type": "LiveObject",
-      } => "Storage",
-    },
-  },
-  "rootTypeReferences": Map {},
-  "rootTypes": Set {
-    {
-      "atomic": true,
-      "fields": Map {
-        "a" => {
-          "optional": false,
-          "value": {
-            "names": Map {
-              "A" => 1,
-              "StorageA" => 0.5,
-            },
-            "type": "Integer",
-            "values": Set {
-              1,
-            },
-          },
-        },
-      },
-      "names": Map {
-        "Storage" => 1,
-      },
-      "type": "LiveObject",
-    },
-  },
-}
-`;
-
-exports[`inferType correctly infers the "SINGLE_SCALAR_ATTRIBUTE" schema ast 1`] = `
-{
-  "_kind": "Document",
-  "definitions": [
-    {
-      "_kind": "ObjectTypeDefinition",
-      "fields": [
-        {
-          "_kind": "FieldDef",
-          "name": {
-            "_kind": "Identifier",
-            "name": "a",
-            "range": [
-              0,
-              0,
-            ],
-          },
-          "optional": false,
-          "range": [
-            0,
-            0,
-          ],
-          "type": {
-            "_kind": "IntType",
-            "range": [
-              0,
-              0,
-            ],
-          },
-        },
-      ],
-      "name": {
-        "_kind": "TypeName",
-        "name": "Storage",
-        "range": [
-          0,
-          0,
-        ],
-      },
-      "range": [
-        0,
-        0,
-      ],
-    },
-  ],
-  "range": [
-    0,
-    0,
-  ],
-}
-`;
-
-exports[`inferType correctly infers the "SINGLE_SCALAR_ATTRIBUTE" schema text 1`] = `
-"type Storage {
-  a: Int
-}"
-`;
-
-exports[`inferType correctly infers the "SINGLE_SCALAR_ATTRIBUTE" type 1`] = `
-{
-  "atomic": true,
-  "fields": Map {
-    "a" => {
-      "optional": false,
-      "value": {
-        "names": Map {
-          "A" => 1,
-          "StorageA" => 0.5,
-        },
-        "type": "Integer",
-        "values": Set {
-          1,
-        },
-      },
-    },
-  },
   "names": Map {
     "Storage" => 1,
   },

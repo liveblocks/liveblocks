@@ -6,6 +6,7 @@ import {
   inferredLiveObjectTypeToAst,
 } from "./liveObject";
 import {
+  combineInferredObjectTypes,
   inferObjectType,
   InferredObjectType,
   inferredObjectTypeToAst,
@@ -85,6 +86,10 @@ export function combineInferredTypes(
 
   if (a.type === "LiveObject" && b.type === "LiveObject") {
     return combineInferredLiveObjectTypes(a, b);
+  }
+
+  if (a.type === "Object" && b.type === "Object") {
+    return combineInferredObjectTypes(a, b);
   }
 
   throw new Error("Not implemented");
