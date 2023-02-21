@@ -33,6 +33,9 @@ jobs:
           brew install fzf && brew tap nvie/tap && brew install
           nvie/tap/git-toolbelt
 
+      - name: Checkout
+        uses: actions/checkout@v3
+
       - name: Setup Node.js environment
         uses: actions/setup-node@v3.6.0
         with:
