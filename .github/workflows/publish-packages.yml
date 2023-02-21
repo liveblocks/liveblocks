@@ -47,6 +47,7 @@ jobs:
 
   prepare-release:
     runs-on: ubuntu-latest
+
     - name: Preparing release
       run: echo This is where we run "release.sh"
     - name: Building all packages
