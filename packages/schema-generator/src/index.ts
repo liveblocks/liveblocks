@@ -2,6 +2,7 @@ import { inferLsonFields } from "./fields";
 import {
   inferObjectType,
   InferredObjectType,
+  isInferredObjectType,
   mergeInferredObjectTypes,
 } from "./object";
 import {
@@ -72,7 +73,7 @@ export function mergeInferredTypes(
     return mergeInferredScalarTypes(a, b);
   }
 
-  if (a.type === "Object" && b.type === "Object") {
+  if (isInferredObjectType(a) && isInferredObjectType(b)) {
     return mergeInferredObjectTypes(a, b);
   }
 

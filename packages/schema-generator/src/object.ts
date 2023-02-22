@@ -11,6 +11,7 @@ import { ChildContext, PlainLsonFields } from "./types";
 import { AST } from "@liveblocks/schema";
 import { InferredSchema } from "./schema";
 import { invariant } from "./utils/invariant";
+import { InferredType } from ".";
 
 export type InferredObjectType = {
   type: "Object";
@@ -36,8 +37,8 @@ export function inferObjectType(
     atomic: false,
   };
 
-  const data = isLiveObject ? value.data : value;
-  inferred.fields = inferLsonFields(data as PlainLsonFields, {
+  const data = (isLiveObject ? value.data : value) as PlainLsonFields;
+  inferred.fields = inferLsonFields(data, {
     ...ctx,
     parent: inferred,
     json: !isLiveObject,
@@ -87,4 +88,10 @@ export function inferredObjectTypeToAst(
     fields: inferredFieldsToAst(inferred.fields, schema),
     range: [0, 0],
   };
+}
+
+export function isInferredObjectType(
+  value: InferredType
+): value is InferredObjectType {
+  return value.type === "Object";
 }

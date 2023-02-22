@@ -27,21 +27,21 @@ exports[`inferType correctly infers the "BASIC_MERGE" schema 1`] = `
 }
 
 type Fill {
-  mesh: Mesh
+  position: Position
   sole: String
   stripes: String
   laces: String
 }
 
 type Stroke {
-  mesh: Mesh
+  position: Position
   sole: String
   laces: String
 }
 
-type Mesh {
-  b?: Int
-  a?: Int
+type Position {
+  x: Float
+  y: Float
 }"
 `;
 

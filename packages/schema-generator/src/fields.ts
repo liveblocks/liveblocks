@@ -35,28 +35,30 @@ export function combineInferredFields(
 ): InferredFields | undefined {
   const keys = new Set([...Object.keys(a), ...Object.keys(b)]);
 
-  const combined: InferredFields = {};
+  const mergedFields: InferredFields = {};
   for (const key of keys) {
-    const childA = a[key];
-    const childB = b[key];
+    const valueA = a[key];
+    const valueB = b[key];
 
-    if (!childA || !childB) {
-      const combinedChild = childA ?? childB;
+    if (!valueA || !valueB) {
+      const mergedValue = valueA ?? valueB;
 
       // Should never happen
-      invariant(isNotUndefined(combinedChild));
+      invariant(isNotUndefined(mergedValue));
 
-      combined[key] = { ...combinedChild, optional: true };
+      mergedValue[key] = { ...mergedValue, optional: true };
       continue;
     }
 
-    const combinedChild = combineTypeReferences(childA, childB);
-    if (!combinedChild) {
+    const mergedValue = combineTypeReferences(valueA, valueB);
+    if (!mergedValue) {
       return undefined;
     }
+
+    mergedFields[key] = mergedValue;
   }
 
-  return combined;
+  return mergedFields;
 }
 
 export function inferredFieldsToAst(

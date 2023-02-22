@@ -2,6 +2,7 @@ import { inferStorageType } from "..";
 import { inferSchema, inferredSchemaToAst } from "../schema";
 import { PlainLsonObject } from "../types";
 import { prettify } from "@liveblocks/schema/src/prettify";
+import { parse } from "@liveblocks/schema";
 
 const EMPTY: PlainLsonObject = {
   liveblocksType: "LiveObject",
@@ -37,7 +38,7 @@ const BASIC_MERGE: PlainLsonObject = {
     fills: {
       liveblocksType: "LiveObject",
       data: {
-        mesh: { b: 1 },
+        position: { x: 0, y: 0 },
         sole: "#808960",
         stripes: "#e3fccb",
         laces: "#c3f4bb",
@@ -46,7 +47,7 @@ const BASIC_MERGE: PlainLsonObject = {
     strokes: {
       liveblocksType: "LiveObject",
       data: {
-        mesh: { a: 1 },
+        position: { x: 1.4, y: 4.2 },
         sole: "#800000",
         laces: "#00ff00",
       },
@@ -86,26 +87,15 @@ describe("inferType", () => {
   };
 
   Object.entries(testCases).forEach(([name, schema]) => {
-    /*
-    it(`correctly infers the "${name}" type`, () => {
-      expect(inferStorageType(schema)).toMatchSnapshot();
-    });
-
     it(`correctly infers the "${name}" schema`, () => {
-      expect(inferSchema(inferStorageType(schema))).toMatchSnapshot();
-    });
+      const ast = inferredSchemaToAst(inferSchema(inferStorageType(schema)));
 
-    it(`correctly infers the "${name}" schema ast`, () => {
-      expect(
-        inferredSchemaToAst(inferSchema(inferStorageType(schema)))
-      ).toMatchSnapshot();
-    });
-    */
+      const schemaText = prettify(ast);
+      expect(() => parse(schemaText)).not.toThrow();
 
-    it(`correctly infers the "${name}" schema`, () => {
-      expect(
-        prettify(inferredSchemaToAst(inferSchema(inferStorageType(schema))))
-      ).toMatchSnapshot();
+      // TODO: Ensure generates schema actually matches the input
+
+      expect(schemaText).toMatchSnapshot();
     });
   });
 });

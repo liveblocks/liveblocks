@@ -1,5 +1,9 @@
 import { mergeInferredTypes, InferredType, isAtomic } from ".";
-import { InferredObjectType, inferredObjectTypeToAst } from "./object";
+import {
+  InferredObjectType,
+  inferredObjectTypeToAst,
+  isInferredObjectType,
+} from "./object";
 import { InferredTypeReference } from "./typeReference";
 import { invariant } from "./utils/invariant";
 import { BidirectionalMap } from "./utils/bidirectionalMap";
@@ -59,7 +63,7 @@ function inferRootTypes(
   const rootTypeReferences: RootReferences = new Map();
 
   for (const [type, referenceObj] of iterateInferredTypesDeep(inferred)) {
-    if (type.type === "Object") {
+    if (isInferredObjectType(type)) {
       rootTypes.add(type);
 
       if (referenceObj) {
@@ -114,11 +118,11 @@ function assignNameOrMerge(schema: InferredSchema, type: InferredObjectType) {
       return;
     }
 
-    const combined = mergeInferredTypes(existingType, type) as
-      | InferredObjectType
-      | undefined;
+    const combined = mergeInferredTypes(existingType, type);
 
     if (combined) {
+      invariant(isInferredObjectType(combined), "Expected object type");
+
       replaceRootType(schema, existingType, combined);
       replaceRootType(schema, type, combined);
       schema.rootNames.set(name, combined);
