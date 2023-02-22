@@ -41,7 +41,11 @@ jobs:
 
       - name: Set release version
         id: version
-        run: echo "$RELEASE_VERSION"
+        env:
+          GIT_TAG: ${{ steps.vars.outputs.tag }}
+        run: echo "version=${GIT_TAG#v}" >> $GITHUB_OUTPUT
+      - name: Check release version
+        run: echo ${{ steps.version.outputs.version }}
 
       # - name: Set release tag
       #   id: vars
