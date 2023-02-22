@@ -1,10 +1,12 @@
 import type { AST } from "@liveblocks/schema";
+
 import { inferType, mergeInferredTypes } from ".";
 import { isInferredObjectType } from "./object";
 import { inferredScalarTypeToAst, isInferredScalarType } from "./scalar";
 import type { InferredSchema } from "./schema";
 import type { ChildContext, InferredType, PlainLson } from "./types";
 import { invariant } from "./utils/invariant";
+import { isNotUndefined } from "./utils/typeGuards";
 
 export type InferredTypeReference = {
   value: InferredType;
@@ -43,7 +45,10 @@ export function inferredTypeReferenceToAst(
 
   if (isInferredObjectType(value)) {
     const name = schema.rootNames.getKey(value);
-    invariant(name != null, "Root type reference without assigned name");
+    invariant(
+      isNotUndefined(name),
+      "Root type reference without assigned name"
+    );
 
     return {
       _kind: "TypeRef",

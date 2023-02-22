@@ -1,12 +1,11 @@
 import type { AST } from "@liveblocks/schema";
+
 import { mergeInferredTypes } from ".";
-import {
-  InferredObjectType,
-  inferredObjectTypeToAst,
-  isInferredObjectType,
-} from "./object";
+import type { InferredObjectType } from "./object";
+import { inferredObjectTypeToAst, isInferredObjectType } from "./object";
 import type { InferredTypeReference } from "./typeReference";
-import { InferredType, isAtomic } from "./types";
+import type { InferredType } from "./types";
+import { isAtomic } from "./types";
 import { BidirectionalMap } from "./utils/bidirectionalMap";
 import { invariant } from "./utils/invariant";
 
@@ -144,7 +143,9 @@ function assignNameOrMerge(schema: InferredSchema, type: InferredObjectType) {
   }
 }
 
-export function inferSchema(inferredStorage: InferredObjectType) {
+export function inferSchema(
+  inferredStorage: InferredObjectType
+): InferredSchema {
   const rootTypes = inferRootTypes(inferredStorage);
   const schema: InferredSchema = {
     ...rootTypes,

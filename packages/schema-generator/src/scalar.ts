@@ -1,5 +1,7 @@
 import type { AST } from "@liveblocks/schema";
-import { generateNames, mergeScoredNames, ScoredNames } from "./naming";
+
+import type { ScoredNames } from "./naming";
+import { generateNames, mergeScoredNames } from "./naming";
 import type { InferredSchema } from "./schema";
 import type { ChildContext, InferredType, JsonScalar } from "./types";
 

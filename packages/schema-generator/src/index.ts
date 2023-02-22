@@ -1,7 +1,7 @@
 import { inferLsonFields } from "./fields";
+import type { InferredObjectType } from "./object";
 import {
   inferObjectType,
-  InferredObjectType,
   isInferredObjectType,
   mergeInferredObjectTypes,
 } from "./object";

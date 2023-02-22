@@ -1,5 +1,6 @@
 import { parse } from "@liveblocks/schema";
 import { prettify } from "@liveblocks/schema/src/prettify";
+
 import { inferStorageType } from "..";
 import { inferredSchemaToAst, inferSchema } from "../schema";
 import type { PlainLsonObject } from "../types";

@@ -31,7 +31,7 @@ export class BidirectionalMap<TKey, TValue> implements Map<TKey, TValue> {
 
   forEach(
     callbackfn: (value: TValue, key: TKey, map: Map<TKey, TValue>) => void,
-    thisArg?: any
+    thisArg?: unknown
   ): void {
     this._map.forEach(callbackfn, thisArg);
   }
@@ -89,7 +89,7 @@ export class BidirectionalMap<TKey, TValue> implements Map<TKey, TValue> {
 
   [Symbol.toStringTag] = "BidirectionalMap";
 
-  get size() {
+  get size(): number {
     return this._map.size;
   }
 }

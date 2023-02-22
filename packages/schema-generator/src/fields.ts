@@ -1,7 +1,8 @@
 import type { AST } from "@liveblocks/schema";
+
 import type { InferredSchema } from "./schema";
+import type { InferredTypeReference } from "./typeReference";
 import {
-  InferredTypeReference,
   inferredTypeReferenceToAst,
   inferTypeReference,
   mergeTypeReferences,

@@ -1,10 +1,11 @@
 import type { Json } from "@liveblocks/core";
-import { InferredObjectType, isInferredObjectType } from "./object";
+
+import type { InferredObjectType } from "./object";
+import { isInferredObjectType } from "./object";
 import type { InferredScalarType } from "./scalar";
 import type { PartialBy } from "./utils/types";
 
 export type PlainLsonFields = Record<string, PlainLson>;
-export type SerializedLiveObject = {};
 export type PlainLsonObject = {
   liveblocksType: "LiveObject";
   data: PlainLsonFields;
