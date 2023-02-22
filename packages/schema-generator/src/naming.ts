@@ -1,4 +1,4 @@
-import type { ChildContext } from "./types";
+import type { ChildContext } from "./inference";
 import { singular, ucFirst, words } from "./utils/strings";
 
 export type ScoredNames = Record<string, number>;

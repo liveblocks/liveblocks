@@ -1,9 +1,7 @@
 import { parse } from "@liveblocks/schema";
-import { prettify } from "@liveblocks/schema/src/prettify";
 
-import { inferStorageType } from "..";
-import { inferredSchemaToAst, inferSchema } from "../schema";
-import type { PlainLsonObject } from "../types";
+import type { PlainLsonObject } from "..";
+import { inferPlainLsonSchema } from "..";
 
 const EMPTY: PlainLsonObject = {
   liveblocksType: "LiveObject",
@@ -87,11 +85,9 @@ describe("inferType", () => {
     BASIC_LIVE_OBJECT,
   };
 
-  Object.entries(testCases).forEach(([name, schema]) => {
+  Object.entries(testCases).forEach(([name, storageData]) => {
     it(`correctly infers the "${name}" schema`, () => {
-      const ast = inferredSchemaToAst(inferSchema(inferStorageType(schema)));
-
-      const schemaText = prettify(ast);
+      const schemaText = inferPlainLsonSchema(storageData);
       expect(() => parse(schemaText)).not.toThrow();
 
       // TODO: Ensure generates schema actually matches the input

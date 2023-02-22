@@ -1,5 +1,7 @@
 import type { AST } from "@liveblocks/schema";
 
+import type { ChildContext } from "./inference";
+import type { JsonObject, PlainLsonFields } from "./plainLson";
 import type { InferredSchema } from "./schema";
 import type { InferredTypeReference } from "./typeReference";
 import {
@@ -7,7 +9,6 @@ import {
   inferTypeReference,
   mergeInferredTypeReferences,
 } from "./typeReference";
-import type { ChildContext, JsonObject, PlainLsonFields } from "./types";
 import { invariant } from "./utils/invariant";
 import { isNotUndefined } from "./utils/typeGuards";
 

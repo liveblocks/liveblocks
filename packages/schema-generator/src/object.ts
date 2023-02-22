@@ -6,16 +6,11 @@ import {
   inferredFieldsToAst,
   mergeInferredFields,
 } from "./fields";
+import type { ChildContext, InferredType } from "./inference";
 import type { ScoredNames } from "./naming";
 import { generateNames, mergeScoredNames } from "./naming";
+import type { JsonObject, PlainLsonFields, PlainLsonObject } from "./plainLson";
 import type { InferredSchema } from "./schema";
-import type {
-  ChildContext,
-  InferredType,
-  JsonObject,
-  PlainLsonFields,
-  PlainLsonObject,
-} from "./types";
 import { invariant } from "./utils/invariant";
 import { isNotUndefined } from "./utils/typeGuards";
 import type { PartialBy } from "./utils/types";

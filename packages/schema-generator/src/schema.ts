@@ -1,11 +1,10 @@
 import type { AST } from "@liveblocks/schema";
 
-import { mergeInferredTypes } from ".";
+import type { InferredType } from "./inference";
+import { isAtomic, mergeInferredTypes } from "./inference";
 import type { InferredObjectType } from "./object";
 import { inferredObjectTypeToAst, isInferredObjectType } from "./object";
 import type { InferredTypeReference } from "./typeReference";
-import type { InferredType } from "./types";
-import { isAtomic } from "./types";
 import { BidirectionalMap } from "./utils/bidirectionalMap";
 import { invariant } from "./utils/invariant";
 
