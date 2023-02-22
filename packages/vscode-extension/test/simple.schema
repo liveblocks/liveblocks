@@ -1,0 +1,48 @@
+# sadsad
+type SomeObject { 
+  # asdasd
+  test: { x: String
+    y: {
+      z: Number
+    }, # Comments?
+    z: String
+  },
+  test2?: Number
+
+  # asdasd
+
+  test3: {
+    x?: String[]
+  }
+}
+
+union B = { x: B } # | { x: A } 
+
+union B = { x: B }
+
+union C = "something" | { x: "else" } | LiveList<LiveObject<{ a: String, b: SomeObject }>> # df?
+
+union D = # Comments
+  | "something"
+  | { x: 3 }
+  | LiveList<LiveObject<{ a: String, b: SomeObject }>> | SomeObject
+
+type ObjectB {
+  test1: SomeObject
+  test: LiveObject<SomeObject>, test: LiveObject<{ x: Number }> # Comments work?
+  test3: LiveMap<"st\"ring", SomeObject>,
+  test4: LiveMap<String, LiveList<LiveObject<{ a: String, b: SomeObject }>>>
+}
+
+type Storage {
+  # asdasd
+  test2?: { x: "yay!" },
+  test3?: {
+    # Something 
+    x?: {},
+  },
+}
+
+type Storage2 {
+  test: "adasdasd",
+}
