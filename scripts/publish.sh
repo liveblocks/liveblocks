@@ -75,6 +75,11 @@ publish_to_npm () {
     npm publish --tag private
 }
 
+# Turns "packages/liveblocks-core" => "@liveblocks/core"
+npm_pkgname () {
+    jq -r .name "$1/package.json"
+}
+
 check_is_valid_version "$VERSION"
 check_is_valid_tag "$TAG"
 
