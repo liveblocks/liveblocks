@@ -1,6 +1,7 @@
-#!/bin/sh
+#!/bin/bash
 set -eu
 
+echo "Running release scripts..."
 PACKAGE_DIRS=(
     "packages/liveblocks-core"
     "packages/liveblocks-client"
