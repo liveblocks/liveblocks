@@ -1,4 +1,4 @@
-import "./styles/globals.css";
+import "../styles/globals.css";
 import "reactflow/dist/base.css";
 import "reactflow/dist/style.css";
 import type { AppProps } from "next/app";
