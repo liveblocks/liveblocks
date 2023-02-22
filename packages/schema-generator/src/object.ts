@@ -1,4 +1,3 @@
-import type { JsonObject, LsonObject } from "@liveblocks/core";
 import type { AST } from "@liveblocks/schema";
 
 import type { InferredFields } from "./fields";
@@ -10,7 +9,13 @@ import {
 import type { ScoredNames } from "./naming";
 import { generateNames, mergeScoredNames } from "./naming";
 import type { InferredSchema } from "./schema";
-import type { ChildContext, InferredType, PlainLsonFields } from "./types";
+import type {
+  ChildContext,
+  InferredType,
+  JsonObject,
+  PlainLsonFields,
+  PlainLsonObject,
+} from "./types";
 import { invariant } from "./utils/invariant";
 import { isNotUndefined } from "./utils/typeGuards";
 import type { PartialBy } from "./utils/types";
@@ -24,7 +29,7 @@ export type InferredObjectType = {
 };
 
 export function inferObjectType(
-  value: JsonObject | LsonObject,
+  value: JsonObject | PlainLsonObject,
   ctx: ChildContext
 ): InferredObjectType {
   // Since we allow arbitrary json objects, we need to be sure we are not inside a json

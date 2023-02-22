@@ -5,7 +5,7 @@ import type { InferredTypeReference } from "./typeReference";
 import {
   inferredTypeReferenceToAst,
   inferTypeReference,
-  mergeTypeReferences,
+  mergeInferredTypeReferences,
 } from "./typeReference";
 import type { ChildContext, JsonObject, PlainLsonFields } from "./types";
 import { invariant } from "./utils/invariant";
@@ -51,7 +51,7 @@ export function mergeInferredFields(
       continue;
     }
 
-    const mergedValue = mergeTypeReferences(valueA, valueB);
+    const mergedValue = mergeInferredTypeReferences(valueA, valueB);
     if (!mergedValue) {
       return undefined;
     }

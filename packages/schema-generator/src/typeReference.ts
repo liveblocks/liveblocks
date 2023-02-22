@@ -20,7 +20,7 @@ export function inferTypeReference(
   return { value: inferType(value, ctx), optional: false };
 }
 
-export function mergeTypeReferences(
+export function mergeInferredTypeReferences(
   a: InferredTypeReference,
   b: InferredTypeReference
 ): InferredTypeReference | undefined {
