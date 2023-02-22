@@ -12,17 +12,17 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # - name: Set up Homebrew
-      #   id: set-up-homebrew
-      #   uses: Homebrew/actions/setup-homebrew@master
+      - name: Set up Homebrew
+        id: set-up-homebrew
+        uses: Homebrew/actions/setup-homebrew@master
 
-      # - name: Install moreutils
-      #   run: brew install moreutils
+      - name: Install moreutils
+        run: brew install moreutils
 
-      # - name: Install git-toolbelt
-      #   run:
-      #     brew install fzf && brew tap nvie/tap && brew install
-      #     nvie/tap/git-toolbelt
+      - name: Install git-toolbelt
+        run:
+          brew install fzf && brew tap nvie/tap && brew install
+          nvie/tap/git-toolbelt
 
       - name: Checkout
         uses: actions/checkout@v3
@@ -51,18 +51,10 @@ jobs:
           echo ${{steps.version.outputs.value}}
           echo ${{steps.npm_tag.outputs.value}}
 
-      - name: setup git config
+      - name: Setup git config
         run: |
           git config user.name "GitHub Actions Bot"
           git config user.email "<>"
-
-      # - name: Do dummy commit
-      #   run:
-      #     git commit --allow-empty -m "Bump to ${{steps.git_tag.outputs.value}}" &&
-      #     git push
-
-      - name: Testing running a script
-        run: ./scripts/test-running-script.sh
 
       - name: Setup Node.js environment
         uses: actions/setup-node@v3.6.0
@@ -73,7 +65,8 @@ jobs:
         run: npm install
 
       - name: Preparing release
-        run: echo This is where we run "release.sh"
+        run:
+          ./scripts/test-running-script.sh -V ${{steps.version.outputs.value}}
 
       - name: Build all packages
         run: npm run build
