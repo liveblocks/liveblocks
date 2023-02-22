@@ -53,7 +53,7 @@ function Example() {
         })
       }
     >
-      <h1>Solved</h1>
+      <h1>Presence solved</h1>
       <div className={styles.text}>
         {cursor
           ? `${cursor.x} × ${cursor.y}`

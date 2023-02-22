@@ -1,0 +1,12 @@
+{
+  "react": [
+    {
+      "path": "/react/getting-started",
+      "title": "Getting started",
+      "tutorial": [
+        "/react/getting-started/presence",
+        "/react/getting-started/conflict-free-data"
+      ]
+    }
+  ]
+}

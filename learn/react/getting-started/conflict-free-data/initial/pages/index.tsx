@@ -53,7 +53,7 @@ function Example() {
         })
       }
     >
-      <h1>Presence initial</h1>
+      <h1>Conflict-free data initial</h1>
       <div className={styles.text}>
         {cursor
           ? `${cursor.x} × ${cursor.y}`
