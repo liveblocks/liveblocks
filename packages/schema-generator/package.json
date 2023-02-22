@@ -5,9 +5,6 @@
   "description": "Helper to infer a liveblocks schema ast from plain lson data",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "bin": {
-    "generate-ast": "./dist/index.js"
-  },
   "scripts": {
     "build": "tsup",
     "lint": "eslint src/",
