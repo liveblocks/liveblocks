@@ -28,11 +28,9 @@ usage () {
 }
 
 VERSION=
-TAG=
 while getopts V:t:h flag; do
     case "$flag" in
         V) VERSION=$OPTARG;;
-        t) TAG=$OPTARG;;
         *) usage; exit 2;;
     esac
 done
@@ -51,15 +49,6 @@ check_is_valid_version () {
         exit 2
     fi
 }
-
-check_is_valid_tag () {
-    if ! [[ "$TAG" =~ ^[a-z0-9]+$ ]]; then
-        err "Invalid tag: $TAG"
-        err "Tag must be in the form of <tag>"
-        exit 2
-    fi
-}
-
 
 ROOT="$(git rev-parse --show-toplevel)"
 
