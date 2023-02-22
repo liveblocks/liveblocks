@@ -46,7 +46,7 @@ export class WebhookHandler {
         `Invalid signature, expected one of ${expectedSignatures}, got ${signature}`
       );
 
-    const event: WebhookEvent = JSON.parse(request.rawBody);
+    const event: WebhookEvent = JSON.parse(request.rawBody) as WebhookEvent;
 
     this.verifyWebhookEventType(event);
 
