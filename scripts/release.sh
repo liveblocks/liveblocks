@@ -93,6 +93,8 @@ commit_to_git () {
     ) )
 }
 
+check_is_valid_version "$VERSION"
+
 # Set up turbo
 npm install
 
