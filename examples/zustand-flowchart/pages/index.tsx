@@ -2,6 +2,7 @@ import React, { useEffect, useMemo } from "react";
 import ReactFlow, { Controls, MiniMap } from "reactflow";
 import useStore from "../src/store";
 import { useRouter } from "next/router";
+import styles from "./index.module.css";
 
 /**
  * This example shows how to build a collaborative flowchart
@@ -27,11 +28,17 @@ export default function Index() {
   }, [enterRoom, leaveRoom]);
 
   if (isStorageLoading) {
-    return <div>Loading...</div>;
+    return (
+      <div className={styles.container}>
+        <div className={styles.loading}>
+          <img src="https://liveblocks.io/loading.svg" alt="Loading" />
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div style={{ position: "fixed", inset: 0 }}>
+    <div className={styles.wrapper}>
       <ReactFlow
         nodes={nodes}
         edges={edges}
