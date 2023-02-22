@@ -1,4 +1,4 @@
-import { JsonObject } from "@liveblocks/core";
+import { JsonObject, LsonObject } from "@liveblocks/core";
 import { PartialBy } from "./utils/types";
 import {
   combineInferredFields,
@@ -6,28 +6,40 @@ import {
   InferredFields,
   inferredFieldsToAst,
 } from "./fields";
-import { generateNames, mergeScoredNames, ScoredNames } from "./names";
-import { ChildContext } from "./types";
+import { generateNames, mergeScoredNames, ScoredNames } from "./naming";
+import { ChildContext, PlainLsonFields } from "./types";
 import { AST } from "@liveblocks/schema";
 import { InferredSchema } from "./schema";
 import { invariant } from "./utils/invariant";
 
 export type InferredObjectType = {
   type: "Object";
+  live: boolean;
   fields: InferredFields;
   names: ScoredNames;
+  atomic: boolean;
 };
 
 export function inferObjectType(
-  value: JsonObject,
+  value: JsonObject | LsonObject,
   ctx: ChildContext
 ): InferredObjectType {
+  // Since we allow arbitrary json objects, we need to be sure we are not inside a json
+  // context before we check the liveblocksType property because the user could have
+  // a field called liveblocksType in their json object
+  const isLiveObject = !ctx.json && value.liveBlocksType === "LiveObject";
+
   const inferred: PartialBy<InferredObjectType, "fields"> = {
     names: generateNames(ctx),
     type: "Object",
+    live: isLiveObject,
+    atomic: false,
   };
 
-  inferred.fields = inferLsonFields(value, {
+  const data =
+    !ctx.json && value.liveBlocksType === "LiveObject" ? value.data : value;
+
+  inferred.fields = inferLsonFields(data as PlainLsonFields, {
     ...ctx,
     parent: inferred,
     json: true,
@@ -36,19 +48,31 @@ export function inferObjectType(
   return inferred as InferredObjectType;
 }
 
-export function combineInferredObjectTypes(
+export function mergeInferredObjectTypes(
   a: InferredObjectType,
   b: InferredObjectType
 ): InferredObjectType | undefined {
+  // Cannot merge live and non-live objects
+  if (a.live !== b.live) {
+    return undefined;
+  }
+
+  // Never merge atomic objects
+  if (a.atomic || b.atomic) {
+    return undefined;
+  }
+
   const combinedFields = combineInferredFields(a.fields, b.fields);
   if (!combinedFields) {
     return undefined;
   }
 
   return {
+    live: a.live,
     names: mergeScoredNames(a.names, b.names),
     type: "Object",
     fields: combinedFields,
+    atomic: false,
   };
 }
 

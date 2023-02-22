@@ -1,6 +1,6 @@
 import { InferredType } from ".";
 import { JsonScalar } from "./types";
-import { generateNames, mergeScoredNames, ScoredNames } from "./names";
+import { generateNames, mergeScoredNames, ScoredNames } from "./naming";
 import { ChildContext } from "./types";
 import { AST } from "@liveblocks/schema";
 import { InferredSchema } from "./schema";
@@ -42,7 +42,7 @@ export const INFERRED_SCALAR_TYPES: Set<InferredScalarType["type"]> = new Set([
   "Float",
 ]);
 
-export function combineInferredScalarTypes(
+export function mergeInferredScalarTypes(
   a: InferredScalarType,
   b: InferredScalarType
 ): InferredScalarType | undefined {
@@ -73,7 +73,7 @@ export function canCombineInferredScalarTypes(
   a: InferredScalarType,
   b: InferredScalarType
 ): boolean {
-  return combineInferredScalarTypes(a, b) !== undefined;
+  return mergeInferredScalarTypes(a, b) !== undefined;
 }
 
 export function inferScalarType(

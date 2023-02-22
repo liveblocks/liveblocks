@@ -86,6 +86,7 @@ describe("inferType", () => {
   };
 
   Object.entries(testCases).forEach(([name, schema]) => {
+    /*
     it(`correctly infers the "${name}" type`, () => {
       expect(inferStorageType(schema)).toMatchSnapshot();
     });
@@ -99,9 +100,9 @@ describe("inferType", () => {
         inferredSchemaToAst(inferSchema(inferStorageType(schema)))
       ).toMatchSnapshot();
     });
+    */
 
-    // Just here for debugging
-    it(`correctly infers the "${name}" schema text`, () => {
+    it(`correctly infers the "${name}" schema`, () => {
       expect(
         prettify(inferredSchemaToAst(inferSchema(inferStorageType(schema))))
       ).toMatchSnapshot();

@@ -1,41 +1,29 @@
 import { inferLsonFields } from "./fields";
 import {
-  combineInferredLiveObjectTypes,
-  inferLiveObjectType,
-  InferredLiveObjectType,
-  inferredLiveObjectTypeToAst,
-} from "./liveObject";
-import {
-  combineInferredObjectTypes,
   inferObjectType,
   InferredObjectType,
-  inferredObjectTypeToAst,
+  mergeInferredObjectTypes,
 } from "./object";
 import {
-  combineInferredScalarTypes,
   InferredScalarType,
   inferScalarType,
   isInferredScalarType,
+  mergeInferredScalarTypes,
 } from "./scalar";
-import { InferredRootType, InferredSchema } from "./schema";
 import { ChildContext, JsonScalar, PlainLson, PlainLsonObject } from "./types";
 import { PartialBy } from "./utils/types";
 
-export type InferredType =
-  | InferredScalarType
-  | InferredLiveObjectType
-  | InferredObjectType;
+export type InferredType = InferredScalarType | InferredObjectType;
 
 export function isAtomic(type: InferredType): boolean {
-  return "atomic" in type && type.atomic;
+  return "atomic" in type && !!type.atomic;
 }
 
-export function inferStorageType(
-  value: PlainLsonObject
-): InferredLiveObjectType {
-  const storage: PartialBy<InferredLiveObjectType, "fields"> = {
+export function inferStorageType(value: PlainLsonObject): InferredObjectType {
+  const storage: PartialBy<InferredObjectType, "fields"> = {
     names: new Map([["Storage", 1]]),
-    type: "LiveObject",
+    type: "Object",
+    live: true,
     atomic: true,
   };
 
@@ -45,7 +33,7 @@ export function inferStorageType(
   });
   storage.fields = fields;
 
-  return storage as InferredLiveObjectType;
+  return storage as InferredObjectType;
 }
 
 export function inferType(value: PlainLson, ctx: ChildContext): InferredType {
@@ -61,7 +49,7 @@ export function inferType(value: PlainLson, ctx: ChildContext): InferredType {
   // have a type property
   if (!ctx.json && "liveblocksType" in value) {
     if (value.liveblocksType === "LiveObject") {
-      return inferLiveObjectType(value as PlainLsonObject, ctx);
+      return inferObjectType(value as PlainLsonObject, ctx);
     }
 
     if (value.liveblocksType === "LiveList") {
@@ -76,33 +64,17 @@ export function inferType(value: PlainLson, ctx: ChildContext): InferredType {
   return inferObjectType(value, ctx);
 }
 
-export function combineInferredTypes(
+export function mergeInferredTypes(
   a: InferredType,
   b: InferredType
 ): InferredType | undefined {
   if (isInferredScalarType(a) && isInferredScalarType(b)) {
-    return combineInferredScalarTypes(a, b);
-  }
-
-  if (a.type === "LiveObject" && b.type === "LiveObject") {
-    return combineInferredLiveObjectTypes(a, b);
+    return mergeInferredScalarTypes(a, b);
   }
 
   if (a.type === "Object" && b.type === "Object") {
-    return combineInferredObjectTypes(a, b);
+    return mergeInferredObjectTypes(a, b);
   }
 
   throw new Error("Not implemented");
-}
-
-export function inferredRootTypeToAst(
-  value: InferredRootType,
-  schema: InferredSchema
-) {
-  switch (value.type) {
-    case "LiveObject":
-      return inferredLiveObjectTypeToAst(value, schema);
-    case "Object":
-      return inferredObjectTypeToAst(value, schema);
-  }
 }

@@ -1,5 +1,5 @@
 import { AST } from "@liveblocks/schema";
-import { combineInferredTypes, InferredType, inferType } from ".";
+import { mergeInferredTypes, InferredType, inferType } from ".";
 import { inferredScalarTypeToAst, isInferredScalarType } from "./scalar";
 import { InferredSchema } from "./schema";
 import { ChildContext, PlainLson } from "./types";
@@ -21,7 +21,7 @@ export function combineTypeReferences(
   a: InferredTypeReference,
   b: InferredTypeReference
 ): InferredTypeReference | undefined {
-  const combinedValue = combineInferredTypes(a.value, b.value);
+  const combinedValue = mergeInferredTypes(a.value, b.value);
   if (!combinedValue) {
     return undefined;
   }
@@ -40,13 +40,13 @@ export function inferredTypeReferenceToAst(
     return inferredScalarTypeToAst(value, schema);
   }
 
-  if (value.type === "LiveObject" || value.type === "Object") {
+  if (value.type === "Object") {
     const name = schema.rootNames.getKey(value);
     invariant(name != null, "Root type reference without assigned name");
 
     return {
       _kind: "TypeRef",
-      asLiveObject: value.type === "LiveObject",
+      asLiveObject: value.live,
       ref: {
         _kind: "TypeName",
         name,

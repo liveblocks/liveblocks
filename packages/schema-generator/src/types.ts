@@ -1,5 +1,4 @@
 import type { Json } from "@liveblocks/core";
-import type { InferredLiveObjectType } from "./liveObject";
 import type { InferredObjectType } from "./object";
 import type { PartialBy } from "./utils/types";
 
@@ -32,7 +31,7 @@ export type PlainLson =
   | Json;
 
 type FieldChildContext = {
-  parent: PartialBy<InferredLiveObjectType | InferredObjectType, "fields">;
+  parent: PartialBy<InferredObjectType, "fields">;
   field: string;
 };
 

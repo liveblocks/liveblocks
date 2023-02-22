@@ -1,21 +1,13 @@
-import {
-  combineInferredTypes,
-  inferredRootTypeToAst,
-  InferredType,
-  isAtomic,
-} from ".";
-import { InferredLiveObjectType } from "./liveObject";
-import { InferredObjectType } from "./object";
+import { mergeInferredTypes, InferredType, isAtomic } from ".";
+import { InferredObjectType, inferredObjectTypeToAst } from "./object";
 import { InferredTypeReference } from "./typeReference";
 import { invariant } from "./utils/invariant";
 import { BidirectionalMap } from "./utils/bidirectionalMap";
 import { AST } from "@liveblocks/schema";
 
-export type InferredRootType = InferredObjectType | InferredLiveObjectType;
-
-type RootTypes = Set<InferredRootType>;
-type RootReferences = Map<InferredRootType, Set<InferredTypeReference>>;
-type RootNames = BidirectionalMap<string, InferredRootType>;
+type RootTypes = Set<InferredObjectType>;
+type RootReferences = Map<InferredObjectType, Set<InferredTypeReference>>;
+type RootNames = BidirectionalMap<string, InferredObjectType>;
 
 export type InferredSchema = {
   rootTypes: RootTypes;
@@ -49,7 +41,6 @@ function* iterateInferredTypesDeep(
 
     yield [root, referenceObj];
     switch (root.type) {
-      case "LiveObject":
       case "Object":
         for (const field of root.fields.values()) {
           yield* iterate(field.value, field);
@@ -62,13 +53,13 @@ function* iterateInferredTypesDeep(
 }
 
 function inferRootTypes(
-  inferred: InferredLiveObjectType
+  inferred: InferredObjectType
 ): Pick<InferredSchema, "rootTypes" | "rootTypeReferences"> {
   const rootTypes: RootTypes = new Set();
   const rootTypeReferences: RootReferences = new Map();
 
   for (const [type, referenceObj] of iterateInferredTypesDeep(inferred)) {
-    if (type.type === "Object" || type.type === "LiveObject") {
+    if (type.type === "Object") {
       rootTypes.add(type);
 
       if (referenceObj) {
@@ -84,8 +75,8 @@ function inferRootTypes(
 
 function replaceRootType(
   schema: InferredSchema,
-  oldType: InferredRootType,
-  newType: InferredRootType
+  oldType: InferredObjectType,
+  newType: InferredObjectType
 ) {
   invariant(schema.rootTypes.has(oldType), "Old type not part of the schema");
 
@@ -105,7 +96,7 @@ function replaceRootType(
   }
 }
 
-function assignNameOrMerge(schema: InferredSchema, type: InferredRootType) {
+function assignNameOrMerge(schema: InferredSchema, type: InferredObjectType) {
   invariant(schema.rootTypes.has(type), "Root type not part of the schema");
   invariant(!schema.rootNames.hasValue(type), "Root type already has a name");
 
@@ -114,6 +105,8 @@ function assignNameOrMerge(schema: InferredSchema, type: InferredRootType) {
     .map(([name]) => name);
 
   // TODO: Be smarter about when to merge types, and when to rename them.
+  // Might also be worth a try to rename both types e.g. "Data" conflicts with "Data" ->
+  // rename them to "UserData" and "ShapeData" instead of keeping "Data" and adding "UserData".
   for (const name of orderedNames) {
     const existingType = schema.rootNames.get(name);
     if (!existingType) {
@@ -121,8 +114,8 @@ function assignNameOrMerge(schema: InferredSchema, type: InferredRootType) {
       return;
     }
 
-    const combined = combineInferredTypes(existingType, type) as
-      | InferredRootType
+    const combined = mergeInferredTypes(existingType, type) as
+      | InferredObjectType
       | undefined;
 
     if (combined) {
@@ -146,7 +139,7 @@ function assignNameOrMerge(schema: InferredSchema, type: InferredRootType) {
   }
 }
 
-export function inferSchema(inferredStorage: InferredLiveObjectType) {
+export function inferSchema(inferredStorage: InferredObjectType) {
   const rootTypes = inferRootTypes(inferredStorage);
   const schema: InferredSchema = {
     ...rootTypes,
@@ -175,7 +168,7 @@ export function inferredSchemaToAst(schema: InferredSchema): AST.Document {
   return {
     _kind: "Document",
     definitions: Array.from(schema.rootTypes.values()).map((rootType) =>
-      inferredRootTypeToAst(rootType, schema)
+      inferredObjectTypeToAst(rootType, schema)
     ),
     range: [0, 0],
   };
