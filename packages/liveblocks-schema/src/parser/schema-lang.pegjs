@@ -89,10 +89,6 @@ TypeName "<type name>"
     { return ast.typeName(name, rng()) }
 
 
-//////   //
-//////   // Function / variable definitions at the top of the document
-//////   //
-//////   
 DefinitionList
   = first:Definition __ rest:( @Definition __ )*
     { return [first, ...rest] }
@@ -104,7 +100,12 @@ Definition
 
 ObjectTypeDefinition
   = TYPE name:TypeName EQ? LCURLY fields:FieldDefList? RCURLY
-    { return ast.objectTypeDefinition(name, fields ?? [], rng()) }
+    { return ast.objectTypeDefinition(
+      name,
+      fields ?? [],
+      false, /* will get its definitive value during the checking phase */
+      rng(),
+    ) }
 
 
 ObjectLiteralExpr
@@ -129,22 +130,22 @@ FieldDef
 
 StringType
   = _ 'String' EOK
-    { return ast.stringType() }
+    { return ast.stringType(rng()) }
 
 
 IntType
   = _ 'Int' EOK
-    { return ast.intType() }
+    { return ast.intType(rng()) }
 
 
 FloatType
   = _ 'Float' EOK
-    { return ast.floatType() }
+    { return ast.floatType(rng()) }
 
 
 BooleanType
   = _ 'Boolean' EOK
-    { return ast.booleanType() }
+    { return ast.booleanType(rng()) }
 
 
 LiveObjectKeyword

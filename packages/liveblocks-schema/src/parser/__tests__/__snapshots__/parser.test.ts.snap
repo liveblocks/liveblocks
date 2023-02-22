@@ -1,0 +1,507 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`syntactic parser large document (snapshot test) 1`] = `
+{
+  "_kind": "Document",
+  "definitions": [
+    {
+      "_kind": "ObjectTypeDefinition",
+      "fields": [
+        {
+          "_kind": "FieldDef",
+          "name": {
+            "_kind": "Identifier",
+            "name": "r",
+            "range": [
+              62,
+              63,
+            ],
+          },
+          "optional": false,
+          "range": [
+            62,
+            68,
+          ],
+          "type": {
+            "_kind": "IntType",
+            "range": [
+              65,
+              68,
+            ],
+          },
+        },
+        {
+          "_kind": "FieldDef",
+          "name": {
+            "_kind": "Identifier",
+            "name": "g",
+            "range": [
+              70,
+              71,
+            ],
+          },
+          "optional": false,
+          "range": [
+            70,
+            76,
+          ],
+          "type": {
+            "_kind": "IntType",
+            "range": [
+              73,
+              76,
+            ],
+          },
+        },
+        {
+          "_kind": "FieldDef",
+          "name": {
+            "_kind": "Identifier",
+            "name": "b",
+            "range": [
+              78,
+              79,
+            ],
+          },
+          "optional": false,
+          "range": [
+            78,
+            84,
+          ],
+          "type": {
+            "_kind": "IntType",
+            "range": [
+              81,
+              84,
+            ],
+          },
+        },
+      ],
+      "isStatic": false,
+      "name": {
+        "_kind": "TypeName",
+        "name": "Color",
+        "range": [
+          54,
+          59,
+        ],
+      },
+      "range": [
+        49,
+        86,
+      ],
+    },
+    {
+      "_kind": "ObjectTypeDefinition",
+      "fields": [
+        {
+          "_kind": "FieldDef",
+          "name": {
+            "_kind": "Identifier",
+            "name": "cx",
+            "range": [
+              116,
+              118,
+            ],
+          },
+          "optional": false,
+          "range": [
+            116,
+            125,
+          ],
+          "type": {
+            "_kind": "FloatType",
+            "range": [
+              120,
+              125,
+            ],
+          },
+        },
+        {
+          "_kind": "FieldDef",
+          "name": {
+            "_kind": "Identifier",
+            "name": "cy",
+            "range": [
+              134,
+              136,
+            ],
+          },
+          "optional": false,
+          "range": [
+            134,
+            143,
+          ],
+          "type": {
+            "_kind": "FloatType",
+            "range": [
+              138,
+              143,
+            ],
+          },
+        },
+        {
+          "_kind": "FieldDef",
+          "name": {
+            "_kind": "Identifier",
+            "name": "r",
+            "range": [
+              152,
+              153,
+            ],
+          },
+          "optional": false,
+          "range": [
+            152,
+            160,
+          ],
+          "type": {
+            "_kind": "FloatType",
+            "range": [
+              155,
+              160,
+            ],
+          },
+        },
+        {
+          "_kind": "FieldDef",
+          "name": {
+            "_kind": "Identifier",
+            "name": "fill",
+            "range": [
+              169,
+              173,
+            ],
+          },
+          "optional": true,
+          "range": [
+            169,
+            181,
+          ],
+          "type": {
+            "_kind": "TypeRef",
+            "asLiveObject": false,
+            "range": [
+              176,
+              181,
+            ],
+            "ref": {
+              "_kind": "TypeName",
+              "name": "Color",
+              "range": [
+                176,
+                181,
+              ],
+            },
+          },
+        },
+        {
+          "_kind": "FieldDef",
+          "name": {
+            "_kind": "Identifier",
+            "name": "stroke",
+            "range": [
+              190,
+              196,
+            ],
+          },
+          "optional": true,
+          "range": [
+            190,
+            204,
+          ],
+          "type": {
+            "_kind": "TypeRef",
+            "asLiveObject": false,
+            "range": [
+              199,
+              204,
+            ],
+            "ref": {
+              "_kind": "TypeName",
+              "name": "Color",
+              "range": [
+                199,
+                204,
+              ],
+            },
+          },
+        },
+        {
+          "_kind": "FieldDef",
+          "name": {
+            "_kind": "Identifier",
+            "name": "third",
+            "range": [
+              213,
+              218,
+            ],
+          },
+          "optional": true,
+          "range": [
+            213,
+            247,
+          ],
+          "type": {
+            "_kind": "ObjectLiteralExpr",
+            "fields": [
+              {
+                "_kind": "FieldDef",
+                "name": {
+                  "_kind": "Identifier",
+                  "name": "r",
+                  "range": [
+                    223,
+                    224,
+                  ],
+                },
+                "optional": false,
+                "range": [
+                  223,
+                  229,
+                ],
+                "type": {
+                  "_kind": "IntType",
+                  "range": [
+                    226,
+                    229,
+                  ],
+                },
+              },
+              {
+                "_kind": "FieldDef",
+                "name": {
+                  "_kind": "Identifier",
+                  "name": "g",
+                  "range": [
+                    231,
+                    232,
+                  ],
+                },
+                "optional": false,
+                "range": [
+                  231,
+                  237,
+                ],
+                "type": {
+                  "_kind": "IntType",
+                  "range": [
+                    234,
+                    237,
+                  ],
+                },
+              },
+              {
+                "_kind": "FieldDef",
+                "name": {
+                  "_kind": "Identifier",
+                  "name": "b",
+                  "range": [
+                    239,
+                    240,
+                  ],
+                },
+                "optional": false,
+                "range": [
+                  239,
+                  245,
+                ],
+                "type": {
+                  "_kind": "IntType",
+                  "range": [
+                    242,
+                    245,
+                  ],
+                },
+              },
+            ],
+            "range": [
+              221,
+              247,
+            ],
+          },
+        },
+      ],
+      "isStatic": false,
+      "name": {
+        "_kind": "TypeName",
+        "name": "Circle",
+        "range": [
+          99,
+          105,
+        ],
+      },
+      "range": [
+        94,
+        255,
+      ],
+    },
+    {
+      "_kind": "ObjectTypeDefinition",
+      "fields": [],
+      "isStatic": false,
+      "name": {
+        "_kind": "TypeName",
+        "name": "Foo",
+        "range": [
+          268,
+          271,
+        ],
+      },
+      "range": [
+        263,
+        274,
+      ],
+    },
+    {
+      "_kind": "ObjectTypeDefinition",
+      "fields": [
+        {
+          "_kind": "FieldDef",
+          "name": {
+            "_kind": "Identifier",
+            "name": "version",
+            "range": [
+              353,
+              360,
+            ],
+          },
+          "optional": false,
+          "range": [
+            353,
+            365,
+          ],
+          "type": {
+            "_kind": "IntType",
+            "range": [
+              362,
+              365,
+            ],
+          },
+        },
+        {
+          "_kind": "FieldDef",
+          "name": {
+            "_kind": "Identifier",
+            "name": "version",
+            "range": [
+              374,
+              381,
+            ],
+          },
+          "optional": false,
+          "range": [
+            374,
+            436,
+          ],
+          "type": {
+            "_kind": "IntType",
+            "range": [
+              383,
+              436,
+            ],
+          },
+        },
+        {
+          "_kind": "FieldDef",
+          "name": {
+            "_kind": "Identifier",
+            "name": "mycircle",
+            "range": [
+              445,
+              453,
+            ],
+          },
+          "optional": true,
+          "range": [
+            445,
+            471,
+          ],
+          "type": {
+            "_kind": "TypeRef",
+            "asLiveObject": true,
+            "range": [
+              456,
+              471,
+            ],
+            "ref": {
+              "_kind": "TypeName",
+              "name": "Bar",
+              "range": [
+                467,
+                470,
+              ],
+            },
+          },
+        },
+        {
+          "_kind": "FieldDef",
+          "name": {
+            "_kind": "Identifier",
+            "name": "someField",
+            "range": [
+              572,
+              581,
+            ],
+          },
+          "optional": false,
+          "range": [
+            572,
+            599,
+          ],
+          "type": {
+            "_kind": "TypeRef",
+            "asLiveObject": false,
+            "range": [
+              583,
+              599,
+            ],
+            "ref": {
+              "_kind": "TypeName",
+              "name": "_undefinedThing_",
+              "range": [
+                583,
+                599,
+              ],
+            },
+          },
+        },
+      ],
+      "isStatic": false,
+      "name": {
+        "_kind": "TypeName",
+        "name": "Foo",
+        "range": [
+          286,
+          289,
+        ],
+      },
+      "range": [
+        281,
+        607,
+      ],
+    },
+    {
+      "_kind": "ObjectTypeDefinition",
+      "fields": [],
+      "isStatic": false,
+      "name": {
+        "_kind": "TypeName",
+        "name": "abc",
+        "range": [
+          620,
+          623,
+        ],
+      },
+      "range": [
+        615,
+        683,
+      ],
+    },
+  ],
+  "range": [
+    7,
+    683,
+  ],
+}
+`;

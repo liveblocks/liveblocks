@@ -63,6 +63,12 @@ ObjectTypeDefinition:
     name    TypeName
     fields  FieldDef*
 
+    # True whether this type is only referenced in JSON contexts only. False
+    # when this type definition is only ever referenced by a "LiveObject<>"
+    # modifier. Not set in the parsing phase, and will receive its definitive
+    # value in the checking phase.
+    isStatic  boolean
+
 
 # StringLiteral:
 #     value     string
