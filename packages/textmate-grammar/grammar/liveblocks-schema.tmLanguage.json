@@ -219,5 +219,5 @@
       "name": "comment.line.liveblocks-schema"
     }
   },
-  "scopeName": "source.lbs"
+  "scopeName": "source.schema"
 }

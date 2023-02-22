@@ -26,7 +26,7 @@
           "liveblocks-schema"
         ],
         "extensions": [
-          ".lbs"
+          ".schema"
         ],
         "configuration": "./language-configuration.json"
       }
@@ -34,7 +34,7 @@
     "grammars": [
       {
         "language": "liveblocks-schema",
-        "scopeName": "source.lbs",
+        "scopeName": "source.schema",
         "path": "dist/grammar/liveblocks-schema.tmLanguage.json"
       }
     ]
