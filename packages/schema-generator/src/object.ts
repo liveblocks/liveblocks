@@ -27,7 +27,7 @@ export function inferObjectType(
   // Since we allow arbitrary json objects, we need to be sure we are not inside a json
   // context before we check the liveblocksType property because the user could have
   // a field called liveblocksType in their json object
-  const isLiveObject = !ctx.json && value.liveBlocksType === "LiveObject";
+  const isLiveObject = !ctx.json && value.liveblocksType === "LiveObject";
 
   const inferred: PartialBy<InferredObjectType, "fields"> = {
     names: generateNames(ctx),
@@ -36,13 +36,11 @@ export function inferObjectType(
     atomic: false,
   };
 
-  const data =
-    !ctx.json && value.liveBlocksType === "LiveObject" ? value.data : value;
-
+  const data = isLiveObject ? value.data : value;
   inferred.fields = inferLsonFields(data as PlainLsonFields, {
     ...ctx,
     parent: inferred,
-    json: true,
+    json: !isLiveObject,
   });
 
   return inferred as InferredObjectType;

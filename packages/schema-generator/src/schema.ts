@@ -42,7 +42,7 @@ function* iterateInferredTypesDeep(
     yield [root, referenceObj];
     switch (root.type) {
       case "Object":
-        for (const field of root.fields.values()) {
+        for (const field of Object.values(root.fields)) {
           yield* iterate(field.value, field);
         }
         return;
@@ -100,7 +100,7 @@ function assignNameOrMerge(schema: InferredSchema, type: InferredObjectType) {
   invariant(schema.rootTypes.has(type), "Root type not part of the schema");
   invariant(!schema.rootNames.hasValue(type), "Root type already has a name");
 
-  const orderedNames = Array.from(type.names.entries())
+  const orderedNames = Object.entries(type.names)
     .sort(([, scoreA], [, scoreB]) => scoreB - scoreA)
     .map(([name]) => name);
 
@@ -157,7 +157,9 @@ export function inferSchema(inferredStorage: InferredObjectType) {
     }
 
     // TODO: Assign names to root types with fewer aliases first?
-    return Math.max(...a.names.values()) - Math.max(...b.names.values());
+    return (
+      Math.max(...Object.values(a.names)) - Math.max(...Object.values(b.names))
+    );
   });
 
   toAssign.forEach((type) => assignNameOrMerge(schema, type));

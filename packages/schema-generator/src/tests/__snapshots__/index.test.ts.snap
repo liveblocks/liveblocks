@@ -2,48 +2,40 @@
 
 exports[`inferType correctly infers the "BASIC_LIVE_OBJECT" schema 1`] = `
 "type Storage {
-  fills: Fill
-  strokes: Stroke
+  fills: LiveObject<Fill>
+  strokes: LiveObject<Stroke>
 }
 
 type Fill {
-  liveblocksType: String
-  data: Datum
+  mesh: String
+  sole: String
+  stripes: String
+  laces: String
 }
 
 type Stroke {
-  liveblocksType: String
-  data: Datum
-}
-
-type Datum {
   mesh: String
   sole: String
-  stripes?: String
   laces: String
 }"
 `;
 
 exports[`inferType correctly infers the "BASIC_MERGE" schema 1`] = `
 "type Storage {
-  fills: Fill
-  strokes: Stroke
+  fills: LiveObject<Fill>
+  strokes: LiveObject<Stroke>
 }
 
 type Fill {
-  liveblocksType: String
-  data: Datum
+  mesh: Mesh
+  sole: String
+  stripes: String
+  laces: String
 }
 
 type Stroke {
-  liveblocksType: String
-  data: Datum
-}
-
-type Datum {
   mesh: Mesh
   sole: String
-  stripes?: String
   laces: String
 }
 
@@ -55,16 +47,11 @@ type Mesh {
 
 exports[`inferType correctly infers the "BASIC_UNMERGEABLE" schema 1`] = `
 "type Storage {
-  fills: Fill
-  strokes: Stroke
+  fills: LiveObject<Fill>
+  strokes: LiveObject<Stroke>
 }
 
 type Fill {
-  liveblocksType: String
-  data: Datum
-}
-
-type Datum {
   mesh: Mesh
   sole: String
   stripes: String
@@ -76,17 +63,12 @@ type Mesh {
 }
 
 type Stroke {
-  liveblocksType: String
-  data: StrokeDatum
-}
-
-type StrokeDatum {
-  mesh: DatumMesh
+  mesh: StrokeMesh
   sole: String
   laces: String
 }
 
-type DatumMesh {
+type StrokeMesh {
   a: String
 }"
 `;

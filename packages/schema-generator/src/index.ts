@@ -21,7 +21,7 @@ export function isAtomic(type: InferredType): boolean {
 
 export function inferStorageType(value: PlainLsonObject): InferredObjectType {
   const storage: PartialBy<InferredObjectType, "fields"> = {
-    names: new Map([["Storage", 1]]),
+    names: { Storage: 1 },
     type: "Object",
     live: true,
     atomic: true,
@@ -76,5 +76,6 @@ export function mergeInferredTypes(
     return mergeInferredObjectTypes(a, b);
   }
 
-  throw new Error("Not implemented");
+  // TODO: Add missing types
+  return undefined;
 }

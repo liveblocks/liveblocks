@@ -10,7 +10,7 @@ import { ChildContext, JsonObject, PlainLsonFields } from "./types";
 import { invariant } from "./utils/invariant";
 import { isNotUndefined } from "./utils/typeGuards";
 
-export type InferredFields = Map<string, InferredTypeReference>;
+export type InferredFields = Record<string, InferredTypeReference>;
 
 export function inferLsonFields(
   fields: PlainLsonFields | JsonObject,
@@ -26,19 +26,19 @@ export function inferLsonFields(
     })
     .filter(isNotUndefined);
 
-  return new Map(fieldEntries);
+  return Object.fromEntries(fieldEntries);
 }
 
 export function combineInferredFields(
   a: InferredFields,
   b: InferredFields
 ): InferredFields | undefined {
-  const combined = new Map(a);
+  const keys = new Set([...Object.keys(a), ...Object.keys(b)]);
 
-  const keys = new Set([...a.keys(), ...b.keys()]);
+  const combined: InferredFields = {};
   for (const key of keys) {
-    const childA = a.get(key);
-    const childB = b.get(key);
+    const childA = a[key];
+    const childB = b[key];
 
     if (!childA || !childB) {
       const combinedChild = childA ?? childB;
@@ -46,7 +46,7 @@ export function combineInferredFields(
       // Should never happen
       invariant(isNotUndefined(combinedChild));
 
-      combined.set(key, { ...combinedChild, optional: true });
+      combined[key] = { ...combinedChild, optional: true };
       continue;
     }
 
@@ -63,7 +63,7 @@ export function inferredFieldsToAst(
   fields: InferredFields,
   schema: InferredSchema
 ): AST.FieldDef[] {
-  return Array.from(fields.entries()).map(([name, value]) => ({
+  return Object.entries(fields).map(([name, value]) => ({
     _kind: "FieldDef",
     name: { _kind: "Identifier", name, range: [0, 0] },
     type: inferredTypeReferenceToAst(value, schema),
