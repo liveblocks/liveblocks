@@ -1,7 +1,7 @@
 import { JsonObject, LsonObject } from "@liveblocks/core";
 import { PartialBy } from "./utils/types";
 import {
-  combineInferredFields,
+  mergeInferredFields,
   inferLsonFields,
   InferredFields,
   inferredFieldsToAst,
@@ -61,8 +61,8 @@ export function mergeInferredObjectTypes(
     return undefined;
   }
 
-  const combinedFields = combineInferredFields(a.fields, b.fields);
-  if (!combinedFields) {
+  const mergedFields = mergeInferredFields(a.fields, b.fields);
+  if (!mergedFields) {
     return undefined;
   }
 
@@ -70,7 +70,7 @@ export function mergeInferredObjectTypes(
     live: a.live,
     names: mergeScoredNames(a.names, b.names),
     type: "Object",
-    fields: combinedFields,
+    fields: mergedFields,
     atomic: false,
   };
 }

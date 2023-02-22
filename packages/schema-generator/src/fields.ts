@@ -1,7 +1,7 @@
 import { AST } from "@liveblocks/schema";
 import { InferredSchema } from "./schema";
 import {
-  combineTypeReferences,
+  mergeTypeReferences,
   InferredTypeReference,
   inferredTypeReferenceToAst,
   inferTypeReference,
@@ -29,7 +29,7 @@ export function inferLsonFields(
   return Object.fromEntries(fieldEntries);
 }
 
-export function combineInferredFields(
+export function mergeInferredFields(
   a: InferredFields,
   b: InferredFields
 ): InferredFields | undefined {
@@ -50,7 +50,7 @@ export function combineInferredFields(
       continue;
     }
 
-    const mergedValue = combineTypeReferences(valueA, valueB);
+    const mergedValue = mergeTypeReferences(valueA, valueB);
     if (!mergedValue) {
       return undefined;
     }

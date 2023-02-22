@@ -54,7 +54,7 @@ export function mergeInferredScalarTypes(
     } as InferredScalarType;
   }
 
-  // Floats are a superset of integers, so we can combine them
+  // Floats are a superset of integers, so we can merge them
   if (
     (a.type === "Integer" && b.type === "Float") ||
     (a.type === "Float" && b.type === "Integer")
@@ -67,13 +67,6 @@ export function mergeInferredScalarTypes(
   }
 
   return undefined;
-}
-
-export function canCombineInferredScalarTypes(
-  a: InferredScalarType,
-  b: InferredScalarType
-): boolean {
-  return mergeInferredScalarTypes(a, b) !== undefined;
 }
 
 export function inferScalarType(

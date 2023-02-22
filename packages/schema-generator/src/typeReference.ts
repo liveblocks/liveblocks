@@ -18,17 +18,17 @@ export function inferTypeReference(
   return { value: inferType(value, ctx), optional: false };
 }
 
-export function combineTypeReferences(
+export function mergeTypeReferences(
   a: InferredTypeReference,
   b: InferredTypeReference
 ): InferredTypeReference | undefined {
-  const combinedValue = mergeInferredTypes(a.value, b.value);
-  if (!combinedValue) {
+  const mergeValue = mergeInferredTypes(a.value, b.value);
+  if (!mergeValue) {
     return undefined;
   }
 
   return {
-    value: combinedValue,
+    value: mergeValue,
     optional: a.optional || b.optional,
   };
 }

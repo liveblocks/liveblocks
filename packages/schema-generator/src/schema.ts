@@ -118,14 +118,14 @@ function assignNameOrMerge(schema: InferredSchema, type: InferredObjectType) {
       return;
     }
 
-    const combined = mergeInferredTypes(existingType, type);
+    const merged = mergeInferredTypes(existingType, type);
+    if (merged) {
+      // Should never happen
+      invariant(isInferredObjectType(merged), "Expected object type");
 
-    if (combined) {
-      invariant(isInferredObjectType(combined), "Expected object type");
-
-      replaceRootType(schema, existingType, combined);
-      replaceRootType(schema, type, combined);
-      schema.rootNames.set(name, combined);
+      replaceRootType(schema, existingType, merged);
+      replaceRootType(schema, type, merged);
+      schema.rootNames.set(name, merged);
       return;
     }
   }
@@ -165,6 +165,8 @@ export function inferSchema(inferredStorage: InferredObjectType) {
       Math.max(...Object.values(a.names)) - Math.max(...Object.values(b.names))
     );
   });
+
+  // TODO: Merge equal types?
 
   toAssign.forEach((type) => assignNameOrMerge(schema, type));
   return schema;
