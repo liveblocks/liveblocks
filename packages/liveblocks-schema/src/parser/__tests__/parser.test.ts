@@ -57,29 +57,74 @@ describe("syntactic parser", () => {
       `,
 
       ast.document([
-        ast.objectTypeDefinition(ast.typeName("Foo"), [
-          ast.fieldDef(ast.identifier("cx"), false, ast.floatType()),
-          ast.fieldDef(ast.identifier("cy"), false, ast.floatType()),
-          ast.fieldDef(ast.identifier("r"), false, ast.floatType()),
-        ]),
+        ast.objectTypeDefinition(
+          ast.typeName("Foo"),
+          [
+            ast.fieldDef(ast.identifier("cx"), false, ast.floatType()),
+            ast.fieldDef(ast.identifier("cy"), false, ast.floatType()),
+            ast.fieldDef(ast.identifier("r"), false, ast.floatType()),
+          ],
+          false /* always false during the parsing phase */
+        ),
 
-        ast.objectTypeDefinition(ast.typeName("Foo"), [
-          ast.fieldDef(ast.identifier("version"), false, ast.intType()),
-          ast.fieldDef(ast.identifier("version"), false, ast.intType()),
-          ast.fieldDef(
-            ast.identifier("mycircle"),
-            true,
-            ast.typeRef(ast.typeName("Bar"), true)
-          ),
-          ast.fieldDef(
-            ast.identifier("someField"),
-            false,
-            ast.typeRef(ast.typeName("_undefinedThing_"), false)
-          ),
-        ]),
+        ast.objectTypeDefinition(
+          ast.typeName("Foo"),
+          [
+            ast.fieldDef(ast.identifier("version"), false, ast.intType()),
+            ast.fieldDef(ast.identifier("version"), false, ast.intType()),
+            ast.fieldDef(
+              ast.identifier("mycircle"),
+              true,
+              ast.typeRef(ast.typeName("Bar"), true)
+            ),
+            ast.fieldDef(
+              ast.identifier("someField"),
+              false,
+              ast.typeRef(ast.typeName("_undefinedThing_"), false)
+            ),
+          ],
+          false /* always false during the parsing phase */
+        ),
 
-        ast.objectTypeDefinition(ast.typeName("abc"), []),
+        ast.objectTypeDefinition(
+          ast.typeName("abc"),
+          [],
+          false /* always false during the parsing phase */
+        ),
       ])
     );
+  });
+
+  it("large document (snapshot test)", () => {
+    expect(
+      parse(
+        `
+      # Comment
+      // Another comment
+
+      type Color { r: Int, g: Int, b: Int }
+
+      type Circle {
+        cx: Float
+        cy: Float
+        r: Float
+        fill?: Color
+        stroke?: Color
+        third?: { r: Int, g: Int, b: Int }
+      }
+
+      type Foo {}
+      type Foo {          // Double type defs are syntactically valid
+        version: Int
+        version: Int      // Double field defs are syntactically valid
+        mycircle?: LiveObject<Bar>
+        //                    ^^^ Will parse the syntax, even though semantically incorrect
+        someField: _undefinedThing_
+      }
+
+      type abc {}         // Lowercased type names are syntactically valid
+      `
+      )
+    ).toMatchSnapshot();
   });
 });

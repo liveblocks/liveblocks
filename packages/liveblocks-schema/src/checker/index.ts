@@ -1,5 +1,3 @@
-import original_didyoumean from "didyoumean";
-
 import type {
   Definition,
   Document,
@@ -13,7 +11,7 @@ import type {
 } from "../ast";
 import { isBuiltInScalar, visit } from "../ast";
 import { assertNever } from "../lib/assert";
-import DefaultMap from "../lib/DefaultMap";
+import { didyoumean as dym } from "../lib/didyoumean";
 import type { ErrorReporter } from "../lib/error-reporting";
 
 function quote(value: string): string {
@@ -24,13 +22,50 @@ const TYPENAME_REGEX = /^[A-Z_]/;
 
 // TODO Ideally _derive_ this list of builtins directly from the grammar
 // instead somehow?
-const BUILTINS = ["String", "Int", "Float", "Boolean"];
+const BUILTINS = ["String", "Int", "Float", "Boolean"] as const;
+
+function suggest_general(value: string, alternatives: string[]): string[] {
+  // Never suggest "Storage"
+  alternatives = alternatives.filter((key) => key !== "Storage");
+
+  const suggestions = dym(value, alternatives);
+
+  // Special hack:
+  // It can be expected that people will try to put "number" in as a type,
+  // because that's TypeScript's syntax. If there is no custom type name found
+  // that closely matches this typo, then try to suggest one more thing to
+  // nudge them. (But only if Float and Int are already legal suggestions.)
+  if (
+    suggestions.length === 0 &&
+    alternatives.includes("Float") &&
+    alternatives.includes("Int")
+  ) {
+    if (/^num(ber)?$/i.test(value)) {
+      return ["Float", "Int"];
+    }
+  }
+
+  return suggestions;
+}
+
+function didyoumeanify(message: string, alternatives: string[]): string {
+  if (alternatives.length === 0) {
+    return message;
+  }
+  if (message.endsWith(".")) {
+    message = message.slice(0, -1);
+  }
+  return `${message}. Did you mean ${alternatives.map(quote).join(" or ")}?`;
+}
 
 /**
  * Reserve these names for future use.
  */
 const RESERVED_TYPENAMES_REGEX = /^Live|^(Presence|Array)$/i;
 
+/**
+ * Helper constructs for use during "checking" phase.
+ */
 class Context {
   errorReporter: ErrorReporter;
 
@@ -38,20 +73,30 @@ class Context {
   // the first checkDocument pass.
   registeredTypes: Map<string, Definition>;
 
-  // Reverse lookup table, to find which type definitions depend on which other
-  // type definitions. Defined during the first checkDocument pass.
-  usedBy: DefaultMap<string, Set<string>>;
+  // Maintain a list of unreferenced definitions. If at the end of the checking
+  // phase, this thing still contains any entries, we throw an error.
+  unreferencedDefs: Set<Definition>;
 
-  // Set of types that (directly or indirectly) have Live constructs in their
-  // field definitions. As such, these types can only be used by other Live
-  // types. Defined during the first checkDocument pass.
-  liveOnlyTypes: Set<string>;
+  readonly suggestors = {
+    objectTypeName: (name: string): string[] =>
+      suggest_general(
+        name,
+        Array.from(this.registeredTypes)
+          .filter(([, def]) => def._kind === "ObjectTypeDefinition")
+          .map(([key]) => key)
+      ),
+
+    typeNameOrBuiltIn: (name: string): string[] =>
+      suggest_general(name, [
+        ...Array.from(this.registeredTypes.keys()),
+        ...BUILTINS,
+      ]),
+  };
 
   constructor(errorReporter: ErrorReporter) {
     this.errorReporter = errorReporter;
     this.registeredTypes = new Map();
-    this.usedBy = new DefaultMap(() => new Set());
-    this.liveOnlyTypes = new Set();
+    this.unreferencedDefs = new Set();
   }
 
   //
@@ -70,6 +115,18 @@ class Context {
     } else {
       return `${startLine}–${endLine}`;
     }
+  }
+
+  getDefinition(typeRef: TypeRef): Definition {
+    const def = this.registeredTypes.get(typeRef.ref.name);
+    if (def === undefined) {
+      this.report(
+        `Unknown type name ${quote(typeRef.ref.name)}`,
+        typeRef.ref.range
+      );
+      throw new Error(`Unknown type name "${typeRef.ref.name}"`);
+    }
+    return def;
   }
 
   report(title: string, range?: Range): void {
@@ -119,7 +176,10 @@ function checkObjectLiteralExpr(
   // Check that none of the fields here use a "live" reference
   for (const field of obj.fields) {
     if (field.type._kind === "TypeRef" && field.type.asLiveObject) {
-      context.report("Cannot use a LiveObject here", field.type.range);
+      context.report(
+        "Cannot use a LiveObject reference inside an object literal",
+        field.type.range
+      );
     }
   }
 }
@@ -147,89 +207,61 @@ function checkTypeName(node: TypeName, context: Context): void {
   }
 }
 
-/**
- * Wrap didyoumean to avoid dealing with a million different possible output
- * values.
- */
-function didyoumean(value: string, alternatives: string[]): string[] {
-  const output = original_didyoumean(value, alternatives);
-  if (!output) {
-    return [];
-  } else if (Array.isArray(output)) {
-    return output;
+function checkTypeNameExists(
+  node: TypeName,
+  context: Context,
+  suggestor: (name: string) => string[]
+): void {
+  if (context.registeredTypes.has(node.name)) {
+    return;
+  }
+  context.report(
+    didyoumeanify(`Unknown type ${quote(node.name)}`, suggestor(node.name)),
+    node.range
+  );
+}
+
+function checkTypeRefTarget(node: TypeRef, context: Context): void {
+  if (node.asLiveObject) {
+    checkTypeNameIsObjectType(node.ref, context);
+    checkTypeNameExists(node.ref, context, context.suggestors.objectTypeName);
   } else {
-    return [output];
+    checkTypeNameExists(
+      node.ref,
+      context,
+      context.suggestors.typeNameOrBuiltIn
+    );
   }
 }
 
-function checkTypeRefTargetExists(node: TypeRef, context: Context): void {
-  const name = node.ref.name;
-  const typeDef = context.registeredTypes.get(name);
-  if (typeDef !== undefined) {
+function checkTypeNameIsObjectType(node: TypeName, context: Context): void {
+  const def = context.registeredTypes.get(node.name);
+  if (!def) {
+    context.report(
+      didyoumeanify(
+        `Unknown object type ${quote(node.name)}`,
+        context.suggestors.objectTypeName(node.name)
+      ),
+      node.range
+    );
     return;
   }
 
-  // If we land here, it means there's an unknown type reference. Possibly
-  // caused by misspellings or people trying to learn/play with the language.
-  // Let's be friendly to them and assist them with fixing the problem,
-  // especially around common mistakes.
-  let alternatives: string[] = didyoumean(
-    node.ref.name,
-    BUILTINS.concat(Array.from(context.registeredTypes.keys()))
-  );
-
-  if (alternatives.length === 0) {
-    // It can be expected that people will try to put "number" in as a type,
-    // because that's TypeScript's syntax. If there is no custom type name
-    // found that closely matches this typo, then try to suggest one more thing
-    // to nudge them.
-    alternatives = /^num(ber)?$/i.test(name)
-      ? ["Float", "Int"]
-      : [
-          /* no alternatives */
-        ];
-  }
-
-  const suggestion =
-    alternatives.length > 0
-      ? `. Did you mean ${alternatives.map((alt) => quote(alt)).join(" or ")}?`
-      : "";
-
-  context.report(`Unknown type ${quote(name)}` + suggestion, node.ref.range);
-}
-
-function checkLiveObjectPayloadIsObjectType(
-  typeRef: TypeRef,
-  context: Context
-): void {
   // Check that the payload of a LiveObject type is an object type
-  if (
-    typeRef.asLiveObject &&
-    context.registeredTypes.get(typeRef.ref.name)?._kind !==
-      "ObjectTypeDefinition"
-  ) {
-    const alternatives: string[] = didyoumean(
-      typeRef.ref.name,
-      Array.from(context.registeredTypes)
-        .filter(([, def]) => def._kind === "ObjectTypeDefinition")
-        .map(([key]) => key)
-    );
-
+  if (def._kind !== "ObjectTypeDefinition") {
     context.report(
-      `Type ${quote(typeRef.ref.name)} is not an object type` +
-        (alternatives.length > 0
-          ? `. Did you mean ${alternatives.map(quote).join(" or ")}?`
-          : ""),
-      typeRef.ref.range
+      didyoumeanify(
+        `Type ${quote(node.name)} is not an object type`,
+        context.suggestors.objectTypeName(node.name)
+      ),
+      node.range
     );
     return undefined;
   }
 }
 
 function checkTypeRef(ref: TypeRef, context: Context): void {
-  checkLiveObjectPayloadIsObjectType(ref, context);
-
-  checkTypeRefTargetExists(ref, context);
+  checkTypeRefTarget(ref, context);
 
   //
   // For each definition, first ensure that it and annotate whether or not they
@@ -242,7 +274,7 @@ function checkTypeRef(ref: TypeRef, context: Context): void {
   // It should be impossible to refer to Foo as a "normal" type, without
   // wrapping it in a Live<...> wrapper itself.
   //
-  checkLiveRefs(ref, context);
+  checkLiveObjectRefs(ref, context);
 }
 
 function checkNoForbiddenRefs(
@@ -280,7 +312,7 @@ function checkNoForbiddenRefs(
     case "TypeRef": {
       if (forbidden.has(node.ref.name)) {
         context.report(
-          `Cyclical reference detected: ${quote(node.ref.name)}`,
+          `Circular reference ${quote(node.ref.name)} not yet supported`,
           node.range
         );
       }
@@ -299,16 +331,29 @@ function checkNoForbiddenRefs(
   }
 }
 
-function checkLiveRefs(typeRef: TypeRef, context: Context): void {
-  // If the type referenced here requires a live context, this must be written
-  // as a LiveObject<> wrapper.
-  if (context.liveOnlyTypes.has(typeRef.ref.name) && !typeRef.asLiveObject) {
+function checkLiveObjectRefs(typeRef: TypeRef, context: Context): void {
+  const def = context.getDefinition(typeRef);
+  if (def._kind !== "ObjectTypeDefinition") {
+    // This check only checks object type definitions
+    return;
+  }
+
+  // Static objects may not be referenced with LiveObject<> references
+  if (def.isStatic && typeRef.asLiveObject) {
     context.report(
-      `Type ${quote(
-        typeRef.ref.name
-      )} can only be used as a Live type. Did you mean to write 'LiveObject<${
-        typeRef.ref.name
-      }>'?`,
+      `Type ${quote(def.name.name)} cannot be used with LiveObject<${quote(
+        def.name.name
+      )}>`,
+      typeRef.range
+    );
+  }
+
+  // Live objects must be referenced with LiveObject<> references
+  if (!def.isStatic && !typeRef.asLiveObject) {
+    context.report(
+      `Type ${quote(def.name.name)} must be referred to as ${quote(
+        `LiveObject<${def.name.name}>`
+      )}`,
       typeRef.range
     );
   }
@@ -324,7 +369,11 @@ function checkObjectTypeDefinition(
   checkNoForbiddenRefs(def, context, new Set([def.name.name]));
 }
 
-function checkDocument(doc: Document, context: Context): void {
+/**
+ * This initial pass registers all type definitions found in the AST in the
+ * registeredTypes registry in the context, for easy lookup.
+ */
+function registerTypeDefinitions(doc: Document, context: Context): void {
   // Now, first add all definitions to the global registry
   for (const def of doc.definitions) {
     const name = def.name.name;
@@ -341,62 +390,120 @@ function checkDocument(doc: Document, context: Context): void {
     } else {
       // All good, let's register it!
       context.registeredTypes.set(name, def);
+      context.unreferencedDefs.add(def);
+    }
+  }
+}
 
-      // Also, while registering it, quickly search all subnodes to see if any
-      // of its field definitions use a Live wrapper. If so, we should mark the
-      // object type definition to require a Live type.
+/**
+ * For all object type definitions, decide whether or not they are used in
+ * static or live contexts.
+ *
+ * What will make an object type a "live" object type?
+ *
+ * 1. It uses a LiveObject, LiveList, or LiveMap construct in its definition
+ * 2. All references to it use LiveObject<> wrappers
+ *
+ */
+function decideStaticOrLive(doc: Document, context: Context): void {
+  const staticObjRefs = new Map<string, TypeRef>();
+  const liveObjRefs = new Map<string, TypeRef | null>();
+
+  // First, if a definition uses a Live structure in its definition, it must be
+  // a live type itself
+  for (const def of context.registeredTypes.values()) {
+    if (def._kind !== "ObjectTypeDefinition") {
+      continue;
+    }
+
+    try {
       visit(
         def,
         {
-          // TODO: Add all other future LiveXxxTypeExprs here, too
-          // TODO: Would be nicer if we could use a NodeGroup as a visitor
-          //       function directly, perhaps?
-          //       i.e. LiveTypeExpr: () => { ... }?
-          TypeRef: (typeRef) => {
-            if (typeRef.asLiveObject) {
-              context.liveOnlyTypes.add(def.name.name);
+          TypeRef: (ref) => {
+            if (ref.asLiveObject) {
+              liveObjRefs.set(def.name.name, null);
+              throw "break";
             }
-            context.usedBy.getOrCreate(typeRef.ref.name).add(def.name.name);
           },
         },
         null
       );
+    } catch {
+      // Ignore
     }
   }
 
-  // Now that we know which types are "live only", we'll need to do another
-  // quick pass to let that requirements infect all of their (indirect)
-  // dependencies too
-  const queue = [...context.liveOnlyTypes];
-  let curr: string | undefined;
-  while ((curr = queue.pop()) !== undefined) {
-    context.usedBy.get(curr)?.forEach((dependant) => {
-      if (!context.liveOnlyTypes.has(dependant)) {
-        context.liveOnlyTypes.add(dependant);
-        queue.push(dependant);
-      }
-    });
+  // Otherwise, it's static only if all references to it don't use LiveObject<>
+  visit(
+    doc,
+    {
+      TypeRef: (typeRef) => {
+        const def = context.registeredTypes.get(typeRef.ref.name);
+        if (def !== undefined) {
+          context.unreferencedDefs.delete(def);
+        }
+
+        if (def?._kind !== "ObjectTypeDefinition") {
+          return;
+        }
+
+        if (typeRef.asLiveObject) {
+          const conflict = staticObjRefs.get(def.name.name);
+          if (conflict === undefined) {
+            liveObjRefs.set(def.name.name, typeRef);
+          } else {
+            context.report(
+              `Type ${quote(def.name.name)} already referenced as ${quote(`LiveObject<${def.name.name}>`)} on line ${context.lineno(typeRef.range)}. You cannot mix these references.`, // prettier-ignore
+              conflict.range
+            );
+          }
+        } else {
+          const conflict = liveObjRefs.get(def.name.name);
+          if (conflict === undefined) {
+            staticObjRefs.set(def.name.name, typeRef);
+          } else if (conflict === null) {
+            context.report(
+              `Type ${quote(def.name.name)} uses Live constructs, so it must be referenced as ${quote(`LiveObject<${def.name.name}>`)}`, // prettier-ignore
+              typeRef.range
+            );
+          } else {
+            context.report(
+              `Type ${quote(def.name.name)} already referenced as ${quote(`LiveObject<${def.name.name}>`)} on line ${context.lineno(conflict.range)}. You cannot mix these references.`, // prettier-ignore
+              typeRef.range
+            );
+          }
+        }
+      },
+    },
+    null
+  );
+
+  for (const staticName of staticObjRefs.keys()) {
+    const def = context.registeredTypes.get(staticName)!;
+    def.isStatic = true;
+  }
+
+  for (const liveName of liveObjRefs.keys()) {
+    const def = context.registeredTypes.get(liveName)!;
+    def.isStatic = false;
   }
 }
 
+/**
+ * The resulting AST, after the checking phase. In this datastructure, you can
+ * assume that all references are intact and semantically correct.
+ */
 export type CheckedDocument = {
-  /**
-   * The raw AST node.
-   */
-  // FIXME(nvie) Keep or remove?
-  // ast: Document;
-
-  /**
-   * A map of bindings from user-defined type names to their respective
-   * definitions.
-   */
-  // FIXME(nvie) Keep or remove?
-  // types: Map<string, Definition>;
-
   /**
    * Direct access to the root "Storage" definition.
    */
-  root: ObjectTypeDefinition;
+  readonly root: ObjectTypeDefinition;
+
+  /**
+   * The list of all definitions.
+   */
+  readonly definitions: readonly Definition[];
 
   /**
    * Look up the Definition of a user-defined type by a Reference to it. This
@@ -411,11 +518,17 @@ export function check(
 ): CheckedDocument {
   const context = new Context(errorReporter);
 
-  // Check the entire tree
+  // First pass: register all definitions in the registry
+  registerTypeDefinitions(doc, context);
+
+  // Second pass: decide static/live for all object type definitions, based on
+  // how they're referenced
+  decideStaticOrLive(doc, context);
+
+  // Last pass: check the entire tree
   visit(
     doc,
     {
-      Document: checkDocument,
       ObjectLiteralExpr: checkObjectLiteralExpr,
       ObjectTypeDefinition: checkObjectTypeDefinition,
       TypeName: checkTypeName,
@@ -430,13 +543,17 @@ export function check(
     );
   }
 
-  for (const [key, def] of context.registeredTypes) {
-    if (key !== "Storage" && !context.usedBy.has(key)) {
-      context.report(
-        `Type ${quote(def.name.name)} is defined but never used`,
-        def.name.range
-      );
+  // Throw an error for every unused definition
+  for (const unusedDef of context.unreferencedDefs) {
+    // The one exception that is allowed to be unused
+    if (unusedDef.name.name === "Storage") {
+      continue;
     }
+
+    context.report(
+      `Type ${quote(unusedDef.name.name)} is defined but never used`,
+      unusedDef.name.range
+    );
   }
 
   if (context.errorReporter.hasErrors) {
@@ -444,11 +561,8 @@ export function check(
   }
 
   return {
-    // FIXME(nvie) Keep or remove?
-    // ast: doc,
-    // types: context.registeredTypes,
-
     root: context.registeredTypes.get("Storage") as ObjectTypeDefinition,
+    definitions: Array.from(context.registeredTypes.values()),
     getDefinition(typeRef: TypeRef): Definition {
       const def = context.registeredTypes.get(typeRef.ref.name);
       if (def === undefined) {

@@ -8,8 +8,8 @@ type Storage {
   float: Float
   Boolean: Boolean
   boolean: Boolean
-  LiveObject: LiveObject<Obj>
-  liveObject: LiveObject<Obj>
+  LiveObject: Obj
+  liveObject: Obj
   Obj: Obj
   obj: Obj
 }

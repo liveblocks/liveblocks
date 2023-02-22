@@ -1,3 +1,18 @@
+# 0.0.9
+
+- `ObjectTypeDefinition` nodes now store an `isStatic` property. When `true`, it
+  means it is only usable in JSON contexts. When `false` (= default) it means
+  the object is only usable in Live contexts.
+- Disallows object type definitions to be used in hybrid contexts. Given a type
+  definition of `type Foo {}`, then either all references to `Foo` must be
+  `'Foo'` or all references must be `'LiveObject<Foo>`, but no mixing is
+  allowed. (Consequence of now having `isStatic` at the object type definition
+  level.)
+- Expose all Definitions in `CheckedDocument`, not just the root
+- Fix: some ugly error messages making incorrect suggestions
+- Fix: tweak error message for circular references
+- Fix: record range info on built-ins
+
 # 0.0.8
 
 - Cleaner and more consistent error messages

@@ -1,6 +1,5 @@
 type Storage {
   foo: LiveObject<Foo>
-  color: Color
 }
 
 type Foo {

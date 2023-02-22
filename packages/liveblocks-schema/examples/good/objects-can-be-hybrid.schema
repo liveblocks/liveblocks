@@ -1,8 +1,0 @@
-type Storage {
-  thing1: Thing
-  thing2: LiveObject<Thing>
-}
-
-type Thing {
-  name: String
-}
