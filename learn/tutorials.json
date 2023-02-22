@@ -1,11 +1,17 @@
 {
   "react": [
     {
-      "path": "/react/getting-started",
+      "slug": "getting-started",
       "title": "Getting started",
-      "tutorial": [
-        "/react/getting-started/presence",
-        "/react/getting-started/conflict-free-data"
+      "pages": [
+        {
+          "slug": "presence",
+          "title": "Presence"
+        },
+        {
+          "slug": "conflict-free-data",
+          "title": "Conflict-free data"
+        }
       ]
     }
   ]
