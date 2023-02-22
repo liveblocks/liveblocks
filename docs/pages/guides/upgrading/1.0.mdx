@@ -9,126 +9,23 @@ meta:
 npm update @liveblocks/client@1.0 @liveblocks/node@1.0
 ```
 
-The major release of 1.0 marks the maturity of Liveblocks. We added additional
-features to [Webhooks](/docs/guides/webhooks), enhancements to the `Room` class,
-and more. The primary change you should note is the transition to making the
-`userId` mandatory in the `authorize` option. This change is in line with our
+The major release of 1.0 marks the maturity of Liveblocks. The primary change
+you should note is the transition to making the `userId` mandatory in the
+`authorize` option. This change is in line with our
 [new pricing model](https://liveblocks.io/pricing).
 
-Let’s take a look at the changes below!
+Let’s take a look!
 
-## Changes in @liveblocks/client [#client]
+## Upgrading to Liveblocks 1.0
 
-### Adds throttle option to createClient [#throttle]
+### @liveblocks/node [#node]
 
-You can now specify the `throttle` option in
-[`createClient`](https://liveblocks.io/docs/api-reference/liveblocks-client#createClientThrottle)
-that can go as low as 16ms. If not set, the default value is 100ms.
-
-```ts highlight="5"
-import { createClient } from "@liveblocks/client";
-
-const client = createClient({
-  /* ... other options ... */
-  throttle: 16,
-});
-```
-
-### Improvements to the Room class [#room]
-
-We added new methods to the `Room` class that you can use to obtain the storage
-status of a room, subscribe to storage status changes, or reconnect to a room
-whenever necessary. You can also use the
-[Liveblocks DevTools extension](/devtools) to visualize real-time changes to
-storage while implementing these changes.
-
-#### Room.getStorageStatus [#getStorageStatus]
-
-The different storage statuses are:
-
-- `not-loaded`: Initial state when entering the room.
-- `loading`: Once the storage has been requested via room.getStorage().
-- `synchronizing`: When some local updates have not been acknowledged by
-  Liveblocks servers.
-- `synchronized`: Storage is in sync with Liveblocks servers.
-
-#### Room.subscribe [#subscribe]
-
-Use `Room.subscribe` to subscribe to storage status changes. This method returns
-an unsubscribe function.
-
-```ts
-room.subscribe("storage-status", (status) => {
-  // Implement your logic here
-  switch (status) {
-    case "not-loaded":
-      break;
-    case "loading":
-      break;
-    case "synchronizing":
-      break;
-    case "synchronized":
-      break;
-    default:
-      break;
-  }
-});
-```
-
-#### Room.reconnect [#reconnect]
-
-You can use `room.reconnect()` to close the room connection and try to
-[reconnect](/docs/api-reference/liveblocks-client#Room.reconnect).
-
-## Changes in @liveblocks/node [#node]
-
-### Update the authorize option [#authorize]
+#### Update the authorize option [@hidden]
 
 We have updated the `authorize` method to make `userId` mandatory. This change
 ties into our new [pricing model](https://liveblocks.io/pricing), which is based
 on Monthly Active Users (MAU) instead of connections. We use `userId` to track
 MAU associated with a Liveblocks account.
-
-If you do not use the `authorize` function, a cookie will be set on the client
-to track the user. This cookie will be used to track MAU associated with a
-Liveblocks account and will expire after 30 days.
-
-### Webhooks enhancements [#webhooks]
-
-We have added two new events to our Webhooks functionality: `RoomCreatedEvent`
-and `RoomDeletedEvent`. We have also added a `WebhookHandler` class to make it
-easier to verify event requests from Liveblock’s Webhooks functionality. It also
-provides fully typed `WebhookEvents`.
-
-```ts
-import { WebhookHandler } from "@liveblocks/node";
-
-const webhookHandler = new WebhookHandler(process.env.SECRET);
-
-const event = webhookHandler.verifyRequest({
-  headers: req.headers,
-  rawBody: req.body,
-});
-```
-
-Verification of events is critical to ensure that the events are coming from
-Liveblocks and not from a malicious source. Check out our
-[Webhooks guide](https://liveblocks.io/docs/guides/webhooks) for more details.
-
-## Changes for all Liveblocks packages [#all]
-
-When upgrading to 1.0, the primary breaking change to consider is updating the
-`authorize` option to include the now-mandatory `userId` field if you use
-`@liveblocks/node`. This change reflects our new pricing model based on Monthly
-Active Users instead of connections.
-
-### Step 1: Update your Liveblocks packages [#step1]
-
-```bash
-npm update @liveblocks/client@1.0 @liveblocks/react@1.0 @liveblocks/node@1.0
-```
-
-### Step 2: Update your authorize option [#step2]
 
 ```ts highlight="20"
 import { authorize } from "@liveblocks/node";
@@ -161,6 +58,136 @@ export default async function auth(req, res) {
   return res.status(response.status).end(response.body);
 }
 ```
+
+If you do not use the `authorize` function because you are using the public API
+key method, a cookie will be set in the browser when a user connects to a room.
+This cookie will be used to track MAU associated with a Liveblocks account and
+will expire after 30 days.
+
+### Authorize endpoint [#authorize-endpoint]
+
+If you do not use the `authorize` function, but call the `authorize` endpoint
+with a secret key instead, you should pass the userId even though it is not
+mandatory on the API level because the userID will be used for MAU. Set the
+`Authorization: Bearer` header to your secret key.
+
+```ts
+POST https://api.liveblocks.io/v2/rooms/{roomId}/authorize
+```
+
+Set the following the request body:
+
+```ts highlight="3"
+{
+  "userId": "user123",
+  "groupIds": [
+    "g1",
+    "g2"
+  ],
+  "userInfo": {
+    "name": "bob",
+    "colors": [
+      "blue",
+      "red"
+    ]
+  }
+}
+```
+
+## Improvements [#improvements]
+
+We added additional features to [Webhooks](/docs/guides/webhooks), enhancements
+to the `Room` class, and more. You can review the
+[release notes](https://github.com/liveblocks/liveblocks/releases) for more
+details.
+
+### @liveblocks/client [#client-improvements]
+
+#### Improvements to throttle allow animation of up to 60fps [@hidden]
+
+You can now specify the `throttle` option in
+[`createClient`](https://liveblocks.io/docs/api-reference/liveblocks-client#createClientThrottle)
+that can go as low as 16ms. If not set, the default value is 100ms.
+
+```ts highlight="5"
+import { createClient } from "@liveblocks/client";
+
+const client = createClient({
+  /* ... other options ... */
+  throttle: 16,
+});
+```
+
+You can see the marked improvement in the animation from 80ms(original limit) to
+16ms in this
+[tweet](https://twitter.com/ctnicholasdev/status/1622656511758700546). If you
+want to try it out for yourself, check out
+[live cursors example](https://liveblocks.io/examples/live-cursors/nextjs).
+
+#### New methods available on the Room class [@hidden]
+
+We added new methods to the `Room` class that you can use to obtain the storage
+status of a room, subscribe to storage status changes, or reconnect to a room
+whenever necessary. You can also use the
+[Liveblocks DevTools extension](/devtools) to visualize real-time changes to
+storage while implementing these changes.
+
+Use `room.getStorageStatus` to retrieve the storage status of a room. The
+statuses are:
+
+- `not-loaded`: Initial state when entering the room.
+- `loading`: Once the storage has been requested via room.getStorage().
+- `synchronizing`: When some local updates have not been acknowledged by
+  Liveblocks servers.
+- `synchronized`: Storage is in sync with Liveblocks servers.
+
+Use `room.subscribe` to subscribe to storage status changes. This method returns
+an unsubscribe function.
+
+```ts
+room.subscribe("storage-status", (status) => {
+  // Implement your logic here
+  switch (status) {
+    case "not-loaded":
+      break;
+    case "loading":
+      break;
+    case "synchronizing":
+      break;
+    case "synchronized":
+      break;
+    default:
+      break;
+  }
+});
+```
+
+You can use `room.reconnect()` to close the room connection and try to
+[reconnect](/docs/api-reference/liveblocks-client#Room.reconnect).
+
+### @liveblocks/node [#node-improvements]
+
+#### Webhooks enhancements [@hidden]
+
+We have added two new events to our Webhooks functionality: `RoomCreatedEvent`
+and `RoomDeletedEvent`. We have also added a `WebhookHandler` class to make it
+easier to verify event requests from Liveblock’s Webhooks functionality. It also
+provides fully typed `WebhookEvents`.
+
+```ts
+import { WebhookHandler } from "@liveblocks/node";
+
+const webhookHandler = new WebhookHandler(process.env.SECRET);
+
+const event = webhookHandler.verifyRequest({
+  headers: req.headers,
+  rawBody: req.body,
+});
+```
+
+Verification of events is critical to ensure that the events are coming from
+Liveblocks and not from a malicious source. Check out our
+[Webhooks guide](https://liveblocks.io/docs/guides/webhooks) for more details.
 
 That’s it!
 

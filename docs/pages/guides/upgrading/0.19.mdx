@@ -20,13 +20,13 @@ internal packages to increase code sharing.
 
 Let’s take a look!
 
-## Changes in @liveblocks/react [#react]
+## Upgrading to 0.19
 
-### Improvements to useOther [#useOther]
+### @liveblocks/react [#react]
 
-Now, `useOther` will not rerender if tracked users have already left the room,
-preventing child components from re-rendering before the parent can unmount
-them. Additionally, `useOther` now requires a
+#### useOther now requires a selector argument [@hidden]
+
+`useOther` now requires a
 [selector](/docs/api-reference/liveblocks-react#selectors-receive-immutable-data)
 function argument. You will need to replace instances of `useOther` that do not
 use a selector in your codebase.
@@ -43,10 +43,11 @@ const other = useOther(id); // 👈 does not include a selector
 const other = useOther(id, (other) => other); // 👈 requires a selector
 ```
 
-### Stale props support for React 17 [#stale-props]
+#### Include unstable_batchedUpdates if you use React 17 [@hidden]
 
-We’ve added support to prevent the "zombie-child" scenario. To avoid this issue,
-we enforce passing the `unstable_batchedUpdates` prop to `RoomProvider`.
+We’ve added support to prevent the "zombie-child"/stale props scenario. To avoid
+this issue, we enforce passing the `unstable_batchedUpdates` prop to
+`RoomProvider`.
 
 <Banner title="You may not need this">
 
@@ -71,48 +72,9 @@ import { unstable_batchedUpdates } from "react-dom"; // 👈
 For additional context, see the
 [troubleshooting guide](/docs/guides/troubleshooting#stale-props-zombie-child)
 
-### New shouldInitiallyConnect prop [#react-shouldInitiallyConnect]
+### @liveblocks/redux [#redux]
 
-We added a new property `shouldInitiallyConnect` to `RoomProvider`, which lets
-you control whether or not the room connects to Liveblock servers. By default,
-it will check the `typeof window` to determine if it should connect. When using
-SSR, you can set it to `false` to prevent the room from connecting to Liveblocks
-servers.
-
-```tsx highlight="4"
-<RoomProvider
-  id="room"
-  initialPresence={{}}
-  shouldInitiallyConnect={false} // 👈 control initial connection to Liveblocks
->
-  <App />
-</RoomProvider>
-```
-
-### Addition of @liveblocks-core package [#liveblocks-core]
-
-We restructured our internal packages to increase code sharing. You may notice a
-new dependency in your dependency tree: `@liveblocks/core`. It contains private
-APIs that aren’t intended for direct consumption.
-
-## Changes in @liveblocks/client [#client]
-
-Similar to the [` shouldInitiallyConnect`](#react-shouldInitiallyConnect) prop
-in `@liveblocks/react`, we added a `shouldInitiallyConnect`option
-to`client.enter`. The default value is `true`. You may want to set it to `false`
-when using SSR, or if you would prefer to establish the WebSocket connection
-later.
-
-```tsx
-client.enter("room", {
-  initialPresence: {},
-  shouldInitiallyConnect: false, // 👈 for SSR using the @liveblocks/client package
-});
-```
-
-## Changes in @liveblocks/redux [#redux]
-
-### liveblocksEnhancer is now the default export [#liveblocksEnhancer]
+#### Update use of default export liveblocksEnhancer [@hidden]
 
 The main export has been renamed, so you will need to update your imports and
 use of the enhancer:
@@ -129,11 +91,11 @@ import { enhancer } from "@liveblocks/redux";
 import { liveblocksEnhancer } from "@liveblocks/redux";
 ```
 
-### enterRoom now accepts a second argument to set the initial state [#enterRoom]
+#### Remove the second argument to state.liveblocks.enterRoom [@hidden]
 
-You no longer need to supply a second argument to`state.liveblocks.enterRoom()`
-to pass an explicit initial state. It will use the state in your Redux store,
-for consistency and ease of use.
+When calling `state.liveblocks.enterRoom()`, you should not pass an explicit
+initial state. It will use the state in your Redux store, for consistency and
+ease of use. To migrate, make the following code changes:
 
 #### Previously ❌ [@hidden]
 
@@ -153,7 +115,7 @@ useEffect(() => {
 });
 ```
 
-## Changes in @liveblocks/zustand [#zustand]
+### @liveblocks/zustand [#zustand]
 
 In 0.19 we added support for Zustand v4 (specifically v4.1.3 or higher) and will
 no longer support Zustand v4.1.2 or lower. This is because Zustand v4.1.3 brings
@@ -209,7 +171,52 @@ To be clear:
   takes an explicit initial state. Instead, it’s automatically be populated from
   your Zustand state.
 
-## Changes for all Liveblocks packages [#all]
+## Improvements [#improvements]
+
+### @liveblocks/react [#react-improvements]
+
+#### New shouldInitiallyConnect prop [@hidden]
+
+We added a new property `shouldInitiallyConnect` to `RoomProvider`, which lets
+you control whether or not the room connects to Liveblock servers. By default,
+it will check the `typeof window` to determine if it should connect. When using
+SSR, you can set it to `false` to prevent the room from connecting to Liveblocks
+servers.
+
+```tsx highlight="4"
+<RoomProvider
+  id="room"
+  initialPresence={{}}
+  shouldInitiallyConnect={false} // 👈 control initial connection to Liveblocks
+>
+  <App />
+</RoomProvider>
+```
+
+#### Addition of @liveblocks-core package [@hidden]
+
+We restructured our internal packages to increase code sharing. You may notice a
+new dependency in your dependency tree: `@liveblocks/core`. It contains private
+APIs that aren’t intended for direct consumption.
+
+### @liveblocks/client [#client-improvements]
+
+#### New shouldInitiallyConnect option [@hidden]
+
+Similar to the [`shouldInitiallyConnect`](#react-shouldInitiallyConnect) prop in
+`@liveblocks/react`, we added a `shouldInitiallyConnect` option to
+`client.enter`. The default value is `true`. You may want to set it to `false`
+when using SSR, or if you would prefer to establish the WebSocket connection
+later.
+
+```tsx
+client.enter("room", {
+  initialPresence: {},
+  shouldInitiallyConnect: false, // 👈 for SSR using the @liveblocks/client package
+});
+```
+
+### All Liveblocks packages [#all]
 
 All packages now provide an `isReadOnly` flag on user instances. It is available
 by calling `getSelf()` and `getOthers`. `isReadOnly` is true when storage is

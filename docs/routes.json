@@ -130,10 +130,6 @@
             "path": "/guides/schema-validation/syntax"
           }
         ]
-      },
-      {
-        "title": "Pricing",
-        "path": "/guides/pricing"
       }
     ]
   },
@@ -174,6 +170,10 @@
   {
     "title": "Miscellaneous",
     "routes": [
+      {
+        "title": "Pricing",
+        "path": "/guides/pricing"
+      },
       {
         "title": "Limits",
         "path": "/guides/limits",
