@@ -24,9 +24,6 @@ jobs:
       #     brew install fzf && brew tap nvie/tap && brew install
       #     nvie/tap/git-toolbelt
 
-      - name: Echo branch
-        run: echo "${{ github.event.base_ref }}"
-
       - name: Checkout
         uses: actions/checkout@v3
         with:
@@ -42,15 +39,22 @@ jobs:
           echo $RELEASE_VERSION
           echo ${{ steps.vars.outputs.tag }}
 
+      - name: Set release version
+        id: vars
+        run: echo "$RELEASE_VERSION" && echo "${steps.vars.outputs.tag#v}"
+
+      # - name: Set release tag
+      #   id: vars
+
       - name: setup git config
         run: |
           git config user.name "GitHub Actions Bot"
           git config user.email "<>"
 
-      - name: Do dummy commit
-        run:
-          git commit --allow-empty -m "Bump to ${{steps.vars.outputs.tag}}" &&
-          git push
+      # - name: Do dummy commit
+      #   run:
+      #     git commit --allow-empty -m "Bump to ${{steps.vars.outputs.tag}}" &&
+      #     git push
 
       - name: Testing running a script
         run: ./scripts/test-running-script.sh
