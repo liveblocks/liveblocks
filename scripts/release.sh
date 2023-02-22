@@ -103,6 +103,9 @@ commit_to_git () {
     ) )
 }
 
+# Set up turbo
+npm install
+
 for PKGDIR in "${PACKAGE_DIRS[@]}"; do
     update_package_version "$PKGDIR" "$VERSION"
 done
