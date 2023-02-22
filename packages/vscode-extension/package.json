@@ -1,0 +1,51 @@
+{
+  "name": "@liveblocks/vscode-extension",
+  "displayName": "liveblocks",
+  "description": "",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.75.0"
+  },
+  "main": "./dist/main.js",
+  "categories": [
+    "Programming Languages"
+  ],
+  "scripts": {
+    "vscode:prepublish": "npm run esbuild:base -- --minify",
+    "esbuild": "node ./esbuild.config.js",
+    "test-compile": "tsc -p ./",
+    "build": "npm run esbuild -- --sourcemap",
+    "dev": "npm run esbuild -- --sourcemap --watch",
+    "lint": "eslint src/",
+    "format": "eslint --fix src/; prettier --write src/"
+  },
+  "contributes": {
+    "languages": [
+      {
+        "id": "liveblocks-schema",
+        "aliases": [
+          "Liveblocks Schema",
+          "liveblocks-schema"
+        ],
+        "extensions": [
+          ".schema"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "liveblocks-schema",
+        "scopeName": "source.schema",
+        "path": "dist/grammar/liveblocks-schema.tmLanguage.json"
+      }
+    ]
+  },
+  "dependencies": {
+    "@liveblocks/textmate-grammar": "*"
+  },
+  "devDependencies": {
+    "esbuild": "^0.17.8",
+    "esbuild-plugin-copy": "^2.0.2"
+  }
+}
