@@ -41,7 +41,7 @@ jobs:
 
       - name: Set release version
         id: version
-        run: echo "$RELEASE_VERSION" && echo "${steps.vars.outputs.tag#v}"
+        run: echo "$RELEASE_VERSION"
 
       # - name: Set release tag
       #   id: vars
