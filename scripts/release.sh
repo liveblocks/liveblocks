@@ -105,5 +105,3 @@ done
 # Update package-lock.json with newly bumped versions
 npm install
 commit_to_git "Bump to $VERSION" "package-lock.json" "packages/"
-git push
-
