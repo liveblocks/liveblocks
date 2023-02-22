@@ -29,7 +29,7 @@ const run = async () => {
         resolveFrom: "cwd",
         assets: {
           from: require.resolve("@liveblocks/textmate-grammar"),
-          to: "dist/grammars",
+          to: "dist/grammar",
         },
       }),
     ],
