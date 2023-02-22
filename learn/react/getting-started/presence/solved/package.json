@@ -1,0 +1,23 @@
+{
+  "name": "learn-liveblocks",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "next": "12.1.6",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "typescript": "4.9.5",
+    "@liveblocks/client": "latest",
+    "@liveblocks/react": "latest",
+    "@next/swc-wasm-nodejs": "12.1.6",
+    "@types/node": "latest",
+    "@types/react": "latest"
+  }
+}
+
