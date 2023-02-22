@@ -20,4 +20,4 @@ export function parse(schemaText: string): CheckedDocument {
   return check(parseDocument(reporter), reporter);
 }
 
-export { prettify } from "./prettify/index";
+export { prettify } from "./prettify";
