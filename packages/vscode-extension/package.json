@@ -12,10 +12,12 @@
   ],
   "scripts": {
     "vscode:prepublish": "npm run esbuild:base -- --minify",
-    "esbuild:base": "node ./esbuild.config.js",
-    "esbuild": "npm run esbuild:base -- --sourcemap",
-    "esbuild:watch": "npm run esbuild:base -- --sourcemap --watch",
-    "test-compile": "tsc -p ./"
+    "esbuild": "node ./esbuild.config.js",
+    "test-compile": "tsc -p ./",
+    "build": "npm run esbuild -- --sourcemap",
+    "dev": "npm run esbuild -- --sourcemap --watch",
+    "lint": "eslint src/",
+    "format": "eslint --fix src/; prettier --write src/"
   },
   "contributes": {
     "languages": [
