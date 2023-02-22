@@ -72,7 +72,8 @@ publish_to_npm () {
     fi
 
     echo "I'm ready to publish $PKGNAME to NPM, under $VERSION!"
-    npm publish --tag private
+    # TODO: remove dry-run
+    npm publish --tag private --dry-run
 }
 
 # Turns "packages/liveblocks-core" => "@liveblocks/core"
@@ -87,7 +88,7 @@ check_is_valid_tag "$TAG"
 for pkgdir in ${PACKAGE_DIRS[@]}; do
     pkgname="$(npm_pkgname "$pkgdir")"
     echo "==> Publishing ${pkgname} to NPM"
-    ( cd "$pkgdir" && publish_to_npm "$pkgname" )
+    ( cd "$pkgdir" && publish_to_npm "$pkgname")
 done
 
 # By now, all packages should be published under a "private" tag.
@@ -100,7 +101,8 @@ for pkgdir in ${PACKAGE_DIRS[@]}; do
     while true; do
         if npm dist-tag ls "$pkgname" | grep -qx "private: $VERSION"; then
             echo "==> $pkgname"
-            npm dist-tag add "$pkgname@$VERSION" "${TAG:-latest}"
+            # TODO: remove dry-run
+            npm dist-tag add "$pkgname@$VERSION" "${TAG:-latest}" --dry-run
             break
         else
             err "I can't find $pkgname @ $VERSION on NPM under the 'private' tag yet..."
@@ -112,8 +114,8 @@ done
 # Clean up those temporary "private" tags
 for pkgdir in ${PACKAGE_DIRS[@]}; do
     pkgname="$(npm_pkgname "$pkgdir")"
-    collect_otp_token
-    npm dist-tag rm "$pkgname@$VERSION" private
+    # TODO: remove dry-run
+    npm dist-tag rm "$pkgname@$VERSION" private --dry-run
 done
 
 echo ""

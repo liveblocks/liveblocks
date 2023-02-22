@@ -84,5 +84,6 @@ jobs:
         # https://docs.github.com/en/actions/publishing-packages/publishing-nodejs-packages#publishing-packages-to-the-npm-registry
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-          VERSION:
-        run: echo this is where we run "publish.sh" # todo add version & tag
+          VERSION: ${{ steps.version.outputs.value }}
+          TAG: ${{ steps.npm_tag.outputs.value }}
+        run: ./scripts/publish.sh -V "$VERSION" -t "$TAG"
