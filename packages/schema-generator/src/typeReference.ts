@@ -1,9 +1,9 @@
-import { AST } from "@liveblocks/schema";
-import { mergeInferredTypes, InferredType, inferType } from ".";
+import type { AST } from "@liveblocks/schema";
+import { inferType, mergeInferredTypes } from ".";
 import { isInferredObjectType } from "./object";
 import { inferredScalarTypeToAst, isInferredScalarType } from "./scalar";
-import { InferredSchema } from "./schema";
-import { ChildContext, PlainLson } from "./types";
+import type { InferredSchema } from "./schema";
+import type { ChildContext, InferredType, PlainLson } from "./types";
 import { invariant } from "./utils/invariant";
 
 export type InferredTypeReference = {

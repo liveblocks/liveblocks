@@ -1,8 +1,8 @@
-import { inferStorageType } from "..";
-import { inferSchema, inferredSchemaToAst } from "../schema";
-import { PlainLsonObject } from "../types";
-import { prettify } from "@liveblocks/schema/src/prettify";
 import { parse } from "@liveblocks/schema";
+import { prettify } from "@liveblocks/schema/src/prettify";
+import { inferStorageType } from "..";
+import { inferredSchemaToAst, inferSchema } from "../schema";
+import type { PlainLsonObject } from "../types";
 
 const EMPTY: PlainLsonObject = {
   liveblocksType: "LiveObject",

@@ -87,7 +87,7 @@ export class BidirectionalMap<TKey, TValue> implements Map<TKey, TValue> {
     return this._map[Symbol.iterator]();
   }
 
-  [Symbol.toStringTag]: "BidirectionalMap";
+  [Symbol.toStringTag] = "BidirectionalMap";
 
   get size() {
     return this._map.size;

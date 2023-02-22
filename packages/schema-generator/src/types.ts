@@ -1,5 +1,6 @@
 import type { Json } from "@liveblocks/core";
-import type { InferredObjectType } from "./object";
+import { InferredObjectType, isInferredObjectType } from "./object";
+import type { InferredScalarType } from "./scalar";
 import type { PartialBy } from "./utils/types";
 
 export type PlainLsonFields = Record<string, PlainLson>;
@@ -36,3 +37,9 @@ type FieldChildContext = {
 };
 
 export type ChildContext = FieldChildContext & { json: boolean }; // TODO: Expand for union, list, ...
+
+export type InferredType = InferredScalarType | InferredObjectType;
+
+export function isAtomic(type: InferredType): boolean {
+  return isInferredObjectType(type) && type.atomic;
+}

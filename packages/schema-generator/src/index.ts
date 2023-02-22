@@ -6,19 +6,18 @@ import {
   mergeInferredObjectTypes,
 } from "./object";
 import {
-  InferredScalarType,
   inferScalarType,
   isInferredScalarType,
   mergeInferredScalarTypes,
 } from "./scalar";
-import { ChildContext, JsonScalar, PlainLson, PlainLsonObject } from "./types";
-import { PartialBy } from "./utils/types";
-
-export type InferredType = InferredScalarType | InferredObjectType;
-
-export function isAtomic(type: InferredType): boolean {
-  return "atomic" in type && !!type.atomic;
-}
+import type {
+  ChildContext,
+  InferredType,
+  JsonScalar,
+  PlainLson,
+  PlainLsonObject,
+} from "./types";
+import type { PartialBy } from "./utils/types";
 
 export function inferStorageType(value: PlainLsonObject): InferredObjectType {
   const storage: PartialBy<InferredObjectType, "fields"> = {

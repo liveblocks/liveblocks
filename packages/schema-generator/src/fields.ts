@@ -1,12 +1,12 @@
-import { AST } from "@liveblocks/schema";
-import { InferredSchema } from "./schema";
+import type { AST } from "@liveblocks/schema";
+import type { InferredSchema } from "./schema";
 import {
-  mergeTypeReferences,
   InferredTypeReference,
   inferredTypeReferenceToAst,
   inferTypeReference,
+  mergeTypeReferences,
 } from "./typeReference";
-import { ChildContext, JsonObject, PlainLsonFields } from "./types";
+import type { ChildContext, JsonObject, PlainLsonFields } from "./types";
 import { invariant } from "./utils/invariant";
 import { isNotUndefined } from "./utils/typeGuards";
 
@@ -46,7 +46,7 @@ export function mergeInferredFields(
       // Should never happen
       invariant(isNotUndefined(mergedValue));
 
-      mergedValue[key] = { ...mergedValue, optional: true };
+      mergedFields[key] = { ...mergedValue, optional: true };
       continue;
     }
 

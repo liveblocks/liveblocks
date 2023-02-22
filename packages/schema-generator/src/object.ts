@@ -1,17 +1,16 @@
-import { JsonObject, LsonObject } from "@liveblocks/core";
-import { PartialBy } from "./utils/types";
+import type { JsonObject, LsonObject } from "@liveblocks/core";
+import type { AST } from "@liveblocks/schema";
 import {
-  mergeInferredFields,
   inferLsonFields,
   InferredFields,
   inferredFieldsToAst,
+  mergeInferredFields,
 } from "./fields";
 import { generateNames, mergeScoredNames, ScoredNames } from "./naming";
-import { ChildContext, PlainLsonFields } from "./types";
-import { AST } from "@liveblocks/schema";
-import { InferredSchema } from "./schema";
+import type { InferredSchema } from "./schema";
+import type { ChildContext, InferredType, PlainLsonFields } from "./types";
 import { invariant } from "./utils/invariant";
-import { InferredType } from ".";
+import type { PartialBy } from "./utils/types";
 
 export type InferredObjectType = {
   type: "Object";
@@ -87,6 +86,7 @@ export function inferredObjectTypeToAst(
     name: { _kind: "TypeName", name, range: [0, 0] },
     fields: inferredFieldsToAst(inferred.fields, schema),
     range: [0, 0],
+    isStatic: !inferred.live,
   };
 }
 

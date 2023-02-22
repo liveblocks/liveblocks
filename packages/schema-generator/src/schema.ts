@@ -1,13 +1,14 @@
-import { mergeInferredTypes, InferredType, isAtomic } from ".";
+import type { AST } from "@liveblocks/schema";
+import { mergeInferredTypes } from ".";
 import {
   InferredObjectType,
   inferredObjectTypeToAst,
   isInferredObjectType,
 } from "./object";
-import { InferredTypeReference } from "./typeReference";
-import { invariant } from "./utils/invariant";
+import type { InferredTypeReference } from "./typeReference";
+import { InferredType, isAtomic } from "./types";
 import { BidirectionalMap } from "./utils/bidirectionalMap";
-import { AST } from "@liveblocks/schema";
+import { invariant } from "./utils/invariant";
 
 type RootTypes = Set<InferredObjectType>;
 type RootReferences = Map<InferredObjectType, Set<InferredTypeReference>>;
