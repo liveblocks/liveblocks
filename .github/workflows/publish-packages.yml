@@ -43,8 +43,16 @@ jobs:
         id: npm_tag
         env:
           GIT_TAG: ${{ steps.git_tag.outputs.value }}
-        run: echo value="${GIT_TAG##*-}" | sed 's/[0-9]//g' >> $GITHUB_OUTPUT
-
+        run: |
+        get_tag_if_exists () {
+          if grep -q "-" <<< "$1"; then
+              echo "${1##*-}" | sed 's/[0-9]//g'
+          else 
+              echo "latest"
+          fi
+        }
+        echo value=$(get_tag_if_exists "$GIT_TAG") >> $GITHUB_OUTPUT
+        
       - name: Check values
         run: |
           echo ${{steps.git_tag.outputs.value}}
@@ -69,9 +77,12 @@ jobs:
       - name: Build all packages
         run: npm run build
 
+      # Add approve step here?
+
       - name: Publish packages
         # setup-node created .npmrc file to publish to npm
         # https://docs.github.com/en/actions/publishing-packages/publishing-nodejs-packages#publishing-packages-to-the-npm-registry
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          VERSION: 
         run: echo this is where we run "publish.sh" # todo add version & tag

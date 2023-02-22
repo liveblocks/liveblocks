@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 set -eu
 
 GITHUB_URL="https://github.com/liveblocks/liveblocks"
