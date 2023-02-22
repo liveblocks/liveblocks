@@ -27,13 +27,14 @@ check_tag_does_not_exist () {
       err "Tag $1 already exists"
       exit 2
   }
+  echo "Tag $1 does not exist yet!"
 }
 
 create_and_push_tag () {
-  git tag "$1"
-  git push origin "$1"
+  echo "Creating tag $1"
+  git tag "$1" -m "Release $1" && git push origin "$1"
+  echo "Tag $1 created and pushed"
 }
-
 
 # check_current_branch
 check_is_valid_github_tag "$1"
