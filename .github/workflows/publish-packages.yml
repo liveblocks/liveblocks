@@ -65,8 +65,7 @@ jobs:
         run: npm install
 
       - name: Preparing release
-        run:
-          ./scripts/test-running-script.sh -V ${{steps.version.outputs.value}}
+        run: ./scripts/release.sh -V ${{steps.version.outputs.value}}
 
       - name: Build all packages
         run: npm run build
