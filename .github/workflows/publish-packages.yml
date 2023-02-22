@@ -44,15 +44,15 @@ jobs:
         env:
           GIT_TAG: ${{ steps.git_tag.outputs.value }}
         run: |
-        get_tag_if_exists () {
-          if grep -q "-" <<< "$1"; then
-              echo "${1##*-}" | sed 's/[0-9]//g'
-          else 
-              echo "latest"
-          fi
-        }
-        echo value=$(get_tag_if_exists "$GIT_TAG") >> $GITHUB_OUTPUT
-        
+          get_tag_if_exists () {
+            if grep -q "-" <<< "$1"; then
+                echo "${1##*-}" | sed 's/[0-9]//g'
+            else 
+                echo "latest"
+            fi
+          }
+          echo value=$(get_tag_if_exists "$GIT_TAG") >> $GITHUB_OUTPUT
+
       - name: Check values
         run: |
           echo ${{steps.git_tag.outputs.value}}
@@ -84,5 +84,5 @@ jobs:
         # https://docs.github.com/en/actions/publishing-packages/publishing-nodejs-packages#publishing-packages-to-the-npm-registry
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-          VERSION: 
+          VERSION:
         run: echo this is where we run "publish.sh" # todo add version & tag
