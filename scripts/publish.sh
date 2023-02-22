@@ -33,6 +33,22 @@ if [ "$#" -ne 0 ]; then
     exit 2
 fi
 
+check_is_valid_version () {
+    if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[a-z0-9]+)?$ ]]; then
+        err "Invalid version: $VERSION"
+        err "Version must be in the form of X.Y.Z or X.Y.Z-<tag>"
+        exit 2
+    fi
+}
+
+check_is_valid_tag () {
+    if ! [[ "$TAG" =~ ^[a-z0-9]+$ ]]; then
+        err "Invalid tag: $TAG"
+        err "Tag must be in the form of <tag>"
+        exit 2
+    fi
+}
+
 npm_pkg_exists () {
     PKGNAME="$1"
     test "$(npm view "$PKGNAME@$VERSION" version 2>/dev/null)" = "$VERSION"
@@ -58,6 +74,9 @@ publish_to_npm () {
     echo "I'm ready to publish $PKGNAME to NPM, under $VERSION!"
     npm publish --tag private
 }
+
+check_is_valid_version "$VERSION"
+check_is_valid_tag "$TAG"
 
 # Publish to NPM
 for pkgdir in ${PACKAGE_DIRS[@]}; do
@@ -105,5 +124,5 @@ echo ""
 echo "==> Pushing changes to GitHub"
 BRANCH="$(git current-branch)"
 URL="${GITHUB_URL}/releases/new?tag=v${VERSION}&target=${BRANCH}&title=${VERSION}&body=%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%0A%0APlease%20replace%20this%20block%20with%20the%20contents%20of%20the%20top%20section%20of%3A%0A%0Ahttps%3A%2F%2Fgithub.com%2Fliveblocks%2Fliveblocks%2Fraw%2F${BRANCH}%2FCHANGELOG.md%0A%0A%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20"
-echo "  - $URL"
+echo "$URL"
 
