@@ -2,7 +2,7 @@
 // Word boundaries are determined either the presence of punctuation (= non letter/number character),
 // a change in case, or a number. For example, "fooBar" and "foo_bar" are both considered
 // two words.
-// \p{Lu} = Unicode uppercase letter, \p{Ll} = Unicode lowercase letter, \p{N} = Unicode number
+// \p{Lu} = Uppercase letter, \p{Ll} = Lowercase letter, \p{N} = Number
 const WORDS_REGEX =
   /\p{Lu}\p{Ll}+|\p{Lu}+(?=\p{Ll}\p{Lu})|\p{Lu}+|\p{Ll}+|\p{N}+/gu;
 
@@ -16,7 +16,7 @@ export function ucFirst(str: string): string {
   return (
     str
       .toLocaleLowerCase()
-      // \p{CWU} = Changes when Uppercased
+      // \p{CWU} = Changes when uppercased
       .replace(/^\p{CWU}/u, (char) => char.toLocaleUpperCase())
   );
 }
