@@ -171,6 +171,10 @@
     "title": "Miscellaneous",
     "routes": [
       {
+        "title": "Pricing",
+        "path": "/guides/pricing"
+      },
+      {
         "title": "Limits",
         "path": "/guides/limits",
         "routes": [
@@ -192,6 +196,14 @@
           {
             "title": "Upgrading to 0.18",
             "path": "/guides/upgrading/0.18"
+          },
+          {
+            "title": "Upgrading to 0.19",
+            "path": "/guides/upgrading/0.19"
+          },
+          {
+            "title": "Upgrading to 1.0",
+            "path": "/guides/upgrading/1.0"
           }
         ]
       },
