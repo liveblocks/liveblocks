@@ -1596,6 +1596,13 @@ function makeStateMachine<
   function onRoomStateMessage(
     message: RoomStateServerMsg<TUserMeta>
   ): OthersEvent<TPresence, TUserMeta> {
+    for (const connectionId in state.others._connections) {
+      const user = message.users[connectionId];
+      if (user === undefined) {
+        state.others.removeConnection(Number(connectionId));
+      }
+    }
+
     for (const key in message.users) {
       const user = message.users[key];
       const connectionId = Number(key);
