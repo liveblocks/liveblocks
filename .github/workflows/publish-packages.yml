@@ -75,7 +75,7 @@ jobs:
           VERSION: ${{steps.version.outputs.value}}
         run: ./.github/scripts/release.sh -V "$VERSION"
 
-      - name: Test tag re-creation
+      - name: Recreate tag to commit with correct version
         env:
           GIT_TAG: ${{ steps.git_tag.outputs.value }}
         run: |
