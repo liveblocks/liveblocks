@@ -28,7 +28,7 @@ A monthly active user can be defined as:
 
 ## How does authorization work with MAU? [#authorization]
 
-### @liveblocks/node [#node]
+### When using @liveblocks/node’s authorize function [#node]
 
 In `@liveblocks/node`, we made the field `userId` in the `authorize` option
 mandatory. This `userId` is used to track MAU associated with a Liveblocks
@@ -52,7 +52,7 @@ export default async function auth(req, res) {
   /**
    * Implement your own security here.
    *
-   * It's your responsibility to ensure that the caller of this endpoint
+   * It’s your responsibility to ensure that the caller of this endpoint
    * is a valid user by validating the cookies or authentication headers
    * and that it has access to the requested room.
    */
@@ -79,7 +79,7 @@ export default async function auth(req, res) {
   key required to use the `authorize` option.
 </Banner>
 
-### When calling the authorize endpoint [#authorize-endpoint]
+### When calling the authorize API endpoint [#authorize-endpoint]
 
 When calling the `authorize` endpoint directly with a secret key, the `userId`
 is not required. However, should still include the `userId` in the request body
@@ -167,7 +167,7 @@ export default async function auth(req, res) {
   /**
    * Implement your own security here.
    *
-   * It's your responsibility to ensure that the caller of this endpoint
+   * It’s your responsibility to ensure that the caller of this endpoint
    * is a valid user by validating the cookies or authentication headers
    * and that it has access to the requested room.
    */
