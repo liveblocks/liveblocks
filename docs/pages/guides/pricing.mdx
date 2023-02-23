@@ -81,7 +81,7 @@ export default async function auth(req, res) {
 
 ### When calling the authorize endpoint [#authorize-endpoint]
 
-When calling the `authorize` endpoint directly with a secret key, the `userID`
+When calling the `authorize` endpoint directly with a secret key, the `userId`
 is not required. However, should still include the `userId` in the request body
 to take advantage of MAU pricing logic. Set the `Authorization: Bearer` header
 to your secret key, then POST to the following endpoint:
