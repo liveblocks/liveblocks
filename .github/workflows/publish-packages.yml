@@ -44,14 +44,14 @@ jobs:
         env:
           GIT_TAG: ${{ steps.git_tag.outputs.value }}
         run: |
-          get_tag_if_exists () {
+          get_npm_tag () {
             if grep -q "-" <<< "$1"; then
                 echo "${1##*-}" | sed 's/[0-9]//g'
             else 
                 echo "latest"
             fi
           }
-          echo value=$(get_tag_if_exists "$GIT_TAG") >> $GITHUB_OUTPUT
+          echo value=$(get_npm_tag "$GIT_TAG") >> $GITHUB_OUTPUT
 
       - name: Check values
         run: |
@@ -69,7 +69,7 @@ jobs:
         with:
           node-version: 16.17.1
 
-      - name: Preparing release
+      - name: Prepare release
         env:
           VERSION: ${{steps.version.outputs.value}}
         run: ./scripts/release.sh -V "$VERSION"
@@ -80,10 +80,10 @@ jobs:
       # Add approve step here?
 
       - name: Publish packages
+        run: ./scripts/publish.sh -V "$VERSION" -t "$NPM_TAG"
         # setup-node created .npmrc file to publish to npm
         # https://docs.github.com/en/actions/publishing-packages/publishing-nodejs-packages#publishing-packages-to-the-npm-registry
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           VERSION: ${{ steps.version.outputs.value }}
-          TAG: ${{ steps.npm_tag.outputs.value }}
-        run: ./scripts/publish.sh -V "$VERSION" -t "$TAG"
+          NPM_TAG: ${{ steps.npm_tag.outputs.value }}
