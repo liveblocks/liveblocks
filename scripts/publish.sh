@@ -73,7 +73,7 @@ publish_to_npm () {
 
     echo "I'm ready to publish $PKGNAME to NPM, under $VERSION!"
     # TODO: remove dry-run
-    npm publish --tag private --dry-run
+    npm publish --tag private
 }
 
 # Turns "packages/liveblocks-core" => "@liveblocks/core"
@@ -102,7 +102,7 @@ for pkgdir in ${PACKAGE_DIRS[@]}; do
         if npm dist-tag ls "$pkgname" | grep -qx "private: $VERSION"; then
             echo "==> $pkgname"
             # TODO: remove dry-run
-            npm dist-tag add "$pkgname@$VERSION" "${TAG:-latest}" --dry-run
+            npm dist-tag add "$pkgname@$VERSION" "${TAG:-latest}"
             break
         else
             err "I can't find $pkgname @ $VERSION on NPM under the 'private' tag yet..."
@@ -115,7 +115,7 @@ done
 for pkgdir in ${PACKAGE_DIRS[@]}; do
     pkgname="$(npm_pkgname "$pkgdir")"
     # TODO: remove dry-run
-    npm dist-tag rm "$pkgname@$VERSION" private --dry-run
+    npm dist-tag rm "$pkgname@$VERSION" private
 done
 
 echo ""
