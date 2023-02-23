@@ -32,7 +32,7 @@ A monthly active user can be defined as:
 
 In `@liveblocks/node`, we made the field `userId` in the `authorize` option
 mandatory. This `userId` is used to track MAU associated with a Liveblocks
-account. Each `userId` will count as 1 MAU. To make sure you begin to track MAU
+account. Each `userId` will count as one MAU. To make sure you begin to track MAU
 as intended, first update `@liveblocks/node`.
 
 ```bash
@@ -135,7 +135,7 @@ const client = createClient({
 To illustrate how counting MAU works without a `userId`, consider the following:
 
 If you have one user who connects to a Liveblocks room that does not enforce
-authorization, you will be billed for 1 MAU. That same person can reaccess a
+authorization, you will be billed for one MAU. That same person can reaccess a
 room the next day, and MAU would not increase. The cookie will expire at the end
 of the 30-day billing cycle, and the user will be counted as a new MAU.
 Liveblocks will count that anonymous user as 2 MAU if packages are not updated.
