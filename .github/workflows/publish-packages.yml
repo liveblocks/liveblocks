@@ -75,6 +75,13 @@ jobs:
           VERSION: ${{steps.version.outputs.value}}
         run: ./.github/scripts/release.sh -V "$VERSION"
 
+      - name: Test tag re-creation
+        env:
+          GIT_TAG: ${{ steps.git_tag.outputs.value }}
+        run: |
+          git push --delete origin "$GIT_TAG" && git tag --delete "$GIT_TAG"
+          git tag "$GIT_TAG" && git push origin "$GIT_TAG"
+
       - name: Build all packages
         run: npm run build
 
