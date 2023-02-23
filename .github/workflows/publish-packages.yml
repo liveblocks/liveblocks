@@ -73,7 +73,7 @@ jobs:
       - name: Prepare release
         env:
           VERSION: ${{steps.version.outputs.value}}
-        run: ./.github/workflows/scripts/release.sh -V "$VERSION"
+        run: ./.github/scripts/release.sh -V "$VERSION"
 
       - name: Build all packages
         run: npm run build
@@ -87,4 +87,4 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           VERSION: ${{ steps.version.outputs.value }}
           NPM_TAG: ${{ steps.npm_tag.outputs.value }}
-        run: ./.github/workflows/scripts/publish.sh -V "$VERSION" -t "$NPM_TAG"
+        run: ./.github/scripts/publish.sh -V "$VERSION" -t "$NPM_TAG"
