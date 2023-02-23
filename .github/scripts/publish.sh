@@ -100,8 +100,7 @@ for pkgdir in ${PACKAGE_DIRS[@]}; do
     pkgname="$(npm_pkgname "$pkgdir")"
     while true; do
         if npm dist-tag ls "$pkgname" | grep -qx "private: $VERSION"; then
-            echo "==> $pkgname"
-            # TODO: remove dry-run
+            echo "==> Adding tag ${TAG:-latest} to $pkgname @ $VERSION"
             npm dist-tag add "$pkgname@$VERSION" "${TAG:-latest}"
             break
         else
