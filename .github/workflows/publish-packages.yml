@@ -24,13 +24,6 @@ jobs:
           rm -rf v1.8.0.tar.gz git-toolbelt-1.8.0
           echo "$HOME/.local/bin" >> $GITHUB_PATH
 
-      # - name: Set up Homebrew
-      #   id: set-up-homebrew
-      #   uses: Homebrew/actions/setup-homebrew@master
-
-      # - name: Install git-toolbelt
-      #   run: brew tap nvie/tap && brew install nvie/tap/git-toolbelt
-
       - name: Checkout
         uses: actions/checkout@v3
         with:
