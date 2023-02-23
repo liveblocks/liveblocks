@@ -77,7 +77,7 @@ To update `@liveblocks/redux` to 0.19, run the following command using your
 preferred package manager:
 
 ```bash
-npm install @liveblocks/client@.19 @liveblocks/redux@.19
+npm install @liveblocks/client@0.19 @liveblocks/redux@0.19
 ```
 
 #### Update use of default export liveblocksEnhancer [@hidden]
@@ -132,7 +132,7 @@ To update `@liveblocks/zustand` to 0.19, run the following command using your
 preferred package manager:
 
 ```bash
-npm install @liveblocks/client@.19 @liveblocks/zustand@.19
+npm install @liveblocks/client@0.19 @liveblocks/zustand@0.19
 ```
 
 - Change these imports, if applicable, and rename accordingly:
@@ -234,7 +234,7 @@ client.enter("room", {
 });
 ```
 
-### All Liveblocks packages [#all]
+### @liveblocks/\* [#all]
 
 All packages now provide an `isReadOnly` flag on user instances. It is available
 by calling `getSelf()` and `getOthers`. `isReadOnly` is true when storage is
