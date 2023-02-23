@@ -1,4 +1,4 @@
-import type { AST } from "@liveblocks/schema";
+import { AST } from "@liveblocks/schema";
 
 import type { ChildContext, InferredType } from "./inference";
 import type { ScoredNames } from "./naming";
@@ -110,12 +110,12 @@ export function inferredScalarTypeToAst(
 ): AST.BuiltInScalar {
   switch (scalar.type) {
     case "String":
-      return { _kind: "StringType", range: [0, 0] };
+      return AST.stringType();
     case "Boolean":
-      return { _kind: "BooleanType", range: [0, 0] };
+      return AST.booleanType();
     case "Integer":
-      return { _kind: "IntType", range: [0, 0] };
+      return AST.intType();
     case "Float":
-      return { _kind: "FloatType", range: [0, 0] };
+      return AST.floatType();
   }
 }

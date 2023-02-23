@@ -1,4 +1,4 @@
-import type { AST } from "@liveblocks/schema";
+import { AST } from "@liveblocks/schema";
 
 import type { ChildContext, InferredType } from "./inference";
 import { inferType, mergeInferredTypes } from "./inference";
@@ -51,16 +51,7 @@ export function inferredTypeReferenceToAst(
       "Root type reference without assigned name"
     );
 
-    return {
-      _kind: "TypeRef",
-      asLiveObject: value.live,
-      ref: {
-        _kind: "TypeName",
-        name,
-        range: [0, 0],
-      },
-      range: [0, 0],
-    };
+    return AST.typeRef(AST.typeName(name), value.live);
   }
 
   throw new Error("Not implemented");

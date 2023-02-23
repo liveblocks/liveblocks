@@ -1,8 +1,7 @@
 {
-  "name": "@liveblocks/schema-generator",
-  "private": true,
+  "name": "@liveblocks/infer-schema",
   "version": "0.1.0",
-  "description": "Helper to infer a liveblocks schema ast from plain lson data",
+  "description": "Helper to infer a Liveblocks schema from plain LSON data",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "scripts": {
@@ -26,14 +25,14 @@
     "@liveblocks/eslint-config": "*",
     "@liveblocks/jest-config": "*",
     "@types/jest": "^29.4.0",
-    "@types/pluralize": "^0.0.29"
+    "@types/pluralize": "^0.0.29",
+    "prettier": "^2.8.3",
+    "typescript": "^4.9.5"
   },
   "dependencies": {
     "@liveblocks/core": "^1.0.0",
     "@liveblocks/schema": "*",
-    "pluralize": "^8.0.0",
-    "prettier": "^2.8.3",
-    "typescript": "^4.9.5"
+    "pluralize": "^8.0.0"
   },
   "sideEffects": false
 }

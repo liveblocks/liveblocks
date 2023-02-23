@@ -1,4 +1,4 @@
-import type { AST } from "@liveblocks/schema";
+import { AST } from "@liveblocks/schema";
 
 import type { ChildContext } from "./inference";
 import type { JsonObject, PlainLsonFields } from "./plainLson";
@@ -67,11 +67,11 @@ export function inferredFieldsToAst(
   fields: InferredFields,
   schema: InferredSchema
 ): AST.FieldDef[] {
-  return Object.entries(fields).map(([name, value]) => ({
-    _kind: "FieldDef",
-    name: { _kind: "Identifier", name, range: [0, 0] },
-    type: inferredTypeReferenceToAst(value, schema),
-    optional: value.optional,
-    range: [0, 0],
-  }));
+  return Object.entries(fields).map(([name, value]) =>
+    AST.fieldDef(
+      AST.identifier(name),
+      value.optional,
+      inferredTypeReferenceToAst(value, schema)
+    )
+  );
 }

@@ -1,4 +1,4 @@
-import type { AST } from "@liveblocks/schema";
+import { AST } from "@liveblocks/schema";
 
 import type { InferredFields } from "./fields";
 import {
@@ -84,13 +84,11 @@ export function inferredObjectTypeToAst(
   const name = schema.rootNames.getKey(inferred);
   invariant(isNotUndefined(name), "Object type without assigned name");
 
-  return {
-    _kind: "ObjectTypeDefinition",
-    name: { _kind: "TypeName", name, range: [0, 0] },
-    fields: inferredFieldsToAst(inferred.fields, schema),
-    range: [0, 0],
-    isStatic: !inferred.live,
-  };
+  return AST.objectTypeDefinition(
+    AST.typeName(name),
+    inferredFieldsToAst(inferred.fields, schema),
+    !inferred.live
+  );
 }
 
 export function isInferredObjectType(

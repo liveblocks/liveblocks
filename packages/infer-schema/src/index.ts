@@ -2,7 +2,7 @@ import { prettify } from "@liveblocks/schema";
 
 import { inferStorageType } from "./inference";
 import type { PlainLsonObject } from "./plainLson";
-import { inferredSchemaToAst, inferSchema } from "./schema";
+import { inferredSchemaToAst, buildSchema } from "./schema";
 
 export type {
   Json,
@@ -13,9 +13,9 @@ export type {
   PlainLsonObject,
 } from "./plainLson";
 
-export function inferPlainLsonSchema(storageValue: PlainLsonObject): string {
+export function inferSchema(storageValue: PlainLsonObject): string {
   const storageType = inferStorageType(storageValue);
-  const schema = inferSchema(storageType);
+  const schema = buildSchema(storageType);
   const ast = inferredSchemaToAst(schema);
   return prettify(ast);
 }

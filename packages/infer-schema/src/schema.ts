@@ -1,4 +1,4 @@
-import type { AST } from "@liveblocks/schema";
+import { AST } from "@liveblocks/schema";
 
 import type { InferredType } from "./inference";
 import { isAtomic, mergeInferredTypes } from "./inference";
@@ -142,7 +142,7 @@ function assignNameOrMerge(schema: InferredSchema, type: InferredObjectType) {
   }
 }
 
-export function inferSchema(
+export function buildSchema(
   inferredStorage: InferredObjectType
 ): InferredSchema {
   const rootTypes = inferRootTypes(inferredStorage);
@@ -174,11 +174,9 @@ export function inferSchema(
 }
 
 export function inferredSchemaToAst(schema: InferredSchema): AST.Document {
-  return {
-    _kind: "Document",
-    definitions: Array.from(schema.rootTypes.values()).map((rootType) =>
+  return AST.document(
+    Array.from(schema.rootTypes.values()).map((rootType) =>
       inferredObjectTypeToAst(rootType, schema)
-    ),
-    range: [0, 0],
-  };
+    )
+  );
 }

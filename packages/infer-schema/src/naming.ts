@@ -23,11 +23,14 @@ export function generateNames({ field, parent }: ChildContext): ScoredNames {
   const typeName = fieldToTypeName(field);
 
   const aliasEntries = Object.entries(parent.names)
-    .map(([name, score]) => [
-      // Data -> ScoreData, ScoreData -> GameScoreData etc.
-      `${name}${typeName}`,
-      score * 0.5,
-    ])
+    .map(
+      ([name, score]) =>
+        [
+          // Data -> ScoreData, ScoreData -> GameScoreData etc.
+          `${name}${typeName}`,
+          score * 0.5,
+        ] as const
+    )
     // Only keep aliases with a score of at least 0.25 (= a depth of at most 3)
     // to avoid overly long names
     .filter(([, score]) => score >= 0.25);

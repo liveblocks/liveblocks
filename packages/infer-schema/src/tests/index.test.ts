@@ -1,7 +1,7 @@
 import { parse } from "@liveblocks/schema";
 
 import type { PlainLsonObject } from "..";
-import { inferPlainLsonSchema } from "..";
+import { inferSchema } from "..";
 
 const EMPTY: PlainLsonObject = {
   liveblocksType: "LiveObject",
@@ -87,7 +87,7 @@ describe("inferType", () => {
 
   Object.entries(testCases).forEach(([name, storageData]) => {
     it(`correctly infers the "${name}" schema`, () => {
-      const schemaText = inferPlainLsonSchema(storageData);
+      const schemaText = inferSchema(storageData);
       expect(() => parse(schemaText)).not.toThrow();
 
       // TODO: Ensure generates schema actually matches the input
