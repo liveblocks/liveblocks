@@ -32,8 +32,8 @@ A monthly active user can be defined as:
 
 In `@liveblocks/node`, we made the field `userId` in the `authorize` option
 mandatory. This `userId` is used to track MAU associated with a Liveblocks
-account. Each `userId` will count as one MAU. To make sure you begin to track MAU
-as intended, first update `@liveblocks/node`.
+account. Each `userId` will count as one MAU. To make sure you begin to track
+MAU as intended, first update `@liveblocks/node`.
 
 ```bash
 npm update @liveblocks/node@1.0
@@ -114,12 +114,12 @@ application, check out our [Authentication guide](/docs/guides/authentication).
 
 ## How is MAU calculated when using a public key? [#public-key]
 
-To take advantage of Liveblocks 1.0 pricing without authorization, you must
-update your Liveblocks packages to 1.0. We will count each connection as one MAU
-if you do not update your packages to 1.0. Once the packages are updated, a
-cookie will be set on the client to track when a new user connects to a room.
-This cookie will track MAU associated with a Liveblocks account and expire after
-30 days.
+To take advantage of Liveblocks 1.0 pricing with the public API key
+authorization, you must update your Liveblocks packages to 1.0. We will count
+each connection as one MAU if you do not update your packages to 1.0. Once the
+packages are updated, a cookie will be set on the client to track when a new
+user connects to a room. This cookie will track MAU associated with a Liveblocks
+account and expire after 30 days.
 
 Inside the `createClient` function, you will use your public key instead of a
 private key.
@@ -138,7 +138,8 @@ If you have one user who connects to a Liveblocks room that does not enforce
 authorization, you will be billed for one MAU. That same person can reaccess a
 room the next day, and MAU would not increase. The cookie will expire at the end
 of the 30-day billing cycle, and the user will be counted as a new MAU.
-Liveblocks will count that anonymous user as two MAU if packages are not updated.
+Liveblocks will count that anonymous user as two MAU if packages are not
+updated.
 
 ## Development use [#development-use]
 
@@ -147,10 +148,10 @@ will still need to include a `userId` in the `authorize` option if you use it.
 We are currently working on updating our dashboard to reflect the number of MAU
 for development use.
 
-If you call Liveblocks API during any automated testing, you may want
-to provide a static `userId` to avoid hitting rate limits. You can do this by
-setting an environment variable and checking the process when you call
-`authorize` from `@liveblocks/node`.
+If you call Liveblocks API during any automated testing, you may want to provide
+a static `userId` to avoid hitting rate limits. You can do this by setting an
+environment variable and checking the process when you call `authorize` from
+`@liveblocks/node`.
 
 ```dotenv file=".env.test"
  TEST_USERID="machine"
