@@ -11,11 +11,6 @@ jobs:
   setup:
     runs-on: ubuntu-latest
 
-    env:
-      # setup-node created .npmrc file to publish to npm
-      # https://docs.github.com/en/actions/publishing-packages/publishing-nodejs-packages#publishing-packages-to-the-npm-registry
-      NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
     steps:
       - name: Set up Homebrew
         id: set-up-homebrew
@@ -67,6 +62,7 @@ jobs:
       - name: Setup Node.js environment
         uses: actions/setup-node@v3.6.0
         with:
+          registry-url: "https://registry.npmjs.org"
           node-version: 16.17.1
 
       - name: Setup git config
@@ -86,6 +82,9 @@ jobs:
 
       - name: Publish packages
         env:
+          # setup-node created .npmrc file to publish to npm
+          # https://docs.github.com/en/actions/publishing-packages/publishing-nodejs-packages#publishing-packages-to-the-npm-registry
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           VERSION: ${{ steps.version.outputs.value }}
           NPM_TAG: ${{ steps.npm_tag.outputs.value }}
         run: ./scripts/publish.sh -V "$VERSION" -t "$NPM_TAG"
