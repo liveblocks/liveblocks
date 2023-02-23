@@ -32,7 +32,7 @@ check_tag_allowed_on_branch () {
   fi
 
   if [ "$NPM_TAG" == "latest" ] && [ "$CURRENT_BRANCH" != "main" ]; then
-    err "Error! Only the latest tag is allowed on main branch"
+    err "Error! You can only push a version without tag on the main branch"
     exit 2
   fi
 }
