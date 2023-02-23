@@ -85,13 +85,11 @@ jobs:
       - name: Build all packages
         run: npm run build
 
-      # Add approve step here?
-
-      # - name: Publish packages
-      #   env:
-      #     # setup-node created .npmrc file to publish to npm
-      #     # https://docs.github.com/en/actions/publishing-packages/publishing-nodejs-packages#publishing-packages-to-the-npm-registry
-      #     NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-      #     VERSION: ${{ steps.version.outputs.value }}
-      #     NPM_TAG: ${{ steps.npm_tag.outputs.value }}
-      #   run: ./.github/scripts/publish.sh -V "$VERSION" -t "$NPM_TAG"
+      - name: Publish packages
+        env:
+          # setup-node created .npmrc file to publish to npm
+          # https://docs.github.com/en/actions/publishing-packages/publishing-nodejs-packages#publishing-packages-to-the-npm-registry
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          VERSION: ${{ steps.version.outputs.value }}
+          NPM_TAG: ${{ steps.npm_tag.outputs.value }}
+        run: ./.github/scripts/publish.sh -V "$VERSION" -t "$NPM_TAG"
