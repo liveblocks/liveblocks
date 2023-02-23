@@ -1,6 +1,6 @@
 {
   "name": "@liveblocks/core",
-  "version": "1.0.0",
+  "version": "1.0.1-test7",
   "description": "Shared code and foundational internals for Liveblocks",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
