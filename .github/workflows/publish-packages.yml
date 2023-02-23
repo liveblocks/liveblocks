@@ -64,15 +64,15 @@ jobs:
           echo ${{steps.version.outputs.value}}
           echo ${{steps.npm_tag.outputs.value}}
 
-      - name: Setup git config
-        run: |
-          git config user.name "GitHub Actions Bot"
-          git config user.email "<>"
-
       - name: Setup Node.js environment
         uses: actions/setup-node@v3.6.0
         with:
           node-version: 16.17.1
+
+      - name: Setup git config
+        run: |
+          git config user.name "GitHub Actions Bot"
+          git config user.email "<>"
 
       - name: Prepare release
         env:
