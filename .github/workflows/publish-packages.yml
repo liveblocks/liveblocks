@@ -11,6 +11,11 @@ jobs:
   setup:
     runs-on: ubuntu-latest
 
+    env:
+      # setup-node created .npmrc file to publish to npm
+      # https://docs.github.com/en/actions/publishing-packages/publishing-nodejs-packages#publishing-packages-to-the-npm-registry
+      NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
     steps:
       - name: Set up Homebrew
         id: set-up-homebrew
@@ -80,10 +85,7 @@ jobs:
       # Add approve step here?
 
       - name: Publish packages
-        run: ./scripts/publish.sh -V "$VERSION" -t "$NPM_TAG"
-        # setup-node created .npmrc file to publish to npm
-        # https://docs.github.com/en/actions/publishing-packages/publishing-nodejs-packages#publishing-packages-to-the-npm-registry
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           VERSION: ${{ steps.version.outputs.value }}
           NPM_TAG: ${{ steps.npm_tag.outputs.value }}
+        run: ./scripts/publish.sh -V "$VERSION" -t "$NPM_TAG"
