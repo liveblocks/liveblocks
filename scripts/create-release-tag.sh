@@ -14,30 +14,35 @@ check_is_valid_github_tag () {
     fi
 }
 
-# Check branch is main or beta, only allow tags without -<tag> on main
-check_current_branch () {
-  git branch --show-current | grep -E "^(main|beta)$" || {
-      err "Tagging is only allowed on main or beta branches"
-      exit 2
-  }
+get_npm_tag () {
+  if grep -q "-" <<< "$1"; then
+      echo "${1##*-}" | sed 's/[0-9]//g'
+  else 
+      echo "latest"
+  fi
 }
 
-check_tag_does_not_exist () {
-  git tag -l "$1" | grep -E "^$1$" && {
-      err "Tag $1 already exists"
-      exit 2
-  }
-  echo "Tag $1 does not exist yet!"
+check_tag_allowed_on_branch () {
+  NPM_TAG=$(get_npm_tag "$1")
+  CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+
+  if [ "$NPM_TAG" == "beta" ] && [ "$CURRENT_BRANCH" != "beta" ]; then
+    err "Error! Only the beta tag is allowed on beta branch"
+    exit 2
+  fi
+
+  if [ "$NPM_TAG" == "latest" ] && [ "$CURRENT_BRANCH" != "main" ]; then
+    err "Error! Only the latest tag is allowed on main branch"
+    exit 2
+  fi
 }
 
 create_and_push_tag () {
-  echo "Creating tag $1"
-  git tag "$1" -m "Release $1" && git push origin "$1"
-  echo "Tag $1 created and pushed"
+  git tag "$1" -m "Release $1"
+  git push origin "$1"
 }
 
-# check_current_branch
+
 check_is_valid_github_tag "$1"
-check_tag_does_not_exist "$1"
-# TODO: check tags without -<tag> are only allowed on main
+check_tag_allowed_on_branch "$1"
 create_and_push_tag "$1"
