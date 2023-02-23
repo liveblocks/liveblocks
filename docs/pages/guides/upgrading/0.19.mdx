@@ -5,10 +5,6 @@ meta:
   description: "Guide to upgrade to Liveblocks version 0.19"
 ---
 
-```bash
-npm update @liveblocks/client@0.19 @liveblocks/react@0.19
-```
-
 In the Liveblocks 0.19 release, we’re adding support for Zustand v4 to
 `@liveblocks/zustand`. Zustand v4 brings greatly improved TypeScript types to
 its APIs, enabling us to enhance the quality of our types, bringing it in line
@@ -19,6 +15,13 @@ Let’s take a look!
 ## Upgrading to 0.19
 
 ### @liveblocks/react [#react]
+
+To update `@liveblocks/react` to .19, run the following command using your
+preferred package manager:
+
+```bash
+npm install @liveblocks/client@0.19 @liveblocks/react@0.19
+```
 
 #### useOther now requires a selector argument [@hidden]
 
@@ -70,6 +73,13 @@ For additional context, see the
 
 ### @liveblocks/redux [#redux]
 
+To update `@liveblocks/redux` to .19, run the following command using your
+preferred package manager:
+
+```bash
+npm install @liveblocks/client@.19 @liveblocks/redux@.19
+```
+
 #### Update use of default export liveblocksEnhancer [@hidden]
 
 The main export has been renamed, so you will need to update your imports and
@@ -118,7 +128,13 @@ no longer support Zustand v4.1.2 or lower. This is because Zustand v4.1.3 brings
 greatly improved TypeScript types to its APIs, and consequently, we can improve
 our internal types. To migrate, make the following code changes:
 
-- `npm update @liveblocks/client@0.19 @liveblocks/zustand@0.19`
+To update `@liveblocks/zustand` to .19, run the following command using your
+preferred package manager:
+
+```bash
+npm install @liveblocks/client@.19 @liveblocks/zustand@.19
+```
+
 - Change these imports, if applicable, and rename accordingly:
 
 #### Previously ❌ [@hidden]

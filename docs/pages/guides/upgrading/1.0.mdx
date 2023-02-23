@@ -5,20 +5,26 @@ meta:
   description: "Guide to upgrade to Liveblocks version 1.0"
 ---
 
-```bash
-npm update @liveblocks/client@1.0 @liveblocks/node@1.0
-```
-
-The major release of 1.0 marks the maturity of Liveblocks. The primary change
-you should note is the transition to making the `userId` mandatory in the
-`authorize` option. This change is in line with our
-[new pricing model](https://liveblocks.io/pricing).
+Liveblocks 1.0 is our first major release, marking the end of the beta period
+for storage and conflict-free data types. This release includes improvements to
+our pricing model that make billing more predictable. Additionally, we have
+vastly improved the ability to animate at up to 60fps by updating the throttle
+option in `createClient`. The primary change you should note is the transition
+to making the `userId` mandatory in the `authorize` option. This change is in
+line with our [new pricing model](https://liveblocks.io/pricing).
 
 Let’s take a look!
 
-## Upgrading to Liveblocks 1.0
+## Upgrading steps by package
 
 ### @liveblocks/node [#node]
+
+To update `@liveblocks/node` to 1.0, run the following command using your
+preferred package manager:
+
+```bash
+npm install @liveblocks/node@1.0.0
+```
 
 #### Update the authorize option [@hidden]
 
@@ -102,6 +108,13 @@ to the `Room` class, and more. You can review the
 details.
 
 ### @liveblocks/client [#client-improvements]
+
+To update `@liveblocks/`client` to 1.0, run the following command using your
+preferred package manager:
+
+```bash
+npm install @liveblocks/client@1.0.0
+```
 
 #### Improvements to throttle allow animation of up to 60fps [@hidden]
 
