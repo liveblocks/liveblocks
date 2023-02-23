@@ -44,7 +44,7 @@ const other = useOther(id, (other) => other); // 👈 requires a selector
 
 #### Include unstable_batchedUpdates if you use React 17 [@hidden]
 
-We’ve added support to prevent the "zombie-child"/stale props scenario. To avoid
+We’ve added support to prevent the stale props/zombie child scenario. To avoid
 this issue, we enforce passing the `unstable_batchedUpdates` prop to
 `RoomProvider`.
 
