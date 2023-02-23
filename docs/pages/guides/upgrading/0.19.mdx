@@ -108,7 +108,7 @@ ease of use. To migrate, make the following code changes:
 ```ts
 useEffect(() => {
   enterRoom("room-id", {
-    todos: [],
+    todos: [], // 👈 remove explicit initial state
   });
 });
 ```
