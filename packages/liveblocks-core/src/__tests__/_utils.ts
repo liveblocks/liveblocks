@@ -524,15 +524,24 @@ export function prepareDisconnectedStorageUpdateTest<
     root: LiveObject<TStorage>;
     machine: Machine<TPresence, TStorage, TUserMeta, TRoomEvent>;
     assert: (updates: JsonStorageUpdate[][]) => void;
+    acknowledgeOperations: () => void;
   }) => Promise<void>
 ): () => Promise<void> {
   return async () => {
+    const operations: Op[] = [];
+
     const { storage, machine } = await prepareRoomWithStorage<
       TPresence,
       TStorage,
       TUserMeta,
       TRoomEvent
-    >(items, -1);
+    >(items, -1, (messages: ClientMsg<TPresence, TRoomEvent>[]) => {
+      for (const message of messages) {
+        if (message.type === ClientMsgCode.UPDATE_STORAGE) {
+          operations.push(...message.ops);
+        }
+      }
+    });
 
     const jsonUpdates: JsonStorageUpdate[][] = [];
 
@@ -546,7 +555,18 @@ export function prepareDisconnectedStorageUpdateTest<
       expect(jsonUpdates).toEqual(updates);
     }
 
+    function acknowledgeOperations() {
+      machine.onMessage(
+        serverMessage({
+          type: ServerMsgCode.UPDATE_STORAGE,
+          ops: operations,
+        })
+      );
+      operations.length = 0;
+    }
+
     await callback({
+      acknowledgeOperations,
       batch: machine.batch,
       root: storage.root,
       machine,

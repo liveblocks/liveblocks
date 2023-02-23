@@ -1,8 +1,14 @@
+import { RoomScope } from "../../protocol/AuthToken";
+import { OpCode } from "../../protocol/Op";
+import type { IdTuple, SerializedCrdt } from "../../protocol/SerializedCrdt";
+import { CrdtType } from "../../protocol/SerializedCrdt";
+import { WebsocketCloseCodes } from "../../types/WebsocketCloseCodes";
 import {
   listUpdate,
   listUpdateDelete,
   listUpdateInsert,
   listUpdateMove,
+  listUpdateSet,
 } from "../../__tests__/_updatesUtils";
 import {
   createSerializedList,
@@ -11,6 +17,7 @@ import {
   FIFTH_POSITION,
   FIRST_POSITION,
   FOURTH_POSITION,
+  prepareDisconnectedStorageUpdateTest,
   prepareIsolatedStorageTest,
   prepareStorageTest,
   prepareStorageUpdateTest,
@@ -18,11 +25,6 @@ import {
   SECOND_POSITION,
   THIRD_POSITION,
 } from "../../__tests__/_utils";
-import { RoomScope } from "../../protocol/AuthToken";
-import { OpCode } from "../../protocol/Op";
-import type { IdTuple, SerializedCrdt } from "../../protocol/SerializedCrdt";
-import { CrdtType } from "../../protocol/SerializedCrdt";
-import { WebsocketCloseCodes } from "../../types/WebsocketCloseCodes";
 import { LiveList } from "../LiveList";
 import { LiveMap } from "../LiveMap";
 import { LiveObject } from "../LiveObject";
@@ -168,6 +170,28 @@ describe("LiveList", () => {
 
       assertUndoRedo();
     });
+
+    it(
+      "undo set on existing item",
+      prepareDisconnectedStorageUpdateTest<{ items: LiveList<number> }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedList("0:1", "0:0", "items"),
+          createSerializedRegister("0:2", "0:1", FIRST_POSITION, 1),
+        ],
+        async ({ root, assert, machine, acknowledgeOperations }) => {
+          root.get("items").set(0, 4);
+          machine.undo();
+
+          acknowledgeOperations();
+
+          assert([
+            [listUpdate([4], [listUpdateSet(0, 4)])],
+            [listUpdate([1], [listUpdateSet(0, 1)])],
+          ]);
+        }
+      )
+    );
 
     it("push number on empty list", async () => {
       const { storage, assert, assertUndoRedo } = await prepareStorageTest<{
