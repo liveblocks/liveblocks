@@ -40,6 +40,7 @@ check_tag_allowed_on_branch () {
 create_and_push_tag () {
   git tag "$1" -m "Release $1"
   git push origin "$1"
+  git tag -d "$1"
 }
 
 
