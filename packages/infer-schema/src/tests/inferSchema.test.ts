@@ -29,26 +29,26 @@ describe("inferSchema", () => {
     });
   });
 
-  describe("reject non-representable storage data", () => {
+  describe("rejects non-representable storage data", () => {
     it("rejects storage data with empty keys", () => {
       expect(() => inferSchema(EMPTY_KEY)).toThrowError(
         "Invalid property key: cannot be empty"
       );
     });
 
-    it("rejects storage data with reserved keys", () => {
+    it("reserved keys", () => {
       expect(() => inferSchema(RESERVED_KEY)).toThrowError(
         "Invalid property key: cannot be a reserved name"
       );
     });
 
-    it("rejects storage data with keys containing whitespace", () => {
+    it("keys containing whitespace", () => {
       expect(() => inferSchema(KEY_WITH_WHITESPACE)).toThrowError(
         "Invalid property key: cannot contain whitespace"
       );
     });
 
-    it("rejects storage data keys containing forbidden characters", () => {
+    it("keys containing forbidden characters", () => {
       expect(() => inferSchema(BRACKET_KEY)).toThrowError(
         "Invalid property key: can only contain alphanumeric characters and underscores"
       );
