@@ -5,10 +5,10 @@ err () {
     echo "$@" >&2
 }
 
-check_is_valid_npm_version () {
-    if ! [[ "$1" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[a-z0-9]+)?$ ]]; then
-        err "Invalid version: $1"
-        err "Version must be in the form of X.Y.Z or X.Y.Z-<tag>"
+check_is_valid_github_tag () {
+    if ! [[ "$1" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[a-z0-9]+)?$ ]]; then
+        err "Invalid tag: $1"
+        err "Tag must be in the form of vX.Y.Z or vX.Y.Z-<tag>"
         exit 2
     fi
 }
@@ -31,21 +31,19 @@ check_npm_tag_allowed_on_branch () {
   fi
 
   if [ "$NPM_TAG" == "latest" ] && [ "$CURRENT_BRANCH" != "main" ]; then
-    err "Error! You can only push a version without tag on the main branch"
+    err "Error! You can only push a version without an npm tag on the main branch"
     exit 2
   fi
 }
 
-check_git_tag_exists() {
-  echo "Checking if tag $1 already exists"
-  if git rev-parse "$1" >/dev/null 2>&1; then
-    err "Error! Tag $1 already exists"
+check_git_tag_exists () {
+  if git show-ref --tags $1 --quiet; then
+    err "Error! Github tag already exists"
     exit 2
-  fi
+  fi 
 }
 
 
-
-check_is_valid_npm_version "$1"
+check_is_valid_github_tag "$1"
 check_npm_tag_allowed_on_branch "$1"
-check_git_tag_exists "v$1"
+check_git_tag_exists "$1"
