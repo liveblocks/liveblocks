@@ -130,7 +130,6 @@ echo ""
 echo "==> Pushing changes to GitHub"
 BRANCH="$(git current-branch)"
 URL="${GITHUB_URL}/releases/new?tag=v${VERSION}&target=${BRANCH}&title=${VERSION}&body=%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%0A%0APlease%20replace%20this%20block%20with%20the%20contents%20of%20the%20top%20section%20of%3A%0A%0Ahttps%3A%2F%2Fgithub.com%2Fliveblocks%2Fliveblocks%2Fraw%2F${BRANCH}%2FCHANGELOG.md%0A%0A%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20"
-echo "$URL"
 
 if ! git push-current; then
     err "WARNING: Could not push this branch to GitHub!"
@@ -141,8 +140,8 @@ if ! git push-current; then
     err
 else
     echo "Done! Please finish it off by writing a nice changelog entry on GitHub."
-    open "$URL"
-    read
+    echo "You can do so by opening this link:"
+    echo "$URL"
 fi
 
 echo "==> Upgrade local examples?"
