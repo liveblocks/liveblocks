@@ -2,7 +2,7 @@ import { prettify } from "@liveblocks/schema";
 
 import { inferStorageType } from "./inference";
 import type { PlainLsonObject } from "./plainLson";
-import { inferredSchemaToAst, buildSchema } from "./schema";
+import { buildSchema, inferredSchemaToAst } from "./schema";
 
 export type {
   Json,

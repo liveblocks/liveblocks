@@ -19,7 +19,7 @@ type FieldChildContext = {
   field: string;
 };
 
-export type ChildContext = FieldChildContext & { json: boolean }; // TODO: Expand for union, list, ...
+export type ChildContext = FieldChildContext; // TODO: Expand for union, list, ...
 
 export type InferredType = InferredScalarType | InferredObjectType;
 
@@ -35,10 +35,7 @@ export function inferStorageType(value: PlainLsonObject): InferredObjectType {
     atomic: true,
   };
 
-  const fields = inferLsonFields(value.data, {
-    json: false,
-    parent: storage,
-  });
+  const fields = inferLsonFields(value.data, { parent: storage });
   storage.fields = fields;
 
   return storage as InferredObjectType;
@@ -53,23 +50,15 @@ export function inferType(value: PlainLson, ctx: ChildContext): InferredType {
     throw new Error("Not implemented");
   }
 
-  // If we are in a json all objects are plain struct types even if they
-  // have a type property
-  if (!ctx.json && "liveblocksType" in value) {
-    if (value.liveblocksType === "LiveObject") {
-      return inferObjectType(value as PlainLsonObject, ctx);
-    }
-
-    if (value.liveblocksType === "LiveList") {
-      throw new Error("Not implemented");
-    }
-
-    if (value.liveblocksType === "LiveMap") {
-      throw new Error("Not implemented");
-    }
+  if (!("liveblocksType" in value)) {
+    return inferObjectType(value, ctx);
   }
 
-  return inferObjectType(value, ctx);
+  if (value.liveblocksType === "LiveObject") {
+    return inferObjectType(value, ctx);
+  }
+
+  throw new Error("Not implemented");
 }
 
 export function mergeInferredTypes(

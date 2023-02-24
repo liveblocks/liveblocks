@@ -9,7 +9,7 @@ import {
 import type { ChildContext, InferredType } from "./inference";
 import type { ScoredNames } from "./naming";
 import { generateNames, mergeScoredNames } from "./naming";
-import type { JsonObject, PlainLsonFields, PlainLsonObject } from "./plainLson";
+import type { JsonObject, PlainLsonObject } from "./plainLson";
 import type { InferredSchema } from "./schema";
 import { invariant } from "./utils/invariant";
 import { isNotUndefined } from "./utils/typeGuards";
@@ -27,23 +27,17 @@ export function inferObjectType(
   value: JsonObject | PlainLsonObject,
   ctx: ChildContext
 ): InferredObjectType {
-  // Since we allow arbitrary json objects, we need to be sure we are not inside a json
-  // context before we check the liveblocksType property because the user could have
-  // a field called liveblocksType in their json object
-  const isLiveObject = !ctx.json && value.liveblocksType === "LiveObject";
-
   const inferred: PartialBy<InferredObjectType, "fields"> = {
     names: generateNames(ctx),
     type: "Object",
-    live: isLiveObject,
+    live: value.liveblocksType === "LiveObject",
     atomic: false,
   };
 
-  const data = (isLiveObject ? value.data : value) as PlainLsonFields;
+  const data = value.liveblocksType === "LiveObject" ? value.data : value;
   inferred.fields = inferLsonFields(data, {
     ...ctx,
     parent: inferred,
-    json: !isLiveObject,
   });
 
   return inferred as InferredObjectType;

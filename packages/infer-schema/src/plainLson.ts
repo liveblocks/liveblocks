@@ -1,6 +1,13 @@
-import type { Json } from "@liveblocks/core";
+import type {
+  JsonArray,
+  JsonObject as BaseJsonObject,
+  JsonScalar,
+} from "@liveblocks/core";
 
-export type PlainLsonFields = Record<string, PlainLson>;
+export type PlainLsonFields = Record<string, PlainLson> & {
+  liveblocksType?: never;
+};
+
 export type PlainLsonObject = {
   liveblocksType: "LiveObject";
   data: PlainLsonFields;
@@ -16,13 +23,8 @@ export type PlainLsonList = {
   data: PlainLson[];
 };
 
-export type { Json, JsonObject, JsonScalar } from "@liveblocks/core";
+export type JsonObject = BaseJsonObject & { liveblocksType?: never };
+export type { JsonArray, JsonScalar } from "@liveblocks/core";
+export type Json = JsonScalar | JsonArray | JsonObject;
 
-export type PlainLson =
-  | PlainLsonObject
-  | PlainLsonMap
-  | PlainLsonList
-
-  // Any "normal" Json value, as long as it's not an object with
-  // a `liveblocksType` field :)
-  | Json;
+export type PlainLson = PlainLsonObject | PlainLsonMap | PlainLsonList | Json;
