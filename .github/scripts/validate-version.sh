@@ -39,10 +39,7 @@ check_npm_tag_allowed_on_branch () {
 }
 
 check_git_tag_exists () {
-  echo "Checking if tag $1 already exists"
-  echo $(git tag)
-  echo "Git tags should be output above"
-  git fetch --tags
+  git fetch --all --tags
   if [ $(git tag -l "$1") ]; then
     err "Error! Github tag already exists"
     exit 2
