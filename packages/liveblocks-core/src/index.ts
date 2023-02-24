@@ -117,6 +117,13 @@ export type { NodeMap, ParentToChildNodeMap } from "./types/NodeMap";
 export type { Others } from "./types/Others";
 export type { User } from "./types/User";
 export { WebsocketCloseCodes } from "./types/WebsocketCloseCodes";
+export type {
+  PlainLson,
+  PlainLsonFields,
+  PlainLsonList,
+  PlainLsonMap,
+  PlainLsonObject,
+} from "./types/PlainLson";
 
 /**
  * Helper type to help users adopt to Lson types from interface definitions.
