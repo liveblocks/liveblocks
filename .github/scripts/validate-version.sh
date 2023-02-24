@@ -39,7 +39,7 @@ check_npm_tag_allowed_on_branch () {
 }
 
 check_git_tag_exists () {
-  git fetch --all --tags
+  git fetch --all --tags --quiet
   if [ $(git tag -l "$1") ]; then
     err "Error! Github tag already exists"
     exit 2
