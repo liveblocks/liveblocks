@@ -88,3 +88,19 @@ jobs:
           VERSION: ${{ steps.version.outputs.value }}
           NPM_TAG: ${{ steps.npm_tag.outputs.value }}
         run: ./.github/scripts/publish.sh -V "$VERSION" -t "$NPM_TAG"
+
+      - name:
+          Creating release tag, don't forget to fill the changelog if necessary!
+        env:
+          VERSION: ${{ steps.version.outputs.value }}
+          GIT_TAG: ${{ inputs.tag }}
+          GITHUB_URL: "https://github.com/liveblocks/liveblocks"
+        run: |
+          git tag "$GIT_TAG" -m "Release $GIT_TAG"
+          git push origin "$GIT_TAG"
+          BRANCH="$(git current-branch)"
+          URL="${GITHUB_URL}/releases/new?tag=$GIT_TAG&target=${BRANCH}&title=$VERSION&body=%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%0A%0APlease%20replace%20this%20block%20with%20the%20contents%20of%20the%20top%20section%20of%3A%0A%0Ahttps%3A%2F%2Fgithub.com%2Fliveblocks%2Fliveblocks%2Fraw%2F${BRANCH}%2FCHANGELOG.md%0A%0A%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20"
+          echo "Done! Please finish it off by writing a nice release entry on GitHub."
+          echo "You can do so by opening this link:"
+          echo "$URL"
+          echo "Also, don't forget to update CHANGELOG.MD"
