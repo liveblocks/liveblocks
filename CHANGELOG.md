@@ -9,6 +9,7 @@
   allowed. (Consequence of now having `isStatic` at the object type definition
   level.)
 - Expose all Definitions in `CheckedDocument`, not just the root
+- Fix: disallow `liveblocksType` as an identifier
 - Fix: some ugly error messages making incorrect suggestions
 - Fix: tweak error message for circular references
 - Fix: record range info on built-ins

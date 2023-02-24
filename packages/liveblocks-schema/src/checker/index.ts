@@ -2,6 +2,7 @@ import type {
   Definition,
   Document,
   FieldDef,
+  Identifier,
   ObjectLiteralExpr,
   ObjectTypeDefinition,
   Range,
@@ -62,6 +63,11 @@ function didyoumeanify(message: string, alternatives: string[]): string {
  * Reserve these names for future use.
  */
 const RESERVED_TYPENAMES_REGEX = /^Live|^(Presence|Array)$/i;
+
+/**
+ * Reserve these identifiers for future use.
+ */
+const RESERVED_IDENTIFIERS_REGEX = /^(liveblocksType)$/;
 
 /**
  * Helper constructs for use during "checking" phase.
@@ -204,6 +210,12 @@ function checkTypeName(node: TypeName, context: Context): void {
       `Name ${quote(node.name)} is reserved for future use`,
       node.range
     );
+  }
+}
+
+function checkIdentifier(node: Identifier, context: Context): void {
+  if (RESERVED_IDENTIFIERS_REGEX.test(node.name)) {
+    context.report(`Identifier ${quote(node.name)} is reserved`, node.range);
   }
 }
 
@@ -529,6 +541,7 @@ export function check(
   visit(
     doc,
     {
+      Identifier: checkIdentifier,
       ObjectLiteralExpr: checkObjectLiteralExpr,
       ObjectTypeDefinition: checkObjectTypeDefinition,
       TypeName: checkTypeName,
