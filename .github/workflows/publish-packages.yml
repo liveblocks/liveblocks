@@ -30,8 +30,7 @@ jobs:
           echo "$HOME/.local/bin" >> $GITHUB_PATH
 
       - name: Validate version
-        run:
-          ./.github/scripts/validate-version.sh "${{ github.event.base_ref }}"
+        run: ./.github/scripts/validate-version.sh "${{ inputs.version }}"
 
       - name: Get current branch
         run: git current-branch
