@@ -6,6 +6,7 @@ err () {
 }
 
 check_is_valid_github_tag () {
+    echo "Checking if tag $1 is valid"
     if ! [[ "$1" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[a-z0-9]+)?$ ]]; then
         err "Invalid tag: $1"
         err "Tag must be in the form of vX.Y.Z or vX.Y.Z-<tag>"
@@ -25,6 +26,7 @@ check_npm_tag_allowed_on_branch () {
   NPM_TAG=$(get_npm_tag "$1")
   CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
 
+  echo "Checking if npm tag $NPM_TAG is allowed on branch $CURRENT_BRANCH"
   if [ "$NPM_TAG" == "beta" ] && [ "$CURRENT_BRANCH" != "beta" ]; then
     err "Error! Only the beta tag is allowed on beta branch"
     exit 2
@@ -37,6 +39,8 @@ check_npm_tag_allowed_on_branch () {
 }
 
 check_git_tag_exists () {
+  echo "Checking if tag $1 already exists"
+  echo "$(git show-ref --tags $1 --quiet)"
   if git show-ref --tags $1 --quiet; then
     err "Error! Github tag already exists"
     exit 2
