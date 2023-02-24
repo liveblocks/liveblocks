@@ -29,16 +29,16 @@ jobs:
           rm -rf v1.8.0.tar.gz git-toolbelt-1.8.0
           echo "$HOME/.local/bin" >> $GITHUB_PATH
 
+      - name: Checkout
+        uses: actions/checkout@v3
+      #   with:
+      #     ref: ${{ github.event.base_ref }}
+
       - name: Validate version
-        run: ./.github/scripts/release.sh "${{ inputs.version }}"
+        run: ./.github/scripts/validate-version.sh "${{ inputs.version }}"
 
       - name: Get current branch
         run: git current-branch
-
-      # - name: Checkout
-      #   uses: actions/checkout@v3
-      #   with:
-      #     ref: ${{ github.event.base_ref }}
 
       # - name: Set git tag
       #   id: git_tag
