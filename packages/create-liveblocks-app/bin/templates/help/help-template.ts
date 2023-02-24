@@ -52,10 +52,10 @@ Options:
   --no-vercel
   Don't deploy on Vercel
   
-  --get-key
+  --api-key
   Get Liveblocks API key
   
-  --no-get-key
+  --no-api-key
   Don't get Liveblocks API key
   
   --open

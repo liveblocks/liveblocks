@@ -13,13 +13,14 @@ request is live mode or test mode.
 ## authorize
 
 If the current user has access to the provided room, call this function from
-your authorization endpoint and returns the result as a http response.
+your authorization endpoint and return the result as a http response.
 
-Optionally, you can also pass a `userId` and `userInfo` to add information about
-the current user that will not change during the session. This information will
-will be accessible in the client to all other users in [`Room.getOthers`][]. It
-can be helpful to implement avatars or display the user’s name without
-introducing a potential impersonification security issue.
+When calling the `authorize` function, you must pass a `userId`. Optionally,
+`userInfo` can be used to add information about the current user that will not
+change during the session. This information will will be accessible in the
+client to all other users in [`Room.getOthers`][]. It can be helpful to
+implement avatars or display the user’s name without introducing a potential
+impersonification security issue.
 
 - `userId` cannot be longer than 128 characters.
 - `userInfo` cannot be longer than 1024 characters once serialized to JSON.

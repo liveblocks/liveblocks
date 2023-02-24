@@ -32,7 +32,7 @@ export async function examplePrompts(flags: Record<string, any>) {
       initial: (prev) => flags.example || prev,
     },
     {
-      type: flags.vercel !== undefined || flags["get-key"] ? null : "confirm",
+      type: flags.vercel !== undefined || flags["api-key"] ? null : "confirm",
       name: "vercel",
       message: "Would you like to deploy on Vercel?",
       initial: true,
@@ -42,7 +42,7 @@ export async function examplePrompts(flags: Record<string, any>) {
     {
       type: (_, values) => {
         // Vercel integration always gets the API keys, so skip question
-        if (flags["get-key"] !== undefined || values.vercel || flags.vercel) {
+        if (flags["api-key"] !== undefined || values.vercel || flags.vercel) {
           return null;
         }
         return "confirm";
@@ -82,7 +82,7 @@ export async function examplePrompts(flags: Record<string, any>) {
           values.vercel ||
           values.liveblocksSecret ||
           flags.vercel ||
-          flags["get-key"]
+          flags["api-key"]
         ) {
           return flags.open ? null : "confirm";
         }
@@ -90,7 +90,7 @@ export async function examplePrompts(flags: Record<string, any>) {
         return null;
       },
       name: "openBrowser",
-      message: "Open browser window to continue set up?",
+      message: "Open browser window to continue set up? (required)",
       initial: true,
       active: "yes",
       inactive: "no",
@@ -102,7 +102,7 @@ export async function examplePrompts(flags: Record<string, any>) {
     example = flags.example,
     name = flags.name,
     vercel = flags.vercel,
-    liveblocksSecret = flags["get-key"],
+    liveblocksSecret = flags["api-key"],
     git = flags.git,
     install = flags.install,
     openBrowser = flags.open,
