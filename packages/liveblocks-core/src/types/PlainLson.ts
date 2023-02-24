@@ -1,6 +1,7 @@
 /**
- * "Plain LSON" is a JSON-based format that's used in the API endpoint to let
- * users upload their initial Room storage.
+ * "Plain LSON" is a JSON-based format that's used when serializing Live structures
+ * to send them over HTTP (e.g. in the API endpoint to let users upload their initial
+ * Room storage, in the API endpoint to fetch a Room's storage, ...).
  *
  * In the client, you would typically create LSON values using:
  *
