@@ -37,6 +37,7 @@ check_npm_tag_allowed_on_branch () {
 }
 
 check_git_tag_exists() {
+  echo "Checking if tag $1 already exists"
   if git rev-parse "$1" >/dev/null 2>&1; then
     err "Error! Tag $1 already exists"
     exit 2
