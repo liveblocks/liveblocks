@@ -19,3 +19,5 @@ export function parse(schemaText: string): CheckedDocument {
   const reporter = ErrorReporter.fromText(schemaText);
   return check(parseDocument(reporter), reporter);
 }
+
+export { prettify } from "./prettify";
