@@ -1,14 +1,11 @@
-import { parse } from "@liveblocks/schema";
+import type { PlainLsonObject } from "../plainLson";
 
-import type { PlainLsonObject } from "..";
-import { inferSchema } from "..";
-
-const EMPTY: PlainLsonObject = {
+export const EMPTY: PlainLsonObject = {
   liveblocksType: "LiveObject",
   data: {},
 };
 
-const BASIC_LIVE_OBJECT: PlainLsonObject = {
+export const BASIC_LIVE_OBJECT: PlainLsonObject = {
   liveblocksType: "LiveObject",
   data: {
     fills: {
@@ -31,7 +28,7 @@ const BASIC_LIVE_OBJECT: PlainLsonObject = {
   },
 };
 
-const BASIC_MERGE: PlainLsonObject = {
+export const BASIC_MERGE: PlainLsonObject = {
   liveblocksType: "LiveObject",
   data: {
     fills: {
@@ -54,7 +51,7 @@ const BASIC_MERGE: PlainLsonObject = {
   },
 };
 
-const BASIC_UNMERGEABLE: PlainLsonObject = {
+export const BASIC_UNMERGEABLE: PlainLsonObject = {
   liveblocksType: "LiveObject",
   data: {
     fills: {
@@ -77,22 +74,42 @@ const BASIC_UNMERGEABLE: PlainLsonObject = {
   },
 };
 
-describe("inferType", () => {
-  const testCases = {
-    EMPTY,
-    BASIC_MERGE,
-    BASIC_UNMERGEABLE,
-    BASIC_LIVE_OBJECT,
-  };
+export const EMPTY_KEY: PlainLsonObject = {
+  liveblocksType: "LiveObject",
+  data: {
+    "": {
+      liveblocksType: "LiveObject",
+      data: {},
+    },
+  },
+};
 
-  Object.entries(testCases).forEach(([name, storageData]) => {
-    it(`correctly infers the "${name}" schema`, () => {
-      const schemaText = inferSchema(storageData);
-      expect(() => parse(schemaText)).not.toThrow();
+export const KEY_WITH_WHITESPACE: PlainLsonObject = {
+  liveblocksType: "LiveObject",
+  data: {
+    "test key": {
+      liveblocksType: "LiveObject",
+      data: {},
+    },
+  },
+};
 
-      // TODO: Ensure generates schema actually matches the input
+export const RESERVED_KEY = {
+  liveblocksType: "LiveObject",
+  data: {
+    liveblocksType: {
+      liveblocksType: "LiveObject",
+      data: {},
+    },
+  },
+} as unknown as PlainLsonObject;
 
-      expect(schemaText).toMatchSnapshot();
-    });
-  });
-});
+export const BRACKET_KEY: PlainLsonObject = {
+  liveblocksType: "LiveObject",
+  data: {
+    "d{": {
+      liveblocksType: "LiveObject",
+      data: {},
+    },
+  },
+};

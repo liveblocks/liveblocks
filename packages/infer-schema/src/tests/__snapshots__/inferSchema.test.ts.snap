@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`inferType correctly infers the "BASIC_LIVE_OBJECT" schema 1`] = `
+exports[`inferSchema correctly infers the "BASIC_LIVE_OBJECT" schema 1`] = `
 "type Storage {
   fills: LiveObject<Fill>
   strokes: LiveObject<Stroke>
@@ -20,7 +20,7 @@ type Stroke {
 }"
 `;
 
-exports[`inferType correctly infers the "BASIC_MERGE" schema 1`] = `
+exports[`inferSchema correctly infers the "BASIC_MERGE" schema 1`] = `
 "type Storage {
   fills: LiveObject<Fill>
   strokes: LiveObject<Stroke>
@@ -45,7 +45,7 @@ type Position {
 }"
 `;
 
-exports[`inferType correctly infers the "BASIC_UNMERGEABLE" schema 1`] = `
+exports[`inferSchema correctly infers the "BASIC_UNMERGEABLE" schema 1`] = `
 "type Storage {
   fills: LiveObject<Fill>
   strokes: LiveObject<Stroke>
@@ -73,7 +73,7 @@ type StrokeMesh {
 }"
 `;
 
-exports[`inferType correctly infers the "EMPTY" schema 1`] = `
+exports[`inferSchema correctly infers the "EMPTY" schema 1`] = `
 "type Storage {
 }"
 `;

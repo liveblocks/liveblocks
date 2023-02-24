@@ -3,6 +3,9 @@ import { singular, ucFirst, words } from "./utils/strings";
 
 export type ScoredNames = Record<string, number>;
 
+// Name to use if a key only contains punctuation or whitespace
+const FALLBACK_NAME = "Value";
+
 export function mergeScoredNames(a: ScoredNames, b: ScoredNames): ScoredNames {
   const keys = new Set([...Object.keys(a), ...Object.keys(b)]);
   const mergedEntries = Array.from(keys.values(), (key) => [
@@ -14,9 +17,11 @@ export function mergeScoredNames(a: ScoredNames, b: ScoredNames): ScoredNames {
 
 // "gameFields" -> "GameField", "__TEST_DATA__" -> "TestData" etc.
 function fieldToTypeName(fieldName: string): string {
-  return words(fieldName)
-    .map((word) => singular(ucFirst(word)))
-    .join("");
+  return (
+    words(fieldName)
+      .map((word) => singular(ucFirst(word)))
+      .join("") || FALLBACK_NAME
+  );
 }
 
 export function generateNames({ field, parent }: ChildContext): ScoredNames {

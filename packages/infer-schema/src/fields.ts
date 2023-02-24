@@ -1,4 +1,5 @@
 import { AST } from "@liveblocks/schema";
+import { string } from "decoders";
 
 import type { ChildContext } from "./inference";
 import type { JsonObject, PlainLsonFields } from "./plainLson";
@@ -14,6 +15,24 @@ import { isNotUndefined } from "./utils/typeGuards";
 
 export type InferredFields = Record<string, InferredTypeReference>;
 
+const RESERVED_NAMES = new Set(["liveblocksType"]);
+
+const propertyKeyDecoder = string
+  .refine((key) => !RESERVED_NAMES.has(key), "cannot be a reserved name")
+  .refine((key) => key.length > 0, "cannot be empty")
+  .refine((key) => key.match(/\s/) === null, "cannot contain whitespace")
+  .refine(
+    (key) => key.match(/^[a-zA-Z0-9_]*$/) !== null,
+    "can only contain alphanumeric characters and underscores"
+  );
+
+function assertValidPropertyKey(key: string) {
+  const result = propertyKeyDecoder.decode(key);
+  if (!result.ok) {
+    throw new Error(`Invalid property key: ${result.error.text}`);
+  }
+}
+
 export function inferLsonFields(
   fields: PlainLsonFields | JsonObject,
   ctx: Omit<ChildContext, "field">
@@ -24,6 +43,7 @@ export function inferLsonFields(
         return undefined;
       }
 
+      assertValidPropertyKey(key);
       return [key, inferTypeReference(value, { ...ctx, field: key })] as const;
     })
     .filter(isNotUndefined);

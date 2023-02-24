@@ -27,14 +27,15 @@ export function inferObjectType(
   value: JsonObject | PlainLsonObject,
   ctx: ChildContext
 ): InferredObjectType {
+  const isLive = value.liveblocksType === "LiveObject";
   const inferred: PartialBy<InferredObjectType, "fields"> = {
     names: generateNames(ctx),
     type: "Object",
-    live: value.liveblocksType === "LiveObject",
+    live: isLive,
     atomic: false,
   };
 
-  const data = value.liveblocksType === "LiveObject" ? value.data : value;
+  const data = isLive ? value.data : value;
   inferred.fields = inferLsonFields(data, {
     ...ctx,
     parent: inferred,
