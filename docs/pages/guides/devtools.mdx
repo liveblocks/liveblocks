@@ -9,12 +9,9 @@ meta:
 
 ## What are Liveblocks DevTools?
 
-Our DevTools are a browser based extension that integrates with Liveblocks and
-your local development environment. They communicate with Liveblocks servers in
-development mode and retrieve the current state of storage and presence. We
-created Liveblocks DevTools to empower our community by making it easier for
-beginners to understand and learn Liveblocks. At the same time, power users can
-leverage the tool to troubleshoot, debug, and optimize their implementation.
+Our [DevTools](/devtools) are a browser-based extension that integrates with
+Liveblocks and your local development environment. This allows you to easily
+troubleshoot, debug, and optimize your collaborative online experiences.
 
 <Banner title="Live demo video">
 
@@ -23,25 +20,18 @@ If you want to see how this works in video, be sure to check out this
 
 </Banner>
 
-## How DevTools works
+## How DevTools work
 
-Our DevTools extension communicates with Liveblocks servers in development mode
-and retrieves the current state of storage and presence. This allows you to
-easily troubleshoot, debug, and optimize your collaborative online experiences.
-We are also working on adding a history feature to the DevTools, which will be
-available soon. The DevTools support one-way data syncs from the Liveblocks
-client and are compiled away in production, similar to other devtools like React
-and Redux Devtools.
+Our DevTools communicate with Liveblocks servers in development mode and
+retrieve the current state of storage and presence (and history is coming
+soon!). The DevTools support one-way data syncs from the Liveblocks client and
+are compiled away in production, similar to other DevTools like React and Redux.
 
-<Banner title="Private beta">
+<Banner title="Devtools Compatibility with legacy packages">
 
-Our DevTools are currently only available if you are on Liveblocks .19 or later.
-To update required packages, run the following code with your preferred package
-manager:
-
-```bash
-npm install @liveblocks/client@latest @liveblocks/react@latest
-```
+Our DevTools are currently only available if you are on Liveblocks 0.19 or
+later. To view step-by-step instructions on how to upgrade your project to
+Liveblocks 0.19, check out our [upgrade guides](/guides/upgrading/).
 
 </Banner>
 
@@ -51,38 +41,87 @@ npm install @liveblocks/client@latest @liveblocks/react@latest
 
 Our DevTools extension is available for all major web browsers:
 
-- [Chrome](https://chrome.google.com/webstore/detail/liveblocks-devtools/iiagocfmmhknpdalddkbiejnfmbmlffk),
-- [Firefox](https://addons.mozilla.org/en-US/firefox/addon/liveblocks-devtools/),
-  and
-- [Edge](https://microsoftedge.microsoft.com/addons/detail/liveblocks-devtools/hfecmmnilleegmjaegkjjklnjbgadikg).
-  You can download it from the store or search for it on the main landing page.
+- [Chrome](https://chrome.google.com/webstore/detail/liveblocks-devtools/iiagocfmmhknpdalddkbiejnfmbmlffk)
+- [Firefox](https://addons.mozilla.org/en-US/firefox/addon/liveblocks-devtools/)
+- [Edge](https://microsoftedge.microsoft.com/addons/detail/liveblocks-devtools/hfecmmnilleegmjaegkjjklnjbgadikg)
 
 ### Features and Tips
 
+- You can quickly expand and collapse nested objects within storage by holding
+  the `⌥` key (option on Mac) and clicking on the object.
+- You can expand and collapse objects with one level of depth by using the arrow
+  keys or spacebar.
+- When a value in storage changes, the DevTools will highlight the value to
+  indicate that it has changed.
+- Storage values are searchable by key.
+- Hovering over a value in storage makes a tooltip appear. If clicked, it
+  displays the value of that key.
+
 ### If DevTools shows an empty page
 
-### Freezing the state to inspect the current element
+If you open Devtools after a Liveblocks client has already been initialized, you
+may see an empty page. This is because the DevTools are only able to retrieve
+the current state of storage and presence. To fix this, you can refresh the page
+or open DevTools before initializing the Liveblocks client.
+
+## Using DevTools with the Liveblocks starter kit
+
+The Next.js starter kit is a great way to get started with Liveblocks and learn
+how to use DevTools.
+
+<Figure>
+  <video autoPlay loop muted playsInline>
+    <source
+      src="/images/devtools/liveblocks-devtools-starter-kit.mp4"
+      type="video/mp4"
+    />
+  </video>
+</Figure>
+To use the starter kit with DevTools, run the following command:
+
+```bash
+npx create-liveblocks-app@latest --next
+```
+
+You can then follow the guided prompts in the terminal to create your project.
+For additional information on how to use the starter kit, see the
+[starter kit guide](docs/guides/nextjs-starter-kit).
+
+Once you have completed the starter kit prompts and installed the extension,
+open Chrome (or your preferred browser) and the DevTools panel. You should see
+the Liveblocks DevTools extension in the list of extensions. Click on the
+extension to open it up.
+
+Now you can run the starter kit by running `npm run dev` and navigating to
+`localhost:3000`. You should see the values from the starter kit populating.
 
 ## Testing DevTools with a Liveblocks example
 
 All of our examples hosted on Liveblocks.io are available for you to run locally
 from the [Liveblocks repository](https://github.com/liveblocks/liveblocks) under
-the examples directory.
-
-For the purpose of testing and reviewing how to use DevTools, we will use the
+the examples directory. For testing and reviewing how to use DevTools, we will
+use the
 [Advanced Collaborative Spreadsheet](https://liveblocks.io/examples/collaborative-spreadsheet-advanced/nextjs).
 
-After cloning the GitHub repository and navigating to the correct example
-folder:
+To clone the git repository and run the example, run the following commands:
 
-git clone https://github.com/liveblocks/liveblocks.git cd
-example/nextjs-nextjs-spreadsheet-advanced/
+```bash
+git clone <https://github.com/liveblocks/liveblocks.git>  &&
+cd examples/nextjs-nextjs-spreadsheet-advanced/
+```
 
-You will need to install packages and create an `.env.local` file, just like you
-would do if you were working on the main repository. First, run `npm install`
-and then create the `.env.local` file with your `LIVEBLOCKS_SECRET_KEY`.
+```bash
+npm install
+```
 
-Now you can run our example by running `npm run dev` and navigating to
-`http://localhost:3000`.
+Then, create the `.env.local` file with your `LIVEBLOCKS_SECRET_KEY`:
 
-## Using the DevTools with the Liveblocks starter kit
+```bash file=".env.local"
+LIVEBLOCKS_SECRET_KEY="sk_prod_xxxxxxxxxxxxxxxxxxxxxxxx"
+```
+
+Open Chrome or your preferred browser and open up the DevTools panel. You should
+see the Liveblocks DevTools extension in the list of extensions. Click on the
+extension to open it up. Now you can run our example by running npm run dev and
+navigating to http://localhost:3000, and you should see the values from the
+spreadsheet examples populating storage.
