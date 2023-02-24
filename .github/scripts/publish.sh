@@ -143,11 +143,3 @@ else
     echo "You can do so by opening this link:"
     echo "$URL"
 fi
-
-echo "==> Upgrade local examples?"
-echo "Now that you're all finished, you may want to also upgrade all our examples"
-echo "to the latest version. To do so, run:"
-echo
-echo "    upgrade-examples.sh $VERSION"
-echo
-
