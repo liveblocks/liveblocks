@@ -1,5 +1,7 @@
 # 0.0.9
 
+- Add `@liveblocks/infer-schema`, a library to help inferring a schema from
+  existing room data
 - `ObjectTypeDefinition` nodes now store an `isStatic` property. When `true`, it
   means it is only usable in JSON contexts. When `false` (= default) it means
   the object is only usable in Live contexts.
