@@ -30,7 +30,7 @@ export {
   lsonToJson,
   patchLiveObjectKey,
 } from "./immutable";
-export { assertNever, nn } from "./lib/assert";
+export { assert, assertNever, nn } from "./lib/assert";
 export {
   deprecate,
   deprecateIf,

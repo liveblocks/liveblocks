@@ -468,6 +468,80 @@ describe("room", () => {
     expect(machine.getOthers()).toEqual([]);
   });
 
+  test("should clear users not present in server message ROOM_STATE", () => {
+    /*
+    Scenario:
+    - Client A (machine) and Client B (ref machine) are connected to the room.
+    - Client A computer goes to sleep, it doesn't properly close. It still has client B in others.
+    - Client B computer goes to sleep, it doesn't properly close.
+    - After 2 minutes, the server clears client A and B from its list of users.
+    - After some time, Client A computer awakes, it still has Client B in "others", client reconnects to the room.
+    - The server returns the message ROOM_STATE with no user (as expected).
+    - Client A should remove client B from others.
+  */
+
+    const { machine } = setupStateMachine({});
+
+    const ws = new MockWebSocket("");
+    machine.connect();
+    machine.authenticationSuccess(defaultRoomToken, ws);
+    ws.open();
+
+    machine.onMessage(
+      serverMessage({
+        type: ServerMsgCode.ROOM_STATE,
+        users: {
+          "1": { scopes: [] },
+          "2": { scopes: [] },
+        },
+      })
+    );
+
+    // Client B
+    machine.onMessage(
+      serverMessage({
+        type: ServerMsgCode.UPDATE_PRESENCE,
+        data: { x: 2 },
+        actor: 1,
+        targetActor: 0,
+      })
+    );
+
+    // Client C
+    machine.onMessage(
+      serverMessage({
+        type: ServerMsgCode.UPDATE_PRESENCE,
+        data: { x: 2 },
+        actor: 2,
+        targetActor: 0,
+      })
+    );
+
+    expect(machine.getOthers()).toEqual([
+      { connectionId: 1, presence: { x: 2 }, isReadOnly: false },
+      { connectionId: 2, presence: { x: 2 }, isReadOnly: false },
+    ]);
+
+    // -----
+    // Client C was inactive and was removed by the server.
+    // -----
+
+    // Client reconnects to the room, and receives a new ROOM_STATE msg from the server.
+    machine.onMessage(
+      serverMessage({
+        type: ServerMsgCode.ROOM_STATE,
+        users: {
+          "1": { scopes: [] },
+        },
+      })
+    );
+
+    // Only Client B is part of others.
+    expect(machine.getOthers()).toEqual([
+      { connectionId: 1, presence: { x: 2 }, isReadOnly: false },
+    ]);
+  });
+
   describe("broadcast", () => {
     test("should send event to other users", () => {
       const { machine, effects } = setupStateMachine({});
