@@ -71,7 +71,7 @@ describe("inferSchema", () => {
         }
 
         expect(() => parse(schemaText)).not.toThrow();
-        // TODO: Ensure generates schema actually matches the inputs
+        // TODO: Ensure generated schema actually matches the inputs
       })
     );
   });
