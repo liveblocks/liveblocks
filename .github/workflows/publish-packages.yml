@@ -7,6 +7,12 @@ on:
     tags:
       - v*.*.*
 
+  workflow_dispatch:
+    inputs:
+      version:
+        type: string
+        required: true
+
 jobs:
   publish:
     runs-on: ubuntu-latest
@@ -24,72 +30,78 @@ jobs:
           rm -rf v1.8.0.tar.gz git-toolbelt-1.8.0
           echo "$HOME/.local/bin" >> $GITHUB_PATH
 
-      - name: Checkout
-        uses: actions/checkout@v3
-        with:
-          ref: ${{ github.event.base_ref }}
+      - name: Validate version
+        run: ./scripts/validate-version.sh
 
-      - name: Set git tag
-        id: git_tag
-        run: echo "value=${GITHUB_REF#refs/*/}" >> $GITHUB_OUTPUT
+      - name: Get current branch
+        run: git current-branch
 
-      - name: Set release version
-        id: version
-        env:
-          GIT_TAG: ${{ steps.git_tag.outputs.value }}
-        run: echo "value=${GIT_TAG#v}" >> $GITHUB_OUTPUT
+      # - name: Checkout
+      #   uses: actions/checkout@v3
+      #   with:
+      #     ref: ${{ github.event.base_ref }}
 
-      - name: Set npm tag
-        id: npm_tag
-        env:
-          GIT_TAG: ${{ steps.git_tag.outputs.value }}
-        run: |
-          get_npm_tag () {
-            if grep -q "-" <<< "$1"; then
-                echo "${1##*-}" | sed 's/[0-9]//g'
-            else 
-                echo "latest"
-            fi
-          }
-          echo value=$(get_npm_tag "$GIT_TAG") >> $GITHUB_OUTPUT
+      # - name: Set git tag
+      #   id: git_tag
+      #   run: echo "value=${GITHUB_REF#refs/*/}" >> $GITHUB_OUTPUT
 
-      - name: Check values
-        run: |
-          echo ${{steps.git_tag.outputs.value}}
-          echo ${{steps.version.outputs.value}}
-          echo ${{steps.npm_tag.outputs.value}}
+      # - name: Set release version
+      #   id: version
+      #   env:
+      #     GIT_TAG: ${{ steps.git_tag.outputs.value }}
+      #   run: echo "value=${GIT_TAG#v}" >> $GITHUB_OUTPUT
 
-      - name: Setup Node.js environment
-        uses: actions/setup-node@v3.6.0
-        with:
-          registry-url: "https://registry.npmjs.org"
-          node-version: 16.17.1
+      # - name: Set npm tag
+      #   id: npm_tag
+      #   env:
+      #     GIT_TAG: ${{ steps.git_tag.outputs.value }}
+      #   run: |
+      #     get_npm_tag () {
+      #       if grep -q "-" <<< "$1"; then
+      #           echo "${1##*-}" | sed 's/[0-9]//g'
+      #       else
+      #           echo "latest"
+      #       fi
+      #     }
+      #     echo value=$(get_npm_tag "$GIT_TAG") >> $GITHUB_OUTPUT
 
-      - name: Setup git config
-        run: |
-          git config user.name "GitHub Actions Bot"
-          git config user.email "<>"
+      # - name: Check values
+      #   run: |
+      #     echo ${{steps.git_tag.outputs.value}}
+      #     echo ${{steps.version.outputs.value}}
+      #     echo ${{steps.npm_tag.outputs.value}}
 
-      - name: Prepare release
-        env:
-          VERSION: ${{steps.version.outputs.value}}
-        run: ./.github/scripts/release.sh -V "$VERSION"
+      # - name: Setup Node.js environment
+      #   uses: actions/setup-node@v3.6.0
+      #   with:
+      #     registry-url: "https://registry.npmjs.org"
+      #     node-version: 16.17.1
 
-      - name: Recreate tag to commit with correct version
-        env:
-          GIT_TAG: ${{ steps.git_tag.outputs.value }}
-        run: |
-          git push --delete origin "$GIT_TAG" && git tag --delete "$GIT_TAG"
-          git tag "$GIT_TAG" && git push origin "$GIT_TAG"
+      # - name: Setup git config
+      #   run: |
+      #     git config user.name "GitHub Actions Bot"
+      #     git config user.email "<>"
 
-      - name: Build all packages
-        run: npm run build
+      # - name: Prepare release
+      #   env:
+      #     VERSION: ${{steps.version.outputs.value}}
+      #   run: ./.github/scripts/release.sh -V "$VERSION"
 
-      - name: Publish packages
-        env:
-          # setup-node created .npmrc file to publish to npm
-          # https://docs.github.com/en/actions/publishing-packages/publishing-nodejs-packages#publishing-packages-to-the-npm-registry
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-          VERSION: ${{ steps.version.outputs.value }}
-          NPM_TAG: ${{ steps.npm_tag.outputs.value }}
-        run: ./.github/scripts/publish.sh -V "$VERSION" -t "$NPM_TAG"
+      # - name: Recreate tag to commit with correct version
+      #   env:
+      #     GIT_TAG: ${{ steps.git_tag.outputs.value }}
+      #   run: |
+      #     git push --delete origin "$GIT_TAG" && git tag --delete "$GIT_TAG"
+      #     git tag "$GIT_TAG" && git push origin "$GIT_TAG"
+
+      # - name: Build all packages
+      #   run: npm run build
+
+      # - name: Publish packages
+      #   env:
+      #     # setup-node created .npmrc file to publish to npm
+      #     # https://docs.github.com/en/actions/publishing-packages/publishing-nodejs-packages#publishing-packages-to-the-npm-registry
+      #     NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      #     VERSION: ${{ steps.version.outputs.value }}
+      #     NPM_TAG: ${{ steps.npm_tag.outputs.value }}
+      #   run: ./.github/scripts/publish.sh -V "$VERSION" -t "$NPM_TAG"
