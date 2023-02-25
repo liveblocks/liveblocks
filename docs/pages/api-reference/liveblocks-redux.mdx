@@ -12,13 +12,13 @@ Enhancer that lets you connect a Redux state to Liveblocks Presence and Storage
 features.
 
 ```js
-import { enhancer } from "@liveblocks/redux";
+import { liveblocksEnhancer } from "@liveblocks/redux";
 import { configureStore } from "@reduxjs/toolkit";
 
 const store = configureStore({
   reducer: /* reducer */,
   enhancers: [
-    enhancer({
+    liveblocksEnhancer({
       client,
       storageMapping: {},
       presenceMapping: {},
@@ -33,7 +33,7 @@ See different authentication methods in the [`createClient`][] method.
 
 ```js highlight="1,4-6,12"
 import { createClient } from "@liveblocks/client";
-import { enhancer } from "@liveblocks/redux";
+import { liveblocksEnhancer } from "@liveblocks/redux";
 
 const client = createClient({
   authEndpoint: "/api/auth",
@@ -42,7 +42,7 @@ const client = createClient({
 const store = configureStore({
   reducer: /* reducer */,
   enhancers: [
-    enhancer({
+    liveblocksEnhancer({
       client,
     }),
   ],
@@ -55,7 +55,7 @@ Mapping used to synchronize a part of your Redux state with one Liveblocks room
 presence.
 
 ```js highlight="20"
-import { enhancer } from "@liveblocks/redux";
+import { liveblocksEnhancer } from "@liveblocks/redux";
 
 const initialState = {
   cursor: { x: 0, y: 0 },
@@ -72,7 +72,7 @@ const slice = createSlice({
 const store = configureStore({
   reducer: slice.reducer,
   enhancers: [
-    enhancer({
+    liveblocksEnhancer({
       client,
       presenceMapping: { cursor: true },
     }),
@@ -86,7 +86,7 @@ Mapping used to synchronize a part of your Redux state with one Liveblocks Room
 storage.
 
 ```js highlight="20"
-import { enhancer } from "@liveblocks/redux";
+import { liveblocksEnhancer } from "@liveblocks/redux";
 
 const initialState = {
   scientist: { name: "" },
@@ -103,7 +103,7 @@ const slice = createSlice({
 const store = configureStore({
   reducer: slice.reducer,
   enhancers: [
-    enhancer({
+    liveblocksEnhancer({
       client,
       storageMapping: { scientist: true },
     }),
