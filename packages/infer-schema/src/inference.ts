@@ -1,4 +1,4 @@
-import { inferLsonFields } from "./fields";
+import { inferLsonFields } from "./field";
 import type { InferredObjectType } from "./object";
 import {
   inferObjectType,
@@ -12,6 +12,7 @@ import {
   isInferredScalarType,
   mergeInferredScalarTypes,
 } from "./scalar";
+import type { InferredSchema } from "./schema";
 import type { PartialBy } from "./utils/types";
 
 type FieldChildContext = {
@@ -63,14 +64,15 @@ export function inferType(value: PlainLson, ctx: ChildContext): InferredType {
 
 export function mergeInferredTypes(
   a: InferredType,
-  b: InferredType
+  b: InferredType,
+  schema?: InferredSchema
 ): InferredType | undefined {
   if (isInferredScalarType(a) && isInferredScalarType(b)) {
     return mergeInferredScalarTypes(a, b);
   }
 
   if (isInferredObjectType(a) && isInferredObjectType(b)) {
-    return mergeInferredObjectTypes(a, b);
+    return mergeInferredObjectTypes(a, b, schema);
   }
 
   // TODO: Add missing types

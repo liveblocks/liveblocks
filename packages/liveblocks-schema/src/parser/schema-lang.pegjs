@@ -103,6 +103,7 @@ ObjectTypeDefinition
     { return ast.objectTypeDefinition(
       name,
       fields ?? [],
+      null, /* Only used to writing schemas with comments */
       false, /* will get its definitive value during the checking phase */
       rng(),
     ) }
@@ -124,7 +125,14 @@ FieldDef
   = name:Identifier question:QUESTION? COLON type:TypeExpr
     {
       const optional = question !== null;
-      return ast.fieldDef(name, optional, type, rng())
+      return ast.fieldDef(
+        name,
+        optional,
+        type,
+        null, /* Only used to writing schemas with comments */
+        null, /* Only used to writing schemas with comments */
+        rng()
+      )
     }
 
 

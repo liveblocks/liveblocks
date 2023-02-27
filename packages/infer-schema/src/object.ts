@@ -1,16 +1,17 @@
 import { AST } from "@liveblocks/schema";
 
-import type { InferredFields } from "./fields";
+import type { InferredFields } from "./field";
 import {
   inferLsonFields,
   inferredFieldsToAst,
   mergeInferredFields,
-} from "./fields";
+} from "./field";
 import type { ChildContext, InferredType } from "./inference";
 import type { ScoredNames } from "./naming";
 import { generateNames, mergeScoredNames } from "./naming";
 import type { JsonObject, PlainLsonObject } from "./plainLson";
-import type { InferredSchema } from "./schema";
+import type { InferredSchema} from "./schema";
+import { replaceRootType } from "./schema";
 import { invariant } from "./utils/invariant";
 import { isNotUndefined } from "./utils/typeGuards";
 import type { PartialBy } from "./utils/types";
@@ -46,7 +47,8 @@ export function inferObjectType(
 
 export function mergeInferredObjectTypes(
   a: InferredObjectType,
-  b: InferredObjectType
+  b: InferredObjectType,
+  schema?: InferredSchema
 ): InferredObjectType | undefined {
   // Cannot merge live and non-live objects
   if (a.live !== b.live) {
@@ -58,18 +60,26 @@ export function mergeInferredObjectTypes(
     return undefined;
   }
 
-  const mergedFields = mergeInferredFields(a.fields, b.fields);
+  const mergedFields = mergeInferredFields(a.fields, b.fields, schema);
   if (!mergedFields) {
     return undefined;
   }
 
-  return {
+  const merged: InferredObjectType = {
     live: a.live,
     names: mergeScoredNames(a.names, b.names),
     type: "Object",
     fields: mergedFields,
     atomic: false,
   };
+
+  // If we have a schema, we need to update root type references
+  if (schema) {
+    replaceRootType(schema, a, merged);
+    replaceRootType(schema, b, merged);
+  }
+
+  return merged;
 }
 
 export function inferredObjectTypeToAst(
@@ -82,6 +92,7 @@ export function inferredObjectTypeToAst(
   return AST.objectTypeDefinition(
     AST.typeName(name),
     inferredFieldsToAst(inferred.fields, schema),
+    null,
     !inferred.live
   );
 }

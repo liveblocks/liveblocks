@@ -9,6 +9,7 @@ import {
   BASIC_MERGE,
   BASIC_UNMERGEABLE,
   BRACKET_KEY,
+  EDGE_CASE,
   EMPTY,
   EMPTY_KEY,
   KEY_WITH_WHITESPACE,
@@ -21,6 +22,10 @@ describe("inferSchema", () => {
     BASIC_MERGE,
     BASIC_UNMERGEABLE,
     BASIC_LIVE_OBJECT,
+    RESERVED_KEY,
+    BRACKET_KEY,
+    KEY_WITH_WHITESPACE,
+    EMPTY_KEY,
   };
 
   Object.entries(testCases).forEach(([name, storageData]) => {
@@ -29,50 +34,22 @@ describe("inferSchema", () => {
     });
   });
 
-  describe("rejects non-representable storage data", () => {
-    it("rejects storage data with empty keys", () => {
-      expect(() => inferSchema(EMPTY_KEY)).toThrowError(
-        "Invalid property key: cannot be empty"
-      );
-    });
-
-    it("reserved keys", () => {
-      expect(() => inferSchema(RESERVED_KEY)).toThrowError(
-        "Invalid property key: cannot be a reserved name"
-      );
-    });
-
-    it("keys containing whitespace", () => {
-      expect(() => inferSchema(KEY_WITH_WHITESPACE)).toThrowError(
-        "Invalid property key: cannot contain whitespace"
-      );
-    });
-
-    it("keys containing forbidden characters", () => {
-      expect(() => inferSchema(BRACKET_KEY)).toThrowError(
-        "Invalid property key: can only contain alphanumeric characters and underscores"
-      );
-    });
+  it("edge-case", () => {
+    expect(inferSchema(EDGE_CASE)).toMatchSnapshot();
   });
 
-  it("always generates a valid schema that matches the plain lson or throws a property rejection error", () => {
+  it("always generates a valid schema that matches the plain lson or includes a fixme comment", () => {
     fc.assert(
-      fc.property(plainLsonArbitraries.object, (storageData) => {
-        let schemaText: string;
-        try {
-          schemaText = inferSchema(storageData as PlainLsonObject);
-        } catch (error) {
-          if (!(error instanceof Error)) {
-            throw error;
+      fc.property(
+        plainLsonArbitraries.object,
+
+        (storageData) => {
+          const schemaText = inferSchema(storageData as PlainLsonObject);
+          if (!schemaText.includes("# FIXME: ")) {
+            expect(() => parse(schemaText)).not.toThrow();
           }
-
-          expect(error.message).toMatch(/^Invalid property key:/);
-          return;
         }
-
-        expect(() => parse(schemaText)).not.toThrow();
-        // TODO: Ensure generated schema actually matches the inputs
-      })
+      )
     );
   });
 });

@@ -111,5 +111,19 @@ export const BRACKET_KEY: PlainLsonObject = {
       liveblocksType: "LiveObject",
       data: {},
     },
+    "d]": {
+      liveblocksType: "LiveObject",
+      data: {},
+    },
+  },
+};
+
+export const EDGE_CASE: PlainLsonObject = {
+  liveblocksType: "LiveObject",
+  data: {
+    "": {
+      liveblocksType: "LiveObject",
+      data: { "": { liveblocksType: "LiveObject", data: {} } },
+    },
   },
 };

@@ -22,3 +22,13 @@ export function ucFirst(str: string): string {
 }
 
 export { singular } from "pluralize";
+
+export function naiveQuote(str: string): string {
+  // Purposefully not escaping quotes inside the string here to match typescripts behavior
+  // and to make it easier to read.
+  return `'${str}'`;
+}
+
+export function escapeNewlines(str: string): string {
+  return str.replace(/\n/g, "\\n");
+}

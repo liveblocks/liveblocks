@@ -35,10 +35,13 @@ export function prettify(node: Node): string {
 
     case "ObjectTypeDefinition":
       return [
+        node.leadingComment !== null ? `# ${node.leadingComment}` : null,
         `type ${prettify(node.name)} {`,
         ...node.fields.map((field) => `  ${prettify(field)}`),
         "}",
-      ].join("\n");
+      ]
+        .filter((line) => line !== null)
+        .join("\n");
 
     case "ObjectLiteralExpr":
       return `{ ${node.fields.map(prettify).join(", ")} }`;
@@ -55,9 +58,14 @@ export function prettify(node: Node): string {
         : prettify(node.ref);
 
     case "FieldDef":
-      return `${prettify(node.name)}${node.optional ? "?" : ""}: ${prettify(
-        node.type
-      )}`;
+      return [
+        node.leadingComment !== null ? `\n# ${node.leadingComment}` : null,
+        `${prettify(node.name)}${node.optional ? "?" : ""}: ${prettify(
+          node.type
+        )}${node.trailingComment ? ` # ${node.trailingComment}` : ""}`,
+      ]
+        .filter((line) => line !== null)
+        .join("\n");
 
     default:
       return assertNever(node, `Please define prettify for «${node}» nodes`);

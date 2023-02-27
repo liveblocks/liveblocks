@@ -108,6 +108,8 @@ export type FieldDef = {
   name: Identifier;
   optional: boolean;
   type: TypeExpr;
+  leadingComment: string | null;
+  trailingComment: string | null;
   range: Range;
 };
 
@@ -139,6 +141,7 @@ export type ObjectTypeDefinition = {
   _kind: "ObjectTypeDefinition";
   name: TypeName;
   fields: FieldDef[];
+  leadingComment: string | null;
   isStatic: boolean;
   range: Range;
 };
@@ -200,6 +203,8 @@ export function fieldDef(
   name: Identifier,
   optional: boolean,
   type: TypeExpr,
+  leadingComment: string | null = null,
+  trailingComment: string | null = null,
   range: Range = [0, 0]
 ): FieldDef {
   DEBUG &&
@@ -222,6 +227,18 @@ export function fieldDef(
           type
         )}`
       );
+      assert(
+        leadingComment === null || typeof leadingComment === "string",
+        `Invalid value for "leadingComment" arg in "FieldDef" call.\nExpected: string?\nGot:      ${JSON.stringify(
+          leadingComment
+        )}`
+      );
+      assert(
+        trailingComment === null || typeof trailingComment === "string",
+        `Invalid value for "trailingComment" arg in "FieldDef" call.\nExpected: string?\nGot:      ${JSON.stringify(
+          trailingComment
+        )}`
+      );
       assertRange(range, "FieldDef");
     })();
   return {
@@ -229,6 +246,8 @@ export function fieldDef(
     name,
     optional,
     type,
+    leadingComment,
+    trailingComment,
     range,
   };
 }
@@ -298,6 +317,7 @@ export function objectLiteralExpr(
 export function objectTypeDefinition(
   name: TypeName,
   fields: FieldDef[],
+  leadingComment: string | null,
   isStatic: boolean,
   range: Range = [0, 0]
 ): ObjectTypeDefinition {
@@ -317,6 +337,12 @@ export function objectTypeDefinition(
         )}`
       );
       assert(
+        leadingComment === null || typeof leadingComment === "string",
+        `Invalid value for "leadingComment" arg in "ObjectTypeDefinition" call.\nExpected: string?\nGot:      ${JSON.stringify(
+          leadingComment
+        )}`
+      );
+      assert(
         typeof isStatic === "boolean",
         `Invalid value for "isStatic" arg in "ObjectTypeDefinition" call.\nExpected: boolean\nGot:      ${JSON.stringify(
           isStatic
@@ -328,6 +354,7 @@ export function objectTypeDefinition(
     _kind: "ObjectTypeDefinition",
     name,
     fields,
+    leadingComment,
     isStatic,
     range,
   };

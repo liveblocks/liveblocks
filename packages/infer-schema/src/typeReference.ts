@@ -23,15 +23,16 @@ export function inferTypeReference(
 
 export function mergeInferredTypeReferences(
   a: InferredTypeReference,
-  b: InferredTypeReference
+  b: InferredTypeReference,
+  schema?: InferredSchema
 ): InferredTypeReference | undefined {
-  const mergeValue = mergeInferredTypes(a.value, b.value);
-  if (!mergeValue) {
+  const mergedValue = mergeInferredTypes(a.value, b.value, schema);
+  if (!mergedValue) {
     return undefined;
   }
 
   return {
-    value: mergeValue,
+    value: mergedValue,
     optional: a.optional || b.optional,
   };
 }

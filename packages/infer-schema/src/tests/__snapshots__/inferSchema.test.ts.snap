@@ -73,7 +73,44 @@ type StrokeMesh {
 }"
 `;
 
+exports[`inferSchema correctly infers the "BRACKET_KEY" schema 1`] = `
+"type Storage {
+  _____: LiveObject<D> # FIXME: Field name 'd{' is illegal, can only contain alphanumeric characters and underscores
+  _____2: LiveObject<D> # FIXME: Field name 'd]' is illegal, can only contain alphanumeric characters and underscores
+}
+
+type D {
+}"
+`;
+
 exports[`inferSchema correctly infers the "EMPTY" schema 1`] = `
 "type Storage {
+}"
+`;
+
+exports[`inferSchema correctly infers the "EMPTY_KEY" schema 1`] = `
+"type Storage {
+  _____: LiveObject<Value> # FIXME: Field name '' is illegal, must start with a letter
+}
+
+type Value {
+}"
+`;
+
+exports[`inferSchema correctly infers the "KEY_WITH_WHITESPACE" schema 1`] = `
+"type Storage {
+  _____: LiveObject<TestKey> # FIXME: Field name 'test key' is illegal, can only contain alphanumeric characters and underscores
+}
+
+type TestKey {
+}"
+`;
+
+exports[`inferSchema correctly infers the "RESERVED_KEY" schema 1`] = `
+"type Storage {
+  _____: LiveObject<LiveblockType> # FIXME: Field name 'liveblocksType' is illegal, cannot be a reserved name
+}
+
+type LiveblockType {
 }"
 `;

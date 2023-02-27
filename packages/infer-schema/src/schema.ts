@@ -1,12 +1,17 @@
 import { AST } from "@liveblocks/schema";
 
 import type { InferredType } from "./inference";
-import { isAtomic, mergeInferredTypes } from "./inference";
+import { isAtomic } from "./inference";
 import type { InferredObjectType } from "./object";
-import { inferredObjectTypeToAst, isInferredObjectType } from "./object";
+import {
+  inferredObjectTypeToAst,
+  isInferredObjectType,
+  mergeInferredObjectTypes,
+} from "./object";
 import type { InferredTypeReference } from "./typeReference";
 import { BidirectionalMap } from "./utils/bidirectionalMap";
 import { invariant } from "./utils/invariant";
+import { isNotUndefined } from "./utils/typeGuards";
 
 type RootTypes = Set<InferredObjectType>;
 type RootReferences = Map<InferredObjectType, Set<InferredTypeReference>>;
@@ -76,16 +81,12 @@ function inferRootTypes(
   return { rootTypes, rootTypeReferences };
 }
 
-function replaceRootType(
+export function replaceRootType(
   schema: InferredSchema,
   oldType: InferredObjectType,
   newType: InferredObjectType
-) {
+): void {
   invariant(schema.rootTypes.has(oldType), "Old type not part of the schema");
-
-  schema.rootTypes.delete(oldType);
-  schema.rootTypes.add(newType);
-  schema.rootNames.deleteValue(oldType);
 
   // Re-wire all references to the old type to the new type
   const oldTypeReferences = schema.rootTypeReferences.get(oldType);
@@ -95,8 +96,13 @@ function replaceRootType(
       reference.value = newType;
       newReferences.add(reference);
     }
-    schema.rootTypeReferences.set(newType, oldTypeReferences);
+    schema.rootTypeReferences.delete(oldType);
+    schema.rootTypeReferences.set(newType, newReferences);
   }
+
+  schema.rootTypes.delete(oldType);
+  schema.rootTypes.add(newType);
+  schema.rootNames.deleteValue(oldType);
 }
 
 function assignNameOrMerge(schema: InferredSchema, type: InferredObjectType) {
@@ -117,29 +123,47 @@ function assignNameOrMerge(schema: InferredSchema, type: InferredObjectType) {
       return;
     }
 
-    const merged = mergeInferredTypes(existingType, type);
+    const merged = mergeInferredObjectTypes(existingType, type, schema);
     if (merged) {
-      // Should never happen
-      invariant(isInferredObjectType(merged), "Expected object type");
-
-      replaceRootType(schema, existingType, merged);
-      replaceRootType(schema, type, merged);
       schema.rootNames.set(name, merged);
       return;
     }
   }
 
+  const baseName = orderedNames[0];
+  invariant(isNotUndefined(baseName), "Expected at least one name");
+
   // Try Name2, Name3, etc. until we find a name that doesn't conflict.
-  let suffix = 2;
+  let n = 2;
   while (true) {
-    const name = `${orderedNames[0]}${suffix}`;
+    const name = `${baseName}${n}`;
     if (!schema.rootNames.has(name)) {
       schema.rootNames.set(name, type);
       return;
     }
-
-    suffix++;
+    n++;
   }
+}
+
+function getNextRootTypeToAssignName(schema: InferredSchema) {
+  return Array.from(schema.rootTypes.values())
+    .filter((type) => !schema.rootNames.hasValue(type))
+    .sort((a, b) => {
+      const aIsAtomic = isAtomic(a);
+      const bIsAtomic = isAtomic(b);
+      if (aIsAtomic && bIsAtomic) {
+        return 0;
+      }
+      if (aIsAtomic || bIsAtomic) {
+        return aIsAtomic ? -1 : 1;
+      }
+
+      // TODO: Assign names to root types with fewer aliases first?
+      return (
+        Math.max(...Object.values(a.names)) -
+        Math.max(...Object.values(b.names))
+      );
+    })[0];
 }
 
 export function buildSchema(
@@ -151,25 +175,14 @@ export function buildSchema(
     rootNames: new BidirectionalMap(),
   };
 
-  const toAssign = Array.from(schema.rootTypes.values()).sort((a, b) => {
-    const aIsAtomic = isAtomic(a);
-    const bIsAtomic = isAtomic(b);
-    if (aIsAtomic && bIsAtomic) {
-      return 0;
-    }
-    if (aIsAtomic || bIsAtomic) {
-      return aIsAtomic ? -1 : 1;
-    }
-
-    // TODO: Assign names to root types with fewer aliases first?
-    return (
-      Math.max(...Object.values(a.names)) - Math.max(...Object.values(b.names))
-    );
-  });
+  let toAssign = getNextRootTypeToAssignName(schema);
+  while (toAssign) {
+    assignNameOrMerge(schema, toAssign);
+    toAssign = getNextRootTypeToAssignName(schema);
+  }
 
   // TODO: Merge equal types?
 
-  toAssign.forEach((type) => assignNameOrMerge(schema, type));
   return schema;
 }
 
