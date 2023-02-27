@@ -2,8 +2,8 @@ import { AST } from "@liveblocks/schema";
 
 import type { InferredType } from "./inference";
 import { isAtomic } from "./inference";
-import type { InferredObjectType } from "./object";
 import {
+  InferredObjectType,
   inferredObjectTypeToAst,
   isInferredObjectType,
   mergeInferredObjectTypes,
@@ -14,12 +14,10 @@ import { invariant } from "./utils/invariant";
 import { isNotUndefined } from "./utils/typeGuards";
 
 type RootTypes = Set<InferredObjectType>;
-type RootReferences = Map<InferredObjectType, Set<InferredTypeReference>>;
 type RootNames = BidirectionalMap<string, InferredObjectType>;
 
 export type InferredSchema = {
   rootTypes: RootTypes;
-  rootTypeReferences: RootReferences;
   rootNames: RootNames;
 };
 
@@ -62,47 +60,35 @@ function* iterateInferredTypesDeep(
 
 function inferRootTypes(
   inferred: InferredObjectType
-): Pick<InferredSchema, "rootTypes" | "rootTypeReferences"> {
+): Pick<InferredSchema, "rootTypes"> {
   const rootTypes: RootTypes = new Set();
-  const rootTypeReferences: RootReferences = new Map();
 
-  for (const [type, referenceObj] of iterateInferredTypesDeep(inferred)) {
+  for (const [type] of iterateInferredTypesDeep(inferred)) {
     if (isInferredObjectType(type)) {
       rootTypes.add(type);
-
-      if (referenceObj) {
-        const references = rootTypeReferences.get(type) ?? new Set();
-        references.add(referenceObj);
-        rootTypeReferences.set(type, references);
-      }
     }
   }
 
-  return { rootTypes, rootTypeReferences };
+  return { rootTypes };
 }
-
 export function replaceRootType(
   schema: InferredSchema,
   oldType: InferredObjectType,
   newType: InferredObjectType
-): void {
+) {
   invariant(schema.rootTypes.has(oldType), "Old type not part of the schema");
-
-  // Re-wire all references to the old type to the new type
-  const oldTypeReferences = schema.rootTypeReferences.get(oldType);
-  if (oldTypeReferences) {
-    const newReferences = schema.rootTypeReferences.get(newType) ?? new Set();
-    for (const reference of oldTypeReferences) {
-      reference.value = newType;
-      newReferences.add(reference);
-    }
-    schema.rootTypeReferences.delete(oldType);
-    schema.rootTypeReferences.set(newType, newReferences);
-  }
 
   schema.rootTypes.delete(oldType);
   schema.rootTypes.add(newType);
   schema.rootNames.deleteValue(oldType);
+
+  schema.rootTypes.forEach((rootType) => {
+    for (const [, ref] of iterateInferredTypesDeep(rootType)) {
+      if (ref?.value === oldType) {
+        ref.value = newType;
+      }
+    }
+  });
 }
 
 function assignNameOrMerge(schema: InferredSchema, type: InferredObjectType) {

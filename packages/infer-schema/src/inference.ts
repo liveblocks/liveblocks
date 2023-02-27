@@ -21,7 +21,6 @@ type FieldChildContext = {
 };
 
 export type ChildContext = FieldChildContext; // TODO: Expand for union, list, ...
-
 export type InferredType = InferredScalarType | InferredObjectType;
 
 export function isAtomic(type: InferredType): boolean {

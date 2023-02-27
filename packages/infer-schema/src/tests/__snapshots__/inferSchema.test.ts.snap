@@ -114,3 +114,13 @@ exports[`inferSchema correctly infers the "RESERVED_KEY" schema 1`] = `
 type LiveblockType {
 }"
 `;
+
+exports[`inferSchema edge-case 1`] = `
+"type Storage {
+  _____: LiveObject<Value> # FIXME: Field name '' is illegal, must start with a letter
+}
+
+type Value {
+  _____?: LiveObject<Value> # FIXME: Field name '' is illegal, must start with a letter
+}"
+`;
