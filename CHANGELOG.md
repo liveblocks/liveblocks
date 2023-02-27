@@ -1,17 +1,27 @@
 # v1.0.1
 
-Log stack traces of function calls that resulted in rejected storage mutations to the console in non-production builds to ease debugging.
+Log stack traces of function calls that resulted in rejected storage mutations
+to the console in non-production builds to ease debugging.
+
+### `@liveblocks/core`
+
+- Fixes bug where the state of `others` in a room was wrong when:
+  - Client A disconnects improperly (ex: computer goes to sleep)
+  - Then Client B disconnects (ex: computer goes to sleep)
+  - Then Client A reconnects: client B still shows in the `others` state
 
 # v1.0.0
 
-This major release marks the maturity of Liveblocks. There are no upgrade instructions for 1.0.0.
+This major release marks the maturity of Liveblocks. There are no upgrade
+instructions for 1.0.0.
 
 ## `@liveblocks/node`
 
 `authorize` option `userId` is now mandatory.
 
-Our new [pricing](https://liveblocks.io/pricing) is based on Monthly Active Users instead of connections. 
-We're using `userId` to track MAU associated to a Liveblocks account.
+Our new [pricing](https://liveblocks.io/pricing) is based on Monthly Active
+Users instead of connections. We're using `userId` to track MAU associated to a
+Liveblocks account.
 
 # v0.19.11
 
