@@ -11,7 +11,7 @@ meta:
 
 Our [DevTools](/devtools) are a browser-based extension that integrates with
 Liveblocks and your local development environment. This allows you to easily
-troubleshoot, debug, and optimize your collaborative online experiences.
+inspect, visualize, and troubleshoot your collaborative online experiences.
 
 <Banner title="Live demo video">
 
@@ -37,7 +37,7 @@ Liveblocks 0.19, check out our [upgrade guides](/guides/upgrading/).
 
 ## How to use DevTools
 
-### Downloading
+### Install the browser extension
 
 Our DevTools extension is available for all major web browsers:
 
@@ -95,26 +95,26 @@ extension to open it up.
 Now you can run the starter kit by running `npm run dev` and navigating to
 `localhost:3000`. You should see the values from the starter kit populating.
 
-## Testing DevTools with a Liveblocks example
+## Trying DevTools with a Liveblocks example
 
 All of our examples hosted on Liveblocks.io are available for you to run locally
-from the [Liveblocks repository](https://github.com/liveblocks/liveblocks) under
-the examples directory. For testing and reviewing how to use DevTools, we will
+from the [examples directory](https://github.com/liveblocks/liveblocks/tree/main/examples) in
+the Liveblocks repo. For testing and reviewing how to use DevTools, we will
 use the
 [Advanced Collaborative Spreadsheet](https://liveblocks.io/examples/collaborative-spreadsheet-advanced/nextjs).
 
-To clone the git repository and run the example, run the following commands:
+To clone the Git repository and run the example, run the following commands:
 
 ```bash
-git clone <https://github.com/liveblocks/liveblocks.git>  &&
-cd examples/nextjs-nextjs-spreadsheet-advanced/
+git clone https://github.com/liveblocks/liveblocks.git
+cd examples/nextjs-spreadsheet-advanced/
 ```
 
 ```bash
 npm install
 ```
 
-Then, create the `.env.local` file with your `LIVEBLOCKS_SECRET_KEY`:
+Then, create the `.env.local` file with your `LIVEBLOCKS_SECRET_KEY`. Obtain your secret key from [here](https://liveblocks.io/dashboard/apikeys).
 
 ```bash file=".env.local"
 LIVEBLOCKS_SECRET_KEY="sk_prod_xxxxxxxxxxxxxxxxxxxxxxxx"
