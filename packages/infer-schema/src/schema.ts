@@ -1,7 +1,8 @@
 import { AST } from "@liveblocks/schema";
 
-import type { InferredType } from "./inference";
+import type { InferredType, MergeContext } from "./inference";
 import { isAtomic } from "./inference";
+import { orderedNames } from "./naming";
 import type { InferredObjectType } from "./object";
 import {
   inferredObjectTypeToAst,
@@ -71,64 +72,109 @@ function inferRootTypes(
 
   return { rootTypes };
 }
-export function replaceRootType(
-  schema: InferredSchema,
-  oldType: InferredObjectType,
-  newType: InferredObjectType
-): void {
-  // invariant(schema.rootTypes.has(oldType), "Old type not part of the schema");
 
-  schema.rootTypes.delete(oldType);
-  schema.rootTypes.add(newType);
-  schema.rootNames.deleteValue(oldType);
+export function applyRootTypeReplacements(
+  schema: InferredSchema,
+  replacements: Map<InferredObjectType, InferredObjectType>
+): void {
+  replacements.forEach((newType, oldType) => {
+    schema.rootTypes.delete(oldType);
+    schema.rootTypes.add(newType);
+    schema.rootNames.deleteValue(oldType);
+  });
 
   schema.rootTypes.forEach((rootType) => {
     for (const [, ref] of iterateInferredTypesDeep(rootType)) {
-      if (ref?.value === oldType) {
-        ref.value = newType;
+      if (!ref || !isInferredObjectType(ref.value)) {
+        continue;
+      }
+
+      const replacement = replacements.get(ref.value);
+      if (replacement) {
+        ref.value = replacement;
       }
     }
   });
+}
+
+function mergeInferredRootTypes(
+  schema: InferredSchema,
+  a: InferredObjectType,
+  b: InferredObjectType
+): InferredObjectType | undefined {
+  const mergeCtx: MergeContext = {
+    mergeFns: new Map(),
+    typeReplacements: new Map(),
+  };
+
+  const merged = mergeInferredObjectTypes(a, b, mergeCtx);
+  if (!merged) {
+    return;
+  }
+
+  const rootTypeReplacements = new Map<
+    InferredObjectType,
+    InferredObjectType
+  >();
+  const references: Map<
+    InferredObjectType,
+    Set<InferredObjectType>
+  > = new Map();
+
+  // Abuse the face that maps iterate in insertion order
+  mergeCtx.typeReplacements.forEach((newType, oldType) => {
+    if (!isInferredObjectType(oldType) || !isInferredObjectType(newType)) {
+      return;
+    }
+
+    if (schema.rootTypes.has(oldType)) {
+      rootTypeReplacements.set(oldType, newType);
+    }
+
+    const newTypeReferences = references.get(newType) ?? new Set();
+    const oldTypeReferences = references.get(oldType);
+    oldTypeReferences?.forEach((key) => {
+      newTypeReferences.add(key);
+      rootTypeReplacements.set(key, newType);
+    });
+
+    references.set(newType, newTypeReferences);
+  });
+
+  applyRootTypeReplacements(schema, rootTypeReplacements);
+  return merged;
 }
 
 function assignNameOrMerge(schema: InferredSchema, type: InferredObjectType) {
   invariant(schema.rootTypes.has(type), "Root type not part of the schema");
   invariant(!schema.rootNames.hasValue(type), "Root type already has a name");
 
-  const orderedNames = Object.entries(type.names)
-    .sort(([, scoreA], [, scoreB]) => scoreB - scoreA)
-    .map(([name]) => name);
+  const names = orderedNames(type.names);
 
   // TODO: Be smarter about when to merge types, and when to rename them.
   // Might also be worth a try to rename both types e.g. "Data" conflicts with "Data" ->
   // rename them to "UserData" and "ShapeData" instead of keeping "Data" and adding "UserData".
-  for (const name of orderedNames) {
+  for (const name of names) {
     const existingType = schema.rootNames.get(name);
     if (!existingType) {
       schema.rootNames.set(name, type);
       return;
     }
 
-    const canMerge = mergeInferredObjectTypes(existingType, type, {
-      mergeFns: new Map(),
-    });
-    if (canMerge) {
-      const merged = mergeInferredObjectTypes(existingType, type, {
-        mergeFns: new Map(),
-        schema,
-      });
+    const merged = mergeInferredRootTypes(schema, existingType, type);
+    if (merged) {
       schema.rootNames.set(name, merged!);
       return;
     }
   }
 
-  const baseName = orderedNames[0];
-  invariant(isNotUndefined(baseName), "Expected at least one name");
+  const preferredName = names[0];
+  invariant(isNotUndefined(preferredName), "Expected at least one name");
 
   // Try Name2, Name3, etc. until we find a name that doesn't conflict.
   let n = 2;
   while (true) {
-    const name = `${baseName}${n}`;
+    const name = `${preferredName}${n}`;
     if (!schema.rootNames.has(name)) {
       schema.rootNames.set(name, type);
       return;

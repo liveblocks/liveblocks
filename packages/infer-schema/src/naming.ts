@@ -54,3 +54,9 @@ export function invalidFieldName(n: number): string {
   // _____2, _____3, _____4 etc.
   return `${INVALID_FIELD_NAME}${n + 1}`;
 }
+
+export function orderedNames(names: ScoredNames): string[] {
+  return Object.entries(names)
+    .sort(([, scoreA], [, scoreB]) => scoreB - scoreA)
+    .map(([name]) => name);
+}

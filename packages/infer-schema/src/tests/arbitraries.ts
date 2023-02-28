@@ -28,5 +28,9 @@ export const plainLsonArbitraries = fc.letrec((tie) => ({
     liveblocksType: fc.constant("LiveObject"),
     data: fc.dictionary(plainLsonPropertyArbitrary, tie("value")),
   }),
-  value: fc.oneof(plainLsonJsonArbitraries.value, tie("object")), // , tie("list"), tie("map")
+  value: fc.oneof(
+    { depthSize: 1 },
+    plainLsonJsonArbitraries.value,
+    tie("object")
+  ), // , tie("list"), tie("map")
 }));

@@ -12,6 +12,7 @@ import {
   mergeInferredTypeReferences,
 } from "./typeReference";
 import { invariant } from "./utils/invariant";
+import { get } from "./utils/object";
 import { escapeNewlines, naiveQuote } from "./utils/strings";
 import { isNotUndefined } from "./utils/typeGuards";
 
@@ -53,8 +54,8 @@ export function mergeInferredFields(
 
   const mergedFields: InferredFields = {};
   for (const key of keys) {
-    const valueA = a[key];
-    const valueB = b[key];
+    const valueA = get(a, key);
+    const valueB = get(b, key);
 
     if (!valueA || !valueB) {
       const mergedValue = valueA ?? valueB;

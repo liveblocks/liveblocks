@@ -12,7 +12,6 @@ import {
   isInferredScalarType,
   mergeInferredScalarTypes,
 } from "./scalar";
-import type { InferredSchema } from "./schema";
 import { once } from "./utils/once";
 import type { PartialBy } from "./utils/types";
 
@@ -67,31 +66,73 @@ export type MergeContext = {
     InferredType,
     Map<InferredType, () => InferredType | undefined>
   >;
-  schema?: InferredSchema;
+  typeReplacements: Map<InferredType, InferredType>;
 };
+
+function currentType(type: InferredType, ctx: MergeContext): InferredType {
+  let current = type;
+  while (true) {
+    const next = ctx.typeReplacements.get(current);
+    if (!next) {
+      return current;
+    }
+
+    current = next;
+  }
+}
+
+function plainMergeInferredTypes(
+  a: InferredType,
+  b: InferredType,
+  ctx: MergeContext
+): InferredType | undefined {
+  if (isInferredScalarType(a) && isInferredScalarType(b)) {
+    return mergeInferredScalarTypes(a, b);
+  }
+
+  if (isInferredObjectType(a) && isInferredObjectType(b)) {
+    return mergeInferredObjectTypes(a, b, ctx);
+  }
+
+  // TODO: Add missing types
+  return undefined;
+}
 
 export function mergeInferredTypes(
   a: InferredType,
   b: InferredType,
   ctx: MergeContext
 ): InferredType | undefined {
-  const mergeFn = ctx.mergeFns.get(a)?.get(b) ?? ctx.mergeFns.get(b)?.get(a);
-  if (mergeFn) {
-    return mergeFn();
+  const currentA = currentType(a, ctx);
+  const currentB = currentType(b, ctx);
+
+  if (currentA === currentB) {
+    return currentA;
   }
 
-  if (isInferredScalarType(a) && isInferredScalarType(b)) {
-    return mergeInferredScalarTypes(a, b);
+  // merge(a, b) = merge(b, a), so we can use both
+  const cached =
+    ctx.mergeFns.get(currentA)?.get(currentB) ??
+    ctx.mergeFns.get(currentB)?.get(currentA);
+
+  if (cached) {
+    return cached();
   }
 
-  if (isInferredObjectType(a) && isInferredObjectType(b)) {
-    const mergeFn = once(() => mergeInferredObjectTypes(a, b, ctx));
-    const currentMergeFns = ctx.mergeFns.get(a) ?? new Map();
-    currentMergeFns.set(b, mergeFn);
-    ctx.mergeFns.set(a, currentMergeFns);
-    return mergeFn();
-  }
+  const merge = once(() => {
+    const merged = plainMergeInferredTypes(currentA, currentB, ctx);
 
-  // TODO: Add missing types
-  return undefined;
+    if (merged) {
+      ctx.typeReplacements.set(currentA, merged);
+      ctx.typeReplacements.set(currentB, merged);
+    }
+
+    return merged;
+  });
+
+  const current = ctx.mergeFns.get(currentA) ?? new Map();
+  current.set(currentB, merge);
+  ctx.mergeFns.set(currentA, current);
+
+  return merge();
 }

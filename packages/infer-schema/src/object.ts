@@ -11,7 +11,6 @@ import type { ScoredNames } from "./naming";
 import { generateNames, mergeScoredNames } from "./naming";
 import type { JsonObject, PlainLsonObject } from "./plainLson";
 import type { InferredSchema } from "./schema";
-import { replaceRootType } from "./schema";
 import { invariant } from "./utils/invariant";
 import { isNotUndefined } from "./utils/typeGuards";
 import type { PartialBy } from "./utils/types";
@@ -75,10 +74,8 @@ export function mergeInferredObjectTypes(
 
   // If we have a schema, we need to update root type references
   // TODO: Move out of here
-  if (ctx.schema) {
-    replaceRootType(ctx.schema, a, merged);
-    replaceRootType(ctx.schema, b, merged);
-  }
+  ctx.typeReplacements.set(a, merged);
+  ctx.typeReplacements.set(b, merged);
 
   return merged;
 }

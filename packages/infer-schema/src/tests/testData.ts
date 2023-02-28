@@ -131,6 +131,10 @@ export const CIRCULAR_MERGE: PlainLsonObject = {
               liveblocksType: "LiveObject",
               data: { a: { liveblocksType: "LiveObject", data: {} } },
             },
+            c: {
+              liveblocksType: "LiveObject",
+              data: { a: { liveblocksType: "LiveObject", data: {} } },
+            },
           },
         },
       },
