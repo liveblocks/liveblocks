@@ -57,9 +57,9 @@ jobs:
 
       - name: Check values
         run: |
-          echo ${{ inputs.tag }}
-          echo ${{ steps.version.outputs.value }}
-          echo ${{ steps.npm_tag.outputs.value }}
+          echo "${{ inputs.tag }}"
+          echo "${{ steps.version.outputs.value }}"
+          echo "${{ steps.npm_tag.outputs.value }}"
 
       - name: Setup Node.js environment
         uses: actions/setup-node@v3.6.0
