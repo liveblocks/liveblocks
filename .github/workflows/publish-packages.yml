@@ -6,6 +6,11 @@ on:
       tag:
         type: string
         required: true
+        description:
+          "github release tag, branch specific examples:\n `main`: v1.0.1 -> can
+          only be run from `main`\n `beta`: v1.0.2-beta0 -> `beta` can only be
+          run from `beta`\n `*`: v1.0.2-test0 -> use format
+          v1.0.2-[NPM_TAG][NUMBER]"
 
 jobs:
   publish:
