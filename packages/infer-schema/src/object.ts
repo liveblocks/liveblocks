@@ -72,6 +72,9 @@ export function mergeInferredObjectTypes(
     atomic: false,
   };
 
+  ctx.typeReplacements.set(a, merged);
+  ctx.typeReplacements.set(b, merged);
+
   return merged;
 }
 

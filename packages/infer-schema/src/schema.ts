@@ -82,7 +82,15 @@ function applyRootTypeReplacements(
 
     schema.rootTypes.delete(oldType);
     schema.rootTypes.add(newType);
+
+    const currentName = schema.rootNames.getKey(oldType);
     schema.rootNames.deleteValue(oldType);
+
+    // PERF: If the type already had his preferred name, we don't need to re-compute it
+    const preferredName = orderedNames(newType.names)[0];
+    if (currentName !== undefined && currentName === preferredName) {
+      schema.rootNames.set(currentName, newType);
+    }
   });
 
   schema.rootTypes.forEach((rootType) => {

@@ -119,16 +119,7 @@ export function mergeInferredTypes(
     return cached();
   }
 
-  const merge = once(() => {
-    const merged = plainMergeInferredTypes(currentA, currentB, ctx);
-
-    if (merged) {
-      ctx.typeReplacements.set(currentA, merged);
-      ctx.typeReplacements.set(currentB, merged);
-    }
-
-    return merged;
-  });
+  const merge = once(() => plainMergeInferredTypes(currentA, currentB, ctx));
 
   const current = ctx.mergeFns.get(currentA) ?? new Map();
   current.set(currentB, merge);
