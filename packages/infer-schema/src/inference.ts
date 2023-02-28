@@ -13,6 +13,7 @@ import {
   mergeInferredScalarTypes,
 } from "./scalar";
 import type { InferredSchema } from "./schema";
+import { once } from "./utils/once";
 import type { PartialBy } from "./utils/types";
 
 type FieldChildContext = {
@@ -61,17 +62,34 @@ export function inferType(value: PlainLson, ctx: ChildContext): InferredType {
   throw new Error("Not implemented");
 }
 
+export type MergeContext = {
+  mergeFns: Map<
+    InferredType,
+    Map<InferredType, () => InferredType | undefined>
+  >;
+  schema?: InferredSchema;
+};
+
 export function mergeInferredTypes(
   a: InferredType,
   b: InferredType,
-  schema?: InferredSchema
+  ctx: MergeContext
 ): InferredType | undefined {
+  const mergeFn = ctx.mergeFns.get(a)?.get(b) ?? ctx.mergeFns.get(b)?.get(a);
+  if (mergeFn) {
+    return mergeFn();
+  }
+
   if (isInferredScalarType(a) && isInferredScalarType(b)) {
     return mergeInferredScalarTypes(a, b);
   }
 
   if (isInferredObjectType(a) && isInferredObjectType(b)) {
-    return mergeInferredObjectTypes(a, b, schema);
+    const mergeFn = once(() => mergeInferredObjectTypes(a, b, ctx));
+    const currentMergeFns = ctx.mergeFns.get(a) ?? new Map();
+    currentMergeFns.set(b, mergeFn);
+    ctx.mergeFns.set(a, currentMergeFns);
+    return mergeFn();
   }
 
   // TODO: Add missing types

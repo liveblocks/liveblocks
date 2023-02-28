@@ -1,5 +1,20 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`inferSchema circular 1`] = `
+"type Storage {
+  a: LiveObject<A>
+}
+
+type B {
+  a: LiveObject<A>
+}
+
+type A {
+  a?: LiveObject<A>
+  b?: LiveObject<B>
+}"
+`;
+
 exports[`inferSchema correctly infers the "BASIC_LIVE_OBJECT" schema 1`] = `
 "type Storage {
   fills: LiveObject<Fill>
@@ -112,15 +127,5 @@ exports[`inferSchema correctly infers the "RESERVED_KEY" schema 1`] = `
 }
 
 type LiveblockType {
-}"
-`;
-
-exports[`inferSchema edge-case 1`] = `
-"type Storage {
-  _____: LiveObject<Value> # FIXME: Field name '' is illegal, must start with a letter
-}
-
-type Value {
-  _____?: LiveObject<Value> # FIXME: Field name '' is illegal, must start with a letter
 }"
 `;

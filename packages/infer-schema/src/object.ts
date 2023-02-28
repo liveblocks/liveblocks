@@ -6,11 +6,12 @@ import {
   inferredFieldsToAst,
   mergeInferredFields,
 } from "./field";
-import type { ChildContext, InferredType } from "./inference";
+import type { ChildContext, InferredType, MergeContext } from "./inference";
 import type { ScoredNames } from "./naming";
 import { generateNames, mergeScoredNames } from "./naming";
 import type { JsonObject, PlainLsonObject } from "./plainLson";
-import { InferredSchema, replaceRootType } from "./schema";
+import type { InferredSchema } from "./schema";
+import { replaceRootType } from "./schema";
 import { invariant } from "./utils/invariant";
 import { isNotUndefined } from "./utils/typeGuards";
 import type { PartialBy } from "./utils/types";
@@ -47,7 +48,7 @@ export function inferObjectType(
 export function mergeInferredObjectTypes(
   a: InferredObjectType,
   b: InferredObjectType,
-  schema?: InferredSchema
+  ctx: MergeContext
 ): InferredObjectType | undefined {
   // Cannot merge live and non-live objects
   if (a.live !== b.live) {
@@ -59,7 +60,7 @@ export function mergeInferredObjectTypes(
     return undefined;
   }
 
-  const mergedFields = mergeInferredFields(a.fields, b.fields, schema);
+  const mergedFields = mergeInferredFields(a.fields, b.fields, ctx);
   if (!mergedFields) {
     return undefined;
   }
@@ -73,9 +74,10 @@ export function mergeInferredObjectTypes(
   };
 
   // If we have a schema, we need to update root type references
-  if (schema) {
-    replaceRootType(schema, a, merged);
-    replaceRootType(schema, b, merged);
+  // TODO: Move out of here
+  if (ctx.schema) {
+    replaceRootType(ctx.schema, a, merged);
+    replaceRootType(ctx.schema, b, merged);
   }
 
   return merged;

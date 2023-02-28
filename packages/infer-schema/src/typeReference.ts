@@ -1,6 +1,6 @@
 import { AST } from "@liveblocks/schema";
 
-import type { ChildContext, InferredType } from "./inference";
+import type { ChildContext, InferredType, MergeContext } from "./inference";
 import { inferType, mergeInferredTypes } from "./inference";
 import { isInferredObjectType } from "./object";
 import type { PlainLson } from "./plainLson";
@@ -24,9 +24,9 @@ export function inferTypeReference(
 export function mergeInferredTypeReferences(
   a: InferredTypeReference,
   b: InferredTypeReference,
-  schema?: InferredSchema
+  ctx: MergeContext
 ): InferredTypeReference | undefined {
-  const mergedValue = mergeInferredTypes(a.value, b.value, schema);
+  const mergedValue = mergeInferredTypes(a.value, b.value, ctx);
   if (!mergedValue) {
     return undefined;
   }

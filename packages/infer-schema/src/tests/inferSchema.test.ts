@@ -9,7 +9,7 @@ import {
   BASIC_MERGE,
   BASIC_UNMERGEABLE,
   BRACKET_KEY,
-  EDGE_CASE,
+  CIRCULAR_MERGE,
   EMPTY,
   EMPTY_KEY,
   KEY_WITH_WHITESPACE,
@@ -26,16 +26,13 @@ describe("inferSchema", () => {
     BRACKET_KEY,
     KEY_WITH_WHITESPACE,
     EMPTY_KEY,
+    CIRCULAR_MERGE,
   };
 
   Object.entries(testCases).forEach(([name, storageData]) => {
     it(`correctly infers the "${name}" schema`, () => {
       expect(inferSchema(storageData)).toMatchSnapshot();
     });
-  });
-
-  it("edge-case", () => {
-    expect(inferSchema(EDGE_CASE)).toMatchSnapshot();
   });
 
   it("always generates a valid schema that matches the plain lson or includes a fixme comment", () => {

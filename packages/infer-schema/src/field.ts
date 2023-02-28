@@ -1,7 +1,7 @@
 import { AST } from "@liveblocks/schema";
 import { string } from "decoders";
 
-import type { ChildContext } from "./inference";
+import type { ChildContext, MergeContext } from "./inference";
 import { invalidFieldName } from "./naming";
 import type { JsonObject, PlainLsonFields } from "./plainLson";
 import type { InferredSchema } from "./schema";
@@ -47,7 +47,7 @@ export function inferLsonFields(
 export function mergeInferredFields(
   a: InferredFields,
   b: InferredFields,
-  schema?: InferredSchema
+  ctx: MergeContext
 ): InferredFields | undefined {
   const keys = new Set([...Object.keys(a), ...Object.keys(b)]);
 
@@ -66,7 +66,7 @@ export function mergeInferredFields(
       continue;
     }
 
-    const mergedValue = mergeInferredTypeReferences(valueA, valueB, schema);
+    const mergedValue = mergeInferredTypeReferences(valueA, valueB, ctx);
     if (!mergedValue) {
       return undefined;
     }

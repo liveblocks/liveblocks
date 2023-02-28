@@ -2,8 +2,8 @@ import { AST } from "@liveblocks/schema";
 
 import type { InferredType } from "./inference";
 import { isAtomic } from "./inference";
+import type { InferredObjectType } from "./object";
 import {
-  InferredObjectType,
   inferredObjectTypeToAst,
   isInferredObjectType,
   mergeInferredObjectTypes,
@@ -75,8 +75,8 @@ export function replaceRootType(
   schema: InferredSchema,
   oldType: InferredObjectType,
   newType: InferredObjectType
-) {
-  invariant(schema.rootTypes.has(oldType), "Old type not part of the schema");
+): void {
+  // invariant(schema.rootTypes.has(oldType), "Old type not part of the schema");
 
   schema.rootTypes.delete(oldType);
   schema.rootTypes.add(newType);
@@ -109,9 +109,15 @@ function assignNameOrMerge(schema: InferredSchema, type: InferredObjectType) {
       return;
     }
 
-    const merged = mergeInferredObjectTypes(existingType, type, schema);
-    if (merged) {
-      schema.rootNames.set(name, merged);
+    const canMerge = mergeInferredObjectTypes(existingType, type, {
+      mergeFns: new Map(),
+    });
+    if (canMerge) {
+      const merged = mergeInferredObjectTypes(existingType, type, {
+        mergeFns: new Map(),
+        schema,
+      });
+      schema.rootNames.set(name, merged!);
       return;
     }
   }

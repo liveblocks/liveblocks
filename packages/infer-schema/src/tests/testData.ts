@@ -118,12 +118,22 @@ export const BRACKET_KEY: PlainLsonObject = {
   },
 };
 
-export const EDGE_CASE: PlainLsonObject = {
+export const CIRCULAR_MERGE: PlainLsonObject = {
   liveblocksType: "LiveObject",
   data: {
-    "": {
+    a: {
       liveblocksType: "LiveObject",
-      data: { "": { liveblocksType: "LiveObject", data: {} } },
+      data: {
+        a: {
+          liveblocksType: "LiveObject",
+          data: {
+            b: {
+              liveblocksType: "LiveObject",
+              data: { a: { liveblocksType: "LiveObject", data: {} } },
+            },
+          },
+        },
+      },
     },
   },
 };
