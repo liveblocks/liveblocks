@@ -47,11 +47,21 @@ Example:
 We have some rules in place to make sure that the version numbers and tags are
 correct.
 
-Publishing a package is done by running the
+### Publishing packages
+
+Publishing packages is done by running the
 [**Publish packages**](https://github.com/liveblocks/liveblocks/actions/workflows/publish-packages.yml)
 workflow.
 
-<!-- Insert workflow screenshot here -->
+1. Run the workflow with the appropriate git tag.
+2. Validate that the workflow published the packages to the npm registry.
+
+To run a release in github (for `main` and `beta` branches):
+
+3. Create a new release on github using the URL provided at the end of the
+   workflow.
+4. Add the release notes
+5. Update CHANGELOG.md
 
 ### Latest releases
 

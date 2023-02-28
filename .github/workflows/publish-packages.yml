@@ -6,11 +6,9 @@ on:
       tag:
         type: string
         required: true
-        description: |
-          github release tag, branch specific examples:
-            - `main`: v1.0.1 -> can only be run from `main`
-            - `beta`: v1.0.2-beta0 -> `beta` can only be run from `beta`
-            - `*`: v1.0.2-test0 -> use format v1.0.2-[NPM_TAG][NUMBER]"
+        description:
+          "github release tag (ex: v1.0.2-test0), doc:
+          https://github.com/liveblocks/liveblocks/blob/main/CONTRIBUTING.MD#releasing"
 
 jobs:
   publish:
