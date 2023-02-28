@@ -30,6 +30,8 @@ Welcome to our contributing guide! We're excited to have you as a contributor.
 Packages are published on the [npm registry](https://www.npmjs.com/). Each
 release is associated to a github tag.
 
+<!-- TODO: insert how to release using workflow here -->
+
 A version is composed of three numbers: `X.Y.Z` where `X` is the major version,
 `Y` is the minor version and `Z` is the patch version.
 
