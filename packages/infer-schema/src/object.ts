@@ -72,11 +72,6 @@ export function mergeInferredObjectTypes(
     atomic: false,
   };
 
-  // If we have a schema, we need to update root type references
-  // TODO: Move out of here
-  ctx.typeReplacements.set(a, merged);
-  ctx.typeReplacements.set(b, merged);
-
   return merged;
 }
 

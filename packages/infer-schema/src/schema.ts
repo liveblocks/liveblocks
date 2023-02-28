@@ -78,6 +78,8 @@ function applyRootTypeReplacements(
   replacements: Map<InferredObjectType, InferredObjectType>
 ): void {
   replacements.forEach((newType, oldType) => {
+    invariant(schema.rootTypes.has(oldType), "Old type not found in schema");
+
     schema.rootTypes.delete(oldType);
     schema.rootTypes.add(newType);
     schema.rootNames.deleteValue(oldType);
@@ -112,10 +114,7 @@ function mergeInferredRootTypes(
     return;
   }
 
-  const rootTypeReplacements = new Map<
-    InferredObjectType,
-    InferredObjectType
-  >();
+  const rootReplacements = new Map<InferredObjectType, InferredObjectType>();
   const references: Map<
     InferredObjectType,
     Set<InferredObjectType>
@@ -128,20 +127,20 @@ function mergeInferredRootTypes(
     }
 
     if (schema.rootTypes.has(oldType)) {
-      rootTypeReplacements.set(oldType, newType);
+      rootReplacements.set(oldType, newType);
     }
 
     const newTypeReferences = references.get(newType) ?? new Set();
     const oldTypeReferences = references.get(oldType);
     oldTypeReferences?.forEach((key) => {
       newTypeReferences.add(key);
-      rootTypeReplacements.set(key, newType);
+      rootReplacements.set(key, newType);
     });
 
     references.set(newType, newTypeReferences);
   });
 
-  applyRootTypeReplacements(schema, rootTypeReplacements);
+  applyRootTypeReplacements(schema, rootReplacements);
   return merged;
 }
 
