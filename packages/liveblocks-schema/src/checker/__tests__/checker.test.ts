@@ -30,9 +30,12 @@ describe("checker", () => {
           range,
         },
         isStatic: false,
+        leadingComment: null,
         fields: [
           {
             _kind: "FieldDef",
+            leadingComment: null,
+            trailingComment: null,
             name: {
               _kind: "Identifier",
               name: "x",
@@ -53,6 +56,8 @@ describe("checker", () => {
           },
           {
             _kind: "FieldDef",
+            leadingComment: null,
+            trailingComment: null,
             name: {
               _kind: "Identifier",
               name: "y",
@@ -87,6 +92,7 @@ describe("checker", () => {
         range,
       },
       isStatic: true,
+      leadingComment: null,
       fields: [],
       range,
     });
@@ -100,6 +106,7 @@ describe("checker", () => {
         range,
       },
       isStatic: false,
+      leadingComment: null,
       fields: [],
       range,
     });

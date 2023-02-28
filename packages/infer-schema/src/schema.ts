@@ -73,7 +73,7 @@ function inferRootTypes(
   return { rootTypes };
 }
 
-export function applyRootTypeReplacements(
+function applyRootTypeReplacements(
   schema: InferredSchema,
   replacements: Map<InferredObjectType, InferredObjectType>
 ): void {

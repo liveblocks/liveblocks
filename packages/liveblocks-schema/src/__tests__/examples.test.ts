@@ -130,6 +130,7 @@ describe("examples", () => {
               name: "Storage",
               range: expect.anything(),
             },
+            leadingComment: null,
             isStatic: false,
             fields: expect.anything(),
             range: expect.anything(),

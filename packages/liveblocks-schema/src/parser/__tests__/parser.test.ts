@@ -64,6 +64,7 @@ describe("syntactic parser", () => {
             ast.fieldDef(ast.identifier("cy"), false, ast.floatType()),
             ast.fieldDef(ast.identifier("r"), false, ast.floatType()),
           ],
+          null,
           false /* always false during the parsing phase */
         ),
 
@@ -83,12 +84,14 @@ describe("syntactic parser", () => {
               ast.typeRef(ast.typeName("_undefinedThing_"), false)
             ),
           ],
+          null,
           false /* always false during the parsing phase */
         ),
 
         ast.objectTypeDefinition(
           ast.typeName("abc"),
           [],
+          null,
           false /* always false during the parsing phase */
         ),
       ])

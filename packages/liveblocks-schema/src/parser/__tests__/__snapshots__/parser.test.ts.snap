@@ -9,6 +9,7 @@ exports[`syntactic parser large document (snapshot test) 1`] = `
       "fields": [
         {
           "_kind": "FieldDef",
+          "leadingComment": null,
           "name": {
             "_kind": "Identifier",
             "name": "r",
@@ -22,6 +23,7 @@ exports[`syntactic parser large document (snapshot test) 1`] = `
             62,
             68,
           ],
+          "trailingComment": null,
           "type": {
             "_kind": "IntType",
             "range": [
@@ -32,6 +34,7 @@ exports[`syntactic parser large document (snapshot test) 1`] = `
         },
         {
           "_kind": "FieldDef",
+          "leadingComment": null,
           "name": {
             "_kind": "Identifier",
             "name": "g",
@@ -45,6 +48,7 @@ exports[`syntactic parser large document (snapshot test) 1`] = `
             70,
             76,
           ],
+          "trailingComment": null,
           "type": {
             "_kind": "IntType",
             "range": [
@@ -55,6 +59,7 @@ exports[`syntactic parser large document (snapshot test) 1`] = `
         },
         {
           "_kind": "FieldDef",
+          "leadingComment": null,
           "name": {
             "_kind": "Identifier",
             "name": "b",
@@ -68,6 +73,7 @@ exports[`syntactic parser large document (snapshot test) 1`] = `
             78,
             84,
           ],
+          "trailingComment": null,
           "type": {
             "_kind": "IntType",
             "range": [
@@ -78,6 +84,7 @@ exports[`syntactic parser large document (snapshot test) 1`] = `
         },
       ],
       "isStatic": false,
+      "leadingComment": null,
       "name": {
         "_kind": "TypeName",
         "name": "Color",
@@ -96,6 +103,7 @@ exports[`syntactic parser large document (snapshot test) 1`] = `
       "fields": [
         {
           "_kind": "FieldDef",
+          "leadingComment": null,
           "name": {
             "_kind": "Identifier",
             "name": "cx",
@@ -109,6 +117,7 @@ exports[`syntactic parser large document (snapshot test) 1`] = `
             116,
             125,
           ],
+          "trailingComment": null,
           "type": {
             "_kind": "FloatType",
             "range": [
@@ -119,6 +128,7 @@ exports[`syntactic parser large document (snapshot test) 1`] = `
         },
         {
           "_kind": "FieldDef",
+          "leadingComment": null,
           "name": {
             "_kind": "Identifier",
             "name": "cy",
@@ -132,6 +142,7 @@ exports[`syntactic parser large document (snapshot test) 1`] = `
             134,
             143,
           ],
+          "trailingComment": null,
           "type": {
             "_kind": "FloatType",
             "range": [
@@ -142,6 +153,7 @@ exports[`syntactic parser large document (snapshot test) 1`] = `
         },
         {
           "_kind": "FieldDef",
+          "leadingComment": null,
           "name": {
             "_kind": "Identifier",
             "name": "r",
@@ -155,6 +167,7 @@ exports[`syntactic parser large document (snapshot test) 1`] = `
             152,
             160,
           ],
+          "trailingComment": null,
           "type": {
             "_kind": "FloatType",
             "range": [
@@ -165,6 +178,7 @@ exports[`syntactic parser large document (snapshot test) 1`] = `
         },
         {
           "_kind": "FieldDef",
+          "leadingComment": null,
           "name": {
             "_kind": "Identifier",
             "name": "fill",
@@ -178,6 +192,7 @@ exports[`syntactic parser large document (snapshot test) 1`] = `
             169,
             181,
           ],
+          "trailingComment": null,
           "type": {
             "_kind": "TypeRef",
             "asLiveObject": false,
@@ -197,6 +212,7 @@ exports[`syntactic parser large document (snapshot test) 1`] = `
         },
         {
           "_kind": "FieldDef",
+          "leadingComment": null,
           "name": {
             "_kind": "Identifier",
             "name": "stroke",
@@ -210,6 +226,7 @@ exports[`syntactic parser large document (snapshot test) 1`] = `
             190,
             204,
           ],
+          "trailingComment": null,
           "type": {
             "_kind": "TypeRef",
             "asLiveObject": false,
@@ -229,6 +246,7 @@ exports[`syntactic parser large document (snapshot test) 1`] = `
         },
         {
           "_kind": "FieldDef",
+          "leadingComment": null,
           "name": {
             "_kind": "Identifier",
             "name": "third",
@@ -242,11 +260,13 @@ exports[`syntactic parser large document (snapshot test) 1`] = `
             213,
             247,
           ],
+          "trailingComment": null,
           "type": {
             "_kind": "ObjectLiteralExpr",
             "fields": [
               {
                 "_kind": "FieldDef",
+                "leadingComment": null,
                 "name": {
                   "_kind": "Identifier",
                   "name": "r",
@@ -260,6 +280,7 @@ exports[`syntactic parser large document (snapshot test) 1`] = `
                   223,
                   229,
                 ],
+                "trailingComment": null,
                 "type": {
                   "_kind": "IntType",
                   "range": [
@@ -270,6 +291,7 @@ exports[`syntactic parser large document (snapshot test) 1`] = `
               },
               {
                 "_kind": "FieldDef",
+                "leadingComment": null,
                 "name": {
                   "_kind": "Identifier",
                   "name": "g",
@@ -283,6 +305,7 @@ exports[`syntactic parser large document (snapshot test) 1`] = `
                   231,
                   237,
                 ],
+                "trailingComment": null,
                 "type": {
                   "_kind": "IntType",
                   "range": [
@@ -293,6 +316,7 @@ exports[`syntactic parser large document (snapshot test) 1`] = `
               },
               {
                 "_kind": "FieldDef",
+                "leadingComment": null,
                 "name": {
                   "_kind": "Identifier",
                   "name": "b",
@@ -306,6 +330,7 @@ exports[`syntactic parser large document (snapshot test) 1`] = `
                   239,
                   245,
                 ],
+                "trailingComment": null,
                 "type": {
                   "_kind": "IntType",
                   "range": [
@@ -323,6 +348,7 @@ exports[`syntactic parser large document (snapshot test) 1`] = `
         },
       ],
       "isStatic": false,
+      "leadingComment": null,
       "name": {
         "_kind": "TypeName",
         "name": "Circle",
@@ -340,6 +366,7 @@ exports[`syntactic parser large document (snapshot test) 1`] = `
       "_kind": "ObjectTypeDefinition",
       "fields": [],
       "isStatic": false,
+      "leadingComment": null,
       "name": {
         "_kind": "TypeName",
         "name": "Foo",
@@ -358,6 +385,7 @@ exports[`syntactic parser large document (snapshot test) 1`] = `
       "fields": [
         {
           "_kind": "FieldDef",
+          "leadingComment": null,
           "name": {
             "_kind": "Identifier",
             "name": "version",
@@ -371,6 +399,7 @@ exports[`syntactic parser large document (snapshot test) 1`] = `
             353,
             365,
           ],
+          "trailingComment": null,
           "type": {
             "_kind": "IntType",
             "range": [
@@ -381,6 +410,7 @@ exports[`syntactic parser large document (snapshot test) 1`] = `
         },
         {
           "_kind": "FieldDef",
+          "leadingComment": null,
           "name": {
             "_kind": "Identifier",
             "name": "version",
@@ -394,6 +424,7 @@ exports[`syntactic parser large document (snapshot test) 1`] = `
             374,
             436,
           ],
+          "trailingComment": null,
           "type": {
             "_kind": "IntType",
             "range": [
@@ -404,6 +435,7 @@ exports[`syntactic parser large document (snapshot test) 1`] = `
         },
         {
           "_kind": "FieldDef",
+          "leadingComment": null,
           "name": {
             "_kind": "Identifier",
             "name": "mycircle",
@@ -417,6 +449,7 @@ exports[`syntactic parser large document (snapshot test) 1`] = `
             445,
             471,
           ],
+          "trailingComment": null,
           "type": {
             "_kind": "TypeRef",
             "asLiveObject": true,
@@ -436,6 +469,7 @@ exports[`syntactic parser large document (snapshot test) 1`] = `
         },
         {
           "_kind": "FieldDef",
+          "leadingComment": null,
           "name": {
             "_kind": "Identifier",
             "name": "someField",
@@ -449,6 +483,7 @@ exports[`syntactic parser large document (snapshot test) 1`] = `
             572,
             599,
           ],
+          "trailingComment": null,
           "type": {
             "_kind": "TypeRef",
             "asLiveObject": false,
@@ -468,6 +503,7 @@ exports[`syntactic parser large document (snapshot test) 1`] = `
         },
       ],
       "isStatic": false,
+      "leadingComment": null,
       "name": {
         "_kind": "TypeName",
         "name": "Foo",
@@ -485,6 +521,7 @@ exports[`syntactic parser large document (snapshot test) 1`] = `
       "_kind": "ObjectTypeDefinition",
       "fields": [],
       "isStatic": false,
+      "leadingComment": null,
       "name": {
         "_kind": "TypeName",
         "name": "abc",
