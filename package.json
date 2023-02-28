@@ -13,8 +13,7 @@
     "test:types": "turbo run test:types",
     "test:deps": "turbo run test:deps",
     "lint": "turbo run lint",
-    "dev": "turbo run dev",
-    "publish": "./scripts/create-release-tag.sh"
+    "dev": "turbo run dev"
   },
   "devDependencies": {
     "dependency-cruiser": "^11.16.1",
