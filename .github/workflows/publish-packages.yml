@@ -1,0 +1,106 @@
+name: Publish packages
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        type: string
+        required: true
+        description: |
+          github release tag, branch specific examples:
+            - `main`: v1.0.1 -> can only be run from `main`
+            - `beta`: v1.0.2-beta0 -> `beta` can only be run from `beta`
+            - `*`: v1.0.2-test0 -> use format v1.0.2-[NPM_TAG][NUMBER]"
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Install moreutils
+        run: sudo apt-get install -y moreutils
+
+      - name: Install git-toolbelt
+        run: |
+          wget https://github.com/nvie/git-toolbelt/archive/v1.8.0.tar.gz
+          tar -xzf v1.8.0.tar.gz
+          mkdir -p "$HOME/.local/bin"
+          cp git-toolbelt-1.8.0/git-* "$HOME/.local/bin"
+          rm -rf v1.8.0.tar.gz git-toolbelt-1.8.0
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Validate git tag
+        run: ./.github/scripts/validate-version.sh "${{ inputs.tag }}"
+
+      - name: Set release version
+        id: version
+        env:
+          GIT_TAG: ${{ inputs.tag }}
+        run: echo "value=${GIT_TAG#v}" >> $GITHUB_OUTPUT
+
+      - name: Set npm tag
+        id: npm_tag
+        env:
+          GIT_TAG: ${{ inputs.tag }}
+        run: |
+          get_npm_tag () {
+            if grep -q "-" <<< "$1"; then
+                echo "${1##*-}" | sed 's/[0-9]//g'
+            else
+                echo "latest"
+            fi
+          }
+          echo value=$(get_npm_tag "$GIT_TAG") >> $GITHUB_OUTPUT
+
+      - name: Check values
+        run: |
+          echo "${{ inputs.tag }}"
+          echo "${{ steps.version.outputs.value }}"
+          echo "${{ steps.npm_tag.outputs.value }}"
+
+      - name: Setup Node.js environment
+        uses: actions/setup-node@v3.6.0
+        with:
+          registry-url: "https://registry.npmjs.org"
+          node-version: 16.17.1
+
+      - name: Setup git config
+        run: |
+          git config user.name "GitHub Actions Bot"
+          git config user.email "<>"
+
+      - name: Prepare release
+        env:
+          VERSION: ${{steps.version.outputs.value}}
+        run: ./.github/scripts/release.sh -V "$VERSION"
+
+      - name: Build all packages
+        run: npm run build
+
+      - name: Publish packages
+        env:
+          # setup-node created .npmrc file to publish to npm
+          # https://docs.github.com/en/actions/publishing-packages/publishing-nodejs-packages#publishing-packages-to-the-npm-registry
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          VERSION: ${{ steps.version.outputs.value }}
+          NPM_TAG: ${{ steps.npm_tag.outputs.value }}
+        run: ./.github/scripts/publish.sh -V "$VERSION" -t "$NPM_TAG"
+
+      - name:
+          Creating release tag, don't forget to fill the changelog if necessary!
+        env:
+          VERSION: ${{ steps.version.outputs.value }}
+          GIT_TAG: ${{ inputs.tag }}
+          GITHUB_URL: "https://github.com/liveblocks/liveblocks"
+        run: |
+          git tag "$GIT_TAG" -m "Release $GIT_TAG"
+          git push origin "$GIT_TAG"
+          BRANCH="$(git current-branch)"
+          URL="${GITHUB_URL}/releases/new?tag=$GIT_TAG&target=${BRANCH}&title=$VERSION&body=%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%0A%0APlease%20replace%20this%20block%20with%20the%20contents%20of%20the%20top%20section%20of%3A%0A%0Ahttps%3A%2F%2Fgithub.com%2Fliveblocks%2Fliveblocks%2Fraw%2F${BRANCH}%2FCHANGELOG.md%0A%0A%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20"
+          echo "Done! Please finish it off by writing a nice release entry on GitHub."
+          echo "You can do so by opening this link:"
+          echo "$URL"
+          echo "Also, don't forget to update CHANGELOG.MD"
