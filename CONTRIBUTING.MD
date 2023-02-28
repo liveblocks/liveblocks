@@ -30,8 +30,6 @@ Welcome to our contributing guide! We're excited to have you as a contributor.
 Packages are published on the [npm registry](https://www.npmjs.com/). Each
 release is associated to a github tag.
 
-<!-- TODO: insert how to release using workflow here -->
-
 A version is composed of three numbers: `X.Y.Z` where `X` is the major version,
 `Y` is the minor version and `Z` is the patch version.
 
@@ -48,6 +46,12 @@ Example:
 
 We have some rules in place to make sure that the version numbers and tags are
 correct.
+
+Publishing a package is done by running the
+[**Publish packages**](https://github.com/liveblocks/liveblocks/actions/workflows/publish-packages.yml)
+workflow.
+
+<!-- Insert workflow screenshot here -->
 
 ### Latest releases
 
