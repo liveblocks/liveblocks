@@ -110,7 +110,7 @@ exports[`inferSchema correctly infers the "EMPTY" schema 1`] = `
 
 exports[`inferSchema correctly infers the "EMPTY_KEY" schema 1`] = `
 "type Storage {
-  _____: LiveObject<Value> # FIXME: Field name '' is illegal, must start with a letter
+  _____: LiveObject<Value> # FIXME: Field name '' is illegal, cannot be empty
 }
 
 type Value {
@@ -128,9 +128,9 @@ type TestKey {
 
 exports[`inferSchema correctly infers the "RESERVED_KEY" schema 1`] = `
 "type Storage {
-  _____: LiveObject<LiveblockType> # FIXME: Field name 'liveblocksType' is illegal, cannot be a reserved name
+  _____: LiveObject<Blocktype> # FIXME: Field name 'liveblocksType' is illegal, cannot be a reserved name
 }
 
-type LiveblockType {
+type Blocktype {
 }"
 `;
