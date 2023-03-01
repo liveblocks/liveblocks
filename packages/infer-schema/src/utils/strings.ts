@@ -10,15 +10,15 @@ export function words(str: string): string[] {
   return str.match(WORDS_REGEX) ?? [];
 }
 
+export function capitalize(str: string): string {
+  // \p{CWU} = Changes when uppercased
+  return str.replace(/^\p{CWU}/u, (char) => char.toLocaleUpperCase());
+}
+
 // Changes the casing of a work to be upper case in a unicode aware way.
 // Definitely not perfect, but would work for most languages.
 export function ucFirst(str: string): string {
-  return (
-    str
-      .toLocaleLowerCase()
-      // \p{CWU} = Changes when uppercased
-      .replace(/^\p{CWU}/u, (char) => char.toLocaleUpperCase())
-  );
+  return capitalize(str.toLocaleLowerCase());
 }
 
 export { singular } from "pluralize";

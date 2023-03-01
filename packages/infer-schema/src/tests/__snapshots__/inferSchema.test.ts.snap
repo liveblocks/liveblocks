@@ -128,9 +128,9 @@ type TestKey {
 
 exports[`inferSchema correctly infers the "RESERVED_KEY" schema 1`] = `
 "type Storage {
-  _____: LiveObject<Blocktype> # FIXME: Field name 'liveblocksType' is illegal, cannot be a reserved name
+  _____: LiveObject<BlockType> # FIXME: Field name 'liveblocksType' is illegal, cannot be a reserved name
 }
 
-type Blocktype {
+type BlockType {
 }"
 `;

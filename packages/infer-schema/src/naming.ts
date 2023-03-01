@@ -1,5 +1,5 @@
 import type { ChildContext } from "./inference";
-import { singular, ucFirst, words } from "./utils/strings";
+import { capitalize, singular, ucFirst, words } from "./utils/strings";
 
 export type ScoredNames = Record<string, number>;
 
@@ -63,7 +63,7 @@ function sanitizedRootTypeName(name: string): string {
     return name;
   }
 
-  return ucFirst(name.replace(RESERVED_TYPE_PREFIX_PREFIX_REGEX, ""));
+  return capitalize(name.replace(RESERVED_TYPE_PREFIX_PREFIX_REGEX, ""));
 }
 
 export function orderedRootTypeNames(names: ScoredNames): string[] {
