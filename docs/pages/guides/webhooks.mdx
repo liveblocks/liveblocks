@@ -12,36 +12,23 @@ polling.
 
 ## Why Webhooks
 
-Webhooks connect two applications by letting one subscribe to events created by
-the other. The listening application (yours) subscribes to events, and the event
-emitting application (Liveblocks) submits events via HTTP requests to the
-listening application's URL. Thus, using webhooks with Liveblocks reduces the
-need to poll Liveblocks data as you are now alerted when the data changes.
-Leveraging webhooks makes Liveblocks observable and reduces the need for cron
-jobs to poll Liveblocks data. As a result, your application (the listening
-application) will have less complex logic related to consuming data.
+Webhooks connect applications by allowing one to subscribe to events from the
+other. With Liveblocks, the listening application subscribes to events, while
+Liveblocks submits events via HTTP requests to the listening application's URL.
+This eliminates the need to poll Liveblocks data and makes it observable,
+reducing the complexity of data consumption.
 
-There are many scenarios where webhooks could benefit your application. For
-example, you can use webhooks to monitor when users enter and leave a room.
-After some time has passed, you could create logic that syncs Liveblocks storage
-to your application database if no users are remaining.
-
-You could also use webhooks to display how many users are currently active in a
-room at any given time. The possibilities are endless, and as time progresses,
-we will include more events for your application to subscribe to.
+Webhooks have numerous benefits, such as monitoring user activity in a room and
+syncing Liveblocks storage to your application database. You can also use
+webhooks to display the number of active users in a room. As time goes on, more
+events will be added for your application to subscribe to.
 
 ## What is a webhook?
 
-Webhooks pass information from one application to another instantaneously. A
-webhook is simply an HTTP callback triggered by an event. When an application
-subscribes to an event, and that event occurs, the webhook invokes the HTTP
-callback with a URL you specify (called the webhook endpoint). Webhooks
-streamline the collection of data between two connected services in real-time.
-
-Like an API, webhooks are a mechanism for a client to receive data. The main
-difference between webhooks and APIs is webhooks function as an inverted API. A
-traditional API receives requests and sends responses, whereas a webhook calls
-an endpoint that you provide where we send events.
+A webhook is an HTTP callback that is activated by an event. When an application
+subscribes to an event, the webhook triggers an HTTP callback at the specified
+URL (webhook endpoint), enabling real-time data transfer between your service
+and Liveblocks.
 
 The lifecycle of a webhook:
 
@@ -54,10 +41,6 @@ The lifecycle of a webhook:
 
 Steps 2-4 will be repeated as long as you are subscribed to Liveblocks events.
 
-In this way, webhooks provide a real-time connection between two services. While
-APIs are useful for obtaining data on a scheduled basis, they are not efficient
-for observing changes on a platform that has a high volume of activity.
-
 ## Concepts
 
 ### Messages
@@ -68,16 +51,13 @@ The message request contains headers used for security purposes.
 
 ### Events
 
-An event occurs when a change is made to Liveblocks data. Updates to storage and
-rooms are common events that will trigger a message. Each endpoint you provide
-in the webhooks dashboard listens to all events by default but can be easily
-configured to only listen to a subset by updating the Message Filtering section.
-As a new user, you may opt to listen to all events or subscribe to only the ones
-that are relevant to your use case.
+An event occurs when a change is made to Liveblocks data. Each endpoint you
+provide in the webhooks dashboard listens to all events by default but can be
+easily configured to only listen to a subset by updating the Message Filtering
+section.
 
-Alternatively, you can use the Event Catalog provided as a way to determine
-which events make the most sense. The Event Catalog provides a list of events
-available for subscription, along with their schema.
+The Event Catalog in the webhooks dashboard provides a list of events available
+for subscription, along with their schema.
 
 Events available for use include:
 
@@ -91,9 +71,9 @@ More events will come later such as:
 
 #### UserEnteredEvent
 
-A user enters a room when they connect to a room, which is when this event is
-triggered. The `numActiveUsers` field represents the number of users in the room
-after the user has entered. This event is not throttled.
+When a user connects to a room, an event is triggered indicating that the user
+has entered. The numActiveUsers field shows the number of users in the room
+after the user has joined. This event is not throttled.
 
 ```ts
 // Schema
@@ -166,8 +146,7 @@ const userLeftEvent = {
 #### StorageUpdatedEvent
 
 Storage is updated when a user writes to storage. This event is throttled at
-five minutes and, as such, may not be triggered for every write. The `updatedAt`
-field is the time of the last write.
+five minutes and, as such, may not be triggered for every write.
 
 For example, if a user writes to storage at 1:00pm, the `storageUpdatedEvent`
 event will be triggered shortly after. If the user writes to storage again at
@@ -191,7 +170,7 @@ const storageUpdatedEvent = {
   data: {
     appId: "my-app-id",
     roomId: "my-room-id",
-    updatedAt: "2021-10-06T01:45:56.558Z",
+    updatedAt: "2021-10-06T01:45:56.558Z", // 👈 s time of the last write.
   },
 };
 ```
@@ -255,18 +234,15 @@ const roomDeletedEvent = {
 
 ### Endpoints
 
-An endpoint is a URL whose purpose is to receive event messages and trigger a
-task based on the message payload. The only criterion for creating an endpoint
-is that it must be one that you control.
+An endpoint is a URL designed to receive event messages and initiate a task
+based on the message payload. The sole requirement for creating an endpoint is
+that it must be under your control.
 
 ### Use Cases
 
-Before webhooks, if you wanted to update an internal data based on Liveblocks’
-state, you would need to set up a cron job to poll the
-[rooms API](/liveblocks.io/docs/api-reference/rest-api-endpoints) for recurrent
-updates. With webhooks, you can now subscribe to the events you are interested
-in, and be alerted of the change when it happens. Powerful ways to leverage
-webhooks with Liveblocks include:
+With webhooks, you can now subscribe to the events you are interested in, and be
+alerted of the change when it happens. Powerful ways to leverage webhooks with
+Liveblocks include:
 
 - Storage Synchronization between room(s) and an internal database
 - Alerting the client when a user leaves or enters a room
@@ -276,8 +252,8 @@ webhooks with Liveblocks include:
 
 ### Creating an endpoint
 
-Creating endpoints is simple, and is done from within the webhooks dashboard for
-your project.
+If you would like to create an endpoint to receive webhook events, you will do
+so from within the webhooks dashboard for your project.
 
 Before sending events, you should disable CSRF protection for the endpoint if it
 is enabled by default, and use the steps outlined in the Security Section to
@@ -336,10 +312,10 @@ be delivered roughly 35 minutes and 5 seconds following the first attempt.
 
 ## Security
 
-Webhooks can generate security holes, but verification can mitigate this risk.
-When you verify your webhooks, you protect against man-in-the-middle, CSRF, and
-replay attacks. Because of this, the importance of verification cannot be
-understated and should be considered paramount in your integration.
+While webhooks can create security vulnerabilities, verifying them can help
+mitigate these risks. Verification safeguards against man-in-the-middle, CSRF,
+and replay attacks. Because of this, it is essential to prioritize verification
+in your integration.
 
 There are two ways to verify your webhooks, either manually or by using the
 `@liveblocks/node` package. We highly recommend using the `@liveblocks/node`
