@@ -7,31 +7,18 @@ meta:
     collaborative application."
 ---
 
-## What are Liveblocks DevTools?
-
 Our [DevTools](/devtools) are a browser-based extension that integrates with
 Liveblocks and your local development environment. This allows you to easily
 inspect, visualize, and troubleshoot your collaborative online experiences.
+
+Our DevTools are currently only available if you are on Liveblocks 1.0 or later.
+To view step-by-step instructions on how to upgrade your project to Liveblocks
+1.0, check out our [upgrade guides](/guides/upgrading/).
 
 <Banner title="Live demo video">
 
 If you want to see how this works in video, be sure to check out this
 [live demo](https://www.youtube.com/watch?v=-6Jxejp0iuw) on YouTube.
-
-</Banner>
-
-## How DevTools work
-
-Our DevTools communicate with Liveblocks servers in development mode and
-retrieve the current state of storage and presence (and history is coming
-soon!). The DevTools support one-way data syncs from the Liveblocks client and
-are compiled away in production, similar to other DevTools like React and Redux.
-
-<Banner title="Devtools Compatibility with legacy packages">
-
-Our DevTools are currently only available if you are on Liveblocks 0.19 or
-later. To view step-by-step instructions on how to upgrade your project to
-Liveblocks 0.19, check out our [upgrade guides](/guides/upgrading/).
 
 </Banner>
 
@@ -47,22 +34,61 @@ Our DevTools extension is available for all major web browsers:
 
 ### Features and tips
 
+Within the `Liveblocks` panel, you will see two panes: storage and presence. The
+storage panel represents each object that you have defined in storage as a tree,
+likewise, the presence panel represents each user that is connected to your
+Liveblocks project.
+
+#### Highlighting
+
+When a value in storage changes, the DevTools will highlight the value to
+indicate that it has changed.
+
+<Figure>
+  <video autoPlay loop muted playsInline>
+    <source
+      src="/images/docs/devtools/highlight-changes.mp4"
+      type="video/mp4"
+    />
+  </video>
+</Figure>
+
+#### Search
+
+Storage values are searchable by key and regex.
+
+<Figure>
+  <video autoPlay loop muted playsInline>
+    <source src="/images/docs/devtools/search-regex.mp4" type="video/mp4" />
+  </video>
+</Figure>
+
+#### Hover
+
+Hovering over a value in storage or presence makes an eye icon appear. If
+clicked, it displays the value of that key.
+
+<Figure>
+  <video autoPlay loop muted playsInline>
+    <source src="/images/docs/devtools/expand-tooltip.mp4" type="video/mp4" />
+  </video>
+</Figure>
+
+#### Expand and collapse
+
 - You can quickly expand and collapse nested objects within storage by holding
   the `⌥` key (option on Mac) and clicking on the object.
 - You can expand and collapse objects with one level of depth by using the arrow
   keys or spacebar.
-- When a value in storage changes, the DevTools will highlight the value to
-  indicate that it has changed.
-- Storage values are searchable by key.
-- Hovering over a value in storage makes a tooltip appear. If clicked, it
-  displays the value of that key.
 
-### If DevTools shows an empty page
+<Banner title="Initialization">
 
 If you open Devtools after a Liveblocks client has already been initialized, you
 may see an empty page. This is because the DevTools are only able to retrieve
 the current state of storage and presence. To fix this, you can refresh the page
 or open DevTools before initializing the Liveblocks client.
+
+</Banner>
 
 ## Using DevTools with the Liveblocks starter kit
 
@@ -72,7 +98,7 @@ how to use DevTools.
 <Figure>
   <video autoPlay loop muted playsInline>
     <source
-      src="/images/devtools/liveblocks-devtools-starter-kit.mp4"
+      src="/images/docs/devtools/liveblocks-devtools-starter-kit.mp4"
       type="video/mp4"
     />
   </video>
@@ -98,8 +124,9 @@ Now you can run the starter kit by running `npm run dev` and navigating to
 ## Trying DevTools with a Liveblocks example
 
 All of our examples hosted on Liveblocks.io are available for you to run locally
-from the [examples directory](https://github.com/liveblocks/liveblocks/tree/main/examples) in
-the Liveblocks repo. For testing and reviewing how to use DevTools, we will
+from the
+[examples directory](https://github.com/liveblocks/liveblocks/tree/main/examples)
+in the Liveblocks repo. For testing and reviewing how to use DevTools, we will
 use the
 [Advanced Collaborative Spreadsheet](https://liveblocks.io/examples/collaborative-spreadsheet-advanced/nextjs).
 
@@ -114,14 +141,27 @@ cd examples/nextjs-spreadsheet-advanced/
 npm install
 ```
 
-Then, create the `.env.local` file with your `LIVEBLOCKS_SECRET_KEY`. Obtain your secret key from [here](https://liveblocks.io/dashboard/apikeys).
+Then, create the `.env.local` file with your `LIVEBLOCKS_SECRET_KEY`. Obtain
+your secret key from [here](https://liveblocks.io/dashboard/apikeys).
 
 ```bash file=".env.local"
 LIVEBLOCKS_SECRET_KEY="sk_prod_xxxxxxxxxxxxxxxxxxxxxxxx"
 ```
 
-Open Chrome or your preferred browser and open up the DevTools panel. You should
-see the Liveblocks DevTools extension in the list of extensions. Click on the
-extension to open it up. Now you can run our example by running npm run dev and
-navigating to http://localhost:3000, and you should see the values from the
-spreadsheet examples populating storage.
+Open your browser and open up the developer tools window. Find the newly
+available "Liveblocks" panel there.
+
+<Figure highlight={false}>
+  <Image
+    src="/images/docs/devtools/spreadsheet-example.png"
+    alt="Liveblocks DevTools panel"
+    layout="responsive"
+    width={730}
+    height={504}
+    quality={90}
+  />
+</Figure>
+
+Now you can run our example by running `npm run dev` and navigating to
+`http://localhost:3000`, and you should see the values from the spreadsheet
+examples populating storage.
