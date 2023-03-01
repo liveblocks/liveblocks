@@ -31,7 +31,24 @@ describe("inferSchema", () => {
 
   Object.entries(testCases).forEach(([name, storageData]) => {
     it(`correctly infers the "${name}" schema`, () => {
-      expect(inferSchema(storageData)).toMatchSnapshot();
+      const inferredText = inferSchema(storageData);
+      expect(inferredText).toMatchSnapshot();
+
+      // Now try to parse the inferred text
+      expect(() => {
+        try {
+          parse(inferredText);
+        } catch (e) {
+          if (/not yet supported/.test((e as Error).message)) {
+            // Some language features are not yet supported in the
+            // parser/checker, but will be in the future. If the error message
+            // contains "not supported yet", we'll safely ignore this error and
+            // assume the rest of the generation happened fine.
+            return;
+          }
+          throw e;
+        }
+      }).not.toThrow();
     });
   });
 

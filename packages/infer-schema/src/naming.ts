@@ -9,6 +9,9 @@ const FALLBACK_NAME = "Value";
 // Base name assigned to field name that cannot be represented inside a schema definition
 const INVALID_FIELD_NAME = "_____";
 
+// Matches all "live" prefixes, case-insensitive. e.g. on "LiveLiveTest" it would match "LiveLive"
+const RESERVED_TYPE_PREFIX_PREFIX_REGEX = /^(live)+/i;
+
 export function mergeScoredNames(a: ScoredNames, b: ScoredNames): ScoredNames {
   const keys = new Set([...Object.keys(a), ...Object.keys(b)]);
   const mergedEntries = Array.from(keys.values(), (key) => [
@@ -55,8 +58,38 @@ export function invalidFieldName(n: number): string {
   return `${INVALID_FIELD_NAME}${n + 1}`;
 }
 
-export function orderedNames(names: ScoredNames): string[] {
-  return Object.entries(names)
-    .sort(([, scoreA], [, scoreB]) => scoreB - scoreA)
-    .map(([name]) => name);
+function sanitizedRootTypeName(name: string): string {
+  if (!name.match(RESERVED_TYPE_PREFIX_PREFIX_REGEX)) {
+    return name;
+  }
+
+  return ucFirst(name.replace(RESERVED_TYPE_PREFIX_PREFIX_REGEX, ""));
+}
+
+export function orderedRootTypeNames(names: ScoredNames): string[] {
+  const rootNames = Object.entries(names)
+    // Remove reserved type prefixes from root type names and decrease their score
+    .map(([name, score]) => {
+      const sanitized = sanitizedRootTypeName(name);
+      if (sanitized.length === name.length) {
+        return [name, score] as const;
+      }
+
+      return [
+        sanitized,
+        // This is arbitrary, we might want to tweak this later
+        (score / (name.length - sanitized.length)) * 4,
+      ] as const;
+    })
+    .sort(([, scoreA], [, scoreB]) => {
+      return scoreB - scoreA;
+    })
+    .map(([name]) => name)
+    .filter((name) => name.length > 0);
+
+  if (rootNames.length === 0) {
+    return [FALLBACK_NAME];
+  }
+
+  return rootNames;
 }

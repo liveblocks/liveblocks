@@ -2,7 +2,7 @@ import { AST } from "@liveblocks/schema";
 
 import type { InferredType, MergeContext } from "./inference";
 import { isAtomic } from "./inference";
-import { orderedNames } from "./naming";
+import { orderedRootTypeNames } from "./naming";
 import type { InferredObjectType } from "./object";
 import {
   inferredObjectTypeToAst,
@@ -87,7 +87,7 @@ function applyRootTypeReplacements(
     schema.rootNames.deleteValue(oldType);
 
     // PERF: If the type already had his preferred name, we don't need to re-compute it
-    const preferredName = orderedNames(newType.names)[0];
+    const preferredName = orderedRootTypeNames(newType.names)[0];
     if (currentName !== undefined && currentName === preferredName) {
       schema.rootNames.set(currentName, newType);
     }
@@ -156,7 +156,7 @@ function assignNameOrMerge(schema: InferredSchema, type: InferredObjectType) {
   invariant(schema.rootTypes.has(type), "Root type not part of the schema");
   invariant(!schema.rootNames.hasValue(type), "Root type already has a name");
 
-  const names = orderedNames(type.names);
+  const names = orderedRootTypeNames(type.names);
 
   // TODO: Be smarter about when to merge types, and when to rename them.
   // Might also be worth a try to rename both types e.g. "Data" conflicts with "Data" ->

@@ -21,6 +21,7 @@ export type InferredFields = Record<string, InferredTypeReference>;
 const RESERVED_NAMES = new Set(["liveblocksType"]);
 
 const propertyKeyDecoder = string
+  .refine((key) => key.length > 0, "cannot be empty")
   .refine((key) => !RESERVED_NAMES.has(key), "cannot be a reserved name")
   .refine((key) => key.match(/^[a-zA-Z]/) !== null, "must start with a letter")
   .refine(
