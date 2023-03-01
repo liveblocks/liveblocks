@@ -7,18 +7,19 @@ meta:
     collaborative application."
 ---
 
-Our [DevTools](/devtools) are a browser-based extension that integrates with
+Our [DevTools](/devtools) is a browser-based extension that integrates with
 Liveblocks and your local development environment. This allows you to easily
 inspect, visualize, and troubleshoot your collaborative online experiences.
 
-DevTools are currently only available if you are on Liveblocks 1.0 or later. To
+DevTools is currently only available if you are on Liveblocks 1.0 or later. To
 view step-by-step instructions on how to upgrade your project to Liveblocks 1.0,
 check out our [upgrade guides](/guides/upgrading/).
 
 <Banner title="Live demo video">
 
-If you want to see how this works in video, be sure to check out this
-[live demo](https://www.youtube.com/watch?v=-6Jxejp0iuw) on YouTube.
+If you want to see how this works in action, check out this
+[live demo](https://www.youtube.com/watch?v=-6Jxejp0iuw) recorded by
+[Vincent](https://twitter.com/nvie) on YouTube.
 
 </Banner>
 
@@ -30,7 +31,7 @@ Our DevTools extension is available for all major web browsers:
 - [Firefox](https://addons.mozilla.org/en-US/firefox/addon/liveblocks-devtools/)
 - [Edge](https://microsoftedge.microsoft.com/addons/detail/liveblocks-devtools/hfecmmnilleegmjaegkjjklnjbgadikg)
 
-Within the "Liveblocks" panel, you will see two panes: storage and presence. The
+Within the “Liveblocks” panel, you will see two panes: storage and presence. The
 storage pane represents each object that you have defined in storage as a tree,
 likewise, the presence pane represents each user that is connected to your
 Liveblocks project.
@@ -64,7 +65,7 @@ Once you have completed the Starter Kit prompts and installed the extension, run
 the Starter Kit with `npm run dev` and open your browser and to
 `localhost:3000`. You should authenticate, and then create a new draft document.
 Once you have created a new document, open up the developer tools window. Find
-the newly available "Liveblocks" panel there.
+the newly available “Liveblocks” panel there.
 
 <Figure>
   <video autoPlay loop muted playsInline>
@@ -106,7 +107,7 @@ LIVEBLOCKS_SECRET_KEY="sk_prod_xxxxxxxxxxxxxxxxxxxxxxxx"
 ```
 
 Open your browser and open up the developer tools window. Find the newly
-available "Liveblocks" panel there.
+available “Liveblocks” panel there.
 
 <Figure highlight={false}>
   <Image
@@ -170,8 +171,8 @@ clicked, it displays the value of that key.
 <Banner title="Initialization">
 
 If you open DevTools after a Liveblocks client has already been initialized, you
-may see an empty page. This is because the DevTools are only able to retrieve
-the current state of storage and presence. To fix this, you can refresh the page
-or open DevTools before initializing the Liveblocks client.
+may see an empty page. This is because DevTools is only able to retrieve the
+current state of storage and presence. To fix this, you can refresh the page or
+open DevTools before initializing the Liveblocks client.
 
 </Banner>
