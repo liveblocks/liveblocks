@@ -22,9 +22,7 @@ If you want to see how this works in video, be sure to check out this
 
 </Banner>
 
-## How to use DevTools
-
-### Install the browser extension
+## Install the browser extension
 
 Our DevTools extension is available for all major web browsers:
 
@@ -32,65 +30,14 @@ Our DevTools extension is available for all major web browsers:
 - [Firefox](https://addons.mozilla.org/en-US/firefox/addon/liveblocks-devtools/)
 - [Edge](https://microsoftedge.microsoft.com/addons/detail/liveblocks-devtools/hfecmmnilleegmjaegkjjklnjbgadikg)
 
-### Features and tips
-
 Within the "Liveblocks" panel, you will see two panes: storage and presence. The
 storage pane represents each object that you have defined in storage as a tree,
 likewise, the presence pane represents each user that is connected to your
 Liveblocks project.
 
-#### Highlighting
+## Try DevTools
 
-When a value in storage changes, the DevTools will highlight the value to
-indicate that it has changed.
-
-<Figure>
-  <video autoPlay loop muted playsInline>
-    <source
-      src="/images/docs/devtools/highlight-changes.mp4"
-      type="video/mp4"
-    />
-  </video>
-</Figure>
-
-#### Search
-
-Storage values are searchable by key and regex.
-
-<Figure>
-  <video autoPlay loop muted playsInline>
-    <source src="/images/docs/devtools/search-regex.mp4" type="video/mp4" />
-  </video>
-</Figure>
-
-#### Hover
-
-Hovering over a value in storage or presence makes an eye icon appear. If
-clicked, it displays the value of that key.
-
-<Figure>
-  <video autoPlay loop muted playsInline>
-    <source src="/images/docs/devtools/expand-tooltip.mp4" type="video/mp4" />
-  </video>
-</Figure>
-
-#### Expand and collapse
-
-- You can expand and collapse objects with one level of depth by using the arrow
-  keys or spacebar.
-- You can quickly expand and collapse nested objects within storage by holding
-  the `⌥` key (option on Mac) and clicking on the object.
-
-<Banner title="Initialization">
-
-If you open DevTools after a Liveblocks client has already been initialized, you
-may see an empty page. This is because the DevTools are only able to retrieve
-the current state of storage and presence. To fix this, you can refresh the page
-or open DevTools before initializing the Liveblocks client.
-
-</Banner>
-
-## Using DevTools with our Starter Kit
+### Using DevTools with our Starter Kit
 
 The [Liveblocks Starter Kit](/starter-kit) is a great way to get started with
 Liveblocks and learn how to use DevTools.
@@ -128,7 +75,7 @@ the newly available "Liveblocks" panel there.
   </video>
 </Figure>
 
-## Trying DevTools with a Liveblocks example
+### Using DevTools with an example from our gallery
 
 All of our examples hosted on Liveblocks.io are available for you to run locally
 from the
@@ -148,7 +95,7 @@ cd liveblocks/examples/nextjs-collaborative-spreadsheet-advanced
 ```
 
 ```bash
-$ npm install
+npm install
 ```
 
 Then, create the `.env.local` file with your `LIVEBLOCKS_SECRET_KEY`. Obtain
@@ -175,3 +122,56 @@ available "Liveblocks" panel there.
 Now you can run our example by running `npm run dev` and navigating to
 `http://localhost:3000`, and you should see the values from the spreadsheet
 examples populating storage.
+
+## Features and tips
+
+### Highlighting
+
+When a value in storage changes, the DevTools will highlight the value to
+indicate that it has changed.
+
+<Figure>
+  <video autoPlay loop muted playsInline>
+    <source
+      src="/images/docs/devtools/highlight-changes.mp4"
+      type="video/mp4"
+    />
+  </video>
+</Figure>
+
+### Search
+
+Storage values are searchable by key and regex.
+
+<Figure>
+  <video autoPlay loop muted playsInline>
+    <source src="/images/docs/devtools/search-regex.mp4" type="video/mp4" />
+  </video>
+</Figure>
+
+### Hover
+
+Hovering over a value in storage or presence makes an eye icon appear. If
+clicked, it displays the value of that key.
+
+<Figure>
+  <video autoPlay loop muted playsInline>
+    <source src="/images/docs/devtools/expand-tooltip.mp4" type="video/mp4" />
+  </video>
+</Figure>
+
+### Expand and collapse
+
+- You can expand and collapse objects with one level of depth by using the arrow
+  keys or spacebar.
+- You can quickly expand and collapse nested objects within storage by holding
+  the `⌥` key (option on Mac) and clicking on the object.
+
+<Banner title="Initialization">
+
+If you open DevTools after a Liveblocks client has already been initialized, you
+may see an empty page. This is because the DevTools are only able to retrieve
+the current state of storage and presence. To fix this, you can refresh the page
+or open DevTools before initializing the Liveblocks client.
+
+</Banner>
