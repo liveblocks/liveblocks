@@ -10,6 +10,7 @@ exports[`checker large document (snapshot test) 1`] = `
         "fields": [
           {
             "_kind": "FieldDef",
+            "leadingComment": null,
             "name": {
               "_kind": "Identifier",
               "name": "r",
@@ -23,6 +24,7 @@ exports[`checker large document (snapshot test) 1`] = `
               56,
               62,
             ],
+            "trailingComment": null,
             "type": {
               "_kind": "IntType",
               "range": [
@@ -33,6 +35,7 @@ exports[`checker large document (snapshot test) 1`] = `
           },
           {
             "_kind": "FieldDef",
+            "leadingComment": null,
             "name": {
               "_kind": "Identifier",
               "name": "g",
@@ -46,6 +49,7 @@ exports[`checker large document (snapshot test) 1`] = `
               64,
               70,
             ],
+            "trailingComment": null,
             "type": {
               "_kind": "IntType",
               "range": [
@@ -56,6 +60,7 @@ exports[`checker large document (snapshot test) 1`] = `
           },
           {
             "_kind": "FieldDef",
+            "leadingComment": null,
             "name": {
               "_kind": "Identifier",
               "name": "b",
@@ -69,6 +74,7 @@ exports[`checker large document (snapshot test) 1`] = `
               72,
               78,
             ],
+            "trailingComment": null,
             "type": {
               "_kind": "IntType",
               "range": [
@@ -79,6 +85,7 @@ exports[`checker large document (snapshot test) 1`] = `
           },
         ],
         "isStatic": true,
+        "leadingComment": null,
         "name": {
           "_kind": "TypeName",
           "name": "RGB",
@@ -97,6 +104,7 @@ exports[`checker large document (snapshot test) 1`] = `
         "fields": [
           {
             "_kind": "FieldDef",
+            "leadingComment": null,
             "name": {
               "_kind": "Identifier",
               "name": "type",
@@ -110,6 +118,7 @@ exports[`checker large document (snapshot test) 1`] = `
               108,
               145,
             ],
+            "trailingComment": null,
             "type": {
               "_kind": "StringType",
               "range": [
@@ -120,6 +129,7 @@ exports[`checker large document (snapshot test) 1`] = `
           },
           {
             "_kind": "FieldDef",
+            "leadingComment": null,
             "name": {
               "_kind": "Identifier",
               "name": "x",
@@ -133,6 +143,7 @@ exports[`checker large document (snapshot test) 1`] = `
               154,
               160,
             ],
+            "trailingComment": null,
             "type": {
               "_kind": "IntType",
               "range": [
@@ -143,6 +154,7 @@ exports[`checker large document (snapshot test) 1`] = `
           },
           {
             "_kind": "FieldDef",
+            "leadingComment": null,
             "name": {
               "_kind": "Identifier",
               "name": "y",
@@ -156,6 +168,7 @@ exports[`checker large document (snapshot test) 1`] = `
               169,
               175,
             ],
+            "trailingComment": null,
             "type": {
               "_kind": "IntType",
               "range": [
@@ -166,6 +179,7 @@ exports[`checker large document (snapshot test) 1`] = `
           },
           {
             "_kind": "FieldDef",
+            "leadingComment": null,
             "name": {
               "_kind": "Identifier",
               "name": "width",
@@ -179,6 +193,7 @@ exports[`checker large document (snapshot test) 1`] = `
               184,
               194,
             ],
+            "trailingComment": null,
             "type": {
               "_kind": "IntType",
               "range": [
@@ -189,6 +204,7 @@ exports[`checker large document (snapshot test) 1`] = `
           },
           {
             "_kind": "FieldDef",
+            "leadingComment": null,
             "name": {
               "_kind": "Identifier",
               "name": "height",
@@ -202,6 +218,7 @@ exports[`checker large document (snapshot test) 1`] = `
               203,
               214,
             ],
+            "trailingComment": null,
             "type": {
               "_kind": "IntType",
               "range": [
@@ -212,6 +229,7 @@ exports[`checker large document (snapshot test) 1`] = `
           },
           {
             "_kind": "FieldDef",
+            "leadingComment": null,
             "name": {
               "_kind": "Identifier",
               "name": "fill",
@@ -225,6 +243,7 @@ exports[`checker large document (snapshot test) 1`] = `
               223,
               233,
             ],
+            "trailingComment": null,
             "type": {
               "_kind": "TypeRef",
               "asLiveObject": false,
@@ -244,6 +263,7 @@ exports[`checker large document (snapshot test) 1`] = `
           },
           {
             "_kind": "FieldDef",
+            "leadingComment": null,
             "name": {
               "_kind": "Identifier",
               "name": "stroke",
@@ -257,6 +277,7 @@ exports[`checker large document (snapshot test) 1`] = `
               242,
               254,
             ],
+            "trailingComment": null,
             "type": {
               "_kind": "TypeRef",
               "asLiveObject": false,
@@ -276,6 +297,7 @@ exports[`checker large document (snapshot test) 1`] = `
           },
         ],
         "isStatic": false,
+        "leadingComment": null,
         "name": {
           "_kind": "TypeName",
           "name": "Rect",
@@ -294,6 +316,7 @@ exports[`checker large document (snapshot test) 1`] = `
         "fields": [
           {
             "_kind": "FieldDef",
+            "leadingComment": null,
             "name": {
               "_kind": "Identifier",
               "name": "type",
@@ -307,6 +330,7 @@ exports[`checker large document (snapshot test) 1`] = `
               292,
               331,
             ],
+            "trailingComment": null,
             "type": {
               "_kind": "StringType",
               "range": [
@@ -317,6 +341,7 @@ exports[`checker large document (snapshot test) 1`] = `
           },
           {
             "_kind": "FieldDef",
+            "leadingComment": null,
             "name": {
               "_kind": "Identifier",
               "name": "cx",
@@ -330,6 +355,7 @@ exports[`checker large document (snapshot test) 1`] = `
               340,
               347,
             ],
+            "trailingComment": null,
             "type": {
               "_kind": "IntType",
               "range": [
@@ -340,6 +366,7 @@ exports[`checker large document (snapshot test) 1`] = `
           },
           {
             "_kind": "FieldDef",
+            "leadingComment": null,
             "name": {
               "_kind": "Identifier",
               "name": "cy",
@@ -353,6 +380,7 @@ exports[`checker large document (snapshot test) 1`] = `
               356,
               363,
             ],
+            "trailingComment": null,
             "type": {
               "_kind": "IntType",
               "range": [
@@ -363,6 +391,7 @@ exports[`checker large document (snapshot test) 1`] = `
           },
           {
             "_kind": "FieldDef",
+            "leadingComment": null,
             "name": {
               "_kind": "Identifier",
               "name": "radius",
@@ -376,6 +405,7 @@ exports[`checker large document (snapshot test) 1`] = `
               372,
               383,
             ],
+            "trailingComment": null,
             "type": {
               "_kind": "IntType",
               "range": [
@@ -386,6 +416,7 @@ exports[`checker large document (snapshot test) 1`] = `
           },
           {
             "_kind": "FieldDef",
+            "leadingComment": null,
             "name": {
               "_kind": "Identifier",
               "name": "fill",
@@ -399,6 +430,7 @@ exports[`checker large document (snapshot test) 1`] = `
               392,
               404,
             ],
+            "trailingComment": null,
             "type": {
               "_kind": "TypeRef",
               "asLiveObject": false,
@@ -418,6 +450,7 @@ exports[`checker large document (snapshot test) 1`] = `
           },
           {
             "_kind": "FieldDef",
+            "leadingComment": null,
             "name": {
               "_kind": "Identifier",
               "name": "stroke",
@@ -431,6 +464,7 @@ exports[`checker large document (snapshot test) 1`] = `
               413,
               425,
             ],
+            "trailingComment": null,
             "type": {
               "_kind": "TypeRef",
               "asLiveObject": false,
@@ -450,6 +484,7 @@ exports[`checker large document (snapshot test) 1`] = `
           },
         ],
         "isStatic": false,
+        "leadingComment": null,
         "name": {
           "_kind": "TypeName",
           "name": "Circle",
@@ -468,6 +503,7 @@ exports[`checker large document (snapshot test) 1`] = `
         "fields": [
           {
             "_kind": "FieldDef",
+            "leadingComment": null,
             "name": {
               "_kind": "Identifier",
               "name": "mycircle",
@@ -481,6 +517,7 @@ exports[`checker large document (snapshot test) 1`] = `
               499,
               527,
             ],
+            "trailingComment": null,
             "type": {
               "_kind": "TypeRef",
               "asLiveObject": true,
@@ -500,6 +537,7 @@ exports[`checker large document (snapshot test) 1`] = `
           },
           {
             "_kind": "FieldDef",
+            "leadingComment": null,
             "name": {
               "_kind": "Identifier",
               "name": "myrect",
@@ -513,6 +551,7 @@ exports[`checker large document (snapshot test) 1`] = `
               536,
               560,
             ],
+            "trailingComment": null,
             "type": {
               "_kind": "TypeRef",
               "asLiveObject": true,
@@ -532,6 +571,7 @@ exports[`checker large document (snapshot test) 1`] = `
           },
         ],
         "isStatic": false,
+        "leadingComment": null,
         "name": {
           "_kind": "TypeName",
           "name": "Storage",
