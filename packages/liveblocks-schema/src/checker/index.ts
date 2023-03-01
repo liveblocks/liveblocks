@@ -508,6 +508,11 @@ function decideStaticOrLive(doc: Document, context: Context): void {
  */
 export type CheckedDocument = {
   /**
+   * Direct access to the raw AST
+   */
+  readonly ast: Document;
+
+  /**
    * Direct access to the root "Storage" definition.
    */
   readonly root: ObjectTypeDefinition;
@@ -574,6 +579,7 @@ export function check(
   }
 
   return {
+    ast: doc,
     root: context.registeredTypes.get("Storage") as ObjectTypeDefinition,
     definitions: Array.from(context.registeredTypes.values()),
     getDefinition(typeRef: TypeRef): Definition {

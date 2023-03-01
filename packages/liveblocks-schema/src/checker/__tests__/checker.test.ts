@@ -79,8 +79,10 @@ describe("checker", () => {
         ],
         range,
       },
+
+      ast: expect.any(Object),
       definitions: expect.any(Array),
-      getDefinition: expect.anything(),
+      getDefinition: expect.any(Function),
     });
 
     const x = output.root.fields[0].type as AST.TypeRef;

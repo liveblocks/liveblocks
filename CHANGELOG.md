@@ -11,6 +11,7 @@
   allowed. (Consequence of now having `isStatic` at the object type definition
   level.)
 - Expose all Definitions in `CheckedDocument`, not just the root
+- Expose access to the raw AST via `CheckedDocument.ast`
 - Fix: disallow `liveblocksType` as an identifier
 - Fix: some ugly error messages making incorrect suggestions
 - Fix: tweak error message for circular references
