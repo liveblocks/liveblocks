@@ -72,7 +72,7 @@ This will download the example and ask permission to open your browser, enabling
 - Copy your **public** key from the [dashboard](https://liveblocks.io/dashboard/apikeys)
 - Replace `pk_YOUR_PUBLIC_KEY` in [`src/App.vue`](./src/App.vue) with your **public** key
 - Push a commit to update the Vercel demo with the key
-- Run `npm run build` and open `http://localhost:8000` in your browser
+- Run `npm run serve` and open `http://localhost:8000` in your browser
 
 </details>
 

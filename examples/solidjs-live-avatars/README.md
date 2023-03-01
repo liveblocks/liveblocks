@@ -73,7 +73,7 @@ This will download the example and ask permission to open your browser, enabling
 - Copy your **public** key from the [dashboard](https://liveblocks.io/dashboard/apikeys)
 - Replace `pk_YOUR_PUBLIC_KEY` in [`src/index.jsx`](./src/index.jsx) with your **public** key
 - Push a commit to update the Vercel demo with the key
-- Run `npm run build` and open `http://localhost:3000` in your browser
+- Run `npm run dev` and open `http://localhost:3000` in your browser
 
 </details>
 
