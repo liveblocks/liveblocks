@@ -1,4 +1,4 @@
-import { inferLsonFields } from "./fields";
+import { inferLsonFields } from "./field";
 import type { InferredObjectType } from "./object";
 import {
   inferObjectType,
@@ -12,6 +12,7 @@ import {
   isInferredScalarType,
   mergeInferredScalarTypes,
 } from "./scalar";
+import { once } from "./utils/once";
 import type { PartialBy } from "./utils/types";
 
 type FieldChildContext = {
@@ -20,7 +21,6 @@ type FieldChildContext = {
 };
 
 export type ChildContext = FieldChildContext; // TODO: Expand for union, list, ...
-
 export type InferredType = InferredScalarType | InferredObjectType;
 
 export function isAtomic(type: InferredType): boolean {
@@ -61,18 +61,69 @@ export function inferType(value: PlainLson, ctx: ChildContext): InferredType {
   throw new Error("Not implemented");
 }
 
-export function mergeInferredTypes(
+export type MergeContext = {
+  mergeFns: Map<
+    InferredType,
+    Map<InferredType, () => InferredType | undefined>
+  >;
+  typeReplacements: Map<InferredType, InferredType>;
+};
+
+function currentType(type: InferredType, ctx: MergeContext): InferredType {
+  let current = type;
+  while (true) {
+    const next = ctx.typeReplacements.get(current);
+    if (!next) {
+      return current;
+    }
+
+    current = next;
+  }
+}
+
+function plainMergeInferredTypes(
   a: InferredType,
-  b: InferredType
+  b: InferredType,
+  ctx: MergeContext
 ): InferredType | undefined {
   if (isInferredScalarType(a) && isInferredScalarType(b)) {
     return mergeInferredScalarTypes(a, b);
   }
 
   if (isInferredObjectType(a) && isInferredObjectType(b)) {
-    return mergeInferredObjectTypes(a, b);
+    return mergeInferredObjectTypes(a, b, ctx);
   }
 
   // TODO: Add missing types
   return undefined;
+}
+
+export function mergeInferredTypes(
+  a: InferredType,
+  b: InferredType,
+  ctx: MergeContext
+): InferredType | undefined {
+  const currentA = currentType(a, ctx);
+  const currentB = currentType(b, ctx);
+
+  if (currentA === currentB) {
+    return currentA;
+  }
+
+  // merge(a, b) = merge(b, a), so we can use both
+  const cached =
+    ctx.mergeFns.get(currentA)?.get(currentB) ??
+    ctx.mergeFns.get(currentB)?.get(currentA);
+
+  if (cached) {
+    return cached();
+  }
+
+  const merge = once(() => plainMergeInferredTypes(currentA, currentB, ctx));
+
+  const current = ctx.mergeFns.get(currentA) ?? new Map();
+  current.set(currentB, merge);
+  ctx.mergeFns.set(currentA, current);
+
+  return merge();
 }

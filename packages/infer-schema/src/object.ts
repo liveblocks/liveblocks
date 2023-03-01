@@ -1,12 +1,12 @@
 import { AST } from "@liveblocks/schema";
 
-import type { InferredFields } from "./fields";
+import type { InferredFields } from "./field";
 import {
   inferLsonFields,
   inferredFieldsToAst,
   mergeInferredFields,
-} from "./fields";
-import type { ChildContext, InferredType } from "./inference";
+} from "./field";
+import type { ChildContext, InferredType, MergeContext } from "./inference";
 import type { ScoredNames } from "./naming";
 import { generateNames, mergeScoredNames } from "./naming";
 import type { JsonObject, PlainLsonObject } from "./plainLson";
@@ -27,14 +27,15 @@ export function inferObjectType(
   value: JsonObject | PlainLsonObject,
   ctx: ChildContext
 ): InferredObjectType {
+  const isLive = value.liveblocksType === "LiveObject";
   const inferred: PartialBy<InferredObjectType, "fields"> = {
     names: generateNames(ctx),
     type: "Object",
-    live: value.liveblocksType === "LiveObject",
+    live: isLive,
     atomic: false,
   };
 
-  const data = value.liveblocksType === "LiveObject" ? value.data : value;
+  const data = isLive ? value.data : value;
   inferred.fields = inferLsonFields(data, {
     ...ctx,
     parent: inferred,
@@ -45,7 +46,8 @@ export function inferObjectType(
 
 export function mergeInferredObjectTypes(
   a: InferredObjectType,
-  b: InferredObjectType
+  b: InferredObjectType,
+  ctx: MergeContext
 ): InferredObjectType | undefined {
   // Cannot merge live and non-live objects
   if (a.live !== b.live) {
@@ -57,18 +59,23 @@ export function mergeInferredObjectTypes(
     return undefined;
   }
 
-  const mergedFields = mergeInferredFields(a.fields, b.fields);
+  const mergedFields = mergeInferredFields(a.fields, b.fields, ctx);
   if (!mergedFields) {
     return undefined;
   }
 
-  return {
+  const merged: InferredObjectType = {
     live: a.live,
     names: mergeScoredNames(a.names, b.names),
     type: "Object",
     fields: mergedFields,
     atomic: false,
   };
+
+  ctx.typeReplacements.set(a, merged);
+  ctx.typeReplacements.set(b, merged);
+
+  return merged;
 }
 
 export function inferredObjectTypeToAst(
@@ -81,6 +88,7 @@ export function inferredObjectTypeToAst(
   return AST.objectTypeDefinition(
     AST.typeName(name),
     inferredFieldsToAst(inferred.fields, schema),
+    null,
     !inferred.live
   );
 }

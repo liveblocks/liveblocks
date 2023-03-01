@@ -38,9 +38,11 @@ Document:
 
 
 FieldDef:
-    name      Identifier
-    optional  boolean
-    type      @TypeExpr
+    name             Identifier
+    optional         boolean
+    type             @TypeExpr
+    leadingComment   string?
+    trailingComment  string?
 
 
 # e.g. "Circle" or "Person" -- used in type positions
@@ -60,8 +62,9 @@ ObjectLiteralExpr:
 
 # e.g. type Circle { cx: Number; cy: Number; r: Float }
 ObjectTypeDefinition:
-    name    TypeName
-    fields  FieldDef*
+    name            TypeName
+    fields          FieldDef*
+    leadingComment  string?
 
     # True whether this type is only referenced in JSON contexts only. False
     # when this type definition is only ever referenced by a "LiveObject<>"
