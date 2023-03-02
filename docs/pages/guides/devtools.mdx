@@ -62,8 +62,9 @@ For additional information on how to use the Starter Kit, see the
 [Starter Kit guide](docs/guides/nextjs-starter-kit).
 
 Once you have completed the Starter Kit prompts and installed the extension, run
-the Starter Kit with `npm run dev` and open your browser to `localhost:3000`. You should authenticate, and then create a new draft document.
-Once you have created a new document, open up the developer tools window. Find
+the Starter Kit with `npm run dev` and open your browser to `localhost:3000`. You
+should authenticate, and then create a new draft document. Once you have created a
+ new document, open up the developer tools window. Find
 the newly available “Liveblocks” panel there.
 
 <Figure>
@@ -84,29 +85,15 @@ in the Liveblocks repo. For testing and reviewing how to use our DevTools, we
 will use the
 [Advanced Collaborative Spreadsheet](https://liveblocks.io/examples/collaborative-spreadsheet-advanced/nextjs).
 
-To clone the Git repository and run the example, run the following commands:
+To download this example, run the following command, and follow the guided prompts to create
+ your project:
 
 ```bash
-git clone https://github.com/liveblocks/liveblocks.git
+npx create-liveblocks-app@latest --example nextjs-spreadsheet-advanced
 ```
 
-```bash
-cd liveblocks/examples/nextjs-collaborative-spreadsheet-advanced
-```
-
-```bash
-npm install
-```
-
-Then, create the `.env.local` file with your `LIVEBLOCKS_SECRET_KEY`. Obtain
-your secret key from [here](https://liveblocks.io/dashboard/apikeys).
-
-```bash file=".env.local"
-LIVEBLOCKS_SECRET_KEY="sk_prod_xxxxxxxxxxxxxxxxxxxxxxxx"
-```
-
-Open your browser and open up the developer tools window. Find the newly
-available “Liveblocks” panel there.
+Once you have completed the prompts and installed the extension, run
+the example with `npm run dev` and open your browser to `localhost:3000`.
 
 <Figure highlight={false}>
   <Image
@@ -119,8 +106,8 @@ available “Liveblocks” panel there.
   />
 </Figure>
 
-Now you can run our example by running `npm run dev` and navigating to
-`http://localhost:3000`, and you should see the values from the spreadsheet
+Open your browser and open up the developer tools window. Find the newly
+available “Liveblocks” panel there, and you should see the values from the spreadsheet
 examples populating storage.
 
 ## Features and tips
