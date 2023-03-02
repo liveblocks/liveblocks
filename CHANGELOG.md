@@ -12,8 +12,7 @@ to the console in non-production builds to ease debugging.
 
 # v1.0.0
 
-This major release marks the maturity of Liveblocks. There are no upgrade
-instructions for 1.0.0.
+This major release marks the maturity of Liveblocks. For upgrade instructions, see the [1.0 upgrade guide](https://liveblocks.io/docs/guides/upgrading/1.0).
 
 ## `@liveblocks/node`
 
