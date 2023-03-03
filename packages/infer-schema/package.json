@@ -4,6 +4,10 @@
   "description": "Helper to infer a Liveblocks schema from plain LSON data",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "files": [
+    "dist/**",
+    "README.md"
+  ],
   "scripts": {
     "build": "tsup",
     "lint": "eslint src/",
