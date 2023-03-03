@@ -61,9 +61,7 @@ to help you get started.
 
 ## Releases
 
-See the [latest changes](https://github.com/liveblocks/liveblocks/releases) or
-learn more about
-[upcoming releases](https://github.com/liveblocks/liveblocks/milestones).
+See the latest changes [here](https://github.com/liveblocks/liveblocks/releases).
 
 ## Community
 

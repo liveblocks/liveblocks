@@ -130,6 +130,10 @@
             "path": "/guides/schema-validation/syntax"
           }
         ]
+      },
+      {
+        "title": "DevTools",
+        "path": "/guides/devtools"
       }
     ]
   },
