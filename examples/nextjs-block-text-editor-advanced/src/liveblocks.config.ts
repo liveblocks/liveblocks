@@ -7,10 +7,12 @@ export const client = createClient({
 });
 
 export const {
-  RoomProvider,
-  useOthers,
-  useRoom,
-  useList,
-  useSelf,
-  useUpdateMyPresence,
+  suspense: {
+    RoomProvider,
+    useOthers,
+    useRoom,
+    useList,
+    useSelf,
+    useUpdateMyPresence,
+  },
 } = createRoomContext<Presence, Storage, UserMeta>(client);

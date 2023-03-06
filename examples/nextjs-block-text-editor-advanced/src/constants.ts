@@ -1,3 +1,4 @@
+import { Text } from "slate";
 import { Format } from "./types";
 
 export const PROSE_CONTAINER_ID = "prose_container";
@@ -20,3 +21,10 @@ export const HOTKEYS: Record<string, Format> = {
   "mod+u": "underline",
   "mod+s": "strikeThrough",
 };
+
+export const STYLE_MARKS: Array<keyof Text> = [
+  "bold",
+  "italic",
+  "underline",
+  "strikeThrough",
+];

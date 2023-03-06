@@ -1,12 +1,16 @@
 import { LiveList } from "@liveblocks/client";
+import { ClientSideSuspense } from "@liveblocks/react";
+import { slateRootToLiveRoot } from "@liveblocks/slate";
 import { nanoid } from "nanoid";
 import { useRouter } from "next/router";
-import { useMemo } from "react";
+import { Suspense, useMemo } from "react";
+import { Descendant } from "slate";
+import { Loading } from "../src/components";
 import Editor from "../src/Editor";
 import { RoomProvider } from "../src/liveblocks.config";
-import { BlockType, CustomElement } from "../src/types";
+import { BlockType } from "../src/types";
 
-const initialValue: CustomElement[] = [
+const initialValue: Descendant[] = [
   {
     id: nanoid(),
     type: BlockType.Title,
@@ -148,17 +152,21 @@ export default function Page() {
   const roomId = useOverrideRoomId("nextjs-block-text-editor-advanced");
 
   return (
-    <RoomProvider
-      id={roomId}
-      initialStorage={{
-        blocks: new LiveList(initialValue),
-      }}
-      initialPresence={{
-        selectedBlockId: null,
-      }}
-    >
-      <Editor />
-    </RoomProvider>
+    <ClientSideSuspense fallback={<Loading />}>
+      {() => (
+        <RoomProvider
+          id={roomId}
+          initialStorage={{
+            slateRoot: slateRootToLiveRoot(initialValue),
+          }}
+          initialPresence={{
+            selectedBlockId: null,
+          }}
+        >
+          <Editor />
+        </RoomProvider>
+      )}
+    </ClientSideSuspense>
   );
 }
 

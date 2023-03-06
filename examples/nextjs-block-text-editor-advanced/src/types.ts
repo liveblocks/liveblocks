@@ -1,5 +1,5 @@
-import { LiveList } from "@liveblocks/client";
-import { BaseEditor, BaseOperation } from "slate";
+import type { LiveRoot, SlatePresence } from "@liveblocks/slate";
+import { BaseEditor, BaseElement, BaseOperation } from "slate";
 import { ReactEditor } from "slate-react";
 
 declare module "slate" {
@@ -11,12 +11,10 @@ declare module "slate" {
   }
 }
 
-export type Presence = {
-  selectedBlockId: string | null;
-};
+export type Presence = SlatePresence<"selection">;
 
 export type Storage = {
-  blocks: LiveList<CustomElement>;
+  slateRoot: LiveRoot;
 };
 
 export type UserMeta = {
@@ -50,59 +48,57 @@ export type TextBlock =
   | BlockType.BulletedList
   | BlockType.ToDo;
 
-export type BlockElement = {
-  id: string;
-  children: CustomText[];
+export type BlockMetadata = {
   createdBy?: number;
 };
 
-export type ParagraphElement = BlockElement & {
+export type ParagraphElement = BaseElement & {
   type: BlockType.Paragraph;
 };
 
-export type HeadingElement = BlockElement & {
+export type HeadingElement = BaseElement & {
   type: BlockType.H1 | BlockType.H2 | BlockType.H3;
 };
 
-export type ListElement = BlockElement & {
+export type ListElement = BaseElement & {
   type: BlockType.BulletedList;
 };
 
-export type ToDoElement = BlockElement & {
+export type ToDoElement = BaseElement & {
   type: BlockType.ToDo;
   checked: boolean;
 };
 
-export type ImageElement = BlockElement & {
+export type ImageElement = BaseElement & {
   type: BlockType.Image;
   url: string | null;
   alt: string | null;
-  children: [{ text: "" }];
 };
 
-export type VideoElement = BlockElement & {
+export type VideoElement = BaseElement & {
   type: BlockType.Video;
   url: string | null;
-  children: [{ text: "" }];
 };
 
-export type CodeSandboxElement = BlockElement & {
+export type CodeSandboxElement = BaseElement & {
   type: BlockType.CodeSandbox;
   url: string | null;
-  children: [{ text: "" }];
 };
 
-export type FigmaElement = BlockElement & {
+export type FigmaElement = BaseElement & {
   type: BlockType.Figma;
   url: string | null;
-  children: [{ text: "" }];
 };
 
-export type TitleElement = BlockElement & {
+export type TitleElement = BaseElement & {
   type: BlockType.Title;
 };
 
-export type CustomElement =
+export type ElementWithId = BaseElement & {
+  id: string;
+};
+
+export type CustomElement = (
   | TitleElement
   | ParagraphElement
   | HeadingElement
@@ -111,7 +107,10 @@ export type CustomElement =
   | ImageElement
   | VideoElement
   | CodeSandboxElement
-  | FigmaElement;
+  | FigmaElement
+) &
+  (ElementWithId | {}) &
+  BlockMetadata;
 
 export type CustomText = {
   text: string;
