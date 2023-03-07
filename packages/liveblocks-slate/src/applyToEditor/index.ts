@@ -1,6 +1,6 @@
 import type { StorageUpdate } from "@liveblocks/client";
 import { assert, assertNever, nn } from "@liveblocks/core";
-import { Editor, Node, Operation, Text } from "slate";
+import { Editor, Node, Text } from "slate";
 import { FORBIDDEN_SET_PROPERTIES } from "../constants";
 import type { LiveblocksEditor } from "../plugins/liveblocks/liveblocksEditor";
 import { isLiveElement, isLiveRoot, isLiveText, LiveRoot } from "../types";
@@ -82,8 +82,6 @@ function applyLiveObjectUpdate(
   const path = getSlatePath(liveRoot, liveNode);
   const slateNode = Node.get(editor, path);
 
-  const ops: Operation[] = [];
-
   let properties: Partial<Node> = {};
   let newProperties: Partial<Node> = {};
   Object.keys(updates).forEach((key) => {
@@ -93,7 +91,9 @@ function applyLiveObjectUpdate(
         "Mismatch between live and slate node type"
       );
 
-      ops.push(...getDiffTextOps(path, slateNode.text, liveNode.get("text")));
+      getDiffTextOps(path, slateNode.text, liveNode.get("text")).forEach((op) =>
+        editor.apply(op)
+      );
       return;
     }
 
@@ -118,10 +118,8 @@ function applyLiveObjectUpdate(
   });
 
   if (Object.keys(newProperties).length || Object.keys(properties).length) {
-    ops.push({ type: "set_node", properties, newProperties, path });
+    editor.apply({ type: "set_node", properties, newProperties, path });
   }
-
-  return ops;
 }
 
 function applyStorageUpdate(

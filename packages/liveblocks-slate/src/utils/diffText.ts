@@ -31,7 +31,7 @@ function getDiffEnd(prev: string, next: string, max: number): number | null {
   return null;
 }
 
-function getDiffOffsets(prev: string, next: string): TextRange | null {
+export function getDiffOffsets(prev: string, next: string): TextRange | null {
   if (prev === next) return null;
   const start = getDiffStart(prev, next);
   if (start === null) return null;

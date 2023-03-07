@@ -1,111 +1,148 @@
-import { Operation, Path, Point } from "slate";
+import { nn } from "@liveblocks/core";
+import { Editor, Operation, Path, Point, Range, Transforms } from "slate";
 import { LiveblocksEditor } from "../liveblocks/liveblocksEditor";
 import { HistoryEditor } from "./historyEditor";
+import { selectionFromUpdate } from "./selectionFromUpdate";
 import { EDITOR_TO_LAST_TEXT_EDIT } from "./weakMaps";
 
 function shouldMerge(editor: HistoryEditor, op: Operation) {
-	const lastTextEdit = EDITOR_TO_LAST_TEXT_EDIT.get(editor);
-	if (!lastTextEdit) {
-		return false;
-	}
+  const lastTextEdit = EDITOR_TO_LAST_TEXT_EDIT.get(editor);
+  if (!lastTextEdit) {
+    return false;
+  }
 
-	const {
-		type,
-		position: { path, offset },
-	} = lastTextEdit;
+  const {
+    type,
+    position: { path, offset },
+  } = lastTextEdit;
 
-	if (type !== op.type || !Path.equals(path, op.path)) {
-		return false;
-	}
+  if (type !== op.type || !Path.equals(path, op.path)) {
+    return false;
+  }
 
-	return (
-		(op.type === "insert_text" && offset === op.offset) ||
-		(op.type === "remove_text" && offset === op.offset + op.text.length)
-	);
+  return (
+    (op.type === "insert_text" && offset === op.offset) ||
+    (op.type === "remove_text" && offset === op.offset + op.text.length)
+  );
 }
 
 export function withHistory<T extends LiveblocksEditor>(
-	editor: T,
+  editor: T
 ): T & HistoryEditor {
-	const e = editor as T & HistoryEditor;
+  const e = editor as T & HistoryEditor;
 
-	e.undo = () => {
-		const { history } = e.room;
-		history.resume();
-		history.undo();
-		history.pause();
-	};
+  e.undo = () => {
+    const { history } = e.room;
 
-	e.redo = () => {
-		const { history } = e.room;
-		history.resume();
-		history.redo();
-		history.pause();
-	};
+    history.resume();
+    HistoryEditor.asApplyingHistory(e, () => {
+      history.undo();
+    });
+    history.pause();
+  };
 
-	const { apply } = e;
-	e.apply = (op) => {
-		apply(op);
+  e.redo = () => {
+    const { history } = e.room;
 
-		if (LiveblocksEditor.isRemote(e)) {
-			const lastInsertionPoint = EDITOR_TO_LAST_TEXT_EDIT.get(e);
-			if (!lastInsertionPoint) {
-				return;
-			}
+    history.resume();
+    HistoryEditor.asApplyingHistory(e, () => {
+      history.redo();
+    });
+    history.pause();
+  };
 
-			const transformed = Point.transform(lastInsertionPoint.position, op, {
-				affinity: "backward",
-			});
+  const { apply } = e;
+  e.apply = (op) => {
+    apply(op);
 
-			const transformedTextEdit = transformed
-				? { ...lastInsertionPoint, position: transformed }
-				: undefined;
+    if (LiveblocksEditor.isRemote(e)) {
+      const lastInsertionPoint = EDITOR_TO_LAST_TEXT_EDIT.get(e);
+      if (!lastInsertionPoint) {
+        return;
+      }
 
-			EDITOR_TO_LAST_TEXT_EDIT.set(e, transformedTextEdit);
-			return;
-		}
+      const transformed = Point.transform(lastInsertionPoint.position, op, {
+        affinity: "backward",
+      });
 
-		if (op.type === "insert_text") {
-			EDITOR_TO_LAST_TEXT_EDIT.set(e, {
-				position: { path: op.path, offset: op.offset + op.text.length },
-				type: op.type,
-			});
-			return;
-		}
+      const transformedTextEdit = transformed
+        ? { ...lastInsertionPoint, position: transformed }
+        : undefined;
 
-		if (op.type === "remove_text") {
-			EDITOR_TO_LAST_TEXT_EDIT.set(e, {
-				position: { path: op.path, offset: op.offset },
-				type: op.type,
-			});
-		}
-	};
+      EDITOR_TO_LAST_TEXT_EDIT.set(e, transformedTextEdit);
+      return;
+    }
 
-	const { storeLocalChange } = e;
-	e.storeLocalChange = (change) => {
-		const merge =
-			HistoryEditor.isMerging(e) ??
-			(e.operations.length || shouldMerge(e, change.op));
+    if (op.type === "insert_text") {
+      EDITOR_TO_LAST_TEXT_EDIT.set(e, {
+        position: { path: op.path, offset: op.offset + op.text.length },
+        type: op.type,
+      });
+      return;
+    }
 
-		storeLocalChange({ ...change, merge });
-	};
+    if (op.type === "remove_text") {
+      EDITOR_TO_LAST_TEXT_EDIT.set(e, {
+        position: { path: op.path, offset: op.offset },
+        type: op.type,
+      });
+    }
+  };
 
-	const { connect } = e;
-	e.connect = () => {
-		connect();
-		e.room.history.pause();
-	};
+  const { storeLocalChange } = e;
+  e.storeLocalChange = (change) => {
+    const merge =
+      HistoryEditor.isMerging(e) ??
+      (e.operations.length || shouldMerge(e, change.op));
 
-	const { submitLocalChange } = e;
-	e.submitLocalChange = (change) => {
-		const { history } = e.room;
-		if (!change.merge) {
-			history.resume();
-			history.pause();
-		}
+    storeLocalChange({ ...change, merge });
+  };
 
-		submitLocalChange(change);
-	};
+  const { connect } = e;
+  e.connect = () => {
+    connect();
+    e.room.history.pause();
+  };
 
-	return e;
+  const { submitLocalChange } = e;
+  e.submitLocalChange = (change) => {
+    const { history } = e.room;
+    if (!change.merge) {
+      history.resume();
+      history.pause();
+    }
+
+    submitLocalChange(change);
+  };
+
+  const { handleRemoteChange } = e;
+  e.handleRemoteChange = (updates) => {
+    if (!HistoryEditor.isApplyingHistory(e)) {
+      handleRemoteChange(updates);
+      return;
+    }
+
+    let selection: Range | null = null;
+    for (let i = updates.length - 1; i >= 0; i--) {
+      selection = selectionFromUpdate(e, e.liveRoot, nn(updates[i]));
+      if (selection) {
+        break;
+      }
+    }
+
+    const selectionRef = selection
+      ? Editor.rangeRef(e, selection, { affinity: "forward" })
+      : null;
+
+    Editor.withoutNormalizing(e, () => {
+      handleRemoteChange(updates);
+
+      const newSelection = selectionRef?.unref();
+      if (newSelection) {
+        Transforms.select(e, newSelection);
+      }
+    });
+  };
+
+  return e;
 }
