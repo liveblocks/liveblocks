@@ -4,6 +4,7 @@ import { isLiveText, LiveRoot } from "../../types";
 import { getDiffOffsets } from "../../utils/diffText";
 import { getSlatePath } from "../../utils/getSlatePath";
 
+// TODO: Handle more than just text updates
 export function selectionFromUpdate(
   editor: Editor,
   liveRoot: LiveRoot,

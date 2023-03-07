@@ -1,4 +1,4 @@
-import type { Editor, Point, RangeRef } from "slate";
+import type { Editor, Point } from "slate";
 
 export const EDITOR_TO_MERGING = new WeakMap<Editor, boolean | undefined>();
 export const EDITOR_TO_LAST_TEXT_EDIT = new WeakMap<
