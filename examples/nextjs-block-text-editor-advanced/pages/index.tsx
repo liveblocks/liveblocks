@@ -160,7 +160,7 @@ export default function Page() {
             slateRoot: slateRootToLiveRoot(initialValue),
           }}
           initialPresence={{
-            selectedBlockId: null,
+            selection: null,
           }}
         >
           <Editor />

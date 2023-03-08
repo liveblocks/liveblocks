@@ -19,6 +19,7 @@ import {
   createEditor,
   Descendant,
   Editor,
+  NodeEntry,
   Path,
   Range,
   Transforms,
@@ -28,6 +29,7 @@ import {
   ReactEditor,
   RenderElementProps,
   Slate,
+  useSlateStatic,
   withReact,
 } from "slate-react";
 
@@ -52,10 +54,13 @@ import { withShortcuts } from "./plugins/withShortcuts";
 import { CustomElement, ElementWithId, UserMeta } from "./types";
 import {
   isNotUndefined,
+  omitTopLevelElementAttributes,
   removeGlobalCursor,
   setGlobalCursor,
   toggleMark,
 } from "./utils";
+
+const EMPTY_VALUE: Descendant[] = [];
 
 const useEditor = () => {
   const room = useRoom();
@@ -144,22 +149,9 @@ export default function App() {
     }
 
     return (
-      <SortableElement
-        {...props}
-        element={element}
-        renderElement={Block}
-        onDelete={() =>
-          Transforms.removeNodes(editor, {
-            at: ReactEditor.findPath(editor, props.element),
-          })
-        }
-        onInsertBelow={(block: CustomElement) => {
-          Transforms.insertNodes(editor, block, {
-            at: Path.next(ReactEditor.findPath(editor, props.element)),
-            select: true,
-          });
-        }}
-      />
+      <SortableElement {...props} element={element}>
+        <Block {...omitTopLevelElementAttributes(props)} />
+      </SortableElement>
     );
   }, []);
 
@@ -168,8 +160,28 @@ export default function App() {
       editor.children
         .map((child) => (isElementWithId(child) ? child.id : undefined))
         .filter(isNotUndefined),
-    []
+    [editor.children]
   );
+
+  const decorate = useCallback(([node, path]: NodeEntry) => {
+    if (
+      path.length !== 0 ||
+      editor.selection == null ||
+      Editor.isEditor(node) ||
+      Editor.string(editor, [path[0]]) !== "" ||
+      !Range.includes(editor.selection, path) ||
+      !Range.isCollapsed(editor.selection)
+    ) {
+      return [];
+    }
+
+    return [
+      {
+        ...editor.selection,
+        placeholder: "Type something here…",
+      },
+    ];
+  }, []);
 
   return (
     <div className={styles.editor}>
@@ -181,7 +193,7 @@ export default function App() {
         onClick={(e) => e.stopPropagation()}
       >
         <div className={styles.container}>
-          <Slate editor={editor} value={[]}>
+          <Slate editor={editor} value={EMPTY_VALUE}>
             <Toolbar />
             <DndContext
               onDragStart={handleDragStart}
@@ -194,30 +206,14 @@ export default function App() {
                 strategy={verticalListSortingStrategy}
               >
                 <Editable
+                  placeholder="Write something…"
                   renderElement={renderElement}
                   renderLeaf={Leaf}
                   /**
                    * Inspired by this great article from https://twitter.com/_jkrsp
                    * https://jkrsp.com/slate-js-placeholder-per-line/
                    **/
-                  decorate={([node, path]) => {
-                    if (
-                      editor.selection == null ||
-                      Editor.isEditor(node) ||
-                      Editor.string(editor, [path[0]]) !== "" ||
-                      !Range.includes(editor.selection, path) ||
-                      !Range.isCollapsed(editor.selection)
-                    ) {
-                      return [];
-                    }
-
-                    return [
-                      {
-                        ...editor.selection,
-                        placeholder: "Type something here…",
-                      },
-                    ];
-                  }}
+                  decorate={decorate}
                   onKeyDown={(event) => {
                     for (const hotkey in HOTKEYS) {
                       if (
@@ -256,19 +252,28 @@ function SortableElement({
   attributes,
   element,
   children,
-  renderElement,
-  onDelete,
-  onInsertBelow,
 }: RenderElementProps & {
   element: ElementWithId;
-  renderElement: any;
-  onDelete: () => void;
-  onInsertBelow: (block: CustomElement) => void;
 }) {
+  const editor = useSlateStatic();
   const sortable = useSortable({ id: element.id });
 
   // TODO:
   const othersByBlockId: (UserMeta & { connectionId: number })[] = [];
+  const onDelete = useCallback(
+    () =>
+      Transforms.removeNodes(editor, {
+        at: ReactEditor.findPath(editor, element),
+      }),
+    []
+  );
+
+  const onInsertBelow = useCallback((block: CustomElement) => {
+    Transforms.insertNodes(editor, block, {
+      at: Path.next(ReactEditor.findPath(editor, element)),
+      select: true,
+    });
+  }, []);
 
   return (
     <div className={styles.block} {...attributes}>
@@ -283,7 +288,7 @@ function SortableElement({
           opacity: sortable.isDragging ? 0 : 1,
         }}
       >
-        {renderElement({ element, children })}
+        {children}
         {othersByBlockId.length > 0 && (
           <div
             className={classNames(styles.avatars, "avatars")}

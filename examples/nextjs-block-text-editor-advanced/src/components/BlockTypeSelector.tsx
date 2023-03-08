@@ -1,11 +1,11 @@
-import { ReactNode } from "react";
-import styles from "./BlockTypeSelector.module.css";
 import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu";
 import { nanoid } from "nanoid";
+import { ReactNode } from "react";
+import { useSelf } from "../liveblocks.config";
 import { BlockType, CustomElement } from "../types";
+import styles from "./BlockTypeSelector.module.css";
 import { ScrollArea } from "./ScrollArea";
 import Tooltip from "./Tooltip";
-import { useSelf } from "../liveblocks.config";
 
 type Props = {
   children: ReactNode;
@@ -13,8 +13,8 @@ type Props = {
 };
 
 export default function BlockTypeSelector({ children, onSelect }: Props) {
-  const self = useSelf();
-  const createdBy = self?.connectionId || 0;
+  const connectionId = useSelf((self) => self.connectionId);
+  const createdBy = connectionId || 0;
 
   const groups = [
     {

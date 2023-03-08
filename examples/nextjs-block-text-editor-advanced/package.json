@@ -30,7 +30,7 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "slate": "^0.91.4",
-    "slate-react": "^0.91.4"
+    "slate-react": "^0.91.10"
   },
   "devDependencies": {
     "@svgr/webpack": "^6.3.1",

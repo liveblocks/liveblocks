@@ -1,6 +1,7 @@
 import { nanoid } from "nanoid";
-import { Editor, Element, Path, Transforms } from "slate";
-import { BlockType, Format, TitleElement, Theme } from "./types";
+import { Editor, Path } from "slate";
+import { RenderElementProps } from "slate-react";
+import { Format, Theme } from "./types";
 
 export function toPx(value: number | undefined): string | undefined {
   return value ? `${Math.round(value)}px` : undefined;
@@ -48,4 +49,12 @@ export function setGlobalCursor(type: CursorType) {
 
 export function removeGlobalCursor(type: CursorType) {
   document.body.classList.remove(type);
+}
+
+// Omit all attributes slate only expects the top level dom node of the element to have.
+export function omitTopLevelElementAttributes({
+  attributes: { ref, "data-slate-node": _, ...attributes },
+  ...props
+}: RenderElementProps): RenderElementProps {
+  return { ...props, attributes } as RenderElementProps;
 }
