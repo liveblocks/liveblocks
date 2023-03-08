@@ -3,6 +3,7 @@
     {
       "slug": "getting-started",
       "title": "Getting started",
+      "technology": "react",
       "technologyTitle": "React",
       "pages": [
         {
