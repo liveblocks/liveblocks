@@ -86,7 +86,7 @@ function Example() {
 }
 
 export default function Page() {
-  const roomId = "nextjs-live-cursors";
+  const roomId = "{% ROOM_ID %}";
 
   return (
     <RoomProvider
