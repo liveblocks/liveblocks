@@ -1,10 +1,10 @@
 {
-  "react": [
+  "nextjs": [
     {
       "slug": "getting-started",
       "title": "Getting started",
-      "technology": "react",
-      "technologyTitle": "React",
+      "technology": "nextjs",
+      "technologyTitle": "Next.js",
       "pages": [
         {
           "slug": "presence",
