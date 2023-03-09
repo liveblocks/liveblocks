@@ -1,7 +1,8 @@
-import {
-  PresenceEditor,
+import type {
   PresenceRequiredEditor,
-  SlatePresence,
+  SlatePresence} from "./presenceEditor";
+import {
+  PresenceEditor
 } from "./presenceEditor";
 
 export type CreateWithPresenceOptions<TPresenceRangeField extends string> = {

@@ -1,15 +1,19 @@
-import { LiveList, LiveObject, Lson } from "@liveblocks/client";
+import type { Lson } from "@liveblocks/client";
+import { LiveList, LiveObject } from "@liveblocks/client";
 import { assert } from "@liveblocks/core";
-import { Descendant, Element, Text } from "slate";
-import {
-  isLiveElement,
-  isLiveText,
+import type { Descendant, Element} from "slate";
+import { Text } from "slate";
+
+import type {
   LiveDescendant,
   LiveElement,
   LiveRoot,
   LiveText,
   LsonElement,
-  LsonText,
+  LsonText} from "../types";
+import {
+  isLiveElement,
+  isLiveText
 } from "../types";
 
 export function lsonToSlateNode(lson: Lson): Descendant {

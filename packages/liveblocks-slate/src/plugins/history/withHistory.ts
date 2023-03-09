@@ -1,5 +1,7 @@
 import { nn } from "@liveblocks/core";
-import { Editor, Operation, Path, Point, Range, Transforms } from "slate";
+import type { Operation, Range} from "slate";
+import { Editor, Path, Point, Transforms } from "slate";
+
 import { LiveblocksEditor } from "../liveblocks/liveblocksEditor";
 import { HistoryEditor } from "./historyEditor";
 import { selectionFromUpdate } from "./selectionFromUpdate";

@@ -40,13 +40,14 @@ import {
   createWithLiveblocks,
   createWithPresence,
   LiveblocksEditor,
+  PresenceEditor,
   withHistory,
 } from "@liveblocks/slate";
 import Block from "./blocks/Block";
 import Leaf from "./blocks/Leaf";
 import { Avatar, BlockInlineActions, Header, Toolbar } from "./components";
 import { HOTKEYS, PROSE_CONTAINER_ID, USER_COLORS } from "./constants";
-import { useList, useRoom } from "./liveblocks.config";
+import { useList, useOthers, useRoom } from "./liveblocks.config";
 import { isElementWithId, withElementIds } from "./plugins/withElementIds";
 import { withLayout } from "./plugins/withLayout";
 import { withResetBlockOnBreak } from "./plugins/withResetBlockOnBreak";
@@ -59,6 +60,7 @@ import {
   setGlobalCursor,
   toggleMark,
 } from "./utils";
+import { shallow } from "@liveblocks/client";
 
 const EMPTY_VALUE: Descendant[] = [];
 
@@ -258,8 +260,16 @@ function SortableElement({
   const editor = useSlateStatic();
   const sortable = useSortable({ id: element.id });
 
-  // TODO:
-  const othersByBlockId: (UserMeta & { connectionId: number })[] = [];
+  const othersByBlockId = useOthers((others) => {
+    const path = ReactEditor.findPath(editor, element);
+    const spans = PresenceEditor.presenceSpans(editor);
+
+    return others.filter((other) => {
+      const span = spans.get(other.connectionId);
+      return span && Path.isParent(path, span[0]);
+    });
+  }, shallow);
+
   const onDelete = useCallback(
     () =>
       Transforms.removeNodes(editor, {

@@ -1,8 +1,11 @@
 import type { Room } from "@liveblocks/client";
-import { BaseRange, Path, Span } from "slate";
+import type { BaseRange, Span } from "slate";
+import { Path } from "slate";
+
 import type { LiveNode, LiveRoot } from "../../types";
 import { getLiveNode } from "../../utils/getLiveNode";
 import { getSlatePath } from "../../utils/getSlatePath";
+import { isNotNull } from "../../utils/guards";
 import { LiveblocksEditor } from "../liveblocks/liveblocksEditor";
 
 export type SlatePresence<TPresenceRangeField extends string> = {
@@ -10,6 +13,7 @@ export type SlatePresence<TPresenceRangeField extends string> = {
 };
 
 export type PresenceRequiredEditor<TPresenceRangeField extends string> =
+  // eslint-disable-next-line @typescript-eslint/ban-types
   LiveblocksEditor<Room<SlatePresence<TPresenceRangeField>, {}, {}, {}>>;
 
 export type PresenceEditor<TPresenceRangeField extends string = string> =
@@ -51,28 +55,32 @@ export const PresenceEditor = {
 
   presenceSpans<TPresenceField extends string>(
     editor: PresenceEditor<TPresenceField>
-  ): Map<number, Span | null> {
+  ): Map<number, Span> {
     const others = editor.room.getOthers();
     const connected = LiveblocksEditor.isConnected(editor);
 
     return new Map(
-      others.map(({ connectionId, presence }) => {
-        const presenceSpan = presence[editor.presenceSpanField];
-        const anchor =
-          presenceSpan && PresenceEditor.getPath(editor, presenceSpan[0]);
-        const focus =
-          presenceSpan && PresenceEditor.getPath(editor, presenceSpan[1]);
-        if (!(anchor && focus && connected)) {
-          return [connectionId, null];
-        }
+      others
+        .map(({ connectionId, presence }) => {
+          const presenceSpan = presence[editor.presenceSpanField];
+          if (!presenceSpan || !connected) {
+            return null;
+          }
 
-        // Slate spans should always be [start, end] not [anchor, focus]
-        const span: Span = Path.isBefore(anchor, focus)
-          ? [anchor, focus]
-          : [focus, anchor];
+          const anchor = PresenceEditor.getPath(editor, presenceSpan[0]);
+          const focus = PresenceEditor.getPath(editor, presenceSpan[1]);
+          if (!anchor || !focus) {
+            return null;
+          }
 
-        return [connectionId, span] as const;
-      })
+          // Slate spans should always be [start, end] not [anchor, focus]
+          const span: Span = Path.isBefore(anchor, focus)
+            ? [anchor, focus]
+            : [focus, anchor];
+
+          return [connectionId, span] as const;
+        })
+        .filter(isNotNull)
     );
   },
 

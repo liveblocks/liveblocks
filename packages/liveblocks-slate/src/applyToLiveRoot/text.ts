@@ -1,9 +1,14 @@
 import { assert } from "@liveblocks/core";
 import type { InsertTextOperation, RemoveTextOperation } from "slate";
-import { isLiveText, LiveRoot } from "../types";
+
+import type { LiveRoot } from "../types";
+import { isLiveText } from "../types";
 import { getLiveNode } from "../utils/getLiveNode";
 
-export function handleInsertText(liveRoot: LiveRoot, op: InsertTextOperation) {
+export function handleInsertText(
+  liveRoot: LiveRoot,
+  op: InsertTextOperation
+): void {
   const { path, offset, text } = op;
   const liveTarget = getLiveNode(liveRoot, path);
 
@@ -18,7 +23,10 @@ export function handleInsertText(liveRoot: LiveRoot, op: InsertTextOperation) {
   liveTarget.set("text", textBefore + text + textAfter);
 }
 
-export function handleRemoveText(liveRoot: LiveRoot, op: RemoveTextOperation) {
+export function handleRemoveText(
+  liveRoot: LiveRoot,
+  op: RemoveTextOperation
+): void {
   const { path, offset, text } = op;
   const liveTarget = getLiveNode(liveRoot, path);
 

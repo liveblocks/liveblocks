@@ -1,5 +1,6 @@
 import { assertNever } from "@liveblocks/core";
 import type { Operation } from "slate";
+
 import type { LiveRoot } from "../types";
 import {
   handleInsertNode,

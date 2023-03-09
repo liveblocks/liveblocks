@@ -1,9 +1,12 @@
 import type { StorageUpdate } from "@liveblocks/client";
 import { assert, assertNever, nn } from "@liveblocks/core";
-import { Editor, Node, Text } from "slate";
+import type { Editor } from "slate";
+import { Node, Text } from "slate";
+
 import { FORBIDDEN_SET_PROPERTIES } from "../constants";
 import type { LiveblocksEditor } from "../plugins/liveblocks/liveblocksEditor";
-import { isLiveElement, isLiveRoot, isLiveText, LiveRoot } from "../types";
+import type { LiveRoot } from "../types";
+import { isLiveElement, isLiveRoot, isLiveText } from "../types";
 import { lsonToSlateNode } from "../utils/convert";
 import { getDiffTextOps } from "../utils/diffText";
 import { getSlatePath } from "../utils/getSlatePath";
@@ -82,8 +85,8 @@ function applyLiveObjectUpdate(
   const path = getSlatePath(liveRoot, liveNode);
   const slateNode = Node.get(editor, path);
 
-  let properties: Partial<Node> = {};
-  let newProperties: Partial<Node> = {};
+  const properties: Partial<Node> = {};
+  const newProperties: Partial<Node> = {};
   Object.keys(updates).forEach((key) => {
     if (key === "text" && isLiveText(liveNode)) {
       assert(
@@ -111,7 +114,7 @@ function applyLiveObjectUpdate(
     const newValue = liveNode.get(key);
 
     // In slate setting a property to null or undefined is the same as removing it
-    if (newValue != null) {
+    if (newValue !== null && newValue !== undefined) {
       // @ts-expect-error - TODO: fix this
       newProperties[key] = newValue;
     }
@@ -140,7 +143,7 @@ function applyStorageUpdate(
 export function applyStorageUpdates(
   editor: LiveblocksEditor,
   updates: StorageUpdate[]
-) {
+): void {
   updates.forEach((update) =>
     applyStorageUpdate(editor, editor.liveRoot, update)
   );

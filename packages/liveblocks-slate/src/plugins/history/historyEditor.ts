@@ -26,14 +26,14 @@ export const HistoryEditor = {
   /**
    * Redo to the previous saved state.
    */
-  redo(editor: HistoryEditor) {
+  redo(editor: HistoryEditor): void {
     editor.redo();
   },
 
   /**
    * Undo to the previous saved state.
    */
-  undo(editor: HistoryEditor) {
+  undo(editor: HistoryEditor): void {
     editor.undo();
   },
 
@@ -41,7 +41,7 @@ export const HistoryEditor = {
    * Apply a series of changes inside a synchronous `fn`, without merging any of
    * the new operations into previous save point in the history.
    */
-  withoutMerging(editor: HistoryEditor, fn: () => void) {
+  withoutMerging(editor: HistoryEditor, fn: () => void): void {
     const prev = EDITOR_TO_MERGING.get(editor);
     EDITOR_TO_MERGING.set(editor, false);
     fn();
@@ -67,7 +67,7 @@ export const HistoryEditor = {
    * we try to guess the and select selection the user would have had
    * based upon the applied operations.
    */
-  asApplyingHistory(editor: HistoryEditor, fn: () => void) {
+  asApplyingHistory(editor: HistoryEditor, fn: () => void): void {
     const prev = HistoryEditor.isApplyingHistory(editor);
     IS_APPLYING_HISTORY.set(editor, true);
     fn();

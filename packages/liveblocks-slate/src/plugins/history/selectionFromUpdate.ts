@@ -1,6 +1,9 @@
 import type { StorageUpdate } from "@liveblocks/core";
-import { Editor, Node, Range } from "slate";
-import { isLiveText, LiveRoot } from "../../types";
+import type { Editor, Range } from "slate";
+import { Node } from "slate";
+
+import type { LiveRoot } from "../../types";
+import { isLiveText } from "../../types";
 import { getDiffOffsets } from "../../utils/diffText";
 import { getSlatePath } from "../../utils/getSlatePath";
 

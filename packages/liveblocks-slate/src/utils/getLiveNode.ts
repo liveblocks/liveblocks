@@ -1,6 +1,8 @@
 import { assert, nn } from "@liveblocks/core";
 import type { Path } from "slate";
-import { isLiveElement, isLiveRoot, LiveNode, LiveRoot } from "../types";
+
+import type { LiveNode, LiveRoot } from "../types";
+import { isLiveElement, isLiveRoot } from "../types";
 import { getLiveChildren } from "./getLiveChildren";
 
 /**

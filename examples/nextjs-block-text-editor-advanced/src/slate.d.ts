@@ -4,11 +4,15 @@ import { HistoryEditor } from "slate-history";
 
 import { ElementWithId } from "./plugins/withElementIds";
 import { CustomElement, CustomText } from "./types";
-import { LiveblocksEditor } from "@liveblocks/slate";
+import { LiveblocksEditor, PresenceEditor } from "@liveblocks/slate";
 
 declare module "slate" {
   interface CustomTypes {
-    Editor: BaseEditor & ReactEditor & LiveblocksEditor & HistoryEditor;
+    Editor: BaseEditor &
+      ReactEditor &
+      LiveblocksEditor &
+      HistoryEditor &
+      PresenceEditor;
     Element: CustomElement;
     Text: CustomText;
   }

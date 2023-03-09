@@ -1,24 +1,18 @@
 import { LiveList, LiveObject } from "@liveblocks/client";
 import { assert, nn } from "@liveblocks/core";
-import {
-  Editor,
+import type {
   InsertNodeOperation,
   MergeNodeOperation,
   MoveNodeOperation,
-  Path,
   RemoveNodeOperation,
   SetNodeOperation,
   SplitNodeOperation,
 } from "slate";
+import { Editor, Path } from "slate";
+
 import { FORBIDDEN_SET_PROPERTIES } from "../constants";
-import {
-  isLiveElement,
-  isLiveRoot,
-  isLiveText,
-  LiveRoot,
-  LsonElement,
-  LsonText,
-} from "../types";
+import type { LiveRoot, LsonElement, LsonText } from "../types";
+import { isLiveElement, isLiveRoot, isLiveText } from "../types";
 import {
   cloneLiveDescendant,
   slateDescendantToLiveDescendant,
@@ -26,7 +20,10 @@ import {
 import { getLiveChildren } from "../utils/getLiveChildren";
 import { getLiveNode } from "../utils/getLiveNode";
 
-export function handleInsertNode(liveRoot: LiveRoot, op: InsertNodeOperation) {
+export function handleInsertNode(
+  liveRoot: LiveRoot,
+  op: InsertNodeOperation
+): void {
   const { path, node } = op;
 
   assert(path.length > 0, "Cannot insert as live root");
@@ -47,7 +44,10 @@ export function handleInsertNode(liveRoot: LiveRoot, op: InsertNodeOperation) {
   liveTarget.get("children").insert(liveInsertNode, offset);
 }
 
-export function handleRemoveNode(liveRoot: LiveRoot, op: RemoveNodeOperation) {
+export function handleRemoveNode(
+  liveRoot: LiveRoot,
+  op: RemoveNodeOperation
+): void {
   const { path } = op;
   assert(path.length > 0, "Cannot remove live root");
 
@@ -65,14 +65,14 @@ export function handleRemoveNode(liveRoot: LiveRoot, op: RemoveNodeOperation) {
   liveTarget.get("children").delete(offset);
 }
 
-export function handleSetNode(liveRoot: LiveRoot, op: SetNodeOperation) {
+export function handleSetNode(liveRoot: LiveRoot, op: SetNodeOperation): void {
   const { path, properties, newProperties } = op;
 
   const targetLiveNode = getLiveNode(liveRoot, path);
 
   assert(!isLiveRoot(targetLiveNode), "Cannot set properties of live root");
 
-  let patch: Partial<LsonText> & Partial<LsonElement> = {};
+  const patch: Partial<LsonText> & Partial<LsonElement> = {};
   Object.entries(newProperties).forEach(([key, value]) => {
     assert(!FORBIDDEN_SET_PROPERTIES.has(key), `Cannot set property "${key}"`);
 
@@ -92,13 +92,16 @@ export function handleSetNode(liveRoot: LiveRoot, op: SetNodeOperation) {
       `Cannot unset property "${key}"`
     );
 
-    if (!newProperties.hasOwnProperty(key)) {
+    if (!Object.hasOwnProperty.call(newProperties, key)) {
       targetLiveNode.delete(key as keyof typeof properties);
     }
   });
 }
 
-export function handleMoveNode(liveRoot: LiveRoot, op: MoveNodeOperation) {
+export function handleMoveNode(
+  liveRoot: LiveRoot,
+  op: MoveNodeOperation
+): void {
   const { path, newPath } = op;
   assert(
     !Path.isAncestor(path, newPath),
@@ -160,7 +163,10 @@ export function handleMoveNode(liveRoot: LiveRoot, op: MoveNodeOperation) {
   getLiveChildren(toParent).insert(cloneLiveDescendant(movedNode), toIdx);
 }
 
-export function handleMergeNode(liveRoot: LiveRoot, op: MergeNodeOperation) {
+export function handleMergeNode(
+  liveRoot: LiveRoot,
+  op: MergeNodeOperation
+): void {
   const { path } = op;
   const toRemove = getLiveNode(liveRoot, path);
   const liveTarget = getLiveNode(liveRoot, Path.previous(path));
@@ -187,7 +193,7 @@ export function handleMergeNode(liveRoot: LiveRoot, op: MergeNodeOperation) {
   getLiveChildren(liveParent).delete(removeIdx);
 }
 
-export function handleSplitNode(root: LiveRoot, op: SplitNodeOperation) {
+export function handleSplitNode(root: LiveRoot, op: SplitNodeOperation): void {
   const { path, position, properties } = op;
   const liveTarget = getLiveNode(root, path);
 
@@ -210,8 +216,8 @@ export function handleSplitNode(root: LiveRoot, op: SplitNodeOperation) {
     return;
   }
 
-  let children = liveTarget.get("children");
-  let newChildren: LiveRoot = new LiveList();
+  const children = liveTarget.get("children");
+  const newChildren: LiveRoot = new LiveList();
   for (let i = children.length - 1; i >= position; i--) {
     const liveNode = nn(children.get(i), `Cannot get live node at index ${i}`);
     children.delete(i);

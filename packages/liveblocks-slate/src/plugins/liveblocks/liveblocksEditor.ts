@@ -1,6 +1,9 @@
 import type { Room, StorageUpdate } from "@liveblocks/client";
-import { BaseEditor, Descendant, Editor } from "slate";
-import { isLiveRoot, LiveRoot } from "../../types";
+import type { BaseEditor, Descendant } from "slate";
+import { Editor } from "slate";
+
+import type { LiveRoot } from "../../types";
+import { isLiveRoot } from "../../types";
 import type { PendingChange } from "./types";
 import {
   EDITOR_TO_LOCAL,
@@ -11,6 +14,7 @@ import {
 
 export type LiveblocksRequiredEditor = BaseEditor;
 export type LiveblocksEditor<
+  // eslint-disable-next-line @typescript-eslint/ban-types
   TRoom extends Room<{}, {}, {}, {}> = Room<{}, {}, {}, {}>
 > = LiveblocksRequiredEditor & {
   room: TRoom;
@@ -45,41 +49,41 @@ export const LiveblocksEditor = {
     );
   },
 
-  asRemote(editor: LiveblocksEditor, fn: () => void) {
+  asRemote(editor: LiveblocksEditor, fn: () => void): void {
     const wasRemote = LiveblocksEditor.isRemote(editor);
     EDITOR_TO_REMOTE.set(editor, true);
     fn();
     EDITOR_TO_REMOTE.set(editor, wasRemote);
   },
 
-  isRemote(editor: LiveblocksEditor) {
+  isRemote(editor: LiveblocksEditor): boolean {
     return EDITOR_TO_REMOTE.get(editor) ?? false;
   },
 
-  asLocal(editor: LiveblocksEditor, fn: () => void) {
+  asLocal(editor: LiveblocksEditor, fn: () => void): void {
     const wasLocal = LiveblocksEditor.isLocal(editor);
     EDITOR_TO_LOCAL.set(editor, true);
     fn();
     EDITOR_TO_LOCAL.set(editor, wasLocal);
   },
 
-  isLocal(editor: LiveblocksEditor) {
+  isLocal(editor: LiveblocksEditor): boolean {
     return EDITOR_TO_LOCAL.get(editor) ?? false;
   },
 
-  localChanges(editor: LiveblocksEditor) {
+  localChanges(editor: LiveblocksEditor): PendingChange[] {
     return EDITOR_TO_PENDING_CHANGES.get(editor) ?? [];
   },
 
-  isConnected(editor: LiveblocksEditor) {
+  isConnected(editor: LiveblocksEditor): boolean {
     return EDITOR_TO_UNSUBSCRIBE.has(editor);
   },
 
-  connect(editor: LiveblocksEditor) {
+  connect(editor: LiveblocksEditor): void {
     editor.connect();
   },
 
-  disconnect(editor: LiveblocksEditor) {
+  disconnect(editor: LiveblocksEditor): void {
     editor.disconnect();
   },
 };

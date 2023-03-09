@@ -1,4 +1,5 @@
 import type { Editor } from "slate";
+
 import type { PendingChange } from "./types";
 
 export const EDITOR_TO_LOCAL: WeakMap<Editor, boolean> = new WeakMap();

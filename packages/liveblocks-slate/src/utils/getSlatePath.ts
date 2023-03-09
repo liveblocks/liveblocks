@@ -1,5 +1,7 @@
 import { LiveList } from "@liveblocks/client";
 import { assert } from "@liveblocks/core";
+import type { Path } from "slate";
+
 import type { LiveDescendant, LiveNode, LiveRoot } from "../types";
 
 // TODO: Internal liveblocks api not exposed by the typings
@@ -11,7 +13,7 @@ type InternalLiveNodeApi = {
  * Get the slate path of a LiveNode inside a live slate root.
  * Will throw if the node isn't a descendant of the slate live root.
  */
-export function getSlatePath(root: LiveRoot, node: LiveNode) {
+export function getSlatePath(root: LiveRoot, node: LiveNode): Path {
   const path: number[] = [];
 
   // Type assertion needed here because we need to access the _parentNode internal

@@ -59,14 +59,14 @@ export function getDiffTextOps(
   }
 
   const offsets = getDiffOffsets(prev, next);
-  if (offsets == null) {
+  if (offsets === null) {
     return [];
   }
 
   const insertText = sliceText(next, offsets);
   const removeText = sliceText(prev, offsets);
 
-  let ops: TextOperation[] = [];
+  const ops: TextOperation[] = [];
   if (removeText) {
     ops.push({
       type: "remove_text",

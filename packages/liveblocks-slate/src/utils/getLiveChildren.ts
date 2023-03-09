@@ -1,6 +1,9 @@
-import { isLiveElement, LiveParent } from "../types";
+import type { LiveList } from "@liveblocks/core";
 
-export function getLiveChildren(parent: LiveParent) {
+import type { LiveDescendant, LiveParent } from "../types";
+import { isLiveElement } from "../types";
+
+export function getLiveChildren(parent: LiveParent): LiveList<LiveDescendant> {
   if (isLiveElement(parent)) {
     return parent.get("children");
   }

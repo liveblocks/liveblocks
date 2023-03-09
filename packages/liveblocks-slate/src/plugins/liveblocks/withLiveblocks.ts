@@ -1,17 +1,22 @@
 import type { Room, StorageUpdate } from "@liveblocks/client";
-import { Descendant, Editor } from "slate";
+import type { Descendant } from "slate";
+import { Editor } from "slate";
+
 import { applyStorageUpdates } from "../../applyToEditor";
 import { applySlateOperation } from "../../applyToLiveRoot";
 import type { LiveRoot } from "../../types";
-import { LiveblocksEditor, LiveblocksRequiredEditor } from "./liveblocksEditor";
+import type { LiveblocksRequiredEditor } from "./liveblocksEditor";
+import { LiveblocksEditor } from "./liveblocksEditor";
 import type { PendingChange } from "./types";
 import { EDITOR_TO_PENDING_CHANGES, EDITOR_TO_UNSUBSCRIBE } from "./weakMaps";
 
+// eslint-disable-next-line @typescript-eslint/ban-types
 export type CreateWithLiveblocksOptions<TRoom extends Room<{}, {}, {}, {}>> = {
   room: TRoom;
   liveRoot: LiveRoot;
 };
 
+// eslint-disable-next-line @typescript-eslint/ban-types
 export function createWithLiveblocks<TRoom extends Room<{}, {}, {}, {}>>({
   room,
   liveRoot,
