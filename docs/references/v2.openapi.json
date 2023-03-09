@@ -696,6 +696,47 @@
         }
       ]
     },
+    "/rooms/{roomId}/broadcast_event": {
+      "post": {
+        "summary": "Broadcast an event to a room",
+        "operationId": "post-broadcast-event",
+        "responses": {
+          "204": {
+            "description": "Success. An event was broadcasted to the room."
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          },
+          "422": {
+            "$ref": "#/components/responses/422"
+          }
+        },
+        "description": "This endpoint enables the broadcast of an event to a room without having to connect to it via the `client` from `@liveblocks/client`.",
+        "requestBody": {
+          "content": {
+            "application/json": {},
+            "description": "Any valid JSON."
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "description": "`id` of the room"
+          }
+        ]
+      }
+    },
     "/rooms/{roomId}/public/authorize": {
       "post": {
         "summary": "Get JWT token for WebSocket with public key",
