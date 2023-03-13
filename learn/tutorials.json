@@ -1,20 +1,32 @@
 {
-  "nextjs": [
-    {
-      "slug": "getting-started",
-      "title": "Getting started",
-      "technology": "nextjs",
-      "technologyTitle": "Next.js",
-      "pages": [
-        {
-          "slug": "presence",
-          "title": "Presence"
-        },
-        {
-          "slug": "conflict-free-data",
-          "title": "Conflict-free data"
-        }
-      ]
-    }
-  ]
+  "nextjs": {
+    "technology": "nextjs",
+    "technologyTitle":  "Next.js",
+    "tutorials": [
+      {
+        "slug": "getting-started",
+        "title": "Getting started",
+        "pages": [
+          {
+            "slug": "presence",
+            "title": "Presence"
+          },
+          {
+            "slug": "conflict-free-data",
+            "title": "Conflict-free data"
+          }
+        ]
+      },
+      {
+        "slug": "authenticating",
+        "title": "Authenticating with endpoints",
+        "pages": []
+      },
+      {
+        "slug": "advanced-liveblocks",
+        "title": "Advanced Liveblocks",
+        "pages": []
+      }
+    ]
+  }
 }
