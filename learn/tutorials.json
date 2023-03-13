@@ -8,24 +8,157 @@
         "title": "Getting started",
         "pages": [
           {
+            "slug": "connecting",
+            "title": "Connecting to Liveblocks",
+            "comingSoon": true
+          },
+          {
+            "slug": "joining-a-room",
+            "title": "Joining a room",
+            "comingSoon": true
+          },
+          {
             "slug": "presence",
-            "title": "Presence"
+            "title": "Using presence"
+          },
+          {
+            "slug": "broadcasting-events",
+            "title": "Broadcasting events",
+            "comingSoon": true
           },
           {
             "slug": "conflict-free-data",
             "title": "Conflict-free data"
+          },
+          {
+            "slug": "data-types",
+            "title": "Data types",
+            "comingSoon": true
+          },
+          {
+            "slug": "mutations",
+            "title": "Using mutations",
+            "comingSoon": true
+          },
+          {
+            "slug": "undo-redo",
+            "title": "Undo and redo",
+            "comingSoon": true
+          },
+          {
+            "slug": "history",
+            "title": "Pausing history",
+            "comingSoon": true
           }
         ]
       },
       {
         "slug": "authenticating",
         "title": "Authenticating with endpoints",
-        "pages": []
+        "pages": [
+          {
+            "slug": "secret-keys",
+            "title": "Authenticating with a secret key",
+            "comingSoon": true
+          },
+          {
+            "slug": "user-info",
+            "title": "Adding user info",
+            "comingSoon": true
+          },
+          {
+            "slug": "user-id",
+            "title": "How user ID is used",
+            "comingSoon": true
+          },
+          {
+            "slug": "mau-in-action",
+            "title": "MAUs in action",
+            "comingSoon": true
+          },
+          {
+            "slug": "Using-apis",
+            "title": "Using Liveblocks APIs",
+            "comingSoon": true
+          },
+          {
+            "slug": "create-client-callback",
+            "title": "Custom authentication flow with a callback",
+            "comingSoon": true
+          }
+        ]
       },
       {
         "slug": "advanced-liveblocks",
         "title": "Advanced Liveblocks",
-        "pages": []
+        "pages": [
+          {
+            "slug": "React Suspense",
+            "title": "Using React suspense",
+            "comingSoon": true
+          },
+          {
+            "slug": "use-others-mapped",
+            "title": "Mapping through others",
+            "comingSoon": true
+          },
+          {
+            "slug": "use-others-performant",
+            "title": "Improving performance with others connection ids",
+            "comingSoon": true
+          },
+          {
+            "slug": "use-error-listener",
+            "title": "Listening for errors",
+            "comingSoon": true
+          },
+          {
+            "slug": "throttle-speed",
+            "title": "Modifying throttle speed",
+            "comingSoon": true
+          },
+          {
+            "slug": "react-nodejs",
+            "title": "Using Liveblocks on Node.js",
+            "comingSoon": true
+          },
+          {
+            "slug": "react-native",
+            "title": "Using Liveblocks with React Native",
+            "comingSoon": true
+          }
+        ]
+      },
+      {
+        "slug": "managing-rooms-and-permissions",
+        "title": "Managing rooms and permissions",
+        "pages": [
+          {
+            "slug": "metadata",
+            "title": "Attaching metadata to rooms",
+            "comingSoon": true
+          },
+          {
+            "slug": "permissions",
+            "title": "Permission types",
+            "comingSoon": true
+          },
+          {
+            "slug": "default-accesses",
+            "title": "Default access level",
+            "comingSoon": true
+          },
+          {
+            "slug": "group-accesses",
+            "title": "Group access level",
+            "comingSoon": true
+          },
+          {
+            "slug": "user-accesses",
+            "title": "User access level",
+            "comingSoon": true
+          }
+        ]
       }
     ]
   }
