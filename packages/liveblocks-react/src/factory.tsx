@@ -180,16 +180,20 @@ export function createRoomContext<
       } as RoomInitializers<TPresence, TStorage>)
     );
 
+    const isFirstRender = React.useRef(true);
     React.useEffect(() => {
-      setRoom(
-        client.enter(roomId, {
-          initialPresence: frozen.initialPresence,
-          initialStorage: frozen.initialStorage,
-          unstable_batchedUpdates: frozen.unstable_batchedUpdates,
-          withoutConnecting: frozen.shouldInitiallyConnect,
-        } as RoomInitializers<TPresence, TStorage>)
-      );
+      if (!isFirstRender.current) {
+        setRoom(
+          client.enter(roomId, {
+            initialPresence: frozen.initialPresence,
+            initialStorage: frozen.initialStorage,
+            unstable_batchedUpdates: frozen.unstable_batchedUpdates,
+            withoutConnecting: frozen.shouldInitiallyConnect,
+          } as RoomInitializers<TPresence, TStorage>)
+        );
+      }
 
+      isFirstRender.current = false;
       return () => {
         client.leave(roomId);
       };
