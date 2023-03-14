@@ -1,3 +1,10 @@
+# v1.0.2
+
+### `@liveblocks/react`
+
+- Fixes a bug in React where the children of `RoomProvider` would get
+  re-rendered twice on mount
+
 # v1.0.1
 
 Log stack traces of function calls that resulted in rejected storage mutations
@@ -12,7 +19,8 @@ to the console in non-production builds to ease debugging.
 
 # v1.0.0
 
-This major release marks the maturity of Liveblocks. For upgrade instructions, see the [1.0 upgrade guide](https://liveblocks.io/docs/guides/upgrading/1.0).
+This major release marks the maturity of Liveblocks. For upgrade instructions,
+see the [1.0 upgrade guide](https://liveblocks.io/docs/guides/upgrading/1.0).
 
 ## `@liveblocks/node`
 
