@@ -1,3 +1,6 @@
 type X {}
 type Foo { bad: LiveObject<LiveObject<X>> }
-                                     ^ Expected ">" but "<" found
+                           ^ Expected <type name> but "L" found
+---
+type Foo { bad: LiveObject<LiveObject> }
+                           ^ Expected <type name> but "L" found

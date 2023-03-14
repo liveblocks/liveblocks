@@ -1,3 +1,8 @@
+# 0.0.10
+
+- Fix: parser now correctly rejects keywords used in type name positions, e.g.
+  `LiveObject<LiveObject>`
+
 # 0.0.9
 
 - Add `@liveblocks/infer-schema`, a library to help inferring a schema from

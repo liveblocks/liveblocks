@@ -85,7 +85,7 @@ Identifier "<identifier>"
 // e.g. "Circle" or "Person" -- used in type positions
 // Similar to Identifier, but there are different semantic validation rules that apply
 TypeName "<type name>"
-  = name:$( WORD_CHAR+ ) !WORD_CHAR _
+  = !( LiveObjectKeyword ) name:$( WORD_CHAR+ ) !WORD_CHAR _
     { return ast.typeName(name, rng()) }
 
 
@@ -177,7 +177,7 @@ BuiltInScalar
 TypeRef
   = LiveObjectKeyword LT name:TypeName GT
     { return ast.typeRef(name, true, rng()) }
-  / !LiveObjectKeyword name:TypeName
+  / name:TypeName
     { return ast.typeRef(name, false, rng()) }
 
 
