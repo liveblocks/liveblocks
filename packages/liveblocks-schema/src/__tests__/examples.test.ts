@@ -66,11 +66,22 @@ describe("examples", () => {
       // Now remove all lines starting with "^", and interpret them as inline
       // error annotations
       let errmsg: RegExp | undefined;
+      let sawAnnotation = false;
       const lines = content.split("\n");
       for (let i = 0; i < lines.length - 1; i++) {
         const line = lines[i];
         const annotation = line.match(/^(\s*)[\^]+([|]?)\s*(.*)$/);
         if (annotation) {
+          if (sawAnnotation) {
+            throw new Error(
+              `Error parsing example ${path.basename(filename)} (chunk ${
+                index + 1
+              }): can only have one error annotation! Please split the example into multiple tests.`
+            );
+          } else {
+            sawAnnotation = true;
+          }
+
           const lineno1 = i;
           const column1 = annotation[1].length + 1;
           const noPosOrNoExactPosition = annotation[2] !== "";
@@ -86,7 +97,6 @@ describe("examples", () => {
               "$"
           );
           lines.splice(i, 1);
-          break;
         }
       }
       content = lines.join("\n");
