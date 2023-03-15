@@ -1,6 +1,6 @@
 {
   "name": "@liveblocks/schema",
-  "version": "0.0.9",
+  "version": "0.0.10-beta1",
   "description": "The Liveblocks schema language",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

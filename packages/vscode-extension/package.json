@@ -2,7 +2,7 @@
   "name": "@liveblocks/vscode-extension",
   "displayName": "liveblocks",
   "description": "",
-  "version": "0.0.9",
+  "version": "0.0.10-beta1",
   "engines": {
     "vscode": "^1.75.0"
   },

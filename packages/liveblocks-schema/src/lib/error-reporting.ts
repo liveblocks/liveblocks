@@ -29,11 +29,64 @@ export class Source {
   }
 }
 
-export type LineInfo = {
+export type Position = {
   offset: number;
   line1: number; // 1-based line number
   column1: number; // 1-based column number
 };
+
+export type PositionRange = [from: Position, to: Position];
+
+export type DiagnosticSource = "parser" | "checker";
+
+export type Severity = "error" | "warning" | "info";
+
+export type Suggestion = {
+  type: "replace";
+  message: string;
+  value: string;
+};
+
+export type Diagnostic = {
+  source: DiagnosticSource;
+  severity: Severity;
+  range?: PositionRange;
+  message: string;
+  suggestions?: Suggestion[];
+};
+
+function makeDiagnostic(
+  source: "parser" | "checker",
+  message: string,
+  range?: PositionRange,
+  severity: Severity = "error",
+  suggestions?: Suggestion[]
+): Diagnostic {
+  return { source, severity, range, message, suggestions };
+}
+
+function formatDiagnostic(diagnostic: Diagnostic): string {
+  const start =
+    diagnostic.range !== undefined ? diagnostic.range[0] : undefined;
+  if (start !== undefined) {
+    // Strip the trailing period from the message, if any
+    const message = diagnostic.message.endsWith(".")
+      ? diagnostic.message.slice(0, -1)
+      : diagnostic.message;
+    return `${message} (at ${start.line1}:${start.column1})`;
+  } else {
+    return diagnostic.message;
+  }
+}
+
+export class DiagnosticError extends Error {
+  diagnostic: Diagnostic;
+
+  constructor(diagnostic: Diagnostic) {
+    super(formatDiagnostic(diagnostic));
+    this.diagnostic = diagnostic;
+  }
+}
 
 /**
  * For a string like "foo\nbarbaz\nquxxx\n", builds: [4, 11, 17]
@@ -102,7 +155,7 @@ export class ErrorReporter {
     return this.#offsets;
   }
 
-  lineInfo(offset: number): LineInfo {
+  toPosition(offset: number): Position {
     const lines = this.lines();
     const offsets = this.offsets();
     const lineno0 = offsets.findIndex((eol) => offset < eol);
@@ -118,13 +171,17 @@ export class ErrorReporter {
     }
   }
 
+  toPositionRange(range: Range): PositionRange {
+    return [this.toPosition(range[0]), this.toPosition(range[1])];
+  }
+
   *iterAnnotateSourceLines(
     startOffset: number,
     endOffset: number
   ): Generator<string> {
     const lines = this.lines();
-    const start = this.lineInfo(startOffset);
-    const end = this.lineInfo(endOffset);
+    const start = this.toPosition(startOffset);
+    const end = this.toPosition(endOffset);
 
     // We want to show a bit of leading and trailing context from the
     // source file. To that end, we'll start at most 3 lines before the
@@ -205,31 +262,21 @@ export class ErrorReporter {
     yield "";
   }
 
-  *iterShortError(message: string, range?: Range): Generator<string> {
+  throwParseError(
+    message: string,
+    range?: Range,
+    suggestions?: Suggestion[]
+  ): never {
     this.#hasErrors = true;
-    const [startOffset] = range ?? [undefined, undefined];
-
-    if (startOffset !== undefined) {
-      // Strip the trailing period from the message, if any
-      if (message.endsWith(".")) {
-        message = message.slice(0, -1);
-      }
-
-      const start = this.lineInfo(startOffset);
-      yield `${message} (at ${start.line1}:${start.column1})`;
-    } else {
-      yield message;
-    }
-  }
-
-  getShortParseError(message: string, range?: Range): string {
-    return Array.from(this.iterShortError(message, range)).join("\n");
-  }
-
-  throwParseError(message: string, range?: Range): never {
-    const err = new Error(this.getShortParseError(message, range));
-    err.name = "ParseError";
-    throw err;
+    throw new DiagnosticError(
+      makeDiagnostic(
+        "parser",
+        message,
+        range !== undefined ? this.toPositionRange(range) : undefined,
+        undefined,
+        suggestions
+      )
+    );
   }
 
   printParseError(message: string, range?: Range): void {
@@ -274,14 +321,21 @@ export class ErrorReporter {
     yield "";
   }
 
-  getShortSemanticError(title: string, range?: Range): string {
-    return Array.from(this.iterShortError(title, range)).join("\n");
-  }
-
-  throwSemanticError(title: string, range?: Range): never {
-    const err = new Error(this.getShortSemanticError(title, range));
-    err.name = "SemanticError";
-    throw err;
+  throwSemanticError(
+    message: string,
+    range?: Range,
+    suggestions?: Suggestion[]
+  ): never {
+    this.#hasErrors = true;
+    throw new DiagnosticError(
+      makeDiagnostic(
+        "checker",
+        message,
+        range !== undefined ? this.toPositionRange(range) : undefined,
+        undefined,
+        suggestions
+      )
+    );
   }
 
   printSemanticError(

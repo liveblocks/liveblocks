@@ -1,11 +1,40 @@
 import type { CheckedDocument } from "./checker";
 import { check } from "./checker";
-import { ErrorReporter } from "./lib/error-reporting";
+import type { Diagnostic } from "./lib/error-reporting";
+import { DiagnosticError, ErrorReporter } from "./lib/error-reporting";
 import { parseDocument } from "./parser";
 
 // Export all AST nodes and helpers
 export * as AST from "./ast";
 export type { CheckedDocument } from "./checker";
+
+export type { Diagnostic };
+
+/**
+ * Returns a list of issues with the current schema. Useful for use in
+ * IDEs and developer tools.
+ *
+ * There's a symmetry with `parse()`:
+ *
+ * - If `parse()` throws on the same schema text, this will return at
+ *   least one Diagnostic issue.
+ * - If `parse()` succeeds, this will return no results.
+ */
+export function getDiagnostics(schemaText: string): Diagnostic[] {
+  try {
+    parse(schemaText);
+    return [];
+  } catch (err) {
+    if (!(err instanceof DiagnosticError)) {
+      // Don't hide unknown errors, re-throw them
+      throw err;
+    }
+
+    // NOTE: For now, we'll only ever throw one diagnostic error at a time. In
+    // the future, we'll collect more before throwing.
+    return [err.diagnostic];
+  }
+}
 
 /**
  * Parses and semantically checks the given schema text into an AST. If this
