@@ -717,10 +717,19 @@
             "$ref": "#/components/responses/422"
           }
         },
-        "description": "This endpoint enables the broadcast of an event to a room without having to connect to it via the `client` from `@liveblocks/client`.",
+        "description": "This endpoint enables the broadcast of an event to a room without having to connect to it via the `client` from `@liveblocks/client`. It takes any valid JSON as a request body.",
         "requestBody": {
           "content": {
-            "application/json": {},
+            "application/json": {
+              "examples": {
+                "example-1": {
+                  "value": {
+                    "jobId": "process-image",
+                    "status": "completed"
+                  }
+                }
+              }
+            },
             "description": "Any valid JSON."
           }
         },
