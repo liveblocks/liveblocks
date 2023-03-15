@@ -12,7 +12,7 @@ polling.
 
 ## Configuring webhooks
 
-To set up webhooks for your project, you'll need to create an endpoint,
+To set up webhooks for your project, you’ll need to create an endpoint,
 subscribe to events, and secure your endpoint.
 
 - [Creating an endpoint](#creating-an-endpoint)
@@ -40,7 +40,7 @@ so from within the webhooks dashboard for your project.
   />
 </Figure>
 
-3. Click the "Add Endpoint" button
+3. Click the “Add Endpoint” button
 
 <Figure>
   <Image
@@ -66,8 +66,8 @@ so from within the webhooks dashboard for your project.
 <Banner title="CSRF Protection">
 
 Before sending events, you should disable CSRF protection for the endpoint if it
-is enabled by default, and use the steps outlined in the security verification
-section to ensure the validity of the message.
+is enabled by default. In addition, you should also follow the steps in the
+security verification section before sending events.
 
 </Banner>
 
@@ -75,12 +75,11 @@ section to ensure the validity of the message.
 
 Each endpoint you provide in the webhooks dashboard listens to all events by
 default but can be easily configured to only listen to a subset by updating the
-Message Filtering section after endpoint creation. The subscribed events can be
-edited later in the Endpoints Overview.
+Message Filtering section after endpoint creation.
 
 1. Select the endpoint you would like to edit from the list of webhooks in the
    dashboard
-2. Click the "Edit" button on the "Subscribed events"
+2. Click the “Edit” button on the “Subscribed events”
 
 <Figure>
   <Image
@@ -93,7 +92,7 @@ edited later in the Endpoints Overview.
   />
 </Figure>
 
-3. Update event selections and click "Save"
+3. Update event selections and click “Save”
 
 <Figure>
   <video autoPlay loop muted playsInline>
@@ -103,11 +102,11 @@ edited later in the Endpoints Overview.
 
 ### Replaying events [#replaying-events]
 
-If your service is unreachable, message retries will automatically be attempted.
+If your service is unreachable, message retries are automatically re-attempted.
 If your service incurs considerable downtime (over 10 hours), you can replay
 individual messages from the Endpoints portion of the dashboard by clicking the
 kebab menu on an individual message, or you can opt to bulk replay events by
-clicking the main menu and selecting "Replay Failed Messages."
+clicking the main menu and selecting “Replay Failed Messages.”
 
 <Figure>
   <video autoPlay loop muted playsInline>
@@ -116,8 +115,8 @@ clicking the main menu and selecting "Replay Failed Messages."
 </Figure>
 
 Each message is attempted based on a schedule that follows the failure of the
-preceding attempt. If an endpoint is removed or disabled, delivery attempts to
-the endpoint will also be disabled. The schedule for retries is as follows:
+preceding attempt. If an endpoint is removed or disabled, delivery attempts will
+also be disabled. The schedule for retries is as follows:
 
 - Immediately
 - 5 seconds
@@ -200,9 +199,9 @@ export default function webhookRequestHandler(req, res) {
 
 #### 1. Construct the signed content [@hidden]
 
-The content to sign is composed by concatenating the id, timestamp and payload
-of the request, separated by the full-stop character (`.`). In code, it will
-look something like:
+The content to sign is composed by concatenating the request’s id, timestamp,
+and payload, separated by the full-stop character (`.`). In code, it will look
+something like:
 
 ```ts
 const crypto = require("crypto");
@@ -243,26 +242,30 @@ const signature = crypto
 This generated signature should match one of the ones sent in the
 `webhook-signature` header.
 
-The webhook-signature header is composed of a list of space delimited signatures
-and their corresponding version identifiers. The signature list is most commonly
-of length one. Though there could be any number of signatures. For example:
+The webhook-signature header comprises a list of space-delimited signatures and
+their corresponding version identifiers. The signature list is most commonly of
+length one. Though there could be any number of signatures. For example:
 
 ```
 v1,g0hM9SsE+OTPJTGt/tmIKtSyZlE3uFJELVlNIOLJ1OE= v1,bm9ldHUjKzFob2VudXRob2VodWUzMjRvdWVvdW9ldQo= v2,MzJsNDk4MzI0K2VvdSMjMTEjQEBAQDEyMzMzMzEyMwo=
 ```
 
-Make sure to remove the version prefix and delimiter (e.g. `v1,`) before
+Make sure to remove the version prefix and delimiter (e.g., `v1`) before
 verifying the signature.
-
-Please note that to compare the signatures it’s recommended to use a
-constant-time string comparison method in order to prevent timing attacks.
 
 #### 4. Verify the timestamp [@hidden]
 
 As mentioned above, Liveblocks also sends the timestamp of the attempt in the
 `webhook-timestamp` header. You should compare this timestamp against your
-system timestamp and make sure it’s within your tolerance in order to prevent
-timestamp attacks.
+system timestamp and make sure it’s within your tolerance to prevent timestamp
+attacks.
+
+<Banner title="Comparing signatures">
+
+We recommend implementing a constant-time string comparison method when
+comparing signatures to prevent timing attacks.
+
+</Banner>
 
 ## Liveblocks Events
 
@@ -280,13 +283,13 @@ Events available for use include:
 - `UserEntered/UserLeft`
 - `RoomCreated/RoomDeleted`
 
-More events will come later such as:
+More events will come later, such as:
 
 - `MaxConnectionsReached`
 
 #### UserEnteredEvent
 
-When a user connects to a room, an event is triggered indicating that the user
+When a user connects to a room, an event is triggered, indicating that the user
 has entered. The numActiveUsers field shows the number of users in the room
 after the user has joined. This event is not throttled.
 
@@ -363,10 +366,10 @@ const userLeftEvent = {
 Storage is updated when a user writes to storage. This event is throttled at
 five minutes and, as such, may not be triggered for every write.
 
-For example, if a user writes to storage at 1:00pm, the `storageUpdatedEvent`
+For example, if a user writes to storage at 1:00 pm, the `storageUpdatedEvent`
 event will be triggered shortly after. If the user writes to storage again at
-1:01pm, the `storageUpdatedEvent` event will be triggered 5 minutes after the
-first event was sent, around 1:05pm.
+1:01 pm, the `storageUpdatedEvent` event will be triggered 5 minutes after the
+first event was sent, around 1:05 pm.
 
 ```ts
 // Schema
@@ -449,10 +452,14 @@ const roomDeletedEvent = {
 
 ## Use Cases
 
-With Webhooks, you can now subscribe to the events you are interested in, and be
+With Webhooks, you can subscribe to the events you are interested in, and be
 alerted of the change when it happens. Powerful ways to leverage webhooks with
 Liveblocks include:
 
 - Storage Synchronization between room(s) and an internal database
 - Monitoring user activity in a room
 - Notifying the client if maximum concurrency has been reached
+
+Webhooks are an excellent way to reduce development time and the need for
+polling. By following the steps outlined in this guide, you'll be able to
+configure, subscribe to, secure, and replay webhook events with Liveblocks.
