@@ -92,7 +92,7 @@
         "title": "Advanced Liveblocks",
         "pages": [
           {
-            "slug": "React Suspense",
+            "slug": "react-suspense",
             "title": "Using React suspense",
             "comingSoon": true
           },
