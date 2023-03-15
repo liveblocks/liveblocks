@@ -724,8 +724,7 @@
               "examples": {
                 "example-1": {
                   "value": {
-                    "jobId": "process-image",
-                    "status": "completed"
+                    type: "EMOJI", emoji: "🔥"
                   }
                 }
               }
