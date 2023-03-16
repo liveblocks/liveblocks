@@ -180,6 +180,7 @@ export function createRoomContext<
       } as RoomInitializers<TPresence, TStorage>)
     );
 
+    // Avoid a double-render on the first mount
     const isFirstRender = React.useRef(true);
     React.useEffect(() => {
       if (!isFirstRender.current) {
