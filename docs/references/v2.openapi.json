@@ -724,7 +724,8 @@
               "examples": {
                 "example-1": {
                   "value": {
-                    "type": "EMOJI", "emoji": "🔥"
+                    "type": "EMOJI",
+                    "emoji": "🔥"
                   }
                 }
               }
