@@ -65,9 +65,7 @@ so from within the webhooks dashboard for your project.
 
 <Banner title="CSRF Protection">
 
-Before sending events, you should disable CSRF protection for the endpoint if it
-is enabled by default. In addition, you should also follow the steps in the
-security verification section before sending events.
+Before sending events, disable CSRF protection for the endpoint if it is enabled by default. Additionally, follow the steps outlined in the security verification section before sending any events.
 
 </Banner>
 
@@ -239,10 +237,9 @@ const signature = crypto
 
 #### 3. Validate the signature [@hidden]
 
-This generated signature should match one of the ones sent in the
-`webhook-signature` header.
+The generated signature should match one of the signatures sent in the `webhook-signature` header.
 
-The webhook-signature header comprises a list of space-delimited signatures and
+The `webhook-signature` header comprises a list of space-delimited signatures and
 their corresponding version identifiers. The signature list is most commonly of
 length one. Though there could be any number of signatures. For example:
 
@@ -290,7 +287,7 @@ More events will come later, such as:
 #### UserEnteredEvent
 
 When a user connects to a room, an event is triggered, indicating that the user
-has entered. The numActiveUsers field shows the number of users in the room
+has entered. The `numActiveUsers` field shows the number of users in the room
 after the user has joined. This event is not throttled.
 
 ```ts
@@ -366,9 +363,9 @@ const userLeftEvent = {
 Storage is updated when a user writes to storage. This event is throttled at
 five minutes and, as such, may not be triggered for every write.
 
-For example, if a user writes to storage at 1:00 pm, the `storageUpdatedEvent`
+For example, if a user writes to storage at 1:00 pm, the `StorageUpdatedEvent`
 event will be triggered shortly after. If the user writes to storage again at
-1:01 pm, the `storageUpdatedEvent` event will be triggered 5 minutes after the
+1:01 pm, the `StorageUpdatedEvent` event will be triggered 5 minutes after the
 first event was sent, around 1:05 pm.
 
 ```ts
@@ -452,11 +449,11 @@ const roomDeletedEvent = {
 
 ## Use Cases
 
-With Webhooks, you can subscribe to the events you are interested in, and be
+With webhooks, you can subscribe to the events you are interested in, and be
 alerted of the change when it happens. Powerful ways to leverage webhooks with
 Liveblocks include:
 
-- Storage Synchronization between room(s) and an internal database
+- Storage synchronization between room(s) and an internal database
 - Monitoring user activity in a room
 - Notifying the client if maximum concurrency has been reached
 
