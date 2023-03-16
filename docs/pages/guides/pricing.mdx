@@ -150,15 +150,6 @@ will still need to include a `userId` in the `authorize` option if you use it.
 We are currently working on updating our dashboard to reflect the number of MAU
 for development use.
 
-If you call Liveblocks API during any automated testing, you may want to provide
-a static `userId` to avoid hitting rate limits. You can do this by setting an
-environment variable and checking the process when you call `authorize` from
-`@liveblocks/node`.
-
-```dotenv file=".env.test"
- TEST_USERID="machine"
-```
-
 ```ts highlight="20,21"
 import { authorize } from "@liveblocks/node";
 
@@ -179,8 +170,7 @@ export default async function auth(req, res) {
     room,
     secret,
     // Corresponds to the UserMeta[id] type defined in liveblocks.config.ts
-    userId:
-      process.env.NODE_ENV === "test" ? process.env.TEST_USERID : "user123",
+    userId: "user123",
     // Check whether you are in the testing environment when passing the userId
     groupIds: ["456"], // Optional
     userInfo: {
@@ -188,6 +178,31 @@ export default async function auth(req, res) {
       name: "Ada Lovelace",
       color: "red",
     },
+  });
+  return res.status(response.status).end(response.body);
+}
+```
+
+## Testing use
+
+If you connect to rooms and call the Liveblocks API during any automated testing,
+you may want to provide a static `userId` to avoid hitting limits.
+
+For example, you could do this by setting an environment variable and checking
+the process when you call `authorize` from `@liveblocks/node`.
+
+```dotenv file=".env.test"
+ TEST_USERID="machine"
+```
+
+```ts file="liveblocks.config.ts"
+export default async function auth(req, res) {
+  const room = req.body.room;
+  const response = await authorize({
+    room,
+    secret,
+    userId:
+      process.env.NODE_ENV === "test" ? process.env.TEST_USERID : "user123",
   });
   return res.status(response.status).end(response.body);
 }

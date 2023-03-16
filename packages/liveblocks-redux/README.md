@@ -21,7 +21,10 @@
   </a>
 </p>
 
-A [store enhancer](https://redux.js.org/understanding/thinking-in-redux/glossary#store-enhancer) to integrate [Liveblocks](https://liveblocks.io) into [Redux](https://redux-toolkit.js.org/) stores.
+A
+[store enhancer](https://redux.js.org/understanding/thinking-in-redux/glossary#store-enhancer)
+to integrate [Liveblocks](https://liveblocks.io) into
+[Redux](https://redux-toolkit.js.org/) stores.
 
 ## Installation
 
@@ -31,25 +34,33 @@ npm install @liveblocks/client @liveblocks/redux
 
 ## Documentation
 
-Read the [documentation](https://liveblocks.io/docs) for guides and API references.
+Read the [documentation](https://liveblocks.io/docs) for guides and API
+references.
 
 ## Examples
 
-Explore our [collaborative examples](https://liveblocks.io/examples) to help you get started.
+Explore our [collaborative examples](https://liveblocks.io/examples) to help you
+get started.
 
-> All examples are open-source and live in this repository, within [`/examples`](../../examples).
+> All examples are open-source and live in this repository, within
+> [`/examples`](../../examples).
 
 ## Releases
 
-See the [latest changes](https://github.com/liveblocks/liveblocks/releases) or learn more about [upcoming releases](https://github.com/liveblocks/liveblocks/milestones).
+See the [latest changes](https://github.com/liveblocks/liveblocks/releases) or
+learn more about
+[upcoming releases](https://github.com/liveblocks/liveblocks/milestones).
 
 ## Community
 
-- [Discord](https://discord.gg/X4YWJuH9VY) - To get involved with the Liveblocks community, ask questions and share tips.
-- [Twitter](https://twitter.com/liveblocks) - To receive updates, announcements, blog posts, and general Liveblocks tips.
+- [Discord](https://liveblocks.io/discord) - To get involved with the Liveblocks
+  community, ask questions and share tips.
+- [Twitter](https://twitter.com/liveblocks) - To receive updates, announcements,
+  blog posts, and general Liveblocks tips.
 
 ## License
 
-Licensed under the Apache License 2.0, Copyright © 2021-present [Liveblocks](https://liveblocks.io).
+Licensed under the Apache License 2.0, Copyright © 2021-present
+[Liveblocks](https://liveblocks.io).
 
 See [LICENSE](../../LICENSE) for more information.
