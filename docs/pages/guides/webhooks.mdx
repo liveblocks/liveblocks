@@ -65,7 +65,9 @@ so from within the webhooks dashboard for your project.
 
 <Banner title="CSRF Protection">
 
-Before sending events, disable CSRF protection for the endpoint if it is enabled by default. Additionally, follow the steps outlined in the security verification section before sending any events.
+Before sending events, disable CSRF protection for the endpoint if it is enabled
+by default. Additionally, follow the steps outlined in the security verification
+section before sending any events.
 
 </Banner>
 
@@ -237,11 +239,12 @@ const signature = crypto
 
 #### 3. Validate the signature [@hidden]
 
-The generated signature should match one of the signatures sent in the `webhook-signature` header.
+The generated signature should match one of the signatures sent in the
+`webhook-signature` header.
 
-The `webhook-signature` header comprises a list of space-delimited signatures and
-their corresponding version identifiers. The signature list is most commonly of
-length one. Though there could be any number of signatures. For example:
+The `webhook-signature` header comprises a list of space-delimited signatures
+and their corresponding version identifiers. The signature list is most commonly
+of length one. Though there could be any number of signatures. For example:
 
 ```
 v1,g0hM9SsE+OTPJTGt/tmIKtSyZlE3uFJELVlNIOLJ1OE= v1,bm9ldHUjKzFob2VudXRob2VodWUzMjRvdWVvdW9ldQo= v2,MzJsNDk4MzI0K2VvdSMjMTEjQEBAQDEyMzMzMzEyMwo=
@@ -385,7 +388,7 @@ const storageUpdatedEvent = {
   data: {
     appId: "my-app-id",
     roomId: "my-room-id",
-    updatedAt: "2021-10-06T01:45:56.558Z", // 👈 s time of the last write.
+    updatedAt: "2021-10-06T01:45:56.558Z", // 👈 time of the last write
   },
 };
 ```
