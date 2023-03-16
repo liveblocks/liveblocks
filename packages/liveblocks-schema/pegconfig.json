@@ -3,6 +3,8 @@
     "customHeader": "import * as ast from \"../ast\";\n"
   },
   "returnTypes": {
+    "ArrayExpr": "ast.ArrayExpr",
+    "ArrayExprList": "ast.ArrayExpr[]",
     "BooleanType": "ast.BooleanType",
     "BooleanTypeList": "ast.BooleanType[]",
     "BuiltInScalar": "ast.BuiltInScalar",
@@ -19,6 +21,8 @@
     "IdentifierList": "ast.Identifier[]",
     "IntType": "ast.IntType",
     "IntTypeList": "ast.IntType[]",
+    "LiveListExpr": "ast.LiveListExpr",
+    "LiveListExprList": "ast.LiveListExpr[]",
     "Node": "ast.Node",
     "NodeList": "ast.Node[]",
     "ObjectLiteralExpr": "ast.ObjectLiteralExpr",

@@ -1,0 +1,5 @@
+type Foo { bad: LiveObject<LiveList> }
+                           ^ Expected <type name> but "L" found
+---
+type Foo { bad: LiveList<LiveObject> }
+                                   ^ Expected "<" but ">" found

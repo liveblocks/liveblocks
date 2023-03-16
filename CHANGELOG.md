@@ -1,5 +1,7 @@
 # 0.0.10
 
+- Add support for `LiveList` types (e.g. `LiveList<Todo>`)
+- Add support for array types (e.g. `String[]`, `Int[][]`, etc)
 - Add new top-level API for diagnostic reporting `getDiagnostics(schemaText)`,
   useful in text editors and IDEs that don't need the parse result, just the
   diagnostic error information (if any).

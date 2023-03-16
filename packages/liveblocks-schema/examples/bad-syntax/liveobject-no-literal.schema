@@ -1,2 +1,0 @@
-type Foo { bad: LiveObject<"literal"> }
-                           ^ Expected <type name> but "\"" found

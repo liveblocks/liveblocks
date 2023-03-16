@@ -39,7 +39,9 @@ export function isDefinition(node: Node): node is Definition {
 
 export function isTypeExpr(node: Node): node is TypeExpr {
   return (
+    node._kind === "ArrayExpr" ||
     node._kind === "ObjectLiteralExpr" ||
+    node._kind === "LiveListExpr" ||
     node._kind === "TypeRef" ||
     isBuiltInScalar(node)
   );
@@ -49,17 +51,24 @@ export type BuiltInScalar = StringType | IntType | FloatType | BooleanType;
 
 export type Definition = ObjectTypeDefinition;
 
-export type TypeExpr = BuiltInScalar | ObjectLiteralExpr | TypeRef;
+export type TypeExpr =
+  | ArrayExpr
+  | BuiltInScalar
+  | ObjectLiteralExpr
+  | LiveListExpr
+  | TypeRef;
 
 export type Range = [number, number];
 
 export type Node =
+  | ArrayExpr
   | BooleanType
   | Document
   | FieldDef
   | FloatType
   | Identifier
   | IntType
+  | LiveListExpr
   | ObjectLiteralExpr
   | ObjectTypeDefinition
   | StringType
@@ -77,12 +86,14 @@ export function isRange(thing: unknown): thing is Range {
 
 export function isNode(node: Node): node is Node {
   return (
+    node._kind === "ArrayExpr" ||
     node._kind === "BooleanType" ||
     node._kind === "Document" ||
     node._kind === "FieldDef" ||
     node._kind === "FloatType" ||
     node._kind === "Identifier" ||
     node._kind === "IntType" ||
+    node._kind === "LiveListExpr" ||
     node._kind === "ObjectLiteralExpr" ||
     node._kind === "ObjectTypeDefinition" ||
     node._kind === "StringType" ||
@@ -90,6 +101,12 @@ export function isNode(node: Node): node is Node {
     node._kind === "TypeRef"
   );
 }
+
+export type ArrayExpr = {
+  _kind: "ArrayExpr";
+  of: TypeExpr;
+  range: Range;
+};
 
 export type BooleanType = {
   _kind: "BooleanType";
@@ -131,6 +148,12 @@ export type IntType = {
   range: Range;
 };
 
+export type LiveListExpr = {
+  _kind: "LiveListExpr";
+  of: TypeExpr;
+  range: Range;
+};
+
 export type ObjectLiteralExpr = {
   _kind: "ObjectLiteralExpr";
   fields: FieldDef[];
@@ -164,6 +187,24 @@ export type TypeRef = {
   asLiveObject: boolean;
   range: Range;
 };
+
+export function arrayExpr(of: TypeExpr, range: Range = [0, 0]): ArrayExpr {
+  DEBUG &&
+    (() => {
+      assert(
+        isTypeExpr(of),
+        `Invalid value for "of" arg in "ArrayExpr" call.\nExpected: @TypeExpr\nGot:      ${JSON.stringify(
+          of
+        )}`
+      );
+      assertRange(range, "ArrayExpr");
+    })();
+  return {
+    _kind: "ArrayExpr",
+    of,
+    range,
+  };
+}
 
 export function booleanType(range: Range = [0, 0]): BooleanType {
   DEBUG &&
@@ -288,6 +329,27 @@ export function intType(range: Range = [0, 0]): IntType {
     })();
   return {
     _kind: "IntType",
+    range,
+  };
+}
+
+export function liveListExpr(
+  of: TypeExpr,
+  range: Range = [0, 0]
+): LiveListExpr {
+  DEBUG &&
+    (() => {
+      assert(
+        isTypeExpr(of),
+        `Invalid value for "of" arg in "LiveListExpr" call.\nExpected: @TypeExpr\nGot:      ${JSON.stringify(
+          of
+        )}`
+      );
+      assertRange(range, "LiveListExpr");
+    })();
+  return {
+    _kind: "LiveListExpr",
+    of,
     range,
   };
 }
@@ -419,12 +481,14 @@ export function typeRef(
 }
 
 interface Visitor<TContext> {
+  ArrayExpr?(node: ArrayExpr, context: TContext): void;
   BooleanType?(node: BooleanType, context: TContext): void;
   Document?(node: Document, context: TContext): void;
   FieldDef?(node: FieldDef, context: TContext): void;
   FloatType?(node: FloatType, context: TContext): void;
   Identifier?(node: Identifier, context: TContext): void;
   IntType?(node: IntType, context: TContext): void;
+  LiveListExpr?(node: LiveListExpr, context: TContext): void;
   ObjectLiteralExpr?(node: ObjectLiteralExpr, context: TContext): void;
   ObjectTypeDefinition?(node: ObjectTypeDefinition, context: TContext): void;
   StringType?(node: StringType, context: TContext): void;
@@ -447,6 +511,11 @@ export function visit<TNode extends Node, TContext>(
   context?: TContext
 ): TNode {
   switch (node._kind) {
+    case "ArrayExpr":
+      visitor.ArrayExpr?.(node, context);
+      visit(node.of, visitor, context);
+      break;
+
     case "BooleanType":
       visitor.BooleanType?.(node, context);
       break;
@@ -472,6 +541,11 @@ export function visit<TNode extends Node, TContext>(
 
     case "IntType":
       visitor.IntType?.(node, context);
+      break;
+
+    case "LiveListExpr":
+      visitor.LiveListExpr?.(node, context);
+      visit(node.of, visitor, context);
       break;
 
     case "ObjectLiteralExpr":

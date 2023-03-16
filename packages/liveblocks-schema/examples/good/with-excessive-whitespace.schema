@@ -9,11 +9,12 @@
 
   	?  	
 
-  	:  	
+  	:  	 LiveObject
+     
+  	<Foo  	
 
-  	Foo  	
-
-  	,  	
+  	  	
+  	>   , 	
 
   	bar  	
 
@@ -36,6 +37,37 @@
   	Foo	  
 
   	{	  
+
+     x  :   LiveList 
+
+     <         {
+
+
+
+
+
+
+     x
+
+                                                                :
+
+     	            Int
+
+     	            [
+
+
+                      # Comment
+     	             
+     	              ]
+
+
+
+     	              [
+
+
+] // Comment
+}        >
+
 
   	}	  	  
 	  	  

@@ -85,7 +85,7 @@ Identifier "<identifier>"
 // e.g. "Circle" or "Person" -- used in type positions
 // Similar to Identifier, but there are different semantic validation rules that apply
 TypeName "<type name>"
-  = !( LiveObjectKeyword ) name:$( WORD_CHAR+ ) !WORD_CHAR _
+  = !( LiveListKeyword / LiveObjectKeyword ) name:$( WORD_CHAR+ ) !WORD_CHAR _
     { return ast.typeName(name, rng()) }
 
 
@@ -156,13 +156,31 @@ BooleanType
     { return ast.booleanType(rng()) }
 
 
+LiveListKeyword
+  = _ @$'LiveList' EOK
+
+
 LiveObjectKeyword
   = _ @$'LiveObject' EOK
 
 
 TypeExpr
+  = expr:TypeExprBase brackets:( LSQUARE RSQUARE { return rng() })*
+    {
+      let node = expr;
+      for (const bracket of brackets) {
+        const [start, _] = node.range
+        const [___, end] = bracket
+        node = ast.arrayExpr(node, [start, end])
+      }
+      return node;
+    }
+
+
+TypeExprBase
   = ObjectLiteralExpr
   / BuiltInScalar
+  / LiveListExpr
   / TypeRef
   // / Literal
 
@@ -172,6 +190,11 @@ BuiltInScalar
   / IntType
   / FloatType
   / BooleanType
+
+
+LiveListExpr
+  = LiveListKeyword LT expr:TypeExpr GT
+    { return ast.liveListExpr(expr, rng()) }
 
 
 TypeRef
@@ -212,6 +235,8 @@ TYPE "keyword \"type\""
 
 LCURLY     = __ @$'{' __
 RCURLY     = __ @$'}' _
+LSQUARE    = __ @$'[' __
+RSQUARE    = __ @$']' _
 //                  ^ NOTE: We cannot generically eat newlines after RCURLY, because they're significant
 GT         = __ @$'>' _
 //                  ^ NOTE: We cannot generically eat newlines after GT, because they're significant

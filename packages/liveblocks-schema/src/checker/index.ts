@@ -1,4 +1,5 @@
 import type {
+  ArrayExpr,
   Definition,
   Document,
   FieldDef,
@@ -187,6 +188,14 @@ function checkNoDuplicateFields(fieldDefs: FieldDef[], context: Context): void {
   }
 }
 
+function ensureNoLiveType(expr: TypeExpr, where: string, context: Context) {
+  if (expr._kind === "TypeRef" && expr.asLiveObject) {
+    context.report(`Cannot use LiveObject ${where}`, expr.range);
+  } else if (expr._kind === "LiveListExpr") {
+    context.report(`Cannot use LiveList ${where}`, expr.range);
+  }
+}
+
 function checkObjectLiteralExpr(
   obj: ObjectLiteralExpr,
   context: Context
@@ -195,13 +204,12 @@ function checkObjectLiteralExpr(
 
   // Check that none of the fields here use a "live" reference
   for (const field of obj.fields) {
-    if (field.type._kind === "TypeRef" && field.type.asLiveObject) {
-      context.report(
-        "Cannot use a LiveObject reference inside an object literal",
-        field.type.range
-      );
-    }
+    ensureNoLiveType(field.type, "inside an object literal", context);
   }
+}
+
+function checkArrayExpr(arr: ArrayExpr, context: Context): void {
+  ensureNoLiveType(arr.of, "inside an array", context);
 }
 
 function checkTypeName(node: TypeName, context: Context): void {
@@ -338,6 +346,11 @@ function checkNoForbiddenRefs(
       }
       break;
 
+    case "ArrayExpr":
+    case "LiveListExpr":
+      checkNoForbiddenRefs(node.of, context, forbidden);
+      break;
+
     case "TypeRef": {
       if (forbidden.has(node.ref.name)) {
         context.report(
@@ -438,8 +451,8 @@ function decideStaticOrLive(doc: Document, context: Context): void {
   const staticObjRefs = new Map<string, TypeRef>();
   const liveObjRefs = new Map<string, TypeRef | null>();
 
-  // First, if a definition uses a Live structure in its definition, it must be
-  // a live type itself
+  // First, if a definition uses a Live construct somewhere in its definition,
+  // it must be a live type itself
   for (const def of context.registeredTypes.values()) {
     if (def._kind !== "ObjectTypeDefinition") {
       continue;
@@ -449,6 +462,11 @@ function decideStaticOrLive(doc: Document, context: Context): void {
       visit(
         def,
         {
+          LiveListExpr: () => {
+            liveObjRefs.set(def.name.name, null);
+            throw "break";
+          },
+
           TypeRef: (ref) => {
             if (ref.asLiveObject) {
               liveObjRefs.set(def.name.name, null);
@@ -564,6 +582,7 @@ export function check(
     doc,
     {
       Identifier: checkIdentifier,
+      ArrayExpr: checkArrayExpr,
       ObjectLiteralExpr: checkObjectLiteralExpr,
       ObjectTypeDefinition: checkObjectTypeDefinition,
       TypeName: checkTypeName,

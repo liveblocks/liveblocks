@@ -1,0 +1,3 @@
+type Foo { bad: LiveList<"literal"> }
+                         ^ Expected "Boolean", "Float", "Int", "LiveList", "LiveObject", "String", "{", or <type name> but "\"" found
+                         # This should be supported when we add string literal support!

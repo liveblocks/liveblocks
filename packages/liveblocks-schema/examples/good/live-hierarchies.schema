@@ -1,13 +1,8 @@
-type Storage {
-  foo: LiveObject<Foo>
-}
-
-type Foo {
-  bar: LiveObject<Color>
-}
-
-type Color {
-  r: Int
-  g: Int
-  b: Int
-}
+type Storage { foo: LiveObject<Foo> }
+type Foo     { bar: LiveObject<Color> }
+type Color   { r: Int; g: Int; b: Int }
+---
+# Order doesn't matter
+type Color   { r: Int; g: Int; b: Int }
+type Storage { foo: LiveObject<Foo> }
+type Foo     { bar: LiveObject<Color> }

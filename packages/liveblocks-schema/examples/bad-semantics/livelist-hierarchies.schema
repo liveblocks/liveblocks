@@ -1,0 +1,27 @@
+type Storage {
+  foo: Foo
+       ^^^ Type 'Foo' uses Live constructs, so it must be referenced as 'LiveObject<Foo>'
+}
+type Foo { bar: LiveList<Bar> }
+type Bar {}
+---
+type Storage {
+  aFooLive: { foo: Foo }
+}
+type Foo { bar: Bar }
+                ^^^ Type 'Bar' uses Live constructs, so it must be referenced as 'LiveObject<Bar>'
+type Bar { qux: LiveList<Qux> }
+type Qux {}
+---
+type Storage {
+  a: { b: { c: { d: LiveList<Foo> } } }
+                    ^^^^^^^^^^^^^ Cannot use LiveList inside an object literal
+}
+type Foo {}
+---
+type Storage {
+  a: { b: { c: { d: FooUsingLiveLists } } }
+                    ^^^^^^^^^^^^^^^^^ Type 'FooUsingLiveLists' uses Live constructs, so it must be referenced as 'LiveObject<FooUsingLiveLists>'
+}
+type FooUsingLiveLists { x: LiveList<Bar> }
+type Bar {}

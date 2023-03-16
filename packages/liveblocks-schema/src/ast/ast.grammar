@@ -21,9 +21,16 @@
 @TypeExpr:
     # | @Literal
     # | ScalarDefinition
+    | ArrayExpr
     | @BuiltInScalar
     | ObjectLiteralExpr
+    | LiveListExpr
     | TypeRef
+
+
+# e.g. "String[]", or "Int[][]", etc.
+ArrayExpr:
+    of  @TypeExpr
 
 
 # Reference to a custom, user-defined, type. Not a built-in. Things like
@@ -53,6 +60,11 @@ TypeName:
 # e.g. "x" or "y" -- used in field positions
 Identifier:
     name  string
+
+
+# e.g. LiveList<...>
+LiveListExpr:
+    of  @TypeExpr
 
 
 # e.g. { cx: Number; cy: Number; r: Float }

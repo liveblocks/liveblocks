@@ -21,8 +21,19 @@ type Circle {
   stroke: RGB
 }
 
+type StaticCircle {
+  type: String // TODO: Use "circle" here
+  cx: Int
+  cy: Int
+  radius: Int
+  fill: RGB
+  stroke: RGB
+}
+
 type Storage {
-  // shapes: LiveList<Shape>
+  circles: LiveList<LiveObject<Circle>>
+  circles2: LiveList<StaticCircle[]>
+  circles3: StaticCircle[]
   mycircle: LiveObject<Circle>
   myrect: LiveObject<Rect>
 }

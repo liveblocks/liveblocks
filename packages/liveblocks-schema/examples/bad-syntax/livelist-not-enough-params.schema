@@ -1,0 +1,4 @@
+type X {
+  a: LiveList                 // Not enough params
+}
+^ Expected "<" but "}" found

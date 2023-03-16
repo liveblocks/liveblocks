@@ -1,6 +1,6 @@
 {
   "name": "@liveblocks/textmate-grammar",
-  "version": "0.0.10-beta1",
+  "version": "0.0.10-beta2",
   "description": "TextMate grammar for the Liveblocks schema language",
   "main": "./grammar/liveblocks-schema.tmLanguage.json",
   "files": [

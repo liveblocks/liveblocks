@@ -1,6 +1,0 @@
-type X {}
-type Foo { bad: LiveObject<LiveObject<X>> }
-                           ^ Expected <type name> but "L" found
----
-type Foo { bad: LiveObject<LiveObject> }
-                           ^ Expected <type name> but "L" found
