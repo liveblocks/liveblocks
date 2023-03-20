@@ -23,14 +23,19 @@
     # | ScalarDefinition
     | ArrayExpr
     | @BuiltInScalar
+    | @LiveStructureExpr
     | ObjectLiteralExpr
-    | LiveListExpr
     | TypeRef
+
+
+@LiveStructureExpr:
+    | LiveMapExpr
+    | LiveListExpr
 
 
 # e.g. "String[]", or "Int[][]", etc.
 ArrayExpr:
-    of  @TypeExpr
+    ofType  @TypeExpr
 
 
 # Reference to a custom, user-defined, type. Not a built-in. Things like
@@ -62,9 +67,15 @@ Identifier:
     name  string
 
 
-# e.g. LiveList<...>
+# e.g. LiveList<Int>
 LiveListExpr:
-    of  @TypeExpr
+    ofType  @TypeExpr
+
+
+# e.g. LiveMap<String, Int>
+LiveMapExpr:
+    keyType    @TypeExpr
+    valueType  @TypeExpr
 
 
 # e.g. { cx: Number; cy: Number; r: Float }

@@ -1,4 +1,0 @@
-type X {
-  a: LiveObject                 // Not enough params
-}
-^ Expected "<" but "}" found

@@ -1,3 +1,11 @@
+type Storage { x: Int }
 type Int { a: String }
      ^^^ Name 'Int' is a built-in and cannot be redefined
-type Storage { x: Int }
+---
+type Storage { x: Float }
+type Float { a: String }
+     ^^^^^ Name 'Float' is a built-in and cannot be redefined
+---
+type Storage { x: String }
+type String { a: Int }
+     ^^^^^ Name 'String' is a built-in and cannot be redefined

@@ -53,6 +53,8 @@ describe("syntactic parser", () => {
         someField: _undefinedThing_
         list: LiveList<Bar>
         //             ^^^ Will parse the syntax, even though semantically incorrect
+        map: LiveMap<String, LiveList<LiveMap<Bar[], Qux>[]>>
+        //                                    ^^^^^ Will parse the syntax, even though semantically incorrect
       }
 
       type abc {}         // Lowercased type names are syntactically valid
@@ -90,6 +92,22 @@ describe("syntactic parser", () => {
               ast.identifier("list"),
               false,
               ast.liveListExpr(ast.typeRef(ast.typeName("Bar"), false))
+            ),
+
+            ast.fieldDef(
+              ast.identifier("map"),
+              false,
+              ast.liveMapExpr(
+                ast.stringType(),
+                ast.liveListExpr(
+                  ast.arrayExpr(
+                    ast.liveMapExpr(
+                      ast.arrayExpr(ast.typeRef(ast.typeName("Bar"), false)),
+                      ast.typeRef(ast.typeName("Qux"), false)
+                    )
+                  )
+                )
+              )
             ),
           ],
           null,
@@ -131,7 +149,8 @@ describe("syntactic parser", () => {
         mycircle?: LiveObject<Bar>
         //                    ^^^ Will parse the syntax, even though semantically incorrect
         someField: _undefinedThing_
-        list: LiveList<LiveList<Bar[][]>>
+        list: LiveList<LiveMap<Int[], LiveList<Bar[][]>>>
+        //                     ^^^^^ Will parse, but is invalid
       }
 
       type abc {}         // Lowercased type names are syntactically valid

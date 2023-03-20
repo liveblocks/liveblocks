@@ -195,7 +195,7 @@ exports[`syntactic parser large document (snapshot test) 1`] = `
           "trailingComment": null,
           "type": {
             "_kind": "ArrayExpr",
-            "of": {
+            "ofType": {
               "_kind": "TypeRef",
               "asLiveObject": false,
               "range": [
@@ -270,7 +270,7 @@ exports[`syntactic parser large document (snapshot test) 1`] = `
           "trailingComment": null,
           "type": {
             "_kind": "ArrayExpr",
-            "of": {
+            "ofType": {
               "_kind": "ObjectLiteralExpr",
               "fields": [
                 {
@@ -529,51 +529,72 @@ exports[`syntactic parser large document (snapshot test) 1`] = `
           "optional": false,
           "range": [
             612,
-            645,
+            661,
           ],
           "trailingComment": null,
           "type": {
             "_kind": "LiveListExpr",
-            "of": {
-              "_kind": "LiveListExpr",
-              "of": {
+            "ofType": {
+              "_kind": "LiveMapExpr",
+              "keyType": {
                 "_kind": "ArrayExpr",
-                "of": {
-                  "_kind": "ArrayExpr",
-                  "of": {
-                    "_kind": "TypeRef",
-                    "asLiveObject": false,
-                    "range": [
-                      636,
-                      639,
-                    ],
-                    "ref": {
-                      "_kind": "TypeName",
-                      "name": "Bar",
-                      "range": [
-                        636,
-                        639,
-                      ],
-                    },
-                  },
+                "ofType": {
+                  "_kind": "IntType",
                   "range": [
-                    636,
-                    641,
+                    635,
+                    638,
                   ],
                 },
                 "range": [
-                  636,
-                  643,
+                  635,
+                  640,
                 ],
               },
               "range": [
                 627,
-                644,
+                660,
               ],
+              "valueType": {
+                "_kind": "LiveListExpr",
+                "ofType": {
+                  "_kind": "ArrayExpr",
+                  "ofType": {
+                    "_kind": "ArrayExpr",
+                    "ofType": {
+                      "_kind": "TypeRef",
+                      "asLiveObject": false,
+                      "range": [
+                        651,
+                        654,
+                      ],
+                      "ref": {
+                        "_kind": "TypeName",
+                        "name": "Bar",
+                        "range": [
+                          651,
+                          654,
+                        ],
+                      },
+                    },
+                    "range": [
+                      651,
+                      656,
+                    ],
+                  },
+                  "range": [
+                    651,
+                    658,
+                  ],
+                },
+                "range": [
+                  642,
+                  659,
+                ],
+              },
             },
             "range": [
               618,
-              645,
+              661,
             ],
           },
         },
@@ -590,7 +611,7 @@ exports[`syntactic parser large document (snapshot test) 1`] = `
       },
       "range": [
         285,
-        653,
+        733,
       ],
     },
     {
@@ -602,19 +623,19 @@ exports[`syntactic parser large document (snapshot test) 1`] = `
         "_kind": "TypeName",
         "name": "abc",
         "range": [
-          666,
-          669,
+          746,
+          749,
         ],
       },
       "range": [
-        661,
-        729,
+        741,
+        809,
       ],
     },
   ],
   "range": [
     7,
-    729,
+    809,
   ],
 }
 `;

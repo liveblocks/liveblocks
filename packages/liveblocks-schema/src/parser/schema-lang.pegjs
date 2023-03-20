@@ -85,7 +85,7 @@ Identifier "<identifier>"
 // e.g. "Circle" or "Person" -- used in type positions
 // Similar to Identifier, but there are different semantic validation rules that apply
 TypeName "<type name>"
-  = !( LiveListKeyword / LiveObjectKeyword ) name:$( WORD_CHAR+ ) !WORD_CHAR _
+  = !( LiveObjectKeyword / LiveListKeyword / LiveMapKeyword ) name:$( WORD_CHAR+ ) !WORD_CHAR _
     { return ast.typeName(name, rng()) }
 
 
@@ -160,6 +160,10 @@ LiveListKeyword
   = _ @$'LiveList' EOK
 
 
+LiveMapKeyword
+  = _ @$'LiveMap' EOK
+
+
 LiveObjectKeyword
   = _ @$'LiveObject' EOK
 
@@ -180,7 +184,7 @@ TypeExpr
 TypeExprBase
   = ObjectLiteralExpr
   / BuiltInScalar
-  / LiveListExpr
+  / LiveStructureExpr
   / TypeRef
   // / Literal
 
@@ -192,16 +196,29 @@ BuiltInScalar
   / BooleanType
 
 
+// e.g. LiveMap<> or LiveList<>
+// NOTE that LiveObject<> is _not_ a Live structure, but technically is more
+// like a modifier on type references
+LiveStructureExpr
+  = LiveListExpr
+  / LiveMapExpr
+
+
 LiveListExpr
   = LiveListKeyword LT expr:TypeExpr GT
     { return ast.liveListExpr(expr, rng()) }
 
 
+LiveMapExpr
+  = LiveMapKeyword LT keyType:TypeExpr COMMA valueType:TypeExpr GT
+    { return ast.liveMapExpr(keyType, valueType, rng()) }
+
+
 TypeRef
   = LiveObjectKeyword LT name:TypeName GT
-    { return ast.typeRef(name, true, rng()) }
+    { return ast.typeRef(name, /* asLiveObject */ true, rng()) }
   / name:TypeName
-    { return ast.typeRef(name, false, rng()) }
+    { return ast.typeRef(name, /* asLiveObject */ false, rng()) }
 
 
 // Literal

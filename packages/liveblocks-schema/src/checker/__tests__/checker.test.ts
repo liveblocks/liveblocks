@@ -126,8 +126,8 @@ describe("checker", () => {
         y: Int
         width: Int
         height: Int
-        fill?: RGB
-        stroke?: RGB
+        fills?: RGB[]
+        strokes?: LiveList<RGB>
       }
 
       type Circle {

@@ -41,11 +41,9 @@ export type DiagnosticSource = "parser" | "checker";
 
 export type Severity = "error" | "warning" | "info";
 
-export type Suggestion = {
-  type: "replace";
-  message: string;
-  value: string;
-};
+export type Suggestion =
+  | { type: "replace"; name: string }
+  | { type: "add-object-type-def"; name: string };
 
 export type Diagnostic = {
   source: DiagnosticSource;
@@ -62,7 +60,14 @@ function makeDiagnostic(
   severity: Severity = "error",
   suggestions?: Suggestion[]
 ): Diagnostic {
-  return { source, severity, range, message, suggestions };
+  return {
+    source,
+    severity,
+    range,
+    message,
+    suggestions:
+      suggestions && suggestions.length > 0 ? suggestions : undefined,
+  };
 }
 
 function formatDiagnostic(diagnostic: Diagnostic): string {
@@ -264,7 +269,7 @@ export class ErrorReporter {
 
   throwParseError(
     message: string,
-    range?: Range,
+    range: Range,
     suggestions?: Suggestion[]
   ): never {
     this.#hasErrors = true;
@@ -272,7 +277,7 @@ export class ErrorReporter {
       makeDiagnostic(
         "parser",
         message,
-        range !== undefined ? this.toPositionRange(range) : undefined,
+        this.toPositionRange(range),
         undefined,
         suggestions
       )
@@ -323,7 +328,7 @@ export class ErrorReporter {
 
   throwSemanticError(
     message: string,
-    range?: Range,
+    range: Range,
     suggestions?: Suggestion[]
   ): never {
     this.#hasErrors = true;
@@ -331,7 +336,7 @@ export class ErrorReporter {
       makeDiagnostic(
         "checker",
         message,
-        range !== undefined ? this.toPositionRange(range) : undefined,
+        this.toPositionRange(range),
         undefined,
         suggestions
       )

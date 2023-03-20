@@ -33,6 +33,8 @@ type StaticCircle {
 type Storage {
   circles: LiveList<LiveObject<Circle>>
   circles2: LiveList<StaticCircle[]>
+  circlesById: LiveMap<String, StaticCircle[]>
+  circlesById2: LiveMap<String, StaticCircle[]>
   circles3: StaticCircle[]
   mycircle: LiveObject<Circle>
   myrect: LiveObject<Rect>

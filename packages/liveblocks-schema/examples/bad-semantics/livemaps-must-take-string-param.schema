@@ -1,0 +1,11 @@
+type Thing { x: Int }
+
+type Storage {
+  a: LiveMap<Int, Thing>
+             ^^^ Only 'String' keys are currently supported in LiveMaps
+  b: LiveMap<String, Thing>
+}
+---
+type Thing {}
+type Storage { bad: LiveMap<Thing, String> }
+                            ^^^^^ Only 'String' keys are currently supported in LiveMaps

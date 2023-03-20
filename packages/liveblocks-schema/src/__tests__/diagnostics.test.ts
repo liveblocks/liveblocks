@@ -34,13 +34,17 @@ describe("diagnostic error reporting", () => {
     ]);
   });
 
-  it("getDiagnostics returns list of issues on schema with semantic errors without range", () => {
-    expect(getDiagnostics("type Henk {}")).toEqual([
+  it("getDiagnostics returns list of issues on schema with semantic errors on entire document", () => {
+    expect(getDiagnostics("type DefinitelyNotNamedStorage {\n}\n")).toEqual([
       {
         source: "checker",
         severity: "error",
         message: "Missing root object type definition named 'Storage'",
-        range: undefined,
+        range: [
+          { column1: 1, line1: 1, offset: 0 },
+          { column1: 2, line1: 2, offset: 34 },
+        ],
+        suggestions: [{ type: "add-object-type-def", name: "Storage" }],
       },
     ]);
   });
@@ -55,13 +59,7 @@ describe("diagnostic error reporting", () => {
           { offset: 27, line1: 1, column1: 28 },
         ],
         message: "Unknown type 'string'. Did you mean 'String'?",
-        suggestions: [
-          {
-            type: "replace",
-            message: "Replace with 'String'",
-            value: "String",
-          },
-        ],
+        suggestions: [{ type: "replace", name: "String" }],
       },
     ]);
   });

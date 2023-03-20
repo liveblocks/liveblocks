@@ -1,0 +1,29 @@
+type X { a: LiveObject }      # Not enough params
+                       ^ Expected "<" but "}" found
+---
+type X { a: LiveObject<> }    # Not enough params
+                       ^ Expected <type name> but ">" found
+---
+type X { a: LiveList }      # Not enough params
+                     ^ Expected "<" but "}" found
+---
+type X { a: LiveList<> }    # Not enough params
+                     ^ Expected "Boolean", "Float", "Int", "LiveList", "LiveMap", "LiveObject", "String", "{", or <type name> but ">" found
+---
+type X { a: LiveMap }       # Not enough params
+                    ^ Expected "<" but "}" found
+---
+type X { a: LiveMap<> }     # Not enough params
+                    ^ Expected "Boolean", "Float", "Int", "LiveList", "LiveMap", "LiveObject", "String", "{", or <type name> but ">" found
+---
+type X { a: LiveMap<Int> }  # Not enough params
+                       ^ Expected "," or "[" but ">" found
+---
+type X { a: LiveObject<Foo, Foo> }    # Too many params
+                          ^ Expected ">" but "," found
+---
+type X { a: LiveList<Int, Int> }  # Too many params
+                        ^ Expected ">" or "[" but "," found
+---
+type X { a: LiveMap<String, Int, String> }  # Too many params
+                               ^ Expected ">" or "[" but "," found

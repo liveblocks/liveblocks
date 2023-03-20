@@ -4,6 +4,8 @@ import type {
   Document,
   FieldDef,
   Identifier,
+  LiveMapExpr,
+  LiveStructureExpr,
   ObjectLiteralExpr,
   ObjectTypeDefinition,
   Range,
@@ -11,7 +13,7 @@ import type {
   TypeName,
   TypeRef,
 } from "../ast";
-import { isBuiltInScalar, visit } from "../ast";
+import { isBuiltInScalar, isLiveStructureExpr, visit } from "../ast";
 import { assertNever } from "../lib/assert";
 import { didyoumean as dym } from "../lib/didyoumean";
 import type { ErrorReporter, Suggestion } from "../lib/error-reporting";
@@ -48,6 +50,18 @@ function suggest_general(value: string, alternatives: string[]): string[] {
   }
 
   return suggestions;
+}
+
+/**
+ * Whether a type expression is a generic LiveXxx<> type.
+ */
+function isLiveStructure(node: TypeExpr): node is LiveStructureExpr | TypeRef {
+  return (
+    // LiveList<...>, or LiveMap<...>
+    isLiveStructureExpr(node) ||
+    // e.g. LiveObject<...>
+    (node._kind === "TypeRef" && node.asLiveObject)
+  );
 }
 
 function didyoumeanify(message: string, alternatives: string[]): string {
@@ -136,24 +150,17 @@ class Context {
     return def;
   }
 
-  report(title: string, range?: Range, suggestions?: Suggestion[]): void {
+  report(title: string, range: Range, suggestions?: Suggestion[]): void {
     // FIXME(nvie) Don't throw on the first error! Collect a few (max 3?) and then throw as one error.
     // this.errorReporter.printSemanticError(title, description, range);
     this.errorReporter.throwSemanticError(title, range, suggestions);
   }
 }
 
-function formatReplaceSuggestions(
-  suggestions: string[]
-): Suggestion[] | undefined {
-  if (suggestions.length === 0) {
-    return;
-  }
-
+function formatReplaceSuggestions(suggestions: string[]): Suggestion[] {
   return suggestions.map((suggestion) => ({
     type: "replace",
-    message: `Replace with ${quote(suggestion)}`,
-    value: suggestion,
+    name: suggestion,
   }));
 }
 
@@ -188,11 +195,13 @@ function checkNoDuplicateFields(fieldDefs: FieldDef[], context: Context): void {
   }
 }
 
-function ensureNoLiveType(expr: TypeExpr, where: string, context: Context) {
-  if (expr._kind === "TypeRef" && expr.asLiveObject) {
-    context.report(`Cannot use LiveObject ${where}`, expr.range);
-  } else if (expr._kind === "LiveListExpr") {
-    context.report(`Cannot use LiveList ${where}`, expr.range);
+function ensureNoLiveStructure(
+  expr: TypeExpr,
+  where: string,
+  context: Context
+) {
+  if (isLiveStructure(expr)) {
+    context.report(`Cannot use Live construct ${where}`, expr.range);
   }
 }
 
@@ -204,12 +213,12 @@ function checkObjectLiteralExpr(
 
   // Check that none of the fields here use a "live" reference
   for (const field of obj.fields) {
-    ensureNoLiveType(field.type, "inside an object literal", context);
+    ensureNoLiveStructure(field.type, "inside an object literal", context);
   }
 }
 
 function checkArrayExpr(arr: ArrayExpr, context: Context): void {
-  ensureNoLiveType(arr.of, "inside an array", context);
+  ensureNoLiveStructure(arr.ofType, "inside an array", context);
 }
 
 function checkTypeName(node: TypeName, context: Context): void {
@@ -348,7 +357,12 @@ function checkNoForbiddenRefs(
 
     case "ArrayExpr":
     case "LiveListExpr":
-      checkNoForbiddenRefs(node.of, context, forbidden);
+      checkNoForbiddenRefs(node.ofType, context, forbidden);
+      break;
+
+    case "LiveMapExpr":
+      checkNoForbiddenRefs(node.keyType, context, forbidden);
+      checkNoForbiddenRefs(node.valueType, context, forbidden);
       break;
 
     case "TypeRef": {
@@ -411,6 +425,17 @@ function checkObjectTypeDefinition(
   checkNoForbiddenRefs(def, context, new Set([def.name.name]));
 }
 
+function checkLiveMapExpr(node: LiveMapExpr, context: Context): void {
+  // Check that the `keyType` is always `String`, never another type
+  if (node.keyType._kind !== "StringType") {
+    context.report(
+      "Only 'String' keys are currently supported in LiveMaps",
+      node.keyType.range,
+      [{ type: "replace", name: "String" }]
+    );
+  }
+}
+
 /**
  * This initial pass registers all type definitions found in the AST in the
  * registeredTypes registry in the context, for easy lookup.
@@ -463,6 +488,11 @@ function decideStaticOrLive(doc: Document, context: Context): void {
         def,
         {
           LiveListExpr: () => {
+            liveObjRefs.set(def.name.name, null);
+            throw "break";
+          },
+
+          LiveMapExpr: () => {
             liveObjRefs.set(def.name.name, null);
             throw "break";
           },
@@ -581,8 +611,9 @@ export function check(
   visit(
     doc,
     {
-      Identifier: checkIdentifier,
       ArrayExpr: checkArrayExpr,
+      Identifier: checkIdentifier,
+      LiveMapExpr: checkLiveMapExpr,
       ObjectLiteralExpr: checkObjectLiteralExpr,
       ObjectTypeDefinition: checkObjectTypeDefinition,
       TypeName: checkTypeName,
@@ -593,7 +624,9 @@ export function check(
 
   if (!context.registeredTypes.has("Storage")) {
     context.errorReporter.throwSemanticError(
-      "Missing root object type definition named 'Storage'"
+      "Missing root object type definition named 'Storage'",
+      doc.range,
+      [{ type: "add-object-type-def", name: "Storage" }]
     );
   }
 

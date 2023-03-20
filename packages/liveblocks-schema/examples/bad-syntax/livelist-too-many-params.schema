@@ -1,4 +1,0 @@
-type X {
-  a: LiveList<Int, Int>       // Too many params
-                 ^ Expected ">" or "[" but "," found
-}
