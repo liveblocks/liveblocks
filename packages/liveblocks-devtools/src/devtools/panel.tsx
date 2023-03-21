@@ -100,7 +100,10 @@ function Panel() {
           }
           actions={[
             { title: "Reload", onClick: handleReload },
-            { title: "Get started", href: "https://liveblocks.io/docs" },
+            {
+              title: "Get started",
+              href: "https://liveblocks.io/docs/guides/devtools",
+            },
           ]}
         />
         <div className="bg-light-0 dark:bg-dark-0 border-light-300 dark:border-dark-300 flex h-12 w-full flex-none items-center justify-center border-t px-8">
