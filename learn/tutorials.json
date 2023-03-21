@@ -8,6 +8,10 @@
         "title": "Getting started",
         "pages": [
           {
+            "slug": "welcome",
+            "title": "Welcome to Liveblocks"
+          },
+          {
             "slug": "connecting",
             "title": "Connecting to Liveblocks",
             "comingSoon": true
@@ -155,6 +159,42 @@
           {
             "slug": "user-accesses",
             "title": "User access level",
+            "comingSoon": true
+          }
+        ]
+      },
+      {
+        "slug": "nextjs-starter-kit-guide",
+        "title": "Using the Next.js Starter Kit",
+        "pages": [
+          {
+            "slug": "installing",
+            "title": "Installing & setting up",
+            "comingSoon": true
+          },
+          {
+            "slug": "authentication",
+            "title": "Adding authentication providers",
+            "comingSoon": true
+          },
+          {
+            "slug": "customizing-the-collaborative-app",
+            "title": "Customizing the collaborative app",
+            "comingSoon": true
+          },
+          {
+            "slug": "adding-new-types",
+            "title": "Adding new types",
+            "comingSoon": true
+          },
+          {
+            "slug": "setting-up-a-database",
+            "title": "Setting up a database",
+            "comingSoon": true
+          },
+          {
+            "slug": "publishing-your-app",
+            "title": "Publishing your app",
             "comingSoon": true
           }
         ]
