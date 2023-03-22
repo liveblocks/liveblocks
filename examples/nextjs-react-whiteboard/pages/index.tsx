@@ -29,7 +29,7 @@ export default function Room() {
   );
 }
 
-function Canvas(): JSX.Element {
+function Canvas() {
   const [isDragging, setIsDragging] = useState(false);
   const shapeIds = useStorage(
     (root) => Array.from(root.shapes.keys()),
@@ -136,7 +136,7 @@ type RectangleProps = {
   ) => void;
 };
 
-function Rectangle({ id, onShapePointerDown }: RectangleProps): JSX.Element {
+function Rectangle({ id, onShapePointerDown }: RectangleProps) {
   const { x, y, fill } = useStorage((root) => root.shapes.get(id)) ?? {};
 
   const selectedByMe = useSelf((me) => me.presence.selectedShape === id);
@@ -173,7 +173,7 @@ function getRandomColor(): string {
   return COLORS[getRandomInt(COLORS.length)];
 }
 
-function Loading(): JSX.Element {
+function Loading() {
   return (
     <div className={styles.container}>
       <div className={styles.loading}>
