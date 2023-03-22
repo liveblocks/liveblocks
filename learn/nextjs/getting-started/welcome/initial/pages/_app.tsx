@@ -1,10 +1,14 @@
-import { useLayoutEffect } from "react"
+import type { AppProps } from "next/app";
+import Script from "next/script";
+import "../styles/global.css";
 
-export default function MyApp({ Component, pageProps }) {
-
-  useLayoutEffect(() => {
-    document.documentElement.classList.add("{% THEME_MODE %}");
-  }, []);
-
-  return <Component {...pageProps} />
+export default function App({ Component, pageProps }: AppProps) {
+  return (
+    <>
+      <Script>
+        {`{% DEFAULT_SCRIPTS %}`}
+      </Script>
+      <Component {...pageProps} />
+    </>
+  )
 }
