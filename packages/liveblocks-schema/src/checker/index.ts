@@ -436,6 +436,8 @@ function checkUnionExpr(node: UnionExpr, context: Context): void {
   }
 }
 
+// NOTE: We can probably rewrite this using a visit(), which would save us from
+// adding case statements with with every new language addition.
 function checkNoForbiddenRefs(
   node: ObjectTypeDefinition | TypeExpr,
   context: Context,
