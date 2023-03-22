@@ -1,4 +1,4 @@
-# vNEXT
+# 0.0.11-beta1
 
 - Add support for union types
 - Add support for `Null` type (where the only possible value is `null`)
