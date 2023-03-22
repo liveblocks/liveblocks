@@ -5,7 +5,7 @@ import "../styles/global.css";
 export default function App({ Component, pageProps }: AppProps) {
   return (
     <>
-      <Script>
+      <Script id="liveblocks-default-scripts">
         {`{% DEFAULT_SCRIPTS %}`}
       </Script>
       <Component {...pageProps} />
