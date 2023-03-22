@@ -1,9 +1,9 @@
 type X {
   a: Int<String>
-        ^ Expected ",", ";", "[", "\n", or "}" but "<" found
+        ^ Expected ",", ";", "[", "\n", "|", or "}" but "<" found
 }
 ---
 type X {
   a: String<Int>
-           ^ Expected ",", ";", "[", "\n", or "}" but "<" found
+           ^ Expected ",", ";", "[", "\n", "|", or "}" but "<" found
 }

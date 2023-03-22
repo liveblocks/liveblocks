@@ -1,3 +1,8 @@
+# vNEXT
+
+- Add support for union types
+- Add support for `Null` type (where the only possible value is `null`)
+
 # 0.0.10
 
 - Add support for `LiveList` types (e.g. `LiveList<Todo>`)

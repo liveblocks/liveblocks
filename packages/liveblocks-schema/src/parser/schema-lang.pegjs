@@ -156,6 +156,11 @@ BooleanType
     { return ast.booleanType(rng()) }
 
 
+NullType
+  = _ 'Null' EOK
+    { return ast.nullType(rng()) }
+
+
 LiveListKeyword
   = _ @$'LiveList' EOK
 
@@ -169,7 +174,22 @@ LiveObjectKeyword
 
 
 TypeExpr
-  = expr:TypeExprBase brackets:( LSQUARE RSQUARE { return rng() })*
+  = left:NonUnionTypeExpr PIPE right:TypeExpr
+    {
+      /* If either left or right is a union type, let's flatten them */
+      const members = [left, right]
+        .flatMap(expr =>
+          ast.isUnionTypeExpr(expr)
+            ? expr.members
+            : [expr]
+        );
+      return ast.unionExpr(members, rng());
+    }
+  / @NonUnionTypeExpr
+
+
+NonUnionTypeExpr
+  = expr:TypeExprLevel3 brackets:( LSQUARE RSQUARE { return rng() })+
     {
       let node = expr;
       for (const bracket of brackets) {
@@ -179,10 +199,12 @@ TypeExpr
       }
       return node;
     }
+  / @TypeExprLevel3
 
 
-TypeExprBase
-  = ObjectLiteralExpr
+TypeExprLevel3
+  = LPAREN @TypeExpr RPAREN
+  / ObjectLiteralExpr
   / BuiltInScalar
   / LiveStructureExpr
   / TypeRef
@@ -194,6 +216,7 @@ BuiltInScalar
   / IntType
   / FloatType
   / BooleanType
+  / NullType
 
 
 // e.g. LiveMap<> or LiveList<>
@@ -252,6 +275,8 @@ TYPE "keyword \"type\""
 
 LCURLY     = __ @$'{' __
 RCURLY     = __ @$'}' _
+LPAREN     = __ @$'(' __
+RPAREN     = __ @$')' _
 LSQUARE    = __ @$'[' __
 RSQUARE    = __ @$']' _
 //                  ^ NOTE: We cannot generically eat newlines after RCURLY, because they're significant

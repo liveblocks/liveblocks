@@ -58,6 +58,18 @@ describe("syntactic parser", () => {
       }
 
       type abc {}         // Lowercased type names are syntactically valid
+
+      type Unions {
+        a: String | Int[]
+        b: (String | Int)[]
+
+        // All of these are the same
+        c: (String | Int | Null)
+        d: ((String | Int) | Null)
+        e: (String | (Int | Null))
+        f: ((String | (Int | Null)))
+        g: Null | Int | String  # But order is retained
+      }
       `,
 
       ast.document([
@@ -120,6 +132,53 @@ describe("syntactic parser", () => {
           null,
           false /* always false during the parsing phase */
         ),
+
+        ast.objectTypeDefinition(
+          ast.typeName("Unions"),
+          [
+            ast.fieldDef(
+              ast.identifier("a"),
+              false,
+              ast.unionExpr([ast.stringType(), ast.arrayExpr(ast.intType())])
+            ),
+            ast.fieldDef(
+              ast.identifier("b"),
+              false,
+              ast.arrayExpr(ast.unionExpr([ast.stringType(), ast.intType()]))
+            ),
+
+            // These are all the same
+            ast.fieldDef(
+              ast.identifier("c"),
+              false,
+              ast.unionExpr([ast.stringType(), ast.intType(), ast.nullType()])
+            ),
+            ast.fieldDef(
+              ast.identifier("d"),
+              false,
+              ast.unionExpr([ast.stringType(), ast.intType(), ast.nullType()])
+            ),
+            ast.fieldDef(
+              ast.identifier("e"),
+              false,
+              ast.unionExpr([ast.stringType(), ast.intType(), ast.nullType()])
+            ),
+            ast.fieldDef(
+              ast.identifier("f"),
+              false,
+              ast.unionExpr([ast.stringType(), ast.intType(), ast.nullType()])
+            ),
+
+            // ...but order is retained
+            ast.fieldDef(
+              ast.identifier("g"),
+              false,
+              ast.unionExpr([ast.nullType(), ast.intType(), ast.stringType()])
+            ),
+          ],
+          null,
+          false /* always false during the parsing phase */
+        ),
       ])
     );
   });
@@ -154,6 +213,18 @@ describe("syntactic parser", () => {
       }
 
       type abc {}         // Lowercased type names are syntactically valid
+
+      type Unions {
+        a: String | Int | Int[]
+        b: (String | Int | Int)[]
+
+        // All of these are the same
+        c: (String | Int | Int | Null)
+        d: ((String | Int) | Null)
+        e: (String | (Int | Null))
+        f: ((String | (Int | Null)))
+        g: Null | Int | String  # But order is retained
+      }
       `
       )
     ).toMatchSnapshot();

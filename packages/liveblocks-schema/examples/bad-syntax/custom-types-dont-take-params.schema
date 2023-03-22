@@ -2,5 +2,5 @@ type Custom {}
 
 type X {
   bad: Custom<Int>
-             ^ Expected ",", ";", "[", "\n", or "}" but "<" found
+             ^ Expected ",", ";", "[", "\n", "|", or "}" but "<" found
 }
