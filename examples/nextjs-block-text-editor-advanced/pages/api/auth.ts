@@ -26,11 +26,10 @@ export default async function auth(req: NextApiRequest, res: NextApiResponse) {
   // In a real-world scenario, this is where you'd assign the
   // user based on their real identity from your auth provider.
   // See https://liveblocks.io/docs/api-reference/liveblocks-node#authorize for more information
-  const userIndex = Math.floor(Math.random() * NAMES.length);
   const response = await authorize({
     room: req.body.room,
     secret: API_KEY,
-    userId: `user-${userIndex}`,
+    userId: `user-${email}`,
     userInfo: {
       name: name,
       imageUrl: image,
