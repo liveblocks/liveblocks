@@ -16,7 +16,7 @@ export function MarketingFooter({
       <Container className={styles.container}>
         <span className={styles.copyright}>© {year} Liveblocks Inc.</span>
         <LinkButton
-          href="https://github.com/liveblocks/liveblocks/tree/main/starter-kit"
+          href="https://github.com/liveblocks/liveblocks/tree/main/starter-kits/nextjs-starter-kit"
           icon={<GitHubIcon />}
           target="_blank"
           variant="secondary"

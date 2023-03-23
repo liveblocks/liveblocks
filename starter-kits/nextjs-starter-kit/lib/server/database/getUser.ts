@@ -14,6 +14,18 @@ export async function getUser(userId: string): Promise<User | null> {
   const user = users.find((user) => user.id === userId);
 
   if (!user) {
+    console.warn(`
+ERROR: User "${userId}" was not found. 
+
+Check that you've added the user to data/users.ts, for example:
+{
+  id: "${userId}",
+  name: "Tchoka Ahoki",
+  avatar: "https://liveblocks.io/avatars/avatar-7.png",
+  groupIds: ["product", "engineering", "design"],
+},
+ 
+`);
     return null;
   }
 

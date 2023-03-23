@@ -176,35 +176,6 @@ Get the current list of users connected to a room.
 }
 ```
 
-## Get rooms
-
-Gets a list of rooms. Pagination is cursor-based, the response contains the url
-for the next page.
-
-<EndpointBlock method="GET" endpoint="https://liveblocks.net/api/v1/rooms" />
-
-### Query parameters [@hidden]
-
-- `limit`: Optional, default is 20, accepted value between 1 and 100.
-- `starting_after`: Optional, automatically built and part of the response for
-  you to request the next page.
-
-### Example response [@hidden]
-
-```json
-{
-  "next_page": "/api/v1/rooms?limit=10&starting_after=W1siaWQiLCJuZXdSb29tLTE2NTQ1NDcyODA0MDkiXSxbImNyZWF0ZWRfYXQiLDE2NTQ1NDcyODA0ODldXQ==",
-  "data": [
-    {
-      "type": "room",
-      "id": "room1",
-      "last_connection_at": "2022-06-06T20:28:00.0000",
-      "created_at": "2022-04-02T18:12:00.0000"
-    }
-  ]
-}
-```
-
 [api v2 reference]: /docs/api-reference/rest-api-endpoints
 [`"livelist"`]: /docs/api-reference/liveblocks-client#LiveList
 [`"livemap"`]: /docs/api-reference/liveblocks-client#LiveMap

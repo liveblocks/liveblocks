@@ -13,6 +13,7 @@ export default async function auth(req: NextApiRequest, res: NextApiResponse) {
   const response = await authorize({
     room,
     secret: API_KEY,
+    userId: `user-${Math.floor(Math.random() * 10)}`,
   });
 
   return res.status(response.status).end(response.body);

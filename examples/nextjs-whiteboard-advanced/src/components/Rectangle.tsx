@@ -4,14 +4,12 @@ import { colorToCss } from "../utils";
 type Props = {
   id: string;
   layer: RectangleLayer;
-  isAnimated: boolean;
   onPointerDown: (e: React.PointerEvent, id: string) => void;
   selectionColor?: string;
 };
 
 export default function Rectangle({
   layer,
-  isAnimated,
   onPointerDown,
   id,
   selectionColor,
@@ -22,7 +20,6 @@ export default function Rectangle({
     <rect
       onPointerDown={(e) => onPointerDown(e, id)}
       style={{
-        transition: isAnimated ? "all 120ms linear" : "",
         transform: `translate(${x}px, ${y}px)`,
       }}
       x={0}

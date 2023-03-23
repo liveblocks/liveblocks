@@ -1,4 +1,5 @@
-import { LiveObject, type Room, type User } from "@liveblocks/client";
+import { LiveObject } from "@liveblocks/client";
+import type { Others, Room } from "@liveblocks/client";
 import { nanoid } from "nanoid";
 import { ID_LENGTH } from "../constants";
 import type { Column, Presence, Row, Storage, UserMeta } from "../types";
@@ -31,7 +32,7 @@ export interface Spreadsheet {
   onCellsChange(callback: (cells: Record<string, string>) => void): () => void;
   onColumnsChange(callback: (columns: Column[]) => void): () => void;
   onOthersChange(
-    callback: (others: User<Presence, UserMeta>[]) => void
+    callback: (others: Others<Presence, UserMeta>) => void
   ): () => void;
   onRowsChange(callback: (rows: Row[]) => void): () => void;
   resizeColumn(index: number, width: number): void;
@@ -243,19 +244,18 @@ export async function createSpreadsheet(
     }
   }
 
-  const othersCallbacks: Array<(others: User<Presence, UserMeta>[]) => void> =
+  const othersCallbacks: Array<(others: Others<Presence, UserMeta>) => void> =
     [];
   function onOthersChange(
-    callback: (others: User<Presence, UserMeta>[]) => void
+    callback: (others: Others<Presence, UserMeta>) => void
   ) {
     othersCallbacks.push(callback);
-    callback(room.getOthers().toArray());
+    callback(room.getOthers());
     return () => removeFromArray(othersCallbacks, callback);
   }
   room.subscribe("others", (others) => {
-    const users = others.toArray();
     for (const callback of othersCallbacks) {
-      callback(users);
+      callback(others);
     }
   });
 

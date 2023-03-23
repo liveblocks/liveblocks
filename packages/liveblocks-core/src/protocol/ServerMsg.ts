@@ -14,6 +14,7 @@ export enum ServerMsgCode {
   // For Storage
   INITIAL_STORAGE_STATE = 200,
   UPDATE_STORAGE = 201,
+  REJECT_STORAGE_OP = 299,
 }
 
 /**
@@ -33,7 +34,8 @@ export type ServerMsg<
 
   // For Storage
   | InitialDocumentStateServerMsg // For a single client
-  | UpdateStorageServerMsg; // Broadcasted
+  | UpdateStorageServerMsg // Broadcasted
+  | RejectedStorageOpServerMsg; // For a single client
 
 /**
  * Sent by the WebSocket server and broadcasted to all clients to announce that
@@ -179,4 +181,15 @@ export type InitialDocumentStateServerMsg = {
 export type UpdateStorageServerMsg = {
   readonly type: ServerMsgCode.UPDATE_STORAGE;
   readonly ops: Op[];
+};
+
+/**
+ * Sent by the WebSocket server to the client to indicate that certain opIds
+ * have been received but were rejected because they caused mutations that are
+ * incompatible with the Room's schema.
+ */
+export type RejectedStorageOpServerMsg = {
+  readonly type: ServerMsgCode.REJECT_STORAGE_OP;
+  readonly opIds: string[];
+  readonly reason: string;
 };

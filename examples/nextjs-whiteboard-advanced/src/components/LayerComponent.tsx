@@ -30,7 +30,6 @@ const LayerComponent = memo(
             id={id}
             layer={layer}
             onPointerDown={onLayerPointerDown}
-            isAnimated={isAnimated}
             selectionColor={selectionColor}
           />
         );
@@ -39,7 +38,6 @@ const LayerComponent = memo(
           <Path
             key={id}
             points={layer.points}
-            isAnimated={isAnimated}
             onPointerDown={(e) => onLayerPointerDown(e, id)}
             x={layer.x}
             y={layer.y}
@@ -53,7 +51,6 @@ const LayerComponent = memo(
             id={id}
             layer={layer}
             onPointerDown={onLayerPointerDown}
-            isAnimated={isAnimated}
             selectionColor={selectionColor}
           />
         );

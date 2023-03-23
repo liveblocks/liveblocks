@@ -12,6 +12,7 @@ import { LiveObject } from "./crdts/LiveObject";
 import type { LiveNode, LiveStructure, LsonObject } from "./crdts/Lson";
 import type { StorageCallback, StorageUpdate } from "./crdts/StorageUpdates";
 import { assertNever, nn } from "./lib/assert";
+import { captureStackTrace } from "./lib/debug";
 import type { Callback, Observable } from "./lib/EventSource";
 import { makeEventSource } from "./lib/EventSource";
 import * as console from "./lib/fancy-console";
@@ -30,7 +31,7 @@ import type { BaseUserMeta } from "./protocol/BaseUserMeta";
 import type { ClientMsg } from "./protocol/ClientMsg";
 import { ClientMsgCode } from "./protocol/ClientMsg";
 import type { Op } from "./protocol/Op";
-import { OpCode } from "./protocol/Op";
+import { isAckOp, OpCode } from "./protocol/Op";
 import type {
   IdTuple,
   SerializedChild,
@@ -542,10 +543,10 @@ export type Room<
     }): void;
   };
 
-  /** @internal - For dev tools support */
+  /** @internal - For DevTools support */
   getSelf_forDevTools(): DevTools.UserTreeNode | null;
 
-  /** @internal - For dev tools support */
+  /** @internal - For DevTools support */
   getOthers_forDevTools(): readonly DevTools.UserTreeNode[];
 };
 
@@ -647,7 +648,7 @@ type Machine<
   getPresence(): Readonly<TPresence>;
   getOthers(): Others<TPresence, TUserMeta>;
 
-  // Dev tools support
+  // DevTools support
   getSelf_forDevTools(): DevTools.UserTreeNode | null;
   getOthers_forDevTools(): readonly DevTools.UserTreeNode[];
 };
@@ -754,6 +755,9 @@ type State<
   // A registry of yet-unacknowledged Ops. These Ops have already been
   // submitted to the server, but have not yet been acknowledged.
   unacknowledgedOps: Map<string, Op>;
+
+  // Stack traces of all pending Ops. Used for debugging in non-production builds
+  opStackTraces?: Map<string, string>;
 };
 
 type Effects<TPresence extends JsonObject, TRoomEvent extends Json> = {
@@ -867,6 +871,17 @@ function makeStateMachine<
     ) {
       const activeBatch = state.activeBatch;
 
+      if (process.env.NODE_ENV !== "production") {
+        const stackTrace = captureStackTrace("Storage mutation", this.dispatch);
+        if (stackTrace) {
+          ops.forEach((op) => {
+            if (op.opId) {
+              nn(state.opStackTraces).set(op.opId, stackTrace);
+            }
+          });
+        }
+      }
+
       if (activeBatch) {
         activeBatch.ops.push(...ops);
         storageUpdates.forEach((value, key) => {
@@ -878,7 +893,7 @@ function makeStateMachine<
             )
           );
         });
-        activeBatch.reverseOps.push(...reverse);
+        activeBatch.reverseOps.unshift(...reverse);
       } else {
         batchUpdates(() => {
           addToUndoStack(reverse, doNotBatchUpdates);
@@ -984,7 +999,7 @@ function makeStateMachine<
         : null
   );
 
-  // For use in dev tools
+  // For use in DevTools
   const selfAsTreeNode = new DerivedRef(
     self as ImmutableRef<User<TPresence, TUserMeta> | null>,
     (me) => (me !== null ? userToTreeNode("Me", me) : null)
@@ -1197,23 +1212,22 @@ function makeStateMachine<
         if (isLocal) {
           source = OpSource.UNDOREDO_RECONNECT;
         } else {
-          const deleted = state.unacknowledgedOps.delete(nn(op.opId));
+          const opId = nn(op.opId);
+          if (process.env.NODE_ENV !== "production") {
+            nn(state.opStackTraces).delete(opId);
+          }
+
+          const deleted = state.unacknowledgedOps.delete(opId);
           source = deleted ? OpSource.ACK : OpSource.REMOTE;
         }
 
         const applyOpResult = applyOp(op, source);
         if (applyOpResult.modified) {
-          const parentId =
-            applyOpResult.modified.node.parent.type === "HasParent"
-              ? nn(
-                  applyOpResult.modified.node.parent.node._id,
-                  "Expected parent node to have an ID"
-                )
-              : undefined;
+          const nodeId = applyOpResult.modified.node._id;
 
-          // If the parent is the root (undefined) or was created in the same batch, we don't want to notify
+          // If the modified node is not the root (undefined) and was created in the same batch, we don't want to notify
           // storage updates for the children.
-          if (!parentId || !createdNodeIds.has(parentId)) {
+          if (!(nodeId && createdNodeIds.has(nodeId))) {
             output.storageUpdates.set(
               nn(applyOpResult.modified.node._id),
               mergeStorageUpdates(
@@ -1231,7 +1245,7 @@ function makeStateMachine<
             op.type === OpCode.CREATE_MAP ||
             op.type === OpCode.CREATE_OBJECT
           ) {
-            createdNodeIds.add(nn(applyOpResult.modified.node._id));
+            createdNodeIds.add(nn(op.id));
           }
         }
       }
@@ -1250,6 +1264,12 @@ function makeStateMachine<
   }
 
   function applyOp(op: Op, source: OpSource): ApplyResult {
+    // Explicit case to handle incoming "AckOp"s, which are supposed to be
+    // no-ops.
+    if (isAckOp(op)) {
+      return { modified: false };
+    }
+
     switch (op.type) {
       case OpCode.DELETE_OBJECT_KEY:
       case OpCode.UPDATE_OBJECT:
@@ -1261,6 +1281,7 @@ function makeStateMachine<
 
         return node._apply(op, source === OpSource.UNDOREDO_RECONNECT);
       }
+
       case OpCode.SET_PARENT_KEY: {
         const node = state.nodes.get(op.id);
         if (node === undefined) {
@@ -1459,7 +1480,7 @@ function makeStateMachine<
 
     if (state.activeBatch) {
       if (options?.addToHistory) {
-        state.activeBatch.reverseOps.push({
+        state.activeBatch.reverseOps.unshift({
           type: "presence",
           data: oldValues,
         });
@@ -1575,6 +1596,13 @@ function makeStateMachine<
   function onRoomStateMessage(
     message: RoomStateServerMsg<TUserMeta>
   ): OthersEvent<TPresence, TUserMeta> {
+    for (const connectionId in state.others._connections) {
+      const user = message.users[connectionId];
+      if (user === undefined) {
+        state.others.removeConnection(Number(connectionId));
+      }
+    }
+
     for (const key in message.users) {
       const user = message.users[key];
       const connectionId = Number(key);
@@ -1731,6 +1759,41 @@ function makeStateMachine<
                 )
               );
             });
+
+            break;
+          }
+
+          // Receiving a RejectedOps message in the client means that the server is no
+          // longer in sync with the client. Trying to synchronize the client again by
+          // rolling back particular Ops may be hard/impossible. It's fine to not try and
+          // accept the out-of-sync reality and throw an error. We look at this kind of bug
+          // as a developer-owned bug. In production, these errors are not expected to happen.
+          case ServerMsgCode.REJECT_STORAGE_OP: {
+            console.errorWithTitle(
+              "Storage mutation rejection error",
+              message.reason
+            );
+
+            if (process.env.NODE_ENV !== "production") {
+              const traces: Set<string> = new Set();
+              for (const opId of message.opIds) {
+                const trace = state.opStackTraces?.get(opId);
+                if (trace) {
+                  traces.add(trace);
+                }
+              }
+
+              if (traces.size > 0) {
+                console.warnWithTitle(
+                  "The following function calls caused the rejected storage mutations:",
+                  `\n\n${Array.from(traces).join("\n\n")}`
+                );
+              }
+
+              throw new Error(
+                `Storage mutations rejected by server: ${message.reason}`
+              );
+            }
 
             break;
           }
@@ -2278,7 +2341,7 @@ function makeStateMachine<
     authenticationSuccess,
     heartbeat,
     onNavigatorOnline,
-    // Internal dev tools
+    // Internal DevTools
     simulateSocketClose,
     simulateSendCloseEvent,
     onVisibilityChange,
@@ -2397,6 +2460,12 @@ function defaultState<
 
     activeBatch: null,
     unacknowledgedOps: new Map<string, Op>(),
+
+    // Debug
+    opStackTraces:
+      process.env.NODE_ENV !== "production"
+        ? new Map<string, string>()
+        : undefined,
   };
 }
 
@@ -2588,6 +2657,8 @@ async function fetchAuthEndpoint(
     headers: {
       "Content-Type": "application/json",
     },
+    // Credentials are needed to support authentication with cookies
+    credentials: "include",
     body: JSON.stringify(body),
   });
   if (!res.ok) {

@@ -82,7 +82,7 @@ export function mapValues<V, O extends Record<string, unknown>>(
 export function tryParseJson(rawMessage: string): Json | undefined {
   try {
     // eslint-disable-next-line no-restricted-syntax
-    return JSON.parse(rawMessage);
+    return JSON.parse(rawMessage) as Json;
   } catch (e) {
     return undefined;
   }

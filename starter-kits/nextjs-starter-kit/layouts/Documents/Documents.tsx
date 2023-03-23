@@ -19,6 +19,7 @@ import { Select } from "../../primitives/Select";
 import { Spinner } from "../../primitives/Spinner";
 import styles from "./Documents.module.css";
 import { DocumentRowGroup } from "../../components/Documents/DocumentRowGroup";
+import { capitalize } from "../../utils";
 
 // Load `x` documents at a time
 const DOCUMENT_LOAD_LIMIT = 10;
@@ -130,7 +131,9 @@ export function DocumentsLayout({
       {...props}
     >
       <div className={styles.header}>
-        <h1 className={styles.headerTitle}>{group?.name ?? filter}</h1>
+        <h1 className={styles.headerTitle}>
+          {group?.name ?? capitalize(filter)}
+        </h1>
         <div className={styles.headerActions}>
           <Select
             initialValue="all"

@@ -286,7 +286,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
     if (op.type === OpCode.UPDATE_OBJECT) {
       return this._applyUpdate(op, isLocal);
     } else if (op.type === OpCode.DELETE_OBJECT_KEY) {
-      return this._applyDeleteObjectKey(op);
+      return this._applyDeleteObjectKey(op, isLocal);
     }
 
     return super._apply(op, isLocal);
@@ -395,7 +395,10 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
   }
 
   /** @internal */
-  private _applyDeleteObjectKey(op: DeleteObjectKeyOp): ApplyResult {
+  private _applyDeleteObjectKey(
+    op: DeleteObjectKeyOp,
+    isLocal: boolean
+  ): ApplyResult {
     const key = op.key;
 
     // If property does not exist, exit without notifying
@@ -403,9 +406,9 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
       return { modified: false };
     }
 
-    // If a local operation exists on the same key
-    // prevent flickering by not applying delete op.
-    if (this._propToLastUpdate.get(key) !== undefined) {
+    // If a local operation exists on the same key and we receive a remote
+    // one prevent flickering by not applying delete op.
+    if (!isLocal && this._propToLastUpdate.get(key) !== undefined) {
       return { modified: false };
     }
 

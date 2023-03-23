@@ -30,6 +30,7 @@ export async function POST({ request }) {
   const response = await authorize({
     room: room,
     secret: API_KEY,
+    userId: `user-${Math.floor(Math.random() * 10)}`,
   });
 
   return new Response(response.body, { status: response.status });

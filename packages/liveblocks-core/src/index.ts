@@ -30,7 +30,7 @@ export {
   lsonToJson,
   patchLiveObjectKey,
 } from "./immutable";
-export { assertNever, nn } from "./lib/assert";
+export { assert, assertNever, nn } from "./lib/assert";
 export {
   deprecate,
   deprecateIf,
@@ -38,7 +38,7 @@ export {
   throwUsageError,
 } from "./lib/deprecation";
 export { freeze } from "./lib/freeze";
-export type { Json, JsonObject } from "./lib/Json";
+export type { Json, JsonArray, JsonObject, JsonScalar } from "./lib/Json";
 export { isJsonArray, isJsonObject, isJsonScalar } from "./lib/Json";
 export { asArrayWithLegacyMethods } from "./lib/LegacyArray";
 export { comparePosition, makePosition } from "./lib/position";
@@ -65,6 +65,7 @@ export type {
 } from "./protocol/ClientMsg";
 export { ClientMsgCode } from "./protocol/ClientMsg";
 export type {
+  AckOp,
   CreateChildOp,
   CreateListOp,
   CreateMapOp,
@@ -94,6 +95,7 @@ export { isChildCrdt, isRootCrdt } from "./protocol/SerializedCrdt";
 export type {
   BroadcastedEventServerMsg,
   InitialDocumentStateServerMsg,
+  RejectedStorageOpServerMsg,
   RoomStateServerMsg,
   ServerMsg,
   UpdatePresenceServerMsg,
@@ -113,6 +115,13 @@ export type {
 export type { Immutable } from "./types/Immutable";
 export type { NodeMap, ParentToChildNodeMap } from "./types/NodeMap";
 export type { Others } from "./types/Others";
+export type {
+  PlainLson,
+  PlainLsonFields,
+  PlainLsonList,
+  PlainLsonMap,
+  PlainLsonObject,
+} from "./types/PlainLson";
 export type { User } from "./types/User";
 export { WebsocketCloseCodes } from "./types/WebsocketCloseCodes";
 

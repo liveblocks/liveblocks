@@ -1,0 +1,39 @@
+name: Publish Liveblocks DevTools extension
+
+on: [workflow_dispatch]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Use Node.js
+        uses: actions/setup-node@v3
+        with:
+          cache: "npm"
+          cache-dependency-path: "**/package-lock.json"
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Turbo Cache
+        id: turbo-cache
+        uses: actions/cache@v3
+        with:
+          key: turbo-cache-@liveblocks/devtools-bust
+          path: node_modules/.cache/turbo
+          restore-keys: turbo-cache-@liveblocks/devtools-bust
+
+      - name: Build for Chromium
+        run: npm run build -- --filter devtools
+
+      - name: Build for Firefox
+        run: npm run build:firefox -- --filter devtools
+
+      - name: Browser Platform Publish
+        uses: PlasmoHQ/bpp@v3
+        with:
+          keys: ${{ secrets.DEVTOOLS_PUBLISHING_KEYS }}

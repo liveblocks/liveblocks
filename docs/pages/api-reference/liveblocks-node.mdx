@@ -13,13 +13,14 @@ request is live mode or test mode.
 ## authorize
 
 If the current user has access to the provided room, call this function from
-your authorization endpoint and returns the result as a http response.
+your authorization endpoint and return the result as a http response.
 
-Optionally, you can also pass a `userId` and `userInfo` to add information about
-the current user that will not change during the session. This information will
-will be accessible in the client to all other users in [`Room.getOthers`][]. It
-can be helpful to implement avatars or display the user’s name without
-introducing a potential impersonification security issue.
+When calling the `authorize` function, you must pass a `userId`. Optionally,
+`userInfo` can be used to add information about the current user that will not
+change during the session. This information will will be accessible in the
+client to all other users in [`Room.getOthers`][]. It can be helpful to
+implement avatars or display the user’s name without introducing a potential
+impersonification security issue.
 
 - `userId` cannot be longer than 128 characters.
 - `userInfo` cannot be longer than 1024 characters once serialized to JSON.
@@ -45,13 +46,13 @@ export default async function auth(req, res) {
   const response = await authorize({
     room,
     secret,
-// Optional, corresponds to the UserMeta[id] type defined in liveblocks.config.ts
+    // Corresponds to the UserMeta[id] type defined in liveblocks.config.ts
     userId: "123",
     groupIds: ["456"], // Optional
     userInfo: {
       // Optional, corresponds to the UserMeta[info] type defined in liveblocks.config.ts
       name: "Ada Lovelace",
-      color: "red"
+      color: "red",
     },
   });
   return res.status(response.status).end(response.body);
@@ -83,11 +84,11 @@ app.post("/api/auth", (req, res) => {
   authorize({
     room: req.body.room,
     secret,
-    userId: "123", // Optional
+    userId: "123",
     userInfo: {
       // Optional
       name: "Ada Lovelace",
-      color: "red"
+      color: "red",
     },
   })
     .then((authResponse) => {
@@ -97,6 +98,62 @@ app.post("/api/auth", (req, res) => {
       res.status(403).end();
     });
 });
+```
+
+### WebhookHandler [#WebhookHandler]
+
+The `WebhookHandler` class is a helper to handle webhook requests from
+Liveblocks.
+
+It’s initialized with a signing secret that you can find in your project’s
+webhook page.
+
+```js
+const webhookHandler = new WebhookHandler(process.env.WEBHOOK_SECRET);
+```
+
+#### verifyRequest [#verifyRequest]
+
+Verifies the request and returns the event.
+
+```js
+const event = webhookHandler.verifyRequest({
+  headers: req.headers,
+  rawBody: req.body,
+});
+```
+
+#### Example [#webhook-example]
+
+```js
+import { WebhookHandler } from "@liveblocks/node";
+
+// Will fail if not properly initialized with a secret
+const webhookHandler = new WebhookHandler(process.env.WEBHOOK_SECRET);
+
+export default function webhookRequestHandler(req, res) {
+  try {
+    const event = webhookHandler.verifyRequest({
+      headers: req.headers,
+      rawBody: req.body,
+    });
+
+    // do things with the event of type `WebhookEvent`
+
+    if (event.type === "storageUpdated") {
+      // do things with the event of type `StorageUpdatedEvent`
+    } else if (event.type === "userEntered") {
+      // do things with the event of type `UserEnteredEvent`
+    } else if (event.type === "userLeft") {
+      // do things with the event of type `UserLeftEvent`
+    }
+  } catch (error) {
+    console.error(error);
+    return res.status(400).end();
+  }
+
+  res.status(200).end();
+}
 ```
 
 [`room.getothers`]: /docs/api-reference/liveblocks-client#Room.getOthers

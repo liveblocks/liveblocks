@@ -4,6 +4,7 @@ import { LiveList, LiveMap, LiveObject } from "@liveblocks/client";
 import { Point, Color, Layer } from "./src/types";
 
 const client = createClient({
+  throttle: 16,
   authEndpoint: "/api/auth",
 });
 

@@ -14,6 +14,7 @@ export default async function auth(req: NextApiRequest, res: NextApiResponse) {
 
   const response = await authorize({
     room,
+    userId: `user-${Math.floor(Math.random() * 10)}`,
     secret: API_KEY,
     liveblocksAuthorizeEndpoint: LIVEBLOCKS_AUTHORIZE_ENDPOINT,
   });

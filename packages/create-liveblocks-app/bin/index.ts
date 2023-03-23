@@ -1,3 +1,3 @@
-import { createLiveblocksApp } from "./createLiveblocksApp";
+import { createLiveblocksApp } from "./create-liveblocks-app";
 
 createLiveblocksApp();

@@ -12,7 +12,6 @@ export default function Cursor({ color, x, y, message }: Props) {
     <div
       className="absolute pointer-events-none top-0 left-0"
       style={{
-        transition: "transform 120ms linear",
         transform: `translateX(${x}px) translateY(${y}px)`,
       }}
     >

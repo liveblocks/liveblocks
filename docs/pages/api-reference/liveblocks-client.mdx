@@ -122,14 +122,14 @@ By default, the client throttle the WebSocket messages sent to 100 milliseconds.
 
 It is possible to override that configuration with the `throttle` option.
 
-`throttle` should be between 80 and 1000 milliseconds.
+`throttle` should be between 16 and 1000 milliseconds.
 
 ```ts
 import { createClient } from "@liveblocks/client";
 
 const client = createClient({
   /* ... other options ... */
-  throttle: 80,
+  throttle: 16,
 });
 ```
 
@@ -553,9 +553,10 @@ room.reconnect();
 
 ## Storage
 
-<Banner title="The storage block is in beta">
+<Banner title="Need help troubleshooting storage?">
 
-The following APIs are subject to change during the beta.
+Try the [Liveblocks DevTools extension](/devtools) to visualize your
+collaborative experiences as you build them, in real-time.
 
 </Banner>
 

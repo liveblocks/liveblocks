@@ -2,11 +2,11 @@
 meta:
   title: "Upgrading to 0.18"
   parentTitle: "Guides"
-  description: "Guide to upgrade to the latest Liveblocks version"
+  description: "Guide to upgrade to Liveblocks version 0.18"
 ---
 
 ```bash
-npm update @liveblocks/client@0.18 @liveblocks/react@0.18
+npm install @liveblocks/client@0.18 @liveblocks/react@0.18
 ```
 
 With the release of 0.18 we’re bringing some exciting and pretty major
@@ -282,7 +282,7 @@ gradually upgrade your app to make use of the new hooks.
 ### Step 1: Install the latest package [@hidden]
 
 ```bash
-npm update @liveblocks/client@0.18 @liveblocks/react@0.18
+npm install @liveblocks/client@0.18 @liveblocks/react@0.18
 ```
 
 ### Step 2: Make sure you’re setting initial presence [@hidden]
@@ -404,7 +404,7 @@ Please note that `useList`, `useObject`, or `useMap` are not deprecated and
 still work with the same behavior as before. We just no longer recommend their
 use.
 
-### Step 5b: Replace mutations with `useMutation` [@hidden]
+### Step 5b: Replace mutations with useMutation [@hidden]
 
 If you are (also) using `useList`, `useObject` or `useMap` to obtain a mutable
 reference to the Live structure to _mutate_ it, you can rewrite those use cases

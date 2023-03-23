@@ -1,6 +1,9 @@
 <p align="center">
-  <a href="https://liveblocks.io">
-    <img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/header.svg" alt="Liveblocks" />
+  <a href="https://liveblocks.io#gh-light-mode-only">
+    <img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/header-light.svg" alt="Liveblocks" />
+  </a>
+  <a href="https://liveblocks.io#gh-dark-mode-only">
+    <img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/header-dark.svg" alt="Liveblocks" />
   </a>
 </p>
 
@@ -48,7 +51,7 @@ learn more about
 
 ## Community
 
-- [Discord](https://discord.gg/X4YWJuH9VY) - To get involved with the Liveblocks
+- [Discord](https://liveblocks.io/discord) - To get involved with the Liveblocks
   community, ask questions and share tips.
 - [Twitter](https://twitter.com/liveblocks) - To receive updates, announcements,
   blog posts, and general Liveblocks tips.

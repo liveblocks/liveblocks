@@ -19,7 +19,7 @@ dedicated React guide below:
 - [React guide][]
 
 You can also
-[follow our step-by-step tutorial](/docs/tutorials/multiplayer-to-do-list/react-redux)
+[follow our step-by-step tutorial](/docs/tutorials/collaborative-to-do-list/react-redux)
 to learn how to use Liveblocks.
 
 ## Install Liveblocks into your project [#install-liveblocks]
@@ -145,6 +145,13 @@ export default function App() {
 
 ## Get other users in the room [#get-others]
 
+<Banner title="Need help troubleshooting presence?">
+
+Try the [Liveblocks DevTools extension](/devtools) to visualize your
+collaborative experiences as you build them, in real-time.
+
+</Banner>
+
 If you want to list all the people connected to the room, you can use
 `state.liveblocks.others` to get an array of the other users in the room.
 
@@ -242,6 +249,13 @@ function OthersCursors() {
 
 ## Sync and persist the state across client [#storage-intro]
 
+<Banner title="Need help troubleshooting storage?">
+
+Try the [Liveblocks DevTools extension](/devtools) to visualize your
+collaborative experiences as you build them, in real-time.
+
+</Banner>
+
 As opposed to the `presence`, some collaborative features require that every
 user interacts with the same piece of state. For example, in Google Docs, it is
 the paragraphs, headings, images in the document. In Figma, it’s all the shapes
@@ -263,9 +277,9 @@ can be nested to create the state that you want.
   property simultaneously, the last modification received by the Liveblocks
   servers is the winner.
 
-When using our redux integration you don't need to interact directly with these
-data structures. Our enhancer synchronize your store with our data structures
-based on the `storageMapping` configuration.
+When using our Redux integration you cannot interact directly with these data
+structures. Our enhancer synchronizes your store with our data structures based
+on the `storageMapping` configuration.
 
 Here is an example to explain how it works under the hood. Imagine you have the
 following store:

@@ -22,7 +22,7 @@ export function wrapObject(values?: string) {
 
 export function stringify(
   value?: Json,
-  maxDepth = 1,
+  maxDepth = 2,
   depth = 0,
   seen = new WeakSet<JsonObject | Json[]>()
 ): string {

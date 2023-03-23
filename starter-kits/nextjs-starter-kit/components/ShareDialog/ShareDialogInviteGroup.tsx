@@ -45,7 +45,6 @@ export function ShareDialogInviteGroup({
 
     if (error) {
       setErrorMessage(error?.suggestion);
-
       return;
     }
 
@@ -72,6 +71,7 @@ export function ShareDialogInviteGroup({
               }}
             >
               <Select
+                key={currentGroups[0]?.id || undefined}
                 aboveOverlay
                 name="groupId"
                 className={styles.inviteSelect}

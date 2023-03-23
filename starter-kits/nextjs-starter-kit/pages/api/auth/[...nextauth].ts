@@ -16,7 +16,7 @@ export const authOptions = {
       const userInfo: User | null = await getUser(session.user.email);
 
       if (!userInfo) {
-        return null;
+        throw new Error("User not found");
       }
 
       session.user.info = userInfo;
@@ -48,7 +48,7 @@ export const authOptions = {
         const user: User | null = await getUser(credentials.email);
 
         if (!user) {
-          return null;
+          throw new Error("User not found");
         }
 
         return {

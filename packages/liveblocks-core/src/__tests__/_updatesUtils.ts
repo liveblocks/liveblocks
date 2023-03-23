@@ -119,6 +119,17 @@ export function serializeUpdateToJson(
   return assertNever(update, "Unsupported LiveStructure type");
 }
 
+export function objectUpdate<TContents extends LsonObject>(
+  contents: ToJson<TContents>,
+  updates: LiveObjectUpdateDelta<TContents>
+): JsonLiveObjectUpdate<TContents> {
+  return {
+    type: "LiveObject",
+    node: contents,
+    updates,
+  };
+}
+
 export function listUpdate<TItem extends Lson>(
   items: ToJson<TItem>[],
   updates: JsonLiveListUpdateDelta<TItem>[]

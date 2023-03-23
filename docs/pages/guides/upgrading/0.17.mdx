@@ -2,8 +2,12 @@
 meta:
   title: "Upgrading to 0.17"
   parentTitle: "Guides"
-  description: "Guide to upgrade to the latest Liveblocks version"
+  description: "Guide to upgrade to Liveblocks version 0.17"
 ---
+
+```bash
+npm install @liveblocks/client@0.17 @liveblocks/react@0.17
+```
 
 With the release of 0.17 we’re making a big investment in the stability and
 reliability of Liveblocks. Our long term goal is to empower you to write and
@@ -22,7 +26,7 @@ To upgrade [`@liveblocks/client`][] and [`@liveblocks/react`][], run the
 following command.
 
 ```bash
-npm update @liveblocks/client@0.17 @liveblocks/react@0.17
+npm install @liveblocks/client@0.17 @liveblocks/react@0.17
 ```
 
 With these changes, we’re clearing the path to enable schema validation per
@@ -241,7 +245,7 @@ To upgrade [`@liveblocks/client`][] and [`@liveblocks/react`], run the following
 command.
 
 ```bash
-npm update @liveblocks/client@0.17 @liveblocks/react@0.17
+npm install @liveblocks/client@0.17 @liveblocks/react@0.17
 ```
 
 #### Step 2 - Create a new file called `liveblocks.config.ts` where you will create your Liveblocks client, provider and hooks and re-export them. [@hidden]
@@ -463,9 +467,8 @@ const me = room.getPresence();
 const others = room.getOthers();
 ```
 
-If you run into issues with these new patterns and you need help, please
-[let us know](https://github.com/liveblocks/liveblocks/discussions/360). We’re
-here to help!
+If you run into issues with these new patterns and you need help, please let us
+know. We’re here to help!
 
 [`@liveblocks/client`]: /docs/api-reference/liveblocks-client
 [`@liveblocks/react`]: /docs/api-reference/liveblocks-react

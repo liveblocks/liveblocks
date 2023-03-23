@@ -24,9 +24,12 @@ app.post("/auth", (req, res) => {
   return authorize({
     room: req.body.room,
     secret: API_KEY,
+    userId: `user-${Math.floor(Math.random() * NAMES.length)}`,
     userInfo: {
       name: NAMES[Math.floor(Math.random() * NAMES.length)],
-      picture: `https://liveblocks.io/avatars/avatar-${Math.floor(Math.random() * 30)}.png`,
+      picture: `https://liveblocks.io/avatars/avatar-${Math.floor(
+        Math.random() * 30
+      )}.png`,
     },
   })
     .then((response) => {

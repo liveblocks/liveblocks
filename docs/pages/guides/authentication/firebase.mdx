@@ -42,12 +42,12 @@ exports.auth = functions.https.onCall((data, context) => {
   return authorize({
     room: data.room,
     secret: "sk_prod_xxxxxxxxxxxxxxxxxxxxxxxx",
-    userId: "123", // Optional
+    userId: "123",
     groupIds: ["456"], // Optional
     userInfo: {
       // Optional, corresponds to the UserMeta[info] info defined in liveblocks.config.ts
       name: "Ada Lovelace",
-      color: "red"
+      color: "red",
     },
   }).then((authResult) => {
     if (authResult.status !== 200) {
@@ -58,8 +58,10 @@ exports.auth = functions.https.onCall((data, context) => {
 });
 ```
 
-The `userId` used in the `authorize` function corresponds to userId used in our APIs when setting permissions (e.g. in create room).
-You can use the following example to use data from `userId` and `userInfo`on the front end.
+The `userId` used in the `authorize` function corresponds to userId used in our
+APIs when setting permissions (e.g. in create room). You can use the following
+example to use data from `userId` and `userInfo`on the front end.
+
 ```ts
   const self = useSelf();
 
