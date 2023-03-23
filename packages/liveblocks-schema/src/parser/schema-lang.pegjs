@@ -178,7 +178,7 @@ LiveObjectKeyword
 
 
 Type
-  = expr:TypeTypeBase brackets:( LSQUARE RSQUARE { return rng() })*
+  = expr:TypeL2 brackets:( LSQUARE RSQUARE { return rng() })*
     {
       let node = expr;
       for (const bracket of brackets) {
@@ -190,7 +190,7 @@ Type
     }
 
 
-TypeTypeBase
+TypeL2
   = ObjectLiteralType
   / BuiltInScalar
   / LiveType
