@@ -3,7 +3,6 @@ import { NextApiRequest, NextApiResponse } from "next";
 import { getServerSession } from "./auth/getServerSession";
 import { User } from "../../src/types";
 
-
 const API_KEY = process.env.LIVEBLOCKS_SECRET_KEY;
 
 export default async function auth(req: NextApiRequest, res: NextApiResponse) {
@@ -11,27 +10,18 @@ export default async function auth(req: NextApiRequest, res: NextApiResponse) {
     return res.status(403).end();
   }
 
-<<<<<<< HEAD
   const session = await getServerSession(req, res);
-    // Anonymous user info
-  const anonymousUser: User ={
+  // Anonymous user info
+  const anonymousUser: User = {
     name: "Anonymous",
     email: "none",
-    image: "N/A"
-      }
+    image: "N/A",
+  };
 
-    console.log(anonymousUser)
+  console.log(anonymousUser);
 
-  const {
-    name,
-    email,
-    image
-    } = session?.user?? anonymousUser;
+  const { name, email, image } = session?.user ?? anonymousUser;
 
-
-
-=======
->>>>>>> main
   // We're generating random users and avatars here.
   // In a real-world scenario, this is where you'd assign the
   // user based on their real identity from your auth provider.
@@ -42,17 +32,9 @@ export default async function auth(req: NextApiRequest, res: NextApiResponse) {
     secret: API_KEY,
     userId: `user-${userIndex}`,
     userInfo: {
-<<<<<<< HEAD
       name: name,
       imageUrl: image,
-=======
-      name: NAMES[userIndex],
-      imageUrl: `https://liveblocks.io/avatars/avatar-${Math.floor(
-        Math.random() * 30
-      )}.png`,
->>>>>>> main
     },
   });
   return res.status(response.status).end(response.body);
 }
-
