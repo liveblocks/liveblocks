@@ -1,4 +1,4 @@
-# 0.0.11-beta3
+# 0.0.11
 
 - Make all built-in types lowercased, following TypeScript syntax more closely
   instead of GraphQLs:
