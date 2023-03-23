@@ -48,7 +48,7 @@ export type Suggestion =
 export type Diagnostic = {
   source: DiagnosticSource;
   severity: Severity;
-  range?: PositionRange;
+  range: PositionRange;
   message: string;
   suggestions?: Suggestion[];
 };
@@ -56,7 +56,7 @@ export type Diagnostic = {
 function makeDiagnostic(
   source: "parser" | "checker",
   message: string,
-  range?: PositionRange,
+  range: PositionRange,
   severity: Severity = "error",
   suggestions?: Suggestion[]
 ): Diagnostic {

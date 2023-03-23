@@ -1,0 +1,15 @@
+{
+  // Use the same settings for all packages
+  "extends": "./tsconfig.common.json",
+
+  "compilerOptions": {
+    "target": "es2015",
+    "module": "es2015",
+    "lib": ["dom", "es2015"],
+
+    "downlevelIteration": true,
+    "esModuleInterop": true,
+    "allowJs": true
+  },
+  "include": ["src/**/*", "plugins/**/*"]
+}

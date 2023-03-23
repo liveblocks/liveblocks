@@ -215,7 +215,7 @@
       "name": "storage.type.scalar.liveblocks-schema"
     },
     "comment": {
-      "match": "#.*$",
+      "match": "(#|//).*$",
       "name": "comment.line.liveblocks-schema"
     }
   },

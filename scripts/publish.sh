@@ -14,6 +14,7 @@ GITHUB_URL="https://github.com/liveblocks/liveblocks-schema"
 PACKAGE_DIRS=(
     "packages/liveblocks-schema"
     "packages/infer-schema"
+    "packages/codemirror-language"
 )
 PRIMARY_PKG=${PACKAGE_DIRS[0]}
 

@@ -28,7 +28,6 @@
   "devDependencies": {
     "@liveblocks/eslint-config": "*",
     "@liveblocks/jest-config": "*",
-    "@types/jest": "^29.4.0",
     "@types/pluralize": "^0.0.29",
     "fast-check": "^3.7.0",
     "prettier": "^2.8.3",

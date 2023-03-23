@@ -1,3 +1,7 @@
+# 0.0.11-beta2
+
+- Add CodeMirror integration
+
 # 0.0.10
 
 - Add support for `LiveList` types (e.g. `LiveList<Todo>`)
