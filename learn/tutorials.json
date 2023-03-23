@@ -13,13 +13,11 @@
           },
           {
             "slug": "connecting",
-            "title": "Connecting to Liveblocks",
-            "comingSoon": true
+            "title": "Connecting to Liveblocks"
           },
           {
             "slug": "joining-a-room",
-            "title": "Joining a room",
-            "comingSoon": true
+            "title": "Joining a room"
           },
           {
             "slug": "presence",
