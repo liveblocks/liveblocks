@@ -1,8 +1,8 @@
 import React from "react";
 import { RoomProvider } from "../liveblocks.config";
 
-export default function App () {
-  if (!RoomProvider) {
+export default function Page() {
+  if (typeof RoomProvider === "undefined") {
     return <div>Not connected</div>
   }
 
