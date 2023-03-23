@@ -37,19 +37,19 @@ type Fou {}
 type Storage {
   x: LiveObject<Strong>
                 ^^^^^^ Unknown object type 'Strong'
-                       # Should *not* suggest 'String' here
+                       # Should *not* suggest 'string' here
 }
 ---
 type Storage {
   x: LiveObject<Number>
                 ^^^^^^ Unknown object type 'Number'
-                       # Should also *not* suggest 'Float' or 'Int' here
+                       # Should also *not* suggest 'number' here
 }
 ---
 type Strang { }
 type Storage { thing: Strong }
                       ^^^^^^ Unknown type 'Strong'. Did you mean 'Strang'?
-                                                                  ###### Should suggest custom type, not built-in String
+                                                                  ###### Should suggest custom type, not built-in string
 ---
 type Storage { thing: Starage }
                       ^^^^^^^ Unknown type 'Starage'

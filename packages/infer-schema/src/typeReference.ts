@@ -40,7 +40,7 @@ export function mergeInferredTypeReferences(
 export function inferredTypeReferenceToAst(
   { value }: InferredTypeReference,
   schema: InferredSchema
-): AST.BuiltInScalar | AST.TypeRef {
+): AST.ScalarType | AST.TypeRef {
   if (isInferredScalarType(value)) {
     return inferredScalarTypeToAst(value, schema);
   }

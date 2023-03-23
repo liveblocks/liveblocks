@@ -32,7 +32,7 @@ export const LiveblocksSchema = LRLanguage.define({
       }),
       styleTags({
         Comment: t.lineComment,
-        Name: t.name,
+        ValueName: t.name,
         NamedType: t.typeName,
         GenericType: t.special(t.typeName),
         NamedTypeDeclaration: t.function(t.typeName),

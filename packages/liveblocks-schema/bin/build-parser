@@ -19,7 +19,7 @@ main () {
     ../../node_modules/.bin/peggy                           \
         --plugin ../../node_modules/ts-pegjs/src/tspegjs.js \
         --extra-options-file pegconfig.json                 \
-        --allowed-start-rules Document,TypeExpr             \
+        --allowed-start-rules Document                      \
         --cache                                             \
         -o "$OUTPUT"                                        \
         "$INPUT"                                            \

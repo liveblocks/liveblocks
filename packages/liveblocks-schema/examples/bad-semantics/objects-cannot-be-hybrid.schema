@@ -5,7 +5,7 @@ type Storage {
 }
 
 type Thing {
-  name: String
+  name: string
 }
 ---
 type Storage {
@@ -15,5 +15,5 @@ type Storage {
 }
 
 type Thing {
-  name: String
+  name: string
 }

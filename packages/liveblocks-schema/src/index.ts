@@ -2,6 +2,7 @@ import type { CheckedDocument } from "./checker";
 import { check } from "./checker";
 import type { Diagnostic } from "./lib/error-reporting";
 import { DiagnosticError, ErrorReporter } from "./lib/error-reporting";
+import type { ParserOptions } from "./parser";
 import { parseDocument } from "./parser";
 
 // Export all AST nodes and helpers
@@ -20,9 +21,12 @@ export type { Diagnostic };
  *   least one Diagnostic issue.
  * - If `parse()` succeeds, this will return no results.
  */
-export function getDiagnostics(schemaText: string): Diagnostic[] {
+export function getDiagnostics(
+  schemaText: string,
+  options?: ParserOptions
+): Diagnostic[] {
   try {
-    parse(schemaText);
+    parse(schemaText, options);
     return [];
   } catch (err) {
     if (!(err instanceof DiagnosticError)) {
@@ -44,9 +48,12 @@ export function getDiagnostics(schemaText: string): Diagnostic[] {
  * @throws SemanticError If the schema text is semantically invalid (for
  * example, when referencing a type that does not exist).
  */
-export function parse(schemaText: string): CheckedDocument {
+export function parse(
+  schemaText: string,
+  options?: ParserOptions
+): CheckedDocument {
   const reporter = ErrorReporter.fromText(schemaText);
-  return check(parseDocument(reporter), reporter);
+  return check(parseDocument(reporter, options), reporter);
 }
 
 export { prettify } from "./prettify";

@@ -1,8 +1,8 @@
-type X { 😈: String }
+type X { 😈: string }
          ^ Expected "}" or <identifier> but "***" found
 ---
-type X { 123: String }
+type X { 123: string }
          ^ Expected "}" or <identifier> but "1" found
 ---
-type X { $foo: String }
+type X { $foo: string }
          ^ Expected "}" or <identifier> but "$" found

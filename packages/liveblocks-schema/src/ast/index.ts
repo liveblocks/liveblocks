@@ -24,59 +24,59 @@ function assertRange(
   );
 }
 
-export function isBuiltInScalar(node: Node): node is BuiltInScalar {
-  return (
-    node._kind === "StringType" ||
-    node._kind === "IntType" ||
-    node._kind === "FloatType" ||
-    node._kind === "BooleanType"
-  );
-}
-
 export function isDefinition(node: Node): node is Definition {
   return node._kind === "ObjectTypeDefinition";
 }
 
-export function isLiveStructureExpr(node: Node): node is LiveStructureExpr {
-  return node._kind === "LiveMapExpr" || node._kind === "LiveListExpr";
+export function isLiveType(node: Node): node is LiveType {
+  return node._kind === "LiveMapType" || node._kind === "LiveListType";
 }
 
-export function isTypeExpr(node: Node): node is TypeExpr {
+export function isScalarType(node: Node): node is ScalarType {
   return (
-    node._kind === "ArrayExpr" ||
-    node._kind === "ObjectLiteralExpr" ||
-    node._kind === "TypeRef" ||
-    isBuiltInScalar(node) ||
-    isLiveStructureExpr(node)
+    node._kind === "StringType" ||
+    node._kind === "NumberType" ||
+    node._kind === "BooleanType" ||
+    node._kind === "NullType"
   );
 }
 
-export type BuiltInScalar = StringType | IntType | FloatType | BooleanType;
+export function isType(node: Node): node is Type {
+  return (
+    node._kind === "ArrayType" ||
+    node._kind === "ObjectLiteralType" ||
+    node._kind === "TypeRef" ||
+    isScalarType(node) ||
+    isLiveType(node)
+  );
+}
 
 export type Definition = ObjectTypeDefinition;
 
-export type LiveStructureExpr = LiveMapExpr | LiveListExpr;
+export type LiveType = LiveMapType | LiveListType;
 
-export type TypeExpr =
-  | ArrayExpr
-  | BuiltInScalar
-  | LiveStructureExpr
-  | ObjectLiteralExpr
+export type ScalarType = StringType | NumberType | BooleanType | NullType;
+
+export type Type =
+  | ScalarType
+  | ArrayType
+  | ObjectLiteralType
+  | LiveType
   | TypeRef;
 
 export type Range = [number, number];
 
 export type Node =
-  | ArrayExpr
+  | ArrayType
   | BooleanType
   | Document
   | FieldDef
-  | FloatType
   | Identifier
-  | IntType
-  | LiveListExpr
-  | LiveMapExpr
-  | ObjectLiteralExpr
+  | LiveListType
+  | LiveMapType
+  | NullType
+  | NumberType
+  | ObjectLiteralType
   | ObjectTypeDefinition
   | StringType
   | TypeName
@@ -93,16 +93,16 @@ export function isRange(thing: unknown): thing is Range {
 
 export function isNode(node: Node): node is Node {
   return (
-    node._kind === "ArrayExpr" ||
+    node._kind === "ArrayType" ||
     node._kind === "BooleanType" ||
     node._kind === "Document" ||
     node._kind === "FieldDef" ||
-    node._kind === "FloatType" ||
     node._kind === "Identifier" ||
-    node._kind === "IntType" ||
-    node._kind === "LiveListExpr" ||
-    node._kind === "LiveMapExpr" ||
-    node._kind === "ObjectLiteralExpr" ||
+    node._kind === "LiveListType" ||
+    node._kind === "LiveMapType" ||
+    node._kind === "NullType" ||
+    node._kind === "NumberType" ||
+    node._kind === "ObjectLiteralType" ||
     node._kind === "ObjectTypeDefinition" ||
     node._kind === "StringType" ||
     node._kind === "TypeName" ||
@@ -110,9 +110,9 @@ export function isNode(node: Node): node is Node {
   );
 }
 
-export type ArrayExpr = {
-  _kind: "ArrayExpr";
-  ofType: TypeExpr;
+export type ArrayType = {
+  _kind: "ArrayType";
+  ofType: Type;
   range: Range;
 };
 
@@ -132,15 +132,9 @@ export type FieldDef = {
   _kind: "FieldDef";
   name: Identifier;
   optional: boolean;
-  type: TypeExpr;
+  type: Type;
   leadingComment: string | null;
   trailingComment: string | null;
-  range: Range;
-};
-
-export type FloatType = {
-  _kind: "FloatType";
-
   range: Range;
 };
 
@@ -150,27 +144,33 @@ export type Identifier = {
   range: Range;
 };
 
-export type IntType = {
-  _kind: "IntType";
+export type LiveListType = {
+  _kind: "LiveListType";
+  ofType: Type;
+  range: Range;
+};
+
+export type LiveMapType = {
+  _kind: "LiveMapType";
+  keyType: Type;
+  valueType: Type;
+  range: Range;
+};
+
+export type NullType = {
+  _kind: "NullType";
 
   range: Range;
 };
 
-export type LiveListExpr = {
-  _kind: "LiveListExpr";
-  ofType: TypeExpr;
+export type NumberType = {
+  _kind: "NumberType";
+
   range: Range;
 };
 
-export type LiveMapExpr = {
-  _kind: "LiveMapExpr";
-  keyType: TypeExpr;
-  valueType: TypeExpr;
-  range: Range;
-};
-
-export type ObjectLiteralExpr = {
-  _kind: "ObjectLiteralExpr";
+export type ObjectLiteralType = {
+  _kind: "ObjectLiteralType";
   fields: FieldDef[];
   range: Range;
 };
@@ -203,19 +203,19 @@ export type TypeRef = {
   range: Range;
 };
 
-export function arrayExpr(ofType: TypeExpr, range: Range = [0, 0]): ArrayExpr {
+export function arrayType(ofType: Type, range: Range = [0, 0]): ArrayType {
   DEBUG &&
     (() => {
       assert(
-        isTypeExpr(ofType),
-        `Invalid value for "ofType" arg in "ArrayExpr" call.\nExpected: @TypeExpr\nGot:      ${JSON.stringify(
+        isType(ofType),
+        `Invalid value for "ofType" arg in "ArrayType" call.\nExpected: @Type\nGot:      ${JSON.stringify(
           ofType
         )}`
       );
-      assertRange(range, "ArrayExpr");
+      assertRange(range, "ArrayType");
     })();
   return {
-    _kind: "ArrayExpr",
+    _kind: "ArrayType",
     ofType,
     range,
   };
@@ -258,7 +258,7 @@ export function document(
 export function fieldDef(
   name: Identifier,
   optional: boolean,
-  type: TypeExpr,
+  type: Type,
   leadingComment: string | null = null,
   trailingComment: string | null = null,
   range: Range = [0, 0]
@@ -278,8 +278,8 @@ export function fieldDef(
         )}`
       );
       assert(
-        isTypeExpr(type),
-        `Invalid value for "type" arg in "FieldDef" call.\nExpected: @TypeExpr\nGot:      ${JSON.stringify(
+        isType(type),
+        `Invalid value for "type" arg in "FieldDef" call.\nExpected: @Type\nGot:      ${JSON.stringify(
           type
         )}`
       );
@@ -308,17 +308,6 @@ export function fieldDef(
   };
 }
 
-export function floatType(range: Range = [0, 0]): FloatType {
-  DEBUG &&
-    (() => {
-      assertRange(range, "FloatType");
-    })();
-  return {
-    _kind: "FloatType",
-    range,
-  };
-}
-
 export function identifier(name: string, range: Range = [0, 0]): Identifier {
   DEBUG &&
     (() => {
@@ -337,84 +326,95 @@ export function identifier(name: string, range: Range = [0, 0]): Identifier {
   };
 }
 
-export function intType(range: Range = [0, 0]): IntType {
-  DEBUG &&
-    (() => {
-      assertRange(range, "IntType");
-    })();
-  return {
-    _kind: "IntType",
-    range,
-  };
-}
-
-export function liveListExpr(
-  ofType: TypeExpr,
+export function liveListType(
+  ofType: Type,
   range: Range = [0, 0]
-): LiveListExpr {
+): LiveListType {
   DEBUG &&
     (() => {
       assert(
-        isTypeExpr(ofType),
-        `Invalid value for "ofType" arg in "LiveListExpr" call.\nExpected: @TypeExpr\nGot:      ${JSON.stringify(
+        isType(ofType),
+        `Invalid value for "ofType" arg in "LiveListType" call.\nExpected: @Type\nGot:      ${JSON.stringify(
           ofType
         )}`
       );
-      assertRange(range, "LiveListExpr");
+      assertRange(range, "LiveListType");
     })();
   return {
-    _kind: "LiveListExpr",
+    _kind: "LiveListType",
     ofType,
     range,
   };
 }
 
-export function liveMapExpr(
-  keyType: TypeExpr,
-  valueType: TypeExpr,
+export function liveMapType(
+  keyType: Type,
+  valueType: Type,
   range: Range = [0, 0]
-): LiveMapExpr {
+): LiveMapType {
   DEBUG &&
     (() => {
       assert(
-        isTypeExpr(keyType),
-        `Invalid value for "keyType" arg in "LiveMapExpr" call.\nExpected: @TypeExpr\nGot:      ${JSON.stringify(
+        isType(keyType),
+        `Invalid value for "keyType" arg in "LiveMapType" call.\nExpected: @Type\nGot:      ${JSON.stringify(
           keyType
         )}`
       );
       assert(
-        isTypeExpr(valueType),
-        `Invalid value for "valueType" arg in "LiveMapExpr" call.\nExpected: @TypeExpr\nGot:      ${JSON.stringify(
+        isType(valueType),
+        `Invalid value for "valueType" arg in "LiveMapType" call.\nExpected: @Type\nGot:      ${JSON.stringify(
           valueType
         )}`
       );
-      assertRange(range, "LiveMapExpr");
+      assertRange(range, "LiveMapType");
     })();
   return {
-    _kind: "LiveMapExpr",
+    _kind: "LiveMapType",
     keyType,
     valueType,
     range,
   };
 }
 
-export function objectLiteralExpr(
+export function nullType(range: Range = [0, 0]): NullType {
+  DEBUG &&
+    (() => {
+      assertRange(range, "NullType");
+    })();
+  return {
+    _kind: "NullType",
+    range,
+  };
+}
+
+export function numberType(range: Range = [0, 0]): NumberType {
+  DEBUG &&
+    (() => {
+      assertRange(range, "NumberType");
+    })();
+  return {
+    _kind: "NumberType",
+    range,
+  };
+}
+
+export function objectLiteralType(
   fields: FieldDef[] = [],
   range: Range = [0, 0]
-): ObjectLiteralExpr {
+): ObjectLiteralType {
   DEBUG &&
     (() => {
       assert(
         Array.isArray(fields) &&
           fields.every((item) => item._kind === "FieldDef"),
-        `Invalid value for "fields" arg in "ObjectLiteralExpr" call.\nExpected: FieldDef*\nGot:      ${JSON.stringify(
+        `Invalid value for "fields" arg in "ObjectLiteralType" call.\nExpected: FieldDef*\nGot:      ${JSON.stringify(
           fields
         )}`
       );
-      assertRange(range, "ObjectLiteralExpr");
+      assertRange(range, "ObjectLiteralType");
     })();
   return {
-    _kind: "ObjectLiteralExpr",
+    _kind: "ObjectLiteralType",
     fields,
     range,
   };
@@ -525,16 +525,16 @@ export function typeRef(
 }
 
 interface Visitor<TContext> {
-  ArrayExpr?(node: ArrayExpr, context: TContext): void;
+  ArrayType?(node: ArrayType, context: TContext): void;
   BooleanType?(node: BooleanType, context: TContext): void;
   Document?(node: Document, context: TContext): void;
   FieldDef?(node: FieldDef, context: TContext): void;
-  FloatType?(node: FloatType, context: TContext): void;
   Identifier?(node: Identifier, context: TContext): void;
-  IntType?(node: IntType, context: TContext): void;
-  LiveListExpr?(node: LiveListExpr, context: TContext): void;
-  LiveMapExpr?(node: LiveMapExpr, context: TContext): void;
-  ObjectLiteralExpr?(node: ObjectLiteralExpr, context: TContext): void;
+  LiveListType?(node: LiveListType, context: TContext): void;
+  LiveMapType?(node: LiveMapType, context: TContext): void;
+  NullType?(node: NullType, context: TContext): void;
+  NumberType?(node: NumberType, context: TContext): void;
+  ObjectLiteralType?(node: ObjectLiteralType, context: TContext): void;
   ObjectTypeDefinition?(node: ObjectTypeDefinition, context: TContext): void;
   StringType?(node: StringType, context: TContext): void;
   TypeName?(node: TypeName, context: TContext): void;
@@ -556,8 +556,8 @@ export function visit<TNode extends Node, TContext>(
   context?: TContext
 ): TNode {
   switch (node._kind) {
-    case "ArrayExpr":
-      visitor.ArrayExpr?.(node, context);
+    case "ArrayType":
+      visitor.ArrayType?.(node, context);
       visit(node.ofType, visitor, context);
       break;
 
@@ -576,31 +576,31 @@ export function visit<TNode extends Node, TContext>(
       visit(node.type, visitor, context);
       break;
 
-    case "FloatType":
-      visitor.FloatType?.(node, context);
-      break;
-
     case "Identifier":
       visitor.Identifier?.(node, context);
       break;
 
-    case "IntType":
-      visitor.IntType?.(node, context);
-      break;
-
-    case "LiveListExpr":
-      visitor.LiveListExpr?.(node, context);
+    case "LiveListType":
+      visitor.LiveListType?.(node, context);
       visit(node.ofType, visitor, context);
       break;
 
-    case "LiveMapExpr":
-      visitor.LiveMapExpr?.(node, context);
+    case "LiveMapType":
+      visitor.LiveMapType?.(node, context);
       visit(node.keyType, visitor, context);
       visit(node.valueType, visitor, context);
       break;
 
-    case "ObjectLiteralExpr":
-      visitor.ObjectLiteralExpr?.(node, context);
+    case "NullType":
+      visitor.NullType?.(node, context);
+      break;
+
+    case "NumberType":
+      visitor.NumberType?.(node, context);
+      break;
+
+    case "ObjectLiteralType":
+      visitor.ObjectLiteralType?.(node, context);
       node.fields.forEach((f) => visit(f, visitor, context));
       break;
 

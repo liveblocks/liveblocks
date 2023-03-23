@@ -1,6 +1,6 @@
 type Storage {
-  name: String
-  age: Int
-  height: Float
-  hasSiblings: Boolean
+  name: string
+  age: number
+  height: number
+  hasSiblings: boolean
 }

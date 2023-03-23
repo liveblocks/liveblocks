@@ -21,17 +21,17 @@ export function prettify(node: Node): string {
     case "Document":
       return node.definitions.map(prettify).join("\n\n");
 
-    case "BooleanType":
-      return "Boolean";
-
     case "StringType":
-      return "String";
+      return "string";
 
-    case "IntType":
-      return "Int";
+    case "NumberType":
+      return "number";
 
-    case "FloatType":
-      return "Float";
+    case "BooleanType":
+      return "boolean";
+
+    case "NullType":
+      return "null";
 
     case "ObjectTypeDefinition":
       return [
@@ -43,16 +43,16 @@ export function prettify(node: Node): string {
         .filter((line) => line !== null)
         .join("\n");
 
-    case "ObjectLiteralExpr":
+    case "ObjectLiteralType":
       return `{ ${node.fields.map(prettify).join(", ")} }`;
 
-    case "ArrayExpr":
+    case "ArrayType":
       return `${prettify(node.ofType)}[]`;
 
-    case "LiveListExpr":
+    case "LiveListType":
       return `LiveList<${prettify(node.ofType)}>`;
 
-    case "LiveMapExpr":
+    case "LiveMapType":
       return `LiveMap<${prettify(node.keyType)}, ${prettify(node.valueType)}>`;
 
     case "Identifier":

@@ -5,3 +5,11 @@ type Storage {}
 type Array {}
      ^ Name 'Array' is reserved for future use
 type Storage {}
+---
+type String {}
+     ^ Name 'String' is reserved for future use
+type Storage { x: String }
+---
+type StrIng {}
+     ^ Name 'StrIng' is reserved for future use
+type Storage { x: StrIng }

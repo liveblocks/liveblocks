@@ -1,26 +1,26 @@
 # Commas
 type Storage {
-  a: Int,
-  b: Int,
+  a: number,
+  b: number,
 }
 ---
 # Newlines
 type Storage {
-  a: Int
-  b: Int
+  a: number
+  b: number
 }
 ---
 # Semicolons
 type Storage {
-  a: Int;
-  b: Int;
+  a: number;
+  b: number;
 }
 ---
 # Mixing newlines, commas and semicolons
 type Storage {
-  a: Int
-  b: Int
-  c: Int,
-  d: Int;
-  e: Int;
+  a: number
+  b: number
+  c: number,
+  d: number;
+  e: number;
 }

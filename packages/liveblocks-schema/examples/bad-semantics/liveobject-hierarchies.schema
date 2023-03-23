@@ -9,7 +9,7 @@ type Storage {
   foo: Foo
        ^^^ Type 'Foo' uses Live constructs, so it must be referenced as 'LiveObject<Foo>'
 }
-type Foo { bar: LiveMap<String, Bar> }
+type Foo { bar: LiveMap<string, Bar> }
 type Bar {}
 ---
 type Storage {
@@ -33,7 +33,7 @@ type Storage {
 type Foo {}
 ---
 type Storage {
-  a: { b: { c: { d: LiveMap<String, Foo> } } }
+  a: { b: { c: { d: LiveMap<string, Foo> } } }
                     ^^^^^^^^^^^^^^^^^^^^ Cannot use Live construct inside an object literal
 }
 type Foo {}
@@ -56,7 +56,7 @@ type Storage {
   a: { b: { c: { d: Foo } } }
                     ^^^ Type 'Foo' uses Live constructs, so it must be referenced as 'LiveObject<Foo>'
 }
-type Foo { x: LiveMap<String, Bar> }
+type Foo { x: LiveMap<string, Bar> }
 type Bar {}
 ---
 type Bar {}
@@ -68,5 +68,5 @@ type Storage { bad: LiveList<Bar>[] }
                     ^^^^^^^^^^^^^^^ Cannot use Live construct inside an array
 ---
 type Bar {}
-type Storage { bad: LiveMap<String, Bar>[] }
+type Storage { bad: LiveMap<string, Bar>[] }
                     ^^^^^^^^^^^^^^^^^^^^^^ Cannot use Live construct inside an array

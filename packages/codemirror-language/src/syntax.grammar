@@ -23,12 +23,12 @@ TypeKeyword {
   keyword<"type">
 }
 
-Name {
+ValueName {
   name
 }
 
 NamedType {
-  capitalizedName
+  name
 }
 
 GenericType {
@@ -56,7 +56,7 @@ FieldsDefinition {
 }
 
 ValueDefinition {
-  Name "?"? ":" union<Type> separator?
+  ValueName "?"? ":" union<Type> separator?
 }
 
 @tokens {

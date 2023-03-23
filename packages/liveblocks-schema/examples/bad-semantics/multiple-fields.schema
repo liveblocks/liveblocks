@@ -1,21 +1,21 @@
 # Duplicate fields in object type definition
 type Storage {
-  x: Int
-  y: String
+  x: number
+  y: string
 
-  x: String
+  x: string
   ^ A field named 'x' is defined multiple times (on line 3 and 6)
-  y?: String
+  y?: string
 }
 ---
 type Storage {
   # Duplicate fields in object literal
   a: {
-    x: Int
-    y: String
+    x: number
+    y: string
 
-    x: String
+    x: string
     ^ A field named 'x' is defined multiple times (on line 4 and 7)
-    y?: String
+    y?: string
   }
 }

@@ -4,21 +4,22 @@
 type Name = {
   a: Name
   b?: Name
+  c?: name
 }
 
 type Name {
   a: Name,
-  b: Name; # Comment
+  b: name; # Comment
   c: {
     a: Generic<Name>
-    b: Generic<Name, Name, Name>, // Comment
+    b: Generic<Name, Name, name>, // Comment
     c: Generic<
       Name, Name,
       Name
     >
   },
   d: Name[]
-  e?: Name[][]
+  e?: name[][]
   f: Name | Name<Name>
-  g: ((Name | Name)[]) | (Name<Name> | Name)
+  g: ((Name | Name)[]) | (Name<name> | Name)
 }

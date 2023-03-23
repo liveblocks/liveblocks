@@ -1,3 +1,5 @@
+import * as fc from "fast-check";
+
 import type * as AST from "../../ast";
 import { ErrorReporter } from "../../lib/error-reporting";
 import { parseDocument } from "../../parser";
@@ -114,7 +116,87 @@ describe("checker", () => {
     });
   });
 
-  it("large document (snapshot test)", () => {
+  it("should reject definitions using legacy built-in type names", () => {
+    fc.assert(
+      fc.property(
+        fc.constantFrom(
+          "BOOLEAN",
+          "Boolean",
+          "FLOAT",
+          "Float",
+          "INT",
+          "Int",
+          "NUMBER",
+          "Null",
+          "Number",
+          "STRING",
+          "String",
+          "boolean",
+          "float",
+          "int",
+          "nULL",
+          "null",
+          "number",
+          "string"
+        ),
+        fc.boolean(),
+
+        (name, allowLegacyBuiltins) => {
+          const schemaText = `
+            type ${name} {}
+            type Storage { x: ${name} }
+          `;
+
+          const reporter = ErrorReporter.fromText(schemaText);
+          expect(() =>
+            check(parseDocument(reporter, { allowLegacyBuiltins }), reporter)
+          ).toThrow();
+        }
+      )
+    );
+  });
+
+  it("should accept definitions using safe type names", () => {
+    fc.assert(
+      fc.property(
+        fc.constantFrom(
+          "BOOLEAN",
+          "Boolean",
+          "FLOAT",
+          "Float",
+          "INT",
+          "Int",
+          "NUMBER",
+          "Null",
+          "Number",
+          "STRING",
+          "String",
+          "boolean",
+          "float",
+          "int",
+          "nULL",
+          "null",
+          "number",
+          "string"
+        ),
+        fc.boolean(),
+
+        (name, allowLegacyBuiltins) => {
+          const schemaText = `
+            type Prefix${name} {}
+            type Storage { x: Prefix${name} }
+          `;
+
+          const reporter = ErrorReporter.fromText(schemaText);
+          expect(() =>
+            check(parseDocument(reporter, { allowLegacyBuiltins }), reporter)
+          ).not.toThrow();
+        }
+      )
+    );
+  });
+
+  it("large legacy document (snapshot test)", () => {
     const schemaText = `
       // union Shape = Rect | Circle
 
@@ -135,6 +217,46 @@ describe("checker", () => {
         cx: Int
         cy: Int
         radius: Int
+        fill ? : RGB
+        stroke?: RGB
+      }
+
+      type Storage {
+        // shapes: LiveList<Shape>
+        mycircle: LiveObject<Circle>
+        myrect: LiveObject<Rect>
+      }
+    `;
+
+    const reporter = ErrorReporter.fromText(schemaText);
+    const output = check(
+      parseDocument(reporter, { allowLegacyBuiltins: true }),
+      reporter
+    );
+    expect(output).toMatchSnapshot();
+  });
+
+  it("large document (snapshot test)", () => {
+    const schemaText = `
+      // union Shape = Rect | Circle
+
+      type RGB { r: number, g: number, b: number }
+
+      type Rect {
+        type: string  # TODO: Use "rect" here
+        x: number
+        y: number
+        width: number
+        height: number
+        fills?: RGB[]
+        strokes?: LiveList<RGB>
+      }
+
+      type Circle {
+        type: string // TODO: Use "circle" here
+        cx: number
+        cy: number
+        radius: number
         fill ? : RGB
         stroke?: RGB
       }

@@ -1,13 +1,13 @@
 type X {
-  x: Int;
-  y: Int;;;;;
-         ^ Expected "}" or <identifier> but ";" found
-  z: Int
+  x: number;
+  y: number;;;;;
+            ^ Expected "}" or <identifier> but ";" found
+  z: number
 }
 ---
 type X {
-  x: Int,
-  y: Int,,,,,
-         ^ Expected "}" or <identifier> but "," found
-  z: Int
+  x: number,
+  y: number,,,,,
+            ^ Expected "}" or <identifier> but "," found
+  z: number
 }

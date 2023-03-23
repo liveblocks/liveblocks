@@ -1,2 +1,2 @@
-type Thing { name: String }
+type Thing { name: string }
 ^| Missing root object type definition named 'Storage'

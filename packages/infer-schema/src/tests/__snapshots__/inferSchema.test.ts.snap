@@ -7,16 +7,16 @@ exports[`inferSchema correctly infers the "BASIC_LIVE_OBJECT" schema 1`] = `
 }
 
 type Fill {
-  mesh: String
-  sole: String
-  stripes: String
-  laces: String
+  mesh: string
+  sole: string
+  stripes: string
+  laces: string
 }
 
 type Stroke {
-  mesh: String
-  sole: String
-  laces: String
+  mesh: string
+  sole: string
+  laces: string
 }"
 `;
 
@@ -28,20 +28,20 @@ exports[`inferSchema correctly infers the "BASIC_MERGE" schema 1`] = `
 
 type Fill {
   position: Position
-  sole: String
-  stripes: String
-  laces: String
+  sole: string
+  stripes: string
+  laces: string
 }
 
 type Stroke {
   position: Position
-  sole: String
-  laces: String
+  sole: string
+  laces: string
 }
 
 type Position {
-  x: Float
-  y: Float
+  x: number
+  y: number
 }"
 `;
 
@@ -53,23 +53,23 @@ exports[`inferSchema correctly infers the "BASIC_UNMERGEABLE" schema 1`] = `
 
 type Fill {
   mesh: Mesh
-  sole: String
-  stripes: String
-  laces: String
+  sole: string
+  stripes: string
+  laces: string
 }
 
 type Mesh {
-  a: Int
+  a: number
 }
 
 type Stroke {
   mesh: StrokeMesh
-  sole: String
-  laces: String
+  sole: string
+  laces: string
 }
 
 type StrokeMesh {
-  a: String
+  a: string
 }"
 `;
 

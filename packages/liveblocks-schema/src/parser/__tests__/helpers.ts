@@ -1,4 +1,5 @@
 import type { Document, Node } from "../../ast";
+import type { ParserOptions } from "..";
 import { parseDocument as originalParseDocument } from "..";
 
 type Value = string | number | boolean | null | undefined | Node | Value[];
@@ -58,20 +59,28 @@ function stripRanges<T extends Node | Node[]>(node: T): T {
 // for easier comparison with Jest .toEqual() assertions.
 //
 
-export function parseDocument(src: string): Document {
-  return stripRanges(originalParseDocument(src));
+export function parseDocument(src: string, options?: ParserOptions): Document {
+  return stripRanges(originalParseDocument(src, options));
 }
 
 ///
 /// Custom expecters
 ///
 
-export function expectDocument(src: string, expected: Node): void {
+export function expectDocument(
+  src: string,
+  expected: Node,
+  options?: ParserOptions
+): void {
   try {
-    return expect(parseDocument(src)).toEqual(stripRanges(expected));
+    return expect(parseDocument(src, options)).toEqual(stripRanges(expected));
   } catch (error: unknown) {
     // Trick from https://kentcdodds.com/blog/improve-test-error-messages-of-your-abstractions
     Error.captureStackTrace(error as Error, expectDocument);
     throw error;
   }
+}
+
+export function expectLegacyDocument(src: string, expected: Node): void {
+  return expectDocument(src, expected, { allowLegacyBuiltins: true });
 }

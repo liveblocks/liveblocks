@@ -1,31 +1,33 @@
 // union Shape = Rect | Circle
 
-type RGB { r: Int, g: Int, b: Int }
+type RGB { r: number, g: number, b: number }
 
 type Rect {
-  type: String // TODO: Use "rect" here
-  x: Int
-  y: Int
-  width: Int
-  height: Int
+  type: string // TODO: Use "rect" here
+  x: number
+  y: number
+  width: number
+  height: number
   fill: RGB
   stroke: RGB
+  hellyeah: boolean
+  nothin: null
 }
 
 type Circle {
-  type: String // TODO: Use "circle" here
-  cx: Int
-  cy: Int
-  radius: Int
+  type: string // TODO: Use "circle" here
+  cx: number
+  cy: number
+  radius: number
   fill: RGB
   stroke: RGB
 }
 
 type StaticCircle {
-  type: String // TODO: Use "circle" here
-  cx: Int
-  cy: Int
-  radius: Int
+  type: string // TODO: Use "circle" here
+  cx: number
+  cy: number
+  radius: number
   fill: RGB
   stroke: RGB
 }
@@ -33,8 +35,8 @@ type StaticCircle {
 type Storage {
   circles: LiveList<LiveObject<Circle>>
   circles2: LiveList<StaticCircle[]>
-  circlesById: LiveMap<String, StaticCircle[]>
-  circlesById2: LiveMap<String, StaticCircle[]>
+  circlesById: LiveMap<string, StaticCircle[]>
+  circlesById2: LiveMap<string, StaticCircle[]>
   circles3: StaticCircle[]
   mycircle: LiveObject<Circle>
   myrect: LiveObject<Rect>

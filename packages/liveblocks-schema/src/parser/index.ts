@@ -1,4 +1,4 @@
-import type { Document, Node, TypeExpr } from "../ast";
+import type { Document, Node } from "../ast";
 import type { Source } from "../lib/error-reporting";
 import { ErrorReporter } from "../lib/error-reporting";
 import * as generatedParser from "./generated-parser";
@@ -6,11 +6,16 @@ import * as generatedParser from "./generated-parser";
 export type StartRule =
   // See the PEG grammar. These are the valid start rule to kick off the
   // parsing process.  All other grammar rules are internal to the parser.
-  "Document" | "TypeExpr";
+  "Document";
+
+export type ParserOptions = {
+  allowLegacyBuiltins?: boolean;
+};
 
 function parseGrammarRule(
   src: string | Source | ErrorReporter,
-  startRule: StartRule
+  startRule: StartRule,
+  options?: ParserOptions
 ): Node | Node[] {
   const reporter =
     typeof src === "string"
@@ -20,7 +25,10 @@ function parseGrammarRule(
       : src;
 
   try {
-    return generatedParser.parse(reporter.contents(), { startRule });
+    return generatedParser.parse(reporter.contents(), {
+      ...(options ?? {}),
+      startRule,
+    });
   } catch (err_: unknown) {
     const e = err_ as Error;
 
@@ -48,10 +56,9 @@ function parseGrammarRule(
   throw new Error("Should never get here");
 }
 
-export function parseDocument(src: string | Source | ErrorReporter): Document {
-  return parseGrammarRule(src, "Document") as Document;
-}
-
-export function parseTypeExpr(src: string | Source | ErrorReporter): TypeExpr {
-  return parseGrammarRule(src, "TypeExpr") as TypeExpr;
+export function parseDocument(
+  src: string | Source | ErrorReporter,
+  options?: ParserOptions
+): Document {
+  return parseGrammarRule(src, "Document", options) as Document;
 }

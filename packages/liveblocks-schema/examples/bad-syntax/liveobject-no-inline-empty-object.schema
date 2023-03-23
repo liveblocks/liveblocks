@@ -5,7 +5,7 @@ type Foo { bad: LiveObject<{}> }
                            ^ Expected <type name> but "{" found
 ---
 type Foo {
-  bad: LiveObject<{ x: Int }>
+  bad: LiveObject<{ x: number }>
                   ^ Expected <type name> but "{" found
 }
 ---

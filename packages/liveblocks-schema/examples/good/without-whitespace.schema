@@ -1,1 +1,1 @@
-type Storage{foo?:LiveObject<Foo>,bar:Bar}type Bar{}type Foo{x:LiveList<{x:Int[][]}>}#comment
+type Storage{foo?:LiveObject<Foo>,bar:Bar}type Bar{}type Foo{x:LiveList<{x:number[][]}>}#comment

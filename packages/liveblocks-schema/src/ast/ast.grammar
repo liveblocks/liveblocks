@@ -6,11 +6,11 @@
 # This is used to generate the AST TypeScript module.
 #
 
-@BuiltInScalar:
+@ScalarType:
     | StringType
-    | IntType
-    | FloatType
+    | NumberType
     | BooleanType
+    | NullType
 
 
 # A custom user-defined type definition
@@ -18,24 +18,23 @@
     | ObjectTypeDefinition
 
 
-@TypeExpr:
-    # | @Literal
-    # | ScalarDefinition
-    | ArrayExpr
-    | @BuiltInScalar
-    | @LiveStructureExpr
-    | ObjectLiteralExpr
+@Type:
+    | @ScalarType
+    | ArrayType
+    | ObjectLiteralType
+    | @LiveType
     | TypeRef
 
 
-@LiveStructureExpr:
-    | LiveMapExpr
-    | LiveListExpr
+@LiveType:
+    # NOTE: LiveObject is *NOT* a LiveType, but a special modifier on TypeRef
+    | LiveMapType
+    | LiveListType
 
 
-# e.g. "String[]", or "Int[][]", etc.
-ArrayExpr:
-    ofType  @TypeExpr
+# e.g. "string[]", or "number[][]", etc.
+ArrayType:
+    ofType  @Type
 
 
 # Reference to a custom, user-defined, type. Not a built-in. Things like
@@ -52,7 +51,7 @@ Document:
 FieldDef:
     name             Identifier
     optional         boolean
-    type             @TypeExpr
+    type             @Type
     leadingComment   string?
     trailingComment  string?
 
@@ -67,19 +66,19 @@ Identifier:
     name  string
 
 
-# e.g. LiveList<Int>
-LiveListExpr:
-    ofType  @TypeExpr
+# e.g. LiveList<number>
+LiveListType:
+    ofType  @Type
 
 
-# e.g. LiveMap<String, Int>
-LiveMapExpr:
-    keyType    @TypeExpr
-    valueType  @TypeExpr
+# e.g. LiveMap<string, number>
+LiveMapType:
+    keyType    @Type
+    valueType  @Type
 
 
 # e.g. { cx: Number; cy: Number; r: Float }
-ObjectLiteralExpr:
+ObjectLiteralType:
     fields  FieldDef*
 
 
@@ -105,13 +104,13 @@ StringType:
     # no fields
 
 
-IntType:
-    # no fields
-
-
-FloatType:
+NumberType:
     # no fields
 
 
 BooleanType:
+    # no fields
+
+
+NullType:
     # no fields

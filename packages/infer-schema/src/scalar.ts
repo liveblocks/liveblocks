@@ -30,17 +30,25 @@ export type InferredFloatType = {
   names: ScoredNames;
 };
 
+export type InferredNullType = {
+  type: "Null";
+  values: Set<null>;
+  names: ScoredNames;
+};
+
 export type InferredScalarType =
   | InferredStringType
   | InferredBooleanType
   | InferredIntegerType
-  | InferredFloatType;
+  | InferredFloatType
+  | InferredNullType;
 
 export const INFERRED_SCALAR_TYPES: Set<InferredScalarType["type"]> = new Set([
   "String",
   "Boolean",
   "Integer",
   "Float",
+  "Null",
 ]);
 
 export function mergeInferredScalarTypes(
@@ -107,15 +115,17 @@ export function isInferredScalarType(
 export function inferredScalarTypeToAst(
   scalar: InferredScalarType,
   _schema: InferredSchema
-): AST.BuiltInScalar {
+): AST.ScalarType {
   switch (scalar.type) {
     case "String":
       return AST.stringType();
     case "Boolean":
       return AST.booleanType();
     case "Integer":
-      return AST.intType();
+      return AST.numberType();
     case "Float":
-      return AST.floatType();
+      return AST.numberType();
+    case "Null":
+      return AST.nullType();
   }
 }

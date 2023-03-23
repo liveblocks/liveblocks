@@ -1,11 +1,11 @@
-type Thing { x: Int }
+type Thing { x: number }
 
 type Storage {
-  a: LiveObject<Int>
-                ^^^ Unknown object type 'Int'
+  a: LiveObject<number>
+                ^^^^^^ Unknown object type 'number'
   b: LiveObject<Thing>
 }
 ---
 type Thing {}
-type Storage { bad: LiveObject<String> }
-                               ^^^^^^ Unknown object type 'String'. Did you mean 'Thing'?
+type Storage { bad: LiveObject<string> }
+                               ^^^^^^ Unknown object type 'string'. Did you mean 'Thing'?

@@ -1,6 +1,6 @@
 type Custom {}
 
 type X {
-  bad: Custom<Int>
+  bad: Custom<number>
              ^ Expected ",", ";", "[", "\n", or "}" but "<" found
 }

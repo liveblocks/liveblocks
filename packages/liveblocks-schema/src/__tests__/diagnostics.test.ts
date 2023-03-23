@@ -3,7 +3,7 @@ import { getDiagnostics } from "..";
 describe("diagnostic error reporting", () => {
   it("getDiagnostics returns empty list on valid schema", () => {
     expect(getDiagnostics("type Storage {}")).toEqual([]);
-    expect(getDiagnostics("type Storage { foo?: String }")).toEqual([]);
+    expect(getDiagnostics("type Storage { foo?: string }")).toEqual([]);
   });
 
   it("getDiagnostics returns list of issues on schema with parse errors", () => {
@@ -50,7 +50,7 @@ describe("diagnostic error reporting", () => {
   });
 
   it("getDiagnostics returns suggestions for typos", () => {
-    expect(getDiagnostics("type Storage { foo?: string }")).toEqual([
+    expect(getDiagnostics("type Storage { foo?: String }")).toEqual([
       {
         source: "checker",
         severity: "error",
@@ -58,8 +58,44 @@ describe("diagnostic error reporting", () => {
           { offset: 21, line1: 1, column1: 22 },
           { offset: 27, line1: 1, column1: 28 },
         ],
-        message: "Unknown type 'string'. Did you mean 'String'?",
-        suggestions: [{ type: "replace", name: "String" }],
+        message: "Unknown type 'String'. Did you mean 'string'?",
+        suggestions: [{ type: "replace", name: "string" }],
+      },
+    ]);
+  });
+});
+
+describe("diagnostic error reporting (legacy schemas)", () => {
+  it("getDiagnostics returns empty list on valid legacy schema", () => {
+    expect(
+      getDiagnostics(
+        "type Storage { s?: String; i?: Int; f?: Float; b?: Boolean; }",
+        { allowLegacyBuiltins: true }
+      )
+    ).toEqual([]);
+    expect(
+      getDiagnostics(
+        "type Storage { s1?: String; i1?: Int; f1?: Float; b1?: Boolean; s2?: string; i2?: number; f2?: number; b2?: boolean; }",
+        { allowLegacyBuiltins: true }
+      )
+    ).toEqual([]);
+  });
+
+  it("getDiagnostics reports errors accordingly for legacy schemas", () => {
+    expect(
+      getDiagnostics("type Storage { s?: String; n?: Number; b?: Boolean; }", {
+        allowLegacyBuiltins: true,
+      })
+    ).toEqual([
+      {
+        message: "Unknown type 'Number'. Did you mean 'number'?",
+        range: [
+          { column1: 32, line1: 1, offset: 31 },
+          { column1: 38, line1: 1, offset: 37 },
+        ],
+        severity: "error",
+        source: "checker",
+        suggestions: [{ name: "number", type: "replace" }],
       },
     ]);
   });

@@ -22,11 +22,1303 @@ exports[`checker large document (snapshot test) 1`] = `
             "optional": false,
             "range": [
               56,
+              65,
+            ],
+            "trailingComment": null,
+            "type": {
+              "_kind": "NumberType",
+              "range": [
+                59,
+                65,
+              ],
+            },
+          },
+          {
+            "_kind": "FieldDef",
+            "leadingComment": null,
+            "name": {
+              "_kind": "Identifier",
+              "name": "g",
+              "range": [
+                67,
+                68,
+              ],
+            },
+            "optional": false,
+            "range": [
+              67,
+              76,
+            ],
+            "trailingComment": null,
+            "type": {
+              "_kind": "NumberType",
+              "range": [
+                70,
+                76,
+              ],
+            },
+          },
+          {
+            "_kind": "FieldDef",
+            "leadingComment": null,
+            "name": {
+              "_kind": "Identifier",
+              "name": "b",
+              "range": [
+                78,
+                79,
+              ],
+            },
+            "optional": false,
+            "range": [
+              78,
+              87,
+            ],
+            "trailingComment": null,
+            "type": {
+              "_kind": "NumberType",
+              "range": [
+                81,
+                87,
+              ],
+            },
+          },
+        ],
+        "isStatic": true,
+        "leadingComment": null,
+        "name": {
+          "_kind": "TypeName",
+          "name": "RGB",
+          "range": [
+            50,
+            53,
+          ],
+        },
+        "range": [
+          45,
+          89,
+        ],
+      },
+      {
+        "_kind": "ObjectTypeDefinition",
+        "fields": [
+          {
+            "_kind": "FieldDef",
+            "leadingComment": null,
+            "name": {
+              "_kind": "Identifier",
+              "name": "type",
+              "range": [
+                117,
+                121,
+              ],
+            },
+            "optional": false,
+            "range": [
+              117,
+              154,
+            ],
+            "trailingComment": null,
+            "type": {
+              "_kind": "StringType",
+              "range": [
+                123,
+                154,
+              ],
+            },
+          },
+          {
+            "_kind": "FieldDef",
+            "leadingComment": null,
+            "name": {
+              "_kind": "Identifier",
+              "name": "x",
+              "range": [
+                163,
+                164,
+              ],
+            },
+            "optional": false,
+            "range": [
+              163,
+              172,
+            ],
+            "trailingComment": null,
+            "type": {
+              "_kind": "NumberType",
+              "range": [
+                166,
+                172,
+              ],
+            },
+          },
+          {
+            "_kind": "FieldDef",
+            "leadingComment": null,
+            "name": {
+              "_kind": "Identifier",
+              "name": "y",
+              "range": [
+                181,
+                182,
+              ],
+            },
+            "optional": false,
+            "range": [
+              181,
+              190,
+            ],
+            "trailingComment": null,
+            "type": {
+              "_kind": "NumberType",
+              "range": [
+                184,
+                190,
+              ],
+            },
+          },
+          {
+            "_kind": "FieldDef",
+            "leadingComment": null,
+            "name": {
+              "_kind": "Identifier",
+              "name": "width",
+              "range": [
+                199,
+                204,
+              ],
+            },
+            "optional": false,
+            "range": [
+              199,
+              212,
+            ],
+            "trailingComment": null,
+            "type": {
+              "_kind": "NumberType",
+              "range": [
+                206,
+                212,
+              ],
+            },
+          },
+          {
+            "_kind": "FieldDef",
+            "leadingComment": null,
+            "name": {
+              "_kind": "Identifier",
+              "name": "height",
+              "range": [
+                221,
+                227,
+              ],
+            },
+            "optional": false,
+            "range": [
+              221,
+              235,
+            ],
+            "trailingComment": null,
+            "type": {
+              "_kind": "NumberType",
+              "range": [
+                229,
+                235,
+              ],
+            },
+          },
+          {
+            "_kind": "FieldDef",
+            "leadingComment": null,
+            "name": {
+              "_kind": "Identifier",
+              "name": "fills",
+              "range": [
+                244,
+                249,
+              ],
+            },
+            "optional": true,
+            "range": [
+              244,
+              257,
+            ],
+            "trailingComment": null,
+            "type": {
+              "_kind": "ArrayType",
+              "ofType": {
+                "_kind": "TypeRef",
+                "asLiveObject": false,
+                "range": [
+                  252,
+                  255,
+                ],
+                "ref": {
+                  "_kind": "TypeName",
+                  "name": "RGB",
+                  "range": [
+                    252,
+                    255,
+                  ],
+                },
+              },
+              "range": [
+                252,
+                257,
+              ],
+            },
+          },
+          {
+            "_kind": "FieldDef",
+            "leadingComment": null,
+            "name": {
+              "_kind": "Identifier",
+              "name": "strokes",
+              "range": [
+                266,
+                273,
+              ],
+            },
+            "optional": true,
+            "range": [
+              266,
+              289,
+            ],
+            "trailingComment": null,
+            "type": {
+              "_kind": "LiveListType",
+              "ofType": {
+                "_kind": "TypeRef",
+                "asLiveObject": false,
+                "range": [
+                  285,
+                  288,
+                ],
+                "ref": {
+                  "_kind": "TypeName",
+                  "name": "RGB",
+                  "range": [
+                    285,
+                    288,
+                  ],
+                },
+              },
+              "range": [
+                276,
+                289,
+              ],
+            },
+          },
+        ],
+        "isStatic": false,
+        "leadingComment": null,
+        "name": {
+          "_kind": "TypeName",
+          "name": "Rect",
+          "range": [
+            102,
+            106,
+          ],
+        },
+        "range": [
+          97,
+          297,
+        ],
+      },
+      {
+        "_kind": "ObjectTypeDefinition",
+        "fields": [
+          {
+            "_kind": "FieldDef",
+            "leadingComment": null,
+            "name": {
+              "_kind": "Identifier",
+              "name": "type",
+              "range": [
+                327,
+                331,
+              ],
+            },
+            "optional": false,
+            "range": [
+              327,
+              366,
+            ],
+            "trailingComment": null,
+            "type": {
+              "_kind": "StringType",
+              "range": [
+                333,
+                366,
+              ],
+            },
+          },
+          {
+            "_kind": "FieldDef",
+            "leadingComment": null,
+            "name": {
+              "_kind": "Identifier",
+              "name": "cx",
+              "range": [
+                375,
+                377,
+              ],
+            },
+            "optional": false,
+            "range": [
+              375,
+              385,
+            ],
+            "trailingComment": null,
+            "type": {
+              "_kind": "NumberType",
+              "range": [
+                379,
+                385,
+              ],
+            },
+          },
+          {
+            "_kind": "FieldDef",
+            "leadingComment": null,
+            "name": {
+              "_kind": "Identifier",
+              "name": "cy",
+              "range": [
+                394,
+                396,
+              ],
+            },
+            "optional": false,
+            "range": [
+              394,
+              404,
+            ],
+            "trailingComment": null,
+            "type": {
+              "_kind": "NumberType",
+              "range": [
+                398,
+                404,
+              ],
+            },
+          },
+          {
+            "_kind": "FieldDef",
+            "leadingComment": null,
+            "name": {
+              "_kind": "Identifier",
+              "name": "radius",
+              "range": [
+                413,
+                419,
+              ],
+            },
+            "optional": false,
+            "range": [
+              413,
+              427,
+            ],
+            "trailingComment": null,
+            "type": {
+              "_kind": "NumberType",
+              "range": [
+                421,
+                427,
+              ],
+            },
+          },
+          {
+            "_kind": "FieldDef",
+            "leadingComment": null,
+            "name": {
+              "_kind": "Identifier",
+              "name": "fill",
+              "range": [
+                436,
+                440,
+              ],
+            },
+            "optional": true,
+            "range": [
+              436,
+              448,
+            ],
+            "trailingComment": null,
+            "type": {
+              "_kind": "TypeRef",
+              "asLiveObject": false,
+              "range": [
+                445,
+                448,
+              ],
+              "ref": {
+                "_kind": "TypeName",
+                "name": "RGB",
+                "range": [
+                  445,
+                  448,
+                ],
+              },
+            },
+          },
+          {
+            "_kind": "FieldDef",
+            "leadingComment": null,
+            "name": {
+              "_kind": "Identifier",
+              "name": "stroke",
+              "range": [
+                457,
+                463,
+              ],
+            },
+            "optional": true,
+            "range": [
+              457,
+              469,
+            ],
+            "trailingComment": null,
+            "type": {
+              "_kind": "TypeRef",
+              "asLiveObject": false,
+              "range": [
+                466,
+                469,
+              ],
+              "ref": {
+                "_kind": "TypeName",
+                "name": "RGB",
+                "range": [
+                  466,
+                  469,
+                ],
+              },
+            },
+          },
+        ],
+        "isStatic": false,
+        "leadingComment": null,
+        "name": {
+          "_kind": "TypeName",
+          "name": "Circle",
+          "range": [
+            310,
+            316,
+          ],
+        },
+        "range": [
+          305,
+          477,
+        ],
+      },
+      {
+        "_kind": "ObjectTypeDefinition",
+        "fields": [
+          {
+            "_kind": "FieldDef",
+            "leadingComment": null,
+            "name": {
+              "_kind": "Identifier",
+              "name": "mycircle",
+              "range": [
+                543,
+                551,
+              ],
+            },
+            "optional": false,
+            "range": [
+              543,
+              571,
+            ],
+            "trailingComment": null,
+            "type": {
+              "_kind": "TypeRef",
+              "asLiveObject": true,
+              "range": [
+                553,
+                571,
+              ],
+              "ref": {
+                "_kind": "TypeName",
+                "name": "Circle",
+                "range": [
+                  564,
+                  570,
+                ],
+              },
+            },
+          },
+          {
+            "_kind": "FieldDef",
+            "leadingComment": null,
+            "name": {
+              "_kind": "Identifier",
+              "name": "myrect",
+              "range": [
+                580,
+                586,
+              ],
+            },
+            "optional": false,
+            "range": [
+              580,
+              604,
+            ],
+            "trailingComment": null,
+            "type": {
+              "_kind": "TypeRef",
+              "asLiveObject": true,
+              "range": [
+                588,
+                604,
+              ],
+              "ref": {
+                "_kind": "TypeName",
+                "name": "Rect",
+                "range": [
+                  599,
+                  603,
+                ],
+              },
+            },
+          },
+        ],
+        "isStatic": false,
+        "leadingComment": null,
+        "name": {
+          "_kind": "TypeName",
+          "name": "Storage",
+          "range": [
+            490,
+            497,
+          ],
+        },
+        "range": [
+          485,
+          612,
+        ],
+      },
+    ],
+    "range": [
+      7,
+      612,
+    ],
+  },
+  "definitions": [
+    {
+      "_kind": "ObjectTypeDefinition",
+      "fields": [
+        {
+          "_kind": "FieldDef",
+          "leadingComment": null,
+          "name": {
+            "_kind": "Identifier",
+            "name": "r",
+            "range": [
+              56,
+              57,
+            ],
+          },
+          "optional": false,
+          "range": [
+            56,
+            65,
+          ],
+          "trailingComment": null,
+          "type": {
+            "_kind": "NumberType",
+            "range": [
+              59,
+              65,
+            ],
+          },
+        },
+        {
+          "_kind": "FieldDef",
+          "leadingComment": null,
+          "name": {
+            "_kind": "Identifier",
+            "name": "g",
+            "range": [
+              67,
+              68,
+            ],
+          },
+          "optional": false,
+          "range": [
+            67,
+            76,
+          ],
+          "trailingComment": null,
+          "type": {
+            "_kind": "NumberType",
+            "range": [
+              70,
+              76,
+            ],
+          },
+        },
+        {
+          "_kind": "FieldDef",
+          "leadingComment": null,
+          "name": {
+            "_kind": "Identifier",
+            "name": "b",
+            "range": [
+              78,
+              79,
+            ],
+          },
+          "optional": false,
+          "range": [
+            78,
+            87,
+          ],
+          "trailingComment": null,
+          "type": {
+            "_kind": "NumberType",
+            "range": [
+              81,
+              87,
+            ],
+          },
+        },
+      ],
+      "isStatic": true,
+      "leadingComment": null,
+      "name": {
+        "_kind": "TypeName",
+        "name": "RGB",
+        "range": [
+          50,
+          53,
+        ],
+      },
+      "range": [
+        45,
+        89,
+      ],
+    },
+    {
+      "_kind": "ObjectTypeDefinition",
+      "fields": [
+        {
+          "_kind": "FieldDef",
+          "leadingComment": null,
+          "name": {
+            "_kind": "Identifier",
+            "name": "type",
+            "range": [
+              117,
+              121,
+            ],
+          },
+          "optional": false,
+          "range": [
+            117,
+            154,
+          ],
+          "trailingComment": null,
+          "type": {
+            "_kind": "StringType",
+            "range": [
+              123,
+              154,
+            ],
+          },
+        },
+        {
+          "_kind": "FieldDef",
+          "leadingComment": null,
+          "name": {
+            "_kind": "Identifier",
+            "name": "x",
+            "range": [
+              163,
+              164,
+            ],
+          },
+          "optional": false,
+          "range": [
+            163,
+            172,
+          ],
+          "trailingComment": null,
+          "type": {
+            "_kind": "NumberType",
+            "range": [
+              166,
+              172,
+            ],
+          },
+        },
+        {
+          "_kind": "FieldDef",
+          "leadingComment": null,
+          "name": {
+            "_kind": "Identifier",
+            "name": "y",
+            "range": [
+              181,
+              182,
+            ],
+          },
+          "optional": false,
+          "range": [
+            181,
+            190,
+          ],
+          "trailingComment": null,
+          "type": {
+            "_kind": "NumberType",
+            "range": [
+              184,
+              190,
+            ],
+          },
+        },
+        {
+          "_kind": "FieldDef",
+          "leadingComment": null,
+          "name": {
+            "_kind": "Identifier",
+            "name": "width",
+            "range": [
+              199,
+              204,
+            ],
+          },
+          "optional": false,
+          "range": [
+            199,
+            212,
+          ],
+          "trailingComment": null,
+          "type": {
+            "_kind": "NumberType",
+            "range": [
+              206,
+              212,
+            ],
+          },
+        },
+        {
+          "_kind": "FieldDef",
+          "leadingComment": null,
+          "name": {
+            "_kind": "Identifier",
+            "name": "height",
+            "range": [
+              221,
+              227,
+            ],
+          },
+          "optional": false,
+          "range": [
+            221,
+            235,
+          ],
+          "trailingComment": null,
+          "type": {
+            "_kind": "NumberType",
+            "range": [
+              229,
+              235,
+            ],
+          },
+        },
+        {
+          "_kind": "FieldDef",
+          "leadingComment": null,
+          "name": {
+            "_kind": "Identifier",
+            "name": "fills",
+            "range": [
+              244,
+              249,
+            ],
+          },
+          "optional": true,
+          "range": [
+            244,
+            257,
+          ],
+          "trailingComment": null,
+          "type": {
+            "_kind": "ArrayType",
+            "ofType": {
+              "_kind": "TypeRef",
+              "asLiveObject": false,
+              "range": [
+                252,
+                255,
+              ],
+              "ref": {
+                "_kind": "TypeName",
+                "name": "RGB",
+                "range": [
+                  252,
+                  255,
+                ],
+              },
+            },
+            "range": [
+              252,
+              257,
+            ],
+          },
+        },
+        {
+          "_kind": "FieldDef",
+          "leadingComment": null,
+          "name": {
+            "_kind": "Identifier",
+            "name": "strokes",
+            "range": [
+              266,
+              273,
+            ],
+          },
+          "optional": true,
+          "range": [
+            266,
+            289,
+          ],
+          "trailingComment": null,
+          "type": {
+            "_kind": "LiveListType",
+            "ofType": {
+              "_kind": "TypeRef",
+              "asLiveObject": false,
+              "range": [
+                285,
+                288,
+              ],
+              "ref": {
+                "_kind": "TypeName",
+                "name": "RGB",
+                "range": [
+                  285,
+                  288,
+                ],
+              },
+            },
+            "range": [
+              276,
+              289,
+            ],
+          },
+        },
+      ],
+      "isStatic": false,
+      "leadingComment": null,
+      "name": {
+        "_kind": "TypeName",
+        "name": "Rect",
+        "range": [
+          102,
+          106,
+        ],
+      },
+      "range": [
+        97,
+        297,
+      ],
+    },
+    {
+      "_kind": "ObjectTypeDefinition",
+      "fields": [
+        {
+          "_kind": "FieldDef",
+          "leadingComment": null,
+          "name": {
+            "_kind": "Identifier",
+            "name": "type",
+            "range": [
+              327,
+              331,
+            ],
+          },
+          "optional": false,
+          "range": [
+            327,
+            366,
+          ],
+          "trailingComment": null,
+          "type": {
+            "_kind": "StringType",
+            "range": [
+              333,
+              366,
+            ],
+          },
+        },
+        {
+          "_kind": "FieldDef",
+          "leadingComment": null,
+          "name": {
+            "_kind": "Identifier",
+            "name": "cx",
+            "range": [
+              375,
+              377,
+            ],
+          },
+          "optional": false,
+          "range": [
+            375,
+            385,
+          ],
+          "trailingComment": null,
+          "type": {
+            "_kind": "NumberType",
+            "range": [
+              379,
+              385,
+            ],
+          },
+        },
+        {
+          "_kind": "FieldDef",
+          "leadingComment": null,
+          "name": {
+            "_kind": "Identifier",
+            "name": "cy",
+            "range": [
+              394,
+              396,
+            ],
+          },
+          "optional": false,
+          "range": [
+            394,
+            404,
+          ],
+          "trailingComment": null,
+          "type": {
+            "_kind": "NumberType",
+            "range": [
+              398,
+              404,
+            ],
+          },
+        },
+        {
+          "_kind": "FieldDef",
+          "leadingComment": null,
+          "name": {
+            "_kind": "Identifier",
+            "name": "radius",
+            "range": [
+              413,
+              419,
+            ],
+          },
+          "optional": false,
+          "range": [
+            413,
+            427,
+          ],
+          "trailingComment": null,
+          "type": {
+            "_kind": "NumberType",
+            "range": [
+              421,
+              427,
+            ],
+          },
+        },
+        {
+          "_kind": "FieldDef",
+          "leadingComment": null,
+          "name": {
+            "_kind": "Identifier",
+            "name": "fill",
+            "range": [
+              436,
+              440,
+            ],
+          },
+          "optional": true,
+          "range": [
+            436,
+            448,
+          ],
+          "trailingComment": null,
+          "type": {
+            "_kind": "TypeRef",
+            "asLiveObject": false,
+            "range": [
+              445,
+              448,
+            ],
+            "ref": {
+              "_kind": "TypeName",
+              "name": "RGB",
+              "range": [
+                445,
+                448,
+              ],
+            },
+          },
+        },
+        {
+          "_kind": "FieldDef",
+          "leadingComment": null,
+          "name": {
+            "_kind": "Identifier",
+            "name": "stroke",
+            "range": [
+              457,
+              463,
+            ],
+          },
+          "optional": true,
+          "range": [
+            457,
+            469,
+          ],
+          "trailingComment": null,
+          "type": {
+            "_kind": "TypeRef",
+            "asLiveObject": false,
+            "range": [
+              466,
+              469,
+            ],
+            "ref": {
+              "_kind": "TypeName",
+              "name": "RGB",
+              "range": [
+                466,
+                469,
+              ],
+            },
+          },
+        },
+      ],
+      "isStatic": false,
+      "leadingComment": null,
+      "name": {
+        "_kind": "TypeName",
+        "name": "Circle",
+        "range": [
+          310,
+          316,
+        ],
+      },
+      "range": [
+        305,
+        477,
+      ],
+    },
+    {
+      "_kind": "ObjectTypeDefinition",
+      "fields": [
+        {
+          "_kind": "FieldDef",
+          "leadingComment": null,
+          "name": {
+            "_kind": "Identifier",
+            "name": "mycircle",
+            "range": [
+              543,
+              551,
+            ],
+          },
+          "optional": false,
+          "range": [
+            543,
+            571,
+          ],
+          "trailingComment": null,
+          "type": {
+            "_kind": "TypeRef",
+            "asLiveObject": true,
+            "range": [
+              553,
+              571,
+            ],
+            "ref": {
+              "_kind": "TypeName",
+              "name": "Circle",
+              "range": [
+                564,
+                570,
+              ],
+            },
+          },
+        },
+        {
+          "_kind": "FieldDef",
+          "leadingComment": null,
+          "name": {
+            "_kind": "Identifier",
+            "name": "myrect",
+            "range": [
+              580,
+              586,
+            ],
+          },
+          "optional": false,
+          "range": [
+            580,
+            604,
+          ],
+          "trailingComment": null,
+          "type": {
+            "_kind": "TypeRef",
+            "asLiveObject": true,
+            "range": [
+              588,
+              604,
+            ],
+            "ref": {
+              "_kind": "TypeName",
+              "name": "Rect",
+              "range": [
+                599,
+                603,
+              ],
+            },
+          },
+        },
+      ],
+      "isStatic": false,
+      "leadingComment": null,
+      "name": {
+        "_kind": "TypeName",
+        "name": "Storage",
+        "range": [
+          490,
+          497,
+        ],
+      },
+      "range": [
+        485,
+        612,
+      ],
+    },
+  ],
+  "getDefinition": [Function],
+  "root": {
+    "_kind": "ObjectTypeDefinition",
+    "fields": [
+      {
+        "_kind": "FieldDef",
+        "leadingComment": null,
+        "name": {
+          "_kind": "Identifier",
+          "name": "mycircle",
+          "range": [
+            543,
+            551,
+          ],
+        },
+        "optional": false,
+        "range": [
+          543,
+          571,
+        ],
+        "trailingComment": null,
+        "type": {
+          "_kind": "TypeRef",
+          "asLiveObject": true,
+          "range": [
+            553,
+            571,
+          ],
+          "ref": {
+            "_kind": "TypeName",
+            "name": "Circle",
+            "range": [
+              564,
+              570,
+            ],
+          },
+        },
+      },
+      {
+        "_kind": "FieldDef",
+        "leadingComment": null,
+        "name": {
+          "_kind": "Identifier",
+          "name": "myrect",
+          "range": [
+            580,
+            586,
+          ],
+        },
+        "optional": false,
+        "range": [
+          580,
+          604,
+        ],
+        "trailingComment": null,
+        "type": {
+          "_kind": "TypeRef",
+          "asLiveObject": true,
+          "range": [
+            588,
+            604,
+          ],
+          "ref": {
+            "_kind": "TypeName",
+            "name": "Rect",
+            "range": [
+              599,
+              603,
+            ],
+          },
+        },
+      },
+    ],
+    "isStatic": false,
+    "leadingComment": null,
+    "name": {
+      "_kind": "TypeName",
+      "name": "Storage",
+      "range": [
+        490,
+        497,
+      ],
+    },
+    "range": [
+      485,
+      612,
+    ],
+  },
+}
+`;
+
+exports[`checker large legacy document (snapshot test) 1`] = `
+{
+  "ast": {
+    "_kind": "Document",
+    "definitions": [
+      {
+        "_kind": "ObjectTypeDefinition",
+        "fields": [
+          {
+            "_kind": "FieldDef",
+            "leadingComment": null,
+            "name": {
+              "_kind": "Identifier",
+              "name": "r",
+              "range": [
+                56,
+                57,
+              ],
+            },
+            "optional": false,
+            "range": [
+              56,
               62,
             ],
             "trailingComment": null,
             "type": {
-              "_kind": "IntType",
+              "_kind": "NumberType",
               "range": [
                 59,
                 62,
@@ -51,7 +1343,7 @@ exports[`checker large document (snapshot test) 1`] = `
             ],
             "trailingComment": null,
             "type": {
-              "_kind": "IntType",
+              "_kind": "NumberType",
               "range": [
                 67,
                 70,
@@ -76,7 +1368,7 @@ exports[`checker large document (snapshot test) 1`] = `
             ],
             "trailingComment": null,
             "type": {
-              "_kind": "IntType",
+              "_kind": "NumberType",
               "range": [
                 75,
                 78,
@@ -145,7 +1437,7 @@ exports[`checker large document (snapshot test) 1`] = `
             ],
             "trailingComment": null,
             "type": {
-              "_kind": "IntType",
+              "_kind": "NumberType",
               "range": [
                 157,
                 160,
@@ -170,7 +1462,7 @@ exports[`checker large document (snapshot test) 1`] = `
             ],
             "trailingComment": null,
             "type": {
-              "_kind": "IntType",
+              "_kind": "NumberType",
               "range": [
                 172,
                 175,
@@ -195,7 +1487,7 @@ exports[`checker large document (snapshot test) 1`] = `
             ],
             "trailingComment": null,
             "type": {
-              "_kind": "IntType",
+              "_kind": "NumberType",
               "range": [
                 191,
                 194,
@@ -220,7 +1512,7 @@ exports[`checker large document (snapshot test) 1`] = `
             ],
             "trailingComment": null,
             "type": {
-              "_kind": "IntType",
+              "_kind": "NumberType",
               "range": [
                 211,
                 214,
@@ -245,7 +1537,7 @@ exports[`checker large document (snapshot test) 1`] = `
             ],
             "trailingComment": null,
             "type": {
-              "_kind": "ArrayExpr",
+              "_kind": "ArrayType",
               "ofType": {
                 "_kind": "TypeRef",
                 "asLiveObject": false,
@@ -286,7 +1578,7 @@ exports[`checker large document (snapshot test) 1`] = `
             ],
             "trailingComment": null,
             "type": {
-              "_kind": "LiveListExpr",
+              "_kind": "LiveListType",
               "ofType": {
                 "_kind": "TypeRef",
                 "asLiveObject": false,
@@ -371,7 +1663,7 @@ exports[`checker large document (snapshot test) 1`] = `
             ],
             "trailingComment": null,
             "type": {
-              "_kind": "IntType",
+              "_kind": "NumberType",
               "range": [
                 358,
                 361,
@@ -396,7 +1688,7 @@ exports[`checker large document (snapshot test) 1`] = `
             ],
             "trailingComment": null,
             "type": {
-              "_kind": "IntType",
+              "_kind": "NumberType",
               "range": [
                 374,
                 377,
@@ -421,7 +1713,7 @@ exports[`checker large document (snapshot test) 1`] = `
             ],
             "trailingComment": null,
             "type": {
-              "_kind": "IntType",
+              "_kind": "NumberType",
               "range": [
                 394,
                 397,
@@ -627,7 +1919,7 @@ exports[`checker large document (snapshot test) 1`] = `
           ],
           "trailingComment": null,
           "type": {
-            "_kind": "IntType",
+            "_kind": "NumberType",
             "range": [
               59,
               62,
@@ -652,7 +1944,7 @@ exports[`checker large document (snapshot test) 1`] = `
           ],
           "trailingComment": null,
           "type": {
-            "_kind": "IntType",
+            "_kind": "NumberType",
             "range": [
               67,
               70,
@@ -677,7 +1969,7 @@ exports[`checker large document (snapshot test) 1`] = `
           ],
           "trailingComment": null,
           "type": {
-            "_kind": "IntType",
+            "_kind": "NumberType",
             "range": [
               75,
               78,
@@ -746,7 +2038,7 @@ exports[`checker large document (snapshot test) 1`] = `
           ],
           "trailingComment": null,
           "type": {
-            "_kind": "IntType",
+            "_kind": "NumberType",
             "range": [
               157,
               160,
@@ -771,7 +2063,7 @@ exports[`checker large document (snapshot test) 1`] = `
           ],
           "trailingComment": null,
           "type": {
-            "_kind": "IntType",
+            "_kind": "NumberType",
             "range": [
               172,
               175,
@@ -796,7 +2088,7 @@ exports[`checker large document (snapshot test) 1`] = `
           ],
           "trailingComment": null,
           "type": {
-            "_kind": "IntType",
+            "_kind": "NumberType",
             "range": [
               191,
               194,
@@ -821,7 +2113,7 @@ exports[`checker large document (snapshot test) 1`] = `
           ],
           "trailingComment": null,
           "type": {
-            "_kind": "IntType",
+            "_kind": "NumberType",
             "range": [
               211,
               214,
@@ -846,7 +2138,7 @@ exports[`checker large document (snapshot test) 1`] = `
           ],
           "trailingComment": null,
           "type": {
-            "_kind": "ArrayExpr",
+            "_kind": "ArrayType",
             "ofType": {
               "_kind": "TypeRef",
               "asLiveObject": false,
@@ -887,7 +2179,7 @@ exports[`checker large document (snapshot test) 1`] = `
           ],
           "trailingComment": null,
           "type": {
-            "_kind": "LiveListExpr",
+            "_kind": "LiveListType",
             "ofType": {
               "_kind": "TypeRef",
               "asLiveObject": false,
@@ -972,7 +2264,7 @@ exports[`checker large document (snapshot test) 1`] = `
           ],
           "trailingComment": null,
           "type": {
-            "_kind": "IntType",
+            "_kind": "NumberType",
             "range": [
               358,
               361,
@@ -997,7 +2289,7 @@ exports[`checker large document (snapshot test) 1`] = `
           ],
           "trailingComment": null,
           "type": {
-            "_kind": "IntType",
+            "_kind": "NumberType",
             "range": [
               374,
               377,
@@ -1022,7 +2314,7 @@ exports[`checker large document (snapshot test) 1`] = `
           ],
           "trailingComment": null,
           "type": {
-            "_kind": "IntType",
+            "_kind": "NumberType",
             "range": [
               394,
               397,
