@@ -9,7 +9,7 @@ import { parseDocument } from "./parser";
 export * as AST from "./ast";
 export type { CheckedDocument } from "./checker";
 
-export type { Diagnostic };
+export type { Diagnostic, ParserOptions };
 
 /**
  * Returns a list of issues with the current schema. Useful for use in
