@@ -29,8 +29,7 @@ export function isBuiltInScalar(node: Node): node is BuiltInScalar {
     node._kind === "StringType" ||
     node._kind === "IntType" ||
     node._kind === "FloatType" ||
-    node._kind === "BooleanType" ||
-    node._kind === "NullType"
+    node._kind === "BooleanType"
   );
 }
 
@@ -42,7 +41,7 @@ export function isLiveStructureExpr(node: Node): node is LiveStructureExpr {
   return node._kind === "LiveMapExpr" || node._kind === "LiveListExpr";
 }
 
-export function isNonUnionTypeExpr(node: Node): node is NonUnionTypeExpr {
+export function isTypeExpr(node: Node): node is TypeExpr {
   return (
     node._kind === "ArrayExpr" ||
     node._kind === "ObjectLiteralExpr" ||
@@ -52,35 +51,18 @@ export function isNonUnionTypeExpr(node: Node): node is NonUnionTypeExpr {
   );
 }
 
-export function isTypeExpr(node: Node): node is TypeExpr {
-  return isNonUnionTypeExpr(node) || isUnionTypeExpr(node);
-}
-
-export function isUnionTypeExpr(node: Node): node is UnionTypeExpr {
-  return node._kind === "UnionExpr";
-}
-
-export type BuiltInScalar =
-  | StringType
-  | IntType
-  | FloatType
-  | BooleanType
-  | NullType;
+export type BuiltInScalar = StringType | IntType | FloatType | BooleanType;
 
 export type Definition = ObjectTypeDefinition;
 
 export type LiveStructureExpr = LiveMapExpr | LiveListExpr;
 
-export type NonUnionTypeExpr =
+export type TypeExpr =
   | ArrayExpr
   | BuiltInScalar
   | LiveStructureExpr
   | ObjectLiteralExpr
   | TypeRef;
-
-export type TypeExpr = NonUnionTypeExpr | UnionTypeExpr;
-
-export type UnionTypeExpr = UnionExpr;
 
 export type Range = [number, number];
 
@@ -94,13 +76,11 @@ export type Node =
   | IntType
   | LiveListExpr
   | LiveMapExpr
-  | NullType
   | ObjectLiteralExpr
   | ObjectTypeDefinition
   | StringType
   | TypeName
-  | TypeRef
-  | UnionExpr;
+  | TypeRef;
 
 export function isRange(thing: unknown): thing is Range {
   return (
@@ -122,13 +102,11 @@ export function isNode(node: Node): node is Node {
     node._kind === "IntType" ||
     node._kind === "LiveListExpr" ||
     node._kind === "LiveMapExpr" ||
-    node._kind === "NullType" ||
     node._kind === "ObjectLiteralExpr" ||
     node._kind === "ObjectTypeDefinition" ||
     node._kind === "StringType" ||
     node._kind === "TypeName" ||
-    node._kind === "TypeRef" ||
-    node._kind === "UnionExpr"
+    node._kind === "TypeRef"
   );
 }
 
@@ -191,12 +169,6 @@ export type LiveMapExpr = {
   range: Range;
 };
 
-export type NullType = {
-  _kind: "NullType";
-
-  range: Range;
-};
-
 export type ObjectLiteralExpr = {
   _kind: "ObjectLiteralExpr";
   fields: FieldDef[];
@@ -228,12 +200,6 @@ export type TypeRef = {
   _kind: "TypeRef";
   ref: TypeName;
   asLiveObject: boolean;
-  range: Range;
-};
-
-export type UnionExpr = {
-  _kind: "UnionExpr";
-  members: NonUnionTypeExpr[];
   range: Range;
 };
 
@@ -432,17 +398,6 @@ export function liveMapExpr(
   };
 }
 
-export function nullType(range: Range = [0, 0]): NullType {
-  DEBUG &&
-    (() => {
-      assertRange(range, "NullType");
-    })();
-  return {
-    _kind: "NullType",
-    range,
-  };
-}
-
 export function objectLiteralExpr(
   fields: FieldDef[] = [],
   range: Range = [0, 0]
@@ -569,29 +524,6 @@ export function typeRef(
   };
 }
 
-export function unionExpr(
-  members: NonUnionTypeExpr[],
-  range: Range = [0, 0]
-): UnionExpr {
-  DEBUG &&
-    (() => {
-      assert(
-        Array.isArray(members) &&
-          members.length > 0 &&
-          members.every((item) => isNonUnionTypeExpr(item)),
-        `Invalid value for "members" arg in "UnionExpr" call.\nExpected: @NonUnionTypeExpr+\nGot:      ${JSON.stringify(
-          members
-        )}`
-      );
-      assertRange(range, "UnionExpr");
-    })();
-  return {
-    _kind: "UnionExpr",
-    members,
-    range,
-  };
-}
-
 interface Visitor<TContext> {
   ArrayExpr?(node: ArrayExpr, context: TContext): void;
   BooleanType?(node: BooleanType, context: TContext): void;
@@ -602,13 +534,11 @@ interface Visitor<TContext> {
   IntType?(node: IntType, context: TContext): void;
   LiveListExpr?(node: LiveListExpr, context: TContext): void;
   LiveMapExpr?(node: LiveMapExpr, context: TContext): void;
-  NullType?(node: NullType, context: TContext): void;
   ObjectLiteralExpr?(node: ObjectLiteralExpr, context: TContext): void;
   ObjectTypeDefinition?(node: ObjectTypeDefinition, context: TContext): void;
   StringType?(node: StringType, context: TContext): void;
   TypeName?(node: TypeName, context: TContext): void;
   TypeRef?(node: TypeRef, context: TContext): void;
-  UnionExpr?(node: UnionExpr, context: TContext): void;
 }
 
 export function visit<TNode extends Node>(
@@ -669,10 +599,6 @@ export function visit<TNode extends Node, TContext>(
       visit(node.valueType, visitor, context);
       break;
 
-    case "NullType":
-      visitor.NullType?.(node, context);
-      break;
-
     case "ObjectLiteralExpr":
       visitor.ObjectLiteralExpr?.(node, context);
       node.fields.forEach((f) => visit(f, visitor, context));
@@ -695,11 +621,6 @@ export function visit<TNode extends Node, TContext>(
     case "TypeRef":
       visitor.TypeRef?.(node, context);
       visit(node.ref, visitor, context);
-      break;
-
-    case "UnionExpr":
-      visitor.UnionExpr?.(node, context);
-      node.members.forEach((m) => visit(m, visitor, context));
       break;
   }
 

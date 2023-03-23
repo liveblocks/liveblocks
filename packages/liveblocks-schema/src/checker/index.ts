@@ -6,20 +6,17 @@ import type {
   Identifier,
   LiveMapExpr,
   LiveStructureExpr,
-  NonUnionTypeExpr,
   ObjectLiteralExpr,
   ObjectTypeDefinition,
   Range,
   TypeExpr,
   TypeName,
   TypeRef,
-  UnionExpr,
 } from "../ast";
 import { isBuiltInScalar, isLiveStructureExpr, visit } from "../ast";
 import { assertNever } from "../lib/assert";
 import { didyoumean as dym } from "../lib/didyoumean";
 import type { ErrorReporter, Suggestion } from "../lib/error-reporting";
-import { prettify } from "../prettify";
 
 function quote(value: string): string {
   return `'${value.replace(/'/g, "\\'")}'`;
@@ -167,11 +164,8 @@ function formatReplaceSuggestions(suggestions: string[]): Suggestion[] {
   }));
 }
 
-function dupes<T, K extends string | number>(
-  items: Iterable<T>,
-  keyFn: (item: T) => K
-): [T, T][] {
-  const seen = new Map<K, T>();
+function dupes<T>(items: Iterable<T>, keyFn: (item: T) => string): [T, T][] {
+  const seen = new Map<string, T>();
 
   const dupes: [T, T][] = [];
   for (const item of items) {
@@ -329,115 +323,6 @@ function checkTypeRef(ref: TypeRef, context: Context): void {
   checkLiveObjectRefs(ref, context);
 }
 
-const Tag = {
-  // strlit: 0,
-  // numlit: 1,
-  // boollit: 2,
-  str: 3,
-  num: 4,
-  bool: 5,
-  nil: 6,
-  array: 7,
-  obj: 8,
-  livelist: 9,
-  livemap: 10,
-  // liveobject: 11,
-} as const;
-
-type Tag = (typeof Tag)[keyof typeof Tag];
-
-/**
- * Returns a string which acts as a "type tag": a high-level indicator that
- * uniquely defines the "tag" of a type. The purpose of this tag is fully
- * internal. It exists to define which combinations of types can legally appear
- * in union types.
- *
- * For example, both a "Float" and an "Int" type have a "number" tag, making
- * them incompatible to put in the same union.
- *
- * This is important because at runtime, when performing schema validation, we
- * should be able to look at an incoming value in isolation, and purely from
- * that know which member of the union it can be, so we can assign that
- * particular subschema to that value.
- *
- * Examples of ambiguous unions:
- * - Int | Float        because what will be the type of the the value 0?
- * - Int[] | String[]   because what will be the type of the the value []?
- * - LiveList<Int> | LiveList<String>
- *                      because what will be the type of the the value new LiveList()?
- * - Person | { name: String; age: Int }
- *                      because what will be the type of the the value { name: "Alex"; age: 30 }
- *
- * Examples of unions that are fine:
- * - Int | Null
- * - LiveList<String> | Null
- * - String | String[]
- * - etc.
- */
-function getTypeTag(node: NonUnionTypeExpr): Tag {
-  switch (node._kind) {
-    case "ArrayExpr":
-      return Tag.array;
-
-    case "ObjectLiteralExpr":
-      return Tag.obj;
-
-    case "LiveMapExpr":
-      return Tag.livemap;
-
-    case "LiveListExpr":
-      return Tag.livelist;
-
-    case "StringType":
-      return Tag.str;
-
-    case "IntType":
-      return Tag.num;
-
-    case "FloatType":
-      return Tag.num;
-
-    case "BooleanType":
-      return Tag.bool;
-
-    case "NullType":
-      return Tag.nil;
-
-    case "TypeRef":
-      return Tag.obj; // node.asLiveObject ? "(live)object" : "object";
-
-    default:
-      return assertNever(node, "Unhandled case");
-  }
-}
-
-function checkUnionExpr(node: UnionExpr, context: Context): void {
-  if (node.members.length <= 1) {
-    context.report("Unions must have at least 2 members", node.range);
-  }
-
-  for (const [member1, member2] of dupes(node.members, getTypeTag)) {
-    const tag = getTypeTag(member1);
-    if (tag === Tag.obj) {
-      context.report(
-        `Unions of object types are not yet supported: type ${quote(
-          prettify(member2)
-        )} cannot appear in a union with ${quote(prettify(member1))}`,
-        member2.range
-      );
-    } else {
-      context.report(
-        `Type ${quote(prettify(member2))} cannot appear in a union with ${quote(
-          prettify(member1)
-        )}`,
-        member2.range
-      );
-    }
-  }
-}
-
-// NOTE: We can probably rewrite this using a visit(), which would save us from
-// adding case statements with with every new language addition.
 function checkNoForbiddenRefs(
   node: ObjectTypeDefinition | TypeExpr,
   context: Context,
@@ -496,12 +381,6 @@ function checkNoForbiddenRefs(
       }
       break;
     }
-
-    case "UnionExpr":
-      for (const member of node.members) {
-        checkNoForbiddenRefs(member, context, forbidden);
-      }
-      break;
 
     default:
       return assertNever(node, "Unhandled case");
@@ -739,7 +618,6 @@ export function check(
       ObjectTypeDefinition: checkObjectTypeDefinition,
       TypeName: checkTypeName,
       TypeRef: checkTypeRef,
-      UnionExpr: checkUnionExpr,
     },
     context
   );

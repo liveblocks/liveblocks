@@ -529,40 +529,24 @@ exports[`checker large document (snapshot test) 1`] = `
             "optional": false,
             "range": [
               513,
-              548,
+              541,
             ],
             "trailingComment": null,
             "type": {
-              "_kind": "UnionExpr",
-              "members": [
-                {
-                  "_kind": "TypeRef",
-                  "asLiveObject": true,
-                  "range": [
-                    523,
-                    541,
-                  ],
-                  "ref": {
-                    "_kind": "TypeName",
-                    "name": "Circle",
-                    "range": [
-                      534,
-                      540,
-                    ],
-                  },
-                },
-                {
-                  "_kind": "NullType",
-                  "range": [
-                    544,
-                    548,
-                  ],
-                },
-              ],
+              "_kind": "TypeRef",
+              "asLiveObject": true,
               "range": [
                 523,
-                548,
+                541,
               ],
+              "ref": {
+                "_kind": "TypeName",
+                "name": "Circle",
+                "range": [
+                  534,
+                  540,
+                ],
+              },
             },
           },
           {
@@ -572,54 +556,31 @@ exports[`checker large document (snapshot test) 1`] = `
               "_kind": "Identifier",
               "name": "myrect",
               "range": [
-                557,
-                563,
+                550,
+                556,
               ],
             },
             "optional": false,
             "range": [
-              557,
-              597,
+              550,
+              574,
             ],
             "trailingComment": null,
             "type": {
-              "_kind": "UnionExpr",
-              "members": [
-                {
-                  "_kind": "TypeRef",
-                  "asLiveObject": true,
-                  "range": [
-                    565,
-                    581,
-                  ],
-                  "ref": {
-                    "_kind": "TypeName",
-                    "name": "Rect",
-                    "range": [
-                      576,
-                      580,
-                    ],
-                  },
-                },
-                {
-                  "_kind": "StringType",
-                  "range": [
-                    584,
-                    590,
-                  ],
-                },
-                {
-                  "_kind": "NullType",
-                  "range": [
-                    593,
-                    597,
-                  ],
-                },
-              ],
+              "_kind": "TypeRef",
+              "asLiveObject": true,
               "range": [
-                565,
-                597,
+                558,
+                574,
               ],
+              "ref": {
+                "_kind": "TypeName",
+                "name": "Rect",
+                "range": [
+                  569,
+                  573,
+                ],
+              },
             },
           },
         ],
@@ -635,13 +596,13 @@ exports[`checker large document (snapshot test) 1`] = `
         },
         "range": [
           455,
-          605,
+          582,
         ],
       },
     ],
     "range": [
       7,
-      605,
+      582,
     ],
   },
   "definitions": [
@@ -1169,40 +1130,24 @@ exports[`checker large document (snapshot test) 1`] = `
           "optional": false,
           "range": [
             513,
-            548,
+            541,
           ],
           "trailingComment": null,
           "type": {
-            "_kind": "UnionExpr",
-            "members": [
-              {
-                "_kind": "TypeRef",
-                "asLiveObject": true,
-                "range": [
-                  523,
-                  541,
-                ],
-                "ref": {
-                  "_kind": "TypeName",
-                  "name": "Circle",
-                  "range": [
-                    534,
-                    540,
-                  ],
-                },
-              },
-              {
-                "_kind": "NullType",
-                "range": [
-                  544,
-                  548,
-                ],
-              },
-            ],
+            "_kind": "TypeRef",
+            "asLiveObject": true,
             "range": [
               523,
-              548,
+              541,
             ],
+            "ref": {
+              "_kind": "TypeName",
+              "name": "Circle",
+              "range": [
+                534,
+                540,
+              ],
+            },
           },
         },
         {
@@ -1212,54 +1157,31 @@ exports[`checker large document (snapshot test) 1`] = `
             "_kind": "Identifier",
             "name": "myrect",
             "range": [
-              557,
-              563,
+              550,
+              556,
             ],
           },
           "optional": false,
           "range": [
-            557,
-            597,
+            550,
+            574,
           ],
           "trailingComment": null,
           "type": {
-            "_kind": "UnionExpr",
-            "members": [
-              {
-                "_kind": "TypeRef",
-                "asLiveObject": true,
-                "range": [
-                  565,
-                  581,
-                ],
-                "ref": {
-                  "_kind": "TypeName",
-                  "name": "Rect",
-                  "range": [
-                    576,
-                    580,
-                  ],
-                },
-              },
-              {
-                "_kind": "StringType",
-                "range": [
-                  584,
-                  590,
-                ],
-              },
-              {
-                "_kind": "NullType",
-                "range": [
-                  593,
-                  597,
-                ],
-              },
-            ],
+            "_kind": "TypeRef",
+            "asLiveObject": true,
             "range": [
-              565,
-              597,
+              558,
+              574,
             ],
+            "ref": {
+              "_kind": "TypeName",
+              "name": "Rect",
+              "range": [
+                569,
+                573,
+              ],
+            },
           },
         },
       ],
@@ -1275,7 +1197,7 @@ exports[`checker large document (snapshot test) 1`] = `
       },
       "range": [
         455,
-        605,
+        582,
       ],
     },
   ],
@@ -1297,40 +1219,24 @@ exports[`checker large document (snapshot test) 1`] = `
         "optional": false,
         "range": [
           513,
-          548,
+          541,
         ],
         "trailingComment": null,
         "type": {
-          "_kind": "UnionExpr",
-          "members": [
-            {
-              "_kind": "TypeRef",
-              "asLiveObject": true,
-              "range": [
-                523,
-                541,
-              ],
-              "ref": {
-                "_kind": "TypeName",
-                "name": "Circle",
-                "range": [
-                  534,
-                  540,
-                ],
-              },
-            },
-            {
-              "_kind": "NullType",
-              "range": [
-                544,
-                548,
-              ],
-            },
-          ],
+          "_kind": "TypeRef",
+          "asLiveObject": true,
           "range": [
             523,
-            548,
+            541,
           ],
+          "ref": {
+            "_kind": "TypeName",
+            "name": "Circle",
+            "range": [
+              534,
+              540,
+            ],
+          },
         },
       },
       {
@@ -1340,54 +1246,31 @@ exports[`checker large document (snapshot test) 1`] = `
           "_kind": "Identifier",
           "name": "myrect",
           "range": [
-            557,
-            563,
+            550,
+            556,
           ],
         },
         "optional": false,
         "range": [
-          557,
-          597,
+          550,
+          574,
         ],
         "trailingComment": null,
         "type": {
-          "_kind": "UnionExpr",
-          "members": [
-            {
-              "_kind": "TypeRef",
-              "asLiveObject": true,
-              "range": [
-                565,
-                581,
-              ],
-              "ref": {
-                "_kind": "TypeName",
-                "name": "Rect",
-                "range": [
-                  576,
-                  580,
-                ],
-              },
-            },
-            {
-              "_kind": "StringType",
-              "range": [
-                584,
-                590,
-              ],
-            },
-            {
-              "_kind": "NullType",
-              "range": [
-                593,
-                597,
-              ],
-            },
-          ],
+          "_kind": "TypeRef",
+          "asLiveObject": true,
           "range": [
-            565,
-            597,
+            558,
+            574,
           ],
+          "ref": {
+            "_kind": "TypeName",
+            "name": "Rect",
+            "range": [
+              569,
+              573,
+            ],
+          },
         },
       },
     ],
@@ -1403,7 +1286,7 @@ exports[`checker large document (snapshot test) 1`] = `
     },
     "range": [
       455,
-      605,
+      582,
     ],
   },
 }

@@ -21,6 +21,9 @@ export function prettify(node: Node): string {
     case "Document":
       return node.definitions.map(prettify).join("\n\n");
 
+    case "BooleanType":
+      return "Boolean";
+
     case "StringType":
       return "String";
 
@@ -29,12 +32,6 @@ export function prettify(node: Node): string {
 
     case "FloatType":
       return "Float";
-
-    case "BooleanType":
-      return "Boolean";
-
-    case "NullType":
-      return "Null";
 
     case "ObjectTypeDefinition":
       return [
@@ -50,11 +47,7 @@ export function prettify(node: Node): string {
       return `{ ${node.fields.map(prettify).join(", ")} }`;
 
     case "ArrayExpr":
-      if (node.ofType._kind === "UnionExpr") {
-        return `(${prettify(node.ofType)})[]`;
-      } else {
-        return `${prettify(node.ofType)}[]`;
-      }
+      return `${prettify(node.ofType)}[]`;
 
     case "LiveListExpr":
       return `LiveList<${prettify(node.ofType)}>`;
@@ -82,9 +75,6 @@ export function prettify(node: Node): string {
       ]
         .filter((line) => line !== null)
         .join("\n");
-
-    case "UnionExpr":
-      return node.members.map((member) => prettify(member)).join(" | ");
 
     default:
       return assertNever(node, `Please define prettify for «${node}» nodes`);
