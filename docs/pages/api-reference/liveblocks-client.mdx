@@ -228,8 +228,8 @@ for (const { connectionId, id, info, presence, isReadOnly } of others) {
 
 ### Room.broadcastEvent
 
-Broadcast an event to other users in the Room. Event broadcasted to the room can
-be listened with [`Room.subscribe("event")`][]. Takes a payload as first
+Broadcast an event to other users in the Room. Events broadcast to the room can
+be listened to with [`Room.subscribe("event")`][]. Takes a payload as first
 argument. Should be serializable to JSON.
 
 By default, broadcasting an event acts as a “fire and forget”. If the user is
