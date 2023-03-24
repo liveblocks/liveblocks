@@ -7,7 +7,7 @@
   </a>
 </p>
 
-# Collaborative Block Text Editor (Advanced)
+# Collaborative Block Text Editor (Advanced) with Google SSO
 
 <p>
   <a href="https://liveblocks.io/examples/collaborative-block-text-editor/nextjs/preview">
@@ -21,7 +21,7 @@
 </p>
 
 This example shows how to build a collaborative block text editor with
-[Liveblocks](https://liveblocks.io), and [Next.js](https://nextjs.org/).
+[Liveblocks](https://liveblocks.io), and [Next.js](https://nextjs.org/) and Google SSO.
 
 <img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/block-text-editor-advanced.png" width="536" alt="Collaborative Block Text Editor (Advanced)" />
 
@@ -47,6 +47,8 @@ Alternatively, you can set up your project manually:
 - Create an account on [liveblocks.io](https://liveblocks.io/dashboard)
 - Copy your **secret** key from the [dashboard](https://liveblocks.io/dashboard/apikeys)
 - Create an `.env.local` file and add your **secret** key as the `LIVEBLOCKS_SECRET_KEY` environment variable
+- Generate the `GOOGLE_CLIENT_SECRET` and `GOOGLE_CLIENT_ID` environment variables by following the instructions in the [Google SSO](https://liveblocks.io/docs/sso/google) documentation
+- Generate the `NEXTAUTH_SECRET` and `JWT_SECRET` environment variables by running `openssl rand -base64 32` and copy the output to your `env.local` for later.
 - Run `npm run dev` and go to [http://localhost:3000](http://localhost:3000)
 
 </details>
