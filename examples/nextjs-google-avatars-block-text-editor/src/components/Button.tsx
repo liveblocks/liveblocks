@@ -12,7 +12,7 @@ import styles from "./Button.module.css";
 
 type Props = {
   children: ReactNode;
-  appearance: "ghost" | "secondary" | "primary";
+  appearance?: "ghost" | "secondary" | "primary";
   isSquare?: boolean;
   onClick?: MouseEventHandler<HTMLButtonElement>;
   onKeyDown?: KeyboardEventHandler<HTMLButtonElement>;
@@ -31,7 +31,7 @@ const Button = forwardRef<HTMLButtonElement, Props>(
   (
     {
       children,
-      appearance,
+      appearance = "secondary",
       isSquare,
       onClick,
       onKeyDown,
