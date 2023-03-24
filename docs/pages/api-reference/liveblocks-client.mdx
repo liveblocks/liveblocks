@@ -233,14 +233,14 @@ be listened to with [`Room.subscribe("event")`][]. Takes a payload as first
 argument. Should be serializable to JSON.
 
 By default, broadcasting an event acts as a “fire and forget”. If the user is
-not currently in the room, the event is simply discarded. With the option
-`shouldQueueEventIfNotReady` , the event will be queued and sent once the
-connection is established.
+not currently in the room, the event is simply discarded. Passing the
+`shouldQueueEventIfNotReady` option will queue the event, before sending it once
+the connection is established.
 
 <Banner title="Notice">
 
-We are not sure if we want to support this option in the future so it might be
-deprecated to be replaced by something else.
+We’re not sure if we want to support `shouldQueueEventIfNotReady` in the future,
+so it may be deprecated and replaced with something else.
 
 </Banner>
 
