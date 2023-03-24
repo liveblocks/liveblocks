@@ -7,6 +7,8 @@ import { useEffect } from "react";
 import { useSession, signIn } from "next-auth/react";
 import { getServerSession } from "./api/auth/getServerSession";
 import MoonIcon from "../src/icons/moon.svg";
+import { Button } from "../src/components";
+import GoogleIcon from "../public/icons/google.svg";
 
 interface Props {
   providers: Awaited<ReturnType<typeof getProviders>>;
@@ -19,13 +21,10 @@ export default function login({ providers }: Props) {
   if (!session)
     return (
       <div className={styles.signin}>
-        <p> You are not signed in.</p>
-        <button
-          className={styles.googlebutton}
-          onClick={() => signIn("google")}
-        >
-          <img src="/google-images/btn_google_signin_light_normal_web@2x.png" />
-        </button>
+        <Button className={styles.googlebutton} appearance="secondary" onClick={() => signIn("google")}>
+          <GoogleIcon />
+          Sign in with Google
+        </Button>
       </div>
     );
 }
