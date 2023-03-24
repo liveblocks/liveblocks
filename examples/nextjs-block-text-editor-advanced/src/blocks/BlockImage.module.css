@@ -1,0 +1,16 @@
+.block_image {
+  position: relative;
+}
+
+.image_embed {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  min-height: 100px;
+  height: auto;
+}
+
+.image_embed img {
+  width: 100%;
+}

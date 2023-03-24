@@ -1,0 +1,82 @@
+.prose {
+  color: rgb(var(--color-foreground));
+  line-height: 1.75em;
+  white-space: pre-wrap;
+}
+
+.prose *::selection {
+  color: rgba(var(--color-foreground), 1);
+  background: rgba(var(--color-primary), var(--opacity-surface-selection));
+}
+
+.prose .title,
+.prose h1,
+.prose .h1,
+.prose h2,
+.prose .h2,
+.prose h3,
+.prose .h3 {
+  font-weight: 600;
+  line-height: 1.3em;
+  letter-spacing: -0.0125em;
+}
+
+.prose .title {
+  padding-top: 1.4em;
+  margin-bottom: 0.5em;
+  font-size: 2.5em;
+}
+
+.prose h1,
+.prose .h1 {
+  padding-top: 1.4em;
+  margin-bottom: 0.25em;
+  font-size: 1.875em;
+}
+
+.prose h1 ~ .inline_actions,
+.prose h1 ~ .toolbar,
+.prose h1 ~ .avatars {
+  padding-top: 2.95em;
+}
+
+.prose h2,
+.prose .h2 {
+  padding-top: 1.4em;
+  margin-bottom: 0.25em;
+  font-size: 1.5em;
+}
+
+.prose h2 ~ .inline_actions,
+.prose h2 ~ .toolbar,
+.prose h2 ~ .avatars {
+  padding-top: 2.15em;
+}
+
+.prose h3,
+.prose .h3 {
+  padding-top: 1em;
+  margin-bottom: 0.25em;
+  font-size: 1.25em;
+}
+
+.prose h3 ~ .inline_actions,
+.prose h3 ~ .toolbar,
+.prose h3 ~ .avatars {
+  padding-top: 1.15em;
+}
+
+.prose p .caret,
+.prose .p .caret {
+  padding-top: 0.15em;
+}
+
+.prose .embed {
+  padding: 0.5em 0;
+}
+
+.prose .embed ~ .inline_actions,
+.prose .embed ~ .toolbar,
+.prose .embed ~ .avatars {
+  padding-top: 0.5em;
+}
