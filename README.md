@@ -10,7 +10,7 @@
   <a href="https://twitter.com/liveblocks">
     <img src="https://img.shields.io/badge/liveblocks-message?style=flat&logo=twitter&color=555&logoColor=fff" alt="Twitter" />
   </a>
-  <a href="https://discord.gg/X4YWJuH9VY">
+  <a href="https://liveblocks.io/discord">
     <img src="https://img.shields.io/discord/913109211746009108?style=flat&label=discord&logo=discord&color=85f&logoColor=fff" alt="Discord" />
   </a>
     <a href="https://www.youtube.com/channel/UCDXT5skWxzOorIQrWG5OT2w">
@@ -61,7 +61,8 @@ to help you get started.
 
 ## Releases
 
-See the latest changes [here](https://github.com/liveblocks/liveblocks/releases).
+See the latest changes
+[here](https://github.com/liveblocks/liveblocks/releases).
 
 ## Community
 
