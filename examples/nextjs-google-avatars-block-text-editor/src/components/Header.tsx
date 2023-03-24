@@ -16,10 +16,7 @@ export default function Header() {
   const others = useOthers();
   const self = useSelf();
   const allUsers = [self, ...others];
-  console.log("all users", allUsers);
-  console.log("the others", others), console.log("self", self);
   const { data: session } = useSession();
-  console.log(session);
 
   const [theme, setTheme] = useState<Theme | null>(
     localStorage.getItem(LOCAL_STORAGE_THEME) as Theme | null
@@ -53,7 +50,6 @@ export default function Header() {
         <div className={styles.right}>
           <div className={styles.avatars}>
             {allUsers.map((user) => {
-              console.log("the user", user);
               const {
                 info: { imageUrl, name },
                 connectionId,

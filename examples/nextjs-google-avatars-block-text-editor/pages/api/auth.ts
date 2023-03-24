@@ -18,8 +18,6 @@ export default async function auth(req: NextApiRequest, res: NextApiResponse) {
     image: "N/A",
   };
 
-  console.log(anonymousUser);
-
   const { name, email, image } = session?.user ?? anonymousUser;
 
   // We're generating random users and avatars here.
