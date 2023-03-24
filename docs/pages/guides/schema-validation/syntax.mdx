@@ -37,19 +37,19 @@ type Storage {
 Familiar scalar types are globally available when you create a schema. We
 support:
 
-- `String`
-- `Int` (only whole numbers)
-- `Float` (floats and whole numbers)
-- `Boolean`
+- `string`
+- `number`
+- `boolean`
+- `null`
 
 A sample schema using only scalar types could look like this:
 
 ```ts
 type Storage {
-  name: String
-  age: Int
-  height: Float
-  hasSiblings: Boolean
+  name: string
+  age: number
+  height: number
+  hasSiblings: boolean
 }
 ```
 
@@ -78,10 +78,10 @@ For example, to make the `age` field optional:
 
 ```ts highlight="3"
 type Storage {
-  name: String
-  age?: Int
-  height: Float
-  hasSiblings: Boolean
+  name: string
+  age?: number
+  height: number
+  hasSiblings: boolean
 }
 ```
 
@@ -108,8 +108,8 @@ Our language supports two different ways to declare object types:
 
 ```ts
 type Scientist {
-  name: String
-  age: Int
+  name: string
+  age: number
 }
 
 type Storage {
@@ -121,7 +121,7 @@ type Storage {
 
 ```ts
 type Storage  {
-  scientist: { name: String, age: Int }
+  scientist: { name: string, age: number }
 }
 ```
 
@@ -143,8 +143,8 @@ so:
 
 ```ts
 type Scientist {
-  name: String
-  age: Int
+  name: string
+  age: number
 }
 
 type Storage {
@@ -169,7 +169,7 @@ Arrays can be defined like this:
 
 ```ts
 type Storage {
-  animals: String[]
+  animals: string[]
 }
 ```
 
@@ -193,7 +193,7 @@ For example:
 
 ```ts
 type Storage {
-  animals: LiveList<String>
+  animals: LiveList<string>
   //       ^^^^^^^^
 }
 ```
@@ -217,18 +217,18 @@ For example:
 
 ```ts
 type Shape {
-  x: Float
-  y: Float
-  fill: String
+  x: number
+  y: number
+  fill: string
 }
 
 type Storage {
-  shapes: LiveMap<String, Shape>
+  shapes: LiveMap<string, Shape>
   //      ^^^^^^^
 }
 ```
 
-The first argument to a `LiveMap` construct must always be `String`.
+The first argument to a `LiveMap` construct must always be `string`.
 
 Accepted and rejected updates:
 
