@@ -7,7 +7,7 @@ import { useMemo } from "react";
 import Editor from "../src/Editor";
 import { RoomProvider } from "../src/liveblocks.config";
 import { BlockType, CustomElement } from "../src/types";
-import { getServerSession} from "../pages/api/auth/getServerSession";
+import { getServerSession } from "./api/auth/getServerSession";
 
 const initialValue: CustomElement[] = [
   {
@@ -211,7 +211,7 @@ export const getServerSideProps: GetServerSideProps = async ({ req, res }) => {
     return {
       redirect: {
         permanent: false,
-        destination: '/signin',
+        destination: "/signin",
       },
     };
   }

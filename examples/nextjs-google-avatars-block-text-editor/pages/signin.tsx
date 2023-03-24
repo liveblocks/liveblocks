@@ -5,7 +5,7 @@ import { getProviders } from "next-auth/react";
 import { useRouter } from "next/router";
 import { useEffect } from "react";
 import { useSession, signIn } from "next-auth/react";
-import { getServerSession } from "../pages/api/auth/getServerSession";
+import { getServerSession } from "./api/auth/getServerSession";
 import MoonIcon from "../src/icons/moon.svg";
 
 interface Props {
