@@ -20,8 +20,8 @@ export default async function auth(req: NextApiRequest, res: NextApiResponse) {
 
   const { name, email, image } = session?.user ?? anonymousUser;
 
-  // We're generating random users and avatars here.
-  // In a real-world scenario, this is where you'd assign the
+  // We're generating users and avatars here based off of Google SSO metadata.
+  //This is where you assign the
   // user based on their real identity from your auth provider.
   // See https://liveblocks.io/docs/api-reference/liveblocks-node#authorize for more information
   const response = await authorize({
