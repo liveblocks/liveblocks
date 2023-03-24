@@ -25,7 +25,7 @@ You can also set up Liveblocks on the server with your secret key, but we’ll c
 
 </Banner>
 
-Ordinarily, you’d find your API keys on the [dashboard](/dashboard/apikeys), but for this tutorial, we’ll let you borrow a temporary key.
+We recommend setting up your connection once, in a file named `liveblocks.config.ts`.
 
 ```ts
 // Create client
@@ -34,16 +34,18 @@ const client = createClient({
 });
 ```
 
+Ordinarily, you’d find your API keys on the [dashboard](/dashboard/apikeys), but for this tutorial we’ll let you borrow a temporary key.
+
 ### Creating room context
 
-The next step is using [`createRoomContext`][] to generate and export all the React features we’ll be using—the first of which will be `RoomProvider`.
+The next step is using [`createRoomContext`][] to generate the React features we’ll be using—the first of which will be `RoomProvider`. We’ll be exporting every React hook from here, and passing in our TypeScript types.
 
 ```ts
 // Create room context
 export const { RoomProvider } = createRoomContext(client);
 ```
 
-Add the two snippets of code to see Liveblocks connect!
+Add the two snippets of code to `liveblocks.config.ts` to connect to Liveblocks!
 
 [`@liveblocks/client`]: /docs/api-reference/liveblocks-client
 [`createClient`]: /docs/api-reference/liveblocks-client#createClient
