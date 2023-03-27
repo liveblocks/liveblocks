@@ -18,7 +18,7 @@
     | ObjectTypeDefinition
 
 
-@Type:
+@NonUnionType:
     | @ScalarType
     | ArrayType
     | ObjectLiteralType
@@ -26,10 +26,20 @@
     | TypeRef
 
 
+@Type:
+    | @NonUnionType
+    | UnionType
+
+
 @LiveType:
     # NOTE: LiveObject is *NOT* a LiveType, but a special modifier on TypeRef
     | LiveMapType
     | LiveListType
+
+
+# e.g. "A | B", "A | (B | C)", etc
+UnionType:
+    members  @NonUnionType+
 
 
 # e.g. "string[]", or "number[][]", etc.

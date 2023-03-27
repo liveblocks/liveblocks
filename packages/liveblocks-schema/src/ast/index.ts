@@ -32,6 +32,16 @@ export function isLiveType(node: Node): node is LiveType {
   return node._kind === "LiveMapType" || node._kind === "LiveListType";
 }
 
+export function isNonUnionType(node: Node): node is NonUnionType {
+  return (
+    node._kind === "ArrayType" ||
+    node._kind === "ObjectLiteralType" ||
+    node._kind === "TypeRef" ||
+    isScalarType(node) ||
+    isLiveType(node)
+  );
+}
+
 export function isScalarType(node: Node): node is ScalarType {
   return (
     node._kind === "StringType" ||
@@ -42,27 +52,23 @@ export function isScalarType(node: Node): node is ScalarType {
 }
 
 export function isType(node: Node): node is Type {
-  return (
-    node._kind === "ArrayType" ||
-    node._kind === "ObjectLiteralType" ||
-    node._kind === "TypeRef" ||
-    isScalarType(node) ||
-    isLiveType(node)
-  );
+  return node._kind === "UnionType" || isNonUnionType(node);
 }
 
 export type Definition = ObjectTypeDefinition;
 
 export type LiveType = LiveMapType | LiveListType;
 
-export type ScalarType = StringType | NumberType | BooleanType | NullType;
-
-export type Type =
+export type NonUnionType =
   | ScalarType
   | ArrayType
   | ObjectLiteralType
   | LiveType
   | TypeRef;
+
+export type ScalarType = StringType | NumberType | BooleanType | NullType;
+
+export type Type = NonUnionType | UnionType;
 
 export type Range = [number, number];
 
@@ -80,7 +86,8 @@ export type Node =
   | ObjectTypeDefinition
   | StringType
   | TypeName
-  | TypeRef;
+  | TypeRef
+  | UnionType;
 
 export function isRange(thing: unknown): thing is Range {
   return (
@@ -106,7 +113,8 @@ export function isNode(node: Node): node is Node {
     node._kind === "ObjectTypeDefinition" ||
     node._kind === "StringType" ||
     node._kind === "TypeName" ||
-    node._kind === "TypeRef"
+    node._kind === "TypeRef" ||
+    node._kind === "UnionType"
   );
 }
 
@@ -200,6 +208,12 @@ export type TypeRef = {
   _kind: "TypeRef";
   ref: TypeName;
   asLiveObject: boolean;
+  range: Range;
+};
+
+export type UnionType = {
+  _kind: "UnionType";
+  members: NonUnionType[];
   range: Range;
 };
 
@@ -524,6 +538,29 @@ export function typeRef(
   };
 }
 
+export function unionType(
+  members: NonUnionType[],
+  range: Range = [0, 0]
+): UnionType {
+  DEBUG &&
+    (() => {
+      assert(
+        Array.isArray(members) &&
+          members.length > 0 &&
+          members.every((item) => isNonUnionType(item)),
+        `Invalid value for "members" arg in "UnionType" call.\nExpected: @NonUnionType+\nGot:      ${JSON.stringify(
+          members
+        )}`
+      );
+      assertRange(range, "UnionType");
+    })();
+  return {
+    _kind: "UnionType",
+    members,
+    range,
+  };
+}
+
 interface Visitor<TContext> {
   ArrayType?(node: ArrayType, context: TContext): void;
   BooleanType?(node: BooleanType, context: TContext): void;
@@ -539,6 +576,7 @@ interface Visitor<TContext> {
   StringType?(node: StringType, context: TContext): void;
   TypeName?(node: TypeName, context: TContext): void;
   TypeRef?(node: TypeRef, context: TContext): void;
+  UnionType?(node: UnionType, context: TContext): void;
 }
 
 export function visit<TNode extends Node>(
@@ -621,6 +659,11 @@ export function visit<TNode extends Node, TContext>(
     case "TypeRef":
       visitor.TypeRef?.(node, context);
       visit(node.ref, visitor, context);
+      break;
+
+    case "UnionType":
+      visitor.UnionType?.(node, context);
+      node.members.forEach((m) => visit(m, visitor, context));
       break;
   }
 

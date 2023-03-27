@@ -47,7 +47,11 @@ export function prettify(node: Node): string {
       return `{ ${node.fields.map(prettify).join(", ")} }`;
 
     case "ArrayType":
-      return `${prettify(node.ofType)}[]`;
+      if (node.ofType._kind === "UnionType") {
+        return `(${prettify(node.ofType)})[]`;
+      } else {
+        return `${prettify(node.ofType)}[]`;
+      }
 
     case "LiveListType":
       return `LiveList<${prettify(node.ofType)}>`;
@@ -75,6 +79,9 @@ export function prettify(node: Node): string {
       ]
         .filter((line) => line !== null)
         .join("\n");
+
+    case "UnionType":
+      return node.members.map((member) => prettify(member)).join(" | ");
 
     default:
       return assertNever(node, `Please define prettify for «${node}» nodes`);

@@ -1821,24 +1821,40 @@ exports[`checker large legacy document (snapshot test) 1`] = `
             "optional": false,
             "range": [
               513,
-              541,
+              548,
             ],
             "trailingComment": null,
             "type": {
-              "_kind": "TypeRef",
-              "asLiveObject": true,
+              "_kind": "UnionType",
+              "members": [
+                {
+                  "_kind": "TypeRef",
+                  "asLiveObject": true,
+                  "range": [
+                    523,
+                    541,
+                  ],
+                  "ref": {
+                    "_kind": "TypeName",
+                    "name": "Circle",
+                    "range": [
+                      534,
+                      540,
+                    ],
+                  },
+                },
+                {
+                  "_kind": "NullType",
+                  "range": [
+                    544,
+                    548,
+                  ],
+                },
+              ],
               "range": [
                 523,
-                541,
+                548,
               ],
-              "ref": {
-                "_kind": "TypeName",
-                "name": "Circle",
-                "range": [
-                  534,
-                  540,
-                ],
-              },
             },
           },
           {
@@ -1848,31 +1864,54 @@ exports[`checker large legacy document (snapshot test) 1`] = `
               "_kind": "Identifier",
               "name": "myrect",
               "range": [
-                550,
-                556,
+                557,
+                563,
               ],
             },
             "optional": false,
             "range": [
-              550,
-              574,
+              557,
+              597,
             ],
             "trailingComment": null,
             "type": {
-              "_kind": "TypeRef",
-              "asLiveObject": true,
-              "range": [
-                558,
-                574,
+              "_kind": "UnionType",
+              "members": [
+                {
+                  "_kind": "TypeRef",
+                  "asLiveObject": true,
+                  "range": [
+                    565,
+                    581,
+                  ],
+                  "ref": {
+                    "_kind": "TypeName",
+                    "name": "Rect",
+                    "range": [
+                      576,
+                      580,
+                    ],
+                  },
+                },
+                {
+                  "_kind": "StringType",
+                  "range": [
+                    584,
+                    590,
+                  ],
+                },
+                {
+                  "_kind": "NullType",
+                  "range": [
+                    593,
+                    597,
+                  ],
+                },
               ],
-              "ref": {
-                "_kind": "TypeName",
-                "name": "Rect",
-                "range": [
-                  569,
-                  573,
-                ],
-              },
+              "range": [
+                565,
+                597,
+              ],
             },
           },
         ],
@@ -1888,13 +1927,13 @@ exports[`checker large legacy document (snapshot test) 1`] = `
         },
         "range": [
           455,
-          582,
+          605,
         ],
       },
     ],
     "range": [
       7,
-      582,
+      605,
     ],
   },
   "definitions": [
@@ -2422,24 +2461,40 @@ exports[`checker large legacy document (snapshot test) 1`] = `
           "optional": false,
           "range": [
             513,
-            541,
+            548,
           ],
           "trailingComment": null,
           "type": {
-            "_kind": "TypeRef",
-            "asLiveObject": true,
+            "_kind": "UnionType",
+            "members": [
+              {
+                "_kind": "TypeRef",
+                "asLiveObject": true,
+                "range": [
+                  523,
+                  541,
+                ],
+                "ref": {
+                  "_kind": "TypeName",
+                  "name": "Circle",
+                  "range": [
+                    534,
+                    540,
+                  ],
+                },
+              },
+              {
+                "_kind": "NullType",
+                "range": [
+                  544,
+                  548,
+                ],
+              },
+            ],
             "range": [
               523,
-              541,
+              548,
             ],
-            "ref": {
-              "_kind": "TypeName",
-              "name": "Circle",
-              "range": [
-                534,
-                540,
-              ],
-            },
           },
         },
         {
@@ -2449,31 +2504,54 @@ exports[`checker large legacy document (snapshot test) 1`] = `
             "_kind": "Identifier",
             "name": "myrect",
             "range": [
-              550,
-              556,
+              557,
+              563,
             ],
           },
           "optional": false,
           "range": [
-            550,
-            574,
+            557,
+            597,
           ],
           "trailingComment": null,
           "type": {
-            "_kind": "TypeRef",
-            "asLiveObject": true,
-            "range": [
-              558,
-              574,
+            "_kind": "UnionType",
+            "members": [
+              {
+                "_kind": "TypeRef",
+                "asLiveObject": true,
+                "range": [
+                  565,
+                  581,
+                ],
+                "ref": {
+                  "_kind": "TypeName",
+                  "name": "Rect",
+                  "range": [
+                    576,
+                    580,
+                  ],
+                },
+              },
+              {
+                "_kind": "StringType",
+                "range": [
+                  584,
+                  590,
+                ],
+              },
+              {
+                "_kind": "NullType",
+                "range": [
+                  593,
+                  597,
+                ],
+              },
             ],
-            "ref": {
-              "_kind": "TypeName",
-              "name": "Rect",
-              "range": [
-                569,
-                573,
-              ],
-            },
+            "range": [
+              565,
+              597,
+            ],
           },
         },
       ],
@@ -2489,7 +2567,7 @@ exports[`checker large legacy document (snapshot test) 1`] = `
       },
       "range": [
         455,
-        582,
+        605,
       ],
     },
   ],
@@ -2511,24 +2589,40 @@ exports[`checker large legacy document (snapshot test) 1`] = `
         "optional": false,
         "range": [
           513,
-          541,
+          548,
         ],
         "trailingComment": null,
         "type": {
-          "_kind": "TypeRef",
-          "asLiveObject": true,
+          "_kind": "UnionType",
+          "members": [
+            {
+              "_kind": "TypeRef",
+              "asLiveObject": true,
+              "range": [
+                523,
+                541,
+              ],
+              "ref": {
+                "_kind": "TypeName",
+                "name": "Circle",
+                "range": [
+                  534,
+                  540,
+                ],
+              },
+            },
+            {
+              "_kind": "NullType",
+              "range": [
+                544,
+                548,
+              ],
+            },
+          ],
           "range": [
             523,
-            541,
+            548,
           ],
-          "ref": {
-            "_kind": "TypeName",
-            "name": "Circle",
-            "range": [
-              534,
-              540,
-            ],
-          },
         },
       },
       {
@@ -2538,31 +2632,54 @@ exports[`checker large legacy document (snapshot test) 1`] = `
           "_kind": "Identifier",
           "name": "myrect",
           "range": [
-            550,
-            556,
+            557,
+            563,
           ],
         },
         "optional": false,
         "range": [
-          550,
-          574,
+          557,
+          597,
         ],
         "trailingComment": null,
         "type": {
-          "_kind": "TypeRef",
-          "asLiveObject": true,
-          "range": [
-            558,
-            574,
+          "_kind": "UnionType",
+          "members": [
+            {
+              "_kind": "TypeRef",
+              "asLiveObject": true,
+              "range": [
+                565,
+                581,
+              ],
+              "ref": {
+                "_kind": "TypeName",
+                "name": "Rect",
+                "range": [
+                  576,
+                  580,
+                ],
+              },
+            },
+            {
+              "_kind": "StringType",
+              "range": [
+                584,
+                590,
+              ],
+            },
+            {
+              "_kind": "NullType",
+              "range": [
+                593,
+                597,
+              ],
+            },
           ],
-          "ref": {
-            "_kind": "TypeName",
-            "name": "Rect",
-            "range": [
-              569,
-              573,
-            ],
-          },
+          "range": [
+            565,
+            597,
+          ],
         },
       },
     ],
@@ -2578,7 +2695,7 @@ exports[`checker large legacy document (snapshot test) 1`] = `
     },
     "range": [
       455,
-      582,
+      605,
     ],
   },
 }

@@ -1,3 +1,7 @@
+# 0.0.12
+
+- Add support for union types
+
 # 0.0.11
 
 - Make all built-in types lowercased, following TypeScript syntax more closely

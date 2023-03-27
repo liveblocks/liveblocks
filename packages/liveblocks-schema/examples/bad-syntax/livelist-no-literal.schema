@@ -1,3 +1,3 @@
 type Foo { bad: LiveList<"literal"> }
-                         ^ Expected "LiveList", "LiveMap", "LiveObject", "boolean", "null", "number", "string", "{", or <type name> but "\"" found
+                         ^ Expected "(", "LiveList", "LiveMap", "LiveObject", "boolean", "null", "number", "string", "{", or <type name> but "\"" found
                          # This should be supported when we add string literal support!

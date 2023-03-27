@@ -1,0 +1,19 @@
+type Storage {
+  a: LiveList<int> | LiveList<string>
+                     ^^^^^^^^^^^^^^^^ Type 'LiveList<string>' cannot appear in a union with 'LiveList<int>'
+}
+---
+type Storage { a: ((string | number) | (boolean | number)) }
+                                                  ^^^^^^ Type 'number' cannot appear in a union with 'number'
+---
+type Storage { a: number | number }
+                           ^^^^^^ Type 'number' cannot appear in a union with 'number'
+---
+type Foo {}
+type Bar {}
+type Storage { a: Foo | Bar }
+                        ^^^ Unions of object types are not yet supported: type 'Bar' cannot appear in a union with 'Foo'
+---
+type Foo {}
+type Storage { a: Foo | Foo }
+                        ^^^ Unions of object types are not yet supported: type 'Foo' cannot appear in a union with 'Foo'

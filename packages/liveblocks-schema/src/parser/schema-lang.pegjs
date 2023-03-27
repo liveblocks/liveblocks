@@ -178,7 +178,22 @@ LiveObjectKeyword
 
 
 Type
-  = expr:TypeL2 brackets:( LSQUARE RSQUARE { return rng() })*
+  = left:NonUnionType PIPE right:Type
+    {
+      /* If either left or right is a union type, let's flatten them */
+      const members = [left, right]
+        .flatMap(expr =>
+          expr._kind === 'UnionType'
+            ? expr.members
+            : [expr]
+        );
+      return ast.unionType(members, rng());
+    }
+  / @NonUnionType
+
+
+NonUnionType
+  = expr:NonUnionTypeL2 brackets:( LSQUARE RSQUARE { return rng() })*
     {
       let node = expr;
       for (const bracket of brackets) {
@@ -188,10 +203,12 @@ Type
       }
       return node;
     }
+  / @NonUnionTypeL2
 
 
-TypeL2
-  = ObjectLiteralType
+NonUnionTypeL2
+  = LPAREN @Type RPAREN
+  / ObjectLiteralType
   / BuiltInScalar
   / LiveType
   / TypeRef
@@ -261,6 +278,8 @@ TYPE "keyword \"type\""
 
 LCURLY     = __ @$'{' __
 RCURLY     = __ @$'}' _
+LPAREN     = __ @$'(' __
+RPAREN     = __ @$')' _
 LSQUARE    = __ @$'[' __
 RSQUARE    = __ @$']' _
 //                  ^ NOTE: We cannot generically eat newlines after RCURLY, because they're significant

@@ -632,10 +632,386 @@ exports[`syntactic parser large document (snapshot test) 1`] = `
         842,
       ],
     },
+    {
+      "_kind": "ObjectTypeDefinition",
+      "fields": [
+        {
+          "_kind": "FieldDef",
+          "leadingComment": null,
+          "name": {
+            "_kind": "Identifier",
+            "name": "a",
+            "range": [
+              872,
+              873,
+            ],
+          },
+          "optional": false,
+          "range": [
+            872,
+            901,
+          ],
+          "trailingComment": null,
+          "type": {
+            "_kind": "UnionType",
+            "members": [
+              {
+                "_kind": "StringType",
+                "range": [
+                  875,
+                  881,
+                ],
+              },
+              {
+                "_kind": "NumberType",
+                "range": [
+                  884,
+                  890,
+                ],
+              },
+              {
+                "_kind": "ArrayType",
+                "ofType": {
+                  "_kind": "NumberType",
+                  "range": [
+                    893,
+                    899,
+                  ],
+                },
+                "range": [
+                  893,
+                  901,
+                ],
+              },
+            ],
+            "range": [
+              875,
+              901,
+            ],
+          },
+        },
+        {
+          "_kind": "FieldDef",
+          "leadingComment": null,
+          "name": {
+            "_kind": "Identifier",
+            "name": "b",
+            "range": [
+              910,
+              911,
+            ],
+          },
+          "optional": false,
+          "range": [
+            910,
+            941,
+          ],
+          "trailingComment": null,
+          "type": {
+            "_kind": "ArrayType",
+            "ofType": {
+              "_kind": "UnionType",
+              "members": [
+                {
+                  "_kind": "StringType",
+                  "range": [
+                    914,
+                    920,
+                  ],
+                },
+                {
+                  "_kind": "NumberType",
+                  "range": [
+                    923,
+                    929,
+                  ],
+                },
+                {
+                  "_kind": "NumberType",
+                  "range": [
+                    932,
+                    938,
+                  ],
+                },
+              ],
+              "range": [
+                914,
+                938,
+              ],
+            },
+            "range": [
+              914,
+              941,
+            ],
+          },
+        },
+        {
+          "_kind": "FieldDef",
+          "leadingComment": null,
+          "name": {
+            "_kind": "Identifier",
+            "name": "c",
+            "range": [
+              988,
+              989,
+            ],
+          },
+          "optional": false,
+          "range": [
+            988,
+            1024,
+          ],
+          "trailingComment": null,
+          "type": {
+            "_kind": "UnionType",
+            "members": [
+              {
+                "_kind": "StringType",
+                "range": [
+                  992,
+                  998,
+                ],
+              },
+              {
+                "_kind": "NumberType",
+                "range": [
+                  1001,
+                  1007,
+                ],
+              },
+              {
+                "_kind": "NumberType",
+                "range": [
+                  1010,
+                  1016,
+                ],
+              },
+              {
+                "_kind": "NullType",
+                "range": [
+                  1019,
+                  1023,
+                ],
+              },
+            ],
+            "range": [
+              992,
+              1023,
+            ],
+          },
+        },
+        {
+          "_kind": "FieldDef",
+          "leadingComment": null,
+          "name": {
+            "_kind": "Identifier",
+            "name": "d",
+            "range": [
+              1033,
+              1034,
+            ],
+          },
+          "optional": false,
+          "range": [
+            1033,
+            1062,
+          ],
+          "trailingComment": null,
+          "type": {
+            "_kind": "UnionType",
+            "members": [
+              {
+                "_kind": "StringType",
+                "range": [
+                  1038,
+                  1044,
+                ],
+              },
+              {
+                "_kind": "NumberType",
+                "range": [
+                  1047,
+                  1053,
+                ],
+              },
+              {
+                "_kind": "NullType",
+                "range": [
+                  1057,
+                  1061,
+                ],
+              },
+            ],
+            "range": [
+              1037,
+              1061,
+            ],
+          },
+        },
+        {
+          "_kind": "FieldDef",
+          "leadingComment": null,
+          "name": {
+            "_kind": "Identifier",
+            "name": "e",
+            "range": [
+              1071,
+              1072,
+            ],
+          },
+          "optional": false,
+          "range": [
+            1071,
+            1100,
+          ],
+          "trailingComment": null,
+          "type": {
+            "_kind": "UnionType",
+            "members": [
+              {
+                "_kind": "StringType",
+                "range": [
+                  1075,
+                  1081,
+                ],
+              },
+              {
+                "_kind": "NumberType",
+                "range": [
+                  1085,
+                  1091,
+                ],
+              },
+              {
+                "_kind": "NullType",
+                "range": [
+                  1094,
+                  1098,
+                ],
+              },
+            ],
+            "range": [
+              1075,
+              1099,
+            ],
+          },
+        },
+        {
+          "_kind": "FieldDef",
+          "leadingComment": null,
+          "name": {
+            "_kind": "Identifier",
+            "name": "f",
+            "range": [
+              1109,
+              1110,
+            ],
+          },
+          "optional": false,
+          "range": [
+            1109,
+            1140,
+          ],
+          "trailingComment": null,
+          "type": {
+            "_kind": "UnionType",
+            "members": [
+              {
+                "_kind": "StringType",
+                "range": [
+                  1114,
+                  1120,
+                ],
+              },
+              {
+                "_kind": "NumberType",
+                "range": [
+                  1124,
+                  1130,
+                ],
+              },
+              {
+                "_kind": "NullType",
+                "range": [
+                  1133,
+                  1137,
+                ],
+              },
+            ],
+            "range": [
+              1114,
+              1138,
+            ],
+          },
+        },
+        {
+          "_kind": "FieldDef",
+          "leadingComment": null,
+          "name": {
+            "_kind": "Identifier",
+            "name": "g",
+            "range": [
+              1149,
+              1150,
+            ],
+          },
+          "optional": false,
+          "range": [
+            1149,
+            1199,
+          ],
+          "trailingComment": null,
+          "type": {
+            "_kind": "UnionType",
+            "members": [
+              {
+                "_kind": "NullType",
+                "range": [
+                  1152,
+                  1156,
+                ],
+              },
+              {
+                "_kind": "NumberType",
+                "range": [
+                  1159,
+                  1165,
+                ],
+              },
+              {
+                "_kind": "StringType",
+                "range": [
+                  1168,
+                  1199,
+                ],
+              },
+            ],
+            "range": [
+              1152,
+              1199,
+            ],
+          },
+        },
+      ],
+      "isStatic": false,
+      "leadingComment": null,
+      "name": {
+        "_kind": "TypeName",
+        "name": "Unions",
+        "range": [
+          855,
+          861,
+        ],
+      },
+      "range": [
+        850,
+        1207,
+      ],
+    },
   ],
   "range": [
     7,
-    842,
+    1207,
   ],
 }
 `;
@@ -1380,10 +1756,539 @@ exports[`syntactic parser large legacy document (snapshot test) 1`] = `
         809,
       ],
     },
+    {
+      "_kind": "ObjectTypeDefinition",
+      "fields": [
+        {
+          "_kind": "FieldDef",
+          "leadingComment": null,
+          "name": {
+            "_kind": "Identifier",
+            "name": "a",
+            "range": [
+              839,
+              840,
+            ],
+          },
+          "optional": false,
+          "range": [
+            839,
+            862,
+          ],
+          "trailingComment": null,
+          "type": {
+            "_kind": "UnionType",
+            "members": [
+              {
+                "_kind": "TypeRef",
+                "asLiveObject": false,
+                "range": [
+                  842,
+                  848,
+                ],
+                "ref": {
+                  "_kind": "TypeName",
+                  "name": "String",
+                  "range": [
+                    842,
+                    848,
+                  ],
+                },
+              },
+              {
+                "_kind": "TypeRef",
+                "asLiveObject": false,
+                "range": [
+                  851,
+                  854,
+                ],
+                "ref": {
+                  "_kind": "TypeName",
+                  "name": "Int",
+                  "range": [
+                    851,
+                    854,
+                  ],
+                },
+              },
+              {
+                "_kind": "ArrayType",
+                "ofType": {
+                  "_kind": "TypeRef",
+                  "asLiveObject": false,
+                  "range": [
+                    857,
+                    860,
+                  ],
+                  "ref": {
+                    "_kind": "TypeName",
+                    "name": "Int",
+                    "range": [
+                      857,
+                      860,
+                    ],
+                  },
+                },
+                "range": [
+                  857,
+                  862,
+                ],
+              },
+            ],
+            "range": [
+              842,
+              862,
+            ],
+          },
+        },
+        {
+          "_kind": "FieldDef",
+          "leadingComment": null,
+          "name": {
+            "_kind": "Identifier",
+            "name": "b",
+            "range": [
+              871,
+              872,
+            ],
+          },
+          "optional": false,
+          "range": [
+            871,
+            896,
+          ],
+          "trailingComment": null,
+          "type": {
+            "_kind": "ArrayType",
+            "ofType": {
+              "_kind": "UnionType",
+              "members": [
+                {
+                  "_kind": "TypeRef",
+                  "asLiveObject": false,
+                  "range": [
+                    875,
+                    881,
+                  ],
+                  "ref": {
+                    "_kind": "TypeName",
+                    "name": "String",
+                    "range": [
+                      875,
+                      881,
+                    ],
+                  },
+                },
+                {
+                  "_kind": "TypeRef",
+                  "asLiveObject": false,
+                  "range": [
+                    884,
+                    887,
+                  ],
+                  "ref": {
+                    "_kind": "TypeName",
+                    "name": "Int",
+                    "range": [
+                      884,
+                      887,
+                    ],
+                  },
+                },
+                {
+                  "_kind": "TypeRef",
+                  "asLiveObject": false,
+                  "range": [
+                    890,
+                    893,
+                  ],
+                  "ref": {
+                    "_kind": "TypeName",
+                    "name": "Int",
+                    "range": [
+                      890,
+                      893,
+                    ],
+                  },
+                },
+              ],
+              "range": [
+                875,
+                893,
+              ],
+            },
+            "range": [
+              875,
+              896,
+            ],
+          },
+        },
+        {
+          "_kind": "FieldDef",
+          "leadingComment": null,
+          "name": {
+            "_kind": "Identifier",
+            "name": "c",
+            "range": [
+              943,
+              944,
+            ],
+          },
+          "optional": false,
+          "range": [
+            943,
+            973,
+          ],
+          "trailingComment": null,
+          "type": {
+            "_kind": "UnionType",
+            "members": [
+              {
+                "_kind": "TypeRef",
+                "asLiveObject": false,
+                "range": [
+                  947,
+                  953,
+                ],
+                "ref": {
+                  "_kind": "TypeName",
+                  "name": "String",
+                  "range": [
+                    947,
+                    953,
+                  ],
+                },
+              },
+              {
+                "_kind": "TypeRef",
+                "asLiveObject": false,
+                "range": [
+                  956,
+                  959,
+                ],
+                "ref": {
+                  "_kind": "TypeName",
+                  "name": "Int",
+                  "range": [
+                    956,
+                    959,
+                  ],
+                },
+              },
+              {
+                "_kind": "TypeRef",
+                "asLiveObject": false,
+                "range": [
+                  962,
+                  965,
+                ],
+                "ref": {
+                  "_kind": "TypeName",
+                  "name": "Int",
+                  "range": [
+                    962,
+                    965,
+                  ],
+                },
+              },
+              {
+                "_kind": "NullType",
+                "range": [
+                  968,
+                  972,
+                ],
+              },
+            ],
+            "range": [
+              947,
+              972,
+            ],
+          },
+        },
+        {
+          "_kind": "FieldDef",
+          "leadingComment": null,
+          "name": {
+            "_kind": "Identifier",
+            "name": "d",
+            "range": [
+              982,
+              983,
+            ],
+          },
+          "optional": false,
+          "range": [
+            982,
+            1008,
+          ],
+          "trailingComment": null,
+          "type": {
+            "_kind": "UnionType",
+            "members": [
+              {
+                "_kind": "TypeRef",
+                "asLiveObject": false,
+                "range": [
+                  987,
+                  993,
+                ],
+                "ref": {
+                  "_kind": "TypeName",
+                  "name": "String",
+                  "range": [
+                    987,
+                    993,
+                  ],
+                },
+              },
+              {
+                "_kind": "TypeRef",
+                "asLiveObject": false,
+                "range": [
+                  996,
+                  999,
+                ],
+                "ref": {
+                  "_kind": "TypeName",
+                  "name": "Int",
+                  "range": [
+                    996,
+                    999,
+                  ],
+                },
+              },
+              {
+                "_kind": "NullType",
+                "range": [
+                  1003,
+                  1007,
+                ],
+              },
+            ],
+            "range": [
+              986,
+              1007,
+            ],
+          },
+        },
+        {
+          "_kind": "FieldDef",
+          "leadingComment": null,
+          "name": {
+            "_kind": "Identifier",
+            "name": "e",
+            "range": [
+              1017,
+              1018,
+            ],
+          },
+          "optional": false,
+          "range": [
+            1017,
+            1043,
+          ],
+          "trailingComment": null,
+          "type": {
+            "_kind": "UnionType",
+            "members": [
+              {
+                "_kind": "TypeRef",
+                "asLiveObject": false,
+                "range": [
+                  1021,
+                  1027,
+                ],
+                "ref": {
+                  "_kind": "TypeName",
+                  "name": "String",
+                  "range": [
+                    1021,
+                    1027,
+                  ],
+                },
+              },
+              {
+                "_kind": "TypeRef",
+                "asLiveObject": false,
+                "range": [
+                  1031,
+                  1034,
+                ],
+                "ref": {
+                  "_kind": "TypeName",
+                  "name": "Int",
+                  "range": [
+                    1031,
+                    1034,
+                  ],
+                },
+              },
+              {
+                "_kind": "NullType",
+                "range": [
+                  1037,
+                  1041,
+                ],
+              },
+            ],
+            "range": [
+              1021,
+              1042,
+            ],
+          },
+        },
+        {
+          "_kind": "FieldDef",
+          "leadingComment": null,
+          "name": {
+            "_kind": "Identifier",
+            "name": "f",
+            "range": [
+              1052,
+              1053,
+            ],
+          },
+          "optional": false,
+          "range": [
+            1052,
+            1080,
+          ],
+          "trailingComment": null,
+          "type": {
+            "_kind": "UnionType",
+            "members": [
+              {
+                "_kind": "TypeRef",
+                "asLiveObject": false,
+                "range": [
+                  1057,
+                  1063,
+                ],
+                "ref": {
+                  "_kind": "TypeName",
+                  "name": "String",
+                  "range": [
+                    1057,
+                    1063,
+                  ],
+                },
+              },
+              {
+                "_kind": "TypeRef",
+                "asLiveObject": false,
+                "range": [
+                  1067,
+                  1070,
+                ],
+                "ref": {
+                  "_kind": "TypeName",
+                  "name": "Int",
+                  "range": [
+                    1067,
+                    1070,
+                  ],
+                },
+              },
+              {
+                "_kind": "NullType",
+                "range": [
+                  1073,
+                  1077,
+                ],
+              },
+            ],
+            "range": [
+              1057,
+              1078,
+            ],
+          },
+        },
+        {
+          "_kind": "FieldDef",
+          "leadingComment": null,
+          "name": {
+            "_kind": "Identifier",
+            "name": "g",
+            "range": [
+              1089,
+              1090,
+            ],
+          },
+          "optional": false,
+          "range": [
+            1089,
+            1136,
+          ],
+          "trailingComment": null,
+          "type": {
+            "_kind": "UnionType",
+            "members": [
+              {
+                "_kind": "NullType",
+                "range": [
+                  1092,
+                  1096,
+                ],
+              },
+              {
+                "_kind": "TypeRef",
+                "asLiveObject": false,
+                "range": [
+                  1099,
+                  1102,
+                ],
+                "ref": {
+                  "_kind": "TypeName",
+                  "name": "Int",
+                  "range": [
+                    1099,
+                    1102,
+                  ],
+                },
+              },
+              {
+                "_kind": "TypeRef",
+                "asLiveObject": false,
+                "range": [
+                  1105,
+                  1136,
+                ],
+                "ref": {
+                  "_kind": "TypeName",
+                  "name": "String",
+                  "range": [
+                    1105,
+                    1136,
+                  ],
+                },
+              },
+            ],
+            "range": [
+              1092,
+              1136,
+            ],
+          },
+        },
+      ],
+      "isStatic": false,
+      "leadingComment": null,
+      "name": {
+        "_kind": "TypeName",
+        "name": "Unions",
+        "range": [
+          822,
+          828,
+        ],
+      },
+      "range": [
+        817,
+        1144,
+      ],
+    },
   ],
   "range": [
     7,
-    809,
+    1144,
   ],
 }
 `;
