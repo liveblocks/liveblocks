@@ -1,6 +1,6 @@
 {
   "name": "@liveblocks/codemirror-language",
-  "version": "0.0.12",
+  "version": "0.0.13-beta1",
   "description": "CodeMirror language for the Liveblocks schema language",
   "type": "module",
   "types": "./dist/index.d.ts",
@@ -35,7 +35,7 @@
     "@codemirror/lint": "^6.0.0",
     "@lezer/highlight": "^1.0.0",
     "@lezer/lr": "^1.0.0",
-    "@liveblocks/schema": "0.0.12"
+    "@liveblocks/schema": "0.0.13-beta1"
   },
   "devDependencies": {
     "@lezer/generator": "^1.2.2",

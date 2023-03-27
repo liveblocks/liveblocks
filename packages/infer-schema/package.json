@@ -1,6 +1,6 @@
 {
   "name": "@liveblocks/infer-schema",
-  "version": "0.0.12",
+  "version": "0.0.13-beta1",
   "description": "Helper to infer a Liveblocks schema from plain LSON data",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -35,7 +35,7 @@
   },
   "dependencies": {
     "@liveblocks/core": "^1.0.0",
-    "@liveblocks/schema": "0.0.12",
+    "@liveblocks/schema": "0.0.13-beta1",
     "decoders": "^2.0.3",
     "pluralize": "^8.0.0"
   },
