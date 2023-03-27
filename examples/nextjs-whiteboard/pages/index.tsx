@@ -13,7 +13,7 @@ import styles from "../styles/index.module.css";
 import { useRouter } from "next/router";
 
 export default function Room() {
-  const roomId = useOverrideRoomId("nextjs-react-whiteboard-1");
+  const roomId = useOverrideRoomId("nextjs-react-whiteboard");
   return (
     <RoomProvider
       id={roomId}
@@ -119,7 +119,7 @@ function Canvas() {
         })}
       </div>
       <div className={styles.toolbar}>
-        <button onClick={() => insertRectangle()}>hello Rectangle</button>
+        <button onClick={() => insertRectangle()}>Rectangle</button>
         <button onClick={() => deleteRectangle()}>Delete</button>
         <button onClick={() => history.undo()}>Undo</button>
         <button onClick={() => history.redo()}>Redo</button>
