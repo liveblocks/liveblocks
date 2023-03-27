@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, PointerEvent } from "react";
 import {
   useHistory,
   useOthers,
@@ -13,7 +13,7 @@ import styles from "../styles/index.module.css";
 import { useRouter } from "next/router";
 
 export default function Room() {
-  const roomId = useOverrideRoomId("nextjs-react-whiteboard");
+  const roomId = useOverrideRoomId("nextjs-whiteboard");
   return (
     <RoomProvider
       id={roomId}
@@ -38,9 +38,10 @@ function Canvas() {
 
   const history = useHistory();
 
-  const insertRectangle = useMutation(({ storage, setMyPresence }: any) => {
+  const insertRectangle = useMutation(({ storage, setMyPresence }) => {
     const shapeId = Date.now().toString();
     const shape = new LiveObject({
+      id: shapeId,
       x: getRandomInt(300),
       y: getRandomInt(300),
       fill: getRandomColor(),
@@ -49,17 +50,18 @@ function Canvas() {
     setMyPresence({ selectedShape: shapeId }, { addToHistory: true });
   }, []);
 
-  const deleteRectangle = useMutation(
-    ({ storage, self, setMyPresence }: any) => {
-      const shapeId = self.presence.selectedShape;
-      storage.get("shapes").delete(shapeId);
-      setMyPresence({ selectedShape: null });
-    },
-    []
-  );
+  const deleteRectangle = useMutation(({ storage, self, setMyPresence }) => {
+    const shapeId = self.presence.selectedShape;
+    if (!shapeId) {
+      return;
+    }
+
+    storage.get("shapes").delete(shapeId);
+    setMyPresence({ selectedShape: null });
+  }, []);
 
   const onShapePointerDown = useMutation(
-    ({ setMyPresence }: any, e: any, shapeId: string) => {
+    ({ setMyPresence }, e, shapeId: string) => {
       history.pause();
       e.stopPropagation();
 
@@ -70,7 +72,7 @@ function Canvas() {
   );
 
   const onCanvasPointerUp = useMutation(
-    ({ setMyPresence }: any, e: any) => {
+    ({ setMyPresence }) => {
       if (!isDragging) {
         setMyPresence({ selectedShape: null }, { addToHistory: true });
       }
@@ -82,13 +84,17 @@ function Canvas() {
   );
 
   const onCanvasPointerMove = useMutation(
-    ({ storage, self }: any, e: any) => {
+    ({ storage, self }, e) => {
       e.preventDefault();
       if (!isDragging) {
         return;
       }
 
       const shapeId = self.presence.selectedShape;
+      if (!shapeId) {
+        return;
+      }
+
       const shape = storage.get("shapes").get(shapeId);
 
       if (shape) {
@@ -130,10 +136,7 @@ function Canvas() {
 
 type RectangleProps = {
   id: string;
-  onShapePointerDown: (
-    e: React.PointerEvent<HTMLDivElement>,
-    id: string
-  ) => void;
+  onShapePointerDown: (e: PointerEvent<HTMLDivElement>, id: string) => void;
 };
 
 function Rectangle({ id, onShapePointerDown }: RectangleProps) {

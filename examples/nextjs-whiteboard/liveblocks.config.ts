@@ -1,4 +1,4 @@
-import { createClient, LiveMap } from "@liveblocks/client";
+import { createClient, LiveMap, LiveObject } from "@liveblocks/client";
 import { createRoomContext } from "@liveblocks/react";
 
 const client = createClient({
@@ -12,12 +12,12 @@ type Presence = {
   selectedShape: string | null;
 };
 
-type Shape = {
-  x: number | undefined;
-  y: number | undefined;
-  fill: string | undefined;
-  id: string | undefined;
-};
+type Shape = LiveObject<{
+  x: number;
+  y: number;
+  fill: string;
+  id: string;
+}>;
 
 type Storage = {
   shapes: LiveMap<string, Shape>;
