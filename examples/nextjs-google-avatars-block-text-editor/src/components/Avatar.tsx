@@ -9,7 +9,7 @@ type Props = {
   color?: string;
 };
 
-export default function Avatar({ imageUrl, name, size = "md", color }: Props) {
+export default function Avatar({ imageUrl, name, size = "md" }: Props) {
   return (
     <Tooltip content={name}>
       <button
@@ -19,14 +19,13 @@ export default function Avatar({ imageUrl, name, size = "md", color }: Props) {
         })}
       >
         <img src={imageUrl} alt="" />
-        {color && (
-          <span
-            className={styles.avatar_color}
-            style={{
-              boxShadow: `0 0 0 2px ${color}, 0 0 0 4px rgb(var(--color-surface))`,
-            }}
-          />
-        )}
+
+        <span
+          className={styles.avatar_color}
+          style={{
+            boxShadow: ` 0 0 0 4px rgb(var(--color-surface))`,
+          }}
+        />
       </button>
     </Tooltip>
   );

@@ -27,8 +27,6 @@
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  /* flex-grow: 1;
-  max-width: 19rem; */
 }
 
 .group {
@@ -47,8 +45,6 @@
 .avatars {
   display: flex;
   align-items: center;
-  /* max-width: 18rem;
-  flex-grow: 1; */
 }
 
 .avatars > button {
@@ -66,54 +62,15 @@
   white-space: nowrap;
 }
 
-/* .more {
-  border-width: 4px;
-  border-radius: 50%;
-  border-color: white;
-  background-color: #9ca3af;
-  min-width: 56px;
-  width: 56px;
-  height: 56px;
-  margin-left: -0.75rem;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  color: white;
-}
-
-
-.avatar {
-  display: block;
-  position: relative;
-  border: none;
-  margin: 0;
-  background: none;
-  border-radius: 50%;
-  padding: 0;
-  box-shadow: 0 0 0 2px rgb(var(--color-surface));
-} */
-
 .more {
   display: flex;
-  /* margin: 0; */
-  /* background: none; */
-
-  /* padding: 0;
-  box-shadow: 0 0 0 2px rgb(var(--color-surface));
-  color: white;
-  border-color: white;
-  background-color: #9ca3af;
-  /* position: absolute; */
   background-color: #9ca3af;
   border-radius: 50%;
-  /* width: 24px;
-  height: 24px; */
-  border: solid white 2px;
   font: size 12px;
-  /* display: flex;
-  justify-content: center;
-  align-items: center; */
-  color: white;
+  margin-left: -0.125rem;
+}
+
+.more > button {
   margin-left: -0.125rem;
 }
 
@@ -121,15 +78,15 @@
   width: 24px;
   height: 24px;
   display: flex;
-  justify-content: center;
+  justify-content: left;
+  padding: 2px;
   align-items: center;
   bottom: 0;
   right: 0;
   top: 0;
   left: 0;
   border-radius: 50%;
-  border: 2px solid rgb(var(--color-surface));
-  font-family: sans-serif;
   font-size: 12px;
   font-weight: 300;
+  color: white;
 }
