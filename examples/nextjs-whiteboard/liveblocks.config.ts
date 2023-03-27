@@ -1,18 +1,8 @@
-import {
-  createClient,
-  LiveList,
-  LiveMap,
-  LiveObject,
-} from "@liveblocks/client";
+import { createClient, LiveMap } from "@liveblocks/client";
 import { createRoomContext } from "@liveblocks/react";
-import { type } from "os";
-
-// const client = createClient({
-//   publicApiKey: process.env.LIVEBLOCKS_PUBLIC_KEY,
-// });
 
 const client = createClient({
-  publicApiKey: "pk_test_IPgCkFWVN2sFB-xiybXtQAiW",
+  publicApiKey: process.env.LIVEBLOCKS_PUBLIC_KEY as string,
 });
 
 // Presence represents the properties that will exist on every User in the Room
@@ -43,7 +33,6 @@ export const {
     RoomProvider,
     useStorage,
     useOthers,
-    useUpdateMyPresence,
     useMutation,
     useHistory,
     useSelf,
