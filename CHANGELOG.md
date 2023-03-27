@@ -1,3 +1,7 @@
+# 0.0.13-beta1
+
+- Fix: allow mixing normal objects and LiveObjects in a union
+
 # 0.0.12
 
 - Add support for union types: `X | Y | Z`

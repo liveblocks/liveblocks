@@ -319,10 +319,10 @@ const Tag = {
   bool: 5,
   null: 6,
   array: 7,
-  obj: 8,
-  livelist: 9,
-  livemap: 10,
-  // liveobject: 11,
+  object: 8,
+  liveList: 9,
+  liveMap: 10,
+  liveObject: 11,
 } as const;
 
 type Tag = (typeof Tag)[keyof typeof Tag];
@@ -361,13 +361,13 @@ function getTypeTag(node: NonUnionType): Tag {
       return Tag.array;
 
     case "ObjectLiteralType":
-      return Tag.obj;
+      return Tag.object;
 
     case "LiveMapType":
-      return Tag.livemap;
+      return Tag.liveMap;
 
     case "LiveListType":
-      return Tag.livelist;
+      return Tag.liveList;
 
     case "StringType":
       return Tag.str;
@@ -382,7 +382,7 @@ function getTypeTag(node: NonUnionType): Tag {
       return Tag.null;
 
     case "TypeRef":
-      return Tag.obj; // node.asLiveObject ? "(live)object" : "object";
+      return node.asLiveObject ? Tag.liveObject : Tag.object;
 
     default:
       return assertNever(node, "Unhandled case");
@@ -396,9 +396,16 @@ function checkUnionType(node: UnionType, context: Context): void {
 
   for (const [member1, member2] of dupes(node.members, getTypeTag)) {
     const tag = getTypeTag(member1);
-    if (tag === Tag.obj) {
+    if (tag === Tag.object) {
       context.report(
-        `Unions of object types are not yet supported: type ${quote(
+        `Unions with more than one object type are not yet supported: type ${quote(
+          prettify(member2)
+        )} cannot appear in a union with ${quote(prettify(member1))}`,
+        member2.range
+      );
+    } else if (tag === Tag.liveObject) {
+      context.report(
+        `Unions with more than one LiveObject are not yet supported: type ${quote(
           prettify(member2)
         )} cannot appear in a union with ${quote(prettify(member1))}`,
         member2.range
