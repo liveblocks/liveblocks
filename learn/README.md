@@ -1,9 +1,8 @@
 ## Interactive tutorials
 
-### How to start a new one
+### How to create a new one
 1. Inside the correct technology directory, create a folder with the URL slug as the name
 2. Each page of the tutorial has a separate folder. Inside this folder is the following structure:
-3. 
 ```
 intial - The project shown when the page loads
 solved - The project shown when you press the "Show solution" button 
@@ -26,9 +25,12 @@ NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY={% LIVEBLOCKS_PUBLIC_KEY %}
 I'm using `.env.development` to hide unimportant variables.
 
 #### guide.mdx
+For tutorials, I'd recommend showing everything in `/pages`, `/styles`, `/src`, `/components/`, `.env`, `package.json`, and `liveblocks.config.ts`. I don't think other config files are important.
+
+In the getting started guide, I'll be hiding most files to make everything as simple as possible.
 ```md
 ---
-// which files is open on page load
+// which file is open on page load
 openFile: "/liveblocks.config.ts"
 
 // which files are visible in the project
