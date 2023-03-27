@@ -17,7 +17,7 @@ export default async function auth(req: NextApiRequest, res: NextApiResponse) {
     email: "none",
     image: "N/A",
   };
-
+  // console.log("session: ", session);
   const { name, email, image } = session?.user ?? anonymousUser;
 
   // We're generating users and avatars here based off of Google SSO metadata.
