@@ -1,6 +1,6 @@
 # 0.0.12
 
-- Add support for union types
+- Add support for union types: `X | Y | Z`
 
 # 0.0.11
 
