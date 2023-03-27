@@ -16,7 +16,6 @@ type Shape = LiveObject<{
   x: number;
   y: number;
   fill: string;
-  id: string;
 }>;
 
 type Storage = {

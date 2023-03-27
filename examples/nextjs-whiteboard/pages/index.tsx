@@ -41,7 +41,6 @@ function Canvas() {
   const insertRectangle = useMutation(({ storage, setMyPresence }) => {
     const shapeId = Date.now().toString();
     const shape = new LiveObject({
-      id: shapeId,
       x: getRandomInt(300),
       y: getRandomInt(300),
       fill: getRandomColor(),
