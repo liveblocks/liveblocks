@@ -1,6 +1,6 @@
 {
-  "name": "@liveblocks/nextjs-whiteboard-advanced",
-  "description": "This example shows how to build an advanced collaborative whiteboard with Liveblocks and Next.js.",
+  "name": "@liveblocks/nextjs-whiteboard",
+  "description": "This example shows how to build a collaborative whiteboard with Liveblocks and Next.js.",
   "license": "Apache-2.0",
   "private": true,
   "scripts": {
