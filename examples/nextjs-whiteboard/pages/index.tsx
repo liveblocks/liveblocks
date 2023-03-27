@@ -61,7 +61,7 @@ function Canvas() {
   }, []);
 
   const onShapePointerDown = useMutation(
-    ({ setMyPresence }, e, shapeId: string) => {
+    ({ setMyPresence }, e: PointerEvent<HTMLDivElement>, shapeId: string) => {
       history.pause();
       e.stopPropagation();
 
@@ -84,7 +84,7 @@ function Canvas() {
   );
 
   const onCanvasPointerMove = useMutation(
-    ({ storage, self }, e) => {
+    ({ storage, self }, e: PointerEvent<HTMLDivElement>) => {
       e.preventDefault();
       if (!isDragging) {
         return;
