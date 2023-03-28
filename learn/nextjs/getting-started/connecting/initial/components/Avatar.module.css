@@ -1,0 +1,13 @@
+.avatar {
+  display: flex;
+  place-content: center;
+  position: relative;
+  border: 4px solid var(--preview-background, white);
+  border-radius: 9999px;
+  background-color: transparent;
+  margin-left: -0.75rem;
+}
+
+.avatar_picture {
+  border-radius: 9999px;
+}

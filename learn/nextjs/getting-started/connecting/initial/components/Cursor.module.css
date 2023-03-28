@@ -1,0 +1,30 @@
+.cursor {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  user-select: none;
+  transition: transform 110ms linear;
+}
+
+.avatarWrapper {
+  position: relative;
+}
+
+.cursorSvg {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.avatar {
+  display: block;
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  overflow: hidden;
+  border-radius: 9999px;
+  outline-width: 2px;
+  outline-style: solid;
+  outline-offset: 2px;
+}

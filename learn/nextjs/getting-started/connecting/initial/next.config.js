@@ -2,5 +2,16 @@
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
-}
-module.exports = nextConfig
+  images: {
+    domains: ["liveblocks.io"],
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "liveblocks.io",
+        port: "",
+        pathname: "/**",
+      },
+    ],
+  },
+};
+module.exports = nextConfig;

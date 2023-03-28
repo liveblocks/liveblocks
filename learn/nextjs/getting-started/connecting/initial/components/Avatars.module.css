@@ -1,0 +1,8 @@
+.avatars {
+  display: flex;
+  padding-left: 0.75rem;
+  overflow: hidden;
+  position: absolute;
+  top: 16px;
+  right: 18px;
+}
