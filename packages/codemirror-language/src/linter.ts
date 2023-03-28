@@ -40,7 +40,20 @@ export const linter = lint(
                   });
                 },
               };
+            } else if (suggestion.type === "remove") {
+              return {
+                name: "Remove",
+                apply: (view) => {
+                  view.dispatch({
+                    changes: {
+                      from: suggestion.range[0],
+                      to: suggestion.range[1],
+                    },
+                  });
+                },
+              };
             } else {
+              // Unknown/future suggestion type, ignore for now
               return;
             }
           })

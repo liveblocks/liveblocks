@@ -63,6 +63,93 @@ describe("diagnostic error reporting", () => {
       },
     ]);
   });
+
+  it("getDiagnostics returns suggestions to remove ranges #1", () => {
+    expect(
+      getDiagnostics(`
+        type Storage {
+          foo: string | string | null
+        }
+      `)
+    ).toEqual([
+      {
+        source: "checker",
+        severity: "error",
+        range: [
+          { offset: 48, line1: 3, column1: 25 },
+          { offset: 54, line1: 3, column1: 31 },
+        ],
+        message: "Type 'string' cannot appear in a union with 'string'",
+        suggestions: [{ type: "remove", range: [45, 54] }],
+      },
+    ]);
+  });
+
+  it("getDiagnostics returns suggestions to remove ranges #2", () => {
+    expect(
+      getDiagnostics(`
+        type Storage {
+          foo: string |    null |string
+        }
+      `)
+    ).toEqual([
+      {
+        source: "checker",
+        severity: "error",
+        range: [
+          { offset: 57, line1: 3, column1: 34 },
+          { offset: 63, line1: 3, column1: 40 },
+        ],
+        message: "Type 'string' cannot appear in a union with 'string'",
+        suggestions: [{ type: "remove", range: [55, 63] }],
+      },
+    ]);
+  });
+
+  it("getDiagnostics returns suggestions to remove ranges #3", () => {
+    expect(
+      getDiagnostics(`
+        type Storage {
+          foo: string |    (string   | null)
+        }
+      `)
+    ).toEqual([
+      {
+        source: "checker",
+        severity: "error",
+        range: [
+          { offset: 52, line1: 3, column1: 29 },
+          { offset: 58, line1: 3, column1: 35 },
+        ],
+        message: "Type 'string' cannot appear in a union with 'string'",
+        suggestions: [{ type: "remove", range: [52, 63] }],
+      },
+    ]);
+  });
+
+  it("getDiagnostics returns suggestions to remove ranges #4", () => {
+    expect(
+      getDiagnostics(`
+        type Storage {
+          foo: string |    (   string       )  | null# foo
+        }
+      `)
+    ).toEqual([
+      {
+        source: "checker",
+        severity: "error",
+        range: [
+          { offset: 55, line1: 3, column1: 32 },
+          { offset: 61, line1: 3, column1: 38 },
+        ],
+        message: "Type 'string' cannot appear in a union with 'string'",
+
+        // No way simple range to remove here that will not break the syntax, so
+        // in this case, don't offer a range removal suggestion
+        suggestions: undefined,
+      },
+    ]);
+  });
 });
 
 describe("diagnostic error reporting (legacy schemas)", () => {

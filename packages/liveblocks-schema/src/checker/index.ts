@@ -389,6 +389,51 @@ function getTypeTag(node: NonUnionType): Tag {
   }
 }
 
+function eatWhitespaceLeft(srcText: string, pos: number): number {
+  while (/[\t ]/.test(srcText.charAt(pos))) pos--;
+  return pos;
+}
+
+function eatWhitespaceRight(srcText: string, pos: number): number {
+  while (/[\t ]/.test(srcText.charAt(pos))) pos++;
+  return pos;
+}
+
+function growToIncludePipeLeft(
+  [start, end]: Range,
+  srcText: string
+): Range | undefined {
+  start = eatWhitespaceLeft(srcText, start - 1);
+  if (srcText.charAt(start) === "|") {
+    start = eatWhitespaceLeft(srcText, start - 1) + 1;
+    return [start, end];
+  } else {
+    return undefined;
+  }
+}
+
+function growToIncludePipeRight(
+  [start, end]: Range,
+  srcText: string
+): Range | undefined {
+  // Try to grow to the right
+  end = eatWhitespaceRight(srcText, end);
+  if (srcText.charAt(end) === "|") {
+    end = eatWhitespaceRight(srcText, end + 1);
+    return [start, end];
+  } else {
+    return undefined;
+  }
+}
+
+function growToIncludePipe(range: Range, context: Context): Range | undefined {
+  const srcText = context.errorReporter.contents();
+  return (
+    growToIncludePipeLeft(range, srcText) ??
+    growToIncludePipeRight(range, srcText)
+  );
+}
+
 function checkUnionType(node: UnionType, context: Context): void {
   if (node.members.length <= 1) {
     context.report("Unions must have at least 2 members", node.range);
@@ -411,11 +456,15 @@ function checkUnionType(node: UnionType, context: Context): void {
         member2.range
       );
     } else {
+      const rangeToRemove = growToIncludePipe(member2.range, context);
       context.report(
         `Type ${quote(prettify(member2))} cannot appear in a union with ${quote(
           prettify(member1)
         )}`,
-        member2.range
+        member2.range,
+        rangeToRemove !== undefined
+          ? [{ type: "remove", range: rangeToRemove }]
+          : []
       );
     }
   }
@@ -506,7 +555,8 @@ function checkLiveObjectRefs(typeRef: TypeRef, context: Context): void {
       `Type ${quote(def.name.name)} cannot be used with LiveObject<${quote(
         def.name.name
       )}>`,
-      typeRef.range
+      typeRef.range,
+      [{ type: "replace", name: def.name.name }]
     );
   }
 
@@ -516,7 +566,8 @@ function checkLiveObjectRefs(typeRef: TypeRef, context: Context): void {
       `Type ${quote(def.name.name)} must be referred to as ${quote(
         `LiveObject<${def.name.name}>`
       )}`,
-      typeRef.range
+      typeRef.range,
+      [{ type: "replace", name: `LiveObject<${def.name.name}>` }]
     );
   }
 }
@@ -638,7 +689,8 @@ function decideStaticOrLive(doc: Document, context: Context): void {
           } else {
             context.report(
               `Type ${quote(def.name.name)} already referenced as ${quote(`LiveObject<${def.name.name}>`)} on line ${context.lineno(typeRef.range)}. You cannot mix these references.`, // prettier-ignore
-              conflict.range
+              conflict.range,
+              [{ type: "replace", name: `LiveObject<${def.name.name}>` }]
             );
           }
         } else {
@@ -648,12 +700,14 @@ function decideStaticOrLive(doc: Document, context: Context): void {
           } else if (conflict === null) {
             context.report(
               `Type ${quote(def.name.name)} uses Live constructs, so it must be referenced as ${quote(`LiveObject<${def.name.name}>`)}`, // prettier-ignore
-              typeRef.range
+              typeRef.range,
+              [{ type: "replace", name: `LiveObject<${def.name.name}>` }]
             );
           } else {
             context.report(
               `Type ${quote(def.name.name)} already referenced as ${quote(`LiveObject<${def.name.name}>`)} on line ${context.lineno(conflict.range)}. You cannot mix these references.`, // prettier-ignore
-              typeRef.range
+              typeRef.range,
+              [{ type: "replace", name: `LiveObject<${def.name.name}>` }]
             );
           }
         }
@@ -746,7 +800,8 @@ export function check(
 
     context.report(
       `Type ${quote(unusedDef.name.name)} is defined but never used`,
-      unusedDef.name.range
+      unusedDef.name.range,
+      [{ type: "remove", range: unusedDef.range }]
     );
   }
 

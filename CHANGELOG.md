@@ -1,6 +1,7 @@
 # 0.0.13-beta1
 
 - Fix: allow mixing normal objects and LiveObjects in a union
+- Add more suggested linter actions
 
 # 0.0.12
 
