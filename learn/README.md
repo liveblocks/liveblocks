@@ -9,6 +9,14 @@ solved - The project shown when you press the "Show solution" button
 guide.mdx - The markdown guide
 ```
 
+OR
+
+```
+intial - The project shown when the page loads
+solved-diff - The project that files that differ to initial when you press "Show solution" button 
+guide.mdx - The markdown guide
+```
+
 3. Inside `initial` and `solved` you can place a Next.js project (and other project types later).
 4. Inside the files you can use tokens. I'd recommend using these the way I'm using them in `getting-started`
 5. You should copy `_app.tsx` and `styles/global.css` from `getting-started` into every Next.js project, and then modify then as needed.
