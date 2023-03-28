@@ -18,9 +18,10 @@ This document describes the language rules for writing your own Liveblocks
 schemas. It is an exhaustive account of all feature that will be implemented and
 supported before the public beta.
 
-Currently in the private beta phase we support: scalars, optionals, objects, and
-`LiveObject`. We’re sharing our plans for other syntaxes so you can give us
-early feedback [here](https://github.com/liveblocks/liveblocks/discussions/674).
+Currently in the private beta phase we support: scalars, arrays, objects,
+optionals, `LiveObject`, `LiveList`, `LiveMap`, and most unions. We’re sharing
+our plans for other syntaxes so you can give us early feedback
+[here](https://github.com/liveblocks/liveblocks/discussions/674).
 
 ## Storage root
 
@@ -64,7 +65,6 @@ root.set("hasSiblings", true);
 
 // ❌ Invalid storage updates
 root.set("name", true);
-root.set("age", 66.5); // Invalid because `age` should be a whole number
 root.set("height", "1.52");
 root.set("hasSiblings", "???");
 ```
@@ -241,6 +241,20 @@ root.set(
 
 // ❌
 root.set("shapes", new LiveMap([["shapeId", { x: 100, y: 100 }]]));
+```
+
+## Unions
+
+You can model a choice between two types using a union, which will be familiar
+from TypeScript. Here are some examples:
+
+```ts
+type Storage {
+  ids: (string | number)[]
+  selectedIds: string | null
+  person: LiveObject<Person> | null
+  people: LiveList<LiveObject<Person>> | null
+}
 ```
 
 ## What’s to come
