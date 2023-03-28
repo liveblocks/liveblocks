@@ -25,17 +25,20 @@
           {
             "slug": "presence",
             "title": "Using presence",
-            "description": ""
+            "description": "",
+            "comingSoon": true
           },
           {
             "slug": "broadcasting-events",
             "title": "Broadcasting events",
-            "description": ""
+            "description": "",
+            "comingSoon": true
           },
           {
             "slug": "conflict-free-data",
             "title": "Conflict-free data",
-            "description": ""
+            "description": "",
+            "comingSoon": true
           },
           {
             "slug": "data-types",
