@@ -49,8 +49,8 @@ A sample schema using only scalar types could look like this:
 type Storage {
   name: string
   age: number
-  height: number
   hasSiblings: boolean
+  favoritePet: string | null
 }
 ```
 
@@ -60,13 +60,14 @@ And here are some updates that would be accepted and rejected by the schema:
 // ✅ Valid storage updates
 root.set("name", "Marie Curie");
 root.set("age", 66);
-root.set("height", 1.52);
 root.set("hasSiblings", true);
+root.set("favoritePet", "Cooper");
+root.set("favoritePet", null);
 
 // ❌ Invalid storage updates
 root.set("name", true);
-root.set("height", "1.52");
-root.set("hasSiblings", "???");
+root.set("hasSiblings", null);
+root.set("favoritePet", 0);
 ```
 
 ## Optionals
@@ -91,8 +92,8 @@ Accepted and rejected updates:
 // ✅
 root.delete("age");
 
-// ❌
-root.delete("name"); // `name` is not optional
+// ❌ Field 'name' is not optional
+root.delete("name");
 ```
 
 <Banner title="Comparison with GraphQL">
@@ -131,8 +132,8 @@ These definitions are equivalent. Accepted and rejected updates:
 // ✅
 root.set("scientist", { name: "Marie Curie", age: 66 });
 
-// ❌
-root.set("scientist", { name: "Marie Curie" }); // `age` is missing
+// ❌ Required field 'age' is missing
+root.set("scientist", { name: "Marie Curie" });
 ```
 
 ## LiveObject
@@ -159,7 +160,7 @@ Accepted and rejected updates:
 // ✅
 root.set("scientist", new LiveObject({ name: "Marie Curie"; age: 66 }));
 
-// ❌ `scientist` should be a LiveObject
+// ❌ Should be a LiveObject
 root.set("scientist", { name: "Marie Curie"; age: 66 });
 ```
 
@@ -179,7 +180,7 @@ Accepted and rejected updates:
 // ✅
 root.set("animals", ["🦁", "🦊", "🐵"]));
 
-// ❌
+// ❌ Should contain strings
 root.set("animals", [1, 2, 2]);
 ```
 
@@ -204,8 +205,8 @@ Accepted and rejected updates:
 // ✅
 root.set("animals", new LiveList(["🦁", "🦊", "🐵"]));
 
-// ❌
-root.set("animals", ["🦁", "🦊", "🐵"]); // `animals` should be a `LiveList`
+// ❌ Should be a LiveList
+root.set("animals", ["🦁", "🦊", "🐵"]);
 ```
 
 ## LiveMap
@@ -239,7 +240,7 @@ root.set(
   new LiveMap([["shapeId", { x: 100, y: 100, fill: "blue" }]])
 );
 
-// ❌
+// ❌ Required field 'fill' is missing
 root.set("shapes", new LiveMap([["shapeId", { x: 100, y: 100 }]]));
 ```
 
@@ -251,7 +252,7 @@ from TypeScript. Here are some examples:
 ```ts
 type Storage {
   ids: (string | number)[]
-  selectedIds: string | null
+  selectedId: string | null
   person: LiveObject<Person> | null
   people: LiveList<LiveObject<Person>> | null
 }
