@@ -1,4 +1,5 @@
 import styles from "./Header.module.css";
+import classNames from "classnames";
 import { useOthers, useSelf } from "../liveblocks.config";
 import Avatar from "./Avatar";
 import Button from "./Button";
