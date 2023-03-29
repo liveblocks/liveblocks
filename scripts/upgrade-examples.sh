@@ -34,7 +34,7 @@ shift $(($OPTIND - 1))
 VERSION="${1:-latest}"
 
 list_all_projects () {
-    find examples e2e \
+    find examples e2e starter-kits \
         -type d '(' -name node_modules -o -name .next ')' -prune \
         -o \
         -name package.json \
