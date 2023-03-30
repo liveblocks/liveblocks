@@ -74,65 +74,79 @@ what kind of validations are currently supported.
 ## The validation process in practice
 
 If you would like to work through an example, you can follow along by using the
-[Multiplayer Form example](/examples/multiplayer-form/nextjs).
+[Collaborative To-Do List](/examples/nextjs-todo-list).
 
-Let’s create a new schema called `collaborative-form` in your dashboard, with
-the following definition:
+Let’s create a new schema called `todo-list` in your dashboard, with the
+following definition:
 
 ```ts
-type Logo {
-  name: string
-  theme: string
+type Storage {
+  todos: LiveList<LiveObject<Todo>>
 }
 
-type Storage {
-  logo: LiveObject<Logo>
+type Todo {
+  text: string
+  checked?: boolean
 }
 ```
 
 Schemas are automatically versioned to facilitate migrations. By saving the new
 schema, we have created the first version, named `collaborative-form@1`.
 
-To attach the schema we just created to a room, call the following endpoint:
+To attach the schema we just created to a room, you can:
+
+- Navigate to the "next-js-todo-list-v2" room and click on "Attach Schema", as
+  shown in the video above
+- Call the following endpoint:
 
 ```ts
-POST https://api.liveblocks.io/v2/rooms/{id}/schema
+POST https://api.liveblocks.io/v2/rooms/nextjs-todo-list-v2/schema
 {
-  "schema": "collaborative-form@1"
+  "schema": "todo-list@1"
 }
 ```
 
 To demonstrate the importance of schema validation and how unsafe operations
-will now fail, we will change the `name` field in our storage mutation to
-`organization` to simulate a bug:
+will now fail, we will change the `checked` field in our schema as required,
+which means that new items added to the list will have to be checked by default.
 
-```tsx file="index.tsx"
-const updateName = useMutation(({ storage }, name: string) => {
-  storage.get("logo").set("name", name);
-}, []);
+The new schema definition will look like this:
+
+```ts highlight="7"
+type Storage {
+  todos: LiveList<LiveObject<Todo>>
+}
+
+type Todo {
+  text: string
+  checked: boolean
+}
 ```
 
-with
-
-```tsx file="index.tsx"
-const updateName = useMutation(({ storage }, name: string) => {
-  storage.get("logo").set("organization", name);
-}, []);
-```
-
-After updating and running locally, we should now see the following error
-because our deployed schema will reject the mutation:
+After updating the schema, and attaching the new version to our room, we can now
+run our app locally by calling `npm run dev` and adding a new item to the list.
+The new item will cause the following error to be thrown:
 
 ```
-Error: Storage mutation rejected by the server.
-Field "organization" does not exist on type "Logo".
+Error: Storage mutations rejected by server: Missing required property 'checked' on type 'LiveList<LiveObject<Todo>>'.
 ```
+
+<Figure>
+  <video autoPlay loop muted playsInline>
+    <source
+      src="/images/docs/schema-validation/reject-schema.mp4"
+      type="video/mp4"
+    />
+  </video>
+</Figure>
+
+<Banner title="Schema modification rejections">
 
 Other examples where schema validation would catch the error include:
 
-- Attempting to update the value of the `name` variable to a number, as it is
-  defined as a string
-- Attempting to delete the `name` variable: it was not defined as optional in
+- Attempting to update the value of the `checked` variable to a number, as it is
+  defined as a boolean in the schema
+- Attempting to delete the `checked` variable: it was not defined as optional in
   the schema
 
 When an instance like this occurs, it’s indicative of a bug in your app. You
