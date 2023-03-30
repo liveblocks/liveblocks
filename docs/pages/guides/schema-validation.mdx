@@ -112,7 +112,7 @@ which means that new items added to the list will have to be checked by default.
 
 The new schema definition will look like this:
 
-```ts highlight="7"
+```ts
 type Storage {
   todos: LiveList<LiveObject<Todo>>
 }
@@ -139,8 +139,6 @@ Error: Storage mutations rejected by server: Missing required property 'checked'
     />
   </video>
 </Figure>
-
-<Banner title="Schema modification rejections">
 
 Other examples where schema validation would catch the error include:
 
