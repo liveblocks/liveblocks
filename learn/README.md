@@ -13,7 +13,7 @@ OR
 
 ```
 intial - The project shown when the page loads
-solved-diff - The project that files that differ to initial when you press "Show solution" button 
+solved-diff - The project files that differ to initial when you press "Show solution" button 
 guide.mdx - The markdown guide
 ```
 
@@ -33,9 +33,6 @@ NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY={% LIVEBLOCKS_PUBLIC_KEY %}
 I'm using `.env.development` to hide unimportant variables.
 
 #### guide.mdx
-To create a link that changes files in the editor, use a file hash: e.g. `[this file](#/pages/index.tsx)` will change to `/pages/index.tsx`
-
-
 For tutorials, I'd recommend showing everything in `/pages`, `/styles`, `/src`, `/components/`, `.env`, `package.json`, and `liveblocks.config.ts`. I don't think other config files are important.
 
 In the getting started guide, I'll be hiding most files to make everything as simple as possible.
@@ -46,12 +43,19 @@ openFile: "/liveblocks.config.ts"
 
 // which files are visible in the project
 showFiles: [ 
-"/liveblocks.config.ts",
+  "/liveblocks.config.ts",
+  "/pages/index.tsx",
 ]
 ---
 
 [MDX guide here]
 ```
+
+#### Link to files in editor
+To create a link that changes files in the editor, use a file hash: e.g. `[this file](#/pages/index.tsx)` will change to `/pages/index.tsx`.
+
+Note that this always starts with `#/` and the link should NOT have \` around it e.g.: `[this file]` is correct and will be displayed like code.
+
 
 #### tutorials.json
 ```
