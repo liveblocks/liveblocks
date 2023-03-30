@@ -33,6 +33,9 @@ NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY={% LIVEBLOCKS_PUBLIC_KEY %}
 I'm using `.env.development` to hide unimportant variables.
 
 #### guide.mdx
+To create a link that changes files in the editor, use a file hash: e.g. `[this file](#/pages/index.tsx)` will change to `/pages/index.tsx`
+
+
 For tutorials, I'd recommend showing everything in `/pages`, `/styles`, `/src`, `/components/`, `.env`, `package.json`, and `liveblocks.config.ts`. I don't think other config files are important.
 
 In the getting started guide, I'll be hiding most files to make everything as simple as possible.
