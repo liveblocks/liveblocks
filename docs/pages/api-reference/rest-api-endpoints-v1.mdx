@@ -147,6 +147,11 @@ Delete all elements of the room storage using the following endpoint.
   endpoint="https://liveblocks.net/api/v1/room/:roomId/storage"
 />
 
+### Some implementation details [@hidden]
+
+- If a room is using a schema, storage can only be deleted if the schema is
+  detached from the room.
+
 ## Get room users
 
 Get the current list of users connected to a room.
@@ -158,7 +163,7 @@ Get the current list of users connected to a room.
 
 ### Some implementation details [@hidden]
 
-- User's custom properties `id` and `info` can be set during the authentication
+- `user` custom properties `id` and `info` can be set during the authentication
   to the room, see [`authorize`][].
 
 ### Example response [@hidden]
@@ -176,8 +181,181 @@ Get the current list of users connected to a room.
 }
 ```
 
+## Create a schema
+
+<EndpointBlock method="POST" endpoint="https://liveblocks.io/v2/schemas" />
+
+### Example request body [@hidden]
+
+```json
+{
+  "name": "collaborative-form",
+  "body": "type Logo {\nname: string\ntheme: string\n}\n\ntype Storage {\nlogo: LiveObject<Logo>\n"
+}
+```
+
+### Some implementation details [@hidden]
+
+The schema needs to be a string literal to be valid JSON when sent to the API
+for parsing. In the dashboard, this schema would be represented as:
+
+```ts
+type Logo {
+  name: number
+  theme: string
+}
+
+type Storage {
+  logo: LiveObject<Logo>
+}
+```
+
+To convert this to a string literal, you can use the following code:
+
+```ts
+JSON.stringify({
+  body: `
+< your schema implementation here >
+`,
+}).replace(/\\n/g, "\n");
+```
+
+### Example response [@hidden]
+
+```json
+{
+  "id": "collaborative-form@1",
+  "name": "collaborative-form",
+  "version": 1,
+  "createdAt": "2023-03-30T06:25:54.675Z",
+  "updatedAt": "2023-03-30T06:25:54.675Z",
+  "body": "type Logo {\nname: string\ntheme: string\n}\n\ntype Storage {\nlogo: LiveObject<Logo>\n"
+}
+```
+
+## Get a schema by id
+
+<EndpointBlock
+  method="GET"
+  endpoint="https://api.liveblocks.io/v2/schemas/:id"
+/>
+
+The schema id is the name of the schema followed by the version number, e.g.
+`collaborative-form@1`.
+
+### Example response [@hidden]
+
+```json
+{
+  "id": "collaborative-form@1",
+  "name": "collaborative-form",
+  "version": 1,
+  "createdAt": "2023-03-30T03:16:55.363Z",
+  "updatedAt": "2023-03-30T03:17:26.580Z",
+  "body": "type Logo {\n  name: string\n  theme: string\n}\n\ntype Storage {\n  logo?: LiveObject<Logo>\n}"
+}
+```
+
+## Get a schema by room
+
+<EndpointBlock
+  method="GET"
+  endpoint="https://liveblocks.io/v2/rooms/:roomId/schema"
+/>
+
+### Example response [@hidden]
+
+```json
+{
+  "id": "collaborative-form@1",
+  "name": "collaborative-form",
+  "version": 1,
+  "createdAt": "2023-03-30T03:16:55.363Z",
+  "updatedAt": "2023-03-30T03:17:26.580Z",
+  "body": "type Logo {\n  name: string\n  theme: string\n}\n\ntype Storage {\n  logo?: LiveObject<Logo>\n}"
+}
+```
+
+## Update a schema
+
+<EndpointBlock
+  method="PUT"
+  endpoint=" https://api.liveblocks.io/v2/schemas/:id"
+/>
+
+### Some implementation details [@hidden]
+
+- The schema id is the name of the schema followed by the version number, e.g.
+  `collaborative-form@1`.
+- The schema can only be updated if it is not attached to any room.
+
+### Example request body
+
+```json
+{
+  "body": "type Logo {\n  name: number\n  theme: string\n}\n\ntype Storage {\n  logo?: LiveObject<Logo>\n}"
+}
+```
+
+### Example response
+
+```json
+{
+  "id": "collaborative-form@1",
+  "name": "collaborative-form",
+  "version": 1,
+  "createdAt": "2023-03-30T03:16:55.363Z",
+  "updatedAt": "2023-03-30T03:17:26.580Z",
+  "body": "type Logo {\n  name: string\n  theme: string\n}\n\ntype Storage {\n  logo?: LiveObject<Logo>\n}"
+}
+```
+
+## Attach a schema to a room
+
+<EndpointBlock
+  method="POST"
+  endpoint="https://api.liveblocks.io/v2/rooms/:roomId/schema"
+/>
+
+### Example request body
+
+```json
+{
+  "schema": "collaborative-form@1"
+}
+```
+
+## Detach a schema from a room
+
+<EndpointBlock
+  method="DELETE"
+  endpoint="https://api.liveblocks.io/v2/rooms/:roomId/schema"
+/>
+
+```json
+{
+  "schema": "collaborative-form@1"
+}
+```
+
+## Delete a schema
+
+<EndpointBlock
+  method="DELETE"
+  endpoint="https://api.liveblocks.io/v2/schemas/:id"
+/>
+
+### Implementation details [@hidden]
+
+A schema can only be deleted if it is not attached to any room. If a schema is
+attached to a room, it is considered "frozen."
+
 [api v2 reference]: /docs/api-reference/rest-api-endpoints
 [`"livelist"`]: /docs/api-reference/liveblocks-client#LiveList
 [`"livemap"`]: /docs/api-reference/liveblocks-client#LiveMap
 [`"liveobject"`]: /docs/api-reference/liveblocks-client#LiveObject
 [`authorize`]: /docs/api-reference/liveblocks-node#authorize
+
+```
+
+```
