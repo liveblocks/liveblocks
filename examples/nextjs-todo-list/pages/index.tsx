@@ -102,7 +102,7 @@ function Loading() {
 }
 
 export default function Page() {
-  const roomId = useOverrideRoomId("nextjs-todo-list");
+  const roomId = useOverrideRoomId("nextjs-todo-list-v2");
 
   return (
     <RoomProvider
