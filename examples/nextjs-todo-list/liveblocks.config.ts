@@ -22,6 +22,7 @@ type Storage = {
 
 type Todo = {
   text: string;
+  checked?: boolean;
 };
 
 // Optionally, UserMeta represents static/readonly metadata on each User, as

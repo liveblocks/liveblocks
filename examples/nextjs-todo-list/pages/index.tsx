@@ -40,6 +40,11 @@ function Example() {
     storage.get("todos").push(new LiveObject({ text }));
   }, []);
 
+  const toggleTodo = useMutation(({ storage }, index) => {
+    const todo = storage.get("todos").get(index);
+    todo?.set("checked", !todo.get("checked"));
+  }, []);
+
   const deleteTodo = useMutation(({ storage }, index) => {
     storage.get("todos").delete(index);
   }, []);
@@ -68,7 +73,16 @@ function Example() {
       {todos.map((todo, index) => {
         return (
           <div key={index} className="todo_container">
-            <div className="todo">{todo.text}</div>
+            <div className="todo" onClick={() => toggleTodo(index)}>
+              <span
+                style={{
+                  cursor: "pointer",
+                  textDecoration: todo.checked ? "line-through" : undefined,
+                }}
+              >
+                {todo.text}
+              </span>
+            </div>
             <button className="delete_button" onClick={() => deleteTodo(index)}>
               ✕
             </button>
