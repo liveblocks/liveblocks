@@ -1,4 +1,4 @@
-import { createClient, LiveList } from "@liveblocks/client";
+import { createClient, LiveList, LiveObject } from "@liveblocks/client";
 import { createRoomContext } from "@liveblocks/react";
 
 const client = createClient({
@@ -17,11 +17,12 @@ type Presence = {
 // LiveList, LiveMap, LiveObject instances, for which updates are
 // automatically persisted and synced to all connected clients.
 type Storage = {
-  todos: LiveList<Todo>;
+  todos: LiveList<LiveObject<Todo>>;
 };
 
 type Todo = {
   text: string;
+  checked?: boolean;
 };
 
 // Optionally, UserMeta represents static/readonly metadata on each User, as
