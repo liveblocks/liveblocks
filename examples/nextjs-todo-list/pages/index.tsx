@@ -7,7 +7,7 @@ import {
   useMutation,
 } from "../liveblocks.config";
 import "@liveblocks/react";
-import { LiveList } from "@liveblocks/client";
+import { LiveList, LiveObject } from "@liveblocks/client";
 import { useRouter } from "next/router";
 import { ClientSideSuspense } from "@liveblocks/react";
 
@@ -37,7 +37,7 @@ function Example() {
   const todos = useStorage((root) => root.todos);
 
   const addTodo = useMutation(({ storage }, text) => {
-    storage.get("todos").push({ text });
+    storage.get("todos").push(new LiveObject({ text }));
   }, []);
 
   const deleteTodo = useMutation(({ storage }, index) => {
