@@ -61,7 +61,7 @@ function Example() {
           updateMyPresence({ isTyping: true });
         }}
         onKeyDown={(e) => {
-          if (e.key === "Enter") {
+          if (draft && e.key === "Enter") {
             updateMyPresence({ isTyping: false });
             addTodo(draft);
             setDraft("");
