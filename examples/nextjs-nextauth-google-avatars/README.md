@@ -16,13 +16,7 @@ This example shows how to build a live avatar stack with [Liveblocks](https://li
 
 ## Getting started
 
-Run the following command to try this example locally:
-
-```bash
-npx create-liveblocks-app@latest --example nextjs-live-avatars --api-key
-```
-
-and then follow [the tutorial](/blog/how-to-add-google-authentication-with-liveblocks-next-js-and-nextauth-js#Using-NextAuth-to-expose-the-session-object-across-the-app) to add Google authentication.
+Clone this repository, and then follow [the tutorial](/blog/how-to-add-google-authentication-with-liveblocks-next-js-and-nextauth-js#Using-NextAuth-to-expose-the-session-object-across-the-app) to add Google authentication.
 
 
 
