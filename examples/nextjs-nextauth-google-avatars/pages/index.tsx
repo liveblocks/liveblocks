@@ -40,7 +40,7 @@ function Example() {
       </div>
       <div>
         <Button
-          className={styles.googlebutton}
+          className="flex gap-2 select none"
           appearance="secondary"
           onClick={() => signOut()}
         >

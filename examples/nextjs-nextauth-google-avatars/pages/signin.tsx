@@ -1,4 +1,4 @@
-import styles from "../components/SignIn.module.css";
+import styles from "../styles/SignIn.module.css";
 
 import { GetServerSideProps } from "next";
 import { getProviders } from "next-auth/react";

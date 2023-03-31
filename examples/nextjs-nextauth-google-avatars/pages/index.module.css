@@ -12,12 +12,3 @@
   align-items: center;
   color: white;
 }
-.break {
-  flex-basis: 100%;
-  height: 0;
-}
-
-.googlebutton {
-  user-select: none;
-  gap: 0.5rem;
-}
