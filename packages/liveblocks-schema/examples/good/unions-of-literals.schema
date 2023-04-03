@@ -1,8 +1,8 @@
 type Storage { a: "hi" | null }
 ---
-type Storage { a: "" | " " }
+type Storage { a: "" | ' ' }
 ---
-type Storage { a: "hi" | "hello" }
+type Storage { a: "hi" | 'hello' }
 ---
 type Storage { a: 42 | "hello" }
 ---
