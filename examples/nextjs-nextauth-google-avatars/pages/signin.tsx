@@ -32,7 +32,6 @@ export default function login({ providers }: Props) {
 export const getServerSideProps: GetServerSideProps = async ({ req, res }) => {
   const session = await getServerSession(req, res);
   const providers = await getProviders();
-  console.log(providers);
 
   if (session) {
     return {

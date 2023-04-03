@@ -21,6 +21,7 @@ export function Avatar({ picture, name }) {
         height={IMAGE_SIZE}
         width={IMAGE_SIZE}
         className={styles.avatar_picture}
+        referrerPolicy="no-referrer"
       />
     </div>
   );

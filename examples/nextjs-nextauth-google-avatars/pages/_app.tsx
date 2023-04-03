@@ -9,7 +9,6 @@ function App({ Component, pageProps }: AppProps<{ session: Session }>) {
     <>
       <Head>
         <title>Liveblocks</title>
-        <meta name="referrer" content="no-referrer" />
         <meta name="robots" content="noindex" />
         <meta name="viewport" content="width=device-width, user-scalable=no" />
         <link
