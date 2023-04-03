@@ -16,7 +16,7 @@
     "@liveblocks/client": "^1.0.0",
     "@liveblocks/node": "^1.0.0",
     "core-js": "^3.9.1",
-    "express": "^4.17.1",
+    "express": "^4.18.2",
     "nuxt": "^2.15.3"
   },
   "devDependencies": {
