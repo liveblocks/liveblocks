@@ -3,18 +3,18 @@ import prettier from "prettier";
 import invariant from "tiny-invariant";
 
 const TYPEOF_CHECKS = new Set(["number", "string", "boolean"]);
-const BUILTIN_TYPES = new Set(["number", "string", "boolean"]);
+
+function isBuiltIn(ref: BaseNodeRef): ref is RawRef {
+  return ref.ref === "Raw";
+}
+
+type RawRef = { ref: "Raw"; name: string };
 
 // e.g. "SomeNode" or "@SomeUnion"
 type BaseNodeRef =
-  | {
-      ref: "Node";
-      name: string;
-    }
-  | {
-      ref: "NodeUnion";
-      name: string;
-    };
+  | RawRef // e.g. `boolean`, or `string | boolean`
+  | { ref: "Node"; name: string }
+  | { ref: "NodeUnion"; name: string };
 
 // e.g. "SomeNode+" or "@SomeUnion*"
 type MultiNodeRef =
@@ -91,12 +91,17 @@ function lowercaseFirst(text: string): string {
 }
 
 function parseBaseNodeRef(spec: string): BaseNodeRef {
-  const match = spec.match(/^(@?[a-z]+)$/i);
+  const match = spec.match(/^((@?[a-z]+)|`[a-z\s|]+`)$/i);
   invariant(match, `Invalid reference: "${spec}"`);
   if (spec.startsWith("@")) {
     return {
       ref: "NodeUnion",
-      name: spec.substring(1),
+      name: spec.slice(1),
+    };
+  } else if (spec.startsWith("`")) {
+    return {
+      ref: "Raw",
+      name: spec.slice(1, -1),
     };
   } else {
     return {
@@ -110,13 +115,13 @@ function parseMultiNodeRef(spec: string): MultiNodeRef {
   if (spec.endsWith("*")) {
     return {
       ref: "List",
-      of: parseBaseNodeRef(spec.substring(0, spec.length - 1)),
+      of: parseBaseNodeRef(spec.slice(0, -1)),
       min: 0,
     };
   } else if (spec.endsWith("+")) {
     return {
       ref: "List",
-      of: parseBaseNodeRef(spec.substring(0, spec.length - 1)),
+      of: parseBaseNodeRef(spec.slice(0, -1)),
       min: 1,
     };
   } else {
@@ -150,9 +155,19 @@ function serializeRef(ref: NodeRef): string {
     }
   } else if (ref.ref === "NodeUnion") {
     return "@" + ref.name;
+  } else if (ref.ref === "Node") {
+    return ref.name;
   } else {
     return ref.name;
   }
+}
+
+function getBaseNodeRef(ref: NodeRef): BaseNodeRef {
+  return ref.ref === "Optional"
+    ? getBaseNodeRef(ref.of)
+    : ref.ref === "List"
+    ? getBaseNodeRef(ref.of)
+    : ref;
 }
 
 function getBareRef(ref: NodeRef): string {
@@ -160,10 +175,14 @@ function getBareRef(ref: NodeRef): string {
     ? getBareRef(ref.of)
     : ref.ref === "List"
     ? getBareRef(ref.of)
+    : ref.ref === "Node"
+    ? ref.name
+    : ref.ref === "NodeUnion"
+    ? ref.name
     : ref.name;
 }
 
-function getBareRefTarget(ref: NodeRef): "Node" | "NodeUnion" {
+function getBareRefTarget(ref: NodeRef): "Node" | "NodeUnion" | "Raw" {
   return ref.ref === "Optional" || ref.ref === "List"
     ? getBareRefTarget(ref.of)
     : ref.ref;
@@ -174,6 +193,8 @@ function getTypeScriptType(ref: NodeRef): string {
     ? getTypeScriptType(ref.of) + " | null"
     : ref.ref === "List"
     ? getTypeScriptType(ref.of) + "[]"
+    : isBuiltIn(ref)
+    ? ref.name
     : ref.name;
 }
 
@@ -200,9 +221,10 @@ function validate(grammar: Grammar) {
         `Illegal field name: "${node.name}.${field.name}" (fields starting with "_" are reserved)`
       );
       const bare = getBareRef(field.ref);
+      const base = getBaseNodeRef(field.ref);
       referenced.add(bare);
       invariant(
-        BUILTIN_TYPES.has(bare) ||
+        isBuiltIn(base) ||
           !!grammar.unionsByName[bare] ||
           !!grammar.nodesByName[bare],
         `Unknown node kind "${bare}" (in "${node.name}.${field.name}")`
@@ -267,9 +289,21 @@ function generateTypeCheckCondition(
     );
   } else if (expected.ref === "NodeUnion") {
     conditions.push(`is${expected.name}(${actualValue})`);
-  } else if (TYPEOF_CHECKS.has(expected.name)) {
+  } else if (isBuiltIn(expected)) {
     conditions.push(
-      `typeof ${actualValue} === ${JSON.stringify(expected.name)}`
+      `( ${expected.name
+        .replace(/`/g, "")
+        .split("|")
+        .flatMap((part) => {
+          part = part.trim();
+          if (TYPEOF_CHECKS.has(part)) {
+            return [`typeof ${actualValue} === ${JSON.stringify(part)}`];
+          } else {
+            console.warn(`Cannot emit runtime type check for ${part}`);
+            return [];
+          }
+        })
+        .join(" || ")})`
     );
   } else {
     conditions.push(
@@ -326,7 +360,8 @@ export function parseGrammarFromString(src: string): Grammar {
       invariant(currUnion, "Expect a current union");
       currUnion.push(parseBaseNodeRef(union));
     } else {
-      const [name, spec] = line.split(/\s+/);
+      const [name, ...rest] = line.split(/\s+/);
+      const spec = rest.join(" ");
       invariant(currNode, "Expect a current node");
       currNode[name] = { name, ref: parseSpec(spec) };
     }
@@ -504,7 +539,7 @@ function generateCode(grammar: Grammar): string {
 
   for (const node of grammar.nodes) {
     const fields = node.fields.filter(
-      (field) => !BUILTIN_TYPES.has(getBareRef(field.ref))
+      (field) => !isBuiltIn(getBaseNodeRef(field.ref))
     );
 
     output.push(`case ${JSON.stringify(node.name)}:`);

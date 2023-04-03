@@ -40,7 +40,15 @@ ArrayType {
 }
 
 Type {
-  NamedType | GenericType | ArrayType | FieldsDefinition
+  NamedType | GenericType | ArrayType | FieldsDefinition | Number | String
+}
+
+Number {
+  digits
+}
+
+String {
+  doubleQuotedString | singleQuotedString
 }
 
 NamedTypeDeclaration {
@@ -61,7 +69,7 @@ ValueDefinition {
 
 @tokens {
   Comment { ("#" | "//") ![\n]* }
-  
+
   name { $[_A-Za-z] $[_0-9A-Za-z]* }
   
   capitalizedName { $[_A-Z] $[_0-9A-Za-z]* }
@@ -71,6 +79,14 @@ ValueDefinition {
   whitespace { @whitespace+ }
 
   parentheses { ("(" | ")") }
+
+  digits { $[-]? @digit+ ( $[.] @digit* )? }
+
+  escape { "\\" _ }
+  singleQuotedString { "'" (stringContentSingle | escape)* ("'" | "\n") }
+  doubleQuotedString { '"' (stringContentDouble | escape)* ('"' | "\n") }
+  stringContentSingle { ![\\\n']+ }
+  stringContentDouble { ![\\\n"]+ }
 
   "{" "}" "<" ">" "[" "]" ":" "|"
 }

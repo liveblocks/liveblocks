@@ -203,7 +203,7 @@ describe("checker", () => {
       type RGB { r: Int, g: Int, b: Int }
 
       type Rect {
-        type: String  # TODO: Use "rect" here
+        type: "rect"
         x: Int
         y: Int
         width: Int
@@ -213,7 +213,7 @@ describe("checker", () => {
       }
 
       type Circle {
-        type: String // TODO: Use "circle" here
+        type: "circle"
         cx: Int
         cy: Int
         radius: Int

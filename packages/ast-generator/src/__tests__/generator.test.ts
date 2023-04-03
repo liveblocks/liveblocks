@@ -5,7 +5,7 @@ describe("parsing grammars", () => {
     expect(
       parseGrammarFromString(`# This is a comment
 Abc:
-  x: string
+  x: \`string\`
   y: @Xyz
 
 @Xyz:
@@ -13,36 +13,36 @@ Abc:
   | Stu
 
 Pqr:
-  p: number
+  p: \`number\`
 
 # This is a comment
 Stu:
-  s: number
+  s: \`number\`
 `)
     ).toEqual({
       nodes: [
         {
           fields: [
-            { name: "x:", ref: { name: "string", ref: "Node" } },
+            { name: "x:", ref: { name: "string", ref: "Raw" } },
             { name: "y:", ref: { name: "Xyz", ref: "NodeUnion" } },
           ],
           fieldsByName: {
-            "x:": { name: "x:", ref: { name: "string", ref: "Node" } },
+            "x:": { name: "x:", ref: { name: "string", ref: "Raw" } },
             "y:": { name: "y:", ref: { name: "Xyz", ref: "NodeUnion" } },
           },
           name: "Abc",
         },
         {
-          fields: [{ name: "p:", ref: { name: "number", ref: "Node" } }],
+          fields: [{ name: "p:", ref: { name: "number", ref: "Raw" } }],
           fieldsByName: {
-            "p:": { name: "p:", ref: { name: "number", ref: "Node" } },
+            "p:": { name: "p:", ref: { name: "number", ref: "Raw" } },
           },
           name: "Pqr",
         },
         {
-          fields: [{ name: "s:", ref: { name: "number", ref: "Node" } }],
+          fields: [{ name: "s:", ref: { name: "number", ref: "Raw" } }],
           fieldsByName: {
-            "s:": { name: "s:", ref: { name: "number", ref: "Node" } },
+            "s:": { name: "s:", ref: { name: "number", ref: "Raw" } },
           },
           name: "Stu",
         },
@@ -50,26 +50,26 @@ Stu:
       nodesByName: {
         Abc: {
           fields: [
-            { name: "x:", ref: { name: "string", ref: "Node" } },
+            { name: "x:", ref: { name: "string", ref: "Raw" } },
             { name: "y:", ref: { name: "Xyz", ref: "NodeUnion" } },
           ],
           fieldsByName: {
-            "x:": { name: "x:", ref: { name: "string", ref: "Node" } },
+            "x:": { name: "x:", ref: { name: "string", ref: "Raw" } },
             "y:": { name: "y:", ref: { name: "Xyz", ref: "NodeUnion" } },
           },
           name: "Abc",
         },
         Pqr: {
-          fields: [{ name: "p:", ref: { name: "number", ref: "Node" } }],
+          fields: [{ name: "p:", ref: { name: "number", ref: "Raw" } }],
           fieldsByName: {
-            "p:": { name: "p:", ref: { name: "number", ref: "Node" } },
+            "p:": { name: "p:", ref: { name: "number", ref: "Raw" } },
           },
           name: "Pqr",
         },
         Stu: {
-          fields: [{ name: "s:", ref: { name: "number", ref: "Node" } }],
+          fields: [{ name: "s:", ref: { name: "number", ref: "Raw" } }],
           fieldsByName: {
-            "s:": { name: "s:", ref: { name: "number", ref: "Node" } },
+            "s:": { name: "s:", ref: { name: "number", ref: "Raw" } },
           },
           name: "Stu",
         },

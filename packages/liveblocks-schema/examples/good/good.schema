@@ -3,7 +3,7 @@
 type RGB { r: number, g: number, b: number }
 
 type Rect {
-  type: string // TODO: Use "rect" here
+  type: "rect"
   x: number
   y: number
   width: number
@@ -15,7 +15,7 @@ type Rect {
 }
 
 type Circle {
-  type: string // TODO: Use "circle" here
+  type: 'circle'  # Single-quoted
   cx: number
   cy: number
   radius: number
@@ -24,7 +24,7 @@ type Circle {
 }
 
 type StaticCircle {
-  type: string // TODO: Use "circle" here
+  type: "circle"  # Double-quoted
   cx: number
   cy: number
   radius: number

@@ -1,0 +1,11 @@
+type Storage { a: "hi" | null }
+---
+type Storage { a: "" | " " }
+---
+type Storage { a: "hi" | "hello" }
+---
+type Storage { a: 42 | "hello" }
+---
+type Storage { a: 1 | 2 | 3 | 5 | 8 | 11 }
+---
+type Storage { a: 0 | false | "" | null }

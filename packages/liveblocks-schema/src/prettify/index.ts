@@ -33,6 +33,9 @@ export function prettify(node: Node): string {
     case "NullType":
       return "null";
 
+    case "LiteralType":
+      return JSON.stringify(node.value);
+
     case "ObjectTypeDefinition":
       return [
         node.leadingComment !== null ? `# ${node.leadingComment}` : null,

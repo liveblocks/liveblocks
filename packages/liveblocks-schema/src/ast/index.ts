@@ -47,7 +47,8 @@ export function isScalarType(node: Node): node is ScalarType {
     node._kind === "StringType" ||
     node._kind === "NumberType" ||
     node._kind === "BooleanType" ||
-    node._kind === "NullType"
+    node._kind === "NullType" ||
+    node._kind === "LiteralType"
   );
 }
 
@@ -66,7 +67,12 @@ export type NonUnionType =
   | LiveType
   | TypeRef;
 
-export type ScalarType = StringType | NumberType | BooleanType | NullType;
+export type ScalarType =
+  | StringType
+  | NumberType
+  | BooleanType
+  | NullType
+  | LiteralType;
 
 export type Type = NonUnionType | UnionType;
 
@@ -78,6 +84,7 @@ export type Node =
   | Document
   | FieldDef
   | Identifier
+  | LiteralType
   | LiveListType
   | LiveMapType
   | NullType
@@ -105,6 +112,7 @@ export function isNode(node: Node): node is Node {
     node._kind === "Document" ||
     node._kind === "FieldDef" ||
     node._kind === "Identifier" ||
+    node._kind === "LiteralType" ||
     node._kind === "LiveListType" ||
     node._kind === "LiveMapType" ||
     node._kind === "NullType" ||
@@ -149,6 +157,12 @@ export type FieldDef = {
 export type Identifier = {
   _kind: "Identifier";
   name: string;
+  range: Range;
+};
+
+export type LiteralType = {
+  _kind: "LiteralType";
+  value: string | number | boolean;
   range: Range;
 };
 
@@ -336,6 +350,29 @@ export function identifier(name: string, range: Range = [0, 0]): Identifier {
   return {
     _kind: "Identifier",
     name,
+    range,
+  };
+}
+
+export function literalType(
+  value: string | number | boolean,
+  range: Range = [0, 0]
+): LiteralType {
+  DEBUG &&
+    (() => {
+      assert(
+        typeof value === "string" ||
+          typeof value === "number" ||
+          typeof value === "boolean",
+        `Invalid value for "value" arg in "LiteralType" call.\nExpected: string | number | boolean\nGot:      ${JSON.stringify(
+          value
+        )}`
+      );
+      assertRange(range, "LiteralType");
+    })();
+  return {
+    _kind: "LiteralType",
+    value,
     range,
   };
 }
@@ -567,6 +604,7 @@ interface Visitor<TContext> {
   Document?(node: Document, context: TContext): void;
   FieldDef?(node: FieldDef, context: TContext): void;
   Identifier?(node: Identifier, context: TContext): void;
+  LiteralType?(node: LiteralType, context: TContext): void;
   LiveListType?(node: LiveListType, context: TContext): void;
   LiveMapType?(node: LiveMapType, context: TContext): void;
   NullType?(node: NullType, context: TContext): void;
@@ -616,6 +654,10 @@ export function visit<TNode extends Node, TContext>(
 
     case "Identifier":
       visitor.Identifier?.(node, context);
+      break;
+
+    case "LiteralType":
+      visitor.LiteralType?.(node, context);
       break;
 
     case "LiveListType":

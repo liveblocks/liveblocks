@@ -1,15 +1,19 @@
 import type {
   ArrayType,
+  BooleanType,
   Definition,
   Document,
   FieldDef,
   Identifier,
+  LiteralType,
   LiveMapType,
   LiveType,
   NonUnionType,
+  NumberType,
   ObjectLiteralType,
   ObjectTypeDefinition,
   Range,
+  StringType,
   Type,
   TypeName,
   TypeRef,
@@ -202,6 +206,14 @@ function checkObjectLiteralType(
   }
 }
 
+function checkLiteralType(lit: LiteralType, context: Context): void {
+  if (typeof lit.value === "number") {
+    if (!Number.isInteger(lit.value)) {
+      context.report("Number literals can only be whole integers", lit.range);
+    }
+  }
+}
+
 function checkArrayType(arr: ArrayType, context: Context): void {
   ensureNoLiveStructure(arr.ofType, "inside an array", context);
 }
@@ -310,22 +322,17 @@ function checkTypeRef(ref: TypeRef, context: Context): void {
   checkLiveObjectRefs(ref, context);
 }
 
-const Tag = {
-  // strlit: 0,
-  // numlit: 1,
-  // boollit: 2,
-  str: 3,
-  num: 4,
-  bool: 5,
-  null: 6,
-  array: 7,
-  object: 8,
-  liveList: 9,
-  liveMap: 10,
-  liveObject: 11,
-} as const;
-
-type Tag = (typeof Tag)[keyof typeof Tag];
+type Tag =
+  | "str"
+  | "num"
+  | "bool"
+  | "arr"
+  | "obj"
+  | "livemap"
+  | "livelist"
+  | "liveobj"
+  | "null"
+  | `lit:${string | number | boolean}`;
 
 /**
  * Returns a string which acts as a "type tag": a high-level indicator that
@@ -355,34 +362,37 @@ type Tag = (typeof Tag)[keyof typeof Tag];
  * - string | string[]
  * - etc.
  */
-function getTypeTag(node: NonUnionType): Tag {
+function getStrictTypeTag(node: NonUnionType): Tag {
   switch (node._kind) {
     case "ArrayType":
-      return Tag.array;
+      return "arr";
 
     case "ObjectLiteralType":
-      return Tag.object;
+      return "obj";
 
     case "LiveMapType":
-      return Tag.liveMap;
+      return "livemap";
 
     case "LiveListType":
-      return Tag.liveList;
+      return "livelist";
 
     case "StringType":
-      return Tag.str;
+      return "str";
 
     case "NumberType":
-      return Tag.num;
+      return "num";
 
     case "BooleanType":
-      return Tag.bool;
+      return "bool";
 
     case "NullType":
-      return Tag.null;
+      return "null";
+
+    case "LiteralType":
+      return `lit:${JSON.stringify(node.value)}`;
 
     case "TypeRef":
-      return node.asLiveObject ? Tag.liveObject : Tag.object;
+      return node.asLiveObject ? "liveobj" : "obj";
 
     default:
       return assertNever(node, "Unhandled case");
@@ -434,21 +444,39 @@ function growToIncludePipe(range: Range, context: Context): Range | undefined {
   );
 }
 
+function reportIncompatibleMembers(
+  member1: NonUnionType,
+  member2: NonUnionType,
+  context: Context
+): void {
+  const rangeToRemove = growToIncludePipe(member2.range, context);
+  context.report(
+    `Type ${quote(prettify(member2))} cannot appear in a union with ${quote(
+      prettify(member1)
+    )}`,
+    member2.range,
+    rangeToRemove !== undefined
+      ? [{ type: "remove", range: rangeToRemove }]
+      : []
+  );
+}
+
 function checkUnionType(node: UnionType, context: Context): void {
   if (node.members.length <= 1) {
     context.report("Unions must have at least 2 members", node.range);
   }
 
-  for (const [member1, member2] of dupes(node.members, getTypeTag)) {
-    const tag = getTypeTag(member1);
-    if (tag === Tag.object) {
+  // On the first pass, error on any exact tag duplicates
+  for (const [member1, member2] of dupes(node.members, getStrictTypeTag)) {
+    const tag = getStrictTypeTag(member1);
+    if (tag === "obj") {
       context.report(
         `Unions with more than one object type are not yet supported: type ${quote(
           prettify(member2)
         )} cannot appear in a union with ${quote(prettify(member1))}`,
         member2.range
       );
-    } else if (tag === Tag.liveObject) {
+    } else if (tag === "liveobj") {
       context.report(
         `Unions with more than one LiveObject are not yet supported: type ${quote(
           prettify(member2)
@@ -456,16 +484,56 @@ function checkUnionType(node: UnionType, context: Context): void {
         member2.range
       );
     } else {
-      const rangeToRemove = growToIncludePipe(member2.range, context);
-      context.report(
-        `Type ${quote(prettify(member2))} cannot appear in a union with ${quote(
-          prettify(member1)
-        )}`,
-        member2.range,
-        rangeToRemove !== undefined
-          ? [{ type: "remove", range: rangeToRemove }]
-          : []
-      );
+      reportIncompatibleMembers(member1, member2, context);
+    }
+  }
+
+  // If we get here, we know there aren't any exact duplicates, but there can
+  // still be incompatibilities with literals and non-literals of the same
+  // type. Let's rule these out now.
+
+  // Keep a few flags
+  let lastString: StringType | undefined; // e.g. `string`
+  let lastStringLit: LiteralType | undefined; // e.g. `"hi"`
+  let lastNumber: NumberType | undefined; // e.g. `number`
+  let lastNumberLit: LiteralType | undefined; // e.g. `42`
+  let lastBoolean: BooleanType | undefined; // e.g. `boolean`
+  let lastBooleanLit: LiteralType | undefined; // e.g. `true`
+
+  for (const member of node.members) {
+    if (member._kind === "StringType") {
+      lastString = member;
+      if (lastStringLit) {
+        reportIncompatibleMembers(lastStringLit, member, context);
+      }
+    } else if (member._kind === "NumberType") {
+      lastNumber = member;
+      if (lastNumberLit) {
+        reportIncompatibleMembers(lastNumberLit, member, context);
+      }
+    } else if (member._kind === "BooleanType") {
+      lastBoolean = member;
+      if (lastBooleanLit) {
+        reportIncompatibleMembers(lastBooleanLit, member, context);
+      }
+    } else if (member._kind === "LiteralType") {
+      const type = typeof member.value;
+      if (type === "string") {
+        lastStringLit = member;
+        if (lastString) {
+          reportIncompatibleMembers(lastString, member, context);
+        }
+      } else if (type === "number") {
+        lastNumberLit = member;
+        if (lastNumber) {
+          reportIncompatibleMembers(lastNumber, member, context);
+        }
+      } else if (type === "boolean") {
+        lastBooleanLit = member;
+        if (lastBoolean) {
+          reportIncompatibleMembers(lastBoolean, member, context);
+        }
+      }
     }
   }
 }
@@ -773,6 +841,7 @@ export function check(
     {
       ArrayType: checkArrayType,
       Identifier: checkIdentifier,
+      LiteralType: checkLiteralType,
       LiveMapType: checkLiveMapType,
       ObjectLiteralType: checkObjectLiteralType,
       ObjectTypeDefinition: checkObjectTypeDefinition,

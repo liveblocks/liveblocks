@@ -2,19 +2,19 @@ type X { a: LiveObject }      # Not enough params
                        ^ Expected "<" but "}" found
 ---
 type X { a: LiveObject<> }    # Not enough params
-                       ^ Expected <type name> but ">" found
+                       ^ Expected type name but ">" found
 ---
 type X { a: LiveList }      # Not enough params
                      ^ Expected "<" but "}" found
 ---
 type X { a: LiveList<> }    # Not enough params
-                     ^ Expected "(", "LiveList", "LiveMap", "LiveObject", "boolean", "null", "number", "string", "{", or <type name> but ">" found
+                     ^ Expected "(", "LiveList", "LiveMap", "LiveObject", "boolean", "null", "number", "string", "{", literal, or type name but ">" found
 ---
 type X { a: LiveMap }       # Not enough params
                     ^ Expected "<" but "}" found
 ---
 type X { a: LiveMap<> }     # Not enough params
-                    ^ Expected "(", "LiveList", "LiveMap", "LiveObject", "boolean", "null", "number", "string", "{", or <type name> but ">" found
+                    ^ Expected "(", "LiveList", "LiveMap", "LiveObject", "boolean", "null", "number", "string", "{", literal, or type name but ">" found
 ---
 type X { a: LiveMap<number> }  # Not enough params
                           ^ Expected ",", "[", or "|" but ">" found

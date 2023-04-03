@@ -222,6 +222,7 @@ describe("syntactic parser", () => {
         //             ^^^ Will parse the syntax, even though semantically incorrect
         map: LiveMap<string, LiveList<LiveMap<Bar[], Qux>[]>>
         //                                    ^^^^^ Will parse the syntax, even though semantically incorrect
+        literal: "nope" | -3 | 42 | false | true | null | "hey"
       }
 
       type abc {}         // Lowercased type names are syntactically valid
@@ -287,6 +288,20 @@ describe("syntactic parser", () => {
                   )
                 )
               )
+            ),
+
+            ast.fieldDef(
+              ast.identifier("literal"),
+              false,
+              ast.unionType([
+                ast.literalType("nope"),
+                ast.literalType(-3),
+                ast.literalType(42),
+                ast.literalType(false),
+                ast.literalType(true),
+                ast.nullType(),
+                ast.literalType("hey"),
+              ])
             ),
           ],
           null,

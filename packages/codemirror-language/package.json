@@ -18,7 +18,7 @@
     "build": "tsup",
     "lint": "eslint src/",
     "format": "eslint --fix src/; prettier --write src/",
-    "test": "jest --verbose --no-coverage"
+    "test": "jest --colors --verbose --no-coverage"
   },
   "repository": {
     "type": "git",

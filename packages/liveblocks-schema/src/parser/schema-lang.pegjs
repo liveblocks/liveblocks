@@ -84,7 +84,7 @@ Identifier "<identifier>"
 
 // e.g. "Circle" or "Person" -- used in type positions
 // Similar to Identifier, but there are different semantic validation rules that apply
-TypeName "<type name>"
+TypeName "type name"
   = !( LiveObjectKeyword / LiveListKeyword / LiveMapKeyword ) name:$( WORD_CHAR+ ) !WORD_CHAR _
     { return ast.typeName(name, rng()) }
 
@@ -210,9 +210,9 @@ NonUnionTypeL2
   = LPAREN @Type RPAREN
   / ObjectLiteralType
   / BuiltInScalar
+  / LiteralType
   / LiveType
   / TypeRef
-  // / Literal
 
 
 BuiltInScalar
@@ -220,6 +220,60 @@ BuiltInScalar
   / NumberType
   / NullType
   / BooleanType
+
+
+LiteralType "literal"
+  = StringLiteralType
+  / NumberLiteralType
+  / BooleanLiteralType
+
+
+StringLiteralType
+  = DoubleQuotedString
+  / SingleQuotedString
+
+
+DoubleQuotedString
+  = rawValue:$( ["] ( ([\\].) / [^"\n{] )* ["] )
+    //                 ^^^^^    ^^^^^^^
+    //   A backslash escapes    Any character but the end of
+    //     any (.) character    string, or a newline, or the start of
+    //                          a template literal
+    {
+      const value = unescape(rawValue
+        .substring(1, rawValue.length - 1))  // strip off quotes
+      return ast.literalType(value, rng())
+    }
+
+
+SingleQuotedString
+  = rawValue:$( ['] ( ([\\].) / [^'\n{] )* ['] )
+    //                 ^^^^^    ^^^^^^^
+    //   A backslash escapes    Any character but the end of
+    //     any (.) character    string, or a newline, or the start of
+    //                          a template literal
+    {
+      const value = unescape(rawValue
+        .substring(1, rawValue.length - 1))  // strip off quotes
+      return ast.literalType(value, rng())
+    }
+
+
+NumberLiteralType
+  = // NOTE: Parse as floating point literals (even though the checker will
+    // reject non-integers)
+    // e.g. 0, 0.5, 1337, -13, or -3.14159265359
+    rawValue:$( MINUS? ( Digits? [.] )? Digits ) _
+    {
+      rawValue = rawValue.replace(/\s+/g, '')
+      const value = parseFloat(rawValue)
+      return ast.literalType(value, rng())
+    }
+
+
+BooleanLiteralType
+  = TRUE { return ast.literalType(true, rng()) }
+  / FALSE { return ast.literalType(false, rng()) }
 
 
 // e.g. LiveMap<> or LiveList<>
@@ -247,29 +301,20 @@ TypeRef
     { return ast.typeRef(name, /* asLiveObject */ false, rng()) }
 
 
-// Literal
-//   = StringLiteral
-// 
-// 
-// StringLiteral "string literal"
-//   = DoubleQuotedString
-// 
-// 
-// DoubleQuotedString
-//   = rawValue:$( ["] ( ([\\].) / [^"\n{] )* ["] )
-//     //                 ^^^^^    ^^^^^^^
-//     //   A backslash escapes    Any character but the end of
-//     //     any (.) character    string, or a newline, or the start of
-//     //                          a template literal
-//     {
-//       const value = unescape(rawValue
-//         .substring(1, rawValue.length - 1))  // strip off quotes
-//       return ast.stringLiteral(value, rawValue, rng())
-//     }
-
-
 EOK "end of keyword"
   = ![a-zA-Z0-9_] _
+
+
+Digits
+  = $( [0-9]+ )
+
+
+FALSE
+  = _ @$'false' EOK __
+
+
+TRUE
+  = _ @$'true' EOK __
 
 
 TYPE "keyword \"type\""
@@ -286,6 +331,7 @@ RSQUARE    = __ @$']' _
 GT         = __ @$'>' _
 //                  ^ NOTE: We cannot generically eat newlines after GT, because they're significant
 LT         = __ @$'<' __
+MINUS      = __ @$'-' __
 COLON      = __ @$':' __
 COMMA      = __ @$',' __
 EQ         = __ @$'=' __

@@ -5,6 +5,11 @@ type Name = {
   a: Name
   b?: Name
   c?: name
+  d: "abc" | 'xyz' | -3 | 0 | 3.14 | true | false | null
+  e: "'hi'"
+  f: '"hi"'
+  g: '\'hi\'"
+  h: "\"hi\""
 }
 
 type Name {

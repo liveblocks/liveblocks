@@ -1,20 +1,20 @@
 type Foo { bad: LiveObject<"literal"> }
-                           ^ Expected <type name> but "\"" found
+                           ^ Expected type name but "\"" found
 ---
 type Foo { bad: LiveObject<{}> }
-                           ^ Expected <type name> but "{" found
+                           ^ Expected type name but "{" found
 ---
 type Foo {
   bad: LiveObject<{ x: number }>
-                  ^ Expected <type name> but "{" found
+                  ^ Expected type name but "{" found
 }
 ---
 type X {}
 type Foo { bad: LiveObject<LiveObject<X>> }
-                           ^ Expected <type name> but "L" found
+                           ^ Expected type name but "L" found
 ---
 type Foo { bad: LiveObject<LiveObject> }
-                           ^ Expected <type name> but "L" found
+                           ^ Expected type name but "L" found
 ---
 type Bar {}
 type Foo { bad: LiveObject<Bar[]> }
