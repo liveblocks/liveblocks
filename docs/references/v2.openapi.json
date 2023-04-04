@@ -1033,6 +1033,34 @@
             "type": "string"
           }
         }
+      },
+      "SchemaResponse": {
+        "title": "Schema",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "version": {
+            "type": "number"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }, 
+          "body": {
+            "type": "string"
+          }         
+        },
+        "examples": [],
+        "x-internal": false
       }
     },
     "securitySchemes": {
