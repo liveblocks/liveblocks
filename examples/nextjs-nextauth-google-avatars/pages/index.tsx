@@ -52,7 +52,7 @@ function Example() {
 }
 
 export default function Page() {
-  const roomId = useOverrideRoomId("nextjs-live-avatars");
+  const roomId = useOverrideRoomId("nextjs-live-avatars-google");
 
   return (
     <RoomProvider id={roomId} initialPresence={{}}>
