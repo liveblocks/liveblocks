@@ -186,7 +186,7 @@ export function createRoomContext<
           initialPresence: frozen.initialPresence,
           initialStorage: frozen.initialStorage,
           unstable_batchedUpdates: frozen.unstable_batchedUpdates,
-          withoutConnecting: frozen.shouldInitiallyConnect,
+          shouldInitiallyConnect: frozen.shouldInitiallyConnect,
         } as RoomInitializers<TPresence, TStorage>)
       );
 
