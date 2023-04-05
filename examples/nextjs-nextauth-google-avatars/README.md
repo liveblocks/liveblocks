@@ -12,11 +12,11 @@
 
 This example shows how to build a live avatar stack with [Liveblocks](https://liveblocks.io), [NextAuth.js](https://next-auth.js.org/), and [Next.js](https://nextjs.org/).
 
-<img src="https://liveblocks.io/images/blog/google-sso/sign-in-with-google-live-avatars.mp4" width="536" alt="Live Avatar Stack" />
+<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/google-authentication-liveblocks-nextjs-nextauthjs.jpg" width="536" alt="Live Avatar Stack" />
 
 ## Getting started
 
-Clone this repository, and then follow [the tutorial](/blog/how-to-add-google-authentication-to-your-nextjs-liveblocks-app-with-nextauthjs) to add Google authentication.
+Clone this repository, and then follow [the tutorial](https://liveblocks.io/blog/how-to-add-google-authentication-to-your-nextjs-liveblocks-app-with-nextauthjs) to add Google authentication.
 
 
 
