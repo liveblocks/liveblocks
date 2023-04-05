@@ -12,7 +12,7 @@ import type {
   User,
 } from "@liveblocks/client";
 import { shallow } from "@liveblocks/client";
-import type { RoomInitializers, ToImmutable } from "@liveblocks/core";
+import type { ToImmutable } from "@liveblocks/core";
 import {
   asArrayWithLegacyMethods,
   deprecateIf,
@@ -175,9 +175,9 @@ export function createRoomContext<
       client.enter(roomId, {
         initialPresence: frozen.initialPresence,
         initialStorage: frozen.initialStorage,
-        unstable_batchedUpdates: frozen.unstable_batchedUpdates,
         shouldInitiallyConnect: frozen.shouldInitiallyConnect,
-      } as RoomInitializers<TPresence, TStorage>)
+        unstable_batchedUpdates: frozen.unstable_batchedUpdates,
+      })
     );
 
     React.useEffect(() => {
@@ -185,9 +185,9 @@ export function createRoomContext<
         client.enter(roomId, {
           initialPresence: frozen.initialPresence,
           initialStorage: frozen.initialStorage,
+          shouldInitiallyConnect: frozen.shouldInitiallyConnect,
           unstable_batchedUpdates: frozen.unstable_batchedUpdates,
-          withoutConnecting: frozen.shouldInitiallyConnect,
-        } as RoomInitializers<TPresence, TStorage>)
+        })
       );
 
       return () => {
