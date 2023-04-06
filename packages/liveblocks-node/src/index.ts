@@ -1,5 +1,4 @@
 export { authorize } from "./authorize";
-
 export type {
   StorageUpdatedEvent,
   UserEnteredEvent,
