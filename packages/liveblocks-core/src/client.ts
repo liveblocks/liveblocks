@@ -57,7 +57,7 @@ export type Client = {
     TRoomEvent extends Json = never
   >(
     roomId: string,
-    options: RoomInitializers<TPresence, TStorage>
+    options: EnterOptions<TPresence, TStorage>
   ): Room<TPresence, TStorage, TUserMeta, TRoomEvent>;
 
   /**
