@@ -29,7 +29,7 @@
                       "data": [
                         {
                           "type": "room",
-                          "id": "HTOGSiXcORTECjfNBBLii",
+                          "id": "Really bad room",
                           "lastConnectionAt": "2022-08-08T23:23:15.281Z",
                           "createdAt": "2022-08-08T23:23:15.281Z",
                           "metadata": {
@@ -55,7 +55,7 @@
             "$ref": "#/components/responses/401"
           },
           "403": {
-            "$ref": "#/components/responses/403"
+            "$ref": "#/components/responses/403/content/'application/json'/examples/UNAUTHORIZED_ROOM_ACCESS/value"
           },
           "422": {
             "$ref": "#/components/responses/422"
@@ -769,7 +769,7 @@
             }
           },
           "403": {
-            "$ref": "#/components/responses/403"
+            "$ref": "#/components/responses/403/content"
           },
           "404": {
             "$ref": "#/components/responses/404"
@@ -809,6 +809,7 @@
         }
       ]
     }
+
   },
   "components": {
     "schemas": {
