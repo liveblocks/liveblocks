@@ -6,8 +6,17 @@ meta:
 alwaysShowAllNavigationLevels: false
 ---
 
-The purpose of `@liveblocks/node` is to help you implement your custom
-authentication backend, i.e. the blue "server" part of this diagram:
+The two main things offered by `@liveblocks/node`:
+
+1. [The `authorize` function](#authorize), which helps you implement custom
+   authentication in your backend.
+1. [The `WebhookHandler` class](#WebhookHandler), which helps you implement
+   webhook handlers.
+
+## authorize
+
+The purpose of `authorize()` is to help you implement your custom authentication
+backend, i.e. the blue "server" part of this diagram:
 
 <Figure highlight={false}>
   <Image
@@ -20,12 +29,14 @@ authentication backend, i.e. the blue "server" part of this diagram:
   />
 </Figure>
 
-## authorize
-
 If the current user has access to the provided room, call this function from
 your authorization endpoint and return the result as an HTTP response.
 
-When calling the `authorize` function, you must pass a `userId`. Optionally,
+When calling the `authorize` function, you are _telling_ (!) Liveblocks that the
+user you specify is authenticated, for which rooms, and which permissions they
+will have.
+
+At the very least, you must pass a `userId` and a `roomId`. Optionally,
 `userInfo` can be used to add information about the current user that will not
 change during the session. This information will will be accessible in the
 client to all other users in [`Room.getOthers`][]. It can be helpful to
@@ -118,7 +129,7 @@ app.post("/api/auth", (req, res) => {
 });
 ```
 
-### WebhookHandler [#WebhookHandler]
+## WebhookHandler [#WebhookHandler]
 
 The `WebhookHandler` class is a helper to handle webhook requests from
 Liveblocks.
@@ -149,7 +160,7 @@ import { WebhookHandler } from "@liveblocks/node";
 // Will fail if not properly initialized with a secret
 const webhookHandler = new WebhookHandler(process.env.WEBHOOK_SECRET);
 
-export default function webhookRequestHandler(req, res) {
+export default function yourCustomWebhookRequestHandler(req, res) {
   try {
     const event = webhookHandler.verifyRequest({
       headers: req.headers,
