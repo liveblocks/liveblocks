@@ -6,6 +6,20 @@ meta:
 alwaysShowAllNavigationLevels: false
 ---
 
+The purpose of `@liveblocks/node` is to help you implement your custom
+authentication backend, i.e. the blue "server" part of this diagram:
+
+<Figure highlight={false}>
+  <Image
+    src="/images/docs/auth-diagram.svg"
+    alt="Auth diagram"
+    layout="responsive"
+    width={730}
+    height={504}
+    quality={90}
+  />
+</Figure>
+
 ## authorize
 
 If the current user has access to the provided room, call this function from
