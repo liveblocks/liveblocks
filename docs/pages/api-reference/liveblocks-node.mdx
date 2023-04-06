@@ -6,10 +6,6 @@ meta:
 alwaysShowAllNavigationLevels: false
 ---
 
-You can use the Liveblocks API in test mode, which does not affect your live
-data. The API key you use to authenticate the request determines whether the
-request is live mode or test mode.
-
 ## authorize
 
 If the current user has access to the provided room, call this function from
@@ -24,6 +20,14 @@ impersonification security issue.
 
 - `userId` cannot be longer than 128 characters.
 - `userInfo` cannot be longer than 1024 characters once serialized to JSON.
+
+<Banner title="Live or test mode?">
+
+You can use the Liveblocks API in test mode, which is separated from the live
+environment. Which SECRET_KEY you use to authenticate the request determines
+whether the request is live mode or test mode.
+
+</Banner>
 
 ### Example using Next.js [#nextjs-example]
 
