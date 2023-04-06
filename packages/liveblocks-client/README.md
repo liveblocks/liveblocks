@@ -32,8 +32,9 @@ npm install @liveblocks/client
 
 ## Documentation
 
-Read the [documentation](https://liveblocks.io/docs) for guides and API
-references.
+Read the
+[documentation](https://liveblocks.io/docs/api-reference/liveblocks-client) for
+guides and API references.
 
 ## Examples
 
