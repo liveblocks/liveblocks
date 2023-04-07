@@ -55,7 +55,7 @@
             "$ref": "#/components/responses/401"
           },
           "403": {
-            "$ref": "#/components/responses/403/content/'application/json'/examples/UNAUTHORIZED_ROOM_ACCESS/value"
+            "$ref": "#/components/responses/403room"
           },
           "422": {
             "$ref": "#/components/responses/422"
@@ -928,7 +928,7 @@
             "type": "string",
             "description": "A suggestion on how to fix the error"
           },
-          "doc": {
+          "docs": {
             "type": "string",
             "description": "A link to the documentation"
           }
@@ -1100,15 +1100,15 @@
           }
         }
       },
-      "403": {
-        "description": "Unauthorized access.",
+      "403room": {
+        "description": "blah blah blah.",
         "content": {
           "application/json": {
             "schema": {
               "$ref": "#/components/schemas/Error"
             },
             "examples": {
-              "INVALID_SECRET_KEY": {
+              "BORKED_SECRET": {
                 "value": {
                   "error": "INVALID_SECRET_KEY",
                   "message": "Invalid secret key.",
