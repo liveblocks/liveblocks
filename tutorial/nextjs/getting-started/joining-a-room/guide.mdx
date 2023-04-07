@@ -7,12 +7,26 @@ showFiles: [
 ---
 
 Liveblocks uses the concept of rooms, separate virtual spaces where people can collaborate.
-To create a multiplayer experience, multiple users must be connected to the same room.
+To create a real-time experience, multiple users must be connected to the same room.
 
 ### RoomProvider
 
-Remember how we exported [`RoomProvider`][] from [liveblocks.config.ts][]? This is the component we’ll be using to connect to a room.
-Switch to `app.tsx`
+Remember how we exported [`RoomProvider`][] from [liveblocks.config.ts][]? This is the component we’ll be using to connect to a room,
+and it also enables us to use the Liveblocks React hooks. `RoomProvider` has two required properties:
+ 
+ 1. `id` - The unique name of the room, a string.
+ 2. `initialPresence` - We'll learn about this on the next page.
+ 
+Switch to [app.tsx][] and return a `RoomProvider` component with the `roomId` string, and an empty object as the `initialPresence`.
+
+```tsx
+<RoomProvider id={roomId} initialPresence={{}}>
+  <LiveblocksApp />
+</RoomProvider>
+```
+
+We’ll be building our custom real-time app inside `LiveblocksApp`, so we’re adding this component as a child.
 
 [`RoomProvider`]: /docs/api-reference/liveblocks-react#RoomProvider
 [liveblocks.config.ts]: #/liveblocks.config.ts
+[app.tsx]: #/app.tsx
