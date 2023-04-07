@@ -25,12 +25,25 @@
           {
             "slug": "others",
             "title": "Displaying others",
-            "description": "Using others to display presence"
+            "description": "Using others to display online presence"
+          },
+          {
+            "slug": "online-avatars",
+            "title": "Online avatars using others",
+            "description": "Building online avatars with useOthers",
+            "comingSoon": true
           },
           {
             "slug": "presence",
             "title": "Using presence",
-            "description": "How to set the current user’s presence"
+            "description": "How to set the current user’s presence",
+            "comingSoon": true
+          },
+          {
+            "slug": "live-cursors",
+            "title": "Live cursors using presence",
+            "description": "Building live cursors with usePresence",
+            "comingSoon": true
           },
           {
             "slug": "broadcasting-events",
