@@ -18,10 +18,9 @@ export async function create(flags: Record<string, any>) {
   const filesToWrite: { location: string; content: string }[] = [];
 
   const configFileName = "liveblocks.config." + (typescript ? "ts" : "js");
-  //const configFile = configFiles[`${framework}${typescript ? "-ts" : ""}`];
   const configFile = configGeneration({ framework, suspense, typescript });
 
-  // === Add .env.local ==================================================
+  // === Add config file ==================================================
   filesToWrite.push({
     location: path.join(appDir, configFileName),
     content: configFile,
