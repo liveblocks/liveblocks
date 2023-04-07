@@ -23,10 +23,14 @@
             "description": "How to use RoomProvider"
           },
           {
+            "slug": "others",
+            "title": "Displaying others",
+            "description": "Using others to display presence"
+          },
+          {
             "slug": "presence",
             "title": "Using presence",
-            "description": "",
-            "comingSoon": true
+            "description": "How to set the current user’s presence"
           },
           {
             "slug": "broadcasting-events",

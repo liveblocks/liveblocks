@@ -1,17 +1,13 @@
 import { RoomProvider } from "./liveblocks.config";
+import { Room } from "./Room";
 
 export default function App() {
   const roomId = "{% ROOM_ID %}";
 
-  // Return LiveblocksApp inside RoomProvider
+  // Return Room inside RoomProvider
   return (
     <RoomProvider id={roomId} initialPresence={{}}>
-      <LiveblocksApp />
+      <Room />
     </RoomProvider>
   );
-}
-
-// Your Liveblocks app
-function LiveblocksApp() {
-  return <>Connected</>;
 }

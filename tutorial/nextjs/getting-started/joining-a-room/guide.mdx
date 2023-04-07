@@ -1,7 +1,8 @@
 ---
-openFile: "/app.tsx"
+openFile: "/App.tsx"
 showFiles: [
-  "/app.tsx",
+  "/App.tsx",
+  "/Room.tsx",
   "/liveblocks.config.ts",
 ]
 ---
@@ -17,16 +18,17 @@ and it also enables us to use the Liveblocks React hooks. `RoomProvider` has two
  1. `id` - The unique name of the room, a string.
  2. `initialPresence` - We'll learn about this on the next page.
  
-Switch to [app.tsx][] and return a `RoomProvider` component with the `roomId` string, and an empty object as the `initialPresence`.
+Switch to [App.tsx][] and return a `RoomProvider` component with the `roomId` string, and an empty object as the `initialPresence`.
 
-```tsx
+```tsx file="App.tsx"
 <RoomProvider id={roomId} initialPresence={{}}>
-  <LiveblocksApp />
+  <Room />
 </RoomProvider>
 ```
 
-We’ll be building our custom real-time app inside `LiveblocksApp`, so we’re adding this component as a child.
+We’ll be building our custom real-time app inside [Room.tsx][], so we’re adding this component as a child.
 
 [`RoomProvider`]: /docs/api-reference/liveblocks-react#RoomProvider
 [liveblocks.config.ts]: #/liveblocks.config.ts
-[app.tsx]: #/app.tsx
+[App.tsx]: #/App.tsx
+[Room.tsx]: #/Room.tsx
