@@ -622,7 +622,7 @@
             "$ref": "#/components/responses/404"
           }
         },
-        "description": "Deletes all of a room’s storage data. Calling this endpoint will disconnect any users from the room if there are any.\n"
+        "description": "Deletes all of the room’s storage data. Calling this endpoint will disconnect any users from the room if there are any.\n"
       }
     },
     "/rooms/{roomId}/authorize": {
