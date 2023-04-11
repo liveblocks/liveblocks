@@ -17,7 +17,7 @@
     "@liveblocks/react": "latest",
     "@next/swc-wasm-nodejs": "12.1.6",
     "@types/node": "latest",
-    "@types/react": "latest"
+    "@types/react": "latest",
+    "react-confetti": "^6.1.0"
   }
 }
-
