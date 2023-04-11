@@ -1,4 +1,4 @@
-name: Language tests
+name: Tests
 
 on: [pull_request]
 
