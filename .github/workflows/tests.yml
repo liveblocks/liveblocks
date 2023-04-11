@@ -8,7 +8,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [18.x]
+        node-version: [16.x]
         pkg: ["@liveblocks/schema", "@liveblocks/infer-schema"]
 
     steps:
@@ -23,7 +23,7 @@ jobs:
           cache-dependency-path: "**/package-lock.json"
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install
 
       - name: Turbo Cache
         id: turbo-cache
