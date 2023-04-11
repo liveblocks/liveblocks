@@ -1,0 +1,2 @@
+type Storage { x: 42nd }
+                    ^ Expected ",", ";", "[", "\n", "|", or "}" but "n" found
