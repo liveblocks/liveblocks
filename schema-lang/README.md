@@ -24,10 +24,10 @@ flowchart LR
   ast/index.ts -.-> checker
   ast/index.ts -.-> prettifier
   ast/index.ts -.-> typescript-generator
-  ast/index.ts -.-> schema-generator
+  ast/index.ts -.-> infer-schema
 
   subgraph TODO
     typescript-generator
-    schema-generator
+    infer-schema
   end
 ```

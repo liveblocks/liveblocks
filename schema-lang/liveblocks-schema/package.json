@@ -34,7 +34,6 @@
     "ast-generator": "^0.1.0",
     "peggy": "^2.0.1",
     "pkg": "^4.4.9",
-    "prettier": "^2.7.1",
     "ts-node": "^10.9.1",
     "ts-pegjs": "^2.1.0",
     "watch": "^1.0.2"
