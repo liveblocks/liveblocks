@@ -12,7 +12,7 @@
     "test:types": "turbo run test:types",
     "test:deps": "turbo run test:deps",
     "lint": "turbo run lint",
-    "dev": "turbo run dev"
+    "format": "turbo run format"
   },
   "devDependencies": {
     "dependency-cruiser": "^11.16.1",
