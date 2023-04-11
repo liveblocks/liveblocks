@@ -1,19 +1,15 @@
-name: Tests
+name: Language tests
 
-# Run on every pull request, and on every push to the main branch
-on:
-  pull_request:
-  push:
-    branches: main
+on: [pull_request]
 
 jobs:
-  test:
+  lang-tests:
     runs-on: ubuntu-latest
 
     strategy:
       matrix:
         node-version: [18.x]
-        pkg: ["ast-generator", "@liveblocks/schema", "@liveblocks/infer-schema"]
+        pkg: ["@liveblocks/schema", "@liveblocks/infer-schema"]
 
     steps:
       - name: Checkout
@@ -27,7 +23,7 @@ jobs:
           cache-dependency-path: "**/package-lock.json"
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Turbo Cache
         id: turbo-cache
@@ -35,8 +31,7 @@ jobs:
         with:
           key: turbo-cache-${{ matrix.node-version }}-${{ matrix.pkg }}-bust1
           path: node_modules/.cache/turbo
-          restore-keys:
-            turbo-cache-${{ matrix.node-version }}-${{ matrix.pkg }}-bust1
+          restore-keys: turbo-cache-${{ matrix.node-version }}-${{ matrix.pkg }}-bust1
 
       - name: Build
         run: npm run build -- --filter ${{ matrix.pkg }}
