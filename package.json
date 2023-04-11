@@ -17,7 +17,7 @@
   },
   "devDependencies": {
     "dependency-cruiser": "^11.16.1",
-    "prettier": "^2.7.1",
+    "prettier": "^2.8.7",
     "tsd": "^0.24.1",
     "tsup": "^6.7.0",
     "turbo": "^1.5.6",
