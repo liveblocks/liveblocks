@@ -1,15 +1,11 @@
-[![Tests](https://github.com/liveblocks/liveblocks-schema/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/liveblocks/liveblocks-schema/actions/workflows/test.yml)
-
 # Liveblocks schema language
 
-This repo is currently private while we're still setting up the foundational
-work, but this may eventually become open source.
+This subsection of the repo is where the Liveblocks schema
+language is developed and maintained.
 
-This monorepo consists of two subprojects:
-
-- [`liveblocks-schema`](./schema-lang/liveblocks-schema) - the source of the
-  main `@liveblocks/schema` package
-- [`ast-generator`](./schema-lang/ast-generator) - an internal build tool
+- [`liveblocks-schema`](./schema-lang/liveblocks-schema) - the parser and the type checker for the Liveblocks schema language
+- [`infer-schema`](./schema-lang/infer-schema) - an experimental library to help generate schema definitions from existing room data
+- [`codemirror-language`](./schema-lang/codemirror-language) the definition of the language for use in CodeMirror.
 
 # Architecture
 
