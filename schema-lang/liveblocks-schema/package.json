@@ -10,7 +10,7 @@
   ],
   "scripts": {
     "build": "tsup",
-    "build:ast": "../../node_modules/ast-generator/dist/index.js src/ast/ast.grammar src/ast/index.ts && tsc --noEmit src/ast/index.ts && node bin/update-returntypes.js",
+    "build:ast": "generate-ast src/ast/ast.grammar src/ast/index.ts && tsc --noEmit src/ast/index.ts && node bin/update-returntypes.js",
     "build:parser": "bin/build-parser && tsc --noEmit src/parser/generated-parser.ts",
     "lint": "eslint src/",
     "format": "eslint --fix src/; prettier --write src/",
@@ -31,7 +31,7 @@
     "@liveblocks/eslint-config": "*",
     "@liveblocks/jest-config": "*",
     "@types/didyoumean": "^1.2.0",
-    "ast-generator": "*",
+    "ast-generator": "^0.1.0",
     "peggy": "^2.0.1",
     "pkg": "^4.4.9",
     "prettier": "^2.7.1",

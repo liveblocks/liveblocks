@@ -1,6 +1,7 @@
 #!/bin/sh
 set -eu
 
+PKGROOT="$(git rev-parse --show-toplevel)/schema-lang/liveblocks-schema"
 INPUT=src/parser/schema-lang.pegjs
 OUTPUT=src/parser/generated-parser.ts
 
