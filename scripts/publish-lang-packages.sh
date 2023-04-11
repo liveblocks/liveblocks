@@ -27,7 +27,7 @@ is_valid_version () {
 }
 
 usage () {
-    err "usage: publish.sh [-V <version>] [-t <tag>] [-h]"
+    err "usage: publish-lang-packages.sh [-V <version>] [-t <tag>] [-h]"
     err
     err ""
     err "Publish a new version of the Liveblocks schema packages to NPM."
