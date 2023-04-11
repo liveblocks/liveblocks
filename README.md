@@ -7,9 +7,9 @@ work, but this may eventually become open source.
 
 This monorepo consists of two subprojects:
 
-- [`liveblocks-schema`](./packages/liveblocks-schema) - the source of the main
-  `@liveblocks/schema` package
-- [`ast-generator`](./packages/ast-generator) - an internal build tool
+- [`liveblocks-schema`](./schema-lang/liveblocks-schema) - the source of the
+  main `@liveblocks/schema` package
+- [`ast-generator`](./schema-lang/ast-generator) - an internal build tool
 
 # Architecture
 

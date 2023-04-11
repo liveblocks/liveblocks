@@ -5,7 +5,7 @@ import { LiveblocksSchema } from "../../dist/index.js";
 
 const ERROR_CHARACTER = "⚠";
 
-// TODO: Share helpers with /packages/liveblocks-schema/src/__tests__/examples.test.ts
+// TODO: Share helpers with /schema-lang/liveblocks-schema/src/__tests__/examples.test.ts
 
 function* readFiles(dirpath: string): IterableIterator<string> {
   const files = fs.readdirSync(dirpath);

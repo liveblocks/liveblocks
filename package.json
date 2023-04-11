@@ -3,7 +3,7 @@
   "private": true,
   "workspaces": [
     "shared/*",
-    "packages/*"
+    "schema-lang/*"
   ],
   "scripts": {
     "build": "turbo run build",

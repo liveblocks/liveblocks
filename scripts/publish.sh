@@ -12,9 +12,9 @@ fi
 
 GITHUB_URL="https://github.com/liveblocks/liveblocks-schema"
 PACKAGE_DIRS=(
-    "packages/liveblocks-schema"
-    "packages/infer-schema"
-    "packages/codemirror-language"
+    "schema-lang/liveblocks-schema"
+    "schema-lang/infer-schema"
+    "schema-lang/codemirror-language"
 )
 PRIMARY_PKG=${PACKAGE_DIRS[0]}
 
@@ -55,7 +55,7 @@ if [ "$#" -ne 0 ]; then
     exit 2
 fi
 
-# Turns "packages/liveblocks-schema" => "@liveblocks/schema"
+# Turns "schema-lang/liveblocks-schema" => "@liveblocks/schema"
 npm_pkgname () {
     jq -r .name "$1/package.json"
 }
@@ -312,7 +312,7 @@ build_version_everywhere "$VERSION"
 
 # Update package-lock.json with newly bumped versions
 npm install
-commit_to_git "Bump to $VERSION" "package-lock.json" "packages/"
+commit_to_git "Bump to $VERSION" "package-lock.json" "schema-lang/"
 
 echo "==> Rebuilding packages"
 turbo run build --force
