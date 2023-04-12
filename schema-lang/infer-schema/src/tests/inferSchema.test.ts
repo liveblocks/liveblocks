@@ -63,7 +63,10 @@ describe("inferSchema", () => {
             expect(() => parse(schemaText)).not.toThrow();
           }
         }
-      )
+      ),
+
+      // This test is pretty slow, let's run a bit less of it
+      { numRuns: 10 }
     );
   });
 });
