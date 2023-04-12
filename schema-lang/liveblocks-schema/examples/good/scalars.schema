@@ -3,4 +3,5 @@ type Storage {
   age: number
   height: number
   hasSiblings: boolean
+  naught: null
 }
