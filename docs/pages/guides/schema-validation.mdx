@@ -51,7 +51,7 @@ fixing them.
 ## Create a schema
 
 Creating a schema via the dashboard is straightforward. Simply navigate to the
-“Schemas” page in the project you want to add the schema to, and click on the
+“Schemas” page in the project you want to add the schema, and click on the
 “Create schema” button. Provide a name and a definition that describes the shape
 of the data you want to store in your rooms.
 
@@ -63,6 +63,54 @@ of the data you want to store in your rooms.
     />
   </video>
 </Figure>
+
+Another way to create a schema is via the
+[create schema API](/docs/api-reference/rest-api-endpoints#create-schema). When
+a schema is sent to the API it needs to be constructed as a string literal to be
+valid JSON when sent to the API for parsing. In the dashboard, a sample schema
+could be represented as:
+
+```ts
+type Storage {
+  todos: LiveList<LiveObject<Todo>>
+}
+
+type Todo {
+  text: string
+  checked?: boolean
+}
+```
+
+To convert the schema to a string literal which will be used in the `body` key
+of the request, you can use the following code:
+
+```ts
+JSON.stringify({
+  body: `
+type Storage {
+  todos: LiveList<LiveObject<Todo>>
+}
+
+type Todo {
+  text: string
+  checked?: boolean
+}
+`,
+}).replace(/\\n/g, "\n");
+// returns '{"body":"\ntype Storage {\n  todos: LiveList<LiveObject<Todo>>\n}\n\ntype Todo {\n  text: string\n  checked?: boolean\n}\n"}'
+```
+
+To create the schema:
+
+```ts
+fetch("https://api.liveblocks.io/v2/schemas", {
+  method: "POST",
+  body: JSON.stringify({
+    name: "todo-list",
+    body: "\ntype Storage {\n  todos: LiveList<LiveObject<Todo>>\n}\n\ntype Todo {\n  text: string\n  checked?: boolean\n}\n",
+  }),
+});
+```
 
 <Banner title="Schema syntax">
 

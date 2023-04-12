@@ -808,8 +808,66 @@
           "description": "`id` of the room"
         }
       ]
+    },
+    "/schemas": {
+      "post": {
+        "summary": "Create Schema",
+        "operationId": "post-create-new-schema",
+        "description": "The schema needs to be a string literal to be valid JSON when sent to the API for parsing. See the [schema validation guide](/docs/guides/schema-validation#Create-a-schema) for more detailed information in formatting your schema.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SchemaRequest"
+              },
+              "examples": {
+                "example-1": {
+                  "value": {
+                    "name": "collaborative-form",
+                    "body": "type Logo {\nname: string\ntheme: string\n}\n\ntype Storage {\nlogo: LiveObject<Logo>\n"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success. Creates the new schema and returns it as JSON.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Schema"
+                },
+                "examples": {
+                  "example-1": {
+                    "value": {
+                      "id": "collaborative-form@1",
+                      "name": "collaborative-form",
+                      "version": 1,
+                      "createdAt": "2023-03-30T06:25:54.675Z",
+                      "updatedAt": "2023-03-30T06:25:54.675Z",
+                      "body": "type Logo {\nname: string\ntheme: string\n}\n\ntype Storage {\nlogo: LiveObject<Logo>\n"
+                    }
+                  }
+                }
+              }
+            },
+            "401": {
+              "$ref": "#/components/responses/401"
+            },
+            "403": {
+              "$ref": "#/components/responses/403"
+            },
+            "404": {
+              "$ref": "#/components/responses/404"
+            }
+          },
+          "description": "Get a room by its `id`. ",
+          "parameters": []
+        }
+      }
     }
-
   },
   "components": {
     "schemas": {
@@ -1055,13 +1113,144 @@
           "updatedAt": {
             "type": "string",
             "format": "date-time"
-          }, 
+          },
           "body": {
             "type": "string"
-          }         
+          }
         },
         "examples": [],
         "x-internal": false
+      },
+      "CreateSchema": {
+        "title": "CreateRoom",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "version": {
+            "type": "number"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "body": {
+            "type": "string"
+          }
+        },
+        "required": ["id", "defaultAccesses"]
+      },
+      "GetSchema": {
+        "title": "CreateRoom",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "defaultAccesses": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "usersAccesses": {
+            "type": "object"
+          },
+          "groupsAccesses": {
+            "type": "object"
+          },
+          "metadata": {
+            "type": "object"
+          }
+        },
+        "required": ["id", "defaultAccesses"]
+      },
+      "SchemaRequest": {
+        "name": "string",
+        "body": "string"
+      },
+      "AttachSchema": {
+        "title": "CreateRoom",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "defaultAccesses": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "usersAccesses": {
+            "type": "object"
+          },
+          "groupsAccesses": {
+            "type": "object"
+          },
+          "metadata": {
+            "type": "object"
+          }
+        },
+        "required": ["id", "defaultAccesses"]
+      },
+      "DetachSchema": {
+        "title": "CreateRoom",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "defaultAccesses": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "usersAccesses": {
+            "type": "object"
+          },
+          "groupsAccesses": {
+            "type": "object"
+          },
+          "metadata": {
+            "type": "object"
+          }
+        },
+        "required": ["id", "defaultAccesses"]
+      },
+      "DeleteSchema": {
+        "title": "CreateRoom",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "defaultAccesses": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "usersAccesses": {
+            "type": "object"
+          },
+          "groupsAccesses": {
+            "type": "object"
+          },
+          "metadata": {
+            "type": "object"
+          }
+        },
+        "required": ["id", "defaultAccesses"]
       }
     },
     "securitySchemes": {
@@ -1100,6 +1289,42 @@
           }
         }
       },
+      "403": {
+        "description": "Unauthorized access.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "examples": {
+              "INVALID_SECRET_KEY": {
+                "value": {
+                  "error": "INVALID_SECRET_KEY",
+                  "message": "Invalid secret key.",
+                  "suggestion": "Please use a valid secret key, the secret key is available in the dashboard: https://liveblocks.io/dashboard/apikeys.",
+                  "docs": ""
+                }
+              },
+              "INVALID_PUBLIC_KEY": {
+                "value": {
+                  "error": "INVALID_PUBLIC_KEY",
+                  "message": "Invalid public key",
+                  "suggestion": "Please use a valid public key, the public key is available in the dashboard: https://liveblocks.io/dashboard/apikeys",
+                  "docs": ""
+                }
+              },
+              "UNAUTHORIZED_ROOM_ACCESS": {
+                "value": {
+                  "error": "UNAUTHORIZED_ROOM_ACCESS",
+                  "message": "The user does not have permission to access the room.",
+                  "suggestion": "Please add the user's ID or one of the user's group IDs to the room first.",
+                  "docs": ""
+                }
+              }
+            }
+          }
+        }
+      },
       "403room": {
         "description": "blah blah blah.",
         "content": {
@@ -1110,7 +1335,7 @@
             "examples": {
               "BORKED_SECRET": {
                 "value": {
-                  "error": "INVALID_SECRET_KEY",
+                  "error": "borked_SECRET_KEY",
                   "message": "Invalid secret key.",
                   "suggestion": "Please use a valid secret key, the secret key is available in the dashboard: https://liveblocks.io/dashboard/apikeys.",
                   "docs": ""
