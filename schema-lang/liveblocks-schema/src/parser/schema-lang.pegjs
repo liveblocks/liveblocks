@@ -327,9 +327,9 @@ LPAREN     = __ @$'(' __
 RPAREN     = __ @$')' _
 LSQUARE    = __ @$'[' __
 RSQUARE    = __ @$']' _
-//                  ^ NOTE: We cannot generically eat newlines after RCURLY, because they're significant
+//                    ^ NOTE: We cannot generically eat newlines after RCURLY, because they're significant
 GT         = __ @$'>' _
-//                  ^ NOTE: We cannot generically eat newlines after GT, because they're significant
+//                    ^ NOTE: We cannot generically eat newlines after GT, because they're significant
 LT         = __ @$'<' __
 MINUS      = __ @$'-' __
 COLON      = __ @$':' __
