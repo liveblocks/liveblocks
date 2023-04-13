@@ -258,6 +258,22 @@ type Storage {
 }
 ```
 
+## Literals
+
+Literal types are also supported, for example:
+
+```ts
+type Event {
+  statusCode: 200 | 400
+  info: string
+}
+
+type Storage {
+  theme: "light" | "dark"
+  history: LiveList<Event>
+}
+```
+
 ## What’s to come
 
 We’re also planning to support more language features. Discriminated unions,
