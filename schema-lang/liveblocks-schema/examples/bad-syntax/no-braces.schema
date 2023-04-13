@@ -1,0 +1,2 @@
+type foo
+        ^| Expected "=" or "{" but end of input found

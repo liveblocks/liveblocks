@@ -4,6 +4,7 @@
   "workspaces": [
     "shared/*",
     "packages/*",
+    "schema-lang/*",
     "e2e/next-sandbox"
   ],
   "scripts": {
