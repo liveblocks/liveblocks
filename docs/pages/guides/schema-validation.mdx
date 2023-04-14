@@ -48,7 +48,17 @@ the storage that do not match the schema you provided. Situations like this
 should only happen in development mode, and the developer is responsible for
 fixing them.
 
-## Create a schema
+## Schema Operations
+You can interact with the schemas you create through the dashboard or by calling the [rest API](/docs/api-reference/rest-api-endpoints).  In this guide, we will cover the following operations: 
+
+ - [Create a schema](#create-a-schema)
+ - [Delete a schema](#delete-a-schema)
+ - [Attach a schema to a room](#attach-a-schema-to-a-room)
+ - [Detach a schema from a room](#detach-a-schema-from-a-room)
+
+ You can also use the rest API to [list schemas](/docs/api-reference/rest-api-endpoints#list-schemas), [get a schema](/docs/api-reference/rest-api-endpoints#get-schema), and [update a schema](/docs/api-reference/rest-api-endpoints#update-schema).
+
+### Create a schema
 
 Creating a schema via the dashboard is straightforward. Simply navigate to the
 “Schemas” page in the project you want to add the schema, and click on the
@@ -118,6 +128,19 @@ Learn more about our [schema syntax](/docs/guides/schema-validation/syntax) and
 what kind of validations are currently supported.
 
 </Banner>
+
+### Delete a schema
+ In the dashboard, you can delete a schema by navigating to the schema in question and clicking on the trash icon next to the schema version you want to delete.  If you have attached a schema to a room, you will need to detach the schema from the room before you can delete it. 
+
+****Add video here***
+
+ If your schema is in a detached state, you can delete it by using the [delete schema API](/docs/api-reference/rest-api-endpoints#delete-schema).
+
+ ### Attach a schema to a room
+
+ 
+ ### Detach a schema from a room
+
 
 ## The validation process in practice
 

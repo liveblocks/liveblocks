@@ -55,7 +55,7 @@
             "$ref": "#/components/responses/401"
           },
           "403": {
-            "$ref": "#/components/responses/403room"
+            "$ref": "#/components/responses/403"
           },
           "422": {
             "$ref": "#/components/responses/422"
@@ -837,6 +837,174 @@
             "content": {
               "application/json": {
                 "schema": {
+                  "$ref": "#/components/schemas/SchemaResponse"
+                },
+                "examples": {
+                  "example-1": {
+                    "value": {
+                      "id": "collaborative-form@1",
+                      "name": "collaborative-form",
+                      "version": 1,
+                      "createdAt": "2023-03-30T06:25:54.675Z",
+                      "updatedAt": "2023-03-30T06:25:54.675Z",
+                      "body": "type Logo {\nname: string\ntheme: string\n}\n\ntype Storage {\nlogo: LiveObject<Logo>\n"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "422": {
+            "$ref": "#/components/responses/422schema"
+          }
+        },
+        "parameters": []
+      }
+    },
+    "/schemas/{id}": {
+      "get": {
+        "summary": "Get schema",
+        "operationId": "get-create-new-schema",
+        "description": "This endpoint retrieves a schema by its id. The id is a combination of the schema name and version. For example, `collaborative-form@1`.",
+        "responses": {
+          "200": {
+            "description": "Success. Found the schema and returns it as JSON.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SchemaResponse"
+                },
+                "examples": {
+                  "example-1": {
+                    "value": {
+                      "id": "collaborative-form@1",
+                      "name": "collaborative-form",
+                      "version": 1,
+                      "createdAt": "2023-03-30T06:25:54.675Z",
+                      "updatedAt": "2023-03-30T06:25:54.675Z",
+                      "body": "type Logo {\nname: string\ntheme: string\n}\n\ntype Storage {\nlogo: LiveObject<Logo>\n"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "404": {
+            "$ref": "#/components/responses/404schema"
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "`id`of the schema"
+          }
+        ]
+      },
+      "put": {
+        "summary": "Update schema",
+        "operationId": "put-update-new-schema",
+        "description": "The schema needs to be a string literal to be valid JSON when sent to the API for parsing. See the [schema validation guide](/docs/guides/schema-validation#Create-a-schema) for more detailed information in formatting your schema.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateSchema"
+              },
+              "examples": {
+                "example-1": {
+                  "value": {
+                    "body": "type Logo {\nname: string\ntheme: string\n}\n\ntype Storage {\nlogo: LiveObject<Logo>\n"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success. Creates the new schema and returns it as JSON.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Schema"
+                },
+                "examples": {
+                  "example-1": {
+                    "value": {
+                      "id": "collaborative-form@2",
+                      "name": "collaborative-form",
+                      "version": 2,
+                      "createdAt": "2023-03-30T07:25:54.675Z",
+                      "updatedAt": "2023-03-30T07:25:54.675Z",
+                      "body": "type Logo {\nname: string\ntheme: string\n}\n\ntype Storage {\nlogo: LiveObject<Logo>\n"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403schema"
+          },
+          "422": {
+            "$ref": "#/components/responses/422schema"
+          }
+        },
+        "parameters": []
+      },
+      "delete": {
+        "summary": "Delete schema",
+        "operationId": "delete-a-schema",
+        "description": "This endpoint deletes a schema by its id. The id is a combination of the schema name and version. For example, `collaborative-form@1`. A schema can only be deleted if it is not attached to a room.  If a schema is attached to a room it is considered 'frozen' and cannot be deleted. In this case, you would need to detach your schema from the room before proceding with the deletion.",
+        "responses": {
+          "200": {
+            "description": "Success. Schema was delated"
+                },
+            "401": {
+              "$ref": "#/components/responses/401"
+            },
+            "403": {
+              "$ref": "#/components/responses/403schema"
+            }
+          },
+          "parameters": [
+            {
+              "schema": {
+                "type": "string"
+              },
+              "name": "id",
+              "in": "path",
+              "required": true,
+              "description": "`id`of the schema"
+            }
+          ]
+        }
+    },
+    "/rooms/{roomId}/schema": {
+      "get": {
+        "summary": "Get schema by room",
+        "operationId": "get-new-schema",
+        "description": "This endpoint retrieves the schema attached to a room.",
+        "responses": {
+          "200": {
+            "description": "Success. Found the schema attached to the room and returns it as JSON.",
+            "content": {
+              "application/json": {
+                "schema": {
                   "$ref": "#/components/schemas/Schema"
                 },
                 "examples": {
@@ -852,20 +1020,103 @@
                   }
                 }
               }
-            },
-            "401": {
-              "$ref": "#/components/responses/401"
-            },
-            "403": {
-              "$ref": "#/components/responses/403"
-            },
-            "404": {
-              "$ref": "#/components/responses/404"
             }
           },
-          "description": "Get a room by its `id`. ",
-          "parameters": []
-        }
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "404": {
+            "$ref": "#/components/responses/404schema"
+          },
+          "403": {
+            "$ref": "#/components/responses/403schema"
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "description": "`id`of the room"
+          }
+        ]
+      },
+      "post": {
+        "summary": "Attach schema to room",
+        "operationId": "post-attach-schema-to-room",
+        "description": "This endpoint attachs a schema to a room. The schema must already exist in the database. Once a schema is attached, operations will be enforced and the schema will be frozen.",
+        "responses": {
+          "200": {
+            "description": "Success. Found the schema attached to the room. Returns the schema id as JSON.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttachSchema"
+                },
+                "examples": {
+                  "example-1": {
+                    "value": {
+                      "schema": "collaborative-form@1"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "404": {
+            "$ref": "#/components/responses/404schema"
+          },
+          "409": {
+            "$ref": "#/components/responses/409schema"
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "description": "`id`of the room"
+          }
+        ]
+      },
+      "delete": {
+        "summary": "Detach schema from room",
+        "operationId": "delete-detach-schema-to-room",
+        "description": "This endpoint detaches the schema from a room. The schema must already exist in the database.",
+        "responses": {
+          "200": {
+            "description": "Success. Detached the schema from the room."
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "404": {
+            "$ref": "#/components/responses/404schema"
+          },
+          "409": {
+            "$ref": "#/components/responses/409schema"
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "description": "`id`of the room"
+          }
+        ]
       }
     }
   },
@@ -1121,136 +1372,29 @@
         "examples": [],
         "x-internal": false
       },
-      "CreateSchema": {
-        "title": "CreateRoom",
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "name": {
-            "type": "string"
-          },
-          "version": {
-            "type": "number"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "updatedAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "body": {
-            "type": "string"
-          }
-        },
-        "required": ["id", "defaultAccesses"]
-      },
-      "GetSchema": {
-        "title": "CreateRoom",
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "defaultAccesses": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "usersAccesses": {
-            "type": "object"
-          },
-          "groupsAccesses": {
-            "type": "object"
-          },
-          "metadata": {
-            "type": "object"
-          }
-        },
-        "required": ["id", "defaultAccesses"]
-      },
       "SchemaRequest": {
+        "title": "SchemaRequest",
+        "type": "object",
+        "properties":{       
         "name": "string",
         "body": "string"
+        }
+      },
+      "UpdateSchema":{
+        "title": "UpdateSchema",
+        "type": "object",
+        "properties": {
+          "body": "string"
+        }
       },
       "AttachSchema": {
-        "title": "CreateRoom",
+        "title": "AttachSchema",
         "type": "object",
         "properties": {
-          "id": {
+          "schema": {
             "type": "string"
-          },
-          "defaultAccesses": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "usersAccesses": {
-            "type": "object"
-          },
-          "groupsAccesses": {
-            "type": "object"
-          },
-          "metadata": {
-            "type": "object"
           }
-        },
-        "required": ["id", "defaultAccesses"]
-      },
-      "DetachSchema": {
-        "title": "CreateRoom",
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "defaultAccesses": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "usersAccesses": {
-            "type": "object"
-          },
-          "groupsAccesses": {
-            "type": "object"
-          },
-          "metadata": {
-            "type": "object"
-          }
-        },
-        "required": ["id", "defaultAccesses"]
-      },
-      "DeleteSchema": {
-        "title": "CreateRoom",
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "defaultAccesses": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "usersAccesses": {
-            "type": "object"
-          },
-          "groupsAccesses": {
-            "type": "object"
-          },
-          "metadata": {
-            "type": "object"
-          }
-        },
-        "required": ["id", "defaultAccesses"]
+        }
       }
     },
     "securitySchemes": {
@@ -1325,17 +1469,25 @@
           }
         }
       },
-      "403room": {
-        "description": "blah blah blah.",
+      "403schema": {
+        "description": "Unauthorized access.",
         "content": {
           "application/json": {
             "schema": {
               "$ref": "#/components/schemas/Error"
             },
             "examples": {
-              "BORKED_SECRET": {
+              "SCHEMA_FROZEN": {
+                "value":{
+                  "error": "SCHEMA_FROZEN",
+                  "message": "Schema is frozen",
+                  "suggestion":
+                    "Please ensure no room is using this schema before modifying it"
+                }
+              },
+              "INVALID_SECRET_KEY": {
                 "value": {
-                  "error": "borked_SECRET_KEY",
+                  "error": "INVALID_SECRET_KEY",
                   "message": "Invalid secret key.",
                   "suggestion": "Please use a valid secret key, the secret key is available in the dashboard: https://liveblocks.io/dashboard/apikeys.",
                   "docs": ""
@@ -1381,6 +1533,26 @@
           }
         }
       },
+      "404schema": {
+        "description": "Schema not found.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "examples": {
+              "SCHEMA_NOT_FOUND": {
+                "value": {
+                  "error": "SCHEMA_NOT_FOUND",
+                  "message": "Schema not found.",
+                  "suggestion": "Please use a valid schema ID, schema IDs are available in the dashboard: https://liveblocks.io/dashboard/schemas.",
+                  "docs": ""
+                }
+              }
+            }
+          }
+        }
+      },
       "409": {
         "description": "Room already exists.",
         "content": {
@@ -1394,6 +1566,32 @@
                   "error": "ROOM_ALREADY_EXISTS",
                   "message": "The room already exists.",
                   "suggestion": "Please use a different room id or update the existing room.",
+                  "doc": ""
+                }
+              }
+            }
+          },
+          "application/xml": {
+            "schema": {
+              "type": "object",
+              "properties": {}
+            }
+          }
+        }
+      },
+      "409schema": {
+        "description": "Existing room data does not match this schema.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "examples": {
+              "SCHEMA_NOT_COMPATIBLE": {
+                "value": {
+                  "error": "SCHEMA_NOT_COMPATIBLE",
+                  "message": "Existing room data does not match this schema.",
+                  "suggestion": "Check the following error and make adjustments to your schema to be able to attach it to this room.",
                   "doc": ""
                 }
               }
@@ -1426,7 +1624,36 @@
             }
           }
         }
+      },
+      "422schema": {
+        "description": "Unprocessable entity.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "examples": {
+              "UNPROCESSABLE_ENTITY": {
+                "value": {
+                  "error": "UNPROCESSABLE_ENTITY",
+                  "message": "Value at key 'name': Schema name must be non empty string with less than 65 characters and only contain lowercase letters, numbers and dashes.",
+                  "suggestion": "Please ensure the data follows the correct format.",
+                  "docs": ""
+                }
+              },
+              "INVALID_SCHEMA": {
+                "value": {
+                  "error": "INVALID_SCHEMA",
+                  "message": "The schema you specified contains errors.",
+                  "suggestion": "Please ensure the schema body follows the correct format, and has been converted to a string.",
+                  "docs": ""
+                }
+              }
+            }
+          }
+        }
       }
+
     },
     "requestBodies": {}
   },
