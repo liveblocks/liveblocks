@@ -59,7 +59,8 @@ export function lsonToJson(value: Lson): Json {
   } else if (value instanceof LiveMap) {
     return liveMapToJson(value);
   } else if (value instanceof LiveRegister) {
-    return value.data;
+    // NOTE: This branch should never be taken, because LiveRegister isn't a valid Lson value
+    return value.data as Json;
   }
 
   // Then for composite Lson values
