@@ -36,8 +36,7 @@
           {
             "slug": "presence",
             "title": "Using presence",
-            "description": "How to set the current user’s presence",
-            "comingSoon": true
+            "description": "How to set the current user’s presence"
           },
           {
             "slug": "live-cursors",
