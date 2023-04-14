@@ -16,7 +16,7 @@
     "format": "turbo run format"
   },
   "devDependencies": {
-    "dependency-cruiser": "^11.16.1",
+    "dependency-cruiser": "^12.11.1",
     "prettier": "^2.8.7",
     "tsd": "^0.24.1",
     "tsup": "^6.7.0",
