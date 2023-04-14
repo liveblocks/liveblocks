@@ -933,7 +933,7 @@
         },
         "responses": {
           "200": {
-            "description": "Success. Creates the new schema and returns it as JSON.",
+            "description": "Success. Updates the new schema and increments the version. The schema `body` is returned as JSON.",
             "content": {
               "application/json": {
                 "schema": {
@@ -964,7 +964,17 @@
             "$ref": "#/components/responses/422schema"
           }
         },
-        "parameters": []
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "`id`of the schema"
+          }
+        ]
       },
       "delete": {
         "summary": "Delete schema",
@@ -1048,6 +1058,22 @@
         "summary": "Attach schema to room",
         "operationId": "post-attach-schema-to-room",
         "description": "This endpoint attachs a schema to a room. The schema must already exist in the database. Once a schema is attached, operations will be enforced and the schema will be frozen.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AttachSchema"
+              },
+              "examples": {
+                "example-1": {
+                  "value": {
+                    "schema": "collaborative-form@1"
+                  }
+                }
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "Success. Found the schema attached to the room. Returns the schema id as JSON.",

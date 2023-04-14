@@ -49,14 +49,20 @@ should only happen in development mode, and the developer is responsible for
 fixing them.
 
 ## Schema Operations
-You can interact with the schemas you create through the dashboard or by calling the [rest API](/docs/api-reference/rest-api-endpoints).  In this guide, we will cover the following operations: 
 
- - [Create a schema](#create-a-schema)
- - [Delete a schema](#delete-a-schema)
- - [Attach a schema to a room](#attach-a-schema-to-a-room)
- - [Detach a schema from a room](#detach-a-schema-from-a-room)
+You can interact with the schemas you create through the dashboard or by calling
+the [rest API](/docs/api-reference/rest-api-endpoints). In this guide, we will
+cover the following operations:
 
- You can also use the rest API to [list schemas](/docs/api-reference/rest-api-endpoints#list-schemas), [get a schema](/docs/api-reference/rest-api-endpoints#get-schema), and [update a schema](/docs/api-reference/rest-api-endpoints#update-schema).
+- [Create a schema](#Create-a-schema)
+- [Delete a schema](#Delete-a-schema)
+- [Attach a schema to a room](#Attach-a-schema-to-a-room)
+- [Detach a schema from a room](#Detach-a-schema-from-a-room)
+
+You can also use the rest API to
+[list schemas](/docs/api-reference/rest-api-endpoints#list-schemas),
+[get a schema](/docs/api-reference/rest-api-endpoints#get-schema), and
+[update a schema](/docs/api-reference/rest-api-endpoints#update-schema).
 
 ### Create a schema
 
@@ -75,10 +81,10 @@ of the data you want to store in your rooms.
 </Figure>
 
 Another way to create a schema is via the
-[create schema API](/docs/api-reference/rest-api-endpoints#create-schema). When
-a schema is sent to the API it needs to be constructed as a string literal to be
-valid JSON when sent to the API for parsing. In the dashboard, a sample schema
-could be represented as:
+[create schema API](/docs/api-reference/rest-api-endpoints#post-create-new-schema).
+When a schema is sent to the API it needs to be constructed as a string literal
+to be valid JSON when sent to the API for parsing. In the dashboard, a sample
+schema could be represented as:
 
 ```ts
 type Storage {
@@ -130,17 +136,83 @@ what kind of validations are currently supported.
 </Banner>
 
 ### Delete a schema
- In the dashboard, you can delete a schema by navigating to the schema in question and clicking on the trash icon next to the schema version you want to delete.  If you have attached a schema to a room, you will need to detach the schema from the room before you can delete it. 
 
-****Add video here***
+In the dashboard, you can delete a schema by navigating to the schema in
+question and clicking on the trash icon next to the schema version you want to
+delete. If you have attached a schema to a room, you will need to detach the
+schema from the room before you can delete it. If this schema is frozen, the
+trash icon will be greyed out.
 
- If your schema is in a detached state, you can delete it by using the [delete schema API](/docs/api-reference/rest-api-endpoints#delete-schema).
+<Figure>
+  <video autoPlay loop muted playsInline>
+    <source
+      src="/images/docs/schema-validation/delete-schema.mp4"
+      type="video/mp4"
+    />
+  </video>
+</Figure>
 
- ### Attach a schema to a room
+If your schema is in a detached state, you can also delete it by using the
+[delete schema API](/docs/api-reference/rest-api-endpoints#delete-a-schema).
 
- 
- ### Detach a schema from a room
+```ts
+fetch("https://api.liveblocks.io/v2/schemas/{id}", {
+  method: "POST",
+});
+```
 
+### Attach a schema to a room
+
+You can attach a schema to a room via the dashboard by navigating to the room in
+question and clicking on the “Attach schema” button.
+
+<Figure>
+  <video autoPlay loop muted playsInline>
+    <source
+      src="/images/docs/schema-validation/attach-schema.mp4"
+      type="video/mp4"
+    />
+  </video>
+</Figure>
+
+Alternatively, you can use the
+[attach schema API](/docs/api-reference/rest-api-endpoints#post-attach-schema-to-room).
+For example:
+
+```ts
+fetch("https://api.liveblocks.io/v2/rooms/{roomId}/schema", {
+  method: "POST",
+  body: JSON.stringify({
+    schema: "todo-list@1",
+  }),
+});
+```
+
+### Detach a schema from a room
+
+You can use the dashboard to remove a schema from a room by navigating to the
+room in question and clicking on the dropdown menu which displays the currently
+attached schema. From there, you can click on the “Detach schema” button.
+
+{" "}
+<Figure>
+  <video autoPlay loop muted playsInline>
+    <source
+      src="/images/docs/schema-validation/detach-schema.mp4"
+      type="video/mp4"
+    />
+  </video>
+</Figure>
+
+To detach a schema from a room using the
+[detach schema API](/docs/api-reference/rest-api-endpoints#delete-detach-schema-to-room),
+use the following code:
+
+```ts
+fetch("https://api.liveblocks.io/v2/rooms/{roomId}/schema", {
+  method: "DELETE",
+});
+```
 
 ## The validation process in practice
 
