@@ -6,9 +6,12 @@ const client = createClient({
 });
 
 // Presence type
+type Presence = {
+  cursor: { x: number; y: number } | null;
+};
 
 export const {
   RoomProvider,
   useOthers,
-  // ...
-} = createRoomContext(client);
+  usePresence, // ✅
+} = createRoomContext<Presence>(client);

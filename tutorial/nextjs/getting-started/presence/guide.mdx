@@ -1,23 +1,60 @@
 ---
-openFile: "/pages/index.tsx"
+openFile: "/liveblocks.config.ts"
+showFiles: [
+  "/App.tsx",
+  "/Room.tsx",
+  "/liveblocks.config.ts",
+]
 ---
 
-## A guide about presence
+Most collaborative features rely on each user having their own temporary state, which is then shared with others.
+For example, in an app using multiplayer cursors, the location of each user’s cursor will be their state. In Liveblocks, we call this _presence_.
 
-A component that just renders some static markup isn't very interesting. Let's add some data.
+We can use _presence_ to hold any object that we wish to share with others. An example would be the coordinates of a user’s cursor on screen:
 
-First, add a script tag to your component and declare a name variable:
-
-```bash
-npm run dev
+```js
+cursor: { x: 256, y: 367 }
 ```
 
-Then do this:
+### Setting up presence
+
+To start using presence, let’s define a type for it in [liveblocks.config.ts][]. We’ll use the format above for displaying cursors, with the addition of `null` to represent an off-screen cursor.
+
+```ts
+// Presence type
+type Presence = {
+  cursor: { x: number; y: number } | null;
+};
+```
+
+Next, pass `Presence` to `createRoomContext` as a generic, and export the `usePresence` hook.
+
+<Banner title="Defining types">
+
+With our React package, you only need to handle your types once inside `liveblocks.config.ts`,
+as they’ll automatically propagate through your entire app.
+
+</Banner>
+
+```ts highlight="4,5"
+export const {
+  RoomProvider,
+  useOthers,
+  usePresence, // ✅
+} = createRoomContext<Presence>(client);
+```
+
+The last step in setting up presence is setting an initial value.
+Switch to [App.tsx][] and pass `cursor: null` to [`RoomProvider`][]—no one starts with their cursor on-screen.
 
 ```tsx
-export function Component() {
-  return (
-    <div>Hello world</div>
-  );
-}
+<RoomProvider id={roomId} initialPresence={{ cursor: null }}>
 ```
+
+Great job! On the next page we’ll be creating live cursors.
+
+
+[`RoomProvider`]: /docs/api-reference/liveblocks-react#RoomProvider
+[liveblocks.config.ts]: #/liveblocks.config.ts
+[App.tsx]: #/App.tsx
+[Room.tsx]: #/Room.tsx
