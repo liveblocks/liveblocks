@@ -106,7 +106,7 @@ export type {
 export { ServerMsgCode } from "./protocol/ServerMsg";
 export type {
   BroadcastOptions,
-  ConnectionState,
+  ConnectionStatus,
   History,
   Room,
   RoomInitializers,

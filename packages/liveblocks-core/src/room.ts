@@ -67,12 +67,12 @@ type AuthCallback = (room: string) => Promise<{ token: string }>;
 
 export type Connection =
   /* The initial state, before connecting */
-  | { state: "closed" }
+  | { status: "closed" }
   /* Authentication has started, but not finished yet */
-  | { state: "authenticating" }
+  | { status: "authenticating" }
   /* Authentication succeeded, now attempting to connect to a room */
   | {
-      state: "connecting";
+      status: "connecting";
       id: number;
       userId?: string;
       userInfo?: Json;
@@ -80,18 +80,18 @@ export type Connection =
     }
   /* Successful room connection, on the happy path */
   | {
-      state: "open";
+      status: "open";
       id: number;
       userId?: string;
       userInfo?: Json;
       isReadOnly: boolean;
     }
   /* Connection lost unexpectedly, considered a temporary hiccup, will retry */
-  | { state: "unavailable" }
+  | { status: "unavailable" }
   /* Connection failed due to known reason (e.g. rejected). Will throw error, then immediately jump to "unavailable" state, to attempt to reconnect */
-  | { state: "failed" };
+  | { status: "failed" };
 
-export type ConnectionState = Connection["state"];
+export type ConnectionStatus = Connection["status"];
 
 export type StorageStatus =
   /* The storage is not loaded and has not been requested. */
@@ -119,7 +119,7 @@ type RoomEventCallbackMap<
     event: OthersEvent<TPresence, TUserMeta>
   ) => void;
   error: Callback<Error>;
-  connection: Callback<ConnectionState>;
+  connection: Callback<ConnectionStatus>;
   history: Callback<HistoryEvent>;
   "storage-status": Callback<StorageStatus>;
 };
@@ -251,7 +251,7 @@ export type Room<
    * metadata and connection ID (from the auth server).
    */
   isSelfAware(): boolean;
-  getConnectionState(): ConnectionState;
+  getConnectionState(): ConnectionStatus;
   readonly subscribe: {
     /**
      * Subscribe to the current user presence updates.
@@ -317,7 +317,7 @@ export type Room<
      * @returns Unsubscribe function.
      *
      */
-    (type: "connection", listener: Callback<ConnectionState>): () => void;
+    (type: "connection", listener: Callback<ConnectionStatus>): () => void;
 
     /**
      * Subscribes to changes made on a Live structure. Returns an unsubscribe function.
@@ -491,7 +491,7 @@ export type Room<
       event: OthersEvent<TPresence, TUserMeta>;
     }>;
     error: Observable<Error>;
-    connection: Observable<ConnectionState>;
+    connection: Observable<ConnectionStatus>;
     storage: Observable<StorageUpdate[]>;
     history: Observable<HistoryEvent>;
     /**
@@ -632,7 +632,7 @@ type Machine<
       event: OthersEvent<TPresence, TUserMeta>;
     }>;
     readonly error: Observable<Error>;
-    readonly connection: Observable<ConnectionState>;
+    readonly connection: Observable<ConnectionStatus>;
     readonly storage: Observable<StorageUpdate[]>;
     readonly history: Observable<HistoryEvent>;
     readonly storageDidLoad: Observable<void>;
@@ -641,7 +641,7 @@ type Machine<
 
   // Core
   isSelfAware(): boolean;
-  getConnectionState(): ConnectionState;
+  getConnectionState(): ConnectionStatus;
   getSelf(): User<TPresence, TUserMeta> | null;
 
   // Presence
@@ -672,8 +672,8 @@ function log(..._params: unknown[]) {
 
 function isConnectionSelfAware(
   connection: Connection
-): connection is typeof connection & { state: "open" | "connecting" } {
-  return connection.state === "open" || connection.state === "connecting";
+): connection is typeof connection & { status: "open" | "connecting" } {
+  return connection.status === "open" || connection.status === "connecting";
 }
 
 type HistoryOp<TPresence extends JsonObject> =
@@ -924,7 +924,7 @@ function makeStateMachine<
       event: OthersEvent<TPresence, TUserMeta>;
     }>(),
     error: makeEventSource<Error>(),
-    connection: makeEventSource<ConnectionState>(),
+    connection: makeEventSource<ConnectionStatus>(),
     storage: makeEventSource<StorageUpdate[]>(),
     history: makeEventSource<HistoryEvent>(),
     storageDidLoad: makeEventSource<void>(),
@@ -945,7 +945,7 @@ function makeStateMachine<
       } else {
         return auth(config.roomId)
           .then(({ token }) => {
-            if (state.connection.current.state !== "authenticating") {
+            if (state.connection.current.status !== "authenticating") {
               return;
             }
             const parsedToken = parseRoomAuthToken(token);
@@ -1382,7 +1382,7 @@ function makeStateMachine<
 
         case "connection":
           return eventHub.connection.subscribe(
-            callback as Callback<ConnectionState>
+            callback as Callback<ConnectionStatus>
           );
 
         case "storage":
@@ -1429,13 +1429,13 @@ function makeStateMachine<
   }
 
   function getConnectionState() {
-    return state.connection.current.state;
+    return state.connection.current.status;
   }
 
   function connect() {
     if (
-      state.connection.current.state !== "closed" &&
-      state.connection.current.state !== "unavailable"
+      state.connection.current.status !== "closed" &&
+      state.connection.current.status !== "unavailable"
     ) {
       return;
     }
@@ -1449,7 +1449,7 @@ function makeStateMachine<
       config.polyfills?.WebSocket ?? config.WebSocketPolyfill
     );
 
-    updateConnection({ state: "authenticating" }, batchUpdates);
+    updateConnection({ status: "authenticating" }, batchUpdates);
     effects.authenticate(auth, createWebSocket);
   }
 
@@ -1516,7 +1516,7 @@ function makeStateMachine<
 
     updateConnection(
       {
-        state: "connecting",
+        status: "connecting",
         id: token.actor,
         userInfo: token.info,
         userId: token.id,
@@ -1533,7 +1533,7 @@ function makeStateMachine<
       console.error("Call to authentication endpoint failed", error);
     }
     state.token = null;
-    updateConnection({ state: "unavailable" }, batchUpdates);
+    updateConnection({ status: "unavailable" }, batchUpdates);
     state.numberOfRetry++;
     state.timeoutHandles.reconnect = effects.scheduleReconnect(getRetryDelay());
   }
@@ -1541,7 +1541,7 @@ function makeStateMachine<
   function onVisibilityChange(visibilityState: DocumentVisibilityState) {
     if (
       visibilityState === "visible" &&
-      state.connection.current.state === "open"
+      state.connection.current.status === "open"
     ) {
       log("Heartbeat after visibility change");
       heartbeat();
@@ -1617,7 +1617,7 @@ function makeStateMachine<
   }
 
   function onNavigatorOnline() {
-    if (state.connection.current.state === "unavailable") {
+    if (state.connection.current.status === "unavailable") {
       log("Try to reconnect after connectivity change");
       reconnect();
     }
@@ -1820,7 +1820,7 @@ function makeStateMachine<
       notify({ others: [{ type: "reset" }] }, doNotBatchUpdates);
 
       if (event.code >= 4000 && event.code <= 4100) {
-        updateConnection({ state: "failed" }, doNotBatchUpdates);
+        updateConnection({ status: "failed" }, doNotBatchUpdates);
 
         const error = new LiveblocksError(event.reason, event.code);
         eventHub.error.notify(error);
@@ -1834,10 +1834,10 @@ function makeStateMachine<
           );
         }
 
-        updateConnection({ state: "unavailable" }, doNotBatchUpdates);
+        updateConnection({ status: "unavailable" }, doNotBatchUpdates);
         state.timeoutHandles.reconnect = effects.scheduleReconnect(delay);
       } else if (event.code === WebsocketCloseCodes.CLOSE_WITHOUT_RETRY) {
-        updateConnection({ state: "closed" }, doNotBatchUpdates);
+        updateConnection({ status: "closed" }, doNotBatchUpdates);
       } else {
         const delay = getRetryDelay();
         state.numberOfRetry++;
@@ -1847,7 +1847,7 @@ function makeStateMachine<
             `Connection to Liveblocks websocket server closed (code: ${event.code}). Retrying in ${delay}ms.`
           );
         }
-        updateConnection({ state: "unavailable" }, doNotBatchUpdates);
+        updateConnection({ status: "unavailable" }, doNotBatchUpdates);
         state.timeoutHandles.reconnect = effects.scheduleReconnect(delay);
       }
     });
@@ -1859,7 +1859,7 @@ function makeStateMachine<
   ) {
     state.connection.set(connection);
     batchedUpdatesWrapper(() => {
-      eventHub.connection.notify(connection.state);
+      eventHub.connection.notify(connection.status);
     });
   }
 
@@ -1885,9 +1885,9 @@ function makeStateMachine<
 
     state.intervalHandles.heartbeat = effects.startHeartbeatInterval();
 
-    if (state.connection.current.state === "connecting") {
+    if (state.connection.current.status === "connecting") {
       updateConnection(
-        { ...state.connection.current, state: "open" },
+        { ...state.connection.current, status: "open" },
         batchUpdates
       );
       state.numberOfRetry = 0;
@@ -1945,7 +1945,7 @@ function makeStateMachine<
       state.socket = null;
     }
 
-    updateConnection({ state: "unavailable" }, batchUpdates);
+    updateConnection({ status: "unavailable" }, batchUpdates);
     clearTimeout(state.timeoutHandles.pongTimeout);
     if (state.timeoutHandles.flush) {
       clearTimeout(state.timeoutHandles.flush);
@@ -2069,7 +2069,7 @@ function makeStateMachine<
     }
 
     batchUpdates(() => {
-      updateConnection({ state: "closed" }, doNotBatchUpdates);
+      updateConnection({ status: "closed" }, doNotBatchUpdates);
 
       if (state.timeoutHandles.flush) {
         clearTimeout(state.timeoutHandles.flush);
@@ -2413,7 +2413,7 @@ function defaultState<
     others.map((other, index) => userToTreeNode(`Other ${index}`, other))
   );
 
-  const connection = new ValueRef<Connection>({ state: "closed" });
+  const connection = new ValueRef<Connection>({ status: "closed" });
 
   return {
     token: null,
