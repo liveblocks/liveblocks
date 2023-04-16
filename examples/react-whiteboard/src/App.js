@@ -21,7 +21,7 @@ function Canvas() {
     const shape = new LiveObject({
       x: getRandomInt(300),
       y: getRandomInt(300),
-      fill: getRandomColor(),
+      fill: getRandomColor()?? null,
     });
     storage.get("shapes").set(shapeId, shape);
     setMyPresence({ selectedShape: shapeId }, { addToHistory: true });
@@ -99,7 +99,7 @@ function Rectangle({ id, onShapePointerDown }) {
 
   const selectedByMe = useSelf((me) => me.presence.selectedShape === id);
   const selectedByOthers = useOthers((others) => others.some(other => other.presence.selectedShape === id));
-  const selectionColor = selectedByMe ? "blue" : selectedByOthers ? "green" : "transparent";
+  const selectionColor = selectedByMe ? "blue" : selectedByOthers ? "green" : "purple";
 
   return (
     <div
@@ -131,14 +131,16 @@ export default function App({ roomId }) {
   )
 }
 
-const COLORS = ["#DC2626", "#D97706", "#059669", "#7C3AED", "#DB2777"];
+const COLORS = ["#DC2626", "#D97706"];
 
 function getRandomInt(max) {
   return Math.floor(Math.random() * max);
 }
 
 function getRandomColor() {
-  return COLORS[getRandomInt(COLORS.length)];
+  let randomNumber= getRandomInt(COLORS.length);
+  if(randomNumber === 1){ return COLORS[getRandomInt(COLORS.length)];}
+  // return COLORS[getRandomInt(COLORS.length)];
 }
 
 function Loading() {
