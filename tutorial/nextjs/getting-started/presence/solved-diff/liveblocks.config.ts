@@ -13,5 +13,5 @@ type Presence = {
 export const {
   RoomProvider,
   useOthers,
-  usePresence, // ✅
+  useMyPresence, // ✅
 } = createRoomContext<Presence>(client);
