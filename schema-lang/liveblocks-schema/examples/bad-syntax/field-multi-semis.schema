@@ -1,0 +1,13 @@
+type X {
+  x: number;
+  y: number;;;;;
+            ^ Expected "}" or <identifier> but ";" found
+  z: number
+}
+---
+type X {
+  x: number,
+  y: number,,,,,
+            ^ Expected "}" or <identifier> but "," found
+  z: number
+}

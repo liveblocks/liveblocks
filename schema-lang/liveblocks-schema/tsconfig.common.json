@@ -1,0 +1,28 @@
+// Duplicated from https://github.com/liveblocks/liveblocks/blob/main/shared/tsconfig.common.json
+{
+  "compilerOptions": {
+    // For all packages, let TypeScript use the following standardized way to
+    // resolve modules
+    "moduleResolution": "node",
+
+    // Don't produce *.js files when running TypeScript. We use `tsup` to
+    // build our output files.
+    "noEmit": true,
+
+    // Settings with an effect on the generated code
+    "esModuleInterop": true, // Emit safer code for packages that use namespace/default imports
+    "stripInternal": true, // Don't emit public types for things annotated with @internal
+
+    // Use better type checking
+    "strict": true,
+    "allowUnreachableCode": false, // False makes this stricter: errors instead of warns
+    "allowUnusedLabels": false, // False makes this stricter: errors instead of warns
+    "forceConsistentCasingInFileNames": true,
+    "importsNotUsedAsValues": "error",
+    "isolatedModules": true,
+    "noImplicitReturns": true,
+    "noUncheckedIndexedAccess": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true
+  }
+}

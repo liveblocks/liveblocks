@@ -57,7 +57,7 @@ export type Client = {
     TRoomEvent extends Json = never
   >(
     roomId: string,
-    options: RoomInitializers<TPresence, TStorage>
+    options: EnterOptions<TPresence, TStorage>
   ): Room<TPresence, TStorage, TUserMeta, TRoomEvent>;
 
   /**
@@ -120,7 +120,7 @@ export type ClientOptions = {
  */
 export function createClient(options: ClientOptions): Client {
   const clientOptions = options;
-  const throttleDelay = getThrottleDelayFromOptions(options);
+  const throttleDelay = getThrottleDelayFromOptions(clientOptions);
 
   const rooms = new Map<
     string,
@@ -153,11 +153,6 @@ export function createClient(options: ClientOptions): Client {
     roomId: string,
     options: EnterOptions<TPresence, TStorage>
   ): Room<TPresence, TStorage, TUserMeta, TRoomEvent> {
-    const shouldConnect =
-      options.shouldInitiallyConnect === undefined
-        ? true
-        : options.shouldInitiallyConnect;
-
     let internalRoom = rooms.get(roomId) as
       | InternalRoom<TPresence, TStorage, TUserMeta, TRoomEvent>
       | undefined;
@@ -215,6 +210,7 @@ export function createClient(options: ClientOptions): Client {
     setupDevTools(() => Array.from(rooms.keys()));
     linkDevTools(roomId, internalRoom.room);
 
+    const shouldConnect = options.shouldInitiallyConnect ?? true;
     if (shouldConnect) {
       // we need to check here because nextjs would fail earlier with Node < 16
       if (typeof atob === "undefined") {

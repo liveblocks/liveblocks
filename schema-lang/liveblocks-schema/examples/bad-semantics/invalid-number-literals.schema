@@ -1,0 +1,5 @@
+type Storage { a: 1.0 | 2.000000 | 1.2 }
+                                   ^^^ Number literals can only be whole integers
+---
+type Storage { a: - 3.14 }
+                  ^^^^^^ Number literals can only be whole integers

@@ -559,7 +559,7 @@
             "$ref": "#/components/responses/404"
           }
         },
-        "description": "Initializes a room storage. The room must already exist and have an empty storage.\n\nThe format of the request body is the same as what's returned by the get storage endpoint.\n\nFor each Liveblocks data structure that you want to create, you need a JSON element having two properties:\n- \"liveblocksType\": \"LiveObject\" | \"LiveList\" | \"LiveMap\"\n- \"data\" => contains the nested data structures (children) and data.\n\nThe root's type can only be LiveObject.",
+        "description": "Initializes a room storage. The room must already exist and have an empty storage. Calling this endpoint will disconnect all users from the room if there are any.\n\nThe format of the request body is the same as what’s returned by the get storage endpoint.\n\nFor each Liveblocks data structure that you want to create, you need a JSON element having two properties:\n- `\"liveblocksType\"` => `\"LiveObject\" | \"LiveList\" | \"LiveMap\"`\n- `\"data\"` => contains the nested data structures (children) and data.\n\nThe root’s type can only be LiveObject.",
         "requestBody": {
           "content": {
             "application/json": {
@@ -622,7 +622,7 @@
             "$ref": "#/components/responses/404"
           }
         },
-        "description": "Deletes all elements of the room storage."
+        "description": "Deletes all of the room’s storage data. Calling this endpoint will disconnect all users from the room if there are any.\n"
       }
     },
     "/rooms/{roomId}/authorize": {
@@ -695,6 +695,56 @@
           "description": "`id` of the room"
         }
       ]
+    },
+    "/rooms/{roomId}/broadcast_event": {
+      "post": {
+        "summary": "Broadcast an event to a room",
+        "operationId": "post-broadcast-event",
+        "responses": {
+          "204": {
+            "description": "Success. An event was broadcasted to the room."
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          },
+          "422": {
+            "$ref": "#/components/responses/422"
+          }
+        },
+        "description": "This endpoint enables the broadcast of an event to a room without having to connect to it via the `client` from `@liveblocks/client`. It takes any valid JSON as a request body.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "example-1": {
+                  "value": {
+                    "type": "EMOJI",
+                    "emoji": "🔥"
+                  }
+                }
+              }
+            },
+            "description": "Any valid JSON."
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "description": "`id` of the room"
+          }
+        ]
+      }
     },
     "/rooms/{roomId}/public/authorize": {
       "post": {

@@ -18,9 +18,10 @@ This document describes the language rules for writing your own Liveblocks
 schemas. It is an exhaustive account of all feature that will be implemented and
 supported before the public beta.
 
-Currently in the private beta phase we support: scalars, optionals, objects, and
-`LiveObject`. We’re sharing our plans for other syntaxes so you can give us
-early feedback [here](https://github.com/liveblocks/liveblocks/discussions/674).
+Currently in the private beta phase we support: scalars, arrays, objects,
+optionals, `LiveObject`, `LiveList`, `LiveMap`, and most unions. We’re sharing
+our plans for other syntaxes so you can give us early feedback
+[here](https://github.com/liveblocks/liveblocks/discussions/674).
 
 ## Storage root
 
@@ -34,22 +35,21 @@ type Storage {
 
 ## Scalars
 
-Familiar scalar types are globally available when you create a schema. We
-support:
+Familiar scalar types are globally available when you create a schema:
 
-- `String`
-- `Int` (only whole numbers)
-- `Float` (floats and whole numbers)
-- `Boolean`
+- `string`
+- `number`
+- `boolean`
+- `null`
 
 A sample schema using only scalar types could look like this:
 
 ```ts
 type Storage {
-  name: String
-  age: Int
-  height: Float
-  hasSiblings: Boolean
+  name: string
+  age: number
+  hasSiblings: boolean
+  favoritePet: string | null
 }
 ```
 
@@ -59,14 +59,28 @@ And here are some updates that would be accepted and rejected by the schema:
 // ✅ Valid storage updates
 root.set("name", "Marie Curie");
 root.set("age", 66);
-root.set("height", 1.52);
 root.set("hasSiblings", true);
+root.set("favoritePet", "Cooper");
+root.set("favoritePet", null);
 
 // ❌ Invalid storage updates
 root.set("name", true);
-root.set("age", 66.5); // Invalid because `age` should be a whole number
-root.set("height", "1.52");
-root.set("hasSiblings", "???");
+root.set("hasSiblings", null);
+root.set("favoritePet", 0);
+```
+
+You can also use literal types to restrict values even further:
+
+```ts
+type Event {
+  statusCode: 200 | 400
+  info: string
+}
+
+type Storage {
+  theme: "light" | "dark"
+  history: LiveList<Event>
+}
 ```
 
 ## Optionals
@@ -78,10 +92,10 @@ For example, to make the `age` field optional:
 
 ```ts highlight="3"
 type Storage {
-  name: String
-  age?: Int
-  height: Float
-  hasSiblings: Boolean
+  name: string
+  age?: number
+  height: number
+  hasSiblings: boolean
 }
 ```
 
@@ -91,8 +105,8 @@ Accepted and rejected updates:
 // ✅
 root.delete("age");
 
-// ❌
-root.delete("name"); // `name` is not optional
+// ❌ Field 'name' is not optional
+root.delete("name");
 ```
 
 <Banner title="Comparison with GraphQL">
@@ -108,8 +122,8 @@ Our language supports two different ways to declare object types:
 
 ```ts
 type Scientist {
-  name: String
-  age: Int
+  name: string
+  age: number
 }
 
 type Storage {
@@ -121,7 +135,7 @@ type Storage {
 
 ```ts
 type Storage  {
-  scientist: { name: String, age: Int }
+  scientist: { name: string, age: number }
 }
 ```
 
@@ -131,8 +145,8 @@ These definitions are equivalent. Accepted and rejected updates:
 // ✅
 root.set("scientist", { name: "Marie Curie", age: 66 });
 
-// ❌
-root.set("scientist", { name: "Marie Curie" }); // `age` is missing
+// ❌ Required field 'age' is missing
+root.set("scientist", { name: "Marie Curie" });
 ```
 
 ## LiveObject
@@ -143,8 +157,8 @@ so:
 
 ```ts
 type Scientist {
-  name: String
-  age: Int
+  name: string
+  age: number
 }
 
 type Storage {
@@ -159,7 +173,7 @@ Accepted and rejected updates:
 // ✅
 root.set("scientist", new LiveObject({ name: "Marie Curie"; age: 66 }));
 
-// ❌ `scientist` should be a LiveObject
+// ❌ Should be a LiveObject
 root.set("scientist", { name: "Marie Curie"; age: 66 });
 ```
 
@@ -169,7 +183,7 @@ Arrays can be defined like this:
 
 ```ts
 type Storage {
-  animals: String[]
+  animals: string[]
 }
 ```
 
@@ -179,7 +193,7 @@ Accepted and rejected updates:
 // ✅
 root.set("animals", ["🦁", "🦊", "🐵"]));
 
-// ❌
+// ❌ Should contain strings
 root.set("animals", [1, 2, 2]);
 ```
 
@@ -193,7 +207,7 @@ For example:
 
 ```ts
 type Storage {
-  animals: LiveList<String>
+  animals: LiveList<string>
   //       ^^^^^^^^
 }
 ```
@@ -204,8 +218,8 @@ Accepted and rejected updates:
 // ✅
 root.set("animals", new LiveList(["🦁", "🦊", "🐵"]));
 
-// ❌
-root.set("animals", ["🦁", "🦊", "🐵"]); // `animals` should be a `LiveList`
+// ❌ Should be a LiveList
+root.set("animals", ["🦁", "🦊", "🐵"]);
 ```
 
 ## LiveMap
@@ -217,18 +231,18 @@ For example:
 
 ```ts
 type Shape {
-  x: Float
-  y: Float
-  fill: String
+  x: number
+  y: number
+  fill: "red" | "yellow" | "blue"
 }
 
 type Storage {
-  shapes: LiveMap<String, Shape>
+  shapes: LiveMap<string, Shape>
   //      ^^^^^^^
 }
 ```
 
-The first argument to a `LiveMap` construct must always be `String`.
+The first argument to a `LiveMap` construct must always be `string`.
 
 Accepted and rejected updates:
 
@@ -239,8 +253,22 @@ root.set(
   new LiveMap([["shapeId", { x: 100, y: 100, fill: "blue" }]])
 );
 
-// ❌
+// ❌ Required field 'fill' is missing
 root.set("shapes", new LiveMap([["shapeId", { x: 100, y: 100 }]]));
+```
+
+## Unions
+
+You can model a choice between two types using a union, which will be familiar
+from TypeScript. Here are some examples:
+
+```ts
+type Storage {
+  ids: (string | number)[]
+  selectedId: string | null
+  person: LiveObject<Person> | null
+  people: LiveList<LiveObject<Person>> | null
+}
 ```
 
 ## What’s to come

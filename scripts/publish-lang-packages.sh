@@ -10,14 +10,11 @@ if [ "$(pwd)" != "$ROOT" ]; then
     exit $?
 fi
 
-GITHUB_URL="https://github.com/liveblocks/liveblocks"
+GITHUB_URL="https://github.com/liveblocks/liveblocks-schema"
 PACKAGE_DIRS=(
-    "packages/liveblocks-core"
-    "packages/liveblocks-client"
-    "packages/liveblocks-node"
-    "packages/liveblocks-react"
-    "packages/liveblocks-redux"
-    "packages/liveblocks-zustand"
+    "schema-lang/liveblocks-schema"
+    "schema-lang/infer-schema"
+    "schema-lang/codemirror-language"
 )
 PRIMARY_PKG=${PACKAGE_DIRS[0]}
 
@@ -30,10 +27,10 @@ is_valid_version () {
 }
 
 usage () {
-    err "usage: publish.sh [-V <version>] [-t <tag>] [-h]"
+    err "usage: publish-lang-packages.sh [-V <version>] [-t <tag>] [-h]"
     err
     err ""
-    err "Publish a new version of the Liveblocks packages to NPM."
+    err "Publish a new version of the Liveblocks schema packages to NPM."
     err
     err "Options:"
     err "-V <version>  Set version to publish (default: prompt)"
@@ -58,7 +55,7 @@ if [ "$#" -ne 0 ]; then
     exit 2
 fi
 
-# Turns "packages/liveblocks-core" => "@liveblocks/core"
+# Turns "schema-lang/liveblocks-schema" => "@liveblocks/schema"
 npm_pkgname () {
     jq -r .name "$1/package.json"
 }
@@ -244,7 +241,6 @@ build_version_everywhere () {
     done
 }
 
-
 npm_pkg_exists () {
     PKGNAME="$1"
     test "$(npm view "$PKGNAME@$VERSION" version 2>/dev/null)" = "$VERSION"
@@ -296,7 +292,7 @@ publish_to_npm () {
 
     echo "I'm ready to publish $PKGNAME to NPM, under $VERSION!"
     collect_otp_token
-    npm publish --tag private --otp "$OTP"
+    npm publish --access public --tag private --otp "$OTP"
 }
 
 commit_to_git () {
@@ -316,10 +312,10 @@ build_version_everywhere "$VERSION"
 
 # Update package-lock.json with newly bumped versions
 npm install
-commit_to_git "Bump to $VERSION" "package-lock.json" "packages/"
+commit_to_git "Bump to $VERSION" "package-lock.json" "schema-lang/"
 
 echo "==> Rebuilding packages"
-node_modules/.bin/turbo run build --force
+turbo run build --force
 
 # Publish to NPM
 for pkgdir in ${PACKAGE_DIRS[@]}; do
@@ -367,7 +363,7 @@ echo ""
 
 echo "==> Pushing changes to GitHub"
 BRANCH="$(git current-branch)"
-URL="${GITHUB_URL}/releases/new?tag=v${VERSION}&target=${BRANCH}&title=${VERSION}&body=%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%0A%0APlease%20replace%20this%20block%20with%20the%20contents%20of%20the%20top%20section%20of%3A%0A%0Ahttps%3A%2F%2Fgithub.com%2Fliveblocks%2Fliveblocks%2Fraw%2F${BRANCH}%2FCHANGELOG.md%0A%0A%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20"
+URL="${GITHUB_URL}/releases/new?tag=v${VERSION}&target=${BRANCH}&title=${VERSION}&body=%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%0A%0APlease%20replace%20this%20block%20with%20the%20contents%20of%20the%20top%20section%20of%3A%0A%0Ahttps%3A%2F%2Fgithub.com%2Fliveblocks%2Fliveblocks-schema%2Fraw%2Fmain%2FCHANGELOG.md%0A%0A%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20%E2%9C%82%20"
 if ! git push-current; then
     err "WARNING: Could not push this branch to GitHub!"
     err "Please manually fix that now, before writing the release notes!"
@@ -378,12 +374,4 @@ if ! git push-current; then
 else
     echo "Done! Please finish it off by writing a nice changelog entry on GitHub."
     open "$URL"
-    read
 fi
-
-echo "==> Upgrade local examples?"
-echo "Now that you're all finished, you may want to also upgrade all our examples"
-echo "to the latest version. To do so, run:"
-echo
-echo "    upgrade-examples.sh $VERSION"
-echo

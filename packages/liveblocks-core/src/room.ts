@@ -2489,7 +2489,10 @@ export function createRoom<
   TUserMeta extends BaseUserMeta,
   TRoomEvent extends Json
 >(
-  options: RoomInitializers<TPresence, TStorage>,
+  options: Omit<
+    RoomInitializers<TPresence, TStorage>,
+    "shouldInitiallyConnect"
+  >,
   config: Config
 ): InternalRoom<TPresence, TStorage, TUserMeta, TRoomEvent> {
   const { initialPresence, initialStorage } = options;

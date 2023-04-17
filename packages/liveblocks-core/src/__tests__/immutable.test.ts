@@ -82,25 +82,25 @@ export async function prepareStorageImmutableTest<
     { isDeep: true }
   );
 
-  function assert(
+  function expectStorageAndStateInBothClients(
     data: ToJson<TStorage>,
     itemsCount?: number,
     storageOpsCount?: number
   ) {
-    assertStorage(data);
+    expectStorageInBothClients(data);
 
-    if (itemsCount) {
+    if (itemsCount !== undefined) {
       expect(machine.getItemsCount()).toBe(itemsCount);
     }
     expect(state).toEqual(refState);
     expect(state).toEqual(data);
 
-    if (storageOpsCount) {
+    if (storageOpsCount !== undefined) {
       expect(totalStorageOps).toEqual(storageOpsCount);
     }
   }
 
-  function assertStorage(data: ToJson<TStorage>) {
+  function expectStorageInBothClients(data: ToJson<TStorage>) {
     const json = lsonToJson(storage.root);
     expect(json).toEqual(data);
     expect(lsonToJson(refStorage.root)).toEqual(data);
@@ -109,8 +109,8 @@ export async function prepareStorageImmutableTest<
   return {
     storage,
     refStorage,
-    assert,
-    assertStorage,
+    expectStorageAndState: expectStorageAndStateInBothClients,
+    expectStorage: expectStorageInBothClients,
     subscribe: machine.subscribe,
     refSubscribe: refMachine.subscribe,
     state,
@@ -158,9 +158,10 @@ describe("patchLiveObjectKey", () => {
 describe("2 ways tests with two clients", () => {
   describe("Object/LiveObject", () => {
     test("create object", async () => {
-      const { storage, state, assert } = await prepareStorageImmutableTest<{
-        syncObj: { a: number };
-      }>([createSerializedObject("0:0", {})], 1);
+      const { storage, state, expectStorageAndState } =
+        await prepareStorageImmutableTest<{
+          syncObj: { a: number };
+        }>([createSerializedObject("0:0", {})], 1);
 
       expect(state).toEqual({});
 
@@ -175,19 +176,20 @@ describe("2 ways tests with two clients", () => {
         newState["syncObj"]
       );
 
-      assert({ syncObj: { a: 1 } }, 2, 1);
+      expectStorageAndState({ syncObj: { a: 1 } }, 2, 1);
     });
 
     test("update object", async () => {
-      const { storage, state, assert } = await prepareStorageImmutableTest<{
-        syncObj: { a: number };
-      }>(
-        [
-          createSerializedObject("0:0", {}),
-          createSerializedObject("0:1", { a: 0 }, "0:0", "syncObj"),
-        ],
-        1
-      );
+      const { storage, state, expectStorageAndState } =
+        await prepareStorageImmutableTest<{
+          syncObj: { a: number };
+        }>(
+          [
+            createSerializedObject("0:0", {}),
+            createSerializedObject("0:1", { a: 0 }, "0:0", "syncObj"),
+          ],
+          1
+        );
 
       expect(state).toEqual({ syncObj: { a: 0 } });
 
@@ -202,19 +204,20 @@ describe("2 ways tests with two clients", () => {
         newState["syncObj"]
       );
 
-      assert({ syncObj: { a: 1 } }, 2, 1);
+      expectStorageAndState({ syncObj: { a: 1 } }, 2, 1);
     });
 
     test("add nested object", async () => {
-      const { storage, state, assert } = await prepareStorageImmutableTest<{
-        syncObj: { a: any };
-      }>(
-        [
-          createSerializedObject("0:0", {}),
-          createSerializedObject("0:1", { a: 0 }, "0:0", "syncObj"),
-        ],
-        1
-      );
+      const { storage, state, expectStorageAndState } =
+        await prepareStorageImmutableTest<{
+          syncObj: { a: any };
+        }>(
+          [
+            createSerializedObject("0:0", {}),
+            createSerializedObject("0:1", { a: 0 }, "0:0", "syncObj"),
+          ],
+          1
+        );
 
       expect(state).toEqual({ syncObj: { a: 0 } });
 
@@ -229,19 +232,20 @@ describe("2 ways tests with two clients", () => {
         newState["syncObj"]
       );
 
-      assert({ syncObj: { a: { subA: "ok" } } }, 3, 1);
+      expectStorageAndState({ syncObj: { a: { subA: "ok" } } }, 3, 1);
     });
 
     test("create LiveList with one LiveRegister item in same batch", async () => {
-      const { storage, state, assert } = await prepareStorageImmutableTest<{
-        doc: any;
-      }>(
-        [
-          createSerializedObject("0:0", {}),
-          createSerializedObject("0:1", {}, "0:0", "doc"),
-        ],
-        1
-      );
+      const { storage, state, expectStorageAndState } =
+        await prepareStorageImmutableTest<{
+          doc: any;
+        }>(
+          [
+            createSerializedObject("0:0", {}),
+            createSerializedObject("0:1", {}, "0:0", "doc"),
+          ],
+          1
+        );
 
       expect(state).toEqual({ doc: {} });
 
@@ -251,19 +255,20 @@ describe("2 ways tests with two clients", () => {
 
       patchLiveObjectKey(storage.root, "doc", oldState["doc"], newState["doc"]);
 
-      assert({ doc: { sub: [0] } }, 4, 2);
+      expectStorageAndState({ doc: { sub: [0] } }, 4, 2);
     });
 
     test("create nested LiveList with one LiveObject item in same batch", async () => {
-      const { storage, state, assert } = await prepareStorageImmutableTest<{
-        doc: any;
-      }>(
-        [
-          createSerializedObject("0:0", {}),
-          createSerializedObject("0:1", {}, "0:0", "doc"),
-        ],
-        1
-      );
+      const { storage, state, expectStorageAndState } =
+        await prepareStorageImmutableTest<{
+          doc: any;
+        }>(
+          [
+            createSerializedObject("0:0", {}),
+            createSerializedObject("0:1", {}, "0:0", "doc"),
+          ],
+          1
+        );
 
       expect(state).toEqual({ doc: {} });
 
@@ -273,19 +278,20 @@ describe("2 ways tests with two clients", () => {
 
       patchLiveObjectKey(storage.root, "doc", oldState["doc"], newState["doc"]);
 
-      assert({ doc: { sub: { subSub: [{ a: 1 }] } } }, 5, 3);
+      expectStorageAndState({ doc: { sub: { subSub: [{ a: 1 }] } } }, 5, 3);
     });
 
     test("Add nested objects in same batch", async () => {
-      const { storage, state, assert } = await prepareStorageImmutableTest<{
-        doc: any;
-      }>(
-        [
-          createSerializedObject("0:0", {}),
-          createSerializedObject("0:1", {}, "0:0", "doc"),
-        ],
-        1
-      );
+      const { storage, state, expectStorageAndState } =
+        await prepareStorageImmutableTest<{
+          doc: any;
+        }>(
+          [
+            createSerializedObject("0:0", {}),
+            createSerializedObject("0:1", {}, "0:0", "doc"),
+          ],
+          1
+        );
 
       expect(state).toEqual({ doc: {} });
 
@@ -295,19 +301,20 @@ describe("2 ways tests with two clients", () => {
 
       patchLiveObjectKey(storage.root, "doc", oldState["doc"], newState["doc"]);
 
-      assert({ doc: { pos: { a: { b: 1 } } } }, 4, 2);
+      expectStorageAndState({ doc: { pos: { a: { b: 1 } } } }, 4, 2);
     });
 
     test("delete object key", async () => {
-      const { storage, state, assert } = await prepareStorageImmutableTest<{
-        syncObj: { a?: number };
-      }>(
-        [
-          createSerializedObject("0:0", {}),
-          createSerializedObject("0:1", { a: 0 }, "0:0", "syncObj"),
-        ],
-        1
-      );
+      const { storage, state, expectStorageAndState } =
+        await prepareStorageImmutableTest<{
+          syncObj: { a?: number };
+        }>(
+          [
+            createSerializedObject("0:0", {}),
+            createSerializedObject("0:1", { a: 0 }, "0:0", "syncObj"),
+          ],
+          1
+        );
 
       expect(state).toEqual({ syncObj: { a: 0 } });
 
@@ -322,24 +329,25 @@ describe("2 ways tests with two clients", () => {
         newState["syncObj"]
       );
 
-      assert({ syncObj: {} }, 2, 1);
+      expectStorageAndState({ syncObj: {} }, 2, 1);
     });
   });
 
   describe("Array/LiveList", () => {
     test("replace array of 3 elements to 1 element", async () => {
-      const { storage, state, assert } = await prepareStorageImmutableTest<{
-        syncList: LiveList<number>;
-      }>(
-        [
-          createSerializedObject("0:0", {}),
-          createSerializedList("0:1", "0:0", "syncList"),
-          createSerializedRegister("0:2", "0:1", FIRST_POSITION, 1),
-          createSerializedRegister("0:3", "0:1", SECOND_POSITION, 1),
-          createSerializedRegister("0:4", "0:1", THIRD_POSITION, 1),
-        ],
-        1
-      );
+      const { storage, state, expectStorageAndState } =
+        await prepareStorageImmutableTest<{
+          syncList: LiveList<number>;
+        }>(
+          [
+            createSerializedObject("0:0", {}),
+            createSerializedList("0:1", "0:0", "syncList"),
+            createSerializedRegister("0:2", "0:1", FIRST_POSITION, 1),
+            createSerializedRegister("0:3", "0:1", SECOND_POSITION, 1),
+            createSerializedRegister("0:4", "0:1", THIRD_POSITION, 1),
+          ],
+          1
+        );
 
       const { oldState, newState } = applyStateChanges(state, () => {
         state.syncList = [2];
@@ -352,19 +360,20 @@ describe("2 ways tests with two clients", () => {
         newState["syncList"]
       );
 
-      assert({ syncList: [2] });
+      expectStorageAndState({ syncList: [2] });
     });
 
     test("add item to array", async () => {
-      const { storage, state, assert } = await prepareStorageImmutableTest<{
-        syncList: LiveList<string>;
-      }>(
-        [
-          createSerializedObject("0:0", {}),
-          createSerializedList("0:1", "0:0", "syncList"),
-        ],
-        1
-      );
+      const { storage, state, expectStorageAndState } =
+        await prepareStorageImmutableTest<{
+          syncList: LiveList<string>;
+        }>(
+          [
+            createSerializedObject("0:0", {}),
+            createSerializedList("0:1", "0:0", "syncList"),
+          ],
+          1
+        );
 
       const { oldState, newState } = applyStateChanges(state, () => {
         state.syncList.push("a");
@@ -377,22 +386,23 @@ describe("2 ways tests with two clients", () => {
         newState["syncList"]
       );
 
-      assert({ syncList: ["a"] }, 3, 1);
+      expectStorageAndState({ syncList: ["a"] }, 3, 1);
     });
 
     test("replace first item in array", async () => {
-      const { storage, state, assert } = await prepareStorageImmutableTest<{
-        list: LiveList<string>;
-      }>(
-        [
-          createSerializedObject("0:0", {}),
-          createSerializedList("0:1", "0:0", "list"),
-          createSerializedRegister("0:2", "0:1", FIRST_POSITION, "A"),
-          createSerializedRegister("0:3", "0:1", SECOND_POSITION, "B"),
-          createSerializedRegister("0:4", "0:1", THIRD_POSITION, "C"),
-        ],
-        1
-      );
+      const { storage, state, expectStorageAndState } =
+        await prepareStorageImmutableTest<{
+          list: LiveList<string>;
+        }>(
+          [
+            createSerializedObject("0:0", {}),
+            createSerializedList("0:1", "0:0", "list"),
+            createSerializedRegister("0:2", "0:1", FIRST_POSITION, "A"),
+            createSerializedRegister("0:3", "0:1", SECOND_POSITION, "B"),
+            createSerializedRegister("0:4", "0:1", THIRD_POSITION, "C"),
+          ],
+          1
+        );
 
       const { oldState, newState } = applyStateChanges(state, () => {
         state.list[0] = "D";
@@ -400,22 +410,23 @@ describe("2 ways tests with two clients", () => {
 
       patchLiveObject(storage.root, oldState, newState);
 
-      assert({ list: ["D", "B", "C"] }, 5, 1);
+      expectStorageAndState({ list: ["D", "B", "C"] }, 5, 1);
     });
 
     test("replace last item in array", async () => {
-      const { storage, state, assert } = await prepareStorageImmutableTest<{
-        list: LiveList<string>;
-      }>(
-        [
-          createSerializedObject("0:0", {}),
-          createSerializedList("0:1", "0:0", "list"),
-          createSerializedRegister("0:2", "0:1", FIRST_POSITION, "A"),
-          createSerializedRegister("0:3", "0:1", SECOND_POSITION, "B"),
-          createSerializedRegister("0:4", "0:1", THIRD_POSITION, "C"),
-        ],
-        1
-      );
+      const { storage, state, expectStorageAndState } =
+        await prepareStorageImmutableTest<{
+          list: LiveList<string>;
+        }>(
+          [
+            createSerializedObject("0:0", {}),
+            createSerializedList("0:1", "0:0", "list"),
+            createSerializedRegister("0:2", "0:1", FIRST_POSITION, "A"),
+            createSerializedRegister("0:3", "0:1", SECOND_POSITION, "B"),
+            createSerializedRegister("0:4", "0:1", THIRD_POSITION, "C"),
+          ],
+          1
+        );
 
       const { oldState, newState } = applyStateChanges(state, () => {
         state.list[2] = "D";
@@ -423,20 +434,21 @@ describe("2 ways tests with two clients", () => {
 
       patchLiveObject(storage.root, oldState, newState);
 
-      assert({ list: ["A", "B", "D"] }, 5, 1);
+      expectStorageAndState({ list: ["A", "B", "D"] }, 5, 1);
     });
 
     test("insert item at beginning of array", async () => {
-      const { storage, state, assert } = await prepareStorageImmutableTest<{
-        syncList: LiveList<string>;
-      }>(
-        [
-          createSerializedObject("0:0", {}),
-          createSerializedList("0:1", "0:0", "syncList"),
-          createSerializedRegister("0:2", "0:1", FIRST_POSITION, "a"),
-        ],
-        1
-      );
+      const { storage, state, expectStorageAndState } =
+        await prepareStorageImmutableTest<{
+          syncList: LiveList<string>;
+        }>(
+          [
+            createSerializedObject("0:0", {}),
+            createSerializedList("0:1", "0:0", "syncList"),
+            createSerializedRegister("0:2", "0:1", FIRST_POSITION, "a"),
+          ],
+          1
+        );
 
       const { oldState, newState } = applyStateChanges(state, () => {
         state.syncList.unshift("b");
@@ -449,23 +461,24 @@ describe("2 ways tests with two clients", () => {
         newState["syncList"]
       );
 
-      assert({ syncList: ["b", "a"] }, 4, 1);
+      expectStorageAndState({ syncList: ["b", "a"] }, 4, 1);
     });
 
     test("swap items in array", async () => {
-      const { storage, state, assert } = await prepareStorageImmutableTest<{
-        syncList: LiveList<string>;
-      }>(
-        [
-          createSerializedObject("0:0", {}),
-          createSerializedList("0:1", "0:0", "syncList"),
-          createSerializedRegister("0:2", "0:1", FIRST_POSITION, "a"),
-          createSerializedRegister("0:3", "0:1", SECOND_POSITION, "b"),
-          createSerializedRegister("0:4", "0:1", THIRD_POSITION, "c"),
-          createSerializedRegister("0:5", "0:1", FOURTH_POSITION, "d"),
-        ],
-        1
-      );
+      const { storage, state, expectStorageAndState } =
+        await prepareStorageImmutableTest<{
+          syncList: LiveList<string>;
+        }>(
+          [
+            createSerializedObject("0:0", {}),
+            createSerializedList("0:1", "0:0", "syncList"),
+            createSerializedRegister("0:2", "0:1", FIRST_POSITION, "a"),
+            createSerializedRegister("0:3", "0:1", SECOND_POSITION, "b"),
+            createSerializedRegister("0:4", "0:1", THIRD_POSITION, "c"),
+            createSerializedRegister("0:5", "0:1", FOURTH_POSITION, "d"),
+          ],
+          1
+        );
 
       const { oldState, newState } = applyStateChanges(state, () => {
         state.syncList = ["d", "b", "c", "a"];
@@ -478,20 +491,21 @@ describe("2 ways tests with two clients", () => {
         newState["syncList"]
       );
 
-      assert({ syncList: ["d", "b", "c", "a"] }, 6, 4);
+      expectStorageAndState({ syncList: ["d", "b", "c", "a"] }, 6, 4);
     });
 
     test("array of objects", async () => {
-      const { storage, state, assert } = await prepareStorageImmutableTest<{
-        syncList: LiveList<LiveObject<{ a: number }>>;
-      }>(
-        [
-          createSerializedObject("0:0", {}),
-          createSerializedList("0:1", "0:0", "syncList"),
-          createSerializedObject("0:2", { a: 1 }, "0:1", FIRST_POSITION),
-        ],
-        1
-      );
+      const { storage, state, expectStorageAndState } =
+        await prepareStorageImmutableTest<{
+          syncList: LiveList<LiveObject<{ a: number }>>;
+        }>(
+          [
+            createSerializedObject("0:0", {}),
+            createSerializedList("0:1", "0:0", "syncList"),
+            createSerializedObject("0:2", { a: 1 }, "0:1", FIRST_POSITION),
+          ],
+          1
+        );
 
       const { oldState, newState } = applyStateChanges(state, () => {
         state.syncList[0].a = 2;
@@ -504,21 +518,22 @@ describe("2 ways tests with two clients", () => {
         newState["syncList"]
       );
 
-      assert({ syncList: [{ a: 2 }] }, 3, 1);
+      expectStorageAndState({ syncList: [{ a: 2 }] }, 3, 1);
     });
 
     test("remove first item from array", async () => {
-      const { storage, state, assert } = await prepareStorageImmutableTest<{
-        syncList: LiveList<string>;
-      }>(
-        [
-          createSerializedObject("0:0", {}),
-          createSerializedList("0:1", "0:0", "syncList"),
-          createSerializedRegister("0:2", "0:1", FIRST_POSITION, "a"),
-          createSerializedRegister("0:3", "0:1", SECOND_POSITION, "b"),
-        ],
-        1
-      );
+      const { storage, state, expectStorageAndState } =
+        await prepareStorageImmutableTest<{
+          syncList: LiveList<string>;
+        }>(
+          [
+            createSerializedObject("0:0", {}),
+            createSerializedList("0:1", "0:0", "syncList"),
+            createSerializedRegister("0:2", "0:1", FIRST_POSITION, "a"),
+            createSerializedRegister("0:3", "0:1", SECOND_POSITION, "b"),
+          ],
+          1
+        );
 
       const { oldState, newState } = applyStateChanges(state, () => {
         state.syncList.shift();
@@ -531,21 +546,22 @@ describe("2 ways tests with two clients", () => {
         newState["syncList"]
       );
 
-      assert({ syncList: ["b"] }, 3, 1);
+      expectStorageAndState({ syncList: ["b"] }, 3, 1);
     });
 
     test("remove last item from array", async () => {
-      const { storage, state, assert } = await prepareStorageImmutableTest<{
-        syncList: LiveList<string>;
-      }>(
-        [
-          createSerializedObject("0:0", {}),
-          createSerializedList("0:1", "0:0", "syncList"),
-          createSerializedRegister("0:2", "0:1", FIRST_POSITION, "a"),
-          createSerializedRegister("0:3", "0:1", SECOND_POSITION, "b"),
-        ],
-        1
-      );
+      const { storage, state, expectStorageAndState } =
+        await prepareStorageImmutableTest<{
+          syncList: LiveList<string>;
+        }>(
+          [
+            createSerializedObject("0:0", {}),
+            createSerializedList("0:1", "0:0", "syncList"),
+            createSerializedRegister("0:2", "0:1", FIRST_POSITION, "a"),
+            createSerializedRegister("0:3", "0:1", SECOND_POSITION, "b"),
+          ],
+          1
+        );
 
       const { oldState, newState } = applyStateChanges(state, () => {
         state.syncList.pop();
@@ -558,22 +574,23 @@ describe("2 ways tests with two clients", () => {
         newState["syncList"]
       );
 
-      assert({ syncList: ["a"] }, 3, 1);
+      expectStorageAndState({ syncList: ["a"] }, 3, 1);
     });
 
     test("remove all elements of array except first", async () => {
-      const { storage, state, assert } = await prepareStorageImmutableTest<{
-        syncList: LiveList<string>;
-      }>(
-        [
-          createSerializedObject("0:0", {}),
-          createSerializedList("0:1", "0:0", "syncList"),
-          createSerializedRegister("0:2", "0:1", FIRST_POSITION, "a"),
-          createSerializedRegister("0:3", "0:1", SECOND_POSITION, "b"),
-          createSerializedRegister("0:4", "0:1", THIRD_POSITION, "c"),
-        ],
-        1
-      );
+      const { storage, state, expectStorageAndState } =
+        await prepareStorageImmutableTest<{
+          syncList: LiveList<string>;
+        }>(
+          [
+            createSerializedObject("0:0", {}),
+            createSerializedList("0:1", "0:0", "syncList"),
+            createSerializedRegister("0:2", "0:1", FIRST_POSITION, "a"),
+            createSerializedRegister("0:3", "0:1", SECOND_POSITION, "b"),
+            createSerializedRegister("0:4", "0:1", THIRD_POSITION, "c"),
+          ],
+          1
+        );
 
       const { oldState, newState } = applyStateChanges(state, () => {
         state.syncList = ["a"];
@@ -586,21 +603,22 @@ describe("2 ways tests with two clients", () => {
         newState["syncList"]
       );
 
-      assert({ syncList: ["a"] }, 3, 2);
+      expectStorageAndState({ syncList: ["a"] }, 3, 2);
     });
     test("remove all elements of array except last", async () => {
-      const { storage, state, assert } = await prepareStorageImmutableTest<{
-        syncList: LiveList<string>;
-      }>(
-        [
-          createSerializedObject("0:0", {}),
-          createSerializedList("0:1", "0:0", "syncList"),
-          createSerializedRegister("0:2", "0:1", FIRST_POSITION, "a"),
-          createSerializedRegister("0:3", "0:1", SECOND_POSITION, "b"),
-          createSerializedRegister("0:4", "0:1", THIRD_POSITION, "c"),
-        ],
-        1
-      );
+      const { storage, state, expectStorageAndState } =
+        await prepareStorageImmutableTest<{
+          syncList: LiveList<string>;
+        }>(
+          [
+            createSerializedObject("0:0", {}),
+            createSerializedList("0:1", "0:0", "syncList"),
+            createSerializedRegister("0:2", "0:1", FIRST_POSITION, "a"),
+            createSerializedRegister("0:3", "0:1", SECOND_POSITION, "b"),
+            createSerializedRegister("0:4", "0:1", THIRD_POSITION, "c"),
+          ],
+          1
+        );
 
       const { oldState, newState } = applyStateChanges(state, () => {
         state.syncList = ["c"];
@@ -613,21 +631,22 @@ describe("2 ways tests with two clients", () => {
         newState["syncList"]
       );
 
-      assert({ syncList: ["c"] }, 3, 2);
+      expectStorageAndState({ syncList: ["c"] }, 3, 2);
     });
     test("remove all elements of array", async () => {
-      const { storage, state, assert } = await prepareStorageImmutableTest<{
-        syncList: LiveList<string>;
-      }>(
-        [
-          createSerializedObject("0:0", {}),
-          createSerializedList("0:1", "0:0", "syncList"),
-          createSerializedRegister("0:2", "0:1", FIRST_POSITION, "a"),
-          createSerializedRegister("0:3", "0:1", SECOND_POSITION, "b"),
-          createSerializedRegister("0:4", "0:1", THIRD_POSITION, "c"),
-        ],
-        1
-      );
+      const { storage, state, expectStorageAndState } =
+        await prepareStorageImmutableTest<{
+          syncList: LiveList<string>;
+        }>(
+          [
+            createSerializedObject("0:0", {}),
+            createSerializedList("0:1", "0:0", "syncList"),
+            createSerializedRegister("0:2", "0:1", FIRST_POSITION, "a"),
+            createSerializedRegister("0:3", "0:1", SECOND_POSITION, "b"),
+            createSerializedRegister("0:4", "0:1", THIRD_POSITION, "c"),
+          ],
+          1
+        );
 
       const { oldState, newState } = applyStateChanges(state, () => {
         state.syncList = [];
@@ -640,7 +659,7 @@ describe("2 ways tests with two clients", () => {
         newState["syncList"]
       );
 
-      assert({ syncList: [] }, 2, 3);
+      expectStorageAndState({ syncList: [] }, 2, 3);
     });
   });
 
@@ -659,7 +678,7 @@ describe("2 ways tests with two clients", () => {
     });
 
     test("new state contains a function", async () => {
-      const { storage, state, assertStorage } =
+      const { storage, state, expectStorage } =
         await prepareStorageImmutableTest<{ syncObj: { a: any } }>(
           [
             createSerializedObject("0:0", {}),
@@ -683,7 +702,7 @@ describe("2 ways tests with two clients", () => {
 
       expect(consoleErrorSpy).toHaveBeenCalledTimes(1);
 
-      assertStorage({ syncObj: { a: 0 } });
+      expectStorage({ syncObj: { a: 0 } });
     });
 
     test("Production env - new state contains a function", async () => {

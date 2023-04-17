@@ -1,0 +1,46 @@
+{
+  "name": "@liveblocks/codemirror-language",
+  "version": "0.0.13-beta1",
+  "description": "CodeMirror language for the Liveblocks schema language",
+  "type": "module",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist/**",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "lint": "eslint src/",
+    "format": "eslint --fix src/; prettier --write src/",
+    "test": "jest --colors --verbose --no-coverage"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/liveblocks/liveblocks-schema.git"
+  },
+  "keywords": [
+    "liveblocks",
+    "schema",
+    "language",
+    "codemirror"
+  ],
+  "dependencies": {
+    "@codemirror/language": "^6.0.0",
+    "@codemirror/lint": "^6.0.0",
+    "@lezer/highlight": "^1.0.0",
+    "@lezer/lr": "^1.0.0",
+    "@liveblocks/schema": "0.0.13-beta1"
+  },
+  "devDependencies": {
+    "@lezer/generator": "^1.2.2",
+    "@liveblocks/eslint-config": "*",
+    "@liveblocks/jest-config": "*"
+  },
+  "sideEffects": false
+}
