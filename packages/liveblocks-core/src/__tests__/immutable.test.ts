@@ -89,13 +89,13 @@ export async function prepareStorageImmutableTest<
   ) {
     assertStorage(data);
 
-    if (itemsCount) {
+    if (itemsCount !== undefined) {
       expect(machine.getItemsCount()).toBe(itemsCount);
     }
     expect(state).toEqual(refState);
     expect(state).toEqual(data);
 
-    if (storageOpsCount) {
+    if (storageOpsCount !== undefined) {
       expect(totalStorageOps).toEqual(storageOpsCount);
     }
   }
