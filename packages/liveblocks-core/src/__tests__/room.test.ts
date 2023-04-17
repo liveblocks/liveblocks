@@ -976,7 +976,7 @@ describe("room", () => {
     });
 
     test("batch without operations should not add an item to the undo stack", async () => {
-      const { storage, assert, undo, batch } = await prepareStorageTest<{
+      const { storage, expectStorage, undo, batch } = await prepareStorageTest<{
         a: number;
       }>([createSerializedObject("0:0", { a: 1 })], 1);
 
@@ -985,22 +985,29 @@ describe("room", () => {
       // Batch without operations on storage or presence
       batch(() => {});
 
-      assert({ a: 2 });
+      expectStorage({ a: 2 });
 
       undo();
 
-      assert({ a: 1 });
+      expectStorage({ a: 1 });
     });
 
     test("batch storage with changes from server", async () => {
-      const { storage, assert, undo, redo, batch, subscribe, refSubscribe } =
-        await prepareStorageTest<{ items: LiveList<string> }>(
-          [
-            createSerializedObject("0:0", {}),
-            createSerializedList("0:1", "0:0", "items"),
-          ],
-          1
-        );
+      const {
+        storage,
+        expectStorage,
+        undo,
+        redo,
+        batch,
+        subscribe,
+        refSubscribe,
+      } = await prepareStorageTest<{ items: LiveList<string> }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedList("0:1", "0:0", "items"),
+        ],
+        1
+      );
 
       const items = storage.root.get("items");
       const refItems = storage.root.get("items");
@@ -1017,19 +1024,19 @@ describe("room", () => {
         items.push("C");
       });
 
-      assert({
+      expectStorage({
         items: ["A", "B", "C"],
       });
 
       undo();
 
-      assert({
+      expectStorage({
         items: [],
       });
 
       redo();
 
-      assert({
+      expectStorage({
         items: ["A", "B", "C"],
       });
     });
@@ -1042,7 +1049,7 @@ describe("room", () => {
 
       const {
         storage,
-        assert,
+        expectStorage,
         undo,
         redo,
         batch,
@@ -1077,7 +1084,7 @@ describe("room", () => {
         items.push("C");
       });
 
-      assert({
+      expectStorage({
         items: ["A", "B", "C"],
       });
 
@@ -1093,13 +1100,13 @@ describe("room", () => {
 
       undo();
 
-      assert({
+      expectStorage({
         items: [],
       });
 
       redo();
 
-      assert({
+      expectStorage({
         items: ["A", "B", "C"],
       });
     });
@@ -1306,7 +1313,7 @@ describe("room", () => {
 
   describe("offline", () => {
     test("disconnect and reconnect with offline changes", async () => {
-      const { storage, assert, machine, refStorage, reconnect, ws } =
+      const { storage, expectStorage, machine, refStorage, reconnect, ws } =
         await prepareStorageTest<{ items: LiveList<string> }>(
           [
             createSerializedObject("0:0", {}),
@@ -1317,11 +1324,11 @@ describe("room", () => {
 
       const items = storage.root.get("items");
 
-      assert({ items: [] });
+      expectStorage({ items: [] });
 
       items.push("A");
       items.push("C"); // Will be removed by other client when offline
-      assert({
+      expectStorage({
         items: ["A", "C"],
       });
 
@@ -1359,19 +1366,19 @@ describe("room", () => {
 
       reconnect(2, newInitStorage);
 
-      assert({
+      expectStorage({
         items: ["A", "B"],
       });
 
       machine.undo();
 
-      assert({
+      expectStorage({
         items: ["A"],
       });
     });
 
     test("disconnect and reconnect with remote changes", async () => {
-      const { assert, machine } = await prepareIsolatedStorageTest<{
+      const { expectStorage, machine } = await prepareIsolatedStorageTest<{
         items?: LiveList<string>;
         items2?: LiveList<string>;
       }>(
@@ -1383,7 +1390,7 @@ describe("room", () => {
         1
       );
 
-      assert({ items: ["a"] });
+      expectStorage({ items: ["a"] });
 
       machine.onClose(
         new CloseEvent("close", {
@@ -1408,7 +1415,7 @@ describe("room", () => {
 
       reconnect(machine, 3, newInitStorage);
 
-      assert({
+      expectStorage({
         items2: ["B"],
       });
     });
@@ -1451,13 +1458,13 @@ describe("room", () => {
     });
 
     test("hasPendingStorageModifications", async () => {
-      const { storage, assert, machine, refStorage, reconnect, ws } =
+      const { storage, expectStorage, machine, refStorage, reconnect, ws } =
         await prepareStorageTest<{ x: number }>(
           [createSerializedObject("0:0", { x: 0 })],
           1
         );
 
-      assert({ x: 0 });
+      expectStorage({ x: 0 });
 
       expect(machine.getStorageStatus()).toBe("synchronized");
 
@@ -1488,7 +1495,7 @@ describe("room", () => {
 
       reconnect(2, newInitStorage);
 
-      assert({
+      expectStorage({
         x: 1,
       });
       expect(machine.getStorageStatus()).toBe("synchronized");
@@ -1645,11 +1652,12 @@ describe("room", () => {
 
   describe("initial storage", () => {
     test("initialize room with initial storage should send operation only once", async () => {
-      const { assert, assertMessagesSent } = await prepareIsolatedStorageTest<{
-        items: LiveList<string>;
-      }>([createSerializedObject("0:0", {})], 1, { items: new LiveList() });
+      const { expectStorage, assertMessagesSent } =
+        await prepareIsolatedStorageTest<{
+          items: LiveList<string>;
+        }>([createSerializedObject("0:0", {})], 1, { items: new LiveList() });
 
-      assert({
+      expectStorage({
         items: [],
       });
 

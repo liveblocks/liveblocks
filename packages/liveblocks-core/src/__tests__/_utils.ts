@@ -240,7 +240,7 @@ export async function prepareIsolatedStorageTest<TStorage extends LsonObject>(
     undo: machine.undo,
     redo: machine.redo,
     ws,
-    assert: (data: ToImmutable<TStorage>) =>
+    expectStorage: (data: ToImmutable<TStorage>) =>
       expect(storage.root.toImmutable()).toEqual(data),
     assertMessagesSent: (messages: ClientMsg<JsonObject, Json>[]) => {
       expect(messagesSent).toEqual(messages);
@@ -344,32 +344,31 @@ export async function prepareStorageTest<
 
   const states: ToImmutable<TStorage>[] = [];
 
-  function assertState(data: ToImmutable<TStorage>) {
-    const imm = storage.root.toImmutable();
-    expect(imm).toEqual(data);
+  function expectBothClientStoragesToEqual(data: ToImmutable<TStorage>) {
+    expect(storage.root.toImmutable()).toEqual(data);
     expect(refStorage.root.toImmutable()).toEqual(data);
     expect(machine.getItemsCount()).toBe(refMachine.getItemsCount());
   }
 
-  function assert(data: ToImmutable<TStorage>) {
+  function expectStorage(data: ToImmutable<TStorage>) {
     states.push(data);
-    assertState(data);
+    expectBothClientStoragesToEqual(data);
   }
 
   function assertUndoRedo() {
     for (let i = 0; i < states.length - 1; i++) {
       machine.undo();
-      assertState(states[states.length - 2 - i]);
+      expectBothClientStoragesToEqual(states[states.length - 2 - i]);
     }
 
     for (let i = 0; i < states.length - 1; i++) {
       machine.redo();
-      assertState(states[i + 1]);
+      expectBothClientStoragesToEqual(states[i + 1]);
     }
 
     for (let i = 0; i < states.length - 1; i++) {
       machine.undo();
-      assertState(states[states.length - 2 - i]);
+      expectBothClientStoragesToEqual(states[states.length - 2 - i]);
     }
   }
 
@@ -412,7 +411,7 @@ export async function prepareStorageTest<
     operations,
     storage,
     refStorage,
-    assert,
+    expectStorage,
     assertUndoRedo,
     updatePresence: machine.updatePresence,
     getUndoStack: machine.getUndoStack,
