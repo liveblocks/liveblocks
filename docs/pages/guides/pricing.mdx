@@ -25,8 +25,9 @@ A monthly active user can be defined as:
   authorization with a secret API key)
 - An anonymous user who connects to a Liveblocks room, at least once a month who
   can be identified by a cookie (if using authorization with the public API key)
-  
-It doesn’t matter how many rooms a user connects to, or how frequently Liveblocks APIs are used—one user is one MAU.
+
+It doesn’t matter how many rooms a user connects to, or how frequently
+Liveblocks APIs are used—one user is one MAU.
 
 ## How does authorization work with MAU? [#authorization]
 
@@ -145,10 +146,9 @@ updated.
 
 ## Development use [#development-use]
 
-While working in development mode, you will not be billed for MAU. However, you
-will still need to include a `userId` in the `authorize` option if you use it.
-We are currently working on updating our dashboard to reflect the number of MAU
-for development use.
+Users coming from localhost and `.test` domains are not counted towards your
+billing. However, you will still need to include a `userId` in the `authorize`
+option if you use it.
 
 ```ts highlight="20,21"
 import { authorize } from "@liveblocks/node";
@@ -185,8 +185,8 @@ export default async function auth(req, res) {
 
 ## Testing use
 
-If you connect to rooms and call the Liveblocks API during any automated testing,
-you may want to provide a static `userId` to avoid hitting limits.
+If you connect to rooms and call the Liveblocks API during any automated
+testing, you may want to provide a static `userId` to avoid hitting limits.
 
 For example, you could do this by setting an environment variable and checking
 the process when you call `authorize` from `@liveblocks/node`.

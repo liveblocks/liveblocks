@@ -1,0 +1,126 @@
+#
+# Below you'll find the full AST specification. This is a simplistic
+# specification format (a DSL) for specifying which AST node hierarchies are
+# valid.
+#
+# This is used to generate the AST TypeScript module.
+#
+
+@ScalarType:
+    | StringType
+    | NumberType
+    | BooleanType
+    | NullType
+    | LiteralType
+
+
+# A custom user-defined type definition
+@Definition:
+    | ObjectTypeDefinition
+
+
+@NonUnionType:
+    | @ScalarType
+    | ArrayType
+    | ObjectLiteralType
+    | @LiveType
+    | TypeRef
+
+
+@Type:
+    | @NonUnionType
+    | UnionType
+
+
+@LiveType:
+    # NOTE: LiveObject is *NOT* a LiveType, but a special modifier on TypeRef
+    | LiveMapType
+    | LiveListType
+
+
+# e.g. "A | B", "A | (B | C)", etc
+UnionType:
+    members  @NonUnionType+
+
+
+# e.g. "string[]", or "number[][]", etc.
+ArrayType:
+    ofType  @Type
+
+
+# Reference to a custom, user-defined, type. Not a built-in. Things like
+# "Circle", "BlogPost", "LiveObject<Circle>", "LiveObject<BlogPost>", etc.
+TypeRef:
+    ref           TypeName
+    asLiveObject  `boolean`
+
+
+Document:
+    definitions  @Definition+
+
+
+FieldDef:
+    name             Identifier
+    optional         `boolean`
+    type             @Type
+    leadingComment   `string`?
+    trailingComment  `string`?
+
+
+# e.g. "Circle" or "Person" -- used in type positions
+TypeName:
+    name  `string`
+
+
+# e.g. "x" or "y" -- used in field positions
+Identifier:
+    name  `string`
+
+
+# e.g. LiveList<number>
+LiveListType:
+    ofType  @Type
+
+
+# e.g. LiveMap<string, number>
+LiveMapType:
+    keyType    @Type
+    valueType  @Type
+
+
+# e.g. { cx: Number; cy: Number; r: Float }
+ObjectLiteralType:
+    fields  FieldDef*
+
+
+# e.g. type Circle { cx: Number; cy: Number; r: Float }
+ObjectTypeDefinition:
+    name            TypeName
+    fields          FieldDef*
+    leadingComment  `string`?
+
+    # True whether this type is only referenced in JSON contexts only. False
+    # when this type definition is only ever referenced by a "LiveObject<>"
+    # modifier. Not set in the parsing phase, and will receive its definitive
+    # value in the checking phase.
+    isStatic  `boolean`
+
+
+StringType:
+    # no fields
+
+
+NumberType:
+    # no fields
+
+
+BooleanType:
+    # no fields
+
+
+NullType:
+    # no fields
+
+
+LiteralType:
+    value  `string | number | boolean`

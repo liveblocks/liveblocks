@@ -35,8 +35,7 @@ type Storage {
 
 ## Scalars
 
-Familiar scalar types are globally available when you create a schema. We
-support:
+Familiar scalar types are globally available when you create a schema:
 
 - `string`
 - `number`
@@ -68,6 +67,20 @@ root.set("favoritePet", null);
 root.set("name", true);
 root.set("hasSiblings", null);
 root.set("favoritePet", 0);
+```
+
+You can also use literal types to restrict values even further:
+
+```ts
+type Event {
+  statusCode: 200 | 400
+  info: string
+}
+
+type Storage {
+  theme: "light" | "dark"
+  history: LiveList<Event>
+}
 ```
 
 ## Optionals

@@ -1,0 +1,44 @@
+{
+  "name": "@liveblocks/schema",
+  "version": "0.0.13-beta1",
+  "description": "The Liveblocks schema language",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist/**",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "build:ast": "generate-ast src/ast/ast.grammar src/ast/index.ts && tsc --noEmit src/ast/index.ts && node bin/update-returntypes.js",
+    "build:parser": "bin/build-parser && tsc --noEmit src/parser/generated-parser.ts",
+    "lint": "eslint src/",
+    "format": "eslint --fix src/; prettier --write src/",
+    "test": "jest --colors --verbose --no-coverage"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/liveblocks/liveblocks-schema.git"
+  },
+  "keywords": [
+    "liveblocks",
+    "schema",
+    "validation",
+    "language",
+    "parser"
+  ],
+  "devDependencies": {
+    "@liveblocks/eslint-config": "*",
+    "@liveblocks/jest-config": "*",
+    "@types/didyoumean": "^1.2.0",
+    "ast-generator": "^0.1.0",
+    "peggy": "^2.0.1",
+    "pkg": "^4.4.9",
+    "ts-node": "^10.9.1",
+    "ts-pegjs": "^2.1.0",
+    "watch": "^1.0.2"
+  },
+  "dependencies": {
+    "didyoumean": "^1.2.2"
+  }
+}
