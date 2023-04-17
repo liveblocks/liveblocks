@@ -242,7 +242,7 @@ export async function prepareIsolatedStorageTest<TStorage extends LsonObject>(
     ws,
     expectStorage: (data: ToImmutable<TStorage>) =>
       expect(storage.root.toImmutable()).toEqual(data),
-    assertMessagesSent: (messages: ClientMsg<JsonObject, Json>[]) => {
+    expectMessagesSent: (messages: ClientMsg<JsonObject, Json>[]) => {
       expect(messagesSent).toEqual(messages);
     },
     applyRemoteOperations: (ops: Op[]) =>

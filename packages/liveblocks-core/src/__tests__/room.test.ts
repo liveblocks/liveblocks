@@ -1652,7 +1652,7 @@ describe("room", () => {
 
   describe("initial storage", () => {
     test("initialize room with initial storage should send operation only once", async () => {
-      const { expectStorage, assertMessagesSent } =
+      const { expectStorage, expectMessagesSent } =
         await prepareIsolatedStorageTest<{
           items: LiveList<string>;
         }>([createSerializedObject("0:0", {})], 1, { items: new LiveList() });
@@ -1661,7 +1661,7 @@ describe("room", () => {
         items: [],
       });
 
-      assertMessagesSent([
+      expectMessagesSent([
         { type: ClientMsgCode.UPDATE_PRESENCE, targetActor: -1, data: {} },
         { type: ClientMsgCode.FETCH_STORAGE },
         {
