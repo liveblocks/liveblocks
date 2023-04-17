@@ -87,7 +87,7 @@ export async function prepareStorageImmutableTest<
     itemsCount?: number,
     storageOpsCount?: number
   ) {
-    assertStorage(data);
+    expectStorageInBothClients(data);
 
     if (itemsCount !== undefined) {
       expect(machine.getItemsCount()).toBe(itemsCount);
@@ -100,7 +100,7 @@ export async function prepareStorageImmutableTest<
     }
   }
 
-  function assertStorage(data: ToJson<TStorage>) {
+  function expectStorageInBothClients(data: ToJson<TStorage>) {
     const json = lsonToJson(storage.root);
     expect(json).toEqual(data);
     expect(lsonToJson(refStorage.root)).toEqual(data);
@@ -110,7 +110,7 @@ export async function prepareStorageImmutableTest<
     storage,
     refStorage,
     assert,
-    assertStorage,
+    expectStorage: expectStorageInBothClients,
     subscribe: machine.subscribe,
     refSubscribe: refMachine.subscribe,
     state,
@@ -659,7 +659,7 @@ describe("2 ways tests with two clients", () => {
     });
 
     test("new state contains a function", async () => {
-      const { storage, state, assertStorage } =
+      const { storage, state, expectStorage } =
         await prepareStorageImmutableTest<{ syncObj: { a: any } }>(
           [
             createSerializedObject("0:0", {}),
@@ -683,7 +683,7 @@ describe("2 ways tests with two clients", () => {
 
       expect(consoleErrorSpy).toHaveBeenCalledTimes(1);
 
-      assertStorage({ syncObj: { a: 0 } });
+      expectStorage({ syncObj: { a: 0 } });
     });
 
     test("Production env - new state contains a function", async () => {
