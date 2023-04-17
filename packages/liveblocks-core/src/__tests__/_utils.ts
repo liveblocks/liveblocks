@@ -438,119 +438,113 @@ export async function prepareStorageTest<
 /**
  * Join the same room with 2 different clients and stop sending socket messages when the storage is initialized
  */
-export function prepareStorageUpdateTest<
+export async function prepareStorageUpdateTest<
   TStorage extends LsonObject,
   TPresence extends JsonObject = never,
   TUserMeta extends BaseUserMeta = never,
   TRoomEvent extends Json = never
 >(
-  items: IdTuple<SerializedCrdt>[],
-  callback: (args: {
-    batch: (fn: () => void) => void;
-    root: LiveObject<TStorage>;
-    machine: Machine<TPresence, TStorage, TUserMeta, TRoomEvent>;
-    expectUpdates: (updates: JsonStorageUpdate[][]) => void;
-  }) => Promise<void>
-): () => Promise<void> {
-  return async () => {
-    const { storage: refStorage, machine: refMachine } =
-      await prepareRoomWithStorage(items, -1);
+  items: IdTuple<SerializedCrdt>[]
+): Promise<{
+  batch: (fn: () => void) => void;
+  root: LiveObject<TStorage>;
+  machine: Machine<TPresence, TStorage, TUserMeta, TRoomEvent>;
+  expectUpdates: (updates: JsonStorageUpdate[][]) => void;
+}> {
+  const { storage: refStorage, machine: refMachine } =
+    await prepareRoomWithStorage(items, -1);
 
-    const { storage, machine } = await prepareRoomWithStorage<
-      TPresence,
-      TStorage,
-      TUserMeta,
-      TRoomEvent
-    >(items, -2, (messages) => {
-      for (const message of messages) {
-        if (message.type === ClientMsgCode.UPDATE_STORAGE) {
-          refMachine.onMessage(
-            serverMessage({
-              type: ServerMsgCode.UPDATE_STORAGE,
-              ops: message.ops,
-            })
-          );
-          machine.onMessage(
-            serverMessage({
-              type: ServerMsgCode.UPDATE_STORAGE,
-              ops: message.ops,
-            })
-          );
-        }
+  const { storage, machine } = await prepareRoomWithStorage<
+    TPresence,
+    TStorage,
+    TUserMeta,
+    TRoomEvent
+  >(items, -2, (messages) => {
+    for (const message of messages) {
+      if (message.type === ClientMsgCode.UPDATE_STORAGE) {
+        refMachine.onMessage(
+          serverMessage({
+            type: ServerMsgCode.UPDATE_STORAGE,
+            ops: message.ops,
+          })
+        );
+        machine.onMessage(
+          serverMessage({
+            type: ServerMsgCode.UPDATE_STORAGE,
+            ops: message.ops,
+          })
+        );
       }
-    });
-
-    const jsonUpdates: JsonStorageUpdate[][] = [];
-    const refJsonUpdates: JsonStorageUpdate[][] = [];
-
-    machine.subscribe(
-      storage.root,
-      (updates) => jsonUpdates.push(updates.map(serializeUpdateToJson)),
-      { isDeep: true }
-    );
-    refMachine.subscribe(
-      refStorage.root,
-      (updates) => refJsonUpdates.push(updates.map(serializeUpdateToJson)),
-      { isDeep: true }
-    );
-
-    function expectUpdatesInBothClients(updates: JsonStorageUpdate[][]) {
-      expect(jsonUpdates).toEqual(updates);
-      expect(refJsonUpdates).toEqual(updates);
     }
+  });
 
-    await callback({
-      batch: machine.batch,
-      root: storage.root,
-      machine,
-      expectUpdates: expectUpdatesInBothClients,
-    });
+  const jsonUpdates: JsonStorageUpdate[][] = [];
+  const refJsonUpdates: JsonStorageUpdate[][] = [];
+
+  machine.subscribe(
+    storage.root,
+    (updates) => jsonUpdates.push(updates.map(serializeUpdateToJson)),
+    { isDeep: true }
+  );
+  refMachine.subscribe(
+    refStorage.root,
+    (updates) => refJsonUpdates.push(updates.map(serializeUpdateToJson)),
+    { isDeep: true }
+  );
+
+  function expectUpdatesInBothClients(updates: JsonStorageUpdate[][]) {
+    expect(jsonUpdates).toEqual(updates);
+    expect(refJsonUpdates).toEqual(updates);
+  }
+
+  return {
+    batch: machine.batch,
+    root: storage.root,
+    machine,
+    expectUpdates: expectUpdatesInBothClients,
   };
 }
 
 /**
  * Create a room, join with the client but sync local storage changes with the server
  */
-export function prepareDisconnectedStorageUpdateTest<
+export async function prepareDisconnectedStorageUpdateTest<
   TStorage extends LsonObject,
   TPresence extends JsonObject = never,
   TUserMeta extends BaseUserMeta = never,
   TRoomEvent extends Json = never
 >(
-  items: IdTuple<SerializedCrdt>[],
-  callback: (args: {
-    batch: (fn: () => void) => void;
-    root: LiveObject<TStorage>;
-    machine: Machine<TPresence, TStorage, TUserMeta, TRoomEvent>;
-    expectUpdates: (updates: JsonStorageUpdate[][]) => void;
-  }) => Promise<void>
-): () => Promise<void> {
-  return async () => {
-    const { storage, machine } = await prepareRoomWithStorage<
-      TPresence,
-      TStorage,
-      TUserMeta,
-      TRoomEvent
-    >(items, -1);
+  items: IdTuple<SerializedCrdt>[]
+): Promise<{
+  batch: (fn: () => void) => void;
+  root: LiveObject<TStorage>;
+  machine: Machine<TPresence, TStorage, TUserMeta, TRoomEvent>;
+  expectUpdates: (updates: JsonStorageUpdate[][]) => void;
+}> {
+  const { storage, machine } = await prepareRoomWithStorage<
+    TPresence,
+    TStorage,
+    TUserMeta,
+    TRoomEvent
+  >(items, -1);
 
-    const receivedUpdates: JsonStorageUpdate[][] = [];
+  const receivedUpdates: JsonStorageUpdate[][] = [];
 
-    machine.subscribe(
-      storage.root,
-      (updates) => receivedUpdates.push(updates.map(serializeUpdateToJson)),
-      { isDeep: true }
-    );
+  machine.subscribe(
+    storage.root,
+    (updates) => receivedUpdates.push(updates.map(serializeUpdateToJson)),
+    { isDeep: true }
+  );
 
-    function expectUpdates(updates: JsonStorageUpdate[][]) {
-      expect(receivedUpdates).toEqual(updates);
-    }
+  function expectUpdates(updates: JsonStorageUpdate[][]) {
+    expect(receivedUpdates).toEqual(updates);
+  }
 
-    await callback({
-      batch: machine.batch,
-      root: storage.root,
-      machine,
-      expectUpdates,
-    });
+  return {
+    batch: machine.batch,
+    root: storage.root,
+    machine,
+    expectUpdates,
   };
 }
 
