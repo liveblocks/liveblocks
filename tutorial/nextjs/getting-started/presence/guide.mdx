@@ -53,7 +53,7 @@ Switch to [App.tsx][] and pass `cursor: null` to [`RoomProvider`][]—no one sta
 
 ### Displaying presence
 
-To display presence, we’ll add [`useMyPresence`][] to [Room.tsx][], and quickly display its value.
+To display presence, we’ll add [`useMyPresence`][] to [Room.tsx][], and quickly display its value, similarly to `useState`.
 
 ```tsx
 import { useMyPresence } from "./liveblocks.config";
@@ -61,11 +61,11 @@ import { useMyPresence } from "./liveblocks.config";
 export function Room() {
   const [myPresence, updateMyPresence] = useMyPresence();
   
-  return JSON.stringify(myPresence);
+  return <div>JSON.stringify(myPresence)</div>;
 }
 ```
 
-Great! You should now be seeing `cursor: null` in the preview window. On the next page we’ll be creating live cursors with presence, similarly to `useState`.
+Great! You should now be seeing `cursor: null` in the preview window. On the next page we’ll be creating live cursors with presence.
 
 
 [`RoomProvider`]: /docs/api-reference/liveblocks-react#RoomProvider

@@ -39,10 +39,14 @@
             "description": "How to set the current user’s presence"
           },
           {
+            "slug": "updating-presence",
+            "title": "Updating presence",
+            "description": "How to update the current user’s presence"
+          },
+          {
             "slug": "live-cursors",
             "title": "Live cursors using presence",
-            "description": "Building live cursors with usePresence",
-            "comingSoon": true
+            "description": "How to build real-time cursors with presence"
           },
           {
             "slug": "broadcasting-events",

@@ -1,0 +1,54 @@
+---
+openFile: "/Room.tsx"
+showFiles: [
+  "/App.tsx",
+  "/Room.tsx",
+  "/liveblocks.config.ts",
+]
+---
+
+On the previous page we learned to set up presence with an initial value of `{ cursor: null }`—let’s take this and turn it into real-time cursors.
+
+### Updating
+
+[text]
+
+```tsx
+// Update cursor coordinates on pointer move
+function handlePointerMove(e) {
+  const cursor = { x: e.clientX, y: e.clientY };
+  updateMyPresence({ cursor });
+}
+```
+
+[text]
+
+```tsx
+// Set cursor to null on pointer leave
+function handlePointerLeave(e) {
+  updateMyPresence({ cursor: null });
+}
+```
+
+[text]
+
+```tsx highlight="3-5"
+return (
+  <div
+    style={{ width: "100vw", height: "100vh" }}
+    onPointerMove={handlePointerMove}
+    onPointerLeave={handlePointerLeave}
+  >
+    {JSON.stringify(myPresence)}
+  </div>
+);
+```
+
+[text]
+
+[`RoomProvider`]: /docs/api-reference/liveblocks-react#RoomProvider
+[`useMyPresence`]: /docs/api-reference/liveblocks-react#useMyPresence
+
+[liveblocks.config.ts]: #/liveblocks.config.ts
+[App.tsx]: #/App.tsx
+[Room.tsx]: #/Room.tsx
