@@ -449,7 +449,7 @@ export function prepareStorageUpdateTest<
     batch: (fn: () => void) => void;
     root: LiveObject<TStorage>;
     machine: Machine<TPresence, TStorage, TUserMeta, TRoomEvent>;
-    assert: (updates: JsonStorageUpdate[][]) => void;
+    expectUpdates: (updates: JsonStorageUpdate[][]) => void;
   }) => Promise<void>
 ): () => Promise<void> {
   return async () => {
@@ -494,7 +494,7 @@ export function prepareStorageUpdateTest<
       { isDeep: true }
     );
 
-    function assert(updates: JsonStorageUpdate[][]) {
+    function expectUpdatesInBothClients(updates: JsonStorageUpdate[][]) {
       expect(jsonUpdates).toEqual(updates);
       expect(refJsonUpdates).toEqual(updates);
     }
@@ -503,7 +503,7 @@ export function prepareStorageUpdateTest<
       batch: machine.batch,
       root: storage.root,
       machine,
-      assert,
+      expectUpdates: expectUpdatesInBothClients,
     });
   };
 }
@@ -522,7 +522,7 @@ export function prepareDisconnectedStorageUpdateTest<
     batch: (fn: () => void) => void;
     root: LiveObject<TStorage>;
     machine: Machine<TPresence, TStorage, TUserMeta, TRoomEvent>;
-    assert: (updates: JsonStorageUpdate[][]) => void;
+    expectUpdates: (updates: JsonStorageUpdate[][]) => void;
   }) => Promise<void>
 ): () => Promise<void> {
   return async () => {
@@ -533,23 +533,23 @@ export function prepareDisconnectedStorageUpdateTest<
       TRoomEvent
     >(items, -1);
 
-    const jsonUpdates: JsonStorageUpdate[][] = [];
+    const receivedUpdates: JsonStorageUpdate[][] = [];
 
     machine.subscribe(
       storage.root,
-      (updates) => jsonUpdates.push(updates.map(serializeUpdateToJson)),
+      (updates) => receivedUpdates.push(updates.map(serializeUpdateToJson)),
       { isDeep: true }
     );
 
-    function assert(updates: JsonStorageUpdate[][]) {
-      expect(jsonUpdates).toEqual(updates);
+    function expectUpdates(updates: JsonStorageUpdate[][]) {
+      expect(receivedUpdates).toEqual(updates);
     }
 
     await callback({
       batch: machine.batch,
       root: storage.root,
       machine,
-      assert,
+      expectUpdates,
     });
   };
 }

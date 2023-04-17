@@ -418,7 +418,7 @@ describe("LiveObject", () => {
           createSerializedObject("0:0", {}),
           createSerializedObject("0:1", { a: "B" }, "0:0", "items"),
         ],
-        async ({ assert, batch, root, machine }) => {
+        async ({ expectUpdates, batch, root, machine }) => {
           const items = root.get("items");
           batch(() => {
             items.set("a", "A");
@@ -426,7 +426,7 @@ describe("LiveObject", () => {
           });
 
           expect(items.toObject()).toEqual({ a: "A", b: "A" });
-          assert([
+          expectUpdates([
             [
               objectUpdate(
                 { a: "A", b: "A" },
@@ -438,7 +438,7 @@ describe("LiveObject", () => {
           machine.undo();
 
           expect(items.toObject()).toEqual({ a: "B" });
-          assert([
+          expectUpdates([
             [
               objectUpdate(
                 { a: "A", b: "A" },

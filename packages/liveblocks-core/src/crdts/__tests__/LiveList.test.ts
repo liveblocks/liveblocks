@@ -127,12 +127,12 @@ describe("LiveList", () => {
             createSerializedObject("0:0", {}),
             createSerializedList("0:1", "0:0", "items"),
           ],
-          async ({ root, assert, machine }) => {
+          async ({ root, expectUpdates, machine }) => {
             root.get("items").push("a");
             machine.undo();
             machine.redo();
 
-            assert([
+            expectUpdates([
               [listUpdate(["a"], [listUpdateInsert(0, "a")])],
               [listUpdate([], [listUpdateDelete(0)])],
               [listUpdate(["a"], [listUpdateInsert(0, "a")])],
@@ -268,12 +268,12 @@ describe("LiveList", () => {
             createSerializedRegister("0:2", "0:1", FIRST_POSITION, "A"),
             createSerializedRegister("0:3", "0:1", SECOND_POSITION, "C"),
           ],
-          async ({ root, assert, machine }) => {
+          async ({ root, expectUpdates, machine }) => {
             root.get("items").insert("B", 1);
             machine.undo();
             machine.redo();
 
-            assert([
+            expectUpdates([
               [listUpdate(["A", "B", "C"], [listUpdateInsert(1, "B")])],
               [listUpdate(["A", "C"], [listUpdateDelete(1)])],
               [listUpdate(["A", "B", "C"], [listUpdateInsert(1, "B")])],
@@ -341,12 +341,12 @@ describe("LiveList", () => {
             createSerializedList("0:1", "0:0", "items"),
             createSerializedRegister("0:2", "0:1", FIRST_POSITION, "A"),
           ],
-          async ({ root, assert, machine }) => {
+          async ({ root, expectUpdates, machine }) => {
             root.get("items").delete(0);
             machine.undo();
             machine.redo();
 
-            assert([
+            expectUpdates([
               [listUpdate([], [listUpdateDelete(0)])],
               [listUpdate(["A"], [listUpdateInsert(0, "A")])],
               [listUpdate([], [listUpdateDelete(0)])],
@@ -442,12 +442,12 @@ describe("LiveList", () => {
             createSerializedRegister("0:2", "0:1", FIRST_POSITION, "A"),
             createSerializedRegister("0:3", "0:1", SECOND_POSITION, "B"),
           ],
-          async ({ root, assert, machine }) => {
+          async ({ root, expectUpdates, machine }) => {
             root.get("items").move(0, 1);
             machine.undo();
             machine.redo();
 
-            assert([
+            expectUpdates([
               [listUpdate(["B", "A"], [listUpdateMove(0, 1, "A")])],
               [listUpdate(["A", "B"], [listUpdateMove(1, 0, "A")])],
               [listUpdate(["B", "A"], [listUpdateMove(0, 1, "A")])],
@@ -568,12 +568,12 @@ describe("LiveList", () => {
             createSerializedRegister("0:2", "0:1", FIRST_POSITION, "A"),
             createSerializedRegister("0:3", "0:1", SECOND_POSITION, "B"),
           ],
-          async ({ root, assert, machine }) => {
+          async ({ root, expectUpdates, machine }) => {
             root.get("items").clear();
             machine.undo();
             machine.redo();
 
-            assert([
+            expectUpdates([
               [listUpdate([], [listUpdateDelete(0), listUpdateDelete(0)])],
               [
                 listUpdate(

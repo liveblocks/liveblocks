@@ -676,7 +676,7 @@ describe("room", () => {
         createSerializedList("0:1", "0:0", "items"),
         createSerializedObject("0:2", {}, "0:1", FIRST_POSITION),
       ],
-      async ({ assert, batch, root, machine }) => {
+      async ({ expectUpdates, batch, root, machine }) => {
         const items = root.get("items");
         batch(() => {
           nn(items.get(0)).set("a", 1);
@@ -690,7 +690,7 @@ describe("room", () => {
         machine.redo();
 
         expect(items.toImmutable()).toEqual([{ a: 2 }]);
-        assert([
+        expectUpdates([
           [listUpdate([{ a: 2 }], [listUpdateSet(0, { a: 2 })])],
           [listUpdate([{}], [listUpdateSet(0, {})])],
           [listUpdate([{ a: 2 }], [listUpdateSet(0, { a: 2 })])],
@@ -1122,7 +1122,7 @@ describe("room", () => {
           createSerializedObject("0:2", {}, "0:1", FIRST_POSITION),
           createSerializedList("0:3", "0:2", "names"),
         ],
-        async ({ assert, root, batch, machine }) => {
+        async ({ expectUpdates: expectUpdates, root, batch, machine }) => {
           let receivedUpdates: StorageUpdate[] = [];
 
           machine.subscribe(root, (updates) => (receivedUpdates = updates), {
@@ -1143,7 +1143,7 @@ describe("room", () => {
             items.push(new LiveObject({ names: new LiveList(["James Doe"]) }));
           });
 
-          assert([
+          expectUpdates([
             [
               listUpdate(
                 [
