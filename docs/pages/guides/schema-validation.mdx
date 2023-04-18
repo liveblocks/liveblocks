@@ -175,6 +175,9 @@ For example:
 ```ts
 fetch("https://api.liveblocks.io/v2/rooms/{roomId}/schema", {
   method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+  },  
   body: JSON.stringify({
     schema: "todo-list@1",
   }),

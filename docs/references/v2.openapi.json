@@ -813,7 +813,7 @@
       "post": {
         "summary": "Create Schema",
         "operationId": "post-create-new-schema",
-        "description": "Creates a new schema which can be referenced later to enforce a room's storage data structure. The schema consists of a name (for referencing it), and a body, which specifies the exact allowed shape of data in the room. This body is a multi-line string written in the Liveblocks <link>schema syntax</link>.",
+        "description": "Creates a new schema which can be referenced later to enforce a room's storage data structure. The schema consists of a name (for referencing it), and a body, which specifies the exact allowed shape of data in the room. This body is a multi-line string written in the Liveblocks [schema syntax](/docs/guides/schema-validation/syntax).",
         "requestBody": {
           "content": {
             "application/json": {
