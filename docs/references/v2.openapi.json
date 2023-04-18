@@ -813,7 +813,7 @@
       "post": {
         "summary": "Create Schema",
         "operationId": "post-create-new-schema",
-        "description": "The schema needs to be a string literal to be valid JSON when sent to the API for parsing. See the [schema validation guide](/docs/guides/schema-validation#Create-a-schema) for more detailed information in formatting your schema.",
+        "description": "Creates a new schema which can be referenced later to enforce a room's storage data structure. The schema consists of a name (for referencing it), and a body, which specifies the exact allowed shape of data in the room. This body is a multi-line string written in the Liveblocks <link>schema syntax</link>.",
         "requestBody": {
           "content": {
             "application/json": {
@@ -823,7 +823,7 @@
               "examples": {
                 "example-1": {
                   "value": {
-                    "name": "collaborative-form",
+                    "name": "my-schema",
                     "body": "type Logo {\nname: string\ntheme: string\n}\n\ntype Storage {\nlogo: LiveObject<Logo>\n"
                   }
                 }
@@ -842,8 +842,8 @@
                 "examples": {
                   "example-1": {
                     "value": {
-                      "id": "collaborative-form@1",
-                      "name": "collaborative-form",
+                      "id": "my-schema@1",
+                      "name": "my-schema",
                       "version": 1,
                       "createdAt": "2023-03-30T06:25:54.675Z",
                       "updatedAt": "2023-03-30T06:25:54.675Z",
@@ -868,7 +868,7 @@
       "get": {
         "summary": "Get schema",
         "operationId": "get-create-new-schema",
-        "description": "This endpoint retrieves a schema by its id. The id is a combination of the schema name and version. For example, `collaborative-form@1`.",
+        "description": "This endpoint retrieves a schema by its id. The id is a combination of the schema name and version. For example, `my-schema@1`.",
         "responses": {
           "200": {
             "description": "Success. Found the schema and returns it as JSON.",
@@ -880,8 +880,8 @@
                 "examples": {
                   "example-1": {
                     "value": {
-                      "id": "collaborative-form@1",
-                      "name": "collaborative-form",
+                      "id": "my-schema@1",
+                      "name": "my-schema",
                       "version": 1,
                       "createdAt": "2023-03-30T06:25:54.675Z",
                       "updatedAt": "2023-03-30T06:25:54.675Z",
@@ -914,7 +914,7 @@
       "put": {
         "summary": "Update schema",
         "operationId": "put-update-new-schema",
-        "description": "The schema needs to be a string literal to be valid JSON when sent to the API for parsing. See the [schema validation guide](/docs/guides/schema-validation#Create-a-schema) for more detailed information in formatting your schema.",
+        "description": "Updates the body for the schema. A schema can only be updated if it is not used by any room.",
         "requestBody": {
           "content": {
             "application/json": {
@@ -942,8 +942,8 @@
                 "examples": {
                   "example-1": {
                     "value": {
-                      "id": "collaborative-form@2",
-                      "name": "collaborative-form",
+                      "id": "my-schema@2",
+                      "name": "my-schema",
                       "version": 2,
                       "createdAt": "2023-03-30T07:25:54.675Z",
                       "updatedAt": "2023-03-30T07:25:54.675Z",
@@ -979,7 +979,7 @@
       "delete": {
         "summary": "Delete schema",
         "operationId": "delete-a-schema",
-        "description": "This endpoint deletes a schema by its id. The id is a combination of the schema name and version. For example, `collaborative-form@1`. A schema can only be deleted if it is not attached to a room.  If a schema is attached to a room it is considered 'frozen' and cannot be deleted. In this case, you would need to detach your schema from the room before proceding with the deletion.",
+        "description": "This endpoint deletes a schema by its id. The id is a combination of the schema name and version. For example, `my-schema@1`. A schema can only be deleted if it is not attached to a room.",
         "responses": {
           "200": {
             "description": "Success. Schema was delated"
@@ -1020,8 +1020,8 @@
                 "examples": {
                   "example-1": {
                     "value": {
-                      "id": "collaborative-form@1",
-                      "name": "collaborative-form",
+                      "id": "my-schema@1",
+                      "name": "my-schema",
                       "version": 1,
                       "createdAt": "2023-03-30T06:25:54.675Z",
                       "updatedAt": "2023-03-30T06:25:54.675Z",
@@ -1057,7 +1057,7 @@
       "post": {
         "summary": "Attach schema to room",
         "operationId": "post-attach-schema-to-room",
-        "description": "This endpoint attachs a schema to a room. The schema must already exist in the database. Once a schema is attached, operations will be enforced and the schema will be frozen.",
+        "description": "This endpoint attachs a schema to a room, and instantly enables runtime schema validation for the room. If the current contents of the room's storage do not match the schema, attaching will fail and the error message will give details on why the schema failed to attach.",
         "requestBody": {
           "content": {
             "application/json": {
@@ -1067,7 +1067,7 @@
               "examples": {
                 "example-1": {
                   "value": {
-                    "schema": "collaborative-form@1"
+                    "schema": "my-schema@1"
                   }
                 }
               }
@@ -1085,7 +1085,7 @@
                 "examples": {
                   "example-1": {
                     "value": {
-                      "schema": "collaborative-form@1"
+                      "schema": "my-schema@1"
                     }
                   }
                 }
@@ -1117,7 +1117,7 @@
       "delete": {
         "summary": "Detach schema from room",
         "operationId": "delete-detach-schema-to-room",
-        "description": "This endpoint detaches the schema from a room. The schema must already exist in the database.",
+        "description": "This endpoint detaches the schema from a room.",
         "responses": {
           "200": {
             "description": "Success. Detached the schema from the room."
