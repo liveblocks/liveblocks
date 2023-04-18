@@ -199,7 +199,7 @@
           "name": "roomId",
           "in": "path",
           "required": true,
-          "description": "`id` of the room"
+          "description": "ID of the room"
         }
       ],
       "get": {
@@ -249,7 +249,7 @@
             "$ref": "#/components/responses/404"
           }
         },
-        "description": "Get a room by its `id`. ",
+        "description": "Get a room by its ID. ",
         "parameters": []
       },
       "post": {
@@ -377,7 +377,7 @@
           "name": "roomId",
           "in": "path",
           "required": true,
-          "description": "`id` of the room"
+          "description": "ID of the room"
         }
       ],
       "get": {
@@ -437,7 +437,7 @@
           "name": "roomId",
           "in": "path",
           "required": true,
-          "description": "`id` of the room"
+          "description": "ID of the room"
         }
       ],
       "get": {
@@ -692,7 +692,7 @@
           "name": "roomId",
           "in": "path",
           "required": true,
-          "description": "`id` of the room"
+          "description": "ID of the room"
         }
       ]
     },
@@ -741,7 +741,7 @@
             "name": "roomId",
             "in": "path",
             "required": true,
-            "description": "`id` of the room"
+            "description": "ID of the room"
           }
         ]
       }
@@ -805,7 +805,7 @@
           "name": "roomId",
           "in": "path",
           "required": true,
-          "description": "`id` of the room"
+          "description": "ID of the room"
         }
       ]
     }
