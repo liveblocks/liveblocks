@@ -1222,7 +1222,7 @@ function makeStateMachine<
         }
 
         const applyOpResult = applyOp(op, source);
-        if (applyOpResult.modified) {
+        if (applyOpResult.modified && source !== OpSource.ACK) {
           const nodeId = applyOpResult.modified.node._id;
 
           // If the modified node is not the root (undefined) and was created in the same batch, we don't want to notify
