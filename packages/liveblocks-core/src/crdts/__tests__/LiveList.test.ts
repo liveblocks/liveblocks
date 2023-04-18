@@ -1,8 +1,14 @@
+import { RoomScope } from "../../protocol/AuthToken";
+import { OpCode } from "../../protocol/Op";
+import type { IdTuple, SerializedCrdt } from "../../protocol/SerializedCrdt";
+import { CrdtType } from "../../protocol/SerializedCrdt";
+import { WebsocketCloseCodes } from "../../types/WebsocketCloseCodes";
 import {
   listUpdate,
   listUpdateDelete,
   listUpdateInsert,
   listUpdateMove,
+  listUpdateSet,
 } from "../../__tests__/_updatesUtils";
 import {
   createSerializedList,
@@ -11,6 +17,7 @@ import {
   FIFTH_POSITION,
   FIRST_POSITION,
   FOURTH_POSITION,
+  prepareDisconnectedStorageUpdateTest,
   prepareIsolatedStorageTest,
   prepareStorageTest,
   prepareStorageUpdateTest,
@@ -18,11 +25,6 @@ import {
   SECOND_POSITION,
   THIRD_POSITION,
 } from "../../__tests__/_utils";
-import { RoomScope } from "../../protocol/AuthToken";
-import { OpCode } from "../../protocol/Op";
-import type { IdTuple, SerializedCrdt } from "../../protocol/SerializedCrdt";
-import { CrdtType } from "../../protocol/SerializedCrdt";
-import { WebsocketCloseCodes } from "../../types/WebsocketCloseCodes";
 import { LiveList } from "../LiveList";
 import { LiveMap } from "../LiveMap";
 import { LiveObject } from "../LiveObject";
@@ -165,6 +167,68 @@ describe("LiveList", () => {
       });
 
       assertUndoRedo();
+    });
+
+    it("push-then-undo-then-ack on existing item", async () => {
+      const { root, expectUpdates, machine, acknowledgeOps } =
+        await prepareDisconnectedStorageUpdateTest<{ items: LiveList<string> }>(
+          // e.g. create { items: ['abc'] }
+          [
+            createSerializedObject("0:0", {}),
+            createSerializedList("0:1", "0:0", "items"),
+            createSerializedRegister("0:2", "0:1", FIRST_POSITION, "abc"),
+          ]
+        );
+
+      root.get("items").push("pqr");
+      expectUpdates([
+        [listUpdate(["abc", "pqr"], [listUpdateInsert(1, "pqr")])],
+      ]);
+
+      machine.undo();
+      expectUpdates([
+        [listUpdate(["abc", "pqr"], [listUpdateInsert(1, "pqr")])],
+        [listUpdate(["abc"], [listUpdateDelete(1)])],
+      ]);
+
+      // Server acknowledges the ops back to the client
+      acknowledgeOps();
+
+      // The acknowledge of own Ops should have no effect on the emitted updates
+      expectUpdates([
+        [listUpdate(["abc", "pqr"], [listUpdateInsert(1, "pqr")])],
+        [listUpdate(["abc"], [listUpdateDelete(1)])],
+      ]);
+    });
+
+    it("set-then-undo-then-ack on existing item", async () => {
+      const { root, expectUpdates, machine, acknowledgeOps } =
+        await prepareDisconnectedStorageUpdateTest<{ items: LiveList<string> }>(
+          // e.g. create { items: ['abc'] }
+          [
+            createSerializedObject("0:0", {}),
+            createSerializedList("0:1", "0:0", "items"),
+            createSerializedRegister("0:2", "0:1", FIRST_POSITION, "abc"),
+          ]
+        );
+
+      root.get("items").set(0, "pqr");
+      expectUpdates([[listUpdate(["pqr"], [listUpdateSet(0, "pqr")])]]);
+
+      machine.undo();
+      expectUpdates([
+        [listUpdate(["pqr"], [listUpdateSet(0, "pqr")])],
+        [listUpdate(["abc"], [listUpdateSet(0, "abc")])],
+      ]);
+
+      // Server acknowledges the ops back to the client
+      acknowledgeOps();
+
+      // The acknowledge of own Ops should have no effect on the emitted updates
+      expectUpdates([
+        [listUpdate(["pqr"], [listUpdateSet(0, "pqr")])],
+        [listUpdate(["abc"], [listUpdateSet(0, "abc")])],
+      ]);
     });
 
     it("push number on empty list", async () => {
