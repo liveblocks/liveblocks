@@ -51,7 +51,7 @@ fixing them.
 ## Schema Operations
 
 You can interact with the schemas you create through the dashboard or by calling
-the [rest API](/docs/api-reference/rest-api-endpoints). In this guide, we will
+the [REST API](/docs/api-reference/rest-api-endpoints). In this guide, we will
 cover the following operations:
 
 - [Create a schema](#Create-a-schema)
@@ -59,7 +59,7 @@ cover the following operations:
 - [Attach a schema to a room](#Attach-a-schema-to-a-room)
 - [Detach a schema from a room](#Detach-a-schema-from-a-room)
 
-You can also use the rest API to
+You can also use the REST API to
 [list schemas](/docs/api-reference/rest-api-endpoints#list-schemas),
 [get a schema](/docs/api-reference/rest-api-endpoints#get-schema), and
 [update a schema](/docs/api-reference/rest-api-endpoints#update-schema).
@@ -82,9 +82,8 @@ of the data you want to store in your rooms.
 
 Another way to create a schema is via the
 [create schema API](/docs/api-reference/rest-api-endpoints#post-create-new-schema).
-When a schema is sent to the API it needs to be constructed as a string literal
-to be valid JSON when sent to the API for parsing. In the dashboard, a sample
-schema could be represented as:
+A schema body is a multi-line string using the Liveblocks <link>schema syntax</link>. In the dashboard, a sample
+schema could be represented as::
 
 ```ts
 type Storage {
@@ -97,34 +96,28 @@ type Todo {
 }
 ```
 
-To convert the schema to a string literal which will be used in the `body` key
-of the request, you can use the following code:
-
-```ts
-JSON.stringify({
-  body: `
-type Storage {
-  todos: LiveList<LiveObject<Todo>>
-}
-
-type Todo {
-  text: string
-  checked?: boolean
-}
-`,
-}).replace(/\\n/g, "\n");
-// returns '{"body":"\ntype Storage {\n  todos: LiveList<LiveObject<Todo>>\n}\n\ntype Todo {\n  text: string\n  checked?: boolean\n}\n"}'
-```
-
-To create the schema:
+To create the schema using fetch you will provide the name and body as a JSON.  Note that the innermost `body` is the field that our API needs to send the schema to the parser, while that outermost `body` is the field that fetch needs to send the JSON to the API. In the example below, the schema would be represented as:
 
 ```ts
 fetch("https://api.liveblocks.io/v2/schemas", {
   method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+  },
   body: JSON.stringify({
     name: "todo-list",
-    body: "\ntype Storage {\n  todos: LiveList<LiveObject<Todo>>\n}\n\ntype Todo {\n  text: string\n  checked?: boolean\n}\n",
-  }),
+    body: `
+      type Storage {
+        todos: LiveList<LiveObject<Todo>>
+      }
+
+      type Todo {
+        text: string
+        checked?: boolean
+      }
+    `
+
+  })
 });
 ```
 
@@ -157,7 +150,7 @@ If your schema is in a detached state, you can also delete it by using the
 
 ```ts
 fetch("https://api.liveblocks.io/v2/schemas/{id}", {
-  method: "POST",
+  method: "DELETE",
 });
 ```
 
@@ -187,6 +180,11 @@ fetch("https://api.liveblocks.io/v2/rooms/{roomId}/schema", {
   }),
 });
 ```
+<Banner title="Prerequisites for attaching a schema">
+
+In order to attach a schema to a room, you must first create a room and initialize storage. 
+
+</Banner>
 
 ### Detach a schema from a room
 
@@ -194,7 +192,6 @@ You can use the dashboard to remove a schema from a room by navigating to the
 room in question and clicking on the dropdown menu which displays the currently
 attached schema. From there, you can click on the “Detach schema” button.
 
-{" "}
 <Figure>
   <video autoPlay loop muted playsInline>
     <source
