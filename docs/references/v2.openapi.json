@@ -979,7 +979,7 @@
       "delete": {
         "summary": "Delete schema",
         "operationId": "delete-a-schema",
-        "description": "This endpoint deletes a schema by its id. The id is a combination of the schema name and version. For example, `my-schema@1`. A schema can only be deleted if it is not attached to a room.",
+        "description": "This endpoint deletes a schema by its ID. The ID is a combination of the schema name and version. For example, `my-schema@1`. A schema can only be deleted if it is not attached to a room.",
         "responses": {
           "200": {
             "description": "Success. Schema was delated"
