@@ -54,17 +54,17 @@ You can interact with the schemas you create through the dashboard or by calling
 the [REST API](/docs/api-reference/rest-api-endpoints). In this guide, we will
 cover the following operations:
 
-- [Create a schema](#Create-a-schema)
-- [Delete a schema](#Delete-a-schema)
-- [Attach a schema to a room](#Attach-a-schema-to-a-room)
-- [Detach a schema from a room](#Detach-a-schema-from-a-room)
+- [Creating a schema](#Creating-a-schema)
+- [Deleting a schema](#Deleting-a-schema)
+- [Attaching a schema to a room](#Attaching-a-schema-to-a-room)
+- [Detaching a schema from a room](#Detaching-a-schema-from-a-room)
 
 You can also use the REST API to
 [list schemas](/docs/api-reference/rest-api-endpoints#list-schemas),
 [get a schema](/docs/api-reference/rest-api-endpoints#get-schema), and
 [update a schema](/docs/api-reference/rest-api-endpoints#update-schema).
 
-### Create a schema
+### Creating a schema
 
 Creating a schema via the dashboard is straightforward. Simply navigate to the
 “Schemas” page in the project you want to add the schema, and click on the
@@ -128,7 +128,7 @@ what kind of validations are currently supported.
 
 </Banner>
 
-### Delete a schema
+### Deleting a schema
 
 In the dashboard, you can delete a schema by navigating to the schema in
 question and clicking on the trash icon next to the schema version you want to
@@ -154,7 +154,7 @@ fetch("https://api.liveblocks.io/v2/schemas/{id}", {
 });
 ```
 
-### Attach a schema to a room
+### Attaching a schema to a room
 
 You can attach a schema to a room via the dashboard by navigating to the room in
 question and clicking on the “Attach schema” button.
@@ -188,7 +188,7 @@ To attach a schema to a room, you must first create a room and initialize storag
 
 </Banner>
 
-### Detach a schema from a room
+### Detaching a schema from a room
 
 You can use the dashboard to remove a schema from a room by navigating to the
 room in question and clicking on the dropdown menu which displays the currently
@@ -289,8 +289,11 @@ Other examples where schema validation would catch the error include:
 - Attempting to delete the `checked` variable: it was not defined as optional in
   the schema
 
-When an instance like this occurs, it’s indicative of a bug in your app. You
-should fix it, just like you would, for a TypeScript bug.
+## How to handle validation errors
+
+When a schema validation error occurs, the LiveBlocks server will reject the operation 
+
+When an instance like this occurs, it’s indicative of a bug in your app. In production, an error like this should never occur. This is because you should address validation errors in the same way you address TypeScript errors. You don't ship to production when your app has TypeScript errors, and neither do you ship to prod when there are schema validation errors. Validation errors are the responsibility of the developer to resolve.
 
 ## What’s to come
 
