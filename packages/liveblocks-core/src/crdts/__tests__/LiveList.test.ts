@@ -1,8 +1,3 @@
-import { RoomScope } from "../../protocol/AuthToken";
-import { OpCode } from "../../protocol/Op";
-import type { IdTuple, SerializedCrdt } from "../../protocol/SerializedCrdt";
-import { CrdtType } from "../../protocol/SerializedCrdt";
-import { WebsocketCloseCodes } from "../../types/WebsocketCloseCodes";
 import {
   listUpdate,
   listUpdateDelete,
@@ -25,6 +20,11 @@ import {
   SECOND_POSITION,
   THIRD_POSITION,
 } from "../../__tests__/_utils";
+import { RoomScope } from "../../protocol/AuthToken";
+import { OpCode } from "../../protocol/Op";
+import type { IdTuple, SerializedCrdt } from "../../protocol/SerializedCrdt";
+import { CrdtType } from "../../protocol/SerializedCrdt";
+import { WebsocketCloseCodes } from "../../types/WebsocketCloseCodes";
 import { LiveList } from "../LiveList";
 import { LiveMap } from "../LiveMap";
 import { LiveObject } from "../LiveObject";
