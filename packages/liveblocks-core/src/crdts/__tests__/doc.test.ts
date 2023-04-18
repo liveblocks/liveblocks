@@ -232,15 +232,16 @@ describe("Storage", () => {
 
   describe("batching", () => {
     it("batching and undo", async () => {
-      const { storage, assert, undo, redo, batch } = await prepareStorageTest<{
-        items: LiveList<string>;
-      }>(
-        [
-          createSerializedObject("0:0", {}),
-          createSerializedList("0:1", "0:0", "items"),
-        ],
-        1
-      );
+      const { storage, expectStorage, undo, redo, batch } =
+        await prepareStorageTest<{
+          items: LiveList<string>;
+        }>(
+          [
+            createSerializedObject("0:0", {}),
+            createSerializedList("0:1", "0:0", "items"),
+          ],
+          1
+        );
 
       const items = storage.root.get("items");
 
@@ -250,33 +251,34 @@ describe("Storage", () => {
         items.push("C");
       });
 
-      assert({
+      expectStorage({
         items: ["A", "B", "C"],
       });
 
       undo();
 
-      assert({
+      expectStorage({
         items: [],
       });
 
       redo();
 
-      assert({
+      expectStorage({
         items: ["A", "B", "C"],
       });
     });
 
     it("nesting batches makes inner batches a no-op", async () => {
-      const { storage, assert, undo, redo, batch } = await prepareStorageTest<{
-        items: LiveList<string>;
-      }>(
-        [
-          createSerializedObject("0:0", {}),
-          createSerializedList("0:1", "0:0", "items"),
-        ],
-        1
-      );
+      const { storage, expectStorage, undo, redo, batch } =
+        await prepareStorageTest<{
+          items: LiveList<string>;
+        }>(
+          [
+            createSerializedObject("0:0", {}),
+            createSerializedList("0:1", "0:0", "items"),
+          ],
+          1
+        );
 
       const items = storage.root.get("items");
 
@@ -300,19 +302,19 @@ describe("Storage", () => {
         });
       });
 
-      assert({
+      expectStorage({
         items: ["A", "B", "C"],
       });
 
       undo();
 
-      assert({
+      expectStorage({
         items: [],
       });
 
       redo();
 
-      assert({
+      expectStorage({
         items: ["A", "B", "C"],
       });
     });
@@ -366,27 +368,28 @@ describe("Storage", () => {
 
   describe("undo / redo", () => {
     it("list.push", async () => {
-      const { storage, assert, assertUndoRedo } = await prepareStorageTest<{
-        items: LiveList<string>;
-      }>(
-        [
-          createSerializedObject("0:0", {}),
-          createSerializedList("0:1", "0:0", "items"),
-        ],
-        1
-      );
+      const { storage, expectStorage, assertUndoRedo } =
+        await prepareStorageTest<{
+          items: LiveList<string>;
+        }>(
+          [
+            createSerializedObject("0:0", {}),
+            createSerializedList("0:1", "0:0", "items"),
+          ],
+          1
+        );
 
       const items = storage.root.get("items");
 
-      assert({ items: [] });
+      expectStorage({ items: [] });
 
       items.push("A");
-      assert({
+      expectStorage({
         items: ["A"],
       });
 
       items.push("B");
-      assert({
+      expectStorage({
         items: ["A", "B"],
       });
 
@@ -394,13 +397,13 @@ describe("Storage", () => {
     });
 
     it("max undo-redo stack", async () => {
-      const { storage, assert, undo } = await prepareStorageTest<{
+      const { storage, expectStorage, undo } = await prepareStorageTest<{
         a: number;
       }>([createSerializedObject("0:0", { a: 0 })], 1);
 
       for (let i = 0; i < 100; i++) {
         storage.root.set("a", i + 1);
-        assert({
+        expectStorage({
           a: i + 1,
         });
       }
@@ -409,13 +412,13 @@ describe("Storage", () => {
         undo();
       }
 
-      assert({
+      expectStorage({
         a: 50,
       });
     });
 
     it("storage operation should clear redo stack", async () => {
-      const { storage, assert, undo, redo } = await prepareStorageTest<{
+      const { storage, expectStorage, undo, redo } = await prepareStorageTest<{
         items: LiveList<string>;
       }>(
         [
@@ -427,23 +430,23 @@ describe("Storage", () => {
 
       const items = storage.root.get("items");
 
-      assert({ items: [] });
+      expectStorage({ items: [] });
 
       items.insert("A", 0);
-      assert({
+      expectStorage({
         items: ["A"],
       });
 
       undo();
 
       items.insert("B", 0);
-      assert({
+      expectStorage({
         items: ["B"],
       });
 
       redo();
 
-      assert({
+      expectStorage({
         items: ["B"],
       });
     });

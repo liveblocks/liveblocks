@@ -1,0 +1,26 @@
+# Commas
+type Storage {
+  a: number,
+  b: number,
+}
+---
+# Newlines
+type Storage {
+  a: number
+  b: number
+}
+---
+# Semicolons
+type Storage {
+  a: number;
+  b: number;
+}
+---
+# Mixing newlines, commas and semicolons
+type Storage {
+  a: number
+  b: number
+  c: number,
+  d: number;
+  e: number;
+}

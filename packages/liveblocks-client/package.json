@@ -25,7 +25,6 @@
     "@liveblocks/jest-config": "*",
     "@types/ws": "^8.5.3",
     "dotenv": "^16.0.3",
-    "fast-check": "^3.0.1",
     "msw": "^0.39.1",
     "ws": "^8.5.0"
   },

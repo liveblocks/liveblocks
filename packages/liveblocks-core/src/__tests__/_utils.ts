@@ -240,9 +240,9 @@ export async function prepareIsolatedStorageTest<TStorage extends LsonObject>(
     undo: machine.undo,
     redo: machine.redo,
     ws,
-    assert: (data: ToImmutable<TStorage>) =>
+    expectStorage: (data: ToImmutable<TStorage>) =>
       expect(storage.root.toImmutable()).toEqual(data),
-    assertMessagesSent: (messages: ClientMsg<JsonObject, Json>[]) => {
+    expectMessagesSent: (messages: ClientMsg<JsonObject, Json>[]) => {
       expect(messagesSent).toEqual(messages);
     },
     applyRemoteOperations: (ops: Op[]) =>
@@ -344,32 +344,31 @@ export async function prepareStorageTest<
 
   const states: ToImmutable<TStorage>[] = [];
 
-  function assertState(data: ToImmutable<TStorage>) {
-    const imm = storage.root.toImmutable();
-    expect(imm).toEqual(data);
+  function expectBothClientStoragesToEqual(data: ToImmutable<TStorage>) {
+    expect(storage.root.toImmutable()).toEqual(data);
     expect(refStorage.root.toImmutable()).toEqual(data);
     expect(machine.getItemsCount()).toBe(refMachine.getItemsCount());
   }
 
-  function assert(data: ToImmutable<TStorage>) {
+  function expectStorage(data: ToImmutable<TStorage>) {
     states.push(data);
-    assertState(data);
+    expectBothClientStoragesToEqual(data);
   }
 
   function assertUndoRedo() {
     for (let i = 0; i < states.length - 1; i++) {
       machine.undo();
-      assertState(states[states.length - 2 - i]);
+      expectBothClientStoragesToEqual(states[states.length - 2 - i]);
     }
 
     for (let i = 0; i < states.length - 1; i++) {
       machine.redo();
-      assertState(states[i + 1]);
+      expectBothClientStoragesToEqual(states[i + 1]);
     }
 
     for (let i = 0; i < states.length - 1; i++) {
       machine.undo();
-      assertState(states[states.length - 2 - i]);
+      expectBothClientStoragesToEqual(states[states.length - 2 - i]);
     }
   }
 
@@ -412,7 +411,7 @@ export async function prepareStorageTest<
     operations,
     storage,
     refStorage,
-    assert,
+    expectStorage,
     assertUndoRedo,
     updatePresence: machine.updatePresence,
     getUndoStack: machine.getUndoStack,
@@ -450,7 +449,7 @@ export function prepareStorageUpdateTest<
     batch: (fn: () => void) => void;
     root: LiveObject<TStorage>;
     machine: Machine<TPresence, TStorage, TUserMeta, TRoomEvent>;
-    assert: (updates: JsonStorageUpdate[][]) => void;
+    expectUpdates: (updates: JsonStorageUpdate[][]) => void;
   }) => Promise<void>
 ): () => Promise<void> {
   return async () => {
@@ -495,7 +494,7 @@ export function prepareStorageUpdateTest<
       { isDeep: true }
     );
 
-    function assert(updates: JsonStorageUpdate[][]) {
+    function expectUpdatesInBothClients(updates: JsonStorageUpdate[][]) {
       expect(jsonUpdates).toEqual(updates);
       expect(refJsonUpdates).toEqual(updates);
     }
@@ -504,7 +503,7 @@ export function prepareStorageUpdateTest<
       batch: machine.batch,
       root: storage.root,
       machine,
-      assert,
+      expectUpdates: expectUpdatesInBothClients,
     });
   };
 }
@@ -523,7 +522,7 @@ export function prepareDisconnectedStorageUpdateTest<
     batch: (fn: () => void) => void;
     root: LiveObject<TStorage>;
     machine: Machine<TPresence, TStorage, TUserMeta, TRoomEvent>;
-    assert: (updates: JsonStorageUpdate[][]) => void;
+    expectUpdates: (updates: JsonStorageUpdate[][]) => void;
   }) => Promise<void>
 ): () => Promise<void> {
   return async () => {
@@ -534,23 +533,23 @@ export function prepareDisconnectedStorageUpdateTest<
       TRoomEvent
     >(items, -1);
 
-    const jsonUpdates: JsonStorageUpdate[][] = [];
+    const receivedUpdates: JsonStorageUpdate[][] = [];
 
     machine.subscribe(
       storage.root,
-      (updates) => jsonUpdates.push(updates.map(serializeUpdateToJson)),
+      (updates) => receivedUpdates.push(updates.map(serializeUpdateToJson)),
       { isDeep: true }
     );
 
-    function assert(updates: JsonStorageUpdate[][]) {
-      expect(jsonUpdates).toEqual(updates);
+    function expectUpdates(updates: JsonStorageUpdate[][]) {
+      expect(receivedUpdates).toEqual(updates);
     }
 
     await callback({
       batch: machine.batch,
       root: storage.root,
       machine,
-      assert,
+      expectUpdates,
     });
   };
 }

@@ -32,8 +32,9 @@ npm install @liveblocks/node
 
 ## Documentation
 
-Read the [documentation](https://liveblocks.io/docs) for guides and API
-references.
+Read the
+[documentation](https://liveblocks.io/docs/api-reference/liveblocks-node) for
+guides and API references.
 
 ## Examples
 

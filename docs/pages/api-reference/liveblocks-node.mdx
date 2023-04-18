@@ -6,16 +6,37 @@ meta:
 alwaysShowAllNavigationLevels: false
 ---
 
-You can use the Liveblocks API in test mode, which does not affect your live
-data. The API key you use to authenticate the request determines whether the
-request is live mode or test mode.
+The two main things offered by `@liveblocks/node`:
+
+1. [The `authorize` function](#authorize), which helps you implement custom
+   authentication in your backend.
+1. [The `WebhookHandler` class](#WebhookHandler), which helps you implement
+   webhook handlers.
 
 ## authorize
 
-If the current user has access to the provided room, call this function from
-your authorization endpoint and return the result as a http response.
+The purpose of `authorize()` is to help you implement your custom authentication
+backend, i.e. the blue "server" part of this diagram:
 
-When calling the `authorize` function, you must pass a `userId`. Optionally,
+<Figure highlight={false}>
+  <Image
+    src="/images/docs/auth-diagram.svg"
+    alt="Auth diagram"
+    layout="responsive"
+    width={730}
+    height={504}
+    quality={90}
+  />
+</Figure>
+
+If the current user has access to the provided room, call this function from
+your authorization endpoint and return the result as an HTTP response.
+
+When calling the `authorize` function, you are _telling_ (!) Liveblocks that the
+user you specify is authenticated, for which rooms, and which permissions they
+will have.
+
+At the very least, you must pass a `userId` and a `roomId`. Optionally,
 `userInfo` can be used to add information about the current user that will not
 change during the session. This information will will be accessible in the
 client to all other users in [`Room.getOthers`][]. It can be helpful to
@@ -24,6 +45,14 @@ impersonification security issue.
 
 - `userId` cannot be longer than 128 characters.
 - `userInfo` cannot be longer than 1024 characters once serialized to JSON.
+
+<Banner title="Live or test mode?">
+
+You can use the Liveblocks API in test mode, which is separated from the live
+environment. Which SECRET_KEY you use to authenticate the request determines
+whether the request is live mode or test mode.
+
+</Banner>
 
 ### Example using Next.js [#nextjs-example]
 
@@ -100,7 +129,7 @@ app.post("/api/auth", (req, res) => {
 });
 ```
 
-### WebhookHandler [#WebhookHandler]
+## WebhookHandler [#WebhookHandler]
 
 The `WebhookHandler` class is a helper to handle webhook requests from
 Liveblocks.
@@ -131,7 +160,7 @@ import { WebhookHandler } from "@liveblocks/node";
 // Will fail if not properly initialized with a secret
 const webhookHandler = new WebhookHandler(process.env.WEBHOOK_SECRET);
 
-export default function webhookRequestHandler(req, res) {
+export default function yourCustomWebhookRequestHandler(req, res) {
   try {
     const event = webhookHandler.verifyRequest({
       headers: req.headers,

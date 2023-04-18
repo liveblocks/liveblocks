@@ -1,0 +1,39 @@
+#!/bin/sh
+set -eu
+
+PKGROOT="$(git rev-parse --show-toplevel)/schema-lang/liveblocks-schema"
+INPUT=src/parser/schema-lang.pegjs
+OUTPUT=src/parser/generated-parser.ts
+
+FORCE=0
+if [ $# -gt 0 ]; then
+    if [ "$1" = "-f" ]; then
+        FORCE=1
+    fi
+fi
+
+main () {
+    echo "Rebuilding parser..." >&2
+
+    set +e
+    ../../node_modules/.bin/peggy                           \
+        --plugin ../../node_modules/ts-pegjs/src/tspegjs.js \
+        --extra-options-file pegconfig.json                 \
+        --allowed-start-rules Document                      \
+        --cache                                             \
+        -o "$OUTPUT"                                        \
+        "$INPUT"                                            \
+        2>errors.log
+    exitcode="$?"
+    if [ "$exitcode" -gt 0 -o "$(cat errors.log | wc -l)" -gt 0 ]; then
+        cat errors.log >&2
+        rm -f "$OUTPUT" errors.log
+        exit "$exitcode"
+    fi
+    rm -f errors.log
+    set -e
+
+    echo "Done" >&2
+}
+
+( cd "$PKGROOT" && main )

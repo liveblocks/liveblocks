@@ -559,7 +559,7 @@
             "$ref": "#/components/responses/404"
           }
         },
-        "description": "Initializes a room storage. The room must already exist and have an empty storage.\n\nThe format of the request body is the same as what's returned by the get storage endpoint.\n\nFor each Liveblocks data structure that you want to create, you need a JSON element having two properties:\n- \"liveblocksType\": \"LiveObject\" | \"LiveList\" | \"LiveMap\"\n- \"data\" => contains the nested data structures (children) and data.\n\nThe root's type can only be LiveObject.",
+        "description": "Initializes a room storage. The room must already exist and have an empty storage. Calling this endpoint will disconnect all users from the room if there are any.\n\nThe format of the request body is the same as what’s returned by the get storage endpoint.\n\nFor each Liveblocks data structure that you want to create, you need a JSON element having two properties:\n- `\"liveblocksType\"` => `\"LiveObject\" | \"LiveList\" | \"LiveMap\"`\n- `\"data\"` => contains the nested data structures (children) and data.\n\nThe root’s type can only be LiveObject.",
         "requestBody": {
           "content": {
             "application/json": {
@@ -622,7 +622,7 @@
             "$ref": "#/components/responses/404"
           }
         },
-        "description": "Deletes all elements of the room storage."
+        "description": "Deletes all of the room’s storage data. Calling this endpoint will disconnect all users from the room if there are any.\n"
       }
     },
     "/rooms/{roomId}/authorize": {
