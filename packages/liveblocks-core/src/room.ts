@@ -1,3 +1,5 @@
+import isDeeplyEqual from "lodash/isEqual";
+
 import type { DocumentVisibilityState } from "./compat/DocumentVisibilityState";
 import type { ApplyResult, ManagedPool } from "./crdts/AbstractCrdt";
 import { OpSource } from "./crdts/AbstractCrdt";
@@ -1217,8 +1219,23 @@ function makeStateMachine<
             nn(state.opStackTraces).delete(opId);
           }
 
-          const deleted = state.unacknowledgedOps.delete(opId);
-          source = deleted ? OpSource.PURE_ACK : OpSource.REMOTE;
+          const unacknowledgedOp = state.unacknowledgedOps.get(opId);
+          if (unacknowledgedOp !== undefined) {
+            //
+            // NOTE: Don't worry, this Lodash dependency isn't meant to stay!
+            //
+            // We will have to be smarter about detecting this by finding a way
+            // to do an O(1) test here ideally, and definitely don't rely on
+            // deep-object comparisons here. However, the point is to make sure
+            // this approach fixes the ghosting bug first. We can make this
+            // check more efficient when it does.
+            //
+            source = isDeeplyEqual(unacknowledgedOp, op)
+              ? OpSource.PURE_ACK
+              : OpSource.PATCHED_ACK;
+          } else {
+            source = OpSource.REMOTE;
+          }
         }
 
         const applyOpResult = applyOp(op, source);
