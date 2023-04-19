@@ -1,4 +1,4 @@
-import { nn } from "../lib/assert";
+import { assertNever, nn } from "../lib/assert";
 import { nanoid } from "../lib/nanoid";
 import { comparePosition, makePosition } from "../lib/position";
 import type { CreateChildOp, CreateListOp, CreateOp, Op } from "../protocol/Op";
@@ -585,31 +585,38 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       throw new Error("Can't attach child if managed pool is not present");
     }
 
-    let result: ApplyResult;
-
-    if (op.intent === "set") {
-      if (source === OpSource.REMOTE) {
-        result = this._applySetRemote(op);
-      } else if (source === OpSource.ACK) {
-        result = this._applySetAck(op);
-      } else {
-        result = this._applySetUndoRedo(op);
-      }
-    } else {
-      if (source === OpSource.REMOTE) {
-        result = this._applyRemoteInsert(op);
-      } else if (source === OpSource.ACK) {
-        result = this._applyInsertAck(op);
-      } else {
-        result = this._applyInsertUndoRedo(op);
-      }
-    }
-
+    const result = this._dispatchByIntent(op, source);
     if (result.modified !== false) {
       this.invalidate();
     }
 
     return result;
+  }
+
+  _dispatchByIntent(op: CreateChildOp, source: OpSource): ApplyResult {
+    if (op.intent === "set") {
+      if (source === OpSource.REMOTE) {
+        return this._applySetRemote(op);
+      } else if (source === OpSource.ACK) {
+        return this._applySetAck(op);
+      } else if (source === OpSource.UNDOREDO_RECONNECT) {
+        return this._applySetUndoRedo(op);
+      } else {
+        // Should never happen
+        return assertNever(source, "Unhandled case");
+      }
+    } else {
+      if (source === OpSource.REMOTE) {
+        return this._applyRemoteInsert(op);
+      } else if (source === OpSource.ACK) {
+        return this._applyInsertAck(op);
+      } else if (source === OpSource.UNDOREDO_RECONNECT) {
+        return this._applyInsertUndoRedo(op);
+      } else {
+        // Should never happen
+        return assertNever(source, "Unhandled case");
+      }
+    }
   }
 
   /** @internal */
