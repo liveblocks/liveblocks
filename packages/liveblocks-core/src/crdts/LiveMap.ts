@@ -153,7 +153,7 @@ export class LiveMap<
       return { modified: false };
     }
 
-    if (source === OpSource.PURE_ACK) {
+    if (source === OpSource.PURE_ACK || source === OpSource.PATCHED_ACK) {
       const lastUpdateOpId = this.unacknowledgedSet.get(key);
       if (lastUpdateOpId === opId) {
         // Acknowlegment from local operation
