@@ -48,8 +48,13 @@ export interface ManagedPool {
 }
 
 export enum OpSource {
+  /* Applied locally in the client (optimistically). Could be from an undo/redo operation, or a reconnect (?) */
   LOCAL,
+
+  /* Incoming Op, originating from a different client */
   REMOTE,
+
+  /* Incoming Op, originally from this client, but echoed back by the server to acknowledge unmodified */
   ACK,
 }
 
