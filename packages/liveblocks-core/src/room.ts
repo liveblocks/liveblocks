@@ -1218,11 +1218,11 @@ function makeStateMachine<
           }
 
           const deleted = state.unacknowledgedOps.delete(opId);
-          source = deleted ? OpSource.ACK : OpSource.REMOTE;
+          source = deleted ? OpSource.PURE_ACK : OpSource.REMOTE;
         }
 
         const applyOpResult = applyOp(op, source);
-        if (applyOpResult.modified && source !== OpSource.ACK) {
+        if (applyOpResult.modified && source !== OpSource.PURE_ACK) {
           const nodeId = applyOpResult.modified.node._id;
 
           // If the modified node is not the root (undefined) and was created in the same batch, we don't want to notify

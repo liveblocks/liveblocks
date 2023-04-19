@@ -52,7 +52,7 @@ export enum OpSource {
   LOCAL,
 
   /* Incoming Op, originally from this client, but echoed back by the server to acknowledge unmodified */
-  ACK,
+  PURE_ACK,
 
   /* Incoming Op, originally from this client, but modified by the server after conflict resolution */
   PATCHED_ACK,
