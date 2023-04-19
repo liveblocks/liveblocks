@@ -48,7 +48,7 @@ export interface ManagedPool {
 }
 
 export enum OpSource {
-  UNDOREDO_RECONNECT,
+  LOCAL,
   REMOTE,
   ACK,
 }

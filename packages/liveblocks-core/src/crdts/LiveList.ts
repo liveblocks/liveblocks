@@ -599,7 +599,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
         return this._applySetRemote(op);
       } else if (source === OpSource.ACK) {
         return this._applySetAck(op);
-      } else if (source === OpSource.UNDOREDO_RECONNECT) {
+      } else if (source === OpSource.LOCAL) {
         return this._applySetUndoRedo(op);
       } else {
         // Should never happen
@@ -610,7 +610,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
         return this._applyRemoteInsert(op);
       } else if (source === OpSource.ACK) {
         return this._applyInsertAck(op);
-      } else if (source === OpSource.UNDOREDO_RECONNECT) {
+      } else if (source === OpSource.LOCAL) {
         return this._applyInsertUndoRedo(op);
       } else {
         // Should never happen
