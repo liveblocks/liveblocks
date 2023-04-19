@@ -54,6 +54,9 @@ export enum OpSource {
   /* Incoming Op, originally from this client, but echoed back by the server to acknowledge unmodified */
   ACK,
 
+  /* Incoming Op, originally from this client, but modified by the server after conflict resolution */
+  PATCHED_ACK,
+
   /* Incoming Op, originating from a different client */
   REMOTE,
 }
