@@ -140,6 +140,32 @@ describe("LiveList", () => {
           }
         )
       );
+
+      test(
+        "batch insert and delete same item",
+        prepareStorageUpdateTest<{ items: LiveList<string> }>(
+          [
+            createSerializedObject("0:1", {}),
+            createSerializedList("0:2", "0:1", "items"),
+          ],
+          async ({ batch, assert, root }) => {
+            batch(() => {
+              const items = root.get("items");
+              items.insert("a", 0);
+              items.delete(0);
+            });
+
+            assert([
+              [
+                listUpdate(
+                  ["b"],
+                  [listUpdateInsert(0, "a"), listUpdateDelete(0)]
+                ),
+              ],
+            ]);
+          }
+        )
+      );
     });
 
     it("push LiveObject on empty list", async () => {
