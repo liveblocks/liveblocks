@@ -48,10 +48,26 @@ the storage that do not match the schema you provided. Situations like this
 should only happen in development mode, and the developer is responsible for
 fixing them.
 
-## Create a schema
+## Schema actions
+
+You can interact with the schemas you create through the dashboard or by calling
+the [REST API](/docs/api-reference/rest-api-endpoints). In this guide, we will
+cover the following operations:
+
+- [Creating a schema](#Creating-a-schema)
+- [Deleting a schema](#Deleting-a-schema)
+- [Attaching a schema to a room](#Attaching-a-schema-to-a-room)
+- [Detaching a schema from a room](#Detaching-a-schema-from-a-room)
+
+You can also use the REST API to
+[list schemas](/docs/api-reference/rest-api-endpoints#list-schemas),
+[get a schema](/docs/api-reference/rest-api-endpoints#get-schema), and
+[update a schema](/docs/api-reference/rest-api-endpoints#update-schema).
+
+### Creating a schema
 
 Creating a schema via the dashboard is straightforward. Simply navigate to the
-“Schemas” page in the project you want to add the schema to, and click on the
+“Schemas” page in the project you want to add the schema, and click on the
 “Create schema” button. Provide a name and a definition that describes the shape
 of the data you want to store in your rooms.
 
@@ -64,12 +80,139 @@ of the data you want to store in your rooms.
   </video>
 </Figure>
 
+Another way to create a schema is via the
+[create schema API](/docs/api-reference/rest-api-endpoints#post-create-new-schema).
+A schema body is a multi-line string using the Liveblocks [schema syntax](/docs/guides/schema-validation/syntax). In the dashboard, a sample
+schema could be represented as:
+
+```ts
+type Storage {
+  todos: LiveList<LiveObject<Todo>>
+}
+
+type Todo {
+  text: string
+  checked?: boolean
+}
+```
+
+To create a schema, provide the name and body in the JSON payload. Example:
+
+```ts
+fetch("https://api.liveblocks.io/v2/schemas", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    name: "todo-list",
+    body: `
+      type Storage {
+        todos: LiveList<LiveObject<Todo>>
+      }
+
+      type Todo {
+        text: string
+        checked?: boolean
+      }
+    `
+  })
+});
+```
+
+Note that in this example, the outermost `body` field is the body of the HTTP request (required by the `fetch` API), whereas the innermost `body` field is consumed by our API to read the schema text.
+
 <Banner title="Schema syntax">
 
 Learn more about our [schema syntax](/docs/guides/schema-validation/syntax) and
 what kind of validations are currently supported.
 
 </Banner>
+
+### Deleting a schema
+
+In the dashboard, you can delete a schema by navigating to the schema in
+question and clicking on the trash icon next to the schema version you want to
+delete. If you have attached a schema to a room, you will need to detach the
+schema from the room before you can delete it. If this schema is frozen, the
+trash icon will be greyed out.
+
+<Figure>
+  <video autoPlay loop muted playsInline>
+    <source
+      src="/images/docs/schema-validation/delete-schema.mp4"
+      type="video/mp4"
+    />
+  </video>
+</Figure>
+
+If your schema is in a detached state, you can also delete it by using the
+[delete schema API](/docs/api-reference/rest-api-endpoints#delete-a-schema).
+
+```ts
+fetch("https://api.liveblocks.io/v2/schemas/{id}", {
+  method: "DELETE",
+});
+```
+
+### Attaching a schema to a room
+
+You can attach a schema to a room via the dashboard by navigating to the room in
+question and clicking on the “Attach schema” button.
+
+<Figure>
+  <video autoPlay loop muted playsInline>
+    <source
+      src="/images/docs/schema-validation/attach-schema.mp4"
+      type="video/mp4"
+    />
+  </video>
+</Figure>
+
+Alternatively, you can use the
+[attach schema API](/docs/api-reference/rest-api-endpoints#post-attach-schema-to-room).
+For example:
+
+```ts
+fetch("https://api.liveblocks.io/v2/rooms/{roomId}/schema", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+  },  
+  body: JSON.stringify({
+    schema: "todo-list@1",
+  }),
+});
+```
+<Banner title="Prerequisites for attaching a schema">
+To attach a schema to a room, you must first create a room and initialize storage. 
+
+</Banner>
+
+### Detaching a schema from a room
+
+You can use the dashboard to remove a schema from a room by navigating to the
+room in question and clicking on the dropdown menu which displays the currently
+attached schema. From there, you can click on the “Detach schema” button.
+
+<Figure>
+  <video autoPlay loop muted playsInline>
+    <source
+      src="/images/docs/schema-validation/detach-schema.mp4"
+      type="video/mp4"
+    />
+  </video>
+</Figure>
+
+To detach a schema from a room using the
+[detach schema API](/docs/api-reference/rest-api-endpoints#delete-detach-schema-to-room),
+use the following code:
+
+```ts
+fetch("https://api.liveblocks.io/v2/rooms/{roomId}/schema", {
+  method: "DELETE",
+});
+```
 
 ## The validation process in practice
 
@@ -147,8 +290,11 @@ Other examples where schema validation would catch the error include:
 - Attempting to delete the `checked` variable: it was not defined as optional in
   the schema
 
-When an instance like this occurs, it’s indicative of a bug in your app. You
-should fix it, just like you would, for a TypeScript bug.
+## How to handle validation errors
+
+When a schema validation error occurs, the LiveBlocks server will reject the operation 
+
+When an instance like this occurs, it’s indicative of a bug in your app. In production, an error like this should never occur. This is because you should address validation errors in the same way you address TypeScript errors. You don't ship to production when your app has TypeScript errors, and neither do you ship to prod when there are schema validation errors. Validation errors are the responsibility of the developer to resolve.
 
 ## What’s to come
 

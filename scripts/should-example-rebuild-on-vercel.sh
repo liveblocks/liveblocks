@@ -48,12 +48,12 @@ shift $(($OPTIND - 1))
 
 if [ "$#" -lt 1 ]; then
     usage
-    exit 2
+    exit 3
 elif [ "$#" -gt 1 ]; then
     shift 1
     err "Superfluous arguments: $@"
     usage
-    exit 2
+    exit 4
 fi
 
 EXAMPLE="${1%/}"
@@ -62,14 +62,14 @@ if [ ! -d "examples/$EXAMPLE" ]; then
     err "Unknown example: $EXAMPLE"
     err "Valid examples are:"
     ls examples/ | cat >&2
-    exit 2
+    exit 5
 fi
 
 get_all_changed_files () {
     if [ ! -f "changed-files.txt" ]; then
         if [ -z "$GITHUB_ACCESS_TOKEN" ]; then
             err "Please set the GITHUB_ACCESS_TOKEN env var for this Vercel project for this to work."
-            exit 2
+            exit 6
         fi
 
         # If this is a check on the main branch, then compare the latest commit
