@@ -7,5 +7,5 @@ export function Room() {
 
   // Set cursor to null on pointer leave
 
-  return <div>{JSON.stringify(myPresence)}</div>;
+  return <div>Cursor: {JSON.stringify(myPresence.cursor)}</div>;
 }

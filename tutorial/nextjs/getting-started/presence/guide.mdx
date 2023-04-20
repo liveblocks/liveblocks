@@ -29,13 +29,6 @@ type Presence = {
 
 Next, pass `Presence` to `createRoomContext` as a generic, and export the [`useMyPresence`][] hook.
 
-<Banner title="Defining types">
-
-With our React package, you only need to handle your types once
-as they’ll automatically propagate through your entire app.
-
-</Banner>
-
 ```ts highlight="4,5"
 export const {
   RoomProvider,
@@ -43,6 +36,13 @@ export const {
   useMyPresence, // ✅
 } = createRoomContext<Presence>(client);
 ```
+
+<Banner title="Defining types">
+
+With our React package, you only need to handle your types once
+as they’ll automatically propagate through your entire app.
+
+</Banner>
 
 The last step in setting up presence is setting an initial value.
 Switch to [App.tsx][] and pass `cursor: null` to [`RoomProvider`][]—no one starts with their cursor on-screen.
@@ -53,7 +53,7 @@ Switch to [App.tsx][] and pass `cursor: null` to [`RoomProvider`][]—no one sta
 
 ### Displaying presence
 
-To display presence, we’ll add [`useMyPresence`][] to [Room.tsx][], and quickly display its value, similarly to `useState`.
+To display the current user’s presence, we’ll add [`useMyPresence`][] to [Room.tsx][], and quickly display its value, similarly to `useState`.
 
 ```tsx
 import { useMyPresence } from "./liveblocks.config";
@@ -61,11 +61,11 @@ import { useMyPresence } from "./liveblocks.config";
 export function Room() {
   const [myPresence, updateMyPresence] = useMyPresence();
   
-  return <div>JSON.stringify(myPresence)</div>;
+  return <div>Cursor: {JSON.stringify(myPresence.cursor)}</div>;
 }
 ```
 
-Great! You should now be seeing `cursor: null` in the preview window. On the next page we’ll be creating live cursors with presence.
+Great! Hit the refresh button in the preview window to reload `initialPresence`, and you should now be seeing `Cursor: null` in the preview window! On the next page we’ll be creating live cursors with presence.
 
 
 [`RoomProvider`]: /docs/api-reference/liveblocks-react#RoomProvider
