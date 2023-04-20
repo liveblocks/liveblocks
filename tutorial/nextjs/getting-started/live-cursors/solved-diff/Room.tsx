@@ -8,7 +8,7 @@ export function Room() {
   const others = useOthers();
 
   function handlePointerMove(e) {
-    const cursor = { x: e.clientX, y: e.clientY };
+    const cursor = { x: Math.floor(e.clientX), y: Math.floor(e.clientY) };
     updateMyPresence({ cursor });
   }
 
@@ -25,8 +25,12 @@ export function Room() {
       Cursor: {JSON.stringify(myPresence.cursor)}
       {others
         .filter((other) => other.presence?.cursor)
-        .map(({ presence }) => (
-          <Cursor x={presence.cursor.x} y={presence.cursor.y} />
+        .map(({ connectionId, presence }) => (
+          <Cursor
+            key={connectionId}
+            x={presence.cursor.x}
+            y={presence.cursor.y}
+          />
         ))}
     </div>
   );

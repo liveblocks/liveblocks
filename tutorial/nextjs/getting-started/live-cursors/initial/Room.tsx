@@ -7,7 +7,7 @@ export function Room() {
   // Get list of other users
 
   function handlePointerMove(e) {
-    const cursor = { x: e.clientX, y: e.clientY };
+    const cursor = { x: Math.floor(e.clientX), y: Math.floor(e.clientY) };
     updateMyPresence({ cursor });
   }
 
