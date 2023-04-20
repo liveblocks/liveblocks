@@ -44,12 +44,13 @@
  * - '!O' < '!~'  (like how .5  < .9)
  *
  */
+import type { Brand } from "./utils";
 
 /**
  * A valid/verified "position" string. These values are used as "parentKey"s by
  * LiveList children, and define their relative ordering.
  */
-export type Pos = string & { _brand: "Pos" };
+export type Pos = Brand<string, "Pos">;
 
 const minCode = 32;
 const maxCode = 126;
