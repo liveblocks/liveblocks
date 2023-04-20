@@ -1,11 +1,27 @@
-import { useMyPresence } from "./liveblocks.config";
+import { useMyPresence, useOthers } from "./liveblocks.config";
+import { Cursor } from "./Cursor";
 
 export function Room() {
   const [myPresence, updateMyPresence] = useMyPresence();
 
-  // Update cursor coordinates on pointer move
+  // Get list of other users
 
-  // Set cursor to null on pointer leave
+  function handlePointerMove(e) {
+    const cursor = { x: e.clientX, y: e.clientY };
+    updateMyPresence({ cursor });
+  }
 
-  return <div>Cursor: {JSON.stringify(myPresence.cursor)}</div>;
+  function handlePointerLeave(e) {
+    updateMyPresence({ cursor: null });
+  }
+
+  return (
+    <div
+      style={{ width: "100vw", height: "100vh" }}
+      onPointerMove={handlePointerMove}
+      onPointerLeave={handlePointerLeave}
+    >
+      Cursor: {JSON.stringify(myPresence.cursor)}
+    </div>
+  );
 }

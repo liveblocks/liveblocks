@@ -9,5 +9,5 @@ type Presence = {
   cursor: { x: number; y: number } | null;
 };
 
-export const { RoomProvider, useOthers, useMyPresence } =
+export const { RoomProvider, useMyPresence } =
   createRoomContext<Presence>(client);

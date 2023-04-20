@@ -20,7 +20,7 @@ export function Room() {
       onPointerMove={handlePointerMove}
       onPointerLeave={handlePointerLeave}
     >
-      <div>Cursor: {JSON.stringify(myPresence.cursor)}</div>
+      Cursor: {JSON.stringify(myPresence.cursor)}
     </div>
   );
 }
