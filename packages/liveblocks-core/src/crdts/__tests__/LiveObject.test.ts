@@ -409,52 +409,49 @@ describe("LiveObject", () => {
   });
 
   describe("acknowledge mechanism", () => {
-    it(
-      "should not ignore history updates if the current op has not been acknowledged",
-      prepareDisconnectedStorageUpdateTest<{
-        items: LiveObject<{ b?: string; a?: string }>;
-      }>(
-        [
+    it("should not ignore history updates if the current op has not been acknowledged", async () => {
+      const { expectUpdates, batch, root, machine } =
+        await prepareDisconnectedStorageUpdateTest<{
+          items: LiveObject<{ b?: string; a?: string }>;
+        }>([
           createSerializedObject("0:0", {}),
           createSerializedObject("0:1", { a: "B" }, "0:0", "items"),
+        ]);
+
+      const items = root.get("items");
+      batch(() => {
+        items.set("a", "A");
+        items.set("b", "A");
+      });
+
+      expect(items.toObject()).toEqual({ a: "A", b: "A" });
+      expectUpdates([
+        [
+          objectUpdate(
+            { a: "A", b: "A" },
+            { a: { type: "update" }, b: { type: "update" } }
+          ),
         ],
-        async ({ expectUpdates, batch, root, machine }) => {
-          const items = root.get("items");
-          batch(() => {
-            items.set("a", "A");
-            items.set("b", "A");
-          });
+      ]);
 
-          expect(items.toObject()).toEqual({ a: "A", b: "A" });
-          expectUpdates([
-            [
-              objectUpdate(
-                { a: "A", b: "A" },
-                { a: { type: "update" }, b: { type: "update" } }
-              ),
-            ],
-          ]);
+      machine.undo();
 
-          machine.undo();
-
-          expect(items.toObject()).toEqual({ a: "B" });
-          expectUpdates([
-            [
-              objectUpdate(
-                { a: "A", b: "A" },
-                { a: { type: "update" }, b: { type: "update" } }
-              ),
-            ],
-            [
-              objectUpdate<{ a?: string; b?: string }>(
-                { a: "B" },
-                { a: { type: "update" }, b: { type: "delete" } }
-              ),
-            ],
-          ]);
-        }
-      )
-    );
+      expect(items.toObject()).toEqual({ a: "B" });
+      expectUpdates([
+        [
+          objectUpdate(
+            { a: "A", b: "A" },
+            { a: { type: "update" }, b: { type: "update" } }
+          ),
+        ],
+        [
+          objectUpdate<{ a?: string; b?: string }>(
+            { a: "B" },
+            { a: { type: "update" }, b: { type: "delete" } }
+          ),
+        ],
+      ]);
+    });
 
     describe("should ignore incoming updates if the current op has not been acknowledged", () => {
       test("when value is not a crdt", async () => {

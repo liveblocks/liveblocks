@@ -120,26 +120,23 @@ describe("LiveList", () => {
     });
 
     describe("updates", () => {
-      it(
-        "push on empty list update",
-        prepareStorageUpdateTest<{ items: LiveList<string> }>(
-          [
+      it("push on empty list update", async () => {
+        const { root, expectUpdates, machine } =
+          await prepareStorageUpdateTest<{ items: LiveList<string> }>([
             createSerializedObject("0:0", {}),
             createSerializedList("0:1", "0:0", "items"),
-          ],
-          async ({ root, expectUpdates, machine }) => {
-            root.get("items").push("a");
-            machine.undo();
-            machine.redo();
+          ]);
 
-            expectUpdates([
-              [listUpdate(["a"], [listUpdateInsert(0, "a")])],
-              [listUpdate([], [listUpdateDelete(0)])],
-              [listUpdate(["a"], [listUpdateInsert(0, "a")])],
-            ]);
-          }
-        )
-      );
+        root.get("items").push("a");
+        machine.undo();
+        machine.redo();
+
+        expectUpdates([
+          [listUpdate(["a"], [listUpdateInsert(0, "a")])],
+          [listUpdate([], [listUpdateDelete(0)])],
+          [listUpdate(["a"], [listUpdateInsert(0, "a")])],
+        ]);
+      });
     });
 
     it("push LiveObject on empty list", async () => {
@@ -259,28 +256,25 @@ describe("LiveList", () => {
     });
 
     describe("updates", () => {
-      it(
-        "insert at the middle update",
-        prepareStorageUpdateTest<{ items: LiveList<string> }>(
-          [
+      it("insert at the middle update", async () => {
+        const { root, expectUpdates, machine } =
+          await prepareStorageUpdateTest<{ items: LiveList<string> }>([
             createSerializedObject("0:0", {}),
             createSerializedList("0:1", "0:0", "items"),
             createSerializedRegister("0:2", "0:1", FIRST_POSITION, "A"),
             createSerializedRegister("0:3", "0:1", SECOND_POSITION, "C"),
-          ],
-          async ({ root, expectUpdates, machine }) => {
-            root.get("items").insert("B", 1);
-            machine.undo();
-            machine.redo();
+          ]);
 
-            expectUpdates([
-              [listUpdate(["A", "B", "C"], [listUpdateInsert(1, "B")])],
-              [listUpdate(["A", "C"], [listUpdateDelete(1)])],
-              [listUpdate(["A", "B", "C"], [listUpdateInsert(1, "B")])],
-            ]);
-          }
-        )
-      );
+        root.get("items").insert("B", 1);
+        machine.undo();
+        machine.redo();
+
+        expectUpdates([
+          [listUpdate(["A", "B", "C"], [listUpdateInsert(1, "B")])],
+          [listUpdate(["A", "C"], [listUpdateDelete(1)])],
+          [listUpdate(["A", "B", "C"], [listUpdateInsert(1, "B")])],
+        ]);
+      });
     });
 
     it("insert LiveObject at position 0", async () => {
@@ -333,27 +327,24 @@ describe("LiveList", () => {
     });
 
     describe("updates", () => {
-      it(
-        "delete first update",
-        prepareStorageUpdateTest<{ items: LiveList<string> }>(
-          [
+      it("delete first update", async () => {
+        const { root, expectUpdates, machine } =
+          await prepareStorageUpdateTest<{ items: LiveList<string> }>([
             createSerializedObject("0:0", {}),
             createSerializedList("0:1", "0:0", "items"),
             createSerializedRegister("0:2", "0:1", FIRST_POSITION, "A"),
-          ],
-          async ({ root, expectUpdates, machine }) => {
-            root.get("items").delete(0);
-            machine.undo();
-            machine.redo();
+          ]);
 
-            expectUpdates([
-              [listUpdate([], [listUpdateDelete(0)])],
-              [listUpdate(["A"], [listUpdateInsert(0, "A")])],
-              [listUpdate([], [listUpdateDelete(0)])],
-            ]);
-          }
-        )
-      );
+        root.get("items").delete(0);
+        machine.undo();
+        machine.redo();
+
+        expectUpdates([
+          [listUpdate([], [listUpdateDelete(0)])],
+          [listUpdate(["A"], [listUpdateInsert(0, "A")])],
+          [listUpdate([], [listUpdateDelete(0)])],
+        ]);
+      });
     });
 
     it("delete first item", async () => {
@@ -433,28 +424,25 @@ describe("LiveList", () => {
     });
 
     describe("updates", () => {
-      it(
-        "move at the end update",
-        prepareStorageUpdateTest<{ items: LiveList<string> }>(
-          [
+      it("move at the end update", async () => {
+        const { root, expectUpdates, machine } =
+          await prepareStorageUpdateTest<{ items: LiveList<string> }>([
             createSerializedObject("0:0", {}),
             createSerializedList("0:1", "0:0", "items"),
             createSerializedRegister("0:2", "0:1", FIRST_POSITION, "A"),
             createSerializedRegister("0:3", "0:1", SECOND_POSITION, "B"),
-          ],
-          async ({ root, expectUpdates, machine }) => {
-            root.get("items").move(0, 1);
-            machine.undo();
-            machine.redo();
+          ]);
 
-            expectUpdates([
-              [listUpdate(["B", "A"], [listUpdateMove(0, 1, "A")])],
-              [listUpdate(["A", "B"], [listUpdateMove(1, 0, "A")])],
-              [listUpdate(["B", "A"], [listUpdateMove(0, 1, "A")])],
-            ]);
-          }
-        )
-      );
+        root.get("items").move(0, 1);
+        machine.undo();
+        machine.redo();
+
+        expectUpdates([
+          [listUpdate(["B", "A"], [listUpdateMove(0, 1, "A")])],
+          [listUpdate(["A", "B"], [listUpdateMove(1, 0, "A")])],
+          [listUpdate(["B", "A"], [listUpdateMove(0, 1, "A")])],
+        ]);
+      });
     });
 
     it("move after current position", async () => {
@@ -559,34 +547,31 @@ describe("LiveList", () => {
     });
 
     describe("updates", () => {
-      it(
-        "clear updates",
-        prepareStorageUpdateTest<{ items: LiveList<string> }>(
-          [
+      it("clear updates", async () => {
+        const { root, expectUpdates, machine } =
+          await prepareStorageUpdateTest<{ items: LiveList<string> }>([
             createSerializedObject("0:0", {}),
             createSerializedList("0:1", "0:0", "items"),
             createSerializedRegister("0:2", "0:1", FIRST_POSITION, "A"),
             createSerializedRegister("0:3", "0:1", SECOND_POSITION, "B"),
-          ],
-          async ({ root, expectUpdates, machine }) => {
-            root.get("items").clear();
-            machine.undo();
-            machine.redo();
+          ]);
 
-            expectUpdates([
-              [listUpdate([], [listUpdateDelete(0), listUpdateDelete(0)])],
-              [
-                listUpdate(
-                  ["A", "B"],
-                  [listUpdateInsert(0, "A"), listUpdateInsert(1, "B")]
-                ),
-              ],
-              // Because redo reverse the operations, we delete items from the end
-              [listUpdate([], [listUpdateDelete(1), listUpdateDelete(0)])],
-            ]);
-          }
-        )
-      );
+        root.get("items").clear();
+        machine.undo();
+        machine.redo();
+
+        expectUpdates([
+          [listUpdate([], [listUpdateDelete(0), listUpdateDelete(0)])],
+          [
+            listUpdate(
+              ["A", "B"],
+              [listUpdateInsert(0, "A"), listUpdateInsert(1, "B")]
+            ),
+          ],
+          // Because redo reverse the operations, we delete items from the end
+          [listUpdate([], [listUpdateDelete(1), listUpdateDelete(0)])],
+        ]);
+      });
     });
 
     it("clear should delete all items", async () => {
