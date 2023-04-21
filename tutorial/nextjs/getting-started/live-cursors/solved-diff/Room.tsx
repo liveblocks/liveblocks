@@ -24,7 +24,7 @@ export function Room() {
     >
       Cursor: {JSON.stringify(myPresence.cursor)}
       {others
-        .filter((other) => other.presence?.cursor)
+        .filter((other) => other.presence.cursor !== null)
         .map(({ connectionId, presence }) => (
           <Cursor
             key={connectionId}

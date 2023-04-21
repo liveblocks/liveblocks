@@ -11,5 +11,5 @@ type Presence = {
 
 export const {
   RoomProvider,
-  // ...
+  useBroadcastEvent, // ✅
 } = createRoomContext<Presence>(client);

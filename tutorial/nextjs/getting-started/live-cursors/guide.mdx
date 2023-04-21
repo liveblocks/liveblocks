@@ -10,7 +10,7 @@ showFiles: [
 
 On the previous page we learned to update presence with our cursor location—let’s use it to render live cursors.
 
-### useOthers
+### Getting others’ presence
 
 We can get each user’s presence with the [`useOthers`][] hook. Like with every hook, the first step is exporting it from [liveblocks.config.ts][].
 
@@ -46,7 +46,7 @@ To render the cursors, we first need a cursor component. If you look inside [Cur
 
 To draw them, we can map through `others`, filtering for any cursors that are equal to `null` (therefore off-screen), and render each on-screen cursor.
 
-```tsx highlight="8-15"
+```tsx highlight="8-16"
 return (
   <div
     style={{ width: "100vw", height: "100vh" }}
@@ -55,7 +55,7 @@ return (
   >
     Cursor: {JSON.stringify(myPresence.cursor)}
     {others
-      .filter((other) => other.presence?.cursor)
+      .filter((other) => other.presence.cursor !== null)
       .map(({ connectionId, presence }) => (
         <Cursor
           key={connectionId}
