@@ -847,7 +847,7 @@ function userToTreeNode(
 }
 
 /** @internal */
-function makeInitialContext<
+function defaultMachineContext<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
   TUserMeta extends BaseUserMeta,
@@ -929,7 +929,7 @@ function makeStateMachine<
 ): Machine<TPresence, TStorage, TUserMeta, TRoomEvent> {
   // XXX Rename to `context`. This represents the "infinite state" part of the Finite State Machine.
   const state: MachineContext<TPresence, TStorage, TUserMeta, TRoomEvent> =
-    makeInitialContext(initialPresence, initialStorage);
+    defaultMachineContext(initialPresence, initialStorage);
 
   const doNotBatchUpdates = (cb: () => void): void => cb();
   const batchUpdates = config.unstable_batchedUpdates ?? doNotBatchUpdates;
