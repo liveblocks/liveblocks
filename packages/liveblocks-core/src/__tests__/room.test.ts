@@ -1432,7 +1432,7 @@ describe("room", () => {
 
       reconnect(2);
 
-      const refMachineOthers = refMachine.getOthers().toArray();
+      const refMachineOthers = refMachine.getOthers();
 
       expect(refMachineOthers).toEqual([
         {
