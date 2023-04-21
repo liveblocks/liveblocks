@@ -2406,7 +2406,7 @@ function defaultState<
   TRoomEvent extends Json
 >(
   initialPresence: TPresence,
-  initialStorage?: TStorage
+  initialStorage: TStorage | undefined
 ): State<TPresence, TStorage, TUserMeta, TRoomEvent> {
   const others = new OthersRef<TPresence, TUserMeta>();
   const others_forDevTools = new DerivedRef(others, (others) =>
