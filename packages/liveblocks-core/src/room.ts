@@ -846,6 +846,77 @@ function userToTreeNode(
   };
 }
 
+/** @internal */
+function defaultMachineContext<
+  TPresence extends JsonObject,
+  TStorage extends LsonObject,
+  TUserMeta extends BaseUserMeta,
+  TRoomEvent extends Json
+>(
+  initialPresence: TPresence,
+  initialStorage: TStorage | undefined
+): MachineContext<TPresence, TStorage, TUserMeta, TRoomEvent> {
+  const others = new OthersRef<TPresence, TUserMeta>();
+  const others_forDevTools = new DerivedRef(others, (others) =>
+    others.map((other, index) => userToTreeNode(`Other ${index}`, other))
+  );
+
+  const connection = new ValueRef<Connection>({ status: "closed" });
+
+  return {
+    token: null,
+    lastConnectionId: null,
+    socket: null,
+    numberOfRetry: 0,
+    lastFlushTime: 0,
+    timeoutHandles: {
+      flush: null,
+      reconnect: 0,
+      pongTimeout: 0,
+    },
+    buffer: {
+      me:
+        // Queue up the initial presence message as a Full Presence™ update
+        {
+          type: "full",
+          data: initialPresence,
+        },
+      messages: [],
+      storageOperations: [],
+    },
+    intervalHandles: {
+      heartbeat: 0,
+    },
+
+    connection,
+    me: new MeRef(initialPresence),
+    others,
+    others_forDevTools,
+
+    initialStorage,
+    idFactory: null,
+
+    // Storage
+    clock: 0,
+    opClock: 0,
+    nodes: new Map<string, LiveNode>(),
+    root: undefined,
+
+    undoStack: [],
+    redoStack: [],
+    pausedHistory: null,
+
+    activeBatch: null,
+    unacknowledgedOps: new Map<string, Op>(),
+
+    // Debug
+    opStackTraces:
+      process.env.NODE_ENV !== "production"
+        ? new Map<string, string>()
+        : undefined,
+  };
+}
+
 function makeStateMachine<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
@@ -2405,76 +2476,6 @@ function makeStateMachine<
     getSelf_forDevTools: () => selfAsTreeNode.current,
     getOthers_forDevTools: (): readonly DevTools.UserTreeNode[] =>
       state.others_forDevTools.current,
-  };
-}
-
-function defaultMachineContext<
-  TPresence extends JsonObject,
-  TStorage extends LsonObject,
-  TUserMeta extends BaseUserMeta,
-  TRoomEvent extends Json
->(
-  initialPresence: TPresence,
-  initialStorage: TStorage | undefined
-): MachineContext<TPresence, TStorage, TUserMeta, TRoomEvent> {
-  const others = new OthersRef<TPresence, TUserMeta>();
-  const others_forDevTools = new DerivedRef(others, (others) =>
-    others.map((other, index) => userToTreeNode(`Other ${index}`, other))
-  );
-
-  const connection = new ValueRef<Connection>({ status: "closed" });
-
-  return {
-    token: null,
-    lastConnectionId: null,
-    socket: null,
-    numberOfRetry: 0,
-    lastFlushTime: 0,
-    timeoutHandles: {
-      flush: null,
-      reconnect: 0,
-      pongTimeout: 0,
-    },
-    buffer: {
-      me:
-        // Queue up the initial presence message as a Full Presence™ update
-        {
-          type: "full",
-          data: initialPresence,
-        },
-      messages: [],
-      storageOperations: [],
-    },
-    intervalHandles: {
-      heartbeat: 0,
-    },
-
-    connection,
-    me: new MeRef(initialPresence),
-    others,
-    others_forDevTools,
-
-    initialStorage,
-    idFactory: null,
-
-    // Storage
-    clock: 0,
-    opClock: 0,
-    nodes: new Map<string, LiveNode>(),
-    root: undefined,
-
-    undoStack: [],
-    redoStack: [],
-    pausedHistory: null,
-
-    activeBatch: null,
-    unacknowledgedOps: new Map<string, Op>(),
-
-    // Debug
-    opStackTraces:
-      process.env.NODE_ENV !== "production"
-        ? new Map<string, string>()
-        : undefined,
   };
 }
 
