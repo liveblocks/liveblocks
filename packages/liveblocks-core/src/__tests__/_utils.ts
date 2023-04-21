@@ -191,8 +191,8 @@ export async function prepareRoomWithStorage<
     TRoomEvent
   >({} as TPresence, defaultStorage || ({} as TStorage));
   const machine = makeStateMachine<TPresence, TStorage, TUserMeta, TRoomEvent>(
-    state,
-    makeMachineConfig(effects)
+    makeMachineConfig(effects),
+    state
   );
   const ws = new MockWebSocket("");
 

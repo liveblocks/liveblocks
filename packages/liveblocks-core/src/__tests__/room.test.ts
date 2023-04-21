@@ -84,8 +84,8 @@ function setupStateMachine<
     undefined // no initialStorage
   );
   const machine = makeStateMachine<TPresence, TStorage, TUserMeta, TRoomEvent>(
-    state,
-    makeMachineConfig(effects)
+    makeMachineConfig(effects),
+    state
   );
   return { machine, state, effects };
 }

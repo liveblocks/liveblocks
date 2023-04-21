@@ -852,9 +852,9 @@ function makeStateMachine<
   TUserMeta extends BaseUserMeta,
   TRoomEvent extends Json
 >(
+  config: MachineConfig<TPresence, TRoomEvent>,
   // XXX Rename to `context`. This represents the "infinite state" part of the Finite State Machine.
-  state: MachineContext<TPresence, TStorage, TUserMeta, TRoomEvent>,
-  config: MachineConfig<TPresence, TRoomEvent>
+  state: MachineContext<TPresence, TStorage, TUserMeta, TRoomEvent>
 ): Machine<TPresence, TStorage, TUserMeta, TRoomEvent> {
   const doNotBatchUpdates = (cb: () => void): void => cb();
   const batchUpdates = config.unstable_batchedUpdates ?? doNotBatchUpdates;
@@ -2521,8 +2521,8 @@ export function createRoomMachine<
   );
 
   const machine = makeStateMachine<TPresence, TStorage, TUserMeta, TRoomEvent>(
-    state,
-    config
+    config,
+    state
   );
 
   const room: Room<TPresence, TStorage, TUserMeta, TRoomEvent> = {
