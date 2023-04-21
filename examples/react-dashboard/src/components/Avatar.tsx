@@ -1,6 +1,10 @@
 import styles from "./Avatar.module.css";
 
-export default function Avatar({ color }) {
+type Props = {
+  color?: string;
+};
+
+export default function Avatar({ color }: Props) {
   return (
     <div className={styles.container}>
       <div className={styles.avatar}>
