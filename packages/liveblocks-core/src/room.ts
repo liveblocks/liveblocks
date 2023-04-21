@@ -843,7 +843,10 @@ function makeStateMachine<
   initialPresence: TPresence,
   initialStorage: TStorage | undefined
 ): Machine<TPresence, TStorage, TUserMeta, TRoomEvent> {
-  // The "context" is the "infinite state" part of this Finite State Machine.
+  // The "context" is the machine's stateful extended context, also sometimes
+  // known as the "extended state" of a finite state machine. The context
+  // maintains state beyond the inherent state that are the finite states
+  // themselves.
   const context: MachineContext<TPresence, TStorage, TUserMeta, TRoomEvent> = {
     token: null,
     lastConnectionId: null,
