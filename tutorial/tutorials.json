@@ -28,12 +28,6 @@
             "description": "Using others to display online presence"
           },
           {
-            "slug": "online-avatars",
-            "title": "Online avatars using others",
-            "description": "Building online avatars with useOthers",
-            "comingSoon": true
-          },
-          {
             "slug": "presence",
             "title": "Using presence",
             "description": "How to set the current user’s presence"
@@ -51,8 +45,7 @@
           {
             "slug": "broadcasting-events",
             "title": "Broadcasting events",
-            "description": "",
-            "comingSoon": true
+            "description": "How to broadcast notification events"
           },
           {
             "slug": "conflict-free-data",
@@ -100,6 +93,12 @@
             "slug": "user-info",
             "title": "Adding user info",
             "description": "",
+            "comingSoon": true
+          },
+          {
+            "slug": "online-avatars",
+            "title": "Online avatars with user info",
+            "description": "Building online avatars with user info",
             "comingSoon": true
           },
           {

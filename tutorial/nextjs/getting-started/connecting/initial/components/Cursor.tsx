@@ -1,5 +1,3 @@
-import styles from "./Cursor.module.css";
-
 type CursorProps = {
   x: number;
   y: number;
@@ -8,10 +6,7 @@ type CursorProps = {
 
 export default function Cursor({ x, y, picture }: CursorProps) {
   return (
-    <div
-      className={styles.cursor}
-      style={{ transform: `translate(${x}px, ${y}px` }}
-    >
+    <div className="cursor" style={{ transform: `translate(${x}px, ${y}px` }}>
       <svg width="32" height="44" viewBox="0 0 24 36" fill="none">
         <defs>
           <filter id="avatar-blur">

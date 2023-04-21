@@ -1,7 +1,6 @@
 import { Avatar } from "./Avatar";
 import { useOthersConnectionIds, useSelf } from "../liveblocks.real.config";
 import { AnimatePresence, motion } from "framer-motion";
-import styles from "./Avatars.module.css";
 
 const animationProps = {
   initial: { width: 0, transformOrigin: "left" },
@@ -21,7 +20,7 @@ export default function Avatars() {
   const currentUser = useSelf();
 
   return (
-    <div className={styles.avatars}>
+    <div className="avatars">
       <AnimatePresence>
         {others.reverse().map((id) => (
           <motion.div key={id} {...animationProps}>
