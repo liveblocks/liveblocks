@@ -1,15 +1,12 @@
 # Public packages
 /packages/   @nvie
-!/packages/liveblocks-devtools/
-!/packages/create-liveblocks-app/
+/packages/liveblocks-devtools/   @nvie @marcbouchenoire
+/packages/create-liveblocks-app/   @CTNicholas
+/packages/liveblocks-node/   @nvie @ofoucherot
 /shared/   @nvie
 /e2e/   @nvie
 
-# DevTools
-/packages/liveblocks-devtools/   @nvie @marcbouchenoire
-
-# Create Liveblocks App, examples, docs, and starter kit
-/packages/create-liveblocks-app/   @CTNicholas
+# Examples, docs, and starter kit
 /starter-kits/   @CTNicholas
 /examples/   @CTNicholas
 /docs/   @CTNicholas
