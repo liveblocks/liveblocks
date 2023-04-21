@@ -925,8 +925,8 @@ function makeStateMachine<
   initialPresence: TPresence,
   initialStorage: TStorage | undefined
 ): Machine<TPresence, TStorage, TUserMeta, TRoomEvent> {
-  // XXX Rename to `context`. This represents the "infinite state" part of the Finite State Machine.
-  const state: MachineContext<TPresence, TStorage, TUserMeta, TRoomEvent> =
+  // The "context" is the "infinite state" part of this Finite State Machine.
+  const context: MachineContext<TPresence, TStorage, TUserMeta, TRoomEvent> =
     defaultMachineContext(initialPresence, initialStorage);
 
   const doNotBatchUpdates = (cb: () => void): void => cb();
@@ -935,26 +935,26 @@ function makeStateMachine<
   const pool: ManagedPool = {
     roomId: config.roomId,
 
-    getNode: (id: string) => state.nodes.get(id),
-    addNode: (id: string, node: LiveNode) => void state.nodes.set(id, node),
-    deleteNode: (id: string) => void state.nodes.delete(id),
+    getNode: (id: string) => context.nodes.get(id),
+    addNode: (id: string, node: LiveNode) => void context.nodes.set(id, node),
+    deleteNode: (id: string) => void context.nodes.delete(id),
 
-    generateId: () => `${getConnectionId()}:${state.clock++}`,
-    generateOpId: () => `${getConnectionId()}:${state.opClock++}`,
+    generateId: () => `${getConnectionId()}:${context.clock++}`,
+    generateOpId: () => `${getConnectionId()}:${context.opClock++}`,
 
     dispatch(
       ops: Op[],
       reverse: Op[],
       storageUpdates: Map<string, StorageUpdate>
     ) {
-      const activeBatch = state.activeBatch;
+      const activeBatch = context.activeBatch;
 
       if (process.env.NODE_ENV !== "production") {
         const stackTrace = captureStackTrace("Storage mutation", this.dispatch);
         if (stackTrace) {
           ops.forEach((op) => {
             if (op.opId) {
-              nn(state.opStackTraces).set(op.opId, stackTrace);
+              nn(context.opStackTraces).set(op.opId, stackTrace);
             }
           });
         }
@@ -975,7 +975,7 @@ function makeStateMachine<
       } else {
         batchUpdates(() => {
           addToUndoStack(reverse, doNotBatchUpdates);
-          state.redoStack = [];
+          context.redoStack = [];
           dispatchOps(ops);
           notify({ storageUpdates }, doNotBatchUpdates);
         });
@@ -984,8 +984,8 @@ function makeStateMachine<
 
     assertStorageIsWritable: () => {
       if (
-        isConnectionSelfAware(state.connection.current) &&
-        state.connection.current.isReadOnly
+        isConnectionSelfAware(context.connection.current) &&
+        context.connection.current.isReadOnly
       ) {
         throw new Error(
           "Cannot write to storage with a read only user, please ensure the user has write permissions"
@@ -1014,7 +1014,7 @@ function makeStateMachine<
       auth: AuthCallback,
       createWebSocket: (token: string) => WebSocket
     ) {
-      const rawToken = state.token;
+      const rawToken = context.token;
       const parsedToken = rawToken !== null && parseRoomAuthToken(rawToken);
       if (parsedToken && !isTokenExpired(parsedToken)) {
         const socket = createWebSocket(rawToken);
@@ -1023,13 +1023,13 @@ function makeStateMachine<
       } else {
         return auth(config.roomId)
           .then(({ token }) => {
-            if (state.connection.current.status !== "authenticating") {
+            if (context.connection.current.status !== "authenticating") {
               return;
             }
             const parsedToken = parseRoomAuthToken(token);
             const socket = createWebSocket(token);
             authenticationSuccess(parsedToken, socket);
-            state.token = token;
+            context.token = token;
           })
           .catch((er: unknown) =>
             authenticationFailure(
@@ -1043,10 +1043,10 @@ function makeStateMachine<
         | ClientMsg<TPresence, TRoomEvent>
         | ClientMsg<TPresence, TRoomEvent>[]
     ) {
-      if (state.socket === null) {
+      if (context.socket === null) {
         throw new Error("Can't send message if socket is null");
       }
-      state.socket.send(JSON.stringify(messageOrMessages));
+      context.socket.send(JSON.stringify(messageOrMessages));
     },
     delayFlush(delay: number) {
       return setTimeout(tryFlushing, delay) as any;
@@ -1063,8 +1063,8 @@ function makeStateMachine<
   };
 
   const self = new DerivedRef(
-    state.connection,
-    state.me,
+    context.connection,
+    context.me,
     (conn, me): User<TPresence, TUserMeta> | null =>
       isConnectionSelfAware(conn)
         ? {
@@ -1091,18 +1091,18 @@ function makeStateMachine<
       throw new Error("Internal error: cannot load storage without items");
     }
 
-    if (state.root) {
+    if (context.root) {
       updateRoot(message.items, batchedUpdatesWrapper);
     } else {
       // TODO: For now, we'll assume the happy path, but reading this data from
       // the central storage server, it may very well turn out to not match the
       // manual type annotation. This will require runtime type validations!
-      state.root = load(message.items) as LiveObject<TStorage>;
+      context.root = load(message.items) as LiveObject<TStorage>;
     }
 
-    for (const key in state.initialStorage) {
-      if (state.root.get(key) === undefined) {
-        state.root.set(key, state.initialStorage[key]);
+    for (const key in context.initialStorage) {
+      if (context.root.get(key) === undefined) {
+        context.root.set(key, context.initialStorage[key]);
       }
     }
   }
@@ -1138,12 +1138,12 @@ function makeStateMachine<
     items: IdTuple<SerializedCrdt>[],
     batchedUpdatesWrapper: (cb: () => void) => void
   ) {
-    if (!state.root) {
+    if (!context.root) {
       return;
     }
 
     const currentItems: NodeMap = new Map();
-    state.nodes.forEach((node, id) => {
+    context.nodes.forEach((node, id) => {
       currentItems.set(id, node._serialize());
     });
 
@@ -1166,11 +1166,11 @@ function makeStateMachine<
     batchedUpdatesWrapper: (cb: () => void) => void
   ) {
     // If undo stack is too large, we remove the older item
-    if (state.undoStack.length >= 50) {
-      state.undoStack.shift();
+    if (context.undoStack.length >= 50) {
+      context.undoStack.shift();
     }
 
-    state.undoStack.push(historyOps);
+    context.undoStack.push(historyOps);
     onHistoryChange(batchedUpdatesWrapper);
   }
 
@@ -1178,8 +1178,8 @@ function makeStateMachine<
     historyOps: HistoryOp<TPresence>[],
     batchedUpdatesWrapper: (cb: () => void) => void
   ) {
-    if (state.pausedHistory !== null) {
-      state.pausedHistory.unshift(...historyOps);
+    if (context.pausedHistory !== null) {
+      context.pausedHistory.unshift(...historyOps);
     } else {
       _addToRealUndoStack(historyOps, batchedUpdatesWrapper);
     }
@@ -1199,14 +1199,14 @@ function makeStateMachine<
   ) {
     batchedUpdatesWrapper(() => {
       if (otherEvents.length > 0) {
-        const others = state.others.current;
+        const others = context.others.current;
         for (const event of otherEvents) {
           eventHub.others.notify({ others, event });
         }
       }
 
       if (presence) {
-        eventHub.me.notify(state.me.current);
+        eventHub.me.notify(context.me.current);
       }
 
       if (storageUpdates.size > 0) {
@@ -1217,11 +1217,11 @@ function makeStateMachine<
   }
 
   function getConnectionId() {
-    const conn = state.connection.current;
+    const conn = context.connection.current;
     if (isConnectionSelfAware(conn)) {
       return conn.id;
-    } else if (state.lastConnectionId !== null) {
-      return state.lastConnectionId;
+    } else if (context.lastConnectionId !== null) {
+      return context.lastConnectionId;
     }
 
     throw new Error(
@@ -1267,18 +1267,18 @@ function makeStateMachine<
         };
 
         for (const key in op.data) {
-          reverse.data[key] = state.me.current[key];
+          reverse.data[key] = context.me.current[key];
         }
 
-        state.me.patch(op.data);
+        context.me.patch(op.data);
 
-        if (state.buffer.me === null) {
-          state.buffer.me = { type: "partial", data: op.data };
+        if (context.buffer.me === null) {
+          context.buffer.me = { type: "partial", data: op.data };
         } else {
           // Merge the new fields with whatever is already queued up (doesn't
           // matter whether its a partial or full update)
           for (const key in op.data) {
-            state.buffer.me.data[key] = op.data[key];
+            context.buffer.me.data[key] = op.data[key];
           }
         }
 
@@ -1292,10 +1292,10 @@ function makeStateMachine<
         } else {
           const opId = nn(op.opId);
           if (process.env.NODE_ENV !== "production") {
-            nn(state.opStackTraces).delete(opId);
+            nn(context.opStackTraces).delete(opId);
           }
 
-          const deleted = state.unacknowledgedOps.delete(opId);
+          const deleted = context.unacknowledgedOps.delete(opId);
           source = deleted ? OpSource.ACK : OpSource.REMOTE;
         }
 
@@ -1352,7 +1352,7 @@ function makeStateMachine<
       case OpCode.DELETE_OBJECT_KEY:
       case OpCode.UPDATE_OBJECT:
       case OpCode.DELETE_CRDT: {
-        const node = state.nodes.get(op.id);
+        const node = context.nodes.get(op.id);
         if (node === undefined) {
           return { modified: false };
         }
@@ -1361,7 +1361,7 @@ function makeStateMachine<
       }
 
       case OpCode.SET_PARENT_KEY: {
-        const node = state.nodes.get(op.id);
+        const node = context.nodes.get(op.id);
         if (node === undefined) {
           return { modified: false };
         }
@@ -1379,7 +1379,7 @@ function makeStateMachine<
           return { modified: false };
         }
 
-        const parentNode = state.nodes.get(op.parentId);
+        const parentNode = context.nodes.get(op.parentId);
         if (parentNode === undefined) {
           return { modified: false };
         }
@@ -1507,13 +1507,13 @@ function makeStateMachine<
   }
 
   function getConnectionState() {
-    return state.connection.current.status;
+    return context.connection.current.status;
   }
 
   function connect() {
     if (
-      state.connection.current.status !== "closed" &&
-      state.connection.current.status !== "unavailable"
+      context.connection.current.status !== "closed" &&
+      context.connection.current.status !== "unavailable"
     ) {
       return;
     }
@@ -1537,8 +1537,8 @@ function makeStateMachine<
   ) {
     const oldValues = {} as TPresence;
 
-    if (state.buffer.me === null) {
-      state.buffer.me = {
+    if (context.buffer.me === null) {
+      context.buffer.me = {
         type: "partial",
         data: {},
       };
@@ -1550,20 +1550,20 @@ function makeStateMachine<
       if (overrideValue === undefined) {
         continue;
       }
-      state.buffer.me.data[key] = overrideValue;
-      oldValues[key] = state.me.current[key];
+      context.buffer.me.data[key] = overrideValue;
+      oldValues[key] = context.me.current[key];
     }
 
-    state.me.patch(patch);
+    context.me.patch(patch);
 
-    if (state.activeBatch) {
+    if (context.activeBatch) {
       if (options?.addToHistory) {
-        state.activeBatch.reverseOps.unshift({
+        context.activeBatch.reverseOps.unshift({
           type: "presence",
           data: oldValues,
         });
       }
-      state.activeBatch.updates.presence = true;
+      context.activeBatch.updates.presence = true;
     } else {
       tryFlushing();
       batchUpdates(() => {
@@ -1602,24 +1602,26 @@ function makeStateMachine<
       },
       batchUpdates
     );
-    state.idFactory = makeIdFactory(token.actor);
-    state.socket = socket;
+    context.idFactory = makeIdFactory(token.actor);
+    context.socket = socket;
   }
 
   function authenticationFailure(error: Error) {
     if (process.env.NODE_ENV !== "production") {
       console.error("Call to authentication endpoint failed", error);
     }
-    state.token = null;
+    context.token = null;
     updateConnection({ status: "unavailable" }, batchUpdates);
-    state.numberOfRetry++;
-    state.timeoutHandles.reconnect = effects.scheduleReconnect(getRetryDelay());
+    context.numberOfRetry++;
+    context.timeoutHandles.reconnect = effects.scheduleReconnect(
+      getRetryDelay()
+    );
   }
 
   function onVisibilityChange(visibilityState: DocumentVisibilityState) {
     if (
       visibilityState === "visible" &&
-      state.connection.current.status === "open"
+      context.connection.current.status === "open"
     ) {
       log("Heartbeat after visibility change");
       heartbeat();
@@ -1634,10 +1636,10 @@ function makeStateMachine<
       // handle it if `targetActor` matches our own connection ID, but we can
       // use the opportunity to effectively reset the known presence as
       // a "keyframe" update, while we have free access to it.
-      const oldUser = state.others.getUser(message.actor);
-      state.others.setOther(message.actor, message.data);
+      const oldUser = context.others.getUser(message.actor);
+      context.others.setOther(message.actor, message.data);
 
-      const newUser = state.others.getUser(message.actor);
+      const newUser = context.others.getUser(message.actor);
       if (oldUser === undefined && newUser !== undefined) {
         // The user just became "visible" due to this update, so fire the
         // "enter" event
@@ -1645,10 +1647,10 @@ function makeStateMachine<
       }
     } else {
       // The incoming message is a partial presence update
-      state.others.patchOther(message.actor, message.data), message;
+      context.others.patchOther(message.actor, message.data), message;
     }
 
-    const user = state.others.getUser(message.actor);
+    const user = context.others.getUser(message.actor);
     if (user) {
       return {
         type: "update",
@@ -1663,9 +1665,9 @@ function makeStateMachine<
   function onUserLeftMessage(
     message: UserLeftServerMsg
   ): OthersEvent<TPresence, TUserMeta> | null {
-    const user = state.others.getUser(message.actor);
+    const user = context.others.getUser(message.actor);
     if (user) {
-      state.others.removeConnection(message.actor);
+      context.others.removeConnection(message.actor);
       return { type: "leave", user };
     }
     return null;
@@ -1674,17 +1676,17 @@ function makeStateMachine<
   function onRoomStateMessage(
     message: RoomStateServerMsg<TUserMeta>
   ): OthersEvent<TPresence, TUserMeta> {
-    for (const connectionId in state.others._connections) {
+    for (const connectionId in context.others._connections) {
       const user = message.users[connectionId];
       if (user === undefined) {
-        state.others.removeConnection(Number(connectionId));
+        context.others.removeConnection(Number(connectionId));
       }
     }
 
     for (const key in message.users) {
       const user = message.users[key];
       const connectionId = Number(key);
-      state.others.setConnection(
+      context.others.setConnection(
         connectionId,
         user.id,
         user.info,
@@ -1695,7 +1697,7 @@ function makeStateMachine<
   }
 
   function onNavigatorOnline() {
-    if (state.connection.current.status === "unavailable") {
+    if (context.connection.current.status === "unavailable") {
       log("Try to reconnect after connectivity change");
       reconnect();
     }
@@ -1710,7 +1712,7 @@ function makeStateMachine<
   function onUserJoinedMessage(
     message: UserJoinServerMsg<TUserMeta>
   ): OthersEvent<TPresence, TUserMeta> | undefined {
-    state.others.setConnection(
+    context.others.setConnection(
       message.actor,
       message.id,
       message.info,
@@ -1718,16 +1720,16 @@ function makeStateMachine<
     );
     // Send current presence to new user
     // TODO: Consider storing it on the backend
-    state.buffer.messages.push({
+    context.buffer.messages.push({
       type: ClientMsgCode.UPDATE_PRESENCE,
-      data: state.me.current,
+      data: context.me.current,
       targetActor: message.actor,
     });
     tryFlushing();
 
     // We recorded the connection, but we won't make the new user visible
     // unless we also know their initial presence data at this point.
-    const user = state.others.getUser(message.actor);
+    const user = context.others.getUser(message.actor);
     return user ? { type: "enter", user } : undefined;
   }
 
@@ -1757,7 +1759,7 @@ function makeStateMachine<
 
   function onMessage(event: MessageEvent<string>) {
     if (event.data === "pong") {
-      clearTimeout(state.timeoutHandles.pongTimeout);
+      clearTimeout(context.timeoutHandles.pongTimeout);
       return;
     }
 
@@ -1815,7 +1817,7 @@ function makeStateMachine<
           case ServerMsgCode.INITIAL_STORAGE_STATE: {
             // createOrUpdateRootFromMessage function could add ops to offlineOperations.
             // Client shouldn't resend these ops as part of the offline ops sending after reconnect.
-            const unacknowledgedOps = new Map(state.unacknowledgedOps);
+            const unacknowledgedOps = new Map(context.unacknowledgedOps);
             createOrUpdateRootFromMessage(message, doNotBatchUpdates);
             applyAndSendOps(unacknowledgedOps, doNotBatchUpdates);
             if (_getInitialStateResolver !== null) {
@@ -1855,7 +1857,7 @@ function makeStateMachine<
             if (process.env.NODE_ENV !== "production") {
               const traces: Set<string> = new Set();
               for (const opId of message.opIds) {
-                const trace = state.opStackTraces?.get(opId);
+                const trace = context.opStackTraces?.get(opId);
                 if (trace) {
                   traces.add(trace);
                 }
@@ -1883,16 +1885,16 @@ function makeStateMachine<
   }
 
   function onClose(event: { code: number; wasClean: boolean; reason: string }) {
-    state.socket = null;
+    context.socket = null;
 
-    clearTimeout(state.timeoutHandles.pongTimeout);
-    clearInterval(state.intervalHandles.heartbeat);
-    if (state.timeoutHandles.flush) {
-      clearTimeout(state.timeoutHandles.flush);
+    clearTimeout(context.timeoutHandles.pongTimeout);
+    clearInterval(context.intervalHandles.heartbeat);
+    if (context.timeoutHandles.flush) {
+      clearTimeout(context.timeoutHandles.flush);
     }
-    clearTimeout(state.timeoutHandles.reconnect);
+    clearTimeout(context.timeoutHandles.reconnect);
 
-    state.others.clearOthers();
+    context.others.clearOthers();
 
     batchUpdates(() => {
       notify({ others: [{ type: "reset" }] }, doNotBatchUpdates);
@@ -1904,7 +1906,7 @@ function makeStateMachine<
         eventHub.error.notify(error);
 
         const delay = getRetryDelay(true);
-        state.numberOfRetry++;
+        context.numberOfRetry++;
 
         if (process.env.NODE_ENV !== "production") {
           console.error(
@@ -1913,12 +1915,12 @@ function makeStateMachine<
         }
 
         updateConnection({ status: "unavailable" }, doNotBatchUpdates);
-        state.timeoutHandles.reconnect = effects.scheduleReconnect(delay);
+        context.timeoutHandles.reconnect = effects.scheduleReconnect(delay);
       } else if (event.code === WebsocketCloseCodes.CLOSE_WITHOUT_RETRY) {
         updateConnection({ status: "closed" }, doNotBatchUpdates);
       } else {
         const delay = getRetryDelay();
-        state.numberOfRetry++;
+        context.numberOfRetry++;
 
         if (process.env.NODE_ENV !== "production") {
           console.warn(
@@ -1926,7 +1928,7 @@ function makeStateMachine<
           );
         }
         updateConnection({ status: "unavailable" }, doNotBatchUpdates);
-        state.timeoutHandles.reconnect = effects.scheduleReconnect(delay);
+        context.timeoutHandles.reconnect = effects.scheduleReconnect(delay);
       }
     });
   }
@@ -1935,7 +1937,7 @@ function makeStateMachine<
     connection: Connection,
     batchedUpdatesWrapper: (cb: () => void) => void
   ) {
-    state.connection.set(connection);
+    context.connection.set(connection);
     batchedUpdatesWrapper(() => {
       eventHub.connection.notify(connection.status);
     });
@@ -1944,14 +1946,14 @@ function makeStateMachine<
   function getRetryDelay(slow: boolean = false) {
     if (slow) {
       return BACKOFF_RETRY_DELAYS_SLOW[
-        state.numberOfRetry < BACKOFF_RETRY_DELAYS_SLOW.length
-          ? state.numberOfRetry
+        context.numberOfRetry < BACKOFF_RETRY_DELAYS_SLOW.length
+          ? context.numberOfRetry
           : BACKOFF_RETRY_DELAYS_SLOW.length - 1
       ];
     }
     return BACKOFF_RETRY_DELAYS[
-      state.numberOfRetry < BACKOFF_RETRY_DELAYS.length
-        ? state.numberOfRetry
+      context.numberOfRetry < BACKOFF_RETRY_DELAYS.length
+        ? context.numberOfRetry
         : BACKOFF_RETRY_DELAYS.length - 1
     ];
   }
@@ -1959,34 +1961,34 @@ function makeStateMachine<
   function onError() {}
 
   function onOpen() {
-    clearInterval(state.intervalHandles.heartbeat);
+    clearInterval(context.intervalHandles.heartbeat);
 
-    state.intervalHandles.heartbeat = effects.startHeartbeatInterval();
+    context.intervalHandles.heartbeat = effects.startHeartbeatInterval();
 
-    if (state.connection.current.status === "connecting") {
+    if (context.connection.current.status === "connecting") {
       updateConnection(
-        { ...state.connection.current, status: "open" },
+        { ...context.connection.current, status: "open" },
         batchUpdates
       );
-      state.numberOfRetry = 0;
+      context.numberOfRetry = 0;
 
       // Re-broadcast the user presence during a reconnect.
-      if (state.lastConnectionId !== undefined) {
-        state.buffer.me = {
+      if (context.lastConnectionId !== undefined) {
+        context.buffer.me = {
           type: "full",
           data:
             // Because state.me.current is a readonly object, we'll have to
             // make a copy here. Otherwise, type errors happen later when
             // "patching" my presence.
-            { ...state.me.current },
+            { ...context.me.current },
         };
         tryFlushing();
       }
 
-      state.lastConnectionId = state.connection.current.id;
+      context.lastConnectionId = context.connection.current.id;
 
-      if (state.root) {
-        state.buffer.messages.push({ type: ClientMsgCode.FETCH_STORAGE });
+      if (context.root) {
+        context.buffer.messages.push({ type: ClientMsgCode.FETCH_STORAGE });
       }
       tryFlushing();
     } else {
@@ -1995,16 +1997,16 @@ function makeStateMachine<
   }
 
   function heartbeat() {
-    if (state.socket === null) {
+    if (context.socket === null) {
       // Should never happen, because we clear the pong timeout when the connection is dropped explictly
       return;
     }
 
-    clearTimeout(state.timeoutHandles.pongTimeout);
-    state.timeoutHandles.pongTimeout = effects.schedulePongTimeout();
+    clearTimeout(context.timeoutHandles.pongTimeout);
+    context.timeoutHandles.pongTimeout = effects.schedulePongTimeout();
 
-    if (state.socket.readyState === state.socket.OPEN) {
-      state.socket.send("ping");
+    if (context.socket.readyState === context.socket.OPEN) {
+      context.socket.send("ping");
     }
   }
 
@@ -2014,22 +2016,22 @@ function makeStateMachine<
   }
 
   function reconnect() {
-    if (state.socket) {
-      state.socket.removeEventListener("open", onOpen);
-      state.socket.removeEventListener("message", onMessage);
-      state.socket.removeEventListener("close", onClose);
-      state.socket.removeEventListener("error", onError);
-      state.socket.close();
-      state.socket = null;
+    if (context.socket) {
+      context.socket.removeEventListener("open", onOpen);
+      context.socket.removeEventListener("message", onMessage);
+      context.socket.removeEventListener("close", onClose);
+      context.socket.removeEventListener("error", onError);
+      context.socket.close();
+      context.socket = null;
     }
 
     updateConnection({ status: "unavailable" }, batchUpdates);
-    clearTimeout(state.timeoutHandles.pongTimeout);
-    if (state.timeoutHandles.flush) {
-      clearTimeout(state.timeoutHandles.flush);
+    clearTimeout(context.timeoutHandles.pongTimeout);
+    if (context.timeoutHandles.flush) {
+      clearTimeout(context.timeoutHandles.flush);
     }
-    clearTimeout(state.timeoutHandles.reconnect);
-    clearInterval(state.intervalHandles.heartbeat);
+    clearTimeout(context.timeoutHandles.reconnect);
+    clearInterval(context.intervalHandles.heartbeat);
     connect();
   }
 
@@ -2058,47 +2060,47 @@ function makeStateMachine<
   }
 
   function tryFlushing() {
-    const storageOps = state.buffer.storageOperations;
+    const storageOps = context.buffer.storageOperations;
 
     if (storageOps.length > 0) {
       storageOps.forEach((op) => {
-        state.unacknowledgedOps.set(nn(op.opId), op);
+        context.unacknowledgedOps.set(nn(op.opId), op);
       });
       notifyStorageStatus();
     }
 
     if (
-      state.socket === null ||
-      state.socket.readyState !== state.socket.OPEN
+      context.socket === null ||
+      context.socket.readyState !== context.socket.OPEN
     ) {
-      state.buffer.storageOperations = [];
+      context.buffer.storageOperations = [];
       return;
     }
 
     const now = Date.now();
 
-    const elapsedTime = now - state.lastFlushTime;
+    const elapsedTime = now - context.lastFlushTime;
 
     if (elapsedTime > config.throttleDelay) {
-      const messages = flushDataToMessages(state);
+      const messages = flushDataToMessages(context);
 
       if (messages.length === 0) {
         return;
       }
       effects.send(messages);
-      state.buffer = {
+      context.buffer = {
         messages: [],
         storageOperations: [],
         me: null,
       };
-      state.lastFlushTime = now;
+      context.lastFlushTime = now;
     } else {
-      if (state.timeoutHandles.flush !== null) {
-        clearTimeout(state.timeoutHandles.flush);
+      if (context.timeoutHandles.flush !== null) {
+        clearTimeout(context.timeoutHandles.flush);
       }
 
-      state.timeoutHandles.flush = effects.delayFlush(
-        config.throttleDelay - (now - state.lastFlushTime)
+      context.timeoutHandles.flush = effects.delayFlush(
+        config.throttleDelay - (now - context.lastFlushTime)
       );
     }
   }
@@ -2137,26 +2139,26 @@ function makeStateMachine<
   }
 
   function disconnect() {
-    if (state.socket) {
-      state.socket.removeEventListener("open", onOpen);
-      state.socket.removeEventListener("message", onMessage);
-      state.socket.removeEventListener("close", onClose);
-      state.socket.removeEventListener("error", onError);
-      state.socket.close();
-      state.socket = null;
+    if (context.socket) {
+      context.socket.removeEventListener("open", onOpen);
+      context.socket.removeEventListener("message", onMessage);
+      context.socket.removeEventListener("close", onClose);
+      context.socket.removeEventListener("error", onError);
+      context.socket.close();
+      context.socket = null;
     }
 
     batchUpdates(() => {
       updateConnection({ status: "closed" }, doNotBatchUpdates);
 
-      if (state.timeoutHandles.flush) {
-        clearTimeout(state.timeoutHandles.flush);
+      if (context.timeoutHandles.flush) {
+        clearTimeout(context.timeoutHandles.flush);
       }
-      clearTimeout(state.timeoutHandles.reconnect);
-      clearTimeout(state.timeoutHandles.pongTimeout);
-      clearInterval(state.intervalHandles.heartbeat);
+      clearTimeout(context.timeoutHandles.reconnect);
+      clearTimeout(context.timeoutHandles.pongTimeout);
+      clearInterval(context.intervalHandles.heartbeat);
 
-      state.others.clearOthers();
+      context.others.clearOthers();
       notify({ others: [{ type: "reset" }] }, doNotBatchUpdates);
 
       // Clear all event listeners
@@ -2165,11 +2167,11 @@ function makeStateMachine<
   }
 
   function getPresence(): Readonly<TPresence> {
-    return state.me.current;
+    return context.me.current;
   }
 
   function getOthers(): Others<TPresence, TUserMeta> {
-    return state.others.current;
+    return context.others.current;
   }
 
   function broadcastEvent(
@@ -2178,11 +2180,11 @@ function makeStateMachine<
       shouldQueueEventIfNotReady: false,
     }
   ) {
-    if (state.socket === null && !options.shouldQueueEventIfNotReady) {
+    if (context.socket === null && !options.shouldQueueEventIfNotReady) {
       return;
     }
 
-    state.buffer.messages.push({
+    context.buffer.messages.push({
       type: ClientMsgCode.BROADCAST_EVENT,
       event,
     });
@@ -2190,7 +2192,7 @@ function makeStateMachine<
   }
 
   function dispatchOps(ops: Op[]) {
-    state.buffer.storageOperations.push(...ops);
+    context.buffer.storageOperations.push(...ops);
     tryFlushing();
   }
 
@@ -2199,7 +2201,7 @@ function makeStateMachine<
 
   function startLoadingStorage(): Promise<void> {
     if (_getInitialStatePromise === null) {
-      state.buffer.messages.push({ type: ClientMsgCode.FETCH_STORAGE });
+      context.buffer.messages.push({ type: ClientMsgCode.FETCH_STORAGE });
       tryFlushing();
       _getInitialStatePromise = new Promise(
         (resolve) => (_getInitialStateResolver = resolve)
@@ -2218,7 +2220,7 @@ function makeStateMachine<
    * root.
    */
   function getStorageSnapshot(): LiveObject<TStorage> | null {
-    const root = state.root;
+    const root = context.root;
     if (root !== undefined) {
       // Done loading
       return root;
@@ -2232,82 +2234,82 @@ function makeStateMachine<
   async function getStorage(): Promise<{
     root: LiveObject<TStorage>;
   }> {
-    if (state.root) {
+    if (context.root) {
       // Store has already loaded, so we can resolve it directly
       return Promise.resolve({
-        root: state.root as LiveObject<TStorage>,
+        root: context.root as LiveObject<TStorage>,
       });
     }
 
     await startLoadingStorage();
     return {
-      root: nn(state.root) as LiveObject<TStorage>,
+      root: nn(context.root) as LiveObject<TStorage>,
     };
   }
 
   function undo() {
-    if (state.activeBatch) {
+    if (context.activeBatch) {
       throw new Error("undo is not allowed during a batch");
     }
-    const historyOps = state.undoStack.pop();
+    const historyOps = context.undoStack.pop();
     if (historyOps === undefined) {
       return;
     }
 
-    state.pausedHistory = null;
+    context.pausedHistory = null;
     const result = applyOps(historyOps, true);
 
     batchUpdates(() => {
       notify(result.updates, doNotBatchUpdates);
-      state.redoStack.push(result.reverse);
+      context.redoStack.push(result.reverse);
       onHistoryChange(doNotBatchUpdates);
     });
 
     for (const op of result.ops) {
       if (op.type !== "presence") {
-        state.buffer.storageOperations.push(op);
+        context.buffer.storageOperations.push(op);
       }
     }
     tryFlushing();
   }
 
   function canUndo() {
-    return state.undoStack.length > 0;
+    return context.undoStack.length > 0;
   }
 
   function redo() {
-    if (state.activeBatch) {
+    if (context.activeBatch) {
       throw new Error("redo is not allowed during a batch");
     }
 
-    const historyOps = state.redoStack.pop();
+    const historyOps = context.redoStack.pop();
     if (historyOps === undefined) {
       return;
     }
 
-    state.pausedHistory = null;
+    context.pausedHistory = null;
     const result = applyOps(historyOps, true);
 
     batchUpdates(() => {
       notify(result.updates, doNotBatchUpdates);
-      state.undoStack.push(result.reverse);
+      context.undoStack.push(result.reverse);
       onHistoryChange(doNotBatchUpdates);
     });
 
     for (const op of result.ops) {
       if (op.type !== "presence") {
-        state.buffer.storageOperations.push(op);
+        context.buffer.storageOperations.push(op);
       }
     }
     tryFlushing();
   }
 
   function canRedo() {
-    return state.redoStack.length > 0;
+    return context.redoStack.length > 0;
   }
 
   function batch<T>(callback: () => T): T {
-    if (state.activeBatch) {
+    if (context.activeBatch) {
       // If there already is an active batch, we don't have to handle this in
       // any special way. That outer active batch will handle the batch. This
       // nested call can be a no-op.
@@ -2317,7 +2319,7 @@ function makeStateMachine<
     let returnValue: T = undefined as unknown as T;
 
     batchUpdates(() => {
-      state.activeBatch = {
+      context.activeBatch = {
         ops: [],
         updates: {
           storageUpdates: new Map(),
@@ -2331,8 +2333,8 @@ function makeStateMachine<
       } finally {
         // "Pop" the current batch of the state, closing the active batch, but
         // handling it separately here
-        const currentBatch = state.activeBatch;
-        state.activeBatch = null;
+        const currentBatch = context.activeBatch;
+        context.activeBatch = null;
 
         if (currentBatch.reverseOps.length > 0) {
           addToUndoStack(currentBatch.reverseOps, doNotBatchUpdates);
@@ -2341,7 +2343,7 @@ function makeStateMachine<
         if (currentBatch.ops.length > 0) {
           // Only clear the redo stack if something has changed during a batch
           // Clear the redo stack because batch is always called from a local operation
-          state.redoStack = [];
+          context.redoStack = [];
         }
 
         if (currentBatch.ops.length > 0) {
@@ -2357,20 +2359,20 @@ function makeStateMachine<
   }
 
   function pauseHistory() {
-    state.pausedHistory = [];
+    context.pausedHistory = [];
   }
 
   function resumeHistory() {
-    const historyOps = state.pausedHistory;
-    state.pausedHistory = null;
+    const historyOps = context.pausedHistory;
+    context.pausedHistory = null;
     if (historyOps !== null && historyOps.length > 0) {
       _addToRealUndoStack(historyOps, batchUpdates);
     }
   }
 
   function simulateSocketClose() {
-    if (state.socket) {
-      state.socket = null;
+    if (context.socket) {
+      context.socket = null;
     }
   }
 
@@ -2387,11 +2389,11 @@ function makeStateMachine<
       return "not-loaded";
     }
 
-    if (state.root === undefined) {
+    if (context.root === undefined) {
       return "loading";
     }
 
-    return state.unacknowledgedOps.size === 0
+    return context.unacknowledgedOps.size === 0
       ? "synchronized"
       : "synchronizing";
   }
@@ -2416,7 +2418,7 @@ function makeStateMachine<
     // Internal
     // XXX Rename to `context` eventually
     get state() {
-      return state;
+      return context;
     },
     onClose,
     onMessage,
@@ -2427,8 +2429,8 @@ function makeStateMachine<
     simulateSocketClose,
     simulateSendCloseEvent,
     onVisibilityChange,
-    getUndoStack: () => state.undoStack,
-    getItemsCount: () => state.nodes.size,
+    getUndoStack: () => context.undoStack,
+    getItemsCount: () => context.nodes.size,
 
     // Core
     connect,
@@ -2467,7 +2469,7 @@ function makeStateMachine<
 
     // Core
     getConnectionState,
-    isSelfAware: () => isConnectionSelfAware(state.connection.current),
+    isSelfAware: () => isConnectionSelfAware(context.connection.current),
     getSelf: () => self.current,
 
     // Presence
@@ -2477,7 +2479,7 @@ function makeStateMachine<
     // Support for the Liveblocks browser extension
     getSelf_forDevTools: () => selfAsTreeNode.current,
     getOthers_forDevTools: (): readonly DevTools.UserTreeNode[] =>
-      state.others_forDevTools.current,
+      context.others_forDevTools.current,
   };
 }
 
