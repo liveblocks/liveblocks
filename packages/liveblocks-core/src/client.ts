@@ -186,13 +186,8 @@ export function createClient(options: ClientOptions): Client {
       {
         roomId,
         throttleDelay,
-
         polyfills: clientOptions.polyfills,
-        WebSocketPolyfill: clientOptions.WebSocketPolyfill, // Backward-compatible API for setting polyfills
-        fetchPolyfill: clientOptions.fetchPolyfill, // Backward-compatible API for setting polyfills
-
         unstable_batchedUpdates: options?.unstable_batchedUpdates,
-
         liveblocksServer:
           // TODO Patch this using public but marked internal fields?
           // eslint-disable-next-line @typescript-eslint/no-explicit-any

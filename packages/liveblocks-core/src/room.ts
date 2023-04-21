@@ -818,16 +818,6 @@ type MachineConfig<TPresence extends JsonObject, TRoomEvent extends Json> = {
    */
   unstable_batchedUpdates?: (cb: () => void) => void;
 
-  /**
-   * Backward-compatible way to set `polyfills.fetch`.
-   */
-  fetchPolyfill?: Polyfills["fetch"];
-
-  /**
-   * Backward-compatible way to set `polyfills.WebSocket`.
-   */
-  WebSocketPolyfill?: Polyfills["WebSocket"];
-
   mockedEffects?: Effects<TPresence, TRoomEvent>;
 };
 
@@ -1497,11 +1487,11 @@ function makeStateMachine<
 
     const auth = prepareAuthEndpoint(
       config.authentication,
-      config.polyfills?.fetch ?? config.fetchPolyfill
+      config.polyfills?.fetch
     );
     const createWebSocket = prepareCreateWebSocket(
       config.liveblocksServer,
-      config.polyfills?.WebSocket ?? config.WebSocketPolyfill
+      config.polyfills?.WebSocket
     );
 
     updateConnection({ status: "authenticating" }, batchUpdates);
