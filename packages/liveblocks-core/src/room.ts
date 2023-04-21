@@ -2391,7 +2391,6 @@ function makeStateMachine<
 
   return {
     // Internal
-    // XXX Rename to `context` eventually
     get state() {
       return context;
     },

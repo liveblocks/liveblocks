@@ -17,11 +17,11 @@ import { ClientMsgCode } from "../protocol/ClientMsg";
 import type { IdTuple, SerializedCrdt } from "../protocol/SerializedCrdt";
 import { CrdtType } from "../protocol/SerializedCrdt";
 import { ServerMsgCode } from "../protocol/ServerMsg";
+import type { _private_Effects as Effects } from "../room";
 import {
   _private_makeStateMachine as makeStateMachine,
   createRoomMachine,
 } from "../room";
-import type { _private_Effects as Effects } from "../room";
 import type { Others } from "../types/Others";
 import { WebsocketCloseCodes } from "../types/WebsocketCloseCodes";
 import { listUpdate, listUpdateInsert, listUpdateSet } from "./_updatesUtils";

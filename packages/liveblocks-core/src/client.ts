@@ -5,7 +5,7 @@ import type { Json, JsonObject } from "./lib/Json";
 import type { Resolve } from "./lib/Resolve";
 import type { Authentication } from "./protocol/Authentication";
 import type { BaseUserMeta } from "./protocol/BaseUserMeta";
-import type { RoomMachine, Polyfills, Room, RoomInitializers } from "./room";
+import type { Polyfills, Room, RoomInitializers, RoomMachine } from "./room";
 import { createRoomMachine } from "./room";
 
 const MIN_THROTTLE = 16;
