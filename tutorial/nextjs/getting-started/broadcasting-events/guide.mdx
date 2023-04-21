@@ -2,11 +2,68 @@
 openFile: "/Room.tsx"
 showFiles: [
   "/App.tsx",
-  "/useToast.tsx",
   "/Room.tsx",
   "/liveblocks.config.ts",
-  "/styles/global.css",
 ]
 ---
 
 Another key feature of Liveblocks is the ability to broadcast events to other users.
+
+[text]
+
+```tsx
+type RoomEvent = {
+  type: "TOAST";
+  message: string;
+};
+```
+
+<Banner title="Multiple event types">
+
+If your app uses multiple event types, you can make `RoomEvent` a union type.
+
+</Banner>
+
+[text]
+
+```tsx highlight="3-5"
+export const {
+  RoomProvider,
+  useBroadcastEvent, // ✅
+  useEventListener, // ✅
+} = createRoomContext<Presence, {}, {}, RoomEvent>(client);
+```
+[text]
+
+```tsx
+// Broadcast event hook
+const broadcast = useBroadcastEvent();
+```
+
+[text]
+
+```tsx highlight="4-5"
+return (
+  <button
+    onClick={() =>
+      // Broadcast toast event
+      broadcast({ type: "TOAST", message: "Event has been broadcast" })
+    }
+  >
+    Broadcast event
+  </button>
+);
+```
+
+[text]
+
+```tsx
+// Listen for incoming events
+useEventListener(({ event }) => {
+  if (event.type === "TOAST") {
+    toast(event.message);
+  }
+});
+```
+
+[text]

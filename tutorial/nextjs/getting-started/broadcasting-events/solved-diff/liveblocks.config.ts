@@ -9,7 +9,17 @@ type Presence = {
   cursor: { x: number; y: number } | null;
 };
 
+type Storage = {};
+
+type UserMeta = {};
+
+type RoomEvent = {
+  type: "TOAST";
+  message: string;
+};
+
 export const {
   RoomProvider,
   useBroadcastEvent, // ✅
-} = createRoomContext<Presence>(client);
+  useEventListener, // ✅
+} = createRoomContext<Presence, Storage, UserMeta, RoomEvent>(client);
