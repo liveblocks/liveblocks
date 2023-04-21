@@ -569,6 +569,7 @@ type Machine<
   TRoomEvent extends Json
 > = {
   // Internal
+  state: MachineContext<TPresence, TStorage, TUserMeta, TRoomEvent>;
   onClose(event: { code: number; wasClean: boolean; reason: string }): void;
   onMessage(event: MessageEvent<string>): void;
   authenticationSuccess(token: RoomAuthToken, socket: WebSocket): void;
@@ -685,7 +686,7 @@ type HistoryOp<TPresence extends JsonObject> =
 
 type IdFactory = () => string;
 
-type State<
+type MachineContext<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
   TUserMeta extends BaseUserMeta,
@@ -800,7 +801,7 @@ export type RoomInitializers<
   shouldInitiallyConnect?: boolean;
 }>;
 
-type Config = {
+type MachineConfig = {
   roomId: string;
   throttleDelay: number;
   authentication: Authentication;
@@ -847,8 +848,9 @@ function makeStateMachine<
   TUserMeta extends BaseUserMeta,
   TRoomEvent extends Json
 >(
-  state: State<TPresence, TStorage, TUserMeta, TRoomEvent>,
-  config: Config,
+  // XXX Rename to `context`. This represents the "infinite state" part of the Finite State Machine.
+  state: MachineContext<TPresence, TStorage, TUserMeta, TRoomEvent>,
+  config: MachineConfig,
   mockedEffects?: Effects<TPresence, TRoomEvent>
 ): Machine<TPresence, TStorage, TUserMeta, TRoomEvent> {
   const doNotBatchUpdates = (cb: () => void): void => cb();
@@ -2026,7 +2028,7 @@ function makeStateMachine<
   }
 
   function flushDataToMessages(
-    state: State<TPresence, TStorage, TUserMeta, TRoomEvent>
+    state: MachineContext<TPresence, TStorage, TUserMeta, TRoomEvent>
   ) {
     const messages: ClientMsg<TPresence, TRoomEvent>[] = [];
     if (state.buffer.me) {
@@ -2336,6 +2338,10 @@ function makeStateMachine<
 
   return {
     // Internal
+    // XXX Rename to `context` eventually
+    get state() {
+      return state;
+    },
     onClose,
     onMessage,
     authenticationSuccess,
@@ -2399,7 +2405,7 @@ function makeStateMachine<
   };
 }
 
-function defaultState<
+function defaultMachineContext<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
   TUserMeta extends BaseUserMeta,
@@ -2407,7 +2413,7 @@ function defaultState<
 >(
   initialPresence: TPresence,
   initialStorage: TStorage | undefined
-): State<TPresence, TStorage, TUserMeta, TRoomEvent> {
+): MachineContext<TPresence, TStorage, TUserMeta, TRoomEvent> {
   const others = new OthersRef<TPresence, TUserMeta>();
   const others_forDevTools = new DerivedRef(others, (others) =>
     others.map((other, index) => userToTreeNode(`Other ${index}`, other))
@@ -2493,11 +2499,16 @@ export function createRoom<
     RoomInitializers<TPresence, TStorage>,
     "shouldInitiallyConnect"
   >,
-  config: Config
+  config: MachineConfig
 ): InternalRoom<TPresence, TStorage, TUserMeta, TRoomEvent> {
   const { initialPresence, initialStorage } = options;
 
-  const state = defaultState<TPresence, TStorage, TUserMeta, TRoomEvent>(
+  const state = defaultMachineContext<
+    TPresence,
+    TStorage,
+    TUserMeta,
+    TRoomEvent
+  >(
     typeof initialPresence === "function"
       ? initialPresence(config.roomId)
       : initialPresence,
@@ -2699,7 +2710,7 @@ class AuthenticationError extends Error {
 // exported here to be accessed used in our test suite.
 //
 export {
-  defaultState as _private_defaultState,
+  defaultMachineContext as _private_defaultMachineContext,
   makeStateMachine as _private_makeStateMachine,
 };
 export type { Effects as _private_Effects, Machine as _private_Machine };

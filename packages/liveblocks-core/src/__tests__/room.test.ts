@@ -18,7 +18,7 @@ import type { IdTuple, SerializedCrdt } from "../protocol/SerializedCrdt";
 import { CrdtType } from "../protocol/SerializedCrdt";
 import { ServerMsgCode } from "../protocol/ServerMsg";
 import {
-  _private_defaultState as defaultState,
+  _private_defaultMachineContext as defaultMachineContext,
   _private_makeStateMachine as makeStateMachine,
   createRoom,
 } from "../room";
@@ -67,7 +67,12 @@ function setupStateMachine<
   TRoomEvent extends Json
 >(initialPresence: TPresence) {
   const effects = mockEffects<TPresence, TRoomEvent>();
-  const state = defaultState<TPresence, TStorage, TUserMeta, TRoomEvent>(
+  const state = defaultMachineContext<
+    TPresence,
+    TStorage,
+    TUserMeta,
+    TRoomEvent
+  >(
     initialPresence,
     undefined // no initialStorage
   );

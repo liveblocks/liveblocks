@@ -27,7 +27,7 @@ import type {
   _private_Machine as Machine,
 } from "../room";
 import {
-  _private_defaultState as defaultState,
+  _private_defaultMachineContext as defaultMachineContext,
   _private_makeStateMachine as makeStateMachine,
 } from "../room";
 import type { JsonStorageUpdate } from "./_updatesUtils";
@@ -150,7 +150,7 @@ export const THIRD_POSITION = makePosition(SECOND_POSITION);
 export const FOURTH_POSITION = makePosition(THIRD_POSITION);
 export const FIFTH_POSITION = makePosition(FOURTH_POSITION);
 
-const defaultContext = {
+const defaultMachineConfig = {
   roomId: "room-id",
   throttleDelay: -1, // No throttle for standard storage test
   liveblocksServer: "wss://live.liveblocks.io/v6",
@@ -178,13 +178,15 @@ export async function prepareRoomWithStorage<
   const effects = mockEffects();
   (effects.send as jest.MockedFunction<any>).mockImplementation(onSend);
 
-  const state = defaultState<TPresence, TStorage, TUserMeta, TRoomEvent>(
-    {} as TPresence,
-    defaultStorage || ({} as TStorage)
-  );
+  const state = defaultMachineContext<
+    TPresence,
+    TStorage,
+    TUserMeta,
+    TRoomEvent
+  >({} as TPresence, defaultStorage || ({} as TStorage));
   const machine = makeStateMachine<TPresence, TStorage, TUserMeta, TRoomEvent>(
     state,
-    defaultContext,
+    defaultMachineConfig,
     effects
   );
   const ws = new MockWebSocket("");
