@@ -5,8 +5,8 @@ import type { Json, JsonObject } from "./lib/Json";
 import type { Resolve } from "./lib/Resolve";
 import type { Authentication } from "./protocol/Authentication";
 import type { BaseUserMeta } from "./protocol/BaseUserMeta";
-import type { InternalRoom, Polyfills, Room, RoomInitializers } from "./room";
-import { createRoom } from "./room";
+import type { RoomMachine, Polyfills, Room, RoomInitializers } from "./room";
+import { createRoomMachine } from "./room";
 
 const MIN_THROTTLE = 16;
 const MAX_THROTTLE = 1000;
@@ -124,7 +124,7 @@ export function createClient(options: ClientOptions): Client {
 
   const rooms = new Map<
     string,
-    InternalRoom<JsonObject, LsonObject, BaseUserMeta, Json>
+    RoomMachine<JsonObject, LsonObject, BaseUserMeta, Json>
   >();
 
   function getRoom<
@@ -154,7 +154,7 @@ export function createClient(options: ClientOptions): Client {
     options: EnterOptions<TPresence, TStorage>
   ): Room<TPresence, TStorage, TUserMeta, TRoomEvent> {
     let internalRoom = rooms.get(roomId) as
-      | InternalRoom<TPresence, TStorage, TUserMeta, TRoomEvent>
+      | RoomMachine<TPresence, TStorage, TUserMeta, TRoomEvent>
       | undefined;
     if (internalRoom) {
       return internalRoom.room as unknown as Room<
@@ -173,7 +173,12 @@ export function createClient(options: ClientOptions): Client {
       "Please provide an initial presence value for the current user when entering the room."
     );
 
-    internalRoom = createRoom<TPresence, TStorage, TUserMeta, TRoomEvent>(
+    internalRoom = createRoomMachine<
+      TPresence,
+      TStorage,
+      TUserMeta,
+      TRoomEvent
+    >(
       {
         initialPresence: options.initialPresence ?? {},
         initialStorage: options.initialStorage,
@@ -199,7 +204,7 @@ export function createClient(options: ClientOptions): Client {
 
     rooms.set(
       roomId,
-      internalRoom as unknown as InternalRoom<
+      internalRoom as unknown as RoomMachine<
         JsonObject,
         LsonObject,
         BaseUserMeta,

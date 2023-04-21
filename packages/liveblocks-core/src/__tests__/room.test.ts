@@ -20,7 +20,7 @@ import { ServerMsgCode } from "../protocol/ServerMsg";
 import {
   _private_defaultMachineContext as defaultMachineContext,
   _private_makeStateMachine as makeStateMachine,
-  createRoom,
+  createRoomMachine,
 } from "../room";
 import type { Others } from "../types/Others";
 import { WebsocketCloseCodes } from "../types/WebsocketCloseCodes";
@@ -122,7 +122,7 @@ describe("room / auth", () => {
   test.each([{ notAToken: "" }, undefined, null, ""])(
     "custom authentication with missing token in callback response should throw",
     async (response) => {
-      const room = createRoom(
+      const room = createRoomMachine(
         { initialPresence: {} as never },
         {
           ...defaultContext,
@@ -150,7 +150,7 @@ describe("room / auth", () => {
   );
 
   test("private authentication with 403 status should throw", async () => {
-    const room = createRoom(
+    const room = createRoomMachine(
       { initialPresence: {} as never },
       {
         ...defaultContext,
@@ -173,7 +173,7 @@ describe("room / auth", () => {
   });
 
   test("private authentication that does not returns json should throw", async () => {
-    const room = createRoom(
+    const room = createRoomMachine(
       { initialPresence: {} as never },
       {
         ...defaultContext,
@@ -196,7 +196,7 @@ describe("room / auth", () => {
   });
 
   test("private authentication that does not returns json should throw", async () => {
-    const room = createRoom(
+    const room = createRoomMachine(
       { initialPresence: {} as never },
       {
         ...defaultContext,

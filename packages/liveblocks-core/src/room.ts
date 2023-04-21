@@ -2476,7 +2476,7 @@ function defaultMachineContext<
 }
 
 /** @internal */
-export type InternalRoom<
+export type RoomMachine<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
   TUserMeta extends BaseUserMeta,
@@ -2489,7 +2489,7 @@ export type InternalRoom<
   onVisibilityChange: (visibilityState: DocumentVisibilityState) => void;
 };
 
-export function createRoom<
+export function createRoomMachine<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
   TUserMeta extends BaseUserMeta,
@@ -2500,7 +2500,7 @@ export function createRoom<
     "shouldInitiallyConnect"
   >,
   config: MachineConfig
-): InternalRoom<TPresence, TStorage, TUserMeta, TRoomEvent> {
+): RoomMachine<TPresence, TStorage, TUserMeta, TRoomEvent> {
   const { initialPresence, initialStorage } = options;
 
   const state = defaultMachineContext<
