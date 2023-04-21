@@ -22,6 +22,7 @@ import {
   _private_makeStateMachine as makeStateMachine,
   createRoomMachine,
 } from "../room";
+import type { _private_Effects as Effects } from "../room";
 import type { Others } from "../types/Others";
 import { WebsocketCloseCodes } from "../types/WebsocketCloseCodes";
 import { listUpdate, listUpdateInsert, listUpdateSet } from "./_updatesUtils";
@@ -42,15 +43,21 @@ import {
   withDateNow,
 } from "./_utils";
 
-const defaultContext = {
-  roomId: "room-id",
-  throttleDelay: 100,
-  liveblocksServer: "wss://live.liveblocks.io/v6",
-  authentication: {
-    type: "private",
-    url: "/mocked-api/auth",
-  } as Authentication,
-};
+function makeMachineConfig<
+  TPresence extends JsonObject,
+  TRoomEvent extends Json
+>(mockedEffects?: Effects<TPresence, TRoomEvent>) {
+  return {
+    roomId: "room-id",
+    throttleDelay: 100,
+    liveblocksServer: "wss://live.liveblocks.io/v6",
+    authentication: {
+      type: "private",
+      url: "/mocked-api/auth",
+    } as Authentication,
+    mockedEffects,
+  };
+}
 
 const defaultRoomToken: RoomAuthToken = {
   appId: "my-app",
@@ -78,8 +85,7 @@ function setupStateMachine<
   );
   const machine = makeStateMachine<TPresence, TStorage, TUserMeta, TRoomEvent>(
     state,
-    defaultContext,
-    effects
+    makeMachineConfig(effects)
   );
   return { machine, state, effects };
 }
@@ -125,7 +131,7 @@ describe("room / auth", () => {
       const room = createRoomMachine(
         { initialPresence: {} as never },
         {
-          ...defaultContext,
+          ...makeMachineConfig(),
           authentication: {
             type: "custom",
             callback: (_room) =>
@@ -153,7 +159,7 @@ describe("room / auth", () => {
     const room = createRoomMachine(
       { initialPresence: {} as never },
       {
-        ...defaultContext,
+        ...makeMachineConfig(),
         authentication: {
           type: "private",
           url: "/mocked-api/403",
@@ -176,7 +182,7 @@ describe("room / auth", () => {
     const room = createRoomMachine(
       { initialPresence: {} as never },
       {
-        ...defaultContext,
+        ...makeMachineConfig(),
         authentication: {
           type: "private",
           url: "/mocked-api/not-json",
@@ -199,7 +205,7 @@ describe("room / auth", () => {
     const room = createRoomMachine(
       { initialPresence: {} as never },
       {
-        ...defaultContext,
+        ...makeMachineConfig(),
         authentication: {
           type: "private",
           url: "/mocked-api/missing-token",
@@ -296,7 +302,7 @@ describe("room", () => {
     withDateNow(now + 30, () => machine.updatePresence({ x: 1 }));
 
     expect(effects.delayFlush).toBeCalledWith(
-      defaultContext.throttleDelay - 30
+      makeMachineConfig().throttleDelay - 30
     );
     expect(effects.send).toHaveBeenCalledWith([
       { type: ClientMsgCode.UPDATE_PRESENCE, targetActor: -1, data: { x: 0 } },

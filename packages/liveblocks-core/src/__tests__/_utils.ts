@@ -150,18 +150,24 @@ export const THIRD_POSITION = makePosition(SECOND_POSITION);
 export const FOURTH_POSITION = makePosition(THIRD_POSITION);
 export const FIFTH_POSITION = makePosition(FOURTH_POSITION);
 
-const defaultMachineConfig = {
-  roomId: "room-id",
-  throttleDelay: -1, // No throttle for standard storage test
-  liveblocksServer: "wss://live.liveblocks.io/v6",
-  authentication: {
-    type: "private",
-    url: "/api/auth",
-  } as Authentication,
-  polyfills: {
-    WebSocket: MockWebSocket as any,
-  },
-};
+function makeMachineConfig<
+  TPresence extends JsonObject,
+  TRoomEvent extends Json
+>(mockedEffects: Effects<TPresence, TRoomEvent>) {
+  return {
+    roomId: "room-id",
+    throttleDelay: -1, // No throttle for standard storage test
+    liveblocksServer: "wss://live.liveblocks.io/v6",
+    authentication: {
+      type: "private",
+      url: "/api/auth",
+    } as Authentication,
+    polyfills: {
+      WebSocket: MockWebSocket as any,
+    },
+    mockedEffects,
+  };
+}
 
 export async function prepareRoomWithStorage<
   TPresence extends JsonObject,
@@ -186,8 +192,7 @@ export async function prepareRoomWithStorage<
   >({} as TPresence, defaultStorage || ({} as TStorage));
   const machine = makeStateMachine<TPresence, TStorage, TUserMeta, TRoomEvent>(
     state,
-    defaultMachineConfig,
-    effects
+    makeMachineConfig(effects)
   );
   const ws = new MockWebSocket("");
 

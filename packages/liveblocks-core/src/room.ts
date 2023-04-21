@@ -761,6 +761,7 @@ type MachineContext<
   opStackTraces?: Map<string, string>;
 };
 
+/** @internal */
 type Effects<TPresence extends JsonObject, TRoomEvent extends Json> = {
   authenticate(
     auth: AuthCallback,
@@ -801,7 +802,8 @@ export type RoomInitializers<
   shouldInitiallyConnect?: boolean;
 }>;
 
-type MachineConfig = {
+/** @internal */
+type MachineConfig<TPresence extends JsonObject, TRoomEvent extends Json> = {
   roomId: string;
   throttleDelay: number;
   authentication: Authentication;
@@ -828,6 +830,8 @@ type MachineConfig = {
    * Backward-compatible way to set `polyfills.WebSocket`.
    */
   WebSocketPolyfill?: Polyfills["WebSocket"];
+
+  mockedEffects?: Effects<TPresence, TRoomEvent>;
 };
 
 function userToTreeNode(
@@ -850,8 +854,7 @@ function makeStateMachine<
 >(
   // XXX Rename to `context`. This represents the "infinite state" part of the Finite State Machine.
   state: MachineContext<TPresence, TStorage, TUserMeta, TRoomEvent>,
-  config: MachineConfig,
-  mockedEffects?: Effects<TPresence, TRoomEvent>
+  config: MachineConfig<TPresence, TRoomEvent>
 ): Machine<TPresence, TStorage, TUserMeta, TRoomEvent> {
   const doNotBatchUpdates = (cb: () => void): void => cb();
   const batchUpdates = config.unstable_batchedUpdates ?? doNotBatchUpdates;
@@ -933,7 +936,7 @@ function makeStateMachine<
     storageStatus: makeEventSource<StorageStatus>(),
   };
 
-  const effects: Effects<TPresence, TRoomEvent> = mockedEffects || {
+  const effects: Effects<TPresence, TRoomEvent> = config.mockedEffects || {
     authenticate(
       auth: AuthCallback,
       createWebSocket: (token: string) => WebSocket
@@ -2499,7 +2502,7 @@ export function createRoomMachine<
     RoomInitializers<TPresence, TStorage>,
     "shouldInitiallyConnect"
   >,
-  config: MachineConfig
+  config: MachineConfig<TPresence, TRoomEvent>
 ): RoomMachine<TPresence, TStorage, TUserMeta, TRoomEvent> {
   const { initialPresence, initialStorage } = options;
 
