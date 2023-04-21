@@ -5,6 +5,7 @@ const client = createClient({
   publicApiKey: "{% LIVEBLOCKS_PUBLIC_KEY %}",
 });
 
+// Event types
 type RoomEvent = {
   type: "TOAST";
   message: string;
