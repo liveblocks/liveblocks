@@ -18,7 +18,6 @@ import type { IdTuple, SerializedCrdt } from "../protocol/SerializedCrdt";
 import { CrdtType } from "../protocol/SerializedCrdt";
 import { ServerMsgCode } from "../protocol/ServerMsg";
 import {
-  _private_defaultMachineContext as defaultMachineContext,
   _private_makeStateMachine as makeStateMachine,
   createRoomMachine,
 } from "../room";
@@ -74,20 +73,12 @@ function setupStateMachine<
   TRoomEvent extends Json
 >(initialPresence: TPresence) {
   const effects = mockEffects<TPresence, TRoomEvent>();
-  const state = defaultMachineContext<
-    TPresence,
-    TStorage,
-    TUserMeta,
-    TRoomEvent
-  >(
+  const machine = makeStateMachine<TPresence, TStorage, TUserMeta, TRoomEvent>(
+    makeMachineConfig(effects),
     initialPresence,
     undefined // no initialStorage
   );
-  const machine = makeStateMachine<TPresence, TStorage, TUserMeta, TRoomEvent>(
-    makeMachineConfig(effects),
-    state
-  );
-  return { machine, state, effects };
+  return { machine, state: machine.state, effects };
 }
 
 describe("room / auth", () => {

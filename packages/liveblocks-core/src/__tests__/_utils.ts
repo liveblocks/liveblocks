@@ -26,10 +26,7 @@ import type {
   _private_Effects as Effects,
   _private_Machine as Machine,
 } from "../room";
-import {
-  _private_defaultMachineContext as defaultMachineContext,
-  _private_makeStateMachine as makeStateMachine,
-} from "../room";
+import { _private_makeStateMachine as makeStateMachine } from "../room";
 import type { JsonStorageUpdate } from "./_updatesUtils";
 import { serializeUpdateToJson } from "./_updatesUtils";
 
@@ -184,15 +181,10 @@ export async function prepareRoomWithStorage<
   const effects = mockEffects();
   (effects.send as jest.MockedFunction<any>).mockImplementation(onSend);
 
-  const state = defaultMachineContext<
-    TPresence,
-    TStorage,
-    TUserMeta,
-    TRoomEvent
-  >({} as TPresence, defaultStorage || ({} as TStorage));
   const machine = makeStateMachine<TPresence, TStorage, TUserMeta, TRoomEvent>(
     makeMachineConfig(effects),
-    state
+    {} as TPresence,
+    defaultStorage || ({} as TStorage)
   );
   const ws = new MockWebSocket("");
 

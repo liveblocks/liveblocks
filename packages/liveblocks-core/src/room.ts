@@ -924,9 +924,13 @@ function makeStateMachine<
   TRoomEvent extends Json
 >(
   config: MachineConfig<TPresence, TRoomEvent>,
-  // XXX Rename to `context`. This represents the "infinite state" part of the Finite State Machine.
-  state: MachineContext<TPresence, TStorage, TUserMeta, TRoomEvent>
+  initialPresence: TPresence,
+  initialStorage: TStorage | undefined
 ): Machine<TPresence, TStorage, TUserMeta, TRoomEvent> {
+  // XXX Rename to `context`. This represents the "infinite state" part of the Finite State Machine.
+  const state: MachineContext<TPresence, TStorage, TUserMeta, TRoomEvent> =
+    defaultMachineContext(initialPresence, initialStorage);
+
   const doNotBatchUpdates = (cb: () => void): void => cb();
   const batchUpdates = config.unstable_batchedUpdates ?? doNotBatchUpdates;
 
@@ -2507,23 +2511,14 @@ export function createRoomMachine<
 ): RoomMachine<TPresence, TStorage, TUserMeta, TRoomEvent> {
   const { initialPresence, initialStorage } = options;
 
-  const state = defaultMachineContext<
-    TPresence,
-    TStorage,
-    TUserMeta,
-    TRoomEvent
-  >(
+  const machine = makeStateMachine<TPresence, TStorage, TUserMeta, TRoomEvent>(
+    config,
     typeof initialPresence === "function"
       ? initialPresence(config.roomId)
       : initialPresence,
     typeof initialStorage === "function"
       ? initialStorage(config.roomId)
       : initialStorage
-  );
-
-  const machine = makeStateMachine<TPresence, TStorage, TUserMeta, TRoomEvent>(
-    config,
-    state
   );
 
   const room: Room<TPresence, TStorage, TUserMeta, TRoomEvent> = {
@@ -2713,8 +2708,5 @@ class AuthenticationError extends Error {
 // These exports are considered private implementation details and only
 // exported here to be accessed used in our test suite.
 //
-export {
-  defaultMachineContext as _private_defaultMachineContext,
-  makeStateMachine as _private_makeStateMachine,
-};
+export { makeStateMachine as _private_makeStateMachine };
 export type { Effects as _private_Effects, Machine as _private_Machine };
