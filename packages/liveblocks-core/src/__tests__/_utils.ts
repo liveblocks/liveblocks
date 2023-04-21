@@ -193,6 +193,7 @@ export async function prepareRoomWithStorage<
   machine.authenticationSuccess(makeRoomToken(actor, scopes), ws as any);
   ws.open();
 
+  // Start getting the storage, but don't await the promise just yet!
   const getStoragePromise = machine.getStorage();
 
   const clonedItems = deepClone(items);
@@ -204,7 +205,6 @@ export async function prepareRoomWithStorage<
   );
 
   const storage = await getStoragePromise;
-
   return {
     storage,
     machine,
