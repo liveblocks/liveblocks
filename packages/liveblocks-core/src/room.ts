@@ -861,8 +861,6 @@ function defaultMachineContext<
     others.map((other, index) => userToTreeNode(`Other ${index}`, other))
   );
 
-  const connection = new ValueRef<Connection>({ status: "closed" });
-
   return {
     token: null,
     lastConnectionId: null,
@@ -888,7 +886,7 @@ function defaultMachineContext<
       heartbeat: 0,
     },
 
-    connection,
+    connection: new ValueRef<Connection>({ status: "closed" }),
     me: new MeRef(initialPresence),
     others,
     others_forDevTools,
