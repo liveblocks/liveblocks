@@ -718,9 +718,6 @@ type MachineContext<
   readonly me: MeRef<TPresence>;
   readonly others: OthersRef<TPresence, TUserMeta>;
 
-  /** @internal */
-  readonly others_forDevTools: ImmutableRef<DevTools.UserTreeNode[]>;
-
   idFactory: IdFactory | null;
   numberOfRetry: number;
   initialStorage?: TStorage;
@@ -846,22 +843,18 @@ function userToTreeNode(
   };
 }
 
-/** @internal */
-function defaultMachineContext<
+function makeStateMachine<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
   TUserMeta extends BaseUserMeta,
   TRoomEvent extends Json
 >(
+  config: MachineConfig<TPresence, TRoomEvent>,
   initialPresence: TPresence,
   initialStorage: TStorage | undefined
-): MachineContext<TPresence, TStorage, TUserMeta, TRoomEvent> {
-  const others = new OthersRef<TPresence, TUserMeta>();
-  const others_forDevTools = new DerivedRef(others, (others) =>
-    others.map((other, index) => userToTreeNode(`Other ${index}`, other))
-  );
-
-  return {
+): Machine<TPresence, TStorage, TUserMeta, TRoomEvent> {
+  // The "context" is the "infinite state" part of this Finite State Machine.
+  const context: MachineContext<TPresence, TStorage, TUserMeta, TRoomEvent> = {
     token: null,
     lastConnectionId: null,
     socket: null,
@@ -888,8 +881,7 @@ function defaultMachineContext<
 
     connection: new ValueRef<Connection>({ status: "closed" }),
     me: new MeRef(initialPresence),
-    others,
-    others_forDevTools,
+    others: new OthersRef<TPresence, TUserMeta>(),
 
     initialStorage,
     idFactory: null,
@@ -913,21 +905,6 @@ function defaultMachineContext<
         ? new Map<string, string>()
         : undefined,
   };
-}
-
-function makeStateMachine<
-  TPresence extends JsonObject,
-  TStorage extends LsonObject,
-  TUserMeta extends BaseUserMeta,
-  TRoomEvent extends Json
->(
-  config: MachineConfig<TPresence, TRoomEvent>,
-  initialPresence: TPresence,
-  initialStorage: TStorage | undefined
-): Machine<TPresence, TStorage, TUserMeta, TRoomEvent> {
-  // The "context" is the "infinite state" part of this Finite State Machine.
-  const context: MachineContext<TPresence, TStorage, TUserMeta, TRoomEvent> =
-    defaultMachineContext(initialPresence, initialStorage);
 
   const doNotBatchUpdates = (cb: () => void): void => cb();
   const batchUpdates = config.unstable_batchedUpdates ?? doNotBatchUpdates;
@@ -2414,6 +2391,11 @@ function makeStateMachine<
     }
   }
 
+  // Derived cached state for use in DevTools
+  const others_forDevTools = new DerivedRef(context.others, (others) =>
+    others.map((other, index) => userToTreeNode(`Other ${index}`, other))
+  );
+
   return {
     // Internal
     // XXX Rename to `context` eventually
@@ -2479,7 +2461,7 @@ function makeStateMachine<
     // Support for the Liveblocks browser extension
     getSelf_forDevTools: () => selfAsTreeNode.current,
     getOthers_forDevTools: (): readonly DevTools.UserTreeNode[] =>
-      context.others_forDevTools.current,
+      others_forDevTools.current,
   };
 }
 
