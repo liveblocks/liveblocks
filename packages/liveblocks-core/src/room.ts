@@ -535,6 +535,11 @@ export type Room<
    * @internal Utilities only used for unit testing.
    */
   readonly __INTERNAL_DO_NOT_USE: {
+    connect(): void;
+    disconnect(): void;
+    onNavigatorOnline(): void;
+    onVisibilityChange(visibilityState: DocumentVisibilityState): void;
+
     simulateCloseWebsocket(): void;
     simulateSendCloseEvent(event: {
       code: number;
@@ -2534,6 +2539,10 @@ export function createRoomMachine<
     },
 
     __INTERNAL_DO_NOT_USE: {
+      connect: machine.connect,
+      disconnect: machine.disconnect,
+      onNavigatorOnline: machine.onNavigatorOnline,
+      onVisibilityChange: machine.onVisibilityChange,
       simulateCloseWebsocket: machine.simulateSocketClose,
       simulateSendCloseEvent: machine.simulateSendCloseEvent,
     },
@@ -2543,10 +2552,10 @@ export function createRoomMachine<
   };
 
   return {
-    connect: machine.connect,
-    disconnect: machine.disconnect,
-    onNavigatorOnline: machine.onNavigatorOnline,
-    onVisibilityChange: machine.onVisibilityChange,
+    connect: room.__internal.connect,
+    disconnect: room.__internal.disconnect,
+    onNavigatorOnline: room.__internal.onNavigatorOnline,
+    onVisibilityChange: room.__internal.onVisibilityChange,
     room,
   };
 }
