@@ -1898,12 +1898,12 @@ function makeStateMachine<
     const elapsedMillis = now - context.buffer.lastFlushedAt;
 
     if (elapsedMillis > config.throttleDelay) {
-      const messages = flushDataToMessages(context);
-
-      if (messages.length === 0) {
+      const messagesToFlush = serializeBuffer();
+      if (messagesToFlush.length === 0) {
         return;
       }
-      effects.send(messages);
+
+      effects.send(messagesToFlush);
       context.buffer = {
         lastFlushedAt: now,
         messages: [],
@@ -1921,34 +1921,36 @@ function makeStateMachine<
     }
   }
 
-  function flushDataToMessages(
-    state: MachineContext<TPresence, TStorage, TUserMeta, TRoomEvent>
-  ) {
+  /**
+   * Returns a list of ClientMsgs to flush to the network, computed from all
+   * pending changes in the buffer. Has no side effects.
+   */
+  function serializeBuffer() {
     const messages: ClientMsg<TPresence, TRoomEvent>[] = [];
-    if (state.buffer.me) {
+    if (context.buffer.me) {
       messages.push(
-        state.buffer.me.type === "full"
+        context.buffer.me.type === "full"
           ? {
               type: ClientMsgCode.UPDATE_PRESENCE,
               // Populating the `targetActor` field turns this message into
               // a Full Presence™ update message (not a patch), which will get
               // interpreted by other clients as such.
               targetActor: -1,
-              data: state.buffer.me.data,
+              data: context.buffer.me.data,
             }
           : {
               type: ClientMsgCode.UPDATE_PRESENCE,
-              data: state.buffer.me.data,
+              data: context.buffer.me.data,
             }
       );
     }
-    for (const event of state.buffer.messages) {
+    for (const event of context.buffer.messages) {
       messages.push(event);
     }
-    if (state.buffer.storageOperations.length > 0) {
+    if (context.buffer.storageOperations.length > 0) {
       messages.push({
         type: ClientMsgCode.UPDATE_STORAGE,
-        ops: state.buffer.storageOperations,
+        ops: context.buffer.storageOperations,
       });
     }
     return messages;
