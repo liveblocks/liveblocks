@@ -687,8 +687,16 @@ type MachineContext<
   } | null;
   lastConnectionId: number | null; // TODO: Move into Connection type members?
   socket: WebSocket | null;
-  lastFlushTime: number;
+
+  /**
+   * All pending changes that yet need to be synced.
+   */
   buffer: {
+    // When the last flush happened. Together with config.throttleDelay, this
+    // will control whether the next flush will be sent out immediately, or if
+    // a flush will get scheduled for a few milliseconds into the future.
+    readonly lastFlushedAt: number;
+
     // Queued-up "my presence" updates to be flushed at the earliest convenience
     me:
       | { type: "partial"; data: Partial<TPresence> }
@@ -844,13 +852,14 @@ function makeStateMachine<
     lastConnectionId: null,
     socket: null,
     numberOfRetry: 0,
-    lastFlushTime: 0,
     timeoutHandles: {
       flush: undefined,
       reconnect: undefined,
       pongTimeout: undefined,
     },
+
     buffer: {
+      lastFlushedAt: 0,
       me:
         // Queue up the initial presence message as a Full Presence™ update
         {
@@ -860,6 +869,7 @@ function makeStateMachine<
       messages: [],
       storageOperations: [],
     },
+
     intervalHandles: {
       heartbeat: undefined,
     },
@@ -1881,10 +1891,9 @@ function makeStateMachine<
     }
 
     const now = Date.now();
+    const elapsedMillis = now - context.buffer.lastFlushedAt;
 
-    const elapsedTime = now - context.lastFlushTime;
-
-    if (elapsedTime > config.throttleDelay) {
+    if (elapsedMillis > config.throttleDelay) {
       const messages = flushDataToMessages(context);
 
       if (messages.length === 0) {
@@ -1892,18 +1901,18 @@ function makeStateMachine<
       }
       effects.send(messages);
       context.buffer = {
+        lastFlushedAt: now,
         messages: [],
         storageOperations: [],
         me: null,
       };
-      context.lastFlushTime = now;
     } else {
       if (context.timeoutHandles.flush !== null) {
         clearTimeout(context.timeoutHandles.flush);
       }
 
       context.timeoutHandles.flush = effects.delayFlush(
-        config.throttleDelay - (now - context.lastFlushTime)
+        config.throttleDelay - elapsedMillis
       );
     }
   }
