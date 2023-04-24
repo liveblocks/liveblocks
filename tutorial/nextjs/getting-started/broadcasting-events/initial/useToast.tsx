@@ -56,7 +56,7 @@ function Toast({
   }, []);
 
   return (
-    <div className="toast" style={{ bottom: 50 * offset - 50 }}>
+    <div className="toast" style={{ bottom: 50 * offset - 50 }} role="status">
       {text}
     </div>
   );

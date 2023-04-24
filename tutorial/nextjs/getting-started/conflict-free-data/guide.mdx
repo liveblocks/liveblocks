@@ -1,12 +1,59 @@
 ---
-openFile: "/pages/index.tsx"
+openFile: "/Room.tsx"
 showFiles: [
-  "/pages/index.tsx",
-  "/pages/index.module.css",
-  "/liveblocks.config.ts"
+  "/App.tsx",
+  "/Room.tsx",
+  "/liveblocks.config.ts",
 ]
 ---
 
-## A guide about conflict-free data
+```ts
+// Storage types
+type Storage = {
+  person: LiveObject<{
+    name: string;
+    age: number;
+  }>;
+};
+```
 
-Some info about conflict-free data
+```ts
+export const {
+  RoomProvider,
+  useStorage, // ✅
+} = createRoomContext<{}, Storage, {}, {}>(client);
+```
+
+```tsx highlight="4-6"
+<RoomProvider
+  id={roomId}
+  initialPresence={{}}
+  initialStorage={{
+    person: new LiveObject({ name: "Marie", age: 30 }),
+  }}
+>
+```
+
+```tsx
+import { useStorage } from "./liveblocks.config";
+
+export function Room() {
+  const person = useStorage((root) => root.person);
+
+  if (!person) {
+    return <div>Loading...</div>;
+  }
+
+  return <div>Person: {JSON.stringify(person)}</div>;
+}
+```
+
+
+
+[`createRoomContext`]: /docs/api-reference/liveblocks-react#createRoomContext
+[`useBroadcastEvent`]: /docs/api-reference/liveblocks-react#useBroadcastEvent
+[`useEventListener`]: /docs/api-reference/liveblocks-react#useEventListener
+
+[liveblocks.config.ts]: #/liveblocks.config.ts
+[App.tsx]: #/App.tsx
+[Room.tsx]: #/Room.tsx
