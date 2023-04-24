@@ -58,6 +58,9 @@ import type { Others, OthersEvent } from "./types/Others";
 import type { User } from "./types/User";
 import { WebsocketCloseCodes } from "./types/WebsocketCloseCodes";
 
+type TimeoutID = ReturnType<typeof setTimeout>;
+type IntervalID = ReturnType<typeof setInterval>;
+
 type CustomEvent<TRoomEvent extends Json> = {
   connectionId: number;
   event: TRoomEvent;
@@ -710,12 +713,12 @@ type MachineContext<
     storageOperations: Op[];
   };
   timeoutHandles: {
-    flush: number | null;
-    reconnect: number;
-    pongTimeout: number;
+    flush: TimeoutID | undefined;
+    reconnect: TimeoutID | undefined;
+    pongTimeout: TimeoutID | undefined;
   };
   intervalHandles: {
-    heartbeat: number;
+    heartbeat: IntervalID | undefined;
   };
 
   readonly connection: ValueRef<Connection>;
@@ -769,10 +772,10 @@ type Effects<TPresence extends JsonObject, TRoomEvent extends Json> = {
     createWebSocket: (token: string) => WebSocket
   ): void;
   send(messages: ClientMsg<TPresence, TRoomEvent>[]): void;
-  delayFlush(delay: number): number;
-  startHeartbeatInterval(): number;
-  schedulePongTimeout(): number;
-  scheduleReconnect(delay: number): number;
+  delayFlush(delay: number): TimeoutID;
+  startHeartbeatInterval(): IntervalID;
+  schedulePongTimeout(): TimeoutID;
+  scheduleReconnect(delay: number): TimeoutID;
 };
 
 export type Polyfills = {
@@ -858,9 +861,9 @@ function makeStateMachine<
     numberOfRetry: 0,
     lastFlushTime: 0,
     timeoutHandles: {
-      flush: null,
-      reconnect: 0,
-      pongTimeout: 0,
+      flush: undefined,
+      reconnect: undefined,
+      pongTimeout: undefined,
     },
     buffer: {
       me:
@@ -873,7 +876,7 @@ function makeStateMachine<
       storageOperations: [],
     },
     intervalHandles: {
-      heartbeat: 0,
+      heartbeat: undefined,
     },
 
     connection: new ValueRef<Connection>({ status: "closed" }),
@@ -1023,16 +1026,16 @@ function makeStateMachine<
       context.socket.send(JSON.stringify(messageOrMessages));
     },
     delayFlush(delay: number) {
-      return setTimeout(tryFlushing, delay) as any;
+      return setTimeout(tryFlushing, delay);
     },
     startHeartbeatInterval() {
-      return setInterval(heartbeat, HEARTBEAT_INTERVAL) as any;
+      return setInterval(heartbeat, HEARTBEAT_INTERVAL);
     },
     schedulePongTimeout() {
-      return setTimeout(pongTimeout, PONG_TIMEOUT) as any;
+      return setTimeout(pongTimeout, PONG_TIMEOUT);
     },
     scheduleReconnect(delay: number) {
-      return setTimeout(connect, delay) as any;
+      return setTimeout(connect, delay);
     },
   };
 
