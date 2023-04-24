@@ -567,18 +567,6 @@ export type Room<
   };
 };
 
-export function isRoomEventName(value: string): value is RoomEventName {
-  return (
-    value === "my-presence" ||
-    value === "others" ||
-    value === "event" ||
-    value === "error" ||
-    value === "connection" ||
-    value === "history" ||
-    value === "storage-status"
-  );
-}
-
 type Machine<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
@@ -2545,6 +2533,18 @@ export function makeClassicSubscribeFn<
   }
 
   return subscribe;
+}
+
+function isRoomEventName(value: string): value is RoomEventName {
+  return (
+    value === "my-presence" ||
+    value === "others" ||
+    value === "event" ||
+    value === "error" ||
+    value === "connection" ||
+    value === "history" ||
+    value === "storage-status"
+  );
 }
 
 class LiveblocksError extends Error {
