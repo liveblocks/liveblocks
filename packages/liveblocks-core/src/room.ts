@@ -1364,10 +1364,6 @@ function makeStateMachine<
     }
   }
 
-  function getConnectionState() {
-    return context.connection.current.status;
-  }
-
   function connect() {
     if (
       context.connection.current.status !== "closed" &&
@@ -2021,14 +2017,6 @@ function makeStateMachine<
     });
   }
 
-  function getPresence(): Readonly<TPresence> {
-    return context.me.current;
-  }
-
-  function getOthers(): Others<TPresence, TUserMeta> {
-    return context.others.current;
-  }
-
   function broadcastEvent(
     event: TRoomEvent,
     options: BroadcastOptions = {
@@ -2326,13 +2314,13 @@ function makeStateMachine<
     },
 
     // Core
-    getConnectionState,
+    getConnectionState: () => context.connection.current.status,
     isSelfAware: () => isConnectionSelfAware(context.connection.current),
     getSelf: () => self.current,
 
     // Presence
-    getPresence,
-    getOthers,
+    getPresence: () => context.me.current,
+    getOthers: () => context.others.current,
 
     // Support for the Liveblocks browser extension
     getSelf_forDevTools: () => selfAsTreeNode.current,
