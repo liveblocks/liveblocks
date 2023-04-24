@@ -1898,6 +1898,7 @@ function makeStateMachine<
     const elapsedMillis = now - context.buffer.lastFlushedAt;
 
     if (elapsedMillis > config.throttleDelay) {
+      // Flush the buffer right now
       const messagesToFlush = serializeBuffer();
       if (messagesToFlush.length === 0) {
         return;
@@ -1911,6 +1912,7 @@ function makeStateMachine<
         me: null,
       };
     } else {
+      // Or schedule the flush a few millis into the future
       if (context.timers.flush !== null) {
         clearTimeout(context.timers.flush);
       }
