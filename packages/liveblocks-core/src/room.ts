@@ -21,7 +21,7 @@ import { isJsonArray, isJsonObject } from "./lib/Json";
 import type { Resolve } from "./lib/Resolve";
 import { compact, isPlainObject, tryParseJson } from "./lib/utils";
 import type { Authentication } from "./protocol/Authentication";
-import type { RoomAuthToken, JwtMetadata } from "./protocol/AuthToken";
+import type { JwtMetadata, RoomAuthToken } from "./protocol/AuthToken";
 import {
   isTokenExpired,
   parseRoomAuthToken,
