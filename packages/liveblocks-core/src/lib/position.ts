@@ -90,13 +90,15 @@ function nthDigit(n: number): Pos {
  * When given no bounds at all, returns the "first" canonical position.
  */
 function makePosition(x?: Pos, y?: Pos): Pos {
-  return x !== undefined && y !== undefined
-    ? between(x, y)
-    : x !== undefined
-    ? after(x)
-    : y !== undefined
-    ? before(y)
-    : ONE;
+  if (x !== undefined && y !== undefined) {
+    return between(x, y);
+  } else if (x !== undefined) {
+    return after(x);
+  } else if (y !== undefined) {
+    return before(y);
+  } else {
+    return ONE;
+  }
 }
 
 /**
