@@ -1507,6 +1507,8 @@ function makeStateMachine<
     }
   }
 
+  function canUndo() { return context.undoStack.length > 0; } // prettier-ignore
+  function canRedo() { return context.redoStack.length > 0; } // prettier-ignore
   function onHistoryChange(batchedUpdatesWrapper: (cb: () => void) => void) {
     batchedUpdatesWrapper(() => {
       eventHub.history.notify({ canUndo: canUndo(), canRedo: canRedo() });
@@ -2066,10 +2068,6 @@ function makeStateMachine<
     tryFlushing();
   }
 
-  function canUndo() {
-    return context.undoStack.length > 0;
-  }
-
   function redo() {
     if (context.activeBatch) {
       throw new Error("redo is not allowed during a batch");
@@ -2095,10 +2093,6 @@ function makeStateMachine<
       }
     }
     tryFlushing();
-  }
-
-  function canRedo() {
-    return context.redoStack.length > 0;
   }
 
   function batch<T>(callback: () => T): T {
