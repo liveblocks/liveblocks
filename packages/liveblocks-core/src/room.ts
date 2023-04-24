@@ -2466,7 +2466,7 @@ function makeStateMachine<
   };
 }
 
-export function createRoomMachine<
+export function createRoom<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
   TUserMeta extends BaseUserMeta,

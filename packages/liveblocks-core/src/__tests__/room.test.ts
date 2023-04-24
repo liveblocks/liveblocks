@@ -20,7 +20,7 @@ import { ServerMsgCode } from "../protocol/ServerMsg";
 import type { _private_Effects as Effects } from "../room";
 import {
   _private_makeStateMachine as makeStateMachine,
-  createRoomMachine,
+  createRoom,
 } from "../room";
 import type { Others } from "../types/Others";
 import { WebsocketCloseCodes } from "../types/WebsocketCloseCodes";
@@ -42,14 +42,14 @@ import {
   withDateNow,
 } from "./_utils";
 
-function createTestableRoom(...args: Parameters<typeof createRoomMachine>): {
+function createTestableRoom(...args: Parameters<typeof createRoom>): {
   // room: ReturnType<typeof createRoom>;
   connect: () => void;
   disconnect: () => void;
   onNavigatorOnline: () => void;
   onVisibilityChange: (visibilityState: DocumentVisibilityState) => void;
 } {
-  const room = createRoomMachine(...args);
+  const room = createRoom(...args);
   return {
     // room,
 

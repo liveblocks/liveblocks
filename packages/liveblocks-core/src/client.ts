@@ -6,7 +6,7 @@ import type { Resolve } from "./lib/Resolve";
 import type { Authentication } from "./protocol/Authentication";
 import type { BaseUserMeta } from "./protocol/BaseUserMeta";
 import type { Polyfills, Room, RoomInitializers } from "./room";
-import { createRoomMachine } from "./room";
+import { createRoom } from "./room";
 
 const MIN_THROTTLE = 16;
 const MAX_THROTTLE = 1000;
@@ -161,12 +161,7 @@ export function createClient(options: ClientOptions): Client {
       "Please provide an initial presence value for the current user when entering the room."
     );
 
-    const newRoom = createRoomMachine<
-      TPresence,
-      TStorage,
-      TUserMeta,
-      TRoomEvent
-    >(
+    const newRoom = createRoom<TPresence, TStorage, TUserMeta, TRoomEvent>(
       {
         initialPresence: options.initialPresence ?? {},
         initialStorage: options.initialStorage,
