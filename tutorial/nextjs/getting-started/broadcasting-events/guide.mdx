@@ -7,8 +7,13 @@ showFiles: [
 ]
 ---
 
-Another key feature of Liveblocks is the ability to [broadcast custom events](/broadcast) to other users. Events are ephemeral and are sent to all users currently connected to the room.
-On this page, we’ll be using events to send toast notifications to other users.
+Another key feature of Liveblocks is the ability to [broadcast custom events](/broadcast) to other users. Events are ephemeral, and are sent to all users currently connected to the room, which makes them useful for:
+
+- Creating state controls, for example “next/previous slide” buttons in presentations
+- Letting other users know when to revalidate data after a change
+- Sending short-lived chat messages to other users
+
+On this page, we’ll be using events to send _toast notifications_ to other users.
 
 ### Setting up types
 
@@ -79,14 +84,6 @@ useEventListener(({ event }) => {
 ```
 
 Try pressing the button to see other users receive toast notifications! You can also change the `message` and see an updated notification appear.
-
-### Other uses
-
-Events are helpful in many other situations too, for example:
-
-- Creating state controls, e.g. “next/previous slide” buttons in presentations
-- Letting other users know when to revalidate data
-- Sending short-lived chat messages to other users
 
 [`createRoomContext`]: /docs/api-reference/liveblocks-react#createRoomContext
 [`useBroadcastEvent`]: /docs/api-reference/liveblocks-react#useBroadcastEvent
