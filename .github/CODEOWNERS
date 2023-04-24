@@ -2,7 +2,7 @@
 /packages/   @nvie
 /packages/liveblocks-devtools/   @nvie @marcbouchenoire
 /packages/create-liveblocks-app/   @CTNicholas
-/packages/liveblocks-node/   @nvie @ofoucherot
+/packages/liveblocks-node/   @nvie @ofoucherot @FlowFlorent 
 /shared/   @nvie
 /e2e/   @nvie
 
