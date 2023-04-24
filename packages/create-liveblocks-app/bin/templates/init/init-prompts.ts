@@ -3,15 +3,15 @@ import c from "ansi-colors";
 
 export type ConfigFrameworks = "react" | "javascript";
 
-export type GenerateConfigQuestions = {
+export type InitQuestions = {
   framework: ConfigFrameworks;
   suspense: boolean;
   typescript: boolean;
 };
 
-export async function generateConfigPrompts(flags: Record<string, any>) {
+export async function initPrompts(flags: Record<string, any>) {
   // === Configure by asking prompts, questions skipped if flags exist ===
-  const questions: PromptObject<keyof GenerateConfigQuestions>[] = [
+  const questions: PromptObject<keyof InitQuestions>[] = [
     {
       type: flags.framework ? null : "select",
       name: "framework",
@@ -47,7 +47,7 @@ export async function generateConfigPrompts(flags: Record<string, any>) {
     framework = flags.framework,
     suspense = flags.suspense,
     typescript = flags.typescript,
-  }: GenerateConfigQuestions = await prompts(questions, {
+  }: InitQuestions = await prompts(questions, {
     onCancel: () => {
       console.log(c.redBright.bold("  Cancelled"));
       console.log();

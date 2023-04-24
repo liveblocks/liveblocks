@@ -1,6 +1,6 @@
-import { GenerateConfigQuestions } from "./generate-config-prompts";
+import { InitQuestions } from "./init-prompts";
 
-export function configGeneration(args: GenerateConfigQuestions) {
+export function configGeneration(args: InitQuestions) {
   return `${imports(args)}
   
 ${createClient(args)}
@@ -9,7 +9,7 @@ ${reactExports(args)}
 `;
 }
 
-function imports({ framework }: GenerateConfigQuestions) {
+function imports({ framework }: InitQuestions) {
   if (framework === "react") {
     return `import { createClient } from "@liveblocks/client";
 import { createRoomContext } from "@liveblocks/react";`;
@@ -18,7 +18,7 @@ import { createRoomContext } from "@liveblocks/react";`;
   return `import { createClient } from "@liveblocks/client";`;
 }
 
-function createClient({ framework }: GenerateConfigQuestions) {
+function createClient({ framework }: InitQuestions) {
   return `${framework !== "react" ? "export " : ""}const client = createClient({
   // publicApiKey: "",
   // authEndpoint: "/api/auth",
@@ -26,7 +26,7 @@ function createClient({ framework }: GenerateConfigQuestions) {
 });`;
 }
 
-function typeDefinitions({ typescript }: GenerateConfigQuestions) {
+function typeDefinitions({ typescript }: InitQuestions) {
   if (!typescript) {
     return "";
   }
@@ -62,11 +62,7 @@ type Storage = {
 `;
 }
 
-function reactExports({
-  framework,
-  suspense,
-  typescript,
-}: GenerateConfigQuestions) {
+function reactExports({ framework, suspense, typescript }: InitQuestions) {
   if (framework !== "react") {
     if (typescript) {
       return `// Typed Room

@@ -2,12 +2,10 @@ import c from "ansi-colors";
 import path from "path";
 import { confirmDirectoryEmpty } from "../../utils";
 import fs from "fs";
-import { generateConfigPrompts } from "./generate-config-prompts";
+import { initPrompts } from "./init-prompts";
 import { configGeneration } from "./config-generation";
 export async function create(flags: Record<string, any>) {
-  const { framework, suspense, typescript } = await generateConfigPrompts(
-    flags
-  );
+  const { framework, suspense, typescript } = await initPrompts(flags);
 
   const appDir = process.cwd();
 

@@ -6,15 +6,15 @@ import { commandLineFlags } from "./flags";
 import * as nextjsTemplate from "./templates/nextjs-starter-kit";
 import * as exampleTemplate from "./templates/example";
 import * as helpTemplate from "./templates/help";
-import * as generateConfigTemplate from "./templates/generate-config";
+import * as initTemplate from "./templates/init";
 
-type TemplateName = "next" | "example" | "help" | "generate-config";
+type TemplateName = "next" | "example" | "help" | "init";
 
 const templates: { [K in TemplateName]: any } = {
   next: nextjsTemplate,
   example: exampleTemplate,
   help: helpTemplate,
-  ["generate-config"]: generateConfigTemplate,
+  init: initTemplate,
 };
 
 export async function createLiveblocksApp() {
@@ -56,8 +56,8 @@ export async function createLiveblocksApp() {
     flags.template = "next";
   }
 
-  if (flags["generate-config"]) {
-    flags.template = "generate-config";
+  if (flags.init) {
+    flags.template = "init";
   }
 
   const initialQuestions: PromptObject<"template">[] = [
@@ -70,8 +70,8 @@ export async function createLiveblocksApp() {
         { title: "Get the Next.js Starter Kit", value: "next" },
         { title: "Get an example from the Liveblocks repo", value: "example" },
         {
-          title: "Generate a liveblocks.config file",
-          value: "generate-config",
+          title: "Create a liveblocks.config file",
+          value: "init",
         },
       ],
     },
