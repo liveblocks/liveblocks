@@ -25,7 +25,6 @@ import { ServerMsgCode } from "../protocol/ServerMsg";
 import type {
   _private_Effects as Effects,
   _private_Machine as Machine,
-  Room,
 } from "../room";
 import {
   _private_makeStateMachine as makeStateMachine,
@@ -208,14 +207,7 @@ export async function prepareRoomWithStorage<
   );
 
   const storage = await getStoragePromise;
-  return {
-    storage,
-    machine: {
-      ...machine,
-      subscribe: makeClassicSubscribeFn(machine),
-    },
-    ws,
-  };
+  return { storage, machine, ws };
 }
 
 export async function prepareIsolatedStorageTest<TStorage extends LsonObject>(
@@ -414,6 +406,7 @@ export async function prepareStorageTest<
   return {
     machine,
     refMachine,
+    subscribe: makeClassicSubscribeFn(machine),
     operations,
     storage,
     refStorage,
@@ -422,8 +415,6 @@ export async function prepareStorageTest<
     updatePresence: machine.updatePresence,
     getUndoStack: machine.getUndoStack,
     getItemsCount: machine.getItemsCount,
-    subscribe: makeClassicSubscribeFn(machine),
-    refSubscribe: makeClassicSubscribeFn(refMachine),
     batch: machine.batch,
     undo: machine.undo,
     redo: machine.redo,
@@ -454,15 +445,11 @@ export async function prepareStorageUpdateTest<
 ): Promise<{
   batch: (fn: () => void) => void;
   root: LiveObject<TStorage>;
-  machine: Machine<TPresence, TStorage, TUserMeta, TRoomEvent> & {
-    subscribe: Room<TPresence, TStorage, TUserMeta, TRoomEvent>["subscribe"];
-  };
+  machine: Machine<TPresence, TStorage, TUserMeta, TRoomEvent>;
   expectUpdates: (updates: JsonStorageUpdate[][]) => void;
 }> {
-  const { storage: refStorage, machine: refMachine } =
-    await prepareRoomWithStorage(items, -1);
-
-  const { storage, machine } = await prepareRoomWithStorage<
+  const { machine: refMachine } = await prepareRoomWithStorage(items, -1);
+  const { machine, storage } = await prepareRoomWithStorage<
     TPresence,
     TStorage,
     TUserMeta,
@@ -489,15 +476,11 @@ export async function prepareStorageUpdateTest<
   const jsonUpdates: JsonStorageUpdate[][] = [];
   const refJsonUpdates: JsonStorageUpdate[][] = [];
 
-  machine.subscribe(
-    storage.root,
-    (updates) => jsonUpdates.push(updates.map(serializeUpdateToJson)),
-    { isDeep: true }
+  machine.events.storage.subscribe((updates) =>
+    jsonUpdates.push(updates.map(serializeUpdateToJson))
   );
-  refMachine.subscribe(
-    refStorage.root,
-    (updates) => refJsonUpdates.push(updates.map(serializeUpdateToJson)),
-    { isDeep: true }
+  refMachine.events.storage.subscribe((updates) =>
+    refJsonUpdates.push(updates.map(serializeUpdateToJson))
   );
 
   function expectUpdatesInBothClients(updates: JsonStorageUpdate[][]) {
@@ -538,7 +521,8 @@ export async function prepareDisconnectedStorageUpdateTest<
 
   const receivedUpdates: JsonStorageUpdate[][] = [];
 
-  machine.subscribe(
+  const subscribe = makeClassicSubscribeFn(machine);
+  subscribe(
     storage.root,
     (updates) => receivedUpdates.push(updates.map(serializeUpdateToJson)),
     { isDeep: true }

@@ -1127,7 +1127,7 @@ describe("LiveList", () => {
 
   describe("subscriptions", () => {
     test("batch multiple actions", async () => {
-      const { storage, subscribe, batch, expectStorage } =
+      const { machine, storage, batch, expectStorage } =
         await prepareStorageTest<{
           items: LiveList<string>;
         }>(
@@ -1140,12 +1140,10 @@ describe("LiveList", () => {
         );
 
       const callback = jest.fn();
+      machine.events.storage.subscribe(callback);
 
       const root = storage.root;
-
       const liveList = root.get("items");
-
-      subscribe(liveList, callback, { isDeep: true });
 
       batch(() => {
         liveList.push("b");
@@ -1168,7 +1166,7 @@ describe("LiveList", () => {
     });
 
     test("batch multiple inserts", async () => {
-      const { storage, subscribe, batch, expectStorage } =
+      const { machine, storage, batch, expectStorage } =
         await prepareStorageTest<{
           items: LiveList<string>;
         }>(
@@ -1181,12 +1179,10 @@ describe("LiveList", () => {
         );
 
       const callback = jest.fn();
+      machine.events.storage.subscribe(callback);
 
       const root = storage.root;
-
       const liveList = root.get("items");
-
-      subscribe(liveList, callback, { isDeep: true });
 
       batch(() => {
         liveList.insert("b", 1);
@@ -1201,7 +1197,7 @@ describe("LiveList", () => {
 
   describe("reconnect with remote changes and subscribe", () => {
     test("Register added to list", async () => {
-      const { expectStorage, machine, root } =
+      const { expectStorage, machine, subscribe, root } =
         await prepareIsolatedStorageTest<{
           items: LiveList<string>;
         }>(
@@ -1219,9 +1215,9 @@ describe("LiveList", () => {
 
       const listItems = root.get("items");
 
-      machine.subscribe(root, rootCallback);
-      machine.subscribe(root, rootDeepCallback, { isDeep: true });
-      machine.subscribe(listItems, listCallback);
+      subscribe(root, rootCallback);
+      subscribe(root, rootDeepCallback, { isDeep: true });
+      subscribe(listItems, listCallback);
 
       expectStorage({ items: ["a"] });
 
@@ -1289,7 +1285,7 @@ describe("LiveList", () => {
     });
 
     test("Register moved in list", async () => {
-      const { expectStorage, machine, root } =
+      const { expectStorage, machine, subscribe, root } =
         await prepareIsolatedStorageTest<{
           items: LiveList<string>;
         }>(
@@ -1308,9 +1304,9 @@ describe("LiveList", () => {
 
       const listItems = root.get("items");
 
-      machine.subscribe(root, rootCallback);
-      machine.subscribe(root, rootDeepCallback, { isDeep: true });
-      machine.subscribe(listItems, listCallback);
+      subscribe(root, rootCallback);
+      subscribe(root, rootDeepCallback, { isDeep: true });
+      subscribe(listItems, listCallback);
 
       expectStorage({ items: ["a", "b"] });
 
@@ -1366,7 +1362,7 @@ describe("LiveList", () => {
     });
 
     test("Register deleted from list", async () => {
-      const { expectStorage, machine, root } =
+      const { expectStorage, machine, subscribe, root } =
         await prepareIsolatedStorageTest<{
           items: LiveList<string>;
         }>(
@@ -1385,9 +1381,9 @@ describe("LiveList", () => {
 
       const listItems = root.get("items");
 
-      machine.subscribe(root, rootCallback);
-      machine.subscribe(root, rootDeepCallback, { isDeep: true });
-      machine.subscribe(listItems, listCallback);
+      subscribe(root, rootCallback);
+      subscribe(root, rootDeepCallback, { isDeep: true });
+      subscribe(listItems, listCallback);
 
       expectStorage({ items: ["a", "b"] });
 
@@ -1505,7 +1501,7 @@ describe("LiveList", () => {
       });
 
       it('with intent "set" should notify with a "set" update', async () => {
-        const { root, applyRemoteOperations, subscribe } =
+        const { machine, root, applyRemoteOperations } =
           await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
             [
               createSerializedObject("root", {}),
@@ -1518,8 +1514,7 @@ describe("LiveList", () => {
         const items = root.get("items");
 
         const callback = jest.fn();
-
-        subscribe(items, callback, { isDeep: true });
+        machine.events.storage.subscribe(callback);
 
         applyRemoteOperations([
           {
@@ -1581,7 +1576,7 @@ describe("LiveList", () => {
       });
 
       it('with intent "set" should notify with a "insert" update if no item exists at this position', async () => {
-        const { root, applyRemoteOperations, subscribe } =
+        const { root, subscribe, applyRemoteOperations } =
           await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
             [
               createSerializedObject("root", {}),
@@ -1595,7 +1590,6 @@ describe("LiveList", () => {
         items.delete(0);
 
         const callback = jest.fn();
-
         subscribe(items, callback, { isDeep: true });
 
         applyRemoteOperations([
@@ -1638,7 +1632,6 @@ describe("LiveList", () => {
         });
 
         const callback = jest.fn();
-
         subscribe(items, callback, { isDeep: true });
 
         applyRemoteOperations([

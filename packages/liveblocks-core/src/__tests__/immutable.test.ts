@@ -73,14 +73,9 @@ export async function prepareStorageImmutableTest<
   state = lsonToJson(storage.root) as ToJson<TStorage>;
   refState = lsonToJson(refStorage.root) as ToJson<TStorage>;
 
-  const root = refStorage.root;
-  refMachine.subscribe(
-    root,
-    () => {
-      refState = lsonToJson(refStorage.root) as ToJson<TStorage>;
-    },
-    { isDeep: true }
-  );
+  refMachine.events.storage.subscribe(() => {
+    refState = lsonToJson(refStorage.root) as ToJson<TStorage>;
+  });
 
   function expectStorageAndStateInBothClients(
     data: ToJson<TStorage>,
@@ -111,8 +106,6 @@ export async function prepareStorageImmutableTest<
     refStorage,
     expectStorageAndState: expectStorageAndStateInBothClients,
     expectStorage: expectStorageInBothClients,
-    subscribe: machine.subscribe,
-    refSubscribe: refMachine.subscribe,
     state,
   };
 }

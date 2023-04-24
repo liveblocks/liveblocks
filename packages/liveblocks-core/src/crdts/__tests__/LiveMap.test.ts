@@ -648,7 +648,7 @@ describe("LiveMap", () => {
 
   describe("reconnect with remote changes and subscribe", () => {
     test("Register added to map", async () => {
-      const { expectStorage, machine, root } =
+      const { expectStorage, machine, subscribe, root } =
         await prepareIsolatedStorageTest<{
           map: LiveMap<string, string>;
         }>(
@@ -665,8 +665,8 @@ describe("LiveMap", () => {
 
       const listItems = root.get("map");
 
-      machine.subscribe(root, rootDeepCallback, { isDeep: true });
-      machine.subscribe(listItems, mapCallback);
+      subscribe(root, rootDeepCallback, { isDeep: true });
+      subscribe(listItems, mapCallback);
 
       expectStorage({ map: new Map([["first", "a"]]) });
 

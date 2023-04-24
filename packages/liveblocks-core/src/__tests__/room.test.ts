@@ -100,10 +100,8 @@ function setupStateMachine<
     undefined // no initialStorage
   );
   return {
-    machine: {
-      ...machine,
-      subscribe: makeClassicSubscribeFn(machine),
-    },
+    machine,
+    subscribe: makeClassicSubscribeFn(machine),
     state: machine.state,
     effects,
   };
@@ -953,7 +951,7 @@ describe("room", () => {
 
       const callback = jest.fn();
 
-      machine.subscribe("my-presence", callback);
+      machine.events.me.subscribe(callback);
 
       machine.batch(() => {
         machine.updatePresence({ x: 0 });
@@ -965,7 +963,7 @@ describe("room", () => {
     });
 
     test("batch storage and presence", async () => {
-      const { machine } = setupStateMachine({});
+      const { machine, subscribe } = setupStateMachine({});
 
       const ws = new MockWebSocket("");
       machine.connect();
@@ -985,8 +983,8 @@ describe("room", () => {
 
       const presenceSubscriber = jest.fn();
       const storageRootSubscriber = jest.fn();
-      machine.subscribe("my-presence", presenceSubscriber);
-      machine.subscribe(storage.root, storageRootSubscriber);
+      subscribe("my-presence", presenceSubscriber);
+      subscribe(storage.root, storageRootSubscriber);
 
       machine.batch(() => {
         machine.updatePresence({ x: 0 });
@@ -1021,30 +1019,16 @@ describe("room", () => {
     });
 
     test("batch storage with changes from server", async () => {
-      const {
-        storage,
-        expectStorage,
-        undo,
-        redo,
-        batch,
-        subscribe,
-        refSubscribe,
-      } = await prepareStorageTest<{ items: LiveList<string> }>(
-        [
-          createSerializedObject("0:0", {}),
-          createSerializedList("0:1", "0:0", "items"),
-        ],
-        1
-      );
+      const { storage, expectStorage, undo, redo, batch } =
+        await prepareStorageTest<{ items: LiveList<string> }>(
+          [
+            createSerializedObject("0:0", {}),
+            createSerializedList("0:1", "0:0", "items"),
+          ],
+          1
+        );
 
       const items = storage.root.get("items");
-      const refItems = storage.root.get("items");
-
-      const itemsSubscriber = jest.fn();
-      const refItemsSubscriber = jest.fn();
-
-      subscribe(items, itemsSubscriber);
-      refSubscribe(refItems, refItemsSubscriber);
 
       batch(() => {
         items.push("A");
@@ -1081,9 +1065,8 @@ describe("room", () => {
         undo,
         redo,
         batch,
-        subscribe,
-        refSubscribe,
         updatePresence,
+        refMachine,
       } = await prepareStorageTest<S, P, M, E>(
         [
           createSerializedObject("0:0", {}),
@@ -1093,16 +1076,9 @@ describe("room", () => {
       );
 
       const items = storage.root.get("items");
-      const refItems = storage.root.get("items");
 
-      const itemsSubscriber = jest.fn();
-      const refItemsSubscriber = jest.fn();
       let refOthers: Others<P, M> | undefined;
-      const refPresenceSubscriber = (o: Others<P, M>) => (refOthers = o);
-
-      subscribe(items, itemsSubscriber);
-      refSubscribe(refItems, refItemsSubscriber);
-      refSubscribe("others", refPresenceSubscriber);
+      refMachine.events.others.subscribe((ev) => (refOthers = ev.others));
 
       batch(() => {
         updatePresence({ x: 0 });
@@ -1156,9 +1132,9 @@ describe("room", () => {
 
       let receivedUpdates: StorageUpdate[] = [];
 
-      machine.subscribe(root, (updates) => (receivedUpdates = updates), {
-        isDeep: true,
-      });
+      machine.events.storage.subscribe(
+        (updates) => (receivedUpdates = updates)
+      );
 
       const immutableState = root.toImmutable() as {
         items: Array<{ names: Array<string> }>;
@@ -1200,8 +1176,7 @@ describe("room", () => {
       const { machine } = setupStateMachine({});
 
       const callback = jest.fn();
-
-      machine.subscribe("history", callback);
+      machine.events.history.subscribe(callback);
 
       machine.batch(() => {
         machine.updatePresence({ x: 0 }, { addToHistory: true });
@@ -1216,8 +1191,7 @@ describe("room", () => {
       const { machine } = setupStateMachine({});
 
       const callback = jest.fn();
-
-      const unsubscribe = machine.subscribe("my-presence", callback);
+      const unsubscribe = machine.events.me.subscribe(callback);
 
       machine.updatePresence({ x: 0 });
 
@@ -1241,7 +1215,9 @@ describe("room", () => {
 
       let others: Others<P, never> | undefined;
 
-      const unsubscribe = machine.subscribe("others", (o) => (others = o));
+      const unsubscribe = machine.events.others.subscribe(
+        (ev) => (others = ev.others)
+      );
 
       machine.onMessage(
         serverMessage({
@@ -1289,8 +1265,7 @@ describe("room", () => {
       ws.open();
 
       const callback = jest.fn();
-
-      machine.subscribe("event", callback);
+      machine.events.customEvent.subscribe(callback);
 
       machine.onMessage(
         serverMessage({
@@ -1312,8 +1287,7 @@ describe("room", () => {
       const { machine } = setupStateMachine({});
 
       const callback = jest.fn();
-
-      const unsubscribe = machine.subscribe("history", callback);
+      const unsubscribe = machine.events.history.subscribe(callback);
 
       machine.updatePresence({ x: 0 }, { addToHistory: true });
 
@@ -1630,7 +1604,7 @@ describe("room", () => {
 
       let others: Others<P, M> | undefined;
 
-      machine.subscribe("others", (o) => (others = o));
+      machine.events.others.subscribe((ev) => (others = ev.others));
 
       machine.onMessage(
         serverMessage({
