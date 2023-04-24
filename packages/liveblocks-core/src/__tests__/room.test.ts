@@ -42,6 +42,26 @@ import {
   withDateNow,
 } from "./_utils";
 
+function createTestableRoom(...args: Parameters<typeof createRoomMachine>): {
+  // room: ReturnType<typeof createRoom>;
+  connect: () => void;
+  disconnect: () => void;
+  onNavigatorOnline: () => void;
+  onVisibilityChange: (visibilityState: DocumentVisibilityState) => void;
+} {
+  const room = createRoomMachine(...args);
+  return {
+    // room,
+
+    // Expose the internal methods that provide control over the room's state
+    // machine directly, for convenience in unit tests.
+    connect: room.__internal.connect,
+    disconnect: room.__internal.disconnect,
+    onNavigatorOnline: room.__internal.onNavigatorOnline,
+    onVisibilityChange: room.__internal.onVisibilityChange,
+  };
+}
+
 function makeMachineConfig<
   TPresence extends JsonObject,
   TRoomEvent extends Json
@@ -119,7 +139,7 @@ describe("room / auth", () => {
   test.each([{ notAToken: "" }, undefined, null, ""])(
     "custom authentication with missing token in callback response should throw",
     async (response) => {
-      const room = createRoomMachine(
+      const controlledRoom = createTestableRoom(
         { initialPresence: {} as never },
         {
           ...makeMachineConfig(),
@@ -134,9 +154,9 @@ describe("room / auth", () => {
         }
       );
 
-      room.connect();
+      controlledRoom.connect();
       await waitFor(() => consoleErrorSpy.mock.calls.length > 0);
-      room.disconnect();
+      controlledRoom.disconnect();
 
       expect(consoleErrorSpy.mock.calls[0][1]).toEqual(
         new Error(
@@ -147,7 +167,7 @@ describe("room / auth", () => {
   );
 
   test("private authentication with 403 status should throw", async () => {
-    const room = createRoomMachine(
+    const controlledRoom = createTestableRoom(
       { initialPresence: {} as never },
       {
         ...makeMachineConfig(),
@@ -158,9 +178,9 @@ describe("room / auth", () => {
       }
     );
 
-    room.connect();
+    controlledRoom.connect();
     await waitFor(() => consoleErrorSpy.mock.calls.length > 0);
-    room.disconnect();
+    controlledRoom.disconnect();
 
     expect(consoleErrorSpy.mock.calls[0][1]).toEqual(
       new Error(
@@ -170,7 +190,7 @@ describe("room / auth", () => {
   });
 
   test("private authentication that does not returns json should throw", async () => {
-    const room = createRoomMachine(
+    const controlledRoom = createTestableRoom(
       { initialPresence: {} as never },
       {
         ...makeMachineConfig(),
@@ -181,9 +201,9 @@ describe("room / auth", () => {
       }
     );
 
-    room.connect();
+    controlledRoom.connect();
     await waitFor(() => consoleErrorSpy.mock.calls.length > 0);
-    room.disconnect();
+    controlledRoom.disconnect();
 
     expect(consoleErrorSpy.mock.calls[0][1]).toEqual(
       new Error(
@@ -193,7 +213,7 @@ describe("room / auth", () => {
   });
 
   test("private authentication that does not returns json should throw", async () => {
-    const room = createRoomMachine(
+    const controlledRoom = createTestableRoom(
       { initialPresence: {} as never },
       {
         ...makeMachineConfig(),
@@ -204,9 +224,9 @@ describe("room / auth", () => {
       }
     );
 
-    room.connect();
+    controlledRoom.connect();
     await waitFor(() => consoleErrorSpy.mock.calls.length > 0);
-    room.disconnect();
+    controlledRoom.disconnect();
 
     expect(consoleErrorSpy.mock.calls[0][1]).toEqual(
       new Error(

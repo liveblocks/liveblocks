@@ -5,7 +5,7 @@ import type { Json, JsonObject } from "./lib/Json";
 import type { Resolve } from "./lib/Resolve";
 import type { Authentication } from "./protocol/Authentication";
 import type { BaseUserMeta } from "./protocol/BaseUserMeta";
-import type { Polyfills, Room, RoomInitializers, RoomMachine } from "./room";
+import type { Polyfills, Room, RoomInitializers } from "./room";
 import { createRoomMachine } from "./room";
 
 const MIN_THROTTLE = 16;
@@ -124,7 +124,7 @@ export function createClient(options: ClientOptions): Client {
 
   const rooms = new Map<
     string,
-    RoomMachine<JsonObject, LsonObject, BaseUserMeta, Json>
+    Room<JsonObject, LsonObject, BaseUserMeta, Json>
   >();
 
   function getRoom<
@@ -133,14 +133,9 @@ export function createClient(options: ClientOptions): Client {
     TUserMeta extends BaseUserMeta = BaseUserMeta,
     TRoomEvent extends Json = never
   >(roomId: string): Room<TPresence, TStorage, TUserMeta, TRoomEvent> | null {
-    const internalRoom = rooms.get(roomId);
-    return internalRoom
-      ? (internalRoom.room as unknown as Room<
-          TPresence,
-          TStorage,
-          TUserMeta,
-          TRoomEvent
-        >)
+    const room = rooms.get(roomId);
+    return room
+      ? (room as Room<TPresence, TStorage, TUserMeta, TRoomEvent>)
       : null;
   }
 
@@ -153,16 +148,9 @@ export function createClient(options: ClientOptions): Client {
     roomId: string,
     options: EnterOptions<TPresence, TStorage>
   ): Room<TPresence, TStorage, TUserMeta, TRoomEvent> {
-    let internalRoom = rooms.get(roomId) as
-      | RoomMachine<TPresence, TStorage, TUserMeta, TRoomEvent>
-      | undefined;
-    if (internalRoom) {
-      return internalRoom.room as unknown as Room<
-        TPresence,
-        TStorage,
-        TUserMeta,
-        TRoomEvent
-      >;
+    const existingRoom = rooms.get(roomId);
+    if (existingRoom !== undefined) {
+      return existingRoom as Room<TPresence, TStorage, TUserMeta, TRoomEvent>;
     }
 
     // console.trace("enter");
@@ -173,7 +161,7 @@ export function createClient(options: ClientOptions): Client {
       "Please provide an initial presence value for the current user when entering the room."
     );
 
-    internalRoom = createRoomMachine<
+    const newRoom = createRoomMachine<
       TPresence,
       TStorage,
       TUserMeta,
@@ -197,18 +185,10 @@ export function createClient(options: ClientOptions): Client {
       }
     );
 
-    rooms.set(
-      roomId,
-      internalRoom as unknown as RoomMachine<
-        JsonObject,
-        LsonObject,
-        BaseUserMeta,
-        Json
-      >
-    );
+    rooms.set(roomId, newRoom);
 
     setupDevTools(() => Array.from(rooms.keys()));
-    linkDevTools(roomId, internalRoom.room);
+    linkDevTools(roomId, newRoom);
 
     const shouldConnect = options.shouldInitiallyConnect ?? true;
     if (shouldConnect) {
@@ -223,10 +203,10 @@ export function createClient(options: ClientOptions): Client {
         global.atob = clientOptions.polyfills.atob;
       }
 
-      internalRoom.connect();
+      newRoom.__internal.connect();
     }
 
-    return internalRoom.room;
+    return newRoom;
   }
 
   function leave(roomId: string) {
@@ -234,8 +214,8 @@ export function createClient(options: ClientOptions): Client {
     unlinkDevTools(roomId);
 
     const room = rooms.get(roomId);
-    if (room) {
-      room.disconnect();
+    if (room !== undefined) {
+      room.__internal.disconnect();
       rooms.delete(roomId);
     }
   }
@@ -248,7 +228,7 @@ export function createClient(options: ClientOptions): Client {
     // TODO: Expose a way to clear these
     window.addEventListener("online", () => {
       for (const [, room] of rooms) {
-        room.onNavigatorOnline();
+        room.__internal.onNavigatorOnline();
       }
     });
   }
@@ -256,7 +236,7 @@ export function createClient(options: ClientOptions): Client {
   if (typeof document !== "undefined") {
     document.addEventListener("visibilitychange", () => {
       for (const [, room] of rooms) {
-        room.onVisibilityChange(document.visibilityState);
+        room.__internal.onVisibilityChange(document.visibilityState);
       }
     });
   }

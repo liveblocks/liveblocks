@@ -2466,20 +2466,6 @@ function makeStateMachine<
   };
 }
 
-/** @internal */
-export type RoomMachine<
-  TPresence extends JsonObject,
-  TStorage extends LsonObject,
-  TUserMeta extends BaseUserMeta,
-  TRoomEvent extends Json
-> = {
-  room: Room<TPresence, TStorage, TUserMeta, TRoomEvent>;
-  connect: () => void;
-  disconnect: () => void;
-  onNavigatorOnline: () => void;
-  onVisibilityChange: (visibilityState: DocumentVisibilityState) => void;
-};
-
 export function createRoomMachine<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
@@ -2491,7 +2477,7 @@ export function createRoomMachine<
     "shouldInitiallyConnect"
   >,
   config: MachineConfig<TPresence, TRoomEvent>
-): RoomMachine<TPresence, TStorage, TUserMeta, TRoomEvent> {
+): Room<TPresence, TStorage, TUserMeta, TRoomEvent> {
   const { initialPresence, initialStorage } = options;
 
   const machine = makeStateMachine<TPresence, TStorage, TUserMeta, TRoomEvent>(
@@ -2555,13 +2541,7 @@ export function createRoomMachine<
     getOthers_forDevTools: machine.getOthers_forDevTools,
   };
 
-  return {
-    connect: room.__internal.connect,
-    disconnect: room.__internal.disconnect,
-    onNavigatorOnline: room.__internal.onNavigatorOnline,
-    onVisibilityChange: room.__internal.onVisibilityChange,
-    room,
-  };
+  return room;
 }
 
 class LiveblocksError extends Error {
