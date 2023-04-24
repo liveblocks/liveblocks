@@ -52,10 +52,10 @@ import type { Brand } from "./utils";
  */
 export type Pos = Brand<string, "Pos">;
 
-const minCode = 32;
-const maxCode = 126;
+const MIN_CODE = 32; // ASCII code of the lowest alphabet char (e.g. ' ')
+const MAX_CODE = 126; // ASCII code of the highest alphabet char (e.g. '~')
 
-const NUM_DIGITS = maxCode - minCode + 1;
+const NUM_DIGITS = MAX_CODE - MIN_CODE + 1;
 
 const ZERO: string = nthDigit(0); // " "
 
@@ -76,8 +76,8 @@ const ZERO_NINE = (ZERO + nthDigit(-1)) as Pos;
 function nthDigit(n: 0): string; // "0" is a legal _digit_, but not a legal Pos value
 function nthDigit(n: number): Pos;
 function nthDigit(n: number): Pos {
-  const code = minCode + (n < 0 ? NUM_DIGITS + n : n);
-  if (code < minCode || code > maxCode) {
+  const code = MIN_CODE + (n < 0 ? NUM_DIGITS + n : n);
+  if (code < MIN_CODE || code > MAX_CODE) {
     throw new Error(`Invalid n value: ${n}`);
   }
   return String.fromCharCode(code) as Pos;
@@ -132,7 +132,7 @@ function before(pos: Pos): Pos {
     const code = pos.charCodeAt(i);
 
     // Scan away all leading zeros, if there are any
-    if (code <= minCode) {
+    if (code <= MIN_CODE) {
       continue;
     }
 
@@ -146,7 +146,7 @@ function before(pos: Pos): Pos {
     // 2. It's not the last digit, so we can just chop off the remainder.
     //
     if (i === lastIndex) {
-      if (code === minCode + 1) {
+      if (code === MIN_CODE + 1) {
         return (pos.substring(0, i) + ZERO_NINE) as Pos;
       } else {
         return (pos.substring(0, i) + String.fromCharCode(code - 1)) as Pos;
@@ -186,7 +186,7 @@ function after(pos: Pos): Pos {
     const code = pos.charCodeAt(i);
 
     // Scan away all leading "nines", if there are any
-    if (code >= maxCode) {
+    if (code >= MAX_CODE) {
       continue;
     }
 
@@ -235,8 +235,8 @@ function _between(lo: Pos, hi: Pos | ""): Pos {
   const loLen = lo.length;
   const hiLen = hi.length;
   while (true) {
-    const loCode = index < loLen ? lo.charCodeAt(index) : minCode;
-    const hiCode = index < hiLen ? hi.charCodeAt(index) : maxCode;
+    const loCode = index < loLen ? lo.charCodeAt(index) : MIN_CODE;
+    const hiCode = index < hiLen ? hi.charCodeAt(index) : MAX_CODE;
 
     if (loCode === hiCode) {
       index++;
@@ -299,11 +299,11 @@ function convertToPos(str: string): Pos {
     const code = str.charCodeAt(i);
 
     // Clamp to min-max range
-    codes.push(code < minCode ? minCode : code > maxCode ? maxCode : code);
+    codes.push(code < MIN_CODE ? MIN_CODE : code > MAX_CODE ? MAX_CODE : code);
   }
 
   // Strip all trailing zeros
-  while (codes.length > 0 && codes[codes.length - 1] === minCode) {
+  while (codes.length > 0 && codes[codes.length - 1] === MIN_CODE) {
     codes.length--;
   }
 
