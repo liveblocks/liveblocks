@@ -723,7 +723,7 @@ type MachineContext<
 
   clock: number;
   opClock: number;
-  nodes: Map<string, LiveNode>;
+  readonly nodes: Map<string, LiveNode>;
   root: LiveObject<TStorage> | undefined;
 
   undoStack: HistoryOp<TPresence>[][];
@@ -739,7 +739,7 @@ type MachineContext<
    * Place to collect all mutations during a batch. Ops will be sent over the
    * wire after the batch is ended.
    */
-  activeBatch: null | {
+  activeBatch: {
     ops: Op[];
     reverseOps: HistoryOp<TPresence>[];
     updates: {
@@ -747,14 +747,14 @@ type MachineContext<
       presence: boolean;
       storageUpdates: Map<string, StorageUpdate>;
     };
-  };
+  } | null;
 
   // A registry of yet-unacknowledged Ops. These Ops have already been
   // submitted to the server, but have not yet been acknowledged.
-  unacknowledgedOps: Map<string, Op>;
+  readonly unacknowledgedOps: Map<string, Op>;
 
   // Stack traces of all pending Ops. Used for debugging in non-production builds
-  opStackTraces?: Map<string, string>;
+  readonly opStackTraces?: Map<string, string>;
 };
 
 /** @internal */
