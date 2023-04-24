@@ -550,13 +550,11 @@ export type Room<
       wasClean: boolean;
       reason: string;
     }): void;
+
+    /** For DevTools support */
+    getSelf_forDevTools(): DevTools.UserTreeNode | null;
+    getOthers_forDevTools(): readonly DevTools.UserTreeNode[];
   };
-
-  /** @internal - For DevTools support */
-  getSelf_forDevTools(): DevTools.UserTreeNode | null;
-
-  /** @internal - For DevTools support */
-  getOthers_forDevTools(): readonly DevTools.UserTreeNode[];
 };
 
 export function isRoomEventName(value: string): value is RoomEventName {
@@ -2537,12 +2535,13 @@ export function createRoom<
       disconnect: machine.disconnect,
       onNavigatorOnline: machine.onNavigatorOnline,
       onVisibilityChange: machine.onVisibilityChange,
+
       simulateCloseWebsocket: machine.simulateSocketClose,
       simulateSendCloseEvent: machine.simulateSendCloseEvent,
-    },
 
-    getSelf_forDevTools: machine.getSelf_forDevTools,
-    getOthers_forDevTools: machine.getOthers_forDevTools,
+      getSelf_forDevTools: machine.getSelf_forDevTools,
+      getOthers_forDevTools: machine.getOthers_forDevTools,
+    },
   };
 
   return room;

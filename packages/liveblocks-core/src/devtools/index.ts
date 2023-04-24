@@ -138,7 +138,7 @@ function partialSyncStorage(
 }
 
 function partialSyncMe(room: Room<JsonObject, LsonObject, BaseUserMeta, Json>) {
-  const me = room.getSelf_forDevTools();
+  const me = room.__internal.getSelf_forDevTools();
   if (me) {
     sendToPanel({
       msg: "room::sync::partial",
@@ -152,7 +152,7 @@ function partialSyncOthers(
   room: Room<JsonObject, LsonObject, BaseUserMeta, Json>
 ) {
   // Any time others updates, send the new storage root to the dev panel
-  const others = room.getOthers_forDevTools();
+  const others = room.__internal.getOthers_forDevTools();
   if (others) {
     sendToPanel({
       msg: "room::sync::partial",
@@ -164,8 +164,8 @@ function partialSyncOthers(
 
 function fullSync(room: Room<JsonObject, LsonObject, BaseUserMeta, Json>) {
   const root = room.getStorageSnapshot();
-  const me = room.getSelf_forDevTools();
-  const others = room.getOthers_forDevTools();
+  const me = room.__internal.getSelf_forDevTools();
+  const others = room.__internal.getOthers_forDevTools();
   sendToPanel({
     msg: "room::sync::full",
     roomId: room.id,
