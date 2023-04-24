@@ -21,6 +21,7 @@ import type { _private_Effects as Effects } from "../room";
 import {
   _private_makeStateMachine as makeStateMachine,
   createRoom,
+  makeClassicSubscribeFn,
 } from "../room";
 import type { Others } from "../types/Others";
 import { WebsocketCloseCodes } from "../types/WebsocketCloseCodes";
@@ -98,7 +99,14 @@ function setupStateMachine<
     initialPresence,
     undefined // no initialStorage
   );
-  return { machine, state: machine.state, effects };
+  return {
+    machine: {
+      ...machine,
+      subscribe: makeClassicSubscribeFn(machine),
+    },
+    state: machine.state,
+    effects,
+  };
 }
 
 describe("room / auth", () => {

@@ -254,6 +254,13 @@ export type Room<
   getConnectionState(): ConnectionStatus;
   readonly subscribe: {
     /**
+     * Subscribes to changes made on any Live structure. Returns an unsubscribe function.
+     *
+     * @internal This legacy API works, but was never documented publicly.
+     */
+    (callback: StorageCallback): () => void;
+
+    /**
      * Subscribe to the current user presence updates.
      *
      * @param listener the callback that is called every time the current user presence is updated with {@link Room.updatePresence}.
@@ -600,16 +607,6 @@ type Machine<
   connect(): void;
   disconnect(): void;
   reconnect(): void;
-
-  // Generic storage callbacks
-  subscribe(callback: StorageCallback): () => void;
-
-  // Storage callbacks filtered by Live structure
-  subscribe<L extends LiveStructure>(liveStructure: L, callback: (node: L) => void): () => void; // prettier-ignore
-  subscribe(node: LiveStructure, callback: StorageCallback, options: { isDeep: true }): () => void; // prettier-ignore
-
-  // Room event callbacks
-  subscribe<E extends RoomEventName>(type: E, listener: RoomEventCallbackFor<E, TPresence, TUserMeta, TRoomEvent>): () => void; // prettier-ignore
 
   // Presence
   updatePresence(
@@ -1364,123 +1361,6 @@ function makeStateMachine<
         return parentNode._attachChild(op, source);
       }
     }
-  }
-
-  function subscribeToLiveStructureDeeply<L extends LiveStructure>(
-    node: L,
-    callback: (updates: StorageUpdate[]) => void
-  ): () => void {
-    return eventHub.storage.subscribe((updates) => {
-      const relatedUpdates = updates.filter((update) =>
-        isSameNodeOrChildOf(update.node, node)
-      );
-      if (relatedUpdates.length > 0) {
-        callback(relatedUpdates);
-      }
-    });
-  }
-
-  function subscribeToLiveStructureShallowly<L extends LiveStructure>(
-    node: L,
-    callback: (node: L) => void
-  ): () => void {
-    return eventHub.storage.subscribe((updates) => {
-      for (const update of updates) {
-        if (update.node._id === node._id) {
-          callback(update.node as L);
-        }
-      }
-    });
-  }
-
-  // Generic storage callbacks
-  function subscribe(callback: StorageCallback): () => void; // prettier-ignore
-  // Storage callbacks filtered by Live structure
-  function subscribe<L extends LiveStructure>(liveStructure: L, callback: (node: L) => void): () => void; // prettier-ignore
-  function subscribe(node: LiveStructure, callback: StorageCallback, options: { isDeep: true }): () => void; // prettier-ignore
-  // Room event callbacks
-  function subscribe<E extends RoomEventName>(type: E, listener: RoomEventCallbackFor<E, TPresence, TUserMeta, TRoomEvent>): () => void; // prettier-ignore
-
-  function subscribe<L extends LiveStructure, E extends RoomEventName>(
-    first: StorageCallback | L | E,
-    second?: ((node: L) => void) | StorageCallback | RoomEventCallback,
-    options?: { isDeep: boolean }
-  ): () => void {
-    if (typeof first === "string" && isRoomEventName(first)) {
-      if (typeof second !== "function") {
-        throw new Error("Second argument must be a callback function");
-      }
-      const callback = second;
-      switch (first) {
-        case "event":
-          return eventHub.customEvent.subscribe(
-            callback as Callback<CustomEvent<TRoomEvent>>
-          );
-
-        case "my-presence":
-          return eventHub.me.subscribe(callback as Callback<TPresence>);
-
-        case "others": {
-          // NOTE: Others have a different callback structure, where the API
-          // exposed on the outside takes _two_ callback arguments!
-          const cb = callback as (
-            others: Others<TPresence, TUserMeta>,
-            event: OthersEvent<TPresence, TUserMeta>
-          ) => void;
-          return eventHub.others.subscribe(({ others, event }) =>
-            cb(others, event)
-          );
-        }
-
-        case "error":
-          return eventHub.error.subscribe(callback as Callback<Error>);
-
-        case "connection":
-          return eventHub.connection.subscribe(
-            callback as Callback<ConnectionStatus>
-          );
-
-        case "storage":
-          return eventHub.storage.subscribe(
-            callback as Callback<StorageUpdate[]>
-          );
-
-        case "history":
-          return eventHub.history.subscribe(callback as Callback<HistoryEvent>);
-
-        case "storage-status":
-          return eventHub.storageStatus.subscribe(
-            callback as Callback<StorageStatus>
-          );
-
-        // istanbul ignore next
-        default:
-          return assertNever(first, "Unknown event");
-      }
-    }
-
-    if (second === undefined || typeof first === "function") {
-      if (typeof first === "function") {
-        const storageCallback = first;
-        return eventHub.storage.subscribe(storageCallback);
-      } else {
-        // istanbul ignore next
-        throw new Error("Please specify a listener callback");
-      }
-    }
-
-    if (isLiveNode(first)) {
-      const node = first;
-      if (options?.isDeep) {
-        const storageCallback = second as StorageCallback;
-        return subscribeToLiveStructureDeeply(node, storageCallback);
-      } else {
-        const nodeCallback = second as (node: L) => void;
-        return subscribeToLiveStructureShallowly(node, nodeCallback);
-      }
-    }
-
-    throw new Error(`"${first}" is not a valid event name`);
   }
 
   function getConnectionState() {
@@ -2417,7 +2297,6 @@ function makeStateMachine<
     connect,
     disconnect,
     reconnect,
-    subscribe,
 
     // Presence
     updatePresence,
@@ -2502,7 +2381,7 @@ export function createRoom<
     getSelf: machine.getSelf,
     reconnect: machine.reconnect,
 
-    subscribe: machine.subscribe,
+    subscribe: makeClassicSubscribeFn(machine),
 
     //////////////
     // Presence //
@@ -2545,6 +2424,137 @@ export function createRoom<
   };
 
   return room;
+}
+
+export function makeClassicSubscribeFn<
+  TPresence extends JsonObject,
+  TStorage extends LsonObject,
+  TUserMeta extends BaseUserMeta,
+  TRoomEvent extends Json
+>(
+  machine: Machine<TPresence, TStorage, TUserMeta, TRoomEvent>
+): Room<TPresence, TStorage, TUserMeta, TRoomEvent>["subscribe"] {
+  // Set up the "subscribe" wrapper API
+  function subscribeToLiveStructureDeeply<L extends LiveStructure>(
+    node: L,
+    callback: (updates: StorageUpdate[]) => void
+  ): () => void {
+    return machine.events.storage.subscribe((updates) => {
+      const relatedUpdates = updates.filter((update) =>
+        isSameNodeOrChildOf(update.node, node)
+      );
+      if (relatedUpdates.length > 0) {
+        callback(relatedUpdates);
+      }
+    });
+  }
+
+  function subscribeToLiveStructureShallowly<L extends LiveStructure>(
+    node: L,
+    callback: (node: L) => void
+  ): () => void {
+    return machine.events.storage.subscribe((updates) => {
+      for (const update of updates) {
+        if (update.node._id === node._id) {
+          callback(update.node as L);
+        }
+      }
+    });
+  }
+
+  // Generic storage callbacks
+  function subscribe(callback: StorageCallback): () => void; // prettier-ignore
+  // Storage callbacks filtered by Live structure
+  function subscribe<L extends LiveStructure>(liveStructure: L, callback: (node: L) => void): () => void; // prettier-ignore
+  function subscribe(node: LiveStructure, callback: StorageCallback, options: { isDeep: true }): () => void; // prettier-ignore
+  // Room event callbacks
+  function subscribe<E extends RoomEventName>(type: E, listener: RoomEventCallbackFor<E, TPresence, TUserMeta, TRoomEvent>): () => void; // prettier-ignore
+
+  function subscribe<L extends LiveStructure, E extends RoomEventName>(
+    first: StorageCallback | L | E,
+    second?: ((node: L) => void) | StorageCallback | RoomEventCallback,
+    options?: { isDeep: boolean }
+  ): () => void {
+    if (typeof first === "string" && isRoomEventName(first)) {
+      if (typeof second !== "function") {
+        throw new Error("Second argument must be a callback function");
+      }
+      const callback = second;
+      switch (first) {
+        case "event":
+          return machine.events.customEvent.subscribe(
+            callback as Callback<CustomEvent<TRoomEvent>>
+          );
+
+        case "my-presence":
+          return machine.events.me.subscribe(callback as Callback<TPresence>);
+
+        case "others": {
+          // NOTE: Others have a different callback structure, where the API
+          // exposed on the outside takes _two_ callback arguments!
+          const cb = callback as (
+            others: Others<TPresence, TUserMeta>,
+            event: OthersEvent<TPresence, TUserMeta>
+          ) => void;
+          return machine.events.others.subscribe(({ others, event }) =>
+            cb(others, event)
+          );
+        }
+
+        case "error":
+          return machine.events.error.subscribe(callback as Callback<Error>);
+
+        case "connection":
+          return machine.events.connection.subscribe(
+            callback as Callback<ConnectionStatus>
+          );
+
+        case "storage":
+          return machine.events.storage.subscribe(
+            callback as Callback<StorageUpdate[]>
+          );
+
+        case "history":
+          return machine.events.history.subscribe(
+            callback as Callback<HistoryEvent>
+          );
+
+        case "storage-status":
+          return machine.events.storageStatus.subscribe(
+            callback as Callback<StorageStatus>
+          );
+
+        // istanbul ignore next
+        default:
+          return assertNever(first, "Unknown event");
+      }
+    }
+
+    if (second === undefined || typeof first === "function") {
+      if (typeof first === "function") {
+        const storageCallback = first;
+        return machine.events.storage.subscribe(storageCallback);
+      } else {
+        // istanbul ignore next
+        throw new Error("Please specify a listener callback");
+      }
+    }
+
+    if (isLiveNode(first)) {
+      const node = first;
+      if (options?.isDeep) {
+        const storageCallback = second as StorageCallback;
+        return subscribeToLiveStructureDeeply(node, storageCallback);
+      } else {
+        const nodeCallback = second as (node: L) => void;
+        return subscribeToLiveStructureShallowly(node, nodeCallback);
+      }
+    }
+
+    throw new Error(`"${first}" is not a valid event name`);
+  }
+
+  return subscribe;
 }
 
 class LiveblocksError extends Error {

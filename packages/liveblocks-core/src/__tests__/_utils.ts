@@ -25,8 +25,12 @@ import { ServerMsgCode } from "../protocol/ServerMsg";
 import type {
   _private_Effects as Effects,
   _private_Machine as Machine,
+  Room,
 } from "../room";
-import { _private_makeStateMachine as makeStateMachine } from "../room";
+import {
+  _private_makeStateMachine as makeStateMachine,
+  makeClassicSubscribeFn,
+} from "../room";
 import type { JsonStorageUpdate } from "./_updatesUtils";
 import { serializeUpdateToJson } from "./_updatesUtils";
 
@@ -206,7 +210,10 @@ export async function prepareRoomWithStorage<
   const storage = await getStoragePromise;
   return {
     storage,
-    machine,
+    machine: {
+      ...machine,
+      subscribe: makeClassicSubscribeFn(machine),
+    },
     ws,
   };
 }
@@ -235,7 +242,7 @@ export async function prepareIsolatedStorageTest<TStorage extends LsonObject>(
   return {
     root: storage.root,
     machine,
-    subscribe: machine.subscribe,
+    subscribe: makeClassicSubscribeFn(machine),
     undo: machine.undo,
     redo: machine.redo,
     ws,
@@ -415,8 +422,8 @@ export async function prepareStorageTest<
     updatePresence: machine.updatePresence,
     getUndoStack: machine.getUndoStack,
     getItemsCount: machine.getItemsCount,
-    subscribe: machine.subscribe,
-    refSubscribe: refMachine.subscribe,
+    subscribe: makeClassicSubscribeFn(machine),
+    refSubscribe: makeClassicSubscribeFn(refMachine),
     batch: machine.batch,
     undo: machine.undo,
     redo: machine.redo,
@@ -447,7 +454,9 @@ export async function prepareStorageUpdateTest<
 ): Promise<{
   batch: (fn: () => void) => void;
   root: LiveObject<TStorage>;
-  machine: Machine<TPresence, TStorage, TUserMeta, TRoomEvent>;
+  machine: Machine<TPresence, TStorage, TUserMeta, TRoomEvent> & {
+    subscribe: Room<TPresence, TStorage, TUserMeta, TRoomEvent>["subscribe"];
+  };
   expectUpdates: (updates: JsonStorageUpdate[][]) => void;
 }> {
   const { storage: refStorage, machine: refMachine } =
