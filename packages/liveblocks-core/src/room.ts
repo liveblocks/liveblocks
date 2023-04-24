@@ -2426,6 +2426,10 @@ export function createRoom<
   return room;
 }
 
+/**
+ * This recreates the classic single `.subscribe()` method for the Room API, as
+ * documented here https://liveblocks.io/docs/api-reference/liveblocks-client#Room.subscribe(storageItem)
+ */
 export function makeClassicSubscribeFn<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
