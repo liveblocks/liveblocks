@@ -1,0 +1,21 @@
+# Public packages
+/packages/   @nvie
+/packages/liveblocks-devtools/   @nvie @marcbouchenoire
+/packages/create-liveblocks-app/   @CTNicholas
+/packages/liveblocks-node/   @nvie @ofoucherot @FlowFlorent 
+/shared/   @nvie
+/e2e/   @nvie
+
+# Examples, docs, and starter kit
+/starter-kits/   @CTNicholas
+/examples/   @CTNicholas
+/docs/   @CTNicholas
+
+# Schema validation
+/schema-lang/   @nvie
+
+# Scripts
+/scripts/   @nvie
+
+# Vercel deployments
+/scripts/should-example-rebuild-on-vercel.sh   @nvie @marcbouchenoire
