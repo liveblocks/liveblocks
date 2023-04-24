@@ -705,13 +705,12 @@ type MachineContext<
     messages: ClientMsg<TPresence, TRoomEvent>[];
     storageOperations: Op[];
   };
-  timeoutHandles: {
+
+  readonly timers: {
     flush: TimeoutID | undefined;
     reconnect: TimeoutID | undefined;
-    pongTimeout: TimeoutID | undefined;
-  };
-  intervalHandles: {
     heartbeat: IntervalID | undefined;
+    pongTimeout: TimeoutID | undefined;
   };
 
   readonly connection: ValueRef<Connection>;
@@ -852,9 +851,10 @@ function makeStateMachine<
     lastConnectionId: null,
     socket: null,
     numberOfRetry: 0,
-    timeoutHandles: {
+    timers: {
       flush: undefined,
       reconnect: undefined,
+      heartbeat: undefined,
       pongTimeout: undefined,
     },
 
@@ -868,10 +868,6 @@ function makeStateMachine<
         },
       messages: [],
       storageOperations: [],
-    },
-
-    intervalHandles: {
-      heartbeat: undefined,
     },
 
     connection: new ValueRef<Connection>({ status: "closed" }),
@@ -1427,9 +1423,7 @@ function makeStateMachine<
     context.token = null;
     updateConnection({ status: "unavailable" }, batchUpdates);
     context.numberOfRetry++;
-    context.timeoutHandles.reconnect = effects.scheduleReconnect(
-      getRetryDelay()
-    );
+    context.timers.reconnect = effects.scheduleReconnect(getRetryDelay());
   }
 
   function onVisibilityChange(visibilityState: DocumentVisibilityState) {
@@ -1575,7 +1569,7 @@ function makeStateMachine<
 
   function onMessage(event: MessageEvent<string>) {
     if (event.data === "pong") {
-      clearTimeout(context.timeoutHandles.pongTimeout);
+      clearTimeout(context.timers.pongTimeout);
       return;
     }
 
@@ -1700,12 +1694,12 @@ function makeStateMachine<
   function onClose(event: { code: number; wasClean: boolean; reason: string }) {
     context.socket = null;
 
-    clearTimeout(context.timeoutHandles.pongTimeout);
-    clearInterval(context.intervalHandles.heartbeat);
-    if (context.timeoutHandles.flush) {
-      clearTimeout(context.timeoutHandles.flush);
+    clearTimeout(context.timers.pongTimeout);
+    clearInterval(context.timers.heartbeat);
+    if (context.timers.flush) {
+      clearTimeout(context.timers.flush);
     }
-    clearTimeout(context.timeoutHandles.reconnect);
+    clearTimeout(context.timers.reconnect);
 
     context.others.clearOthers();
 
@@ -1728,7 +1722,7 @@ function makeStateMachine<
         }
 
         updateConnection({ status: "unavailable" }, doNotBatchUpdates);
-        context.timeoutHandles.reconnect = effects.scheduleReconnect(delay);
+        context.timers.reconnect = effects.scheduleReconnect(delay);
       } else if (event.code === WebsocketCloseCodes.CLOSE_WITHOUT_RETRY) {
         updateConnection({ status: "closed" }, doNotBatchUpdates);
       } else {
@@ -1741,7 +1735,7 @@ function makeStateMachine<
           );
         }
         updateConnection({ status: "unavailable" }, doNotBatchUpdates);
-        context.timeoutHandles.reconnect = effects.scheduleReconnect(delay);
+        context.timers.reconnect = effects.scheduleReconnect(delay);
       }
     });
   }
@@ -1774,9 +1768,9 @@ function makeStateMachine<
   function onError() {}
 
   function onOpen() {
-    clearInterval(context.intervalHandles.heartbeat);
+    clearInterval(context.timers.heartbeat);
 
-    context.intervalHandles.heartbeat = effects.startHeartbeatInterval();
+    context.timers.heartbeat = effects.startHeartbeatInterval();
 
     if (context.connection.current.status === "connecting") {
       updateConnection(
@@ -1815,8 +1809,8 @@ function makeStateMachine<
       return;
     }
 
-    clearTimeout(context.timeoutHandles.pongTimeout);
-    context.timeoutHandles.pongTimeout = effects.schedulePongTimeout();
+    clearTimeout(context.timers.pongTimeout);
+    context.timers.pongTimeout = effects.schedulePongTimeout();
 
     if (context.socket.readyState === context.socket.OPEN) {
       context.socket.send("ping");
@@ -1839,12 +1833,12 @@ function makeStateMachine<
     }
 
     updateConnection({ status: "unavailable" }, batchUpdates);
-    clearTimeout(context.timeoutHandles.pongTimeout);
-    if (context.timeoutHandles.flush) {
-      clearTimeout(context.timeoutHandles.flush);
+    clearTimeout(context.timers.pongTimeout);
+    if (context.timers.flush) {
+      clearTimeout(context.timers.flush);
     }
-    clearTimeout(context.timeoutHandles.reconnect);
-    clearInterval(context.intervalHandles.heartbeat);
+    clearTimeout(context.timers.reconnect);
+    clearInterval(context.timers.heartbeat);
     connect();
   }
 
@@ -1907,11 +1901,11 @@ function makeStateMachine<
         me: null,
       };
     } else {
-      if (context.timeoutHandles.flush !== null) {
-        clearTimeout(context.timeoutHandles.flush);
+      if (context.timers.flush !== null) {
+        clearTimeout(context.timers.flush);
       }
 
-      context.timeoutHandles.flush = effects.delayFlush(
+      context.timers.flush = effects.delayFlush(
         config.throttleDelay - elapsedMillis
       );
     }
@@ -1963,12 +1957,12 @@ function makeStateMachine<
     batchUpdates(() => {
       updateConnection({ status: "closed" }, doNotBatchUpdates);
 
-      if (context.timeoutHandles.flush) {
-        clearTimeout(context.timeoutHandles.flush);
+      if (context.timers.flush) {
+        clearTimeout(context.timers.flush);
       }
-      clearTimeout(context.timeoutHandles.reconnect);
-      clearTimeout(context.timeoutHandles.pongTimeout);
-      clearInterval(context.intervalHandles.heartbeat);
+      clearTimeout(context.timers.reconnect);
+      clearTimeout(context.timers.pongTimeout);
+      clearInterval(context.timers.heartbeat);
 
       context.others.clearOthers();
       notify({ others: [{ type: "reset" }] }, doNotBatchUpdates);
