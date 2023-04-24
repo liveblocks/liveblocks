@@ -153,7 +153,7 @@ export abstract class AbstractCrdt {
   }
 
   /** @internal */
-  get parentPos(): Pos {
+  get _parentPos(): Pos {
     switch (this.parent.type) {
       case "HasParent":
         return this.parent.pos;

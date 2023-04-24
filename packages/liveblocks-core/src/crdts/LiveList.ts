@@ -53,7 +53,7 @@ export type LiveListUpdates<TItem extends Lson> = {
 };
 
 function compareNodePosition(itemA: LiveNode, itemB: LiveNode) {
-  return comparePosition(itemA.parentPos, itemB.parentPos);
+  return comparePosition(itemA._parentPos, itemB._parentPos);
 }
 
 /**
@@ -502,8 +502,8 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     let newKey = key;
 
     if (existingItemIndex !== -1) {
-      const before = this._items[existingItemIndex]?.parentPos;
-      const after = this._items[existingItemIndex + 1]?.parentPos;
+      const before = this._items[existingItemIndex]?._parentPos;
+      const after = this._items[existingItemIndex + 1]?._parentPos;
 
       newKey = makePosition(before, after);
       child._setParentLink(this, newKey);
@@ -689,7 +689,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     } else {
       this._items[existingItemIndex]._setParentLink(
         this,
-        makePosition(newKey, this._items[existingItemIndex + 1]?.parentPos)
+        makePosition(newKey, this._items[existingItemIndex + 1]?._parentPos)
       );
 
       const previousIndex = this._items.indexOf(child);
@@ -722,7 +722,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       if (existingItemIndex !== -1) {
         this._items[existingItemIndex]._setParentLink(
           this,
-          makePosition(newKey, this._items[existingItemIndex + 1]?.parentPos)
+          makePosition(newKey, this._items[existingItemIndex + 1]?._parentPos)
         );
       }
 
@@ -750,7 +750,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       if (existingItemIndex !== -1) {
         this._items[existingItemIndex]._setParentLink(
           this,
-          makePosition(newKey, this._items[existingItemIndex + 1]?.parentPos)
+          makePosition(newKey, this._items[existingItemIndex + 1]?._parentPos)
         );
       }
 
@@ -786,7 +786,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     if (existingItemIndex !== -1) {
       this._items[existingItemIndex]._setParentLink(
         this,
-        makePosition(newKey, this._items[existingItemIndex + 1]?.parentPos)
+        makePosition(newKey, this._items[existingItemIndex + 1]?._parentPos)
       );
     }
 
@@ -873,9 +873,11 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     }
 
     const before = this._items[index - 1]
-      ? this._items[index - 1].parentPos
+      ? this._items[index - 1]._parentPos
       : undefined;
-    const after = this._items[index] ? this._items[index].parentPos : undefined;
+    const after = this._items[index]
+      ? this._items[index]._parentPos
+      : undefined;
 
     const position = makePosition(before, after);
 
@@ -930,12 +932,12 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       afterPosition =
         targetIndex === this._items.length - 1
           ? undefined
-          : this._items[targetIndex + 1].parentPos;
-      beforePosition = this._items[targetIndex].parentPos;
+          : this._items[targetIndex + 1]._parentPos;
+      beforePosition = this._items[targetIndex]._parentPos;
     } else {
-      afterPosition = this._items[targetIndex].parentPos;
+      afterPosition = this._items[targetIndex]._parentPos;
       beforePosition =
-        targetIndex === 0 ? undefined : this._items[targetIndex - 1].parentPos;
+        targetIndex === 0 ? undefined : this._items[targetIndex - 1]._parentPos;
     }
 
     const position = makePosition(beforePosition, afterPosition);
@@ -1243,7 +1245,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     const shiftedPosition = makePosition(
       key,
       this._items.length > index + 1
-        ? this._items[index + 1]?.parentPos
+        ? this._items[index + 1]?._parentPos
         : undefined
     );
 
