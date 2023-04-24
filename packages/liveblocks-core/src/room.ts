@@ -2466,6 +2466,10 @@ function makeStateMachine<
   };
 }
 
+/**
+ * Initializes a new Room state machine, and returns its public API to observe
+ * and control it.
+ */
 export function createRoom<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
