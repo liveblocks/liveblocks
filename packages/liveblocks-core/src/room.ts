@@ -532,9 +532,13 @@ export type Room<
   reconnect(): void;
 
   /**
-   * @internal Utilities only used for unit testing.
+   * @internal
+   * Private methods to directly control the underlying state machine for this
+   * room. Used in the core internals and for unit testing, but as a user of
+   * Liveblocks, NEVER USE ANY OF THESE METHODS DIRECTLY, because bad things
+   * will probably happen if you do.
    */
-  readonly __INTERNAL_DO_NOT_USE: {
+  readonly __internal: {
     connect(): void;
     disconnect(): void;
     onNavigatorOnline(): void;
@@ -2538,7 +2542,7 @@ export function createRoomMachine<
       resume: machine.resumeHistory,
     },
 
-    __INTERNAL_DO_NOT_USE: {
+    __internal: {
       connect: machine.connect,
       disconnect: machine.disconnect,
       onNavigatorOnline: machine.onNavigatorOnline,
