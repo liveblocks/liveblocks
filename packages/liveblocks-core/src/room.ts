@@ -21,7 +21,7 @@ import { isJsonArray, isJsonObject } from "./lib/Json";
 import type { Resolve } from "./lib/Resolve";
 import { compact, isPlainObject, tryParseJson } from "./lib/utils";
 import type { Authentication } from "./protocol/Authentication";
-import type { RoomAuthToken } from "./protocol/AuthToken";
+import type { RoomAuthToken, JwtMetadata } from "./protocol/AuthToken";
 import {
   isTokenExpired,
   parseRoomAuthToken,
@@ -687,7 +687,10 @@ type MachineContext<
   TUserMeta extends BaseUserMeta,
   TRoomEvent extends Json
 > = {
-  token: string | null;
+  token: {
+    readonly raw: string;
+    readonly parsed: RoomAuthToken & JwtMetadata;
+  } | null;
   lastConnectionId: number | null; // TODO: Move into Connection type members?
   socket: WebSocket | null;
   lastFlushTime: number;
@@ -979,11 +982,12 @@ function makeStateMachine<
       auth: AuthCallback,
       createWebSocket: (token: string) => WebSocket
     ) {
-      const rawToken = context.token;
-      const parsedToken = rawToken !== null && parseRoomAuthToken(rawToken);
-      if (parsedToken && !isTokenExpired(parsedToken)) {
-        const socket = createWebSocket(rawToken);
-        authenticationSuccess(parsedToken, socket);
+      // If we already have a parsed token from a previous connection
+      // in-memory, reuse it
+      const prevToken = context.token;
+      if (prevToken !== null && !isTokenExpired(prevToken.parsed)) {
+        const socket = createWebSocket(prevToken.raw);
+        authenticationSuccess(prevToken.parsed, socket);
         return undefined;
       } else {
         return auth(config.roomId)
@@ -994,7 +998,7 @@ function makeStateMachine<
             const parsedToken = parseRoomAuthToken(token);
             const socket = createWebSocket(token);
             authenticationSuccess(parsedToken, socket);
-            context.token = token;
+            context.token = { raw: token, parsed: parsedToken };
           })
           .catch((er: unknown) =>
             authenticationFailure(
