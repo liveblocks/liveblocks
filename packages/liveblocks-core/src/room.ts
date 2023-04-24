@@ -930,17 +930,17 @@ function makeStateMachine<
       if (process.env.NODE_ENV !== "production") {
         const stackTrace = captureStackTrace("Storage mutation", this.dispatch);
         if (stackTrace) {
-          ops.forEach((op) => {
+          for (const op of ops) {
             if (op.opId) {
               nn(context.opStackTraces).set(op.opId, stackTrace);
             }
-          });
+          }
         }
       }
 
       if (activeBatch) {
         activeBatch.ops.push(...ops);
-        storageUpdates.forEach((value, key) => {
+        for (const [key, value] of storageUpdates) {
           activeBatch.updates.storageUpdates.set(
             key,
             mergeStorageUpdates(
@@ -948,7 +948,7 @@ function makeStateMachine<
               value
             )
           );
-        });
+        }
         activeBatch.reverseOps.unshift(...reverse);
       } else {
         batchUpdates(() => {
@@ -1092,9 +1092,9 @@ function makeStateMachine<
     }
 
     const currentItems: NodeMap = new Map();
-    context.nodes.forEach((node, id) => {
+    for (const [id, node] of context.nodes) {
       currentItems.set(id, node._serialize());
-    });
+    }
 
     // Get operations that represent the diff between 2 states.
     const ops = getTreesDiffOperations(currentItems, new Map(items));
@@ -1650,13 +1650,12 @@ function makeStateMachine<
           // Write event
           case ServerMsgCode.UPDATE_STORAGE: {
             const applyResult = applyOps(message.ops, false);
-            applyResult.updates.storageUpdates.forEach((value, key) => {
+            for (const [key, value] of applyResult.updates.storageUpdates) {
               updates.storageUpdates.set(
                 key,
                 mergeStorageUpdates(updates.storageUpdates.get(key), value)
               );
-            });
-
+            }
             break;
           }
 
@@ -1878,11 +1877,10 @@ function makeStateMachine<
 
   function tryFlushing() {
     const storageOps = context.buffer.storageOperations;
-
     if (storageOps.length > 0) {
-      storageOps.forEach((op) => {
+      for (const op of storageOps) {
         context.unacknowledgedOps.set(nn(op.opId), op);
-      });
+      }
       notifyStorageStatus();
     }
 
@@ -1982,7 +1980,9 @@ function makeStateMachine<
       notify({ others: [{ type: "reset" }] }, doNotBatchUpdates);
 
       // Clear all event listeners
-      Object.values(eventHub).forEach((eventSource) => eventSource.clear());
+      for (const eventSource of Object.values(eventHub)) {
+        eventSource.clear();
+      }
     });
   }
 
