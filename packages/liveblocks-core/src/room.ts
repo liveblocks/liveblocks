@@ -712,6 +712,10 @@ type MachineContext<
     storageOperations: Op[];
   };
 
+  /**
+   * Number of reconnect() retries.
+   */
+  numRetries: number;
   readonly timers: {
     flush: TimeoutID | undefined;
     reconnect: TimeoutID | undefined;
@@ -724,7 +728,6 @@ type MachineContext<
   readonly others: OthersRef<TPresence, TUserMeta>;
 
   idFactory: IdFactory | null;
-  numberOfRetry: number;
   initialStorage?: TStorage;
 
   clock: number;
@@ -856,7 +859,8 @@ function makeStateMachine<
     token: null,
     lastConnectionId: null,
     socket: null,
-    numberOfRetry: 0,
+
+    numRetries: 0,
     timers: {
       flush: undefined,
       reconnect: undefined,
@@ -1428,7 +1432,7 @@ function makeStateMachine<
     }
     context.token = null;
     updateConnection({ status: "unavailable" }, batchUpdates);
-    context.numberOfRetry++;
+    context.numRetries++;
     context.timers.reconnect = effects.scheduleReconnect(getRetryDelay());
   }
 
@@ -1719,7 +1723,7 @@ function makeStateMachine<
         eventHub.error.notify(error);
 
         const delay = getRetryDelay(true);
-        context.numberOfRetry++;
+        context.numRetries++;
 
         if (process.env.NODE_ENV !== "production") {
           console.error(
@@ -1733,7 +1737,7 @@ function makeStateMachine<
         updateConnection({ status: "closed" }, doNotBatchUpdates);
       } else {
         const delay = getRetryDelay();
-        context.numberOfRetry++;
+        context.numRetries++;
 
         if (process.env.NODE_ENV !== "production") {
           console.warn(
@@ -1759,14 +1763,14 @@ function makeStateMachine<
   function getRetryDelay(slow: boolean = false) {
     if (slow) {
       return BACKOFF_RETRY_DELAYS_SLOW[
-        context.numberOfRetry < BACKOFF_RETRY_DELAYS_SLOW.length
-          ? context.numberOfRetry
+        context.numRetries < BACKOFF_RETRY_DELAYS_SLOW.length
+          ? context.numRetries
           : BACKOFF_RETRY_DELAYS_SLOW.length - 1
       ];
     }
     return BACKOFF_RETRY_DELAYS[
-      context.numberOfRetry < BACKOFF_RETRY_DELAYS.length
-        ? context.numberOfRetry
+      context.numRetries < BACKOFF_RETRY_DELAYS.length
+        ? context.numRetries
         : BACKOFF_RETRY_DELAYS.length - 1
     ];
   }
@@ -1783,7 +1787,7 @@ function makeStateMachine<
         { ...context.connection.current, status: "open" },
         batchUpdates
       );
-      context.numberOfRetry = 0;
+      context.numRetries = 0;
 
       // Re-broadcast the user presence during a reconnect.
       if (context.lastConnectionId !== undefined) {
