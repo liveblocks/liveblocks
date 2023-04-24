@@ -15,12 +15,13 @@ to get access in the near future.
 </Banner>
 
 This document describes the language rules for writing your own Liveblocks
-schemas. It is an exhaustive account of all feature that will be implemented and
-supported before the public beta.
+schemas. It is an exhaustive account of all features that will be implemented
+and supported before the public beta and is
+[open source](https://github.com/liveblocks/liveblocks/tree/main/schema-lang).
 
-Currently in the private beta phase we support: scalars, arrays, objects,
-optionals, `LiveObject`, `LiveList`, `LiveMap`, and most unions. We’re sharing
-our plans for other syntaxes so you can give us early feedback
+In the private beta phase we support: scalars, arrays, objects, optionals,
+`LiveObject`, `LiveList`, `LiveMap`, and most unions. We’re sharing our plans
+for other syntaxes so you can give us early feedback
 [here](https://github.com/liveblocks/liveblocks/discussions/674).
 
 ## Storage root
@@ -35,8 +36,7 @@ type Storage {
 
 ## Scalars
 
-Familiar scalar types are globally available when you create a schema. We
-support:
+Familiar scalar types are globally available when you create a schema:
 
 - `string`
 - `number`
@@ -68,6 +68,20 @@ root.set("favoritePet", null);
 root.set("name", true);
 root.set("hasSiblings", null);
 root.set("favoritePet", 0);
+```
+
+You can also use literal types to restrict values even further:
+
+```ts
+type Event {
+  statusCode: 200 | 400
+  info: string
+}
+
+type Storage {
+  theme: "light" | "dark"
+  history: LiveList<Event>
+}
 ```
 
 ## Optionals
@@ -220,7 +234,7 @@ For example:
 type Shape {
   x: number
   y: number
-  fill: string
+  fill: "red" | "yellow" | "blue"
 }
 
 type Storage {

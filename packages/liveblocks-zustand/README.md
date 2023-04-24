@@ -33,8 +33,9 @@ npm install @liveblocks/client @liveblocks/zustand
 
 ## Documentation
 
-Read the [documentation](https://liveblocks.io/docs) for guides and API
-references.
+Read the
+[documentation](https://liveblocks.io/docs/api-reference/liveblocks-zustand) for
+guides and API references.
 
 ## Examples
 

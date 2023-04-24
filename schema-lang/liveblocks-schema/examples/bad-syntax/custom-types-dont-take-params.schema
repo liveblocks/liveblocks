@@ -1,0 +1,6 @@
+type Custom {}
+
+type X {
+  bad: Custom<number>
+             ^ Expected ",", ";", "[", "\n", "|", or "}" but "<" found
+}

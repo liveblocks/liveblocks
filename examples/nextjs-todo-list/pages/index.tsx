@@ -7,7 +7,7 @@ import {
   useMutation,
 } from "../liveblocks.config";
 import "@liveblocks/react";
-import { LiveList } from "@liveblocks/client";
+import { LiveList, LiveObject } from "@liveblocks/client";
 import { useRouter } from "next/router";
 import { ClientSideSuspense } from "@liveblocks/react";
 
@@ -37,7 +37,12 @@ function Example() {
   const todos = useStorage((root) => root.todos);
 
   const addTodo = useMutation(({ storage }, text) => {
-    storage.get("todos").push({ text });
+    storage.get("todos").push(new LiveObject({ text }));
+  }, []);
+
+  const toggleTodo = useMutation(({ storage }, index) => {
+    const todo = storage.get("todos").get(index);
+    todo?.set("checked", !todo.get("checked"));
   }, []);
 
   const deleteTodo = useMutation(({ storage }, index) => {
@@ -56,7 +61,7 @@ function Example() {
           updateMyPresence({ isTyping: true });
         }}
         onKeyDown={(e) => {
-          if (e.key === "Enter") {
+          if (draft && e.key === "Enter") {
             updateMyPresence({ isTyping: false });
             addTodo(draft);
             setDraft("");
@@ -68,7 +73,16 @@ function Example() {
       {todos.map((todo, index) => {
         return (
           <div key={index} className="todo_container">
-            <div className="todo">{todo.text}</div>
+            <div className="todo" onClick={() => toggleTodo(index)}>
+              <span
+                style={{
+                  cursor: "pointer",
+                  textDecoration: todo.checked ? "line-through" : undefined,
+                }}
+              >
+                {todo.text}
+              </span>
+            </div>
             <button className="delete_button" onClick={() => deleteTodo(index)}>
               ✕
             </button>
@@ -88,7 +102,7 @@ function Loading() {
 }
 
 export default function Page() {
-  const roomId = useOverrideRoomId("nextjs-todo-list");
+  const roomId = useOverrideRoomId("nextjs-todo-list-v2");
 
   return (
     <RoomProvider

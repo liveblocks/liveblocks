@@ -1,3 +1,8 @@
+# v1.0.2
+
+Fix bug where passing down `shouldInitiallyConnect` connection option would not
+always work.
+
 # v1.0.1
 
 Log stack traces of function calls that resulted in rejected storage mutations

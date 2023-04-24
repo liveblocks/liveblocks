@@ -1,6 +1,6 @@
 {
   "name": "@liveblocks/core",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Shared code and foundational internals for Liveblocks",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -36,7 +36,6 @@
     "@types/ws": "^8.5.3",
     "dotenv": "^16.0.3",
     "eslint-plugin-rulesdir": "^0.2.1",
-    "fast-check": "^3.0.1",
     "msw": "^0.47.4",
     "ws": "^8.5.0"
   },

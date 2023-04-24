@@ -1,0 +1,179 @@
+name: Tests
+
+on: [pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [16.x]
+        pkg:
+          [
+            "@liveblocks/core",
+            "@liveblocks/client",
+            "@liveblocks/react",
+            "@liveblocks/redux",
+            "@liveblocks/zustand",
+            "@liveblocks/node",
+          ]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Use Node ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+          cache-dependency-path: "**/package-lock.json"
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Turbo Cache
+        id: turbo-cache
+        uses: actions/cache@v3
+        with:
+          key: turbo-cache-${{ matrix.node-version }}-${{ matrix.pkg }}-bust1
+          path: node_modules/.cache/turbo
+          restore-keys:
+            turbo-cache-${{ matrix.node-version }}-${{ matrix.pkg }}-bust1
+
+      - name: Build
+        run: npm run build -- --filter ${{ matrix.pkg }}
+
+      - name: Run unit tests
+        run: npm run test -- --filter ${{ matrix.pkg }}
+
+      - name: Run type tests
+        run: npm run test:types -- --filter ${{ matrix.pkg }}
+
+      - name: Run dependency tests
+        run: npm run test:deps -- --filter ${{ matrix.pkg }}
+
+      - name: Run lint checks
+        run: npm run lint -- --filter ${{ matrix.pkg }}
+
+  e2e-tests:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [16.x]
+
+    timeout-minutes: 60
+
+    env:
+      LIVEBLOCKS_SECRET_KEY: ${{ secrets.E2E_TEST_LIVEBLOCKS_SECRET_KEY }}
+      LIVEBLOCKS_SERVER: ${{ secrets.E2E_TEST_LIVEBLOCKS_SERVER }}
+      LIVEBLOCKS_AUTHORIZE_ENDPOINT:
+        ${{ secrets.E2E_TEST_LIVEBLOCKS_AUTHORIZE_ENDPOINT }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Use Node ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+          cache-dependency-path: "**/package-lock.json"
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Install Playwright
+        run: npx playwright install chromium
+
+      - name: Run Playwright tests
+        run: npm run test -- --filter @liveblocks/next-sandbox
+
+      - uses: actions/upload-artifact@v2
+        if: always()
+        with:
+          name: playwright-report
+          path: e2e/next-sandbox/playwright-report
+          retention-days: 14
+
+  e2e-client-specs-tests:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [16.x]
+
+    timeout-minutes: 60
+
+    env:
+      LIVEBLOCKS_PUBLIC_KEY: ${{ secrets.E2E_TEST_LIVEBLOCKS_PUBLIC_KEY }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Use Node ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+          cache-dependency-path: "**/package-lock.json"
+
+      - name: Run npm install
+        run: npm install
+
+      - name: Run e2e client specs tests
+        run: npm run test:e2e
+        working-directory: packages/liveblocks-core
+
+  lang-tests:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [16.x]
+        pkg: ["@liveblocks/schema", "@liveblocks/infer-schema"]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+          cache-dependency-path: "**/package-lock.json"
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Turbo Cache
+        id: turbo-cache
+        uses: actions/cache@v3
+        with:
+          key: turbo-cache-${{ matrix.node-version }}-${{ matrix.pkg }}-bust1
+          path: node_modules/.cache/turbo
+          restore-keys:
+            turbo-cache-${{ matrix.node-version }}-${{ matrix.pkg }}-bust1
+
+      - name: Build
+        run: npm run build -- --filter ${{ matrix.pkg }}
+
+      - name: Ensure no files are changed
+        run: |
+          CHANGED=$(git status --porcelain)
+          if [ -n "$CHANGED" ]; then
+            echo "Local, uncommitted changes found:"
+            echo "$CHANGED"
+            exit 1
+          fi
+
+      - name: Run unit tests
+        run: npm run test -- --filter ${{ matrix.pkg }}
+
+      - name: Run lint checks
+        run: npm run lint -- --filter ${{ matrix.pkg }}
