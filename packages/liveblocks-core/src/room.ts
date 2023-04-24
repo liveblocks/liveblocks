@@ -685,7 +685,13 @@ type MachineContext<
     readonly raw: string;
     readonly parsed: RoomAuthToken & JwtMetadata;
   } | null;
-  lastConnectionId: number | null; // TODO: Move into Connection type members?
+
+  /**
+   * Remembers the last successful connection ID. This gets assigned as soon as
+   * the connection status switched from "connecting" to "open".
+   */
+  lastConnectionId: number | null; // TODO Do we really need to separately track this, or can we derive this from the last known token?
+
   socket: WebSocket | null;
 
   /**
