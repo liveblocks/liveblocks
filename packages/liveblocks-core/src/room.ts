@@ -32,13 +32,7 @@ import type { ClientMsg } from "./protocol/ClientMsg";
 import { ClientMsgCode } from "./protocol/ClientMsg";
 import type { Op } from "./protocol/Op";
 import { isAckOp, OpCode } from "./protocol/Op";
-import type {
-  IdTuple,
-  SerializedChild,
-  SerializedCrdt,
-  SerializedRootObject,
-} from "./protocol/SerializedCrdt";
-import { isRootCrdt } from "./protocol/SerializedCrdt";
+import type { IdTuple, SerializedCrdt } from "./protocol/SerializedCrdt";
 import type {
   InitialDocumentStateServerMsg,
   RoomStateServerMsg,
@@ -53,7 +47,7 @@ import { MeRef } from "./refs/MeRef";
 import { OthersRef } from "./refs/OthersRef";
 import { DerivedRef, ValueRef } from "./refs/ValueRef";
 import type * as DevTools from "./types/DevToolsTreeNode";
-import type { NodeMap, ParentToChildNodeMap } from "./types/NodeMap";
+import type { NodeMap } from "./types/NodeMap";
 import type { Others, OthersEvent } from "./types/Others";
 import type { User } from "./types/User";
 import { WebsocketCloseCodes } from "./types/WebsocketCloseCodes";
@@ -1063,10 +1057,7 @@ function makeStateMachine<
     if (context.root) {
       updateRoot(message.items, batchedUpdatesWrapper);
     } else {
-      // TODO: For now, we'll assume the happy path, but reading this data from
-      // the central storage server, it may very well turn out to not match the
-      // manual type annotation. This will require runtime type validations!
-      context.root = load(message.items) as LiveObject<TStorage>;
+      context.root = LiveObject._fromItems<TStorage>(message.items, pool);
     }
 
     for (const key in context.initialStorage) {
@@ -1074,33 +1065,6 @@ function makeStateMachine<
         context.root.set(key, context.initialStorage[key]);
       }
     }
-  }
-
-  function buildRootAndParentToChildren(
-    items: IdTuple<SerializedCrdt>[]
-  ): [IdTuple<SerializedRootObject>, ParentToChildNodeMap] {
-    const parentToChildren: ParentToChildNodeMap = new Map();
-    let root: IdTuple<SerializedRootObject> | null = null;
-
-    for (const [id, crdt] of items) {
-      if (isRootCrdt(crdt)) {
-        root = [id, crdt];
-      } else {
-        const tuple: IdTuple<SerializedChild> = [id, crdt];
-        const children = parentToChildren.get(crdt.parentId);
-        if (children !== undefined) {
-          children.push(tuple);
-        } else {
-          parentToChildren.set(crdt.parentId, [tuple]);
-        }
-      }
-    }
-
-    if (root === null) {
-      throw new Error("Root can't be null");
-    }
-
-    return [root, parentToChildren];
   }
 
   function updateRoot(
@@ -1122,12 +1086,6 @@ function makeStateMachine<
     const result = applyOps(ops, false);
 
     notify(result.updates, batchedUpdatesWrapper);
-  }
-
-  function load(items: IdTuple<SerializedCrdt>[]): LiveObject<LsonObject> {
-    // TODO Abstract these details into a LiveObject._fromItems() helper?
-    const [root, parentToChildren] = buildRootAndParentToChildren(items);
-    return LiveObject._deserialize(root, parentToChildren, pool);
   }
 
   function _addToRealUndoStack(
