@@ -943,7 +943,7 @@ function makeStateMachine<
           activeBatch.updates.storageUpdates.set(
             key,
             mergeStorageUpdates(
-              activeBatch.updates.storageUpdates.get(key) as any, // FIXME
+              activeBatch.updates.storageUpdates.get(key),
               value
             )
           );
@@ -1286,9 +1286,7 @@ function makeStateMachine<
             output.storageUpdates.set(
               nn(applyOpResult.modified.node._id),
               mergeStorageUpdates(
-                output.storageUpdates.get(
-                  nn(applyOpResult.modified.node._id)
-                ) as any, // FIXME
+                output.storageUpdates.get(nn(applyOpResult.modified.node._id)),
                 applyOpResult.modified
               )
             );
@@ -1693,10 +1691,7 @@ function makeStateMachine<
             applyResult.updates.storageUpdates.forEach((value, key) => {
               updates.storageUpdates.set(
                 key,
-                mergeStorageUpdates(
-                  updates.storageUpdates.get(key) as any, // FIXME
-                  value
-                )
+                mergeStorageUpdates(updates.storageUpdates.get(key), value)
               );
             });
 
