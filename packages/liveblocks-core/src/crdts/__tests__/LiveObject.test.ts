@@ -905,7 +905,7 @@ describe("LiveObject", () => {
 
   describe("reconnect with remote changes and subscribe", () => {
     test("LiveObject updated", async () => {
-      const { expectStorage, machine, root } =
+      const { expectStorage, machine, root, subscribe } =
         await prepareIsolatedStorageTest<{
           obj: LiveObject<{ a: number }>;
         }>(
@@ -919,8 +919,8 @@ describe("LiveObject", () => {
       const rootDeepCallback = jest.fn();
       const liveObjectCallback = jest.fn();
 
-      machine.subscribe(root, rootDeepCallback, { isDeep: true });
-      machine.subscribe(root.get("obj"), liveObjectCallback);
+      subscribe(root, rootDeepCallback, { isDeep: true });
+      subscribe(root.get("obj"), liveObjectCallback);
 
       expectStorage({ obj: { a: 1 } });
 
@@ -964,7 +964,7 @@ describe("LiveObject", () => {
     });
 
     test("LiveObject updated nested", async () => {
-      const { expectStorage, machine, root } =
+      const { expectStorage, machine, root, subscribe } =
         await prepareIsolatedStorageTest<{
           obj: LiveObject<{ a: number; subObj?: LiveObject<{ b: number }> }>;
         }>(
@@ -978,8 +978,8 @@ describe("LiveObject", () => {
       const rootDeepCallback = jest.fn();
       const liveObjectCallback = jest.fn();
 
-      machine.subscribe(root, rootDeepCallback, { isDeep: true });
-      machine.subscribe(root.get("obj"), liveObjectCallback);
+      subscribe(root, rootDeepCallback, { isDeep: true });
+      subscribe(root.get("obj"), liveObjectCallback);
 
       expectStorage({ obj: { a: 1 } });
 

@@ -27,8 +27,8 @@ import type {
   _private_Machine as Machine,
 } from "../room";
 import {
-  _private_defaultState as defaultState,
   _private_makeStateMachine as makeStateMachine,
+  makeClassicSubscribeFn,
 } from "../room";
 import type { JsonStorageUpdate } from "./_updatesUtils";
 import { serializeUpdateToJson } from "./_updatesUtils";
@@ -150,18 +150,24 @@ export const THIRD_POSITION = makePosition(SECOND_POSITION);
 export const FOURTH_POSITION = makePosition(THIRD_POSITION);
 export const FIFTH_POSITION = makePosition(FOURTH_POSITION);
 
-const defaultContext = {
-  roomId: "room-id",
-  throttleDelay: -1, // No throttle for standard storage test
-  liveblocksServer: "wss://live.liveblocks.io/v6",
-  authentication: {
-    type: "private",
-    url: "/api/auth",
-  } as Authentication,
-  polyfills: {
-    WebSocket: MockWebSocket as any,
-  },
-};
+function makeMachineConfig<
+  TPresence extends JsonObject,
+  TRoomEvent extends Json
+>(mockedEffects: Effects<TPresence, TRoomEvent>) {
+  return {
+    roomId: "room-id",
+    throttleDelay: -1, // No throttle for standard storage test
+    liveblocksServer: "wss://live.liveblocks.io/v6",
+    authentication: {
+      type: "private",
+      url: "/api/auth",
+    } as Authentication,
+    polyfills: {
+      WebSocket: MockWebSocket as any,
+    },
+    mockedEffects,
+  };
+}
 
 export async function prepareRoomWithStorage<
   TPresence extends JsonObject,
@@ -178,14 +184,10 @@ export async function prepareRoomWithStorage<
   const effects = mockEffects();
   (effects.send as jest.MockedFunction<any>).mockImplementation(onSend);
 
-  const state = defaultState<TPresence, TStorage, TUserMeta, TRoomEvent>(
+  const machine = makeStateMachine<TPresence, TStorage, TUserMeta, TRoomEvent>(
+    makeMachineConfig(effects),
     {} as TPresence,
     defaultStorage || ({} as TStorage)
-  );
-  const machine = makeStateMachine<TPresence, TStorage, TUserMeta, TRoomEvent>(
-    state,
-    defaultContext,
-    effects
   );
   const ws = new MockWebSocket("");
 
@@ -193,6 +195,7 @@ export async function prepareRoomWithStorage<
   machine.authenticationSuccess(makeRoomToken(actor, scopes), ws as any);
   ws.open();
 
+  // Start getting the storage, but don't await the promise just yet!
   const getStoragePromise = machine.getStorage();
 
   const clonedItems = deepClone(items);
@@ -204,12 +207,7 @@ export async function prepareRoomWithStorage<
   );
 
   const storage = await getStoragePromise;
-
-  return {
-    storage,
-    machine,
-    ws,
-  };
+  return { storage, machine, ws };
 }
 
 export async function prepareIsolatedStorageTest<TStorage extends LsonObject>(
@@ -236,7 +234,7 @@ export async function prepareIsolatedStorageTest<TStorage extends LsonObject>(
   return {
     root: storage.root,
     machine,
-    subscribe: machine.subscribe,
+    subscribe: makeClassicSubscribeFn(machine),
     undo: machine.undo,
     redo: machine.redo,
     ws,
@@ -408,6 +406,7 @@ export async function prepareStorageTest<
   return {
     machine,
     refMachine,
+    subscribe: makeClassicSubscribeFn(machine),
     operations,
     storage,
     refStorage,
@@ -416,8 +415,6 @@ export async function prepareStorageTest<
     updatePresence: machine.updatePresence,
     getUndoStack: machine.getUndoStack,
     getItemsCount: machine.getItemsCount,
-    subscribe: machine.subscribe,
-    refSubscribe: refMachine.subscribe,
     batch: machine.batch,
     undo: machine.undo,
     redo: machine.redo,
@@ -451,10 +448,8 @@ export async function prepareStorageUpdateTest<
   machine: Machine<TPresence, TStorage, TUserMeta, TRoomEvent>;
   expectUpdates: (updates: JsonStorageUpdate[][]) => void;
 }> {
-  const { storage: refStorage, machine: refMachine } =
-    await prepareRoomWithStorage(items, -1);
-
-  const { storage, machine } = await prepareRoomWithStorage<
+  const { machine: refMachine } = await prepareRoomWithStorage(items, -1);
+  const { machine, storage } = await prepareRoomWithStorage<
     TPresence,
     TStorage,
     TUserMeta,
@@ -481,15 +476,11 @@ export async function prepareStorageUpdateTest<
   const jsonUpdates: JsonStorageUpdate[][] = [];
   const refJsonUpdates: JsonStorageUpdate[][] = [];
 
-  machine.subscribe(
-    storage.root,
-    (updates) => jsonUpdates.push(updates.map(serializeUpdateToJson)),
-    { isDeep: true }
+  machine.events.storage.subscribe((updates) =>
+    jsonUpdates.push(updates.map(serializeUpdateToJson))
   );
-  refMachine.subscribe(
-    refStorage.root,
-    (updates) => refJsonUpdates.push(updates.map(serializeUpdateToJson)),
-    { isDeep: true }
+  refMachine.events.storage.subscribe((updates) =>
+    refJsonUpdates.push(updates.map(serializeUpdateToJson))
   );
 
   function expectUpdatesInBothClients(updates: JsonStorageUpdate[][]) {
@@ -530,7 +521,8 @@ export async function prepareDisconnectedStorageUpdateTest<
 
   const receivedUpdates: JsonStorageUpdate[][] = [];
 
-  machine.subscribe(
+  const subscribe = makeClassicSubscribeFn(machine);
+  subscribe(
     storage.root,
     (updates) => receivedUpdates.push(updates.map(serializeUpdateToJson)),
     { isDeep: true }

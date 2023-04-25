@@ -51,7 +51,7 @@ function generateRandomNumber(max: number, ignore?: number) {
 function Sandbox() {
   const [status, setStatus] = useState("connected");
   const room = useRoom();
-  const internals = (room as any).__INTERNAL_DO_NOT_USE as Internal;
+  const internals = (room as any).__internal as Internal;
   const list = useList("items");
   const me = useSelf();
   const undo = useUndo();
