@@ -1,4 +1,6 @@
 import { assertNever } from "../lib/assert";
+import type { Pos } from "../lib/position";
+import { asPos } from "../lib/position";
 import type { CreateChildOp, Op } from "../protocol/Op";
 import { OpCode } from "../protocol/Op";
 import type { SerializedCrdt } from "../protocol/SerializedCrdt";
@@ -69,6 +71,10 @@ type HasParent = {
   readonly type: "HasParent";
   readonly node: LiveNode;
   readonly key: string;
+
+  // Typically the same as `key`, but checked to be a valid Pos value (needed
+  // when used as item in a LiveList)
+  readonly pos: Pos;
 };
 
 type NoParent = {
@@ -78,16 +84,24 @@ type NoParent = {
 type Orphaned = {
   readonly type: "Orphaned";
   readonly oldKey: string;
+
+  // Typically the same as `key`, but checked to be a valid Pos value (needed
+  // when used as item in a LiveList)
+  readonly oldPos: Pos;
 };
 
-function HasParent(node: LiveNode, key: string): HasParent {
-  return Object.freeze({ type: "HasParent", node, key });
+function HasParent(
+  node: LiveNode,
+  key: string,
+  pos: Pos = asPos(key)
+): HasParent {
+  return Object.freeze({ type: "HasParent", node, key, pos });
 }
 
 const NoParent: NoParent = Object.freeze({ type: "NoParent" });
 
-function Orphaned(oldKey: string): Orphaned {
-  return Object.freeze({ type: "Orphaned", oldKey });
+function Orphaned(oldKey: string, oldPos: Pos = asPos(oldKey)): Orphaned {
+  return Object.freeze({ type: "Orphaned", oldKey, oldPos });
 }
 
 /**
@@ -139,6 +153,23 @@ export abstract class AbstractCrdt {
   }
 
   /** @internal */
+  get _parentPos(): Pos {
+    switch (this.parent.type) {
+      case "HasParent":
+        return this.parent.pos;
+
+      case "NoParent":
+        throw new Error("Parent key is missing");
+
+      case "Orphaned":
+        return this.parent.oldPos;
+
+      default:
+        return assertNever(this.parent, "Unknown state");
+    }
+  }
+
+  /** @internal */
   protected get _pool(): ManagedPool | undefined {
     return this.__pool;
   }
@@ -155,23 +186,6 @@ export abstract class AbstractCrdt {
   /** @internal */
   get parent(): ParentInfo {
     return this._parent;
-  }
-
-  /** @internal */
-  get _parentNode(): LiveNode | null {
-    switch (this.parent.type) {
-      case "HasParent":
-        return this.parent.node;
-
-      case "NoParent":
-        return null;
-
-      case "Orphaned":
-        return null;
-
-      default:
-        return assertNever(this.parent, "Unknown state");
-    }
   }
 
   /** @internal */
@@ -252,19 +266,17 @@ export abstract class AbstractCrdt {
 
     switch (this.parent.type) {
       case "HasParent": {
-        this._parent = Orphaned(this.parent.key);
+        this._parent = Orphaned(this.parent.key, this.parent.pos);
         break;
       }
 
       case "NoParent": {
-        // throw new Error("Node is already detached. Cannot detach twice.");
         this._parent = NoParent;
         break;
       }
 
       case "Orphaned": {
-        // throw new Error("Node is already detached. Cannot detach twice.");
-        this._parent = Orphaned(this.parent.oldKey);
+        // No change needed
         break;
       }
 
