@@ -1872,12 +1872,12 @@ function makeStateMachine<
 
       context.others.clearOthers();
       notify({ others: [{ type: "reset" }] }, doNotBatchUpdates);
-
-      // Clear all event listeners
-      for (const eventSource of Object.values(eventHub)) {
-        eventSource.clear();
-      }
     });
+
+    // Clear all event listeners
+    for (const eventSource of Object.values(eventHub)) {
+      eventSource.clear();
+    }
   }
 
   function reconnect() {
