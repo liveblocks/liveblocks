@@ -29,6 +29,8 @@ jobs:
 
       - name: Checkout
         uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.WRITE_ACCESS_TOKEN }}
 
       - name: Validate git tag
         run: ./.github/scripts/validate-version.sh "${{ inputs.tag }}"
