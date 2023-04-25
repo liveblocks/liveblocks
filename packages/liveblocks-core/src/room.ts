@@ -1571,6 +1571,30 @@ function makeStateMachine<
     }
   }
 
+  function applyAndSendOps(
+    offlineOps: Map<string, Op>,
+    batchedUpdatesWrapper: (cb: () => void) => void
+  ) {
+    if (offlineOps.size === 0) {
+      return;
+    }
+
+    const messages: ClientMsg<TPresence, TRoomEvent>[] = [];
+
+    const ops = Array.from(offlineOps.values());
+
+    const result = applyOps(ops, true);
+
+    messages.push({
+      type: ClientMsgCode.UPDATE_STORAGE,
+      ops: result.ops,
+    });
+
+    notify(result.updates, batchedUpdatesWrapper);
+
+    effects.send(messages);
+  }
+
   function onMessage(event: MessageEvent<string>) {
     if (event.data === "pong") {
       clearTimeout(context.timers.pongTimeout);
@@ -1843,30 +1867,6 @@ function makeStateMachine<
     clearTimeout(context.timers.reconnect);
     clearInterval(context.timers.heartbeat);
     connect();
-  }
-
-  function applyAndSendOps(
-    offlineOps: Map<string, Op>,
-    batchedUpdatesWrapper: (cb: () => void) => void
-  ) {
-    if (offlineOps.size === 0) {
-      return;
-    }
-
-    const messages: ClientMsg<TPresence, TRoomEvent>[] = [];
-
-    const ops = Array.from(offlineOps.values());
-
-    const result = applyOps(ops, true);
-
-    messages.push({
-      type: ClientMsgCode.UPDATE_STORAGE,
-      ops: result.ops,
-    });
-
-    notify(result.updates, batchedUpdatesWrapper);
-
-    effects.send(messages);
   }
 
   function tryFlushing() {
