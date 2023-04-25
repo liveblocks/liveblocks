@@ -4,18 +4,48 @@ import { useEffect, useRef, useState } from "react";
 import { COLORS_PRESENCE } from "../constants";
 import Cursor from "./Cursor";
 
-function getCursorPositionFromBoundingRect(e, boundingRect) {
+type Props = {
+  id: string;
+  children: React.ReactNode;
+};
+
+type Presence = {
+  cursor: CursorPosition | null;
+  cardId: string | null;
+}
+
+type BoundingRect = {
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+}
+
+type CursorPosition = {
+  x: number;
+  y: number;
+}
+
+function getCursorPositionFromBoundingRect(
+  e: MouseEvent, 
+  boundingRect: BoundingRect
+): CursorPosition {
   return {
     x: (e.clientX - boundingRect.left) / boundingRect.width,
     y: (e.clientY - boundingRect.top) / boundingRect.height,
   };
 }
 
-export default function Card({ id, children }) {
-  const containerRef = useRef();
+export default function Card({ id, children }: Props) {
+  const containerRef = useRef<HTMLDivElement>(null);
   const updateMyPresence = useUpdateMyPresence();
   const others = useOthers();
-  const [boundingRect, setBoundingRect] = useState(null);
+  // const others = useOthers<{ presence: Presence }>( );
+  const [boundingRect, setBoundingRect] = useState<BoundingRect | null>(null);
+  const [myPresence, setMyPresence] = useState<Presence>({
+    cursor: null,
+    cardId: null,
+  });
 
   useEffect(() => {
     if (containerRef.current) {
@@ -31,7 +61,8 @@ export default function Card({ id, children }) {
         updateMyPresence({
           cardId: id,
         });
-        setBoundingRect(containerRef.current.getBoundingClientRect());
+        setBoundingRect(containerRef.current?.getBoundingClientRect() ?? null);
+        // setBoundingRect(containerRef.current?.getBoundingClientRect()??null);  
       }}
       onPointerMove={(e) => {
         e.preventDefault();
@@ -40,7 +71,10 @@ export default function Card({ id, children }) {
           return;
         }
 
-        const cursor = getCursorPositionFromBoundingRect(e, boundingRect);
+        const cursor = {
+          x: (e.clientX - boundingRect.left) / boundingRect.width,
+          y: (e.clientY - boundingRect.top) / boundingRect.height,
+        };
 
         updateMyPresence({
           cursor,
@@ -58,21 +92,26 @@ export default function Card({ id, children }) {
       {others.map(({ connectionId, presence }) => {
         if (
           boundingRect == null ||
+          presence == null ||
           presence.cursor == null ||
           presence.cardId == null ||
           presence.cardId !== id
         ) {
           return null;
         }
-
+        
+        // const { x, y } = presence.cursor;
+        // if (!x || !y) {
+        //   return null;
+        // }
         return (
           <Cursor
             key={`cursor-${connectionId}`}
             color={`rgb(${
               COLORS_PRESENCE[connectionId % COLORS_PRESENCE.length]
             }`}
-            x={presence.cursor.x * boundingRect.width}
-            y={presence.cursor.y * boundingRect.height}
+            x={(presence.cursor as CursorPosition).x * boundingRect.width}
+            y={(presence.cursor as CursorPosition).y * boundingRect.height}
           />
         );
       })}

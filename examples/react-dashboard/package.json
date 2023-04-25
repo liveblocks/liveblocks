@@ -9,17 +9,13 @@
     "react": "^18.1.0",
     "react-dom": "^18.1.0",
     "react-scripts": "^5.0.1",
-    "recharts": "^2.1.13",
+    "recharts": "^2.5.0",
     "next": "^12.1.6"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject",
     "dev": "next dev",
-    "next-build": "next build",
-    "next-start": "next start"
+    "build": "next build",
+    "start": "next start"
   },
   "browserslist": {
     "production": [

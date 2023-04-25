@@ -1,6 +1,12 @@
 import React from "react";
 
-export default function Cursor({ color, x, y }) {
+type Props = {
+  color: string;
+  x: number;
+  y: number;
+};
+
+export default function Cursor({ color, x, y }: Props) {
   return (
     <svg
       style={{

@@ -8,7 +8,7 @@ export default function Header() {
 
   return (
     <header className={styles.container}>
-      <h1>Dashboard</h1>
+      <h1 className={styles.heading}>Dashboard</h1>
       <div className={styles.container_avatars}>
         {connectionIds.map((connectionId) => (
           <Avatar

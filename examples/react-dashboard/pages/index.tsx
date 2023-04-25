@@ -9,60 +9,74 @@ import {
   Legend,
   PieChart,
   Pie,
-  BarChart,
+  BarChart
 } from "recharts";
-import { dataRevenue, dataUsers, dataPlatforms, dataActivation } from "./data";
+import { useRouter } from "next/router";
+import { DataKey } from 'recharts/types/util/types';
+import { dataRevenue, dataUsers, dataPlatforms, dataActivation } from "../src/data";
 import {
   RoomProvider,
   useMyPresence,
   useOthersMapped,
-} from "./liveblocks.config";
-import styles from "./App.module.css";
-import Header from "./components/Header";
-import Card from "./components/Card";
+} from "../src/liveblocks.config";
+import styles from "./index.module.css";
+import Header from "../src/components/Header";
+import Card from "../src/components/Card";
 
 let roomId = "react-dashboard";
 
-overrideRoomId();
+type SelectedDataset = {
+  cardId: string;
+  dataKey: DataKey<string>;
+};
+
+// overrideRoomId();
 
 function Example() {
   const [myPresence, updateMyPresence] = useMyPresence();
   const others = useOthersMapped((user) => user.presence.selectedDataset);
 
-  const handleLegendPointerEnter = (e, cardId) => {
+  const handleLegendPointerEnter = (
+    e: {
+      dataKey: DataKey<string>
+    },
+    cardId: string
+  ) => {
     const { dataKey } = e;
-
+  
+    const selectedDataset = {
+      cardId: cardId,
+      dataKey: dataKey.toString(), // convert number to string
+    };
+  
     updateMyPresence({
-      selectedDataset: {
-        cardId: cardId,
-        dataKey: dataKey,
-      },
+      selectedDataset: selectedDataset,
     });
   };
 
-  const handleLegendPointerLeave = (e) => {
+  const handleLegendPointerLeave = () => {
     updateMyPresence({
       selectedDataset: null,
     });
   };
 
-  const isDatasetSelected = (cardId, dataKey) => {
+  const isDatasetSelected = (cardId: string, dataKey: DataKey<string>) => {
     if (
-      myPresence.selectedDataset?.cardId === cardId &&
-      myPresence.selectedDataset?.dataKey === dataKey
+      (myPresence.selectedDataset as SelectedDataset)?.cardId === cardId &&
+      (myPresence.selectedDataset as SelectedDataset)?.dataKey === dataKey
     ) {
       return true;
     }
-
+  
     for (const [, selectedDataset] of others) {
       if (
-        selectedDataset?.cardId === cardId &&
-        selectedDataset?.dataKey === dataKey
+        (selectedDataset as SelectedDataset)?.cardId === cardId &&
+        (selectedDataset as SelectedDataset)?.dataKey === dataKey
       ) {
         return true;
       }
     }
-
+  
     return false;
   };
 
@@ -249,15 +263,30 @@ export default function App() {
   );
 }
 
+export async function getStaticProps() {
+  const API_KEY = process.env.NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY;
+  const API_KEY_WARNING = process.env.CODESANDBOX_SSE
+    ? `Add your public key from https://liveblocks.io/dashboard/apikeys as the \`NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY\` secret in CodeSandbox.\n` +
+      `Learn more: https://github.com/liveblocks/liveblocks/tree/main/examples/nextjs-live-cursors-chat#codesandbox.`
+    : `Create an \`.env.local\` file and add your public key from https://liveblocks.io/dashboard/apikeys as the \`NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY\` environment variable.\n` +
+      `Learn more: https://github.com/liveblocks/liveblocks/tree/main/examples/nextjs-live-cursors-chat#getting-started.`;
+
+  if (!API_KEY) {
+    console.warn(API_KEY_WARNING);
+  }
+
+  return { props: {} };
+}
+
 /**
  * This function is used when deploying an example on liveblocks.io.
  * You can ignore it completely if you run the example locally.
  */
-function overrideRoomId() {
-  const query = new URLSearchParams(window?.location?.search);
-  const roomIdSuffix = query.get("roomId");
+// function overrideRoomId() {
+//   const query = new URLSearchParams(window?.location?.search);
+//   const roomIdSuffix = query.get("roomId");
 
-  if (roomIdSuffix) {
-    roomId = `${roomId}-${roomIdSuffix}`;
-  }
-}
+//   if (roomIdSuffix) {
+//     roomId = `${roomId}-${roomIdSuffix}`;
+//   }
+// }
