@@ -5,7 +5,15 @@
 - Release `create-liveblocks-app` along with other Liveblocks packages, using the same versioning scheme.
 - Internal refactorings.
 
-# v1.0.3 - v1.0.5
+# v1.0.5
+
+Non-existent.
+
+# v1.0.4
+
+Non-existent.
+
+# v1.0.3
 
 Non-existent.
 
