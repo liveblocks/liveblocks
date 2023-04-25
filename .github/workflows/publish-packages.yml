@@ -76,7 +76,8 @@ jobs:
         run: ./.github/scripts/release.sh -V "$VERSION"
 
       - name: Build all packages
-        run: npm run build
+        run: |
+          npm run build -- --filter='./packages/*' --filter='!@liveblocks/devtools'
 
       - name: Publish packages
         env:
