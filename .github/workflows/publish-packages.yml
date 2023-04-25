@@ -7,7 +7,7 @@ on:
         type: string
         required: true
         description:
-          "Git tag to create (e.g. v1.0.2-test7). See also
+          "Git tag to create (e.g. v1.2.3-test4). See also
           https://github.com/liveblocks/liveblocks/blob/main/CONTRIBUTING.MD#releasing"
 
 jobs:
