@@ -1016,7 +1016,9 @@ function makeStateMachine<
       if (context.socket === null) {
         throw new Error("Can't send message if socket is null");
       }
-      context.socket.send(JSON.stringify(messageOrMessages));
+      if (context.socket.readyState === context.socket.OPEN) {
+        context.socket.send(JSON.stringify(messageOrMessages));
+      }
     },
     delayFlush(delay: number) {
       return setTimeout(tryFlushing, delay);
