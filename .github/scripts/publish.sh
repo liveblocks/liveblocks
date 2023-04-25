@@ -105,8 +105,8 @@ for pkgdir in ${PACKAGE_DIRS[@]}; do
             npm dist-tag add "$pkgname@$VERSION" "${TAG:-latest}"
             break
         else
-            err "I can't find $pkgname @ $VERSION on NPM under the 'private' tag yet..."
-            read
+            err "I can't find $pkgname@$VERSION on NPM under the 'private' tag yet..."
+            sleep 3
         fi
     done
 done
