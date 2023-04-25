@@ -3,7 +3,7 @@
 ## Internal changes
 
 - Release `create-liveblocks-app` along with other Liveblocks packages, using the same versioning scheme.
-- Internal refactorings
+- Internal refactorings.
 
 # v1.0.3 - v1.0.5
 
