@@ -877,7 +877,7 @@ function makeStateMachine<
       storageOperations: [],
     },
 
-    connection: new ValueRef<Connection>({ status: "closed" }),
+    connection: new ValueRef({ status: "closed" }),
     me: new MeRef(initialPresence),
     others: new OthersRef<TPresence, TUserMeta>(),
 
