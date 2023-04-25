@@ -318,7 +318,7 @@ describe("room", () => {
 
     withDateNow(now + 30, () => machine.updatePresence({ x: 1 }));
 
-    expect(effects.delayFlush).toBeCalledWith(
+    expect(effects.scheduleFlush).toBeCalledWith(
       makeMachineConfig().throttleDelay - 30
     );
     expect(effects.send).toHaveBeenCalledWith([

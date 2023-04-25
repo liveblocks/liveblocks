@@ -773,10 +773,10 @@ type Effects<TPresence extends JsonObject, TRoomEvent extends Json> = {
     createWebSocket: (token: string) => WebSocket
   ): void;
   send(messages: ClientMsg<TPresence, TRoomEvent>[]): void;
-  delayFlush(delay: number): TimeoutID;
+  scheduleFlush(delay: number): TimeoutID;
+  scheduleReconnect(delay: number): TimeoutID;
   startHeartbeatInterval(): IntervalID;
   schedulePongTimeout(): TimeoutID;
-  scheduleReconnect(delay: number): TimeoutID;
 };
 
 export type Polyfills = {
@@ -1017,6 +1017,7 @@ function makeStateMachine<
           );
       }
     },
+
     send(
       messageOrMessages:
         | ClientMsg<TPresence, TRoomEvent>
@@ -1027,18 +1028,11 @@ function makeStateMachine<
       }
       context.socket.send(JSON.stringify(messageOrMessages));
     },
-    delayFlush(delay: number) {
-      return setTimeout(tryFlushing, delay);
-    },
-    startHeartbeatInterval() {
-      return setInterval(heartbeat, HEARTBEAT_INTERVAL);
-    },
-    schedulePongTimeout() {
-      return setTimeout(pongTimeout, PONG_TIMEOUT);
-    },
-    scheduleReconnect(delay: number) {
-      return setTimeout(connect, delay);
-    },
+
+    scheduleFlush: (delay: number) => setTimeout(tryFlushing, delay),
+    scheduleReconnect: (delay: number) => setTimeout(connect, delay),
+    startHeartbeatInterval: () => setInterval(heartbeat, HEARTBEAT_INTERVAL),
+    schedulePongTimeout: () => setTimeout(pongTimeout, PONG_TIMEOUT),
   };
 
   const self = new DerivedRef(
@@ -1915,7 +1909,7 @@ function makeStateMachine<
         clearTimeout(context.timers.flush);
       }
 
-      context.timers.flush = effects.delayFlush(
+      context.timers.flush = effects.scheduleFlush(
         config.throttleDelay - elapsedMillis
       );
     }
