@@ -1849,6 +1849,36 @@ function makeStateMachine<
     reconnect();
   }
 
+  function disconnect() {
+    if (context.socket) {
+      context.socket.removeEventListener("open", onOpen);
+      context.socket.removeEventListener("message", onMessage);
+      context.socket.removeEventListener("close", onClose);
+      context.socket.removeEventListener("error", onError);
+      context.socket.close();
+      context.socket = null;
+    }
+
+    batchUpdates(() => {
+      updateConnection({ status: "closed" }, doNotBatchUpdates);
+
+      if (context.timers.flush) {
+        clearTimeout(context.timers.flush);
+      }
+      clearTimeout(context.timers.reconnect);
+      clearTimeout(context.timers.pongTimeout);
+      clearInterval(context.timers.heartbeat);
+
+      context.others.clearOthers();
+      notify({ others: [{ type: "reset" }] }, doNotBatchUpdates);
+
+      // Clear all event listeners
+      for (const eventSource of Object.values(eventHub)) {
+        eventSource.clear();
+      }
+    });
+  }
+
   function reconnect() {
     if (context.socket) {
       context.socket.removeEventListener("open", onOpen);
@@ -1948,36 +1978,6 @@ function makeStateMachine<
       });
     }
     return messages;
-  }
-
-  function disconnect() {
-    if (context.socket) {
-      context.socket.removeEventListener("open", onOpen);
-      context.socket.removeEventListener("message", onMessage);
-      context.socket.removeEventListener("close", onClose);
-      context.socket.removeEventListener("error", onError);
-      context.socket.close();
-      context.socket = null;
-    }
-
-    batchUpdates(() => {
-      updateConnection({ status: "closed" }, doNotBatchUpdates);
-
-      if (context.timers.flush) {
-        clearTimeout(context.timers.flush);
-      }
-      clearTimeout(context.timers.reconnect);
-      clearTimeout(context.timers.pongTimeout);
-      clearInterval(context.timers.heartbeat);
-
-      context.others.clearOthers();
-      notify({ others: [{ type: "reset" }] }, doNotBatchUpdates);
-
-      // Clear all event listeners
-      for (const eventSource of Object.values(eventHub)) {
-        eventSource.clear();
-      }
-    });
   }
 
   function broadcastEvent(
