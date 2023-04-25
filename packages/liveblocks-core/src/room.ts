@@ -772,7 +772,7 @@ type Effects<TPresence extends JsonObject, TRoomEvent extends Json> = {
 export type Polyfills = {
   atob?: (data: string) => string;
   fetch?: typeof fetch;
-  WebSocket?: any;
+  WebSocket?: typeof WebSocket;
 };
 
 export type RoomInitializers<
