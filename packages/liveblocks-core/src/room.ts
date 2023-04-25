@@ -1427,6 +1427,8 @@ function makeStateMachine<
     context.token = null;
     updateConnection({ status: "unavailable" }, batchUpdates);
     context.numRetries++;
+
+    clearTimeout(context.timers.reconnect);
     context.timers.reconnect = effects.scheduleReconnect(getRetryDelay());
   }
 
@@ -1721,12 +1723,10 @@ function makeStateMachine<
   function onClose(event: { code: number; wasClean: boolean; reason: string }) {
     context.socket = null;
 
-    clearTimeout(context.timers.pongTimeout);
-    clearInterval(context.timers.heartbeat);
-    if (context.timers.flush) {
-      clearTimeout(context.timers.flush);
-    }
+    clearTimeout(context.timers.flush);
     clearTimeout(context.timers.reconnect);
+    clearInterval(context.timers.heartbeat);
+    clearTimeout(context.timers.pongTimeout);
 
     context.others.clearOthers();
 
@@ -1749,6 +1749,8 @@ function makeStateMachine<
         }
 
         updateConnection({ status: "unavailable" }, doNotBatchUpdates);
+
+        clearTimeout(context.timers.reconnect);
         context.timers.reconnect = effects.scheduleReconnect(delay);
       } else if (event.code === WebsocketCloseCodes.CLOSE_WITHOUT_RETRY) {
         updateConnection({ status: "closed" }, doNotBatchUpdates);
@@ -1762,6 +1764,8 @@ function makeStateMachine<
           );
         }
         updateConnection({ status: "unavailable" }, doNotBatchUpdates);
+
+        clearTimeout(context.timers.reconnect);
         context.timers.reconnect = effects.scheduleReconnect(delay);
       }
     });
@@ -1796,7 +1800,6 @@ function makeStateMachine<
 
   function onOpen() {
     clearInterval(context.timers.heartbeat);
-
     context.timers.heartbeat = effects.startHeartbeatInterval();
 
     if (context.connection.current.status === "connecting") {
@@ -1862,12 +1865,10 @@ function makeStateMachine<
     batchUpdates(() => {
       updateConnection({ status: "closed" }, doNotBatchUpdates);
 
-      if (context.timers.flush) {
-        clearTimeout(context.timers.flush);
-      }
+      clearTimeout(context.timers.flush);
       clearTimeout(context.timers.reconnect);
-      clearTimeout(context.timers.pongTimeout);
       clearInterval(context.timers.heartbeat);
+      clearTimeout(context.timers.pongTimeout);
 
       context.others.clearOthers();
       notify({ others: [{ type: "reset" }] }, doNotBatchUpdates);
@@ -1890,12 +1891,12 @@ function makeStateMachine<
     }
 
     updateConnection({ status: "unavailable" }, batchUpdates);
-    clearTimeout(context.timers.pongTimeout);
-    if (context.timers.flush) {
-      clearTimeout(context.timers.flush);
-    }
+
+    clearTimeout(context.timers.flush);
     clearTimeout(context.timers.reconnect);
     clearInterval(context.timers.heartbeat);
+    clearTimeout(context.timers.pongTimeout);
+
     connect();
   }
 
@@ -1935,10 +1936,7 @@ function makeStateMachine<
       };
     } else {
       // Or schedule the flush a few millis into the future
-      if (context.timers.flush !== null) {
-        clearTimeout(context.timers.flush);
-      }
-
+      clearTimeout(context.timers.flush);
       context.timers.flush = effects.scheduleFlush(
         config.throttleDelay - elapsedMillis
       );
