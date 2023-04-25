@@ -100,13 +100,13 @@ echo "Assigning definitive NPM tags"
 for pkgdir in ${PACKAGE_DIRS[@]}; do
     pkgname="$(npm_pkgname "$pkgdir")"
     while true; do
-        if npm dist-tag ls "$pkgname" | grep -qx "private: $VERSION"; then
-            echo "==> Adding tag ${TAG:-latest} to $pkgname @ $VERSION"
+        if npm dist-tag ls "$pkgname" | grep -qEe ": $VERSION\$"; then
+            echo "==> Adding tag ${TAG:-latest} to $pkgname@$VERSION"
             npm dist-tag add "$pkgname@$VERSION" "${TAG:-latest}"
             break
         else
-            err "I can't find $pkgname@$VERSION on NPM under the 'private' tag yet..."
-            sleep 3
+            err "I can't find $pkgname@$VERSION on NPM yet..."
+            sleep 5
         fi
     done
 done
@@ -114,7 +114,7 @@ done
 # Clean up those temporary "private" tags
 for pkgdir in ${PACKAGE_DIRS[@]}; do
     pkgname="$(npm_pkgname "$pkgdir")"
-    npm dist-tag rm "$pkgname@$VERSION" private
+    npm dist-tag rm "$pkgname@$VERSION" private || echo "Continuing despite error..."
 done
 
 echo ""
