@@ -265,32 +265,37 @@ function takeN(pos: string, n: number): string {
     : pos + ZERO.repeat(n - pos.length);
 }
 
-/**
- * Okay, this regex may need a little explanation.
- *
- * It checks whether a given string is a valid Pos value. There are three
- * rules:
- *
- *   - All characters in the string must be from our alphabet
- *   - The string must not have any trailing "zeroes" (trailing " ")
- *   - The string must not be the empty string
- *
- * The first range [\x20-\x7E] checks whether all characters are from the
- * alphabet. Here, \x20 = 32 (min), and \x7E = 126 (max).
- *
- * In the second range, we check [\x21-\x7E], which excludes the " " char
- * (\x20). This ensures there are no trailing zeroes, _and_ ensures the string
- * is non-empty.
- *
- * Using this regex is faster than iterating over the string
- * character-by-character and checking ranges.
- */
-const posRegex = /^[\x20-\x7E]*[\x21-\x7E]$/;
-//                 ^^^^^^^^^^^ ^^^^^^^^^^^
-//                     (1)         (2)
+const MIN_NON_ZERO_CODE = MIN_CODE + 1;
 
+/**
+ * Checks whether a given string is a valid Pos value. There are three rules:
+ *
+ *   - The string must not be the empty string
+ *   - The string must not have any trailing "zeroes" (trailing " ")
+ *   - All characters in the string must be from our alphabet
+ *
+ */
 function isPos(str: string): str is Pos {
-  return posRegex.test(str);
+  // May not be empty string
+  if (str === "") {
+    return false;
+  }
+
+  // Last digit may not be a "0" (no trailing zeroes)
+  const lastIdx = str.length - 1;
+  const last = str.charCodeAt(lastIdx);
+  if (last < MIN_NON_ZERO_CODE || last > MAX_CODE) {
+    return false;
+  }
+
+  for (let i = 0; i < lastIdx; i++) {
+    const code = str.charCodeAt(i);
+    if (code < MIN_CODE || code > MAX_CODE) {
+      return false;
+    }
+  }
+
+  return true;
 }
 
 function convertToPos(str: string): Pos {
