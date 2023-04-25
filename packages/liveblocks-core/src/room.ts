@@ -1862,13 +1862,13 @@ function makeStateMachine<
       context.socket = null;
     }
 
+    clearTimeout(context.timers.flush);
+    clearTimeout(context.timers.reconnect);
+    clearInterval(context.timers.heartbeat);
+    clearTimeout(context.timers.pongTimeout);
+
     batchUpdates(() => {
       updateConnection({ status: "closed" }, doNotBatchUpdates);
-
-      clearTimeout(context.timers.flush);
-      clearTimeout(context.timers.reconnect);
-      clearInterval(context.timers.heartbeat);
-      clearTimeout(context.timers.pongTimeout);
 
       context.others.clearOthers();
       notify({ others: [{ type: "reset" }] }, doNotBatchUpdates);
@@ -1890,12 +1890,12 @@ function makeStateMachine<
       context.socket = null;
     }
 
-    updateConnection({ status: "unavailable" }, batchUpdates);
-
     clearTimeout(context.timers.flush);
     clearTimeout(context.timers.reconnect);
     clearInterval(context.timers.heartbeat);
     clearTimeout(context.timers.pongTimeout);
+
+    updateConnection({ status: "unavailable" }, batchUpdates);
 
     connect();
   }
