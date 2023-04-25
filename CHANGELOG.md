@@ -1,3 +1,9 @@
+# v1.0.3
+
+## Internal changes
+
+- Release `create-liveblocks-app` along with other Liveblocks packages, using the same versioning scheme.
+
 # v1.0.2
 
 Fix bug where passing down `shouldInitiallyConnect` connection option would not
