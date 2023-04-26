@@ -1,4 +1,4 @@
-import React,{useMemo} from "react";
+import React, { useMemo } from "react";
 import {
   XAxis,
   YAxis,
@@ -9,15 +9,17 @@ import {
   Legend,
   PieChart,
   Pie,
-  BarChart
+  BarChart,
 } from "recharts";
-import { DataKey } from 'recharts/types/util/types';
+import { DataKey } from "recharts/types/util/types";
 import { useRouter } from "next/router";
-import { dataRevenue, dataUsers, dataPlatforms, dataActivation } from "../src/data";
 import {
-  useMyPresence,
-  useOthersMapped,
-} from "../src/liveblocks.config";
+  dataRevenue,
+  dataUsers,
+  dataPlatforms,
+  dataActivation,
+} from "../src/data";
+import { useMyPresence, useOthersMapped } from "../src/liveblocks.config";
 import styles from "./index.module.css";
 import Header from "../src/components/Header";
 import Card from "../src/components/Card";
@@ -27,24 +29,23 @@ type SelectedDataset = {
   dataKey: DataKey<string>;
 };
 
-
 export default function Example() {
   const [myPresence, updateMyPresence] = useMyPresence();
   const others = useOthersMapped((user) => user.presence.selectedDataset);
 
   const handleLegendPointerEnter = (
     e: {
-      dataKey: DataKey<string>
+      dataKey: DataKey<string>;
     },
     cardId: string
   ) => {
     const { dataKey } = e;
-  
+
     const selectedDataset = {
       cardId: cardId,
       dataKey: dataKey.toString(), // convert number to string
     };
-  
+
     updateMyPresence({
       selectedDataset: selectedDataset,
     });
@@ -63,7 +64,7 @@ export default function Example() {
     ) {
       return true;
     }
-  
+
     for (const [, selectedDataset] of others) {
       if (
         (selectedDataset as SelectedDataset)?.cardId === cardId &&
@@ -72,7 +73,7 @@ export default function Example() {
         return true;
       }
     }
-  
+
     return false;
   };
 
@@ -243,7 +244,6 @@ export default function Example() {
     </div>
   );
 }
-
 
 export async function getStaticProps() {
   const API_KEY = process.env.NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY;

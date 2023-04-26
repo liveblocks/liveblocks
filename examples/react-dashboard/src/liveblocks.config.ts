@@ -8,14 +8,13 @@ const client = createClient({
 export type CursorPosition = {
   x: number;
   y: number;
-}
+};
 
 export type Presence = {
-  selectedDataset?: { cardId: string | null, dataKey: string| null } | null;
+  selectedDataset?: { cardId: string | null; dataKey: string | null } | null;
   cursor: CursorPosition | null;
   cardId: string | null;
-}
-
+};
 
 export const {
   RoomProvider,
@@ -25,4 +24,3 @@ export const {
   useOthersMapped,
   useOthersConnectionIds,
 } = createRoomContext<Presence /* UserMeta, RoomEvent */>(client);
-

@@ -1,5 +1,10 @@
 import styles from "./Card.module.css";
-import { useUpdateMyPresence, useOthers, Presence, CursorPosition } from "../liveblocks.config";
+import {
+  useUpdateMyPresence,
+  useOthers,
+  Presence,
+  CursorPosition,
+} from "../liveblocks.config";
 import { useEffect, useRef, useState } from "react";
 import { COLORS_PRESENCE } from "../constants";
 import Cursor from "./Cursor";
@@ -14,10 +19,10 @@ type BoundingRect = {
   top: number;
   width: number;
   height: number;
-}
+};
 
 function getCursorPositionFromBoundingRect(
-  e: MouseEvent, 
+  e: MouseEvent,
   boundingRect: BoundingRect
 ): CursorPosition {
   return {
@@ -52,7 +57,7 @@ export default function Card({ id, children }: Props) {
           cardId: id,
         });
         setBoundingRect(containerRef.current?.getBoundingClientRect() ?? null);
-        // setBoundingRect(containerRef.current?.getBoundingClientRect()??null);  
+        // setBoundingRect(containerRef.current?.getBoundingClientRect()??null);
       }}
       onPointerMove={(e) => {
         e.preventDefault();
@@ -89,7 +94,7 @@ export default function Card({ id, children }: Props) {
         ) {
           return null;
         }
-        
+
         return (
           <Cursor
             key={`cursor-${connectionId}`}
