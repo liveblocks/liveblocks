@@ -578,7 +578,6 @@ type Machine<
   onClose(event: { code: number; wasClean: boolean; reason: string }): void;
   onMessage(event: MessageEvent<string>): void;
   authenticationSuccess(token: RoomAuthToken, socket: WebSocket): void;
-  heartbeat(): void;
   onNavigatorOnline(): void;
 
   // Internal unit testing tools
@@ -2228,7 +2227,6 @@ function makeStateMachine<
     onClose,
     onMessage,
     authenticationSuccess,
-    heartbeat,
     onNavigatorOnline,
 
     // Internal DevTools
