@@ -569,7 +569,12 @@ type Machine<
   TRoomEvent extends Json
 > = {
   /* Only access these internals in unit tests, to test implementation details */
-  __internal: MachineContext<TPresence, TStorage, TUserMeta, TRoomEvent>;
+  // prettier-ignore
+  __internal: Pick<
+    MachineContext<TPresence, TStorage, TUserMeta, TRoomEvent>,
+    "buffer" | "numRetries"
+  >;
+
   onClose(event: { code: number; wasClean: boolean; reason: string }): void;
   onMessage(event: MessageEvent<string>): void;
   authenticationSuccess(token: RoomAuthToken, socket: WebSocket): void;
@@ -2213,8 +2218,10 @@ function makeStateMachine<
 
   return {
     /* NOTE: Exposing __internal here only to allow testing implementation details in unit tests */
-    get __internal() {
-      return context;
+    // prettier-ignore
+    __internal: {
+      get buffer() { return context.buffer },
+      get numRetries() { return context.numRetries },
     },
 
     // Internal
@@ -2223,9 +2230,11 @@ function makeStateMachine<
     authenticationSuccess,
     heartbeat,
     onNavigatorOnline,
+
     // Internal DevTools
     simulateSocketClose,
     simulateSendCloseEvent,
+
     onVisibilityChange,
     getUndoStack: () => context.undoStack,
     getItemsCount: () => context.nodes.size,
