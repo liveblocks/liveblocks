@@ -13,6 +13,7 @@ export type CursorPosition = {
 }
 
 export type Presence = {
+  selectedDataset?: { cardId: string | null, dataKey: string| null }| null;
   cursor: CursorPosition | null;
   cardId: string | null;
 }
