@@ -3,12 +3,7 @@ import type { AppProps } from "next/app";
 import Head from "next/head";
 import { useRouter } from "next/router";
 import React, { useMemo } from "react";
-// import { RoomProvider } from "../liveblocks.config";
-import ReactDOM from "react-dom";
-// import App from ".";
 import "./globals.css";
-
-// ReactDOM.render(<App />, document.getElementById("root"));
 
 function App({ Component, pageProps }: AppProps) {
     const roomId = useOverrideRoomId("nextjs-multiplayer-form");
@@ -38,7 +33,6 @@ function App({ Component, pageProps }: AppProps) {
   }
   
   export default App;
-
 
   /**
  * This function is used when deploying an example on liveblocks.io.

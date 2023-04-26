@@ -100,10 +100,6 @@ export default function Card({ id, children }: Props) {
           return null;
         }
         
-        // const { x, y } = presence.cursor;
-        // if (!x || !y) {
-        //   return null;
-        // }
         return (
           <Cursor
             key={`cursor-${connectionId}`}
