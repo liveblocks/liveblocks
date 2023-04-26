@@ -575,23 +575,35 @@ type Machine<
     "buffer" | "numRetries"
   >;
 
+  // XXX Should become .transition({ type: "EXPLICIT_CLOSE ???" })
+  // XXX What's the diff with simulateSendCloseEvent() and simulateSocketClose() below?
   onClose(event: { code: number; wasClean: boolean; reason: string }): void;
+  // XXX OK to be called at any time?
   onMessage(event: MessageEvent<string>): void;
+  // XXX Should become .transition({ type: "AUTH_DONE", data: <jwt token> })
   authenticationSuccess(token: RoomAuthToken, socket: WebSocket): void;
+  // XXX OK to be called at any time?
   onNavigatorOnline(): void;
 
   // Internal unit testing tools
+  // XXX Should become .transition({ type: "IMPLICIT_CLOSE ???" })
   simulateSocketClose(): void;
+  // XXX Should become .transition({ type: "EXPLICIT_CLOSE ???" })
   simulateSendCloseEvent(event: { code: number; wasClean: boolean; reason: string; }): void; // prettier-ignore
 
-  // onWakeUp,
+  // XXX Should become .transition({ type: "FOCUS_VISIBLE" })
   onVisibilityChange(visibilityState: DocumentVisibilityState): void;
+  // XXX Only used in unit tests to test impl details, hide this under __internal!
   getUndoStack(): HistoryOp<TPresence>[][];
+  // XXX Only used in unit tests to test impl details, hide this under __internal!
   getItemsCount(): number;
 
   // Core
+  // XXX Should become .transition({ type: "CONNECT" })
   connect(): void;
+  // XXX Should become .transition({ type: "DISCONNECT" })
   disconnect(): void;
+  // XXX Should become .transition({ type: "RECONNECT" })
   reconnect(): void;
 
   // Presence
@@ -1880,6 +1892,7 @@ function makeStateMachine<
     }
   }
 
+  // XXX Should become .transition({ type: "RECONNECT" })
   function reconnect() {
     if (context.socket) {
       context.socket.removeEventListener("open", onOpen);
@@ -2305,6 +2318,13 @@ export function createRoom<
 ): Room<TPresence, TStorage, TUserMeta, TRoomEvent> {
   const { initialPresence, initialStorage } = options;
 
+  //
+  // XXX There barely is anything left between Room and Machine. By now, Room is
+  // basically just a super light wrapper around the Machine type, guarding the
+  // public API.
+  //
+  // XXX It would be nice to just DRY them up into a single type at this point.
+  //
   const machine = makeStateMachine<TPresence, TStorage, TUserMeta, TRoomEvent>(
     config,
     typeof initialPresence === "function"
@@ -2325,6 +2345,7 @@ export function createRoom<
     getSelf: machine.getSelf,
     reconnect: machine.reconnect,
 
+    // XXX This subscribe function is the only different public API between
     subscribe: makeClassicSubscribeFn(machine),
 
     //////////////
@@ -2344,6 +2365,8 @@ export function createRoom<
     events: machine.events,
 
     batch: machine.batch,
+
+    // XXX Mimick the same nested structure on Machine, and export it directly as such
     history: {
       undo: machine.undo,
       redo: machine.redo,
@@ -2353,6 +2376,7 @@ export function createRoom<
       resume: machine.resumeHistory,
     },
 
+    // XXX Mimick the same __internal structure, and export it directly as such
     __internal: {
       connect: machine.connect,
       disconnect: machine.disconnect,
