@@ -9,22 +9,12 @@ type Props = {
   children: React.ReactNode;
 };
 
-// type Presence = {
-//   cursor: CursorPosition | null;
-//   cardId: string | null;
-// }
-
 type BoundingRect = {
   left: number;
   top: number;
   width: number;
   height: number;
 }
-
-// type CursorPosition = {
-//   x: number;
-//   y: number;
-// }
 
 function getCursorPositionFromBoundingRect(
   e: MouseEvent, 
