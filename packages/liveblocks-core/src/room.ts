@@ -578,11 +578,7 @@ type Machine<
 
   // Internal unit testing tools
   simulateSocketClose(): void;
-  simulateSendCloseEvent(event: {
-    code: number;
-    wasClean: boolean;
-    reason: string;
-  }): void;
+  simulateSendCloseEvent(event: { code: number; wasClean: boolean; reason: string; }): void; // prettier-ignore
 
   // onWakeUp,
   onVisibilityChange(visibilityState: DocumentVisibilityState): void;
@@ -595,10 +591,7 @@ type Machine<
   reconnect(): void;
 
   // Presence
-  updatePresence(
-    patch: Partial<TPresence>,
-    options?: { addToHistory: boolean }
-  ): void;
+  updatePresence(patch: Partial<TPresence>, options?: { addToHistory: boolean }): void; // prettier-ignore
   broadcastEvent(event: TRoomEvent, options?: BroadcastOptions): void;
 
   batch<T>(callback: () => T): T;
@@ -609,9 +602,7 @@ type Machine<
   pauseHistory(): void;
   resumeHistory(): void;
 
-  getStorage(): Promise<{
-    root: LiveObject<TStorage>;
-  }>;
+  getStorage(): Promise<{ root: LiveObject<TStorage> }>;
   getStorageSnapshot(): LiveObject<TStorage> | null;
   getStorageStatus(): StorageStatus;
 
