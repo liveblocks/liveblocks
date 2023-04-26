@@ -80,7 +80,7 @@ export class MockWebSocket implements WebSocket {
     public url: string,
     private onSend: (message: string) => void = () => {}
   ) {
-    this.readyState = this.CLOSED;
+    this.readyState = this.CONNECTING;
     MockWebSocket.instances.push(this);
   }
 
