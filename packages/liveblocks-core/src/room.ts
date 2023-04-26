@@ -568,8 +568,8 @@ type Machine<
   TUserMeta extends BaseUserMeta,
   TRoomEvent extends Json
 > = {
-  // Internal
-  state: MachineContext<TPresence, TStorage, TUserMeta, TRoomEvent>;
+  /* Only access these internals in unit tests, to test implementation details */
+  __internal: MachineContext<TPresence, TStorage, TUserMeta, TRoomEvent>;
   onClose(event: { code: number; wasClean: boolean; reason: string }): void;
   onMessage(event: MessageEvent<string>): void;
   authenticationSuccess(token: RoomAuthToken, socket: WebSocket): void;
@@ -2212,10 +2212,12 @@ function makeStateMachine<
   );
 
   return {
-    // Internal
-    get state() {
+    /* NOTE: Exposing __internal here only to allow testing implementation details in unit tests */
+    get __internal() {
       return context;
     },
+
+    // Internal
     onClose,
     onMessage,
     authenticationSuccess,
