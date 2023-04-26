@@ -35,12 +35,7 @@ export default function Card({ id, children }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const updateMyPresence = useUpdateMyPresence();
   const others = useOthers();
-  // const others = useOthers<{ presence: Presence }>( );
   const [boundingRect, setBoundingRect] = useState<BoundingRect | null>(null);
-  const [myPresence, setMyPresence] = useState<Presence>({
-    cursor: null,
-    cardId: null,
-  });
 
   useEffect(() => {
     if (containerRef.current) {
@@ -57,7 +52,6 @@ export default function Card({ id, children }: Props) {
           cardId: id,
         });
         setBoundingRect(containerRef.current?.getBoundingClientRect() ?? null);
-        // setBoundingRect(containerRef.current?.getBoundingClientRect()??null);
       }}
       onPointerMove={(e) => {
         e.preventDefault();
