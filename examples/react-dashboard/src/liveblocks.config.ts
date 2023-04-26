@@ -7,6 +7,16 @@ const client = createClient({
 
 // overrideApiKey();
 
+export type CursorPosition = {
+  x: number;
+  y: number;
+}
+
+export type Presence = {
+  cursor: CursorPosition | null;
+  cardId: string | null;
+}
+
 
 export const {
   RoomProvider,
@@ -15,17 +25,5 @@ export const {
   useUpdateMyPresence,
   useOthersMapped,
   useOthersConnectionIds,
-} = createRoomContext(client);
+} = createRoomContext<Presence /* UserMeta, RoomEvent */>(client);
 
-// /**
-//  * This function is used when deploying an example on liveblocks.io.
-//  * You can ignore it completely if you run the example locally.
-//  */
-// function overrideApiKey() {
-//   const query = new URLSearchParams(window?.location?.search);
-//   const apiKey = query.get("apiKey");
-
-//   if (apiKey) {
-//     PUBLIC_KEY = apiKey;
-//   }
-// }

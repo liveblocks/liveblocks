@@ -1,4 +1,4 @@
-import React from "react";
+import React,{useMemo} from "react";
 import {
   XAxis,
   YAxis,
@@ -12,9 +12,9 @@ import {
   BarChart
 } from "recharts";
 import { DataKey } from 'recharts/types/util/types';
+import { useRouter } from "next/router";
 import { dataRevenue, dataUsers, dataPlatforms, dataActivation } from "../src/data";
 import {
-  RoomProvider,
   useMyPresence,
   useOthersMapped,
 } from "../src/liveblocks.config";
@@ -22,16 +22,13 @@ import styles from "./index.module.css";
 import Header from "../src/components/Header";
 import Card from "../src/components/Card";
 
-let roomId = "react-dashboard";
-
 type SelectedDataset = {
   cardId: string;
   dataKey: DataKey<string>;
 };
 
-// overrideRoomId();
 
-function Example() {
+export default function Example() {
   const [myPresence, updateMyPresence] = useMyPresence();
   const others = useOthersMapped((user) => user.presence.selectedDataset);
 
@@ -247,20 +244,6 @@ function Example() {
   );
 }
 
-export default function App() {
-  return (
-    <RoomProvider
-      id={roomId}
-      initialPresence={{
-        selectedDataset: { cardId: null, dataKey: null },
-        cursor: null,
-        cardId: null,
-      }}
-    >
-      <Example />
-    </RoomProvider>
-  );
-}
 
 export async function getStaticProps() {
   const API_KEY = process.env.NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY;
@@ -281,11 +264,11 @@ export async function getStaticProps() {
  * This function is used when deploying an example on liveblocks.io.
  * You can ignore it completely if you run the example locally.
  */
-function overrideRoomId() {
-  const query = new URLSearchParams(window?.location?.search);
-  const roomIdSuffix = query.get("roomId");
+function useOverrideRoomId(roomId: string) {
+  const { query } = useRouter();
+  const overrideRoomId = useMemo(() => {
+    return query?.roomId ? `${roomId}-${query.roomId}` : roomId;
+  }, [query, roomId]);
 
-  if (roomIdSuffix) {
-    roomId = `${roomId}-${roomIdSuffix}`;
-  }
+  return overrideRoomId;
 }

@@ -1,15 +1,24 @@
 
 import type { AppProps } from "next/app";
 import Head from "next/head";
+import { RoomProvider } from "../src/liveblocks.config";
 import { useRouter } from "next/router";
 import React, { useMemo } from "react";
 import "./globals.css";
-
+import Example from "./index";
 function App({ Component, pageProps }: AppProps) {
-    const roomId = useOverrideRoomId("nextjs-multiplayer-form");
   
+  const roomId = useOverrideRoomId("react-dashboard");
     return (
-        <div>
+    <RoomProvider
+      id={roomId}
+      initialPresence={{
+        selectedDataset: { cardId: null, dataKey: null },
+        cursor: null,
+        cardId: null,
+      }}
+    >
+      <Example />
         <Head>
           <title>Liveblocks</title>
           <meta name="robots" content="noindex" />
@@ -28,7 +37,7 @@ function App({ Component, pageProps }: AppProps) {
           />
         </Head>
         <Component {...pageProps} />
-        </div>
+        </RoomProvider>
     );
   }
   
@@ -39,10 +48,10 @@ function App({ Component, pageProps }: AppProps) {
  * You can ignore it completely if you run the example locally.
  */
 function useOverrideRoomId(roomId: string) {
-    const { query } = useRouter();
-    const overrideRoomId = useMemo(() => {
-      return query?.roomId ? `${roomId}-${query.roomId}` : roomId;
-    }, [query, roomId]);
-  
-    return overrideRoomId;
+  const { query } = useRouter();
+  const overrideRoomId = useMemo(() => {
+    return query?.roomId ? `${roomId}-${query.roomId}` : roomId;
+  }, [query, roomId]);
+
+  return overrideRoomId;
 }

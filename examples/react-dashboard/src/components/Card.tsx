@@ -1,5 +1,5 @@
 import styles from "./Card.module.css";
-import { useUpdateMyPresence, useOthers } from "../liveblocks.config";
+import { useUpdateMyPresence, useOthers, Presence, CursorPosition } from "../liveblocks.config";
 import { useEffect, useRef, useState } from "react";
 import { COLORS_PRESENCE } from "../constants";
 import Cursor from "./Cursor";
@@ -9,10 +9,10 @@ type Props = {
   children: React.ReactNode;
 };
 
-type Presence = {
-  cursor: CursorPosition | null;
-  cardId: string | null;
-}
+// type Presence = {
+//   cursor: CursorPosition | null;
+//   cardId: string | null;
+// }
 
 type BoundingRect = {
   left: number;
@@ -21,10 +21,10 @@ type BoundingRect = {
   height: number;
 }
 
-type CursorPosition = {
-  x: number;
-  y: number;
-}
+// type CursorPosition = {
+//   x: number;
+//   y: number;
+// }
 
 function getCursorPositionFromBoundingRect(
   e: MouseEvent, 
