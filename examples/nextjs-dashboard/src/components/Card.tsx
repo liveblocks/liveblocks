@@ -1,8 +1,7 @@
 import styles from "./Card.module.css";
 import {
   useUpdateMyPresence,
-  useOthers,
-  CursorPosition,
+  useOthers
 } from "../liveblocks.config";
 import { useEffect, useRef, useState } from "react";
 import { COLORS_PRESENCE } from "../constants";
@@ -85,8 +84,8 @@ export default function Card({ id, children }: Props) {
             color={`rgb(${
               COLORS_PRESENCE[connectionId % COLORS_PRESENCE.length]
             }`}
-            x={(presence.cursor as CursorPosition).x * boundingRect.width}
-            y={(presence.cursor as CursorPosition).y * boundingRect.height}
+            x={presence.cursor.x * boundingRect.width}
+            y={presence.cursor.y * boundingRect.height}
           />
         );
       })}

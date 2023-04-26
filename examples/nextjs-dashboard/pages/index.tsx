@@ -12,7 +12,6 @@ import {
   BarChart,
 } from "recharts";
 import { DataKey } from "recharts/types/util/types";
-import { useRouter } from "next/router";
 import {
   dataRevenue,
   dataUsers,
@@ -55,16 +54,16 @@ export default function Example() {
 
   const isDatasetSelected = (cardId: string, dataKey: DataKey<string>) => {
     if (
-      (myPresence.selectedDataset as SelectedDataset)?.cardId === cardId &&
-      (myPresence.selectedDataset as SelectedDataset)?.dataKey === dataKey
+      myPresence.selectedDataset?.cardId === cardId &&
+      myPresence.selectedDataset?.dataKey === dataKey
     ) {
       return true;
     }
 
     for (const [, selectedDataset] of others) {
       if (
-        (selectedDataset as SelectedDataset)?.cardId === cardId &&
-        (selectedDataset as SelectedDataset)?.dataKey === dataKey
+        selectedDataset?.cardId === cardId &&
+        selectedDataset?.dataKey === dataKey
       ) {
         return true;
       }
