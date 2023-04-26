@@ -5,8 +5,6 @@ const client = createClient({
   publicApiKey: process.env.NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY!,
 });
 
-// overrideApiKey();
-
 export type CursorPosition = {
   x: number;
   y: number;
