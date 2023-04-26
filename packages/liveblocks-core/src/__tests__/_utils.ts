@@ -620,11 +620,11 @@ export function mockEffects<
 >(): Effects<TPresence, TRoomEvent> {
   return {
     authenticate: jest.fn(),
-    delayFlush: jest.fn(),
     send: jest.fn(),
-    schedulePongTimeout: jest.fn(),
-    startHeartbeatInterval: jest.fn(),
+    scheduleFlush: jest.fn(),
     scheduleReconnect: jest.fn(),
+    startHeartbeatInterval: jest.fn(),
+    schedulePongTimeout: jest.fn(),
   };
 }
 

@@ -15,10 +15,12 @@ import type {
 import { OpCode } from "../protocol/Op";
 import type {
   IdTuple,
+  SerializedChild,
+  SerializedCrdt,
   SerializedObject,
   SerializedRootObject,
 } from "../protocol/SerializedCrdt";
-import { CrdtType } from "../protocol/SerializedCrdt";
+import { CrdtType, isRootCrdt } from "../protocol/SerializedCrdt";
 import type * as DevTools from "../types/DevToolsTreeNode";
 import type { ParentToChildNodeMap } from "../types/NodeMap";
 import type { ApplyResult, ManagedPool } from "./AbstractCrdt";
@@ -57,6 +59,48 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
 
   /** @internal */
   private _propToLastUpdate: Map<string, string>;
+
+  /** @internal */
+  private static _buildRootAndParentToChildren(
+    items: IdTuple<SerializedCrdt>[]
+  ): [IdTuple<SerializedRootObject>, ParentToChildNodeMap] {
+    const parentToChildren: ParentToChildNodeMap = new Map();
+    let root: IdTuple<SerializedRootObject> | null = null;
+
+    for (const [id, crdt] of items) {
+      if (isRootCrdt(crdt)) {
+        root = [id, crdt];
+      } else {
+        const tuple: IdTuple<SerializedChild> = [id, crdt];
+        const children = parentToChildren.get(crdt.parentId);
+        if (children !== undefined) {
+          children.push(tuple);
+        } else {
+          parentToChildren.set(crdt.parentId, [tuple]);
+        }
+      }
+    }
+
+    if (root === null) {
+      throw new Error("Root can't be null");
+    }
+
+    return [root, parentToChildren];
+  }
+
+  /** @internal */
+  static _fromItems<O extends LsonObject>(
+    items: IdTuple<SerializedCrdt>[],
+    pool: ManagedPool
+  ): LiveObject<O> {
+    const [root, parentToChildren] =
+      LiveObject._buildRootAndParentToChildren(items);
+    return LiveObject._deserialize(
+      root,
+      parentToChildren,
+      pool
+    ) as LiveObject<O>;
+  }
 
   constructor(obj: O = {} as O) {
     super();
