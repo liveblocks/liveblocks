@@ -5,8 +5,9 @@ import { useRouter } from "next/router";
 import React, { useMemo } from "react";
 import "./globals.css";
 import Example from "./index";
+
 function App({ Component, pageProps }: AppProps) {
-  const roomId = useOverrideRoomId("react-dashboard");
+  const roomId = useOverrideRoomId("nextjs-dashboard");
   return (
     <RoomProvider
       id={roomId}
