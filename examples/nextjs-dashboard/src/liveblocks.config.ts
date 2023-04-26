@@ -5,13 +5,13 @@ const client = createClient({
   publicApiKey: process.env.NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY!,
 });
 
-export type CursorPosition = {
+type CursorPosition = {
   x: number;
   y: number;
 };
 
-export type Presence = {
-  selectedDataset?: { cardId: string | null; dataKey: string | null } | null;
+type Presence = {
+  selectedDataset: { cardId: string; dataKey: string } | null;
   cursor: CursorPosition | null;
   cardId: string | null;
 };

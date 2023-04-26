@@ -12,7 +12,7 @@ function App({ Component, pageProps }: AppProps) {
     <RoomProvider
       id={roomId}
       initialPresence={{
-        selectedDataset: { cardId: null, dataKey: null },
+        selectedDataset: null,
         cursor: null,
         cardId: null,
       }}

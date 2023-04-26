@@ -2,7 +2,6 @@ import styles from "./Card.module.css";
 import {
   useUpdateMyPresence,
   useOthers,
-  Presence,
   CursorPosition,
 } from "../liveblocks.config";
 import { useEffect, useRef, useState } from "react";
@@ -21,15 +20,6 @@ type BoundingRect = {
   height: number;
 };
 
-function getCursorPositionFromBoundingRect(
-  e: MouseEvent,
-  boundingRect: BoundingRect
-): CursorPosition {
-  return {
-    x: (e.clientX - boundingRect.left) / boundingRect.width,
-    y: (e.clientY - boundingRect.top) / boundingRect.height,
-  };
-}
 
 export default function Card({ id, children }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);

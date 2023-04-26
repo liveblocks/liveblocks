@@ -24,10 +24,6 @@ import styles from "./index.module.css";
 import Header from "../src/components/Header";
 import Card from "../src/components/Card";
 
-type SelectedDataset = {
-  cardId: string;
-  dataKey: DataKey<string>;
-};
 
 export default function Example() {
   const [myPresence, updateMyPresence] = useMyPresence();
@@ -260,15 +256,3 @@ export async function getStaticProps() {
   return { props: {} };
 }
 
-/**
- * This function is used when deploying an example on liveblocks.io.
- * You can ignore it completely if you run the example locally.
- */
-function useOverrideRoomId(roomId: string) {
-  const { query } = useRouter();
-  const overrideRoomId = useMemo(() => {
-    return query?.roomId ? `${roomId}-${query.roomId}` : roomId;
-  }, [query, roomId]);
-
-  return overrideRoomId;
-}

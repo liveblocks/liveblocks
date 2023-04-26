@@ -17,18 +17,6 @@
     "build": "next build",
     "start": "next start"
   },
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
-  },
   "devDependencies": {
     "prettier": "^2.6.2",
     "@types/react-dom": "^18.0.6",
