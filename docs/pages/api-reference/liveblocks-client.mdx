@@ -52,6 +52,7 @@ const client = createClient({
       },
       body: JSON.stringify({ room }),
     });
+
     return await response.json();
   },
 });
@@ -77,7 +78,7 @@ import { createClient } from "@liveblocks/client";
 import { decode } from "base-64";
 
 const client = createClient({
-  /* ... other options ... */
+  // Other options
   polyfills: {
     atob: decode,
   },
@@ -104,7 +105,7 @@ import fetch from "node-fetch";
 import WebSocket from "ws";
 
 const client = createClient({
-  /* ... other options ... */
+  // Other options
   polyfills: {
     fetch,
     WebSocket,
@@ -128,7 +129,7 @@ It is possible to override that configuration with the `throttle` option.
 import { createClient } from "@liveblocks/client";
 
 const client = createClient({
-  /* ... other options ... */
+  // Other options
   throttle: 16,
 });
 ```
@@ -160,9 +161,17 @@ The second argument is a configuration for the presence and storage.
   WebSocket.
 
 ```ts
+const initialPresence = {
+  cursor: null,
+};
+
+const initialStorage = {
+  todos: new LiveList(),
+};
+
 const room = client.enter("my-room", {
-  initialPresence: { cursor: null },
-  initialStorage: { todos: new LiveList() },
+  initialPresence,
+  initialStorage,
 });
 ```
 
@@ -200,18 +209,21 @@ update. No need to send the full presence.
 room.updatePresence({ x: 0 });
 room.updatePresence({ y: 0 });
 
-const presence = room.getPresence();
-// presence is equivalent to { x: 0, y: 0 }
+// { x: 0, y: 0 }
+room.getPresence();
 ```
 
 `updatePresence` accepts an optional argument to add a new item to the undo/redo
 stack. See [`room.history`][] for more information.
 
 ```ts
-room.updatePresence({ selectedId: "xxx" }, { addToHistory: true });
-room.updatePresence({ selectedId: "yyy" }, { addToHistory: true });
+room.updatePresence({ selectedId: "123" }, { addToHistory: true });
+room.updatePresence({ selectedId: "456" }, { addToHistory: true });
+
 room.history.undo();
-// room.getPresence() equals { selectedId: "xxx" }
+
+// { selectedId: "123" }
+room.getPresence();
 ```
 
 ### Room.getOthers
@@ -274,6 +286,7 @@ Returns an unsubscribe function.
 
 ```ts
 const { root } = await room.getStorage();
+
 const unsubscribe = room.subscribe(root, (root) => {
   // Do something
 });
@@ -285,6 +298,7 @@ list of updates instead. Each such update is a `{ type, node }` object.
 
 ```ts
 const { root } = await room.getStorage();
+
 const unsubscribe = room.subscribe(
   root,
   (updates) => {
@@ -315,7 +329,7 @@ const unsubscribe = room.subscribe(
 
 ### Room.subscribe("event") [#Room.subscribe.event]
 
-Subscribe to events broadcasted by [`Room.broadcastEvent`][].
+Subscribe to events broadcast by [`Room.broadcastEvent`][].
 
 Takes a callback that is called when a user calls [`Room.broadcastEvent`][].
 
@@ -383,7 +397,7 @@ Returns an unsubscribe function.
 ```ts
 const unsubscribe = room.subscribe("error", (error) => {
   if (error.code === 4005) {
-    // Maximum concurrent connections per room exceeded.
+    // Maximum concurrent connections per room exceeded
   }
 });
 ```
@@ -435,6 +449,7 @@ All the modifications are merged in a single history item (undo/redo).
 
 ```ts
 const { root } = await room.getStorage();
+
 room.batch(() => {
   root.set("x", 0);
   room.updatePresence({ cursor: { x: 100, y: 100 } });
@@ -456,10 +471,13 @@ Undoes the last operation executed by the current client. It does not impact
 operations made by other clients.
 
 ```ts
-room.updatePresence({ selectedId: "xxx" }, { addToHistory: true });
-room.updatePresence({ selectedId: "yyy" }, { addToHistory: true });
+room.updatePresence({ selectedId: "123" }, { addToHistory: true });
+room.updatePresence({ selectedId: "456" }, { addToHistory: true });
+
 room.history.undo();
-// room.getPresence() equals { selectedId: "xxx" }
+
+// { selectedId: "123" }
+room.getPresence();
 ```
 
 ### Room.history.redo
@@ -468,12 +486,14 @@ Redoes the last operation executed by the current client. It does not impact
 operations made by other clients.
 
 ```ts
-room.updatePresence({ selectedId: "xxx" }, { addToHistory: true });
-room.updatePresence({ selectedId: "yyy" }, { addToHistory: true });
+room.updatePresence({ selectedId: "123" }, { addToHistory: true });
+room.updatePresence({ selectedId: "456" }, { addToHistory: true });
+
 room.history.undo();
-// room.getPresence() equals { selectedId: "xxx" }
 room.history.redo();
-// room.getPresence() equals { selectedId: "yyy" }
+
+// { selectedId: "456" }
+room.getPresence();
 ```
 
 ### Room.history.canUndo
@@ -481,10 +501,13 @@ room.history.redo();
 Returns whether there are any operations to undo.
 
 ```ts
-room.updatePresence({ selectedId: "xx" }, { addToHistory: true });
-// room.history.canUndo() is true
-room.history.undo();
-// room.history.canUndo() is false
+// false
+room.history.canUndo();
+
+room.updatePresence({ selectedId: "123" }, { addToHistory: true });
+
+// true
+room.history.canUndo();
 ```
 
 ### Room.history.canRedo
@@ -492,11 +515,15 @@ room.history.undo();
 Returns whether there are any operations to redo.
 
 ```ts
-room.updatePresence({ selectedId: "xx" }, { addToHistory: true });
+room.updatePresence({ selectedId: "123" }, { addToHistory: true });
+
+// false
+room.history.canRedo();
+
 room.history.undo();
-// room.history.canRedo() is true
-room.history.redo();
-// room.history.canRedo() is false
+
+// true
+room.history.canRedo();
 ```
 
 ### Room.history.pause
@@ -506,12 +533,17 @@ single history item until resume is called.
 
 ```ts
 room.updatePresence({ cursor: { x: 0, y: 0 } }, { addToHistory: true });
+
 room.history.pause();
+
 room.updatePresence({ cursor: { x: 1, y: 1 } }, { addToHistory: true });
 room.updatePresence({ cursor: { x: 2, y: 2 } }, { addToHistory: true });
+
 room.history.resume();
 room.history.undo();
-// room.getPresence() equals { cursor: { x: 0, y: 0 } }
+
+// { cursor: { x: 0, y: 0 } }
+room.getPresence();
 ```
 
 ### Room.history.resume
@@ -521,12 +553,17 @@ history item anymore.
 
 ```ts
 room.updatePresence({ cursor: { x: 0, y: 0 } }, { addToHistory: true });
+
 room.history.pause();
+
 room.updatePresence({ cursor: { x: 1, y: 1 } }, { addToHistory: true });
 room.updatePresence({ cursor: { x: 2, y: 2 } }, { addToHistory: true });
+
 room.history.resume();
 room.history.undo();
-// room.getPresence() equals { cursor: { x: 0, y: 0 } }
+
+// { cursor: { x: 0, y: 0 } }
+room.getPresence();
 ```
 
 ### Room.getStorageStatus
@@ -623,7 +660,9 @@ Delete a property from the `LiveObject`
 ```ts
 const object = new LiveObject({ firstName: "Ada", lastName: "Lovelace" });
 object.delete("lastName");
-object.toObject(); // equals to { firstName: "Ada" }
+
+// { firstName: "Ada" }
+object.toImmutable();
 ```
 
 ### get [#LiveObject.get]
@@ -632,7 +671,9 @@ Get a property from the `LiveObject`
 
 ```ts
 const object = new LiveObject({ firstName: "Ada", lastName: "Lovelace" });
-object.get("firstName"); // equals to "Ada"
+
+// "Ada"
+object.get("firstName");
 ```
 
 ### set [#LiveObject.set]
@@ -642,6 +683,9 @@ Adds or updates a property with the specified key and a value.
 ```ts
 const object = new LiveObject({ firstName: "Marie" });
 object.set("lastName", "Curie");
+
+// { firstName: "Marie", lastName: "Curie" }
+object.toImmutable();
 ```
 
 ### update [#LiveObject.update]
@@ -649,8 +693,11 @@ object.set("lastName", "Curie");
 Adds or updates multiple properties at once.
 
 ```ts
-const object = new LiveObject({ firstName: "Grace", lastName: "Hopper" });
-object.update({ job: "Computer Scientist", birthDate: "December 9, 1906" });
+const object = new LiveObject({ job: "Scientist" });
+object.update({ firstName: "Grace", lastName: "Hopper" });
+
+// { firstName: "Grace", lastName: "Hopper", job: "Scientist" }
+object.toImmutable();
 ```
 
 ### toObject [#LiveObject.toObject]
@@ -666,7 +713,9 @@ Transform the `LiveObject` into a normal JavaScript object.
 
 ```ts
 const liveObject = new LiveObject({ firstName: "Grace", lastName: "Hopper" });
+
 // { firstName: "Grace", lastName: "Hopper" }
+liveObject.toObject();
 ```
 
 Please note that this method won’t recursively convert Live structures, which
@@ -674,10 +723,11 @@ may be surprising:
 
 ```ts
 const liveObject = new LiveObject({
-  animals: new LiveList(["🦁", "🦊", "🐵"]),
+  animals: new LiveList(["apple", "banana", "cherry"]),
 });
-liveObject.toObject();
+
 // { animals: <LiveList instance> } // ❗️
+liveObject.toObject();
 ```
 
 ### toImmutable [#LiveObject.toImmutable]
@@ -689,14 +739,11 @@ Nested values will also be immutable.
 const liveObject = new LiveObject({
   firstName: "Grace",
   lastName: "Hopper",
-  hobbies: new LiveList(["needlepoint", "reading", "playing piano"]),
+  hobbies: new LiveList(["reading", "piano"]),
 });
+
+// { firstName: "Grace", lastName: "Hopper", hobbies: ["reading", "piano"] }
 liveObject.toImmutable();
-// {
-//   firstName: "Grace",
-//   lastName: "Hopper",
-//   hobbies: ["needlepoint", "reading", "playing piano"]
-// }
 ```
 
 ## LiveMap
@@ -738,9 +785,15 @@ const map = new LiveMap([
   ["keyA", "valueA"],
   ["keyB", "valueB"],
 ]);
-map.delete("keyA"); // equals true
-map.get("keyA"); // equals undefined
-map.delete("unknownKey"); // equals false
+
+// true
+map.delete("keyA");
+
+// undefined
+map.get("keyA");
+
+// false
+map.delete("unknownKey");
 ```
 
 ### entries [#LiveMap.entries]
@@ -771,8 +824,9 @@ const map = new LiveMap([
   ["keyA", "valueA"],
   ["keyB", "valueB"],
 ]);
+
+// "valueA", "valueB"
 map.forEach((value, key) => console.log(value));
-// prints to the console "valueA", "valueB"
 ```
 
 ### get [#LiveMap.get]
@@ -785,8 +839,12 @@ const map = new LiveMap([
   ["keyA", "valueA"],
   ["keyB", "valueB"],
 ]);
-map.get("keyA"); // equals "valueA"
-map.get("unknownKey"); // equals undefined
+
+// "valueA"
+map.get("keyA");
+
+// undefined
+map.get("unknownKey");
 ```
 
 ### has [#LiveMap.has]
@@ -799,8 +857,12 @@ const map = new LiveMap([
   ["keyA", "valueA"],
   ["keyB", "valueB"],
 ]);
-map.has("keyA"); // equals true
-map.has("unknownKey"); // equals false
+
+// true
+map.has("keyA");
+
+// false
+map.has("unknownKey");
 ```
 
 ### keys [#LiveMap.keys]
@@ -829,6 +891,9 @@ Adds or updates an element with a specified key and a value.
 ```ts
 const map = new LiveMap();
 map.set("keyA", "valueA");
+
+// "valueA"
+map.get("keyA");
 ```
 
 ### size [#LiveMap.size]
@@ -840,7 +905,9 @@ const map = new LiveMap([
   ["keyA", "valueA"],
   ["keyB", "valueB"],
 ]);
-map.size; // equals 2
+
+// 2
+map.size;
 ```
 
 ### values [#LiveMap.values]
@@ -870,20 +937,20 @@ will also be immutable.
 ```ts
 const map = new LiveMap([
   ["abc", new LiveObject({ firstName: "Grace", lastName: "Hopper" })],
-  ["pqr", new LiveObject({ firstName: "Ada", lastName: "Lovelace" })],
+  ["def", new LiveObject({ firstName: "Ada", lastName: "Lovelace" })],
 ]);
-map.toImmutable();
-// equal to:
+
 // Map(2) {
-//   'abc' => { firstName: 'Grace', lastName: 'Hopper' },
-//   'pqr' => { firstName: 'Ada', lastName: 'Lovelace' }
+//   "abc" => { firstName: "Grace", lastName: "Hopper" },
+//   "def" => { firstName: "Ada", lastName: "Lovelace" },
 // }
+map.toImmutable();
 ```
 
 ## LiveList
 
 The `LiveList` class represents an ordered collection of items that is
-synchorinized across clients. Items should be serializable to JSON or another
+synchronized across clients. Items should be serializable to JSON or another
 Live data structure.
 
 ### new LiveList [#LiveList.constructor]
@@ -897,7 +964,7 @@ const list = new LiveList();
 Create a `LiveList` with initial data
 
 ```ts
-const list = new LiveList(["🦁", "🦊", "🐵"]);
+const list = new LiveList(["apple", "banana", "cherry"]);
 ```
 
 ### clear [#LiveList.clear]
@@ -905,9 +972,11 @@ const list = new LiveList(["🦁", "🦊", "🐵"]);
 Removes all the elements.
 
 ```ts
-const list = new LiveList(["🦁", "🦊", "🐵"]);
+const list = new LiveList(["apple", "banana", "cherry"]);
 list.clear();
-list.toArray(); // equals []
+
+// []
+list.toImmutable();
 ```
 
 ### delete [#LiveList.delete]
@@ -915,9 +984,11 @@ list.toArray(); // equals []
 Deletes an element at the specified index.
 
 ```ts
-const list = new LiveList(["🦁", "🦊", "🐵"]);
+const list = new LiveList(["apple", "banana", "cherry"]);
 list.delete(1);
-list.toArray(); // equals ["🦁", "🐵"]
+
+// ["apple", "cherry"]
+list.toImmutable();
 ```
 
 ### every [#LiveList.every]
@@ -928,9 +999,14 @@ Otherwise, false.
 
 ```ts
 const list = new LiveList([0, 2, 4]);
-list.every((i) => i % 2 === 0); // equals true
+
+// true
+list.every((i) => i % 2 === 0);
+
 list.push(5);
-list.every((i) => i % 2 === 0); // equals false
+
+// false
+list.every((i) => i % 2 === 0);
 ```
 
 ### filter [#LiveList.filter]
@@ -940,7 +1016,9 @@ provided function.
 
 ```ts
 const list = new LiveList([0, 1, 2, 3, 4]);
-list.filter((i) => i % 2 === 0); // equals [0, 2, 4]
+
+// [0, 2, 4]
+list.filter((i) => i % 2 === 0);
 ```
 
 ### find [#LiveList.find]
@@ -948,8 +1026,10 @@ list.filter((i) => i % 2 === 0); // equals [0, 2, 4]
 Returns the first element that satisfies the provided testing function.
 
 ```ts
-const list = new LiveList(["apple", "lemon", "tomato"]);
-list.find((fruit) => fruit.startsWith("l")); // equals "lemon"
+const list = new LiveList(["apple", "banana", "cherry"]);
+
+// "banana"
+list.find((fruit) => fruit.startsWith("b"));
 ```
 
 ### findIndex [#LiveList.findIndex]
@@ -958,8 +1038,10 @@ Returns the index of the first element in the `LiveList` that satisfies the
 provided testing function.
 
 ```ts
-const list = new LiveList(["apple", "lemon", "tomato"]);
-list.findIndex((fruit) => fruit.startsWith("l")); // equals 1
+const list = new LiveList(["apple", "banana", "cherry"]);
+
+// 1
+list.findIndex((fruit) => fruit.startsWith("b"));
 ```
 
 ### forEach [#LiveList.forEach]
@@ -967,8 +1049,10 @@ list.findIndex((fruit) => fruit.startsWith("l")); // equals 1
 Executes a provided function once for each element.
 
 ```ts
-const list = new LiveList(["🦁", "🦊", "🐵"]);
-list.forEach((item) => console.log(item)); // prints to the console "🦁", "🦊", "🐵"
+const list = new LiveList(["apple", "banana", "cherry"]);
+
+// "apple", "banana", "cherry"
+list.forEach((item) => console.log(item));
 ```
 
 ### get [#LiveList.get]
@@ -976,8 +1060,10 @@ list.forEach((item) => console.log(item)); // prints to the console "🦁", "�
 Get the element at the specified index.
 
 ```ts
-const list = new LiveList(["🦁", "🦊", "🐵"]);
-list.get(2); // equals "🐵"
+const list = new LiveList(["apple", "banana", "cherry"]);
+
+// "banana"
+list.get(1);
 ```
 
 ### indexOf [#LiveList.indexOf]
@@ -986,9 +1072,11 @@ Returns the first index at which a given element can be found in the `LiveList`,
 or -1 if it is not present.
 
 ```ts
-const list = new LiveList(["🦁", "🦊", "🐵"]);
-list.indexOf("🐵"); // equals 2
-list.indexOf("🐺"); // equals -1
+const list = new LiveList(["apple", "banana", "cherry"]);
+
+// 2
+list.indexOf("cherry"); // equals 2
+list.indexOf("tomato"); // equals -1
 ```
 
 ### insert [#LiveList.insert]
@@ -996,9 +1084,12 @@ list.indexOf("🐺"); // equals -1
 Inserts one element at a specified index.
 
 ```ts
-const list = new LiveList(["🦁", "🦊", "🐵"]);
-list.insert("🐺", 1);
-list.toArray(); // equals ["🦁", "🐺", "🦊", "🐵"]
+const list = new LiveList(["apple", "banana", "cherry"]);
+
+list.insert("tomato", 1);
+
+// ["apple", "tomato", "banana", "cherry"]
+list.toImmutable();
 ```
 
 ### lastIndexOf [#LiveList.lastIndexOf]
@@ -1008,9 +1099,10 @@ or -1 if it is not present. The `LiveList` is searched backwards, starting at
 fromIndex.
 
 ```ts
-const list = new LiveList(["🦁", "🦊", "🐵", "🦊"]);
-list.lastIndexOf("🦊"); // equals 3
-list.lastIndexOf("🐺"); // equals -1
+const list = new LiveList(["apple", "banana", "cherry", "banana"]);
+
+list.lastIndexOf("banana"); // equals 3
+list.lastIndexOf("tomato"); // equals -1
 ```
 
 ### length [#LiveList.length]
@@ -1018,8 +1110,10 @@ list.lastIndexOf("🐺"); // equals -1
 Returns the number of elements.
 
 ```ts
-const list = new LiveList(["🦁", "🦊", "🐵"]);
-list.length; // equals 3
+const list = new LiveList(["apple", "banana", "cherry"]);
+
+// 3
+list.length;
 ```
 
 ### map [#LiveList.map]
@@ -1028,8 +1122,10 @@ Creates an array populated with the results of calling a provided function on
 every element.
 
 ```ts
-const list = new LiveList(["apple", "lemon", "tomato"]);
-list.map((fruit) => fruit.toUpperCase()); // equals ["APPLE", "LEMON", "TOMATO"]
+const list = new LiveList(["apple", "banana", "cherry"]);
+
+// ["APPLE", "BANANA", "CHERRY"]
+list.map((fruit) => fruit.toUpperCase());
 ```
 
 ### move [#LiveList.move]
@@ -1037,9 +1133,13 @@ list.map((fruit) => fruit.toUpperCase()); // equals ["APPLE", "LEMON", "TOMATO"]
 Moves one element at a specified index.
 
 ```ts
-const list = new LiveList(["🦁", "🦊", "🐵"]);
-list.move(2, 0); // move the "🐵" at index 0
-list.toArray(); // equals ["🐵", "🦁", "🦊"]
+const list = new LiveList(["apple", "banana", "cherry"]);
+
+// Move "cherry" to index 0
+list.move(2, 0);
+
+// ["cherry", "apple", "banana"]
+list.toImmutable();
 ```
 
 ### push [#LiveList.push]
@@ -1047,9 +1147,12 @@ list.toArray(); // equals ["🐵", "🦁", "🦊"]
 Adds one element to the end of the `LiveList`.
 
 ```ts
-const list = new LiveList(["🦁", "🦊", "🐵"]);
-list.push("🐺");
-list.toArray(); // equals ["🦁", "🦊", "🐵", "🐺"]
+const list = new LiveList(["apple", "banana", "cherry"]);
+
+list.push("tomato");
+
+// ["apple", "banana", "cherry", "tomato"]
+list.toImmutable();
 ```
 
 ### set [#LiveList.set]
@@ -1057,9 +1160,12 @@ list.toArray(); // equals ["🦁", "🦊", "🐵", "🐺"]
 Replace one element at the specified index.
 
 ```ts
-const list = new LiveList(["🦁", "🦊", "🐵"]);
-list.set(1, "🐺");
-list.toArray(); // equals ["🦁", "🐺", "🐵"]
+const list = new LiveList(["apple", "banana", "cherry"]);
+
+list.set(1, "tomato");
+
+// ["apple", "tomato", "cherry"]
+list.toImmutable();
 ```
 
 ### some [#LiveList.some]
@@ -1068,9 +1174,13 @@ Tests whether at least one element in the `LiveList` passes the test implemented
 by the provided function.
 
 ```ts
-const list = new LiveList(["apple", "lemon", "tomato"]);
-list.some((fruit) => fruit.startsWith("l")); // equals true
-list.some((fruit) => fruit.startsWith("x")); // equals false
+const list = new LiveList(["apple", "banana", "cherry"]);
+
+// true
+list.some((fruit) => fruit.startsWith("b"));
+
+// false
+list.some((fruit) => fruit.startsWith("x"));
 ```
 
 ### toArray [#LiveList.toArray]
@@ -1085,9 +1195,10 @@ and leads to fewer surprises.
 Transforms the `LiveList` into a normal JavaScript array.
 
 ```ts
-const list = new LiveList(["🦁", "🦊", "🐵"]);
+const list = new LiveList(["apple", "banana", "cherry"]);
+
+// ["apple", "banana", "cherry"]
 list.toArray();
-// ["🦁", "🦊", "🐵"]
 ```
 
 Please note that this method won’t recursively convert Live structures, which
@@ -1097,8 +1208,11 @@ may be surprising:
 const list = new LiveList([
   new LiveObject({ firstName: "Grace", lastName: "Hopper" }),
 ]);
+
+// [
+//   <LiveObject instance>,
+// ]
 list.toArray();
-// [ <LiveObject instance> ]  // ❗️
 ```
 
 ### toImmutable [#LiveList.toImmutable]
@@ -1110,8 +1224,11 @@ Nested values will also be immutable.
 const list = new LiveList([
   new LiveObject({ firstName: "Grace", lastName: "Hopper" }),
 ]);
+
+// [
+//   { firstName: "Grace", lastName: "Hopper" },
+// ]
 list.toImmutable();
-// [ { firstName: "Grace", lastName: "Hopper" } ]
 ```
 
 [`atob`]: https://developer.mozilla.org/en-US/docs/Web/API/atob
