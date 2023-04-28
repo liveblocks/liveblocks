@@ -1,7 +1,7 @@
+import type { PlainLsonObject } from "@liveblocks/core";
 import { parse } from "@liveblocks/schema";
 import fc from "fast-check";
 
-import type { PlainLsonObject } from "..";
 import { inferSchema } from "..";
 import { plainLsonArbitraries } from "./arbitraries";
 import {
