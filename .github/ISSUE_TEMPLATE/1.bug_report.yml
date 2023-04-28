@@ -1,0 +1,62 @@
+name: Bug Report
+description: Create a bug report for liveblocks
+labels: "bug"
+body:
+  - type: dropdown
+    attributes:
+      label: Which area(s) of Liveblocks is affected? (leave empty if unsure)
+      multiple: true
+      options:
+        - "Presence"
+        - "Storage"
+        - "Broadcast"
+        - "Webhooks"
+        - "DevTools"
+        - "Starter Kit"
+        - "Billing/Usage"
+        - "Documentation"
+        - "Examples"
+        - "Other"
+  - type: dropdown
+    attributes:
+      label: What technology are you using in your project?
+      multiple: true
+      options:
+        - "Javascript"
+        - "React"
+        - "React + Redux"
+        - "React + Zustand"
+        - "Vue"
+        - "Other"
+   - type: input
+    attributes:
+      label: Link to the code that reproduces this issue
+      description: |
+        A link to a GitHub repository, a [CodeSandbox](https://codesandbox.io/p/sandbox/github/vercel/next.js/tree/canary/examples/reproduction-template) or a [StackBlitz](https://stackblitz.com/fork/github/vercel/next.js/tree/canary/examples/reproduction-template) minimal reproduction. Minimal reproductions should be created from our [bug report template with `npx create-next-app -e reproduction-template`](https://github.com/vercel/next.js/tree/canary/examples/reproduction-template) and should include only changes that contribute to the issue.
+        To report an App Router related issue, you can use these templates: [CodeSandbox](https://codesandbox.io/p/sandbox/github/vercel/next.js/tree/canary/examples/reproduction-template-app-dir), [StackBlitz](https://stackblitz.com/fork/github/vercel/next.js/tree/canary/examples/reproduction-template-app-dir) or [`npx create-next-app -e reproduction-template-app-dir`](https://github.com/vercel/next.js/tree/canary/examples/reproduction-template-app-dir)
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: To Reproduce
+      description: Steps to reproduce the behavior, please provide a clear description of how to reproduce the issue, based on the linked minimal reproduction. Screenshots can be provided in the issue body below. If using code blocks, make sure that [syntax highlighting is correct](https://docs.github.com/en/get-started/writing-on-github/working-with-advanced-formatting/creating-and-highlighting-code-blocks#syntax-highlighting) and double check that the rendered preview is not broken.
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Describe the Bug
+      description: A clear and concise description of what the bug is.
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Expected Behavior
+      description:
+        A clear and concise description of what you expected to happen.
+    validations:
+      required: true
+  - type: input
+    attributes:
+      label: Which browser are you using? (if relevant)
+      description:
+        "Please specify the exact version. For example: Chrome 100.0.4878.0"
