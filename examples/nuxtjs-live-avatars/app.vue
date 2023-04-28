@@ -1,5 +1,6 @@
 <template>
-  <main class="flex justify-center items-center h-screen select-none">
+  <main class="flex h-screen select-none items-center justify-center">
+    test
     <div class="flex flex-row pl-3">
       <Avatar
         v-for="user in others.slice(0, 3)"
@@ -40,7 +41,6 @@
 </style>
 
 <script>
-import Vue from "vue";
 import { createClient } from "@liveblocks/client";
 
 const client = createClient({
@@ -52,14 +52,15 @@ const initialPresence = {};
 
 let roomId = "nuxtjs-live-avatars";
 
-export default Vue.extend({
-  data: function () {
+export default {
+  data() {
     return {
       others: [],
       currentUser: null,
     };
   },
-  mounted: function () {
+  mounted() {
+    console.log("test");
     overrideRoomId();
 
     const room = client.enter(roomId, { initialPresence });
@@ -70,13 +71,13 @@ export default Vue.extend({
     );
     this._room = room;
   },
-  destroyed: function () {
+  destroyed() {
     this._unsubscribeOthers();
     this._unsubscribeConnection();
     client.leave(roomId);
   },
   methods: {
-    onOthersChange: function (others) {
+    onOthersChange(others) {
       // The picture and name are comming from the authentication endpoint
       // See api.js for and https://liveblocks.io/docs/api-reference/liveblocks-node#authorize for more information
       this.others = others.map((user) => ({
@@ -85,11 +86,11 @@ export default Vue.extend({
         name: user.info?.name,
       }));
     },
-    onConnectionChange: function () {
+    onConnectionChange() {
       this.currentUser = this._room.getSelf();
     },
   },
-});
+};
 
 /**
  * This function is used when deploying an example on liveblocks.io.

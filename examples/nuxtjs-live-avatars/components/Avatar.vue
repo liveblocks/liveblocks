@@ -1,9 +1,6 @@
 <template>
-  <div
-    class="border-4 rounded-full border-white -ml-3 bg-gray-400 avatar"
-    v-bind:data-tooltip="name"
-  >
-    <img class="rounded-full" :src="picture" height="48px" width="48px" />
+  <div class="avatar" v-bind:data-tooltip="name">
+    <img class="avatar_picture" :src="picture" height="48" width="48" />
   </div>
 </template>
 
@@ -12,8 +9,12 @@
   display: flex;
   place-content: center;
   position: relative;
+  border: 4px solid #fff;
+  border-radius: 9999px;
   width: 56px;
   height: 56px;
+  background-color: #9ca3af;
+  margin-left: -0.75rem;
 }
 
 .avatar:before {
@@ -34,6 +35,10 @@
 
 .avatar:hover:before {
   opacity: 1;
+}
+
+.avatar_picture {
+  border-radius: 9999px;
 }
 </style>
 
