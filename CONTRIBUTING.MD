@@ -98,3 +98,28 @@ We release packages under the desired npm tag using the following format:
 - npm tag: `<tag>`
 
 Other releases are published from any branch.
+
+## Code Review
+
+We use code reviews to maintain the quality of Liveblocks code and products.
+Code reviewers should look at:
+
+- **Design**: Is the code well-designed and appropriate for your system?
+- **Functionality**: Does the code behave as intended by the plan? Is the way
+  the code behaves good for its users?
+- **Complexity**: Could the code be made simpler? Would another developer be
+  able to easily understand and use this code when they come across it in the
+  future?
+- **Tests**: Does the code have correct and well-designed automated tests?
+- **Security**: Are there any security risks in the code as identified by the
+  latest OWASP Top 10?
+- **Naming**: Are there clear names for variables, classes, methods, etc.?
+- **Comments**: Are the comments clear and useful?
+- **Style**: Does the code follow Liveblocks style guides?
+- **Documentation**: Was the relevant documentation updated or created?
+- **Secure Coding**: Secure coding practices are incorporated into the
+  development lifecycle and security architecture of Liveblocks. Engineers at
+  Liveblocks are responsible for defining security requirements initially and
+  throughout all phases of the software development life cycle and then
+  evaluating for compliance with those requirements. All engineers at Liveblocks
+  are responsible for reviewing the OWASP Top 10 Web Application Security Risks.
