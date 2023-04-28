@@ -12,8 +12,8 @@ body:
       multiple: true
       options:
         - "Presence"
-        - "Storage"
         - "Broadcast"
+        - "Storage"
         - "Webhooks"
         - "DevTools"
         - "Starter Kit"
