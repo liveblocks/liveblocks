@@ -1,6 +1,5 @@
 <template>
   <main class="flex h-screen select-none items-center justify-center">
-    test
     <div class="flex flex-row pl-3">
       <Avatar
         v-for="user in others.slice(0, 3)"
