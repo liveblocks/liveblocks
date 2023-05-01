@@ -41,7 +41,7 @@ export { freeze } from "./lib/freeze";
 export type { Json, JsonArray, JsonObject, JsonScalar } from "./lib/Json";
 export { isJsonArray, isJsonObject, isJsonScalar } from "./lib/Json";
 export { asArrayWithLegacyMethods } from "./lib/LegacyArray";
-export { comparePosition, makePosition } from "./lib/position";
+export { asPos, makePosition } from "./lib/position";
 export type { Resolve } from "./lib/Resolve";
 export { shallow } from "./lib/shallow";
 export { b64decode, isPlainObject, tryParseJson } from "./lib/utils";
