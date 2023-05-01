@@ -10,7 +10,6 @@
   },
   "devDependencies": {
     "@types/node": "^18",
-    "autoprefixer": "^10.4.14",
     "nuxt": "^3.4.3"
   },
   "dependencies": {
