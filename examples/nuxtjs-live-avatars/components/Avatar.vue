@@ -1,6 +1,6 @@
 <template>
   <div class="avatar" v-bind:data-tooltip="name">
-    <img class="avatar_picture" :src="picture" height="48" width="48" />
+    <img class="picture" :alt="name" :src="picture" height="48" width="48" />
   </div>
 </template>
 
@@ -37,7 +37,7 @@
   opacity: 1;
 }
 
-.avatar_picture {
+.picture {
   border-radius: 9999px;
 }
 </style>
