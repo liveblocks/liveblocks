@@ -907,7 +907,7 @@
             "name": "id",
             "in": "path",
             "required": true,
-            "description": "`id`of the schema"
+            "description": "ID of the schema"
           }
         ]
       },
@@ -972,7 +972,7 @@
             "name": "id",
             "in": "path",
             "required": true,
-            "description": "`id`of the schema"
+            "description": "ID of the schema"
           }
         ]
       },
@@ -983,26 +983,26 @@
         "responses": {
           "200": {
             "description": "Success. Schema was delated"
-                },
-            "401": {
-              "$ref": "#/components/responses/401"
-            },
-            "403": {
-              "$ref": "#/components/responses/403schema"
-            }
           },
-          "parameters": [
-            {
-              "schema": {
-                "type": "string"
-              },
-              "name": "id",
-              "in": "path",
-              "required": true,
-              "description": "`id`of the schema"
-            }
-          ]
-        }
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403schema"
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "ID of the schema"
+          }
+        ]
+      }
     },
     "/rooms/{roomId}/schema": {
       "get": {
@@ -1050,7 +1050,7 @@
             "name": "roomId",
             "in": "path",
             "required": true,
-            "description": "`id`of the room"
+            "description": "ID of the room"
           }
         ]
       },
@@ -1110,7 +1110,7 @@
             "name": "roomId",
             "in": "path",
             "required": true,
-            "description": "`id`of the room"
+            "description": "ID of the room"
           }
         ]
       },
@@ -1140,7 +1140,7 @@
             "name": "roomId",
             "in": "path",
             "required": true,
-            "description": "`id`of the room"
+            "description": "ID of the room"
           }
         ]
       }
@@ -1401,12 +1401,12 @@
       "SchemaRequest": {
         "title": "SchemaRequest",
         "type": "object",
-        "properties":{       
-        "name": "string",
-        "body": "string"
+        "properties": {
+          "name": "string",
+          "body": "string"
         }
       },
-      "UpdateSchema":{
+      "UpdateSchema": {
         "title": "UpdateSchema",
         "type": "object",
         "properties": {
@@ -1504,11 +1504,10 @@
             },
             "examples": {
               "SCHEMA_FROZEN": {
-                "value":{
+                "value": {
                   "error": "SCHEMA_FROZEN",
                   "message": "Schema is frozen",
-                  "suggestion":
-                    "Please ensure no room is using this schema before modifying it"
+                  "suggestion": "Please ensure no room is using this schema before modifying it"
                 }
               },
               "INVALID_SECRET_KEY": {
@@ -1679,7 +1678,6 @@
           }
         }
       }
-
     },
     "requestBodies": {}
   },
