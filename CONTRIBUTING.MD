@@ -112,14 +112,13 @@ Code reviewers should look at:
   future?
 - **Tests**: Does the code have correct and well-designed automated tests?
 - **Security**: Are there any security risks in the code as identified by the
-  latest OWASP Top 10?
+  latest [OWASP Top 10](https://owasp.org/www-project-top-ten/)?
 - **Naming**: Are there clear names for variables, classes, methods, etc.?
 - **Comments**: Are the comments clear and useful?
 - **Style**: Does the code follow Liveblocks style guides?
-- **Documentation**: Was the relevant documentation updated or created?
+- **Documentation**: Was the relevant [documentation](https://liveblocks.io/docs) updated or created?
 - **Secure Coding**: Secure coding practices are incorporated into the
-  development lifecycle and security architecture of Liveblocks. Engineers at
+  development lifecycle and security architecture of Liveblocks. Maintainers and contributors of
   Liveblocks are responsible for defining security requirements initially and
   throughout all phases of the software development life cycle and then
-  evaluating for compliance with those requirements. All engineers at Liveblocks
-  are responsible for reviewing the OWASP Top 10 Web Application Security Risks.
+  evaluating for compliance with those requirements.
