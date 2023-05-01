@@ -1,3 +1,7 @@
+# v1.0.7
+
+- Private API changes only.
+
 # v1.0.6
 
 ## Internal changes
