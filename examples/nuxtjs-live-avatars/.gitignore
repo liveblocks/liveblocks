@@ -1,8 +1,9 @@
-.DS_Store
 node_modules
-.env
-.env.*
-!.env.example
-.vercel
+*.log*
 .nuxt
+.nitro
+.cache
 .output
+.env
+dist
+.DS_Store
