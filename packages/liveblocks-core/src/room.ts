@@ -489,15 +489,9 @@ export type Room<
   getStorageSnapshot(): LiveObject<TStorage> | null;
 
   readonly events: {
-    readonly customEvent: Observable<{
-      connectionId: number;
-      event: TRoomEvent;
-    }>;
+    readonly customEvent: Observable<{ connectionId: number; event: TRoomEvent; }>; // prettier-ignore
     readonly me: Observable<TPresence>;
-    readonly others: Observable<{
-      others: Others<TPresence, TUserMeta>;
-      event: OthersEvent<TPresence, TUserMeta>;
-    }>;
+    readonly others: Observable<{ others: Others<TPresence, TUserMeta>; event: OthersEvent<TPresence, TUserMeta>; }>; // prettier-ignore
     readonly error: Observable<Error>;
     readonly connection: Observable<ConnectionStatus>;
     readonly storage: Observable<StorageUpdate[]>;
