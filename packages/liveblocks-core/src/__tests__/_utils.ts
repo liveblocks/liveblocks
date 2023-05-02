@@ -22,10 +22,7 @@ import type {
 import { CrdtType } from "../protocol/SerializedCrdt";
 import type { ServerMsg } from "../protocol/ServerMsg";
 import { ServerMsgCode } from "../protocol/ServerMsg";
-import type {
-  _private_Effects as Effects,
-  _private_Machine as Machine,
-} from "../room";
+import type { _private_Effects as Effects, Room } from "../room";
 import {
   _private_makeStateMachine as makeStateMachine,
   makeClassicSubscribeFn,

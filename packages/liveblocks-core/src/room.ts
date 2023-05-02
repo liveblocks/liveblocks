@@ -608,13 +608,6 @@ type PrivateRoomAPI<
   getOthers_forDevTools(): readonly DevTools.UserTreeNode[];
 };
 
-type Machine<
-  TPresence extends JsonObject,
-  TStorage extends LsonObject,
-  TUserMeta extends BaseUserMeta,
-  TRoomEvent extends Json
-> = Room<TPresence, TStorage, TUserMeta, TRoomEvent>;
-
 const BACKOFF_RETRY_DELAYS = [250, 500, 1000, 2000, 4000, 8000, 10000];
 const BACKOFF_RETRY_DELAYS_SLOW = [2000, 30000, 60000, 300000];
 
@@ -2620,4 +2613,4 @@ class AuthenticationError extends Error {
 // exported here to be accessed used in our test suite.
 //
 export { makeStateMachine as _private_makeStateMachine };
-export type { Effects as _private_Effects, Machine as _private_Machine };
+export type { Effects as _private_Effects };
