@@ -50,6 +50,7 @@ import { DerivedRef, ValueRef } from "./refs/ValueRef";
 import type * as DevTools from "./types/DevToolsTreeNode";
 import type {
   IWebSocket,
+  IWebSocketCloseEvent,
   IWebSocketInstance,
   IWebSocketMessageEvent,
 } from "./types/IWebSocket";
@@ -579,18 +580,14 @@ type PrivateRoomAPI<
   connect(): void;
   disconnect(): void;
 
-  onClose(event: { code: number; wasClean: boolean; reason: string }): void;
+  onClose(event: IWebSocketCloseEvent): void;
   onMessage(event: MessageEvent<string>): void;
   authenticationSuccess(token: RoomAuthToken, socket: IWebSocketInstance): void;
   onNavigatorOnline(): void;
   onVisibilityChange(visibilityState: DocumentVisibilityState): void;
 
   simulateCloseWebsocket(): void;
-  simulateSendCloseEvent(event: {
-    code: number;
-    wasClean: boolean;
-    reason: string;
-  }): void;
+  simulateSendCloseEvent(event: IWebSocketCloseEvent): void;
 
   getUndoStack(): HistoryOp<TPresence>[][];
   getItemsCount(): number;
@@ -1704,7 +1701,7 @@ export function createRoom<
     });
   }
 
-  function onClose(event: { code: number; wasClean: boolean; reason: string }) {
+  function onClose(event: IWebSocketCloseEvent) {
     context.socket = null;
 
     clearTimeout(context.timers.flush);
@@ -2156,11 +2153,7 @@ export function createRoom<
     }
   }
 
-  function simulateSendCloseEvent(event: {
-    code: number;
-    wasClean: boolean;
-    reason: string;
-  }) {
+  function simulateSendCloseEvent(event: IWebSocketCloseEvent) {
     onClose(event);
   }
 
