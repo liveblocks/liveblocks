@@ -128,8 +128,8 @@ describe("LiveList", () => {
           ]);
 
         root.get("items").push("a");
-        machine.undo();
-        machine.redo();
+        machine.history.undo();
+        machine.history.redo();
 
         expectUpdates([
           [listUpdate(["a"], [listUpdateInsert(0, "a")])],
@@ -266,8 +266,8 @@ describe("LiveList", () => {
           ]);
 
         root.get("items").insert("B", 1);
-        machine.undo();
-        machine.redo();
+        machine.history.undo();
+        machine.history.redo();
 
         expectUpdates([
           [listUpdate(["A", "B", "C"], [listUpdateInsert(1, "B")])],
@@ -336,8 +336,8 @@ describe("LiveList", () => {
           ]);
 
         root.get("items").delete(0);
-        machine.undo();
-        machine.redo();
+        machine.history.undo();
+        machine.history.redo();
 
         expectUpdates([
           [listUpdate([], [listUpdateDelete(0)])],
@@ -434,8 +434,8 @@ describe("LiveList", () => {
           ]);
 
         root.get("items").move(0, 1);
-        machine.undo();
-        machine.redo();
+        machine.history.undo();
+        machine.history.redo();
 
         expectUpdates([
           [listUpdate(["B", "A"], [listUpdateMove(0, 1, "A")])],
@@ -557,8 +557,8 @@ describe("LiveList", () => {
           ]);
 
         root.get("items").clear();
-        machine.undo();
-        machine.redo();
+        machine.history.undo();
+        machine.history.redo();
 
         expectUpdates([
           [listUpdate([], [listUpdateDelete(0), listUpdateDelete(0)])],
@@ -914,7 +914,7 @@ describe("LiveList", () => {
         items: ["0"],
       });
 
-      machine.undo();
+      machine.history.undo();
 
       expectStorage({
         items: [],
@@ -930,7 +930,7 @@ describe("LiveList", () => {
         },
       ]);
 
-      machine.redo();
+      machine.history.redo();
 
       expectStorage({
         items: ["1", "0"],

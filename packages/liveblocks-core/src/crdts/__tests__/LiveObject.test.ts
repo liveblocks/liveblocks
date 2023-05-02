@@ -434,7 +434,7 @@ describe("LiveObject", () => {
         ],
       ]);
 
-      machine.undo();
+      machine.history.undo();
 
       expect(items.toObject()).toEqual({ a: "B" });
       expectUpdates([

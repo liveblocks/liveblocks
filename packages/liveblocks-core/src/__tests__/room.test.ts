@@ -683,12 +683,12 @@ describe("room", () => {
     machine.updatePresence({ x: 1 }, { addToHistory: true });
     expect(machine.__internal.buffer.me?.data).toEqual({ x: 1 });
 
-    machine.undo();
+    machine.history.undo();
 
     expect(machine.__internal.buffer.me?.data).toEqual({ x: 0 });
     expect(machine.getPresence()).toEqual({ x: 0 });
 
-    machine.redo();
+    machine.history.redo();
 
     expect(machine.__internal.buffer.me?.data).toEqual({ x: 1 });
     expect(machine.getPresence()).toEqual({ x: 1 });
@@ -711,10 +711,10 @@ describe("room", () => {
     });
 
     expect(items.toImmutable()).toEqual([{ a: 2 }]);
-    machine.undo();
+    machine.history.undo();
 
     expect(items.toImmutable()).toEqual([{}]);
-    machine.redo();
+    machine.history.redo();
 
     expect(items.toImmutable()).toEqual([{ a: 2 }]);
     expectUpdates([
@@ -750,12 +750,12 @@ describe("room", () => {
       storage.root.set("x", 1);
     });
 
-    machine.undo();
+    machine.history.undo();
 
     expect(machine.getPresence()).toEqual({ x: 1 });
     expect(storage.root.toObject()).toEqual({ x: 0 });
 
-    machine.redo();
+    machine.history.redo();
   });
 
   test("if nothing happened while the history was paused, the undo stack should not be impacted", () => {
@@ -770,10 +770,10 @@ describe("room", () => {
     machine.updatePresence({ x: 1 }, { addToHistory: true });
     expect(machine.__internal.buffer.me?.data).toEqual({ x: 1 });
 
-    machine.pauseHistory();
-    machine.resumeHistory();
+    machine.history.pause();
+    machine.history.resume();
 
-    machine.undo();
+    machine.history.undo();
 
     expect(machine.__internal.buffer.me?.data).toEqual({ x: 0 });
     expect(machine.getPresence()).toEqual({ x: 0 });
@@ -790,7 +790,7 @@ describe("room", () => {
     machine.updatePresence({ x: 0 });
     machine.updatePresence({ x: 1 });
 
-    machine.undo();
+    machine.history.undo();
 
     expect(machine.getPresence()).toEqual({ x: 1 });
   });
@@ -806,7 +806,7 @@ describe("room", () => {
     machine.updatePresence({ x: 0 }, { addToHistory: true });
     expect(machine.__internal.buffer.me?.data).toEqual({ x: 0 });
 
-    machine.pauseHistory();
+    machine.history.pause();
 
     for (let i = 1; i <= 10; i++) {
       machine.updatePresence({ x: i }, { addToHistory: true });
@@ -816,14 +816,14 @@ describe("room", () => {
     expect(machine.getPresence()).toEqual({ x: 10 });
     expect(machine.__internal.buffer.me?.data).toEqual({ x: 10 });
 
-    machine.resumeHistory();
+    machine.history.resume();
 
-    machine.undo();
+    machine.history.undo();
 
     expect(machine.__internal.buffer.me?.data).toEqual({ x: 0 });
     expect(machine.getPresence()).toEqual({ x: 0 });
 
-    machine.redo();
+    machine.history.redo();
 
     expect(machine.__internal.buffer.me?.data).toEqual({ x: 10 });
     expect(machine.getPresence()).toEqual({ x: 10 });
@@ -841,13 +841,13 @@ describe("room", () => {
 
     machine.updatePresence({ x: 1 }, { addToHistory: true });
 
-    machine.pauseHistory();
+    machine.history.pause();
 
     for (let i = 1; i <= 10; i++) {
       machine.updatePresence({ x: i }, { addToHistory: true });
     }
 
-    machine.undo();
+    machine.history.undo();
 
     expect(machine.getPresence()).toEqual({ x: 0 });
     expect(machine.__internal.buffer.me?.data).toEqual({ x: 0 });
@@ -881,13 +881,13 @@ describe("room", () => {
 
     expect(machine.__internal.buffer.me?.data).toEqual({ x: 1 });
 
-    machine.undo();
+    machine.history.undo();
 
     expect(machine.__internal.buffer.me?.data).toEqual({ x: 0 });
     expect(machine.getPresence()).toEqual({ x: 0 });
     expect(storage.root.toObject()).toEqual({ x: 0 });
 
-    machine.redo();
+    machine.history.redo();
 
     expect(machine.__internal.buffer.me?.data).toEqual({ x: 1 });
     expect(storage.root.toObject()).toEqual({ x: 1 });
@@ -915,13 +915,13 @@ describe("room", () => {
 
     storage.root.set("x", 1);
 
-    machine.undo();
+    machine.history.undo();
 
     expect(storage.root.toObject()).toEqual({ x: 0 });
 
     machine.batch(() => {});
 
-    machine.redo();
+    machine.history.redo();
 
     expect(storage.root.toObject()).toEqual({ x: 1 });
   });
@@ -1291,11 +1291,11 @@ describe("room", () => {
 
       expect(callback).toHaveBeenCalledWith({ canUndo: true, canRedo: false });
 
-      machine.undo();
+      machine.history.undo();
 
       expect(callback).toHaveBeenCalledWith({ canUndo: false, canRedo: true });
 
-      machine.redo();
+      machine.history.redo();
 
       expect(callback).toHaveBeenCalledWith({ canUndo: true, canRedo: false });
 
@@ -1368,7 +1368,7 @@ describe("room", () => {
         items: ["A", "B"],
       });
 
-      machine.undo();
+      machine.history.undo();
 
       expectStorage({
         items: ["A"],

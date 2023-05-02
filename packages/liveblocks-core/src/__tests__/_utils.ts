@@ -264,8 +264,8 @@ export async function prepareIsolatedStorageTest<TStorage extends LsonObject>(
     root: storage.root,
     machine,
     subscribe: makeClassicSubscribeFn(machine),
-    undo: machine.undo,
-    redo: machine.redo,
+    undo: machine.history.undo,
+    redo: machine.history.redo,
     ws,
     expectStorage: (data: ToImmutable<TStorage>) =>
       expect(storage.root.toImmutable()).toEqual(data),
@@ -384,17 +384,17 @@ export async function prepareStorageTest<
 
   function assertUndoRedo() {
     for (let i = 0; i < states.length - 1; i++) {
-      machine.undo();
+      machine.history.undo();
       expectBothClientStoragesToEqual(states[states.length - 2 - i]);
     }
 
     for (let i = 0; i < states.length - 1; i++) {
-      machine.redo();
+      machine.history.redo();
       expectBothClientStoragesToEqual(states[i + 1]);
     }
 
     for (let i = 0; i < states.length - 1; i++) {
-      machine.undo();
+      machine.history.undo();
       expectBothClientStoragesToEqual(states[states.length - 2 - i]);
     }
   }
@@ -445,10 +445,10 @@ export async function prepareStorageTest<
     getUndoStack: machine.getUndoStack,
     getItemsCount: machine.getItemsCount,
     batch: machine.batch,
-    undo: machine.undo,
-    redo: machine.redo,
-    canUndo: machine.canUndo,
-    canRedo: machine.canRedo,
+    undo: machine.history.undo,
+    redo: machine.history.redo,
+    canUndo: machine.history.canUndo,
+    canRedo: machine.history.canRedo,
     applyRemoteOperations: (ops: Op[]) =>
       machine.onMessage(
         serverMessage({

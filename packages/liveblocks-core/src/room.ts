@@ -616,12 +616,14 @@ type Machine<
 
   // Presence
   batch<T>(callback: () => T): T;
-  undo(): void;
-  redo(): void;
-  canUndo(): boolean;
-  canRedo(): boolean;
-  pauseHistory(): void;
-  resumeHistory(): void;
+  readonly history: {
+    undo(): void;
+    redo(): void;
+    canUndo(): boolean;
+    canRedo(): boolean;
+    pause(): void;
+    resume(): void;
+  };
 
   getStorage(): Promise<{ root: LiveObject<TStorage> }>;
   getStorageSnapshot(): LiveObject<TStorage> | null;
@@ -2251,12 +2253,14 @@ function makeStateMachine<
 
     // Storage
     batch,
-    undo,
-    redo,
-    canUndo,
-    canRedo,
-    pauseHistory,
-    resumeHistory,
+    history: {
+      undo,
+      redo,
+      canUndo,
+      canRedo,
+      pause: pauseHistory,
+      resume: resumeHistory,
+    },
 
     getStorage,
     getStorageSnapshot,
@@ -2355,16 +2359,7 @@ export function createRoom<
     events: machine.events,
 
     batch: machine.batch,
-
-    // XXX Mimick the same nested structure on Machine, and export it directly as such
-    history: {
-      undo: machine.undo,
-      redo: machine.redo,
-      canUndo: machine.canUndo,
-      canRedo: machine.canRedo,
-      pause: machine.pauseHistory,
-      resume: machine.resumeHistory,
-    },
+    history: machine.history,
 
     // XXX Mimick the same __internal structure, and export it directly as such
     __internal: {
