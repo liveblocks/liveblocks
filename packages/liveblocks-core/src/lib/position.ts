@@ -330,11 +330,7 @@ function asPos(str: string): Pos {
   return isPos(str) ? str : convertToPos(str);
 }
 
-function comparePosition(posA: Pos, posB: Pos): number {
-  return posA === posB ? 0 : posA < posB ? -1 : 1;
-}
-
-export { asPos, comparePosition, makePosition };
+export { asPos, makePosition };
 
 // For use in unit tests only
 export {

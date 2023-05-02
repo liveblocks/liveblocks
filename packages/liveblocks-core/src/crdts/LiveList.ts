@@ -1,7 +1,7 @@
 import { nn } from "../lib/assert";
 import { nanoid } from "../lib/nanoid";
 import type { Pos } from "../lib/position";
-import { asPos, comparePosition, makePosition } from "../lib/position";
+import { asPos, makePosition } from "../lib/position";
 import type { CreateChildOp, CreateListOp, CreateOp, Op } from "../protocol/Op";
 import { OpCode } from "../protocol/Op";
 import type { IdTuple, SerializedList } from "../protocol/SerializedCrdt";
@@ -53,7 +53,9 @@ export type LiveListUpdates<TItem extends Lson> = {
 };
 
 function compareNodePosition(itemA: LiveNode, itemB: LiveNode) {
-  return comparePosition(itemA._parentPos, itemB._parentPos);
+  const posA = itemA._parentPos;
+  const posB = itemB._parentPos;
+  return posA === posB ? 0 : posA < posB ? -1 : 1;
 }
 
 /**

@@ -8,7 +8,6 @@ import {
   __nthDigit as nthDigit,
   __NUM_DIGITS as NUM_DIGITS,
   asPos,
-  comparePosition,
   makePosition,
 } from "../position";
 
@@ -168,24 +167,6 @@ describe("position datastructure", () => {
         (s) => {
           expect(asPos(s)).toBe(asPos(asPos(s)));
           expect(asPos(s)).toBe(asPos(asPos(asPos(asPos(s)))));
-        }
-      )
-    );
-  });
-
-  it("position's string representation is also alphabetically sortable", () => {
-    fc.assert(
-      fc.property(
-        genPos(),
-        genPos(),
-
-        (pos1, pos2) => {
-          expect(comparePosition(pos1, pos2) < 0).toEqual(pos1 < pos2);
-          expect(comparePosition(pos1, pos2) > 0).toEqual(pos1 > pos2);
-          expect(comparePosition(pos1, pos2) === 0).toEqual(pos1 === pos2);
-          expect(comparePosition(pos1, pos2) <= 0).toEqual(pos1 <= pos2);
-          expect(comparePosition(pos1, pos2) >= 0).toEqual(pos1 >= pos2);
-          expect(comparePosition(pos1, pos2) !== 0).toEqual(pos1 !== pos2);
         }
       )
     );
@@ -485,36 +466,9 @@ describe("makePosition", () => {
 
 describe("comparePosition", () => {
   it("basics", () => {
-    expect(comparePosition(asPos("1"), asPos("2"))).toBeLessThan(0);
-    expect(comparePosition(asPos("!"), asPos("~~"))).toBeLessThan(0);
-    expect(comparePosition(asPos("11111"), asPos("11"))).toBeGreaterThan(0);
-  });
-
-  it("returns 0 when equal", () => {
-    fc.assert(
-      fc.property(
-        genUnverifiedPos(),
-
-        (pos) => {
-          expect(comparePosition(pos, pos)).toBe(0);
-        }
-      )
-    );
-  });
-
-  it("inverted comparison leads to opposite result", () => {
-    fc.assert(
-      fc.property(
-        genUnverifiedPos(),
-        genUnverifiedPos(),
-
-        (p1, p2) => {
-          if (p1 !== p2) {
-            expect(comparePosition(p1, p2)).toBe(-comparePosition(p2, p1));
-          }
-        }
-      )
-    );
+    expect(asPos("1") < asPos("2")).toBe(true);
+    expect(asPos("!") < asPos("~~")).toBe(true);
+    expect(asPos("11111") > asPos("11")).toBe(true);
   });
 
   it("correct compares output of before/after", () => {
@@ -523,10 +477,10 @@ describe("comparePosition", () => {
         genPos(),
 
         (pos) => {
-          expect(comparePosition(pos, after(pos))).toBe(-1);
-          expect(comparePosition(before(pos), pos)).toBe(-1);
-          expect(comparePosition(after(pos), pos)).toBe(1);
-          expect(comparePosition(pos, before(pos))).toBe(1);
+          expect(pos < after(pos)).toBe(true);
+          expect(before(pos) < pos).toBe(true);
+          expect(after(pos) > pos).toBe(true);
+          expect(pos > before(pos)).toBe(true);
         }
       )
     );
@@ -539,10 +493,10 @@ describe("comparePosition", () => {
 
         ([lo, hi]) => {
           const mid = between(lo, hi);
-          expect(comparePosition(lo, mid)).toBe(-1);
-          expect(comparePosition(mid, hi)).toBe(-1);
-          expect(comparePosition(mid, lo)).toBe(1);
-          expect(comparePosition(hi, mid)).toBe(1);
+          expect(lo < mid).toBe(true);
+          expect(mid < hi).toBe(true);
+          expect(mid > lo).toBe(true);
+          expect(hi > mid).toBe(true);
         }
       )
     );
