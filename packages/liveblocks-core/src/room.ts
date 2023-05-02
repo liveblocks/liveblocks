@@ -2192,6 +2192,18 @@ function makeStateMachine<
     others.map((other, index) => userToTreeNode(`Other ${index}`, other))
   );
 
+  const events = {
+    customEvent: eventHub.customEvent.observable,
+    others: eventHub.others.observable,
+    me: eventHub.me.observable,
+    error: eventHub.error.observable,
+    connection: eventHub.connection.observable,
+    storage: eventHub.storage.observable,
+    history: eventHub.history.observable,
+    storageDidLoad: eventHub.storageDidLoad.observable,
+    storageStatus: eventHub.storageStatus.observable,
+  };
+
   return {
     /* NOTE: Exposing __internal here only to allow testing implementation details in unit tests */
     __internal: {
@@ -2242,17 +2254,7 @@ function makeStateMachine<
     getStorageSnapshot,
     getStorageStatus,
 
-    events: {
-      customEvent: eventHub.customEvent.observable,
-      others: eventHub.others.observable,
-      me: eventHub.me.observable,
-      error: eventHub.error.observable,
-      connection: eventHub.connection.observable,
-      storage: eventHub.storage.observable,
-      history: eventHub.history.observable,
-      storageDidLoad: eventHub.storageDidLoad.observable,
-      storageStatus: eventHub.storageStatus.observable,
-    },
+    events,
 
     // Core
     getConnectionState: () => context.connection.current.status,
