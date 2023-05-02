@@ -1,5 +1,8 @@
 import type { Json } from "./Json";
 
+declare const brand: unique symbol;
+export type Brand<T, TBrand extends string> = T & { [brand]: TBrand };
+
 export function isPlainObject(
   blob: unknown
 ): blob is { [key: string]: unknown } {

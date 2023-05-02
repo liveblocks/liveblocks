@@ -1,5 +1,4 @@
 import { authorize } from "@liveblocks/node";
-import express from "express";
 
 const API_KEY = process.env.LIVEBLOCKS_SECRET_KEY;
 const API_KEY_WARNING = process.env.CODESANDBOX_SSE
@@ -8,39 +7,36 @@ const API_KEY_WARNING = process.env.CODESANDBOX_SSE
   : `Create an \`.env\` file and add your secret key from https://liveblocks.io/dashboard/apikeys as the \`LIVEBLOCKS_SECRET_KEY\` environment variable.\n` +
     `Learn more: https://github.com/liveblocks/liveblocks/tree/main/examples/nuxtjs-live-avatars#getting-started.`;
 
-const app = express();
-app.use(express.json());
-
-app.post("/auth", (req, res) => {
+export default defineEventHandler(async (event) => {
   if (!API_KEY) {
     console.warn(API_KEY_WARNING);
 
-    return res.status(401).end(API_KEY_WARNING);
+    throw createError({ statusCode: 401, statusMessage: API_KEY_WARNING });
   }
 
-  // For the avatar example, we're generating random users
-  // and set their info from the authentication endpoint
-  // See https://liveblocks.io/docs/api-reference/liveblocks-node#authorize for more information
-  return authorize({
-    room: req.body.room,
-    secret: API_KEY,
-    userId: `user-${Math.floor(Math.random() * NAMES.length)}`,
-    userInfo: {
-      name: NAMES[Math.floor(Math.random() * NAMES.length)],
-      picture: `https://liveblocks.io/avatars/avatar-${Math.floor(
-        Math.random() * 30
-      )}.png`,
-    },
-  })
-    .then((response) => {
-      res.status(response.status).end(response.body);
-    })
-    .catch(() => {
-      res.status(403).end();
-    });
-});
+  const body = await readBody(event);
 
-export default app;
+  try {
+    // For the avatar example, we're generating random users
+    // and set their info from the authentication endpoint
+    // See https://liveblocks.io/docs/api-reference/liveblocks-node#authorize for more information
+    const response = await authorize({
+      room: body.room,
+      secret: API_KEY,
+      userId: `user-${Math.floor(Math.random() * NAMES.length)}`,
+      userInfo: {
+        name: NAMES[Math.floor(Math.random() * NAMES.length)],
+        picture: `https://liveblocks.io/avatars/avatar-${Math.floor(
+          Math.random() * 30
+        )}.png`,
+      },
+    });
+    setResponseStatus(event, 202);
+    return response.body;
+  } catch (er) {
+    throw createError({ statusCode: 403 });
+  }
+});
 
 const NAMES = [
   "Charlie Layne",

@@ -1,3 +1,5 @@
+import type { JsonScalar, PlainLson, PlainLsonObject } from "@liveblocks/core";
+
 import { inferLsonFields } from "./field";
 import type { InferredObjectType } from "./object";
 import {
@@ -5,7 +7,6 @@ import {
   isInferredObjectType,
   mergeInferredObjectTypes,
 } from "./object";
-import type { JsonScalar, PlainLson, PlainLsonObject } from "./plainLson";
 import type { InferredScalarType } from "./scalar";
 import {
   inferScalarType,

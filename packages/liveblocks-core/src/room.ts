@@ -18,6 +18,7 @@ import { makeEventSource } from "./lib/EventSource";
 import * as console from "./lib/fancy-console";
 import type { Json, JsonObject } from "./lib/Json";
 import { isJsonArray, isJsonObject } from "./lib/Json";
+import { asPos } from "./lib/position";
 import type { Resolve } from "./lib/Resolve";
 import { compact, isPlainObject, tryParseJson } from "./lib/utils";
 import type { Authentication } from "./protocol/Authentication";
@@ -32,13 +33,7 @@ import type { ClientMsg } from "./protocol/ClientMsg";
 import { ClientMsgCode } from "./protocol/ClientMsg";
 import type { Op } from "./protocol/Op";
 import { isAckOp, OpCode } from "./protocol/Op";
-import type {
-  IdTuple,
-  SerializedChild,
-  SerializedCrdt,
-  SerializedRootObject,
-} from "./protocol/SerializedCrdt";
-import { isRootCrdt } from "./protocol/SerializedCrdt";
+import type { IdTuple, SerializedCrdt } from "./protocol/SerializedCrdt";
 import type {
   InitialDocumentStateServerMsg,
   RoomStateServerMsg,
@@ -53,7 +48,7 @@ import { MeRef } from "./refs/MeRef";
 import { OthersRef } from "./refs/OthersRef";
 import { DerivedRef, ValueRef } from "./refs/ValueRef";
 import type * as DevTools from "./types/DevToolsTreeNode";
-import type { NodeMap, ParentToChildNodeMap } from "./types/NodeMap";
+import type { NodeMap } from "./types/NodeMap";
 import type { Others, OthersEvent } from "./types/Others";
 import type { User } from "./types/User";
 import type {
@@ -696,10 +691,23 @@ type MachineContext<
     readonly raw: string;
     readonly parsed: RoomAuthToken & JwtMetadata;
   } | null;
-  lastConnectionId: number | null; // TODO: Move into Connection type members?
+  /**
+   * Remembers the last successful connection ID. This gets assigned as soon as
+   * the connection status switched from "connecting" to "open".
+   */
+  lastConnectionId: number | null; // TODO Do we really need to separately track this, or can we derive this from the last known token?
+
   socket: IWebSocketInstance | null;
-  lastFlushTime: number;
+
+  /**
+   * All pending changes that yet need to be synced.
+   */
   buffer: {
+    // When the last flush happened. Together with config.throttleDelay, this
+    // will control whether the next flush will be sent out immediately, or if
+    // a flush will get scheduled for a few milliseconds into the future.
+    readonly lastFlushedAt: number;
+
     // Queued-up "my presence" updates to be flushed at the earliest convenience
     me:
       | { type: "partial"; data: Partial<TPresence> }
@@ -708,13 +716,16 @@ type MachineContext<
     messages: ClientMsg<TPresence, TRoomEvent>[];
     storageOperations: Op[];
   };
-  timeoutHandles: {
+
+  /**
+   * Number of reconnect() retries.
+   */
+  numRetries: number;
+  readonly timers: {
     flush: TimeoutID | undefined;
     reconnect: TimeoutID | undefined;
-    pongTimeout: TimeoutID | undefined;
-  };
-  intervalHandles: {
     heartbeat: IntervalID | undefined;
+    pongTimeout: TimeoutID | undefined;
   };
 
   readonly connection: ValueRef<Connection>;
@@ -722,12 +733,11 @@ type MachineContext<
   readonly others: OthersRef<TPresence, TUserMeta>;
 
   idFactory: IdFactory | null;
-  numberOfRetry: number;
   initialStorage?: TStorage;
 
   clock: number;
   opClock: number;
-  nodes: Map<string, LiveNode>;
+  readonly nodes: Map<string, LiveNode>;
   root: LiveObject<TStorage> | undefined;
 
   undoStack: HistoryOp<TPresence>[][];
@@ -743,7 +753,7 @@ type MachineContext<
    * Place to collect all mutations during a batch. Ops will be sent over the
    * wire after the batch is ended.
    */
-  activeBatch: null | {
+  activeBatch: {
     ops: Op[];
     reverseOps: HistoryOp<TPresence>[];
     updates: {
@@ -751,14 +761,14 @@ type MachineContext<
       presence: boolean;
       storageUpdates: Map<string, StorageUpdate>;
     };
-  };
+  } | null;
 
   // A registry of yet-unacknowledged Ops. These Ops have already been
   // submitted to the server, but have not yet been acknowledged.
-  unacknowledgedOps: Map<string, Op>;
+  readonly unacknowledgedOps: Map<string, Op>;
 
   // Stack traces of all pending Ops. Used for debugging in non-production builds
-  opStackTraces?: Map<string, string>;
+  readonly opStackTraces?: Map<string, string>;
 };
 
 /** @internal */
@@ -768,10 +778,10 @@ type Effects<TPresence extends JsonObject, TRoomEvent extends Json> = {
     createWebSocket: (token: string) => IWebSocketInstance
   ): void;
   send(messages: ClientMsg<TPresence, TRoomEvent>[]): void;
-  delayFlush(delay: number): TimeoutID;
+  scheduleFlush(delay: number): TimeoutID;
+  scheduleReconnect(delay: number): TimeoutID;
   startHeartbeatInterval(): IntervalID;
   schedulePongTimeout(): TimeoutID;
-  scheduleReconnect(delay: number): TimeoutID;
 };
 
 export type Polyfills = {
@@ -854,14 +864,17 @@ function makeStateMachine<
     token: null,
     lastConnectionId: null,
     socket: null,
-    numberOfRetry: 0,
-    lastFlushTime: 0,
-    timeoutHandles: {
+
+    numRetries: 0,
+    timers: {
       flush: undefined,
       reconnect: undefined,
+      heartbeat: undefined,
       pongTimeout: undefined,
     },
+
     buffer: {
+      lastFlushedAt: 0,
       me:
         // Queue up the initial presence message as a Full Presence™ update
         {
@@ -870,9 +883,6 @@ function makeStateMachine<
         },
       messages: [],
       storageOperations: [],
-    },
-    intervalHandles: {
-      heartbeat: undefined,
     },
 
     connection: new ValueRef<Connection>({ status: "closed" }),
@@ -925,17 +935,17 @@ function makeStateMachine<
       if (process.env.NODE_ENV !== "production") {
         const stackTrace = captureStackTrace("Storage mutation", this.dispatch);
         if (stackTrace) {
-          ops.forEach((op) => {
+          for (const op of ops) {
             if (op.opId) {
               nn(context.opStackTraces).set(op.opId, stackTrace);
             }
-          });
+          }
         }
       }
 
       if (activeBatch) {
         activeBatch.ops.push(...ops);
-        storageUpdates.forEach((value, key) => {
+        for (const [key, value] of storageUpdates) {
           activeBatch.updates.storageUpdates.set(
             key,
             mergeStorageUpdates(
@@ -943,7 +953,7 @@ function makeStateMachine<
               value
             )
           );
-        });
+        }
         activeBatch.reverseOps.unshift(...reverse);
       } else {
         batchUpdates(() => {
@@ -1012,6 +1022,7 @@ function makeStateMachine<
           );
       }
     },
+
     send(
       messageOrMessages:
         | ClientMsg<TPresence, TRoomEvent>
@@ -1022,18 +1033,11 @@ function makeStateMachine<
       }
       context.socket.send(JSON.stringify(messageOrMessages));
     },
-    delayFlush(delay: number) {
-      return setTimeout(tryFlushing, delay);
-    },
-    startHeartbeatInterval() {
-      return setInterval(heartbeat, HEARTBEAT_INTERVAL);
-    },
-    schedulePongTimeout() {
-      return setTimeout(pongTimeout, PONG_TIMEOUT);
-    },
-    scheduleReconnect(delay: number) {
-      return setTimeout(connect, delay);
-    },
+
+    scheduleFlush: (delay: number) => setTimeout(tryFlushing, delay),
+    scheduleReconnect: (delay: number) => setTimeout(connect, delay),
+    startHeartbeatInterval: () => setInterval(heartbeat, HEARTBEAT_INTERVAL),
+    schedulePongTimeout: () => setTimeout(pongTimeout, PONG_TIMEOUT),
   };
 
   const self = new DerivedRef(
@@ -1068,10 +1072,7 @@ function makeStateMachine<
     if (context.root) {
       updateRoot(message.items, batchedUpdatesWrapper);
     } else {
-      // TODO: For now, we'll assume the happy path, but reading this data from
-      // the central storage server, it may very well turn out to not match the
-      // manual type annotation. This will require runtime type validations!
-      context.root = load(message.items) as LiveObject<TStorage>;
+      context.root = LiveObject._fromItems<TStorage>(message.items, pool);
     }
 
     for (const key in context.initialStorage) {
@@ -1079,33 +1080,6 @@ function makeStateMachine<
         context.root.set(key, context.initialStorage[key]);
       }
     }
-  }
-
-  function buildRootAndParentToChildren(
-    items: IdTuple<SerializedCrdt>[]
-  ): [IdTuple<SerializedRootObject>, ParentToChildNodeMap] {
-    const parentToChildren: ParentToChildNodeMap = new Map();
-    let root: IdTuple<SerializedRootObject> | null = null;
-
-    for (const [id, crdt] of items) {
-      if (isRootCrdt(crdt)) {
-        root = [id, crdt];
-      } else {
-        const tuple: IdTuple<SerializedChild> = [id, crdt];
-        const children = parentToChildren.get(crdt.parentId);
-        if (children !== undefined) {
-          children.push(tuple);
-        } else {
-          parentToChildren.set(crdt.parentId, [tuple]);
-        }
-      }
-    }
-
-    if (root === null) {
-      throw new Error("Root can't be null");
-    }
-
-    return [root, parentToChildren];
   }
 
   function updateRoot(
@@ -1117,9 +1091,9 @@ function makeStateMachine<
     }
 
     const currentItems: NodeMap = new Map();
-    context.nodes.forEach((node, id) => {
+    for (const [id, node] of context.nodes) {
       currentItems.set(id, node._serialize());
-    });
+    }
 
     // Get operations that represent the diff between 2 states.
     const ops = getTreesDiffOperations(currentItems, new Map(items));
@@ -1127,12 +1101,6 @@ function makeStateMachine<
     const result = applyOps(ops, false);
 
     notify(result.updates, batchedUpdatesWrapper);
-  }
-
-  function load(items: IdTuple<SerializedCrdt>[]): LiveObject<LsonObject> {
-    // TODO Abstract these details into a LiveObject._fromItems() helper?
-    const [root, parentToChildren] = buildRootAndParentToChildren(items);
-    return LiveObject._deserialize(root, parentToChildren, pool);
   }
 
   function _addToRealUndoStack(
@@ -1339,7 +1307,11 @@ function makeStateMachine<
         }
 
         if (node.parent.type === "HasParent" && isLiveList(node.parent.node)) {
-          return node.parent.node._setChildKey(op.parentKey, node, source);
+          return node.parent.node._setChildKey(
+            asPos(op.parentKey),
+            node,
+            source
+          );
         }
         return { modified: false };
       }
@@ -1466,10 +1438,10 @@ function makeStateMachine<
     }
     context.token = null;
     updateConnection({ status: "unavailable" }, batchUpdates);
-    context.numberOfRetry++;
-    context.timeoutHandles.reconnect = effects.scheduleReconnect(
-      getRetryDelay()
-    );
+    context.numRetries++;
+
+    clearTimeout(context.timers.reconnect);
+    context.timers.reconnect = effects.scheduleReconnect(getRetryDelay());
   }
 
   function onVisibilityChange(visibilityState: DocumentVisibilityState) {
@@ -1557,6 +1529,8 @@ function makeStateMachine<
     }
   }
 
+  function canUndo() { return context.undoStack.length > 0; } // prettier-ignore
+  function canRedo() { return context.redoStack.length > 0; } // prettier-ignore
   function onHistoryChange(batchedUpdatesWrapper: (cb: () => void) => void) {
     batchedUpdatesWrapper(() => {
       eventHub.history.notify({ canUndo: canUndo(), canRedo: canRedo() });
@@ -1611,9 +1585,33 @@ function makeStateMachine<
     }
   }
 
+  function applyAndSendOps(
+    offlineOps: Map<string, Op>,
+    batchedUpdatesWrapper: (cb: () => void) => void
+  ) {
+    if (offlineOps.size === 0) {
+      return;
+    }
+
+    const messages: ClientMsg<TPresence, TRoomEvent>[] = [];
+
+    const ops = Array.from(offlineOps.values());
+
+    const result = applyOps(ops, true);
+
+    messages.push({
+      type: ClientMsgCode.UPDATE_STORAGE,
+      ops: result.ops,
+    });
+
+    notify(result.updates, batchedUpdatesWrapper);
+
+    effects.send(messages);
+  }
+
   function onMessage(event: IWebSocketMessageEvent) {
     if (event.data === "pong") {
-      clearTimeout(context.timeoutHandles.pongTimeout);
+      clearTimeout(context.timers.pongTimeout);
       return;
     }
 
@@ -1689,13 +1687,12 @@ function makeStateMachine<
           // Write event
           case ServerMsgCode.UPDATE_STORAGE: {
             const applyResult = applyOps(message.ops, false);
-            applyResult.updates.storageUpdates.forEach((value, key) => {
+            for (const [key, value] of applyResult.updates.storageUpdates) {
               updates.storageUpdates.set(
                 key,
                 mergeStorageUpdates(updates.storageUpdates.get(key), value)
               );
-            });
-
+            }
             break;
           }
 
@@ -1743,12 +1740,10 @@ function makeStateMachine<
   function onClose(event: { code: number; wasClean: boolean; reason: string }) {
     context.socket = null;
 
-    clearTimeout(context.timeoutHandles.pongTimeout);
-    clearInterval(context.intervalHandles.heartbeat);
-    if (context.timeoutHandles.flush) {
-      clearTimeout(context.timeoutHandles.flush);
-    }
-    clearTimeout(context.timeoutHandles.reconnect);
+    clearTimeout(context.timers.flush);
+    clearTimeout(context.timers.reconnect);
+    clearInterval(context.timers.heartbeat);
+    clearTimeout(context.timers.pongTimeout);
 
     context.others.clearOthers();
 
@@ -1762,7 +1757,7 @@ function makeStateMachine<
         eventHub.error.notify(error);
 
         const delay = getRetryDelay(true);
-        context.numberOfRetry++;
+        context.numRetries++;
 
         if (process.env.NODE_ENV !== "production") {
           console.error(
@@ -1771,12 +1766,14 @@ function makeStateMachine<
         }
 
         updateConnection({ status: "unavailable" }, doNotBatchUpdates);
-        context.timeoutHandles.reconnect = effects.scheduleReconnect(delay);
+
+        clearTimeout(context.timers.reconnect);
+        context.timers.reconnect = effects.scheduleReconnect(delay);
       } else if (event.code === WebsocketCloseCodes.CLOSE_WITHOUT_RETRY) {
         updateConnection({ status: "closed" }, doNotBatchUpdates);
       } else {
         const delay = getRetryDelay();
-        context.numberOfRetry++;
+        context.numRetries++;
 
         if (process.env.NODE_ENV !== "production") {
           console.warn(
@@ -1784,7 +1781,9 @@ function makeStateMachine<
           );
         }
         updateConnection({ status: "unavailable" }, doNotBatchUpdates);
-        context.timeoutHandles.reconnect = effects.scheduleReconnect(delay);
+
+        clearTimeout(context.timers.reconnect);
+        context.timers.reconnect = effects.scheduleReconnect(delay);
       }
     });
   }
@@ -1802,14 +1801,14 @@ function makeStateMachine<
   function getRetryDelay(slow: boolean = false) {
     if (slow) {
       return BACKOFF_RETRY_DELAYS_SLOW[
-        context.numberOfRetry < BACKOFF_RETRY_DELAYS_SLOW.length
-          ? context.numberOfRetry
+        context.numRetries < BACKOFF_RETRY_DELAYS_SLOW.length
+          ? context.numRetries
           : BACKOFF_RETRY_DELAYS_SLOW.length - 1
       ];
     }
     return BACKOFF_RETRY_DELAYS[
-      context.numberOfRetry < BACKOFF_RETRY_DELAYS.length
-        ? context.numberOfRetry
+      context.numRetries < BACKOFF_RETRY_DELAYS.length
+        ? context.numRetries
         : BACKOFF_RETRY_DELAYS.length - 1
     ];
   }
@@ -1817,16 +1816,15 @@ function makeStateMachine<
   function onError() {}
 
   function onOpen() {
-    clearInterval(context.intervalHandles.heartbeat);
-
-    context.intervalHandles.heartbeat = effects.startHeartbeatInterval();
+    clearInterval(context.timers.heartbeat);
+    context.timers.heartbeat = effects.startHeartbeatInterval();
 
     if (context.connection.current.status === "connecting") {
       updateConnection(
         { ...context.connection.current, status: "open" },
         batchUpdates
       );
-      context.numberOfRetry = 0;
+      context.numRetries = 0;
 
       // Re-broadcast the user presence during a reconnect.
       if (context.lastConnectionId !== undefined) {
@@ -1858,8 +1856,8 @@ function makeStateMachine<
       return;
     }
 
-    clearTimeout(context.timeoutHandles.pongTimeout);
-    context.timeoutHandles.pongTimeout = effects.schedulePongTimeout();
+    clearTimeout(context.timers.pongTimeout);
+    context.timers.pongTimeout = effects.schedulePongTimeout();
 
     if (context.socket.readyState === context.socket.OPEN) {
       context.socket.send("ping");
@@ -1869,129 +1867,6 @@ function makeStateMachine<
   function pongTimeout() {
     log("Pong timeout. Trying to reconnect.");
     reconnect();
-  }
-
-  function reconnect() {
-    if (context.socket) {
-      context.socket.removeEventListener("open", onOpen);
-      context.socket.removeEventListener("message", onMessage);
-      context.socket.removeEventListener("close", onClose);
-      context.socket.removeEventListener("error", onError);
-      context.socket.close();
-      context.socket = null;
-    }
-
-    updateConnection({ status: "unavailable" }, batchUpdates);
-    clearTimeout(context.timeoutHandles.pongTimeout);
-    if (context.timeoutHandles.flush) {
-      clearTimeout(context.timeoutHandles.flush);
-    }
-    clearTimeout(context.timeoutHandles.reconnect);
-    clearInterval(context.intervalHandles.heartbeat);
-    connect();
-  }
-
-  function applyAndSendOps(
-    offlineOps: Map<string, Op>,
-    batchedUpdatesWrapper: (cb: () => void) => void
-  ) {
-    if (offlineOps.size === 0) {
-      return;
-    }
-
-    const messages: ClientMsg<TPresence, TRoomEvent>[] = [];
-
-    const ops = Array.from(offlineOps.values());
-
-    const result = applyOps(ops, true);
-
-    messages.push({
-      type: ClientMsgCode.UPDATE_STORAGE,
-      ops: result.ops,
-    });
-
-    notify(result.updates, batchedUpdatesWrapper);
-
-    effects.send(messages);
-  }
-
-  function tryFlushing() {
-    const storageOps = context.buffer.storageOperations;
-
-    if (storageOps.length > 0) {
-      storageOps.forEach((op) => {
-        context.unacknowledgedOps.set(nn(op.opId), op);
-      });
-      notifyStorageStatus();
-    }
-
-    if (
-      context.socket === null ||
-      context.socket.readyState !== context.socket.OPEN
-    ) {
-      context.buffer.storageOperations = [];
-      return;
-    }
-
-    const now = Date.now();
-
-    const elapsedTime = now - context.lastFlushTime;
-
-    if (elapsedTime > config.throttleDelay) {
-      const messages = flushDataToMessages(context);
-
-      if (messages.length === 0) {
-        return;
-      }
-      effects.send(messages);
-      context.buffer = {
-        messages: [],
-        storageOperations: [],
-        me: null,
-      };
-      context.lastFlushTime = now;
-    } else {
-      if (context.timeoutHandles.flush !== null) {
-        clearTimeout(context.timeoutHandles.flush);
-      }
-
-      context.timeoutHandles.flush = effects.delayFlush(
-        config.throttleDelay - (now - context.lastFlushTime)
-      );
-    }
-  }
-
-  function flushDataToMessages(
-    state: MachineContext<TPresence, TStorage, TUserMeta, TRoomEvent>
-  ) {
-    const messages: ClientMsg<TPresence, TRoomEvent>[] = [];
-    if (state.buffer.me) {
-      messages.push(
-        state.buffer.me.type === "full"
-          ? {
-              type: ClientMsgCode.UPDATE_PRESENCE,
-              // Populating the `targetActor` field turns this message into
-              // a Full Presence™ update message (not a patch), which will get
-              // interpreted by other clients as such.
-              targetActor: -1,
-              data: state.buffer.me.data,
-            }
-          : {
-              type: ClientMsgCode.UPDATE_PRESENCE,
-              data: state.buffer.me.data,
-            }
-      );
-    }
-    for (const event of state.buffer.messages) {
-      messages.push(event);
-    }
-    if (state.buffer.storageOperations.length > 0) {
-      messages.push({
-        type: ClientMsgCode.UPDATE_STORAGE,
-        ops: state.buffer.storageOperations,
-      });
-    }
-    return messages;
   }
 
   function disconnect() {
@@ -2004,22 +1879,120 @@ function makeStateMachine<
       context.socket = null;
     }
 
+    clearTimeout(context.timers.flush);
+    clearTimeout(context.timers.reconnect);
+    clearInterval(context.timers.heartbeat);
+    clearTimeout(context.timers.pongTimeout);
+
     batchUpdates(() => {
       updateConnection({ status: "closed" }, doNotBatchUpdates);
 
-      if (context.timeoutHandles.flush) {
-        clearTimeout(context.timeoutHandles.flush);
-      }
-      clearTimeout(context.timeoutHandles.reconnect);
-      clearTimeout(context.timeoutHandles.pongTimeout);
-      clearInterval(context.intervalHandles.heartbeat);
-
       context.others.clearOthers();
       notify({ others: [{ type: "reset" }] }, doNotBatchUpdates);
-
-      // Clear all event listeners
-      Object.values(eventHub).forEach((eventSource) => eventSource.clear());
     });
+
+    // Clear all event listeners
+    for (const eventSource of Object.values(eventHub)) {
+      eventSource.clear();
+    }
+  }
+
+  function reconnect() {
+    if (context.socket) {
+      context.socket.removeEventListener("open", onOpen);
+      context.socket.removeEventListener("message", onMessage);
+      context.socket.removeEventListener("close", onClose);
+      context.socket.removeEventListener("error", onError);
+      context.socket.close();
+      context.socket = null;
+    }
+
+    clearTimeout(context.timers.flush);
+    clearTimeout(context.timers.reconnect);
+    clearInterval(context.timers.heartbeat);
+    clearTimeout(context.timers.pongTimeout);
+
+    updateConnection({ status: "unavailable" }, batchUpdates);
+
+    connect();
+  }
+
+  function tryFlushing() {
+    const storageOps = context.buffer.storageOperations;
+    if (storageOps.length > 0) {
+      for (const op of storageOps) {
+        context.unacknowledgedOps.set(nn(op.opId), op);
+      }
+      notifyStorageStatus();
+    }
+
+    if (
+      context.socket === null ||
+      context.socket.readyState !== context.socket.OPEN
+    ) {
+      context.buffer.storageOperations = [];
+      return;
+    }
+
+    const now = Date.now();
+    const elapsedMillis = now - context.buffer.lastFlushedAt;
+
+    if (elapsedMillis > config.throttleDelay) {
+      // Flush the buffer right now
+      const messagesToFlush = serializeBuffer();
+      if (messagesToFlush.length === 0) {
+        return;
+      }
+
+      effects.send(messagesToFlush);
+      context.buffer = {
+        lastFlushedAt: now,
+        messages: [],
+        storageOperations: [],
+        me: null,
+      };
+    } else {
+      // Or schedule the flush a few millis into the future
+      clearTimeout(context.timers.flush);
+      context.timers.flush = effects.scheduleFlush(
+        config.throttleDelay - elapsedMillis
+      );
+    }
+  }
+
+  /**
+   * Returns a list of ClientMsgs to flush to the network, computed from all
+   * pending changes in the buffer. Has no side effects.
+   */
+  function serializeBuffer() {
+    const messages: ClientMsg<TPresence, TRoomEvent>[] = [];
+    if (context.buffer.me) {
+      messages.push(
+        context.buffer.me.type === "full"
+          ? {
+              type: ClientMsgCode.UPDATE_PRESENCE,
+              // Populating the `targetActor` field turns this message into
+              // a Full Presence™ update message (not a patch), which will get
+              // interpreted by other clients as such.
+              targetActor: -1,
+              data: context.buffer.me.data,
+            }
+          : {
+              type: ClientMsgCode.UPDATE_PRESENCE,
+              data: context.buffer.me.data,
+            }
+      );
+    }
+    for (const event of context.buffer.messages) {
+      messages.push(event);
+    }
+    if (context.buffer.storageOperations.length > 0) {
+      messages.push({
+        type: ClientMsgCode.UPDATE_STORAGE,
+        ops: context.buffer.storageOperations,
+      });
+    }
+    return messages;
   }
 
   function broadcastEvent(
@@ -2121,10 +2094,6 @@ function makeStateMachine<
     tryFlushing();
   }
 
-  function canUndo() {
-    return context.undoStack.length > 0;
-  }
-
   function redo() {
     if (context.activeBatch) {
       throw new Error("redo is not allowed during a batch");
@@ -2150,10 +2119,6 @@ function makeStateMachine<
       }
     }
     tryFlushing();
-  }
-
-  function canRedo() {
-    return context.redoStack.length > 0;
   }
 
   function batch<T>(callback: () => T): T {
