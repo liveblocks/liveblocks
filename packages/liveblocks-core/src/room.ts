@@ -395,6 +395,15 @@ export type Room<
   TRoomEvent extends Json
 > = {
   /**
+   * @internal
+   * Private methods to directly control the underlying state machine for this
+   * room. Used in the core internals and for unit testing, but as a user of
+   * Liveblocks, NEVER USE ANY OF THESE METHODS DIRECTLY, because bad things
+   * will probably happen if you do.
+   */
+  readonly __internal: PrivateRoomAPI<TPresence, TStorage, TUserMeta, TRoomEvent>; // prettier-ignore
+
+  /**
    * The id of the room.
    */
   readonly id: string;
@@ -542,56 +551,61 @@ export type Room<
    * Close room connection and try to reconnect
    */
   reconnect(): void;
+};
 
-  /**
-   * @internal
-   * Private methods to directly control the underlying state machine for this
-   * room. Used in the core internals and for unit testing, but as a user of
-   * Liveblocks, NEVER USE ANY OF THESE METHODS DIRECTLY, because bad things
-   * will probably happen if you do.
-   */
-  readonly __internal: {
-    // Context
-    buffer: MachineContext<TPresence, TStorage, TUserMeta, TRoomEvent>["buffer"]; // prettier-ignore
-    numRetries: MachineContext<TPresence, TStorage, TUserMeta, TRoomEvent>["numRetries"]; // prettier-ignore
+/**
+ * @internal
+ * Private methods to directly control the underlying state machine for this
+ * room. Used in the core internals and for unit testing, but as a user of
+ * Liveblocks, NEVER USE ANY OF THESE METHODS DIRECTLY, because bad things
+ * will probably happen if you do.
+ */
+type PrivateRoomAPI<
+  TPresence extends JsonObject,
+  TStorage extends LsonObject,
+  TUserMeta extends BaseUserMeta,
+  TRoomEvent extends Json
+> = {
+  // Context
+  buffer: MachineContext<TPresence, TStorage, TUserMeta, TRoomEvent>["buffer"]; // prettier-ignore
+  numRetries: MachineContext<TPresence, TStorage, TUserMeta, TRoomEvent>["numRetries"]; // prettier-ignore
 
-    // Core
-    // XXX Should become .transition({ type: "CONNECT" })
-    connect(): void;
-    // XXX Should become .transition({ type: "DISCONNECT" })
-    disconnect(): void;
+  // Core
+  // XXX Should become .transition({ type: "CONNECT" })
+  connect(): void;
+  // XXX Should become .transition({ type: "DISCONNECT" })
+  disconnect(): void;
 
-    // XXX Should become .transition({ type: "EXPLICIT_CLOSE ???" })
-    // XXX What's the diff with simulateSendCloseEvent() and simulateSocketClose() below?
-    onClose(event: { code: number; wasClean: boolean; reason: string }): void;
-    // XXX OK to be called at any time?
-    onMessage(event: MessageEvent<string>): void;
-    // XXX Should become .transition({ type: "AUTH_DONE", data: <jwt token> })
-    authenticationSuccess(token: RoomAuthToken, socket: WebSocket): void;
-    // XXX OK to be called at any time?
-    onNavigatorOnline(): void;
-    // XXX Should become .transition({ type: "FOCUS_VISIBLE" })
-    onVisibilityChange(visibilityState: DocumentVisibilityState): void;
+  // XXX Should become .transition({ type: "EXPLICIT_CLOSE ???" })
+  // XXX What's the diff with simulateSendCloseEvent() and simulateSocketClose() below?
+  onClose(event: { code: number; wasClean: boolean; reason: string }): void;
+  // XXX OK to be called at any time?
+  onMessage(event: MessageEvent<string>): void;
+  // XXX Should become .transition({ type: "AUTH_DONE", data: <jwt token> })
+  authenticationSuccess(token: RoomAuthToken, socket: WebSocket): void;
+  // XXX OK to be called at any time?
+  onNavigatorOnline(): void;
+  // XXX Should become .transition({ type: "FOCUS_VISIBLE" })
+  onVisibilityChange(visibilityState: DocumentVisibilityState): void;
 
-    // XXX Should become .transition({ type: "IMPLICIT_CLOSE ???" })
-    simulateCloseWebsocket(): void;
-    // XXX Should become .transition({ type: "EXPLICIT_CLOSE ???" })
-    // XXX DRY up inlined type with IWebSocketCloseEvent once that PR is merged into main
-    simulateSendCloseEvent(event: {
-      code: number;
-      wasClean: boolean;
-      reason: string;
-    }): void;
+  // XXX Should become .transition({ type: "IMPLICIT_CLOSE ???" })
+  simulateCloseWebsocket(): void;
+  // XXX Should become .transition({ type: "EXPLICIT_CLOSE ???" })
+  // XXX DRY up inlined type with IWebSocketCloseEvent once that PR is merged into main
+  simulateSendCloseEvent(event: {
+    code: number;
+    wasClean: boolean;
+    reason: string;
+  }): void;
 
-    // XXX Only used in unit tests to test impl details, hide this under __internal!
-    getUndoStack(): HistoryOp<TPresence>[][];
-    // XXX Only used in unit tests to test impl details, hide this under __internal!
-    getItemsCount(): number;
+  // XXX Only used in unit tests to test impl details, hide this under __internal!
+  getUndoStack(): HistoryOp<TPresence>[][];
+  // XXX Only used in unit tests to test impl details, hide this under __internal!
+  getItemsCount(): number;
 
-    // DevTools support
-    getSelf_forDevTools(): DevTools.UserTreeNode | null;
-    getOthers_forDevTools(): readonly DevTools.UserTreeNode[];
-  };
+  // DevTools support
+  getSelf_forDevTools(): DevTools.UserTreeNode | null;
+  getOthers_forDevTools(): readonly DevTools.UserTreeNode[];
 };
 
 type Machine<
