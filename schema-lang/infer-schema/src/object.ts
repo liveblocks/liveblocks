@@ -1,3 +1,4 @@
+import type { PlainLsonObject } from "@liveblocks/core";
 import { AST } from "@liveblocks/schema";
 
 import type { InferredFields } from "./field";
@@ -9,7 +10,7 @@ import {
 import type { ChildContext, InferredType, MergeContext } from "./inference";
 import type { ScoredNames } from "./naming";
 import { generateNames, mergeScoredNames } from "./naming";
-import type { JsonObject, PlainLsonObject } from "./plainLson";
+import type { NonLiveJsonObject } from "./plainLson";
 import type { InferredSchema } from "./schema";
 import { invariant } from "./utils/invariant";
 import { isNotUndefined } from "./utils/typeGuards";
@@ -24,7 +25,7 @@ export type InferredObjectType = {
 };
 
 export function inferObjectType(
-  value: JsonObject | PlainLsonObject,
+  value: NonLiveJsonObject | PlainLsonObject,
   ctx: ChildContext
 ): InferredObjectType {
   const isLive = value.liveblocksType === "LiveObject";

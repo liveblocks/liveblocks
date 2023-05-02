@@ -1,9 +1,10 @@
+import type { PlainLsonFields } from "@liveblocks/core";
 import { AST } from "@liveblocks/schema";
 import { string } from "decoders";
 
 import type { ChildContext, MergeContext } from "./inference";
 import { invalidFieldName } from "./naming";
-import type { JsonObject, PlainLsonFields } from "./plainLson";
+import type { NonLiveJsonObject } from "./plainLson";
 import type { InferredSchema } from "./schema";
 import type { InferredTypeReference } from "./typeReference";
 import {
@@ -30,7 +31,7 @@ const propertyKeyDecoder = string
   );
 
 export function inferLsonFields(
-  fields: PlainLsonFields | JsonObject,
+  fields: PlainLsonFields | NonLiveJsonObject,
   ctx: Omit<ChildContext, "field">
 ): InferredFields {
   const fieldEntries = Object.entries(fields)
