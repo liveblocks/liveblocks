@@ -211,9 +211,11 @@ export async function prepareRoomWithStorage<
   (effects.send as jest.MockedFunction<any>).mockImplementation(onSend);
 
   const room = makeStateMachine<TPresence, TStorage, TUserMeta, TRoomEvent>(
-    makeMachineConfig(effects),
-    {} as TPresence,
-    defaultStorage || ({} as TStorage)
+    {
+      initialPresence: {} as TPresence,
+      initialStorage: defaultStorage || ({} as TStorage),
+    },
+    makeMachineConfig(effects)
   );
   const ws = new MockWebSocket("");
 

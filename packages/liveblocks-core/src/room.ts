@@ -813,10 +813,21 @@ function makeStateMachine<
   TUserMeta extends BaseUserMeta,
   TRoomEvent extends Json
 >(
-  config: MachineConfig<TPresence, TRoomEvent>,
-  initialPresence: TPresence,
-  initialStorage: TStorage | undefined
+  options: Omit<
+    RoomInitializers<TPresence, TStorage>,
+    "shouldInitiallyConnect"
+  >,
+  config: MachineConfig<TPresence, TRoomEvent>
 ): Room<TPresence, TStorage, TUserMeta, TRoomEvent> {
+  const initialPresence =
+    typeof options.initialPresence === "function"
+      ? options.initialPresence(config.roomId)
+      : options.initialPresence;
+  const initialStorage =
+    typeof options.initialStorage === "function"
+      ? options.initialStorage(config.roomId)
+      : options.initialStorage;
+
   // The "context" is the machine's stateful extended context, also sometimes
   // known as the "extended state" of a finite state machine. The context
   // maintains state beyond the inherent state that are the finite states
@@ -2278,16 +2289,9 @@ export function createRoom<
   >,
   config: MachineConfig<TPresence, TRoomEvent>
 ): Room<TPresence, TStorage, TUserMeta, TRoomEvent> {
-  const { initialPresence, initialStorage } = options;
-
   return makeStateMachine<TPresence, TStorage, TUserMeta, TRoomEvent>(
-    config,
-    typeof initialPresence === "function"
-      ? initialPresence(config.roomId)
-      : initialPresence,
-    typeof initialStorage === "function"
-      ? initialStorage(config.roomId)
-      : initialStorage
+    options,
+    config
   );
 }
 

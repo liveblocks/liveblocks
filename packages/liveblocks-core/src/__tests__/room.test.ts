@@ -95,9 +95,11 @@ function setupStateMachine<
 >(initialPresence: TPresence) {
   const effects = mockEffects<TPresence, TRoomEvent>();
   const machine = makeStateMachine<TPresence, TStorage, TUserMeta, TRoomEvent>(
-    makeMachineConfig(effects),
-    initialPresence,
-    undefined // no initialStorage
+    {
+      initialPresence,
+      initialStorage: undefined,
+    },
+    makeMachineConfig(effects)
   );
   return {
     machine,
