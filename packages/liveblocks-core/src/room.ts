@@ -2216,13 +2216,11 @@ function makeStateMachine<
       get buffer() { return context.buffer }, // prettier-ignore
       get numRetries() { return context.numRetries }, // prettier-ignore
 
-      // Internal
       onClose,
       onMessage,
       authenticationSuccess,
       onNavigatorOnline,
 
-      // Internal DevTools
       simulateCloseWebsocket,
       simulateSendCloseEvent,
 
