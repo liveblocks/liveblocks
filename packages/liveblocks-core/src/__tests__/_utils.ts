@@ -23,7 +23,7 @@ import { CrdtType } from "../protocol/SerializedCrdt";
 import type { ServerMsg } from "../protocol/ServerMsg";
 import { ServerMsgCode } from "../protocol/ServerMsg";
 import type { _private_Effects as Effects, Room } from "../room";
-import { createRoom, makeClassicSubscribeFn } from "../room";
+import { createRoom } from "../room";
 import type { JsonStorageUpdate } from "./_updatesUtils";
 import { serializeUpdateToJson } from "./_updatesUtils";
 
@@ -230,7 +230,6 @@ export async function prepareIsolatedStorageTest<TStorage extends LsonObject>(
   return {
     root: storage.root,
     room,
-    subscribe: makeClassicSubscribeFn(room.events),
     undo: room.history.undo,
     redo: room.history.redo,
     ws,
@@ -402,7 +401,6 @@ export async function prepareStorageTest<
   return {
     room,
     refRoom,
-    subscribe: makeClassicSubscribeFn(room.events),
     operations,
     storage,
     refStorage,
@@ -517,8 +515,7 @@ export async function prepareDisconnectedStorageUpdateTest<
 
   const receivedUpdates: JsonStorageUpdate[][] = [];
 
-  const subscribe = makeClassicSubscribeFn(room.events);
-  subscribe(
+  room.subscribe(
     storage.root,
     (updates) => receivedUpdates.push(updates.map(serializeUpdateToJson)),
     { isDeep: true }

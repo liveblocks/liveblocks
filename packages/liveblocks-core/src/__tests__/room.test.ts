@@ -18,7 +18,7 @@ import type { IdTuple, SerializedCrdt } from "../protocol/SerializedCrdt";
 import { CrdtType } from "../protocol/SerializedCrdt";
 import { ServerMsgCode } from "../protocol/ServerMsg";
 import type { _private_Effects as Effects } from "../room";
-import { createRoom, makeClassicSubscribeFn } from "../room";
+import { createRoom } from "../room";
 import type { Others } from "../types/Others";
 import { WebsocketCloseCodes } from "../types/WebsocketCloseCodes";
 import { listUpdate, listUpdateInsert, listUpdateSet } from "./_updatesUtils";
@@ -97,11 +97,7 @@ function setupStateMachine<
     },
     makeMachineConfig(effects)
   );
-  return {
-    room,
-    subscribe: makeClassicSubscribeFn(room.events),
-    effects,
-  };
+  return { room, effects };
 }
 
 describe("room / auth", () => {
@@ -962,7 +958,7 @@ describe("room", () => {
     });
 
     test("batch storage and presence", async () => {
-      const { room, subscribe } = setupStateMachine({});
+      const { room } = setupStateMachine({});
 
       const ws = new MockWebSocket("");
       room.__internal.connect();
@@ -982,8 +978,8 @@ describe("room", () => {
 
       const presenceSubscriber = jest.fn();
       const storageRootSubscriber = jest.fn();
-      subscribe("my-presence", presenceSubscriber);
-      subscribe(storage.root, storageRootSubscriber);
+      room.subscribe("my-presence", presenceSubscriber);
+      room.subscribe(storage.root, storageRootSubscriber);
 
       room.batch(() => {
         room.updatePresence({ x: 0 });
