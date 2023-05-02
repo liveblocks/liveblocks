@@ -2280,14 +2280,7 @@ export function createRoom<
 ): Room<TPresence, TStorage, TUserMeta, TRoomEvent> {
   const { initialPresence, initialStorage } = options;
 
-  //
-  // XXX There barely is anything left between Room and Machine. By now, Room is
-  // basically just a super light wrapper around the Machine type, guarding the
-  // public API.
-  //
-  // XXX It would be nice to just DRY them up into a single type at this point.
-  //
-  const machine = makeStateMachine<TPresence, TStorage, TUserMeta, TRoomEvent>(
+  return makeStateMachine<TPresence, TStorage, TUserMeta, TRoomEvent>(
     config,
     typeof initialPresence === "function"
       ? initialPresence(config.roomId)
@@ -2296,44 +2289,6 @@ export function createRoom<
       ? initialStorage(config.roomId)
       : initialStorage
   );
-
-  const room: Room<TPresence, TStorage, TUserMeta, TRoomEvent> = {
-    __internal: machine.__internal,
-
-    id: machine.id,
-
-    /////////////
-    // Core    //
-    /////////////
-    getConnectionState: machine.getConnectionState,
-    isSelfAware: machine.isSelfAware,
-    getSelf: machine.getSelf,
-    reconnect: machine.reconnect,
-
-    // XXX This subscribe function is the only different public API between
-    subscribe: machine.subscribe,
-
-    //////////////
-    // Presence //
-    //////////////
-    getPresence: machine.getPresence,
-    updatePresence: machine.updatePresence,
-    getOthers: machine.getOthers,
-    broadcastEvent: machine.broadcastEvent,
-
-    //////////////
-    // Storage  //
-    //////////////
-    getStorage: machine.getStorage,
-    getStorageSnapshot: machine.getStorageSnapshot,
-    getStorageStatus: machine.getStorageStatus,
-    events: machine.events,
-
-    batch: machine.batch,
-    history: machine.history,
-  };
-
-  return room;
 }
 
 /**
