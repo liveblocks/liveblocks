@@ -73,7 +73,7 @@ describe("createClient", () => {
           // @ts-expect-error: authEndpoint could be anything for a non-typescript user so we want to allow for this test
           authEndpoint,
           polyfills: {
-            WebSocket: MockWebSocket as unknown as typeof WebSocket,
+            WebSocket: MockWebSocket,
             fetch: fetchMock,
             atob: atobPolyfillMock,
           },
@@ -105,7 +105,7 @@ describe("createClient", () => {
       createClientAndEnter({
         authEndpoint: "/api/auth",
         polyfills: {
-          WebSocket: MockWebSocket as unknown as typeof WebSocket,
+          WebSocket: MockWebSocket,
           fetch: fetchMock,
           atob: atobPolyfillMock,
         },
@@ -118,7 +118,7 @@ describe("createClient", () => {
       createClientAndEnter({
         publicApiKey: "pk_xxx",
         polyfills: {
-          WebSocket: MockWebSocket as unknown as typeof WebSocket,
+          WebSocket: MockWebSocket,
           fetch: fetchMock,
           atob: atobPolyfillMock,
         },
@@ -131,7 +131,7 @@ describe("createClient", () => {
       createClientAndEnter({
         authEndpoint: authEndpointCallback,
         polyfills: {
-          WebSocket: MockWebSocket as unknown as typeof WebSocket,
+          WebSocket: MockWebSocket,
           atob: atobPolyfillMock,
         },
       });
@@ -143,7 +143,7 @@ describe("createClient", () => {
       createClientAndEnter({
         authEndpoint: "/api/auth",
         polyfills: {
-          WebSocket: MockWebSocket as unknown as typeof WebSocket,
+          WebSocket: MockWebSocket,
           atob: atobPolyfillMock,
         },
       })
@@ -157,7 +157,7 @@ describe("createClient", () => {
       createClientAndEnter({
         publicApiKey: "pk_xxx",
         polyfills: {
-          WebSocket: MockWebSocket as unknown as typeof WebSocket,
+          WebSocket: MockWebSocket,
         },
       })
     ).toThrow(
@@ -181,7 +181,7 @@ describe("createClient", () => {
         throttle: "invalid" as unknown as number, // Deliberately use wrong type at runtime
         authEndpoint: "api/auth",
         polyfills: {
-          WebSocket: MockWebSocket as unknown as typeof WebSocket,
+          WebSocket: MockWebSocket,
           fetch: fetchMock,
         },
       })
@@ -194,7 +194,7 @@ describe("createClient", () => {
         throttle: 15,
         authEndpoint: "api/auth",
         polyfills: {
-          WebSocket: MockWebSocket as unknown as typeof WebSocket,
+          WebSocket: MockWebSocket,
           fetch: fetchMock,
         },
       })
@@ -207,7 +207,7 @@ describe("createClient", () => {
         throttle: 1001,
         authEndpoint: "api/auth",
         polyfills: {
-          WebSocket: MockWebSocket as unknown as typeof WebSocket,
+          WebSocket: MockWebSocket,
           fetch: fetchMock,
         },
       })
@@ -232,7 +232,7 @@ describe("when env atob does not exist (atob polyfill handling)", () => {
       createClientAndEnter({
         publicApiKey: "pk_xxx",
         polyfills: {
-          WebSocket: MockWebSocket as unknown as typeof WebSocket,
+          WebSocket: MockWebSocket,
           fetch: fetchMock,
           atob: undefined,
         },
@@ -247,7 +247,7 @@ describe("when env atob does not exist (atob polyfill handling)", () => {
       createClientAndEnter({
         publicApiKey: "pk_xxx",
         polyfills: {
-          WebSocket: MockWebSocket as unknown as typeof WebSocket,
+          WebSocket: MockWebSocket,
           fetch: fetchMock,
           atob: atobPolyfillMock,
         },
