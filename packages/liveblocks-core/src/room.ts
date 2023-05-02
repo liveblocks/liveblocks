@@ -576,7 +576,7 @@ type Machine<
 > = Pick<
   Room<TPresence, TStorage, TUserMeta, TRoomEvent>,
   // TODO: Move props here
-  never
+  "reconnect" | "updatePresence" | "broadcastEvent" | "events"
 > & {
   /* Only access these internals in unit tests, to test implementation details */
   // prettier-ignore
@@ -613,13 +613,8 @@ type Machine<
   connect(): void;
   // XXX Should become .transition({ type: "DISCONNECT" })
   disconnect(): void;
-  // XXX Should become .transition({ type: "RECONNECT" })
-  reconnect(): void;
 
   // Presence
-  updatePresence(patch: Partial<TPresence>, options?: { addToHistory: boolean }): void; // prettier-ignore
-  broadcastEvent(event: TRoomEvent, options?: BroadcastOptions): void;
-
   batch<T>(callback: () => T): T;
   undo(): void;
   redo(): void;
@@ -631,21 +626,6 @@ type Machine<
   getStorage(): Promise<{ root: LiveObject<TStorage> }>;
   getStorageSnapshot(): LiveObject<TStorage> | null;
   getStorageStatus(): StorageStatus;
-
-  readonly events: {
-    readonly customEvent: Observable<CustomEvent<TRoomEvent>>;
-    readonly me: Observable<TPresence>;
-    readonly others: Observable<{
-      others: Others<TPresence, TUserMeta>;
-      event: OthersEvent<TPresence, TUserMeta>;
-    }>;
-    readonly error: Observable<Error>;
-    readonly connection: Observable<ConnectionStatus>;
-    readonly storage: Observable<StorageUpdate[]>;
-    readonly history: Observable<HistoryEvent>;
-    readonly storageDidLoad: Observable<void>;
-    readonly storageStatus: Observable<StorageStatus>;
-  };
 
   // Core
   isSelfAware(): boolean;
