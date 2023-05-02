@@ -192,7 +192,7 @@ function makeMachineConfig<
       url: "/api/auth",
     } as Authentication,
     polyfills: {
-      WebSocket: MockWebSocket as any,
+      WebSocket: MockWebSocket,
     },
     mockedEffects,
   };
@@ -221,10 +221,7 @@ export async function prepareRoomWithStorage<
   const ws = new MockWebSocket("");
 
   machine.__internal.connect();
-  machine.__internal.authenticationSuccess(
-    makeRoomToken(actor, scopes),
-    ws as any
-  );
+  machine.__internal.authenticationSuccess(makeRoomToken(actor, scopes), ws);
   ws.open();
 
   // Start getting the storage, but don't await the promise just yet!
@@ -411,10 +408,7 @@ export async function prepareStorageTest<
     currentActor = actor;
     const ws = new MockWebSocket("");
     machine.__internal.connect();
-    machine.__internal.authenticationSuccess(
-      makeRoomToken(actor, []),
-      ws as any
-    );
+    machine.__internal.authenticationSuccess(makeRoomToken(actor, []), ws);
     ws.open();
 
     // Mock server messages for Presence.
