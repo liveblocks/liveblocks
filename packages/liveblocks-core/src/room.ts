@@ -2404,7 +2404,7 @@ export function makeClassicSubscribeFn<
   TUserMeta extends BaseUserMeta,
   TRoomEvent extends Json
 >(
-  machine: Machine<TPresence, TStorage, TUserMeta, TRoomEvent>
+  machine: Pick<Room<TPresence, TStorage, TUserMeta, TRoomEvent>, "events">
 ): Room<TPresence, TStorage, TUserMeta, TRoomEvent>["subscribe"] {
   // Set up the "subscribe" wrapper API
   function subscribeToLiveStructureDeeply<L extends LiveStructure>(
