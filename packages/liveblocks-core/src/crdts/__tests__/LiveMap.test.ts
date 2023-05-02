@@ -648,7 +648,7 @@ describe("LiveMap", () => {
 
   describe("reconnect with remote changes and subscribe", () => {
     test("Register added to map", async () => {
-      const { expectStorage, machine, subscribe, root } =
+      const { expectStorage, room, subscribe, root } =
         await prepareIsolatedStorageTest<{
           map: LiveMap<string, string>;
         }>(
@@ -670,7 +670,7 @@ describe("LiveMap", () => {
 
       expectStorage({ map: new Map([["first", "a"]]) });
 
-      machine.__internal.onClose(
+      room.__internal.onClose(
         new CloseEvent("close", {
           code: WebsocketCloseCodes.CLOSE_ABNORMAL,
           wasClean: false,
@@ -700,7 +700,7 @@ describe("LiveMap", () => {
         ],
       ];
 
-      reconnect(machine, 3, newInitStorage);
+      reconnect(room, 3, newInitStorage);
 
       expectStorage({
         map: new Map([

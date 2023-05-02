@@ -229,7 +229,7 @@ export async function prepareIsolatedStorageTest<TStorage extends LsonObject>(
 
   return {
     root: storage.root,
-    machine: room,
+    room,
     subscribe: makeClassicSubscribeFn(room.events),
     undo: room.history.undo,
     redo: room.history.redo,
@@ -441,7 +441,7 @@ export async function prepareStorageUpdateTest<
 ): Promise<{
   batch: (fn: () => void) => void;
   root: LiveObject<TStorage>;
-  machine: Room<TPresence, TStorage, TUserMeta, TRoomEvent>;
+  room: Room<TPresence, TStorage, TUserMeta, TRoomEvent>;
   expectUpdates: (updates: JsonStorageUpdate[][]) => void;
 }> {
   const { room: refRoom } = await prepareRoomWithStorage(items, -1);
@@ -487,7 +487,7 @@ export async function prepareStorageUpdateTest<
   return {
     batch: room.batch,
     root: storage.root,
-    machine: room,
+    room,
     expectUpdates: expectUpdatesInBothClients,
   };
 }
@@ -505,7 +505,7 @@ export async function prepareDisconnectedStorageUpdateTest<
 ): Promise<{
   batch: (fn: () => void) => void;
   root: LiveObject<TStorage>;
-  machine: Room<TPresence, TStorage, TUserMeta, TRoomEvent>;
+  room: Room<TPresence, TStorage, TUserMeta, TRoomEvent>;
   expectUpdates: (updates: JsonStorageUpdate[][]) => void;
 }> {
   const { storage, room } = await prepareRoomWithStorage<
@@ -531,7 +531,7 @@ export async function prepareDisconnectedStorageUpdateTest<
   return {
     batch: room.batch,
     root: storage.root,
-    machine: room,
+    room,
     expectUpdates,
   };
 }
@@ -542,16 +542,16 @@ export async function reconnect<
   TUserMeta extends BaseUserMeta,
   TRoomEvent extends Json
 >(
-  machine: Room<TPresence, TStorage, TUserMeta, TRoomEvent>,
+  room: Room<TPresence, TStorage, TUserMeta, TRoomEvent>,
   actor: number,
   newItems: IdTuple<SerializedCrdt>[]
 ) {
   const ws = new MockWebSocket("");
-  machine.__internal.connect();
-  machine.__internal.authenticationSuccess(makeRoomToken(actor, []), ws);
+  room.__internal.connect();
+  room.__internal.authenticationSuccess(makeRoomToken(actor, []), ws);
   ws.open();
 
-  machine.__internal.onMessage(
+  room.__internal.onMessage(
     serverMessage({
       type: ServerMsgCode.INITIAL_STORAGE_STATE,
       items: newItems,

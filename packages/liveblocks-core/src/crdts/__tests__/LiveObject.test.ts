@@ -410,7 +410,7 @@ describe("LiveObject", () => {
 
   describe("acknowledge mechanism", () => {
     it("should not ignore history updates if the current op has not been acknowledged", async () => {
-      const { expectUpdates, batch, root, machine } =
+      const { expectUpdates, batch, root, room } =
         await prepareDisconnectedStorageUpdateTest<{
           items: LiveObject<{ b?: string; a?: string }>;
         }>([
@@ -434,7 +434,7 @@ describe("LiveObject", () => {
         ],
       ]);
 
-      machine.history.undo();
+      room.history.undo();
 
       expect(items.toObject()).toEqual({ a: "B" });
       expectUpdates([
@@ -905,7 +905,7 @@ describe("LiveObject", () => {
 
   describe("reconnect with remote changes and subscribe", () => {
     test("LiveObject updated", async () => {
-      const { expectStorage, machine, root, subscribe } =
+      const { expectStorage, room, root, subscribe } =
         await prepareIsolatedStorageTest<{
           obj: LiveObject<{ a: number }>;
         }>(
@@ -924,7 +924,7 @@ describe("LiveObject", () => {
 
       expectStorage({ obj: { a: 1 } });
 
-      machine.__internal.onClose(
+      room.__internal.onClose(
         new CloseEvent("close", {
           code: WebsocketCloseCodes.CLOSE_ABNORMAL,
           wasClean: false,
@@ -944,7 +944,7 @@ describe("LiveObject", () => {
         ],
       ];
 
-      reconnect(machine, 3, newInitStorage);
+      reconnect(room, 3, newInitStorage);
 
       expectStorage({
         obj: { a: 2 },
@@ -964,7 +964,7 @@ describe("LiveObject", () => {
     });
 
     test("LiveObject updated nested", async () => {
-      const { expectStorage, machine, root, subscribe } =
+      const { expectStorage, room, root, subscribe } =
         await prepareIsolatedStorageTest<{
           obj: LiveObject<{ a: number; subObj?: LiveObject<{ b: number }> }>;
         }>(
@@ -983,7 +983,7 @@ describe("LiveObject", () => {
 
       expectStorage({ obj: { a: 1 } });
 
-      machine.__internal.onClose(
+      room.__internal.onClose(
         new CloseEvent("close", {
           code: WebsocketCloseCodes.CLOSE_ABNORMAL,
           wasClean: false,
@@ -1012,7 +1012,7 @@ describe("LiveObject", () => {
         ],
       ];
 
-      reconnect(machine, 3, newInitStorage);
+      reconnect(room, 3, newInitStorage);
 
       expectStorage({
         obj: { a: 1, subObj: { b: 1 } },
