@@ -2332,7 +2332,7 @@ export function createRoom<
     reconnect: machine.reconnect,
 
     // XXX This subscribe function is the only different public API between
-    subscribe: makeClassicSubscribeFn(machine),
+    subscribe: makeClassicSubscribeFn(machine.events),
 
     //////////////
     // Presence //
@@ -2361,20 +2361,21 @@ export function createRoom<
  * This recreates the classic single `.subscribe()` method for the Room API, as
  * documented here https://liveblocks.io/docs/api-reference/liveblocks-client#Room.subscribe(storageItem)
  */
+// XXX Stop exporting this -- it should be purely an implementation detail of this module
 export function makeClassicSubscribeFn<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
   TUserMeta extends BaseUserMeta,
   TRoomEvent extends Json
 >(
-  machine: Pick<Room<TPresence, TStorage, TUserMeta, TRoomEvent>, "events">
+  events: Room<TPresence, TStorage, TUserMeta, TRoomEvent>["events"]
 ): SubscribeFn<TPresence, TStorage, TUserMeta, TRoomEvent> {
   // Set up the "subscribe" wrapper API
   function subscribeToLiveStructureDeeply<L extends LiveStructure>(
     node: L,
     callback: (updates: StorageUpdate[]) => void
   ): () => void {
-    return machine.events.storage.subscribe((updates) => {
+    return events.storage.subscribe((updates) => {
       const relatedUpdates = updates.filter((update) =>
         isSameNodeOrChildOf(update.node, node)
       );
@@ -2388,7 +2389,7 @@ export function makeClassicSubscribeFn<
     node: L,
     callback: (node: L) => void
   ): () => void {
-    return machine.events.storage.subscribe((updates) => {
+    return events.storage.subscribe((updates) => {
       for (const update of updates) {
         if (update.node._id === node._id) {
           callback(update.node as L);
@@ -2417,12 +2418,12 @@ export function makeClassicSubscribeFn<
       const callback = second;
       switch (first) {
         case "event":
-          return machine.events.customEvent.subscribe(
+          return events.customEvent.subscribe(
             callback as Callback<CustomEvent<TRoomEvent>>
           );
 
         case "my-presence":
-          return machine.events.me.subscribe(callback as Callback<TPresence>);
+          return events.me.subscribe(callback as Callback<TPresence>);
 
         case "others": {
           // NOTE: Others have a different callback structure, where the API
@@ -2431,31 +2432,29 @@ export function makeClassicSubscribeFn<
             others: Others<TPresence, TUserMeta>,
             event: OthersEvent<TPresence, TUserMeta>
           ) => void;
-          return machine.events.others.subscribe(({ others, event }) =>
+          return events.others.subscribe(({ others, event }) =>
             cb(others, event)
           );
         }
 
         case "error":
-          return machine.events.error.subscribe(callback as Callback<Error>);
+          return events.error.subscribe(callback as Callback<Error>);
 
         case "connection":
-          return machine.events.connection.subscribe(
+          return events.connection.subscribe(
             callback as Callback<ConnectionStatus>
           );
 
         case "storage":
-          return machine.events.storage.subscribe(
+          return events.storage.subscribe(
             callback as Callback<StorageUpdate[]>
           );
 
         case "history":
-          return machine.events.history.subscribe(
-            callback as Callback<HistoryEvent>
-          );
+          return events.history.subscribe(callback as Callback<HistoryEvent>);
 
         case "storage-status":
-          return machine.events.storageStatus.subscribe(
+          return events.storageStatus.subscribe(
             callback as Callback<StorageStatus>
           );
 
@@ -2468,7 +2467,7 @@ export function makeClassicSubscribeFn<
     if (second === undefined || typeof first === "function") {
       if (typeof first === "function") {
         const storageCallback = first;
-        return machine.events.storage.subscribe(storageCallback);
+        return events.storage.subscribe(storageCallback);
       } else {
         // istanbul ignore next
         throw new Error("Please specify a listener callback");

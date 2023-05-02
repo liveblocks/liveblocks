@@ -101,7 +101,7 @@ function setupStateMachine<
   );
   return {
     machine,
-    subscribe: makeClassicSubscribeFn(machine),
+    subscribe: makeClassicSubscribeFn(machine.events),
     effects,
   };
 }

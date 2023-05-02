@@ -263,7 +263,7 @@ export async function prepareIsolatedStorageTest<TStorage extends LsonObject>(
   return {
     root: storage.root,
     machine,
-    subscribe: makeClassicSubscribeFn(machine),
+    subscribe: makeClassicSubscribeFn(machine.events),
     undo: machine.history.undo,
     redo: machine.history.redo,
     ws,
@@ -437,7 +437,7 @@ export async function prepareStorageTest<
   return {
     machine,
     refMachine,
-    subscribe: makeClassicSubscribeFn(machine),
+    subscribe: makeClassicSubscribeFn(machine.events),
     operations,
     storage,
     refStorage,
@@ -552,7 +552,7 @@ export async function prepareDisconnectedStorageUpdateTest<
 
   const receivedUpdates: JsonStorageUpdate[][] = [];
 
-  const subscribe = makeClassicSubscribeFn(machine);
+  const subscribe = makeClassicSubscribeFn(machine.events);
   subscribe(
     storage.root,
     (updates) => receivedUpdates.push(updates.map(serializeUpdateToJson)),
