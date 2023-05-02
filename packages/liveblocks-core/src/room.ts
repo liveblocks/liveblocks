@@ -806,6 +806,7 @@ function userToTreeNode(
   };
 }
 
+// XXX Remove this -- this is now almost equal to createRoom
 function makeStateMachine<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
