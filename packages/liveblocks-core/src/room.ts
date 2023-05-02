@@ -504,6 +504,8 @@ export type Room<
      * lifetime of a Room.
      */
     storageDidLoad: Observable<void>;
+
+    readonly storageStatus: Observable<StorageStatus>;
   };
 
   /**
