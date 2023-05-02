@@ -234,6 +234,160 @@ export type BroadcastOptions = {
   shouldQueueEventIfNotReady: boolean;
 };
 
+type SubscribeFn<
+  TPresence extends JsonObject,
+  _TStorage extends LsonObject,
+  TUserMeta extends BaseUserMeta,
+  TRoomEvent extends Json
+> = {
+  /**
+   * Subscribes to changes made on any Live structure. Returns an unsubscribe function.
+   *
+   * @internal This legacy API works, but was never documented publicly.
+   */
+  (callback: StorageCallback): () => void;
+
+  /**
+   * Subscribe to the current user presence updates.
+   *
+   * @param listener the callback that is called every time the current user presence is updated with {@link Room.updatePresence}.
+   *
+   * @returns Unsubscribe function.
+   *
+   * @example
+   * room.subscribe("my-presence", (presence) => {
+   *   // Do something
+   * });
+   */
+  (type: "my-presence", listener: Callback<TPresence>): () => void;
+
+  /**
+   * Subscribe to the other users updates.
+   *
+   * @param listener the callback that is called when a user enters or leaves the room or when a user update its presence.
+   *
+   * @returns Unsubscribe function.
+   *
+   * @example
+   * room.subscribe("others", (others) => {
+   *   // Do something
+   * });
+   *
+   */
+  (
+    type: "others",
+    listener: (
+      others: Others<TPresence, TUserMeta>,
+      event: OthersEvent<TPresence, TUserMeta>
+    ) => void
+  ): () => void;
+
+  /**
+   * Subscribe to events broadcasted by {@link Room.broadcastEvent}
+   *
+   * @param listener the callback that is called when a user calls {@link Room.broadcastEvent}
+   *
+   * @returns Unsubscribe function.
+   *
+   * @example
+   * room.subscribe("event", ({ event, connectionId }) => {
+   *   // Do something
+   * });
+   *
+   */
+  (type: "event", listener: Callback<CustomEvent<TRoomEvent>>): () => void;
+
+  /**
+   * Subscribe to errors thrown in the room.
+   *
+   * @returns Unsubscribe function.
+   *
+   */
+  (type: "error", listener: ErrorCallback): () => void;
+
+  /**
+   * Subscribe to connection state updates.
+   *
+   * @returns Unsubscribe function.
+   *
+   */
+  (type: "connection", listener: Callback<ConnectionStatus>): () => void;
+
+  /**
+   * Subscribes to changes made on a Live structure. Returns an unsubscribe function.
+   * In a future version, we will also expose what exactly changed in the Live structure.
+   *
+   * @param callback The callback this called when the Live structure changes.
+   *
+   * @returns Unsubscribe function.
+   *
+   * @example
+   * const liveMap = new LiveMap();  // Could also be LiveList or LiveObject
+   * const unsubscribe = room.subscribe(liveMap, (liveMap) => { });
+   * unsubscribe();
+   */
+  <L extends LiveStructure>(
+    liveStructure: L,
+    callback: (node: L) => void
+  ): () => void;
+
+  /**
+   * Subscribes to changes made on a Live structure and all the nested data
+   * structures. Returns an unsubscribe function. In a future version, we
+   * will also expose what exactly changed in the Live structure.
+   *
+   * @param callback The callback this called when the Live structure, or any
+   * of its nested values, changes.
+   *
+   * @returns Unsubscribe function.
+   *
+   * @example
+   * const liveMap = new LiveMap();  // Could also be LiveList or LiveObject
+   * const unsubscribe = room.subscribe(liveMap, (updates) => { }, { isDeep: true });
+   * unsubscribe();
+   */
+  <L extends LiveStructure>(
+    liveStructure: L,
+    callback: StorageCallback,
+    options: { isDeep: true }
+  ): () => void;
+
+  /**
+   * Subscribe to the current user's history changes.
+   *
+   * @returns Unsubscribe function.
+   *
+   * @example
+   * room.subscribe("history", ({ canUndo, canRedo }) => {
+   *   // Do something
+   * });
+   */
+  (type: "history", listener: Callback<HistoryEvent>): () => void;
+
+  /**
+   * Subscribe to storage status changes.
+   *
+   * @returns Unsubscribe function.
+   *
+   * @example
+   * room.subscribe("storage-status", (status) => {
+   *   switch(status) {
+   *      case "not-loaded":
+   *        break;
+   *      case "loading":
+   *        break;
+   *      case "synchronizing":
+   *        break;
+   *      case "synchronized":
+   *        break;
+   *      default:
+   *        break;
+   *   }
+   * });
+   */
+  (type: "storage-status", listener: Callback<StorageStatus>): () => void;
+};
+
 export type Room<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
@@ -250,154 +404,7 @@ export type Room<
    */
   isSelfAware(): boolean;
   getConnectionState(): ConnectionStatus;
-  readonly subscribe: {
-    /**
-     * Subscribes to changes made on any Live structure. Returns an unsubscribe function.
-     *
-     * @internal This legacy API works, but was never documented publicly.
-     */
-    (callback: StorageCallback): () => void;
-
-    /**
-     * Subscribe to the current user presence updates.
-     *
-     * @param listener the callback that is called every time the current user presence is updated with {@link Room.updatePresence}.
-     *
-     * @returns Unsubscribe function.
-     *
-     * @example
-     * room.subscribe("my-presence", (presence) => {
-     *   // Do something
-     * });
-     */
-    (type: "my-presence", listener: Callback<TPresence>): () => void;
-
-    /**
-     * Subscribe to the other users updates.
-     *
-     * @param listener the callback that is called when a user enters or leaves the room or when a user update its presence.
-     *
-     * @returns Unsubscribe function.
-     *
-     * @example
-     * room.subscribe("others", (others) => {
-     *   // Do something
-     * });
-     *
-     */
-    (
-      type: "others",
-      listener: (
-        others: Others<TPresence, TUserMeta>,
-        event: OthersEvent<TPresence, TUserMeta>
-      ) => void
-    ): () => void;
-
-    /**
-     * Subscribe to events broadcasted by {@link Room.broadcastEvent}
-     *
-     * @param listener the callback that is called when a user calls {@link Room.broadcastEvent}
-     *
-     * @returns Unsubscribe function.
-     *
-     * @example
-     * room.subscribe("event", ({ event, connectionId }) => {
-     *   // Do something
-     * });
-     *
-     */
-    (type: "event", listener: Callback<CustomEvent<TRoomEvent>>): () => void;
-
-    /**
-     * Subscribe to errors thrown in the room.
-     *
-     * @returns Unsubscribe function.
-     *
-     */
-    (type: "error", listener: ErrorCallback): () => void;
-
-    /**
-     * Subscribe to connection state updates.
-     *
-     * @returns Unsubscribe function.
-     *
-     */
-    (type: "connection", listener: Callback<ConnectionStatus>): () => void;
-
-    /**
-     * Subscribes to changes made on a Live structure. Returns an unsubscribe function.
-     * In a future version, we will also expose what exactly changed in the Live structure.
-     *
-     * @param callback The callback this called when the Live structure changes.
-     *
-     * @returns Unsubscribe function.
-     *
-     * @example
-     * const liveMap = new LiveMap();  // Could also be LiveList or LiveObject
-     * const unsubscribe = room.subscribe(liveMap, (liveMap) => { });
-     * unsubscribe();
-     */
-    <L extends LiveStructure>(
-      liveStructure: L,
-      callback: (node: L) => void
-    ): () => void;
-
-    /**
-     * Subscribes to changes made on a Live structure and all the nested data
-     * structures. Returns an unsubscribe function. In a future version, we
-     * will also expose what exactly changed in the Live structure.
-     *
-     * @param callback The callback this called when the Live structure, or any
-     * of its nested values, changes.
-     *
-     * @returns Unsubscribe function.
-     *
-     * @example
-     * const liveMap = new LiveMap();  // Could also be LiveList or LiveObject
-     * const unsubscribe = room.subscribe(liveMap, (updates) => { }, { isDeep: true });
-     * unsubscribe();
-     */
-    <L extends LiveStructure>(
-      liveStructure: L,
-      callback: StorageCallback,
-      options: { isDeep: true }
-    ): () => void;
-
-    /**
-     * Subscribe to the current user's history changes.
-     *
-     * @returns Unsubscribe function.
-     *
-     * @example
-     * room.subscribe("history", ({ canUndo, canRedo }) => {
-     *   // Do something
-     * });
-     */
-    (type: "history", listener: Callback<HistoryEvent>): () => void;
-
-    /**
-     * Subscribe to storage status changes.
-     *
-     * @returns Unsubscribe function.
-     *
-     * @example
-     * room.subscribe("storage-status", (status) => {
-     *   switch(status) {
-     *      case "not-loaded":
-     *        break;
-     *      case "loading":
-     *        break;
-     *      case "synchronizing":
-     *        break;
-     *      case "synchronized":
-     *        break;
-     *      default:
-     *        break;
-     *   }
-     * });
-     */
-    (type: "storage-status", listener: Callback<StorageStatus>): () => void;
-  };
+  readonly subscribe: SubscribeFn<TPresence, TStorage, TUserMeta, TRoomEvent>;
 
   /**
    * Room's history contains functions that let you undo and redo operation made on by the current client on the presence and storage.
@@ -2373,7 +2380,7 @@ export function makeClassicSubscribeFn<
   TRoomEvent extends Json
 >(
   machine: Pick<Room<TPresence, TStorage, TUserMeta, TRoomEvent>, "events">
-): Room<TPresence, TStorage, TUserMeta, TRoomEvent>["subscribe"] {
+): SubscribeFn<TPresence, TStorage, TUserMeta, TRoomEvent> {
   // Set up the "subscribe" wrapper API
   function subscribeToLiveStructureDeeply<L extends LiveStructure>(
     node: L,
