@@ -613,25 +613,7 @@ type Machine<
   TStorage extends LsonObject,
   TUserMeta extends BaseUserMeta,
   TRoomEvent extends Json
-> = Pick<
-  Room<TPresence, TStorage, TUserMeta, TRoomEvent>,
-  // TODO: Move props here
-  | "reconnect"
-  | "updatePresence"
-  | "broadcastEvent"
-  | "events"
-  | "batch"
-  | "history"
-  | "getStorage"
-  | "getStorageSnapshot"
-  | "getStorageStatus"
-  | "isSelfAware"
-  | "getConnectionState"
-  | "getSelf"
-  | "getPresence"
-  | "getOthers"
-  | "__internal"
->;
+> = Omit<Room<TPresence, TStorage, TUserMeta, TRoomEvent>, "id" | "subscribe">;
 
 const BACKOFF_RETRY_DELAYS = [250, 500, 1000, 2000, 4000, 8000, 10000];
 const BACKOFF_RETRY_DELAYS_SLOW = [2000, 30000, 60000, 300000];
