@@ -18,11 +18,7 @@ import type { IdTuple, SerializedCrdt } from "../protocol/SerializedCrdt";
 import { CrdtType } from "../protocol/SerializedCrdt";
 import { ServerMsgCode } from "../protocol/ServerMsg";
 import type { _private_Effects as Effects } from "../room";
-import {
-  _private_makeStateMachine as makeStateMachine,
-  createRoom,
-  makeClassicSubscribeFn,
-} from "../room";
+import { createRoom, makeClassicSubscribeFn } from "../room";
 import type { Others } from "../types/Others";
 import { WebsocketCloseCodes } from "../types/WebsocketCloseCodes";
 import { listUpdate, listUpdateInsert, listUpdateSet } from "./_updatesUtils";
@@ -94,7 +90,7 @@ function setupStateMachine<
   TRoomEvent extends Json
 >(initialPresence: TPresence) {
   const effects = mockEffects<TPresence, TRoomEvent>();
-  const machine = makeStateMachine<TPresence, TStorage, TUserMeta, TRoomEvent>(
+  const machine = createRoom<TPresence, TStorage, TUserMeta, TRoomEvent>(
     {
       initialPresence,
       initialStorage: undefined,

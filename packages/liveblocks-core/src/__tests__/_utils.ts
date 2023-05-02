@@ -23,10 +23,7 @@ import { CrdtType } from "../protocol/SerializedCrdt";
 import type { ServerMsg } from "../protocol/ServerMsg";
 import { ServerMsgCode } from "../protocol/ServerMsg";
 import type { _private_Effects as Effects, Room } from "../room";
-import {
-  _private_makeStateMachine as makeStateMachine,
-  makeClassicSubscribeFn,
-} from "../room";
+import { createRoom, makeClassicSubscribeFn } from "../room";
 import type { JsonStorageUpdate } from "./_updatesUtils";
 import { serializeUpdateToJson } from "./_updatesUtils";
 
@@ -210,7 +207,7 @@ export async function prepareRoomWithStorage<
   const effects = mockEffects();
   (effects.send as jest.MockedFunction<any>).mockImplementation(onSend);
 
-  const room = makeStateMachine<TPresence, TStorage, TUserMeta, TRoomEvent>(
+  const room = createRoom<TPresence, TStorage, TUserMeta, TRoomEvent>(
     {
       initialPresence: {} as TPresence,
       initialStorage: defaultStorage || ({} as TStorage),

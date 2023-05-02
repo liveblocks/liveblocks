@@ -806,8 +806,11 @@ function userToTreeNode(
   };
 }
 
-// XXX Remove this -- this is now almost equal to createRoom
-function makeStateMachine<
+/**
+ * Initializes a new Room state machine, and returns its public API to observe
+ * and control it.
+ */
+export function createRoom<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
   TUserMeta extends BaseUserMeta,
@@ -2274,28 +2277,6 @@ function makeStateMachine<
 }
 
 /**
- * Initializes a new Room state machine, and returns its public API to observe
- * and control it.
- */
-export function createRoom<
-  TPresence extends JsonObject,
-  TStorage extends LsonObject,
-  TUserMeta extends BaseUserMeta,
-  TRoomEvent extends Json
->(
-  options: Omit<
-    RoomInitializers<TPresence, TStorage>,
-    "shouldInitiallyConnect"
-  >,
-  config: MachineConfig<TPresence, TRoomEvent>
-): Room<TPresence, TStorage, TUserMeta, TRoomEvent> {
-  return makeStateMachine<TPresence, TStorage, TUserMeta, TRoomEvent>(
-    options,
-    config
-  );
-}
-
-/**
  * This recreates the classic single `.subscribe()` method for the Room API, as
  * documented here https://liveblocks.io/docs/api-reference/liveblocks-client#Room.subscribe(storageItem)
  */
@@ -2572,5 +2553,4 @@ class AuthenticationError extends Error {
 // These exports are considered private implementation details and only
 // exported here to be accessed used in our test suite.
 //
-export { makeStateMachine as _private_makeStateMachine };
 export type { Effects as _private_Effects };
