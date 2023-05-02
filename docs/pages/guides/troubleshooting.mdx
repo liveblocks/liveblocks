@@ -60,7 +60,7 @@ Just do either of the following to avoid it!
    `unstable_batchedUpdates` function to the RoomProvider in the mean time, so
    Liveblocks can circumvent the issue on your behalf!
 
-```tsx highlight="1,8"
+```tsx highlight="1,7"
 import { unstable_batchedUpdates } from "react-dom";
 //                                      ^^^^^^^^^^^ ...or "react-native"!
 <RoomProvider
@@ -95,6 +95,7 @@ function Parent() {
   const shapes = useStorage((root) => root.shapes);
   return shapes.map(({ id }) => <Child key={id} id={id} />);
 }
+
 function Child({ id }) {
   const shape = useStorage((root) => root.shapes.get(id));
   return <Shape x={shape.x} y={shape.y} />;
