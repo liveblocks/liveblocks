@@ -1617,6 +1617,11 @@ function makeStateMachine<
       return;
     }
 
+    if (typeof event.data !== "string") {
+      // istanbul ignore next: Unknown incoming message
+      return;
+    }
+
     const messages = parseServerMessages(event.data);
     if (messages === null || messages.length === 0) {
       // istanbul ignore next: Unknown incoming message
