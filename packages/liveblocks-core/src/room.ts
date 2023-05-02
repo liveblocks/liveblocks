@@ -551,17 +551,42 @@ export type Room<
    * will probably happen if you do.
    */
   readonly __internal: {
+    // Core
+    // XXX Should become .transition({ type: "CONNECT" })
     connect(): void;
+    // XXX Should become .transition({ type: "DISCONNECT" })
     disconnect(): void;
+
+    // Context
+    buffer: MachineContext<TPresence, TStorage, TUserMeta, TRoomEvent>["buffer"]; // prettier-ignore
+    numRetries: MachineContext<TPresence, TStorage, TUserMeta, TRoomEvent>["numRetries"]; // prettier-ignore
+
+    // XXX Should become .transition({ type: "EXPLICIT_CLOSE ???" })
+    // XXX What's the diff with simulateSendCloseEvent() and simulateSocketClose() below?
+    onClose(event: { code: number; wasClean: boolean; reason: string }): void;
+    // XXX OK to be called at any time?
+    onMessage(event: MessageEvent<string>): void;
+    // XXX Should become .transition({ type: "AUTH_DONE", data: <jwt token> })
+    authenticationSuccess(token: RoomAuthToken, socket: WebSocket): void;
+    // XXX OK to be called at any time?
     onNavigatorOnline(): void;
+    // XXX Should become .transition({ type: "FOCUS_VISIBLE" })
     onVisibilityChange(visibilityState: DocumentVisibilityState): void;
 
+    // XXX Should become .transition({ type: "IMPLICIT_CLOSE ???" })
     simulateCloseWebsocket(): void;
+    // XXX Should become .transition({ type: "EXPLICIT_CLOSE ???" })
+    // XXX DRY up inlined type with IWebSocketCloseEvent once that PR is merged into main
     simulateSendCloseEvent(event: {
       code: number;
       wasClean: boolean;
       reason: string;
     }): void;
+
+    // XXX Only used in unit tests to test impl details, hide this under __internal!
+    getUndoStack(): HistoryOp<TPresence>[][];
+    // XXX Only used in unit tests to test impl details, hide this under __internal!
+    getItemsCount(): number;
 
     /** For DevTools support */
     getSelf_forDevTools(): DevTools.UserTreeNode | null;
@@ -591,47 +616,8 @@ type Machine<
   | "getSelf"
   | "getPresence"
   | "getOthers"
-> & {
-  /* Only access these internals in unit tests, to test implementation details */
-  readonly __internal: {
-    // Context
-    buffer: MachineContext<TPresence, TStorage, TUserMeta, TRoomEvent>["buffer"]; // prettier-ignore
-    numRetries: MachineContext<TPresence, TStorage, TUserMeta, TRoomEvent>["numRetries"]; // prettier-ignore
-
-    // XXX Should become .transition({ type: "EXPLICIT_CLOSE ???" })
-    // XXX What's the diff with simulateSendCloseEvent() and simulateSocketClose() below?
-    onClose(event: { code: number; wasClean: boolean; reason: string }): void;
-    // XXX OK to be called at any time?
-    onMessage(event: MessageEvent<string>): void;
-    // XXX Should become .transition({ type: "AUTH_DONE", data: <jwt token> })
-    authenticationSuccess(token: RoomAuthToken, socket: WebSocket): void;
-    // XXX OK to be called at any time?
-    onNavigatorOnline(): void;
-
-    // Internal unit testing tools
-    // XXX Should become .transition({ type: "IMPLICIT_CLOSE ???" })
-    simulateCloseWebsocket(): void;
-    // XXX Should become .transition({ type: "EXPLICIT_CLOSE ???" })
-    simulateSendCloseEvent(event: { code: number; wasClean: boolean; reason: string; }): void; // prettier-ignore
-
-    // XXX Should become .transition({ type: "FOCUS_VISIBLE" })
-    onVisibilityChange(visibilityState: DocumentVisibilityState): void;
-    // XXX Only used in unit tests to test impl details, hide this under __internal!
-    getUndoStack(): HistoryOp<TPresence>[][];
-    // XXX Only used in unit tests to test impl details, hide this under __internal!
-    getItemsCount(): number;
-
-    // Core
-    // XXX Should become .transition({ type: "CONNECT" })
-    connect(): void;
-    // XXX Should become .transition({ type: "DISCONNECT" })
-    disconnect(): void;
-
-    // DevTools support
-    getSelf_forDevTools(): DevTools.UserTreeNode | null;
-    getOthers_forDevTools(): readonly DevTools.UserTreeNode[];
-  };
-};
+  | "__internal"
+>;
 
 const BACKOFF_RETRY_DELAYS = [250, 500, 1000, 2000, 4000, 8000, 10000];
 const BACKOFF_RETRY_DELAYS_SLOW = [2000, 30000, 60000, 300000];
