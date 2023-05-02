@@ -13,7 +13,7 @@
     "nuxt": "^3.4.3"
   },
   "dependencies": {
-    "@liveblocks/client": "^1.0.6",
-    "@liveblocks/node": "^1.0.6"
+    "@liveblocks/client": "^1.0.7",
+    "@liveblocks/node": "^1.0.7"
   }
 }
