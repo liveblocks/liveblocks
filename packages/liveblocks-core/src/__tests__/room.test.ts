@@ -256,7 +256,7 @@ describe("room", () => {
     const { room } = setupStateMachine({});
     room.__internal.authenticationSuccess(
       defaultRoomToken,
-      new MockWebSocket("")
+      new MockWebSocket()
     );
     expect(room.getConnectionState()).toBe("connecting");
   });
@@ -264,7 +264,7 @@ describe("room", () => {
   test("initial presence should be sent once the connection is open", () => {
     const { room, effects } = setupStateMachine({ x: 0 });
 
-    const ws = new MockWebSocket("");
+    const ws = new MockWebSocket();
     room.__internal.connect();
     room.__internal.authenticationSuccess(defaultRoomToken, ws);
     ws.open();
@@ -277,7 +277,7 @@ describe("room", () => {
   test("if presence has been updated before the connection, it should be sent when the connection is ready", () => {
     const { room, effects } = setupStateMachine({});
 
-    const ws = new MockWebSocket("");
+    const ws = new MockWebSocket();
     room.updatePresence({ x: 0 });
     room.__internal.connect();
     room.__internal.authenticationSuccess(defaultRoomToken, ws);
@@ -291,7 +291,7 @@ describe("room", () => {
   test("if no presence has been set before the connection is open, an empty presence should be sent", () => {
     const { room, effects } = setupStateMachine({} as never);
 
-    const ws = new MockWebSocket("");
+    const ws = new MockWebSocket();
     room.__internal.connect();
     room.__internal.authenticationSuccess(defaultRoomToken, ws);
     ws.open();
@@ -304,7 +304,7 @@ describe("room", () => {
   test("initial presence followed by updatePresence should delay sending the second presence event", () => {
     const { room, effects } = setupStateMachine({ x: 0 });
 
-    const ws = new MockWebSocket("");
+    const ws = new MockWebSocket();
     room.__internal.connect();
     room.__internal.authenticationSuccess(defaultRoomToken, ws);
 
@@ -348,7 +348,7 @@ describe("room", () => {
   test("others should be iterable", () => {
     const { room } = setupStateMachine({});
 
-    const ws = new MockWebSocket("");
+    const ws = new MockWebSocket();
     room.__internal.connect();
     room.__internal.authenticationSuccess(defaultRoomToken, ws);
     ws.open();
@@ -384,7 +384,7 @@ describe("room", () => {
   test("others should be iterable", () => {
     const { room } = setupStateMachine({});
 
-    const ws = new MockWebSocket("");
+    const ws = new MockWebSocket();
     room.__internal.connect();
     room.__internal.authenticationSuccess(defaultRoomToken, ws);
     ws.open();
@@ -420,7 +420,7 @@ describe("room", () => {
   test("others should be read-only when associated scopes are received", () => {
     const { room } = setupStateMachine({});
 
-    const ws = new MockWebSocket("");
+    const ws = new MockWebSocket();
     room.__internal.connect();
     room.__internal.authenticationSuccess(defaultRoomToken, ws);
     ws.open();
@@ -456,7 +456,7 @@ describe("room", () => {
   test("should clear users when socket close", () => {
     const { room } = setupStateMachine({});
 
-    const ws = new MockWebSocket("");
+    const ws = new MockWebSocket();
     room.__internal.connect();
     room.__internal.authenticationSuccess(defaultRoomToken, ws);
     ws.open();
@@ -507,7 +507,7 @@ describe("room", () => {
 
     const { room } = setupStateMachine({});
 
-    const ws = new MockWebSocket("");
+    const ws = new MockWebSocket();
     room.__internal.connect();
     room.__internal.authenticationSuccess(defaultRoomToken, ws);
     ws.open();
@@ -571,7 +571,7 @@ describe("room", () => {
     test("should send event to other users", () => {
       const { room, effects } = setupStateMachine({});
 
-      const ws = new MockWebSocket("");
+      const ws = new MockWebSocket();
       room.__internal.connect();
       room.__internal.authenticationSuccess(defaultRoomToken, ws);
 
@@ -610,7 +610,7 @@ describe("room", () => {
 
       expect(effects.send).not.toHaveBeenCalled();
 
-      const ws = new MockWebSocket("");
+      const ws = new MockWebSocket();
       room.__internal.connect();
       room.__internal.authenticationSuccess(defaultRoomToken, ws);
       ws.open();
@@ -631,7 +631,7 @@ describe("room", () => {
 
       expect(effects.send).not.toHaveBeenCalled();
 
-      const ws = new MockWebSocket("");
+      const ws = new MockWebSocket();
       room.__internal.connect();
       room.__internal.authenticationSuccess(defaultRoomToken, ws);
       ws.open();
@@ -647,7 +647,7 @@ describe("room", () => {
   test("storage should be initialized properly", async () => {
     const { room } = setupStateMachine({});
 
-    const ws = new MockWebSocket("");
+    const ws = new MockWebSocket();
     room.__internal.connect();
     room.__internal.authenticationSuccess(defaultRoomToken, ws);
     ws.open();
@@ -669,7 +669,7 @@ describe("room", () => {
   test("undo redo with presence", async () => {
     const { room } = setupStateMachine({});
 
-    const ws = new MockWebSocket("");
+    const ws = new MockWebSocket();
     room.__internal.connect();
     room.__internal.authenticationSuccess(defaultRoomToken, ws);
     ws.open();
@@ -724,7 +724,7 @@ describe("room", () => {
   test("if presence is not added to history during a batch, it should not impact the undo/stack", async () => {
     const { room } = setupStateMachine({});
 
-    const ws = new MockWebSocket("");
+    const ws = new MockWebSocket();
     room.__internal.connect();
     room.__internal.authenticationSuccess(defaultRoomToken, ws);
     ws.open();
@@ -758,7 +758,7 @@ describe("room", () => {
   test("if nothing happened while the history was paused, the undo stack should not be impacted", () => {
     const { room } = setupStateMachine({});
 
-    const ws = new MockWebSocket("");
+    const ws = new MockWebSocket();
     room.__internal.connect();
     room.__internal.authenticationSuccess(defaultRoomToken, ws);
     ws.open();
@@ -779,7 +779,7 @@ describe("room", () => {
   test("undo redo with presence that do not impact presence", async () => {
     const { room } = setupStateMachine({});
 
-    const ws = new MockWebSocket("");
+    const ws = new MockWebSocket();
     room.__internal.connect();
     room.__internal.authenticationSuccess(defaultRoomToken, ws);
     ws.open();
@@ -795,7 +795,7 @@ describe("room", () => {
   test("pause / resume history", async () => {
     const { room } = setupStateMachine({});
 
-    const ws = new MockWebSocket("");
+    const ws = new MockWebSocket();
     room.__internal.connect();
     room.__internal.authenticationSuccess(defaultRoomToken, ws);
     ws.open();
@@ -829,7 +829,7 @@ describe("room", () => {
   test("undo while history is paused", async () => {
     const { room } = setupStateMachine({});
 
-    const ws = new MockWebSocket("");
+    const ws = new MockWebSocket();
     room.__internal.connect();
     room.__internal.authenticationSuccess(defaultRoomToken, ws);
     ws.open();
@@ -853,7 +853,7 @@ describe("room", () => {
   test("undo redo with presence + storage", async () => {
     const { room } = setupStateMachine({});
 
-    const ws = new MockWebSocket("");
+    const ws = new MockWebSocket();
     room.__internal.connect();
     room.__internal.authenticationSuccess(defaultRoomToken, ws);
     ws.open();
@@ -894,7 +894,7 @@ describe("room", () => {
   test("batch without changes should not erase redo stack", async () => {
     const { room } = setupStateMachine({});
 
-    const ws = new MockWebSocket("");
+    const ws = new MockWebSocket();
     room.__internal.connect();
     room.__internal.authenticationSuccess(defaultRoomToken, ws);
     ws.open();
@@ -960,7 +960,7 @@ describe("room", () => {
     test("batch storage and presence", async () => {
       const { room } = setupStateMachine({});
 
-      const ws = new MockWebSocket("");
+      const ws = new MockWebSocket();
       room.__internal.connect();
       room.__internal.authenticationSuccess(defaultRoomToken, ws);
       ws.open();
@@ -1201,7 +1201,7 @@ describe("room", () => {
 
       const { room } = setupStateMachine<P, never, never, never>({});
 
-      const ws = new MockWebSocket("");
+      const ws = new MockWebSocket();
       room.__internal.connect();
       room.__internal.authenticationSuccess(defaultRoomToken, ws);
       ws.open();
@@ -1252,7 +1252,7 @@ describe("room", () => {
     test("event", () => {
       const { room } = setupStateMachine({});
 
-      const ws = new MockWebSocket("");
+      const ws = new MockWebSocket();
       room.__internal.connect();
       room.__internal.authenticationSuccess(defaultRoomToken, ws);
       ws.open();
@@ -1517,7 +1517,7 @@ describe("room", () => {
     test("when error code 1006", () => {
       const { room } = setupStateMachine({ x: 0 });
 
-      const ws = new MockWebSocket("");
+      const ws = new MockWebSocket();
       room.__internal.connect();
       room.__internal.authenticationSuccess(defaultRoomToken, ws);
       ws.open();
@@ -1539,7 +1539,7 @@ describe("room", () => {
     test("when error code 4002", () => {
       const { room } = setupStateMachine({ x: 0 });
 
-      const ws = new MockWebSocket("");
+      const ws = new MockWebSocket();
       room.__internal.connect();
       room.__internal.authenticationSuccess(defaultRoomToken, ws);
       ws.open();
@@ -1562,7 +1562,7 @@ describe("room", () => {
       const { room } = setupStateMachine({ x: 0 });
       expect(room.getConnectionState()).toBe("closed");
 
-      const ws = new MockWebSocket("");
+      const ws = new MockWebSocket();
       room.__internal.connect();
       expect(room.getConnectionState()).toBe("authenticating");
 
@@ -1590,7 +1590,7 @@ describe("room", () => {
 
       const { room } = setupStateMachine<P, S, M, E>({});
 
-      const ws = new MockWebSocket("");
+      const ws = new MockWebSocket();
       room.__internal.connect();
       room.__internal.authenticationSuccess(defaultRoomToken, ws);
       ws.open();
