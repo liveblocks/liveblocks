@@ -576,7 +576,12 @@ type Machine<
 > = Pick<
   Room<TPresence, TStorage, TUserMeta, TRoomEvent>,
   // TODO: Move props here
-  "reconnect" | "updatePresence" | "broadcastEvent" | "events"
+  | "reconnect"
+  | "updatePresence"
+  | "broadcastEvent"
+  | "events"
+  | "batch"
+  | "history"
 > & {
   /* Only access these internals in unit tests, to test implementation details */
   // prettier-ignore
@@ -613,17 +618,6 @@ type Machine<
   connect(): void;
   // XXX Should become .transition({ type: "DISCONNECT" })
   disconnect(): void;
-
-  // Presence
-  batch<T>(callback: () => T): T;
-  readonly history: {
-    undo(): void;
-    redo(): void;
-    canUndo(): boolean;
-    canRedo(): boolean;
-    pause(): void;
-    resume(): void;
-  };
 
   getStorage(): Promise<{ root: LiveObject<TStorage> }>;
   getStorageSnapshot(): LiveObject<TStorage> | null;
