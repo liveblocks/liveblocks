@@ -476,7 +476,7 @@ export async function prepareStorageUpdateTest<
 ): Promise<{
   batch: (fn: () => void) => void;
   root: LiveObject<TStorage>;
-  machine: Machine<TPresence, TStorage, TUserMeta, TRoomEvent>;
+  machine: Room<TPresence, TStorage, TUserMeta, TRoomEvent>;
   expectUpdates: (updates: JsonStorageUpdate[][]) => void;
 }> {
   const { machine: refMachine } = await prepareRoomWithStorage(items, -1);
@@ -540,7 +540,7 @@ export async function prepareDisconnectedStorageUpdateTest<
 ): Promise<{
   batch: (fn: () => void) => void;
   root: LiveObject<TStorage>;
-  machine: Machine<TPresence, TStorage, TUserMeta, TRoomEvent>;
+  machine: Room<TPresence, TStorage, TUserMeta, TRoomEvent>;
   expectUpdates: (updates: JsonStorageUpdate[][]) => void;
 }> {
   const { storage, machine } = await prepareRoomWithStorage<
@@ -577,7 +577,7 @@ export async function reconnect<
   TUserMeta extends BaseUserMeta,
   TRoomEvent extends Json
 >(
-  machine: Machine<TPresence, TStorage, TUserMeta, TRoomEvent>,
+  machine: Room<TPresence, TStorage, TUserMeta, TRoomEvent>,
   actor: number,
   newItems: IdTuple<SerializedCrdt>[]
 ) {

@@ -613,7 +613,7 @@ type Machine<
   TStorage extends LsonObject,
   TUserMeta extends BaseUserMeta,
   TRoomEvent extends Json
-> = Omit<Room<TPresence, TStorage, TUserMeta, TRoomEvent>, never>;
+> = Room<TPresence, TStorage, TUserMeta, TRoomEvent>;
 
 const BACKOFF_RETRY_DELAYS = [250, 500, 1000, 2000, 4000, 8000, 10000];
 const BACKOFF_RETRY_DELAYS_SLOW = [2000, 30000, 60000, 300000];
@@ -822,7 +822,7 @@ function makeStateMachine<
   config: MachineConfig<TPresence, TRoomEvent>,
   initialPresence: TPresence,
   initialStorage: TStorage | undefined
-): Machine<TPresence, TStorage, TUserMeta, TRoomEvent> {
+): Room<TPresence, TStorage, TUserMeta, TRoomEvent> {
   // The "context" is the machine's stateful extended context, also sometimes
   // known as the "extended state" of a finite state machine. The context
   // maintains state beyond the inherent state that are the finite states
