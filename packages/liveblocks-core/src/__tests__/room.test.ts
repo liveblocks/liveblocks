@@ -1067,7 +1067,7 @@ describe("room", () => {
         redo,
         batch,
         updatePresence,
-        refMachine,
+        refRoom: refMachine,
       } = await prepareStorageTest<S, P, M, E>(
         [
           createSerializedObject("0:0", {}),
@@ -1314,7 +1314,7 @@ describe("room", () => {
 
   describe("offline", () => {
     test("disconnect and reconnect with offline changes", async () => {
-      const { storage, expectStorage, machine, refStorage, reconnect, ws } =
+      const { storage, expectStorage, room, refStorage, reconnect, ws } =
         await prepareStorageTest<{ items: LiveList<string> }>(
           [
             createSerializedObject("0:0", {}),
@@ -1371,7 +1371,7 @@ describe("room", () => {
         items: ["A", "B"],
       });
 
-      machine.history.undo();
+      room.history.undo();
 
       expectStorage({
         items: ["A"],
@@ -1422,12 +1422,12 @@ describe("room", () => {
     });
 
     test("disconnect and reconnect should keep user current presence", async () => {
-      const { machine, refMachine, reconnect, ws } = await prepareStorageTest<
+      const { room, refRoom, reconnect, ws } = await prepareStorageTest<
         never,
         { x: number }
       >([createSerializedObject("0:0", {})], 1);
 
-      machine.updatePresence({ x: 1 });
+      room.updatePresence({ x: 1 });
 
       ws.closeFromBackend(
         new CloseEvent("close", {
@@ -1438,7 +1438,7 @@ describe("room", () => {
 
       reconnect(2);
 
-      const refMachineOthers = refMachine.getOthers();
+      const refMachineOthers = refRoom.getOthers();
 
       expect(refMachineOthers).toEqual([
         {
@@ -1459,7 +1459,7 @@ describe("room", () => {
     });
 
     test("hasPendingStorageModifications", async () => {
-      const { storage, expectStorage, machine, refStorage, reconnect, ws } =
+      const { storage, expectStorage, room, refStorage, reconnect, ws } =
         await prepareStorageTest<{ x: number }>(
           [createSerializedObject("0:0", { x: 0 })],
           1
@@ -1467,11 +1467,11 @@ describe("room", () => {
 
       expectStorage({ x: 0 });
 
-      expect(machine.getStorageStatus()).toBe("synchronized");
+      expect(room.getStorageStatus()).toBe("synchronized");
 
       const storageStatusCallback = jest.fn();
 
-      machine.events.storageStatus.subscribe(storageStatusCallback);
+      room.events.storageStatus.subscribe(storageStatusCallback);
 
       ws.closeFromBackend(
         new CloseEvent("close", {
@@ -1483,7 +1483,7 @@ describe("room", () => {
       storage.root.set("x", 1);
 
       expect(storageStatusCallback).toBeCalledWith("synchronizing");
-      expect(machine.getStorageStatus()).toBe("synchronizing");
+      expect(room.getStorageStatus()).toBe("synchronizing");
 
       const storageJson = lsonToJson(storage.root);
       expect(storageJson).toEqual({ x: 1 });
@@ -1499,7 +1499,7 @@ describe("room", () => {
       expectStorage({
         x: 1,
       });
-      expect(machine.getStorageStatus()).toBe("synchronized");
+      expect(room.getStorageStatus()).toBe("synchronized");
       expect(storageStatusCallback).toBeCalledWith("synchronized");
 
       expect(storageStatusCallback).toHaveBeenCalledTimes(2);

@@ -1127,20 +1127,19 @@ describe("LiveList", () => {
 
   describe("subscriptions", () => {
     test("batch multiple actions", async () => {
-      const { machine, storage, batch, expectStorage } =
-        await prepareStorageTest<{
-          items: LiveList<string>;
-        }>(
-          [
-            createSerializedObject("0:0", {}),
-            createSerializedList("0:1", "0:0", "items"),
-            createSerializedRegister("0:2", "0:1", FIRST_POSITION, "a"),
-          ],
-          1
-        );
+      const { room, storage, batch, expectStorage } = await prepareStorageTest<{
+        items: LiveList<string>;
+      }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedList("0:1", "0:0", "items"),
+          createSerializedRegister("0:2", "0:1", FIRST_POSITION, "a"),
+        ],
+        1
+      );
 
       const callback = jest.fn();
-      machine.events.storage.subscribe(callback);
+      room.events.storage.subscribe(callback);
 
       const root = storage.root;
       const liveList = root.get("items");
@@ -1166,20 +1165,19 @@ describe("LiveList", () => {
     });
 
     test("batch multiple inserts", async () => {
-      const { machine, storage, batch, expectStorage } =
-        await prepareStorageTest<{
-          items: LiveList<string>;
-        }>(
-          [
-            createSerializedObject("0:0", {}),
-            createSerializedList("0:1", "0:0", "items"),
-            createSerializedRegister("0:2", "0:1", FIRST_POSITION, "a"),
-          ],
-          1
-        );
+      const { room, storage, batch, expectStorage } = await prepareStorageTest<{
+        items: LiveList<string>;
+      }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedList("0:1", "0:0", "items"),
+          createSerializedRegister("0:2", "0:1", FIRST_POSITION, "a"),
+        ],
+        1
+      );
 
       const callback = jest.fn();
-      machine.events.storage.subscribe(callback);
+      room.events.storage.subscribe(callback);
 
       const root = storage.root;
       const liveList = root.get("items");

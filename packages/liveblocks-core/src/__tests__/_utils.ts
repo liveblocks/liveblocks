@@ -210,22 +210,22 @@ export async function prepareRoomWithStorage<
   const effects = mockEffects();
   (effects.send as jest.MockedFunction<any>).mockImplementation(onSend);
 
-  const machine = makeStateMachine<TPresence, TStorage, TUserMeta, TRoomEvent>(
+  const room = makeStateMachine<TPresence, TStorage, TUserMeta, TRoomEvent>(
     makeMachineConfig(effects),
     {} as TPresence,
     defaultStorage || ({} as TStorage)
   );
   const ws = new MockWebSocket("");
 
-  machine.__internal.connect();
-  machine.__internal.authenticationSuccess(makeRoomToken(actor, scopes), ws);
+  room.__internal.connect();
+  room.__internal.authenticationSuccess(makeRoomToken(actor, scopes), ws);
   ws.open();
 
   // Start getting the storage, but don't await the promise just yet!
-  const getStoragePromise = machine.getStorage();
+  const getStoragePromise = room.getStorage();
 
   const clonedItems = deepClone(items);
-  machine.__internal.onMessage(
+  room.__internal.onMessage(
     serverMessage({
       type: ServerMsgCode.INITIAL_STORAGE_STATE,
       items: clonedItems,
@@ -233,7 +233,7 @@ export async function prepareRoomWithStorage<
   );
 
   const storage = await getStoragePromise;
-  return { storage, machine, ws };
+  return { storage, room, ws };
 }
 
 export async function prepareIsolatedStorageTest<TStorage extends LsonObject>(
@@ -243,7 +243,7 @@ export async function prepareIsolatedStorageTest<TStorage extends LsonObject>(
 ) {
   const messagesSent: ClientMsg<never, never>[] = [];
 
-  const { machine, storage, ws } = await prepareRoomWithStorage<
+  const { room, storage, ws } = await prepareRoomWithStorage<
     never,
     TStorage,
     never,
@@ -259,10 +259,10 @@ export async function prepareIsolatedStorageTest<TStorage extends LsonObject>(
 
   return {
     root: storage.root,
-    machine,
-    subscribe: makeClassicSubscribeFn(machine.events),
-    undo: machine.history.undo,
-    redo: machine.history.redo,
+    machine: room,
+    subscribe: makeClassicSubscribeFn(room.events),
+    undo: room.history.undo,
+    redo: room.history.redo,
     ws,
     expectStorage: (data: ToImmutable<TStorage>) =>
       expect(storage.root.toImmutable()).toEqual(data),
@@ -270,7 +270,7 @@ export async function prepareIsolatedStorageTest<TStorage extends LsonObject>(
       expect(messagesSent).toEqual(messages);
     },
     applyRemoteOperations: (ops: Op[]) =>
-      machine.__internal.onMessage(
+      room.__internal.onMessage(
         serverMessage({
           type: ServerMsgCode.UPDATE_STORAGE,
           ops,
@@ -293,16 +293,14 @@ export async function prepareStorageTest<
   let currentActor = actor;
   const operations: Op[] = [];
 
-  const { machine: refMachine, storage: refStorage } =
-    await prepareRoomWithStorage<TPresence, TStorage, TUserMeta, TRoomEvent>(
-      items,
-      -1,
-      undefined,
-      undefined,
-      scopes
-    );
+  const { room: refRoom, storage: refStorage } = await prepareRoomWithStorage<
+    TPresence,
+    TStorage,
+    TUserMeta,
+    TRoomEvent
+  >(items, -1, undefined, undefined, scopes);
 
-  const { machine, storage, ws } = await prepareRoomWithStorage<
+  const { room, storage, ws } = await prepareRoomWithStorage<
     TPresence,
     TStorage,
     TUserMeta,
@@ -315,20 +313,20 @@ export async function prepareStorageTest<
         if (message.type === ClientMsgCode.UPDATE_STORAGE) {
           operations.push(...message.ops);
 
-          refMachine.__internal.onMessage(
+          refRoom.__internal.onMessage(
             serverMessage({
               type: ServerMsgCode.UPDATE_STORAGE,
               ops: message.ops,
             })
           );
-          machine.__internal.onMessage(
+          room.__internal.onMessage(
             serverMessage({
               type: ServerMsgCode.UPDATE_STORAGE,
               ops: message.ops,
             })
           );
         } else if (message.type === ClientMsgCode.UPDATE_PRESENCE) {
-          refMachine.__internal.onMessage(
+          refRoom.__internal.onMessage(
             serverMessage({
               type: ServerMsgCode.UPDATE_PRESENCE,
               data: message.data,
@@ -346,8 +344,8 @@ export async function prepareStorageTest<
   // Mock Server messages for Presence
 
   // Machine is the first user connected to the room, it then receives a server message
-  // saying that the refMachine user joined the room.
-  machine.__internal.onMessage(
+  // saying that the refRoom user joined the room.
+  room.__internal.onMessage(
     serverMessage({
       type: ServerMsgCode.USER_JOINED,
       actor: -1,
@@ -357,9 +355,9 @@ export async function prepareStorageTest<
     })
   );
 
-  // RefMachine is the second user connected to the room, it receives a server message
+  // RefRoom is the second user connected to the room, it receives a server message
   // ROOM_STATE with the list of users in the room.
-  refMachine.__internal.onMessage(
+  refRoom.__internal.onMessage(
     serverMessage({
       type: ServerMsgCode.ROOM_STATE,
       users: { [currentActor]: { scopes: [] } },
@@ -371,8 +369,8 @@ export async function prepareStorageTest<
   function expectBothClientStoragesToEqual(data: ToImmutable<TStorage>) {
     expect(storage.root.toImmutable()).toEqual(data);
     expect(refStorage.root.toImmutable()).toEqual(data);
-    expect(machine.__internal.getItemsCount()).toBe(
-      refMachine.__internal.getItemsCount()
+    expect(room.__internal.getItemsCount()).toBe(
+      refRoom.__internal.getItemsCount()
     );
   }
 
@@ -383,17 +381,17 @@ export async function prepareStorageTest<
 
   function assertUndoRedo() {
     for (let i = 0; i < states.length - 1; i++) {
-      machine.history.undo();
+      room.history.undo();
       expectBothClientStoragesToEqual(states[states.length - 2 - i]);
     }
 
     for (let i = 0; i < states.length - 1; i++) {
-      machine.history.redo();
+      room.history.redo();
       expectBothClientStoragesToEqual(states[i + 1]);
     }
 
     for (let i = 0; i < states.length - 1; i++) {
-      machine.history.undo();
+      room.history.undo();
       expectBothClientStoragesToEqual(states[states.length - 2 - i]);
     }
   }
@@ -404,13 +402,13 @@ export async function prepareStorageTest<
   ): MockWebSocket {
     currentActor = actor;
     const ws = new MockWebSocket("");
-    machine.__internal.connect();
-    machine.__internal.authenticationSuccess(makeRoomToken(actor, []), ws);
+    room.__internal.connect();
+    room.__internal.authenticationSuccess(makeRoomToken(actor, []), ws);
     ws.open();
 
     // Mock server messages for Presence.
-    // Other user in the room (refMachine) recieves a "USER_JOINED" message.
-    refMachine.__internal.onMessage(
+    // Other user in the room (refRoom) recieves a "USER_JOINED" message.
+    refRoom.__internal.onMessage(
       serverMessage({
         type: ServerMsgCode.USER_JOINED,
         actor,
@@ -421,7 +419,7 @@ export async function prepareStorageTest<
     );
 
     if (newItems) {
-      machine.__internal.onMessage(
+      room.__internal.onMessage(
         serverMessage({
           type: ServerMsgCode.INITIAL_STORAGE_STATE,
           items: newItems,
@@ -432,24 +430,24 @@ export async function prepareStorageTest<
   }
 
   return {
-    machine,
-    refMachine,
-    subscribe: makeClassicSubscribeFn(machine.events),
+    room,
+    refRoom,
+    subscribe: makeClassicSubscribeFn(room.events),
     operations,
     storage,
     refStorage,
     expectStorage,
     assertUndoRedo,
-    updatePresence: machine.updatePresence,
-    getUndoStack: machine.__internal.getUndoStack,
-    getItemsCount: machine.__internal.getItemsCount,
-    batch: machine.batch,
-    undo: machine.history.undo,
-    redo: machine.history.redo,
-    canUndo: machine.history.canUndo,
-    canRedo: machine.history.canRedo,
+    updatePresence: room.updatePresence,
+    getUndoStack: room.__internal.getUndoStack,
+    getItemsCount: room.__internal.getItemsCount,
+    batch: room.batch,
+    undo: room.history.undo,
+    redo: room.history.redo,
+    canUndo: room.history.canUndo,
+    canRedo: room.history.canRedo,
     applyRemoteOperations: (ops: Op[]) =>
-      machine.__internal.onMessage(
+      room.__internal.onMessage(
         serverMessage({
           type: ServerMsgCode.UPDATE_STORAGE,
           ops,
@@ -476,8 +474,8 @@ export async function prepareStorageUpdateTest<
   machine: Room<TPresence, TStorage, TUserMeta, TRoomEvent>;
   expectUpdates: (updates: JsonStorageUpdate[][]) => void;
 }> {
-  const { machine: refMachine } = await prepareRoomWithStorage(items, -1);
-  const { machine, storage } = await prepareRoomWithStorage<
+  const { room: refRoom } = await prepareRoomWithStorage(items, -1);
+  const { room, storage } = await prepareRoomWithStorage<
     TPresence,
     TStorage,
     TUserMeta,
@@ -485,13 +483,13 @@ export async function prepareStorageUpdateTest<
   >(items, -2, (messages) => {
     for (const message of messages) {
       if (message.type === ClientMsgCode.UPDATE_STORAGE) {
-        refMachine.__internal.onMessage(
+        refRoom.__internal.onMessage(
           serverMessage({
             type: ServerMsgCode.UPDATE_STORAGE,
             ops: message.ops,
           })
         );
-        machine.__internal.onMessage(
+        room.__internal.onMessage(
           serverMessage({
             type: ServerMsgCode.UPDATE_STORAGE,
             ops: message.ops,
@@ -504,10 +502,10 @@ export async function prepareStorageUpdateTest<
   const jsonUpdates: JsonStorageUpdate[][] = [];
   const refJsonUpdates: JsonStorageUpdate[][] = [];
 
-  machine.events.storage.subscribe((updates) =>
+  room.events.storage.subscribe((updates) =>
     jsonUpdates.push(updates.map(serializeUpdateToJson))
   );
-  refMachine.events.storage.subscribe((updates) =>
+  refRoom.events.storage.subscribe((updates) =>
     refJsonUpdates.push(updates.map(serializeUpdateToJson))
   );
 
@@ -517,9 +515,9 @@ export async function prepareStorageUpdateTest<
   }
 
   return {
-    batch: machine.batch,
+    batch: room.batch,
     root: storage.root,
-    machine,
+    machine: room,
     expectUpdates: expectUpdatesInBothClients,
   };
 }
@@ -540,7 +538,7 @@ export async function prepareDisconnectedStorageUpdateTest<
   machine: Room<TPresence, TStorage, TUserMeta, TRoomEvent>;
   expectUpdates: (updates: JsonStorageUpdate[][]) => void;
 }> {
-  const { storage, machine } = await prepareRoomWithStorage<
+  const { storage, room } = await prepareRoomWithStorage<
     TPresence,
     TStorage,
     TUserMeta,
@@ -549,7 +547,7 @@ export async function prepareDisconnectedStorageUpdateTest<
 
   const receivedUpdates: JsonStorageUpdate[][] = [];
 
-  const subscribe = makeClassicSubscribeFn(machine.events);
+  const subscribe = makeClassicSubscribeFn(room.events);
   subscribe(
     storage.root,
     (updates) => receivedUpdates.push(updates.map(serializeUpdateToJson)),
@@ -561,9 +559,9 @@ export async function prepareDisconnectedStorageUpdateTest<
   }
 
   return {
-    batch: machine.batch,
+    batch: room.batch,
     root: storage.root,
-    machine,
+    machine: room,
     expectUpdates,
   };
 }

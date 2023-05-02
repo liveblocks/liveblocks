@@ -39,13 +39,14 @@ export async function prepareStorageImmutableTest<
 
   let totalStorageOps = 0;
 
-  const { machine: refMachine, storage: refStorage } =
-    await prepareRoomWithStorage<TPresence, TStorage, TUserMeta, TRoomEvent>(
-      items,
-      -1
-    );
+  const { room: refRoom, storage: refStorage } = await prepareRoomWithStorage<
+    TPresence,
+    TStorage,
+    TUserMeta,
+    TRoomEvent
+  >(items, -1);
 
-  const { machine, storage } = await prepareRoomWithStorage<
+  const { room, storage } = await prepareRoomWithStorage<
     TPresence,
     TStorage,
     TUserMeta,
@@ -54,13 +55,13 @@ export async function prepareStorageImmutableTest<
     for (const message of messages) {
       if (message.type === ClientMsgCode.UPDATE_STORAGE) {
         totalStorageOps += message.ops.length;
-        refMachine.__internal.onMessage(
+        refRoom.__internal.onMessage(
           serverMessage({
             type: ServerMsgCode.UPDATE_STORAGE,
             ops: message.ops,
           })
         );
-        machine.__internal.onMessage(
+        room.__internal.onMessage(
           serverMessage({
             type: ServerMsgCode.UPDATE_STORAGE,
             ops: message.ops,
@@ -73,7 +74,7 @@ export async function prepareStorageImmutableTest<
   state = lsonToJson(storage.root) as ToJson<TStorage>;
   refState = lsonToJson(refStorage.root) as ToJson<TStorage>;
 
-  refMachine.events.storage.subscribe(() => {
+  refRoom.events.storage.subscribe(() => {
     refState = lsonToJson(refStorage.root) as ToJson<TStorage>;
   });
 
@@ -85,7 +86,7 @@ export async function prepareStorageImmutableTest<
     expectStorageInBothClients(data);
 
     if (itemsCount !== undefined) {
-      expect(machine.__internal.getItemsCount()).toBe(itemsCount);
+      expect(room.__internal.getItemsCount()).toBe(itemsCount);
     }
     expect(state).toEqual(refState);
     expect(state).toEqual(data);
