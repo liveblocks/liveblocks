@@ -24,7 +24,7 @@ import {
   makeClassicSubscribeFn,
 } from "../room";
 import type { Others } from "../types/Others";
-import { WebsocketCloseCodes } from "../types/WebsocketCloseCodes";
+import { WebsocketCloseCodes } from "../types/IWebSocket";
 import { listUpdate, listUpdateInsert, listUpdateSet } from "./_updatesUtils";
 import {
   createSerializedList,

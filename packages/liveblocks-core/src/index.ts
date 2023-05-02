@@ -129,8 +129,8 @@ export type {
   IWebSocketEvent,
   IWebSocketInstance,
   IWebSocketMessageEvent,
-} from "./types/WebsocketCloseCodes";
-export { WebsocketCloseCodes } from "./types/WebsocketCloseCodes";
+} from "./types/IWebSocket";
+export { WebsocketCloseCodes } from "./types/IWebSocket";
 
 /**
  * Helper type to help users adopt to Lson types from interface definitions.

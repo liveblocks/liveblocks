@@ -55,8 +55,8 @@ import type {
   IWebSocket,
   IWebSocketInstance,
   IWebSocketMessageEvent,
-} from "./types/WebsocketCloseCodes";
-import { WebsocketCloseCodes } from "./types/WebsocketCloseCodes";
+} from "./types/IWebSocket";
+import { WebsocketCloseCodes } from "./types/IWebSocket";
 
 type TimeoutID = ReturnType<typeof setTimeout>;
 type IntervalID = ReturnType<typeof setInterval>;
