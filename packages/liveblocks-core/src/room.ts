@@ -573,7 +573,11 @@ type Machine<
   TStorage extends LsonObject,
   TUserMeta extends BaseUserMeta,
   TRoomEvent extends Json
-> = {
+> = Pick<
+  Room<TPresence, TStorage, TUserMeta, TRoomEvent>,
+  // TODO: Move props here
+  never
+> & {
   /* Only access these internals in unit tests, to test implementation details */
   // prettier-ignore
   __internal: Pick<
