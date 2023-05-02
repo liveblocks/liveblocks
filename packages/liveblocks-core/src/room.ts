@@ -56,6 +56,11 @@ import type * as DevTools from "./types/DevToolsTreeNode";
 import type { NodeMap, ParentToChildNodeMap } from "./types/NodeMap";
 import type { Others, OthersEvent } from "./types/Others";
 import type { User } from "./types/User";
+import type {
+  IWebSocket,
+  IWebSocketInstance,
+  IWebSocketMessageEvent,
+} from "./types/WebsocketCloseCodes";
 import { WebsocketCloseCodes } from "./types/WebsocketCloseCodes";
 
 type TimeoutID = ReturnType<typeof setTimeout>;
@@ -576,8 +581,8 @@ type Machine<
   // Internal
   state: MachineContext<TPresence, TStorage, TUserMeta, TRoomEvent>;
   onClose(event: { code: number; wasClean: boolean; reason: string }): void;
-  onMessage(event: MessageEvent<string>): void;
-  authenticationSuccess(token: RoomAuthToken, socket: WebSocket): void;
+  onMessage(event: IWebSocketMessageEvent): void;
+  authenticationSuccess(token: RoomAuthToken, socket: IWebSocketInstance): void;
   heartbeat(): void;
   onNavigatorOnline(): void;
 
@@ -692,7 +697,7 @@ type MachineContext<
     readonly parsed: RoomAuthToken & JwtMetadata;
   } | null;
   lastConnectionId: number | null; // TODO: Move into Connection type members?
-  socket: WebSocket | null;
+  socket: IWebSocketInstance | null;
   lastFlushTime: number;
   buffer: {
     // Queued-up "my presence" updates to be flushed at the earliest convenience
@@ -760,7 +765,7 @@ type MachineContext<
 type Effects<TPresence extends JsonObject, TRoomEvent extends Json> = {
   authenticate(
     auth: AuthCallback,
-    createWebSocket: (token: string) => WebSocket
+    createWebSocket: (token: string) => IWebSocketInstance
   ): void;
   send(messages: ClientMsg<TPresence, TRoomEvent>[]): void;
   delayFlush(delay: number): TimeoutID;
@@ -772,7 +777,7 @@ type Effects<TPresence extends JsonObject, TRoomEvent extends Json> = {
 export type Polyfills = {
   atob?: (data: string) => string;
   fetch?: typeof fetch;
-  WebSocket?: typeof WebSocket;
+  WebSocket?: IWebSocket;
 };
 
 export type RoomInitializers<
@@ -980,7 +985,7 @@ function makeStateMachine<
   const effects: Effects<TPresence, TRoomEvent> = config.mockedEffects || {
     authenticate(
       auth: AuthCallback,
-      createWebSocket: (token: string) => WebSocket
+      createWebSocket: (token: string) => IWebSocketInstance
     ) {
       // If we already have a parsed token from a previous connection
       // in-memory, reuse it
@@ -1432,7 +1437,10 @@ function makeStateMachine<
     );
   }
 
-  function authenticationSuccess(token: RoomAuthToken, socket: WebSocket) {
+  function authenticationSuccess(
+    token: RoomAuthToken,
+    socket: IWebSocketInstance
+  ) {
     socket.addEventListener("message", onMessage);
     socket.addEventListener("open", onOpen);
     socket.addEventListener("close", onClose);
@@ -1603,7 +1611,7 @@ function makeStateMachine<
     }
   }
 
-  function onMessage(event: MessageEvent<string>) {
+  function onMessage(event: IWebSocketMessageEvent) {
     if (event.data === "pong") {
       clearTimeout(context.timeoutHandles.pongTimeout);
       return;
@@ -2559,7 +2567,7 @@ class LiveblocksError extends Error {
 
 function prepareCreateWebSocket(
   liveblocksServer: string,
-  WebSocketPolyfill?: typeof WebSocket
+  WebSocketPolyfill?: IWebSocket
 ) {
   if (typeof window === "undefined" && WebSocketPolyfill === undefined) {
     throw new Error(
@@ -2567,9 +2575,9 @@ function prepareCreateWebSocket(
     );
   }
 
-  const ws = WebSocketPolyfill || WebSocket;
+  const ws: IWebSocket = WebSocketPolyfill || WebSocket;
 
-  return (token: string): WebSocket => {
+  return (token: string): IWebSocketInstance => {
     return new ws(
       `${liveblocksServer}/?token=${token}&version=${
         // prettier-ignore
