@@ -807,6 +807,7 @@ function userToTreeNode(
 }
 
 /**
+ * @internal
  * Initializes a new Room state machine, and returns its public API to observe
  * and control it.
  */
