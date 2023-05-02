@@ -571,36 +571,23 @@ type PrivateRoomAPI<
   numRetries: MachineContext<TPresence, TStorage, TUserMeta, TRoomEvent>["numRetries"]; // prettier-ignore
 
   // Core
-  // XXX Should become .transition({ type: "CONNECT" })
   connect(): void;
-  // XXX Should become .transition({ type: "DISCONNECT" })
   disconnect(): void;
 
-  // XXX Should become .transition({ type: "EXPLICIT_CLOSE ???" })
-  // XXX What's the diff with simulateSendCloseEvent() and simulateSocketClose() below?
   onClose(event: { code: number; wasClean: boolean; reason: string }): void;
-  // XXX OK to be called at any time?
   onMessage(event: MessageEvent<string>): void;
-  // XXX Should become .transition({ type: "AUTH_DONE", data: <jwt token> })
   authenticationSuccess(token: RoomAuthToken, socket: WebSocket): void;
-  // XXX OK to be called at any time?
   onNavigatorOnline(): void;
-  // XXX Should become .transition({ type: "FOCUS_VISIBLE" })
   onVisibilityChange(visibilityState: DocumentVisibilityState): void;
 
-  // XXX Should become .transition({ type: "IMPLICIT_CLOSE ???" })
   simulateCloseWebsocket(): void;
-  // XXX Should become .transition({ type: "EXPLICIT_CLOSE ???" })
-  // XXX DRY up inlined type with IWebSocketCloseEvent once that PR is merged into main
   simulateSendCloseEvent(event: {
     code: number;
     wasClean: boolean;
     reason: string;
   }): void;
 
-  // XXX Only used in unit tests to test impl details, hide this under __internal!
   getUndoStack(): HistoryOp<TPresence>[][];
-  // XXX Only used in unit tests to test impl details, hide this under __internal!
   getItemsCount(): number;
 
   // DevTools support
@@ -1865,7 +1852,6 @@ export function createRoom<
     }
   }
 
-  // XXX Should become .transition({ type: "RECONNECT" })
   function reconnect() {
     if (context.socket) {
       context.socket.removeEventListener("open", onOpen);
@@ -2281,7 +2267,6 @@ export function createRoom<
  * This recreates the classic single `.subscribe()` method for the Room API, as
  * documented here https://liveblocks.io/docs/api-reference/liveblocks-client#Room.subscribe(storageItem)
  */
-// XXX Stop exporting this -- it should be purely an implementation detail of this module
 export function makeClassicSubscribeFn<
   TPresence extends JsonObject,
   TStorage extends LsonObject,

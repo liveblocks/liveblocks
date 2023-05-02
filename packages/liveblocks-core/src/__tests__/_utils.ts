@@ -50,25 +50,6 @@ function deepClone<T extends Json>(items: T): T {
   return JSON.parse(JSON.stringify(items)) as T;
 }
 
-// XXX
-// XXX This class is really doing two things!
-// XXX
-// XXX 1. It simulates a WebSocket interface (without actually connecting)
-// XXX 2. It has control APIs to let us simulate events in unit tests, as if
-// XXX       those are happening to the connection
-// XXX
-// XXX Put all the "control methods" that don't belong to the WebSocket instance
-// XXX itself on a separate "controller" instance.
-// XXX
-// XXX ws.controller.open()
-// XXX
-// XXX Or even:
-// XXX
-// XXX const [ws, controller] = mockWebSocket();
-// XXX controller.simulateOpen()
-// XXX controller.simulateConnectionLoss()
-// XXX etc.
-// XXX
 export class MockWebSocket implements WebSocket {
   CONNECTING = 0;
   OPEN = 1;
@@ -120,23 +101,13 @@ export class MockWebSocket implements WebSocket {
     this.onSend(message);
   }
 
-  // XXX Rename to controller.open()
   open() {
-    // XXX If I add in this check to more correctly simulate the WebSocket
-    // XXX behavior, a unit test fails. Look into this.
-    // XXX if (this.readyState >= this.OPEN) {
-    // XXX   throw new Error(
-    // XXX     "Can only simulate opening a WebSocket that hasn't been open"
-    // XXX   );
-    // XXX }
-
     this.readyState = this.OPEN;
     for (const callback of this.callbacks.open) {
       callback();
     }
   }
 
-  // XXX Rename to controller.close()
   closeFromBackend(event?: CloseEvent) {
     this.readyState = this.CLOSED;
     for (const callback of this.callbacks.close) {
