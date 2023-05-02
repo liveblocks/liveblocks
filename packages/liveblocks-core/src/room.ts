@@ -610,7 +610,7 @@ type Machine<
 
     // Internal unit testing tools
     // XXX Should become .transition({ type: "IMPLICIT_CLOSE ???" })
-    simulateSocketClose(): void;
+    simulateCloseWebsocket(): void;
     // XXX Should become .transition({ type: "EXPLICIT_CLOSE ???" })
     simulateSendCloseEvent(event: { code: number; wasClean: boolean; reason: string; }): void; // prettier-ignore
 
@@ -2161,7 +2161,7 @@ function makeStateMachine<
     }
   }
 
-  function simulateSocketClose() {
+  function simulateCloseWebsocket() {
     if (context.socket) {
       context.socket = null;
     }
@@ -2223,7 +2223,7 @@ function makeStateMachine<
       onNavigatorOnline,
 
       // Internal DevTools
-      simulateSocketClose,
+      simulateCloseWebsocket,
       simulateSendCloseEvent,
 
       onVisibilityChange,
@@ -2358,7 +2358,7 @@ export function createRoom<
       onNavigatorOnline: machine.__internal.onNavigatorOnline,
       onVisibilityChange: machine.__internal.onVisibilityChange,
 
-      simulateCloseWebsocket: machine.__internal.simulateSocketClose,
+      simulateCloseWebsocket: machine.__internal.simulateCloseWebsocket,
       simulateSendCloseEvent: machine.__internal.simulateSendCloseEvent,
 
       getSelf_forDevTools: machine.__internal.getSelf_forDevTools,
