@@ -551,15 +551,15 @@ export type Room<
    * will probably happen if you do.
    */
   readonly __internal: {
+    // Context
+    buffer: MachineContext<TPresence, TStorage, TUserMeta, TRoomEvent>["buffer"]; // prettier-ignore
+    numRetries: MachineContext<TPresence, TStorage, TUserMeta, TRoomEvent>["numRetries"]; // prettier-ignore
+
     // Core
     // XXX Should become .transition({ type: "CONNECT" })
     connect(): void;
     // XXX Should become .transition({ type: "DISCONNECT" })
     disconnect(): void;
-
-    // Context
-    buffer: MachineContext<TPresence, TStorage, TUserMeta, TRoomEvent>["buffer"]; // prettier-ignore
-    numRetries: MachineContext<TPresence, TStorage, TUserMeta, TRoomEvent>["numRetries"]; // prettier-ignore
 
     // XXX Should become .transition({ type: "EXPLICIT_CLOSE ???" })
     // XXX What's the diff with simulateSendCloseEvent() and simulateSocketClose() below?
@@ -588,7 +588,7 @@ export type Room<
     // XXX Only used in unit tests to test impl details, hide this under __internal!
     getItemsCount(): number;
 
-    /** For DevTools support */
+    // DevTools support
     getSelf_forDevTools(): DevTools.UserTreeNode | null;
     getOthers_forDevTools(): readonly DevTools.UserTreeNode[];
   };
