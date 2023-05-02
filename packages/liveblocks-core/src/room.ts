@@ -593,11 +593,13 @@ type Machine<
   | "getOthers"
 > & {
   /* Only access these internals in unit tests, to test implementation details */
-  // prettier-ignore
-  __internal: Pick<
-    MachineContext<TPresence, TStorage, TUserMeta, TRoomEvent>,
-    "buffer" | "numRetries"
-  >;
+  readonly __internal: {
+    // Context
+    buffer: MachineContext<TPresence, TStorage, TUserMeta, TRoomEvent>["buffer"]; // prettier-ignore
+    numRetries: MachineContext<TPresence, TStorage, TUserMeta, TRoomEvent>["numRetries"]; // prettier-ignore
+
+    // ...
+  };
 
   // XXX Should become .transition({ type: "EXPLICIT_CLOSE ???" })
   // XXX What's the diff with simulateSendCloseEvent() and simulateSocketClose() below?
@@ -2212,10 +2214,9 @@ function makeStateMachine<
 
   return {
     /* NOTE: Exposing __internal here only to allow testing implementation details in unit tests */
-    // prettier-ignore
     __internal: {
-      get buffer() { return context.buffer },
-      get numRetries() { return context.numRetries },
+      get buffer() { return context.buffer }, // prettier-ignore
+      get numRetries() { return context.numRetries }, // prettier-ignore
     },
 
     // Internal
