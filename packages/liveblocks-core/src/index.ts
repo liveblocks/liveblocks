@@ -123,6 +123,13 @@ export type {
   PlainLsonObject,
 } from "./types/PlainLson";
 export type { User } from "./types/User";
+export type {
+  IWebSocket,
+  IWebSocketCloseEvent,
+  IWebSocketEvent,
+  IWebSocketInstance,
+  IWebSocketMessageEvent,
+} from "./types/WebsocketCloseCodes";
 export { WebsocketCloseCodes } from "./types/WebsocketCloseCodes";
 
 /**
