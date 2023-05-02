@@ -489,21 +489,25 @@ export type Room<
   getStorageSnapshot(): LiveObject<TStorage> | null;
 
   readonly events: {
-    customEvent: Observable<{ connectionId: number; event: TRoomEvent }>;
-    me: Observable<TPresence>;
-    others: Observable<{
+    readonly customEvent: Observable<{
+      connectionId: number;
+      event: TRoomEvent;
+    }>;
+    readonly me: Observable<TPresence>;
+    readonly others: Observable<{
       others: Others<TPresence, TUserMeta>;
       event: OthersEvent<TPresence, TUserMeta>;
     }>;
-    error: Observable<Error>;
-    connection: Observable<ConnectionStatus>;
-    storage: Observable<StorageUpdate[]>;
-    history: Observable<HistoryEvent>;
+    readonly error: Observable<Error>;
+    readonly connection: Observable<ConnectionStatus>;
+    readonly storage: Observable<StorageUpdate[]>;
+    readonly history: Observable<HistoryEvent>;
+
     /**
      * Subscribe to the storage loaded event. Will fire at most once during the
      * lifetime of a Room.
      */
-    storageDidLoad: Observable<void>;
+    readonly storageDidLoad: Observable<void>;
 
     readonly storageStatus: Observable<StorageStatus>;
   };
