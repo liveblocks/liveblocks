@@ -2319,6 +2319,8 @@ export function createRoom<
   );
 
   const room: Room<TPresence, TStorage, TUserMeta, TRoomEvent> = {
+    __internal: machine.__internal,
+
     id: config.roomId,
 
     /////////////
@@ -2350,20 +2352,6 @@ export function createRoom<
 
     batch: machine.batch,
     history: machine.history,
-
-    // XXX Mimick the same __internal structure, and export it directly as such
-    __internal: {
-      connect: machine.__internal.connect,
-      disconnect: machine.__internal.disconnect,
-      onNavigatorOnline: machine.__internal.onNavigatorOnline,
-      onVisibilityChange: machine.__internal.onVisibilityChange,
-
-      simulateCloseWebsocket: machine.__internal.simulateCloseWebsocket,
-      simulateSendCloseEvent: machine.__internal.simulateSendCloseEvent,
-
-      getSelf_forDevTools: machine.__internal.getSelf_forDevTools,
-      getOthers_forDevTools: machine.__internal.getOthers_forDevTools,
-    },
   };
 
   return room;
