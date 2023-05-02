@@ -582,6 +582,14 @@ type Machine<
   | "events"
   | "batch"
   | "history"
+  | "getStorage"
+  | "getStorageSnapshot"
+  | "getStorageStatus"
+  | "isSelfAware"
+  | "getConnectionState"
+  | "getSelf"
+  | "getPresence"
+  | "getOthers"
 > & {
   /* Only access these internals in unit tests, to test implementation details */
   // prettier-ignore
@@ -618,19 +626,6 @@ type Machine<
   connect(): void;
   // XXX Should become .transition({ type: "DISCONNECT" })
   disconnect(): void;
-
-  getStorage(): Promise<{ root: LiveObject<TStorage> }>;
-  getStorageSnapshot(): LiveObject<TStorage> | null;
-  getStorageStatus(): StorageStatus;
-
-  // Core
-  isSelfAware(): boolean;
-  getConnectionState(): ConnectionStatus;
-  getSelf(): User<TPresence, TUserMeta> | null;
-
-  // Presence
-  getPresence(): Readonly<TPresence>;
-  getOthers(): Others<TPresence, TUserMeta>;
 
   // DevTools support
   getSelf_forDevTools(): DevTools.UserTreeNode | null;
