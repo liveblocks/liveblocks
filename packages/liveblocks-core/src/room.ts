@@ -48,15 +48,15 @@ import { MeRef } from "./refs/MeRef";
 import { OthersRef } from "./refs/OthersRef";
 import { DerivedRef, ValueRef } from "./refs/ValueRef";
 import type * as DevTools from "./types/DevToolsTreeNode";
-import type { NodeMap } from "./types/NodeMap";
-import type { Others, OthersEvent } from "./types/Others";
-import type { User } from "./types/User";
 import type {
   IWebSocket,
   IWebSocketInstance,
   IWebSocketMessageEvent,
 } from "./types/IWebSocket";
 import { WebsocketCloseCodes } from "./types/IWebSocket";
+import type { NodeMap } from "./types/NodeMap";
+import type { Others, OthersEvent } from "./types/Others";
+import type { User } from "./types/User";
 
 type TimeoutID = ReturnType<typeof setTimeout>;
 type IntervalID = ReturnType<typeof setInterval>;
