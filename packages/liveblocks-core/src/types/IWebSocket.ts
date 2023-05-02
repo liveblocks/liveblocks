@@ -22,13 +22,11 @@ export interface IWebSocketInstance {
 
   addEventListener(type: "close", listener: (this: IWebSocketInstance, ev: IWebSocketCloseEvent) => unknown): void; // prettier-ignore
   addEventListener(type: "message", listener: (this: IWebSocketInstance, ev: IWebSocketMessageEvent) => unknown): void; // prettier-ignore
-  addEventListener(type: string, listener: (this: IWebSocketInstance, ev: IWebSocketEvent) => unknown): void; // prettier-ignore
-  //                     ^^^^^^ Includes "open" and "error"
+  addEventListener(type: "open" | "error", listener: (this: IWebSocketInstance, ev: IWebSocketEvent) => unknown): void; // prettier-ignore
 
   removeEventListener(type: "close", listener: (this: IWebSocketInstance, ev: IWebSocketCloseEvent) => unknown): void; // prettier-ignore
   removeEventListener(type: "message", listener: (this: IWebSocketInstance, ev: IWebSocketMessageEvent) => unknown): void; // prettier-ignore
-  removeEventListener(type: string, listener: (this: IWebSocketInstance, ev: IWebSocketEvent) => unknown): void; // prettier-ignore
-  //                        ^^^^^^ Includes "open" and "error"
+  removeEventListener(type: "open" | "error", listener: (this: IWebSocketInstance, ev: IWebSocketEvent) => unknown): void; // prettier-ignore
 
   close(): void;
   send(data: string): void;
