@@ -670,7 +670,7 @@ describe("LiveMap", () => {
 
       expectStorage({ map: new Map([["first", "a"]]) });
 
-      machine.onClose(
+      machine.__internal.onClose(
         new CloseEvent("close", {
           code: WebsocketCloseCodes.CLOSE_ABNORMAL,
           wasClean: false,

@@ -220,15 +220,18 @@ export async function prepareRoomWithStorage<
   );
   const ws = new MockWebSocket("");
 
-  machine.connect();
-  machine.authenticationSuccess(makeRoomToken(actor, scopes), ws as any);
+  machine.__internal.connect();
+  machine.__internal.authenticationSuccess(
+    makeRoomToken(actor, scopes),
+    ws as any
+  );
   ws.open();
 
   // Start getting the storage, but don't await the promise just yet!
   const getStoragePromise = machine.getStorage();
 
   const clonedItems = deepClone(items);
-  machine.onMessage(
+  machine.__internal.onMessage(
     serverMessage({
       type: ServerMsgCode.INITIAL_STORAGE_STATE,
       items: clonedItems,
@@ -273,7 +276,7 @@ export async function prepareIsolatedStorageTest<TStorage extends LsonObject>(
       expect(messagesSent).toEqual(messages);
     },
     applyRemoteOperations: (ops: Op[]) =>
-      machine.onMessage(
+      machine.__internal.onMessage(
         serverMessage({
           type: ServerMsgCode.UPDATE_STORAGE,
           ops,
@@ -318,20 +321,20 @@ export async function prepareStorageTest<
         if (message.type === ClientMsgCode.UPDATE_STORAGE) {
           operations.push(...message.ops);
 
-          refMachine.onMessage(
+          refMachine.__internal.onMessage(
             serverMessage({
               type: ServerMsgCode.UPDATE_STORAGE,
               ops: message.ops,
             })
           );
-          machine.onMessage(
+          machine.__internal.onMessage(
             serverMessage({
               type: ServerMsgCode.UPDATE_STORAGE,
               ops: message.ops,
             })
           );
         } else if (message.type === ClientMsgCode.UPDATE_PRESENCE) {
-          refMachine.onMessage(
+          refMachine.__internal.onMessage(
             serverMessage({
               type: ServerMsgCode.UPDATE_PRESENCE,
               data: message.data,
@@ -350,7 +353,7 @@ export async function prepareStorageTest<
 
   // Machine is the first user connected to the room, it then receives a server message
   // saying that the refMachine user joined the room.
-  machine.onMessage(
+  machine.__internal.onMessage(
     serverMessage({
       type: ServerMsgCode.USER_JOINED,
       actor: -1,
@@ -362,7 +365,7 @@ export async function prepareStorageTest<
 
   // RefMachine is the second user connected to the room, it receives a server message
   // ROOM_STATE with the list of users in the room.
-  refMachine.onMessage(
+  refMachine.__internal.onMessage(
     serverMessage({
       type: ServerMsgCode.ROOM_STATE,
       users: { [currentActor]: { scopes: [] } },
@@ -374,7 +377,9 @@ export async function prepareStorageTest<
   function expectBothClientStoragesToEqual(data: ToImmutable<TStorage>) {
     expect(storage.root.toImmutable()).toEqual(data);
     expect(refStorage.root.toImmutable()).toEqual(data);
-    expect(machine.getItemsCount()).toBe(refMachine.getItemsCount());
+    expect(machine.__internal.getItemsCount()).toBe(
+      refMachine.__internal.getItemsCount()
+    );
   }
 
   function expectStorage(data: ToImmutable<TStorage>) {
@@ -405,13 +410,16 @@ export async function prepareStorageTest<
   ): MockWebSocket {
     currentActor = actor;
     const ws = new MockWebSocket("");
-    machine.connect();
-    machine.authenticationSuccess(makeRoomToken(actor, []), ws as any);
+    machine.__internal.connect();
+    machine.__internal.authenticationSuccess(
+      makeRoomToken(actor, []),
+      ws as any
+    );
     ws.open();
 
     // Mock server messages for Presence.
     // Other user in the room (refMachine) recieves a "USER_JOINED" message.
-    refMachine.onMessage(
+    refMachine.__internal.onMessage(
       serverMessage({
         type: ServerMsgCode.USER_JOINED,
         actor,
@@ -422,7 +430,7 @@ export async function prepareStorageTest<
     );
 
     if (newItems) {
-      machine.onMessage(
+      machine.__internal.onMessage(
         serverMessage({
           type: ServerMsgCode.INITIAL_STORAGE_STATE,
           items: newItems,
@@ -442,15 +450,15 @@ export async function prepareStorageTest<
     expectStorage,
     assertUndoRedo,
     updatePresence: machine.updatePresence,
-    getUndoStack: machine.getUndoStack,
-    getItemsCount: machine.getItemsCount,
+    getUndoStack: machine.__internal.getUndoStack,
+    getItemsCount: machine.__internal.getItemsCount,
     batch: machine.batch,
     undo: machine.history.undo,
     redo: machine.history.redo,
     canUndo: machine.history.canUndo,
     canRedo: machine.history.canRedo,
     applyRemoteOperations: (ops: Op[]) =>
-      machine.onMessage(
+      machine.__internal.onMessage(
         serverMessage({
           type: ServerMsgCode.UPDATE_STORAGE,
           ops,
@@ -486,13 +494,13 @@ export async function prepareStorageUpdateTest<
   >(items, -2, (messages) => {
     for (const message of messages) {
       if (message.type === ClientMsgCode.UPDATE_STORAGE) {
-        refMachine.onMessage(
+        refMachine.__internal.onMessage(
           serverMessage({
             type: ServerMsgCode.UPDATE_STORAGE,
             ops: message.ops,
           })
         );
-        machine.onMessage(
+        machine.__internal.onMessage(
           serverMessage({
             type: ServerMsgCode.UPDATE_STORAGE,
             ops: message.ops,
@@ -580,11 +588,11 @@ export async function reconnect<
   newItems: IdTuple<SerializedCrdt>[]
 ) {
   const ws = new MockWebSocket("");
-  machine.connect();
-  machine.authenticationSuccess(makeRoomToken(actor, []), ws);
+  machine.__internal.connect();
+  machine.__internal.authenticationSuccess(makeRoomToken(actor, []), ws);
   ws.open();
 
-  machine.onMessage(
+  machine.__internal.onMessage(
     serverMessage({
       type: ServerMsgCode.INITIAL_STORAGE_STATE,
       items: newItems,

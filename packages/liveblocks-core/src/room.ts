@@ -598,41 +598,39 @@ type Machine<
     buffer: MachineContext<TPresence, TStorage, TUserMeta, TRoomEvent>["buffer"]; // prettier-ignore
     numRetries: MachineContext<TPresence, TStorage, TUserMeta, TRoomEvent>["numRetries"]; // prettier-ignore
 
-    // ...
+    // XXX Should become .transition({ type: "EXPLICIT_CLOSE ???" })
+    // XXX What's the diff with simulateSendCloseEvent() and simulateSocketClose() below?
+    onClose(event: { code: number; wasClean: boolean; reason: string }): void;
+    // XXX OK to be called at any time?
+    onMessage(event: MessageEvent<string>): void;
+    // XXX Should become .transition({ type: "AUTH_DONE", data: <jwt token> })
+    authenticationSuccess(token: RoomAuthToken, socket: WebSocket): void;
+    // XXX OK to be called at any time?
+    onNavigatorOnline(): void;
+
+    // Internal unit testing tools
+    // XXX Should become .transition({ type: "IMPLICIT_CLOSE ???" })
+    simulateSocketClose(): void;
+    // XXX Should become .transition({ type: "EXPLICIT_CLOSE ???" })
+    simulateSendCloseEvent(event: { code: number; wasClean: boolean; reason: string; }): void; // prettier-ignore
+
+    // XXX Should become .transition({ type: "FOCUS_VISIBLE" })
+    onVisibilityChange(visibilityState: DocumentVisibilityState): void;
+    // XXX Only used in unit tests to test impl details, hide this under __internal!
+    getUndoStack(): HistoryOp<TPresence>[][];
+    // XXX Only used in unit tests to test impl details, hide this under __internal!
+    getItemsCount(): number;
+
+    // Core
+    // XXX Should become .transition({ type: "CONNECT" })
+    connect(): void;
+    // XXX Should become .transition({ type: "DISCONNECT" })
+    disconnect(): void;
+
+    // DevTools support
+    getSelf_forDevTools(): DevTools.UserTreeNode | null;
+    getOthers_forDevTools(): readonly DevTools.UserTreeNode[];
   };
-
-  // XXX Should become .transition({ type: "EXPLICIT_CLOSE ???" })
-  // XXX What's the diff with simulateSendCloseEvent() and simulateSocketClose() below?
-  onClose(event: { code: number; wasClean: boolean; reason: string }): void;
-  // XXX OK to be called at any time?
-  onMessage(event: MessageEvent<string>): void;
-  // XXX Should become .transition({ type: "AUTH_DONE", data: <jwt token> })
-  authenticationSuccess(token: RoomAuthToken, socket: WebSocket): void;
-  // XXX OK to be called at any time?
-  onNavigatorOnline(): void;
-
-  // Internal unit testing tools
-  // XXX Should become .transition({ type: "IMPLICIT_CLOSE ???" })
-  simulateSocketClose(): void;
-  // XXX Should become .transition({ type: "EXPLICIT_CLOSE ???" })
-  simulateSendCloseEvent(event: { code: number; wasClean: boolean; reason: string; }): void; // prettier-ignore
-
-  // XXX Should become .transition({ type: "FOCUS_VISIBLE" })
-  onVisibilityChange(visibilityState: DocumentVisibilityState): void;
-  // XXX Only used in unit tests to test impl details, hide this under __internal!
-  getUndoStack(): HistoryOp<TPresence>[][];
-  // XXX Only used in unit tests to test impl details, hide this under __internal!
-  getItemsCount(): number;
-
-  // Core
-  // XXX Should become .transition({ type: "CONNECT" })
-  connect(): void;
-  // XXX Should become .transition({ type: "DISCONNECT" })
-  disconnect(): void;
-
-  // DevTools support
-  getSelf_forDevTools(): DevTools.UserTreeNode | null;
-  getOthers_forDevTools(): readonly DevTools.UserTreeNode[];
 };
 
 const BACKOFF_RETRY_DELAYS = [250, 500, 1000, 2000, 4000, 8000, 10000];
@@ -2217,25 +2215,30 @@ function makeStateMachine<
     __internal: {
       get buffer() { return context.buffer }, // prettier-ignore
       get numRetries() { return context.numRetries }, // prettier-ignore
+
+      // Internal
+      onClose,
+      onMessage,
+      authenticationSuccess,
+      onNavigatorOnline,
+
+      // Internal DevTools
+      simulateSocketClose,
+      simulateSendCloseEvent,
+
+      onVisibilityChange,
+      getUndoStack: () => context.undoStack,
+      getItemsCount: () => context.nodes.size,
+
+      connect,
+      disconnect,
+
+      // Support for the Liveblocks browser extension
+      getSelf_forDevTools: () => selfAsTreeNode.current,
+      getOthers_forDevTools: (): readonly DevTools.UserTreeNode[] =>
+        others_forDevTools.current,
     },
 
-    // Internal
-    onClose,
-    onMessage,
-    authenticationSuccess,
-    onNavigatorOnline,
-
-    // Internal DevTools
-    simulateSocketClose,
-    simulateSendCloseEvent,
-
-    onVisibilityChange,
-    getUndoStack: () => context.undoStack,
-    getItemsCount: () => context.nodes.size,
-
-    // Core
-    connect,
-    disconnect,
     reconnect,
 
     // Presence
@@ -2277,11 +2280,6 @@ function makeStateMachine<
     // Presence
     getPresence: () => context.me.current,
     getOthers: () => context.others.current,
-
-    // Support for the Liveblocks browser extension
-    getSelf_forDevTools: () => selfAsTreeNode.current,
-    getOthers_forDevTools: (): readonly DevTools.UserTreeNode[] =>
-      others_forDevTools.current,
   };
 }
 
@@ -2322,6 +2320,7 @@ export function createRoom<
 
   const room: Room<TPresence, TStorage, TUserMeta, TRoomEvent> = {
     id: config.roomId,
+
     /////////////
     // Core    //
     /////////////
@@ -2354,16 +2353,16 @@ export function createRoom<
 
     // XXX Mimick the same __internal structure, and export it directly as such
     __internal: {
-      connect: machine.connect,
-      disconnect: machine.disconnect,
-      onNavigatorOnline: machine.onNavigatorOnline,
-      onVisibilityChange: machine.onVisibilityChange,
+      connect: machine.__internal.connect,
+      disconnect: machine.__internal.disconnect,
+      onNavigatorOnline: machine.__internal.onNavigatorOnline,
+      onVisibilityChange: machine.__internal.onVisibilityChange,
 
-      simulateCloseWebsocket: machine.simulateSocketClose,
-      simulateSendCloseEvent: machine.simulateSendCloseEvent,
+      simulateCloseWebsocket: machine.__internal.simulateSocketClose,
+      simulateSendCloseEvent: machine.__internal.simulateSendCloseEvent,
 
-      getSelf_forDevTools: machine.getSelf_forDevTools,
-      getOthers_forDevTools: machine.getOthers_forDevTools,
+      getSelf_forDevTools: machine.__internal.getSelf_forDevTools,
+      getOthers_forDevTools: machine.__internal.getOthers_forDevTools,
     },
   };
 

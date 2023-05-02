@@ -849,7 +849,7 @@ describe("LiveList", () => {
           1
         );
 
-      machine.onClose(
+      machine.__internal.onClose(
         new CloseEvent("close", {
           code: WebsocketCloseCodes.CLOSE_ABNORMAL,
           wasClean: false,
@@ -899,7 +899,7 @@ describe("LiveList", () => {
           1
         );
 
-      machine.onClose(
+      machine.__internal.onClose(
         new CloseEvent("close", {
           code: WebsocketCloseCodes.CLOSE_ABNORMAL,
           wasClean: false,
@@ -1221,7 +1221,7 @@ describe("LiveList", () => {
 
       expectStorage({ items: ["a"] });
 
-      machine.onClose(
+      machine.__internal.onClose(
         new CloseEvent("close", {
           code: WebsocketCloseCodes.CLOSE_ABNORMAL,
           wasClean: false,
@@ -1310,7 +1310,7 @@ describe("LiveList", () => {
 
       expectStorage({ items: ["a", "b"] });
 
-      machine.onClose(
+      machine.__internal.onClose(
         new CloseEvent("close", {
           code: WebsocketCloseCodes.CLOSE_ABNORMAL,
           wasClean: false,
@@ -1387,7 +1387,7 @@ describe("LiveList", () => {
 
       expectStorage({ items: ["a", "b"] });
 
-      machine.onClose(
+      machine.__internal.onClose(
         new CloseEvent("close", {
           code: WebsocketCloseCodes.CLOSE_ABNORMAL,
           wasClean: false,

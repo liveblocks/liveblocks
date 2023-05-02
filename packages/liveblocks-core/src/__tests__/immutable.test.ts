@@ -54,13 +54,13 @@ export async function prepareStorageImmutableTest<
     for (const message of messages) {
       if (message.type === ClientMsgCode.UPDATE_STORAGE) {
         totalStorageOps += message.ops.length;
-        refMachine.onMessage(
+        refMachine.__internal.onMessage(
           serverMessage({
             type: ServerMsgCode.UPDATE_STORAGE,
             ops: message.ops,
           })
         );
-        machine.onMessage(
+        machine.__internal.onMessage(
           serverMessage({
             type: ServerMsgCode.UPDATE_STORAGE,
             ops: message.ops,
@@ -85,7 +85,7 @@ export async function prepareStorageImmutableTest<
     expectStorageInBothClients(data);
 
     if (itemsCount !== undefined) {
-      expect(machine.getItemsCount()).toBe(itemsCount);
+      expect(machine.__internal.getItemsCount()).toBe(itemsCount);
     }
     expect(state).toEqual(refState);
     expect(state).toEqual(data);
