@@ -5,7 +5,7 @@
 
   /**
    * The main Liveblocks code for the example.
-   * Check in src/routes/index.svelte to see the setup code.
+   * Check in src/routes/+page.svelte to see the setup code.
    */
 
   export let room: Room;
