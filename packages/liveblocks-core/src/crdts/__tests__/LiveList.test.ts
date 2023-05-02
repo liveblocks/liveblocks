@@ -22,7 +22,7 @@ import { RoomScope } from "../../protocol/AuthToken";
 import { OpCode } from "../../protocol/Op";
 import type { IdTuple, SerializedCrdt } from "../../protocol/SerializedCrdt";
 import { CrdtType } from "../../protocol/SerializedCrdt";
-import { WebsocketCloseCodes } from "../../types/WebsocketCloseCodes";
+import { WebsocketCloseCodes } from "../../types/IWebSocket";
 import { LiveList } from "../LiveList";
 import { LiveMap } from "../LiveMap";
 import { LiveObject } from "../LiveObject";

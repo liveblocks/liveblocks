@@ -19,8 +19,8 @@ import { CrdtType } from "../protocol/SerializedCrdt";
 import { ServerMsgCode } from "../protocol/ServerMsg";
 import type { _private_Effects as Effects } from "../room";
 import { createRoom } from "../room";
+import { WebsocketCloseCodes } from "../types/IWebSocket";
 import type { Others } from "../types/Others";
-import { WebsocketCloseCodes } from "../types/WebsocketCloseCodes";
 import { listUpdate, listUpdateInsert, listUpdateSet } from "./_updatesUtils";
 import {
   createSerializedList,

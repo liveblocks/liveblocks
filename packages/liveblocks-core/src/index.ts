@@ -113,6 +113,14 @@ export type {
   StorageStatus,
 } from "./room";
 export type { Immutable } from "./types/Immutable";
+export type {
+  IWebSocket,
+  IWebSocketCloseEvent,
+  IWebSocketEvent,
+  IWebSocketInstance,
+  IWebSocketMessageEvent,
+} from "./types/IWebSocket";
+export { WebsocketCloseCodes } from "./types/IWebSocket";
 export type { NodeMap, ParentToChildNodeMap } from "./types/NodeMap";
 export type { Others } from "./types/Others";
 export type {
@@ -123,7 +131,6 @@ export type {
   PlainLsonObject,
 } from "./types/PlainLson";
 export type { User } from "./types/User";
-export { WebsocketCloseCodes } from "./types/WebsocketCloseCodes";
 
 /**
  * Helper type to help users adopt to Lson types from interface definitions.
