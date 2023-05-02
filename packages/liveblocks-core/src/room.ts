@@ -584,16 +584,27 @@ type PrivateRoomAPI<
   getOthers_forDevTools(): readonly DevTools.UserTreeNode[];
 
   // Core
+  // XXX Should become .transition({ type: "CONNECT" })
   connect(): void;
+  // XXX Should become .transition({ type: "DISCONNECT" })
   disconnect(): void;
 
+  // XXX Should become .transition({ type: "EXPLICIT_CLOSE ???" })
+  // XXX What's the diff with simulateSendCloseEvent() and simulateSocketClose() below?
   onClose(event: IWebSocketCloseEvent): void;
+  // XXX OK to be called at any time?
   onMessage(event: IWebSocketEvent): void;
+  // XXX Should become .transition({ type: "AUTH_DONE", data: <jwt token> })
   authenticationSuccess(token: RoomAuthToken, socket: IWebSocketInstance): void;
+  // XXX OK to be called at any time?
   onNavigatorOnline(): void;
+  // XXX Should become .transition({ type: "FOCUS_VISIBLE" })
   onVisibilityChange(visibilityState: DocumentVisibilityState): void;
 
+  // XXX Should become .transition({ type: "IMPLICIT_CLOSE ???" })
   simulateCloseWebsocket(): void;
+  // XXX Should become .transition({ type: "EXPLICIT_CLOSE ???" })
+  // XXX DRY up inlined type with IWebSocketCloseEvent once that PR is merged into main
   simulateSendCloseEvent(event: IWebSocketCloseEvent): void;
 };
 
@@ -1864,6 +1875,7 @@ export function createRoom<
     }
   }
 
+  // XXX Should become .transition({ type: "RECONNECT" })
   function reconnect() {
     if (context.socket) {
       context.socket.removeEventListener("open", onOpen);
