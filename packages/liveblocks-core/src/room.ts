@@ -48,10 +48,15 @@ import { MeRef } from "./refs/MeRef";
 import { OthersRef } from "./refs/OthersRef";
 import { DerivedRef, ValueRef } from "./refs/ValueRef";
 import type * as DevTools from "./types/DevToolsTreeNode";
+import type {
+  IWebSocket,
+  IWebSocketInstance,
+  IWebSocketMessageEvent,
+} from "./types/IWebSocket";
+import { WebsocketCloseCodes } from "./types/IWebSocket";
 import type { NodeMap } from "./types/NodeMap";
 import type { Others, OthersEvent } from "./types/Others";
 import type { User } from "./types/User";
-import { WebsocketCloseCodes } from "./types/WebsocketCloseCodes";
 
 type TimeoutID = ReturnType<typeof setTimeout>;
 type IntervalID = ReturnType<typeof setInterval>;
@@ -571,8 +576,8 @@ type Machine<
   // Internal
   state: MachineContext<TPresence, TStorage, TUserMeta, TRoomEvent>;
   onClose(event: { code: number; wasClean: boolean; reason: string }): void;
-  onMessage(event: MessageEvent<string>): void;
-  authenticationSuccess(token: RoomAuthToken, socket: WebSocket): void;
+  onMessage(event: IWebSocketMessageEvent): void;
+  authenticationSuccess(token: RoomAuthToken, socket: IWebSocketInstance): void;
   heartbeat(): void;
   onNavigatorOnline(): void;
 
@@ -686,14 +691,13 @@ type MachineContext<
     readonly raw: string;
     readonly parsed: RoomAuthToken & JwtMetadata;
   } | null;
-
   /**
    * Remembers the last successful connection ID. This gets assigned as soon as
    * the connection status switched from "connecting" to "open".
    */
   lastConnectionId: number | null; // TODO Do we really need to separately track this, or can we derive this from the last known token?
 
-  socket: WebSocket | null;
+  socket: IWebSocketInstance | null;
 
   /**
    * All pending changes that yet need to be synced.
@@ -771,7 +775,7 @@ type MachineContext<
 type Effects<TPresence extends JsonObject, TRoomEvent extends Json> = {
   authenticate(
     auth: AuthCallback,
-    createWebSocket: (token: string) => WebSocket
+    createWebSocket: (token: string) => IWebSocketInstance
   ): void;
   send(messages: ClientMsg<TPresence, TRoomEvent>[]): void;
   scheduleFlush(delay: number): TimeoutID;
@@ -783,7 +787,7 @@ type Effects<TPresence extends JsonObject, TRoomEvent extends Json> = {
 export type Polyfills = {
   atob?: (data: string) => string;
   fetch?: typeof fetch;
-  WebSocket?: any;
+  WebSocket?: IWebSocket;
 };
 
 export type RoomInitializers<
@@ -991,7 +995,7 @@ function makeStateMachine<
   const effects: Effects<TPresence, TRoomEvent> = config.mockedEffects || {
     authenticate(
       auth: AuthCallback,
-      createWebSocket: (token: string) => WebSocket
+      createWebSocket: (token: string) => IWebSocketInstance
     ) {
       // If we already have a parsed token from a previous connection
       // in-memory, reuse it
@@ -1405,7 +1409,10 @@ function makeStateMachine<
     );
   }
 
-  function authenticationSuccess(token: RoomAuthToken, socket: WebSocket) {
+  function authenticationSuccess(
+    token: RoomAuthToken,
+    socket: IWebSocketInstance
+  ) {
     socket.addEventListener("message", onMessage);
     socket.addEventListener("open", onOpen);
     socket.addEventListener("close", onClose);
@@ -1602,9 +1609,14 @@ function makeStateMachine<
     effects.send(messages);
   }
 
-  function onMessage(event: MessageEvent<string>) {
+  function onMessage(event: IWebSocketMessageEvent) {
     if (event.data === "pong") {
       clearTimeout(context.timers.pongTimeout);
+      return;
+    }
+
+    if (typeof event.data !== "string") {
+      // istanbul ignore next: Unknown incoming message
       return;
     }
 
@@ -2525,7 +2537,7 @@ class LiveblocksError extends Error {
 
 function prepareCreateWebSocket(
   liveblocksServer: string,
-  WebSocketPolyfill?: typeof WebSocket
+  WebSocketPolyfill?: IWebSocket
 ) {
   if (typeof window === "undefined" && WebSocketPolyfill === undefined) {
     throw new Error(
@@ -2533,9 +2545,9 @@ function prepareCreateWebSocket(
     );
   }
 
-  const ws = WebSocketPolyfill || WebSocket;
+  const ws: IWebSocket = WebSocketPolyfill || WebSocket;
 
-  return (token: string): WebSocket => {
+  return (token: string): IWebSocketInstance => {
     return new ws(
       `${liveblocksServer}/?token=${token}&version=${
         // prettier-ignore

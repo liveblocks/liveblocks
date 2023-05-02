@@ -72,9 +72,11 @@ describe("createClient", () => {
           publicApiKey,
           // @ts-expect-error: authEndpoint could be anything for a non-typescript user so we want to allow for this test
           authEndpoint,
-          WebSocketPolyfill: MockWebSocket,
-          fetchPolyfill: fetchMock,
-          atobPolyfill: atobPolyfillMock,
+          polyfills: {
+            WebSocket: MockWebSocket,
+            fetch: fetchMock,
+            atob: atobPolyfillMock,
+          },
         })
       ).toThrowError(errorMessage);
     }

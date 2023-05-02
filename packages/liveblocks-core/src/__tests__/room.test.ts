@@ -23,8 +23,8 @@ import {
   createRoom,
   makeClassicSubscribeFn,
 } from "../room";
+import { WebsocketCloseCodes } from "../types/IWebSocket";
 import type { Others } from "../types/Others";
-import { WebsocketCloseCodes } from "../types/WebsocketCloseCodes";
 import { listUpdate, listUpdateInsert, listUpdateSet } from "./_updatesUtils";
 import {
   createSerializedList,
