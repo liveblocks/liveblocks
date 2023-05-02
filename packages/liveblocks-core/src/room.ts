@@ -613,7 +613,7 @@ type Machine<
   TStorage extends LsonObject,
   TUserMeta extends BaseUserMeta,
   TRoomEvent extends Json
-> = Omit<Room<TPresence, TStorage, TUserMeta, TRoomEvent>, "subscribe">;
+> = Omit<Room<TPresence, TStorage, TUserMeta, TRoomEvent>, never>;
 
 const BACKOFF_RETRY_DELAYS = [250, 500, 1000, 2000, 4000, 8000, 10000];
 const BACKOFF_RETRY_DELAYS_SLOW = [2000, 30000, 60000, 300000];
@@ -2232,6 +2232,7 @@ function makeStateMachine<
     },
 
     id: config.roomId,
+    subscribe: makeClassicSubscribeFn(events),
 
     reconnect,
 
@@ -2316,7 +2317,7 @@ export function createRoom<
     reconnect: machine.reconnect,
 
     // XXX This subscribe function is the only different public API between
-    subscribe: makeClassicSubscribeFn(machine.events),
+    subscribe: machine.subscribe,
 
     //////////////
     // Presence //
