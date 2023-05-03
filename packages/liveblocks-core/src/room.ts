@@ -51,7 +51,6 @@ import type * as DevTools from "./types/DevToolsTreeNode";
 import type {
   IWebSocket,
   IWebSocketCloseEvent,
-  IWebSocketEvent,
   IWebSocketInstance,
   IWebSocketMessageEvent,
 } from "./types/IWebSocket";
@@ -602,7 +601,7 @@ type PrivateRoomAPI<
     implicitClose(): void; // NOTE: Also used in e2e test app!
 
     // XXX OK to be called at any time?
-    onMessage(event: IWebSocketEvent): void;
+    onMessage(event: IWebSocketMessageEvent): void;
     // XXX Should become a shorthand for .transition({ type: "AUTH_DONE", data: <jwt token> })
     authenticationSuccess(token: RoomAuthToken, socket: IWebSocketInstance): void; // prettier-ignore
     // XXX OK to be called at any time?
