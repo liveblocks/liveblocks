@@ -591,12 +591,15 @@ type PrivateRoomAPI<
     authSuccess(token: RoomAuthToken, socket: IWebSocketInstance): void; // prettier-ignore
     navigatorOnline(): void;
     windowGotFocus(): void;
+    pong(): void;
 
-    // XXX These will in practice only happen if there is an open and working
-    // XXX websocket connection, since the source of these messages is... the
-    // XXX websocket. However, these events should likely be handled
-    // XXX orthorgonally to the state machine (the state of the connection does
-    // XXX not matter for how incoming messages are handled).
+    /**
+     * Call this when a server message is received (typically from the
+     * active WebSocket connection, or simulated by a unit test). These
+     * messages should *not* be PONG messages (aka server heartbeats).
+     *
+     * When a PONG is received, call pong() instead.
+     */
     incomingMessage(event: IWebSocketMessageEvent): void;
   };
 };
@@ -797,19 +800,19 @@ function userToTreeNode(
   };
 }
 
+/**
+ * TODO(nvie) Abstract this out more. This will not be the final form.
+ */
 type FSMEvent =
   | { type: "CONNECT" }
   | { type: "DISCONNECT" }
   | { type: "WINDOW_GOT_FOCUS" }
+  | { type: "RECEIVE_PONG" }
   | { type: "NAVIGATOR_ONLINE" }
   | {
       type: "AUTH_SUCCESS";
       token: RoomAuthToken;
       socket: IWebSocketInstance;
-    }
-  | {
-      type: "INCOMING_WEBSOCKET_MESSAGE";
-      messageEvent: IWebSocketMessageEvent;
     }
   | { type: "IMPLICIT_CLOSE" }
   | { type: "EXPLICIT_CLOSE"; closeEvent: IWebSocketCloseEvent };
@@ -1397,7 +1400,8 @@ export function createRoom<
   }
 
   function handleAuthSuccess(token: RoomAuthToken, socket: IWebSocketInstance) {
-    socket.addEventListener("message", handleIncomingMessage);
+    // XXX Don't call handlers directly -- call .transition() instead
+    socket.addEventListener("message", handleRawSocketMessage);
     socket.addEventListener("open", handleSocketOpen);
     socket.addEventListener("close", handleExplicitClose);
     socket.addEventListener("error", handleSocketError);
@@ -1429,7 +1433,7 @@ export function createRoom<
   }
 
   function handleWindowGotFocus() {
-    // XXX MOVE THIS GUARD INTO THE .transition() function
+    // TODO Move this guard into the .transition() function eventually
     if (context.connection.current.status === "open") {
       log("Heartbeat after visibility change");
       heartbeat();
@@ -1591,12 +1595,23 @@ export function createRoom<
     effects.send(messages);
   }
 
-  function handleIncomingMessage(event: IWebSocketMessageEvent) {
+  /**
+   * Handles a raw message received on the WebSocket. Can be either a "pong"
+   * (server heartbeat), or a message from the Liveblocks server.
+   */
+  function handleRawSocketMessage(event: IWebSocketMessageEvent) {
     if (event.data === "pong") {
-      clearTimeout(context.timers.pongTimeout);
-      return;
+      transition({ type: "RECEIVE_PONG" });
+    } else {
+      handleServerMessage(event);
     }
+  }
 
+  function handlePong() {
+    clearTimeout(context.timers.pongTimeout);
+  }
+
+  function handleServerMessage(event: IWebSocketMessageEvent) {
     if (typeof event.data !== "string") {
       // istanbul ignore next: Unknown incoming message
       return;
@@ -1796,9 +1811,10 @@ export function createRoom<
   }
 
   function handleSocketError() {
-    // XXX At the very least, emit a log here
+    // TODO(nvie) At the very least, emit a log here?
   }
 
+  // XXX Should eventually become .transition({ type: "OPEN_SOCKET" })
   function handleSocketOpen() {
     clearInterval(context.timers.heartbeat);
     context.timers.heartbeat = effects.startHeartbeatInterval();
@@ -1856,7 +1872,7 @@ export function createRoom<
   function handleDisconnect() {
     if (context.socket) {
       context.socket.removeEventListener("open", handleSocketOpen);
-      context.socket.removeEventListener("message", handleIncomingMessage);
+      context.socket.removeEventListener("message", handleRawSocketMessage);
       context.socket.removeEventListener("close", handleExplicitClose);
       context.socket.removeEventListener("error", handleSocketError);
       context.socket.close();
@@ -1881,11 +1897,11 @@ export function createRoom<
     }
   }
 
-  // XXX Should become .transition({ type: "RECONNECT" })
+  // XXX Should eventually become .transition({ type: "RECONNECT" })
   function reconnect() {
     if (context.socket) {
       context.socket.removeEventListener("open", handleSocketOpen);
-      context.socket.removeEventListener("message", handleIncomingMessage);
+      context.socket.removeEventListener("message", handleRawSocketMessage);
       context.socket.removeEventListener("close", handleExplicitClose);
       context.socket.removeEventListener("error", handleSocketError);
       context.socket.close();
@@ -2221,7 +2237,16 @@ export function createRoom<
     storageStatus: eventHub.storageStatus.observable,
   };
 
-  // XXX This is where all the sanity checks need to happen and guards need to be applied
+  //
+  // NOTE:
+  // The Finite State Machine's .transition() function will eventually be
+  // the central gate keeper of sanity. This function will likely be abstracted
+  // away in a proper FSM abstraction (like a separate class).
+  //
+  // The idea is that, eventually, the handler functions can only be called
+  // from here, and never from anywhere else, so this function can perform its
+  // central gatekeeping.
+  //
   function transition(event: FSMEvent) {
     switch (event.type) {
       case "CONNECT":
@@ -2230,17 +2255,17 @@ export function createRoom<
       case "DISCONNECT":
         return handleDisconnect();
 
+      case "RECEIVE_PONG":
+        return handlePong();
+
+      case "AUTH_SUCCESS":
+        return handleAuthSuccess(event.token, event.socket);
+
       case "WINDOW_GOT_FOCUS":
         return handleWindowGotFocus();
 
       case "NAVIGATOR_ONLINE":
         return handleNavigatorBackOnline();
-
-      case "AUTH_SUCCESS":
-        return handleAuthSuccess(event.token, event.socket);
-
-      case "INCOMING_WEBSOCKET_MESSAGE":
-        return handleIncomingMessage(event.messageEvent);
 
       case "IMPLICIT_CLOSE":
         return handleImplicitClose();
@@ -2270,12 +2295,21 @@ export function createRoom<
       simulate: {
         explicitClose:  (closeEvent) => transition({ type: "EXPLICIT_CLOSE", closeEvent }),
         implicitClose:            () => transition({ type: "IMPLICIT_CLOSE" }),
-        incomingMessage:     (event) => transition({ type: "INCOMING_WEBSOCKET_MESSAGE", messageEvent: event }),
         authSuccess: (token, socket) => transition({ type: "AUTH_SUCCESS", token, socket }),
         navigatorOnline:          () => transition({ type: "NAVIGATOR_ONLINE" }),
         windowGotFocus:           () => transition({ type: "WINDOW_GOT_FOCUS" }),
+        pong:                     () => transition({ type: "RECEIVE_PONG" }),
         connect:                  () => transition({ type: "CONNECT" }),
         disconnect:               () => transition({ type: "DISCONNECT" }),
+
+        /**
+         * This one looks differently from the rest, because receiving messages
+         * is handled orthorgonally from all other possible events above,
+         * because it does not matter what the connectivity state of the
+         * machine is, so there won't be an explicit state machine transition
+         * needed for this event.
+         */
+        incomingMessage: handleServerMessage,
       },
     },
 
