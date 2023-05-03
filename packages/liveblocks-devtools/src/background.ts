@@ -20,12 +20,12 @@ browser.runtime.onConnect.addListener((port) => {
     switch (message.msg) {
       // The panel has requested to reload the current tab.
       case "reload":
-        browser.tabs.reload(message.tabId);
+        void browser.tabs.reload(message.tabId);
         break;
 
       // The panel has requested to open a new tab with a given URL.
       case "open":
-        browser.tabs.create({
+        void browser.tabs.create({
           url: message.url,
         });
         break;
@@ -40,7 +40,7 @@ browser.runtime.onConnect.addListener((port) => {
       case "connect":
         portsByTabId.set(message.tabId, port);
       default: // eslint-disable-line no-fallthrough
-        browser.tabs.sendMessage(message.tabId, message);
+        void browser.tabs.sendMessage(message.tabId, message);
     }
   }
 

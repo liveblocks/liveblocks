@@ -233,7 +233,7 @@ const internalEnhancer = <TState>(options: {
           type: ACTION_TYPES.START_LOADING_STORAGE,
         });
 
-        room.getStorage().then(({ root }) => {
+        void room.getStorage().then(({ root }) => {
           const updates: any = {};
 
           room!.batch(() => {

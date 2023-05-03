@@ -2020,7 +2020,7 @@ export function createRoom<
       return root;
     } else {
       // Not done loading, kick off the loading (will not do anything if already kicked off)
-      startLoadingStorage();
+      void startLoadingStorage();
       return null;
     }
   }
