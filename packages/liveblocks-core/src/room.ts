@@ -970,13 +970,6 @@ export function createRoom<
         authenticationSuccess(prevToken.parsed, socket);
         return undefined;
       } else {
-        //
-        // TODO(nvie): May have found a bug here
-        //
-        // This promise was returned before, but never awaited, meaning the
-        // promise might be dangling and get this callback at a later stage,
-        // even when it is no longer expected.
-        //
         void auth(config.roomId)
           .then(({ token }) => {
             if (context.connection.current.status !== "authenticating") {
