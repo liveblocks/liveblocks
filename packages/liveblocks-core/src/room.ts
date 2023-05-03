@@ -48,10 +48,17 @@ import { MeRef } from "./refs/MeRef";
 import { OthersRef } from "./refs/OthersRef";
 import { DerivedRef, ValueRef } from "./refs/ValueRef";
 import type * as DevTools from "./types/DevToolsTreeNode";
+import type {
+  IWebSocket,
+  IWebSocketCloseEvent,
+  IWebSocketEvent,
+  IWebSocketInstance,
+  IWebSocketMessageEvent,
+} from "./types/IWebSocket";
+import { WebsocketCloseCodes } from "./types/IWebSocket";
 import type { NodeMap } from "./types/NodeMap";
 import type { Others, OthersEvent } from "./types/Others";
 import type { User } from "./types/User";
-import { WebsocketCloseCodes } from "./types/WebsocketCloseCodes";
 
 type TimeoutID = ReturnType<typeof setTimeout>;
 type IntervalID = ReturnType<typeof setInterval>;
@@ -234,12 +241,175 @@ export type BroadcastOptions = {
   shouldQueueEventIfNotReady: boolean;
 };
 
+type SubscribeFn<
+  TPresence extends JsonObject,
+  _TStorage extends LsonObject,
+  TUserMeta extends BaseUserMeta,
+  TRoomEvent extends Json
+> = {
+  /**
+   * Subscribes to changes made on any Live structure. Returns an unsubscribe function.
+   *
+   * @internal This legacy API works, but was never documented publicly.
+   */
+  (callback: StorageCallback): () => void;
+
+  /**
+   * Subscribe to the current user presence updates.
+   *
+   * @param listener the callback that is called every time the current user presence is updated with {@link Room.updatePresence}.
+   *
+   * @returns Unsubscribe function.
+   *
+   * @example
+   * room.subscribe("my-presence", (presence) => {
+   *   // Do something
+   * });
+   */
+  (type: "my-presence", listener: Callback<TPresence>): () => void;
+
+  /**
+   * Subscribe to the other users updates.
+   *
+   * @param listener the callback that is called when a user enters or leaves the room or when a user update its presence.
+   *
+   * @returns Unsubscribe function.
+   *
+   * @example
+   * room.subscribe("others", (others) => {
+   *   // Do something
+   * });
+   *
+   */
+  (
+    type: "others",
+    listener: (
+      others: Others<TPresence, TUserMeta>,
+      event: OthersEvent<TPresence, TUserMeta>
+    ) => void
+  ): () => void;
+
+  /**
+   * Subscribe to events broadcasted by {@link Room.broadcastEvent}
+   *
+   * @param listener the callback that is called when a user calls {@link Room.broadcastEvent}
+   *
+   * @returns Unsubscribe function.
+   *
+   * @example
+   * room.subscribe("event", ({ event, connectionId }) => {
+   *   // Do something
+   * });
+   *
+   */
+  (type: "event", listener: Callback<CustomEvent<TRoomEvent>>): () => void;
+
+  /**
+   * Subscribe to errors thrown in the room.
+   *
+   * @returns Unsubscribe function.
+   *
+   */
+  (type: "error", listener: ErrorCallback): () => void;
+
+  /**
+   * Subscribe to connection state updates.
+   *
+   * @returns Unsubscribe function.
+   *
+   */
+  (type: "connection", listener: Callback<ConnectionStatus>): () => void;
+
+  /**
+   * Subscribes to changes made on a Live structure. Returns an unsubscribe function.
+   * In a future version, we will also expose what exactly changed in the Live structure.
+   *
+   * @param callback The callback this called when the Live structure changes.
+   *
+   * @returns Unsubscribe function.
+   *
+   * @example
+   * const liveMap = new LiveMap();  // Could also be LiveList or LiveObject
+   * const unsubscribe = room.subscribe(liveMap, (liveMap) => { });
+   * unsubscribe();
+   */
+  <L extends LiveStructure>(
+    liveStructure: L,
+    callback: (node: L) => void
+  ): () => void;
+
+  /**
+   * Subscribes to changes made on a Live structure and all the nested data
+   * structures. Returns an unsubscribe function. In a future version, we
+   * will also expose what exactly changed in the Live structure.
+   *
+   * @param callback The callback this called when the Live structure, or any
+   * of its nested values, changes.
+   *
+   * @returns Unsubscribe function.
+   *
+   * @example
+   * const liveMap = new LiveMap();  // Could also be LiveList or LiveObject
+   * const unsubscribe = room.subscribe(liveMap, (updates) => { }, { isDeep: true });
+   * unsubscribe();
+   */
+  <L extends LiveStructure>(
+    liveStructure: L,
+    callback: StorageCallback,
+    options: { isDeep: true }
+  ): () => void;
+
+  /**
+   * Subscribe to the current user's history changes.
+   *
+   * @returns Unsubscribe function.
+   *
+   * @example
+   * room.subscribe("history", ({ canUndo, canRedo }) => {
+   *   // Do something
+   * });
+   */
+  (type: "history", listener: Callback<HistoryEvent>): () => void;
+
+  /**
+   * Subscribe to storage status changes.
+   *
+   * @returns Unsubscribe function.
+   *
+   * @example
+   * room.subscribe("storage-status", (status) => {
+   *   switch(status) {
+   *      case "not-loaded":
+   *        break;
+   *      case "loading":
+   *        break;
+   *      case "synchronizing":
+   *        break;
+   *      case "synchronized":
+   *        break;
+   *      default:
+   *        break;
+   *   }
+   * });
+   */
+  (type: "storage-status", listener: Callback<StorageStatus>): () => void;
+};
+
 export type Room<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
   TUserMeta extends BaseUserMeta,
   TRoomEvent extends Json
 > = {
+  /**
+   * @internal
+   * Private methods to directly control the underlying state machine for this
+   * room. Used in the core internals and for unit testing, but as a user of
+   * Liveblocks, NEVER USE ANY OF THESE METHODS DIRECTLY, because bad things
+   * will probably happen if you do.
+   */
+  readonly __internal: PrivateRoomAPI<TPresence, TStorage, TUserMeta, TRoomEvent>; // prettier-ignore
+
   /**
    * The id of the room.
    */
@@ -250,154 +420,7 @@ export type Room<
    */
   isSelfAware(): boolean;
   getConnectionState(): ConnectionStatus;
-  readonly subscribe: {
-    /**
-     * Subscribes to changes made on any Live structure. Returns an unsubscribe function.
-     *
-     * @internal This legacy API works, but was never documented publicly.
-     */
-    (callback: StorageCallback): () => void;
-
-    /**
-     * Subscribe to the current user presence updates.
-     *
-     * @param listener the callback that is called every time the current user presence is updated with {@link Room.updatePresence}.
-     *
-     * @returns Unsubscribe function.
-     *
-     * @example
-     * room.subscribe("my-presence", (presence) => {
-     *   // Do something
-     * });
-     */
-    (type: "my-presence", listener: Callback<TPresence>): () => void;
-
-    /**
-     * Subscribe to the other users updates.
-     *
-     * @param listener the callback that is called when a user enters or leaves the room or when a user update its presence.
-     *
-     * @returns Unsubscribe function.
-     *
-     * @example
-     * room.subscribe("others", (others) => {
-     *   // Do something
-     * });
-     *
-     */
-    (
-      type: "others",
-      listener: (
-        others: Others<TPresence, TUserMeta>,
-        event: OthersEvent<TPresence, TUserMeta>
-      ) => void
-    ): () => void;
-
-    /**
-     * Subscribe to events broadcasted by {@link Room.broadcastEvent}
-     *
-     * @param listener the callback that is called when a user calls {@link Room.broadcastEvent}
-     *
-     * @returns Unsubscribe function.
-     *
-     * @example
-     * room.subscribe("event", ({ event, connectionId }) => {
-     *   // Do something
-     * });
-     *
-     */
-    (type: "event", listener: Callback<CustomEvent<TRoomEvent>>): () => void;
-
-    /**
-     * Subscribe to errors thrown in the room.
-     *
-     * @returns Unsubscribe function.
-     *
-     */
-    (type: "error", listener: ErrorCallback): () => void;
-
-    /**
-     * Subscribe to connection state updates.
-     *
-     * @returns Unsubscribe function.
-     *
-     */
-    (type: "connection", listener: Callback<ConnectionStatus>): () => void;
-
-    /**
-     * Subscribes to changes made on a Live structure. Returns an unsubscribe function.
-     * In a future version, we will also expose what exactly changed in the Live structure.
-     *
-     * @param callback The callback this called when the Live structure changes.
-     *
-     * @returns Unsubscribe function.
-     *
-     * @example
-     * const liveMap = new LiveMap();  // Could also be LiveList or LiveObject
-     * const unsubscribe = room.subscribe(liveMap, (liveMap) => { });
-     * unsubscribe();
-     */
-    <L extends LiveStructure>(
-      liveStructure: L,
-      callback: (node: L) => void
-    ): () => void;
-
-    /**
-     * Subscribes to changes made on a Live structure and all the nested data
-     * structures. Returns an unsubscribe function. In a future version, we
-     * will also expose what exactly changed in the Live structure.
-     *
-     * @param callback The callback this called when the Live structure, or any
-     * of its nested values, changes.
-     *
-     * @returns Unsubscribe function.
-     *
-     * @example
-     * const liveMap = new LiveMap();  // Could also be LiveList or LiveObject
-     * const unsubscribe = room.subscribe(liveMap, (updates) => { }, { isDeep: true });
-     * unsubscribe();
-     */
-    <L extends LiveStructure>(
-      liveStructure: L,
-      callback: StorageCallback,
-      options: { isDeep: true }
-    ): () => void;
-
-    /**
-     * Subscribe to the current user's history changes.
-     *
-     * @returns Unsubscribe function.
-     *
-     * @example
-     * room.subscribe("history", ({ canUndo, canRedo }) => {
-     *   // Do something
-     * });
-     */
-    (type: "history", listener: Callback<HistoryEvent>): () => void;
-
-    /**
-     * Subscribe to storage status changes.
-     *
-     * @returns Unsubscribe function.
-     *
-     * @example
-     * room.subscribe("storage-status", (status) => {
-     *   switch(status) {
-     *      case "not-loaded":
-     *        break;
-     *      case "loading":
-     *        break;
-     *      case "synchronizing":
-     *        break;
-     *      case "synchronized":
-     *        break;
-     *      default:
-     *        break;
-     *   }
-     * });
-     */
-    (type: "storage-status", listener: Callback<StorageStatus>): () => void;
-  };
+  readonly subscribe: SubscribeFn<TPresence, TStorage, TUserMeta, TRoomEvent>;
 
   /**
    * Room's history contains functions that let you undo and redo operation made on by the current client on the presence and storage.
@@ -489,21 +512,21 @@ export type Room<
   getStorageSnapshot(): LiveObject<TStorage> | null;
 
   readonly events: {
-    customEvent: Observable<{ connectionId: number; event: TRoomEvent }>;
-    me: Observable<TPresence>;
-    others: Observable<{
-      others: Others<TPresence, TUserMeta>;
-      event: OthersEvent<TPresence, TUserMeta>;
-    }>;
-    error: Observable<Error>;
-    connection: Observable<ConnectionStatus>;
-    storage: Observable<StorageUpdate[]>;
-    history: Observable<HistoryEvent>;
+    readonly customEvent: Observable<{ connectionId: number; event: TRoomEvent; }>; // prettier-ignore
+    readonly me: Observable<TPresence>;
+    readonly others: Observable<{ others: Others<TPresence, TUserMeta>; event: OthersEvent<TPresence, TUserMeta>; }>; // prettier-ignore
+    readonly error: Observable<Error>;
+    readonly connection: Observable<ConnectionStatus>;
+    readonly storage: Observable<StorageUpdate[]>;
+    readonly history: Observable<HistoryEvent>;
+
     /**
      * Subscribe to the storage loaded event. Will fire at most once during the
      * lifetime of a Room.
      */
-    storageDidLoad: Observable<void>;
+    readonly storageDidLoad: Observable<void>;
+
+    readonly storageStatus: Observable<StorageStatus>;
   };
 
   /**
@@ -535,109 +558,40 @@ export type Room<
    * Close room connection and try to reconnect
    */
   reconnect(): void;
-
-  /**
-   * @internal
-   * Private methods to directly control the underlying state machine for this
-   * room. Used in the core internals and for unit testing, but as a user of
-   * Liveblocks, NEVER USE ANY OF THESE METHODS DIRECTLY, because bad things
-   * will probably happen if you do.
-   */
-  readonly __internal: {
-    connect(): void;
-    disconnect(): void;
-    onNavigatorOnline(): void;
-    onVisibilityChange(visibilityState: DocumentVisibilityState): void;
-
-    simulateCloseWebsocket(): void;
-    simulateSendCloseEvent(event: {
-      code: number;
-      wasClean: boolean;
-      reason: string;
-    }): void;
-
-    /** For DevTools support */
-    getSelf_forDevTools(): DevTools.UserTreeNode | null;
-    getOthers_forDevTools(): readonly DevTools.UserTreeNode[];
-  };
 };
 
-type Machine<
+/**
+ * @internal
+ * Private methods to directly control the underlying state machine for this
+ * room. Used in the core internals and for unit testing, but as a user of
+ * Liveblocks, NEVER USE ANY OF THESE METHODS DIRECTLY, because bad things
+ * will probably happen if you do.
+ */
+type PrivateRoomAPI<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
   TUserMeta extends BaseUserMeta,
   TRoomEvent extends Json
 > = {
-  // Internal
-  state: MachineContext<TPresence, TStorage, TUserMeta, TRoomEvent>;
-  onClose(event: { code: number; wasClean: boolean; reason: string }): void;
-  onMessage(event: MessageEvent<string>): void;
-  authenticationSuccess(token: RoomAuthToken, socket: WebSocket): void;
-  heartbeat(): void;
-  onNavigatorOnline(): void;
-
-  // Internal unit testing tools
-  simulateSocketClose(): void;
-  simulateSendCloseEvent(event: {
-    code: number;
-    wasClean: boolean;
-    reason: string;
-  }): void;
-
-  // onWakeUp,
-  onVisibilityChange(visibilityState: DocumentVisibilityState): void;
-  getUndoStack(): HistoryOp<TPresence>[][];
-  getItemsCount(): number;
+  // Context
+  buffer: MachineContext<TPresence, TStorage, TUserMeta, TRoomEvent>["buffer"]; // prettier-ignore
+  numRetries: MachineContext<TPresence, TStorage, TUserMeta, TRoomEvent>["numRetries"]; // prettier-ignore
 
   // Core
   connect(): void;
   disconnect(): void;
-  reconnect(): void;
 
-  // Presence
-  updatePresence(
-    patch: Partial<TPresence>,
-    options?: { addToHistory: boolean }
-  ): void;
-  broadcastEvent(event: TRoomEvent, options?: BroadcastOptions): void;
+  onClose(event: IWebSocketCloseEvent): void;
+  onMessage(event: IWebSocketEvent): void;
+  authenticationSuccess(token: RoomAuthToken, socket: IWebSocketInstance): void;
+  onNavigatorOnline(): void;
+  onVisibilityChange(visibilityState: DocumentVisibilityState): void;
 
-  batch<T>(callback: () => T): T;
-  undo(): void;
-  redo(): void;
-  canUndo(): boolean;
-  canRedo(): boolean;
-  pauseHistory(): void;
-  resumeHistory(): void;
+  simulateCloseWebsocket(): void;
+  simulateSendCloseEvent(event: IWebSocketCloseEvent): void;
 
-  getStorage(): Promise<{
-    root: LiveObject<TStorage>;
-  }>;
-  getStorageSnapshot(): LiveObject<TStorage> | null;
-  getStorageStatus(): StorageStatus;
-
-  readonly events: {
-    readonly customEvent: Observable<CustomEvent<TRoomEvent>>;
-    readonly me: Observable<TPresence>;
-    readonly others: Observable<{
-      others: Others<TPresence, TUserMeta>;
-      event: OthersEvent<TPresence, TUserMeta>;
-    }>;
-    readonly error: Observable<Error>;
-    readonly connection: Observable<ConnectionStatus>;
-    readonly storage: Observable<StorageUpdate[]>;
-    readonly history: Observable<HistoryEvent>;
-    readonly storageDidLoad: Observable<void>;
-    readonly storageStatus: Observable<StorageStatus>;
-  };
-
-  // Core
-  isSelfAware(): boolean;
-  getConnectionState(): ConnectionStatus;
-  getSelf(): User<TPresence, TUserMeta> | null;
-
-  // Presence
-  getPresence(): Readonly<TPresence>;
-  getOthers(): Others<TPresence, TUserMeta>;
+  getUndoStack(): HistoryOp<TPresence>[][];
+  getItemsCount(): number;
 
   // DevTools support
   getSelf_forDevTools(): DevTools.UserTreeNode | null;
@@ -686,14 +640,13 @@ type MachineContext<
     readonly raw: string;
     readonly parsed: RoomAuthToken & JwtMetadata;
   } | null;
-
   /**
    * Remembers the last successful connection ID. This gets assigned as soon as
    * the connection status switched from "connecting" to "open".
    */
   lastConnectionId: number | null; // TODO Do we really need to separately track this, or can we derive this from the last known token?
 
-  socket: WebSocket | null;
+  socket: IWebSocketInstance | null;
 
   /**
    * All pending changes that yet need to be synced.
@@ -771,7 +724,7 @@ type MachineContext<
 type Effects<TPresence extends JsonObject, TRoomEvent extends Json> = {
   authenticate(
     auth: AuthCallback,
-    createWebSocket: (token: string) => WebSocket
+    createWebSocket: (token: string) => IWebSocketInstance
   ): void;
   send(messages: ClientMsg<TPresence, TRoomEvent>[]): void;
   scheduleFlush(delay: number): TimeoutID;
@@ -783,7 +736,7 @@ type Effects<TPresence extends JsonObject, TRoomEvent extends Json> = {
 export type Polyfills = {
   atob?: (data: string) => string;
   fetch?: typeof fetch;
-  WebSocket?: any;
+  WebSocket?: IWebSocket;
 };
 
 export type RoomInitializers<
@@ -842,16 +795,32 @@ function userToTreeNode(
   };
 }
 
-function makeStateMachine<
+/**
+ * @internal
+ * Initializes a new Room state machine, and returns its public API to observe
+ * and control it.
+ */
+export function createRoom<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
   TUserMeta extends BaseUserMeta,
   TRoomEvent extends Json
 >(
-  config: MachineConfig<TPresence, TRoomEvent>,
-  initialPresence: TPresence,
-  initialStorage: TStorage | undefined
-): Machine<TPresence, TStorage, TUserMeta, TRoomEvent> {
+  options: Omit<
+    RoomInitializers<TPresence, TStorage>,
+    "shouldInitiallyConnect"
+  >,
+  config: MachineConfig<TPresence, TRoomEvent>
+): Room<TPresence, TStorage, TUserMeta, TRoomEvent> {
+  const initialPresence =
+    typeof options.initialPresence === "function"
+      ? options.initialPresence(config.roomId)
+      : options.initialPresence;
+  const initialStorage =
+    typeof options.initialStorage === "function"
+      ? options.initialStorage(config.roomId)
+      : options.initialStorage;
+
   // The "context" is the machine's stateful extended context, also sometimes
   // known as the "extended state" of a finite state machine. The context
   // maintains state beyond the inherent state that are the finite states
@@ -881,7 +850,7 @@ function makeStateMachine<
       storageOperations: [],
     },
 
-    connection: new ValueRef<Connection>({ status: "closed" }),
+    connection: new ValueRef({ status: "closed" }),
     me: new MeRef(initialPresence),
     others: new OthersRef<TPresence, TUserMeta>(),
 
@@ -991,7 +960,7 @@ function makeStateMachine<
   const effects: Effects<TPresence, TRoomEvent> = config.mockedEffects || {
     authenticate(
       auth: AuthCallback,
-      createWebSocket: (token: string) => WebSocket
+      createWebSocket: (token: string) => IWebSocketInstance
     ) {
       // If we already have a parsed token from a previous connection
       // in-memory, reuse it
@@ -1405,7 +1374,10 @@ function makeStateMachine<
     );
   }
 
-  function authenticationSuccess(token: RoomAuthToken, socket: WebSocket) {
+  function authenticationSuccess(
+    token: RoomAuthToken,
+    socket: IWebSocketInstance
+  ) {
     socket.addEventListener("message", onMessage);
     socket.addEventListener("open", onOpen);
     socket.addEventListener("close", onClose);
@@ -1602,9 +1574,14 @@ function makeStateMachine<
     effects.send(messages);
   }
 
-  function onMessage(event: MessageEvent<string>) {
+  function onMessage(event: IWebSocketMessageEvent) {
     if (event.data === "pong") {
       clearTimeout(context.timers.pongTimeout);
+      return;
+    }
+
+    if (typeof event.data !== "string") {
+      // istanbul ignore next: Unknown incoming message
       return;
     }
 
@@ -1725,7 +1702,7 @@ function makeStateMachine<
     });
   }
 
-  function onClose(event: { code: number; wasClean: boolean; reason: string }) {
+  function onClose(event: IWebSocketCloseEvent) {
     context.socket = null;
 
     clearTimeout(context.timers.flush);
@@ -2171,17 +2148,13 @@ function makeStateMachine<
     }
   }
 
-  function simulateSocketClose() {
+  function simulateCloseWebsocket() {
     if (context.socket) {
       context.socket = null;
     }
   }
 
-  function simulateSendCloseEvent(event: {
-    code: number;
-    wasClean: boolean;
-    reason: string;
-  }) {
+  function simulateSendCloseEvent(event: IWebSocketCloseEvent) {
     onClose(event);
   }
 
@@ -2220,26 +2193,48 @@ function makeStateMachine<
     others.map((other, index) => userToTreeNode(`Other ${index}`, other))
   );
 
-  return {
-    // Internal
-    get state() {
-      return context;
-    },
-    onClose,
-    onMessage,
-    authenticationSuccess,
-    heartbeat,
-    onNavigatorOnline,
-    // Internal DevTools
-    simulateSocketClose,
-    simulateSendCloseEvent,
-    onVisibilityChange,
-    getUndoStack: () => context.undoStack,
-    getItemsCount: () => context.nodes.size,
+  const events = {
+    customEvent: eventHub.customEvent.observable,
+    others: eventHub.others.observable,
+    me: eventHub.me.observable,
+    error: eventHub.error.observable,
+    connection: eventHub.connection.observable,
+    storage: eventHub.storage.observable,
+    history: eventHub.history.observable,
+    storageDidLoad: eventHub.storageDidLoad.observable,
+    storageStatus: eventHub.storageStatus.observable,
+  };
 
-    // Core
-    connect,
-    disconnect,
+  return {
+    /* NOTE: Exposing __internal here only to allow testing implementation details in unit tests */
+    __internal: {
+      get buffer() { return context.buffer }, // prettier-ignore
+      get numRetries() { return context.numRetries }, // prettier-ignore
+
+      onClose,
+      onMessage,
+      authenticationSuccess,
+      onNavigatorOnline,
+
+      simulateCloseWebsocket,
+      simulateSendCloseEvent,
+
+      onVisibilityChange,
+      getUndoStack: () => context.undoStack,
+      getItemsCount: () => context.nodes.size,
+
+      connect,
+      disconnect,
+
+      // Support for the Liveblocks browser extension
+      getSelf_forDevTools: () => selfAsTreeNode.current,
+      getOthers_forDevTools: (): readonly DevTools.UserTreeNode[] =>
+        others_forDevTools.current,
+    },
+
+    id: config.roomId,
+    subscribe: makeClassicSubscribeFn(events),
+
     reconnect,
 
     // Presence
@@ -2248,28 +2243,20 @@ function makeStateMachine<
 
     // Storage
     batch,
-    undo,
-    redo,
-    canUndo,
-    canRedo,
-    pauseHistory,
-    resumeHistory,
+    history: {
+      undo,
+      redo,
+      canUndo,
+      canRedo,
+      pause: pauseHistory,
+      resume: resumeHistory,
+    },
 
     getStorage,
     getStorageSnapshot,
     getStorageStatus,
 
-    events: {
-      customEvent: eventHub.customEvent.observable,
-      others: eventHub.others.observable,
-      me: eventHub.me.observable,
-      error: eventHub.error.observable,
-      connection: eventHub.connection.observable,
-      storage: eventHub.storage.observable,
-      history: eventHub.history.observable,
-      storageDidLoad: eventHub.storageDidLoad.observable,
-      storageStatus: eventHub.storageStatus.observable,
-    },
+    events,
 
     // Core
     getConnectionState: () => context.connection.current.status,
@@ -2279,115 +2266,28 @@ function makeStateMachine<
     // Presence
     getPresence: () => context.me.current,
     getOthers: () => context.others.current,
-
-    // Support for the Liveblocks browser extension
-    getSelf_forDevTools: () => selfAsTreeNode.current,
-    getOthers_forDevTools: (): readonly DevTools.UserTreeNode[] =>
-      others_forDevTools.current,
   };
 }
 
 /**
- * Initializes a new Room state machine, and returns its public API to observe
- * and control it.
- */
-export function createRoom<
-  TPresence extends JsonObject,
-  TStorage extends LsonObject,
-  TUserMeta extends BaseUserMeta,
-  TRoomEvent extends Json
->(
-  options: Omit<
-    RoomInitializers<TPresence, TStorage>,
-    "shouldInitiallyConnect"
-  >,
-  config: MachineConfig<TPresence, TRoomEvent>
-): Room<TPresence, TStorage, TUserMeta, TRoomEvent> {
-  const { initialPresence, initialStorage } = options;
-
-  const machine = makeStateMachine<TPresence, TStorage, TUserMeta, TRoomEvent>(
-    config,
-    typeof initialPresence === "function"
-      ? initialPresence(config.roomId)
-      : initialPresence,
-    typeof initialStorage === "function"
-      ? initialStorage(config.roomId)
-      : initialStorage
-  );
-
-  const room: Room<TPresence, TStorage, TUserMeta, TRoomEvent> = {
-    id: config.roomId,
-    /////////////
-    // Core    //
-    /////////////
-    getConnectionState: machine.getConnectionState,
-    isSelfAware: machine.isSelfAware,
-    getSelf: machine.getSelf,
-    reconnect: machine.reconnect,
-
-    subscribe: makeClassicSubscribeFn(machine),
-
-    //////////////
-    // Presence //
-    //////////////
-    getPresence: machine.getPresence,
-    updatePresence: machine.updatePresence,
-    getOthers: machine.getOthers,
-    broadcastEvent: machine.broadcastEvent,
-
-    //////////////
-    // Storage  //
-    //////////////
-    getStorage: machine.getStorage,
-    getStorageSnapshot: machine.getStorageSnapshot,
-    getStorageStatus: machine.getStorageStatus,
-    events: machine.events,
-
-    batch: machine.batch,
-    history: {
-      undo: machine.undo,
-      redo: machine.redo,
-      canUndo: machine.canUndo,
-      canRedo: machine.canRedo,
-      pause: machine.pauseHistory,
-      resume: machine.resumeHistory,
-    },
-
-    __internal: {
-      connect: machine.connect,
-      disconnect: machine.disconnect,
-      onNavigatorOnline: machine.onNavigatorOnline,
-      onVisibilityChange: machine.onVisibilityChange,
-
-      simulateCloseWebsocket: machine.simulateSocketClose,
-      simulateSendCloseEvent: machine.simulateSendCloseEvent,
-
-      getSelf_forDevTools: machine.getSelf_forDevTools,
-      getOthers_forDevTools: machine.getOthers_forDevTools,
-    },
-  };
-
-  return room;
-}
-
-/**
+ * @internal
  * This recreates the classic single `.subscribe()` method for the Room API, as
  * documented here https://liveblocks.io/docs/api-reference/liveblocks-client#Room.subscribe(storageItem)
  */
-export function makeClassicSubscribeFn<
+function makeClassicSubscribeFn<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
   TUserMeta extends BaseUserMeta,
   TRoomEvent extends Json
 >(
-  machine: Machine<TPresence, TStorage, TUserMeta, TRoomEvent>
-): Room<TPresence, TStorage, TUserMeta, TRoomEvent>["subscribe"] {
+  events: Room<TPresence, TStorage, TUserMeta, TRoomEvent>["events"]
+): SubscribeFn<TPresence, TStorage, TUserMeta, TRoomEvent> {
   // Set up the "subscribe" wrapper API
   function subscribeToLiveStructureDeeply<L extends LiveStructure>(
     node: L,
     callback: (updates: StorageUpdate[]) => void
   ): () => void {
-    return machine.events.storage.subscribe((updates) => {
+    return events.storage.subscribe((updates) => {
       const relatedUpdates = updates.filter((update) =>
         isSameNodeOrChildOf(update.node, node)
       );
@@ -2401,7 +2301,7 @@ export function makeClassicSubscribeFn<
     node: L,
     callback: (node: L) => void
   ): () => void {
-    return machine.events.storage.subscribe((updates) => {
+    return events.storage.subscribe((updates) => {
       for (const update of updates) {
         if (update.node._id === node._id) {
           callback(update.node as L);
@@ -2430,12 +2330,12 @@ export function makeClassicSubscribeFn<
       const callback = second;
       switch (first) {
         case "event":
-          return machine.events.customEvent.subscribe(
+          return events.customEvent.subscribe(
             callback as Callback<CustomEvent<TRoomEvent>>
           );
 
         case "my-presence":
-          return machine.events.me.subscribe(callback as Callback<TPresence>);
+          return events.me.subscribe(callback as Callback<TPresence>);
 
         case "others": {
           // NOTE: Others have a different callback structure, where the API
@@ -2444,31 +2344,29 @@ export function makeClassicSubscribeFn<
             others: Others<TPresence, TUserMeta>,
             event: OthersEvent<TPresence, TUserMeta>
           ) => void;
-          return machine.events.others.subscribe(({ others, event }) =>
+          return events.others.subscribe(({ others, event }) =>
             cb(others, event)
           );
         }
 
         case "error":
-          return machine.events.error.subscribe(callback as Callback<Error>);
+          return events.error.subscribe(callback as Callback<Error>);
 
         case "connection":
-          return machine.events.connection.subscribe(
+          return events.connection.subscribe(
             callback as Callback<ConnectionStatus>
           );
 
         case "storage":
-          return machine.events.storage.subscribe(
+          return events.storage.subscribe(
             callback as Callback<StorageUpdate[]>
           );
 
         case "history":
-          return machine.events.history.subscribe(
-            callback as Callback<HistoryEvent>
-          );
+          return events.history.subscribe(callback as Callback<HistoryEvent>);
 
         case "storage-status":
-          return machine.events.storageStatus.subscribe(
+          return events.storageStatus.subscribe(
             callback as Callback<StorageStatus>
           );
 
@@ -2481,7 +2379,7 @@ export function makeClassicSubscribeFn<
     if (second === undefined || typeof first === "function") {
       if (typeof first === "function") {
         const storageCallback = first;
-        return machine.events.storage.subscribe(storageCallback);
+        return events.storage.subscribe(storageCallback);
       } else {
         // istanbul ignore next
         throw new Error("Please specify a listener callback");
@@ -2525,7 +2423,7 @@ class LiveblocksError extends Error {
 
 function prepareCreateWebSocket(
   liveblocksServer: string,
-  WebSocketPolyfill?: typeof WebSocket
+  WebSocketPolyfill?: IWebSocket
 ) {
   if (typeof window === "undefined" && WebSocketPolyfill === undefined) {
     throw new Error(
@@ -2533,9 +2431,9 @@ function prepareCreateWebSocket(
     );
   }
 
-  const ws = WebSocketPolyfill || WebSocket;
+  const ws: IWebSocket = WebSocketPolyfill || WebSocket;
 
-  return (token: string): WebSocket => {
+  return (token: string): IWebSocketInstance => {
     return new ws(
       `${liveblocksServer}/?token=${token}&version=${
         // prettier-ignore
@@ -2648,5 +2546,4 @@ class AuthenticationError extends Error {
 // These exports are considered private implementation details and only
 // exported here to be accessed used in our test suite.
 //
-export { makeStateMachine as _private_makeStateMachine };
-export type { Effects as _private_Effects, Machine as _private_Machine };
+export type { Effects as _private_Effects };

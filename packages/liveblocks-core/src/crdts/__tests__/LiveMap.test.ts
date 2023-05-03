@@ -11,7 +11,7 @@ import { RoomScope } from "../../protocol/AuthToken";
 import { OpCode } from "../../protocol/Op";
 import type { IdTuple, SerializedCrdt } from "../../protocol/SerializedCrdt";
 import { CrdtType } from "../../protocol/SerializedCrdt";
-import { WebsocketCloseCodes } from "../../types/WebsocketCloseCodes";
+import { WebsocketCloseCodes } from "../../types/IWebSocket";
 import { LiveList } from "../LiveList";
 import { LiveMap } from "../LiveMap";
 import { LiveObject } from "../LiveObject";
@@ -324,7 +324,7 @@ describe("LiveMap", () => {
 
     // https://github.com/liveblocks/liveblocks/issues/95
     it("should have deleted key when subscriber is called", async () => {
-      const { root, subscribe } = await prepareIsolatedStorageTest<{
+      const { room, root } = await prepareIsolatedStorageTest<{
         map: LiveMap<string, string>;
       }>(
         [
@@ -340,7 +340,7 @@ describe("LiveMap", () => {
 
       let keys: string[] = [];
 
-      subscribe(map, () => (keys = Array.from(map.keys())));
+      room.subscribe(map, () => (keys = Array.from(map.keys())));
 
       map.delete("first");
 
@@ -348,7 +348,7 @@ describe("LiveMap", () => {
     });
 
     it("should call subscribe when key is deleted", async () => {
-      const { root, subscribe } = await prepareIsolatedStorageTest<{
+      const { room, root } = await prepareIsolatedStorageTest<{
         map: LiveMap<string, string>;
       }>(
         [
@@ -364,7 +364,7 @@ describe("LiveMap", () => {
 
       const fn = jest.fn();
 
-      subscribe(map, fn);
+      room.subscribe(map, fn);
 
       map.delete("first");
 
@@ -373,7 +373,7 @@ describe("LiveMap", () => {
     });
 
     it("should not call subscribe when key is not deleted", async () => {
-      const { root, subscribe } = await prepareIsolatedStorageTest<{
+      const { room, root } = await prepareIsolatedStorageTest<{
         map: LiveMap<string, string>;
       }>(
         [
@@ -389,7 +389,7 @@ describe("LiveMap", () => {
 
       const fn = jest.fn();
 
-      subscribe(map, fn);
+      room.subscribe(map, fn);
 
       map.delete("unknown");
 
@@ -584,7 +584,7 @@ describe("LiveMap", () => {
 
   describe("subscriptions", () => {
     test("simple action", async () => {
-      const { storage, subscribe } = await prepareStorageTest<{
+      const { room, storage } = await prepareStorageTest<{
         map: LiveMap<string, string>;
       }>(
         [
@@ -600,7 +600,7 @@ describe("LiveMap", () => {
 
       const liveMap = root.get("map");
 
-      subscribe(liveMap, callback);
+      room.subscribe(liveMap, callback);
 
       liveMap.set("a", "av");
 
@@ -609,7 +609,7 @@ describe("LiveMap", () => {
     });
 
     test("deep subscribe", async () => {
-      const { storage, subscribe } = await prepareStorageTest<{
+      const { room, storage } = await prepareStorageTest<{
         map: LiveMap<string, LiveObject<{ a: number }>>;
       }>(
         [
@@ -625,7 +625,7 @@ describe("LiveMap", () => {
       const root = storage.root;
       const mapElement = root.get("map").get("mapElement");
 
-      const unsubscribe = subscribe(root.get("map"), callback, {
+      const unsubscribe = room.subscribe(root.get("map"), callback, {
         isDeep: true,
       });
 
@@ -648,29 +648,28 @@ describe("LiveMap", () => {
 
   describe("reconnect with remote changes and subscribe", () => {
     test("Register added to map", async () => {
-      const { expectStorage, machine, subscribe, root } =
-        await prepareIsolatedStorageTest<{
-          map: LiveMap<string, string>;
-        }>(
-          [
-            createSerializedObject("0:0", {}),
-            createSerializedMap("0:1", "0:0", "map"),
-            createSerializedRegister("0:2", "0:1", "first", "a"),
-          ],
-          1
-        );
+      const { expectStorage, room, root } = await prepareIsolatedStorageTest<{
+        map: LiveMap<string, string>;
+      }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedMap("0:1", "0:0", "map"),
+          createSerializedRegister("0:2", "0:1", "first", "a"),
+        ],
+        1
+      );
 
       const rootDeepCallback = jest.fn();
       const mapCallback = jest.fn();
 
       const listItems = root.get("map");
 
-      subscribe(root, rootDeepCallback, { isDeep: true });
-      subscribe(listItems, mapCallback);
+      room.subscribe(root, rootDeepCallback, { isDeep: true });
+      room.subscribe(listItems, mapCallback);
 
       expectStorage({ map: new Map([["first", "a"]]) });
 
-      machine.onClose(
+      room.__internal.onClose(
         new CloseEvent("close", {
           code: WebsocketCloseCodes.CLOSE_ABNORMAL,
           wasClean: false,
@@ -700,7 +699,7 @@ describe("LiveMap", () => {
         ],
       ];
 
-      reconnect(machine, 3, newInitStorage);
+      reconnect(room, 3, newInitStorage);
 
       expectStorage({
         map: new Map([

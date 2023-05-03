@@ -1,6 +1,6 @@
 {
   "name": "@liveblocks/core",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "Shared code and foundational internals for Liveblocks",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -23,6 +23,7 @@
     "format": "eslint --fix src/; prettier --write src/",
     "lint": "eslint src/",
     "test": "jest --silent --verbose --color=always",
+    "test:types": "tsd",
     "test:watch": "jest --silent --verbose --color=always --watch",
     "test:e2e": "jest --silent --verbose --color=always --config=./jest.config.e2e.js",
     "test:deps": "depcruise src --exclude __tests__ --config",
