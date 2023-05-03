@@ -1575,8 +1575,11 @@ describe("room", () => {
       room.reconnect();
       expect(room.getConnectionState()).toBe("authenticating");
 
-      room.__internal.authenticationSuccess(defaultRoomToken, ws);
-      ws.simulateOpen();
+      const ws2 = new MockWebSocket();
+      room.__internal.authenticationSuccess(defaultRoomToken, ws2);
+      expect(room.getConnectionState()).toBe("connecting");
+
+      ws2.simulateOpen();
       expect(room.getConnectionState()).toBe("open");
     });
   });
