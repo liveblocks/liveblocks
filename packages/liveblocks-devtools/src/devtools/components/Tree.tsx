@@ -812,7 +812,7 @@ function collect(
 
       case "LiveList":
       case "LiveObject":
-      case "LiveMap":
+      case "LiveMap": {
         let isIndirectMatch = false;
         for (const childNode of node.payload) {
           if (collect(childNode, pattern, directMatches, indirectMatches)) {
@@ -823,6 +823,7 @@ function collect(
           indirectMatches.add(node.id);
         }
         return isIndirectMatch;
+      }
 
       default:
         // e.g. future LiveXxx types
