@@ -808,6 +808,23 @@ function userToTreeNode(
   };
 }
 
+type FSMEvent =
+  | { type: "CONNECT" }
+  | { type: "DISCONNECT" }
+  | { type: "VISIBILITY_CHANGE"; visibilityState: DocumentVisibilityState }
+  | { type: "NAVIGATOR_ONLINE" }
+  | {
+      type: "AUTH_SUCCESS";
+      token: RoomAuthToken;
+      socket: IWebSocketInstance;
+    }
+  | {
+      type: "INCOMING_WEBSOCKET_MESSAGE";
+      messageEvent: IWebSocketMessageEvent;
+    }
+  | { type: "IMPLICIT_CLOSE" }
+  | { type: "EXPLICIT_CLOSE"; closeEvent: IWebSocketCloseEvent };
+
 /**
  * @internal
  * Initializes a new Room state machine, and returns its public API to observe
@@ -2218,6 +2235,39 @@ export function createRoom<
     storageStatus: eventHub.storageStatus.observable,
   };
 
+  // XXX This is where all the sanity checks need to happen and guards need to be applied
+  function transition(event: FSMEvent) {
+    switch (event.type) {
+      case "CONNECT":
+        return connect();
+
+      case "DISCONNECT":
+        return disconnect();
+
+      case "VISIBILITY_CHANGE":
+        return onVisibilityChange(event.visibilityState);
+
+      case "NAVIGATOR_ONLINE":
+        return onNavigatorOnline();
+
+      case "AUTH_SUCCESS":
+        return authenticationSuccess(event.token, event.socket);
+
+      case "INCOMING_WEBSOCKET_MESSAGE":
+        return onMessage(event.messageEvent);
+
+      case "IMPLICIT_CLOSE":
+        return implicitClose();
+
+      case "EXPLICIT_CLOSE":
+        return explicitClose(event.closeEvent);
+
+      default: {
+        console.warn("Unexpected transition");
+      }
+    }
+  }
+
   return {
     /* NOTE: Exposing __internal here only to allow testing implementation details in unit tests */
     __internal: {
@@ -2232,14 +2282,21 @@ export function createRoom<
         others_forDevTools.current,
 
       simulate: {
-        explicitClose,
-        implicitClose,
-        onMessage,
-        authenticationSuccess,
-        onNavigatorOnline,
-        onVisibilityChange,
-        connect,
-        disconnect,
+        explicitClose: (closeEvent) =>
+          transition({ type: "EXPLICIT_CLOSE", closeEvent }),
+        implicitClose: () => transition({ type: "IMPLICIT_CLOSE" }),
+        onMessage: (event) =>
+          transition({
+            type: "INCOMING_WEBSOCKET_MESSAGE",
+            messageEvent: event,
+          }),
+        authenticationSuccess: (token, socket) =>
+          transition({ type: "AUTH_SUCCESS", token, socket }),
+        onNavigatorOnline: () => transition({ type: "NAVIGATOR_ONLINE" }),
+        onVisibilityChange: (visibilityState) =>
+          transition({ type: "VISIBILITY_CHANGE", visibilityState }),
+        connect: () => transition({ type: "CONNECT" }),
+        disconnect: () => transition({ type: "DISCONNECT" }),
       },
     },
 
