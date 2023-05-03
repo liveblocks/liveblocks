@@ -41,10 +41,10 @@ import {
 
 function createTestableRoom(...args: Parameters<typeof createRoom>): {
   // room: ReturnType<typeof createRoom>;
-  connect: () => void;
-  disconnect: () => void;
-  onNavigatorOnline: () => void;
-  onVisibilityChange: (visibilityState: DocumentVisibilityState) => void;
+  connect(): void;
+  disconnect(): void;
+  onNavigatorOnline(): void;
+  windowGotFocus(): void;
 } {
   const room = createRoom(...args);
   return {
@@ -55,7 +55,7 @@ function createTestableRoom(...args: Parameters<typeof createRoom>): {
     connect: room.__internal.simulate.connect,
     disconnect: room.__internal.simulate.disconnect,
     onNavigatorOnline: room.__internal.simulate.onNavigatorOnline,
-    onVisibilityChange: room.__internal.simulate.onVisibilityChange,
+    windowGotFocus: room.__internal.simulate.windowGotFocus,
   };
 }
 

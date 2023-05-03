@@ -1,4 +1,3 @@
-import type { DocumentVisibilityState } from "./compat/DocumentVisibilityState";
 import type { ApplyResult, ManagedPool } from "./crdts/AbstractCrdt";
 import { OpSource } from "./crdts/AbstractCrdt";
 import {
@@ -607,7 +606,7 @@ type PrivateRoomAPI<
     // XXX OK to be called at any time?
     onNavigatorOnline(): void;
     // XXX Should become a shorthand for .transition({ type: "FOCUS_VISIBLE" })
-    onVisibilityChange(visibilityState: DocumentVisibilityState): void;
+    windowGotFocus(): void;
   };
 };
 
@@ -811,7 +810,7 @@ function userToTreeNode(
 type FSMEvent =
   | { type: "CONNECT" }
   | { type: "DISCONNECT" }
-  | { type: "VISIBILITY_CHANGE"; visibilityState: DocumentVisibilityState }
+  | { type: "WINDOW_GOT_FOCUS" }
   | { type: "NAVIGATOR_ONLINE" }
   | {
       type: "AUTH_SUCCESS";
@@ -1442,11 +1441,9 @@ export function createRoom<
     context.timers.reconnect = effects.scheduleReconnect(getRetryDelay());
   }
 
-  function onVisibilityChange(visibilityState: DocumentVisibilityState) {
-    if (
-      visibilityState === "visible" &&
-      context.connection.current.status === "open"
-    ) {
+  function windowGotFocus() {
+    // XXX MOVE THIS GUARD INTO THE .transition() function
+    if (context.connection.current.status === "open") {
       log("Heartbeat after visibility change");
       heartbeat();
     }
@@ -2244,8 +2241,8 @@ export function createRoom<
       case "DISCONNECT":
         return disconnect();
 
-      case "VISIBILITY_CHANGE":
-        return onVisibilityChange(event.visibilityState);
+      case "WINDOW_GOT_FOCUS":
+        return windowGotFocus();
 
       case "NAVIGATOR_ONLINE":
         return onNavigatorOnline();
@@ -2293,8 +2290,7 @@ export function createRoom<
         authenticationSuccess: (token, socket) =>
           transition({ type: "AUTH_SUCCESS", token, socket }),
         onNavigatorOnline: () => transition({ type: "NAVIGATOR_ONLINE" }),
-        onVisibilityChange: (visibilityState) =>
-          transition({ type: "VISIBILITY_CHANGE", visibilityState }),
+        windowGotFocus: () => transition({ type: "WINDOW_GOT_FOCUS" }),
         connect: () => transition({ type: "CONNECT" }),
         disconnect: () => transition({ type: "DISCONNECT" }),
       },

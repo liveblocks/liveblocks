@@ -233,8 +233,10 @@ export function createClient(options: ClientOptions): Client {
 
   if (typeof document !== "undefined") {
     document.addEventListener("visibilitychange", () => {
-      for (const [, room] of rooms) {
-        room.__internal.simulate.onVisibilityChange(document.visibilityState);
+      if (document.visibilityState === "visible") {
+        for (const [, room] of rooms) {
+          room.__internal.simulate.windowGotFocus();
+        }
       }
     });
   }
