@@ -36,14 +36,18 @@ describe("Value ref cache", () => {
           const ref = new ValueRef<unknown>(init);
           expect(ref.current).toStrictEqual(init);
           expect(() => {
-            (ref.current as any).abc = 123;
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            // @ts-ignore
+            ref.current.abc = 123;
           }).toThrow();
 
           // Freezes in setter
           ref.set(newVal);
           expect(ref.current).toStrictEqual(newVal);
           expect(() => {
-            (ref.current as any).xyz = 456;
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            // @ts-ignore
+            ref.current.xyz = 456;
           }).toThrow();
         }
       )
