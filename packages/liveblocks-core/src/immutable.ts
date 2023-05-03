@@ -204,7 +204,9 @@ export function patchLiveObjectKey<
     const nonSerializableValue = findNonSerializableValue(next);
     if (nonSerializableValue) {
       console.error(
-        `New state path: '${nonSerializableValue.path}' value: '${nonSerializableValue.value}' is not serializable.\nOnly serializable value can be synced with Liveblocks.`
+        `New state path: '${nonSerializableValue.path}' value: '${String(
+          nonSerializableValue.value
+        )}' is not serializable.\nOnly serializable value can be synced with Liveblocks.`
       );
       return;
     }

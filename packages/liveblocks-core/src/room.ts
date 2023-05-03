@@ -2405,7 +2405,7 @@ function makeClassicSubscribeFn<
       }
     }
 
-    throw new Error(`"${first}" is not a valid event name`);
+    throw new Error(`"${String(first)}" is not a valid event name`);
   }
 
   return subscribe;
@@ -2530,7 +2530,9 @@ async function fetchAuthEndpoint(
     data = await (res.json() as Promise<Json>);
   } catch (er) {
     throw new AuthenticationError(
-      `Expected a JSON response when doing a POST request on "${endpoint}". ${er}`
+      `Expected a JSON response when doing a POST request on "${endpoint}". ${String(
+        er
+      )}`
     );
   }
   if (!isPlainObject(data) || typeof data.token !== "string") {
