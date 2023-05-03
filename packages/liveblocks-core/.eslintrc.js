@@ -48,6 +48,13 @@ module.exports = {
       rules: {
         "no-restricted-syntax": "off",
         "@typescript-eslint/explicit-module-boundary-types": "off",
+
+        // Ideally, we should remove these overrides, since they are still
+        // useful to catch bugs
+        "@typescript-eslint/no-unsafe-argument": "off",
+        "@typescript-eslint/no-unsafe-assignment": "off",
+        "@typescript-eslint/no-unsafe-call": "off",
+        "@typescript-eslint/no-unsafe-member-access": "off",
       },
     },
   ],
