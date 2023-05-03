@@ -533,7 +533,7 @@ export async function prepareDisconnectedStorageUpdateTest<
   };
 }
 
-export async function reconnect<
+export function reconnect<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
   TUserMeta extends BaseUserMeta,

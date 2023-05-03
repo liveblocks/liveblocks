@@ -220,9 +220,9 @@ function after(pos: Pos): Pos {
  */
 function between(lo: Pos, hi: Pos): Pos {
   if (lo < hi) {
-    return _between(lo, hi) as Pos;
+    return _between(lo, hi);
   } else if (lo > hi) {
-    return _between(hi, lo) as Pos;
+    return _between(hi, lo);
   } else {
     throw new Error("Cannot compute value between two equal positions");
   }

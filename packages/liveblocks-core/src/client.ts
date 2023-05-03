@@ -93,6 +93,13 @@ export type ClientOptions = {
   | { publicApiKey?: never; authEndpoint: AuthEndpoint }
 );
 
+function getServerFromClientOptions(clientOptions: ClientOptions) {
+  const rawOptions = clientOptions as Record<string, unknown>;
+  return typeof rawOptions.liveblocksServer === "string"
+    ? rawOptions.liveblocksServer
+    : "wss://api.liveblocks.io/v6";
+}
+
 /**
  * Create a client that will be responsible to communicate with liveblocks servers.
  *
@@ -171,11 +178,7 @@ export function createClient(options: ClientOptions): Client {
         throttleDelay,
         polyfills: clientOptions.polyfills,
         unstable_batchedUpdates: options?.unstable_batchedUpdates,
-        liveblocksServer:
-          // TODO Patch this using public but marked internal fields?
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (clientOptions as any)?.liveblocksServer ||
-          "wss://api.liveblocks.io/v6",
+        liveblocksServer: getServerFromClientOptions(clientOptions),
         authentication: prepareAuthentication(clientOptions, roomId),
       }
     );

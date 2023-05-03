@@ -16,6 +16,14 @@ module.exports = {
     "@typescript-eslint/no-non-null-assertion": "off",
     eqeqeq: "off",
 
+    // Ideally, enable these lint rules again later, as they are useful
+    // to catch bugs
+    "@typescript-eslint/no-unsafe-argument": "off",
+    "@typescript-eslint/no-unsafe-assignment": "off",
+    "@typescript-eslint/no-unsafe-call": "off",
+    "@typescript-eslint/no-unsafe-member-access": "off",
+    "@typescript-eslint/no-unsafe-return": "off",
+
     // ----------------------------------------------------------------------
     // Extra rules for this project specifically
     // ----------------------------------------------------------------------

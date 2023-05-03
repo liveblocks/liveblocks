@@ -666,7 +666,7 @@ describe("room", () => {
     expect(storage.root.toObject()).toEqual({ x: 0 });
   });
 
-  test("undo redo with presence", async () => {
+  test("undo redo with presence", () => {
     const { room } = setupStateMachine({});
 
     const ws = new MockWebSocket("");
@@ -776,7 +776,7 @@ describe("room", () => {
     expect(room.getPresence()).toEqual({ x: 0 });
   });
 
-  test("undo redo with presence that do not impact presence", async () => {
+  test("undo redo with presence that do not impact presence", () => {
     const { room } = setupStateMachine({});
 
     const ws = new MockWebSocket("");
@@ -792,7 +792,7 @@ describe("room", () => {
     expect(room.getPresence()).toEqual({ x: 1 });
   });
 
-  test("pause / resume history", async () => {
+  test("pause / resume history", () => {
     const { room } = setupStateMachine({});
 
     const ws = new MockWebSocket("");
@@ -826,7 +826,7 @@ describe("room", () => {
     expect(room.getPresence()).toEqual({ x: 10 });
   });
 
-  test("undo while history is paused", async () => {
+  test("undo while history is paused", () => {
     const { room } = setupStateMachine({});
 
     const ws = new MockWebSocket("");

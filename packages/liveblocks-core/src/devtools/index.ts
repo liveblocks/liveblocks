@@ -7,7 +7,7 @@ import { activateBridge, onMessageFromPanel, sendToPanel } from "./bridge";
 // prettier-ignore
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore (__PACKAGE_VERSION__ will be injected by the build script)
-const VERSION = typeof __PACKAGE_VERSION__ === "string" ? /* istanbul ignore next */ __PACKAGE_VERSION__ : "dev";
+const VERSION = typeof (__PACKAGE_VERSION__ as unknown) === "string" ? /* istanbul ignore next */ (__PACKAGE_VERSION__ as string) : "dev";
 
 let _devtoolsSetupHasRun = false;
 

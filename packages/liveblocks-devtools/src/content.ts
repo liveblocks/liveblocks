@@ -7,10 +7,10 @@ window.addEventListener("message", (event) => {
     return;
   }
 
-  const message = event.data;
+  const message = event.data as Record<string, unknown>;
   if (message?.source === "liveblocks-devtools-client") {
     // Relay messages from the client to the panel
-    browser.runtime.sendMessage(
+    void browser.runtime.sendMessage(
       message as DevToolsMsg.FullClientToPanelMessage
     );
   }

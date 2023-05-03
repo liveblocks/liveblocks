@@ -11,6 +11,7 @@ import type { LiveNode, Lson, LsonObject, ToJson } from "./crdts/Lson";
 import type { StorageUpdate } from "./crdts/StorageUpdates";
 import * as console from "./lib/fancy-console";
 import type { Json, JsonObject } from "./lib/Json";
+import { isJsonObject } from "./lib/Json";
 import { isPlainObject } from "./lib/utils";
 
 function lsonObjectToJson<O extends LsonObject>(
@@ -59,7 +60,8 @@ export function lsonToJson(value: Lson): Json {
   } else if (value instanceof LiveMap) {
     return liveMapToJson(value);
   } else if (value instanceof LiveRegister) {
-    return value.data;
+    // NOTE: This branch should never be taken, because LiveRegister isn't a valid Lson value
+    return value.data as Json;
   }
 
   // Then for composite Lson values
@@ -202,7 +204,9 @@ export function patchLiveObjectKey<
     const nonSerializableValue = findNonSerializableValue(next);
     if (nonSerializableValue) {
       console.error(
-        `New state path: '${nonSerializableValue.path}' value: '${nonSerializableValue.value}' is not serializable.\nOnly serializable value can be synced with Liveblocks.`
+        `New state path: '${nonSerializableValue.path}' value: '${String(
+          nonSerializableValue.value
+        )}' is not serializable.\nOnly serializable value can be synced with Liveblocks.`
       );
       return;
     }
@@ -304,17 +308,13 @@ function legacy_patchImmutableNode<S extends Json>(
   if (pathItem === undefined) {
     switch (update.type) {
       case "LiveObject": {
-        if (
-          state === null ||
-          typeof state !== "object" ||
-          Array.isArray(state)
-        ) {
+        if (!isJsonObject(state)) {
           throw new Error(
             "Internal: received update on LiveObject but state was not an object"
           );
         }
 
-        const newState = Object.assign({}, state as JsonObject);
+        const newState: JsonObject = Object.assign({}, state);
 
         for (const key in update.updates) {
           if (update.updates[key]?.type === "update") {
@@ -390,16 +390,12 @@ function legacy_patchImmutableNode<S extends Json>(
       }
 
       case "LiveMap": {
-        if (
-          state === null ||
-          typeof state !== "object" ||
-          Array.isArray(state)
-        ) {
+        if (!isJsonObject(state)) {
           throw new Error(
             "Internal: received update on LiveMap but state was not an object"
           );
         }
-        const newState = Object.assign({}, state as JsonObject);
+        const newState: JsonObject = Object.assign({}, state);
 
         for (const key in update.updates) {
           if (update.updates[key]?.type === "update") {
@@ -433,13 +429,14 @@ function legacy_patchImmutableNode<S extends Json>(
     //              FIXME Not completely true, because we could have been
     //              updating indexes from StorageUpdate here that aren't in S,
     //              technically.
-  } else if (state !== null && typeof state === "object") {
+  } else if (isJsonObject(state)) {
     const node = state[pathItem];
     if (node === undefined) {
       return state;
     } else {
+      const stateAsObj: JsonObject = state;
       return {
-        ...(state as JsonObject),
+        ...stateAsObj,
         [pathItem]: legacy_patchImmutableNode(node, path, update),
       } as S;
       //   ^

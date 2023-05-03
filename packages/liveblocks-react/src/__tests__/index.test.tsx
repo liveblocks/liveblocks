@@ -399,7 +399,7 @@ describe("useObject", () => {
 });
 
 describe("useStorage", () => {
-  test("return null before storage has loaded", async () => {
+  test("return null before storage has loaded", () => {
     const { result } = renderHook(() => useStorage((root) => root.obj));
     expect(result.current).toBeNull();
   });

@@ -119,7 +119,7 @@ const basicStoreReducer = ((
     }
   }
 
-  return state as BasicState;
+  return state;
 }) as Reducer<BasicState>;
 
 const basicInitialState = {

@@ -970,7 +970,7 @@ export function createRoom<
         authenticationSuccess(prevToken.parsed, socket);
         return undefined;
       } else {
-        return auth(config.roomId)
+        void auth(config.roomId)
           .then(({ token }) => {
             if (context.connection.current.status !== "authenticating") {
               return;
@@ -985,6 +985,7 @@ export function createRoom<
               er instanceof Error ? er : new Error(String(er))
             )
           );
+        return undefined;
       }
     },
 
@@ -2012,7 +2013,7 @@ export function createRoom<
       return root;
     } else {
       // Not done loading, kick off the loading (will not do anything if already kicked off)
-      startLoadingStorage();
+      void startLoadingStorage();
       return null;
     }
   }
@@ -2023,7 +2024,7 @@ export function createRoom<
     if (context.root) {
       // Store has already loaded, so we can resolve it directly
       return Promise.resolve({
-        root: context.root as LiveObject<TStorage>,
+        root: context.root,
       });
     }
 
@@ -2397,7 +2398,7 @@ function makeClassicSubscribeFn<
       }
     }
 
-    throw new Error(`"${first}" is not a valid event name`);
+    throw new Error(`"${String(first)}" is not a valid event name`);
   }
 
   return subscribe;
@@ -2439,7 +2440,7 @@ function prepareCreateWebSocket(
         // prettier-ignore
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore (__PACKAGE_VERSION__ will be injected by the build script)
-        typeof __PACKAGE_VERSION__ === "string" ? /* istanbul ignore next */ __PACKAGE_VERSION__ : "dev"
+        typeof (__PACKAGE_VERSION__ as unknown) === "string" ? /* istanbul ignore next */ (__PACKAGE_VERSION__ as string) : "dev"
       }`
     );
   };
@@ -2522,7 +2523,9 @@ async function fetchAuthEndpoint(
     data = await (res.json() as Promise<Json>);
   } catch (er) {
     throw new AuthenticationError(
-      `Expected a JSON response when doing a POST request on "${endpoint}". ${er}`
+      `Expected a JSON response when doing a POST request on "${endpoint}". ${String(
+        er
+      )}`
     );
   }
   if (!isPlainObject(data) || typeof data.token !== "string") {
