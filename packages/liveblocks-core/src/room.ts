@@ -51,6 +51,7 @@ import type * as DevTools from "./types/DevToolsTreeNode";
 import type {
   IWebSocket,
   IWebSocketCloseEvent,
+  IWebSocketEvent,
   IWebSocketInstance,
   IWebSocketMessageEvent,
 } from "./types/IWebSocket";
@@ -581,7 +582,7 @@ type PrivateRoomAPI<
   disconnect(): void;
 
   onClose(event: IWebSocketCloseEvent): void;
-  onMessage(event: MessageEvent<string>): void;
+  onMessage(event: IWebSocketEvent): void;
   authenticationSuccess(token: RoomAuthToken, socket: IWebSocketInstance): void;
   onNavigatorOnline(): void;
   onVisibilityChange(visibilityState: DocumentVisibilityState): void;
