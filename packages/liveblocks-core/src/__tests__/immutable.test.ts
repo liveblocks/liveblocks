@@ -55,13 +55,13 @@ export async function prepareStorageImmutableTest<
     for (const message of messages) {
       if (message.type === ClientMsgCode.UPDATE_STORAGE) {
         totalStorageOps += message.ops.length;
-        refRoom.__internal.onMessage(
+        refRoom.__internal.simulate.onMessage(
           serverMessage({
             type: ServerMsgCode.UPDATE_STORAGE,
             ops: message.ops,
           })
         );
-        room.__internal.onMessage(
+        room.__internal.simulate.onMessage(
           serverMessage({
             type: ServerMsgCode.UPDATE_STORAGE,
             ops: message.ops,

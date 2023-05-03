@@ -923,7 +923,7 @@ describe("LiveObject", () => {
 
       expectStorage({ obj: { a: 1 } });
 
-      room.__internal.onClose(
+      room.__internal.simulate.onClose(
         new CloseEvent("close", {
           code: WebsocketCloseCodes.CLOSE_ABNORMAL,
           wasClean: false,
@@ -981,7 +981,7 @@ describe("LiveObject", () => {
 
       expectStorage({ obj: { a: 1 } });
 
-      room.__internal.onClose(
+      room.__internal.simulate.onClose(
         new CloseEvent("close", {
           code: WebsocketCloseCodes.CLOSE_ABNORMAL,
           wasClean: false,
