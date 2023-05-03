@@ -91,8 +91,9 @@ type TreeProps<TTreeNode extends DevTools.TreeNode> = Pick<
   ArboristTreeProps<TTreeNode> &
   RefAttributes<TreeApi<TTreeNode> | undefined>;
 
-interface RowProps extends ComponentProps<"div"> {
-  node: NodeApi;
+interface RowProps<TTreeNode extends DevTools.TreeNode>
+  extends ComponentProps<"div"> {
+  node: NodeApi<TTreeNode>;
 }
 
 interface RowHighlightProps extends ComponentProps<"div"> {
@@ -312,7 +313,12 @@ function RowHighlight({ node, className, ...props }: RowHighlightProps) {
   );
 }
 
-function Row({ node, children, className, ...props }: RowProps) {
+function Row<TTreeNode extends DevTools.TreeNode>({
+  node,
+  children,
+  className,
+  ...props
+}: RowProps<TTreeNode>) {
   const isOpen = node.isOpen;
   const isParent = node.isInternal;
   const isSelected = node.isSelected;
