@@ -353,7 +353,7 @@ describe("room", () => {
     room.__internal.simulate.authenticationSuccess(defaultRoomToken, ws);
     ws.simulateOpen();
 
-    room.__internal.simulate.onMessage(
+    room.__internal.simulate.incomingMessage(
       serverMessage({
         type: ServerMsgCode.ROOM_STATE,
         users: {
@@ -362,7 +362,7 @@ describe("room", () => {
       })
     );
 
-    room.__internal.simulate.onMessage(
+    room.__internal.simulate.incomingMessage(
       serverMessage({
         type: ServerMsgCode.UPDATE_PRESENCE,
         data: { x: 2 },
@@ -389,7 +389,7 @@ describe("room", () => {
     room.__internal.simulate.authenticationSuccess(defaultRoomToken, ws);
     ws.simulateOpen();
 
-    room.__internal.simulate.onMessage(
+    room.__internal.simulate.incomingMessage(
       serverMessage({
         type: ServerMsgCode.ROOM_STATE,
         users: {
@@ -398,7 +398,7 @@ describe("room", () => {
       })
     );
 
-    room.__internal.simulate.onMessage(
+    room.__internal.simulate.incomingMessage(
       serverMessage({
         type: ServerMsgCode.UPDATE_PRESENCE,
         data: { x: 2 },
@@ -425,7 +425,7 @@ describe("room", () => {
     room.__internal.simulate.authenticationSuccess(defaultRoomToken, ws);
     ws.simulateOpen();
 
-    room.__internal.simulate.onMessage(
+    room.__internal.simulate.incomingMessage(
       serverMessage({
         type: ServerMsgCode.ROOM_STATE,
         users: {
@@ -434,7 +434,7 @@ describe("room", () => {
       })
     );
 
-    room.__internal.simulate.onMessage(
+    room.__internal.simulate.incomingMessage(
       serverMessage({
         type: ServerMsgCode.UPDATE_PRESENCE,
         data: { x: 2 },
@@ -461,7 +461,7 @@ describe("room", () => {
     room.__internal.simulate.authenticationSuccess(defaultRoomToken, ws);
     ws.simulateOpen();
 
-    room.__internal.simulate.onMessage(
+    room.__internal.simulate.incomingMessage(
       serverMessage({
         type: ServerMsgCode.ROOM_STATE,
         users: {
@@ -470,7 +470,7 @@ describe("room", () => {
       })
     );
 
-    room.__internal.simulate.onMessage(
+    room.__internal.simulate.incomingMessage(
       serverMessage({
         type: ServerMsgCode.UPDATE_PRESENCE,
         data: { x: 2 },
@@ -512,7 +512,7 @@ describe("room", () => {
     room.__internal.simulate.authenticationSuccess(defaultRoomToken, ws);
     ws.simulateOpen();
 
-    room.__internal.simulate.onMessage(
+    room.__internal.simulate.incomingMessage(
       serverMessage({
         type: ServerMsgCode.ROOM_STATE,
         users: {
@@ -523,7 +523,7 @@ describe("room", () => {
     );
 
     // Client B
-    room.__internal.simulate.onMessage(
+    room.__internal.simulate.incomingMessage(
       serverMessage({
         type: ServerMsgCode.UPDATE_PRESENCE,
         data: { x: 2 },
@@ -533,7 +533,7 @@ describe("room", () => {
     );
 
     // Client C
-    room.__internal.simulate.onMessage(
+    room.__internal.simulate.incomingMessage(
       serverMessage({
         type: ServerMsgCode.UPDATE_PRESENCE,
         data: { x: 2 },
@@ -552,7 +552,7 @@ describe("room", () => {
     // -----
 
     // Client reconnects to the room, and receives a new ROOM_STATE msg from the server.
-    room.__internal.simulate.onMessage(
+    room.__internal.simulate.incomingMessage(
       serverMessage({
         type: ServerMsgCode.ROOM_STATE,
         users: {
@@ -654,7 +654,7 @@ describe("room", () => {
 
     const getStoragePromise = room.getStorage();
 
-    room.__internal.simulate.onMessage(
+    room.__internal.simulate.incomingMessage(
       serverMessage({
         type: ServerMsgCode.INITIAL_STORAGE_STATE,
         items: [["root", { type: CrdtType.OBJECT, data: { x: 0 } }]],
@@ -731,7 +731,7 @@ describe("room", () => {
 
     const getStoragePromise = room.getStorage();
 
-    room.__internal.simulate.onMessage(
+    room.__internal.simulate.incomingMessage(
       serverMessage({
         type: ServerMsgCode.INITIAL_STORAGE_STATE,
         items: [["root", { type: CrdtType.OBJECT, data: { x: 0 } }]],
@@ -860,7 +860,7 @@ describe("room", () => {
 
     const getStoragePromise = room.getStorage();
 
-    room.__internal.simulate.onMessage(
+    room.__internal.simulate.incomingMessage(
       serverMessage({
         type: ServerMsgCode.INITIAL_STORAGE_STATE,
         items: [["root", { type: CrdtType.OBJECT, data: { x: 0 } }]],
@@ -901,7 +901,7 @@ describe("room", () => {
 
     const getStoragePromise = room.getStorage();
 
-    room.__internal.simulate.onMessage(
+    room.__internal.simulate.incomingMessage(
       serverMessage({
         type: ServerMsgCode.INITIAL_STORAGE_STATE,
         items: [["root", { type: CrdtType.OBJECT, data: { x: 0 } }]],
@@ -967,7 +967,7 @@ describe("room", () => {
 
       const getStoragePromise = room.getStorage();
 
-      room.__internal.simulate.onMessage(
+      room.__internal.simulate.incomingMessage(
         serverMessage({
           type: ServerMsgCode.INITIAL_STORAGE_STATE,
           items: [["root", { type: CrdtType.OBJECT, data: { x: 0 } }]],
@@ -1212,14 +1212,14 @@ describe("room", () => {
         (ev) => (others = ev.others)
       );
 
-      room.__internal.simulate.onMessage(
+      room.__internal.simulate.incomingMessage(
         serverMessage({
           type: ServerMsgCode.ROOM_STATE,
           users: { 1: { scopes: [] } },
         })
       );
 
-      room.__internal.simulate.onMessage(
+      room.__internal.simulate.incomingMessage(
         serverMessage({
           type: ServerMsgCode.UPDATE_PRESENCE,
           data: { x: 2 },
@@ -1230,7 +1230,7 @@ describe("room", () => {
 
       unsubscribe();
 
-      room.__internal.simulate.onMessage(
+      room.__internal.simulate.incomingMessage(
         serverMessage({
           type: ServerMsgCode.UPDATE_PRESENCE,
           data: { x: 3 },
@@ -1260,7 +1260,7 @@ describe("room", () => {
       const callback = jest.fn();
       room.events.customEvent.subscribe(callback);
 
-      room.__internal.simulate.onMessage(
+      room.__internal.simulate.incomingMessage(
         serverMessage({
           type: ServerMsgCode.BROADCASTED_EVENT,
           event: { type: "MY_EVENT" },
@@ -1602,7 +1602,7 @@ describe("room", () => {
 
       room.events.others.subscribe((ev) => (others = ev.others));
 
-      room.__internal.simulate.onMessage(
+      room.__internal.simulate.incomingMessage(
         serverMessage({
           type: ServerMsgCode.ROOM_STATE,
           users: { "1": { id: undefined, scopes: [] } },
@@ -1610,7 +1610,7 @@ describe("room", () => {
       );
 
       // UpdatePresence sent before the initial full UpdatePresence
-      room.__internal.simulate.onMessage(
+      room.__internal.simulate.incomingMessage(
         serverMessage({
           type: ServerMsgCode.UPDATE_PRESENCE,
           data: { x: 2 },
@@ -1623,7 +1623,7 @@ describe("room", () => {
       ]);
 
       // Full UpdatePresence sent as an answer to "UserJoined" message
-      room.__internal.simulate.onMessage(
+      room.__internal.simulate.incomingMessage(
         serverMessage({
           type: ServerMsgCode.UPDATE_PRESENCE,
           data: { x: 2 },

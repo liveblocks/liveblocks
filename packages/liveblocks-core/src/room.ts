@@ -604,7 +604,7 @@ type PrivateRoomAPI<
     // XXX websocket. However, these events should likely be handled
     // XXX orthorgonally to the state machine (the state of the connection does
     // XXX not matter for how incoming messages are handled).
-    onMessage(event: IWebSocketMessageEvent): void;
+    incomingMessage(event: IWebSocketMessageEvent): void;
   };
 };
 
@@ -2275,21 +2275,16 @@ export function createRoom<
       getOthers_forDevTools: (): readonly DevTools.UserTreeNode[] =>
         others_forDevTools.current,
 
+      // prettier-ignore
       simulate: {
-        explicitClose: (closeEvent) =>
-          transition({ type: "EXPLICIT_CLOSE", closeEvent }),
-        implicitClose: () => transition({ type: "IMPLICIT_CLOSE" }),
-        onMessage: (event) =>
-          transition({
-            type: "INCOMING_WEBSOCKET_MESSAGE",
-            messageEvent: event,
-          }),
-        authenticationSuccess: (token, socket) =>
-          transition({ type: "AUTH_SUCCESS", token, socket }),
-        onNavigatorOnline: () => transition({ type: "NAVIGATOR_ONLINE" }),
-        windowGotFocus: () => transition({ type: "WINDOW_GOT_FOCUS" }),
-        connect: () => transition({ type: "CONNECT" }),
-        disconnect: () => transition({ type: "DISCONNECT" }),
+        explicitClose:            (closeEvent) => transition({ type: "EXPLICIT_CLOSE", closeEvent }),
+        implicitClose:                      () => transition({ type: "IMPLICIT_CLOSE" }),
+        incomingMessage:               (event) => transition({ type: "INCOMING_WEBSOCKET_MESSAGE", messageEvent: event }),
+        authenticationSuccess: (token, socket) => transition({ type: "AUTH_SUCCESS", token, socket }),
+        onNavigatorOnline:                  () => transition({ type: "NAVIGATOR_ONLINE" }),
+        windowGotFocus:                     () => transition({ type: "WINDOW_GOT_FOCUS" }),
+        connect:                            () => transition({ type: "CONNECT" }),
+        disconnect:                         () => transition({ type: "DISCONNECT" }),
       },
     },
 
