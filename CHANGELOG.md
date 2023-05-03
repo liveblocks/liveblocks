@@ -6,7 +6,8 @@
 
 ## Internal changes
 
-- Release `create-liveblocks-app` along with other Liveblocks packages, using the same versioning scheme.
+- Release `create-liveblocks-app` along with other Liveblocks packages, using
+  the same versioning scheme.
 - Internal refactorings.
 
 # v1.0.5
@@ -40,7 +41,8 @@ to the console in non-production builds to ease debugging.
 
 # v1.0.0
 
-This major release marks the maturity of Liveblocks. For upgrade instructions, see the [1.0 upgrade guide](https://liveblocks.io/docs/guides/upgrading/1.0).
+This major release marks the maturity of Liveblocks. For upgrade instructions,
+see the [1.0 upgrade guide](https://liveblocks.io/docs/guides/upgrading/1.0).
 
 ## `@liveblocks/node`
 
