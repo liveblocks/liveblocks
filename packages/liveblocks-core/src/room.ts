@@ -2447,7 +2447,7 @@ function prepareCreateWebSocket(
         // prettier-ignore
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore (__PACKAGE_VERSION__ will be injected by the build script)
-        typeof __PACKAGE_VERSION__ === "string" ? /* istanbul ignore next */ __PACKAGE_VERSION__ : "dev"
+        typeof (__PACKAGE_VERSION__ as unknown) === "string" ? /* istanbul ignore next */ (__PACKAGE_VERSION__ as string) : "dev"
       }`
     );
   };
