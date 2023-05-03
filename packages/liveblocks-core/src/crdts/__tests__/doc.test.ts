@@ -12,14 +12,14 @@ import type { LiveObject } from "../LiveObject";
 describe("Storage", () => {
   describe("subscribe generic", () => {
     test("simple action", async () => {
-      const { storage, subscribe } = await prepareStorageTest<{ a: number }>(
+      const { room, storage } = await prepareStorageTest<{ a: number }>(
         [createSerializedObject("0:0", { a: 0 })],
         1
       );
 
       const callback = jest.fn();
 
-      const unsubscribe = subscribe(callback);
+      const unsubscribe = room.subscribe(callback);
 
       storage.root.set("a", 1);
 
@@ -38,7 +38,7 @@ describe("Storage", () => {
     });
 
     test("remote action", async () => {
-      const { storage, applyRemoteOperations, subscribe } =
+      const { room, storage, applyRemoteOperations } =
         await prepareStorageTest<{ a: number }>(
           [createSerializedObject("0:0", { a: 0 })],
           1
@@ -46,7 +46,7 @@ describe("Storage", () => {
 
       const callback = jest.fn();
 
-      const unsubscribe = subscribe(callback);
+      const unsubscribe = room.subscribe(callback);
 
       applyRemoteOperations([
         { type: OpCode.UPDATE_OBJECT, data: { a: 1 }, opId: "", id: "0:0" },
@@ -69,7 +69,7 @@ describe("Storage", () => {
     });
 
     test("remote action with multipe updates on same object", async () => {
-      const { storage, applyRemoteOperations, subscribe } =
+      const { room, storage, applyRemoteOperations } =
         await prepareStorageTest<{ a: number }>(
           [createSerializedObject("0:0", { a: 0 })],
           1
@@ -77,7 +77,7 @@ describe("Storage", () => {
 
       const callback = jest.fn();
 
-      const unsubscribe = subscribe(callback);
+      const unsubscribe = room.subscribe(callback);
 
       applyRemoteOperations([
         { type: OpCode.UPDATE_OBJECT, data: { a: 1 }, opId: "", id: "0:0" },
@@ -101,7 +101,7 @@ describe("Storage", () => {
     });
 
     test("batch actions on a single LiveObject", async () => {
-      const { storage, assertUndoRedo, subscribe, batch } =
+      const { room, storage, assertUndoRedo, batch } =
         await prepareStorageTest<{ a: number; b: number }>(
           [createSerializedObject("0:0", { a: 0, b: 0 })],
           1
@@ -111,7 +111,7 @@ describe("Storage", () => {
 
       const root = storage.root;
 
-      const unsubscribe = subscribe(callback);
+      const unsubscribe = room.subscribe(callback);
 
       batch(() => {
         root.set("a", 1);
@@ -138,7 +138,7 @@ describe("Storage", () => {
     });
 
     test("batch actions on multiple LiveObjects", async () => {
-      const { storage, subscribe, batch } = await prepareStorageTest<{
+      const { room, storage, batch } = await prepareStorageTest<{
         a: number;
         child: LiveObject<{ b: number }>;
       }>(
@@ -153,7 +153,7 @@ describe("Storage", () => {
 
       const root = storage.root;
 
-      subscribe(callback);
+      room.subscribe(callback);
 
       batch(() => {
         root.set("a", 1);
@@ -176,7 +176,7 @@ describe("Storage", () => {
     });
 
     test("batch actions on multiple Live types", async () => {
-      const { storage, subscribe, batch } = await prepareStorageTest<{
+      const { room, storage, batch } = await prepareStorageTest<{
         a: number;
         childObj: LiveObject<{ b: number }>;
         childList: LiveList<string>;
@@ -195,7 +195,7 @@ describe("Storage", () => {
 
       const root = storage.root;
 
-      subscribe(callback);
+      room.subscribe(callback);
 
       batch(() => {
         root.set("a", 1);
