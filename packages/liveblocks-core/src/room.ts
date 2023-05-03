@@ -604,10 +604,7 @@ type PrivateRoomAPI<
     // XXX OK to be called at any time?
     onMessage(event: IWebSocketEvent): void;
     // XXX Should become a shorthand for .transition({ type: "AUTH_DONE", data: <jwt token> })
-    authenticationSuccess(
-      token: RoomAuthToken,
-      socket: IWebSocketInstance
-    ): void;
+    authenticationSuccess(token: RoomAuthToken, socket: IWebSocketInstance): void; // prettier-ignore
     // XXX OK to be called at any time?
     onNavigatorOnline(): void;
     // XXX Should become a shorthand for .transition({ type: "FOCUS_VISIBLE" })
