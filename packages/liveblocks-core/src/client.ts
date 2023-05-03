@@ -226,7 +226,7 @@ export function createClient(options: ClientOptions): Client {
     // TODO: Expose a way to clear these
     window.addEventListener("online", () => {
       for (const [, room] of rooms) {
-        room.__internal.simulate.onNavigatorOnline();
+        room.__internal.simulate.navigatorOnline();
       }
     });
   }

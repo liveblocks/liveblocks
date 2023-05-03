@@ -234,10 +234,7 @@ describe("room", () => {
 
   test("authentication success should transition to connecting", () => {
     const { room } = setupStateMachine({});
-    room.__internal.simulate.authenticationSuccess(
-      defaultRoomToken,
-      new MockWebSocket()
-    );
+    room.__internal.simulate.authSuccess(defaultRoomToken, new MockWebSocket());
     expect(room.getConnectionState()).toBe("connecting");
   });
 
@@ -246,7 +243,7 @@ describe("room", () => {
 
     const ws = new MockWebSocket();
     room.__internal.simulate.connect();
-    room.__internal.simulate.authenticationSuccess(defaultRoomToken, ws);
+    room.__internal.simulate.authSuccess(defaultRoomToken, ws);
     ws.simulateOpen();
 
     expect(effects.send).toHaveBeenCalledWith([
@@ -260,7 +257,7 @@ describe("room", () => {
     const ws = new MockWebSocket();
     room.updatePresence({ x: 0 });
     room.__internal.simulate.connect();
-    room.__internal.simulate.authenticationSuccess(defaultRoomToken, ws);
+    room.__internal.simulate.authSuccess(defaultRoomToken, ws);
     ws.simulateOpen();
 
     expect(effects.send).toHaveBeenCalledWith([
@@ -273,7 +270,7 @@ describe("room", () => {
 
     const ws = new MockWebSocket();
     room.__internal.simulate.connect();
-    room.__internal.simulate.authenticationSuccess(defaultRoomToken, ws);
+    room.__internal.simulate.authSuccess(defaultRoomToken, ws);
     ws.simulateOpen();
 
     expect(effects.send).toHaveBeenCalledWith([
@@ -286,7 +283,7 @@ describe("room", () => {
 
     const ws = new MockWebSocket();
     room.__internal.simulate.connect();
-    room.__internal.simulate.authenticationSuccess(defaultRoomToken, ws);
+    room.__internal.simulate.authSuccess(defaultRoomToken, ws);
 
     const now = new Date(2021, 1, 1, 0, 0, 0, 0).getTime();
 
@@ -330,7 +327,7 @@ describe("room", () => {
 
     const ws = new MockWebSocket();
     room.__internal.simulate.connect();
-    room.__internal.simulate.authenticationSuccess(defaultRoomToken, ws);
+    room.__internal.simulate.authSuccess(defaultRoomToken, ws);
     ws.simulateOpen();
 
     room.__internal.simulate.incomingMessage(
@@ -366,7 +363,7 @@ describe("room", () => {
 
     const ws = new MockWebSocket();
     room.__internal.simulate.connect();
-    room.__internal.simulate.authenticationSuccess(defaultRoomToken, ws);
+    room.__internal.simulate.authSuccess(defaultRoomToken, ws);
     ws.simulateOpen();
 
     room.__internal.simulate.incomingMessage(
@@ -402,7 +399,7 @@ describe("room", () => {
 
     const ws = new MockWebSocket();
     room.__internal.simulate.connect();
-    room.__internal.simulate.authenticationSuccess(defaultRoomToken, ws);
+    room.__internal.simulate.authSuccess(defaultRoomToken, ws);
     ws.simulateOpen();
 
     room.__internal.simulate.incomingMessage(
@@ -438,7 +435,7 @@ describe("room", () => {
 
     const ws = new MockWebSocket();
     room.__internal.simulate.connect();
-    room.__internal.simulate.authenticationSuccess(defaultRoomToken, ws);
+    room.__internal.simulate.authSuccess(defaultRoomToken, ws);
     ws.simulateOpen();
 
     room.__internal.simulate.incomingMessage(
@@ -489,7 +486,7 @@ describe("room", () => {
 
     const ws = new MockWebSocket();
     room.__internal.simulate.connect();
-    room.__internal.simulate.authenticationSuccess(defaultRoomToken, ws);
+    room.__internal.simulate.authSuccess(defaultRoomToken, ws);
     ws.simulateOpen();
 
     room.__internal.simulate.incomingMessage(
@@ -553,7 +550,7 @@ describe("room", () => {
 
       const ws = new MockWebSocket();
       room.__internal.simulate.connect();
-      room.__internal.simulate.authenticationSuccess(defaultRoomToken, ws);
+      room.__internal.simulate.authSuccess(defaultRoomToken, ws);
 
       const now = new Date(2021, 1, 1, 0, 0, 0, 0).getTime();
 
@@ -592,7 +589,7 @@ describe("room", () => {
 
       const ws = new MockWebSocket();
       room.__internal.simulate.connect();
-      room.__internal.simulate.authenticationSuccess(defaultRoomToken, ws);
+      room.__internal.simulate.authSuccess(defaultRoomToken, ws);
       ws.simulateOpen();
 
       expect(effects.send).toBeCalledTimes(1);
@@ -613,7 +610,7 @@ describe("room", () => {
 
       const ws = new MockWebSocket();
       room.__internal.simulate.connect();
-      room.__internal.simulate.authenticationSuccess(defaultRoomToken, ws);
+      room.__internal.simulate.authSuccess(defaultRoomToken, ws);
       ws.simulateOpen();
 
       expect(effects.send).toBeCalledTimes(1);
@@ -629,7 +626,7 @@ describe("room", () => {
 
     const ws = new MockWebSocket();
     room.__internal.simulate.connect();
-    room.__internal.simulate.authenticationSuccess(defaultRoomToken, ws);
+    room.__internal.simulate.authSuccess(defaultRoomToken, ws);
     ws.simulateOpen();
 
     const getStoragePromise = room.getStorage();
@@ -651,7 +648,7 @@ describe("room", () => {
 
     const ws = new MockWebSocket();
     room.__internal.simulate.connect();
-    room.__internal.simulate.authenticationSuccess(defaultRoomToken, ws);
+    room.__internal.simulate.authSuccess(defaultRoomToken, ws);
     ws.simulateOpen();
 
     expect(room.__internal.buffer.me).toEqual(null);
@@ -706,7 +703,7 @@ describe("room", () => {
 
     const ws = new MockWebSocket();
     room.__internal.simulate.connect();
-    room.__internal.simulate.authenticationSuccess(defaultRoomToken, ws);
+    room.__internal.simulate.authSuccess(defaultRoomToken, ws);
     ws.simulateOpen();
 
     const getStoragePromise = room.getStorage();
@@ -740,7 +737,7 @@ describe("room", () => {
 
     const ws = new MockWebSocket();
     room.__internal.simulate.connect();
-    room.__internal.simulate.authenticationSuccess(defaultRoomToken, ws);
+    room.__internal.simulate.authSuccess(defaultRoomToken, ws);
     ws.simulateOpen();
 
     room.updatePresence({ x: 0 }, { addToHistory: true });
@@ -761,7 +758,7 @@ describe("room", () => {
 
     const ws = new MockWebSocket();
     room.__internal.simulate.connect();
-    room.__internal.simulate.authenticationSuccess(defaultRoomToken, ws);
+    room.__internal.simulate.authSuccess(defaultRoomToken, ws);
     ws.simulateOpen();
 
     room.updatePresence({ x: 0 });
@@ -777,7 +774,7 @@ describe("room", () => {
 
     const ws = new MockWebSocket();
     room.__internal.simulate.connect();
-    room.__internal.simulate.authenticationSuccess(defaultRoomToken, ws);
+    room.__internal.simulate.authSuccess(defaultRoomToken, ws);
     ws.simulateOpen();
 
     room.updatePresence({ x: 0 }, { addToHistory: true });
@@ -811,7 +808,7 @@ describe("room", () => {
 
     const ws = new MockWebSocket();
     room.__internal.simulate.connect();
-    room.__internal.simulate.authenticationSuccess(defaultRoomToken, ws);
+    room.__internal.simulate.authSuccess(defaultRoomToken, ws);
     ws.simulateOpen();
 
     room.updatePresence({ x: 0 }, { addToHistory: true });
@@ -835,7 +832,7 @@ describe("room", () => {
 
     const ws = new MockWebSocket();
     room.__internal.simulate.connect();
-    room.__internal.simulate.authenticationSuccess(defaultRoomToken, ws);
+    room.__internal.simulate.authSuccess(defaultRoomToken, ws);
     ws.simulateOpen();
 
     const getStoragePromise = room.getStorage();
@@ -876,7 +873,7 @@ describe("room", () => {
 
     const ws = new MockWebSocket();
     room.__internal.simulate.connect();
-    room.__internal.simulate.authenticationSuccess(defaultRoomToken, ws);
+    room.__internal.simulate.authSuccess(defaultRoomToken, ws);
     ws.simulateOpen();
 
     const getStoragePromise = room.getStorage();
@@ -942,7 +939,7 @@ describe("room", () => {
 
       const ws = new MockWebSocket();
       room.__internal.simulate.connect();
-      room.__internal.simulate.authenticationSuccess(defaultRoomToken, ws);
+      room.__internal.simulate.authSuccess(defaultRoomToken, ws);
       ws.simulateOpen();
 
       const getStoragePromise = room.getStorage();
@@ -1183,7 +1180,7 @@ describe("room", () => {
 
       const ws = new MockWebSocket();
       room.__internal.simulate.connect();
-      room.__internal.simulate.authenticationSuccess(defaultRoomToken, ws);
+      room.__internal.simulate.authSuccess(defaultRoomToken, ws);
       ws.simulateOpen();
 
       let others: Others<P, never> | undefined;
@@ -1234,7 +1231,7 @@ describe("room", () => {
 
       const ws = new MockWebSocket();
       room.__internal.simulate.connect();
-      room.__internal.simulate.authenticationSuccess(defaultRoomToken, ws);
+      room.__internal.simulate.authSuccess(defaultRoomToken, ws);
       ws.simulateOpen();
 
       const callback = jest.fn();
@@ -1499,7 +1496,7 @@ describe("room", () => {
 
       const ws = new MockWebSocket();
       room.__internal.simulate.connect();
-      room.__internal.simulate.authenticationSuccess(defaultRoomToken, ws);
+      room.__internal.simulate.authSuccess(defaultRoomToken, ws);
       ws.simulateOpen();
 
       ws.simulateCloseFromServer(
@@ -1521,7 +1518,7 @@ describe("room", () => {
 
       const ws = new MockWebSocket();
       room.__internal.simulate.connect();
-      room.__internal.simulate.authenticationSuccess(defaultRoomToken, ws);
+      room.__internal.simulate.authSuccess(defaultRoomToken, ws);
       ws.simulateOpen();
 
       ws.simulateCloseFromServer(
@@ -1546,7 +1543,7 @@ describe("room", () => {
       room.__internal.simulate.connect();
       expect(room.getConnectionState()).toBe("authenticating");
 
-      room.__internal.simulate.authenticationSuccess(defaultRoomToken, ws);
+      room.__internal.simulate.authSuccess(defaultRoomToken, ws);
       expect(room.getConnectionState()).toBe("connecting");
 
       ws.simulateOpen();
@@ -1556,7 +1553,7 @@ describe("room", () => {
       expect(room.getConnectionState()).toBe("authenticating");
 
       const ws2 = new MockWebSocket();
-      room.__internal.simulate.authenticationSuccess(defaultRoomToken, ws2);
+      room.__internal.simulate.authSuccess(defaultRoomToken, ws2);
       expect(room.getConnectionState()).toBe("connecting");
 
       ws2.simulateOpen();
@@ -1575,7 +1572,7 @@ describe("room", () => {
 
       const ws = new MockWebSocket();
       room.__internal.simulate.connect();
-      room.__internal.simulate.authenticationSuccess(defaultRoomToken, ws);
+      room.__internal.simulate.authSuccess(defaultRoomToken, ws);
       ws.simulateOpen();
 
       let others: Others<P, M> | undefined;

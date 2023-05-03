@@ -581,11 +581,6 @@ type PrivateRoomAPI<
   getSelf_forDevTools(): DevTools.UserTreeNode | null;
   getOthers_forDevTools(): readonly DevTools.UserTreeNode[];
 
-  // XXX Rename these methods to whatever is convenient!
-  // XXX The key abstraction we need to put in place is that each of these
-  // XXX calls a .transition(<event>) on the room internally, and that the room
-  // XXX itself is in control of how to handle (or ignore) that event, based on its
-  // XXX internal current finite state!
   simulate: {
     connect(): void;
     disconnect(): void;
@@ -593,10 +588,8 @@ type PrivateRoomAPI<
     explicitClose(event: IWebSocketCloseEvent): void; // NOTE: Also used in e2e test app!
     implicitClose(): void; // NOTE: Also used in e2e test app!
 
-    // XXX Should become a shorthand for .transition({ type: "AUTH_DONE", data: <jwt token> })
-    authenticationSuccess(token: RoomAuthToken, socket: IWebSocketInstance): void; // prettier-ignore
-    // XXX OK to be called at any time?
-    onNavigatorOnline(): void;
+    authSuccess(token: RoomAuthToken, socket: IWebSocketInstance): void; // prettier-ignore
+    navigatorOnline(): void;
     windowGotFocus(): void;
 
     // XXX These will in practice only happen if there is an open and working
@@ -993,7 +986,7 @@ export function createRoom<
       const prevToken = context.token;
       if (prevToken !== null && !isTokenExpired(prevToken.parsed)) {
         const socket = createWebSocket(prevToken.raw);
-        authenticationSuccess(prevToken.parsed, socket);
+        handleAuthSuccess(prevToken.parsed, socket);
         return undefined;
       } else {
         void auth(config.roomId)
@@ -1003,7 +996,7 @@ export function createRoom<
             }
             const parsedToken = parseRoomAuthToken(token);
             const socket = createWebSocket(token);
-            authenticationSuccess(parsedToken, socket);
+            handleAuthSuccess(parsedToken, socket);
             context.token = { raw: token, parsed: parsedToken };
           })
           .catch((er: unknown) =>
@@ -1029,7 +1022,7 @@ export function createRoom<
     },
 
     scheduleFlush: (delay: number) => setTimeout(tryFlushing, delay),
-    scheduleReconnect: (delay: number) => setTimeout(connect, delay),
+    scheduleReconnect: (delay: number) => setTimeout(handleConnect, delay),
     startHeartbeatInterval: () => setInterval(heartbeat, HEARTBEAT_INTERVAL),
     schedulePongTimeout: () => setTimeout(pongTimeout, PONG_TIMEOUT),
   };
@@ -1327,7 +1320,7 @@ export function createRoom<
     }
   }
 
-  function connect() {
+  function handleConnect() {
     if (
       context.connection.current.status !== "closed" &&
       context.connection.current.status !== "unavailable"
@@ -1403,14 +1396,11 @@ export function createRoom<
     );
   }
 
-  function authenticationSuccess(
-    token: RoomAuthToken,
-    socket: IWebSocketInstance
-  ) {
-    socket.addEventListener("message", onMessage);
-    socket.addEventListener("open", onOpen);
-    socket.addEventListener("close", explicitClose);
-    socket.addEventListener("error", onError);
+  function handleAuthSuccess(token: RoomAuthToken, socket: IWebSocketInstance) {
+    socket.addEventListener("message", handleIncomingMessage);
+    socket.addEventListener("open", handleSocketOpen);
+    socket.addEventListener("close", handleExplicitClose);
+    socket.addEventListener("error", handleSocketError);
 
     updateConnection(
       {
@@ -1438,7 +1428,7 @@ export function createRoom<
     context.timers.reconnect = effects.scheduleReconnect(getRetryDelay());
   }
 
-  function windowGotFocus() {
+  function handleWindowGotFocus() {
     // XXX MOVE THIS GUARD INTO THE .transition() function
     if (context.connection.current.status === "open") {
       log("Heartbeat after visibility change");
@@ -1514,7 +1504,7 @@ export function createRoom<
     return { type: "reset" };
   }
 
-  function onNavigatorOnline() {
+  function handleNavigatorBackOnline() {
     if (context.connection.current.status === "unavailable") {
       log("Try to reconnect after connectivity change");
       reconnect();
@@ -1601,7 +1591,7 @@ export function createRoom<
     effects.send(messages);
   }
 
-  function onMessage(event: IWebSocketMessageEvent) {
+  function handleIncomingMessage(event: IWebSocketMessageEvent) {
     if (event.data === "pong") {
       clearTimeout(context.timers.pongTimeout);
       return;
@@ -1729,7 +1719,7 @@ export function createRoom<
     });
   }
 
-  function explicitClose(event: IWebSocketCloseEvent) {
+  function handleExplicitClose(event: IWebSocketCloseEvent) {
     context.socket = null;
 
     clearTimeout(context.timers.flush);
@@ -1805,9 +1795,11 @@ export function createRoom<
     ];
   }
 
-  function onError() {}
+  function handleSocketError() {
+    // XXX At the very least, emit a log here
+  }
 
-  function onOpen() {
+  function handleSocketOpen() {
     clearInterval(context.timers.heartbeat);
     context.timers.heartbeat = effects.startHeartbeatInterval();
 
@@ -1861,12 +1853,12 @@ export function createRoom<
     reconnect();
   }
 
-  function disconnect() {
+  function handleDisconnect() {
     if (context.socket) {
-      context.socket.removeEventListener("open", onOpen);
-      context.socket.removeEventListener("message", onMessage);
-      context.socket.removeEventListener("close", explicitClose);
-      context.socket.removeEventListener("error", onError);
+      context.socket.removeEventListener("open", handleSocketOpen);
+      context.socket.removeEventListener("message", handleIncomingMessage);
+      context.socket.removeEventListener("close", handleExplicitClose);
+      context.socket.removeEventListener("error", handleSocketError);
       context.socket.close();
       context.socket = null;
     }
@@ -1892,10 +1884,10 @@ export function createRoom<
   // XXX Should become .transition({ type: "RECONNECT" })
   function reconnect() {
     if (context.socket) {
-      context.socket.removeEventListener("open", onOpen);
-      context.socket.removeEventListener("message", onMessage);
-      context.socket.removeEventListener("close", explicitClose);
-      context.socket.removeEventListener("error", onError);
+      context.socket.removeEventListener("open", handleSocketOpen);
+      context.socket.removeEventListener("message", handleIncomingMessage);
+      context.socket.removeEventListener("close", handleExplicitClose);
+      context.socket.removeEventListener("error", handleSocketError);
       context.socket.close();
       context.socket = null;
     }
@@ -1907,7 +1899,7 @@ export function createRoom<
 
     updateConnection({ status: "unavailable" }, batchUpdates);
 
-    connect();
+    handleConnect();
   }
 
   function tryFlushing() {
@@ -2176,7 +2168,7 @@ export function createRoom<
     }
   }
 
-  function implicitClose() {
+  function handleImplicitClose() {
     if (context.socket) {
       context.socket = null;
     }
@@ -2233,28 +2225,28 @@ export function createRoom<
   function transition(event: FSMEvent) {
     switch (event.type) {
       case "CONNECT":
-        return connect();
+        return handleConnect();
 
       case "DISCONNECT":
-        return disconnect();
+        return handleDisconnect();
 
       case "WINDOW_GOT_FOCUS":
-        return windowGotFocus();
+        return handleWindowGotFocus();
 
       case "NAVIGATOR_ONLINE":
-        return onNavigatorOnline();
+        return handleNavigatorBackOnline();
 
       case "AUTH_SUCCESS":
-        return authenticationSuccess(event.token, event.socket);
+        return handleAuthSuccess(event.token, event.socket);
 
       case "INCOMING_WEBSOCKET_MESSAGE":
-        return onMessage(event.messageEvent);
+        return handleIncomingMessage(event.messageEvent);
 
       case "IMPLICIT_CLOSE":
-        return implicitClose();
+        return handleImplicitClose();
 
       case "EXPLICIT_CLOSE":
-        return explicitClose(event.closeEvent);
+        return handleExplicitClose(event.closeEvent);
 
       default: {
         console.warn("Unexpected transition");
@@ -2277,14 +2269,14 @@ export function createRoom<
 
       // prettier-ignore
       simulate: {
-        explicitClose:            (closeEvent) => transition({ type: "EXPLICIT_CLOSE", closeEvent }),
-        implicitClose:                      () => transition({ type: "IMPLICIT_CLOSE" }),
-        incomingMessage:               (event) => transition({ type: "INCOMING_WEBSOCKET_MESSAGE", messageEvent: event }),
-        authenticationSuccess: (token, socket) => transition({ type: "AUTH_SUCCESS", token, socket }),
-        onNavigatorOnline:                  () => transition({ type: "NAVIGATOR_ONLINE" }),
-        windowGotFocus:                     () => transition({ type: "WINDOW_GOT_FOCUS" }),
-        connect:                            () => transition({ type: "CONNECT" }),
-        disconnect:                         () => transition({ type: "DISCONNECT" }),
+        explicitClose:  (closeEvent) => transition({ type: "EXPLICIT_CLOSE", closeEvent }),
+        implicitClose:            () => transition({ type: "IMPLICIT_CLOSE" }),
+        incomingMessage:     (event) => transition({ type: "INCOMING_WEBSOCKET_MESSAGE", messageEvent: event }),
+        authSuccess: (token, socket) => transition({ type: "AUTH_SUCCESS", token, socket }),
+        navigatorOnline:          () => transition({ type: "NAVIGATOR_ONLINE" }),
+        windowGotFocus:           () => transition({ type: "WINDOW_GOT_FOCUS" }),
+        connect:                  () => transition({ type: "CONNECT" }),
+        disconnect:               () => transition({ type: "DISCONNECT" }),
       },
     },
 

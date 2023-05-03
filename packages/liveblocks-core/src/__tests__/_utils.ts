@@ -214,10 +214,7 @@ export async function prepareRoomWithStorage<
   const ws = new MockWebSocket();
 
   room.__internal.simulate.connect();
-  room.__internal.simulate.authenticationSuccess(
-    makeRoomToken(actor, scopes),
-    ws
-  );
+  room.__internal.simulate.authSuccess(makeRoomToken(actor, scopes), ws);
   ws.simulateOpen();
 
   // Start getting the storage, but don't await the promise just yet!
@@ -399,10 +396,7 @@ export async function prepareStorageTest<
     currentActor = actor;
     const ws = new MockWebSocket();
     room.__internal.simulate.connect();
-    room.__internal.simulate.authenticationSuccess(
-      makeRoomToken(actor, []),
-      ws
-    );
+    room.__internal.simulate.authSuccess(makeRoomToken(actor, []), ws);
     ws.simulateOpen();
 
     // Mock server messages for Presence.
@@ -573,7 +567,7 @@ export function reconnect<
 ) {
   const ws = new MockWebSocket();
   room.__internal.simulate.connect();
-  room.__internal.simulate.authenticationSuccess(makeRoomToken(actor, []), ws);
+  room.__internal.simulate.authSuccess(makeRoomToken(actor, []), ws);
   ws.simulateOpen();
 
   room.__internal.simulate.incomingMessage(
