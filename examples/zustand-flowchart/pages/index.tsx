@@ -19,13 +19,13 @@ export default function Index() {
     onConnect,
   } = useStore();
 
-  const roomId = useOverrideRoomId("nextjs-flow-chart");
+  const roomId = useOverrideRoomId("zustand-flowchart");
 
   // Enter the Liveblocks room on load
   useEffect(() => {
     enterRoom(roomId);
     return () => leaveRoom(roomId);
-  }, [enterRoom, leaveRoom]);
+  }, [enterRoom, leaveRoom, roomId]);
 
   if (isStorageLoading) {
     return (
