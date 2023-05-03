@@ -573,9 +573,15 @@ type PrivateRoomAPI<
   TUserMeta extends BaseUserMeta,
   TRoomEvent extends Json
 > = {
-  // Context
+  // For introspection
   buffer: MachineContext<TPresence, TStorage, TUserMeta, TRoomEvent>["buffer"]; // prettier-ignore
   numRetries: MachineContext<TPresence, TStorage, TUserMeta, TRoomEvent>["numRetries"]; // prettier-ignore
+  getUndoStack(): HistoryOp<TPresence>[][];
+  getItemsCount(): number;
+
+  // For DevTools support (Liveblocks browser extension)
+  getSelf_forDevTools(): DevTools.UserTreeNode | null;
+  getOthers_forDevTools(): readonly DevTools.UserTreeNode[];
 
   // Core
   connect(): void;
@@ -589,13 +595,6 @@ type PrivateRoomAPI<
 
   simulateCloseWebsocket(): void;
   simulateSendCloseEvent(event: IWebSocketCloseEvent): void;
-
-  getUndoStack(): HistoryOp<TPresence>[][];
-  getItemsCount(): number;
-
-  // DevTools support
-  getSelf_forDevTools(): DevTools.UserTreeNode | null;
-  getOthers_forDevTools(): readonly DevTools.UserTreeNode[];
 };
 
 const BACKOFF_RETRY_DELAYS = [250, 500, 1000, 2000, 4000, 8000, 10000];
