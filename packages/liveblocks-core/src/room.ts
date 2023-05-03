@@ -1400,7 +1400,6 @@ export function createRoom<
   }
 
   function handleAuthSuccess(token: RoomAuthToken, socket: IWebSocketInstance) {
-    // XXX Don't call handlers directly -- call .transition() instead
     socket.addEventListener("message", handleRawSocketMessage);
     socket.addEventListener("open", handleSocketOpen);
     socket.addEventListener("close", handleExplicitClose);
@@ -1814,7 +1813,6 @@ export function createRoom<
     // TODO(nvie) At the very least, emit a log here?
   }
 
-  // XXX Should eventually become .transition({ type: "OPEN_SOCKET" })
   function handleSocketOpen() {
     clearInterval(context.timers.heartbeat);
     context.timers.heartbeat = effects.startHeartbeatInterval();
@@ -1897,7 +1895,6 @@ export function createRoom<
     }
   }
 
-  // XXX Should eventually become .transition({ type: "RECONNECT" })
   function reconnect() {
     if (context.socket) {
       context.socket.removeEventListener("open", handleSocketOpen);
