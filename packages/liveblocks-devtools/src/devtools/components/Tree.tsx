@@ -925,8 +925,8 @@ const AutoSizer = forwardRef<HTMLDivElement, AutoSizerProps>(
       <div
         style={
           {
-            "--width": `${width}px`,
-            "--height": `${height}px`,
+            "--width": width !== undefined ? `${width}px` : undefined,
+            "--height": height !== undefined ? `${height}px` : undefined,
             ...autoSizerStyle,
             ...style,
           } as CSSProperties
