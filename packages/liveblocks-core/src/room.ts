@@ -2248,9 +2248,8 @@ export function createRoom<
       case "EXPLICIT_CLOSE":
         return handleExplicitClose(event.closeEvent);
 
-      default: {
-        console.warn("Unexpected transition");
-      }
+      default:
+        return assertNever(event, "Invalid event");
     }
   }
 
