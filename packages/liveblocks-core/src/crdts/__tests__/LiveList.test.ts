@@ -854,7 +854,7 @@ describe("LiveList", () => {
           1
         );
 
-      room.__internal.simulate.onClose(
+      room.__internal.simulate.explicitClose(
         new CloseEvent("close", {
           code: WebsocketCloseCodes.CLOSE_ABNORMAL,
           wasClean: false,
@@ -904,7 +904,7 @@ describe("LiveList", () => {
           1
         );
 
-      room.__internal.simulate.onClose(
+      room.__internal.simulate.explicitClose(
         new CloseEvent("close", {
           code: WebsocketCloseCodes.CLOSE_ABNORMAL,
           wasClean: false,
@@ -1223,7 +1223,7 @@ describe("LiveList", () => {
 
       expectStorage({ items: ["a"] });
 
-      room.__internal.simulate.onClose(
+      room.__internal.simulate.explicitClose(
         new CloseEvent("close", {
           code: WebsocketCloseCodes.CLOSE_ABNORMAL,
           wasClean: false,
@@ -1311,7 +1311,7 @@ describe("LiveList", () => {
 
       expectStorage({ items: ["a", "b"] });
 
-      room.__internal.simulate.onClose(
+      room.__internal.simulate.explicitClose(
         new CloseEvent("close", {
           code: WebsocketCloseCodes.CLOSE_ABNORMAL,
           wasClean: false,
@@ -1387,7 +1387,7 @@ describe("LiveList", () => {
 
       expectStorage({ items: ["a", "b"] });
 
-      room.__internal.simulate.onClose(
+      room.__internal.simulate.explicitClose(
         new CloseEvent("close", {
           code: WebsocketCloseCodes.CLOSE_ABNORMAL,
           wasClean: false,

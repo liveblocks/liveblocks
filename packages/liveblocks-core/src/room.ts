@@ -597,10 +597,9 @@ type PrivateRoomAPI<
 
     // XXX Should become a shorthand for .transition({ type: "EXPLICIT_CLOSE ???" })
     // XXX What's the diff with simulateSendCloseEvent() and simulateSocketClose() below?
-    onClose(event: IWebSocketCloseEvent): void; // NOTE: Also used in e2e test app!
-
+    explicitClose(event: IWebSocketCloseEvent): void; // NOTE: Also used in e2e test app!
     // XXX Should become a shorthand for .transition({ type: "IMPLICIT_CLOSE ???" })
-    simulateCloseWebsocket(): void; // NOTE: Also used in e2e test app!
+    implicitClose(): void; // NOTE: Also used in e2e test app!
 
     // XXX OK to be called at any time?
     onMessage(event: IWebSocketEvent): void;
@@ -1401,7 +1400,7 @@ export function createRoom<
   ) {
     socket.addEventListener("message", onMessage);
     socket.addEventListener("open", onOpen);
-    socket.addEventListener("close", onClose);
+    socket.addEventListener("close", explicitClose);
     socket.addEventListener("error", onError);
 
     updateConnection(
@@ -1723,7 +1722,7 @@ export function createRoom<
     });
   }
 
-  function onClose(event: IWebSocketCloseEvent) {
+  function explicitClose(event: IWebSocketCloseEvent) {
     context.socket = null;
 
     clearTimeout(context.timers.flush);
@@ -1859,7 +1858,7 @@ export function createRoom<
     if (context.socket) {
       context.socket.removeEventListener("open", onOpen);
       context.socket.removeEventListener("message", onMessage);
-      context.socket.removeEventListener("close", onClose);
+      context.socket.removeEventListener("close", explicitClose);
       context.socket.removeEventListener("error", onError);
       context.socket.close();
       context.socket = null;
@@ -1888,7 +1887,7 @@ export function createRoom<
     if (context.socket) {
       context.socket.removeEventListener("open", onOpen);
       context.socket.removeEventListener("message", onMessage);
-      context.socket.removeEventListener("close", onClose);
+      context.socket.removeEventListener("close", explicitClose);
       context.socket.removeEventListener("error", onError);
       context.socket.close();
       context.socket = null;
@@ -2170,7 +2169,7 @@ export function createRoom<
     }
   }
 
-  function simulateCloseWebsocket() {
+  function implicitClose() {
     if (context.socket) {
       context.socket = null;
     }
@@ -2237,11 +2236,11 @@ export function createRoom<
         others_forDevTools.current,
 
       simulate: {
-        onClose,
+        explicitClose,
+        implicitClose,
         onMessage,
         authenticationSuccess,
         onNavigatorOnline,
-        simulateCloseWebsocket,
         onVisibilityChange,
         connect,
         disconnect,

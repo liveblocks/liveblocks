@@ -483,7 +483,7 @@ describe("room", () => {
       { connectionId: 1, presence: { x: 2 }, isReadOnly: false },
     ]);
 
-    room.__internal.simulate.onClose(
+    room.__internal.simulate.explicitClose(
       new CloseEvent("close", {
         code: WebsocketCloseCodes.CLOSE_ABNORMAL,
         wasClean: false,
@@ -1385,7 +1385,7 @@ describe("room", () => {
 
       expectStorage({ items: ["a"] });
 
-      room.__internal.simulate.onClose(
+      room.__internal.simulate.explicitClose(
         new CloseEvent("close", {
           code: WebsocketCloseCodes.CLOSE_ABNORMAL,
           wasClean: false,
