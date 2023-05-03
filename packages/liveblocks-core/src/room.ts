@@ -587,26 +587,24 @@ type PrivateRoomAPI<
   // XXX itself is in control of how to handle (or ignore) that event, based on its
   // XXX internal current finite state!
   simulate: {
-    // Core
-    // XXX Should become a shorthand for .transition({ type: "CONNECT" })
     connect(): void;
-    // XXX Should become a shorthand for .transition({ type: "DISCONNECT" })
     disconnect(): void;
 
-    // XXX Should become a shorthand for .transition({ type: "EXPLICIT_CLOSE ???" })
-    // XXX What's the diff with simulateSendCloseEvent() and simulateSocketClose() below?
     explicitClose(event: IWebSocketCloseEvent): void; // NOTE: Also used in e2e test app!
-    // XXX Should become a shorthand for .transition({ type: "IMPLICIT_CLOSE ???" })
     implicitClose(): void; // NOTE: Also used in e2e test app!
 
-    // XXX OK to be called at any time?
-    onMessage(event: IWebSocketMessageEvent): void;
     // XXX Should become a shorthand for .transition({ type: "AUTH_DONE", data: <jwt token> })
     authenticationSuccess(token: RoomAuthToken, socket: IWebSocketInstance): void; // prettier-ignore
     // XXX OK to be called at any time?
     onNavigatorOnline(): void;
-    // XXX Should become a shorthand for .transition({ type: "FOCUS_VISIBLE" })
     windowGotFocus(): void;
+
+    // XXX These will in practice only happen if there is an open and working
+    // XXX websocket connection, since the source of these messages is... the
+    // XXX websocket. However, these events should likely be handled
+    // XXX orthorgonally to the state machine (the state of the connection does
+    // XXX not matter for how incoming messages are handled).
+    onMessage(event: IWebSocketMessageEvent): void;
   };
 };
 
@@ -614,7 +612,6 @@ const BACKOFF_RETRY_DELAYS = [250, 500, 1000, 2000, 4000, 8000, 10000];
 const BACKOFF_RETRY_DELAYS_SLOW = [2000, 30000, 60000, 300000];
 
 const HEARTBEAT_INTERVAL = 30000;
-// const WAKE_UP_CHECK_INTERVAL = 2000;
 const PONG_TIMEOUT = 2000;
 
 function makeIdFactory(connectionId: number): IdFactory {
