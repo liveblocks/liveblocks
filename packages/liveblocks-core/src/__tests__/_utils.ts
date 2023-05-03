@@ -133,7 +133,7 @@ export class MockWebSocket {
   // SIMULATION APIS
   //
 
-  open() {
+  simulateOpen() {
     this.#readyState = this.OPEN;
     for (const callback of this.#openListeners) {
       callback({ type: "open" });
@@ -143,7 +143,7 @@ export class MockWebSocket {
   /**
    * Simulates a close of the connection by the server.
    */
-  closeFromBackend(event: IWebSocketCloseEvent) {
+  simulateCloseFromServer(event: IWebSocketCloseEvent) {
     this.#readyState = this.CLOSED;
     for (const callback of this.#closeListeners) {
       callback(event);
@@ -209,7 +209,7 @@ export async function prepareRoomWithStorage<
 
   room.__internal.connect();
   room.__internal.authenticationSuccess(makeRoomToken(actor, scopes), ws);
-  ws.open();
+  ws.simulateOpen();
 
   // Start getting the storage, but don't await the promise just yet!
   const getStoragePromise = room.getStorage();
@@ -393,7 +393,7 @@ export async function prepareStorageTest<
     const ws = new MockWebSocket();
     room.__internal.connect();
     room.__internal.authenticationSuccess(makeRoomToken(actor, []), ws);
-    ws.open();
+    ws.simulateOpen();
 
     // Mock server messages for Presence.
     // Other user in the room (refRoom) recieves a "USER_JOINED" message.
@@ -566,7 +566,7 @@ export async function reconnect<
   const ws = new MockWebSocket();
   room.__internal.connect();
   room.__internal.authenticationSuccess(makeRoomToken(actor, []), ws);
-  ws.open();
+  ws.simulateOpen();
 
   room.__internal.onMessage(
     serverMessage({
