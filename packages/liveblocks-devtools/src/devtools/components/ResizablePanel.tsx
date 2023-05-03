@@ -169,7 +169,9 @@ export function ResizablePanel({
           <Handle
             direction="vertical"
             value={height}
+            // eslint-disable-next-line @typescript-eslint/no-misused-promises
             onValueChange={setRenderHeight}
+            // eslint-disable-next-line @typescript-eslint/no-misused-promises
             onValueApply={setHeight}
             min={MIN_HEIGHT}
             max={MAX_HEIGHT}
@@ -179,6 +181,7 @@ export function ResizablePanel({
             direction="horizontal"
             value={width}
             onValueChange={setRenderWidth}
+            // eslint-disable-next-line @typescript-eslint/no-misused-promises
             onValueApply={setWidth}
             min={MIN_WIDTH}
             max={MAX_WIDTH}
