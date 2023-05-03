@@ -597,7 +597,11 @@ type PrivateRoomAPI<
 
     // XXX Should become a shorthand for .transition({ type: "EXPLICIT_CLOSE ???" })
     // XXX What's the diff with simulateSendCloseEvent() and simulateSocketClose() below?
-    onClose(event: IWebSocketCloseEvent): void;
+    onClose(event: IWebSocketCloseEvent): void; // NOTE: Also used in e2e test app!
+
+    // XXX Should become a shorthand for .transition({ type: "IMPLICIT_CLOSE ???" })
+    simulateCloseWebsocket(): void; // NOTE: Also used in e2e test app!
+
     // XXX OK to be called at any time?
     onMessage(event: IWebSocketEvent): void;
     // XXX Should become a shorthand for .transition({ type: "AUTH_DONE", data: <jwt token> })
@@ -609,12 +613,6 @@ type PrivateRoomAPI<
     onNavigatorOnline(): void;
     // XXX Should become a shorthand for .transition({ type: "FOCUS_VISIBLE" })
     onVisibilityChange(visibilityState: DocumentVisibilityState): void;
-
-    // XXX Should become a shorthand for .transition({ type: "IMPLICIT_CLOSE ???" })
-    simulateCloseWebsocket(): void;
-    // XXX Should become a shorthand for .transition({ type: "EXPLICIT_CLOSE ???" })
-    // XXX DRY up inlined type with IWebSocketCloseEvent once that PR is merged into main
-    simulateSendCloseEvent(event: IWebSocketCloseEvent): void;
   };
 };
 
@@ -2178,10 +2176,6 @@ export function createRoom<
     }
   }
 
-  function simulateSendCloseEvent(event: IWebSocketCloseEvent) {
-    onClose(event);
-  }
-
   function getStorageStatus(): StorageStatus {
     if (_getInitialStatePromise === null) {
       return "not-loaded";
@@ -2248,7 +2242,6 @@ export function createRoom<
         authenticationSuccess,
         onNavigatorOnline,
         simulateCloseWebsocket,
-        simulateSendCloseEvent,
         onVisibilityChange,
         connect,
         disconnect,
