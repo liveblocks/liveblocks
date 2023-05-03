@@ -134,6 +134,12 @@ export class MockWebSocket {
   //
 
   simulateOpen() {
+    if (this.readyState > this.CONNECTING) {
+      throw new Error(
+        "Cannot open a WebSocket that has already advanced beyond the CONNECTING state"
+      );
+    }
+
     this.#readyState = this.OPEN;
     for (const callback of this.#openListeners) {
       callback({ type: "open" });
