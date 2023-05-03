@@ -86,7 +86,7 @@ export async function prepareStorageImmutableTest<
     expectStorageInBothClients(data);
 
     if (itemsCount !== undefined) {
-      expect(room.__internal.getItemsCount()).toBe(itemsCount);
+      expect(room.__internal.nodeCount).toBe(itemsCount);
     }
     expect(state).toEqual(refState);
     expect(state).toEqual(data);

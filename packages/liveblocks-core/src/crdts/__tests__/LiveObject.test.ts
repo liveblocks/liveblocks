@@ -159,7 +159,7 @@ describe("LiveObject", () => {
   });
 
   it("update with LiveObject", async () => {
-    const { storage, expectStorage, operations, assertUndoRedo, getUndoStack } =
+    const { room, storage, expectStorage, operations, assertUndoRedo } =
       await prepareStorageTest<{ child: LiveObject<{ a: number }> | null }>(
         [createSerializedObject("0:0", { child: null })],
         1
@@ -178,7 +178,7 @@ describe("LiveObject", () => {
         a: 0,
       },
     });
-    expect(getUndoStack()[0]).toEqual([
+    expect(room.__internal.undoStack[0]).toEqual([
       {
         type: OpCode.UPDATE_OBJECT,
         id: "0:0",
@@ -205,7 +205,7 @@ describe("LiveObject", () => {
     expectStorage({
       child: null,
     });
-    expect(getUndoStack()[1]).toEqual([
+    expect(room.__internal.undoStack[1]).toEqual([
       {
         type: OpCode.CREATE_OBJECT,
         id: "1:0",
@@ -219,7 +219,7 @@ describe("LiveObject", () => {
   });
 
   it("remove nested grand child record with update", async () => {
-    const { storage, expectStorage, assertUndoRedo, getItemsCount } =
+    const { room, storage, expectStorage, assertUndoRedo } =
       await prepareStorageTest<{
         a: number;
         child: LiveObject<{
@@ -248,13 +248,13 @@ describe("LiveObject", () => {
       a: 0,
       child: null,
     });
-    expect(getItemsCount()).toBe(1);
+    expect(room.__internal.nodeCount).toBe(1);
 
     assertUndoRedo();
   });
 
   it("remove nested child record with update", async () => {
-    const { storage, expectStorage, assertUndoRedo, getItemsCount } =
+    const { room, storage, expectStorage, assertUndoRedo } =
       await prepareStorageTest<{
         a: number;
         child: LiveObject<{ b: number }> | null;
@@ -276,13 +276,13 @@ describe("LiveObject", () => {
       a: 0,
       child: null,
     });
-    expect(getItemsCount()).toBe(1);
+    expect(room.__internal.nodeCount).toBe(1);
 
     assertUndoRedo();
   });
 
   it("add nested record with update", async () => {
-    const { storage, expectStorage, assertUndoRedo, getItemsCount } =
+    const { room, storage, expectStorage, assertUndoRedo } =
       await prepareStorageTest([createSerializedObject("0:0", {})], 1);
 
     expectStorage({});
@@ -297,13 +297,13 @@ describe("LiveObject", () => {
       },
     });
 
-    expect(getItemsCount()).toBe(2);
+    expect(room.__internal.nodeCount).toBe(2);
 
     assertUndoRedo();
   });
 
   it("replace nested record with update", async () => {
-    const { storage, expectStorage, assertUndoRedo, getItemsCount } =
+    const { room, storage, expectStorage, assertUndoRedo } =
       await prepareStorageTest([createSerializedObject("0:0", {})], 1);
 
     expectStorage({});
@@ -328,7 +328,7 @@ describe("LiveObject", () => {
       },
     });
 
-    expect(getItemsCount()).toBe(2);
+    expect(room.__internal.nodeCount).toBe(2);
 
     assertUndoRedo();
   });

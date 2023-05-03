@@ -378,7 +378,7 @@ describe("LiveList", () => {
     });
 
     it("delete should remove descendants", async () => {
-      const { storage, expectStorage, assertUndoRedo, getItemsCount } =
+      const { room, storage, expectStorage, assertUndoRedo } =
         await prepareStorageTest<{
           items: LiveList<LiveObject<{ child: LiveObject<{ a: number }> }>>;
         }>([
@@ -399,7 +399,7 @@ describe("LiveList", () => {
       });
 
       // Ensure that LiveStructure are deleted properly
-      expect(getItemsCount()).toBe(2);
+      expect(room.__internal.nodeCount).toBe(2);
 
       assertUndoRedo();
     });

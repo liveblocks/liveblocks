@@ -573,11 +573,11 @@ type PrivateRoomAPI<
   TUserMeta extends BaseUserMeta,
   TRoomEvent extends Json
 > = {
-  // For introspection
+  // For introspection in unit tests only
   buffer: MachineContext<TPresence, TStorage, TUserMeta, TRoomEvent>["buffer"]; // prettier-ignore
-  numRetries: MachineContext<TPresence, TStorage, TUserMeta, TRoomEvent>["numRetries"]; // prettier-ignore
-  getUndoStack(): HistoryOp<TPresence>[][];
-  getItemsCount(): number;
+  numRetries: number;
+  undoStack: readonly (readonly Readonly<HistoryOp<TPresence>>[])[];
+  nodeCount: number;
 
   // For DevTools support (Liveblocks browser extension)
   getSelf_forDevTools(): DevTools.UserTreeNode | null;
@@ -2212,6 +2212,13 @@ export function createRoom<
     __internal: {
       get buffer() { return context.buffer }, // prettier-ignore
       get numRetries() { return context.numRetries }, // prettier-ignore
+      get undoStack() { return context.undoStack }, // prettier-ignore
+      get nodeCount() { return context.nodes.size }, // prettier-ignore
+
+      // Support for the Liveblocks browser extension
+      getSelf_forDevTools: () => selfAsTreeNode.current,
+      getOthers_forDevTools: (): readonly DevTools.UserTreeNode[] =>
+        others_forDevTools.current,
 
       onClose,
       onMessage,
@@ -2222,16 +2229,9 @@ export function createRoom<
       simulateSendCloseEvent,
 
       onVisibilityChange,
-      getUndoStack: () => context.undoStack,
-      getItemsCount: () => context.nodes.size,
 
       connect,
       disconnect,
-
-      // Support for the Liveblocks browser extension
-      getSelf_forDevTools: () => selfAsTreeNode.current,
-      getOthers_forDevTools: (): readonly DevTools.UserTreeNode[] =>
-        others_forDevTools.current,
     },
 
     id: config.roomId,

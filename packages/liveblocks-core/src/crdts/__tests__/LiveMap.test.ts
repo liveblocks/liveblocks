@@ -262,7 +262,7 @@ describe("LiveMap", () => {
     });
 
     it("should remove nested data structure from cache", async () => {
-      const { storage, expectStorage, assertUndoRedo, getItemsCount } =
+      const { room, storage, expectStorage, assertUndoRedo } =
         await prepareStorageTest<{
           map: LiveMap<string, LiveObject<{ a: number }>>;
         }>(
@@ -281,9 +281,9 @@ describe("LiveMap", () => {
       const root = storage.root;
       const map = root.toObject().map;
 
-      expect(getItemsCount()).toBe(3);
+      expect(room.__internal.nodeCount).toBe(3);
       expect(map.delete("first")).toBe(true);
-      expect(getItemsCount()).toBe(2);
+      expect(room.__internal.nodeCount).toBe(2);
 
       expectStorage({
         map: new Map(),
@@ -293,7 +293,7 @@ describe("LiveMap", () => {
     });
 
     it("should delete live list", async () => {
-      const { storage, expectStorage, assertUndoRedo, getItemsCount } =
+      const { room, storage, expectStorage, assertUndoRedo } =
         await prepareStorageTest<{ map: LiveMap<string, LiveList<number>> }>(
           [
             createSerializedObject("0:0", {}),
@@ -311,9 +311,9 @@ describe("LiveMap", () => {
       const root = storage.root;
       const map = root.toObject().map;
 
-      expect(getItemsCount()).toBe(4);
+      expect(room.__internal.nodeCount).toBe(4);
       expect(map.delete("first")).toBe(true);
-      expect(getItemsCount()).toBe(2);
+      expect(room.__internal.nodeCount).toBe(2);
 
       expectStorage({
         map: new Map(),

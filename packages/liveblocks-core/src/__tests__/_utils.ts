@@ -364,9 +364,7 @@ export async function prepareStorageTest<
   function expectBothClientStoragesToEqual(data: ToImmutable<TStorage>) {
     expect(storage.root.toImmutable()).toEqual(data);
     expect(refStorage.root.toImmutable()).toEqual(data);
-    expect(room.__internal.getItemsCount()).toBe(
-      refRoom.__internal.getItemsCount()
-    );
+    expect(room.__internal.nodeCount).toBe(refRoom.__internal.nodeCount);
   }
 
   function expectStorage(data: ToImmutable<TStorage>) {
@@ -433,8 +431,6 @@ export async function prepareStorageTest<
     expectStorage,
     assertUndoRedo,
     updatePresence: room.updatePresence,
-    getUndoStack: room.__internal.getUndoStack,
-    getItemsCount: room.__internal.getItemsCount,
     batch: room.batch,
     undo: room.history.undo,
     redo: room.history.redo,
