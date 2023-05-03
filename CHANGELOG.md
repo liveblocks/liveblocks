@@ -1,3 +1,7 @@
+# v1.0.8 (not yet released)
+
+- Internal refactorings only
+
 # v1.0.7
 
 - Private API changes only.
