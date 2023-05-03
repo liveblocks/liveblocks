@@ -43,7 +43,9 @@ export class WebhookHandler {
 
     if (expectedSignatures.includes(signature) === false)
       throw new Error(
-        `Invalid signature, expected one of ${expectedSignatures}, got ${signature}`
+        `Invalid signature, expected one of ${expectedSignatures.join(
+          ", "
+        )}, got ${signature}`
       );
 
     const event: WebhookEvent = JSON.parse(request.rawBody) as WebhookEvent;
