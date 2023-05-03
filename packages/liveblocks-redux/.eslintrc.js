@@ -21,4 +21,21 @@ module.exports = {
     // ----------------------------------------------------------------------
     /* None yet 😇 ! */
   },
+
+  overrides: [
+    {
+      files: ["src/__tests__/**"],
+
+      // Special config for test files
+      rules: {
+        // Ideally, enable these lint rules again later, as they are useful
+        // to catch bugs
+        "@typescript-eslint/no-unsafe-argument": "off",
+        "@typescript-eslint/no-unsafe-assignment": "off",
+        "@typescript-eslint/no-unsafe-call": "off",
+        "@typescript-eslint/no-unsafe-member-access": "off",
+        "@typescript-eslint/no-unsafe-return": "off",
+      },
+    },
+  ],
 };

@@ -624,8 +624,14 @@ export function createRoomContext<
     return React.useMemo(
       () => {
         return ((...args) =>
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-return
           room.batch(() =>
-            callback(makeMutationContext(room), ...args)
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+            callback(
+              makeMutationContext(room),
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+              ...args
+            )
           )) as OmitFirstArg<F>;
       },
       // eslint-disable-next-line react-hooks/exhaustive-deps
