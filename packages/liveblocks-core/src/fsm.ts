@@ -143,6 +143,35 @@ export class FiniteStateMachine<
     return this;
   }
 
+  private getMatches(
+    nameOrPattern: Resolve<Wildcardify<TStateName>>
+  ): TStateName[] {
+    const matches: TStateName[] = [];
+
+    // We're trying to match a group pattern here, i.e. `foo.*` (which might
+    // match `foo.bar` and `foo.qux` states)
+    if (nameOrPattern.endsWith("*")) {
+      const prefix = nameOrPattern.slice(0, -1);
+      for (const state of this.states) {
+        if (state.startsWith(prefix)) {
+          matches.push(state);
+        }
+      }
+    } else {
+      // Just a single, explicit state name
+      const name = nameOrPattern as TStateName;
+      if (this.states.has(name)) {
+        matches.push(name);
+      }
+    }
+
+    if (matches.length === 0) {
+      throw new Error(`No states match ${JSON.stringify(nameOrPattern)}`);
+    }
+
+    return matches;
+  }
+
   /**
    * Define all allowed outgoing transitions for a state.
    *
@@ -159,7 +188,7 @@ export class FiniteStateMachine<
    * such events will get ignored.
    */
   public addTransitions(
-    src: Resolve<Wildcardify<TStateName>>,
+    nameOrPattern: Resolve<Wildcardify<TStateName>>,
     mapping: {
       [E in TEvent as E["type"]]?: TargetFn<TContext, E, TStateName> | null;
     }
@@ -168,25 +197,19 @@ export class FiniteStateMachine<
       throw new Error("Already started");
     }
 
-    const srcStateNames = src.endsWith("*")
-      ? Array.from(this.states.keys()).filter((name) =>
-          name.startsWith(src.slice(0, -1))
-        )
-      : [src];
-
-    for (const srcStateName of srcStateNames) {
-      let map = this.allowedTransitions.get(srcStateName);
+    for (const src of this.getMatches(nameOrPattern)) {
+      let map = this.allowedTransitions.get(src);
       if (map === undefined) {
         map = new Map();
-        this.allowedTransitions.set(srcStateName, map);
+        this.allowedTransitions.set(src, map);
       }
 
-      for (const [type, ev] of Object.entries(mapping)) {
+      for (const [type, targetFn] of Object.entries(mapping)) {
         this.knownEventTypes.add(type);
 
-        if (ev !== undefined && ev !== null) {
+        if (targetFn !== undefined && targetFn !== null) {
           // TODO Disallow overwriting when using a wildcard pattern!
-          map.set(type, ev as TargetFn<TContext, TEvent, TStateName>);
+          map.set(type, targetFn as TargetFn<TContext, TEvent, TStateName>);
         }
       }
     }

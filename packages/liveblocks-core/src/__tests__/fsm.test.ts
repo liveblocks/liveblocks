@@ -35,6 +35,22 @@ describe("finite state machine", () => {
     }).toThrow('Invalid next state name: "i-am-not-a-valid-state-name"');
   });
 
+  test("error when a state name matches no state", () => {
+    expect(() =>
+      new FSM(null).addTransitions("foo", {
+        /* not important */
+      })
+    ).toThrow('No states match "foo"');
+  });
+
+  test("error when a state pattern matches no state", () => {
+    expect(() =>
+      new FSM(null).addState("initial").addTransitions("initial.*", {
+        /* not important */
+      })
+    ).toThrow('No states match "initial.*"');
+  });
+
   test("initial state", () => {
     const fsm = new FSM(null)
       .addState("red")
