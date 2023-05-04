@@ -19,6 +19,19 @@
   border-radius: 9999px;
   background-color: transparent;
   margin-left: -0.75rem;
+  transform-origin: left;
+  animation: slideIn 0.4s ease-in-out;
+}
+
+@keyframes slideIn {
+  0% {
+    opacity: 0;
+    transform: translate(100%, 0);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(0, 0);
+  }
 }
 
 .avatar_picture {
