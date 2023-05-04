@@ -250,6 +250,70 @@ describe("finite state machine", () => {
     expect(calls).toEqual(["light!", "darkness!", "light!", "darkness!"]);
   });
 
+  test("using wildcards to describe transitions", () => {
+    const fsm = new FSM(null)
+      .addEvent("FROM_ANYWHERE")
+      .addEvent("FROM_FOO_ONLY")
+
+      .addState({ name: "foo.one" })
+      .addState({ name: "foo.two" })
+      .addState({ name: "bar.three" })
+
+      .addTransitions("*", {
+        FROM_ANYWHERE: () => "foo.two",
+      })
+
+      .addTransitions("foo.*", {
+        FROM_FOO_ONLY: () => "bar.three",
+      })
+
+      .start();
+
+    expect(fsm.currentStateName).toEqual("foo.one");
+    fsm.transition({ type: "FROM_ANYWHERE" });
+    expect(fsm.currentStateName).toEqual("foo.two");
+    fsm.transition({ type: "FROM_ANYWHERE" });
+    expect(fsm.currentStateName).toEqual("foo.two");
+    fsm.transition({ type: "FROM_FOO_ONLY" });
+    expect(fsm.currentStateName).toEqual("bar.three");
+    expect(() => fsm.transition({ type: "FROM_FOO_ONLY" })).toThrow(
+      'Event "FROM_FOO_ONLY" is not allowed from state "bar.three"'
+    );
+    fsm.transition({ type: "FROM_ANYWHERE" });
+    expect(fsm.currentStateName).toEqual("foo.two");
+  });
+
+  // TODO Nice to have, no need to fix this right now yet
+  test.skip("wildcards cannot overwrite existing transitions", () => {
+    const fsm = new FSM(null)
+      .addState({ name: "foo.start" })
+      .addState({ name: "foo.mid" })
+      .addState({ name: "foo.end" })
+
+      .addTransitions("foo.start", {
+        FROM_ANYWHERE: () => "foo.mid",
+      })
+
+      .addTransitions("foo.mid", {
+        FROM_ANYWHERE: () => "foo.end",
+      })
+
+      // This wildcard should _not_ override the transitions defined above
+      .addTransitions("*", {
+        FROM_ANYWHERE: () => "foo.start",
+      })
+
+      .start();
+
+    expect(fsm.currentStateName).toEqual("foo.start");
+    fsm.transition({ type: "FROM_ANYWHERE" });
+    expect(fsm.currentStateName).toEqual("foo.mid");
+    fsm.transition({ type: "FROM_ANYWHERE" });
+    expect(fsm.currentStateName).toEqual("foo.end");
+    fsm.transition({ type: "FROM_ANYWHERE" });
+    expect(fsm.currentStateName).toEqual("foo.start");
+  });
+
   // describe("promise-based states", () => {
   //   test("normal flow", async () => {
   //     const calls: string[] = [];

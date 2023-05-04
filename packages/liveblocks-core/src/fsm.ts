@@ -1,6 +1,7 @@
 /**
  * Finite State Machine (FSM) implementation.
  */
+import type { Resolve } from "./lib/Resolve";
 
 // XXX Tidy up this class before publishing
 
@@ -25,6 +26,9 @@ type Action<
   TEvent extends BaseEvent,
   TState extends BaseState<TContext>
 > = (event: TEvent, context: Readonly<TContext>) => TState["name"];
+
+type Groups<T extends string> = T extends `${infer G}.${string}` ? G : never;
+type Wildcardify<T extends string> = Resolve<T | "*" | `${Groups<T>}.*`>;
 
 export class FiniteStateMachine<
   TContext,
@@ -131,7 +135,7 @@ export class FiniteStateMachine<
   }
 
   public addTransitions(
-    srcStateName: TState["name"],
+    src: Wildcardify<TState["name"]>,
     mapping: {
       //
       // NOTE: I'm exploring the idea of making it super explicit, by letting
@@ -143,7 +147,7 @@ export class FiniteStateMachine<
       // Alternatively, we could distinguish `undefined` as "ignore", and
       // `null` as throw-and-explicitly-forbid the transition.
       //
-      [E in TEvent as E["type"]]: Action<TContext, E, TState> | null;
+      [E in TEvent as E["type"]]?: Action<TContext, E, TState> | null;
       //                        ^ Add a `?` here if too annoying
     }
   ): this {
@@ -151,15 +155,24 @@ export class FiniteStateMachine<
       throw new Error("Already started");
     }
 
-    let map = this.allowedTransitions.get(srcStateName);
-    if (map === undefined) {
-      map = new Map();
-      this.allowedTransitions.set(srcStateName, map);
-    }
+    const srcStateNames = src.endsWith("*")
+      ? Array.from(this.states.keys()).filter((name) =>
+          name.startsWith(src.slice(0, -1))
+        )
+      : [src];
 
-    for (const [type, ev] of Object.entries(mapping)) {
-      if (ev !== null && ev !== undefined) {
-        map.set(type, ev as Action<TContext, TEvent, TState>);
+    for (const srcStateName of srcStateNames) {
+      let map = this.allowedTransitions.get(srcStateName);
+      if (map === undefined) {
+        map = new Map();
+        this.allowedTransitions.set(srcStateName, map);
+      }
+
+      for (const [type, ev] of Object.entries(mapping)) {
+        if (ev !== null && ev !== undefined) {
+          // XXX Disallow overwriting when using a wildcard pattern!
+          map.set(type, ev as Action<TContext, TEvent, TState>);
+        }
       }
     }
     return this;
