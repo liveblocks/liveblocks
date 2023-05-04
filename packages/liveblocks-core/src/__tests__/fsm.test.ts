@@ -9,22 +9,22 @@ describe("finite state machine", () => {
   test("cannot use FSM when it hasn't started yet", () => {
     const fsm = new FSM(null);
     expect(() => fsm.transition({ type: "SOME_EVENT" })).toThrow(
-      "Machine hasn't started yet"
+      "Not started yet"
     );
   });
 
-  test("cannot use FSM when it hasn't started yet", () => {
+  test("cannot get current state when machine hasn't started yet", () => {
     const fsm = new FSM(null)
-      .addState({ name: "red" })
-      .addState({ name: "yellow" })
-      .addState({ name: "green" });
+      .addState("red")
+      .addState("yellow")
+      .addState("green");
 
-    expect(() => fsm.currentStateName).toThrow("Machine hasn't started yet");
+    expect(() => fsm.currentState).toThrow("Not started yet");
   });
 
   test("error when there is an nonexisting target state", () => {
     const fsm = new FSM(null)
-      .addState({ name: "initial" })
+      .addState("initial")
       .addTransitions("initial", {
         SOME_EVENT: () => "i-am-not-a-valid-state-name",
       })
@@ -37,18 +37,18 @@ describe("finite state machine", () => {
 
   test("initial state", () => {
     const fsm = new FSM(null)
-      .addState({ name: "red" })
-      .addState({ name: "yellow" })
-      .addState({ name: "green" })
+      .addState("red")
+      .addState("yellow")
+      .addState("green")
       .start();
 
-    expect(fsm.currentStateName).toBe("red");
+    expect(fsm.currentState).toBe("red");
   });
 
   test("transitionIfPossible never errors when target state does not exist", () => {
     const fsm = new FSM(null)
-      .addState({ name: "red" })
-      .addState({ name: "green" })
+      .addState("red")
+      .addState("green")
 
       .addTransitions("red", {
         INVALID: () => "i-am-not-a-valid-state-name",
@@ -69,7 +69,7 @@ describe("finite state machine", () => {
       'Invalid next state name: "i-am-not-a-valid-state-name"'
     );
 
-    expect(fsm.currentStateName).toBe("red");
+    expect(fsm.currentState).toBe("red");
 
     expect(() => fsm.transition({ type: "ONLY_WHEN_GREEN" })).toThrow(
       'Event "ONLY_WHEN_GREEN" is not allowed from state "red"'
@@ -77,10 +77,10 @@ describe("finite state machine", () => {
     expect(() =>
       fsm.transitionIfPossible({ type: "ONLY_WHEN_GREEN" })
     ).not.toThrow();
-    expect(fsm.currentStateName).toBe("red"); // Doesn't change the state
+    expect(fsm.currentState).toBe("red"); // Doesn't change the state
 
     fsm.transitionIfPossible({ type: "ONLY_WHEN_RED" }); // Acts like .transition()
-    expect(fsm.currentStateName).toBe("green");
+    expect(fsm.currentState).toBe("green");
 
     fsm.transitionIfPossible({ type: "ONLY_WHEN_GREEN" });
 
@@ -96,9 +96,13 @@ describe("finite state machine", () => {
     const onEnterYellow = jest.fn();
 
     const fsm = new FSM(null)
-      .addState({ name: "red", onEnter: onEnterRed })
-      .addState({ name: "yellow", onEnter: onEnterYellow })
-      .addState({ name: "green", onEnter: onEnterGreen });
+      .addState("red")
+      .addState("yellow")
+      .addState("green")
+
+      .onEnter("red", onEnterRed)
+      .onEnter("yellow", onEnterYellow)
+      .onEnter("green", onEnterGreen);
 
     expect(onEnterRed).not.toBeCalled();
     expect(onEnterYellow).not.toBeCalled();
@@ -117,9 +121,13 @@ describe("finite state machine", () => {
     const onExitYellow = jest.fn();
 
     const fsm = new FSM(null)
-      .addState({ name: "red", onExit: onExitRed })
-      .addState({ name: "yellow", onExit: onExitYellow })
-      .addState({ name: "green", onExit: onExitGreen });
+      .addState("red")
+      .addState("yellow")
+      .addState("green")
+
+      .onExit("red", onExitRed)
+      .onExit("yellow", onExitYellow)
+      .onExit("green", onExitGreen);
 
     fsm.start();
 
@@ -141,13 +149,21 @@ describe("finite state machine", () => {
     const enterRed = () => void calls.push("entered red");
     const enterYellow = () => void calls.push("entered yellow");
     const exitGreen = () => void calls.push("exited green");
-    const exitYellow = () => void calls.push("exited red");
-    const exitRed = () => void calls.push("exited yellow");
+    const exitYellow = () => void calls.push("exited yellow");
+    const exitRed = () => void calls.push("exited red");
 
     const fsm = new FSM(null)
-      .addState({ name: "red", onEnter: enterRed, onExit: exitYellow })
-      .addState({ name: "yellow", onEnter: enterYellow, onExit: exitRed })
-      .addState({ name: "green", onEnter: enterGreen, onExit: exitGreen })
+      .addState("red")
+      .addState("yellow")
+      .addState("green")
+
+      .onEnter("red", enterRed)
+      .onEnter("yellow", enterYellow)
+      .onEnter("green", enterGreen)
+
+      .onExit("red", exitRed)
+      .onExit("yellow", exitYellow)
+      .onExit("green", exitGreen)
 
       .addTransitions("green", {
         STAY_GREEN_LONGER: () => "green",
@@ -164,30 +180,30 @@ describe("finite state machine", () => {
 
       .start();
 
-    expect(fsm.currentStateName).toEqual("red");
+    expect(fsm.currentState).toEqual("red");
     expect(calls).toEqual(["entered red"]);
 
     fsm.transition({ type: "TO_GREEN" });
-    expect(fsm.currentStateName).toEqual("green");
+    expect(fsm.currentState).toEqual("green");
     expect(calls).toEqual(["entered red", "exited red", "entered green"]);
 
     // No enter/exit events happen when staying in the same state explicitly
     fsm.transition({ type: "STAY_GREEN_LONGER" });
-    expect(fsm.currentStateName).toEqual("green");
+    expect(fsm.currentState).toEqual("green");
     fsm.transition({ type: "STAY_GREEN_LONGER" });
-    expect(fsm.currentStateName).toEqual("green");
+    expect(fsm.currentState).toEqual("green");
     expect(calls).toEqual(["entered red", "exited red", "entered green"]);
 
     expect(() => fsm.transition({ type: "TO_RED" })).toThrow(
       'Event "TO_RED" is not allowed from state "green"'
     );
-    expect(fsm.currentStateName).toEqual("green");
+    expect(fsm.currentState).toEqual("green");
 
     expect(fsm.can("TO_RED")).toBe(false);
     expect(fsm.can("BE_CAREFUL")).toBe(true);
 
     fsm.transition({ type: "BE_CAREFUL" });
-    expect(fsm.currentStateName).toEqual("yellow");
+    expect(fsm.currentState).toEqual("yellow");
     expect(calls).toEqual([
       "entered red",
       "exited red",
@@ -200,7 +216,7 @@ describe("finite state machine", () => {
   test("states with cleanup functions", () => {
     const calls: string[] = [];
 
-    const onEnter = () => {
+    const onEnterWithCleanup = () => {
       calls.push("light!");
       return () => {
         calls.push("darkness!");
@@ -208,8 +224,10 @@ describe("finite state machine", () => {
     };
 
     const fsm = new FSM(null)
-      .addState({ name: "off" })
-      .addState({ name: "on", onEnter })
+      .addState("off")
+      .addState("on")
+
+      .onEnter("on", onEnterWithCleanup)
 
       .addTransitions("on", {
         TOGGLE: () => "off",
@@ -221,19 +239,19 @@ describe("finite state machine", () => {
 
       .start();
 
-    expect(fsm.currentStateName).toEqual("off");
+    expect(fsm.currentState).toEqual("off");
     expect(calls).toEqual([]);
 
     fsm.transition({ type: "TOGGLE" });
-    expect(fsm.currentStateName).toEqual("on");
+    expect(fsm.currentState).toEqual("on");
     expect(calls).toEqual(["light!"]);
 
     fsm.transition({ type: "TOGGLE" });
-    expect(fsm.currentStateName).toEqual("off");
+    expect(fsm.currentState).toEqual("off");
     expect(calls).toEqual(["light!", "darkness!"]);
 
     fsm.transition({ type: "TOGGLE" });
-    expect(fsm.currentStateName).toEqual("on");
+    expect(fsm.currentState).toEqual("on");
     expect(calls).toEqual(["light!", "darkness!", "light!"]);
 
     fsm.stop();
@@ -242,9 +260,9 @@ describe("finite state machine", () => {
 
   test("using wildcards to describe transitions", () => {
     const fsm = new FSM(null)
-      .addState({ name: "foo.one" })
-      .addState({ name: "foo.two" })
-      .addState({ name: "bar.three" })
+      .addState("foo.one")
+      .addState("foo.two")
+      .addState("bar.three")
 
       .addTransitions("*", {
         FROM_ANYWHERE: () => "foo.two",
@@ -256,26 +274,26 @@ describe("finite state machine", () => {
 
       .start();
 
-    expect(fsm.currentStateName).toEqual("foo.one");
+    expect(fsm.currentState).toEqual("foo.one");
     fsm.transition({ type: "FROM_ANYWHERE" });
-    expect(fsm.currentStateName).toEqual("foo.two");
+    expect(fsm.currentState).toEqual("foo.two");
     fsm.transition({ type: "FROM_ANYWHERE" });
-    expect(fsm.currentStateName).toEqual("foo.two");
+    expect(fsm.currentState).toEqual("foo.two");
     fsm.transition({ type: "FROM_FOO_ONLY" });
-    expect(fsm.currentStateName).toEqual("bar.three");
+    expect(fsm.currentState).toEqual("bar.three");
     expect(() => fsm.transition({ type: "FROM_FOO_ONLY" })).toThrow(
       'Event "FROM_FOO_ONLY" is not allowed from state "bar.three"'
     );
     fsm.transition({ type: "FROM_ANYWHERE" });
-    expect(fsm.currentStateName).toEqual("foo.two");
+    expect(fsm.currentState).toEqual("foo.two");
   });
 
   // TODO Nice to have, no need to fix this right now yet
   test.skip("wildcards cannot overwrite existing transitions", () => {
     const fsm = new FSM(null)
-      .addState({ name: "foo.start" })
-      .addState({ name: "foo.mid" })
-      .addState({ name: "foo.end" })
+      .addState("foo.start")
+      .addState("foo.mid")
+      .addState("foo.end")
 
       .addTransitions("foo.start", {
         FROM_ANYWHERE: () => "foo.mid",
@@ -292,13 +310,13 @@ describe("finite state machine", () => {
 
       .start();
 
-    expect(fsm.currentStateName).toEqual("foo.start");
+    expect(fsm.currentState).toEqual("foo.start");
     fsm.transition({ type: "FROM_ANYWHERE" });
-    expect(fsm.currentStateName).toEqual("foo.mid");
+    expect(fsm.currentState).toEqual("foo.mid");
     fsm.transition({ type: "FROM_ANYWHERE" });
-    expect(fsm.currentStateName).toEqual("foo.end");
+    expect(fsm.currentState).toEqual("foo.end");
     fsm.transition({ type: "FROM_ANYWHERE" });
-    expect(fsm.currentStateName).toEqual("foo.start");
+    expect(fsm.currentState).toEqual("foo.start");
   });
 
   // describe("promise-based states", () => {
