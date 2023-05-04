@@ -21,7 +21,7 @@ enum RunningState {
   STOPPED,
 }
 
-type Action<
+type TargetFn<
   TContext,
   TEvent extends BaseEvent,
   TState extends BaseState<TContext>
@@ -43,7 +43,7 @@ export class FiniteStateMachine<
   private states: Map<string, TState>;
   private allowedTransitions: Map<
     string,
-    Map<string, Action<TContext, TEvent, TState>>
+    Map<string, TargetFn<TContext, TEvent, TState>>
   >;
   private currentStateOrNull: TState | null;
   private cleanupFn: (() => void) | undefined;
@@ -134,21 +134,25 @@ export class FiniteStateMachine<
     return this;
   }
 
+  /**
+   * Define all allowed outgoing transitions for a state.
+   *
+   * The targets for each event can be defined as a function which returns the
+   * next state to transition to. These functions can look at the `event` or
+   * `context` params to conditionally decide which next state to transition
+   * to.
+   *
+   * WARNING: The target functions should be used to trigger any side effects!
+   * XXX Use explicit transition actions for that.
+   *
+   * If you set it to `null`, then the transition will be explicitly forbidden
+   * and throw an error. If you don't define a target for a transition, then
+   * such events will get ignored.
+   */
   public addTransitions(
     src: Wildcardify<TState["name"]>,
     mapping: {
-      //
-      // NOTE: I'm exploring the idea of making it super explicit, by letting
-      // TypeScript force you to handle each event explicitly from every
-      // possible state, so that you make a very explicit decision in each
-      // scenario. If that is ultimately too annoying, we can make these
-      // explicit `null`s optional instead.
-      //
-      // Alternatively, we could distinguish `undefined` as "ignore", and
-      // `null` as throw-and-explicitly-forbid the transition.
-      //
-      [E in TEvent as E["type"]]?: Action<TContext, E, TState> | null;
-      //                        ^ Add a `?` here if too annoying
+      [E in TEvent as E["type"]]?: TargetFn<TContext, E, TState> | null;
     }
   ): this {
     if (this.runningState !== RunningState.NOT_STARTED_YET) {
@@ -169,9 +173,9 @@ export class FiniteStateMachine<
       }
 
       for (const [type, ev] of Object.entries(mapping)) {
-        if (ev !== null && ev !== undefined) {
-          // XXX Disallow overwriting when using a wildcard pattern!
-          map.set(type, ev as Action<TContext, TEvent, TState>);
+        if (ev !== undefined && ev !== null) {
+          // TODO Disallow overwriting when using a wildcard pattern!
+          map.set(type, ev as TargetFn<TContext, TEvent, TState>);
         }
       }
     }
@@ -190,7 +194,7 @@ export class FiniteStateMachine<
 
   private getTransition(
     eventName: TEvent["type"]
-  ): Action<TContext, TEvent, TState> | undefined {
+  ): TargetFn<TContext, TEvent, TState> | undefined {
     return this.allowedTransitions.get(this.currentStateName)?.get(eventName);
   }
 
