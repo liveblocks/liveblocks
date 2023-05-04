@@ -5,9 +5,6 @@ import type { Resolve } from "./lib/Resolve";
 
 // XXX Tidy up this class before publishing
 
-// Trick taken from the React codebase
-type CleanupFn = () => void;
-
 type BaseEvent = { type: string };
 
 enum RunningState {
@@ -16,13 +13,14 @@ enum RunningState {
   STOPPED,
 }
 
+type CleanupFn = () => void;
 type EnterFn<TContext> = (context: TContext) => void | CleanupFn;
 type ExitFn<TContext> = (context: TContext) => void;
 
-type TargetFn<TContext, TEvent extends BaseEvent, TStateName extends string> = (
+type TargetFn<TContext, TEvent extends BaseEvent, TState extends string> = (
   event: TEvent,
   context: Readonly<TContext>
-) => TStateName;
+) => TState;
 
 type Groups<T extends string> = T extends `${infer G}.${string}` ? G : never;
 type Wildcardify<T extends string> = T | "*" | `${Groups<T>}.*`;
@@ -30,7 +28,7 @@ type Wildcardify<T extends string> = T | "*" | `${Groups<T>}.*`;
 export class FiniteStateMachine<
   TContext,
   TEvent extends BaseEvent,
-  TStateName extends string // BaseState<TContext>
+  TState extends string
 > {
   // Indicates whether this state machine is still being configured, has
   // started, or has terminated
@@ -38,19 +36,19 @@ export class FiniteStateMachine<
 
   private context: TContext;
 
-  private states: Set<TStateName>;
-  private currentStateOrNull: TStateName | null;
+  private states: Set<TState>;
+  private currentStateOrNull: TState | null;
 
   private allowedTransitions: Map<
     string,
-    Map<string, TargetFn<TContext, TEvent, TStateName>>
+    Map<string, TargetFn<TContext, TEvent, TState>>
   >;
 
   // TODO: Generalize this data structure to support group-based
   // exiting/entering, more like a stack
   private cleanupFn: (() => void) | undefined;
-  private enterFns: Map<TStateName, EnterFn<TContext>>;
-  private exitFns: Map<TStateName, ExitFn<TContext>>;
+  private enterFns: Map<TState, EnterFn<TContext>>;
+  private exitFns: Map<TState, ExitFn<TContext>>;
 
   // Used to provide better error messages
   private knownEventTypes: Set<string>;
@@ -59,7 +57,7 @@ export class FiniteStateMachine<
    * Returns the initial state, which is defined by the first call made to
    * .addState().
    */
-  private get initialState(): TStateName {
+  private get initialState(): TState {
     // Return the first state ever defined as the initial state
     const result = this.states.values()[Symbol.iterator]().next();
     if (result.done) {
@@ -69,7 +67,7 @@ export class FiniteStateMachine<
     }
   }
 
-  public get currentState(): TStateName {
+  public get currentState(): TState {
     if (this.currentStateOrNull === null) {
       throw new Error("Not started yet");
     }
@@ -119,7 +117,7 @@ export class FiniteStateMachine<
    * onEnter and onExit handlers which will automatically get triggered when
    * state transitions around this state happen.
    */
-  public addState(state: TStateName): this {
+  public addState(state: TState): this {
     if (this.runningState !== RunningState.NOT_STARTED_YET) {
       throw new Error("Already started");
     }
@@ -127,7 +125,7 @@ export class FiniteStateMachine<
     return this;
   }
 
-  public onEnter(state: TStateName, enterFn: EnterFn<TContext>): this {
+  public onEnter(state: TState, enterFn: EnterFn<TContext>): this {
     if (this.runningState !== RunningState.NOT_STARTED_YET) {
       throw new Error("Already started");
     }
@@ -135,7 +133,7 @@ export class FiniteStateMachine<
     return this;
   }
 
-  public onExit(state: TStateName, exitFn: (context: TContext) => void): this {
+  public onExit(state: TState, exitFn: (context: TContext) => void): this {
     if (this.runningState !== RunningState.NOT_STARTED_YET) {
       throw new Error("Already started");
     }
@@ -143,10 +141,8 @@ export class FiniteStateMachine<
     return this;
   }
 
-  private getMatches(
-    nameOrPattern: Resolve<Wildcardify<TStateName>>
-  ): TStateName[] {
-    const matches: TStateName[] = [];
+  private getMatches(nameOrPattern: Resolve<Wildcardify<TState>>): TState[] {
+    const matches: TState[] = [];
 
     // We're trying to match a group pattern here, i.e. `foo.*` (which might
     // match `foo.bar` and `foo.qux` states)
@@ -159,7 +155,7 @@ export class FiniteStateMachine<
       }
     } else {
       // Just a single, explicit state name
-      const name = nameOrPattern as TStateName;
+      const name = nameOrPattern as TState;
       if (this.states.has(name)) {
         matches.push(name);
       }
@@ -188,9 +184,9 @@ export class FiniteStateMachine<
    * such events will get ignored.
    */
   public addTransitions(
-    nameOrPattern: Resolve<Wildcardify<TStateName>>,
+    nameOrPattern: Resolve<Wildcardify<TState>>,
     mapping: {
-      [E in TEvent as E["type"]]?: TargetFn<TContext, E, TStateName> | null;
+      [E in TEvent as E["type"]]?: TargetFn<TContext, E, TState> | null;
     }
   ): this {
     if (this.runningState !== RunningState.NOT_STARTED_YET) {
@@ -209,7 +205,7 @@ export class FiniteStateMachine<
 
         if (targetFn !== undefined && targetFn !== null) {
           // TODO Disallow overwriting when using a wildcard pattern!
-          map.set(type, targetFn as TargetFn<TContext, TEvent, TStateName>);
+          map.set(type, targetFn as TargetFn<TContext, TEvent, TState>);
         }
       }
     }
@@ -218,7 +214,7 @@ export class FiniteStateMachine<
 
   private getTransition(
     eventName: TEvent["type"]
-  ): TargetFn<TContext, TEvent, TStateName> | undefined {
+  ): TargetFn<TContext, TEvent, TState> | undefined {
     return this.allowedTransitions.get(this.currentState)?.get(eventName);
   }
 
