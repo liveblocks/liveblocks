@@ -15,6 +15,12 @@ type BaseState<TContext> = {
 };
 type BaseEvent = { type: string };
 
+type State<TStateName extends string, TContext> = {
+  name: TStateName;
+  onEnter?: (context: TContext) => void | CleanupFn;
+  onExit?: (context: TContext) => void;
+};
+
 enum RunningState {
   NOT_STARTED_YET, // Machine can be set up during this phase
   STARTED,
@@ -28,34 +34,34 @@ type TargetFn<
 > = (event: TEvent, context: Readonly<TContext>) => TState["name"];
 
 type Groups<T extends string> = T extends `${infer G}.${string}` ? G : never;
-type Wildcardify<T extends string> = Resolve<T | "*" | `${Groups<T>}.*`>;
+type Wildcardify<T extends string> = T | "*" | `${Groups<T>}.*`;
 
 export class FiniteStateMachine<
   TContext,
   TEvent extends BaseEvent,
-  TState extends BaseState<TContext>
+  TStateName extends string // BaseState<TContext>
 > {
   // Indicates whether this state machine is still being configured, has
   // started, or has terminated
   private runningState: RunningState;
 
   private context: TContext;
-  private states: Map<string, TState>;
+  private states: Map<string, State<TStateName, TContext>>;
   private allowedTransitions: Map<
     string,
-    Map<string, TargetFn<TContext, TEvent, TState>>
+    Map<string, TargetFn<TContext, TEvent, State<TStateName, TContext>>>
   >;
-  private currentStateOrNull: TState | null;
+  private currentStateOrNull: State<TStateName, TContext> | null;
   private cleanupFn: (() => void) | undefined;
 
   // Used to provide better error messages
-  private knownEvents: Set<string>;
+  private knownEventTypes: Set<string>;
 
   /**
    * Returns the initial state, which is defined by the first call made to
    * .addState().
    */
-  private get initialState(): TState {
+  private get initialState(): State<TStateName, TContext> {
     // Return the first state ever defined as the initial state
     const result = this.states.values()[Symbol.iterator]().next();
     if (result.done) {
@@ -65,7 +71,7 @@ export class FiniteStateMachine<
     }
   }
 
-  private get currentState(): TState {
+  private get currentState(): State<TStateName, TContext> {
     if (this.currentStateOrNull === null) {
       throw new Error("State machine is not configured yet");
     }
@@ -103,22 +109,9 @@ export class FiniteStateMachine<
     this.runningState = RunningState.NOT_STARTED_YET;
     this.currentStateOrNull = null;
     this.states = new Map();
-    this.knownEvents = new Set();
+    this.knownEventTypes = new Set();
     this.allowedTransitions = new Map();
     this.context = initialContext;
-  }
-
-  /**
-   * Declares the existence of an event type.
-   *
-   * XXX Not sure if this method will eventually be needed.
-   */
-  public addEvent(eventType: TEvent["type"]): this {
-    if (this.runningState !== RunningState.NOT_STARTED_YET) {
-      throw new Error("Already started");
-    }
-    this.knownEvents.add(eventType);
-    return this;
   }
 
   /**
@@ -126,7 +119,7 @@ export class FiniteStateMachine<
    * onEnter and onExit handlers which will automatically get triggered when
    * state transitions around this state happen.
    */
-  public addState(state: TState): this {
+  public addState(state: State<TStateName, TContext>): this {
     if (this.runningState !== RunningState.NOT_STARTED_YET) {
       throw new Error("Already started");
     }
@@ -150,9 +143,13 @@ export class FiniteStateMachine<
    * such events will get ignored.
    */
   public addTransitions(
-    src: Wildcardify<TState["name"]>,
+    src: Resolve<Wildcardify<TStateName>>,
     mapping: {
-      [E in TEvent as E["type"]]?: TargetFn<TContext, E, TState> | null;
+      [E in TEvent as E["type"]]?: TargetFn<
+        TContext,
+        E,
+        State<TStateName, TContext>
+      > | null;
     }
   ): this {
     if (this.runningState !== RunningState.NOT_STARTED_YET) {
@@ -173,9 +170,14 @@ export class FiniteStateMachine<
       }
 
       for (const [type, ev] of Object.entries(mapping)) {
+        this.knownEventTypes.add(type);
+
         if (ev !== undefined && ev !== null) {
           // TODO Disallow overwriting when using a wildcard pattern!
-          map.set(type, ev as TargetFn<TContext, TEvent, TState>);
+          map.set(
+            type,
+            ev as TargetFn<TContext, TEvent, State<TStateName, TContext>>
+          );
         }
       }
     }
@@ -194,7 +196,7 @@ export class FiniteStateMachine<
 
   private getTransition(
     eventName: TEvent["type"]
-  ): TargetFn<TContext, TEvent, TState> | undefined {
+  ): TargetFn<TContext, TEvent, State<TStateName, TContext>> | undefined {
     return this.allowedTransitions.get(this.currentStateName)?.get(eventName);
   }
 
@@ -235,7 +237,7 @@ export class FiniteStateMachine<
   public transition(event: TEvent): void {
     const action = this.getTransition(event.type);
     if (action === undefined) {
-      if (this.knownEvents.has(event.type)) {
+      if (this.knownEventTypes.has(event.type)) {
         // XXX Fail silently instead?
         throw new Error(
           `Event ${JSON.stringify(

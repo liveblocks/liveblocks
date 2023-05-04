@@ -2,7 +2,7 @@ import { FiniteStateMachine as FSM } from "../fsm";
 
 describe("finite state machine", () => {
   test("cannot start before there is at least an initial state", () => {
-    const fsm = new FSM(null).addEvent("x").addEvent("y");
+    const fsm = new FSM(null);
     expect(() => fsm.start()).toThrow("No states defined yet");
   });
 
@@ -24,7 +24,6 @@ describe("finite state machine", () => {
 
   test("error when there is an nonexisting target state", () => {
     const fsm = new FSM(null)
-      .addEvent("SOME_EVENT")
       .addState({ name: "initial" })
       .addTransitions("initial", {
         SOME_EVENT: () => "i-am-not-a-valid-state-name",
@@ -48,10 +47,6 @@ describe("finite state machine", () => {
 
   test("transitionIfPossible never errors when target state does not exist", () => {
     const fsm = new FSM(null)
-      .addEvent("INVALID")
-      .addEvent("ONLY_WHEN_RED")
-      .addEvent("ONLY_WHEN_GREEN")
-
       .addState({ name: "red" })
       .addState({ name: "green" })
 
@@ -150,11 +145,6 @@ describe("finite state machine", () => {
     const exitRed = () => void calls.push("exited yellow");
 
     const fsm = new FSM(null)
-      .addEvent("TO_RED")
-      .addEvent("TO_GREEN")
-      .addEvent("STAY_GREEN_LONGER")
-      .addEvent("BE_CAREFUL")
-
       .addState({ name: "red", onEnter: enterRed, onExit: exitYellow })
       .addState({ name: "yellow", onEnter: enterYellow, onExit: exitRed })
       .addState({ name: "green", onEnter: enterGreen, onExit: exitGreen })
@@ -252,9 +242,6 @@ describe("finite state machine", () => {
 
   test("using wildcards to describe transitions", () => {
     const fsm = new FSM(null)
-      .addEvent("FROM_ANYWHERE")
-      .addEvent("FROM_FOO_ONLY")
-
       .addState({ name: "foo.one" })
       .addState({ name: "foo.two" })
       .addState({ name: "bar.three" })
