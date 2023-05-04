@@ -12,10 +12,13 @@ type TimerEvent = { readonly type: "TIMER" };
 /**
  * Built-in events thrown by .onEnterAsync().
  */
-type AsyncOKEvent<T> = { readonly type: "ASYNC_OK"; readonly result: T };
+type AsyncOKEvent<T> = {
+  readonly type: "ASYNC_OK";
+  readonly data: T;
+};
 type AsyncErrorEvent = {
   readonly type: "ASYNC_ERROR";
-  readonly error: unknown;
+  readonly reason: unknown;
 };
 type BuiltinEvent = TimerEvent | AsyncOKEvent<unknown> | AsyncErrorEvent;
 
@@ -244,16 +247,16 @@ export class FSM<
 
       void promiseFn(this.currentContext).then(
         // On OK
-        (result: T) => {
+        (data: T) => {
           if (!cancelled) {
-            this.transition({ type: "ASYNC_OK", result }, onOK);
+            this.transition({ type: "ASYNC_OK", data }, onOK);
           }
         },
 
         // On Error
-        (error: unknown) => {
+        (reason: unknown) => {
           if (!cancelled) {
-            this.transition({ type: "ASYNC_ERROR", error }, onError);
+            this.transition({ type: "ASYNC_ERROR", reason }, onError);
           }
         }
       );
