@@ -1,4 +1,44 @@
-import { FiniteStateMachine as FSM } from "../fsm";
+import { FiniteStateMachine as FSM, distance, patterns } from "../fsm";
+
+describe("helper function", () => {
+  test("distance", () => {
+    expect(distance("foo.bar.baz", "foo.bar.baz")).toEqual([0, 0]);
+    expect(distance("foo.bar.baz", "foo.bar.qux")).toEqual([1, 1]);
+    expect(distance("foo.bar.baz", "foo.bar.qux.bla")).toEqual([1, 2]);
+    expect(distance("foo.bar.baz", "foo.baz")).toEqual([2, 1]);
+    expect(distance("foo.bar.baz", "yo")).toEqual([3, 1]);
+    expect(distance("yo", "foo.bar.baz")).toEqual([1, 3]);
+    expect(distance("yo", "hey")).toEqual([1, 1]);
+  });
+
+  test("patterns", () => {
+    expect(patterns("a.b.c.d.e.f", 3)).toEqual([
+      "a.b.c.d.*",
+      "a.b.c.d.e.*",
+      "a.b.c.d.e.f",
+    ]);
+    expect(patterns("initial", 1)).toEqual(["initial"]);
+    expect(patterns("foo.bar.baz", 1)).toEqual(["foo.bar.baz"]);
+    expect(patterns("foo.bar.baz", 2)).toEqual(["foo.bar.*", "foo.bar.baz"]);
+    expect(patterns("foo.bar.baz", 3)).toEqual([
+      "foo.*",
+      "foo.bar.*",
+      "foo.bar.baz",
+    ]);
+    expect(patterns("foo.bar.baz", 4)).toEqual([
+      "*",
+      "foo.*",
+      "foo.bar.*",
+      "foo.bar.baz",
+    ]);
+    expect(() => patterns("foo.bar.baz", 0)).toThrow(
+      "Invalid number of levels"
+    );
+    expect(() => patterns("foo.bar.baz", 5)).toThrow(
+      "Invalid number of levels"
+    );
+  });
+});
 
 describe("finite state machine", () => {
   test("cannot start before there is at least an initial state", () => {
@@ -106,175 +146,273 @@ describe("finite state machine", () => {
     );
   });
 
-  test("executes onEnter directly when starting", () => {
-    const onEnterRed = jest.fn();
-    const onEnterGreen = jest.fn();
-    const onEnterYellow = jest.fn();
+  describe("enter/leave functions", () => {
+    test("executes onEnter when starting", () => {
+      const onEnterRed = jest.fn();
+      const onEnterGreen = jest.fn();
+      const onEnterYellow = jest.fn();
 
-    const fsm = new FSM(null)
-      .addState("red")
-      .addState("yellow")
-      .addState("green")
+      const fsm = new FSM(null)
+        .addState("red")
+        .addState("yellow")
+        .addState("green")
 
-      .onEnter("red", onEnterRed)
-      .onEnter("yellow", onEnterYellow)
-      .onEnter("green", onEnterGreen);
+        .onEnter("red", onEnterRed)
+        .onEnter("yellow", onEnterYellow)
+        .onEnter("green", onEnterGreen);
 
-    expect(onEnterRed).not.toBeCalled();
-    expect(onEnterYellow).not.toBeCalled();
-    expect(onEnterGreen).not.toBeCalled();
+      expect(onEnterRed).not.toBeCalled();
+      expect(onEnterYellow).not.toBeCalled();
+      expect(onEnterGreen).not.toBeCalled();
 
-    fsm.start();
+      fsm.start();
 
-    expect(onEnterRed).toBeCalledTimes(1);
-    expect(onEnterYellow).not.toBeCalled();
-    expect(onEnterGreen).not.toBeCalled();
-  });
+      expect(onEnterRed).toBeCalledTimes(1);
+      expect(onEnterYellow).not.toBeCalled();
+      expect(onEnterGreen).not.toBeCalled();
+    });
 
-  test("executes onExit directly when stopping", () => {
-    const onExitRed = jest.fn();
-    const onExitGreen = jest.fn();
-    const onExitYellow = jest.fn();
+    test("executes onExit when stopping", () => {
+      const onExitRed = jest.fn();
+      const onExitGreen = jest.fn();
+      const onExitYellow = jest.fn();
 
-    const fsm = new FSM(null)
-      .addState("red")
-      .addState("yellow")
-      .addState("green")
+      const fsm = new FSM(null)
+        .addState("red")
+        .addState("yellow")
+        .addState("green")
 
-      .onExit("red", onExitRed)
-      .onExit("yellow", onExitYellow)
-      .onExit("green", onExitGreen);
+        .onExit("red", onExitRed)
+        .onExit("yellow", onExitYellow)
+        .onExit("green", onExitGreen);
 
-    fsm.start();
+      fsm.start();
 
-    expect(onExitRed).not.toBeCalled();
-    expect(onExitYellow).not.toBeCalled();
-    expect(onExitGreen).not.toBeCalled();
+      expect(onExitRed).not.toBeCalled();
+      expect(onExitYellow).not.toBeCalled();
+      expect(onExitGreen).not.toBeCalled();
 
-    fsm.stop();
+      fsm.stop();
 
-    expect(onExitRed).toBeCalledTimes(1);
-    expect(onExitYellow).not.toBeCalled();
-    expect(onExitGreen).not.toBeCalled();
-  });
+      expect(onExitRed).toBeCalledTimes(1);
+      expect(onExitYellow).not.toBeCalled();
+      expect(onExitGreen).not.toBeCalled();
+    });
 
-  test("executes onEnter after onExit", () => {
-    const calls: string[] = [];
+    test("executes onEnter after onExit when transitioning", () => {
+      const calls: string[] = [];
 
-    const enterGreen = () => void calls.push("entered green");
-    const enterRed = () => void calls.push("entered red");
-    const enterYellow = () => void calls.push("entered yellow");
-    const exitGreen = () => void calls.push("exited green");
-    const exitYellow = () => void calls.push("exited yellow");
-    const exitRed = () => void calls.push("exited red");
+      const enterGreen = () => void calls.push("entered green");
+      const enterRed = () => void calls.push("entered red");
+      const enterYellow = () => void calls.push("entered yellow");
+      const exitGreen = () => void calls.push("exited green");
+      const exitYellow = () => void calls.push("exited yellow");
+      const exitRed = () => void calls.push("exited red");
 
-    const fsm = new FSM(null)
-      .addState("red")
-      .addState("yellow")
-      .addState("green")
+      const fsm = new FSM(null)
+        .addState("red")
+        .addState("yellow")
+        .addState("green")
 
-      .onEnter("red", enterRed)
-      .onEnter("yellow", enterYellow)
-      .onEnter("green", enterGreen)
+        .onEnter("red", enterRed)
+        .onEnter("yellow", enterYellow)
+        .onEnter("green", enterGreen)
 
-      .onExit("red", exitRed)
-      .onExit("yellow", exitYellow)
-      .onExit("green", exitGreen)
+        .onExit("red", exitRed)
+        .onExit("yellow", exitYellow)
+        .onExit("green", exitGreen)
 
-      .addTransitions("green", {
-        STAY_GREEN_LONGER: () => "green",
-        BE_CAREFUL: () => "yellow",
-      })
+        .addTransitions("green", {
+          STAY_GREEN_LONGER: () => "green",
+          BE_CAREFUL: () => "yellow",
+        })
 
-      .addTransitions("red", {
-        TO_GREEN: () => "green",
-      })
+        .addTransitions("red", {
+          TO_GREEN: () => "green",
+        })
 
-      .addTransitions("yellow", {
-        TO_RED: () => "redd",
-      })
+        .addTransitions("yellow", {
+          TO_RED: () => "redd",
+        })
 
-      .start();
+        .start();
 
-    expect(fsm.currentState).toEqual("red");
-    expect(calls).toEqual(["entered red"]);
+      expect(fsm.currentState).toEqual("red");
+      expect(calls).toEqual(["entered red"]);
 
-    fsm.transition({ type: "TO_GREEN" });
-    expect(fsm.currentState).toEqual("green");
-    expect(calls).toEqual(["entered red", "exited red", "entered green"]);
+      fsm.transition({ type: "TO_GREEN" });
+      expect(fsm.currentState).toEqual("green");
+      expect(calls).toEqual(["entered red", "exited red", "entered green"]);
 
-    // No enter/exit events happen when staying in the same state explicitly
-    fsm.transition({ type: "STAY_GREEN_LONGER" });
-    expect(fsm.currentState).toEqual("green");
-    fsm.transition({ type: "STAY_GREEN_LONGER" });
-    expect(fsm.currentState).toEqual("green");
-    expect(calls).toEqual(["entered red", "exited red", "entered green"]);
+      // No enter/exit events happen when staying in the same state explicitly
+      fsm.transition({ type: "STAY_GREEN_LONGER" });
+      expect(fsm.currentState).toEqual("green");
+      fsm.transition({ type: "STAY_GREEN_LONGER" });
+      expect(fsm.currentState).toEqual("green");
+      expect(calls).toEqual(["entered red", "exited red", "entered green"]);
 
-    expect(() => fsm.transition({ type: "TO_RED" })).toThrow(
-      'Event "TO_RED" is not allowed from state "green"'
-    );
-    expect(fsm.currentState).toEqual("green");
+      expect(() => fsm.transition({ type: "TO_RED" })).toThrow(
+        'Event "TO_RED" is not allowed from state "green"'
+      );
+      expect(fsm.currentState).toEqual("green");
 
-    expect(fsm.can("TO_RED")).toBe(false);
-    expect(fsm.can("BE_CAREFUL")).toBe(true);
+      expect(fsm.can("TO_RED")).toBe(false);
+      expect(fsm.can("BE_CAREFUL")).toBe(true);
 
-    fsm.transition({ type: "BE_CAREFUL" });
-    expect(fsm.currentState).toEqual("yellow");
-    expect(calls).toEqual([
-      "entered red",
-      "exited red",
-      "entered green",
-      "exited green",
-      "entered yellow",
-    ]);
-  });
+      fsm.transition({ type: "BE_CAREFUL" });
+      expect(fsm.currentState).toEqual("yellow");
+      expect(calls).toEqual([
+        "entered red",
+        "exited red",
+        "entered green",
+        "exited green",
+        "entered yellow",
+      ]);
+    });
 
-  test("states with cleanup functions", () => {
-    const calls: string[] = [];
+    test("does not execute onExit/onEnter events when explicitly staying in the same state", () => {
+      const calls: string[] = [];
 
-    const onEnterWithCleanup = () => {
-      calls.push("light!");
-      return () => {
-        calls.push("darkness!");
+      const enterGreen = () => void calls.push("entered green");
+      const exitGreen = () => void calls.push("exited green");
+
+      const fsm = new FSM(null)
+        .addState("green")
+
+        .onEnter("green", enterGreen)
+        .onExit("green", exitGreen)
+
+        .addTransitions("green", {
+          DO_NOTHING: () => "green",
+        })
+
+        .start();
+
+      expect(fsm.currentState).toEqual("green");
+      expect(calls).toEqual(["entered green"]);
+
+      fsm.transition({ type: "DO_NOTHING" });
+
+      expect(fsm.currentState).toEqual("green");
+      expect(calls).toEqual(["entered green"]);
+    });
+
+    test("executes cleanup functions when leaving state", () => {
+      const calls: string[] = [];
+
+      const onEnterWithCleanup = () => {
+        calls.push("light!");
+        return () => {
+          calls.push("darkness!");
+        };
       };
-    };
 
-    const fsm = new FSM(null)
-      .addState("off")
-      .addState("on")
+      const fsm = new FSM(null)
+        .addState("off")
+        .addState("on")
 
-      .onEnter("on", onEnterWithCleanup)
+        .onEnter("on", onEnterWithCleanup)
 
-      .addTransitions("on", {
-        TOGGLE: () => "off",
-      })
+        .addTransitions("on", {
+          TOGGLE: () => "off",
+        })
 
-      .addTransitions("off", {
-        TOGGLE: () => "on",
-      })
+        .addTransitions("off", {
+          TOGGLE: () => "on",
+        })
 
-      .start();
+        .start();
 
-    expect(fsm.currentState).toEqual("off");
-    expect(calls).toEqual([]);
+      expect(fsm.currentState).toEqual("off");
+      expect(calls).toEqual([]);
 
-    fsm.transition({ type: "TOGGLE" });
-    expect(fsm.currentState).toEqual("on");
-    expect(calls).toEqual(["light!"]);
+      fsm.transition({ type: "TOGGLE" });
+      expect(fsm.currentState).toEqual("on");
+      expect(calls).toEqual(["light!"]);
 
-    fsm.transition({ type: "TOGGLE" });
-    expect(fsm.currentState).toEqual("off");
-    expect(calls).toEqual(["light!", "darkness!"]);
+      fsm.transition({ type: "TOGGLE" });
+      expect(fsm.currentState).toEqual("off");
+      expect(calls).toEqual(["light!", "darkness!"]);
 
-    fsm.transition({ type: "TOGGLE" });
-    expect(fsm.currentState).toEqual("on");
-    expect(calls).toEqual(["light!", "darkness!", "light!"]);
+      fsm.transition({ type: "TOGGLE" });
+      expect(fsm.currentState).toEqual("on");
+      expect(calls).toEqual(["light!", "darkness!", "light!"]);
 
-    fsm.stop();
-    expect(calls).toEqual(["light!", "darkness!", "light!", "darkness!"]);
+      fsm.stop();
+      expect(calls).toEqual(["light!", "darkness!", "light!", "darkness!"]);
+    });
+
+    test("executes group-based enter/exit handlers correctly", () => {
+      const calls: string[] = [];
+
+      const exitMachine = jest.fn(() => void calls.push("exited machine"));
+      const enterMachine = jest.fn(() => {
+        calls.push("entered machine");
+        return exitMachine;
+      });
+
+      const exitGroup = jest.fn(() => void calls.push("exited group"));
+      const enterGroup = jest.fn(() => {
+        calls.push("entered group");
+        return exitGroup;
+      });
+
+      const exitRed = jest.fn(() => void calls.push("exited red"));
+      const enterRed = jest.fn(() => {
+        calls.push("entered red");
+        return exitRed;
+      });
+
+      const fsm = new FSM(null)
+        .addState("initial")
+        .addState("group.red")
+        .addState("group.yellow")
+        .addState("group.green")
+        .addState("error")
+
+        .addTransitions("*", { ERROR: () => "error" })
+        .addTransitions("initial", { START: () => "group.red" })
+        .addTransitions("group.red", { NEXT: () => "group.yellow" })
+        .addTransitions("group.yellow", { NEXT: () => "group.green" })
+        .addTransitions("group.green", { NEXT: () => "group.red" })
+
+        .onEnter("*", enterMachine)
+        .onEnter("group.*", enterGroup)
+        .onEnter("group.red", enterRed);
+
+      fsm.start();
+      expect(fsm.currentState).toEqual("initial");
+      expect(calls).toEqual(["entered machine"]);
+      calls.length = 0;
+
+      fsm.transition({ type: "START" });
+      expect(fsm.currentState).toEqual("group.red");
+      expect(calls).toEqual(["entered group", "entered red"]);
+      calls.length = 0;
+
+      fsm.transition({ type: "NEXT" });
+      expect(fsm.currentState).toEqual("group.yellow");
+      expect(calls).toEqual(["exited red"]);
+      calls.length = 0;
+
+      fsm.transition({ type: "NEXT" });
+      expect(calls).toEqual([]);
+      calls.length = 0;
+
+      fsm.transition({ type: "NEXT" });
+      expect(calls).toEqual(["entered red"]);
+      calls.length = 0;
+
+      fsm.transition({ type: "ERROR" });
+      expect(calls).toEqual(["exited red", "exited group"]);
+      calls.length = 0;
+
+      fsm.stop();
+      expect(calls).toEqual(["exited machine"]);
+    });
   });
 
-  test("using wildcards to describe transitions", () => {
+  test("using wildcards to describe transitions from a group of states", () => {
     const fsm = new FSM(null)
       .addState("foo.one")
       .addState("foo.two")

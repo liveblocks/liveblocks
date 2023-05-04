@@ -1,7 +1,6 @@
 /**
  * Finite State Machine (FSM) implementation.
  */
-import type { Resolve } from "./lib/Resolve";
 
 // XXX Tidy up this class before publishing
 
@@ -22,8 +21,56 @@ type TargetFn<TContext, TEvent extends BaseEvent, TState extends string> = (
   context: Readonly<TContext>
 ) => TState;
 
-type Groups<T extends string> = T extends `${infer G}.${string}` ? G : never;
-type Wildcardify<T extends string> = T | "*" | `${Groups<T>}.*`;
+type Groups<T extends string> = T extends `${infer G}.${infer Rest}`
+  ? G | `${G}.${Groups<Rest>}`
+  : never;
+type Wildcard<T extends string> = "*" | `${Groups<T>}.*`;
+
+export function distance(state1: string, state2: string): [number, number] {
+  if (state1 === state2) {
+    return [0, 0];
+  }
+
+  const chunks1 = state1.split(".");
+  const chunks2 = state2.split(".");
+  const minLen = Math.min(chunks1.length, chunks2.length);
+  let shared = 0;
+  for (; shared < minLen; shared++) {
+    if (chunks1[shared] !== chunks2[shared]) {
+      break;
+    }
+  }
+
+  const up = chunks1.length - shared;
+  const down = chunks2.length - shared;
+  return [up, down];
+}
+
+export function patterns<TState extends string>(
+  targetState: TState,
+  levels: number
+): (Wildcard<TState> | TState)[] {
+  const parts = targetState.split(".");
+  if (levels < 1 || levels > parts.length + 1) {
+    throw new Error("Invalid number of levels");
+  }
+
+  const result: (Wildcard<TState> | TState)[] = [];
+  if (levels > parts.length) {
+    result.push("*");
+  }
+
+  for (let i = parts.length - levels + 1; i < parts.length; i++) {
+    const slice = parts.slice(0, i);
+    if (slice.length > 0) {
+      result.push((slice.join(".") + ".*") as Wildcard<TState>);
+    }
+  }
+
+  result.push(targetState);
+
+  return result;
+}
 
 export class FiniteStateMachine<
   TContext,
@@ -44,10 +91,27 @@ export class FiniteStateMachine<
     Map<string, TargetFn<TContext, TEvent, TState>>
   >;
 
-  // TODO: Generalize this data structure to support group-based
-  // exiting/entering, more like a stack
-  private cleanupFn: (() => void) | undefined;
-  private enterFns: Map<TState, EnterFn<TContext>>;
+  //
+  // The cleanup stack is a stack of (optional) callback functions that will
+  // be run when exiting the current state. If a state (or state group) does
+  // not have an exit handler, then the entry for that level may be
+  // `undefined`, but there will be an explicit entry in the stack for it.
+  //
+  // This will always be true:
+  //
+  //   cleanupStack.length == currentState.split('.').length
+  //
+  // Each stack level represents a different state "group".
+  //
+  // For example, if
+  // you have a state named `foo.bar.qux`, then the stack will contain the
+  // exit handler for `foo.bar.qux` at the top, then `foo.bar.*`, then
+  // `foo.*`, and finally, `*`, then empty.
+  //
+  private cleanupStack: (CleanupFn | null)[];
+
+  private enterFns: Map<TState | Wildcard<TState>, EnterFn<TContext>>;
+  // XXX Can we drop this and use the cleanupFn sturcture instead, making .onExit(xxx) just a wrapper around .onEnter(() => xxx)?
   private exitFns: Map<TState, ExitFn<TContext>>;
 
   // Used to provide better error messages
@@ -84,7 +148,7 @@ export class FiniteStateMachine<
 
     this.runningState = RunningState.STARTED;
     this.currentStateOrNull = this.initialState;
-    this.enter();
+    this.enter(null);
     return this;
   }
 
@@ -97,7 +161,7 @@ export class FiniteStateMachine<
       throw new Error("Cannot stop a state machine that isn't started yet");
     }
     this.runningState = RunningState.STOPPED;
-    this.exit();
+    this.exit(null);
     this.currentStateOrNull = null;
   }
 
@@ -106,6 +170,7 @@ export class FiniteStateMachine<
     this.currentStateOrNull = null;
     this.states = new Set();
     this.enterFns = new Map();
+    this.cleanupStack = [];
     this.exitFns = new Map();
     this.knownEventTypes = new Set();
     this.allowedTransitions = new Map();
@@ -125,11 +190,19 @@ export class FiniteStateMachine<
     return this;
   }
 
-  public onEnter(state: TState, enterFn: EnterFn<TContext>): this {
+  public onEnter(
+    nameOrPattern: TState | Wildcard<TState>,
+    enterFn: EnterFn<TContext>
+  ): this {
     if (this.runningState !== RunningState.NOT_STARTED_YET) {
       throw new Error("Already started");
+    } else if (this.enterFns.has(nameOrPattern)) {
+      throw new Error(
+        `enter/exit function for ${nameOrPattern} already exists`
+      );
     }
-    this.enterFns.set(state, enterFn);
+
+    this.enterFns.set(nameOrPattern, enterFn);
     return this;
   }
 
@@ -137,11 +210,12 @@ export class FiniteStateMachine<
     if (this.runningState !== RunningState.NOT_STARTED_YET) {
       throw new Error("Already started");
     }
+
     this.exitFns.set(state, exitFn);
     return this;
   }
 
-  private getMatches(nameOrPattern: Resolve<Wildcardify<TState>>): TState[] {
+  private getMatches(nameOrPattern: TState | Wildcard<TState>): TState[] {
     const matches: TState[] = [];
 
     // We're trying to match a group pattern here, i.e. `foo.*` (which might
@@ -184,7 +258,7 @@ export class FiniteStateMachine<
    * such events will get ignored.
    */
   public addTransitions(
-    nameOrPattern: Resolve<Wildcardify<TState>>,
+    nameOrPattern: TState | Wildcard<TState>,
     mapping: {
       [E in TEvent as E["type"]]?: TargetFn<TContext, E, TState> | null;
     }
@@ -230,10 +304,16 @@ export class FiniteStateMachine<
   /**
    * Exits the current state, and executes any necessary onExit handlers.
    * Call this before changing the current state to the next state.
+   *
+   * @param levels Defines how many "levels" of nesting will be exited. For
+   * example, if you transition from `foo.bar.qux` to `foo.bar.baz`, then
+   * the level is 1. But if you transition from `foo.bar.qux` to `bla.bla`,
+   * then the level is 3.
    */
-  private exit() {
-    this.cleanupFn?.();
-    this.cleanupFn = undefined;
+  private exit(levels: number | null) {
+    for (let i = 0; i < (levels ?? this.cleanupStack.length + 1); i++) {
+      this.cleanupStack.pop()?.();
+    }
     this.exitFns.get(this.currentState)?.(this.context);
   }
 
@@ -241,10 +321,20 @@ export class FiniteStateMachine<
    * Enters the current state, and executes any necessary onEnter handlers.
    * Call this directly _after_ setting the current state to the next state.
    */
-  private enter() {
-    const cleanupFn = this.enterFns.get(this.currentState)?.(this.context);
-    if (typeof cleanupFn === "function") {
-      this.cleanupFn = cleanupFn;
+  private enter(levels: number | null) {
+    const enterPatterns = patterns(
+      this.currentState,
+      levels ?? this.currentState.split(".").length + 1
+    );
+
+    for (const pattern of enterPatterns) {
+      const enterFn = this.enterFns.get(pattern);
+      const cleanupFn = enterFn?.(this.context);
+      if (typeof cleanupFn === "function") {
+        this.cleanupStack.push(cleanupFn);
+      } else {
+        this.cleanupStack.push(null);
+      }
     }
   }
 
@@ -272,11 +362,11 @@ export class FiniteStateMachine<
       throw new Error(`Invalid next state name: ${JSON.stringify(nextState)}`);
     }
 
-    // TODO: Generalize this check to support group-based exiting/entering
-    if (nextState !== this.currentState) {
-      this.exit();
+    const [up, down] = distance(this.currentState, nextState);
+    if (up > 0 || down > 0) {
+      this.exit(up);
       this.currentStateOrNull = nextState;
-      this.enter();
+      this.enter(down);
     }
   }
 
