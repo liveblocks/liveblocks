@@ -6,13 +6,15 @@ import { commandLineFlags } from "./flags";
 import * as nextjsTemplate from "./templates/nextjs-starter-kit";
 import * as exampleTemplate from "./templates/example";
 import * as helpTemplate from "./templates/help";
+import * as initTemplate from "./templates/init";
 
-type TemplateName = "next" | "example" | "help";
+type TemplateName = "next" | "example" | "help" | "init";
 
 const templates: { [K in TemplateName]: any } = {
   next: nextjsTemplate,
   example: exampleTemplate,
   help: helpTemplate,
+  init: initTemplate,
 };
 
 export async function createLiveblocksApp() {
@@ -54,15 +56,23 @@ export async function createLiveblocksApp() {
     flags.template = "next";
   }
 
+  if (flags.init) {
+    flags.template = "init";
+  }
+
   const initialQuestions: PromptObject<"template">[] = [
     {
       // Skip question if template already set
       type: flags.template ? null : "select",
       name: "template",
-      message: "Which template would you like to use?",
+      message: "What would you like to do?",
       choices: [
-        { title: "Next.js Starter Kit", value: "next" },
-        { title: "An example from the Liveblocks repo", value: "example" },
+        { title: "Get the Next.js Starter Kit", value: "next" },
+        { title: "Get an example from the Liveblocks repo", value: "example" },
+        {
+          title: "Create a liveblocks.config file",
+          value: "init",
+        },
       ],
     },
   ];

@@ -9,6 +9,7 @@ PACKAGE_DIRS=(
     "packages/liveblocks-react"
     "packages/liveblocks-redux"
     "packages/liveblocks-zustand"
+    "packages/create-liveblocks-app"
 )
 
 err () {

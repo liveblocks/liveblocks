@@ -15,22 +15,25 @@ The easiest way to get started with a Liveblocks starter kit or example.
 
 You can create a new Liveblocks project using the following command:
 ```
-npx create-liveblocks-app
+npx create-liveblocks-app@latest
 ```
 
 The initial prompt allows you to set up one of the following:
 1. [Next.js Starter kit](https://liveblocks.io/starter-kit)—Our official starter kit for Next.js
 2. [An example from the Liveblocks repo](https://github.com/liveblocks/liveblocks/tree/main/examples)—Any example from `liveblocks/liveblocks`
 
-From there, follow the instructions to set up your app!
+From there, follow the instructions to set up your app! You can also use the CLI to generate a `liveblocks.config.(js|ts)` config file.
 
 ### Flags (optional)
 If you wish, you can skip certain `create-liveblocks-app` prompts with the following flags. Please note that these are optional, and if no flags are used, you will be prompted about these options in the installer instead.
 
 ```
-npx create-liveblocks-app [options]
+npx create-liveblocks-app@latest [options]
 
 Options:
+
+  --init
+  Generate a liveblocks.config.(js|ts) file in the current directory
 
   --next 
   Use the Next.js Starter Kit
@@ -85,15 +88,20 @@ Options:
 #### Examples
 Next.js Starter Kit with no install:
 ```
-npx create-liveblocks-app --next --no-install
+npx create-liveblocks-app@latest --next --no-install
 ```
 
 Example from Liveblocks repo with directory/project name specified:
 ```
-npx create-liveblocks-app --example nextjs-live-avatars --name my-liveblocks-app
+npx create-liveblocks-app@latest --example nextjs-live-avatars --name my-liveblocks-app
 ```
 
 Next.js Starter Kit with every option:
 ```
-npx create-liveblocks-app --next --name my-project --auth github --package-manager npm --install --git  --vercel --open
+npx create-liveblocks-app@latest --next --name my-project --auth github --package-manager npm --install --git  --vercel --open
+```
+
+Generate a Liveblocks config file:
+```
+npx create-liveblocks-app@latest --init
 ```

@@ -57,10 +57,11 @@ const eventSource = makeEventSource<DevTools.FullPanelToClientMessage>();
 
 // Define it as a no-op in production environments or when run outside of a browser context
 if (process.env.NODE_ENV !== "production" && typeof window !== "undefined") {
-  window.addEventListener("message", (event) => {
+  window.addEventListener("message", (event: MessageEvent<unknown>) => {
     if (
       event.source === window &&
-      event.data?.source === "liveblocks-devtools-panel"
+      (event.data as Record<string, unknown>)?.source ===
+        "liveblocks-devtools-panel"
     ) {
       // console.log(
       //   "%c[client ← panel] %c%s",
@@ -69,7 +70,7 @@ if (process.env.NODE_ENV !== "production" && typeof window !== "undefined") {
       //   event.data.msg,
       //   event.data
       // );
-      eventSource.notify(event.data);
+      eventSource.notify(event.data as DevTools.FullPanelToClientMessage);
     } else {
       // Message not for us
     }

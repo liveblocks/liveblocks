@@ -11,7 +11,7 @@ import { RoomScope } from "../../protocol/AuthToken";
 import { OpCode } from "../../protocol/Op";
 import type { IdTuple, SerializedCrdt } from "../../protocol/SerializedCrdt";
 import { CrdtType } from "../../protocol/SerializedCrdt";
-import { WebsocketCloseCodes } from "../../types/WebsocketCloseCodes";
+import { WebsocketCloseCodes } from "../../types/IWebSocket";
 import { LiveList } from "../LiveList";
 import { LiveObject } from "../LiveObject";
 
@@ -409,52 +409,49 @@ describe("LiveObject", () => {
   });
 
   describe("acknowledge mechanism", () => {
-    it(
-      "should not ignore history updates if the current op has not been acknowledged",
-      prepareDisconnectedStorageUpdateTest<{
-        items: LiveObject<{ b?: string; a?: string }>;
-      }>(
-        [
+    it("should not ignore history updates if the current op has not been acknowledged", async () => {
+      const { expectUpdates, batch, root, room } =
+        await prepareDisconnectedStorageUpdateTest<{
+          items: LiveObject<{ b?: string; a?: string }>;
+        }>([
           createSerializedObject("0:0", {}),
           createSerializedObject("0:1", { a: "B" }, "0:0", "items"),
+        ]);
+
+      const items = root.get("items");
+      batch(() => {
+        items.set("a", "A");
+        items.set("b", "A");
+      });
+
+      expect(items.toObject()).toEqual({ a: "A", b: "A" });
+      expectUpdates([
+        [
+          objectUpdate(
+            { a: "A", b: "A" },
+            { a: { type: "update" }, b: { type: "update" } }
+          ),
         ],
-        async ({ expectUpdates, batch, root, machine }) => {
-          const items = root.get("items");
-          batch(() => {
-            items.set("a", "A");
-            items.set("b", "A");
-          });
+      ]);
 
-          expect(items.toObject()).toEqual({ a: "A", b: "A" });
-          expectUpdates([
-            [
-              objectUpdate(
-                { a: "A", b: "A" },
-                { a: { type: "update" }, b: { type: "update" } }
-              ),
-            ],
-          ]);
+      room.history.undo();
 
-          machine.undo();
-
-          expect(items.toObject()).toEqual({ a: "B" });
-          expectUpdates([
-            [
-              objectUpdate(
-                { a: "A", b: "A" },
-                { a: { type: "update" }, b: { type: "update" } }
-              ),
-            ],
-            [
-              objectUpdate<{ a?: string; b?: string }>(
-                { a: "B" },
-                { a: { type: "update" }, b: { type: "delete" } }
-              ),
-            ],
-          ]);
-        }
-      )
-    );
+      expect(items.toObject()).toEqual({ a: "B" });
+      expectUpdates([
+        [
+          objectUpdate(
+            { a: "A", b: "A" },
+            { a: { type: "update" }, b: { type: "update" } }
+          ),
+        ],
+        [
+          objectUpdate<{ a?: string; b?: string }>(
+            { a: "B" },
+            { a: { type: "update" }, b: { type: "delete" } }
+          ),
+        ],
+      ]);
+    });
 
     describe("should ignore incoming updates if the current op has not been acknowledged", () => {
       test("when value is not a crdt", async () => {
@@ -604,12 +601,12 @@ describe("LiveObject", () => {
     });
 
     it("should not notify if property does not exist", async () => {
-      const { root, subscribe } = await prepareIsolatedStorageTest<{
+      const { room, root } = await prepareIsolatedStorageTest<{
         a?: number;
       }>([createSerializedObject("0:0", {})]);
 
       const callback = jest.fn();
-      subscribe(root, callback);
+      room.subscribe(root, callback);
 
       root.delete("a");
 
@@ -617,12 +614,12 @@ describe("LiveObject", () => {
     });
 
     it("should notify if property has been deleted", async () => {
-      const { root, subscribe } = await prepareIsolatedStorageTest<{
+      const { room, root } = await prepareIsolatedStorageTest<{
         a?: number;
       }>([createSerializedObject("0:0", { a: 1 })]);
 
       const callback = jest.fn();
-      subscribe(root, callback);
+      room.subscribe(root, callback);
 
       root.delete("a");
 
@@ -632,13 +629,13 @@ describe("LiveObject", () => {
 
   describe("applyDeleteObjectKey", () => {
     it("should not notify if property does not exist", async () => {
-      const { root, subscribe, applyRemoteOperations } =
+      const { room, root, applyRemoteOperations } =
         await prepareIsolatedStorageTest<{ a?: number }>([
           createSerializedObject("0:0", {}),
         ]);
 
       const callback = jest.fn();
-      subscribe(root, callback);
+      room.subscribe(root, callback);
 
       applyRemoteOperations([
         { type: OpCode.DELETE_OBJECT_KEY, id: "0:0", key: "a" },
@@ -648,13 +645,13 @@ describe("LiveObject", () => {
     });
 
     it("should notify if property has been deleted", async () => {
-      const { root, subscribe, applyRemoteOperations } =
+      const { room, root, applyRemoteOperations } =
         await prepareIsolatedStorageTest<{ a?: number }>([
           createSerializedObject("0:0", { a: 1 }),
         ]);
 
       const callback = jest.fn();
-      subscribe(root, callback);
+      room.subscribe(root, callback);
 
       applyRemoteOperations([
         { type: OpCode.DELETE_OBJECT_KEY, id: "0:0", key: "a" },
@@ -666,7 +663,7 @@ describe("LiveObject", () => {
 
   describe("subscriptions", () => {
     test("simple action", async () => {
-      const { storage, subscribe } = await prepareStorageTest<{ a: number }>(
+      const { room, storage } = await prepareStorageTest<{ a: number }>(
         [createSerializedObject("0:0", { a: 0 })],
         1
       );
@@ -675,7 +672,7 @@ describe("LiveObject", () => {
 
       const root = storage.root;
 
-      subscribe(root, callback);
+      room.subscribe(root, callback);
 
       root.set("a", 1);
 
@@ -684,7 +681,7 @@ describe("LiveObject", () => {
     });
 
     test("subscribe multiple actions", async () => {
-      const { storage, subscribe } = await prepareStorageTest<{
+      const { room, storage } = await prepareStorageTest<{
         child: LiveObject<{ a: number }>;
         child2: LiveObject<{ a: number }>;
       }>(
@@ -700,7 +697,7 @@ describe("LiveObject", () => {
 
       const root = storage.root;
 
-      const unsubscribe = subscribe(root.get("child"), callback);
+      const unsubscribe = room.subscribe(root.get("child"), callback);
 
       root.get("child").set("a", 1);
 
@@ -715,7 +712,7 @@ describe("LiveObject", () => {
     });
 
     test("deep subscribe", async () => {
-      const { storage, subscribe } = await prepareStorageTest<{
+      const { room, storage } = await prepareStorageTest<{
         child: LiveObject<{ a: number; subchild: LiveObject<{ b: number }> }>;
       }>(
         [
@@ -730,7 +727,7 @@ describe("LiveObject", () => {
 
       const root = storage.root;
 
-      const unsubscribe = subscribe(root, callback, { isDeep: true });
+      const unsubscribe = room.subscribe(root, callback, { isDeep: true });
 
       root.get("child").set("a", 1);
       root.get("child").get("subchild").set("b", 1);
@@ -757,7 +754,7 @@ describe("LiveObject", () => {
     });
 
     test("deep subscribe remote operation", async () => {
-      const { storage, subscribe, applyRemoteOperations } =
+      const { room, storage, applyRemoteOperations } =
         await prepareStorageTest<{
           child: LiveObject<{
             a: number;
@@ -776,7 +773,7 @@ describe("LiveObject", () => {
 
       const root = storage.root;
 
-      const unsubscribe = subscribe(root, callback, { isDeep: true });
+      const unsubscribe = room.subscribe(root, callback, { isDeep: true });
 
       root.get("child").set("a", 1);
 
@@ -811,7 +808,7 @@ describe("LiveObject", () => {
     });
 
     test("subscribe subchild remote operation", async () => {
-      const { storage, subscribe, applyRemoteOperations } =
+      const { room, storage, applyRemoteOperations } =
         await prepareStorageTest<{
           child: LiveObject<{
             a: number;
@@ -832,7 +829,7 @@ describe("LiveObject", () => {
 
       const subchild = root.get("child").get("subchild");
 
-      const unsubscribe = subscribe(subchild, callback);
+      const unsubscribe = room.subscribe(subchild, callback);
 
       applyRemoteOperations([
         {
@@ -858,7 +855,7 @@ describe("LiveObject", () => {
     });
 
     test("deep subscribe remote and local operation - delete object key", async () => {
-      const { storage, subscribe, applyRemoteOperations } =
+      const { room, storage, applyRemoteOperations } =
         await prepareStorageTest<{
           child: LiveObject<{ a?: number; b?: number }>;
         }>(
@@ -873,7 +870,7 @@ describe("LiveObject", () => {
 
       const root = storage.root;
 
-      const unsubscribe = subscribe(root, callback, { isDeep: true });
+      const unsubscribe = room.subscribe(root, callback, { isDeep: true });
 
       applyRemoteOperations([
         {
@@ -908,26 +905,25 @@ describe("LiveObject", () => {
 
   describe("reconnect with remote changes and subscribe", () => {
     test("LiveObject updated", async () => {
-      const { expectStorage, machine, root } =
-        await prepareIsolatedStorageTest<{
-          obj: LiveObject<{ a: number }>;
-        }>(
-          [
-            createSerializedObject("0:0", {}),
-            createSerializedObject("0:1", { a: 1 }, "0:0", "obj"),
-          ],
-          1
-        );
+      const { expectStorage, room, root } = await prepareIsolatedStorageTest<{
+        obj: LiveObject<{ a: number }>;
+      }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedObject("0:1", { a: 1 }, "0:0", "obj"),
+        ],
+        1
+      );
 
       const rootDeepCallback = jest.fn();
       const liveObjectCallback = jest.fn();
 
-      machine.subscribe(root, rootDeepCallback, { isDeep: true });
-      machine.subscribe(root.get("obj"), liveObjectCallback);
+      room.subscribe(root, rootDeepCallback, { isDeep: true });
+      room.subscribe(root.get("obj"), liveObjectCallback);
 
       expectStorage({ obj: { a: 1 } });
 
-      machine.onClose(
+      room.__internal.onClose(
         new CloseEvent("close", {
           code: WebsocketCloseCodes.CLOSE_ABNORMAL,
           wasClean: false,
@@ -947,7 +943,7 @@ describe("LiveObject", () => {
         ],
       ];
 
-      reconnect(machine, 3, newInitStorage);
+      reconnect(room, 3, newInitStorage);
 
       expectStorage({
         obj: { a: 2 },
@@ -967,26 +963,25 @@ describe("LiveObject", () => {
     });
 
     test("LiveObject updated nested", async () => {
-      const { expectStorage, machine, root } =
-        await prepareIsolatedStorageTest<{
-          obj: LiveObject<{ a: number; subObj?: LiveObject<{ b: number }> }>;
-        }>(
-          [
-            createSerializedObject("0:0", {}),
-            createSerializedObject("0:1", { a: 1 }, "0:0", "obj"),
-          ],
-          1
-        );
+      const { expectStorage, room, root } = await prepareIsolatedStorageTest<{
+        obj: LiveObject<{ a: number; subObj?: LiveObject<{ b: number }> }>;
+      }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedObject("0:1", { a: 1 }, "0:0", "obj"),
+        ],
+        1
+      );
 
       const rootDeepCallback = jest.fn();
       const liveObjectCallback = jest.fn();
 
-      machine.subscribe(root, rootDeepCallback, { isDeep: true });
-      machine.subscribe(root.get("obj"), liveObjectCallback);
+      room.subscribe(root, rootDeepCallback, { isDeep: true });
+      room.subscribe(root.get("obj"), liveObjectCallback);
 
       expectStorage({ obj: { a: 1 } });
 
-      machine.onClose(
+      room.__internal.onClose(
         new CloseEvent("close", {
           code: WebsocketCloseCodes.CLOSE_ABNORMAL,
           wasClean: false,
@@ -1015,7 +1010,7 @@ describe("LiveObject", () => {
         ],
       ];
 
-      reconnect(machine, 3, newInitStorage);
+      reconnect(room, 3, newInitStorage);
 
       expectStorage({
         obj: { a: 1, subObj: { b: 1 } },
@@ -1039,7 +1034,7 @@ describe("LiveObject", () => {
 
   describe("undo apply update", () => {
     test("subscription should gives the right update", async () => {
-      const { root, expectStorage, subscribe, undo } =
+      const { room, root, expectStorage, undo } =
         await prepareIsolatedStorageTest<{ a: number }>(
           [createSerializedObject("0:0", { a: 0 })],
           1
@@ -1050,7 +1045,7 @@ describe("LiveObject", () => {
       expectStorage({ a: 1 });
 
       const callback = jest.fn();
-      subscribe(root, callback, { isDeep: true });
+      room.subscribe(root, callback, { isDeep: true });
 
       undo();
       expectStorage({ a: 0 });
@@ -1081,7 +1076,7 @@ describe("LiveObject", () => {
       const obj = root.get("obj");
       const secondItem = obj.get("b");
 
-      const applyResult = obj._detachChild(secondItem!);
+      const applyResult = obj._detachChild(secondItem);
 
       expect(applyResult).toEqual({
         modified: {

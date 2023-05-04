@@ -1,0 +1,20 @@
+.container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 56px;
+  padding: 4px 20px;
+}
+
+.heading {
+  font-weight: 500;
+  font-size: 16px;
+}
+
+.container_avatars {
+  display: flex;
+}
+
+.container_avatars > * {
+  margin-left: 12px;
+}

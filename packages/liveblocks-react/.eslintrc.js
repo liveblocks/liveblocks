@@ -16,6 +16,7 @@ module.exports = {
     "@typescript-eslint/no-explicit-any": "off",
     "@typescript-eslint/no-non-null-assertion": "off",
     "@typescript-eslint/explicit-module-boundary-types": "off",
+    "@typescript-eslint/unbound-method": "off",
 
     // ----------------------------------------------------------------------
     // Extra rules for this project specifically
@@ -25,4 +26,20 @@ module.exports = {
     "react-hooks/rules-of-hooks": "error",
     "react-hooks/exhaustive-deps": "error",
   },
+
+  overrides: [
+    {
+      files: ["src/**/__tests__/**"],
+
+      rules: {
+        // Ideally, enable these lint rules again later, as they are useful to
+        // catch bugs
+        "@typescript-eslint/no-unsafe-argument": "off",
+        "@typescript-eslint/no-unsafe-assignment": "off",
+        "@typescript-eslint/no-unsafe-return": "off",
+        "@typescript-eslint/unbound-method": "off",
+        "@typescript-eslint/no-floating-promises": "off",
+      },
+    },
+  ],
 };

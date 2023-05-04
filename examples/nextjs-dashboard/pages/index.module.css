@@ -1,0 +1,48 @@
+.container {
+  position: relative;
+}
+
+.container_charts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  padding: 0 12px 12px;
+}
+
+.card_heading {
+  font-size: 40px;
+  font-weight: 300;
+  margin: 0;
+  padding: 0 8px;
+}
+
+.card_heading span {
+  display: block;
+  font-size: 16px;
+  color: var(--light-gray);
+  font-weight: 500;
+}
+
+.card_chart_area {
+  margin-top: 16px;
+}
+
+@media (max-width: 800px) {
+  .container_charts {
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+  }
+
+  .card_heading {
+    font-size: 34px;
+    font-weight: 300;
+    margin: 0;
+  }
+
+  .card_heading span {
+    font-size: 14px;
+  }
+
+  .card_chart_area {
+    margin-top: 8px;
+  }
+}

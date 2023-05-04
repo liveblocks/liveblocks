@@ -156,7 +156,7 @@ const internalEnhancer = <TState>(options: {
 
             if (room) {
               isPatching = true;
-              updatePresence(room!, state, newState, presenceMapping as any);
+              updatePresence(room, state, newState, presenceMapping as any);
 
               room.batch(() => {
                 if (storageRoot) {
@@ -233,7 +233,7 @@ const internalEnhancer = <TState>(options: {
           type: ACTION_TYPES.START_LOADING_STORAGE,
         });
 
-        room.getStorage().then(({ root }) => {
+        void room.getStorage().then(({ root }) => {
           const updates: any = {};
 
           room!.batch(() => {

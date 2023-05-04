@@ -91,8 +91,9 @@ type TreeProps<TTreeNode extends DevTools.TreeNode> = Pick<
   ArboristTreeProps<TTreeNode> &
   RefAttributes<TreeApi<TTreeNode> | undefined>;
 
-interface RowProps extends ComponentProps<"div"> {
-  node: NodeApi;
+interface RowProps<TTreeNode extends DevTools.TreeNode>
+  extends ComponentProps<"div"> {
+  node: NodeApi<TTreeNode>;
 }
 
 interface RowHighlightProps extends ComponentProps<"div"> {
@@ -312,7 +313,12 @@ function RowHighlight({ node, className, ...props }: RowHighlightProps) {
   );
 }
 
-function Row({ node, children, className, ...props }: RowProps) {
+function Row<TTreeNode extends DevTools.TreeNode>({
+  node,
+  children,
+  className,
+  ...props
+}: RowProps<TTreeNode>) {
   const isOpen = node.isOpen;
   const isParent = node.isInternal;
   const isSelected = node.isSelected;
@@ -508,11 +514,7 @@ function LsonNodeRenderer(props: NodeRendererProps<DevTools.LsonTreeNode>) {
     case "LiveMap":
     case "LiveList":
     case "LiveObject":
-      return (
-        <LiveNodeRenderer
-          {...(props as NodeRendererProps<DevTools.LsonTreeNode>)}
-        />
-      );
+      return <LiveNodeRenderer {...props} />;
 
     case "Json":
       return (
@@ -523,11 +525,7 @@ function LsonNodeRenderer(props: NodeRendererProps<DevTools.LsonTreeNode>) {
 
     default:
       // e.g. future LiveXxx types
-      return (
-        <LiveNodeRenderer
-          {...(props as NodeRendererProps<DevTools.LsonTreeNode>)}
-        />
-      );
+      return <LiveNodeRenderer {...props} />;
   }
 }
 
@@ -814,7 +812,7 @@ function collect(
 
       case "LiveList":
       case "LiveObject":
-      case "LiveMap":
+      case "LiveMap": {
         let isIndirectMatch = false;
         for (const childNode of node.payload) {
           if (collect(childNode, pattern, directMatches, indirectMatches)) {
@@ -825,6 +823,7 @@ function collect(
           indirectMatches.add(node.id);
         }
         return isIndirectMatch;
+      }
 
       default:
         // e.g. future LiveXxx types
@@ -926,8 +925,8 @@ const AutoSizer = forwardRef<HTMLDivElement, AutoSizerProps>(
       <div
         style={
           {
-            "--width": `${width}px`,
-            "--height": `${height}px`,
+            "--width": width !== undefined ? `${width}px` : undefined,
+            "--height": height !== undefined ? `${height}px` : undefined,
             ...autoSizerStyle,
             ...style,
           } as CSSProperties

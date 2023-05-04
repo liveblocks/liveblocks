@@ -12,7 +12,11 @@ module.exports = {
     "eslint-plugin-simple-import-sort",
   ],
 
-  extends: ["eslint:recommended", "plugin:@typescript-eslint/recommended"],
+  extends: [
+    "eslint:recommended",
+    "plugin:@typescript-eslint/recommended",
+    "plugin:@typescript-eslint/recommended-requiring-type-checking",
+  ],
 
   // Rules that are enabled for _all_ packages by default
   rules: {

@@ -202,7 +202,7 @@ const middlewareImpl: InnerLiveblocksMiddleware = (config, options) => {
         })
       );
 
-      room.getStorage().then(({ root }) => {
+      void room.getStorage().then(({ root }) => {
         const updates = {} as Partial<TState>;
 
         room.batch(() => {

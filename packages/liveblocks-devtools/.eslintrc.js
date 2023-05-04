@@ -13,6 +13,7 @@ module.exports = {
     // Overrides from default rule config used in all other projects!
     // ----------------------------------------------------------------------
     "@typescript-eslint/explicit-module-boundary-types": "off",
+    "@typescript-eslint/unbound-method": "off",
 
     // ----------------------------------------------------------------------
     // Extra rules for this project specifically

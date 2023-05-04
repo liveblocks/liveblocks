@@ -38,10 +38,10 @@ will have.
 
 At the very least, you must pass a `userId` and a `roomId`. Optionally,
 `userInfo` can be used to add information about the current user that will not
-change during the session. This information will will be accessible in the
-client to all other users in [`Room.getOthers`][]. It can be helpful to
-implement avatars or display the user’s name without introducing a potential
-impersonification security issue.
+change during the session. This information will be accessible in the client to
+all other users in [`Room.getOthers`][]. It can be helpful to implement avatars
+or display the user’s name without introducing a potential impersonification
+security issue.
 
 - `userId` cannot be longer than 128 characters.
 - `userInfo` cannot be longer than 1024 characters once serialized to JSON.
@@ -130,6 +130,14 @@ app.post("/api/auth", (req, res) => {
 ```
 
 ## WebhookHandler [#WebhookHandler]
+
+<Banner title="Need help implementing webhooks?">
+
+Check out the [Webhooks guide](/docs/guides/webhooks), we explain how to use
+them within your product so that you can react to Liveblocks events as they
+happen.
+
+</Banner>
 
 The `WebhookHandler` class is a helper to handle webhook requests from
 Liveblocks.

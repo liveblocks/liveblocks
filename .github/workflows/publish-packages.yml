@@ -7,7 +7,7 @@ on:
         type: string
         required: true
         description:
-          "github release tag (ex: v1.0.2-test0), doc:
+          "Git tag to create (e.g. v1.2.3-test4). See also
           https://github.com/liveblocks/liveblocks/blob/main/CONTRIBUTING.MD#releasing"
 
 jobs:
@@ -29,6 +29,8 @@ jobs:
 
       - name: Checkout
         uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.WRITE_ACCESS_TOKEN }}
 
       - name: Validate git tag
         run: ./.github/scripts/validate-version.sh "${{ inputs.tag }}"
@@ -76,7 +78,8 @@ jobs:
         run: ./.github/scripts/release.sh -V "$VERSION"
 
       - name: Build all packages
-        run: npm run build
+        run: |
+          npm run build -- --filter='./packages/*' --filter='!@liveblocks/devtools'
 
       - name: Publish packages
         env:

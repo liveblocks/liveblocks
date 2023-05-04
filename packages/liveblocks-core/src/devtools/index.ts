@@ -7,7 +7,7 @@ import { activateBridge, onMessageFromPanel, sendToPanel } from "./bridge";
 // prettier-ignore
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore (__PACKAGE_VERSION__ will be injected by the build script)
-const VERSION = typeof __PACKAGE_VERSION__ === "string" ? /* istanbul ignore next */ __PACKAGE_VERSION__ : "dev";
+const VERSION = typeof (__PACKAGE_VERSION__ as unknown) === "string" ? /* istanbul ignore next */ (__PACKAGE_VERSION__ as string) : "dev";
 
 let _devtoolsSetupHasRun = false;
 
@@ -138,7 +138,7 @@ function partialSyncStorage(
 }
 
 function partialSyncMe(room: Room<JsonObject, LsonObject, BaseUserMeta, Json>) {
-  const me = room.getSelf_forDevTools();
+  const me = room.__internal.getSelf_forDevTools();
   if (me) {
     sendToPanel({
       msg: "room::sync::partial",
@@ -152,7 +152,7 @@ function partialSyncOthers(
   room: Room<JsonObject, LsonObject, BaseUserMeta, Json>
 ) {
   // Any time others updates, send the new storage root to the dev panel
-  const others = room.getOthers_forDevTools();
+  const others = room.__internal.getOthers_forDevTools();
   if (others) {
     sendToPanel({
       msg: "room::sync::partial",
@@ -164,8 +164,8 @@ function partialSyncOthers(
 
 function fullSync(room: Room<JsonObject, LsonObject, BaseUserMeta, Json>) {
   const root = room.getStorageSnapshot();
-  const me = room.getSelf_forDevTools();
-  const others = room.getOthers_forDevTools();
+  const me = room.__internal.getSelf_forDevTools();
+  const others = room.__internal.getOthers_forDevTools();
   sendToPanel({
     msg: "room::sync::full",
     roomId: room.id,

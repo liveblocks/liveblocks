@@ -1,4 +1,4 @@
-import type { PlainLsonObject } from "../plainLson";
+import type { PlainLsonObject } from "@liveblocks/core";
 
 export const EMPTY: PlainLsonObject = {
   liveblocksType: "LiveObject",

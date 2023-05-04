@@ -1,3 +1,31 @@
+# v1.0.8 (not yet released)
+
+- Internal refactorings only
+
+# v1.0.7
+
+- Private API changes only.
+
+# v1.0.6
+
+## Internal changes
+
+- Release `create-liveblocks-app` along with other Liveblocks packages, using
+  the same versioning scheme.
+- Internal refactorings.
+
+# v1.0.5
+
+Non-existent.
+
+# v1.0.4
+
+Non-existent.
+
+# v1.0.3
+
+Non-existent.
+
 # v1.0.2
 
 Fix bug where passing down `shouldInitiallyConnect` connection option would not
@@ -17,7 +45,8 @@ to the console in non-production builds to ease debugging.
 
 # v1.0.0
 
-This major release marks the maturity of Liveblocks. For upgrade instructions, see the [1.0 upgrade guide](https://liveblocks.io/docs/guides/upgrading/1.0).
+This major release marks the maturity of Liveblocks. For upgrade instructions,
+see the [1.0 upgrade guide](https://liveblocks.io/docs/guides/upgrading/1.0).
 
 ## `@liveblocks/node`
 

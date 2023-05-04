@@ -18,10 +18,11 @@ import { makeEventSource } from "./lib/EventSource";
 import * as console from "./lib/fancy-console";
 import type { Json, JsonObject } from "./lib/Json";
 import { isJsonArray, isJsonObject } from "./lib/Json";
+import { asPos } from "./lib/position";
 import type { Resolve } from "./lib/Resolve";
 import { compact, isPlainObject, tryParseJson } from "./lib/utils";
 import type { Authentication } from "./protocol/Authentication";
-import type { RoomAuthToken } from "./protocol/AuthToken";
+import type { JwtMetadata, RoomAuthToken } from "./protocol/AuthToken";
 import {
   isTokenExpired,
   parseRoomAuthToken,
@@ -32,13 +33,7 @@ import type { ClientMsg } from "./protocol/ClientMsg";
 import { ClientMsgCode } from "./protocol/ClientMsg";
 import type { Op } from "./protocol/Op";
 import { isAckOp, OpCode } from "./protocol/Op";
-import type {
-  IdTuple,
-  SerializedChild,
-  SerializedCrdt,
-  SerializedRootObject,
-} from "./protocol/SerializedCrdt";
-import { isRootCrdt } from "./protocol/SerializedCrdt";
+import type { IdTuple, SerializedCrdt } from "./protocol/SerializedCrdt";
 import type {
   InitialDocumentStateServerMsg,
   RoomStateServerMsg,
@@ -53,10 +48,20 @@ import { MeRef } from "./refs/MeRef";
 import { OthersRef } from "./refs/OthersRef";
 import { DerivedRef, ValueRef } from "./refs/ValueRef";
 import type * as DevTools from "./types/DevToolsTreeNode";
-import type { NodeMap, ParentToChildNodeMap } from "./types/NodeMap";
+import type {
+  IWebSocket,
+  IWebSocketCloseEvent,
+  IWebSocketEvent,
+  IWebSocketInstance,
+  IWebSocketMessageEvent,
+} from "./types/IWebSocket";
+import { WebsocketCloseCodes } from "./types/IWebSocket";
+import type { NodeMap } from "./types/NodeMap";
 import type { Others, OthersEvent } from "./types/Others";
 import type { User } from "./types/User";
-import { WebsocketCloseCodes } from "./types/WebsocketCloseCodes";
+
+type TimeoutID = ReturnType<typeof setTimeout>;
+type IntervalID = ReturnType<typeof setInterval>;
 
 type CustomEvent<TRoomEvent extends Json> = {
   connectionId: number;
@@ -67,12 +72,12 @@ type AuthCallback = (room: string) => Promise<{ token: string }>;
 
 export type Connection =
   /* The initial state, before connecting */
-  | { state: "closed" }
+  | { status: "closed" }
   /* Authentication has started, but not finished yet */
-  | { state: "authenticating" }
+  | { status: "authenticating" }
   /* Authentication succeeded, now attempting to connect to a room */
   | {
-      state: "connecting";
+      status: "connecting";
       id: number;
       userId?: string;
       userInfo?: Json;
@@ -80,18 +85,18 @@ export type Connection =
     }
   /* Successful room connection, on the happy path */
   | {
-      state: "open";
+      status: "open";
       id: number;
       userId?: string;
       userInfo?: Json;
       isReadOnly: boolean;
     }
   /* Connection lost unexpectedly, considered a temporary hiccup, will retry */
-  | { state: "unavailable" }
+  | { status: "unavailable" }
   /* Connection failed due to known reason (e.g. rejected). Will throw error, then immediately jump to "unavailable" state, to attempt to reconnect */
-  | { state: "failed" };
+  | { status: "failed" };
 
-export type ConnectionState = Connection["state"];
+export type ConnectionStatus = Connection["status"];
 
 export type StorageStatus =
   /* The storage is not loaded and has not been requested. */
@@ -119,7 +124,7 @@ type RoomEventCallbackMap<
     event: OthersEvent<TPresence, TUserMeta>
   ) => void;
   error: Callback<Error>;
-  connection: Callback<ConnectionState>;
+  connection: Callback<ConnectionStatus>;
   history: Callback<HistoryEvent>;
   "storage-status": Callback<StorageStatus>;
 };
@@ -236,12 +241,175 @@ export type BroadcastOptions = {
   shouldQueueEventIfNotReady: boolean;
 };
 
+type SubscribeFn<
+  TPresence extends JsonObject,
+  _TStorage extends LsonObject,
+  TUserMeta extends BaseUserMeta,
+  TRoomEvent extends Json
+> = {
+  /**
+   * Subscribes to changes made on any Live structure. Returns an unsubscribe function.
+   *
+   * @internal This legacy API works, but was never documented publicly.
+   */
+  (callback: StorageCallback): () => void;
+
+  /**
+   * Subscribe to the current user presence updates.
+   *
+   * @param listener the callback that is called every time the current user presence is updated with {@link Room.updatePresence}.
+   *
+   * @returns Unsubscribe function.
+   *
+   * @example
+   * room.subscribe("my-presence", (presence) => {
+   *   // Do something
+   * });
+   */
+  (type: "my-presence", listener: Callback<TPresence>): () => void;
+
+  /**
+   * Subscribe to the other users updates.
+   *
+   * @param listener the callback that is called when a user enters or leaves the room or when a user update its presence.
+   *
+   * @returns Unsubscribe function.
+   *
+   * @example
+   * room.subscribe("others", (others) => {
+   *   // Do something
+   * });
+   *
+   */
+  (
+    type: "others",
+    listener: (
+      others: Others<TPresence, TUserMeta>,
+      event: OthersEvent<TPresence, TUserMeta>
+    ) => void
+  ): () => void;
+
+  /**
+   * Subscribe to events broadcasted by {@link Room.broadcastEvent}
+   *
+   * @param listener the callback that is called when a user calls {@link Room.broadcastEvent}
+   *
+   * @returns Unsubscribe function.
+   *
+   * @example
+   * room.subscribe("event", ({ event, connectionId }) => {
+   *   // Do something
+   * });
+   *
+   */
+  (type: "event", listener: Callback<CustomEvent<TRoomEvent>>): () => void;
+
+  /**
+   * Subscribe to errors thrown in the room.
+   *
+   * @returns Unsubscribe function.
+   *
+   */
+  (type: "error", listener: ErrorCallback): () => void;
+
+  /**
+   * Subscribe to connection state updates.
+   *
+   * @returns Unsubscribe function.
+   *
+   */
+  (type: "connection", listener: Callback<ConnectionStatus>): () => void;
+
+  /**
+   * Subscribes to changes made on a Live structure. Returns an unsubscribe function.
+   * In a future version, we will also expose what exactly changed in the Live structure.
+   *
+   * @param callback The callback this called when the Live structure changes.
+   *
+   * @returns Unsubscribe function.
+   *
+   * @example
+   * const liveMap = new LiveMap();  // Could also be LiveList or LiveObject
+   * const unsubscribe = room.subscribe(liveMap, (liveMap) => { });
+   * unsubscribe();
+   */
+  <L extends LiveStructure>(
+    liveStructure: L,
+    callback: (node: L) => void
+  ): () => void;
+
+  /**
+   * Subscribes to changes made on a Live structure and all the nested data
+   * structures. Returns an unsubscribe function. In a future version, we
+   * will also expose what exactly changed in the Live structure.
+   *
+   * @param callback The callback this called when the Live structure, or any
+   * of its nested values, changes.
+   *
+   * @returns Unsubscribe function.
+   *
+   * @example
+   * const liveMap = new LiveMap();  // Could also be LiveList or LiveObject
+   * const unsubscribe = room.subscribe(liveMap, (updates) => { }, { isDeep: true });
+   * unsubscribe();
+   */
+  <L extends LiveStructure>(
+    liveStructure: L,
+    callback: StorageCallback,
+    options: { isDeep: true }
+  ): () => void;
+
+  /**
+   * Subscribe to the current user's history changes.
+   *
+   * @returns Unsubscribe function.
+   *
+   * @example
+   * room.subscribe("history", ({ canUndo, canRedo }) => {
+   *   // Do something
+   * });
+   */
+  (type: "history", listener: Callback<HistoryEvent>): () => void;
+
+  /**
+   * Subscribe to storage status changes.
+   *
+   * @returns Unsubscribe function.
+   *
+   * @example
+   * room.subscribe("storage-status", (status) => {
+   *   switch(status) {
+   *      case "not-loaded":
+   *        break;
+   *      case "loading":
+   *        break;
+   *      case "synchronizing":
+   *        break;
+   *      case "synchronized":
+   *        break;
+   *      default:
+   *        break;
+   *   }
+   * });
+   */
+  (type: "storage-status", listener: Callback<StorageStatus>): () => void;
+};
+
 export type Room<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
   TUserMeta extends BaseUserMeta,
   TRoomEvent extends Json
 > = {
+  /**
+   * @internal
+   * Private methods to directly control the underlying state machine for this
+   * room. Used in the core internals and for unit testing, but as a user of
+   * Liveblocks, NEVER USE ANY OF THESE METHODS DIRECTLY, because bad things
+   * will probably happen if you do.
+   */
+  readonly __internal: PrivateRoomAPI<TPresence, TStorage, TUserMeta, TRoomEvent>; // prettier-ignore
+
   /**
    * The id of the room.
    */
@@ -251,148 +419,8 @@ export type Room<
    * metadata and connection ID (from the auth server).
    */
   isSelfAware(): boolean;
-  getConnectionState(): ConnectionState;
-  readonly subscribe: {
-    /**
-     * Subscribe to the current user presence updates.
-     *
-     * @param listener the callback that is called every time the current user presence is updated with {@link Room.updatePresence}.
-     *
-     * @returns Unsubscribe function.
-     *
-     * @example
-     * room.subscribe("my-presence", (presence) => {
-     *   // Do something
-     * });
-     */
-    (type: "my-presence", listener: Callback<TPresence>): () => void;
-
-    /**
-     * Subscribe to the other users updates.
-     *
-     * @param listener the callback that is called when a user enters or leaves the room or when a user update its presence.
-     *
-     * @returns Unsubscribe function.
-     *
-     * @example
-     * room.subscribe("others", (others) => {
-     *   // Do something
-     * });
-     *
-     */
-    (
-      type: "others",
-      listener: (
-        others: Others<TPresence, TUserMeta>,
-        event: OthersEvent<TPresence, TUserMeta>
-      ) => void
-    ): () => void;
-
-    /**
-     * Subscribe to events broadcasted by {@link Room.broadcastEvent}
-     *
-     * @param listener the callback that is called when a user calls {@link Room.broadcastEvent}
-     *
-     * @returns Unsubscribe function.
-     *
-     * @example
-     * room.subscribe("event", ({ event, connectionId }) => {
-     *   // Do something
-     * });
-     *
-     */
-    (type: "event", listener: Callback<CustomEvent<TRoomEvent>>): () => void;
-
-    /**
-     * Subscribe to errors thrown in the room.
-     *
-     * @returns Unsubscribe function.
-     *
-     */
-    (type: "error", listener: ErrorCallback): () => void;
-
-    /**
-     * Subscribe to connection state updates.
-     *
-     * @returns Unsubscribe function.
-     *
-     */
-    (type: "connection", listener: Callback<ConnectionState>): () => void;
-
-    /**
-     * Subscribes to changes made on a Live structure. Returns an unsubscribe function.
-     * In a future version, we will also expose what exactly changed in the Live structure.
-     *
-     * @param callback The callback this called when the Live structure changes.
-     *
-     * @returns Unsubscribe function.
-     *
-     * @example
-     * const liveMap = new LiveMap();  // Could also be LiveList or LiveObject
-     * const unsubscribe = room.subscribe(liveMap, (liveMap) => { });
-     * unsubscribe();
-     */
-    <L extends LiveStructure>(
-      liveStructure: L,
-      callback: (node: L) => void
-    ): () => void;
-
-    /**
-     * Subscribes to changes made on a Live structure and all the nested data
-     * structures. Returns an unsubscribe function. In a future version, we
-     * will also expose what exactly changed in the Live structure.
-     *
-     * @param callback The callback this called when the Live structure, or any
-     * of its nested values, changes.
-     *
-     * @returns Unsubscribe function.
-     *
-     * @example
-     * const liveMap = new LiveMap();  // Could also be LiveList or LiveObject
-     * const unsubscribe = room.subscribe(liveMap, (updates) => { }, { isDeep: true });
-     * unsubscribe();
-     */
-    <L extends LiveStructure>(
-      liveStructure: L,
-      callback: StorageCallback,
-      options: { isDeep: true }
-    ): () => void;
-
-    /**
-     * Subscribe to the current user's history changes.
-     *
-     * @returns Unsubscribe function.
-     *
-     * @example
-     * room.subscribe("history", ({ canUndo, canRedo }) => {
-     *   // Do something
-     * });
-     */
-    (type: "history", listener: Callback<HistoryEvent>): () => void;
-
-    /**
-     * Subscribe to storage status changes.
-     *
-     * @returns Unsubscribe function.
-     *
-     * @example
-     * room.subscribe("storage-status", (status) => {
-     *   switch(status) {
-     *      case "not-loaded":
-     *        break;
-     *      case "loading":
-     *        break;
-     *      case "synchronizing":
-     *        break;
-     *      case "synchronized":
-     *        break;
-     *      default:
-     *        break;
-     *   }
-     * });
-     */
-    (type: "storage-status", listener: Callback<StorageStatus>): () => void;
-  };
+  getConnectionState(): ConnectionStatus;
+  readonly subscribe: SubscribeFn<TPresence, TStorage, TUserMeta, TRoomEvent>;
 
   /**
    * Room's history contains functions that let you undo and redo operation made on by the current client on the presence and storage.
@@ -484,21 +512,21 @@ export type Room<
   getStorageSnapshot(): LiveObject<TStorage> | null;
 
   readonly events: {
-    customEvent: Observable<{ connectionId: number; event: TRoomEvent }>;
-    me: Observable<TPresence>;
-    others: Observable<{
-      others: Others<TPresence, TUserMeta>;
-      event: OthersEvent<TPresence, TUserMeta>;
-    }>;
-    error: Observable<Error>;
-    connection: Observable<ConnectionState>;
-    storage: Observable<StorageUpdate[]>;
-    history: Observable<HistoryEvent>;
+    readonly customEvent: Observable<{ connectionId: number; event: TRoomEvent; }>; // prettier-ignore
+    readonly me: Observable<TPresence>;
+    readonly others: Observable<{ others: Others<TPresence, TUserMeta>; event: OthersEvent<TPresence, TUserMeta>; }>; // prettier-ignore
+    readonly error: Observable<Error>;
+    readonly connection: Observable<ConnectionStatus>;
+    readonly storage: Observable<StorageUpdate[]>;
+    readonly history: Observable<HistoryEvent>;
+
     /**
      * Subscribe to the storage loaded event. Will fire at most once during the
      * lifetime of a Room.
      */
-    storageDidLoad: Observable<void>;
+    readonly storageDidLoad: Observable<void>;
+
+    readonly storageStatus: Observable<StorageStatus>;
   };
 
   /**
@@ -530,123 +558,40 @@ export type Room<
    * Close room connection and try to reconnect
    */
   reconnect(): void;
-
-  /**
-   * @internal Utilities only used for unit testing.
-   */
-  readonly __INTERNAL_DO_NOT_USE: {
-    simulateCloseWebsocket(): void;
-    simulateSendCloseEvent(event: {
-      code: number;
-      wasClean: boolean;
-      reason: string;
-    }): void;
-  };
-
-  /** @internal - For DevTools support */
-  getSelf_forDevTools(): DevTools.UserTreeNode | null;
-
-  /** @internal - For DevTools support */
-  getOthers_forDevTools(): readonly DevTools.UserTreeNode[];
 };
 
-export function isRoomEventName(value: string): value is RoomEventName {
-  return (
-    value === "my-presence" ||
-    value === "others" ||
-    value === "event" ||
-    value === "error" ||
-    value === "connection" ||
-    value === "history" ||
-    value === "storage-status"
-  );
-}
-
-type Machine<
+/**
+ * @internal
+ * Private methods to directly control the underlying state machine for this
+ * room. Used in the core internals and for unit testing, but as a user of
+ * Liveblocks, NEVER USE ANY OF THESE METHODS DIRECTLY, because bad things
+ * will probably happen if you do.
+ */
+type PrivateRoomAPI<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
   TUserMeta extends BaseUserMeta,
   TRoomEvent extends Json
 > = {
-  // Internal
-  onClose(event: { code: number; wasClean: boolean; reason: string }): void;
-  onMessage(event: MessageEvent<string>): void;
-  authenticationSuccess(token: RoomAuthToken, socket: WebSocket): void;
-  heartbeat(): void;
-  onNavigatorOnline(): void;
-
-  // Internal unit testing tools
-  simulateSocketClose(): void;
-  simulateSendCloseEvent(event: {
-    code: number;
-    wasClean: boolean;
-    reason: string;
-  }): void;
-
-  // onWakeUp,
-  onVisibilityChange(visibilityState: DocumentVisibilityState): void;
-  getUndoStack(): HistoryOp<TPresence>[][];
-  getItemsCount(): number;
+  // Context
+  buffer: MachineContext<TPresence, TStorage, TUserMeta, TRoomEvent>["buffer"]; // prettier-ignore
+  numRetries: MachineContext<TPresence, TStorage, TUserMeta, TRoomEvent>["numRetries"]; // prettier-ignore
 
   // Core
   connect(): void;
   disconnect(): void;
-  reconnect(): void;
 
-  // Generic storage callbacks
-  subscribe(callback: StorageCallback): () => void;
+  onClose(event: IWebSocketCloseEvent): void;
+  onMessage(event: IWebSocketEvent): void;
+  authenticationSuccess(token: RoomAuthToken, socket: IWebSocketInstance): void;
+  onNavigatorOnline(): void;
+  onVisibilityChange(visibilityState: DocumentVisibilityState): void;
 
-  // Storage callbacks filtered by Live structure
-  subscribe<L extends LiveStructure>(liveStructure: L, callback: (node: L) => void): () => void; // prettier-ignore
-  subscribe(node: LiveStructure, callback: StorageCallback, options: { isDeep: true }): () => void; // prettier-ignore
+  simulateCloseWebsocket(): void;
+  simulateSendCloseEvent(event: IWebSocketCloseEvent): void;
 
-  // Room event callbacks
-  subscribe<E extends RoomEventName>(type: E, listener: RoomEventCallbackFor<E, TPresence, TUserMeta, TRoomEvent>): () => void; // prettier-ignore
-
-  // Presence
-  updatePresence(
-    patch: Partial<TPresence>,
-    options?: { addToHistory: boolean }
-  ): void;
-  broadcastEvent(event: TRoomEvent, options?: BroadcastOptions): void;
-
-  batch<T>(callback: () => T): T;
-  undo(): void;
-  redo(): void;
-  canUndo(): boolean;
-  canRedo(): boolean;
-  pauseHistory(): void;
-  resumeHistory(): void;
-
-  getStorage(): Promise<{
-    root: LiveObject<TStorage>;
-  }>;
-  getStorageSnapshot(): LiveObject<TStorage> | null;
-  getStorageStatus(): StorageStatus;
-
-  readonly events: {
-    readonly customEvent: Observable<CustomEvent<TRoomEvent>>;
-    readonly me: Observable<TPresence>;
-    readonly others: Observable<{
-      others: Others<TPresence, TUserMeta>;
-      event: OthersEvent<TPresence, TUserMeta>;
-    }>;
-    readonly error: Observable<Error>;
-    readonly connection: Observable<ConnectionState>;
-    readonly storage: Observable<StorageUpdate[]>;
-    readonly history: Observable<HistoryEvent>;
-    readonly storageDidLoad: Observable<void>;
-    readonly storageStatus: Observable<StorageStatus>;
-  };
-
-  // Core
-  isSelfAware(): boolean;
-  getConnectionState(): ConnectionState;
-  getSelf(): User<TPresence, TUserMeta> | null;
-
-  // Presence
-  getPresence(): Readonly<TPresence>;
-  getOthers(): Others<TPresence, TUserMeta>;
+  getUndoStack(): HistoryOp<TPresence>[][];
+  getItemsCount(): number;
 
   // DevTools support
   getSelf_forDevTools(): DevTools.UserTreeNode | null;
@@ -672,8 +617,8 @@ function log(..._params: unknown[]) {
 
 function isConnectionSelfAware(
   connection: Connection
-): connection is typeof connection & { state: "open" | "connecting" } {
-  return connection.state === "open" || connection.state === "connecting";
+): connection is typeof connection & { status: "open" | "connecting" } {
+  return connection.status === "open" || connection.status === "connecting";
 }
 
 type HistoryOp<TPresence extends JsonObject> =
@@ -685,17 +630,33 @@ type HistoryOp<TPresence extends JsonObject> =
 
 type IdFactory = () => string;
 
-type State<
+type MachineContext<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
   TUserMeta extends BaseUserMeta,
   TRoomEvent extends Json
 > = {
-  token: string | null;
-  lastConnectionId: number | null; // TODO: Move into Connection type members?
-  socket: WebSocket | null;
-  lastFlushTime: number;
+  token: {
+    readonly raw: string;
+    readonly parsed: RoomAuthToken & JwtMetadata;
+  } | null;
+  /**
+   * Remembers the last successful connection ID. This gets assigned as soon as
+   * the connection status switched from "connecting" to "open".
+   */
+  lastConnectionId: number | null; // TODO Do we really need to separately track this, or can we derive this from the last known token?
+
+  socket: IWebSocketInstance | null;
+
+  /**
+   * All pending changes that yet need to be synced.
+   */
   buffer: {
+    // When the last flush happened. Together with config.throttleDelay, this
+    // will control whether the next flush will be sent out immediately, or if
+    // a flush will get scheduled for a few milliseconds into the future.
+    readonly lastFlushedAt: number;
+
     // Queued-up "my presence" updates to be flushed at the earliest convenience
     me:
       | { type: "partial"; data: Partial<TPresence> }
@@ -704,29 +665,28 @@ type State<
     messages: ClientMsg<TPresence, TRoomEvent>[];
     storageOperations: Op[];
   };
-  timeoutHandles: {
-    flush: number | null;
-    reconnect: number;
-    pongTimeout: number;
-  };
-  intervalHandles: {
-    heartbeat: number;
+
+  /**
+   * Number of reconnect() retries.
+   */
+  numRetries: number;
+  readonly timers: {
+    flush: TimeoutID | undefined;
+    reconnect: TimeoutID | undefined;
+    heartbeat: IntervalID | undefined;
+    pongTimeout: TimeoutID | undefined;
   };
 
   readonly connection: ValueRef<Connection>;
   readonly me: MeRef<TPresence>;
   readonly others: OthersRef<TPresence, TUserMeta>;
 
-  /** @internal */
-  readonly others_forDevTools: ImmutableRef<DevTools.UserTreeNode[]>;
-
   idFactory: IdFactory | null;
-  numberOfRetry: number;
   initialStorage?: TStorage;
 
   clock: number;
   opClock: number;
-  nodes: Map<string, LiveNode>;
+  readonly nodes: Map<string, LiveNode>;
   root: LiveObject<TStorage> | undefined;
 
   undoStack: HistoryOp<TPresence>[][];
@@ -742,7 +702,7 @@ type State<
    * Place to collect all mutations during a batch. Ops will be sent over the
    * wire after the batch is ended.
    */
-  activeBatch: null | {
+  activeBatch: {
     ops: Op[];
     reverseOps: HistoryOp<TPresence>[];
     updates: {
@@ -750,32 +710,33 @@ type State<
       presence: boolean;
       storageUpdates: Map<string, StorageUpdate>;
     };
-  };
+  } | null;
 
   // A registry of yet-unacknowledged Ops. These Ops have already been
   // submitted to the server, but have not yet been acknowledged.
-  unacknowledgedOps: Map<string, Op>;
+  readonly unacknowledgedOps: Map<string, Op>;
 
   // Stack traces of all pending Ops. Used for debugging in non-production builds
-  opStackTraces?: Map<string, string>;
+  readonly opStackTraces?: Map<string, string>;
 };
 
+/** @internal */
 type Effects<TPresence extends JsonObject, TRoomEvent extends Json> = {
   authenticate(
     auth: AuthCallback,
-    createWebSocket: (token: string) => WebSocket
+    createWebSocket: (token: string) => IWebSocketInstance
   ): void;
   send(messages: ClientMsg<TPresence, TRoomEvent>[]): void;
-  delayFlush(delay: number): number;
-  startHeartbeatInterval(): number;
-  schedulePongTimeout(): number;
-  scheduleReconnect(delay: number): number;
+  scheduleFlush(delay: number): TimeoutID;
+  scheduleReconnect(delay: number): TimeoutID;
+  startHeartbeatInterval(): IntervalID;
+  schedulePongTimeout(): TimeoutID;
 };
 
 export type Polyfills = {
   atob?: (data: string) => string;
   fetch?: typeof fetch;
-  WebSocket?: any;
+  WebSocket?: IWebSocket;
 };
 
 export type RoomInitializers<
@@ -800,7 +761,8 @@ export type RoomInitializers<
   shouldInitiallyConnect?: boolean;
 }>;
 
-type Config = {
+/** @internal */
+type MachineConfig<TPresence extends JsonObject, TRoomEvent extends Json> = {
   roomId: string;
   throttleDelay: number;
   authentication: Authentication;
@@ -818,15 +780,7 @@ type Config = {
    */
   unstable_batchedUpdates?: (cb: () => void) => void;
 
-  /**
-   * Backward-compatible way to set `polyfills.fetch`.
-   */
-  fetchPolyfill?: Polyfills["fetch"];
-
-  /**
-   * Backward-compatible way to set `polyfills.WebSocket`.
-   */
-  WebSocketPolyfill?: Polyfills["WebSocket"];
+  mockedEffects?: Effects<TPresence, TRoomEvent>;
 };
 
 function userToTreeNode(
@@ -841,63 +795,135 @@ function userToTreeNode(
   };
 }
 
-function makeStateMachine<
+/**
+ * @internal
+ * Initializes a new Room state machine, and returns its public API to observe
+ * and control it.
+ */
+export function createRoom<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
   TUserMeta extends BaseUserMeta,
   TRoomEvent extends Json
 >(
-  state: State<TPresence, TStorage, TUserMeta, TRoomEvent>,
-  config: Config,
-  mockedEffects?: Effects<TPresence, TRoomEvent>
-): Machine<TPresence, TStorage, TUserMeta, TRoomEvent> {
+  options: Omit<
+    RoomInitializers<TPresence, TStorage>,
+    "shouldInitiallyConnect"
+  >,
+  config: MachineConfig<TPresence, TRoomEvent>
+): Room<TPresence, TStorage, TUserMeta, TRoomEvent> {
+  const initialPresence =
+    typeof options.initialPresence === "function"
+      ? options.initialPresence(config.roomId)
+      : options.initialPresence;
+  const initialStorage =
+    typeof options.initialStorage === "function"
+      ? options.initialStorage(config.roomId)
+      : options.initialStorage;
+
+  // The "context" is the machine's stateful extended context, also sometimes
+  // known as the "extended state" of a finite state machine. The context
+  // maintains state beyond the inherent state that are the finite states
+  // themselves.
+  const context: MachineContext<TPresence, TStorage, TUserMeta, TRoomEvent> = {
+    token: null,
+    lastConnectionId: null,
+    socket: null,
+
+    numRetries: 0,
+    timers: {
+      flush: undefined,
+      reconnect: undefined,
+      heartbeat: undefined,
+      pongTimeout: undefined,
+    },
+
+    buffer: {
+      lastFlushedAt: 0,
+      me:
+        // Queue up the initial presence message as a Full Presence™ update
+        {
+          type: "full",
+          data: initialPresence,
+        },
+      messages: [],
+      storageOperations: [],
+    },
+
+    connection: new ValueRef({ status: "closed" }),
+    me: new MeRef(initialPresence),
+    others: new OthersRef<TPresence, TUserMeta>(),
+
+    initialStorage,
+    idFactory: null,
+
+    // Storage
+    clock: 0,
+    opClock: 0,
+    nodes: new Map<string, LiveNode>(),
+    root: undefined,
+
+    undoStack: [],
+    redoStack: [],
+    pausedHistory: null,
+
+    activeBatch: null,
+    unacknowledgedOps: new Map<string, Op>(),
+
+    // Debug
+    opStackTraces:
+      process.env.NODE_ENV !== "production"
+        ? new Map<string, string>()
+        : undefined,
+  };
+
   const doNotBatchUpdates = (cb: () => void): void => cb();
   const batchUpdates = config.unstable_batchedUpdates ?? doNotBatchUpdates;
 
   const pool: ManagedPool = {
     roomId: config.roomId,
 
-    getNode: (id: string) => state.nodes.get(id),
-    addNode: (id: string, node: LiveNode) => void state.nodes.set(id, node),
-    deleteNode: (id: string) => void state.nodes.delete(id),
+    getNode: (id: string) => context.nodes.get(id),
+    addNode: (id: string, node: LiveNode) => void context.nodes.set(id, node),
+    deleteNode: (id: string) => void context.nodes.delete(id),
 
-    generateId: () => `${getConnectionId()}:${state.clock++}`,
-    generateOpId: () => `${getConnectionId()}:${state.opClock++}`,
+    generateId: () => `${getConnectionId()}:${context.clock++}`,
+    generateOpId: () => `${getConnectionId()}:${context.opClock++}`,
 
     dispatch(
       ops: Op[],
       reverse: Op[],
       storageUpdates: Map<string, StorageUpdate>
     ) {
-      const activeBatch = state.activeBatch;
+      const activeBatch = context.activeBatch;
 
       if (process.env.NODE_ENV !== "production") {
         const stackTrace = captureStackTrace("Storage mutation", this.dispatch);
         if (stackTrace) {
-          ops.forEach((op) => {
+          for (const op of ops) {
             if (op.opId) {
-              nn(state.opStackTraces).set(op.opId, stackTrace);
+              nn(context.opStackTraces).set(op.opId, stackTrace);
             }
-          });
+          }
         }
       }
 
       if (activeBatch) {
         activeBatch.ops.push(...ops);
-        storageUpdates.forEach((value, key) => {
+        for (const [key, value] of storageUpdates) {
           activeBatch.updates.storageUpdates.set(
             key,
             mergeStorageUpdates(
-              activeBatch.updates.storageUpdates.get(key) as any, // FIXME
+              activeBatch.updates.storageUpdates.get(key),
               value
             )
           );
-        });
+        }
         activeBatch.reverseOps.unshift(...reverse);
       } else {
         batchUpdates(() => {
           addToUndoStack(reverse, doNotBatchUpdates);
-          state.redoStack = [];
+          context.redoStack = [];
           dispatchOps(ops);
           notify({ storageUpdates }, doNotBatchUpdates);
         });
@@ -906,8 +932,8 @@ function makeStateMachine<
 
     assertStorageIsWritable: () => {
       if (
-        isConnectionSelfAware(state.connection.current) &&
-        state.connection.current.isReadOnly
+        isConnectionSelfAware(context.connection.current) &&
+        context.connection.current.isReadOnly
       ) {
         throw new Error(
           "Cannot write to storage with a read only user, please ensure the user has write permissions"
@@ -924,69 +950,65 @@ function makeStateMachine<
       event: OthersEvent<TPresence, TUserMeta>;
     }>(),
     error: makeEventSource<Error>(),
-    connection: makeEventSource<ConnectionState>(),
+    connection: makeEventSource<ConnectionStatus>(),
     storage: makeEventSource<StorageUpdate[]>(),
     history: makeEventSource<HistoryEvent>(),
     storageDidLoad: makeEventSource<void>(),
     storageStatus: makeEventSource<StorageStatus>(),
   };
 
-  const effects: Effects<TPresence, TRoomEvent> = mockedEffects || {
+  const effects: Effects<TPresence, TRoomEvent> = config.mockedEffects || {
     authenticate(
       auth: AuthCallback,
-      createWebSocket: (token: string) => WebSocket
+      createWebSocket: (token: string) => IWebSocketInstance
     ) {
-      const rawToken = state.token;
-      const parsedToken = rawToken !== null && parseRoomAuthToken(rawToken);
-      if (parsedToken && !isTokenExpired(parsedToken)) {
-        const socket = createWebSocket(rawToken);
-        authenticationSuccess(parsedToken, socket);
+      // If we already have a parsed token from a previous connection
+      // in-memory, reuse it
+      const prevToken = context.token;
+      if (prevToken !== null && !isTokenExpired(prevToken.parsed)) {
+        const socket = createWebSocket(prevToken.raw);
+        authenticationSuccess(prevToken.parsed, socket);
         return undefined;
       } else {
-        return auth(config.roomId)
+        void auth(config.roomId)
           .then(({ token }) => {
-            if (state.connection.current.state !== "authenticating") {
+            if (context.connection.current.status !== "authenticating") {
               return;
             }
             const parsedToken = parseRoomAuthToken(token);
             const socket = createWebSocket(token);
             authenticationSuccess(parsedToken, socket);
-            state.token = token;
+            context.token = { raw: token, parsed: parsedToken };
           })
           .catch((er: unknown) =>
             authenticationFailure(
               er instanceof Error ? er : new Error(String(er))
             )
           );
+        return undefined;
       }
     },
+
     send(
       messageOrMessages:
         | ClientMsg<TPresence, TRoomEvent>
         | ClientMsg<TPresence, TRoomEvent>[]
     ) {
-      if (state.socket === null) {
+      if (context.socket === null) {
         throw new Error("Can't send message if socket is null");
       }
-      state.socket.send(JSON.stringify(messageOrMessages));
+      context.socket.send(JSON.stringify(messageOrMessages));
     },
-    delayFlush(delay: number) {
-      return setTimeout(tryFlushing, delay) as any;
-    },
-    startHeartbeatInterval() {
-      return setInterval(heartbeat, HEARTBEAT_INTERVAL) as any;
-    },
-    schedulePongTimeout() {
-      return setTimeout(pongTimeout, PONG_TIMEOUT) as any;
-    },
-    scheduleReconnect(delay: number) {
-      return setTimeout(connect, delay) as any;
-    },
+
+    scheduleFlush: (delay: number) => setTimeout(tryFlushing, delay),
+    scheduleReconnect: (delay: number) => setTimeout(connect, delay),
+    startHeartbeatInterval: () => setInterval(heartbeat, HEARTBEAT_INTERVAL),
+    schedulePongTimeout: () => setTimeout(pongTimeout, PONG_TIMEOUT),
   };
 
   const self = new DerivedRef(
-    state.connection,
-    state.me,
+    context.connection,
+    context.me,
     (conn, me): User<TPresence, TUserMeta> | null =>
       isConnectionSelfAware(conn)
         ? {
@@ -1013,61 +1035,31 @@ function makeStateMachine<
       throw new Error("Internal error: cannot load storage without items");
     }
 
-    if (state.root) {
+    if (context.root) {
       updateRoot(message.items, batchedUpdatesWrapper);
     } else {
-      // TODO: For now, we'll assume the happy path, but reading this data from
-      // the central storage server, it may very well turn out to not match the
-      // manual type annotation. This will require runtime type validations!
-      state.root = load(message.items) as LiveObject<TStorage>;
+      context.root = LiveObject._fromItems<TStorage>(message.items, pool);
     }
 
-    for (const key in state.initialStorage) {
-      if (state.root.get(key) === undefined) {
-        state.root.set(key, state.initialStorage[key]);
+    for (const key in context.initialStorage) {
+      if (context.root.get(key) === undefined) {
+        context.root.set(key, context.initialStorage[key]);
       }
     }
-  }
-
-  function buildRootAndParentToChildren(
-    items: IdTuple<SerializedCrdt>[]
-  ): [IdTuple<SerializedRootObject>, ParentToChildNodeMap] {
-    const parentToChildren: ParentToChildNodeMap = new Map();
-    let root: IdTuple<SerializedRootObject> | null = null;
-
-    for (const [id, crdt] of items) {
-      if (isRootCrdt(crdt)) {
-        root = [id, crdt];
-      } else {
-        const tuple: IdTuple<SerializedChild> = [id, crdt];
-        const children = parentToChildren.get(crdt.parentId);
-        if (children !== undefined) {
-          children.push(tuple);
-        } else {
-          parentToChildren.set(crdt.parentId, [tuple]);
-        }
-      }
-    }
-
-    if (root === null) {
-      throw new Error("Root can't be null");
-    }
-
-    return [root, parentToChildren];
   }
 
   function updateRoot(
     items: IdTuple<SerializedCrdt>[],
     batchedUpdatesWrapper: (cb: () => void) => void
   ) {
-    if (!state.root) {
+    if (!context.root) {
       return;
     }
 
     const currentItems: NodeMap = new Map();
-    state.nodes.forEach((node, id) => {
+    for (const [id, node] of context.nodes) {
       currentItems.set(id, node._serialize());
-    });
+    }
 
     // Get operations that represent the diff between 2 states.
     const ops = getTreesDiffOperations(currentItems, new Map(items));
@@ -1077,22 +1069,16 @@ function makeStateMachine<
     notify(result.updates, batchedUpdatesWrapper);
   }
 
-  function load(items: IdTuple<SerializedCrdt>[]): LiveObject<LsonObject> {
-    // TODO Abstract these details into a LiveObject._fromItems() helper?
-    const [root, parentToChildren] = buildRootAndParentToChildren(items);
-    return LiveObject._deserialize(root, parentToChildren, pool);
-  }
-
   function _addToRealUndoStack(
     historyOps: HistoryOp<TPresence>[],
     batchedUpdatesWrapper: (cb: () => void) => void
   ) {
     // If undo stack is too large, we remove the older item
-    if (state.undoStack.length >= 50) {
-      state.undoStack.shift();
+    if (context.undoStack.length >= 50) {
+      context.undoStack.shift();
     }
 
-    state.undoStack.push(historyOps);
+    context.undoStack.push(historyOps);
     onHistoryChange(batchedUpdatesWrapper);
   }
 
@@ -1100,8 +1086,8 @@ function makeStateMachine<
     historyOps: HistoryOp<TPresence>[],
     batchedUpdatesWrapper: (cb: () => void) => void
   ) {
-    if (state.pausedHistory !== null) {
-      state.pausedHistory.unshift(...historyOps);
+    if (context.pausedHistory !== null) {
+      context.pausedHistory.unshift(...historyOps);
     } else {
       _addToRealUndoStack(historyOps, batchedUpdatesWrapper);
     }
@@ -1121,14 +1107,14 @@ function makeStateMachine<
   ) {
     batchedUpdatesWrapper(() => {
       if (otherEvents.length > 0) {
-        const others = state.others.current;
+        const others = context.others.current;
         for (const event of otherEvents) {
           eventHub.others.notify({ others, event });
         }
       }
 
       if (presence) {
-        eventHub.me.notify(state.me.current);
+        eventHub.me.notify(context.me.current);
       }
 
       if (storageUpdates.size > 0) {
@@ -1139,11 +1125,11 @@ function makeStateMachine<
   }
 
   function getConnectionId() {
-    const conn = state.connection.current;
+    const conn = context.connection.current;
     if (isConnectionSelfAware(conn)) {
       return conn.id;
-    } else if (state.lastConnectionId !== null) {
-      return state.lastConnectionId;
+    } else if (context.lastConnectionId !== null) {
+      return context.lastConnectionId;
     }
 
     throw new Error(
@@ -1189,18 +1175,18 @@ function makeStateMachine<
         };
 
         for (const key in op.data) {
-          reverse.data[key] = state.me.current[key];
+          reverse.data[key] = context.me.current[key];
         }
 
-        state.me.patch(op.data);
+        context.me.patch(op.data);
 
-        if (state.buffer.me === null) {
-          state.buffer.me = { type: "partial", data: op.data };
+        if (context.buffer.me === null) {
+          context.buffer.me = { type: "partial", data: op.data };
         } else {
           // Merge the new fields with whatever is already queued up (doesn't
           // matter whether its a partial or full update)
           for (const key in op.data) {
-            state.buffer.me.data[key] = op.data[key];
+            context.buffer.me.data[key] = op.data[key];
           }
         }
 
@@ -1214,10 +1200,10 @@ function makeStateMachine<
         } else {
           const opId = nn(op.opId);
           if (process.env.NODE_ENV !== "production") {
-            nn(state.opStackTraces).delete(opId);
+            nn(context.opStackTraces).delete(opId);
           }
 
-          const deleted = state.unacknowledgedOps.delete(opId);
+          const deleted = context.unacknowledgedOps.delete(opId);
           source = deleted ? OpSource.ACK : OpSource.REMOTE;
         }
 
@@ -1231,9 +1217,7 @@ function makeStateMachine<
             output.storageUpdates.set(
               nn(applyOpResult.modified.node._id),
               mergeStorageUpdates(
-                output.storageUpdates.get(
-                  nn(applyOpResult.modified.node._id)
-                ) as any, // FIXME
+                output.storageUpdates.get(nn(applyOpResult.modified.node._id)),
                 applyOpResult.modified
               )
             );
@@ -1274,7 +1258,7 @@ function makeStateMachine<
       case OpCode.DELETE_OBJECT_KEY:
       case OpCode.UPDATE_OBJECT:
       case OpCode.DELETE_CRDT: {
-        const node = state.nodes.get(op.id);
+        const node = context.nodes.get(op.id);
         if (node === undefined) {
           return { modified: false };
         }
@@ -1283,13 +1267,17 @@ function makeStateMachine<
       }
 
       case OpCode.SET_PARENT_KEY: {
-        const node = state.nodes.get(op.id);
+        const node = context.nodes.get(op.id);
         if (node === undefined) {
           return { modified: false };
         }
 
         if (node.parent.type === "HasParent" && isLiveList(node.parent.node)) {
-          return node.parent.node._setChildKey(op.parentKey, node, source);
+          return node.parent.node._setChildKey(
+            asPos(op.parentKey),
+            node,
+            source
+          );
         }
         return { modified: false };
       }
@@ -1301,7 +1289,7 @@ function makeStateMachine<
           return { modified: false };
         }
 
-        const parentNode = state.nodes.get(op.parentId);
+        const parentNode = context.nodes.get(op.parentId);
         if (parentNode === undefined) {
           return { modified: false };
         }
@@ -1311,145 +1299,24 @@ function makeStateMachine<
     }
   }
 
-  function subscribeToLiveStructureDeeply<L extends LiveStructure>(
-    node: L,
-    callback: (updates: StorageUpdate[]) => void
-  ): () => void {
-    return eventHub.storage.subscribe((updates) => {
-      const relatedUpdates = updates.filter((update) =>
-        isSameNodeOrChildOf(update.node, node)
-      );
-      if (relatedUpdates.length > 0) {
-        callback(relatedUpdates);
-      }
-    });
-  }
-
-  function subscribeToLiveStructureShallowly<L extends LiveStructure>(
-    node: L,
-    callback: (node: L) => void
-  ): () => void {
-    return eventHub.storage.subscribe((updates) => {
-      for (const update of updates) {
-        if (update.node._id === node._id) {
-          callback(update.node as L);
-        }
-      }
-    });
-  }
-
-  // Generic storage callbacks
-  function subscribe(callback: StorageCallback): () => void; // prettier-ignore
-  // Storage callbacks filtered by Live structure
-  function subscribe<L extends LiveStructure>(liveStructure: L, callback: (node: L) => void): () => void; // prettier-ignore
-  function subscribe(node: LiveStructure, callback: StorageCallback, options: { isDeep: true }): () => void; // prettier-ignore
-  // Room event callbacks
-  function subscribe<E extends RoomEventName>(type: E, listener: RoomEventCallbackFor<E, TPresence, TUserMeta, TRoomEvent>): () => void; // prettier-ignore
-
-  function subscribe<L extends LiveStructure, E extends RoomEventName>(
-    first: StorageCallback | L | E,
-    second?: ((node: L) => void) | StorageCallback | RoomEventCallback,
-    options?: { isDeep: boolean }
-  ): () => void {
-    if (typeof first === "string" && isRoomEventName(first)) {
-      if (typeof second !== "function") {
-        throw new Error("Second argument must be a callback function");
-      }
-      const callback = second;
-      switch (first) {
-        case "event":
-          return eventHub.customEvent.subscribe(
-            callback as Callback<CustomEvent<TRoomEvent>>
-          );
-
-        case "my-presence":
-          return eventHub.me.subscribe(callback as Callback<TPresence>);
-
-        case "others": {
-          // NOTE: Others have a different callback structure, where the API
-          // exposed on the outside takes _two_ callback arguments!
-          const cb = callback as (
-            others: Others<TPresence, TUserMeta>,
-            event: OthersEvent<TPresence, TUserMeta>
-          ) => void;
-          return eventHub.others.subscribe(({ others, event }) =>
-            cb(others, event)
-          );
-        }
-
-        case "error":
-          return eventHub.error.subscribe(callback as Callback<Error>);
-
-        case "connection":
-          return eventHub.connection.subscribe(
-            callback as Callback<ConnectionState>
-          );
-
-        case "storage":
-          return eventHub.storage.subscribe(
-            callback as Callback<StorageUpdate[]>
-          );
-
-        case "history":
-          return eventHub.history.subscribe(callback as Callback<HistoryEvent>);
-
-        case "storage-status":
-          return eventHub.storageStatus.subscribe(
-            callback as Callback<StorageStatus>
-          );
-
-        // istanbul ignore next
-        default:
-          return assertNever(first, "Unknown event");
-      }
-    }
-
-    if (second === undefined || typeof first === "function") {
-      if (typeof first === "function") {
-        const storageCallback = first;
-        return eventHub.storage.subscribe(storageCallback);
-      } else {
-        // istanbul ignore next
-        throw new Error("Please specify a listener callback");
-      }
-    }
-
-    if (isLiveNode(first)) {
-      const node = first;
-      if (options?.isDeep) {
-        const storageCallback = second as StorageCallback;
-        return subscribeToLiveStructureDeeply(node, storageCallback);
-      } else {
-        const nodeCallback = second as (node: L) => void;
-        return subscribeToLiveStructureShallowly(node, nodeCallback);
-      }
-    }
-
-    throw new Error(`"${first}" is not a valid event name`);
-  }
-
-  function getConnectionState() {
-    return state.connection.current.state;
-  }
-
   function connect() {
     if (
-      state.connection.current.state !== "closed" &&
-      state.connection.current.state !== "unavailable"
+      context.connection.current.status !== "closed" &&
+      context.connection.current.status !== "unavailable"
     ) {
       return;
     }
 
     const auth = prepareAuthEndpoint(
       config.authentication,
-      config.polyfills?.fetch ?? config.fetchPolyfill
+      config.polyfills?.fetch
     );
     const createWebSocket = prepareCreateWebSocket(
       config.liveblocksServer,
-      config.polyfills?.WebSocket ?? config.WebSocketPolyfill
+      config.polyfills?.WebSocket
     );
 
-    updateConnection({ state: "authenticating" }, batchUpdates);
+    updateConnection({ status: "authenticating" }, batchUpdates);
     effects.authenticate(auth, createWebSocket);
   }
 
@@ -1459,8 +1326,8 @@ function makeStateMachine<
   ) {
     const oldValues = {} as TPresence;
 
-    if (state.buffer.me === null) {
-      state.buffer.me = {
+    if (context.buffer.me === null) {
+      context.buffer.me = {
         type: "partial",
         data: {},
       };
@@ -1472,20 +1339,20 @@ function makeStateMachine<
       if (overrideValue === undefined) {
         continue;
       }
-      state.buffer.me.data[key] = overrideValue;
-      oldValues[key] = state.me.current[key];
+      context.buffer.me.data[key] = overrideValue;
+      oldValues[key] = context.me.current[key];
     }
 
-    state.me.patch(patch);
+    context.me.patch(patch);
 
-    if (state.activeBatch) {
+    if (context.activeBatch) {
       if (options?.addToHistory) {
-        state.activeBatch.reverseOps.unshift({
+        context.activeBatch.reverseOps.unshift({
           type: "presence",
           data: oldValues,
         });
       }
-      state.activeBatch.updates.presence = true;
+      context.activeBatch.updates.presence = true;
     } else {
       tryFlushing();
       batchUpdates(() => {
@@ -1508,7 +1375,10 @@ function makeStateMachine<
     );
   }
 
-  function authenticationSuccess(token: RoomAuthToken, socket: WebSocket) {
+  function authenticationSuccess(
+    token: RoomAuthToken,
+    socket: IWebSocketInstance
+  ) {
     socket.addEventListener("message", onMessage);
     socket.addEventListener("open", onOpen);
     socket.addEventListener("close", onClose);
@@ -1516,7 +1386,7 @@ function makeStateMachine<
 
     updateConnection(
       {
-        state: "connecting",
+        status: "connecting",
         id: token.actor,
         userInfo: token.info,
         userId: token.id,
@@ -1524,24 +1394,26 @@ function makeStateMachine<
       },
       batchUpdates
     );
-    state.idFactory = makeIdFactory(token.actor);
-    state.socket = socket;
+    context.idFactory = makeIdFactory(token.actor);
+    context.socket = socket;
   }
 
   function authenticationFailure(error: Error) {
     if (process.env.NODE_ENV !== "production") {
       console.error("Call to authentication endpoint failed", error);
     }
-    state.token = null;
-    updateConnection({ state: "unavailable" }, batchUpdates);
-    state.numberOfRetry++;
-    state.timeoutHandles.reconnect = effects.scheduleReconnect(getRetryDelay());
+    context.token = null;
+    updateConnection({ status: "unavailable" }, batchUpdates);
+    context.numRetries++;
+
+    clearTimeout(context.timers.reconnect);
+    context.timers.reconnect = effects.scheduleReconnect(getRetryDelay());
   }
 
   function onVisibilityChange(visibilityState: DocumentVisibilityState) {
     if (
       visibilityState === "visible" &&
-      state.connection.current.state === "open"
+      context.connection.current.status === "open"
     ) {
       log("Heartbeat after visibility change");
       heartbeat();
@@ -1556,10 +1428,10 @@ function makeStateMachine<
       // handle it if `targetActor` matches our own connection ID, but we can
       // use the opportunity to effectively reset the known presence as
       // a "keyframe" update, while we have free access to it.
-      const oldUser = state.others.getUser(message.actor);
-      state.others.setOther(message.actor, message.data);
+      const oldUser = context.others.getUser(message.actor);
+      context.others.setOther(message.actor, message.data);
 
-      const newUser = state.others.getUser(message.actor);
+      const newUser = context.others.getUser(message.actor);
       if (oldUser === undefined && newUser !== undefined) {
         // The user just became "visible" due to this update, so fire the
         // "enter" event
@@ -1567,10 +1439,10 @@ function makeStateMachine<
       }
     } else {
       // The incoming message is a partial presence update
-      state.others.patchOther(message.actor, message.data), message;
+      context.others.patchOther(message.actor, message.data), message;
     }
 
-    const user = state.others.getUser(message.actor);
+    const user = context.others.getUser(message.actor);
     if (user) {
       return {
         type: "update",
@@ -1585,9 +1457,9 @@ function makeStateMachine<
   function onUserLeftMessage(
     message: UserLeftServerMsg
   ): OthersEvent<TPresence, TUserMeta> | null {
-    const user = state.others.getUser(message.actor);
+    const user = context.others.getUser(message.actor);
     if (user) {
-      state.others.removeConnection(message.actor);
+      context.others.removeConnection(message.actor);
       return { type: "leave", user };
     }
     return null;
@@ -1596,17 +1468,17 @@ function makeStateMachine<
   function onRoomStateMessage(
     message: RoomStateServerMsg<TUserMeta>
   ): OthersEvent<TPresence, TUserMeta> {
-    for (const connectionId in state.others._connections) {
+    for (const connectionId in context.others._connections) {
       const user = message.users[connectionId];
       if (user === undefined) {
-        state.others.removeConnection(Number(connectionId));
+        context.others.removeConnection(Number(connectionId));
       }
     }
 
     for (const key in message.users) {
       const user = message.users[key];
       const connectionId = Number(key);
-      state.others.setConnection(
+      context.others.setConnection(
         connectionId,
         user.id,
         user.info,
@@ -1617,12 +1489,14 @@ function makeStateMachine<
   }
 
   function onNavigatorOnline() {
-    if (state.connection.current.state === "unavailable") {
+    if (context.connection.current.status === "unavailable") {
       log("Try to reconnect after connectivity change");
       reconnect();
     }
   }
 
+  function canUndo() { return context.undoStack.length > 0; } // prettier-ignore
+  function canRedo() { return context.redoStack.length > 0; } // prettier-ignore
   function onHistoryChange(batchedUpdatesWrapper: (cb: () => void) => void) {
     batchedUpdatesWrapper(() => {
       eventHub.history.notify({ canUndo: canUndo(), canRedo: canRedo() });
@@ -1632,7 +1506,7 @@ function makeStateMachine<
   function onUserJoinedMessage(
     message: UserJoinServerMsg<TUserMeta>
   ): OthersEvent<TPresence, TUserMeta> | undefined {
-    state.others.setConnection(
+    context.others.setConnection(
       message.actor,
       message.id,
       message.info,
@@ -1640,16 +1514,16 @@ function makeStateMachine<
     );
     // Send current presence to new user
     // TODO: Consider storing it on the backend
-    state.buffer.messages.push({
+    context.buffer.messages.push({
       type: ClientMsgCode.UPDATE_PRESENCE,
-      data: state.me.current,
+      data: context.me.current,
       targetActor: message.actor,
     });
     tryFlushing();
 
     // We recorded the connection, but we won't make the new user visible
     // unless we also know their initial presence data at this point.
-    const user = state.others.getUser(message.actor);
+    const user = context.others.getUser(message.actor);
     return user ? { type: "enter", user } : undefined;
   }
 
@@ -1677,9 +1551,38 @@ function makeStateMachine<
     }
   }
 
-  function onMessage(event: MessageEvent<string>) {
+  function applyAndSendOps(
+    offlineOps: Map<string, Op>,
+    batchedUpdatesWrapper: (cb: () => void) => void
+  ) {
+    if (offlineOps.size === 0) {
+      return;
+    }
+
+    const messages: ClientMsg<TPresence, TRoomEvent>[] = [];
+
+    const ops = Array.from(offlineOps.values());
+
+    const result = applyOps(ops, true);
+
+    messages.push({
+      type: ClientMsgCode.UPDATE_STORAGE,
+      ops: result.ops,
+    });
+
+    notify(result.updates, batchedUpdatesWrapper);
+
+    effects.send(messages);
+  }
+
+  function onMessage(event: IWebSocketMessageEvent) {
     if (event.data === "pong") {
-      clearTimeout(state.timeoutHandles.pongTimeout);
+      clearTimeout(context.timers.pongTimeout);
+      return;
+    }
+
+    if (typeof event.data !== "string") {
+      // istanbul ignore next: Unknown incoming message
       return;
     }
 
@@ -1737,7 +1640,7 @@ function makeStateMachine<
           case ServerMsgCode.INITIAL_STORAGE_STATE: {
             // createOrUpdateRootFromMessage function could add ops to offlineOperations.
             // Client shouldn't resend these ops as part of the offline ops sending after reconnect.
-            const unacknowledgedOps = new Map(state.unacknowledgedOps);
+            const unacknowledgedOps = new Map(context.unacknowledgedOps);
             createOrUpdateRootFromMessage(message, doNotBatchUpdates);
             applyAndSendOps(unacknowledgedOps, doNotBatchUpdates);
             if (_getInitialStateResolver !== null) {
@@ -1750,16 +1653,12 @@ function makeStateMachine<
           // Write event
           case ServerMsgCode.UPDATE_STORAGE: {
             const applyResult = applyOps(message.ops, false);
-            applyResult.updates.storageUpdates.forEach((value, key) => {
+            for (const [key, value] of applyResult.updates.storageUpdates) {
               updates.storageUpdates.set(
                 key,
-                mergeStorageUpdates(
-                  updates.storageUpdates.get(key) as any, // FIXME
-                  value
-                )
+                mergeStorageUpdates(updates.storageUpdates.get(key), value)
               );
-            });
-
+            }
             break;
           }
 
@@ -1777,7 +1676,7 @@ function makeStateMachine<
             if (process.env.NODE_ENV !== "production") {
               const traces: Set<string> = new Set();
               for (const opId of message.opIds) {
-                const trace = state.opStackTraces?.get(opId);
+                const trace = context.opStackTraces?.get(opId);
                 if (trace) {
                   traces.add(trace);
                 }
@@ -1804,29 +1703,27 @@ function makeStateMachine<
     });
   }
 
-  function onClose(event: { code: number; wasClean: boolean; reason: string }) {
-    state.socket = null;
+  function onClose(event: IWebSocketCloseEvent) {
+    context.socket = null;
 
-    clearTimeout(state.timeoutHandles.pongTimeout);
-    clearInterval(state.intervalHandles.heartbeat);
-    if (state.timeoutHandles.flush) {
-      clearTimeout(state.timeoutHandles.flush);
-    }
-    clearTimeout(state.timeoutHandles.reconnect);
+    clearTimeout(context.timers.flush);
+    clearTimeout(context.timers.reconnect);
+    clearInterval(context.timers.heartbeat);
+    clearTimeout(context.timers.pongTimeout);
 
-    state.others.clearOthers();
+    context.others.clearOthers();
 
     batchUpdates(() => {
       notify({ others: [{ type: "reset" }] }, doNotBatchUpdates);
 
       if (event.code >= 4000 && event.code <= 4100) {
-        updateConnection({ state: "failed" }, doNotBatchUpdates);
+        updateConnection({ status: "failed" }, doNotBatchUpdates);
 
         const error = new LiveblocksError(event.reason, event.code);
         eventHub.error.notify(error);
 
         const delay = getRetryDelay(true);
-        state.numberOfRetry++;
+        context.numRetries++;
 
         if (process.env.NODE_ENV !== "production") {
           console.error(
@@ -1834,21 +1731,25 @@ function makeStateMachine<
           );
         }
 
-        updateConnection({ state: "unavailable" }, doNotBatchUpdates);
-        state.timeoutHandles.reconnect = effects.scheduleReconnect(delay);
+        updateConnection({ status: "unavailable" }, doNotBatchUpdates);
+
+        clearTimeout(context.timers.reconnect);
+        context.timers.reconnect = effects.scheduleReconnect(delay);
       } else if (event.code === WebsocketCloseCodes.CLOSE_WITHOUT_RETRY) {
-        updateConnection({ state: "closed" }, doNotBatchUpdates);
+        updateConnection({ status: "closed" }, doNotBatchUpdates);
       } else {
         const delay = getRetryDelay();
-        state.numberOfRetry++;
+        context.numRetries++;
 
         if (process.env.NODE_ENV !== "production") {
           console.warn(
             `Connection to Liveblocks websocket server closed (code: ${event.code}). Retrying in ${delay}ms.`
           );
         }
-        updateConnection({ state: "unavailable" }, doNotBatchUpdates);
-        state.timeoutHandles.reconnect = effects.scheduleReconnect(delay);
+        updateConnection({ status: "unavailable" }, doNotBatchUpdates);
+
+        clearTimeout(context.timers.reconnect);
+        context.timers.reconnect = effects.scheduleReconnect(delay);
       }
     });
   }
@@ -1857,23 +1758,23 @@ function makeStateMachine<
     connection: Connection,
     batchedUpdatesWrapper: (cb: () => void) => void
   ) {
-    state.connection.set(connection);
+    context.connection.set(connection);
     batchedUpdatesWrapper(() => {
-      eventHub.connection.notify(connection.state);
+      eventHub.connection.notify(connection.status);
     });
   }
 
   function getRetryDelay(slow: boolean = false) {
     if (slow) {
       return BACKOFF_RETRY_DELAYS_SLOW[
-        state.numberOfRetry < BACKOFF_RETRY_DELAYS_SLOW.length
-          ? state.numberOfRetry
+        context.numRetries < BACKOFF_RETRY_DELAYS_SLOW.length
+          ? context.numRetries
           : BACKOFF_RETRY_DELAYS_SLOW.length - 1
       ];
     }
     return BACKOFF_RETRY_DELAYS[
-      state.numberOfRetry < BACKOFF_RETRY_DELAYS.length
-        ? state.numberOfRetry
+      context.numRetries < BACKOFF_RETRY_DELAYS.length
+        ? context.numRetries
         : BACKOFF_RETRY_DELAYS.length - 1
     ];
   }
@@ -1881,34 +1782,33 @@ function makeStateMachine<
   function onError() {}
 
   function onOpen() {
-    clearInterval(state.intervalHandles.heartbeat);
+    clearInterval(context.timers.heartbeat);
+    context.timers.heartbeat = effects.startHeartbeatInterval();
 
-    state.intervalHandles.heartbeat = effects.startHeartbeatInterval();
-
-    if (state.connection.current.state === "connecting") {
+    if (context.connection.current.status === "connecting") {
       updateConnection(
-        { ...state.connection.current, state: "open" },
+        { ...context.connection.current, status: "open" },
         batchUpdates
       );
-      state.numberOfRetry = 0;
+      context.numRetries = 0;
 
       // Re-broadcast the user presence during a reconnect.
-      if (state.lastConnectionId !== undefined) {
-        state.buffer.me = {
+      if (context.lastConnectionId !== undefined) {
+        context.buffer.me = {
           type: "full",
           data:
             // Because state.me.current is a readonly object, we'll have to
             // make a copy here. Otherwise, type errors happen later when
             // "patching" my presence.
-            { ...state.me.current },
+            { ...context.me.current },
         };
         tryFlushing();
       }
 
-      state.lastConnectionId = state.connection.current.id;
+      context.lastConnectionId = context.connection.current.id;
 
-      if (state.root) {
-        state.buffer.messages.push({ type: ClientMsgCode.FETCH_STORAGE });
+      if (context.root) {
+        context.buffer.messages.push({ type: ClientMsgCode.FETCH_STORAGE });
       }
       tryFlushing();
     } else {
@@ -1917,16 +1817,16 @@ function makeStateMachine<
   }
 
   function heartbeat() {
-    if (state.socket === null) {
+    if (context.socket === null) {
       // Should never happen, because we clear the pong timeout when the connection is dropped explictly
       return;
     }
 
-    clearTimeout(state.timeoutHandles.pongTimeout);
-    state.timeoutHandles.pongTimeout = effects.schedulePongTimeout();
+    clearTimeout(context.timers.pongTimeout);
+    context.timers.pongTimeout = effects.schedulePongTimeout();
 
-    if (state.socket.readyState === state.socket.OPEN) {
-      state.socket.send("ping");
+    if (context.socket.readyState === context.socket.OPEN) {
+      context.socket.send("ping");
     }
   }
 
@@ -1935,163 +1835,130 @@ function makeStateMachine<
     reconnect();
   }
 
-  function reconnect() {
-    if (state.socket) {
-      state.socket.removeEventListener("open", onOpen);
-      state.socket.removeEventListener("message", onMessage);
-      state.socket.removeEventListener("close", onClose);
-      state.socket.removeEventListener("error", onError);
-      state.socket.close();
-      state.socket = null;
+  function disconnect() {
+    if (context.socket) {
+      context.socket.removeEventListener("open", onOpen);
+      context.socket.removeEventListener("message", onMessage);
+      context.socket.removeEventListener("close", onClose);
+      context.socket.removeEventListener("error", onError);
+      context.socket.close();
+      context.socket = null;
     }
 
-    updateConnection({ state: "unavailable" }, batchUpdates);
-    clearTimeout(state.timeoutHandles.pongTimeout);
-    if (state.timeoutHandles.flush) {
-      clearTimeout(state.timeoutHandles.flush);
+    clearTimeout(context.timers.flush);
+    clearTimeout(context.timers.reconnect);
+    clearInterval(context.timers.heartbeat);
+    clearTimeout(context.timers.pongTimeout);
+
+    batchUpdates(() => {
+      updateConnection({ status: "closed" }, doNotBatchUpdates);
+
+      context.others.clearOthers();
+      notify({ others: [{ type: "reset" }] }, doNotBatchUpdates);
+    });
+
+    // Clear all event listeners
+    for (const eventSource of Object.values(eventHub)) {
+      eventSource.clear();
     }
-    clearTimeout(state.timeoutHandles.reconnect);
-    clearInterval(state.intervalHandles.heartbeat);
+  }
+
+  function reconnect() {
+    if (context.socket) {
+      context.socket.removeEventListener("open", onOpen);
+      context.socket.removeEventListener("message", onMessage);
+      context.socket.removeEventListener("close", onClose);
+      context.socket.removeEventListener("error", onError);
+      context.socket.close();
+      context.socket = null;
+    }
+
+    clearTimeout(context.timers.flush);
+    clearTimeout(context.timers.reconnect);
+    clearInterval(context.timers.heartbeat);
+    clearTimeout(context.timers.pongTimeout);
+
+    updateConnection({ status: "unavailable" }, batchUpdates);
+
     connect();
   }
 
-  function applyAndSendOps(
-    offlineOps: Map<string, Op>,
-    batchedUpdatesWrapper: (cb: () => void) => void
-  ) {
-    if (offlineOps.size === 0) {
-      return;
-    }
-
-    const messages: ClientMsg<TPresence, TRoomEvent>[] = [];
-
-    const ops = Array.from(offlineOps.values());
-
-    const result = applyOps(ops, true);
-
-    messages.push({
-      type: ClientMsgCode.UPDATE_STORAGE,
-      ops: result.ops,
-    });
-
-    notify(result.updates, batchedUpdatesWrapper);
-
-    effects.send(messages);
-  }
-
   function tryFlushing() {
-    const storageOps = state.buffer.storageOperations;
-
+    const storageOps = context.buffer.storageOperations;
     if (storageOps.length > 0) {
-      storageOps.forEach((op) => {
-        state.unacknowledgedOps.set(nn(op.opId), op);
-      });
+      for (const op of storageOps) {
+        context.unacknowledgedOps.set(nn(op.opId), op);
+      }
       notifyStorageStatus();
     }
 
     if (
-      state.socket === null ||
-      state.socket.readyState !== state.socket.OPEN
+      context.socket === null ||
+      context.socket.readyState !== context.socket.OPEN
     ) {
-      state.buffer.storageOperations = [];
+      context.buffer.storageOperations = [];
       return;
     }
 
     const now = Date.now();
+    const elapsedMillis = now - context.buffer.lastFlushedAt;
 
-    const elapsedTime = now - state.lastFlushTime;
-
-    if (elapsedTime > config.throttleDelay) {
-      const messages = flushDataToMessages(state);
-
-      if (messages.length === 0) {
+    if (elapsedMillis > config.throttleDelay) {
+      // Flush the buffer right now
+      const messagesToFlush = serializeBuffer();
+      if (messagesToFlush.length === 0) {
         return;
       }
-      effects.send(messages);
-      state.buffer = {
+
+      effects.send(messagesToFlush);
+      context.buffer = {
+        lastFlushedAt: now,
         messages: [],
         storageOperations: [],
         me: null,
       };
-      state.lastFlushTime = now;
     } else {
-      if (state.timeoutHandles.flush !== null) {
-        clearTimeout(state.timeoutHandles.flush);
-      }
-
-      state.timeoutHandles.flush = effects.delayFlush(
-        config.throttleDelay - (now - state.lastFlushTime)
+      // Or schedule the flush a few millis into the future
+      clearTimeout(context.timers.flush);
+      context.timers.flush = effects.scheduleFlush(
+        config.throttleDelay - elapsedMillis
       );
     }
   }
 
-  function flushDataToMessages(
-    state: State<TPresence, TStorage, TUserMeta, TRoomEvent>
-  ) {
+  /**
+   * Returns a list of ClientMsgs to flush to the network, computed from all
+   * pending changes in the buffer. Has no side effects.
+   */
+  function serializeBuffer() {
     const messages: ClientMsg<TPresence, TRoomEvent>[] = [];
-    if (state.buffer.me) {
+    if (context.buffer.me) {
       messages.push(
-        state.buffer.me.type === "full"
+        context.buffer.me.type === "full"
           ? {
               type: ClientMsgCode.UPDATE_PRESENCE,
               // Populating the `targetActor` field turns this message into
               // a Full Presence™ update message (not a patch), which will get
               // interpreted by other clients as such.
               targetActor: -1,
-              data: state.buffer.me.data,
+              data: context.buffer.me.data,
             }
           : {
               type: ClientMsgCode.UPDATE_PRESENCE,
-              data: state.buffer.me.data,
+              data: context.buffer.me.data,
             }
       );
     }
-    for (const event of state.buffer.messages) {
+    for (const event of context.buffer.messages) {
       messages.push(event);
     }
-    if (state.buffer.storageOperations.length > 0) {
+    if (context.buffer.storageOperations.length > 0) {
       messages.push({
         type: ClientMsgCode.UPDATE_STORAGE,
-        ops: state.buffer.storageOperations,
+        ops: context.buffer.storageOperations,
       });
     }
     return messages;
-  }
-
-  function disconnect() {
-    if (state.socket) {
-      state.socket.removeEventListener("open", onOpen);
-      state.socket.removeEventListener("message", onMessage);
-      state.socket.removeEventListener("close", onClose);
-      state.socket.removeEventListener("error", onError);
-      state.socket.close();
-      state.socket = null;
-    }
-
-    batchUpdates(() => {
-      updateConnection({ state: "closed" }, doNotBatchUpdates);
-
-      if (state.timeoutHandles.flush) {
-        clearTimeout(state.timeoutHandles.flush);
-      }
-      clearTimeout(state.timeoutHandles.reconnect);
-      clearTimeout(state.timeoutHandles.pongTimeout);
-      clearInterval(state.intervalHandles.heartbeat);
-
-      state.others.clearOthers();
-      notify({ others: [{ type: "reset" }] }, doNotBatchUpdates);
-
-      // Clear all event listeners
-      Object.values(eventHub).forEach((eventSource) => eventSource.clear());
-    });
-  }
-
-  function getPresence(): Readonly<TPresence> {
-    return state.me.current;
-  }
-
-  function getOthers(): Others<TPresence, TUserMeta> {
-    return state.others.current;
   }
 
   function broadcastEvent(
@@ -2100,11 +1967,11 @@ function makeStateMachine<
       shouldQueueEventIfNotReady: false,
     }
   ) {
-    if (state.socket === null && !options.shouldQueueEventIfNotReady) {
+    if (context.socket === null && !options.shouldQueueEventIfNotReady) {
       return;
     }
 
-    state.buffer.messages.push({
+    context.buffer.messages.push({
       type: ClientMsgCode.BROADCAST_EVENT,
       event,
     });
@@ -2112,7 +1979,7 @@ function makeStateMachine<
   }
 
   function dispatchOps(ops: Op[]) {
-    state.buffer.storageOperations.push(...ops);
+    context.buffer.storageOperations.push(...ops);
     tryFlushing();
   }
 
@@ -2121,7 +1988,7 @@ function makeStateMachine<
 
   function startLoadingStorage(): Promise<void> {
     if (_getInitialStatePromise === null) {
-      state.buffer.messages.push({ type: ClientMsgCode.FETCH_STORAGE });
+      context.buffer.messages.push({ type: ClientMsgCode.FETCH_STORAGE });
       tryFlushing();
       _getInitialStatePromise = new Promise(
         (resolve) => (_getInitialStateResolver = resolve)
@@ -2140,13 +2007,13 @@ function makeStateMachine<
    * root.
    */
   function getStorageSnapshot(): LiveObject<TStorage> | null {
-    const root = state.root;
+    const root = context.root;
     if (root !== undefined) {
       // Done loading
       return root;
     } else {
       // Not done loading, kick off the loading (will not do anything if already kicked off)
-      startLoadingStorage();
+      void startLoadingStorage();
       return null;
     }
   }
@@ -2154,82 +2021,74 @@ function makeStateMachine<
   async function getStorage(): Promise<{
     root: LiveObject<TStorage>;
   }> {
-    if (state.root) {
+    if (context.root) {
       // Store has already loaded, so we can resolve it directly
       return Promise.resolve({
-        root: state.root as LiveObject<TStorage>,
+        root: context.root,
       });
     }
 
     await startLoadingStorage();
     return {
-      root: nn(state.root) as LiveObject<TStorage>,
+      root: nn(context.root) as LiveObject<TStorage>,
     };
   }
 
   function undo() {
-    if (state.activeBatch) {
+    if (context.activeBatch) {
       throw new Error("undo is not allowed during a batch");
     }
-    const historyOps = state.undoStack.pop();
+    const historyOps = context.undoStack.pop();
     if (historyOps === undefined) {
       return;
     }
 
-    state.pausedHistory = null;
+    context.pausedHistory = null;
     const result = applyOps(historyOps, true);
 
     batchUpdates(() => {
       notify(result.updates, doNotBatchUpdates);
-      state.redoStack.push(result.reverse);
+      context.redoStack.push(result.reverse);
       onHistoryChange(doNotBatchUpdates);
     });
 
     for (const op of result.ops) {
       if (op.type !== "presence") {
-        state.buffer.storageOperations.push(op);
+        context.buffer.storageOperations.push(op);
       }
     }
     tryFlushing();
-  }
-
-  function canUndo() {
-    return state.undoStack.length > 0;
   }
 
   function redo() {
-    if (state.activeBatch) {
+    if (context.activeBatch) {
       throw new Error("redo is not allowed during a batch");
     }
 
-    const historyOps = state.redoStack.pop();
+    const historyOps = context.redoStack.pop();
     if (historyOps === undefined) {
       return;
     }
 
-    state.pausedHistory = null;
+    context.pausedHistory = null;
     const result = applyOps(historyOps, true);
 
     batchUpdates(() => {
       notify(result.updates, doNotBatchUpdates);
-      state.undoStack.push(result.reverse);
+      context.undoStack.push(result.reverse);
       onHistoryChange(doNotBatchUpdates);
     });
 
     for (const op of result.ops) {
       if (op.type !== "presence") {
-        state.buffer.storageOperations.push(op);
+        context.buffer.storageOperations.push(op);
       }
     }
     tryFlushing();
   }
 
-  function canRedo() {
-    return state.redoStack.length > 0;
-  }
-
   function batch<T>(callback: () => T): T {
-    if (state.activeBatch) {
+    if (context.activeBatch) {
       // If there already is an active batch, we don't have to handle this in
       // any special way. That outer active batch will handle the batch. This
       // nested call can be a no-op.
@@ -2239,7 +2098,7 @@ function makeStateMachine<
     let returnValue: T = undefined as unknown as T;
 
     batchUpdates(() => {
-      state.activeBatch = {
+      context.activeBatch = {
         ops: [],
         updates: {
           storageUpdates: new Map(),
@@ -2253,8 +2112,8 @@ function makeStateMachine<
       } finally {
         // "Pop" the current batch of the state, closing the active batch, but
         // handling it separately here
-        const currentBatch = state.activeBatch;
-        state.activeBatch = null;
+        const currentBatch = context.activeBatch;
+        context.activeBatch = null;
 
         if (currentBatch.reverseOps.length > 0) {
           addToUndoStack(currentBatch.reverseOps, doNotBatchUpdates);
@@ -2263,7 +2122,7 @@ function makeStateMachine<
         if (currentBatch.ops.length > 0) {
           // Only clear the redo stack if something has changed during a batch
           // Clear the redo stack because batch is always called from a local operation
-          state.redoStack = [];
+          context.redoStack = [];
         }
 
         if (currentBatch.ops.length > 0) {
@@ -2279,28 +2138,24 @@ function makeStateMachine<
   }
 
   function pauseHistory() {
-    state.pausedHistory = [];
+    context.pausedHistory = [];
   }
 
   function resumeHistory() {
-    const historyOps = state.pausedHistory;
-    state.pausedHistory = null;
+    const historyOps = context.pausedHistory;
+    context.pausedHistory = null;
     if (historyOps !== null && historyOps.length > 0) {
       _addToRealUndoStack(historyOps, batchUpdates);
     }
   }
 
-  function simulateSocketClose() {
-    if (state.socket) {
-      state.socket = null;
+  function simulateCloseWebsocket() {
+    if (context.socket) {
+      context.socket = null;
     }
   }
 
-  function simulateSendCloseEvent(event: {
-    code: number;
-    wasClean: boolean;
-    reason: string;
-  }) {
+  function simulateSendCloseEvent(event: IWebSocketCloseEvent) {
     onClose(event);
   }
 
@@ -2309,11 +2164,11 @@ function makeStateMachine<
       return "not-loaded";
     }
 
-    if (state.root === undefined) {
+    if (context.root === undefined) {
       return "loading";
     }
 
-    return state.unacknowledgedOps.size === 0
+    return context.unacknowledgedOps.size === 0
       ? "synchronized"
       : "synchronizing";
   }
@@ -2334,25 +2189,54 @@ function makeStateMachine<
     }
   }
 
-  return {
-    // Internal
-    onClose,
-    onMessage,
-    authenticationSuccess,
-    heartbeat,
-    onNavigatorOnline,
-    // Internal DevTools
-    simulateSocketClose,
-    simulateSendCloseEvent,
-    onVisibilityChange,
-    getUndoStack: () => state.undoStack,
-    getItemsCount: () => state.nodes.size,
+  // Derived cached state for use in DevTools
+  const others_forDevTools = new DerivedRef(context.others, (others) =>
+    others.map((other, index) => userToTreeNode(`Other ${index}`, other))
+  );
 
-    // Core
-    connect,
-    disconnect,
+  const events = {
+    customEvent: eventHub.customEvent.observable,
+    others: eventHub.others.observable,
+    me: eventHub.me.observable,
+    error: eventHub.error.observable,
+    connection: eventHub.connection.observable,
+    storage: eventHub.storage.observable,
+    history: eventHub.history.observable,
+    storageDidLoad: eventHub.storageDidLoad.observable,
+    storageStatus: eventHub.storageStatus.observable,
+  };
+
+  return {
+    /* NOTE: Exposing __internal here only to allow testing implementation details in unit tests */
+    __internal: {
+      get buffer() { return context.buffer }, // prettier-ignore
+      get numRetries() { return context.numRetries }, // prettier-ignore
+
+      onClose,
+      onMessage,
+      authenticationSuccess,
+      onNavigatorOnline,
+
+      simulateCloseWebsocket,
+      simulateSendCloseEvent,
+
+      onVisibilityChange,
+      getUndoStack: () => context.undoStack,
+      getItemsCount: () => context.nodes.size,
+
+      connect,
+      disconnect,
+
+      // Support for the Liveblocks browser extension
+      getSelf_forDevTools: () => selfAsTreeNode.current,
+      getOthers_forDevTools: (): readonly DevTools.UserTreeNode[] =>
+        others_forDevTools.current,
+    },
+
+    id: config.roomId,
+    subscribe: makeClassicSubscribeFn(events),
+
     reconnect,
-    subscribe,
 
     // Presence
     updatePresence,
@@ -2360,211 +2244,176 @@ function makeStateMachine<
 
     // Storage
     batch,
-    undo,
-    redo,
-    canUndo,
-    canRedo,
-    pauseHistory,
-    resumeHistory,
+    history: {
+      undo,
+      redo,
+      canUndo,
+      canRedo,
+      pause: pauseHistory,
+      resume: resumeHistory,
+    },
 
     getStorage,
     getStorageSnapshot,
     getStorageStatus,
 
-    events: {
-      customEvent: eventHub.customEvent.observable,
-      others: eventHub.others.observable,
-      me: eventHub.me.observable,
-      error: eventHub.error.observable,
-      connection: eventHub.connection.observable,
-      storage: eventHub.storage.observable,
-      history: eventHub.history.observable,
-      storageDidLoad: eventHub.storageDidLoad.observable,
-      storageStatus: eventHub.storageStatus.observable,
-    },
+    events,
 
     // Core
-    getConnectionState,
-    isSelfAware: () => isConnectionSelfAware(state.connection.current),
+    getConnectionState: () => context.connection.current.status,
+    isSelfAware: () => isConnectionSelfAware(context.connection.current),
     getSelf: () => self.current,
 
     // Presence
-    getPresence,
-    getOthers,
-
-    // Support for the Liveblocks browser extension
-    getSelf_forDevTools: () => selfAsTreeNode.current,
-    getOthers_forDevTools: (): readonly DevTools.UserTreeNode[] =>
-      state.others_forDevTools.current,
+    getPresence: () => context.me.current,
+    getOthers: () => context.others.current,
   };
 }
 
-function defaultState<
+/**
+ * @internal
+ * This recreates the classic single `.subscribe()` method for the Room API, as
+ * documented here https://liveblocks.io/docs/api-reference/liveblocks-client#Room.subscribe(storageItem)
+ */
+function makeClassicSubscribeFn<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
   TUserMeta extends BaseUserMeta,
   TRoomEvent extends Json
 >(
-  initialPresence: TPresence,
-  initialStorage?: TStorage
-): State<TPresence, TStorage, TUserMeta, TRoomEvent> {
-  const others = new OthersRef<TPresence, TUserMeta>();
-  const others_forDevTools = new DerivedRef(others, (others) =>
-    others.map((other, index) => userToTreeNode(`Other ${index}`, other))
-  );
+  events: Room<TPresence, TStorage, TUserMeta, TRoomEvent>["events"]
+): SubscribeFn<TPresence, TStorage, TUserMeta, TRoomEvent> {
+  // Set up the "subscribe" wrapper API
+  function subscribeToLiveStructureDeeply<L extends LiveStructure>(
+    node: L,
+    callback: (updates: StorageUpdate[]) => void
+  ): () => void {
+    return events.storage.subscribe((updates) => {
+      const relatedUpdates = updates.filter((update) =>
+        isSameNodeOrChildOf(update.node, node)
+      );
+      if (relatedUpdates.length > 0) {
+        callback(relatedUpdates);
+      }
+    });
+  }
 
-  const connection = new ValueRef<Connection>({ state: "closed" });
+  function subscribeToLiveStructureShallowly<L extends LiveStructure>(
+    node: L,
+    callback: (node: L) => void
+  ): () => void {
+    return events.storage.subscribe((updates) => {
+      for (const update of updates) {
+        if (update.node._id === node._id) {
+          callback(update.node as L);
+        }
+      }
+    });
+  }
 
-  return {
-    token: null,
-    lastConnectionId: null,
-    socket: null,
-    numberOfRetry: 0,
-    lastFlushTime: 0,
-    timeoutHandles: {
-      flush: null,
-      reconnect: 0,
-      pongTimeout: 0,
-    },
-    buffer: {
-      me:
-        // Queue up the initial presence message as a Full Presence™ update
-        {
-          type: "full",
-          data: initialPresence,
-        },
-      messages: [],
-      storageOperations: [],
-    },
-    intervalHandles: {
-      heartbeat: 0,
-    },
+  // Generic storage callbacks
+  function subscribe(callback: StorageCallback): () => void; // prettier-ignore
+  // Storage callbacks filtered by Live structure
+  function subscribe<L extends LiveStructure>(liveStructure: L, callback: (node: L) => void): () => void; // prettier-ignore
+  function subscribe(node: LiveStructure, callback: StorageCallback, options: { isDeep: true }): () => void; // prettier-ignore
+  // Room event callbacks
+  function subscribe<E extends RoomEventName>(type: E, listener: RoomEventCallbackFor<E, TPresence, TUserMeta, TRoomEvent>): () => void; // prettier-ignore
 
-    connection,
-    me: new MeRef(initialPresence),
-    others,
-    others_forDevTools,
+  function subscribe<L extends LiveStructure, E extends RoomEventName>(
+    first: StorageCallback | L | E,
+    second?: ((node: L) => void) | StorageCallback | RoomEventCallback,
+    options?: { isDeep: boolean }
+  ): () => void {
+    if (typeof first === "string" && isRoomEventName(first)) {
+      if (typeof second !== "function") {
+        throw new Error("Second argument must be a callback function");
+      }
+      const callback = second;
+      switch (first) {
+        case "event":
+          return events.customEvent.subscribe(
+            callback as Callback<CustomEvent<TRoomEvent>>
+          );
 
-    initialStorage,
-    idFactory: null,
+        case "my-presence":
+          return events.me.subscribe(callback as Callback<TPresence>);
 
-    // Storage
-    clock: 0,
-    opClock: 0,
-    nodes: new Map<string, LiveNode>(),
-    root: undefined,
+        case "others": {
+          // NOTE: Others have a different callback structure, where the API
+          // exposed on the outside takes _two_ callback arguments!
+          const cb = callback as (
+            others: Others<TPresence, TUserMeta>,
+            event: OthersEvent<TPresence, TUserMeta>
+          ) => void;
+          return events.others.subscribe(({ others, event }) =>
+            cb(others, event)
+          );
+        }
 
-    undoStack: [],
-    redoStack: [],
-    pausedHistory: null,
+        case "error":
+          return events.error.subscribe(callback as Callback<Error>);
 
-    activeBatch: null,
-    unacknowledgedOps: new Map<string, Op>(),
+        case "connection":
+          return events.connection.subscribe(
+            callback as Callback<ConnectionStatus>
+          );
 
-    // Debug
-    opStackTraces:
-      process.env.NODE_ENV !== "production"
-        ? new Map<string, string>()
-        : undefined,
-  };
+        case "storage":
+          return events.storage.subscribe(
+            callback as Callback<StorageUpdate[]>
+          );
+
+        case "history":
+          return events.history.subscribe(callback as Callback<HistoryEvent>);
+
+        case "storage-status":
+          return events.storageStatus.subscribe(
+            callback as Callback<StorageStatus>
+          );
+
+        // istanbul ignore next
+        default:
+          return assertNever(first, "Unknown event");
+      }
+    }
+
+    if (second === undefined || typeof first === "function") {
+      if (typeof first === "function") {
+        const storageCallback = first;
+        return events.storage.subscribe(storageCallback);
+      } else {
+        // istanbul ignore next
+        throw new Error("Please specify a listener callback");
+      }
+    }
+
+    if (isLiveNode(first)) {
+      const node = first;
+      if (options?.isDeep) {
+        const storageCallback = second as StorageCallback;
+        return subscribeToLiveStructureDeeply(node, storageCallback);
+      } else {
+        const nodeCallback = second as (node: L) => void;
+        return subscribeToLiveStructureShallowly(node, nodeCallback);
+      }
+    }
+
+    throw new Error(`"${String(first)}" is not a valid event name`);
+  }
+
+  return subscribe;
 }
 
-/** @internal */
-export type InternalRoom<
-  TPresence extends JsonObject,
-  TStorage extends LsonObject,
-  TUserMeta extends BaseUserMeta,
-  TRoomEvent extends Json
-> = {
-  room: Room<TPresence, TStorage, TUserMeta, TRoomEvent>;
-  connect: () => void;
-  disconnect: () => void;
-  onNavigatorOnline: () => void;
-  onVisibilityChange: (visibilityState: DocumentVisibilityState) => void;
-};
-
-export function createRoom<
-  TPresence extends JsonObject,
-  TStorage extends LsonObject,
-  TUserMeta extends BaseUserMeta,
-  TRoomEvent extends Json
->(
-  options: Omit<
-    RoomInitializers<TPresence, TStorage>,
-    "shouldInitiallyConnect"
-  >,
-  config: Config
-): InternalRoom<TPresence, TStorage, TUserMeta, TRoomEvent> {
-  const { initialPresence, initialStorage } = options;
-
-  const state = defaultState<TPresence, TStorage, TUserMeta, TRoomEvent>(
-    typeof initialPresence === "function"
-      ? initialPresence(config.roomId)
-      : initialPresence,
-    typeof initialStorage === "function"
-      ? initialStorage(config.roomId)
-      : initialStorage
+function isRoomEventName(value: string): value is RoomEventName {
+  return (
+    value === "my-presence" ||
+    value === "others" ||
+    value === "event" ||
+    value === "error" ||
+    value === "connection" ||
+    value === "history" ||
+    value === "storage-status"
   );
-
-  const machine = makeStateMachine<TPresence, TStorage, TUserMeta, TRoomEvent>(
-    state,
-    config
-  );
-
-  const room: Room<TPresence, TStorage, TUserMeta, TRoomEvent> = {
-    id: config.roomId,
-    /////////////
-    // Core    //
-    /////////////
-    getConnectionState: machine.getConnectionState,
-    isSelfAware: machine.isSelfAware,
-    getSelf: machine.getSelf,
-    reconnect: machine.reconnect,
-
-    subscribe: machine.subscribe,
-
-    //////////////
-    // Presence //
-    //////////////
-    getPresence: machine.getPresence,
-    updatePresence: machine.updatePresence,
-    getOthers: machine.getOthers,
-    broadcastEvent: machine.broadcastEvent,
-
-    //////////////
-    // Storage  //
-    //////////////
-    getStorage: machine.getStorage,
-    getStorageSnapshot: machine.getStorageSnapshot,
-    getStorageStatus: machine.getStorageStatus,
-    events: machine.events,
-
-    batch: machine.batch,
-    history: {
-      undo: machine.undo,
-      redo: machine.redo,
-      canUndo: machine.canUndo,
-      canRedo: machine.canRedo,
-      pause: machine.pauseHistory,
-      resume: machine.resumeHistory,
-    },
-
-    __INTERNAL_DO_NOT_USE: {
-      simulateCloseWebsocket: machine.simulateSocketClose,
-      simulateSendCloseEvent: machine.simulateSendCloseEvent,
-    },
-
-    getSelf_forDevTools: machine.getSelf_forDevTools,
-    getOthers_forDevTools: machine.getOthers_forDevTools,
-  };
-
-  return {
-    connect: machine.connect,
-    disconnect: machine.disconnect,
-    onNavigatorOnline: machine.onNavigatorOnline,
-    onVisibilityChange: machine.onVisibilityChange,
-    room,
-  };
 }
 
 class LiveblocksError extends Error {
@@ -2575,7 +2424,7 @@ class LiveblocksError extends Error {
 
 function prepareCreateWebSocket(
   liveblocksServer: string,
-  WebSocketPolyfill?: typeof WebSocket
+  WebSocketPolyfill?: IWebSocket
 ) {
   if (typeof window === "undefined" && WebSocketPolyfill === undefined) {
     throw new Error(
@@ -2583,15 +2432,15 @@ function prepareCreateWebSocket(
     );
   }
 
-  const ws = WebSocketPolyfill || WebSocket;
+  const ws: IWebSocket = WebSocketPolyfill || WebSocket;
 
-  return (token: string): WebSocket => {
+  return (token: string): IWebSocketInstance => {
     return new ws(
       `${liveblocksServer}/?token=${token}&version=${
         // prettier-ignore
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore (__PACKAGE_VERSION__ will be injected by the build script)
-        typeof __PACKAGE_VERSION__ === "string" ? /* istanbul ignore next */ __PACKAGE_VERSION__ : "dev"
+        typeof (__PACKAGE_VERSION__ as unknown) === "string" ? /* istanbul ignore next */ (__PACKAGE_VERSION__ as string) : "dev"
       }`
     );
   };
@@ -2674,7 +2523,9 @@ async function fetchAuthEndpoint(
     data = await (res.json() as Promise<Json>);
   } catch (er) {
     throw new AuthenticationError(
-      `Expected a JSON response when doing a POST request on "${endpoint}". ${er}`
+      `Expected a JSON response when doing a POST request on "${endpoint}". ${String(
+        er
+      )}`
     );
   }
   if (!isPlainObject(data) || typeof data.token !== "string") {
@@ -2698,8 +2549,4 @@ class AuthenticationError extends Error {
 // These exports are considered private implementation details and only
 // exported here to be accessed used in our test suite.
 //
-export {
-  defaultState as _private_defaultState,
-  makeStateMachine as _private_makeStateMachine,
-};
-export type { Effects as _private_Effects, Machine as _private_Machine };
+export type { Effects as _private_Effects };

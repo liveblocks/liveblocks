@@ -1,7 +1,7 @@
 import liveblocksPanelHTML from "url:./panel.html";
 import browser from "webextension-polyfill";
 
-browser.devtools.panels.create(
+void browser.devtools.panels.create(
   "Liveblocks",
   "",
   // See: https://github.com/PlasmoHQ/plasmo/issues/106#issuecomment-1188539625
