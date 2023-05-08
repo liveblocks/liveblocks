@@ -342,7 +342,7 @@ export class FiniteStateMachine<
    * Sends an event to the machine, which may cause an internal state
    * transition to happen. When that happens, will trigger side effects.
    */
-  public transition(event: TEvent): void {
+  public send(event: TEvent): void {
     const action = this.getTransition(event.type);
     if (action === undefined) {
       if (this.knownEventTypes.has(event.type)) {
@@ -375,10 +375,13 @@ export class FiniteStateMachine<
    * the current state.
    *
    * XXX Not sure if this method will eventually be needed.
+   * XXX Not sure about this API. Is this something the _caller_ would
+   * XXX have to worry about? Perhaps better to make this part of the
+   * XXX machine's configation instead?
    */
-  public transitionIfPossible(event: TEvent) {
+  public sendIfPossible(event: TEvent) {
     if (this.can(event.type)) {
-      this.transition(event);
+      this.send(event);
     }
   }
 }

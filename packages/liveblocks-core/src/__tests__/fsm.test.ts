@@ -48,9 +48,7 @@ describe("finite state machine", () => {
 
   test("cannot use FSM when it hasn't started yet", () => {
     const fsm = new FSM(null);
-    expect(() => fsm.transition({ type: "SOME_EVENT" })).toThrow(
-      "Not started yet"
-    );
+    expect(() => fsm.send({ type: "SOME_EVENT" })).toThrow("Not started yet");
   });
 
   test("cannot get current state when machine hasn't started yet", () => {
@@ -71,7 +69,7 @@ describe("finite state machine", () => {
       .start();
 
     expect(() => {
-      fsm.transition({ type: "SOME_EVENT" });
+      fsm.send({ type: "SOME_EVENT" });
     }).toThrow('Invalid next state name: "i-am-not-a-valid-state-name"');
   });
 
@@ -101,7 +99,7 @@ describe("finite state machine", () => {
     expect(fsm.currentState).toBe("red");
   });
 
-  test("transitionIfPossible never errors when target state does not exist", () => {
+  test("sendIfPossible never errors when target state does not exist", () => {
     const fsm = new FSM(null)
       .addState("red")
       .addState("green")
@@ -117,31 +115,29 @@ describe("finite state machine", () => {
 
       .start();
 
-    expect(() => fsm.transition({ type: "UNKNOWN_EVENT" })).toThrow(
+    expect(() => fsm.send({ type: "UNKNOWN_EVENT" })).toThrow(
       'Unknown event "UNKNOWN_EVENT"'
     );
 
-    expect(() => fsm.transition({ type: "INVALID" })).toThrow(
+    expect(() => fsm.send({ type: "INVALID" })).toThrow(
       'Invalid next state name: "i-am-not-a-valid-state-name"'
     );
 
     expect(fsm.currentState).toBe("red");
 
-    expect(() => fsm.transition({ type: "ONLY_WHEN_GREEN" })).toThrow(
+    expect(() => fsm.send({ type: "ONLY_WHEN_GREEN" })).toThrow(
       'Event "ONLY_WHEN_GREEN" is not allowed from state "red"'
     );
-    expect(() =>
-      fsm.transitionIfPossible({ type: "ONLY_WHEN_GREEN" })
-    ).not.toThrow();
+    expect(() => fsm.sendIfPossible({ type: "ONLY_WHEN_GREEN" })).not.toThrow();
     expect(fsm.currentState).toBe("red"); // Doesn't change the state
 
-    fsm.transitionIfPossible({ type: "ONLY_WHEN_RED" }); // Acts like .transition()
+    fsm.sendIfPossible({ type: "ONLY_WHEN_RED" }); // Acts like .send()
     expect(fsm.currentState).toBe("green");
 
-    fsm.transitionIfPossible({ type: "ONLY_WHEN_GREEN" });
+    fsm.sendIfPossible({ type: "ONLY_WHEN_GREEN" });
 
     // Still fails (because this is a configuration error)
-    expect(() => fsm.transitionIfPossible({ type: "INVALID" })).toThrow(
+    expect(() => fsm.sendIfPossible({ type: "INVALID" })).toThrow(
       'Invalid next state name: "i-am-not-a-valid-state-name"'
     );
   });
@@ -240,18 +236,18 @@ describe("finite state machine", () => {
       expect(fsm.currentState).toEqual("red");
       expect(calls).toEqual(["entered red"]);
 
-      fsm.transition({ type: "TO_GREEN" });
+      fsm.send({ type: "TO_GREEN" });
       expect(fsm.currentState).toEqual("green");
       expect(calls).toEqual(["entered red", "exited red", "entered green"]);
 
       // No enter/exit events happen when staying in the same state explicitly
-      fsm.transition({ type: "STAY_GREEN_LONGER" });
+      fsm.send({ type: "STAY_GREEN_LONGER" });
       expect(fsm.currentState).toEqual("green");
-      fsm.transition({ type: "STAY_GREEN_LONGER" });
+      fsm.send({ type: "STAY_GREEN_LONGER" });
       expect(fsm.currentState).toEqual("green");
       expect(calls).toEqual(["entered red", "exited red", "entered green"]);
 
-      expect(() => fsm.transition({ type: "TO_RED" })).toThrow(
+      expect(() => fsm.send({ type: "TO_RED" })).toThrow(
         'Event "TO_RED" is not allowed from state "green"'
       );
       expect(fsm.currentState).toEqual("green");
@@ -259,7 +255,7 @@ describe("finite state machine", () => {
       expect(fsm.can("TO_RED")).toBe(false);
       expect(fsm.can("BE_CAREFUL")).toBe(true);
 
-      fsm.transition({ type: "BE_CAREFUL" });
+      fsm.send({ type: "BE_CAREFUL" });
       expect(fsm.currentState).toEqual("yellow");
       expect(calls).toEqual([
         "entered red",
@@ -291,7 +287,7 @@ describe("finite state machine", () => {
       expect(fsm.currentState).toEqual("green");
       expect(calls).toEqual(["entered green"]);
 
-      fsm.transition({ type: "DO_NOTHING" });
+      fsm.send({ type: "DO_NOTHING" });
 
       expect(fsm.currentState).toEqual("green");
       expect(calls).toEqual(["entered green"]);
@@ -326,15 +322,15 @@ describe("finite state machine", () => {
       expect(fsm.currentState).toEqual("off");
       expect(calls).toEqual([]);
 
-      fsm.transition({ type: "TOGGLE" });
+      fsm.send({ type: "TOGGLE" });
       expect(fsm.currentState).toEqual("on");
       expect(calls).toEqual(["light!"]);
 
-      fsm.transition({ type: "TOGGLE" });
+      fsm.send({ type: "TOGGLE" });
       expect(fsm.currentState).toEqual("off");
       expect(calls).toEqual(["light!", "darkness!"]);
 
-      fsm.transition({ type: "TOGGLE" });
+      fsm.send({ type: "TOGGLE" });
       expect(fsm.currentState).toEqual("on");
       expect(calls).toEqual(["light!", "darkness!", "light!"]);
 
@@ -385,25 +381,25 @@ describe("finite state machine", () => {
       expect(calls).toEqual(["entered machine"]);
       calls.length = 0;
 
-      fsm.transition({ type: "START" });
+      fsm.send({ type: "START" });
       expect(fsm.currentState).toEqual("group.red");
       expect(calls).toEqual(["entered group", "entered red"]);
       calls.length = 0;
 
-      fsm.transition({ type: "NEXT" });
+      fsm.send({ type: "NEXT" });
       expect(fsm.currentState).toEqual("group.yellow");
       expect(calls).toEqual(["exited red"]);
       calls.length = 0;
 
-      fsm.transition({ type: "NEXT" });
+      fsm.send({ type: "NEXT" });
       expect(calls).toEqual([]);
       calls.length = 0;
 
-      fsm.transition({ type: "NEXT" });
+      fsm.send({ type: "NEXT" });
       expect(calls).toEqual(["entered red"]);
       calls.length = 0;
 
-      fsm.transition({ type: "ERROR" });
+      fsm.send({ type: "ERROR" });
       expect(calls).toEqual(["exited red", "exited group"]);
       calls.length = 0;
 
@@ -429,16 +425,16 @@ describe("finite state machine", () => {
       .start();
 
     expect(fsm.currentState).toEqual("foo.one");
-    fsm.transition({ type: "FROM_ANYWHERE" });
+    fsm.send({ type: "FROM_ANYWHERE" });
     expect(fsm.currentState).toEqual("foo.two");
-    fsm.transition({ type: "FROM_ANYWHERE" });
+    fsm.send({ type: "FROM_ANYWHERE" });
     expect(fsm.currentState).toEqual("foo.two");
-    fsm.transition({ type: "FROM_FOO_ONLY" });
+    fsm.send({ type: "FROM_FOO_ONLY" });
     expect(fsm.currentState).toEqual("bar.three");
-    expect(() => fsm.transition({ type: "FROM_FOO_ONLY" })).toThrow(
+    expect(() => fsm.send({ type: "FROM_FOO_ONLY" })).toThrow(
       'Event "FROM_FOO_ONLY" is not allowed from state "bar.three"'
     );
-    fsm.transition({ type: "FROM_ANYWHERE" });
+    fsm.send({ type: "FROM_ANYWHERE" });
     expect(fsm.currentState).toEqual("foo.two");
   });
 
@@ -465,11 +461,11 @@ describe("finite state machine", () => {
       .start();
 
     expect(fsm.currentState).toEqual("foo.start");
-    fsm.transition({ type: "FROM_ANYWHERE" });
+    fsm.send({ type: "FROM_ANYWHERE" });
     expect(fsm.currentState).toEqual("foo.mid");
-    fsm.transition({ type: "FROM_ANYWHERE" });
+    fsm.send({ type: "FROM_ANYWHERE" });
     expect(fsm.currentState).toEqual("foo.end");
-    fsm.transition({ type: "FROM_ANYWHERE" });
+    fsm.send({ type: "FROM_ANYWHERE" });
     expect(fsm.currentState).toEqual("foo.start");
   });
 
@@ -489,12 +485,12 @@ describe("finite state machine", () => {
   //         promise.then(
   //           (_result) => {
   //             if (!cancelled && config.onDone && fsm.can(config.onDone)) {
-  //               fsm.transition(config.onDone);
+  //               fsm.send(config.onDone);
   //             }
   //           },
   //           (_error) => {
   //             if (!cancelled && config.onError && fsm.can(config.onError)) {
-  //               fsm.transition(config.onError);
+  //               fsm.send(config.onError);
   //             }
   //           }
   //         );
@@ -564,12 +560,12 @@ describe("finite state machine", () => {
   //         promise.then(
   //           (_result) => {
   //             if (!cancelled && config.onDone && fsm.can(config.onDone)) {
-  //               fsm.transition(config.onDone);
+  //               fsm.send(config.onDone);
   //             }
   //           },
   //           (_error) => {
   //             if (!cancelled && config.onError && fsm.can(config.onError)) {
-  //               fsm.transition(config.onError);
+  //               fsm.send(config.onError);
   //             }
   //           }
   //         );
@@ -624,7 +620,7 @@ describe("finite state machine", () => {
   //     expect(calls).toEqual(["promise started"]);
 
   //     // Immediately move out of the state, which should "cancel" the promise
-  //     fsm.transition("ABORT");
+  //     fsm.send("ABORT");
 
   //     return new Promise((resolve) => {
   //       setTimeout(() => {
