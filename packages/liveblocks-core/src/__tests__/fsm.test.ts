@@ -1,4 +1,4 @@
-import { FSM, distance, patterns } from "../fsm";
+import { distance, FSM, patterns } from "../fsm";
 
 async function sleep(ms: number): Promise<42> {
   return new Promise((resolve) => {

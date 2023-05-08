@@ -356,7 +356,7 @@ export class FSM<
     stateOrPattern: TState | Wildcard<TState>,
     after: number | ((context: Readonly<TContext>) => number),
     target: Target<TContext, TimerEvent, TState>
-  ) {
+  ): this {
     return this.onEnter(stateOrPattern, () => {
       const ms =
         typeof after === "function" ? after(this.currentContext) : after;
@@ -482,7 +482,7 @@ export class FSM<
    * Like .transition(), but will not throw if the event cannot be handled by
    * the current state.
    */
-  public sendIfPossible(event: TEvent) {
+  public sendIfPossible(event: TEvent): void {
     if (this.can(event.type)) {
       this.send(event);
     }
