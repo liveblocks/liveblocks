@@ -58,17 +58,17 @@ describe("helper functions", () => {
 
 describe("finite state machine", () => {
   test("cannot start before there is at least an initial state", () => {
-    const fsm = new FSM(null);
+    const fsm = new FSM({});
     expect(() => fsm.start()).toThrow("No states defined yet");
   });
 
   test("cannot use FSM when it hasn't started yet", () => {
-    const fsm = new FSM(null);
+    const fsm = new FSM({});
     expect(() => fsm.send({ type: "SOME_EVENT" })).toThrow("Not started yet");
   });
 
   test("cannot get current state when machine hasn't started yet", () => {
-    const fsm = new FSM(null)
+    const fsm = new FSM({})
       .addState("red")
       .addState("yellow")
       .addState("green");
@@ -77,7 +77,7 @@ describe("finite state machine", () => {
   });
 
   test("error when there is an nonexisting target state", () => {
-    const fsm = new FSM(null)
+    const fsm = new FSM({})
       .addState("initial")
       .addTransitions("initial", {
         SOME_EVENT: "i-am-not-a-valid-state-name",
@@ -91,7 +91,7 @@ describe("finite state machine", () => {
 
   test("error when a state name matches no state", () => {
     expect(() =>
-      new FSM(null).addTransitions("foo", {
+      new FSM({}).addTransitions("foo", {
         /* not important */
       })
     ).toThrow('No states match "foo"');
@@ -99,14 +99,14 @@ describe("finite state machine", () => {
 
   test("error when a state pattern matches no state", () => {
     expect(() =>
-      new FSM(null).addState("initial").addTransitions("initial.*", {
+      new FSM({}).addState("initial").addTransitions("initial.*", {
         /* not important */
       })
     ).toThrow('No states match "initial.*"');
   });
 
   test("initial state", () => {
-    const fsm = new FSM(null)
+    const fsm = new FSM({})
       .addState("red")
       .addState("yellow")
       .addState("green")
@@ -116,7 +116,7 @@ describe("finite state machine", () => {
   });
 
   test("sendIfPossible never errors when target state does not exist", () => {
-    const fsm = new FSM(null)
+    const fsm = new FSM({})
       .addState("red")
       .addState("green")
 
@@ -164,7 +164,7 @@ describe("finite state machine", () => {
       const onEnterGreen = jest.fn();
       const onEnterYellow = jest.fn();
 
-      const fsm = new FSM(null)
+      const fsm = new FSM({})
         .addState("red")
         .addState("yellow")
         .addState("green")
@@ -189,7 +189,7 @@ describe("finite state machine", () => {
       const onExitGreen = jest.fn();
       const onExitYellow = jest.fn();
 
-      const fsm = new FSM(null)
+      const fsm = new FSM({})
         .addState("red")
         .addState("yellow")
         .addState("green")
@@ -221,7 +221,7 @@ describe("finite state machine", () => {
       const exitYellow = () => void calls.push("exited yellow");
       const exitRed = () => void calls.push("exited red");
 
-      const fsm = new FSM(null)
+      const fsm = new FSM({})
         .addState("red")
         .addState("yellow")
         .addState("green")
@@ -288,7 +288,7 @@ describe("finite state machine", () => {
       const enterGreen = () => void calls.push("entered green");
       const exitGreen = () => void calls.push("exited green");
 
-      const fsm = new FSM(null)
+      const fsm = new FSM({})
         .addState("green")
 
         .onEnter("green", enterGreen)
@@ -319,7 +319,7 @@ describe("finite state machine", () => {
         };
       };
 
-      const fsm = new FSM(null)
+      const fsm = new FSM({})
         .addState("off")
         .addState("on")
 
@@ -375,7 +375,7 @@ describe("finite state machine", () => {
         return exitRed;
       });
 
-      const fsm = new FSM(null)
+      const fsm = new FSM({})
         .addState("initial")
         .addState("group.red")
         .addState("group.yellow")
@@ -425,7 +425,7 @@ describe("finite state machine", () => {
   });
 
   test("using wildcards to describe transitions from a group of states", () => {
-    const fsm = new FSM(null)
+    const fsm = new FSM({})
       .addState("foo.one")
       .addState("foo.two")
       .addState("bar.three")
@@ -454,11 +454,58 @@ describe("finite state machine", () => {
     expect(fsm.currentState).toEqual("foo.two");
   });
 
+  test("patching context", () => {
+    const fsm = new FSM({ x: 0 })
+      .addState("one")
+      .addState("two")
+
+      .addTransitions("one", {
+        GO: {
+          target: "two",
+          assign: () => ({ x: 0 }),
+        },
+      })
+
+      .addTransitions("two", {
+        BACK: "one",
+        GO: {
+          target: "two", // Stay here, but... do an action
+          assign: (context) => ({ x: context.x + 1 }),
+        },
+      })
+
+      .start();
+
+    expect(fsm.currentState).toEqual("one");
+    fsm.send({ type: "GO" });
+    fsm.send({ type: "GO" });
+    fsm.send({ type: "GO" });
+    fsm.send({ type: "GO" });
+    expect(fsm.currentState).toEqual("two");
+    expect(fsm.context).toEqual({ x: 3 });
+
+    fsm.send({ type: "BACK" });
+    expect(fsm.currentState).toEqual("one");
+    expect(fsm.context).toEqual({ x: 3 }); // Still at 3!
+
+    fsm.send({ type: "GO" });
+    expect(fsm.currentState).toEqual("two");
+    expect(fsm.context).toEqual({ x: 0 }); // Reset to 0!
+
+    fsm.send({ type: "GO" });
+    fsm.send({ type: "GO" });
+    fsm.send({ type: "GO" });
+    fsm.send({ type: "GO" });
+    fsm.send({ type: "GO" });
+    expect(fsm.currentState).toEqual("two");
+    expect(fsm.context).toEqual({ x: 5 });
+  });
+
   describe("time-based transitions", () => {
     test("time-based transitions", () => {
       jest.useFakeTimers();
 
-      const fsm = new FSM(null)
+      const fsm = new FSM({})
         .addState("start.one")
         .addState("start.two")
         .addState("end")
@@ -486,7 +533,7 @@ describe("finite state machine", () => {
     test("time-based transitions get cancelled", () => {
       jest.useFakeTimers();
 
-      const fsm = new FSM(null)
+      const fsm = new FSM({})
         .addState("start.one")
         .addState("start.two")
         .addState("end")
@@ -519,7 +566,7 @@ describe("finite state machine", () => {
 
   describe("promise-based transitions", () => {
     function makeFSM(promiseFn: () => Promise<unknown>) {
-      const fsm = new FSM(null)
+      const fsm = new FSM({})
         .addState("waiting.one")
         .addState("waiting.two")
         .addState("good")
@@ -618,7 +665,7 @@ describe("finite state machine", () => {
 
   // TODO Nice to have, no need to fix this right now yet
   test.skip("wildcards cannot overwrite existing transitions", () => {
-    const fsm = new FSM(null)
+    const fsm = new FSM({})
       .addState("foo.start")
       .addState("foo.mid")
       .addState("foo.end")

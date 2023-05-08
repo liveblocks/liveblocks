@@ -20,16 +20,26 @@ enum RunningState {
 }
 
 type CleanupFn = () => void;
-type EnterFn<TContext> = (context: TContext) => void | CleanupFn;
-type ExitFn<TContext> = (context: TContext) => void;
+type EnterFn<TContext> = (context: Readonly<TContext>) => void | CleanupFn;
+type ExitFn<TContext> = (context: Readonly<TContext>) => void;
 
 type TargetFn<TContext, TEvent extends BaseEvent, TState extends string> = (
   event: TEvent,
   context: Readonly<TContext>
-) => TState;
+) => TState | FullTargetSpec<TContext, TEvent, TState>;
+
+type FullTargetSpec<
+  TContext,
+  TEvent extends BaseEvent,
+  TState extends string
+> = {
+  target: TState;
+  assign: (context: Readonly<TContext>, event: TEvent) => Partial<TContext>;
+};
 
 type Target<TContext, TEvent extends BaseEvent, TState extends string> =
   | TState // Static, e.g. 'complete'
+  | FullTargetSpec<TContext, TEvent, TState>
   | TargetFn<TContext, TEvent, TState>; // Dynamic, e.g. (context) => context.x ? 'complete' : 'other'
 
 type Groups<T extends string> = T extends `${infer G}.${infer Rest}`
@@ -83,12 +93,16 @@ export function patterns<TState extends string>(
   return result;
 }
 
-export class FSM<TContext, TEvent extends BaseEvent, TState extends string> {
+export class FSM<
+  TContext extends object,
+  TEvent extends BaseEvent,
+  TState extends string
+> {
   // Indicates whether this state machine is still being configured, has
   // started, or has terminated
   private runningState: RunningState;
 
-  private context: TContext;
+  #context: Readonly<TContext>;
 
   private states: Set<TState>;
   private currentStateOrNull: TState | null;
@@ -172,7 +186,7 @@ export class FSM<TContext, TEvent extends BaseEvent, TState extends string> {
     this.currentStateOrNull = null;
   }
 
-  constructor(initialContext: TContext) {
+  constructor(initialContext: Readonly<TContext>) {
     this.runningState = RunningState.NOT_STARTED_YET;
     this.currentStateOrNull = null;
     this.states = new Set();
@@ -181,7 +195,11 @@ export class FSM<TContext, TEvent extends BaseEvent, TState extends string> {
     this.exitFns = new Map();
     this.knownEventTypes = new Set();
     this.allowedTransitions = new Map();
-    this.context = initialContext;
+    this.#context = Object.assign({}, initialContext);
+  }
+
+  public get context(): Readonly<TContext> {
+    return this.#context;
   }
 
   /**
@@ -218,14 +236,14 @@ export class FSM<TContext, TEvent extends BaseEvent, TState extends string> {
 
   public onEnterAsync<T>(
     nameOrPattern: TState | Wildcard<TState>,
-    promiseFn: (context: TContext) => Promise<T>,
+    promiseFn: (context: Readonly<TContext>) => Promise<T>,
     onOK: Target<TContext, AsyncOKEvent<T>, TState>,
     onError: Target<TContext, AsyncErrorEvent, TState>
   ): this {
     return this.onEnter(nameOrPattern, () => {
       let cancelled = false;
 
-      void promiseFn(this.context).then(
+      void promiseFn(this.#context).then(
         // On OK
         (result: T) => {
           if (!cancelled) {
@@ -247,7 +265,10 @@ export class FSM<TContext, TEvent extends BaseEvent, TState extends string> {
     });
   }
 
-  public onExit(state: TState, exitFn: (context: TContext) => void): this {
+  public onExit(
+    state: TState,
+    exitFn: (context: Readonly<TContext>) => void
+  ): this {
     if (this.runningState !== RunningState.NOT_STARTED_YET) {
       throw new Error("Already started");
     }
@@ -345,11 +366,11 @@ export class FSM<TContext, TEvent extends BaseEvent, TState extends string> {
    */
   public addTimedTransition(
     stateOrPattern: TState | Wildcard<TState>,
-    after: number | ((context: TContext) => number),
+    after: number | ((context: Readonly<TContext>) => number),
     target: Target<TContext, TimerEvent, TState>
   ) {
     return this.onEnter(stateOrPattern, () => {
-      const ms = typeof after === "function" ? after(this.context) : after;
+      const ms = typeof after === "function" ? after(this.#context) : after;
       const timeoutID = setTimeout(() => {
         this.transition({ type: "TIMER" }, target);
       }, ms);
@@ -388,7 +409,7 @@ export class FSM<TContext, TEvent extends BaseEvent, TState extends string> {
     for (let i = 0; i < (levels ?? this.cleanupStack.length + 1); i++) {
       this.cleanupStack.pop()?.();
     }
-    this.exitFns.get(this.currentState)?.(this.context);
+    this.exitFns.get(this.currentState)?.(this.#context);
   }
 
   /**
@@ -403,7 +424,7 @@ export class FSM<TContext, TEvent extends BaseEvent, TState extends string> {
 
     for (const pattern of enterPatterns) {
       const enterFn = this.enterFns.get(pattern);
-      const cleanupFn = enterFn?.(this.context);
+      const cleanupFn = enterFn?.(this.#context);
       if (typeof cleanupFn === "function") {
         this.cleanupStack.push(cleanupFn);
       } else {
@@ -434,20 +455,39 @@ export class FSM<TContext, TEvent extends BaseEvent, TState extends string> {
     return this.transition(event, targetFn);
   }
 
-  private transition<T extends TEvent | BuiltinEvent>(
-    event: T,
-    target: Target<TContext, T, TState>
+  private transition<E extends TEvent | BuiltinEvent>(
+    event: E,
+    target: Target<TContext, E, TState>
   ) {
     const targetFn = typeof target === "function" ? target : () => target;
-    const nextState = targetFn(event, this.context);
+    const nextTarget = targetFn(event, this.#context);
+    let nextState: TState;
+    let action:
+      | ((context: Readonly<TContext>, event: E) => Partial<TContext>)
+      | undefined = undefined;
+    if (typeof nextTarget === "string") {
+      nextState = nextTarget;
+    } else {
+      nextState = nextTarget.target;
+      action = nextTarget.assign;
+    }
+
     if (!this.states.has(nextState)) {
       throw new Error(`Invalid next state name: ${JSON.stringify(nextState)}`);
     }
 
     const [up, down] = distance(this.currentState, nextState);
-    if (up > 0 || down > 0) {
+    if (up > 0) {
       this.exit(up);
-      this.currentStateOrNull = nextState;
+    }
+
+    this.currentStateOrNull = nextState; // NOTE: Could stay the same, but... there could be an action to execute here
+    if (action !== undefined) {
+      const patch = action(this.context, event);
+      this.#context = Object.assign({}, this.#context, patch);
+    }
+
+    if (down > 0) {
       this.enter(down);
     }
   }
