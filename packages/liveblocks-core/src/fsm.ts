@@ -107,7 +107,7 @@ export class FSM<
   // started, or has terminated
   private runningState: RunningState;
 
-  #context: Readonly<TContext>;
+  private currentContext: Readonly<TContext>;
 
   private states: Set<TState>;
   private currentStateOrNull: TState | null;
@@ -196,11 +196,11 @@ export class FSM<
     this.cleanupStack = [];
     this.knownEventTypes = new Set();
     this.allowedTransitions = new Map();
-    this.#context = Object.assign({}, initialContext);
+    this.currentContext = Object.assign({}, initialContext);
   }
 
   public get context(): Readonly<TContext> {
-    return this.#context;
+    return this.currentContext;
   }
 
   /**
@@ -242,7 +242,7 @@ export class FSM<
     return this.onEnter(nameOrPattern, () => {
       let cancelled = false;
 
-      void promiseFn(this.#context).then(
+      void promiseFn(this.currentContext).then(
         // On OK
         (result: T) => {
           if (!cancelled) {
@@ -357,7 +357,8 @@ export class FSM<
     target: Target<TContext, TimerEvent, TState>
   ) {
     return this.onEnter(stateOrPattern, () => {
-      const ms = typeof after === "function" ? after(this.#context) : after;
+      const ms =
+        typeof after === "function" ? after(this.currentContext) : after;
       const timeoutID = setTimeout(() => {
         this.transition({ type: "TIMER" }, target);
       }, ms);
@@ -410,7 +411,7 @@ export class FSM<
 
     for (const pattern of enterPatterns) {
       const enterFn = this.enterFns.get(pattern);
-      const cleanupFn = enterFn?.(this.#context);
+      const cleanupFn = enterFn?.(this.currentContext);
       if (typeof cleanupFn === "function") {
         this.cleanupStack.push(cleanupFn);
       } else {
@@ -446,7 +447,7 @@ export class FSM<
     target: Target<TContext, E, TState>
   ) {
     const targetFn = typeof target === "function" ? target : () => target;
-    const nextTarget = targetFn(event, this.#context);
+    const nextTarget = targetFn(event, this.currentContext);
     let nextState: TState;
     let action:
       | ((context: Readonly<TContext>, event: E) => Partial<TContext>)
@@ -470,7 +471,7 @@ export class FSM<
     this.currentStateOrNull = nextState; // NOTE: Could stay the same, but... there could be an action to execute here
     if (action !== undefined) {
       const patch = action(this.context, event);
-      this.#context = Object.assign({}, this.#context, patch);
+      this.currentContext = Object.assign({}, this.currentContext, patch);
     }
 
     if (down > 0) {
