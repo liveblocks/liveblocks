@@ -378,8 +378,6 @@ export class FSM<
 
   /**
    * Checks to see if the given event can be handled in the current state.
-   *
-   * XXX Not sure if this method will eventually be needed.
    */
   public can(eventName: TEvent["type"]): boolean {
     return this.getTargetFn(eventName) !== undefined;
@@ -483,11 +481,6 @@ export class FSM<
   /**
    * Like .transition(), but will not throw if the event cannot be handled by
    * the current state.
-   *
-   * XXX Not sure if this method will eventually be needed.
-   * XXX Not sure about this API. Is this something the _caller_ would
-   * XXX have to worry about? Perhaps better to make this part of the
-   * XXX machine's configation instead?
    */
   public sendIfPossible(event: TEvent) {
     if (this.can(event.type)) {
