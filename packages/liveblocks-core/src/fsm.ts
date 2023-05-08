@@ -391,7 +391,8 @@ export class FSM<
    * then the level is 3.
    */
   private exit(levels: number | null) {
-    for (let i = 0; i < (levels ?? this.cleanupStack.length + 1); i++) {
+    levels = levels ?? this.cleanupStack.length;
+    for (let i = 0; i < levels; i++) {
       this.cleanupStack.pop()?.();
     }
   }
