@@ -142,7 +142,7 @@ describe("finite state machine", () => {
     expect(fsm.currentState).toBe("red");
 
     expect(() => fsm.send({ type: "ONLY_WHEN_GREEN" })).toThrow(
-      'Event "ONLY_WHEN_GREEN" is not allowed from state "red"'
+      'Event "ONLY_WHEN_GREEN" not allowed in state "red"'
     );
     expect(() => fsm.sendIfPossible({ type: "ONLY_WHEN_GREEN" })).not.toThrow();
     expect(fsm.currentState).toBe("red"); // Doesn't change the state
@@ -353,7 +353,7 @@ describe("finite state machine", () => {
     fsm.send({ type: "FROM_FOO_ONLY" });
     expect(fsm.currentState).toEqual("bar.three");
     expect(() => fsm.send({ type: "FROM_FOO_ONLY" })).toThrow(
-      'Event "FROM_FOO_ONLY" is not allowed from state "bar.three"'
+      'Event "FROM_FOO_ONLY" not allowed in state "bar.three"'
     );
     fsm.send({ type: "FROM_ANYWHERE" });
     expect(fsm.currentState).toEqual("foo.two");

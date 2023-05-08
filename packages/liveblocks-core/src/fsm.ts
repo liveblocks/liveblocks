@@ -430,14 +430,13 @@ export class FSM<
     const targetFn = this.getTargetFn(event.type);
     if (targetFn === undefined) {
       if (this.knownEventTypes.has(event.type)) {
-        // XXX Fail silently instead?
         throw new Error(
           `Event ${JSON.stringify(
             event.type
-          )} is not allowed from state ${JSON.stringify(this.currentState)}`
+          )} not allowed in state ${JSON.stringify(this.currentState)}`
         );
       } else {
-        throw new Error(`Unknown event ${JSON.stringify(event.type)}`);
+        throw new Error(`Invalid event ${JSON.stringify(event.type)}`);
       }
     }
 
