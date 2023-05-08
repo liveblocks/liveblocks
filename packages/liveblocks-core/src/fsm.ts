@@ -1,23 +1,23 @@
 /**
- * Finite State Machine (FSM) implementation.
+ * A generic Finite State Machine (FSM) implementation.
  */
 
-// XXX Tidy up this class before publishing
-
 type BaseEvent = { readonly type: string };
+
+/**
+ * Built-in event thrown by .addTimedTransition().
+ */
 type TimerEvent = { readonly type: "TIMER" };
+
+/**
+ * Built-in events thrown by .onEnterAsync().
+ */
 type AsyncOKEvent<T> = { readonly type: "ASYNC_OK"; readonly result: T };
 type AsyncErrorEvent = {
   readonly type: "ASYNC_ERROR";
   readonly error: unknown;
 };
 type BuiltinEvent = TimerEvent | AsyncOKEvent<unknown> | AsyncErrorEvent;
-
-enum RunningState {
-  NOT_STARTED_YET, // Machine can be set up during this phase
-  STARTED,
-  STOPPED,
-}
 
 type CleanupFn = () => void;
 type EnterFn<TContext> = (context: Readonly<TContext>) => void | CleanupFn;
@@ -91,6 +91,12 @@ export function patterns<TState extends string>(
   result.push(targetState);
 
   return result;
+}
+
+enum RunningState {
+  NOT_STARTED_YET, // Machine can be set up during this phase
+  STARTED,
+  STOPPED,
 }
 
 export class FSM<
