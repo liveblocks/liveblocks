@@ -184,115 +184,20 @@ describe("finite state machine", () => {
       expect(onEnterGreen).not.toBeCalled();
     });
 
-    test("executes onExit when stopping", () => {
-      const onExitRed = jest.fn();
-      const onExitGreen = jest.fn();
-      const onExitYellow = jest.fn();
-
-      const fsm = new FSM({})
-        .addState("red")
-        .addState("yellow")
-        .addState("green")
-
-        .onExit("red", onExitRed)
-        .onExit("yellow", onExitYellow)
-        .onExit("green", onExitGreen);
-
-      fsm.start();
-
-      expect(onExitRed).not.toBeCalled();
-      expect(onExitYellow).not.toBeCalled();
-      expect(onExitGreen).not.toBeCalled();
-
-      fsm.stop();
-
-      expect(onExitRed).toBeCalledTimes(1);
-      expect(onExitYellow).not.toBeCalled();
-      expect(onExitGreen).not.toBeCalled();
-    });
-
-    test("executes onEnter after onExit when transitioning", () => {
-      const calls: string[] = [];
-
-      const enterGreen = () => void calls.push("entered green");
-      const enterRed = () => void calls.push("entered red");
-      const enterYellow = () => void calls.push("entered yellow");
-      const exitGreen = () => void calls.push("exited green");
-      const exitYellow = () => void calls.push("exited yellow");
-      const exitRed = () => void calls.push("exited red");
-
-      const fsm = new FSM({})
-        .addState("red")
-        .addState("yellow")
-        .addState("green")
-
-        .onEnter("red", enterRed)
-        .onEnter("yellow", enterYellow)
-        .onEnter("green", enterGreen)
-
-        .onExit("red", exitRed)
-        .onExit("yellow", exitYellow)
-        .onExit("green", exitGreen)
-
-        .addTransitions("green", {
-          STAY_GREEN_LONGER: "green",
-          BE_CAREFUL: "yellow",
-        })
-
-        .addTransitions("red", {
-          TO_GREEN: "green",
-        })
-
-        .addTransitions("yellow", {
-          TO_RED: "redd",
-        })
-
-        .start();
-
-      expect(fsm.currentState).toEqual("red");
-      expect(calls).toEqual(["entered red"]);
-
-      fsm.send({ type: "TO_GREEN" });
-      expect(fsm.currentState).toEqual("green");
-      expect(calls).toEqual(["entered red", "exited red", "entered green"]);
-
-      // No enter/exit events happen when staying in the same state explicitly
-      fsm.send({ type: "STAY_GREEN_LONGER" });
-      expect(fsm.currentState).toEqual("green");
-      fsm.send({ type: "STAY_GREEN_LONGER" });
-      expect(fsm.currentState).toEqual("green");
-      expect(calls).toEqual(["entered red", "exited red", "entered green"]);
-
-      expect(() => fsm.send({ type: "TO_RED" })).toThrow(
-        'Event "TO_RED" is not allowed from state "green"'
-      );
-      expect(fsm.currentState).toEqual("green");
-
-      expect(fsm.can("TO_RED")).toBe(false);
-      expect(fsm.can("BE_CAREFUL")).toBe(true);
-
-      fsm.send({ type: "BE_CAREFUL" });
-      expect(fsm.currentState).toEqual("yellow");
-      expect(calls).toEqual([
-        "entered red",
-        "exited red",
-        "entered green",
-        "exited green",
-        "entered yellow",
-      ]);
-    });
-
     test("does not execute onExit/onEnter events when explicitly staying in the same state", () => {
       const calls: string[] = [];
 
-      const enterGreen = () => void calls.push("entered green");
-      const exitGreen = () => void calls.push("exited green");
+      const enterGreen = () => {
+        calls.push("entered green");
+        return () => {
+          calls.push("exited green");
+        };
+      };
 
       const fsm = new FSM({})
         .addState("green")
 
         .onEnter("green", enterGreen)
-        .onExit("green", exitGreen)
 
         .addTransitions("green", {
           DO_NOTHING: "green",

@@ -21,7 +21,6 @@ type BuiltinEvent = TimerEvent | AsyncOKEvent<unknown> | AsyncErrorEvent;
 
 type CleanupFn = () => void;
 type EnterFn<TContext> = (context: Readonly<TContext>) => void | CleanupFn;
-type ExitFn<TContext> = (context: Readonly<TContext>) => void;
 
 type TargetFn<TContext, TEvent extends BaseEvent, TState extends string> = (
   event: TEvent,
@@ -138,8 +137,6 @@ export class FSM<
   private cleanupStack: (CleanupFn | null)[];
 
   private enterFns: Map<TState | Wildcard<TState>, EnterFn<TContext>>;
-  // XXX Can we drop this and use the cleanupFn sturcture instead, making .onExit(xxx) just a wrapper around .onEnter(() => xxx)?
-  private exitFns: Map<TState, ExitFn<TContext>>;
 
   // Used to provide better error messages
   private knownEventTypes: Set<string>;
@@ -198,7 +195,6 @@ export class FSM<
     this.states = new Set();
     this.enterFns = new Map();
     this.cleanupStack = [];
-    this.exitFns = new Map();
     this.knownEventTypes = new Set();
     this.allowedTransitions = new Map();
     this.#context = Object.assign({}, initialContext);
@@ -209,9 +205,7 @@ export class FSM<
   }
 
   /**
-   * Define an explicit finite state in the state machine. States can contain
-   * onEnter and onExit handlers which will automatically get triggered when
-   * state transitions around this state happen.
+   * Define an explicit finite state in the state machine.
    */
   public addState(state: TState): this {
     if (this.runningState !== RunningState.NOT_STARTED_YET) {
@@ -269,18 +263,6 @@ export class FSM<
         cancelled = true;
       };
     });
-  }
-
-  public onExit(
-    state: TState,
-    exitFn: (context: Readonly<TContext>) => void
-  ): this {
-    if (this.runningState !== RunningState.NOT_STARTED_YET) {
-      throw new Error("Already started");
-    }
-
-    this.exitFns.set(state, exitFn);
-    return this;
   }
 
   private getMatches(nameOrPattern: TState | Wildcard<TState>): TState[] {
@@ -403,7 +385,7 @@ export class FSM<
   }
 
   /**
-   * Exits the current state, and executes any necessary onExit handlers.
+   * Exits the current state, and executes any necessary cleanup functions.
    * Call this before changing the current state to the next state.
    *
    * @param levels Defines how many "levels" of nesting will be exited. For
@@ -415,7 +397,6 @@ export class FSM<
     for (let i = 0; i < (levels ?? this.cleanupStack.length + 1); i++) {
       this.cleanupStack.pop()?.();
     }
-    this.exitFns.get(this.currentState)?.(this.#context);
   }
 
   /**
