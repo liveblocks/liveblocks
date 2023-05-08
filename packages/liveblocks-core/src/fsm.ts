@@ -269,8 +269,8 @@ export class FSM<
 
     // We're trying to match a group pattern here, i.e. `foo.*` (which might
     // match `foo.bar` and `foo.qux` states)
-    if (nameOrPattern.endsWith("*")) {
-      const prefix = nameOrPattern.slice(0, -1);
+    if (nameOrPattern.endsWith(".*")) {
+      const prefix = nameOrPattern.slice(0, -1); // Strip only the "*", keep the "."
       for (const state of this.states) {
         if (state.startsWith(prefix)) {
           matches.push(state);
