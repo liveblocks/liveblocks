@@ -299,9 +299,6 @@ export class FSM<
    * `context` params to conditionally decide which next state to transition
    * to.
    *
-   * WARNING: The target functions should be used to trigger any side effects!
-   * XXX Use explicit transition actions for that.
-   *
    * If you set it to `null`, then the transition will be explicitly forbidden
    * and throw an error. If you don't define a target for a transition, then
    * such events will get ignored.
