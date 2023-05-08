@@ -83,11 +83,7 @@ export function patterns<TState extends string>(
   return result;
 }
 
-export class FiniteStateMachine<
-  TContext,
-  TEvent extends BaseEvent,
-  TState extends string
-> {
+export class FSM<TContext, TEvent extends BaseEvent, TState extends string> {
   // Indicates whether this state machine is still being configured, has
   // started, or has terminated
   private runningState: RunningState;
