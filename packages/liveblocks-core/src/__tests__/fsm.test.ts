@@ -438,6 +438,67 @@ describe("finite state machine", () => {
     expect(fsm.currentState).toEqual("foo.two");
   });
 
+  test("time-based transitions", () => {
+    jest.useFakeTimers();
+
+    const fsm = new FSM(null)
+      .addState("start.one")
+      .addState("start.two")
+      .addState("end")
+      .addState("timed-out")
+
+      .addTransitions("start.one", { GO: () => "start.two" })
+      .addTransitions("start.two", { GO: () => "start.one" })
+      .addTransitions("start.*", { END: () => "end" })
+
+      .addTimedTransition("start.*", 10000, () => "timed-out")
+
+      .start();
+
+    // Staying within the "start" group won't cancel
+    expect(fsm.currentState).toEqual("start.one");
+    fsm.send({ type: "GO" });
+    fsm.send({ type: "GO" });
+    fsm.send({ type: "GO" });
+    expect(fsm.currentState).toEqual("start.two");
+
+    jest.runAllTimers(); // Make the timer go off...
+    expect(fsm.currentState).toEqual("timed-out"); // ...the timer causes the machine to move to "timed-out" state
+  });
+
+  test("time-based transitions get cancelled", () => {
+    jest.useFakeTimers();
+
+    const fsm = new FSM(null)
+      .addState("start.one")
+      .addState("start.two")
+      .addState("end")
+      .addState("timed-out")
+
+      .addTransitions("start.one", { GO: () => "start.two" })
+      .addTransitions("start.two", { GO: () => "start.one" })
+      .addTransitions("start.*", { END: () => "end" })
+
+      .addTimedTransition("start.*", 10000, () => "timed-out")
+
+      .start();
+
+    jest.advanceTimersByTime(5000); // Not far enough yet
+
+    // Staying within the "start" group won't cancel
+    expect(fsm.currentState).toEqual("start.one");
+    fsm.send({ type: "GO" });
+    fsm.send({ type: "GO" });
+    fsm.send({ type: "GO" });
+    expect(fsm.currentState).toEqual("start.two");
+
+    fsm.send({ type: "END" });
+    expect(fsm.currentState).toEqual("end");
+
+    jest.runAllTimers(); // Make the timer go off...
+    expect(fsm.currentState).toEqual("end"); // ...it should _NOT_ move to timed-out state anymore
+  });
+
   // TODO Nice to have, no need to fix this right now yet
   test.skip("wildcards cannot overwrite existing transitions", () => {
     const fsm = new FSM(null)

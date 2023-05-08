@@ -4,7 +4,9 @@
 
 // XXX Tidy up this class before publishing
 
-type BaseEvent = { type: string };
+type BaseEvent = { readonly type: string };
+type TimerEvent = { readonly type: "TIMER" };
+type BuiltinEvent = TimerEvent;
 
 enum RunningState {
   NOT_STARTED_YET, // Machine can be set up during this phase
@@ -198,6 +200,9 @@ export class FiniteStateMachine<
       throw new Error("Already started");
     } else if (this.enterFns.has(nameOrPattern)) {
       throw new Error(
+        // TODO We _currently_ don't support multiple .onEnters() for the same
+        // state, but this is not a fundamental limitation. Just not
+        // implemented yet. If we wanted to, we could make this an array.
         `enter/exit function for ${nameOrPattern} already exists`
       );
     }
@@ -286,7 +291,34 @@ export class FiniteStateMachine<
     return this;
   }
 
-  private getTransition(
+  /**
+   * Like `.addTransition()`, but takes an (anonymous) transition whenever the
+   * timer fires.
+   *
+   * @param stateOrPattern The state name, or state group pattern name.
+   * @param after          Number of milliseconds after which to take the
+   *                       transition. If in the mean time, another transition
+   *                       is taken, the timer will get cancelled.
+   * @param targetFn       The target state to go to.
+   */
+  public addTimedTransition(
+    stateOrPattern: TState | Wildcard<TState>,
+    after: number | ((context: TContext) => number),
+    targetFn: TargetFn<TContext, TimerEvent, TState>
+  ) {
+    return this.onEnter(stateOrPattern, () => {
+      const ms = typeof after === "function" ? after(this.context) : after;
+      const timeoutID = setTimeout(() => {
+        this.transition({ type: "TIMER" }, targetFn);
+      }, ms);
+
+      return () => {
+        clearTimeout(timeoutID);
+      };
+    });
+  }
+
+  private getTargetFn(
     eventName: TEvent["type"]
   ): TargetFn<TContext, TEvent, TState> | undefined {
     return this.allowedTransitions.get(this.currentState)?.get(eventName);
@@ -298,7 +330,7 @@ export class FiniteStateMachine<
    * XXX Not sure if this method will eventually be needed.
    */
   public can(eventName: TEvent["type"]): boolean {
-    return this.getTransition(eventName) !== undefined;
+    return this.getTargetFn(eventName) !== undefined;
   }
 
   /**
@@ -343,8 +375,8 @@ export class FiniteStateMachine<
    * transition to happen. When that happens, will trigger side effects.
    */
   public send(event: TEvent): void {
-    const action = this.getTransition(event.type);
-    if (action === undefined) {
+    const targetFn = this.getTargetFn(event.type);
+    if (targetFn === undefined) {
       if (this.knownEventTypes.has(event.type)) {
         // XXX Fail silently instead?
         throw new Error(
@@ -357,7 +389,14 @@ export class FiniteStateMachine<
       }
     }
 
-    const nextState = action(event, this.context);
+    return this.transition(event, targetFn);
+  }
+
+  private transition<T extends TEvent | BuiltinEvent>(
+    event: T,
+    targetFn: TargetFn<TContext, T, TState>
+  ) {
+    const nextState = targetFn(event, this.context);
     if (!this.states.has(nextState)) {
       throw new Error(`Invalid next state name: ${JSON.stringify(nextState)}`);
     }
