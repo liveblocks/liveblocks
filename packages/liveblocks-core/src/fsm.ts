@@ -6,7 +6,12 @@
 
 type BaseEvent = { readonly type: string };
 type TimerEvent = { readonly type: "TIMER" };
-type BuiltinEvent = TimerEvent;
+type AsyncOKEvent<T> = { readonly type: "ASYNC_OK"; readonly result: T };
+type AsyncErrorEvent = {
+  readonly type: "ASYNC_ERROR";
+  readonly error: unknown;
+};
+type BuiltinEvent = TimerEvent | AsyncOKEvent<unknown> | AsyncErrorEvent;
 
 enum RunningState {
   NOT_STARTED_YET, // Machine can be set up during this phase
@@ -24,8 +29,8 @@ type TargetFn<TContext, TEvent extends BaseEvent, TState extends string> = (
 ) => TState;
 
 type Target<TContext, TEvent extends BaseEvent, TState extends string> =
-  | TargetFn<TContext, TEvent, TState>
-  | TState;
+  | TState // Static, e.g. 'complete'
+  | TargetFn<TContext, TEvent, TState>; // Dynamic, e.g. (context) => context.x ? 'complete' : 'other'
 
 type Groups<T extends string> = T extends `${infer G}.${infer Rest}`
   ? G | `${G}.${Groups<Rest>}`
@@ -215,6 +220,37 @@ export class FiniteStateMachine<
     return this;
   }
 
+  public onEnterAsync<T>(
+    nameOrPattern: TState | Wildcard<TState>,
+    promiseFn: (context: TContext) => Promise<T>,
+    onOK: Target<TContext, AsyncOKEvent<T>, TState>,
+    onError: Target<TContext, AsyncErrorEvent, TState>
+  ): this {
+    return this.onEnter(nameOrPattern, () => {
+      let cancelled = false;
+
+      void promiseFn(this.context).then(
+        // On OK
+        (result: T) => {
+          if (!cancelled) {
+            this.transition({ type: "ASYNC_OK", result }, onOK);
+          }
+        },
+
+        // On Error
+        (error: unknown) => {
+          if (!cancelled) {
+            this.transition({ type: "ASYNC_ERROR", error }, onError);
+          }
+        }
+      );
+
+      return () => {
+        cancelled = true;
+      };
+    });
+  }
+
   public onExit(state: TState, exitFn: (context: TContext) => void): this {
     if (this.runningState !== RunningState.NOT_STARTED_YET) {
       throw new Error("Already started");
@@ -317,10 +353,9 @@ export class FiniteStateMachine<
     target: Target<TContext, TimerEvent, TState>
   ) {
     return this.onEnter(stateOrPattern, () => {
-      const targetFn = typeof target === "function" ? target : () => target;
       const ms = typeof after === "function" ? after(this.context) : after;
       const timeoutID = setTimeout(() => {
-        this.transition({ type: "TIMER" }, targetFn);
+        this.transition({ type: "TIMER" }, target);
       }, ms);
 
       return () => {
@@ -405,8 +440,9 @@ export class FiniteStateMachine<
 
   private transition<T extends TEvent | BuiltinEvent>(
     event: T,
-    targetFn: TargetFn<TContext, T, TState>
+    target: Target<TContext, T, TState>
   ) {
+    const targetFn = typeof target === "function" ? target : () => target;
     const nextState = targetFn(event, this.context);
     if (!this.states.has(nextState)) {
       throw new Error(`Invalid next state name: ${JSON.stringify(nextState)}`);

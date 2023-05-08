@@ -1,6 +1,22 @@
 import { FiniteStateMachine as FSM, distance, patterns } from "../fsm";
 
-describe("helper function", () => {
+async function sleep(ms: number): Promise<42> {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve(42);
+    }, ms);
+  });
+}
+
+async function failAfter(ms: number): Promise<void> {
+  return new Promise((_, reject) => {
+    setTimeout(() => {
+      reject("failed");
+    }, ms);
+  });
+}
+
+describe("helper functions", () => {
   test("distance", () => {
     expect(distance("foo.bar.baz", "foo.bar.baz")).toEqual([0, 0]);
     expect(distance("foo.bar.baz", "foo.bar.qux")).toEqual([1, 1]);
@@ -438,65 +454,166 @@ describe("finite state machine", () => {
     expect(fsm.currentState).toEqual("foo.two");
   });
 
-  test("time-based transitions", () => {
-    jest.useFakeTimers();
+  describe("time-based transitions", () => {
+    test("time-based transitions", () => {
+      jest.useFakeTimers();
 
-    const fsm = new FSM(null)
-      .addState("start.one")
-      .addState("start.two")
-      .addState("end")
-      .addState("timed-out")
+      const fsm = new FSM(null)
+        .addState("start.one")
+        .addState("start.two")
+        .addState("end")
+        .addState("timed-out")
 
-      .addTransitions("start.one", { GO: "start.two" })
-      .addTransitions("start.two", { GO: "start.one" })
-      .addTransitions("start.*", { END: "end" })
+        .addTransitions("start.one", { GO: "start.two" })
+        .addTransitions("start.two", { GO: "start.one" })
+        .addTransitions("start.*", { END: "end" })
 
-      .addTimedTransition("start.*", 10000, "timed-out")
+        .addTimedTransition("start.*", 10000, "timed-out")
 
-      .start();
+        .start();
 
-    // Staying within the "start" group won't cancel
-    expect(fsm.currentState).toEqual("start.one");
-    fsm.send({ type: "GO" });
-    fsm.send({ type: "GO" });
-    fsm.send({ type: "GO" });
-    expect(fsm.currentState).toEqual("start.two");
+      // Staying within the "start" group won't cancel
+      expect(fsm.currentState).toEqual("start.one");
+      fsm.send({ type: "GO" });
+      fsm.send({ type: "GO" });
+      fsm.send({ type: "GO" });
+      expect(fsm.currentState).toEqual("start.two");
 
-    jest.runAllTimers(); // Make the timer go off...
-    expect(fsm.currentState).toEqual("timed-out"); // ...the timer causes the machine to move to "timed-out" state
+      jest.runAllTimers(); // Make the timer go off...
+      expect(fsm.currentState).toEqual("timed-out"); // ...the timer causes the machine to move to "timed-out" state
+    });
+
+    test("time-based transitions get cancelled", () => {
+      jest.useFakeTimers();
+
+      const fsm = new FSM(null)
+        .addState("start.one")
+        .addState("start.two")
+        .addState("end")
+        .addState("timed-out")
+
+        .addTransitions("start.one", { GO: "start.two" })
+        .addTransitions("start.two", { GO: "start.one" })
+        .addTransitions("start.*", { END: "end" })
+
+        .addTimedTransition("start.*", 10000, "timed-out")
+
+        .start();
+
+      jest.advanceTimersByTime(5000); // Not far enough yet
+
+      // Staying within the "start" group won't cancel
+      expect(fsm.currentState).toEqual("start.one");
+      fsm.send({ type: "GO" });
+      fsm.send({ type: "GO" });
+      fsm.send({ type: "GO" });
+      expect(fsm.currentState).toEqual("start.two");
+
+      fsm.send({ type: "END" });
+      expect(fsm.currentState).toEqual("end");
+
+      jest.runAllTimers(); // Make the timer go off...
+      expect(fsm.currentState).toEqual("end"); // ...it should _NOT_ move to timed-out state anymore
+    });
   });
 
-  test("time-based transitions get cancelled", () => {
-    jest.useFakeTimers();
+  describe("promise-based transitions", () => {
+    function makeFSM(promiseFn: () => Promise<unknown>) {
+      const fsm = new FSM(null)
+        .addState("waiting.one")
+        .addState("waiting.two")
+        .addState("good")
+        .addState("bad")
 
-    const fsm = new FSM(null)
-      .addState("start.one")
-      .addState("start.two")
-      .addState("end")
-      .addState("timed-out")
+        // Manual transitions (callable via .send())
+        .addTransitions("waiting.*", { OK: "good", FAIL: "bad" })
+        .addTransitions("waiting.one", { JUMP: "waiting.two" })
+        .addTransitions("waiting.two", { JUMP: "waiting.one" })
 
-      .addTransitions("start.one", { GO: "start.two" })
-      .addTransitions("start.two", { GO: "start.one" })
-      .addTransitions("start.*", { END: "end" })
+        // Automatic transitions (based on promise results)
+        .onEnterAsync("waiting.*", promiseFn, "good", "bad");
 
-      .addTimedTransition("start.*", 10000, "timed-out")
+      return fsm;
+    }
 
-      .start();
+    test("promise-based transitions (on success)", async () => {
+      jest.useFakeTimers();
 
-    jest.advanceTimersByTime(5000); // Not far enough yet
+      const fsm = makeFSM(() => sleep(2000));
+      fsm.start();
 
-    // Staying within the "start" group won't cancel
-    expect(fsm.currentState).toEqual("start.one");
-    fsm.send({ type: "GO" });
-    fsm.send({ type: "GO" });
-    fsm.send({ type: "GO" });
-    expect(fsm.currentState).toEqual("start.two");
+      expect(fsm.currentState).toEqual("waiting.one");
+      await jest.advanceTimersByTimeAsync(1000);
+      expect(fsm.currentState).toEqual("waiting.one");
+      await jest.runAllTimersAsync();
+      expect(fsm.currentState).toEqual("good");
+    });
 
-    fsm.send({ type: "END" });
-    expect(fsm.currentState).toEqual("end");
+    test("promise-based transitions (on failure)", async () => {
+      jest.useFakeTimers();
 
-    jest.runAllTimers(); // Make the timer go off...
-    expect(fsm.currentState).toEqual("end"); // ...it should _NOT_ move to timed-out state anymore
+      const fsm = makeFSM(() => failAfter(2000));
+      fsm.start();
+
+      expect(fsm.currentState).toEqual("waiting.one");
+      await jest.advanceTimersByTimeAsync(1000);
+      expect(fsm.currentState).toEqual("waiting.one");
+      await jest.runAllTimersAsync();
+      expect(fsm.currentState).toEqual("bad");
+    });
+
+    test("promise-based transitions abort successfully (on success)", async () => {
+      jest.useFakeTimers();
+
+      const fsm = makeFSM(() => sleep(2000));
+      fsm.start();
+
+      expect(fsm.currentState).toEqual("waiting.one");
+      await jest.advanceTimersByTimeAsync(1000);
+      expect(fsm.currentState).toEqual("waiting.one");
+      fsm.send({ type: "FAIL" }); // Manually failing first...
+      expect(fsm.currentState).toEqual("bad");
+      await jest.runAllTimersAsync();
+      expect(fsm.currentState).toEqual("bad"); // ...will ignore the returned promise transition
+    });
+
+    test("promise-based transitions abort successfully (on failure)", async () => {
+      jest.useFakeTimers();
+
+      const fsm = makeFSM(() => failAfter(2000));
+      fsm.start();
+
+      expect(fsm.currentState).toEqual("waiting.one");
+      await jest.advanceTimersByTimeAsync(1000);
+      expect(fsm.currentState).toEqual("waiting.one");
+      fsm.send({ type: "OK" }); // Manually failing first...
+      expect(fsm.currentState).toEqual("good");
+      await jest.runAllTimersAsync();
+      expect(fsm.currentState).toEqual("good"); // ...will ignore the returned promise transition
+    });
+
+    test("promise-based transitions won't abort within group", async () => {
+      jest.useFakeTimers();
+
+      const fsm = makeFSM(() => failAfter(2000));
+      fsm.start();
+
+      expect(fsm.currentState).toEqual("waiting.one");
+      fsm.send({ type: "JUMP" });
+      expect(fsm.currentState).toEqual("waiting.two");
+      fsm.send({ type: "JUMP" });
+      expect(fsm.currentState).toEqual("waiting.one");
+      await jest.advanceTimersByTimeAsync(1000);
+
+      // We can keep jumping between waiting.* states without the promise
+      // getting cancelled (unlike jumping to "good" or "bad")
+      expect(fsm.currentState).toEqual("waiting.one");
+      fsm.send({ type: "JUMP" });
+      expect(fsm.currentState).toEqual("waiting.two");
+
+      await jest.runAllTimersAsync();
+      expect(fsm.currentState).toEqual("bad"); // ...will ignore the returned promise transition
+    });
   });
 
   // TODO Nice to have, no need to fix this right now yet
@@ -529,167 +646,4 @@ describe("finite state machine", () => {
     fsm.send({ type: "FROM_ANYWHERE" });
     expect(fsm.currentState).toEqual("foo.start");
   });
-
-  // describe("promise-based states", () => {
-  //   test("normal flow", async () => {
-  //     const calls: string[] = [];
-
-  //     function fromPromise<T>(config: {
-  //       promiseFactory: (context: T) => Promise<unknown>;
-  //       onDone?: /* EventName */ string;
-  //       onError?: /* EventName */ string;
-  //     }) {
-  //       function generatedOnEnter(context: T) {
-  //         let cancelled = false;
-
-  //         const promise = config.promiseFactory(context);
-  //         promise.then(
-  //           (_result) => {
-  //             if (!cancelled && config.onDone && fsm.can(config.onDone)) {
-  //               fsm.send(config.onDone);
-  //             }
-  //           },
-  //           (_error) => {
-  //             if (!cancelled && config.onError && fsm.can(config.onError)) {
-  //               fsm.send(config.onError);
-  //             }
-  //           }
-  //         );
-
-  //         return () => {
-  //           cancelled = true;
-  //         };
-  //       }
-  //       return generatedOnEnter;
-  //     }
-
-  //     function somePromise() {
-  //       calls.push("promise started");
-  //       return new Promise((resolve) => {
-  //         setTimeout(() => {
-  //           calls.push("promise done");
-  //           return resolve(undefined);
-  //         }, 0);
-  //       });
-  //     }
-
-  //     const fsm = new FSM(
-  //       {},
-  //       {
-  //         running: {
-  //           initial: true,
-  //           onEnter: fromPromise({
-  //             promiseFactory: somePromise,
-  //             onDone: "DONE",
-  //             onError: "ERROR",
-  //           }),
-  //           on: {
-  //             DONE: "resolved",
-  //             ERROR: "rejected",
-  //           },
-  //         },
-
-  //         resolved: {},
-  //         rejected: {},
-  //       }
-  //     );
-
-  //     expect(fsm.currentStateName).toEqual("running");
-  //     expect(calls).toEqual(["promise started"]);
-
-  //     return new Promise((resolve) => {
-  //       setTimeout(() => {
-  //         expect(calls).toEqual(["promise started", "promise done"]);
-  //         expect(fsm.currentStateName).toEqual("resolved");
-  //         resolve(undefined);
-  //       }, 0);
-  //     });
-  //   });
-
-  //   test("cancelling promises", async () => {
-  //     const calls: string[] = [];
-
-  //     function fromPromise<T>(config: {
-  //       promiseFactory: (context: T) => Promise<unknown>;
-  //       onDone?: /* EventName */ string;
-  //       onError?: /* EventName */ string;
-  //     }) {
-  //       function generatedOnEnter(context: T) {
-  //         let cancelled = false;
-
-  //         const promise = config.promiseFactory(context);
-  //         promise.then(
-  //           (_result) => {
-  //             if (!cancelled && config.onDone && fsm.can(config.onDone)) {
-  //               fsm.send(config.onDone);
-  //             }
-  //           },
-  //           (_error) => {
-  //             if (!cancelled && config.onError && fsm.can(config.onError)) {
-  //               fsm.send(config.onError);
-  //             }
-  //           }
-  //         );
-
-  //         return () => {
-  //           cancelled = true;
-  //         };
-  //       }
-  //       return generatedOnEnter;
-  //     }
-
-  //     function somePromise() {
-  //       calls.push("promise started");
-  //       return new Promise((resolve) => {
-  //         setTimeout(() => {
-  //           calls.push("promise done");
-  //           return resolve(undefined);
-  //         }, 0);
-  //       });
-  //     }
-
-  //     const fsm = new FSM(
-  //       {},
-  //       {
-  //         running: {
-  //           initial: true,
-  //           onEnter: fromPromise({
-  //             promiseFactory: somePromise,
-  //             onDone: "DONE",
-  //             onError: "ERROR",
-  //           }),
-  //           on: {
-  //             DONE: "resolved",
-  //             ERROR: "rejected",
-  //             ABORT: "rejected",
-  //           },
-  //         },
-
-  //         resolved: {},
-  //         rejected: {
-  //           on: {
-  //             DONE: () => {
-  //               throw new Error("Should never get triggered");
-  //             },
-  //             ABORT: "rejected",
-  //           },
-  //         },
-  //       }
-  //     );
-
-  //     expect(fsm.currentStateName).toEqual("running");
-  //     expect(calls).toEqual(["promise started"]);
-
-  //     // Immediately move out of the state, which should "cancel" the promise
-  //     fsm.send("ABORT");
-
-  //     return new Promise((resolve) => {
-  //       setTimeout(() => {
-  //         expect(calls).toEqual(["promise started", "promise done"]);
-  //         expect(fsm.currentStateName).toEqual("rejected");
-  //         resolve(undefined);
-  //       }, 0);
-  //     });
-  //   });
-  // });
 });
