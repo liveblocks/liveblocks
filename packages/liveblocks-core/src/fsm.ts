@@ -125,14 +125,13 @@ export class FSM<
   //
   // This will always be true:
   //
-  //   cleanupStack.length == currentState.split('.').length
+  //   cleanupStack.length == currentState.split('.').length + 1
   //
   // Each stack level represents a different state "group".
   //
-  // For example, if
-  // you have a state named `foo.bar.qux`, then the stack will contain the
-  // exit handler for `foo.bar.qux` at the top, then `foo.bar.*`, then
-  // `foo.*`, and finally, `*`, then empty.
+  // For example, if you are in a state named `foo.bar.qux`, then the stack
+  // will contain the exit handler for `foo.bar.qux` (at the top), then
+  // `foo.bar.*`, then `foo.*`, and finally, `*`.
   //
   private cleanupStack: (CleanupFn | null)[];
 
