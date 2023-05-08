@@ -23,6 +23,10 @@ type TargetFn<TContext, TEvent extends BaseEvent, TState extends string> = (
   context: Readonly<TContext>
 ) => TState;
 
+type Target<TContext, TEvent extends BaseEvent, TState extends string> =
+  | TargetFn<TContext, TEvent, TState>
+  | TState;
+
 type Groups<T extends string> = T extends `${infer G}.${infer Rest}`
   ? G | `${G}.${Groups<Rest>}`
   : never;
@@ -89,8 +93,8 @@ export class FiniteStateMachine<
   private currentStateOrNull: TState | null;
 
   private allowedTransitions: Map<
-    string,
-    Map<string, TargetFn<TContext, TEvent, TState>>
+    TState,
+    Map<TEvent["type"], TargetFn<TContext, TEvent, TState>>
   >;
 
   //
@@ -265,7 +269,7 @@ export class FiniteStateMachine<
   public addTransitions(
     nameOrPattern: TState | Wildcard<TState>,
     mapping: {
-      [E in TEvent as E["type"]]?: TargetFn<TContext, E, TState> | null;
+      [E in TEvent as E["type"]]?: Target<TContext, E, TState> | null;
     }
   ): this {
     if (this.runningState !== RunningState.NOT_STARTED_YET) {
@@ -279,12 +283,18 @@ export class FiniteStateMachine<
         this.allowedTransitions.set(src, map);
       }
 
-      for (const [type, targetFn] of Object.entries(mapping)) {
+      for (const [type, target_] of Object.entries(mapping)) {
+        const targetSpec = target_ as
+          | Target<TContext, TEvent, TState>
+          | null
+          | undefined;
         this.knownEventTypes.add(type);
 
-        if (targetFn !== undefined && targetFn !== null) {
+        if (targetSpec !== undefined && targetSpec !== null) {
           // TODO Disallow overwriting when using a wildcard pattern!
-          map.set(type, targetFn as TargetFn<TContext, TEvent, TState>);
+          const targetFn =
+            typeof targetSpec === "function" ? targetSpec : () => targetSpec;
+          map.set(type, targetFn);
         }
       }
     }
@@ -299,14 +309,15 @@ export class FiniteStateMachine<
    * @param after          Number of milliseconds after which to take the
    *                       transition. If in the mean time, another transition
    *                       is taken, the timer will get cancelled.
-   * @param targetFn       The target state to go to.
+   * @param target     The target state to go to.
    */
   public addTimedTransition(
     stateOrPattern: TState | Wildcard<TState>,
     after: number | ((context: TContext) => number),
-    targetFn: TargetFn<TContext, TimerEvent, TState>
+    target: Target<TContext, TimerEvent, TState>
   ) {
     return this.onEnter(stateOrPattern, () => {
+      const targetFn = typeof target === "function" ? target : () => target;
       const ms = typeof after === "function" ? after(this.context) : after;
       const timeoutID = setTimeout(() => {
         this.transition({ type: "TIMER" }, targetFn);

@@ -64,7 +64,7 @@ describe("finite state machine", () => {
     const fsm = new FSM(null)
       .addState("initial")
       .addTransitions("initial", {
-        SOME_EVENT: () => "i-am-not-a-valid-state-name",
+        SOME_EVENT: "i-am-not-a-valid-state-name",
       })
       .start();
 
@@ -105,12 +105,12 @@ describe("finite state machine", () => {
       .addState("green")
 
       .addTransitions("red", {
-        INVALID: () => "i-am-not-a-valid-state-name",
-        ONLY_WHEN_RED: () => "green",
+        INVALID: "i-am-not-a-valid-state-name",
+        ONLY_WHEN_RED: "green",
       })
 
       .addTransitions("green", {
-        ONLY_WHEN_GREEN: () => "red",
+        ONLY_WHEN_GREEN: "red",
       })
 
       .start();
@@ -219,16 +219,16 @@ describe("finite state machine", () => {
         .onExit("green", exitGreen)
 
         .addTransitions("green", {
-          STAY_GREEN_LONGER: () => "green",
-          BE_CAREFUL: () => "yellow",
+          STAY_GREEN_LONGER: "green",
+          BE_CAREFUL: "yellow",
         })
 
         .addTransitions("red", {
-          TO_GREEN: () => "green",
+          TO_GREEN: "green",
         })
 
         .addTransitions("yellow", {
-          TO_RED: () => "redd",
+          TO_RED: "redd",
         })
 
         .start();
@@ -279,7 +279,7 @@ describe("finite state machine", () => {
         .onExit("green", exitGreen)
 
         .addTransitions("green", {
-          DO_NOTHING: () => "green",
+          DO_NOTHING: "green",
         })
 
         .start();
@@ -310,11 +310,11 @@ describe("finite state machine", () => {
         .onEnter("on", onEnterWithCleanup)
 
         .addTransitions("on", {
-          TOGGLE: () => "off",
+          TOGGLE: "off",
         })
 
         .addTransitions("off", {
-          TOGGLE: () => "on",
+          TOGGLE: "on",
         })
 
         .start();
@@ -366,11 +366,11 @@ describe("finite state machine", () => {
         .addState("group.green")
         .addState("error")
 
-        .addTransitions("*", { ERROR: () => "error" })
-        .addTransitions("initial", { START: () => "group.red" })
-        .addTransitions("group.red", { NEXT: () => "group.yellow" })
-        .addTransitions("group.yellow", { NEXT: () => "group.green" })
-        .addTransitions("group.green", { NEXT: () => "group.red" })
+        .addTransitions("*", { ERROR: "error" })
+        .addTransitions("initial", { START: "group.red" })
+        .addTransitions("group.red", { NEXT: "group.yellow" })
+        .addTransitions("group.yellow", { NEXT: "group.green" })
+        .addTransitions("group.green", { NEXT: "group.red" })
 
         .onEnter("*", enterMachine)
         .onEnter("group.*", enterGroup)
@@ -415,11 +415,11 @@ describe("finite state machine", () => {
       .addState("bar.three")
 
       .addTransitions("*", {
-        FROM_ANYWHERE: () => "foo.two",
+        FROM_ANYWHERE: "foo.two",
       })
 
       .addTransitions("foo.*", {
-        FROM_FOO_ONLY: () => "bar.three",
+        FROM_FOO_ONLY: "bar.three",
       })
 
       .start();
@@ -447,11 +447,11 @@ describe("finite state machine", () => {
       .addState("end")
       .addState("timed-out")
 
-      .addTransitions("start.one", { GO: () => "start.two" })
-      .addTransitions("start.two", { GO: () => "start.one" })
-      .addTransitions("start.*", { END: () => "end" })
+      .addTransitions("start.one", { GO: "start.two" })
+      .addTransitions("start.two", { GO: "start.one" })
+      .addTransitions("start.*", { END: "end" })
 
-      .addTimedTransition("start.*", 10000, () => "timed-out")
+      .addTimedTransition("start.*", 10000, "timed-out")
 
       .start();
 
@@ -475,11 +475,11 @@ describe("finite state machine", () => {
       .addState("end")
       .addState("timed-out")
 
-      .addTransitions("start.one", { GO: () => "start.two" })
-      .addTransitions("start.two", { GO: () => "start.one" })
-      .addTransitions("start.*", { END: () => "end" })
+      .addTransitions("start.one", { GO: "start.two" })
+      .addTransitions("start.two", { GO: "start.one" })
+      .addTransitions("start.*", { END: "end" })
 
-      .addTimedTransition("start.*", 10000, () => "timed-out")
+      .addTimedTransition("start.*", 10000, "timed-out")
 
       .start();
 
@@ -507,16 +507,16 @@ describe("finite state machine", () => {
       .addState("foo.end")
 
       .addTransitions("foo.start", {
-        FROM_ANYWHERE: () => "foo.mid",
+        FROM_ANYWHERE: "foo.mid",
       })
 
       .addTransitions("foo.mid", {
-        FROM_ANYWHERE: () => "foo.end",
+        FROM_ANYWHERE: "foo.end",
       })
 
       // This wildcard should _not_ override the transitions defined above
       .addTransitions("*", {
-        FROM_ANYWHERE: () => "foo.start",
+        FROM_ANYWHERE: "foo.start",
       })
 
       .start();
