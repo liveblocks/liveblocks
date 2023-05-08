@@ -132,7 +132,7 @@ describe("finite state machine", () => {
       .start();
 
     expect(() => fsm.send({ type: "UNKNOWN_EVENT" })).toThrow(
-      'Unknown event "UNKNOWN_EVENT"'
+      'Invalid event "UNKNOWN_EVENT"'
     );
 
     expect(() => fsm.send({ type: "INVALID" })).toThrow(
