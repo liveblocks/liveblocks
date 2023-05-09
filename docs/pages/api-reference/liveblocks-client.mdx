@@ -281,7 +281,7 @@ const unsubscribe = room.subscribe(root, (root) => {
 
 It’s also possible to subscribe to a storage item and its children by passing an
 optional `isDeep` parameter. In that case, the callback will get called with a
-list of updates instead. Each such update is a `{ type, node }` object.
+list of updates instead. Each such update is a `{ type, node, updates }` object.
 
 ```ts
 const { root } = await room.getStorage();
