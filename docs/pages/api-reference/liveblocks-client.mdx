@@ -287,8 +287,8 @@ list of updates instead. Each such update is a `{ type, node, updates }` object.
 const { root } = await room.getStorage();
 const unsubscribe = room.subscribe(
   root,
-  (updates) => {
-    for (const update of updates) {
+  (storageUpdates) => {
+    for (const update of storageUpdates) {
       const {
         type, // "LiveObject", "LiveList", or "LiveMap"
         node,
