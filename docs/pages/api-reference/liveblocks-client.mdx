@@ -293,7 +293,7 @@ const unsubscribe = room.subscribe(
         type, // "update" or "delete"
         node,
       } = update;
-      switch (node.type) {
+      switch (type) {
         case "LiveObject": {
           // update.node is the LiveObject that has been updated/deleted
           break;
