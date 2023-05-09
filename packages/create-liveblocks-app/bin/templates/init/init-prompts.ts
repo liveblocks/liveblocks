@@ -36,13 +36,13 @@ export async function initPrompts(flags: Record<string, any>) {
       initial: true,
     },
     {
-      type: flags.typescript ? null : "confirm",
+      type: flags.typescript !== undefined ? null : "confirm",
       name: "typescript",
       message: "Are you using TypeScript?",
       initial: true,
     },
     {
-      type: flags.comments ? null : "confirm",
+      type: flags.comments !== undefined ? null : "confirm",
       name: "comments",
       message: "Add helpful comments?",
       initial: true,
