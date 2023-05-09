@@ -34,6 +34,19 @@ Options:
 
   --init
   Generate a liveblocks.config.(js|ts) file in the current directory
+  
+  --framework [`react`|`javascript`]
+  The framework your config file uses. Option only for `--init`.
+  e.g. `--framework react`
+  
+  --suspense
+  Use React Suspense hooks in the config file.  Option only for `--init` with React framework.
+  
+  --typescript
+  Use TypeScript in your config file.  Option only for `--init`.
+  
+  --comments
+  Add helpful comments to the config file.  Option only for `--init`.
 
   --next 
   Use the Next.js Starter Kit
