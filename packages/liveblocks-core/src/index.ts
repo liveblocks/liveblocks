@@ -24,10 +24,10 @@ export type {
   ToJson,
 } from "./crdts/Lson";
 export type {
-  StorageUpdate,
   LiveListUpdate,
   LiveMapUpdate,
   LiveObjectUpdate,
+  StorageUpdate,
 } from "./crdts/StorageUpdates";
 export type { ToImmutable } from "./crdts/ToImmutable";
 export {
