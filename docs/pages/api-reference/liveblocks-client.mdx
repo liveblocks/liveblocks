@@ -290,20 +290,24 @@ const unsubscribe = room.subscribe(
   (updates) => {
     for (const update of updates) {
       const {
-        type, // "update" or "delete"
+        type, // "LiveObject", "LiveList", or "LiveMap"
         node,
+        updates,
       } = update;
       switch (type) {
         case "LiveObject": {
+          // updates["property"]?.type; is "update" or "delete"
           // update.node is the LiveObject that has been updated/deleted
           break;
         }
         case "LiveMap": {
+          // updates["key"]?.type; is "update" or "delete"
           // update.node is the LiveMap that has been updated/deleted
           break;
         }
         case "LiveList": {
-          // update.node is the LiveList that has been updated/deleted
+          // updates[0]?.type; is "delete", "insert", "move", or "set"
+          // update.node is the LiveList that has been updated, deleted, or modified
           break;
         }
       }
