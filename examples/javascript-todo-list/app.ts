@@ -97,38 +97,6 @@ async function run() {
     render();
   });
 
-
-  const unsubscribe = room.subscribe(
-    root,
-    (storageUpdates) => {
-      for (const update of updates) {
-        const {
-          type, // "LiveObject", "LiveList", or "LiveMap"
-          node,
-          updates,
-        } = update;
-        switch (type) {
-          case "LiveObject": {
-            // updates["property"]?.type; is "update" or "delete"
-            // update.node is the LiveObject that has been updated/deleted
-            break;
-          }
-          case "LiveMap": {
-            // updates["key"]?.type; is "update" or "delete"
-            // update.node is the LiveMap that has been updated/deleted
-            break;
-          }
-          case "LiveList": {
-            // updates[0]?.type; is "delete", "insert", "move", or "set"
-            // update.node is the LiveList that has been updated, deleted, or modified
-            break;
-          }
-        }
-      }
-    },
-    { isDeep: true }
-  );
-
   /**
    * This function is used when deploying an example on liveblocks.io.
    * You can ignore it completely if you run the example locally.
