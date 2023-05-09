@@ -126,6 +126,7 @@ type RoomEventCallbackMap<
   error: Callback<Error>;
   connection: Callback<ConnectionStatus>;
   history: Callback<HistoryEvent>;
+  storage: Callback<StorageUpdate[]>;
   "storage-status": Callback<StorageStatus>;
 };
 
