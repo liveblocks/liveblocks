@@ -36,7 +36,7 @@ export async function initPrompts(flags: Record<string, any>) {
       initial: true,
     },
     {
-      type: flags.name ? null : "confirm",
+      type: flags.typescript ? null : "confirm",
       name: "typescript",
       message: "Are you using TypeScript?",
       initial: true,
