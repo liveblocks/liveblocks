@@ -85,11 +85,23 @@ export const commandLineFlags: OptionDefinition[] = [
     type: Boolean,
   },
   {
+    name: "no-suspense",
+    type: Boolean,
+  },
+  {
     name: "typescript",
     type: Boolean,
   },
   {
+    name: "no-typescript",
+    type: Boolean,
+  },
+  {
     name: "comments",
+    type: Boolean,
+  },
+  {
+    name: "no-comments",
     type: Boolean,
   },
 ];
