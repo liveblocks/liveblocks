@@ -42,10 +42,19 @@ Options:
   --suspense
   Use React Suspense hooks in the config file.  Option only for `--init` with React framework.
   
+  --no-suspense
+  Don't use React Suspense hooks in the config file.  Option only for `--init` with React framework.
+  
   --typescript
   Use TypeScript in your config file.  Option only for `--init`.
   
+  --no-typescript
+  Don't use TypeScript in your config file.  Option only for `--init`.
+  
   --comments
+  Add helpful comments to the config file.  Option only for `--init`.
+  
+  --no-comments
   Add helpful comments to the config file.  Option only for `--init`.
 
   --next 
