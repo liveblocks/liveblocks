@@ -5,6 +5,10 @@ const client = createClient({
   publicApiKey: "{% LIVEBLOCKS_PUBLIC_KEY %}",
 });
 
+type Presence = {};
+type Storage = {};
+type UserMeta = {};
+
 // Event types
 type RoomEvent = {
   type: "TOAST";
@@ -12,7 +16,29 @@ type RoomEvent = {
 };
 
 export const {
-  RoomProvider,
-  useBroadcastEvent, // ✅
-  useEventListener, // ✅
-} = createRoomContext<{}, {}, {}, RoomEvent>(client);
+  suspense: {
+    RoomProvider,
+    useRoom,
+    useMyPresence,
+    useUpdateMyPresence,
+    useSelf,
+    useOthers,
+    useOthersMapped,
+    useOthersConnectionIds,
+    useOther,
+    useBroadcastEvent,
+    useEventListener,
+    useErrorListener,
+    useStorage,
+    useObject,
+    useMap,
+    useList,
+    useBatch,
+    useHistory,
+    useUndo,
+    useRedo,
+    useCanUndo,
+    useCanRedo,
+    useMutation,
+  },
+} = createRoomContext<Presence, Storage, UserMeta, RoomEvent>(client);

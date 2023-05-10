@@ -35,19 +35,9 @@ If your app uses multiple event types, you can make `RoomEvent` a union type.
 
 </Banner>
 
-Next, add the type to [`createRoomContext`][] in the _fourth_ position, and export the two hooks we’ll be using: [`useBroadcastEvent`][] and [`useEventListener`][].
-
-```tsx highlight="3-5"
-export const {
-  RoomProvider,
-  useBroadcastEvent, // ✅
-  useEventListener, // ✅
-} = createRoomContext<{}, {}, {}, RoomEvent>(client);
-```
-
 ### Broadcasting the events
 
-Events can be broadcast to other users with the [`useBroadcastEvent`][] hook. Switch to [Room.tsx][] and add the hook.
+Events can be broadcast to other users with the [`useBroadcastEvent`][] hook. Switch to [Room.tsx][] and add the hook, imported from our config file.
 
 ```tsx
 // Broadcast event hook
@@ -71,7 +61,7 @@ return (
 
 ### Listening for events
 
-We’re now sending an event, but we’re not listening for any. Import [`useEventListener`][] and add it to the component. In the callback, we’re checking if
+We’re now _sending_ an event, but we’re not _listening_ for any. Import [`useEventListener`][] and add it to the component. In the callback, we’re checking if
 the received event is a toast notification, and if it is, we’re calling a function that sends a toast notification with the message.
 
 ```tsx

@@ -5,7 +5,6 @@ import { ClientSideSuspense } from "@liveblocks/react";
 export default function App() {
   const roomId = "{% ROOM_ID %}";
 
-  // Return Room inside RoomProvider
   return (
     <RoomProvider id={roomId} initialPresence={{ cursor: null }}>
       <ClientSideSuspense fallback={<div>Loading...</div>}>
