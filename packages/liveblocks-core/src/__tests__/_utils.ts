@@ -24,6 +24,12 @@ import type { ServerMsg } from "../protocol/ServerMsg";
 import { ServerMsgCode } from "../protocol/ServerMsg";
 import type { _private_Effects as Effects, Room } from "../room";
 import { createRoom } from "../room";
+import type {
+  IWebSocket,
+  IWebSocketCloseEvent,
+  IWebSocketEvent,
+  IWebSocketMessageEvent,
+} from "../types/IWebSocket";
 import type { JsonStorageUpdate } from "./_updatesUtils";
 import { serializeUpdateToJson } from "./_updatesUtils";
 
@@ -50,93 +56,113 @@ function deepClone<T extends Json>(items: T): T {
   return JSON.parse(JSON.stringify(items)) as T;
 }
 
-export class MockWebSocket implements WebSocket {
-  CONNECTING = 0;
-  OPEN = 1;
-  CLOSING = 2;
-  CLOSED = 3;
+type Listener = (ev: IWebSocketEvent) => void;
+type CloseListener = (ev: IWebSocketCloseEvent) => void;
+type MessageListener = (ev: IWebSocketMessageEvent) => void;
 
-  static instances: MockWebSocket[] = [];
+export class MockWebSocket {
+  readonly CONNECTING = 0;
+  readonly OPEN = 1;
+  readonly CLOSING = 2;
+  readonly CLOSED = 3;
 
-  isMock = true;
+  readonly url: string;
 
-  callbacks = {
-    open: [] as Array<(event?: WebSocketEventMap["open"]) => void>,
-    close: [] as Array<(event?: WebSocketEventMap["close"]) => void>,
-    error: [] as Array<(event?: WebSocketEventMap["error"]) => void>,
-    message: [] as Array<(event?: WebSocketEventMap["message"]) => void>,
-  };
+  #readyState: number;
+  readonly sentMessages: string[] = [];
 
-  sentMessages: string[] = [];
-  readyState: number;
+  readonly #closeListeners: CloseListener[] = [];
+  readonly #errorListeners: Listener[] = [];
+  readonly #messageListeners: MessageListener[] = [];
+  readonly #openListeners: Listener[] = [];
 
-  constructor(
-    public url: string,
-    private onSend: (message: string) => void = () => {}
-  ) {
-    this.readyState = this.CONNECTING;
-    MockWebSocket.instances.push(this);
+  constructor(url: string = "ws://ignored") {
+    this.url = url;
+    this.#readyState = this.CONNECTING;
   }
 
-  close(_code?: number, _reason?: string): void {
-    this.readyState = this.CLOSED;
+  //
+  // WEBSOCKET API
+  //
+
+  get readyState(): number {
+    return this.#readyState;
   }
 
-  addEventListener<T extends "open" | "close" | "error" | "message">(
-    event: T,
-    callback: (event: WebSocketEventMap[T]) => void
-  ) {
-    this.callbacks[event].push(callback as any);
+  addEventListener(event: "message", listener: MessageListener): void; // prettier-ignore
+  addEventListener(event: "close", listener: CloseListener): void; // prettier-ignore
+  addEventListener(event: "open" | "error", listener: Listener): void; // prettier-ignore
+  // prettier-ignore
+  addEventListener(event: "open" | "close" | "message" | "error", listener: Listener | MessageListener | CloseListener): void {
+    if (event === "open") {
+      this.#openListeners.push(listener as Listener);
+    } else if (event === "close") {
+      this.#closeListeners.push(listener as CloseListener);
+    } else if (event === "error") {
+      this.#errorListeners.push(listener as Listener);
+    } else if (event === "message") {
+      this.#messageListeners.push(listener as MessageListener);
+    }
   }
 
-  removeEventListener<T extends "open" | "close" | "error" | "message">(
-    event: T,
-    callback: (event: WebSocketEventMap[T]) => void
-  ) {
-    remove(this.callbacks[event], callback as any);
+  removeEventListener(event: "message", listener: MessageListener): void; // prettier-ignore
+  removeEventListener(event: "close", listener: CloseListener): void; // prettier-ignore
+  removeEventListener(event: "open" | "error", listener: Listener): void; // prettier-ignore
+  // prettier-ignore
+  removeEventListener(event: "open" | "close" | "message" | "error", listener: Listener | MessageListener | CloseListener): void {
+    if (event === "open") {
+      remove(this.#openListeners, listener as Listener);
+    } else if (event === "close") {
+      remove(this.#closeListeners, listener as CloseListener);
+    } else if (event === "error") {
+      remove(this.#errorListeners, listener as Listener);
+    } else if (event === "message") {
+      remove(this.#messageListeners, listener as MessageListener);
+    }
   }
 
   send(message: string) {
     this.sentMessages.push(message);
-    this.onSend(message);
   }
 
-  open() {
-    this.readyState = this.OPEN;
-    for (const callback of this.callbacks.open) {
-      callback();
+  close(_code?: number, _reason?: string): void {
+    this.#readyState = this.CLOSED;
+  }
+
+  //
+  // SIMULATION APIS
+  //
+
+  simulateOpen() {
+    if (this.readyState > this.CONNECTING) {
+      throw new Error(
+        "Cannot open a WebSocket that has already advanced beyond the CONNECTING state"
+      );
+    }
+
+    this.#readyState = this.OPEN;
+    for (const callback of this.#openListeners) {
+      callback({ type: "open" });
     }
   }
 
-  closeFromBackend(event?: CloseEvent) {
-    this.readyState = this.CLOSED;
-    for (const callback of this.callbacks.close) {
+  /**
+   * Simulates a close of the connection by the server.
+   */
+  simulateCloseFromServer(event: IWebSocketCloseEvent) {
+    this.#readyState = this.CLOSED;
+    for (const callback of this.#closeListeners) {
       callback(event);
     }
   }
-
-  // Fields and methods below are not implemented
-
-  binaryType: BinaryType = "blob";
-  bufferedAmount: number = 0;
-  extensions: string = "";
-  onclose: ((this: WebSocket, ev: CloseEvent) => any) | null = () => {
-    throw new Error("NOT IMPLEMENTED");
-  };
-  onerror: ((this: WebSocket, ev: Event) => any) | null = () => {
-    throw new Error("NOT IMPLEMENTED");
-  };
-  onmessage: ((this: WebSocket, ev: MessageEvent<any>) => any) | null = () => {
-    throw new Error("NOT IMPLEMENTED");
-  };
-  onopen: ((this: WebSocket, ev: Event) => any) | null = () => {
-    throw new Error("NOT IMPLEMENTED");
-  };
-  protocol: string = "";
-  dispatchEvent(_event: Event): boolean {
-    throw new Error("Method not implemented.");
-  }
 }
+
+// ------------------------------------------------------------------------
+// This little line will ensure that the MockWebSocket class is and remains
+// assignable to IWebSocket in TypeScript (because "implementing it" is
+// impossible).
+((): IWebSocket => MockWebSocket)(); // Do not remove this check
+// ------------------------------------------------------------------------
 
 export const FIRST_POSITION = makePosition();
 export const SECOND_POSITION = makePosition(FIRST_POSITION);
@@ -185,11 +211,11 @@ export async function prepareRoomWithStorage<
     },
     makeMachineConfig(effects)
   );
-  const ws = new MockWebSocket("");
+  const ws = new MockWebSocket();
 
   room.__internal.connect();
   room.__internal.authenticationSuccess(makeRoomToken(actor, scopes), ws);
-  ws.open();
+  ws.simulateOpen();
 
   // Start getting the storage, but don't await the promise just yet!
   const getStoragePromise = room.getStorage();
@@ -370,10 +396,10 @@ export async function prepareStorageTest<
     newItems?: IdTuple<SerializedCrdt>[] | undefined
   ): MockWebSocket {
     currentActor = actor;
-    const ws = new MockWebSocket("");
+    const ws = new MockWebSocket();
     room.__internal.connect();
     room.__internal.authenticationSuccess(makeRoomToken(actor, []), ws);
-    ws.open();
+    ws.simulateOpen();
 
     // Mock server messages for Presence.
     // Other user in the room (refRoom) recieves a "USER_JOINED" message.
@@ -543,10 +569,10 @@ export function reconnect<
   actor: number,
   newItems: IdTuple<SerializedCrdt>[]
 ) {
-  const ws = new MockWebSocket("");
+  const ws = new MockWebSocket();
   room.__internal.connect();
   room.__internal.authenticationSuccess(makeRoomToken(actor, []), ws);
-  ws.open();
+  ws.simulateOpen();
 
   room.__internal.onMessage(
     serverMessage({

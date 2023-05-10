@@ -1,5 +1,5 @@
 import c from "ansi-colors";
-import commandLineArgs from "command-line-args";
+import commandLineArgs, { CommandLineOptions } from "command-line-args";
 import prompts, { PromptObject } from "prompts";
 import readline from "readline";
 import { commandLineFlags } from "./flags";
@@ -31,7 +31,28 @@ export async function createLiveblocksApp() {
   console.log(c.bold.bgMagenta(" Liveblocks "));
   console.log();
 
-  const flags = commandLineArgs(commandLineFlags);
+  let flags: CommandLineOptions;
+
+  try {
+    flags = commandLineArgs(commandLineFlags);
+  } catch (err) {
+    if (err.name === "UNKNOWN_OPTION") {
+      console.log(
+        c.redBright.bold(
+          `Error: \`${c.whiteBright(err.optionName)}\` is not a valid flag`
+        )
+      );
+      console.log();
+      console.log(c.bold("Learn more:"));
+      console.log(
+        "https://github.com/liveblocks/liveblocks/blob/main/packages/create-liveblocks-app/README.MD"
+      );
+    } else {
+      console.log(c.redBright.bold("Error"));
+      console.log(err);
+    }
+    process.exit(0);
+  }
 
   // If any --no-[FLAGNAME] is set, set --[FLAGNAME] to false
   // e.g. `--no-install === true` -> `--install === false`
