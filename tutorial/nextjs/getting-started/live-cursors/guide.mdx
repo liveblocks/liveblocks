@@ -12,17 +12,7 @@ On the previous page we learned to update presence with our cursor location—le
 
 ### Getting others’ presence
 
-We can get each user’s presence with the [`useOthers`][] hook. Like with every hook, the first step is exporting it from [liveblocks.config.ts][].
-
-```ts highlight="4"
-export const {
-  RoomProvider,
-  useMyPresence,
-  useOthers, // ✅
-} = createRoomContext(client);
-```
-
-Then, switch to [Room.tsx][] and add the hook to your function.
+Switch to [Room.tsx][], import the hook from [liveblocks.config.ts][], and add it to your component.
 
 ```tsx
 // Get list of other users
@@ -44,7 +34,13 @@ To render the cursors, we first need a cursor component. If you look inside [Cur
 <Cursor x={141} y={252} />
 ```
 
-To draw them, we can map through `others`, filtering for any cursors that are equal to `null` (therefore off-screen), and render each on-screen cursor.
+To draw them, we can map through `others`, filtering for any cursors that are equal to `null` (therefore off-screen), and render each on-screen cursor. Switch back to [Room.tsx][] and return the following code.
+
+<Banner title="connectionId">
+
+`connectionId` is a unique number for each online user that can be used as a key.
+
+</Banner>
 
 ```tsx highlight="8-16"
 return (
@@ -67,13 +63,24 @@ return (
 );
 ```
 
-<Banner title="connectionId">
+After adding this, hover over the preview windows to see functioning live cursors!
 
-`connectionId` is a helpful unique number that can be used as a key.
+### Throttle rate
+
+We can actually make these cursors even smoother, by asking Liveblocks to send more frequent updates. You can do this in [liveblocks.config.ts][] by adding the `throttle` property.
+
+```tsx highlight="3"
+const client = createClient({
+  publicApiKey: "pk_dev_PHigBerT_qlDHfGgAVlgreL1PZBL05meCHlRQkli3oZ3tERpzrqhoZV6ioNjrAOu",
+  throttle: 16,
+});
+```
+
+<Banner title="Throttle rate">
+
+The default throttle rate is 100ms, and above we’re decreasing it to 16ms. This is equivalent to a 60fps animation.
 
 </Banner>
-
-After adding the code, you’ll see functioning live cursors!
 
 ### Other uses
 
