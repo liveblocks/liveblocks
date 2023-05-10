@@ -3,13 +3,15 @@ import { createRoomContext } from "@liveblocks/react";
 
 const client = createClient({
   publicApiKey: "{% LIVEBLOCKS_PUBLIC_KEY %}",
+  throttle: 16,
 });
 
-type Presence = {};
+// Presence type
+type Presence = {
+  cursor: { x: number; y: number } | null;
+};
 
-// Storage types
 type Storage = {};
-
 type UserMeta = {};
 type RoomEvent = {};
 

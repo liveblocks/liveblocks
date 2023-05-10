@@ -1,3 +1,3 @@
 export function Room() {
-  return "Add `useStorage`";
+  return <>Add `useStorage`</>;
 }

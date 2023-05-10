@@ -7,6 +7,14 @@ showFiles: [
 ]
 ---
 
+Conflict-free data, or _storage_, allows us to create persistent data that multiple users can edit simultaneously.
+
+There are currently three different real-time data structures, each with a similar JavaScript counterpart:
+
+- [`LiveObject`][] - JavaScript Object
+- [`LiveList`][] - JavaScript Array
+- [`LiveMap`][] - JavaScript Map
+
 ```ts
 // Storage types
 type Storage = {
@@ -15,13 +23,6 @@ type Storage = {
     age: number;
   }>;
 };
-```
-
-```ts
-export const {
-  RoomProvider,
-  useStorage, // ✅
-} = createRoomContext<{}, Storage, {}, {}>(client);
 ```
 
 ```tsx highlight="4-6"
@@ -40,19 +41,22 @@ import { useStorage } from "./liveblocks.config";
 export function Room() {
   const person = useStorage((root) => root.person);
 
-  if (!person) {
-    return <div>Loading...</div>;
-  }
-
   return <div>Person: {JSON.stringify(person)}</div>;
 }
 ```
 
+<Banner title="Without suspense">
+
+If we weren’t using `suspense` in our config file, `person` would return `null` until it was loaded, and we’d have to check for this.
+
+</Banner>
+
+**Press the refresh button in the preview window** to reload `initialStorage`, and you should now be seeing `person`! On the next page we’ll be updating storage.
 
 
-[`createRoomContext`]: /docs/api-reference/liveblocks-react#createRoomContext
-[`useBroadcastEvent`]: /docs/api-reference/liveblocks-react#useBroadcastEvent
-[`useEventListener`]: /docs/api-reference/liveblocks-react#useEventListener
+[`LiveObject`]: /docs/api-reference/liveblocks-client#LiveObject
+[`LiveList`]: /docs/api-reference/liveblocks-client#LiveList
+[`LiveMap`]: /docs/api-reference/liveblocks-client#LiveMap
 
 [liveblocks.config.ts]: #/liveblocks.config.ts
 [App.tsx]: #/App.tsx
