@@ -126,7 +126,6 @@ type RoomEventCallbackMap<
   error: Callback<Error>;
   connection: Callback<ConnectionStatus>;
   history: Callback<HistoryEvent>;
-  storage: Callback<StorageUpdate[]>;
   "storage-status": Callback<StorageStatus>;
 };
 
@@ -2357,11 +2356,6 @@ function makeClassicSubscribeFn<
         case "connection":
           return events.connection.subscribe(
             callback as Callback<ConnectionStatus>
-          );
-
-        case "storage":
-          return events.storage.subscribe(
-            callback as Callback<StorageUpdate[]>
           );
 
         case "history":
