@@ -1,3 +1,6 @@
+import type { EventSource, Observable } from "./lib/EventSource";
+import { makeEventSource } from "./lib/EventSource";
+
 /**
  * A generic Finite State Machine (FSM) implementation.
  */
@@ -120,6 +123,24 @@ export class FSM<
     Map<TEvent["type"], TargetFn<TContext, TEvent, TState>>
   >;
 
+  private readonly eventHub: {
+    readonly didReceiveEvent: EventSource<TEvent | BuiltinEvent>;
+    readonly willTransition: EventSource<{ from: TState; to: TState }>;
+    readonly didPatchContext: EventSource<Partial<TContext>>;
+    readonly didIgnoreEvent: EventSource<TEvent>;
+    readonly willExitState: EventSource<TState>;
+    readonly didEnterState: EventSource<TState>;
+  };
+
+  public readonly events: {
+    readonly didReceiveEvent: Observable<TEvent | BuiltinEvent>;
+    readonly willTransition: Observable<{ from: TState; to: TState }>;
+    readonly didPatchContext: Observable<Partial<TContext>>;
+    readonly didIgnoreEvent: Observable<TEvent>;
+    readonly willExitState: Observable<TState>;
+    readonly didEnterState: Observable<TState>;
+  };
+
   //
   // The cleanup stack is a stack of (optional) callback functions that will
   // be run when exiting the current state. If a state (or state group) does
@@ -200,6 +221,22 @@ export class FSM<
     this.knownEventTypes = new Set();
     this.allowedTransitions = new Map();
     this.currentContext = Object.assign({}, initialContext);
+    this.eventHub = {
+      didReceiveEvent: makeEventSource(),
+      willTransition: makeEventSource(),
+      didPatchContext: makeEventSource(),
+      didIgnoreEvent: makeEventSource(),
+      willExitState: makeEventSource(),
+      didEnterState: makeEventSource(),
+    };
+    this.events = {
+      didReceiveEvent: this.eventHub.didReceiveEvent.observable,
+      willTransition: this.eventHub.willTransition.observable,
+      didPatchContext: this.eventHub.didPatchContext.observable,
+      didIgnoreEvent: this.eventHub.didIgnoreEvent.observable,
+      willExitState: this.eventHub.willExitState.observable,
+      didEnterState: this.eventHub.didEnterState.observable,
+    };
   }
 
   public get context(): Readonly<TContext> {
@@ -389,6 +426,8 @@ export class FSM<
    * then the level is 3.
    */
   private exit(levels: number | null) {
+    this.eventHub.willExitState.notify(this.currentState);
+
     levels = levels ?? this.cleanupStack.length;
     for (let i = 0; i < levels; i++) {
       this.cleanupStack.pop()?.();
@@ -414,6 +453,8 @@ export class FSM<
         this.cleanupStack.push(null);
       }
     }
+
+    this.eventHub.didEnterState.notify(this.currentState);
   }
 
   /**
@@ -430,6 +471,8 @@ export class FSM<
     // which may likely be a configuration error
     if (!this.knownEventTypes.has(event.type)) {
       throw new Error(`Invalid event ${JSON.stringify(event.type)}`);
+    } else {
+      this.eventHub.didIgnoreEvent.notify(event);
     }
   }
 
@@ -437,6 +480,10 @@ export class FSM<
     event: E,
     target: Target<TContext, E, TState>
   ) {
+    this.eventHub.didReceiveEvent.notify(event);
+
+    const oldState = this.currentState;
+
     const targetFn = typeof target === "function" ? target : () => target;
     const nextTarget = targetFn(event, this.currentContext);
     let nextState: TState;
@@ -454,6 +501,8 @@ export class FSM<
       throw new Error(`Invalid next state name: ${JSON.stringify(nextState)}`);
     }
 
+    this.eventHub.willTransition.notify({ from: oldState, to: nextState });
+
     const [up, down] = distance(this.currentState, nextState);
     if (up > 0) {
       this.exit(up);
@@ -463,6 +512,7 @@ export class FSM<
     if (action !== undefined) {
       const patch = action(this.context, event);
       this.currentContext = Object.assign({}, this.currentContext, patch);
+      this.eventHub.didPatchContext.notify(patch);
     }
 
     if (down > 0) {
