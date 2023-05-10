@@ -15,20 +15,20 @@ in your own project:
 npm install @liveblocks/client @liveblocks/react
 ```
 
+After installing the packages, you can initialize a Liveblocks project with a config file, which we’ve already done on this page:
+
+```bash
+npm create-liveblocks-app@latest --init
+```
+
+This file is named [liveblocks.config.ts][].
+
 ### Setting up a client
 
-The first step in connecting to Liveblocks is creating a client which will be responsible for communicating with our back end. You can do this by importing [`createClient`][] from [`@liveblocks/client`][], and passing your public API key.
-
-<Banner title="Secret key">
-
-You can also set up Liveblocks on the server with your secret key, but we’ll come back to that in the authentication section.
-
-</Banner>
-
-We recommend setting up your connection once, in a file named `liveblocks.config.ts`.
+The first step in connecting to Liveblocks is creating a client which will be responsible for communicating with our back end.
+You can do this by modifying [`createClient`][] in your config file, and passing your public API key.
 
 ```ts
-// Create client
 const client = createClient({
   publicApiKey: "{% LIVEBLOCKS_PUBLIC_KEY %}",
 });
@@ -36,17 +36,33 @@ const client = createClient({
 
 Ordinarily, you’d find your API keys on the [dashboard](/dashboard/apikeys), but for this tutorial we’ll let you borrow a temporary key.
 
-### Creating room context
+<Banner title="Secret key">
 
-The next step is using [`createRoomContext`][] to generate the React features we’ll be using—the first of which will be `RoomProvider`. We’ll be exporting every React hook from here, and passing in our TypeScript types.
+You can also set up Liveblocks on the server with your secret key, but we’ll come back to that in the authentication section.
+
+</Banner>
+
+### Exporting hooks and components
+
+When building Liveblocks apps, we’ll be exporting all React hooks and components from this file, which enables you to have full type safety with minimal effort.
+
+We’ll be editing the four types in this file later, but for now, take note that we’re exporting from the `suspense` property; this enables
+the [React Suspense](https://react.dev/reference/react/Suspense) version of our hooks, which we recommend for easier development.
 
 ```ts
-// Create room context
-export const { RoomProvider } = createRoomContext(client);
+export const {
+  suspense: {
+    RoomProvider,
+    // ...
+  }
+}
 ```
 
-Add the two snippets of code to `liveblocks.config.ts` to connect to Liveblocks!
+`RoomProvider` is the component that acts as the root of your real-time app—try uncommenting the export in the code panel to see the app connect to Liveblocks!
 
 [`@liveblocks/client`]: /docs/api-reference/liveblocks-client
 [`createClient`]: /docs/api-reference/liveblocks-client#createClient
 [`createRoomContext`]: /docs/api-reference/liveblocks-react#createRoomContext
+[`RoomProvider`]: /docs/api-reference/liveblocks-react#RoomProvider
+
+[liveblocks.config.ts]: #/liveblocks.config.ts
