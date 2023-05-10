@@ -581,7 +581,7 @@ type PrivateRoomAPI<
   getSelf_forDevTools(): DevTools.UserTreeNode | null;
   getOthers_forDevTools(): readonly DevTools.UserTreeNode[];
 
-  simulate: {
+  send: {
     connect(): void;
     disconnect(): void;
 
@@ -2289,7 +2289,7 @@ export function createRoom<
         others_forDevTools.current,
 
       // prettier-ignore
-      simulate: {
+      send: {
         explicitClose:  (closeEvent) => transition({ type: "EXPLICIT_CLOSE", closeEvent }),
         implicitClose:            () => transition({ type: "IMPLICIT_CLOSE" }),
         authSuccess: (token, socket) => transition({ type: "AUTH_SUCCESS", token, socket }),
