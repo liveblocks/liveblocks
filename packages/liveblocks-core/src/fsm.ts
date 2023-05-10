@@ -380,13 +380,6 @@ export class FSM<
   }
 
   /**
-   * Checks to see if the given event can be handled in the current state.
-   */
-  public can(eventName: TEvent["type"]): boolean {
-    return this.getTargetFn(eventName) !== undefined;
-  }
-
-  /**
    * Exits the current state, and executes any necessary cleanup functions.
    * Call this before changing the current state to the next state.
    *
@@ -429,19 +422,15 @@ export class FSM<
    */
   public send(event: TEvent): void {
     const targetFn = this.getTargetFn(event.type);
-    if (targetFn === undefined) {
-      if (this.knownEventTypes.has(event.type)) {
-        throw new Error(
-          `Event ${JSON.stringify(
-            event.type
-          )} not allowed in state ${JSON.stringify(this.currentState)}`
-        );
-      } else {
-        throw new Error(`Invalid event ${JSON.stringify(event.type)}`);
-      }
+    if (targetFn !== undefined) {
+      return this.transition(event, targetFn);
     }
 
-    return this.transition(event, targetFn);
+    // Ignore the event otherwise, but throw if the event is entirely unknown,
+    // which may likely be a configuration error
+    if (!this.knownEventTypes.has(event.type)) {
+      throw new Error(`Invalid event ${JSON.stringify(event.type)}`);
+    }
   }
 
   private transition<E extends TEvent | BuiltinEvent>(
@@ -478,16 +467,6 @@ export class FSM<
 
     if (down > 0) {
       this.enter(down);
-    }
-  }
-
-  /**
-   * Like .transition(), but will not throw if the event cannot be handled by
-   * the current state.
-   */
-  public sendIfPossible(event: TEvent): void {
-    if (this.can(event.type)) {
-      this.send(event);
     }
   }
 }

@@ -141,19 +141,17 @@ describe("finite state machine", () => {
 
     expect(fsm.currentState).toBe("red");
 
-    expect(() => fsm.send({ type: "ONLY_WHEN_GREEN" })).toThrow(
-      'Event "ONLY_WHEN_GREEN" not allowed in state "red"'
-    );
-    expect(() => fsm.sendIfPossible({ type: "ONLY_WHEN_GREEN" })).not.toThrow();
-    expect(fsm.currentState).toBe("red"); // Doesn't change the state
+    fsm.send({ type: "ONLY_WHEN_GREEN" }); // Event not handled, should be a no-op...
+    expect(fsm.currentState).toBe("red"); // ...so it doesn't change the state
 
-    fsm.sendIfPossible({ type: "ONLY_WHEN_RED" }); // Acts like .send()
+    fsm.send({ type: "ONLY_WHEN_RED" });
     expect(fsm.currentState).toBe("green");
 
-    fsm.sendIfPossible({ type: "ONLY_WHEN_GREEN" });
+    fsm.send({ type: "ONLY_WHEN_GREEN" });
 
-    // Still fails (because this is a configuration error)
-    expect(() => fsm.sendIfPossible({ type: "INVALID" })).toThrow(
+    // However... .send() fails if this is a completely unknown
+    // event (because that's a configuration error)
+    expect(() => fsm.send({ type: "INVALID" })).toThrow(
       'Invalid next state name: "i-am-not-a-valid-state-name"'
     );
   });
@@ -352,9 +350,10 @@ describe("finite state machine", () => {
     expect(fsm.currentState).toEqual("foo.two");
     fsm.send({ type: "FROM_FOO_ONLY" });
     expect(fsm.currentState).toEqual("bar.three");
-    expect(() => fsm.send({ type: "FROM_FOO_ONLY" })).toThrow(
-      'Event "FROM_FOO_ONLY" not allowed in state "bar.three"'
-    );
+
+    fsm.send({ type: "FROM_FOO_ONLY" }); // This event is not handled by this state, it's a no-op
+    expect(fsm.currentState).toEqual("bar.three");
+
     fsm.send({ type: "FROM_ANYWHERE" });
     expect(fsm.currentState).toEqual("foo.two");
   });
