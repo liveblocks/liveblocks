@@ -27,20 +27,10 @@ type Presence = {
 };
 ```
 
-Next, pass `Presence` to `createRoomContext` as a generic, and export the [`useMyPresence`][] hook.
-
-```ts highlight="4,5"
-export const {
-  RoomProvider,
-  useOthers,
-  useMyPresence, // ✅
-} = createRoomContext<Presence>(client);
-```
-
 <Banner title="Defining types">
 
-With our React package, you only need to handle your types once
-as they’ll automatically propagate through your entire app.
+You’ll notice that at the bottom of the file, we’ve already added `Presence` to `createRoomContext`.
+Because we’re exporting our hooks from here, all our types will automatically propagate through our entire app.
 
 </Banner>
 
@@ -65,7 +55,7 @@ export function Room() {
 }
 ```
 
-Great! Hit the refresh button in the preview window to reload `initialPresence`, and you should now be seeing `Cursor: null` in the preview window! On the next page we’ll be creating live cursors with presence.
+Great! **Press the refresh button in the preview window** to reload `initialPresence`, and you should now be seeing `Cursor: null`! On the next page we’ll be creating live cursors with presence.
 
 
 [`RoomProvider`]: /docs/api-reference/liveblocks-react#RoomProvider

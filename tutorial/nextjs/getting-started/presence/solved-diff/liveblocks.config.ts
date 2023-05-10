@@ -10,7 +10,34 @@ type Presence = {
   cursor: { x: number; y: number } | null;
 };
 
+type Storage = {};
+type UserMeta = {};
+type RoomEvent = {};
+
 export const {
-  RoomProvider,
-  useMyPresence, // ✅
-} = createRoomContext<Presence>(client);
+  suspense: {
+    RoomProvider,
+    useRoom,
+    useMyPresence,
+    useUpdateMyPresence,
+    useSelf,
+    useOthers,
+    useOthersMapped,
+    useOthersConnectionIds,
+    useOther,
+    useBroadcastEvent,
+    useEventListener,
+    useErrorListener,
+    useStorage,
+    useObject,
+    useMap,
+    useList,
+    useBatch,
+    useHistory,
+    useUndo,
+    useRedo,
+    useCanUndo,
+    useCanRedo,
+    useMutation,
+  },
+} = createRoomContext<Presence, Storage, UserMeta, RoomEvent>(client);
