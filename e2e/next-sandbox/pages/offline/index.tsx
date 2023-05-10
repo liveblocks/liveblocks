@@ -10,7 +10,7 @@ const { RoomProvider, useList, useRedo, useSelf, useUndo, useRoom } =
   createRoomContext<never, { items: LiveList<string> }>(client);
 
 type Internal = {
-  simulate: {
+  send: {
     explicitClose(event: IWebSocketCloseEvent): void;
     implicitClose(): void;
   };
@@ -81,7 +81,7 @@ function Sandbox() {
       <button
         id="closeWebsocket"
         onClick={() => {
-          internals.simulate.implicitClose();
+          internals.send.implicitClose();
           setStatus("offline");
         }}
       >
@@ -90,7 +90,7 @@ function Sandbox() {
       <button
         id="sendCloseEventConnectionError"
         onClick={() =>
-          internals.simulate.explicitClose(
+          internals.send.explicitClose(
             new CloseEvent("close", {
               reason: "Fake connection error",
               code: 1005,
@@ -104,7 +104,7 @@ function Sandbox() {
       <button
         id="sendCloseEventAppError"
         onClick={() =>
-          internals.simulate.explicitClose(
+          internals.send.explicitClose(
             new CloseEvent("close", {
               reason: "App error",
               code: 4002,
