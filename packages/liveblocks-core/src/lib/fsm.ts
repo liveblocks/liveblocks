@@ -39,6 +39,9 @@ type FullTargetSpec<
   TState extends string
 > = {
   target: TState;
+
+  // XXX This `assign` API is misused a lot to trigger side-effects, which is
+  // fine on transitions. But this API shouldn't be called `assign`.
   assign: (context: Readonly<TContext>, event: TEvent) => Partial<TContext>;
 };
 
