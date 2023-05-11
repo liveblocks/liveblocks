@@ -34,7 +34,7 @@ type EnterFn<TContext> = (context: Readonly<TContext>) => void | CleanupFn;
 type TargetFn<TContext, TEvent extends BaseEvent, TState extends string> = (
   event: TEvent,
   context: Readonly<TContext>
-) => TState | TargetConfig<TContext, TEvent, TState>;
+) => TState | TargetConfig<TContext, TEvent, TState> | null;
 
 type Assigner<TContext, TEvent extends BaseEvent> =
   | Partial<TContext>
@@ -147,7 +147,7 @@ export class FSM<
     readonly didReceiveEvent: EventSource<TEvent | BuiltinEvent>;
     readonly willTransition: EventSource<{ from: TState; to: TState }>;
     readonly didPatchContext: EventSource<Partial<TContext>>;
-    readonly didIgnoreEvent: EventSource<TEvent>;
+    readonly didIgnoreEvent: EventSource<TEvent | BuiltinEvent>;
     readonly willExitState: EventSource<TState>;
     readonly didEnterState: EventSource<TState>;
   };
@@ -156,7 +156,7 @@ export class FSM<
     readonly didReceiveEvent: Observable<TEvent | BuiltinEvent>;
     readonly willTransition: Observable<{ from: TState; to: TState }>;
     readonly didPatchContext: Observable<Partial<TContext>>;
-    readonly didIgnoreEvent: Observable<TEvent>;
+    readonly didIgnoreEvent: Observable<TEvent | BuiltinEvent>;
     readonly willExitState: Observable<TState>;
     readonly didEnterState: Observable<TState>;
   };
@@ -513,6 +513,12 @@ export class FSM<
     let nextState: TState;
     let assign: Assigner<TContext, E> | undefined = undefined;
     let effect: Effect<TContext, E> | undefined = undefined;
+    if (nextTarget === null) {
+      // Do not transition
+      this.eventHub.didIgnoreEvent.notify(event);
+      return;
+    }
+
     if (typeof nextTarget === "string") {
       nextState = nextTarget;
     } else {
