@@ -2435,11 +2435,6 @@ function makeClassicSubscribeFn<
             callback as Callback<ConnectionStatus>
           );
 
-        case "storage":
-          return events.storage.subscribe(
-            callback as Callback<StorageUpdate[]>
-          );
-
         case "history":
           return events.history.subscribe(callback as Callback<HistoryEvent>);
 
