@@ -1,19 +1,20 @@
+/**
+ * A generic Finite State Machine (FSM) implementation.
+ *
+ * This is a generic implementation that is not Liveblocks specific. We could
+ * put this in a separate NPM package if we wanted to make this more reusable.
+ */
+
 import type { EventSource, Observable } from "./EventSource";
 import { makeEventSource } from "./EventSource";
 
 /**
- * A generic Finite State Machine (FSM) implementation.
- */
-
-type BaseEvent = { readonly type: string };
-
-/**
- * Built-in event thrown by .addTimedTransition().
+ * Built-in event sent by .addTimedTransition().
  */
 type TimerEvent = { readonly type: "TIMER" };
 
 /**
- * Built-in events thrown by .onEnterAsync().
+ * Built-in events sent by .onEnterAsync().
  */
 type AsyncOKEvent<T> = {
   readonly type: "ASYNC_OK";
@@ -23,6 +24,8 @@ type AsyncErrorEvent = {
   readonly type: "ASYNC_ERROR";
   readonly reason: unknown;
 };
+
+type BaseEvent = { readonly type: string };
 type BuiltinEvent = TimerEvent | AsyncOKEvent<unknown> | AsyncErrorEvent;
 
 type CleanupFn = () => void;
@@ -31,13 +34,9 @@ type EnterFn<TContext> = (context: Readonly<TContext>) => void | CleanupFn;
 type TargetFn<TContext, TEvent extends BaseEvent, TState extends string> = (
   event: TEvent,
   context: Readonly<TContext>
-) => TState | FullTargetSpec<TContext, TEvent, TState>;
+) => TState | TargetConfig<TContext, TEvent, TState>;
 
-type FullTargetSpec<
-  TContext,
-  TEvent extends BaseEvent,
-  TState extends string
-> = {
+type TargetConfig<TContext, TEvent extends BaseEvent, TState extends string> = {
   target: TState;
 
   // XXX This `assign` API is misused a lot to trigger side-effects, which is
@@ -47,7 +46,7 @@ type FullTargetSpec<
 
 type Target<TContext, TEvent extends BaseEvent, TState extends string> =
   | TState // Static, e.g. 'complete'
-  | FullTargetSpec<TContext, TEvent, TState>
+  | TargetConfig<TContext, TEvent, TState>
   | TargetFn<TContext, TEvent, TState>; // Dynamic, e.g. (context) => context.x ? 'complete' : 'other'
 
 type Groups<T extends string> = T extends `${infer G}.${infer Rest}`
@@ -55,7 +54,7 @@ type Groups<T extends string> = T extends `${infer G}.${infer Rest}`
   : never;
 type Wildcard<T extends string> = "*" | `${Groups<T>}.*`;
 
-export function distance(state1: string, state2: string): [number, number] {
+function distance(state1: string, state2: string): [number, number] {
   if (state1 === state2) {
     return [0, 0];
   }
@@ -75,7 +74,7 @@ export function distance(state1: string, state2: string): [number, number] {
   return [up, down];
 }
 
-export function patterns<TState extends string>(
+function patterns<TState extends string>(
   targetState: TState,
   levels: number
 ): (Wildcard<TState> | TState)[] {
@@ -307,7 +306,9 @@ export class FSM<
     });
   }
 
-  private getMatches(nameOrPattern: TState | Wildcard<TState>): TState[] {
+  private getStatesMatching(
+    nameOrPattern: TState | Wildcard<TState>
+  ): TState[] {
     const matches: TState[] = [];
 
     // We're trying to match a group pattern here, i.e. `foo.*` (which might
@@ -360,24 +361,26 @@ export class FSM<
       throw new Error("Already started");
     }
 
-    for (const src of this.getMatches(nameOrPattern)) {
-      let map = this.allowedTransitions.get(src);
+    for (const srcState of this.getStatesMatching(nameOrPattern)) {
+      let map = this.allowedTransitions.get(srcState);
       if (map === undefined) {
         map = new Map();
-        this.allowedTransitions.set(src, map);
+        this.allowedTransitions.set(srcState, map);
       }
 
-      for (const [type, target_] of Object.entries(mapping)) {
-        const targetSpec = target_ as
+      for (const [type, targetConfig_] of Object.entries(mapping)) {
+        const targetConfig = targetConfig_ as
           | Target<TContext, TEvent, TState>
           | null
           | undefined;
         this.knownEventTypes.add(type);
 
-        if (targetSpec !== undefined && targetSpec !== null) {
+        if (targetConfig !== undefined && targetConfig !== null) {
           // TODO Disallow overwriting when using a wildcard pattern!
           const targetFn =
-            typeof targetSpec === "function" ? targetSpec : () => targetSpec;
+            typeof targetConfig === "function"
+              ? targetConfig
+              : () => targetConfig;
           map.set(type, targetFn);
         }
       }
@@ -523,3 +526,6 @@ export class FSM<
     }
   }
 }
+
+// Exported only for unit tests
+export { distance, patterns };
