@@ -37,5 +37,15 @@ characters once serialized to JSON.
 
 ### Storage
 
-The value of a `LiveObject`, `LiveList`, and `LiveMap` storage item cannot
-exceed 128 kB. This limit can be increased on the Enterprise plan.
+- A `LiveObject` cannot exceed 128 kB when totalling the size of the keys and
+  values.
+- A `LiveMap` can be any size, so long as each individual value does not exceed
+  128kB.
+- A `LiveList` can be any size, so long as each individual value does not exceed
+  128kB.
+
+Note that when one real-time data structure is nested inside another, it does
+not count towards the limit. Only the JSON leaves of your data structure count
+towards the limit. For example, if a `LiveList` is nested inside a `LiveObject`,
+the `LiveList` and its contents do not count towards the `LiveObject`'s data
+limit.
