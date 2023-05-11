@@ -7,6 +7,7 @@ export type InitQuestions = {
   framework: ConfigFrameworks;
   suspense: boolean;
   typescript: boolean;
+  comments: boolean;
 };
 
 export async function initPrompts(flags: Record<string, any>) {
@@ -35,9 +36,15 @@ export async function initPrompts(flags: Record<string, any>) {
       initial: true,
     },
     {
-      type: flags.name ? null : "confirm",
+      type: flags.typescript !== undefined ? null : "confirm",
       name: "typescript",
       message: "Are you using TypeScript?",
+      initial: true,
+    },
+    {
+      type: flags.comments !== undefined ? null : "confirm",
+      name: "comments",
+      message: "Add helpful comments?",
       initial: true,
     },
   ];
@@ -47,6 +54,7 @@ export async function initPrompts(flags: Record<string, any>) {
     framework = flags.framework,
     suspense = flags.suspense,
     typescript = flags.typescript,
+    comments = flags.comments,
   }: InitQuestions = await prompts(questions, {
     onCancel: () => {
       console.log(c.redBright.bold("  Cancelled"));
@@ -55,5 +63,5 @@ export async function initPrompts(flags: Record<string, any>) {
     },
   });
 
-  return { framework, suspense, typescript };
+  return { framework, suspense, typescript, comments };
 }
