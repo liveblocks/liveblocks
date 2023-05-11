@@ -1,4 +1,3 @@
-import type { DocumentVisibilityState } from "./compat/DocumentVisibilityState";
 import type { ApplyResult, ManagedPool } from "./crdts/AbstractCrdt";
 import { OpSource } from "./crdts/AbstractCrdt";
 import {
@@ -51,7 +50,6 @@ import type * as DevTools from "./types/DevToolsTreeNode";
 import type {
   IWebSocket,
   IWebSocketCloseEvent,
-  IWebSocketEvent,
   IWebSocketInstance,
   IWebSocketMessageEvent,
 } from "./types/IWebSocket";
@@ -573,36 +571,43 @@ type PrivateRoomAPI<
   TUserMeta extends BaseUserMeta,
   TRoomEvent extends Json
 > = {
-  // Context
+  // For introspection in unit tests only
   buffer: MachineContext<TPresence, TStorage, TUserMeta, TRoomEvent>["buffer"]; // prettier-ignore
-  numRetries: MachineContext<TPresence, TStorage, TUserMeta, TRoomEvent>["numRetries"]; // prettier-ignore
+  numRetries: number;
+  undoStack: readonly (readonly Readonly<HistoryOp<TPresence>>[])[];
+  nodeCount: number;
 
-  // Core
-  connect(): void;
-  disconnect(): void;
-
-  onClose(event: IWebSocketCloseEvent): void;
-  onMessage(event: IWebSocketEvent): void;
-  authenticationSuccess(token: RoomAuthToken, socket: IWebSocketInstance): void;
-  onNavigatorOnline(): void;
-  onVisibilityChange(visibilityState: DocumentVisibilityState): void;
-
-  simulateCloseWebsocket(): void;
-  simulateSendCloseEvent(event: IWebSocketCloseEvent): void;
-
-  getUndoStack(): HistoryOp<TPresence>[][];
-  getItemsCount(): number;
-
-  // DevTools support
+  // For DevTools support (Liveblocks browser extension)
   getSelf_forDevTools(): DevTools.UserTreeNode | null;
   getOthers_forDevTools(): readonly DevTools.UserTreeNode[];
+
+  send: {
+    connect(): void;
+    disconnect(): void;
+
+    explicitClose(event: IWebSocketCloseEvent): void; // NOTE: Also used in e2e test app!
+    implicitClose(): void; // NOTE: Also used in e2e test app!
+
+    authSuccess(token: RoomAuthToken, socket: IWebSocketInstance): void; // prettier-ignore
+    navigatorOnline(): void;
+    windowGotFocus(): void;
+    pong(): void;
+
+    /**
+     * Call this when a server message is received (typically from the
+     * active WebSocket connection, or simulated by a unit test). These
+     * messages should *not* be PONG messages (aka server heartbeats).
+     *
+     * When a PONG is received, call pong() instead.
+     */
+    incomingMessage(event: IWebSocketMessageEvent): void;
+  };
 };
 
 const BACKOFF_RETRY_DELAYS = [250, 500, 1000, 2000, 4000, 8000, 10000];
 const BACKOFF_RETRY_DELAYS_SLOW = [2000, 30000, 60000, 300000];
 
 const HEARTBEAT_INTERVAL = 30000;
-// const WAKE_UP_CHECK_INTERVAL = 2000;
 const PONG_TIMEOUT = 2000;
 
 function makeIdFactory(connectionId: number): IdFactory {
@@ -796,6 +801,23 @@ function userToTreeNode(
 }
 
 /**
+ * TODO(nvie) Abstract this out more. This will not be the final form.
+ */
+type FSMEvent =
+  | { type: "CONNECT" }
+  | { type: "DISCONNECT" }
+  | { type: "WINDOW_GOT_FOCUS" }
+  | { type: "RECEIVE_PONG" }
+  | { type: "NAVIGATOR_ONLINE" }
+  | {
+      type: "AUTH_SUCCESS";
+      token: RoomAuthToken;
+      socket: IWebSocketInstance;
+    }
+  | { type: "IMPLICIT_CLOSE" }
+  | { type: "EXPLICIT_CLOSE"; closeEvent: IWebSocketCloseEvent };
+
+/**
  * @internal
  * Initializes a new Room state machine, and returns its public API to observe
  * and control it.
@@ -967,7 +989,7 @@ export function createRoom<
       const prevToken = context.token;
       if (prevToken !== null && !isTokenExpired(prevToken.parsed)) {
         const socket = createWebSocket(prevToken.raw);
-        authenticationSuccess(prevToken.parsed, socket);
+        handleAuthSuccess(prevToken.parsed, socket);
         return undefined;
       } else {
         void auth(config.roomId)
@@ -977,7 +999,7 @@ export function createRoom<
             }
             const parsedToken = parseRoomAuthToken(token);
             const socket = createWebSocket(token);
-            authenticationSuccess(parsedToken, socket);
+            handleAuthSuccess(parsedToken, socket);
             context.token = { raw: token, parsed: parsedToken };
           })
           .catch((er: unknown) =>
@@ -1003,7 +1025,7 @@ export function createRoom<
     },
 
     scheduleFlush: (delay: number) => setTimeout(tryFlushing, delay),
-    scheduleReconnect: (delay: number) => setTimeout(connect, delay),
+    scheduleReconnect: (delay: number) => setTimeout(handleConnect, delay),
     startHeartbeatInterval: () => setInterval(heartbeat, HEARTBEAT_INTERVAL),
     schedulePongTimeout: () => setTimeout(pongTimeout, PONG_TIMEOUT),
   };
@@ -1301,7 +1323,7 @@ export function createRoom<
     }
   }
 
-  function connect() {
+  function handleConnect() {
     if (
       context.connection.current.status !== "closed" &&
       context.connection.current.status !== "unavailable"
@@ -1377,14 +1399,11 @@ export function createRoom<
     );
   }
 
-  function authenticationSuccess(
-    token: RoomAuthToken,
-    socket: IWebSocketInstance
-  ) {
-    socket.addEventListener("message", onMessage);
-    socket.addEventListener("open", onOpen);
-    socket.addEventListener("close", onClose);
-    socket.addEventListener("error", onError);
+  function handleAuthSuccess(token: RoomAuthToken, socket: IWebSocketInstance) {
+    socket.addEventListener("message", handleRawSocketMessage);
+    socket.addEventListener("open", handleSocketOpen);
+    socket.addEventListener("close", handleExplicitClose);
+    socket.addEventListener("error", handleSocketError);
 
     updateConnection(
       {
@@ -1412,11 +1431,9 @@ export function createRoom<
     context.timers.reconnect = effects.scheduleReconnect(getRetryDelay());
   }
 
-  function onVisibilityChange(visibilityState: DocumentVisibilityState) {
-    if (
-      visibilityState === "visible" &&
-      context.connection.current.status === "open"
-    ) {
+  function handleWindowGotFocus() {
+    // TODO Move this guard into the .transition() function eventually
+    if (context.connection.current.status === "open") {
       log("Heartbeat after visibility change");
       heartbeat();
     }
@@ -1490,7 +1507,7 @@ export function createRoom<
     return { type: "reset" };
   }
 
-  function onNavigatorOnline() {
+  function handleNavigatorBackOnline() {
     if (context.connection.current.status === "unavailable") {
       log("Try to reconnect after connectivity change");
       reconnect();
@@ -1577,12 +1594,23 @@ export function createRoom<
     effects.send(messages);
   }
 
-  function onMessage(event: IWebSocketMessageEvent) {
+  /**
+   * Handles a raw message received on the WebSocket. Can be either a "pong"
+   * (server heartbeat), or a message from the Liveblocks server.
+   */
+  function handleRawSocketMessage(event: IWebSocketMessageEvent) {
     if (event.data === "pong") {
-      clearTimeout(context.timers.pongTimeout);
-      return;
+      transition({ type: "RECEIVE_PONG" });
+    } else {
+      handleServerMessage(event);
     }
+  }
 
+  function handlePong() {
+    clearTimeout(context.timers.pongTimeout);
+  }
+
+  function handleServerMessage(event: IWebSocketMessageEvent) {
     if (typeof event.data !== "string") {
       // istanbul ignore next: Unknown incoming message
       return;
@@ -1705,7 +1733,7 @@ export function createRoom<
     });
   }
 
-  function onClose(event: IWebSocketCloseEvent) {
+  function handleExplicitClose(event: IWebSocketCloseEvent) {
     context.socket = null;
 
     clearTimeout(context.timers.flush);
@@ -1781,9 +1809,11 @@ export function createRoom<
     ];
   }
 
-  function onError() {}
+  function handleSocketError() {
+    // TODO(nvie) At the very least, emit a log here?
+  }
 
-  function onOpen() {
+  function handleSocketOpen() {
     clearInterval(context.timers.heartbeat);
     context.timers.heartbeat = effects.startHeartbeatInterval();
 
@@ -1837,12 +1867,12 @@ export function createRoom<
     reconnect();
   }
 
-  function disconnect() {
+  function handleDisconnect() {
     if (context.socket) {
-      context.socket.removeEventListener("open", onOpen);
-      context.socket.removeEventListener("message", onMessage);
-      context.socket.removeEventListener("close", onClose);
-      context.socket.removeEventListener("error", onError);
+      context.socket.removeEventListener("open", handleSocketOpen);
+      context.socket.removeEventListener("message", handleRawSocketMessage);
+      context.socket.removeEventListener("close", handleExplicitClose);
+      context.socket.removeEventListener("error", handleSocketError);
       context.socket.close();
       context.socket = null;
     }
@@ -1867,10 +1897,10 @@ export function createRoom<
 
   function reconnect() {
     if (context.socket) {
-      context.socket.removeEventListener("open", onOpen);
-      context.socket.removeEventListener("message", onMessage);
-      context.socket.removeEventListener("close", onClose);
-      context.socket.removeEventListener("error", onError);
+      context.socket.removeEventListener("open", handleSocketOpen);
+      context.socket.removeEventListener("message", handleRawSocketMessage);
+      context.socket.removeEventListener("close", handleExplicitClose);
+      context.socket.removeEventListener("error", handleSocketError);
       context.socket.close();
       context.socket = null;
     }
@@ -1882,7 +1912,7 @@ export function createRoom<
 
     updateConnection({ status: "unavailable" }, batchUpdates);
 
-    connect();
+    handleConnect();
   }
 
   function tryFlushing() {
@@ -2151,14 +2181,10 @@ export function createRoom<
     }
   }
 
-  function simulateCloseWebsocket() {
+  function handleImplicitClose() {
     if (context.socket) {
       context.socket = null;
     }
-  }
-
-  function simulateSendCloseEvent(event: IWebSocketCloseEvent) {
-    onClose(event);
   }
 
   function getStorageStatus(): StorageStatus {
@@ -2208,31 +2234,80 @@ export function createRoom<
     storageStatus: eventHub.storageStatus.observable,
   };
 
+  //
+  // NOTE:
+  // The Finite State Machine's .transition() function will eventually be
+  // the central gate keeper of sanity. This function will likely be abstracted
+  // away in a proper FSM abstraction (like a separate class).
+  //
+  // The idea is that, eventually, the handler functions can only be called
+  // from here, and never from anywhere else, so this function can perform its
+  // central gatekeeping.
+  //
+  function transition(event: FSMEvent) {
+    switch (event.type) {
+      case "CONNECT":
+        return handleConnect();
+
+      case "DISCONNECT":
+        return handleDisconnect();
+
+      case "RECEIVE_PONG":
+        return handlePong();
+
+      case "AUTH_SUCCESS":
+        return handleAuthSuccess(event.token, event.socket);
+
+      case "WINDOW_GOT_FOCUS":
+        return handleWindowGotFocus();
+
+      case "NAVIGATOR_ONLINE":
+        return handleNavigatorBackOnline();
+
+      case "IMPLICIT_CLOSE":
+        return handleImplicitClose();
+
+      case "EXPLICIT_CLOSE":
+        return handleExplicitClose(event.closeEvent);
+
+      default:
+        return assertNever(event, "Invalid event");
+    }
+  }
+
   return {
     /* NOTE: Exposing __internal here only to allow testing implementation details in unit tests */
     __internal: {
       get buffer() { return context.buffer }, // prettier-ignore
       get numRetries() { return context.numRetries }, // prettier-ignore
-
-      onClose,
-      onMessage,
-      authenticationSuccess,
-      onNavigatorOnline,
-
-      simulateCloseWebsocket,
-      simulateSendCloseEvent,
-
-      onVisibilityChange,
-      getUndoStack: () => context.undoStack,
-      getItemsCount: () => context.nodes.size,
-
-      connect,
-      disconnect,
+      get undoStack() { return context.undoStack }, // prettier-ignore
+      get nodeCount() { return context.nodes.size }, // prettier-ignore
 
       // Support for the Liveblocks browser extension
       getSelf_forDevTools: () => selfAsTreeNode.current,
       getOthers_forDevTools: (): readonly DevTools.UserTreeNode[] =>
         others_forDevTools.current,
+
+      // prettier-ignore
+      send: {
+        explicitClose:  (closeEvent) => transition({ type: "EXPLICIT_CLOSE", closeEvent }),
+        implicitClose:            () => transition({ type: "IMPLICIT_CLOSE" }),
+        authSuccess: (token, socket) => transition({ type: "AUTH_SUCCESS", token, socket }),
+        navigatorOnline:          () => transition({ type: "NAVIGATOR_ONLINE" }),
+        windowGotFocus:           () => transition({ type: "WINDOW_GOT_FOCUS" }),
+        pong:                     () => transition({ type: "RECEIVE_PONG" }),
+        connect:                  () => transition({ type: "CONNECT" }),
+        disconnect:               () => transition({ type: "DISCONNECT" }),
+
+        /**
+         * This one looks differently from the rest, because receiving messages
+         * is handled orthorgonally from all other possible events above,
+         * because it does not matter what the connectivity state of the
+         * machine is, so there won't be an explicit state machine transition
+         * needed for this event.
+         */
+        incomingMessage: handleServerMessage,
+      },
     },
 
     id: config.roomId,

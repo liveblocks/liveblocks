@@ -55,13 +55,13 @@ export async function prepareStorageImmutableTest<
     for (const message of messages) {
       if (message.type === ClientMsgCode.UPDATE_STORAGE) {
         totalStorageOps += message.ops.length;
-        refRoom.__internal.onMessage(
+        refRoom.__internal.send.incomingMessage(
           serverMessage({
             type: ServerMsgCode.UPDATE_STORAGE,
             ops: message.ops,
           })
         );
-        room.__internal.onMessage(
+        room.__internal.send.incomingMessage(
           serverMessage({
             type: ServerMsgCode.UPDATE_STORAGE,
             ops: message.ops,
@@ -86,7 +86,7 @@ export async function prepareStorageImmutableTest<
     expectStorageInBothClients(data);
 
     if (itemsCount !== undefined) {
-      expect(room.__internal.getItemsCount()).toBe(itemsCount);
+      expect(room.__internal.nodeCount).toBe(itemsCount);
     }
     expect(state).toEqual(refState);
     expect(state).toEqual(data);
