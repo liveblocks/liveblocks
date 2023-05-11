@@ -1,5 +1,5 @@
-import type { EventSource, Observable } from "./lib/EventSource";
-import { makeEventSource } from "./lib/EventSource";
+import type { EventSource, Observable } from "./EventSource";
+import { makeEventSource } from "./EventSource";
 
 /**
  * A generic Finite State Machine (FSM) implementation.
