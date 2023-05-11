@@ -8,12 +8,27 @@ showFiles: [
 ---
 
 Conflict-free data, or _storage_, allows us to create persistent data that multiple users can edit simultaneously.
+This is ideal for storing real-time document state, such as shapes on a canvas, paragraphs in a text editor, or cells in a spreadsheet.
 
-There are currently three different real-time data structures, each with a similar JavaScript counterpart:
+### Data structures
+
+To build applications using conflict-free data, you can make use of our real-time data types. Each type is similar to a JavaScript counterpart:
 
 - [`LiveObject`][] - JavaScript Object
 - [`LiveList`][] - JavaScript Array
 - [`LiveMap`][] - JavaScript Map
+
+These data types can be combined, and nested inside each other, to create a real-time data structure that automatically updates and handles conflicts when multiple users edit data at the same time.
+
+### Defining storage
+
+Let’s imagine a simple structure:
+
+```ts
+person: { name: "Marie", age: 30 }
+```
+
+To use storage, the first step is to define your type. Open [liveblocks.config.ts][]
 
 ```ts
 // Storage types
