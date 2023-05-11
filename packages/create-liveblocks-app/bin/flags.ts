@@ -75,4 +75,33 @@ export const commandLineFlags: OptionDefinition[] = [
     name: "auth",
     type: String,
   },
+  // For init#
+  {
+    name: "framework",
+    type: String,
+  },
+  {
+    name: "suspense",
+    type: Boolean,
+  },
+  {
+    name: "no-suspense",
+    type: Boolean,
+  },
+  {
+    name: "typescript",
+    type: Boolean,
+  },
+  {
+    name: "no-typescript",
+    type: Boolean,
+  },
+  {
+    name: "comments",
+    type: Boolean,
+  },
+  {
+    name: "no-comments",
+    type: Boolean,
+  },
 ];

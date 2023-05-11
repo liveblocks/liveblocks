@@ -378,7 +378,7 @@ describe("LiveList", () => {
     });
 
     it("delete should remove descendants", async () => {
-      const { storage, expectStorage, assertUndoRedo, getItemsCount } =
+      const { room, storage, expectStorage, assertUndoRedo } =
         await prepareStorageTest<{
           items: LiveList<LiveObject<{ child: LiveObject<{ a: number }> }>>;
         }>([
@@ -399,7 +399,7 @@ describe("LiveList", () => {
       });
 
       // Ensure that LiveStructure are deleted properly
-      expect(getItemsCount()).toBe(2);
+      expect(room.__internal.nodeCount).toBe(2);
 
       assertUndoRedo();
     });
@@ -854,7 +854,7 @@ describe("LiveList", () => {
           1
         );
 
-      room.__internal.onClose(
+      room.__internal.send.explicitClose(
         new CloseEvent("close", {
           code: WebsocketCloseCodes.CLOSE_ABNORMAL,
           wasClean: false,
@@ -904,7 +904,7 @@ describe("LiveList", () => {
           1
         );
 
-      room.__internal.onClose(
+      room.__internal.send.explicitClose(
         new CloseEvent("close", {
           code: WebsocketCloseCodes.CLOSE_ABNORMAL,
           wasClean: false,
@@ -1223,7 +1223,7 @@ describe("LiveList", () => {
 
       expectStorage({ items: ["a"] });
 
-      room.__internal.onClose(
+      room.__internal.send.explicitClose(
         new CloseEvent("close", {
           code: WebsocketCloseCodes.CLOSE_ABNORMAL,
           wasClean: false,
@@ -1311,7 +1311,7 @@ describe("LiveList", () => {
 
       expectStorage({ items: ["a", "b"] });
 
-      room.__internal.onClose(
+      room.__internal.send.explicitClose(
         new CloseEvent("close", {
           code: WebsocketCloseCodes.CLOSE_ABNORMAL,
           wasClean: false,
@@ -1387,7 +1387,7 @@ describe("LiveList", () => {
 
       expectStorage({ items: ["a", "b"] });
 
-      room.__internal.onClose(
+      room.__internal.send.explicitClose(
         new CloseEvent("close", {
           code: WebsocketCloseCodes.CLOSE_ABNORMAL,
           wasClean: false,

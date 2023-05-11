@@ -201,7 +201,7 @@ export function createClient(options: ClientOptions): Client {
         global.atob = clientOptions.polyfills.atob;
       }
 
-      newRoom.__internal.connect();
+      newRoom.__internal.send.connect();
     }
 
     return newRoom;
@@ -213,7 +213,7 @@ export function createClient(options: ClientOptions): Client {
 
     const room = rooms.get(roomId);
     if (room !== undefined) {
-      room.__internal.disconnect();
+      room.__internal.send.disconnect();
       rooms.delete(roomId);
     }
   }
@@ -226,15 +226,17 @@ export function createClient(options: ClientOptions): Client {
     // TODO: Expose a way to clear these
     window.addEventListener("online", () => {
       for (const [, room] of rooms) {
-        room.__internal.onNavigatorOnline();
+        room.__internal.send.navigatorOnline();
       }
     });
   }
 
   if (typeof document !== "undefined") {
     document.addEventListener("visibilitychange", () => {
-      for (const [, room] of rooms) {
-        room.__internal.onVisibilityChange(document.visibilityState);
+      if (document.visibilityState === "visible") {
+        for (const [, room] of rooms) {
+          room.__internal.send.windowGotFocus();
+        }
       }
     });
   }
