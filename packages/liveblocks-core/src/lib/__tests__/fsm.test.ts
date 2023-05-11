@@ -366,7 +366,7 @@ describe("finite state machine", () => {
       .addTransitions("one", {
         GO: {
           target: "two",
-          assign: () => ({ x: 0 }),
+          assign: { x: 0 },
         },
       })
 
@@ -403,6 +403,51 @@ describe("finite state machine", () => {
     fsm.send({ type: "GO" });
     expect(fsm.currentState).toEqual("two");
     expect(fsm.context).toEqual({ x: 5 });
+  });
+
+  test("side effects", () => {
+    const reset = jest.fn();
+    const inced = jest.fn();
+
+    const fsm = new FSM({ x: 13, y: 13 })
+      .addState("one")
+      .addState("two")
+
+      .addTransitions("one", {
+        GO: {
+          target: "two",
+          assign: { x: 0 },
+          effect: reset,
+        },
+      })
+
+      .addTransitions("two", {
+        BACK: "one",
+        GO: {
+          target: "two", // Stay here, but... do an action
+          assign: (context) => ({ x: context.x + 1 }),
+          effect: inced,
+        },
+      })
+
+      .start();
+
+    expect(fsm.currentState).toEqual("one");
+    expect(reset).not.toBeCalled();
+    expect(inced).not.toBeCalled();
+    fsm.send({ type: "GO" });
+    expect(reset).toBeCalledTimes(1);
+    expect(inced).not.toBeCalled();
+    fsm.send({ type: "GO" });
+    expect(reset).toBeCalledTimes(1);
+    expect(inced).toHaveBeenLastCalledWith({ x: 1, y: 13 }, { type: "GO" });
+    fsm.send({ type: "GO" });
+    expect(reset).toBeCalledTimes(1);
+    expect(inced).toHaveBeenLastCalledWith({ x: 2, y: 13 }, { type: "GO" });
+    fsm.send({ type: "GO" });
+    expect(reset).toBeCalledTimes(1);
+    expect(inced).toHaveBeenLastCalledWith({ x: 3, y: 13 }, { type: "GO" });
+    expect(fsm.context).toEqual({ x: 3, y: 13 });
   });
 
   describe("time-based transitions", () => {

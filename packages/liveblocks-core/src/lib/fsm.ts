@@ -36,12 +36,30 @@ type TargetFn<TContext, TEvent extends BaseEvent, TState extends string> = (
   context: Readonly<TContext>
 ) => TState | TargetConfig<TContext, TEvent, TState>;
 
+type Assigner<TContext, TEvent extends BaseEvent> =
+  | Partial<TContext>
+  | ((context: Readonly<TContext>, event: TEvent) => Partial<TContext>);
+
+type Effect<TContext, TEvent extends BaseEvent> = (
+  context: Readonly<TContext>,
+  event: TEvent
+) => void;
+
 type TargetConfig<TContext, TEvent extends BaseEvent, TState extends string> = {
   target: TState;
 
-  // XXX This `assign` API is misused a lot to trigger side-effects, which is
-  // fine on transitions. But this API shouldn't be called `assign`.
-  assign: (context: Readonly<TContext>, event: TEvent) => Partial<TContext>;
+  /**
+   * Specify an object that will be used to "patch" the current context as soon
+   * as the transition is taken. The context will be updated before the new
+   * state is entered.
+   */
+  assign?: Assigner<TContext, TEvent>;
+
+  /**
+   * Emit a side effect (other than assigning to the context) when this
+   * transition is taken.
+   */
+  effect?: Effect<TContext, TEvent>;
 };
 
 type Target<TContext, TEvent extends BaseEvent, TState extends string> =
@@ -493,14 +511,14 @@ export class FSM<
     const targetFn = typeof target === "function" ? target : () => target;
     const nextTarget = targetFn(event, this.currentContext);
     let nextState: TState;
-    let action:
-      | ((context: Readonly<TContext>, event: E) => Partial<TContext>)
-      | undefined = undefined;
+    let assign: Assigner<TContext, E> | undefined = undefined;
+    let effect: Effect<TContext, E> | undefined = undefined;
     if (typeof nextTarget === "string") {
       nextState = nextTarget;
     } else {
       nextState = nextTarget.target;
-      action = nextTarget.assign;
+      assign = nextTarget.assign;
+      effect = nextTarget.effect;
     }
 
     if (!this.states.has(nextState)) {
@@ -515,10 +533,14 @@ export class FSM<
     }
 
     this.currentStateOrNull = nextState; // NOTE: Could stay the same, but... there could be an action to execute here
-    if (action !== undefined) {
-      const patch = action(this.context, event);
+    if (assign !== undefined) {
+      const patch =
+        typeof assign === "function" ? assign(this.context, event) : assign;
       this.currentContext = Object.assign({}, this.currentContext, patch);
       this.eventHub.didPatchContext.notify(patch);
+    }
+    if (effect !== undefined) {
+      effect(this.context, event);
     }
 
     if (down > 0) {
