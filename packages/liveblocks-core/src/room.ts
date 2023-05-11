@@ -572,7 +572,7 @@ type PrivateRoomAPI<
   TRoomEvent extends Json
 > = {
   // For introspection in unit tests only
-  buffer: MachineContext<TPresence, TStorage, TUserMeta, TRoomEvent>["buffer"]; // prettier-ignore
+  buffer: RoomState<TPresence, TStorage, TUserMeta, TRoomEvent>["buffer"]; // prettier-ignore
   numRetries: number;
   undoStack: readonly (readonly Readonly<HistoryOp<TPresence>>[])[];
   nodeCount: number;
@@ -635,7 +635,7 @@ type HistoryOp<TPresence extends JsonObject> =
 
 type IdFactory = () => string;
 
-type MachineContext<
+type RoomState<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
   TUserMeta extends BaseUserMeta,
@@ -767,7 +767,7 @@ export type RoomInitializers<
 }>;
 
 /** @internal */
-type MachineConfig<TPresence extends JsonObject, TRoomEvent extends Json> = {
+type RoomConfig<TPresence extends JsonObject, TRoomEvent extends Json> = {
   roomId: string;
   throttleDelay: number;
   authentication: Authentication;
@@ -819,8 +819,7 @@ type FSMEvent =
 
 /**
  * @internal
- * Initializes a new Room state machine, and returns its public API to observe
- * and control it.
+ * Initializes a new Room, and returns its public API.
  */
 export function createRoom<
   TPresence extends JsonObject,
@@ -832,7 +831,7 @@ export function createRoom<
     RoomInitializers<TPresence, TStorage>,
     "shouldInitiallyConnect"
   >,
-  config: MachineConfig<TPresence, TRoomEvent>
+  config: RoomConfig<TPresence, TRoomEvent>
 ): Room<TPresence, TStorage, TUserMeta, TRoomEvent> {
   const initialPresence =
     typeof options.initialPresence === "function"
@@ -843,11 +842,8 @@ export function createRoom<
       ? options.initialStorage(config.roomId)
       : options.initialStorage;
 
-  // The "context" is the machine's stateful extended context, also sometimes
-  // known as the "extended state" of a finite state machine. The context
-  // maintains state beyond the inherent state that are the finite states
-  // themselves.
-  const context: MachineContext<TPresence, TStorage, TUserMeta, TRoomEvent> = {
+  // The room's internal stateful context
+  const context: RoomState<TPresence, TStorage, TUserMeta, TRoomEvent> = {
     token: null,
     lastConnectionId: null,
     socket: null,
