@@ -1,3 +1,9 @@
+# v1.0.9 (not yet released)
+
+### `@liveblocks/client`
+
+- Internal refactorings
+
 # v1.0.8
 
 ### `create-liveblocks-app`
