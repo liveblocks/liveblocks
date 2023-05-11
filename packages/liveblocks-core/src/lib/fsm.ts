@@ -549,5 +549,5 @@ export class FSM<
   }
 }
 
-// Exported only for unit tests
+/** @internal - For unit tests only */
 export { distance, patterns };
