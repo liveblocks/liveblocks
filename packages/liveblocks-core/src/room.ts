@@ -24,7 +24,7 @@ import type { Authentication } from "./protocol/Authentication";
 import type { RichToken, RoomAuthToken } from "./protocol/AuthToken";
 import {
   isTokenExpired,
-  parseRoomAuthToken_,
+  parseRoomAuthToken,
   RoomScope,
 } from "./protocol/AuthToken";
 import type { BaseUserMeta } from "./protocol/BaseUserMeta";
@@ -989,11 +989,10 @@ export function createRoom<
             if (context.connection.current.status !== "authenticating") {
               return;
             }
-            const parsedToken = parseRoomAuthToken_(token);
-            const socket = createWebSocket(token);
-
-            handleAuthSuccess(parsedToken, socket);
-            context.richToken = { raw: token, parsed: parsedToken };
+            const richToken = parseRoomAuthToken(token);
+            const socket = createWebSocket(richToken.raw);
+            handleAuthSuccess(richToken.parsed, socket);
+            context.richToken = richToken;
           })
           .catch((er: unknown) =>
             authenticationFailure(
