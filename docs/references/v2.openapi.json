@@ -559,7 +559,7 @@
             "$ref": "#/components/responses/404"
           }
         },
-        "description": "Initializes a room storage. The room must already exist and have an empty storage. Calling this endpoint will disconnect all users from the room if there are any.\n\nThe format of the request body is the same as what’s returned by the get storage endpoint.\n\nFor each Liveblocks data structure that you want to create, you need a JSON element having two properties:\n- `\"liveblocksType\"` => `\"LiveObject\" | \"LiveList\" | \"LiveMap\"`\n- `\"data\"` => contains the nested data structures (children) and data.\n\nThe root’s type can only be LiveObject.",
+        "description": "Initializes a room storage. The room must already exist and have an empty storage. Calling this endpoint will disconnect all users from the room if there are any.\n\nThe format of the request body is the same as what’s returned by the get storage endpoint.\n\nFor each Liveblocks data structure that you want to create, you need a JSON element having two properties:\n- `\"liveblocksType\"` => `\"LiveObject\" | \"LiveList\" | \"LiveMap\"`\n- `\"data\"` => contains the nested data structures (children) and data.\n\nThe root’s type can only be LiveObject.\n\nA utility function, `toPlainLson` is included in `@liveblocks/client` from `1.0.9` to help convert `LiveObject`, `LiveList`, and `LiveMap` to the structure expected by the endpoint.",
         "requestBody": {
           "content": {
             "application/json": {
