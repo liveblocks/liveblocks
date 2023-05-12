@@ -39,10 +39,9 @@ import {
   withDateNow,
 } from "./_utils";
 
-function makeMachineConfig<
-  TPresence extends JsonObject,
-  TRoomEvent extends Json
->(mockedEffects?: Effects<TPresence, TRoomEvent>) {
+function makeRoomConfig<TPresence extends JsonObject, TRoomEvent extends Json>(
+  mockedEffects?: Effects<TPresence, TRoomEvent>
+) {
   return {
     roomId: "room-id",
     throttleDelay: 100,
@@ -75,7 +74,7 @@ function setupStateMachine<
       initialPresence,
       initialStorage: undefined,
     },
-    makeMachineConfig(effects)
+    makeRoomConfig(effects)
   );
   return { room, effects };
 }
@@ -121,7 +120,7 @@ describe("room / auth", () => {
       const room = createRoom(
         { initialPresence: {} as never },
         {
-          ...makeMachineConfig(),
+          ...makeRoomConfig(),
           authentication: {
             type: "custom",
             callback: (_room) =>
@@ -149,7 +148,7 @@ describe("room / auth", () => {
     const room = createRoom(
       { initialPresence: {} as never },
       {
-        ...makeMachineConfig(),
+        ...makeRoomConfig(),
         authentication: {
           type: "private",
           url: "/mocked-api/403",
@@ -172,7 +171,7 @@ describe("room / auth", () => {
     const room = createRoom(
       { initialPresence: {} as never },
       {
-        ...makeMachineConfig(),
+        ...makeRoomConfig(),
         authentication: {
           type: "private",
           url: "/mocked-api/not-json",
@@ -195,7 +194,7 @@ describe("room / auth", () => {
     const room = createRoom(
       { initialPresence: {} as never },
       {
-        ...makeMachineConfig(),
+        ...makeRoomConfig(),
         authentication: {
           type: "private",
           url: "/mocked-api/missing-token",
@@ -292,7 +291,7 @@ describe("room", () => {
     withDateNow(now + 30, () => room.updatePresence({ x: 1 }));
 
     expect(effects.scheduleFlush).toBeCalledWith(
-      makeMachineConfig().throttleDelay - 30
+      makeRoomConfig().throttleDelay - 30
     );
     expect(effects.send).toHaveBeenCalledWith([
       { type: ClientMsgCode.UPDATE_PRESENCE, targetActor: -1, data: { x: 0 } },
