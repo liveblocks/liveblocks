@@ -1,8 +1,9 @@
-import type { LiveList } from "../crdts/LiveList";
-import type { LiveMap } from "../crdts/LiveMap";
-import type { LiveObject } from "../crdts/LiveObject";
-import type { Lson, LsonObject } from "../crdts/Lson";
 import type { Json } from "../lib/Json";
+import type { PlainLson } from "../types/PlainLson";
+import { LiveList } from "./LiveList";
+import { LiveMap } from "./LiveMap";
+import { LiveObject } from "./LiveObject";
+import type { Lson, LsonObject } from "./Lson";
 
 /**
  * Helper type to convert any valid Lson type to the equivalent Json type.
@@ -41,3 +42,34 @@ export type ToImmutable<L extends Lson | LsonObject> =
 
   // Otherwise, this is not possible
   never;
+
+/**
+ * Returns PlainLson for a given Json or LiveStructure, suitable for calling the storage init api
+ */
+export function toPlainLson(lson: Lson): PlainLson {
+  if (lson instanceof LiveObject) {
+    return {
+      liveblocksType: "LiveObject",
+      data: Object.fromEntries(
+        Object.entries(lson.toObject()).map(([key, value]) => [
+          key,
+          value ? toPlainLson(value) : "",
+        ])
+      ),
+    };
+  } else if (lson instanceof LiveMap) {
+    return {
+      liveblocksType: "LiveMap",
+      data: Object.fromEntries(
+        [...lson].map(([key, value]) => [key, toPlainLson(value)])
+      ),
+    };
+  } else if (lson instanceof LiveList) {
+    return {
+      liveblocksType: "LiveList",
+      data: [...lson].map((item) => toPlainLson(item)),
+    };
+  } else {
+    return lson;
+  }
+}

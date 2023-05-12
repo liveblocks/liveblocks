@@ -18,7 +18,7 @@ import {
 } from "./liveblocks-helpers";
 import { LiveRegister } from "./LiveRegister";
 import type { LiveNode, Lson } from "./Lson";
-import type { ToImmutable } from "./ToImmutable";
+import type { ToImmutable } from "./utils";
 
 export type LiveListUpdateDelta =
   | {

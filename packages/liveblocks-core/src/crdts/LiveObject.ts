@@ -31,8 +31,8 @@ import {
   isLiveNode,
   isLiveStructure,
 } from "./liveblocks-helpers";
-import type { ToImmutable } from "./ToImmutable";
 import type { UpdateDelta } from "./UpdateDelta";
+import type { ToImmutable } from "./utils";
 
 export type LiveObjectUpdateDelta<O extends { [key: string]: unknown }> = {
   [K in keyof O]?: UpdateDelta | undefined;

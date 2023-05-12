@@ -1,8 +1,3 @@
-import { LiveList } from "../crdts/LiveList";
-import { LiveMap } from "../crdts/LiveMap";
-import { LiveObject } from "../crdts/LiveObject";
-import type { Lson } from "../crdts/Lson";
-import type { PlainLson } from "../types/PlainLson";
 import type { Json } from "./Json";
 
 declare const brand: unique symbol;
@@ -153,35 +148,4 @@ export function compactObject<O extends Record<string, unknown>>(obj: O): O {
     }
   });
   return newObj;
-}
-
-/**
- * Returns PlainLson for a given Json or LiveStructure, suitable for calling the storage init api
- */
-export function toPlainLson(lson: Lson): PlainLson {
-  if (lson instanceof LiveObject) {
-    return {
-      liveblocksType: "LiveObject",
-      data: Object.fromEntries(
-        Object.entries(lson.toObject()).map(([key, value]) => [
-          key,
-          value ? toPlainLson(value) : "",
-        ])
-      ),
-    };
-  } else if (lson instanceof LiveMap) {
-    return {
-      liveblocksType: "LiveMap",
-      data: Object.fromEntries(
-        [...lson].map(([key, value]) => [key, toPlainLson(value)])
-      ),
-    };
-  } else if (lson instanceof LiveList) {
-    return {
-      liveblocksType: "LiveList",
-      data: [...lson].map((item) => toPlainLson(item)),
-    };
-  } else {
-    return lson;
-  }
 }
