@@ -633,11 +633,7 @@ export function mockEffects<
   TRoomEvent extends Json
 >(): Effects<TPresence, TRoomEvent> {
   return {
-    authenticateAndConnect: jest.fn(),
     send: jest.fn(),
-    scheduleReconnect: jest.fn(),
-    startHeartbeatInterval: jest.fn(),
-    schedulePongTimeout: jest.fn(),
   };
 }
 

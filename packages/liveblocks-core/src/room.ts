@@ -24,11 +24,7 @@ import type { Resolve } from "./lib/Resolve";
 import { compact, isPlainObject, tryParseJson } from "./lib/utils";
 import type { Authentication } from "./protocol/Authentication";
 import type { RichToken, RoomAuthToken } from "./protocol/AuthToken";
-import {
-  isTokenExpired,
-  parseRoomAuthToken,
-  RoomScope,
-} from "./protocol/AuthToken";
+import { parseRoomAuthToken, RoomScope } from "./protocol/AuthToken";
 import type { BaseUserMeta } from "./protocol/BaseUserMeta";
 import type { ClientMsg } from "./protocol/ClientMsg";
 import { ClientMsgCode } from "./protocol/ClientMsg";
@@ -61,7 +57,6 @@ import type { Others, OthersEvent } from "./types/Others";
 import type { User } from "./types/User";
 
 type TimeoutID = ReturnType<typeof setTimeout>;
-type IntervalID = ReturnType<typeof setInterval>;
 
 type CustomEvent<TRoomEvent extends Json> = {
   connectionId: number;
@@ -603,12 +598,6 @@ type PrivateRoomAPI<
   };
 };
 
-// const BACKOFF_RETRY_DELAYS = [250, 500, 1000, 2000, 4000, 8000, 10000];
-// const BACKOFF_RETRY_DELAYS_SLOW = [2000, 30000, 60000, 300000];
-
-const HEARTBEAT_INTERVAL = 30000;
-const PONG_TIMEOUT = 2000;
-
 function makeIdFactory(connectionId: number): IdFactory {
   let count = 0;
   return () => `${connectionId}:${count++}`;
@@ -676,7 +665,7 @@ type RoomState<
     flush: TimeoutID | undefined;
   };
 
-  readonly managedSocket: ManagedSocket;
+  readonly managedSocket: ManagedSocket<RichToken>;
   readonly connection: ValueRef<Connection>; // XXX Make this a derived property
   readonly me: MeRef<TPresence>;
   readonly others: OthersRef<TPresence, TUserMeta>;
@@ -722,14 +711,7 @@ type RoomState<
 
 /** @internal */
 type Effects<TPresence extends JsonObject, TRoomEvent extends Json> = {
-  authenticateAndConnect(
-    auth: () => Promise<RichToken>,
-    createWebSocket: (token: RichToken) => IWebSocketInstance
-  ): void;
   send(messages: ClientMsg<TPresence, TRoomEvent>[]): void;
-  scheduleReconnect(delay: number): TimeoutID;
-  startHeartbeatInterval(): IntervalID;
-  schedulePongTimeout(): TimeoutID;
 };
 
 export type Polyfills = {
@@ -800,8 +782,6 @@ function userToTreeNode(
 type FSMEvent =
   | { type: "CONNECT" }
   | { type: "DISCONNECT" }
-  | { type: "WINDOW_GOT_FOCUS" }
-  | { type: "RECEIVE_PONG" }
   | { type: "NAVIGATOR_ONLINE" }
   | {
       type: "AUTH_SUCCESS";
@@ -837,7 +817,7 @@ export function createRoom<
       : options.initialStorage;
 
   // Create a delegate pair for (a specific) Live Room socket connection(s)
-  const delegates: Delegates = {
+  const delegates: Delegates<RichToken> = {
     authenticate: makeAuthDelegateForRoom(
       config.roomId,
       config.authentication,
@@ -898,6 +878,11 @@ export function createRoom<
         ? new Map<string, string>()
         : undefined,
   };
+
+  // Register events handlers for events coming from the socket
+  // We never have to unsubscribe, because the Room and the Connection Manager
+  // will have the same life-time.
+  context.managedSocket.events.onMessage.subscribe(handleServerMessage);
 
   const doNotBatchUpdates = (cb: () => void): void => cb();
   const batchUpdates = config.unstable_batchedUpdates ?? doNotBatchUpdates;
@@ -980,52 +965,13 @@ export function createRoom<
   };
 
   const effects: Effects<TPresence, TRoomEvent> = config.mockedEffects || {
-    authenticateAndConnect(
-      auth: () => Promise<RichToken>,
-      createWebSocket: (token: RichToken) => IWebSocketInstance
-    ) {
-      // If we already have a parsed token from a previous connection
-      // in-memory, reuse it
-      const prevToken = context.token;
-      if (prevToken !== null && !isTokenExpired(prevToken.parsed)) {
-        const socket = createWebSocket(prevToken);
-        handleAuthSuccess(prevToken.parsed, socket);
-        return undefined;
-      } else {
-        void auth()
-          .then((token) => {
-            if (context.connection.current.status !== "authenticating") {
-              return;
-            }
-            const socket = createWebSocket(token);
-            handleAuthSuccess(token.parsed, socket);
-            context.token = token;
-          })
-          .catch((er: unknown) =>
-            authenticationFailure(
-              er instanceof Error ? er : new Error(String(er))
-            )
-          );
-        return undefined;
-      }
-    },
-
     send(
       messageOrMessages:
         | ClientMsg<TPresence, TRoomEvent>
         | ClientMsg<TPresence, TRoomEvent>[]
     ) {
-      if (context.socket === null) {
-        throw new Error("Can't send message if socket is null");
-      }
-      if (context.socket.readyState === context.socket.OPEN) {
-        context.socket.send(JSON.stringify(messageOrMessages));
-      }
+      context.managedSocket.send(JSON.stringify(messageOrMessages));
     },
-
-    scheduleReconnect: (delay: number) => setTimeout(handleConnect, delay),
-    startHeartbeatInterval: () => setInterval(heartbeat, HEARTBEAT_INTERVAL),
-    schedulePongTimeout: () => setTimeout(pongTimeout, PONG_TIMEOUT),
   };
 
   const self = new DerivedRef(
@@ -1382,7 +1328,6 @@ export function createRoom<
     socket.addEventListener("message", handleRawSocketMessage);
     socket.addEventListener("open", handleSocketOpen);
     socket.addEventListener("close", handleExplicitClose); // XXX Can go
-    socket.addEventListener("error", handleSocketError); // XXX Can go
 
     updateConnection(
       {
@@ -1394,30 +1339,7 @@ export function createRoom<
       },
       batchUpdates
     );
-    context.idFactory = makeIdFactory(token.actor);
-    context.socket = socket; // XXX Can go
-  }
-
-  // XXX Can go
-  function authenticationFailure(error: Error) {
-    if (process.env.NODE_ENV !== "production") {
-      console.error("Call to authentication endpoint failed", error);
-    }
-    context.token = null;
-    updateConnection({ status: "unavailable" }, batchUpdates);
-
-    // XXX Can go
-    clearTimeout(context.timers.reconnect);
-    // XXX Can go
-    context.timers.reconnect = effects.scheduleReconnect(getRetryDelay());
-  }
-
-  function handleWindowGotFocus() {
-    // TODO Move this guard into the .transition() function eventually
-    if (context.connection.current.status === "open") {
-      log("Heartbeat after visibility change");
-      heartbeat();
-    }
+    context.idFactory = makeIdFactory(token.actor); // XXX Keep!
   }
 
   function onUpdatePresenceMessage(
@@ -1576,22 +1498,9 @@ export function createRoom<
   }
 
   /**
-   * Handles a raw message received on the WebSocket. Can be either a "pong"
-   * (server heartbeat), or a message from the Liveblocks server.
+   * Handles a message received on the WebSocket. Will never be a "pong". The
+   * "pong" is handled at the connection manager level.
    */
-  function handleRawSocketMessage(event: IWebSocketMessageEvent) {
-    if (event.data === "pong") {
-      transition({ type: "RECEIVE_PONG" });
-    } else {
-      // XXX Replace this with a managedSocket.onMessage.subscribe(handleServerMessage)
-      handleServerMessage(event);
-    }
-  }
-
-  function handlePong() {
-    clearTimeout(context.timers.pongTimeout);
-  }
-
   function handleServerMessage(event: IWebSocketMessageEvent) {
     if (typeof event.data !== "string") {
       // istanbul ignore next: Unknown incoming message
@@ -1720,8 +1629,6 @@ export function createRoom<
 
     clearTimeout(context.timers.flush);
     clearTimeout(context.timers.reconnect);
-    clearInterval(context.timers.heartbeat);
-    clearTimeout(context.timers.pongTimeout);
 
     /// XXX What does this notification do exactly?
     context.others.clearOthers();
@@ -1777,15 +1684,8 @@ export function createRoom<
     });
   }
 
-  function handleSocketError() {
-    // TODO(nvie) At the very least, emit a log here?
-  }
-
   // XXX Can go soon. Should now be handled by the connection manager.
   function handleSocketOpen() {
-    clearInterval(context.timers.heartbeat); // XXX Can go
-    context.timers.heartbeat = effects.startHeartbeatInterval(); // XXX Can go
-
     if (context.connection.current.status === "connecting") {
       updateConnection(
         { ...context.connection.current, status: "open" },
@@ -1822,15 +1722,12 @@ export function createRoom<
       context.socket.removeEventListener("open", handleSocketOpen);
       context.socket.removeEventListener("message", handleRawSocketMessage);
       context.socket.removeEventListener("close", handleExplicitClose);
-      context.socket.removeEventListener("error", handleSocketError);
       context.socket.close();
       context.socket = null;
     }
 
-    clearTimeout(context.timers.flush);
+    clearTimeout(context.timers.flush); // XXX Keep!
     clearTimeout(context.timers.reconnect);
-    clearInterval(context.timers.heartbeat);
-    clearTimeout(context.timers.pongTimeout);
 
     batchUpdates(() => {
       updateConnection({ status: "closed" }, doNotBatchUpdates);
@@ -1851,10 +1748,8 @@ export function createRoom<
       context.socket = null;
     }
 
-    clearTimeout(context.timers.flush);
+    clearTimeout(context.timers.flush); // XXX Keep!
     clearTimeout(context.timers.reconnect);
-    clearInterval(context.timers.heartbeat);
-    clearTimeout(context.timers.pongTimeout);
 
     updateConnection({ status: "unavailable" }, batchUpdates);
 
@@ -2200,14 +2095,8 @@ export function createRoom<
       case "DISCONNECT":
         return handleDisconnect();
 
-      case "RECEIVE_PONG":
-        return handlePong();
-
       case "AUTH_SUCCESS":
         return handleAuthSuccess(event.token, event.socket);
-
-      case "WINDOW_GOT_FOCUS":
-        return handleWindowGotFocus();
 
       case "NAVIGATOR_ONLINE":
         return handleNavigatorBackOnline();
@@ -2241,8 +2130,6 @@ export function createRoom<
         implicitClose:            () => transition({ type: "IMPLICIT_CLOSE" }),
         authSuccess: (token, socket) => transition({ type: "AUTH_SUCCESS", token, socket }),
         navigatorOnline:          () => transition({ type: "NAVIGATOR_ONLINE" }),
-        windowGotFocus:           () => transition({ type: "WINDOW_GOT_FOCUS" }),
-        pong:                     () => transition({ type: "RECEIVE_PONG" }),
         connect:                  () => transition({ type: "CONNECT" }),
         disconnect:               () => transition({ type: "DISCONNECT" }),
 
