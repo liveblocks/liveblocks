@@ -126,19 +126,19 @@ export function parseRoomAuthToken_(
   tokenString: string
 ): RoomAuthToken & JwtMetadata {
   const data = parseJwtToken(tokenString);
-  if (data && isRoomAuthToken(data)) {
-    const {
-      // If this legacy field is found on the token, pretend it wasn't there,
-      // to make all internally used token payloads uniform
-      maxConnections: _legacyField,
-      ...token
-    } = data;
-    return token;
-  } else {
+  if (!(data && isRoomAuthToken(data))) {
     throw new Error(
       "Authentication error: we expected a room token but did not get one. Hint: if you are using a callback, ensure the room is passed when creating the token. For more information: https://liveblocks.io/docs/api-reference/liveblocks-client#createClientCallback"
     );
   }
+
+  const {
+    // If this legacy field is found on the token, pretend it wasn't there,
+    // to make all internally used token payloads uniform
+    maxConnections: _legacyField,
+    ...token
+  } = data;
+  return token;
 }
 
 export function parseRoomAuthToken(tokenString: string): RichToken {
