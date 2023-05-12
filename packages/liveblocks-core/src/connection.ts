@@ -73,11 +73,20 @@ type State =
   | "@ok.connected"
   | "@ok.awaiting-pong";
 
+/**
+ * Arbitrary record that will be used as the authentication "token". It's the
+ * value that is returned by calling the authentication delegate, and will get
+ * passed to the connection factory delegate. This value will be remembered by
+ * the connection manager, but its value will not be interpreted, so it can be
+ * any object value.
+ */
+type BaseAuthResult = Record<string, unknown>;
+
 type Context = {
   /**
    * Will be populated with the last known auth token.
    */
-  token: string | null;
+  token: BaseAuthResult | null;
 
   /**
    * The current active WebSocket connection to the room. If this is not null
@@ -159,9 +168,9 @@ function sendHeartbeat(ctx: Context) {
   ctx.socket?.send("ping");
 }
 
-type Delegates = {
-  authenticate: () => Promise<{ token: string }>;
-  createSocket: (token: string) => IWebSocketInstance;
+export type Delegates<T extends BaseAuthResult> = {
+  authenticate: () => Promise<T>;
+  createSocket: (token: T) => IWebSocketInstance;
 };
 
 function enableTracing(fsm: FSM<Context, Event, State>) {
@@ -202,7 +211,7 @@ function enableTracing(fsm: FSM<Context, Event, State>) {
   };
 }
 
-function setupStateMachine(delegates: Delegates) {
+function setupStateMachine<T extends BaseAuthResult>(delegates: Delegates<T>) {
   // Emitted whenever a new WebSocket connection attempt suceeds
   const didConnect = makeEventSource<void>();
   // const didDisconnect = makeEventSource<void>();
@@ -215,7 +224,7 @@ function setupStateMachine(delegates: Delegates) {
   // outside world. These events need to be handled by the connection manager.
   const onError = makeEventSource<IWebSocketEvent>();
 
-  const initialContext: Context = {
+  const initialContext: Context & { token: T | null } = {
     token: null,
     socket: null,
 
@@ -281,7 +290,7 @@ function setupStateMachine(delegates: Delegates) {
       (okEvent) => ({
         target: "@connecting.busy",
         assign: {
-          token: okEvent.data.token,
+          token: okEvent.data as BaseAuthResult,
           backoffDelay: LOW_DELAY,
         },
       }),
@@ -330,7 +339,7 @@ function setupStateMachine(delegates: Delegates) {
            * XXX EXPLAIN THIS SETUP, and also explain why we won't have to
            * remove the event listeners.
            */
-          const socket = delegates.createSocket(ctx.token);
+          const socket = delegates.createSocket(ctx.token as T);
 
           // Part 1: used to "promisify" the socket, so we will resolve when
           // the connection opens, but reject if the connection does not.
@@ -487,7 +496,7 @@ function setupStateMachine(delegates: Delegates) {
  * exposing just a few safe actions and events that can be called or observed
  * from the outside.
  */
-export class ManagedSocket {
+export class ManagedSocket<T extends BaseAuthResult> {
   /** @internal */
   private fsm: FSM<Context, Event, State>;
 
@@ -517,7 +526,7 @@ export class ManagedSocket {
     readonly onError: Observable<IWebSocketEvent>;
   };
 
-  constructor(delegates: Delegates) {
+  constructor(delegates: Delegates<T>) {
     const { fsm, events } = setupStateMachine(delegates);
     this.fsm = fsm;
     this.events = events;
