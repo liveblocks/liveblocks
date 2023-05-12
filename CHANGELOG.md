@@ -2,6 +2,8 @@
 
 - Export `LiveListUpdate`, `LiveMapUpdate`, and `LiveObjectUpdate` types used by
   the storage update callback.
+- Export new utility, `toPlainLson`, to assist in calling the initialize storage
+  API
 
 # v1.0.8
 
@@ -10,11 +12,15 @@
 - Internal refactorings
 
 ### `create-liveblocks-app`
-- Added [flags](https://github.com/liveblocks/liveblocks/tree/main/packages/create-liveblocks-app#flags-optional) for creating config files with `--init` (e.g. `--framework react`)
+
+- Added
+  [flags](https://github.com/liveblocks/liveblocks/tree/main/packages/create-liveblocks-app#flags-optional)
+  for creating config files with `--init` (e.g. `--framework react`)
 - Added an error if an incorrect flag is used
 - Slightly changed the format of the default config file
 
 ### `@liveblocks/client`
+
 - Internal refactorings
 
 # v1.0.7
