@@ -724,7 +724,7 @@ type RoomState<
 /** @internal */
 type Effects<TPresence extends JsonObject, TRoomEvent extends Json> = {
   authenticateAndConnect(
-    auth: () => Promise<{ token: string }>,
+    auth: () => Promise<RichToken>,
     createWebSocket: (token: RichToken) => IWebSocketInstance
   ): void;
   send(messages: ClientMsg<TPresence, TRoomEvent>[]): void;
@@ -973,7 +973,7 @@ export function createRoom<
 
   const effects: Effects<TPresence, TRoomEvent> = config.mockedEffects || {
     authenticateAndConnect(
-      auth: () => Promise<{ token: string }>,
+      auth: () => Promise<RichToken>,
       createWebSocket: (richToken: RichToken) => IWebSocketInstance
     ) {
       // If we already have a parsed token from a previous connection
@@ -985,11 +985,10 @@ export function createRoom<
         return undefined;
       } else {
         void auth()
-          .then(({ token }) => {
+          .then((richToken) => {
             if (context.connection.current.status !== "authenticating") {
               return;
             }
-            const richToken = parseRoomAuthToken(token);
             const socket = createWebSocket(richToken);
             handleAuthSuccess(richToken.parsed, socket);
             context.richToken = richToken;
@@ -2522,8 +2521,7 @@ function makeAuthDelegateForRoom(
   roomId: string,
   authentication: Authentication,
   fetchPolyfill?: typeof window.fetch
-  // XXX Change this return type
-): () => Promise<{ token: string }> {
+): () => Promise<RichToken> {
   if (authentication.type === "public") {
     if (typeof window === "undefined" && fetchPolyfill === undefined) {
       throw new Error(
@@ -2539,7 +2537,7 @@ function makeAuthDelegateForRoom(
           room: roomId,
           publicApiKey: authentication.publicApiKey,
         }
-      );
+      ).then(({ token }) => parseRoomAuthToken(token));
   }
 
   if (authentication.type === "private") {
@@ -2552,7 +2550,7 @@ function makeAuthDelegateForRoom(
     return () =>
       fetchAuthEndpoint(fetchPolyfill || fetch, authentication.url, {
         room: roomId,
-      });
+      }).then(({ token }) => parseRoomAuthToken(token));
   }
 
   if (authentication.type === "custom") {
@@ -2563,7 +2561,7 @@ function makeAuthDelegateForRoom(
           'Authentication error. We expect the authentication callback to return a token, but it does not. Hint: the return value should look like: { token: "..." }'
         );
       }
-      return response;
+      return parseRoomAuthToken(response.token);
     };
   }
 
