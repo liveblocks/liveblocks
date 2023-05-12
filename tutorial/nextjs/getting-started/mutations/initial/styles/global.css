@@ -1,0 +1,11 @@
+{% DEFAULT_STYLES %}
+
+div {
+  font-family: monospace;
+  white-space: pre;
+}
+
+input {
+  display: block;
+  margin-top: 10px;
+}

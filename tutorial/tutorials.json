@@ -1,7 +1,7 @@
 {
   "nextjs": {
     "slug": "nextjs",
-    "title":  "Next.js",
+    "title": "Next.js",
     "tutorials": [
       {
         "slug": "getting-started",
@@ -50,18 +50,16 @@
           {
             "slug": "conflict-free-data",
             "title": "Conflict-free data",
-            "description": "",
-            "comingSoon": true
-          },
-          {
-            "slug": "data-types",
-            "title": "Data types",
-            "description": "",
-            "comingSoon": true
+            "description": "How to use useStorage and conflict-free data"
           },
           {
             "slug": "mutations",
             "title": "Using mutations",
+            "description": "How to use useMutation and update storage"
+          },
+          {
+            "slug": "data-types",
+            "title": "Data types",
             "description": "",
             "comingSoon": true
           },
