@@ -28,10 +28,12 @@ export type RoomAuthToken = {
 export type AuthToken = AppOnlyAuthToken | RoomAuthToken;
 
 // The "rich" token is data we obtain by parsing the JWT token and making all
-// metadata on it accessible. It's done right after authorizing in the backend.
+// metadata on it accessible. It's done right after hitting the backend, but
+// before the promise will get returned, so it's an inherent part of the
+// authentication step.
 export type RichToken = {
-  readonly raw: string;
-  readonly parsed: RoomAuthToken & JwtMetadata;
+  readonly raw: string; // The raw JWT value, unchanged
+  readonly parsed: RoomAuthToken & JwtMetadata; // Rich data on the JWT value
 };
 
 export interface JwtMetadata extends JsonObject {
