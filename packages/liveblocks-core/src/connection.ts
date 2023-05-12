@@ -164,6 +164,10 @@ function enableTracing(fsm: FSM<Context, Event, State>) {
 }
 
 function setupStateMachine(delegates: DelegateConfig) {
+  // Emitted whenever a new WebSocket connection attempt suceeds
+  const didConnect = makeEventSource<void>();
+  // const didDisconnect = makeEventSource<void>();
+
   // Create observable event sources, which this machine will call into when
   // specific events happen
   const onMessage = makeEventSource<IWebSocketMessageEvent>();
@@ -409,6 +413,13 @@ function setupStateMachine(delegates: DelegateConfig) {
               target: "@connecting.busy",
               assign: increaseBackoffDelay,
             },
+    })
+
+    .onEnter("@ok.*", () => {
+      didConnect.notify();
+      return () => {
+        // didDisconnect.notify();
+      };
     });
 
   // Install debug logging
@@ -421,6 +432,8 @@ function setupStateMachine(delegates: DelegateConfig) {
 
     // Observable events that will be emitted by this machine
     events: {
+      didConnect: didConnect.observable,
+      // didDisconnect: didDisconnect.observable,
       onMessage: onMessage.observable,
       onError: onError.observable,
     },
@@ -441,7 +454,14 @@ export class ManagedSocket {
 
   public readonly events: {
     /**
-     * Sent for every incoming message from the currently active WebSocket
+     * Emitted when the WebSocket connection goes in or out of "connected"
+     * state.
+     */
+    readonly didConnect: Observable<void>;
+    // readonly didDisconnect: Observable<void>; // Deliberate close, temporary connection loss, permanent connection loss, etc.
+
+    /**
+     * Emitted for every incoming message from the currently active WebSocket
      * connection.
      */
     readonly onMessage: Observable<IWebSocketMessageEvent>;
