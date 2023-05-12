@@ -21,10 +21,10 @@ import { asPos } from "./lib/position";
 import type { Resolve } from "./lib/Resolve";
 import { compact, isPlainObject, tryParseJson } from "./lib/utils";
 import type { Authentication } from "./protocol/Authentication";
-import type { JwtMetadata, RoomAuthToken } from "./protocol/AuthToken";
+import type { RichToken, RoomAuthToken } from "./protocol/AuthToken";
 import {
   isTokenExpired,
-  parseRoomAuthToken,
+  parseRoomAuthToken_,
   RoomScope,
 } from "./protocol/AuthToken";
 import type { BaseUserMeta } from "./protocol/BaseUserMeta";
@@ -641,10 +641,8 @@ type RoomState<
   TUserMeta extends BaseUserMeta,
   TRoomEvent extends Json
 > = {
-  token: {
-    readonly raw: string;
-    readonly parsed: RoomAuthToken & JwtMetadata;
-  } | null;
+  richToken: RichToken | null;
+
   /**
    * Remembers the last successful connection ID. This gets assigned as soon as
    * the connection status switched from "connecting" to "open".
@@ -844,7 +842,7 @@ export function createRoom<
 
   // The room's internal stateful context
   const context: RoomState<TPresence, TStorage, TUserMeta, TRoomEvent> = {
-    token: null,
+    richToken: null,
     lastConnectionId: null,
     socket: null,
 
@@ -982,7 +980,7 @@ export function createRoom<
     ) {
       // If we already have a parsed token from a previous connection
       // in-memory, reuse it
-      const prevToken = context.token;
+      const prevToken = context.richToken;
       if (prevToken !== null && !isTokenExpired(prevToken.parsed)) {
         const socket = createWebSocket(prevToken.raw);
         handleAuthSuccess(prevToken.parsed, socket);
@@ -993,10 +991,11 @@ export function createRoom<
             if (context.connection.current.status !== "authenticating") {
               return;
             }
-            const parsedToken = parseRoomAuthToken(token);
+            const parsedToken = parseRoomAuthToken_(token);
             const socket = createWebSocket(token);
+
             handleAuthSuccess(parsedToken, socket);
-            context.token = { raw: token, parsed: parsedToken };
+            context.richToken = { raw: token, parsed: parsedToken };
           })
           .catch((er: unknown) =>
             authenticationFailure(
@@ -1426,7 +1425,7 @@ export function createRoom<
     if (process.env.NODE_ENV !== "production") {
       console.error("Call to authentication endpoint failed", error);
     }
-    context.token = null;
+    context.richToken = null;
     updateConnection({ status: "unavailable" }, batchUpdates);
     context.numRetries++;
 

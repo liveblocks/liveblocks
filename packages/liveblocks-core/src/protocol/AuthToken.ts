@@ -27,6 +27,13 @@ export type RoomAuthToken = {
 
 export type AuthToken = AppOnlyAuthToken | RoomAuthToken;
 
+// The "rich" token is data we obtain by parsing the JWT token and making all
+// metadata on it accessible. It's done right after authorizing in the backend.
+export type RichToken = {
+  readonly raw: string;
+  readonly parsed: RoomAuthToken & JwtMetadata;
+};
+
 export interface JwtMetadata extends JsonObject {
   iat: number;
   exp: number;
@@ -113,7 +120,7 @@ function parseJwtToken(token: string): JwtMetadata {
   }
 }
 
-export function parseRoomAuthToken(
+export function parseRoomAuthToken_(
   tokenString: string
 ): RoomAuthToken & JwtMetadata {
   const data = parseJwtToken(tokenString);
@@ -130,4 +137,12 @@ export function parseRoomAuthToken(
       "Authentication error: we expected a room token but did not get one. Hint: if you are using a callback, ensure the room is passed when creating the token. For more information: https://liveblocks.io/docs/api-reference/liveblocks-client#createClientCallback"
     );
   }
+}
+
+export function parseRoomAuthToken(tokenString: string): RichToken {
+  const parsedToken = parseRoomAuthToken_(tokenString);
+  return {
+    raw: tokenString,
+    parsed: parsedToken,
+  };
 }
