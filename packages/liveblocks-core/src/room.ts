@@ -725,7 +725,7 @@ type RoomState<
 type Effects<TPresence extends JsonObject, TRoomEvent extends Json> = {
   authenticateAndConnect(
     auth: () => Promise<{ token: string }>,
-    createWebSocket: (token: string) => IWebSocketInstance
+    createWebSocket: (token: RichToken) => IWebSocketInstance
   ): void;
   send(messages: ClientMsg<TPresence, TRoomEvent>[]): void;
   scheduleFlush(delay: number): TimeoutID;
@@ -974,13 +974,13 @@ export function createRoom<
   const effects: Effects<TPresence, TRoomEvent> = config.mockedEffects || {
     authenticateAndConnect(
       auth: () => Promise<{ token: string }>,
-      createWebSocket: (token: string) => IWebSocketInstance
+      createWebSocket: (richToken: RichToken) => IWebSocketInstance
     ) {
       // If we already have a parsed token from a previous connection
       // in-memory, reuse it
       const prevToken = context.richToken;
       if (prevToken !== null && !isTokenExpired(prevToken.parsed)) {
-        const socket = createWebSocket(prevToken.raw);
+        const socket = createWebSocket(prevToken);
         handleAuthSuccess(prevToken.parsed, socket);
         return undefined;
       } else {
@@ -990,7 +990,7 @@ export function createRoom<
               return;
             }
             const richToken = parseRoomAuthToken(token);
-            const socket = createWebSocket(richToken.raw);
+            const socket = createWebSocket(richToken);
             handleAuthSuccess(richToken.parsed, socket);
             context.richToken = richToken;
           })
@@ -2505,7 +2505,8 @@ function makeCreateSocketDelegateForRoom(
 
   const ws: IWebSocket = WebSocketPolyfill || WebSocket;
 
-  return (token: string): IWebSocketInstance => {
+  return (richToken: RichToken): IWebSocketInstance => {
+    const token = richToken.raw;
     return new ws(
       `${liveblocksServer}/?token=${token}&version=${
         // prettier-ignore
