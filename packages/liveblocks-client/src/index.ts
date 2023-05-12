@@ -26,6 +26,7 @@ export {
   LiveMap,
   LiveObject,
   shallow,
+  toPlainLson,
 } from "@liveblocks/core";
 
 /**

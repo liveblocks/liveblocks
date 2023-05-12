@@ -11,7 +11,7 @@ import type { LiveObject } from "../src/crdts/LiveObject";
 import type { Json, JsonObject } from "../src/lib/Json";
 import type { BaseUserMeta } from "../src/protocol/BaseUserMeta";
 import type { LsonObject } from "../src/crdts/Lson";
-import type { ToImmutable } from "../src/crdts/ToImmutable";
+import type { ToImmutable } from "../src/crdts/utils";
 
 async function initializeRoomForTest<
   TPresence extends JsonObject,

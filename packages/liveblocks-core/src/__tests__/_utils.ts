@@ -1,6 +1,6 @@
 import type { LiveObject } from "..";
 import type { LsonObject } from "../crdts/Lson";
-import type { ToImmutable } from "../crdts/ToImmutable";
+import type { ToImmutable } from "../crdts/utils";
 import type { Json, JsonObject } from "../lib/Json";
 import { makePosition } from "../lib/position";
 import { remove } from "../lib/utils";

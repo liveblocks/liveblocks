@@ -17,8 +17,8 @@ import {
   lsonToLiveNode,
 } from "./liveblocks-helpers";
 import type { LiveNode, Lson } from "./Lson";
-import type { ToImmutable } from "./ToImmutable";
 import type { UpdateDelta } from "./UpdateDelta";
+import type { ToImmutable } from "./utils";
 
 /**
  * A LiveMap notification that is sent in-client to any subscribers whenever

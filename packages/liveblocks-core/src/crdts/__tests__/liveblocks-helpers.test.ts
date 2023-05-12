@@ -6,6 +6,10 @@ import {
   findNonSerializableValue,
   getTreesDiffOperations,
 } from "../liveblocks-helpers";
+import { LiveList } from "../LiveList";
+import { LiveMap } from "../LiveMap";
+import { LiveObject } from "../LiveObject";
+import { toPlainLson } from "../utils";
 
 describe("getTreesDiffOperations", () => {
   test("new liveList Register item", () => {
@@ -256,5 +260,44 @@ describe("findNonSerializableValue", () => {
         expect(result).toEqual(false);
       }
     }
+  });
+});
+
+describe("toPlainLson", () => {
+  it("toPlainLson with a plain object should not change", () => {
+    const mockPlainObject = {
+      fruits: ["strawberry", "apple", "mango"],
+      vegetables: { broccoli: "delicious", spinach: "also tasty" },
+    };
+    const plainToPlain = toPlainLson(mockPlainObject);
+    expect(mockPlainObject).toEqual(plainToPlain);
+  });
+
+  it("toPlainLson with a liveStructure object should return plain lson object", () => {
+    const mockLsonObject = new LiveObject({
+      fruits: new LiveList(["strawberry", "apple", "mango"]),
+      vegetables: new LiveMap([
+        ["broccoli", "delicious"],
+        ["spinach", "also tasty"],
+      ]),
+    });
+
+    // What the Plain Lson should look like if the util works
+    const lsonObject = {
+      liveblocksType: "LiveObject",
+      data: {
+        fruits: {
+          liveblocksType: "LiveList",
+          data: ["strawberry", "apple", "mango"],
+        },
+        vegetables: {
+          liveblocksType: "LiveMap",
+          data: { broccoli: "delicious", spinach: "also tasty" },
+        },
+      },
+    };
+
+    const lsonToPlain = toPlainLson(mockLsonObject);
+    expect(lsonObject).toEqual(lsonToPlain);
   });
 });
