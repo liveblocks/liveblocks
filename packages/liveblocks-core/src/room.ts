@@ -639,7 +639,7 @@ type RoomState<
   TUserMeta extends BaseUserMeta,
   TRoomEvent extends Json
 > = {
-  richToken: RichToken | null;
+  token: RichToken | null;
 
   /**
    * Remembers the last successful connection ID. This gets assigned as soon as
@@ -840,7 +840,7 @@ export function createRoom<
 
   // The room's internal stateful context
   const context: RoomState<TPresence, TStorage, TUserMeta, TRoomEvent> = {
-    richToken: null,
+    token: null,
     lastConnectionId: null,
     socket: null,
 
@@ -974,24 +974,24 @@ export function createRoom<
   const effects: Effects<TPresence, TRoomEvent> = config.mockedEffects || {
     authenticateAndConnect(
       auth: () => Promise<RichToken>,
-      createWebSocket: (richToken: RichToken) => IWebSocketInstance
+      createWebSocket: (token: RichToken) => IWebSocketInstance
     ) {
       // If we already have a parsed token from a previous connection
       // in-memory, reuse it
-      const prevToken = context.richToken;
+      const prevToken = context.token;
       if (prevToken !== null && !isTokenExpired(prevToken.parsed)) {
         const socket = createWebSocket(prevToken);
         handleAuthSuccess(prevToken.parsed, socket);
         return undefined;
       } else {
         void auth()
-          .then((richToken) => {
+          .then((token) => {
             if (context.connection.current.status !== "authenticating") {
               return;
             }
-            const socket = createWebSocket(richToken);
-            handleAuthSuccess(richToken.parsed, socket);
-            context.richToken = richToken;
+            const socket = createWebSocket(token);
+            handleAuthSuccess(token.parsed, socket);
+            context.token = token;
           })
           .catch((er: unknown) =>
             authenticationFailure(
@@ -1421,7 +1421,7 @@ export function createRoom<
     if (process.env.NODE_ENV !== "production") {
       console.error("Call to authentication endpoint failed", error);
     }
-    context.richToken = null;
+    context.token = null;
     updateConnection({ status: "unavailable" }, batchUpdates);
     context.numRetries++;
 
