@@ -56,7 +56,6 @@ type Event =
   | { type: "RECONNECT" } // e.g. user asking for an explicit reconnect of the socket
   | { type: "DISCONNECT" } // e.g. leaving the room
   | { type: "WINDOW_GOT_FOCUS" } // e.g. user's browser tab is refocused
-  //         ^^^^^^^^^^^^^^^^ XXX Where to handle and what to do exactly on the WINDOW_GOT_FOCUS event?
 
   // Events that the connection manager will internally deal with
   | { type: "PONG" }
@@ -456,6 +455,9 @@ function createStateMachine<T extends BaseAuthResult>(delegates: Delegates<T>) {
       target: "@ok.awaiting-pong",
       effect: sendHeartbeat,
     })
+    .addTransitions("@ok.connected", {
+      WINDOW_GOT_FOCUS: { target: "@ok.awaiting-pong", effect: sendHeartbeat },
+    })
 
     .addTimedTransition("@ok.awaiting-pong", PONG_TIMEOUT, {
       target: "@connecting.busy",
@@ -516,12 +518,27 @@ function createStateMachine<T extends BaseAuthResult>(delegates: Delegates<T>) {
       },
     });
 
+  // Lastly, register an event handler to listen for window-focus events as
+  // soon as the machine starts, and use it to send itself "WINDOW_GOT_FOCUS"
+  // events.
+  if (typeof document !== "undefined") {
+    fsm.onEnter("*", () => {
+      function onVisibilityChange() {
+        if (document.visibilityState === "visible") {
+          fsm.send({ type: "WINDOW_GOT_FOCUS" });
+        }
+      }
+      document.addEventListener("visibilitychange", onVisibilityChange);
+      return () => {
+        document.removeEventListener("visibilitychange", onVisibilityChange);
+      };
+    });
+  }
+
   const { statusDidChange, didConnect, didDisconnect } =
     defineConnectivityEvents(fsm);
 
   // Install debug logging
-
-  // Log all state transitions to the console
   enableTracing(fsm); // TODO Remove logging in production
 
   // Start the machine
