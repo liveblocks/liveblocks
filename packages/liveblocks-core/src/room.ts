@@ -66,8 +66,6 @@ type CustomEvent<TRoomEvent extends Json> = {
   event: TRoomEvent;
 };
 
-type AuthCallback = () => Promise<{ token: string }>;
-
 export type Connection =
   /* The initial state, before connecting */
   | { status: "closed" }
@@ -726,7 +724,7 @@ type RoomState<
 /** @internal */
 type Effects<TPresence extends JsonObject, TRoomEvent extends Json> = {
   authenticateAndConnect(
-    auth: AuthCallback,
+    auth: () => Promise<{ token: string }>,
     createWebSocket: (token: string) => IWebSocketInstance
   ): void;
   send(messages: ClientMsg<TPresence, TRoomEvent>[]): void;
@@ -975,7 +973,7 @@ export function createRoom<
 
   const effects: Effects<TPresence, TRoomEvent> = config.mockedEffects || {
     authenticateAndConnect(
-      auth: AuthCallback,
+      auth: () => Promise<{ token: string }>,
       createWebSocket: (token: string) => IWebSocketInstance
     ) {
       // If we already have a parsed token from a previous connection
@@ -2524,7 +2522,8 @@ function makeAuthDelegateForRoom(
   roomId: string,
   authentication: Authentication,
   fetchPolyfill?: typeof window.fetch
-): AuthCallback {
+  // XXX Change this return type
+): () => Promise<{ token: string }> {
   if (authentication.type === "public") {
     if (typeof window === "undefined" && fetchPolyfill === undefined) {
       throw new Error(
