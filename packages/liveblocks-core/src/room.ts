@@ -1322,24 +1322,18 @@ export function createRoom<
       return;
     }
 
-    const delegates = {
-      authenticate: prepareAuthEndpoint(
-        config.roomId,
-        config.authentication,
-        config.polyfills?.fetch
-      ),
-
-      createSocket: prepareCreateWebSocket(
-        config.liveblocksServer,
-        config.polyfills?.WebSocket
-      ),
-    };
+    const auth = prepareAuthEndpoint(
+      config.roomId,
+      config.authentication,
+      config.polyfills?.fetch
+    );
+    const createWebSocket = prepareCreateWebSocket(
+      config.liveblocksServer,
+      config.polyfills?.WebSocket
+    );
 
     updateConnection({ status: "authenticating" }, batchUpdates);
-    effects.authenticateAndConnect(
-      delegates.authenticate,
-      delegates.createSocket
-    );
+    effects.authenticateAndConnect(auth, createWebSocket);
   }
 
   function updatePresence(
