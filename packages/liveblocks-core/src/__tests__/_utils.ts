@@ -170,10 +170,9 @@ export const THIRD_POSITION = makePosition(SECOND_POSITION);
 export const FOURTH_POSITION = makePosition(THIRD_POSITION);
 export const FIFTH_POSITION = makePosition(FOURTH_POSITION);
 
-function makeMachineConfig<
-  TPresence extends JsonObject,
-  TRoomEvent extends Json
->(mockedEffects: Effects<TPresence, TRoomEvent>) {
+function makeRoomConfig<TPresence extends JsonObject, TRoomEvent extends Json>(
+  mockedEffects: Effects<TPresence, TRoomEvent>
+) {
   return {
     roomId: "room-id",
     throttleDelay: -1, // No throttle for standard storage test
@@ -209,7 +208,7 @@ export async function prepareRoomWithStorage<
       initialPresence: {} as TPresence,
       initialStorage: defaultStorage || ({} as TStorage),
     },
-    makeMachineConfig(effects)
+    makeRoomConfig(effects)
   );
   const ws = new MockWebSocket();
 

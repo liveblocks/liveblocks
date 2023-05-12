@@ -472,7 +472,7 @@ describe("room", () => {
   test("should clear users not present in server message ROOM_STATE", () => {
     /*
     Scenario:
-    - Client A (machine) and Client B (ref machine) are connected to the room.
+    - Client A (room) and Client B (refRoom) are connected to the room.
     - Client A computer goes to sleep, it doesn't properly close. It still has client B in others.
     - Client B computer goes to sleep, it doesn't properly close.
     - After 2 minutes, the server clears client A and B from its list of users.
@@ -1406,9 +1406,9 @@ describe("room", () => {
 
       reconnect(2);
 
-      const refMachineOthers = refRoom.getOthers();
+      const refRoomOthers = refRoom.getOthers();
 
-      expect(refMachineOthers).toEqual([
+      expect(refRoomOthers).toEqual([
         {
           connectionId: 1,
           id: undefined,
