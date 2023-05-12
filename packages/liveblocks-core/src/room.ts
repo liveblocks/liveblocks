@@ -1323,13 +1323,13 @@ export function createRoom<
     }
 
     const delegates = {
-      authenticate: makeAuthDelegateForRoom(
+      authenticate: prepareAuthEndpoint(
         config.roomId,
         config.authentication,
         config.polyfills?.fetch
       ),
 
-      createSocket: makeCreateSocketDelegateForRoom(
+      createSocket: prepareCreateWebSocket(
         config.liveblocksServer,
         config.polyfills?.WebSocket
       ),
@@ -2492,7 +2492,7 @@ class LiveblocksError extends Error {
   }
 }
 
-function makeCreateSocketDelegateForRoom(
+function prepareCreateWebSocket(
   liveblocksServer: string,
   WebSocketPolyfill?: IWebSocket
 ) {
@@ -2517,7 +2517,7 @@ function makeCreateSocketDelegateForRoom(
   };
 }
 
-function makeAuthDelegateForRoom(
+function prepareAuthEndpoint(
   roomId: string,
   authentication: Authentication,
   fetchPolyfill?: typeof window.fetch
