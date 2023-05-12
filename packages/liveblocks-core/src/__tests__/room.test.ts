@@ -220,7 +220,7 @@ describe("room", () => {
     const { room, effects } = setupStateMachine({});
     room.__internal.send.connect();
     expect(room.getConnectionState()).toEqual("authenticating");
-    expect(effects.authenticate).toHaveBeenCalled();
+    expect(effects.authenticateAndConnect).toHaveBeenCalled();
   });
 
   test("connect should stay authenticating if connect is called multiple times and call authenticate only once", () => {
@@ -229,7 +229,7 @@ describe("room", () => {
     expect(room.getConnectionState()).toEqual("authenticating");
     room.__internal.send.connect();
     expect(room.getConnectionState()).toEqual("authenticating");
-    expect(effects.authenticate).toHaveBeenCalledTimes(1);
+    expect(effects.authenticateAndConnect).toHaveBeenCalledTimes(1);
   });
 
   test("authentication success should transition to connecting", () => {

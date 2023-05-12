@@ -66,7 +66,7 @@ type CustomEvent<TRoomEvent extends Json> = {
   event: TRoomEvent;
 };
 
-type AuthCallback = (room: string) => Promise<{ token: string }>;
+type AuthCallback = () => Promise<{ token: string }>;
 
 export type Connection =
   /* The initial state, before connecting */
@@ -727,7 +727,7 @@ type MachineContext<
 
 /** @internal */
 type Effects<TPresence extends JsonObject, TRoomEvent extends Json> = {
-  authenticate(
+  authenticateAndConnect(
     auth: AuthCallback,
     createWebSocket: (token: string) => IWebSocketInstance
   ): void;
@@ -980,7 +980,7 @@ export function createRoom<
   };
 
   const effects: Effects<TPresence, TRoomEvent> = config.mockedEffects || {
-    authenticate(
+    authenticateAndConnect(
       auth: AuthCallback,
       createWebSocket: (token: string) => IWebSocketInstance
     ) {
@@ -992,7 +992,7 @@ export function createRoom<
         handleAuthSuccess(prevToken.parsed, socket);
         return undefined;
       } else {
-        void auth(config.roomId)
+        void auth()
           .then(({ token }) => {
             if (context.connection.current.status !== "authenticating") {
               return;
@@ -1331,17 +1331,24 @@ export function createRoom<
       return;
     }
 
-    const auth = prepareAuthEndpoint(
-      config.authentication,
-      config.polyfills?.fetch
-    );
-    const createWebSocket = prepareCreateWebSocket(
-      config.liveblocksServer,
-      config.polyfills?.WebSocket
-    );
+    const delegates = {
+      authenticate: makeAuthDelegateForRoom(
+        config.roomId,
+        config.authentication,
+        config.polyfills?.fetch
+      ),
+
+      createSocket: makeCreateSocketDelegateForRoom(
+        config.liveblocksServer,
+        config.polyfills?.WebSocket
+      ),
+    };
 
     updateConnection({ status: "authenticating" }, batchUpdates);
-    effects.authenticate(auth, createWebSocket);
+    effects.authenticateAndConnect(
+      delegates.authenticate,
+      delegates.createSocket
+    );
   }
 
   function updatePresence(
@@ -2494,7 +2501,7 @@ class LiveblocksError extends Error {
   }
 }
 
-function prepareCreateWebSocket(
+function makeCreateSocketDelegateForRoom(
   liveblocksServer: string,
   WebSocketPolyfill?: IWebSocket
 ) {
@@ -2518,7 +2525,8 @@ function prepareCreateWebSocket(
   };
 }
 
-function prepareAuthEndpoint(
+function makeAuthDelegateForRoom(
+  roomId: string,
   authentication: Authentication,
   fetchPolyfill?: typeof window.fetch
 ): AuthCallback {
@@ -2529,12 +2537,12 @@ function prepareAuthEndpoint(
       );
     }
 
-    return (room: string) =>
+    return () =>
       fetchAuthEndpoint(
         fetchPolyfill || /* istanbul ignore next */ fetch,
         authentication.url,
         {
-          room,
+          room: roomId,
           publicApiKey: authentication.publicApiKey,
         }
       );
@@ -2547,15 +2555,15 @@ function prepareAuthEndpoint(
       );
     }
 
-    return (room: string) =>
+    return () =>
       fetchAuthEndpoint(fetchPolyfill || fetch, authentication.url, {
-        room,
+        room: roomId,
       });
   }
 
   if (authentication.type === "custom") {
-    return async (room: string) => {
-      const response = await authentication.callback(room);
+    return async () => {
+      const response = await authentication.callback(roomId);
       if (!response || !response.token) {
         throw new Error(
           'Authentication error. We expect the authentication callback to return a token, but it does not. Hint: the return value should look like: { token: "..." }'

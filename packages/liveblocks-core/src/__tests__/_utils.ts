@@ -634,7 +634,7 @@ export function mockEffects<
   TRoomEvent extends Json
 >(): Effects<TPresence, TRoomEvent> {
   return {
-    authenticate: jest.fn(),
+    authenticateAndConnect: jest.fn(),
     send: jest.fn(),
     scheduleFlush: jest.fn(),
     scheduleReconnect: jest.fn(),
