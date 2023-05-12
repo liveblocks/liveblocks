@@ -62,7 +62,7 @@ const defaultRoomToken: RoomAuthToken = {
   scopes: [],
 };
 
-function setupStateMachine<
+function createTestableRoom<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
   TUserMeta extends BaseUserMeta,
@@ -216,14 +216,14 @@ describe("room / auth", () => {
 
 describe("room", () => {
   test("connect should transition to authenticating if closed and execute authenticate", () => {
-    const { room, effects } = setupStateMachine({});
+    const { room, effects } = createTestableRoom({});
     room.__internal.send.connect();
     expect(room.getConnectionState()).toEqual("authenticating");
     expect(effects.authenticateAndConnect).toHaveBeenCalled();
   });
 
   test("connect should stay authenticating if connect is called multiple times and call authenticate only once", () => {
-    const { room, effects } = setupStateMachine({});
+    const { room, effects } = createTestableRoom({});
     room.__internal.send.connect();
     expect(room.getConnectionState()).toEqual("authenticating");
     room.__internal.send.connect();
@@ -232,13 +232,13 @@ describe("room", () => {
   });
 
   test("authentication success should transition to connecting", () => {
-    const { room } = setupStateMachine({});
+    const { room } = createTestableRoom({});
     room.__internal.send.authSuccess(defaultRoomToken, new MockWebSocket());
     expect(room.getConnectionState()).toBe("connecting");
   });
 
   test("initial presence should be sent once the connection is open", () => {
-    const { room, effects } = setupStateMachine({ x: 0 });
+    const { room, effects } = createTestableRoom({ x: 0 });
 
     const ws = new MockWebSocket();
     room.__internal.send.connect();
@@ -251,7 +251,7 @@ describe("room", () => {
   });
 
   test("if presence has been updated before the connection, it should be sent when the connection is ready", () => {
-    const { room, effects } = setupStateMachine({});
+    const { room, effects } = createTestableRoom({});
 
     const ws = new MockWebSocket();
     room.updatePresence({ x: 0 });
@@ -265,7 +265,7 @@ describe("room", () => {
   });
 
   test("if no presence has been set before the connection is open, an empty presence should be sent", () => {
-    const { room, effects } = setupStateMachine({} as never);
+    const { room, effects } = createTestableRoom({} as never);
 
     const ws = new MockWebSocket();
     room.__internal.send.connect();
@@ -278,7 +278,7 @@ describe("room", () => {
   });
 
   test("initial presence followed by updatePresence should delay sending the second presence event", () => {
-    const { room, effects } = setupStateMachine({ x: 0 });
+    const { room, effects } = createTestableRoom({ x: 0 });
 
     const ws = new MockWebSocket();
     room.__internal.send.connect();
@@ -300,7 +300,7 @@ describe("room", () => {
   });
 
   test("should replace current presence and set flushData presence when connection is closed", () => {
-    const { room } = setupStateMachine({});
+    const { room } = createTestableRoom({});
 
     room.updatePresence({ x: 0 });
 
@@ -309,7 +309,7 @@ describe("room", () => {
   });
 
   test("should merge current presence and set flushData presence when connection is closed", () => {
-    const { room } = setupStateMachine({});
+    const { room } = createTestableRoom({});
 
     room.updatePresence({ x: 0 });
 
@@ -322,7 +322,7 @@ describe("room", () => {
   });
 
   test("others should be iterable", () => {
-    const { room } = setupStateMachine({});
+    const { room } = createTestableRoom({});
 
     const ws = new MockWebSocket();
     room.__internal.send.connect();
@@ -358,7 +358,7 @@ describe("room", () => {
   });
 
   test("others should be iterable", () => {
-    const { room } = setupStateMachine({});
+    const { room } = createTestableRoom({});
 
     const ws = new MockWebSocket();
     room.__internal.send.connect();
@@ -394,7 +394,7 @@ describe("room", () => {
   });
 
   test("others should be read-only when associated scopes are received", () => {
-    const { room } = setupStateMachine({});
+    const { room } = createTestableRoom({});
 
     const ws = new MockWebSocket();
     room.__internal.send.connect();
@@ -430,7 +430,7 @@ describe("room", () => {
   });
 
   test("should clear users when socket close", () => {
-    const { room } = setupStateMachine({});
+    const { room } = createTestableRoom({});
 
     const ws = new MockWebSocket();
     room.__internal.send.connect();
@@ -481,7 +481,7 @@ describe("room", () => {
     - Client A should remove client B from others.
   */
 
-    const { room } = setupStateMachine({});
+    const { room } = createTestableRoom({});
 
     const ws = new MockWebSocket();
     room.__internal.send.connect();
@@ -545,7 +545,7 @@ describe("room", () => {
 
   describe("broadcast", () => {
     test("should send event to other users", () => {
-      const { room, effects } = setupStateMachine({});
+      const { room, effects } = createTestableRoom({});
 
       const ws = new MockWebSocket();
       room.__internal.send.connect();
@@ -580,7 +580,7 @@ describe("room", () => {
     });
 
     test("should not send event to other users if not connected", () => {
-      const { room, effects } = setupStateMachine({});
+      const { room, effects } = createTestableRoom({});
 
       room.broadcastEvent({ type: "EVENT" });
 
@@ -598,7 +598,7 @@ describe("room", () => {
     });
 
     test("should queue event if socket is not ready and shouldQueueEventsIfNotReady is true", () => {
-      const { room, effects } = setupStateMachine({});
+      const { room, effects } = createTestableRoom({});
 
       room.broadcastEvent(
         { type: "EVENT" },
@@ -621,7 +621,7 @@ describe("room", () => {
   });
 
   test("storage should be initialized properly", async () => {
-    const { room } = setupStateMachine({});
+    const { room } = createTestableRoom({});
 
     const ws = new MockWebSocket();
     room.__internal.send.connect();
@@ -643,7 +643,7 @@ describe("room", () => {
   });
 
   test("undo redo with presence", () => {
-    const { room } = setupStateMachine({});
+    const { room } = createTestableRoom({});
 
     const ws = new MockWebSocket();
     room.__internal.send.connect();
@@ -698,7 +698,7 @@ describe("room", () => {
   });
 
   test("if presence is not added to history during a batch, it should not impact the undo/stack", async () => {
-    const { room } = setupStateMachine({});
+    const { room } = createTestableRoom({});
 
     const ws = new MockWebSocket();
     room.__internal.send.connect();
@@ -732,7 +732,7 @@ describe("room", () => {
   });
 
   test("if nothing happened while the history was paused, the undo stack should not be impacted", () => {
-    const { room } = setupStateMachine({});
+    const { room } = createTestableRoom({});
 
     const ws = new MockWebSocket();
     room.__internal.send.connect();
@@ -753,7 +753,7 @@ describe("room", () => {
   });
 
   test("undo redo with presence that do not impact presence", () => {
-    const { room } = setupStateMachine({});
+    const { room } = createTestableRoom({});
 
     const ws = new MockWebSocket();
     room.__internal.send.connect();
@@ -769,7 +769,7 @@ describe("room", () => {
   });
 
   test("pause / resume history", () => {
-    const { room } = setupStateMachine({});
+    const { room } = createTestableRoom({});
 
     const ws = new MockWebSocket();
     room.__internal.send.connect();
@@ -803,7 +803,7 @@ describe("room", () => {
   });
 
   test("undo while history is paused", () => {
-    const { room } = setupStateMachine({});
+    const { room } = createTestableRoom({});
 
     const ws = new MockWebSocket();
     room.__internal.send.connect();
@@ -827,7 +827,7 @@ describe("room", () => {
   });
 
   test("undo redo with presence + storage", async () => {
-    const { room } = setupStateMachine({});
+    const { room } = createTestableRoom({});
 
     const ws = new MockWebSocket();
     room.__internal.send.connect();
@@ -868,7 +868,7 @@ describe("room", () => {
   });
 
   test("batch without changes should not erase redo stack", async () => {
-    const { room } = setupStateMachine({});
+    const { room } = createTestableRoom({});
 
     const ws = new MockWebSocket();
     room.__internal.send.connect();
@@ -918,7 +918,7 @@ describe("room", () => {
 
   describe("subscription", () => {
     test("batch my-presence", () => {
-      const { room } = setupStateMachine({});
+      const { room } = createTestableRoom({});
 
       const callback = jest.fn();
 
@@ -934,7 +934,7 @@ describe("room", () => {
     });
 
     test("batch storage and presence", async () => {
-      const { room } = setupStateMachine({});
+      const { room } = createTestableRoom({});
 
       const ws = new MockWebSocket();
       room.__internal.send.connect();
@@ -1142,7 +1142,7 @@ describe("room", () => {
     });
 
     test("batch history", () => {
-      const { room } = setupStateMachine({});
+      const { room } = createTestableRoom({});
 
       const callback = jest.fn();
       room.events.history.subscribe(callback);
@@ -1157,7 +1157,7 @@ describe("room", () => {
     });
 
     test("my-presence", () => {
-      const { room } = setupStateMachine({});
+      const { room } = createTestableRoom({});
 
       const callback = jest.fn();
       const unsubscribe = room.events.me.subscribe(callback);
@@ -1175,7 +1175,7 @@ describe("room", () => {
     test("others", () => {
       type P = { x?: number };
 
-      const { room } = setupStateMachine<P, never, never, never>({});
+      const { room } = createTestableRoom<P, never, never, never>({});
 
       const ws = new MockWebSocket();
       room.__internal.send.connect();
@@ -1226,7 +1226,7 @@ describe("room", () => {
     });
 
     test("event", () => {
-      const { room } = setupStateMachine({});
+      const { room } = createTestableRoom({});
 
       const ws = new MockWebSocket();
       room.__internal.send.connect();
@@ -1253,7 +1253,7 @@ describe("room", () => {
     });
 
     test("history", () => {
-      const { room } = setupStateMachine({});
+      const { room } = createTestableRoom({});
 
       const callback = jest.fn();
       const unsubscribe = room.events.history.subscribe(callback);
@@ -1491,7 +1491,7 @@ describe("room", () => {
     });
 
     test("when error code 1006", () => {
-      const { room } = setupStateMachine({ x: 0 });
+      const { room } = createTestableRoom({ x: 0 });
 
       const ws = new MockWebSocket();
       room.__internal.send.connect();
@@ -1513,7 +1513,7 @@ describe("room", () => {
     });
 
     test("when error code 4002", () => {
-      const { room } = setupStateMachine({ x: 0 });
+      const { room } = createTestableRoom({ x: 0 });
 
       const ws = new MockWebSocket();
       room.__internal.send.connect();
@@ -1535,7 +1535,7 @@ describe("room", () => {
     });
 
     test("manual reconnection", () => {
-      const { room } = setupStateMachine({ x: 0 });
+      const { room } = createTestableRoom({ x: 0 });
       expect(room.getConnectionState()).toBe("closed");
 
       const ws = new MockWebSocket();
@@ -1567,7 +1567,7 @@ describe("room", () => {
       type M = never;
       type E = never;
 
-      const { room } = setupStateMachine<P, S, M, E>({});
+      const { room } = createTestableRoom<P, S, M, E>({});
 
       const ws = new MockWebSocket();
       room.__internal.send.connect();
