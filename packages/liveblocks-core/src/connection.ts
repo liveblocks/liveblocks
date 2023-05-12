@@ -1,4 +1,5 @@
 import type { Observable } from "./lib/EventSource";
+import { assertNever } from "./lib/assert";
 import { makeEventSource } from "./lib/EventSource";
 import { FSM } from "./lib/fsm";
 import type {
@@ -7,6 +8,44 @@ import type {
   IWebSocketInstance,
   IWebSocketMessageEvent,
 } from "./types/IWebSocket";
+
+type PublicConnectionStatus =
+  | "closed" // Room hasn't been entered, or has left already
+  | "authenticating" // Authentication has started, but not finished yet
+  | "connecting" // Authentication succeeded, now attempting to connect to a room
+  | "open" // Successful room connection, on the happy path
+  | "unavailable" // Connection lost unexpectedly, considered a temporary hiccup, will retry
+  | "failed"; // Connection failed and we won't retry automatically (e.g. unauthorized)
+
+/**
+ * Maps internal machine state to the public connection status API.
+ */
+function toPublicConnectionStatus(state: State): PublicConnectionStatus {
+  switch (state) {
+    case "@ok.connected":
+    case "@ok.awaiting-pong":
+      return "open";
+
+    case "@idle.initial":
+      return "closed";
+
+    case "@auth.busy":
+    case "@auth.backoff":
+      return "authenticating";
+
+    case "@connecting.busy":
+      return "connecting";
+
+    case "@connecting.backoff":
+      return "unavailable";
+
+    case "@idle.failed":
+      return "failed";
+
+    default:
+      return assertNever(state, "Unknown state");
+  }
+}
 
 /**
  * Events that can be sent to the machine externally.
@@ -484,6 +523,10 @@ export class ManagedSocket {
     this.events = events;
 
     fsm.start();
+  }
+
+  get status(): PublicConnectionStatus {
+    return toPublicConnectionStatus(this.fsm.currentState);
   }
 
   /**
