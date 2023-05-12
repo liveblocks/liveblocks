@@ -136,9 +136,9 @@ export function parseRoomAuthToken_(
     // If this legacy field is found on the token, pretend it wasn't there,
     // to make all internally used token payloads uniform
     maxConnections: _legacyField,
-    ...token
+    ...parsedToken
   } = data;
-  return token;
+  return parsedToken;
 }
 
 export function parseRoomAuthToken(tokenString: string): RichToken {
