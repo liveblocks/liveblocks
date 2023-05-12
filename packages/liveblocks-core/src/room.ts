@@ -1,3 +1,5 @@
+import { ManagedSocket } from "./connection";
+import type { Delegates } from "./connection";
 import type { ApplyResult, ManagedPool } from "./crdts/AbstractCrdt";
 import { OpSource } from "./crdts/AbstractCrdt";
 import {
@@ -571,7 +573,6 @@ type PrivateRoomAPI<
 > = {
   // For introspection in unit tests only
   buffer: RoomState<TPresence, TStorage, TUserMeta, TRoomEvent>["buffer"]; // prettier-ignore
-  numRetries: number;
   undoStack: readonly (readonly Readonly<HistoryOp<TPresence>>[])[];
   nodeCount: number;
 
@@ -602,8 +603,8 @@ type PrivateRoomAPI<
   };
 };
 
-const BACKOFF_RETRY_DELAYS = [250, 500, 1000, 2000, 4000, 8000, 10000];
-const BACKOFF_RETRY_DELAYS_SLOW = [2000, 30000, 60000, 300000];
+// const BACKOFF_RETRY_DELAYS = [250, 500, 1000, 2000, 4000, 8000, 10000];
+// const BACKOFF_RETRY_DELAYS_SLOW = [2000, 30000, 60000, 300000];
 
 const HEARTBEAT_INTERVAL = 30000;
 const PONG_TIMEOUT = 2000;
@@ -643,11 +644,15 @@ type RoomState<
 
   /**
    * Remembers the last successful connection ID. This gets assigned as soon as
-   * the connection status switched from "connecting" to "open".
+   * the connection status switched from "connecting" to "open", and is used to
+   * hold on to the connection ID beyond the happy state. If, for example, the
+   * server connection is lost, it will try to reconnect. Reconnecting will
+   * change the connection ID, but during this limbo period, there would not be
+   * a connection ID temporarily, so we use the last known connection ID to
+   * generate IDs for new nodes if they are being created while the connection
+   * is reestablishing.
    */
-  lastConnectionId: number | null; // TODO Do we really need to separately track this, or can we derive this from the last known token?
-
-  socket: IWebSocketInstance | null;
+  lastConnectionId: number | null;
 
   /**
    * All pending changes that yet need to be synced.
@@ -667,18 +672,12 @@ type RoomState<
     storageOperations: Op[];
   };
 
-  /**
-   * Number of reconnect() retries.
-   */
-  numRetries: number;
   readonly timers: {
     flush: TimeoutID | undefined;
-    reconnect: TimeoutID | undefined;
-    heartbeat: IntervalID | undefined;
-    pongTimeout: TimeoutID | undefined;
   };
 
-  readonly connection: ValueRef<Connection>;
+  readonly managedSocket: ManagedSocket;
+  readonly connection: ValueRef<Connection>; // XXX Make this a derived property
   readonly me: MeRef<TPresence>;
   readonly others: OthersRef<TPresence, TUserMeta>;
 
@@ -837,18 +836,28 @@ export function createRoom<
       ? options.initialStorage(config.roomId)
       : options.initialStorage;
 
+  // Create a delegate pair for (a specific) Live Room socket connection(s)
+  const delegates: Delegates = {
+    authenticate: makeAuthDelegateForRoom(
+      config.roomId,
+      config.authentication,
+      config.polyfills?.fetch
+    ),
+
+    createSocket: makeCreateSocketDelegateForRoom(
+      config.liveblocksServer,
+      config.polyfills?.WebSocket
+    ),
+  };
+
   // The room's internal stateful context
   const context: RoomState<TPresence, TStorage, TUserMeta, TRoomEvent> = {
     token: null,
     lastConnectionId: null,
-    socket: null,
+    managedSocket: new ManagedSocket(delegates),
 
-    numRetries: 0,
     timers: {
       flush: undefined,
-      reconnect: undefined,
-      heartbeat: undefined,
-      pongTimeout: undefined,
     },
 
     buffer: {
@@ -1312,28 +1321,6 @@ export function createRoom<
     }
   }
 
-  function handleConnect() {
-    if (
-      context.connection.current.status !== "closed" &&
-      context.connection.current.status !== "unavailable"
-    ) {
-      return;
-    }
-
-    const auth = prepareAuthEndpoint(
-      config.roomId,
-      config.authentication,
-      config.polyfills?.fetch
-    );
-    const createWebSocket = prepareCreateWebSocket(
-      config.liveblocksServer,
-      config.polyfills?.WebSocket
-    );
-
-    updateConnection({ status: "authenticating" }, batchUpdates);
-    effects.authenticateAndConnect(auth, createWebSocket);
-  }
-
   function updatePresence(
     patch: Partial<TPresence>,
     options?: { addToHistory: boolean }
@@ -1389,11 +1376,13 @@ export function createRoom<
     );
   }
 
+  // XXX Can go
   function handleAuthSuccess(token: RoomAuthToken, socket: IWebSocketInstance) {
+    // XXX Don't call handlers directly -- call .transition() instead
     socket.addEventListener("message", handleRawSocketMessage);
     socket.addEventListener("open", handleSocketOpen);
-    socket.addEventListener("close", handleExplicitClose);
-    socket.addEventListener("error", handleSocketError);
+    socket.addEventListener("close", handleExplicitClose); // XXX Can go
+    socket.addEventListener("error", handleSocketError); // XXX Can go
 
     updateConnection(
       {
@@ -1406,18 +1395,20 @@ export function createRoom<
       batchUpdates
     );
     context.idFactory = makeIdFactory(token.actor);
-    context.socket = socket;
+    context.socket = socket; // XXX Can go
   }
 
+  // XXX Can go
   function authenticationFailure(error: Error) {
     if (process.env.NODE_ENV !== "production") {
       console.error("Call to authentication endpoint failed", error);
     }
     context.token = null;
     updateConnection({ status: "unavailable" }, batchUpdates);
-    context.numRetries++;
 
+    // XXX Can go
     clearTimeout(context.timers.reconnect);
+    // XXX Can go
     context.timers.reconnect = effects.scheduleReconnect(getRetryDelay());
   }
 
@@ -1592,6 +1583,7 @@ export function createRoom<
     if (event.data === "pong") {
       transition({ type: "RECEIVE_PONG" });
     } else {
+      // XXX Replace this with a managedSocket.onMessage.subscribe(handleServerMessage)
       handleServerMessage(event);
     }
   }
@@ -1731,19 +1723,21 @@ export function createRoom<
     clearInterval(context.timers.heartbeat);
     clearTimeout(context.timers.pongTimeout);
 
+    /// XXX What does this notification do exactly?
     context.others.clearOthers();
 
     batchUpdates(() => {
+      /// XXX What does this notification do exactly?
       notify({ others: [{ type: "reset" }] }, doNotBatchUpdates);
 
       if (event.code >= 4000 && event.code <= 4100) {
         updateConnection({ status: "failed" }, doNotBatchUpdates);
 
+        // XXX Should the manager relay this event, so we can rethrow it?
         const error = new LiveblocksError(event.reason, event.code);
         eventHub.error.notify(error);
 
         const delay = getRetryDelay(true);
-        context.numRetries++;
 
         if (process.env.NODE_ENV !== "production") {
           console.error(
@@ -1759,7 +1753,6 @@ export function createRoom<
         updateConnection({ status: "closed" }, doNotBatchUpdates);
       } else {
         const delay = getRetryDelay();
-        context.numRetries++;
 
         if (process.env.NODE_ENV !== "production") {
           console.warn(
@@ -1784,36 +1777,22 @@ export function createRoom<
     });
   }
 
-  function getRetryDelay(slow: boolean = false) {
-    if (slow) {
-      return BACKOFF_RETRY_DELAYS_SLOW[
-        context.numRetries < BACKOFF_RETRY_DELAYS_SLOW.length
-          ? context.numRetries
-          : BACKOFF_RETRY_DELAYS_SLOW.length - 1
-      ];
-    }
-    return BACKOFF_RETRY_DELAYS[
-      context.numRetries < BACKOFF_RETRY_DELAYS.length
-        ? context.numRetries
-        : BACKOFF_RETRY_DELAYS.length - 1
-    ];
-  }
-
   function handleSocketError() {
     // TODO(nvie) At the very least, emit a log here?
   }
 
+  // XXX Can go soon. Should now be handled by the connection manager.
   function handleSocketOpen() {
-    clearInterval(context.timers.heartbeat);
-    context.timers.heartbeat = effects.startHeartbeatInterval();
+    clearInterval(context.timers.heartbeat); // XXX Can go
+    context.timers.heartbeat = effects.startHeartbeatInterval(); // XXX Can go
 
     if (context.connection.current.status === "connecting") {
       updateConnection(
         { ...context.connection.current, status: "open" },
         batchUpdates
       );
-      context.numRetries = 0;
 
+      // XXX Handle this bit as a managedSocket.didEnterState.subscribe('@ok.*')
       // Re-broadcast the user presence during a reconnect.
       if (context.lastConnectionId !== undefined) {
         context.buffer.me = {
@@ -1834,27 +1813,8 @@ export function createRoom<
       }
       tryFlushing();
     } else {
-      // TODO
+      // TODO Nothing!
     }
-  }
-
-  function heartbeat() {
-    if (context.socket === null) {
-      // Should never happen, because we clear the pong timeout when the connection is dropped explictly
-      return;
-    }
-
-    clearTimeout(context.timers.pongTimeout);
-    context.timers.pongTimeout = effects.schedulePongTimeout();
-
-    if (context.socket.readyState === context.socket.OPEN) {
-      context.socket.send("ping");
-    }
-  }
-
-  function pongTimeout() {
-    log("Pong timeout. Trying to reconnect.");
-    reconnect();
   }
 
   function handleDisconnect() {
@@ -1880,6 +1840,7 @@ export function createRoom<
     });
   }
 
+  // XXX Should eventually become .transition({ type: "RECONNECT" })
   function reconnect() {
     if (context.socket) {
       context.socket.removeEventListener("open", handleSocketOpen);
@@ -1985,6 +1946,7 @@ export function createRoom<
       shouldQueueEventIfNotReady: false,
     }
   ) {
+    // XXX Replace with context.managedSocket.status === 'open' ?
     if (context.socket === null && !options.shouldQueueEventIfNotReady) {
       return;
     }
@@ -2265,7 +2227,6 @@ export function createRoom<
     /* NOTE: Exposing __internal here only to allow testing implementation details in unit tests */
     __internal: {
       get buffer() { return context.buffer }, // prettier-ignore
-      get numRetries() { return context.numRetries }, // prettier-ignore
       get undoStack() { return context.undoStack }, // prettier-ignore
       get nodeCount() { return context.nodes.size }, // prettier-ignore
 
@@ -2480,7 +2441,7 @@ class LiveblocksError extends Error {
   }
 }
 
-function prepareCreateWebSocket(
+function makeCreateSocketDelegateForRoom(
   liveblocksServer: string,
   WebSocketPolyfill?: IWebSocket
 ) {
@@ -2505,7 +2466,7 @@ function prepareCreateWebSocket(
   };
 }
 
-function prepareAuthEndpoint(
+function makeAuthDelegateForRoom(
   roomId: string,
   authentication: Authentication,
   fetchPolyfill?: typeof window.fetch
