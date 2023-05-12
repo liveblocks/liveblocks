@@ -122,9 +122,7 @@ function parseJwtToken(token: string): JwtMetadata {
   }
 }
 
-export function parseRoomAuthToken_(
-  tokenString: string
-): RoomAuthToken & JwtMetadata {
+export function parseRoomAuthToken(tokenString: string): RichToken {
   const data = parseJwtToken(tokenString);
   if (!(data && isRoomAuthToken(data))) {
     throw new Error(
@@ -138,11 +136,7 @@ export function parseRoomAuthToken_(
     maxConnections: _legacyField,
     ...parsedToken
   } = data;
-  return parsedToken;
-}
 
-export function parseRoomAuthToken(tokenString: string): RichToken {
-  const parsedToken = parseRoomAuthToken_(tokenString);
   return {
     raw: tokenString,
     parsed: parsedToken,
