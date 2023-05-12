@@ -120,9 +120,9 @@ function sendHeartbeat(ctx: Context) {
   ctx.socket?.send("ping");
 }
 
-type DelegateConfig = {
+type Delegates = {
   authenticate: () => Promise<{ token: string }>;
-  connect: (token: string) => IWebSocketInstance;
+  createSocket: (token: string) => IWebSocketInstance;
 };
 
 function enableTracing(fsm: FSM<Context, Event, State>) {
@@ -163,7 +163,7 @@ function enableTracing(fsm: FSM<Context, Event, State>) {
   };
 }
 
-function setupStateMachine(delegates: DelegateConfig) {
+function setupStateMachine(delegates: Delegates) {
   // Emitted whenever a new WebSocket connection attempt suceeds
   const didConnect = makeEventSource<void>();
   // const didDisconnect = makeEventSource<void>();
@@ -291,7 +291,7 @@ function setupStateMachine(delegates: DelegateConfig) {
            * XXX EXPLAIN THIS SETUP, and also explain why we won't have to
            * remove the event listeners.
            */
-          const socket = delegates.connect(ctx.token);
+          const socket = delegates.createSocket(ctx.token);
 
           // Part 1: used to "promisify" the socket, so we will resolve when
           // the connection opens, but reject if the connection does not.
@@ -478,7 +478,7 @@ export class ManagedSocket {
     readonly onError: Observable<IWebSocketEvent>;
   };
 
-  constructor(delegates: DelegateConfig) {
+  constructor(delegates: Delegates) {
     const { fsm, events } = setupStateMachine(delegates);
     this.fsm = fsm;
     this.events = events;

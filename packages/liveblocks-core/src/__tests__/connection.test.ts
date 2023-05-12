@@ -9,7 +9,7 @@ describe("ManagedSocket", () => {
     jest.useFakeTimers();
 
     let lastSocket;
-    const connect = () => {
+    const createSocket = () => {
       lastSocket = new MockWebSocket("wss://ignored");
       return lastSocket;
     };
@@ -19,7 +19,7 @@ describe("ManagedSocket", () => {
 
     const mgr = new ManagedSocket({
       authenticate: ALWAYS_FAILS,
-      connect,
+      createSocket,
     });
     mgr.events.didConnect.subscribe(didConnect);
     // mgr.events.didDisconnect.subscribe(didDisconnect);
@@ -36,7 +36,7 @@ describe("ManagedSocket", () => {
     jest.useFakeTimers();
 
     let lastSocket: MockWebSocket;
-    const connect = () => {
+    const createSocket = () => {
       lastSocket = new MockWebSocket("wss://ignored");
       setTimeout(() => {
         lastSocket.simulateOpen();
@@ -49,7 +49,7 @@ describe("ManagedSocket", () => {
 
     const mgr = new ManagedSocket({
       authenticate: ALWAYS_SUCCEEDS,
-      connect,
+      createSocket,
     });
     mgr.events.didConnect.subscribe(didConnect);
     // mgr.events.didDisconnect.subscribe(didDisconnect);
