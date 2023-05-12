@@ -9,6 +9,7 @@ import type {
   IWebSocketMessageEvent,
 } from "./types/IWebSocket";
 
+// XXX DRY this type up with the one in room.ts
 export type PublicConnectionStatus =
   | "closed" // Room hasn't been entered, or has left already
   | "authenticating" // Authentication has started, but not finished yet
@@ -168,7 +169,7 @@ function timeoutAfter(millis: number): Promise<never> {
 function sendHeartbeat(ctx: Context) {
   console.log("Sending heartbeat...");
   if (!ctx.socket) {
-    console.error("This should never happen");
+    console.error("This should never happen"); // XXX Remove eventually
   }
   ctx.socket?.send("ping");
 }
@@ -364,6 +365,12 @@ function createStateMachine<T extends BaseAuthResult>(delegates: Delegates<T>) {
             throw new Error("No auth token"); // This should never happen
           }
 
+          // XXX This may be the place to also check token expiry (using
+          // XXX isTokenExpired from ./protocol/AuthToken). If the token will
+          // XXX expire soon, then let's consider it non-existing and get
+          // XXX a fresh one. Just throwing here should move the machine back
+          // XXX to the authentication phase.
+
           /**
            * Create the WebSocket, and set up a few event listeners once. The
            * trick being used here is this:
@@ -461,7 +468,11 @@ function createStateMachine<T extends BaseAuthResult>(delegates: Delegates<T>) {
 
     .addTimedTransition("@ok.awaiting-pong", PONG_TIMEOUT, {
       target: "@connecting.busy",
-      assign: { socket: null },
+      assign: {
+        // XXX Should also explicitly clean up the old socket instance, i.e.
+        // remove all event listeners, and then call .close()?
+        socket: null,
+      },
       effect: () => {
         // Log implicit connection loss and drop the current open socket
         console.log(
@@ -532,6 +543,28 @@ function createStateMachine<T extends BaseAuthResult>(delegates: Delegates<T>) {
       return () => {
         document.removeEventListener("visibilitychange", onVisibilityChange);
       };
+
+      //
+      //    ^^^ ^^^ ^^^ ^^^ ^^^ ^^^
+      //    ||| ||| ||| ||| ||| |||
+      //
+      // XXX Do something similar like for NAVIGATOR_ONLINE events.
+      //
+      // These must be handled when the machine is in "@connecting.backoff" state
+      // at least (perhaps more?)
+      //
+      //     if (
+      //       typeof window !== "undefined" &&
+      //       // istanbul ignore next: React Native environment doesn't implement window.addEventListener
+      //       typeof window.addEventListener !== "undefined"
+      //     ) {
+      //       window.addEventListener("online", () => {
+      //         for (const [, room] of rooms) {
+      //           room.__internal.send.navigatorOnline();
+      //         }
+      //       });
+      //     }
+      //
     });
   }
 
@@ -543,6 +576,18 @@ function createStateMachine<T extends BaseAuthResult>(delegates: Delegates<T>) {
 
   // Start the machine
   fsm.start();
+
+  // XXX Remove again eventually
+  console.log(`
+  ________  ___________   __        _______  ___________  _______  ________   
+ /"       )("     _   ") /""\\      /"      \\("     _   ")/"     "||"      "\\  
+(:   \\___/  )__/  \\\\__/ /    \\    |:        |)__/  \\\\__/(: ______)(.  ___  :) 
+ \\___  \\       \\\\_ /   /' /\\  \\   |_____/   )   \\\\_ /    \\/    |  |: \\   ) || 
+  __/  \\\\      |.  |  //  __'  \\   //      /    |.  |    // ___)_ (| (___\\ || 
+ /" \\   :)     \\:  | /   /  \\\\  \\ |:  __   \\    \\:  |   (:      "||:       :) 
+(_______/       \\__|(___/    \\___)|__|  \\___)    \\__|    \\_______)(________/  
+                                                                              
+  `);
 
   return {
     fsm,
