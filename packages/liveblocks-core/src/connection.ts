@@ -502,7 +502,13 @@ function createStateMachine<T extends BaseAuthResult>(delegates: Delegates<T>) {
       EXPLICIT_SOCKET_CLOSE: (e) => {
         // Server instructed us to stop retrying, so move to failed state
         if (e.event.code === 4999) {
-          return "@idle.failed"; // Should not retry, give up
+          return {
+            target: "@idle.failed",
+            effect: () =>
+              console.warn(
+                "Connection to WebSocket closed permanently. Won't retry."
+              ),
+          }; // Should not retry, give up
         }
 
         // If this is a custom Liveblocks server close reason, back off more
