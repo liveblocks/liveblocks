@@ -1,5 +1,5 @@
 import { ManagedSocket } from "./connection";
-import type { Delegates } from "./connection";
+import type { Delegates, PublicConnectionStatus } from "./connection";
 import type { ApplyResult, ManagedPool } from "./crdts/AbstractCrdt";
 import { OpSource } from "./crdts/AbstractCrdt";
 import {
@@ -884,13 +884,52 @@ export function createRoom<
   const doNotBatchUpdates = (cb: () => void): void => cb();
   const batchUpdates = config.unstable_batchedUpdates ?? doNotBatchUpdates;
 
+  function onStatusDidChange(newStatus: PublicConnectionStatus) {
+    if (newStatus !== "open" && newStatus !== "connecting") {
+      context.connection.set({ status: newStatus });
+    } else {
+      // XXX Define this as an accessor on the managed connection
+      if (context.token === null) {
+        throw new Error("Unexpected null token here");
+      }
+      context.connection.set({
+        status: newStatus,
+        id: context.token.parsed.actor,
+        userInfo: context.token.parsed.info,
+        userId: context.token.parsed.id,
+        isReadOnly: isStorageReadOnly(context.token.parsed.scopes),
+      });
+    }
+
+    // Forward to the outside world
+    batchUpdates(() => {
+      eventHub.connection.notify(newStatus);
+    });
+  }
+
+  function onDidConnect() {
+    // XXX Define this as an accessor on the managed connection
+    context.idFactory = makeIdFactory(context.token.actor);
+  }
+
+  function onDidDisconnect() {
+    clearTimeout(context.timers.flush);
+
+    // XXX Combine this into the same batch wrapper as the onStatusDidChange
+    // event, only when this is transitioning from "open" to non-open
+    batchUpdates(() => {
+      context.others.clearOthers();
+      notify({ others: [{ type: "reset" }] }, doNotBatchUpdates);
+    });
+  }
+
   // Register events handlers for events coming from the socket
   // We never have to unsubscribe, because the Room and the Connection Manager
   // will have the same life-time.
   context.managedSocket.events.onMessage.subscribe(handleServerMessage);
-  context.managedSocket.events.didDisconnect.subscribe(() =>
-    clearTimeout(context.timers.flush)
-  );
+  context.managedSocket.events.statusDidChange.subscribe(onStatusDidChange);
+  context.managedSocket.events.didConnect.subscribe(onDidConnect);
+  context.managedSocket.events.didDisconnect.subscribe(onDidDisconnect);
   context.managedSocket.events.onLiveblocksError.subscribe((err) => {
     batchUpdates(() => {
       if (process.env.NODE_ENV !== "production") {
@@ -1337,27 +1376,6 @@ export function createRoom<
     );
   }
 
-  // XXX Can go
-  function handleAuthSuccess(token: RoomAuthToken, socket: IWebSocketInstance) {
-    // XXX Don't call handlers directly -- call .transition() instead
-    socket.addEventListener("message", handleRawSocketMessage);
-    socket.addEventListener("open", handleSocketOpen);
-    socket.addEventListener("close", handleExplicitClose); // XXX Can go
-
-    // XXX Keep!
-    updateConnection(
-      {
-        status: "connecting",
-        id: token.actor,
-        userInfo: token.info,
-        userId: token.id,
-        isReadOnly: isStorageReadOnly(token.scopes),
-      },
-      batchUpdates
-    );
-    context.idFactory = makeIdFactory(token.actor); // XXX Keep!
-  }
-
   function onUpdatePresenceMessage(
     message: UpdatePresenceServerMsg<TPresence>
   ): OthersEvent<TPresence, TUserMeta> | undefined {
@@ -1424,13 +1442,6 @@ export function createRoom<
       );
     }
     return { type: "reset" };
-  }
-
-  function handleNavigatorBackOnline() {
-    if (context.connection.current.status === "unavailable") {
-      log("Try to reconnect after connectivity change");
-      reconnect();
-    }
   }
 
   function canUndo() { return context.undoStack.length > 0; } // prettier-ignore
@@ -1640,70 +1651,13 @@ export function createRoom<
     });
   }
 
-  function handleExplicitClose(event: IWebSocketCloseEvent) {
-    context.socket = null;
-
-    clearTimeout(context.timers.flush);
-    clearTimeout(context.timers.reconnect);
-
-    batchUpdates(() => {
-      context.others.clearOthers();
-      notify({ others: [{ type: "reset" }] }, doNotBatchUpdates);
-
-      if (event.code >= 4000 && event.code <= 4100) {
-        updateConnection({ status: "failed" }, doNotBatchUpdates);
-
-        // Should the manager relay this event, so we can rethrow it?
-        // const error = new LiveblocksError(event.reason, event.code);
-        // eventHub.error.notify(error);
-
-        // const delay = getRetryDelay(true);
-
-        // if (process.env.NODE_ENV !== "production") {
-        //   console.error(
-        //     `Connection to websocket server closed. Reason: ${error.message} (code: ${error.code}). Retrying in ${delay}ms.`
-        //   );
-        // }
-
-        updateConnection({ status: "unavailable" }, doNotBatchUpdates);
-
-        clearTimeout(context.timers.reconnect);
-        context.timers.reconnect = effects.scheduleReconnect(delay);
-      } else if (event.code === WebsocketCloseCodes.CLOSE_WITHOUT_RETRY) {
-        updateConnection({ status: "closed" }, doNotBatchUpdates);
-      } else {
-        const delay = getRetryDelay();
-
-        if (process.env.NODE_ENV !== "production") {
-          console.warn(
-            `Connection to Liveblocks websocket server closed (code: ${event.code}). Retrying in ${delay}ms.`
-          );
-        }
-        updateConnection({ status: "unavailable" }, doNotBatchUpdates);
-
-        clearTimeout(context.timers.reconnect);
-        context.timers.reconnect = effects.scheduleReconnect(delay);
-      }
-    });
-  }
-
-  function updateConnection(
-    connection: Connection,
-    batchedUpdatesWrapper: (cb: () => void) => void
-  ) {
-    context.connection.set(connection);
-    batchedUpdatesWrapper(() => {
-      eventHub.connection.notify(connection.status);
-    });
-  }
-
   // XXX Can go soon. Should now be handled by the connection manager.
   function handleSocketOpen() {
     if (context.connection.current.status === "connecting") {
-      updateConnection(
-        { ...context.connection.current, status: "open" },
-        batchUpdates
-      );
+      // updateConnection(
+      //   { ...context.connection.current, status: "open" },
+      //   batchUpdates
+      // );
 
       // XXX Handle this bit as a managedSocket.didEnterState.subscribe('@ok.*')
       // Re-broadcast the user presence during a reconnect.
