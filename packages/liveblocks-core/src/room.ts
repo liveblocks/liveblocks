@@ -21,7 +21,7 @@ import { asPos } from "./lib/position";
 import type { Resolve } from "./lib/Resolve";
 import { compact, isPlainObject, tryParseJson } from "./lib/utils";
 import type { Authentication } from "./protocol/Authentication";
-import type { JwtMetadata, RoomAuthToken } from "./protocol/AuthToken";
+import type { RichToken, RoomAuthToken } from "./protocol/AuthToken";
 import {
   isTokenExpired,
   parseRoomAuthToken,
@@ -65,8 +65,6 @@ type CustomEvent<TRoomEvent extends Json> = {
   connectionId: number;
   event: TRoomEvent;
 };
-
-type AuthCallback = (room: string) => Promise<{ token: string }>;
 
 export type Connection =
   /* The initial state, before connecting */
@@ -572,7 +570,7 @@ type PrivateRoomAPI<
   TRoomEvent extends Json
 > = {
   // For introspection in unit tests only
-  buffer: MachineContext<TPresence, TStorage, TUserMeta, TRoomEvent>["buffer"]; // prettier-ignore
+  buffer: RoomState<TPresence, TStorage, TUserMeta, TRoomEvent>["buffer"]; // prettier-ignore
   numRetries: number;
   undoStack: readonly (readonly Readonly<HistoryOp<TPresence>>[])[];
   nodeCount: number;
@@ -635,16 +633,14 @@ type HistoryOp<TPresence extends JsonObject> =
 
 type IdFactory = () => string;
 
-type MachineContext<
+type RoomState<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
   TUserMeta extends BaseUserMeta,
   TRoomEvent extends Json
 > = {
-  token: {
-    readonly raw: string;
-    readonly parsed: RoomAuthToken & JwtMetadata;
-  } | null;
+  token: RichToken | null;
+
   /**
    * Remembers the last successful connection ID. This gets assigned as soon as
    * the connection status switched from "connecting" to "open".
@@ -727,9 +723,9 @@ type MachineContext<
 
 /** @internal */
 type Effects<TPresence extends JsonObject, TRoomEvent extends Json> = {
-  authenticate(
-    auth: AuthCallback,
-    createWebSocket: (token: string) => IWebSocketInstance
+  authenticateAndConnect(
+    auth: () => Promise<RichToken>,
+    createWebSocket: (token: RichToken) => IWebSocketInstance
   ): void;
   send(messages: ClientMsg<TPresence, TRoomEvent>[]): void;
   scheduleFlush(delay: number): TimeoutID;
@@ -767,7 +763,7 @@ export type RoomInitializers<
 }>;
 
 /** @internal */
-type MachineConfig<TPresence extends JsonObject, TRoomEvent extends Json> = {
+type RoomConfig<TPresence extends JsonObject, TRoomEvent extends Json> = {
   roomId: string;
   throttleDelay: number;
   authentication: Authentication;
@@ -819,8 +815,7 @@ type FSMEvent =
 
 /**
  * @internal
- * Initializes a new Room state machine, and returns its public API to observe
- * and control it.
+ * Initializes a new Room, and returns its public API.
  */
 export function createRoom<
   TPresence extends JsonObject,
@@ -832,7 +827,7 @@ export function createRoom<
     RoomInitializers<TPresence, TStorage>,
     "shouldInitiallyConnect"
   >,
-  config: MachineConfig<TPresence, TRoomEvent>
+  config: RoomConfig<TPresence, TRoomEvent>
 ): Room<TPresence, TStorage, TUserMeta, TRoomEvent> {
   const initialPresence =
     typeof options.initialPresence === "function"
@@ -843,11 +838,8 @@ export function createRoom<
       ? options.initialStorage(config.roomId)
       : options.initialStorage;
 
-  // The "context" is the machine's stateful extended context, also sometimes
-  // known as the "extended state" of a finite state machine. The context
-  // maintains state beyond the inherent state that are the finite states
-  // themselves.
-  const context: MachineContext<TPresence, TStorage, TUserMeta, TRoomEvent> = {
+  // The room's internal stateful context
+  const context: RoomState<TPresence, TStorage, TUserMeta, TRoomEvent> = {
     token: null,
     lastConnectionId: null,
     socket: null,
@@ -980,27 +972,26 @@ export function createRoom<
   };
 
   const effects: Effects<TPresence, TRoomEvent> = config.mockedEffects || {
-    authenticate(
-      auth: AuthCallback,
-      createWebSocket: (token: string) => IWebSocketInstance
+    authenticateAndConnect(
+      auth: () => Promise<RichToken>,
+      createWebSocket: (token: RichToken) => IWebSocketInstance
     ) {
       // If we already have a parsed token from a previous connection
       // in-memory, reuse it
       const prevToken = context.token;
       if (prevToken !== null && !isTokenExpired(prevToken.parsed)) {
-        const socket = createWebSocket(prevToken.raw);
+        const socket = createWebSocket(prevToken);
         handleAuthSuccess(prevToken.parsed, socket);
         return undefined;
       } else {
-        void auth(config.roomId)
-          .then(({ token }) => {
+        void auth()
+          .then((token) => {
             if (context.connection.current.status !== "authenticating") {
               return;
             }
-            const parsedToken = parseRoomAuthToken(token);
             const socket = createWebSocket(token);
-            handleAuthSuccess(parsedToken, socket);
-            context.token = { raw: token, parsed: parsedToken };
+            handleAuthSuccess(token.parsed, socket);
+            context.token = token;
           })
           .catch((er: unknown) =>
             authenticationFailure(
@@ -1332,6 +1323,7 @@ export function createRoom<
     }
 
     const auth = prepareAuthEndpoint(
+      config.roomId,
       config.authentication,
       config.polyfills?.fetch
     );
@@ -1341,7 +1333,7 @@ export function createRoom<
     );
 
     updateConnection({ status: "authenticating" }, batchUpdates);
-    effects.authenticate(auth, createWebSocket);
+    effects.authenticateAndConnect(auth, createWebSocket);
   }
 
   function updatePresence(
@@ -2506,7 +2498,8 @@ function prepareCreateWebSocket(
 
   const ws: IWebSocket = WebSocketPolyfill || WebSocket;
 
-  return (token: string): IWebSocketInstance => {
+  return (richToken: RichToken): IWebSocketInstance => {
+    const token = richToken.raw;
     return new ws(
       `${liveblocksServer}/?token=${token}&version=${
         // prettier-ignore
@@ -2519,9 +2512,10 @@ function prepareCreateWebSocket(
 }
 
 function prepareAuthEndpoint(
+  roomId: string,
   authentication: Authentication,
   fetchPolyfill?: typeof window.fetch
-): AuthCallback {
+): () => Promise<RichToken> {
   if (authentication.type === "public") {
     if (typeof window === "undefined" && fetchPolyfill === undefined) {
       throw new Error(
@@ -2529,15 +2523,15 @@ function prepareAuthEndpoint(
       );
     }
 
-    return (room: string) =>
+    return () =>
       fetchAuthEndpoint(
         fetchPolyfill || /* istanbul ignore next */ fetch,
         authentication.url,
         {
-          room,
+          room: roomId,
           publicApiKey: authentication.publicApiKey,
         }
-      );
+      ).then(({ token }) => parseRoomAuthToken(token));
   }
 
   if (authentication.type === "private") {
@@ -2547,21 +2541,21 @@ function prepareAuthEndpoint(
       );
     }
 
-    return (room: string) =>
+    return () =>
       fetchAuthEndpoint(fetchPolyfill || fetch, authentication.url, {
-        room,
-      });
+        room: roomId,
+      }).then(({ token }) => parseRoomAuthToken(token));
   }
 
   if (authentication.type === "custom") {
-    return async (room: string) => {
-      const response = await authentication.callback(room);
+    return async () => {
+      const response = await authentication.callback(roomId);
       if (!response || !response.token) {
         throw new Error(
           'Authentication error. We expect the authentication callback to return a token, but it does not. Hint: the return value should look like: { token: "..." }'
         );
       }
-      return response;
+      return parseRoomAuthToken(response.token);
     };
   }
 

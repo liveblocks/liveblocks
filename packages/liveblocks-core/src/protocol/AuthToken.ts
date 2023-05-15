@@ -27,6 +27,15 @@ export type RoomAuthToken = {
 
 export type AuthToken = AppOnlyAuthToken | RoomAuthToken;
 
+// The "rich" token is data we obtain by parsing the JWT token and making all
+// metadata on it accessible. It's done right after hitting the backend, but
+// before the promise will get returned, so it's an inherent part of the
+// authentication step.
+export type RichToken = {
+  readonly raw: string; // The raw JWT value, unchanged
+  readonly parsed: RoomAuthToken & JwtMetadata; // Rich data on the JWT value
+};
+
 export interface JwtMetadata extends JsonObject {
   iat: number;
   exp: number;
@@ -113,21 +122,23 @@ function parseJwtToken(token: string): JwtMetadata {
   }
 }
 
-export function parseRoomAuthToken(
-  tokenString: string
-): RoomAuthToken & JwtMetadata {
+export function parseRoomAuthToken(tokenString: string): RichToken {
   const data = parseJwtToken(tokenString);
-  if (data && isRoomAuthToken(data)) {
-    const {
-      // If this legacy field is found on the token, pretend it wasn't there,
-      // to make all internally used token payloads uniform
-      maxConnections: _legacyField,
-      ...token
-    } = data;
-    return token;
-  } else {
+  if (!(data && isRoomAuthToken(data))) {
     throw new Error(
       "Authentication error: we expected a room token but did not get one. Hint: if you are using a callback, ensure the room is passed when creating the token. For more information: https://liveblocks.io/docs/api-reference/liveblocks-client#createClientCallback"
     );
   }
+
+  const {
+    // If this legacy field is found on the token, pretend it wasn't there,
+    // to make all internally used token payloads uniform
+    maxConnections: _legacyField,
+    ...parsedToken
+  } = data;
+
+  return {
+    raw: tokenString,
+    parsed: parsedToken,
+  };
 }
