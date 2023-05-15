@@ -554,7 +554,8 @@ function createStateMachine<T extends BaseAuthResult>(delegates: Delegates<T>) {
       //    ^^^ ^^^ ^^^ ^^^ ^^^ ^^^
       //    ||| ||| ||| ||| ||| |||
       //
-      // XXX Do something similar like for NAVIGATOR_ONLINE events.
+      // XXX REIMPLEMENT LATER
+      // Do something similar like for NAVIGATOR_ONLINE events.
       //
       // These must be handled when the machine is in "@connecting.backoff" state
       // at least (perhaps more?)
