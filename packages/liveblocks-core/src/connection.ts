@@ -189,7 +189,7 @@ function enableTracing(fsm: FSM<Context, Event, State>) {
   function log(...args: unknown[]) {
     // eslint-disable-next-line
     console.log(
-      `${((new Date().getTime() - start) / 1000).toFixed(2)} [FSM]`,
+      `${((new Date().getTime() - start) / 1000).toFixed(2)} [FSM #${fsm.id}]`,
       ...args
     );
   }
@@ -587,7 +587,7 @@ function createStateMachine<T extends BaseAuthResult>(delegates: Delegates<T>) {
     defineConnectivityEvents(fsm);
 
   // Install debug logging
-  enableTracing(fsm); // TODO Remove logging in production
+  const cleanup = enableTracing(fsm); // TODO Remove logging in production
 
   // Start the machine
   fsm.start();
@@ -606,6 +606,7 @@ function createStateMachine<T extends BaseAuthResult>(delegates: Delegates<T>) {
 
   return {
     fsm,
+    cleanup,
 
     // Observable events that will be emitted by this machine
     events: {
@@ -629,6 +630,7 @@ function createStateMachine<T extends BaseAuthResult>(delegates: Delegates<T>) {
 export class ManagedSocket<T extends BaseAuthResult> {
   /** @internal */
   private fsm: FSM<Context, Event, State>;
+  private cleanup: () => void;
 
   public readonly events: {
     /**
@@ -653,9 +655,10 @@ export class ManagedSocket<T extends BaseAuthResult> {
   };
 
   constructor(delegates: Delegates<T>) {
-    const { fsm, events } = createStateMachine(delegates);
+    const { fsm, events, cleanup } = createStateMachine(delegates);
     this.fsm = fsm;
     this.events = events;
+    this.cleanup = cleanup;
   }
 
   get status(): PublicConnectionStatus {
@@ -684,6 +687,16 @@ export class ManagedSocket<T extends BaseAuthResult> {
    */
   public disconnect() {
     this.fsm.send({ type: "DISCONNECT" });
+  }
+
+  /**
+   * Call this to stop the machine and run necessary cleanup functions. After
+   * calling destroy(), you can no longer use this instance. Call this before
+   * letting the instance get garbage collected.
+   */
+  public destroy() {
+    this.fsm.stop();
+    this.cleanup();
   }
 
   /**
