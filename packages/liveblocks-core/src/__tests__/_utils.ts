@@ -635,7 +635,6 @@ export function mockEffects<
   return {
     authenticateAndConnect: jest.fn(),
     send: jest.fn(),
-    scheduleFlush: jest.fn(),
     scheduleReconnect: jest.fn(),
     startHeartbeatInterval: jest.fn(),
     schedulePongTimeout: jest.fn(),

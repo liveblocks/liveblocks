@@ -277,26 +277,41 @@ describe("room", () => {
     ]);
   });
 
-  test("initial presence followed by updatePresence should delay sending the second presence event", () => {
+  test("initial presence followed by updatePresence should delay sending the second presence event", async () => {
+    jest.useFakeTimers();
+
     const { room, effects } = createTestableRoom({ x: 0 });
 
     const ws = new MockWebSocket();
     room.__internal.send.connect();
     room.__internal.send.authSuccess(defaultRoomToken, ws);
 
-    const now = new Date(2021, 1, 1, 0, 0, 0, 0).getTime();
+    const now = Date.now();
 
-    withDateNow(now, () => ws.simulateOpen());
-
-    withDateNow(now + 30, () => room.updatePresence({ x: 1 }));
-
-    expect(effects.scheduleFlush).toBeCalledWith(
-      makeRoomConfig().throttleDelay - 30
-    );
-    expect(effects.send).toHaveBeenCalledWith([
+    expect(effects.send).toHaveBeenCalledTimes(0);
+    ws.simulateOpen();
+    expect(effects.send).toHaveBeenCalledTimes(1);
+    expect(effects.send).toHaveBeenLastCalledWith([
       { type: ClientMsgCode.UPDATE_PRESENCE, targetActor: -1, data: { x: 0 } },
     ]);
-    expect(room.__internal.buffer.me?.data).toEqual({ x: 1 });
+
+    // Forward the system clock by 30 millis
+    jest.setSystemTime(now + 30);
+    room.updatePresence({ x: 1 });
+    jest.setSystemTime(now + 35);
+    room.updatePresence({ x: 2 }); // These calls should get batched and flushed later
+
+    expect(effects.send).toHaveBeenCalledTimes(1);
+    expect(room.__internal.buffer.me?.data).toEqual({ x: 2 });
+    expect(jest.getTimerCount()).toBeGreaterThan(0);
+
+    // Forwarding time by the flush threshold will trigger the future flush
+    await jest.advanceTimersByTimeAsync(makeRoomConfig().throttleDelay);
+
+    expect(effects.send).toHaveBeenCalledTimes(2);
+    expect(effects.send).toHaveBeenLastCalledWith([
+      { type: ClientMsgCode.UPDATE_PRESENCE, data: { x: 2 } },
+    ]);
   });
 
   test("should replace current presence and set flushData presence when connection is closed", () => {
