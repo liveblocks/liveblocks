@@ -656,7 +656,6 @@ type RoomState<
     flush: TimeoutID | undefined;
   };
 
-  readonly managedSocket: ManagedSocket<RichToken>;
   readonly connection: ValueRef<Connection>; // XXX Make this a derived property
   readonly me: MeRef<TPresence>;
   readonly others: OthersRef<TPresence, TUserMeta>;
@@ -806,11 +805,12 @@ export function createRoom<
     ),
   };
 
+  const managedSocket: ManagedSocket<RichToken> = new ManagedSocket(delegates);
+
   // The room's internal stateful context
   const context: RoomState<TPresence, TStorage, TUserMeta, TRoomEvent> = {
     token: null,
     lastConnectionId: null,
-    managedSocket: new ManagedSocket(delegates),
 
     timers: {
       flush: undefined,
@@ -931,11 +931,11 @@ export function createRoom<
   // Register events handlers for events coming from the socket
   // We never have to unsubscribe, because the Room and the Connection Manager
   // will have the same life-time.
-  context.managedSocket.events.onMessage.subscribe(handleServerMessage);
-  context.managedSocket.events.statusDidChange.subscribe(onStatusDidChange);
-  context.managedSocket.events.didConnect.subscribe(onDidConnect);
-  context.managedSocket.events.didDisconnect.subscribe(onDidDisconnect);
-  context.managedSocket.events.onLiveblocksError.subscribe((err) => {
+  managedSocket.events.onMessage.subscribe(handleServerMessage);
+  managedSocket.events.statusDidChange.subscribe(onStatusDidChange);
+  managedSocket.events.didConnect.subscribe(onDidConnect);
+  managedSocket.events.didDisconnect.subscribe(onDidDisconnect);
+  managedSocket.events.onLiveblocksError.subscribe((err) => {
     batchUpdates(() => {
       if (process.env.NODE_ENV !== "production") {
         console.error(
@@ -1029,7 +1029,7 @@ export function createRoom<
         | ClientMsg<TPresence, TRoomEvent>
         | ClientMsg<TPresence, TRoomEvent>[]
     ) {
-      context.managedSocket.send(JSON.stringify(messageOrMessages));
+      managedSocket.send(JSON.stringify(messageOrMessages));
     },
   };
 
@@ -1665,7 +1665,7 @@ export function createRoom<
       notifyStorageStatus();
     }
 
-    if (context.managedSocket.status !== "open") {
+    if (managedSocket.status !== "open") {
       // XXX I don't understand what's happening here exactly
       context.buffer.storageOperations = [];
       return;
@@ -1740,7 +1740,7 @@ export function createRoom<
     }
   ) {
     if (
-      context.managedSocket.status !== "open" &&
+      managedSocket.status !== "open" &&
       !options.shouldQueueEventIfNotReady
     ) {
       return;
@@ -1986,11 +1986,11 @@ export function createRoom<
       // prettier-ignore
       send: {
         // These exist only for our E2E testing app
-        explicitClose: (event) => context.managedSocket._privateSend({ type: "EXPLICIT_SOCKET_CLOSE", event }),
-        implicitClose: () => context.managedSocket._privateSend({ type: "PONG_TIMEOUT" }),
+        explicitClose: (event) => managedSocket._privateSend({ type: "EXPLICIT_SOCKET_CLOSE", event }),
+        implicitClose: () => managedSocket._privateSend({ type: "PONG_TIMEOUT" }),
 
-        connect: () => context.managedSocket.connect(),
-        disconnect: () => context.managedSocket.disconnect(),
+        connect: () => managedSocket.connect(),
+        disconnect: () => managedSocket.disconnect(),
 
         /**
          * This one looks differently from the rest, because receiving messages
@@ -2006,7 +2006,7 @@ export function createRoom<
     id: config.roomId,
     subscribe: makeClassicSubscribeFn(events),
 
-    reconnect: () => context.managedSocket.reconnect(),
+    reconnect: () => managedSocket.reconnect(),
 
     // Presence
     updatePresence,
