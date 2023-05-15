@@ -1,5 +1,5 @@
-import { ManagedSocket } from "./connection";
 import type { Delegates, PublicConnectionStatus } from "./connection";
+import { ManagedSocket } from "./connection";
 import type { ApplyResult, ManagedPool } from "./crdts/AbstractCrdt";
 import { OpSource } from "./crdts/AbstractCrdt";
 import {
@@ -23,7 +23,7 @@ import { asPos } from "./lib/position";
 import type { Resolve } from "./lib/Resolve";
 import { compact, isPlainObject, tryParseJson } from "./lib/utils";
 import type { Authentication } from "./protocol/Authentication";
-import type { RichToken, RoomAuthToken } from "./protocol/AuthToken";
+import type { RichToken } from "./protocol/AuthToken";
 import { parseRoomAuthToken, RoomScope } from "./protocol/AuthToken";
 import type { BaseUserMeta } from "./protocol/BaseUserMeta";
 import type { ClientMsg } from "./protocol/ClientMsg";
