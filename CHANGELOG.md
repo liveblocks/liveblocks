@@ -1,9 +1,12 @@
-# v1.0.9 (not yet released)
+# v1.0.9
+
+### `@liveblocks/client`
 
 - Export `LiveListUpdate`, `LiveMapUpdate`, and `LiveObjectUpdate` types used by
   the storage update callback.
 - Export new utility, `toPlainLson`, to assist in calling the initialize storage
   API
+- Internal refactorings
 
 # v1.0.8
 
