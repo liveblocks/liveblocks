@@ -547,15 +547,18 @@ function createStateMachine<T extends BaseAuthResult>(delegates: Delegates<T>) {
   // soon as the machine starts, and use it to send itself "WINDOW_GOT_FOCUS"
   // events.
   if (typeof document !== "undefined") {
+    const doc = typeof document !== "undefined" ? document : undefined;
+    const root = typeof window !== "undefined" ? window : doc;
+
     fsm.onEnter("*", () => {
       function onVisibilityChange() {
-        if (document.visibilityState === "visible") {
+        if (doc?.visibilityState === "visible") {
           fsm.send({ type: "WINDOW_GOT_FOCUS" });
         }
       }
-      document.addEventListener("visibilitychange", onVisibilityChange);
+      root?.addEventListener("visibilitychange", onVisibilityChange);
       return () => {
-        document.removeEventListener("visibilitychange", onVisibilityChange);
+        root?.removeEventListener("visibilitychange", onVisibilityChange);
       };
 
       //
