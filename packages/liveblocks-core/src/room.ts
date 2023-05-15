@@ -1942,12 +1942,6 @@ export function createRoom<
     }
   }
 
-  function handleImplicitClose() {
-    if (context.socket) {
-      context.socket = null;
-    }
-  }
-
   function getStorageStatus(): StorageStatus {
     if (_getInitialStatePromise === null) {
       return "not-loaded";
@@ -2016,9 +2010,6 @@ export function createRoom<
       case "AUTH_SUCCESS":
         return handleAuthSuccess(event.token, event.socket);
 
-      case "IMPLICIT_CLOSE":
-        return handleImplicitClose();
-
       case "EXPLICIT_CLOSE":
         return handleExplicitClose(event.closeEvent);
 
@@ -2042,7 +2033,6 @@ export function createRoom<
       // prettier-ignore
       send: {
         explicitClose:  (closeEvent) => transition({ type: "EXPLICIT_CLOSE", closeEvent }),
-        implicitClose:            () => transition({ type: "IMPLICIT_CLOSE" }),
         authSuccess: (token, socket) => transition({ type: "AUTH_SUCCESS", token, socket }),
         connect:                  () => transition({ type: "CONNECT" }),
         disconnect:               () => transition({ type: "DISCONNECT" }),
