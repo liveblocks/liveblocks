@@ -1,8 +1,8 @@
-import type { Observable } from "./lib/EventSource";
 import { assertNever } from "./lib/assert";
+import type { Observable } from "./lib/EventSource";
 import { makeEventSource } from "./lib/EventSource";
+import type { BuiltinEvent, Target } from "./lib/fsm";
 import { FSM } from "./lib/fsm";
-import type { Target, BuiltinEvent } from "./lib/fsm";
 import type {
   IWebSocketCloseEvent,
   IWebSocketEvent,
