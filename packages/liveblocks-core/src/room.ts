@@ -1683,10 +1683,8 @@ export function createRoom<
       notifyStorageStatus();
     }
 
-    if (
-      context.socket === null ||
-      context.socket.readyState !== context.socket.OPEN
-    ) {
+    if (context.managedSocket.status !== "open") {
+      // XXX I don't understand what's happening here exactly
       context.buffer.storageOperations = [];
       return;
     }
@@ -1759,8 +1757,10 @@ export function createRoom<
       shouldQueueEventIfNotReady: false,
     }
   ) {
-    // XXX Replace with context.managedSocket.status === 'open' ?
-    if (context.socket === null && !options.shouldQueueEventIfNotReady) {
+    if (
+      context.managedSocket.status !== "open" &&
+      !options.shouldQueueEventIfNotReady
+    ) {
       return;
     }
 
