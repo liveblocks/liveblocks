@@ -881,6 +881,9 @@ export function createRoom<
         : undefined,
   };
 
+  const doNotBatchUpdates = (cb: () => void): void => cb();
+  const batchUpdates = config.unstable_batchedUpdates ?? doNotBatchUpdates;
+
   // Register events handlers for events coming from the socket
   // We never have to unsubscribe, because the Room and the Connection Manager
   // will have the same life-time.
@@ -888,9 +891,16 @@ export function createRoom<
   context.managedSocket.events.didDisconnect.subscribe(() =>
     clearTimeout(context.timers.flush)
   );
-
-  const doNotBatchUpdates = (cb: () => void): void => cb();
-  const batchUpdates = config.unstable_batchedUpdates ?? doNotBatchUpdates;
+  context.managedSocket.events.onLiveblocksError.subscribe((err) => {
+    batchUpdates(() => {
+      if (process.env.NODE_ENV !== "production") {
+        console.error(
+          `Connection to websocket server closed. Reason: ${err.message} (code: ${err.code}).`
+        );
+      }
+      eventHub.error.notify(err);
+    });
+  });
 
   const pool: ManagedPool = {
     roomId: config.roomId,
@@ -1643,17 +1653,17 @@ export function createRoom<
       if (event.code >= 4000 && event.code <= 4100) {
         updateConnection({ status: "failed" }, doNotBatchUpdates);
 
-        // XXX Should the manager relay this event, so we can rethrow it?
-        const error = new LiveblocksError(event.reason, event.code);
-        eventHub.error.notify(error);
+        // Should the manager relay this event, so we can rethrow it?
+        // const error = new LiveblocksError(event.reason, event.code);
+        // eventHub.error.notify(error);
 
-        const delay = getRetryDelay(true);
+        // const delay = getRetryDelay(true);
 
-        if (process.env.NODE_ENV !== "production") {
-          console.error(
-            `Connection to websocket server closed. Reason: ${error.message} (code: ${error.code}). Retrying in ${delay}ms.`
-          );
-        }
+        // if (process.env.NODE_ENV !== "production") {
+        //   console.error(
+        //     `Connection to websocket server closed. Reason: ${error.message} (code: ${error.code}). Retrying in ${delay}ms.`
+        //   );
+        // }
 
         updateConnection({ status: "unavailable" }, doNotBatchUpdates);
 
@@ -2323,12 +2333,6 @@ function isRoomEventName(value: string): value is RoomEventName {
     value === "history" ||
     value === "storage-status"
   );
-}
-
-class LiveblocksError extends Error {
-  constructor(message: string, public code: number) {
-    super(message);
-  }
 }
 
 function makeCreateSocketDelegateForRoom(
