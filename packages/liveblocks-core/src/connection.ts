@@ -108,7 +108,7 @@ const LOW_DELAY = BACKOFF_DELAYS[0];
  * Used to back off from WebSocket reconnection attempts after a known
  * Liveblocks issue, like "room full" or a "rate limit" error.
  */
-// const BACKOFF_DELAYS_SLOW = [2000, 30000, 60000, 300000] as const;
+const BACKOFF_DELAYS_SLOW = [2000, 30000, 60000, 300000] as const;
 
 /**
  * The client will send a PING to the server every 30 seconds, after which it
@@ -130,6 +130,12 @@ const AUTH_TIMEOUT = 10000;
  */
 const SOCKET_CONNECT_TIMEOUT = 10000;
 
+class LiveblocksError extends Error {
+  constructor(message: string, public code: number) {
+    super(message);
+  }
+}
+
 function nextBackoffDelay(
   currentDelay: number,
   delays: readonly number[] = BACKOFF_DELAYS
@@ -143,11 +149,11 @@ function increaseBackoffDelay(context: Context) {
   return { backoffDelay: nextBackoffDelay(context.backoffDelay) };
 }
 
-// function increaseBackoffDelayAggressively(context: Context) {
-//   return {
-//     backoffDelay: nextBackoffDelay(context.backoffDelay, BACKOFF_DELAYS_SLOW),
-//   };
-// }
+function increaseBackoffDelayAggressively(context: Context) {
+  return {
+    backoffDelay: nextBackoffDelay(context.backoffDelay, BACKOFF_DELAYS_SLOW),
+  };
+}
 
 /**
  * Generic promise that will time out after X milliseconds.
@@ -220,9 +226,9 @@ function setupStateMachine<T extends BaseAuthResult>(delegates: Delegates<T>) {
   // specific events happen
   const onMessage = makeEventSource<IWebSocketMessageEvent>();
 
-  // XXX Needed this way? I don't think we should tie these directly to the
-  // outside world. These events need to be handled by the connection manager.
-  const onError = makeEventSource<IWebSocketEvent>();
+  // Emitted whenever the server deliberately closes the connection for
+  // a specific Liveblocks reason
+  const onLiveblocksError = makeEventSource<LiveblocksError>();
 
   const initialContext: Context & { token: T | null } = {
     token: null,
@@ -453,14 +459,34 @@ function setupStateMachine<T extends BaseAuthResult>(delegates: Delegates<T>) {
         };
       },
 
-      EXPLICIT_SOCKET_CLOSE: (event) =>
-        event.event.code === 4999
-          ? "@idle.failed" // Should not retry, give up
-          : // Like an implicit close, try re-opening a new socket
-            {
-              target: "@connecting.busy",
-              assign: increaseBackoffDelay,
+      EXPLICIT_SOCKET_CLOSE: (e) => {
+        // Server instructed us to stop retrying, so move to failed state
+        if (e.event.code === 4999) {
+          return "@idle.failed"; // Should not retry, give up
+        }
+
+        // If this is a custom Liveblocks server close reason, back off more
+        // aggressively, and emit a Liveblocks error event...
+        if (e.event.code >= 4000 && e.event.code <= 4100) {
+          return {
+            target: "@connecting.busy",
+            assign: increaseBackoffDelayAggressively,
+            effect: (_, { event }) => {
+              if (event.code >= 4000 && event.code <= 4100) {
+                const err = new LiveblocksError(event.reason, event.code);
+                onLiveblocksError.notify(err);
+              }
             },
+          };
+        }
+
+        // Consider this close event a temporary hiccup, and try re-opening
+        // a new socket
+        return {
+          target: "@connecting.busy",
+          assign: increaseBackoffDelay,
+        };
+      },
     })
 
     .onEnter("@ok.*", () => {
@@ -483,7 +509,7 @@ function setupStateMachine<T extends BaseAuthResult>(delegates: Delegates<T>) {
       didConnect: didConnect.observable,
       // didDisconnect: didDisconnect.observable,
       onMessage: onMessage.observable,
-      onError: onError.observable,
+      onLiveblocksError: onLiveblocksError.observable,
     },
   };
 }
@@ -514,16 +540,11 @@ export class ManagedSocket<T extends BaseAuthResult> {
      */
     readonly onMessage: Observable<IWebSocketMessageEvent>;
 
-    // /**
-    //  * Sent when the connection with the server is lost, either explicitly or
-    //  * implicitly.
-    //  */
-    // readonly onClose: Observable<IWebSocketCloseEvent>;
-
     /**
-     * Called whenever an unknown error happens.
+     * Emitted whenever a connection gets closed for a known error reason, e.g.
+     * max number of connections, max number of messages, etc.
      */
-    readonly onError: Observable<IWebSocketEvent>;
+    readonly onLiveblocksError: Observable<LiveblocksError>;
   };
 
   constructor(delegates: Delegates<T>) {
