@@ -669,6 +669,17 @@ export class ManagedSocket<T extends BaseAuthResult> {
   }
 
   /**
+   * Returns the current auth token.
+   */
+  get token(): T {
+    const tok = this.fsm.context.token;
+    if (tok === null) {
+      throw new Error(`Unexpected null token here`);
+    }
+    return tok as T;
+  }
+
+  /**
    * Call this method to try to connect to a WebSocket. This only has an effect
    * if the machine is idle at the moment, otherwise this is a no-op.
    */
