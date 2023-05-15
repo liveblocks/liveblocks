@@ -218,19 +218,6 @@ export function createClient(options: ClientOptions): Client {
     }
   }
 
-  if (
-    typeof window !== "undefined" &&
-    // istanbul ignore next: React Native environment doesn't implement window.addEventListener
-    typeof window.addEventListener !== "undefined"
-  ) {
-    // TODO: Expose a way to clear these
-    window.addEventListener("online", () => {
-      for (const [, room] of rooms) {
-        room.__internal.send.navigatorOnline();
-      }
-    });
-  }
-
   if (typeof document !== "undefined") {
     document.addEventListener("visibilitychange", () => {
       if (document.visibilityState === "visible") {

@@ -583,7 +583,6 @@ type PrivateRoomAPI<
     implicitClose(): void; // NOTE: Also used in e2e test app!
 
     authSuccess(token: RoomAuthToken, socket: IWebSocketInstance): void; // prettier-ignore
-    navigatorOnline(): void;
     windowGotFocus(): void;
     pong(): void;
 
@@ -784,7 +783,6 @@ function userToTreeNode(
 type FSMEvent =
   | { type: "CONNECT" }
   | { type: "DISCONNECT" }
-  | { type: "NAVIGATOR_ONLINE" }
   | {
       type: "AUTH_SUCCESS";
       token: RoomAuthToken;
@@ -2065,9 +2063,6 @@ export function createRoom<
       case "AUTH_SUCCESS":
         return handleAuthSuccess(event.token, event.socket);
 
-      case "NAVIGATOR_ONLINE":
-        return handleNavigatorBackOnline();
-
       case "IMPLICIT_CLOSE":
         return handleImplicitClose();
 
@@ -2096,7 +2091,6 @@ export function createRoom<
         explicitClose:  (closeEvent) => transition({ type: "EXPLICIT_CLOSE", closeEvent }),
         implicitClose:            () => transition({ type: "IMPLICIT_CLOSE" }),
         authSuccess: (token, socket) => transition({ type: "AUTH_SUCCESS", token, socket }),
-        navigatorOnline:          () => transition({ type: "NAVIGATOR_ONLINE" }),
         connect:                  () => transition({ type: "CONNECT" }),
         disconnect:               () => transition({ type: "DISCONNECT" }),
 
