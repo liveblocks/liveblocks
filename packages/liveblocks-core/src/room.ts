@@ -51,7 +51,6 @@ import type {
   IWebSocketInstance,
   IWebSocketMessageEvent,
 } from "./types/IWebSocket";
-import { WebsocketCloseCodes } from "./types/IWebSocket";
 import type { NodeMap } from "./types/NodeMap";
 import type { Others, OthersEvent } from "./types/Others";
 import type { User } from "./types/User";
@@ -602,11 +601,6 @@ function makeIdFactory(connectionId: number): IdFactory {
   return () => `${connectionId}:${count++}`;
 }
 
-function log(..._params: unknown[]) {
-  // console.log(...params, new Date().toString());
-  return;
-}
-
 function isConnectionSelfAware(
   connection: Connection
 ): connection is typeof connection & { status: "open" | "connecting" } {
@@ -906,8 +900,39 @@ export function createRoom<
   }
 
   function onDidConnect() {
-    // XXX Define this as an accessor on the managed connection
-    context.idFactory = makeIdFactory(context.token.actor);
+    // XXX Combine this into the same batch wrapper as the onStatusDidChange
+    // event, only when this is transitioning from non-open to "open" state
+
+    const conn = context.connection.current;
+    if (conn.status !== "open") {
+      // Totally unexpected by now
+      throw new Error("Unexpected non-open state here");
+    }
+
+    // Re-broadcast the full user presence as soon as we reconnect
+    // NOTE: This condition tries to guard "is this a reconnect". There may be
+    // a more robust way to check that.
+    if (context.lastConnectionId !== undefined) {
+      context.buffer.me = {
+        type: "full",
+        data:
+          // Because state.me.current is a readonly object, we'll have to
+          // make a copy here. Otherwise, type errors happen later when
+          // "patching" my presence.
+          { ...context.me.current },
+      };
+      tryFlushing();
+    }
+
+    // XXX Define token metadata accessor on the managed connection?
+    context.lastConnectionId = conn.id;
+    context.idFactory = makeIdFactory(conn.id);
+
+    if (context.root) {
+      context.buffer.messages.push({ type: ClientMsgCode.FETCH_STORAGE });
+    }
+
+    tryFlushing();
   }
 
   function onDidDisconnect() {
@@ -1647,78 +1672,6 @@ export function createRoom<
 
       notify(updates, doNotBatchUpdates);
     });
-  }
-
-  // XXX Can go soon. Should now be handled by the connection manager.
-  function handleSocketOpen() {
-    if (context.connection.current.status === "connecting") {
-      // updateConnection(
-      //   { ...context.connection.current, status: "open" },
-      //   batchUpdates
-      // );
-
-      // XXX Handle this bit as a managedSocket.didEnterState.subscribe('@ok.*')
-      // Re-broadcast the user presence during a reconnect.
-      if (context.lastConnectionId !== undefined) {
-        context.buffer.me = {
-          type: "full",
-          data:
-            // Because state.me.current is a readonly object, we'll have to
-            // make a copy here. Otherwise, type errors happen later when
-            // "patching" my presence.
-            { ...context.me.current },
-        };
-        tryFlushing();
-      }
-
-      context.lastConnectionId = context.connection.current.id;
-
-      if (context.root) {
-        context.buffer.messages.push({ type: ClientMsgCode.FETCH_STORAGE });
-      }
-      tryFlushing();
-    } else {
-      // TODO Nothing!
-    }
-  }
-
-  function handleDisconnect() {
-    if (context.socket) {
-      context.socket.removeEventListener("open", handleSocketOpen);
-      context.socket.removeEventListener("message", handleRawSocketMessage);
-      context.socket.removeEventListener("close", handleExplicitClose);
-      context.socket.close();
-      context.socket = null;
-    }
-
-    clearTimeout(context.timers.flush); // XXX Keep!
-    clearTimeout(context.timers.reconnect);
-
-    batchUpdates(() => {
-      updateConnection({ status: "closed" }, doNotBatchUpdates);
-
-      context.others.clearOthers();
-      notify({ others: [{ type: "reset" }] }, doNotBatchUpdates);
-    });
-  }
-
-  // XXX Should eventually become .transition({ type: "RECONNECT" })
-  function reconnect() {
-    if (context.socket) {
-      context.socket.removeEventListener("open", handleSocketOpen);
-      context.socket.removeEventListener("message", handleRawSocketMessage);
-      context.socket.removeEventListener("close", handleExplicitClose);
-      context.socket.removeEventListener("error", handleSocketError);
-      context.socket.close();
-      context.socket = null;
-    }
-
-    clearTimeout(context.timers.flush); // XXX Keep!
-    clearTimeout(context.timers.reconnect);
-
-    updateConnection({ status: "unavailable" }, batchUpdates);
-
-    handleConnect();
   }
 
   function tryFlushing() {
