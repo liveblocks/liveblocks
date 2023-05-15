@@ -58,6 +58,7 @@ type Event =
   | { type: "RECONNECT" } // e.g. user asking for an explicit reconnect of the socket
   | { type: "DISCONNECT" } // e.g. leaving the room
   | { type: "WINDOW_GOT_FOCUS" } // e.g. user's browser tab is refocused
+  | { type: "NAVIGATOR_ONLINE" } // e.g. browser gets back online
 
   // Events that the connection manager will internally deal with
   | { type: "PONG" }
@@ -311,6 +312,7 @@ function createStateMachine<T extends BaseAuthResult>(delegates: Delegates<T>) {
   // Configure the @auth.* states
   //
   fsm
+    .addTransitions("@auth.backoff", { NAVIGATOR_ONLINE: "@auth.busy" })
     .addTimedTransition(
       "@auth.backoff",
       (ctx) => ctx.backoffDelay,
@@ -347,6 +349,9 @@ function createStateMachine<T extends BaseAuthResult>(delegates: Delegates<T>) {
   // Configure the @connecting.* states
   //
   fsm
+    .addTransitions("@connecting.backoff", {
+      NAVIGATOR_ONLINE: "@connecting.busy",
+    })
     .addTimedTransition(
       "@connecting.backoff",
       (ctx) => ctx.backoffDelay,
@@ -548,41 +553,26 @@ function createStateMachine<T extends BaseAuthResult>(delegates: Delegates<T>) {
   // events.
   if (typeof document !== "undefined") {
     const doc = typeof document !== "undefined" ? document : undefined;
-    const root = typeof window !== "undefined" ? window : doc;
+    const win = typeof window !== "undefined" ? window : undefined;
+    const root = win ?? doc;
 
     fsm.onEnter("*", () => {
+      function onBackOnline() {
+        fsm.send({ type: "NAVIGATOR_ONLINE" });
+      }
+
       function onVisibilityChange() {
         if (doc?.visibilityState === "visible") {
           fsm.send({ type: "WINDOW_GOT_FOCUS" });
         }
       }
+
+      win?.addEventListener("online", onBackOnline);
       root?.addEventListener("visibilitychange", onVisibilityChange);
       return () => {
         root?.removeEventListener("visibilitychange", onVisibilityChange);
+        win?.removeEventListener("online", onBackOnline);
       };
-
-      //
-      //    ^^^ ^^^ ^^^ ^^^ ^^^ ^^^
-      //    ||| ||| ||| ||| ||| |||
-      //
-      // XXX REIMPLEMENT LATER
-      // Do something similar like for NAVIGATOR_ONLINE events.
-      //
-      // These must be handled when the machine is in "@connecting.backoff" state
-      // at least (perhaps more?)
-      //
-      //     if (
-      //       typeof window !== "undefined" &&
-      //       // istanbul ignore next: React Native environment doesn't implement window.addEventListener
-      //       typeof window.addEventListener !== "undefined"
-      //     ) {
-      //       window.addEventListener("online", () => {
-      //         for (const [, room] of rooms) {
-      //           room.__internal.send.navigatorOnline();
-      //         }
-      //       });
-      //     }
-      //
     });
   }
 
