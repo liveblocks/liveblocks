@@ -227,7 +227,7 @@ function defineConnectivityEvents(fsm: FSM<Context, Event, State>): {
   const didConnect = makeEventSource<void>();
   const didDisconnect = makeEventSource<void>();
 
-  let oldPublicStatus = toPublicConnectionStatus(fsm.currentState);
+  let oldPublicStatus: PublicConnectionStatus | null = null;
 
   fsm.events.didEnterState.subscribe((newState) => {
     const newPublicStatus = toPublicConnectionStatus(newState);
