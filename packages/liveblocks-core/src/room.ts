@@ -662,6 +662,8 @@ type RoomState<
   };
 
   readonly timers: {
+    // XXX Should we move this into the `buffer` structure, if _that_ is what
+    // is being flushed, close to the `lastFlushedAt` value?
     flush: TimeoutID | undefined;
   };
 
@@ -883,6 +885,9 @@ export function createRoom<
   // We never have to unsubscribe, because the Room and the Connection Manager
   // will have the same life-time.
   context.managedSocket.events.onMessage.subscribe(handleServerMessage);
+  context.managedSocket.events.didDisconnect.subscribe(() =>
+    clearTimeout(context.timers.flush)
+  );
 
   const doNotBatchUpdates = (cb: () => void): void => cb();
   const batchUpdates = config.unstable_batchedUpdates ?? doNotBatchUpdates;
