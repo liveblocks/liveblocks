@@ -1334,6 +1334,7 @@ export function createRoom<
     socket.addEventListener("open", handleSocketOpen);
     socket.addEventListener("close", handleExplicitClose); // XXX Can go
 
+    // XXX Keep!
     updateConnection(
       {
         status: "connecting",
@@ -1635,11 +1636,8 @@ export function createRoom<
     clearTimeout(context.timers.flush);
     clearTimeout(context.timers.reconnect);
 
-    /// XXX What does this notification do exactly?
-    context.others.clearOthers();
-
     batchUpdates(() => {
-      /// XXX What does this notification do exactly?
+      context.others.clearOthers();
       notify({ others: [{ type: "reset" }] }, doNotBatchUpdates);
 
       if (event.code >= 4000 && event.code <= 4100) {
