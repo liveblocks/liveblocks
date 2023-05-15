@@ -1,0 +1,68 @@
+---
+title: "Connecting to Liveblocks"
+description: "How to connect with createClient"
+openFile: "/liveblocks.config.ts"
+showFiles: [
+  "/liveblocks.config.ts",
+]
+---
+
+To use Liveblocks in React, you need to install our packages to your
+project. We’ve already installed the packages in this guide, but this is how you’d do it
+in your own project:
+
+```bash
+npm install @liveblocks/client @liveblocks/react
+```
+
+After installing the packages, you can initialize a Liveblocks project with a config file, which we’ve already done on this page:
+
+```bash
+npm create-liveblocks-app@latest --init
+```
+
+This file is named [liveblocks.config.ts][].
+
+### Setting up a client
+
+The first step in connecting to Liveblocks is creating a client which will be responsible for communicating with our back end.
+You can do this by modifying [`createClient`][] in your config file, and passing your public API key.
+
+```ts
+const client = createClient({
+  publicApiKey: "{% LIVEBLOCKS_PUBLIC_KEY %}",
+});
+```
+
+Ordinarily, you’d find your API keys on the [dashboard](/dashboard/apikeys), but for this tutorial we’ll let you borrow a temporary key.
+
+<Banner title="Secret key">
+
+You can also set up Liveblocks on the server with your secret key, but we’ll come back to that in the authentication section.
+
+</Banner>
+
+### Exporting hooks and components
+
+When building Liveblocks apps, we’ll be exporting all React hooks and components from this file, which enables you to have full type safety with minimal effort.
+
+We’ll be editing the four types in this file later, but for now, take note that we’re exporting from the `suspense` property; this enables
+the [React Suspense](/docs/api-reference/liveblocks-react#suspense) version of our hooks, which we recommend for easier development.
+
+```ts
+export const {
+  suspense: {
+    RoomProvider,
+    // ...
+  }
+}
+```
+
+`RoomProvider` is the component that acts as the root of your real-time app—try uncommenting the export in the code panel to see the app connect to Liveblocks!
+
+[`@liveblocks/client`]: /docs/api-reference/liveblocks-client
+[`createClient`]: /docs/api-reference/liveblocks-client#createClient
+[`createRoomContext`]: /docs/api-reference/liveblocks-react#createRoomContext
+[`RoomProvider`]: /docs/api-reference/liveblocks-react#RoomProvider
+
+[liveblocks.config.ts]: #/liveblocks.config.ts

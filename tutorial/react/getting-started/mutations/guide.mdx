@@ -1,0 +1,44 @@
+---
+openFile: "/Room.tsx"
+showFiles: ["/App.tsx", "/Room.tsx", "/liveblocks.config.ts"]
+---
+
+words
+
+### Modifying storage
+
+```tsx
+// Add mutation
+const updateName = useMutation(({ storage }, name: string) => {
+  storage.get("person").set("name", name);
+}, []);
+```
+
+```tsx
+return (
+  <div>
+    <input
+      type="text"
+      value={person.name}
+      onChange={(e) => updateName(e.target.value)}
+    />
+  </div>
+);
+```
+
+Using a LiveObject like this, instead of a regular JavaScript object, allows us
+to use its real-time features. For example multiple people can edit the
+properties of a LiveObject at the same time without overriding the whole object.
+
+<Banner title="Without suspense">
+
+</Banner>
+
+[`LiveObject`]: /docs/api-reference/liveblocks-client#LiveObject
+[`LiveList`]: /docs/api-reference/liveblocks-client#LiveList
+[`LiveMap`]: /docs/api-reference/liveblocks-client#LiveMap
+[`useStorage`]: /docs/api-reference/liveblocks-react#useStorage
+[`useCallback`]: /docs/api-reference/liveblocks-react#useCallback
+[liveblocks.config.ts]: #/liveblocks.config.ts
+[App.tsx]: #/App.tsx
+[Room.tsx]: #/Room.tsx

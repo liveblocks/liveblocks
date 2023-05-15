@@ -1,0 +1,66 @@
+---
+openFile: "/liveblocks.config.ts"
+showFiles: [
+  "/App.tsx",
+  "/Room.tsx",
+  "/liveblocks.config.ts",
+]
+---
+
+Most collaborative features rely on each user having their own temporary state, which is then shared with others.
+For example, in an app using multiplayer cursors, the location of each user’s cursor will be their state. In Liveblocks, we call this [presence](/presence).
+
+We can use _presence_ to hold any object that we wish to share with others. An example would be the coordinates of a user’s cursor on screen:
+
+```js
+cursor: { x: 256, y: 367 }
+```
+
+### Setting up presence
+
+To start using presence, let’s define a type for it in [liveblocks.config.ts][]. We’ll use the format above for displaying cursors, with the addition of `null` to represent an off-screen cursor.
+
+```ts
+// Presence type
+type Presence = {
+  cursor: { x: number; y: number } | null;
+};
+```
+
+<Banner title="Defining types">
+
+You’ll notice that at the bottom of the file, we’ve already added `Presence` to `createRoomContext`.
+Because we’re exporting our hooks from here, all our types will automatically propagate through our entire app.
+
+</Banner>
+
+The last step in setting up presence is setting an initial value.
+Switch to [App.tsx][] and pass `cursor: null` to [`RoomProvider`][]—no one starts with their cursor on-screen.
+
+```tsx
+<RoomProvider id={roomId} initialPresence={{ cursor: null }}>
+```
+
+### Displaying presence
+
+To display the current user’s presence, we’ll add [`useMyPresence`][] to [Room.tsx][], and quickly display its value, similarly to `useState`.
+
+```tsx
+import { useMyPresence } from "./liveblocks.config";
+
+export function Room() {
+  const [myPresence, updateMyPresence] = useMyPresence();
+  
+  return <div>Cursor: {JSON.stringify(myPresence.cursor)}</div>;
+}
+```
+
+Great! **Press the refresh button in the preview window** to reload `initialPresence`, and you should now be seeing `Cursor: null`! On the next page we’ll be creating live cursors with presence.
+
+
+[`RoomProvider`]: /docs/api-reference/liveblocks-react#RoomProvider
+[`useMyPresence`]: /docs/api-reference/liveblocks-react#useMyPresence
+
+[liveblocks.config.ts]: #/liveblocks.config.ts
+[App.tsx]: #/App.tsx
+[Room.tsx]: #/Room.tsx
