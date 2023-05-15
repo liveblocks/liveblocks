@@ -5,7 +5,8 @@
     "shared/*",
     "packages/*",
     "schema-lang/*",
-    "e2e/next-sandbox"
+    "e2e/next-sandbox",
+    "examples/nextjs-whiteboard-advanced"
   ],
   "scripts": {
     "build": "turbo run build",
