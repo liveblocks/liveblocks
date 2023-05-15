@@ -9,7 +9,7 @@ import type {
   IWebSocketMessageEvent,
 } from "./types/IWebSocket";
 
-type PublicConnectionStatus =
+export type PublicConnectionStatus =
   | "closed" // Room hasn't been entered, or has left already
   | "authenticating" // Authentication has started, but not finished yet
   | "connecting" // Authentication succeeded, now attempting to connect to a room
@@ -217,11 +217,38 @@ function enableTracing(fsm: FSM<Context, Event, State>) {
   };
 }
 
-function setupStateMachine<T extends BaseAuthResult>(delegates: Delegates<T>) {
+function defineConnectivityEvents(fsm: FSM<Context, Event, State>): {
+  statusDidChange: Observable<PublicConnectionStatus>;
+  didConnect: Observable<void>;
+  didDisconnect: Observable<void>;
+} {
   // Emitted whenever a new WebSocket connection attempt suceeds
+  const statusDidChange = makeEventSource<PublicConnectionStatus>();
   const didConnect = makeEventSource<void>();
-  // const didDisconnect = makeEventSource<void>();
+  const didDisconnect = makeEventSource<void>();
 
+  let oldPublicStatus = toPublicConnectionStatus(fsm.currentState);
+
+  fsm.events.didEnterState.subscribe((newState) => {
+    const newPublicStatus = toPublicConnectionStatus(newState);
+    statusDidChange.notify(newPublicStatus);
+
+    if (oldPublicStatus === "open" && newPublicStatus !== "open") {
+      didDisconnect.notify();
+    } else if (oldPublicStatus !== "open" && newPublicStatus === "open") {
+      didConnect.notify();
+    }
+    oldPublicStatus = newPublicStatus;
+  });
+
+  return {
+    statusDidChange: statusDidChange.observable,
+    didConnect: didConnect.observable,
+    didDisconnect: didDisconnect.observable,
+  };
+}
+
+function createStateMachine<T extends BaseAuthResult>(delegates: Delegates<T>) {
   // Create observable event sources, which this machine will call into when
   // specific events happen
   const onMessage = makeEventSource<IWebSocketMessageEvent>();
@@ -487,27 +514,27 @@ function setupStateMachine<T extends BaseAuthResult>(delegates: Delegates<T>) {
           assign: increaseBackoffDelay,
         };
       },
-    })
-
-    .onEnter("@ok.*", () => {
-      didConnect.notify();
-      return () => {
-        // didDisconnect.notify();
-      };
     });
+
+  const { statusDidChange, didConnect, didDisconnect } =
+    defineConnectivityEvents(fsm);
 
   // Install debug logging
 
   // Log all state transitions to the console
   enableTracing(fsm); // TODO Remove logging in production
 
+  // Start the machine
+  fsm.start();
+
   return {
     fsm,
 
     // Observable events that will be emitted by this machine
     events: {
-      didConnect: didConnect.observable,
-      // didDisconnect: didDisconnect.observable,
+      statusDidChange,
+      didConnect,
+      didDisconnect,
       onMessage: onMessage.observable,
       onLiveblocksError: onLiveblocksError.observable,
     },
@@ -531,8 +558,9 @@ export class ManagedSocket<T extends BaseAuthResult> {
      * Emitted when the WebSocket connection goes in or out of "connected"
      * state.
      */
+    readonly statusDidChange: Observable<PublicConnectionStatus>;
     readonly didConnect: Observable<void>;
-    // readonly didDisconnect: Observable<void>; // Deliberate close, temporary connection loss, permanent connection loss, etc.
+    readonly didDisconnect: Observable<void>; // Deliberate close, temporary connection loss, permanent connection loss, etc.
 
     /**
      * Emitted for every incoming message from the currently active WebSocket
@@ -548,11 +576,9 @@ export class ManagedSocket<T extends BaseAuthResult> {
   };
 
   constructor(delegates: Delegates<T>) {
-    const { fsm, events } = setupStateMachine(delegates);
+    const { fsm, events } = createStateMachine(delegates);
     this.fsm = fsm;
     this.events = events;
-
-    fsm.start();
   }
 
   get status(): PublicConnectionStatus {
