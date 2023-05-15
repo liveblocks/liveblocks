@@ -2,6 +2,7 @@ import type { Observable } from "./lib/EventSource";
 import { assertNever } from "./lib/assert";
 import { makeEventSource } from "./lib/EventSource";
 import { FSM } from "./lib/fsm";
+import type { Target, BuiltinEvent } from "./lib/fsm";
 import type {
   IWebSocketCloseEvent,
   IWebSocketEvent,
@@ -61,7 +62,10 @@ type Event =
   // Events that the connection manager will internally deal with
   | { type: "PONG" }
   | { type: "EXPLICIT_SOCKET_ERROR"; event: IWebSocketEvent }
-  | { type: "EXPLICIT_SOCKET_CLOSE"; event: IWebSocketCloseEvent };
+  | { type: "EXPLICIT_SOCKET_CLOSE"; event: IWebSocketCloseEvent }
+
+  // Only used by the E2E testing app, to simulate a pong timeout :(
+  | { type: "PONG_TIMEOUT" };
 
 type State =
   | "@idle.initial"
@@ -464,22 +468,26 @@ function createStateMachine<T extends BaseAuthResult>(delegates: Delegates<T>) {
     })
     .addTransitions("@ok.connected", {
       WINDOW_GOT_FOCUS: { target: "@ok.awaiting-pong", effect: sendHeartbeat },
-    })
+    });
 
-    .addTimedTransition("@ok.awaiting-pong", PONG_TIMEOUT, {
-      target: "@connecting.busy",
-      assign: {
-        // XXX Should also explicitly clean up the old socket instance, i.e.
-        // remove all event listeners, and then call .close()?
-        socket: null,
-      },
-      effect: () => {
-        // Log implicit connection loss and drop the current open socket
-        console.log(
-          "Received no pong from server, assume implicit connection loss."
-        );
-      },
-    })
+  const noPongAction: Target<Context, Event | BuiltinEvent, State> = {
+    target: "@connecting.busy",
+    assign: {
+      // XXX Should also explicitly clean up the old socket instance, i.e.
+      // remove all event listeners, and then call .close()?
+      socket: null,
+    },
+    effect: () => {
+      // Log implicit connection loss and drop the current open socket
+      console.log(
+        "Received no pong from server, assume implicit connection loss."
+      );
+    },
+  };
+
+  fsm
+    .addTimedTransition("@ok.awaiting-pong", PONG_TIMEOUT, noPongAction)
+    .addTransitions("@ok.awaiting-pong", { PONG_TIMEOUT: noPongAction }) // Only needed for E2E testing application
 
     .addTransitions("@ok.awaiting-pong", { PONG: "@ok.connected" })
 
@@ -691,5 +699,13 @@ export class ManagedSocket<T extends BaseAuthResult> {
     } else {
       socket.send(data);
     }
+  }
+
+  /**
+   * NOTE: Used by the E2E app only, to simulate explicit events.
+   * Not ideal to keep exposed :(
+   */
+  public _privateSend(event: Event) {
+    return this.fsm.send(event);
   }
 }
