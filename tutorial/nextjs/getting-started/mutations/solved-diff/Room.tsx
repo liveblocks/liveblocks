@@ -10,8 +10,8 @@ export function Room() {
 
   return (
     <div>
-      Person: {JSON.stringify(person)}
       <input
+        id="name"
         type="text"
         value={person.name}
         onChange={(e) => updateName(e.target.value)}
