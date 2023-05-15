@@ -1,11 +1,12 @@
 {
-  "nextjs": {
-    "slug": "nextjs",
-    "title": "Next.js",
+  "react": {
+    "slug": "react",
+    "title": "React",
     "tutorials": [
       {
         "slug": "getting-started",
         "title": "Getting started",
+        "technology": "react",
         "pages": [
           {
             "slug": "welcome",
@@ -79,7 +80,8 @@
       },
       {
         "slug": "authenticating",
-        "title": "Authenticating with endpoints",
+        "title": "Authenticating with Next.js",
+        "technology": "nextjs",
         "pages": [
           {
             "slug": "secret-keys",
@@ -128,6 +130,7 @@
       {
         "slug": "advanced-liveblocks",
         "title": "Advanced Liveblocks",
+        "technology": "react",
         "pages": [
           {
             "slug": "react-suspense",
@@ -176,6 +179,7 @@
       {
         "slug": "managing-rooms-and-permissions",
         "title": "Managing rooms and permissions",
+        "technology": "react",
         "pages": [
           {
             "slug": "metadata",
@@ -212,6 +216,7 @@
       {
         "slug": "nextjs-starter-kit-guide",
         "title": "Using the Next.js Starter Kit",
+        "technology": "nextjs",
         "pages": [
           {
             "slug": "installing",
