@@ -11,41 +11,51 @@ import { makeEventSource } from "./EventSource";
 /**
  * Built-in event sent by .addTimedTransition().
  */
-type TimerEvent = { readonly type: "TIMER" };
+export type TimerEvent = { readonly type: "TIMER" };
 
 /**
  * Built-in events sent by .onEnterAsync().
  */
-type AsyncOKEvent<T> = {
+export type AsyncOKEvent<T> = {
   readonly type: "ASYNC_OK";
   readonly data: T;
 };
-type AsyncErrorEvent = {
+export type AsyncErrorEvent = {
   readonly type: "ASYNC_ERROR";
   readonly reason: unknown;
 };
 
-type BaseEvent = { readonly type: string };
-type BuiltinEvent = TimerEvent | AsyncOKEvent<unknown> | AsyncErrorEvent;
+export type BaseEvent = { readonly type: string };
+export type BuiltinEvent = TimerEvent | AsyncOKEvent<unknown> | AsyncErrorEvent;
 
-type CleanupFn = () => void;
-type EnterFn<TContext> = (context: Readonly<TContext>) => void | CleanupFn;
+export type CleanupFn = () => void;
+export type EnterFn<TContext> = (
+  context: Readonly<TContext>
+) => void | CleanupFn;
 
-type TargetFn<TContext, TEvent extends BaseEvent, TState extends string> = (
+export type TargetFn<
+  TContext,
+  TEvent extends BaseEvent,
+  TState extends string
+> = (
   event: TEvent,
   context: Readonly<TContext>
 ) => TState | TargetConfig<TContext, TEvent, TState> | null;
 
-type Assigner<TContext, TEvent extends BaseEvent> =
+export type Assigner<TContext, TEvent extends BaseEvent> =
   | Partial<TContext>
   | ((context: Readonly<TContext>, event: TEvent) => Partial<TContext>);
 
-type Effect<TContext, TEvent extends BaseEvent> = (
+export type Effect<TContext, TEvent extends BaseEvent> = (
   context: Readonly<TContext>,
   event: TEvent
 ) => void;
 
-type TargetConfig<TContext, TEvent extends BaseEvent, TState extends string> = {
+export type TargetConfig<
+  TContext,
+  TEvent extends BaseEvent,
+  TState extends string
+> = {
   target: TState;
 
   /**
@@ -62,7 +72,7 @@ type TargetConfig<TContext, TEvent extends BaseEvent, TState extends string> = {
   effect?: Effect<TContext, TEvent>;
 };
 
-type Target<TContext, TEvent extends BaseEvent, TState extends string> =
+export type Target<TContext, TEvent extends BaseEvent, TState extends string> =
   | TState // Static, e.g. 'complete'
   | TargetConfig<TContext, TEvent, TState>
   | TargetFn<TContext, TEvent, TState>; // Dynamic, e.g. (context) => context.x ? 'complete' : 'other'
@@ -70,7 +80,7 @@ type Target<TContext, TEvent extends BaseEvent, TState extends string> =
 type Groups<T extends string> = T extends `${infer G}.${infer Rest}`
   ? G | `${G}.${Groups<Rest>}`
   : never;
-type Wildcard<T extends string> = "*" | `${Groups<T>}.*`;
+export type Wildcard<T extends string> = "*" | `${Groups<T>}.*`;
 
 function distance(state1: string, state2: string): [number, number] {
   if (state1 === state2) {

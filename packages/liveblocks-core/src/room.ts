@@ -581,10 +581,6 @@ type PrivateRoomAPI<
     explicitClose(event: IWebSocketCloseEvent): void; // NOTE: Also used in e2e test app!
     implicitClose(): void; // NOTE: Also used in e2e test app!
 
-    authSuccess(token: RoomAuthToken, socket: IWebSocketInstance): void; // prettier-ignore
-    windowGotFocus(): void;
-    pong(): void;
-
     /**
      * Call this when a server message is received (typically from the
      * active WebSocket connection, or simulated by a unit test). These
@@ -770,20 +766,6 @@ function userToTreeNode(
     payload: user,
   };
 }
-
-/**
- * TODO(nvie) Abstract this out more. This will not be the final form.
- */
-type FSMEvent =
-  | { type: "CONNECT" }
-  | { type: "DISCONNECT" }
-  | {
-      type: "AUTH_SUCCESS";
-      token: RoomAuthToken;
-      socket: IWebSocketInstance;
-    }
-  | { type: "IMPLICIT_CLOSE" }
-  | { type: "EXPLICIT_CLOSE"; closeEvent: IWebSocketCloseEvent };
 
 /**
  * @internal
@@ -1989,35 +1971,6 @@ export function createRoom<
     storageStatus: eventHub.storageStatus.observable,
   };
 
-  //
-  // NOTE:
-  // The Finite State Machine's .transition() function will eventually be
-  // the central gate keeper of sanity. This function will likely be abstracted
-  // away in a proper FSM abstraction (like a separate class).
-  //
-  // The idea is that, eventually, the handler functions can only be called
-  // from here, and never from anywhere else, so this function can perform its
-  // central gatekeeping.
-  //
-  function transition(event: FSMEvent) {
-    switch (event.type) {
-      case "CONNECT":
-        return handleConnect();
-
-      case "DISCONNECT":
-        return handleDisconnect();
-
-      case "AUTH_SUCCESS":
-        return handleAuthSuccess(event.token, event.socket);
-
-      case "EXPLICIT_CLOSE":
-        return handleExplicitClose(event.closeEvent);
-
-      default:
-        return assertNever(event, "Invalid event");
-    }
-  }
-
   return {
     /* NOTE: Exposing __internal here only to allow testing implementation details in unit tests */
     __internal: {
@@ -2032,10 +1985,12 @@ export function createRoom<
 
       // prettier-ignore
       send: {
-        explicitClose:  (closeEvent) => transition({ type: "EXPLICIT_CLOSE", closeEvent }),
-        authSuccess: (token, socket) => transition({ type: "AUTH_SUCCESS", token, socket }),
-        connect:                  () => transition({ type: "CONNECT" }),
-        disconnect:               () => transition({ type: "DISCONNECT" }),
+        // These exist only for our E2E testing app
+        explicitClose: (event) => context.managedSocket._privateSend({ type: "EXPLICIT_SOCKET_CLOSE", event }),
+        implicitClose: () => context.managedSocket._privateSend({ type: "PONG_TIMEOUT" }),
+
+        connect: () => context.managedSocket.connect(),
+        disconnect: () => context.managedSocket.disconnect(),
 
         /**
          * This one looks differently from the rest, because receiving messages
@@ -2051,7 +2006,7 @@ export function createRoom<
     id: config.roomId,
     subscribe: makeClassicSubscribeFn(events),
 
-    reconnect,
+    reconnect: () => context.managedSocket.reconnect(),
 
     // Presence
     updatePresence,

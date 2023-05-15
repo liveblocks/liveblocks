@@ -218,16 +218,6 @@ export function createClient(options: ClientOptions): Client {
     }
   }
 
-  if (typeof document !== "undefined") {
-    document.addEventListener("visibilitychange", () => {
-      if (document.visibilityState === "visible") {
-        for (const [, room] of rooms) {
-          room.__internal.send.windowGotFocus();
-        }
-      }
-    });
-  }
-
   return {
     getRoom,
     enter,
