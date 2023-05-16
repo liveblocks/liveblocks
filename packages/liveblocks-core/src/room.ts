@@ -576,7 +576,7 @@ type PrivateRoomAPI<
 
   send: {
     connect(): void;
-    disconnect(): void;
+    disconnect(): void; // XXX Do we really need disconnect() now that we have destroy()? Seems still useful to reset the machine, but also... YAGNI?
     destroy(): void;
 
     explicitClose(event: IWebSocketCloseEvent): void; // NOTE: Also used in e2e test app!
@@ -1991,7 +1991,7 @@ export function createRoom<
         implicitClose: () => managedSocket._privateSend({ type: "PONG_TIMEOUT" }),
 
         connect: () => managedSocket.connect(),
-        disconnect: () => managedSocket.disconnect(),
+        disconnect: () => managedSocket.disconnect(), // XXX Do we really need disconnect() now that we have destroy()? Seems still useful to reset the machine, but also... YAGNI?
         destroy: () => managedSocket.destroy(),
 
         /**
