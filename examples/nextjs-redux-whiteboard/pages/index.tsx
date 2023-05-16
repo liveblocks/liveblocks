@@ -1,4 +1,5 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
+import { useRouter } from "next/router";
 import { useDispatch, useSelector } from "react-redux";
 import { actions } from "@liveblocks/redux";
 import {
@@ -8,26 +9,24 @@ import {
   onCanvasPointerUp,
   onCanvasPointerMove,
   client,
-} from "./store";
-import "./App.css";
+} from "../src/store";
+import styles from "./app.module.css";
 
 let roomId = "redux-whiteboard";
 
-overrideRoomId();
+// overrideRoomId("redux-whiteboard");
 
-export default function App() {
-  const shapes = useSelector((state) => state.shapes);
-  const isLoading = useSelector((state) => state.liveblocks.isStorageLoading);
-  const selectedShape = useSelector((state) => state.selectedShape);
-  const others = useSelector((state) => state.liveblocks.others);
+export default function MyApp() {
+  const shapes = useSelector((state: any) => state.shapes);
+  const isLoading = useSelector((state: any) => state.liveblocks.isStorageLoading);
+  const selectedShape = useSelector((state: any) => state.selectedShape);
+  const others = useSelector((state: any) => state.liveblocks.others);
 
   const dispatch = useDispatch();
 
   useEffect(() => {
     dispatch(
-      actions.enterRoom(roomId, {
-        shapes: {},
-      })
+      actions.enterRoom(roomId)
     );
 
     return () => {
@@ -37,7 +36,7 @@ export default function App() {
 
   if (isLoading) {
     return (
-      <div className="loading">
+      <div className={styles.loading}>
         <img src="https://liveblocks.io/loading.svg" alt="Loading" />
       </div>
     );
@@ -46,14 +45,20 @@ export default function App() {
   return (
     <>
       <div
-        className="canvas"
+        className={styles.canvas}
         onPointerMove={(e) => {
           e.preventDefault();
           dispatch(onCanvasPointerMove({ x: e.clientX, y: e.clientY }));
         }}
         onPointerUp={() => {
           dispatch(onCanvasPointerUp());
-          client.getRoom(roomId).history.resume();
+          const room = client.getRoom(roomId);
+          if (room) {
+            const history = room.history;
+            if (history) {
+              history.resume();
+            }
+          }
         }}
       >
         {Object.entries(shapes).map(([shapeId, shape]) => {
@@ -62,7 +67,7 @@ export default function App() {
           if (selectedShape === shapeId) {
             selectionColor = "blue";
           } else if (
-            others.some((user) => user.presence?.selectedShape === shapeId)
+            others.some((user: any) => user.presence?.selectedShape === shapeId)
           ) {
             selectionColor = "green";
           }
@@ -78,7 +83,8 @@ export default function App() {
           );
         })}
       </div>
-      <div className="toolbar">
+      {client && roomId && (
+      <div className={styles.toolbar}>
         <button onClick={() => dispatch(insertRectangle())}>Rectangle</button>
         <button
           onClick={() => dispatch(deleteShape())}
@@ -86,23 +92,31 @@ export default function App() {
         >
           Delete
         </button>
-        <button onClick={() => client.getRoom(roomId).history.undo()}>
-          Undo
-        </button>
-        <button onClick={() => client.getRoom(roomId).history.redo()}>
+
+  <button onClick={() => client.getRoom(roomId)?.history.undo()}>Undo</button>
+
+        <button onClick={() => client.getRoom(roomId)?.history.redo()}>
           Redo
         </button>
       </div>
+      )}
     </>
   );
 }
 
-const Rectangle = ({ shape, selectionColor, id, transition }) => {
+interface RectangleProps {
+  shape: any;
+  selectionColor: string;
+  id: string;
+  transition: boolean;
+}
+
+const Rectangle: React.FC<RectangleProps> = ({ shape, selectionColor, id, transition }) => {
   const dispatch = useDispatch();
 
   return (
     <div
-      className="rectangle"
+      className={styles.rectangle}
       style={{
         transform: `translate(${shape.x}px, ${shape.y}px)`,
         transition: transition ? "transform 120ms linear" : "none",
@@ -111,7 +125,7 @@ const Rectangle = ({ shape, selectionColor, id, transition }) => {
       }}
       onPointerDown={(e) => {
         e.stopPropagation();
-        client.getRoom(roomId).history.pause();
+        client.getRoom(roomId)?.history.pause();
         dispatch(onShapePointerDown(id));
       }}
     />
@@ -122,11 +136,12 @@ const Rectangle = ({ shape, selectionColor, id, transition }) => {
  * This function is used when deploying an example on liveblocks.io.
  * You can ignore it completely if you run the example locally.
  */
-function overrideRoomId() {
-  const query = new URLSearchParams(window?.location?.search);
-  const roomIdSuffix = query.get("roomId");
+function overrideRoomId(roomId: string) {
+  const { query } = useRouter();
+  const overrideRoomId = useMemo(() => {
+    return query?.roomId ? `${roomId}-${query.roomId}` : roomId;
+  }, [query, roomId]);
 
-  if (roomIdSuffix) {
-    roomId = `${roomId}-${roomIdSuffix}`;
-  }
+  return overrideRoomId;
 }
+
