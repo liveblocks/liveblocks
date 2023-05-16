@@ -135,6 +135,12 @@ const AUTH_TIMEOUT = 10000;
  */
 const SOCKET_CONNECT_TIMEOUT = 10000;
 
+/**
+ * Special error class that can be thrown during authentication to stop the
+ * connection manager from retrying.
+ */
+export class UnauthorizedError extends Error {}
+
 class LiveblocksError extends Error {
   constructor(message: string, public code: number) {
     super(message);
@@ -335,14 +341,24 @@ function createStateMachine<T extends BaseAuthResult>(delegates: Delegates<T>) {
       }),
 
       // Auth failed
-      // XXX TODO If _UNAUTHORIZED_, don't retry, instead go to @idle.failed directly
-      (_failedEvent) => ({
-        target: "@auth.backoff",
-        assign: increaseBackoffDelay,
-        // effect: () => {
-        //   console.log(`Authentication failed: ${String(failedEvent.reason)}`);
-        // },
-      })
+      (failedEvent) =>
+        failedEvent.reason instanceof UnauthorizedError
+          ? {
+              target: "@idle.failed",
+              effect: () =>
+                console.log(
+                  `Unauthorized, will stop retrying: ${
+                    (failedEvent.reason as UnauthorizedError).message
+                  }`
+                ),
+            }
+          : {
+              target: "@auth.backoff",
+              assign: increaseBackoffDelay,
+              // effect: () => {
+              //   console.log(`Authentication failed: ${String(failedEvent.reason)}`);
+              // },
+            }
     );
 
   //
