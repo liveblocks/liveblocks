@@ -577,6 +577,7 @@ type PrivateRoomAPI<
   send: {
     connect(): void;
     disconnect(): void;
+    destroy(): void;
 
     explicitClose(event: IWebSocketCloseEvent): void; // NOTE: Also used in e2e test app!
     implicitClose(): void; // NOTE: Also used in e2e test app!
@@ -1991,6 +1992,7 @@ export function createRoom<
 
         connect: () => managedSocket.connect(),
         disconnect: () => managedSocket.disconnect(),
+        destroy: () => managedSocket.destroy(),
 
         /**
          * This one looks differently from the rest, because receiving messages

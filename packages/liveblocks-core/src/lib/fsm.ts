@@ -134,11 +134,15 @@ enum RunningState {
   STOPPED,
 }
 
+let nextId = 1;
+
 export class FSM<
   TContext extends object,
   TEvent extends BaseEvent,
   TState extends string
 > {
+  public id: number;
+
   // Indicates whether this state machine is still being configured, has
   // started, or has terminated
   private runningState: RunningState;
@@ -243,6 +247,7 @@ export class FSM<
   }
 
   constructor(initialContext: Readonly<TContext>) {
+    this.id = nextId++;
     this.runningState = RunningState.NOT_STARTED_YET;
     this.currentStateOrNull = null;
     this.states = new Set();

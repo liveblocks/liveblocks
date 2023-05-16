@@ -213,7 +213,7 @@ export function createClient(options: ClientOptions): Client {
 
     const room = rooms.get(roomId);
     if (room !== undefined) {
-      room.__internal.send.disconnect();
+      room.__internal.send.destroy();
       rooms.delete(roomId);
     }
   }
