@@ -619,8 +619,6 @@ type RoomState<
   TUserMeta extends BaseUserMeta,
   TRoomEvent extends Json
 > = {
-  token: RichToken | null;
-
   /**
    * Remembers the last successful connection ID. This gets assigned as soon as
    * the connection status switched from "connecting" to "open", and is used to
@@ -810,7 +808,6 @@ export function createRoom<
 
   // The room's internal stateful context
   const context: RoomState<TPresence, TStorage, TUserMeta, TRoomEvent> = {
-    token: null,
     lastConnectionId: null,
 
     timers: {
@@ -863,16 +860,12 @@ export function createRoom<
     if (newStatus !== "open" && newStatus !== "connecting") {
       context.connection.set({ status: newStatus });
     } else {
-      // XXX Define this as an accessor on the managed connection
-      if (context.token === null) {
-        throw new Error("Unexpected null token here");
-      }
       context.connection.set({
         status: newStatus,
-        id: context.token.parsed.actor,
-        userInfo: context.token.parsed.info,
-        userId: context.token.parsed.id,
-        isReadOnly: isStorageReadOnly(context.token.parsed.scopes),
+        id: managedSocket.token.parsed.actor,
+        userInfo: managedSocket.token.parsed.info,
+        userId: managedSocket.token.parsed.id,
+        isReadOnly: isStorageReadOnly(managedSocket.token.parsed.scopes),
       });
     }
 
