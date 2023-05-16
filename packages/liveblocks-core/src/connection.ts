@@ -377,6 +377,15 @@ function createStateMachine<T extends BaseAuthResult>(delegates: Delegates<T>) {
       ? fsm.send({ type: "PONG" })
       : onMessage.notify(event);
 
+  function teardownSocket(socket: IWebSocketInstance | null) {
+    if (socket) {
+      socket.removeEventListener("error", onSocketError);
+      socket.removeEventListener("close", onSocketClose);
+      socket.removeEventListener("message", onSocketMessage);
+      socket.close();
+    }
+  }
+
   fsm
     .addTransitions("@connecting.backoff", {
       NAVIGATOR_ONLINE: "@connecting.busy",
@@ -453,11 +462,18 @@ function createStateMachine<T extends BaseAuthResult>(delegates: Delegates<T>) {
         // to @auth.busy to reattempt authentication
         ({
           target: "@auth.backoff",
-          assign: (ctx) => ({
-            socket: null, // XXX Should not be needed, as socket should already be null if we get here?
-            // XXX If failed because of a "room full" or "rate limit", back off more aggressively here
-            backoffDelay: nextBackoffDelay(ctx.backoffDelay),
-          }),
+          assign: (ctx) => {
+            // XXX Remove this check
+            if (ctx.socket) {
+              throw new Error(
+                "Oops! This is unexpected! You may have found an edge case. Please tell Vincent about this."
+              );
+            }
+            return {
+              // XXX If failed because of a "room full" or "rate limit", back off more aggressively here
+              backoffDelay: nextBackoffDelay(ctx.backoffDelay),
+            };
+          },
           effect: () => {
             console.error(
               `Connection to WebSocket could not be established, reason: ${String(
@@ -491,11 +507,7 @@ function createStateMachine<T extends BaseAuthResult>(delegates: Delegates<T>) {
   const noPongAction: Target<Context, Event | BuiltinEvent, State> = {
     target: "@connecting.busy",
     assign: (ctx) => {
-      const oldSocket = ctx.socket;
-      oldSocket?.removeEventListener("error", onSocketError);
-      oldSocket?.removeEventListener("close", onSocketClose);
-      oldSocket?.removeEventListener("message", onSocketMessage);
-      oldSocket?.close();
+      teardownSocket(ctx.socket);
       return {
         socket: null,
       };
@@ -574,7 +586,7 @@ function createStateMachine<T extends BaseAuthResult>(delegates: Delegates<T>) {
     const win = typeof window !== "undefined" ? window : undefined;
     const root = win ?? doc;
 
-    fsm.onEnter("*", () => {
+    fsm.onEnter("*", (ctx) => {
       function onBackOnline() {
         fsm.send({ type: "NAVIGATOR_ONLINE" });
       }
@@ -590,6 +602,9 @@ function createStateMachine<T extends BaseAuthResult>(delegates: Delegates<T>) {
       return () => {
         root?.removeEventListener("visibilitychange", onVisibilityChange);
         win?.removeEventListener("online", onBackOnline);
+
+        // Also tear down the old socket when stopping the machine, if there is one
+        teardownSocket(ctx.socket);
       };
     });
   }
