@@ -361,6 +361,19 @@ function createStateMachine<T extends BaseAuthResult>(delegates: Delegates<T>) {
   //
   // Configure the @connecting.* states
   //
+
+  // Function references
+  const onSocketError = (event: IWebSocketEvent) =>
+    fsm.send({ type: "EXPLICIT_SOCKET_ERROR", event });
+
+  const onSocketClose = (event: IWebSocketCloseEvent) =>
+    fsm.send({ type: "EXPLICIT_SOCKET_CLOSE", event });
+
+  const onSocketMessage = (event: IWebSocketMessageEvent) =>
+    event.data === "pong"
+      ? fsm.send({ type: "PONG" })
+      : onMessage.notify(event);
+
   fsm
     .addTransitions("@connecting.backoff", {
       NAVIGATOR_ONLINE: "@connecting.busy",
@@ -409,29 +422,13 @@ function createStateMachine<T extends BaseAuthResult>(delegates: Delegates<T>) {
           socket.addEventListener("open", () => {
             socket.removeEventListener("error", reject);
             socket.removeEventListener("close", reject);
-            resolve(socket);
-          });
 
-          // Part 2: set up the _actual_ event listeners, which can be
-          // externally observed.
-          socket.addEventListener("error", (event) =>
-            fsm.send({
-              type: "EXPLICIT_SOCKET_ERROR",
-              event,
-            })
-          );
-          socket.addEventListener("close", (event) =>
-            fsm.send({
-              type: "EXPLICIT_SOCKET_CLOSE",
-              event,
-            })
-          );
-          socket.addEventListener("message", (event) => {
-            if (event.data === "pong") {
-              fsm.send({ type: "PONG" });
-            } else {
-              onMessage.notify(event);
-            }
+            // Part 2: set up the _actual_ event listeners, which can be
+            // externally observed.
+            socket.addEventListener("error", onSocketError);
+            socket.addEventListener("close", onSocketClose);
+            socket.addEventListener("message", onSocketMessage);
+            resolve(socket);
           });
         });
 
@@ -491,10 +488,15 @@ function createStateMachine<T extends BaseAuthResult>(delegates: Delegates<T>) {
 
   const noPongAction: Target<Context, Event | BuiltinEvent, State> = {
     target: "@connecting.busy",
-    assign: {
-      // XXX Should also explicitly clean up the old socket instance, i.e.
-      // remove all event listeners, and then call .close()?
-      socket: null,
+    assign: (ctx) => {
+      const oldSocket = ctx.socket;
+      oldSocket?.removeEventListener("error", onSocketError);
+      oldSocket?.removeEventListener("close", onSocketClose);
+      oldSocket?.removeEventListener("message", onSocketMessage);
+      oldSocket?.close();
+      return {
+        socket: null,
+      };
     },
     effect: () => {
       // Log implicit connection loss and drop the current open socket
