@@ -9,18 +9,18 @@ import {
   onCanvasPointerUp,
   onCanvasPointerMove,
   client,
+  Shape,
+  State
 } from "../src/store";
 import styles from "./app.module.css";
 
 let roomId = "redux-whiteboard";
 
-// overrideRoomId("redux-whiteboard");
-
 export default function MyApp() {
-  const shapes = useSelector((state: any) => state.shapes);
-  const isLoading = useSelector((state: any) => state.liveblocks.isStorageLoading);
-  const selectedShape = useSelector((state: any) => state.selectedShape);
-  const others = useSelector((state: any) => state.liveblocks.others);
+  const shapes = useSelector((state: State) => state.shapes);
+  const isLoading = useSelector((state: State) => state.liveblocks.isStorageLoading);
+  const selectedShape = useSelector((state: State) => state.selectedShape);
+  const others = useSelector((state: State) => state.liveblocks.others);
 
   const dispatch = useDispatch();
 
@@ -105,7 +105,7 @@ export default function MyApp() {
 }
 
 interface RectangleProps {
-  shape: any;
+  shape: Shape;
   selectionColor: string;
   id: string;
   transition: boolean;

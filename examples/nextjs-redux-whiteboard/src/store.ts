@@ -138,7 +138,7 @@ function getRandomColor(): string {
   return COLORS[getRandomInt(COLORS.length)];
 }
 
-interface Shape {
+export type Shape = {
   x: number;
   y: number;
   fill: string;
@@ -148,13 +148,21 @@ type Presence = {
   selectedShape: string | null;
 }
 
-type State ={
+type LiveblocksState = {
+  others: Presence[];
+  isLoading: boolean;
+}
+
+export type State = {
+  liveblocks: LiveblocksState| null;
+
   shapes: Record<string, Shape>;
   selectedShape: string | null;
   isDragging: boolean;
 }
 
 const initialState: State = {
+  liveblocks:null,
   shapes: {},
   selectedShape: null,
   isDragging: false,
