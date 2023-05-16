@@ -688,7 +688,11 @@ export class ManagedSocket<T extends BaseAuthResult> {
   }
 
   get status(): PublicConnectionStatus {
-    return toPublicConnectionStatus(this.fsm.currentState);
+    try {
+      return toPublicConnectionStatus(this.fsm.currentState);
+    } catch {
+      return "closed";
+    }
   }
 
   /**
