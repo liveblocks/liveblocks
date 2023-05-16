@@ -18,8 +18,8 @@ type AuthorizeOptions = {
    * It can also be used to generate a token that gives access to a private
    * room where the userId is configured in the room accesses.
    *
-   * The user ID will be used as a unique identifier to compute your Liveblocks
-   * account's Monthly Active Users.
+   * This user ID will be used as the unique identifier to compute your
+   * Liveblocks account's Monthly Active Users.
    */
   userId: string;
   /**
