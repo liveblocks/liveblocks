@@ -2,25 +2,47 @@ import fetch from "node-fetch";
 
 type AuthorizeOptions = {
   /**
-   * The secret api provided at https://liveblocks.io/dashboard/apikeys
+   * The secret API key for your Liveblocks account. You can find it on
+   * https://liveblocks.io/dashboard/apikeys
    */
   secret: string;
   /**
-   * The room provided in the authorization request body
+   * The room ID for which to authorize the user. This will authorize the user
+   * to enter the Liveblocks room.
    */
   room: string;
   /**
-   * The id of the user that try to connect. It can be used to get information about the connected users in the room (name, avatar, etc).
-   * It can also be used to generate a token that gives access to a private room where the userId is configured in the room accesses.
-   * Liveblocks uses the userId to calculate your account's Monthly Active Users.
+   * Associates a user ID to the session that is being authorized. The user ID
+   * is typically set to the user ID from your own database.
+   *
+   * It can also be used to generate a token that gives access to a private
+   * room where the userId is configured in the room accesses.
+   *
+   * The user ID will be used as a unique identifier to compute your Liveblocks
+   * account's Monthly Active Users.
    */
   userId: string;
   /**
-   * The info associated to the user. Can be used to store the name or the profile picture to implement avatar for example. Can't exceed 1KB when serialized as JSON
+   * Arbitrary metadata associated to this user session.
+   *
+   * You can use it to store a small amount of static metadata for a user
+   * session. It is public information, that will be visible to other users in
+   * the same room, like name, avatar URL, etc.
+   *
+   * It's only suitable for static info that won't change during a session. If
+   * you want to store dynamic metadata on a user session, don't keep that in
+   * the session token, but use Presence instead.
+   *
+   * Can't exceed 1KB when serialized as JSON.
    */
-  userInfo?: unknown; // must be Json
+  userInfo?: unknown;
   /**
-   * The ids of the groups to which the user belongs. It should be used to generate a token that gives access to a private room and at least one of the group is configured in the room accesses.
+   * Tell Liveblocks which group IDs this user belongs to. This will authorize
+   * the user session to access private rooms that have at least one of these
+   * group IDs listed in their room access configuration.
+   *
+   * See https://liveblocks.io/docs/guides/managing-rooms-users-permissions#permissions
+   * for how to configure your room's permissions to use this feature.
    */
   groupIds?: string[];
 };
@@ -36,6 +58,10 @@ type AuthorizeResponse = {
 };
 
 /**
+ * Tells Liveblocks that a user should be allowed access to a room, which user
+ * this session is for, and what metadata to associate with the user (like
+ * name, avatar, etc.)
+ *
  * @example
  * export default async function auth(req, res) {
  *
