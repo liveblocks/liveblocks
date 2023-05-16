@@ -1,6 +1,7 @@
 import { assertNever } from "./lib/assert";
 import type { Observable } from "./lib/EventSource";
 import { makeEventSource } from "./lib/EventSource";
+import * as console from "./lib/fancy-console";
 import type { BuiltinEvent, Target } from "./lib/fsm";
 import { FSM } from "./lib/fsm";
 import type {
@@ -178,7 +179,6 @@ function timeoutAfter(millis: number): Promise<never> {
 }
 
 function sendHeartbeat(ctx: Context) {
-  console.log("Sending heartbeat...");
   if (!ctx.socket) {
     console.error("This should never happen"); // XXX Remove eventually
   }
@@ -195,7 +195,7 @@ function enableTracing(fsm: FSM<Context, Event, State>) {
 
   function log(...args: unknown[]) {
     // eslint-disable-next-line
-    console.log(
+    console.warn(
       `${((new Date().getTime() - start) / 1000).toFixed(2)} [FSM #${fsm.id}]`,
       ...args
     );
@@ -346,7 +346,7 @@ function createStateMachine<T extends BaseAuthResult>(delegates: Delegates<T>) {
           ? {
               target: "@idle.failed",
               effect: () =>
-                console.log(
+                console.error(
                   `Unauthorized, will stop retrying: ${
                     (failedEvent.reason as UnauthorizedError).message
                   }`
@@ -462,7 +462,7 @@ function createStateMachine<T extends BaseAuthResult>(delegates: Delegates<T>) {
             backoffDelay: nextBackoffDelay(ctx.backoffDelay),
           }),
           effect: () => {
-            console.log(
+            console.error(
               `Connection to WebSocket could not be established, reason: ${String(
                 failedEvent.reason
               )}`
@@ -500,7 +500,7 @@ function createStateMachine<T extends BaseAuthResult>(delegates: Delegates<T>) {
     },
     effect: () => {
       // Log implicit connection loss and drop the current open socket
-      console.log(
+      console.warn(
         "Received no pong from server, assume implicit connection loss."
       );
     },
@@ -602,7 +602,7 @@ function createStateMachine<T extends BaseAuthResult>(delegates: Delegates<T>) {
   fsm.start();
 
   // XXX Remove again eventually
-  console.log(`
+  console.warn(`
   ________  ___________   __        _______  ___________  _______  ________   
  /"       )("     _   ") /""\\      /"      \\("     _   ")/"     "||"      "\\  
 (:   \\___/  )__/  \\\\__/ /    \\    |:        |)__/  \\\\__/(: ______)(.  ___  :) 
@@ -680,7 +680,7 @@ export class ManagedSocket<T extends BaseAuthResult> {
   get token(): T {
     const tok = this.fsm.context.token;
     if (tok === null) {
-      throw new Error(`Unexpected null token here`);
+      throw new Error("Unexpected null token here");
     }
     return tok as T;
   }
