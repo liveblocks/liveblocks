@@ -2180,15 +2180,15 @@ function makeCreateSocketDelegateForRoom(
   liveblocksServer: string,
   WebSocketPolyfill?: IWebSocket
 ) {
-  if (typeof window === "undefined" && WebSocketPolyfill === undefined) {
-    throw new Error(
-      "To use Liveblocks client in a non-dom environment, you need to provide a WebSocket polyfill."
-    );
-  }
-
-  const ws: IWebSocket = WebSocketPolyfill || WebSocket;
-
   return (richToken: RichToken): IWebSocketInstance => {
+    const ws: IWebSocket = WebSocketPolyfill || WebSocket;
+
+    if (typeof WebSocket === "undefined" && WebSocketPolyfill === undefined) {
+      throw new Error(
+        "To use Liveblocks client in a non-dom environment, you need to provide a WebSocket polyfill."
+      );
+    }
+
     const token = richToken.raw;
     return new ws(
       `${liveblocksServer}/?token=${token}&version=${
@@ -2207,14 +2207,14 @@ function makeAuthDelegateForRoom(
   fetchPolyfill?: typeof window.fetch
 ): () => Promise<RichToken> {
   if (authentication.type === "public") {
-    if (typeof window === "undefined" && fetchPolyfill === undefined) {
-      throw new Error(
-        "To use Liveblocks client in a non-dom environment with a publicApiKey, you need to provide a fetch polyfill."
-      );
-    }
+    return async () => {
+      if (typeof window === "undefined" && fetchPolyfill === undefined) {
+        throw new Error(
+          "To use Liveblocks client in a non-dom environment with a publicApiKey, you need to provide a fetch polyfill."
+        );
+      }
 
-    return () =>
-      fetchAuthEndpoint(
+      return fetchAuthEndpoint(
         fetchPolyfill || /* istanbul ignore next */ fetch,
         authentication.url,
         {
@@ -2222,19 +2222,21 @@ function makeAuthDelegateForRoom(
           publicApiKey: authentication.publicApiKey,
         }
       ).then(({ token }) => parseRoomAuthToken(token));
+    };
   }
 
   if (authentication.type === "private") {
-    if (typeof window === "undefined" && fetchPolyfill === undefined) {
-      throw new Error(
-        "To use Liveblocks client in a non-dom environment with a url as auth endpoint, you need to provide a fetch polyfill."
-      );
-    }
+    return async () => {
+      if (typeof window === "undefined" && fetchPolyfill === undefined) {
+        throw new Error(
+          "To use Liveblocks client in a non-dom environment with a url as auth endpoint, you need to provide a fetch polyfill."
+        );
+      }
 
-    return () =>
-      fetchAuthEndpoint(fetchPolyfill || fetch, authentication.url, {
+      return fetchAuthEndpoint(fetchPolyfill || fetch, authentication.url, {
         room: roomId,
       }).then(({ token }) => parseRoomAuthToken(token));
+    };
   }
 
   if (authentication.type === "custom") {
