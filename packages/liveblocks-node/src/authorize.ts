@@ -101,7 +101,7 @@ export async function authorize(
     };
   } catch (er) {
     return {
-      status: 403,
+      status: 503,
       body: 'Call to "https://api.liveblocks.io/v2/rooms/:roomId/authorize" failed. See "error" for more information.',
       error: er as Error | undefined,
     };
