@@ -1,4 +1,4 @@
-import { useWindowSize } from "@/utils";
+import { useWindowSize } from "../utils";
 import Confetti from "react-confetti";
 
 export default function Confettis() {

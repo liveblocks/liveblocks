@@ -1,6 +1,5 @@
-import { ready } from "../App";
-import React from "react";
-import Confettis from "../components/Confettis";
+import { ready } from "./App";
+import Confettis from "./components/Confettis";
 
 export default function Page() {
   if (!ready) {
