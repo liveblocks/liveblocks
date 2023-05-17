@@ -121,7 +121,7 @@ const BACKOFF_DELAYS_SLOW = [2000, 30000, 60000, 300000] as const;
  * must receive a PONG back within the next 2 seconds. If that doesn't happen,
  * this is interpreted as an implicit connection loss event.
  */
-const HEARTBEAT_INTERVAL = 5000; // XXX Beat like a mouse 🐭
+const HEARTBEAT_INTERVAL = 30000;
 const PONG_TIMEOUT = 2000;
 
 /**
@@ -379,10 +379,7 @@ function createStateMachine<T extends BaseAuthResult>(delegates: Delegates<T>) {
 
   const onSocketMessage = (event: IWebSocketMessageEvent) =>
     event.data === "pong"
-      ? undefined /* 
-    // XXX DISABLE PONG FOR TESTINGGGGGGGGGG ------------------------------------
-      fsm.send({ type: "PONG" })
-      */
+      ? fsm.send({ type: "PONG" })
       : onMessage.notify(event);
 
   function teardownSocket(socket: IWebSocketInstance | null) {
