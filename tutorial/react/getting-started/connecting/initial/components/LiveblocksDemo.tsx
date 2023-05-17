@@ -2,7 +2,7 @@ import Avatars from "../components/Avatars";
 import { RoomProvider } from "../liveblocks.real.config";
 import Connected from "../components/Connected";
 import { useRef } from "react";
-import Cursors from "@/components/Cursors";
+import Cursors from "./Cursors";
 
 export default function LiveblocksDemo() {
   const roomId = "{% ROOM_ID %}";
