@@ -25,6 +25,7 @@ type AuthorizeOptions = {
   groupIds?: string[];
 };
 
+/** @internal */
 type AllAuthorizeOptions = AuthorizeOptions & {
   liveblocksAuthorizeEndpoint?: string;
 };
@@ -73,7 +74,7 @@ export async function authorize(
     }
 
     const result = await fetch(
-      buildLiveblocksAuthorizeEndpoint(options as AllAuthorizeOptions, room),
+      buildLiveblocksAuthorizeEndpoint(options, room),
       {
         method: "POST",
         headers: {
