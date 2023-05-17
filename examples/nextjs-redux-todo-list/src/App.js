@@ -4,9 +4,9 @@ import { actions } from "@liveblocks/redux";
 import { addTodo, deleteTodo, setDraft } from "./store";
 import "./App.css";
 
-let roomId = "nextjs-redux-todo-list";
+let roomId = "redux-todo-list";
 
-overrideRoomId(roomId);
+overrideRoomId();
 
 function WhoIsHere() {
   const othersUsersCount = useSelector(
@@ -92,11 +92,11 @@ export default function App() {
  * This function is used when deploying an example on liveblocks.io.
  * You can ignore it completely if you run the example locally.
  */
-function useOverrideRoomId(roomId: string) {
-  const { query } = useRouter();
-  const overrideRoomId = useMemo(() => {
-    return query?.roomId ? `${roomId}-${query.roomId}` : roomId;
-  }, [query, roomId]);
+function overrideRoomId() {
+  const query = new URLSearchParams(window?.location?.search);
+  const roomIdSuffix = query.get("roomId");
 
-  return overrideRoomId;
+  if (roomIdSuffix) {
+    roomId = `${roomId}-${roomIdSuffix}`;
+  }
 }
