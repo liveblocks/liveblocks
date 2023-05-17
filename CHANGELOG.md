@@ -1,3 +1,9 @@
+# vNEXT (not released yet)
+
+### `@liveblocks/node`
+
+- Fix incorrect status code when Liveblocks server cannot be reached temporarily
+
 # v1.0.9
 
 ### `@liveblocks/client`
