@@ -10,17 +10,19 @@ import {
   onCanvasPointerMove,
   client,
   Shape,
-  State
+  State,
+  User
 } from "../src/store";
 import styles from "./app.module.css";
 
-let roomId = "redux-whiteboard";
+let roomId = "nextjs-redux-whiteboard";
 
 export default function MyApp() {
+  useOverrideRoomId("roomId");
   const shapes = useSelector((state: State) => state.shapes);
-  const isLoading = useSelector((state: State) => state.liveblocks.isStorageLoading);
+  const isLoading = useSelector((state: State) => state.liveblocks?.isStorageLoading);
   const selectedShape = useSelector((state: State) => state.selectedShape);
-  const others = useSelector((state: State) => state.liveblocks.others);
+  const others = useSelector((state: State) => state.liveblocks?.others);
 
   const dispatch = useDispatch();
 
@@ -67,7 +69,7 @@ export default function MyApp() {
           if (selectedShape === shapeId) {
             selectionColor = "blue";
           } else if (
-            others.some((user: any) => user.presence?.selectedShape === shapeId)
+            others?.some((user: User) => user.presence?.selectedShape === shapeId)
           ) {
             selectionColor = "green";
           }
@@ -136,7 +138,7 @@ const Rectangle: React.FC<RectangleProps> = ({ shape, selectionColor, id, transi
  * This function is used when deploying an example on liveblocks.io.
  * You can ignore it completely if you run the example locally.
  */
-function overrideRoomId(roomId: string) {
+function useOverrideRoomId(roomId: string) {
   const { query } = useRouter();
   const overrideRoomId = useMemo(() => {
     return query?.roomId ? `${roomId}-${query.roomId}` : roomId;
@@ -144,4 +146,3 @@ function overrideRoomId(roomId: string) {
 
   return overrideRoomId;
 }
-
