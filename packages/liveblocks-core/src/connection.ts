@@ -315,7 +315,12 @@ function createStateMachine<T extends BaseAuthResult>(delegates: Delegates<T>) {
   // Configure the @auth.* states
   //
   fsm
-    .addTransitions("@auth.backoff", { NAVIGATOR_ONLINE: "@auth.busy" })
+    .addTransitions("@auth.backoff", {
+      NAVIGATOR_ONLINE: {
+        target: "@auth.busy",
+        assign: { backoffDelay: LOW_DELAY },
+      },
+    })
     .addTimedTransition(
       "@auth.backoff",
       (ctx) => ctx.backoffDelay,
@@ -385,7 +390,10 @@ function createStateMachine<T extends BaseAuthResult>(delegates: Delegates<T>) {
 
   fsm
     .addTransitions("@connecting.backoff", {
-      NAVIGATOR_ONLINE: "@connecting.busy",
+      NAVIGATOR_ONLINE: {
+        target: "@connecting.busy",
+        assign: { backoffDelay: LOW_DELAY },
+      },
     })
     .addTimedTransition(
       "@connecting.backoff",
