@@ -400,6 +400,14 @@ function createStateMachine<T extends BaseAuthResult>(delegates: Delegates<T>) {
       "@connecting.busy",
 
       (ctx) => {
+        // XXX Remove this check? Should be an assumption we can make!
+        // XXX By the time we reach here, any existing socket on the context should have been cleaned up already!
+        if (ctx.socket) {
+          throw new Error(
+            "Oops! Old socket should already be cleaned up by the time this state is entered! You may have found an edge case. Please tell Vincent about this."
+          );
+        }
+
         //
         // Use the "connect" delegate to create the WebSocket connection (which
         // will initiate the connection), and set up all the necessary event
@@ -506,12 +514,6 @@ function createStateMachine<T extends BaseAuthResult>(delegates: Delegates<T>) {
 
   const noPongAction: Target<Context, Event | BuiltinEvent, State> = {
     target: "@connecting.busy",
-    assign: (ctx) => {
-      teardownSocket(ctx.socket);
-      return {
-        socket: null,
-      };
-    },
     effect: () => {
       // Log implicit connection loss and drop the current open socket
       console.warn(
@@ -521,6 +523,18 @@ function createStateMachine<T extends BaseAuthResult>(delegates: Delegates<T>) {
   };
 
   fsm
+    .onEnter("@ok.*", (ctx) => {
+      // Do nothing on entering...
+
+      // ...but when *leaving* OK state, always tear down the old socket. It's
+      // no longer valid.
+      return () => {
+        teardownSocket(ctx.socket);
+        (ctx as any).socket = null;
+        //   ^^^^^^ XXX Add support to the FSM to support changing the context when entering
+      };
+    })
+
     .addTimedTransition("@ok.awaiting-pong", PONG_TIMEOUT, noPongAction)
     .addTransitions("@ok.awaiting-pong", { PONG_TIMEOUT: noPongAction }) // Only needed for E2E testing application
 
