@@ -91,18 +91,18 @@ export async function authorize(
 
     if (!result.ok) {
       return {
-        status: 403,
+        status: 403 /* Unauthorized */,
         body: await result.text(),
       };
     }
 
     return {
-      status: 200,
+      status: 200 /* OK */,
       body: await result.text(),
     };
   } catch (er) {
     return {
-      status: 503,
+      status: 503 /* Service Unavailable */,
       body: 'Call to "https://api.liveblocks.io/v2/rooms/:roomId/authorize" failed. See "error" for more information.',
       error: er as Error | undefined,
     };
