@@ -3,9 +3,60 @@ openFile: "/Room.tsx"
 showFiles: ["/App.tsx", "/Room.tsx", "/liveblocks.config.ts"]
 ---
 
-words
+On the previous page we learned how to set up storage with an initial
+value—let’s learn how to modify storage by taking this and transforming it into
+a [collaborative form](/use-cases/collaborative-forms).
 
 ### Modifying storage
+
+[FLIP AND MENTION `storage` FIRST? SIMPLIFY?]
+
+To modify our conflict-free data storage, we can add the [`useMutation`][] hook.
+This hook works similarly to
+[`useCallback`](https://react.dev/reference/react/useCallback) from React,
+however it also gives you access to your _mutable storage_.
+
+```tsx
+const modifyStorage = useMutation(({ storage }) => {
+  // Modify storage here
+}, []);
+```
+
+`storage` in the code snippet above is a [`LiveObject`][] that contains the
+entire room’s storage, and corresponds to your `Storage` type in
+[liveblocks.config.ts][]. This is the current type:
+
+```ts
+type Storage = {
+  person: LiveObject<{
+    name: string;
+    age: number;
+  }>;
+};
+```
+
+To access a property under `storage`, such as `person`, we can use
+[`LiveObject.get`][].
+
+```ts
+// LiveObject<{ name: "Marie", age: 30"}>
+const person = storage.get("person");
+```
+
+And then because `person` itself is a [`LiveObject`][], we can set the value
+using [`LiveObject.set`][].
+
+```ts
+person.set("name", "Albert");
+
+// "Albert"
+console.log(person.get("name"));
+```
+
+On the previous page we defined our `Storage` type as a [`LiveObject`][] named
+`person`—you can see this in [liveblocks.config.ts][].
+
+Within this function, we can then use methods
 
 ```tsx
 // Add mutation
@@ -30,15 +81,19 @@ Using a LiveObject like this, instead of a regular JavaScript object, allows us
 to use its real-time features. For example multiple people can edit the
 properties of a LiveObject at the same time without overriding the whole object.
 
-<Banner title="Without suspense">
+<Banner title="Try it yourself" type="success">
+
+Think you’ve got it? Try adding a second input for `age`!
 
 </Banner>
 
 [`LiveObject`]: /docs/api-reference/liveblocks-client#LiveObject
+[`LiveObject.get`]: /docs/api-reference/liveblocks-client#LiveObject.get
+[`LiveObject.set`]: /docs/api-reference/liveblocks-client#LiveObject.set
 [`LiveList`]: /docs/api-reference/liveblocks-client#LiveList
 [`LiveMap`]: /docs/api-reference/liveblocks-client#LiveMap
 [`useStorage`]: /docs/api-reference/liveblocks-react#useStorage
-[`useCallback`]: /docs/api-reference/liveblocks-react#useCallback
+[`useMutation`]: /docs/api-reference/liveblocks-react#useMutation
 [liveblocks.config.ts]: #/liveblocks.config.ts
 [App.tsx]: #/App.tsx
 [Room.tsx]: #/Room.tsx

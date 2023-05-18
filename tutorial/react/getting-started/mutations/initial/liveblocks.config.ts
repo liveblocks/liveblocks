@@ -7,7 +7,6 @@ const client = createClient({
 
 type Presence = {};
 
-// Storage types
 type Storage = {
   person: LiveObject<{
     name: string;

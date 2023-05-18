@@ -73,7 +73,7 @@ returning its value, and automatically updating on real-time changes.
 const person = useStorage((root) => root.person);
 ```
 
-Each real-time data structure is converted to an immutable copy of its
+Each real-time data structure is converted to an _immutable copy_ of its
 JavaScript counterpart, so a `LiveObject` becomes a regular JavaScript object.
 We can implement this ourselves by adding the following code to [Room.tsx][]:
 
