@@ -1,4 +1,3 @@
-// import "..@/src/globals.css";/
 import "../src/globals.css";
 import React from "react";
 import { Provider } from "react-redux";

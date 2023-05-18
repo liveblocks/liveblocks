@@ -3,10 +3,6 @@ import { liveblocksEnhancer } from "@liveblocks/redux";
 import { TypedUseSelectorHook, useDispatch, useSelector } from "react-redux";
 import { configureStore, createSlice } from "@reduxjs/toolkit";
 
-let PUBLIC_KEY =
-  "pk_dev_CypBcZWgbJz8ATtq7xD36FC3CKAcwlAejqy3PzsWo0oYhrck1dxMGAOxCuGL0DIv";
-
-// overrideApiKey();
 const client = createClient({
   publicApiKey: process.env.NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY!,
 });

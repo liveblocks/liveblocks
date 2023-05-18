@@ -4,11 +4,8 @@
   "license": "Apache-2.0",
   "private": true,
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject",
-    "next-build": "next build",
+    "start": "next start",
+    "build": "next build",
     "dev": "next dev"
   },
   "dependencies": {
