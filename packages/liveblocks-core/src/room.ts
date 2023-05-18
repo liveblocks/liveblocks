@@ -1,5 +1,5 @@
 import type { Delegates, PublicConnectionStatus } from "./connection";
-import { ManagedSocket, UNAUTHORIZED } from "./connection";
+import { ManagedSocket, UnauthorizedError } from "./connection";
 import type { ApplyResult, ManagedPool } from "./crdts/AbstractCrdt";
 import { OpSource } from "./crdts/AbstractCrdt";
 import {
@@ -2276,7 +2276,7 @@ async function fetchAuthEndpoint(
     if (res.status === 401 || res.status === 403) {
       // Throw a special symbol, which the connection manager will recognize
       // and understand that retrying will have no effect
-      throw UNAUTHORIZED;
+      throw new UnauthorizedError(await res.text());
     } else {
       throw new AuthenticationError(
         `Expected a status 200 but got ${res.status} when doing a POST request on "${endpoint}"`
