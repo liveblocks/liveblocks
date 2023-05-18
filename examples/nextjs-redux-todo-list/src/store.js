@@ -17,6 +17,24 @@ const client = createClient({
   publicApiKey: PUBLIC_KEY,
 });
 
+type LiveblocksState = {
+  others: User[],
+  isStorageLoading: boolean,
+};
+
+export type State = {
+  liveblocks: LiveblocksState | null,
+  shapes: Record<string, Shape>,
+  selectedShape: string | null,
+  isDragging: boolean,
+};
+
+const initialState: State = {
+  liveblocks: null,
+  shapes: {},
+  selectedShape: null,
+  isDragging: false,
+};
 const initialState = {
   todos: [],
   draft: "",

@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { actions } from "@liveblocks/redux";
-import { addTodo, deleteTodo, setDraft } from "../src/store";
+import { addTodo, deleteTodo, setDraft, State } from "../src/store";
 import "./App.css";
 
 let roomId = "nextjs-redux-todo-list";
@@ -10,7 +10,7 @@ overrideRoomId(roomId);
 
 function WhoIsHere() {
   const othersUsersCount = useSelector(
-    (state) => state.liveblocks.others.length
+    (state: State) => state.liveblocks?.others.length
   );
 
   return (
@@ -21,8 +21,8 @@ function WhoIsHere() {
 }
 
 function SomeoneIsTyping() {
-  const someoneIsTyping = useSelector((state) =>
-    state.liveblocks.others.some((user) => user.presence?.isTyping)
+  const someoneIsTyping = useSelector((state: State) =>
+    state.liveblocks?.others.some((user) => user.presence?.isTyping)
   );
 
   return someoneIsTyping ? (
@@ -31,16 +31,12 @@ function SomeoneIsTyping() {
 }
 
 export default function App() {
-  const todos = useSelector((state) => state.todos);
-  const draft = useSelector((state) => state.draft);
+  const todos = useSelector((state:State) => state.todos);
+  const draft = useSelector((state:State) => state.draft);
   const dispatch = useDispatch();
 
   useEffect(() => {
-    dispatch(
-      actions.enterRoom(roomId, {
-        todos: [],
-      })
-    );
+    dispatch(actions.enterRoom(roomId));
 
     return () => {
       dispatch(actions.leaveRoom(roomId));
@@ -92,11 +88,13 @@ export default function App() {
  * This function is used when deploying an example on liveblocks.io.
  * You can ignore it completely if you run the example locally.
  */
-function useOverrideRoomId(roomId: string) {
-  const { query } = useRouter();
-  const overrideRoomId = useMemo(() => {
-    return query?.roomId ? `${roomId}-${query.roomId}` : roomId;
-  }, [query, roomId]);
-
-  return overrideRoomId;
+function overrideRoomId() {
+  if (typeof window === "undefined") {
+    return;
+  }
+  const query = new URLSearchParams(window.location?.search);
+  const roomIdSuffix = query.get("roomId");
+  if (roomIdSuffix) {
+    roomId = `${roomId}-${roomIdSuffix}`;
+  }
 }
