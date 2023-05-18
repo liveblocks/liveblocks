@@ -1,8 +1,14 @@
 import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { actions } from "@liveblocks/redux";
-import { addTodo, deleteTodo, setDraft, State } from "../src/store";
-import "./App.module.css";
+import {
+  addTodo,
+  deleteTodo,
+  setDraft,
+  State,
+  useAppDispatch,
+  useAppSelector,
+} from "../src/store";
 
 let roomId = "nextjs-redux-todo-list";
 
@@ -30,10 +36,10 @@ function SomeoneIsTyping() {
   ) : null;
 }
 
-export default function App() {
-  const todos = useSelector((state: State) => state.todos);
-  const draft = useSelector((state: State) => state.draft);
-  const dispatch = useDispatch();
+export default function TodoApp() {
+  const todos = useAppSelector((state) => state.todos);
+  const draft = useAppSelector((state) => state.draft);
+  const dispatch = useAppDispatch();
 
   useEffect(() => {
     dispatch(actions.enterRoom(roomId));

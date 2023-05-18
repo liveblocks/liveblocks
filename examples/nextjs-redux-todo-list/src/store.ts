@@ -3,33 +3,18 @@ import { liveblocksEnhancer } from "@liveblocks/redux";
 import { TypedUseSelectorHook, useDispatch, useSelector } from "react-redux";
 import { configureStore, createSlice } from "@reduxjs/toolkit";
 
-let PUBLIC_KEY = "pk_YOUR_PUBLIC_KEY";
+let PUBLIC_KEY =
+  "pk_dev_CypBcZWgbJz8ATtq7xD36FC3CKAcwlAejqy3PzsWo0oYhrck1dxMGAOxCuGL0DIv";
 
-overrideApiKey();
-
-if (!/^pk_(live|test)/.test(PUBLIC_KEY)) {
-  console.warn(
-    `Replace "${PUBLIC_KEY}" by your public key from https://liveblocks.io/dashboard/apikeys.\n` +
-      `Learn more: https://github.com/liveblocks/liveblocks/tree/main/examples/redux-todo-list#getting-started.`
-  );
-}
-
+// overrideApiKey();
 const client = createClient({
-  publicApiKey: PUBLIC_KEY,
+  publicApiKey: process.env.NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY!,
 });
 
 export type User = {
   presence?: {
     isTyping: boolean;
   };
-};
-
-type Presence = {
-  isTyping: boolean;
-};
-
-type Storage = {
-  todos: LiveList<LiveObject<Todo>>;
 };
 
 type Todo = {
@@ -98,16 +83,3 @@ export const useAppDispatch: DispatchFunc = useDispatch; // Export a hook that c
 export const useAppSelector: TypedUseSelectorHook<State> = useSelector;
 
 export default store;
-
-/**
- * This function is used when deploying an example on liveblocks.io.
- * You can ignore it completely if you run the example locally.
- */
-function overrideApiKey() {
-  const query = new URLSearchParams(window?.location?.search);
-  const apiKey = query.get("apiKey");
-
-  if (apiKey) {
-    PUBLIC_KEY = apiKey;
-  }
-}
