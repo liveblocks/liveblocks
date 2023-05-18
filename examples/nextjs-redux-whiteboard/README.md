@@ -21,7 +21,7 @@
 </p>
 
 This example shows how to build a collaborative whiteboard with
-[Liveblocks](https://liveblocks.io), [React](https://reactjs.org/) and
+[Liveblocks](https://liveblocks.io), [Next.js](https://nextjs.org/) and
 [Redux](https://redux-toolkit.js.org/).
 
 <img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/whiteboard.png" width="536" alt="Collaborative Whiteboard" />
@@ -52,7 +52,7 @@ Alternatively, you can set up your project manually:
 - Install all dependencies with `npm install`
 - Create an account on [liveblocks.io](https://liveblocks.io/dashboard)
 - Copy your **public** key from the [dashboard](https://liveblocks.io/dashboard/apikeys)
-- - Create a`.env.local` file and add your **public** key as the
+- Create a`.env.local` file and add your **public** key as the
   `NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY` environment variable
 - Run `npm run dev` and open `http://localhost:3000` in your browser
 

@@ -15,10 +15,10 @@ import {
 } from "../src/store";
 import styles from "./app.module.css";
 
-let roomId = "nextjs-redux-whiteboard";
+let roomId = "redux-whiteboard";
+useOverrideRoomId();
 
 export default function MyApp() {
-  useOverrideRoomId("roomId");
   const shapes = useSelector((state: State) => state.shapes);
   const isLoading = useSelector((state: State) => state.liveblocks?.isStorageLoading);
   const selectedShape = useSelector((state: State) => state.selectedShape);
@@ -138,11 +138,15 @@ const Rectangle: React.FC<RectangleProps> = ({ shape, selectionColor, id, transi
  * This function is used when deploying an example on liveblocks.io.
  * You can ignore it completely if you run the example locally.
  */
-function useOverrideRoomId(roomId: string) {
-  const { query } = useRouter();
-  const overrideRoomId = useMemo(() => {
-    return query?.roomId ? `${roomId}-${query.roomId}` : roomId;
-  }, [query, roomId]);
+function overrideRoomId() {
+  if (typeof window === "undefined") {
+    return;
+  }
 
-  return overrideRoomId;
+  const query = new URLSearchParams(window.location?.search);
+  const roomIdSuffix = query.get("roomId");
+
+  if (roomIdSuffix) {
+    roomId = `${roomId}-${roomIdSuffix}`;
+  }
 }
