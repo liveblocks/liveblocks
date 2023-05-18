@@ -1,17 +1,19 @@
 ---
 openFile: "/Room.tsx"
-showFiles: [
-  "/App.tsx",
-  "/Room.tsx",
-  "/liveblocks.config.ts",
-]
+showFiles: ["/App.tsx", "/Room.tsx", "/liveblocks.config.ts"]
 ---
 
-On the previous page we learned to set up presence with an initial value of `{ cursor: null }`—let’s take this and turn it into [real-time cursors](/examples/live-cursors).
+On the previous page we learned to set up presence with an initial value of
+`{ cursor: null }`—let’s learn how to update presence by taking this and turning
+it into [real-time cursors](/examples/live-cursors).
 
 ### Updating
 
-To get cursor location we can use browser [`PointerEvents`](https://developer.mozilla.org/en-US/docs/Web/API/Pointer_events). Switch to [Room.tsx][] and add a function for `onPointerMove` that gets your cursor location using `clientX/clientY` and updates your current presence with the value.
+To get cursor location we can use browser
+[`PointerEvents`](https://developer.mozilla.org/en-US/docs/Web/API/Pointer_events).
+Switch to [Room.tsx][] and add a function for `onPointerMove` that gets your
+cursor location using `clientX/clientY` and updates your current presence with
+the value.
 
 ```tsx
 // Update cursor coordinates on pointer move
@@ -23,11 +25,15 @@ function handlePointerMove(e) {
 
 <Banner title="updateMyPresence">
 
-Note that while [`updateMyPresence`][] is different to a [`useState`](https://react.dev/reference/react/useState) set function. [`updateMyPresence`][] does not replace the entire presence object—instead it just updates the given properties.
+Note that while [`updateMyPresence`][] is different to a
+[`useState`](https://react.dev/reference/react/useState) set function.
+[`updateMyPresence`][] does not replace the entire presence object—instead it
+just updates the given properties.
 
 </Banner>
 
-Next, create a function for `onPointerLeave` that sets the `cursor` value to `null`.
+Next, create a function for `onPointerLeave` that sets the `cursor` value to
+`null`.
 
 ```tsx
 // Set cursor to null on pointer leave
@@ -36,7 +42,8 @@ function handlePointerLeave(e) {
 }
 ```
 
-And finally, make sure that our `div` element spans the screen, add the two events.
+And finally, make sure that our `div` element spans the screen, add the two
+events.
 
 ```tsx highlight="3-5"
 return (
@@ -50,12 +57,13 @@ return (
 );
 ```
 
-If you hover over a preview window, you’ll now see the coordinates of your cursor, taken from `myPresence`! On the next page we’ll use this to render the cursors.
+If you hover over a preview window, you’ll now see the coordinates of your
+cursor, taken from `myPresence`! On the next page we’ll use this to render the
+cursors.
 
 [`RoomProvider`]: /docs/api-reference/liveblocks-react#RoomProvider
 [`useMyPresence`]: /docs/api-reference/liveblocks-react#useMyPresence
 [`updateMyPresence`]: /docs/api-reference/liveblocks-react#useMyPresence
-
 [liveblocks.config.ts]: #/liveblocks.config.ts
 [App.tsx]: #/App.tsx
 [Room.tsx]: #/Room.tsx
