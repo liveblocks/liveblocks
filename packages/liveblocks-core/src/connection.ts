@@ -85,7 +85,7 @@ type State =
  * the connection manager, but its value will not be interpreted, so it can be
  * any object value.
  */
-type BaseAuthResult = Record<string, unknown>;
+export type BaseAuthResult = Record<string, unknown>;
 
 type Context = {
   /**
