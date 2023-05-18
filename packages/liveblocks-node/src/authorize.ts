@@ -89,17 +89,24 @@ export async function authorize(
       }
     );
 
-    if (!result.ok) {
+    if (result.ok) {
+      return {
+        status: 200 /* OK */,
+        body: await result.text(),
+      };
+    }
+
+    if (result.status >= 500) {
+      return {
+        status: 503 /* Service Unavailable */,
+        body: await result.text(),
+      };
+    } else {
       return {
         status: 403 /* Unauthorized */,
         body: await result.text(),
       };
     }
-
-    return {
-      status: 200 /* OK */,
-      body: await result.text(),
-    };
   } catch (er) {
     return {
       status: 503 /* Service Unavailable */,
