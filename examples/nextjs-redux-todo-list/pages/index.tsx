@@ -2,11 +2,11 @@ import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { actions } from "@liveblocks/redux";
 import { addTodo, deleteTodo, setDraft, State } from "../src/store";
-import "./App.css";
+import "./App.module.css";
 
 let roomId = "nextjs-redux-todo-list";
 
-overrideRoomId(roomId);
+overrideRoomId();
 
 function WhoIsHere() {
   const othersUsersCount = useSelector(
@@ -31,8 +31,8 @@ function SomeoneIsTyping() {
 }
 
 export default function App() {
-  const todos = useSelector((state:State) => state.todos);
-  const draft = useSelector((state:State) => state.draft);
+  const todos = useSelector((state: State) => state.todos);
+  const draft = useSelector((state: State) => state.draft);
   const dispatch = useDispatch();
 
   useEffect(() => {

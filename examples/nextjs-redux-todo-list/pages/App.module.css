@@ -1,4 +1,4 @@
-body {
+.body {
   background-color: rgb(243, 243, 243);
 }
 
@@ -12,7 +12,7 @@ body {
   max-width: 28rem;
 }
 
-input {
+.input {
   appearance: none;
   box-sizing: border-box;
   padding: 0.5rem 0.875rem;
@@ -27,12 +27,12 @@ input {
   font-size: 16px;
 }
 
-input:hover {
+.input:hover {
   box-shadow: 0 0 #000, 0 0 #000, 0 0 #000, 0 0 #000,
     0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
 }
 
-input:focus {
+.input:focus {
   outline: none;
 }
 

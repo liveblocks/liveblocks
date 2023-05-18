@@ -1,5 +1,6 @@
-import { createClient } from "@liveblocks/client";
+import { createClient, LiveList, LiveObject } from "@liveblocks/client";
 import { liveblocksEnhancer } from "@liveblocks/redux";
+import { TypedUseSelectorHook, useDispatch, useSelector } from "react-redux";
 import { configureStore, createSlice } from "@reduxjs/toolkit";
 
 let PUBLIC_KEY = "pk_YOUR_PUBLIC_KEY";
@@ -17,25 +18,39 @@ const client = createClient({
   publicApiKey: PUBLIC_KEY,
 });
 
+export type User = {
+  presence?: {
+    isTyping: boolean;
+  };
+};
+
+type Presence = {
+  isTyping: boolean;
+};
+
+type Storage = {
+  todos: LiveList<LiveObject<Todo>>;
+};
+
+type Todo = {
+  text: string;
+  checked?: boolean;
+};
+
 type LiveblocksState = {
-  others: User[],
-  isStorageLoading: boolean,
+  others: User[];
+  isStorageLoading: boolean;
 };
 
 export type State = {
-  liveblocks: LiveblocksState | null,
-  shapes: Record<string, Shape>,
-  selectedShape: string | null,
-  isDragging: boolean,
+  liveblocks: LiveblocksState | null;
+  todos: Todo[];
+  draft: string;
+  isTyping: boolean;
 };
 
 const initialState: State = {
   liveblocks: null,
-  shapes: {},
-  selectedShape: null,
-  isDragging: false,
-};
-const initialState = {
   todos: [],
   draft: "",
   isTyping: false,
@@ -66,7 +81,7 @@ export function makeStore() {
   return configureStore({
     reducer: slice.reducer,
     enhancers: [
-      liveblocksEnhancer({
+      liveblocksEnhancer<State>({
         client,
         storageMapping: { todos: true },
         presenceMapping: { isTyping: true },
@@ -76,6 +91,11 @@ export function makeStore() {
 }
 
 const store = makeStore();
+
+export type AppDispatch = typeof store.dispatch;
+type DispatchFunc = () => AppDispatch;
+export const useAppDispatch: DispatchFunc = useDispatch; // Export a hook that can be reused to resolve types
+export const useAppSelector: TypedUseSelectorHook<State> = useSelector;
 
 export default store;
 
