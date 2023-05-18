@@ -1,6 +1,7 @@
 import { createClient} from "@liveblocks/client";
 import { liveblocksEnhancer } from "@liveblocks/redux";
 import { configureStore, createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { TypedUseSelectorHook, useDispatch, useSelector } from "react-redux";
 
 export const client = createClient({
   publicApiKey: process.env.NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY!,
@@ -105,5 +106,10 @@ export function makeStore() {
 }
 
 const store = makeStore();
+
+export type AppDispatch = typeof store.dispatch;
+type DispatchFunc = () => AppDispatch;
+export const useAppDispatch: DispatchFunc = useDispatch; // Export a hook that can be reused to resolve types
+export const useAppSelector : TypedUseSelectorHook<State> = useSelector;
 
 export default store;

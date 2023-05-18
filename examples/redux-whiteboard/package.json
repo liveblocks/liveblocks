@@ -1,13 +1,12 @@
 {
   "name": "@liveblocks/redux-whiteboard",
-  "description": "This example shows how to build a collaborative whiteboard with Liveblocks, React and Redux.",
+  "description": "This example shows how to build a collaborative whiteboard with Liveblocks, Next.js and Redux.",
   "license": "Apache-2.0",
   "private": true,
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "start": "next start",
+    "build": "next build",
+    "dev": "next dev"
   },
   "dependencies": {
     "@liveblocks/client": "^1.0.0",
@@ -17,21 +16,15 @@
     "react-dom": "^18.1.0",
     "react-redux": "^8.0.2",
     "react-scripts": "^5.0.1",
-    "redux": "^4.1.2"
-  },
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
+    "redux": "^4.1.2",
+    "next": "^12.1.6"
   },
   "devDependencies": {
-    "prettier": "^2.6.2"
+    "prettier": "^2.6.2",
+    "@types/react-dom": "^18.0.6",
+    "@types/node": "^16.10.1",
+    "@types/react": "18.0.27",
+    "@types/recharts": "^1.8.24",
+    "typescript": "^4.6.4"
   }
 }

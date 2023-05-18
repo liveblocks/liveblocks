@@ -1,6 +1,5 @@
-import { useEffect, useMemo } from "react";
-import { useRouter } from "next/router";
-import { useDispatch, useSelector } from "react-redux";
+import { useEffect} from "react";
+import { useDispatch} from "react-redux";
 import { actions } from "@liveblocks/redux";
 import {
   insertRectangle,
@@ -10,21 +9,20 @@ import {
   onCanvasPointerMove,
   client,
   Shape,
-  State,
-  User
+  User, useAppDispatch, useAppSelector
 } from "../src/store";
 import styles from "./app.module.css";
 
 let roomId = "redux-whiteboard";
-useOverrideRoomId();
+overrideRoomId();
 
 export default function MyApp() {
-  const shapes = useSelector((state: State) => state.shapes);
-  const isLoading = useSelector((state: State) => state.liveblocks?.isStorageLoading);
-  const selectedShape = useSelector((state: State) => state.selectedShape);
-  const others = useSelector((state: State) => state.liveblocks?.others);
+  const shapes = useAppSelector((state) => state.shapes);
+  const isLoading = useAppSelector((state) => state.liveblocks?.isStorageLoading);
+  const selectedShape = useAppSelector((state) => state.selectedShape);
+  const others = useAppSelector((state) => state.liveblocks?.others);
 
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
 
   useEffect(() => {
     dispatch(
