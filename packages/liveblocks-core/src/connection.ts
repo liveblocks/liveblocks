@@ -677,7 +677,7 @@ export class ManagedSocket<T extends BaseAuthResult> {
   get token(): T {
     const tok = this.fsm.context.token;
     if (tok === null) {
-      throw new Error(`Unexpected null token here`);
+      throw new Error("Unexpected null token here");
     }
     return tok as T;
   }
