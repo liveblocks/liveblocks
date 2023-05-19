@@ -53,6 +53,7 @@ export type AsyncCache<TData = any, TError = any> = {
     key: string,
     callback: Callback<AsyncState<TData, TError>>
   ): UnsubscribeCallback;
+  clear(): void;
 };
 
 const noop = () => {};
@@ -167,11 +168,16 @@ export function createAsyncCache<TData = any, TError = any>(
     return cache.get(key)?.subscribe(callback) ?? noop;
   }
 
+  function clear() {
+    cache.clear();
+  }
+
   return {
     create,
     get,
     getState,
     revalidate,
     subscribe,
+    clear,
   };
 }

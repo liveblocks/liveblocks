@@ -181,6 +181,23 @@ describe("AsyncCache", () => {
     expect(subscribeCallback).not.toHaveBeenCalled();
   });
 
+  test("clearing the cache", async () => {
+    const asyncFunction = jest.fn(async (key: string) => {
+      await sleep(REQUEST_DELAY);
+
+      return key;
+    });
+    const asyncCache = createAsyncCache(asyncFunction);
+
+    await asyncCache.get(KEY_ABC);
+
+    asyncCache.clear();
+
+    await asyncCache.get(KEY_ABC);
+
+    expect(asyncFunction).toHaveBeenCalledTimes(2);
+  });
+
   test("statuses", async () => {
     let index = 0;
     const asyncFunction = jest.fn(async () => {
