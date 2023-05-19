@@ -1,4 +1,4 @@
-import { createClient} from "@liveblocks/client";
+import { createClient } from "@liveblocks/client";
 import { liveblocksEnhancer } from "@liveblocks/redux";
 import { configureStore, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { TypedUseSelectorHook, useDispatch, useSelector } from "react-redux";
@@ -21,28 +21,28 @@ export type Shape = {
   x: number;
   y: number;
   fill: string;
-}
+};
 
 export type User = {
-    presence?: {
-      selectedShape: string | null;
-    }
-}
+  presence?: {
+    selectedShape: string | null;
+  };
+};
 
 type LiveblocksState = {
   others: User[];
   isStorageLoading: boolean;
-}
+};
 
 export type State = {
-  liveblocks: LiveblocksState| null;
+  liveblocks: LiveblocksState | null;
   shapes: Record<string, Shape>;
   selectedShape: string | null;
   isDragging: boolean;
-}
+};
 
 const initialState: State = {
-  liveblocks:null,
+  liveblocks: null,
   shapes: {},
   selectedShape: null,
   isDragging: false,
@@ -75,7 +75,10 @@ const slice = createSlice({
     onCanvasPointerUp: (state) => {
       state.isDragging = false;
     },
-    onCanvasPointerMove: (state, action: PayloadAction<{ x: number; y: number }>) => {
+    onCanvasPointerMove: (
+      state,
+      action: PayloadAction<{ x: number; y: number }>
+    ) => {
       if (state.isDragging && state.selectedShape) {
         state.shapes[state.selectedShape].x = action.payload.x - 50;
         state.shapes[state.selectedShape].y = action.payload.y - 50;
@@ -110,6 +113,6 @@ const store = makeStore();
 export type AppDispatch = typeof store.dispatch;
 type DispatchFunc = () => AppDispatch;
 export const useAppDispatch: DispatchFunc = useDispatch; // Export a hook that can be reused to resolve types
-export const useAppSelector : TypedUseSelectorHook<State> = useSelector;
+export const useAppSelector: TypedUseSelectorHook<State> = useSelector;
 
 export default store;

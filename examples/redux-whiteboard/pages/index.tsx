@@ -1,5 +1,5 @@
-import { useEffect} from "react";
-import { useDispatch} from "react-redux";
+import { useEffect } from "react";
+import { useDispatch } from "react-redux";
 import { actions } from "@liveblocks/redux";
 import {
   insertRectangle,
@@ -9,7 +9,9 @@ import {
   onCanvasPointerMove,
   client,
   Shape,
-  User, useAppDispatch, useAppSelector
+  User,
+  useAppDispatch,
+  useAppSelector,
 } from "../src/store";
 import styles from "./app.module.css";
 
@@ -18,16 +20,16 @@ overrideRoomId();
 
 export default function MyApp() {
   const shapes = useAppSelector((state) => state.shapes);
-  const isLoading = useAppSelector((state) => state.liveblocks?.isStorageLoading);
+  const isLoading = useAppSelector(
+    (state) => state.liveblocks?.isStorageLoading
+  );
   const selectedShape = useAppSelector((state) => state.selectedShape);
   const others = useAppSelector((state) => state.liveblocks?.others);
 
   const dispatch = useAppDispatch();
 
   useEffect(() => {
-    dispatch(
-      actions.enterRoom(roomId)
-    );
+    dispatch(actions.enterRoom(roomId));
 
     return () => {
       dispatch(actions.leaveRoom(roomId));
@@ -67,7 +69,9 @@ export default function MyApp() {
           if (selectedShape === shapeId) {
             selectionColor = "blue";
           } else if (
-            others?.some((user: User) => user.presence?.selectedShape === shapeId)
+            others?.some(
+              (user: User) => user.presence?.selectedShape === shapeId
+            )
           ) {
             selectionColor = "green";
           }
@@ -84,21 +88,23 @@ export default function MyApp() {
         })}
       </div>
       {client && roomId && (
-      <div className={styles.toolbar}>
-        <button onClick={() => dispatch(insertRectangle())}>Rectangle</button>
-        <button
-          onClick={() => dispatch(deleteShape())}
-          disabled={selectedShape == null}
-        >
-          Delete
-        </button>
+        <div className={styles.toolbar}>
+          <button onClick={() => dispatch(insertRectangle())}>Rectangle</button>
+          <button
+            onClick={() => dispatch(deleteShape())}
+            disabled={selectedShape == null}
+          >
+            Delete
+          </button>
 
-  <button onClick={() => client.getRoom(roomId)?.history.undo()}>Undo</button>
+          <button onClick={() => client.getRoom(roomId)?.history.undo()}>
+            Undo
+          </button>
 
-        <button onClick={() => client.getRoom(roomId)?.history.redo()}>
-          Redo
-        </button>
-      </div>
+          <button onClick={() => client.getRoom(roomId)?.history.redo()}>
+            Redo
+          </button>
+        </div>
       )}
     </>
   );
@@ -111,7 +117,12 @@ interface RectangleProps {
   transition: boolean;
 }
 
-const Rectangle: React.FC<RectangleProps> = ({ shape, selectionColor, id, transition }) => {
+const Rectangle: React.FC<RectangleProps> = ({
+  shape,
+  selectionColor,
+  id,
+  transition,
+}) => {
   const dispatch = useDispatch();
 
   return (
