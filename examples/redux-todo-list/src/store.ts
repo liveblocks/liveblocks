@@ -1,4 +1,4 @@
-import { createClient, LiveList, LiveObject } from "@liveblocks/client";
+import { createClient } from "@liveblocks/client";
 import { liveblocksEnhancer } from "@liveblocks/redux";
 import { TypedUseSelectorHook, useDispatch, useSelector } from "react-redux";
 import { configureStore, createSlice } from "@reduxjs/toolkit";
