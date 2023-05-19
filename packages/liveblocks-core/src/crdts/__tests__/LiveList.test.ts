@@ -612,7 +612,7 @@ describe("LiveList", () => {
 
   describe("batch", () => {
     it("batch multiple inserts", async () => {
-      const { storage, expectStorage, assertUndoRedo, batch } =
+      const { room, storage, expectStorage, assertUndoRedo } =
         await prepareStorageTest<{
           items: LiveList<string>;
         }>(
@@ -627,7 +627,7 @@ describe("LiveList", () => {
 
       expectStorage({ items: [] });
 
-      batch(() => {
+      room.batch(() => {
         items.push("A");
         items.push("B");
       });
@@ -1132,7 +1132,7 @@ describe("LiveList", () => {
 
   describe("subscriptions", () => {
     test("batch multiple actions", async () => {
-      const { room, storage, batch, expectStorage } = await prepareStorageTest<{
+      const { room, storage, expectStorage } = await prepareStorageTest<{
         items: LiveList<string>;
       }>(
         [
@@ -1149,7 +1149,7 @@ describe("LiveList", () => {
       const root = storage.root;
       const liveList = root.get("items");
 
-      batch(() => {
+      room.batch(() => {
         liveList.push("b");
         liveList.push("c");
       });
@@ -1170,7 +1170,7 @@ describe("LiveList", () => {
     });
 
     test("batch multiple inserts", async () => {
-      const { room, storage, batch, expectStorage } = await prepareStorageTest<{
+      const { room, storage, expectStorage } = await prepareStorageTest<{
         items: LiveList<string>;
       }>(
         [
@@ -1187,7 +1187,7 @@ describe("LiveList", () => {
       const root = storage.root;
       const liveList = root.get("items");
 
-      batch(() => {
+      room.batch(() => {
         liveList.insert("b", 1);
         liveList.insert("c", 2);
       });

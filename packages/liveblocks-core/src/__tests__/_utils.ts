@@ -255,8 +255,6 @@ export async function prepareIsolatedStorageTest<TStorage extends LsonObject>(
   return {
     root: storage.root,
     room,
-    undo: room.history.undo,
-    redo: room.history.redo,
     ws,
     expectStorage: (data: ToImmutable<TStorage>) =>
       expect(storage.root.toImmutable()).toEqual(data),
@@ -429,12 +427,6 @@ export async function prepareStorageTest<
     refStorage,
     expectStorage,
     assertUndoRedo,
-    updatePresence: room.updatePresence,
-    batch: room.batch,
-    undo: room.history.undo,
-    redo: room.history.redo,
-    canUndo: room.history.canUndo,
-    canRedo: room.history.canRedo,
     applyRemoteOperations: (ops: Op[]) =>
       room.__internal.send.incomingMessage(
         serverMessage({
@@ -458,9 +450,8 @@ export async function prepareStorageUpdateTest<
 >(
   items: IdTuple<SerializedCrdt>[]
 ): Promise<{
-  batch: (fn: () => void) => void;
-  root: LiveObject<TStorage>;
   room: Room<TPresence, TStorage, TUserMeta, TRoomEvent>;
+  root: LiveObject<TStorage>;
   expectUpdates: (updates: JsonStorageUpdate[][]) => void;
 }> {
   const { room: refRoom } = await prepareRoomWithStorage(items, -1);
@@ -504,9 +495,8 @@ export async function prepareStorageUpdateTest<
   }
 
   return {
-    batch: room.batch,
-    root: storage.root,
     room,
+    root: storage.root,
     expectUpdates: expectUpdatesInBothClients,
   };
 }
@@ -522,9 +512,8 @@ export async function prepareDisconnectedStorageUpdateTest<
 >(
   items: IdTuple<SerializedCrdt>[]
 ): Promise<{
-  batch: (fn: () => void) => void;
-  root: LiveObject<TStorage>;
   room: Room<TPresence, TStorage, TUserMeta, TRoomEvent>;
+  root: LiveObject<TStorage>;
   expectUpdates: (updates: JsonStorageUpdate[][]) => void;
 }> {
   const { storage, room } = await prepareRoomWithStorage<
@@ -547,9 +536,8 @@ export async function prepareDisconnectedStorageUpdateTest<
   }
 
   return {
-    batch: room.batch,
-    root: storage.root,
     room,
+    root: storage.root,
     expectUpdates,
   };
 }
