@@ -408,9 +408,7 @@ function createStateMachine<T extends BaseAuthResult>(delegates: Delegates<T>) {
         //
         // Use the "connect" delegate to create the WebSocket connection (which
         // will initiate the connection), and set up all the necessary event
-        // listeners, then wait until the 'open' event has fired. If this
-        // happens, we know we have a WebSocket instance in OPEN state that is
-        // ready to use.
+        // listeners, then wait until the 'open' event has fired.
         //
         const promise = new Promise<IWebSocketInstance>((resolve, reject) => {
           if (ctx.token === null) {
@@ -418,21 +416,26 @@ function createStateMachine<T extends BaseAuthResult>(delegates: Delegates<T>) {
           }
 
           /**
-           * Create the WebSocket, and set up a few event listeners once. The
-           * trick being used here is this:
+           * Instantiate the WebSocket, and set up event listeners.
            *
-           * XXX EXPLAIN THIS SETUP, and also explain why we won't have to
-           * remove the event listeners.
+           * The `error` and `close` event handlers marked (*) are installed
+           * here only temporarily, just to handle this promise-based state.
+           * When those get triggered, we reject this promise.
+           *
+           * When an "open" event happens, we're OK and ready to let the
+           * Promise succeed, and move to the OK state. Before that happens, we
+           * attach the _actual_, more permanent event listeners that will
+           * outlive this state and be used in the OK state mostly.
            */
           const socket = delegates.createSocket(ctx.token as T);
 
           // Part 1: used to "promisify" the socket, so we will resolve when
           // the connection opens, but reject if the connection does not.
-          socket.addEventListener("error", reject);
-          socket.addEventListener("close", reject);
+          socket.addEventListener("error", reject); // (*)
+          socket.addEventListener("close", reject); // (*)
           socket.addEventListener("open", () => {
-            socket.removeEventListener("error", reject);
-            socket.removeEventListener("close", reject);
+            socket.removeEventListener("error", reject); // Remove (*)
+            socket.removeEventListener("close", reject); // Remove (*)
 
             // Part 2: set up the _actual_ event listeners, which can be
             // externally observed.
