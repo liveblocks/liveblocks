@@ -405,14 +405,6 @@ function createStateMachine<T extends BaseAuthResult>(delegates: Delegates<T>) {
       "@connecting.busy",
 
       (ctx) => {
-        // XXX Remove this check? Should be an assumption we can make!
-        // XXX By the time we reach here, any existing socket on the context should have been cleaned up already!
-        if (ctx.socket) {
-          throw new Error(
-            "Oops! Old socket should already be cleaned up by the time this state is entered! You may have found an edge case. Please tell Vincent about this."
-          );
-        }
-
         //
         // Use the "connect" delegate to create the WebSocket connection (which
         // will initiate the connection), and set up all the necessary event
@@ -477,12 +469,6 @@ function createStateMachine<T extends BaseAuthResult>(delegates: Delegates<T>) {
         ({
           target: "@auth.backoff",
           assign: (ctx) => {
-            // XXX Remove this check
-            if (ctx.socket) {
-              throw new Error(
-                "Oops! This is unexpected! You may have found an edge case. Please tell Vincent about this."
-              );
-            }
             return {
               // XXX If failed because of a "room full" or "rate limit", back off more aggressively here
               backoffDelay: nextBackoffDelay(ctx.backoffDelay),
