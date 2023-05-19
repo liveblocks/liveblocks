@@ -515,7 +515,12 @@ function createStateMachine<T extends BaseAuthResult>(delegates: Delegates<T>) {
       return () => {
         teardownSocket(ctx.socket);
         (ctx as any).socket = null;
-        //   ^^^^^^ XXX Add support to the FSM to support changing the context when entering
+        //   ^^^^^^
+        //   XXX Really, I should add an official API to the FSM to support
+        //   XXX assigning to context when entering/leaving a state, since this
+        //   XXX is a well-defined moment in a state transition.
+        //   XXX I've only temporarily pulled this hack here, for which I ask
+        //   XXX forgiveness.
       };
     })
 
