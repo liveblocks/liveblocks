@@ -117,7 +117,7 @@ test.describe("Presence", () => {
     await secondPage.close();
   });
 
-  test("client B receives other udpate presence before initial presence", async () => {
+  test("client B receives other update presence before initial presence", async () => {
     const testUrl = TEST_URL + "?room=e2e-presence-scenario5";
     const firstPage = await preparePage(testUrl);
     const secondPage = await preparePage(testUrl);
