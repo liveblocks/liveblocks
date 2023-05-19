@@ -462,12 +462,7 @@ function createStateMachine<T extends BaseAuthResult>(delegates: Delegates<T>) {
         // retrying.
         ({
           target: "@auth.backoff",
-          assign: (ctx) => {
-            return {
-              // XXX If failed because of a "room full" or "rate limit", back off more aggressively here
-              backoffDelay: nextBackoffDelay(ctx.backoffDelay),
-            };
-          },
+          assign: increaseBackoffDelay,
           effect: () => {
             console.error(
               `Connection to WebSocket could not be established, reason: ${String(
