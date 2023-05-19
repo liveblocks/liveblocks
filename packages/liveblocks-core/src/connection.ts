@@ -10,7 +10,7 @@ import type {
   IWebSocketMessageEvent,
 } from "./types/IWebSocket";
 
-// XXX DRY this type up with the one in room.ts
+// TODO DRY this type up with the ConnectionStatus type in room.ts
 export type PublicConnectionStatus =
   | "closed" // Room hasn't been entered, or has left already
   | "authenticating" // Authentication has started, but not finished yet
@@ -178,10 +178,6 @@ function timeoutAfter(millis: number): Promise<never> {
 }
 
 function sendHeartbeat(ctx: Context) {
-  console.log("Sending heartbeat...");
-  if (!ctx.socket) {
-    console.error("This should never happen"); // XXX Remove eventually
-  }
   ctx.socket?.send("ping");
 }
 
@@ -441,7 +437,7 @@ function createStateMachine<T extends BaseAuthResult>(delegates: Delegates<T>) {
         return Promise.race([promise, timeoutAfter(SOCKET_CONNECT_TIMEOUT)]);
       },
 
-      // On successful authentication
+      // Only transition to OK state after a successfully opened WebSocket connection
       (okEvent) => ({
         target: "@ok.connected",
         assign: {
@@ -450,10 +446,11 @@ function createStateMachine<T extends BaseAuthResult>(delegates: Delegates<T>) {
         },
       }),
 
-      // On failure
+      // If the WebSocket connection cannot be established
       (failedEvent) =>
-        // XXX TODO If _UNAUTHORIZED_, we should discard the token and jump back
-        // to @auth.busy to reattempt authentication
+        // TODO In the future, when the WebSocket connection will potentially
+        // be closed with an explicit _UNAUTHORIZED_ message, we should stop
+        // retrying.
         ({
           target: "@auth.backoff",
           assign: (ctx) => ({

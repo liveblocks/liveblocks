@@ -10,7 +10,7 @@ describe("ManagedSocket", () => {
 
     let lastSocket;
     const createSocket = () => {
-      lastSocket = new MockWebSocket("wss://ignored");
+      lastSocket = new MockWebSocket();
       return lastSocket;
     };
 
@@ -37,7 +37,7 @@ describe("ManagedSocket", () => {
 
     let lastSocket: MockWebSocket;
     const createSocket = () => {
-      lastSocket = new MockWebSocket("wss://ignored");
+      lastSocket = new MockWebSocket();
       setTimeout(() => {
         lastSocket.simulateOpen();
       }, 500);
