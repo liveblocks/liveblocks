@@ -160,6 +160,27 @@ describe("AsyncCache", () => {
     );
   });
 
+  test("using a non-existing key", async () => {
+    const asyncFunction = jest.fn(async (key: string) => {
+      await sleep(REQUEST_DELAY);
+
+      return key;
+    });
+    const asyncCache = createAsyncCache(asyncFunction);
+    const subscribeCallback = jest.fn();
+
+    const unsubscribe = asyncCache.subscribe(KEY_ABC, subscribeCallback);
+    expect(unsubscribe).toEqual(expect.any(Function));
+
+    await asyncCache.revalidate(KEY_ABC);
+
+    expect(asyncCache.getState(KEY_ABC)).toBeUndefined();
+
+    await asyncCache.get(KEY_ABC);
+
+    expect(subscribeCallback).not.toHaveBeenCalled();
+  });
+
   test("statuses", async () => {
     let index = 0;
     const asyncFunction = jest.fn(async () => {
