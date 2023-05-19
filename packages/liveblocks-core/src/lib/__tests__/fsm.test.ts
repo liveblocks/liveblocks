@@ -453,7 +453,7 @@ describe("finite state machine", () => {
   test("explicitly *not* transitioning", () => {
     let n = 0;
 
-    const fsm = new FSM({ x: 13, y: 13 })
+    const fsm = new FSM({})
       .addState("one")
       .addState("two")
       .addTransitions("one", { GO: "two" })
