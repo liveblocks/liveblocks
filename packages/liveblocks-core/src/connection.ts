@@ -417,12 +417,6 @@ function createStateMachine<T extends BaseAuthResult>(delegates: Delegates<T>) {
             throw new Error("No auth token"); // This should never happen
           }
 
-          // XXX This may be the place to also check token expiry (using
-          // XXX isTokenExpired from ./protocol/AuthToken). If the token will
-          // XXX expire soon, then let's consider it non-existing and get
-          // XXX a fresh one. Just throwing here should move the machine back
-          // XXX to the authentication phase.
-
           /**
            * Create the WebSocket, and set up a few event listeners once. The
            * trick being used here is this:
