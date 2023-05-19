@@ -76,9 +76,15 @@ export class MockWebSocket {
   readonly #messageListeners: MessageListener[] = [];
   readonly #openListeners: Listener[] = [];
 
-  constructor(url: string = "ws://ignored") {
+  constructor(url: string = "ws://ignored", autoOpen: boolean = false) {
     this.url = url;
     this.#readyState = this.CONNECTING;
+
+    if (autoOpen) {
+      setTimeout(() => {
+        this.simulateOpen();
+      }, 0);
+    }
   }
 
   //
