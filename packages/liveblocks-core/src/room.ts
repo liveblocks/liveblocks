@@ -2541,7 +2541,7 @@ async function httpSend(
   fetchPolyfill?: typeof window.fetch
 ) {
   const fetcher = fetchPolyfill || /* istanbul ignore next */ fetch;
-  const res = await fetcher(endpoint, {
+  await fetcher(endpoint, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -2549,7 +2549,6 @@ async function httpSend(
     },
     body: JSON.stringify(message),
   });
-  console.warn(JSON.stringify(res.body));
 }
 
 function prepareAuthEndpoint(
