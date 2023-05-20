@@ -78,6 +78,7 @@ export type AuthEndpoint =
 export type ClientOptions = {
   throttle?: number;
   polyfills?: Polyfills;
+  unstable_fallbackToHTTP: boolean;
 
   /**
    * Backward-compatible way to set `polyfills.fetch`.
@@ -180,6 +181,11 @@ export function createClient(options: ClientOptions): Client {
         unstable_batchedUpdates: options?.unstable_batchedUpdates,
         liveblocksServer: getServerFromClientOptions(clientOptions),
         authentication: prepareAuthentication(clientOptions, roomId),
+        httpSendEndpoint: buildLiveblocksHttpSendEndpoint(
+          clientOptions,
+          roomId
+        ),
+        unstable_fallbackToHTTP: clientOptions.unstable_fallbackToHTTP,
       }
     );
 
@@ -314,6 +320,20 @@ function prepareAuthentication(
   throw new Error(
     "Invalid Liveblocks client options. For more information: https://liveblocks.io/docs/api-reference/liveblocks-client#createClient"
   );
+}
+
+function buildLiveblocksHttpSendEndpoint(
+  options: ClientOptions & { httpSendEndpoint?: string | undefined },
+  roomId: string
+): string {
+  // INTERNAL override for testing purpose.
+  if (options.httpSendEndpoint) {
+    return options.httpSendEndpoint.replace("{roomId}", roomId);
+  }
+
+  return `https://api.liveblocks.io/v2/rooms/${encodeURIComponent(
+    roomId
+  )}/send-message`;
 }
 
 function buildLiveblocksPublicAuthorizeEndpoint(
