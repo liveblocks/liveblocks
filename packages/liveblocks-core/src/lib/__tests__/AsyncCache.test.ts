@@ -1,10 +1,11 @@
 import type { AsyncState } from "../AsyncCache";
-import { createAsyncCache } from "../AsyncCache";
+import { createAsyncCache, isStateEqual } from "../AsyncCache";
 
 const REQUEST_DELAY = 20;
 const KEY_ABC = "abc";
 const KEY_XYZ = "xyz";
-const ERROR = new Error("error");
+const ERROR_MESSAGE = "error";
+const ERROR = new Error(ERROR_MESSAGE);
 
 type AsyncStateDataError<TData = any, TError = any> = Pick<
   AsyncState<TData, TError>,
@@ -458,5 +459,161 @@ describe("AsyncCache", () => {
         error: undefined,
       })
     );
+  });
+
+  test("only notifying subscribers when there's a change", async () => {
+    const mock = createAsyncMock();
+    const cache = createAsyncCache(mock, {
+      deduplicationInterval: 0,
+    });
+    const callback = jest.fn();
+
+    const cacheItem = cache.create(KEY_ABC);
+    const unsubscribe = cacheItem.subscribe(callback);
+
+    // 🚀 Called
+    await cacheItem.get();
+
+    // 🗑️ Invalidated but without clearing the cache for "abc"
+    cacheItem.invalidate({ keepPreviousData: true });
+    // 🗑️ Invalidated
+    cacheItem.invalidate();
+    // 🗑️ Invalidated
+    cacheItem.invalidate();
+
+    unsubscribe();
+
+    expect(callback).toHaveBeenCalledTimes(3);
+
+    // 1️⃣ Triggered when the first call starts
+    expect(callback).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining<AsyncState<string>>({
+        isLoading: true,
+        data: undefined,
+        error: undefined,
+      })
+    );
+    // 2️⃣✅ Triggered when the first call finished
+    expect(callback).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining<AsyncState<string>>({
+        isLoading: false,
+        data: KEY_ABC,
+        error: undefined,
+      })
+    );
+    // 3️⃣🗑️ Triggered when invalidated and cleared
+    expect(callback).toHaveBeenNthCalledWith(
+      3,
+      expect.objectContaining<AsyncState<string>>({
+        isLoading: false,
+        data: undefined,
+        error: undefined,
+      })
+    );
+  });
+});
+
+describe.only("isStateEqual", () => {
+  test("loading or not", () => {
+    const a: AsyncState = {
+      isLoading: false,
+      data: undefined,
+      error: undefined,
+    };
+    const b: AsyncState = {
+      isLoading: true,
+      data: undefined,
+      error: undefined,
+    };
+    const c: AsyncState = {
+      isLoading: false,
+      data: undefined,
+      error: undefined,
+    };
+
+    expect(isStateEqual(a, b)).toBe(false);
+    expect(isStateEqual(b, a)).toBe(false);
+    expect(isStateEqual(a, c)).toBe(true);
+    expect(isStateEqual(c, a)).toBe(true);
+  });
+
+  test("error or not", () => {
+    const a: AsyncState = {
+      isLoading: false,
+      data: undefined,
+      error: undefined,
+    };
+    const b: AsyncState = {
+      isLoading: false,
+      data: undefined,
+      error: ERROR,
+    };
+
+    expect(isStateEqual(a, b)).toBe(false);
+    expect(isStateEqual(b, a)).toBe(false);
+  });
+
+  test("error", () => {
+    const a: AsyncState = {
+      isLoading: false,
+      data: undefined,
+      error: new Error(ERROR_MESSAGE),
+    };
+    const b: AsyncState = {
+      isLoading: false,
+      data: undefined,
+      error: new Error(ERROR_MESSAGE),
+    };
+    const c: AsyncState = {
+      isLoading: false,
+      data: undefined,
+      error: new Error("c"),
+    };
+
+    expect(isStateEqual(a, b)).toBe(true);
+    expect(isStateEqual(b, a)).toBe(true);
+    expect(isStateEqual(a, c)).toBe(false);
+    expect(isStateEqual(c, a)).toBe(false);
+  });
+
+  test("data or not", () => {
+    const a: AsyncState = {
+      isLoading: false,
+      data: undefined,
+      error: undefined,
+    };
+    const b: AsyncState = {
+      isLoading: false,
+      data: { key: KEY_ABC },
+      error: undefined,
+    };
+
+    expect(isStateEqual(a, b)).toBe(false);
+    expect(isStateEqual(b, a)).toBe(false);
+  });
+
+  test("data", () => {
+    const a: AsyncState = {
+      isLoading: false,
+      data: { key: KEY_ABC },
+      error: undefined,
+    };
+    const b: AsyncState = {
+      isLoading: false,
+      data: { key: KEY_ABC },
+      error: undefined,
+    };
+    const c: AsyncState = {
+      isLoading: false,
+      data: [{ key: KEY_ABC }],
+      error: undefined,
+    };
+
+    expect(isStateEqual(a, b)).toBe(true);
+    expect(isStateEqual(b, a)).toBe(true);
+    expect(isStateEqual(a, c)).toBe(false);
+    expect(isStateEqual(c, a)).toBe(false);
   });
 });

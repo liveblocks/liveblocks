@@ -63,6 +63,58 @@ export type AsyncCache<TData = any, TError = any> = {
 
 const noop = () => {};
 
+function getKeys<T extends object>(value: T) {
+  if (value instanceof Error) {
+    return ["name", "message"];
+  } else {
+    return Object.keys(value);
+  }
+}
+
+function deepCompare(a: any, b: any): boolean {
+  if (
+    typeof a !== "object" ||
+    typeof b !== "object" ||
+    a === null ||
+    b === null
+  ) {
+    return a === b;
+  }
+
+  const keysA = getKeys(a);
+  const keysB = getKeys(b);
+
+  if (keysA.length !== keysB.length) {
+    return false;
+  }
+
+  for (const key of keysA) {
+    if (
+      !(key in b) ||
+      !deepCompare(
+        (a as Record<string, any>)[key],
+        (b as Record<string, any>)[key]
+      )
+    ) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+export function isStateEqual(a: AsyncState, b: AsyncState): boolean {
+  if (
+    a.isLoading !== b.isLoading ||
+    ((a.data === undefined) !== b.data) === undefined ||
+    ((a.error === undefined) !== b.error) === undefined
+  ) {
+    return false;
+  } else {
+    return deepCompare(a, b);
+  }
+}
+
 function createCacheItem<TData = any, TError = any>(
   key: string,
   asyncFunction: AsyncFunction<TData>,
@@ -74,9 +126,15 @@ function createCacheItem<TData = any, TError = any>(
     hasScheduledInvalidation: false,
   };
   const eventSource = makeEventSource<AsyncState<TData, TError>>();
+  let previousState = getState();
 
   function notify() {
-    eventSource.notify(getState());
+    const newState = getState();
+
+    if (!isStateEqual(previousState, newState)) {
+      previousState = newState;
+      eventSource.notify(newState);
+    }
   }
 
   function execute() {
