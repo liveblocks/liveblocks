@@ -46,12 +46,6 @@ export type TargetFn<
   context: Readonly<TContext>
 ) => TState | TargetConfig<TContext, TEvent, TState> | null;
 
-export type Assigner<TContext> = (patch: Partial<TContext>) => void;
-
-export type AssignConfig<TContext extends object, TEvent extends BaseEvent> =
-  | Partial<TContext>
-  | ((context: Patchable<TContext>, event: TEvent) => void);
-
 export type Effect<TContext, TEvent extends BaseEvent> = (
   context: Patchable<TContext>,
   event: TEvent
@@ -63,14 +57,6 @@ export type TargetConfig<
   TState extends string
 > = {
   target: TState;
-
-  // /**
-  //  * Specify an object that will be used to "patch" the current context as soon
-  //  * as the transition is taken. The context will be updated before the new
-  //  * state is entered.
-  //  */
-  // assign?: AssignConfig<TContext, TEvent>;
-  assign?: never;
 
   /**
    * Emit a side effect (other than assigning to the context) when this
@@ -590,7 +576,6 @@ export class FSM<
     const targetFn = typeof target === "function" ? target : () => target;
     const nextTarget = targetFn(event, this.currentContext.current);
     let nextState: TState;
-    // let assign: AssignConfig<TContext, E> | undefined = undefined;
     let effects: Effect<TContext, E>[] | undefined = undefined;
     if (nextTarget === null) {
       // Do not transition
@@ -602,7 +587,6 @@ export class FSM<
       nextState = nextTarget;
     } else {
       nextState = nextTarget.target;
-      // assign = nextTarget.assign;
       effects =
         nextTarget.effect !== undefined
           ? Array.isArray(nextTarget.effect)
