@@ -168,6 +168,24 @@ function increaseBackoffDelayAggressively(context: Patchable<Context>) {
   });
 }
 
+enum LogLevel {
+  INFO,
+  WARN,
+  ERROR,
+}
+
+function log(level: LogLevel, message: string) {
+  const logger =
+    level === LogLevel.ERROR
+      ? console.error
+      : level === LogLevel.WARN
+      ? console.warn
+      : /* black hole */ () => {};
+  return () => {
+    logger(message);
+  };
+}
+
 /**
  * Generic promise that will time out after X milliseconds.
  */
@@ -345,20 +363,21 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
         failedEvent.reason instanceof UnauthorizedError
           ? {
               target: "@idle.failed",
-              effect: () =>
-                console.error(
-                  `Unauthorized: ${
-                    (failedEvent.reason as UnauthorizedError).message
-                  }`
-                ),
+              effect: log(
+                LogLevel.ERROR,
+                `Unauthorized: ${
+                  (failedEvent.reason as UnauthorizedError).message
+                }`
+              ),
             }
           : {
               target: "@auth.backoff",
               effect: [
                 increaseBackoffDelay,
-                // () => {
-                //   console.log(`Authentication failed: ${String(failedEvent.reason)}`);
-                // },
+                log(
+                  LogLevel.INFO,
+                  `Authentication failed: ${String(failedEvent.reason)}`
+                ),
               ],
             }
     );
@@ -467,13 +486,12 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
           target: "@auth.backoff",
           effect: [
             increaseBackoffDelay,
-            () => {
-              console.error(
-                `Connection to WebSocket could not be established, reason: ${String(
-                  failedEvent.reason
-                )}`
-              );
-            },
+            log(
+              LogLevel.ERROR,
+              `Connection to WebSocket could not be established, reason: ${String(
+                failedEvent.reason
+              )}`
+            ),
           ],
         })
     );
@@ -500,12 +518,11 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
 
   const noPongAction: Target<Context, Event | BuiltinEvent, State> = {
     target: "@connecting.busy",
-    effect: () => {
-      // Log implicit connection loss and drop the current open socket
-      console.warn(
-        "Received no pong from server, assume implicit connection loss."
-      );
-    },
+    // Log implicit connection loss and drop the current open socket
+    effect: log(
+      LogLevel.WARN,
+      "Received no pong from server, assume implicit connection loss."
+    ),
   };
 
   machine
@@ -546,10 +563,10 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
         if (e.event.code === 4999) {
           return {
             target: "@idle.failed",
-            effect: () =>
-              console.warn(
-                "Connection to WebSocket closed permanently. Won't retry."
-              ),
+            effect: log(
+              LogLevel.WARN,
+              "Connection to WebSocket closed permanently. Won't retry."
+            ),
           }; // Should not retry, give up
         }
 
