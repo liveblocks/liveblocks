@@ -226,11 +226,7 @@ function enableTracing(machine: FSM<Context, Event, State>) {
   };
 }
 
-function defineConnectivityEvents(machine: FSM<Context, Event, State>): {
-  statusDidChange: Observable<PublicConnectionStatus>;
-  didConnect: Observable<void>;
-  didDisconnect: Observable<void>;
-} {
+function defineConnectivityEvents(machine: FSM<Context, Event, State>) {
   // Emitted whenever a new WebSocket connection attempt suceeds
   const statusDidChange = makeEventSource<PublicConnectionStatus>();
   const didConnect = makeEventSource<void>();
@@ -238,7 +234,7 @@ function defineConnectivityEvents(machine: FSM<Context, Event, State>): {
 
   let oldPublicStatus: PublicConnectionStatus | null = null;
 
-  machine.events.didEnterState.subscribe((newState) => {
+  const unsubscribe = machine.events.didEnterState.subscribe((newState) => {
     const newPublicStatus = toPublicConnectionStatus(newState);
     statusDidChange.notify(newPublicStatus);
 
@@ -254,6 +250,7 @@ function defineConnectivityEvents(machine: FSM<Context, Event, State>): {
     statusDidChange: statusDidChange.observable,
     didConnect: didConnect.observable,
     didDisconnect: didDisconnect.observable,
+    unsubscribe,
   };
 }
 
@@ -616,18 +613,21 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
     });
   }
 
-  const { statusDidChange, didConnect, didDisconnect } =
+  const cleanups = [];
+
+  const { statusDidChange, didConnect, didDisconnect, unsubscribe } =
     defineConnectivityEvents(machine);
+  cleanups.push(unsubscribe);
 
   // Install debug logging
-  const cleanup = enableTracing(machine); // TODO Remove logging in production
+  cleanups.push(enableTracing(machine)); // TODO Remove logging in production
 
   // Start the machine
   machine.start();
 
   return {
     machine,
-    cleanup,
+    cleanups,
 
     // Observable events that will be emitted by this machine
     events: {
@@ -651,7 +651,7 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
 export class ManagedSocket<T extends BaseAuthResult> {
   /** @internal */
   private machine: FSM<Context, Event, State>;
-  private cleanup: () => void;
+  private cleanups: (() => void)[];
 
   public readonly events: {
     /**
@@ -676,11 +676,11 @@ export class ManagedSocket<T extends BaseAuthResult> {
   };
 
   constructor(delegates: Delegates<T>) {
-    const { machine, events, cleanup } =
+    const { machine, events, cleanups } =
       createConnectionStateMachine(delegates);
     this.machine = machine;
     this.events = events;
-    this.cleanup = cleanup;
+    this.cleanups = cleanups;
   }
 
   get status(): PublicConnectionStatus {
@@ -733,7 +733,11 @@ export class ManagedSocket<T extends BaseAuthResult> {
    */
   public destroy() {
     this.machine.stop();
-    this.cleanup();
+
+    let cleanup: (() => void) | undefined;
+    while ((cleanup = this.cleanups.pop())) {
+      cleanup();
+    }
   }
 
   /**
