@@ -348,7 +348,7 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
               target: "@idle.failed",
               effect: () =>
                 console.error(
-                  `Unauthorized, will stop retrying: ${
+                  `Unauthorized: ${
                     (failedEvent.reason as UnauthorizedError).message
                   }`
                 ),
