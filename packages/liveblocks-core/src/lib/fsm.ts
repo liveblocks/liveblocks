@@ -62,7 +62,7 @@ export type TargetConfig<
    * Emit a side effect (other than assigning to the context) when this
    * transition is taken.
    */
-  effect?: Effect<TContext, TEvent> | Effect<TContext, TEvent>[];
+  effect: Effect<TContext, TEvent> | Effect<TContext, TEvent>[];
 };
 
 export type Target<
