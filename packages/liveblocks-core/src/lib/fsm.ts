@@ -588,12 +588,9 @@ export class FSM<
       nextState = nextTarget;
     } else {
       nextState = nextTarget.target;
-      effects =
-        nextTarget.effect !== undefined
-          ? Array.isArray(nextTarget.effect)
-            ? nextTarget.effect
-            : [nextTarget.effect]
-          : undefined;
+      effects = Array.isArray(nextTarget.effect)
+        ? nextTarget.effect
+        : [nextTarget.effect];
     }
 
     if (!this.states.has(nextState)) {
