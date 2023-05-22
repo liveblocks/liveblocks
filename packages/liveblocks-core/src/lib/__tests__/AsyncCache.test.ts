@@ -78,9 +78,9 @@ describe("AsyncCache", () => {
     await Promise.all([
       // 🚀 Called
       cache.get(KEY_ABC),
-      // 🔜 Waiting on the first promise
+      // 🔜 Waiting on the first call's promise
       cache.get(KEY_ABC),
-      // 🔜 Waiting on the first promise
+      // 🔜 Waiting on the first call's promise
       cache.get(KEY_ABC),
     ]);
 
@@ -313,7 +313,7 @@ describe("AsyncCache", () => {
 
     expect(callback).toHaveBeenCalledTimes(4);
 
-    // 1️⃣ Triggered when the first call starts
+    // 1️⃣ Triggered when the first call started
     expect(callback).toHaveBeenNthCalledWith(
       1,
       expect.objectContaining<AsyncState<string>>({
@@ -331,7 +331,7 @@ describe("AsyncCache", () => {
         error: ERROR,
       })
     );
-    // 3️⃣ Triggered when the second call starts
+    // 3️⃣ Triggered when the second call started
     expect(callback).toHaveBeenNthCalledWith(
       3,
       expect.objectContaining<AsyncState<string>>({
@@ -389,7 +389,7 @@ describe("AsyncCache", () => {
 
     expect(callback).toHaveBeenCalledTimes(3);
 
-    // 1️⃣ Triggered when the first call starts
+    // 1️⃣ Triggered when the first call started
     expect(callback).toHaveBeenNthCalledWith(
       1,
       expect.objectContaining<AsyncState<string>>({
@@ -508,6 +508,157 @@ describe("AsyncCache", () => {
       expect.objectContaining<AsyncState<string>>({
         isLoading: false,
         data: undefined,
+        error: undefined,
+      })
+    );
+  });
+});
+
+describe("AsyncCache use cases", () => {
+  test("token with expiration", async () => {
+    const TOKEN_EXPIRATION = REQUEST_DELAY * 2;
+
+    type Token = {
+      token: string;
+      expiresAt: number;
+    };
+
+    let index = 0;
+    const mock = jest.fn(async (key: string): Promise<Token> => {
+      await sleep(REQUEST_DELAY);
+
+      const isError = index === 1;
+      const expiresAt = Date.now() + TOKEN_EXPIRATION;
+      index += 1;
+
+      if (isError) {
+        throw new Error("Couldn't generate a token");
+      } else {
+        return {
+          token: JSON.stringify({ key, expiresAt }),
+          expiresAt,
+        };
+      }
+    });
+    const cache = createAsyncCache(mock, {
+      deduplicationInterval: 0,
+    });
+
+    const callback = jest.fn();
+    const unsubscribe = cache.subscribe(KEY_ABC, callback);
+
+    async function getToken(): Promise<string> {
+      const state = cache.getState(KEY_ABC);
+
+      if (state?.data && state.data.expiresAt > Date.now()) {
+        return state.data.token;
+      }
+
+      if (state?.data && !state.isLoading) {
+        cache.invalidate(KEY_ABC);
+      }
+
+      const { data } = await cache.get(KEY_ABC);
+
+      if (data) {
+        return data.token;
+      } else {
+        return await getToken();
+      }
+    }
+
+    // 🚀 Generating a first token
+    expect(Number(JSON.parse(await getToken()).expiresAt)).toBeGreaterThan(
+      Date.now()
+    );
+
+    // ✨ Cached because the first token is still valid
+    expect(Number(JSON.parse(await getToken()).expiresAt)).toBeGreaterThan(
+      Date.now()
+    );
+
+    await sleep(TOKEN_EXPIRATION * 1.5);
+
+    const tokens = await Promise.all([
+      // 🚀 Generating a new token because the cached one expired
+      // ❌ Errors, retries, and ✅ succeeds the second time
+      getToken(),
+      // 🔜 Waiting on the first call's promises
+      getToken(),
+      // 🔜 Waiting on the first call's promises
+      getToken(),
+    ]);
+
+    for (const token of tokens) {
+      expect(Number(JSON.parse(token).expiresAt)).toBeGreaterThan(Date.now());
+    }
+
+    unsubscribe();
+
+    expect(mock).toHaveBeenCalledTimes(3);
+
+    expect(callback).toHaveBeenCalledTimes(7);
+
+    // 1️⃣ Triggered when generating the first token started
+    expect(callback).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining<AsyncState<string>>({
+        isLoading: true,
+        data: undefined,
+        error: undefined,
+      })
+    );
+    // 2️⃣✅ Triggered when generating the first token finished
+    expect(callback).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining<AsyncState<string>>({
+        isLoading: false,
+        data: expect.any(Object),
+        error: undefined,
+      })
+    );
+    // 3️⃣🗑️ Triggered when invalidated because expired
+    expect(callback).toHaveBeenNthCalledWith(
+      3,
+      expect.objectContaining<AsyncState<string>>({
+        isLoading: false,
+        data: undefined,
+        error: undefined,
+      })
+    );
+    // 4️⃣ Triggered when generating the second token
+    expect(callback).toHaveBeenNthCalledWith(
+      4,
+      expect.objectContaining<AsyncState<string>>({
+        isLoading: true,
+        data: undefined,
+        error: undefined,
+      })
+    );
+    // 5️⃣❌ Triggered when generating the second token errored
+    expect(callback).toHaveBeenNthCalledWith(
+      5,
+      expect.objectContaining<AsyncState<string>>({
+        isLoading: false,
+        data: undefined,
+        error: expect.any(Error),
+      })
+    );
+    // 6️⃣ Triggered when generating the third token started
+    expect(callback).toHaveBeenNthCalledWith(
+      6,
+      expect.objectContaining<AsyncState<string>>({
+        isLoading: true,
+        data: undefined,
+        error: undefined,
+      })
+    );
+    // 7️⃣✅ Triggered when generating the third token finished
+    expect(callback).toHaveBeenNthCalledWith(
+      7,
+      expect.objectContaining<AsyncState<string>>({
+        isLoading: false,
+        data: expect.any(Object),
         error: undefined,
       })
     );

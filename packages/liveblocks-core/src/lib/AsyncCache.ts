@@ -137,7 +137,7 @@ function createCacheItem<TData = any, TError = any>(
   function invalidate(options?: InvalidateOptions) {
     if (context.promise) {
       context.hasScheduledInvalidation = true;
-    } else if (!context.hasScheduledInvalidation) {
+    } else if (!context.hasScheduledInvalidation && !context.error) {
       const keepPreviousData = options?.keepPreviousData ?? false;
       context.isInvalid = true;
       context.error = undefined;
