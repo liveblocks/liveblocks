@@ -252,11 +252,8 @@ function defineConnectivityEvents(machine: FSM<Context, Event, State>) {
   };
 }
 
-const assign = (patch: Partial<Context>) => {
-  return (ctx: Patchable<Context>) => {
-    ctx.patch(patch);
-  };
-};
+const assign = (patch: Partial<Context>) => (ctx: Patchable<Context>) =>
+  ctx.patch(patch);
 
 function createConnectionStateMachine<T extends BaseAuthResult>(
   delegates: Delegates<T>
