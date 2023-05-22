@@ -63,55 +63,19 @@ export type AsyncCache<TData = any, TError = any> = {
 
 const noop = () => {};
 
-function getKeys<T extends object>(value: T) {
-  if (value instanceof Error) {
-    return ["name", "message"];
-  } else {
-    return Object.keys(value);
-  }
-}
-
-function deepCompare(a: any, b: any): boolean {
-  if (
-    typeof a !== "object" ||
-    typeof b !== "object" ||
-    a === null ||
-    b === null
-  ) {
-    return a === b;
-  }
-
-  const keysA = getKeys(a);
-  const keysB = getKeys(b);
-
-  if (keysA.length !== keysB.length) {
-    return false;
-  }
-
-  for (const key of keysA) {
-    if (
-      !(key in b) ||
-      !deepCompare(
-        (a as Record<string, any>)[key],
-        (b as Record<string, any>)[key]
-      )
-    ) {
-      return false;
-    }
-  }
-
-  return true;
-}
-
-export function isStateEqual(a: AsyncState, b: AsyncState): boolean {
+export function isDifferentState(a: AsyncState, b: AsyncState): boolean {
   if (
     a.isLoading !== b.isLoading ||
-    ((a.data === undefined) !== b.data) === undefined ||
-    ((a.error === undefined) !== b.error) === undefined
+    (a.data === undefined) !== (b.data === undefined) ||
+    (a.error === undefined) !== (b.error === undefined)
   ) {
-    return false;
+    return true;
   } else {
-    return deepCompare(a, b);
+    // This might not be true, `data` and `error` would have to be
+    // deeply compared to know that. But in our use-case, `data` and
+    // `error` can't change without being set to `undefined` first or
+    // `isLoading` also changing in between.
+    return false;
   }
 }
 
@@ -131,7 +95,7 @@ function createCacheItem<TData = any, TError = any>(
   function notify() {
     const newState = getState();
 
-    if (!isStateEqual(previousState, newState)) {
+    if (isDifferentState(previousState, newState)) {
       previousState = newState;
       eventSource.notify(newState);
     }

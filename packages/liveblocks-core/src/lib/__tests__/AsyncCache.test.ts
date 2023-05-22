@@ -1,11 +1,10 @@
 import type { AsyncState } from "../AsyncCache";
-import { createAsyncCache, isStateEqual } from "../AsyncCache";
+import { createAsyncCache, isDifferentState } from "../AsyncCache";
 
 const REQUEST_DELAY = 20;
 const KEY_ABC = "abc";
 const KEY_XYZ = "xyz";
-const ERROR_MESSAGE = "error";
-const ERROR = new Error(ERROR_MESSAGE);
+const ERROR = new Error("error");
 
 type AsyncStateDataError<TData = any, TError = any> = Pick<
   AsyncState<TData, TError>,
@@ -515,8 +514,8 @@ describe("AsyncCache", () => {
   });
 });
 
-describe.only("isStateEqual", () => {
-  test("loading or not", () => {
+describe("isDifferentState", () => {
+  test("loading", () => {
     const a: AsyncState = {
       isLoading: false,
       data: undefined,
@@ -533,13 +532,29 @@ describe.only("isStateEqual", () => {
       error: undefined,
     };
 
-    expect(isStateEqual(a, b)).toBe(false);
-    expect(isStateEqual(b, a)).toBe(false);
-    expect(isStateEqual(a, c)).toBe(true);
-    expect(isStateEqual(c, a)).toBe(true);
+    expect(isDifferentState(a, b)).toBe(true);
+    expect(isDifferentState(b, a)).toBe(true);
+    expect(isDifferentState(a, c)).toBe(false);
+    expect(isDifferentState(c, a)).toBe(false);
   });
 
-  test("error or not", () => {
+  test("data", () => {
+    const a: AsyncState = {
+      isLoading: false,
+      data: undefined,
+      error: undefined,
+    };
+    const b: AsyncState = {
+      isLoading: false,
+      data: { key: KEY_ABC },
+      error: undefined,
+    };
+
+    expect(isDifferentState(a, b)).toBe(true);
+    expect(isDifferentState(b, a)).toBe(true);
+  });
+
+  test("error", () => {
     const a: AsyncState = {
       isLoading: false,
       data: undefined,
@@ -551,69 +566,7 @@ describe.only("isStateEqual", () => {
       error: ERROR,
     };
 
-    expect(isStateEqual(a, b)).toBe(false);
-    expect(isStateEqual(b, a)).toBe(false);
-  });
-
-  test("error", () => {
-    const a: AsyncState = {
-      isLoading: false,
-      data: undefined,
-      error: new Error(ERROR_MESSAGE),
-    };
-    const b: AsyncState = {
-      isLoading: false,
-      data: undefined,
-      error: new Error(ERROR_MESSAGE),
-    };
-    const c: AsyncState = {
-      isLoading: false,
-      data: undefined,
-      error: new Error("c"),
-    };
-
-    expect(isStateEqual(a, b)).toBe(true);
-    expect(isStateEqual(b, a)).toBe(true);
-    expect(isStateEqual(a, c)).toBe(false);
-    expect(isStateEqual(c, a)).toBe(false);
-  });
-
-  test("data or not", () => {
-    const a: AsyncState = {
-      isLoading: false,
-      data: undefined,
-      error: undefined,
-    };
-    const b: AsyncState = {
-      isLoading: false,
-      data: { key: KEY_ABC },
-      error: undefined,
-    };
-
-    expect(isStateEqual(a, b)).toBe(false);
-    expect(isStateEqual(b, a)).toBe(false);
-  });
-
-  test("data", () => {
-    const a: AsyncState = {
-      isLoading: false,
-      data: { key: KEY_ABC },
-      error: undefined,
-    };
-    const b: AsyncState = {
-      isLoading: false,
-      data: { key: KEY_ABC },
-      error: undefined,
-    };
-    const c: AsyncState = {
-      isLoading: false,
-      data: [{ key: KEY_ABC }],
-      error: undefined,
-    };
-
-    expect(isStateEqual(a, b)).toBe(true);
-    expect(isStateEqual(b, a)).toBe(true);
-    expect(isStateEqual(a, c)).toBe(false);
-    expect(isStateEqual(c, a)).toBe(false);
+    expect(isDifferentState(a, b)).toBe(true);
+    expect(isDifferentState(b, a)).toBe(true);
   });
 });
