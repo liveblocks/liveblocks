@@ -410,7 +410,7 @@ describe("LiveObject", () => {
 
   describe("acknowledge mechanism", () => {
     it("should not ignore history updates if the current op has not been acknowledged", async () => {
-      const { expectUpdates, batch, root, room } =
+      const { room, root, expectUpdates } =
         await prepareDisconnectedStorageUpdateTest<{
           items: LiveObject<{ b?: string; a?: string }>;
         }>([
@@ -419,7 +419,7 @@ describe("LiveObject", () => {
         ]);
 
       const items = root.get("items");
-      batch(() => {
+      room.batch(() => {
         items.set("a", "A");
         items.set("b", "A");
       });
@@ -1034,11 +1034,9 @@ describe("LiveObject", () => {
 
   describe("undo apply update", () => {
     test("subscription should gives the right update", async () => {
-      const { room, root, expectStorage, undo } =
-        await prepareIsolatedStorageTest<{ a: number }>(
-          [createSerializedObject("0:0", { a: 0 })],
-          1
-        );
+      const { room, root, expectStorage } = await prepareIsolatedStorageTest<{
+        a: number;
+      }>([createSerializedObject("0:0", { a: 0 })], 1);
 
       expectStorage({ a: 0 });
       root.set("a", 1);
@@ -1047,7 +1045,7 @@ describe("LiveObject", () => {
       const callback = jest.fn();
       room.subscribe(root, callback, { isDeep: true });
 
-      undo();
+      room.history.undo();
       expectStorage({ a: 0 });
 
       expect(callback).toHaveBeenCalledWith([

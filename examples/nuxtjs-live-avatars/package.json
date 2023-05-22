@@ -10,7 +10,7 @@
   },
   "devDependencies": {
     "@types/node": "^18",
-    "nuxt": "^3.4.3"
+    "nuxt": "^3.5.0"
   },
   "dependencies": {
     "@liveblocks/client": "^1.0.9",
