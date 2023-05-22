@@ -3,7 +3,7 @@ import type { Observable } from "./lib/EventSource";
 import { makeEventSource } from "./lib/EventSource";
 import * as console from "./lib/fancy-console";
 import type { BuiltinEvent, Target } from "./lib/fsm";
-import { FSM } from "./lib/fsm";
+import { FSM, Patchable } from "./lib/fsm";
 import type {
   IWebSocketCloseEvent,
   IWebSocketEvent,
@@ -158,14 +158,14 @@ function nextBackoffDelay(
   );
 }
 
-function increaseBackoffDelay(context: Context) {
-  return { backoffDelay: nextBackoffDelay(context.backoffDelay) };
+function increaseBackoffDelay(context: Patchable<Context>) {
+  context.patch({ backoffDelay: nextBackoffDelay(context.backoffDelay) });
 }
 
-function increaseBackoffDelayAggressively(context: Context) {
-  return {
+function increaseBackoffDelayAggressively(context: Patchable<Context>) {
+  context.patch({
     backoffDelay: nextBackoffDelay(context.backoffDelay, BACKOFF_DELAYS_SLOW),
-  };
+  });
 }
 
 /**
@@ -206,10 +206,6 @@ function enableTracing(machine: FSM<Context, Event, State>) {
     }),
     machine.events.willTransition.subscribe(({ from, to }) => {
       log("Transitioning", from, "→", to);
-    }),
-    machine.events.didPatchContext.subscribe((patch) => {
-      log(`Patched: ${JSON.stringify(patch)}`);
-      // log(`New context: ${JSON.stringify(machine.context)}`);
     }),
     machine.events.didIgnoreEvent.subscribe((e) => {
       log("Ignored event", e, "(current state won't handle it)");
@@ -256,6 +252,12 @@ function defineConnectivityEvents(machine: FSM<Context, Event, State>) {
   };
 }
 
+const assign = (patch: Partial<Context>) => {
+  return (ctx: Patchable<Context>) => {
+    ctx.patch(patch);
+  };
+};
+
 function createConnectionStateMachine<T extends BaseAuthResult>(
   delegates: Delegates<T>
 ) {
@@ -294,7 +296,7 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
   machine.addTransitions("*", {
     RECONNECT: {
       target: "@auth.backoff",
-      assign: increaseBackoffDelay,
+      effect: increaseBackoffDelay,
     },
 
     DISCONNECT: "@idle.initial",
@@ -317,7 +319,7 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
     .addTransitions("@auth.backoff", {
       NAVIGATOR_ONLINE: {
         target: "@auth.busy",
-        assign: { backoffDelay: RESET_DELAY },
+        effect: assign({ backoffDelay: RESET_DELAY }),
       },
     })
     .addTimedTransition(
@@ -335,10 +337,10 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
       // On successful authentication
       (okEvent) => ({
         target: "@connecting.busy",
-        assign: {
+        effect: assign({
           token: okEvent.data as BaseAuthResult,
           backoffDelay: RESET_DELAY,
-        },
+        }),
       }),
 
       // Auth failed
@@ -355,10 +357,12 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
             }
           : {
               target: "@auth.backoff",
-              assign: increaseBackoffDelay,
-              // effect: () => {
-              //   console.log(`Authentication failed: ${String(failedEvent.reason)}`);
-              // },
+              effect: [
+                increaseBackoffDelay,
+                // () => {
+                //   console.log(`Authentication failed: ${String(failedEvent.reason)}`);
+                // },
+              ],
             }
     );
 
@@ -391,7 +395,7 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
     .addTransitions("@connecting.backoff", {
       NAVIGATOR_ONLINE: {
         target: "@connecting.busy",
-        assign: { backoffDelay: RESET_DELAY },
+        effect: assign({ backoffDelay: RESET_DELAY }),
       },
     })
     .addTimedTransition(
@@ -451,10 +455,10 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
       // Only transition to OK state after a successfully opened WebSocket connection
       (okEvent) => ({
         target: "@ok.connected",
-        assign: {
+        effect: assign({
           socket: okEvent.data,
           backoffDelay: RESET_DELAY,
-        },
+        }),
       }),
 
       // If the WebSocket connection cannot be established
@@ -464,14 +468,16 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
         // retrying.
         ({
           target: "@auth.backoff",
-          assign: increaseBackoffDelay,
-          effect: () => {
-            console.error(
-              `Connection to WebSocket could not be established, reason: ${String(
-                failedEvent.reason
-              )}`
-            );
-          },
+          effect: [
+            increaseBackoffDelay,
+            () => {
+              console.error(
+                `Connection to WebSocket could not be established, reason: ${String(
+                  failedEvent.reason
+                )}`
+              );
+            },
+          ],
         })
     );
 
@@ -513,13 +519,7 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
       // no longer valid.
       return (ctx) => {
         teardownSocket(ctx.socket);
-        (ctx as any).socket = null;
-        //   ^^^^^^
-        //   XXX Really, I should add an official API to the FSM to support
-        //   XXX assigning to context when entering/leaving a state, since this
-        //   XXX is a well-defined moment in a state transition.
-        //   XXX I've only temporarily pulled this hack here, for which I ask
-        //   XXX forgiveness.
+        ctx.patch({ socket: null });
       };
     })
 
@@ -540,7 +540,7 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
 
         return {
           target: "@connecting.busy",
-          assign: increaseBackoffDelay,
+          effect: increaseBackoffDelay,
         };
       },
 
@@ -561,13 +561,15 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
         if (e.event.code >= 4000 && e.event.code <= 4100) {
           return {
             target: "@connecting.busy",
-            assign: increaseBackoffDelayAggressively,
-            effect: (_, { event }) => {
-              if (event.code >= 4000 && event.code <= 4100) {
-                const err = new LiveblocksError(event.reason, event.code);
-                onLiveblocksError.notify(err);
-              }
-            },
+            effect: [
+              increaseBackoffDelayAggressively,
+              (_, { event }) => {
+                if (event.code >= 4000 && event.code <= 4100) {
+                  const err = new LiveblocksError(event.reason, event.code);
+                  onLiveblocksError.notify(err);
+                }
+              },
+            ],
           };
         }
 
@@ -575,7 +577,7 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
         // a new socket
         return {
           target: "@connecting.busy",
-          assign: increaseBackoffDelay,
+          effect: increaseBackoffDelay,
         };
       },
     });

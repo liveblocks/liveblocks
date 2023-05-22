@@ -28,13 +28,17 @@ export type AsyncErrorEvent = {
 export type BaseEvent = { readonly type: string };
 export type BuiltinEvent = TimerEvent | AsyncOKEvent<unknown> | AsyncErrorEvent;
 
-export type CleanupFn<TContext> = (context: Readonly<TContext>) => void;
+export type Patchable<TContext> = Readonly<TContext> & {
+  patch(patch: Partial<TContext>): void;
+};
+
+export type CleanupFn<TContext> = (context: Patchable<TContext>) => void;
 export type EnterFn<TContext> = (
-  context: Readonly<TContext>
+  context: Patchable<TContext>
 ) => void | CleanupFn<TContext>;
 
 export type TargetFn<
-  TContext,
+  TContext extends object,
   TEvent extends BaseEvent,
   TState extends string
 > = (
@@ -42,37 +46,44 @@ export type TargetFn<
   context: Readonly<TContext>
 ) => TState | TargetConfig<TContext, TEvent, TState> | null;
 
-export type Assigner<TContext, TEvent extends BaseEvent> =
+export type Assigner<TContext> = (patch: Partial<TContext>) => void;
+
+export type AssignConfig<TContext extends object, TEvent extends BaseEvent> =
   | Partial<TContext>
-  | ((context: Readonly<TContext>, event: TEvent) => Partial<TContext>);
+  | ((context: Patchable<TContext>, event: TEvent) => void);
 
 export type Effect<TContext, TEvent extends BaseEvent> = (
-  context: Readonly<TContext>,
+  context: Patchable<TContext>,
   event: TEvent
 ) => void;
 
 export type TargetConfig<
-  TContext,
+  TContext extends object,
   TEvent extends BaseEvent,
   TState extends string
 > = {
   target: TState;
 
-  /**
-   * Specify an object that will be used to "patch" the current context as soon
-   * as the transition is taken. The context will be updated before the new
-   * state is entered.
-   */
-  assign?: Assigner<TContext, TEvent>;
+  // /**
+  //  * Specify an object that will be used to "patch" the current context as soon
+  //  * as the transition is taken. The context will be updated before the new
+  //  * state is entered.
+  //  */
+  // assign?: AssignConfig<TContext, TEvent>;
+  assign?: never;
 
   /**
    * Emit a side effect (other than assigning to the context) when this
    * transition is taken.
    */
-  effect?: Effect<TContext, TEvent>;
+  effect?: Effect<TContext, TEvent> | Effect<TContext, TEvent>[];
 };
 
-export type Target<TContext, TEvent extends BaseEvent, TState extends string> =
+export type Target<
+  TContext extends object,
+  TEvent extends BaseEvent,
+  TState extends string
+> =
   | TState // Static, e.g. 'complete'
   | TargetConfig<TContext, TEvent, TState>
   | TargetFn<TContext, TEvent, TState>; // Dynamic, e.g. (context) => context.x ? 'complete' : 'other'
@@ -128,6 +139,57 @@ function patterns<TState extends string>(
   return result;
 }
 
+class SafeContext<TContext extends object> {
+  private curr: Readonly<TContext>;
+
+  constructor(initialContext: TContext) {
+    this.curr = initialContext;
+  }
+
+  get current(): Readonly<TContext> {
+    return this.curr;
+  }
+
+  /**
+   * Call a callback function that allows patching of the context, by
+   * calling `context.patch()`. Patching is only allowed for the duration
+   * of this window.
+   */
+  allowPatching(callback: (context: Patchable<TContext>) => void): void {
+    const self = this;
+    let allowed = true;
+
+    const patchableContext = {
+      ...this.curr,
+      patch(patch: Partial<TContext>): void {
+        if (allowed) {
+          self.curr = Object.assign({}, self.curr, patch);
+
+          // Also patch the temporary mutable context helper itself, in case
+          // there are multiple calls in a succession that need
+          for (const pair of Object.entries(patch)) {
+            const [key, value] = pair as [
+              keyof TContext,
+              TContext[keyof TContext]
+            ];
+            if (key !== "patch") {
+              (this as TContext)[key] = value;
+            }
+          }
+        } else {
+          throw new Error("Can no longer patch stale context");
+        }
+      },
+    };
+    callback(patchableContext);
+
+    // If ever the patch function is called after this temporary window,
+    // disallow it
+    allowed = false;
+    return;
+  }
+}
+
 enum RunningState {
   NOT_STARTED_YET, // Machine can be set up during this phase
   STARTED,
@@ -147,7 +209,7 @@ export class FSM<
   // started, or has terminated
   private runningState: RunningState;
 
-  private currentContext: Readonly<TContext>;
+  private readonly currentContext: SafeContext<TContext>;
 
   private states: Set<TState>;
   private currentStateOrNull: TState | null;
@@ -160,7 +222,6 @@ export class FSM<
   private readonly eventHub: {
     readonly didReceiveEvent: EventSource<TEvent | BuiltinEvent>;
     readonly willTransition: EventSource<{ from: TState; to: TState }>;
-    readonly didPatchContext: EventSource<Partial<TContext>>;
     readonly didIgnoreEvent: EventSource<TEvent | BuiltinEvent>;
     readonly willExitState: EventSource<TState>;
     readonly didEnterState: EventSource<TState>;
@@ -169,7 +230,6 @@ export class FSM<
   public readonly events: {
     readonly didReceiveEvent: Observable<TEvent | BuiltinEvent>;
     readonly willTransition: Observable<{ from: TState; to: TState }>;
-    readonly didPatchContext: Observable<Partial<TContext>>;
     readonly didIgnoreEvent: Observable<TEvent | BuiltinEvent>;
     readonly willExitState: Observable<TState>;
     readonly didEnterState: Observable<TState>;
@@ -255,11 +315,10 @@ export class FSM<
     this.cleanupStack = [];
     this.knownEventTypes = new Set();
     this.allowedTransitions = new Map();
-    this.currentContext = Object.assign({}, initialContext);
+    this.currentContext = new SafeContext(initialContext);
     this.eventHub = {
       didReceiveEvent: makeEventSource(),
       willTransition: makeEventSource(),
-      didPatchContext: makeEventSource(),
       didIgnoreEvent: makeEventSource(),
       willExitState: makeEventSource(),
       didEnterState: makeEventSource(),
@@ -267,7 +326,6 @@ export class FSM<
     this.events = {
       didReceiveEvent: this.eventHub.didReceiveEvent.observable,
       willTransition: this.eventHub.willTransition.observable,
-      didPatchContext: this.eventHub.didPatchContext.observable,
       didIgnoreEvent: this.eventHub.didIgnoreEvent.observable,
       willExitState: this.eventHub.willExitState.observable,
       didEnterState: this.eventHub.didEnterState.observable,
@@ -275,7 +333,7 @@ export class FSM<
   }
 
   public get context(): Readonly<TContext> {
-    return this.currentContext;
+    return this.currentContext.current;
   }
 
   /**
@@ -317,7 +375,7 @@ export class FSM<
     return this.onEnter(nameOrPattern, () => {
       let cancelled = false;
 
-      void promiseFn(this.currentContext).then(
+      void promiseFn(this.currentContext.current).then(
         // On OK
         (data: T) => {
           if (!cancelled) {
@@ -438,7 +496,9 @@ export class FSM<
   ): this {
     return this.onEnter(stateOrPattern, () => {
       const ms =
-        typeof after === "function" ? after(this.currentContext) : after;
+        typeof after === "function"
+          ? after(this.currentContext.current)
+          : after;
       const timeoutID = setTimeout(() => {
         this.transition({ type: "TIMER" }, target);
       }, ms);
@@ -467,10 +527,12 @@ export class FSM<
   private exit(levels: number | null) {
     this.eventHub.willExitState.notify(this.currentState);
 
-    levels = levels ?? this.cleanupStack.length;
-    for (let i = 0; i < levels; i++) {
-      this.cleanupStack.pop()?.(this.currentContext);
-    }
+    this.currentContext.allowPatching((patchableContext) => {
+      levels = levels ?? this.cleanupStack.length;
+      for (let i = 0; i < levels; i++) {
+        this.cleanupStack.pop()?.(patchableContext);
+      }
+    });
   }
 
   /**
@@ -483,15 +545,17 @@ export class FSM<
       levels ?? this.currentState.split(".").length + 1
     );
 
-    for (const pattern of enterPatterns) {
-      const enterFn = this.enterFns.get(pattern);
-      const cleanupFn = enterFn?.(this.currentContext);
-      if (typeof cleanupFn === "function") {
-        this.cleanupStack.push(cleanupFn);
-      } else {
-        this.cleanupStack.push(null);
+    this.currentContext.allowPatching((patchableContext) => {
+      for (const pattern of enterPatterns) {
+        const enterFn = this.enterFns.get(pattern);
+        const cleanupFn = enterFn?.(patchableContext);
+        if (typeof cleanupFn === "function") {
+          this.cleanupStack.push(cleanupFn);
+        } else {
+          this.cleanupStack.push(null);
+        }
       }
-    }
+    });
 
     this.eventHub.didEnterState.notify(this.currentState);
   }
@@ -524,10 +588,10 @@ export class FSM<
     const oldState = this.currentState;
 
     const targetFn = typeof target === "function" ? target : () => target;
-    const nextTarget = targetFn(event, this.currentContext);
+    const nextTarget = targetFn(event, this.currentContext.current);
     let nextState: TState;
-    let assign: Assigner<TContext, E> | undefined = undefined;
-    let effect: Effect<TContext, E> | undefined = undefined;
+    // let assign: AssignConfig<TContext, E> | undefined = undefined;
+    let effects: Effect<TContext, E>[] | undefined = undefined;
     if (nextTarget === null) {
       // Do not transition
       this.eventHub.didIgnoreEvent.notify(event);
@@ -538,8 +602,13 @@ export class FSM<
       nextState = nextTarget;
     } else {
       nextState = nextTarget.target;
-      assign = nextTarget.assign;
-      effect = nextTarget.effect;
+      // assign = nextTarget.assign;
+      effects =
+        nextTarget.effect !== undefined
+          ? Array.isArray(nextTarget.effect)
+            ? nextTarget.effect
+            : [nextTarget.effect]
+          : undefined;
     }
 
     if (!this.states.has(nextState)) {
@@ -554,14 +623,18 @@ export class FSM<
     }
 
     this.currentStateOrNull = nextState; // NOTE: Could stay the same, but... there could be an action to execute here
-    if (assign !== undefined) {
-      const patch =
-        typeof assign === "function" ? assign(this.context, event) : assign;
-      this.currentContext = Object.assign({}, this.currentContext, patch);
-      this.eventHub.didPatchContext.notify(patch);
-    }
-    if (effect !== undefined) {
-      effect(this.context, event);
+    if (effects !== undefined) {
+      const effectsToRun = effects;
+      this.currentContext.allowPatching((patchableContext) => {
+        for (const effect of effectsToRun) {
+          if (typeof effect === "function") {
+            // May mutate context
+            effect(patchableContext, event);
+          } else {
+            patchableContext.patch(effect);
+          }
+        }
+      });
     }
 
     if (down > 0) {
