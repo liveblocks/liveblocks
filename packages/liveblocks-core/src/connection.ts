@@ -186,34 +186,36 @@ export type Delegates<T extends BaseAuthResult> = {
   createSocket: (token: T) => IWebSocketInstance;
 };
 
-function enableTracing(fsm: FSM<Context, Event, State>) {
+function enableTracing(machine: FSM<Context, Event, State>) {
   const start = new Date().getTime();
 
   function log(...args: unknown[]) {
     // eslint-disable-next-line
     console.warn(
-      `${((new Date().getTime() - start) / 1000).toFixed(2)} [FSM #${fsm.id}]`,
+      `${((new Date().getTime() - start) / 1000).toFixed(2)} [FSM #${
+        machine.id
+      }]`,
       ...args
     );
   }
   const unsubs = [
-    fsm.events.didReceiveEvent.subscribe((e) => {
+    machine.events.didReceiveEvent.subscribe((e) => {
       log(`Event ${e.type}`);
     }),
-    fsm.events.willTransition.subscribe(({ from, to }) => {
+    machine.events.willTransition.subscribe(({ from, to }) => {
       log("Transitioning", from, "→", to);
     }),
-    fsm.events.didPatchContext.subscribe((patch) => {
+    machine.events.didPatchContext.subscribe((patch) => {
       log(`Patched: ${JSON.stringify(patch)}`);
-      // log(`New context: ${JSON.stringify(fsm.context)}`);
+      // log(`New context: ${JSON.stringify(machine.context)}`);
     }),
-    fsm.events.didIgnoreEvent.subscribe((e) => {
+    machine.events.didIgnoreEvent.subscribe((e) => {
       log("Ignored event", e, "(current state won't handle it)");
     }),
-    // fsm.events.willExitState.subscribe((s) => {
+    // machine.events.willExitState.subscribe((s) => {
     //   log("Exiting state", s);
     // }),
-    // fsm.events.didEnterState.subscribe((s) => {
+    // machine.events.didEnterState.subscribe((s) => {
     //   log("Entering state", s);
     // }),
   ];
@@ -224,7 +226,7 @@ function enableTracing(fsm: FSM<Context, Event, State>) {
   };
 }
 
-function defineConnectivityEvents(fsm: FSM<Context, Event, State>): {
+function defineConnectivityEvents(machine: FSM<Context, Event, State>): {
   statusDidChange: Observable<PublicConnectionStatus>;
   didConnect: Observable<void>;
   didDisconnect: Observable<void>;
@@ -236,7 +238,7 @@ function defineConnectivityEvents(fsm: FSM<Context, Event, State>): {
 
   let oldPublicStatus: PublicConnectionStatus | null = null;
 
-  fsm.events.didEnterState.subscribe((newState) => {
+  machine.events.didEnterState.subscribe((newState) => {
     const newPublicStatus = toPublicConnectionStatus(newState);
     statusDidChange.notify(newPublicStatus);
 
@@ -255,7 +257,9 @@ function defineConnectivityEvents(fsm: FSM<Context, Event, State>): {
   };
 }
 
-function createStateMachine<T extends BaseAuthResult>(delegates: Delegates<T>) {
+function createConnectionStateMachine<T extends BaseAuthResult>(
+  delegates: Delegates<T>
+) {
   // Create observable event sources, which this machine will call into when
   // specific events happen
   const onMessage = makeEventSource<IWebSocketMessageEvent>();
@@ -274,7 +278,9 @@ function createStateMachine<T extends BaseAuthResult>(delegates: Delegates<T>) {
     backoffDelay: LOW_DELAY,
   };
 
-  const fsm = new FSM<Context, Event, State>(initialContext)
+  // The `machine` is the actual finite state machine instance that will
+  // maintain the WebSocket's connection
+  const machine = new FSM<Context, Event, State>(initialContext)
     .addState("@idle.initial")
     .addState("@idle.failed")
     .addState("@auth.busy")
@@ -290,7 +296,7 @@ function createStateMachine<T extends BaseAuthResult>(delegates: Delegates<T>) {
   // It's always possible to explicitly get a .reconnect() or .disconnect()
   // from the user.
   //
-  fsm.addTransitions("*", {
+  machine.addTransitions("*", {
     RECONNECT: {
       target: "@auth.backoff",
       assign: increaseBackoffDelay,
@@ -302,7 +308,7 @@ function createStateMachine<T extends BaseAuthResult>(delegates: Delegates<T>) {
   //
   // Configure the @idle.* states
   //
-  fsm.addTransitions("@idle.*", {
+  machine.addTransitions("@idle.*", {
     CONNECT: (_, ctx) =>
       // If we still have a known token, try to reconnect to the socket directly,
       // otherwise, try to obtain a new token
@@ -312,7 +318,7 @@ function createStateMachine<T extends BaseAuthResult>(delegates: Delegates<T>) {
   //
   // Configure the @auth.* states
   //
-  fsm
+  machine
     .addTransitions("@auth.backoff", {
       NAVIGATOR_ONLINE: {
         target: "@auth.busy",
@@ -367,14 +373,14 @@ function createStateMachine<T extends BaseAuthResult>(delegates: Delegates<T>) {
 
   // Function references
   const onSocketError = (event: IWebSocketEvent) =>
-    fsm.send({ type: "EXPLICIT_SOCKET_ERROR", event });
+    machine.send({ type: "EXPLICIT_SOCKET_ERROR", event });
 
   const onSocketClose = (event: IWebSocketCloseEvent) =>
-    fsm.send({ type: "EXPLICIT_SOCKET_CLOSE", event });
+    machine.send({ type: "EXPLICIT_SOCKET_CLOSE", event });
 
   const onSocketMessage = (event: IWebSocketMessageEvent) =>
     event.data === "pong"
-      ? fsm.send({ type: "PONG" })
+      ? machine.send({ type: "PONG" })
       : onMessage.notify(event);
 
   function teardownSocket(socket: IWebSocketInstance | null) {
@@ -386,7 +392,7 @@ function createStateMachine<T extends BaseAuthResult>(delegates: Delegates<T>) {
     }
   }
 
-  fsm
+  machine
     .addTransitions("@connecting.backoff", {
       NAVIGATOR_ONLINE: {
         target: "@connecting.busy",
@@ -485,7 +491,7 @@ function createStateMachine<T extends BaseAuthResult>(delegates: Delegates<T>) {
   // it as an implicit connection loss, and transition to reconnect (throw away
   // this socket, and open a new one).
   //
-  fsm
+  machine
     .addTimedTransition("@ok.connected", HEARTBEAT_INTERVAL, {
       target: "@ok.awaiting-pong",
       effect: sendHeartbeat,
@@ -504,7 +510,7 @@ function createStateMachine<T extends BaseAuthResult>(delegates: Delegates<T>) {
     },
   };
 
-  fsm
+  machine
     .onEnter("@ok.*", (ctx) => {
       // Do nothing on entering...
 
@@ -587,14 +593,14 @@ function createStateMachine<T extends BaseAuthResult>(delegates: Delegates<T>) {
     const win = typeof window !== "undefined" ? window : undefined;
     const root = win ?? doc;
 
-    fsm.onEnter("*", (ctx) => {
+    machine.onEnter("*", (ctx) => {
       function onBackOnline() {
-        fsm.send({ type: "NAVIGATOR_ONLINE" });
+        machine.send({ type: "NAVIGATOR_ONLINE" });
       }
 
       function onVisibilityChange() {
         if (doc?.visibilityState === "visible") {
-          fsm.send({ type: "WINDOW_GOT_FOCUS" });
+          machine.send({ type: "WINDOW_GOT_FOCUS" });
         }
       }
 
@@ -611,16 +617,16 @@ function createStateMachine<T extends BaseAuthResult>(delegates: Delegates<T>) {
   }
 
   const { statusDidChange, didConnect, didDisconnect } =
-    defineConnectivityEvents(fsm);
+    defineConnectivityEvents(machine);
 
   // Install debug logging
-  const cleanup = enableTracing(fsm); // TODO Remove logging in production
+  const cleanup = enableTracing(machine); // TODO Remove logging in production
 
   // Start the machine
-  fsm.start();
+  machine.start();
 
   return {
-    fsm,
+    machine,
     cleanup,
 
     // Observable events that will be emitted by this machine
@@ -644,7 +650,7 @@ function createStateMachine<T extends BaseAuthResult>(delegates: Delegates<T>) {
  */
 export class ManagedSocket<T extends BaseAuthResult> {
   /** @internal */
-  private fsm: FSM<Context, Event, State>;
+  private machine: FSM<Context, Event, State>;
   private cleanup: () => void;
 
   public readonly events: {
@@ -670,15 +676,16 @@ export class ManagedSocket<T extends BaseAuthResult> {
   };
 
   constructor(delegates: Delegates<T>) {
-    const { fsm, events, cleanup } = createStateMachine(delegates);
-    this.fsm = fsm;
+    const { machine, events, cleanup } =
+      createConnectionStateMachine(delegates);
+    this.machine = machine;
     this.events = events;
     this.cleanup = cleanup;
   }
 
   get status(): PublicConnectionStatus {
     try {
-      return toPublicConnectionStatus(this.fsm.currentState);
+      return toPublicConnectionStatus(this.machine.currentState);
     } catch {
       return "closed";
     }
@@ -688,7 +695,7 @@ export class ManagedSocket<T extends BaseAuthResult> {
    * Returns the current auth token.
    */
   get token(): T {
-    const tok = this.fsm.context.token;
+    const tok = this.machine.context.token;
     if (tok === null) {
       throw new Error("Unexpected null token here");
     }
@@ -700,7 +707,7 @@ export class ManagedSocket<T extends BaseAuthResult> {
    * if the machine is idle at the moment, otherwise this is a no-op.
    */
   public connect() {
-    this.fsm.send({ type: "CONNECT" });
+    this.machine.send({ type: "CONNECT" });
   }
 
   /**
@@ -708,7 +715,7 @@ export class ManagedSocket<T extends BaseAuthResult> {
    * the socket, potentially obtaining a new token first, if needed.
    */
   public reconnect() {
-    this.fsm.send({ type: "RECONNECT" });
+    this.machine.send({ type: "RECONNECT" });
   }
 
   /**
@@ -716,7 +723,7 @@ export class ManagedSocket<T extends BaseAuthResult> {
    * a no-op if there is no active connection.
    */
   public disconnect() {
-    this.fsm.send({ type: "DISCONNECT" });
+    this.machine.send({ type: "DISCONNECT" });
   }
 
   /**
@@ -725,7 +732,7 @@ export class ManagedSocket<T extends BaseAuthResult> {
    * letting the instance get garbage collected.
    */
   public destroy() {
-    this.fsm.stop();
+    this.machine.stop();
     this.cleanup();
   }
 
@@ -734,7 +741,7 @@ export class ManagedSocket<T extends BaseAuthResult> {
    * message if this is somehow impossible.
    */
   public send(data: string) {
-    const socket = this.fsm.context?.socket;
+    const socket = this.machine.context?.socket;
     if (socket === null) {
       console.warn("Cannot send: not connected yet", data);
     } else if (socket.readyState !== WebSocket.OPEN) {
@@ -749,6 +756,6 @@ export class ManagedSocket<T extends BaseAuthResult> {
    * Not ideal to keep exposed :(
    */
   public _privateSend(event: Event) {
-    return this.fsm.send(event);
+    return this.machine.send(event);
   }
 }
