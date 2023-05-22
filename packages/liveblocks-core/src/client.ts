@@ -78,7 +78,7 @@ export type AuthEndpoint =
 export type ClientOptions = {
   throttle?: number;
   polyfills?: Polyfills;
-  unstable_fallbackToHTTP: boolean;
+  unstable_fallbackToHTTP?: boolean;
 
   /**
    * Backward-compatible way to set `polyfills.fetch`.
@@ -185,7 +185,7 @@ export function createClient(options: ClientOptions): Client {
           clientOptions,
           roomId
         ),
-        unstable_fallbackToHTTP: clientOptions.unstable_fallbackToHTTP,
+        unstable_fallbackToHTTP: !!clientOptions.unstable_fallbackToHTTP,
       }
     );
 

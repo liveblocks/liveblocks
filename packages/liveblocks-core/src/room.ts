@@ -770,8 +770,8 @@ type RoomConfig<TPresence extends JsonObject, TRoomEvent extends Json> = {
   throttleDelay: number;
   authentication: Authentication;
   liveblocksServer: string;
-  httpSendEndpoint: string;
-  unstable_fallbackToHTTP: boolean;
+  httpSendEndpoint?: string;
+  unstable_fallbackToHTTP?: boolean;
 
   polyfills?: Polyfills;
 
@@ -1020,7 +1020,14 @@ export function createRoom<
           // if our message contains UTF-8, we can't simply use length. See: https://stackoverflow.com/questions/23318037/size-of-json-object-in-kbs-mbs
           // if this turns out to be expensive, we could just guess with a lower value.
           const size = new TextEncoder().encode(message).length;
-          if (size > MAX_MESSAGE_SIZE && context.token?.raw) {
+          if (
+            size > MAX_MESSAGE_SIZE &&
+            context.token?.raw &&
+            config.httpSendEndpoint
+          ) {
+            if (isTokenExpired(context.token.parsed)) {
+              return reconnect();
+            }
             // check for expiration?
             void httpSend(
               message,
