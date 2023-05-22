@@ -612,6 +612,8 @@ type PrivateRoomAPI<
   getOthers_forDevTools(): readonly DevTools.UserTreeNode[];
 
   send: {
+    simulateAuthSuccess(x: unknown, y: unknown): void; // XXX Remove this
+
     explicitClose(event: IWebSocketCloseEvent): void; // NOTE: Also used in e2e test app!
     implicitClose(): void; // NOTE: Also used in e2e test app!
 
@@ -2038,6 +2040,10 @@ export function createRoom<
 
       // prettier-ignore
       send: {
+        simulateAuthSuccess() { 
+          throw new Error('🙏 Rewrite this test to no longer depend on authSuccess, please! 🙏')
+        },
+
         // These exist only for our E2E testing app
         explicitClose: (event) => managedSocket._privateSendMachineEvent({ type: "EXPLICIT_SOCKET_CLOSE", event }),
         implicitClose: () => managedSocket._privateSendMachineEvent({ type: "PONG_TIMEOUT" }),
