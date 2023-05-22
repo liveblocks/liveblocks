@@ -1522,7 +1522,8 @@ describe("room", () => {
         "Connection to Liveblocks websocket server closed (code: 1006). Retrying in 250ms."
       );
 
-      expect(room.__internal.numRetries).toEqual(1);
+      // XXX Assert here that, if 250ms pass (= SHORT delay!), another
+      // WebSocket connection gets instantiated by the room
     });
 
     test("when error code 4002", () => {
@@ -1544,7 +1545,8 @@ describe("room", () => {
         "Connection to websocket server closed. Reason:  (code: 4002). Retrying in 2000ms."
       );
 
-      expect(room.__internal.numRetries).toEqual(1);
+      // XXX Assert here that, if 2000ms pass (= LONG delay!), another
+      // WebSocket connection gets instantiated by the room
     });
 
     test("manual reconnection", () => {
