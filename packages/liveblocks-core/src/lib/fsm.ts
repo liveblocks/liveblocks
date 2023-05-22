@@ -142,6 +142,7 @@ class SafeContext<TContext extends object> {
    * of this window.
    */
   allowPatching(callback: (context: Patchable<TContext>) => void): void {
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
     const self = this;
     let allowed = true;
 

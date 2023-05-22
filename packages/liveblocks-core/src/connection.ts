@@ -2,8 +2,8 @@ import { assertNever } from "./lib/assert";
 import type { Observable } from "./lib/EventSource";
 import { makeEventSource } from "./lib/EventSource";
 import * as console from "./lib/fancy-console";
-import type { BuiltinEvent, Target } from "./lib/fsm";
-import { FSM, Patchable } from "./lib/fsm";
+import type { BuiltinEvent, Patchable, Target } from "./lib/fsm";
+import { FSM } from "./lib/fsm";
 import type {
   IWebSocketCloseEvent,
   IWebSocketEvent,
@@ -703,7 +703,7 @@ export class ManagedSocket<T extends BaseAuthResult> {
    * Call this method to try to connect to a WebSocket. This only has an effect
    * if the machine is idle at the moment, otherwise this is a no-op.
    */
-  public connect() {
+  public connect(): void {
     this.machine.send({ type: "CONNECT" });
   }
 
@@ -711,7 +711,7 @@ export class ManagedSocket<T extends BaseAuthResult> {
    * If idle, will try to connect. Otherwise, it will attempt to reconnect to
    * the socket, potentially obtaining a new token first, if needed.
    */
-  public reconnect() {
+  public reconnect(): void {
     this.machine.send({ type: "RECONNECT" });
   }
 
@@ -719,7 +719,7 @@ export class ManagedSocket<T extends BaseAuthResult> {
    * Call this method to disconnect from the current WebSocket. Is going to be
    * a no-op if there is no active connection.
    */
-  public disconnect() {
+  public disconnect(): void {
     this.machine.send({ type: "DISCONNECT" });
   }
 
@@ -728,7 +728,7 @@ export class ManagedSocket<T extends BaseAuthResult> {
    * calling destroy(), you can no longer use this instance. Call this before
    * letting the instance get garbage collected.
    */
-  public destroy() {
+  public destroy(): void {
     this.machine.stop();
 
     let cleanup: (() => void) | undefined;
@@ -741,7 +741,7 @@ export class ManagedSocket<T extends BaseAuthResult> {
    * Safely send a message to the current WebSocket connection. Will emit a log
    * message if this is somehow impossible.
    */
-  public send(data: string) {
+  public send(data: string): void {
     const socket = this.machine.context?.socket;
     if (socket === null) {
       console.warn("Cannot send: not connected yet", data);
@@ -756,7 +756,7 @@ export class ManagedSocket<T extends BaseAuthResult> {
    * NOTE: Used by the E2E app only, to simulate explicit events.
    * Not ideal to keep exposed :(
    */
-  public _privateSend(event: Event) {
-    return this.machine.send(event);
+  public _privateSend(event: Event): void {
+    this.machine.send(event);
   }
 }
