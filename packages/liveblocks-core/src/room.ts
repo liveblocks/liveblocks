@@ -2541,7 +2541,7 @@ async function httpSend(
   fetchPolyfill?: typeof window.fetch
 ) {
   const fetcher = fetchPolyfill || /* istanbul ignore next */ fetch;
-  await fetcher(endpoint, {
+  return fetcher(endpoint, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
