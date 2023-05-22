@@ -206,6 +206,24 @@ describe("AsyncCache", () => {
     expect(mock).toHaveBeenCalledTimes(2);
   });
 
+  test("revalidating", async () => {
+    const mock = createAsyncMock();
+    const cache = createAsyncCache(mock, { deduplicationInterval: 0 });
+
+    // 🚀 Called
+    await cache.get(KEY_ABC);
+
+    // 🗑️ Clears the cache for "abc" and 🚀 called again because invalidated
+    expect(await cache.revalidate(KEY_ABC)).toMatchObject<
+      AsyncStateDataError<string>
+    >({
+      data: KEY_ABC,
+      error: undefined,
+    });
+
+    expect(mock).toHaveBeenCalledTimes(2);
+  });
+
   test("clearing the cache", async () => {
     const mock = createAsyncMock();
     const cache = createAsyncCache(mock, {

@@ -46,6 +46,9 @@ export type AsyncCacheItem<TData = any, TError = any> = Observable<
   get(): Promise<AsyncResolvedState<TData, TError>>;
   getState(): AsyncState<TData, TError>;
   invalidate(options?: InvalidateOptions): void;
+  revalidate(
+    options?: InvalidateOptions
+  ): Promise<AsyncResolvedState<TData, TError>>;
 };
 
 export type AsyncCache<TData = any, TError = any> = {
@@ -53,6 +56,10 @@ export type AsyncCache<TData = any, TError = any> = {
   get(key: string): Promise<AsyncResolvedState<TData, TError>>;
   getState(key: string): AsyncState<TData, TError> | undefined;
   invalidate(key: string, options?: InvalidateOptions): void;
+  revalidate(
+    key: string,
+    options?: InvalidateOptions
+  ): Promise<AsyncResolvedState<TData, TError>>;
   subscribe(
     key: string,
     callback: Callback<AsyncState<TData, TError>>
@@ -168,6 +175,12 @@ function createCacheItem<TData = any, TError = any>(
     return getState() as AsyncResolvedState<TData, TError>;
   }
 
+  function revalidate(options?: InvalidateOptions) {
+    invalidate(options);
+
+    return get();
+  }
+
   function getState() {
     return {
       isLoading: context.isLoading,
@@ -181,6 +194,7 @@ function createCacheItem<TData = any, TError = any>(
     get,
     getState,
     invalidate,
+    revalidate,
   };
 }
 
@@ -207,7 +221,7 @@ export function createAsyncCache<TData = any, TError = any>(
     return cacheItem;
   }
 
-  async function get(key: string) {
+  function get(key: string) {
     return create(key).get();
   }
 
@@ -217,6 +231,10 @@ export function createAsyncCache<TData = any, TError = any>(
 
   function invalidate(key: string, options?: InvalidateOptions) {
     cache.get(key)?.invalidate(options);
+  }
+
+  function revalidate(key: string, options?: InvalidateOptions) {
+    return create(key).revalidate(options);
   }
 
   function subscribe(
@@ -239,6 +257,7 @@ export function createAsyncCache<TData = any, TError = any>(
     get,
     getState,
     invalidate,
+    revalidate,
     subscribe,
     has,
     clear,
