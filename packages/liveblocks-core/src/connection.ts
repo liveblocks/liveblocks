@@ -104,7 +104,6 @@ type Context = {
    * The current retry delay when automatically retrying.
    */
   backoffDelay: number;
-  // numRetries: number; // Keep track of the number of retry attempts
 };
 
 const BACKOFF_DELAYS = [250, 500, 1000, 2000, 4000, 8000, 10000] as const;
@@ -273,7 +272,6 @@ function createStateMachine<T extends BaseAuthResult>(delegates: Delegates<T>) {
     // whether this is for the authentication server or the websocket server).
     // Reset every time a connection succeeded.
     backoffDelay: LOW_DELAY,
-    // numRetries: 0,
   };
 
   const fsm = new FSM<Context, Event, State>(initialContext)
