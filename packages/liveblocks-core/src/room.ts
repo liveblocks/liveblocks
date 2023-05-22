@@ -672,6 +672,8 @@ type RoomState<
    * All pending changes that yet need to be synced.
    */
   buffer: {
+    flushTimerID: TimeoutID | undefined;
+
     // When the last flush happened. Together with config.throttleDelay, this
     // will control whether the next flush will be sent out immediately, or if
     // a flush will get scheduled for a few milliseconds into the future.
@@ -684,12 +686,6 @@ type RoomState<
       | null;
     messages: ClientMsg<TPresence, TRoomEvent>[];
     storageOperations: Op[];
-  };
-
-  readonly timers: {
-    // XXX Should we move this into the `buffer` structure, if _that_ is what
-    // is being flushed, close to the `lastFlushedAt` value?
-    flush: TimeoutID | undefined;
   };
 
   readonly connection: ValueRef<Connection>; // XXX Make this a derived property
@@ -849,11 +845,8 @@ export function createRoom<
   const context: RoomState<TPresence, TStorage, TUserMeta, TRoomEvent> = {
     lastConnectionId: null,
 
-    timers: {
-      flush: undefined,
-    },
-
     buffer: {
+      flushTimerID: undefined,
       lastFlushedAt: 0,
       me:
         // Queue up the initial presence message as a Full Presence™ update
@@ -951,7 +944,7 @@ export function createRoom<
   }
 
   function onDidDisconnect() {
-    clearTimeout(context.timers.flush);
+    clearTimeout(context.buffer.flushTimerID);
 
     // XXX Combine this into the same batch wrapper as the onStatusDidChange
     // event, only when this is transitioning from "open" to non-open
@@ -1742,6 +1735,7 @@ export function createRoom<
 
       effects.send(messagesToFlush);
       context.buffer = {
+        flushTimerID: undefined,
         lastFlushedAt: now,
         messages: [],
         storageOperations: [],
@@ -1749,8 +1743,8 @@ export function createRoom<
       };
     } else {
       // Or schedule the flush a few millis into the future
-      clearTimeout(context.timers.flush);
-      context.timers.flush = setTimeout(
+      clearTimeout(context.buffer.flushTimerID);
+      context.buffer.flushTimerID = setTimeout(
         tryFlushing,
         config.throttleDelay - elapsedMillis
       );
