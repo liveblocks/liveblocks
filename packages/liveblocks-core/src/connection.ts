@@ -101,13 +101,15 @@ type Context = {
   socket: IWebSocketInstance | null;
 
   /**
-   * The current retry delay when automatically retrying.
+   * The current retry delay when automatically retrying. Will get bumped to
+   * the next "tier" every time a connection attempt fails. Reset every time
+   * a connection succeeded.
    */
   backoffDelay: number;
 };
 
 const BACKOFF_DELAYS = [250, 500, 1000, 2000, 4000, 8000, 10000] as const;
-const LOW_DELAY = BACKOFF_DELAYS[0];
+const RESET_DELAY = BACKOFF_DELAYS[0]; // Use the lowest delay value when resetting it upon success
 
 /**
  * Used to back off from WebSocket reconnection attempts after a known
@@ -268,11 +270,7 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
   const initialContext: Context & { token: T | null } = {
     token: null,
     socket: null,
-
-    // Bumped to the next "tier" every time a connection attempt fails (no matter
-    // whether this is for the authentication server or the websocket server).
-    // Reset every time a connection succeeded.
-    backoffDelay: LOW_DELAY,
+    backoffDelay: RESET_DELAY,
   };
 
   // The `machine` is the actual finite state machine instance that will
@@ -319,7 +317,7 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
     .addTransitions("@auth.backoff", {
       NAVIGATOR_ONLINE: {
         target: "@auth.busy",
-        assign: { backoffDelay: LOW_DELAY },
+        assign: { backoffDelay: RESET_DELAY },
       },
     })
     .addTimedTransition(
@@ -339,7 +337,7 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
         target: "@connecting.busy",
         assign: {
           token: okEvent.data as BaseAuthResult,
-          backoffDelay: LOW_DELAY,
+          backoffDelay: RESET_DELAY,
         },
       }),
 
@@ -393,7 +391,7 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
     .addTransitions("@connecting.backoff", {
       NAVIGATOR_ONLINE: {
         target: "@connecting.busy",
-        assign: { backoffDelay: LOW_DELAY },
+        assign: { backoffDelay: RESET_DELAY },
       },
     })
     .addTimedTransition(
@@ -455,7 +453,7 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
         target: "@ok.connected",
         assign: {
           socket: okEvent.data,
-          backoffDelay: LOW_DELAY,
+          backoffDelay: RESET_DELAY,
         },
       }),
 
