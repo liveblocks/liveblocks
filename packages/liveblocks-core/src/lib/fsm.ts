@@ -28,10 +28,10 @@ export type AsyncErrorEvent = {
 export type BaseEvent = { readonly type: string };
 export type BuiltinEvent = TimerEvent | AsyncOKEvent<unknown> | AsyncErrorEvent;
 
-export type CleanupFn = () => void;
+export type CleanupFn<TContext> = (context: Readonly<TContext>) => void;
 export type EnterFn<TContext> = (
   context: Readonly<TContext>
-) => void | CleanupFn;
+) => void | CleanupFn<TContext>;
 
 export type TargetFn<
   TContext,
@@ -191,7 +191,7 @@ export class FSM<
   // will contain the exit handler for `foo.bar.qux` (at the top), then
   // `foo.bar.*`, then `foo.*`, and finally, `*`.
   //
-  private cleanupStack: (CleanupFn | null)[];
+  private cleanupStack: (CleanupFn<TContext> | null)[];
 
   private enterFns: Map<TState | Wildcard<TState>, EnterFn<TContext>>;
 
@@ -469,7 +469,7 @@ export class FSM<
 
     levels = levels ?? this.cleanupStack.length;
     for (let i = 0; i < levels; i++) {
-      this.cleanupStack.pop()?.();
+      this.cleanupStack.pop()?.(this.currentContext);
     }
   }
 

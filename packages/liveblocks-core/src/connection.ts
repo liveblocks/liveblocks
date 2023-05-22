@@ -506,12 +506,12 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
   };
 
   machine
-    .onEnter("@ok.*", (ctx) => {
+    .onEnter("@ok.*", () => {
       // Do nothing on entering...
 
       // ...but when *leaving* OK state, always tear down the old socket. It's
       // no longer valid.
-      return () => {
+      return (ctx) => {
         teardownSocket(ctx.socket);
         (ctx as any).socket = null;
         //   ^^^^^^
