@@ -668,7 +668,7 @@ describe("room", () => {
   });
 
   it("undo redo batch", async () => {
-    const { expectUpdates, batch, root, room } =
+    const { room, root, expectUpdates } =
       await prepareDisconnectedStorageUpdateTest<{
         items: LiveList<LiveObject<Record<string, number>>>;
       }>([
@@ -678,7 +678,7 @@ describe("room", () => {
       ]);
 
     const items = root.get("items");
-    batch(() => {
+    room.batch(() => {
       nn(items.get(0)).set("a", 1);
       items.set(0, new LiveObject({ a: 2 }));
     });
@@ -900,20 +900,20 @@ describe("room", () => {
   });
 
   test("canUndo / canRedo", async () => {
-    const { storage, undo, canUndo, canRedo } = await prepareStorageTest<{
+    const { room, storage } = await prepareStorageTest<{
       a: number;
     }>([createSerializedObject("0:0", { a: 1 })], 1);
 
-    expect(canUndo()).toBeFalsy();
-    expect(canRedo()).toBeFalsy();
+    expect(room.history.canUndo()).toBeFalsy();
+    expect(room.history.canRedo()).toBeFalsy();
 
     storage.root.set("a", 2);
 
-    expect(canUndo()).toBeTruthy();
+    expect(room.history.canUndo()).toBeTruthy();
 
-    undo();
+    room.history.undo();
 
-    expect(canRedo()).toBeTruthy();
+    expect(room.history.canRedo()).toBeTruthy();
   });
 
   describe("subscription", () => {
@@ -973,35 +973,36 @@ describe("room", () => {
     });
 
     test("batch without operations should not add an item to the undo stack", async () => {
-      const { storage, expectStorage, undo, batch } = await prepareStorageTest<{
+      const { room, storage, expectStorage } = await prepareStorageTest<{
         a: number;
       }>([createSerializedObject("0:0", { a: 1 })], 1);
 
       storage.root.set("a", 2);
 
       // Batch without operations on storage or presence
-      batch(() => {});
+      room.batch(() => {});
 
       expectStorage({ a: 2 });
 
-      undo();
+      room.history.undo();
 
       expectStorage({ a: 1 });
     });
 
     test("batch storage with changes from server", async () => {
-      const { storage, expectStorage, undo, redo, batch } =
-        await prepareStorageTest<{ items: LiveList<string> }>(
-          [
-            createSerializedObject("0:0", {}),
-            createSerializedList("0:1", "0:0", "items"),
-          ],
-          1
-        );
+      const { room, storage, expectStorage } = await prepareStorageTest<{
+        items: LiveList<string>;
+      }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedList("0:1", "0:0", "items"),
+        ],
+        1
+      );
 
       const items = storage.root.get("items");
 
-      batch(() => {
+      room.batch(() => {
         items.push("A");
         items.push("B");
         items.push("C");
@@ -1011,13 +1012,13 @@ describe("room", () => {
         items: ["A", "B", "C"],
       });
 
-      undo();
+      room.history.undo();
 
       expectStorage({
         items: [],
       });
 
-      redo();
+      room.history.redo();
 
       expectStorage({
         items: ["A", "B", "C"],
@@ -1031,12 +1032,9 @@ describe("room", () => {
       type E = never;
 
       const {
+        room,
         storage,
         expectStorage,
-        undo,
-        redo,
-        batch,
-        updatePresence,
         refRoom: refRoom,
       } = await prepareStorageTest<S, P, M, E>(
         [
@@ -1051,9 +1049,9 @@ describe("room", () => {
       let refOthers: Others<P, M> | undefined;
       refRoom.events.others.subscribe((ev) => (refOthers = ev.others));
 
-      batch(() => {
-        updatePresence({ x: 0 });
-        updatePresence({ x: 1 });
+      room.batch(() => {
+        room.updatePresence({ x: 0 });
+        room.updatePresence({ x: 1 });
         items.push("A");
         items.push("B");
         items.push("C");
@@ -1073,13 +1071,13 @@ describe("room", () => {
         },
       ]);
 
-      undo();
+      room.history.undo();
 
       expectStorage({
         items: [],
       });
 
-      redo();
+      room.history.redo();
 
       expectStorage({
         items: ["A", "B", "C"],
@@ -1087,12 +1085,7 @@ describe("room", () => {
     });
 
     test("nested storage updates", async () => {
-      const {
-        expectUpdates: expectUpdates,
-        root,
-        batch,
-        room,
-      } = await prepareStorageUpdateTest<{
+      const { room, root, expectUpdates } = await prepareStorageUpdateTest<{
         items: LiveList<LiveObject<{ names: LiveList<string> }>>;
       }>([
         createSerializedObject("0:0", {}),
@@ -1109,7 +1102,7 @@ describe("room", () => {
         items: Array<{ names: Array<string> }>;
       };
 
-      batch(() => {
+      room.batch(() => {
         const items = root.get("items");
         items.insert(new LiveObject({ names: new LiveList(["John Doe"]) }), 0);
         items.get(1)?.get("names").push("Jane Doe");
