@@ -1,58 +1,63 @@
 import type { Callback, Observable, UnsubscribeCallback } from "./EventSource";
 import { makeEventSource } from "./EventSource";
 
+const DEDUPLICATION_INTERVAL = 2000;
+
+type WithRequired<T, K extends keyof T> = T & { [P in K]-?: T[P] };
+
 type AsyncFunction<T, A extends any[] = any[]> = (...args: A) => Promise<T>;
 
-export type AsyncState<TData = any, TError = any> =
-  | {
-      status: "idle" | "loading";
-      data?: TData;
-      error?: TError;
-    }
-  | {
-      status: "error";
-      data: undefined;
-      error: TError;
-    }
-  | {
-      status: "success";
-      data: TData;
-      error: undefined;
-    };
+type AsyncCacheOptions = {
+  deduplicationInterval?: number;
+};
+
+type AsyncCacheItemOptions = WithRequired<
+  AsyncCacheOptions,
+  "deduplicationInterval"
+>;
+
+type InvalidateOptions = {
+  keepPreviousData?: boolean;
+};
+
+export type AsyncState<TData = any, TError = any> = {
+  isLoading: boolean;
+  data?: TData;
+  error?: TError;
+};
+
+type AsyncResolvedState<TData = any, TError = any> = AsyncState<
+  TData,
+  TError
+> & {
+  isLoading: false;
+};
 
 type AsyncCacheItemContext<TData, TError> = AsyncState<TData, TError> & {
+  isInvalid: boolean;
+  hasScheduledInvalidation: boolean;
   promise?: Promise<TData>;
+  lastExecutedAt?: number;
 };
 
 export type AsyncCacheItem<TData = any, TError = any> = Observable<
   AsyncState<TData, TError>
 > & {
-  get(): Promise<
-    Extract<
-      AsyncState<TData, TError>,
-      { status: "success" } | { status: "error" }
-    >
-  >;
+  get(): Promise<AsyncResolvedState<TData, TError>>;
   getState(): AsyncState<TData, TError>;
-  revalidate(): Promise<void>;
+  invalidate(options?: InvalidateOptions): void;
 };
 
 export type AsyncCache<TData = any, TError = any> = {
   create(key: string): AsyncCacheItem<TData, TError>;
-  get(
-    key: string
-  ): Promise<
-    Extract<
-      AsyncState<TData, TError>,
-      { status: "success" } | { status: "error" }
-    >
-  >;
+  get(key: string): Promise<AsyncResolvedState<TData, TError>>;
   getState(key: string): AsyncState<TData, TError> | undefined;
-  revalidate(key: string): Promise<void>;
+  invalidate(key: string, options?: InvalidateOptions): void;
   subscribe(
     key: string,
     callback: Callback<AsyncState<TData, TError>>
   ): UnsubscribeCallback;
+  has(key: string): boolean;
   clear(): void;
 };
 
@@ -60,10 +65,13 @@ const noop = () => {};
 
 function createCacheItem<TData = any, TError = any>(
   key: string,
-  asyncFunction: AsyncFunction<TData>
+  asyncFunction: AsyncFunction<TData>,
+  { deduplicationInterval }: AsyncCacheItemOptions
 ): AsyncCacheItem<TData, TError> {
   const context: AsyncCacheItemContext<TData, TError> = {
-    status: "idle",
+    isLoading: false,
+    isInvalid: true,
+    hasScheduledInvalidation: false,
   };
   const eventSource = makeEventSource<AsyncState<TData, TError>>();
 
@@ -71,55 +79,78 @@ function createCacheItem<TData = any, TError = any>(
     eventSource.notify(getState());
   }
 
-  function setSuccess(data: TData) {
-    context.status = "success";
-    context.data = data;
-    context.error = undefined;
-    notify();
-  }
-
-  function setError(error: TError) {
-    context.status = "error";
-    context.data = undefined;
-    context.error = error;
-    notify();
-  }
-
   function execute() {
+    context.lastExecutedAt = Date.now();
     context.error = undefined;
-    context.status = "loading";
+    context.isLoading = true;
+    context.isInvalid = true;
     context.promise = asyncFunction(key);
+
     notify();
   }
 
-  async function revalidate() {
+  async function resolve() {
     try {
-      if (context.status !== "loading") {
-        execute();
+      const data = await context.promise;
+
+      context.data = data;
+      context.error = undefined;
+      context.isInvalid = false;
+    } catch (error) {
+      context.error = error as TError;
+      context.isInvalid = true;
+    }
+
+    context.promise = undefined;
+    context.isLoading = false;
+
+    if (context.hasScheduledInvalidation) {
+      context.hasScheduledInvalidation = false;
+      invalidate();
+    } else {
+      notify();
+    }
+  }
+
+  function invalidate(options?: InvalidateOptions) {
+    if (context.promise) {
+      context.hasScheduledInvalidation = true;
+    } else if (!context.hasScheduledInvalidation) {
+      const keepPreviousData = options?.keepPreviousData ?? false;
+      context.isInvalid = true;
+      context.error = undefined;
+
+      if (!keepPreviousData) {
+        context.data = undefined;
       }
 
-      setSuccess(await (context.promise as Promise<TData>));
-    } catch (error) {
-      setError(error as TError);
+      notify();
     }
   }
 
   async function get() {
-    if (!context.data) {
-      await revalidate();
+    if (context.isInvalid) {
+      const isDuplicate = context.lastExecutedAt
+        ? Date.now() - context.lastExecutedAt < deduplicationInterval
+        : false;
+
+      if (!context.promise && !isDuplicate) {
+        execute();
+      }
+
+      if (context.promise) {
+        await resolve();
+      }
     }
 
-    return getState() as Extract<
-      AsyncState<TData, TError>,
-      { status: "success" } | { status: "error" }
-    >;
+    return getState() as AsyncResolvedState<TData, TError>;
   }
 
-  function getState(): AsyncState<TData, TError> {
+  function getState() {
     return {
+      isLoading: context.isLoading,
       data: context.data,
       error: context.error,
-      status: context.status,
     } as AsyncState<TData, TError>;
   }
 
@@ -127,14 +158,19 @@ function createCacheItem<TData = any, TError = any>(
     ...eventSource.observable,
     get,
     getState,
-    revalidate,
+    invalidate,
   };
 }
 
 export function createAsyncCache<TData = any, TError = any>(
-  asyncFunction: AsyncFunction<TData, [string]>
+  asyncFunction: AsyncFunction<TData, [string]>,
+  options?: AsyncCacheOptions
 ): AsyncCache<TData, TError> {
   const cache = new Map<string, AsyncCacheItem<TData, TError>>();
+  const cacheItemOptions: AsyncCacheItemOptions = {
+    deduplicationInterval:
+      options?.deduplicationInterval ?? DEDUPLICATION_INTERVAL,
+  };
 
   function create(key: string) {
     let cacheItem = cache.get(key);
@@ -143,7 +179,7 @@ export function createAsyncCache<TData = any, TError = any>(
       return cacheItem;
     }
 
-    cacheItem = createCacheItem(key, asyncFunction);
+    cacheItem = createCacheItem(key, asyncFunction, cacheItemOptions);
     cache.set(key, cacheItem);
 
     return cacheItem;
@@ -157,15 +193,19 @@ export function createAsyncCache<TData = any, TError = any>(
     return cache.get(key)?.getState();
   }
 
-  async function revalidate(key: string) {
-    await cache.get(key)?.revalidate();
+  function invalidate(key: string, options?: InvalidateOptions) {
+    cache.get(key)?.invalidate(options);
   }
 
   function subscribe(
     key: string,
     callback: Callback<AsyncState<TData, TError>>
   ) {
-    return cache.get(key)?.subscribe(callback) ?? noop;
+    return create(key).subscribe(callback) ?? noop;
+  }
+
+  function has(key: string) {
+    return cache.has(key);
   }
 
   function clear() {
@@ -176,8 +216,9 @@ export function createAsyncCache<TData = any, TError = any>(
     create,
     get,
     getState,
-    revalidate,
+    invalidate,
     subscribe,
+    has,
     clear,
   };
 }

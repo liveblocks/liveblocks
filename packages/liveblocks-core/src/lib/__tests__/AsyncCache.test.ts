@@ -1,10 +1,15 @@
 import type { AsyncState } from "../AsyncCache";
 import { createAsyncCache } from "../AsyncCache";
 
-const REQUEST_DELAY = 100;
+const REQUEST_DELAY = 20;
 const KEY_ABC = "abc";
 const KEY_XYZ = "xyz";
-const ERROR_MESSAGE = "error";
+const ERROR = new Error("error");
+
+type AsyncStateDataError<TData = any, TError = any> = Pick<
+  AsyncState<TData, TError>,
+  "data" | "error"
+>;
 
 async function sleep(ms: number): Promise<42> {
   return new Promise((resolve) => {
@@ -14,256 +19,444 @@ async function sleep(ms: number): Promise<42> {
   });
 }
 
+function createAsyncMock(
+  errorPredicate: (index: number, key: string) => boolean = () => false
+) {
+  let index = 0;
+
+  return jest.fn(async (key: string) => {
+    const isError = errorPredicate(index, key);
+    index += 1;
+
+    await sleep(REQUEST_DELAY);
+
+    if (isError) {
+      throw ERROR;
+    } else {
+      return key;
+    }
+  });
+}
+
 describe("AsyncCache", () => {
   test("getting the same key", async () => {
-    const asyncFunction = jest.fn(async (key: string) => {
-      await sleep(REQUEST_DELAY);
+    const mock = createAsyncMock();
+    const cache = createAsyncCache(mock, { deduplicationInterval: 0 });
 
-      return key;
-    });
-    const cache = createAsyncCache(asyncFunction);
+    // 🚀 Called
+    expect(await cache.get(KEY_ABC)).toMatchObject<AsyncStateDataError<string>>(
+      {
+        data: KEY_ABC,
+        error: undefined,
+      }
+    );
 
-    const successState: AsyncState<string> = {
-      status: "success",
-      data: KEY_ABC,
-      error: undefined,
-    };
+    // ✨ Cached
+    expect(await cache.get(KEY_ABC)).toMatchObject<AsyncStateDataError<string>>(
+      {
+        data: KEY_ABC,
+        error: undefined,
+      }
+    );
 
-    expect(await cache.get(KEY_ABC)).toMatchObject(successState);
-    expect(await cache.get(KEY_ABC)).toMatchObject(successState);
-    expect(await cache.get(KEY_ABC)).toMatchObject(successState);
+    // ✨ Cached
+    expect(await cache.get(KEY_ABC)).toMatchObject<AsyncStateDataError<string>>(
+      {
+        data: KEY_ABC,
+        error: undefined,
+      }
+    );
 
-    expect(asyncFunction).toHaveBeenCalledTimes(1);
-    expect(asyncFunction).toHaveBeenCalledWith(KEY_ABC);
+    expect(mock).toHaveBeenCalledTimes(1);
+    expect(mock).toHaveBeenCalledWith(KEY_ABC);
+  });
+
+  test("getting the same key in parallel", async () => {
+    const mock = createAsyncMock();
+    const cache = createAsyncCache(mock, { deduplicationInterval: 0 });
+
+    await Promise.all([
+      // 🚀 Called
+      cache.get(KEY_ABC),
+      // 🔜 Waiting on the first promise
+      cache.get(KEY_ABC),
+      // 🔜 Waiting on the first promise
+      cache.get(KEY_ABC),
+    ]);
+
+    expect(mock).toHaveBeenCalledTimes(1);
   });
 
   test("getting multiple keys", async () => {
-    const asyncFunction = jest.fn(async (key: string) => {
-      await sleep(REQUEST_DELAY);
+    const mock = createAsyncMock((_, key) => key === KEY_XYZ);
+    const cache = createAsyncCache(mock, { deduplicationInterval: 0 });
 
-      return key;
-    });
-    const asyncCache = createAsyncCache(asyncFunction);
+    // 🚀 Called with "abc"
+    const abc = await cache.get(KEY_ABC);
+    // 🚀 Called with "xyz"
+    const xyz = await cache.get(KEY_XYZ);
 
-    const abc = await asyncCache.get(KEY_ABC);
-    const xyz = await asyncCache.get(KEY_XYZ);
-
-    expect(abc.data).toEqual(KEY_ABC);
-    expect(xyz.data).toEqual(KEY_XYZ);
-    expect(asyncFunction).toHaveBeenCalledTimes(2);
-  });
-
-  test("getting an error then a success", async () => {
-    let index = 0;
-    const asyncFunction = jest.fn(async (key: string) => {
-      const isError = index === 0;
-      index += 1;
-
-      await sleep(REQUEST_DELAY);
-
-      if (isError) {
-        throw new Error(ERROR_MESSAGE);
-      } else {
-        return key;
-      }
-    });
-    const asyncCache = createAsyncCache<string, Error>(asyncFunction);
-
-    const firstState = await asyncCache.get(KEY_ABC);
-    expect(firstState).toMatchObject({
-      status: "error",
-      data: undefined,
-      error: new Error(ERROR_MESSAGE),
-    });
-
-    const secondState = await asyncCache.get(KEY_ABC);
-    expect(secondState).toMatchObject({
-      status: "success",
+    expect(abc).toMatchObject<AsyncStateDataError<string>>({
       data: KEY_ABC,
       error: undefined,
     });
-
-    expect(asyncFunction).toHaveBeenCalledTimes(2);
-  });
-
-  test("getting a success then an error", async () => {
-    let index = 0;
-    const asyncFunction = jest.fn(async (key: string) => {
-      const isError = index > 0;
-      index += 1;
-
-      await sleep(REQUEST_DELAY);
-
-      if (isError) {
-        throw new Error(ERROR_MESSAGE);
-      } else {
-        return key;
-      }
+    expect(xyz).toMatchObject<AsyncStateDataError<string>>({
+      data: undefined,
+      error: ERROR,
     });
 
-    const asyncCache = createAsyncCache<string, Error>(asyncFunction);
+    expect(mock).toHaveBeenCalledTimes(2);
+  });
 
-    const firstState = await asyncCache.get(KEY_ABC);
-    expect(firstState).toMatchObject({
-      status: "success",
+  test("staying invalid when erroring", async () => {
+    const mock = createAsyncMock((index) => index === 0);
+    const cache = createAsyncCache(mock, {
+      deduplicationInterval: 0,
+    });
+
+    // 🚀 Called and ❌ errored
+    expect(await cache.get(KEY_ABC)).toMatchObject<AsyncStateDataError<string>>(
+      {
+        data: undefined,
+        error: ERROR,
+      }
+    );
+
+    // 🚀 Called again because the first call errored
+    expect(await cache.get(KEY_ABC)).toMatchObject<AsyncStateDataError<string>>(
+      {
+        data: KEY_ABC,
+        error: undefined,
+      }
+    );
+
+    expect(mock).toHaveBeenCalledTimes(2);
+  });
+
+  test("deduplicating", async () => {
+    const mock = createAsyncMock();
+    const cache = createAsyncCache(mock, {
+      deduplicationInterval: REQUEST_DELAY * 1.5,
+    });
+
+    // 🚀 Called
+    await cache.get(KEY_ABC);
+    // 🔜 Deduplicated
+    await cache.get(KEY_ABC);
+
+    cache.invalidate(KEY_ABC);
+    // 🔜 Still deduplicated, regardless of invalidation
+    await cache.get(KEY_ABC);
+
+    await sleep(REQUEST_DELAY);
+
+    cache.invalidate(KEY_ABC);
+
+    // 🚀 Called because the last non-deduplicated call was older than the deduplication interval
+    await cache.get(KEY_ABC);
+
+    expect(mock).toHaveBeenCalledTimes(2);
+  });
+
+  test("invalidating", async () => {
+    const mock = createAsyncMock();
+    const cache = createAsyncCache(mock, { deduplicationInterval: 0 });
+
+    // 🚀 Called
+    await cache.get(KEY_ABC);
+
+    // 🗑️ Clears the cache for "abc"
+    cache.invalidate(KEY_ABC);
+
+    expect(cache.getState(KEY_ABC)?.data).toBeUndefined();
+
+    // 🚀 Called because invalidated
+    expect(await cache.get(KEY_ABC)).toMatchObject<AsyncStateDataError<string>>(
+      {
+        data: KEY_ABC,
+        error: undefined,
+      }
+    );
+
+    expect(mock).toHaveBeenCalledTimes(2);
+  });
+
+  test("invalidating without clearing the cache", async () => {
+    const mock = createAsyncMock();
+    const cache = createAsyncCache(mock, { deduplicationInterval: 0 });
+
+    // 🚀 Called
+    await cache.get(KEY_ABC);
+
+    expect(cache.getState(KEY_ABC)?.data).not.toBeUndefined();
+
+    // 🗑️ Doesn't clear the cache for "abc"
+    cache.invalidate(KEY_ABC, { keepPreviousData: true });
+
+    expect(cache.getState(KEY_ABC)?.data).not.toBeUndefined();
+
+    // 🚀 Called because invalidated
+    expect(await cache.get(KEY_ABC)).toMatchObject<AsyncStateDataError<string>>(
+      {
+        data: KEY_ABC,
+        error: undefined,
+      }
+    );
+
+    expect(mock).toHaveBeenCalledTimes(2);
+  });
+
+  test("clearing the cache", async () => {
+    const mock = createAsyncMock();
+    const cache = createAsyncCache(mock, {
+      deduplicationInterval: 0,
+    });
+
+    // 🚀 Called
+    await cache.get(KEY_ABC);
+
+    // 🗑️ Cleared
+    cache.clear();
+
+    expect(cache.has(KEY_ABC)).toBe(false);
+
+    // 🚀 Called because the cache was cleared
+    await cache.get(KEY_ABC);
+
+    expect(mock).toHaveBeenCalledTimes(2);
+  });
+
+  test("clearing the cache while running", async () => {
+    const mock = createAsyncMock();
+    const cache = createAsyncCache(mock, {
+      deduplicationInterval: 0,
+    });
+
+    // 🚀 Called with "abc"
+    await cache.get(KEY_ABC);
+
+    // 🚀 Called with "xyz"
+    const promise = cache.get(KEY_XYZ);
+
+    // 🗑️ Cleared
+    cache.clear();
+
+    // 🔙 Despite the cache being cleared, the promise is still resolved
+    const state = await promise;
+
+    expect(cache.has(KEY_ABC)).toBe(false);
+    expect(cache.has(KEY_XYZ)).toBe(false);
+    expect(state).toMatchObject<AsyncStateDataError<string>>({
+      data: KEY_XYZ,
+      error: undefined,
+    });
+  });
+
+  test("checking if a key exists", async () => {
+    const mock = createAsyncMock();
+    const cache = createAsyncCache(mock, {
+      deduplicationInterval: 0,
+    });
+
+    expect(cache.has(KEY_ABC)).toBe(false);
+
+    // 🚀 Called
+    await cache.get(KEY_ABC);
+
+    expect(cache.has(KEY_ABC)).toBe(true);
+  });
+
+  test("getting the cache of a key", async () => {
+    const mock = createAsyncMock();
+    const cache = createAsyncCache(mock, {
+      deduplicationInterval: 0,
+    });
+
+    // 🚀 Called
+    await cache.get(KEY_ABC);
+
+    expect(cache.getState(KEY_ABC)).toMatchObject<AsyncStateDataError<string>>({
       data: KEY_ABC,
       error: undefined,
     });
+  });
 
-    await asyncCache.revalidate(KEY_ABC);
-
-    // TODO: Option to hold onto the last success state if there's an error?
-    const secondState = await asyncCache.get(KEY_ABC);
-    expect(secondState).toMatchObject({
-      status: "error",
-      data: undefined,
-      error: new Error(ERROR_MESSAGE),
+  test("getting the cache of a non-existing key", () => {
+    const mock = createAsyncMock();
+    const cache = createAsyncCache(mock, {
+      deduplicationInterval: 0,
     });
 
-    expect(asyncFunction).toHaveBeenCalledTimes(3);
+    expect(cache.getState(KEY_ABC)).toBeUndefined();
   });
 
   test("subscribing to a key", async () => {
-    const asyncFunction = jest.fn(async (key: string) => {
-      await sleep(REQUEST_DELAY);
-
-      return key;
+    const mock = createAsyncMock((index) => index === 0);
+    const cache = createAsyncCache(mock, {
+      deduplicationInterval: 0,
     });
-    const asyncCache = createAsyncCache(asyncFunction);
-    const subscribeCallback = jest.fn();
+    const callback = jest.fn();
 
-    const cacheItem = asyncCache.create(KEY_ABC);
-    const unsubscribe = cacheItem.subscribe(subscribeCallback);
+    const cacheItem = cache.create(KEY_ABC);
+    const unsubscribe = cacheItem.subscribe(callback);
 
+    // 🚀 Called and ❌ errored
+    await cacheItem.get();
+
+    // 🚀 Called and ✅ fulfilled
     await cacheItem.get();
 
     unsubscribe();
 
-    await cacheItem.revalidate();
+    // 🚀 Called but 🔜 the subscriber won't be notified because it unsubscribed
+    await cacheItem.get();
 
-    expect(subscribeCallback).toHaveBeenCalledTimes(2);
-    expect(subscribeCallback).toHaveBeenNthCalledWith(
+    expect(callback).toHaveBeenCalledTimes(4);
+
+    // 1️⃣ Triggered when the first call starts
+    expect(callback).toHaveBeenNthCalledWith(
       1,
-      expect.objectContaining({
-        status: "loading",
+      expect.objectContaining<AsyncState<string>>({
+        isLoading: true,
         data: undefined,
         error: undefined,
       })
     );
-    expect(subscribeCallback).toHaveBeenNthCalledWith(
+    // 2️⃣❌ Triggered when the first call resolved
+    expect(callback).toHaveBeenNthCalledWith(
       2,
-      expect.objectContaining({
-        status: "success",
+      expect.objectContaining<AsyncState<string>>({
+        isLoading: false,
+        data: undefined,
+        error: ERROR,
+      })
+    );
+    // 3️⃣ Triggered when the second call starts
+    expect(callback).toHaveBeenNthCalledWith(
+      3,
+      expect.objectContaining<AsyncState<string>>({
+        isLoading: true,
+        data: undefined,
+        error: undefined,
+      })
+    );
+    // 4️⃣✅ Triggered when the second call resolved
+    expect(callback).toHaveBeenNthCalledWith(
+      4,
+      expect.objectContaining<AsyncState<string>>({
+        isLoading: false,
         data: KEY_ABC,
         error: undefined,
       })
     );
   });
 
-  test("using a non-existing key", async () => {
-    const asyncFunction = jest.fn(async (key: string) => {
-      await sleep(REQUEST_DELAY);
-
-      return key;
+  test("subscribing a non-existing key", async () => {
+    const mock = createAsyncMock();
+    const cache = createAsyncCache(mock, {
+      deduplicationInterval: 0,
     });
-    const asyncCache = createAsyncCache(asyncFunction);
-    const subscribeCallback = jest.fn();
+    const callback = jest.fn();
 
-    const unsubscribe = asyncCache.subscribe(KEY_ABC, subscribeCallback);
-    expect(unsubscribe).toEqual(expect.any(Function));
+    // 🛎️ Subscribes to a key that doesn't exist yet
+    const unsubscribe = cache.subscribe(KEY_ABC, callback);
 
-    await asyncCache.revalidate(KEY_ABC);
+    // 🚀 Called and 🛎️ the subscriber will be notified
+    await cache.get(KEY_ABC);
 
-    expect(asyncCache.getState(KEY_ABC)).toBeUndefined();
+    unsubscribe();
 
-    await asyncCache.get(KEY_ABC);
-
-    expect(subscribeCallback).not.toHaveBeenCalled();
+    expect(callback).toHaveBeenCalled();
   });
 
-  test("clearing the cache", async () => {
-    const asyncFunction = jest.fn(async (key: string) => {
-      await sleep(REQUEST_DELAY);
-
-      return key;
+  test("subscribing and invalidating", async () => {
+    const mock = createAsyncMock();
+    const cache = createAsyncCache(mock, {
+      deduplicationInterval: 0,
     });
-    const asyncCache = createAsyncCache(asyncFunction);
+    const callback = jest.fn();
 
-    await asyncCache.get(KEY_ABC);
+    const cacheItem = cache.create(KEY_ABC);
+    const unsubscribe = cacheItem.subscribe(callback);
 
-    asyncCache.clear();
+    // 🚀 Called
+    await cacheItem.get();
 
-    await asyncCache.get(KEY_ABC);
+    // 🗑️ Invalidated
+    cache.invalidate(KEY_ABC);
 
-    expect(asyncFunction).toHaveBeenCalledTimes(2);
+    unsubscribe();
+
+    expect(callback).toHaveBeenCalledTimes(3);
+
+    // 1️⃣ Triggered when the first call starts
+    expect(callback).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining<AsyncState<string>>({
+        isLoading: true,
+        data: undefined,
+        error: undefined,
+      })
+    );
+    // 2️⃣✅ Triggered when the first call finished
+    expect(callback).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining<AsyncState<string>>({
+        isLoading: false,
+        data: KEY_ABC,
+        error: undefined,
+      })
+    );
+    // 3️⃣🗑️ Triggered when invalidated
+    expect(callback).toHaveBeenNthCalledWith(
+      3,
+      expect.objectContaining<AsyncState<string>>({
+        isLoading: false,
+        data: undefined,
+        error: undefined,
+      })
+    );
   });
 
-  test("statuses", async () => {
-    let index = 0;
-    const asyncFunction = jest.fn(async () => {
-      const isError = index === 0;
-      index += 1;
-
-      await sleep(REQUEST_DELAY);
-
-      if (isError) {
-        throw new Error(ERROR_MESSAGE);
-      } else {
-        return index;
-      }
+  test("subscribing and invalidating while running", async () => {
+    const mock = createAsyncMock();
+    const cache = createAsyncCache(mock, {
+      deduplicationInterval: 0,
     });
-    const asyncCache = createAsyncCache(asyncFunction);
+    const callback = jest.fn();
 
-    const cacheItem = asyncCache.create(KEY_ABC);
+    const cacheItem = cache.create(KEY_ABC);
+    const unsubscribe = cacheItem.subscribe(callback);
 
-    expect(asyncFunction).not.toHaveBeenCalled();
-    expect(cacheItem.getState()).toMatchObject({
-      status: "idle",
-      data: undefined,
-      error: undefined,
-    });
+    // 🚀 Called
+    const promise = cacheItem.get();
 
-    void cacheItem.get();
+    // 🗑️ Invalidated before the call finished
+    cacheItem.invalidate();
 
-    expect(cacheItem.getState()).toMatchObject({
-      status: "loading",
-      data: undefined,
-      error: undefined,
-    });
+    await promise;
 
-    await sleep(REQUEST_DELAY);
+    unsubscribe();
 
-    expect(cacheItem.getState()).toMatchObject({
-      status: "error",
-      data: undefined,
-      error: new Error(ERROR_MESSAGE),
-    });
+    expect(callback).toHaveBeenCalledTimes(2);
 
-    // Will revalidate because there's no data yet
-    await cacheItem.get();
-
-    expect(cacheItem.getState()).toMatchObject({
-      status: "success",
-      data: 2,
-      error: undefined,
-    });
-
-    // Will not revalidate because there's data
-    await cacheItem.get();
-
-    expect(cacheItem.getState()).toMatchObject({
-      status: "success",
-      data: 2,
-      error: undefined,
-    });
-
-    // Will revalidate even if there's data already
-    await cacheItem.revalidate();
-
-    expect(cacheItem.getState()).toMatchObject({
-      status: "success",
-      data: 3,
-      error: undefined,
-    });
+    // 1️⃣ Triggered when the first call starts
+    expect(callback).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining<AsyncState<string>>({
+        isLoading: true,
+        data: undefined,
+        error: undefined,
+      })
+    );
+    // 2️⃣✅🗑️ Triggered when the first call finished but was invalidated in the meantime
+    expect(callback).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining<AsyncState<string>>({
+        isLoading: false,
+        data: undefined,
+        error: undefined,
+      })
+    );
   });
 });
