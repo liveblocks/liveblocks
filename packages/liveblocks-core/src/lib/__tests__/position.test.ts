@@ -254,7 +254,12 @@ describe("after / before", () => {
             expect(before(pos).length).toBe(1); // Always generates a single-digit
           }
         }
-      )
+      ),
+
+      {
+        // Counter-examples that where found in the past by fast-check
+        examples: [["\u0000x"]],
+      }
     );
   });
 
