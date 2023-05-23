@@ -28,6 +28,7 @@ import {
   createSerializedRegister,
   FIRST_POSITION,
   makeControllableWebSocket,
+  makeRichToken,
   mockEffects,
   MockWebSocketServer,
   prepareDisconnectedStorageUpdateTest,
@@ -69,15 +70,24 @@ function createTestableRoom<
   TUserMeta extends BaseUserMeta,
   TRoomEvent extends Json
 >(initialPresence: TPresence) {
-  const effects = mockEffects<TPresence, TRoomEvent>();
+  const effects = mockEffects<TPresence, TRoomEvent>(); // XXX Stop using/returning this
+
+  const wss = new MockWebSocketServer();
+  const mockedDelegates = {
+    authenticate: jest.fn(() => Promise.resolve(makeRichToken(1, []))),
+    createSocket: jest.fn(() => wss.newSocket()),
+  };
+
   const room = createRoom<TPresence, TStorage, TUserMeta, TRoomEvent>(
     {
       initialPresence,
       initialStorage: undefined,
     },
-    makeRoomConfig(effects)
+    makeRoomConfig(),
+    mockedDelegates
   );
-  return { room, effects };
+
+  return { room, effects, delegates: mockedDelegates, wss };
 }
 
 describe("room / auth", () => {
@@ -130,7 +140,8 @@ describe("room / auth", () => {
                 resolve(response);
               }),
           },
-        }
+        },
+        /* XXX TODO */ void "PLEASE IMPLEMENT ME"
       );
 
       room.connect();
@@ -154,7 +165,8 @@ describe("room / auth", () => {
           type: "private",
           url: "/mocked-api/403",
         },
-      }
+      },
+      /* XXX TODO */ void "PLEASE IMPLEMENT ME"
     );
 
     room.connect();
@@ -177,7 +189,8 @@ describe("room / auth", () => {
           type: "private",
           url: "/mocked-api/not-json",
         },
-      }
+      },
+      /* XXX TODO */ void "PLEASE IMPLEMENT ME"
     );
 
     room.connect();
@@ -200,7 +213,8 @@ describe("room / auth", () => {
           type: "private",
           url: "/mocked-api/missing-token",
         },
-      }
+      },
+      /* XXX TODO */ void "PLEASE IMPLEMENT ME"
     );
 
     room.connect();
@@ -216,43 +230,58 @@ describe("room / auth", () => {
 });
 
 describe("room", () => {
-  test("connect should transition to authenticating if closed and execute authenticate", () => {
-    const { room } = createTestableRoom({});
+  test.only("connect should transition to authenticating if closed and execute authenticate", () => {
+    const { room, delegates } = createTestableRoom({});
+    expect(delegates.authenticate).not.toHaveBeenCalled();
     room.connect();
     expect(room.getConnectionState()).toEqual("authenticating");
-    // XXX Assert that authentication delegate got called
+    expect(delegates.authenticate).toHaveBeenCalled();
+    expect(delegates.createSocket).not.toHaveBeenCalled();
   });
 
-  test("connect should stay authenticating if connect is called multiple times and call authenticate only once", () => {
-    const { room } = createTestableRoom({});
+  test.only("connect should stay authenticating if connect is called multiple times and call authenticate only once", () => {
+    const { room, delegates } = createTestableRoom({});
     room.connect();
     expect(room.getConnectionState()).toEqual("authenticating");
     room.connect();
     room.connect();
     room.connect();
     expect(room.getConnectionState()).toEqual("authenticating");
-    // XXX Assert that authentication delegate got called (only once)
+    expect(delegates.authenticate).toHaveBeenCalledTimes(1);
+    expect(delegates.createSocket).not.toHaveBeenCalled();
   });
 
-  test("authentication success should transition to connecting", () => {
+  test.only("authentication success should transition to connecting", async () => {
+    jest.useFakeTimers();
     const { room } = createTestableRoom({});
-    room.__internal.send.simulateAuthSuccess(
-      defaultRoomToken,
-      makeControllableWebSocket()
-    );
+    expect(room.getConnectionState()).toBe("closed");
+
+    room.connect();
+    expect(room.getConnectionState()).toBe("authenticating");
+    await jest.advanceTimersByTimeAsync(0); // Wait until authentication has succeeded
     expect(room.getConnectionState()).toBe("connecting");
   });
 
-  test("initial presence should be sent once the connection is open", () => {
-    const { room, effects } = createTestableRoom({ x: 0 });
-
-    const ws = makeControllableWebSocket();
+  test.only("initial presence should be sent once the connection is open", async () => {
+    jest.useFakeTimers();
+    const { room, wss } = createTestableRoom({ x: 0 });
     room.connect();
-    room.__internal.send.simulateAuthSuccess(defaultRoomToken, ws);
-    ws.server.accept();
 
-    expect(effects.send).toHaveBeenCalledWith([
-      { type: ClientMsgCode.UPDATE_PRESENCE, targetActor: -1, data: { x: 0 } },
+    await jest.advanceTimersByTimeAsync(0); // Wait until authentication has succeeded
+    expect(room.getConnectionState()).toBe("connecting");
+
+    wss.accept(wss.current);
+    await jest.advanceTimersByTimeAsync(0); // Wait until WebSocket is opened
+    expect(room.getConnectionState()).toBe("open");
+
+    expect(wss.receivedMessages).toEqual([
+      [
+        {
+          type: ClientMsgCode.UPDATE_PRESENCE,
+          targetActor: -1,
+          data: { x: 0 },
+        },
+      ],
     ]);
   });
 

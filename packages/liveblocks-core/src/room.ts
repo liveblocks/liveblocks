@@ -817,7 +817,7 @@ export function createRoom<
     "shouldInitiallyConnect"
   >,
   config: RoomConfig<TPresence, TRoomEvent>,
-  mockedDelegates?: Delegates<RichToken>
+  mockedDelegates: Delegates<RichToken> | undefined
 ): Room<TPresence, TStorage, TUserMeta, TRoomEvent> {
   const initialPresence =
     typeof options.initialPresence === "function"
