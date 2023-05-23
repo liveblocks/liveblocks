@@ -41,7 +41,7 @@ type AsyncCacheItemContext<TData, TError> = AsyncState<TData, TError> & {
   scheduledInvalidation?: InvalidateOptions<TData>;
   rollbackOptimisticDataOnError?: boolean;
   promise?: Promise<TData>;
-  lastExecutedAt?: number;
+  lastInvokedAt?: number;
   previousState: AsyncState<TData, TError>;
   previousNonOptimisticData?: TData;
 };
@@ -74,7 +74,7 @@ export type AsyncCache<TData = any, TError = any> = {
 
   /**
    * Marks a key as invalid, which means that the next
-   * {@link AsyncCache.get} call will re-execute the function.
+   * {@link AsyncCache.get} call will re-invoke the function.
    *
    * @param key The key to invalidate.
    * @param options.setData Whether to clear the cached data or not, or to set
@@ -156,8 +156,8 @@ function createCacheItem<TData = any, TError = any>(
     }
   }
 
-  function execute() {
-    context.lastExecutedAt = Date.now();
+  function invoke() {
+    context.lastInvokedAt = Date.now();
     context.error = undefined;
     context.isLoading = true;
     context.isInvalid = true;
@@ -239,15 +239,15 @@ function createCacheItem<TData = any, TError = any>(
     // If a key isn't invalid (never called, errored,
     // invalidated...), we just return its cache.
     if (context.isInvalid) {
-      const isDuplicate = context.lastExecutedAt
-        ? Date.now() - context.lastExecutedAt < deduplicationInterval
+      const isDuplicate = context.lastInvokedAt
+        ? Date.now() - context.lastInvokedAt < deduplicationInterval
         : false;
 
-      // We only execute the provided function if there's not
-      // a promise pending already or if a previous execution
+      // We only invoke the provided function if there's not
+      // a promise pending already or if a previous invocation
       // was already made within the deduplication interval.
       if (!context.promise && !isDuplicate) {
-        execute();
+        invoke();
       }
 
       if (context.promise) {
