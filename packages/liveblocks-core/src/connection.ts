@@ -365,9 +365,7 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
               target: "@idle.failed",
               effect: log(
                 LogLevel.ERROR,
-                `Unauthorized: ${
-                  (failedEvent.reason as UnauthorizedError).message
-                }`
+                `Unauthorized: ${failedEvent.reason.message}`
               ),
             }
           : {
