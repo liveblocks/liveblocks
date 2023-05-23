@@ -816,7 +816,8 @@ export function createRoom<
     RoomInitializers<TPresence, TStorage>,
     "shouldInitiallyConnect"
   >,
-  config: RoomConfig<TPresence, TRoomEvent>
+  config: RoomConfig<TPresence, TRoomEvent>,
+  mockedDelegates?: Delegates<RichToken>
 ): Room<TPresence, TStorage, TUserMeta, TRoomEvent> {
   const initialPresence =
     typeof options.initialPresence === "function"
@@ -828,7 +829,7 @@ export function createRoom<
       : options.initialStorage;
 
   // Create a delegate pair for (a specific) Live Room socket connection(s)
-  const delegates: Delegates<RichToken> = {
+  const delegates: Delegates<RichToken> = mockedDelegates ?? {
     authenticate: makeAuthDelegateForRoom(
       config.roomId,
       config.authentication,
