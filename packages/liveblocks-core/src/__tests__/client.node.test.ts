@@ -30,6 +30,11 @@ function atobPolyfillMock(data: string): string {
 function createClientAndEnter(options: ClientOptions) {
   const client = createClient(options);
   client.enter("room", { initialPresence: {} });
+
+  // Entering starts asynchronous jobs in the background (times, promises,
+  // etc). Not leaving the room would leave those open handles dangling which
+  // doesn't make Jest happy.
+  client.leave("room");
 }
 
 describe("createClient", () => {
