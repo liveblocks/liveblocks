@@ -84,15 +84,15 @@ type LiteServer = {
 };
 
 export class MockWebSocketServer {
-  public last: MockWebSocket | undefined;
+  public current: MockWebSocket | undefined;
   public connections: Map<MockWebSocket, Emitters> = new Map();
   public receivedMessages: string[] = [];
 
-  get current(): MockWebSocket {
-    if (this.last === undefined) {
+  get last(): LiteServer {
+    if (this.current === undefined) {
       throw new Error("No socket instantiated yet");
     }
-    return this.last;
+    return this.current.server;
   }
 
   getEmitters(socket: MockWebSocket): Emitters {
@@ -148,7 +148,7 @@ export class MockWebSocketServer {
     const socket = new MockWebSocket();
     socket.linkToServer(liteServer, publicListeners);
     this.connections.set(socket, emitters);
-    this.last = socket;
+    this.current = socket;
 
     if (callback) {
       callback(socket);
