@@ -769,12 +769,4 @@ export class ManagedSocket<T extends BaseAuthResult> {
       socket.send(data);
     }
   }
-
-  /**
-   * NOTE: Used by the E2E app only, to simulate explicit events.
-   * Not ideal to keep exposed :(
-   */
-  public _privateSend(event: Event): void {
-    this.machine.send(event);
-  }
 }
