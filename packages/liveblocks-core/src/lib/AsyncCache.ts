@@ -2,7 +2,6 @@ import type { Callback, Observable, UnsubscribeCallback } from "./EventSource";
 import { makeEventSource } from "./EventSource";
 
 const DEDUPLICATION_INTERVAL = 2000;
-const KEEP_PREVIOUS_DATA = false;
 
 type WithRequired<T, K extends keyof T> = T & { [P in K]-?: T[P] };
 
@@ -18,13 +17,10 @@ type AsyncCacheItemOptions = WithRequired<
 >;
 
 type InvalidateOptions<TData = any> =
+  | { setData?: never; setDataOptimistically?: never }
   | {
-      keepPreviousData: true;
-      setOptimisticData?: never;
-    }
-  | {
-      keepPreviousData?: false;
-      setOptimisticData?: (data: TData | undefined) => TData | undefined;
+      setData: false | ((data: TData | undefined) => TData | undefined);
+      setDataOptimistically?: boolean;
     };
 
 export type AsyncState<TData = any, TError = any> = {
@@ -43,10 +39,11 @@ type AsyncResolvedState<TData = any, TError = any> = AsyncState<
 type AsyncCacheItemContext<TData, TError> = AsyncState<TData, TError> & {
   isInvalid: boolean;
   scheduledInvalidation?: InvalidateOptions<TData>;
+  rollbackOptimisticDataOnError?: boolean;
   promise?: Promise<TData>;
   lastExecutedAt?: number;
   previousState: AsyncState<TData, TError>;
-  previousData?: TData;
+  previousNonOptimisticData?: TData;
 };
 
 export type AsyncCacheItem<TData = any, TError = any> = Observable<
@@ -64,7 +61,7 @@ export type AsyncCache<TData = any, TError = any> = {
   create(key: string): AsyncCacheItem<TData, TError>;
   get(key: string): Promise<AsyncResolvedState<TData, TError>>;
   getState(key: string): AsyncState<TData, TError> | undefined;
-  invalidate(key: string, options?: InvalidateOptions): void;
+  invalidate(key: string, options?: InvalidateOptions<TData>): void;
   revalidate(
     key: string,
     options?: InvalidateOptions<TData>
@@ -131,13 +128,19 @@ function createCacheItem<TData = any, TError = any>(
       const data = await context.promise;
 
       context.data = data;
+      context.previousNonOptimisticData = data;
       context.error = undefined;
       context.isInvalid = false;
     } catch (error) {
+      if (context.rollbackOptimisticDataOnError) {
+        context.data = context.previousNonOptimisticData;
+      }
+
       context.error = error as TError;
       context.isInvalid = true;
     }
 
+    context.rollbackOptimisticDataOnError = false;
     context.promise = undefined;
     context.isLoading = false;
 
@@ -150,22 +153,22 @@ function createCacheItem<TData = any, TError = any>(
     }
   }
 
-  function invalidate(options?: InvalidateOptions<TData>) {
-    const resolvedOptions: WithRequired<
-      InvalidateOptions<TData>,
-      "keepPreviousData"
-    > = { keepPreviousData: KEEP_PREVIOUS_DATA, ...options };
-
+  function invalidate(options: InvalidateOptions<TData> = {}) {
     if (context.promise) {
-      context.scheduledInvalidation = resolvedOptions;
+      context.scheduledInvalidation = options;
     } else if (!context.scheduledInvalidation && !context.error) {
       context.isInvalid = true;
       context.error = undefined;
 
-      if (resolvedOptions.setOptimisticData) {
-        context.data = resolvedOptions.setOptimisticData(context.data);
-      } else if (!resolvedOptions.keepPreviousData) {
-        context.data = undefined;
+      context.data =
+        typeof options.setData === "function"
+          ? options.setData(context.data)
+          : options.setData === false
+          ? context.data
+          : undefined;
+
+      if (options.setData && options.setDataOptimistically) {
+        context.rollbackOptimisticDataOnError = true;
       }
 
       notify();
@@ -244,11 +247,11 @@ export function createAsyncCache<TData = any, TError = any>(
     return cache.get(key)?.getState();
   }
 
-  function invalidate(key: string, options?: InvalidateOptions) {
+  function invalidate(key: string, options?: InvalidateOptions<TData>) {
     cache.get(key)?.invalidate(options);
   }
 
-  function revalidate(key: string, options?: InvalidateOptions) {
+  function revalidate(key: string, options?: InvalidateOptions<TData>) {
     return create(key).revalidate(options);
   }
 

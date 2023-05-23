@@ -197,7 +197,7 @@ describe("AsyncCache", () => {
     expect(cache.getState(KEY_ABC)?.data).not.toBeUndefined();
 
     // 🗑️ Doesn't clear the cache for "abc"
-    cache.invalidate(KEY_ABC, { keepPreviousData: true });
+    cache.invalidate(KEY_ABC, { setData: false });
 
     expect(cache.getState(KEY_ABC)?.data).not.toBeUndefined();
 
@@ -243,9 +243,10 @@ describe("AsyncCache", () => {
     await cache.get(KEY_ABC);
 
     await cache.revalidate(KEY_ABC, {
-      setOptimisticData: (data) => {
+      setData: (data) => {
         return data ? createIndices(data.length + 1) : undefined;
       },
+      setDataOptimistically: true,
     });
 
     unsubscribe();
@@ -286,6 +287,67 @@ describe("AsyncCache", () => {
         isLoading: false,
         data: [0, 1],
         error: undefined,
+      })
+    );
+  });
+
+  test("revalidating with optimistic data and reverting on error", async () => {
+    const mock = createAsyncMock(
+      (index) => index === 1,
+      (index) => createIndices(index)
+    );
+    const cache = createAsyncCache(mock, { deduplicationInterval: 0 });
+
+    const callback = jest.fn();
+    const unsubscribe = cache.subscribe(KEY_ABC, callback);
+
+    await cache.get(KEY_ABC);
+
+    await cache.revalidate(KEY_ABC, {
+      setData: (data) => {
+        return data ? createIndices(data.length + 1) : undefined;
+      },
+      setDataOptimistically: true,
+    });
+
+    unsubscribe();
+
+    expect(callback).toHaveBeenCalledTimes(4);
+
+    // 1️⃣ Triggered when the first call started
+    expect(callback).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining<AsyncState<number[]>>({
+        isLoading: true,
+        data: undefined,
+        error: undefined,
+      })
+    );
+    // 2️⃣ Triggered when the first call finished
+    expect(callback).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining<AsyncState<number[]>>({
+        isLoading: false,
+        data: [0],
+        error: undefined,
+      })
+    );
+    // 3️⃣ Triggered when revalidated with optimistic data
+    expect(callback).toHaveBeenNthCalledWith(
+      3,
+      expect.objectContaining<AsyncState<number[]>>({
+        isLoading: true,
+        data: [0, 1],
+        error: undefined,
+      })
+    );
+    // 4️⃣❌ Triggered when revalidation errored and 🔙 rollbacked the optimistic data
+    expect(callback).toHaveBeenNthCalledWith(
+      4,
+      expect.objectContaining<AsyncState<number[]>>({
+        isLoading: false,
+        data: [0],
+        error: expect.any(Error),
       })
     );
   });
@@ -558,7 +620,7 @@ describe("AsyncCache", () => {
     await cacheItem.get();
 
     // 🗑️ Invalidated but without clearing the cache for "abc"
-    cacheItem.invalidate({ keepPreviousData: true });
+    cacheItem.invalidate({ setData: false });
     // 🗑️ Invalidated
     cacheItem.invalidate();
     // 🗑️ Invalidated
