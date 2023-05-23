@@ -207,7 +207,7 @@ export function createClient(options: ClientOptions): Client {
         global.atob = clientOptions.polyfills.atob;
       }
 
-      newRoom.__internal.send.connect();
+      newRoom.connect();
     }
 
     return newRoom;
@@ -219,32 +219,10 @@ export function createClient(options: ClientOptions): Client {
 
     const room = rooms.get(roomId);
     if (room !== undefined) {
-      room.__internal.send.disconnect();
+      // room.disconnect();  // XXX Uncomment if this turns out to be problematic, but I don't think so
+      room.destroy();
       rooms.delete(roomId);
     }
-  }
-
-  if (
-    typeof window !== "undefined" &&
-    // istanbul ignore next: React Native environment doesn't implement window.addEventListener
-    typeof window.addEventListener !== "undefined"
-  ) {
-    // TODO: Expose a way to clear these
-    window.addEventListener("online", () => {
-      for (const [, room] of rooms) {
-        room.__internal.send.navigatorOnline();
-      }
-    });
-  }
-
-  if (typeof document !== "undefined") {
-    document.addEventListener("visibilitychange", () => {
-      if (document.visibilityState === "visible") {
-        for (const [, room] of rooms) {
-          room.__internal.send.windowGotFocus();
-        }
-      }
-    });
   }
 
   return {

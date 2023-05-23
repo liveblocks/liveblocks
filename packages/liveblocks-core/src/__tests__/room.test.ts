@@ -133,9 +133,9 @@ describe("room / auth", () => {
         }
       );
 
-      room.__internal.send.connect();
+      room.connect();
       await waitFor(() => consoleErrorSpy.mock.calls.length > 0);
-      room.__internal.send.disconnect();
+      room.disconnect();
 
       expect(consoleErrorSpy.mock.calls[0][1]).toEqual(
         new Error(
@@ -157,9 +157,9 @@ describe("room / auth", () => {
       }
     );
 
-    room.__internal.send.connect();
+    room.connect();
     await waitFor(() => consoleErrorSpy.mock.calls.length > 0);
-    room.__internal.send.disconnect();
+    room.disconnect();
 
     expect(consoleErrorSpy.mock.calls[0][1]).toEqual(
       new Error(
@@ -180,9 +180,9 @@ describe("room / auth", () => {
       }
     );
 
-    room.__internal.send.connect();
+    room.connect();
     await waitFor(() => consoleErrorSpy.mock.calls.length > 0);
-    room.__internal.send.disconnect();
+    room.disconnect();
 
     expect(consoleErrorSpy.mock.calls[0][1]).toEqual(
       new Error(
@@ -203,9 +203,9 @@ describe("room / auth", () => {
       }
     );
 
-    room.__internal.send.connect();
+    room.connect();
     await waitFor(() => consoleErrorSpy.mock.calls.length > 0);
-    room.__internal.send.disconnect();
+    room.disconnect();
 
     expect(consoleErrorSpy.mock.calls[0][1]).toEqual(
       new Error(
@@ -218,16 +218,16 @@ describe("room / auth", () => {
 describe("room", () => {
   test("connect should transition to authenticating if closed and execute authenticate", () => {
     const { room, effects } = createTestableRoom({});
-    room.__internal.send.connect();
+    room.connect();
     expect(room.getConnectionState()).toEqual("authenticating");
     expect(effects.authenticateAndConnect).toHaveBeenCalled();
   });
 
   test("connect should stay authenticating if connect is called multiple times and call authenticate only once", () => {
     const { room, effects } = createTestableRoom({});
-    room.__internal.send.connect();
+    room.connect();
     expect(room.getConnectionState()).toEqual("authenticating");
-    room.__internal.send.connect();
+    room.connect();
     expect(room.getConnectionState()).toEqual("authenticating");
     expect(effects.authenticateAndConnect).toHaveBeenCalledTimes(1);
   });
@@ -245,7 +245,7 @@ describe("room", () => {
     const { room, effects } = createTestableRoom({ x: 0 });
 
     const ws = makeControllableWebSocket();
-    room.__internal.send.connect();
+    room.connect();
     room.__internal.send.authSuccess(defaultRoomToken, ws);
     ws.server.accept();
 
@@ -259,7 +259,7 @@ describe("room", () => {
 
     const ws = makeControllableWebSocket();
     room.updatePresence({ x: 0 });
-    room.__internal.send.connect();
+    room.connect();
     room.__internal.send.authSuccess(defaultRoomToken, ws);
     ws.server.accept();
 
@@ -272,7 +272,7 @@ describe("room", () => {
     const { room, effects } = createTestableRoom({} as never);
 
     const ws = makeControllableWebSocket();
-    room.__internal.send.connect();
+    room.connect();
     room.__internal.send.authSuccess(defaultRoomToken, ws);
     ws.server.accept();
 
@@ -287,7 +287,7 @@ describe("room", () => {
     const { room, effects } = createTestableRoom({ x: 0 });
 
     const ws = makeControllableWebSocket();
-    room.__internal.send.connect();
+    room.connect();
     room.__internal.send.authSuccess(defaultRoomToken, ws);
 
     const now = Date.now();
@@ -343,7 +343,7 @@ describe("room", () => {
     const { room } = createTestableRoom({});
 
     const ws = makeControllableWebSocket();
-    room.__internal.send.connect();
+    room.connect();
     room.__internal.send.authSuccess(defaultRoomToken, ws);
     ws.server.accept();
 
@@ -379,7 +379,7 @@ describe("room", () => {
     const { room } = createTestableRoom({});
 
     const ws = makeControllableWebSocket();
-    room.__internal.send.connect();
+    room.connect();
     room.__internal.send.authSuccess(defaultRoomToken, ws);
     ws.server.accept();
 
@@ -415,7 +415,7 @@ describe("room", () => {
     const { room } = createTestableRoom({});
 
     const ws = makeControllableWebSocket();
-    room.__internal.send.connect();
+    room.connect();
     room.__internal.send.authSuccess(defaultRoomToken, ws);
     ws.server.accept();
 
@@ -451,7 +451,7 @@ describe("room", () => {
     const { room } = createTestableRoom({});
 
     const ws = makeControllableWebSocket();
-    room.__internal.send.connect();
+    room.connect();
     room.__internal.send.authSuccess(defaultRoomToken, ws);
     ws.server.accept();
 
@@ -502,7 +502,7 @@ describe("room", () => {
     const { room } = createTestableRoom({});
 
     const ws = makeControllableWebSocket();
-    room.__internal.send.connect();
+    room.connect();
     room.__internal.send.authSuccess(defaultRoomToken, ws);
     ws.server.accept();
 
@@ -566,7 +566,7 @@ describe("room", () => {
       const { room, effects } = createTestableRoom({});
 
       const ws = makeControllableWebSocket();
-      room.__internal.send.connect();
+      room.connect();
       room.__internal.send.authSuccess(defaultRoomToken, ws);
 
       const now = new Date(2021, 1, 1, 0, 0, 0, 0).getTime();
@@ -605,7 +605,7 @@ describe("room", () => {
       expect(effects.send).not.toHaveBeenCalled();
 
       const ws = makeControllableWebSocket();
-      room.__internal.send.connect();
+      room.connect();
       room.__internal.send.authSuccess(defaultRoomToken, ws);
       ws.server.accept();
 
@@ -626,7 +626,7 @@ describe("room", () => {
       expect(effects.send).not.toHaveBeenCalled();
 
       const ws = makeControllableWebSocket();
-      room.__internal.send.connect();
+      room.connect();
       room.__internal.send.authSuccess(defaultRoomToken, ws);
       ws.server.accept();
 
@@ -642,7 +642,7 @@ describe("room", () => {
     const { room } = createTestableRoom({});
 
     const ws = makeControllableWebSocket();
-    room.__internal.send.connect();
+    room.connect();
     room.__internal.send.authSuccess(defaultRoomToken, ws);
     ws.server.accept();
 
@@ -664,7 +664,7 @@ describe("room", () => {
     const { room } = createTestableRoom({});
 
     const ws = makeControllableWebSocket();
-    room.__internal.send.connect();
+    room.connect();
     room.__internal.send.authSuccess(defaultRoomToken, ws);
     ws.server.accept();
 
@@ -719,7 +719,7 @@ describe("room", () => {
     const { room } = createTestableRoom({});
 
     const ws = makeControllableWebSocket();
-    room.__internal.send.connect();
+    room.connect();
     room.__internal.send.authSuccess(defaultRoomToken, ws);
     ws.server.accept();
 
@@ -753,7 +753,7 @@ describe("room", () => {
     const { room } = createTestableRoom({});
 
     const ws = makeControllableWebSocket();
-    room.__internal.send.connect();
+    room.connect();
     room.__internal.send.authSuccess(defaultRoomToken, ws);
     ws.server.accept();
 
@@ -774,7 +774,7 @@ describe("room", () => {
     const { room } = createTestableRoom({});
 
     const ws = makeControllableWebSocket();
-    room.__internal.send.connect();
+    room.connect();
     room.__internal.send.authSuccess(defaultRoomToken, ws);
     ws.server.accept();
 
@@ -790,7 +790,7 @@ describe("room", () => {
     const { room } = createTestableRoom({});
 
     const ws = makeControllableWebSocket();
-    room.__internal.send.connect();
+    room.connect();
     room.__internal.send.authSuccess(defaultRoomToken, ws);
     ws.server.accept();
 
@@ -824,7 +824,7 @@ describe("room", () => {
     const { room } = createTestableRoom({});
 
     const ws = makeControllableWebSocket();
-    room.__internal.send.connect();
+    room.connect();
     room.__internal.send.authSuccess(defaultRoomToken, ws);
     ws.server.accept();
 
@@ -848,7 +848,7 @@ describe("room", () => {
     const { room } = createTestableRoom({});
 
     const ws = makeControllableWebSocket();
-    room.__internal.send.connect();
+    room.connect();
     room.__internal.send.authSuccess(defaultRoomToken, ws);
     ws.server.accept();
 
@@ -889,7 +889,7 @@ describe("room", () => {
     const { room } = createTestableRoom({});
 
     const ws = makeControllableWebSocket();
-    room.__internal.send.connect();
+    room.connect();
     room.__internal.send.authSuccess(defaultRoomToken, ws);
     ws.server.accept();
 
@@ -955,7 +955,7 @@ describe("room", () => {
       const { room } = createTestableRoom({});
 
       const ws = makeControllableWebSocket();
-      room.__internal.send.connect();
+      room.connect();
       room.__internal.send.authSuccess(defaultRoomToken, ws);
       ws.server.accept();
 
@@ -1189,7 +1189,7 @@ describe("room", () => {
       const { room } = createTestableRoom<P, never, never, never>({});
 
       const ws = makeControllableWebSocket();
-      room.__internal.send.connect();
+      room.connect();
       room.__internal.send.authSuccess(defaultRoomToken, ws);
       ws.server.accept();
 
@@ -1240,7 +1240,7 @@ describe("room", () => {
       const { room } = createTestableRoom({});
 
       const ws = makeControllableWebSocket();
-      room.__internal.send.connect();
+      room.connect();
       room.__internal.send.authSuccess(defaultRoomToken, ws);
       ws.server.accept();
 
@@ -1505,7 +1505,7 @@ describe("room", () => {
       const { room } = createTestableRoom({ x: 0 });
 
       const ws = makeControllableWebSocket();
-      room.__internal.send.connect();
+      room.connect();
       room.__internal.send.authSuccess(defaultRoomToken, ws);
       ws.server.accept();
 
@@ -1527,7 +1527,7 @@ describe("room", () => {
       const { room } = createTestableRoom({ x: 0 });
 
       const ws = makeControllableWebSocket();
-      room.__internal.send.connect();
+      room.connect();
       room.__internal.send.authSuccess(defaultRoomToken, ws);
       ws.server.accept();
 
@@ -1552,7 +1552,7 @@ describe("room", () => {
       const wss = new MockWebSocketServer();
 
       const ws = wss.newSocket();
-      room.__internal.send.connect();
+      room.connect();
       expect(room.getConnectionState()).toBe("authenticating");
 
       room.__internal.send.authSuccess(defaultRoomToken, ws);
@@ -1583,7 +1583,7 @@ describe("room", () => {
       const { room } = createTestableRoom<P, S, M, E>({});
 
       const ws = makeControllableWebSocket();
-      room.__internal.send.connect();
+      room.connect();
       room.__internal.send.authSuccess(defaultRoomToken, ws);
       ws.server.accept();
 
