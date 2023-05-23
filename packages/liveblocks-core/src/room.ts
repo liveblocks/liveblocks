@@ -608,7 +608,9 @@ const BACKOFF_RETRY_DELAYS_SLOW = [2000, 30000, 60000, 300000];
 const HEARTBEAT_INTERVAL = 30000;
 const PONG_TIMEOUT = 2000;
 
-const MAX_MESSAGE_SIZE = 1 * 1024 * 1024 - 128;
+// The maximum message size on websockets is 1MB (1024*1024), a small amount of space is substracted so we're not right at the limit
+// NOTE: this only works with the unstable_fallbackToHTTP option enabled
+const MAX_MESSAGE_SIZE = 1024 * 1024 - 128;
 
 function makeIdFactory(connectionId: number): IdFactory {
   let count = 0;
@@ -1025,7 +1027,7 @@ export function createRoom<
             context.token?.raw &&
             config.httpSendEndpoint
           ) {
-            if (isTokenExpired(context.token.parsed)) {
+            if (isTokenExpired(context.token.parsed, false)) {
               return reconnect();
             }
             // check for expiration?
@@ -2554,7 +2556,7 @@ async function httpSend(
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify(message),
+    body: message,
   });
 }
 
