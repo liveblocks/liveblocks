@@ -1,3 +1,5 @@
+import type { Delegates, PublicConnectionStatus } from "./connection";
+import { ManagedSocket, UnauthorizedError } from "./connection";
 import type { ApplyResult, ManagedPool } from "./crdts/AbstractCrdt";
 import { OpSource } from "./crdts/AbstractCrdt";
 import {
@@ -21,7 +23,7 @@ import { asPos } from "./lib/position";
 import type { Resolve } from "./lib/Resolve";
 import { compact, isPlainObject, tryParseJson } from "./lib/utils";
 import type { Authentication } from "./protocol/Authentication";
-import type { RichToken, RoomAuthToken } from "./protocol/AuthToken";
+import type { RichToken } from "./protocol/AuthToken";
 import {
   isTokenExpired,
   parseRoomAuthToken,
@@ -53,13 +55,11 @@ import type {
   IWebSocketInstance,
   IWebSocketMessageEvent,
 } from "./types/IWebSocket";
-import { WebsocketCloseCodes } from "./types/IWebSocket";
 import type { NodeMap } from "./types/NodeMap";
 import type { Others, OthersEvent } from "./types/Others";
 import type { User } from "./types/User";
 
 type TimeoutID = ReturnType<typeof setTimeout>;
-type IntervalID = ReturnType<typeof setInterval>;
 
 type CustomEvent<TRoomEvent extends Json> = {
   connectionId: number;
@@ -551,7 +551,40 @@ export type Room<
   getStorageStatus(): StorageStatus;
 
   /**
-   * Close room connection and try to reconnect
+   * @internal (for now)
+   *
+   * Start an attempt to connect the room (aka "enter" it). Calling
+   * `.connect()` only has an effect if the room is still in its idle initial
+   * state, or the room was explicitly disconnected, or reconnection attempts
+   * were stopped (for example, because the user isn't authorized to enter the
+   * room). Will be a no-op otherwise.
+   */
+  connect(): void;
+
+  /**
+   * @internal (for now)
+   *
+   * Disconnect the room's connection to the Liveblocks server, if any. Puts
+   * the room back into an idle state. It will not do anything until either
+   * `.connect()` or `.reconnect()` is called.
+   *
+   * Only use this API if you wish to connect the room again at a later time.
+   * If you want to disconnect the room because you no longer need it, call
+   * `.destroy()` instead.
+   */
+  disconnect(): void;
+
+  /**
+   * @internal (for now)
+   *
+   * Disconnect the room's connection to the Liveblocks server, if any. Runs
+   * cleanup functions. The room instance can no longer be used to (re)connect.
+   */
+  destroy(): void;
+
+  /**
+   * Reconnect the room to the Liveblocks server by re-establishing a fresh
+   * connection. If the room is not connected yet, initiate it.
    */
   reconnect(): void;
 };
@@ -571,7 +604,6 @@ type PrivateRoomAPI<
 > = {
   // For introspection in unit tests only
   buffer: RoomState<TPresence, TStorage, TUserMeta, TRoomEvent>["buffer"]; // prettier-ignore
-  numRetries: number;
   undoStack: readonly (readonly Readonly<HistoryOp<TPresence>>[])[];
   nodeCount: number;
 
@@ -580,16 +612,8 @@ type PrivateRoomAPI<
   getOthers_forDevTools(): readonly DevTools.UserTreeNode[];
 
   send: {
-    connect(): void;
-    disconnect(): void;
-
     explicitClose(event: IWebSocketCloseEvent): void; // NOTE: Also used in e2e test app!
     implicitClose(): void; // NOTE: Also used in e2e test app!
-
-    authSuccess(token: RoomAuthToken, socket: IWebSocketInstance): void; // prettier-ignore
-    navigatorOnline(): void;
-    windowGotFocus(): void;
-    pong(): void;
 
     /**
      * Call this when a server message is received (typically from the
@@ -602,12 +626,6 @@ type PrivateRoomAPI<
   };
 };
 
-const BACKOFF_RETRY_DELAYS = [250, 500, 1000, 2000, 4000, 8000, 10000];
-const BACKOFF_RETRY_DELAYS_SLOW = [2000, 30000, 60000, 300000];
-
-const HEARTBEAT_INTERVAL = 30000;
-const PONG_TIMEOUT = 2000;
-
 // The maximum message size on websockets is 1MB (1024*1024), a small amount of space is substracted so we're not right at the limit
 // NOTE: this only works with the unstable_fallbackToHTTP option enabled
 const MAX_MESSAGE_SIZE = 1024 * 1024 - 128;
@@ -615,11 +633,6 @@ const MAX_MESSAGE_SIZE = 1024 * 1024 - 128;
 function makeIdFactory(connectionId: number): IdFactory {
   let count = 0;
   return () => `${connectionId}:${count++}`;
-}
-
-function log(..._params: unknown[]) {
-  // console.log(...params, new Date().toString());
-  return;
 }
 
 function isConnectionSelfAware(
@@ -643,15 +656,17 @@ type RoomState<
   TUserMeta extends BaseUserMeta,
   TRoomEvent extends Json
 > = {
-  token: RichToken | null;
-
   /**
    * Remembers the last successful connection ID. This gets assigned as soon as
-   * the connection status switched from "connecting" to "open".
+   * the connection status switched from "connecting" to "open", and is used to
+   * hold on to the connection ID beyond the happy state. If, for example, the
+   * server connection is lost, it will try to reconnect. Reconnecting will
+   * change the connection ID, but during this limbo period, there would not be
+   * a connection ID temporarily, so we use the last known connection ID to
+   * generate IDs for new nodes if they are being created while the connection
+   * is reestablishing.
    */
-  lastConnectionId: number | null; // TODO Do we really need to separately track this, or can we derive this from the last known token?
-
-  socket: IWebSocketInstance | null;
+  lastConnectionId: number | null;
 
   /**
    * All pending changes that yet need to be synced.
@@ -671,18 +686,13 @@ type RoomState<
     storageOperations: Op[];
   };
 
-  /**
-   * Number of reconnect() retries.
-   */
-  numRetries: number;
   readonly timers: {
+    // XXX Should we move this into the `buffer` structure, if _that_ is what
+    // is being flushed, close to the `lastFlushedAt` value?
     flush: TimeoutID | undefined;
-    reconnect: TimeoutID | undefined;
-    heartbeat: IntervalID | undefined;
-    pongTimeout: TimeoutID | undefined;
   };
 
-  readonly connection: ValueRef<Connection>;
+  readonly connection: ValueRef<Connection>; // XXX Make this a derived property
   readonly me: MeRef<TPresence>;
   readonly others: OthersRef<TPresence, TUserMeta>;
 
@@ -727,14 +737,7 @@ type RoomState<
 
 /** @internal */
 type Effects<TPresence extends JsonObject, TRoomEvent extends Json> = {
-  authenticateAndConnect(
-    auth: () => Promise<RichToken>,
-    createWebSocket: (token: RichToken) => IWebSocketInstance
-  ): void;
   send(messages: ClientMsg<TPresence, TRoomEvent>[]): void;
-  scheduleReconnect(delay: number): TimeoutID;
-  startHeartbeatInterval(): IntervalID;
-  schedulePongTimeout(): TimeoutID;
 };
 
 export type Polyfills = {
@@ -802,23 +805,6 @@ function userToTreeNode(
 }
 
 /**
- * TODO(nvie) Abstract this out more. This will not be the final form.
- */
-type FSMEvent =
-  | { type: "CONNECT" }
-  | { type: "DISCONNECT" }
-  | { type: "WINDOW_GOT_FOCUS" }
-  | { type: "RECEIVE_PONG" }
-  | { type: "NAVIGATOR_ONLINE" }
-  | {
-      type: "AUTH_SUCCESS";
-      token: RoomAuthToken;
-      socket: IWebSocketInstance;
-    }
-  | { type: "IMPLICIT_CLOSE" }
-  | { type: "EXPLICIT_CLOSE"; closeEvent: IWebSocketCloseEvent };
-
-/**
  * @internal
  * Initializes a new Room, and returns its public API.
  */
@@ -843,18 +829,28 @@ export function createRoom<
       ? options.initialStorage(config.roomId)
       : options.initialStorage;
 
+  // Create a delegate pair for (a specific) Live Room socket connection(s)
+  const delegates: Delegates<RichToken> = {
+    authenticate: makeAuthDelegateForRoom(
+      config.roomId,
+      config.authentication,
+      config.polyfills?.fetch
+    ),
+
+    createSocket: makeCreateSocketDelegateForRoom(
+      config.liveblocksServer,
+      config.polyfills?.WebSocket
+    ),
+  };
+
+  const managedSocket: ManagedSocket<RichToken> = new ManagedSocket(delegates);
+
   // The room's internal stateful context
   const context: RoomState<TPresence, TStorage, TUserMeta, TRoomEvent> = {
-    token: null,
     lastConnectionId: null,
-    socket: null,
 
-    numRetries: 0,
     timers: {
       flush: undefined,
-      reconnect: undefined,
-      heartbeat: undefined,
-      pongTimeout: undefined,
     },
 
     buffer: {
@@ -898,6 +894,90 @@ export function createRoom<
 
   const doNotBatchUpdates = (cb: () => void): void => cb();
   const batchUpdates = config.unstable_batchedUpdates ?? doNotBatchUpdates;
+
+  function onStatusDidChange(newStatus: PublicConnectionStatus) {
+    if (newStatus !== "open" && newStatus !== "connecting") {
+      context.connection.set({ status: newStatus });
+    } else {
+      context.connection.set({
+        status: newStatus,
+        id: managedSocket.token.parsed.actor,
+        userInfo: managedSocket.token.parsed.info,
+        userId: managedSocket.token.parsed.id,
+        isReadOnly: isStorageReadOnly(managedSocket.token.parsed.scopes),
+      });
+    }
+
+    // Forward to the outside world
+    batchUpdates(() => {
+      eventHub.connection.notify(newStatus);
+    });
+  }
+
+  function onDidConnect() {
+    // XXX Combine this into the same batch wrapper as the onStatusDidChange
+    // event, only when this is transitioning from non-open to "open" state
+
+    const conn = context.connection.current;
+    if (conn.status !== "open") {
+      // Totally unexpected by now
+      throw new Error("Unexpected non-open state here");
+    }
+
+    // Re-broadcast the full user presence as soon as we reconnect
+    // NOTE: This condition tries to guard "is this a reconnect". There may be
+    // a more robust way to check that.
+    if (context.lastConnectionId !== undefined) {
+      context.buffer.me = {
+        type: "full",
+        data:
+          // Because state.me.current is a readonly object, we'll have to
+          // make a copy here. Otherwise, type errors happen later when
+          // "patching" my presence.
+          { ...context.me.current },
+      };
+      tryFlushing();
+    }
+
+    // XXX Define token metadata accessor on the managed connection?
+    context.lastConnectionId = conn.id;
+    context.idFactory = makeIdFactory(conn.id);
+
+    if (context.root) {
+      context.buffer.messages.push({ type: ClientMsgCode.FETCH_STORAGE });
+    }
+
+    tryFlushing();
+  }
+
+  function onDidDisconnect() {
+    clearTimeout(context.timers.flush);
+
+    // XXX Combine this into the same batch wrapper as the onStatusDidChange
+    // event, only when this is transitioning from "open" to non-open
+    batchUpdates(() => {
+      context.others.clearOthers();
+      notify({ others: [{ type: "reset" }] }, doNotBatchUpdates);
+    });
+  }
+
+  // Register events handlers for events coming from the socket
+  // We never have to unsubscribe, because the Room and the Connection Manager
+  // will have the same life-time.
+  managedSocket.events.onMessage.subscribe(handleServerMessage);
+  managedSocket.events.statusDidChange.subscribe(onStatusDidChange);
+  managedSocket.events.didConnect.subscribe(onDidConnect);
+  managedSocket.events.didDisconnect.subscribe(onDidDisconnect);
+  managedSocket.events.onLiveblocksError.subscribe((err) => {
+    batchUpdates(() => {
+      if (process.env.NODE_ENV !== "production") {
+        console.error(
+          `Connection to websocket server closed. Reason: ${err.message} (code: ${err.code}).`
+        );
+      }
+      eventHub.error.notify(err);
+    });
+  });
 
   const pool: ManagedPool = {
     roomId: config.roomId,
@@ -977,78 +1057,39 @@ export function createRoom<
   };
 
   const effects: Effects<TPresence, TRoomEvent> = config.mockedEffects || {
-    authenticateAndConnect(
-      auth: () => Promise<RichToken>,
-      createWebSocket: (token: RichToken) => IWebSocketInstance
-    ) {
-      // If we already have a parsed token from a previous connection
-      // in-memory, reuse it
-      const prevToken = context.token;
-      if (prevToken !== null && !isTokenExpired(prevToken.parsed)) {
-        const socket = createWebSocket(prevToken);
-        handleAuthSuccess(prevToken.parsed, socket);
-        return undefined;
-      } else {
-        void auth()
-          .then((token) => {
-            if (context.connection.current.status !== "authenticating") {
-              return;
-            }
-            const socket = createWebSocket(token);
-            handleAuthSuccess(token.parsed, socket);
-            context.token = token;
-          })
-          .catch((er: unknown) =>
-            authenticationFailure(
-              er instanceof Error ? er : new Error(String(er))
-            )
-          );
-        return undefined;
-      }
-    },
-
     send(
       messageOrMessages:
         | ClientMsg<TPresence, TRoomEvent>
         | ClientMsg<TPresence, TRoomEvent>[]
     ) {
-      if (context.socket === null) {
-        throw new Error("Can't send message if socket is null");
-      }
-      if (context.socket.readyState === context.socket.OPEN) {
-        const message = JSON.stringify(messageOrMessages);
-        if (config.unstable_fallbackToHTTP) {
-          // if our message contains UTF-8, we can't simply use length. See: https://stackoverflow.com/questions/23318037/size-of-json-object-in-kbs-mbs
-          // if this turns out to be expensive, we could just guess with a lower value.
-          const size = new TextEncoder().encode(message).length;
-          if (
-            size > MAX_MESSAGE_SIZE &&
-            context.token?.raw &&
-            config.httpSendEndpoint
-          ) {
-            if (isTokenExpired(context.token.parsed)) {
-              return reconnect();
-            }
-            // check for expiration?
-            void httpSend(
-              message,
-              context.token.raw,
-              config.httpSendEndpoint,
-              config.polyfills?.fetch
-            );
-            console.warn(
-              "Message was too large for websockets and sent over HTTP instead"
-            );
-            return;
+      const message = JSON.stringify(messageOrMessages);
+      if (config.unstable_fallbackToHTTP) {
+        // if our message contains UTF-8, we can't simply use length. See: https://stackoverflow.com/questions/23318037/size-of-json-object-in-kbs-mbs
+        // if this turns out to be expensive, we could just guess with a lower value.
+        const size = new TextEncoder().encode(message).length;
+        if (
+          size > MAX_MESSAGE_SIZE &&
+          managedSocket.token.raw &&
+          config.httpSendEndpoint
+        ) {
+          if (isTokenExpired(managedSocket.token.parsed)) {
+            return managedSocket.reconnect();
           }
-        }
-        context.socket.send(message);
-      }
-    },
 
-    scheduleReconnect: (delay: number) => setTimeout(handleConnect, delay),
-    startHeartbeatInterval: () => setInterval(heartbeat, HEARTBEAT_INTERVAL),
-    schedulePongTimeout: () => setTimeout(pongTimeout, PONG_TIMEOUT),
+          void httpSend(
+            message,
+            managedSocket.token.raw,
+            config.httpSendEndpoint,
+            config.polyfills?.fetch
+          );
+          console.warn(
+            "Message was too large for websockets and sent over HTTP instead"
+          );
+          return;
+        }
+      }
+      managedSocket.send(message);
+    },
   };
 
   const self = new DerivedRef(
@@ -1344,28 +1385,6 @@ export function createRoom<
     }
   }
 
-  function handleConnect() {
-    if (
-      context.connection.current.status !== "closed" &&
-      context.connection.current.status !== "unavailable"
-    ) {
-      return;
-    }
-
-    const auth = prepareAuthEndpoint(
-      config.roomId,
-      config.authentication,
-      config.polyfills?.fetch
-    );
-    const createWebSocket = prepareCreateWebSocket(
-      config.liveblocksServer,
-      config.polyfills?.WebSocket
-    );
-
-    updateConnection({ status: "authenticating" }, batchUpdates);
-    effects.authenticateAndConnect(auth, createWebSocket);
-  }
-
   function updatePresence(
     patch: Partial<TPresence>,
     options?: { addToHistory: boolean }
@@ -1419,46 +1438,6 @@ export function createRoom<
       scopes.includes(RoomScope.PresenceWrite) &&
       !scopes.includes(RoomScope.Write)
     );
-  }
-
-  function handleAuthSuccess(token: RoomAuthToken, socket: IWebSocketInstance) {
-    socket.addEventListener("message", handleRawSocketMessage);
-    socket.addEventListener("open", handleSocketOpen);
-    socket.addEventListener("close", handleExplicitClose);
-    socket.addEventListener("error", handleSocketError);
-
-    updateConnection(
-      {
-        status: "connecting",
-        id: token.actor,
-        userInfo: token.info,
-        userId: token.id,
-        isReadOnly: isStorageReadOnly(token.scopes),
-      },
-      batchUpdates
-    );
-    context.idFactory = makeIdFactory(token.actor);
-    context.socket = socket;
-  }
-
-  function authenticationFailure(error: Error) {
-    if (process.env.NODE_ENV !== "production") {
-      console.error("Call to authentication endpoint failed", error);
-    }
-    context.token = null;
-    updateConnection({ status: "unavailable" }, batchUpdates);
-    context.numRetries++;
-
-    clearTimeout(context.timers.reconnect);
-    context.timers.reconnect = effects.scheduleReconnect(getRetryDelay());
-  }
-
-  function handleWindowGotFocus() {
-    // TODO Move this guard into the .transition() function eventually
-    if (context.connection.current.status === "open") {
-      log("Heartbeat after visibility change");
-      heartbeat();
-    }
   }
 
   function onUpdatePresenceMessage(
@@ -1527,13 +1506,6 @@ export function createRoom<
       );
     }
     return { type: "reset" };
-  }
-
-  function handleNavigatorBackOnline() {
-    if (context.connection.current.status === "unavailable") {
-      log("Try to reconnect after connectivity change");
-      reconnect();
-    }
   }
 
   function canUndo() { return context.undoStack.length > 0; } // prettier-ignore
@@ -1617,21 +1589,9 @@ export function createRoom<
   }
 
   /**
-   * Handles a raw message received on the WebSocket. Can be either a "pong"
-   * (server heartbeat), or a message from the Liveblocks server.
+   * Handles a message received on the WebSocket. Will never be a "pong". The
+   * "pong" is handled at the connection manager level.
    */
-  function handleRawSocketMessage(event: IWebSocketMessageEvent) {
-    if (event.data === "pong") {
-      transition({ type: "RECEIVE_PONG" });
-    } else {
-      handleServerMessage(event);
-    }
-  }
-
-  function handlePong() {
-    clearTimeout(context.timers.pongTimeout);
-  }
-
   function handleServerMessage(event: IWebSocketMessageEvent) {
     if (typeof event.data !== "string") {
       // istanbul ignore next: Unknown incoming message
@@ -1755,188 +1715,6 @@ export function createRoom<
     });
   }
 
-  function handleExplicitClose(event: IWebSocketCloseEvent) {
-    context.socket = null;
-
-    clearTimeout(context.timers.flush);
-    clearTimeout(context.timers.reconnect);
-    clearInterval(context.timers.heartbeat);
-    clearTimeout(context.timers.pongTimeout);
-
-    context.others.clearOthers();
-
-    batchUpdates(() => {
-      notify({ others: [{ type: "reset" }] }, doNotBatchUpdates);
-
-      if (event.code >= 4000 && event.code <= 4100) {
-        updateConnection({ status: "failed" }, doNotBatchUpdates);
-
-        const error = new LiveblocksError(event.reason, event.code);
-        eventHub.error.notify(error);
-
-        const delay = getRetryDelay(true);
-        context.numRetries++;
-
-        if (process.env.NODE_ENV !== "production") {
-          console.error(
-            `Connection to websocket server closed. Reason: ${error.message} (code: ${error.code}). Retrying in ${delay}ms.`
-          );
-        }
-
-        updateConnection({ status: "unavailable" }, doNotBatchUpdates);
-
-        clearTimeout(context.timers.reconnect);
-        context.timers.reconnect = effects.scheduleReconnect(delay);
-      } else if (event.code === WebsocketCloseCodes.CLOSE_WITHOUT_RETRY) {
-        updateConnection({ status: "closed" }, doNotBatchUpdates);
-      } else {
-        const delay = getRetryDelay();
-        context.numRetries++;
-
-        if (process.env.NODE_ENV !== "production") {
-          console.warn(
-            `Connection to Liveblocks websocket server closed (code: ${event.code}). Retrying in ${delay}ms.`
-          );
-        }
-        updateConnection({ status: "unavailable" }, doNotBatchUpdates);
-
-        clearTimeout(context.timers.reconnect);
-        context.timers.reconnect = effects.scheduleReconnect(delay);
-      }
-    });
-  }
-
-  function updateConnection(
-    connection: Connection,
-    batchedUpdatesWrapper: (cb: () => void) => void
-  ) {
-    context.connection.set(connection);
-    batchedUpdatesWrapper(() => {
-      eventHub.connection.notify(connection.status);
-    });
-  }
-
-  function getRetryDelay(slow: boolean = false) {
-    if (slow) {
-      return BACKOFF_RETRY_DELAYS_SLOW[
-        context.numRetries < BACKOFF_RETRY_DELAYS_SLOW.length
-          ? context.numRetries
-          : BACKOFF_RETRY_DELAYS_SLOW.length - 1
-      ];
-    }
-    return BACKOFF_RETRY_DELAYS[
-      context.numRetries < BACKOFF_RETRY_DELAYS.length
-        ? context.numRetries
-        : BACKOFF_RETRY_DELAYS.length - 1
-    ];
-  }
-
-  function handleSocketError() {
-    // TODO(nvie) At the very least, emit a log here?
-  }
-
-  function handleSocketOpen() {
-    clearInterval(context.timers.heartbeat);
-    context.timers.heartbeat = effects.startHeartbeatInterval();
-
-    if (context.connection.current.status === "connecting") {
-      updateConnection(
-        { ...context.connection.current, status: "open" },
-        batchUpdates
-      );
-      context.numRetries = 0;
-
-      // Re-broadcast the user presence during a reconnect.
-      if (context.lastConnectionId !== undefined) {
-        context.buffer.me = {
-          type: "full",
-          data:
-            // Because state.me.current is a readonly object, we'll have to
-            // make a copy here. Otherwise, type errors happen later when
-            // "patching" my presence.
-            { ...context.me.current },
-        };
-        tryFlushing();
-      }
-
-      context.lastConnectionId = context.connection.current.id;
-
-      if (context.root) {
-        context.buffer.messages.push({ type: ClientMsgCode.FETCH_STORAGE });
-      }
-      tryFlushing();
-    } else {
-      // TODO
-    }
-  }
-
-  function heartbeat() {
-    if (context.socket === null) {
-      // Should never happen, because we clear the pong timeout when the connection is dropped explictly
-      return;
-    }
-
-    clearTimeout(context.timers.pongTimeout);
-    context.timers.pongTimeout = effects.schedulePongTimeout();
-
-    if (context.socket.readyState === context.socket.OPEN) {
-      context.socket.send("ping");
-    }
-  }
-
-  function pongTimeout() {
-    log("Pong timeout. Trying to reconnect.");
-    reconnect();
-  }
-
-  function handleDisconnect() {
-    if (context.socket) {
-      context.socket.removeEventListener("open", handleSocketOpen);
-      context.socket.removeEventListener("message", handleRawSocketMessage);
-      context.socket.removeEventListener("close", handleExplicitClose);
-      context.socket.removeEventListener("error", handleSocketError);
-      context.socket.close();
-      context.socket = null;
-    }
-
-    clearTimeout(context.timers.flush);
-    clearTimeout(context.timers.reconnect);
-    clearInterval(context.timers.heartbeat);
-    clearTimeout(context.timers.pongTimeout);
-
-    batchUpdates(() => {
-      updateConnection({ status: "closed" }, doNotBatchUpdates);
-
-      context.others.clearOthers();
-      notify({ others: [{ type: "reset" }] }, doNotBatchUpdates);
-    });
-
-    // Clear all event listeners
-    for (const eventSource of Object.values(eventHub)) {
-      eventSource.clear();
-    }
-  }
-
-  function reconnect() {
-    if (context.socket) {
-      context.socket.removeEventListener("open", handleSocketOpen);
-      context.socket.removeEventListener("message", handleRawSocketMessage);
-      context.socket.removeEventListener("close", handleExplicitClose);
-      context.socket.removeEventListener("error", handleSocketError);
-      context.socket.close();
-      context.socket = null;
-    }
-
-    clearTimeout(context.timers.flush);
-    clearTimeout(context.timers.reconnect);
-    clearInterval(context.timers.heartbeat);
-    clearTimeout(context.timers.pongTimeout);
-
-    updateConnection({ status: "unavailable" }, batchUpdates);
-
-    handleConnect();
-  }
-
   function tryFlushing() {
     const storageOps = context.buffer.storageOperations;
     if (storageOps.length > 0) {
@@ -1946,10 +1724,8 @@ export function createRoom<
       notifyStorageStatus();
     }
 
-    if (
-      context.socket === null ||
-      context.socket.readyState !== context.socket.OPEN
-    ) {
+    if (managedSocket.status !== "open") {
+      // XXX I don't understand what's happening here exactly
       context.buffer.storageOperations = [];
       return;
     }
@@ -2022,7 +1798,10 @@ export function createRoom<
       shouldQueueEventIfNotReady: false,
     }
   ) {
-    if (context.socket === null && !options.shouldQueueEventIfNotReady) {
+    if (
+      managedSocket.status !== "open" &&
+      !options.shouldQueueEventIfNotReady
+    ) {
       return;
     }
 
@@ -2204,12 +1983,6 @@ export function createRoom<
     }
   }
 
-  function handleImplicitClose() {
-    if (context.socket) {
-      context.socket = null;
-    }
-  }
-
   function getStorageStatus(): StorageStatus {
     if (_getInitialStatePromise === null) {
       return "not-loaded";
@@ -2257,52 +2030,10 @@ export function createRoom<
     storageStatus: eventHub.storageStatus.observable,
   };
 
-  //
-  // NOTE:
-  // The Finite State Machine's .transition() function will eventually be
-  // the central gate keeper of sanity. This function will likely be abstracted
-  // away in a proper FSM abstraction (like a separate class).
-  //
-  // The idea is that, eventually, the handler functions can only be called
-  // from here, and never from anywhere else, so this function can perform its
-  // central gatekeeping.
-  //
-  function transition(event: FSMEvent) {
-    switch (event.type) {
-      case "CONNECT":
-        return handleConnect();
-
-      case "DISCONNECT":
-        return handleDisconnect();
-
-      case "RECEIVE_PONG":
-        return handlePong();
-
-      case "AUTH_SUCCESS":
-        return handleAuthSuccess(event.token, event.socket);
-
-      case "WINDOW_GOT_FOCUS":
-        return handleWindowGotFocus();
-
-      case "NAVIGATOR_ONLINE":
-        return handleNavigatorBackOnline();
-
-      case "IMPLICIT_CLOSE":
-        return handleImplicitClose();
-
-      case "EXPLICIT_CLOSE":
-        return handleExplicitClose(event.closeEvent);
-
-      default:
-        return assertNever(event, "Invalid event");
-    }
-  }
-
   return {
     /* NOTE: Exposing __internal here only to allow testing implementation details in unit tests */
     __internal: {
       get buffer() { return context.buffer }, // prettier-ignore
-      get numRetries() { return context.numRetries }, // prettier-ignore
       get undoStack() { return context.undoStack }, // prettier-ignore
       get nodeCount() { return context.nodes.size }, // prettier-ignore
 
@@ -2313,14 +2044,10 @@ export function createRoom<
 
       // prettier-ignore
       send: {
-        explicitClose:  (closeEvent) => transition({ type: "EXPLICIT_CLOSE", closeEvent }),
-        implicitClose:            () => transition({ type: "IMPLICIT_CLOSE" }),
-        authSuccess: (token, socket) => transition({ type: "AUTH_SUCCESS", token, socket }),
-        navigatorOnline:          () => transition({ type: "NAVIGATOR_ONLINE" }),
-        windowGotFocus:           () => transition({ type: "WINDOW_GOT_FOCUS" }),
-        pong:                     () => transition({ type: "RECEIVE_PONG" }),
-        connect:                  () => transition({ type: "CONNECT" }),
-        disconnect:               () => transition({ type: "DISCONNECT" }),
+        // These exist only for our E2E testing app
+        explicitClose: (event) => managedSocket._privateSendMachineEvent({ type: "EXPLICIT_SOCKET_CLOSE", event }),
+        implicitClose: () => managedSocket._privateSendMachineEvent({ type: "PONG_TIMEOUT" }),
+
 
         /**
          * This one looks differently from the rest, because receiving messages
@@ -2336,7 +2063,10 @@ export function createRoom<
     id: config.roomId,
     subscribe: makeClassicSubscribeFn(events),
 
-    reconnect,
+    connect: () => managedSocket.connect(),
+    reconnect: () => managedSocket.reconnect(),
+    disconnect: () => managedSocket.disconnect(), // XXX Do we really need disconnect() now that we have destroy()? Seems still useful to reset the machine, but also... YAGNI?
+    destroy: () => managedSocket.destroy(),
 
     // Presence
     updatePresence,
@@ -2511,25 +2241,19 @@ function isRoomEventName(value: string): value is RoomEventName {
   );
 }
 
-class LiveblocksError extends Error {
-  constructor(message: string, public code: number) {
-    super(message);
-  }
-}
-
-function prepareCreateWebSocket(
+function makeCreateSocketDelegateForRoom(
   liveblocksServer: string,
   WebSocketPolyfill?: IWebSocket
 ) {
-  if (typeof window === "undefined" && WebSocketPolyfill === undefined) {
-    throw new Error(
-      "To use Liveblocks client in a non-dom environment, you need to provide a WebSocket polyfill."
-    );
-  }
-
-  const ws: IWebSocket = WebSocketPolyfill || WebSocket;
-
   return (richToken: RichToken): IWebSocketInstance => {
+    const ws: IWebSocket = WebSocketPolyfill || WebSocket;
+
+    if (typeof WebSocket === "undefined" && WebSocketPolyfill === undefined) {
+      throw new Error(
+        "To use Liveblocks client in a non-dom environment, you need to provide a WebSocket polyfill."
+      );
+    }
+
     const token = richToken.raw;
     return new ws(
       `${liveblocksServer}/?token=${token}&version=${
@@ -2559,20 +2283,20 @@ async function httpSend(
   });
 }
 
-function prepareAuthEndpoint(
+function makeAuthDelegateForRoom(
   roomId: string,
   authentication: Authentication,
   fetchPolyfill?: typeof window.fetch
 ): () => Promise<RichToken> {
   if (authentication.type === "public") {
-    if (typeof window === "undefined" && fetchPolyfill === undefined) {
-      throw new Error(
-        "To use Liveblocks client in a non-dom environment with a publicApiKey, you need to provide a fetch polyfill."
-      );
-    }
+    return async () => {
+      if (typeof window === "undefined" && fetchPolyfill === undefined) {
+        throw new Error(
+          "To use Liveblocks client in a non-dom environment with a publicApiKey, you need to provide a fetch polyfill."
+        );
+      }
 
-    return () =>
-      fetchAuthEndpoint(
+      return fetchAuthEndpoint(
         fetchPolyfill || /* istanbul ignore next */ fetch,
         authentication.url,
         {
@@ -2580,19 +2304,21 @@ function prepareAuthEndpoint(
           publicApiKey: authentication.publicApiKey,
         }
       ).then(({ token }) => parseRoomAuthToken(token));
+    };
   }
 
   if (authentication.type === "private") {
-    if (typeof window === "undefined" && fetchPolyfill === undefined) {
-      throw new Error(
-        "To use Liveblocks client in a non-dom environment with a url as auth endpoint, you need to provide a fetch polyfill."
-      );
-    }
+    return async () => {
+      if (typeof window === "undefined" && fetchPolyfill === undefined) {
+        throw new Error(
+          "To use Liveblocks client in a non-dom environment with a url as auth endpoint, you need to provide a fetch polyfill."
+        );
+      }
 
-    return () =>
-      fetchAuthEndpoint(fetchPolyfill || fetch, authentication.url, {
+      return fetchAuthEndpoint(fetchPolyfill || fetch, authentication.url, {
         room: roomId,
       }).then(({ token }) => parseRoomAuthToken(token));
+    };
   }
 
   if (authentication.type === "custom") {
@@ -2628,9 +2354,16 @@ async function fetchAuthEndpoint(
     body: JSON.stringify(body),
   });
   if (!res.ok) {
-    throw new AuthenticationError(
-      `Expected a status 200 but got ${res.status} when doing a POST request on "${endpoint}"`
-    );
+    // XXX Double-check - is this indeed correct?
+    if (res.status === 401 || res.status === 403) {
+      // Throw a special symbol, which the connection manager will recognize
+      // and understand that retrying will have no effect
+      throw new UnauthorizedError(await res.text());
+    } else {
+      throw new AuthenticationError(
+        `Expected a status 200 but got ${res.status} when doing a POST request on "${endpoint}"`
+      );
+    }
   }
   let data: Json;
   try {
