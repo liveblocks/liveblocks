@@ -58,18 +58,65 @@ export type AsyncCacheItem<TData = any, TError = any> = Observable<
 };
 
 export type AsyncCache<TData = any, TError = any> = {
+  /**
+   * Returns a promise which resolves with the state of the key.
+   *
+   * @param key The key to get.
+   */
   get(key: string): Promise<AsyncResolvedState<TData, TError>>;
+
+  /**
+   * Returns the current state of the key synchronously.
+   *
+   * @param key The key to get the state of.
+   */
   getState(key: string): AsyncState<TData, TError> | undefined;
+
+  /**
+   * Marks a key as invalid, which means that the next
+   * {@link AsyncCache.get} call will re-execute the function.
+   *
+   * @param key The key to invalidate.
+   * @param options.setData Whether to clear the cached data or not, or to set
+   *                        it freely (e.g. as an optimistic version of its future)
+   * @param options.setDataOptimistically Whether to rollback the data if there's an error.
+   */
   invalidate(key: string, options?: InvalidateOptions<TData>): void;
+
+  /**
+   * Calls {@link AsyncCache.invalidate} and then {@link AsyncCache.get}.
+   *
+   * @param key The key to revalidate.
+   * @param options.setData Whether to clear the cached data or not, or to set
+   *                        it freely (e.g. as an optimistic version of its future)
+   * @param options.setDataOptimistically Whether to rollback the data if there's an error.
+   */
   revalidate(
     key: string,
     options?: InvalidateOptions<TData>
   ): Promise<AsyncResolvedState<TData, TError>>;
+
+  /**
+   * Subscribes to a key's changes.
+   *
+   * @param key The key to subscribe to.
+   * @param callback The function invoked on every change.
+   */
   subscribe(
     key: string,
     callback: Callback<AsyncState<TData, TError>>
   ): UnsubscribeCallback;
+
+  /**
+   * Returns whether a key already exists in the cache.
+   *
+   * @param key The key to look for.
+   */
   has(key: string): boolean;
+
+  /**
+   * Clears all keys.
+   */
   clear(): void;
 };
 
@@ -244,6 +291,10 @@ export function createAsyncCache<TData = any, TError = any>(
       options?.deduplicationInterval ?? DEDUPLICATION_INTERVAL,
   };
 
+  /**
+   * Returns the {@link AsyncCacheItem} for a key,
+   * and create it if it doesn't exist yet.
+   */
   function create(key: string) {
     let cacheItem = cache.get(key);
 
