@@ -240,8 +240,10 @@ describe("AsyncCache", () => {
     const callback = jest.fn();
     const unsubscribe = cache.subscribe(KEY_ABC, callback);
 
+    // 🚀 Called and returned [0]
     await cache.get(KEY_ABC);
 
+    // 🗑️ Invalidated with [0, 1] as optimistic data, then 🚀 called and returned [0, 1]
     await cache.revalidate(KEY_ABC, {
       setData: (data) => {
         return data ? createIndices(data.length + 1) : undefined;
@@ -301,8 +303,10 @@ describe("AsyncCache", () => {
     const callback = jest.fn();
     const unsubscribe = cache.subscribe(KEY_ABC, callback);
 
+    // 🚀 Called and returned [0]
     await cache.get(KEY_ABC);
 
+    // 🗑️ Invalidated with [0, 1] as optimistic data, then ❌ errored so the data was rollbacked to [0]
     await cache.revalidate(KEY_ABC, {
       setData: (data) => {
         return data ? createIndices(data.length + 1) : undefined;
