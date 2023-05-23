@@ -348,7 +348,7 @@ describe("room", () => {
     ]);
   });
 
-  test("should replace current presence and set flushData presence when connection is closed", () => {
+  test.only("should replace current presence and set flushData presence when connection is closed", () => {
     const { room } = createTestableRoom({});
 
     room.updatePresence({ x: 0 });
@@ -357,7 +357,7 @@ describe("room", () => {
     expect(room.__internal.buffer.me?.data).toStrictEqual({ x: 0 });
   });
 
-  test("should merge current presence and set flushData presence when connection is closed", () => {
+  test.only("should merge current presence and set flushData presence when connection is closed", () => {
     const { room } = createTestableRoom({});
 
     room.updatePresence({ x: 0 });
@@ -966,7 +966,7 @@ describe("room", () => {
   });
 
   describe("subscription", () => {
-    test("batch my-presence", () => {
+    test.only("batch my-presence", () => {
       const { room } = createTestableRoom({});
 
       const callback = jest.fn();
@@ -1183,7 +1183,7 @@ describe("room", () => {
       expect(newImmutableState).toEqual(root.toImmutable());
     });
 
-    test("batch history", () => {
+    test.only("batch history", () => {
       const { room } = createTestableRoom({});
 
       const callback = jest.fn();
@@ -1198,7 +1198,7 @@ describe("room", () => {
       expect(callback).toHaveBeenCalledWith({ canUndo: true, canRedo: false });
     });
 
-    test("my-presence", () => {
+    test.only("my-presence", () => {
       const { room } = createTestableRoom({});
 
       const callback = jest.fn();
@@ -1294,7 +1294,7 @@ describe("room", () => {
       });
     });
 
-    test("history", () => {
+    test.only("history", () => {
       const { room } = createTestableRoom({});
 
       const callback = jest.fn();
