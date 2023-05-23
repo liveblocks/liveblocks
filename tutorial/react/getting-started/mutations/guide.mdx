@@ -3,28 +3,14 @@ openFile: "/Room.tsx"
 showFiles: ["/App.tsx", "/Room.tsx", "/liveblocks.config.ts"]
 ---
 
-On the previous page we learned how to set up storage with an initial
-value—let’s learn how to modify storage by taking this and transforming it into
-a [collaborative form](/use-cases/collaborative-forms).
+On the previous page we learned how to set up conflict-free data storage with an
+initial value—let’s learn how to modify storage by taking this and transforming
+it into a [collaborative form](/use-cases/collaborative-forms).
 
 ### Modifying storage
 
-[FLIP AND MENTION `storage` FIRST? SIMPLIFY?]
-
-To modify our conflict-free data storage, we can add the [`useMutation`][] hook.
-This hook works similarly to
-[`useCallback`](https://react.dev/reference/react/useCallback) from React,
-however it also gives you access to your _mutable storage_.
-
-```tsx
-const modifyStorage = useMutation(({ storage }) => {
-  // Modify storage here
-}, []);
-```
-
-`storage` in the code snippet above is a [`LiveObject`][] that contains the
-entire room’s storage, and corresponds to your `Storage` type in
-[liveblocks.config.ts][]. This is the current type:
+Currently, our storage consists of a [`LiveObject`][] called `person`. `Storage`
+itself is also always a [`LiveObject`][].
 
 ```ts
 type Storage = {
@@ -35,51 +21,70 @@ type Storage = {
 };
 ```
 
-To access a property under `storage`, such as `person`, we can use
-[`LiveObject.get`][].
+To access `person`, we must first retrieve it from our storage with
+[`LiveObject.get`][]. We can then modify a property on `person` with
+[`LiveObject.set`][].
 
 ```ts
-// LiveObject<{ name: "Marie", age: 30"}>
 const person = storage.get("person");
+person.set("name", "Albert");
 ```
 
-And then because `person` itself is a [`LiveObject`][], we can set the value
-using [`LiveObject.set`][].
+But how do we access our storage in the first place?
+
+### Adding a mutation
+
+We can add the [`useMutation`][] hook to access our storage. This hook works
+similarly to [`useCallback`](https://react.dev/reference/react/useCallback) from
+React, however it also gives you access to your _mutable storage_.
 
 ```ts
-person.set("name", "Albert");
-
-// "Albert"
-console.log(person.get("name"));
-```
-
-On the previous page we defined our `Storage` type as a [`LiveObject`][] named
-`person`—you can see this in [liveblocks.config.ts][].
-
-Within this function, we can then use methods
-
-```tsx
-// Add mutation
-const updateName = useMutation(({ storage }, name: string) => {
-  storage.get("person").set("name", name);
+const updateName = useMutation(({ storage }) => {
+  const person = storage.get("person");
+  person.set("name", "Albert");
 }, []);
 ```
 
+<Banner title="Dependencies">
+
+Like with [`useCallback`](https://react.dev/reference/react/useCallback),
+remember to place any dependencies in the array.
+
+</Banner>
+
+We can also provide arguments to [`useMutation`][], for example to allow any
+`name` to be used. Try adding this code snippet to [Room.tsx][].
+
+```ts
+// Add mutation
+const updateName = useMutation(({ storage }, newName: string) => {
+  const person = storage.get("person");
+  person.set("name", newName);
+}, []);
+```
+
+This function can then be called with a `name` argument.
+
+```ts
+updateName("Grace");
+```
+
+### Creating a real-time input
+
+To create an input in a collaborative form, we can combine the value returned
+from [`useStorage`][] to display the value, and [`useMutation`][] to modify it.
+
 ```tsx
 return (
-  <div>
-    <input
-      type="text"
-      value={person.name}
-      onChange={(e) => updateName(e.target.value)}
-    />
-  </div>
+  <input
+    type="text"
+    value={person.name}
+    onChange={(e) => updateName(e.target.value)}
+  />
 );
 ```
 
-Using a LiveObject like this, instead of a regular JavaScript object, allows us
-to use its real-time features. For example multiple people can edit the
-properties of a LiveObject at the same time without overriding the whole object.
+Update the return value in [Room.tsx][] to see a working real-time input!
 
 <Banner title="Try it yourself" type="success">
 
