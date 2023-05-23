@@ -2,6 +2,7 @@ import type { Callback, Observable, UnsubscribeCallback } from "./EventSource";
 import { makeEventSource } from "./EventSource";
 
 const DEDUPLICATION_INTERVAL = 2000;
+const KEEP_PREVIOUS_DATA = false;
 
 type WithRequired<T, K extends keyof T> = T & { [P in K]-?: T[P] };
 
@@ -16,9 +17,15 @@ type AsyncCacheItemOptions = WithRequired<
   "deduplicationInterval"
 >;
 
-type InvalidateOptions = {
-  keepPreviousData?: boolean;
-};
+type InvalidateOptions<TData = any> =
+  | {
+      keepPreviousData: true;
+      setOptimisticData?: never;
+    }
+  | {
+      keepPreviousData?: false;
+      setOptimisticData?: (data: TData | undefined) => TData | undefined;
+    };
 
 export type AsyncState<TData = any, TError = any> = {
   isLoading: boolean;
@@ -35,9 +42,11 @@ type AsyncResolvedState<TData = any, TError = any> = AsyncState<
 
 type AsyncCacheItemContext<TData, TError> = AsyncState<TData, TError> & {
   isInvalid: boolean;
-  hasScheduledInvalidation: boolean;
+  scheduledInvalidation?: InvalidateOptions<TData>;
   promise?: Promise<TData>;
   lastExecutedAt?: number;
+  previousState: AsyncState<TData, TError>;
+  previousData?: TData;
 };
 
 export type AsyncCacheItem<TData = any, TError = any> = Observable<
@@ -45,9 +54,9 @@ export type AsyncCacheItem<TData = any, TError = any> = Observable<
 > & {
   get(): Promise<AsyncResolvedState<TData, TError>>;
   getState(): AsyncState<TData, TError>;
-  invalidate(options?: InvalidateOptions): void;
+  invalidate(options?: InvalidateOptions<TData>): void;
   revalidate(
-    options?: InvalidateOptions
+    options?: InvalidateOptions<TData>
   ): Promise<AsyncResolvedState<TData, TError>>;
 };
 
@@ -58,7 +67,7 @@ export type AsyncCache<TData = any, TError = any> = {
   invalidate(key: string, options?: InvalidateOptions): void;
   revalidate(
     key: string,
-    options?: InvalidateOptions
+    options?: InvalidateOptions<TData>
   ): Promise<AsyncResolvedState<TData, TError>>;
   subscribe(
     key: string,
@@ -94,17 +103,16 @@ function createCacheItem<TData = any, TError = any>(
   const context: AsyncCacheItemContext<TData, TError> = {
     isLoading: false,
     isInvalid: true,
-    hasScheduledInvalidation: false,
+    previousState: { isLoading: false },
   };
   const eventSource = makeEventSource<AsyncState<TData, TError>>();
-  let previousState = getState();
 
   function notify() {
-    const newState = getState();
+    const state = getState();
 
-    if (isDifferentState(previousState, newState)) {
-      previousState = newState;
-      eventSource.notify(newState);
+    if (isDifferentState(context.previousState, state)) {
+      context.previousState = state;
+      eventSource.notify(state);
     }
   }
 
@@ -133,23 +141,30 @@ function createCacheItem<TData = any, TError = any>(
     context.promise = undefined;
     context.isLoading = false;
 
-    if (context.hasScheduledInvalidation) {
-      context.hasScheduledInvalidation = false;
-      invalidate();
+    if (context.scheduledInvalidation) {
+      const scheduledInvalidation = context.scheduledInvalidation;
+      context.scheduledInvalidation = undefined;
+      invalidate(scheduledInvalidation);
     } else {
       notify();
     }
   }
 
-  function invalidate(options?: InvalidateOptions) {
+  function invalidate(options?: InvalidateOptions<TData>) {
+    const resolvedOptions: WithRequired<
+      InvalidateOptions<TData>,
+      "keepPreviousData"
+    > = { keepPreviousData: KEEP_PREVIOUS_DATA, ...options };
+
     if (context.promise) {
-      context.hasScheduledInvalidation = true;
-    } else if (!context.hasScheduledInvalidation && !context.error) {
-      const keepPreviousData = options?.keepPreviousData ?? false;
+      context.scheduledInvalidation = resolvedOptions;
+    } else if (!context.scheduledInvalidation && !context.error) {
       context.isInvalid = true;
       context.error = undefined;
 
-      if (!keepPreviousData) {
+      if (resolvedOptions.setOptimisticData) {
+        context.data = resolvedOptions.setOptimisticData(context.data);
+      } else if (!resolvedOptions.keepPreviousData) {
         context.data = undefined;
       }
 
@@ -175,7 +190,7 @@ function createCacheItem<TData = any, TError = any>(
     return getState() as AsyncResolvedState<TData, TError>;
   }
 
-  function revalidate(options?: InvalidateOptions) {
+  function revalidate(options?: InvalidateOptions<TData>) {
     invalidate(options);
 
     return get();

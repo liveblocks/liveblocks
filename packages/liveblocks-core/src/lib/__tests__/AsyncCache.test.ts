@@ -19,8 +19,10 @@ async function sleep(ms: number): Promise<42> {
   });
 }
 
-function createAsyncMock(
-  errorPredicate: (index: number, key: string) => boolean = () => false
+function createAsyncMock<T = string>(
+  errorPredicate: (index: number, key: string) => boolean = () => false,
+  returnValue: (index: number, key: string) => T = (_, key) =>
+    key as unknown as T
 ) {
   let index = 0;
 
@@ -33,9 +35,13 @@ function createAsyncMock(
     if (isError) {
       throw ERROR;
     } else {
-      return key;
+      return returnValue(index, key);
     }
   });
+}
+
+function createIndices(length: number) {
+  return [...Array(length).keys()];
 }
 
 describe("AsyncCache", () => {
@@ -222,6 +228,66 @@ describe("AsyncCache", () => {
     });
 
     expect(mock).toHaveBeenCalledTimes(2);
+  });
+
+  test("revalidating with optimistic data", async () => {
+    const mock = createAsyncMock(
+      () => false,
+      (index) => createIndices(index)
+    );
+    const cache = createAsyncCache(mock, { deduplicationInterval: 0 });
+
+    const callback = jest.fn();
+    const unsubscribe = cache.subscribe(KEY_ABC, callback);
+
+    await cache.get(KEY_ABC);
+
+    await cache.revalidate(KEY_ABC, {
+      setOptimisticData: (data) => {
+        return data ? createIndices(data.length + 1) : undefined;
+      },
+    });
+
+    unsubscribe();
+
+    expect(callback).toHaveBeenCalledTimes(4);
+
+    // 1️⃣ Triggered when the first call started
+    expect(callback).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining<AsyncState<number[]>>({
+        isLoading: true,
+        data: undefined,
+        error: undefined,
+      })
+    );
+    // 2️⃣ Triggered when the first call finished
+    expect(callback).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining<AsyncState<number[]>>({
+        isLoading: false,
+        data: [0],
+        error: undefined,
+      })
+    );
+    // 3️⃣ Triggered when revalidated with optimistic data
+    expect(callback).toHaveBeenNthCalledWith(
+      3,
+      expect.objectContaining<AsyncState<number[]>>({
+        isLoading: true,
+        data: [0, 1],
+        error: undefined,
+      })
+    );
+    // 4️⃣ Triggered when revalidation finished
+    expect(callback).toHaveBeenNthCalledWith(
+      4,
+      expect.objectContaining<AsyncState<number[]>>({
+        isLoading: false,
+        data: [0, 1],
+        error: undefined,
+      })
+    );
   });
 
   test("clearing the cache", async () => {
