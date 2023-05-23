@@ -174,6 +174,9 @@ enum LogLevel {
   ERROR,
 }
 
+/**
+ * Generic "log" effect. Use it in `effect` handlers of state transitions.
+ */
 function log(level: LogLevel, message: string) {
   const logger =
     level === LogLevel.ERROR
