@@ -372,7 +372,7 @@ describe("AsyncCache", () => {
     expect(mock).toHaveBeenCalledTimes(2);
   });
 
-  test("clearing the cache while running", async () => {
+  test("clearing the cache while pending", async () => {
     const mock = createAsyncMock();
     const cache = createAsyncCache(mock, {
       deduplicationInterval: 0,
@@ -564,7 +564,7 @@ describe("AsyncCache", () => {
     );
   });
 
-  test("subscribing and invalidating while running", async () => {
+  test("subscribing and invalidating while pending", async () => {
     const mock = createAsyncMock();
     const cache = createAsyncCache(mock, {
       deduplicationInterval: 0,

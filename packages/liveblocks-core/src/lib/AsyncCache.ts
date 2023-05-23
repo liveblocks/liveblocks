@@ -77,19 +77,15 @@ export type AsyncCache<TData = any, TError = any> = {
 const noop = () => {};
 
 export function isDifferentState(a: AsyncState, b: AsyncState): boolean {
-  if (
+  // This might not be true, `data` and `error` would have to be
+  // deeply compared to know that. But in our use-case, `data` and
+  // `error` can't change without being set to `undefined` first or
+  // `isLoading` also changing in between or at the same time.
+  return (
     a.isLoading !== b.isLoading ||
     (a.data === undefined) !== (b.data === undefined) ||
     (a.error === undefined) !== (b.error === undefined)
-  ) {
-    return true;
-  } else {
-    // This might not be true, `data` and `error` would have to be
-    // deeply compared to know that. But in our use-case, `data` and
-    // `error` can't change without being set to `undefined` first or
-    // `isLoading` also changing in between.
-    return false;
-  }
+  );
 }
 
 function createCacheItem<TData = any, TError = any>(
@@ -107,6 +103,7 @@ function createCacheItem<TData = any, TError = any>(
   function notify() {
     const state = getState();
 
+    // We only notify subscribers if the cache has changed.
     if (isDifferentState(context.previousState, state)) {
       context.previousState = state;
       eventSource.notify(state);
@@ -120,6 +117,8 @@ function createCacheItem<TData = any, TError = any>(
     context.isInvalid = true;
     context.promise = asyncFunction(key);
 
+    // We notify subscribers that the promise
+    // started (changing `isLoading`).
     notify();
   }
 
@@ -132,12 +131,15 @@ function createCacheItem<TData = any, TError = any>(
       context.error = undefined;
       context.isInvalid = false;
     } catch (error) {
+      // We updated `data` optimistically but there's now an
+      // error so we rollback to the previous non-optimistic `data`.
       if (context.rollbackOptimisticDataOnError) {
         context.data = context.previousNonOptimisticData;
       }
 
-      context.error = error as TError;
+      // We keep the key as invalid because there was an error.
       context.isInvalid = true;
+      context.error = error as TError;
     }
 
     context.rollbackOptimisticDataOnError = false;
@@ -145,18 +147,26 @@ function createCacheItem<TData = any, TError = any>(
     context.isLoading = false;
 
     if (context.scheduledInvalidation) {
+      // If there was an invalidation made during
+      // the promise, we scheduled it to now.
       const scheduledInvalidation = context.scheduledInvalidation;
       context.scheduledInvalidation = undefined;
       invalidate(scheduledInvalidation);
     } else {
+      // We notify subscribers that the promise resolved
+      // (changing `isLoading` and either `data` or `error`).
       notify();
     }
   }
 
   function invalidate(options: InvalidateOptions<TData> = {}) {
     if (context.promise) {
+      // If there is a promise pending, we schedule the
+      // invalidation for when the promise resolves.
       context.scheduledInvalidation = options;
     } else if (!context.scheduledInvalidation && !context.error) {
+      // We only invalidate if there's not an
+      // invalidation still scheduled or an error.
       context.isInvalid = true;
       context.error = undefined;
 
@@ -167,20 +177,29 @@ function createCacheItem<TData = any, TError = any>(
           ? context.data
           : undefined;
 
+      // If we set `data` optimistically, we specify that we
+      // should rollback `data` if the next resolve is an error.
       if (options.setData && options.setDataOptimistically) {
         context.rollbackOptimisticDataOnError = true;
       }
 
+      // We notify subscribers that there was an
+      // invalidation (potentially changind `data`).
       notify();
     }
   }
 
   async function get() {
+    // If a key isn't invalid (never called, errored,
+    // invalidated...), we just return its cache.
     if (context.isInvalid) {
       const isDuplicate = context.lastExecutedAt
         ? Date.now() - context.lastExecutedAt < deduplicationInterval
         : false;
 
+      // We only execute the provided function if there's not
+      // a promise pending already or if a previous execution
+      // was already made within the deduplication interval.
       if (!context.promise && !isDuplicate) {
         execute();
       }
