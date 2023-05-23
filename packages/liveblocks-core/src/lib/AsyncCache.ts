@@ -17,10 +17,10 @@ type AsyncCacheItemOptions = WithRequired<
 >;
 
 type InvalidateOptions<TData = any> =
-  | { setData?: never; setDataOptimistically?: never }
+  | { clearData?: false; setOptimisticData?: never }
   | {
-      setData: false | ((data: TData | undefined) => TData | undefined);
-      setDataOptimistically?: boolean;
+      clearData?: never;
+      setOptimisticData: (data: TData | undefined) => TData | undefined;
     };
 
 export type AsyncState<TData = any, TError = any> = {
@@ -77,9 +77,8 @@ export type AsyncCache<TData = any, TError = any> = {
    * {@link AsyncCache.get} call will re-invoke the function.
    *
    * @param key The key to invalidate.
-   * @param options.setData Whether to clear the cached data or not, or to set
-   *                        it freely (e.g. as an optimistic version of its future)
-   * @param options.setDataOptimistically Whether to rollback the data if there's an error.
+   * @param options.clearData Whether to clear the cached data.
+   * @param options.setOptimisticData Set data immediately but rollback if there's an error.
    */
   invalidate(key: string, options?: InvalidateOptions<TData>): void;
 
@@ -87,9 +86,8 @@ export type AsyncCache<TData = any, TError = any> = {
    * Calls {@link AsyncCache.invalidate} and then {@link AsyncCache.get}.
    *
    * @param key The key to revalidate.
-   * @param options.setData Whether to clear the cached data or not, or to set
-   *                        it freely (e.g. as an optimistic version of its future)
-   * @param options.setDataOptimistically Whether to rollback the data if there's an error.
+   * @param options.clearData Whether to clear the cached data.
+   * @param options.setOptimisticData Set data immediately but rollback if there's an error.
    */
   revalidate(
     key: string,
@@ -216,17 +214,13 @@ function createCacheItem<TData = any, TError = any>(
       context.isInvalid = true;
       context.error = undefined;
 
-      context.data =
-        typeof options.setData === "function"
-          ? options.setData(context.data)
-          : options.setData === false
-          ? context.data
-          : undefined;
-
       // If we set `data` optimistically, we specify that we
       // should rollback `data` if the next resolve is an error.
-      if (options.setData && options.setDataOptimistically) {
+      if (options.setOptimisticData) {
         context.rollbackOptimisticDataOnError = true;
+        context.data = options.setOptimisticData(context.data);
+      } else if (options.clearData !== false) {
+        context.data = undefined;
       }
 
       // We notify subscribers that there was an

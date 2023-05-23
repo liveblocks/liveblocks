@@ -197,7 +197,7 @@ describe("AsyncCache", () => {
     expect(cache.getState(KEY_ABC)?.data).not.toBeUndefined();
 
     // 🗑️ Doesn't clear the cache for "abc"
-    cache.invalidate(KEY_ABC, { setData: false });
+    cache.invalidate(KEY_ABC, { clearData: false });
 
     expect(cache.getState(KEY_ABC)?.data).not.toBeUndefined();
 
@@ -245,10 +245,9 @@ describe("AsyncCache", () => {
 
     // 🗑️ Invalidated with [0, 1] as optimistic data, then 🚀 called and returned [0, 1]
     await cache.revalidate(KEY_ABC, {
-      setData: (data) => {
+      setOptimisticData: (data) => {
         return data ? createIndices(data.length + 1) : undefined;
       },
-      setDataOptimistically: true,
     });
 
     unsubscribe();
@@ -308,10 +307,9 @@ describe("AsyncCache", () => {
 
     // 🗑️ Invalidated with [0, 1] as optimistic data, then ❌ errored so the data was rollbacked to [0]
     await cache.revalidate(KEY_ABC, {
-      setData: (data) => {
+      setOptimisticData: (data) => {
         return data ? createIndices(data.length + 1) : undefined;
       },
-      setDataOptimistically: true,
     });
 
     unsubscribe();
@@ -620,7 +618,7 @@ describe("AsyncCache", () => {
     await cache.get(KEY_ABC);
 
     // 🗑️ Invalidated but without clearing the cache for "abc"
-    cache.invalidate(KEY_ABC, { setData: false });
+    cache.invalidate(KEY_ABC, { clearData: false });
     // 🗑️ Invalidated
     cache.invalidate(KEY_ABC);
     // 🗑️ Invalidated
