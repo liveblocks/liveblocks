@@ -44,7 +44,7 @@ function makeRoomToken(actor: number, scopes: string[]): RoomAuthToken {
   };
 }
 
-function makeRichToken(actor: number, scopes: string[]): RichToken {
+export function makeRichToken(actor: number, scopes: string[]): RichToken {
   const raw = "<some fake JWT token>";
   const parsed = {
     ...makeRoomToken(actor, scopes),
