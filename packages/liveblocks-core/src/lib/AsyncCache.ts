@@ -58,7 +58,6 @@ export type AsyncCacheItem<TData = any, TError = any> = Observable<
 };
 
 export type AsyncCache<TData = any, TError = any> = {
-  create(key: string): AsyncCacheItem<TData, TError>;
   get(key: string): Promise<AsyncResolvedState<TData, TError>>;
   getState(key: string): AsyncState<TData, TError> | undefined;
   invalidate(key: string, options?: InvalidateOptions<TData>): void;
@@ -290,7 +289,6 @@ export function createAsyncCache<TData = any, TError = any>(
   }
 
   return {
-    create,
     get,
     getState,
     invalidate,

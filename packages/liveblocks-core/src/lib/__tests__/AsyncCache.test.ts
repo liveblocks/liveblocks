@@ -447,19 +447,18 @@ describe("AsyncCache", () => {
     });
     const callback = jest.fn();
 
-    const cacheItem = cache.create(KEY_ABC);
-    const unsubscribe = cacheItem.subscribe(callback);
+    const unsubscribe = cache.subscribe(KEY_ABC, callback);
 
     // 🚀 Called and ❌ errored
-    await cacheItem.get();
+    await cache.get(KEY_ABC);
 
     // 🚀 Called and ✅ fulfilled
-    await cacheItem.get();
+    await cache.get(KEY_ABC);
 
     unsubscribe();
 
     // 🚀 Called but 🔜 the subscriber won't be notified because it unsubscribed
-    await cacheItem.get();
+    await cache.get(KEY_ABC);
 
     expect(callback).toHaveBeenCalledTimes(4);
 
@@ -526,11 +525,10 @@ describe("AsyncCache", () => {
     });
     const callback = jest.fn();
 
-    const cacheItem = cache.create(KEY_ABC);
-    const unsubscribe = cacheItem.subscribe(callback);
+    const unsubscribe = cache.subscribe(KEY_ABC, callback);
 
     // 🚀 Called
-    await cacheItem.get();
+    await cache.get(KEY_ABC);
 
     // 🗑️ Invalidated
     cache.invalidate(KEY_ABC);
@@ -575,14 +573,13 @@ describe("AsyncCache", () => {
     });
     const callback = jest.fn();
 
-    const cacheItem = cache.create(KEY_ABC);
-    const unsubscribe = cacheItem.subscribe(callback);
+    const unsubscribe = cache.subscribe(KEY_ABC, callback);
 
     // 🚀 Called
-    const promise = cacheItem.get();
+    const promise = cache.get(KEY_ABC);
 
     // 🗑️ Invalidated before the call finished
-    cacheItem.invalidate();
+    cache.invalidate(KEY_ABC);
 
     await promise;
 
@@ -617,18 +614,17 @@ describe("AsyncCache", () => {
     });
     const callback = jest.fn();
 
-    const cacheItem = cache.create(KEY_ABC);
-    const unsubscribe = cacheItem.subscribe(callback);
+    const unsubscribe = cache.subscribe(KEY_ABC, callback);
 
     // 🚀 Called
-    await cacheItem.get();
+    await cache.get(KEY_ABC);
 
     // 🗑️ Invalidated but without clearing the cache for "abc"
-    cacheItem.invalidate({ setData: false });
+    cache.invalidate(KEY_ABC, { setData: false });
     // 🗑️ Invalidated
-    cacheItem.invalidate();
+    cache.invalidate(KEY_ABC);
     // 🗑️ Invalidated
-    cacheItem.invalidate();
+    cache.invalidate(KEY_ABC);
 
     unsubscribe();
 
