@@ -2,7 +2,7 @@ import { assertNever } from "./lib/assert";
 import type { Observable } from "./lib/EventSource";
 import { makeEventSource } from "./lib/EventSource";
 import * as console from "./lib/fancy-console";
-import type { BuiltinEvent, Target } from "./lib/fsm";
+import type { BuiltinEvent, Patchable, Target } from "./lib/fsm";
 import { FSM } from "./lib/fsm";
 import type {
   IWebSocketCloseEvent,
@@ -158,13 +158,34 @@ function nextBackoffDelay(
   );
 }
 
-function increaseBackoffDelay(context: Context) {
-  return { backoffDelay: nextBackoffDelay(context.backoffDelay) };
+function increaseBackoffDelay(context: Patchable<Context>) {
+  context.patch({ backoffDelay: nextBackoffDelay(context.backoffDelay) });
 }
 
-function increaseBackoffDelayAggressively(context: Context) {
-  return {
+function increaseBackoffDelayAggressively(context: Patchable<Context>) {
+  context.patch({
     backoffDelay: nextBackoffDelay(context.backoffDelay, BACKOFF_DELAYS_SLOW),
+  });
+}
+
+enum LogLevel {
+  INFO,
+  WARN,
+  ERROR,
+}
+
+/**
+ * Generic "log" effect. Use it in `effect` handlers of state transitions.
+ */
+function log(level: LogLevel, message: string) {
+  const logger =
+    level === LogLevel.ERROR
+      ? console.error
+      : level === LogLevel.WARN
+      ? console.warn
+      : /* black hole */ () => {};
+  return () => {
+    logger(message);
   };
 }
 
@@ -206,10 +227,6 @@ function enableTracing(machine: FSM<Context, Event, State>) {
     }),
     machine.events.willTransition.subscribe(({ from, to }) => {
       log("Transitioning", from, "→", to);
-    }),
-    machine.events.didPatchContext.subscribe((patch) => {
-      log(`Patched: ${JSON.stringify(patch)}`);
-      // log(`New context: ${JSON.stringify(machine.context)}`);
     }),
     machine.events.didIgnoreEvent.subscribe((e) => {
       log("Ignored event", e, "(current state won't handle it)");
@@ -256,6 +273,9 @@ function defineConnectivityEvents(machine: FSM<Context, Event, State>) {
   };
 }
 
+const assign = (patch: Partial<Context>) => (ctx: Patchable<Context>) =>
+  ctx.patch(patch);
+
 function createConnectionStateMachine<T extends BaseAuthResult>(
   delegates: Delegates<T>
 ) {
@@ -294,7 +314,7 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
   machine.addTransitions("*", {
     RECONNECT: {
       target: "@auth.backoff",
-      assign: increaseBackoffDelay,
+      effect: increaseBackoffDelay,
     },
 
     DISCONNECT: "@idle.initial",
@@ -317,7 +337,7 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
     .addTransitions("@auth.backoff", {
       NAVIGATOR_ONLINE: {
         target: "@auth.busy",
-        assign: { backoffDelay: RESET_DELAY },
+        effect: assign({ backoffDelay: RESET_DELAY }),
       },
     })
     .addTimedTransition(
@@ -335,10 +355,10 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
       // On successful authentication
       (okEvent) => ({
         target: "@connecting.busy",
-        assign: {
+        effect: assign({
           token: okEvent.data as BaseAuthResult,
           backoffDelay: RESET_DELAY,
-        },
+        }),
       }),
 
       // Auth failed
@@ -346,19 +366,20 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
         failedEvent.reason instanceof UnauthorizedError
           ? {
               target: "@idle.failed",
-              effect: () =>
-                console.error(
-                  `Unauthorized: ${
-                    (failedEvent.reason as UnauthorizedError).message
-                  }`
-                ),
+              effect: log(
+                LogLevel.ERROR,
+                `Unauthorized: ${failedEvent.reason.message}`
+              ),
             }
           : {
               target: "@auth.backoff",
-              assign: increaseBackoffDelay,
-              // effect: () => {
-              //   console.log(`Authentication failed: ${String(failedEvent.reason)}`);
-              // },
+              effect: [
+                increaseBackoffDelay,
+                log(
+                  LogLevel.INFO,
+                  `Authentication failed: ${String(failedEvent.reason)}`
+                ),
+              ],
             }
     );
 
@@ -391,7 +412,7 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
     .addTransitions("@connecting.backoff", {
       NAVIGATOR_ONLINE: {
         target: "@connecting.busy",
-        assign: { backoffDelay: RESET_DELAY },
+        effect: assign({ backoffDelay: RESET_DELAY }),
       },
     })
     .addTimedTransition(
@@ -451,10 +472,10 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
       // Only transition to OK state after a successfully opened WebSocket connection
       (okEvent) => ({
         target: "@ok.connected",
-        assign: {
+        effect: assign({
           socket: okEvent.data,
           backoffDelay: RESET_DELAY,
-        },
+        }),
       }),
 
       // If the WebSocket connection cannot be established
@@ -464,14 +485,15 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
         // retrying.
         ({
           target: "@auth.backoff",
-          assign: increaseBackoffDelay,
-          effect: () => {
-            console.error(
+          effect: [
+            increaseBackoffDelay,
+            log(
+              LogLevel.ERROR,
               `Connection to WebSocket could not be established, reason: ${String(
                 failedEvent.reason
               )}`
-            );
-          },
+            ),
+          ],
         })
     );
 
@@ -497,29 +519,22 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
 
   const noPongAction: Target<Context, Event | BuiltinEvent, State> = {
     target: "@connecting.busy",
-    effect: () => {
-      // Log implicit connection loss and drop the current open socket
-      console.warn(
-        "Received no pong from server, assume implicit connection loss."
-      );
-    },
+    // Log implicit connection loss and drop the current open socket
+    effect: log(
+      LogLevel.WARN,
+      "Received no pong from server, assume implicit connection loss."
+    ),
   };
 
   machine
-    .onEnter("@ok.*", (ctx) => {
+    .onEnter("@ok.*", () => {
       // Do nothing on entering...
 
       // ...but when *leaving* OK state, always tear down the old socket. It's
       // no longer valid.
-      return () => {
+      return (ctx) => {
         teardownSocket(ctx.socket);
-        (ctx as any).socket = null;
-        //   ^^^^^^
-        //   XXX Really, I should add an official API to the FSM to support
-        //   XXX assigning to context when entering/leaving a state, since this
-        //   XXX is a well-defined moment in a state transition.
-        //   XXX I've only temporarily pulled this hack here, for which I ask
-        //   XXX forgiveness.
+        ctx.patch({ socket: null });
       };
     })
 
@@ -540,7 +555,7 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
 
         return {
           target: "@connecting.busy",
-          assign: increaseBackoffDelay,
+          effect: increaseBackoffDelay,
         };
       },
 
@@ -549,10 +564,10 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
         if (e.event.code === 4999) {
           return {
             target: "@idle.failed",
-            effect: () =>
-              console.warn(
-                "Connection to WebSocket closed permanently. Won't retry."
-              ),
+            effect: log(
+              LogLevel.WARN,
+              "Connection to WebSocket closed permanently. Won't retry."
+            ),
           }; // Should not retry, give up
         }
 
@@ -561,13 +576,15 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
         if (e.event.code >= 4000 && e.event.code <= 4100) {
           return {
             target: "@connecting.busy",
-            assign: increaseBackoffDelayAggressively,
-            effect: (_, { event }) => {
-              if (event.code >= 4000 && event.code <= 4100) {
-                const err = new LiveblocksError(event.reason, event.code);
-                onLiveblocksError.notify(err);
-              }
-            },
+            effect: [
+              increaseBackoffDelayAggressively,
+              (_, { event }) => {
+                if (event.code >= 4000 && event.code <= 4100) {
+                  const err = new LiveblocksError(event.reason, event.code);
+                  onLiveblocksError.notify(err);
+                }
+              },
+            ],
           };
         }
 
@@ -575,7 +592,7 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
         // a new socket
         return {
           target: "@connecting.busy",
-          assign: increaseBackoffDelay,
+          effect: increaseBackoffDelay,
         };
       },
     });
@@ -704,7 +721,7 @@ export class ManagedSocket<T extends BaseAuthResult> {
    * Call this method to try to connect to a WebSocket. This only has an effect
    * if the machine is idle at the moment, otherwise this is a no-op.
    */
-  public connect() {
+  public connect(): void {
     this.machine.send({ type: "CONNECT" });
   }
 
@@ -712,7 +729,7 @@ export class ManagedSocket<T extends BaseAuthResult> {
    * If idle, will try to connect. Otherwise, it will attempt to reconnect to
    * the socket, potentially obtaining a new token first, if needed.
    */
-  public reconnect() {
+  public reconnect(): void {
     this.machine.send({ type: "RECONNECT" });
   }
 
@@ -720,7 +737,7 @@ export class ManagedSocket<T extends BaseAuthResult> {
    * Call this method to disconnect from the current WebSocket. Is going to be
    * a no-op if there is no active connection.
    */
-  public disconnect() {
+  public disconnect(): void {
     this.machine.send({ type: "DISCONNECT" });
   }
 
@@ -729,7 +746,7 @@ export class ManagedSocket<T extends BaseAuthResult> {
    * calling destroy(), you can no longer use this instance. Call this before
    * letting the instance get garbage collected.
    */
-  public destroy() {
+  public destroy(): void {
     this.machine.stop();
 
     let cleanup: (() => void) | undefined;
@@ -742,7 +759,7 @@ export class ManagedSocket<T extends BaseAuthResult> {
    * Safely send a message to the current WebSocket connection. Will emit a log
    * message if this is somehow impossible.
    */
-  public send(data: string) {
+  public send(data: string): void {
     const socket = this.machine.context?.socket;
     if (socket === null) {
       console.warn("Cannot send: not connected yet", data);
@@ -757,7 +774,7 @@ export class ManagedSocket<T extends BaseAuthResult> {
    * NOTE: Used by the E2E app only, to simulate explicit events.
    * Not ideal to keep exposed :(
    */
-  public _privateSend(event: Event) {
-    return this.machine.send(event);
+  public _privateSend(event: Event): void {
+    this.machine.send(event);
   }
 }
