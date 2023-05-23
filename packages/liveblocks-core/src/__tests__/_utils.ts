@@ -437,7 +437,7 @@ export async function prepareRoomWithStorage<
   );
 
   room.connect();
-  wss.accept(wss.current);
+  wss.last.accept();
 
   // Start getting the storage, but don't await the promise just yet!
   const getStoragePromise = room.getStorage();
@@ -454,11 +454,14 @@ export async function prepareRoomWithStorage<
   return {
     storage,
     room,
-
+    wss,
+    /**
+     * @deprecated Use wss.
+     */
     get ws() {
       // XXX Not so sure that this API will be the best API. Better to expose
       // XXX the server itself, I think.
-      return wss.current;
+      return wss.current!;
     },
   };
 }

@@ -87,7 +87,15 @@ function createTestableRoom<
     mockedDelegates
   );
 
-  return { room, effects, delegates: mockedDelegates, wss };
+  return {
+    room,
+    effects,
+    delegates: mockedDelegates,
+    /**
+     * The fake WebSocket server backend that these unit tests connect to.
+     */
+    wss,
+  };
 }
 
 describe("room / auth", () => {
@@ -270,7 +278,7 @@ describe("room", () => {
     await jest.advanceTimersByTimeAsync(0); // Wait until authentication has succeeded
     expect(room.getConnectionState()).toBe("connecting");
 
-    wss.accept(wss.current);
+    wss.last.accept();
     await jest.advanceTimersByTimeAsync(0); // Wait until WebSocket is opened
     expect(room.getConnectionState()).toBe("open");
 
@@ -285,17 +293,24 @@ describe("room", () => {
     ]);
   });
 
-  test("if presence has been updated before the connection, it should be sent when the connection is ready", () => {
-    const { room, effects } = createTestableRoom({});
+  test.only("if presence has been updated before the connection, it should be sent when the connection is ready", async () => {
+    const { room, wss } = createTestableRoom({});
 
-    const ws = makeControllableWebSocket();
     room.updatePresence({ x: 0 });
     room.connect();
-    room.__internal.send.simulateAuthSuccess(defaultRoomToken, ws);
-    ws.server.accept();
 
-    expect(effects.send).toHaveBeenCalledWith([
-      { type: ClientMsgCode.UPDATE_PRESENCE, targetActor: -1, data: { x: 0 } },
+    await jest.advanceTimersByTimeAsync(0); // Wait until authentication has succeeded
+    wss.last.accept();
+
+    await jest.advanceTimersByTimeAsync(0); // Wait until connection has been opened
+    expect(wss.receivedMessages).toEqual([
+      [
+        {
+          type: ClientMsgCode.UPDATE_PRESENCE,
+          targetActor: -1,
+          data: { x: 0 },
+        },
+      ],
     ]);
   });
 
@@ -1578,30 +1593,35 @@ describe("room", () => {
       // WebSocket connection gets instantiated by the room
     });
 
-    test("manual reconnection", () => {
-      const { room } = createTestableRoom({ x: 0 });
+    test.only("manual reconnection", async () => {
+      jest.useFakeTimers();
+      const { room, wss } = createTestableRoom({ x: 0 });
       expect(room.getConnectionState()).toBe("closed");
 
-      const wss = new MockWebSocketServer();
-
-      const ws = wss.newSocket();
       room.connect();
       expect(room.getConnectionState()).toBe("authenticating");
-
-      room.__internal.send.simulateAuthSuccess(defaultRoomToken, ws);
+      await jest.advanceTimersByTimeAsync(0); // Wait until authentication has succeeded
       expect(room.getConnectionState()).toBe("connecting");
 
-      ws.server.accept();
+      const ws1 = wss.last;
+      ws1.accept();
+      await jest.advanceTimersByTimeAsync(0); // Wait until WebSocket has been opened
       expect(room.getConnectionState()).toBe("open");
 
       room.reconnect();
       expect(room.getConnectionState()).toBe("authenticating");
-
-      const ws2 = wss.newSocket();
-      room.__internal.send.simulateAuthSuccess(defaultRoomToken, ws2);
+      await jest.advanceTimersByTimeAsync(0); // There's a backoff delay here!
+      expect(room.getConnectionState()).toBe("authenticating");
+      await jest.advanceTimersByTimeAsync(500); // Wait for the increased backoff delay!
       expect(room.getConnectionState()).toBe("connecting");
 
-      ws2.server.accept();
+      const ws2 = wss.last;
+      ws2.accept();
+
+      // This "last" one is a new/different socket instance!
+      expect(ws1 === ws2).toBe(false);
+
+      await jest.advanceTimersByTimeAsync(0); // Wait until WebSocket has been opened
       expect(room.getConnectionState()).toBe("open");
     });
   });
