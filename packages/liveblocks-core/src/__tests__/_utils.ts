@@ -6,7 +6,7 @@ import { makeEventSource } from "../lib/EventSource";
 import type { Json, JsonObject } from "../lib/Json";
 import { makePosition } from "../lib/position";
 import type { Authentication } from "../protocol/Authentication";
-import type { RichToken, RoomAuthToken } from "../protocol/AuthToken";
+import type { RoomAuthToken } from "../protocol/AuthToken";
 import type { BaseUserMeta } from "../protocol/BaseUserMeta";
 import type { ClientMsg } from "../protocol/ClientMsg";
 import { ClientMsgCode } from "../protocol/ClientMsg";
@@ -31,10 +31,15 @@ import type {
   IWebSocketEvent,
   IWebSocketMessageEvent,
 } from "../types/IWebSocket";
+import {
+  ALWAYS_AUTH_AS,
+  AUTO_OPEN_SOCKETS,
+  defineBehavior,
+} from "./_behaviors";
 import type { JsonStorageUpdate } from "./_updatesUtils";
 import { serializeUpdateToJson } from "./_updatesUtils";
 
-function makeRoomToken(actor: number, scopes: string[]): RoomAuthToken {
+export function makeRoomToken(actor: number, scopes: string[]): RoomAuthToken {
   return {
     appId: "my-app",
     roomId: "my-room",
@@ -42,16 +47,6 @@ function makeRoomToken(actor: number, scopes: string[]): RoomAuthToken {
     actor,
     scopes,
   };
-}
-
-export function makeRichToken(actor: number, scopes: string[]): RichToken {
-  const raw = "<some fake JWT token>";
-  const parsed = {
-    ...makeRoomToken(actor, scopes),
-    iat: Date.now() / 1000,
-    exp: Date.now() / 1000 + 60, // Valid for 1 minute
-  };
-  return { raw, parsed };
 }
 
 /**
@@ -421,11 +416,10 @@ export async function prepareRoomWithStorage<
   const effects = mockEffects();
   (effects.send as jest.MockedFunction<any>).mockImplementation(onSend);
 
-  const wss = new MockWebSocketServer();
-  const mockedDelegates = {
-    authenticate: () => Promise.resolve(makeRichToken(actor, scopes)),
-    createSocket: () => wss.newSocket(),
-  };
+  const { wss, delegates } = defineBehavior(
+    ALWAYS_AUTH_AS(actor, scopes),
+    AUTO_OPEN_SOCKETS
+  );
 
   const room = createRoom<TPresence, TStorage, TUserMeta, TRoomEvent>(
     {
@@ -433,11 +427,10 @@ export async function prepareRoomWithStorage<
       initialStorage: defaultStorage || ({} as TStorage),
     },
     makeRoomConfig(effects),
-    mockedDelegates
+    delegates
   );
 
   room.connect();
-  wss.last.accept();
 
   // Start getting the storage, but don't await the promise just yet!
   const getStoragePromise = room.getStorage();

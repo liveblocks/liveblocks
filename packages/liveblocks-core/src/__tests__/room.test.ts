@@ -26,6 +26,12 @@ import type {
 import { createRoom } from "../room";
 import { WebsocketCloseCodes } from "../types/IWebSocket";
 import type { Others } from "../types/Others";
+import {
+  AUTO_OPEN_SOCKETS,
+  DEFAULT_AUTH,
+  defineBehavior,
+  MANUAL_SOCKETS,
+} from "./_behaviors";
 import { listUpdate, listUpdateInsert, listUpdateSet } from "./_updatesUtils";
 import {
   createSerializedList,
@@ -33,9 +39,7 @@ import {
   createSerializedRegister,
   FIRST_POSITION,
   makeControllableWebSocket,
-  makeRichToken,
   mockEffects,
-  MockWebSocketServer,
   prepareDisconnectedStorageUpdateTest,
   prepareIsolatedStorageTest,
   prepareStorageTest,
@@ -102,14 +106,14 @@ function createTestableRoom<
   TStorage extends LsonObject,
   TUserMeta extends BaseUserMeta,
   TRoomEvent extends Json
->(initialPresence: TPresence) {
+>(
+  initialPresence: TPresence,
+  authBehavior = DEFAULT_AUTH,
+  socketBehavior = MANUAL_SOCKETS
+) {
   const effects = mockEffects<TPresence, TRoomEvent>(); // XXX Stop using/returning this
 
-  const wss = new MockWebSocketServer();
-  const mockedDelegates = {
-    authenticate: jest.fn(() => Promise.resolve(makeRichToken(1, []))),
-    createSocket: jest.fn(() => wss.newSocket()),
-  };
+  const { wss, delegates } = defineBehavior(authBehavior, socketBehavior);
 
   const room = createRoom<TPresence, TStorage, TUserMeta, TRoomEvent>(
     {
@@ -117,13 +121,13 @@ function createTestableRoom<
       initialStorage: undefined,
     },
     makeRoomConfig(),
-    mockedDelegates
+    delegates
   );
 
   return {
     room,
     effects,
-    delegates: mockedDelegates,
+    delegates,
     /**
      * The fake WebSocket server backend that these unit tests connect to.
      */
@@ -293,28 +297,29 @@ describe("room", () => {
   });
 
   test.only("authentication success should transition to connecting", async () => {
-    jest.useFakeTimers();
-    const { room } = createTestableRoom({});
+    const { room } = createTestableRoom({}, DEFAULT_AUTH, AUTO_OPEN_SOCKETS);
     expect(room.getConnectionState()).toBe("closed");
 
     room.connect();
     expect(room.getConnectionState()).toBe("authenticating");
-    await jest.advanceTimersByTimeAsync(0); // Wait until authentication has succeeded
+    await waitUntilStatus(room, "connecting");
     expect(room.getConnectionState()).toBe("connecting");
+    await waitUntilStatus(room, "open");
+    expect(room.getConnectionState()).toBe("open");
   });
 
   test.only("initial presence should be sent once the connection is open", async () => {
-    jest.useFakeTimers();
-    const { room, wss } = createTestableRoom({ x: 0 });
+    const { room, wss } = createTestableRoom(
+      { x: 0 },
+      DEFAULT_AUTH,
+      AUTO_OPEN_SOCKETS
+    );
+
     room.connect();
+    await waitUntilStatus(room, "connecting");
+    expect(wss.receivedMessages).toEqual([]);
 
-    await jest.advanceTimersByTimeAsync(0); // Wait until authentication has succeeded
-    expect(room.getConnectionState()).toBe("connecting");
-
-    wss.last.accept();
-    await jest.advanceTimersByTimeAsync(0); // Wait until WebSocket is opened
-    expect(room.getConnectionState()).toBe("open");
-
+    await waitUntilStatus(room, "open");
     expect(wss.receivedMessages).toEqual([
       [
         {
@@ -327,15 +332,15 @@ describe("room", () => {
   });
 
   test.only("if presence has been updated before the connection, it should be sent when the connection is ready", async () => {
-    const { room, wss } = createTestableRoom({});
-
+    const { room, wss } = createTestableRoom(
+      {},
+      DEFAULT_AUTH,
+      AUTO_OPEN_SOCKETS
+    );
     room.updatePresence({ x: 0 });
     room.connect();
 
-    await jest.advanceTimersByTimeAsync(0); // Wait until authentication has succeeded
-    wss.last.accept();
-
-    await jest.advanceTimersByTimeAsync(0); // Wait until connection has been opened
+    await waitUntilStatus(room, "open");
     expect(wss.receivedMessages).toEqual([
       [
         {
@@ -347,16 +352,17 @@ describe("room", () => {
     ]);
   });
 
-  test("if no presence has been set before the connection is open, an empty presence should be sent", () => {
-    const { room, effects } = createTestableRoom({} as never);
-
-    const ws = makeControllableWebSocket();
+  test.only("if no presence has been set before the connection is open, an empty presence should be sent", async () => {
+    const { room, wss } = createTestableRoom(
+      {} as never,
+      DEFAULT_AUTH,
+      AUTO_OPEN_SOCKETS
+    );
     room.connect();
-    room.__internal.send.simulateAuthSuccess(defaultRoomToken, ws);
-    ws.server.accept();
 
-    expect(effects.send).toHaveBeenCalledWith([
-      { type: ClientMsgCode.UPDATE_PRESENCE, targetActor: -1, data: {} },
+    await waitUntilStatus(room, "open");
+    expect(wss.receivedMessages).toEqual([
+      [{ type: ClientMsgCode.UPDATE_PRESENCE, targetActor: -1, data: {} }],
     ]);
   });
 
@@ -1628,17 +1634,22 @@ describe("room", () => {
 
     test.only("manual reconnection", async () => {
       jest.useFakeTimers();
-      const { room, wss } = createTestableRoom({ x: 0 });
+
+      const { room, wss } = createTestableRoom(
+        { x: 0 },
+        undefined,
+        MANUAL_SOCKETS
+      );
       expect(room.getConnectionState()).toBe("closed");
 
       room.connect();
       expect(room.getConnectionState()).toBe("authenticating");
-      await jest.advanceTimersByTimeAsync(0); // Wait until authentication has succeeded
+      await waitUntilStatus(room, "connecting");
       expect(room.getConnectionState()).toBe("connecting");
 
       const ws1 = wss.last;
       ws1.accept();
-      await jest.advanceTimersByTimeAsync(0); // Wait until WebSocket has been opened
+      await waitUntilStatus(room, "open");
       expect(room.getConnectionState()).toBe("open");
 
       room.reconnect();
@@ -1654,7 +1665,7 @@ describe("room", () => {
       // This "last" one is a new/different socket instance!
       expect(ws1 === ws2).toBe(false);
 
-      await jest.advanceTimersByTimeAsync(0); // Wait until WebSocket has been opened
+      await waitUntilStatus(room, "open");
       expect(room.getConnectionState()).toBe("open");
     });
   });
