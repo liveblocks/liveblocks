@@ -418,7 +418,7 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
         // will initiate the connection), and set up all the necessary event
         // listeners, then wait until the 'open' event has fired.
         //
-        const promise = new Promise<IWebSocketInstance>((resolve, reject) => {
+        const promise = new Promise<IWebSocketInstance>((res, rej) => {
           if (ctx.token === null) {
             throw new Error("No auth token"); // This should never happen
           }
@@ -437,8 +437,14 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
            */
           const socket = delegates.createSocket(ctx.token as T);
 
+          function reject() {
+            socket.removeEventListener("message", onSocketMessage);
+            rej();
+          }
+
           // Part 1: used to "promisify" the socket, so we will resolve when
           // the connection opens, but reject if the connection does not.
+          socket.addEventListener("message", onSocketMessage);
           socket.addEventListener("error", reject); // (*)
           socket.addEventListener("close", reject); // (*)
           socket.addEventListener("open", () => {
@@ -449,8 +455,7 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
             // externally observed.
             socket.addEventListener("error", onSocketError);
             socket.addEventListener("close", onSocketClose);
-            socket.addEventListener("message", onSocketMessage);
-            resolve(socket);
+            res(socket);
           });
         });
 
