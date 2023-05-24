@@ -190,14 +190,20 @@ function log(level: LogLevel, message: string) {
 }
 
 /**
- * Generic promise that will time out after X milliseconds.
+ * Returns whatever the given promise returns, but will be rejected with
+ * a "Timed out" error if the given promise does not return or reject within
+ * the given timeout period (in milliseconds).
  */
-function timeoutAfter(millis: number): Promise<never> {
-  return new Promise((_, reject) => {
-    setTimeout(() => {
-      reject(new Error("Timed out"));
-    }, millis);
-  });
+async function withTimeout<T>(promise: Promise<T>, millis: number): Promise<T> {
+  let timerID: ReturnType<typeof setTimeout> | undefined;
+  return Promise.race([
+    promise,
+    new Promise<never>((_, reject) => {
+      timerID = setTimeout(() => {
+        reject(new Error("Timed out"));
+      }, millis);
+    }),
+  ]).finally(() => clearTimeout(timerID));
 }
 
 function sendHeartbeat(ctx: Context) {
@@ -349,8 +355,7 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
     .onEnterAsync(
       "@auth.busy",
 
-      () =>
-        Promise.race([delegates.authenticate(), timeoutAfter(AUTH_TIMEOUT)]),
+      () => withTimeout(delegates.authenticate(), AUTH_TIMEOUT),
 
       // On successful authentication
       (okEvent) => ({
@@ -466,7 +471,7 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
           });
         });
 
-        return Promise.race([promise, timeoutAfter(SOCKET_CONNECT_TIMEOUT)]);
+        return withTimeout(promise, SOCKET_CONNECT_TIMEOUT);
       },
 
       // Only transition to OK state after a successfully opened WebSocket connection
