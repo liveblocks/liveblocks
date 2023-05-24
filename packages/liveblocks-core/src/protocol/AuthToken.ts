@@ -52,7 +52,7 @@ function hasJwtMeta(data: unknown): data is JwtMetadata {
 
 export function isTokenExpired(token: JwtMetadata): boolean {
   const now = Date.now() / 1000;
-  return now > token.exp - 300 || now < token.iat + 300;
+  return now > token.exp - 300 || now < token.iat - 300;
 }
 
 function isStringList(value: unknown): value is string[] {
