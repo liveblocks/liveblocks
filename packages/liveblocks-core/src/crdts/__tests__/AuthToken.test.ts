@@ -28,10 +28,19 @@ describe("isTokenExpired", () => {
     expect(isTokenExpired(expiredToken)).toBe(true);
   });
 
-  test("future token is invalid", () => {
+  test("near-future token is valid", () => {
     const futureToken: JwtMetadata = {
-      iat: (Date.now() + 15 * MINUTES) / 1000,
+      iat: (Date.now() + 4 * MINUTES) / 1000,
       exp: (Date.now() + 1 * DAYS) / 1000,
+    };
+
+    expect(isTokenExpired(futureToken)).toBe(false);
+  });
+
+  test("far-future token is invalid", () => {
+    const futureToken: JwtMetadata = {
+      iat: (Date.now() + 90 * DAYS) / 1000,
+      exp: (Date.now() + 91 * DAYS) / 1000,
     };
 
     expect(isTokenExpired(futureToken)).toBe(true);

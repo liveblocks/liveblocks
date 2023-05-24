@@ -1,33 +1,48 @@
 import { createClient } from "@liveblocks/client";
 import { liveblocksEnhancer } from "@liveblocks/redux";
-import { configureStore, createSlice } from "@reduxjs/toolkit";
-
-let PUBLIC_KEY = "pk_YOUR_PUBLIC_KEY";
-
-overrideApiKey();
-
-if (!/^pk_(live|test)/.test(PUBLIC_KEY)) {
-  console.warn(
-    `Replace "${PUBLIC_KEY}" by your public key from https://liveblocks.io/dashboard/apikeys.\n` +
-      `Learn more: https://github.com/liveblocks/liveblocks/tree/main/examples/redux-whiteboard#getting-started.`
-  );
-}
+import { configureStore, createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { TypedUseSelectorHook, useDispatch, useSelector } from "react-redux";
 
 export const client = createClient({
-  publicApiKey: PUBLIC_KEY,
+  publicApiKey: process.env.NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY!,
 });
 
 const COLORS = ["#DC2626", "#D97706", "#059669", "#7C3AED", "#DB2777"];
 
-function getRandomInt(max) {
+function getRandomInt(max: number): number {
   return Math.floor(Math.random() * max);
 }
 
-function getRandomColor() {
+function getRandomColor(): string {
   return COLORS[getRandomInt(COLORS.length)];
 }
 
-const initialState = {
+export type Shape = {
+  x: number;
+  y: number;
+  fill: string;
+};
+
+export type User = {
+  presence?: {
+    selectedShape: string | null;
+  };
+};
+
+type LiveblocksState = {
+  others: User[];
+  isStorageLoading: boolean;
+};
+
+export type State = {
+  liveblocks: LiveblocksState | null;
+  shapes: Record<string, Shape>;
+  selectedShape: string | null;
+  isDragging: boolean;
+};
+
+const initialState: State = {
+  liveblocks: null,
   shapes: {},
   selectedShape: null,
   isDragging: false,
@@ -39,7 +54,7 @@ const slice = createSlice({
   reducers: {
     insertRectangle: (state) => {
       const shapeId = Date.now().toString();
-      const shape = {
+      const shape: Shape = {
         x: getRandomInt(300),
         y: getRandomInt(300),
         fill: getRandomColor(),
@@ -47,7 +62,7 @@ const slice = createSlice({
       state.shapes[shapeId] = shape;
       state.selectedShape = shapeId;
     },
-    onShapePointerDown: (state, action) => {
+    onShapePointerDown: (state, action: PayloadAction<string>) => {
       state.selectedShape = action.payload;
       state.isDragging = true;
     },
@@ -60,7 +75,10 @@ const slice = createSlice({
     onCanvasPointerUp: (state) => {
       state.isDragging = false;
     },
-    onCanvasPointerMove: (state, action) => {
+    onCanvasPointerMove: (
+      state,
+      action: PayloadAction<{ x: number; y: number }>
+    ) => {
       if (state.isDragging && state.selectedShape) {
         state.shapes[state.selectedShape].x = action.payload.x - 50;
         state.shapes[state.selectedShape].y = action.payload.y - 50;
@@ -81,7 +99,7 @@ export function makeStore() {
   return configureStore({
     reducer: slice.reducer,
     enhancers: [
-      liveblocksEnhancer({
+      liveblocksEnhancer<State>({
         client,
         presenceMapping: { selectedShape: true },
         storageMapping: { shapes: true },
@@ -92,17 +110,9 @@ export function makeStore() {
 
 const store = makeStore();
 
+export type AppDispatch = typeof store.dispatch;
+type DispatchFunc = () => AppDispatch;
+export const useAppDispatch: DispatchFunc = useDispatch; // Export a hook that can be reused to resolve types
+export const useAppSelector: TypedUseSelectorHook<State> = useSelector;
+
 export default store;
-
-/**
- * This function is used when deploying an example on liveblocks.io.
- * You can ignore it completely if you run the example locally.
- */
-function overrideApiKey() {
-  const query = new URLSearchParams(window?.location?.search);
-  const apiKey = query.get("apiKey");
-
-  if (apiKey) {
-    PUBLIC_KEY = apiKey;
-  }
-}

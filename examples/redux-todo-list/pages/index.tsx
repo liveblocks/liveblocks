@@ -1,15 +1,19 @@
 import React, { useEffect } from "react";
-import { useDispatch, useSelector } from "react-redux";
 import { actions } from "@liveblocks/redux";
-import { addTodo, deleteTodo, setDraft } from "./store";
-import "./App.css";
+import {
+  addTodo,
+  deleteTodo,
+  setDraft,
+  useAppDispatch,
+  useAppSelector,
+} from "../src/store";
 
 let roomId = "redux-todo-list";
 
 overrideRoomId();
 
 function WhoIsHere() {
-  const othersUsersCount = useSelector(
+  const othersUsersCount = useAppSelector(
     (state) => state.liveblocks.others.length
   );
 
@@ -21,7 +25,7 @@ function WhoIsHere() {
 }
 
 function SomeoneIsTyping() {
-  const someoneIsTyping = useSelector((state) =>
+  const someoneIsTyping = useAppSelector((state) =>
     state.liveblocks.others.some((user) => user.presence?.isTyping)
   );
 
@@ -30,17 +34,13 @@ function SomeoneIsTyping() {
   ) : null;
 }
 
-export default function App() {
-  const todos = useSelector((state) => state.todos);
-  const draft = useSelector((state) => state.draft);
-  const dispatch = useDispatch();
+export default function TodoApp() {
+  const todos = useAppSelector((state) => state.todos);
+  const draft = useAppSelector((state) => state.draft);
+  const dispatch = useAppDispatch();
 
   useEffect(() => {
-    dispatch(
-      actions.enterRoom(roomId, {
-        todos: [],
-      })
-    );
+    dispatch(actions.enterRoom(roomId));
 
     return () => {
       dispatch(actions.leaveRoom(roomId));
@@ -93,9 +93,11 @@ export default function App() {
  * You can ignore it completely if you run the example locally.
  */
 function overrideRoomId() {
-  const query = new URLSearchParams(window?.location?.search);
+  if (typeof window === "undefined") {
+    return;
+  }
+  const query = new URLSearchParams(window.location?.search);
   const roomIdSuffix = query.get("roomId");
-
   if (roomIdSuffix) {
     roomId = `${roomId}-${roomIdSuffix}`;
   }
