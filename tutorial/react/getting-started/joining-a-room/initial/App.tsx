@@ -6,5 +6,5 @@ export default function App() {
   const roomId = "{% ROOM_ID %}";
 
   // Return Room inside RoomProvider
-  return <>Not connected</>;
+  return <>Not in a room</>;
 }

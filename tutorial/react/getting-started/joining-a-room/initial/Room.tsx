@@ -1,4 +1,4 @@
 // Your Liveblocks app
 export function Room() {
-  return <>Connected</>;
+  return <>In a room!</>;
 }
