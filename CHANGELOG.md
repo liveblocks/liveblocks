@@ -1,5 +1,10 @@
 # vNEXT (not released yet)
 
+### `@liveblocks/client`
+
+- Fix a bug related to proactive token expiration detection
+- Internal refactorings
+
 ### `@liveblocks/node`
 
 - Fix incorrect status code when Liveblocks server cannot be reached temporarily
