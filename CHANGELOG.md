@@ -1,9 +1,13 @@
 # vNEXT (not released yet)
 
+# v1.0.10
+
 ### `@liveblocks/client`
 
 - Fix a bug related to proactive token expiration detection
 - Internal refactorings
+- Add unstable_fallbackToHTTP option to the core client to support messages over
+  1MB
 
 ### `@liveblocks/node`
 
