@@ -50,13 +50,10 @@ function hasJwtMeta(data: unknown): data is JwtMetadata {
   return typeof iat === "number" && typeof exp === "number";
 }
 
-export function isTokenExpired(
-  token: JwtMetadata,
-  useIssueOffset: boolean = true
-): boolean {
+export function isTokenExpired(token: JwtMetadata): boolean {
   const now = Date.now() / 1000;
-  const issuedAtOffset = useIssueOffset ? 300 : 0;
-  return now > token.exp - 300 || now < token.iat + issuedAtOffset;
+  const valid = now <= token.exp - 300 && now >= token.iat - 300;
+  return !valid;
 }
 
 function isStringList(value: unknown): value is string[] {

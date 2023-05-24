@@ -250,11 +250,16 @@ describe("after / before", () => {
         genUnverifiedPos(),
 
         (pos) => {
-          if (!(pos === ONE || pos[0] === ZERO)) {
+          if (!(pos === ONE || asPos(pos)[0] === ZERO)) {
             expect(before(pos).length).toBe(1); // Always generates a single-digit
           }
         }
-      )
+      ),
+
+      {
+        // Counter-examples that where found in the past by fast-check
+        examples: [["\u0000x"]],
+      }
     );
   });
 

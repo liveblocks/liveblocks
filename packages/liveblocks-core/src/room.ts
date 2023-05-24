@@ -732,7 +732,6 @@ type Effects<TPresence extends JsonObject, TRoomEvent extends Json> = {
     createWebSocket: (token: RichToken) => IWebSocketInstance
   ): void;
   send(messages: ClientMsg<TPresence, TRoomEvent>[]): void;
-  scheduleFlush(delay: number): TimeoutID;
   scheduleReconnect(delay: number): TimeoutID;
   startHeartbeatInterval(): IntervalID;
   schedulePongTimeout(): TimeoutID;
@@ -1027,7 +1026,7 @@ export function createRoom<
             context.token?.raw &&
             config.httpSendEndpoint
           ) {
-            if (isTokenExpired(context.token.parsed, false)) {
+            if (isTokenExpired(context.token.parsed)) {
               return reconnect();
             }
             // check for expiration?
@@ -1047,7 +1046,6 @@ export function createRoom<
       }
     },
 
-    scheduleFlush: (delay: number) => setTimeout(tryFlushing, delay),
     scheduleReconnect: (delay: number) => setTimeout(handleConnect, delay),
     startHeartbeatInterval: () => setInterval(heartbeat, HEARTBEAT_INTERVAL),
     schedulePongTimeout: () => setTimeout(pongTimeout, PONG_TIMEOUT),
@@ -1976,7 +1974,8 @@ export function createRoom<
     } else {
       // Or schedule the flush a few millis into the future
       clearTimeout(context.timers.flush);
-      context.timers.flush = effects.scheduleFlush(
+      context.timers.flush = setTimeout(
+        tryFlushing,
         config.throttleDelay - elapsedMillis
       );
     }

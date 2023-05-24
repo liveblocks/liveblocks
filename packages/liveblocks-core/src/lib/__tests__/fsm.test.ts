@@ -450,6 +450,34 @@ describe("finite state machine", () => {
     expect(fsm.context).toEqual({ x: 3, y: 13 });
   });
 
+  test("explicitly *not* transitioning", () => {
+    let n = 0;
+
+    const fsm = new FSM({})
+      .addState("one")
+      .addState("two")
+      .addTransitions("one", { GO: "two" })
+      .addTransitions("two", {
+        GO: () =>
+          n++ % 2 === 0
+            ? "one" // Transition if n is even
+            : null, // Otherwise, do nothing
+      })
+      .start();
+
+    expect(fsm.currentState).toEqual("one");
+    fsm.send({ type: "GO" });
+    expect(fsm.currentState).toEqual("two");
+    fsm.send({ type: "GO" });
+    expect(fsm.currentState).toEqual("one");
+    fsm.send({ type: "GO" });
+    expect(fsm.currentState).toEqual("two");
+    fsm.send({ type: "GO" });
+    expect(fsm.currentState).toEqual("two"); // Did *not* transition!
+    fsm.send({ type: "GO" });
+    expect(fsm.currentState).toEqual("one");
+  });
+
   describe("time-based transitions", () => {
     test("time-based transitions", () => {
       jest.useFakeTimers();
