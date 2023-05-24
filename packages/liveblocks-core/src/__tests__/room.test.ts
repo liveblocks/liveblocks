@@ -78,6 +78,22 @@ export async function waitUntilStatus(
   ).finally(() => unsub?.());
 }
 
+export async function waitUntilOthersUpdate(
+  room: Room<JsonObject, LsonObject, BaseUserMeta, Json>
+): Promise<void> {
+  let unsub: (() => void) | undefined;
+  return withTimeout(
+    new Promise<void>((resolve) => {
+      // Otherwise, subscribe
+      unsub = room.events.others.subscribe(() => {
+        resolve();
+      });
+    }),
+    1000,
+    'Room never got an "others" update within 1s'
+  ).finally(() => unsub?.());
+}
+
 function makeRoomConfig<TPresence extends JsonObject, TRoomEvent extends Json>(
   mockedEffects?: Effects<TPresence, TRoomEvent>
 ) {
