@@ -92,14 +92,15 @@ export type Wildcard<T extends string> = "*" | `${Groups<T>}.*`;
  */
 export async function withTimeout<T>(
   promise: Promise<T>,
-  millis: number
+  millis: number,
+  errmsg = "Timed out"
 ): Promise<T> {
   let timerID: ReturnType<typeof setTimeout> | undefined;
   return Promise.race([
     promise,
     new Promise<never>((_, reject) => {
       timerID = setTimeout(() => {
-        reject(new Error("Timed out"));
+        reject(new Error(errmsg));
       }, millis);
     }),
   ]).finally(() => clearTimeout(timerID));

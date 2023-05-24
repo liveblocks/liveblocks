@@ -8,6 +8,7 @@ import type { LsonObject } from "../crdts/Lson";
 import type { StorageUpdate } from "../crdts/StorageUpdates";
 import { legacy_patchImmutableObject, lsonToJson } from "../immutable";
 import * as console from "../lib/fancy-console";
+import { withTimeout } from "../lib/fsm";
 import type { Json, JsonObject } from "../lib/Json";
 import type { Authentication } from "../protocol/Authentication";
 import type { RoomAuthToken } from "../protocol/AuthToken";
@@ -17,7 +18,11 @@ import { ClientMsgCode } from "../protocol/ClientMsg";
 import type { IdTuple, SerializedCrdt } from "../protocol/SerializedCrdt";
 import { CrdtType } from "../protocol/SerializedCrdt";
 import { ServerMsgCode } from "../protocol/ServerMsg";
-import type { _private_Effects as Effects } from "../room";
+import type {
+  _private_Effects as Effects,
+  ConnectionStatus,
+  Room,
+} from "../room";
 import { createRoom } from "../room";
 import { WebsocketCloseCodes } from "../types/IWebSocket";
 import type { Others } from "../types/Others";
@@ -40,6 +45,34 @@ import {
   waitFor,
   withDateNow,
 } from "./_utils";
+
+/**
+ * Handy helper that allows to pause test execution until the room has
+ * asynchronously reached a particular status. Status must be reached within
+ * a limited time window, or else this will fail, to avoid hanging.
+ */
+export function waitUntilStatus(
+  room: Room<JsonObject, LsonObject, BaseUserMeta, Json>,
+  targetStatus: ConnectionStatus
+): Promise<void> {
+  return withTimeout(
+    new Promise((resolve) => {
+      if (room.getConnectionState() === targetStatus) {
+        resolve(undefined);
+      } else {
+        // Otherwise, subscribe
+        const unsub = room.events.connection.subscribe((status) => {
+          if (status === targetStatus) {
+            unsub();
+            resolve(undefined);
+          }
+        });
+      }
+    }),
+    1000,
+    `Room did not reach connection status "${targetStatus}" within 1s`
+  );
+}
 
 function makeRoomConfig<TPresence extends JsonObject, TRoomEvent extends Json>(
   mockedEffects?: Effects<TPresence, TRoomEvent>
