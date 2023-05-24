@@ -93,6 +93,7 @@ type ServerSocket = {
 };
 
 export class MockWebSocketServer {
+  private newSocketCallback: ((socket: MockWebSocket) => void) | undefined;
   public current: MockWebSocket | undefined;
   public connections: Map<MockWebSocket, Emitters> = new Map();
   public receivedMessages: string[] = [];
@@ -160,16 +161,29 @@ export class MockWebSocketServer {
     this.current = socket;
 
     if (callback) {
-      callback(socket);
+      this.onNewSocket(callback);
     }
+
+    // Run the callback in the next tick. This is important, because we first
+    // need to return the socket.
+    setTimeout(() => {
+      this.newSocketCallback?.(socket);
+    }, 0);
 
     return socket;
   }
 
-  public newSocketAndAccept(): MockWebSocket {
-    return this.newSocket((socket) =>
-      setTimeout(() => socket.server.accept(), 0)
-    );
+  public onNewSocket(callback: (socket: MockWebSocket) => void): void {
+    // If a callback already exists, run this one "after it", by wrapping them.
+    if (this.newSocketCallback) {
+      const existingFn = this.newSocketCallback;
+      this.newSocketCallback = (socket) => {
+        existingFn(socket);
+        callback(socket);
+      };
+    } else {
+      this.newSocketCallback = callback;
+    }
   }
 }
 
