@@ -550,7 +550,7 @@
             }
           },
           "401": {
-            "description": "Unauthorized"
+            "$ref": "#/components/responses/401"
           },
           "403": {
             "$ref": "#/components/responses/403"
