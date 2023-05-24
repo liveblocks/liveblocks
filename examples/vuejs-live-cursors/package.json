@@ -10,6 +10,7 @@
     "type-check": "vue-tsc --noEmit -p tsconfig.app.json --composite false"
   },
   "dependencies": {
+    "@liveblocks/client": "^1.0.9",
     "vue": "^3.3.2"
   },
   "devDependencies": {
