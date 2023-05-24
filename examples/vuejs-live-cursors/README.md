@@ -1,87 +1,40 @@
-<p align="center">
-  <a href="https://liveblocks.io#gh-light-mode-only">
-    <img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/header-light.svg" alt="Liveblocks" />
-  </a>
-  <a href="https://liveblocks.io#gh-dark-mode-only">
-    <img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/header-dark.svg" alt="Liveblocks" />
-  </a>
-</p>
+# vuejs-live-cursors
 
-# Live Cursors
+This template should help get you started developing with Vue 3 in Vite.
 
-<p>
-  <a href="https://liveblocks.io/examples/live-cursors/vuejs/preview">
-    <img src="https://img.shields.io/badge/live%20preview-message?style=flat&logo=data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgMjQgMjQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTE2Ljg0OSA0Ljc1SDBsNC44NDggNS4wNzV2Ny4wMDhsMTItMTIuMDgzWk03LjE1IDE5LjI1SDI0bC00Ljg0OS01LjA3NVY3LjE2N2wtMTIgMTIuMDgzWiIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==&color=333" alt="Live Preview" />
-  </a>
-  <a href="https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/vuejs-live-cursors">
-    <img src="https://img.shields.io/badge/open%20in%20codesandbox-message?style=flat&logo=codesandbox&color=333&logoColor=fff" alt="Open in CodeSandbox" />
-  </a>
-  <img src="https://img.shields.io/badge/vue.js-message?style=flat&logo=vue.js&color=3b7&logoColor=fff" alt="Vue" />
-</p>
+## Recommended IDE Setup
 
-This example shows how to build live cursors with [Liveblocks](https://liveblocks.io) and [Vue](https://vuejs.org/).
+[VSCode](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur) + [TypeScript Vue Plugin (Volar)](https://marketplace.visualstudio.com/items?itemName=Vue.vscode-typescript-vue-plugin).
 
-<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/live-cursors.png" width="536" alt="Live Cursors" />
+## Type Support for `.vue` Imports in TS
 
-## Getting started
+TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [TypeScript Vue Plugin (Volar)](https://marketplace.visualstudio.com/items?itemName=Vue.vscode-typescript-vue-plugin) to make the TypeScript language service aware of `.vue` types.
 
-Run the following command to try this example locally:
+If the standalone TypeScript plugin doesn't feel fast enough to you, Volar has also implemented a [Take Over Mode](https://github.com/johnsoncodehk/volar/discussions/471#discussioncomment-1361669) that is more performant. You can enable it by the following steps:
 
-```bash
-npx create-liveblocks-app@latest --example vuejs-live-cursors --no-api-key --no-vercel
+1. Disable the built-in TypeScript Extension
+    1) Run `Extensions: Show Built-in Extensions` from VSCode's command palette
+    2) Find `TypeScript and JavaScript Language Features`, right click and select `Disable (Workspace)`
+2. Reload the VSCode window by running `Developer: Reload Window` from the command palette.
+
+## Customize configuration
+
+See [Vite Configuration Reference](https://vitejs.dev/config/).
+
+## Project Setup
+
+```sh
+npm install
 ```
 
-This will download the example and install the example. Next, you must:
+### Compile and Hot-Reload for Development
 
-- Create an account on [liveblocks.io](https://liveblocks.io/dashboard)
-- Copy your **public** key from the [dashboard](https://liveblocks.io/dashboard/apikeys)
-- Replace `pk_YOUR_PUBLIC_KEY` in [`src/App.vue`](./src/App.vue) with your **public** key
-- Run `npm run serve` and open `http://localhost:8000` in your browser
-
-### Manual setup
-
-<details><summary>Read more</summary>
-
-<p></p>
-
-Alternatively, you can set up your project manually:
-
-- Install all dependencies with `npm install`
-- Create an account on [liveblocks.io](https://liveblocks.io/dashboard)
-- Copy your **public** key from the [dashboard](https://liveblocks.io/dashboard/apikeys)
-- Replace `pk_YOUR_PUBLIC_KEY` in [`src/App.vue`](./src/App.vue) with your **public** key
-- Run `npm run serve` and open `http://localhost:8000` in your browser
-
-</details>
-
-### Deploy on Vercel
-
-<details><summary>Read more</summary>
-
-<p></p>
-
-To both deploy on [Vercel](https://vercel.com), and run the example locally, use the following command:
-
-```bash
-npx create-liveblocks-app@latest --example vuejs-live-cursors --vercel
+```sh
+npm run dev
 ```
 
-This will download the example and ask permission to open your browser, enabling you to deploy to Vercel. Next, you must:
+### Type-Check, Compile and Minify for Production
 
-- Create an account on [liveblocks.io](https://liveblocks.io/dashboard)
-- Copy your **public** key from the [dashboard](https://liveblocks.io/dashboard/apikeys)
-- Replace `pk_YOUR_PUBLIC_KEY` in [`src/App.vue`](./src/App.vue) with your **public** key
-- Push a commit to update the Vercel demo with the key
-- Run `npm run serve` and open `http://localhost:8000` in your browser
-
-</details>
-
-### Develop on CodeSandbox
-
-<details><summary>Read more</summary>
-
-<p></p>
-
-After forking [this example](https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/vuejs-live-cursors) on CodeSandbox, create the `pk_YOUR_PUBLIC_KEY` environment variable as a [public](https://codesandbox.io/docs/secrets).
-
-</details>
+```sh
+npm run build
+```
