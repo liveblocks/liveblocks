@@ -3,7 +3,7 @@ import type { Observable } from "./lib/EventSource";
 import { makeEventSource } from "./lib/EventSource";
 import * as console from "./lib/fancy-console";
 import type { BuiltinEvent, Patchable, Target } from "./lib/fsm";
-import { FSM } from "./lib/fsm";
+import { FSM, withTimeout } from "./lib/fsm";
 import type {
   IWebSocketCloseEvent,
   IWebSocketEvent,
@@ -187,23 +187,6 @@ function log(level: LogLevel, message: string) {
   return () => {
     logger(message);
   };
-}
-
-/**
- * Returns whatever the given promise returns, but will be rejected with
- * a "Timed out" error if the given promise does not return or reject within
- * the given timeout period (in milliseconds).
- */
-async function withTimeout<T>(promise: Promise<T>, millis: number): Promise<T> {
-  let timerID: ReturnType<typeof setTimeout> | undefined;
-  return Promise.race([
-    promise,
-    new Promise<never>((_, reject) => {
-      timerID = setTimeout(() => {
-        reject(new Error("Timed out"));
-      }, millis);
-    }),
-  ]).finally(() => clearTimeout(timerID));
 }
 
 function sendHeartbeat(ctx: Context) {
