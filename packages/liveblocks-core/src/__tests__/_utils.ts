@@ -268,33 +268,33 @@ export class MockWebSocket {
     return this.#readyState;
   }
 
-  addEventListener(event: "message", listener: MessageListener): void; // prettier-ignore
-  addEventListener(event: "close", listener: CloseListener): void; // prettier-ignore
-  addEventListener(event: "open" | "error", listener: Listener): void; // prettier-ignore
+  addEventListener(type: "message", listener: MessageListener): void; // prettier-ignore
+  addEventListener(type: "close", listener: CloseListener): void; // prettier-ignore
+  addEventListener(type: "open" | "error", listener: Listener): void; // prettier-ignore
   // prettier-ignore
-  addEventListener(event: "open" | "close" | "message" | "error", listener: Listener | MessageListener | CloseListener): void {
-    let unsub;
-    if (event === "open") {
+  addEventListener(type: "open" | "close" | "message" | "error", listener: Listener | MessageListener | CloseListener): void {
+    let unsub: (() => void) | undefined;
+    if (type === "open") {
       unsub = this.listeners.onOpen.subscribe(listener as Listener);
-    } else if (event === "close") {
+    } else if (type === "close") {
       unsub = this.listeners.onClose.subscribe(listener as CloseListener);
-    } else if (event === "message") {
+    } else if (type === "message") {
       unsub = this.listeners.onMessage.subscribe(listener as MessageListener);
-    } else if (event === "error") {
+    } else if (type === "error") {
       unsub = this.listeners.onError.subscribe(listener as Listener);
     }
 
     if (unsub) {
-      this.unsubs[event].set(listener, unsub);
+      this.unsubs[type].set(listener, unsub);
     }
   }
 
-  removeEventListener(event: "message", listener: MessageListener): void; // prettier-ignore
-  removeEventListener(event: "close", listener: CloseListener): void; // prettier-ignore
-  removeEventListener(event: "open" | "error", listener: Listener): void; // prettier-ignore
+  removeEventListener(type: "message", listener: MessageListener): void; // prettier-ignore
+  removeEventListener(type: "close", listener: CloseListener): void; // prettier-ignore
+  removeEventListener(type: "open" | "error", listener: Listener): void; // prettier-ignore
   // prettier-ignore
-  removeEventListener(event: "open" | "close" | "message" | "error", listener: Listener | MessageListener | CloseListener): void {
-    const unsub = this.unsubs[event].get(listener);
+  removeEventListener(type: "open" | "close" | "message" | "error", listener: Listener | MessageListener | CloseListener): void {
+    const unsub = this.unsubs[type].get(listener);
     if (unsub !== undefined) {
       unsub();
     }
