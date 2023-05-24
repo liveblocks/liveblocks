@@ -75,11 +75,20 @@ type Emitters = {
   onError: EventSource<IWebSocketEvent>;
 };
 
+/**
+ * The server side socket of the two-sided connection. It's the opposite end of
+ * the client side socket (aka the MockWebSocket instance).
+ */
 type ServerSocket = {
+  /** Inspect the messages the server end has received as the result of the client side sending it messages. */
   receivedMessages: string[];
+  /** Accept the socket from the server side. The client will receive an "open" event. */
   accept(): void;
+  /** Close the socket from the server side. */
   close(event: IWebSocketCloseEvent): void;
+  /** Send a message from the server side to the client side. */
   message(event: IWebSocketMessageEvent): void;
+  /** Send an error event from the server side to the client side. */
   error(event: IWebSocketEvent): void;
 };
 
