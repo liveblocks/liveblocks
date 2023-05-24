@@ -75,7 +75,7 @@ type Emitters = {
   onError: EventSource<IWebSocketEvent>;
 };
 
-type LiteServer = {
+type ServerSocket = {
   receivedMessages: string[];
   accept(): void;
   close(event: IWebSocketCloseEvent): void;
@@ -88,7 +88,7 @@ export class MockWebSocketServer {
   public connections: Map<MockWebSocket, Emitters> = new Map();
   public receivedMessages: string[] = [];
 
-  get last(): LiteServer {
+  get last(): ServerSocket {
     if (this.current === undefined) {
       throw new Error("No socket instantiated yet");
     }
@@ -137,7 +137,7 @@ export class MockWebSocketServer {
       onError: emitters.onError.observable,
     };
 
-    const liteServer: LiteServer = {
+    const serverSocket: ServerSocket = {
       receivedMessages: this.receivedMessages,
       accept: () => emitters.onOpen.notify(new Event("open")),
       close: emitters.onClose.notify,
@@ -146,7 +146,7 @@ export class MockWebSocketServer {
     };
 
     const socket = new MockWebSocket();
-    socket.linkToServer(liteServer, publicListeners);
+    socket.linkToServerSocket(serverSocket, publicListeners);
     this.connections.set(socket, emitters);
     this.current = socket;
 
@@ -170,7 +170,7 @@ export class MockWebSocket {
    * This is a convenience accessor if you're only interested in controlling
    * behavior for this particular client/server socket pair.
    */
-  private _server: LiteServer | undefined;
+  private _serverSocket: ServerSocket | undefined;
 
   private _listeners: Listeners | undefined;
   private unsubs: {
@@ -206,8 +206,8 @@ export class MockWebSocket {
     this.#readyState = this.CONNECTING;
   }
 
-  public linkToServer(server: LiteServer, listeners: Listeners) {
-    this._server = server;
+  public linkToServerSocket(serverSocket: ServerSocket, listeners: Listeners) {
+    this._serverSocket = serverSocket;
     this._listeners = listeners;
 
     // onOpen (from server)
@@ -234,14 +234,17 @@ export class MockWebSocket {
     });
   }
 
-  public get server(): LiteServer {
-    if (this._server === undefined) {
+  /**
+   * Returns the server-side socket on the opposite end of the connection.
+   */
+  public get server(): ServerSocket {
+    if (this._serverSocket === undefined) {
       throw new Error("No server attached yet");
     }
-    return this._server;
+    return this._serverSocket;
   }
 
-  public get listeners(): Listeners {
+  private get listeners(): Listeners {
     if (this._listeners === undefined) {
       throw new Error("No server attached yet");
     }
