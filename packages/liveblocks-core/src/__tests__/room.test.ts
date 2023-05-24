@@ -109,7 +109,7 @@ function createTestableRoom<
 >(
   initialPresence: TPresence,
   authBehavior = DEFAULT_AUTH,
-  socketBehavior = MANUAL_SOCKETS
+  socketBehavior = AUTO_OPEN_SOCKETS
 ) {
   const effects = mockEffects<TPresence, TRoomEvent>(); // XXX Stop using/returning this
 
@@ -297,7 +297,7 @@ describe("room", () => {
   });
 
   test.only("authentication success should transition to connecting", async () => {
-    const { room } = createTestableRoom({}, DEFAULT_AUTH, AUTO_OPEN_SOCKETS);
+    const { room } = createTestableRoom({});
     expect(room.getConnectionState()).toBe("closed");
 
     room.connect();
@@ -309,11 +309,7 @@ describe("room", () => {
   });
 
   test.only("initial presence should be sent once the connection is open", async () => {
-    const { room, wss } = createTestableRoom(
-      { x: 0 },
-      DEFAULT_AUTH,
-      AUTO_OPEN_SOCKETS
-    );
+    const { room, wss } = createTestableRoom({ x: 0 });
 
     room.connect();
     await waitUntilStatus(room, "connecting");
@@ -332,11 +328,7 @@ describe("room", () => {
   });
 
   test.only("if presence has been updated before the connection, it should be sent when the connection is ready", async () => {
-    const { room, wss } = createTestableRoom(
-      {},
-      DEFAULT_AUTH,
-      AUTO_OPEN_SOCKETS
-    );
+    const { room, wss } = createTestableRoom({});
     room.updatePresence({ x: 0 });
     room.connect();
 
@@ -353,11 +345,7 @@ describe("room", () => {
   });
 
   test.only("if no presence has been set before the connection is open, an empty presence should be sent", async () => {
-    const { room, wss } = createTestableRoom(
-      {} as never,
-      DEFAULT_AUTH,
-      AUTO_OPEN_SOCKETS
-    );
+    const { room, wss } = createTestableRoom({} as never);
     room.connect();
 
     await waitUntilStatus(room, "open");
@@ -1637,8 +1625,8 @@ describe("room", () => {
 
       const { room, wss } = createTestableRoom(
         { x: 0 },
-        undefined,
-        MANUAL_SOCKETS
+        DEFAULT_AUTH,
+        MANUAL_SOCKETS // ⚠️  This will let us programmatically control opening the sockets
       );
       expect(room.getConnectionState()).toBe("closed");
 
