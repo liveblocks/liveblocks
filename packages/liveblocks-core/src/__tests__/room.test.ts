@@ -430,42 +430,6 @@ describe("room", () => {
     expect(room.__internal.buffer.me?.data).toStrictEqual({ x: 0, y: 0 });
   });
 
-  test("others should be iterable", () => {
-    const { room } = createTestableRoom({});
-
-    const ws = makeControllableWebSocket();
-    room.connect();
-    room.__internal.send.simulateAuthSuccess(defaultRoomToken, ws);
-    ws.server.accept();
-
-    room.__internal.send.incomingMessage(
-      serverMessage({
-        type: ServerMsgCode.ROOM_STATE,
-        users: {
-          "1": { scopes: [] },
-        },
-      })
-    );
-
-    room.__internal.send.incomingMessage(
-      serverMessage({
-        type: ServerMsgCode.UPDATE_PRESENCE,
-        data: { x: 2 },
-        actor: 1,
-        targetActor: 0, // Setting targetActor means this is a full presence update
-      })
-    );
-
-    const users = [];
-    for (const user of room.getOthers()) {
-      users.push(user);
-    }
-
-    expect(users).toEqual([
-      { connectionId: 1, presence: { x: 2 }, isReadOnly: false },
-    ]);
-  });
-
   test.only("others should be iterable", async () => {
     const { room, wss } = createTestableRoom({});
     room.connect();
