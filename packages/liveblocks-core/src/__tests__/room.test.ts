@@ -55,27 +55,27 @@ import {
  * asynchronously reached a particular status. Status must be reached within
  * a limited time window, or else this will fail, to avoid hanging.
  */
-export function waitUntilStatus(
+export async function waitUntilStatus(
   room: Room<JsonObject, LsonObject, BaseUserMeta, Json>,
   targetStatus: ConnectionStatus
 ): Promise<void> {
+  let unsub: (() => void) | undefined;
   return withTimeout(
-    new Promise((resolve) => {
+    new Promise<void>((resolve) => {
       if (room.getConnectionState() === targetStatus) {
         resolve(undefined);
       } else {
         // Otherwise, subscribe
-        const unsub = room.events.connection.subscribe((status) => {
+        unsub = room.events.connection.subscribe((status) => {
           if (status === targetStatus) {
-            unsub();
-            resolve(undefined);
+            resolve();
           }
         });
       }
     }),
     1000,
     `Room did not reach connection status "${targetStatus}" within 1s`
-  );
+  ).finally(() => unsub?.());
 }
 
 function makeRoomConfig<TPresence extends JsonObject, TRoomEvent extends Json>(
