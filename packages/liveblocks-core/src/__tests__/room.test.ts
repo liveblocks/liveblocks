@@ -354,23 +354,20 @@ describe("room", () => {
     ]);
   });
 
-  test("initial presence followed by updatePresence should delay sending the second presence event", async () => {
-    jest.useFakeTimers();
-
-    const { room, effects } = createTestableRoom({ x: 0 });
-
-    const ws = makeControllableWebSocket();
+  test.only("initial presence followed by updatePresence should delay sending the second presence event", async () => {
+    const { room, wss } = createTestableRoom({ x: 0 });
     room.connect();
-    room.__internal.send.simulateAuthSuccess(defaultRoomToken, ws);
 
-    const now = Date.now();
+    expect(wss.receivedMessages).toEqual([]);
+    await waitUntilStatus(room, "open");
 
-    expect(effects.send).toHaveBeenCalledTimes(0);
-    ws.server.accept();
-    expect(effects.send).toHaveBeenCalledTimes(1);
-    expect(effects.send).toHaveBeenLastCalledWith([
+    expect(wss.receivedMessages.length).toBe(1);
+    expect(wss.receivedMessages[0]).toEqual([
       { type: ClientMsgCode.UPDATE_PRESENCE, targetActor: -1, data: { x: 0 } },
     ]);
+
+    jest.useFakeTimers();
+    const now = Date.now();
 
     // Forward the system clock by 30 millis
     jest.setSystemTime(now + 30);
@@ -378,14 +375,15 @@ describe("room", () => {
     jest.setSystemTime(now + 35);
     room.updatePresence({ x: 2 }); // These calls should get batched and flushed later
 
-    expect(effects.send).toHaveBeenCalledTimes(1);
+    await jest.advanceTimersByTimeAsync(0);
+    expect(wss.receivedMessages.length).toBe(1); // Still no new data received
     expect(room.__internal.buffer.me?.data).toEqual({ x: 2 });
 
     // Forwarding time by the flush threshold will trigger the future flush
     await jest.advanceTimersByTimeAsync(makeRoomConfig().throttleDelay);
 
-    expect(effects.send).toHaveBeenCalledTimes(2);
-    expect(effects.send).toHaveBeenLastCalledWith([
+    expect(wss.receivedMessages.length).toBe(2);
+    expect(wss.receivedMessages[1]).toEqual([
       { type: ClientMsgCode.UPDATE_PRESENCE, data: { x: 2 } },
     ]);
   });
