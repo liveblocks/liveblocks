@@ -9,10 +9,14 @@ ${reactExports(args)}
 `;
 }
 
-function imports({ framework }: InitQuestions) {
+function imports({ framework, typescript }: InitQuestions) {
   if (framework === "react") {
     return `import { createClient } from "@liveblocks/client";
 import { createRoomContext } from "@liveblocks/react";`;
+  }
+
+  if (typescript) {
+    return `import { createClient, type Room } from "@liveblocks/client";`;
   }
 
   return `import { createClient } from "@liveblocks/client";`;
@@ -83,7 +87,7 @@ type RoomEvent = {
 function reactExports({ framework, suspense, typescript }: InitQuestions) {
   if (framework !== "react") {
     if (typescript) {
-      return `export type Room = ReturnType<typeof client.enter<Presence, Storage, UserMeta, RoomEvent>>;`;
+      return `export type TypedRoom = Room<Presence, Storage, UserMeta, RoomEvent>;`;
     }
     return "";
   }
