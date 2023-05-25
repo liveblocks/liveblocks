@@ -1,4 +1,7 @@
-import { createSignal, onCleanup, onMount } from "solid-js";
+import { createSignal, onCleanup, onMount, Show } from "solid-js";
+// import type { Client, Room } from "@liveblocks/client";
+// import type { Room } from "@liveblocks/client";
+import type { TypedRoom } from "./liveblocks.config";
 import { Key } from "@solid-primitives/keyed";
 import Cursor from "./components/Cursor.jsx";
 import styles from "./App.module.css";
@@ -14,7 +17,8 @@ const COLORS = [
   "#7986CB",
 ];
 
-function App({ room }) {
+function App( props: { room: TypedRoom }) {
+  const room=props.room;
   const [currentUser, setCurrentUser] = createSignal(room.getPresence());
   const [users, setUsers] = createSignal([]);
 
