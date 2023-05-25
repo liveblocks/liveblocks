@@ -1,6 +1,7 @@
 {
-  "name": "vuejs-live-cursors",
-  "version": "0.0.0",
+  "name": "vuejs-live-avatars",
+  "description": "This example shows how to build a live avatar stack with Liveblocks and Vue",
+  "license": "Apache-2.0",
   "private": true,
   "scripts": {
     "dev": "vite",
