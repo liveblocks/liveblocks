@@ -1,5 +1,9 @@
 # vNEXT (not released yet)
 
+### `@liveblocks/core`
+
+- Fix a bug where undo/redo on `LiveObject` creates exponentially larger deltas
+
 # v1.0.10
 
 ### `@liveblocks/client`
