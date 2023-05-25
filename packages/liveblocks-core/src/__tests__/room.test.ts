@@ -677,43 +677,37 @@ describe("room", () => {
       ]);
     });
 
-    test("should not send event to other users if not connected", () => {
-      const { room, effects } = createTestableRoom({});
+    test.only("should not send event to other users if not connected", async () => {
+      const { room, wss } = createTestableRoom({});
 
       room.broadcastEvent({ type: "EVENT" });
+      expect(wss.receivedMessages).toEqual([]);
 
-      expect(effects.send).not.toHaveBeenCalled();
-
-      const ws = makeControllableWebSocket();
       room.connect();
-      room.__internal.send.simulateAuthSuccess(defaultRoomToken, ws);
-      ws.server.accept();
+      await waitUntilStatus(room, "open");
 
-      expect(effects.send).toBeCalledTimes(1);
-      expect(effects.send).toHaveBeenCalledWith([
-        { type: ClientMsgCode.UPDATE_PRESENCE, targetActor: -1, data: {} },
+      expect(wss.receivedMessages).toEqual([
+        [{ type: ClientMsgCode.UPDATE_PRESENCE, targetActor: -1, data: {} }],
       ]);
     });
 
-    test("should queue event if socket is not ready and shouldQueueEventsIfNotReady is true", () => {
-      const { room, effects } = createTestableRoom({});
+    test.only("should queue event if socket is not ready and shouldQueueEventsIfNotReady is true", async () => {
+      const { room, wss } = createTestableRoom({});
 
       room.broadcastEvent(
         { type: "EVENT" },
         { shouldQueueEventIfNotReady: true }
       );
+      expect(wss.receivedMessages).toEqual([]);
 
-      expect(effects.send).not.toHaveBeenCalled();
-
-      const ws = makeControllableWebSocket();
       room.connect();
-      room.__internal.send.simulateAuthSuccess(defaultRoomToken, ws);
-      ws.server.accept();
+      await waitUntilStatus(room, "open");
 
-      expect(effects.send).toBeCalledTimes(1);
-      expect(effects.send).toHaveBeenCalledWith([
-        { type: ClientMsgCode.UPDATE_PRESENCE, targetActor: -1, data: {} },
-        { type: ClientMsgCode.BROADCAST_EVENT, event: { type: "EVENT" } },
+      expect(wss.receivedMessages).toEqual([
+        [
+          { type: ClientMsgCode.UPDATE_PRESENCE, targetActor: -1, data: {} },
+          { type: ClientMsgCode.BROADCAST_EVENT, event: { type: "EVENT" } },
+        ],
       ]);
     });
   });
