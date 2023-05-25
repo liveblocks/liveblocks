@@ -57,6 +57,15 @@ function deepClone<T extends Json>(items: T): T {
   return JSON.parse(JSON.stringify(items)) as T;
 }
 
+// NOTE: we have some instability with opIds in the undo/redo stack and this should be investigated
+function deepCloneWithoutOpId<T>(item: T) {
+  return JSON.parse(
+    JSON.stringify(item),
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    (key, value) => (key === "opId" ? undefined : value)
+  ) as T;
+}
+
 type Listener = (ev: IWebSocketEvent) => void;
 type CloseListener = (ev: IWebSocketCloseEvent) => void;
 type MessageListener = (ev: IWebSocketMessageEvent) => void;
@@ -547,15 +556,31 @@ export async function prepareStorageTest<
   }
 
   function assertUndoRedo() {
+    // this is what the last undo item looked like before we undo
+
+    const before = deepCloneWithoutOpId(
+      room.__internal.undoStack[room.__internal.undoStack.length - 1]
+    );
+
+    // this will undo the whole stack
     for (let i = 0; i < states.length - 1; i++) {
       room.history.undo();
       expectBothClientStoragesToEqual(states[states.length - 2 - i]);
     }
 
+    // this will redo the whole stack
     for (let i = 0; i < states.length - 1; i++) {
       room.history.redo();
       expectBothClientStoragesToEqual(states[i + 1]);
     }
+
+    // this is what the last undo item looks like after redoing everything
+    const after = deepCloneWithoutOpId(
+      room.__internal.undoStack[room.__internal.undoStack.length - 1]
+    );
+
+    // It should be identical before/after
+    expect(before).toEqual(after);
 
     for (let i = 0; i < states.length - 1; i++) {
       room.history.undo();
