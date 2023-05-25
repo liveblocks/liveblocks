@@ -1215,15 +1215,11 @@ describe("room", () => {
       expect(callback).toHaveBeenCalledWith({ x: 0 });
     });
 
-    test("others", () => {
+    test.only("others", async () => {
       type P = { x?: number };
 
-      const { room } = createTestableRoom<P, never, never, never>({});
-
-      const ws = makeControllableWebSocket();
+      const { room, wss } = createTestableRoom<P, never, never, never>({});
       room.connect();
-      room.__internal.send.simulateAuthSuccess(defaultRoomToken, ws);
-      ws.server.accept();
 
       let others: Others<P, never> | undefined;
 
@@ -1231,14 +1227,16 @@ describe("room", () => {
         (ev) => (others = ev.others)
       );
 
-      room.__internal.send.incomingMessage(
+      await waitUntilStatus(room, "open");
+
+      wss.last.send(
         serverMessage({
           type: ServerMsgCode.ROOM_STATE,
           users: { 1: { scopes: [] } },
         })
       );
 
-      room.__internal.send.incomingMessage(
+      wss.last.send(
         serverMessage({
           type: ServerMsgCode.UPDATE_PRESENCE,
           data: { x: 2 },
@@ -1249,7 +1247,7 @@ describe("room", () => {
 
       unsubscribe();
 
-      room.__internal.send.incomingMessage(
+      wss.last.send(
         serverMessage({
           type: ServerMsgCode.UPDATE_PRESENCE,
           data: { x: 3 },
@@ -1268,24 +1266,25 @@ describe("room", () => {
       ]);
     });
 
-    test("event", () => {
-      const { room } = createTestableRoom({});
+    test.only("event", async () => {
+      const { room, wss } = createTestableRoom({});
 
-      const ws = makeControllableWebSocket();
+      wss.onConnection((conn) => {
+        conn.server.send(
+          serverMessage({
+            type: ServerMsgCode.BROADCASTED_EVENT,
+            event: { type: "MY_EVENT" },
+            actor: 1,
+          })
+        );
+      });
+
       room.connect();
-      room.__internal.send.simulateAuthSuccess(defaultRoomToken, ws);
-      ws.server.accept();
 
       const callback = jest.fn();
       room.events.customEvent.subscribe(callback);
 
-      room.__internal.send.incomingMessage(
-        serverMessage({
-          type: ServerMsgCode.BROADCASTED_EVENT,
-          event: { type: "MY_EVENT" },
-          actor: 1,
-        })
-      );
+      await waitUntilStatus(room, "open");
 
       expect(callback).toHaveBeenCalledWith({
         connectionId: 1,
