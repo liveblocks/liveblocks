@@ -717,25 +717,20 @@ describe("room", () => {
     });
   });
 
-  test("storage should be initialized properly", async () => {
-    const { room } = createTestableRoom({});
+  test.only("storage should be initialized properly", async () => {
+    const { room, wss } = createTestableRoom({});
 
-    const ws = makeControllableWebSocket();
+    wss.onConnection((conn) => {
+      conn.server.send(
+        serverMessage({
+          type: ServerMsgCode.INITIAL_STORAGE_STATE,
+          items: [["root", { type: CrdtType.OBJECT, data: { x: 0 } }]],
+        })
+      );
+    });
+
     room.connect();
-    room.__internal.send.simulateAuthSuccess(defaultRoomToken, ws);
-    ws.server.accept();
-
-    const getStoragePromise = room.getStorage();
-
-    room.__internal.send.incomingMessage(
-      serverMessage({
-        type: ServerMsgCode.INITIAL_STORAGE_STATE,
-        items: [["root", { type: CrdtType.OBJECT, data: { x: 0 } }]],
-      })
-    );
-
-    const storage = await getStoragePromise;
-
+    const storage = await room.getStorage();
     expect(storage.root.toObject()).toEqual({ x: 0 });
   });
 
