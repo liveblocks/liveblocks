@@ -386,7 +386,6 @@ export class FSM<
       throw new Error("Already started");
     }
 
-    const isPattern = nameOrPattern.endsWith("*");
     for (const srcState of this.getStatesMatching(nameOrPattern)) {
       let map = this.allowedTransitions.get(srcState);
       if (map === undefined) {
@@ -395,6 +394,12 @@ export class FSM<
       }
 
       for (const [type, target_] of Object.entries(mapping)) {
+        if (map.has(type)) {
+          throw new Error(
+            `Trying to set transition "${type}" on "${srcState}" (via "${nameOrPattern}"), but a transition already exists there.`
+          );
+        }
+
         const target = target_ as
           | Target<TContext, TEvent, TState>
           | null
@@ -402,12 +407,8 @@ export class FSM<
         this.knownEventTypes.add(type);
 
         if (target !== undefined) {
-          // Disallow overwriting when using a wildcard pattern!
-          if (!isPattern || !map.has(type)) {
-            const targetFn =
-              typeof target === "function" ? target : () => target;
-            map.set(type, targetFn);
-          }
+          const targetFn = typeof target === "function" ? target : () => target;
+          map.set(type, targetFn);
         }
       }
     }

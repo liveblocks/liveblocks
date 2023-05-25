@@ -643,49 +643,42 @@ describe("finite state machine", () => {
   test("wildcards cannot overwrite existing transitions", () => {
     const fsm = new FSM({})
       .addState("start")
-      .addState("mid")
-      .addState("almost")
       .addState("end")
-      .addState("outside1")
-      .addState("outside2")
 
       // Using target specifications in all of its forms here
-      .addTransitions("start", { GO: "mid" })
-      .addTransitions("mid", { GO: () => "almost" })
-      .addTransitions("almost", {
-        GO: { target: "end", effect: () => void "noop" },
-      })
-      .addTransitions("end", {
-        // Explicitly forbidden transition, even setting the wildcard
-        // below should not override this
-        GO: null,
-      })
+      .addTransitions("start", { GO: "end" })
 
-      .addTransitions("*", {
-        TO_OUTSIDE: "outside1",
+      // No overrides here, so perfectly fine 👍
+      .addTransitions("*", { TO_START: "start" })
+      .addTransitions("*", { TO_END: "end" });
 
-        // This wildcard transition should _not_ override any of the
-        // existing GO transitions defined above
-        GO: "outside2",
-      })
+    expect(() =>
+      fsm
+        // This wildcard transition should _not_ be allowed, as it would
+        // override/conflict with the existing start->GO transition defined
+        // earlier
+        .addTransitions("*", { GO: "start" })
+    ).toThrow(
+      'Trying to set transition "GO" on "start" (via "*"), but a transition already exists there.'
+    );
 
-      .start();
+    fsm.start();
 
     expect(fsm.currentState).toEqual("start");
     fsm.send({ type: "GO" });
-    expect(fsm.currentState).toEqual("mid");
-    fsm.send({ type: "GO" });
-    expect(fsm.currentState).toEqual("almost");
-    fsm.send({ type: "GO" });
     expect(fsm.currentState).toEqual("end");
+    fsm.send({ type: "GO" });
     fsm.send({ type: "GO" });
     expect(fsm.currentState).toEqual("end");
 
-    fsm.send({ type: "TO_OUTSIDE" });
-    expect(fsm.currentState).toEqual("outside1");
-    fsm.send({ type: "GO" });
-    expect(fsm.currentState).toEqual("outside2");
-    fsm.send({ type: "GO" });
-    expect(fsm.currentState).toEqual("outside2");
+    fsm.send({ type: "TO_START" });
+    expect(fsm.currentState).toEqual("start");
+    fsm.send({ type: "TO_START" });
+    expect(fsm.currentState).toEqual("start");
+
+    fsm.send({ type: "TO_END" });
+    expect(fsm.currentState).toEqual("end");
+    fsm.send({ type: "TO_END" });
+    expect(fsm.currentState).toEqual("end");
   });
 });
