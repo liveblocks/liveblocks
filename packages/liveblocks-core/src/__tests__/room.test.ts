@@ -567,7 +567,7 @@ describe("room", () => {
     expect(room.getOthers()).toEqual([]);
   });
 
-  test("should clear users not present in server message ROOM_STATE", () => {
+  test.only("should clear users not present in server message ROOM_STATE", async () => {
     /*
     Scenario:
     - Client A (room) and Client B (refRoom) are connected to the room.
@@ -577,45 +577,44 @@ describe("room", () => {
     - After some time, Client A computer awakes, it still has Client B in "others", client reconnects to the room.
     - The server returns the message ROOM_STATE with no user (as expected).
     - Client A should remove client B from others.
-  */
+    */
 
-    const { room } = createTestableRoom({});
-
-    const ws = makeControllableWebSocket();
+    const { room, wss } = createTestableRoom({});
     room.connect();
-    room.__internal.send.simulateAuthSuccess(defaultRoomToken, ws);
-    ws.server.accept();
 
-    room.__internal.send.incomingMessage(
-      serverMessage({
-        type: ServerMsgCode.ROOM_STATE,
-        users: {
-          "1": { scopes: [] },
-          "2": { scopes: [] },
-        },
-      })
-    );
+    wss.onConnection((conn) => {
+      conn.server.send(
+        serverMessage({
+          type: ServerMsgCode.ROOM_STATE,
+          users: {
+            "1": { scopes: [] },
+            "2": { scopes: [] },
+          },
+        })
+      );
 
-    // Client B
-    room.__internal.send.incomingMessage(
-      serverMessage({
-        type: ServerMsgCode.UPDATE_PRESENCE,
-        data: { x: 2 },
-        actor: 1,
-        targetActor: 0,
-      })
-    );
+      // Client B
+      conn.server.send(
+        serverMessage({
+          type: ServerMsgCode.UPDATE_PRESENCE,
+          data: { x: 2 },
+          actor: 1,
+          targetActor: 0,
+        })
+      );
 
-    // Client C
-    room.__internal.send.incomingMessage(
-      serverMessage({
-        type: ServerMsgCode.UPDATE_PRESENCE,
-        data: { x: 2 },
-        actor: 2,
-        targetActor: 0,
-      })
-    );
+      // Client C
+      conn.server.send(
+        serverMessage({
+          type: ServerMsgCode.UPDATE_PRESENCE,
+          data: { x: 2 },
+          actor: 2,
+          targetActor: 0,
+        })
+      );
+    });
 
+    await waitUntilStatus(room, "open");
     expect(room.getOthers()).toEqual([
       { connectionId: 1, presence: { x: 2 }, isReadOnly: false },
       { connectionId: 2, presence: { x: 2 }, isReadOnly: false },
@@ -626,7 +625,8 @@ describe("room", () => {
     // -----
 
     // Client reconnects to the room, and receives a new ROOM_STATE msg from the server.
-    room.__internal.send.incomingMessage(
+    expect(wss.connections.size).toBe(1);
+    wss.last.send(
       serverMessage({
         type: ServerMsgCode.ROOM_STATE,
         users: {
