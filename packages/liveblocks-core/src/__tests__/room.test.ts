@@ -146,6 +146,11 @@ const defaultRoomToken: RoomAuthToken = {
   scopes: [],
 };
 
+/**
+ * Sets up a Room instance that, when you call `.connect()` on it, will
+ * successfully connect to the WebSocket server `wss`, which you can
+ * control/observe.
+ */
 function createTestableRoom<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
