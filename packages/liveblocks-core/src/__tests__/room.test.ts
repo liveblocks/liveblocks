@@ -986,24 +986,21 @@ describe("room", () => {
       expect(callback).toHaveBeenCalledWith({ x: 0, y: 1 });
     });
 
-    test("batch storage and presence", async () => {
-      const { room } = createTestableRoom({});
+    test.only("batch storage and presence", async () => {
+      const { room, wss } = createTestableRoom({});
 
-      const ws = makeControllableWebSocket();
+      wss.onConnection((conn) => {
+        conn.server.send(
+          serverMessage({
+            type: ServerMsgCode.INITIAL_STORAGE_STATE,
+            items: [["root", { type: CrdtType.OBJECT, data: { x: 0 } }]],
+          })
+        );
+      });
+
       room.connect();
-      room.__internal.send.simulateAuthSuccess(defaultRoomToken, ws);
-      ws.server.accept();
 
-      const getStoragePromise = room.getStorage();
-
-      room.__internal.send.incomingMessage(
-        serverMessage({
-          type: ServerMsgCode.INITIAL_STORAGE_STATE,
-          items: [["root", { type: CrdtType.OBJECT, data: { x: 0 } }]],
-        })
-      );
-
-      const storage = await getStoragePromise;
+      const storage = await room.getStorage();
 
       const presenceSubscriber = jest.fn();
       const storageRootSubscriber = jest.fn();
