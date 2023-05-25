@@ -642,31 +642,50 @@ describe("finite state machine", () => {
 
   test("wildcards cannot overwrite existing transitions", () => {
     const fsm = new FSM({})
-      .addState("foo.start")
-      .addState("foo.mid")
-      .addState("foo.end")
+      .addState("start")
+      .addState("mid")
+      .addState("almost")
+      .addState("end")
+      .addState("outside1")
+      .addState("outside2")
 
-      .addTransitions("foo.start", {
-        FROM_ANYWHERE: "foo.mid",
+      // Using target specifications in all of its forms here
+      .addTransitions("start", { GO: "mid" })
+      .addTransitions("mid", { GO: () => "almost" })
+      .addTransitions("almost", {
+        GO: { target: "end", effect: () => void "noop" },
+      })
+      .addTransitions("end", {
+        // Explicitly forbidden transition, even setting the wildcard
+        // below should not override this
+        GO: null,
       })
 
-      .addTransitions("foo.mid", {
-        FROM_ANYWHERE: "foo.end",
-      })
-
-      // This wildcard should _not_ override the transitions defined above
       .addTransitions("*", {
-        FROM_ANYWHERE: "foo.start",
+        TO_OUTSIDE: "outside1",
+
+        // This wildcard transition should _not_ override any of the
+        // existing GO transitions defined above
+        GO: "outside2",
       })
 
       .start();
 
-    expect(fsm.currentState).toEqual("foo.start");
-    fsm.send({ type: "FROM_ANYWHERE" });
-    expect(fsm.currentState).toEqual("foo.mid");
-    fsm.send({ type: "FROM_ANYWHERE" });
-    expect(fsm.currentState).toEqual("foo.end");
-    fsm.send({ type: "FROM_ANYWHERE" });
-    expect(fsm.currentState).toEqual("foo.start");
+    expect(fsm.currentState).toEqual("start");
+    fsm.send({ type: "GO" });
+    expect(fsm.currentState).toEqual("mid");
+    fsm.send({ type: "GO" });
+    expect(fsm.currentState).toEqual("almost");
+    fsm.send({ type: "GO" });
+    expect(fsm.currentState).toEqual("end");
+    fsm.send({ type: "GO" });
+    expect(fsm.currentState).toEqual("end");
+
+    fsm.send({ type: "TO_OUTSIDE" });
+    expect(fsm.currentState).toEqual("outside1");
+    fsm.send({ type: "GO" });
+    expect(fsm.currentState).toEqual("outside2");
+    fsm.send({ type: "GO" });
+    expect(fsm.currentState).toEqual("outside2");
   });
 });

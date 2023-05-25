@@ -401,7 +401,7 @@ export class FSM<
           | undefined;
         this.knownEventTypes.add(type);
 
-        if (target !== undefined && target !== null) {
+        if (target !== undefined) {
           // Disallow overwriting when using a wildcard pattern!
           if (!isPattern || !map.has(type)) {
             const targetFn =
