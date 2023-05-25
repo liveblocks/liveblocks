@@ -38,7 +38,7 @@ describe("ManagedSocket", () => {
 
     const mgr = new ManagedSocket({
       authenticate: ALWAYS_SUCCEEDS,
-      createSocket: () => wss.newSocketAndAccept(),
+      createSocket: () => wss.newSocket((socket) => socket.server.accept()),
     });
     mgr.events.didConnect.subscribe(didConnect);
     // mgr.events.didDisconnect.subscribe(didDisconnect);
