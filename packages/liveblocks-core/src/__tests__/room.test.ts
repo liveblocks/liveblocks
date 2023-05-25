@@ -526,6 +526,7 @@ describe("room", () => {
     ]);
   });
 
+  // XXX This one is tricky!
   test("should clear users when socket close", () => {
     const { room } = createTestableRoom({});
 
