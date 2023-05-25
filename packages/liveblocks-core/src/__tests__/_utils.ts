@@ -96,13 +96,18 @@ type ServerSocket = {
   /** Close the socket from the server side. */
   close(event: IWebSocketCloseEvent): void;
   /** Send a message from the server side to the client side. */
-  message(event: IWebSocketMessageEvent): void;
+  send(event: IWebSocketMessageEvent): void;
   /** Send an error event from the server side to the client side. */
   error(event: IWebSocketEvent): void;
 };
 
+type Connection = {
+  client: MockWebSocket;
+  server: ServerSocket;
+};
+
 export class MockWebSocketServer {
-  private newSocketCallbacks = makeEventSource<MockWebSocket>();
+  private newConnectionCallbacks = makeEventSource<Connection>();
   public current: MockWebSocket | undefined;
   public connections: Map<MockWebSocket, Emitters> = new Map();
   public receivedMessages: string[] = [];
@@ -153,31 +158,34 @@ export class MockWebSocketServer {
       receivedMessages: this.receivedMessages,
       accept: () => serverEvents.onOpen.notify(new Event("open")),
       close: serverEvents.onClose.notify,
-      message: serverEvents.onMessage.notify,
+      send: serverEvents.onMessage.notify,
       error: serverEvents.onError.notify,
     };
 
-    const socket = new MockWebSocket();
-    socket.linkToServerSocket(serverSocket, serverEvents);
-    this.connections.set(socket, serverEvents);
-    this.current = socket;
+    const clientSocket = new MockWebSocket();
+    clientSocket.linkToServerSocket(serverSocket, serverEvents);
+    this.connections.set(clientSocket, serverEvents);
+    this.current = clientSocket;
 
     // Run the callback in the next tick. This is important, because we first
     // need to return the socket.
     setTimeout(() => {
       // Call the provided callback once, for this connection only.
-      initFn?.(socket);
+      initFn?.(clientSocket);
 
       // ...then proceed to call the rest of the callbacks, which will be
       // executed on every new connection
-      this.newSocketCallbacks.notify(socket);
+      this.newConnectionCallbacks.notify({
+        client: clientSocket,
+        server: serverSocket,
+      });
     }, 0);
 
-    return socket;
+    return clientSocket;
   }
 
-  public onNewSocket(callback: (socket: MockWebSocket) => void): void {
-    this.newSocketCallbacks.subscribe(callback);
+  public onConnection(callback: (conn: Connection) => void): void {
+    this.newConnectionCallbacks.subscribe(callback);
   }
 }
 
