@@ -640,8 +640,7 @@ describe("finite state machine", () => {
     });
   });
 
-  // TODO Nice to have, no need to fix this right now yet
-  test.skip("wildcards cannot overwrite existing transitions", () => {
+  test("wildcards cannot overwrite existing transitions", () => {
     const fsm = new FSM({})
       .addState("foo.start")
       .addState("foo.mid")

@@ -386,6 +386,7 @@ export class FSM<
       throw new Error("Already started");
     }
 
+    const isPattern = nameOrPattern.endsWith("*");
     for (const srcState of this.getStatesMatching(nameOrPattern)) {
       let map = this.allowedTransitions.get(srcState);
       if (map === undefined) {
@@ -400,10 +401,13 @@ export class FSM<
           | undefined;
         this.knownEventTypes.add(type);
 
-        if (target != null) {
-          // TODO Disallow overwriting when using a wildcard pattern!
-          const targetFn = typeof target === "function" ? target : () => target;
-          map.set(type, targetFn);
+        if (target !== undefined && target !== null) {
+          // Disallow overwriting when using a wildcard pattern!
+          if (!isPattern || !map.has(type)) {
+            const targetFn =
+              typeof target === "function" ? target : () => target;
+            map.set(type, targetFn);
+          }
         }
       }
     }
