@@ -34,7 +34,7 @@ type EnterFn<TContext> = (context: Readonly<TContext>) => void | CleanupFn;
 type TargetFn<TContext, TEvent extends BaseEvent, TState extends string> = (
   event: TEvent,
   context: Readonly<TContext>
-) => TState | TargetConfig<TContext, TEvent, TState> | null;
+) => TState | TargetObject<TContext, TEvent, TState> | null;
 
 type Assigner<TContext, TEvent extends BaseEvent> =
   | Partial<TContext>
@@ -45,7 +45,14 @@ type Effect<TContext, TEvent extends BaseEvent> = (
   event: TEvent
 ) => void;
 
-type TargetConfig<TContext, TEvent extends BaseEvent, TState extends string> = {
+/**
+ * "Expanded" object form to specify a target state with.
+ */
+export type TargetObject<
+  TContext,
+  TEvent extends BaseEvent,
+  TState extends string
+> = {
   target: TState;
 
   /**
@@ -64,7 +71,7 @@ type TargetConfig<TContext, TEvent extends BaseEvent, TState extends string> = {
 
 type Target<TContext, TEvent extends BaseEvent, TState extends string> =
   | TState // Static, e.g. 'complete'
-  | TargetConfig<TContext, TEvent, TState>
+  | TargetObject<TContext, TEvent, TState>
   | TargetFn<TContext, TEvent, TState>; // Dynamic, e.g. (context) => context.x ? 'complete' : 'other'
 
 type Groups<T extends string> = T extends `${infer G}.${infer Rest}`
@@ -386,19 +393,16 @@ export class FSM<
         this.allowedTransitions.set(srcState, map);
       }
 
-      for (const [type, targetConfig_] of Object.entries(mapping)) {
-        const targetConfig = targetConfig_ as
+      for (const [type, target_] of Object.entries(mapping)) {
+        const target = target_ as
           | Target<TContext, TEvent, TState>
           | null
           | undefined;
         this.knownEventTypes.add(type);
 
-        if (targetConfig !== undefined && targetConfig !== null) {
+        if (target != null) {
           // TODO Disallow overwriting when using a wildcard pattern!
-          const targetFn =
-            typeof targetConfig === "function"
-              ? targetConfig
-              : () => targetConfig;
+          const targetFn = typeof target === "function" ? target : () => target;
           map.set(type, targetFn);
         }
       }
