@@ -1,4 +1,3 @@
-import type { DocumentVisibilityState } from "./compat/DocumentVisibilityState";
 import type { ApplyResult, ManagedPool } from "./crdts/AbstractCrdt";
 import { OpSource } from "./crdts/AbstractCrdt";
 import {
@@ -22,7 +21,7 @@ import { asPos } from "./lib/position";
 import type { Resolve } from "./lib/Resolve";
 import { compact, isPlainObject, tryParseJson } from "./lib/utils";
 import type { Authentication } from "./protocol/Authentication";
-import type { JwtMetadata, RoomAuthToken } from "./protocol/AuthToken";
+import type { RichToken, RoomAuthToken } from "./protocol/AuthToken";
 import {
   isTokenExpired,
   parseRoomAuthToken,
@@ -51,7 +50,6 @@ import type * as DevTools from "./types/DevToolsTreeNode";
 import type {
   IWebSocket,
   IWebSocketCloseEvent,
-  IWebSocketEvent,
   IWebSocketInstance,
   IWebSocketMessageEvent,
 } from "./types/IWebSocket";
@@ -67,8 +65,6 @@ type CustomEvent<TRoomEvent extends Json> = {
   connectionId: number;
   event: TRoomEvent;
 };
-
-type AuthCallback = (room: string) => Promise<{ token: string }>;
 
 export type Connection =
   /* The initial state, before connecting */
@@ -573,37 +569,48 @@ type PrivateRoomAPI<
   TUserMeta extends BaseUserMeta,
   TRoomEvent extends Json
 > = {
-  // Context
-  buffer: MachineContext<TPresence, TStorage, TUserMeta, TRoomEvent>["buffer"]; // prettier-ignore
-  numRetries: MachineContext<TPresence, TStorage, TUserMeta, TRoomEvent>["numRetries"]; // prettier-ignore
+  // For introspection in unit tests only
+  buffer: RoomState<TPresence, TStorage, TUserMeta, TRoomEvent>["buffer"]; // prettier-ignore
+  numRetries: number;
+  undoStack: readonly (readonly Readonly<HistoryOp<TPresence>>[])[];
+  nodeCount: number;
 
-  // Core
-  connect(): void;
-  disconnect(): void;
-
-  onClose(event: IWebSocketCloseEvent): void;
-  onMessage(event: IWebSocketEvent): void;
-  authenticationSuccess(token: RoomAuthToken, socket: IWebSocketInstance): void;
-  onNavigatorOnline(): void;
-  onVisibilityChange(visibilityState: DocumentVisibilityState): void;
-
-  simulateCloseWebsocket(): void;
-  simulateSendCloseEvent(event: IWebSocketCloseEvent): void;
-
-  getUndoStack(): HistoryOp<TPresence>[][];
-  getItemsCount(): number;
-
-  // DevTools support
+  // For DevTools support (Liveblocks browser extension)
   getSelf_forDevTools(): DevTools.UserTreeNode | null;
   getOthers_forDevTools(): readonly DevTools.UserTreeNode[];
+
+  send: {
+    connect(): void;
+    disconnect(): void;
+
+    explicitClose(event: IWebSocketCloseEvent): void; // NOTE: Also used in e2e test app!
+    implicitClose(): void; // NOTE: Also used in e2e test app!
+
+    authSuccess(token: RoomAuthToken, socket: IWebSocketInstance): void; // prettier-ignore
+    navigatorOnline(): void;
+    windowGotFocus(): void;
+    pong(): void;
+
+    /**
+     * Call this when a server message is received (typically from the
+     * active WebSocket connection, or simulated by a unit test). These
+     * messages should *not* be PONG messages (aka server heartbeats).
+     *
+     * When a PONG is received, call pong() instead.
+     */
+    incomingMessage(event: IWebSocketMessageEvent): void;
+  };
 };
 
 const BACKOFF_RETRY_DELAYS = [250, 500, 1000, 2000, 4000, 8000, 10000];
 const BACKOFF_RETRY_DELAYS_SLOW = [2000, 30000, 60000, 300000];
 
 const HEARTBEAT_INTERVAL = 30000;
-// const WAKE_UP_CHECK_INTERVAL = 2000;
 const PONG_TIMEOUT = 2000;
+
+// The maximum message size on websockets is 1MB (1024*1024), a small amount of space is substracted so we're not right at the limit
+// NOTE: this only works with the unstable_fallbackToHTTP option enabled
+const MAX_MESSAGE_SIZE = 1024 * 1024 - 128;
 
 function makeIdFactory(connectionId: number): IdFactory {
   let count = 0;
@@ -630,16 +637,14 @@ type HistoryOp<TPresence extends JsonObject> =
 
 type IdFactory = () => string;
 
-type MachineContext<
+type RoomState<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
   TUserMeta extends BaseUserMeta,
   TRoomEvent extends Json
 > = {
-  token: {
-    readonly raw: string;
-    readonly parsed: RoomAuthToken & JwtMetadata;
-  } | null;
+  token: RichToken | null;
+
   /**
    * Remembers the last successful connection ID. This gets assigned as soon as
    * the connection status switched from "connecting" to "open".
@@ -722,12 +727,11 @@ type MachineContext<
 
 /** @internal */
 type Effects<TPresence extends JsonObject, TRoomEvent extends Json> = {
-  authenticate(
-    auth: AuthCallback,
-    createWebSocket: (token: string) => IWebSocketInstance
+  authenticateAndConnect(
+    auth: () => Promise<RichToken>,
+    createWebSocket: (token: RichToken) => IWebSocketInstance
   ): void;
   send(messages: ClientMsg<TPresence, TRoomEvent>[]): void;
-  scheduleFlush(delay: number): TimeoutID;
   scheduleReconnect(delay: number): TimeoutID;
   startHeartbeatInterval(): IntervalID;
   schedulePongTimeout(): TimeoutID;
@@ -762,11 +766,13 @@ export type RoomInitializers<
 }>;
 
 /** @internal */
-type MachineConfig<TPresence extends JsonObject, TRoomEvent extends Json> = {
+type RoomConfig<TPresence extends JsonObject, TRoomEvent extends Json> = {
   roomId: string;
   throttleDelay: number;
   authentication: Authentication;
   liveblocksServer: string;
+  httpSendEndpoint?: string;
+  unstable_fallbackToHTTP?: boolean;
 
   polyfills?: Polyfills;
 
@@ -796,9 +802,25 @@ function userToTreeNode(
 }
 
 /**
+ * TODO(nvie) Abstract this out more. This will not be the final form.
+ */
+type FSMEvent =
+  | { type: "CONNECT" }
+  | { type: "DISCONNECT" }
+  | { type: "WINDOW_GOT_FOCUS" }
+  | { type: "RECEIVE_PONG" }
+  | { type: "NAVIGATOR_ONLINE" }
+  | {
+      type: "AUTH_SUCCESS";
+      token: RoomAuthToken;
+      socket: IWebSocketInstance;
+    }
+  | { type: "IMPLICIT_CLOSE" }
+  | { type: "EXPLICIT_CLOSE"; closeEvent: IWebSocketCloseEvent };
+
+/**
  * @internal
- * Initializes a new Room state machine, and returns its public API to observe
- * and control it.
+ * Initializes a new Room, and returns its public API.
  */
 export function createRoom<
   TPresence extends JsonObject,
@@ -810,7 +832,7 @@ export function createRoom<
     RoomInitializers<TPresence, TStorage>,
     "shouldInitiallyConnect"
   >,
-  config: MachineConfig<TPresence, TRoomEvent>
+  config: RoomConfig<TPresence, TRoomEvent>
 ): Room<TPresence, TStorage, TUserMeta, TRoomEvent> {
   const initialPresence =
     typeof options.initialPresence === "function"
@@ -821,11 +843,8 @@ export function createRoom<
       ? options.initialStorage(config.roomId)
       : options.initialStorage;
 
-  // The "context" is the machine's stateful extended context, also sometimes
-  // known as the "extended state" of a finite state machine. The context
-  // maintains state beyond the inherent state that are the finite states
-  // themselves.
-  const context: MachineContext<TPresence, TStorage, TUserMeta, TRoomEvent> = {
+  // The room's internal stateful context
+  const context: RoomState<TPresence, TStorage, TUserMeta, TRoomEvent> = {
     token: null,
     lastConnectionId: null,
     socket: null,
@@ -958,27 +977,26 @@ export function createRoom<
   };
 
   const effects: Effects<TPresence, TRoomEvent> = config.mockedEffects || {
-    authenticate(
-      auth: AuthCallback,
-      createWebSocket: (token: string) => IWebSocketInstance
+    authenticateAndConnect(
+      auth: () => Promise<RichToken>,
+      createWebSocket: (token: RichToken) => IWebSocketInstance
     ) {
       // If we already have a parsed token from a previous connection
       // in-memory, reuse it
       const prevToken = context.token;
       if (prevToken !== null && !isTokenExpired(prevToken.parsed)) {
-        const socket = createWebSocket(prevToken.raw);
-        authenticationSuccess(prevToken.parsed, socket);
+        const socket = createWebSocket(prevToken);
+        handleAuthSuccess(prevToken.parsed, socket);
         return undefined;
       } else {
-        void auth(config.roomId)
-          .then(({ token }) => {
+        void auth()
+          .then((token) => {
             if (context.connection.current.status !== "authenticating") {
               return;
             }
-            const parsedToken = parseRoomAuthToken(token);
             const socket = createWebSocket(token);
-            authenticationSuccess(parsedToken, socket);
-            context.token = { raw: token, parsed: parsedToken };
+            handleAuthSuccess(token.parsed, socket);
+            context.token = token;
           })
           .catch((er: unknown) =>
             authenticationFailure(
@@ -998,12 +1016,37 @@ export function createRoom<
         throw new Error("Can't send message if socket is null");
       }
       if (context.socket.readyState === context.socket.OPEN) {
-        context.socket.send(JSON.stringify(messageOrMessages));
+        const message = JSON.stringify(messageOrMessages);
+        if (config.unstable_fallbackToHTTP) {
+          // if our message contains UTF-8, we can't simply use length. See: https://stackoverflow.com/questions/23318037/size-of-json-object-in-kbs-mbs
+          // if this turns out to be expensive, we could just guess with a lower value.
+          const size = new TextEncoder().encode(message).length;
+          if (
+            size > MAX_MESSAGE_SIZE &&
+            context.token?.raw &&
+            config.httpSendEndpoint
+          ) {
+            if (isTokenExpired(context.token.parsed)) {
+              return reconnect();
+            }
+            // check for expiration?
+            void httpSend(
+              message,
+              context.token.raw,
+              config.httpSendEndpoint,
+              config.polyfills?.fetch
+            );
+            console.warn(
+              "Message was too large for websockets and sent over HTTP instead"
+            );
+            return;
+          }
+        }
+        context.socket.send(message);
       }
     },
 
-    scheduleFlush: (delay: number) => setTimeout(tryFlushing, delay),
-    scheduleReconnect: (delay: number) => setTimeout(connect, delay),
+    scheduleReconnect: (delay: number) => setTimeout(handleConnect, delay),
     startHeartbeatInterval: () => setInterval(heartbeat, HEARTBEAT_INTERVAL),
     schedulePongTimeout: () => setTimeout(pongTimeout, PONG_TIMEOUT),
   };
@@ -1301,7 +1344,7 @@ export function createRoom<
     }
   }
 
-  function connect() {
+  function handleConnect() {
     if (
       context.connection.current.status !== "closed" &&
       context.connection.current.status !== "unavailable"
@@ -1310,6 +1353,7 @@ export function createRoom<
     }
 
     const auth = prepareAuthEndpoint(
+      config.roomId,
       config.authentication,
       config.polyfills?.fetch
     );
@@ -1319,7 +1363,7 @@ export function createRoom<
     );
 
     updateConnection({ status: "authenticating" }, batchUpdates);
-    effects.authenticate(auth, createWebSocket);
+    effects.authenticateAndConnect(auth, createWebSocket);
   }
 
   function updatePresence(
@@ -1377,14 +1421,11 @@ export function createRoom<
     );
   }
 
-  function authenticationSuccess(
-    token: RoomAuthToken,
-    socket: IWebSocketInstance
-  ) {
-    socket.addEventListener("message", onMessage);
-    socket.addEventListener("open", onOpen);
-    socket.addEventListener("close", onClose);
-    socket.addEventListener("error", onError);
+  function handleAuthSuccess(token: RoomAuthToken, socket: IWebSocketInstance) {
+    socket.addEventListener("message", handleRawSocketMessage);
+    socket.addEventListener("open", handleSocketOpen);
+    socket.addEventListener("close", handleExplicitClose);
+    socket.addEventListener("error", handleSocketError);
 
     updateConnection(
       {
@@ -1412,11 +1453,9 @@ export function createRoom<
     context.timers.reconnect = effects.scheduleReconnect(getRetryDelay());
   }
 
-  function onVisibilityChange(visibilityState: DocumentVisibilityState) {
-    if (
-      visibilityState === "visible" &&
-      context.connection.current.status === "open"
-    ) {
+  function handleWindowGotFocus() {
+    // TODO Move this guard into the .transition() function eventually
+    if (context.connection.current.status === "open") {
       log("Heartbeat after visibility change");
       heartbeat();
     }
@@ -1490,7 +1529,7 @@ export function createRoom<
     return { type: "reset" };
   }
 
-  function onNavigatorOnline() {
+  function handleNavigatorBackOnline() {
     if (context.connection.current.status === "unavailable") {
       log("Try to reconnect after connectivity change");
       reconnect();
@@ -1577,12 +1616,23 @@ export function createRoom<
     effects.send(messages);
   }
 
-  function onMessage(event: IWebSocketMessageEvent) {
+  /**
+   * Handles a raw message received on the WebSocket. Can be either a "pong"
+   * (server heartbeat), or a message from the Liveblocks server.
+   */
+  function handleRawSocketMessage(event: IWebSocketMessageEvent) {
     if (event.data === "pong") {
-      clearTimeout(context.timers.pongTimeout);
-      return;
+      transition({ type: "RECEIVE_PONG" });
+    } else {
+      handleServerMessage(event);
     }
+  }
 
+  function handlePong() {
+    clearTimeout(context.timers.pongTimeout);
+  }
+
+  function handleServerMessage(event: IWebSocketMessageEvent) {
     if (typeof event.data !== "string") {
       // istanbul ignore next: Unknown incoming message
       return;
@@ -1705,7 +1755,7 @@ export function createRoom<
     });
   }
 
-  function onClose(event: IWebSocketCloseEvent) {
+  function handleExplicitClose(event: IWebSocketCloseEvent) {
     context.socket = null;
 
     clearTimeout(context.timers.flush);
@@ -1781,9 +1831,11 @@ export function createRoom<
     ];
   }
 
-  function onError() {}
+  function handleSocketError() {
+    // TODO(nvie) At the very least, emit a log here?
+  }
 
-  function onOpen() {
+  function handleSocketOpen() {
     clearInterval(context.timers.heartbeat);
     context.timers.heartbeat = effects.startHeartbeatInterval();
 
@@ -1837,12 +1889,12 @@ export function createRoom<
     reconnect();
   }
 
-  function disconnect() {
+  function handleDisconnect() {
     if (context.socket) {
-      context.socket.removeEventListener("open", onOpen);
-      context.socket.removeEventListener("message", onMessage);
-      context.socket.removeEventListener("close", onClose);
-      context.socket.removeEventListener("error", onError);
+      context.socket.removeEventListener("open", handleSocketOpen);
+      context.socket.removeEventListener("message", handleRawSocketMessage);
+      context.socket.removeEventListener("close", handleExplicitClose);
+      context.socket.removeEventListener("error", handleSocketError);
       context.socket.close();
       context.socket = null;
     }
@@ -1867,10 +1919,10 @@ export function createRoom<
 
   function reconnect() {
     if (context.socket) {
-      context.socket.removeEventListener("open", onOpen);
-      context.socket.removeEventListener("message", onMessage);
-      context.socket.removeEventListener("close", onClose);
-      context.socket.removeEventListener("error", onError);
+      context.socket.removeEventListener("open", handleSocketOpen);
+      context.socket.removeEventListener("message", handleRawSocketMessage);
+      context.socket.removeEventListener("close", handleExplicitClose);
+      context.socket.removeEventListener("error", handleSocketError);
       context.socket.close();
       context.socket = null;
     }
@@ -1882,7 +1934,7 @@ export function createRoom<
 
     updateConnection({ status: "unavailable" }, batchUpdates);
 
-    connect();
+    handleConnect();
   }
 
   function tryFlushing() {
@@ -1922,7 +1974,8 @@ export function createRoom<
     } else {
       // Or schedule the flush a few millis into the future
       clearTimeout(context.timers.flush);
-      context.timers.flush = effects.scheduleFlush(
+      context.timers.flush = setTimeout(
+        tryFlushing,
         config.throttleDelay - elapsedMillis
       );
     }
@@ -2151,14 +2204,10 @@ export function createRoom<
     }
   }
 
-  function simulateCloseWebsocket() {
+  function handleImplicitClose() {
     if (context.socket) {
       context.socket = null;
     }
-  }
-
-  function simulateSendCloseEvent(event: IWebSocketCloseEvent) {
-    onClose(event);
   }
 
   function getStorageStatus(): StorageStatus {
@@ -2208,31 +2257,80 @@ export function createRoom<
     storageStatus: eventHub.storageStatus.observable,
   };
 
+  //
+  // NOTE:
+  // The Finite State Machine's .transition() function will eventually be
+  // the central gate keeper of sanity. This function will likely be abstracted
+  // away in a proper FSM abstraction (like a separate class).
+  //
+  // The idea is that, eventually, the handler functions can only be called
+  // from here, and never from anywhere else, so this function can perform its
+  // central gatekeeping.
+  //
+  function transition(event: FSMEvent) {
+    switch (event.type) {
+      case "CONNECT":
+        return handleConnect();
+
+      case "DISCONNECT":
+        return handleDisconnect();
+
+      case "RECEIVE_PONG":
+        return handlePong();
+
+      case "AUTH_SUCCESS":
+        return handleAuthSuccess(event.token, event.socket);
+
+      case "WINDOW_GOT_FOCUS":
+        return handleWindowGotFocus();
+
+      case "NAVIGATOR_ONLINE":
+        return handleNavigatorBackOnline();
+
+      case "IMPLICIT_CLOSE":
+        return handleImplicitClose();
+
+      case "EXPLICIT_CLOSE":
+        return handleExplicitClose(event.closeEvent);
+
+      default:
+        return assertNever(event, "Invalid event");
+    }
+  }
+
   return {
     /* NOTE: Exposing __internal here only to allow testing implementation details in unit tests */
     __internal: {
       get buffer() { return context.buffer }, // prettier-ignore
       get numRetries() { return context.numRetries }, // prettier-ignore
-
-      onClose,
-      onMessage,
-      authenticationSuccess,
-      onNavigatorOnline,
-
-      simulateCloseWebsocket,
-      simulateSendCloseEvent,
-
-      onVisibilityChange,
-      getUndoStack: () => context.undoStack,
-      getItemsCount: () => context.nodes.size,
-
-      connect,
-      disconnect,
+      get undoStack() { return context.undoStack }, // prettier-ignore
+      get nodeCount() { return context.nodes.size }, // prettier-ignore
 
       // Support for the Liveblocks browser extension
       getSelf_forDevTools: () => selfAsTreeNode.current,
       getOthers_forDevTools: (): readonly DevTools.UserTreeNode[] =>
         others_forDevTools.current,
+
+      // prettier-ignore
+      send: {
+        explicitClose:  (closeEvent) => transition({ type: "EXPLICIT_CLOSE", closeEvent }),
+        implicitClose:            () => transition({ type: "IMPLICIT_CLOSE" }),
+        authSuccess: (token, socket) => transition({ type: "AUTH_SUCCESS", token, socket }),
+        navigatorOnline:          () => transition({ type: "NAVIGATOR_ONLINE" }),
+        windowGotFocus:           () => transition({ type: "WINDOW_GOT_FOCUS" }),
+        pong:                     () => transition({ type: "RECEIVE_PONG" }),
+        connect:                  () => transition({ type: "CONNECT" }),
+        disconnect:               () => transition({ type: "DISCONNECT" }),
+
+        /**
+         * This one looks differently from the rest, because receiving messages
+         * is handled orthorgonally from all other possible events above,
+         * because it does not matter what the connectivity state of the
+         * machine is, so there won't be an explicit state machine transition
+         * needed for this event.
+         */
+        incomingMessage: handleServerMessage,
+      },
     },
 
     id: config.roomId,
@@ -2360,11 +2458,6 @@ function makeClassicSubscribeFn<
             callback as Callback<ConnectionStatus>
           );
 
-        case "storage":
-          return events.storage.subscribe(
-            callback as Callback<StorageUpdate[]>
-          );
-
         case "history":
           return events.history.subscribe(callback as Callback<HistoryEvent>);
 
@@ -2436,7 +2529,8 @@ function prepareCreateWebSocket(
 
   const ws: IWebSocket = WebSocketPolyfill || WebSocket;
 
-  return (token: string): IWebSocketInstance => {
+  return (richToken: RichToken): IWebSocketInstance => {
+    const token = richToken.raw;
     return new ws(
       `${liveblocksServer}/?token=${token}&version=${
         // prettier-ignore
@@ -2448,10 +2542,28 @@ function prepareCreateWebSocket(
   };
 }
 
+async function httpSend(
+  message: string,
+  token: string,
+  endpoint: string,
+  fetchPolyfill?: typeof window.fetch
+) {
+  const fetcher = fetchPolyfill || /* istanbul ignore next */ fetch;
+  return fetcher(endpoint, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: message,
+  });
+}
+
 function prepareAuthEndpoint(
+  roomId: string,
   authentication: Authentication,
   fetchPolyfill?: typeof window.fetch
-): AuthCallback {
+): () => Promise<RichToken> {
   if (authentication.type === "public") {
     if (typeof window === "undefined" && fetchPolyfill === undefined) {
       throw new Error(
@@ -2459,15 +2571,15 @@ function prepareAuthEndpoint(
       );
     }
 
-    return (room: string) =>
+    return () =>
       fetchAuthEndpoint(
         fetchPolyfill || /* istanbul ignore next */ fetch,
         authentication.url,
         {
-          room,
+          room: roomId,
           publicApiKey: authentication.publicApiKey,
         }
-      );
+      ).then(({ token }) => parseRoomAuthToken(token));
   }
 
   if (authentication.type === "private") {
@@ -2477,21 +2589,21 @@ function prepareAuthEndpoint(
       );
     }
 
-    return (room: string) =>
+    return () =>
       fetchAuthEndpoint(fetchPolyfill || fetch, authentication.url, {
-        room,
-      });
+        room: roomId,
+      }).then(({ token }) => parseRoomAuthToken(token));
   }
 
   if (authentication.type === "custom") {
-    return async (room: string) => {
-      const response = await authentication.callback(room);
+    return async () => {
+      const response = await authentication.callback(roomId);
       if (!response || !response.token) {
         throw new Error(
           'Authentication error. We expect the authentication callback to return a token, but it does not. Hint: the return value should look like: { token: "..." }'
         );
       }
-      return response;
+      return parseRoomAuthToken(response.token);
     };
   }
 

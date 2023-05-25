@@ -501,7 +501,7 @@ function Index() {
     >
       <ClientSideSuspense fallback={<div>Loading...</div>}>
         {() => <App />}
-      </Suspense>
+      </ClientSideSuspense>
     </RoomProvider>
   );
 }

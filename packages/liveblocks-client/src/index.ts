@@ -8,6 +8,9 @@ export type {
   JsonArray,
   JsonObject,
   JsonScalar,
+  LiveListUpdate,
+  LiveMapUpdate,
+  LiveObjectUpdate,
   LiveStructure,
   Lson,
   LsonObject,
@@ -23,6 +26,7 @@ export {
   LiveMap,
   LiveObject,
   shallow,
+  toPlainLson,
 } from "@liveblocks/core";
 
 /**

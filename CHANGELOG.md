@@ -1,11 +1,44 @@
+# vNEXT (not released yet)
+
+# v1.0.10
+
+### `@liveblocks/client`
+
+- Fix a bug related to proactive token expiration detection
+- Internal refactorings
+- Add unstable_fallbackToHTTP option to the core client to support messages over
+  1MB
+
+### `@liveblocks/node`
+
+- Fix incorrect status code when Liveblocks server cannot be reached temporarily
+
+# v1.0.9
+
+### `@liveblocks/client`
+
+- Export `LiveListUpdate`, `LiveMapUpdate`, and `LiveObjectUpdate` types used by
+  the storage update callback.
+- Export new utility, `toPlainLson`, to assist in calling the initialize storage
+  API
+- Internal refactorings
+
 # v1.0.8
 
+### `@liveblocks/client`
+
+- Internal refactorings
+
 ### `create-liveblocks-app`
-- Added [flags](https://github.com/liveblocks/liveblocks/tree/main/packages/create-liveblocks-app#flags-optional) for creating config files with `--init` (e.g. `--framework react`)
+
+- Added
+  [flags](https://github.com/liveblocks/liveblocks/tree/main/packages/create-liveblocks-app#flags-optional)
+  for creating config files with `--init` (e.g. `--framework react`)
 - Added an error if an incorrect flag is used
 - Slightly changed the format of the default config file
 
 ### `@liveblocks/client`
+
 - Internal refactorings
 
 # v1.0.7

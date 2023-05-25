@@ -23,8 +23,13 @@ export type {
   LsonObject,
   ToJson,
 } from "./crdts/Lson";
-export type { StorageUpdate } from "./crdts/StorageUpdates";
-export type { ToImmutable } from "./crdts/ToImmutable";
+export type {
+  LiveListUpdate,
+  LiveMapUpdate,
+  LiveObjectUpdate,
+  StorageUpdate,
+} from "./crdts/StorageUpdates";
+export type { ToImmutable, toPlainLson } from "./crdts/utils";
 export {
   legacy_patchImmutableObject,
   lsonToJson,

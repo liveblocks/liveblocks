@@ -39,30 +39,9 @@ import {
   withDateNow,
 } from "./_utils";
 
-function createTestableRoom(...args: Parameters<typeof createRoom>): {
-  // room: ReturnType<typeof createRoom>;
-  connect: () => void;
-  disconnect: () => void;
-  onNavigatorOnline: () => void;
-  onVisibilityChange: (visibilityState: DocumentVisibilityState) => void;
-} {
-  const room = createRoom(...args);
-  return {
-    // room,
-
-    // Expose the internal methods that provide control over the room's state
-    // machine directly, for convenience in unit tests.
-    connect: room.__internal.connect,
-    disconnect: room.__internal.disconnect,
-    onNavigatorOnline: room.__internal.onNavigatorOnline,
-    onVisibilityChange: room.__internal.onVisibilityChange,
-  };
-}
-
-function makeMachineConfig<
-  TPresence extends JsonObject,
-  TRoomEvent extends Json
->(mockedEffects?: Effects<TPresence, TRoomEvent>) {
+function makeRoomConfig<TPresence extends JsonObject, TRoomEvent extends Json>(
+  mockedEffects?: Effects<TPresence, TRoomEvent>
+) {
   return {
     roomId: "room-id",
     throttleDelay: 100,
@@ -83,7 +62,7 @@ const defaultRoomToken: RoomAuthToken = {
   scopes: [],
 };
 
-function setupStateMachine<
+function createTestableRoom<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
   TUserMeta extends BaseUserMeta,
@@ -95,7 +74,7 @@ function setupStateMachine<
       initialPresence,
       initialStorage: undefined,
     },
-    makeMachineConfig(effects)
+    makeRoomConfig(effects)
   );
   return { room, effects };
 }
@@ -138,10 +117,10 @@ describe("room / auth", () => {
   test.each([{ notAToken: "" }, undefined, null, ""])(
     "custom authentication with missing token in callback response should throw",
     async (response) => {
-      const controlledRoom = createTestableRoom(
+      const room = createRoom(
         { initialPresence: {} as never },
         {
-          ...makeMachineConfig(),
+          ...makeRoomConfig(),
           authentication: {
             type: "custom",
             callback: (_room) =>
@@ -153,9 +132,9 @@ describe("room / auth", () => {
         }
       );
 
-      controlledRoom.connect();
+      room.__internal.send.connect();
       await waitFor(() => consoleErrorSpy.mock.calls.length > 0);
-      controlledRoom.disconnect();
+      room.__internal.send.disconnect();
 
       expect(consoleErrorSpy.mock.calls[0][1]).toEqual(
         new Error(
@@ -166,10 +145,10 @@ describe("room / auth", () => {
   );
 
   test("private authentication with 403 status should throw", async () => {
-    const controlledRoom = createTestableRoom(
+    const room = createRoom(
       { initialPresence: {} as never },
       {
-        ...makeMachineConfig(),
+        ...makeRoomConfig(),
         authentication: {
           type: "private",
           url: "/mocked-api/403",
@@ -177,9 +156,9 @@ describe("room / auth", () => {
       }
     );
 
-    controlledRoom.connect();
+    room.__internal.send.connect();
     await waitFor(() => consoleErrorSpy.mock.calls.length > 0);
-    controlledRoom.disconnect();
+    room.__internal.send.disconnect();
 
     expect(consoleErrorSpy.mock.calls[0][1]).toEqual(
       new Error(
@@ -189,10 +168,10 @@ describe("room / auth", () => {
   });
 
   test("private authentication that does not returns json should throw", async () => {
-    const controlledRoom = createTestableRoom(
+    const room = createRoom(
       { initialPresence: {} as never },
       {
-        ...makeMachineConfig(),
+        ...makeRoomConfig(),
         authentication: {
           type: "private",
           url: "/mocked-api/not-json",
@@ -200,9 +179,9 @@ describe("room / auth", () => {
       }
     );
 
-    controlledRoom.connect();
+    room.__internal.send.connect();
     await waitFor(() => consoleErrorSpy.mock.calls.length > 0);
-    controlledRoom.disconnect();
+    room.__internal.send.disconnect();
 
     expect(consoleErrorSpy.mock.calls[0][1]).toEqual(
       new Error(
@@ -212,10 +191,10 @@ describe("room / auth", () => {
   });
 
   test("private authentication that does not returns json should throw", async () => {
-    const controlledRoom = createTestableRoom(
+    const room = createRoom(
       { initialPresence: {} as never },
       {
-        ...makeMachineConfig(),
+        ...makeRoomConfig(),
         authentication: {
           type: "private",
           url: "/mocked-api/missing-token",
@@ -223,9 +202,9 @@ describe("room / auth", () => {
       }
     );
 
-    controlledRoom.connect();
+    room.__internal.send.connect();
     await waitFor(() => consoleErrorSpy.mock.calls.length > 0);
-    controlledRoom.disconnect();
+    room.__internal.send.disconnect();
 
     expect(consoleErrorSpy.mock.calls[0][1]).toEqual(
       new Error(
@@ -237,36 +216,33 @@ describe("room / auth", () => {
 
 describe("room", () => {
   test("connect should transition to authenticating if closed and execute authenticate", () => {
-    const { room, effects } = setupStateMachine({});
-    room.__internal.connect();
+    const { room, effects } = createTestableRoom({});
+    room.__internal.send.connect();
     expect(room.getConnectionState()).toEqual("authenticating");
-    expect(effects.authenticate).toHaveBeenCalled();
+    expect(effects.authenticateAndConnect).toHaveBeenCalled();
   });
 
   test("connect should stay authenticating if connect is called multiple times and call authenticate only once", () => {
-    const { room, effects } = setupStateMachine({});
-    room.__internal.connect();
+    const { room, effects } = createTestableRoom({});
+    room.__internal.send.connect();
     expect(room.getConnectionState()).toEqual("authenticating");
-    room.__internal.connect();
+    room.__internal.send.connect();
     expect(room.getConnectionState()).toEqual("authenticating");
-    expect(effects.authenticate).toHaveBeenCalledTimes(1);
+    expect(effects.authenticateAndConnect).toHaveBeenCalledTimes(1);
   });
 
   test("authentication success should transition to connecting", () => {
-    const { room } = setupStateMachine({});
-    room.__internal.authenticationSuccess(
-      defaultRoomToken,
-      new MockWebSocket()
-    );
+    const { room } = createTestableRoom({});
+    room.__internal.send.authSuccess(defaultRoomToken, new MockWebSocket());
     expect(room.getConnectionState()).toBe("connecting");
   });
 
   test("initial presence should be sent once the connection is open", () => {
-    const { room, effects } = setupStateMachine({ x: 0 });
+    const { room, effects } = createTestableRoom({ x: 0 });
 
     const ws = new MockWebSocket();
-    room.__internal.connect();
-    room.__internal.authenticationSuccess(defaultRoomToken, ws);
+    room.__internal.send.connect();
+    room.__internal.send.authSuccess(defaultRoomToken, ws);
     ws.simulateOpen();
 
     expect(effects.send).toHaveBeenCalledWith([
@@ -275,12 +251,12 @@ describe("room", () => {
   });
 
   test("if presence has been updated before the connection, it should be sent when the connection is ready", () => {
-    const { room, effects } = setupStateMachine({});
+    const { room, effects } = createTestableRoom({});
 
     const ws = new MockWebSocket();
     room.updatePresence({ x: 0 });
-    room.__internal.connect();
-    room.__internal.authenticationSuccess(defaultRoomToken, ws);
+    room.__internal.send.connect();
+    room.__internal.send.authSuccess(defaultRoomToken, ws);
     ws.simulateOpen();
 
     expect(effects.send).toHaveBeenCalledWith([
@@ -289,11 +265,11 @@ describe("room", () => {
   });
 
   test("if no presence has been set before the connection is open, an empty presence should be sent", () => {
-    const { room, effects } = setupStateMachine({} as never);
+    const { room, effects } = createTestableRoom({} as never);
 
     const ws = new MockWebSocket();
-    room.__internal.connect();
-    room.__internal.authenticationSuccess(defaultRoomToken, ws);
+    room.__internal.send.connect();
+    room.__internal.send.authSuccess(defaultRoomToken, ws);
     ws.simulateOpen();
 
     expect(effects.send).toHaveBeenCalledWith([
@@ -301,30 +277,44 @@ describe("room", () => {
     ]);
   });
 
-  test("initial presence followed by updatePresence should delay sending the second presence event", () => {
-    const { room, effects } = setupStateMachine({ x: 0 });
+  test("initial presence followed by updatePresence should delay sending the second presence event", async () => {
+    jest.useFakeTimers();
+
+    const { room, effects } = createTestableRoom({ x: 0 });
 
     const ws = new MockWebSocket();
-    room.__internal.connect();
-    room.__internal.authenticationSuccess(defaultRoomToken, ws);
+    room.__internal.send.connect();
+    room.__internal.send.authSuccess(defaultRoomToken, ws);
 
-    const now = new Date(2021, 1, 1, 0, 0, 0, 0).getTime();
+    const now = Date.now();
 
-    withDateNow(now, () => ws.simulateOpen());
-
-    withDateNow(now + 30, () => room.updatePresence({ x: 1 }));
-
-    expect(effects.scheduleFlush).toBeCalledWith(
-      makeMachineConfig().throttleDelay - 30
-    );
-    expect(effects.send).toHaveBeenCalledWith([
+    expect(effects.send).toHaveBeenCalledTimes(0);
+    ws.simulateOpen();
+    expect(effects.send).toHaveBeenCalledTimes(1);
+    expect(effects.send).toHaveBeenLastCalledWith([
       { type: ClientMsgCode.UPDATE_PRESENCE, targetActor: -1, data: { x: 0 } },
     ]);
-    expect(room.__internal.buffer.me?.data).toEqual({ x: 1 });
+
+    // Forward the system clock by 30 millis
+    jest.setSystemTime(now + 30);
+    room.updatePresence({ x: 1 });
+    jest.setSystemTime(now + 35);
+    room.updatePresence({ x: 2 }); // These calls should get batched and flushed later
+
+    expect(effects.send).toHaveBeenCalledTimes(1);
+    expect(room.__internal.buffer.me?.data).toEqual({ x: 2 });
+
+    // Forwarding time by the flush threshold will trigger the future flush
+    await jest.advanceTimersByTimeAsync(makeRoomConfig().throttleDelay);
+
+    expect(effects.send).toHaveBeenCalledTimes(2);
+    expect(effects.send).toHaveBeenLastCalledWith([
+      { type: ClientMsgCode.UPDATE_PRESENCE, data: { x: 2 } },
+    ]);
   });
 
   test("should replace current presence and set flushData presence when connection is closed", () => {
-    const { room } = setupStateMachine({});
+    const { room } = createTestableRoom({});
 
     room.updatePresence({ x: 0 });
 
@@ -333,7 +323,7 @@ describe("room", () => {
   });
 
   test("should merge current presence and set flushData presence when connection is closed", () => {
-    const { room } = setupStateMachine({});
+    const { room } = createTestableRoom({});
 
     room.updatePresence({ x: 0 });
 
@@ -346,14 +336,14 @@ describe("room", () => {
   });
 
   test("others should be iterable", () => {
-    const { room } = setupStateMachine({});
+    const { room } = createTestableRoom({});
 
     const ws = new MockWebSocket();
-    room.__internal.connect();
-    room.__internal.authenticationSuccess(defaultRoomToken, ws);
+    room.__internal.send.connect();
+    room.__internal.send.authSuccess(defaultRoomToken, ws);
     ws.simulateOpen();
 
-    room.__internal.onMessage(
+    room.__internal.send.incomingMessage(
       serverMessage({
         type: ServerMsgCode.ROOM_STATE,
         users: {
@@ -362,7 +352,7 @@ describe("room", () => {
       })
     );
 
-    room.__internal.onMessage(
+    room.__internal.send.incomingMessage(
       serverMessage({
         type: ServerMsgCode.UPDATE_PRESENCE,
         data: { x: 2 },
@@ -382,14 +372,14 @@ describe("room", () => {
   });
 
   test("others should be iterable", () => {
-    const { room } = setupStateMachine({});
+    const { room } = createTestableRoom({});
 
     const ws = new MockWebSocket();
-    room.__internal.connect();
-    room.__internal.authenticationSuccess(defaultRoomToken, ws);
+    room.__internal.send.connect();
+    room.__internal.send.authSuccess(defaultRoomToken, ws);
     ws.simulateOpen();
 
-    room.__internal.onMessage(
+    room.__internal.send.incomingMessage(
       serverMessage({
         type: ServerMsgCode.ROOM_STATE,
         users: {
@@ -398,7 +388,7 @@ describe("room", () => {
       })
     );
 
-    room.__internal.onMessage(
+    room.__internal.send.incomingMessage(
       serverMessage({
         type: ServerMsgCode.UPDATE_PRESENCE,
         data: { x: 2 },
@@ -418,14 +408,14 @@ describe("room", () => {
   });
 
   test("others should be read-only when associated scopes are received", () => {
-    const { room } = setupStateMachine({});
+    const { room } = createTestableRoom({});
 
     const ws = new MockWebSocket();
-    room.__internal.connect();
-    room.__internal.authenticationSuccess(defaultRoomToken, ws);
+    room.__internal.send.connect();
+    room.__internal.send.authSuccess(defaultRoomToken, ws);
     ws.simulateOpen();
 
-    room.__internal.onMessage(
+    room.__internal.send.incomingMessage(
       serverMessage({
         type: ServerMsgCode.ROOM_STATE,
         users: {
@@ -434,7 +424,7 @@ describe("room", () => {
       })
     );
 
-    room.__internal.onMessage(
+    room.__internal.send.incomingMessage(
       serverMessage({
         type: ServerMsgCode.UPDATE_PRESENCE,
         data: { x: 2 },
@@ -454,14 +444,14 @@ describe("room", () => {
   });
 
   test("should clear users when socket close", () => {
-    const { room } = setupStateMachine({});
+    const { room } = createTestableRoom({});
 
     const ws = new MockWebSocket();
-    room.__internal.connect();
-    room.__internal.authenticationSuccess(defaultRoomToken, ws);
+    room.__internal.send.connect();
+    room.__internal.send.authSuccess(defaultRoomToken, ws);
     ws.simulateOpen();
 
-    room.__internal.onMessage(
+    room.__internal.send.incomingMessage(
       serverMessage({
         type: ServerMsgCode.ROOM_STATE,
         users: {
@@ -470,7 +460,7 @@ describe("room", () => {
       })
     );
 
-    room.__internal.onMessage(
+    room.__internal.send.incomingMessage(
       serverMessage({
         type: ServerMsgCode.UPDATE_PRESENCE,
         data: { x: 2 },
@@ -483,7 +473,7 @@ describe("room", () => {
       { connectionId: 1, presence: { x: 2 }, isReadOnly: false },
     ]);
 
-    room.__internal.onClose(
+    room.__internal.send.explicitClose(
       new CloseEvent("close", {
         code: WebsocketCloseCodes.CLOSE_ABNORMAL,
         wasClean: false,
@@ -496,7 +486,7 @@ describe("room", () => {
   test("should clear users not present in server message ROOM_STATE", () => {
     /*
     Scenario:
-    - Client A (machine) and Client B (ref machine) are connected to the room.
+    - Client A (room) and Client B (refRoom) are connected to the room.
     - Client A computer goes to sleep, it doesn't properly close. It still has client B in others.
     - Client B computer goes to sleep, it doesn't properly close.
     - After 2 minutes, the server clears client A and B from its list of users.
@@ -505,14 +495,14 @@ describe("room", () => {
     - Client A should remove client B from others.
   */
 
-    const { room } = setupStateMachine({});
+    const { room } = createTestableRoom({});
 
     const ws = new MockWebSocket();
-    room.__internal.connect();
-    room.__internal.authenticationSuccess(defaultRoomToken, ws);
+    room.__internal.send.connect();
+    room.__internal.send.authSuccess(defaultRoomToken, ws);
     ws.simulateOpen();
 
-    room.__internal.onMessage(
+    room.__internal.send.incomingMessage(
       serverMessage({
         type: ServerMsgCode.ROOM_STATE,
         users: {
@@ -523,7 +513,7 @@ describe("room", () => {
     );
 
     // Client B
-    room.__internal.onMessage(
+    room.__internal.send.incomingMessage(
       serverMessage({
         type: ServerMsgCode.UPDATE_PRESENCE,
         data: { x: 2 },
@@ -533,7 +523,7 @@ describe("room", () => {
     );
 
     // Client C
-    room.__internal.onMessage(
+    room.__internal.send.incomingMessage(
       serverMessage({
         type: ServerMsgCode.UPDATE_PRESENCE,
         data: { x: 2 },
@@ -552,7 +542,7 @@ describe("room", () => {
     // -----
 
     // Client reconnects to the room, and receives a new ROOM_STATE msg from the server.
-    room.__internal.onMessage(
+    room.__internal.send.incomingMessage(
       serverMessage({
         type: ServerMsgCode.ROOM_STATE,
         users: {
@@ -569,11 +559,11 @@ describe("room", () => {
 
   describe("broadcast", () => {
     test("should send event to other users", () => {
-      const { room, effects } = setupStateMachine({});
+      const { room, effects } = createTestableRoom({});
 
       const ws = new MockWebSocket();
-      room.__internal.connect();
-      room.__internal.authenticationSuccess(defaultRoomToken, ws);
+      room.__internal.send.connect();
+      room.__internal.send.authSuccess(defaultRoomToken, ws);
 
       const now = new Date(2021, 1, 1, 0, 0, 0, 0).getTime();
 
@@ -604,15 +594,15 @@ describe("room", () => {
     });
 
     test("should not send event to other users if not connected", () => {
-      const { room, effects } = setupStateMachine({});
+      const { room, effects } = createTestableRoom({});
 
       room.broadcastEvent({ type: "EVENT" });
 
       expect(effects.send).not.toHaveBeenCalled();
 
       const ws = new MockWebSocket();
-      room.__internal.connect();
-      room.__internal.authenticationSuccess(defaultRoomToken, ws);
+      room.__internal.send.connect();
+      room.__internal.send.authSuccess(defaultRoomToken, ws);
       ws.simulateOpen();
 
       expect(effects.send).toBeCalledTimes(1);
@@ -622,7 +612,7 @@ describe("room", () => {
     });
 
     test("should queue event if socket is not ready and shouldQueueEventsIfNotReady is true", () => {
-      const { room, effects } = setupStateMachine({});
+      const { room, effects } = createTestableRoom({});
 
       room.broadcastEvent(
         { type: "EVENT" },
@@ -632,8 +622,8 @@ describe("room", () => {
       expect(effects.send).not.toHaveBeenCalled();
 
       const ws = new MockWebSocket();
-      room.__internal.connect();
-      room.__internal.authenticationSuccess(defaultRoomToken, ws);
+      room.__internal.send.connect();
+      room.__internal.send.authSuccess(defaultRoomToken, ws);
       ws.simulateOpen();
 
       expect(effects.send).toBeCalledTimes(1);
@@ -645,16 +635,16 @@ describe("room", () => {
   });
 
   test("storage should be initialized properly", async () => {
-    const { room } = setupStateMachine({});
+    const { room } = createTestableRoom({});
 
     const ws = new MockWebSocket();
-    room.__internal.connect();
-    room.__internal.authenticationSuccess(defaultRoomToken, ws);
+    room.__internal.send.connect();
+    room.__internal.send.authSuccess(defaultRoomToken, ws);
     ws.simulateOpen();
 
     const getStoragePromise = room.getStorage();
 
-    room.__internal.onMessage(
+    room.__internal.send.incomingMessage(
       serverMessage({
         type: ServerMsgCode.INITIAL_STORAGE_STATE,
         items: [["root", { type: CrdtType.OBJECT, data: { x: 0 } }]],
@@ -667,11 +657,11 @@ describe("room", () => {
   });
 
   test("undo redo with presence", () => {
-    const { room } = setupStateMachine({});
+    const { room } = createTestableRoom({});
 
     const ws = new MockWebSocket();
-    room.__internal.connect();
-    room.__internal.authenticationSuccess(defaultRoomToken, ws);
+    room.__internal.send.connect();
+    room.__internal.send.authSuccess(defaultRoomToken, ws);
     ws.simulateOpen();
 
     expect(room.__internal.buffer.me).toEqual(null);
@@ -692,7 +682,7 @@ describe("room", () => {
   });
 
   it("undo redo batch", async () => {
-    const { expectUpdates, batch, root, room } =
+    const { room, root, expectUpdates } =
       await prepareDisconnectedStorageUpdateTest<{
         items: LiveList<LiveObject<Record<string, number>>>;
       }>([
@@ -702,7 +692,7 @@ describe("room", () => {
       ]);
 
     const items = root.get("items");
-    batch(() => {
+    room.batch(() => {
       nn(items.get(0)).set("a", 1);
       items.set(0, new LiveObject({ a: 2 }));
     });
@@ -722,16 +712,16 @@ describe("room", () => {
   });
 
   test("if presence is not added to history during a batch, it should not impact the undo/stack", async () => {
-    const { room } = setupStateMachine({});
+    const { room } = createTestableRoom({});
 
     const ws = new MockWebSocket();
-    room.__internal.connect();
-    room.__internal.authenticationSuccess(defaultRoomToken, ws);
+    room.__internal.send.connect();
+    room.__internal.send.authSuccess(defaultRoomToken, ws);
     ws.simulateOpen();
 
     const getStoragePromise = room.getStorage();
 
-    room.__internal.onMessage(
+    room.__internal.send.incomingMessage(
       serverMessage({
         type: ServerMsgCode.INITIAL_STORAGE_STATE,
         items: [["root", { type: CrdtType.OBJECT, data: { x: 0 } }]],
@@ -756,11 +746,11 @@ describe("room", () => {
   });
 
   test("if nothing happened while the history was paused, the undo stack should not be impacted", () => {
-    const { room } = setupStateMachine({});
+    const { room } = createTestableRoom({});
 
     const ws = new MockWebSocket();
-    room.__internal.connect();
-    room.__internal.authenticationSuccess(defaultRoomToken, ws);
+    room.__internal.send.connect();
+    room.__internal.send.authSuccess(defaultRoomToken, ws);
     ws.simulateOpen();
 
     room.updatePresence({ x: 0 }, { addToHistory: true });
@@ -777,11 +767,11 @@ describe("room", () => {
   });
 
   test("undo redo with presence that do not impact presence", () => {
-    const { room } = setupStateMachine({});
+    const { room } = createTestableRoom({});
 
     const ws = new MockWebSocket();
-    room.__internal.connect();
-    room.__internal.authenticationSuccess(defaultRoomToken, ws);
+    room.__internal.send.connect();
+    room.__internal.send.authSuccess(defaultRoomToken, ws);
     ws.simulateOpen();
 
     room.updatePresence({ x: 0 });
@@ -793,11 +783,11 @@ describe("room", () => {
   });
 
   test("pause / resume history", () => {
-    const { room } = setupStateMachine({});
+    const { room } = createTestableRoom({});
 
     const ws = new MockWebSocket();
-    room.__internal.connect();
-    room.__internal.authenticationSuccess(defaultRoomToken, ws);
+    room.__internal.send.connect();
+    room.__internal.send.authSuccess(defaultRoomToken, ws);
     ws.simulateOpen();
 
     room.updatePresence({ x: 0 }, { addToHistory: true });
@@ -827,11 +817,11 @@ describe("room", () => {
   });
 
   test("undo while history is paused", () => {
-    const { room } = setupStateMachine({});
+    const { room } = createTestableRoom({});
 
     const ws = new MockWebSocket();
-    room.__internal.connect();
-    room.__internal.authenticationSuccess(defaultRoomToken, ws);
+    room.__internal.send.connect();
+    room.__internal.send.authSuccess(defaultRoomToken, ws);
     ws.simulateOpen();
 
     room.updatePresence({ x: 0 }, { addToHistory: true });
@@ -851,16 +841,16 @@ describe("room", () => {
   });
 
   test("undo redo with presence + storage", async () => {
-    const { room } = setupStateMachine({});
+    const { room } = createTestableRoom({});
 
     const ws = new MockWebSocket();
-    room.__internal.connect();
-    room.__internal.authenticationSuccess(defaultRoomToken, ws);
+    room.__internal.send.connect();
+    room.__internal.send.authSuccess(defaultRoomToken, ws);
     ws.simulateOpen();
 
     const getStoragePromise = room.getStorage();
 
-    room.__internal.onMessage(
+    room.__internal.send.incomingMessage(
       serverMessage({
         type: ServerMsgCode.INITIAL_STORAGE_STATE,
         items: [["root", { type: CrdtType.OBJECT, data: { x: 0 } }]],
@@ -892,16 +882,16 @@ describe("room", () => {
   });
 
   test("batch without changes should not erase redo stack", async () => {
-    const { room } = setupStateMachine({});
+    const { room } = createTestableRoom({});
 
     const ws = new MockWebSocket();
-    room.__internal.connect();
-    room.__internal.authenticationSuccess(defaultRoomToken, ws);
+    room.__internal.send.connect();
+    room.__internal.send.authSuccess(defaultRoomToken, ws);
     ws.simulateOpen();
 
     const getStoragePromise = room.getStorage();
 
-    room.__internal.onMessage(
+    room.__internal.send.incomingMessage(
       serverMessage({
         type: ServerMsgCode.INITIAL_STORAGE_STATE,
         items: [["root", { type: CrdtType.OBJECT, data: { x: 0 } }]],
@@ -924,25 +914,25 @@ describe("room", () => {
   });
 
   test("canUndo / canRedo", async () => {
-    const { storage, undo, canUndo, canRedo } = await prepareStorageTest<{
+    const { room, storage } = await prepareStorageTest<{
       a: number;
     }>([createSerializedObject("0:0", { a: 1 })], 1);
 
-    expect(canUndo()).toBeFalsy();
-    expect(canRedo()).toBeFalsy();
+    expect(room.history.canUndo()).toBeFalsy();
+    expect(room.history.canRedo()).toBeFalsy();
 
     storage.root.set("a", 2);
 
-    expect(canUndo()).toBeTruthy();
+    expect(room.history.canUndo()).toBeTruthy();
 
-    undo();
+    room.history.undo();
 
-    expect(canRedo()).toBeTruthy();
+    expect(room.history.canRedo()).toBeTruthy();
   });
 
   describe("subscription", () => {
     test("batch my-presence", () => {
-      const { room } = setupStateMachine({});
+      const { room } = createTestableRoom({});
 
       const callback = jest.fn();
 
@@ -958,16 +948,16 @@ describe("room", () => {
     });
 
     test("batch storage and presence", async () => {
-      const { room } = setupStateMachine({});
+      const { room } = createTestableRoom({});
 
       const ws = new MockWebSocket();
-      room.__internal.connect();
-      room.__internal.authenticationSuccess(defaultRoomToken, ws);
+      room.__internal.send.connect();
+      room.__internal.send.authSuccess(defaultRoomToken, ws);
       ws.simulateOpen();
 
       const getStoragePromise = room.getStorage();
 
-      room.__internal.onMessage(
+      room.__internal.send.incomingMessage(
         serverMessage({
           type: ServerMsgCode.INITIAL_STORAGE_STATE,
           items: [["root", { type: CrdtType.OBJECT, data: { x: 0 } }]],
@@ -997,35 +987,36 @@ describe("room", () => {
     });
 
     test("batch without operations should not add an item to the undo stack", async () => {
-      const { storage, expectStorage, undo, batch } = await prepareStorageTest<{
+      const { room, storage, expectStorage } = await prepareStorageTest<{
         a: number;
       }>([createSerializedObject("0:0", { a: 1 })], 1);
 
       storage.root.set("a", 2);
 
       // Batch without operations on storage or presence
-      batch(() => {});
+      room.batch(() => {});
 
       expectStorage({ a: 2 });
 
-      undo();
+      room.history.undo();
 
       expectStorage({ a: 1 });
     });
 
     test("batch storage with changes from server", async () => {
-      const { storage, expectStorage, undo, redo, batch } =
-        await prepareStorageTest<{ items: LiveList<string> }>(
-          [
-            createSerializedObject("0:0", {}),
-            createSerializedList("0:1", "0:0", "items"),
-          ],
-          1
-        );
+      const { room, storage, expectStorage } = await prepareStorageTest<{
+        items: LiveList<string>;
+      }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedList("0:1", "0:0", "items"),
+        ],
+        1
+      );
 
       const items = storage.root.get("items");
 
-      batch(() => {
+      room.batch(() => {
         items.push("A");
         items.push("B");
         items.push("C");
@@ -1035,13 +1026,13 @@ describe("room", () => {
         items: ["A", "B", "C"],
       });
 
-      undo();
+      room.history.undo();
 
       expectStorage({
         items: [],
       });
 
-      redo();
+      room.history.redo();
 
       expectStorage({
         items: ["A", "B", "C"],
@@ -1055,12 +1046,9 @@ describe("room", () => {
       type E = never;
 
       const {
+        room,
         storage,
         expectStorage,
-        undo,
-        redo,
-        batch,
-        updatePresence,
         refRoom: refRoom,
       } = await prepareStorageTest<S, P, M, E>(
         [
@@ -1075,9 +1063,9 @@ describe("room", () => {
       let refOthers: Others<P, M> | undefined;
       refRoom.events.others.subscribe((ev) => (refOthers = ev.others));
 
-      batch(() => {
-        updatePresence({ x: 0 });
-        updatePresence({ x: 1 });
+      room.batch(() => {
+        room.updatePresence({ x: 0 });
+        room.updatePresence({ x: 1 });
         items.push("A");
         items.push("B");
         items.push("C");
@@ -1097,13 +1085,13 @@ describe("room", () => {
         },
       ]);
 
-      undo();
+      room.history.undo();
 
       expectStorage({
         items: [],
       });
 
-      redo();
+      room.history.redo();
 
       expectStorage({
         items: ["A", "B", "C"],
@@ -1111,12 +1099,7 @@ describe("room", () => {
     });
 
     test("nested storage updates", async () => {
-      const {
-        expectUpdates: expectUpdates,
-        root,
-        batch,
-        room,
-      } = await prepareStorageUpdateTest<{
+      const { room, root, expectUpdates } = await prepareStorageUpdateTest<{
         items: LiveList<LiveObject<{ names: LiveList<string> }>>;
       }>([
         createSerializedObject("0:0", {}),
@@ -1133,7 +1116,7 @@ describe("room", () => {
         items: Array<{ names: Array<string> }>;
       };
 
-      batch(() => {
+      room.batch(() => {
         const items = root.get("items");
         items.insert(new LiveObject({ names: new LiveList(["John Doe"]) }), 0);
         items.get(1)?.get("names").push("Jane Doe");
@@ -1166,7 +1149,7 @@ describe("room", () => {
     });
 
     test("batch history", () => {
-      const { room } = setupStateMachine({});
+      const { room } = createTestableRoom({});
 
       const callback = jest.fn();
       room.events.history.subscribe(callback);
@@ -1181,7 +1164,7 @@ describe("room", () => {
     });
 
     test("my-presence", () => {
-      const { room } = setupStateMachine({});
+      const { room } = createTestableRoom({});
 
       const callback = jest.fn();
       const unsubscribe = room.events.me.subscribe(callback);
@@ -1199,11 +1182,11 @@ describe("room", () => {
     test("others", () => {
       type P = { x?: number };
 
-      const { room } = setupStateMachine<P, never, never, never>({});
+      const { room } = createTestableRoom<P, never, never, never>({});
 
       const ws = new MockWebSocket();
-      room.__internal.connect();
-      room.__internal.authenticationSuccess(defaultRoomToken, ws);
+      room.__internal.send.connect();
+      room.__internal.send.authSuccess(defaultRoomToken, ws);
       ws.simulateOpen();
 
       let others: Others<P, never> | undefined;
@@ -1212,14 +1195,14 @@ describe("room", () => {
         (ev) => (others = ev.others)
       );
 
-      room.__internal.onMessage(
+      room.__internal.send.incomingMessage(
         serverMessage({
           type: ServerMsgCode.ROOM_STATE,
           users: { 1: { scopes: [] } },
         })
       );
 
-      room.__internal.onMessage(
+      room.__internal.send.incomingMessage(
         serverMessage({
           type: ServerMsgCode.UPDATE_PRESENCE,
           data: { x: 2 },
@@ -1230,7 +1213,7 @@ describe("room", () => {
 
       unsubscribe();
 
-      room.__internal.onMessage(
+      room.__internal.send.incomingMessage(
         serverMessage({
           type: ServerMsgCode.UPDATE_PRESENCE,
           data: { x: 3 },
@@ -1250,17 +1233,17 @@ describe("room", () => {
     });
 
     test("event", () => {
-      const { room } = setupStateMachine({});
+      const { room } = createTestableRoom({});
 
       const ws = new MockWebSocket();
-      room.__internal.connect();
-      room.__internal.authenticationSuccess(defaultRoomToken, ws);
+      room.__internal.send.connect();
+      room.__internal.send.authSuccess(defaultRoomToken, ws);
       ws.simulateOpen();
 
       const callback = jest.fn();
       room.events.customEvent.subscribe(callback);
 
-      room.__internal.onMessage(
+      room.__internal.send.incomingMessage(
         serverMessage({
           type: ServerMsgCode.BROADCASTED_EVENT,
           event: { type: "MY_EVENT" },
@@ -1277,7 +1260,7 @@ describe("room", () => {
     });
 
     test("history", () => {
-      const { room } = setupStateMachine({});
+      const { room } = createTestableRoom({});
 
       const callback = jest.fn();
       const unsubscribe = room.events.history.subscribe(callback);
@@ -1385,7 +1368,7 @@ describe("room", () => {
 
       expectStorage({ items: ["a"] });
 
-      room.__internal.onClose(
+      room.__internal.send.explicitClose(
         new CloseEvent("close", {
           code: WebsocketCloseCodes.CLOSE_ABNORMAL,
           wasClean: false,
@@ -1430,9 +1413,9 @@ describe("room", () => {
 
       reconnect(2);
 
-      const refMachineOthers = refRoom.getOthers();
+      const refRoomOthers = refRoom.getOthers();
 
-      expect(refMachineOthers).toEqual([
+      expect(refRoomOthers).toEqual([
         {
           connectionId: 1,
           id: undefined,
@@ -1515,11 +1498,11 @@ describe("room", () => {
     });
 
     test("when error code 1006", () => {
-      const { room } = setupStateMachine({ x: 0 });
+      const { room } = createTestableRoom({ x: 0 });
 
       const ws = new MockWebSocket();
-      room.__internal.connect();
-      room.__internal.authenticationSuccess(defaultRoomToken, ws);
+      room.__internal.send.connect();
+      room.__internal.send.authSuccess(defaultRoomToken, ws);
       ws.simulateOpen();
 
       ws.simulateCloseFromServer(
@@ -1537,11 +1520,11 @@ describe("room", () => {
     });
 
     test("when error code 4002", () => {
-      const { room } = setupStateMachine({ x: 0 });
+      const { room } = createTestableRoom({ x: 0 });
 
       const ws = new MockWebSocket();
-      room.__internal.connect();
-      room.__internal.authenticationSuccess(defaultRoomToken, ws);
+      room.__internal.send.connect();
+      room.__internal.send.authSuccess(defaultRoomToken, ws);
       ws.simulateOpen();
 
       ws.simulateCloseFromServer(
@@ -1559,14 +1542,14 @@ describe("room", () => {
     });
 
     test("manual reconnection", () => {
-      const { room } = setupStateMachine({ x: 0 });
+      const { room } = createTestableRoom({ x: 0 });
       expect(room.getConnectionState()).toBe("closed");
 
       const ws = new MockWebSocket();
-      room.__internal.connect();
+      room.__internal.send.connect();
       expect(room.getConnectionState()).toBe("authenticating");
 
-      room.__internal.authenticationSuccess(defaultRoomToken, ws);
+      room.__internal.send.authSuccess(defaultRoomToken, ws);
       expect(room.getConnectionState()).toBe("connecting");
 
       ws.simulateOpen();
@@ -1576,7 +1559,7 @@ describe("room", () => {
       expect(room.getConnectionState()).toBe("authenticating");
 
       const ws2 = new MockWebSocket();
-      room.__internal.authenticationSuccess(defaultRoomToken, ws2);
+      room.__internal.send.authSuccess(defaultRoomToken, ws2);
       expect(room.getConnectionState()).toBe("connecting");
 
       ws2.simulateOpen();
@@ -1591,18 +1574,18 @@ describe("room", () => {
       type M = never;
       type E = never;
 
-      const { room } = setupStateMachine<P, S, M, E>({});
+      const { room } = createTestableRoom<P, S, M, E>({});
 
       const ws = new MockWebSocket();
-      room.__internal.connect();
-      room.__internal.authenticationSuccess(defaultRoomToken, ws);
+      room.__internal.send.connect();
+      room.__internal.send.authSuccess(defaultRoomToken, ws);
       ws.simulateOpen();
 
       let others: Others<P, M> | undefined;
 
       room.events.others.subscribe((ev) => (others = ev.others));
 
-      room.__internal.onMessage(
+      room.__internal.send.incomingMessage(
         serverMessage({
           type: ServerMsgCode.ROOM_STATE,
           users: { "1": { id: undefined, scopes: [] } },
@@ -1610,7 +1593,7 @@ describe("room", () => {
       );
 
       // UpdatePresence sent before the initial full UpdatePresence
-      room.__internal.onMessage(
+      room.__internal.send.incomingMessage(
         serverMessage({
           type: ServerMsgCode.UPDATE_PRESENCE,
           data: { x: 2 },
@@ -1623,7 +1606,7 @@ describe("room", () => {
       ]);
 
       // Full UpdatePresence sent as an answer to "UserJoined" message
-      room.__internal.onMessage(
+      room.__internal.send.incomingMessage(
         serverMessage({
           type: ServerMsgCode.UPDATE_PRESENCE,
           data: { x: 2 },

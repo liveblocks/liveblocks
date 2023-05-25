@@ -21,7 +21,7 @@
 </p>
 
 This example shows how to build a collaborative whiteboard with
-[Liveblocks](https://liveblocks.io), [React](https://reactjs.org/) and
+[Liveblocks](https://liveblocks.io), [Next.js](https://nextjs.org/) and
 [Redux](https://redux-toolkit.js.org/).
 
 <img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/whiteboard.png" width="536" alt="Collaborative Whiteboard" />
@@ -52,29 +52,31 @@ Alternatively, you can set up your project manually:
 - Install all dependencies with `npm install`
 - Create an account on [liveblocks.io](https://liveblocks.io/dashboard)
 - Copy your **public** key from the [dashboard](https://liveblocks.io/dashboard/apikeys)
-- Replace `pk_YOUR_PUBLIC_KEY` in [`src/store.js`](./src/store.js) with your **public** key
-- Run `npm run start` and open `http://localhost:3000` in your browser
+- Create a`.env.local` file and add your **public** key as the
+  `NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY` environment variable
+- Run `npm run dev` and open `http://localhost:3000` in your browser
 
-</details>
-
-### Deploy on Vercel
+## Deploy on Vercel
 
 <details><summary>Read more</summary>
 
 <p></p>
 
-To both deploy on [Vercel](https://vercel.com), and run the example locally, use the following command:
+To both deploy on [Vercel](https://vercel.com), and run the example locally, use
+the following command:
 
 ```bash
 npx create-liveblocks-app@latest --example redux-whiteboard --vercel
 ```
 
-This will download the example and ask permission to open your browser, enabling you to deploy to Vercel. Next, you must:
+This will download the example and ask permission to open your browser, enabling
+you to deploy to Vercel. Next, you must:
 
 - Create an account on [liveblocks.io](https://liveblocks.io/dashboard)
-- Copy your **public** key from the [dashboard](https://liveblocks.io/dashboard/apikeys)
-- Replace `pk_YOUR_PUBLIC_KEY` in [`src/store.js`](./src/store.js) with your **public** key
-- Push a commit to update the Vercel demo with the key
+- Copy your **public** key from the
+  [dashboard](https://liveblocks.io/dashboard/apikeys)
+- Add your **public** key as the `NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY` environment
+  variable in the Vercel dashboard
 - Run `npm run start` and open `http://localhost:3000` in your browser
 
 </details>
@@ -85,7 +87,7 @@ This will download the example and ask permission to open your browser, enabling
 
 <p></p>
 
-After forking [this example](https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/redux-whiteboard) on CodeSandbox, create the `pk_YOUR_PUBLIC_KEY` environment variable as a [public](https://codesandbox.io/docs/secrets).
+After forking [this example](https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/redux-whiteboard) on CodeSandbox, create the `NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY` environment variable as a [public](https://codesandbox.io/docs/secrets).
 
 </details>
 

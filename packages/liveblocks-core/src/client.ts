@@ -78,6 +78,7 @@ export type AuthEndpoint =
 export type ClientOptions = {
   throttle?: number;
   polyfills?: Polyfills;
+  unstable_fallbackToHTTP?: boolean;
 
   /**
    * Backward-compatible way to set `polyfills.fetch`.
@@ -180,6 +181,11 @@ export function createClient(options: ClientOptions): Client {
         unstable_batchedUpdates: options?.unstable_batchedUpdates,
         liveblocksServer: getServerFromClientOptions(clientOptions),
         authentication: prepareAuthentication(clientOptions, roomId),
+        httpSendEndpoint: buildLiveblocksHttpSendEndpoint(
+          clientOptions,
+          roomId
+        ),
+        unstable_fallbackToHTTP: !!clientOptions.unstable_fallbackToHTTP,
       }
     );
 
@@ -201,7 +207,7 @@ export function createClient(options: ClientOptions): Client {
         global.atob = clientOptions.polyfills.atob;
       }
 
-      newRoom.__internal.connect();
+      newRoom.__internal.send.connect();
     }
 
     return newRoom;
@@ -213,7 +219,7 @@ export function createClient(options: ClientOptions): Client {
 
     const room = rooms.get(roomId);
     if (room !== undefined) {
-      room.__internal.disconnect();
+      room.__internal.send.disconnect();
       rooms.delete(roomId);
     }
   }
@@ -226,15 +232,17 @@ export function createClient(options: ClientOptions): Client {
     // TODO: Expose a way to clear these
     window.addEventListener("online", () => {
       for (const [, room] of rooms) {
-        room.__internal.onNavigatorOnline();
+        room.__internal.send.navigatorOnline();
       }
     });
   }
 
   if (typeof document !== "undefined") {
     document.addEventListener("visibilitychange", () => {
-      for (const [, room] of rooms) {
-        room.__internal.onVisibilityChange(document.visibilityState);
+      if (document.visibilityState === "visible") {
+        for (const [, room] of rooms) {
+          room.__internal.send.windowGotFocus();
+        }
       }
     });
   }
@@ -312,6 +320,20 @@ function prepareAuthentication(
   throw new Error(
     "Invalid Liveblocks client options. For more information: https://liveblocks.io/docs/api-reference/liveblocks-client#createClient"
   );
+}
+
+function buildLiveblocksHttpSendEndpoint(
+  options: ClientOptions & { httpSendEndpoint?: string | undefined },
+  roomId: string
+): string {
+  // INTERNAL override for testing purpose.
+  if (options.httpSendEndpoint) {
+    return options.httpSendEndpoint.replace("{roomId}", roomId);
+  }
+
+  return `https://api.liveblocks.io/v2/rooms/${encodeURIComponent(
+    roomId
+  )}/send-message`;
 }
 
 function buildLiveblocksPublicAuthorizeEndpoint(

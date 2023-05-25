@@ -1,3 +1,4 @@
+import type { IWebSocketCloseEvent } from "@liveblocks/core";
 import { LiveList } from "@liveblocks/client";
 import { createRoomContext } from "@liveblocks/react";
 import React, { useState } from "react";
@@ -9,12 +10,10 @@ const { RoomProvider, useList, useRedo, useSelf, useUndo, useRoom } =
   createRoomContext<never, { items: LiveList<string> }>(client);
 
 type Internal = {
-  simulateCloseWebsocket(): void;
-  simulateSendCloseEvent(event: {
-    code: number;
-    wasClean: boolean;
-    reason: string;
-  }): void;
+  send: {
+    explicitClose(event: IWebSocketCloseEvent): void;
+    implicitClose(): void;
+  };
 };
 
 export default function Home() {
@@ -51,7 +50,7 @@ function generateRandomNumber(max: number, ignore?: number) {
 function Sandbox() {
   const [status, setStatus] = useState("connected");
   const room = useRoom();
-  const internals = (room as any).__internal as Internal;
+  const internals = (room as Record<string, unknown>).__internal as Internal;
   const list = useList("items");
   const me = useSelf();
   const undo = useUndo();
@@ -82,7 +81,7 @@ function Sandbox() {
       <button
         id="closeWebsocket"
         onClick={() => {
-          internals.simulateCloseWebsocket();
+          internals.send.implicitClose();
           setStatus("offline");
         }}
       >
@@ -90,25 +89,29 @@ function Sandbox() {
       </button>
       <button
         id="sendCloseEventConnectionError"
-        onClick={() => {
-          internals.simulateSendCloseEvent({
-            reason: "Fake connection error",
-            code: 1005,
-            wasClean: true,
-          });
-        }}
+        onClick={() =>
+          internals.send.explicitClose(
+            new CloseEvent("close", {
+              reason: "Fake connection error",
+              code: 1005,
+              wasClean: true,
+            })
+          )
+        }
       >
         Send close event (connection)
       </button>
       <button
         id="sendCloseEventAppError"
-        onClick={() => {
-          internals.simulateSendCloseEvent({
-            reason: "App error",
-            code: 4002,
-            wasClean: true,
-          });
-        }}
+        onClick={() =>
+          internals.send.explicitClose(
+            new CloseEvent("close", {
+              reason: "App error",
+              code: 4002,
+              wasClean: true,
+            })
+          )
+        }
       >
         Send close event (app)
       </button>

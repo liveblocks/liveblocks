@@ -28,10 +28,19 @@ describe("isTokenExpired", () => {
     expect(isTokenExpired(expiredToken)).toBe(true);
   });
 
-  test("future token is invalid", () => {
+  test("near-future token is valid", () => {
     const futureToken: JwtMetadata = {
-      iat: (Date.now() + 15 * MINUTES) / 1000,
+      iat: (Date.now() + 4 * MINUTES) / 1000,
       exp: (Date.now() + 1 * DAYS) / 1000,
+    };
+
+    expect(isTokenExpired(futureToken)).toBe(false);
+  });
+
+  test("far-future token is invalid", () => {
+    const futureToken: JwtMetadata = {
+      iat: (Date.now() + 90 * DAYS) / 1000,
+      exp: (Date.now() + 91 * DAYS) / 1000,
     };
 
     expect(isTokenExpired(futureToken)).toBe(true);
@@ -46,8 +55,8 @@ describe("parseRoomAuthToken", () => {
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2MTY3MjM2NjcsImV4cCI6MTYxNjcyNzI2NywiYXBwSWQiOiI2MDVhNGZkMzFhMzZkNWVhN2EyZTA5MTQiLCJzY29wZXMiOlsicm9vbTpyZWFkIiwicm9vbTp3cml0ZSJdfQ.7Wplt6YV_YbpPAcAFyC8pX8tk5BGNy53GdoH1_u8sjo";
 
   test("should parse a valid token", () => {
-    const parsedToken = parseRoomAuthToken(roomToken);
-    expect(parsedToken).toEqual({
+    const { parsed } = parseRoomAuthToken(roomToken);
+    expect(parsed).toEqual({
       actor: 87,
       appId: "605a4fd31a36d5ea7a2e08f1",
       exp: 1664570010,

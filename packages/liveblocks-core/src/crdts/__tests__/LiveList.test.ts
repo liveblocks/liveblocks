@@ -378,7 +378,7 @@ describe("LiveList", () => {
     });
 
     it("delete should remove descendants", async () => {
-      const { storage, expectStorage, assertUndoRedo, getItemsCount } =
+      const { room, storage, expectStorage, assertUndoRedo } =
         await prepareStorageTest<{
           items: LiveList<LiveObject<{ child: LiveObject<{ a: number }> }>>;
         }>([
@@ -399,7 +399,7 @@ describe("LiveList", () => {
       });
 
       // Ensure that LiveStructure are deleted properly
-      expect(getItemsCount()).toBe(2);
+      expect(room.__internal.nodeCount).toBe(2);
 
       assertUndoRedo();
     });
@@ -612,7 +612,7 @@ describe("LiveList", () => {
 
   describe("batch", () => {
     it("batch multiple inserts", async () => {
-      const { storage, expectStorage, assertUndoRedo, batch } =
+      const { room, storage, expectStorage, assertUndoRedo } =
         await prepareStorageTest<{
           items: LiveList<string>;
         }>(
@@ -627,7 +627,7 @@ describe("LiveList", () => {
 
       expectStorage({ items: [] });
 
-      batch(() => {
+      room.batch(() => {
         items.push("A");
         items.push("B");
       });
@@ -854,7 +854,7 @@ describe("LiveList", () => {
           1
         );
 
-      room.__internal.onClose(
+      room.__internal.send.explicitClose(
         new CloseEvent("close", {
           code: WebsocketCloseCodes.CLOSE_ABNORMAL,
           wasClean: false,
@@ -904,7 +904,7 @@ describe("LiveList", () => {
           1
         );
 
-      room.__internal.onClose(
+      room.__internal.send.explicitClose(
         new CloseEvent("close", {
           code: WebsocketCloseCodes.CLOSE_ABNORMAL,
           wasClean: false,
@@ -1132,7 +1132,7 @@ describe("LiveList", () => {
 
   describe("subscriptions", () => {
     test("batch multiple actions", async () => {
-      const { room, storage, batch, expectStorage } = await prepareStorageTest<{
+      const { room, storage, expectStorage } = await prepareStorageTest<{
         items: LiveList<string>;
       }>(
         [
@@ -1149,7 +1149,7 @@ describe("LiveList", () => {
       const root = storage.root;
       const liveList = root.get("items");
 
-      batch(() => {
+      room.batch(() => {
         liveList.push("b");
         liveList.push("c");
       });
@@ -1170,7 +1170,7 @@ describe("LiveList", () => {
     });
 
     test("batch multiple inserts", async () => {
-      const { room, storage, batch, expectStorage } = await prepareStorageTest<{
+      const { room, storage, expectStorage } = await prepareStorageTest<{
         items: LiveList<string>;
       }>(
         [
@@ -1187,7 +1187,7 @@ describe("LiveList", () => {
       const root = storage.root;
       const liveList = root.get("items");
 
-      batch(() => {
+      room.batch(() => {
         liveList.insert("b", 1);
         liveList.insert("c", 2);
       });
@@ -1223,7 +1223,7 @@ describe("LiveList", () => {
 
       expectStorage({ items: ["a"] });
 
-      room.__internal.onClose(
+      room.__internal.send.explicitClose(
         new CloseEvent("close", {
           code: WebsocketCloseCodes.CLOSE_ABNORMAL,
           wasClean: false,
@@ -1311,7 +1311,7 @@ describe("LiveList", () => {
 
       expectStorage({ items: ["a", "b"] });
 
-      room.__internal.onClose(
+      room.__internal.send.explicitClose(
         new CloseEvent("close", {
           code: WebsocketCloseCodes.CLOSE_ABNORMAL,
           wasClean: false,
@@ -1387,7 +1387,7 @@ describe("LiveList", () => {
 
       expectStorage({ items: ["a", "b"] });
 
-      room.__internal.onClose(
+      room.__internal.send.explicitClose(
         new CloseEvent("close", {
           code: WebsocketCloseCodes.CLOSE_ABNORMAL,
           wasClean: false,
