@@ -36,6 +36,8 @@ export {
   patchLiveObjectKey,
 } from "./immutable";
 export { assert, assertNever, nn } from "./lib/assert";
+export type { AsyncCache, AsyncState } from "./lib/AsyncCache";
+export { createAsyncCache } from "./lib/AsyncCache";
 export {
   deprecate,
   deprecateIf,

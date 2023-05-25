@@ -21,7 +21,8 @@ import {
 import * as React from "react";
 import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector";
 
-import { useInitial, useRerender } from "./hooks";
+import { useInitial } from "./lib/use-initial";
+import { useRerender } from "./lib/use-rerender";
 import type {
   MutationContext,
   OmitFirstArg,

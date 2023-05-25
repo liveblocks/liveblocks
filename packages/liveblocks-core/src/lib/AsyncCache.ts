@@ -42,7 +42,7 @@ type AsyncCacheItemContext<TData, TError> = AsyncState<TData, TError> & {
   rollbackOptimisticDataOnError?: boolean;
   promise?: Promise<TData>;
   lastInvokedAt?: number;
-  previousState: AsyncState<TData, TError>;
+  lastState: AsyncState<TData, TError>;
   previousNonOptimisticData?: TData;
 };
 
@@ -58,6 +58,15 @@ export type AsyncCacheItem<TData = any, TError = any> = Observable<
 };
 
 export type AsyncCache<TData = any, TError = any> = {
+  /**
+   * @private
+   *
+   * Creates a key.
+   *
+   * @param key The key to create.
+   */
+  create(key: string): AsyncCacheItem<TData, TError>;
+
   /**
    * Returns a promise which resolves with the state of the key.
    *
@@ -120,6 +129,7 @@ export type AsyncCache<TData = any, TError = any> = {
 
 const noop = () => {};
 
+// TODO: invalidate() with optimistic data will not be counted as a different state
 export function isDifferentState(a: AsyncState, b: AsyncState): boolean {
   // This might not be true, `data` and `error` would have to be
   // deeply compared to know that. But in our use-case, `data` and
@@ -140,16 +150,21 @@ function createCacheItem<TData = any, TError = any>(
   const context: AsyncCacheItemContext<TData, TError> = {
     isLoading: false,
     isInvalid: true,
-    previousState: { isLoading: false },
+    lastState: { isLoading: false },
   };
   const eventSource = makeEventSource<AsyncState<TData, TError>>();
 
   function notify() {
-    const state = getState();
+    const state: AsyncState<TData, TError> = {
+      isLoading: context.isLoading,
+      data: context.data,
+      error: context.error,
+    };
 
-    // We only notify subscribers if the cache has changed.
-    if (isDifferentState(context.previousState, state)) {
-      context.previousState = state;
+    // If the cache has changed, we notify
+    // subscribers and update the cache.
+    if (isDifferentState(context.lastState, state)) {
+      context.lastState = state;
       eventSource.notify(state);
     }
   }
@@ -259,11 +274,7 @@ function createCacheItem<TData = any, TError = any>(
   }
 
   function getState() {
-    return {
-      isLoading: context.isLoading,
-      data: context.data,
-      error: context.error,
-    } as AsyncState<TData, TError>;
+    return context.lastState;
   }
 
   return {
@@ -334,6 +345,7 @@ export function createAsyncCache<TData = any, TError = any>(
   }
 
   return {
+    create,
     get,
     getState,
     invalidate,
