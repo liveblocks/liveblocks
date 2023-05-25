@@ -1,4 +1,4 @@
-import { createClient } from "@liveblocks/client";
+import { createClient, type Room } from "@liveblocks/client";
 
 export const client = createClient({
   publicApiKey: import.meta.env.VITE_LIVEBLOCKS_PUBLIC_KEY,
@@ -37,59 +37,4 @@ type RoomEvent = {
   // ...
 };
 
-export type Room = ReturnType<typeof client.enter<Presence, Storage, UserMeta, RoomEvent>>;
-
-// TODO consideration
-
-// Needs string: true
-// client.enter = client.enter<Presence, Storage, UserMeta, RoomEvent>
-
-
-/*
-// Export typed enter room function
-export const enterRoom = (...args: Parameters<typeof client.enter<
-  Presence,
-  Storage,
-  UserMeta,
-  RoomEvent
->>) => {
-  return client.enter<
-    Presence,
-    Storage,
-    UserMeta,
-    RoomEvent
-  >(...args);
-};
-
-// Export leave room function
-export const leaveRoom = (...args: Parameters<typeof client.leave>) =>
-  client.leave(...args);
-
-// Export Room type
-export type Room = ReturnType<typeof enterRoom>;
- */
-
-
-/*
-// Needs strict: true
-
-// Add types to client.enter
-const enterRoomWithContext = client.enter<
-  Presence,
-  Storage,
-  UserMeta,
-  RoomEvent
->;
-
-// Export typed enter room function
-export const enterRoom = (...args: Parameters<typeof enterRoomWithContext>) => {
-  return enterRoomWithContext(...args);
-};
-
-// Export leave room function
-export const leaveRoom = (...args: Parameters<typeof client.leave>) =>
-  client.leave(...args);
-
-// Export Room type
-export type Room = ReturnType<typeof enterRoom>;
- */
+export type TypedRoom = Room<Presence, Storage, UserMeta, RoomEvent>;

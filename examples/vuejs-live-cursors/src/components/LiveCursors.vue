@@ -1,13 +1,11 @@
 <script lang="ts" setup>
 import { onUnmounted, ref } from "vue";
 import Cursor from "@/components/Cursor.vue";
-import type { Room } from "../../liveblocks.config";
+import type { TypedRoom } from "@/liveblocks.config";
 
-interface Props {
-  room: Room;
-}
-
-const { room } = defineProps<Props>();
+const { room } = defineProps<{
+  room: TypedRoom;
+}>();
 
 // Get initial values for presence and others
 const myPresence = ref(room.getPresence());

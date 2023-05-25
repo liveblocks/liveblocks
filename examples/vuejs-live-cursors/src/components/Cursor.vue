@@ -1,11 +1,9 @@
 <script lang="ts" setup>
-interface Props {
+const { color, x, y } = defineProps<{
   color: string;
   x: number;
   y: number;
-}
-
-const props = defineProps<Props>();
+}>();
 </script>
 
 <template>
