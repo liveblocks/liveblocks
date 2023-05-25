@@ -323,12 +323,18 @@ export class MockWebSocket {
     }
   }
 
+  /**
+   * Send a message from the client to the WebSocket server.
+   */
   public send(message: string) {
     if (this.readyState === this.OPEN) {
       this.server.receivedMessages.push(message);
     }
   }
 
+  /**
+   * Close the socket from the client side.
+   */
   public close(_code?: number, _reason?: string): void {
     this.#readyState = this.CLOSED;
   }
