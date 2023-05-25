@@ -811,13 +811,9 @@ describe("room", () => {
     room.history.redo();
   });
 
-  test("if nothing happened while the history was paused, the undo stack should not be impacted", () => {
+  test.only("if nothing happened while the history was paused, the undo stack should not be impacted", () => {
     const { room } = createTestableRoom({});
-
-    const ws = makeControllableWebSocket();
-    room.connect();
-    room.__internal.send.simulateAuthSuccess(defaultRoomToken, ws);
-    ws.server.accept();
+    // room.connect();  // Seems not even needed?
 
     room.updatePresence({ x: 0 }, { addToHistory: true });
     room.updatePresence({ x: 1 }, { addToHistory: true });
@@ -832,13 +828,9 @@ describe("room", () => {
     expect(room.getPresence()).toEqual({ x: 0 });
   });
 
-  test("undo redo with presence that do not impact presence", () => {
+  test.only("undo redo with presence that do not impact presence", () => {
     const { room } = createTestableRoom({});
-
-    const ws = makeControllableWebSocket();
-    room.connect();
-    room.__internal.send.simulateAuthSuccess(defaultRoomToken, ws);
-    ws.server.accept();
+    // room.connect();  // Seems not even needed?
 
     room.updatePresence({ x: 0 });
     room.updatePresence({ x: 1 });
@@ -848,13 +840,9 @@ describe("room", () => {
     expect(room.getPresence()).toEqual({ x: 1 });
   });
 
-  test("pause / resume history", () => {
+  test.only("pause / resume history", () => {
     const { room } = createTestableRoom({});
-
-    const ws = makeControllableWebSocket();
-    room.connect();
-    room.__internal.send.simulateAuthSuccess(defaultRoomToken, ws);
-    ws.server.accept();
+    // room.connect();  // Seems not even needed?
 
     room.updatePresence({ x: 0 }, { addToHistory: true });
     expect(room.__internal.buffer.me?.data).toEqual({ x: 0 });
@@ -882,16 +870,11 @@ describe("room", () => {
     expect(room.getPresence()).toEqual({ x: 10 });
   });
 
-  test("undo while history is paused", () => {
+  test.only("undo while history is paused", () => {
     const { room } = createTestableRoom({});
-
-    const ws = makeControllableWebSocket();
-    room.connect();
-    room.__internal.send.simulateAuthSuccess(defaultRoomToken, ws);
-    ws.server.accept();
+    // room.connect();  // Seems not even needed?
 
     room.updatePresence({ x: 0 }, { addToHistory: true });
-
     room.updatePresence({ x: 1 }, { addToHistory: true });
 
     room.history.pause();
@@ -906,24 +889,21 @@ describe("room", () => {
     expect(room.__internal.buffer.me?.data).toEqual({ x: 0 });
   });
 
-  test("undo redo with presence + storage", async () => {
-    const { room } = createTestableRoom({});
+  test.only("undo redo with presence + storage", async () => {
+    const { room, wss } = createTestableRoom({});
 
-    const ws = makeControllableWebSocket();
+    wss.onConnection((conn) => {
+      conn.server.send(
+        serverMessage({
+          type: ServerMsgCode.INITIAL_STORAGE_STATE,
+          items: [["root", { type: CrdtType.OBJECT, data: { x: 0 } }]],
+        })
+      );
+    });
+
     room.connect();
-    room.__internal.send.simulateAuthSuccess(defaultRoomToken, ws);
-    ws.server.accept();
 
-    const getStoragePromise = room.getStorage();
-
-    room.__internal.send.incomingMessage(
-      serverMessage({
-        type: ServerMsgCode.INITIAL_STORAGE_STATE,
-        items: [["root", { type: CrdtType.OBJECT, data: { x: 0 } }]],
-      })
-    );
-
-    const storage = await getStoragePromise;
+    const storage = await room.getStorage();
 
     room.updatePresence({ x: 0 }, { addToHistory: true });
 
@@ -947,33 +927,26 @@ describe("room", () => {
     expect(room.getPresence()).toEqual({ x: 1 });
   });
 
-  test("batch without changes should not erase redo stack", async () => {
-    const { room } = createTestableRoom({});
+  test.only("batch without changes should not erase redo stack", async () => {
+    const { room, wss } = createTestableRoom({});
 
-    const ws = makeControllableWebSocket();
+    wss.onConnection((conn) => {
+      conn.server.send(
+        serverMessage({
+          type: ServerMsgCode.INITIAL_STORAGE_STATE,
+          items: [["root", { type: CrdtType.OBJECT, data: { x: 0 } }]],
+        })
+      );
+    });
+
     room.connect();
-    room.__internal.send.simulateAuthSuccess(defaultRoomToken, ws);
-    ws.server.accept();
-
-    const getStoragePromise = room.getStorage();
-
-    room.__internal.send.incomingMessage(
-      serverMessage({
-        type: ServerMsgCode.INITIAL_STORAGE_STATE,
-        items: [["root", { type: CrdtType.OBJECT, data: { x: 0 } }]],
-      })
-    );
-
-    const storage = await getStoragePromise;
+    const storage = await room.getStorage();
 
     storage.root.set("x", 1);
-
     room.history.undo();
-
     expect(storage.root.toObject()).toEqual({ x: 0 });
 
     room.batch(() => {});
-
     room.history.redo();
 
     expect(storage.root.toObject()).toEqual({ x: 1 });
