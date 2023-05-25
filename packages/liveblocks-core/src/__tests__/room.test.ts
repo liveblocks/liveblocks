@@ -781,24 +781,20 @@ describe("room", () => {
     ]);
   });
 
-  test("if presence is not added to history during a batch, it should not impact the undo/stack", async () => {
-    const { room } = createTestableRoom({});
+  test.only("if presence is not added to history during a batch, it should not impact the undo/stack", async () => {
+    const { room, wss } = createTestableRoom({});
 
-    const ws = makeControllableWebSocket();
+    wss.onConnection((conn) => {
+      conn.server.send(
+        serverMessage({
+          type: ServerMsgCode.INITIAL_STORAGE_STATE,
+          items: [["root", { type: CrdtType.OBJECT, data: { x: 0 } }]],
+        })
+      );
+    });
+
     room.connect();
-    room.__internal.send.simulateAuthSuccess(defaultRoomToken, ws);
-    ws.server.accept();
-
-    const getStoragePromise = room.getStorage();
-
-    room.__internal.send.incomingMessage(
-      serverMessage({
-        type: ServerMsgCode.INITIAL_STORAGE_STATE,
-        items: [["root", { type: CrdtType.OBJECT, data: { x: 0 } }]],
-      })
-    );
-
-    const storage = await getStoragePromise;
+    const storage = await room.getStorage();
 
     room.updatePresence({ x: 0 });
 
