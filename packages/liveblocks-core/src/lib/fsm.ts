@@ -44,14 +44,17 @@ export type TargetFn<
 > = (
   event: TEvent,
   context: Readonly<TContext>
-) => TState | TargetConfig<TContext, TEvent, TState> | null;
+) => TState | TargetObject<TContext, TEvent, TState> | null;
 
 export type Effect<TContext, TEvent extends BaseEvent> = (
   context: Patchable<TContext>,
   event: TEvent
 ) => void;
 
-export type TargetConfig<
+/**
+ * "Expanded" object form to specify a target state with.
+ */
+export type TargetObject<
   TContext extends object,
   TEvent extends BaseEvent,
   TState extends string
@@ -71,7 +74,7 @@ export type Target<
   TState extends string
 > =
   | TState // Static, e.g. 'complete'
-  | TargetConfig<TContext, TEvent, TState>
+  | TargetObject<TContext, TEvent, TState>
   | TargetFn<TContext, TEvent, TState>; // Dynamic, e.g. (context) => context.x ? 'complete' : 'other'
 
 type Groups<T extends string> = T extends `${infer G}.${infer Rest}`
@@ -469,19 +472,21 @@ export class FSM<
         this.allowedTransitions.set(srcState, map);
       }
 
-      for (const [type, targetConfig_] of Object.entries(mapping)) {
-        const targetConfig = targetConfig_ as
+      for (const [type, target_] of Object.entries(mapping)) {
+        if (map.has(type)) {
+          throw new Error(
+            `Trying to set transition "${type}" on "${srcState}" (via "${nameOrPattern}"), but a transition already exists there.`
+          );
+        }
+
+        const target = target_ as
           | Target<TContext, TEvent, TState>
           | null
           | undefined;
         this.knownEventTypes.add(type);
 
-        if (targetConfig !== undefined && targetConfig !== null) {
-          // TODO Disallow overwriting when using a wildcard pattern!
-          const targetFn =
-            typeof targetConfig === "function"
-              ? targetConfig
-              : () => targetConfig;
+        if (target !== undefined) {
+          const targetFn = typeof target === "function" ? target : () => target;
           map.set(type, targetFn);
         }
       }
