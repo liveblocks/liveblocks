@@ -1,11 +1,22 @@
 {% DEFAULT_STYLES %}
 
-div {
-  font-family: monospace;
-  white-space: pre;
+form, li {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  margin: 0;
 }
 
 input {
   display: block;
-  margin-top: 10px;
+  margin-top: 0;
+}
+
+ul {
+  list-style-type: none;
+}
+
+li {
+  justify-content: start;
 }
