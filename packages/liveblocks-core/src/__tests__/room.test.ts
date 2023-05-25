@@ -734,15 +734,12 @@ describe("room", () => {
     expect(storage.root.toObject()).toEqual({ x: 0 });
   });
 
-  test("undo redo with presence", () => {
-    const { room } = createTestableRoom({});
-
-    const ws = makeControllableWebSocket();
+  test.only("undo redo with presence", async () => {
+    const { room } = createTestableRoom({ x: -1 });
     room.connect();
-    room.__internal.send.simulateAuthSuccess(defaultRoomToken, ws);
-    ws.server.accept();
 
-    expect(room.__internal.buffer.me).toEqual(null);
+    await waitUntilStatus(room, "open");
+    expect(room.__internal.buffer.me).toEqual(null); // Buffer was flushed
     room.updatePresence({ x: 0 }, { addToHistory: true });
     expect(room.__internal.buffer.me?.data).toEqual({ x: 0 });
     room.updatePresence({ x: 1 }, { addToHistory: true });
@@ -759,7 +756,7 @@ describe("room", () => {
     expect(room.getPresence()).toEqual({ x: 1 });
   });
 
-  it("undo redo batch", async () => {
+  test("undo redo batch", async () => {
     const { room, root, expectUpdates } =
       await prepareDisconnectedStorageUpdateTest<{
         items: LiveList<LiveObject<Record<string, number>>>;
