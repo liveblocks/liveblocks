@@ -547,15 +547,38 @@ export async function prepareStorageTest<
   }
 
   function assertUndoRedo() {
+    // this is what the last undo item looked like before we undo
+    const before = JSON.parse(
+      JSON.stringify(
+        room.__internal.undoStack[room.__internal.undoStack.length - 1]
+      ) //,
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+      //(key, value) => (key === "opId" ? undefined : value)
+    );
+
+    // this will undo the whole stack
     for (let i = 0; i < states.length - 1; i++) {
       room.history.undo();
       expectBothClientStoragesToEqual(states[states.length - 2 - i]);
     }
 
+    // this will redo the whole stack
     for (let i = 0; i < states.length - 1; i++) {
       room.history.redo();
       expectBothClientStoragesToEqual(states[i + 1]);
     }
+
+    // this is what the last undo item looks like after redoing everything
+    const after = JSON.parse(
+      JSON.stringify(
+        room.__internal.undoStack[room.__internal.undoStack.length - 1]
+      ) //,
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+      //(key, value) => (key === "opId" ? undefined : value)
+    );
+
+    // It should be identical before/after
+    expect(before).toEqual(after);
 
     for (let i = 0; i < states.length - 1; i++) {
       room.history.undo();
