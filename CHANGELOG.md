@@ -1,4 +1,4 @@
-# vNEXT (not released yet)
+# v1.0.11
 
 ### `@liveblocks/core`
 
