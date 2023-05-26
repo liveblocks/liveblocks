@@ -1,13 +1,27 @@
 <script lang="ts" setup>
 import { client, type TypedRoom } from "@/liveblocks.config";
 import { onUnmounted } from "vue";
-import LiveCursors from "@/components/LiveCursors.vue";
+import LiveAvatars from "@/components/LiveAvatars.vue";
+
+const NAMES = [
+  "Charlie Layne",
+  "Mislav Abha",
+  "Tatum Paolo",
+  "Anjali Wanda",
+  "Jody Hekla",
+  "Emil Joyce",
+  "Jory Quispe",
+  "Quinn Elton",
+];
 
 const initialPresence = {
-  cursor: null,
+  name: NAMES[Math.floor(Math.random() * NAMES.length)],
+  picture: `https://liveblocks.io/avatars/avatar-${Math.floor(
+    Math.random() * 30,
+  )}.png`,
 };
 
-let roomId = "vuejs-live-cursors";
+let roomId = "vuejs-live-avatars";
 overrideRoomId();
 
 // Join a room
@@ -33,6 +47,6 @@ function overrideRoomId() {
 </script>
 
 <template>
-  <LiveCursors :room="room" />
+  <LiveAvatars :room="room" />
 </template>
 

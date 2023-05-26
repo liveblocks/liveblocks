@@ -7,28 +7,29 @@
   </a>
 </p>
 
-# Live Cursors
+# Live Avatar Stack
 
 <p>
-  <a href="https://liveblocks.io/examples/live-cursors/vuejs/preview">
+  <a href="https://liveblocks.io/examples/live-avatars/vuejs/preview">
     <img src="https://img.shields.io/badge/live%20preview-message?style=flat&logo=data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgMjQgMjQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTE2Ljg0OSA0Ljc1SDBsNC44NDggNS4wNzV2Ny4wMDhsMTItMTIuMDgzWk03LjE1IDE5LjI1SDI0bC00Ljg0OS01LjA3NVY3LjE2N2wtMTIgMTIuMDgzWiIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==&color=333" alt="Live Preview" />
   </a>
-  <a href="https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/vuejs-live-cursors">
+  <a href="https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/vuejs-live-avatars">
     <img src="https://img.shields.io/badge/open%20in%20codesandbox-message?style=flat&logo=codesandbox&color=333&logoColor=fff" alt="Open in CodeSandbox" />
   </a>
   <img src="https://img.shields.io/badge/vue.js-message?style=flat&logo=vue.js&color=3b7&logoColor=fff" alt="Vue" />
 </p>
 
-This example shows how to build live cursors with [Liveblocks](https://liveblocks.io) and [Vue](https://vuejs.org/).
+This example shows how to build a live avatar stack with [Liveblocks](https://liveblocks.io)
+and [Vue](https://vuejs.org/).
 
-<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/live-cursors.png" width="536" alt="Live Cursors" />
+<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/live-avatars.png" width="536" alt="Live Avatar Stack" />
 
 ## Getting started
 
 Run the following command to try this example locally:
 
 ```bash
-npx create-liveblocks-app@latest --example vuejs-live-cursors --api-key
+npx create-liveblocks-app@latest --example vuejs-live-avatars --api-key
 ```
 
 This will download the example and ask permission to open your browser, enabling
@@ -63,7 +64,7 @@ To both deploy on [Vercel](https://vercel.com), and run the example locally, use
 the following command:
 
 ```bash
-npx create-liveblocks-app@latest --example vuejs-live-cursors --vercel
+npx create-liveblocks-app@latest --example vuejs-live-avatars --vercel
 ```
 
 This will download the example and ask permission to open your browser, enabling
@@ -78,7 +79,7 @@ you to deploy to Vercel.
 <p></p>
 
 After forking
-[this example](https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/vuejs-live-cursors)
+[this example](https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/vuejs-live-avatars)
 on CodeSandbox, create the `VITE_LIVEBLOCKS_PUBLIC_KEY` environment
 variable as a [secret](https://codesandbox.io/docs/secrets).
 
