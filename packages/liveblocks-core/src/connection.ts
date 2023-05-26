@@ -595,6 +595,10 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
             target: "@connecting.busy",
             effect: [
               increaseBackoffDelayAggressively,
+              (ctx) =>
+                console.warn(
+                  `Connection to Liveblocks websocket server closed (code: ${e.event.code}). Retrying in ${ctx.backoffDelay}ms.`
+                ),
               (_, { event }) => {
                 if (event.code >= 4000 && event.code <= 4100) {
                   const err = new LiveblocksError(event.reason, event.code);
@@ -609,7 +613,13 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
         // a new socket
         return {
           target: "@connecting.busy",
-          effect: increaseBackoffDelay,
+          effect: [
+            increaseBackoffDelay,
+            (ctx) =>
+              console.warn(
+                `Connection to Liveblocks websocket server closed (code: ${e.event.code}). Retrying in ${ctx.backoffDelay}ms.`
+              ),
+          ],
         };
       },
     });
