@@ -112,6 +112,10 @@ export class MockWebSocketServer {
   public connections: Map<MockWebSocket, Emitters> = new Map();
   public receivedMessages: string[] = [];
 
+  /**
+   * The server socket of the last connection that has been established to the
+   * server.
+   */
   get last(): ServerSocket {
     if (this.current === undefined) {
       throw new Error("No socket instantiated yet");
