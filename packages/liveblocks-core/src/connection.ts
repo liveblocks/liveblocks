@@ -223,7 +223,7 @@ function enableTracing(machine: FSM<Context, Event, State>) {
       log("Transitioning", from, "→", to);
     }),
     machine.events.didIgnoreEvent.subscribe((e) => {
-      log("Ignored event", e, "(current state won't handle it)");
+      log("Ignored event", e.type, e, "(current state won't handle it)");
     }),
     // machine.events.willExitState.subscribe((s) => {
     //   log("Exiting state", s);
