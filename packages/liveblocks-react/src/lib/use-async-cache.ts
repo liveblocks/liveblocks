@@ -2,6 +2,8 @@ import type { AsyncCache, AsyncState } from "@liveblocks/core";
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useSyncExternalStore } from "use-sync-external-store/shim";
 
+import { useInitial } from "./use-initial";
+
 const DEFAULT_ASYNC_STATE: AsyncState = {
   isLoading: false,
   data: undefined,
@@ -10,6 +12,7 @@ const DEFAULT_ASYNC_STATE: AsyncState = {
 
 export type UseAsyncCacheOptions = {
   keepPreviousDataWhileLoading?: boolean;
+  suspense?: boolean;
 };
 
 type PreviousData<TData> = {
@@ -19,11 +22,13 @@ type PreviousData<TData> = {
 
 const noop = () => {};
 
+// TODO: If suspense:true, update the returned AsyncState type to never be loading
 export function useAsyncCache<TData = any, TError = any>(
   cache: AsyncCache<TData, TError>,
   key: string | null,
   options?: UseAsyncCacheOptions
 ) {
+  const frozenOptions = useInitial(options);
   const cacheItem = useMemo(() => {
     if (key === null) {
       return null;
@@ -53,9 +58,15 @@ export function useAsyncCache<TData = any, TError = any>(
     previousData.current = { key, data: state.data };
   }, [key, state]);
 
+  if (frozenOptions?.suspense && state.isLoading && cacheItem) {
+    throw new Promise<void>((resolve) => {
+      cacheItem.subscribeOnce(() => resolve());
+    });
+  }
+
   if (
     state.isLoading &&
-    options?.keepPreviousDataWhileLoading &&
+    frozenOptions?.keepPreviousDataWhileLoading &&
     typeof state.data === "undefined" &&
     previousData.current?.key !== key &&
     typeof previousData.current?.data !== "undefined"

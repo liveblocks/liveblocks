@@ -1,8 +1,10 @@
+import "@testing-library/jest-dom";
+
 import type { AsyncState } from "@liveblocks/core";
 import { createAsyncCache } from "@liveblocks/core";
 import type { RenderHookResult } from "@testing-library/react";
-import { act, renderHook, waitFor } from "@testing-library/react";
-import React from "react";
+import { act, render, renderHook, waitFor } from "@testing-library/react";
+import React, { Suspense } from "react";
 import { hydrateRoot } from "react-dom/client";
 import { renderToString } from "react-dom/server";
 
@@ -13,6 +15,8 @@ const REQUEST_DELAY = 20;
 const KEY_ABC = "abc";
 const KEY_XYZ = "xyz";
 const ERROR = new Error("error");
+const CONTAINER_ID = "container";
+const SUSPENSE_FALLBACK = "…";
 
 type RenderHookProps = {
   key: string | null;
@@ -373,6 +377,36 @@ describe("useAsyncCache", () => {
     expect(mock).toHaveBeenCalledTimes(2);
   });
 
+  test("suspending during loading", async () => {
+    const mock = createAsyncMock();
+    const cache = createAsyncCache(mock, { deduplicationInterval: 0 });
+
+    function Component() {
+      const { data } = useAsyncCache(cache, KEY_ABC, { suspense: true });
+
+      return <>{data ?? null}</>;
+    }
+
+    // 🚀 Called
+    const { getByTestId } = render(
+      <div data-testid={CONTAINER_ID}>
+        <Suspense fallback={SUSPENSE_FALLBACK}>
+          <Component />
+        </Suspense>
+      </div>
+    );
+
+    // 🔜 Suspends isntead of returning a loading state
+    expect(getByTestId(CONTAINER_ID).innerHTML).toEqual(SUSPENSE_FALLBACK);
+
+    await waitFor(() =>
+      expect(getByTestId(CONTAINER_ID).innerHTML).toEqual(KEY_ABC)
+    );
+
+    // ✅ Returns a success state
+    expect(getByTestId(CONTAINER_ID).innerHTML).toEqual(KEY_ABC);
+  });
+
   test("switching keys", async () => {
     const mock = createAsyncMock();
     const cache = createAsyncCache(mock, { deduplicationInterval: 0 });
@@ -587,41 +621,18 @@ describe("useAsyncCache", () => {
     expect(third.renderCount()).toEqual(2);
   });
 
-  test("sharing keys between vanilla and React", async () => {
-    const mock = createAsyncMock();
-    const cache = createAsyncCache(mock, { deduplicationInterval: 0 });
-
-    const { result } = renderHook(() => useAsyncCache(cache, KEY_ABC));
-
-    await waitFor(() => {
-      expect(result.current.isLoading).toBe(false);
-    });
-
-    expect(result.current).toMatchObject<AsyncState<string>>({
-      isLoading: false,
-      data: KEY_ABC,
-      error: undefined,
-    });
-
-    act(() => cache.invalidate(KEY_ABC));
-
-    expect(result.current).toMatchObject<AsyncState<string>>({
-      isLoading: false,
-      data: undefined,
-      error: undefined,
-    });
-  });
-
   test("rendering server-side and hydrating should match", () => {
     const mock = createAsyncMock();
     const cache = createAsyncCache(mock, { deduplicationInterval: 0 });
 
+    // 🌍 Both hooks are rendered server-side
     const empty = renderHookServer(() => useAsyncCache(cache, null));
     const abc = renderHookServer(() => useAsyncCache(cache, KEY_ABC));
 
     const emptyServer = empty.result.current;
     const abcServer = abc.result.current;
 
+    // 🖥️ Both hooks are hydrated on the client
     empty.hydrate();
     abc.hydrate();
 
@@ -635,5 +646,34 @@ describe("useAsyncCache", () => {
     expect(abcServer.isLoading).toEqual(abcClient.isLoading);
     expect(abcServer.data).toEqual(abcClient.data);
     expect(abcServer.error).toEqual(abcClient.error);
+  });
+
+  test("sharing keys between vanilla and React", async () => {
+    const mock = createAsyncMock();
+    const cache = createAsyncCache(mock, { deduplicationInterval: 0 });
+
+    // 🚀 Called
+    const { result } = renderHook(() => useAsyncCache(cache, KEY_ABC));
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    // ✅ Returns a success state
+    expect(result.current).toMatchObject<AsyncState<string>>({
+      isLoading: false,
+      data: KEY_ABC,
+      error: undefined,
+    });
+
+    // 🗑️ Invalidated from the vanilla cache
+    act(() => cache.invalidate(KEY_ABC));
+
+    // 🔜 Returns an empty state because invalidated
+    expect(result.current).toMatchObject<AsyncState<string>>({
+      isLoading: false,
+      data: undefined,
+      error: undefined,
+    });
   });
 });
