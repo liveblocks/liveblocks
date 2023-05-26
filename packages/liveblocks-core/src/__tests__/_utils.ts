@@ -897,13 +897,3 @@ export async function waitFor(predicate: () => boolean): Promise<void> {
 
   throw new Error("TIMEOUT");
 }
-
-export function withDateNow(now: number, callback: () => void) {
-  const realDateNow = Date.now.bind(global.Date);
-  global.Date.now = jest.fn(() => now);
-  try {
-    callback();
-  } finally {
-    global.Date.now = realDateNow;
-  }
-}
