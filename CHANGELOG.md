@@ -9,6 +9,10 @@
 
 - Fix incorrect status code when Liveblocks server cannot be reached temporarily
 
+### `create-liveblocks-app`
+
+- Added `export type TypedRoom = Room<...>` to init command for non-React apps
+
 # v1.0.9
 
 ### `@liveblocks/client`
