@@ -375,7 +375,6 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
       id,
       data: {},
     };
-    reverse.push(reverseUpdate);
 
     for (const key in op.data as Partial<O>) {
       const oldValue = this._map.get(key);

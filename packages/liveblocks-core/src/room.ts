@@ -608,6 +608,10 @@ const BACKOFF_RETRY_DELAYS_SLOW = [2000, 30000, 60000, 300000];
 const HEARTBEAT_INTERVAL = 30000;
 const PONG_TIMEOUT = 2000;
 
+// The maximum message size on websockets is 1MB (1024*1024), a small amount of space is substracted so we're not right at the limit
+// NOTE: this only works with the unstable_fallbackToHTTP option enabled
+const MAX_MESSAGE_SIZE = 1024 * 1024 - 128;
+
 function makeIdFactory(connectionId: number): IdFactory {
   let count = 0;
   return () => `${connectionId}:${count++}`;
@@ -767,6 +771,8 @@ type RoomConfig<TPresence extends JsonObject, TRoomEvent extends Json> = {
   throttleDelay: number;
   authentication: Authentication;
   liveblocksServer: string;
+  httpSendEndpoint?: string;
+  unstable_fallbackToHTTP?: boolean;
 
   polyfills?: Polyfills;
 
@@ -1010,7 +1016,33 @@ export function createRoom<
         throw new Error("Can't send message if socket is null");
       }
       if (context.socket.readyState === context.socket.OPEN) {
-        context.socket.send(JSON.stringify(messageOrMessages));
+        const message = JSON.stringify(messageOrMessages);
+        if (config.unstable_fallbackToHTTP) {
+          // if our message contains UTF-8, we can't simply use length. See: https://stackoverflow.com/questions/23318037/size-of-json-object-in-kbs-mbs
+          // if this turns out to be expensive, we could just guess with a lower value.
+          const size = new TextEncoder().encode(message).length;
+          if (
+            size > MAX_MESSAGE_SIZE &&
+            context.token?.raw &&
+            config.httpSendEndpoint
+          ) {
+            if (isTokenExpired(context.token.parsed)) {
+              return reconnect();
+            }
+            // check for expiration?
+            void httpSend(
+              message,
+              context.token.raw,
+              config.httpSendEndpoint,
+              config.polyfills?.fetch
+            );
+            console.warn(
+              "Message was too large for websockets and sent over HTTP instead"
+            );
+            return;
+          }
+        }
+        context.socket.send(message);
       }
     },
 
@@ -2508,6 +2540,23 @@ function prepareCreateWebSocket(
       }`
     );
   };
+}
+
+async function httpSend(
+  message: string,
+  token: string,
+  endpoint: string,
+  fetchPolyfill?: typeof window.fetch
+) {
+  const fetcher = fetchPolyfill || /* istanbul ignore next */ fetch;
+  return fetcher(endpoint, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: message,
+  });
 }
 
 function prepareAuthEndpoint(
