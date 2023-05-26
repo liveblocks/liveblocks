@@ -109,7 +109,12 @@ type Context = {
 };
 
 const BACKOFF_DELAYS = [250, 500, 1000, 2000, 4000, 8000, 10000] as const;
-const RESET_DELAY = BACKOFF_DELAYS[0]; // Use the lowest delay value when resetting it upon success
+
+// Resetting the delay happens upon success. We could reset to 0, but that
+// would risk no delay, which generally isn't wise. Instead, we'll reset it to
+// the lowest safe delay minus 1 millisecond. The reason is that every time
+// a retry happens, the retry delay will first be bumped to the next "tier".
+const RESET_DELAY = BACKOFF_DELAYS[0] - 1;
 
 /**
  * Used to back off from WebSocket reconnection attempts after a known
@@ -571,7 +576,7 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
         }
 
         return {
-          target: "@connecting.busy",
+          target: "@connecting.backoff",
           effect: increaseBackoffDelay,
         };
       },
@@ -592,7 +597,7 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
         // aggressively, and emit a Liveblocks error event...
         if (e.event.code >= 4000 && e.event.code <= 4100) {
           return {
-            target: "@connecting.busy",
+            target: "@connecting.backoff",
             effect: [
               increaseBackoffDelayAggressively,
               (ctx) =>
@@ -612,7 +617,7 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
         // Consider this close event a temporary hiccup, and try re-opening
         // a new socket
         return {
-          target: "@connecting.busy",
+          target: "@connecting.backoff",
           effect: [
             increaseBackoffDelay,
             (ctx) =>
