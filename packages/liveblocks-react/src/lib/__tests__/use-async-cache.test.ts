@@ -3,6 +3,7 @@ import { createAsyncCache } from "@liveblocks/core";
 import type { RenderHookResult } from "@testing-library/react";
 import { act, renderHook, waitFor } from "@testing-library/react";
 
+import type { UseAsyncCacheOptions } from "../use-async-cache";
 import { useAsyncCache } from "../use-async-cache";
 
 const REQUEST_DELAY = 20;
@@ -12,6 +13,7 @@ const ERROR = new Error("error");
 
 type RenderHookProps = {
   key: string | null;
+  options?: UseAsyncCacheOptions;
 };
 
 async function sleep(ms: number): Promise<42> {
@@ -397,6 +399,66 @@ describe("useAsyncCache", () => {
     await sleep(REQUEST_DELAY * 1.5);
 
     expect(mock).toHaveBeenCalledTimes(1);
+  });
+
+  test("switching keys but keeping previous data while loading", async () => {
+    const mock = createAsyncMock();
+    const cache = createAsyncCache(mock, { deduplicationInterval: 0 });
+
+    // 🚀 Called with "abc"
+    const { result, rerender } = renderHook<
+      ReturnType<typeof useAsyncCache>,
+      RenderHookProps
+    >(
+      ({ key }) =>
+        useAsyncCache(cache, key, { keepPreviousDataWhileLoading: true }),
+      {
+        initialProps: {
+          key: KEY_ABC,
+        },
+      }
+    );
+
+    // 🔜 Returns a loading state
+    expect(result.current).toMatchObject<AsyncState<string>>({
+      isLoading: true,
+      data: undefined,
+      error: undefined,
+    });
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    // ✅ Returns a success state
+    expect(result.current).toMatchObject<AsyncState<string>>({
+      isLoading: false,
+      data: KEY_ABC,
+      error: undefined,
+    });
+
+    // 🚀 Called with "xyz"
+    rerender({ key: KEY_XYZ });
+
+    // 🔜 Returns a loading state with the previous data from "abc"
+    expect(result.current).toMatchObject<AsyncState<string>>({
+      isLoading: true,
+      data: KEY_ABC,
+      error: undefined,
+    });
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    // ✅ Returns a success state for "xyz"
+    expect(result.current).toMatchObject<AsyncState<string>>({
+      isLoading: false,
+      data: KEY_XYZ,
+      error: undefined,
+    });
+
+    expect(mock).toHaveBeenCalledTimes(2);
   });
 
   test("rerendering shouldn't affect a key's state", async () => {
