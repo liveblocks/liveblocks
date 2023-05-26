@@ -525,38 +525,36 @@ describe("room", () => {
     ]);
   });
 
-  // XXX This one is tricky!
-  test("should clear users when socket close", () => {
-    const { room } = createTestableRoom({});
-
-    const ws = makeControllableWebSocket();
+  test.only("should clear users when socket close", async () => {
+    const { room, wss } = createTestableRoom({});
     room.connect();
-    room.__internal.send.simulateAuthSuccess(defaultRoomToken, ws);
-    ws.server.accept();
 
-    room.__internal.send.incomingMessage(
-      serverMessage({
-        type: ServerMsgCode.ROOM_STATE,
-        users: {
-          "1": { scopes: [] },
-        },
-      })
-    );
+    wss.onConnection((conn) => {
+      conn.server.send(
+        serverMessage({
+          type: ServerMsgCode.ROOM_STATE,
+          users: {
+            "1": { scopes: [] },
+          },
+        })
+      );
 
-    room.__internal.send.incomingMessage(
-      serverMessage({
-        type: ServerMsgCode.UPDATE_PRESENCE,
-        data: { x: 2 },
-        actor: 1,
-        targetActor: 0, // Setting targetActor means this is a full presence update
-      })
-    );
+      conn.server.send(
+        serverMessage({
+          type: ServerMsgCode.UPDATE_PRESENCE,
+          data: { x: 2 },
+          actor: 1,
+          targetActor: 0, // Setting targetActor means this is a full presence update
+        })
+      );
+    });
 
+    await waitUntilStatus(room, "open");
     expect(room.getOthers()).toEqual([
       { connectionId: 1, presence: { x: 2 }, isReadOnly: false },
     ]);
 
-    room.__internal.send.explicitClose(
+    wss.last.close(
       new CloseEvent("close", {
         code: WebsocketCloseCodes.CLOSE_ABNORMAL,
         wasClean: false,
