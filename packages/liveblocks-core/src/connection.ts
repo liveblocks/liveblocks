@@ -417,32 +417,24 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
     .onEnterAsync(
       "@connecting.busy",
 
+      //
+      // Use the "createSocket" delegate function (provided to the
+      // ManagedSocket) to create the actual WebSocket connection instance.
+      // Then, set up all the necessary event listeners, and wait for the
+      // "open" event to occur.
+      //
+      // When the "open" event happens, we're ready to transition to the
+      // OK state. This is done by resolving the Promise.
+      //
       async (ctx) => {
         let capturedPrematureEvent: IWebSocketEvent | null = null;
 
-        //
-        // Use the "connect" delegate to create the WebSocket connection (which
-        // will initiate the connection), and set up all the necessary event
-        // listeners, then wait until the 'open' event has fired.
-        //
         const promise = new Promise<[IWebSocketInstance, () => void]>(
-          (res, rej) => {
+          (resolve, rej) => {
             if (ctx.token === null) {
               throw new Error("No auth token"); // This should never happen
             }
 
-            /**
-             * Instantiate the WebSocket, and set up event listeners.
-             *
-             * The `error` and `close` event handlers marked (*) are installed
-             * here only temporarily, just to handle this promise-based state.
-             * When those get triggered, we reject this promise.
-             *
-             * When an "open" event happens, we're OK and ready to let the
-             * Promise succeed, and move to the OK state. Before that happens, we
-             * attach the _actual_, more permanent event listeners that will
-             * outlive this state and be used in the OK state mostly.
-             */
             const socket = delegates.createSocket(ctx.token as T);
 
             function reject(event: IWebSocketEvent) {
@@ -451,14 +443,40 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
               rej(event);
             }
 
-            // Part 1: used to "promisify" the socket, so we will resolve when
-            // the connection opens, but reject if the connection does not.
+            //
+            // Part 1:
+            // The `error` and `close` event handlers marked (*) are installed
+            // here only temporarily, just to handle this promise-based state.
+            // When those get triggered, we reject this promise.
+            //
             socket.addEventListener("message", onSocketMessage);
             socket.addEventListener("error", reject); // (*)
             socket.addEventListener("close", reject); // (*)
             socket.addEventListener("open", () => {
-              // Part 2: set up the _actual_ event listeners, which can be
-              // externally observed.
+              //
+              // Part 2:
+              // The "open" event just fired, so the server accepted our
+              // attempt to connect. We'll go on and resolve() our promise as
+              // a result.
+              //
+              // However, we cannot safely remove our error/close rejection
+              // handlers _just yet_. There is a small, unlikely-but-possible
+              // edge case: if (and only if) any close/error events are
+              // _already_ queued up in the event queue before this handler is
+              // invoked, then those will fire before our promise will be
+              // resolved.
+              //
+              // Scenario:
+              // - Event queue is empty, listeners are installed
+              // - Two events synchronously get scheduled in the event queue: [<open event>, <close event>]
+              // - The open handler is invoked (= this very callback)
+              // - Event queue now looks like: [<close event>]
+              // - We happily continue and resolve the promise
+              // - Event queue now looks like: [<close event>, <our resolved promise>]
+              // - Close event handler fires, but we already resolved promise! 😣
+              //
+              // This is what I'm calling a "premature" event here, we'll deal with it in part 3.
+              //
               socket.addEventListener("error", onSocketError);
               socket.addEventListener("close", onSocketClose);
               const unsub = () => {
@@ -467,12 +485,26 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
               };
 
               // Resolve the promise, which will take us to the @ok.* state
-              res([socket, unsub]);
+              resolve([socket, unsub]);
             });
           }
         );
 
         return withTimeout(promise, SOCKET_CONNECT_TIMEOUT).then(
+          //
+          // Part 3:
+          // By now, our "open" event has fired, and the promise has been
+          // resolved. Two possible scenarios:
+          //
+          // 1. The happy path. Most likely. No premature close/error event has
+          //    happened yet.
+          // 2. A premature close/error event has happened. Let's reject the
+          //    promise after all before continuing.
+          //
+          // Any close/error event that will get scheduled after this point
+          // onwards, will be caught in the OK state, and dealt with
+          // accordingly.
+          //
           ([socket, unsub]) => {
             unsub();
 
