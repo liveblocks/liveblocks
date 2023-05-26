@@ -1,3 +1,9 @@
+# v1.0.12
+
+### `create-liveblocks-app`
+
+- Added `export type TypedRoom = Room<...>` to init command for non-React apps
+
 # v1.0.11
 
 ### `@liveblocks/core`
