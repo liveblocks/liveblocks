@@ -364,7 +364,7 @@ export class MockWebSocket {
  * Makes a simple mocked WebSocket client that is connected to a mocked
  * WebSocket server.
  */
-export function makeControllableWebSocket(): MockWebSocket {
+function makeControllableWebSocket(): MockWebSocket {
   const server = new MockWebSocketServer();
   return server.newSocket();
 }
