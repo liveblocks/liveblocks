@@ -412,54 +412,70 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
     .onEnterAsync(
       "@connecting.busy",
 
-      (ctx) => {
+      async (ctx) => {
+        let capturedPrematureEvent: IWebSocketEvent | null = null;
+
         //
         // Use the "connect" delegate to create the WebSocket connection (which
         // will initiate the connection), and set up all the necessary event
         // listeners, then wait until the 'open' event has fired.
         //
-        const promise = new Promise<IWebSocketInstance>((res, rej) => {
-          if (ctx.token === null) {
-            throw new Error("No auth token"); // This should never happen
+        const promise = new Promise<[IWebSocketInstance, () => void]>(
+          (res, rej) => {
+            if (ctx.token === null) {
+              throw new Error("No auth token"); // This should never happen
+            }
+
+            /**
+             * Instantiate the WebSocket, and set up event listeners.
+             *
+             * The `error` and `close` event handlers marked (*) are installed
+             * here only temporarily, just to handle this promise-based state.
+             * When those get triggered, we reject this promise.
+             *
+             * When an "open" event happens, we're OK and ready to let the
+             * Promise succeed, and move to the OK state. Before that happens, we
+             * attach the _actual_, more permanent event listeners that will
+             * outlive this state and be used in the OK state mostly.
+             */
+            const socket = delegates.createSocket(ctx.token as T);
+
+            function reject(event: IWebSocketEvent) {
+              capturedPrematureEvent = event;
+              socket.removeEventListener("message", onSocketMessage);
+              rej(event);
+            }
+
+            // Part 1: used to "promisify" the socket, so we will resolve when
+            // the connection opens, but reject if the connection does not.
+            socket.addEventListener("message", onSocketMessage);
+            socket.addEventListener("error", reject); // (*)
+            socket.addEventListener("close", reject); // (*)
+            socket.addEventListener("open", () => {
+              // Part 2: set up the _actual_ event listeners, which can be
+              // externally observed.
+              socket.addEventListener("error", onSocketError);
+              socket.addEventListener("close", onSocketClose);
+              const unsub = () => {
+                socket.removeEventListener("error", reject); // Remove (*)
+                socket.removeEventListener("close", reject); // Remove (*)
+              };
+              res([socket, unsub]);
+            });
           }
+        );
 
-          /**
-           * Instantiate the WebSocket, and set up event listeners.
-           *
-           * The `error` and `close` event handlers marked (*) are installed
-           * here only temporarily, just to handle this promise-based state.
-           * When those get triggered, we reject this promise.
-           *
-           * When an "open" event happens, we're OK and ready to let the
-           * Promise succeed, and move to the OK state. Before that happens, we
-           * attach the _actual_, more permanent event listeners that will
-           * outlive this state and be used in the OK state mostly.
-           */
-          const socket = delegates.createSocket(ctx.token as T);
+        return withTimeout(promise, SOCKET_CONNECT_TIMEOUT).then(
+          ([socket, unsub]) => {
+            unsub();
 
-          function reject() {
-            socket.removeEventListener("message", onSocketMessage);
-            rej();
+            if (capturedPrematureEvent) {
+              throw capturedPrematureEvent;
+            }
+
+            return socket;
           }
-
-          // Part 1: used to "promisify" the socket, so we will resolve when
-          // the connection opens, but reject if the connection does not.
-          socket.addEventListener("message", onSocketMessage);
-          socket.addEventListener("error", reject); // (*)
-          socket.addEventListener("close", reject); // (*)
-          socket.addEventListener("open", () => {
-            socket.removeEventListener("error", reject); // Remove (*)
-            socket.removeEventListener("close", reject); // Remove (*)
-
-            // Part 2: set up the _actual_ event listeners, which can be
-            // externally observed.
-            socket.addEventListener("error", onSocketError);
-            socket.addEventListener("close", onSocketClose);
-            res(socket);
-          });
-        });
-
-        return withTimeout(promise, SOCKET_CONNECT_TIMEOUT);
+        );
       },
 
       // Only transition to OK state after a successfully opened WebSocket connection
@@ -472,7 +488,7 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
       }),
 
       // If the WebSocket connection cannot be established
-      (failedEvent) =>
+      (failure) =>
         // TODO In the future, when the WebSocket connection will potentially
         // be closed with an explicit _UNAUTHORIZED_ message, we should stop
         // retrying.
@@ -480,12 +496,20 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
           target: "@auth.backoff",
           effect: [
             increaseBackoffDelay,
-            log(
-              LogLevel.ERROR,
-              `Connection to WebSocket could not be established, reason: ${String(
-                failedEvent.reason
-              )}`
-            ),
+            () => {
+              const err = failure.reason as IWebSocketEvent | Error;
+              if (err instanceof Error) {
+                console.warn(String(err));
+              } else {
+                console.warn(
+                  err.type === "close"
+                    ? `Connection to Liveblocks websocket server closed (code: ${
+                        (err as IWebSocketCloseEvent).code
+                      })`
+                    : "Connection to Liveblocks websocket server could not be established."
+                );
+              }
+            },
           ],
         })
     );
