@@ -11,7 +11,6 @@ import * as console from "../lib/fancy-console";
 import { withTimeout } from "../lib/fsm";
 import type { Json, JsonObject } from "../lib/Json";
 import type { Authentication } from "../protocol/Authentication";
-import type { RoomAuthToken } from "../protocol/AuthToken";
 import { RoomScope } from "../protocol/AuthToken";
 import type { BaseUserMeta } from "../protocol/BaseUserMeta";
 import { ClientMsgCode } from "../protocol/ClientMsg";
@@ -38,7 +37,6 @@ import {
   createSerializedObject,
   createSerializedRegister,
   FIRST_POSITION,
-  makeControllableWebSocket,
   mockEffects,
   prepareDisconnectedStorageUpdateTest,
   prepareIsolatedStorageTest,
@@ -136,14 +134,6 @@ function makeRoomConfig<TPresence extends JsonObject, TRoomEvent extends Json>(
     mockedEffects,
   };
 }
-
-const defaultRoomToken: RoomAuthToken = {
-  appId: "my-app",
-  roomId: "my-room",
-  id: "user1",
-  actor: 0,
-  scopes: [],
-};
 
 /**
  * Sets up a Room instance that, when you call `.connect()` on it, will
@@ -1712,45 +1702,45 @@ describe("room", () => {
   });
 
   describe("Initial UpdatePresenceServerMsg", () => {
-    test("skip UpdatePresence from other when initial full presence has not been received", () => {
+    test.only("skip UpdatePresence from other when initial full presence has not been received", async () => {
       type P = { x?: number };
       type S = never;
       type M = never;
       type E = never;
 
-      const { room } = createTestableRoom<P, S, M, E>({});
+      const { room, wss } = createTestableRoom<P, S, M, E>({});
 
-      const ws = makeControllableWebSocket();
+      wss.onConnection((conn) => {
+        conn.server.send(
+          serverMessage({
+            type: ServerMsgCode.ROOM_STATE,
+            users: { "1": { id: undefined, scopes: [] } },
+          })
+        );
+
+        // UpdatePresence sent before the initial full UpdatePresence
+        conn.server.send(
+          serverMessage({
+            type: ServerMsgCode.UPDATE_PRESENCE,
+            data: { x: 2 },
+            actor: 1,
+          })
+        );
+      });
+
       room.connect();
-      room.__internal.send.simulateAuthSuccess(defaultRoomToken, ws);
-      ws.server.accept();
 
       let others: Others<P, M> | undefined;
 
       room.events.others.subscribe((ev) => (others = ev.others));
 
-      room.__internal.send.incomingMessage(
-        serverMessage({
-          type: ServerMsgCode.ROOM_STATE,
-          users: { "1": { id: undefined, scopes: [] } },
-        })
-      );
-
-      // UpdatePresence sent before the initial full UpdatePresence
-      room.__internal.send.incomingMessage(
-        serverMessage({
-          type: ServerMsgCode.UPDATE_PRESENCE,
-          data: { x: 2 },
-          actor: 1,
-        })
-      );
-
+      await waitUntilStatus(room, "open");
       expect(others).toEqual([
         // User not yet publicly visible
       ]);
 
       // Full UpdatePresence sent as an answer to "UserJoined" message
-      room.__internal.send.incomingMessage(
+      wss.last.send(
         serverMessage({
           type: ServerMsgCode.UPDATE_PRESENCE,
           data: { x: 2 },
