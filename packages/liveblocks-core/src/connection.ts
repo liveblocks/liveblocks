@@ -109,7 +109,12 @@ type Context = {
 };
 
 const BACKOFF_DELAYS = [250, 500, 1000, 2000, 4000, 8000, 10000] as const;
-const RESET_DELAY = BACKOFF_DELAYS[0]; // Use the lowest delay value when resetting it upon success
+
+// Resetting the delay happens upon success. We could reset to 0, but that
+// would risk no delay, which generally isn't wise. Instead, we'll reset it to
+// the lowest safe delay minus 1 millisecond. The reason is that every time
+// a retry happens, the retry delay will first be bumped to the next "tier".
+const RESET_DELAY = BACKOFF_DELAYS[0] - 1;
 
 /**
  * Used to back off from WebSocket reconnection attempts after a known
@@ -218,7 +223,7 @@ function enableTracing(machine: FSM<Context, Event, State>) {
       log("Transitioning", from, "→", to);
     }),
     machine.events.didIgnoreEvent.subscribe((e) => {
-      log("Ignored event", e, "(current state won't handle it)");
+      log("Ignored event", e.type, e, "(current state won't handle it)");
     }),
     // machine.events.willExitState.subscribe((s) => {
     //   log("Exiting state", s);
@@ -412,54 +417,103 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
     .onEnterAsync(
       "@connecting.busy",
 
-      (ctx) => {
-        //
-        // Use the "connect" delegate to create the WebSocket connection (which
-        // will initiate the connection), and set up all the necessary event
-        // listeners, then wait until the 'open' event has fired.
-        //
-        const promise = new Promise<IWebSocketInstance>((res, rej) => {
-          if (ctx.token === null) {
-            throw new Error("No auth token"); // This should never happen
+      //
+      // Use the "createSocket" delegate function (provided to the
+      // ManagedSocket) to create the actual WebSocket connection instance.
+      // Then, set up all the necessary event listeners, and wait for the
+      // "open" event to occur.
+      //
+      // When the "open" event happens, we're ready to transition to the
+      // OK state. This is done by resolving the Promise.
+      //
+      async (ctx) => {
+        let capturedPrematureEvent: IWebSocketEvent | null = null;
+
+        const promise = new Promise<[IWebSocketInstance, () => void]>(
+          (resolve, rej) => {
+            if (ctx.token === null) {
+              throw new Error("No auth token"); // This should never happen
+            }
+
+            const socket = delegates.createSocket(ctx.token as T);
+
+            function reject(event: IWebSocketEvent) {
+              capturedPrematureEvent = event;
+              socket.removeEventListener("message", onSocketMessage);
+              rej(event);
+            }
+
+            //
+            // Part 1:
+            // The `error` and `close` event handlers marked (*) are installed
+            // here only temporarily, just to handle this promise-based state.
+            // When those get triggered, we reject this promise.
+            //
+            socket.addEventListener("message", onSocketMessage);
+            socket.addEventListener("error", reject); // (*)
+            socket.addEventListener("close", reject); // (*)
+            socket.addEventListener("open", () => {
+              //
+              // Part 2:
+              // The "open" event just fired, so the server accepted our
+              // attempt to connect. We'll go on and resolve() our promise as
+              // a result.
+              //
+              // However, we cannot safely remove our error/close rejection
+              // handlers _just yet_. There is a small, unlikely-but-possible
+              // edge case: if (and only if) any close/error events are
+              // _already_ queued up in the event queue before this handler is
+              // invoked, then those will fire before our promise will be
+              // resolved.
+              //
+              // Scenario:
+              // - Event queue is empty, listeners are installed
+              // - Two events synchronously get scheduled in the event queue: [<open event>, <close event>]
+              // - The open handler is invoked (= this very callback)
+              // - Event queue now looks like: [<close event>]
+              // - We happily continue and resolve the promise
+              // - Event queue now looks like: [<close event>, <our resolved promise>]
+              // - Close event handler fires, but we already resolved promise! 😣
+              //
+              // This is what I'm calling a "premature" event here, we'll deal with it in part 3.
+              //
+              socket.addEventListener("error", onSocketError);
+              socket.addEventListener("close", onSocketClose);
+              const unsub = () => {
+                socket.removeEventListener("error", reject); // Remove (*)
+                socket.removeEventListener("close", reject); // Remove (*)
+              };
+
+              // Resolve the promise, which will take us to the @ok.* state
+              resolve([socket, unsub]);
+            });
           }
+        );
 
-          /**
-           * Instantiate the WebSocket, and set up event listeners.
-           *
-           * The `error` and `close` event handlers marked (*) are installed
-           * here only temporarily, just to handle this promise-based state.
-           * When those get triggered, we reject this promise.
-           *
-           * When an "open" event happens, we're OK and ready to let the
-           * Promise succeed, and move to the OK state. Before that happens, we
-           * attach the _actual_, more permanent event listeners that will
-           * outlive this state and be used in the OK state mostly.
-           */
-          const socket = delegates.createSocket(ctx.token as T);
+        return withTimeout(promise, SOCKET_CONNECT_TIMEOUT).then(
+          //
+          // Part 3:
+          // By now, our "open" event has fired, and the promise has been
+          // resolved. Two possible scenarios:
+          //
+          // 1. The happy path. Most likely.
+          // 2. Uh-oh. A premature close/error event has been observed. Let's
+          //    reject the promise after all.
+          //
+          // Any close/error event that will get scheduled after this point
+          // onwards, will be caught in the OK state, and dealt with
+          // accordingly.
+          //
+          ([socket, unsub]) => {
+            unsub();
 
-          function reject() {
-            socket.removeEventListener("message", onSocketMessage);
-            rej();
+            if (capturedPrematureEvent) {
+              throw capturedPrematureEvent;
+            }
+
+            return socket;
           }
-
-          // Part 1: used to "promisify" the socket, so we will resolve when
-          // the connection opens, but reject if the connection does not.
-          socket.addEventListener("message", onSocketMessage);
-          socket.addEventListener("error", reject); // (*)
-          socket.addEventListener("close", reject); // (*)
-          socket.addEventListener("open", () => {
-            socket.removeEventListener("error", reject); // Remove (*)
-            socket.removeEventListener("close", reject); // Remove (*)
-
-            // Part 2: set up the _actual_ event listeners, which can be
-            // externally observed.
-            socket.addEventListener("error", onSocketError);
-            socket.addEventListener("close", onSocketClose);
-            res(socket);
-          });
-        });
-
-        return withTimeout(promise, SOCKET_CONNECT_TIMEOUT);
+        );
       },
 
       // Only transition to OK state after a successfully opened WebSocket connection
@@ -472,22 +526,41 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
       }),
 
       // If the WebSocket connection cannot be established
-      (failedEvent) =>
+      (failure) => {
+        const err = failure.reason as IWebSocketEvent | Error;
+
         // TODO In the future, when the WebSocket connection will potentially
         // be closed with an explicit _UNAUTHORIZED_ message, we should stop
         // retrying.
-        ({
+        return {
           target: "@auth.backoff",
           effect: [
-            increaseBackoffDelay,
-            log(
-              LogLevel.ERROR,
-              `Connection to WebSocket could not be established, reason: ${String(
-                failedEvent.reason
-              )}`
-            ),
+            // Increase the backoff delay conditionally
+            // TODO: This is ugly. DRY this up with the other code 40xx checks elsewhere.
+            !(err instanceof Error) &&
+            err.type === "close" &&
+            (err as IWebSocketCloseEvent).code >= 4000 &&
+            (err as IWebSocketCloseEvent).code <= 4100
+              ? increaseBackoffDelayAggressively
+              : increaseBackoffDelay,
+
+            // Produce a useful log message
+            (ctx) => {
+              if (err instanceof Error) {
+                console.warn(String(err));
+              } else {
+                console.warn(
+                  err.type === "close"
+                    ? `Connection to Liveblocks websocket server closed prematurely (code: ${
+                        (err as IWebSocketCloseEvent).code
+                      }). Retrying in ${ctx.backoffDelay}ms.`
+                    : "Connection to Liveblocks websocket server could not be established."
+                );
+              }
+            },
           ],
-        })
+        };
+      }
     );
 
   //
@@ -547,7 +620,7 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
         }
 
         return {
-          target: "@connecting.busy",
+          target: "@connecting.backoff",
           effect: increaseBackoffDelay,
         };
       },
@@ -568,9 +641,13 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
         // aggressively, and emit a Liveblocks error event...
         if (e.event.code >= 4000 && e.event.code <= 4100) {
           return {
-            target: "@connecting.busy",
+            target: "@connecting.backoff",
             effect: [
               increaseBackoffDelayAggressively,
+              (ctx) =>
+                console.warn(
+                  `Connection to Liveblocks websocket server closed (code: ${e.event.code}). Retrying in ${ctx.backoffDelay}ms.`
+                ),
               (_, { event }) => {
                 if (event.code >= 4000 && event.code <= 4100) {
                   const err = new LiveblocksError(event.reason, event.code);
@@ -584,8 +661,14 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
         // Consider this close event a temporary hiccup, and try re-opening
         // a new socket
         return {
-          target: "@connecting.busy",
-          effect: increaseBackoffDelay,
+          target: "@connecting.backoff",
+          effect: [
+            increaseBackoffDelay,
+            (ctx) =>
+              console.warn(
+                `Connection to Liveblocks websocket server closed (code: ${e.event.code}). Retrying in ${ctx.backoffDelay}ms.`
+              ),
+          ],
         };
       },
     });
