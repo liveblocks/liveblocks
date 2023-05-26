@@ -497,7 +497,7 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
           // resolved. Two possible scenarios:
           //
           // 1. The happy path. Most likely.
-          // 2. Uh-ok. A premature close/error event has been observed. Let's
+          // 2. Uh-oh. A premature close/error event has been observed. Let's
           //    reject the promise after all.
           //
           // Any close/error event that will get scheduled after this point
