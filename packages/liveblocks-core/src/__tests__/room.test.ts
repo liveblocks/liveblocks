@@ -47,7 +47,6 @@ import {
   reconnect,
   serverMessage,
   waitFor,
-  withDateNow,
 } from "./_utils";
 
 /**
@@ -642,37 +641,41 @@ describe("room", () => {
   });
 
   describe("broadcast", () => {
-    test("should send event to other users", () => {
-      const { room, effects } = createTestableRoom({});
-
-      const ws = makeControllableWebSocket();
+    test.only("should send event to other users", async () => {
+      const { room, wss } = createTestableRoom({});
       room.connect();
-      room.__internal.send.simulateAuthSuccess(defaultRoomToken, ws);
 
-      const now = new Date(2021, 1, 1, 0, 0, 0, 0).getTime();
-
-      withDateNow(now, () => ws.server.accept());
-
-      expect(effects.send).nthCalledWith(1, [
-        { type: ClientMsgCode.UPDATE_PRESENCE, targetActor: -1, data: {} },
+      await waitUntilStatus(room, "open");
+      expect(wss.receivedMessages).toEqual([
+        [{ type: ClientMsgCode.UPDATE_PRESENCE, targetActor: -1, data: {} }],
       ]);
 
-      // Event payload can be any JSON value
-      withDateNow(now + 1000, () => room.broadcastEvent({ type: "EVENT" }));
-      withDateNow(now + 2000, () => room.broadcastEvent([1, 2, 3]));
-      withDateNow(now + 3000, () => room.broadcastEvent(42));
-      withDateNow(now + 4000, () => room.broadcastEvent("hi"));
+      const now = Date.now();
+      jest.useFakeTimers();
+      try {
+        // Event payload can be any JSON value
+        jest.setSystemTime(now + 1000);
+        room.broadcastEvent({ type: "EVENT" });
+        jest.setSystemTime(now + 2000);
+        room.broadcastEvent([1, 2, 3]);
+        jest.setSystemTime(now + 3000);
+        room.broadcastEvent(42);
+        jest.setSystemTime(now + 4000);
+        room.broadcastEvent("hi");
+      } finally {
+        jest.useRealTimers();
+      }
 
-      expect(effects.send).nthCalledWith(2, [
+      expect(wss.receivedMessages[1]).toEqual([
         { type: ClientMsgCode.BROADCAST_EVENT, event: { type: "EVENT" } },
       ]);
-      expect(effects.send).nthCalledWith(3, [
+      expect(wss.receivedMessages[2]).toEqual([
         { type: ClientMsgCode.BROADCAST_EVENT, event: [1, 2, 3] },
       ]);
-      expect(effects.send).nthCalledWith(4, [
+      expect(wss.receivedMessages[3]).toEqual([
         { type: ClientMsgCode.BROADCAST_EVENT, event: 42 },
       ]);
-      expect(effects.send).nthCalledWith(5, [
+      expect(wss.receivedMessages[4]).toEqual([
         { type: ClientMsgCode.BROADCAST_EVENT, event: "hi" },
       ]);
     });
