@@ -9,22 +9,22 @@
     "dev": "next dev"
   },
   "dependencies": {
-    "@liveblocks/client": "^1.0.9",
-    "@liveblocks/redux": "^1.0.9",
+    "@liveblocks/client": "^1.0.11",
+    "@liveblocks/redux": "^1.0.11",
     "@reduxjs/toolkit": "^1.8.4",
+    "next": "^12.1.6",
     "react": "^18.1.0",
     "react-dom": "^18.1.0",
     "react-redux": "^8.0.2",
     "react-scripts": "^5.0.1",
-    "redux": "^4.1.2",
-    "next": "^12.1.6"
+    "redux": "^4.1.2"
   },
   "devDependencies": {
-    "prettier": "^2.6.2",
-    "@types/react-dom": "^18.0.6",
     "@types/node": "^16.10.1",
     "@types/react": "18.0.27",
+    "@types/react-dom": "^18.0.6",
     "@types/recharts": "^1.8.24",
+    "prettier": "^2.6.2",
     "typescript": "^4.6.4"
   }
 }
