@@ -70,7 +70,7 @@ type Listener = (ev: IWebSocketEvent) => void;
 type CloseListener = (ev: IWebSocketCloseEvent) => void;
 type MessageListener = (ev: IWebSocketMessageEvent) => void;
 
-type Listeners = {
+type ServerEvents = {
   onOpen: Observable<IWebSocketEvent>;
   onClose: Observable<IWebSocketCloseEvent>;
   onMessage: Observable<IWebSocketMessageEvent>;
@@ -96,13 +96,18 @@ type ServerSocket = {
   /** Close the socket from the server side. */
   close(event: IWebSocketCloseEvent): void;
   /** Send a message from the server side to the client side. */
-  message(event: IWebSocketMessageEvent): void;
+  send(event: IWebSocketMessageEvent): void;
   /** Send an error event from the server side to the client side. */
   error(event: IWebSocketEvent): void;
 };
 
+type Connection = {
+  client: MockWebSocket;
+  server: ServerSocket;
+};
+
 export class MockWebSocketServer {
-  private newSocketCallback: ((socket: MockWebSocket) => void) | undefined;
+  private newConnectionCallbacks = makeEventSource<Connection>();
   public current: MockWebSocket | undefined;
   public connections: Map<MockWebSocket, Emitters> = new Map();
   public receivedMessages: string[] = [];
@@ -141,58 +146,46 @@ export class MockWebSocketServer {
   /**
    * Create a new socket connection instance this server.
    */
-  public newSocket(callback?: (socket: MockWebSocket) => void): MockWebSocket {
-    const emitters = {
+  public newSocket(initFn?: (socket: MockWebSocket) => void): MockWebSocket {
+    const serverEvents = {
       onOpen: makeEventSource<IWebSocketEvent>(),
       onClose: makeEventSource<IWebSocketCloseEvent>(),
       onMessage: makeEventSource<IWebSocketMessageEvent>(),
       onError: makeEventSource<IWebSocketEvent>(),
     };
 
-    const publicListeners: Listeners = {
-      onOpen: emitters.onOpen.observable,
-      onClose: emitters.onClose.observable,
-      onMessage: emitters.onMessage.observable,
-      onError: emitters.onError.observable,
-    };
-
     const serverSocket: ServerSocket = {
       receivedMessages: this.receivedMessages,
-      accept: () => emitters.onOpen.notify(new Event("open")),
-      close: emitters.onClose.notify,
-      message: emitters.onMessage.notify,
-      error: emitters.onError.notify,
+      accept: () => serverEvents.onOpen.notify(new Event("open")),
+      close: serverEvents.onClose.notify,
+      send: serverEvents.onMessage.notify,
+      error: serverEvents.onError.notify,
     };
 
-    const socket = new MockWebSocket();
-    socket.linkToServerSocket(serverSocket, publicListeners);
-    this.connections.set(socket, emitters);
-    this.current = socket;
-
-    if (callback) {
-      this.onNewSocket(callback);
-    }
+    const clientSocket = new MockWebSocket();
+    clientSocket.linkToServerSocket(serverSocket, serverEvents);
+    this.connections.set(clientSocket, serverEvents);
+    this.current = clientSocket;
 
     // Run the callback in the next tick. This is important, because we first
     // need to return the socket.
     setTimeout(() => {
-      this.newSocketCallback?.(socket);
+      // Call the provided callback once, for this connection only.
+      initFn?.(clientSocket);
+
+      // ...then proceed to call the rest of the callbacks, which will be
+      // executed on every new connection
+      this.newConnectionCallbacks.notify({
+        client: clientSocket,
+        server: serverSocket,
+      });
     }, 0);
 
-    return socket;
+    return clientSocket;
   }
 
-  public onNewSocket(callback: (socket: MockWebSocket) => void): void {
-    // If a callback already exists, run this one "after it", by wrapping them.
-    if (this.newSocketCallback) {
-      const existingFn = this.newSocketCallback;
-      this.newSocketCallback = (socket) => {
-        existingFn(socket);
-        callback(socket);
-      };
-    } else {
-      this.newSocketCallback = callback;
-    }
+  public onConnection(callback: (conn: Connection) => void): void {
+    this.newConnectionCallbacks.subscribe(callback);
   }
 }
 
@@ -204,7 +197,7 @@ export class MockWebSocket {
    */
   private _serverSocket: ServerSocket | undefined;
 
-  private _listeners: Listeners | undefined;
+  private _listeners: ServerEvents | undefined;
   private unsubs: {
     open: WeakMap<Listener | MessageListener | CloseListener, () => void>;
     close: WeakMap<Listener | MessageListener | CloseListener, () => void>;
@@ -238,7 +231,10 @@ export class MockWebSocket {
     this.#readyState = this.CONNECTING;
   }
 
-  public linkToServerSocket(serverSocket: ServerSocket, listeners: Listeners) {
+  public linkToServerSocket(
+    serverSocket: ServerSocket,
+    listeners: ServerEvents
+  ) {
     this._serverSocket = serverSocket;
     this._listeners = listeners;
 
@@ -260,7 +256,7 @@ export class MockWebSocket {
 
     // onSend (from server)
     listeners.onMessage.subscribe(() => {
-      if (this.readyState > this.CONNECTING) {
+      if (this.readyState < this.OPEN) {
         throw new Error("Socket hasn't been opened yet");
       }
     });
@@ -276,7 +272,7 @@ export class MockWebSocket {
     return this._serverSocket;
   }
 
-  private get listeners(): Listeners {
+  private get listeners(): ServerEvents {
     if (this._listeners === undefined) {
       throw new Error("No server attached yet");
     }
@@ -323,12 +319,18 @@ export class MockWebSocket {
     }
   }
 
+  /**
+   * Send a message from the client to the WebSocket server.
+   */
   public send(message: string) {
     if (this.readyState === this.OPEN) {
       this.server.receivedMessages.push(message);
     }
   }
 
+  /**
+   * Close the socket from the client side.
+   */
   public close(_code?: number, _reason?: string): void {
     this.#readyState = this.CLOSED;
   }
