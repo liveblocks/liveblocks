@@ -1535,50 +1535,142 @@ describe("room", () => {
       consoleWarnSpy.mockRestore();
     });
 
-    test("when error code 1006", () => {
-      const { room } = createTestableRoom({ x: 0 });
-
-      const ws = makeControllableWebSocket();
+    test.only("when error code 1006 (immediately)", async () => {
+      const { room, wss } = createTestableRoom({ x: 0 });
       room.connect();
-      room.__internal.send.simulateAuthSuccess(defaultRoomToken, ws);
-      ws.server.accept();
 
-      ws.server.close(
-        new CloseEvent("close", {
-          code: 1006,
-          wasClean: false,
-        })
-      );
+      // Close the connection as soon as it's opened
+      wss.onConnection((conn) => {
+        conn.server.close(
+          new CloseEvent("close", {
+            code: 1006,
+            wasClean: false,
+          })
+        );
+      });
 
-      expect(consoleWarnSpy.mock.calls[0][0]).toEqual(
-        "Connection to Liveblocks websocket server closed (code: 1006). Retrying in 250ms."
-      );
+      await waitUntilStatus(room, "connecting");
 
-      // XXX Assert here that, if 250ms pass (= SHORT delay!), another
-      // WebSocket connection gets instantiated by the room
+      jest.useFakeTimers();
+      try {
+        await jest.advanceTimersByTimeAsync(0);
+        expect(consoleWarnSpy.mock.calls.map((args) => args[0])).toContain(
+          "Connection to Liveblocks websocket server closed prematurely (code: 1006). Retrying in 250ms."
+        );
+        expect(wss.connections.size).toBe(1);
+
+        // A new connection attempt will be made after a short backoff delay
+        await jest.advanceTimersByTimeAsync(250);
+        expect(wss.connections.size).toBe(2);
+      } finally {
+        jest.useRealTimers();
+      }
     });
 
-    test("when error code 4002", () => {
-      const { room } = createTestableRoom({ x: 0 });
-
-      const ws = makeControllableWebSocket();
+    test.only("when error code 1006 (after delay)", async () => {
+      const { room, wss } = createTestableRoom({ x: 0 });
       room.connect();
-      room.__internal.send.simulateAuthSuccess(defaultRoomToken, ws);
-      ws.server.accept();
 
-      ws.server.close(
-        new CloseEvent("close", {
-          code: 4002,
-          wasClean: false,
-        })
-      );
+      // Close the connection 1.111 second after it opened
+      wss.onConnection((conn) => {
+        setTimeout(() => {
+          conn.server.close(
+            new CloseEvent("close", {
+              code: 1006,
+              wasClean: false,
+            })
+          );
+        }, 1111);
+      });
 
-      expect(consoleErrorSpy.mock.calls[0][0]).toEqual(
-        "Connection to websocket server closed. Reason:  (code: 4002). Retrying in 2000ms."
-      );
+      await waitUntilStatus(room, "connecting");
 
-      // XXX Assert here that, if 2000ms pass (= LONG delay!), another
-      // WebSocket connection gets instantiated by the room
+      jest.useFakeTimers();
+      try {
+        await waitUntilStatus(room, "open");
+        await jest.advanceTimersByTimeAsync(1111);
+        expect(consoleWarnSpy.mock.calls.map((args) => args[0])).toContain(
+          "Connection to Liveblocks websocket server closed (code: 1006). Retrying in 250ms."
+        );
+        expect(wss.connections.size).toBe(1);
+
+        // A new connection attempt will be made after a short backoff delay
+        await jest.advanceTimersByTimeAsync(250);
+        expect(wss.connections.size).toBe(2);
+      } finally {
+        jest.useRealTimers();
+      }
+    });
+
+    test.only("when error code 4002 (immediately)", async () => {
+      const { room, wss } = createTestableRoom({ x: 0 });
+      room.connect();
+
+      wss.onConnection((conn) => {
+        conn.server.close(
+          new CloseEvent("close", {
+            code: 4002,
+            wasClean: false,
+          })
+        );
+      });
+
+      await waitUntilStatus(room, "connecting");
+
+      jest.useFakeTimers();
+      try {
+        await jest.advanceTimersByTimeAsync(0);
+        expect(consoleWarnSpy.mock.calls.map((args) => args[0])).toContain(
+          "Connection to Liveblocks websocket server closed prematurely (code: 4002). Retrying in 2000ms."
+        );
+
+        expect(wss.connections.size).toBe(1);
+
+        // A new connection attempt will be made after a longer backoff delay
+        await jest.advanceTimersByTimeAsync(500); // Waiting our normal short delay isn't enough here...
+        expect(wss.connections.size).toBe(1);
+        await jest.advanceTimersByTimeAsync(1500); // Wait an additional 1500 seconds
+        expect(wss.connections.size).toBe(2);
+      } finally {
+        jest.useRealTimers();
+      }
+    });
+
+    test.only("when error code 4002 (after delay)", async () => {
+      const { room, wss } = createTestableRoom({ x: 0 });
+      room.connect();
+
+      // Close the connection 1.111 second after it opened
+      wss.onConnection((conn) => {
+        setTimeout(() => {
+          conn.server.close(
+            new CloseEvent("close", {
+              code: 4002,
+              wasClean: false,
+            })
+          );
+        }, 1111);
+      });
+
+      await waitUntilStatus(room, "connecting");
+
+      jest.useFakeTimers();
+      try {
+        await waitUntilStatus(room, "open");
+        await jest.advanceTimersByTimeAsync(1111);
+        expect(consoleWarnSpy.mock.calls.map((args) => args[0])).toContain(
+          "Connection to Liveblocks websocket server closed (code: 4002). Retrying in 2000ms."
+        );
+        expect(wss.connections.size).toBe(1);
+
+        // A new connection attempt will be made after a LONG backoff delay
+        await jest.advanceTimersByTimeAsync(500); // Waiting our normal short delay isn't enough here...
+        expect(wss.connections.size).toBe(1);
+        await jest.advanceTimersByTimeAsync(1500); // Wait an additional 1500 seconds (for a total of 2000ms)
+        expect(wss.connections.size).toBe(2);
+      } finally {
+        jest.useRealTimers();
+      }
     });
 
     test.only("manual reconnection", async () => {
