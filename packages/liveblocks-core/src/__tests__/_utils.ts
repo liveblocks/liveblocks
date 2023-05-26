@@ -366,8 +366,7 @@ export class MockWebSocket {
  */
 export function makeControllableWebSocket(): MockWebSocket {
   const server = new MockWebSocketServer();
-  const socket = server.newSocket();
-  return socket;
+  return server.newSocket();
 }
 
 // ------------------------------------------------------------------------
