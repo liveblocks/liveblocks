@@ -465,6 +465,8 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
                 socket.removeEventListener("error", reject); // Remove (*)
                 socket.removeEventListener("close", reject); // Remove (*)
               };
+
+              // Resolve the promise, which will take us to the @ok.* state
               res([socket, unsub]);
             });
           }
@@ -493,30 +495,41 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
       }),
 
       // If the WebSocket connection cannot be established
-      (failure) =>
+      (failure) => {
+        const err = failure.reason as IWebSocketEvent | Error;
+
         // TODO In the future, when the WebSocket connection will potentially
         // be closed with an explicit _UNAUTHORIZED_ message, we should stop
         // retrying.
-        ({
+        return {
           target: "@auth.backoff",
           effect: [
-            increaseBackoffDelay,
-            () => {
-              const err = failure.reason as IWebSocketEvent | Error;
+            // Increase the backoff delay conditionally
+            // TODO: This is ugly. DRY this up with the other code 40xx checks elsewhere.
+            !(err instanceof Error) &&
+            err.type === "close" &&
+            (err as IWebSocketCloseEvent).code >= 4000 &&
+            (err as IWebSocketCloseEvent).code <= 4100
+              ? increaseBackoffDelayAggressively
+              : increaseBackoffDelay,
+
+            // Produce a useful log message
+            (ctx) => {
               if (err instanceof Error) {
                 console.warn(String(err));
               } else {
                 console.warn(
                   err.type === "close"
-                    ? `Connection to Liveblocks websocket server closed (code: ${
+                    ? `Connection to Liveblocks websocket server closed prematurely (code: ${
                         (err as IWebSocketCloseEvent).code
-                      })`
+                      }). Retrying in ${ctx.backoffDelay}ms.`
                     : "Connection to Liveblocks websocket server could not be established."
                 );
               }
             },
           ],
-        })
+        };
+      }
     );
 
   //
