@@ -13,6 +13,9 @@ module.exports = {
   testPathIgnorePatterns: ["__tests__/_.*"],
   roots: ["<rootDir>/src"],
 
-  // Ensure `window.fetch` is polyfilled if it isn't available in the runtime
-  setupFiles: ["@liveblocks/jest-config/fetch-polyfill"],
+  // Ensure `window.fetch` are `window.TextEncoder` are polyfilled if they aren't available in the runtime
+  setupFiles: [
+    "@liveblocks/jest-config/fetch-polyfill",
+    "@liveblocks/jest-config/textencoder-polyfill",
+  ],
 };

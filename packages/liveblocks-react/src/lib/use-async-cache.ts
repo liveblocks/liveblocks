@@ -19,7 +19,6 @@ type PreviousData<TData> = {
 
 const noop = () => {};
 
-// TODO: Support SSR? Support fallback data?
 export function useAsyncCache<TData = any, TError = any>(
   cache: AsyncCache<TData, TError>,
   key: string | null,

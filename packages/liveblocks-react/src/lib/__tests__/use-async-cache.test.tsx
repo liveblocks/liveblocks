@@ -2,6 +2,9 @@ import type { AsyncState } from "@liveblocks/core";
 import { createAsyncCache } from "@liveblocks/core";
 import type { RenderHookResult } from "@testing-library/react";
 import { act, renderHook, waitFor } from "@testing-library/react";
+import React from "react";
+import { hydrateRoot } from "react-dom/client";
+import { renderToString } from "react-dom/server";
 
 import type { UseAsyncCacheOptions } from "../use-async-cache";
 import { useAsyncCache } from "../use-async-cache";
@@ -14,6 +17,24 @@ const ERROR = new Error("error");
 type RenderHookProps = {
   key: string | null;
   options?: UseAsyncCacheOptions;
+};
+
+type RenderHookOptions<Props> = {
+  initialProps?: Props;
+};
+
+type RenderHookWithCountResult<TResult, TProps> = RenderHookResult<
+  TResult,
+  TProps
+> & {
+  renderCount: () => number;
+};
+
+type RenderHookServerCompomentProps<TResult> = { render: () => TResult };
+
+type RenderHookServerResult<TResult> = {
+  result: { current: TResult };
+  hydrate: () => void;
 };
 
 async function sleep(ms: number): Promise<42> {
@@ -45,17 +66,6 @@ function createAsyncMock<T = string>(
   });
 }
 
-type RenderHookWithCountResult<TResult, TProps> = RenderHookResult<
-  TResult,
-  TProps
-> & {
-  renderCount: () => number;
-};
-
-type RenderHookOptions<Props> = {
-  initialProps?: Props;
-};
-
 function renderHookWithCount<TResult, TProps>(
   render: (initialProps: TProps) => TResult,
   options?: RenderHookOptions<TProps>
@@ -69,6 +79,45 @@ function renderHookWithCount<TResult, TProps>(
   }, options);
 
   return { renderCount: () => count, ...result };
+}
+
+function renderHookServer<TResult>(
+  render: () => TResult
+): RenderHookServerResult<TResult> {
+  const results: Array<TResult> = [];
+  const result = {
+    get current() {
+      return results.slice(-1)[0];
+    },
+  };
+
+  const setValue = (value: TResult) => {
+    results.push(value);
+  };
+
+  const Component = ({ render }: RenderHookServerCompomentProps<TResult>) => {
+    setValue(render());
+
+    return null;
+  };
+
+  const component = <Component render={render} />;
+
+  const serverOutput = renderToString(component);
+
+  const hydrate = () => {
+    const root = document.createElement("div");
+    root.innerHTML = serverOutput;
+
+    act(() => {
+      hydrateRoot(root, component);
+    });
+  };
+
+  return {
+    result,
+    hydrate,
+  };
 }
 
 describe("useAsyncCache", () => {
@@ -561,5 +610,30 @@ describe("useAsyncCache", () => {
       data: undefined,
       error: undefined,
     });
+  });
+
+  test("rendering server-side and hydrating should match", () => {
+    const mock = createAsyncMock();
+    const cache = createAsyncCache(mock, { deduplicationInterval: 0 });
+
+    const empty = renderHookServer(() => useAsyncCache(cache, null));
+    const abc = renderHookServer(() => useAsyncCache(cache, KEY_ABC));
+
+    const emptyServer = empty.result.current;
+    const abcServer = abc.result.current;
+
+    empty.hydrate();
+    abc.hydrate();
+
+    const emptyClient = empty.result.current;
+    const abcClient = abc.result.current;
+
+    expect(emptyServer.isLoading).toEqual(emptyClient.isLoading);
+    expect(emptyServer.data).toEqual(emptyClient.data);
+    expect(emptyServer.error).toEqual(emptyClient.error);
+
+    expect(abcServer.isLoading).toEqual(abcClient.isLoading);
+    expect(abcServer.data).toEqual(abcClient.data);
+    expect(abcServer.error).toEqual(abcClient.error);
   });
 });
