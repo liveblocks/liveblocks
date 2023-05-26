@@ -131,7 +131,7 @@ export class MockWebSocketServer {
   public get receivedMessages(): Json[] {
     return this.receivedMessagesRaw.map((raw) => {
       try {
-        return JSON.parse(raw);
+        return JSON.parse(raw) as Json;
       } catch {
         return "<non-JSON value>";
       }
