@@ -1,47 +1,23 @@
-import { useState } from "react";
-import { LiveObject } from "@liveblocks/client";
 import { useStorage, useMutation } from "./liveblocks.config";
 
 export function Room() {
-  const [itemText, setItemText] = useState("");
-  const list = useStorage((root) => root.items);
+  const person = useStorage((root) => root.person);
 
-  // Add mutation
-  const addItem = useMutation(
-    ({ storage }, e) => {
-      e.preventDefault();
+  // Update name mutation
+  const updateName = useMutation(({ storage }, newName: string) => {
+    const person = storage.get("person");
+    person.set("name", newName);
+  }, []);
 
-      const newItem = new LiveObject({
-        complete: false,
-        text: itemText,
-      });
-
-      const items = storage.get("items");
-      items.push(newItem);
-
-      setItemText("");
-    },
-    [itemText, setItemText]
-  );
+  // Add name mutation
 
   return (
     <div>
-      <form onSubmit={addItem}>
-        <input
-          type="text"
-          value={itemText}
-          onChange={(e) => setItemText(e.target.value)}
-        />
-        <button>Add</button>
-      </form>
-      <ul>
-        {list.map((item) => (
-          <li>
-            <input type="checkbox" />
-            {item.text}
-          </li>
-        ))}
-      </ul>
+      <input
+        type="text"
+        value={person.name}
+        onChange={(e) => updateName(e.target.value)}
+      />
     </div>
   );
 }

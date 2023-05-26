@@ -23,7 +23,7 @@ button {
 }
 
 button:active {
-  opacity: 0.9;
+  opacity: 0.85;
 }
 
 button:focus{
@@ -45,6 +45,7 @@ button:focus{
   margin: 8px;
   animation: ease slideIn 0.2s;
   transition: ease bottom 0.2s;
+  filter: drop-shadow(0 4px 3px rgb(0 0 0 / 0.07)) drop-shadow(0 2px 2px rgb(0 0 0 / 0.06));
 }
 
 @keyframes slideIn {

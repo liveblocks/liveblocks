@@ -1,7 +1,7 @@
-import { LiveObject } from "@liveblocks/client";
+import { LiveList, LiveObject } from "@liveblocks/client";
+import { ClientSideSuspense } from "@liveblocks/react";
 import { RoomProvider } from "./liveblocks.config";
 import { Room } from "./Room";
-import { ClientSideSuspense } from "@liveblocks/react";
 
 export default function App() {
   const roomId = "{% ROOM_ID %}";
@@ -11,7 +11,7 @@ export default function App() {
       id={roomId}
       initialPresence={{}}
       initialStorage={{
-        person: new LiveObject({ name: "Marie", age: 30 }),
+        people: new LiveList([new LiveObject({ name: "Marie", age: 30 })]),
       }}
     >
       <ClientSideSuspense fallback={<div>Loading...</div>}>

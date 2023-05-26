@@ -1,22 +1,64 @@
 {% DEFAULT_STYLES %}
 
-form, li {
+div {
   display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 4px;
-  margin: 0;
+  flex-direction: column;
+  gap: 8px;
 }
 
 input {
+  font-family: "Inter", sans-serif;
   display: block;
-  margin-top: 0;
+  font-size: 16px;
+  position: relative;
+  border: 0;
+  padding: 12px 16px;
+  background: #fff;
+  box-shadow:
+    0 0 0 1px rgba(128, 128, 128, 0.2),
+    0 1px 1px 0 rgb(0 0 0 / 0.06),
+    0 1px 2px 0 rgb(0 0 0 / 0.1);
+  border-radius: 6px;
 }
 
-ul {
-  list-style-type: none;
+input:focus{
+  box-shadow:
+    0 0 0 1px rgba(128, 128, 128, 0.2),
+    0 0 0 2px var(--preview-background),
+    0 0 0 4px var(--preview-foreground),
+    0 1px 1px 0 rgb(0 0 0 / 0.06),
+    0 1px 2px 0 rgb(0 0 0 / 0.1);
 }
 
-li {
-  justify-content: start;
+input:focus, input:focus-within, input:active {
+  outline: none;
+}
+
+button {
+  font-family: "Inter", sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  border: 0;
+  padding: 12px 16px;
+  background: var(--preview-foreground);
+  color: var(--preview-background);
+  box-shadow:
+    0 0 0 1px rgba(128, 128, 128, 0.2),
+    0 1px 1px 0 rgb(0 0 0 / 0.06),
+    0 1px 2px 0 rgb(0 0 0 / 0.1);
+  cursor: pointer;
+  border-radius: 6px;
+}
+
+button:active {
+  opacity: 0.85;
+}
+
+button:focus{
+  box-shadow:
+    0 0 0 1px rgba(128, 128, 128, 0.2),
+    0 0 0 2px var(--preview-background),
+    0 0 0 4px var(--preview-foreground),
+    0 1px 1px 0 rgb(0 0 0 / 0.06),
+    0 1px 2px 0 rgb(0 0 0 / 0.1);
 }
