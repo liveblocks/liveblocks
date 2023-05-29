@@ -400,6 +400,10 @@ function makeRoomConfig<TPresence extends JsonObject, TRoomEvent extends Json>(
   };
 }
 
+/**
+ * Sets up a Room instance that auto-connects to a server and that will receive
+ * the given initial storage items from the server.
+ */
 export async function prepareRoomWithStorage<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
@@ -420,6 +424,16 @@ export async function prepareRoomWithStorage<
     AUTO_OPEN_SOCKETS
   );
 
+  const clonedItems = deepClone(items);
+  wss.onConnection((conn) => {
+    conn.server.send(
+      serverMessage({
+        type: ServerMsgCode.INITIAL_STORAGE_STATE,
+        items: clonedItems,
+      })
+    );
+  });
+
   const room = createRoom<TPresence, TStorage, TUserMeta, TRoomEvent>(
     {
       initialPresence: {} as TPresence,
@@ -431,18 +445,7 @@ export async function prepareRoomWithStorage<
 
   room.connect();
 
-  // Start getting the storage, but don't await the promise just yet!
-  const getStoragePromise = room.getStorage();
-
-  const clonedItems = deepClone(items);
-  room.__internal.send.incomingMessage(
-    serverMessage({
-      type: ServerMsgCode.INITIAL_STORAGE_STATE,
-      items: clonedItems,
-    })
-  );
-
-  const storage = await getStoragePromise;
+  const storage = await room.getStorage();
   return {
     storage,
     room,
@@ -463,9 +466,7 @@ export async function prepareIsolatedStorageTest<TStorage extends LsonObject>(
   actor: number = 0,
   defaultStorage?: TStorage
 ) {
-  const messagesSent: ClientMsg<never, never>[] = [];
-
-  const { room, storage, ws } = await prepareRoomWithStorage<
+  const { room, storage, wss } = await prepareRoomWithStorage<
     never,
     TStorage,
     never,
@@ -473,8 +474,9 @@ export async function prepareIsolatedStorageTest<TStorage extends LsonObject>(
   >(
     items,
     actor,
-    (messages: ClientMsg<never, never>[]) => {
-      messagesSent.push(...messages);
+    (_messages: ClientMsg<never, never>[]) => {
+      // No-op!
+      // messagesSent.push(...messages);
     },
     defaultStorage || ({} as TStorage)
   );
@@ -482,14 +484,13 @@ export async function prepareIsolatedStorageTest<TStorage extends LsonObject>(
   return {
     root: storage.root,
     room,
-    ws,
     expectStorage: (data: ToImmutable<TStorage>) =>
       expect(storage.root.toImmutable()).toEqual(data),
     expectMessagesSent: (messages: ClientMsg<JsonObject, Json>[]) => {
-      expect(messagesSent).toEqual(messages);
+      expect(wss.receivedMessages).toEqual(messages);
     },
     applyRemoteOperations: (ops: Op[]) =>
-      room.__internal.send.incomingMessage(
+      wss.last.send(
         serverMessage({
           type: ServerMsgCode.UPDATE_STORAGE,
           ops,
