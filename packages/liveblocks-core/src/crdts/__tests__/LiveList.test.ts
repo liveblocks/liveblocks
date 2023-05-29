@@ -845,7 +845,7 @@ describe("LiveList", () => {
     });
 
     it("list conflicts with offline", async () => {
-      const { root, expectStorage, applyRemoteOperations, room } =
+      const { root, expectStorage, applyRemoteOperations, room, wss } =
         await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
           [
             createSerializedObject("0:0", {}),
@@ -854,7 +854,7 @@ describe("LiveList", () => {
           1
         );
 
-      room.__internal.send.explicitClose(
+      wss.last.close(
         new CloseEvent("close", {
           code: WebsocketCloseCodes.CLOSE_ABNORMAL,
           wasClean: false,
@@ -895,7 +895,7 @@ describe("LiveList", () => {
     });
 
     it("list conflicts with undo redo and remote change", async () => {
-      const { root, expectStorage, applyRemoteOperations, room } =
+      const { root, expectStorage, applyRemoteOperations, room, wss } =
         await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
           [
             createSerializedObject("0:0", {}),
@@ -904,7 +904,7 @@ describe("LiveList", () => {
           1
         );
 
-      room.__internal.send.explicitClose(
+      wss.last.close(
         new CloseEvent("close", {
           code: WebsocketCloseCodes.CLOSE_ABNORMAL,
           wasClean: false,
@@ -1200,16 +1200,17 @@ describe("LiveList", () => {
 
   describe("reconnect with remote changes and subscribe", () => {
     test("Register added to list", async () => {
-      const { expectStorage, room, root } = await prepareIsolatedStorageTest<{
-        items: LiveList<string>;
-      }>(
-        [
-          createSerializedObject("0:0", {}),
-          createSerializedList("0:1", "0:0", "items"),
-          createSerializedRegister("0:2", "0:1", FIRST_POSITION, "a"),
-        ],
-        1
-      );
+      const { expectStorage, room, root, wss } =
+        await prepareIsolatedStorageTest<{
+          items: LiveList<string>;
+        }>(
+          [
+            createSerializedObject("0:0", {}),
+            createSerializedList("0:1", "0:0", "items"),
+            createSerializedRegister("0:2", "0:1", FIRST_POSITION, "a"),
+          ],
+          1
+        );
 
       const rootCallback = jest.fn();
       const rootDeepCallback = jest.fn();
@@ -1223,7 +1224,7 @@ describe("LiveList", () => {
 
       expectStorage({ items: ["a"] });
 
-      room.__internal.send.explicitClose(
+      wss.last.close(
         new CloseEvent("close", {
           code: WebsocketCloseCodes.CLOSE_ABNORMAL,
           wasClean: false,
@@ -1287,17 +1288,18 @@ describe("LiveList", () => {
     });
 
     test("Register moved in list", async () => {
-      const { expectStorage, room, root } = await prepareIsolatedStorageTest<{
-        items: LiveList<string>;
-      }>(
-        [
-          createSerializedObject("0:0", {}),
-          createSerializedList("0:1", "0:0", "items"),
-          createSerializedRegister("0:2", "0:1", FIRST_POSITION, "a"),
-          createSerializedRegister("0:3", "0:1", SECOND_POSITION, "b"),
-        ],
-        1
-      );
+      const { expectStorage, room, root, wss } =
+        await prepareIsolatedStorageTest<{
+          items: LiveList<string>;
+        }>(
+          [
+            createSerializedObject("0:0", {}),
+            createSerializedList("0:1", "0:0", "items"),
+            createSerializedRegister("0:2", "0:1", FIRST_POSITION, "a"),
+            createSerializedRegister("0:3", "0:1", SECOND_POSITION, "b"),
+          ],
+          1
+        );
 
       const rootCallback = jest.fn();
       const rootDeepCallback = jest.fn();
@@ -1311,7 +1313,7 @@ describe("LiveList", () => {
 
       expectStorage({ items: ["a", "b"] });
 
-      room.__internal.send.explicitClose(
+      wss.last.close(
         new CloseEvent("close", {
           code: WebsocketCloseCodes.CLOSE_ABNORMAL,
           wasClean: false,
@@ -1363,17 +1365,18 @@ describe("LiveList", () => {
     });
 
     test("Register deleted from list", async () => {
-      const { expectStorage, room, root } = await prepareIsolatedStorageTest<{
-        items: LiveList<string>;
-      }>(
-        [
-          createSerializedObject("0:0", {}),
-          createSerializedList("0:1", "0:0", "items"),
-          createSerializedRegister("0:2", "0:1", FIRST_POSITION, "a"),
-          createSerializedRegister("0:3", "0:1", SECOND_POSITION, "b"),
-        ],
-        1
-      );
+      const { expectStorage, room, root, wss } =
+        await prepareIsolatedStorageTest<{
+          items: LiveList<string>;
+        }>(
+          [
+            createSerializedObject("0:0", {}),
+            createSerializedList("0:1", "0:0", "items"),
+            createSerializedRegister("0:2", "0:1", FIRST_POSITION, "a"),
+            createSerializedRegister("0:3", "0:1", SECOND_POSITION, "b"),
+          ],
+          1
+        );
 
       const rootCallback = jest.fn();
       const rootDeepCallback = jest.fn();
@@ -1387,7 +1390,7 @@ describe("LiveList", () => {
 
       expectStorage({ items: ["a", "b"] });
 
-      room.__internal.send.explicitClose(
+      wss.last.close(
         new CloseEvent("close", {
           code: WebsocketCloseCodes.CLOSE_ABNORMAL,
           wasClean: false,

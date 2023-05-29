@@ -905,15 +905,16 @@ describe("LiveObject", () => {
 
   describe("reconnect with remote changes and subscribe", () => {
     test("LiveObject updated", async () => {
-      const { expectStorage, room, root } = await prepareIsolatedStorageTest<{
-        obj: LiveObject<{ a: number }>;
-      }>(
-        [
-          createSerializedObject("0:0", {}),
-          createSerializedObject("0:1", { a: 1 }, "0:0", "obj"),
-        ],
-        1
-      );
+      const { expectStorage, room, root, wss } =
+        await prepareIsolatedStorageTest<{
+          obj: LiveObject<{ a: number }>;
+        }>(
+          [
+            createSerializedObject("0:0", {}),
+            createSerializedObject("0:1", { a: 1 }, "0:0", "obj"),
+          ],
+          1
+        );
 
       const rootDeepCallback = jest.fn();
       const liveObjectCallback = jest.fn();
@@ -923,7 +924,7 @@ describe("LiveObject", () => {
 
       expectStorage({ obj: { a: 1 } });
 
-      room.__internal.send.explicitClose(
+      wss.last.close(
         new CloseEvent("close", {
           code: WebsocketCloseCodes.CLOSE_ABNORMAL,
           wasClean: false,
@@ -963,15 +964,16 @@ describe("LiveObject", () => {
     });
 
     test("LiveObject updated nested", async () => {
-      const { expectStorage, room, root } = await prepareIsolatedStorageTest<{
-        obj: LiveObject<{ a: number; subObj?: LiveObject<{ b: number }> }>;
-      }>(
-        [
-          createSerializedObject("0:0", {}),
-          createSerializedObject("0:1", { a: 1 }, "0:0", "obj"),
-        ],
-        1
-      );
+      const { expectStorage, room, root, wss } =
+        await prepareIsolatedStorageTest<{
+          obj: LiveObject<{ a: number; subObj?: LiveObject<{ b: number }> }>;
+        }>(
+          [
+            createSerializedObject("0:0", {}),
+            createSerializedObject("0:1", { a: 1 }, "0:0", "obj"),
+          ],
+          1
+        );
 
       const rootDeepCallback = jest.fn();
       const liveObjectCallback = jest.fn();
@@ -981,7 +983,7 @@ describe("LiveObject", () => {
 
       expectStorage({ obj: { a: 1 } });
 
-      room.__internal.send.explicitClose(
+      wss.last.close(
         new CloseEvent("close", {
           code: WebsocketCloseCodes.CLOSE_ABNORMAL,
           wasClean: false,

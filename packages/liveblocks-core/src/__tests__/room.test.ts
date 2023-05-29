@@ -1380,7 +1380,7 @@ describe("room", () => {
     });
 
     test("disconnect and reconnect with remote changes", async () => {
-      const { expectStorage, room } = await prepareIsolatedStorageTest<{
+      const { expectStorage, room, wss } = await prepareIsolatedStorageTest<{
         items?: LiveList<string>;
         items2?: LiveList<string>;
       }>(
@@ -1394,7 +1394,7 @@ describe("room", () => {
 
       expectStorage({ items: ["a"] });
 
-      room.__internal.send.explicitClose(
+      wss.last.close(
         new CloseEvent("close", {
           code: WebsocketCloseCodes.CLOSE_ABNORMAL,
           wasClean: false,
