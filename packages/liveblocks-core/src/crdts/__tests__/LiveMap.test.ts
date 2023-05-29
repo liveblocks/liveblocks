@@ -648,16 +648,17 @@ describe("LiveMap", () => {
 
   describe("reconnect with remote changes and subscribe", () => {
     test("Register added to map", async () => {
-      const { expectStorage, room, root } = await prepareIsolatedStorageTest<{
-        map: LiveMap<string, string>;
-      }>(
-        [
-          createSerializedObject("0:0", {}),
-          createSerializedMap("0:1", "0:0", "map"),
-          createSerializedRegister("0:2", "0:1", "first", "a"),
-        ],
-        1
-      );
+      const { expectStorage, room, root, wss } =
+        await prepareIsolatedStorageTest<{
+          map: LiveMap<string, string>;
+        }>(
+          [
+            createSerializedObject("0:0", {}),
+            createSerializedMap("0:1", "0:0", "map"),
+            createSerializedRegister("0:2", "0:1", "first", "a"),
+          ],
+          1
+        );
 
       const rootDeepCallback = jest.fn();
       const mapCallback = jest.fn();
@@ -669,7 +670,7 @@ describe("LiveMap", () => {
 
       expectStorage({ map: new Map([["first", "a"]]) });
 
-      room.__internal.send.explicitClose(
+      wss.last.close(
         new CloseEvent("close", {
           code: WebsocketCloseCodes.CLOSE_ABNORMAL,
           wasClean: false,
