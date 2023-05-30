@@ -504,7 +504,9 @@ export async function prepareIsolatedStorageTest<TStorage extends LsonObject>(
     wss,
     expectStorage: (data: ToImmutable<TStorage>) =>
       expect(storage.root.toImmutable()).toEqual(data),
-    expectMessagesSent: (messages: ClientMsg<JsonObject, Json>[]) => {
+    expectMessagesSent: (
+      messages: (ClientMsg<JsonObject, Json> | ClientMsg<JsonObject, Json>[])[]
+    ) => {
       expect(wss.receivedMessages).toEqual(messages);
     },
     applyRemoteOperations: (ops: Op[]) =>
