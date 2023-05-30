@@ -25,27 +25,27 @@ type InvalidateOptions<T> =
     };
 
 type AsyncStateInvalid<T> = {
-  isLoading: false;
-  data?: T;
-  error?: never;
+  readonly isLoading: false;
+  readonly data?: T;
+  readonly error?: never;
 };
 
 type AsyncStateLoading<T> = {
-  isLoading: true;
-  data?: T;
-  error?: never;
+  readonly isLoading: true;
+  readonly data?: T;
+  readonly error?: never;
 };
 
 type AsyncStateSuccess<T> = {
-  isLoading: false;
-  data: T;
-  error?: never;
+  readonly isLoading: false;
+  readonly data: T;
+  readonly error?: never;
 };
 
 type AsyncStateError<T, E> = {
-  isLoading: false;
-  data?: T;
-  error: E;
+  readonly isLoading: false;
+  readonly data?: T;
+  readonly error: E;
 };
 
 export type AsyncState<T, E> =
