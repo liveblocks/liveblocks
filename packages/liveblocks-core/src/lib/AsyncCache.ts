@@ -16,23 +16,20 @@ type AsyncCacheItemOptions = WithRequired<
   "deduplicationInterval"
 >;
 
-type InvalidateOptions<TData = any> =
+type InvalidateOptions<TData> =
   | { clearData?: false; optimisticData?: never }
   | {
       clearData?: never;
       optimisticData: TData | ((data: TData | undefined) => TData | undefined);
     };
 
-export type AsyncState<TData = any, TError = any> = {
+export type AsyncState<TData, TError> = {
   isLoading: boolean;
   data?: TData;
   error?: TError;
 };
 
-type AsyncResolvedState<TData = any, TError = any> = AsyncState<
-  TData,
-  TError
-> & {
+type AsyncResolvedState<TData, TError> = AsyncState<TData, TError> & {
   isLoading: false;
 };
 
@@ -46,7 +43,7 @@ type AsyncCacheItemContext<TData, TError> = AsyncState<TData, TError> & {
   previousNonOptimisticData?: TData;
 };
 
-export type AsyncCacheItem<TData = any, TError = any> = Observable<
+export type AsyncCacheItem<TData, TError> = Observable<
   AsyncState<TData, TError>
 > & {
   get(): Promise<AsyncResolvedState<TData, TError>>;
@@ -57,7 +54,7 @@ export type AsyncCacheItem<TData = any, TError = any> = Observable<
   ): Promise<AsyncResolvedState<TData, TError>>;
 };
 
-export type AsyncCache<TData = any, TError = any> = {
+export type AsyncCache<TData, TError> = {
   /**
    * Returns a promise which resolves with the state of the key.
    *
@@ -120,7 +117,10 @@ export type AsyncCache<TData = any, TError = any> = {
 
 const noop = () => {};
 
-export function isDifferentState(a: AsyncState, b: AsyncState): boolean {
+export function isDifferentState(
+  a: AsyncState<unknown, unknown>,
+  b: AsyncState<unknown, unknown>
+): boolean {
   // This might not be true, `data` and `error` would have to be
   // deeply compared to know that. But in our use-case, `data` and
   // `error` can't change without being set to `undefined` first or
@@ -132,7 +132,7 @@ export function isDifferentState(a: AsyncState, b: AsyncState): boolean {
   );
 }
 
-function createCacheItem<TData = any, TError = any>(
+function createCacheItem<TData, TError>(
   key: string,
   asyncFunction: AsyncFunction<TData>,
   { deduplicationInterval }: AsyncCacheItemOptions
@@ -278,7 +278,7 @@ function createCacheItem<TData = any, TError = any>(
   };
 }
 
-export function createAsyncCache<TData = any, TError = any>(
+export function createAsyncCache<TData, TError>(
   asyncFunction: AsyncFunction<TData, [string]>,
   options?: AsyncCacheOptions
 ): AsyncCache<TData, TError> {

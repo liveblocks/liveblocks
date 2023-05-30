@@ -6,7 +6,7 @@ const KEY_ABC = "abc";
 const KEY_XYZ = "xyz";
 const ERROR = new Error("error");
 
-type AsyncStateDataError<TData = any, TError = any> = Pick<
+type AsyncStateDataError<TData, TError> = Pick<
   AsyncState<TData, TError>,
   "data" | "error"
 >;
@@ -50,28 +50,28 @@ describe("AsyncCache", () => {
     const cache = createAsyncCache(mock, { deduplicationInterval: 0 });
 
     // 🚀 Called
-    expect(await cache.get(KEY_ABC)).toMatchObject<AsyncStateDataError<string>>(
-      {
-        data: KEY_ABC,
-        error: undefined,
-      }
-    );
+    expect(await cache.get(KEY_ABC)).toMatchObject<
+      AsyncStateDataError<string, Error>
+    >({
+      data: KEY_ABC,
+      error: undefined,
+    });
 
     // ✨ Cached
-    expect(await cache.get(KEY_ABC)).toMatchObject<AsyncStateDataError<string>>(
-      {
-        data: KEY_ABC,
-        error: undefined,
-      }
-    );
+    expect(await cache.get(KEY_ABC)).toMatchObject<
+      AsyncStateDataError<string, Error>
+    >({
+      data: KEY_ABC,
+      error: undefined,
+    });
 
     // ✨ Cached
-    expect(await cache.get(KEY_ABC)).toMatchObject<AsyncStateDataError<string>>(
-      {
-        data: KEY_ABC,
-        error: undefined,
-      }
-    );
+    expect(await cache.get(KEY_ABC)).toMatchObject<
+      AsyncStateDataError<string, Error>
+    >({
+      data: KEY_ABC,
+      error: undefined,
+    });
 
     expect(mock).toHaveBeenCalledTimes(1);
     expect(mock).toHaveBeenCalledWith(KEY_ABC);
@@ -102,11 +102,11 @@ describe("AsyncCache", () => {
     // 🚀 Called with "xyz"
     const xyz = await cache.get(KEY_XYZ);
 
-    expect(abc).toMatchObject<AsyncStateDataError<string>>({
+    expect(abc).toMatchObject<AsyncStateDataError<string, Error>>({
       data: KEY_ABC,
       error: undefined,
     });
-    expect(xyz).toMatchObject<AsyncStateDataError<string>>({
+    expect(xyz).toMatchObject<AsyncStateDataError<string, Error>>({
       data: undefined,
       error: ERROR,
     });
@@ -121,20 +121,20 @@ describe("AsyncCache", () => {
     });
 
     // 🚀 Called and ❌ errored
-    expect(await cache.get(KEY_ABC)).toMatchObject<AsyncStateDataError<string>>(
-      {
-        data: undefined,
-        error: ERROR,
-      }
-    );
+    expect(await cache.get(KEY_ABC)).toMatchObject<
+      AsyncStateDataError<string, Error>
+    >({
+      data: undefined,
+      error: ERROR,
+    });
 
     // 🚀 Called again because the first call errored
-    expect(await cache.get(KEY_ABC)).toMatchObject<AsyncStateDataError<string>>(
-      {
-        data: KEY_ABC,
-        error: undefined,
-      }
-    );
+    expect(await cache.get(KEY_ABC)).toMatchObject<
+      AsyncStateDataError<string, Error>
+    >({
+      data: KEY_ABC,
+      error: undefined,
+    });
 
     expect(mock).toHaveBeenCalledTimes(2);
   });
@@ -177,12 +177,12 @@ describe("AsyncCache", () => {
     expect(cache.getState(KEY_ABC)?.data).toBeUndefined();
 
     // 🚀 Called because invalidated
-    expect(await cache.get(KEY_ABC)).toMatchObject<AsyncStateDataError<string>>(
-      {
-        data: KEY_ABC,
-        error: undefined,
-      }
-    );
+    expect(await cache.get(KEY_ABC)).toMatchObject<
+      AsyncStateDataError<string, Error>
+    >({
+      data: KEY_ABC,
+      error: undefined,
+    });
 
     expect(mock).toHaveBeenCalledTimes(2);
   });
@@ -202,12 +202,12 @@ describe("AsyncCache", () => {
     expect(cache.getState(KEY_ABC)?.data).not.toBeUndefined();
 
     // 🚀 Called because invalidated
-    expect(await cache.get(KEY_ABC)).toMatchObject<AsyncStateDataError<string>>(
-      {
-        data: KEY_ABC,
-        error: undefined,
-      }
-    );
+    expect(await cache.get(KEY_ABC)).toMatchObject<
+      AsyncStateDataError<string, Error>
+    >({
+      data: KEY_ABC,
+      error: undefined,
+    });
 
     expect(mock).toHaveBeenCalledTimes(2);
   });
@@ -221,7 +221,7 @@ describe("AsyncCache", () => {
 
     // 🗑️ Clears the cache for "abc" and 🚀 called again because invalidated
     expect(await cache.revalidate(KEY_ABC)).toMatchObject<
-      AsyncStateDataError<string>
+      AsyncStateDataError<string, Error>
     >({
       data: KEY_ABC,
       error: undefined,
@@ -257,7 +257,7 @@ describe("AsyncCache", () => {
     // 1️⃣ Triggered when the first call started
     expect(callback).toHaveBeenNthCalledWith(
       1,
-      expect.objectContaining<AsyncState<number[]>>({
+      expect.objectContaining<AsyncState<number[], Error>>({
         isLoading: true,
         data: undefined,
         error: undefined,
@@ -266,7 +266,7 @@ describe("AsyncCache", () => {
     // 2️⃣ Triggered when the first call finished
     expect(callback).toHaveBeenNthCalledWith(
       2,
-      expect.objectContaining<AsyncState<number[]>>({
+      expect.objectContaining<AsyncState<number[], Error>>({
         isLoading: false,
         data: [0],
         error: undefined,
@@ -275,7 +275,7 @@ describe("AsyncCache", () => {
     // 3️⃣ Triggered when revalidated with optimistic data
     expect(callback).toHaveBeenNthCalledWith(
       3,
-      expect.objectContaining<AsyncState<number[]>>({
+      expect.objectContaining<AsyncState<number[], Error>>({
         isLoading: true,
         data: [0, 1],
         error: undefined,
@@ -284,7 +284,7 @@ describe("AsyncCache", () => {
     // 4️⃣ Triggered when revalidation finished
     expect(callback).toHaveBeenNthCalledWith(
       4,
-      expect.objectContaining<AsyncState<number[]>>({
+      expect.objectContaining<AsyncState<number[], Error>>({
         isLoading: false,
         data: [0, 1],
         error: undefined,
@@ -319,7 +319,7 @@ describe("AsyncCache", () => {
     // 1️⃣ Triggered when the first call started
     expect(callback).toHaveBeenNthCalledWith(
       1,
-      expect.objectContaining<AsyncState<number[]>>({
+      expect.objectContaining<AsyncState<number[], Error>>({
         isLoading: true,
         data: undefined,
         error: undefined,
@@ -328,7 +328,7 @@ describe("AsyncCache", () => {
     // 2️⃣ Triggered when the first call finished
     expect(callback).toHaveBeenNthCalledWith(
       2,
-      expect.objectContaining<AsyncState<number[]>>({
+      expect.objectContaining<AsyncState<number[], Error>>({
         isLoading: false,
         data: [0],
         error: undefined,
@@ -337,7 +337,7 @@ describe("AsyncCache", () => {
     // 3️⃣ Triggered when revalidated with optimistic data
     expect(callback).toHaveBeenNthCalledWith(
       3,
-      expect.objectContaining<AsyncState<number[]>>({
+      expect.objectContaining<AsyncState<number[], Error>>({
         isLoading: true,
         data: [0, 1],
         error: undefined,
@@ -346,7 +346,7 @@ describe("AsyncCache", () => {
     // 4️⃣❌ Triggered when revalidation errored and 🔙 rollbacked the optimistic data
     expect(callback).toHaveBeenNthCalledWith(
       4,
-      expect.objectContaining<AsyncState<number[]>>({
+      expect.objectContaining<AsyncState<number[], Error>>({
         isLoading: false,
         data: [0],
         error: expect.any(Error),
@@ -394,7 +394,7 @@ describe("AsyncCache", () => {
 
     expect(cache.has(KEY_ABC)).toBe(false);
     expect(cache.has(KEY_XYZ)).toBe(false);
-    expect(state).toMatchObject<AsyncStateDataError<string>>({
+    expect(state).toMatchObject<AsyncStateDataError<string, Error>>({
       data: KEY_XYZ,
       error: undefined,
     });
@@ -423,7 +423,9 @@ describe("AsyncCache", () => {
     // 🚀 Called
     await cache.get(KEY_ABC);
 
-    expect(cache.getState(KEY_ABC)).toMatchObject<AsyncStateDataError<string>>({
+    expect(cache.getState(KEY_ABC)).toMatchObject<
+      AsyncStateDataError<string, Error>
+    >({
       data: KEY_ABC,
       error: undefined,
     });
@@ -463,7 +465,7 @@ describe("AsyncCache", () => {
     // 1️⃣ Triggered when the first call started
     expect(callback).toHaveBeenNthCalledWith(
       1,
-      expect.objectContaining<AsyncState<string>>({
+      expect.objectContaining<AsyncState<string, Error>>({
         isLoading: true,
         data: undefined,
         error: undefined,
@@ -472,7 +474,7 @@ describe("AsyncCache", () => {
     // 2️⃣❌ Triggered when the first call resolved
     expect(callback).toHaveBeenNthCalledWith(
       2,
-      expect.objectContaining<AsyncState<string>>({
+      expect.objectContaining<AsyncState<string, Error>>({
         isLoading: false,
         data: undefined,
         error: ERROR,
@@ -481,7 +483,7 @@ describe("AsyncCache", () => {
     // 3️⃣ Triggered when the second call started
     expect(callback).toHaveBeenNthCalledWith(
       3,
-      expect.objectContaining<AsyncState<string>>({
+      expect.objectContaining<AsyncState<string, Error>>({
         isLoading: true,
         data: undefined,
         error: undefined,
@@ -490,7 +492,7 @@ describe("AsyncCache", () => {
     // 4️⃣✅ Triggered when the second call resolved
     expect(callback).toHaveBeenNthCalledWith(
       4,
-      expect.objectContaining<AsyncState<string>>({
+      expect.objectContaining<AsyncState<string, Error>>({
         isLoading: false,
         data: KEY_ABC,
         error: undefined,
@@ -538,7 +540,7 @@ describe("AsyncCache", () => {
     // 1️⃣ Triggered when the first call started
     expect(callback).toHaveBeenNthCalledWith(
       1,
-      expect.objectContaining<AsyncState<string>>({
+      expect.objectContaining<AsyncState<string, Error>>({
         isLoading: true,
         data: undefined,
         error: undefined,
@@ -547,7 +549,7 @@ describe("AsyncCache", () => {
     // 2️⃣✅ Triggered when the first call finished
     expect(callback).toHaveBeenNthCalledWith(
       2,
-      expect.objectContaining<AsyncState<string>>({
+      expect.objectContaining<AsyncState<string, Error>>({
         isLoading: false,
         data: KEY_ABC,
         error: undefined,
@@ -556,7 +558,7 @@ describe("AsyncCache", () => {
     // 3️⃣🗑️ Triggered when invalidated
     expect(callback).toHaveBeenNthCalledWith(
       3,
-      expect.objectContaining<AsyncState<string>>({
+      expect.objectContaining<AsyncState<string, Error>>({
         isLoading: false,
         data: undefined,
         error: undefined,
@@ -588,7 +590,7 @@ describe("AsyncCache", () => {
     // 1️⃣ Triggered when the first call starts
     expect(callback).toHaveBeenNthCalledWith(
       1,
-      expect.objectContaining<AsyncState<string>>({
+      expect.objectContaining<AsyncState<string, Error>>({
         isLoading: true,
         data: undefined,
         error: undefined,
@@ -597,7 +599,7 @@ describe("AsyncCache", () => {
     // 2️⃣✅🗑️ Triggered when the first call finished but was invalidated in the meantime
     expect(callback).toHaveBeenNthCalledWith(
       2,
-      expect.objectContaining<AsyncState<string>>({
+      expect.objectContaining<AsyncState<string, Error>>({
         isLoading: false,
         data: undefined,
         error: undefined,
@@ -631,7 +633,7 @@ describe("AsyncCache", () => {
     // 1️⃣ Triggered when the first call starts
     expect(callback).toHaveBeenNthCalledWith(
       1,
-      expect.objectContaining<AsyncState<string>>({
+      expect.objectContaining<AsyncState<string, Error>>({
         isLoading: true,
         data: undefined,
         error: undefined,
@@ -640,7 +642,7 @@ describe("AsyncCache", () => {
     // 2️⃣✅ Triggered when the first call finished
     expect(callback).toHaveBeenNthCalledWith(
       2,
-      expect.objectContaining<AsyncState<string>>({
+      expect.objectContaining<AsyncState<string, Error>>({
         isLoading: false,
         data: KEY_ABC,
         error: undefined,
@@ -649,7 +651,7 @@ describe("AsyncCache", () => {
     // 3️⃣🗑️ Triggered when invalidated and cleared
     expect(callback).toHaveBeenNthCalledWith(
       3,
-      expect.objectContaining<AsyncState<string>>({
+      expect.objectContaining<AsyncState<string, Error>>({
         isLoading: false,
         data: undefined,
         error: undefined,
@@ -746,7 +748,7 @@ describe("AsyncCache use cases", () => {
     // 1️⃣ Triggered when generating the first token started
     expect(callback).toHaveBeenNthCalledWith(
       1,
-      expect.objectContaining<AsyncState<string>>({
+      expect.objectContaining<AsyncState<string, Error>>({
         isLoading: true,
         data: undefined,
         error: undefined,
@@ -755,7 +757,7 @@ describe("AsyncCache use cases", () => {
     // 2️⃣✅ Triggered when generating the first token finished
     expect(callback).toHaveBeenNthCalledWith(
       2,
-      expect.objectContaining<AsyncState<string>>({
+      expect.objectContaining<AsyncState<string, Error>>({
         isLoading: false,
         data: expect.any(Object),
         error: undefined,
@@ -764,7 +766,7 @@ describe("AsyncCache use cases", () => {
     // 3️⃣🗑️ Triggered when invalidated because expired
     expect(callback).toHaveBeenNthCalledWith(
       3,
-      expect.objectContaining<AsyncState<string>>({
+      expect.objectContaining<AsyncState<string, Error>>({
         isLoading: false,
         data: undefined,
         error: undefined,
@@ -773,7 +775,7 @@ describe("AsyncCache use cases", () => {
     // 4️⃣ Triggered when generating the second token
     expect(callback).toHaveBeenNthCalledWith(
       4,
-      expect.objectContaining<AsyncState<string>>({
+      expect.objectContaining<AsyncState<string, Error>>({
         isLoading: true,
         data: undefined,
         error: undefined,
@@ -782,7 +784,7 @@ describe("AsyncCache use cases", () => {
     // 5️⃣❌ Triggered when generating the second token errored
     expect(callback).toHaveBeenNthCalledWith(
       5,
-      expect.objectContaining<AsyncState<string>>({
+      expect.objectContaining<AsyncState<string, Error>>({
         isLoading: false,
         data: undefined,
         error: expect.any(Error),
@@ -791,7 +793,7 @@ describe("AsyncCache use cases", () => {
     // 6️⃣ Triggered when generating the third token started
     expect(callback).toHaveBeenNthCalledWith(
       6,
-      expect.objectContaining<AsyncState<string>>({
+      expect.objectContaining<AsyncState<string, Error>>({
         isLoading: true,
         data: undefined,
         error: undefined,
@@ -800,7 +802,7 @@ describe("AsyncCache use cases", () => {
     // 7️⃣✅ Triggered when generating the third token finished
     expect(callback).toHaveBeenNthCalledWith(
       7,
-      expect.objectContaining<AsyncState<string>>({
+      expect.objectContaining<AsyncState<string, Error>>({
         isLoading: false,
         data: expect.any(Object),
         error: undefined,
@@ -811,17 +813,17 @@ describe("AsyncCache use cases", () => {
 
 describe("isDifferentState", () => {
   test("loading", () => {
-    const a: AsyncState = {
+    const a: AsyncState<undefined, Error> = {
       isLoading: false,
       data: undefined,
       error: undefined,
     };
-    const b: AsyncState = {
+    const b: AsyncState<undefined, Error> = {
       isLoading: true,
       data: undefined,
       error: undefined,
     };
-    const c: AsyncState = {
+    const c: AsyncState<undefined, Error> = {
       isLoading: false,
       data: undefined,
       error: undefined,
@@ -834,12 +836,12 @@ describe("isDifferentState", () => {
   });
 
   test("data", () => {
-    const a: AsyncState = {
+    const a: AsyncState<{ key: string }, Error> = {
       isLoading: false,
       data: undefined,
       error: undefined,
     };
-    const b: AsyncState = {
+    const b: AsyncState<{ key: string }, Error> = {
       isLoading: false,
       data: { key: KEY_ABC },
       error: undefined,
@@ -850,12 +852,12 @@ describe("isDifferentState", () => {
   });
 
   test("error", () => {
-    const a: AsyncState = {
+    const a: AsyncState<string, Error> = {
       isLoading: false,
       data: undefined,
       error: undefined,
     };
-    const b: AsyncState = {
+    const b: AsyncState<string, Error> = {
       isLoading: false,
       data: undefined,
       error: ERROR,
