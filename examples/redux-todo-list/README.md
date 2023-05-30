@@ -20,7 +20,7 @@
   <img src="https://img.shields.io/badge/redux-message?style=flat&logo=redux&color=74b&logoColor=fff" alt="Redux" />
 </p>
 
-This example shows how to build a collaborative to-do list with [Liveblocks](https://liveblocks.io), [React](https://reactjs.org/) and [Redux](https://redux-toolkit.js.org/).
+This example shows how to build a collaborative to-do list with [Liveblocks](https://liveblocks.io), [React](https://reactjs.org/), [Next.js](https://nextjs.org/), and [Redux](https://redux-toolkit.js.org/).
 
 As users edit the list, changes will be automatically persisted and synced—allowing for a list that updates in real-time across clients. Users will also be able to see who else is currently online and when a user is typing.
 
@@ -38,8 +38,9 @@ This will download the example and install the example. Next, you must:
 
 - Create an account on [liveblocks.io](https://liveblocks.io/dashboard)
 - Copy your **public** key from the [dashboard](https://liveblocks.io/dashboard/apikeys)
-- Replace `pk_YOUR_PUBLIC_KEY` in [`src/store.js`](./src/store.js) with your **public** key
-- Run `npm run start` and open `http://localhost:3000` in your browser
+- Create a`.env.local` file and add your **public** key as the
+  `NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY` environment variable
+- Run `npm run dev` and open `http://localhost:3000` in your browser
 
 ### Manual setup
 
@@ -52,8 +53,9 @@ Alternatively, you can set up your project manually:
 - Install all dependencies with `npm install`
 - Create an account on [liveblocks.io](https://liveblocks.io/dashboard)
 - Copy your **public** key from the [dashboard](https://liveblocks.io/dashboard/apikeys)
-- Replace `pk_YOUR_PUBLIC_KEY` in [`src/store.js`](./src/store.js) with your **public** key
-- Run `npm run start` and open `http://localhost:3000` in your browser
+- Create a`.env.local` file and add your **public** key as the
+  `NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY` environment variable
+- Run `npm run dev` and open `http://localhost:3000` in your browser
 
 </details>
 
@@ -73,9 +75,10 @@ This will download the example and ask permission to open your browser, enabling
 
 - Create an account on [liveblocks.io](https://liveblocks.io/dashboard)
 - Copy your **public** key from the [dashboard](https://liveblocks.io/dashboard/apikeys)
-- Replace `pk_YOUR_PUBLIC_KEY` in [`src/store.js`](./src/store.js) with your **public** key
+- Create a`.env.local` file and add your **public** key as the
+  `NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY` environment variable
 - Push a commit to update the Vercel demo with the key
-- Run `npm run start` and open `http://localhost:3000` in your browser
+- Run `npm run dev` and open `http://localhost:3000` in your browser
 
 </details>
 
@@ -85,12 +88,10 @@ This will download the example and ask permission to open your browser, enabling
 
 <p></p>
 
-After forking [this example](https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/redux-todo-list) on CodeSandbox, create the `pk_YOUR_PUBLIC_KEY` environment variable as a [public](https://codesandbox.io/docs/secrets).
+After forking [this example](https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/redux-todo-list) on CodeSandbox, create the `NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KE` environment variable as a [public](https://codesandbox.io/docs/secrets).
 
 </details>
 
 ### Tutorial
 
 Follow our [step by step tutorial](https://liveblocks.io/docs/tutorials/collaborative-to-do-list/react-redux) to build it from scratch.
-
-

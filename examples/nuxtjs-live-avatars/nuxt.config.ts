@@ -1,5 +1,9 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
+  runtimeConfig: {
+    liveblocksSecretKey: process.env.LIVEBLOCKS_SECRET_KEY || "",
+    codeSandboxSse: process.env.CODESANDBOX_SSE || "",
+  },
   nitro: {
     preset: "vercel-edge",
   },

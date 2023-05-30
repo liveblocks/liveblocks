@@ -47,6 +47,7 @@ type AuthorizeOptions = {
   groupIds?: string[];
 };
 
+/** @internal */
 type AllAuthorizeOptions = AuthorizeOptions & {
   liveblocksAuthorizeEndpoint?: string;
 };
@@ -98,36 +99,40 @@ export async function authorize(
       );
     }
 
-    const result = await fetch(
-      buildLiveblocksAuthorizeEndpoint(options as AllAuthorizeOptions, room),
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${secret}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          userId,
-          userInfo,
-          groupIds,
-        }),
-      }
-    );
+    const resp = await fetch(buildLiveblocksAuthorizeEndpoint(options, room), {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${secret}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        userId,
+        userInfo,
+        groupIds,
+      }),
+    });
 
-    if (!result.ok) {
+    if (resp.ok) {
       return {
-        status: 403,
-        body: await result.text(),
+        status: 200 /* OK */,
+        body: await resp.text(),
       };
     }
 
-    return {
-      status: 200,
-      body: await result.text(),
-    };
+    if (resp.status >= 500) {
+      return {
+        status: 503 /* Service Unavailable */,
+        body: await resp.text(),
+      };
+    } else {
+      return {
+        status: 403 /* Unauthorized */,
+        body: await resp.text(),
+      };
+    }
   } catch (er) {
     return {
-      status: 403,
+      status: 503 /* Service Unavailable */,
       body: 'Call to "https://api.liveblocks.io/v2/rooms/:roomId/authorize" failed. See "error" for more information.',
       error: er as Error | undefined,
     };
