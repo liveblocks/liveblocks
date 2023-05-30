@@ -1,4 +1,4 @@
-import { LiveObject } from "@liveblocks/client";
+import { LiveList, LiveObject } from "@liveblocks/client";
 import { RoomProvider } from "./liveblocks.config";
 import { Room } from "./Room";
 import { ClientSideSuspense } from "@liveblocks/react";
