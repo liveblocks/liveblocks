@@ -23,15 +23,39 @@ type InvalidateOptions<TData> =
       optimisticData: TData | ((data: TData | undefined) => TData | undefined);
     };
 
-export type AsyncState<TData, TError> = {
-  isLoading: boolean;
-  data?: TData;
-  error?: TError;
+type AsyncStateEmpty = {
+  isLoading: false;
+  data?: never;
+  error?: never;
 };
 
-type AsyncResolvedState<TData, TError> = AsyncState<TData, TError> & {
-  isLoading: false;
+type AsyncStateLoading<TData> = {
+  isLoading: true;
+  data?: TData;
+  error?: never;
 };
+
+type AsyncStateSuccess<TData> = {
+  isLoading: false;
+  data: TData;
+  error?: never;
+};
+
+type AsyncStateError<TData, TError> = {
+  isLoading: false;
+  data?: TData;
+  error: TError;
+};
+
+export type AsyncState<TData, TError> =
+  | AsyncStateEmpty
+  | AsyncStateLoading<TData>
+  | AsyncStateSuccess<TData>
+  | AsyncStateError<TData, TError>;
+
+type AsyncStateResolved<TData, TError> =
+  | AsyncStateSuccess<TData>
+  | AsyncStateError<TData, TError>;
 
 type AsyncCacheItemContext<TData, TError> = AsyncState<TData, TError> & {
   isInvalid: boolean;
@@ -46,12 +70,12 @@ type AsyncCacheItemContext<TData, TError> = AsyncState<TData, TError> & {
 export type AsyncCacheItem<TData, TError> = Observable<
   AsyncState<TData, TError>
 > & {
-  get(): Promise<AsyncResolvedState<TData, TError>>;
+  get(): Promise<AsyncStateResolved<TData, TError>>;
   getState(): AsyncState<TData, TError>;
   invalidate(options?: InvalidateOptions<TData>): void;
   revalidate(
     options?: InvalidateOptions<TData>
-  ): Promise<AsyncResolvedState<TData, TError>>;
+  ): Promise<AsyncStateResolved<TData, TError>>;
 };
 
 export type AsyncCache<TData, TError> = {
@@ -60,7 +84,7 @@ export type AsyncCache<TData, TError> = {
    *
    * @param key The key to get.
    */
-  get(key: string): Promise<AsyncResolvedState<TData, TError>>;
+  get(key: string): Promise<AsyncStateResolved<TData, TError>>;
 
   /**
    * Returns the current state of the key synchronously.
@@ -89,7 +113,7 @@ export type AsyncCache<TData, TError> = {
   revalidate(
     key: string,
     options?: InvalidateOptions<TData>
-  ): Promise<AsyncResolvedState<TData, TError>>;
+  ): Promise<AsyncStateResolved<TData, TError>>;
 
   /**
    * Subscribes to a key's changes.
@@ -252,7 +276,7 @@ function createCacheItem<TData, TError>(
       }
     }
 
-    return getState() as AsyncResolvedState<TData, TError>;
+    return getState() as AsyncStateResolved<TData, TError>;
   }
 
   function revalidate(options?: InvalidateOptions<TData>) {
