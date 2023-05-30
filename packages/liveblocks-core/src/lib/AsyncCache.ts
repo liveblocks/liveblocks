@@ -1,5 +1,6 @@
 import type { Callback, Observable, UnsubscribeCallback } from "./EventSource";
 import { makeEventSource } from "./EventSource";
+import { shallow } from "./shallow";
 
 const DEDUPLICATION_INTERVAL = 2000;
 
@@ -23,7 +24,7 @@ type InvalidateOptions<T> =
       optimisticData: T | ((data: T | undefined) => T | undefined);
     };
 
-type AsyncStateEmpty = {
+type AsyncStateInitial = {
   isLoading: false;
   data?: never;
   error?: never;
@@ -31,6 +32,12 @@ type AsyncStateEmpty = {
 
 type AsyncStateLoading<T> = {
   isLoading: true;
+  data?: T;
+  error?: never;
+};
+
+type AsyncStateInvalidated<T> = {
+  isLoading: false;
   data?: T;
   error?: never;
 };
@@ -48,20 +55,20 @@ type AsyncStateError<T, E> = {
 };
 
 export type AsyncState<T, E> =
-  | AsyncStateEmpty
+  | AsyncStateInitial
   | AsyncStateLoading<T>
+  | AsyncStateInvalidated<T>
   | AsyncStateSuccess<T>
   | AsyncStateError<T, E>;
 
 type AsyncStateResolved<T, E> = AsyncStateSuccess<T> | AsyncStateError<T, E>;
 
-type AsyncCacheItemContext<T, E> = AsyncState<T, E> & {
+type AsyncCacheItemContext<T> = {
   isInvalid: boolean;
   scheduledInvalidation?: InvalidateOptions<T>;
   rollbackOptimisticDataOnError?: boolean;
   promise?: Promise<T>;
   lastInvokedAt?: number;
-  previousState: AsyncState<T, E>;
   previousNonOptimisticData?: T;
 };
 
@@ -139,15 +146,15 @@ export function isDifferentState(
   a: AsyncState<unknown, unknown>,
   b: AsyncState<unknown, unknown>
 ): boolean {
-  // This might not be true, `data` and `error` would have to be
-  // deeply compared to know that. But in our use-case, `data` and
-  // `error` can't change without being set to `undefined` first or
-  // `isLoading` also changing in between or at the same time.
-  return (
+  if (
     a.isLoading !== b.isLoading ||
     (a.data === undefined) !== (b.data === undefined) ||
     (a.error === undefined) !== (b.error === undefined)
-  );
+  ) {
+    return true;
+  } else {
+    return !shallow(a.data, b.data) || !shallow(a.error, b.error);
+  }
 }
 
 function createCacheItem<T, E>(
@@ -155,32 +162,29 @@ function createCacheItem<T, E>(
   asyncFunction: AsyncFunction<T>,
   { deduplicationInterval }: AsyncCacheItemOptions
 ): AsyncCacheItem<T, E> {
-  const context: AsyncCacheItemContext<T, E> = {
-    isLoading: false,
+  const context: AsyncCacheItemContext<T> = {
     isInvalid: true,
-    previousState: { isLoading: false },
   };
+  let state: AsyncState<T, E> = { isLoading: false };
+  let previousState: AsyncState<T, E> = { isLoading: false };
   const eventSource = makeEventSource<AsyncState<T, E>>();
 
   function notify() {
-    const state = getState();
-
     // We only notify subscribers if the cache has changed.
-    if (isDifferentState(context.previousState, state)) {
-      context.previousState = state;
+    if (isDifferentState(previousState, state)) {
+      previousState = state;
       eventSource.notify(state);
     }
   }
 
   function invoke() {
     context.lastInvokedAt = Date.now();
-    context.error = undefined;
-    context.isLoading = true;
     context.isInvalid = true;
     context.promise = asyncFunction(key);
 
-    // We notify subscribers that the promise
-    // started (changing `isLoading`).
+    state = { isLoading: true, data: state.data };
+
+    // We notify subscribers that the promise started.
     notify();
   }
 
@@ -188,25 +192,31 @@ function createCacheItem<T, E>(
     try {
       const data = await context.promise;
 
-      context.data = data;
-      context.previousNonOptimisticData = data;
-      context.error = undefined;
       context.isInvalid = false;
-    } catch (error) {
-      // We updated `data` optimistically but there's now an
-      // error so we rollback to the previous non-optimistic `data`.
-      if (context.rollbackOptimisticDataOnError) {
-        context.data = context.previousNonOptimisticData;
-      }
+      context.previousNonOptimisticData = data;
 
+      state = {
+        isLoading: false,
+        data,
+      };
+    } catch (error) {
       // We keep the key as invalid because there was an error.
       context.isInvalid = true;
-      context.error = error as E;
+
+      state = {
+        isLoading: false,
+        data: context.rollbackOptimisticDataOnError
+          ? // If we updated `data` optimistically but there's now an
+            // error, we rollback to the previous non-optimistic `data`.
+            context.previousNonOptimisticData
+          : // Otherwise, we keep the current `data`.
+            state.data,
+        error: error as E,
+      };
     }
 
     context.rollbackOptimisticDataOnError = false;
     context.promise = undefined;
-    context.isLoading = false;
 
     if (context.scheduledInvalidation) {
       // If there was an invalidation made during
@@ -214,11 +224,11 @@ function createCacheItem<T, E>(
       const scheduledInvalidation = context.scheduledInvalidation;
       context.scheduledInvalidation = undefined;
       invalidate(scheduledInvalidation);
-    } else {
-      // We notify subscribers that the promise resolved
-      // (changing `isLoading` and either `data` or `error`).
-      notify();
     }
+
+    // We notify subscribers that the promise
+    // resolved or there was a scheduled invalidation.
+    notify();
   }
 
   function invalidate(options: InvalidateOptions<T> = {}) {
@@ -226,28 +236,35 @@ function createCacheItem<T, E>(
       // If there is a promise pending, we schedule the
       // invalidation for when the promise resolves.
       context.scheduledInvalidation = options;
-    } else if (!context.scheduledInvalidation && !context.error) {
+    } else if (!context.scheduledInvalidation && !state.error) {
       // We only invalidate if there's not an
       // invalidation still scheduled or an error.
       context.isInvalid = true;
-      context.error = undefined;
+
+      let data = state.data;
 
       // If we set `data` optimistically, we specify that we
       // should rollback `data` if the next resolve is an error.
       if (options.optimisticData !== undefined) {
         context.rollbackOptimisticDataOnError = true;
-        context.data =
+        data =
           options.optimisticData instanceof Function
-            ? options.optimisticData(context.data)
+            ? options.optimisticData(state.data)
             : options.optimisticData;
       } else if (options.clearData !== false) {
-        context.data = undefined;
+        data = undefined;
       }
 
-      // We notify subscribers that there was an
-      // invalidation (potentially changind `data`).
-      notify();
+      state = {
+        isLoading: false,
+        data,
+      };
     }
+  }
+
+  function invalidateAndNotify(options: InvalidateOptions<T> = {}) {
+    invalidate(options);
+    notify();
   }
 
   async function get() {
@@ -280,18 +297,14 @@ function createCacheItem<T, E>(
   }
 
   function getState() {
-    return {
-      isLoading: context.isLoading,
-      data: context.data,
-      error: context.error,
-    } as AsyncState<T, E>;
+    return state;
   }
 
   return {
     ...eventSource.observable,
     get,
     getState,
-    invalidate,
+    invalidate: invalidateAndNotify,
     revalidate,
   };
 }

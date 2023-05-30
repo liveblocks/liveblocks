@@ -54,7 +54,6 @@ describe("AsyncCache", () => {
       AsyncStateDataError<string, Error>
     >({
       data: KEY_ABC,
-      error: undefined,
     });
 
     // ✨ Cached
@@ -62,7 +61,6 @@ describe("AsyncCache", () => {
       AsyncStateDataError<string, Error>
     >({
       data: KEY_ABC,
-      error: undefined,
     });
 
     // ✨ Cached
@@ -70,7 +68,6 @@ describe("AsyncCache", () => {
       AsyncStateDataError<string, Error>
     >({
       data: KEY_ABC,
-      error: undefined,
     });
 
     expect(mock).toHaveBeenCalledTimes(1);
@@ -104,10 +101,8 @@ describe("AsyncCache", () => {
 
     expect(abc).toMatchObject<AsyncStateDataError<string, Error>>({
       data: KEY_ABC,
-      error: undefined,
     });
     expect(xyz).toMatchObject<AsyncStateDataError<string, Error>>({
-      data: undefined,
       error: ERROR,
     });
 
@@ -124,7 +119,6 @@ describe("AsyncCache", () => {
     expect(await cache.get(KEY_ABC)).toMatchObject<
       AsyncStateDataError<string, Error>
     >({
-      data: undefined,
       error: ERROR,
     });
 
@@ -133,7 +127,6 @@ describe("AsyncCache", () => {
       AsyncStateDataError<string, Error>
     >({
       data: KEY_ABC,
-      error: undefined,
     });
 
     expect(mock).toHaveBeenCalledTimes(2);
@@ -181,7 +174,6 @@ describe("AsyncCache", () => {
       AsyncStateDataError<string, Error>
     >({
       data: KEY_ABC,
-      error: undefined,
     });
 
     expect(mock).toHaveBeenCalledTimes(2);
@@ -206,7 +198,6 @@ describe("AsyncCache", () => {
       AsyncStateDataError<string, Error>
     >({
       data: KEY_ABC,
-      error: undefined,
     });
 
     expect(mock).toHaveBeenCalledTimes(2);
@@ -224,7 +215,6 @@ describe("AsyncCache", () => {
       AsyncStateDataError<string, Error>
     >({
       data: KEY_ABC,
-      error: undefined,
     });
 
     expect(mock).toHaveBeenCalledTimes(2);
@@ -259,8 +249,6 @@ describe("AsyncCache", () => {
       1,
       expect.objectContaining<AsyncState<number[], Error>>({
         isLoading: true,
-        data: undefined,
-        error: undefined,
       })
     );
     // 2️⃣ Triggered when the first call finished
@@ -269,7 +257,6 @@ describe("AsyncCache", () => {
       expect.objectContaining<AsyncState<number[], Error>>({
         isLoading: false,
         data: [0],
-        error: undefined,
       })
     );
     // 3️⃣ Triggered when revalidated with optimistic data
@@ -278,7 +265,6 @@ describe("AsyncCache", () => {
       expect.objectContaining<AsyncState<number[], Error>>({
         isLoading: true,
         data: [0, 1],
-        error: undefined,
       })
     );
     // 4️⃣ Triggered when revalidation finished
@@ -287,7 +273,6 @@ describe("AsyncCache", () => {
       expect.objectContaining<AsyncState<number[], Error>>({
         isLoading: false,
         data: [0, 1],
-        error: undefined,
       })
     );
   });
@@ -321,8 +306,6 @@ describe("AsyncCache", () => {
       1,
       expect.objectContaining<AsyncState<number[], Error>>({
         isLoading: true,
-        data: undefined,
-        error: undefined,
       })
     );
     // 2️⃣ Triggered when the first call finished
@@ -331,7 +314,6 @@ describe("AsyncCache", () => {
       expect.objectContaining<AsyncState<number[], Error>>({
         isLoading: false,
         data: [0],
-        error: undefined,
       })
     );
     // 3️⃣ Triggered when revalidated with optimistic data
@@ -340,7 +322,6 @@ describe("AsyncCache", () => {
       expect.objectContaining<AsyncState<number[], Error>>({
         isLoading: true,
         data: [0, 1],
-        error: undefined,
       })
     );
     // 4️⃣❌ Triggered when revalidation errored and 🔙 rollbacked the optimistic data
@@ -396,7 +377,6 @@ describe("AsyncCache", () => {
     expect(cache.has(KEY_XYZ)).toBe(false);
     expect(state).toMatchObject<AsyncStateDataError<string, Error>>({
       data: KEY_XYZ,
-      error: undefined,
     });
   });
 
@@ -427,7 +407,6 @@ describe("AsyncCache", () => {
       AsyncStateDataError<string, Error>
     >({
       data: KEY_ABC,
-      error: undefined,
     });
   });
 
@@ -467,8 +446,6 @@ describe("AsyncCache", () => {
       1,
       expect.objectContaining<AsyncState<string, Error>>({
         isLoading: true,
-        data: undefined,
-        error: undefined,
       })
     );
     // 2️⃣❌ Triggered when the first call resolved
@@ -476,7 +453,6 @@ describe("AsyncCache", () => {
       2,
       expect.objectContaining<AsyncState<string, Error>>({
         isLoading: false,
-        data: undefined,
         error: ERROR,
       })
     );
@@ -485,8 +461,6 @@ describe("AsyncCache", () => {
       3,
       expect.objectContaining<AsyncState<string, Error>>({
         isLoading: true,
-        data: undefined,
-        error: undefined,
       })
     );
     // 4️⃣✅ Triggered when the second call resolved
@@ -495,7 +469,6 @@ describe("AsyncCache", () => {
       expect.objectContaining<AsyncState<string, Error>>({
         isLoading: false,
         data: KEY_ABC,
-        error: undefined,
       })
     );
   });
@@ -542,8 +515,6 @@ describe("AsyncCache", () => {
       1,
       expect.objectContaining<AsyncState<string, Error>>({
         isLoading: true,
-        data: undefined,
-        error: undefined,
       })
     );
     // 2️⃣✅ Triggered when the first call finished
@@ -552,7 +523,6 @@ describe("AsyncCache", () => {
       expect.objectContaining<AsyncState<string, Error>>({
         isLoading: false,
         data: KEY_ABC,
-        error: undefined,
       })
     );
     // 3️⃣🗑️ Triggered when invalidated
@@ -560,8 +530,6 @@ describe("AsyncCache", () => {
       3,
       expect.objectContaining<AsyncState<string, Error>>({
         isLoading: false,
-        data: undefined,
-        error: undefined,
       })
     );
   });
@@ -592,8 +560,6 @@ describe("AsyncCache", () => {
       1,
       expect.objectContaining<AsyncState<string, Error>>({
         isLoading: true,
-        data: undefined,
-        error: undefined,
       })
     );
     // 2️⃣✅🗑️ Triggered when the first call finished but was invalidated in the meantime
@@ -601,8 +567,6 @@ describe("AsyncCache", () => {
       2,
       expect.objectContaining<AsyncState<string, Error>>({
         isLoading: false,
-        data: undefined,
-        error: undefined,
       })
     );
   });
@@ -635,8 +599,6 @@ describe("AsyncCache", () => {
       1,
       expect.objectContaining<AsyncState<string, Error>>({
         isLoading: true,
-        data: undefined,
-        error: undefined,
       })
     );
     // 2️⃣✅ Triggered when the first call finished
@@ -645,7 +607,6 @@ describe("AsyncCache", () => {
       expect.objectContaining<AsyncState<string, Error>>({
         isLoading: false,
         data: KEY_ABC,
-        error: undefined,
       })
     );
     // 3️⃣🗑️ Triggered when invalidated and cleared
@@ -653,8 +614,6 @@ describe("AsyncCache", () => {
       3,
       expect.objectContaining<AsyncState<string, Error>>({
         isLoading: false,
-        data: undefined,
-        error: undefined,
       })
     );
   });
@@ -750,8 +709,6 @@ describe("AsyncCache use cases", () => {
       1,
       expect.objectContaining<AsyncState<string, Error>>({
         isLoading: true,
-        data: undefined,
-        error: undefined,
       })
     );
     // 2️⃣✅ Triggered when generating the first token finished
@@ -760,7 +717,6 @@ describe("AsyncCache use cases", () => {
       expect.objectContaining<AsyncState<string, Error>>({
         isLoading: false,
         data: expect.any(Object),
-        error: undefined,
       })
     );
     // 3️⃣🗑️ Triggered when invalidated because expired
@@ -768,8 +724,6 @@ describe("AsyncCache use cases", () => {
       3,
       expect.objectContaining<AsyncState<string, Error>>({
         isLoading: false,
-        data: undefined,
-        error: undefined,
       })
     );
     // 4️⃣ Triggered when generating the second token
@@ -777,8 +731,6 @@ describe("AsyncCache use cases", () => {
       4,
       expect.objectContaining<AsyncState<string, Error>>({
         isLoading: true,
-        data: undefined,
-        error: undefined,
       })
     );
     // 5️⃣❌ Triggered when generating the second token errored
@@ -786,7 +738,6 @@ describe("AsyncCache use cases", () => {
       5,
       expect.objectContaining<AsyncState<string, Error>>({
         isLoading: false,
-        data: undefined,
         error: expect.any(Error),
       })
     );
@@ -795,8 +746,6 @@ describe("AsyncCache use cases", () => {
       6,
       expect.objectContaining<AsyncState<string, Error>>({
         isLoading: true,
-        data: undefined,
-        error: undefined,
       })
     );
     // 7️⃣✅ Triggered when generating the third token finished
@@ -805,7 +754,6 @@ describe("AsyncCache use cases", () => {
       expect.objectContaining<AsyncState<string, Error>>({
         isLoading: false,
         data: expect.any(Object),
-        error: undefined,
       })
     );
   });
@@ -815,18 +763,12 @@ describe("isDifferentState", () => {
   test("loading", () => {
     const a: AsyncState<undefined, Error> = {
       isLoading: false,
-      data: undefined,
-      error: undefined,
     };
     const b: AsyncState<undefined, Error> = {
       isLoading: true,
-      data: undefined,
-      error: undefined,
     };
     const c: AsyncState<undefined, Error> = {
       isLoading: false,
-      data: undefined,
-      error: undefined,
     };
 
     expect(isDifferentState(a, b)).toBe(true);
@@ -835,16 +777,42 @@ describe("isDifferentState", () => {
     expect(isDifferentState(c, a)).toBe(false);
   });
 
-  test("data", () => {
+  test("data or not", () => {
     const a: AsyncState<{ key: string }, Error> = {
       isLoading: false,
-      data: undefined,
-      error: undefined,
     };
     const b: AsyncState<{ key: string }, Error> = {
       isLoading: false,
       data: { key: KEY_ABC },
+    };
+
+    expect(isDifferentState(a, b)).toBe(true);
+    expect(isDifferentState(b, a)).toBe(true);
+  });
+
+  test("data", () => {
+    const a: AsyncState<Record<string, string>, Error> = {
+      isLoading: false,
+      data: { abc: KEY_ABC, xyz: KEY_XYZ },
       error: undefined,
+    };
+    const b: AsyncState<Record<string, string>, Error> = {
+      isLoading: false,
+      data: { xyz: KEY_XYZ, abc: KEY_ABC },
+      error: undefined,
+    };
+
+    expect(isDifferentState(a, b)).toBe(false);
+    expect(isDifferentState(b, a)).toBe(false);
+  });
+
+  test("error or not", () => {
+    const a: AsyncState<string, Error> = {
+      isLoading: false,
+    };
+    const b: AsyncState<string, Error> = {
+      isLoading: false,
+      error: ERROR,
     };
 
     expect(isDifferentState(a, b)).toBe(true);
@@ -855,7 +823,7 @@ describe("isDifferentState", () => {
     const a: AsyncState<string, Error> = {
       isLoading: false,
       data: undefined,
-      error: undefined,
+      error: ERROR,
     };
     const b: AsyncState<string, Error> = {
       isLoading: false,
@@ -863,7 +831,7 @@ describe("isDifferentState", () => {
       error: ERROR,
     };
 
-    expect(isDifferentState(a, b)).toBe(true);
-    expect(isDifferentState(b, a)).toBe(true);
+    expect(isDifferentState(a, b)).toBe(false);
+    expect(isDifferentState(b, a)).toBe(false);
   });
 });
