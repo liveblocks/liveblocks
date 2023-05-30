@@ -24,20 +24,14 @@ type InvalidateOptions<T> =
       optimisticData: T | ((data: T | undefined) => T | undefined);
     };
 
-type AsyncStateInitial = {
+type AsyncStateInvalid<T> = {
   isLoading: false;
-  data?: never;
+  data?: T;
   error?: never;
 };
 
 type AsyncStateLoading<T> = {
   isLoading: true;
-  data?: T;
-  error?: never;
-};
-
-type AsyncStateInvalidated<T> = {
-  isLoading: false;
   data?: T;
   error?: never;
 };
@@ -55,9 +49,8 @@ type AsyncStateError<T, E> = {
 };
 
 export type AsyncState<T, E> =
-  | AsyncStateInitial
+  | AsyncStateInvalid<T>
   | AsyncStateLoading<T>
-  | AsyncStateInvalidated<T>
   | AsyncStateSuccess<T>
   | AsyncStateError<T, E>;
 
