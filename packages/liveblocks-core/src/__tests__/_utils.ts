@@ -412,13 +412,13 @@ export async function prepareRoomWithStorage<
 >(
   items: IdTuple<SerializedCrdt>[],
   actor: number = 0,
-  onSend:
+  onSend_DEPRECATED:
     | ((messages: ClientMsg<TPresence, TRoomEvent>[]) => void)
     | undefined = undefined,
   defaultStorage?: TStorage,
   scopes: string[] = []
 ) {
-  if (onSend !== undefined) {
+  if (onSend_DEPRECATED !== undefined) {
     throw new Error(
       "Can no longer use `onSend` effect, please rewrite unit test"
     );
@@ -476,15 +476,7 @@ export async function prepareIsolatedStorageTest<TStorage extends LsonObject>(
     TStorage,
     never,
     never
-  >(
-    items,
-    actor,
-    (_messages: ClientMsg<never, never>[]) => {
-      // No-op!
-      // messagesSent.push(...messages);
-    },
-    defaultStorage || ({} as TStorage)
-  );
+  >(items, actor, undefined, defaultStorage || ({} as TStorage));
 
   return {
     root: storage.root,
