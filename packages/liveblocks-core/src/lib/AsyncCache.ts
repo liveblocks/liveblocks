@@ -17,10 +17,10 @@ type AsyncCacheItemOptions = WithRequired<
 >;
 
 type InvalidateOptions<TData = any> =
-  | { clearData?: false; setOptimisticData?: never }
+  | { clearData?: false; optimisticData?: never }
   | {
       clearData?: never;
-      setOptimisticData: (data: TData | undefined) => TData | undefined;
+      optimisticData: TData | ((data: TData | undefined) => TData | undefined);
     };
 
 export type AsyncState<TData = any, TError = any> = {
@@ -78,7 +78,7 @@ export type AsyncCache<TData = any, TError = any> = {
    *
    * @param key The key to invalidate.
    * @param options.clearData Whether to clear the cached data.
-   * @param options.setOptimisticData Set data immediately but rollback if there's an error.
+   * @param options.optimisticData Set data optimistically but rollback if there's an error.
    */
   invalidate(key: string, options?: InvalidateOptions<TData>): void;
 
@@ -87,7 +87,7 @@ export type AsyncCache<TData = any, TError = any> = {
    *
    * @param key The key to revalidate.
    * @param options.clearData Whether to clear the cached data.
-   * @param options.setOptimisticData Set data immediately but rollback if there's an error.
+   * @param options.optimisticData Set data optimistically but rollback if there's an error.
    */
   revalidate(
     key: string,
@@ -216,9 +216,12 @@ function createCacheItem<TData = any, TError = any>(
 
       // If we set `data` optimistically, we specify that we
       // should rollback `data` if the next resolve is an error.
-      if (options.setOptimisticData) {
+      if (options.optimisticData !== undefined) {
         context.rollbackOptimisticDataOnError = true;
-        context.data = options.setOptimisticData(context.data);
+        context.data =
+          options.optimisticData instanceof Function
+            ? options.optimisticData(context.data)
+            : options.optimisticData;
       } else if (options.clearData !== false) {
         context.data = undefined;
       }

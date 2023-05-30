@@ -245,7 +245,7 @@ describe("AsyncCache", () => {
 
     // 🗑️ Invalidated with [0, 1] as optimistic data, then 🚀 called and returned [0, 1]
     await cache.revalidate(KEY_ABC, {
-      setOptimisticData: (data) => {
+      optimisticData: (data) => {
         return data ? createIndices(data.length + 1) : undefined;
       },
     });
@@ -307,7 +307,7 @@ describe("AsyncCache", () => {
 
     // 🗑️ Invalidated with [0, 1] as optimistic data, then ❌ errored so the data was rollbacked to [0]
     await cache.revalidate(KEY_ABC, {
-      setOptimisticData: (data) => {
+      optimisticData: (data) => {
         return data ? createIndices(data.length + 1) : undefined;
       },
     });
