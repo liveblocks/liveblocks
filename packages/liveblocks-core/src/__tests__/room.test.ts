@@ -1793,31 +1793,34 @@ describe("room", () => {
   });
 
   describe("initial storage", () => {
-    test("initialize room with initial storage should send operation only once", async () => {
-      const { expectStorage, expectMessagesSent } =
-        await prepareIsolatedStorageTest<{
-          items: LiveList<string>;
-        }>([createSerializedObject("0:0", {})], 1, { items: new LiveList() });
+    test.only("initialize room with initial storage should send operation only once", async () => {
+      const { wss, expectStorage } = await prepareIsolatedStorageTest<{
+        items: LiveList<string>;
+      }>([createSerializedObject("0:0", {})], 1, { items: new LiveList() });
 
       expectStorage({
         items: [],
       });
 
-      expectMessagesSent([
-        { type: ClientMsgCode.UPDATE_PRESENCE, targetActor: -1, data: {} },
-        { type: ClientMsgCode.FETCH_STORAGE },
-        {
-          type: ClientMsgCode.UPDATE_STORAGE,
-          ops: [
-            {
-              type: OpCode.CREATE_LIST,
-              id: "1:0",
-              opId: "1:1",
-              parentId: "0:0",
-              parentKey: "items",
-            },
-          ],
-        },
+      expect(wss.receivedMessages).toEqual([
+        [
+          { type: ClientMsgCode.UPDATE_PRESENCE, targetActor: -1, data: {} },
+          { type: ClientMsgCode.FETCH_STORAGE },
+        ],
+        [
+          {
+            type: ClientMsgCode.UPDATE_STORAGE,
+            ops: [
+              {
+                type: OpCode.CREATE_LIST,
+                id: "1:0",
+                opId: "1:1",
+                parentId: "0:0",
+                parentKey: "items",
+              },
+            ],
+          },
+        ],
       ]);
     });
   });
