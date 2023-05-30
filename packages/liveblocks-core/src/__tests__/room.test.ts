@@ -16,6 +16,7 @@ import type { BaseUserMeta } from "../protocol/BaseUserMeta";
 import { ClientMsgCode } from "../protocol/ClientMsg";
 import type { IdTuple, SerializedCrdt } from "../protocol/SerializedCrdt";
 import { CrdtType } from "../protocol/SerializedCrdt";
+import { OpCode } from "../protocol/Op";
 import { ServerMsgCode } from "../protocol/ServerMsg";
 import type {
   _private_Effects as Effects,
@@ -1809,11 +1810,11 @@ describe("room", () => {
           type: ClientMsgCode.UPDATE_STORAGE,
           ops: [
             {
+              type: OpCode.CREATE_LIST,
               id: "1:0",
               opId: "1:1",
               parentId: "0:0",
               parentKey: "items",
-              type: 2,
             },
           ],
         },
