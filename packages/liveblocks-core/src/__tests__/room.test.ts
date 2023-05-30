@@ -81,11 +81,11 @@ export async function waitUntilStatus(
  */
 export async function waitUntilNoLongerStatus(
   room: Room<JsonObject, LsonObject, BaseUserMeta, Json>,
-  status: ConnectionStatus
+  targetStatus: ConnectionStatus
 ): Promise<void> {
-  if (room.getConnectionState() !== status) {
+  if (room.getConnectionState() !== targetStatus) {
     throw new Error(
-      `Room is not currently in the expected status "${status}", it's currently "${room.getConnectionState()}"`
+      `Room is not currently in the expected status "${targetStatus}", it's currently "${room.getConnectionState()}"`
     );
   }
 
@@ -93,13 +93,13 @@ export async function waitUntilNoLongerStatus(
   return withTimeout(
     new Promise<void>((resolve) => {
       unsub = room.events.connection.subscribe((status) => {
-        if (status !== status) {
+        if (status !== targetStatus) {
           resolve();
         }
       });
     }),
     1000,
-    `Room remained in status "${status}" and did not change`
+    `Room remained in status "${targetStatus}" and did not change`
   ).finally(() => unsub?.());
 }
 
