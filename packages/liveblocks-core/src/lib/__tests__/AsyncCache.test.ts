@@ -277,6 +277,79 @@ describe("AsyncCache", () => {
     );
   });
 
+  test("revalidating with complex optimistic data", async () => {
+    const mock = createAsyncMock(
+      () => false,
+      (index) => createIndices(index).map((index) => ({ index, a: [0] }))
+    );
+    const cache = createAsyncCache(mock, { deduplicationInterval: 0 });
+
+    const callback = jest.fn();
+    const unsubscribe = cache.subscribe(KEY_ABC, callback);
+
+    // 🚀 Called and returned [{ index: 0 }]
+    await cache.get(KEY_ABC);
+
+    // 🗑️ Invalidated with [{ index: 0 }, { index: 1 }] as optimistic data, then 🚀 called and returned [{ index: 0 }, { index: 1 }]
+    await cache.revalidate(KEY_ABC, {
+      optimisticData: (data) => {
+        return data
+          ? createIndices(data.length + 1).map((index) => ({ a: [0], index }))
+          : undefined;
+      },
+    });
+
+    unsubscribe();
+
+    expect(callback).toHaveBeenCalledTimes(4);
+
+    // 1️⃣ Triggered when the first call started
+    expect(callback).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining<
+        AsyncState<{ index: number; a: number[] }[], Error>
+      >({
+        isLoading: true,
+      })
+    );
+    // 2️⃣ Triggered when the first call finished
+    expect(callback).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining<
+        AsyncState<{ index: number; a: number[] }[], Error>
+      >({
+        isLoading: false,
+        data: [{ a: [0], index: 0 }],
+      })
+    );
+    // 3️⃣ Triggered when revalidated with optimistic data
+    expect(callback).toHaveBeenNthCalledWith(
+      3,
+      expect.objectContaining<
+        AsyncState<{ index: number; a: number[] }[], Error>
+      >({
+        isLoading: true,
+        data: [
+          { a: [0], index: 0 },
+          { a: [0], index: 1 },
+        ],
+      })
+    );
+    // 4️⃣ Triggered when revalidation finished
+    expect(callback).toHaveBeenNthCalledWith(
+      4,
+      expect.objectContaining<
+        AsyncState<{ index: number; a: number[] }[], Error>
+      >({
+        isLoading: false,
+        data: [
+          { a: [0], index: 0 },
+          { a: [0], index: 1 },
+        ],
+      })
+    );
+  });
+
   test("revalidating with optimistic data and reverting on error", async () => {
     const mock = createAsyncMock(
       (index) => index === 1,
