@@ -9,6 +9,7 @@ import type { Authentication } from "../protocol/Authentication";
 import type { RoomAuthToken } from "../protocol/AuthToken";
 import type { BaseUserMeta } from "../protocol/BaseUserMeta";
 import type { ClientMsg } from "../protocol/ClientMsg";
+import { withTimeout } from "../lib/fsm";
 import { ClientMsgCode } from "../protocol/ClientMsg";
 import type { Op } from "../protocol/Op";
 import type {
@@ -95,7 +96,8 @@ type Emitters = {
  */
 type ServerSocket = {
   /** Inspect the messages the server end has received as the result of the client side sending it messages. */
-  receivedMessagesRaw: string[];
+  receivedMessagesRaw: readonly string[];
+  receive(message: string): void;
   /** Accept the socket from the server side. The client will receive an "open" event. */
   accept(): void;
   /** Close the socket from the server side. */
@@ -115,6 +117,8 @@ export class MockWebSocketServer {
   private newConnectionCallbacks = makeEventSource<Connection>();
   public current: MockWebSocket | undefined;
   public connections: Map<MockWebSocket, Emitters> = new Map();
+
+  private onReceive = makeEventSource<string>();
   public receivedMessagesRaw: string[] = [];
 
   /**
@@ -180,6 +184,11 @@ export class MockWebSocketServer {
 
     const serverSocket: ServerSocket = {
       receivedMessagesRaw: this.receivedMessagesRaw,
+      receive: (message: string) => {
+        this.receivedMessagesRaw.push(message);
+        this.onReceive.notify(message);
+      },
+
       accept: () => serverEvents.onOpen.notify(new Event("open")),
       close: serverEvents.onClose.notify,
       send: serverEvents.onMessage.notify,
@@ -210,6 +219,17 @@ export class MockWebSocketServer {
 
   public onConnection(callback: (conn: Connection) => void): void {
     this.newConnectionCallbacks.subscribe(callback);
+  }
+
+  /**
+   * Pauses test execution until a message has been received.
+   */
+  public async waitUntilMessageReceived(): Promise<void> {
+    await withTimeout(
+      this.onReceive.waitUntil(),
+      1000,
+      "Server did not receive a message within 1s"
+    );
   }
 }
 
@@ -348,7 +368,7 @@ export class MockWebSocket {
    */
   public send(message: string) {
     if (this.readyState === this.OPEN) {
-      this.server.receivedMessagesRaw.push(message);
+      this.server.receive(message);
     }
   }
 
