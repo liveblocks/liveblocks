@@ -795,29 +795,6 @@ export async function prepareDisconnectedStorageUpdateTest<
   };
 }
 
-export function reconnect<
-  TPresence extends JsonObject,
-  TStorage extends LsonObject,
-  TUserMeta extends BaseUserMeta,
-  TRoomEvent extends Json
->(
-  room: Room<TPresence, TStorage, TUserMeta, TRoomEvent>,
-  actor: number,
-  newItems: IdTuple<SerializedCrdt>[]
-) {
-  const ws = makeControllableWebSocket();
-  room.connect();
-  room.__internal.send.simulateAuthSuccess(makeRoomToken(actor, []), ws);
-  ws.server.accept();
-
-  room.__internal.send.incomingMessage(
-    serverMessage({
-      type: ServerMsgCode.INITIAL_STORAGE_STATE,
-      items: newItems,
-    })
-  );
-}
-
 export function createSerializedObject(
   id: string,
   data: JsonObject,

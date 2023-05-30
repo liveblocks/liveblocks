@@ -42,7 +42,6 @@ import {
   prepareIsolatedStorageTest,
   prepareStorageTest,
   prepareStorageUpdateTest,
-  reconnect,
   serverMessage,
   waitFor,
 } from "./_utils";
@@ -1379,7 +1378,7 @@ describe("room", () => {
       });
     });
 
-    test("disconnect and reconnect with remote changes", async () => {
+    test.only("disconnect and reconnect with remote changes", async () => {
       const { expectStorage, room, wss } = await prepareIsolatedStorageTest<{
         items?: LiveList<string>;
         items2?: LiveList<string>;
@@ -1393,13 +1392,6 @@ describe("room", () => {
       );
 
       expectStorage({ items: ["a"] });
-
-      wss.last.close(
-        new CloseEvent("close", {
-          code: WebsocketCloseCodes.CLOSE_ABNORMAL,
-          wasClean: false,
-        })
-      );
 
       const newInitStorage: IdTuple<SerializedCrdt>[] = [
         ["0:0", { type: CrdtType.OBJECT, data: {} }],
@@ -1415,8 +1407,26 @@ describe("room", () => {
         ],
       ];
 
-      reconnect(room, 3, newInitStorage);
+      // The next time a connection is made, send the updated storage
+      wss.onConnection((conn) =>
+        conn.server.send(
+          serverMessage({
+            type: ServerMsgCode.INITIAL_STORAGE_STATE,
+            items: newInitStorage,
+          })
+        )
+      );
 
+      // Closing the connection from the server will trigger a reconnect, which
+      // will in turn load the "B" item
+      wss.last.close(
+        new CloseEvent("close", {
+          code: WebsocketCloseCodes.CLOSE_ABNORMAL,
+          wasClean: false,
+        })
+      );
+
+      await waitUntilStatus(room, "open");
       expectStorage({
         items2: ["B"],
       });
