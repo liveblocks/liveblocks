@@ -2,25 +2,50 @@ export type Callback<T> = (event: T) => void;
 export type UnsubscribeCallback = () => void;
 
 export type Observable<T> = {
+  /**
+   * Register a callback function to be called whenever the event source emits
+   * an event.
+   */
   subscribe(callback: Callback<T>): UnsubscribeCallback;
+  /**
+   * Register a one-time callback function to be called whenever the event
+   * source emits an event. After the event fires, the callback is
+   * auto-unsubscribed.
+   */
   subscribeOnce(callback: Callback<T>): UnsubscribeCallback;
+  /**
+   * Returns a promise that will resolve when an event is emitted by this
+   * event source. Optionally, specify a predicate that has to match. The first
+   * event matching that predicate will then resolve the promise.
+   */
   waitUntil(predicate?: (event: T) => boolean): Promise<T>;
 };
 
-export type EventSource<T> = {
+export type EventSource<T> = Observable<T> & {
   /**
-   * Private/controlled notification of events.
+   * Notify all subscribers about the event.
    */
   notify(event: T): void;
-  subscribe(callback: Callback<T>): UnsubscribeCallback;
-  subscribeOnce(callback: Callback<T>): UnsubscribeCallback;
+  /**
+   * Clear all registered event listeners. None of the registered functions
+   * will ever get called again. Be careful when using this API, because the
+   * subscribers may not have any idea they won't be notified anymore.
+   */
   clear(): void;
-
-  waitUntil(predicate?: (event: T) => boolean): Promise<T>;
+  /**
+   * Returns the number of active subscribers.
+   */
   count(): number;
+  /**
+   * Pauses event delivery until unpaused. Any .notify() calls made while
+   * paused will get buffered into memory and emitted later.
+   */
   pause(): void;
+  /**
+   * Emits all in-memory buffered events, and unpauses. Any .notify() calls
+   * made after this will be synchronously delivered again.
+   */
   unpause(): void;
-
   /**
    * Observable instance, which can be used to subscribe to this event source
    * in a readonly fashion. Safe to publicly expose.
