@@ -171,4 +171,32 @@ describe("EventSource", () => {
         }
       )
     ));
+
+  it("pausing/continuing event delivery", () => {
+    fc.assert(
+      fc.property(
+        anything(),
+
+        (payload) => {
+          const callback = jest.fn();
+          const hub = makeEventSource();
+
+          const unsub = hub.observable.subscribe(callback);
+
+          hub.pause();
+          hub.notify(payload);
+          hub.notify(payload);
+          hub.notify(payload);
+
+          expect(callback.mock.calls.length).toBe(0); // No events get delivered until unpaused
+
+          hub.unpause();
+          expect(callback.mock.calls.length).toBe(3); // Buffered events get delivered
+
+          // Deregister callback
+          unsub();
+        }
+      )
+    );
+  });
 });

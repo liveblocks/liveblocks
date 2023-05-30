@@ -17,6 +17,8 @@ export type EventSource<T> = {
   clear(): void;
 
   asPromise(): Promise<T>;
+  pause(): void;
+  unpause(): void;
 
   /**
    * Observable instance, which can be used to subscribe to this event source
@@ -51,6 +53,23 @@ export type EventEmitter<T> = (event: T) => void;
 export function makeEventSource<T>(): EventSource<T> {
   const _onetimeObservers = new Set<Callback<T>>();
   const _observers = new Set<Callback<T>>();
+  let _buffer: T[] | null = null;
+
+  function pause(): void {
+    _buffer = [];
+  }
+
+  function unpause(): void {
+    if (_buffer === null) {
+      // Already unpaused
+      return;
+    }
+
+    for (const event of _buffer) {
+      notify(event);
+    }
+    _buffer = null;
+  }
 
   function subscribe(callback: Callback<T>): UnsubscribeCallback {
     _observers.add(callback);
@@ -69,6 +88,14 @@ export function makeEventSource<T>(): EventSource<T> {
     }).finally(() => unsub?.());
   }
 
+  function notifyOrBuffer(event: T) {
+    if (_buffer !== null) {
+      _buffer.push(event);
+    } else {
+      notify(event);
+    }
+  }
+
   function notify(event: T) {
     _onetimeObservers.forEach((callback) => callback(event));
     _onetimeObservers.clear();
@@ -83,12 +110,14 @@ export function makeEventSource<T>(): EventSource<T> {
 
   return {
     // Private/internal control over event emission
-    notify,
+    notify: notifyOrBuffer,
     subscribe,
     subscribeOnce,
     clear,
 
     asPromise,
+    pause,
+    unpause,
 
     // Publicly exposable subscription API
     observable: {
