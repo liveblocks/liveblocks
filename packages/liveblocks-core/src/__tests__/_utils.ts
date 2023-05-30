@@ -795,6 +795,7 @@ export async function prepareDisconnectedStorageUpdateTest<
   };
 }
 
+// XXX Remove this helper, or at least rename + rewrite it
 export function reconnect<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
