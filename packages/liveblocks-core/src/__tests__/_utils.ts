@@ -118,7 +118,7 @@ export class MockWebSocketServer {
   public current: MockWebSocket | undefined;
   public connections: Map<MockWebSocket, Emitters> = new Map();
 
-  private onReceive = makeEventSource<string>();
+  public onReceive = makeEventSource<string>();
   public receivedMessagesRaw: string[] = [];
 
   /**
