@@ -276,6 +276,7 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
   // Create observable event sources, which this machine will call into when
   // specific events happen
   const onMessage = makeEventSource<IWebSocketMessageEvent>();
+  onMessage.pause(); // Pause all message delivery until status is OPEN
 
   // Emitted whenever the server deliberately closes the connection for
   // a specific Liveblocks reason
@@ -594,13 +595,21 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
 
   machine
     .onEnter("@ok.*", () => {
-      // Do nothing on entering...
+      let timer = setTimeout(
+        // On the next tick, start delivering all messages that have already
+        // been received, and continue synchronous delivery of all future
+        // incoming messages.
+        onMessage.unpause,
+        0
+      );
 
       // ...but when *leaving* OK state, always tear down the old socket. It's
       // no longer valid.
       return (ctx) => {
         teardownSocket(ctx.socket);
         ctx.patch({ socket: null });
+        clearTimeout(timer);
+        onMessage.pause();
       };
     })
 
