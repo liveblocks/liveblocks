@@ -16,11 +16,11 @@ type AsyncCacheItemOptions = WithRequired<
   "deduplicationInterval"
 >;
 
-type InvalidateOptions<TData> =
+type InvalidateOptions<T> =
   | { clearData?: false; optimisticData?: never }
   | {
       clearData?: never;
-      optimisticData: TData | ((data: TData | undefined) => TData | undefined);
+      optimisticData: T | ((data: T | undefined) => T | undefined);
     };
 
 type AsyncStateEmpty = {
@@ -29,69 +29,63 @@ type AsyncStateEmpty = {
   error?: never;
 };
 
-type AsyncStateLoading<TData> = {
+type AsyncStateLoading<T> = {
   isLoading: true;
-  data?: TData;
+  data?: T;
   error?: never;
 };
 
-type AsyncStateSuccess<TData> = {
+type AsyncStateSuccess<T> = {
   isLoading: false;
-  data: TData;
+  data: T;
   error?: never;
 };
 
-type AsyncStateError<TData, TError> = {
+type AsyncStateError<T, E> = {
   isLoading: false;
-  data?: TData;
-  error: TError;
+  data?: T;
+  error: E;
 };
 
-export type AsyncState<TData, TError> =
+export type AsyncState<T, E> =
   | AsyncStateEmpty
-  | AsyncStateLoading<TData>
-  | AsyncStateSuccess<TData>
-  | AsyncStateError<TData, TError>;
+  | AsyncStateLoading<T>
+  | AsyncStateSuccess<T>
+  | AsyncStateError<T, E>;
 
-type AsyncStateResolved<TData, TError> =
-  | AsyncStateSuccess<TData>
-  | AsyncStateError<TData, TError>;
+type AsyncStateResolved<T, E> = AsyncStateSuccess<T> | AsyncStateError<T, E>;
 
-type AsyncCacheItemContext<TData, TError> = AsyncState<TData, TError> & {
+type AsyncCacheItemContext<T, E> = AsyncState<T, E> & {
   isInvalid: boolean;
-  scheduledInvalidation?: InvalidateOptions<TData>;
+  scheduledInvalidation?: InvalidateOptions<T>;
   rollbackOptimisticDataOnError?: boolean;
-  promise?: Promise<TData>;
+  promise?: Promise<T>;
   lastInvokedAt?: number;
-  previousState: AsyncState<TData, TError>;
-  previousNonOptimisticData?: TData;
+  previousState: AsyncState<T, E>;
+  previousNonOptimisticData?: T;
 };
 
-export type AsyncCacheItem<TData, TError> = Observable<
-  AsyncState<TData, TError>
-> & {
-  get(): Promise<AsyncStateResolved<TData, TError>>;
-  getState(): AsyncState<TData, TError>;
-  invalidate(options?: InvalidateOptions<TData>): void;
-  revalidate(
-    options?: InvalidateOptions<TData>
-  ): Promise<AsyncStateResolved<TData, TError>>;
+export type AsyncCacheItem<T, E> = Observable<AsyncState<T, E>> & {
+  get(): Promise<AsyncStateResolved<T, E>>;
+  getState(): AsyncState<T, E>;
+  invalidate(options?: InvalidateOptions<T>): void;
+  revalidate(options?: InvalidateOptions<T>): Promise<AsyncStateResolved<T, E>>;
 };
 
-export type AsyncCache<TData, TError> = {
+export type AsyncCache<T, E> = {
   /**
    * Returns a promise which resolves with the state of the key.
    *
    * @param key The key to get.
    */
-  get(key: string): Promise<AsyncStateResolved<TData, TError>>;
+  get(key: string): Promise<AsyncStateResolved<T, E>>;
 
   /**
    * Returns the current state of the key synchronously.
    *
    * @param key The key to get the state of.
    */
-  getState(key: string): AsyncState<TData, TError> | undefined;
+  getState(key: string): AsyncState<T, E> | undefined;
 
   /**
    * Marks a key as invalid, which means that the next
@@ -101,7 +95,7 @@ export type AsyncCache<TData, TError> = {
    * @param options.clearData Whether to clear the cached data.
    * @param options.optimisticData Set data optimistically but rollback if there's an error.
    */
-  invalidate(key: string, options?: InvalidateOptions<TData>): void;
+  invalidate(key: string, options?: InvalidateOptions<T>): void;
 
   /**
    * Calls {@link AsyncCache.invalidate} and then {@link AsyncCache.get}.
@@ -112,8 +106,8 @@ export type AsyncCache<TData, TError> = {
    */
   revalidate(
     key: string,
-    options?: InvalidateOptions<TData>
-  ): Promise<AsyncStateResolved<TData, TError>>;
+    options?: InvalidateOptions<T>
+  ): Promise<AsyncStateResolved<T, E>>;
 
   /**
    * Subscribes to a key's changes.
@@ -123,7 +117,7 @@ export type AsyncCache<TData, TError> = {
    */
   subscribe(
     key: string,
-    callback: Callback<AsyncState<TData, TError>>
+    callback: Callback<AsyncState<T, E>>
   ): UnsubscribeCallback;
 
   /**
@@ -156,17 +150,17 @@ export function isDifferentState(
   );
 }
 
-function createCacheItem<TData, TError>(
+function createCacheItem<T, E>(
   key: string,
-  asyncFunction: AsyncFunction<TData>,
+  asyncFunction: AsyncFunction<T>,
   { deduplicationInterval }: AsyncCacheItemOptions
-): AsyncCacheItem<TData, TError> {
-  const context: AsyncCacheItemContext<TData, TError> = {
+): AsyncCacheItem<T, E> {
+  const context: AsyncCacheItemContext<T, E> = {
     isLoading: false,
     isInvalid: true,
     previousState: { isLoading: false },
   };
-  const eventSource = makeEventSource<AsyncState<TData, TError>>();
+  const eventSource = makeEventSource<AsyncState<T, E>>();
 
   function notify() {
     const state = getState();
@@ -207,7 +201,7 @@ function createCacheItem<TData, TError>(
 
       // We keep the key as invalid because there was an error.
       context.isInvalid = true;
-      context.error = error as TError;
+      context.error = error as E;
     }
 
     context.rollbackOptimisticDataOnError = false;
@@ -227,7 +221,7 @@ function createCacheItem<TData, TError>(
     }
   }
 
-  function invalidate(options: InvalidateOptions<TData> = {}) {
+  function invalidate(options: InvalidateOptions<T> = {}) {
     if (context.promise) {
       // If there is a promise pending, we schedule the
       // invalidation for when the promise resolves.
@@ -276,10 +270,10 @@ function createCacheItem<TData, TError>(
       }
     }
 
-    return getState() as AsyncStateResolved<TData, TError>;
+    return getState() as AsyncStateResolved<T, E>;
   }
 
-  function revalidate(options?: InvalidateOptions<TData>) {
+  function revalidate(options?: InvalidateOptions<T>) {
     invalidate(options);
 
     return get();
@@ -290,7 +284,7 @@ function createCacheItem<TData, TError>(
       isLoading: context.isLoading,
       data: context.data,
       error: context.error,
-    } as AsyncState<TData, TError>;
+    } as AsyncState<T, E>;
   }
 
   return {
@@ -302,11 +296,11 @@ function createCacheItem<TData, TError>(
   };
 }
 
-export function createAsyncCache<TData, TError>(
-  asyncFunction: AsyncFunction<TData, [string]>,
+export function createAsyncCache<T, E>(
+  asyncFunction: AsyncFunction<T, [string]>,
   options?: AsyncCacheOptions
-): AsyncCache<TData, TError> {
-  const cache = new Map<string, AsyncCacheItem<TData, TError>>();
+): AsyncCache<T, E> {
+  const cache = new Map<string, AsyncCacheItem<T, E>>();
   const cacheItemOptions: AsyncCacheItemOptions = {
     deduplicationInterval:
       options?.deduplicationInterval ?? DEDUPLICATION_INTERVAL,
@@ -337,18 +331,15 @@ export function createAsyncCache<TData, TError>(
     return cache.get(key)?.getState();
   }
 
-  function invalidate(key: string, options?: InvalidateOptions<TData>) {
+  function invalidate(key: string, options?: InvalidateOptions<T>) {
     cache.get(key)?.invalidate(options);
   }
 
-  function revalidate(key: string, options?: InvalidateOptions<TData>) {
+  function revalidate(key: string, options?: InvalidateOptions<T>) {
     return create(key).revalidate(options);
   }
 
-  function subscribe(
-    key: string,
-    callback: Callback<AsyncState<TData, TError>>
-  ) {
+  function subscribe(key: string, callback: Callback<AsyncState<T, E>>) {
     return create(key).subscribe(callback) ?? noop;
   }
 
