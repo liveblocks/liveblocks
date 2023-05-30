@@ -511,6 +511,13 @@ export async function prepareStorageTest<
   TUserMeta extends BaseUserMeta = never,
   TRoomEvent extends Json = never
 >(items: IdTuple<SerializedCrdt>[], actor: number = 0, scopes: string[] = []) {
+  if (0 < 1) {
+    // XXX Remove this blocker
+    throw new Error(
+      "🙏 Please rewrite this test that is based on prepareStorageTest() helper! 🙏"
+    );
+  }
+
   let currentActor = actor;
   const operations: Op[] = [];
 
@@ -699,6 +706,13 @@ export async function prepareStorageUpdateTest<
   root: LiveObject<TStorage>;
   expectUpdates: (updates: JsonStorageUpdate[][]) => void;
 }> {
+  if (0 < 1) {
+    // XXX Remove this blocker
+    throw new Error(
+      "🙏 Please rewrite this test that is based on prepareStorageUpdateTest() helper! 🙏"
+    );
+  }
+
   const { room: refRoom } = await prepareRoomWithStorage(items, -1);
   const { room, storage } = await prepareRoomWithStorage<
     TPresence,
@@ -754,13 +768,7 @@ export async function prepareDisconnectedStorageUpdateTest<
   TPresence extends JsonObject = never,
   TUserMeta extends BaseUserMeta = never,
   TRoomEvent extends Json = never
->(
-  items: IdTuple<SerializedCrdt>[]
-): Promise<{
-  room: Room<TPresence, TStorage, TUserMeta, TRoomEvent>;
-  root: LiveObject<TStorage>;
-  expectUpdates: (updates: JsonStorageUpdate[][]) => void;
-}> {
+>(items: IdTuple<SerializedCrdt>[]) {
   const { storage, room } = await prepareRoomWithStorage<
     TPresence,
     TStorage,

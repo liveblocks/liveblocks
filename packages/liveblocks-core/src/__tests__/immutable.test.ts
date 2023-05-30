@@ -34,6 +34,13 @@ export async function prepareStorageImmutableTest<
   TUserMeta extends BaseUserMeta = never,
   TRoomEvent extends Json = never
 >(items: IdTuple<SerializedCrdt>[], actor: number = 0) {
+  if (0 < 1) {
+    // XXX Remove this blocker
+    throw new Error(
+      "🙏 Please rewrite this test that is based on prepareStorageImmutableTest() helper! 🙏"
+    );
+  }
+
   let state = {} as ToJson<TStorage>;
   let refState = {} as ToJson<TStorage>;
 
