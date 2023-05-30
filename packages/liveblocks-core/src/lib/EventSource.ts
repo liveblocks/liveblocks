@@ -4,7 +4,7 @@ export type UnsubscribeCallback = () => void;
 export type Observable<T> = {
   subscribe(callback: Callback<T>): UnsubscribeCallback;
   subscribeOnce(callback: Callback<T>): UnsubscribeCallback;
-  asPromise(): Promise<T>;
+  waitUntil(predicate?: (event: T) => boolean): Promise<T>;
 };
 
 export type EventSource<T> = {
@@ -16,7 +16,7 @@ export type EventSource<T> = {
   subscribeOnce(callback: Callback<T>): UnsubscribeCallback;
   clear(): void;
 
-  asPromise(): Promise<T>;
+  waitUntil(predicate?: (event: T) => boolean): Promise<T>;
   pause(): void;
   unpause(): void;
 
@@ -81,10 +81,14 @@ export function makeEventSource<T>(): EventSource<T> {
     return () => _onetimeObservers.delete(callback);
   }
 
-  async function asPromise(): Promise<T> {
+  async function waitUntil(predicate?: (event: T) => boolean): Promise<T> {
     let unsub: () => void | undefined;
     return new Promise<T>((res) => {
-      unsub = subscribeOnce(res);
+      unsub = subscribe((event) => {
+        if (predicate === undefined || predicate(event)) {
+          res(event);
+        }
+      });
     }).finally(() => unsub?.());
   }
 
@@ -115,7 +119,7 @@ export function makeEventSource<T>(): EventSource<T> {
     subscribeOnce,
     clear,
 
-    asPromise,
+    waitUntil,
     pause,
     unpause,
 
@@ -123,7 +127,7 @@ export function makeEventSource<T>(): EventSource<T> {
     observable: {
       subscribe,
       subscribeOnce,
-      asPromise,
+      waitUntil,
     },
   };
 }

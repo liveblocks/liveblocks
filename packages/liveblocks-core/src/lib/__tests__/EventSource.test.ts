@@ -155,22 +155,31 @@ describe("EventSource", () => {
     );
   });
 
-  it("awaiting events", async () =>
-    fc.assert(
-      fc.asyncProperty(
-        anything(),
+  it("awaiting events", async () => {
+    const src = makeEventSource();
+    const promise$ = src.waitUntil();
 
-        async (payload) => {
-          const src = makeEventSource();
-          const promise = src.asPromise();
+    // Now notify, so the promise will resolve
+    src.notify(0);
+    src.notify(1);
+    src.notify(2);
 
-          // Now notify, so the promise will resolve
-          src.notify(payload);
+    await expect(promise$).resolves.toBe(0);
+  });
 
-          await expect(promise).resolves.toBe(payload);
-        }
-      )
-    ));
+  it("awaiting events conditionally", async () => {
+    const src = makeEventSource<number>();
+    const promise$ = src.waitUntil((n) => n % 2 === 1);
+
+    // Now notify, so the promise will resolve
+    src.notify(2);
+    src.notify(4);
+    src.notify(6);
+    src.notify(7); // First odd number, so we'll wait until this one!
+    src.notify(8);
+
+    await expect(promise$).resolves.toBe(7);
+  });
 
   it("pausing/continuing event delivery", () => {
     fc.assert(
