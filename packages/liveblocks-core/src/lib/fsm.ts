@@ -92,17 +92,24 @@ export type Wildcard<T extends string> = "*" | `${Groups<T>}.*`;
  */
 export async function withTimeout<T>(
   promise: Promise<T>,
-  millis: number
+  millis: number,
+  errmsg = "Timed out"
 ): Promise<T> {
   let timerID: ReturnType<typeof setTimeout> | undefined;
-  return Promise.race([
-    promise,
-    new Promise<never>((_, reject) => {
-      timerID = setTimeout(() => {
-        reject(new Error("Timed out"));
-      }, millis);
-    }),
-  ]).finally(() => clearTimeout(timerID));
+  const timer$ = new Promise<never>((_, reject) => {
+    timerID = setTimeout(() => {
+      reject(new Error(errmsg));
+    }, millis);
+  });
+  return (
+    Promise
+      // Race the given promise against the timer. Whichever one finishes
+      // first wins the race.
+      .race([promise, timer$])
+
+      // Either way, clear the timeout, no matter who won
+      .finally(() => clearTimeout(timerID))
+  );
 }
 
 function distance(state1: string, state2: string): [number, number] {
