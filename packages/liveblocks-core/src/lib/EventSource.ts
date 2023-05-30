@@ -4,6 +4,7 @@ export type UnsubscribeCallback = () => void;
 export type Observable<T> = {
   subscribe(callback: Callback<T>): UnsubscribeCallback;
   subscribeOnce(callback: Callback<T>): UnsubscribeCallback;
+  asPromise(): Promise<T>;
 };
 
 export type EventSource<T> = {
@@ -14,6 +15,8 @@ export type EventSource<T> = {
   subscribe(callback: Callback<T>): UnsubscribeCallback;
   subscribeOnce(callback: Callback<T>): UnsubscribeCallback;
   clear(): void;
+
+  asPromise(): Promise<T>;
 
   /**
    * Observable instance, which can be used to subscribe to this event source
@@ -59,6 +62,13 @@ export function makeEventSource<T>(): EventSource<T> {
     return () => _onetimeObservers.delete(callback);
   }
 
+  async function asPromise(): Promise<T> {
+    let unsub: () => void | undefined;
+    return new Promise<T>((res) => {
+      unsub = subscribeOnce(res);
+    }).finally(() => unsub?.());
+  }
+
   function notify(event: T) {
     _onetimeObservers.forEach((callback) => callback(event));
     _onetimeObservers.clear();
@@ -78,10 +88,13 @@ export function makeEventSource<T>(): EventSource<T> {
     subscribeOnce,
     clear,
 
+    asPromise,
+
     // Publicly exposable subscription API
     observable: {
       subscribe,
       subscribeOnce,
+      asPromise,
     },
   };
 }

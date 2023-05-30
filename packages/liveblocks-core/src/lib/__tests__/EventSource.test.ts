@@ -154,4 +154,21 @@ describe("EventSource", () => {
       )
     );
   });
+
+  it("awaiting events", async () =>
+    fc.assert(
+      fc.asyncProperty(
+        anything(),
+
+        async (payload) => {
+          const src = makeEventSource();
+          const promise = src.asPromise();
+
+          // Now notify, so the promise will resolve
+          src.notify(payload);
+
+          await expect(promise).resolves.toBe(payload);
+        }
+      )
+    ));
 });
