@@ -383,7 +383,7 @@ export const FOURTH_POSITION = makePosition(THIRD_POSITION);
 export const FIFTH_POSITION = makePosition(FOURTH_POSITION);
 
 function makeRoomConfig<TPresence extends JsonObject, TRoomEvent extends Json>(
-  mockedEffects: Effects<TPresence, TRoomEvent>
+  mockedEffects?: Effects<TPresence, TRoomEvent> // XXX Remove?
 ) {
   return {
     roomId: "room-id",
@@ -412,12 +412,17 @@ export async function prepareRoomWithStorage<
 >(
   items: IdTuple<SerializedCrdt>[],
   actor: number = 0,
-  onSend: (messages: ClientMsg<TPresence, TRoomEvent>[]) => void = () => {},
+  onSend:
+    | ((messages: ClientMsg<TPresence, TRoomEvent>[]) => void)
+    | undefined = undefined,
   defaultStorage?: TStorage,
   scopes: string[] = []
 ) {
-  const effects = mockEffects();
-  (effects.send as jest.MockedFunction<any>).mockImplementation(onSend);
+  if (onSend !== undefined) {
+    throw new Error(
+      "Can no longer use `onSend` effect, please rewrite unit test"
+    );
+  }
 
   const { wss, delegates } = defineBehavior(
     ALWAYS_AUTH_AS(actor, scopes),
@@ -439,7 +444,7 @@ export async function prepareRoomWithStorage<
       initialPresence: {} as TPresence,
       initialStorage: defaultStorage || ({} as TStorage),
     },
-    makeRoomConfig(effects),
+    makeRoomConfig(),
     delegates
   );
 
