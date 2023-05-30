@@ -55,23 +55,15 @@ export async function waitUntilStatus(
   room: Room<JsonObject, LsonObject, BaseUserMeta, Json>,
   targetStatus: ConnectionStatus
 ): Promise<void> {
-  let unsub: (() => void) | undefined;
-  return withTimeout(
-    new Promise<void>((resolve) => {
-      if (room.getConnectionState() === targetStatus) {
-        resolve(undefined);
-      } else {
-        // Otherwise, subscribe
-        unsub = room.events.connection.subscribe((status) => {
-          if (status === targetStatus) {
-            resolve();
-          }
-        });
-      }
-    }),
+  if (room.getConnectionState() === targetStatus) {
+    return;
+  }
+
+  await withTimeout(
+    room.events.connection.waitUntil((status) => status === targetStatus),
     1000,
     `Room did not reach connection status "${targetStatus}" within 1s`
-  ).finally(() => unsub?.());
+  );
 }
 
 /**
@@ -89,34 +81,41 @@ export async function waitUntilNoLongerStatus(
     );
   }
 
-  let unsub: (() => void) | undefined;
-  return withTimeout(
-    new Promise<void>((resolve) => {
-      unsub = room.events.connection.subscribe((status) => {
-        if (status !== targetStatus) {
-          resolve();
-        }
-      });
-    }),
+  await withTimeout(
+    room.events.connection.waitUntil((status) => status !== targetStatus),
     1000,
     `Room remained in status "${targetStatus}" and did not change`
-  ).finally(() => unsub?.());
+  );
 }
 
-export async function waitUntilOthersUpdate(
+export async function waitUntilOthersEvent(
   room: Room<JsonObject, LsonObject, BaseUserMeta, Json>
 ): Promise<void> {
-  let unsub: (() => void) | undefined;
-  return withTimeout(
-    new Promise<void>((resolve) => {
-      // Otherwise, subscribe
-      unsub = room.events.others.subscribe(() => {
-        resolve();
-      });
-    }),
+  await withTimeout(
+    room.events.others.waitUntil(),
     1000,
     'Room never got an "others" update within 1s'
-  ).finally(() => unsub?.());
+  );
+}
+
+export async function waitUntilCustomEvent(
+  room: Room<JsonObject, LsonObject, BaseUserMeta, Json>
+): Promise<void> {
+  await withTimeout(
+    room.events.customEvent.waitUntil(),
+    1000,
+    "Room never got a custom broadcast event within 1s"
+  );
+}
+
+export async function waitUntilStorageUpdate(
+  room: Room<JsonObject, LsonObject, BaseUserMeta, Json>
+): Promise<void> {
+  await withTimeout(
+    room.events.storage.waitUntil(),
+    1000,
+    "Room never received a storage update within 1s"
+  );
 }
 
 /**
@@ -130,19 +129,11 @@ export async function waitUntilSynchronized(
     return;
   }
 
-  const MAX_TIMEOUT = 1000;
-  let unsub: (() => void) | undefined;
-  return withTimeout(
-    new Promise<void>((resolve) => {
-      unsub = room.events.storageStatus.subscribe((status) => {
-        if (status === "synchronized") {
-          resolve();
-        }
-      });
-    }),
-    MAX_TIMEOUT,
-    `Room did not reach "synchronized" storage status within ${MAX_TIMEOUT}ms`
-  ).finally(() => unsub?.());
+  await withTimeout(
+    room.events.storageStatus.waitUntil((status) => status === "synchronized"),
+    1000,
+    'Room did not reach "synchronized" storage status within 1s'
+  );
 }
 
 function makeRoomConfig<TPresence extends JsonObject, TRoomEvent extends Json>(
@@ -502,7 +493,7 @@ describe("room", () => {
       );
     });
 
-    await waitUntilOthersUpdate(room);
+    await waitUntilOthersEvent(room);
 
     expect(room.getOthers()).toEqual([
       { connectionId: 1, presence: { x: 2 }, isReadOnly: false },
@@ -533,7 +524,7 @@ describe("room", () => {
       );
     });
 
-    await waitUntilOthersUpdate(room);
+    await waitUntilOthersEvent(room);
 
     expect(room.getOthers()).toEqual([
       { connectionId: 1, presence: { x: 2 }, isReadOnly: true },
@@ -564,7 +555,7 @@ describe("room", () => {
       );
     });
 
-    await waitUntilStatus(room, "open");
+    await waitUntilOthersEvent(room);
     expect(room.getOthers()).toEqual([
       { connectionId: 1, presence: { x: 2 }, isReadOnly: false },
     ]);
@@ -626,7 +617,7 @@ describe("room", () => {
       );
     });
 
-    await waitUntilStatus(room, "open");
+    await waitUntilOthersEvent(room);
     expect(room.getOthers()).toEqual([
       { connectionId: 1, presence: { x: 2 }, isReadOnly: false },
       { connectionId: 2, presence: { x: 2 }, isReadOnly: false },
@@ -1261,6 +1252,7 @@ describe("room", () => {
         })
       );
 
+      await waitUntilOthersEvent(room);
       unsubscribe();
 
       wss.last.send(
@@ -1300,7 +1292,7 @@ describe("room", () => {
       const callback = jest.fn();
       room.events.customEvent.subscribe(callback);
 
-      await waitUntilStatus(room, "open");
+      await waitUntilCustomEvent(room);
 
       expect(callback).toHaveBeenCalledWith({
         connectionId: 1,
@@ -1452,7 +1444,7 @@ describe("room", () => {
         })
       );
 
-      await waitUntilStatus(room, "open");
+      await waitUntilStorageUpdate(room);
       expectStorage({
         items2: ["B"],
       });
@@ -1770,7 +1762,7 @@ describe("room", () => {
 
       room.events.others.subscribe((ev) => (others = ev.others));
 
-      await waitUntilStatus(room, "open");
+      await waitUntilOthersEvent(room);
       expect(others).toEqual([
         // User not yet publicly visible
       ]);
