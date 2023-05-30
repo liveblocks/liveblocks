@@ -17,6 +17,7 @@ export type EventSource<T> = {
   clear(): void;
 
   waitUntil(predicate?: (event: T) => boolean): Promise<T>;
+  count(): number;
   pause(): void;
   unpause(): void;
 
@@ -112,12 +113,17 @@ export function makeEventSource<T>(): EventSource<T> {
     _observers.clear();
   }
 
+  function count() {
+    return _onetimeObservers.size + _observers.size;
+  }
+
   return {
     // Private/internal control over event emission
     notify: notifyOrBuffer,
     subscribe,
     subscribeOnce,
     clear,
+    count,
 
     waitUntil,
     pause,

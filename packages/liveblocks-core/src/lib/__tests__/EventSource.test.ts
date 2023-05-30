@@ -70,6 +70,45 @@ describe("EventSource", () => {
     );
   });
 
+  it("getting counts", () => {
+    const callback1 = jest.fn();
+    const callback2 = jest.fn();
+    const callback3 = jest.fn();
+    const hub = makeEventSource();
+
+    // No callbacks registered yet
+    expect(hub.count()).toBe(0);
+
+    const unsub1 = hub.observable.subscribe(callback1);
+    expect(hub.count()).toBe(1);
+
+    const unsub2a = hub.observable.subscribe(callback2);
+    expect(hub.count()).toBe(2);
+
+    // Registering the same exact callback multiple times has no effect
+    // on the count
+    const unsub2b = hub.observable.subscribe(callback2);
+    expect(hub.count()).toBe(2);
+
+    const unsub3 = hub.observable.subscribeOnce(callback3);
+    expect(hub.count()).toBe(3);
+
+    unsub1();
+    unsub2a();
+    unsub2b();
+    expect(hub.count()).toBe(1);
+
+    unsub3();
+    expect(hub.count()).toBe(0);
+
+    // Calling unsub more often will not have an effect
+    unsub1();
+    unsub2a();
+    unsub2b();
+    unsub3();
+    expect(hub.count()).toBe(0);
+  });
+
   it("subscribing once", () => {
     fc.assert(
       fc.property(
