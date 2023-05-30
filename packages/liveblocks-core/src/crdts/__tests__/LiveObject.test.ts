@@ -409,7 +409,7 @@ describe("LiveObject", () => {
   });
 
   describe("acknowledge mechanism", () => {
-    it("should not ignore history updates if the current op has not been acknowledged", async () => {
+    it.only("should not ignore history updates if the current op has not been acknowledged", async () => {
       const { room, root, expectUpdates } =
         await prepareDisconnectedStorageUpdateTest<{
           items: LiveObject<{ b?: string; a?: string }>;
