@@ -9,8 +9,8 @@
     "start": "next start"
   },
   "dependencies": {
-    "@liveblocks/client": "^1.1.0-fsm2",
-    "@liveblocks/react": "^1.1.0-fsm2",
+    "@liveblocks/client": "^1.1.0-fsm3",
+    "@liveblocks/react": "^1.1.0-fsm3",
     "next": "^12.1.6",
     "react": "18.2.0",
     "react-dom": "18.2.0"

@@ -13,7 +13,7 @@
     "nuxt": "^3.5.0"
   },
   "dependencies": {
-    "@liveblocks/client": "^1.1.0-fsm2",
-    "@liveblocks/node": "^1.1.0-fsm2"
+    "@liveblocks/client": "^1.1.0-fsm3",
+    "@liveblocks/node": "^1.1.0-fsm3"
   }
 }
