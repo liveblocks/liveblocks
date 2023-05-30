@@ -511,6 +511,13 @@ export async function prepareStorageTest<
   TUserMeta extends BaseUserMeta = never,
   TRoomEvent extends Json = never
 >(items: IdTuple<SerializedCrdt>[], actor: number = 0, scopes: string[] = []) {
+  if (0 < 1) {
+    // XXX Remove this blocker
+    throw new Error(
+      "🙏 Please rewrite this test that is based on prepareStorageTest() helper! 🙏"
+    );
+  }
+
   let currentActor = actor;
   const operations: Op[] = [];
 
