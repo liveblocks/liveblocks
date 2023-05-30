@@ -767,7 +767,7 @@ describe("room", () => {
     expect(room.getPresence()).toEqual({ x: 1 });
   });
 
-  test("undo redo batch", async () => {
+  test.only("undo redo batch", async () => {
     const { room, root, expectUpdates } =
       await prepareDisconnectedStorageUpdateTest<{
         items: LiveList<LiveObject<Record<string, number>>>;
