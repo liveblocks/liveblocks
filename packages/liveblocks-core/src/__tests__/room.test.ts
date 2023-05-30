@@ -119,6 +119,32 @@ export async function waitUntilOthersUpdate(
   ).finally(() => unsub?.());
 }
 
+/**
+ * Handy helper that allows to pause test execution until the room has
+ * synchronized all pending changes to the server.
+ */
+export async function waitUntilSynchronized(
+  room: Room<JsonObject, LsonObject, BaseUserMeta, Json>
+): Promise<void> {
+  if (room.getStorageStatus() === "synchronized") {
+    return;
+  }
+
+  const MAX_TIMEOUT = 1000;
+  let unsub: (() => void) | undefined;
+  return withTimeout(
+    new Promise<void>((resolve) => {
+      unsub = room.events.storageStatus.subscribe((status) => {
+        if (status === "synchronized") {
+          resolve();
+        }
+      });
+    }),
+    MAX_TIMEOUT,
+    `Room did not reach "synchronized" storage status within ${MAX_TIMEOUT}ms`
+  ).finally(() => unsub?.());
+}
+
 function makeRoomConfig<TPresence extends JsonObject, TRoomEvent extends Json>(
   mockedEffects?: Effects<TPresence, TRoomEvent>
 ) {
