@@ -1,5 +1,5 @@
 import styles from "./Avatar.module.css";
-
+import type { Presence } from "../../liveblocks.config.ts";
 /**
  * This file shows how to add live avatars like you can see them at the top right of a Google Doc or a Figma file.
  * https://liveblocks.io/docs/examples/live-avatars
@@ -11,8 +11,11 @@ import styles from "./Avatar.module.css";
  */
 
 const IMAGE_SIZE = 48;
+// props: { room: TypedRoom }
 
-export default function Avatar({ picture, name }) {
+// Avatar({ picture, name })
+export default function Avatar(props: { name: string; picture: string }) {
+  const { name, picture } = props;
   return (
     <div class={styles.avatar} data-tooltip={name}>
       <img

@@ -4,7 +4,8 @@ import { createClient } from "@liveblocks/client";
 import App from "./App";
 import "./index.css";
 
-let PUBLIC_KEY = "pk_YOUR_PUBLIC_KEY";
+let PUBLIC_KEY =
+  "pk_dev_cGhHV46MCR_vLLDFpeT37x4pLmR2WvS_MGqTO1rhUdimBrKHx9AHjasXV6m7Aoy7";
 let roomId = "solidjs-live-avatars";
 
 overrideApiKeyAndRoomId();
