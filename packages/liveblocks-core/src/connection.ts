@@ -596,7 +596,7 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
 
   machine
     .onEnter("@ok.*", () => {
-      let timer = setTimeout(
+      const timerID = setTimeout(
         // On the next tick, start delivering all messages that have already
         // been received, and continue synchronous delivery of all future
         // incoming messages.
@@ -609,7 +609,7 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
       return (ctx) => {
         teardownSocket(ctx.socket);
         ctx.patch({ socket: null });
-        clearTimeout(timer);
+        clearTimeout(timerID);
         onMessage.pause();
       };
     })
