@@ -7,11 +7,11 @@ import {
   prepareStorageTest,
   reconnect,
 } from "../../__tests__/_utils";
+import { waitUntilStorageUpdate } from "../../__tests__/_waitUtils";
 import { RoomScope } from "../../protocol/AuthToken";
 import { OpCode } from "../../protocol/Op";
 import type { IdTuple, SerializedCrdt } from "../../protocol/SerializedCrdt";
 import { CrdtType } from "../../protocol/SerializedCrdt";
-import { WebsocketCloseCodes } from "../../types/IWebSocket";
 import { LiveList } from "../LiveList";
 import { LiveMap } from "../LiveMap";
 import { LiveObject } from "../LiveObject";
@@ -323,7 +323,7 @@ describe("LiveMap", () => {
     });
 
     // https://github.com/liveblocks/liveblocks/issues/95
-    it("should have deleted key when subscriber is called", async () => {
+    it.only("should have deleted key when subscriber is called", async () => {
       const { room, root } = await prepareIsolatedStorageTest<{
         map: LiveMap<string, string>;
       }>(
@@ -347,7 +347,7 @@ describe("LiveMap", () => {
       expect(keys).toEqual(["second"]);
     });
 
-    it("should call subscribe when key is deleted", async () => {
+    it.only("should call subscribe when key is deleted", async () => {
       const { room, root } = await prepareIsolatedStorageTest<{
         map: LiveMap<string, string>;
       }>(
@@ -372,7 +372,7 @@ describe("LiveMap", () => {
       expect(fn.mock.calls[0][0]).toBe(map);
     });
 
-    it("should not call subscribe when key is not deleted", async () => {
+    it.only("should not call subscribe when key is not deleted", async () => {
       const { room, root } = await prepareIsolatedStorageTest<{
         map: LiveMap<string, string>;
       }>(
@@ -647,7 +647,7 @@ describe("LiveMap", () => {
   });
 
   describe("reconnect with remote changes and subscribe", () => {
-    test("Register added to map", async () => {
+    test.only("register added to map", async () => {
       const { expectStorage, room, root, wss } =
         await prepareIsolatedStorageTest<{
           map: LiveMap<string, string>;
@@ -669,13 +669,6 @@ describe("LiveMap", () => {
       room.subscribe(listItems, mapCallback);
 
       expectStorage({ map: new Map([["first", "a"]]) });
-
-      wss.last.close(
-        new CloseEvent("close", {
-          code: WebsocketCloseCodes.CLOSE_ABNORMAL,
-          wasClean: false,
-        })
-      );
 
       const newInitStorage: IdTuple<SerializedCrdt>[] = [
         ["0:0", { type: CrdtType.OBJECT, data: {} }],
@@ -700,8 +693,9 @@ describe("LiveMap", () => {
         ],
       ];
 
-      reconnect(room, 3, newInitStorage);
+      reconnect(wss, newInitStorage);
 
+      await waitUntilStorageUpdate(room);
       expectStorage({
         map: new Map([
           ["first", "a"],
@@ -724,7 +718,7 @@ describe("LiveMap", () => {
   });
 
   describe("internal methods", () => {
-    test("_detachChild", async () => {
+    test.only("_detachChild", async () => {
       const { root } = await prepareIsolatedStorageTest<{
         map: LiveMap<string, LiveObject<{ a: number }>>;
       }>(

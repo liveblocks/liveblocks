@@ -32,6 +32,7 @@ import type {
   IWebSocketEvent,
   IWebSocketMessageEvent,
 } from "../types/IWebSocket";
+import { WebsocketCloseCodes } from "../types/IWebSocket";
 import {
   ALWAYS_AUTH_AS,
   AUTO_OPEN_SOCKETS,
@@ -826,26 +827,27 @@ export async function prepareDisconnectedStorageUpdateTest<
   };
 }
 
-// XXX Remove this helper, or at least rename + rewrite it
-export function reconnect<
-  TPresence extends JsonObject,
-  TStorage extends LsonObject,
-  TUserMeta extends BaseUserMeta,
-  TRoomEvent extends Json
->(
-  room: Room<TPresence, TStorage, TUserMeta, TRoomEvent>,
-  actor: number,
-  newItems: IdTuple<SerializedCrdt>[]
+export function reconnect(
+  wss: MockWebSocketServer,
+  nextStorageItems: IdTuple<SerializedCrdt>[]
 ) {
-  const ws = makeControllableWebSocket();
-  room.connect();
-  room.__internal.send.simulateAuthSuccess(makeRoomToken(actor, []), ws);
-  ws.server.accept();
+  // Next time a client socket connects, send this INITIAL_STORAGE_STATE
+  // message
+  wss.onConnection((conn) =>
+    conn.server.send(
+      serverMessage({
+        type: ServerMsgCode.INITIAL_STORAGE_STATE,
+        items: nextStorageItems,
+      })
+    )
+  );
 
-  room.__internal.send.incomingMessage(
-    serverMessage({
-      type: ServerMsgCode.INITIAL_STORAGE_STATE,
-      items: newItems,
+  // Send a close from the WebSocket server, triggering an automatic reconnect
+  // by the room.
+  wss.last.close(
+    new CloseEvent("close", {
+      code: WebsocketCloseCodes.CLOSE_ABNORMAL,
+      wasClean: false,
     })
   );
 }

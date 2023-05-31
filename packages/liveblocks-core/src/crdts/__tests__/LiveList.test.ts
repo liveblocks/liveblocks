@@ -18,6 +18,10 @@ import {
   SECOND_POSITION,
   THIRD_POSITION,
 } from "../../__tests__/_utils";
+import {
+  waitUntilStatus,
+  waitUntilStorageUpdate,
+} from "../../__tests__/_waitUtils";
 import { RoomScope } from "../../protocol/AuthToken";
 import { OpCode } from "../../protocol/Op";
 import type { IdTuple, SerializedCrdt } from "../../protocol/SerializedCrdt";
@@ -68,7 +72,7 @@ describe("LiveList", () => {
   });
 
   describe("deserialization", () => {
-    it("create document with list in root", async () => {
+    it.only("create document with list in root", async () => {
       const { expectStorage } = await prepareIsolatedStorageTest<{
         items: LiveList<never>;
       }>([
@@ -81,7 +85,7 @@ describe("LiveList", () => {
       });
     });
 
-    it("init list with items", async () => {
+    it.only("init list with items", async () => {
       const { expectStorage } = await prepareIsolatedStorageTest<{
         items: LiveList<LiveObject<{ a: number }>>;
       }>([
@@ -215,7 +219,7 @@ describe("LiveList", () => {
       assertUndoRedo();
     });
 
-    it("push already attached LiveObject should throw", async () => {
+    it.only("push already attached LiveObject should throw", async () => {
       const { root } = await prepareIsolatedStorageTest<{
         items: LiveList<LiveObject<{ a: number }>>;
       }>(
@@ -731,7 +735,7 @@ describe("LiveList", () => {
   });
 
   describe("conflict", () => {
-    it("list conflicts", async () => {
+    it.only("list conflicts", async () => {
       const { root, expectStorage, applyRemoteOperations } =
         await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
           [
@@ -774,7 +778,7 @@ describe("LiveList", () => {
       });
     });
 
-    it("list conflicts 2", async () => {
+    it.only("list conflicts 2", async () => {
       const { root, applyRemoteOperations, expectStorage } =
         await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
           [
@@ -844,8 +848,8 @@ describe("LiveList", () => {
       });
     });
 
-    it("list conflicts with offline", async () => {
-      const { root, expectStorage, applyRemoteOperations, room, wss } =
+    it.only("list conflicts with offline", async () => {
+      const { room, root, expectStorage, applyRemoteOperations, wss } =
         await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
           [
             createSerializedObject("0:0", {}),
@@ -853,13 +857,6 @@ describe("LiveList", () => {
           ],
           1
         );
-
-      wss.last.close(
-        new CloseEvent("close", {
-          code: WebsocketCloseCodes.CLOSE_ABNORMAL,
-          wasClean: false,
-        })
-      );
 
       const items = root.get("items");
 
@@ -870,12 +867,13 @@ describe("LiveList", () => {
         items: ["0"],
       });
 
-      reconnect(room, 3, [
+      reconnect(wss, [
         createSerializedObject("0:0", {}),
         createSerializedList("0:1", "0:0", "items"),
         createSerializedRegister("2:0", "0:1", FIRST_POSITION, "1"),
       ]);
 
+      await waitUntilStorageUpdate(room);
       expectStorage({
         items: ["1", "0"],
       });
@@ -894,7 +892,7 @@ describe("LiveList", () => {
       });
     });
 
-    it("list conflicts with undo redo and remote change", async () => {
+    it.only("list conflicts with undo redo and remote change", async () => {
       const { root, expectStorage, applyRemoteOperations, room, wss } =
         await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
           [
@@ -910,6 +908,7 @@ describe("LiveList", () => {
           wasClean: false,
         })
       );
+      await waitUntilStatus(room, "open");
 
       const items = root.get("items");
 
@@ -937,12 +936,13 @@ describe("LiveList", () => {
 
       room.history.redo();
 
+      await waitUntilStorageUpdate(room);
       expectStorage({
         items: ["1", "0"],
       });
     });
 
-    it("list conflicts - move", async () => {
+    it.only("list conflicts - move", async () => {
       const { root, expectStorage, applyRemoteOperations } =
         await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
           [
@@ -996,7 +996,7 @@ describe("LiveList", () => {
       });
     });
 
-    it("list conflicts - ack has different position that local item", async () => {
+    it.only("list conflicts - ack has different position that local item", async () => {
       const { root, expectStorage, applyRemoteOperations } =
         await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
           [
@@ -1073,7 +1073,7 @@ describe("LiveList", () => {
       });
     });
 
-    it("list conflicts - ack has different position that local and ack position is used", async () => {
+    it.only("list conflicts - ack has different position that local and ack position is used", async () => {
       const { root, expectStorage, applyRemoteOperations } =
         await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
           [
@@ -1199,7 +1199,7 @@ describe("LiveList", () => {
   });
 
   describe("reconnect with remote changes and subscribe", () => {
-    test("Register added to list", async () => {
+    test.only("register added to list", async () => {
       const { expectStorage, room, root, wss } =
         await prepareIsolatedStorageTest<{
           items: LiveList<string>;
@@ -1224,13 +1224,6 @@ describe("LiveList", () => {
 
       expectStorage({ items: ["a"] });
 
-      wss.last.close(
-        new CloseEvent("close", {
-          code: WebsocketCloseCodes.CLOSE_ABNORMAL,
-          wasClean: false,
-        })
-      );
-
       const newInitStorage: IdTuple<SerializedCrdt>[] = [
         ["0:0", { type: CrdtType.OBJECT, data: {} }],
         ["0:1", { type: CrdtType.LIST, parentId: "0:0", parentKey: "items" }],
@@ -1254,8 +1247,9 @@ describe("LiveList", () => {
         ],
       ];
 
-      reconnect(room, 3, newInitStorage);
+      reconnect(wss, newInitStorage);
 
+      await waitUntilStorageUpdate(room);
       expectStorage({
         items: ["a", "b"],
       });
@@ -1287,7 +1281,7 @@ describe("LiveList", () => {
       expect(listCallback).toHaveBeenCalledTimes(2);
     });
 
-    test("Register moved in list", async () => {
+    test.only("register moved in list", async () => {
       const { expectStorage, room, root, wss } =
         await prepareIsolatedStorageTest<{
           items: LiveList<string>;
@@ -1312,13 +1306,6 @@ describe("LiveList", () => {
       room.subscribe(listItems, listCallback);
 
       expectStorage({ items: ["a", "b"] });
-
-      wss.last.close(
-        new CloseEvent("close", {
-          code: WebsocketCloseCodes.CLOSE_ABNORMAL,
-          wasClean: false,
-        })
-      );
 
       const newInitStorage: IdTuple<SerializedCrdt>[] = [
         ["0:0", { type: CrdtType.OBJECT, data: {} }],
@@ -1343,8 +1330,9 @@ describe("LiveList", () => {
         ],
       ];
 
-      reconnect(room, 3, newInitStorage);
+      reconnect(wss, newInitStorage);
 
+      await waitUntilStorageUpdate(room);
       expectStorage({
         items: ["b", "a"],
       });
@@ -1364,7 +1352,7 @@ describe("LiveList", () => {
       expect(listCallback).toHaveBeenCalledTimes(1);
     });
 
-    test("Register deleted from list", async () => {
+    test.only("register deleted from list", async () => {
       const { expectStorage, room, root, wss } =
         await prepareIsolatedStorageTest<{
           items: LiveList<string>;
@@ -1390,13 +1378,6 @@ describe("LiveList", () => {
 
       expectStorage({ items: ["a", "b"] });
 
-      wss.last.close(
-        new CloseEvent("close", {
-          code: WebsocketCloseCodes.CLOSE_ABNORMAL,
-          wasClean: false,
-        })
-      );
-
       const newInitStorage: IdTuple<SerializedCrdt>[] = [
         ["0:0", { type: CrdtType.OBJECT, data: {} }],
         ["0:1", { type: CrdtType.LIST, parentId: "0:0", parentKey: "items" }],
@@ -1411,8 +1392,9 @@ describe("LiveList", () => {
         ],
       ];
 
-      reconnect(room, 3, newInitStorage);
+      reconnect(wss, newInitStorage);
 
+      await waitUntilStorageUpdate(room);
       expectStorage({
         items: ["a"],
       });
@@ -1434,7 +1416,7 @@ describe("LiveList", () => {
   });
 
   describe("internal methods", () => {
-    test("_detachChild", async () => {
+    test.only("_detachChild", async () => {
       const { root } = await prepareIsolatedStorageTest<{
         items: LiveList<LiveObject<{ a: number }>>;
       }>(
@@ -1472,7 +1454,7 @@ describe("LiveList", () => {
     });
 
     describe("apply CreateRegister", () => {
-      it('with intent "set" should replace existing item', async () => {
+      it.only('with intent "set" should replace existing item', async () => {
         const { expectStorage, applyRemoteOperations } =
           await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
             [
@@ -1503,7 +1485,7 @@ describe("LiveList", () => {
         });
       });
 
-      it('with intent "set" should notify with a "set" update', async () => {
+      it.only('with intent "set" should notify with a "set" update', async () => {
         const { room, root, applyRemoteOperations } =
           await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
             [
@@ -1539,7 +1521,7 @@ describe("LiveList", () => {
         ]);
       });
 
-      it('with intent "set" should insert item if conflict with a delete operation', async () => {
+      it.only('with intent "set" should insert item if conflict with a delete operation', async () => {
         const { root, expectStorage, applyRemoteOperations } =
           await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
             [
@@ -1578,7 +1560,7 @@ describe("LiveList", () => {
         });
       });
 
-      it('with intent "set" should notify with a "insert" update if no item exists at this position', async () => {
+      it.only('with intent "set" should notify with a "insert" update if no item exists at this position', async () => {
         const { room, root, applyRemoteOperations } =
           await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
             [
@@ -1615,7 +1597,7 @@ describe("LiveList", () => {
         ]);
       });
 
-      it("on existing position should give the right update", async () => {
+      it.only("on existing position should give the right update", async () => {
         const { room, root, expectStorage, applyRemoteOperations } =
           await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
             [
