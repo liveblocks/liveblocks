@@ -3,13 +3,13 @@ import type { LsonObject } from "../crdts/Lson";
 import type { ToImmutable } from "../crdts/utils";
 import type { EventSource, Observable } from "../lib/EventSource";
 import { makeEventSource } from "../lib/EventSource";
+import { withTimeout } from "../lib/fsm";
 import type { Json, JsonObject } from "../lib/Json";
 import { makePosition } from "../lib/position";
 import type { Authentication } from "../protocol/Authentication";
 import type { RoomAuthToken } from "../protocol/AuthToken";
 import type { BaseUserMeta } from "../protocol/BaseUserMeta";
 import type { ClientMsg } from "../protocol/ClientMsg";
-import { withTimeout } from "../lib/fsm";
 import { ClientMsgCode } from "../protocol/ClientMsg";
 import type { Op } from "../protocol/Op";
 import type {
