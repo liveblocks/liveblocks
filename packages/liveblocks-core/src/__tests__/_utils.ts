@@ -553,14 +553,14 @@ export async function prepareStorageTest<
   let currentActor = actor;
   const operations: Op[] = [];
 
-  const { room: refRoom, storage: refStorage } = await prepareRoomWithStorage<
+  const ref = await prepareRoomWithStorage<
     TPresence,
     TStorage,
     TUserMeta,
     TRoomEvent
   >(items, -1, undefined, undefined, scopes);
 
-  const { room, storage, ws } = await prepareRoomWithStorage<
+  const subject = await prepareRoomWithStorage<
     TPresence,
     TStorage,
     TUserMeta,
@@ -573,20 +573,20 @@ export async function prepareStorageTest<
         if (message.type === ClientMsgCode.UPDATE_STORAGE) {
           operations.push(...message.ops);
 
-          refRoom.__internal.send.incomingMessage(
+          ref.room.__internal.send.incomingMessage(
             serverMessage({
               type: ServerMsgCode.UPDATE_STORAGE,
               ops: message.ops,
             })
           );
-          room.__internal.send.incomingMessage(
+          subject.room.__internal.send.incomingMessage(
             serverMessage({
               type: ServerMsgCode.UPDATE_STORAGE,
               ops: message.ops,
             })
           );
         } else if (message.type === ClientMsgCode.UPDATE_PRESENCE) {
-          refRoom.__internal.send.incomingMessage(
+          ref.room.__internal.send.incomingMessage(
             serverMessage({
               type: ServerMsgCode.UPDATE_PRESENCE,
               data: message.data,
@@ -605,7 +605,7 @@ export async function prepareStorageTest<
 
   // Machine is the first user connected to the room, it then receives a server message
   // saying that the refRoom user joined the room.
-  room.__internal.send.incomingMessage(
+  subject.room.__internal.send.incomingMessage(
     serverMessage({
       type: ServerMsgCode.USER_JOINED,
       actor: -1,
@@ -617,7 +617,7 @@ export async function prepareStorageTest<
 
   // RefRoom is the second user connected to the room, it receives a server message
   // ROOM_STATE with the list of users in the room.
-  refRoom.__internal.send.incomingMessage(
+  ref.room.__internal.send.incomingMessage(
     serverMessage({
       type: ServerMsgCode.ROOM_STATE,
       users: { [currentActor]: { scopes: [] } },
@@ -627,9 +627,11 @@ export async function prepareStorageTest<
   const states: ToImmutable<TStorage>[] = [];
 
   function expectBothClientStoragesToEqual(data: ToImmutable<TStorage>) {
-    expect(storage.root.toImmutable()).toEqual(data);
-    expect(refStorage.root.toImmutable()).toEqual(data);
-    expect(room.__internal.nodeCount).toBe(refRoom.__internal.nodeCount);
+    expect(subject.storage.root.toImmutable()).toEqual(data);
+    expect(ref.storage.root.toImmutable()).toEqual(data);
+    expect(subject.room.__internal.nodeCount).toBe(
+      ref.room.__internal.nodeCount
+    );
   }
 
   function expectStorage(data: ToImmutable<TStorage>) {
@@ -641,31 +643,35 @@ export async function prepareStorageTest<
     // this is what the last undo item looked like before we undo
 
     const before = deepCloneWithoutOpId(
-      room.__internal.undoStack[room.__internal.undoStack.length - 1]
+      subject.room.__internal.undoStack[
+        subject.room.__internal.undoStack.length - 1
+      ]
     );
 
     // this will undo the whole stack
     for (let i = 0; i < states.length - 1; i++) {
-      room.history.undo();
+      subject.room.history.undo();
       expectBothClientStoragesToEqual(states[states.length - 2 - i]);
     }
 
     // this will redo the whole stack
     for (let i = 0; i < states.length - 1; i++) {
-      room.history.redo();
+      subject.room.history.redo();
       expectBothClientStoragesToEqual(states[i + 1]);
     }
 
     // this is what the last undo item looks like after redoing everything
     const after = deepCloneWithoutOpId(
-      room.__internal.undoStack[room.__internal.undoStack.length - 1]
+      subject.room.__internal.undoStack[
+        subject.room.__internal.undoStack.length - 1
+      ]
     );
 
     // It should be identical before/after
     expect(before).toEqual(after);
 
     for (let i = 0; i < states.length - 1; i++) {
-      room.history.undo();
+      subject.room.history.undo();
       expectBothClientStoragesToEqual(states[states.length - 2 - i]);
     }
   }
@@ -676,13 +682,16 @@ export async function prepareStorageTest<
   ): MockWebSocket {
     currentActor = actor;
     const ws = makeControllableWebSocket();
-    room.connect();
-    room.__internal.send.simulateAuthSuccess(makeRoomToken(actor, []), ws);
+    subject.room.connect();
+    subject.room.__internal.send.simulateAuthSuccess(
+      makeRoomToken(actor, []),
+      ws
+    );
     ws.server.accept();
 
     // Mock server messages for Presence.
     // Other user in the room (refRoom) recieves a "USER_JOINED" message.
-    refRoom.__internal.send.incomingMessage(
+    ref.room.__internal.send.incomingMessage(
       serverMessage({
         type: ServerMsgCode.USER_JOINED,
         actor,
@@ -693,7 +702,7 @@ export async function prepareStorageTest<
     );
 
     if (newItems) {
-      room.__internal.send.incomingMessage(
+      subject.room.__internal.send.incomingMessage(
         serverMessage({
           type: ServerMsgCode.INITIAL_STORAGE_STATE,
           items: newItems,
@@ -704,22 +713,22 @@ export async function prepareStorageTest<
   }
 
   return {
-    room,
-    refRoom,
+    room: subject.room,
+    refRoom: ref.room,
     operations,
-    storage,
-    refStorage,
+    storage: subject.storage,
+    refStorage: ref.storage,
     expectStorage,
     assertUndoRedo,
     applyRemoteOperations: (ops: Op[]) =>
-      room.__internal.send.incomingMessage(
+      subject.room.__internal.send.incomingMessage(
         serverMessage({
           type: ServerMsgCode.UPDATE_STORAGE,
           ops,
         })
       ),
     reconnect,
-    ws,
+    ws: subject.ws,
   };
 }
 
