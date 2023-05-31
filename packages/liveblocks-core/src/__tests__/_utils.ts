@@ -90,7 +90,7 @@ type Emitters = {
  */
 type ServerSocket = {
   /** Inspect the messages the server end has received as the result of the client side sending it messages. */
-  receivedMessages: string[];
+  receivedMessagesRaw: string[];
   /** Accept the socket from the server side. The client will receive an "open" event. */
   accept(): void;
   /** Close the socket from the server side. */
@@ -110,7 +110,7 @@ export class MockWebSocketServer {
   private newConnectionCallbacks = makeEventSource<Connection>();
   public current: MockWebSocket | undefined;
   public connections: Map<MockWebSocket, Emitters> = new Map();
-  public receivedMessages: string[] = [];
+  public receivedMessagesRaw: string[] = [];
 
   /**
    * The server socket of the last connection that has been established to the
@@ -121,6 +121,21 @@ export class MockWebSocketServer {
       throw new Error("No socket instantiated yet");
     }
     return this.current.server;
+  }
+
+  /**
+   * In 99.9% of cases, the server messages are going to be JSON-serialized
+   * values. If you need to look at the raw message (the 0.1% case), you can
+   * use this.receivedMessagesRaw for that.
+   */
+  public get receivedMessages(): Json[] {
+    return this.receivedMessagesRaw.map((raw) => {
+      try {
+        return JSON.parse(raw) as Json;
+      } catch {
+        return "<non-JSON value>";
+      }
+    });
   }
 
   getEmitters(socket: MockWebSocket): Emitters {
@@ -159,7 +174,7 @@ export class MockWebSocketServer {
     };
 
     const serverSocket: ServerSocket = {
-      receivedMessages: this.receivedMessages,
+      receivedMessagesRaw: this.receivedMessagesRaw,
       accept: () => serverEvents.onOpen.notify(new Event("open")),
       close: serverEvents.onClose.notify,
       send: serverEvents.onMessage.notify,
@@ -328,7 +343,7 @@ export class MockWebSocket {
    */
   public send(message: string) {
     if (this.readyState === this.OPEN) {
-      this.server.receivedMessages.push(message);
+      this.server.receivedMessagesRaw.push(message);
     }
   }
 
