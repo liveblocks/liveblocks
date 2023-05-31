@@ -421,8 +421,9 @@ function makeRoomConfig<TPresence extends JsonObject, TRoomEvent extends Json>(
 }
 
 /**
- * Sets up a Room instance that auto-connects to a server and that will receive
- * the given initial storage items from the server.
+ * Sets up a Room instance that auto-connects to a server. It will receive the
+ * given initial storage items from the server. It awaits until storage has
+ * loaded.
  */
 export async function prepareRoomWithStorage<
   TPresence extends JsonObject,
@@ -486,6 +487,14 @@ export async function prepareRoomWithStorage<
   };
 }
 
+/**
+ * Sets up a Room instance that auto-connects to a server. It will receive the
+ * given initial storage items from the server. It awaits until storage has
+ * loaded.
+ *
+ * The `expectStorage`, `expectMessagesSent`, and `applyRemoteOperations`
+ * helpers can be used to make assertions easier to express.
+ */
 export async function prepareIsolatedStorageTest<TStorage extends LsonObject>(
   items: IdTuple<SerializedCrdt>[],
   actor: number = 0,
@@ -502,13 +511,16 @@ export async function prepareIsolatedStorageTest<TStorage extends LsonObject>(
     root: storage.root,
     room,
     wss,
+
     expectStorage: (data: ToImmutable<TStorage>) =>
       expect(storage.root.toImmutable()).toEqual(data),
+
     expectMessagesSent: (
       messages: (ClientMsg<JsonObject, Json> | ClientMsg<JsonObject, Json>[])[]
     ) => {
       expect(wss.receivedMessages).toEqual(messages);
     },
+
     applyRemoteOperations: (ops: Op[]) =>
       wss.last.send(
         serverMessage({
