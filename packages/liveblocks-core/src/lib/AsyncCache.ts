@@ -10,6 +10,10 @@ type RevalidateOptions<T> = {
   optimisticData: T | ((data: T | undefined) => T);
 };
 
+type AsyncCacheOptions<T, E> = {
+  compare?: (a: AsyncState<T, E>, b: AsyncState<T, E>) => boolean;
+};
+
 type AsyncStateInitial = {
   readonly isLoading: false;
   readonly data?: never;
@@ -127,7 +131,7 @@ export type AsyncCache<T, E> = {
 
 const noop = () => {};
 
-export function isDifferentState(
+export function isStateEqual(
   a: AsyncState<unknown, unknown>,
   b: AsyncState<unknown, unknown>
 ): boolean {
@@ -136,15 +140,16 @@ export function isDifferentState(
     (a.data === undefined) !== (b.data === undefined) ||
     (a.error === undefined) !== (b.error === undefined)
   ) {
-    return true;
+    return false;
   } else {
-    return !shallow(a.data, b.data) || !shallow(a.error, b.error);
+    return shallow(a.data, b.data) && shallow(a.error, b.error);
   }
 }
 
 function createCacheItem<T, E>(
   key: string,
-  asyncFunction: AsyncFunction<T>
+  asyncFunction: AsyncFunction<T>,
+  options?: AsyncCacheOptions<T, E>
 ): AsyncCacheItem<T, E> {
   const context: AsyncCacheItemContext<T> = {
     isInvalid: true,
@@ -157,8 +162,10 @@ function createCacheItem<T, E>(
    * @internal
    */
   function notify() {
+    const compare = options?.compare ?? isStateEqual;
+
     // We only notify subscribers if the cache has changed.
-    if (isDifferentState(previousState, state)) {
+    if (!compare(previousState, state)) {
       previousState = state;
       eventSource.notify(state);
     }
@@ -319,7 +326,8 @@ function createCacheItem<T, E>(
 }
 
 export function createAsyncCache<T, E>(
-  asyncFunction: AsyncFunction<T, [string]>
+  asyncFunction: AsyncFunction<T, [string]>,
+  options?: AsyncCacheOptions<T, E>
 ): AsyncCache<T, E> {
   const cache = new Map<string, AsyncCacheItem<T, E>>();
 
@@ -330,7 +338,7 @@ export function createAsyncCache<T, E>(
       return cacheItem;
     }
 
-    cacheItem = createCacheItem(key, asyncFunction);
+    cacheItem = createCacheItem(key, asyncFunction, options);
     cache.set(key, cacheItem);
 
     return cacheItem;

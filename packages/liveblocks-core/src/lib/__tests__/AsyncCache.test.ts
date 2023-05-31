@@ -1,5 +1,5 @@
 import type { AsyncState } from "../AsyncCache";
-import { createAsyncCache, isDifferentState } from "../AsyncCache";
+import { createAsyncCache, isStateEqual } from "../AsyncCache";
 
 const REQUEST_DELAY = 20;
 const KEY_ABC = "abc";
@@ -1241,9 +1241,58 @@ describe("AsyncCache", () => {
 
     expect(callback).toHaveBeenCalled();
   });
+
+  test("providing a custom comparison function", async () => {
+    const mock = createAsyncMock({
+      error: (index) => index === 0,
+      value: (index) => createIndices(index),
+    });
+    const cache = createAsyncCache(mock, {
+      // ❓ Only data changes will trigger notifications
+      compare: (a, b) => {
+        return JSON.stringify(a.data) === JSON.stringify(b.data);
+      },
+    });
+    const callback = jest.fn();
+
+    const unsubscribe = cache.subscribe(KEY_ABC, callback);
+
+    // 🚀 Called and ❌ errored
+    await cache.get(KEY_ABC);
+
+    // 🚀 Called and ✅ fulfilled
+    await cache.get(KEY_ABC);
+
+    // 🗑️ Revalidated and 🚀 called
+    await cache.revalidate(KEY_ABC);
+
+    unsubscribe();
+
+    // 🚀 Called but 🔜 the subscriber won't be notified because it unsubscribed
+    await cache.get(KEY_ABC);
+
+    expect(callback).toHaveBeenCalledTimes(2);
+
+    // 1️⃣✅ Triggered when the second call fulfilled
+    expect(callback).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining<AsyncState<number[], Error>>({
+        isLoading: false,
+        data: [0, 1],
+      })
+    );
+    // 2️⃣✅ Triggered when the revalidation resolved
+    expect(callback).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining<AsyncState<number[], Error>>({
+        isLoading: false,
+        data: [0, 1, 2],
+      })
+    );
+  });
 });
 
-describe("isDifferentState", () => {
+describe("isStateEqual", () => {
   test("loading", () => {
     const a: AsyncState<undefined, Error> = {
       isLoading: false,
@@ -1255,10 +1304,10 @@ describe("isDifferentState", () => {
       isLoading: false,
     };
 
-    expect(isDifferentState(a, b)).toBe(true);
-    expect(isDifferentState(b, a)).toBe(true);
-    expect(isDifferentState(a, c)).toBe(false);
-    expect(isDifferentState(c, a)).toBe(false);
+    expect(isStateEqual(a, b)).toBe(false);
+    expect(isStateEqual(b, a)).toBe(false);
+    expect(isStateEqual(a, c)).toBe(true);
+    expect(isStateEqual(c, a)).toBe(true);
   });
 
   test("data or not", () => {
@@ -1270,8 +1319,8 @@ describe("isDifferentState", () => {
       data: { key: KEY_ABC },
     };
 
-    expect(isDifferentState(a, b)).toBe(true);
-    expect(isDifferentState(b, a)).toBe(true);
+    expect(isStateEqual(a, b)).toBe(false);
+    expect(isStateEqual(b, a)).toBe(false);
   });
 
   test("data", () => {
@@ -1286,8 +1335,8 @@ describe("isDifferentState", () => {
       error: undefined,
     };
 
-    expect(isDifferentState(a, b)).toBe(false);
-    expect(isDifferentState(b, a)).toBe(false);
+    expect(isStateEqual(a, b)).toBe(true);
+    expect(isStateEqual(b, a)).toBe(true);
   });
 
   test("error or not", () => {
@@ -1299,8 +1348,8 @@ describe("isDifferentState", () => {
       error: ERROR,
     };
 
-    expect(isDifferentState(a, b)).toBe(true);
-    expect(isDifferentState(b, a)).toBe(true);
+    expect(isStateEqual(a, b)).toBe(false);
+    expect(isStateEqual(b, a)).toBe(false);
   });
 
   test("error", () => {
@@ -1315,7 +1364,7 @@ describe("isDifferentState", () => {
       error: ERROR,
     };
 
-    expect(isDifferentState(a, b)).toBe(false);
-    expect(isDifferentState(b, a)).toBe(false);
+    expect(isStateEqual(a, b)).toBe(true);
+    expect(isStateEqual(b, a)).toBe(true);
   });
 });
