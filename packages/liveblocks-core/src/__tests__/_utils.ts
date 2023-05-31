@@ -477,13 +477,11 @@ export async function prepareRoomWithStorage<
     storage,
     room,
     wss,
-    /**
-     * @deprecated Use wss.
-     */
+    /** @deprecated Use wss. */
     get ws() {
       // XXX Not so sure that this API will be the best API. Better to expose
       // XXX the server itself, I think.
-      return wss.current!;
+      return wss.last;
     },
   };
 }
@@ -543,13 +541,6 @@ export async function prepareStorageTest<
   TUserMeta extends BaseUserMeta = never,
   TRoomEvent extends Json = never
 >(items: IdTuple<SerializedCrdt>[], actor: number = 0, scopes: string[] = []) {
-  if (0 < 1) {
-    // XXX Remove this blocker
-    throw new Error(
-      "🙏 Please rewrite this test that is based on prepareStorageTest() helper! 🙏"
-    );
-  }
-
   let currentActor = actor;
   const operations: Op[] = [];
 
@@ -565,47 +556,51 @@ export async function prepareStorageTest<
     TStorage,
     TUserMeta,
     TRoomEvent
-  >(
-    items,
-    currentActor,
-    (messages: ClientMsg<TPresence, TRoomEvent>[]) => {
-      for (const message of messages) {
-        if (message.type === ClientMsgCode.UPDATE_STORAGE) {
-          operations.push(...message.ops);
+  >(items, currentActor, undefined, undefined, scopes);
 
-          ref.room.__internal.send.incomingMessage(
-            serverMessage({
-              type: ServerMsgCode.UPDATE_STORAGE,
-              ops: message.ops,
-            })
-          );
-          subject.room.__internal.send.incomingMessage(
-            serverMessage({
-              type: ServerMsgCode.UPDATE_STORAGE,
-              ops: message.ops,
-            })
-          );
-        } else if (message.type === ClientMsgCode.UPDATE_PRESENCE) {
-          ref.room.__internal.send.incomingMessage(
-            serverMessage({
-              type: ServerMsgCode.UPDATE_PRESENCE,
-              data: message.data,
-              actor: currentActor,
-              targetActor: message.targetActor,
-            })
-          );
-        }
+  function parseAsClientMsgs(data: string) {
+    const json = JSON.parse(data) as
+      | ClientMsg<JsonObject, Json>
+      | ClientMsg<JsonObject, Json>[];
+    return Array.isArray(json) ? json : [json];
+  }
+
+  subject.wss.onReceive.subscribe((data) => {
+    const messages = parseAsClientMsgs(data);
+    for (const message of messages) {
+      if (message.type === ClientMsgCode.UPDATE_STORAGE) {
+        operations.push(...message.ops);
+
+        ref.wss.last.send(
+          serverMessage({
+            type: ServerMsgCode.UPDATE_STORAGE,
+            ops: message.ops,
+          })
+        );
+        subject.wss.last.send(
+          serverMessage({
+            type: ServerMsgCode.UPDATE_STORAGE,
+            ops: message.ops,
+          })
+        );
+      } else if (message.type === ClientMsgCode.UPDATE_PRESENCE) {
+        ref.wss.last.send(
+          serverMessage({
+            type: ServerMsgCode.UPDATE_PRESENCE,
+            data: message.data,
+            actor: currentActor,
+            targetActor: message.targetActor,
+          })
+        );
       }
-    },
-    undefined,
-    scopes
-  );
+    }
+  });
 
   // Mock Server messages for Presence
 
   // Machine is the first user connected to the room, it then receives a server message
   // saying that the refRoom user joined the room.
-  subject.room.__internal.send.incomingMessage(
+  subject.wss.last.send(
     serverMessage({
       type: ServerMsgCode.USER_JOINED,
       actor: -1,
@@ -617,7 +612,7 @@ export async function prepareStorageTest<
 
   // RefRoom is the second user connected to the room, it receives a server message
   // ROOM_STATE with the list of users in the room.
-  ref.room.__internal.send.incomingMessage(
+  ref.wss.last.send(
     serverMessage({
       type: ServerMsgCode.ROOM_STATE,
       users: { [currentActor]: { scopes: [] } },
@@ -728,7 +723,12 @@ export async function prepareStorageTest<
         })
       ),
     reconnect,
-    ws: subject.ws,
+
+    wss: subject.wss,
+    /** @deprecated Use wss. */
+    get ws() {
+      return subject.wss.last;
+    },
   };
 }
 

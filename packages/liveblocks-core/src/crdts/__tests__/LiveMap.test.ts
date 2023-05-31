@@ -93,7 +93,7 @@ describe("LiveMap", () => {
     });
   });
 
-  it.failing("create document with map in root", async () => {
+  it("create document with map in root", async () => {
     const { storage, expectStorage } = await prepareStorageTest<{
       map: LiveMap<string, LiveObject<{ a: number }>>;
     }>([
@@ -107,7 +107,7 @@ describe("LiveMap", () => {
     expectStorage({ map: new Map() });
   });
 
-  it.failing("set throws on read-only", async () => {
+  it("set throws on read-only", async () => {
     const { storage } = await prepareStorageTest<{
       map: LiveMap<string, LiveObject<{ a: number }>>;
     }>(
@@ -125,7 +125,7 @@ describe("LiveMap", () => {
     );
   });
 
-  it.failing("init map with items", async () => {
+  it("init map with items", async () => {
     const { storage, expectStorage } = await prepareStorageTest<{
       map: LiveMap<string, LiveObject<{ a: number }>>;
     }>([
@@ -156,7 +156,7 @@ describe("LiveMap", () => {
     });
   });
 
-  it.failing("map.set object", async () => {
+  it("map.set object", async () => {
     const { storage, expectStorage, assertUndoRedo } =
       await prepareStorageTest<{
         map: LiveMap<string, number>;
@@ -199,7 +199,7 @@ describe("LiveMap", () => {
   });
 
   describe("delete", () => {
-    it.failing("throws on read-only", async () => {
+    it("throws on read-only", async () => {
       const { storage } = await prepareStorageTest<{
         map: LiveMap<string, number>;
       }>(
@@ -217,7 +217,7 @@ describe("LiveMap", () => {
       );
     });
 
-    it.failing("should delete LiveObject", async () => {
+    it("should delete LiveObject", async () => {
       const { storage, expectStorage, assertUndoRedo } =
         await prepareStorageTest<{
           map: LiveMap<string, number>;
@@ -261,7 +261,7 @@ describe("LiveMap", () => {
       assertUndoRedo();
     });
 
-    it.failing("should remove nested data structure from cache", async () => {
+    it("should remove nested data structure from cache", async () => {
       const { room, storage, expectStorage, assertUndoRedo } =
         await prepareStorageTest<{
           map: LiveMap<string, LiveObject<{ a: number }>>;
@@ -292,7 +292,7 @@ describe("LiveMap", () => {
       assertUndoRedo();
     });
 
-    it.failing("should delete live list", async () => {
+    it("should delete live list", async () => {
       const { room, storage, expectStorage, assertUndoRedo } =
         await prepareStorageTest<{ map: LiveMap<string, LiveList<number>> }>(
           [
@@ -397,7 +397,7 @@ describe("LiveMap", () => {
     });
   });
 
-  it.failing("map.set live object", async () => {
+  it("map.set live object", async () => {
     const { storage, expectStorage, assertUndoRedo } =
       await prepareStorageTest<{
         map: LiveMap<string, LiveObject<{ a: number }>>;
@@ -424,7 +424,7 @@ describe("LiveMap", () => {
     assertUndoRedo();
   });
 
-  it.failing("map.set already attached live object should throw", async () => {
+  it("map.set already attached live object should throw", async () => {
     const { storage } = await prepareStorageTest<{
       map: LiveMap<string, LiveObject<{ a: number }>>;
     }>([
@@ -441,23 +441,20 @@ describe("LiveMap", () => {
     expect(() => map.set("second", object)).toThrow();
   });
 
-  it.failing(
-    "new Map with already attached live object should throw",
-    async () => {
-      const { storage } = await prepareStorageTest<{
-        child: LiveObject<{ a: number }> | null;
-        map: LiveMap<string, LiveObject<{ a: number }>> | null;
-      }>([createSerializedObject("0:0", { child: null, map: null })], 1);
+  it("new Map with already attached live object should throw", async () => {
+    const { storage } = await prepareStorageTest<{
+      child: LiveObject<{ a: number }> | null;
+      map: LiveMap<string, LiveObject<{ a: number }>> | null;
+    }>([createSerializedObject("0:0", { child: null, map: null })], 1);
 
-      const root = storage.root;
-      const child = new LiveObject({ a: 0 });
-      root.update({ child });
+    const root = storage.root;
+    const child = new LiveObject({ a: 0 });
+    root.update({ child });
 
-      expect(() => new LiveMap([["first", child]])).toThrow();
-    }
-  );
+    expect(() => new LiveMap([["first", child]])).toThrow();
+  });
 
-  it.failing("map.set live object on existing key", async () => {
+  it("map.set live object on existing key", async () => {
     const { storage, expectStorage, assertUndoRedo } =
       await prepareStorageTest<{
         map: LiveMap<string, LiveObject<{ a: number }>>;
@@ -486,7 +483,7 @@ describe("LiveMap", () => {
     assertUndoRedo();
   });
 
-  it.failing("attach map with items to root", async () => {
+  it("attach map with items to root", async () => {
     const { storage, expectStorage, assertUndoRedo } =
       await prepareStorageTest<{
         map?: LiveMap<string, { a: number }>;
@@ -503,7 +500,7 @@ describe("LiveMap", () => {
     assertUndoRedo();
   });
 
-  it.failing("attach map with live objects to root", async () => {
+  it("attach map with live objects to root", async () => {
     const { storage, expectStorage, assertUndoRedo } =
       await prepareStorageTest<{
         map?: LiveMap<string, LiveObject<{ a: number }>>;
@@ -520,7 +517,7 @@ describe("LiveMap", () => {
     assertUndoRedo();
   });
 
-  it.failing("attach map with objects to root", async () => {
+  it("attach map with objects to root", async () => {
     const { storage, expectStorage, assertUndoRedo } =
       await prepareStorageTest<{
         map?: LiveMap<string, { a: number }>;
@@ -537,7 +534,7 @@ describe("LiveMap", () => {
     assertUndoRedo();
   });
 
-  it.failing("add list in map", async () => {
+  it("add list in map", async () => {
     const { storage, expectStorage, assertUndoRedo } =
       await prepareStorageTest<{
         map: LiveMap<string, LiveList<string>>;
@@ -561,7 +558,7 @@ describe("LiveMap", () => {
     assertUndoRedo();
   });
 
-  it.failing("add map in map", async () => {
+  it("add map in map", async () => {
     const { storage, expectStorage, assertUndoRedo } =
       await prepareStorageTest<{
         map: LiveMap<string, LiveMap<string, string>>;
@@ -586,7 +583,7 @@ describe("LiveMap", () => {
   });
 
   describe("subscriptions", () => {
-    test.failing("simple action", async () => {
+    test("simple action", async () => {
       const { room, storage } = await prepareStorageTest<{
         map: LiveMap<string, string>;
       }>(
@@ -611,7 +608,7 @@ describe("LiveMap", () => {
       expect(callback).toHaveBeenCalledWith(liveMap);
     });
 
-    test.failing("deep subscribe", async () => {
+    test("deep subscribe", async () => {
       const { room, storage } = await prepareStorageTest<{
         map: LiveMap<string, LiveObject<{ a: number }>>;
       }>(

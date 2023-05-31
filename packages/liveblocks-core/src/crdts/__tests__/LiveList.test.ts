@@ -103,7 +103,7 @@ describe("LiveList", () => {
   });
 
   describe("push", () => {
-    it.failing("throws on read-only", async () => {
+    it("throws on read-only", async () => {
       const { storage } = await prepareStorageTest<{
         items: LiveList<string>;
       }>(
@@ -144,7 +144,7 @@ describe("LiveList", () => {
       });
     });
 
-    it.failing("push LiveObject on empty list", async () => {
+    it("push LiveObject on empty list", async () => {
       const { storage, expectStorage, assertUndoRedo } =
         await prepareStorageTest<{
           items: LiveList<LiveObject<{ a: number }>>;
@@ -172,7 +172,7 @@ describe("LiveList", () => {
       assertUndoRedo();
     });
 
-    it.failing("push number on empty list", async () => {
+    it("push number on empty list", async () => {
       const { storage, expectStorage, assertUndoRedo } =
         await prepareStorageTest<{
           items: LiveList<number>;
@@ -195,7 +195,7 @@ describe("LiveList", () => {
       assertUndoRedo();
     });
 
-    it.failing("push LiveMap on empty list", async () => {
+    it("push LiveMap on empty list", async () => {
       const { storage, expectStorage, assertUndoRedo } =
         await prepareStorageTest<{
           items: LiveList<LiveMap<string, number>>;
@@ -240,7 +240,7 @@ describe("LiveList", () => {
   });
 
   describe("insert", () => {
-    it.failing("throws on read-only", async () => {
+    it("throws on read-only", async () => {
       const { storage } = await prepareStorageTest<{
         items: LiveList<string>;
       }>(
@@ -283,7 +283,7 @@ describe("LiveList", () => {
       });
     });
 
-    it.failing("insert LiveObject at position 0", async () => {
+    it("insert LiveObject at position 0", async () => {
       const { storage, expectStorage, assertUndoRedo } =
         await prepareStorageTest<{
           items: LiveList<LiveObject<{ a: number }>>;
@@ -312,7 +312,7 @@ describe("LiveList", () => {
   });
 
   describe("delete", () => {
-    it.failing("throws on read-only", async () => {
+    it("throws on read-only", async () => {
       const { storage } = await prepareStorageTest<{
         items: LiveList<string>;
       }>(
@@ -354,7 +354,7 @@ describe("LiveList", () => {
       });
     });
 
-    it.failing("delete first item", async () => {
+    it("delete first item", async () => {
       const { storage, expectStorage, assertUndoRedo } =
         await prepareStorageTest<{
           items: LiveList<string>;
@@ -381,7 +381,7 @@ describe("LiveList", () => {
       assertUndoRedo();
     });
 
-    it.failing("delete should remove descendants", async () => {
+    it("delete should remove descendants", async () => {
       const { room, storage, expectStorage, assertUndoRedo } =
         await prepareStorageTest<{
           items: LiveList<LiveObject<{ child: LiveObject<{ a: number }> }>>;
@@ -410,7 +410,7 @@ describe("LiveList", () => {
   });
 
   describe("move", () => {
-    it.failing("throws on read-only", async () => {
+    it("throws on read-only", async () => {
       const { storage } = await prepareStorageTest<{
         items: LiveList<string>;
       }>(
@@ -453,7 +453,7 @@ describe("LiveList", () => {
       });
     });
 
-    it.failing("move after current position", async () => {
+    it("move after current position", async () => {
       const { storage, expectStorage, assertUndoRedo } =
         await prepareStorageTest<{
           items: LiveList<string>;
@@ -478,7 +478,7 @@ describe("LiveList", () => {
       assertUndoRedo();
     });
 
-    it.failing("move before current position", async () => {
+    it("move before current position", async () => {
       const { storage, expectStorage, assertUndoRedo } =
         await prepareStorageTest<{
           items: LiveList<string>;
@@ -507,7 +507,7 @@ describe("LiveList", () => {
       assertUndoRedo();
     });
 
-    it.failing("move at the end of the list", async () => {
+    it("move at the end of the list", async () => {
       const { storage, expectStorage, assertUndoRedo } =
         await prepareStorageTest<{
           items: LiveList<string>;
@@ -536,7 +536,7 @@ describe("LiveList", () => {
   });
 
   describe("clear", () => {
-    it.failing("throws on read-only", async () => {
+    it("throws on read-only", async () => {
       const { storage } = await prepareStorageTest<{ items: LiveList<string> }>(
         [
           createSerializedObject("0:0", {}),
@@ -583,7 +583,7 @@ describe("LiveList", () => {
       });
     });
 
-    it.failing("clear should delete all items", async () => {
+    it("clear should delete all items", async () => {
       const { storage, expectStorage, assertUndoRedo } =
         await prepareStorageTest<{
           items: LiveList<string>;
@@ -615,7 +615,7 @@ describe("LiveList", () => {
   });
 
   describe("batch", () => {
-    it.failing("batch multiple inserts", async () => {
+    it("batch multiple inserts", async () => {
       const { room, storage, expectStorage, assertUndoRedo } =
         await prepareStorageTest<{
           items: LiveList<string>;
@@ -646,7 +646,7 @@ describe("LiveList", () => {
   });
 
   describe("set", () => {
-    it.failing("throws on read-only", async () => {
+    it("throws on read-only", async () => {
       const { storage } = await prepareStorageTest<{ items: LiveList<string> }>(
         [
           createSerializedObject("0:0", {}),
@@ -680,7 +680,7 @@ describe("LiveList", () => {
       );
     });
 
-    it.failing("set register", async () => {
+    it("set register", async () => {
       const { storage, expectStorage, assertUndoRedo } =
         await prepareStorageTest<{
           items: LiveList<string>;
@@ -709,7 +709,7 @@ describe("LiveList", () => {
       assertUndoRedo();
     });
 
-    it.failing("set nested object", async () => {
+    it("set nested object", async () => {
       const { storage, expectStorage, assertUndoRedo } =
         await prepareStorageTest<{
           items: LiveList<LiveObject<{ a: number }>>;
@@ -1125,7 +1125,7 @@ describe("LiveList", () => {
   });
 
   describe("subscriptions", () => {
-    test.failing("batch multiple actions", async () => {
+    test("batch multiple actions", async () => {
       const { room, storage, expectStorage } = await prepareStorageTest<{
         items: LiveList<string>;
       }>(
@@ -1163,7 +1163,7 @@ describe("LiveList", () => {
       ]);
     });
 
-    test.failing("batch multiple inserts", async () => {
+    test("batch multiple inserts", async () => {
       const { room, storage, expectStorage } = await prepareStorageTest<{
         items: LiveList<string>;
       }>(

@@ -11,7 +11,7 @@ import type { LiveObject } from "../LiveObject";
 
 describe("Storage", () => {
   describe("subscribe generic", () => {
-    test.failing("simple action", async () => {
+    test("simple action", async () => {
       const { room, storage } = await prepareStorageTest<{ a: number }>(
         [createSerializedObject("0:0", { a: 0 })],
         1
@@ -37,7 +37,7 @@ describe("Storage", () => {
       ]);
     });
 
-    test.failing("remote action", async () => {
+    test("remote action", async () => {
       const { room, storage, applyRemoteOperations } =
         await prepareStorageTest<{ a: number }>(
           [createSerializedObject("0:0", { a: 0 })],
@@ -68,42 +68,39 @@ describe("Storage", () => {
       ]);
     });
 
-    test.failing(
-      "remote action with multipe updates on same object",
-      async () => {
-        const { room, storage, applyRemoteOperations } =
-          await prepareStorageTest<{ a: number }>(
-            [createSerializedObject("0:0", { a: 0 })],
-            1
-          );
+    test("remote action with multipe updates on same object", async () => {
+      const { room, storage, applyRemoteOperations } =
+        await prepareStorageTest<{ a: number }>(
+          [createSerializedObject("0:0", { a: 0 })],
+          1
+        );
 
-        const callback = jest.fn();
+      const callback = jest.fn();
 
-        const unsubscribe = room.subscribe(callback);
+      const unsubscribe = room.subscribe(callback);
 
-        applyRemoteOperations([
-          { type: OpCode.UPDATE_OBJECT, data: { a: 1 }, opId: "", id: "0:0" },
-          { type: OpCode.UPDATE_OBJECT, data: { b: 1 }, opId: "", id: "0:0" },
-        ]);
+      applyRemoteOperations([
+        { type: OpCode.UPDATE_OBJECT, data: { a: 1 }, opId: "", id: "0:0" },
+        { type: OpCode.UPDATE_OBJECT, data: { b: 1 }, opId: "", id: "0:0" },
+      ]);
 
-        unsubscribe();
+      unsubscribe();
 
-        applyRemoteOperations([
-          { type: OpCode.UPDATE_OBJECT, data: { a: 2 }, opId: "", id: "0:0" },
-        ]);
+      applyRemoteOperations([
+        { type: OpCode.UPDATE_OBJECT, data: { a: 2 }, opId: "", id: "0:0" },
+      ]);
 
-        expect(callback).toHaveBeenCalledTimes(1);
-        expect(callback).toHaveBeenCalledWith([
-          {
-            type: "LiveObject",
-            node: storage.root,
-            updates: { a: { type: "update" }, b: { type: "update" } },
-          },
-        ]);
-      }
-    );
+      expect(callback).toHaveBeenCalledTimes(1);
+      expect(callback).toHaveBeenCalledWith([
+        {
+          type: "LiveObject",
+          node: storage.root,
+          updates: { a: { type: "update" }, b: { type: "update" } },
+        },
+      ]);
+    });
 
-    test.failing("batch actions on a single LiveObject", async () => {
+    test("batch actions on a single LiveObject", async () => {
       const { room, storage, assertUndoRedo } = await prepareStorageTest<{
         a: number;
         b: number;
@@ -139,7 +136,7 @@ describe("Storage", () => {
       assertUndoRedo();
     });
 
-    test.failing("batch actions on multiple LiveObjects", async () => {
+    test("batch actions on multiple LiveObjects", async () => {
       const { room, storage } = await prepareStorageTest<{
         a: number;
         child: LiveObject<{ b: number }>;
@@ -177,7 +174,7 @@ describe("Storage", () => {
       ]);
     });
 
-    test.failing("batch actions on multiple Live types", async () => {
+    test("batch actions on multiple Live types", async () => {
       const { room, storage } = await prepareStorageTest<{
         a: number;
         childObj: LiveObject<{ b: number }>;
@@ -233,7 +230,7 @@ describe("Storage", () => {
   });
 
   describe("batching", () => {
-    it.failing("batching and undo", async () => {
+    it("batching and undo", async () => {
       const { room, storage, expectStorage } = await prepareStorageTest<{
         items: LiveList<string>;
       }>(
@@ -269,7 +266,7 @@ describe("Storage", () => {
       });
     });
 
-    it.failing("nesting batches makes inner batches a no-op", async () => {
+    it("nesting batches makes inner batches a no-op", async () => {
       const { room, storage, expectStorage } = await prepareStorageTest<{
         items: LiveList<string>;
       }>(
@@ -319,7 +316,7 @@ describe("Storage", () => {
       });
     });
 
-    it.failing("batch callbacks can return a value", async () => {
+    it("batch callbacks can return a value", async () => {
       const { room, storage } = await prepareStorageTest<{
         items: LiveList<string>;
       }>(
@@ -343,7 +340,7 @@ describe("Storage", () => {
       expect(numInserted).toEqual(3);
     });
 
-    it.failing("calling undo during a batch should throw", async () => {
+    it("calling undo during a batch should throw", async () => {
       const { room } = await prepareStorageTest<{ a: number }>(
         [createSerializedObject("0:0", { a: 0 })],
         1
@@ -354,7 +351,7 @@ describe("Storage", () => {
       });
     });
 
-    it.failing("calling redo during a batch should throw", async () => {
+    it("calling redo during a batch should throw", async () => {
       const { room } = await prepareStorageTest<{ a: number }>(
         [createSerializedObject("0:0", { a: 0 })],
         1
@@ -367,7 +364,7 @@ describe("Storage", () => {
   });
 
   describe("undo / redo", () => {
-    it.failing("list.push", async () => {
+    it("list.push", async () => {
       const { storage, expectStorage, assertUndoRedo } =
         await prepareStorageTest<{
           items: LiveList<string>;
@@ -396,7 +393,7 @@ describe("Storage", () => {
       assertUndoRedo();
     });
 
-    it.failing("max undo-redo stack", async () => {
+    it("max undo-redo stack", async () => {
       const { room, storage, expectStorage } = await prepareStorageTest<{
         a: number;
       }>([createSerializedObject("0:0", { a: 0 })], 1);
@@ -417,7 +414,7 @@ describe("Storage", () => {
       });
     });
 
-    it.failing("storage operation should clear redo stack", async () => {
+    it("storage operation should clear redo stack", async () => {
       const { room, storage, expectStorage } = await prepareStorageTest<{
         items: LiveList<string>;
       }>(
