@@ -1,32 +1,20 @@
 import { createClient, type Room } from "@liveblocks/client";
-let PUBLIC_KEY = "pk_YOUR_PUBLIC_KEY";
 
-const client = createClient({
-  publicApiKey: PUBLIC_KEY,
+export const PUBLIC_API_KEY = "your public key";
+
+export const client = createClient({
+  publicApiKey: PUBLIC_API_KEY,
 });
-
-const initialPresence = {
-  cursor: null,
-};
-let roomId = "solidjs-live-cursors";
-
-// const room: Room<{},{},{},{}> = client.enter(roomId, { initialPresence });
-// const room = client.enter<{},{},{},{}>(roomId, { initialPresence });
-// const room =client.enter(roomId, { initialPresence })
-const room =client.enter<Presence, Storage, UserMeta, RoomEvent>(roomId, { initialPresence })
 
 // Presence represents the properties that exist on every user in the Room
 // and that will automatically be kept in sync. Accessible through the
 // `user.presence` property. Must be JSON-serializable.
 type Presence = {
   cursor: {
-     x: number, 
-     y: number, 
-     color: string
-    } | null
+    x: number;
+    y: number;
+  } | null;
 };
-
-
 
 // Optionally, Storage represents the shared document that persists in the
 // Room, even after all users leave. Fields under Storage typically are
@@ -52,4 +40,4 @@ type RoomEvent = {
   // ...
 };
 
-export type TypedRoom =  Room<Presence, Storage, UserMeta, RoomEvent>;
+export type TypedRoom = Room<Presence, Storage, UserMeta, RoomEvent>;
