@@ -5,7 +5,7 @@ import {
   prepareDisconnectedStorageUpdateTest,
   prepareIsolatedStorageTest,
   prepareStorageTest,
-  reconnect,
+  replaceRemoteStorageAndReconnect,
 } from "../../__tests__/_utils";
 import { waitUntilStorageUpdate } from "../../__tests__/_waitUtils";
 import { RoomScope } from "../../protocol/AuthToken";
@@ -937,7 +937,7 @@ describe("LiveObject", () => {
         ],
       ];
 
-      reconnect(wss, newInitStorage);
+      replaceRemoteStorageAndReconnect(wss, newInitStorage);
 
       await waitUntilStorageUpdate(room);
       expectStorage({
@@ -999,7 +999,7 @@ describe("LiveObject", () => {
         ],
       ];
 
-      reconnect(wss, newInitStorage);
+      replaceRemoteStorageAndReconnect(wss, newInitStorage);
 
       await waitUntilStorageUpdate(room);
       expectStorage({

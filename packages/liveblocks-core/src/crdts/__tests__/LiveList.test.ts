@@ -14,7 +14,7 @@ import {
   prepareIsolatedStorageTest,
   prepareStorageTest,
   prepareStorageUpdateTest,
-  reconnect,
+  replaceRemoteStorageAndReconnect,
   SECOND_POSITION,
   THIRD_POSITION,
 } from "../../__tests__/_utils";
@@ -867,7 +867,7 @@ describe("LiveList", () => {
         items: ["0"],
       });
 
-      reconnect(wss, [
+      replaceRemoteStorageAndReconnect(wss, [
         createSerializedObject("0:0", {}),
         createSerializedList("0:1", "0:0", "items"),
         createSerializedRegister("2:0", "0:1", FIRST_POSITION, "1"),
@@ -1241,7 +1241,7 @@ describe("LiveList", () => {
         ],
       ];
 
-      reconnect(wss, newInitStorage);
+      replaceRemoteStorageAndReconnect(wss, newInitStorage);
 
       await waitUntilStorageUpdate(room);
       expectStorage({
@@ -1324,7 +1324,7 @@ describe("LiveList", () => {
         ],
       ];
 
-      reconnect(wss, newInitStorage);
+      replaceRemoteStorageAndReconnect(wss, newInitStorage);
 
       await waitUntilStorageUpdate(room);
       expectStorage({
@@ -1386,7 +1386,7 @@ describe("LiveList", () => {
         ],
       ];
 
-      reconnect(wss, newInitStorage);
+      replaceRemoteStorageAndReconnect(wss, newInitStorage);
 
       await waitUntilStorageUpdate(room);
       expectStorage({

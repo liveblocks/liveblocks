@@ -827,7 +827,7 @@ export async function prepareDisconnectedStorageUpdateTest<
   };
 }
 
-export function reconnect(
+export function replaceRemoteStorageAndReconnect(
   wss: MockWebSocketServer,
   nextStorageItems: IdTuple<SerializedCrdt>[]
 ) {
