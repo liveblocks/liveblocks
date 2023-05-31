@@ -1,7 +1,6 @@
 import { createClient, type Room } from "@liveblocks/client";
 
-export const PUBLIC_API_KEY =
-  "pk_dev_cGhHV46MCR_vLLDFpeT37x4pLmR2WvS_MGqTO1rhUdimBrKHx9AHjasXV6m7Aoy7";
+export const PUBLIC_API_KEY = "your public key";
 
 if (!/^pk_(live|test)/.test(PUBLIC_API_KEY)) {
   console.warn(
