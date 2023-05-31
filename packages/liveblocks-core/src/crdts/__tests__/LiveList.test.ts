@@ -913,16 +913,10 @@ describe("LiveList", () => {
       const items = root.get("items");
 
       items.push("0");
-
-      expectStorage({
-        items: ["0"],
-      });
+      expectStorage({ items: ["0"] });
 
       room.history.undo();
-
-      expectStorage({
-        items: [],
-      });
+      expectStorage({ items: [] });
 
       applyRemoteOperations([
         {
@@ -933,13 +927,13 @@ describe("LiveList", () => {
           data: "1",
         },
       ]);
+      expectStorage({ items: [] });
 
       room.history.redo();
+      expectStorage({ items: ["0"] });
 
       await waitUntilStorageUpdate(room);
-      expectStorage({
-        items: ["1", "0"],
-      });
+      expectStorage({ items: ["1", "0"] });
     });
 
     it.only("list conflicts - move", async () => {
