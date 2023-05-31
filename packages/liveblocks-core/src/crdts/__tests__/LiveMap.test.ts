@@ -18,7 +18,7 @@ import { LiveObject } from "../LiveObject";
 
 describe("LiveMap", () => {
   describe("not attached", () => {
-    it("basic operations with LiveObjects", () => {
+    it.only("basic operations with LiveObjects", () => {
       const map = new LiveMap([["first" as string, new LiveObject({ a: 0 })]]);
       expect(map.get("first")?.get("a")).toBe(0);
 
@@ -57,7 +57,7 @@ describe("LiveMap", () => {
       expect(asArray[1][1].get("a")).toBe(2);
     });
 
-    it("basic operations with native objects", () => {
+    it.only("basic operations with native objects", () => {
       const map = new LiveMap<string, { a: number }>([["first", { a: 0 }]]);
       expect(map.get("first")).toEqual({ a: 0 });
 

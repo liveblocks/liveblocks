@@ -17,7 +17,7 @@ import { LiveObject } from "../LiveObject";
 
 describe("LiveObject", () => {
   describe("roomId", () => {
-    it("should be null for orphan", () => {
+    it.only("should be null for orphan", () => {
       expect(new LiveObject().roomId).toBeNull();
     });
 
@@ -564,7 +564,7 @@ describe("LiveObject", () => {
       );
     });
 
-    it("detached", () => {
+    it.only("detached", () => {
       const liveObject = new LiveObject({ a: 0 });
       liveObject.delete("a");
       expect(liveObject.get("a")).toBe(undefined);

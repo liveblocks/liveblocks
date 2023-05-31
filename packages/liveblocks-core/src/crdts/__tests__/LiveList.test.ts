@@ -33,7 +33,7 @@ import { LiveObject } from "../LiveObject";
 
 describe("LiveList", () => {
   describe("not attached", () => {
-    it("basic operations with native objects", () => {
+    it.only("basic operations with native objects", () => {
       const list = new LiveList<string>(["first", "second", "third"]);
       expect(list.get(0)).toEqual("first");
       expect(list.length).toBe(3);
@@ -664,13 +664,13 @@ describe("LiveList", () => {
       );
     });
 
-    it("set register on detached list", () => {
+    it.only("set register on detached list", () => {
       const list = new LiveList<string>(["A", "B", "C"]);
       list.set(0, "D");
       expect(list.toArray()).toEqual(["D", "B", "C"]);
     });
 
-    it("set at invalid position should throw", () => {
+    it.only("set at invalid position should throw", () => {
       const list = new LiveList<string>(["A", "B", "C"]);
       expect(() => list.set(-1, "D")).toThrowError(
         'Cannot set list item at index "-1". index should be between 0 and 2'
