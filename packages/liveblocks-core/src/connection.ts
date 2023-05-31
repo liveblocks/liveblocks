@@ -476,7 +476,8 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
               // - Event queue now looks like: [<close event>, <our resolved promise>]
               // - Close event handler fires, but we already resolved promise! 😣
               //
-              // This is what I'm calling a "premature" event here, we'll deal with it in part 3.
+              // This is what's called a "premature" event here, we'll deal
+              // with it in part 3.
               //
               socket.addEventListener("error", onSocketError);
               socket.addEventListener("close", onSocketClose);
