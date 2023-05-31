@@ -17,11 +17,11 @@ import { LiveObject } from "../LiveObject";
 
 describe("LiveObject", () => {
   describe("roomId", () => {
-    it.only("should be null for orphan", () => {
+    it("should be null for orphan", () => {
       expect(new LiveObject().roomId).toBeNull();
     });
 
-    it.only("should be the associated room id if attached", async () => {
+    it("should be the associated room id if attached", async () => {
       const { root } = await prepareIsolatedStorageTest(
         [createSerializedObject("root", {})],
         1
@@ -30,7 +30,7 @@ describe("LiveObject", () => {
       expect(root.roomId).toBe("room-id");
     });
 
-    it.only("should be null after being detached", async () => {
+    it("should be null after being detached", async () => {
       const { root } = await prepareIsolatedStorageTest<{
         child: LiveObject<{ a: number }>;
       }>(
@@ -409,7 +409,7 @@ describe("LiveObject", () => {
   });
 
   describe("acknowledge mechanism", () => {
-    it.only("should not ignore history updates if the current op has not been acknowledged", async () => {
+    it("should not ignore history updates if the current op has not been acknowledged", async () => {
       const { room, root, expectUpdates } =
         await prepareDisconnectedStorageUpdateTest<{
           items: LiveObject<{ b?: string; a?: string }>;
@@ -454,7 +454,7 @@ describe("LiveObject", () => {
     });
 
     describe("should ignore incoming updates if the current op has not been acknowledged", () => {
-      test.only("when value is not a crdt", async () => {
+      test("when value is not a crdt", async () => {
         const { root, expectStorage, applyRemoteOperations } =
           await prepareIsolatedStorageTest<{ a: number }>(
             [createSerializedObject("0:0", { a: 0 })],
@@ -479,7 +479,7 @@ describe("LiveObject", () => {
         expectStorage({ a: 1 });
       });
 
-      it.only("when value is a LiveObject", async () => {
+      it("when value is a LiveObject", async () => {
         const { root, expectStorage, applyRemoteOperations } =
           await prepareIsolatedStorageTest<{
             a: LiveObject<{ subA: number }>;
@@ -511,7 +511,7 @@ describe("LiveObject", () => {
         expectStorage({ a: { subA: 1 } });
       });
 
-      it.only("when value is a LiveList with LiveObjects", async () => {
+      it("when value is a LiveList with LiveObjects", async () => {
         const { root, expectStorage, applyRemoteOperations } =
           await prepareIsolatedStorageTest<{
             a: LiveList<LiveObject<{ b: number }>>;
@@ -564,7 +564,7 @@ describe("LiveObject", () => {
       );
     });
 
-    it.only("detached", () => {
+    it("detached", () => {
       const liveObject = new LiveObject({ a: 0 });
       liveObject.delete("a");
       expect(liveObject.get("a")).toBe(undefined);
@@ -600,7 +600,7 @@ describe("LiveObject", () => {
       assertUndoRedo();
     });
 
-    it.only("should not notify if property does not exist", async () => {
+    it("should not notify if property does not exist", async () => {
       const { room, root } = await prepareIsolatedStorageTest<{
         a?: number;
       }>([createSerializedObject("0:0", {})]);
@@ -613,7 +613,7 @@ describe("LiveObject", () => {
       expect(callback).toHaveBeenCalledTimes(0);
     });
 
-    it.only("should notify if property has been deleted", async () => {
+    it("should notify if property has been deleted", async () => {
       const { room, root } = await prepareIsolatedStorageTest<{
         a?: number;
       }>([createSerializedObject("0:0", { a: 1 })]);
@@ -628,7 +628,7 @@ describe("LiveObject", () => {
   });
 
   describe("applyDeleteObjectKey", () => {
-    it.only("should not notify if property does not exist", async () => {
+    it("should not notify if property does not exist", async () => {
       const { room, root, applyRemoteOperations } =
         await prepareIsolatedStorageTest<{ a?: number }>([
           createSerializedObject("0:0", {}),
@@ -644,7 +644,7 @@ describe("LiveObject", () => {
       expect(callback).toHaveBeenCalledTimes(0);
     });
 
-    it.only("should notify if property has been deleted", async () => {
+    it("should notify if property has been deleted", async () => {
       const { room, root, applyRemoteOperations } =
         await prepareIsolatedStorageTest<{ a?: number }>([
           createSerializedObject("0:0", { a: 1 }),
@@ -904,7 +904,7 @@ describe("LiveObject", () => {
   });
 
   describe("reconnect with remote changes and subscribe", () => {
-    test.only("LiveObject updated", async () => {
+    test("LiveObject updated", async () => {
       const { expectStorage, room, root, wss } =
         await prepareIsolatedStorageTest<{
           obj: LiveObject<{ a: number }>;
@@ -957,7 +957,7 @@ describe("LiveObject", () => {
       expect(liveObjectCallback).toHaveBeenCalledTimes(1);
     });
 
-    test.only("LiveObject updated nested", async () => {
+    test("LiveObject updated nested", async () => {
       const { expectStorage, room, root, wss } =
         await prepareIsolatedStorageTest<{
           obj: LiveObject<{ a: number; subObj?: LiveObject<{ b: number }> }>;
@@ -1023,7 +1023,7 @@ describe("LiveObject", () => {
   });
 
   describe("undo apply update", () => {
-    test.only("subscription should gives the right update", async () => {
+    test("subscription should gives the right update", async () => {
       const { room, root, expectStorage } = await prepareIsolatedStorageTest<{
         a: number;
       }>([createSerializedObject("0:0", { a: 0 })], 1);
@@ -1045,7 +1045,7 @@ describe("LiveObject", () => {
   });
 
   describe("internal methods", () => {
-    test.only("_detachChild", async () => {
+    test("_detachChild", async () => {
       const { root } = await prepareIsolatedStorageTest<{
         obj: LiveObject<{
           a: LiveObject<{ subA: number }>;

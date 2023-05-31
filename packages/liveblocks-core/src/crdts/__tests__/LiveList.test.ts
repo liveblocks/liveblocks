@@ -33,7 +33,7 @@ import { LiveObject } from "../LiveObject";
 
 describe("LiveList", () => {
   describe("not attached", () => {
-    it.only("basic operations with native objects", () => {
+    it("basic operations with native objects", () => {
       const list = new LiveList<string>(["first", "second", "third"]);
       expect(list.get(0)).toEqual("first");
       expect(list.length).toBe(3);
@@ -72,7 +72,7 @@ describe("LiveList", () => {
   });
 
   describe("deserialization", () => {
-    it.only("create document with list in root", async () => {
+    it("create document with list in root", async () => {
       const { expectStorage } = await prepareIsolatedStorageTest<{
         items: LiveList<never>;
       }>([
@@ -85,7 +85,7 @@ describe("LiveList", () => {
       });
     });
 
-    it.only("init list with items", async () => {
+    it("init list with items", async () => {
       const { expectStorage } = await prepareIsolatedStorageTest<{
         items: LiveList<LiveObject<{ a: number }>>;
       }>([
@@ -219,7 +219,7 @@ describe("LiveList", () => {
       assertUndoRedo();
     });
 
-    it.only("push already attached LiveObject should throw", async () => {
+    it("push already attached LiveObject should throw", async () => {
       const { root } = await prepareIsolatedStorageTest<{
         items: LiveList<LiveObject<{ a: number }>>;
       }>(
@@ -664,13 +664,13 @@ describe("LiveList", () => {
       );
     });
 
-    it.only("set register on detached list", () => {
+    it("set register on detached list", () => {
       const list = new LiveList<string>(["A", "B", "C"]);
       list.set(0, "D");
       expect(list.toArray()).toEqual(["D", "B", "C"]);
     });
 
-    it.only("set at invalid position should throw", () => {
+    it("set at invalid position should throw", () => {
       const list = new LiveList<string>(["A", "B", "C"]);
       expect(() => list.set(-1, "D")).toThrowError(
         'Cannot set list item at index "-1". index should be between 0 and 2'
@@ -735,7 +735,7 @@ describe("LiveList", () => {
   });
 
   describe("conflict", () => {
-    it.only("list conflicts", async () => {
+    it("list conflicts", async () => {
       const { root, expectStorage, applyRemoteOperations } =
         await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
           [
@@ -778,7 +778,7 @@ describe("LiveList", () => {
       });
     });
 
-    it.only("list conflicts 2", async () => {
+    it("list conflicts 2", async () => {
       const { root, applyRemoteOperations, expectStorage } =
         await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
           [
@@ -848,7 +848,7 @@ describe("LiveList", () => {
       });
     });
 
-    it.only("list conflicts with offline", async () => {
+    it("list conflicts with offline", async () => {
       const { room, root, expectStorage, applyRemoteOperations, wss } =
         await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
           [
@@ -892,7 +892,7 @@ describe("LiveList", () => {
       });
     });
 
-    it.only("list conflicts with undo redo and remote change", async () => {
+    it("list conflicts with undo redo and remote change", async () => {
       const { root, expectStorage, applyRemoteOperations, room, wss } =
         await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
           [
@@ -936,7 +936,7 @@ describe("LiveList", () => {
       expectStorage({ items: ["1", "0"] });
     });
 
-    it.only("list conflicts - move", async () => {
+    it("list conflicts - move", async () => {
       const { root, expectStorage, applyRemoteOperations } =
         await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
           [
@@ -990,7 +990,7 @@ describe("LiveList", () => {
       });
     });
 
-    it.only("list conflicts - ack has different position that local item", async () => {
+    it("list conflicts - ack has different position that local item", async () => {
       const { root, expectStorage, applyRemoteOperations } =
         await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
           [
@@ -1067,7 +1067,7 @@ describe("LiveList", () => {
       });
     });
 
-    it.only("list conflicts - ack has different position that local and ack position is used", async () => {
+    it("list conflicts - ack has different position that local and ack position is used", async () => {
       const { root, expectStorage, applyRemoteOperations } =
         await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
           [
@@ -1193,7 +1193,7 @@ describe("LiveList", () => {
   });
 
   describe("reconnect with remote changes and subscribe", () => {
-    test.only("register added to list", async () => {
+    test("register added to list", async () => {
       const { expectStorage, room, root, wss } =
         await prepareIsolatedStorageTest<{
           items: LiveList<string>;
@@ -1275,7 +1275,7 @@ describe("LiveList", () => {
       expect(listCallback).toHaveBeenCalledTimes(2);
     });
 
-    test.only("register moved in list", async () => {
+    test("register moved in list", async () => {
       const { expectStorage, room, root, wss } =
         await prepareIsolatedStorageTest<{
           items: LiveList<string>;
@@ -1346,7 +1346,7 @@ describe("LiveList", () => {
       expect(listCallback).toHaveBeenCalledTimes(1);
     });
 
-    test.only("register deleted from list", async () => {
+    test("register deleted from list", async () => {
       const { expectStorage, room, root, wss } =
         await prepareIsolatedStorageTest<{
           items: LiveList<string>;
@@ -1410,7 +1410,7 @@ describe("LiveList", () => {
   });
 
   describe("internal methods", () => {
-    test.only("_detachChild", async () => {
+    test("_detachChild", async () => {
       const { root } = await prepareIsolatedStorageTest<{
         items: LiveList<LiveObject<{ a: number }>>;
       }>(
@@ -1448,7 +1448,7 @@ describe("LiveList", () => {
     });
 
     describe("apply CreateRegister", () => {
-      it.only('with intent "set" should replace existing item', async () => {
+      it('with intent "set" should replace existing item', async () => {
         const { expectStorage, applyRemoteOperations } =
           await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
             [
@@ -1479,7 +1479,7 @@ describe("LiveList", () => {
         });
       });
 
-      it.only('with intent "set" should notify with a "set" update', async () => {
+      it('with intent "set" should notify with a "set" update', async () => {
         const { room, root, applyRemoteOperations } =
           await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
             [
@@ -1515,7 +1515,7 @@ describe("LiveList", () => {
         ]);
       });
 
-      it.only('with intent "set" should insert item if conflict with a delete operation', async () => {
+      it('with intent "set" should insert item if conflict with a delete operation', async () => {
         const { root, expectStorage, applyRemoteOperations } =
           await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
             [
@@ -1554,7 +1554,7 @@ describe("LiveList", () => {
         });
       });
 
-      it.only('with intent "set" should notify with a "insert" update if no item exists at this position', async () => {
+      it('with intent "set" should notify with a "insert" update if no item exists at this position', async () => {
         const { room, root, applyRemoteOperations } =
           await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
             [
@@ -1591,7 +1591,7 @@ describe("LiveList", () => {
         ]);
       });
 
-      it.only("on existing position should give the right update", async () => {
+      it("on existing position should give the right update", async () => {
         const { room, root, expectStorage, applyRemoteOperations } =
           await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
             [

@@ -242,7 +242,7 @@ describe("room / auth", () => {
 });
 
 describe("room", () => {
-  test.only("connect should transition to authenticating if closed and execute authenticate", () => {
+  test("connect should transition to authenticating if closed and execute authenticate", () => {
     const { room, delegates } = createTestableRoom({});
     expect(delegates.authenticate).not.toHaveBeenCalled();
     room.connect();
@@ -251,7 +251,7 @@ describe("room", () => {
     expect(delegates.createSocket).not.toHaveBeenCalled();
   });
 
-  test.only("connect should stay authenticating if connect is called multiple times and call authenticate only once", () => {
+  test("connect should stay authenticating if connect is called multiple times and call authenticate only once", () => {
     const { room, delegates } = createTestableRoom({});
     room.connect();
     expect(room.getConnectionState()).toEqual("authenticating");
@@ -263,7 +263,7 @@ describe("room", () => {
     expect(delegates.createSocket).not.toHaveBeenCalled();
   });
 
-  test.only("authentication success should transition to connecting", async () => {
+  test("authentication success should transition to connecting", async () => {
     const { room } = createTestableRoom({});
     expect(room.getConnectionState()).toBe("closed");
 
@@ -275,7 +275,7 @@ describe("room", () => {
     expect(room.getConnectionState()).toBe("open");
   });
 
-  test.only("initial presence should be sent once the connection is open", async () => {
+  test("initial presence should be sent once the connection is open", async () => {
     const { room, wss } = createTestableRoom({ x: 0 });
 
     room.connect();
@@ -294,7 +294,7 @@ describe("room", () => {
     ]);
   });
 
-  test.only("if presence has been updated before the connection, it should be sent when the connection is ready", async () => {
+  test("if presence has been updated before the connection, it should be sent when the connection is ready", async () => {
     const { room, wss } = createTestableRoom({});
     room.updatePresence({ x: 0 });
     room.connect();
@@ -311,7 +311,7 @@ describe("room", () => {
     ]);
   });
 
-  test.only("if no presence has been set before the connection is open, an empty presence should be sent", async () => {
+  test("if no presence has been set before the connection is open, an empty presence should be sent", async () => {
     const { room, wss } = createTestableRoom({} as never);
     room.connect();
 
@@ -321,7 +321,7 @@ describe("room", () => {
     ]);
   });
 
-  test.only("initial presence followed by updatePresence should delay sending the second presence event", async () => {
+  test("initial presence followed by updatePresence should delay sending the second presence event", async () => {
     const { room, wss } = createTestableRoom({ x: 0 });
     room.connect();
 
@@ -359,7 +359,7 @@ describe("room", () => {
     }
   });
 
-  test.only("should replace current presence and set flushData presence when connection is closed", () => {
+  test("should replace current presence and set flushData presence when connection is closed", () => {
     const { room } = createTestableRoom({});
 
     room.updatePresence({ x: 0 });
@@ -368,7 +368,7 @@ describe("room", () => {
     expect(room.__internal.buffer.me?.data).toStrictEqual({ x: 0 });
   });
 
-  test.only("should merge current presence and set flushData presence when connection is closed", () => {
+  test("should merge current presence and set flushData presence when connection is closed", () => {
     const { room } = createTestableRoom({});
 
     room.updatePresence({ x: 0 });
@@ -381,7 +381,7 @@ describe("room", () => {
     expect(room.__internal.buffer.me?.data).toStrictEqual({ x: 0, y: 0 });
   });
 
-  test.only("others should be iterable", async () => {
+  test("others should be iterable", async () => {
     const { room, wss } = createTestableRoom({});
     room.connect();
 
@@ -412,7 +412,7 @@ describe("room", () => {
     ]);
   });
 
-  test.only("others should be read-only when associated scopes are received", async () => {
+  test("others should be read-only when associated scopes are received", async () => {
     const { room, wss } = createTestableRoom({});
     room.connect();
 
@@ -443,7 +443,7 @@ describe("room", () => {
     ]);
   });
 
-  test.only("should clear users when socket close", async () => {
+  test("should clear users when socket close", async () => {
     const { room, wss } = createTestableRoom({});
     room.connect();
 
@@ -482,7 +482,7 @@ describe("room", () => {
     expect(room.getOthers()).toEqual([]);
   });
 
-  test.only("should clear users not present in server message ROOM_STATE", async () => {
+  test("should clear users not present in server message ROOM_STATE", async () => {
     /*
     Scenario:
     - Client A (room) and Client B (refRoom) are connected to the room.
@@ -557,7 +557,7 @@ describe("room", () => {
   });
 
   describe("broadcast", () => {
-    test.only("should send event to other users", async () => {
+    test("should send event to other users", async () => {
       const { room, wss } = createTestableRoom({});
       room.connect();
 
@@ -596,7 +596,7 @@ describe("room", () => {
       ]);
     });
 
-    test.only("should not send event to other users if not connected", async () => {
+    test("should not send event to other users if not connected", async () => {
       const { room, wss } = createTestableRoom({});
 
       room.broadcastEvent({ type: "EVENT" });
@@ -610,7 +610,7 @@ describe("room", () => {
       ]);
     });
 
-    test.only("should queue event if socket is not ready and shouldQueueEventsIfNotReady is true", async () => {
+    test("should queue event if socket is not ready and shouldQueueEventsIfNotReady is true", async () => {
       const { room, wss } = createTestableRoom({});
 
       room.broadcastEvent(
@@ -631,7 +631,7 @@ describe("room", () => {
     });
   });
 
-  test.only("storage should be initialized properly", async () => {
+  test("storage should be initialized properly", async () => {
     const { room, wss } = createTestableRoom({});
 
     wss.onConnection((conn) => {
@@ -648,7 +648,7 @@ describe("room", () => {
     expect(storage.root.toObject()).toEqual({ x: 0 });
   });
 
-  test.only("undo redo with presence", async () => {
+  test("undo redo with presence", async () => {
     const { room } = createTestableRoom({ x: -1 });
     room.connect();
 
@@ -670,7 +670,7 @@ describe("room", () => {
     expect(room.getPresence()).toEqual({ x: 1 });
   });
 
-  test.only("undo redo batch", async () => {
+  test("undo redo batch", async () => {
     const { room, root, expectUpdates } =
       await prepareDisconnectedStorageUpdateTest<{
         items: LiveList<LiveObject<Record<string, number>>>;
@@ -700,7 +700,7 @@ describe("room", () => {
     ]);
   });
 
-  test.only("if presence is not added to history during a batch, it should not impact the undo/stack", async () => {
+  test("if presence is not added to history during a batch, it should not impact the undo/stack", async () => {
     const { room, wss } = createTestableRoom({});
 
     wss.onConnection((conn) => {
@@ -730,7 +730,7 @@ describe("room", () => {
     room.history.redo();
   });
 
-  test.only("if nothing happened while the history was paused, the undo stack should not be impacted", () => {
+  test("if nothing happened while the history was paused, the undo stack should not be impacted", () => {
     const { room } = createTestableRoom({});
     // room.connect();  // Seems not even needed?
 
@@ -747,7 +747,7 @@ describe("room", () => {
     expect(room.getPresence()).toEqual({ x: 0 });
   });
 
-  test.only("undo redo with presence that do not impact presence", () => {
+  test("undo redo with presence that do not impact presence", () => {
     const { room } = createTestableRoom({});
     // room.connect();  // Seems not even needed?
 
@@ -759,7 +759,7 @@ describe("room", () => {
     expect(room.getPresence()).toEqual({ x: 1 });
   });
 
-  test.only("pause / resume history", () => {
+  test("pause / resume history", () => {
     const { room } = createTestableRoom({});
     // room.connect();  // Seems not even needed?
 
@@ -789,7 +789,7 @@ describe("room", () => {
     expect(room.getPresence()).toEqual({ x: 10 });
   });
 
-  test.only("undo while history is paused", () => {
+  test("undo while history is paused", () => {
     const { room } = createTestableRoom({});
     // room.connect();  // Seems not even needed?
 
@@ -808,7 +808,7 @@ describe("room", () => {
     expect(room.__internal.buffer.me?.data).toEqual({ x: 0 });
   });
 
-  test.only("undo redo with presence + storage", async () => {
+  test("undo redo with presence + storage", async () => {
     const { room, wss } = createTestableRoom({});
 
     wss.onConnection((conn) => {
@@ -846,7 +846,7 @@ describe("room", () => {
     expect(room.getPresence()).toEqual({ x: 1 });
   });
 
-  test.only("batch without changes should not erase redo stack", async () => {
+  test("batch without changes should not erase redo stack", async () => {
     const { room, wss } = createTestableRoom({});
 
     wss.onConnection((conn) => {
@@ -889,7 +889,7 @@ describe("room", () => {
   });
 
   describe("subscription", () => {
-    test.only("batch my-presence", () => {
+    test("batch my-presence", () => {
       const { room } = createTestableRoom({});
 
       const callback = jest.fn();
@@ -905,7 +905,7 @@ describe("room", () => {
       expect(callback).toHaveBeenCalledWith({ x: 0, y: 1 });
     });
 
-    test.only("batch storage and presence", async () => {
+    test("batch storage and presence", async () => {
       const { room, wss } = createTestableRoom({});
 
       wss.onConnection((conn) => {
@@ -1103,7 +1103,7 @@ describe("room", () => {
       expect(newImmutableState).toEqual(root.toImmutable());
     });
 
-    test.only("batch history", () => {
+    test("batch history", () => {
       const { room } = createTestableRoom({});
 
       const callback = jest.fn();
@@ -1118,7 +1118,7 @@ describe("room", () => {
       expect(callback).toHaveBeenCalledWith({ canUndo: true, canRedo: false });
     });
 
-    test.only("my-presence", () => {
+    test("my-presence", () => {
       const { room } = createTestableRoom({});
 
       const callback = jest.fn();
@@ -1134,7 +1134,7 @@ describe("room", () => {
       expect(callback).toHaveBeenCalledWith({ x: 0 });
     });
 
-    test.only("others", async () => {
+    test("others", async () => {
       type P = { x?: number };
 
       const { room, wss } = createTestableRoom<P, never, never, never>({});
@@ -1186,7 +1186,7 @@ describe("room", () => {
       ]);
     });
 
-    test.only("event", async () => {
+    test("event", async () => {
       const { room, wss } = createTestableRoom({});
 
       wss.onConnection((conn) => {
@@ -1214,7 +1214,7 @@ describe("room", () => {
       });
     });
 
-    test.only("history", () => {
+    test("history", () => {
       const { room } = createTestableRoom({});
 
       const callback = jest.fn();
@@ -1308,7 +1308,7 @@ describe("room", () => {
       });
     });
 
-    test.only("disconnect and reconnect with remote changes", async () => {
+    test("disconnect and reconnect with remote changes", async () => {
       const { expectStorage, room, wss } = await prepareIsolatedStorageTest<{
         items?: LiveList<string>;
         items2?: LiveList<string>;
@@ -1463,7 +1463,7 @@ describe("room", () => {
       consoleWarnSpy.mockRestore();
     });
 
-    test.only("when error code 1006 (immediately)", async () => {
+    test("when error code 1006 (immediately)", async () => {
       const { room, wss } = createTestableRoom({ x: 0 });
       room.connect();
 
@@ -1495,7 +1495,7 @@ describe("room", () => {
       }
     });
 
-    test.only("when error code 1006 (after delay)", async () => {
+    test("when error code 1006 (after delay)", async () => {
       const { room, wss } = createTestableRoom({ x: 0 });
       room.connect();
 
@@ -1530,7 +1530,7 @@ describe("room", () => {
       }
     });
 
-    test.only("when error code 4002 (immediately)", async () => {
+    test("when error code 4002 (immediately)", async () => {
       const { room, wss } = createTestableRoom({ x: 0 });
       room.connect();
 
@@ -1564,7 +1564,7 @@ describe("room", () => {
       }
     });
 
-    test.only("when error code 4002 (after delay)", async () => {
+    test("when error code 4002 (after delay)", async () => {
       const { room, wss } = createTestableRoom({ x: 0 });
       room.connect();
 
@@ -1601,7 +1601,7 @@ describe("room", () => {
       }
     });
 
-    test.only("manual reconnection", async () => {
+    test("manual reconnection", async () => {
       jest.useFakeTimers();
 
       const { room, wss } = createTestableRoom(
@@ -1642,7 +1642,7 @@ describe("room", () => {
   });
 
   describe("Initial UpdatePresenceServerMsg", () => {
-    test.only("skip UpdatePresence from other when initial full presence has not been received", async () => {
+    test("skip UpdatePresence from other when initial full presence has not been received", async () => {
       type P = { x?: number };
       type S = never;
       type M = never;
@@ -1704,7 +1704,7 @@ describe("room", () => {
   });
 
   describe("initial storage", () => {
-    test.only("initialize room with initial storage should send operation only once", async () => {
+    test("initialize room with initial storage should send operation only once", async () => {
       const { wss, expectStorage } = await prepareIsolatedStorageTest<{
         items: LiveList<string>;
       }>([createSerializedObject("0:0", {})], 1, { items: new LiveList() });

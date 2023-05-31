@@ -18,7 +18,7 @@ import { LiveObject } from "../LiveObject";
 
 describe("LiveMap", () => {
   describe("not attached", () => {
-    it.only("basic operations with LiveObjects", () => {
+    it("basic operations with LiveObjects", () => {
       const map = new LiveMap([["first" as string, new LiveObject({ a: 0 })]]);
       expect(map.get("first")?.get("a")).toBe(0);
 
@@ -57,7 +57,7 @@ describe("LiveMap", () => {
       expect(asArray[1][1].get("a")).toBe(2);
     });
 
-    it.only("basic operations with native objects", () => {
+    it("basic operations with native objects", () => {
       const map = new LiveMap<string, { a: number }>([["first", { a: 0 }]]);
       expect(map.get("first")).toEqual({ a: 0 });
 
@@ -323,7 +323,7 @@ describe("LiveMap", () => {
     });
 
     // https://github.com/liveblocks/liveblocks/issues/95
-    it.only("should have deleted key when subscriber is called", async () => {
+    it("should have deleted key when subscriber is called", async () => {
       const { room, root } = await prepareIsolatedStorageTest<{
         map: LiveMap<string, string>;
       }>(
@@ -347,7 +347,7 @@ describe("LiveMap", () => {
       expect(keys).toEqual(["second"]);
     });
 
-    it.only("should call subscribe when key is deleted", async () => {
+    it("should call subscribe when key is deleted", async () => {
       const { room, root } = await prepareIsolatedStorageTest<{
         map: LiveMap<string, string>;
       }>(
@@ -372,7 +372,7 @@ describe("LiveMap", () => {
       expect(fn.mock.calls[0][0]).toBe(map);
     });
 
-    it.only("should not call subscribe when key is not deleted", async () => {
+    it("should not call subscribe when key is not deleted", async () => {
       const { room, root } = await prepareIsolatedStorageTest<{
         map: LiveMap<string, string>;
       }>(
@@ -647,7 +647,7 @@ describe("LiveMap", () => {
   });
 
   describe("reconnect with remote changes and subscribe", () => {
-    test.only("register added to map", async () => {
+    test("register added to map", async () => {
       const { expectStorage, room, root, wss } =
         await prepareIsolatedStorageTest<{
           map: LiveMap<string, string>;
@@ -718,7 +718,7 @@ describe("LiveMap", () => {
   });
 
   describe("internal methods", () => {
-    test.only("_detachChild", async () => {
+    test("_detachChild", async () => {
       const { root } = await prepareIsolatedStorageTest<{
         map: LiveMap<string, LiveObject<{ a: number }>>;
       }>(
