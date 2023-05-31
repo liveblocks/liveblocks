@@ -1252,7 +1252,7 @@ describe("room", () => {
   });
 
   describe("offline", () => {
-    test.failing("disconnect and reconnect with offline changes", async () => {
+    test("disconnect and reconnect with offline changes", async () => {
       const { storage, expectStorage, room, refStorage, reconnect, wss } =
         await prepareStorageTest<{ items: LiveList<string> }>(
           [
@@ -1306,6 +1306,7 @@ describe("room", () => {
 
       reconnect(2, newInitStorage);
 
+      await waitUntilStorageUpdate(room);
       expectStorage({
         items: ["A", "B"],
       });
