@@ -1,12 +1,24 @@
 import { createClient, type Room } from "@liveblocks/client";
 
-let PUBLIC_KEY = "pk_YOUR_PUBLIC_KEY";
+export const PUBLIC_API_KEY =
+  "pk_dev_cGhHV46MCR_vLLDFpeT37x4pLmR2WvS_MGqTO1rhUdimBrKHx9AHjasXV6m7Aoy7";
+
+if (!/^pk_(live|test)/.test(PUBLIC_API_KEY)) {
+  console.warn(
+    `Replace "${PUBLIC_API_KEY}" by your public key from https://liveblocks.io/dashboard/apikeys.\n` +
+      `Learn more: https://github.com/liveblocks/liveblocks/tree/main/examples/solidjs-live-avatars#getting-started.`
+  );
+}
 
 export const client = createClient({
-  publicApiKey: PUBLIC_KEY,
-  // authEndpoint: "/api/auth",
-  // throttle: 100,
+  publicApiKey: PUBLIC_API_KEY,
 });
+
+// let PUBLIC_KEY = "pk_YOUR_PUBLIC_KEY";
+
+// export const client = createClient({
+//   publicApiKey: PUBLIC_KEY,
+// });
 
 // Presence represents the properties that exist on every user in the Room
 // and that will automatically be kept in sync. Accessible through the
@@ -14,9 +26,6 @@ export const client = createClient({
 export type Presence = {
   picture: string;
   name: string;
-
-  // cursor: { x: number, y: number } | null,
-  // ...
 };
 
 // Optionally, Storage represents the shared document that persists in the

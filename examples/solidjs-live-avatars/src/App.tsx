@@ -4,7 +4,7 @@ import Avatar from "./components/Avatar.jsx";
 import styles from "./App.module.css";
 
 function App(props: { room: TypedRoom }) {
-  const room=props.room;
+  const room = props.room;
   const [currentUser, setCurrentUser] = createSignal(room.getPresence());
   const [users, setUsers] = createSignal([]);
   const hasMoreUsers = () => users().length > 3;
@@ -15,9 +15,7 @@ function App(props: { room: TypedRoom }) {
     });
 
     const unsubscribeOthers = room.subscribe("others", (others) => {
-      const othersWithPresence = others
-        .toArray()
-        .filter((other) => other?.presence);
+      const othersWithPresence = others.filter((other) => other?.presence);
       setUsers(othersWithPresence);
     });
 

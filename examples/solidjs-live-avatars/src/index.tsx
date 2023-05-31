@@ -1,25 +1,14 @@
 /* @refresh reload */
 import { render } from "solid-js/web";
 import { createClient } from "@liveblocks/client";
+import { client, PUBLIC_API_KEY } from "../liveblocks.config";
 import App from "./App";
 import "./index.css";
 
-let PUBLIC_KEY =
-  "pk_dev_cGhHV46MCR_vLLDFpeT37x4pLmR2WvS_MGqTO1rhUdimBrKHx9AHjasXV6m7Aoy7";
 let roomId = "solidjs-live-avatars";
-
+let PUBLIC_KEY = PUBLIC_API_KEY
 overrideApiKeyAndRoomId();
 
-if (!/^pk_(live|test)/.test(PUBLIC_KEY)) {
-  console.warn(
-    `Replace "${PUBLIC_KEY}" by your public key from https://liveblocks.io/dashboard/apikeys.\n` +
-      `Learn more: https://github.com/liveblocks/liveblocks/tree/main/examples/solidjs-live-avatars#getting-started.`
-  );
-}
-
-const client = createClient({
-  publicApiKey: PUBLIC_KEY,
-});
 
 const NAMES = [
   "Charlie Layne",
