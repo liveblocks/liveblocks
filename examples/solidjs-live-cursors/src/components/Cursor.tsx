@@ -4,7 +4,7 @@ import { Motion } from "@motionone/solid";
 // Custom spring animation for smooth cursor
 const springAnimation = spring({ damping: 30, stiffness: 200, mass: 0.5 });
 
-export default function Cursor(props) {
+export default function Cursor(props: { x: number; y: number; color: string }) {
   return (
     <Motion
       initial={false}
