@@ -430,7 +430,7 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
       async (ctx) => {
         let capturedPrematureEvent: IWebSocketEvent | null = null;
 
-        const promise = new Promise<[IWebSocketInstance, () => void]>(
+        const connect$ = new Promise<[IWebSocketInstance, () => void]>(
           (resolve, rej) => {
             if (ctx.token === null) {
               throw new Error("No auth token"); // This should never happen
@@ -492,7 +492,7 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
           }
         );
 
-        return withTimeout(promise, SOCKET_CONNECT_TIMEOUT).then(
+        return withTimeout(connect$, SOCKET_CONNECT_TIMEOUT).then(
           //
           // Part 3:
           // By now, our "open" event has fired, and the promise has been
