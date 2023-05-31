@@ -6,10 +6,11 @@ const KEY_ABC = "abc";
 const KEY_XYZ = "xyz";
 const ERROR = new Error("error");
 
-type AsyncStateDataError<TData, TError> = Pick<
-  AsyncState<TData, TError>,
-  "data" | "error"
->;
+type AsyncMockOptions<T> = {
+  error: (index: number, key: string) => boolean;
+  delay: (index: number, key: string) => number;
+  value: (index: number, key: string) => T;
+};
 
 async function sleep(ms: number): Promise<42> {
   return new Promise((resolve) => {
@@ -19,23 +20,33 @@ async function sleep(ms: number): Promise<42> {
   });
 }
 
+const defaultAsyncMockOptions: AsyncMockOptions<unknown> = {
+  error: () => false,
+  delay: () => REQUEST_DELAY,
+  value: (_, key) => key,
+};
+
 function createAsyncMock<T = string>(
-  errorPredicate: (index: number, key: string) => boolean = () => false,
-  returnValue: (index: number, key: string) => T = (_, key) =>
-    key as unknown as T
+  options: Partial<
+    AsyncMockOptions<T>
+  > = defaultAsyncMockOptions as AsyncMockOptions<T>
 ) {
+  const error = options.error ?? defaultAsyncMockOptions.error;
+  const delay = options.delay ?? defaultAsyncMockOptions.delay;
+  const value = options.value ?? defaultAsyncMockOptions.value;
+
   let index = 0;
 
   return jest.fn(async (key: string) => {
-    const isError = errorPredicate(index, key);
+    const isError = error(index, key);
     index += 1;
 
-    await sleep(REQUEST_DELAY);
+    await sleep(delay(index, key));
 
     if (isError) {
       throw ERROR;
     } else {
-      return returnValue(index, key);
+      return value(index, key) as T;
     }
   });
 }
@@ -45,28 +56,25 @@ function createIndices(length: number) {
 }
 
 describe("AsyncCache", () => {
-  test("getting the same key", async () => {
+  test("getting", async () => {
     const mock = createAsyncMock();
-    const cache = createAsyncCache(mock, { deduplicationInterval: 0 });
+    const cache = createAsyncCache(mock);
 
     // 🚀 Called
-    expect(await cache.get(KEY_ABC)).toMatchObject<
-      AsyncStateDataError<string, Error>
-    >({
+    expect(await cache.get(KEY_ABC)).toMatchObject<AsyncState<string, Error>>({
+      isLoading: false,
       data: KEY_ABC,
     });
 
     // ✨ Cached
-    expect(await cache.get(KEY_ABC)).toMatchObject<
-      AsyncStateDataError<string, Error>
-    >({
+    expect(await cache.get(KEY_ABC)).toMatchObject<AsyncState<string, Error>>({
+      isLoading: false,
       data: KEY_ABC,
     });
 
     // ✨ Cached
-    expect(await cache.get(KEY_ABC)).toMatchObject<
-      AsyncStateDataError<string, Error>
-    >({
+    expect(await cache.get(KEY_ABC)).toMatchObject<AsyncState<string, Error>>({
+      isLoading: false,
       data: KEY_ABC,
     });
 
@@ -74,129 +82,127 @@ describe("AsyncCache", () => {
     expect(mock).toHaveBeenCalledWith(KEY_ABC);
   });
 
-  test("getting the same key in parallel", async () => {
-    const mock = createAsyncMock();
-    const cache = createAsyncCache(mock, { deduplicationInterval: 0 });
+  test("getting in parallel", async () => {
+    const mock = createAsyncMock({
+      value: (index) => createIndices(index),
+    });
+    const cache = createAsyncCache(mock);
 
     await Promise.all([
       // 🚀 Called
       cache.get(KEY_ABC),
-      // 🔜 Waiting on the first call's promise
+      // 🔜 Waiting on the first call
       cache.get(KEY_ABC),
-      // 🔜 Waiting on the first call's promise
+      // 🔜 Waiting on the first call
       cache.get(KEY_ABC),
     ]);
+
+    expect(cache.getState(KEY_ABC)).toMatchObject<AsyncState<number[], Error>>({
+      isLoading: false,
+      data: [0],
+    });
 
     expect(mock).toHaveBeenCalledTimes(1);
   });
 
   test("getting multiple keys", async () => {
-    const mock = createAsyncMock((_, key) => key === KEY_XYZ);
-    const cache = createAsyncCache(mock, { deduplicationInterval: 0 });
+    const mock = createAsyncMock({
+      error: (_, key) => key === KEY_XYZ,
+    });
+    const cache = createAsyncCache(mock);
 
     // 🚀 Called with "abc"
     const abc = await cache.get(KEY_ABC);
     // 🚀 Called with "xyz"
     const xyz = await cache.get(KEY_XYZ);
 
-    expect(abc).toMatchObject<AsyncStateDataError<string, Error>>({
+    expect(abc).toMatchObject<AsyncState<string, Error>>({
+      isLoading: false,
       data: KEY_ABC,
     });
-    expect(xyz).toMatchObject<AsyncStateDataError<string, Error>>({
+    expect(xyz).toMatchObject<AsyncState<string, Error>>({
+      isLoading: false,
       error: ERROR,
     });
 
     expect(mock).toHaveBeenCalledTimes(2);
   });
 
-  test("staying invalid when erroring", async () => {
-    const mock = createAsyncMock((index) => index === 0);
-    const cache = createAsyncCache(mock, {
-      deduplicationInterval: 0,
+  test("getting while revalidating", async () => {
+    const mock = createAsyncMock({
+      value: (index) => createIndices(index),
     });
+    const cache = createAsyncCache(mock);
+    const callback = jest.fn();
+
+    const unsubscribe = cache.subscribe(KEY_ABC, callback);
+
+    // 🗑️ Revalidated and 🚀 called
+    const revalidatePromise = cache.revalidate(KEY_ABC);
+
+    // 🔜 Skipped because revalidating
+    const getPromise = cache.get(KEY_ABC);
+
+    await revalidatePromise;
+    await getPromise;
+
+    // 🗑️ Revalidated
+    await cache.revalidate(KEY_ABC);
+
+    unsubscribe();
+
+    expect(mock).toHaveBeenCalledTimes(2);
+
+    expect(callback).toHaveBeenCalledTimes(4);
+
+    // 1️⃣ Triggered when the first call starts
+    expect(callback).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining<AsyncState<number[], Error>>({
+        isLoading: true,
+      })
+    );
+    // 2️⃣✅🗑️ Triggered when the first call finished
+    expect(callback).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining<AsyncState<number[], Error>>({
+        isLoading: false,
+        data: [0],
+      })
+    );
+    // 1️⃣ Triggered when the second revalidation call starts
+    expect(callback).toHaveBeenNthCalledWith(
+      3,
+      expect.objectContaining<AsyncState<number[], Error>>({
+        isLoading: true,
+        data: [0],
+      })
+    );
+    // 2️⃣✅🗑️ Triggered when the second revalidation call finished
+    expect(callback).toHaveBeenNthCalledWith(
+      4,
+      expect.objectContaining<AsyncState<number[], Error>>({
+        isLoading: false,
+        data: [0, 1],
+      })
+    );
+  });
+
+  test("staying invalid when erroring", async () => {
+    const mock = createAsyncMock({
+      error: (index) => index === 0,
+    });
+    const cache = createAsyncCache(mock);
 
     // 🚀 Called and ❌ errored
-    expect(await cache.get(KEY_ABC)).toMatchObject<
-      AsyncStateDataError<string, Error>
-    >({
+    expect(await cache.get(KEY_ABC)).toMatchObject<AsyncState<string, Error>>({
+      isLoading: false,
       error: ERROR,
     });
 
     // 🚀 Called again because the first call errored
-    expect(await cache.get(KEY_ABC)).toMatchObject<
-      AsyncStateDataError<string, Error>
-    >({
-      data: KEY_ABC,
-    });
-
-    expect(mock).toHaveBeenCalledTimes(2);
-  });
-
-  test("deduplicating", async () => {
-    const mock = createAsyncMock();
-    const cache = createAsyncCache(mock, {
-      deduplicationInterval: REQUEST_DELAY * 1.5,
-    });
-
-    // 🚀 Called
-    await cache.get(KEY_ABC);
-    // 🔜 Deduplicated
-    await cache.get(KEY_ABC);
-
-    cache.invalidate(KEY_ABC);
-    // 🔜 Still deduplicated, regardless of invalidation
-    await cache.get(KEY_ABC);
-
-    await sleep(REQUEST_DELAY);
-
-    cache.invalidate(KEY_ABC);
-
-    // 🚀 Called because the last non-deduplicated call was older than the deduplication interval
-    await cache.get(KEY_ABC);
-
-    expect(mock).toHaveBeenCalledTimes(2);
-  });
-
-  test("invalidating", async () => {
-    const mock = createAsyncMock();
-    const cache = createAsyncCache(mock, { deduplicationInterval: 0 });
-
-    // 🚀 Called
-    await cache.get(KEY_ABC);
-
-    // 🗑️ Clears the cache for "abc"
-    cache.invalidate(KEY_ABC);
-
-    expect(cache.getState(KEY_ABC)?.data).toBeUndefined();
-
-    // 🚀 Called because invalidated
-    expect(await cache.get(KEY_ABC)).toMatchObject<
-      AsyncStateDataError<string, Error>
-    >({
-      data: KEY_ABC,
-    });
-
-    expect(mock).toHaveBeenCalledTimes(2);
-  });
-
-  test("invalidating without clearing the cache", async () => {
-    const mock = createAsyncMock();
-    const cache = createAsyncCache(mock, { deduplicationInterval: 0 });
-
-    // 🚀 Called
-    await cache.get(KEY_ABC);
-
-    expect(cache.getState(KEY_ABC)?.data).not.toBeUndefined();
-
-    // 🗑️ Doesn't clear the cache for "abc"
-    cache.invalidate(KEY_ABC, { clearData: false });
-
-    expect(cache.getState(KEY_ABC)?.data).not.toBeUndefined();
-
-    // 🚀 Called because invalidated
-    expect(await cache.get(KEY_ABC)).toMatchObject<
-      AsyncStateDataError<string, Error>
-    >({
+    expect(await cache.get(KEY_ABC)).toMatchObject<AsyncState<string, Error>>({
+      isLoading: false,
       data: KEY_ABC,
     });
 
@@ -204,28 +210,206 @@ describe("AsyncCache", () => {
   });
 
   test("revalidating", async () => {
-    const mock = createAsyncMock();
-    const cache = createAsyncCache(mock, { deduplicationInterval: 0 });
+    const mock = createAsyncMock({
+      value: (index) => createIndices(index),
+    });
+    const cache = createAsyncCache(mock);
+
+    const callback = jest.fn();
+    const unsubscribe = cache.subscribe(KEY_ABC, callback);
 
     // 🚀 Called
     await cache.get(KEY_ABC);
 
-    // 🗑️ Clears the cache for "abc" and 🚀 called again because invalidated
+    // 🗑️ Revalidated and 🚀 called again
     expect(await cache.revalidate(KEY_ABC)).toMatchObject<
-      AsyncStateDataError<string, Error>
+      AsyncState<number[], Error>
     >({
-      data: KEY_ABC,
+      isLoading: false,
+      data: [0, 1],
     });
 
+    unsubscribe();
+
     expect(mock).toHaveBeenCalledTimes(2);
+
+    // 1️⃣ Triggered when the first call started
+    expect(callback).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining<AsyncState<number[], Error>>({
+        isLoading: true,
+      })
+    );
+    // 2️⃣ Triggered when the first call finished
+    expect(callback).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining<AsyncState<number[], Error>>({
+        isLoading: false,
+        data: [0],
+      })
+    );
+    // 3️⃣ Triggered when revalidated
+    expect(callback).toHaveBeenNthCalledWith(
+      3,
+      expect.objectContaining<AsyncState<number[], Error>>({
+        isLoading: true,
+        data: [0],
+      })
+    );
+    // 4️⃣ Triggered when revalidation finished
+    expect(callback).toHaveBeenNthCalledWith(
+      4,
+      expect.objectContaining<AsyncState<number[], Error>>({
+        isLoading: false,
+        data: [0, 1],
+      })
+    );
+  });
+
+  test("revalidating a non-existing key", async () => {
+    const mock = createAsyncMock({
+      value: (index) => createIndices(index),
+    });
+    const cache = createAsyncCache(mock);
+
+    const callback = jest.fn();
+    const unsubscribe = cache.subscribe(KEY_ABC, callback);
+
+    // 🚀 Called because revalidated
+    expect(await cache.revalidate(KEY_ABC)).toMatchObject<
+      AsyncState<number[], Error>
+    >({
+      isLoading: false,
+      data: [0],
+    });
+
+    unsubscribe();
+
+    expect(mock).toHaveBeenCalledTimes(1);
+
+    // 1️⃣ Triggered when revalidated
+    expect(callback).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining<AsyncState<number[], Error>>({
+        isLoading: true,
+      })
+    );
+    // 2️⃣ Triggered when revalidation finished
+    expect(callback).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining<AsyncState<number[], Error>>({
+        isLoading: false,
+        data: [0],
+      })
+    );
+  });
+
+  test("revalidating while pending", async () => {
+    const mock = createAsyncMock({
+      value: (index) => createIndices(index),
+    });
+    const cache = createAsyncCache(mock);
+    const callback = jest.fn();
+
+    const unsubscribe = cache.subscribe(KEY_ABC, callback);
+
+    // 🚀 Called
+    const getPromise = cache.get(KEY_ABC);
+
+    // 🗑️ Revalidated while pending
+    const revalidatePromise = cache.revalidate(KEY_ABC);
+
+    await getPromise;
+    await revalidatePromise;
+
+    unsubscribe();
+
+    expect(mock).toHaveBeenCalledTimes(1);
+
+    expect(callback).toHaveBeenCalledTimes(2);
+
+    // 1️⃣ Triggered when the first call starts
+    expect(callback).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining<AsyncState<number[], Error>>({
+        isLoading: true,
+      })
+    );
+    // 2️⃣✅🗑️ Triggered when the first call finished
+    expect(callback).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining<AsyncState<number[], Error>>({
+        isLoading: false,
+        data: [0],
+      })
+    );
+  });
+
+  test("revalidating in parallel", async () => {
+    const mock = createAsyncMock({
+      value: (index) => createIndices(index),
+    });
+    const cache = createAsyncCache(mock);
+    const callback = jest.fn();
+
+    const unsubscribe = cache.subscribe(KEY_ABC, callback);
+
+    // 🚀 Called
+    await cache.get(KEY_ABC);
+
+    await Promise.all([
+      // 🚀 Revalidated
+      cache.revalidate(KEY_ABC),
+      // 🔜 Waiting on the first revalidation
+      cache.revalidate(KEY_ABC),
+      // 🔜 Waiting on the first revalidation
+      cache.revalidate(KEY_ABC),
+    ]);
+
+    unsubscribe();
+
+    expect(mock).toHaveBeenCalledTimes(2);
+
+    expect(callback).toHaveBeenCalledTimes(4);
+
+    // 1️⃣ Triggered when the first call starts
+    expect(callback).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining<AsyncState<number[], Error>>({
+        isLoading: true,
+      })
+    );
+    // 2️⃣✅🗑️ Triggered when the first call finished
+    expect(callback).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining<AsyncState<number[], Error>>({
+        isLoading: false,
+        data: [0],
+      })
+    );
+    // 3️⃣ Triggered when the first revalidation call starts
+    expect(callback).toHaveBeenNthCalledWith(
+      3,
+      expect.objectContaining<AsyncState<number[], Error>>({
+        isLoading: true,
+        data: [0],
+      })
+    );
+    // 4️⃣✅🗑️ Triggered when the first revalidation call finished
+    expect(callback).toHaveBeenNthCalledWith(
+      4,
+      expect.objectContaining<AsyncState<number[], Error>>({
+        isLoading: false,
+        data: [0, 1],
+      })
+    );
   });
 
   test("revalidating with optimistic data", async () => {
-    const mock = createAsyncMock(
-      () => false,
-      (index) => createIndices(index)
-    );
-    const cache = createAsyncCache(mock, { deduplicationInterval: 0 });
+    const mock = createAsyncMock({
+      value: (index) => createIndices(index),
+    });
+    const cache = createAsyncCache(mock);
 
     const callback = jest.fn();
     const unsubscribe = cache.subscribe(KEY_ABC, callback);
@@ -233,10 +417,10 @@ describe("AsyncCache", () => {
     // 🚀 Called and returned [0]
     await cache.get(KEY_ABC);
 
-    // 🗑️ Invalidated with [0, 1] as optimistic data, then 🚀 called and returned [0, 1]
+    // 🗑️ Revalidated with [0, 1] as optimistic data, then 🚀 called and returned [0, 1]
     await cache.revalidate(KEY_ABC, {
       optimisticData: (data) => {
-        return data ? createIndices(data.length + 1) : undefined;
+        return data ? createIndices(data.length + 1) : [0];
       },
     });
 
@@ -277,12 +461,84 @@ describe("AsyncCache", () => {
     );
   });
 
-  test("revalidating with complex optimistic data", async () => {
-    const mock = createAsyncMock(
-      () => false,
-      (index) => createIndices(index).map((index) => ({ index, a: [0] }))
+  test("revalidating with optimistic data in parallel", async () => {
+    const mock = createAsyncMock({
+      value: (index) => createIndices(index),
+    });
+    const cache = createAsyncCache(mock);
+    const callback = jest.fn();
+
+    const unsubscribe = cache.subscribe(KEY_ABC, callback);
+
+    // 🚀 Called
+    await cache.get(KEY_ABC);
+
+    await Promise.all([
+      // 🚀 Revalidated
+      cache.revalidate(KEY_ABC, {
+        optimisticData: (data) => {
+          return data ? createIndices(data.length + 1) : [0];
+        },
+      }),
+      // 🔜 Waiting on the first revalidation
+      cache.revalidate(KEY_ABC, {
+        optimisticData: (data) => {
+          return data ? createIndices(data.length + 1) : [0];
+        },
+      }),
+      // 🔜 Waiting on the first revalidation
+      cache.revalidate(KEY_ABC, {
+        optimisticData: (data) => {
+          return data ? createIndices(data.length + 1) : [0];
+        },
+      }),
+    ]);
+
+    unsubscribe();
+
+    expect(mock).toHaveBeenCalledTimes(2);
+
+    expect(callback).toHaveBeenCalledTimes(4);
+
+    // 1️⃣ Triggered when the first call starts
+    expect(callback).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining<AsyncState<number[], Error>>({
+        isLoading: true,
+      })
     );
-    const cache = createAsyncCache(mock, { deduplicationInterval: 0 });
+    // 2️⃣✅🗑️ Triggered when the first call finished
+    expect(callback).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining<AsyncState<number[], Error>>({
+        isLoading: false,
+        data: [0],
+      })
+    );
+    // 1️⃣ Triggered when the first revalidation call starts with optimistic data
+    expect(callback).toHaveBeenNthCalledWith(
+      3,
+      expect.objectContaining<AsyncState<number[], Error>>({
+        isLoading: true,
+        data: [0, 1],
+      })
+    );
+    // 2️⃣✅🗑️ Triggered when the first revalidation call finished
+    expect(callback).toHaveBeenNthCalledWith(
+      4,
+      expect.objectContaining<AsyncState<number[], Error>>({
+        isLoading: false,
+        data: [0, 1],
+      })
+    );
+  });
+
+  test("revalidating with complex optimistic data", async () => {
+    const mock = createAsyncMock({
+      value: (index) =>
+        createIndices(index).map((index) => ({ index, a: [0] })),
+    });
+    const cache = createAsyncCache(mock);
 
     const callback = jest.fn();
     const unsubscribe = cache.subscribe(KEY_ABC, callback);
@@ -290,12 +546,12 @@ describe("AsyncCache", () => {
     // 🚀 Called and returned [{ index: 0 }]
     await cache.get(KEY_ABC);
 
-    // 🗑️ Invalidated with [{ index: 0 }, { index: 1 }] as optimistic data, then 🚀 called and returned [{ index: 0 }, { index: 1 }]
+    // 🗑️ Revalidated with [{ index: 0 }, { index: 1 }] as optimistic data, then 🚀 called and returned [{ index: 0 }, { index: 1 }]
     await cache.revalidate(KEY_ABC, {
       optimisticData: (data) => {
         return data
           ? createIndices(data.length + 1).map((index) => ({ a: [0], index }))
-          : undefined;
+          : [0].map((index) => ({ a: [0], index }));
       },
     });
 
@@ -351,11 +607,11 @@ describe("AsyncCache", () => {
   });
 
   test("revalidating with optimistic data and reverting on error", async () => {
-    const mock = createAsyncMock(
-      (index) => index === 1,
-      (index) => createIndices(index)
-    );
-    const cache = createAsyncCache(mock, { deduplicationInterval: 0 });
+    const mock = createAsyncMock({
+      error: (index) => index === 1,
+      value: (index) => createIndices(index),
+    });
+    const cache = createAsyncCache(mock);
 
     const callback = jest.fn();
     const unsubscribe = cache.subscribe(KEY_ABC, callback);
@@ -363,10 +619,10 @@ describe("AsyncCache", () => {
     // 🚀 Called and returned [0]
     await cache.get(KEY_ABC);
 
-    // 🗑️ Invalidated with [0, 1] as optimistic data, then ❌ errored so the data was rollbacked to [0]
+    // 🗑️ Revalidated with [0, 1] as optimistic data, then ❌ errored so the data was rollbacked to [0]
     await cache.revalidate(KEY_ABC, {
       optimisticData: (data) => {
-        return data ? createIndices(data.length + 1) : undefined;
+        return data ? createIndices(data.length + 1) : [0];
       },
     });
 
@@ -408,11 +664,406 @@ describe("AsyncCache", () => {
     );
   });
 
+  test("revalidating with a mutation", async () => {
+    const mock = createAsyncMock({
+      value: (index) => createIndices(index),
+    });
+    const cache = createAsyncCache(mock);
+
+    const callback = jest.fn();
+    const unsubscribe = cache.subscribe(KEY_ABC, callback);
+
+    // 🚀 Called
+    await cache.get(KEY_ABC);
+
+    // 🔨 Revalidated with a mutation instead of calling again
+    expect(
+      await cache.revalidate(KEY_ABC, async (data) => {
+        await sleep(REQUEST_DELAY);
+
+        return data ? createIndices(data.length + 1) : undefined;
+      })
+    ).toMatchObject<AsyncState<number[], Error>>({
+      isLoading: false,
+      data: [0, 1],
+    });
+
+    unsubscribe();
+
+    expect(mock).toHaveBeenCalledTimes(1);
+
+    // 1️⃣ Triggered when the first call started
+    expect(callback).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining<AsyncState<number[], Error>>({
+        isLoading: true,
+      })
+    );
+    // 2️⃣ Triggered when the first call finished
+    expect(callback).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining<AsyncState<number[], Error>>({
+        isLoading: false,
+        data: [0],
+      })
+    );
+    // 3️⃣ Triggered when revalidated with a mutation
+    expect(callback).toHaveBeenNthCalledWith(
+      3,
+      expect.objectContaining<AsyncState<number[], Error>>({
+        isLoading: true,
+        data: [0],
+      })
+    );
+    // 4️⃣ Triggered when revalidation finished
+    expect(callback).toHaveBeenNthCalledWith(
+      4,
+      expect.objectContaining<AsyncState<number[], Error>>({
+        isLoading: false,
+        data: [0, 1],
+      })
+    );
+  });
+
+  test("revalidating with a mutation in parallel", async () => {
+    const mock = createAsyncMock({
+      value: (index) => createIndices(index),
+    });
+    const cache = createAsyncCache(mock);
+    const callback = jest.fn();
+
+    const unsubscribe = cache.subscribe(KEY_ABC, callback);
+
+    // 🚀 Called
+    await cache.get(KEY_ABC);
+
+    await Promise.all([
+      // 🚀 Revalidated with a mutation
+      cache.revalidate(KEY_ABC, async (data) => {
+        await sleep(REQUEST_DELAY);
+
+        return data ? createIndices(data.length + 1) : undefined;
+      }),
+      // 🔜 Waiting on the first revalidation
+      cache.revalidate(KEY_ABC, async (data) => {
+        await sleep(REQUEST_DELAY);
+
+        return data ? createIndices(data.length + 1) : undefined;
+      }),
+      // 🔜 Waiting on the first revalidation
+      cache.revalidate(KEY_ABC, async (data) => {
+        await sleep(REQUEST_DELAY);
+
+        return data ? createIndices(data.length + 1) : undefined;
+      }),
+    ]);
+
+    unsubscribe();
+
+    expect(mock).toHaveBeenCalledTimes(1);
+
+    expect(callback).toHaveBeenCalledTimes(4);
+
+    // 1️⃣ Triggered when the first call starts
+    expect(callback).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining<AsyncState<number[], Error>>({
+        isLoading: true,
+      })
+    );
+    // 2️⃣✅🗑️ Triggered when the first call finished
+    expect(callback).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining<AsyncState<number[], Error>>({
+        isLoading: false,
+        data: [0],
+      })
+    );
+    // 1️⃣ Triggered when the first revalidation call starts
+    expect(callback).toHaveBeenNthCalledWith(
+      3,
+      expect.objectContaining<AsyncState<number[], Error>>({
+        isLoading: true,
+        data: [0],
+      })
+    );
+    // 2️⃣✅🗑️ Triggered when the first revalidation call finished
+    expect(callback).toHaveBeenNthCalledWith(
+      4,
+      expect.objectContaining<AsyncState<number[], Error>>({
+        isLoading: false,
+        data: [0, 1],
+      })
+    );
+  });
+
+  test("revalidating with a mutation that doesn't return data", async () => {
+    const mock = createAsyncMock({
+      value: (index) => createIndices(index),
+    });
+    const cache = createAsyncCache(mock);
+
+    const callback = jest.fn();
+    const unsubscribe = cache.subscribe(KEY_ABC, callback);
+
+    // 🚀 Called
+    await cache.get(KEY_ABC);
+
+    // 🔨 Revalidated with a mutation but which doesn't return data, so 🚀 calling again
+    expect(
+      await cache.revalidate(KEY_ABC, async () => {
+        await sleep(REQUEST_DELAY);
+      })
+    ).toMatchObject<AsyncState<number[], Error>>({
+      isLoading: false,
+      data: [0, 1],
+    });
+
+    unsubscribe();
+
+    expect(mock).toHaveBeenCalledTimes(2);
+
+    // 1️⃣ Triggered when the first call started
+    expect(callback).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining<AsyncState<number[], Error>>({
+        isLoading: true,
+      })
+    );
+    // 2️⃣ Triggered when the first call finished
+    expect(callback).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining<AsyncState<number[], Error>>({
+        isLoading: false,
+        data: [0],
+      })
+    );
+    // 3️⃣ Triggered when revalidated
+    expect(callback).toHaveBeenNthCalledWith(
+      3,
+      expect.objectContaining<AsyncState<number[], Error>>({
+        isLoading: true,
+        data: [0],
+      })
+    );
+    // 4️⃣ Triggered when the revalidation finished
+    expect(callback).toHaveBeenNthCalledWith(
+      4,
+      expect.objectContaining<AsyncState<number[], Error>>({
+        isLoading: false,
+        data: [0, 1],
+      })
+    );
+  });
+
+  test("revalidating with a mutation and optimistic data", async () => {
+    const mock = createAsyncMock({
+      value: (index) => createIndices(index),
+    });
+    const cache = createAsyncCache(mock);
+
+    const callback = jest.fn();
+    const unsubscribe = cache.subscribe(KEY_ABC, callback);
+
+    // 🚀 Called
+    await cache.get(KEY_ABC);
+
+    // 🔨 Revalidated with a mutation and optimistic data
+    expect(
+      await cache.revalidate(
+        KEY_ABC,
+        async (data) => {
+          await sleep(REQUEST_DELAY);
+
+          return data ? createIndices(data.length + 1) : undefined;
+        },
+        {
+          optimisticData: (data) => {
+            return data ? createIndices(data.length + 1) : [0];
+          },
+        }
+      )
+    ).toMatchObject<AsyncState<number[], Error>>({
+      isLoading: false,
+      data: [0, 1],
+    });
+
+    unsubscribe();
+
+    expect(mock).toHaveBeenCalledTimes(1);
+
+    // 1️⃣ Triggered when the first call started
+    expect(callback).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining<AsyncState<number[], Error>>({
+        isLoading: true,
+      })
+    );
+    // 2️⃣ Triggered when the first call finished
+    expect(callback).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining<AsyncState<number[], Error>>({
+        isLoading: false,
+        data: [0],
+      })
+    );
+    // 3️⃣ Triggered when revalidated with a mutation and optimistic data
+    expect(callback).toHaveBeenNthCalledWith(
+      3,
+      expect.objectContaining<AsyncState<number[], Error>>({
+        isLoading: true,
+        data: [0, 1],
+      })
+    );
+    // 4️⃣ Triggered when the mutation finished
+    expect(callback).toHaveBeenNthCalledWith(
+      4,
+      expect.objectContaining<AsyncState<number[], Error>>({
+        isLoading: false,
+        data: [0, 1],
+      })
+    );
+  });
+
+  test("revalidating with a mutation that errors", async () => {
+    const mock = createAsyncMock({
+      value: (index) => createIndices(index),
+    });
+    const cache = createAsyncCache(mock);
+
+    const callback = jest.fn();
+    const unsubscribe = cache.subscribe(KEY_ABC, callback);
+
+    // 🚀 Called
+    await cache.get(KEY_ABC);
+
+    // 🔨❌ Revalidated with a mutation but it errored
+    await expect(
+      async () =>
+        await cache.revalidate(KEY_ABC, async () => {
+          await sleep(REQUEST_DELAY);
+
+          throw ERROR;
+        })
+    ).rejects.toThrow(ERROR);
+
+    expect(cache.getState(KEY_ABC)).toMatchObject<AsyncState<number[], Error>>({
+      isLoading: false,
+      data: [0],
+    });
+
+    unsubscribe();
+
+    expect(mock).toHaveBeenCalledTimes(1);
+
+    // 1️⃣ Triggered when the first call started
+    expect(callback).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining<AsyncState<number[], Error>>({
+        isLoading: true,
+      })
+    );
+    // 2️⃣ Triggered when the first call finished
+    expect(callback).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining<AsyncState<number[], Error>>({
+        isLoading: false,
+        data: [0],
+      })
+    );
+    // 3️⃣ Triggered when revalidated with a mutation
+    expect(callback).toHaveBeenNthCalledWith(
+      3,
+      expect.objectContaining<AsyncState<number[], Error>>({
+        isLoading: true,
+        data: [0],
+      })
+    );
+    // 4️⃣ Triggered when the mutation errored
+    expect(callback).toHaveBeenNthCalledWith(
+      4,
+      expect.objectContaining<AsyncState<number[], Error>>({
+        isLoading: false,
+        data: [0],
+      })
+    );
+  });
+
+  test("revalidating with a mutation that errors and optimistic data", async () => {
+    const mock = createAsyncMock({
+      value: (index) => createIndices(index),
+    });
+    const cache = createAsyncCache(mock);
+
+    const callback = jest.fn();
+    const unsubscribe = cache.subscribe(KEY_ABC, callback);
+
+    // 🚀 Called
+    await cache.get(KEY_ABC);
+
+    // 🔨❌ Revalidated with a mutation but it errored
+    await expect(
+      async () =>
+        await cache.revalidate(
+          KEY_ABC,
+          async () => {
+            await sleep(REQUEST_DELAY);
+
+            throw ERROR;
+          },
+          {
+            optimisticData: (data) => {
+              return data ? createIndices(data.length + 1) : [0];
+            },
+          }
+        )
+    ).rejects.toThrow(ERROR);
+
+    expect(cache.getState(KEY_ABC)).toMatchObject<AsyncState<number[], Error>>({
+      isLoading: false,
+      data: [0],
+    });
+
+    unsubscribe();
+
+    expect(mock).toHaveBeenCalledTimes(1);
+
+    // 1️⃣ Triggered when the first call started
+    expect(callback).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining<AsyncState<number[], Error>>({
+        isLoading: true,
+      })
+    );
+    // 2️⃣ Triggered when the first call finished
+    expect(callback).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining<AsyncState<number[], Error>>({
+        isLoading: false,
+        data: [0],
+      })
+    );
+    // 3️⃣ Triggered when revalidated with a mutation and optimistic data
+    expect(callback).toHaveBeenNthCalledWith(
+      3,
+      expect.objectContaining<AsyncState<number[], Error>>({
+        isLoading: true,
+        data: [0, 1],
+      })
+    );
+    // 4️⃣ Triggered when the mutation errored
+    expect(callback).toHaveBeenNthCalledWith(
+      4,
+      expect.objectContaining<AsyncState<number[], Error>>({
+        isLoading: false,
+        data: [0],
+      })
+    );
+  });
+
   test("clearing the cache", async () => {
     const mock = createAsyncMock();
-    const cache = createAsyncCache(mock, {
-      deduplicationInterval: 0,
-    });
+    const cache = createAsyncCache(mock);
 
     // 🚀 Called
     await cache.get(KEY_ABC);
@@ -430,9 +1081,7 @@ describe("AsyncCache", () => {
 
   test("clearing the cache while pending", async () => {
     const mock = createAsyncMock();
-    const cache = createAsyncCache(mock, {
-      deduplicationInterval: 0,
-    });
+    const cache = createAsyncCache(mock);
 
     // 🚀 Called with "abc"
     await cache.get(KEY_ABC);
@@ -448,16 +1097,52 @@ describe("AsyncCache", () => {
 
     expect(cache.has(KEY_ABC)).toBe(false);
     expect(cache.has(KEY_XYZ)).toBe(false);
-    expect(state).toMatchObject<AsyncStateDataError<string, Error>>({
+    expect(state).toMatchObject<AsyncState<string, Error>>({
+      isLoading: false,
       data: KEY_XYZ,
     });
   });
 
+  test("clearing the cache should unsubscribe active subscribers", async () => {
+    const mock = createAsyncMock();
+    const cache = createAsyncCache(mock);
+    const callback = jest.fn();
+
+    const unsubscribe = cache.subscribe(KEY_ABC, callback);
+
+    // 🚀 Called
+    await cache.get(KEY_ABC);
+
+    // 🗑️ Cleared
+    cache.clear();
+
+    // 🚀 Called again because cleared
+    await cache.get(KEY_ABC);
+
+    unsubscribe();
+
+    expect(callback).toHaveBeenCalledTimes(2);
+
+    // 1️⃣ Triggered when the first call started
+    expect(callback).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining<AsyncState<string, Error>>({
+        isLoading: true,
+      })
+    );
+    // 2️⃣✅ Triggered when the first call resolved
+    expect(callback).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining<AsyncState<string, Error>>({
+        isLoading: false,
+        data: KEY_ABC,
+      })
+    );
+  });
+
   test("checking if a key exists", async () => {
     const mock = createAsyncMock();
-    const cache = createAsyncCache(mock, {
-      deduplicationInterval: 0,
-    });
+    const cache = createAsyncCache(mock);
 
     expect(cache.has(KEY_ABC)).toBe(false);
 
@@ -469,34 +1154,29 @@ describe("AsyncCache", () => {
 
   test("getting the cache of a key", async () => {
     const mock = createAsyncMock();
-    const cache = createAsyncCache(mock, {
-      deduplicationInterval: 0,
-    });
+    const cache = createAsyncCache(mock);
 
     // 🚀 Called
     await cache.get(KEY_ABC);
 
-    expect(cache.getState(KEY_ABC)).toMatchObject<
-      AsyncStateDataError<string, Error>
-    >({
+    expect(cache.getState(KEY_ABC)).toMatchObject<AsyncState<string, Error>>({
+      isLoading: false,
       data: KEY_ABC,
     });
   });
 
   test("getting the cache of a non-existing key", () => {
     const mock = createAsyncMock();
-    const cache = createAsyncCache(mock, {
-      deduplicationInterval: 0,
-    });
+    const cache = createAsyncCache(mock);
 
     expect(cache.getState(KEY_ABC)).toBeUndefined();
   });
 
   test("subscribing to a key", async () => {
-    const mock = createAsyncMock((index) => index === 0);
-    const cache = createAsyncCache(mock, {
-      deduplicationInterval: 0,
+    const mock = createAsyncMock({
+      error: (index) => index === 0,
     });
+    const cache = createAsyncCache(mock);
     const callback = jest.fn();
 
     const unsubscribe = cache.subscribe(KEY_ABC, callback);
@@ -548,9 +1228,7 @@ describe("AsyncCache", () => {
 
   test("subscribing a non-existing key", async () => {
     const mock = createAsyncMock();
-    const cache = createAsyncCache(mock, {
-      deduplicationInterval: 0,
-    });
+    const cache = createAsyncCache(mock);
     const callback = jest.fn();
 
     // 🛎️ Subscribes to a key that doesn't exist yet
@@ -562,273 +1240,6 @@ describe("AsyncCache", () => {
     unsubscribe();
 
     expect(callback).toHaveBeenCalled();
-  });
-
-  test("subscribing and invalidating", async () => {
-    const mock = createAsyncMock();
-    const cache = createAsyncCache(mock, {
-      deduplicationInterval: 0,
-    });
-    const callback = jest.fn();
-
-    const unsubscribe = cache.subscribe(KEY_ABC, callback);
-
-    // 🚀 Called
-    await cache.get(KEY_ABC);
-
-    // 🗑️ Invalidated
-    cache.invalidate(KEY_ABC);
-
-    unsubscribe();
-
-    expect(callback).toHaveBeenCalledTimes(3);
-
-    // 1️⃣ Triggered when the first call started
-    expect(callback).toHaveBeenNthCalledWith(
-      1,
-      expect.objectContaining<AsyncState<string, Error>>({
-        isLoading: true,
-      })
-    );
-    // 2️⃣✅ Triggered when the first call finished
-    expect(callback).toHaveBeenNthCalledWith(
-      2,
-      expect.objectContaining<AsyncState<string, Error>>({
-        isLoading: false,
-        data: KEY_ABC,
-      })
-    );
-    // 3️⃣🗑️ Triggered when invalidated
-    expect(callback).toHaveBeenNthCalledWith(
-      3,
-      expect.objectContaining<AsyncState<string, Error>>({
-        isLoading: false,
-      })
-    );
-  });
-
-  test("subscribing and invalidating while pending", async () => {
-    const mock = createAsyncMock();
-    const cache = createAsyncCache(mock, {
-      deduplicationInterval: 0,
-    });
-    const callback = jest.fn();
-
-    const unsubscribe = cache.subscribe(KEY_ABC, callback);
-
-    // 🚀 Called
-    const promise = cache.get(KEY_ABC);
-
-    // 🗑️ Invalidated before the call finished
-    cache.invalidate(KEY_ABC);
-
-    await promise;
-
-    unsubscribe();
-
-    expect(callback).toHaveBeenCalledTimes(2);
-
-    // 1️⃣ Triggered when the first call starts
-    expect(callback).toHaveBeenNthCalledWith(
-      1,
-      expect.objectContaining<AsyncState<string, Error>>({
-        isLoading: true,
-      })
-    );
-    // 2️⃣✅🗑️ Triggered when the first call finished but was invalidated in the meantime
-    expect(callback).toHaveBeenNthCalledWith(
-      2,
-      expect.objectContaining<AsyncState<string, Error>>({
-        isLoading: false,
-      })
-    );
-  });
-
-  test("only notifying subscribers when there's a change", async () => {
-    const mock = createAsyncMock();
-    const cache = createAsyncCache(mock, {
-      deduplicationInterval: 0,
-    });
-    const callback = jest.fn();
-
-    const unsubscribe = cache.subscribe(KEY_ABC, callback);
-
-    // 🚀 Called
-    await cache.get(KEY_ABC);
-
-    // 🗑️ Invalidated but without clearing the cache for "abc"
-    cache.invalidate(KEY_ABC, { clearData: false });
-    // 🗑️ Invalidated
-    cache.invalidate(KEY_ABC);
-    // 🗑️ Invalidated
-    cache.invalidate(KEY_ABC);
-
-    unsubscribe();
-
-    expect(callback).toHaveBeenCalledTimes(3);
-
-    // 1️⃣ Triggered when the first call starts
-    expect(callback).toHaveBeenNthCalledWith(
-      1,
-      expect.objectContaining<AsyncState<string, Error>>({
-        isLoading: true,
-      })
-    );
-    // 2️⃣✅ Triggered when the first call finished
-    expect(callback).toHaveBeenNthCalledWith(
-      2,
-      expect.objectContaining<AsyncState<string, Error>>({
-        isLoading: false,
-        data: KEY_ABC,
-      })
-    );
-    // 3️⃣🗑️ Triggered when invalidated and cleared
-    expect(callback).toHaveBeenNthCalledWith(
-      3,
-      expect.objectContaining<AsyncState<string, Error>>({
-        isLoading: false,
-      })
-    );
-  });
-});
-
-describe("AsyncCache use cases", () => {
-  test("token with expiration", async () => {
-    const TOKEN_EXPIRATION = REQUEST_DELAY * 2;
-
-    type Token = {
-      token: string;
-      expiresAt: number;
-    };
-
-    let index = 0;
-    const mock = jest.fn(async (key: string): Promise<Token> => {
-      await sleep(REQUEST_DELAY);
-
-      const isError = index === 1;
-      const expiresAt = Date.now() + TOKEN_EXPIRATION;
-      index += 1;
-
-      if (isError) {
-        throw new Error("Couldn't generate a token");
-      } else {
-        return {
-          token: JSON.stringify({ key, expiresAt }),
-          expiresAt,
-        };
-      }
-    });
-    const cache = createAsyncCache(mock, {
-      deduplicationInterval: 0,
-    });
-
-    const callback = jest.fn();
-    const unsubscribe = cache.subscribe(KEY_ABC, callback);
-
-    async function getToken(): Promise<string> {
-      const state = cache.getState(KEY_ABC);
-
-      if (state?.data && state.data.expiresAt > Date.now()) {
-        return state.data.token;
-      }
-
-      if (state?.data && !state.isLoading) {
-        cache.invalidate(KEY_ABC);
-      }
-
-      const { data } = await cache.get(KEY_ABC);
-
-      if (data) {
-        return data.token;
-      } else {
-        return await getToken();
-      }
-    }
-
-    // 🚀 Generating a first token
-    expect(Number(JSON.parse(await getToken()).expiresAt)).toBeGreaterThan(
-      Date.now()
-    );
-
-    // ✨ Cached because the first token is still valid
-    expect(Number(JSON.parse(await getToken()).expiresAt)).toBeGreaterThan(
-      Date.now()
-    );
-
-    await sleep(TOKEN_EXPIRATION * 1.5);
-
-    const tokens = await Promise.all([
-      // 🚀 Generating a new token because the cached one expired
-      // ❌ Errors, retries, and ✅ succeeds the second time
-      getToken(),
-      // 🔜 Waiting on the first call's promises
-      getToken(),
-      // 🔜 Waiting on the first call's promises
-      getToken(),
-    ]);
-
-    for (const token of tokens) {
-      expect(Number(JSON.parse(token).expiresAt)).toBeGreaterThan(Date.now());
-    }
-
-    unsubscribe();
-
-    expect(mock).toHaveBeenCalledTimes(3);
-
-    expect(callback).toHaveBeenCalledTimes(7);
-
-    // 1️⃣ Triggered when generating the first token started
-    expect(callback).toHaveBeenNthCalledWith(
-      1,
-      expect.objectContaining<AsyncState<string, Error>>({
-        isLoading: true,
-      })
-    );
-    // 2️⃣✅ Triggered when generating the first token finished
-    expect(callback).toHaveBeenNthCalledWith(
-      2,
-      expect.objectContaining<AsyncState<string, Error>>({
-        isLoading: false,
-        data: expect.any(Object),
-      })
-    );
-    // 3️⃣🗑️ Triggered when invalidated because expired
-    expect(callback).toHaveBeenNthCalledWith(
-      3,
-      expect.objectContaining<AsyncState<string, Error>>({
-        isLoading: false,
-      })
-    );
-    // 4️⃣ Triggered when generating the second token
-    expect(callback).toHaveBeenNthCalledWith(
-      4,
-      expect.objectContaining<AsyncState<string, Error>>({
-        isLoading: true,
-      })
-    );
-    // 5️⃣❌ Triggered when generating the second token errored
-    expect(callback).toHaveBeenNthCalledWith(
-      5,
-      expect.objectContaining<AsyncState<string, Error>>({
-        isLoading: false,
-        error: expect.any(Error),
-      })
-    );
-    // 6️⃣ Triggered when generating the third token started
-    expect(callback).toHaveBeenNthCalledWith(
-      6,
-      expect.objectContaining<AsyncState<string, Error>>({
-        isLoading: true,
-      })
-    );
-    // 7️⃣✅ Triggered when generating the third token finished
-    expect(callback).toHaveBeenNthCalledWith(
-      7,
-      expect.objectContaining<AsyncState<string, Error>>({
-        isLoading: false,
-        data: expect.any(Object),
-      })
-    );
   });
 });
 
