@@ -1371,47 +1371,37 @@ describe("room", () => {
       });
     });
 
-    test.failing(
-      "disconnect and reconnect should keep user current presence",
-      async () => {
-        const { room, refRoom, reconnect, wss } = await prepareStorageTest<
-          never,
-          { x: number }
-        >([createSerializedObject("0:0", {})], 1);
+    test("disconnect and reconnect should keep user current presence", async () => {
+      const { room, refRoom, reconnect, refWss } = await prepareStorageTest<
+        never,
+        { x: number }
+      >([createSerializedObject("0:0", {})], 1);
 
-        room.updatePresence({ x: 1 });
+      room.updatePresence({ x: 1 });
 
-        wss.last.close(
-          new CloseEvent("close", {
-            code: WebsocketCloseCodes.CLOSE_ABNORMAL,
-            wasClean: false,
-          })
-        );
+      reconnect(2);
 
-        reconnect(2);
+      await refWss.waitUntilMessageReceived();
+      const refRoomOthers = refRoom.getOthers();
+      expect(refRoomOthers).toEqual([
+        {
+          connectionId: 1,
+          id: undefined,
+          info: undefined,
+          presence: { x: 1 },
+          isReadOnly: false,
+        }, // old user is not cleaned directly
+        {
+          connectionId: 2,
+          id: undefined,
+          info: undefined,
+          presence: { x: 1 },
+          isReadOnly: false,
+        },
+      ]);
+    });
 
-        const refRoomOthers = refRoom.getOthers();
-
-        expect(refRoomOthers).toEqual([
-          {
-            connectionId: 1,
-            id: undefined,
-            info: undefined,
-            presence: { x: 1 },
-            isReadOnly: false,
-          }, // old user is not cleaned directly
-          {
-            connectionId: 2,
-            id: undefined,
-            info: undefined,
-            presence: { x: 1 },
-            isReadOnly: false,
-          },
-        ]);
-      }
-    );
-
-    test.failing("hasPendingStorageModifications", async () => {
+    test("hasPendingStorageModifications", async () => {
       const { storage, expectStorage, room, refStorage, reconnect, wss } =
         await prepareStorageTest<{ x: number }>(
           [createSerializedObject("0:0", { x: 0 })],
@@ -1449,9 +1439,8 @@ describe("room", () => {
 
       reconnect(2, newInitStorage);
 
-      expectStorage({
-        x: 1,
-      });
+      await waitUntilStorageUpdate(room);
+      expectStorage({ x: 1 });
       expect(room.getStorageStatus()).toBe("synchronized");
       expect(storageStatusCallback).toBeCalledWith("synchronized");
 

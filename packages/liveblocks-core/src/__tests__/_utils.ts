@@ -381,15 +381,6 @@ export class MockWebSocket {
   }
 }
 
-/**
- * Makes a simple mocked WebSocket client that is connected to a mocked
- * WebSocket server.
- */
-function makeControllableWebSocket(): MockWebSocket {
-  const server = new MockWebSocketServer();
-  return server.newSocket();
-}
-
 // ------------------------------------------------------------------------
 // This little line will ensure that the MockWebSocket class is and remains
 // assignable to IWebSocket in TypeScript (because "implementing it" is
@@ -673,38 +664,42 @@ export async function prepareStorageTest<
 
   function reconnect(
     actor: number,
-    newItems?: IdTuple<SerializedCrdt>[] | undefined
-  ): MockWebSocket {
+    nextStorageItems?: IdTuple<SerializedCrdt>[] | undefined
+  ) {
     currentActor = actor;
-    const ws = makeControllableWebSocket();
-    subject.room.connect();
-    subject.room.__internal.send.simulateAuthSuccess(
-      makeRoomToken(actor, []),
-      ws
-    );
-    ws.server.accept();
 
-    // Mock server messages for Presence.
-    // Other user in the room (refRoom) recieves a "USER_JOINED" message.
-    ref.room.__internal.send.incomingMessage(
-      serverMessage({
-        type: ServerMsgCode.USER_JOINED,
-        actor,
-        id: undefined,
-        info: undefined,
-        scopes: [],
-      })
-    );
+    // Next time a client socket connects, send this INITIAL_STORAGE_STATE
+    // message
+    subject.wss.onConnection((conn) => {
+      if (nextStorageItems) {
+        conn.server.send(
+          serverMessage({
+            type: ServerMsgCode.INITIAL_STORAGE_STATE,
+            items: nextStorageItems,
+          })
+        );
+      }
 
-    if (newItems) {
-      subject.room.__internal.send.incomingMessage(
+      // Other user in the room (refRoom) receives a "USER_JOINED" message.
+      ref.wss.last.send(
         serverMessage({
-          type: ServerMsgCode.INITIAL_STORAGE_STATE,
-          items: newItems,
+          type: ServerMsgCode.USER_JOINED,
+          actor,
+          id: undefined,
+          info: undefined,
+          scopes: [],
         })
       );
-    }
-    return ws;
+    });
+
+    // Send a close from the WebSocket server, triggering an automatic reconnect
+    // by the room.
+    subject.wss.last.close(
+      new CloseEvent("close", {
+        code: WebsocketCloseCodes.CLOSE_ABNORMAL,
+        wasClean: false,
+      })
+    );
   }
 
   return {
@@ -715,20 +710,19 @@ export async function prepareStorageTest<
     refStorage: ref.storage,
     expectStorage,
     assertUndoRedo,
+
     applyRemoteOperations: (ops: Op[]) =>
-      subject.room.__internal.send.incomingMessage(
+      subject.wss.last.send(
         serverMessage({
           type: ServerMsgCode.UPDATE_STORAGE,
           ops,
         })
       ),
+
     reconnect,
 
     wss: subject.wss,
-    /** @deprecated Use wss. */
-    get ws() {
-      return subject.wss.last;
-    },
+    refWss: ref.wss,
   };
 }
 
