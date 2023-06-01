@@ -4,6 +4,28 @@ import type { Json, JsonObject } from "../lib/Json";
 import type { BaseUserMeta } from "../protocol/BaseUserMeta";
 import type { ConnectionStatus, Room } from "../room";
 
+export function sleep(delay: number) {
+  return new Promise((resolve) => setTimeout(resolve, delay));
+}
+
+export async function waitFor(predicate: () => boolean): Promise<void> {
+  const result = predicate();
+  if (result) {
+    return;
+  }
+
+  const time = new Date().getTime();
+
+  while (new Date().getTime() - time < 2000) {
+    await sleep(100);
+    if (predicate()) {
+      return;
+    }
+  }
+
+  throw new Error("TIMEOUT");
+}
+
 /**
  * Handy helper that allows to pause test execution until the room has
  * asynchronously reached a particular status. Status must be reached within

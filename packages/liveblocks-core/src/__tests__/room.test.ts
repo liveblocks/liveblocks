@@ -39,9 +39,9 @@ import {
   prepareStorageTest,
   prepareStorageUpdateTest,
   serverMessage,
-  waitFor,
 } from "./_utils";
 import {
+  waitFor,
   waitUntilCustomEvent,
   waitUntilOthersEvent,
   waitUntilStatus,
