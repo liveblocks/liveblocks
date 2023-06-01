@@ -874,9 +874,7 @@ export function createRoom<
   const batchUpdates = config.unstable_batchedUpdates ?? doNotBatchUpdates;
 
   function onStatusDidChange(newStatus: PublicConnectionStatus) {
-    if (newStatus !== "open" && newStatus !== "connecting") {
-      context.connection.set({ status: newStatus });
-    } else {
+    if (newStatus === "open" || newStatus === "connecting") {
       context.connection.set({
         status: newStatus,
         id: managedSocket.token.parsed.actor,
@@ -884,6 +882,8 @@ export function createRoom<
         userId: managedSocket.token.parsed.id,
         isReadOnly: isStorageReadOnly(managedSocket.token.parsed.scopes),
       });
+    } else {
+      context.connection.set({ status: newStatus });
     }
 
     // Forward to the outside world
