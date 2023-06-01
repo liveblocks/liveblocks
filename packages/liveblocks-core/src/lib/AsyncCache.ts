@@ -1,117 +1,119 @@
 import type { Callback, Observable, UnsubscribeCallback } from "./EventSource";
 import { makeEventSource } from "./EventSource";
-
-const DEDUPLICATION_INTERVAL = 2000;
-
-type WithRequired<T, K extends keyof T> = T & { [P in K]-?: T[P] };
+import { shallow } from "./shallow";
 
 type AsyncFunction<T, A extends any[] = any[]> = (...args: A) => Promise<T>;
 
-type AsyncCacheOptions = {
-  deduplicationInterval?: number;
+type Mutation<T> = (data: T | undefined, key: string) => Promise<T | void>;
+
+type RevalidateOptions<T> = {
+  optimisticData: T | ((data: T | undefined) => T);
 };
 
-type AsyncCacheItemOptions = WithRequired<
-  AsyncCacheOptions,
-  "deduplicationInterval"
->;
-
-type InvalidateOptions<TData = any> =
-  | { clearData?: false; setOptimisticData?: never }
-  | {
-      clearData?: never;
-      setOptimisticData: (data: TData | undefined) => TData | undefined;
-    };
-
-export type AsyncState<TData = any, TError = any> = {
-  isLoading: boolean;
-  data?: TData;
-  error?: TError;
+type AsyncCacheOptions<T, E> = {
+  compare?: (a: AsyncState<T, E>, b: AsyncState<T, E>) => boolean;
 };
 
-type AsyncResolvedState<TData = any, TError = any> = AsyncState<
-  TData,
-  TError
-> & {
-  isLoading: false;
+type AsyncStateInitial = {
+  readonly isLoading: false;
+  readonly data?: never;
+  readonly error?: never;
 };
 
-type AsyncCacheItemContext<TData, TError> = AsyncState<TData, TError> & {
+type AsyncStateLoading<T> = {
+  readonly isLoading: true;
+  readonly data?: T;
+  readonly error?: never;
+};
+
+type AsyncStateSuccess<T> = {
+  readonly isLoading: false;
+  readonly data: T;
+  readonly error?: never;
+};
+
+type AsyncStateError<T, E> = {
+  readonly isLoading: false;
+  readonly data?: T;
+  readonly error: E;
+};
+
+export type AsyncState<T, E> =
+  | AsyncStateInitial
+  | AsyncStateLoading<T>
+  | AsyncStateSuccess<T>
+  | AsyncStateError<T, E>;
+
+type AsyncStateResolved<T, E> = AsyncStateSuccess<T> | AsyncStateError<T, E>;
+
+type AsyncCacheItemContext<T> = {
+  promise?: Promise<T>;
   isInvalid: boolean;
-  scheduledInvalidation?: InvalidateOptions<TData>;
   rollbackOptimisticDataOnError?: boolean;
-  promise?: Promise<TData>;
-  lastInvokedAt?: number;
-  lastState: AsyncState<TData, TError>;
-  previousNonOptimisticData?: TData;
+  previousNonOptimisticData?: T;
 };
 
-export type AsyncCacheItem<TData = any, TError = any> = Observable<
-  AsyncState<TData, TError>
-> & {
-  get(): Promise<AsyncResolvedState<TData, TError>>;
-  getState(): AsyncState<TData, TError>;
-  invalidate(options?: InvalidateOptions<TData>): void;
+export type AsyncCacheItem<T, E> = Observable<AsyncState<T, E>> & {
+  get(): Promise<AsyncStateResolved<T, E>>;
+  getState(): AsyncState<T, E>;
+  revalidate(options?: RevalidateOptions<T>): Promise<AsyncStateResolved<T, E>>;
   revalidate(
-    options?: InvalidateOptions<TData>
-  ): Promise<AsyncResolvedState<TData, TError>>;
+    mutation: Mutation<T>,
+    options?: RevalidateOptions<T>
+  ): Promise<AsyncStateResolved<T, E>>;
+  revalidate(
+    mutation?: RevalidateOptions<T> | Mutation<T>,
+    second?: RevalidateOptions<T>
+  ): Promise<AsyncStateResolved<T, E>>;
 };
 
-export type AsyncCache<TData = any, TError = any> = {
-  /**
-   * @private
-   *
-   * Creates a key.
-   *
-   * @param key The key to create.
-   */
-  create(key: string): AsyncCacheItem<TData, TError>;
-
+export type AsyncCache<T, E> = {
   /**
    * Returns a promise which resolves with the state of the key.
    *
    * @param key The key to get.
    */
-  get(key: string): Promise<AsyncResolvedState<TData, TError>>;
+  get(key: string): Promise<AsyncStateResolved<T, E>>;
 
   /**
    * Returns the current state of the key synchronously.
    *
    * @param key The key to get the state of.
    */
-  getState(key: string): AsyncState<TData, TError> | undefined;
+  getState(key: string): AsyncState<T, E> | undefined;
 
   /**
-   * Marks a key as invalid, which means that the next
-   * {@link AsyncCache.get} call will re-invoke the function.
-   *
-   * @param key The key to invalidate.
-   * @param options.clearData Whether to clear the cached data.
-   * @param options.setOptimisticData Set data immediately but rollback if there's an error.
-   */
-  invalidate(key: string, options?: InvalidateOptions<TData>): void;
-
-  /**
-   * Calls {@link AsyncCache.invalidate} and then {@link AsyncCache.get}.
+   * Revalidates the key.
    *
    * @param key The key to revalidate.
-   * @param options.clearData Whether to clear the cached data.
-   * @param options.setOptimisticData Set data immediately but rollback if there's an error.
+   * @param options.optimisticData Set data optimistically but rollback if there's an error.
    */
   revalidate(
     key: string,
-    options?: InvalidateOptions<TData>
-  ): Promise<AsyncResolvedState<TData, TError>>;
+    options?: RevalidateOptions<T>
+  ): Promise<AsyncStateResolved<T, E>>;
+  /**
+   * Revalidates the key with a mutation.
+   *
+   * @param key The key to revalidate.
+   * @param mutation An asynchronous function to wait on, optionally setting the data manually if it returns any.
+   * @param options.optimisticData Set data optimistically but rollback if there's an error.
+   */
+  revalidate(
+    key: string,
+    mutation: Mutation<T>,
+    options?: RevalidateOptions<T>
+  ): Promise<AsyncStateResolved<T, E>>;
 
   /**
-   * Subscribes to a key's changes.
+   * Subscribes to the key's changes.
    *
    * @param key The key to subscribe to.
    * @param callback The function invoked on every change.
    */
   subscribe(
     key: string,
-    callback: Callback<AsyncState<TData, TError>>
+    callback: Callback<AsyncState<T, E>>
   ): UnsubscribeCallback;
 
   /**
@@ -129,177 +131,206 @@ export type AsyncCache<TData = any, TError = any> = {
 
 const noop = () => {};
 
-// TODO: invalidate() with optimistic data will not be counted as a different state
-export function isDifferentState(a: AsyncState, b: AsyncState): boolean {
-  // This might not be true, `data` and `error` would have to be
-  // deeply compared to know that. But in our use-case, `data` and
-  // `error` can't change without being set to `undefined` first or
-  // `isLoading` also changing in between or at the same time.
-  return (
+export function isStateEqual(
+  a: AsyncState<unknown, unknown>,
+  b: AsyncState<unknown, unknown>
+): boolean {
+  if (
     a.isLoading !== b.isLoading ||
     (a.data === undefined) !== (b.data === undefined) ||
     (a.error === undefined) !== (b.error === undefined)
-  );
+  ) {
+    return false;
+  } else {
+    return shallow(a.data, b.data) && shallow(a.error, b.error);
+  }
 }
 
-function createCacheItem<TData = any, TError = any>(
+function createCacheItem<T, E>(
   key: string,
-  asyncFunction: AsyncFunction<TData>,
-  { deduplicationInterval }: AsyncCacheItemOptions
-): AsyncCacheItem<TData, TError> {
-  const context: AsyncCacheItemContext<TData, TError> = {
-    isLoading: false,
+  asyncFunction: AsyncFunction<T>,
+  options?: AsyncCacheOptions<T, E>
+): AsyncCacheItem<T, E> {
+  const context: AsyncCacheItemContext<T> = {
     isInvalid: true,
-    lastState: { isLoading: false },
   };
-  const eventSource = makeEventSource<AsyncState<TData, TError>>();
+  let state: AsyncState<T, E> = { isLoading: false };
+  let previousState: AsyncState<T, E> = { isLoading: false };
+  const eventSource = makeEventSource<AsyncState<T, E>>();
 
+  /**
+   * @internal
+   */
   function notify() {
-    const state: AsyncState<TData, TError> = {
-      isLoading: context.isLoading,
-      data: context.data,
-      error: context.error,
-    };
+    const compare = options?.compare ?? isStateEqual;
 
-    // If the cache has changed, we notify
-    // subscribers and update the cache.
-    if (isDifferentState(context.lastState, state)) {
-      context.lastState = state;
+    // We only notify subscribers if the cache has changed.
+    if (!compare(previousState, state)) {
+      previousState = state;
       eventSource.notify(state);
     }
   }
 
-  function invoke() {
-    context.lastInvokedAt = Date.now();
-    context.error = undefined;
-    context.isLoading = true;
-    context.isInvalid = true;
-    context.promise = asyncFunction(key);
-
-    // We notify subscribers that the promise
-    // started (changing `isLoading`).
-    notify();
-  }
-
+  /**
+   * @internal
+   */
   async function resolve() {
+    // Return early if there's nothing to resolve.
+    if (!context.promise) {
+      return;
+    }
+
     try {
       const data = await context.promise;
 
-      context.data = data;
-      context.previousNonOptimisticData = data;
-      context.error = undefined;
       context.isInvalid = false;
-    } catch (error) {
-      // We updated `data` optimistically but there's now an
-      // error so we rollback to the previous non-optimistic `data`.
-      if (context.rollbackOptimisticDataOnError) {
-        context.data = context.previousNonOptimisticData;
-      }
+      context.previousNonOptimisticData = data;
 
-      // We keep the key as invalid because there was an error.
-      context.isInvalid = true;
-      context.error = error as TError;
+      state = {
+        isLoading: false,
+        data,
+      };
+    } catch (error) {
+      state = {
+        isLoading: false,
+        data: context.rollbackOptimisticDataOnError
+          ? // If we updated `data` optimistically but there's now an
+            // error, we rollback to the previous non-optimistic `data`.
+            context.previousNonOptimisticData
+          : // Otherwise, we keep the current `data`.
+            state.data,
+        error: error as E,
+      };
     }
 
     context.rollbackOptimisticDataOnError = false;
     context.promise = undefined;
-    context.isLoading = false;
 
-    if (context.scheduledInvalidation) {
-      // If there was an invalidation made during
-      // the promise, we scheduled it to now.
-      const scheduledInvalidation = context.scheduledInvalidation;
-      context.scheduledInvalidation = undefined;
-      invalidate(scheduledInvalidation);
-    } else {
-      // We notify subscribers that the promise resolved
-      // (changing `isLoading` and either `data` or `error`).
-      notify();
-    }
+    // We notify subscribers that the promise resolved, either as a success or an error.
+    notify();
   }
 
-  function invalidate(options: InvalidateOptions<TData> = {}) {
-    if (context.promise) {
-      // If there is a promise pending, we schedule the
-      // invalidation for when the promise resolves.
-      context.scheduledInvalidation = options;
-    } else if (!context.scheduledInvalidation && !context.error) {
-      // We only invalidate if there's not an
-      // invalidation still scheduled or an error.
-      context.isInvalid = true;
-      context.error = undefined;
+  async function revalidate(
+    options?: RevalidateOptions<T>
+  ): Promise<AsyncStateResolved<T, E>>;
+  async function revalidate(
+    mutation: Mutation<T>,
+    options?: RevalidateOptions<T>
+  ): Promise<AsyncStateResolved<T, E>>;
+  async function revalidate(
+    first?: RevalidateOptions<T> | Mutation<T>,
+    second?: RevalidateOptions<T>
+  ): Promise<AsyncStateResolved<T, E>> {
+    const mutation = typeof first === "function" ? first : undefined;
+    const options = typeof first === "function" ? second : first;
 
-      // If we set `data` optimistically, we specify that we
-      // should rollback `data` if the next resolve is an error.
-      if (options.setOptimisticData) {
-        context.rollbackOptimisticDataOnError = true;
-        context.data = options.setOptimisticData(context.data);
-      } else if (options.clearData !== false) {
-        context.data = undefined;
+    context.isInvalid = true;
+
+    // We first set optimistic data if it's provided.
+    if (options?.optimisticData) {
+      context.rollbackOptimisticDataOnError = true;
+      state = {
+        ...state,
+        data:
+          options.optimisticData instanceof Function
+            ? options.optimisticData(state.data)
+            : options.optimisticData,
+      };
+    }
+
+    // If there's no mutation, we revalidate the data by getting it again.
+    if (!mutation) {
+      return get();
+    }
+
+    // We catch the mutation errors so we can set the correct non-loading state.
+    try {
+      state = {
+        isLoading: true,
+        data: state.data,
+      };
+
+      // We notify subscribers that the mutation started.
+      notify();
+
+      const data = await mutation(context.previousNonOptimisticData, key);
+
+      if (data === undefined) {
+        return get();
       }
 
-      // We notify subscribers that there was an
-      // invalidation (potentially changind `data`).
+      context.isInvalid = false;
+      context.previousNonOptimisticData = data;
+      context.rollbackOptimisticDataOnError = false;
+
+      state = {
+        isLoading: false,
+        data,
+      };
+
+      // We notify subscribers that the mutation fulfilled.
       notify();
+
+      return getState() as AsyncStateResolved<T, E>;
+    } catch (error) {
+      state = {
+        isLoading: false,
+        data: context.rollbackOptimisticDataOnError
+          ? // If we updated `data` optimistically but there's now an
+            // error, we rollback to the previous non-optimistic `data`.
+            (context.previousNonOptimisticData as T)
+          : // Otherwise, we keep the current `data`.
+            (state.data as T),
+      };
+
+      context.rollbackOptimisticDataOnError = false;
+
+      // We notify subscribers that the mutation errored.
+      notify();
+
+      // We re-throw the mutation error so it can be handled outside.
+      throw error as E;
     }
   }
 
   async function get() {
-    // If a key isn't invalid (never called, errored,
-    // invalidated...), we just return its cache.
+    // If a key isn't invalid (never called, errored...), we just return its cache.
     if (context.isInvalid) {
-      const isDuplicate = context.lastInvokedAt
-        ? Date.now() - context.lastInvokedAt < deduplicationInterval
-        : false;
+      // We only invoke the provided function if there's not a promise pending already.
+      if (!context.promise) {
+        context.isInvalid = true;
+        context.promise = asyncFunction(key);
 
-      // We only invoke the provided function if there's not
-      // a promise pending already or if a previous invocation
-      // was already made within the deduplication interval.
-      if (!context.promise && !isDuplicate) {
-        invoke();
+        state = { isLoading: true, data: state.data };
+
+        // We notify subscribers that the promise started.
+        notify();
       }
 
-      if (context.promise) {
-        await resolve();
-      }
+      await resolve();
     }
 
-    return getState() as AsyncResolvedState<TData, TError>;
-  }
-
-  function revalidate(options?: InvalidateOptions<TData>) {
-    invalidate(options);
-
-    return get();
+    return getState() as AsyncStateResolved<T, E>;
   }
 
   function getState() {
-    return context.lastState;
+    return state;
   }
 
   return {
     ...eventSource.observable,
     get,
     getState,
-    invalidate,
     revalidate,
   };
 }
 
-export function createAsyncCache<TData = any, TError = any>(
-  asyncFunction: AsyncFunction<TData, [string]>,
-  options?: AsyncCacheOptions
-): AsyncCache<TData, TError> {
-  const cache = new Map<string, AsyncCacheItem<TData, TError>>();
-  const cacheItemOptions: AsyncCacheItemOptions = {
-    deduplicationInterval:
-      options?.deduplicationInterval ?? DEDUPLICATION_INTERVAL,
-  };
+export function createAsyncCache<T, E>(
+  asyncFunction: AsyncFunction<T, [string]>,
+  options?: AsyncCacheOptions<T, E>
+): AsyncCache<T, E> {
+  const cache = new Map<string, AsyncCacheItem<T, E>>();
 
-  /**
-   * Returns the {@link AsyncCacheItem} for a key,
-   * and create it if it doesn't exist yet.
-   */
   function create(key: string) {
     let cacheItem = cache.get(key);
 
@@ -307,7 +338,7 @@ export function createAsyncCache<TData = any, TError = any>(
       return cacheItem;
     }
 
-    cacheItem = createCacheItem(key, asyncFunction, cacheItemOptions);
+    cacheItem = createCacheItem(key, asyncFunction, options);
     cache.set(key, cacheItem);
 
     return cacheItem;
@@ -321,18 +352,15 @@ export function createAsyncCache<TData = any, TError = any>(
     return cache.get(key)?.getState();
   }
 
-  function invalidate(key: string, options?: InvalidateOptions<TData>) {
-    cache.get(key)?.invalidate(options);
-  }
-
-  function revalidate(key: string, options?: InvalidateOptions<TData>) {
-    return create(key).revalidate(options);
-  }
-
-  function subscribe(
+  function revalidate(
     key: string,
-    callback: Callback<AsyncState<TData, TError>>
+    first?: RevalidateOptions<T> | Mutation<T>,
+    second?: RevalidateOptions<T>
   ) {
+    return create(key).revalidate(first, second);
+  }
+
+  function subscribe(key: string, callback: Callback<AsyncState<T, E>>) {
     return create(key).subscribe(callback) ?? noop;
   }
 
@@ -345,10 +373,8 @@ export function createAsyncCache<TData = any, TError = any>(
   }
 
   return {
-    create,
     get,
     getState,
-    invalidate,
     revalidate,
     subscribe,
     has,

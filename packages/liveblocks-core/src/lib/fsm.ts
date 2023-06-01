@@ -11,66 +11,99 @@ import { makeEventSource } from "./EventSource";
 /**
  * Built-in event sent by .addTimedTransition().
  */
-type TimerEvent = { readonly type: "TIMER" };
+export type TimerEvent = { readonly type: "TIMER" };
 
 /**
  * Built-in events sent by .onEnterAsync().
  */
-type AsyncOKEvent<T> = {
+export type AsyncOKEvent<T> = {
   readonly type: "ASYNC_OK";
   readonly data: T;
 };
-type AsyncErrorEvent = {
+export type AsyncErrorEvent = {
   readonly type: "ASYNC_ERROR";
   readonly reason: unknown;
 };
 
-type BaseEvent = { readonly type: string };
-type BuiltinEvent = TimerEvent | AsyncOKEvent<unknown> | AsyncErrorEvent;
+export type BaseEvent = { readonly type: string };
+export type BuiltinEvent = TimerEvent | AsyncOKEvent<unknown> | AsyncErrorEvent;
 
-type CleanupFn = () => void;
-type EnterFn<TContext> = (context: Readonly<TContext>) => void | CleanupFn;
+export type Patchable<TContext> = Readonly<TContext> & {
+  patch(patch: Partial<TContext>): void;
+};
 
-type TargetFn<TContext, TEvent extends BaseEvent, TState extends string> = (
+export type CleanupFn<TContext> = (context: Patchable<TContext>) => void;
+export type EnterFn<TContext> = (
+  context: Patchable<TContext>
+) => void | CleanupFn<TContext>;
+
+export type TargetFn<
+  TContext extends object,
+  TEvent extends BaseEvent,
+  TState extends string
+> = (
   event: TEvent,
   context: Readonly<TContext>
-) => TState | TargetConfig<TContext, TEvent, TState>;
+) => TState | TargetObject<TContext, TEvent, TState> | null;
 
-type Assigner<TContext, TEvent extends BaseEvent> =
-  | Partial<TContext>
-  | ((context: Readonly<TContext>, event: TEvent) => Partial<TContext>);
-
-type Effect<TContext, TEvent extends BaseEvent> = (
-  context: Readonly<TContext>,
+export type Effect<TContext, TEvent extends BaseEvent> = (
+  context: Patchable<TContext>,
   event: TEvent
 ) => void;
 
-type TargetConfig<TContext, TEvent extends BaseEvent, TState extends string> = {
+/**
+ * "Expanded" object form to specify a target state with.
+ */
+export type TargetObject<
+  TContext extends object,
+  TEvent extends BaseEvent,
+  TState extends string
+> = {
   target: TState;
-
-  /**
-   * Specify an object that will be used to "patch" the current context as soon
-   * as the transition is taken. The context will be updated before the new
-   * state is entered.
-   */
-  assign?: Assigner<TContext, TEvent>;
 
   /**
    * Emit a side effect (other than assigning to the context) when this
    * transition is taken.
    */
-  effect?: Effect<TContext, TEvent>;
+  effect: Effect<TContext, TEvent> | Effect<TContext, TEvent>[];
 };
 
-type Target<TContext, TEvent extends BaseEvent, TState extends string> =
+export type Target<
+  TContext extends object,
+  TEvent extends BaseEvent,
+  TState extends string
+> =
   | TState // Static, e.g. 'complete'
-  | TargetConfig<TContext, TEvent, TState>
+  | TargetObject<TContext, TEvent, TState>
   | TargetFn<TContext, TEvent, TState>; // Dynamic, e.g. (context) => context.x ? 'complete' : 'other'
 
 type Groups<T extends string> = T extends `${infer G}.${infer Rest}`
   ? G | `${G}.${Groups<Rest>}`
   : never;
-type Wildcard<T extends string> = "*" | `${Groups<T>}.*`;
+export type Wildcard<T extends string> = "*" | `${Groups<T>}.*`;
+
+/**
+ * Returns whatever the given promise returns, but will be rejected with
+ * a "Timed out" error if the given promise does not return or reject within
+ * the given timeout period (in milliseconds).
+ *
+ * Useful to wrap onEnterAsync() promises, to avoid promises from being able to
+ * infinitely hang the machine.
+ */
+export async function withTimeout<T>(
+  promise: Promise<T>,
+  millis: number
+): Promise<T> {
+  let timerID: ReturnType<typeof setTimeout> | undefined;
+  return Promise.race([
+    promise,
+    new Promise<never>((_, reject) => {
+      timerID = setTimeout(() => {
+        reject(new Error("Timed out"));
+      }, millis);
+    }),
+  ]).finally(() => clearTimeout(timerID));
+}
 
 function distance(state1: string, state2: string): [number, number] {
   if (state1 === state2) {
@@ -118,22 +151,78 @@ function patterns<TState extends string>(
   return result;
 }
 
+class SafeContext<TContext extends object> {
+  private curr: Readonly<TContext>;
+
+  constructor(initialContext: TContext) {
+    this.curr = initialContext;
+  }
+
+  get current(): Readonly<TContext> {
+    return this.curr;
+  }
+
+  /**
+   * Call a callback function that allows patching of the context, by
+   * calling `context.patch()`. Patching is only allowed for the duration
+   * of this window.
+   */
+  allowPatching(callback: (context: Patchable<TContext>) => void): void {
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
+    const self = this;
+    let allowed = true;
+
+    const patchableContext = {
+      ...this.curr,
+      patch(patch: Partial<TContext>): void {
+        if (allowed) {
+          self.curr = Object.assign({}, self.curr, patch);
+
+          // Also patch the temporary mutable context helper itself, in case
+          // there are multiple calls in a succession that need
+          for (const pair of Object.entries(patch)) {
+            const [key, value] = pair as [
+              keyof TContext,
+              TContext[keyof TContext]
+            ];
+            if (key !== "patch") {
+              (this as TContext)[key] = value;
+            }
+          }
+        } else {
+          throw new Error("Can no longer patch stale context");
+        }
+      },
+    };
+    callback(patchableContext);
+
+    // If ever the patch function is called after this temporary window,
+    // disallow it
+    allowed = false;
+    return;
+  }
+}
+
 enum RunningState {
   NOT_STARTED_YET, // Machine can be set up during this phase
   STARTED,
   STOPPED,
 }
 
+let nextId = 1;
+
 export class FSM<
   TContext extends object,
   TEvent extends BaseEvent,
   TState extends string
 > {
+  public id: number;
+
   // Indicates whether this state machine is still being configured, has
   // started, or has terminated
   private runningState: RunningState;
 
-  private currentContext: Readonly<TContext>;
+  private readonly currentContext: SafeContext<TContext>;
 
   private states: Set<TState>;
   private currentStateOrNull: TState | null;
@@ -146,8 +235,7 @@ export class FSM<
   private readonly eventHub: {
     readonly didReceiveEvent: EventSource<TEvent | BuiltinEvent>;
     readonly willTransition: EventSource<{ from: TState; to: TState }>;
-    readonly didPatchContext: EventSource<Partial<TContext>>;
-    readonly didIgnoreEvent: EventSource<TEvent>;
+    readonly didIgnoreEvent: EventSource<TEvent | BuiltinEvent>;
     readonly willExitState: EventSource<TState>;
     readonly didEnterState: EventSource<TState>;
   };
@@ -155,8 +243,7 @@ export class FSM<
   public readonly events: {
     readonly didReceiveEvent: Observable<TEvent | BuiltinEvent>;
     readonly willTransition: Observable<{ from: TState; to: TState }>;
-    readonly didPatchContext: Observable<Partial<TContext>>;
-    readonly didIgnoreEvent: Observable<TEvent>;
+    readonly didIgnoreEvent: Observable<TEvent | BuiltinEvent>;
     readonly willExitState: Observable<TState>;
     readonly didEnterState: Observable<TState>;
   };
@@ -177,7 +264,7 @@ export class FSM<
   // will contain the exit handler for `foo.bar.qux` (at the top), then
   // `foo.bar.*`, then `foo.*`, and finally, `*`.
   //
-  private cleanupStack: (CleanupFn | null)[];
+  private cleanupStack: (CleanupFn<TContext> | null)[];
 
   private enterFns: Map<TState | Wildcard<TState>, EnterFn<TContext>>;
 
@@ -233,6 +320,7 @@ export class FSM<
   }
 
   constructor(initialContext: Readonly<TContext>) {
+    this.id = nextId++;
     this.runningState = RunningState.NOT_STARTED_YET;
     this.currentStateOrNull = null;
     this.states = new Set();
@@ -240,11 +328,10 @@ export class FSM<
     this.cleanupStack = [];
     this.knownEventTypes = new Set();
     this.allowedTransitions = new Map();
-    this.currentContext = Object.assign({}, initialContext);
+    this.currentContext = new SafeContext(initialContext);
     this.eventHub = {
       didReceiveEvent: makeEventSource(),
       willTransition: makeEventSource(),
-      didPatchContext: makeEventSource(),
       didIgnoreEvent: makeEventSource(),
       willExitState: makeEventSource(),
       didEnterState: makeEventSource(),
@@ -252,7 +339,6 @@ export class FSM<
     this.events = {
       didReceiveEvent: this.eventHub.didReceiveEvent.observable,
       willTransition: this.eventHub.willTransition.observable,
-      didPatchContext: this.eventHub.didPatchContext.observable,
       didIgnoreEvent: this.eventHub.didIgnoreEvent.observable,
       willExitState: this.eventHub.willExitState.observable,
       didEnterState: this.eventHub.didEnterState.observable,
@@ -260,7 +346,7 @@ export class FSM<
   }
 
   public get context(): Readonly<TContext> {
-    return this.currentContext;
+    return this.currentContext.current;
   }
 
   /**
@@ -302,7 +388,7 @@ export class FSM<
     return this.onEnter(nameOrPattern, () => {
       let cancelled = false;
 
-      void promiseFn(this.currentContext).then(
+      void promiseFn(this.currentContext.current).then(
         // On OK
         (data: T) => {
           if (!cancelled) {
@@ -386,19 +472,21 @@ export class FSM<
         this.allowedTransitions.set(srcState, map);
       }
 
-      for (const [type, targetConfig_] of Object.entries(mapping)) {
-        const targetConfig = targetConfig_ as
+      for (const [type, target_] of Object.entries(mapping)) {
+        if (map.has(type)) {
+          throw new Error(
+            `Trying to set transition "${type}" on "${srcState}" (via "${nameOrPattern}"), but a transition already exists there.`
+          );
+        }
+
+        const target = target_ as
           | Target<TContext, TEvent, TState>
           | null
           | undefined;
         this.knownEventTypes.add(type);
 
-        if (targetConfig !== undefined && targetConfig !== null) {
-          // TODO Disallow overwriting when using a wildcard pattern!
-          const targetFn =
-            typeof targetConfig === "function"
-              ? targetConfig
-              : () => targetConfig;
+        if (target !== undefined) {
+          const targetFn = typeof target === "function" ? target : () => target;
           map.set(type, targetFn);
         }
       }
@@ -423,7 +511,9 @@ export class FSM<
   ): this {
     return this.onEnter(stateOrPattern, () => {
       const ms =
-        typeof after === "function" ? after(this.currentContext) : after;
+        typeof after === "function"
+          ? after(this.currentContext.current)
+          : after;
       const timeoutID = setTimeout(() => {
         this.transition({ type: "TIMER" }, target);
       }, ms);
@@ -452,10 +542,12 @@ export class FSM<
   private exit(levels: number | null) {
     this.eventHub.willExitState.notify(this.currentState);
 
-    levels = levels ?? this.cleanupStack.length;
-    for (let i = 0; i < levels; i++) {
-      this.cleanupStack.pop()?.();
-    }
+    this.currentContext.allowPatching((patchableContext) => {
+      levels = levels ?? this.cleanupStack.length;
+      for (let i = 0; i < levels; i++) {
+        this.cleanupStack.pop()?.(patchableContext);
+      }
+    });
   }
 
   /**
@@ -468,15 +560,17 @@ export class FSM<
       levels ?? this.currentState.split(".").length + 1
     );
 
-    for (const pattern of enterPatterns) {
-      const enterFn = this.enterFns.get(pattern);
-      const cleanupFn = enterFn?.(this.currentContext);
-      if (typeof cleanupFn === "function") {
-        this.cleanupStack.push(cleanupFn);
-      } else {
-        this.cleanupStack.push(null);
+    this.currentContext.allowPatching((patchableContext) => {
+      for (const pattern of enterPatterns) {
+        const enterFn = this.enterFns.get(pattern);
+        const cleanupFn = enterFn?.(patchableContext);
+        if (typeof cleanupFn === "function") {
+          this.cleanupStack.push(cleanupFn);
+        } else {
+          this.cleanupStack.push(null);
+        }
       }
-    }
+    });
 
     this.eventHub.didEnterState.notify(this.currentState);
   }
@@ -509,16 +603,22 @@ export class FSM<
     const oldState = this.currentState;
 
     const targetFn = typeof target === "function" ? target : () => target;
-    const nextTarget = targetFn(event, this.currentContext);
+    const nextTarget = targetFn(event, this.currentContext.current);
     let nextState: TState;
-    let assign: Assigner<TContext, E> | undefined = undefined;
-    let effect: Effect<TContext, E> | undefined = undefined;
+    let effects: Effect<TContext, E>[] | undefined = undefined;
+    if (nextTarget === null) {
+      // Do not transition
+      this.eventHub.didIgnoreEvent.notify(event);
+      return;
+    }
+
     if (typeof nextTarget === "string") {
       nextState = nextTarget;
     } else {
       nextState = nextTarget.target;
-      assign = nextTarget.assign;
-      effect = nextTarget.effect;
+      effects = Array.isArray(nextTarget.effect)
+        ? nextTarget.effect
+        : [nextTarget.effect];
     }
 
     if (!this.states.has(nextState)) {
@@ -533,14 +633,18 @@ export class FSM<
     }
 
     this.currentStateOrNull = nextState; // NOTE: Could stay the same, but... there could be an action to execute here
-    if (assign !== undefined) {
-      const patch =
-        typeof assign === "function" ? assign(this.context, event) : assign;
-      this.currentContext = Object.assign({}, this.currentContext, patch);
-      this.eventHub.didPatchContext.notify(patch);
-    }
-    if (effect !== undefined) {
-      effect(this.context, event);
+    if (effects !== undefined) {
+      const effectsToRun = effects;
+      this.currentContext.allowPatching((patchableContext) => {
+        for (const effect of effectsToRun) {
+          if (typeof effect === "function") {
+            // May mutate context
+            effect(patchableContext, event);
+          } else {
+            patchableContext.patch(effect);
+          }
+        }
+      });
     }
 
     if (down > 0) {

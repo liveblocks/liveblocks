@@ -366,7 +366,7 @@ describe("finite state machine", () => {
       .addTransitions("one", {
         GO: {
           target: "two",
-          assign: { x: 0 },
+          effect: (ctx) => ctx.patch({ x: 0 }),
         },
       })
 
@@ -374,7 +374,7 @@ describe("finite state machine", () => {
         BACK: "one",
         GO: {
           target: "two", // Stay here, but... do an action
-          assign: (context) => ({ x: context.x + 1 }),
+          effect: (ctx) => ctx.patch({ x: ctx.x + 1 }),
         },
       })
 
@@ -405,6 +405,66 @@ describe("finite state machine", () => {
     expect(fsm.context).toEqual({ x: 5 });
   });
 
+  test("patching context (prevents patching old/stale contexts)", () => {
+    const fsm = new FSM({ x: 0 })
+      .addState("one")
+      .addState("two")
+      .addTransitions("one", { GO: "two" })
+      .addTransitions("two", { GO: "one" })
+
+      .onEnter("two", (ctx1) => {
+        ctx1.patch({ x: 13 });
+
+        return () => {
+          // NOTE: Patching an old context is an accident and will throw!
+          ctx1.patch({ x: 7 });
+        };
+      })
+
+      .start();
+
+    expect(fsm.currentState).toEqual("one");
+    expect(fsm.context).toEqual({ x: 0 });
+    fsm.send({ type: "GO" });
+    expect(fsm.context).toEqual({ x: 13 });
+
+    // Leaving "two" state will trigger onExit handler which contains the bug
+    expect(() => fsm.send({ type: "GO" })).toThrow(
+      "Can no longer patch stale context"
+    );
+  });
+
+  test("patching context (on enter)", () => {
+    const fsm = new FSM({ x: 0 })
+      .addState("one")
+      .addState("two")
+      .addTransitions("one", { GO: "two" })
+      .addTransitions("two", { GO: "one" })
+
+      .onEnter("two", (ctx1) => {
+        // Can call .patch() multiple times (the last one will win)
+        ctx1.patch({ x: 8 });
+        ctx1.patch({ x: -4 });
+        ctx1.patch({ x: 13 }); // winner
+        ctx1.patch({}); // won't overwrite anything
+
+        return (ctx2) => {
+          ctx2.patch({ x: -99 });
+          ctx2.patch({ x: 7 }); // winner
+          ctx2.patch({}); // won't overwrite anything
+        };
+      })
+
+      .start();
+
+    expect(fsm.currentState).toEqual("one");
+    expect(fsm.context).toEqual({ x: 0 });
+    fsm.send({ type: "GO" });
+    expect(fsm.context).toEqual({ x: 13 });
+    fsm.send({ type: "GO" });
+    expect(fsm.context).toEqual({ x: 7 });
+  });
+
   test("side effects", () => {
     const reset = jest.fn();
     const inced = jest.fn();
@@ -416,8 +476,7 @@ describe("finite state machine", () => {
       .addTransitions("one", {
         GO: {
           target: "two",
-          assign: { x: 0 },
-          effect: reset,
+          effect: [(ctx) => ctx.patch({ x: 0 }), reset],
         },
       })
 
@@ -425,8 +484,7 @@ describe("finite state machine", () => {
         BACK: "one",
         GO: {
           target: "two", // Stay here, but... do an action
-          assign: (context) => ({ x: context.x + 1 }),
-          effect: inced,
+          effect: [(ctx) => ctx.patch({ x: ctx.x + 1 }), inced],
         },
       })
 
@@ -440,14 +498,51 @@ describe("finite state machine", () => {
     expect(inced).not.toBeCalled();
     fsm.send({ type: "GO" });
     expect(reset).toBeCalledTimes(1);
-    expect(inced).toHaveBeenLastCalledWith({ x: 1, y: 13 }, { type: "GO" });
+    expect(inced).toHaveBeenLastCalledWith(
+      { x: 1, y: 13, patch: expect.any(Function) },
+      { type: "GO" }
+    );
     fsm.send({ type: "GO" });
     expect(reset).toBeCalledTimes(1);
-    expect(inced).toHaveBeenLastCalledWith({ x: 2, y: 13 }, { type: "GO" });
+    expect(inced).toHaveBeenLastCalledWith(
+      { x: 2, y: 13, patch: expect.any(Function) },
+      { type: "GO" }
+    );
     fsm.send({ type: "GO" });
     expect(reset).toBeCalledTimes(1);
-    expect(inced).toHaveBeenLastCalledWith({ x: 3, y: 13 }, { type: "GO" });
+    expect(inced).toHaveBeenLastCalledWith(
+      { x: 3, y: 13, patch: expect.any(Function) },
+      { type: "GO" }
+    );
     expect(fsm.context).toEqual({ x: 3, y: 13 });
+  });
+
+  test("explicitly *not* transitioning", () => {
+    let n = 0;
+
+    const fsm = new FSM({})
+      .addState("one")
+      .addState("two")
+      .addTransitions("one", { GO: "two" })
+      .addTransitions("two", {
+        GO: () =>
+          n++ % 2 === 0
+            ? "one" // Transition if n is even
+            : null, // Otherwise, do nothing
+      })
+      .start();
+
+    expect(fsm.currentState).toEqual("one");
+    fsm.send({ type: "GO" });
+    expect(fsm.currentState).toEqual("two");
+    fsm.send({ type: "GO" });
+    expect(fsm.currentState).toEqual("one");
+    fsm.send({ type: "GO" });
+    expect(fsm.currentState).toEqual("two");
+    fsm.send({ type: "GO" });
+    expect(fsm.currentState).toEqual("two"); // Did *not* transition!
+    fsm.send({ type: "GO" });
+    expect(fsm.currentState).toEqual("one");
   });
 
   describe("time-based transitions", () => {
@@ -612,34 +707,45 @@ describe("finite state machine", () => {
     });
   });
 
-  // TODO Nice to have, no need to fix this right now yet
-  test.skip("wildcards cannot overwrite existing transitions", () => {
+  test("wildcards cannot overwrite existing transitions", () => {
     const fsm = new FSM({})
-      .addState("foo.start")
-      .addState("foo.mid")
-      .addState("foo.end")
+      .addState("start")
+      .addState("end")
 
-      .addTransitions("foo.start", {
-        FROM_ANYWHERE: "foo.mid",
-      })
+      // Using target specifications in all of its forms here
+      .addTransitions("start", { GO: "end" })
 
-      .addTransitions("foo.mid", {
-        FROM_ANYWHERE: "foo.end",
-      })
+      // No overrides here, so perfectly fine 👍
+      .addTransitions("*", { TO_START: "start" })
+      .addTransitions("*", { TO_END: "end" });
 
-      // This wildcard should _not_ override the transitions defined above
-      .addTransitions("*", {
-        FROM_ANYWHERE: "foo.start",
-      })
+    expect(() =>
+      fsm
+        // This wildcard transition should _not_ be allowed, as it would
+        // override/conflict with the existing start->GO transition defined
+        // earlier
+        .addTransitions("*", { GO: "start" })
+    ).toThrow(
+      'Trying to set transition "GO" on "start" (via "*"), but a transition already exists there.'
+    );
 
-      .start();
+    fsm.start();
 
-    expect(fsm.currentState).toEqual("foo.start");
-    fsm.send({ type: "FROM_ANYWHERE" });
-    expect(fsm.currentState).toEqual("foo.mid");
-    fsm.send({ type: "FROM_ANYWHERE" });
-    expect(fsm.currentState).toEqual("foo.end");
-    fsm.send({ type: "FROM_ANYWHERE" });
-    expect(fsm.currentState).toEqual("foo.start");
+    expect(fsm.currentState).toEqual("start");
+    fsm.send({ type: "GO" });
+    expect(fsm.currentState).toEqual("end");
+    fsm.send({ type: "GO" });
+    fsm.send({ type: "GO" });
+    expect(fsm.currentState).toEqual("end");
+
+    fsm.send({ type: "TO_START" });
+    expect(fsm.currentState).toEqual("start");
+    fsm.send({ type: "TO_START" });
+    expect(fsm.currentState).toEqual("start");
+
+    fsm.send({ type: "TO_END" });
+    expect(fsm.currentState).toEqual("end");
+    fsm.send({ type: "TO_END" });
+    expect(fsm.currentState).toEqual("end");
   });
 });
