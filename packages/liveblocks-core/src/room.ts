@@ -2227,7 +2227,7 @@ function makeCreateSocketDelegateForRoom(
       (typeof WebSocket === "undefined" ? undefined : WebSocket);
 
     if (ws === undefined) {
-      throw new Error(
+      throw new StopRetrying(
         "To use Liveblocks client in a non-dom environment, you need to provide a WebSocket polyfill."
       );
     }
@@ -2266,31 +2266,31 @@ function makeAuthDelegateForRoom(
   authentication: Authentication,
   fetchPolyfill?: typeof window.fetch
 ): () => Promise<RichToken> {
-  const f =
+  const fetcher =
     fetchPolyfill ?? (typeof window === "undefined" ? undefined : window.fetch);
 
   if (authentication.type === "public") {
-    if (f === undefined) {
-      throw new Error(
-        "To use Liveblocks client in a non-dom environment with a publicApiKey, you need to provide a fetch polyfill."
-      );
-    }
-
     return async () => {
-      return fetchAuthEndpoint(f, authentication.url, {
+      if (fetcher === undefined) {
+        throw new StopRetrying(
+          "To use Liveblocks client in a non-dom environment with a publicApiKey, you need to provide a fetch polyfill."
+        );
+      }
+
+      return fetchAuthEndpoint(fetcher, authentication.url, {
         room: roomId,
         publicApiKey: authentication.publicApiKey,
       }).then(({ token }) => parseRoomAuthToken(token));
     };
   } else if (authentication.type === "private") {
-    if (f === undefined) {
-      throw new Error(
-        "To use Liveblocks client in a non-dom environment with a url as auth endpoint, you need to provide a fetch polyfill."
-      );
-    }
-
     return async () => {
-      return fetchAuthEndpoint(f, authentication.url, {
+      if (fetcher === undefined) {
+        throw new StopRetrying(
+          "To use Liveblocks client in a non-dom environment with a url as auth endpoint, you need to provide a fetch polyfill."
+        );
+      }
+
+      return fetchAuthEndpoint(fetcher, authentication.url, {
         room: roomId,
       }).then(({ token }) => parseRoomAuthToken(token));
     };
