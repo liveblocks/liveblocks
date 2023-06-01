@@ -2331,7 +2331,11 @@ async function fetchAuthEndpoint(
     if (res.status === 401 || res.status === 403) {
       // Throw a special error instance, which the connection manager will
       // recognize and understand that retrying will have no effect
-      throw new StopRetrying(await res.text());
+      throw new StopRetrying(
+        `Unauthorized: ${
+          (await res.text()) || "reason not provided in auth response"
+        }`
+      );
     } else {
       throw new AuthenticationError(
         `Expected a status 200 but got ${res.status} when doing a POST request on "${endpoint}"`
