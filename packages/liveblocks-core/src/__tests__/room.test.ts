@@ -17,7 +17,6 @@ import { OpCode } from "../protocol/Op";
 import type { IdTuple, SerializedCrdt } from "../protocol/SerializedCrdt";
 import { CrdtType } from "../protocol/SerializedCrdt";
 import { ServerMsgCode } from "../protocol/ServerMsg";
-import type { _private_Effects as Effects } from "../room";
 import { createRoom } from "../room";
 import { WebsocketCloseCodes } from "../types/IWebSocket";
 import type { Others } from "../types/Others";
@@ -47,9 +46,7 @@ import {
   waitUntilStorageUpdate,
 } from "./_waitUtils";
 
-function makeRoomConfig<TPresence extends JsonObject, TRoomEvent extends Json>(
-  mockedEffects?: Effects<TPresence, TRoomEvent>
-) {
+function makeRoomConfig() {
   return {
     roomId: "room-id",
     throttleDelay: 100,
@@ -58,7 +55,6 @@ function makeRoomConfig<TPresence extends JsonObject, TRoomEvent extends Json>(
       type: "private",
       url: "/mocked-api/auth",
     } as Authentication,
-    mockedEffects,
   };
 }
 
@@ -146,7 +142,7 @@ describe("room / auth", () => {
           ...makeRoomConfig(),
           authentication: {
             type: "custom",
-            callback: (_room) =>
+            callback: (_roomId) =>
               new Promise((resolve) => {
                 // @ts-expect-error: testing for missing token in callback response
                 resolve(response);

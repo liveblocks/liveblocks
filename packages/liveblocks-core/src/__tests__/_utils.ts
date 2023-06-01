@@ -24,7 +24,7 @@ import type {
 import { CrdtType } from "../protocol/SerializedCrdt";
 import type { ServerMsg } from "../protocol/ServerMsg";
 import { ServerMsgCode } from "../protocol/ServerMsg";
-import type { _private_Effects as Effects, Room } from "../room";
+import type { Room } from "../room";
 import { createRoom } from "../room";
 import type {
   IWebSocket,
@@ -400,9 +400,7 @@ export const THIRD_POSITION = makePosition(SECOND_POSITION);
 export const FOURTH_POSITION = makePosition(THIRD_POSITION);
 export const FIFTH_POSITION = makePosition(FOURTH_POSITION);
 
-function makeRoomConfig<TPresence extends JsonObject, TRoomEvent extends Json>(
-  mockedEffects?: Effects<TPresence, TRoomEvent> // XXX Remove?
-) {
+function makeRoomConfig() {
   return {
     roomId: "room-id",
     throttleDelay: -1, // No throttle for standard storage test
@@ -414,7 +412,6 @@ function makeRoomConfig<TPresence extends JsonObject, TRoomEvent extends Json>(
     polyfills: {
       WebSocket: MockWebSocket,
     },
-    mockedEffects,
   };
 }
 

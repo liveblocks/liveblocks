@@ -722,11 +722,6 @@ type RoomState<
   readonly opStackTraces?: Map<string, string>;
 };
 
-/** @internal */
-type Effects<TPresence extends JsonObject, TRoomEvent extends Json> = {
-  send(messages: ClientMsg<TPresence, TRoomEvent>[]): void;
-};
-
 export type Polyfills = {
   atob?: (data: string) => string;
   fetch?: typeof fetch;
@@ -756,7 +751,7 @@ export type RoomInitializers<
 }>;
 
 /** @internal */
-type RoomConfig<TPresence extends JsonObject, TRoomEvent extends Json> = {
+type RoomConfig = {
   roomId: string;
   throttleDelay: number;
   authentication: Authentication;
@@ -775,8 +770,6 @@ type RoomConfig<TPresence extends JsonObject, TRoomEvent extends Json> = {
    * https://liveblocks.io/docs/guides/troubleshooting#stale-props-zombie-child
    */
   unstable_batchedUpdates?: (cb: () => void) => void;
-
-  mockedEffects?: Effects<TPresence, TRoomEvent>;
 };
 
 function userToTreeNode(
@@ -805,7 +798,7 @@ export function createRoom<
     RoomInitializers<TPresence, TStorage>,
     "shouldInitiallyConnect"
   >,
-  config: RoomConfig<TPresence, TRoomEvent>,
+  config: RoomConfig,
   mockedDelegates?: Delegates<RichToken>
 ): Room<TPresence, TStorage, TUserMeta, TRoomEvent> {
   const initialPresence =
@@ -1035,41 +1028,39 @@ export function createRoom<
     storageStatus: makeEventSource<StorageStatus>(),
   };
 
-  const effects: Effects<TPresence, TRoomEvent> = config.mockedEffects || {
-    send(
-      messageOrMessages:
-        | ClientMsg<TPresence, TRoomEvent>
-        | ClientMsg<TPresence, TRoomEvent>[]
-    ) {
-      const message = JSON.stringify(messageOrMessages);
-      if (config.unstable_fallbackToHTTP) {
-        // if our message contains UTF-8, we can't simply use length. See: https://stackoverflow.com/questions/23318037/size-of-json-object-in-kbs-mbs
-        // if this turns out to be expensive, we could just guess with a lower value.
-        const size = new TextEncoder().encode(message).length;
-        if (
-          size > MAX_MESSAGE_SIZE &&
-          managedSocket.token.raw &&
-          config.httpSendEndpoint
-        ) {
-          if (isTokenExpired(managedSocket.token.parsed)) {
-            return managedSocket.reconnect();
-          }
-
-          void httpSend(
-            message,
-            managedSocket.token.raw,
-            config.httpSendEndpoint,
-            config.polyfills?.fetch
-          );
-          console.warn(
-            "Message was too large for websockets and sent over HTTP instead"
-          );
-          return;
+  function sendMessages(
+    messageOrMessages:
+      | ClientMsg<TPresence, TRoomEvent>
+      | ClientMsg<TPresence, TRoomEvent>[]
+  ) {
+    const message = JSON.stringify(messageOrMessages);
+    if (config.unstable_fallbackToHTTP) {
+      // if our message contains UTF-8, we can't simply use length. See: https://stackoverflow.com/questions/23318037/size-of-json-object-in-kbs-mbs
+      // if this turns out to be expensive, we could just guess with a lower value.
+      const size = new TextEncoder().encode(message).length;
+      if (
+        size > MAX_MESSAGE_SIZE &&
+        managedSocket.token.raw &&
+        config.httpSendEndpoint
+      ) {
+        if (isTokenExpired(managedSocket.token.parsed)) {
+          return managedSocket.reconnect();
         }
+
+        void httpSend(
+          message,
+          managedSocket.token.raw,
+          config.httpSendEndpoint,
+          config.polyfills?.fetch
+        );
+        console.warn(
+          "Message was too large for websockets and sent over HTTP instead"
+        );
+        return;
       }
-      managedSocket.send(message);
-    },
-  };
+    }
+    managedSocket.send(message);
+  }
 
   const self = new DerivedRef(
     context.connection,
@@ -1564,7 +1555,7 @@ export function createRoom<
 
     notify(result.updates, batchedUpdatesWrapper);
 
-    effects.send(messages);
+    sendMessages(messages);
   }
 
   /**
@@ -1718,7 +1709,7 @@ export function createRoom<
         return;
       }
 
-      effects.send(messagesToFlush);
+      sendMessages(messagesToFlush);
       context.buffer = {
         flushTimerID: undefined,
         lastFlushedAt: now,
@@ -2354,9 +2345,3 @@ async function fetchAuthEndpoint(
   const { token } = data;
   return { token };
 }
-
-//
-// These exports are considered private implementation details and only
-// exported here to be accessed used in our test suite.
-//
-export type { Effects as _private_Effects };
