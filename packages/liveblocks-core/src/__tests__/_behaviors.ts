@@ -94,11 +94,6 @@ export function MANUAL_SOCKETS(wss: MockWebSocketServer) {
   return wss.newSocket();
 }
 
-// XXX TODO IMPLEMENT?
-// export function SOCKET_OPEN_AND_CLOSE(closeCode: number) {
-//   return (wss: MockWebSocketServer) => wss.newSocket();
-// }
-
 /**
  * Configured the backend to create sockets and automatically accept each such
  * created socket asynchronously.

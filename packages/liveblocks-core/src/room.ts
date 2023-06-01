@@ -679,7 +679,7 @@ type RoomState<
     storageOperations: Op[];
   };
 
-  readonly connection: ValueRef<Connection>; // XXX Make this a derived property
+  readonly connection: ValueRef<Connection>; // TODO Make this a derived property?
   readonly me: MeRef<TPresence>;
   readonly others: OthersRef<TPresence, TUserMeta>;
 
@@ -900,9 +900,6 @@ export function createRoom<
   }
 
   function onDidConnect() {
-    // XXX Combine this into the same batch wrapper as the onStatusDidChange
-    // event, only when this is transitioning from non-open to "open" state
-
     const conn = context.connection.current;
     if (conn.status !== "open") {
       // Totally unexpected by now
@@ -924,7 +921,6 @@ export function createRoom<
       tryFlushing();
     }
 
-    // XXX Define token metadata accessor on the managed connection?
     context.lastConnectionId = conn.id;
     context.idFactory = makeIdFactory(conn.id);
 
@@ -938,8 +934,6 @@ export function createRoom<
   function onDidDisconnect() {
     clearTimeout(context.buffer.flushTimerID);
 
-    // XXX Combine this into the same batch wrapper as the onStatusDidChange
-    // event, only when this is transitioning from "open" to non-open
     batchUpdates(() => {
       context.others.clearOthers();
       notify({ others: [{ type: "reset" }] }, doNotBatchUpdates);
@@ -1710,7 +1704,6 @@ export function createRoom<
     }
 
     if (managedSocket.status !== "open") {
-      // XXX I don't understand what's happening here exactly
       context.buffer.storageOperations = [];
       return;
     }
@@ -2041,7 +2034,7 @@ export function createRoom<
 
     connect: () => managedSocket.connect(),
     reconnect: () => managedSocket.reconnect(),
-    disconnect: () => managedSocket.disconnect(), // XXX Do we really need disconnect() now that we have destroy()? Seems still useful to reset the machine, but also... YAGNI?
+    disconnect: () => managedSocket.disconnect(),
     destroy: () => managedSocket.destroy(),
 
     // Presence

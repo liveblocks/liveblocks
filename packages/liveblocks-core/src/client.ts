@@ -219,7 +219,6 @@ export function createClient(options: ClientOptions): Client {
 
     const room = rooms.get(roomId);
     if (room !== undefined) {
-      // room.disconnect();  // XXX Uncomment if this turns out to be problematic, but I don't think so
       room.destroy();
       rooms.delete(roomId);
     }
