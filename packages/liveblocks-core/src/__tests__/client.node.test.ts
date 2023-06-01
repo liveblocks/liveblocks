@@ -27,7 +27,7 @@ function atobPolyfillMock(data: string): string {
   return Buffer.from(data, "base64").toString();
 }
 
-function createClientAndEnter(options: ClientOptions) {
+function enterAndLeave(options: ClientOptions) {
   const client = createClient(options);
   client.enter("room", { initialPresence: {} });
 
@@ -74,7 +74,7 @@ describe("createClient", () => {
     "should throw if publicApiKey & authEndpoint are misconfigured",
     (publicApiKey, authEndpoint, errorMessage) => {
       expect(() =>
-        createClientAndEnter({
+        enterAndLeave({
           // @ts-expect-error: publicApiKey could be anything for a non-typescript user so we want to allow for this test
           publicApiKey,
           // @ts-expect-error: authEndpoint could be anything for a non-typescript user so we want to allow for this test
@@ -109,7 +109,7 @@ describe("createClient", () => {
 
   test("should not throw if authEndpoint is string and fetch polyfill is defined", () => {
     expect(() =>
-      createClientAndEnter({
+      enterAndLeave({
         authEndpoint: "/api/auth",
         polyfills: {
           WebSocket: MockWebSocket,
@@ -122,7 +122,7 @@ describe("createClient", () => {
 
   test("should not throw if public key is used and fetch polyfill is defined", () => {
     expect(() =>
-      createClientAndEnter({
+      enterAndLeave({
         publicApiKey: "pk_xxx",
         polyfills: {
           WebSocket: MockWebSocket,
@@ -135,7 +135,7 @@ describe("createClient", () => {
 
   test("should not throw if WebSocketPolyfill is set", () => {
     expect(() => {
-      createClientAndEnter({
+      enterAndLeave({
         authEndpoint: authEndpointCallback,
         polyfills: {
           WebSocket: MockWebSocket,
@@ -150,7 +150,7 @@ describe("createClient", () => {
     "should throw if authEndpoint is string and fetch polyfill is not defined",
     () => {
       expect(() =>
-        createClientAndEnter({
+        enterAndLeave({
           authEndpoint: "/api/auth",
           polyfills: {
             WebSocket: MockWebSocket,
@@ -168,7 +168,7 @@ describe("createClient", () => {
     "should throw if public key is used and fetch polyfill is not defined",
     () => {
       expect(() =>
-        createClientAndEnter({
+        enterAndLeave({
           publicApiKey: "pk_xxx",
           polyfills: {
             WebSocket: MockWebSocket,
@@ -183,7 +183,7 @@ describe("createClient", () => {
   // XXX Make this test pass again later
   test.failing("should throw if WebSocketPolyfill is not set", () => {
     expect(() =>
-      createClientAndEnter({
+      enterAndLeave({
         authEndpoint: authEndpointCallback,
       })
     ).toThrowError(
@@ -193,7 +193,7 @@ describe("createClient", () => {
 
   test("should throw if throttle is not a number", () => {
     expect(() =>
-      createClientAndEnter({
+      enterAndLeave({
         throttle: "invalid" as unknown as number, // Deliberately use wrong type at runtime
         authEndpoint: "api/auth",
         polyfills: {
@@ -206,7 +206,7 @@ describe("createClient", () => {
 
   test("should throw if throttle is less than 16", () => {
     expect(() =>
-      createClientAndEnter({
+      enterAndLeave({
         throttle: 15,
         authEndpoint: "api/auth",
         polyfills: {
@@ -219,7 +219,7 @@ describe("createClient", () => {
 
   test("should throw if throttle is more than 1000", () => {
     expect(() =>
-      createClientAndEnter({
+      enterAndLeave({
         throttle: 1001,
         authEndpoint: "api/auth",
         polyfills: {
@@ -245,7 +245,7 @@ describe("when env atob does not exist (atob polyfill handling)", () => {
 
   test("should throw error if atob polyfill is not set", () => {
     expect(() => {
-      createClientAndEnter({
+      enterAndLeave({
         publicApiKey: "pk_xxx",
         polyfills: {
           WebSocket: MockWebSocket,
@@ -260,7 +260,7 @@ describe("when env atob does not exist (atob polyfill handling)", () => {
 
   test("should not throw error if atob polyfill option is set", () => {
     expect(() => {
-      createClientAndEnter({
+      enterAndLeave({
         publicApiKey: "pk_xxx",
         polyfills: {
           WebSocket: MockWebSocket,
