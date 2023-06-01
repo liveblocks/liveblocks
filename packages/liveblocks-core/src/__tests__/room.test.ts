@@ -1473,7 +1473,7 @@ describe("room", () => {
       jest.useFakeTimers();
       try {
         await jest.advanceTimersByTimeAsync(0);
-        expect(consoleWarnSpy.mock.calls.map((args) => args[0])).toContain(
+        expect(consoleWarnSpy).toHaveBeenCalledWith(
           "Connection to Liveblocks websocket server closed prematurely (code: 1006). Retrying in 250ms."
         );
         expect(wss.connections.size).toBe(1);
@@ -1508,7 +1508,7 @@ describe("room", () => {
       try {
         await waitUntilStatus(room, "open");
         await jest.advanceTimersByTimeAsync(1111);
-        expect(consoleWarnSpy.mock.calls.map((args) => args[0])).toContain(
+        expect(consoleWarnSpy).toHaveBeenCalledWith(
           "Connection to Liveblocks websocket server closed (code: 1006). Retrying in 250ms."
         );
         expect(wss.connections.size).toBe(1);
@@ -1539,7 +1539,7 @@ describe("room", () => {
       jest.useFakeTimers();
       try {
         await jest.advanceTimersByTimeAsync(0);
-        expect(consoleWarnSpy.mock.calls.map((args) => args[0])).toContain(
+        expect(consoleWarnSpy).toHaveBeenCalledWith(
           "Connection to Liveblocks websocket server closed prematurely (code: 4002). Retrying in 2000ms."
         );
 
@@ -1577,7 +1577,7 @@ describe("room", () => {
       try {
         await waitUntilStatus(room, "open");
         await jest.advanceTimersByTimeAsync(1111);
-        expect(consoleWarnSpy.mock.calls.map((args) => args[0])).toContain(
+        expect(consoleWarnSpy).toHaveBeenCalledWith(
           "Connection to Liveblocks websocket server closed (code: 4002). Retrying in 2000ms."
         );
         expect(wss.connections.size).toBe(1);
