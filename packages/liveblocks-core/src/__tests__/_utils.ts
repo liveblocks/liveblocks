@@ -218,7 +218,13 @@ export class MockWebSocketServer {
     return clientSocket;
   }
 
+  /**
+   * Set a new behavior to execute when a new server connection is made.
+   * Replaces an existing "onConnection" behavior if any exists. It won't stack
+   * those behaviors.
+   */
   public onConnection(callback: (conn: Connection) => void): void {
+    this.newConnectionCallbacks.clear();
     this.newConnectionCallbacks.subscribe(callback);
   }
 
