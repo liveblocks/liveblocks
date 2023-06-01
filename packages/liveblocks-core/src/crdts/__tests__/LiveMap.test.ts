@@ -120,7 +120,7 @@ describe("LiveMap", () => {
     );
 
     const map = storage.root.get("map");
-    expect(() => map.set("key", new LiveObject({ a: 0 }))).toThrowError(
+    expect(() => map.set("key", new LiveObject({ a: 0 }))).toThrow(
       "Cannot write to storage with a read only user, please ensure the user has write permissions"
     );
   });
@@ -212,7 +212,7 @@ describe("LiveMap", () => {
       );
 
       const map = storage.root.get("map");
-      expect(() => map.delete("key")).toThrowError(
+      expect(() => map.delete("key")).toThrow(
         "Cannot write to storage with a read only user, please ensure the user has write permissions"
       );
     });

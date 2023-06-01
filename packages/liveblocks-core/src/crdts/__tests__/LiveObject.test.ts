@@ -88,7 +88,7 @@ describe("LiveObject", () => {
       [RoomScope.Read, RoomScope.PresenceWrite]
     );
 
-    expect(() => storage.root.update({ a: 1 })).toThrowError(
+    expect(() => storage.root.update({ a: 1 })).toThrow(
       "Cannot write to storage with a read only user, please ensure the user has write permissions"
     );
   });
@@ -153,7 +153,7 @@ describe("LiveObject", () => {
       [RoomScope.Read, RoomScope.PresenceWrite]
     );
 
-    expect(() => storage.root.set("a", 1)).toThrowError(
+    expect(() => storage.root.set("a", 1)).toThrow(
       "Cannot write to storage with a read only user, please ensure the user has write permissions"
     );
   });
@@ -559,7 +559,7 @@ describe("LiveObject", () => {
         [RoomScope.Read, RoomScope.PresenceWrite]
       );
 
-      expect(() => storage.root.get("child").delete("a")).toThrowError(
+      expect(() => storage.root.get("child").delete("a")).toThrow(
         "Cannot write to storage with a read only user, please ensure the user has write permissions"
       );
     });

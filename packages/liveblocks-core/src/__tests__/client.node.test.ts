@@ -85,7 +85,7 @@ describe("createClient", () => {
             atob: atobPolyfillMock,
           },
         })
-      ).toThrowError(errorMessage);
+      ).toThrow(errorMessage);
     }
   );
 
@@ -186,7 +186,7 @@ describe("createClient", () => {
       enterAndLeave({
         authEndpoint: authEndpointCallback,
       })
-    ).toThrowError(
+    ).toThrow(
       "To use Liveblocks client in a non-dom environment, you need to provide a WebSocket polyfill."
     );
   });
@@ -201,7 +201,7 @@ describe("createClient", () => {
           fetch: fetchMock,
         },
       })
-    ).toThrowError("throttle should be a number between 16 and 1000.");
+    ).toThrow("throttle should be a number between 16 and 1000.");
   });
 
   test("should throw if throttle is less than 16", () => {
@@ -214,7 +214,7 @@ describe("createClient", () => {
           fetch: fetchMock,
         },
       })
-    ).toThrowError("throttle should be a number between 16 and 1000.");
+    ).toThrow("throttle should be a number between 16 and 1000.");
   });
 
   test("should throw if throttle is more than 1000", () => {
@@ -227,7 +227,7 @@ describe("createClient", () => {
           fetch: fetchMock,
         },
       })
-    ).toThrowError("throttle should be a number between 16 and 1000.");
+    ).toThrow("throttle should be a number between 16 and 1000.");
   });
 });
 
@@ -253,7 +253,7 @@ describe("when env atob does not exist (atob polyfill handling)", () => {
           atob: undefined,
         },
       });
-    }).toThrowError(
+    }).toThrow(
       "You need to polyfill atob to use the client in your environment. Please follow the instructions at https://liveblocks.io/docs/errors/liveblocks-client/atob-polyfill"
     );
   });

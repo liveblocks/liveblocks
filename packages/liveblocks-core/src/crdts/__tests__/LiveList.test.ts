@@ -118,7 +118,7 @@ describe("LiveList", () => {
       const root = storage.root;
       const items = root.get("items");
 
-      expect(() => items.push("first")).toThrowError(
+      expect(() => items.push("first")).toThrow(
         "Cannot write to storage with a read only user, please ensure the user has write permissions"
       );
     });
@@ -255,7 +255,7 @@ describe("LiveList", () => {
       const root = storage.root;
       const items = root.get("items");
 
-      expect(() => items.insert("first", 0)).toThrowError(
+      expect(() => items.insert("first", 0)).toThrow(
         "Cannot write to storage with a read only user, please ensure the user has write permissions"
       );
     });
@@ -327,7 +327,7 @@ describe("LiveList", () => {
       const root = storage.root;
       const items = root.get("items");
 
-      expect(() => items.delete(0)).toThrowError(
+      expect(() => items.delete(0)).toThrow(
         "Cannot write to storage with a read only user, please ensure the user has write permissions"
       );
     });
@@ -425,7 +425,7 @@ describe("LiveList", () => {
       const root = storage.root;
       const items = root.get("items");
 
-      expect(() => items.move(0, 1)).toThrowError(
+      expect(() => items.move(0, 1)).toThrow(
         "Cannot write to storage with a read only user, please ensure the user has write permissions"
       );
     });
@@ -549,7 +549,7 @@ describe("LiveList", () => {
       const root = storage.root;
       const items = root.get("items");
 
-      expect(() => items.clear()).toThrowError(
+      expect(() => items.clear()).toThrow(
         "Cannot write to storage with a read only user, please ensure the user has write permissions"
       );
     });
@@ -659,7 +659,7 @@ describe("LiveList", () => {
       const root = storage.root;
       const items = root.get("items");
 
-      expect(() => items.set(0, "A")).toThrowError(
+      expect(() => items.set(0, "A")).toThrow(
         "Cannot write to storage with a read only user, please ensure the user has write permissions"
       );
     });
@@ -672,10 +672,10 @@ describe("LiveList", () => {
 
     it("set at invalid position should throw", () => {
       const list = new LiveList<string>(["A", "B", "C"]);
-      expect(() => list.set(-1, "D")).toThrowError(
+      expect(() => list.set(-1, "D")).toThrow(
         'Cannot set list item at index "-1". index should be between 0 and 2'
       );
-      expect(() => list.set(3, "D")).toThrowError(
+      expect(() => list.set(3, "D")).toThrow(
         'Cannot set list item at index "3". index should be between 0 and 2'
       );
     });
