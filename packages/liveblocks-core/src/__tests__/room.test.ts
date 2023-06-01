@@ -33,7 +33,6 @@ import {
   createSerializedObject,
   createSerializedRegister,
   FIRST_POSITION,
-  mockEffects,
   prepareDisconnectedStorageUpdateTest,
   prepareIsolatedStorageTest,
   prepareStorageTest,
@@ -78,8 +77,6 @@ function createTestableRoom<
   authBehavior = DEFAULT_AUTH,
   socketBehavior = AUTO_OPEN_SOCKETS
 ) {
-  const effects = mockEffects<TPresence, TRoomEvent>(); // XXX Stop using/returning this
-
   const { wss, delegates } = defineBehavior(authBehavior, socketBehavior);
 
   const room = createRoom<TPresence, TStorage, TUserMeta, TRoomEvent>(
@@ -93,7 +90,6 @@ function createTestableRoom<
 
   return {
     room,
-    effects,
     delegates,
     /**
      * The fake WebSocket server backend that these unit tests connect to.

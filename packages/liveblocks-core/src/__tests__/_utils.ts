@@ -891,15 +891,6 @@ export function createSerializedRegister(
   return [id, { type: CrdtType.REGISTER, parentId, parentKey, data }];
 }
 
-export function mockEffects<
-  TPresence extends JsonObject,
-  TRoomEvent extends Json
->(): Effects<TPresence, TRoomEvent> {
-  return {
-    send: jest.fn(),
-  };
-}
-
 export function parseAsClientMsgs(data: string) {
   const json = JSON.parse(data) as
     | ClientMsg<JsonObject, Json>
