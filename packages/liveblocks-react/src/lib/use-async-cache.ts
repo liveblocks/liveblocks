@@ -1,10 +1,17 @@
-import type { AsyncCache, AsyncState } from "@liveblocks/core";
+import type {
+  AsyncCache,
+  AsyncCacheMutation,
+  AsyncCacheRevalidateOptions,
+  AsyncState,
+  AsyncStateInitial,
+  AsyncStateResolved,
+} from "@liveblocks/core";
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useSyncExternalStore } from "use-sync-external-store/shim";
 
 import { useInitial } from "./use-initial";
 
-const DEFAULT_ASYNC_STATE: AsyncState = {
+const INITIAL_ASYNC_STATE: AsyncStateInitial = {
   isLoading: false,
   data: undefined,
   error: undefined,
@@ -15,19 +22,60 @@ export type UseAsyncCacheOptions = {
   suspense?: boolean;
 };
 
-type PreviousData<TData> = {
+type UseAsyncCacheState<
+  T,
+  E,
+  O extends UseAsyncCacheOptions = UseAsyncCacheOptions
+> = O extends {
+  suspense: true;
+}
+  ? Exclude<AsyncState<T, E>, { isLoading: true }>
+  : AsyncState<T, E>;
+
+export type UseAsyncCacheResponse<
+  T,
+  E,
+  O extends UseAsyncCacheOptions = UseAsyncCacheOptions
+> = UseAsyncCacheState<T, E, O> & {
+  /**
+   * Returns the current state of the key synchronously.
+   */
+  getState: () => AsyncState<T, E>;
+
+  /**
+   * Revalidates the key.
+   *
+   * @param key The key to revalidate.
+   * @param options.optimisticData Set data optimistically but rollback if there's an error.
+   */
+  revalidate(
+    options?: AsyncCacheRevalidateOptions<T>
+  ): Promise<AsyncStateResolved<T, E> | void>;
+  /**
+   * Revalidates the key with a mutation.
+   *
+   * @param key The key to revalidate.
+   * @param mutation An asynchronous function to wait on, optionally setting the data manually if it returns any.
+   * @param options.optimisticData Set data optimistically but rollback if there's an error.
+   */
+  revalidate(
+    mutation: AsyncCacheMutation<T>,
+    options?: AsyncCacheRevalidateOptions<T>
+  ): Promise<AsyncStateResolved<T, E> | void>;
+};
+
+type PreviousData<T> = {
   key: string | null;
-  data?: TData;
+  data?: T;
 };
 
 const noop = () => {};
 
-// TODO: If suspense:true, update the returned AsyncState type to never be loading
-export function useAsyncCache<TData = any, TError = any>(
-  cache: AsyncCache<TData, TError>,
+export function useAsyncCache<T, E, O extends UseAsyncCacheOptions>(
+  cache: AsyncCache<T, E>,
   key: string | null,
-  options?: UseAsyncCacheOptions
-) {
+  options?: O
+): UseAsyncCacheResponse<T, E, O> {
   const frozenOptions = useInitial(options);
   const cacheItem = useMemo(() => {
     if (key === null) {
@@ -44,15 +92,23 @@ export function useAsyncCache<TData = any, TError = any>(
     (callback: () => void) => cacheItem?.subscribe(callback) ?? noop,
     [cacheItem]
   );
-  const getSnapshot = useCallback(
-    () =>
-      cacheItem?.getState() ??
-      (DEFAULT_ASYNC_STATE as AsyncState<TData, TError>),
+
+  const getState = useCallback(
+    () => cacheItem?.getState() ?? INITIAL_ASYNC_STATE,
     [cacheItem]
   );
 
-  const state = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
-  const previousData = useRef<PreviousData<TData>>();
+  const revalidate = useCallback(
+    async (
+      first?: AsyncCacheRevalidateOptions<T> | AsyncCacheMutation<T>,
+      second?: AsyncCacheRevalidateOptions<T>
+    ) => cacheItem?.revalidate(first, second),
+    [cacheItem]
+  );
+
+  const state = useSyncExternalStore(subscribe, getState, getState);
+  const previousData = useRef<PreviousData<T>>();
+  let data = state.data;
 
   useEffect(() => {
     previousData.current = { key, data: state.data };
@@ -71,19 +127,14 @@ export function useAsyncCache<TData = any, TError = any>(
     previousData.current?.key !== key &&
     typeof previousData.current?.data !== "undefined"
   ) {
-    state.data = previousData.current.data;
+    data = previousData.current.data;
   }
 
-  const invalidate = useCallback(() => cacheItem?.invalidate(), [cacheItem]);
-
-  const revalidate = useCallback(() => cacheItem?.revalidate(), [cacheItem]);
-
-  const getState = useCallback(() => cacheItem?.getState(), [cacheItem]);
-
   return {
-    ...state,
-    invalidate,
-    revalidate,
+    isLoading: state.isLoading,
+    data,
+    error: state.error,
     getState,
-  };
+    revalidate,
+  } as UseAsyncCacheResponse<T, E, O>;
 }

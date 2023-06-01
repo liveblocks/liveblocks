@@ -4,9 +4,12 @@ import { shallow } from "./shallow";
 
 type AsyncFunction<T, A extends any[] = any[]> = (...args: A) => Promise<T>;
 
-type Mutation<T> = (data: T | undefined, key: string) => Promise<T | void>;
+export type Mutation<T> = (
+  data: T | undefined,
+  key: string
+) => Promise<T | void>;
 
-type RevalidateOptions<T> = {
+export type RevalidateOptions<T> = {
   optimisticData: T | ((data: T | undefined) => T);
 };
 
@@ -14,25 +17,25 @@ type AsyncCacheOptions<T, E> = {
   compare?: (a: AsyncState<T, E>, b: AsyncState<T, E>) => boolean;
 };
 
-type AsyncStateInitial = {
+export type AsyncStateInitial = {
   readonly isLoading: false;
   readonly data?: never;
   readonly error?: never;
 };
 
-type AsyncStateLoading<T> = {
+export type AsyncStateLoading<T> = {
   readonly isLoading: true;
   readonly data?: T;
   readonly error?: never;
 };
 
-type AsyncStateSuccess<T> = {
+export type AsyncStateSuccess<T> = {
   readonly isLoading: false;
   readonly data: T;
   readonly error?: never;
 };
 
-type AsyncStateError<T, E> = {
+export type AsyncStateError<T, E> = {
   readonly isLoading: false;
   readonly data?: T;
   readonly error: E;
@@ -44,7 +47,9 @@ export type AsyncState<T, E> =
   | AsyncStateSuccess<T>
   | AsyncStateError<T, E>;
 
-type AsyncStateResolved<T, E> = AsyncStateSuccess<T> | AsyncStateError<T, E>;
+export type AsyncStateResolved<T, E> =
+  | AsyncStateSuccess<T>
+  | AsyncStateError<T, E>;
 
 type AsyncCacheItemContext<T> = {
   promise?: Promise<T>;
@@ -62,12 +67,21 @@ export type AsyncCacheItem<T, E> = Observable<AsyncState<T, E>> & {
     options?: RevalidateOptions<T>
   ): Promise<AsyncStateResolved<T, E>>;
   revalidate(
-    mutation?: RevalidateOptions<T> | Mutation<T>,
+    first?: RevalidateOptions<T> | Mutation<T>,
     second?: RevalidateOptions<T>
   ): Promise<AsyncStateResolved<T, E>>;
 };
 
 export type AsyncCache<T, E> = {
+  /**
+   * @private
+   *
+   * Creates a key in the cache.
+   *
+   * @param key The key to create.
+   */
+  create(key: string): AsyncCacheItem<T, E>;
+
   /**
    * Returns a promise which resolves with the state of the key.
    *
@@ -373,6 +387,7 @@ export function createAsyncCache<T, E>(
   }
 
   return {
+    create,
     get,
     getState,
     revalidate,

@@ -1152,7 +1152,7 @@ describe("AsyncCache", () => {
     expect(cache.has(KEY_ABC)).toBe(true);
   });
 
-  test("getting the cache of a key", async () => {
+  test("getting a key's state", async () => {
     const mock = createAsyncMock();
     const cache = createAsyncCache(mock);
 
@@ -1165,7 +1165,7 @@ describe("AsyncCache", () => {
     });
   });
 
-  test("getting the cache of a non-existing key", () => {
+  test("getting a non-existing key's state", () => {
     const mock = createAsyncMock();
     const cache = createAsyncCache(mock);
 

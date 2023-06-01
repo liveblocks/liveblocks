@@ -8,7 +8,10 @@ import React, { Suspense } from "react";
 import { hydrateRoot } from "react-dom/client";
 import { renderToString } from "react-dom/server";
 
-import type { UseAsyncCacheOptions } from "../use-async-cache";
+import type {
+  UseAsyncCacheOptions,
+  UseAsyncCacheResponse,
+} from "../use-async-cache";
 import { useAsyncCache } from "../use-async-cache";
 
 const REQUEST_DELAY = 20;
@@ -17,6 +20,12 @@ const KEY_XYZ = "xyz";
 const ERROR = new Error("error");
 const CONTAINER_ID = "container";
 const SUSPENSE_FALLBACK = "…";
+
+type AsyncMockOptions<T> = {
+  error: (index: number, key: string) => boolean;
+  delay: (index: number, key: string) => number;
+  value: (index: number, key: string) => T;
+};
 
 type RenderHookProps = {
   key: string | null;
@@ -49,25 +58,39 @@ async function sleep(ms: number): Promise<42> {
   });
 }
 
+const defaultAsyncMockOptions: AsyncMockOptions<unknown> = {
+  error: () => false,
+  delay: () => REQUEST_DELAY,
+  value: (_, key) => key,
+};
+
 function createAsyncMock<T = string>(
-  errorPredicate: (index: number, key: string) => boolean = () => false,
-  returnValue: (index: number, key: string) => T = (_, key) =>
-    key as unknown as T
+  options: Partial<
+    AsyncMockOptions<T>
+  > = defaultAsyncMockOptions as AsyncMockOptions<T>
 ) {
+  const error = options.error ?? defaultAsyncMockOptions.error;
+  const delay = options.delay ?? defaultAsyncMockOptions.delay;
+  const value = options.value ?? defaultAsyncMockOptions.value;
+
   let index = 0;
 
   return jest.fn(async (key: string) => {
-    const isError = errorPredicate(index, key);
+    const isError = error(index, key);
     index += 1;
 
-    await sleep(REQUEST_DELAY);
+    await sleep(delay(index, key));
 
     if (isError) {
       throw ERROR;
     } else {
-      return returnValue(index, key);
+      return value(index, key) as T;
     }
   });
+}
+
+function createIndices(length: number) {
+  return [...Array(length).keys()];
 }
 
 function renderHookWithCount<TResult, TProps>(
@@ -127,13 +150,13 @@ function renderHookServer<TResult>(
 describe("useAsyncCache", () => {
   test("getting a key", async () => {
     const mock = createAsyncMock();
-    const cache = createAsyncCache(mock, { deduplicationInterval: 0 });
+    const cache = createAsyncCache(mock);
 
     // 🚀 Called
     const { result } = renderHook(() => useAsyncCache(cache, KEY_ABC));
 
     // 🔜 Returns a loading state
-    expect(result.current).toMatchObject<AsyncState<string>>({
+    expect(result.current).toMatchObject<AsyncState<string, Error>>({
       isLoading: true,
       data: undefined,
       error: undefined,
@@ -144,7 +167,7 @@ describe("useAsyncCache", () => {
     });
 
     // ✅ Returns a success state
-    expect(result.current).toMatchObject<AsyncState<string>>({
+    expect(result.current).toMatchObject<AsyncState<string, Error>>({
       isLoading: false,
       data: KEY_ABC,
       error: undefined,
@@ -153,7 +176,7 @@ describe("useAsyncCache", () => {
 
   test("getting the same key in parallel", async () => {
     const mock = createAsyncMock();
-    const cache = createAsyncCache(mock, { deduplicationInterval: 0 });
+    const cache = createAsyncCache(mock);
 
     // 🚀 Called
     const first = renderHook(() => useAsyncCache(cache, KEY_ABC));
@@ -161,12 +184,12 @@ describe("useAsyncCache", () => {
     const second = renderHook(() => useAsyncCache(cache, KEY_ABC));
 
     // 🔜 Both hooks return a loading state
-    expect(first.result.current).toMatchObject<AsyncState<string>>({
+    expect(first.result.current).toMatchObject<AsyncState<string, Error>>({
       isLoading: true,
       data: undefined,
       error: undefined,
     });
-    expect(second.result.current).toMatchObject<AsyncState<string>>({
+    expect(second.result.current).toMatchObject<AsyncState<string, Error>>({
       isLoading: true,
       data: undefined,
       error: undefined,
@@ -178,12 +201,12 @@ describe("useAsyncCache", () => {
     });
 
     // ✅ Both hooks return a success state
-    expect(first.result.current).toMatchObject<AsyncState<string>>({
+    expect(first.result.current).toMatchObject<AsyncState<string, Error>>({
       isLoading: false,
       data: KEY_ABC,
       error: undefined,
     });
-    expect(second.result.current).toMatchObject<AsyncState<string>>({
+    expect(second.result.current).toMatchObject<AsyncState<string, Error>>({
       isLoading: false,
       data: KEY_ABC,
       error: undefined,
@@ -194,14 +217,14 @@ describe("useAsyncCache", () => {
 
   test("getting an empty key", async () => {
     const mock = createAsyncMock();
-    const cache = createAsyncCache(mock, { deduplicationInterval: 0 });
+    const cache = createAsyncCache(mock);
 
     // 💨 Not called
     const { result } = renderHook(() => useAsyncCache(cache, null));
 
     await sleep(REQUEST_DELAY * 1.5);
 
-    expect(result.current).toMatchObject<AsyncState<string>>({
+    expect(result.current).toMatchObject<AsyncState<string, Error>>({
       isLoading: false,
       data: undefined,
       error: undefined,
@@ -212,7 +235,7 @@ describe("useAsyncCache", () => {
 
   test("getting an existing key", async () => {
     const mock = createAsyncMock();
-    const cache = createAsyncCache(mock, { deduplicationInterval: 0 });
+    const cache = createAsyncCache(mock);
 
     // 🚀 Called
     const first = renderHook(() => useAsyncCache(cache, KEY_ABC));
@@ -222,7 +245,7 @@ describe("useAsyncCache", () => {
     });
 
     // ✅ The first hook returns a success state
-    expect(first.result.current).toMatchObject<AsyncState<string>>({
+    expect(first.result.current).toMatchObject<AsyncState<string, Error>>({
       isLoading: false,
       data: KEY_ABC,
       error: undefined,
@@ -231,7 +254,7 @@ describe("useAsyncCache", () => {
     const second = renderHook(() => useAsyncCache(cache, KEY_ABC));
 
     // ✨ Cached and the second hook immediately returns a success state without loading in between
-    expect(second.result.current).toMatchObject<AsyncState<string>>({
+    expect(second.result.current).toMatchObject<AsyncState<string, Error>>({
       isLoading: false,
       data: KEY_ABC,
       error: undefined,
@@ -239,8 +262,8 @@ describe("useAsyncCache", () => {
   });
 
   test("staying invalid when erroring", async () => {
-    const mock = createAsyncMock((index) => index === 0);
-    const cache = createAsyncCache(mock, { deduplicationInterval: 0 });
+    const mock = createAsyncMock({ error: (index) => index === 0 });
+    const cache = createAsyncCache(mock);
 
     // 🚀 Called and ❌ errored
     const first = renderHook(() => useAsyncCache(cache, KEY_ABC));
@@ -250,7 +273,7 @@ describe("useAsyncCache", () => {
     });
 
     // ❌ The first hook returns an error state
-    expect(first.result.current).toMatchObject<AsyncState<string>>({
+    expect(first.result.current).toMatchObject<AsyncState<string, Error>>({
       isLoading: false,
       data: undefined,
       error: expect.any(Error),
@@ -260,12 +283,12 @@ describe("useAsyncCache", () => {
     const second = renderHook(() => useAsyncCache(cache, KEY_ABC));
 
     // 🔜 Both hooks return a loading state
-    expect(first.result.current).toMatchObject<AsyncState<string>>({
+    expect(first.result.current).toMatchObject<AsyncState<string, Error>>({
       isLoading: true,
       data: undefined,
       error: undefined,
     });
-    expect(second.result.current).toMatchObject<AsyncState<string>>({
+    expect(second.result.current).toMatchObject<AsyncState<string, Error>>({
       isLoading: true,
       data: undefined,
       error: undefined,
@@ -276,66 +299,27 @@ describe("useAsyncCache", () => {
     });
 
     // ✅ Both hooks return a success state
-    expect(first.result.current).toMatchObject<AsyncState<string>>({
+    expect(first.result.current).toMatchObject<AsyncState<string, Error>>({
       isLoading: false,
       data: KEY_ABC,
       error: undefined,
     });
-    expect(second.result.current).toMatchObject<AsyncState<string>>({
+    expect(second.result.current).toMatchObject<AsyncState<string, Error>>({
       isLoading: false,
       data: KEY_ABC,
       error: undefined,
     });
-  });
-
-  test("invalidating", async () => {
-    const mock = createAsyncMock();
-    const cache = createAsyncCache(mock, { deduplicationInterval: 0 });
-
-    // 🚀 Called
-    const { result } = renderHook(() => useAsyncCache(cache, KEY_ABC));
-
-    // 🔜 Returns a loading state
-    expect(result.current).toMatchObject<AsyncState<string>>({
-      isLoading: true,
-      data: undefined,
-      error: undefined,
-    });
-
-    await waitFor(() => {
-      expect(result.current.isLoading).toBe(false);
-    });
-
-    // ✅ Returns a success state
-    expect(result.current).toMatchObject<AsyncState<string>>({
-      isLoading: false,
-      data: KEY_ABC,
-      error: undefined,
-    });
-
-    act(() => {
-      result.current.invalidate();
-    });
-
-    // 🔜 Returns an empty state because invalidated
-    expect(result.current).toMatchObject<AsyncState<string>>({
-      isLoading: false,
-      data: undefined,
-      error: undefined,
-    });
-
-    expect(mock).toHaveBeenCalledTimes(1);
   });
 
   test("revalidating", async () => {
     const mock = createAsyncMock();
-    const cache = createAsyncCache(mock, { deduplicationInterval: 0 });
+    const cache = createAsyncCache(mock);
 
     // 🚀 Called
     const { result } = renderHook(() => useAsyncCache(cache, KEY_ABC));
 
     // 🔜 Returns a loading state
-    expect(result.current).toMatchObject<AsyncState<string>>({
+    expect(result.current).toMatchObject<AsyncState<string, Error>>({
       isLoading: true,
       data: undefined,
       error: undefined,
@@ -346,7 +330,7 @@ describe("useAsyncCache", () => {
     });
 
     // ✅ Returns a success state
-    expect(result.current).toMatchObject<AsyncState<string>>({
+    expect(result.current).toMatchObject<AsyncState<string, Error>>({
       isLoading: false,
       data: KEY_ABC,
       error: undefined,
@@ -357,9 +341,9 @@ describe("useAsyncCache", () => {
     });
 
     // 🔜 Returns a loading state because revalidated
-    expect(result.current).toMatchObject<AsyncState<string>>({
+    expect(result.current).toMatchObject<AsyncState<string, Error>>({
       isLoading: true,
-      data: undefined,
+      data: KEY_ABC,
       error: undefined,
     });
 
@@ -368,7 +352,7 @@ describe("useAsyncCache", () => {
     });
 
     // ✅ Returns a success state
-    expect(result.current).toMatchObject<AsyncState<string>>({
+    expect(result.current).toMatchObject<AsyncState<string, Error>>({
       isLoading: false,
       data: KEY_ABC,
       error: undefined,
@@ -379,7 +363,7 @@ describe("useAsyncCache", () => {
 
   test("suspending during loading", async () => {
     const mock = createAsyncMock();
-    const cache = createAsyncCache(mock, { deduplicationInterval: 0 });
+    const cache = createAsyncCache(mock);
 
     function Component() {
       const { data } = useAsyncCache(cache, KEY_ABC, { suspense: true });
@@ -409,18 +393,18 @@ describe("useAsyncCache", () => {
 
   test("switching keys", async () => {
     const mock = createAsyncMock();
-    const cache = createAsyncCache(mock, { deduplicationInterval: 0 });
+    const cache = createAsyncCache(mock);
 
     // 🚀 Called with "abc"
     const { result, rerender } = renderHook<
-      ReturnType<typeof useAsyncCache>,
+      UseAsyncCacheResponse<string, unknown>,
       RenderHookProps
     >(({ key }) => useAsyncCache(cache, key), {
       initialProps: { key: KEY_ABC },
     });
 
     // 🔜 Returns a loading state
-    expect(result.current).toMatchObject<AsyncState<string>>({
+    expect(result.current).toMatchObject<AsyncState<string, Error>>({
       isLoading: true,
       data: undefined,
       error: undefined,
@@ -430,7 +414,7 @@ describe("useAsyncCache", () => {
     rerender({ key: KEY_XYZ });
 
     // 🔜 Returns a loading state
-    expect(result.current).toMatchObject<AsyncState<string>>({
+    expect(result.current).toMatchObject<AsyncState<string, Error>>({
       isLoading: true,
       data: undefined,
       error: undefined,
@@ -441,7 +425,7 @@ describe("useAsyncCache", () => {
     });
 
     // ✅ Returns a success state for "xyz"
-    expect(result.current).toMatchObject<AsyncState<string>>({
+    expect(result.current).toMatchObject<AsyncState<string, Error>>({
       isLoading: false,
       data: KEY_XYZ,
       error: undefined,
@@ -452,18 +436,18 @@ describe("useAsyncCache", () => {
 
   test("switching from a key to an empty one", async () => {
     const mock = createAsyncMock();
-    const cache = createAsyncCache(mock, { deduplicationInterval: 0 });
+    const cache = createAsyncCache(mock);
 
     // 🚀 Called with "abc"
     const { result, rerender } = renderHook<
-      ReturnType<typeof useAsyncCache>,
+      UseAsyncCacheResponse<string, unknown>,
       RenderHookProps
     >(({ key }) => useAsyncCache(cache, key), {
       initialProps: { key: KEY_ABC },
     });
 
     // 🔜 Returns a loading state
-    expect(result.current).toMatchObject<AsyncState<string>>({
+    expect(result.current).toMatchObject<AsyncState<string, Error>>({
       isLoading: true,
       data: undefined,
       error: undefined,
@@ -473,7 +457,7 @@ describe("useAsyncCache", () => {
     rerender({ key: null });
 
     // 🕳️ Returns an empty non-loading state
-    expect(result.current).toMatchObject<AsyncState<string>>({
+    expect(result.current).toMatchObject<AsyncState<string, Error>>({
       isLoading: false,
       data: undefined,
       error: undefined,
@@ -486,11 +470,11 @@ describe("useAsyncCache", () => {
 
   test("switching keys but keeping previous data while loading", async () => {
     const mock = createAsyncMock();
-    const cache = createAsyncCache(mock, { deduplicationInterval: 0 });
+    const cache = createAsyncCache(mock);
 
     // 🚀 Called with "abc"
     const { result, rerender } = renderHook<
-      ReturnType<typeof useAsyncCache>,
+      UseAsyncCacheResponse<string, unknown>,
       RenderHookProps
     >(
       ({ key }) =>
@@ -503,7 +487,7 @@ describe("useAsyncCache", () => {
     );
 
     // 🔜 Returns a loading state
-    expect(result.current).toMatchObject<AsyncState<string>>({
+    expect(result.current).toMatchObject<AsyncState<string, Error>>({
       isLoading: true,
       data: undefined,
       error: undefined,
@@ -514,7 +498,7 @@ describe("useAsyncCache", () => {
     });
 
     // ✅ Returns a success state
-    expect(result.current).toMatchObject<AsyncState<string>>({
+    expect(result.current).toMatchObject<AsyncState<string, Error>>({
       isLoading: false,
       data: KEY_ABC,
       error: undefined,
@@ -524,7 +508,7 @@ describe("useAsyncCache", () => {
     rerender({ key: KEY_XYZ });
 
     // 🔜 Returns a loading state with the previous data from "abc"
-    expect(result.current).toMatchObject<AsyncState<string>>({
+    expect(result.current).toMatchObject<AsyncState<string, Error>>({
       isLoading: true,
       data: KEY_ABC,
       error: undefined,
@@ -535,7 +519,7 @@ describe("useAsyncCache", () => {
     });
 
     // ✅ Returns a success state for "xyz"
-    expect(result.current).toMatchObject<AsyncState<string>>({
+    expect(result.current).toMatchObject<AsyncState<string, Error>>({
       isLoading: false,
       data: KEY_XYZ,
       error: undefined,
@@ -546,7 +530,7 @@ describe("useAsyncCache", () => {
 
   test("rerendering shouldn't affect a key's state", async () => {
     const mock = createAsyncMock();
-    const cache = createAsyncCache(mock, { deduplicationInterval: 0 });
+    const cache = createAsyncCache(mock);
 
     // 🚀 Called
     const { result, rerender } = renderHook(() =>
@@ -554,7 +538,7 @@ describe("useAsyncCache", () => {
     );
 
     // 🔜 Returns a loading state
-    expect(result.current).toMatchObject<AsyncState<string>>({
+    expect(result.current).toMatchObject<AsyncState<string, Error>>({
       isLoading: true,
       data: undefined,
       error: undefined,
@@ -565,7 +549,7 @@ describe("useAsyncCache", () => {
     rerender();
 
     // 🔜 Still returns a loading state
-    expect(result.current).toMatchObject<AsyncState<string>>({
+    expect(result.current).toMatchObject<AsyncState<string, Error>>({
       isLoading: true,
       data: undefined,
       error: undefined,
@@ -576,7 +560,7 @@ describe("useAsyncCache", () => {
     });
 
     // ✅ Returns a success state
-    expect(result.current).toMatchObject<AsyncState<string>>({
+    expect(result.current).toMatchObject<AsyncState<string, Error>>({
       isLoading: false,
       data: KEY_ABC,
       error: undefined,
@@ -587,7 +571,7 @@ describe("useAsyncCache", () => {
     rerender();
 
     // ✅ Still returns a success state
-    expect(result.current).toMatchObject<AsyncState<string>>({
+    expect(result.current).toMatchObject<AsyncState<string, Error>>({
       isLoading: false,
       data: KEY_ABC,
       error: undefined,
@@ -595,8 +579,10 @@ describe("useAsyncCache", () => {
   });
 
   test("rerendering only when necessary", async () => {
-    const mock = createAsyncMock((index) => index === 0);
-    const cache = createAsyncCache(mock, { deduplicationInterval: 0 });
+    const mock = createAsyncMock({
+      error: (index) => index === 0,
+    });
+    const cache = createAsyncCache(mock);
 
     // 🚀 Called with "abc" and ❌ errored
     const first = renderHookWithCount(() => useAsyncCache(cache, KEY_ABC));
@@ -623,7 +609,7 @@ describe("useAsyncCache", () => {
 
   test("rendering server-side and hydrating should match", () => {
     const mock = createAsyncMock();
-    const cache = createAsyncCache(mock, { deduplicationInterval: 0 });
+    const cache = createAsyncCache(mock);
 
     // 🌍 Both hooks are rendered server-side
     const empty = renderHookServer(() => useAsyncCache(cache, null));
@@ -649,30 +635,54 @@ describe("useAsyncCache", () => {
   });
 
   test("sharing keys between vanilla and React", async () => {
-    const mock = createAsyncMock();
-    const cache = createAsyncCache(mock, { deduplicationInterval: 0 });
+    const mock = createAsyncMock({
+      value: (index) => createIndices(index),
+    });
+    const cache = createAsyncCache(mock);
 
     // 🚀 Called
     const { result } = renderHook(() => useAsyncCache(cache, KEY_ABC));
+
+    // 🔜 Returns a loading state
+    expect(result.current).toMatchObject<AsyncState<number[], Error>>({
+      isLoading: true,
+      data: undefined,
+      error: undefined,
+    });
 
     await waitFor(() => {
       expect(result.current.isLoading).toBe(false);
     });
 
     // ✅ Returns a success state
-    expect(result.current).toMatchObject<AsyncState<string>>({
+    expect(result.current).toMatchObject<AsyncState<number[], Error>>({
       isLoading: false,
-      data: KEY_ABC,
+      data: [0],
       error: undefined,
     });
 
-    // 🗑️ Invalidated from the vanilla cache
-    act(() => cache.invalidate(KEY_ABC));
+    // 🗑️ Revalidated from the vanilla cache
+    act(() => void cache.revalidate(KEY_ABC));
 
-    // 🔜 Returns an empty state because invalidated
-    expect(result.current).toMatchObject<AsyncState<string>>({
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(true);
+    });
+
+    // 🔜 Returns a loading state because revalidated
+    expect(result.current).toMatchObject<AsyncState<number[], Error>>({
+      isLoading: true,
+      data: [0],
+      error: undefined,
+    });
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    // ✅ Returns a success state
+    expect(result.current).toMatchObject<AsyncState<number[], Error>>({
       isLoading: false,
-      data: undefined,
+      data: [0, 1],
       error: undefined,
     });
   });
