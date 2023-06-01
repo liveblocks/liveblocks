@@ -24,28 +24,6 @@ export async function waitUntilStatus(
   );
 }
 
-/**
- * Handy helper that allows to pause test execution until the room changes from
- * a particular status. The change must happen within a limited time window, or
- * else this will fail, to avoid hanging.
- */
-export async function waitUntilNoLongerStatus(
-  room: Room<JsonObject, LsonObject, BaseUserMeta, Json>,
-  targetStatus: ConnectionStatus
-): Promise<void> {
-  if (room.getConnectionState() !== targetStatus) {
-    throw new Error(
-      `Room is not currently in the expected status "${targetStatus}", it's currently "${room.getConnectionState()}"`
-    );
-  }
-
-  await withTimeout(
-    room.events.connection.waitUntil((status) => status !== targetStatus),
-    1000,
-    `Room remained in status "${targetStatus}" and did not change`
-  );
-}
-
 export async function waitUntilOthersEvent(
   room: Room<JsonObject, LsonObject, BaseUserMeta, Json>
 ): Promise<void> {
