@@ -517,6 +517,13 @@ export async function prepareIsolatedStorageTest<TStorage extends LsonObject>(
   };
 }
 
+function parseAsClientMsgs(data: string) {
+  const json = JSON.parse(data) as
+    | ClientMsg<JsonObject, Json>
+    | ClientMsg<JsonObject, Json>[];
+  return Array.isArray(json) ? json : [json];
+}
+
 /**
  * Create 2 rooms with a loaded storage
  * All operations made on the main room are forwarded to the other room
@@ -544,13 +551,6 @@ export async function prepareStorageTest<
     TUserMeta,
     TRoomEvent
   >(items, currentActor, undefined, undefined, scopes);
-
-  function parseAsClientMsgs(data: string) {
-    const json = JSON.parse(data) as
-      | ClientMsg<JsonObject, Json>
-      | ClientMsg<JsonObject, Json>[];
-    return Array.isArray(json) ? json : [json];
-  }
 
   subject.wss.onReceive.subscribe((data) => {
     const messages = parseAsClientMsgs(data);
@@ -737,29 +737,25 @@ export async function prepareStorageUpdateTest<
   root: LiveObject<TStorage>;
   expectUpdates: (updates: JsonStorageUpdate[][]) => void;
 }> {
-  if (0 < 1) {
-    // XXX Remove this blocker
-    throw new Error(
-      "🙏 Please rewrite this test that is based on prepareStorageUpdateTest() helper! 🙏"
-    );
-  }
-
-  const { room: refRoom } = await prepareRoomWithStorage(items, -1);
-  const { room, storage } = await prepareRoomWithStorage<
+  const ref = await prepareRoomWithStorage(items, -1);
+  const subject = await prepareRoomWithStorage<
     TPresence,
     TStorage,
     TUserMeta,
     TRoomEvent
-  >(items, -2, (messages) => {
+  >(items, -2);
+
+  subject.wss.onReceive.subscribe((data) => {
+    const messages = parseAsClientMsgs(data);
     for (const message of messages) {
       if (message.type === ClientMsgCode.UPDATE_STORAGE) {
-        refRoom.__internal.send.incomingMessage(
+        ref.wss.last.send(
           serverMessage({
             type: ServerMsgCode.UPDATE_STORAGE,
             ops: message.ops,
           })
         );
-        room.__internal.send.incomingMessage(
+        subject.wss.last.send(
           serverMessage({
             type: ServerMsgCode.UPDATE_STORAGE,
             ops: message.ops,
@@ -772,10 +768,10 @@ export async function prepareStorageUpdateTest<
   const jsonUpdates: JsonStorageUpdate[][] = [];
   const refJsonUpdates: JsonStorageUpdate[][] = [];
 
-  room.events.storage.subscribe((updates) =>
+  subject.room.events.storage.subscribe((updates) =>
     jsonUpdates.push(updates.map(serializeUpdateToJson))
   );
-  refRoom.events.storage.subscribe((updates) =>
+  ref.room.events.storage.subscribe((updates) =>
     refJsonUpdates.push(updates.map(serializeUpdateToJson))
   );
 
@@ -785,8 +781,8 @@ export async function prepareStorageUpdateTest<
   }
 
   return {
-    room,
-    root: storage.root,
+    room: subject.room,
+    root: subject.storage.root,
     expectUpdates: expectUpdatesInBothClients,
   };
 }

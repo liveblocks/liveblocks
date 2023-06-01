@@ -124,7 +124,7 @@ describe("LiveList", () => {
     });
 
     describe("updates", () => {
-      it.failing("push on empty list update", async () => {
+      it("push on empty list update", async () => {
         const { root, expectUpdates, room } = await prepareStorageUpdateTest<{
           items: LiveList<string>;
         }>([
@@ -261,7 +261,7 @@ describe("LiveList", () => {
     });
 
     describe("updates", () => {
-      it.failing("insert at the middle update", async () => {
+      it("insert at the middle update", async () => {
         const { root, expectUpdates, room } = await prepareStorageUpdateTest<{
           items: LiveList<string>;
         }>([
@@ -333,7 +333,7 @@ describe("LiveList", () => {
     });
 
     describe("updates", () => {
-      it.failing("delete first update", async () => {
+      it("delete first update", async () => {
         const { root, expectUpdates, room } = await prepareStorageUpdateTest<{
           items: LiveList<string>;
         }>([
@@ -431,7 +431,7 @@ describe("LiveList", () => {
     });
 
     describe("updates", () => {
-      it.failing("move at the end update", async () => {
+      it("move at the end update", async () => {
         const { root, expectUpdates, room } = await prepareStorageUpdateTest<{
           items: LiveList<string>;
         }>([
@@ -555,7 +555,7 @@ describe("LiveList", () => {
     });
 
     describe("updates", () => {
-      it.failing("clear updates", async () => {
+      it("clear updates", async () => {
         const { root, expectUpdates, room } = await prepareStorageUpdateTest<{
           items: LiveList<string>;
         }>([

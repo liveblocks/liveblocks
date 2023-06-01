@@ -1062,7 +1062,7 @@ describe("room", () => {
       });
     });
 
-    test.failing("nested storage updates", async () => {
+    test("nested storage updates", async () => {
       const { room, root, expectUpdates } = await prepareStorageUpdateTest<{
         items: LiveList<LiveObject<{ names: LiveList<string> }>>;
       }>([
