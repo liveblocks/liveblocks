@@ -9,7 +9,7 @@
  */
 
 import type { Delegates } from "../connection";
-import { UnauthorizedError } from "../connection";
+import { StopRetrying } from "../connection";
 import type { RichToken } from "../protocol/AuthToken";
 import type { IWebSocketInstance } from "../types/IWebSocket";
 import { makeRoomToken, MockWebSocketServer } from "./_utils";
@@ -77,7 +77,7 @@ export function ALWAYS_FAIL_AUTH(): RichToken {
 
 export function UNAUTHORIZED(): RichToken {
   // A type of error that gets treated specially
-  throw new UnauthorizedError();
+  throw new StopRetrying("Unauthorized");
 }
 
 //

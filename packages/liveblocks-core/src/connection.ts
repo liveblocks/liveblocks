@@ -146,7 +146,11 @@ const SOCKET_CONNECT_TIMEOUT = 10000;
  * Special error class that can be thrown during authentication to stop the
  * connection manager from retrying.
  */
-export class UnauthorizedError extends Error {}
+export class StopRetrying extends Error {
+  constructor(reason: string) {
+    super(reason);
+  }
+}
 
 class LiveblocksError extends Error {
   constructor(message: string, public code: number) {
@@ -357,13 +361,10 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
 
       // Auth failed
       (failedEvent) =>
-        failedEvent.reason instanceof UnauthorizedError
+        failedEvent.reason instanceof StopRetrying
           ? {
               target: "@idle.failed",
-              effect: log(
-                LogLevel.ERROR,
-                `Unauthorized: ${failedEvent.reason.message}`
-              ),
+              effect: log(LogLevel.ERROR, failedEvent.reason.message),
             }
           : {
               target: "@auth.backoff",
