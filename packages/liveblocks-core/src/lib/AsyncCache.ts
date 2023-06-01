@@ -4,10 +4,24 @@ import { shallow } from "./shallow";
 
 type AsyncFunction<T, A extends any[] = any[]> = (...args: A) => Promise<T>;
 
-type Mutation<T> = (data: T | undefined, key: string) => Promise<T | void>;
+type OptimisticData<T> = T | ((data: T | undefined) => T);
+
+export type Mutation<T, M> = (
+  data: T | undefined,
+  key: string
+) => Promise<MutationResponse<T, M>>;
+
+export type MutationResponse<T, M> = {
+  data: T;
+  mutation?: M;
+};
+
+type MutateOptions<T> = {
+  optimisticData: OptimisticData<T>;
+};
 
 type RevalidateOptions<T> = {
-  optimisticData: T | ((data: T | undefined) => T);
+  optimisticData: OptimisticData<T>;
 };
 
 type AsyncCacheOptions<T, E> = {
@@ -57,14 +71,10 @@ export type AsyncCacheItem<T, E> = Observable<AsyncState<T, E>> & {
   get(): Promise<AsyncStateResolved<T, E>>;
   getState(): AsyncState<T, E>;
   revalidate(options?: RevalidateOptions<T>): Promise<AsyncStateResolved<T, E>>;
-  revalidate(
-    mutation: Mutation<T>,
+  mutate<M>(
+    mutation: Mutation<T, M>,
     options?: RevalidateOptions<T>
-  ): Promise<AsyncStateResolved<T, E>>;
-  revalidate(
-    mutation?: RevalidateOptions<T> | Mutation<T>,
-    second?: RevalidateOptions<T>
-  ): Promise<AsyncStateResolved<T, E>>;
+  ): Promise<MutationResponse<T, M>>;
 };
 
 export type AsyncCache<T, E> = {
@@ -92,18 +102,19 @@ export type AsyncCache<T, E> = {
     key: string,
     options?: RevalidateOptions<T>
   ): Promise<AsyncStateResolved<T, E>>;
+
   /**
-   * Revalidates the key with a mutation.
+   * Mutates the key.
    *
-   * @param key The key to revalidate.
-   * @param mutation An asynchronous function to wait on, optionally setting the data manually if it returns any.
+   * @param key The key to mutate.
+   * @param mutation An asynchronous function to wait on, setting the data manually if it returns any.
    * @param options.optimisticData Set data optimistically but rollback if there's an error.
    */
-  revalidate(
+  mutate<M>(
     key: string,
-    mutation: Mutation<T>,
-    options?: RevalidateOptions<T>
-  ): Promise<AsyncStateResolved<T, E>>;
+    mutation: Mutation<T, M>,
+    options?: MutateOptions<T>
+  ): Promise<MutationResponse<T, M>>;
 
   /**
    * Subscribes to the key's changes.
@@ -210,38 +221,44 @@ function createCacheItem<T, E>(
     notify();
   }
 
-  async function revalidate(
-    options?: RevalidateOptions<T>
-  ): Promise<AsyncStateResolved<T, E>>;
-  async function revalidate(
-    mutation: Mutation<T>,
-    options?: RevalidateOptions<T>
-  ): Promise<AsyncStateResolved<T, E>>;
-  async function revalidate(
-    first?: RevalidateOptions<T> | Mutation<T>,
-    second?: RevalidateOptions<T>
-  ): Promise<AsyncStateResolved<T, E>> {
-    const mutation = typeof first === "function" ? first : undefined;
-    const options = typeof first === "function" ? second : first;
+  /**
+   * @internal
+   */
+  function setOptimisticData(optimisticData?: OptimisticData<T>) {
+    if (!optimisticData) {
+      return;
+    }
 
+    context.rollbackOptimisticDataOnError = true;
+    state = {
+      ...state,
+      data:
+        optimisticData instanceof Function
+          ? optimisticData(state.data)
+          : optimisticData,
+    };
+  }
+
+  async function revalidate(
+    options?: RevalidateOptions<T>
+  ): Promise<AsyncStateResolved<T, E>> {
     context.isInvalid = true;
 
     // We first set optimistic data if it's provided.
-    if (options?.optimisticData) {
-      context.rollbackOptimisticDataOnError = true;
-      state = {
-        ...state,
-        data:
-          options.optimisticData instanceof Function
-            ? options.optimisticData(state.data)
-            : options.optimisticData,
-      };
-    }
+    setOptimisticData(options?.optimisticData);
 
-    // If there's no mutation, we revalidate the data by getting it again.
-    if (!mutation) {
-      return get();
-    }
+    // Then we call the function again because it was marked invalid.
+    return get();
+  }
+
+  async function mutate<M>(
+    mutation: Mutation<T, M>,
+    options?: MutateOptions<T>
+  ) {
+    context.isInvalid = true;
+
+    // We first set optimistic data if it's provided.
+    setOptimisticData(options?.optimisticData);
 
     // We catch the mutation errors so we can set the correct non-loading state.
     try {
@@ -253,11 +270,10 @@ function createCacheItem<T, E>(
       // We notify subscribers that the mutation started.
       notify();
 
-      const data = await mutation(context.previousNonOptimisticData, key);
-
-      if (data === undefined) {
-        return get();
-      }
+      const { data, mutation: mutationResponse } = await mutation(
+        context.previousNonOptimisticData,
+        key
+      );
 
       context.isInvalid = false;
       context.previousNonOptimisticData = data;
@@ -271,7 +287,10 @@ function createCacheItem<T, E>(
       // We notify subscribers that the mutation fulfilled.
       notify();
 
-      return getState() as AsyncStateResolved<T, E>;
+      return {
+        data,
+        mutation: mutationResponse,
+      };
     } catch (error) {
       state = {
         isLoading: false,
@@ -322,6 +341,7 @@ function createCacheItem<T, E>(
     get,
     getState,
     revalidate,
+    mutate,
   };
 }
 
@@ -352,12 +372,16 @@ export function createAsyncCache<T, E>(
     return cache.get(key)?.getState();
   }
 
-  function revalidate(
+  function revalidate(key: string, options?: RevalidateOptions<T>) {
+    return create(key).revalidate(options);
+  }
+
+  function mutate<M>(
     key: string,
-    first?: RevalidateOptions<T> | Mutation<T>,
-    second?: RevalidateOptions<T>
+    mutation: Mutation<T, M>,
+    options?: MutateOptions<T>
   ) {
-    return create(key).revalidate(first, second);
+    return create(key).mutate(mutation, options);
   }
 
   function subscribe(key: string, callback: Callback<AsyncState<T, E>>) {
@@ -376,6 +400,7 @@ export function createAsyncCache<T, E>(
     get,
     getState,
     revalidate,
+    mutate,
     subscribe,
     has,
     clear,
