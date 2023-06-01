@@ -145,43 +145,34 @@ describe("createClient", () => {
     }).not.toThrow();
   });
 
-  // XXX Make this test pass again later
-  test.failing(
-    "should throw if authEndpoint is string and fetch polyfill is not defined",
-    () => {
-      expect(() =>
-        enterAndLeave({
-          authEndpoint: "/api/auth",
-          polyfills: {
-            WebSocket: MockWebSocket,
-            atob: atobPolyfillMock,
-          },
-        })
-      ).toThrow(
-        "To use Liveblocks client in a non-dom environment with a url as auth endpoint, you need to provide a fetch polyfill."
-      );
-    }
-  );
+  test("should throw if authEndpoint is string and fetch polyfill is not defined", () => {
+    expect(() =>
+      enterAndLeave({
+        authEndpoint: "/api/auth",
+        polyfills: {
+          WebSocket: MockWebSocket,
+          atob: atobPolyfillMock,
+        },
+      })
+    ).toThrow(
+      "To use Liveblocks client in a non-dom environment with a url as auth endpoint, you need to provide a fetch polyfill."
+    );
+  });
 
-  // XXX Make this test pass again later
-  test.failing(
-    "should throw if public key is used and fetch polyfill is not defined",
-    () => {
-      expect(() =>
-        enterAndLeave({
-          publicApiKey: "pk_xxx",
-          polyfills: {
-            WebSocket: MockWebSocket,
-          },
-        })
-      ).toThrow(
-        "To use Liveblocks client in a non-dom environment with a publicApiKey, you need to provide a fetch polyfill."
-      );
-    }
-  );
+  test("should throw if public key is used and fetch polyfill is not defined", () => {
+    expect(() =>
+      enterAndLeave({
+        publicApiKey: "pk_xxx",
+        polyfills: {
+          WebSocket: MockWebSocket,
+        },
+      })
+    ).toThrow(
+      "To use Liveblocks client in a non-dom environment with a publicApiKey, you need to provide a fetch polyfill."
+    );
+  });
 
-  // XXX Make this test pass again later
-  test.failing("should throw if WebSocketPolyfill is not set", () => {
+  test("should throw if WebSocketPolyfill is not set", () => {
     expect(() =>
       enterAndLeave({
         authEndpoint: authEndpointCallback,

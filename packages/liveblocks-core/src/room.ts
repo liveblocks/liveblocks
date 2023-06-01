@@ -2264,40 +2264,35 @@ function makeAuthDelegateForRoom(
   authentication: Authentication,
   fetchPolyfill?: typeof window.fetch
 ): () => Promise<RichToken> {
+  const f =
+    fetchPolyfill ?? (typeof window === "undefined" ? undefined : window.fetch);
+
   if (authentication.type === "public") {
-    return async () => {
-      if (typeof window === "undefined" && fetchPolyfill === undefined) {
-        throw new Error(
-          "To use Liveblocks client in a non-dom environment with a publicApiKey, you need to provide a fetch polyfill."
-        );
-      }
+    if (f === undefined) {
+      throw new Error(
+        "To use Liveblocks client in a non-dom environment with a publicApiKey, you need to provide a fetch polyfill."
+      );
+    }
 
-      return fetchAuthEndpoint(
-        fetchPolyfill || /* istanbul ignore next */ fetch,
-        authentication.url,
-        {
-          room: roomId,
-          publicApiKey: authentication.publicApiKey,
-        }
-      ).then(({ token }) => parseRoomAuthToken(token));
+    return async () => {
+      return fetchAuthEndpoint(f, authentication.url, {
+        room: roomId,
+        publicApiKey: authentication.publicApiKey,
+      }).then(({ token }) => parseRoomAuthToken(token));
     };
-  }
+  } else if (authentication.type === "private") {
+    if (f === undefined) {
+      throw new Error(
+        "To use Liveblocks client in a non-dom environment with a url as auth endpoint, you need to provide a fetch polyfill."
+      );
+    }
 
-  if (authentication.type === "private") {
     return async () => {
-      if (typeof window === "undefined" && fetchPolyfill === undefined) {
-        throw new Error(
-          "To use Liveblocks client in a non-dom environment with a url as auth endpoint, you need to provide a fetch polyfill."
-        );
-      }
-
-      return fetchAuthEndpoint(fetchPolyfill || fetch, authentication.url, {
+      return fetchAuthEndpoint(f, authentication.url, {
         room: roomId,
       }).then(({ token }) => parseRoomAuthToken(token));
     };
-  }
-
-  if (authentication.type === "custom") {
+  } else if (authentication.type === "custom") {
     return async () => {
       const response = await authentication.callback(roomId);
       if (!response || !response.token) {
@@ -2307,9 +2302,9 @@ function makeAuthDelegateForRoom(
       }
       return parseRoomAuthToken(response.token);
     };
+  } else {
+    throw new Error("Internal error. Unexpected authentication type");
   }
-
-  throw new Error("Internal error. Unexpected authentication type");
 }
 
 async function fetchAuthEndpoint(
