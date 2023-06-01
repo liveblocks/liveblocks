@@ -7,7 +7,9 @@ import { Response as NodeFetchResponse } from "node-fetch";
 
 import type { ClientOptions } from "../client";
 import { createClient } from "../client";
+import * as console from "../lib/fancy-console";
 import { MockWebSocket } from "./_utils";
+import { waitUntilStatus } from "./_waitUtils";
 
 const token =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2MTY3MjM2NjcsImV4cCI6MTYxNjcyNzI2Nywicm9vbUlkIjoiazV3bWgwRjlVTGxyek1nWnRTMlpfIiwiYXBwSWQiOiI2MDVhNGZkMzFhMzZkNWVhN2EyZTA5MTQiLCJhY3RvciI6MCwic2NvcGVzIjpbIndlYnNvY2tldDpwcmVzZW5jZSIsIndlYnNvY2tldDpzdG9yYWdlIiwicm9vbTpyZWFkIiwicm9vbTp3cml0ZSJdfQ.IQFyw54-b4F6P0MTSzmBVwdZi2pwPaxZwzgkE2l0Mi4";
@@ -18,9 +20,7 @@ const fetchMock = (async () =>
   )) as typeof fetch;
 
 function authEndpointCallback() {
-  return Promise.resolve({
-    token,
-  });
+  return Promise.resolve({ token });
 }
 
 function atobPolyfillMock(data: string): string {
@@ -145,41 +145,66 @@ describe("createClient", () => {
     }).not.toThrow();
   });
 
-  test("should throw if authEndpoint is string and fetch polyfill is not defined", () => {
-    expect(() =>
-      enterAndLeave({
-        authEndpoint: "/api/auth",
-        polyfills: {
-          WebSocket: MockWebSocket,
-          atob: atobPolyfillMock,
-        },
-      })
-    ).toThrow(
+  test("should throw if authEndpoint is string and fetch polyfill is not defined", async () => {
+    const spy = jest.spyOn(console, "error");
+
+    const client = createClient({
+      authEndpoint: "/api/auth",
+      polyfills: {
+        WebSocket: MockWebSocket,
+        atob: atobPolyfillMock,
+      },
+    });
+    const room = client.enter("room", { initialPresence: {} });
+
+    // Room will fail to connect, and move to "closed" state, basically giving up reconnecting
+    await waitUntilStatus(room, "failed");
+
+    expect(spy).toHaveBeenCalledWith(
       "To use Liveblocks client in a non-dom environment with a url as auth endpoint, you need to provide a fetch polyfill."
     );
+
+    // Clean things up
+    client.leave("room");
   });
 
-  test("should throw if public key is used and fetch polyfill is not defined", () => {
-    expect(() =>
-      enterAndLeave({
-        publicApiKey: "pk_xxx",
-        polyfills: {
-          WebSocket: MockWebSocket,
-        },
-      })
-    ).toThrow(
+  test("should throw if public key is used and fetch polyfill is not defined", async () => {
+    const spy = jest.spyOn(console, "error");
+
+    const client = createClient({
+      publicApiKey: "pk_xxx",
+      polyfills: {
+        WebSocket: MockWebSocket,
+      },
+    });
+    const room = client.enter("room", { initialPresence: {} });
+
+    // Room will fail to connect, and move to "closed" state, basically giving up reconnecting
+    await waitUntilStatus(room, "failed");
+
+    expect(spy).toHaveBeenCalledWith(
       "To use Liveblocks client in a non-dom environment with a publicApiKey, you need to provide a fetch polyfill."
     );
+
+    // Clean things up
+    client.leave("room");
   });
 
-  test("should throw if WebSocketPolyfill is not set", () => {
-    expect(() =>
-      enterAndLeave({
-        authEndpoint: authEndpointCallback,
-      })
-    ).toThrow(
+  test("should fail to connect and stop retrying if WebSocketPolyfill is not set", async () => {
+    const spy = jest.spyOn(console, "error");
+
+    const client = createClient({ authEndpoint: authEndpointCallback });
+    const room = client.enter("room", { initialPresence: {} });
+
+    // Room will fail to connect, and move to "closed" state, basically giving up reconnecting
+    await waitUntilStatus(room, "failed");
+
+    expect(spy).toHaveBeenCalledWith(
       "To use Liveblocks client in a non-dom environment, you need to provide a WebSocket polyfill."
     );
+
+    // Clean things up
+    client.leave("room");
   });
 
   test("should throw if throttle is not a number", () => {

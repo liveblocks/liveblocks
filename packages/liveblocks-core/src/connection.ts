@@ -373,8 +373,12 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
           effect: [
             increaseBackoffDelay,
             log(
-              LogLevel.INFO,
-              `Authentication failed: ${String(failedEvent.reason)}`
+              LogLevel.ERROR,
+              `Authentication failed: ${
+                failedEvent.reason instanceof Error
+                  ? failedEvent.reason.message
+                  : String(failedEvent.reason)
+              }`
             ),
           ],
         };

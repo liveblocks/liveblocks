@@ -186,8 +186,7 @@ export function createClient(options: ClientOptions): Client {
           roomId
         ),
         unstable_fallbackToHTTP: !!clientOptions.unstable_fallbackToHTTP,
-      },
-      undefined
+      }
     );
 
     rooms.set(roomId, newRoom);

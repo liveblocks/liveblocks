@@ -112,6 +112,9 @@ describe("room / auth", () => {
     rest.post("/mocked-api/403", (_req, res, ctx) => {
       return res(ctx.status(403));
     }),
+    rest.post("/mocked-api/401-with-details", (_req, res, ctx) => {
+      return res(ctx.status(401), ctx.text("wrong key type"));
+    }),
     rest.post("/mocked-api/not-json", (_req, res, ctx) => {
       return res(ctx.status(202), ctx.text("this is not json"));
     }),
@@ -137,8 +140,9 @@ describe("room / auth", () => {
     consoleErrorSpy.mockRestore();
   });
 
-  test.failing.each([{ notAToken: "" }, undefined, null, ""])(
-    "custom authentication with missing token in callback response should throw",
+  test.each([{ notAToken: "" }, undefined, null, ""])(
+    "custom authentication with missing token in callback response should fail",
+
     async (response) => {
       const room = createRoom(
         { initialPresence: {} as never },
@@ -152,102 +156,100 @@ describe("room / auth", () => {
                 resolve(response);
               }),
           },
-        },
-        /* XXX TODO */ void "PLEASE IMPLEMENT ME"
+        }
       );
 
       room.connect();
+      await waitUntilStatus(room, "authenticating");
       await waitFor(() => consoleErrorSpy.mock.calls.length > 0);
-      room.disconnect();
-
-      expect(consoleErrorSpy.mock.calls[0][1]).toEqual(
-        new Error(
-          'Authentication error. We expect the authentication callback to return a token, but it does not. Hint: the return value should look like: { token: "..." }'
-        )
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        'Authentication failed: We expect the authentication callback to return a token, but it does not. Hint: the return value should look like: { token: "..." }'
       );
+      room.destroy();
     }
   );
 
-  test.failing(
-    "private authentication with 403 status should throw",
-    async () => {
-      const room = createRoom(
-        { initialPresence: {} as never },
-        {
-          ...makeRoomConfig(),
-          authentication: {
-            type: "private",
-            url: "/mocked-api/403",
-          },
+  test("private authentication with 403 status should fail", async () => {
+    const room = createRoom(
+      { initialPresence: {} as never },
+      {
+        ...makeRoomConfig(),
+        authentication: {
+          type: "private",
+          url: "/mocked-api/403",
         },
-        /* XXX TODO */ void "PLEASE IMPLEMENT ME"
-      );
+      }
+    );
 
-      room.connect();
-      await waitFor(() => consoleErrorSpy.mock.calls.length > 0);
-      room.disconnect();
+    room.connect();
+    await waitUntilStatus(room, "failed");
+    expect(consoleErrorSpy).toHaveBeenCalledWith(
+      "Unauthorized: reason not provided in auth response (403 returned by POST /mocked-api/403)"
+    );
+    room.destroy();
+  });
 
-      expect(consoleErrorSpy.mock.calls[0][1]).toEqual(
-        new Error(
-          'Expected a status 200 but got 403 when doing a POST request on "/mocked-api/403"'
-        )
-      );
-    }
-  );
-
-  test.failing(
-    "private authentication that does not returns json should throw",
-    async () => {
-      const room = createRoom(
-        { initialPresence: {} as never },
-        {
-          ...makeRoomConfig(),
-          authentication: {
-            type: "private",
-            url: "/mocked-api/not-json",
-          },
+  test("private authentication with 403 status should fail with details", async () => {
+    const room = createRoom(
+      { initialPresence: {} as never },
+      {
+        ...makeRoomConfig(),
+        authentication: {
+          type: "private",
+          url: "/mocked-api/401-with-details",
         },
-        /* XXX TODO */ void "PLEASE IMPLEMENT ME"
-      );
+      }
+    );
 
-      room.connect();
-      await waitFor(() => consoleErrorSpy.mock.calls.length > 0);
-      room.disconnect();
+    room.connect();
+    await waitUntilStatus(room, "failed");
+    expect(consoleErrorSpy).toHaveBeenCalledWith(
+      "Unauthorized: wrong key type (401 returned by POST /mocked-api/401-with-details)"
+    );
+    room.destroy();
+  });
 
-      expect(consoleErrorSpy.mock.calls[0][1]).toEqual(
-        new Error(
-          'Expected a JSON response when doing a POST request on "/mocked-api/not-json". SyntaxError: Unexpected token h in JSON at position 1'
-        )
-      );
-    }
-  );
-
-  test.failing(
-    "private authentication that does not returns json should throw",
-    async () => {
-      const room = createRoom(
-        { initialPresence: {} as never },
-        {
-          ...makeRoomConfig(),
-          authentication: {
-            type: "private",
-            url: "/mocked-api/missing-token",
-          },
+  test("private authentication that does not return valid JSON should fail", async () => {
+    const room = createRoom(
+      { initialPresence: {} as never },
+      {
+        ...makeRoomConfig(),
+        authentication: {
+          type: "private",
+          url: "/mocked-api/not-json",
         },
-        /* XXX TODO */ void "PLEASE IMPLEMENT ME"
-      );
+      }
+    );
 
-      room.connect();
-      await waitFor(() => consoleErrorSpy.mock.calls.length > 0);
-      room.disconnect();
+    room.connect();
+    await waitUntilStatus(room, "authenticating");
+    await waitFor(() => consoleErrorSpy.mock.calls.length > 0);
+    expect(consoleErrorSpy).toHaveBeenCalledWith(
+      'Authentication failed: Expected a JSON response when doing a POST request on "/mocked-api/not-json". SyntaxError: Unexpected token h in JSON at position 1'
+    );
+    room.destroy();
+  });
 
-      expect(consoleErrorSpy.mock.calls[0][1]).toEqual(
-        new Error(
-          'Expected a JSON response of the form `{ token: "..." }` when doing a POST request on "/mocked-api/missing-token", but got {}'
-        )
-      );
-    }
-  );
+  test("private authentication without an auth token response should fail", async () => {
+    const room = createRoom(
+      { initialPresence: {} as never },
+      {
+        ...makeRoomConfig(),
+        authentication: {
+          type: "private",
+          url: "/mocked-api/missing-token",
+        },
+      }
+    );
+
+    room.connect();
+    await waitUntilStatus(room, "authenticating");
+    await waitFor(() => consoleErrorSpy.mock.calls.length > 0);
+    expect(consoleErrorSpy).toHaveBeenCalledWith(
+      'Authentication failed: Expected a JSON response of the form `{ token: "..." }` when doing a POST request on "/mocked-api/missing-token", but got {}'
+    );
+    room.destroy();
+  });
 });
 
 describe("room", () => {
@@ -1450,18 +1452,13 @@ describe("room", () => {
   });
 
   describe("reconnect", () => {
-    let consoleErrorSpy: jest.SpyInstance;
     let consoleWarnSpy: jest.SpyInstance;
 
     beforeEach(() => {
-      consoleErrorSpy = jest
-        .spyOn(console, "error")
-        .mockImplementation(() => {});
       consoleWarnSpy = jest.spyOn(console, "warn").mockImplementation(() => {});
     });
 
     afterEach(() => {
-      consoleErrorSpy.mockRestore();
       consoleWarnSpy.mockRestore();
     });
 

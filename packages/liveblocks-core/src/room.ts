@@ -806,7 +806,7 @@ export function createRoom<
     "shouldInitiallyConnect"
   >,
   config: RoomConfig<TPresence, TRoomEvent>,
-  mockedDelegates: Delegates<RichToken> | undefined
+  mockedDelegates?: Delegates<RichToken>
 ): Room<TPresence, TStorage, TUserMeta, TRoomEvent> {
   const initialPresence =
     typeof options.initialPresence === "function"
@@ -2299,7 +2299,7 @@ function makeAuthDelegateForRoom(
       const response = await authentication.callback(roomId);
       if (!response || !response.token) {
         throw new Error(
-          'Authentication error. We expect the authentication callback to return a token, but it does not. Hint: the return value should look like: { token: "..." }'
+          'We expect the authentication callback to return a token, but it does not. Hint: the return value should look like: { token: "..." }'
         );
       }
       return parseRoomAuthToken(response.token);
@@ -2327,33 +2327,32 @@ async function fetchAuthEndpoint(
     body: JSON.stringify(body),
   });
   if (!res.ok) {
-    // XXX Double-check - is this indeed correct?
+    const reason = `${
+      (await res.text()).trim() || "reason not provided in auth response"
+    } (${res.status} returned by POST ${endpoint})`;
+
     if (res.status === 401 || res.status === 403) {
       // Throw a special error instance, which the connection manager will
       // recognize and understand that retrying will have no effect
-      throw new StopRetrying(
-        `Unauthorized: ${
-          (await res.text()) || "reason not provided in auth response"
-        }`
-      );
+      throw new StopRetrying(`Unauthorized: ${reason}`);
     } else {
-      throw new AuthenticationError(
-        `Expected a status 200 but got ${res.status} when doing a POST request on "${endpoint}"`
-      );
+      throw new Error(`Failed to authenticate: ${reason}`);
     }
   }
+
   let data: Json;
   try {
     data = await (res.json() as Promise<Json>);
   } catch (er) {
-    throw new AuthenticationError(
+    throw new Error(
       `Expected a JSON response when doing a POST request on "${endpoint}". ${String(
         er
       )}`
     );
   }
+
   if (!isPlainObject(data) || typeof data.token !== "string") {
-    throw new AuthenticationError(
+    throw new Error(
       `Expected a JSON response of the form \`{ token: "..." }\` when doing a POST request on "${endpoint}", but got ${JSON.stringify(
         data
       )}`
@@ -2361,12 +2360,6 @@ async function fetchAuthEndpoint(
   }
   const { token } = data;
   return { token };
-}
-
-class AuthenticationError extends Error {
-  constructor(message: string) {
-    super(message);
-  }
 }
 
 //
