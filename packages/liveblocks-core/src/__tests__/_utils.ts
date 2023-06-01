@@ -517,13 +517,6 @@ export async function prepareIsolatedStorageTest<TStorage extends LsonObject>(
   };
 }
 
-function parseAsClientMsgs(data: string) {
-  const json = JSON.parse(data) as
-    | ClientMsg<JsonObject, Json>
-    | ClientMsg<JsonObject, Json>[];
-  return Array.isArray(json) ? json : [json];
-}
-
 /**
  * Create 2 rooms with a loaded storage
  * All operations made on the main room are forwarded to the other room
@@ -905,6 +898,13 @@ export function mockEffects<
   return {
     send: jest.fn(),
   };
+}
+
+export function parseAsClientMsgs(data: string) {
+  const json = JSON.parse(data) as
+    | ClientMsg<JsonObject, Json>
+    | ClientMsg<JsonObject, Json>[];
+  return Array.isArray(json) ? json : [json];
 }
 
 export function serverMessage(

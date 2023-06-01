@@ -12,7 +12,6 @@ import {
 import * as console from "../lib/fancy-console";
 import type { Json, JsonObject } from "../lib/Json";
 import type { BaseUserMeta } from "../protocol/BaseUserMeta";
-import type { ClientMsg } from "../protocol/ClientMsg";
 import { ClientMsgCode } from "../protocol/ClientMsg";
 import type { IdTuple, SerializedCrdt } from "../protocol/SerializedCrdt";
 import { ServerMsgCode } from "../protocol/ServerMsg";
@@ -22,6 +21,7 @@ import {
   createSerializedRegister,
   FIRST_POSITION,
   FOURTH_POSITION,
+  parseAsClientMsgs,
   prepareRoomWithStorage,
   SECOND_POSITION,
   serverMessage,
@@ -34,41 +34,37 @@ export async function prepareStorageImmutableTest<
   TUserMeta extends BaseUserMeta = never,
   TRoomEvent extends Json = never
 >(items: IdTuple<SerializedCrdt>[], actor: number = 0) {
-  if (0 < 1) {
-    // XXX Remove this blocker
-    throw new Error(
-      "🙏 Please rewrite this test that is based on prepareStorageImmutableTest() helper! 🙏"
-    );
-  }
-
   let state = {} as ToJson<TStorage>;
   let refState = {} as ToJson<TStorage>;
 
   let totalStorageOps = 0;
 
-  const { room: refRoom, storage: refStorage } = await prepareRoomWithStorage<
+  const ref = await prepareRoomWithStorage<
     TPresence,
     TStorage,
     TUserMeta,
     TRoomEvent
   >(items, -1);
 
-  const { room, storage } = await prepareRoomWithStorage<
+  const subject = await prepareRoomWithStorage<
     TPresence,
     TStorage,
     TUserMeta,
     TRoomEvent
-  >(items, actor, (messages: ClientMsg<TPresence, TRoomEvent>[]) => {
+  >(items, actor);
+
+  subject.wss.onReceive.subscribe((data) => {
+    const messages = parseAsClientMsgs(data);
     for (const message of messages) {
       if (message.type === ClientMsgCode.UPDATE_STORAGE) {
         totalStorageOps += message.ops.length;
-        refRoom.__internal.send.incomingMessage(
+        ref.wss.last.send(
           serverMessage({
             type: ServerMsgCode.UPDATE_STORAGE,
             ops: message.ops,
           })
         );
-        room.__internal.send.incomingMessage(
+        subject.wss.last.send(
           serverMessage({
             type: ServerMsgCode.UPDATE_STORAGE,
             ops: message.ops,
@@ -78,11 +74,11 @@ export async function prepareStorageImmutableTest<
     }
   });
 
-  state = lsonToJson(storage.root) as ToJson<TStorage>;
-  refState = lsonToJson(refStorage.root) as ToJson<TStorage>;
+  state = lsonToJson(subject.storage.root) as ToJson<TStorage>;
+  refState = lsonToJson(ref.storage.root) as ToJson<TStorage>;
 
-  refRoom.events.storage.subscribe(() => {
-    refState = lsonToJson(refStorage.root) as ToJson<TStorage>;
+  ref.room.events.storage.subscribe(() => {
+    refState = lsonToJson(ref.storage.root) as ToJson<TStorage>;
   });
 
   function expectStorageAndStateInBothClients(
@@ -93,7 +89,7 @@ export async function prepareStorageImmutableTest<
     expectStorageInBothClients(data);
 
     if (itemsCount !== undefined) {
-      expect(room.__internal.nodeCount).toBe(itemsCount);
+      expect(subject.room.__internal.nodeCount).toBe(itemsCount);
     }
     expect(state).toEqual(refState);
     expect(state).toEqual(data);
@@ -104,14 +100,14 @@ export async function prepareStorageImmutableTest<
   }
 
   function expectStorageInBothClients(data: ToJson<TStorage>) {
-    const json = lsonToJson(storage.root);
+    const json = lsonToJson(subject.storage.root);
     expect(json).toEqual(data);
-    expect(lsonToJson(refStorage.root)).toEqual(data);
+    expect(lsonToJson(ref.storage.root)).toEqual(data);
   }
 
   return {
-    storage,
-    refStorage,
+    storage: subject.storage,
+    refStorage: ref.storage,
     expectStorageAndState: expectStorageAndStateInBothClients,
     expectStorage: expectStorageInBothClients,
     state,
@@ -158,7 +154,7 @@ describe("patchLiveObjectKey", () => {
 
 describe("2 ways tests with two clients", () => {
   describe("Object/LiveObject", () => {
-    test.failing("create object", async () => {
+    test("create object", async () => {
       const { storage, state, expectStorageAndState } =
         await prepareStorageImmutableTest<{
           syncObj: { a: number };
@@ -180,7 +176,7 @@ describe("2 ways tests with two clients", () => {
       expectStorageAndState({ syncObj: { a: 1 } }, 2, 1);
     });
 
-    test.failing("update object", async () => {
+    test("update object", async () => {
       const { storage, state, expectStorageAndState } =
         await prepareStorageImmutableTest<{
           syncObj: { a: number };
@@ -208,7 +204,7 @@ describe("2 ways tests with two clients", () => {
       expectStorageAndState({ syncObj: { a: 1 } }, 2, 1);
     });
 
-    test.failing("add nested object", async () => {
+    test("add nested object", async () => {
       const { storage, state, expectStorageAndState } =
         await prepareStorageImmutableTest<{
           syncObj: { a: any };
@@ -236,69 +232,53 @@ describe("2 ways tests with two clients", () => {
       expectStorageAndState({ syncObj: { a: { subA: "ok" } } }, 3, 1);
     });
 
-    test.failing(
-      "create LiveList with one LiveRegister item in same batch",
-      async () => {
-        const { storage, state, expectStorageAndState } =
-          await prepareStorageImmutableTest<{
-            doc: any;
-          }>(
-            [
-              createSerializedObject("0:0", {}),
-              createSerializedObject("0:1", {}, "0:0", "doc"),
-            ],
-            1
-          );
-
-        expect(state).toEqual({ doc: {} });
-
-        const { oldState, newState } = applyStateChanges(state, () => {
-          state.doc = { sub: [0] };
-        });
-
-        patchLiveObjectKey(
-          storage.root,
-          "doc",
-          oldState["doc"],
-          newState["doc"]
+    test("create LiveList with one LiveRegister item in same batch", async () => {
+      const { storage, state, expectStorageAndState } =
+        await prepareStorageImmutableTest<{
+          doc: any;
+        }>(
+          [
+            createSerializedObject("0:0", {}),
+            createSerializedObject("0:1", {}, "0:0", "doc"),
+          ],
+          1
         );
 
-        expectStorageAndState({ doc: { sub: [0] } }, 4, 2);
-      }
-    );
+      expect(state).toEqual({ doc: {} });
 
-    test.failing(
-      "create nested LiveList with one LiveObject item in same batch",
-      async () => {
-        const { storage, state, expectStorageAndState } =
-          await prepareStorageImmutableTest<{
-            doc: any;
-          }>(
-            [
-              createSerializedObject("0:0", {}),
-              createSerializedObject("0:1", {}, "0:0", "doc"),
-            ],
-            1
-          );
+      const { oldState, newState } = applyStateChanges(state, () => {
+        state.doc = { sub: [0] };
+      });
 
-        expect(state).toEqual({ doc: {} });
+      patchLiveObjectKey(storage.root, "doc", oldState["doc"], newState["doc"]);
 
-        const { oldState, newState } = applyStateChanges(state, () => {
-          state.doc = { sub: { subSub: [{ a: 1 }] } };
-        });
+      expectStorageAndState({ doc: { sub: [0] } }, 4, 2);
+    });
 
-        patchLiveObjectKey(
-          storage.root,
-          "doc",
-          oldState["doc"],
-          newState["doc"]
+    test("create nested LiveList with one LiveObject item in same batch", async () => {
+      const { storage, state, expectStorageAndState } =
+        await prepareStorageImmutableTest<{
+          doc: any;
+        }>(
+          [
+            createSerializedObject("0:0", {}),
+            createSerializedObject("0:1", {}, "0:0", "doc"),
+          ],
+          1
         );
 
-        expectStorageAndState({ doc: { sub: { subSub: [{ a: 1 }] } } }, 5, 3);
-      }
-    );
+      expect(state).toEqual({ doc: {} });
 
-    test.failing("Add nested objects in same batch", async () => {
+      const { oldState, newState } = applyStateChanges(state, () => {
+        state.doc = { sub: { subSub: [{ a: 1 }] } };
+      });
+
+      patchLiveObjectKey(storage.root, "doc", oldState["doc"], newState["doc"]);
+
+      expectStorageAndState({ doc: { sub: { subSub: [{ a: 1 }] } } }, 5, 3);
+    });
+
+    test("Add nested objects in same batch", async () => {
       const { storage, state, expectStorageAndState } =
         await prepareStorageImmutableTest<{
           doc: any;
@@ -321,7 +301,7 @@ describe("2 ways tests with two clients", () => {
       expectStorageAndState({ doc: { pos: { a: { b: 1 } } } }, 4, 2);
     });
 
-    test.failing("delete object key", async () => {
+    test("delete object key", async () => {
       const { storage, state, expectStorageAndState } =
         await prepareStorageImmutableTest<{
           syncObj: { a?: number };
@@ -351,7 +331,7 @@ describe("2 ways tests with two clients", () => {
   });
 
   describe("Array/LiveList", () => {
-    test.failing("replace array of 3 elements to 1 element", async () => {
+    test("replace array of 3 elements to 1 element", async () => {
       const { storage, state, expectStorageAndState } =
         await prepareStorageImmutableTest<{
           syncList: LiveList<number>;
@@ -380,7 +360,7 @@ describe("2 ways tests with two clients", () => {
       expectStorageAndState({ syncList: [2] });
     });
 
-    test.failing("add item to array", async () => {
+    test("add item to array", async () => {
       const { storage, state, expectStorageAndState } =
         await prepareStorageImmutableTest<{
           syncList: LiveList<string>;
@@ -406,7 +386,7 @@ describe("2 ways tests with two clients", () => {
       expectStorageAndState({ syncList: ["a"] }, 3, 1);
     });
 
-    test.failing("replace first item in array", async () => {
+    test("replace first item in array", async () => {
       const { storage, state, expectStorageAndState } =
         await prepareStorageImmutableTest<{
           list: LiveList<string>;
@@ -430,7 +410,7 @@ describe("2 ways tests with two clients", () => {
       expectStorageAndState({ list: ["D", "B", "C"] }, 5, 1);
     });
 
-    test.failing("replace last item in array", async () => {
+    test("replace last item in array", async () => {
       const { storage, state, expectStorageAndState } =
         await prepareStorageImmutableTest<{
           list: LiveList<string>;
@@ -454,7 +434,7 @@ describe("2 ways tests with two clients", () => {
       expectStorageAndState({ list: ["A", "B", "D"] }, 5, 1);
     });
 
-    test.failing("insert item at beginning of array", async () => {
+    test("insert item at beginning of array", async () => {
       const { storage, state, expectStorageAndState } =
         await prepareStorageImmutableTest<{
           syncList: LiveList<string>;
@@ -481,7 +461,7 @@ describe("2 ways tests with two clients", () => {
       expectStorageAndState({ syncList: ["b", "a"] }, 4, 1);
     });
 
-    test.failing("swap items in array", async () => {
+    test("swap items in array", async () => {
       const { storage, state, expectStorageAndState } =
         await prepareStorageImmutableTest<{
           syncList: LiveList<string>;
@@ -511,7 +491,7 @@ describe("2 ways tests with two clients", () => {
       expectStorageAndState({ syncList: ["d", "b", "c", "a"] }, 6, 4);
     });
 
-    test.failing("array of objects", async () => {
+    test("array of objects", async () => {
       const { storage, state, expectStorageAndState } =
         await prepareStorageImmutableTest<{
           syncList: LiveList<LiveObject<{ a: number }>>;
@@ -538,7 +518,7 @@ describe("2 ways tests with two clients", () => {
       expectStorageAndState({ syncList: [{ a: 2 }] }, 3, 1);
     });
 
-    test.failing("remove first item from array", async () => {
+    test("remove first item from array", async () => {
       const { storage, state, expectStorageAndState } =
         await prepareStorageImmutableTest<{
           syncList: LiveList<string>;
@@ -566,7 +546,7 @@ describe("2 ways tests with two clients", () => {
       expectStorageAndState({ syncList: ["b"] }, 3, 1);
     });
 
-    test.failing("remove last item from array", async () => {
+    test("remove last item from array", async () => {
       const { storage, state, expectStorageAndState } =
         await prepareStorageImmutableTest<{
           syncList: LiveList<string>;
@@ -594,7 +574,7 @@ describe("2 ways tests with two clients", () => {
       expectStorageAndState({ syncList: ["a"] }, 3, 1);
     });
 
-    test.failing("remove all elements of array except first", async () => {
+    test("remove all elements of array except first", async () => {
       const { storage, state, expectStorageAndState } =
         await prepareStorageImmutableTest<{
           syncList: LiveList<string>;
@@ -623,7 +603,7 @@ describe("2 ways tests with two clients", () => {
       expectStorageAndState({ syncList: ["a"] }, 3, 2);
     });
 
-    test.failing("remove all elements of array except last", async () => {
+    test("remove all elements of array except last", async () => {
       const { storage, state, expectStorageAndState } =
         await prepareStorageImmutableTest<{
           syncList: LiveList<string>;
@@ -652,7 +632,7 @@ describe("2 ways tests with two clients", () => {
       expectStorageAndState({ syncList: ["c"] }, 3, 2);
     });
 
-    test.failing("remove all elements of array", async () => {
+    test("remove all elements of array", async () => {
       const { storage, state, expectStorageAndState } =
         await prepareStorageImmutableTest<{
           syncList: LiveList<string>;
@@ -696,7 +676,7 @@ describe("2 ways tests with two clients", () => {
       consoleErrorSpy.mockRestore();
     });
 
-    test.failing("new state contains a function", async () => {
+    test("new state contains a function", async () => {
       const { storage, state, expectStorage } =
         await prepareStorageImmutableTest<{ syncObj: { a: any } }>(
           [
@@ -724,7 +704,7 @@ describe("2 ways tests with two clients", () => {
       expectStorage({ syncObj: { a: 0 } });
     });
 
-    test.failing("Production env - new state contains a function", async () => {
+    test("Production env - new state contains a function", async () => {
       const { storage, state } = await prepareStorageImmutableTest<{
         syncObj: { a: any };
       }>(
