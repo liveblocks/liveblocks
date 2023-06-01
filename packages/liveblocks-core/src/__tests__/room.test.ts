@@ -1262,16 +1262,16 @@ describe("room", () => {
           1
         );
 
-      const items = storage.root.get("items");
-
       expectStorage({ items: [] });
 
+      const items = storage.root.get("items");
       items.push("A");
       items.push("C"); // Will be removed by other client when offline
       expectStorage({
         items: ["A", "C"],
       });
 
+      // Kill client A's connection, will trigger auto-reconnect logic
       wss.last.close(
         new CloseEvent("close", {
           code: WebsocketCloseCodes.CLOSE_ABNORMAL,
@@ -1282,7 +1282,7 @@ describe("room", () => {
       // Operation done offline
       items.push("B");
 
-      // Other client (which is online), deletes "C".
+      // Other client (which is still online), deletes "C".
       refStorage.root.get("items").delete(1);
 
       const storageJson = lsonToJson(storage.root);

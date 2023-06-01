@@ -470,17 +470,7 @@ export async function prepareRoomWithStorage<
   room.connect();
 
   const storage = await room.getStorage();
-  return {
-    storage,
-    room,
-    wss,
-    /** @deprecated Use wss. */
-    get ws() {
-      // XXX Not so sure that this API will be the best API. Better to expose
-      // XXX the server itself, I think.
-      return wss.last;
-    },
-  };
+  return { storage, room, wss };
 }
 
 /**
