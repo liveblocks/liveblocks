@@ -2222,9 +2222,11 @@ function makeCreateSocketDelegateForRoom(
   WebSocketPolyfill?: IWebSocket
 ) {
   return (richToken: RichToken): IWebSocketInstance => {
-    const ws: IWebSocket = WebSocketPolyfill || WebSocket;
+    const ws: IWebSocket | undefined =
+      WebSocketPolyfill ??
+      (typeof WebSocket === "undefined" ? undefined : WebSocket);
 
-    if (typeof WebSocket === "undefined" && WebSocketPolyfill === undefined) {
+    if (ws === undefined) {
       throw new Error(
         "To use Liveblocks client in a non-dom environment, you need to provide a WebSocket polyfill."
       );
