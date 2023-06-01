@@ -612,19 +612,8 @@ type PrivateRoomAPI<
   getOthers_forDevTools(): readonly DevTools.UserTreeNode[];
 
   send: {
-    simulateAuthSuccess(x: unknown, y: unknown): void; // XXX Remove this
-
     explicitClose(event: IWebSocketCloseEvent): void; // NOTE: Also used in e2e test app!
     implicitClose(): void; // NOTE: Also used in e2e test app!
-
-    /**
-     * Call this when a server message is received (typically from the
-     * active WebSocket connection, or simulated by a unit test). These
-     * messages should *not* be PONG messages (aka server heartbeats).
-     *
-     * When a PONG is received, call pong() instead.
-     */
-    incomingMessage(event: IWebSocketMessageEvent): void;
   };
 };
 
@@ -2041,23 +2030,9 @@ export function createRoom<
 
       // prettier-ignore
       send: {
-        simulateAuthSuccess() { 
-          throw new Error('🙏 Rewrite this test to no longer depend on authSuccess, please! 🙏')
-        },
-
         // These exist only for our E2E testing app
         explicitClose: (event) => managedSocket._privateSendMachineEvent({ type: "EXPLICIT_SOCKET_CLOSE", event }),
         implicitClose: () => managedSocket._privateSendMachineEvent({ type: "PONG_TIMEOUT" }),
-
-
-        /**
-         * This one looks differently from the rest, because receiving messages
-         * is handled orthorgonally from all other possible events above,
-         * because it does not matter what the connectivity state of the
-         * machine is, so there won't be an explicit state machine transition
-         * needed for this event.
-         */
-        incomingMessage: handleServerMessage,
       },
     },
 
