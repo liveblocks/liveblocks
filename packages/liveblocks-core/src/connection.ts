@@ -360,22 +360,25 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
       }),
 
       // Auth failed
-      (failedEvent) =>
-        failedEvent.reason instanceof StopRetrying
-          ? {
-              target: "@idle.failed",
-              effect: log(LogLevel.ERROR, failedEvent.reason.message),
-            }
-          : {
-              target: "@auth.backoff",
-              effect: [
-                increaseBackoffDelay,
-                log(
-                  LogLevel.INFO,
-                  `Authentication failed: ${String(failedEvent.reason)}`
-                ),
-              ],
-            }
+      (failedEvent) => {
+        if (failedEvent.reason instanceof StopRetrying) {
+          return {
+            target: "@idle.failed",
+            effect: log(LogLevel.ERROR, failedEvent.reason.message),
+          };
+        }
+
+        return {
+          target: "@auth.backoff",
+          effect: [
+            increaseBackoffDelay,
+            log(
+              LogLevel.INFO,
+              `Authentication failed: ${String(failedEvent.reason)}`
+            ),
+          ],
+        };
+      }
     );
 
   //
@@ -530,7 +533,14 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
 
       // If the WebSocket connection cannot be established
       (failure) => {
-        const err = failure.reason as IWebSocketEvent | Error;
+        const err = failure.reason as IWebSocketEvent | StopRetrying | Error;
+
+        if (err instanceof StopRetrying) {
+          return {
+            target: "@idle.failed",
+            effect: log(LogLevel.ERROR, err.message),
+          };
+        }
 
         // TODO In the future, when the WebSocket connection will potentially
         // be closed with an explicit _UNAUTHORIZED_ message, we should stop
