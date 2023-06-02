@@ -4,6 +4,9 @@
 
 - Rewritten the client's internals to maintain a stabler and more reliable
   WebSocket connection over time.
+- Started to deprecate old polyfill APIs, `fetchPolyfill` and
+  `WebSocketPolyfill`. These will be removed in a future release. Use the
+  newer/recommended `polyfills` config option instead.
 
 # v1.0.12
 

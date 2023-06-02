@@ -81,12 +81,14 @@ export type ClientOptions = {
   unstable_fallbackToHTTP?: boolean;
 
   /**
-   * Backward-compatible way to set `polyfills.fetch`.
+   * @deprecated Use `polyfills: { fetch: ... }` instead.
+   * This option will be removed in a future release.
    */
   fetchPolyfill?: Polyfills["fetch"];
 
   /**
-   * Backward-compatible way to set `polyfills.WebSocket`.
+   * @deprecated Use `polyfills: { WebSocket: ... }` instead.
+   * This option will be removed in a future release.
    */
   WebSocketPolyfill?: Polyfills["WebSocket"];
 
