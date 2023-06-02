@@ -52,6 +52,7 @@ const THROTTLE_DELAY = 100;
 function makeRoomConfig(mockedDelegates?: RoomDelegates) {
   return {
     delegates: mockedDelegates,
+    enableDebugLogging: false,
     roomId: "room-id",
     throttleDelay: THROTTLE_DELAY,
     liveblocksServer: "wss://live.liveblocks.io/v6",

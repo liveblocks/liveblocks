@@ -94,6 +94,8 @@ export type ClientOptions = {
 
   /** @internal */
   mockedDelegates?: RoomDelegates;
+  /** @internal */
+  enableDebugLogging?: boolean;
 } & (
   | { publicApiKey: string; authEndpoint?: never }
   | { publicApiKey?: never; authEndpoint: AuthEndpoint }
@@ -166,9 +168,6 @@ export function createClient(options: ClientOptions): Client {
       return existingRoom as Room<TPresence, TStorage, TUserMeta, TRoomEvent>;
     }
 
-    // console.trace("enter");
-    // console.log("enter(", roomId, options, ") called");
-
     deprecateIf(
       options.initialPresence === null || options.initialPresence === undefined,
       "Please provide an initial presence value for the current user when entering the room."
@@ -184,6 +183,7 @@ export function createClient(options: ClientOptions): Client {
         throttleDelay,
         polyfills: clientOptions.polyfills,
         delegates: clientOptions.mockedDelegates,
+        enableDebugLogging: clientOptions.enableDebugLogging,
         unstable_batchedUpdates: options?.unstable_batchedUpdates,
         liveblocksServer: getServerFromClientOptions(clientOptions),
         authentication: prepareAuthentication(clientOptions, roomId),

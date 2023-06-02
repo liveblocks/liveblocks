@@ -212,7 +212,6 @@ function enableTracing(machine: FSM<Context, Event, State>) {
   const start = new Date().getTime();
 
   function log(...args: unknown[]) {
-    // eslint-disable-next-line
     console.warn(
       `${((new Date().getTime() - start) / 1000).toFixed(2)} [FSM #${
         machine.id
@@ -221,21 +220,15 @@ function enableTracing(machine: FSM<Context, Event, State>) {
     );
   }
   const unsubs = [
-    machine.events.didReceiveEvent.subscribe((e) => {
-      log(`Event ${e.type}`);
-    }),
-    machine.events.willTransition.subscribe(({ from, to }) => {
-      log("Transitioning", from, "→", to);
-    }),
-    machine.events.didIgnoreEvent.subscribe((e) => {
-      log("Ignored event", e.type, e, "(current state won't handle it)");
-    }),
-    // machine.events.willExitState.subscribe((s) => {
-    //   log("Exiting state", s);
-    // }),
-    // machine.events.didEnterState.subscribe((s) => {
-    //   log("Entering state", s);
-    // }),
+    machine.events.didReceiveEvent.subscribe((e) => log(`Event ${e.type}`)),
+    machine.events.willTransition.subscribe(({ from, to }) =>
+      log("Transitioning", from, "→", to)
+    ),
+    machine.events.didIgnoreEvent.subscribe((e) =>
+      log("Ignored event", e.type, e, "(current state won't handle it)")
+    ),
+    // machine.events.willExitState.subscribe((s) => log("Exiting state", s)),
+    // machine.events.didEnterState.subscribe((s) => log("Entering state", s)),
   ];
   return () => {
     for (const unsub of unsubs) {
@@ -276,7 +269,8 @@ const assign = (patch: Partial<Context>) => (ctx: Patchable<Context>) =>
   ctx.patch(patch);
 
 function createConnectionStateMachine<T extends BaseAuthResult>(
-  delegates: Delegates<T>
+  delegates: Delegates<T>,
+  enableDebugLogging: boolean
 ) {
   // Create observable event sources, which this machine will call into when
   // specific events happen
@@ -741,7 +735,9 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
   cleanups.push(unsubscribe);
 
   // Install debug logging
-  cleanups.push(enableTracing(machine)); // TODO Disable tracing by default
+  if (enableDebugLogging) {
+    cleanups.push(enableTracing(machine));
+  }
 
   // Start the machine
   machine.start();
@@ -796,9 +792,11 @@ export class ManagedSocket<T extends BaseAuthResult> {
     readonly onLiveblocksError: Observable<LiveblocksError>;
   };
 
-  constructor(delegates: Delegates<T>) {
-    const { machine, events, cleanups } =
-      createConnectionStateMachine(delegates);
+  constructor(delegates: Delegates<T>, enableDebugLogging: boolean = false) {
+    const { machine, events, cleanups } = createConnectionStateMachine(
+      delegates,
+      enableDebugLogging
+    );
     this.machine = machine;
     this.events = events;
     this.cleanups = cleanups;

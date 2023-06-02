@@ -85,6 +85,7 @@ function makeRoomConfig(mockedDelegates: RoomDelegates) {
     polyfills: {
       WebSocket: MockWebSocket,
     },
+    enableDebugLogging: false,
   };
 }
 

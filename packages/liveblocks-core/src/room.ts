@@ -765,6 +765,7 @@ type RoomConfig = {
   unstable_fallbackToHTTP?: boolean;
 
   polyfills?: Polyfills;
+  enableDebugLogging?: boolean;
 
   /**
    * Only necessary when you’re using Liveblocks with React v17 or lower.
@@ -828,7 +829,10 @@ export function createRoom<
     ),
   };
 
-  const managedSocket: ManagedSocket<RichToken> = new ManagedSocket(delegates);
+  const managedSocket: ManagedSocket<RichToken> = new ManagedSocket(
+    delegates,
+    config.enableDebugLogging
+  );
 
   // The room's internal stateful context
   const context: RoomState<TPresence, TStorage, TUserMeta, TRoomEvent> = {
