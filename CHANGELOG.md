@@ -2,8 +2,11 @@
 
 ### `@liveblocks/core`
 
-- Rewritten the client's internals to maintain a stabler and more reliable
-  WebSocket connection over time.
+- Rewritten the client's internals to maintain the connection with Liveblocks
+  servers more reliably.
+- Client will stop retrying to establish a connection in cases where retrying
+  would not help (explicit unauthorized/forbidden response, or a configuration
+  error)
 - Started to deprecate old polyfill APIs, `fetchPolyfill` and
   `WebSocketPolyfill`. These will be removed in a future release. Use the
   newer/recommended `polyfills` config option instead.
