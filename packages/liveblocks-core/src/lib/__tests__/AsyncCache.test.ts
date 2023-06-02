@@ -1,4 +1,4 @@
-import type { AsyncState } from "../AsyncCache";
+import type { AsyncState, MutateResponse } from "../AsyncCache";
 import { createAsyncCache, isStateEqual } from "../AsyncCache";
 
 const REQUEST_DELAY = 20;
@@ -664,7 +664,7 @@ describe("AsyncCache", () => {
     );
   });
 
-  test("revalidating with a mutation", async () => {
+  test("mutating", async () => {
     const mock = createAsyncMock({
       value: (index) => createIndices(index),
     });
@@ -676,16 +676,19 @@ describe("AsyncCache", () => {
     // 🚀 Called
     await cache.get(KEY_ABC);
 
-    // 🔨 Revalidated with a mutation instead of calling again
+    // 🔨 Mutating instead of calling again
     expect(
-      await cache.revalidate(KEY_ABC, async (data) => {
+      await cache.mutate(KEY_ABC, async (data) => {
         await sleep(REQUEST_DELAY);
 
-        return data ? createIndices(data.length + 1) : undefined;
+        return {
+          data: data ? createIndices(data.length + 1) : [0],
+          mutation: data?.length ?? 1,
+        };
       })
-    ).toMatchObject<AsyncState<number[], Error>>({
-      isLoading: false,
+    ).toMatchObject<MutateResponse<number[], number>>({
       data: [0, 1],
+      mutation: 1,
     });
 
     unsubscribe();
@@ -707,7 +710,7 @@ describe("AsyncCache", () => {
         data: [0],
       })
     );
-    // 3️⃣ Triggered when revalidated with a mutation
+    // 3️⃣ Triggered when mutation started
     expect(callback).toHaveBeenNthCalledWith(
       3,
       expect.objectContaining<AsyncState<number[], Error>>({
@@ -715,7 +718,7 @@ describe("AsyncCache", () => {
         data: [0],
       })
     );
-    // 4️⃣ Triggered when revalidation finished
+    // 4️⃣ Triggered when mutation finished
     expect(callback).toHaveBeenNthCalledWith(
       4,
       expect.objectContaining<AsyncState<number[], Error>>({
@@ -725,7 +728,7 @@ describe("AsyncCache", () => {
     );
   });
 
-  test("revalidating with a mutation in parallel", async () => {
+  test("mutating in parallel", async () => {
     const mock = createAsyncMock({
       value: (index) => createIndices(index),
     });
@@ -738,23 +741,29 @@ describe("AsyncCache", () => {
     await cache.get(KEY_ABC);
 
     await Promise.all([
-      // 🚀 Revalidated with a mutation
-      cache.revalidate(KEY_ABC, async (data) => {
+      // 🚀 Mutated
+      cache.mutate(KEY_ABC, async (data) => {
         await sleep(REQUEST_DELAY);
 
-        return data ? createIndices(data.length + 1) : undefined;
+        return {
+          data: data ? createIndices(data.length + 1) : [0],
+        };
       }),
       // 🔜 Waiting on the first revalidation
-      cache.revalidate(KEY_ABC, async (data) => {
+      cache.mutate(KEY_ABC, async (data) => {
         await sleep(REQUEST_DELAY);
 
-        return data ? createIndices(data.length + 1) : undefined;
+        return {
+          data: data ? createIndices(data.length + 1) : [0],
+        };
       }),
       // 🔜 Waiting on the first revalidation
-      cache.revalidate(KEY_ABC, async (data) => {
+      cache.mutate(KEY_ABC, async (data) => {
         await sleep(REQUEST_DELAY);
 
-        return data ? createIndices(data.length + 1) : undefined;
+        return {
+          data: data ? createIndices(data.length + 1) : [0],
+        };
       }),
     ]);
 
@@ -779,7 +788,7 @@ describe("AsyncCache", () => {
         data: [0],
       })
     );
-    // 1️⃣ Triggered when the first revalidation call starts
+    // 1️⃣ Triggered when the first mutation call starts
     expect(callback).toHaveBeenNthCalledWith(
       3,
       expect.objectContaining<AsyncState<number[], Error>>({
@@ -787,7 +796,7 @@ describe("AsyncCache", () => {
         data: [0],
       })
     );
-    // 2️⃣✅🗑️ Triggered when the first revalidation call finished
+    // 2️⃣✅🗑️ Triggered when the first mutation call finished
     expect(callback).toHaveBeenNthCalledWith(
       4,
       expect.objectContaining<AsyncState<number[], Error>>({
@@ -797,7 +806,7 @@ describe("AsyncCache", () => {
     );
   });
 
-  test("revalidating with a mutation that doesn't return data", async () => {
+  test("mutating with optimistic data", async () => {
     const mock = createAsyncMock({
       value: (index) => createIndices(index),
     });
@@ -809,73 +818,17 @@ describe("AsyncCache", () => {
     // 🚀 Called
     await cache.get(KEY_ABC);
 
-    // 🔨 Revalidated with a mutation but which doesn't return data, so 🚀 calling again
+    // 🔨 Mutated with optimistic data
     expect(
-      await cache.revalidate(KEY_ABC, async () => {
-        await sleep(REQUEST_DELAY);
-      })
-    ).toMatchObject<AsyncState<number[], Error>>({
-      isLoading: false,
-      data: [0, 1],
-    });
-
-    unsubscribe();
-
-    expect(mock).toHaveBeenCalledTimes(2);
-
-    // 1️⃣ Triggered when the first call started
-    expect(callback).toHaveBeenNthCalledWith(
-      1,
-      expect.objectContaining<AsyncState<number[], Error>>({
-        isLoading: true,
-      })
-    );
-    // 2️⃣ Triggered when the first call finished
-    expect(callback).toHaveBeenNthCalledWith(
-      2,
-      expect.objectContaining<AsyncState<number[], Error>>({
-        isLoading: false,
-        data: [0],
-      })
-    );
-    // 3️⃣ Triggered when revalidated
-    expect(callback).toHaveBeenNthCalledWith(
-      3,
-      expect.objectContaining<AsyncState<number[], Error>>({
-        isLoading: true,
-        data: [0],
-      })
-    );
-    // 4️⃣ Triggered when the revalidation finished
-    expect(callback).toHaveBeenNthCalledWith(
-      4,
-      expect.objectContaining<AsyncState<number[], Error>>({
-        isLoading: false,
-        data: [0, 1],
-      })
-    );
-  });
-
-  test("revalidating with a mutation and optimistic data", async () => {
-    const mock = createAsyncMock({
-      value: (index) => createIndices(index),
-    });
-    const cache = createAsyncCache(mock);
-
-    const callback = jest.fn();
-    const unsubscribe = cache.subscribe(KEY_ABC, callback);
-
-    // 🚀 Called
-    await cache.get(KEY_ABC);
-
-    // 🔨 Revalidated with a mutation and optimistic data
-    expect(
-      await cache.revalidate(
+      await cache.mutate(
         KEY_ABC,
         async (data) => {
           await sleep(REQUEST_DELAY);
 
-          return data ? createIndices(data.length + 1) : undefined;
+          return {
+            data: data ? createIndices(data.length + 1) : [0],
+            mutation: data?.length ?? 1,
+          };
         },
         {
           optimisticData: (data) => {
@@ -883,9 +836,9 @@ describe("AsyncCache", () => {
           },
         }
       )
-    ).toMatchObject<AsyncState<number[], Error>>({
-      isLoading: false,
+    ).toMatchObject<MutateResponse<number[], number>>({
       data: [0, 1],
+      mutation: 1,
     });
 
     unsubscribe();
@@ -907,7 +860,7 @@ describe("AsyncCache", () => {
         data: [0],
       })
     );
-    // 3️⃣ Triggered when revalidated with a mutation and optimistic data
+    // 3️⃣ Triggered when mutated with optimistic data
     expect(callback).toHaveBeenNthCalledWith(
       3,
       expect.objectContaining<AsyncState<number[], Error>>({
@@ -925,7 +878,7 @@ describe("AsyncCache", () => {
     );
   });
 
-  test("revalidating with a mutation that errors", async () => {
+  test("mutating but erroring", async () => {
     const mock = createAsyncMock({
       value: (index) => createIndices(index),
     });
@@ -937,10 +890,10 @@ describe("AsyncCache", () => {
     // 🚀 Called
     await cache.get(KEY_ABC);
 
-    // 🔨❌ Revalidated with a mutation but it errored
+    // 🔨❌ Mutated but it errored
     await expect(
       async () =>
-        await cache.revalidate(KEY_ABC, async () => {
+        await cache.mutate(KEY_ABC, async () => {
           await sleep(REQUEST_DELAY);
 
           throw ERROR;
@@ -971,7 +924,7 @@ describe("AsyncCache", () => {
         data: [0],
       })
     );
-    // 3️⃣ Triggered when revalidated with a mutation
+    // 3️⃣ Triggered when the mutation started
     expect(callback).toHaveBeenNthCalledWith(
       3,
       expect.objectContaining<AsyncState<number[], Error>>({
@@ -989,7 +942,7 @@ describe("AsyncCache", () => {
     );
   });
 
-  test("revalidating with a mutation that errors and optimistic data", async () => {
+  test("mutating with optimistic data but erroring", async () => {
     const mock = createAsyncMock({
       value: (index) => createIndices(index),
     });
@@ -1001,10 +954,10 @@ describe("AsyncCache", () => {
     // 🚀 Called
     await cache.get(KEY_ABC);
 
-    // 🔨❌ Revalidated with a mutation but it errored
+    // 🔨❌ Mutated but it errored
     await expect(
       async () =>
-        await cache.revalidate(
+        await cache.mutate(
           KEY_ABC,
           async () => {
             await sleep(REQUEST_DELAY);
@@ -1043,7 +996,7 @@ describe("AsyncCache", () => {
         data: [0],
       })
     );
-    // 3️⃣ Triggered when revalidated with a mutation and optimistic data
+    // 3️⃣ Triggered when mutating with optimistic data
     expect(callback).toHaveBeenNthCalledWith(
       3,
       expect.objectContaining<AsyncState<number[], Error>>({
