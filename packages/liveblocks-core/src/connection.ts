@@ -639,7 +639,7 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
       // socket, or not. So always check to see if the socket is still OPEN or
       // not. When still OPEN, don't transition.
       EXPLICIT_SOCKET_ERROR: (_, context) => {
-        if (context.socket?.readyState === WebSocket.OPEN) {
+        if (context.socket?.readyState === 1 /* WebSocket.OPEN */) {
           // TODO: Not here, but do we need to forward this error?
           return null; /* Do not leave OK state, socket is still usable */
         }
@@ -864,7 +864,7 @@ export class ManagedSocket<T extends BaseAuthResult> {
     const socket = this.machine.context?.socket;
     if (socket === null) {
       console.warn("Cannot send: not connected yet", data);
-    } else if (socket.readyState !== WebSocket.OPEN) {
+    } else if (socket.readyState !== 1 /* WebSocket.OPEN */) {
       console.warn("Cannot send: WebSocket no longer open", data);
     } else {
       socket.send(data);
