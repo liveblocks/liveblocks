@@ -8,7 +8,7 @@ import { Response as NodeFetchResponse } from "node-fetch";
 import type { ClientOptions } from "../client";
 import { createClient } from "../client";
 import * as console from "../lib/fancy-console";
-import { MockWebSocket } from "./_utils";
+import { MockWebSocket } from "./_MockWebSocketServer";
 import { waitUntilStatus } from "./_waitUtils";
 
 const token =

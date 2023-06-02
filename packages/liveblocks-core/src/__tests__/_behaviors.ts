@@ -12,7 +12,8 @@ import { StopRetrying } from "../connection";
 import type { RichToken } from "../protocol/AuthToken";
 import type { RoomDelegates } from "../room";
 import type { IWebSocketInstance } from "../types/IWebSocket";
-import { makeRoomToken, MockWebSocketServer } from "./_utils";
+import { MockWebSocketServer } from "./_MockWebSocketServer";
+import { makeRoomToken } from "./_utils";
 
 function makeRichToken(actor: number, scopes: string[]): RichToken {
   const raw = "<some fake JWT token>";
