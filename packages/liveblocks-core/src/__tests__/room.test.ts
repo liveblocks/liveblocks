@@ -2,6 +2,7 @@ import { rest } from "msw";
 import { setupServer } from "msw/node";
 
 import { nn } from "..";
+import type { Delegates } from "../connection";
 import { LiveList } from "../crdts/LiveList";
 import { LiveObject } from "../crdts/LiveObject";
 import type { LsonObject } from "../crdts/Lson";
@@ -10,6 +11,7 @@ import { legacy_patchImmutableObject, lsonToJson } from "../immutable";
 import * as console from "../lib/fancy-console";
 import type { Json, JsonObject } from "../lib/Json";
 import type { Authentication } from "../protocol/Authentication";
+import type { RichToken } from "../protocol/AuthToken";
 import { RoomScope } from "../protocol/AuthToken";
 import type { BaseUserMeta } from "../protocol/BaseUserMeta";
 import { ClientMsgCode } from "../protocol/ClientMsg";
@@ -46,15 +48,18 @@ import {
   waitUntilStorageUpdate,
 } from "./_waitUtils";
 
-function makeRoomConfig() {
+const THROTTLE_DELAY = 100;
+
+function makeRoomConfig(mockedDelegates?: Delegates<RichToken>) {
   return {
     roomId: "room-id",
-    throttleDelay: 100,
+    throttleDelay: THROTTLE_DELAY,
     liveblocksServer: "wss://live.liveblocks.io/v6",
     authentication: {
       type: "private",
       url: "/mocked-api/auth",
     } as Authentication,
+    mockedDelegates,
   };
 }
 
@@ -80,8 +85,7 @@ function createTestableRoom<
       initialPresence,
       initialStorage: undefined,
     },
-    makeRoomConfig(),
-    delegates
+    makeRoomConfig(delegates)
   );
 
   return {
@@ -351,7 +355,7 @@ describe("room", () => {
       expect(room.__internal.buffer.me?.data).toEqual({ x: 2 });
 
       // Forwarding time by the flush threshold will trigger the future flush
-      await jest.advanceTimersByTimeAsync(makeRoomConfig().throttleDelay);
+      await jest.advanceTimersByTimeAsync(THROTTLE_DELAY);
 
       expect(wss.receivedMessages.length).toBe(2);
       expect(wss.receivedMessages[1]).toEqual([

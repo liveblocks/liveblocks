@@ -1,4 +1,5 @@
 import type { LiveObject } from "..";
+import type { Delegates } from "../connection";
 import type { LsonObject } from "../crdts/Lson";
 import type { ToImmutable } from "../crdts/utils";
 import type { EventSource, Observable } from "../lib/EventSource";
@@ -7,7 +8,7 @@ import { withTimeout } from "../lib/fsm";
 import type { Json, JsonObject } from "../lib/Json";
 import { makePosition } from "../lib/position";
 import type { Authentication } from "../protocol/Authentication";
-import type { RoomAuthToken } from "../protocol/AuthToken";
+import type { RichToken, RoomAuthToken } from "../protocol/AuthToken";
 import type { BaseUserMeta } from "../protocol/BaseUserMeta";
 import type { ClientMsg } from "../protocol/ClientMsg";
 import { ClientMsgCode } from "../protocol/ClientMsg";
@@ -400,8 +401,9 @@ export const THIRD_POSITION = makePosition(SECOND_POSITION);
 export const FOURTH_POSITION = makePosition(THIRD_POSITION);
 export const FIFTH_POSITION = makePosition(FOURTH_POSITION);
 
-function makeRoomConfig() {
+function makeRoomConfig(mockedDelegates: Delegates<RichToken>) {
   return {
+    delegates: mockedDelegates,
     roomId: "room-id",
     throttleDelay: -1, // No throttle for standard storage test
     liveblocksServer: "wss://live.liveblocks.io/v6",
@@ -460,8 +462,7 @@ export async function prepareRoomWithStorage<
       initialPresence: {} as TPresence,
       initialStorage: defaultStorage || ({} as TStorage),
     },
-    makeRoomConfig(),
-    delegates
+    makeRoomConfig(delegates)
   );
 
   room.connect();

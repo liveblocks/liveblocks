@@ -760,6 +760,7 @@ type RoomConfig = {
   unstable_fallbackToHTTP?: boolean;
 
   polyfills?: Polyfills;
+  mockedDelegates?: Delegates<RichToken>;
 
   /**
    * Only necessary when you’re using Liveblocks with React v17 or lower.
@@ -798,8 +799,7 @@ export function createRoom<
     RoomInitializers<TPresence, TStorage>,
     "shouldInitiallyConnect"
   >,
-  config: RoomConfig,
-  mockedDelegates?: Delegates<RichToken>
+  config: RoomConfig
 ): Room<TPresence, TStorage, TUserMeta, TRoomEvent> {
   const initialPresence =
     typeof options.initialPresence === "function"
@@ -811,7 +811,7 @@ export function createRoom<
       : options.initialStorage;
 
   // Create a delegate pair for (a specific) Live Room socket connection(s)
-  const delegates: Delegates<RichToken> = mockedDelegates ?? {
+  const delegates: Delegates<RichToken> = config.mockedDelegates ?? {
     authenticate: makeAuthDelegateForRoom(
       config.roomId,
       config.authentication,

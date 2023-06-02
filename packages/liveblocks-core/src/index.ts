@@ -13,6 +13,7 @@
 
 export type { Client } from "./client";
 export { createClient } from "./client";
+export type { BaseAuthResult, Delegates } from "./connection";
 export { LiveList } from "./crdts/LiveList";
 export { LiveMap } from "./crdts/LiveMap";
 export { LiveObject } from "./crdts/LiveObject";

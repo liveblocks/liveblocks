@@ -1,9 +1,11 @@
+import type { Delegates } from "./connection";
 import type { LsonObject } from "./crdts/Lson";
 import { linkDevTools, setupDevTools, unlinkDevTools } from "./devtools";
 import { deprecateIf } from "./lib/deprecation";
 import type { Json, JsonObject } from "./lib/Json";
 import type { Resolve } from "./lib/Resolve";
 import type { Authentication } from "./protocol/Authentication";
+import type { RichToken } from "./protocol/AuthToken";
 import type { BaseUserMeta } from "./protocol/BaseUserMeta";
 import type { Polyfills, Room, RoomInitializers } from "./room";
 import { createRoom } from "./room";
@@ -89,6 +91,9 @@ export type ClientOptions = {
    * Backward-compatible way to set `polyfills.WebSocket`.
    */
   WebSocketPolyfill?: Polyfills["WebSocket"];
+
+  /** @internal */
+  mockedDelegates?: Delegates<RichToken>;
 } & (
   | { publicApiKey: string; authEndpoint?: never }
   | { publicApiKey?: never; authEndpoint: AuthEndpoint }
@@ -178,6 +183,7 @@ export function createClient(options: ClientOptions): Client {
         roomId,
         throttleDelay,
         polyfills: clientOptions.polyfills,
+        mockedDelegates: clientOptions.mockedDelegates,
         unstable_batchedUpdates: options?.unstable_batchedUpdates,
         liveblocksServer: getServerFromClientOptions(clientOptions),
         authentication: prepareAuthentication(clientOptions, roomId),
