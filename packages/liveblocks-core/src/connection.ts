@@ -3,7 +3,8 @@ import type { Observable } from "./lib/EventSource";
 import { makeEventSource } from "./lib/EventSource";
 import * as console from "./lib/fancy-console";
 import type { BuiltinEvent, Patchable, Target } from "./lib/fsm";
-import { FSM, withTimeout } from "./lib/fsm";
+import { FSM } from "./lib/fsm";
+import { withTimeout } from "./lib/utils";
 import type {
   IWebSocketCloseEvent,
   IWebSocketEvent,

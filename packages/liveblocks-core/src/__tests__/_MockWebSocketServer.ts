@@ -1,7 +1,7 @@
 import type { EventSource, Observable } from "../lib/EventSource";
 import { makeEventSource } from "../lib/EventSource";
-import { withTimeout } from "../lib/fsm";
 import type { Json } from "../lib/Json";
+import { withTimeout } from "../lib/utils";
 import type {
   IWebSocket,
   IWebSocketCloseEvent,

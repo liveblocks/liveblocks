@@ -6,7 +6,7 @@ import WebSocket from "ws";
 
 import type { Room, ConnectionStatus } from "../src/room";
 import type { BaseUserMeta } from "../src/protocol/BaseUserMeta";
-import { withTimeout } from "../src/lib/fsm";
+import { withTimeout } from "../src/lib/utils";
 import type { Json, JsonObject } from "../src/lib/Json";
 import type { LiveObject } from "../src/crdts/LiveObject";
 import type { LsonObject } from "../src/crdts/Lson";

@@ -50,7 +50,12 @@ export { asArrayWithLegacyMethods } from "./lib/LegacyArray";
 export { asPos, makePosition } from "./lib/position";
 export type { Resolve } from "./lib/Resolve";
 export { shallow } from "./lib/shallow";
-export { b64decode, isPlainObject, tryParseJson } from "./lib/utils";
+export {
+  b64decode,
+  isPlainObject,
+  tryParseJson,
+  withTimeout,
+} from "./lib/utils";
 export type {
   AppOnlyAuthToken,
   AuthToken,

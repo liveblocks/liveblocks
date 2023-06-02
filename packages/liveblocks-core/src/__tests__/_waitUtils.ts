@@ -1,6 +1,6 @@
 import type { LsonObject } from "../crdts/Lson";
-import { withTimeout } from "../lib/fsm";
 import type { Json, JsonObject } from "../lib/Json";
+import { withTimeout } from "../lib/utils";
 import type { BaseUserMeta } from "../protocol/BaseUserMeta";
 import type { ConnectionStatus, Room } from "../room";
 

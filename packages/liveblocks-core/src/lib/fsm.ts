@@ -82,36 +82,6 @@ type Groups<T extends string> = T extends `${infer G}.${infer Rest}`
   : never;
 export type Wildcard<T extends string> = "*" | `${Groups<T>}.*`;
 
-/**
- * Returns whatever the given promise returns, but will be rejected with
- * a "Timed out" error if the given promise does not return or reject within
- * the given timeout period (in milliseconds).
- *
- * Useful to wrap onEnterAsync() promises, to avoid promises from being able to
- * infinitely hang the machine.
- */
-export async function withTimeout<T>(
-  promise: Promise<T>,
-  millis: number,
-  errmsg = "Timed out"
-): Promise<T> {
-  let timerID: ReturnType<typeof setTimeout> | undefined;
-  const timer$ = new Promise<never>((_, reject) => {
-    timerID = setTimeout(() => {
-      reject(new Error(errmsg));
-    }, millis);
-  });
-  return (
-    Promise
-      // Race the given promise against the timer. Whichever one finishes
-      // first wins the race.
-      .race([promise, timer$])
-
-      // Either way, clear the timeout, no matter who won
-      .finally(() => clearTimeout(timerID))
-  );
-}
-
 function distance(state1: string, state2: string): [number, number] {
   if (state1 === state2) {
     return [0, 0];
