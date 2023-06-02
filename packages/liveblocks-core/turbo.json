@@ -1,0 +1,19 @@
+{
+  // Extend the global Turbo file
+  "extends": ["//"],
+
+  "pipeline": {
+    "test:e2e": {
+      "dependsOn": ["build"],
+      "inputs": [
+        "jest.*",
+        "e2e/**/*.tsx",
+        "e2e/**/*.ts",
+        "src/**/*.tsx",
+        "src/**/*.ts",
+        "test/**/*.ts",
+        "test/**/*.tsx"
+      ]
+    }
+  }
+}
