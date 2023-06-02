@@ -25,9 +25,9 @@ async function initializeRoomForTest<
     throw new Error('Environment variable "LIVEBLOCKS_PUBLIC_KEY" is missing.');
   }
 
-  let ws: MockWebSocket | null = null;
+  let ws: PausableWebSocket | null = null;
 
-  class MockWebSocket extends WebSocket {
+  class PausableWebSocket extends WebSocket {
     sendBuffer: any[] = [];
     _isSendPaused = false;
 
@@ -65,7 +65,7 @@ async function initializeRoomForTest<
     publicApiKey,
     polyfills: {
       fetch,
-      WebSocket: MockWebSocket,
+      WebSocket: PausableWebSocket,
     },
     liveblocksServer: process.env.LIVEBLOCKS_SERVER,
   } as any);
