@@ -65,6 +65,10 @@ export function defineBehavior(
 // Standardized AUTHENTICATION behaviors for use in unit tests.
 //
 
+/**
+ * Configures the authentication delegate to always successfully authorize as
+ * user 1.
+ */
 export const DEFAULT_AUTH = ALWAYS_AUTH_AS(1);
 
 export function ALWAYS_AUTH_AS(actor: number, scopes: string[] = []) {
@@ -85,18 +89,18 @@ export function UNAUTHORIZED(): RichToken {
 //
 
 /**
- * Configures the backend to create sockets, but do nothing else. This means
- * you'll have to manually accept those socket connections explicitly in unit
- * tests, i.e. by calling `wss.last.accept()` to accept the last connection
- * that was made to the server.
+ * Configures the MockWebSocketServer to *not* automatically accept new socket
+ * connections. This means you'll have to manually accept those socket
+ * connections explicitly in unit tests, i.e. by calling `wss.last.accept()` to
+ * accept the last connection that was made to the server.
  */
 export function MANUAL_SOCKETS(wss: MockWebSocketServer) {
   return wss.newSocket();
 }
 
 /**
- * Configured the backend to create sockets and automatically accept each such
- * created socket asynchronously.
+ * Configures the MockWebSocketServer to automatically accept each new socket
+ * connection asynchronously.
  */
 export function AUTO_OPEN_SOCKETS(wss: MockWebSocketServer) {
   return wss.newSocket((socket) => socket.server.accept());
