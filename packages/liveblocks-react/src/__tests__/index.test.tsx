@@ -21,6 +21,8 @@ import {
 } from "./_liveblocks.config";
 import { act, renderHook, waitFor } from "./_utils"; // Basically re-exports from @testing-library/react
 
+const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
 /**
  * https://developer.mozilla.org/en-US/docs/Web/API/CloseEvent/code
  */
@@ -38,6 +40,7 @@ function remove<T>(array: T[], item: T) {
 }
 
 class MockWebSocket {
+  readyState: number;
   static instances: MockWebSocket[] = [];
 
   isMock = true;
@@ -53,6 +56,15 @@ class MockWebSocket {
 
   constructor(public url: string) {
     MockWebSocket.instances.push(this);
+    this.readyState = 0 /* CONNECTING */;
+
+    // Fake the server accepting the new connection
+    setTimeout(() => {
+      this.readyState = 1 /* OPEN */;
+      for (const openCb of this.callbacks.open) {
+        openCb();
+      }
+    }, 0);
   }
 
   addEventListener(event: "open", callback: (event: Event) => void): void;
@@ -94,7 +106,9 @@ class MockWebSocket {
     this.sentMessages.push(message);
   }
 
-  close() {}
+  close() {
+    this.readyState = 3 /* CLOSED */;
+  }
 }
 
 window.WebSocket = MockWebSocket as any;
@@ -129,6 +143,8 @@ async function waitForSocketToBeConnected() {
   const socket = MockWebSocket.instances[0];
   expect(socket.callbacks.open.length).toBe(1);
 
+  // Give open callback (scheduled for next tick) a chance to finish before returning
+  await wait(0);
   return socket;
 }
 
@@ -137,7 +153,6 @@ async function waitForSocketToBeConnected() {
  */
 async function websocketSimulator() {
   const socket = await waitForSocketToBeConnected();
-  socket.callbacks.open[0]();
 
   function simulateIncomingMessage(
     msg: ServerMsg<JsonObject, BaseUserMeta, Json>
