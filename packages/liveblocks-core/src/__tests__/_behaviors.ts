@@ -8,9 +8,9 @@
  *   const { wss, delegates } = defineBehavior(ALWAYS_AUTH_AS(2), SOCKET_AUTO_OPEN);
  */
 
-import type { Delegates } from "../connection";
 import { StopRetrying } from "../connection";
 import type { RichToken } from "../protocol/AuthToken";
+import type { RoomDelegates } from "../room";
 import type { IWebSocketInstance } from "../types/IWebSocket";
 import { makeRoomToken, MockWebSocketServer } from "./_utils";
 
@@ -38,7 +38,7 @@ export function defineBehavior(
   socketBehavior: (wss: MockWebSocketServer) => IWebSocketInstance
 ): {
   wss: MockWebSocketServer;
-  delegates: Delegates<RichToken>;
+  delegates: RoomDelegates;
 } {
   const authenticate = () => {
     try {
@@ -52,7 +52,7 @@ export function defineBehavior(
 
   const wss = new MockWebSocketServer();
 
-  const delegates: Delegates<RichToken> = {
+  const delegates: RoomDelegates = {
     authenticate: jest.fn(authenticate),
     createSocket: jest.fn(createSocket),
     //            ^^^^^^^ Allow observing these calls in tests

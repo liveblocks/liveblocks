@@ -750,17 +750,21 @@ export type RoomInitializers<
   shouldInitiallyConnect?: boolean;
 }>;
 
+export type RoomDelegates = Delegates<RichToken>;
+
 /** @internal */
 type RoomConfig = {
+  delegates?: RoomDelegates;
+
   roomId: string;
   throttleDelay: number;
+
   authentication: Authentication;
   liveblocksServer: string;
   httpSendEndpoint?: string;
   unstable_fallbackToHTTP?: boolean;
 
   polyfills?: Polyfills;
-  mockedDelegates?: Delegates<RichToken>;
 
   /**
    * Only necessary when you’re using Liveblocks with React v17 or lower.
@@ -811,7 +815,7 @@ export function createRoom<
       : options.initialStorage;
 
   // Create a delegate pair for (a specific) Live Room socket connection(s)
-  const delegates: Delegates<RichToken> = config.mockedDelegates ?? {
+  const delegates: RoomDelegates = config.delegates ?? {
     authenticate: makeAuthDelegateForRoom(
       config.roomId,
       config.authentication,

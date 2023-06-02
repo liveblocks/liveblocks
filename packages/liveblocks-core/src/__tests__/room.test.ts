@@ -2,7 +2,6 @@ import { rest } from "msw";
 import { setupServer } from "msw/node";
 
 import { nn } from "..";
-import type { Delegates } from "../connection";
 import { LiveList } from "../crdts/LiveList";
 import { LiveObject } from "../crdts/LiveObject";
 import type { LsonObject } from "../crdts/Lson";
@@ -11,7 +10,6 @@ import { legacy_patchImmutableObject, lsonToJson } from "../immutable";
 import * as console from "../lib/fancy-console";
 import type { Json, JsonObject } from "../lib/Json";
 import type { Authentication } from "../protocol/Authentication";
-import type { RichToken } from "../protocol/AuthToken";
 import { RoomScope } from "../protocol/AuthToken";
 import type { BaseUserMeta } from "../protocol/BaseUserMeta";
 import { ClientMsgCode } from "../protocol/ClientMsg";
@@ -19,6 +17,7 @@ import { OpCode } from "../protocol/Op";
 import type { IdTuple, SerializedCrdt } from "../protocol/SerializedCrdt";
 import { CrdtType } from "../protocol/SerializedCrdt";
 import { ServerMsgCode } from "../protocol/ServerMsg";
+import type { RoomDelegates } from "../room";
 import { createRoom } from "../room";
 import { WebsocketCloseCodes } from "../types/IWebSocket";
 import type { Others } from "../types/Others";
@@ -50,8 +49,9 @@ import {
 
 const THROTTLE_DELAY = 100;
 
-function makeRoomConfig(mockedDelegates?: Delegates<RichToken>) {
+function makeRoomConfig(mockedDelegates?: RoomDelegates) {
   return {
+    delegates: mockedDelegates,
     roomId: "room-id",
     throttleDelay: THROTTLE_DELAY,
     liveblocksServer: "wss://live.liveblocks.io/v6",
@@ -59,7 +59,6 @@ function makeRoomConfig(mockedDelegates?: Delegates<RichToken>) {
       type: "private",
       url: "/mocked-api/auth",
     } as Authentication,
-    mockedDelegates,
   };
 }
 
