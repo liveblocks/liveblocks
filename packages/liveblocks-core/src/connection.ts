@@ -540,6 +540,13 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
       (failure) => {
         const err = failure.reason as IWebSocketEvent | StopRetrying | Error;
 
+        // Stop retrying if this promise explicitly tells us so. This should,
+        // in the case of a WebSocket connection attempt only be the case if
+        // there is a configuration error.
+        //
+        // If a WebSocket connection is refused by the server, it could be that
+        // the token is expired or revoked, etc. In those cases, always go back
+        // to the authentication endpoint to try to obtain a new token.
         if (err instanceof StopRetrying) {
           return {
             target: "@idle.failed",
@@ -547,9 +554,6 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
           };
         }
 
-        // TODO In the future, when the WebSocket connection will potentially
-        // be closed with an explicit _UNAUTHORIZED_ message, we should stop
-        // retrying.
         return {
           target: "@auth.backoff",
           effect: [
@@ -641,7 +645,7 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
       // not. When still OPEN, don't transition.
       EXPLICIT_SOCKET_ERROR: (_, context) => {
         if (context.socket?.readyState === 1 /* WebSocket.OPEN */) {
-          // TODO: Not here, but do we need to forward this error?
+          // TODO Do we need to forward this error to the client?
           return null; /* Do not leave OK state, socket is still usable */
         }
 
@@ -737,7 +741,7 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
   cleanups.push(unsubscribe);
 
   // Install debug logging
-  cleanups.push(enableTracing(machine)); // TODO Remove logging in production
+  cleanups.push(enableTracing(machine)); // TODO Disable tracing by default
 
   // Start the machine
   machine.start();
