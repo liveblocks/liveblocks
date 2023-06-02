@@ -6,15 +6,19 @@ type AsyncFunction<T, A extends any[] = any[]> = (...args: A) => Promise<T>;
 
 type OptimisticData<T> = T | ((data: T | undefined) => T);
 
-export type Mutation<T, M> = (
+export type Mutation<T, M = undefined> = (
   data: T | undefined,
   key: string
 ) => Promise<MutationResponse<T, M>>;
 
-export type MutationResponse<T, M> = {
+type MutationResponse<T, M = undefined> = {
   data: T;
   mutation?: M;
 };
+
+export type MutateResponse<T, M = undefined> = M extends undefined
+  ? { data: T }
+  : { data: T; mutation: M };
 
 type MutateOptions<T> = {
   optimisticData: OptimisticData<T>;
@@ -74,7 +78,7 @@ export type AsyncCacheItem<T, E> = Observable<AsyncState<T, E>> & {
   mutate<M>(
     mutation: Mutation<T, M>,
     options?: RevalidateOptions<T>
-  ): Promise<MutationResponse<T, M>>;
+  ): Promise<MutateResponse<T, M>>;
 };
 
 export type AsyncCache<T, E> = {
@@ -110,11 +114,11 @@ export type AsyncCache<T, E> = {
    * @param mutation An asynchronous function to wait on, setting the data manually if it returns any.
    * @param options.optimisticData Set data optimistically but rollback if there's an error.
    */
-  mutate<M>(
+  mutate<M = undefined>(
     key: string,
     mutation: Mutation<T, M>,
     options?: MutateOptions<T>
-  ): Promise<MutationResponse<T, M>>;
+  ): Promise<MutateResponse<T, M>>;
 
   /**
    * Subscribes to the key's changes.
@@ -290,7 +294,7 @@ function createCacheItem<T, E>(
       return {
         data,
         mutation: mutationResponse,
-      };
+      } as MutateResponse<T, M>;
     } catch (error) {
       state = {
         isLoading: false,

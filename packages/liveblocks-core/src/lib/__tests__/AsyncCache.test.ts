@@ -1,4 +1,4 @@
-import type { AsyncState, MutationResponse } from "../AsyncCache";
+import type { AsyncState, MutateResponse } from "../AsyncCache";
 import { createAsyncCache, isStateEqual } from "../AsyncCache";
 
 const REQUEST_DELAY = 20;
@@ -686,7 +686,7 @@ describe("AsyncCache", () => {
           mutation: data?.length ?? 1,
         };
       })
-    ).toMatchObject<MutationResponse<number[], number>>({
+    ).toMatchObject<MutateResponse<number[], number>>({
       data: [0, 1],
       mutation: 1,
     });
@@ -836,7 +836,7 @@ describe("AsyncCache", () => {
           },
         }
       )
-    ).toMatchObject<MutationResponse<number[], number>>({
+    ).toMatchObject<MutateResponse<number[], number>>({
       data: [0, 1],
       mutation: 1,
     });
