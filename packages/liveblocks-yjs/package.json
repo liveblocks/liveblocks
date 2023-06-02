@@ -1,0 +1,60 @@
+{
+  "name": "@liveblocks/yjs",
+  "version": "1.0.12",
+  "description": "An integration with . Liveblocks is the all-in-one toolkit to build collaborative products like Figma, Notion, and more.",
+  "license": "Apache-2.0",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist/**",
+    "README.md"
+  ],
+  "scripts": {
+    "dev": "tsup --watch",
+    "build": "tsup",
+    "format": "eslint --fix src/; prettier --write src/",
+    "lint": "eslint src/",
+    "test": "jest --silent --verbose --color=always",
+    "test:types": "tsd",
+    "test:watch": "jest --silent --verbose --color=always --watch"
+  },
+  "dependencies": {
+    "@liveblocks/client": "1.0.12",
+    "@liveblocks/core": "1.0.12"
+  },
+  "peerDependencies": {
+    "yjs": "^13.6.1"
+  },
+  "devDependencies": {
+    "@liveblocks/eslint-config": "*",
+    "@liveblocks/jest-config": "*",
+    "@testing-library/jest-dom": "^5.16.5"
+  },
+  "sideEffects": false,
+  "bugs": {
+    "url": "https://github.com/liveblocks/liveblocks/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/liveblocks/liveblocks.git",
+    "directory": "packages/liveblocks-yjs"
+  },
+  "homepage": "https://liveblocks.io",
+  "keywords": [
+    "yjs",
+    "react",
+    "liveblocks",
+    "real-time",
+    "toolkit",
+    "multiplayer",
+    "websockets",
+    "collaboration",
+    "collaborative",
+    "presence",
+    "crdts",
+    "synchronize",
+    "rooms",
+    "documents",
+    "conflict resolution"
+  ]
+}

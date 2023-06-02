@@ -1,0 +1,11 @@
+{
+  // Use the same settings for all packages
+  "extends": "../../shared/tsconfig.common.json",
+
+  "compilerOptions": {
+    "target": "es2015",
+    "module": "es2015",
+    "lib": ["dom", "es2015"]
+  },
+  "include": ["src/**/*"]
+}
