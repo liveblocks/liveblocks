@@ -1,4 +1,4 @@
-# v1.1.0-beta1
+# v1.1.0-rc1
 
 ### `@liveblocks/core`
 
