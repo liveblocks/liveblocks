@@ -1,3 +1,10 @@
+# v1.1.0-beta1
+
+### `@liveblocks/core`
+
+- Rewritten the client's internals to maintain a stabler and more reliable
+  WebSocket connection over time.
+
 # v1.0.12
 
 ### `create-liveblocks-app`
