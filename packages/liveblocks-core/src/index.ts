@@ -38,6 +38,8 @@ export {
 export { assert, assertNever, nn } from "./lib/assert";
 export type {
   AsyncCache,
+  MutateOptions as AsyncCacheMutateOptions,
+  MutateResponse as AsyncCacheMutateResponse,
   Mutation as AsyncCacheMutation,
   RevalidateOptions as AsyncCacheRevalidateOptions,
   AsyncState,

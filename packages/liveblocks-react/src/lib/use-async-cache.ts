@@ -1,5 +1,7 @@
 import type {
   AsyncCache,
+  AsyncCacheMutateOptions,
+  AsyncCacheMutateResponse,
   AsyncCacheMutation,
   AsyncCacheRevalidateOptions,
   AsyncState,
@@ -45,23 +47,22 @@ export type UseAsyncCacheResponse<
   /**
    * Revalidates the key.
    *
-   * @param key The key to revalidate.
    * @param options.optimisticData Set data optimistically but rollback if there's an error.
    */
   revalidate(
     options?: AsyncCacheRevalidateOptions<T>
-  ): Promise<AsyncStateResolved<T, E> | void>;
+  ): Promise<AsyncStateResolved<T, E>>;
+
   /**
-   * Revalidates the key with a mutation.
+   * Mutates the key.
    *
-   * @param key The key to revalidate.
-   * @param mutation An asynchronous function to wait on, optionally setting the data manually if it returns any.
+   * @param mutation An asynchronous function to wait on, setting the data manually if it returns any.
    * @param options.optimisticData Set data optimistically but rollback if there's an error.
    */
-  revalidate(
-    mutation: AsyncCacheMutation<T>,
-    options?: AsyncCacheRevalidateOptions<T>
-  ): Promise<AsyncStateResolved<T, E> | void>;
+  mutate<M = undefined>(
+    mutation: AsyncCacheMutation<T, M>,
+    options?: AsyncCacheMutateOptions<T>
+  ): Promise<AsyncCacheMutateResponse<T, M>>;
 };
 
 type PreviousData<T> = {
@@ -99,10 +100,16 @@ export function useAsyncCache<T, E, O extends UseAsyncCacheOptions>(
   );
 
   const revalidate = useCallback(
-    async (
-      first?: AsyncCacheRevalidateOptions<T> | AsyncCacheMutation<T>,
-      second?: AsyncCacheRevalidateOptions<T>
-    ) => cacheItem?.revalidate(first, second),
+    (options?: AsyncCacheRevalidateOptions<T>) =>
+      cacheItem?.revalidate(options),
+    [cacheItem]
+  );
+
+  const mutate = useCallback(
+    <M = undefined>(
+      mutation: AsyncCacheMutation<T, M>,
+      options?: AsyncCacheMutateOptions<T>
+    ) => cacheItem?.mutate(mutation, options),
     [cacheItem]
   );
 
@@ -136,5 +143,6 @@ export function useAsyncCache<T, E, O extends UseAsyncCacheOptions>(
     error: state.error,
     getState,
     revalidate,
+    mutate,
   } as UseAsyncCacheResponse<T, E, O>;
 }

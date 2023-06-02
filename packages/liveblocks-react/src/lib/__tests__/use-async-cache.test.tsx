@@ -361,6 +361,66 @@ describe("useAsyncCache", () => {
     expect(mock).toHaveBeenCalledTimes(2);
   });
 
+  test("mutating", async () => {
+    const mock = createAsyncMock();
+    const cache = createAsyncCache(mock);
+
+    // 🚀 Called
+    const { result } = renderHook(() => useAsyncCache(cache, KEY_ABC));
+
+    // 🔜 Returns a loading state
+    expect(result.current).toMatchObject<AsyncState<string, Error>>({
+      isLoading: true,
+      data: undefined,
+      error: undefined,
+    });
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    // ✅ Returns a success state
+    expect(result.current).toMatchObject<AsyncState<string, Error>>({
+      isLoading: false,
+      data: KEY_ABC,
+      error: undefined,
+    });
+
+    act(() => {
+      result.current.mutate(async (data, key) => {
+        await sleep(REQUEST_DELAY);
+
+        return {
+          data: data ? data + key : key,
+        };
+      });
+    });
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(true);
+    });
+
+    // 🔜 Returns a loading state because mutated
+    expect(result.current).toMatchObject<AsyncState<string, Error>>({
+      isLoading: true,
+      data: KEY_ABC,
+      error: undefined,
+    });
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    // ✅ Returns a success state with the mutated data
+    expect(result.current).toMatchObject<AsyncState<string, Error>>({
+      isLoading: false,
+      data: `${KEY_ABC}${KEY_ABC}`,
+      error: undefined,
+    });
+
+    expect(mock).toHaveBeenCalledTimes(1);
+  });
+
   test("suspending during loading", async () => {
     const mock = createAsyncMock();
     const cache = createAsyncCache(mock);

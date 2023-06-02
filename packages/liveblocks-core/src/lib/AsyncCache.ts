@@ -11,7 +11,7 @@ export type Mutation<T, M = undefined> = (
   key: string
 ) => Promise<MutationResponse<T, M>>;
 
-type MutationResponse<T, M = undefined> = {
+export type MutationResponse<T, M = undefined> = {
   data: T;
   mutation?: M;
 };
@@ -20,11 +20,11 @@ export type MutateResponse<T, M = undefined> = M extends undefined
   ? { data: T }
   : { data: T; mutation: M };
 
-type MutateOptions<T> = {
+export type MutateOptions<T> = {
   optimisticData: OptimisticData<T>;
 };
 
-type RevalidateOptions<T> = {
+export type RevalidateOptions<T> = {
   optimisticData: OptimisticData<T>;
 };
 
@@ -32,25 +32,25 @@ type AsyncCacheOptions<T, E> = {
   compare?: (a: AsyncState<T, E>, b: AsyncState<T, E>) => boolean;
 };
 
-type AsyncStateInitial = {
+export type AsyncStateInitial = {
   readonly isLoading: false;
   readonly data?: never;
   readonly error?: never;
 };
 
-type AsyncStateLoading<T> = {
+export type AsyncStateLoading<T> = {
   readonly isLoading: true;
   readonly data?: T;
   readonly error?: never;
 };
 
-type AsyncStateSuccess<T> = {
+export type AsyncStateSuccess<T> = {
   readonly isLoading: false;
   readonly data: T;
   readonly error?: never;
 };
 
-type AsyncStateError<T, E> = {
+export type AsyncStateError<T, E> = {
   readonly isLoading: false;
   readonly data?: T;
   readonly error: E;
@@ -62,7 +62,9 @@ export type AsyncState<T, E> =
   | AsyncStateSuccess<T>
   | AsyncStateError<T, E>;
 
-type AsyncStateResolved<T, E> = AsyncStateSuccess<T> | AsyncStateError<T, E>;
+export type AsyncStateResolved<T, E> =
+  | AsyncStateSuccess<T>
+  | AsyncStateError<T, E>;
 
 type AsyncCacheItemContext<T> = {
   promise?: Promise<T>;
@@ -82,6 +84,15 @@ export type AsyncCacheItem<T, E> = Observable<AsyncState<T, E>> & {
 };
 
 export type AsyncCache<T, E> = {
+  /**
+   * @private
+   *
+   * Creates a key in the cache.
+   *
+   * @param key The key to create.
+   */
+  create(key: string): AsyncCacheItem<T, E>;
+
   /**
    * Returns a promise which resolves with the state of the key.
    *
@@ -401,6 +412,7 @@ export function createAsyncCache<T, E>(
   }
 
   return {
+    create,
     get,
     getState,
     revalidate,
