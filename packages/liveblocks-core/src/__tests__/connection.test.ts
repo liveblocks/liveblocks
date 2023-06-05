@@ -1,22 +1,22 @@
 import { ManagedSocket } from "../connection";
-import { MockWebSocketServer } from "./_utils";
-
-const ALWAYS_SUCCEEDS = () => Promise.resolve({ token: "MY_TOKEN" });
-const ALWAYS_FAILS = () => Promise.reject(new Error("Nope"));
+import {
+  ALWAYS_FAIL_AUTH,
+  AUTO_OPEN_SOCKETS,
+  DEFAULT_AUTH,
+  defineBehavior,
+  MANUAL_SOCKETS,
+} from "./_behaviors";
 
 describe("ManagedSocket", () => {
   test("failure to authenticate", async () => {
     jest.useFakeTimers();
 
-    const wss = new MockWebSocketServer();
+    const { delegates } = defineBehavior(ALWAYS_FAIL_AUTH, MANUAL_SOCKETS);
 
     const didConnect = jest.fn();
     // const didDisconnect = jest.fn();
 
-    const mgr = new ManagedSocket({
-      authenticate: ALWAYS_FAILS,
-      createSocket: () => wss.newSocket(),
-    });
+    const mgr = new ManagedSocket(delegates);
     mgr.events.didConnect.subscribe(didConnect);
     // mgr.events.didDisconnect.subscribe(didDisconnect);
 
@@ -31,15 +31,12 @@ describe("ManagedSocket", () => {
   test("authenticate succeeds, but no websocket connection", async () => {
     jest.useFakeTimers();
 
-    const wss = new MockWebSocketServer();
+    const { delegates } = defineBehavior(DEFAULT_AUTH, AUTO_OPEN_SOCKETS);
 
     const didConnect = jest.fn();
     // const didDisconnect = jest.fn();
 
-    const mgr = new ManagedSocket({
-      authenticate: ALWAYS_SUCCEEDS,
-      createSocket: () => wss.newSocket((socket) => socket.server.accept()),
-    });
+    const mgr = new ManagedSocket(delegates);
     mgr.events.didConnect.subscribe(didConnect);
     // mgr.events.didDisconnect.subscribe(didDisconnect);
 

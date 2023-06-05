@@ -1,17 +1,17 @@
 import "dotenv/config";
 
-import type { ClientRequestArgs } from "http";
 import fetch from "node-fetch";
 import type { URL } from "url";
 import WebSocket from "ws";
 
-import type { Room } from "../src";
-import { createClient } from "../src/client";
-import type { LiveObject } from "../src/crdts/LiveObject";
-import type { Json, JsonObject } from "../src/lib/Json";
+import type { Room, ConnectionStatus } from "../src/room";
 import type { BaseUserMeta } from "../src/protocol/BaseUserMeta";
+import { withTimeout } from "../src/lib/utils";
+import type { Json, JsonObject } from "../src/lib/Json";
+import type { LiveObject } from "../src/crdts/LiveObject";
 import type { LsonObject } from "../src/crdts/Lson";
 import type { ToImmutable } from "../src/crdts/utils";
+import { createClient } from "../src/client";
 
 async function initializeRoomForTest<
   TPresence extends JsonObject,
@@ -25,18 +25,14 @@ async function initializeRoomForTest<
     throw new Error('Environment variable "LIVEBLOCKS_PUBLIC_KEY" is missing.');
   }
 
-  let ws: MockWebSocket | null = null;
+  let ws: PausableWebSocket | null = null;
 
-  class MockWebSocket extends WebSocket {
-    sendBuffer: any[] = [];
+  class PausableWebSocket extends WebSocket {
+    sendBuffer: string[] = [];
     _isSendPaused = false;
 
-    constructor(
-      address: string | URL,
-      protocols: WebSocket.ClientOptions | ClientRequestArgs | undefined
-    ) {
-      super(address, protocols);
-
+    constructor(address: string | URL) {
+      super(address);
       ws = this;
     }
 
@@ -52,7 +48,7 @@ async function initializeRoomForTest<
       this.sendBuffer = [];
     }
 
-    send(data: any) {
+    send(data: string) {
       if (this._isSendPaused) {
         this.sendBuffer.push(data);
       } else {
@@ -64,26 +60,28 @@ async function initializeRoomForTest<
   const client = createClient({
     publicApiKey,
     polyfills: {
+      // @ts-ignore-error
       fetch,
-      WebSocket: MockWebSocket,
+      WebSocket: PausableWebSocket,
     },
     liveblocksServer: process.env.LIVEBLOCKS_SERVER,
-  } as any);
+  });
 
   const room = client.enter<TPresence, TStorage, TUserMeta, TRoomEvent>(
     roomId,
     { initialPresence, initialStorage }
   );
-  await waitFor(() => room.getConnectionState() === "open");
-
-  if (ws == null) {
-    throw new Error("Websocket should be initialized at this point");
-  }
+  await waitUntilStatus(room, "open");
 
   return {
     client,
     room,
-    ws: ws as MockWebSocket, // TODO: Find out why casting is necessary
+    get ws() {
+      if (ws == null) {
+        throw new Error("Websocket should be initialized at this point");
+      }
+      return ws;
+    },
   };
 }
 
@@ -117,36 +115,28 @@ export function prepareTestsConflicts<TStorage extends LsonObject>(
   return async () => {
     const roomName = "storage-requirements-e2e-tests-" + new Date().getTime();
 
-    const {
-      client: client1,
-      room: room1,
-      ws: ws1,
-    } = await initializeRoomForTest<never, TStorage, never, never>(
+    const actor1 = await initializeRoomForTest<never, TStorage, never, never>(
       roomName,
       {} as never,
       initialStorage
     );
-    const {
-      client: client2,
-      room: room2,
-      ws: ws2,
-    } = await initializeRoomForTest<never, TStorage, never, never>(
+    const actor2 = await initializeRoomForTest<never, TStorage, never, never>(
       roomName,
       {} as never
     );
 
-    const { root: root1 } = await room1.getStorage();
-    const { root: root2 } = await room2.getStorage();
+    const { root: root1 } = await actor1.room.getStorage();
+    const { root: root2 } = await actor2.room.getStorage();
 
     const wsUtils = {
       flushSocket1Messages: async () => {
-        ws1.resumeSend();
+        actor1.ws.resumeSend();
         // Waiting until every messages are received by all clients.
         // We don't have a public way to know if everything has been received so we have to rely on time
         await wait(1000);
       },
       flushSocket2Messages: async () => {
-        ws2.resumeSend();
+        actor2.ws.resumeSend();
         // Waiting until every messages are received by all clients.
         // We don't have a public way to know if everything has been received so we have to rely on time
         await wait(1000);
@@ -157,20 +147,20 @@ export function prepareTestsConflicts<TStorage extends LsonObject>(
     // We don't have a public way to know if everything has been received so we have to rely on time
     await wait(1000);
 
-    ws1.pauseSend();
-    ws2.pauseSend();
+    actor1.ws.pauseSend();
+    actor2.ws.pauseSend();
 
     let immutableStorage1 = root1.toImmutable();
     let immutableStorage2 = root2.toImmutable();
 
-    room1.subscribe(
+    actor1.room.subscribe(
       root1,
       () => {
         immutableStorage1 = root1.toImmutable();
       },
       { isDeep: true }
     );
-    room2.subscribe(
+    actor2.room.subscribe(
       root2,
       () => {
         immutableStorage2 = root2.toImmutable();
@@ -194,18 +184,18 @@ export function prepareTestsConflicts<TStorage extends LsonObject>(
 
     try {
       await callback({
-        room1,
-        room2,
+        room1: actor1.room,
+        room2: actor2.room,
         root1,
         root2,
         wsUtils,
         assert,
       });
-      client1.leave(roomName);
-      client2.leave(roomName);
+      actor1.client.leave(roomName);
+      actor2.client.leave(roomName);
     } catch (er) {
-      client1.leave(roomName);
-      client2.leave(roomName);
+      actor1.client.leave(roomName);
+      actor2.client.leave(roomName);
       throw er;
     }
   };
@@ -225,39 +215,38 @@ export function prepareSingleClientTest<TStorage extends LsonObject>(
   return async () => {
     const roomName = "storage-requirements-e2e-tests-" + new Date().getTime();
 
-    const { client, room, ws } = await initializeRoomForTest<
-      never,
-      TStorage,
-      never,
-      never
-    >(roomName, {} as never, initialStorage);
+    const actor = await initializeRoomForTest<never, TStorage, never, never>(
+      roomName,
+      {} as never,
+      initialStorage
+    );
 
-    const { root } = await room.getStorage();
+    const { root } = await actor.room.getStorage();
 
     // Waiting until every messages are received by all clients.
     // We don't have a public way to know if everything has been received so we have to rely on time
     await wait(1000);
 
-    ws.pauseSend();
+    actor.ws.pauseSend();
 
-    ws.addEventListener("message", (message) => {
+    actor.ws.addEventListener("message", (message) => {
       console.log(message.data);
     });
 
     try {
       await callback({
-        room,
+        room: actor.room,
         root,
         flushSocketMessages: async () => {
-          ws.resumeSend();
+          actor.ws.resumeSend();
           // Waiting until every messages are received by all clients.
           // We don't have a public way to know if everything has been received so we have to rely on time
           await wait(1000);
         },
       });
-      client.leave(roomName);
+      actor.client.leave(roomName);
     } catch (er) {
-      client.leave(roomName);
+      actor.client.leave(roomName);
       throw er;
     }
   };
@@ -267,20 +256,22 @@ export function wait(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-async function waitFor(predicate: () => {}, delay: number = 2000) {
-  const result = predicate();
-  if (result) {
-    return true;
+/**
+ * Handy helper that allows to pause test execution until the room has
+ * asynchronously reached a particular status. Status must be reached within
+ * a limited time window, or else this will fail, to avoid hanging.
+ */
+async function waitUntilStatus(
+  room: Room<JsonObject, LsonObject, BaseUserMeta, Json>,
+  targetStatus: ConnectionStatus
+): Promise<void> {
+  if (room.getConnectionState() === targetStatus) {
+    return;
   }
 
-  const time = new Date().getTime();
-
-  while (new Date().getTime() - time < delay) {
-    await wait(100);
-    if (predicate()) {
-      return true;
-    }
-  }
-
-  return false;
+  await withTimeout(
+    room.events.connection.waitUntil((status) => status === targetStatus),
+    5000,
+    `Room did not reach connection status "${targetStatus}" within 5s`
+  );
 }

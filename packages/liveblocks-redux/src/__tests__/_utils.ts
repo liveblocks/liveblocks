@@ -19,6 +19,7 @@ export function remove<T>(array: T[], item: T): void {
 }
 
 export class MockWebSocket {
+  readyState: number;
   static instances: MockWebSocket[] = [];
 
   isMock = true;
@@ -34,6 +35,15 @@ export class MockWebSocket {
 
   constructor(public url: string) {
     MockWebSocket.instances.push(this);
+    this.readyState = 0 /* CONNECTING */;
+
+    // Fake the server accepting the new connection
+    setTimeout(() => {
+      this.readyState = 1 /* OPEN */;
+      for (const openCb of this.callbacks.open) {
+        openCb();
+      }
+    }, 0);
   }
 
   addEventListener(
@@ -55,7 +65,9 @@ export class MockWebSocket {
     this.sentMessages.push(message);
   }
 
-  close(): void {}
+  close(): void {
+    this.readyState = 3 /* CLOSED */;
+  }
 }
 
 export function wait(delay: number): Promise<void> {

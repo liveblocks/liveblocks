@@ -1,3 +1,16 @@
+# v1.1.0-rc1
+
+### `@liveblocks/core`
+
+- Improved the client's internals to ensure a more reliable connection with
+  Liveblocks servers.
+- Client will stop retrying to establish a connection in cases where retrying
+  would not help (explicit unauthorized/forbidden response, or a configuration
+  error)
+- Started to deprecate old polyfill APIs, `fetchPolyfill` and
+  `WebSocketPolyfill`. These will be removed in a future release. Use the
+  newer/recommended `polyfills` config option instead.
+
 # v1.0.12
 
 ### `create-liveblocks-app`

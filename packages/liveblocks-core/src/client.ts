@@ -5,7 +5,7 @@ import type { Json, JsonObject } from "./lib/Json";
 import type { Resolve } from "./lib/Resolve";
 import type { Authentication } from "./protocol/Authentication";
 import type { BaseUserMeta } from "./protocol/BaseUserMeta";
-import type { Polyfills, Room, RoomInitializers } from "./room";
+import type { Polyfills, Room, RoomDelegates, RoomInitializers } from "./room";
 import { createRoom } from "./room";
 
 const MIN_THROTTLE = 16;
@@ -81,14 +81,21 @@ export type ClientOptions = {
   unstable_fallbackToHTTP?: boolean;
 
   /**
-   * Backward-compatible way to set `polyfills.fetch`.
+   * @deprecated Use `polyfills: { fetch: ... }` instead.
+   * This option will be removed in a future release.
    */
   fetchPolyfill?: Polyfills["fetch"];
 
   /**
-   * Backward-compatible way to set `polyfills.WebSocket`.
+   * @deprecated Use `polyfills: { WebSocket: ... }` instead.
+   * This option will be removed in a future release.
    */
   WebSocketPolyfill?: Polyfills["WebSocket"];
+
+  /** @internal */
+  mockedDelegates?: RoomDelegates;
+  /** @internal */
+  enableDebugLogging?: boolean;
 } & (
   | { publicApiKey: string; authEndpoint?: never }
   | { publicApiKey?: never; authEndpoint: AuthEndpoint }
@@ -161,9 +168,6 @@ export function createClient(options: ClientOptions): Client {
       return existingRoom as Room<TPresence, TStorage, TUserMeta, TRoomEvent>;
     }
 
-    // console.trace("enter");
-    // console.log("enter(", roomId, options, ") called");
-
     deprecateIf(
       options.initialPresence === null || options.initialPresence === undefined,
       "Please provide an initial presence value for the current user when entering the room."
@@ -178,6 +182,8 @@ export function createClient(options: ClientOptions): Client {
         roomId,
         throttleDelay,
         polyfills: clientOptions.polyfills,
+        delegates: clientOptions.mockedDelegates,
+        enableDebugLogging: clientOptions.enableDebugLogging,
         unstable_batchedUpdates: options?.unstable_batchedUpdates,
         liveblocksServer: getServerFromClientOptions(clientOptions),
         authentication: prepareAuthentication(clientOptions, roomId),
@@ -207,7 +213,7 @@ export function createClient(options: ClientOptions): Client {
         global.atob = clientOptions.polyfills.atob;
       }
 
-      newRoom.__internal.send.connect();
+      newRoom.connect();
     }
 
     return newRoom;
@@ -219,32 +225,9 @@ export function createClient(options: ClientOptions): Client {
 
     const room = rooms.get(roomId);
     if (room !== undefined) {
-      room.__internal.send.disconnect();
+      room.destroy();
       rooms.delete(roomId);
     }
-  }
-
-  if (
-    typeof window !== "undefined" &&
-    // istanbul ignore next: React Native environment doesn't implement window.addEventListener
-    typeof window.addEventListener !== "undefined"
-  ) {
-    // TODO: Expose a way to clear these
-    window.addEventListener("online", () => {
-      for (const [, room] of rooms) {
-        room.__internal.send.navigatorOnline();
-      }
-    });
-  }
-
-  if (typeof document !== "undefined") {
-    document.addEventListener("visibilitychange", () => {
-      if (document.visibilityState === "visible") {
-        for (const [, room] of rooms) {
-          room.__internal.send.windowGotFocus();
-        }
-      }
-    });
   }
 
   return {

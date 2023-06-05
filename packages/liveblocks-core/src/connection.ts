@@ -3,7 +3,8 @@ import type { Observable } from "./lib/EventSource";
 import { makeEventSource } from "./lib/EventSource";
 import * as console from "./lib/fancy-console";
 import type { BuiltinEvent, Patchable, Target } from "./lib/fsm";
-import { FSM, withTimeout } from "./lib/fsm";
+import { FSM } from "./lib/fsm";
+import { withTimeout } from "./lib/utils";
 import type {
   IWebSocketCloseEvent,
   IWebSocketEvent,
@@ -146,7 +147,11 @@ const SOCKET_CONNECT_TIMEOUT = 10000;
  * Special error class that can be thrown during authentication to stop the
  * connection manager from retrying.
  */
-export class UnauthorizedError extends Error {}
+export class StopRetrying extends Error {
+  constructor(reason: string) {
+    super(reason);
+  }
+}
 
 class LiveblocksError extends Error {
   constructor(message: string, public code: number) {
@@ -207,7 +212,6 @@ function enableTracing(machine: FSM<Context, Event, State>) {
   const start = new Date().getTime();
 
   function log(...args: unknown[]) {
-    // eslint-disable-next-line
     console.warn(
       `${((new Date().getTime() - start) / 1000).toFixed(2)} [FSM #${
         machine.id
@@ -216,21 +220,15 @@ function enableTracing(machine: FSM<Context, Event, State>) {
     );
   }
   const unsubs = [
-    machine.events.didReceiveEvent.subscribe((e) => {
-      log(`Event ${e.type}`);
-    }),
-    machine.events.willTransition.subscribe(({ from, to }) => {
-      log("Transitioning", from, "→", to);
-    }),
-    machine.events.didIgnoreEvent.subscribe((e) => {
-      log("Ignored event", e.type, e, "(current state won't handle it)");
-    }),
-    // machine.events.willExitState.subscribe((s) => {
-    //   log("Exiting state", s);
-    // }),
-    // machine.events.didEnterState.subscribe((s) => {
-    //   log("Entering state", s);
-    // }),
+    machine.events.didReceiveEvent.subscribe((e) => log(`Event ${e.type}`)),
+    machine.events.willTransition.subscribe(({ from, to }) =>
+      log("Transitioning", from, "→", to)
+    ),
+    machine.events.didIgnoreEvent.subscribe((e) =>
+      log("Ignored event", e.type, e, "(current state won't handle it)")
+    ),
+    // machine.events.willExitState.subscribe((s) => log("Exiting state", s)),
+    // machine.events.didEnterState.subscribe((s) => log("Entering state", s)),
   ];
   return () => {
     for (const unsub of unsubs) {
@@ -271,7 +269,8 @@ const assign = (patch: Partial<Context>) => (ctx: Patchable<Context>) =>
   ctx.patch(patch);
 
 function createConnectionStateMachine<T extends BaseAuthResult>(
-  delegates: Delegates<T>
+  delegates: Delegates<T>,
+  enableDebugLogging: boolean
 ) {
   // Create observable event sources, which this machine will call into when
   // specific events happen
@@ -356,25 +355,29 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
       }),
 
       // Auth failed
-      (failedEvent) =>
-        failedEvent.reason instanceof UnauthorizedError
-          ? {
-              target: "@idle.failed",
-              effect: log(
-                LogLevel.ERROR,
-                `Unauthorized: ${failedEvent.reason.message}`
-              ),
-            }
-          : {
-              target: "@auth.backoff",
-              effect: [
-                increaseBackoffDelay,
-                log(
-                  LogLevel.INFO,
-                  `Authentication failed: ${String(failedEvent.reason)}`
-                ),
-              ],
-            }
+      (failedEvent) => {
+        if (failedEvent.reason instanceof StopRetrying) {
+          return {
+            target: "@idle.failed",
+            effect: log(LogLevel.ERROR, failedEvent.reason.message),
+          };
+        }
+
+        return {
+          target: "@auth.backoff",
+          effect: [
+            increaseBackoffDelay,
+            log(
+              LogLevel.ERROR,
+              `Authentication failed: ${
+                failedEvent.reason instanceof Error
+                  ? failedEvent.reason.message
+                  : String(failedEvent.reason)
+              }`
+            ),
+          ],
+        };
+      }
     );
 
   //
@@ -529,11 +532,22 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
 
       // If the WebSocket connection cannot be established
       (failure) => {
-        const err = failure.reason as IWebSocketEvent | Error;
+        const err = failure.reason as IWebSocketEvent | StopRetrying | Error;
 
-        // TODO In the future, when the WebSocket connection will potentially
-        // be closed with an explicit _UNAUTHORIZED_ message, we should stop
-        // retrying.
+        // Stop retrying if this promise explicitly tells us so. This should,
+        // in the case of a WebSocket connection attempt only be the case if
+        // there is a configuration error.
+        //
+        // If a WebSocket connection is refused by the server, it could be that
+        // the token is expired or revoked, etc. In those cases, always go back
+        // to the authentication endpoint to try to obtain a new token.
+        if (err instanceof StopRetrying) {
+          return {
+            target: "@idle.failed",
+            effect: log(LogLevel.ERROR, err.message),
+          };
+        }
+
         return {
           target: "@auth.backoff",
           effect: [
@@ -624,8 +638,8 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
       // socket, or not. So always check to see if the socket is still OPEN or
       // not. When still OPEN, don't transition.
       EXPLICIT_SOCKET_ERROR: (_, context) => {
-        if (context.socket?.readyState === WebSocket.OPEN) {
-          // TODO: Not here, but do we need to forward this error?
+        if (context.socket?.readyState === 1 /* WebSocket.OPEN */) {
+          // TODO Do we need to forward this error to the client?
           return null; /* Do not leave OK state, socket is still usable */
         }
 
@@ -721,7 +735,9 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
   cleanups.push(unsubscribe);
 
   // Install debug logging
-  cleanups.push(enableTracing(machine)); // TODO Remove logging in production
+  if (enableDebugLogging) {
+    cleanups.push(enableTracing(machine));
+  }
 
   // Start the machine
   machine.start();
@@ -776,9 +792,11 @@ export class ManagedSocket<T extends BaseAuthResult> {
     readonly onLiveblocksError: Observable<LiveblocksError>;
   };
 
-  constructor(delegates: Delegates<T>) {
-    const { machine, events, cleanups } =
-      createConnectionStateMachine(delegates);
+  constructor(delegates: Delegates<T>, enableDebugLogging: boolean = false) {
+    const { machine, events, cleanups } = createConnectionStateMachine(
+      delegates,
+      enableDebugLogging
+    );
     this.machine = machine;
     this.events = events;
     this.cleanups = cleanups;
@@ -849,10 +867,18 @@ export class ManagedSocket<T extends BaseAuthResult> {
     const socket = this.machine.context?.socket;
     if (socket === null) {
       console.warn("Cannot send: not connected yet", data);
-    } else if (socket.readyState !== WebSocket.OPEN) {
+    } else if (socket.readyState !== 1 /* WebSocket.OPEN */) {
       console.warn("Cannot send: WebSocket no longer open", data);
     } else {
       socket.send(data);
     }
+  }
+
+  /**
+   * NOTE: Used by the E2E app only, to simulate explicit events.
+   * Not ideal to keep exposed :(
+   */
+  public _privateSendMachineEvent(event: Event): void {
+    this.machine.send(event);
   }
 }
