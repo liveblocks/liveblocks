@@ -2,8 +2,8 @@
 
 ### `@liveblocks/core`
 
-- Improved the client's internals to ensure a more reliable connection with Liveblocks servers.
-  servers more reliably.
+- Improved the client's internals to ensure a more reliable connection with
+  Liveblocks servers.
 - Client will stop retrying to establish a connection in cases where retrying
   would not help (explicit unauthorized/forbidden response, or a configuration
   error)
