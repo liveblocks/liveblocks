@@ -4,80 +4,192 @@ meta:
   description:
     "Explore the documentation to discover how to make most of our APIs and
     tools"
+showTitle: false
 ---
 
-Welcome to the Liveblocks documentation. Explore our guides and examples to
-integrate Liveblocks into your project. If you have questions about anything
-related to Liveblocks, feel free to [contact us](/contact) directly and we will
-be happy to help.
+<DocsHomepageHero
+  title="Documentation"
+  description="Liveblocks provides integrations and a scalable infrastructure for building
+real-time collaborative experiences."
+  actions={[
+    {
+      title: "Learn with a tutorial",
+      href: "/docs/tutorial",
+      appearance: "primary",
+    },
+    {
+      title: "Browse examples",
+      href: "/examples",
+    },
+  ]}
+/>
 
-## Learn Liveblocks
+<DocsHomepageGrid />
 
-<ListGrid columns={2}>
+## API Reference
+
+<ListGrid columns={3}>
   <DocsCard
-    title="Concepts"
-    href="/docs/concepts"
-    description="Learn the core Liveblocks concepts before getting started."
+    type="technology"
+    title="JavaScript"
+    href="/docs/api-reference/liveblocks-client"
+    description="@liveblocks/client"
     visual={
-      <Image
-        src="/images/docs/concepts.png"
-        alt="Concepts"
-        width={416}
-        height={234}
-        quality={90}
+      <img
+        alt=""
+        src="/images/docs/javascript.svg"
+        width={24}
+        height={24}
+        loading="lazy"
       />
     }
-    center={false}
   />
   <DocsCard
-    title="Get started"
-    href="/docs/get-started"
-    description="Learn how to install and configure Liveblocks into your project."
+    type="technology"
+    title="React"
+    href="/docs/api-reference/liveblocks-react"
+    description="@liveblocks/react"
     visual={
-      <Image
-        src="/images/docs/get-started.png"
-        alt="Get started with Liveblocks"
-        width={416}
-        height={234}
-        quality={90}
-        layout="responsive"
-        objectFit="cover"
+      <img
+        alt=""
+        src="/images/docs/react.svg"
+        width={24}
+        height={24}
+        loading="lazy"
       />
     }
-    center={false}
   />
   <DocsCard
-    title="Examples"
-    href="/examples"
-    description="Browse and take inspiration from our gallery of collaborative UI patterns."
+    type="technology"
+    title="Redux"
+    href="/docs/api-reference/liveblocks-redux"
+    description="@liveblocks/redux"
     visual={
-      <Image
-        src="/images/docs/examples.png"
-        alt="Examples"
-        width={416}
-        height={234}
-        quality={90}
+      <img
+        alt=""
+        src="/images/docs/redux.svg"
+        width={24}
+        height={24}
+        loading="lazy"
       />
     }
-    center={false}
+  />
+  <DocsCard
+    type="technology"
+    title="Zustand"
+    href="/docs/api-reference/liveblocks-zustand"
+    description="@liveblocks/zustand"
+    visual={
+      <img
+        alt=""
+        src="/images/docs/zustand.png"
+        width={24}
+        height={24}
+        loading="lazy"
+      />
+    }
+  />
+  <DocsCard
+    type="technology"
+    title="Node.js"
+    href="/docs/api-reference/liveblocks-node"
+    description="@liveblocks/node"
+    visual={
+      <img
+        alt=""
+        src="/images/docs/nodejs.svg"
+        width={24}
+        height={24}
+        loading="lazy"
+      />
+    }
+  />
+  <DocsCard
+    type="technology"
+    title="REST API"
+    href="/docs/api-reference/rest-api-endpoints"
+    description="HTTP endpoints"
+    visual={
+      <img
+        alt=""
+        src="/images/docs/api.svg"
+        width={24}
+        height={24}
+        loading="lazy"
+      />
+    }
   />
 </ListGrid>
 
-## Join the community
+## Examples
 
 <ListGrid columns={2}>
+  <ExampleCard
+    example={{
+      title: "Live Cursors",
+      slug: "live-cursors",
+      image: "/images/examples/thumbnails/live-cursors.jpg",
+    }}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "Collaborative Whiteboard",
+      slug: "collaborative-whiteboard-advanced",
+      image:
+        "/images/examples/thumbnails/collaborative-whiteboard-advanced.jpg",
+      advanced: true,
+    }}
+    openInNewWindow
+  />
+</ListGrid>
+
+## Community
+
+<ListGrid columns={3}>
   <DocsCard
-    title="GitHub"
-    href="https://github.com/liveblocks/liveblocks"
-    description="Follow along and contribute to the development of Liveblocks, and get help with GitHub discussions."
-    visual={<img alt="GitHub" src="/images/docs/github.svg" width={56} />}
+    title="Twitter"
+    href="https://twitter.com/liveblocks"
+    description="Follow us on Twitter for the latest news and updates."
+    visual={
+      <img
+        alt=""
+        src="/images/docs/twitter.svg"
+        width={24}
+        height={24}
+        loading="lazy"
+      />
+    }
     openInNewWindow
   />
   <DocsCard
     title="Discord"
     href="https://liveblocks.io/discord"
-    description="Join our awesome community of developers on Discord to help and show off what you built."
-    visual={<img alt="Discord" src="/images/docs/discord.svg" width={56} />}
+    description="Join hundreds of developers building with Liveblocks."
+    visual={
+      <img
+        alt=""
+        src="/images/docs/discord.svg"
+        width={24}
+        height={24}
+        loading="lazy"
+      />
+    }
+    openInNewWindow
+  />
+  <DocsCard
+    title="GitHub"
+    href="https://github.com/liveblocks/liveblocks"
+    description="Follow progress and contribute to the codebase."
+    visual={
+      <img
+        alt=""
+        src="/images/docs/github.svg"
+        width={24}
+        height={24}
+        loading="lazy"
+      />
+    }
     openInNewWindow
   />
 </ListGrid>
