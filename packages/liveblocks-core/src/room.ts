@@ -904,7 +904,7 @@ export function createRoom<
     const conn = context.connection.current;
     if (conn.status !== "open") {
       // Totally unexpected by now
-      throw new Error("Unexpected non-open state here");
+      throw new Error("Unexpected not-open state");
     }
 
     // Re-broadcast the full user presence as soon as we reconnect
