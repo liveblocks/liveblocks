@@ -707,34 +707,45 @@ describe("finite state machine", () => {
     });
   });
 
-  // TODO Nice to have, no need to fix this right now yet
-  test.skip("wildcards cannot overwrite existing transitions", () => {
+  test("wildcards cannot overwrite existing transitions", () => {
     const fsm = new FSM({})
-      .addState("foo.start")
-      .addState("foo.mid")
-      .addState("foo.end")
+      .addState("start")
+      .addState("end")
 
-      .addTransitions("foo.start", {
-        FROM_ANYWHERE: "foo.mid",
-      })
+      // Using target specifications in all of its forms here
+      .addTransitions("start", { GO: "end" })
 
-      .addTransitions("foo.mid", {
-        FROM_ANYWHERE: "foo.end",
-      })
+      // No overrides here, so perfectly fine 👍
+      .addTransitions("*", { TO_START: "start" })
+      .addTransitions("*", { TO_END: "end" });
 
-      // This wildcard should _not_ override the transitions defined above
-      .addTransitions("*", {
-        FROM_ANYWHERE: "foo.start",
-      })
+    expect(() =>
+      fsm
+        // This wildcard transition should _not_ be allowed, as it would
+        // override/conflict with the existing start->GO transition defined
+        // earlier
+        .addTransitions("*", { GO: "start" })
+    ).toThrow(
+      'Trying to set transition "GO" on "start" (via "*"), but a transition already exists there.'
+    );
 
-      .start();
+    fsm.start();
 
-    expect(fsm.currentState).toEqual("foo.start");
-    fsm.send({ type: "FROM_ANYWHERE" });
-    expect(fsm.currentState).toEqual("foo.mid");
-    fsm.send({ type: "FROM_ANYWHERE" });
-    expect(fsm.currentState).toEqual("foo.end");
-    fsm.send({ type: "FROM_ANYWHERE" });
-    expect(fsm.currentState).toEqual("foo.start");
+    expect(fsm.currentState).toEqual("start");
+    fsm.send({ type: "GO" });
+    expect(fsm.currentState).toEqual("end");
+    fsm.send({ type: "GO" });
+    fsm.send({ type: "GO" });
+    expect(fsm.currentState).toEqual("end");
+
+    fsm.send({ type: "TO_START" });
+    expect(fsm.currentState).toEqual("start");
+    fsm.send({ type: "TO_START" });
+    expect(fsm.currentState).toEqual("start");
+
+    fsm.send({ type: "TO_END" });
+    expect(fsm.currentState).toEqual("end");
+    fsm.send({ type: "TO_END" });
+    expect(fsm.currentState).toEqual("end");
   });
 });

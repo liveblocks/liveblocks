@@ -1,9 +1,10 @@
 import type { LiveObject } from "..";
 import type { LsonObject } from "../crdts/Lson";
 import type { ToImmutable } from "../crdts/utils";
+import type { EventSource, Observable } from "../lib/EventSource";
+import { makeEventSource } from "../lib/EventSource";
 import type { Json, JsonObject } from "../lib/Json";
 import { makePosition } from "../lib/position";
-import { remove } from "../lib/utils";
 import type { Authentication } from "../protocol/Authentication";
 import type { RoomAuthToken } from "../protocol/AuthToken";
 import type { BaseUserMeta } from "../protocol/BaseUserMeta";
@@ -56,111 +57,311 @@ function deepClone<T extends Json>(items: T): T {
   return JSON.parse(JSON.stringify(items)) as T;
 }
 
+// NOTE: we have some instability with opIds in the undo/redo stack and this should be investigated
+function deepCloneWithoutOpId<T>(item: T) {
+  return JSON.parse(
+    JSON.stringify(item),
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    (key, value) => (key === "opId" ? undefined : value)
+  ) as T;
+}
+
 type Listener = (ev: IWebSocketEvent) => void;
 type CloseListener = (ev: IWebSocketCloseEvent) => void;
 type MessageListener = (ev: IWebSocketMessageEvent) => void;
 
+type ServerEvents = {
+  onOpen: Observable<IWebSocketEvent>;
+  onClose: Observable<IWebSocketCloseEvent>;
+  onMessage: Observable<IWebSocketMessageEvent>;
+  onError: Observable<IWebSocketEvent>;
+};
+
+type Emitters = {
+  onOpen: EventSource<IWebSocketEvent>;
+  onClose: EventSource<IWebSocketCloseEvent>;
+  onMessage: EventSource<IWebSocketMessageEvent>;
+  onError: EventSource<IWebSocketEvent>;
+};
+
+/**
+ * The server side socket of the two-sided connection. It's the opposite end of
+ * the client side socket (aka the MockWebSocket instance).
+ */
+type ServerSocket = {
+  /** Inspect the messages the server end has received as the result of the client side sending it messages. */
+  receivedMessagesRaw: string[];
+  /** Accept the socket from the server side. The client will receive an "open" event. */
+  accept(): void;
+  /** Close the socket from the server side. */
+  close(event: IWebSocketCloseEvent): void;
+  /** Send a message from the server side to the client side. */
+  send(event: IWebSocketMessageEvent): void;
+  /** Send an error event from the server side to the client side. */
+  error(event: IWebSocketEvent): void;
+};
+
+type Connection = {
+  client: MockWebSocket;
+  server: ServerSocket;
+};
+
+export class MockWebSocketServer {
+  private newConnectionCallbacks = makeEventSource<Connection>();
+  public current: MockWebSocket | undefined;
+  public connections: Map<MockWebSocket, Emitters> = new Map();
+  public receivedMessagesRaw: string[] = [];
+
+  /**
+   * The server socket of the last connection that has been established to the
+   * server.
+   */
+  get last(): ServerSocket {
+    if (this.current === undefined) {
+      throw new Error("No socket instantiated yet");
+    }
+    return this.current.server;
+  }
+
+  /**
+   * In 99.9% of cases, the server messages are going to be JSON-serialized
+   * values. If you need to look at the raw message (the 0.1% case), you can
+   * use this.receivedMessagesRaw for that.
+   */
+  public get receivedMessages(): Json[] {
+    return this.receivedMessagesRaw.map((raw) => {
+      try {
+        return JSON.parse(raw) as Json;
+      } catch {
+        return "<non-JSON value>";
+      }
+    });
+  }
+
+  getEmitters(socket: MockWebSocket): Emitters {
+    const emitters = this.connections.get(socket);
+    if (emitters === undefined) {
+      throw new Error("Unknown socket");
+    }
+    return emitters;
+  }
+
+  accept(socket: MockWebSocket) {
+    this.getEmitters(socket).onOpen.notify(new Event("open"));
+  }
+
+  close(socket: MockWebSocket, event: IWebSocketCloseEvent) {
+    this.getEmitters(socket).onClose.notify(event);
+  }
+
+  message(socket: MockWebSocket, event: IWebSocketMessageEvent) {
+    this.getEmitters(socket).onMessage.notify(event);
+  }
+
+  error(socket: MockWebSocket, event: IWebSocketEvent) {
+    this.getEmitters(socket).onError.notify(event);
+  }
+
+  /**
+   * Create a new socket connection instance this server.
+   */
+  public newSocket(initFn?: (socket: MockWebSocket) => void): MockWebSocket {
+    const serverEvents = {
+      onOpen: makeEventSource<IWebSocketEvent>(),
+      onClose: makeEventSource<IWebSocketCloseEvent>(),
+      onMessage: makeEventSource<IWebSocketMessageEvent>(),
+      onError: makeEventSource<IWebSocketEvent>(),
+    };
+
+    const serverSocket: ServerSocket = {
+      receivedMessagesRaw: this.receivedMessagesRaw,
+      accept: () => serverEvents.onOpen.notify(new Event("open")),
+      close: serverEvents.onClose.notify,
+      send: serverEvents.onMessage.notify,
+      error: serverEvents.onError.notify,
+    };
+
+    const clientSocket = new MockWebSocket();
+    clientSocket.linkToServerSocket(serverSocket, serverEvents);
+    this.connections.set(clientSocket, serverEvents);
+    this.current = clientSocket;
+
+    // Run the callback in the next tick. This is important, because we first
+    // need to return the socket.
+    setTimeout(() => {
+      // Call the provided callback once, for this connection only.
+      initFn?.(clientSocket);
+
+      // ...then proceed to call the rest of the callbacks, which will be
+      // executed on every new connection
+      this.newConnectionCallbacks.notify({
+        client: clientSocket,
+        server: serverSocket,
+      });
+    }, 0);
+
+    return clientSocket;
+  }
+
+  public onConnection(callback: (conn: Connection) => void): void {
+    this.newConnectionCallbacks.subscribe(callback);
+  }
+}
+
 export class MockWebSocket {
-  readonly CONNECTING = 0;
-  readonly OPEN = 1;
-  readonly CLOSING = 2;
-  readonly CLOSED = 3;
+  /**
+   * Control/simulate server-side behavior for this socket connection only.
+   * This is a convenience accessor if you're only interested in controlling
+   * behavior for this particular client/server socket pair.
+   */
+  private _serverSocket: ServerSocket | undefined;
+
+  private _listeners: ServerEvents | undefined;
+  private unsubs: {
+    open: WeakMap<Listener | MessageListener | CloseListener, () => void>;
+    close: WeakMap<Listener | MessageListener | CloseListener, () => void>;
+    message: WeakMap<Listener | MessageListener | CloseListener, () => void>;
+    error: WeakMap<Listener | MessageListener | CloseListener, () => void>;
+  };
+
+  public readonly CONNECTING = 0;
+  public readonly OPEN = 1;
+  public readonly CLOSING = 2;
+  public readonly CLOSED = 3;
 
   readonly url: string;
 
   #readyState: number;
-  readonly sentMessages: string[] = [];
 
-  readonly #closeListeners: CloseListener[] = [];
-  readonly #errorListeners: Listener[] = [];
-  readonly #messageListeners: MessageListener[] = [];
-  readonly #openListeners: Listener[] = [];
-
-  constructor(url: string = "ws://ignored", autoOpen: boolean = false) {
+  /**
+   * Don't call this constructor directly. Obtain a MockWebSocket instance by
+   * instantiating a MockWebSocketServer, and calling .newSocket() on it. That
+   * way, you can control and observe this socket's exact behavior by using the
+   * server.
+   */
+  constructor(url: string = "ws://ignored") {
+    this.unsubs = {
+      open: new WeakMap(),
+      close: new WeakMap(),
+      message: new WeakMap(),
+      error: new WeakMap(),
+    };
     this.url = url;
     this.#readyState = this.CONNECTING;
+  }
 
-    if (autoOpen) {
-      setTimeout(() => {
-        this.simulateOpen();
-      }, 0);
+  public linkToServerSocket(
+    serverSocket: ServerSocket,
+    listeners: ServerEvents
+  ) {
+    this._serverSocket = serverSocket;
+    this._listeners = listeners;
+
+    // onOpen (from server)
+    listeners.onOpen.subscribeOnce(() => {
+      if (this.readyState > this.CONNECTING) {
+        throw new Error(
+          "Cannot open a WebSocket that has already advanced beyond the CONNECTING state"
+        );
+      }
+
+      this.#readyState = this.OPEN;
+    });
+
+    // onClose (from server)
+    listeners.onClose.subscribe(() => {
+      this.#readyState = this.CLOSED;
+    });
+
+    // onSend (from server)
+    listeners.onMessage.subscribe(() => {
+      if (this.readyState < this.OPEN) {
+        throw new Error("Socket hasn't been opened yet");
+      }
+    });
+  }
+
+  /**
+   * Returns the server-side socket on the opposite end of the connection.
+   */
+  public get server(): ServerSocket {
+    if (this._serverSocket === undefined) {
+      throw new Error("No server attached yet");
     }
+    return this._serverSocket;
+  }
+
+  private get listeners(): ServerEvents {
+    if (this._listeners === undefined) {
+      throw new Error("No server attached yet");
+    }
+    return this._listeners;
   }
 
   //
   // WEBSOCKET API
   //
 
-  get readyState(): number {
+  public get readyState(): number {
     return this.#readyState;
   }
 
-  addEventListener(event: "message", listener: MessageListener): void; // prettier-ignore
-  addEventListener(event: "close", listener: CloseListener): void; // prettier-ignore
-  addEventListener(event: "open" | "error", listener: Listener): void; // prettier-ignore
+  addEventListener(type: "message", listener: MessageListener): void; // prettier-ignore
+  addEventListener(type: "close", listener: CloseListener): void; // prettier-ignore
+  addEventListener(type: "open" | "error", listener: Listener): void; // prettier-ignore
   // prettier-ignore
-  addEventListener(event: "open" | "close" | "message" | "error", listener: Listener | MessageListener | CloseListener): void {
-    if (event === "open") {
-      this.#openListeners.push(listener as Listener);
-    } else if (event === "close") {
-      this.#closeListeners.push(listener as CloseListener);
-    } else if (event === "error") {
-      this.#errorListeners.push(listener as Listener);
-    } else if (event === "message") {
-      this.#messageListeners.push(listener as MessageListener);
+  addEventListener(type: "open" | "close" | "message" | "error", listener: Listener | MessageListener | CloseListener): void {
+    let unsub: (() => void) | undefined;
+    if (type === "open") {
+      unsub = this.listeners.onOpen.subscribe(listener as Listener);
+    } else if (type === "close") {
+      unsub = this.listeners.onClose.subscribe(listener as CloseListener);
+    } else if (type === "message") {
+      unsub = this.listeners.onMessage.subscribe(listener as MessageListener);
+    } else if (type === "error") {
+      unsub = this.listeners.onError.subscribe(listener as Listener);
+    }
+
+    if (unsub) {
+      this.unsubs[type].set(listener, unsub);
     }
   }
 
-  removeEventListener(event: "message", listener: MessageListener): void; // prettier-ignore
-  removeEventListener(event: "close", listener: CloseListener): void; // prettier-ignore
-  removeEventListener(event: "open" | "error", listener: Listener): void; // prettier-ignore
+  removeEventListener(type: "message", listener: MessageListener): void; // prettier-ignore
+  removeEventListener(type: "close", listener: CloseListener): void; // prettier-ignore
+  removeEventListener(type: "open" | "error", listener: Listener): void; // prettier-ignore
   // prettier-ignore
-  removeEventListener(event: "open" | "close" | "message" | "error", listener: Listener | MessageListener | CloseListener): void {
-    if (event === "open") {
-      remove(this.#openListeners, listener as Listener);
-    } else if (event === "close") {
-      remove(this.#closeListeners, listener as CloseListener);
-    } else if (event === "error") {
-      remove(this.#errorListeners, listener as Listener);
-    } else if (event === "message") {
-      remove(this.#messageListeners, listener as MessageListener);
-    }
-  }
-
-  send(message: string) {
-    this.sentMessages.push(message);
-  }
-
-  close(_code?: number, _reason?: string): void {
-    this.#readyState = this.CLOSED;
-  }
-
-  //
-  // SIMULATION APIS
-  //
-
-  simulateOpen() {
-    if (this.readyState > this.CONNECTING) {
-      throw new Error(
-        "Cannot open a WebSocket that has already advanced beyond the CONNECTING state"
-      );
-    }
-
-    this.#readyState = this.OPEN;
-    for (const callback of this.#openListeners) {
-      callback({ type: "open" });
+  removeEventListener(type: "open" | "close" | "message" | "error", listener: Listener | MessageListener | CloseListener): void {
+    const unsub = this.unsubs[type].get(listener);
+    if (unsub !== undefined) {
+      unsub();
     }
   }
 
   /**
-   * Simulates a close of the connection by the server.
+   * Send a message from the client to the WebSocket server.
    */
-  simulateCloseFromServer(event: IWebSocketCloseEvent) {
-    this.#readyState = this.CLOSED;
-    for (const callback of this.#closeListeners) {
-      callback(event);
+  public send(message: string) {
+    if (this.readyState === this.OPEN) {
+      this.server.receivedMessagesRaw.push(message);
     }
   }
+
+  /**
+   * Close the socket from the client side.
+   */
+  public close(_code?: number, _reason?: string): void {
+    this.#readyState = this.CLOSED;
+  }
+}
+
+/**
+ * Makes a simple mocked WebSocket client that is connected to a mocked
+ * WebSocket server.
+ */
+export function makeControllableWebSocket(): MockWebSocket {
+  const server = new MockWebSocketServer();
+  return server.newSocket();
 }
 
 // ------------------------------------------------------------------------
@@ -216,11 +417,11 @@ export async function prepareRoomWithStorage<
     },
     makeRoomConfig(effects)
   );
-  const ws = new MockWebSocket();
+  const ws = makeControllableWebSocket();
 
   room.__internal.send.connect();
   room.__internal.send.authSuccess(makeRoomToken(actor, scopes), ws);
-  ws.simulateOpen();
+  ws.server.accept();
 
   // Start getting the storage, but don't await the promise just yet!
   const getStoragePromise = room.getStorage();
@@ -376,15 +577,31 @@ export async function prepareStorageTest<
   }
 
   function assertUndoRedo() {
+    // this is what the last undo item looked like before we undo
+
+    const before = deepCloneWithoutOpId(
+      room.__internal.undoStack[room.__internal.undoStack.length - 1]
+    );
+
+    // this will undo the whole stack
     for (let i = 0; i < states.length - 1; i++) {
       room.history.undo();
       expectBothClientStoragesToEqual(states[states.length - 2 - i]);
     }
 
+    // this will redo the whole stack
     for (let i = 0; i < states.length - 1; i++) {
       room.history.redo();
       expectBothClientStoragesToEqual(states[i + 1]);
     }
+
+    // this is what the last undo item looks like after redoing everything
+    const after = deepCloneWithoutOpId(
+      room.__internal.undoStack[room.__internal.undoStack.length - 1]
+    );
+
+    // It should be identical before/after
+    expect(before).toEqual(after);
 
     for (let i = 0; i < states.length - 1; i++) {
       room.history.undo();
@@ -397,10 +614,10 @@ export async function prepareStorageTest<
     newItems?: IdTuple<SerializedCrdt>[] | undefined
   ): MockWebSocket {
     currentActor = actor;
-    const ws = new MockWebSocket();
+    const ws = makeControllableWebSocket();
     room.__internal.send.connect();
     room.__internal.send.authSuccess(makeRoomToken(actor, []), ws);
-    ws.simulateOpen();
+    ws.server.accept();
 
     // Mock server messages for Presence.
     // Other user in the room (refRoom) recieves a "USER_JOINED" message.
@@ -558,10 +775,10 @@ export function reconnect<
   actor: number,
   newItems: IdTuple<SerializedCrdt>[]
 ) {
-  const ws = new MockWebSocket();
+  const ws = makeControllableWebSocket();
   room.__internal.send.connect();
   room.__internal.send.authSuccess(makeRoomToken(actor, []), ws);
-  ws.simulateOpen();
+  ws.server.accept();
 
   room.__internal.send.incomingMessage(
     serverMessage({

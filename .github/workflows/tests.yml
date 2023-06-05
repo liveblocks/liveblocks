@@ -46,7 +46,7 @@ jobs:
         run: npm run build -- --filter ${{ matrix.pkg }}
 
       - name: Run unit tests
-        run: npm run test -- --filter ${{ matrix.pkg }}
+        run: npm run test -- --filter ${{ matrix.pkg }} -- --coverage
 
       - name: Run type tests
         run: npm run test:types -- --filter ${{ matrix.pkg }}

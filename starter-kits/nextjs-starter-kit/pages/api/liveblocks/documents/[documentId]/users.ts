@@ -62,7 +62,7 @@ async function POST(req: NextApiRequest, res: NextApiResponse) {
 }
 
 /**
- * DELETE Users - Used in /lib/client/removeUserAccess.ts
+ * PATCH Users - Used in /lib/client/removeUserAccess.ts
  *
  * Remove a collaborator from a document
  * Only allow if authorized with NextAuth and is added as a userId on usersAccesses
@@ -74,7 +74,7 @@ async function POST(req: NextApiRequest, res: NextApiResponse) {
  * @param req.body.userId - The removed user's id
  * @param res
  */
-async function DELETE(req: NextApiRequest, res: NextApiResponse) {
+async function PATCH(req: NextApiRequest, res: NextApiResponse) {
   const documentId = req.query.documentId as string;
   const { userId }: RemoveUserRequest = JSON.parse(req.body);
 
@@ -96,14 +96,14 @@ export default async function users(req: NextApiRequest, res: NextApiResponse) {
       return await GET(req, res);
     case "POST":
       return await POST(req, res);
-    case "DELETE":
-      return await DELETE(req, res);
+    case "PATCH":
+      return await PATCH(req, res);
     default:
       return res.status(405).json({
         error: {
           code: 405,
           message: "Method Not Allowed",
-          suggestion: "Only GET, POST, and DELETE are available from this API",
+          suggestion: "Only GET, POST, and PATCH are available from this API",
         },
       });
   }

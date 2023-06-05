@@ -1,4 +1,14 @@
-# vNEXT (not released yet)
+# v1.0.12
+
+### `create-liveblocks-app`
+
+- Added `export type TypedRoom = Room<...>` to init command for non-React apps
+
+# v1.0.11
+
+### `@liveblocks/core`
+
+- Fix a bug where undo/redo on `LiveObject` creates exponentially larger deltas
 
 # v1.0.10
 
