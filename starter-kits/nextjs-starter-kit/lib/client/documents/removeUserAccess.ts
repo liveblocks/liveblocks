@@ -26,7 +26,7 @@ export async function removeUserAccess({
   };
 
   return fetchApiEndpoint<DocumentUser[]>(url, {
-    method: "DELETE",
+    method: "PATCH",
     body: JSON.stringify(request),
   });
 }

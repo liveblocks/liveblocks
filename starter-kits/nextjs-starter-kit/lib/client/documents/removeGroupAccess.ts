@@ -26,7 +26,7 @@ export async function removeGroupAccess({
   };
 
   return fetchApiEndpoint<DocumentGroup[]>(url, {
-    method: "DELETE",
+    method: "PATCH",
     body: JSON.stringify(request),
   });
 }

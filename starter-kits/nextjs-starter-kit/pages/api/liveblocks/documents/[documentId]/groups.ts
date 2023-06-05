@@ -62,7 +62,7 @@ async function POST(req: NextApiRequest, res: NextApiResponse) {
 }
 
 /**
- * DELETE Groups - Used in /lib/client/removeGroupAccess.ts
+ * PATCH Groups - Used in /lib/client/removeGroupAccess.ts
  *
  * Remove a group from a document
  * Only allow if authorized with NextAuth and is added as a userId on usersAccesses
@@ -74,7 +74,7 @@ async function POST(req: NextApiRequest, res: NextApiResponse) {
  * @param req.body.groupId - The removed group's id
  * @param res
  */
-async function DELETE(req: NextApiRequest, res: NextApiResponse) {
+async function PATCH(req: NextApiRequest, res: NextApiResponse) {
   const documentId = req.query.documentId as string;
   const { groupId }: RemoveGroupRequest = JSON.parse(req.body);
 
@@ -99,14 +99,14 @@ export default async function groups(
       return await GET(req, res);
     case "POST":
       return await POST(req, res);
-    case "DELETE":
-      return await DELETE(req, res);
+    case "PATCH":
+      return await PATCH(req, res);
     default:
       return res.status(405).json({
         error: {
           code: 405,
           message: "Method Not Allowed",
-          suggestion: "Only GET, POST, AND DELETE are available from this API",
+          suggestion: "Only GET, POST, AND PATCH are available from this API",
         },
       });
   }
