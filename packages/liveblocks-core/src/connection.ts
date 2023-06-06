@@ -314,12 +314,13 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
   //
   // Configure the @idle.* states
   //
-  machine.addTransitions("@idle.*", {
-    CONNECT: (_, ctx) =>
-      // If we still have a known token, try to reconnect to the socket directly,
-      // otherwise, try to obtain a new token
-      ctx.token !== null ? "@connecting.busy" : "@auth.busy",
-  });
+
+    .addTransitions("@idle.*", {
+      CONNECT: (_, ctx) =>
+        // If we still have a known token, try to reconnect to the socket directly,
+        // otherwise, try to obtain a new token
+        ctx.token !== null ? "@connecting.busy" : "@auth.busy",
+    });
 
   //
   // Configure the @auth.* states
