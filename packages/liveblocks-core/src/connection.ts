@@ -45,9 +45,12 @@ export type NewConnectionStatus =
   | "disconnected";
 
 /**
- * Maps internal machine state to the public connection status API.
+ * Maps internal machine state to the public LegacyConnectionStatus API.
  */
-function toLegacyConnectionStatus(state: State): LegacyConnectionStatus {
+function toLegacyConnectionStatus(
+  machine: FSM<Context, Event, State>
+): LegacyConnectionStatus {
+  const state = machine.currentState;
   switch (state) {
     case "@ok.connected":
     case "@ok.awaiting-pong":
@@ -280,9 +283,11 @@ function defineConnectivityEvents(machine: FSM<Context, Event, State>) {
 
   let oldPublicStatus: LegacyConnectionStatus | null = null;
 
-  const unsubscribe = machine.events.didEnterState.subscribe((newState) => {
-    const newPublicStatus = toLegacyConnectionStatus(newState);
-    statusDidChange.notify(newPublicStatus);
+  const unsubscribe = machine.events.didEnterState.subscribe(() => {
+    const newPublicStatus = toLegacyConnectionStatus(machine);
+    if (newPublicStatus !== oldPublicStatus) {
+      statusDidChange.notify(newPublicStatus);
+    }
 
     if (oldPublicStatus === "open" && newPublicStatus !== "open") {
       didDisconnect.notify();
@@ -845,7 +850,7 @@ export class ManagedSocket<T extends BaseAuthResult> {
 
   getLegacyStatus(): LegacyConnectionStatus {
     try {
-      return toLegacyConnectionStatus(this.machine.currentState);
+      return toLegacyConnectionStatus(this.machine);
     } catch {
       return "closed";
     }
