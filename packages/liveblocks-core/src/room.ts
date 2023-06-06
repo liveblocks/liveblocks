@@ -66,7 +66,7 @@ type CustomEvent<TRoomEvent extends Json> = {
   event: TRoomEvent;
 };
 
-export type Connection =
+type Connection =
   /* The initial state, before connecting */
   | {
       status: "closed";
