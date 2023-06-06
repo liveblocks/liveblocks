@@ -88,6 +88,16 @@ export type BaseAuthResult = Record<string, unknown>;
 
 type Context = {
   /**
+   * Count the number of times the machine reaches an "@ok.*" state. Once the
+   * machine reaches idle state again, this count is reset to 0 again.
+   *
+   * This lets us distinguish:
+   * - If successCount = 0, then it's an initial "connecting" state.
+   * - If successCount > 0, then it's an "reconnecting" state.
+   */
+  successCount: number;
+
+  /**
    * Will be populated with the last known auth token.
    */
   token: BaseAuthResult | null;
@@ -173,6 +183,10 @@ function increaseBackoffDelayAggressively(context: Patchable<Context>) {
   context.patch({
     backoffDelay: nextBackoffDelay(context.backoffDelay, BACKOFF_DELAYS_SLOW),
   });
+}
+
+function resetSuccessCount(context: Patchable<Context>) {
+  context.patch({ successCount: 0 });
 }
 
 enum LogLevel {
@@ -279,6 +293,7 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
   const onLiveblocksError = makeEventSource<LiveblocksError>();
 
   const initialContext: Context & { token: T | null } = {
+    successCount: 0,
     token: null,
     socket: null,
     backoffDelay: RESET_DELAY,
@@ -305,7 +320,7 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
   machine.addTransitions("*", {
     RECONNECT: {
       target: "@auth.backoff",
-      effect: increaseBackoffDelay,
+      effect: [increaseBackoffDelay, resetSuccessCount],
     },
 
     DISCONNECT: "@idle.initial",
@@ -314,6 +329,8 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
   //
   // Configure the @idle.* states
   //
+  machine
+    .onEnter("@idle.*", resetSuccessCount)
 
     .addTransitions("@idle.*", {
       CONNECT: (_, ctx) =>
@@ -607,7 +624,9 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
   };
 
   machine
-    .onEnter("@ok.*", () => {
+    .onEnter("@ok.*", (ctx) => {
+      ctx.patch({ successCount: ctx.successCount + 1 });
+
       const timerID = setTimeout(
         // On the next tick, start delivering all messages that have already
         // been received, and continue synchronous delivery of all future
