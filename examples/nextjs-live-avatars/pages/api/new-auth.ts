@@ -16,6 +16,8 @@ export default async function auth(req: NextApiRequest, res: NextApiResponse) {
     secret: API_KEY,
     userId: `user-${userIndex}`,
     permissions: buildSimpleRoomPermissions(req.body.room),
+    // OR  permissions: buildSimpleMyAccessPermissions("organization-123.*"),
+    // OR  permissions: [{ resource: "organization-123.*", scopes: ["comment:read"]}]
     userInfo: {
       name: NAMES[userIndex],
       picture: `https://liveblocks.io/avatars/avatar-${Math.floor(

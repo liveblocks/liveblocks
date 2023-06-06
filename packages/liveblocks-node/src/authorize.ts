@@ -168,10 +168,12 @@ export function buildSimpleRoomPermissions(
 /**
  * The token returned will give permission to all the rooms which have access configured in Liveblocks for the userId and groupIds provided.
  */
-export function buildSimpleMyAccessPermissions() {
+export function buildSimpleMyAccessPermissions(
+  resource?: string
+): LiveblocksPermission[] {
   return [
     {
-      resource: "*",
+      resource: resource ?? "*",
       scopes: [LiveblocksScope.MyAccess],
     },
   ];
