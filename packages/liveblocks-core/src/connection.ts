@@ -13,7 +13,8 @@ import type {
 } from "./types/IWebSocket";
 
 /**
- * @deprecated These are old connection statuses. Please rely on the newer
+ * XXX Mark as @deprecated
+ * These are old connection statuses. Please rely on the newer
  * Status values instead. We recommend making the following changes
  * if you use these APIs:
  *

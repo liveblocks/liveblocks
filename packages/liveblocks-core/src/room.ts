@@ -415,7 +415,7 @@ export type Room<
    * metadata and connection ID (from the auth server).
    */
   isSelfAware(): boolean;
-  getConnectionState(): LegacyConnectionStatus;
+  getConnectionState(): LegacyConnectionStatus; // XXX Deprecate this in favor of getStatus()
   getStatus(): Status;
   readonly subscribe: SubscribeFn<TPresence, TStorage, TUserMeta, TRoomEvent>;
 
@@ -677,7 +677,7 @@ type RoomState<
     storageOperations: Op[];
   };
 
-  readonly connection: ValueRef<Connection>; // TODO Make this a derived property?
+  readonly connection: ValueRef<Connection>; // XXX Make this a derived property?
   readonly me: MeRef<TPresence>;
   readonly others: OthersRef<TPresence, TUserMeta>;
 

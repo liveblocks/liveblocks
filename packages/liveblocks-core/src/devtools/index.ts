@@ -120,7 +120,7 @@ function partialSyncConnection(
   sendToPanel({
     msg: "room::sync::partial",
     roomId: room.id,
-    status: room.getConnectionState(),
+    status: room.getConnectionState(), // XXX How to best handle the new statuses in DevTools? Probably just make it support all (legacy + new) statuses?
   });
 }
 
@@ -169,7 +169,7 @@ function fullSync(room: Room<JsonObject, LsonObject, BaseUserMeta, Json>) {
   sendToPanel({
     msg: "room::sync::full",
     roomId: room.id,
-    status: room.getConnectionState(),
+    status: room.getConnectionState(), // XXX How to best handle the new statuses in DevTools? Probably just make it support all (legacy + new) statuses?
     storage: root?.toTreeNode("root").payload ?? null,
     me,
     others,
