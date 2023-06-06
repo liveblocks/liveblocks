@@ -1,9 +1,8 @@
-import { legacyAuthorize } from "@liveblocks/node";
+import { authorize, buildSimpleRoomPermissions } from "@liveblocks/node";
 import { NextApiRequest, NextApiResponse } from "next";
 
 const API_KEY = process.env.LIVEBLOCKS_SECRET_KEY;
 
-// This endpoint is temporary there to support clients < 1.1.0
 export default async function auth(req: NextApiRequest, res: NextApiResponse) {
   if (!API_KEY) {
     return res.status(403).end();
@@ -13,10 +12,10 @@ export default async function auth(req: NextApiRequest, res: NextApiResponse) {
   // and set their info from the authentication endpoint
   // See https://liveblocks.io/docs/api-reference/liveblocks-node#authorize for more information
   const userIndex = Math.floor(Math.random() * NAMES.length);
-  const response = await legacyAuthorize({
-    room: req.body.room,
+  const response = await authorize({
     secret: API_KEY,
     userId: `user-${userIndex}`,
+    permissions: buildSimpleRoomPermissions(req.body.room),
     userInfo: {
       name: NAMES[userIndex],
       picture: `https://liveblocks.io/avatars/avatar-${Math.floor(

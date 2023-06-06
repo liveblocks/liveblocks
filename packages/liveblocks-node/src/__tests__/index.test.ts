@@ -1,10 +1,10 @@
-import { authorize } from "..";
+import { legacyAuthorize } from "..";
 
 describe("authorize", () => {
   test.each([null, "", undefined, {}])(
     "should check that room is a non-empty string",
     async (room) => {
-      await authorize({
+      await legacyAuthorize({
         // @ts-expect-error: we want to test for anything passed as room
         room,
         userId: "user1",
@@ -20,7 +20,7 @@ describe("authorize", () => {
   test.each([null, "", undefined, {}])(
     "should check that userId is a non-empty string",
     async (userId) => {
-      await authorize({
+      await legacyAuthorize({
         // @ts-expect-error: we want to test for anything passed as userId,
         userId,
         room: "123",

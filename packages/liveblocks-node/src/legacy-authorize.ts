@@ -1,54 +1,27 @@
 import fetch from "node-fetch";
 
-enum LiveblocksScope {
-  RoomWrite = "room:write",
-  RoomRead = "room:read",
-  RoomPresenceWrite = "room:presence:write",
-  MyAccess = "my:access",
-  CommentWrite = "comment:write",
-  CommentRead = "comment:read",
-}
-
-type LiveblocksPermission = {
-  resource: string;
-  scopes: LiveblocksScope[];
-};
-
-type AuthorizeOptions = {
+type LegacyAuthorizeOptions = {
   /**
    * The secret API key for your Liveblocks account. You can find it on
    * https://liveblocks.io/dashboard/apikeys
    */
   secret: string;
-
   /**
-   * The permissions to grant to the user. This will authorize the user to access
-   * the different resources with the specified scopes.
+   * The room ID for which to authorize the user. This will authorize the user
+   * to enter the Liveblocks room.
    */
-  permissions: LiveblocksPermission[];
-
+  room: string;
   /**
    * Associates a user ID to the session that is being authorized. The user ID
    * is typically set to the user ID from your own database.
    *
-   * If the permissions contain the scope "my:access". The userId will be used to check
-   * if the user has access to the room based on the room accesses that you configured.
-   *
+   * It can also be used to generate a token that gives access to a private
+   * room where the userId is configured in the room accesses.
    *
    * This user ID will be used as the unique identifier to compute your
    * Liveblocks account's Monthly Active Users.
    */
   userId: string;
-
-  /**
-   * If the permissions contain the scope "my:access". The group Ids will be used to check
-   * if the user has access to the room based on the room accesses that you configured.
-   *
-   * See https://liveblocks.io/docs/guides/managing-rooms-users-permissions#permissions
-   * for how to configure your room's permissions to use this feature.
-   */
-  groupIds?: string[];
-
   /**
    * Arbitrary metadata associated to this user session.
    *
@@ -63,10 +36,19 @@ type AuthorizeOptions = {
    * Can't exceed 1KB when serialized as JSON.
    */
   userInfo?: unknown;
+  /**
+   * Tell Liveblocks which group IDs this user belongs to. This will authorize
+   * the user session to access private rooms that have at least one of these
+   * group IDs listed in their room access configuration.
+   *
+   * See https://liveblocks.io/docs/guides/managing-rooms-users-permissions#permissions
+   * for how to configure your room's permissions to use this feature.
+   */
+  groupIds?: string[];
 };
 
 /** @internal */
-type AllAuthorizeOptions = AuthorizeOptions & {
+type AllAuthorizeOptions = LegacyAuthorizeOptions & {
   liveblocksAuthorizeEndpoint?: string;
 };
 
@@ -77,7 +59,9 @@ type AuthorizeResponse = {
 };
 
 /**
- * Get a token from Liveblocks that gives a user access to the requested resousces with the specified access scopes.
+ * Tells Liveblocks that a user should be allowed access to a room, which user
+ * this session is for, and what metadata to associate with the user (like
+ * name, avatar, etc.)
  *
  * @example
  * export default async function auth(req, res) {
@@ -86,9 +70,9 @@ type AuthorizeResponse = {
  *
  * const room = req.body.room;
  * const response = await authorize({
+ *   room,
  *   secret,
  *   userId: "123",
- *   permissions: buildSimpleRoomPermissions(room.id),
  *   userInfo: {    // Optional
  *     name: "Ada Lovelace"
  *   },
@@ -97,11 +81,17 @@ type AuthorizeResponse = {
  * return res.status(response.status).end(response.body);
  * }
  */
-export async function authorize(
-  options: AuthorizeOptions
+export async function legacyAuthorize(
+  options: LegacyAuthorizeOptions
 ): Promise<AuthorizeResponse> {
   try {
-    const { permissions, secret, userId, userInfo, groupIds } = options;
+    const { room, secret, userId, userInfo, groupIds } = options;
+
+    if (!(typeof room === "string" && room.length > 0)) {
+      throw new Error(
+        "Invalid room. Please provide a non-empty string as the room. For more information: https://liveblocks.io/docs/api-reference/liveblocks-node#authorize"
+      );
+    }
 
     if (!(typeof userId === "string" && userId.length > 0)) {
       throw new Error(
@@ -109,7 +99,7 @@ export async function authorize(
       );
     }
 
-    const resp = await fetch(buildLiveblocksAuthorizeEndpoint(options), {
+    const resp = await fetch(buildLiveblocksAuthorizeEndpoint(options, room), {
       method: "POST",
       headers: {
         Authorization: `Bearer ${secret}`,
@@ -117,7 +107,6 @@ export async function authorize(
       },
       body: JSON.stringify({
         userId,
-        permissions,
         userInfo,
         groupIds,
       }),
@@ -150,40 +139,16 @@ export async function authorize(
   }
 }
 
-/**
- * The token returned will give permission to enter a room and read and update the storage.
- */
-export function buildSimpleRoomPermissions(
-  roomId: string,
-  scopes?: LiveblocksScope[]
-): LiveblocksPermission[] {
-  return [
-    {
-      resource: roomId,
-      scopes: scopes || [LiveblocksScope.RoomWrite],
-    },
-  ];
-}
-
-/**
- * The token returned will give permission to all the rooms which have access configured in Liveblocks for the userId and groupIds provided.
- */
-export function buildSimpleMyAccessPermissions() {
-  return [
-    {
-      resource: "*",
-      scopes: [LiveblocksScope.MyAccess],
-    },
-  ];
-}
-
 function buildLiveblocksAuthorizeEndpoint(
-  options: AllAuthorizeOptions
+  options: AllAuthorizeOptions,
+  roomId: string
 ): string {
   // INTERNAL override for testing purpose.
   if (options.liveblocksAuthorizeEndpoint) {
-    return options.liveblocksAuthorizeEndpoint;
+    return options.liveblocksAuthorizeEndpoint.replace("{roomId}", roomId);
   }
 
-  return `https://api.liveblocks.io/v2/authorize`;
+  return `https://api.liveblocks.io/v2/rooms/${encodeURIComponent(
+    roomId
+  )}/authorize`;
 }

@@ -1,4 +1,5 @@
-export { authorize } from "./authorize";
+export { legacyAuthorize } from "./legacy-authorize";
+export { authorize, buildSimpleRoomPermissions } from "./authorize";
 export type {
   StorageUpdatedEvent,
   UserEnteredEvent,
