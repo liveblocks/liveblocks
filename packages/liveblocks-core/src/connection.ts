@@ -281,20 +281,20 @@ function defineConnectivityEvents(machine: FSM<Context, Event, State>) {
   const didConnect = makeEventSource<void>();
   const didDisconnect = makeEventSource<void>();
 
-  let oldPublicStatus: LegacyConnectionStatus | null = null;
+  let lastStatus: LegacyConnectionStatus | null = null;
 
   const unsubscribe = machine.events.didEnterState.subscribe(() => {
-    const newPublicStatus = toLegacyConnectionStatus(machine);
-    if (newPublicStatus !== oldPublicStatus) {
-      statusDidChange.notify(newPublicStatus);
+    const currStatus = toLegacyConnectionStatus(machine);
+    if (currStatus !== lastStatus) {
+      statusDidChange.notify(currStatus);
     }
 
-    if (oldPublicStatus === "open" && newPublicStatus !== "open") {
+    if (lastStatus === "open" && currStatus !== "open") {
       didDisconnect.notify();
-    } else if (oldPublicStatus !== "open" && newPublicStatus === "open") {
+    } else if (lastStatus !== "open" && currStatus === "open") {
       didConnect.notify();
     }
-    oldPublicStatus = newPublicStatus;
+    lastStatus = currStatus;
   });
 
   return {
