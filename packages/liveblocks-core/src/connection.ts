@@ -12,12 +12,37 @@ import type {
   IWebSocketMessageEvent,
 } from "./types/IWebSocket";
 
+/**
+ * @deprecated These are old connection statuses. Please rely on the newer
+ * Status values instead. We recommend making the following changes
+ * if you use these APIs:
+ *
+ *     OLD APIs                       NEW APIs
+ *     .getConnectionState()     -->  .getStatus()
+ *     .subscribe('connection')  -->  .subscribe('status')
+ *
+ *     OLD STATUSES         NEW STATUSES
+ *     closed          -->  initial
+ *     authenticating  -->  connecting
+ *     connecting      -->  connecting
+ *     open            -->  connected
+ *     unavailable     -->  reconnecting
+ *     failed          -->  disconnected
+ *
+ */
 export type LegacyConnectionStatus =
   | "closed" // Room hasn't been entered, or has left already
   | "connecting" // In the process of authenticating and establishing a WebSocket connection
   | "open" // Successful room connection, on the happy path
   | "unavailable" // Connection lost unexpectedly, considered a temporary hiccup, will retry
   | "failed"; // Connection failed and we won't retry automatically (e.g. unauthorized)
+
+export type NewConnectionStatus =
+  | "initial"
+  | "connecting"
+  | "connected"
+  | "reconnecting"
+  | "disconnected";
 
 /**
  * Maps internal machine state to the public connection status API.
