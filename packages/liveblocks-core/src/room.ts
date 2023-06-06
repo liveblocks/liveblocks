@@ -1,4 +1,8 @@
-import type { Delegates, LegacyConnectionStatus } from "./connection";
+import type {
+  Delegates,
+  LegacyConnectionStatus,
+  NewConnectionStatus as Status,
+} from "./connection";
 import { ManagedSocket, StopRetrying } from "./connection";
 import type { ApplyResult, ManagedPool } from "./crdts/AbstractCrdt";
 import { OpSource } from "./crdts/AbstractCrdt";
@@ -109,6 +113,8 @@ type RoomEventCallbackMap<
   TUserMeta extends BaseUserMeta,
   TRoomEvent extends Json
 > = {
+  connection: Callback<LegacyConnectionStatus>; // Old/deprecated API
+  status: Callback<Status>; // New/recommended API
   event: Callback<CustomEvent<TRoomEvent>>;
   "my-presence": Callback<TPresence>;
   //
@@ -120,7 +126,6 @@ type RoomEventCallbackMap<
     event: OthersEvent<TPresence, TUserMeta>
   ) => void;
   error: Callback<Error>;
-  connection: Callback<LegacyConnectionStatus>;
   history: Callback<HistoryEvent>;
   "storage-status": Callback<StorageStatus>;
 };
@@ -509,7 +514,9 @@ export type Room<
   getStorageSnapshot(): LiveObject<TStorage> | null;
 
   readonly events: {
-    readonly connection: Observable<LegacyConnectionStatus>;
+    readonly connection: Observable<LegacyConnectionStatus>; // Old/legacy API
+    readonly status: Observable<Status>; // New/recommended API
+
     readonly customEvent: Observable<{ connectionId: number; event: TRoomEvent; }>; // prettier-ignore
     readonly me: Observable<TPresence>;
     readonly others: Observable<{ others: Others<TPresence, TUserMeta>; event: OthersEvent<TPresence, TUserMeta>; }>; // prettier-ignore
@@ -1034,7 +1041,9 @@ export function createRoom<
   };
 
   const eventHub = {
-    connection: makeEventSource<LegacyConnectionStatus>(),
+    connection: makeEventSource<LegacyConnectionStatus>(), // Old/deprecated API
+    status: makeEventSource<Status>(), // New/recommended API
+
     customEvent: makeEventSource<CustomEvent<TRoomEvent>>(),
     me: makeEventSource<TPresence>(),
     others: makeEventSource<{
@@ -2010,7 +2019,9 @@ export function createRoom<
   );
 
   const events = {
-    connection: eventHub.connection.observable,
+    connection: eventHub.connection.observable, // Old/deprecated API
+    status: eventHub.status.observable, // New/recommended API
+
     customEvent: eventHub.customEvent.observable,
     others: eventHub.others.observable,
     me: eventHub.me.observable,
