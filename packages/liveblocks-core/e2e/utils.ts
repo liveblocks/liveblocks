@@ -4,7 +4,8 @@ import fetch from "node-fetch";
 import type { URL } from "url";
 import WebSocket from "ws";
 
-import type { Room, ConnectionStatus } from "../src/room";
+import type { Room } from "../src/room";
+import type { LegacyConnectionStatus } from "../src/connection";
 import type { BaseUserMeta } from "../src/protocol/BaseUserMeta";
 import { withTimeout } from "../src/lib/utils";
 import type { Json, JsonObject } from "../src/lib/Json";
@@ -263,7 +264,7 @@ export function wait(ms: number) {
  */
 async function waitUntilStatus(
   room: Room<JsonObject, LsonObject, BaseUserMeta, Json>,
-  targetStatus: ConnectionStatus
+  targetStatus: LegacyConnectionStatus
 ): Promise<void> {
   if (room.getConnectionState() === targetStatus) {
     return;

@@ -1,8 +1,9 @@
+import type { LegacyConnectionStatus } from "../connection";
 import type { LsonObject } from "../crdts/Lson";
 import type { Json, JsonObject } from "../lib/Json";
 import { withTimeout } from "../lib/utils";
 import type { BaseUserMeta } from "../protocol/BaseUserMeta";
-import type { ConnectionStatus, Room } from "../room";
+import type { Room } from "../room";
 
 export function sleep(delay: number) {
   return new Promise((resolve) => setTimeout(resolve, delay));
@@ -33,7 +34,7 @@ export async function waitFor(predicate: () => boolean): Promise<void> {
  */
 export async function waitUntilStatus(
   room: Room<JsonObject, LsonObject, BaseUserMeta, Json>,
-  targetStatus: ConnectionStatus
+  targetStatus: LegacyConnectionStatus
 ): Promise<void> {
   if (room.getConnectionState() === targetStatus) {
     return;

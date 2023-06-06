@@ -1,4 +1,4 @@
-import type { Delegates, PublicConnectionStatus } from "./connection";
+import type { Delegates, LegacyConnectionStatus } from "./connection";
 import { ManagedSocket, StopRetrying } from "./connection";
 import type { ApplyResult, ManagedPool } from "./crdts/AbstractCrdt";
 import { OpSource } from "./crdts/AbstractCrdt";
@@ -94,8 +94,6 @@ type Connection =
       lastSessionInfo: SessionInfo | null;
     };
 
-export type ConnectionStatus = Connection["status"];
-
 export type StorageStatus =
   /* The storage is not loaded and has not been requested. */
   | "not-loaded"
@@ -122,7 +120,7 @@ type RoomEventCallbackMap<
     event: OthersEvent<TPresence, TUserMeta>
   ) => void;
   error: Callback<Error>;
-  connection: Callback<ConnectionStatus>;
+  connection: Callback<LegacyConnectionStatus>;
   history: Callback<HistoryEvent>;
   "storage-status": Callback<StorageStatus>;
 };
@@ -316,7 +314,7 @@ type SubscribeFn<
    * @returns Unsubscribe function.
    *
    */
-  (type: "connection", listener: Callback<ConnectionStatus>): () => void;
+  (type: "connection", listener: Callback<LegacyConnectionStatus>): () => void;
 
   /**
    * Subscribes to changes made on a Live structure. Returns an unsubscribe function.
@@ -417,7 +415,7 @@ export type Room<
    * metadata and connection ID (from the auth server).
    */
   isSelfAware(): boolean;
-  getConnectionState(): ConnectionStatus;
+  getConnectionState(): LegacyConnectionStatus;
   readonly subscribe: SubscribeFn<TPresence, TStorage, TUserMeta, TRoomEvent>;
 
   /**
@@ -514,7 +512,7 @@ export type Room<
     readonly me: Observable<TPresence>;
     readonly others: Observable<{ others: Others<TPresence, TUserMeta>; event: OthersEvent<TPresence, TUserMeta>; }>; // prettier-ignore
     readonly error: Observable<Error>;
-    readonly connection: Observable<ConnectionStatus>;
+    readonly connection: Observable<LegacyConnectionStatus>;
     readonly storage: Observable<StorageUpdate[]>;
     readonly history: Observable<HistoryEvent>;
 
@@ -881,7 +879,7 @@ export function createRoom<
   const doNotBatchUpdates = (cb: () => void): void => cb();
   const batchUpdates = config.unstable_batchedUpdates ?? doNotBatchUpdates;
 
-  function onStatusDidChange(newStatus: PublicConnectionStatus) {
+  function onStatusDidChange(newStatus: LegacyConnectionStatus) {
     const token = managedSocket.token?.parsed;
     const sessionInfo = token
       ? {
@@ -2167,7 +2165,7 @@ function makeClassicSubscribeFn<
 
         case "connection":
           return events.connection.subscribe(
-            callback as Callback<ConnectionStatus>
+            callback as Callback<LegacyConnectionStatus>
           );
 
         case "history":

@@ -12,8 +12,7 @@ import type {
   IWebSocketMessageEvent,
 } from "./types/IWebSocket";
 
-// TODO DRY this type up with the ConnectionStatus type in room.ts
-export type PublicConnectionStatus =
+export type LegacyConnectionStatus =
   | "closed" // Room hasn't been entered, or has left already
   | "connecting" // In the process of authenticating and establishing a WebSocket connection
   | "open" // Successful room connection, on the happy path
@@ -23,7 +22,7 @@ export type PublicConnectionStatus =
 /**
  * Maps internal machine state to the public connection status API.
  */
-function toPublicConnectionStatus(state: State): PublicConnectionStatus {
+function toLegacyConnectionStatus(state: State): LegacyConnectionStatus {
   switch (state) {
     case "@ok.connected":
     case "@ok.awaiting-pong":
@@ -250,14 +249,14 @@ function enableTracing(machine: FSM<Context, Event, State>) {
 
 function defineConnectivityEvents(machine: FSM<Context, Event, State>) {
   // Emitted whenever a new WebSocket connection attempt succeeds
-  const statusDidChange = makeEventSource<PublicConnectionStatus>();
+  const statusDidChange = makeEventSource<LegacyConnectionStatus>();
   const didConnect = makeEventSource<void>();
   const didDisconnect = makeEventSource<void>();
 
-  let oldPublicStatus: PublicConnectionStatus | null = null;
+  let oldPublicStatus: LegacyConnectionStatus | null = null;
 
   const unsubscribe = machine.events.didEnterState.subscribe((newState) => {
-    const newPublicStatus = toPublicConnectionStatus(newState);
+    const newPublicStatus = toLegacyConnectionStatus(newState);
     statusDidChange.notify(newPublicStatus);
 
     if (oldPublicStatus === "open" && newPublicStatus !== "open") {
@@ -792,7 +791,7 @@ export class ManagedSocket<T extends BaseAuthResult> {
      * Emitted when the WebSocket connection goes in or out of "connected"
      * state.
      */
-    readonly statusDidChange: Observable<PublicConnectionStatus>;
+    readonly statusDidChange: Observable<LegacyConnectionStatus>;
     readonly didConnect: Observable<void>;
     readonly didDisconnect: Observable<void>; // Deliberate close, temporary connection loss, permanent connection loss, etc.
 
@@ -819,9 +818,9 @@ export class ManagedSocket<T extends BaseAuthResult> {
     this.cleanups = cleanups;
   }
 
-  get status(): PublicConnectionStatus {
+  get status(): LegacyConnectionStatus {
     try {
-      return toPublicConnectionStatus(this.machine.currentState);
+      return toLegacyConnectionStatus(this.machine.currentState);
     } catch {
       return "closed";
     }
