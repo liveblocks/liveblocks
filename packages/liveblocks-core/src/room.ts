@@ -416,6 +416,7 @@ export type Room<
    */
   isSelfAware(): boolean;
   getConnectionState(): LegacyConnectionStatus;
+  getStatus(): Status;
   readonly subscribe: SubscribeFn<TPresence, TStorage, TUserMeta, TRoomEvent>;
 
   /**
@@ -2070,6 +2071,7 @@ export function createRoom<
     events,
 
     // Core
+    getStatus: () => managedSocket.getStatus(),
     getConnectionState: () => context.connection.current.status,
     isSelfAware: () => hasSessionInfo(context.connection.current),
     getSelf: () => self.current,

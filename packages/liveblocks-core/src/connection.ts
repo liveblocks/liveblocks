@@ -76,6 +76,35 @@ function toLegacyConnectionStatus(
 }
 
 /**
+ * Maps internal machine state to the public Status API.
+ */
+function toNewConnectionStatus(
+  machine: FSM<Context, Event, State>
+): NewConnectionStatus {
+  const state = machine.currentState;
+  switch (state) {
+    case "@ok.connected":
+    case "@ok.awaiting-pong":
+      return "connected";
+
+    case "@idle.initial":
+      return "initial";
+
+    case "@auth.busy":
+    case "@auth.backoff":
+    case "@connecting.busy":
+    case "@connecting.backoff":
+      return machine.context.successCount > 0 ? "reconnecting" : "connecting";
+
+    case "@idle.failed":
+      return "disconnected";
+
+    default:
+      return assertNever(state, "Unknown state");
+  }
+}
+
+/**
  * Events that can be sent to the machine externally.
  */
 type Event =
@@ -853,6 +882,14 @@ export class ManagedSocket<T extends BaseAuthResult> {
       return toLegacyConnectionStatus(this.machine);
     } catch {
       return "closed";
+    }
+  }
+
+  getStatus(): NewConnectionStatus {
+    try {
+      return toNewConnectionStatus(this.machine);
+    } catch {
+      return "disconnected";
     }
   }
 
