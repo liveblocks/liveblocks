@@ -509,11 +509,11 @@ export type Room<
   getStorageSnapshot(): LiveObject<TStorage> | null;
 
   readonly events: {
+    readonly connection: Observable<LegacyConnectionStatus>;
     readonly customEvent: Observable<{ connectionId: number; event: TRoomEvent; }>; // prettier-ignore
     readonly me: Observable<TPresence>;
     readonly others: Observable<{ others: Others<TPresence, TUserMeta>; event: OthersEvent<TPresence, TUserMeta>; }>; // prettier-ignore
     readonly error: Observable<Error>;
-    readonly connection: Observable<LegacyConnectionStatus>;
     readonly storage: Observable<StorageUpdate[]>;
     readonly history: Observable<HistoryEvent>;
 
@@ -1034,6 +1034,7 @@ export function createRoom<
   };
 
   const eventHub = {
+    connection: makeEventSource<LegacyConnectionStatus>(),
     customEvent: makeEventSource<CustomEvent<TRoomEvent>>(),
     me: makeEventSource<TPresence>(),
     others: makeEventSource<{
@@ -1041,7 +1042,6 @@ export function createRoom<
       event: OthersEvent<TPresence, TUserMeta>;
     }>(),
     error: makeEventSource<Error>(),
-    connection: makeEventSource<ConnectionStatus>(),
     storage: makeEventSource<StorageUpdate[]>(),
     history: makeEventSource<HistoryEvent>(),
     storageDidLoad: makeEventSource<void>(),
@@ -2010,11 +2010,11 @@ export function createRoom<
   );
 
   const events = {
+    connection: eventHub.connection.observable,
     customEvent: eventHub.customEvent.observable,
     others: eventHub.others.observable,
     me: eventHub.me.observable,
     error: eventHub.error.observable,
-    connection: eventHub.connection.observable,
     storage: eventHub.storage.observable,
     history: eventHub.history.observable,
     storageDidLoad: eventHub.storageDidLoad.observable,
