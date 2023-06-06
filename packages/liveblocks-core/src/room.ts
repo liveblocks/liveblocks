@@ -1714,7 +1714,7 @@ export function createRoom<
       notifyStorageStatus();
     }
 
-    if (managedSocket.status !== "open") {
+    if (managedSocket.getLegacyStatus() !== "open") {
       context.buffer.storageOperations = [];
       return;
     }
@@ -1789,7 +1789,7 @@ export function createRoom<
     }
   ) {
     if (
-      managedSocket.status !== "open" &&
+      managedSocket.getLegacyStatus() !== "open" &&
       !options.shouldQueueEventIfNotReady
     ) {
       return;

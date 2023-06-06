@@ -843,7 +843,7 @@ export class ManagedSocket<T extends BaseAuthResult> {
     this.cleanups = cleanups;
   }
 
-  get status(): LegacyConnectionStatus {
+  getLegacyStatus(): LegacyConnectionStatus {
     try {
       return toLegacyConnectionStatus(this.machine.currentState);
     } catch {
