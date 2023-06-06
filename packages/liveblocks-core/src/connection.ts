@@ -235,7 +235,7 @@ function enableTracing(machine: FSM<Context, Event, State>) {
 }
 
 function defineConnectivityEvents(machine: FSM<Context, Event, State>) {
-  // Emitted whenever a new WebSocket connection attempt suceeds
+  // Emitted whenever a new WebSocket connection attempt succeeds
   const statusDidChange = makeEventSource<PublicConnectionStatus>();
   const didConnect = makeEventSource<void>();
   const didDisconnect = makeEventSource<void>();
