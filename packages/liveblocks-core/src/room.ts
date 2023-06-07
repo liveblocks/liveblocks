@@ -1,5 +1,5 @@
 import type { Delegates, LegacyConnectionStatus, Status } from "./connection";
-import { ManagedSocket, StopRetrying } from "./connection";
+import { ManagedSocket, newToLegacyStatus, StopRetrying } from "./connection";
 import type { ApplyResult, ManagedPool } from "./crdts/AbstractCrdt";
 import { OpSource } from "./crdts/AbstractCrdt";
 import {
@@ -69,7 +69,7 @@ type CustomEvent<TRoomEvent extends Json> = {
 type Connection =
   /* The initial state, before connecting */
   | {
-      status: "closed";
+      status: "initial";
       sessionInfo?: never;
       lastSessionInfo: SessionInfo | null;
     }
@@ -80,16 +80,16 @@ type Connection =
       lastSessionInfo?: never;
     }
   /* Successful room connection, on the happy path */
-  | { status: "open"; sessionInfo: SessionInfo; lastSessionInfo?: never }
+  | { status: "connected"; sessionInfo: SessionInfo; lastSessionInfo?: never }
   /* Connection lost unexpectedly, considered a temporary hiccup, will retry */
   | {
-      status: "unavailable";
+      status: "reconnecting";
       sessionInfo?: never;
       lastSessionInfo: SessionInfo | null;
     }
   /* Connection failed due to known reason (e.g. rejected). Will throw error, then immediately jump to "unavailable" state, to attempt to reconnect */
   | {
-      status: "failed";
+      status: "disconnected";
       sessionInfo?: never;
       lastSessionInfo: SessionInfo | null;
     };
@@ -851,7 +851,7 @@ export function createRoom<
     },
 
     connection: new ValueRef<Connection>({
-      status: "closed",
+      status: "initial",
       lastSessionInfo: null,
     }),
     me: new MeRef(initialPresence),
@@ -883,7 +883,7 @@ export function createRoom<
   const doNotBatchUpdates = (cb: () => void): void => cb();
   const batchUpdates = config.unstable_batchedUpdates ?? doNotBatchUpdates;
 
-  function onStatusDidChange(newStatus: LegacyConnectionStatus) {
+  function onStatusDidChange(newStatus: Status) {
     const token = managedSocket.token?.parsed;
     const sessionInfo = token
       ? {
@@ -894,7 +894,7 @@ export function createRoom<
         }
       : null;
 
-    if (newStatus === "open") {
+    if (newStatus === "connected") {
       if (sessionInfo === null) {
         throw new Error("Unexpected missing session info");
       }
@@ -910,13 +910,14 @@ export function createRoom<
 
     // Forward to the outside world
     batchUpdates(() => {
-      eventHub.connection.notify(newStatus);
+      eventHub.status.notify(newStatus);
+      eventHub.connection.notify(newToLegacyStatus(newStatus));
     });
   }
 
   function onDidConnect() {
     const conn = context.connection.current;
-    if (conn.status !== "open") {
+    if (conn.status !== "connected") {
       // Totally unexpected by now
       throw new Error("Unexpected not-open state");
     }
@@ -1720,7 +1721,7 @@ export function createRoom<
       notifyStorageStatus();
     }
 
-    if (managedSocket.getLegacyStatus() !== "open") {
+    if (managedSocket.getStatus() !== "connected") {
       context.buffer.storageOperations = [];
       return;
     }
@@ -1795,7 +1796,7 @@ export function createRoom<
     }
   ) {
     if (
-      managedSocket.getLegacyStatus() !== "open" &&
+      managedSocket.getStatus() !== "connected" &&
       !options.shouldQueueEventIfNotReady
     ) {
       return;
@@ -2079,7 +2080,7 @@ export function createRoom<
 
     // Core
     getStatus: () => managedSocket.getStatus(),
-    getConnectionState: () => context.connection.current.status,
+    getConnectionState: () => managedSocket.getLegacyStatus(), // XXX This was newToLegacyStatus(context.connection.current.status) -- is that not the same?
     isSelfAware: () => hasSessionInfo(context.connection.current),
     getSelf: () => self.current,
 

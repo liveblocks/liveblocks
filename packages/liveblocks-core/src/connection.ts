@@ -45,34 +45,25 @@ export type Status =
   | "reconnecting"
   | "disconnected";
 
-/**
- * Maps internal machine state to the public LegacyConnectionStatus API.
- */
-function toLegacyConnectionStatus(
-  machine: FSM<Context, Event, State>
-): LegacyConnectionStatus {
-  const state = machine.currentState;
-  switch (state) {
-    case "@ok.connected":
-    case "@ok.awaiting-pong":
-      return "open";
-
-    case "@idle.initial":
-      return "closed";
-
-    case "@auth.busy":
-    case "@auth.backoff":
-    case "@connecting.busy":
+export function newToLegacyStatus(status: Status): LegacyConnectionStatus {
+  switch (status) {
+    case "connecting":
       return "connecting";
 
-    case "@connecting.backoff":
+    case "connected":
+      return "open";
+
+    case "reconnecting":
       return "unavailable";
 
-    case "@idle.failed":
+    case "disconnected":
       return "failed";
 
+    case "initial":
+      return "closed";
+
     default:
-      return assertNever(state, "Unknown state");
+      return "closed";
   }
 }
 
@@ -305,21 +296,21 @@ function enableTracing(machine: FSM<Context, Event, State>) {
 
 function defineConnectivityEvents(machine: FSM<Context, Event, State>) {
   // Emitted whenever a new WebSocket connection attempt succeeds
-  const statusDidChange = makeEventSource<LegacyConnectionStatus>();
+  const statusDidChange = makeEventSource<Status>();
   const didConnect = makeEventSource<void>();
   const didDisconnect = makeEventSource<void>();
 
-  let lastStatus: LegacyConnectionStatus | null = null;
+  let lastStatus: Status | null = null;
 
   const unsubscribe = machine.events.didEnterState.subscribe(() => {
-    const currStatus = toLegacyConnectionStatus(machine);
+    const currStatus = toNewConnectionStatus(machine);
     if (currStatus !== lastStatus) {
       statusDidChange.notify(currStatus);
     }
 
-    if (lastStatus === "open" && currStatus !== "open") {
+    if (lastStatus === "connected" && currStatus !== "connected") {
       didDisconnect.notify();
-    } else if (lastStatus !== "open" && currStatus === "open") {
+    } else if (lastStatus !== "connected" && currStatus === "connected") {
       didConnect.notify();
     }
     lastStatus = currStatus;
@@ -849,7 +840,7 @@ export class ManagedSocket<T extends BaseAuthResult> {
      * Emitted when the WebSocket connection goes in or out of "connected"
      * state.
      */
-    readonly statusDidChange: Observable<LegacyConnectionStatus>;
+    readonly statusDidChange: Observable<Status>;
     readonly didConnect: Observable<void>;
     readonly didDisconnect: Observable<void>; // Deliberate close, temporary connection loss, permanent connection loss, etc.
 
@@ -877,11 +868,7 @@ export class ManagedSocket<T extends BaseAuthResult> {
   }
 
   getLegacyStatus(): LegacyConnectionStatus {
-    try {
-      return toLegacyConnectionStatus(this.machine);
-    } catch {
-      return "closed";
-    }
+    return newToLegacyStatus(this.getStatus());
   }
 
   getStatus(): Status {

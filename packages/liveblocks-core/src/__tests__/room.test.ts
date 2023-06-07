@@ -276,7 +276,7 @@ describe("room", () => {
   test("authentication success should transition to connecting", async () => {
     const { room } = createTestableRoom({});
     expect(room.getConnectionState()).toBe("closed"); // This API will be deprecated in the future
-    expect(room.getStatus()).toEqual("disconnected");
+    expect(room.getStatus()).toEqual("initial");
 
     room.connect();
     expect(room.getConnectionState()).toBe("connecting");
@@ -1611,7 +1611,7 @@ describe("room", () => {
           MANUAL_SOCKETS // ⚠️  This will let us programmatically control opening the sockets
         );
         expect(room.getConnectionState()).toBe("closed"); // This API will be deprecated in the future
-        expect(room.getStatus()).toEqual("disconnected");
+        expect(room.getStatus()).toEqual("initial");
 
         room.connect();
         expect(room.getConnectionState()).toBe("connecting");
