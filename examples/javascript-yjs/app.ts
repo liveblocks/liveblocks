@@ -3,11 +3,12 @@ import * as Y from "yjs";
 import Quill from "quill";
 import QuillCursors from "quill-cursors";
 import { QuillBinding } from "y-quill";
+import LiveblocksProvider from "@liveblocks/yjs";
 
 async function run() {
   let PUBLIC_KEY =
     "pk_prod_-azD9Tpk-NWEPPh4Z0M6kr14_gf5G_LffyqBtkQUIRPbXfMrdTOOM7BWwXtm2pbo";
-  let roomId = "javascript-todo-list";
+  let roomId = "javascript-yjs";
 
   overrideApiKeyAndRoomId();
 
@@ -60,6 +61,7 @@ async function run() {
   // Create an editor-binding which
   // "binds" the quill editor to a Y.Text type.
   const binding = new QuillBinding(ytext, quill);
+  const provider = new LiveblocksProvider(room, ydoc);
 
   /**
    * This function is used when deploying an example on liveblocks.io.
