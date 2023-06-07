@@ -68,29 +68,33 @@ type CustomEvent<TRoomEvent extends Json> = {
 
 export type Connection =
   /* The initial state, before connecting */
-  | { status: "closed" }
+  | {
+      status: "closed";
+      sessionInfo?: never;
+      lastSessionInfo: SessionInfo | null;
+    }
   /* Authentication has started, but not finished yet */
-  | { status: "authenticating" }
+  | {
+      status: "authenticating";
+      sessionInfo?: never;
+      lastSessionInfo: SessionInfo | null;
+    }
   /* Authentication succeeded, now attempting to connect to a room */
-  | {
-      status: "connecting";
-      id: number;
-      userId?: string;
-      userInfo?: Json;
-      isReadOnly: boolean;
-    }
+  | { status: "connecting"; sessionInfo: SessionInfo; lastSessionInfo?: never }
   /* Successful room connection, on the happy path */
-  | {
-      status: "open";
-      id: number;
-      userId?: string;
-      userInfo?: Json;
-      isReadOnly: boolean;
-    }
+  | { status: "open"; sessionInfo: SessionInfo; lastSessionInfo?: never }
   /* Connection lost unexpectedly, considered a temporary hiccup, will retry */
-  | { status: "unavailable" }
+  | {
+      status: "unavailable";
+      sessionInfo?: never;
+      lastSessionInfo: SessionInfo | null;
+    }
   /* Connection failed due to known reason (e.g. rejected). Will throw error, then immediately jump to "unavailable" state, to attempt to reconnect */
-  | { status: "failed" };
+  | {
+      status: "failed";
+      sessionInfo?: never;
+      lastSessionInfo: SessionInfo | null;
+    };
 
 export type ConnectionStatus = Connection["status"];
 
@@ -628,8 +632,22 @@ function makeIdFactory(connectionId: number): IdFactory {
 
 function isConnectionSelfAware(
   connection: Connection
-): connection is typeof connection & { status: "open" | "connecting" } {
-  return connection.status === "open" || connection.status === "connecting";
+): connection is typeof connection &
+  (
+    | { sessionInfo: SessionInfo; lastSessionInfo?: never }
+    | { sessionInfo?: never; lastSessionInfo: SessionInfo }
+  ) {
+  return (
+    connection.status === "open" ||
+    connection.status === "connecting" ||
+    connection.lastSessionInfo !== null
+  );
+}
+
+function getSessionInfo(connection: Connection): SessionInfo | null {
+  return connection.status === "open" || connection.status === "connecting"
+    ? connection.sessionInfo
+    : connection.lastSessionInfo;
 }
 
 type HistoryOp<TPresence extends JsonObject> =
@@ -641,24 +659,19 @@ type HistoryOp<TPresence extends JsonObject> =
 
 type IdFactory = () => string;
 
+type SessionInfo = {
+  readonly id: number; // This is the "actor" (otherwise known as the "connection ID")
+  readonly userId?: string;
+  readonly userInfo?: Json;
+  readonly isReadOnly: boolean;
+};
+
 type RoomState<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
   TUserMeta extends BaseUserMeta,
   TRoomEvent extends Json
 > = {
-  /**
-   * Remembers the last successful connection ID. This gets assigned as soon as
-   * the connection status switched from "connecting" to "open", and is used to
-   * hold on to the connection ID beyond the happy state. If, for example, the
-   * server connection is lost, it will try to reconnect. Reconnecting will
-   * change the connection ID, but during this limbo period, there would not be
-   * a connection ID temporarily, so we use the last known connection ID to
-   * generate IDs for new nodes if they are being created while the connection
-   * is reestablishing.
-   */
-  lastConnectionId: number | null;
-
   /**
    * All pending changes that yet need to be synced.
    */
@@ -836,8 +849,6 @@ export function createRoom<
 
   // The room's internal stateful context
   const context: RoomState<TPresence, TStorage, TUserMeta, TRoomEvent> = {
-    lastConnectionId: null,
-
     buffer: {
       flushTimerID: undefined,
       lastFlushedAt: 0,
@@ -851,7 +862,10 @@ export function createRoom<
       storageOperations: [],
     },
 
-    connection: new ValueRef({ status: "closed" }),
+    connection: new ValueRef<Connection>({
+      status: "closed",
+      lastSessionInfo: null,
+    }),
     me: new MeRef(initialPresence),
     others: new OthersRef<TPresence, TUserMeta>(),
 
@@ -882,21 +896,29 @@ export function createRoom<
   const batchUpdates = config.unstable_batchedUpdates ?? doNotBatchUpdates;
 
   function onStatusDidChange(newStatus: PublicConnectionStatus) {
+    const token = managedSocket.token?.parsed;
+    const sessionInfo = token
+      ? {
+          id: token.actor,
+          userInfo: token.info,
+          userId: token.id,
+          isReadOnly: isStorageReadOnly(token.scopes),
+        }
+      : null;
+
     if (newStatus === "open" || newStatus === "connecting") {
-      const token = managedSocket.token?.parsed;
-      if (token === undefined) {
-        // Token is not expected to be null in these states
-        throw new Error("Unexpected null token here");
+      if (sessionInfo === null) {
+        throw new Error("Unexpected missing self-identity");
       }
       context.connection.set({
         status: newStatus,
-        id: token.actor,
-        userInfo: token.info,
-        userId: token.id,
-        isReadOnly: isStorageReadOnly(token.scopes),
+        sessionInfo,
       });
     } else {
-      context.connection.set({ status: newStatus });
+      context.connection.set({
+        status: newStatus,
+        lastSessionInfo: sessionInfo,
+      });
     }
 
     // Forward to the outside world
@@ -915,7 +937,12 @@ export function createRoom<
     // Re-broadcast the full user presence as soon as we reconnect
     // NOTE: This condition tries to guard "is this a reconnect". There may be
     // a more robust way to check that.
-    if (context.lastConnectionId !== undefined) {
+    if (
+      (
+        context.connection.current.sessionInfo ??
+        context.connection.current.lastSessionInfo
+      )?.id !== null
+    ) {
       context.buffer.me = {
         type: "full",
         data:
@@ -927,8 +954,7 @@ export function createRoom<
       tryFlushing();
     }
 
-    context.lastConnectionId = conn.id;
-    context.idFactory = makeIdFactory(conn.id);
+    context.idFactory = makeIdFactory(conn.sessionInfo.id);
 
     if (context.root) {
       context.buffer.messages.push({ type: ClientMsgCode.FETCH_STORAGE });
@@ -1015,10 +1041,7 @@ export function createRoom<
     },
 
     assertStorageIsWritable: () => {
-      if (
-        isConnectionSelfAware(context.connection.current) &&
-        context.connection.current.isReadOnly
-      ) {
+      if (getSessionInfo(context.connection.current)?.isReadOnly) {
         throw new Error(
           "Cannot write to storage with a read only user, please ensure the user has write permissions"
         );
@@ -1078,16 +1101,18 @@ export function createRoom<
   const self = new DerivedRef(
     context.connection,
     context.me,
-    (conn, me): User<TPresence, TUserMeta> | null =>
-      isConnectionSelfAware(conn)
+    (conn, me): User<TPresence, TUserMeta> | null => {
+      const info = conn.sessionInfo ?? conn.lastSessionInfo;
+      return info
         ? {
-            connectionId: conn.id,
-            id: conn.userId,
-            info: conn.userInfo,
+            connectionId: info.id,
+            id: info.userId,
+            info: info.userInfo,
             presence: me,
-            isReadOnly: conn.isReadOnly,
+            isReadOnly: info.isReadOnly,
           }
-        : null
+        : null;
+    }
   );
 
   // For use in DevTools
@@ -1195,10 +1220,9 @@ export function createRoom<
 
   function getConnectionId() {
     const conn = context.connection.current;
-    if (isConnectionSelfAware(conn)) {
-      return conn.id;
-    } else if (context.lastConnectionId !== null) {
-      return context.lastConnectionId;
+    const info = conn.sessionInfo ?? conn.lastSessionInfo;
+    if (info) {
+      return info.id;
     }
 
     throw new Error(
