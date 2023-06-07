@@ -13,15 +13,35 @@ Liveblocks into your project.
   <DocsCard
     title="React"
     href="/docs/get-started/react"
-    visual={<DocsReactIcon />}
+    visual={
+      <img
+        alt="React"
+        src="/images/docs/react.svg"
+        width={24}
+        height={24}
+        loading="lazy"
+      />
+    }
   />
   <DocsCard
     title="React + Redux"
     href="/docs/get-started/react-redux"
     visual={
       <>
-        <DocsReactIcon />
-        <DocsReduxIcon />
+        <img
+          alt="React"
+          src="/images/docs/react.svg"
+          width={24}
+          height={24}
+          loading="lazy"
+        />
+        <img
+          alt="Redux"
+          src="/images/docs/redux.svg"
+          width={24}
+          height={24}
+          loading="lazy"
+        />
       </>
     }
   />
@@ -30,7 +50,13 @@ Liveblocks into your project.
     href="/docs/get-started/react-zustand"
     visual={
       <>
-        <DocsReactIcon />
+        <img
+          alt="React"
+          src="/images/docs/react.svg"
+          width={24}
+          height={24}
+          loading="lazy"
+        />
         <img
           alt="Zustand"
           src="/images/docs/zustand.png"
@@ -44,9 +70,29 @@ Liveblocks into your project.
   <DocsCard
     title="JavaScript"
     href="/docs/get-started/javascript"
-    visual={<DocsJavascriptIcon />}
+    visual={
+      <img
+        alt="JavaScript"
+        src="/images/docs/javascript.svg"
+        width={24}
+        height={24}
+        loading="lazy"
+      />
+    }
   />
-  <DocsCard title="Vue" href="/docs/get-started/vue" visual={<DocsVueIcon />} />
+  <DocsCard
+    title="Vue"
+    href="/docs/get-started/vue"
+    visual={
+      <img
+        alt="Vue"
+        src="/images/docs/vue.svg"
+        width={24}
+        height={24}
+        loading="lazy"
+      />
+    }
+  />
 </ListGrid>
 
 <MissingTechnologyBanner />
