@@ -7,12 +7,10 @@ enum LiveblocksScope {
   MyAccess = "my:access",
   CommentWrite = "comment:write",
   CommentRead = "comment:read",
+  Events = "events",
 }
 
-type LiveblocksPermission = {
-  resource: string;
-  scopes: LiveblocksScope[];
-};
+type LiveblocksPermissions = Record<string, LiveblocksScope[]>;
 
 type AuthorizeOptions = {
   /**
@@ -25,7 +23,7 @@ type AuthorizeOptions = {
    * The permissions to grant to the user. This will authorize the user to access
    * the different resources with the specified scopes.
    */
-  permissions: LiveblocksPermission[];
+  permissions: LiveblocksPermissions;
 
   /**
    * Associates a user ID to the session that is being authorized. The user ID
@@ -156,13 +154,10 @@ export async function authorize(
 export function buildSimpleRoomPermissions(
   roomId: string,
   scopes?: LiveblocksScope[]
-): LiveblocksPermission[] {
-  return [
-    {
-      resource: roomId,
-      scopes: scopes || [LiveblocksScope.RoomWrite],
-    },
-  ];
+): LiveblocksPermissions {
+  return {
+    [roomId]: scopes || [LiveblocksScope.RoomWrite],
+  };
 }
 
 /**
@@ -170,13 +165,11 @@ export function buildSimpleRoomPermissions(
  */
 export function buildSimpleMyAccessPermissions(
   resource?: string
-): LiveblocksPermission[] {
-  return [
-    {
-      resource: resource ?? "*",
-      scopes: [LiveblocksScope.MyAccess],
-    },
-  ];
+): LiveblocksPermissions {
+  const resourceKey = resource ? resource : "*";
+  return {
+    [resourceKey]: [LiveblocksScope.MyAccess],
+  };
 }
 
 function buildLiveblocksAuthorizeEndpoint(
