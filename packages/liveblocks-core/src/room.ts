@@ -73,7 +73,7 @@ export type Connection =
       sessionInfo?: never;
       lastSessionInfo: SessionInfo | null;
     }
-  /* Authentication succeeded, now attempting to connect to a room */
+  /* In the process of authenticating and establishing a WebSocket connection */
   | {
       status: "connecting";
       sessionInfo: SessionInfo | null;
