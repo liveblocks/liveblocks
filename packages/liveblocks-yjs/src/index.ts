@@ -9,7 +9,8 @@ import type {
   LsonObject,
   Room,
 } from "@liveblocks/client";
-import * as Y from "yjs";
+import type { Doc } from "yjs";
+import { applyUpdate, mergeUpdates } from "yjs";
 
 type RoomEvent = {
   type: "REFRESH";
@@ -24,40 +25,62 @@ type RefreshResponse = {
   lastUpdate: number;
 };
 
-export default class LiveblocksProvider {
-  private room: Room<JsonObject, LsonObject, BaseUserMeta, Json>;
+export default class LiveblocksProvider<
+  P extends JsonObject,
+  S extends LsonObject,
+  U extends BaseUserMeta,
+  E extends Json
+> {
+  private room: Room<P, S, U, E>;
   private httpEndpoint?: string;
   private lastUpdateDate: null | Date = null;
-  private doc: Y.Doc;
+  private doc: Doc;
 
-  constructor(
-    room: Room<JsonObject, LsonObject, BaseUserMeta, Json>,
-    doc: Y.Doc,
-    config?: LiveblocksYjsOptions
-  ) {
-    this.room = room;
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+  constructor(room: Room<P, S, U, E>, doc: Doc, config?: LiveblocksYjsOptions) {
     this.doc = doc;
+    this.room = room;
+    console.log(this.room);
+    this.room.getDoc();
+    this.doc.on("update", this.handleUpdate);
+    this.room.events.connection.subscribe((status) => {
+      console.log("Status ", status);
+      if (status === "open") {
+        this.room.getDoc();
+      }
+    });
     if (config?.httpEndpoint) {
-      this.httpEndpoint = config.httpEndpoint;
-      this.room.subscribe("event", ({ event }) => {
+      this.httpEndpoint = config.httpEndpoint + "?room=" + this.room.id;
+
+      this.room.events.customEvent.subscribe(({ event }) => {
         if ((event as RoomEvent)?.type === "REFRESH") {
-          void this.refresh();
+          void this.resync();
         }
       });
 
-      void this.refresh();
+      void this.resync();
     }
   }
 
-  private async refresh() {
+  private handleUpdate = async (update: Uint8Array, origin: string) => {
+    //this.room.
+    console.log(origin);
+    this.room.updateDoc(update);
+    if (this.httpEndpoint) {
+      await fetch(this.httpEndpoint, {
+        method: "POST",
+        body: update,
+      });
+    }
+  };
+
+  private async resync() {
     if (!this.httpEndpoint) {
       return;
     }
     const response = await fetch(
       `${this.httpEndpoint}${
         this.lastUpdateDate !== null
-          ? `?after=${this.lastUpdateDate.toISOString()}`
+          ? `&after=${this.lastUpdateDate.toISOString()}`
           : ""
       }`
     );
@@ -69,8 +92,8 @@ export default class LiveblocksProvider {
 
     this.lastUpdateDate = new Date(lastUpdate);
 
-    const update = Y.mergeUpdates(updates.map(base64ToUint8Array));
-    Y.applyUpdate(this.doc, update);
+    const update = mergeUpdates(updates.map(base64ToUint8Array));
+    applyUpdate(this.doc, update);
   }
 }
 

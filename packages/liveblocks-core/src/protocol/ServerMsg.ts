@@ -15,6 +15,10 @@ export enum ServerMsgCode {
   INITIAL_STORAGE_STATE = 200,
   UPDATE_STORAGE = 201,
   REJECT_STORAGE_OP = 299,
+
+  // For YJS Docs
+  FETCH_DOC = 300,
+  DOC_UPDATE = 301, //
 }
 
 /**
@@ -35,7 +39,10 @@ export type ServerMsg<
   // For Storage
   | InitialDocumentStateServerMsg // For a single client
   | UpdateStorageServerMsg // Broadcasted
-  | RejectedStorageOpServerMsg; // For a single client
+  | RejectedStorageOpServerMsg // For a single client
+  | FetchDoc; // For receiving doc from backend
+
+// For YJS Docs
 
 /**
  * Sent by the WebSocket server and broadcasted to all clients to announce that
@@ -130,6 +137,11 @@ export type UserJoinServerMsg<TUserMeta extends BaseUserMeta> = {
 export type UserLeftServerMsg = {
   readonly type: ServerMsgCode.USER_LEFT;
   readonly actor: number;
+};
+
+export type FetchDoc = {
+  readonly type: ServerMsgCode.FETCH_DOC;
+  readonly data: Uint8Array[];
 };
 
 /**

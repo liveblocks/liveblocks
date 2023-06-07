@@ -471,6 +471,19 @@ export type Room<
   ): void;
 
   /**
+   *
+   * Sends YJS document updates to liveblocks server
+   *
+   * @param {Uint8Array} data the doc update to send to the server
+   */
+  updateDoc(data: Uint8Array): void;
+
+  /**
+   * Sends a request for the current document from liveblocks server
+   */
+  getDoc(): void;
+
+  /**
    * Broadcasts an event to other users in the room. Event broadcasted to the room can be listened with {@link Room.subscribe}("event").
    * @param {any} event the event to broadcast. Should be serializable to JSON
    *
@@ -1684,6 +1697,10 @@ export function createRoom<
             break;
           }
 
+          case ServerMsgCode.FETCH_DOC: {
+            break;
+          }
+
           case ServerMsgCode.ROOM_STATE: {
             updates.others.push(onRoomStateMessage(message));
             break;
@@ -2016,6 +2033,18 @@ export function createRoom<
     return messages;
   }
 
+  function updateDoc(data: Uint8Array) {
+    if (context.socket === null) {
+      return;
+    }
+
+    context.buffer.messages.push({
+      type: ClientMsgCode.UPDATE_DOC,
+      data,
+    });
+    tryFlushing();
+  }
+
   function broadcastEvent(
     event: TRoomEvent,
     options: BroadcastOptions = {
@@ -2087,6 +2116,12 @@ export function createRoom<
     return {
       root: nn(context.root) as LiveObject<TStorage>,
     };
+  }
+
+  function getDoc(): void {
+    console.warn("pushing fetch doc message");
+    context.buffer.messages.push({ type: ClientMsgCode.FETCH_DOC });
+    tryFlushing();
   }
 
   function undo() {
@@ -2340,6 +2375,7 @@ export function createRoom<
 
     // Presence
     updatePresence,
+    updateDoc,
     broadcastEvent,
 
     // Storage
@@ -2353,6 +2389,7 @@ export function createRoom<
       resume: resumeHistory,
     },
 
+    getDoc,
     getStorage,
     getStorageSnapshot,
     getStorageStatus,
