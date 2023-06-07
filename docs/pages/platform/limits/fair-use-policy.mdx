@@ -1,12 +1,20 @@
 ---
 meta:
-  title: "Limits"
-  parentTitle: "Guides"
-  description:
-    "A list of all the limits and limitations that apply on Liveblocks."
+  title: "Fair Use Policy"
+  parentTitle: "Platform"
+  description: "Fair Use Policy for all Liveblocks plans."
 ---
 
-## General limits
+All Liveblocks subscription plans are subject to this Fair Use Policy.
+
+## Usage guidelines
+
+We have established guidelines for our community’s usage of our plans. Most
+users should fall within the specified ranges, however, if usage is excessive,
+we will notify you and work to address the issue. Our aim is to be accommodating
+while maintaining the stability of our infrastructure.
+
+### Typical usage guidelines
 
 |                                   | Starter                                       | Pro                                          | Startup                                              | Enterprise |
 | --------------------------------- | --------------------------------------------- | -------------------------------------------- | ---------------------------------------------------- | ---------- |
@@ -17,35 +25,26 @@ meta:
 | Simultaneous connections per room | Up to <Limits.FreeMaxConnectionsPerRoom />    | Up to <Limits.ProMaxConnectionsPerRoom />    | Up to <Limits.StartupMaxConnectionsPerRoom />        | Custom     |
 | Team members per account          | <Limits.FreeTeamMembersPerAccount />          | Unlimited                                    | Unlimited                                            | Custom     |
 
-To learn more about how Monthly Active Users (MAU) are calculated for each plan,
-take a look at the [pricing guide](/guides/pricing).
+### Other guidelines
 
-## Other limits
+The `userId` must be used to represent a single user.
 
-### Room `id`
+### Commercial usage
 
-A room `id` cannot exceed 128 characters.
+**Starter accounts** are restricted to non-commercial use only. All commercial
+usage of the platform requires either a Pro, Startup, or Enterprise plan.
 
-### User `id`
+Commercial usage refers to any usage of the Liveblocks platform in projects
+where financial gain is being sought by any party involved in the production,
+including paid employees or consultants.
 
-A user `id` cannot exceed 128 characters.
+### General limits
 
-### User information
+[Take a look at our limits guide](/docs/guides/limits) to learn more about the
+limits we apply to all accounts.
 
-User information sent from the authentication endpoint cannot exceed 1024
-characters once serialized to JSON.
+### Learn more
 
-### Storage
-
-- A `LiveObject` cannot exceed 128 kB when totalling the size of the keys and
-  values.
-- A `LiveMap` can be any size, so long as each individual value does not exceed
-  128kB.
-- A `LiveList` can be any size, so long as each individual value does not exceed
-  128kB.
-
-Note that when one real-time data structure is nested inside another, it does
-not count towards the limit. Only the JSON leaves of your data structure count
-towards the limit. For example, if a `LiveList` is nested inside a `LiveObject`,
-the `LiveList` and its contents do not count towards the `LiveObject`'s data
-limit.
+For further information regarding this policy and acceptable use of our
+Services, please refer to our [Terms of Service](/terms) or your Enterprise
+Service Agreement.

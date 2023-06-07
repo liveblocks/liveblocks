@@ -1,0 +1,58 @@
+---
+meta:
+  title: "Storage"
+  parentTitle: "Primitives"
+  description:
+    "Use the storage conflict‑free data types to enable people to edit the same
+    document in real‑time."
+---
+
+Use the storage conflict‑free data types to enable people to edit the same
+document in real‑time.
+
+<Banner title="Storage persistence">
+  
+Storage data automatically persists when people leave the room. The data
+can also be cleared and stored on your database using the{" "}
+[REST API endpoints](/docs/api-reference/rest-api-endpoints#delete-rooms-roomId-storage).
+
+</Banner>
+
+## Conflict-free data types
+
+### LiveObject
+
+The `LiveObject` data type is similar to a JavaScript object that is
+synchronized on all clients. Keys should be strings, and values should be
+serializable to JSON. If multiple clients update the same property
+simultaneously, the last modification received by the Liveblocks servers is the
+winner.
+
+[View LiveObject API Reference](/docs/api-reference/liveblocks-client#LiveObject)
+
+### LiveMap
+
+The `LiveMap` class is similar to a JavaScript Map that is synchronized on all
+clients. Use this for indexing values that all have the same structure. Keys
+should be strings, and values should be serializable to JSON. If multiple
+clients update the same property simultaneously, the last modification received
+by the Liveblocks servers is the winner.
+
+[View LiveMap API Reference](/docs/api-reference/liveblocks-client#LiveMap)
+
+### LiveList
+
+The `LiveList` class represents an ordered collection of items that is
+synchorinized across clients. Items should be serializable to JSON or another
+Live data type.
+
+[View LiveList API Reference](/docs/api-reference/liveblocks-client#LiveList)
+
+## Validating storage modifications on the server
+
+If you want to ensure all incoming storage modifications are valid, you can
+attach a storage schema to your rooms. The server will use that to automatically
+reject invalid modifications. You can learn more about schema validation
+[here](/docs/platform/schema-validation).
+
+[Learn more about schema validation](/docs/platform/schema-validation)

@@ -1,7 +1,7 @@
 ---
 meta:
   title: "DevTools"
-  parentTitle: "Guides"
+  parentTitle: "Tooling"
   description:
     "Learn how to leverage Liveblocks DevTools to inspect and troubleshoot your
     collaborative application."
@@ -62,10 +62,10 @@ For additional information on how to use the Starter Kit, see the
 [Starter Kit guide](docs/guides/nextjs-starter-kit).
 
 Once you have completed the Starter Kit prompts and installed the extension, run
-the Starter Kit with `npm run dev` and open your browser to `localhost:3000`. You
-should authenticate, and then create a new draft document. Once you have created a
- new document, open up the developer tools window. Find
-the newly available “Liveblocks” panel there.
+the Starter Kit with `npm run dev` and open your browser to `localhost:3000`.
+You should authenticate, and then create a new draft document. Once you have
+created a new document, open up the developer tools window. Find the newly
+available “Liveblocks” panel there.
 
 <Figure>
   <video autoPlay loop muted playsInline>
@@ -78,22 +78,22 @@ the newly available “Liveblocks” panel there.
 
 ### With an example from our gallery
 
-All of [our examples](/examples) hosted on Liveblocks.io are available for you to run locally
-from the
+All of [our examples](/examples) hosted on Liveblocks.io are available for you
+to run locally from the
 [examples directory](https://github.com/liveblocks/liveblocks/tree/main/examples)
 in the Liveblocks repo. For testing and reviewing how to use our DevTools, we
 will use the
 [Advanced Collaborative Spreadsheet](https://liveblocks.io/examples/collaborative-spreadsheet-advanced/nextjs).
 
-To download this example, run the following command, and follow the guided prompts to create
- your project:
+To download this example, run the following command, and follow the guided
+prompts to create your project:
 
 ```bash
 npx create-liveblocks-app@latest --example nextjs-spreadsheet-advanced
 ```
 
-Once you have completed the prompts and installed the extension, run
-the example with `npm run dev` and open your browser to `localhost:3000`.
+Once you have completed the prompts and installed the extension, run the example
+with `npm run dev` and open your browser to `localhost:3000`.
 
 <Figure highlight={false}>
   <Image
@@ -107,8 +107,8 @@ the example with `npm run dev` and open your browser to `localhost:3000`.
 </Figure>
 
 Open your browser and open up the developer tools window. Find the newly
-available “Liveblocks” panel there, and you should see the values from the spreadsheet
-examples populating storage.
+available “Liveblocks” panel there, and you should see the values from the
+spreadsheet examples populating storage.
 
 ## Features and tips
 
@@ -156,9 +156,9 @@ clicked, it displays the value of that key.
 
 <Banner title="Initialization">
 
-If you open the DevTools after a Liveblocks client has already been initialized, you
-may see an empty page. This is because our DevTools is only able to retrieve the
-current state of storage and presence. To fix this, you can refresh the page or
-open the DevTools before initializing the Liveblocks client.
+If you open the DevTools after a Liveblocks client has already been initialized,
+you may see an empty page. This is because our DevTools is only able to retrieve
+the current state of storage and presence. To fix this, you can refresh the page
+or open the DevTools before initializing the Liveblocks client.
 
 </Banner>
