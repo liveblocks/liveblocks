@@ -5,8 +5,7 @@
     "shared/*",
     "packages/*",
     "schema-lang/*",
-    "e2e/next-sandbox",
-    "examples/javascript-yjs"
+    "e2e/next-sandbox"
   ],
   "scripts": {
     "build": "turbo run build",
