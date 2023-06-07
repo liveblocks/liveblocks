@@ -73,14 +73,12 @@ export type Connection =
       sessionInfo?: never;
       lastSessionInfo: SessionInfo | null;
     }
-  /* Authentication has started, but not finished yet */
-  | {
-      status: "authenticating";
-      sessionInfo?: never;
-      lastSessionInfo: SessionInfo | null;
-    }
   /* Authentication succeeded, now attempting to connect to a room */
-  | { status: "connecting"; sessionInfo: SessionInfo; lastSessionInfo?: never }
+  | {
+      status: "connecting";
+      sessionInfo: SessionInfo | null;
+      lastSessionInfo?: never;
+    }
   /* Successful room connection, on the happy path */
   | { status: "open"; sessionInfo: SessionInfo; lastSessionInfo?: never }
   /* Connection lost unexpectedly, considered a temporary hiccup, will retry */
@@ -894,14 +892,13 @@ export function createRoom<
         }
       : null;
 
-    if (newStatus === "open" || newStatus === "connecting") {
+    if (newStatus === "open") {
       if (sessionInfo === null) {
         throw new Error("Unexpected missing session info");
       }
-      context.connection.set({
-        status: newStatus,
-        sessionInfo,
-      });
+      context.connection.set({ status: newStatus, sessionInfo });
+    } else if (newStatus === "connecting") {
+      context.connection.set({ status: newStatus, sessionInfo });
     } else {
       context.connection.set({
         status: newStatus,
