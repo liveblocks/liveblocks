@@ -813,12 +813,8 @@ export class ManagedSocket<T extends BaseAuthResult> {
   /**
    * Returns the current auth token.
    */
-  get token(): T {
-    const tok = this.machine.context.token;
-    if (tok === null) {
-      throw new Error("Unexpected null token here");
-    }
-    return tok as T;
+  get token(): T | null {
+    return this.machine.context.token as T | null;
   }
 
   /**

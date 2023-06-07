@@ -883,12 +883,17 @@ export function createRoom<
 
   function onStatusDidChange(newStatus: PublicConnectionStatus) {
     if (newStatus === "open" || newStatus === "connecting") {
+      const token = managedSocket.token?.parsed;
+      if (token === undefined) {
+        // Token is not expected to be null in these states
+        throw new Error("Unexpected null token here");
+      }
       context.connection.set({
         status: newStatus,
-        id: managedSocket.token.parsed.actor,
-        userInfo: managedSocket.token.parsed.info,
-        userId: managedSocket.token.parsed.id,
-        isReadOnly: isStorageReadOnly(managedSocket.token.parsed.scopes),
+        id: token.actor,
+        userInfo: token.info,
+        userId: token.id,
+        isReadOnly: isStorageReadOnly(token.scopes),
       });
     } else {
       context.connection.set({ status: newStatus });
@@ -1048,7 +1053,7 @@ export function createRoom<
       const size = new TextEncoder().encode(message).length;
       if (
         size > MAX_MESSAGE_SIZE &&
-        managedSocket.token.raw &&
+        managedSocket.token?.raw &&
         config.httpSendEndpoint
       ) {
         if (isTokenExpired(managedSocket.token.parsed)) {
