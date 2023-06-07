@@ -474,9 +474,9 @@ export type Room<
    *
    * Sends YJS document updates to liveblocks server
    *
-   * @param {Uint8Array} data the doc update to send to the server
+   * @param {string} data the doc update to send to the server, base64 encoded uint8array
    */
-  updateDoc(data: Uint8Array): void;
+  updateDoc(data: string): void;
 
   /**
    * Sends a request for the current document from liveblocks server
@@ -536,6 +536,7 @@ export type Room<
     readonly storageDidLoad: Observable<void>;
 
     readonly storageStatus: Observable<StorageStatus>;
+    readonly docUpdated: Observable<string[]>;
   };
 
   /**
@@ -987,6 +988,7 @@ export function createRoom<
     history: makeEventSource<HistoryEvent>(),
     storageDidLoad: makeEventSource<void>(),
     storageStatus: makeEventSource<StorageStatus>(),
+    docUpdated: makeEventSource<string[]>(),
   };
 
   const effects: Effects<TPresence, TRoomEvent> = config.mockedEffects || {
@@ -1698,6 +1700,7 @@ export function createRoom<
           }
 
           case ServerMsgCode.FETCH_DOC: {
+            eventHub.docUpdated.notify(message.data);
             break;
           }
 
@@ -2033,7 +2036,7 @@ export function createRoom<
     return messages;
   }
 
-  function updateDoc(data: Uint8Array) {
+  function updateDoc(data: string) {
     if (context.socket === null) {
       return;
     }
@@ -2290,6 +2293,7 @@ export function createRoom<
     history: eventHub.history.observable,
     storageDidLoad: eventHub.storageDidLoad.observable,
     storageStatus: eventHub.storageStatus.observable,
+    docUpdated: eventHub.docUpdated.observable,
   };
 
   //

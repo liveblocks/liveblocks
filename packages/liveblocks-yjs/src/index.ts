@@ -9,6 +9,7 @@ import type {
   LsonObject,
   Room,
 } from "@liveblocks/client";
+import { Base64 } from "js-base64";
 import type { Doc } from "yjs";
 import { applyUpdate, mergeUpdates } from "yjs";
 
@@ -39,15 +40,15 @@ export default class LiveblocksProvider<
   constructor(room: Room<P, S, U, E>, doc: Doc, config?: LiveblocksYjsOptions) {
     this.doc = doc;
     this.room = room;
-    console.log(this.room);
     this.room.getDoc();
     this.doc.on("update", this.handleUpdate);
-    this.room.events.connection.subscribe((status) => {
-      console.log("Status ", status);
-      if (status === "open") {
-        this.room.getDoc();
-      }
+
+    this.room.events.docUpdated.subscribe((updates) => {
+      const decodedUpdates: Uint8Array[] = updates.map(Base64.toUint8Array);
+      const update = mergeUpdates(decodedUpdates);
+      applyUpdate(this.doc, update);
     });
+
     if (config?.httpEndpoint) {
       this.httpEndpoint = config.httpEndpoint + "?room=" + this.room.id;
 
@@ -62,13 +63,13 @@ export default class LiveblocksProvider<
   }
 
   private handleUpdate = async (update: Uint8Array, origin: string) => {
-    //this.room.
-    console.log(origin);
-    this.room.updateDoc(update);
+    console.log("Update happened", origin);
+    const encodedUpdate = Base64.fromUint8Array(update);
+    this.room.updateDoc(encodedUpdate);
     if (this.httpEndpoint) {
       await fetch(this.httpEndpoint, {
         method: "POST",
-        body: update,
+        body: encodedUpdate,
       });
     }
   };
@@ -92,16 +93,7 @@ export default class LiveblocksProvider<
 
     this.lastUpdateDate = new Date(lastUpdate);
 
-    const update = mergeUpdates(updates.map(base64ToUint8Array));
+    const update = mergeUpdates(updates.map(Base64.toUint8Array));
     applyUpdate(this.doc, update);
   }
-}
-
-function base64ToUint8Array(base64: string) {
-  const binaryString = atob(base64);
-  const bytes = new Uint8Array(binaryString.length);
-  for (let i = 0; i < binaryString.length; i++) {
-    bytes[i] = binaryString.charCodeAt(i);
-  }
-  return bytes;
 }

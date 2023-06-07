@@ -141,7 +141,7 @@ export type UserLeftServerMsg = {
 
 export type FetchDoc = {
   readonly type: ServerMsgCode.FETCH_DOC;
-  readonly data: Uint8Array[];
+  readonly data: string[];
 };
 
 /**

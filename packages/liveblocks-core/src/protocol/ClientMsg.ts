@@ -87,5 +87,5 @@ export type FetchDocClientMsg = {
 
 export type UpdateDocClientMsg = {
   readonly type: ClientMsgCode.UPDATE_DOC;
-  readonly data: Uint8Array;
+  readonly data: string;
 };
