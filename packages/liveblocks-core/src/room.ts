@@ -2177,6 +2177,9 @@ function makeClassicSubscribeFn<
             callback as Callback<LegacyConnectionStatus>
           );
 
+        case "status":
+          return events.status.subscribe(callback as Callback<Status>);
+
         case "history":
           return events.history.subscribe(callback as Callback<HistoryEvent>);
 
