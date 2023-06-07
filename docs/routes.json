@@ -45,6 +45,28 @@
       {
         "title": "How Liveblocks works",
         "path": "/concepts/how-liveblocks-works"
+      },
+      {
+        "title": "Authentication",
+        "path": "/concepts/authentication",
+        "routes": [
+          {
+            "title": "Next.js",
+            "path": "/concepts/authentication/next-js"
+          },
+          {
+            "title": "Firebase",
+            "path": "/concepts/authentication/firebase"
+          },
+          {
+            "title": "Nuxt.js",
+            "path": "/concepts/authentication/nuxt-js"
+          },
+          {
+            "title": "Express",
+            "path": "/concepts/authentication/express"
+          }
+        ]
       }
     ]
   },
@@ -113,6 +135,10 @@
       {
         "title": "Webhooks",
         "path": "/platform/webhooks"
+      },
+      {
+        "title": "Room management",
+        "path": "/platform/room-management"
       },
       {
         "title": "Schema validation",
