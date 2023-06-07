@@ -356,8 +356,27 @@ user update its presence.
 Returns an unsubscribe function.
 
 ```ts
-const unsubscribe = room.subscribe("others", (others) => {
+const unsubscribe = room.subscribe("others", (others, event) => {
   // Do something
+
+  if (event.type === "leave") {
+    // A user has left the room
+    // event.user;
+  }
+
+  if (event.type === "enter") {
+    // A user has entered the room
+    // event.user;
+  }
+
+  if (event.type === "update") {
+    // A user has updated
+    // event.user;
+    // event.updates;
+  }
+
+  if (event.type === "reset") {
+    // A disconnection has occurred and others has reset
 });
 ```
 
