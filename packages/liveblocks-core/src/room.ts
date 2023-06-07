@@ -908,7 +908,7 @@ export function createRoom<
 
     if (newStatus === "open" || newStatus === "connecting") {
       if (sessionInfo === null) {
-        throw new Error("Unexpected missing self-identity");
+        throw new Error("Unexpected missing session info");
       }
       context.connection.set({
         status: newStatus,
