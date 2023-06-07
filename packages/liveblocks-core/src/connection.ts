@@ -15,7 +15,7 @@ import type {
 // TODO DRY this type up with the ConnectionStatus type in room.ts
 export type PublicConnectionStatus =
   | "closed" // Room hasn't been entered, or has left already
-  | "connecting" // Authentication succeeded, now attempting to connect to a room
+  | "connecting" // In the process of authenticating and establishing a WebSocket connection
   | "open" // Successful room connection, on the happy path
   | "unavailable" // Connection lost unexpectedly, considered a temporary hiccup, will retry
   | "failed"; // Connection failed and we won't retry automatically (e.g. unauthorized)
