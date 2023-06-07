@@ -38,7 +38,7 @@ export type LegacyConnectionStatus =
   | "unavailable" // Connection lost unexpectedly, considered a temporary hiccup, will retry
   | "failed"; // Connection failed and we won't retry automatically (e.g. unauthorized)
 
-export type NewConnectionStatus =
+export type Status =
   | "initial"
   | "connecting"
   | "connected"
@@ -79,9 +79,7 @@ function toLegacyConnectionStatus(
 /**
  * Maps internal machine state to the public Status API.
  */
-function toNewConnectionStatus(
-  machine: FSM<Context, Event, State>
-): NewConnectionStatus {
+function toNewConnectionStatus(machine: FSM<Context, Event, State>): Status {
   const state = machine.currentState;
   switch (state) {
     case "@ok.connected":
@@ -886,7 +884,7 @@ export class ManagedSocket<T extends BaseAuthResult> {
     }
   }
 
-  getStatus(): NewConnectionStatus {
+  getStatus(): Status {
     try {
       return toNewConnectionStatus(this.machine);
     } catch {

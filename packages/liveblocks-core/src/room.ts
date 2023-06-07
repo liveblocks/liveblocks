@@ -1,8 +1,4 @@
-import type {
-  Delegates,
-  LegacyConnectionStatus,
-  NewConnectionStatus as Status,
-} from "./connection";
+import type { Delegates, LegacyConnectionStatus, Status } from "./connection";
 import { ManagedSocket, StopRetrying } from "./connection";
 import type { ApplyResult, ManagedPool } from "./crdts/AbstractCrdt";
 import { OpSource } from "./crdts/AbstractCrdt";
