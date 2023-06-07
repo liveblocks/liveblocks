@@ -15,7 +15,6 @@ import type {
 // TODO DRY this type up with the ConnectionStatus type in room.ts
 export type PublicConnectionStatus =
   | "closed" // Room hasn't been entered, or has left already
-  | "authenticating" // Authentication has started, but not finished yet
   | "connecting" // Authentication succeeded, now attempting to connect to a room
   | "open" // Successful room connection, on the happy path
   | "unavailable" // Connection lost unexpectedly, considered a temporary hiccup, will retry
@@ -35,8 +34,6 @@ function toPublicConnectionStatus(state: State): PublicConnectionStatus {
 
     case "@auth.busy":
     case "@auth.backoff":
-      return "authenticating";
-
     case "@connecting.busy":
       return "connecting";
 

@@ -156,7 +156,7 @@ describe("room / auth", () => {
       );
 
       room.connect();
-      await waitUntilStatus(room, "authenticating");
+      await waitUntilStatus(room, "connecting");
       await waitFor(() => consoleErrorSpy.mock.calls.length > 0);
       expect(consoleErrorSpy).toHaveBeenCalledWith(
         'Authentication failed: We expect the authentication callback to return a token, but it does not. Hint: the return value should look like: { token: "..." }'
@@ -218,7 +218,7 @@ describe("room / auth", () => {
     );
 
     room.connect();
-    await waitUntilStatus(room, "authenticating");
+    await waitUntilStatus(room, "connecting");
     await waitFor(() => consoleErrorSpy.mock.calls.length > 0);
     expect(consoleErrorSpy).toHaveBeenCalledWith(
       'Authentication failed: Expected a JSON response when doing a POST request on "/mocked-api/not-json". SyntaxError: Unexpected token h in JSON at position 1'
@@ -239,7 +239,7 @@ describe("room / auth", () => {
     );
 
     room.connect();
-    await waitUntilStatus(room, "authenticating");
+    await waitUntilStatus(room, "connecting");
     await waitFor(() => consoleErrorSpy.mock.calls.length > 0);
     expect(consoleErrorSpy).toHaveBeenCalledWith(
       'Authentication failed: Expected a JSON response of the form `{ token: "..." }` when doing a POST request on "/mocked-api/missing-token", but got {}'
@@ -253,7 +253,7 @@ describe("room", () => {
     const { room, delegates } = createTestableRoom({});
     expect(delegates.authenticate).not.toHaveBeenCalled();
     room.connect();
-    expect(room.getConnectionState()).toEqual("authenticating");
+    expect(room.getConnectionState()).toEqual("connecting");
     expect(delegates.authenticate).toHaveBeenCalled();
     expect(delegates.createSocket).not.toHaveBeenCalled();
   });
@@ -261,11 +261,11 @@ describe("room", () => {
   test("connect should stay authenticating if connect is called multiple times and call authenticate only once", () => {
     const { room, delegates } = createTestableRoom({});
     room.connect();
-    expect(room.getConnectionState()).toEqual("authenticating");
+    expect(room.getConnectionState()).toEqual("connecting");
     room.connect();
     room.connect();
     room.connect();
-    expect(room.getConnectionState()).toEqual("authenticating");
+    expect(room.getConnectionState()).toEqual("connecting");
     expect(delegates.authenticate).toHaveBeenCalledTimes(1);
     expect(delegates.createSocket).not.toHaveBeenCalled();
   });
@@ -275,8 +275,6 @@ describe("room", () => {
     expect(room.getConnectionState()).toBe("closed");
 
     room.connect();
-    expect(room.getConnectionState()).toBe("authenticating");
-    await waitUntilStatus(room, "connecting");
     expect(room.getConnectionState()).toBe("connecting");
     await waitUntilStatus(room, "open");
     expect(room.getConnectionState()).toBe("open");
@@ -1510,6 +1508,7 @@ describe("room", () => {
 
       jest.useFakeTimers();
       try {
+        await jest.advanceTimersByTimeAsync(0);
         await waitUntilStatus(room, "open");
         await jest.advanceTimersByTimeAsync(1111);
         expect(consoleWarnSpy).toHaveBeenCalledWith(
@@ -1579,6 +1578,7 @@ describe("room", () => {
 
       jest.useFakeTimers();
       try {
+        await jest.advanceTimersByTimeAsync(0);
         await waitUntilStatus(room, "open");
         await jest.advanceTimersByTimeAsync(1111);
         expect(consoleWarnSpy).toHaveBeenCalledWith(
@@ -1607,9 +1607,8 @@ describe("room", () => {
         expect(room.getConnectionState()).toBe("closed");
 
         room.connect();
-        expect(room.getConnectionState()).toBe("authenticating");
-        await waitUntilStatus(room, "connecting");
         expect(room.getConnectionState()).toBe("connecting");
+        await jest.advanceTimersByTimeAsync(0); // Resolve the auth promise, which will then start the socket connection
 
         const ws1 = wss.last;
         ws1.accept();
@@ -1617,9 +1616,9 @@ describe("room", () => {
         expect(room.getConnectionState()).toBe("open");
 
         room.reconnect();
-        expect(room.getConnectionState()).toBe("authenticating");
+        expect(room.getConnectionState()).toBe("connecting");
         await jest.advanceTimersByTimeAsync(0); // There's a backoff delay here!
-        expect(room.getConnectionState()).toBe("authenticating");
+        expect(room.getConnectionState()).toBe("connecting");
         await jest.advanceTimersByTimeAsync(500); // Wait for the increased backoff delay!
         expect(room.getConnectionState()).toBe("connecting");
 
