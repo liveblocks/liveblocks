@@ -5,7 +5,7 @@ import type { URL } from "url";
 import WebSocket from "ws";
 
 import type { Room } from "../src/room";
-import type { LegacyConnectionStatus } from "../src/connection";
+import type { Status } from "../src/connection";
 import type { BaseUserMeta } from "../src/protocol/BaseUserMeta";
 import { withTimeout } from "../src/lib/utils";
 import type { Json, JsonObject } from "../src/lib/Json";
@@ -72,7 +72,7 @@ async function initializeRoomForTest<
     roomId,
     { initialPresence, initialStorage }
   );
-  await waitUntilStatus(room, "open");
+  await waitUntilStatus(room, "connected");
 
   return {
     client,
@@ -264,14 +264,14 @@ export function wait(ms: number) {
  */
 async function waitUntilStatus(
   room: Room<JsonObject, LsonObject, BaseUserMeta, Json>,
-  targetStatus: LegacyConnectionStatus
+  targetStatus: Status
 ): Promise<void> {
-  if (room.getConnectionState() === targetStatus) {
+  if (room.getStatus() === targetStatus) {
     return;
   }
 
   await withTimeout(
-    room.events.connection.waitUntil((status) => status === targetStatus),
+    room.events.status.waitUntil((status) => status === targetStatus),
     5000,
     `Room did not reach connection status "${targetStatus}" within 5s`
   );
