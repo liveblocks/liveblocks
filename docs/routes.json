@@ -62,10 +62,6 @@
       {
         "title": "Storage",
         "path": "/primitives/storage"
-      },
-      {
-        "title": "Comments",
-        "path": "/primitives/comments"
       }
     ]
   },

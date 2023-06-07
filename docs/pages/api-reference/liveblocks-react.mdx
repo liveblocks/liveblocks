@@ -126,6 +126,20 @@ import { useRoom } from "./liveblocks.config";
 const room = useRoom();
 ```
 
+### useErrorListener
+
+Listen to potential room connection errors.
+
+```ts
+import { useErrorListener } from "./liveblocks.config";
+
+useErrorListener((error) => {
+  if (error.code === 4005) {
+    // Maximum concurrent connections per room exceeded.
+  }
+});
+```
+
 ## Presence
 
 <Banner title="Need help troubleshooting presence?">
@@ -388,6 +402,8 @@ function Cursor({ connectionId }) {
 👉 A [Suspense version][] of this hook is also available, which will never
 return `null`.
 
+## Broadcast
+
 ### useBroadcastEvent
 
 Returns a callback that lets you broadcast custom events to other users in the
@@ -412,20 +428,6 @@ import { useEventListener } from "./liveblocks.config";
 useEventListener(({ connectionId, event }) => {
   if (event.type === "EMOJI") {
     // Do something
-  }
-});
-```
-
-### useErrorListener
-
-Listen to potential room connection errors.
-
-```ts
-import { useErrorListener } from "./liveblocks.config";
-
-useErrorListener((error) => {
-  if (error.code === 4005) {
-    // Maximum concurrent connections per room exceeded.
   }
 });
 ```

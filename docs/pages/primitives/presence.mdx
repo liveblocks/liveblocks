@@ -9,3 +9,83 @@ meta:
 
 Add presence features to your product to make people feel like they’re together
 in the same room.
+
+## Presence API Reference
+
+<ListGrid columns={3}>
+  <DocsCard
+    type="technology"
+    title="JavaScript"
+    href="/docs/api-reference/liveblocks-client#Room.getPresence"
+    description="@liveblocks/client"
+    visual={<DocsJavascriptIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="React"
+    href="/docs/api-reference/liveblocks-react#Presence"
+    description="@liveblocks/react"
+    visual={<DocsReactIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="Redux"
+    href="/docs/api-reference/liveblocks-redux#enhancer-option-presence-mapping"
+    description="@liveblocks/redux"
+    visual={<DocsReduxIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="Zustand"
+    href="/docs/api-reference/liveblocks-zustand#middleware-option-presence-mapping"
+    description="@liveblocks/zustand"
+    visual={
+      <img
+        alt=""
+        src="/images/docs/zustand.png"
+        width={24}
+        height={24}
+        loading="lazy"
+      />
+    }
+  />
+</ListGrid>
+
+## Examples using presence
+
+<ListGrid columns={2}>
+  <ExampleCard
+    example={{
+      title: "Live Cursors",
+      slug: "live-cursors",
+      image: "/images/examples/thumbnails/live-cursors.jpg",
+    }}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "Live Avatar Stack",
+      slug: "live-avatar-stack",
+      image: "/images/examples/thumbnails/live-avatar-stack.jpg",
+    }}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "Live Form Selection",
+      slug: "live-form-selection",
+      image: "/images/examples/thumbnails/live-form-selection.jpg",
+    }}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "Collaborative Whiteboard",
+      slug: "collaborative-whiteboard-advanced",
+      image:
+        "/images/examples/thumbnails/collaborative-whiteboard-advanced.jpg",
+      advanced: true,
+    }}
+    openInNewWindow
+  />
+</ListGrid>
