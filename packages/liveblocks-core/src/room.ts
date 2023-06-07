@@ -630,13 +630,7 @@ function makeIdFactory(connectionId: number): IdFactory {
   return () => `${connectionId}:${count++}`;
 }
 
-function isConnectionSelfAware(
-  connection: Connection
-): connection is typeof connection &
-  (
-    | { sessionInfo: SessionInfo; lastSessionInfo?: never }
-    | { sessionInfo?: never; lastSessionInfo: SessionInfo }
-  ) {
+function hasSessionInfo(connection: Connection): boolean {
   return (
     connection.status === "open" ||
     connection.status === "connecting" ||
@@ -2088,7 +2082,7 @@ export function createRoom<
 
     // Core
     getConnectionState: () => context.connection.current.status,
-    isSelfAware: () => isConnectionSelfAware(context.connection.current),
+    isSelfAware: () => hasSessionInfo(context.connection.current),
     getSelf: () => self.current,
 
     // Presence
