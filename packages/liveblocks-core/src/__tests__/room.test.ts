@@ -1598,41 +1598,42 @@ describe("room", () => {
 
     test("manual reconnection", async () => {
       jest.useFakeTimers();
+      try {
+        const { room, wss } = createTestableRoom(
+          { x: 0 },
+          DEFAULT_AUTH,
+          MANUAL_SOCKETS // ⚠️  This will let us programmatically control opening the sockets
+        );
+        expect(room.getConnectionState()).toBe("closed");
 
-      const { room, wss } = createTestableRoom(
-        { x: 0 },
-        DEFAULT_AUTH,
-        MANUAL_SOCKETS // ⚠️  This will let us programmatically control opening the sockets
-      );
-      expect(room.getConnectionState()).toBe("closed");
+        room.connect();
+        expect(room.getConnectionState()).toBe("authenticating");
+        await waitUntilStatus(room, "connecting");
+        expect(room.getConnectionState()).toBe("connecting");
 
-      room.connect();
-      expect(room.getConnectionState()).toBe("authenticating");
-      await waitUntilStatus(room, "connecting");
-      expect(room.getConnectionState()).toBe("connecting");
+        const ws1 = wss.last;
+        ws1.accept();
+        await waitUntilStatus(room, "open");
+        expect(room.getConnectionState()).toBe("open");
 
-      const ws1 = wss.last;
-      ws1.accept();
-      await waitUntilStatus(room, "open");
-      expect(room.getConnectionState()).toBe("open");
+        room.reconnect();
+        expect(room.getConnectionState()).toBe("authenticating");
+        await jest.advanceTimersByTimeAsync(0); // There's a backoff delay here!
+        expect(room.getConnectionState()).toBe("authenticating");
+        await jest.advanceTimersByTimeAsync(500); // Wait for the increased backoff delay!
+        expect(room.getConnectionState()).toBe("connecting");
 
-      room.reconnect();
-      expect(room.getConnectionState()).toBe("authenticating");
-      await jest.advanceTimersByTimeAsync(0); // There's a backoff delay here!
-      expect(room.getConnectionState()).toBe("authenticating");
-      await jest.advanceTimersByTimeAsync(500); // Wait for the increased backoff delay!
-      expect(room.getConnectionState()).toBe("connecting");
+        const ws2 = wss.last;
+        ws2.accept();
 
-      const ws2 = wss.last;
-      ws2.accept();
+        // This "last" one is a new/different socket instance!
+        expect(ws1 === ws2).toBe(false);
 
-      // This "last" one is a new/different socket instance!
-      expect(ws1 === ws2).toBe(false);
-
-      await waitUntilStatus(room, "open");
-      expect(room.getConnectionState()).toBe("open");
-
-      jest.useRealTimers();
+        await waitUntilStatus(room, "open");
+        expect(room.getConnectionState()).toBe("open");
+      } finally {
+        jest.useRealTimers();
+      }
     });
   });
 
