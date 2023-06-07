@@ -104,21 +104,16 @@
     ]
   },
   {
-    "title": "Tooling",
+    "title": "Platform",
     "routes": [
       {
         "title": "Next.js Starter Kit",
-        "path": "/tooling/nextjs-starter-kit"
+        "path": "/platform/nextjs-starter-kit"
       },
       {
         "title": "DevTools",
-        "path": "/tooling/devtools"
-      }
-    ]
-  },
-  {
-    "title": "Platform",
-    "routes": [
+        "path": "/platform/devtools"
+      },
       {
         "title": "Webhooks",
         "path": "/platform/webhooks"
