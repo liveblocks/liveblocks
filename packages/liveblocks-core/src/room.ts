@@ -630,18 +630,12 @@ function makeIdFactory(connectionId: number): IdFactory {
   return () => `${connectionId}:${count++}`;
 }
 
-function hasSessionInfo(connection: Connection): boolean {
-  return (
-    connection.status === "open" ||
-    connection.status === "connecting" ||
-    connection.lastSessionInfo !== null
-  );
+function getSessionInfo(connection: Connection): SessionInfo | null {
+  return connection.sessionInfo ?? connection.lastSessionInfo ?? null;
 }
 
-function getSessionInfo(connection: Connection): SessionInfo | null {
-  return connection.status === "open" || connection.status === "connecting"
-    ? connection.sessionInfo
-    : connection.lastSessionInfo;
+function hasSessionInfo(connection: Connection): boolean {
+  return getSessionInfo(connection) !== null;
 }
 
 type HistoryOp<TPresence extends JsonObject> =
