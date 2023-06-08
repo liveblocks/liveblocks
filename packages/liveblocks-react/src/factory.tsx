@@ -755,6 +755,7 @@ export function createRoomContext<
       RoomProvider,
 
       useRoom,
+      useStatus,
 
       useBatch,
       useBroadcastEvent,

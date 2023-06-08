@@ -515,6 +515,12 @@ export type RoomContextBundle<
     useRoom(): Room<TPresence, TStorage, TUserMeta, TRoomEvent>;
 
     /**
+     * Returns the current connection status for the Room, and triggers
+     * a re-render whenever it changes. Can be used to render a status badge.
+     */
+    useStatus(): Status;
+
+    /**
      * Returns a function that batches modifications made during the given function.
      * All the modifications are sent to other clients in a single message.
      * All the modifications are merged in a single history item (undo/redo).
