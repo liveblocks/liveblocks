@@ -66,34 +66,6 @@ type CustomEvent<TRoomEvent extends Json> = {
   event: TRoomEvent;
 };
 
-type Connection =
-  /* The initial state, before connecting */
-  | {
-      status: "initial";
-      sessionInfo?: never;
-      lastSessionInfo: SessionInfo | null;
-    }
-  /* In the process of authenticating and establishing a WebSocket connection */
-  | {
-      status: "connecting";
-      sessionInfo: SessionInfo | null;
-      lastSessionInfo?: never;
-    }
-  /* Successful room connection, on the happy path */
-  | { status: "connected"; sessionInfo: SessionInfo; lastSessionInfo?: never }
-  /* Connection lost unexpectedly, considered a temporary hiccup, will retry */
-  | {
-      status: "reconnecting";
-      sessionInfo?: never;
-      lastSessionInfo: SessionInfo | null;
-    }
-  /* Connection failed due to known reason (e.g. rejected). Will throw error, then immediately jump to "unavailable" state, to attempt to reconnect */
-  | {
-      status: "disconnected";
-      sessionInfo?: never;
-      lastSessionInfo: SessionInfo | null;
-    };
-
 export type StorageStatus =
   /* The storage is not loaded and has not been requested. */
   | "not-loaded"
@@ -630,14 +602,6 @@ function makeIdFactory(connectionId: number): IdFactory {
   return () => `${connectionId}:${count++}`;
 }
 
-function getSessionInfo(connection: Connection): SessionInfo | null {
-  return connection.sessionInfo ?? connection.lastSessionInfo ?? null;
-}
-
-function hasSessionInfo(connection: Connection): boolean {
-  return getSessionInfo(connection) !== null;
-}
-
 type HistoryOp<TPresence extends JsonObject> =
   | Op
   | {
@@ -680,7 +644,10 @@ type RoomState<
     storageOperations: Op[];
   };
 
-  readonly connection: ValueRef<Connection>; // XXX Make this a derived property?
+  // A carbon-copy of the session information, all extracted from the JWT
+  // token, which is returned by the authenticate delegate and stored inside
+  // the machine.
+  readonly sessionInfo: ValueRef<SessionInfo | null>;
   readonly me: MeRef<TPresence>;
   readonly others: OthersRef<TPresence, TUserMeta>;
 
@@ -850,10 +817,7 @@ export function createRoom<
       storageOperations: [],
     },
 
-    connection: new ValueRef<Connection>({
-      status: "initial",
-      lastSessionInfo: null,
-    }),
+    sessionInfo: new ValueRef(null),
     me: new MeRef(initialPresence),
     others: new OthersRef<TPresence, TUserMeta>(),
 
@@ -883,29 +847,17 @@ export function createRoom<
   const doNotBatchUpdates = (cb: () => void): void => cb();
   const batchUpdates = config.unstable_batchedUpdates ?? doNotBatchUpdates;
 
+  let lastToken: RichToken["parsed"] | undefined;
   function onStatusDidChange(newStatus: Status) {
     const token = managedSocket.token?.parsed;
-    const sessionInfo = token
-      ? {
-          id: token.actor,
-          userInfo: token.info,
-          userId: token.id,
-          isReadOnly: isStorageReadOnly(token.scopes),
-        }
-      : null;
-
-    if (newStatus === "connected") {
-      if (sessionInfo === null) {
-        throw new Error("Unexpected missing session info");
-      }
-      context.connection.set({ status: newStatus, sessionInfo });
-    } else if (newStatus === "connecting") {
-      context.connection.set({ status: newStatus, sessionInfo });
-    } else {
-      context.connection.set({
-        status: newStatus,
-        lastSessionInfo: sessionInfo,
+    if (token !== undefined && token !== lastToken) {
+      context.sessionInfo.set({
+        id: token.actor,
+        userInfo: token.info,
+        userId: token.id,
+        isReadOnly: isStorageReadOnly(token.scopes),
       });
+      lastToken = token;
     }
 
     // Forward to the outside world
@@ -917,22 +869,16 @@ export function createRoom<
 
   function onDidConnect() {
     // XXX We're in onDidConnect already, so status will always be connected! Can we just remove this throw? We don't seem to need this really, do we?
-
-    const conn = context.connection.current;
-    if (conn.status !== "connected") {
+    const sessionInfo = context.sessionInfo.current;
+    if (sessionInfo === null) {
       // Totally unexpected by now
-      throw new Error("Unexpected not-open state");
+      throw new Error("Unexpected missing session info");
     }
 
     // Re-broadcast the full user presence as soon as we reconnect
     // NOTE: This condition tries to guard "is this a reconnect". There may be
     // a more robust way to check that.
-    if (
-      (
-        context.connection.current.sessionInfo ??
-        context.connection.current.lastSessionInfo
-      )?.id !== null
-    ) {
+    if (sessionInfo?.id !== null) {
       context.buffer.me = {
         type: "full",
         data:
@@ -944,7 +890,7 @@ export function createRoom<
       tryFlushing();
     }
 
-    context.idFactory = makeIdFactory(conn.sessionInfo.id);
+    context.idFactory = makeIdFactory(sessionInfo.id);
 
     if (context.root) {
       context.buffer.messages.push({ type: ClientMsgCode.FETCH_STORAGE });
@@ -967,6 +913,7 @@ export function createRoom<
   // We never have to unsubscribe, because the Room and the Connection Manager
   // will have the same life-time.
   managedSocket.events.onMessage.subscribe(handleServerMessage);
+  // managedSocket.events.tokenDidChange.subscribe(onTokenDidChange);   // XXX Perhaps this would be nice?
   managedSocket.events.statusDidChange.subscribe(onStatusDidChange);
   managedSocket.events.didConnect.subscribe(onDidConnect);
   managedSocket.events.didDisconnect.subscribe(onDidDisconnect);
@@ -1032,7 +979,7 @@ export function createRoom<
     },
 
     assertStorageIsWritable: () => {
-      if (getSessionInfo(context.connection.current)?.isReadOnly) {
+      if (context.sessionInfo.current?.isReadOnly) {
         throw new Error(
           "Cannot write to storage with a read only user, please ensure the user has write permissions"
         );
@@ -1092,11 +1039,10 @@ export function createRoom<
   }
 
   const self = new DerivedRef(
-    context.connection,
+    context.sessionInfo as ImmutableRef<SessionInfo | null>,
     context.me,
-    (conn, me): User<TPresence, TUserMeta> | null => {
-      const info = conn.sessionInfo ?? conn.lastSessionInfo;
-      return info
+    (info, me): User<TPresence, TUserMeta> | null => {
+      return info !== null
         ? {
             connectionId: info.id,
             id: info.userId,
@@ -1212,8 +1158,7 @@ export function createRoom<
   }
 
   function getConnectionId() {
-    const conn = context.connection.current;
-    const info = conn.sessionInfo ?? conn.lastSessionInfo;
+    const info = context.sessionInfo.current;
     if (info) {
       return info.id;
     }
@@ -2084,7 +2029,7 @@ export function createRoom<
     // Core
     getStatus: () => managedSocket.getStatus(),
     getConnectionState: () => managedSocket.getLegacyStatus(), // XXX This was newToLegacyStatus(context.connection.current.status) -- is that not the same?
-    isSelfAware: () => hasSessionInfo(context.connection.current),
+    isSelfAware: () => context.sessionInfo.current !== null,
     getSelf: () => self.current,
 
     // Presence
