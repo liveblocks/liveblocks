@@ -874,20 +874,20 @@ export function createRoom<
       throw new Error("Unexpected missing session info");
     }
 
-    // Re-broadcast the full user presence as soon as we reconnect
-    // NOTE: This condition tries to guard "is this a reconnect". There may be
-    // a more robust way to check that.
-    if (sessionInfo?.id !== null) {
-      context.buffer.me = {
-        type: "full",
-        data:
-          // Because state.me.current is a readonly object, we'll have to
-          // make a copy here. Otherwise, type errors happen later when
-          // "patching" my presence.
-          { ...context.me.current },
-      };
-      tryFlushing();
-    }
+    // Re-broadcast the full user presence as soon as we (re)connect
+    context.buffer.me = {
+      type: "full",
+      data:
+        // Because context.me.current is a readonly object, we'll have to
+        // make a copy here. Otherwise, type errors happen later when
+        // "patching" my presence.
+        { ...context.me.current },
+    };
+
+    // NOTE: There was a flush here before, but I don't think it's really
+    // needed anymore. We're now combining this flush with the one below, to
+    // combine them in a single batch.
+    // tryFlushing();
 
     context.idFactory = makeIdFactory(sessionInfo.id);
 
