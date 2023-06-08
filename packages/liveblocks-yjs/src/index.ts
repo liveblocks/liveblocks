@@ -10,6 +10,7 @@ import type {
   Room,
 } from "@liveblocks/client";
 import { Base64 } from "js-base64";
+import { Observable } from "lib0/observable";
 import type { Doc } from "yjs";
 import { applyUpdate, mergeUpdates } from "yjs";
 
@@ -26,6 +27,93 @@ type RefreshResponse = {
   lastUpdate: number;
 };
 
+export class Awareness extends Observable<any> {
+  private room: Room<JsonObject, LsonObject, BaseUserMeta, Json>;
+  public doc: Doc;
+  public clientID: number;
+  public states: Map<string, any> = new Map();
+  public meta: Map<string, any> = new Map();
+  public _checkInterval: number = 0;
+
+  private unsub: () => void;
+  constructor(
+    doc: Doc,
+    room: Room<JsonObject, LsonObject, BaseUserMeta, Json>
+  ) {
+    super();
+    this.doc = doc;
+    this.room = room;
+    this.clientID = doc.clientID;
+    this.unsub = this.room.events.others.subscribe(({ event }) => {
+      if (event.type === "leave") {
+        // REMOVED
+        this.emit("change", [
+          { added: [], updated: [], removed: [event.user.connectionId] },
+          "local",
+        ]);
+      }
+
+      if (event.type === "enter") {
+        // ADDED
+        this.emit("change", [
+          { added: [event.user.connectionId], updated: [], removed: [] },
+          "local",
+        ]);
+      }
+
+      if (event.type === "update") {
+        // UPDATED
+        this.emit("change", [
+          { added: [], updated: [event.user.connectionId], removed: [] },
+          "local",
+        ]);
+      }
+    });
+  }
+
+  destroy(): void {
+    this.emit("destroy", [this]);
+    this.unsub();
+    super.destroy();
+    this.setLocalState(null);
+  }
+
+  getLocalState(): JsonObject | null {
+    const presence = this.room.getPresence();
+    if (Object.keys(this.room.getPresence()).length === 0) {
+      return null;
+    }
+    return presence;
+  }
+
+  setLocalState(state: Partial<JsonObject> | null): void {
+    const self = this.room.getSelf();
+
+    if (!self) {
+      return; // we're not connected
+    }
+
+    this.room.updatePresence({ ...(state || {}) });
+  }
+
+  setLocalStateField(field: string, value: JsonObject | null): void {
+    const update = { [field]: value } as Partial<JsonObject>;
+    this.room.updatePresence(update);
+  }
+
+  // Translate
+  getStates(): Map<number, any> {
+    const others = this.room.getOthers();
+    const states = others.reduce((acc: Map<number, any>, currentValue) => {
+      if (currentValue.connectionId) {
+        acc.set(currentValue.connectionId, currentValue.presence);
+      }
+      return acc;
+    }, new Map());
+    return states;
+  }
+}
+
 export default class LiveblocksProvider<
   P extends JsonObject,
   S extends LsonObject,
@@ -37,10 +125,28 @@ export default class LiveblocksProvider<
   private lastUpdateDate: null | Date = null;
   private doc: Doc;
 
+  public awareness: Awareness;
+
   constructor(room: Room<P, S, U, E>, doc: Doc, config?: LiveblocksYjsOptions) {
     this.doc = doc;
     this.room = room;
+
+    // if we have a connectionId already during construction, use that
+    const connectionId = this.room.getSelf()?.connectionId;
+    if (connectionId) {
+      this.doc.clientID = connectionId;
+    }
+    this.awareness = new Awareness(this.doc, this.room);
     this.doc.on("update", this.handleUpdate);
+
+    // if the connection changes, set the new id
+    this.room.events.connection.subscribe((e) => {
+      if (e === "open") {
+        this.doc.clientID =
+          this.room.getSelf()?.connectionId || this.doc.clientID;
+        this.awareness.clientID = this.doc.clientID;
+      }
+    });
 
     this.room.events.docUpdated.subscribe((updates) => {
       const decodedUpdates: Uint8Array[] = updates.map(Base64.toUint8Array);

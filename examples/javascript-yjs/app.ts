@@ -21,7 +21,6 @@ async function run() {
 
   const client = createClient({
     publicApiKey: PUBLIC_KEY,
-    unstable_fallbackToHTTP: true,
     // @ts-expect-error
     liveblocksServer: "ws://127.0.0.1:8787/v6",
     publicAuthorizeEndpoint:
@@ -46,7 +45,7 @@ async function run() {
         // adding some basic Quill content features
         [{ header: [1, 2, false] }],
         ["bold", "italic", "underline"],
-        ["image", "code-block"],
+        ["code-block"],
       ],
       history: {
         // Local undo shouldn't undo changes
@@ -58,10 +57,11 @@ async function run() {
     theme: "snow", // 'bubble' is also great
   });
 
+  const provider = new LiveblocksProvider(room, ydoc);
+
   // Create an editor-binding which
   // "binds" the quill editor to a Y.Text type.
-  const binding = new QuillBinding(ytext, quill);
-  const provider = new LiveblocksProvider(room, ydoc);
+  const binding = new QuillBinding(ytext, quill, provider.awareness);
 
   /**
    * This function is used when deploying an example on liveblocks.io.
