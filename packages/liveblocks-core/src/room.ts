@@ -953,7 +953,7 @@ export function createRoom<
     clearTimeout(context.buffer.flushTimerID);
 
     batchUpdates(() => {
-      // XXX Move this clearing-of-others to the "connection-unstable" event
+      // TODO Move this clearing-of-others to the "connection-unstable" event
       context.others.clearOthers();
       notify({ others: [{ type: "reset" }] }, doNotBatchUpdates);
     });
