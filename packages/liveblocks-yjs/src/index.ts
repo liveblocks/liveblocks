@@ -40,13 +40,12 @@ export default class LiveblocksProvider<
   constructor(room: Room<P, S, U, E>, doc: Doc, config?: LiveblocksYjsOptions) {
     this.doc = doc;
     this.room = room;
-    this.room.getDoc();
     this.doc.on("update", this.handleUpdate);
 
     this.room.events.docUpdated.subscribe((updates) => {
       const decodedUpdates: Uint8Array[] = updates.map(Base64.toUint8Array);
       const update = mergeUpdates(decodedUpdates);
-      applyUpdate(this.doc, update);
+      applyUpdate(this.doc, update, "backend");
     });
 
     if (config?.httpEndpoint) {
@@ -54,27 +53,29 @@ export default class LiveblocksProvider<
 
       this.room.events.customEvent.subscribe(({ event }) => {
         if ((event as RoomEvent)?.type === "REFRESH") {
-          void this.resync();
+          void this.resyncHttp();
         }
       });
 
-      void this.resync();
+      void this.resyncHttp();
     }
+    this.room.getDoc();
   }
 
   private handleUpdate = async (update: Uint8Array, origin: string) => {
-    console.log("Update happened", origin);
-    const encodedUpdate = Base64.fromUint8Array(update);
-    this.room.updateDoc(encodedUpdate);
-    if (this.httpEndpoint) {
-      await fetch(this.httpEndpoint, {
-        method: "POST",
-        body: encodedUpdate,
-      });
+    if (origin !== "backend") {
+      const encodedUpdate = Base64.fromUint8Array(update);
+      this.room.updateDoc(encodedUpdate);
+      if (this.httpEndpoint) {
+        await fetch(this.httpEndpoint, {
+          method: "POST",
+          body: encodedUpdate,
+        });
+      }
     }
   };
 
-  private async resync() {
+  private async resyncHttp() {
     if (!this.httpEndpoint) {
       return;
     }
@@ -94,6 +95,6 @@ export default class LiveblocksProvider<
     this.lastUpdateDate = new Date(lastUpdate);
 
     const update = mergeUpdates(updates.map(Base64.toUint8Array));
-    applyUpdate(this.doc, update);
+    applyUpdate(this.doc, update, "backend");
   }
 }
