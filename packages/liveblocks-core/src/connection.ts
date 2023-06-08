@@ -864,7 +864,7 @@ export class ManagedSocket<T extends BaseAuthResult> {
     try {
       return toNewConnectionStatus(this.machine);
     } catch {
-      return "disconnected";
+      return "initial";
     }
   }
 
