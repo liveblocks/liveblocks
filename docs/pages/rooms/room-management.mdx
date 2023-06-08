@@ -1,7 +1,7 @@
 ---
 meta:
   title: "Room management"
-  parentTitle: "Guides"
+  parentTitle: "Rooms"
   description: "Learn more Liveblocks rooms, users, and permissions concepts"
 ---
 
@@ -207,7 +207,7 @@ group within room.
 Groups are represented by a `groupId`—a custom string that represents a
 selection of users in your app. Groups can be attached to a user by passing an
 array of `groupId` values in `groupIds`, during
-[authentication](/docs/concepts/authentication).
+[authentication](/docs/rooms/authentication).
 
 ```js highlight="3"
 import { authorize } from "@liveblocks/node";
@@ -282,7 +282,7 @@ room.
 </Figure>
 
 To use this, first a user is given a `userId` during
-[authentication](/docs/concepts/authentication).
+[authentication](/docs/rooms/authentication).
 
 ```js highlight="3"
 import { authorize } from "@liveblocks/node";
