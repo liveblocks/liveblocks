@@ -916,6 +916,8 @@ export function createRoom<
   }
 
   function onDidConnect() {
+    // XXX We're in onDidConnect already, so status will always be connected! Can we just remove this throw? We don't seem to need this really, do we?
+
     const conn = context.connection.current;
     if (conn.status !== "connected") {
       // Totally unexpected by now
@@ -955,6 +957,7 @@ export function createRoom<
     clearTimeout(context.buffer.flushTimerID);
 
     batchUpdates(() => {
+      // XXX Move this clearing-of-others to the "connection-unstable" event
       context.others.clearOthers();
       notify({ others: [{ type: "reset" }] }, doNotBatchUpdates);
     });
