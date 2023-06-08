@@ -493,8 +493,9 @@ export type Room<
     readonly history: Observable<HistoryEvent>;
 
     /**
-     * Subscribe to the storage loaded event. Will fire at most once during the
-     * lifetime of a Room.
+     * Subscribe to the storage loaded event. Will fire any time a full Storage
+     * copy is downloaded. (This happens after the initial connect, and on
+     * every reconnect.)
      */
     readonly storageDidLoad: Observable<void>;
 
