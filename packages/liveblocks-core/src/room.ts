@@ -889,6 +889,8 @@ export function createRoom<
     // combine them in a single batch.
     // tryFlushing();
 
+    // NOTE: Soon, once the actor ID assignment gets delayed until after the
+    // room connection happens, we won't know the connection ID here just yet.
     context.idFactory = makeIdFactory(sessionInfo.id);
 
     if (context.root) {
