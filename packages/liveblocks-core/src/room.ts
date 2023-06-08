@@ -868,7 +868,6 @@ export function createRoom<
   }
 
   function onDidConnect() {
-    // XXX We're in onDidConnect already, so status will always be connected! Can we just remove this throw? We don't seem to need this really, do we?
     const sessionInfo = context.sessionInfo.current;
     if (sessionInfo === null) {
       // Totally unexpected by now
@@ -913,7 +912,6 @@ export function createRoom<
   // We never have to unsubscribe, because the Room and the Connection Manager
   // will have the same life-time.
   managedSocket.events.onMessage.subscribe(handleServerMessage);
-  // managedSocket.events.tokenDidChange.subscribe(onTokenDidChange);   // XXX Perhaps this would be nice?
   managedSocket.events.statusDidChange.subscribe(onStatusDidChange);
   managedSocket.events.didConnect.subscribe(onDidConnect);
   managedSocket.events.didDisconnect.subscribe(onDidDisconnect);
@@ -2028,7 +2026,7 @@ export function createRoom<
 
     // Core
     getStatus: () => managedSocket.getStatus(),
-    getConnectionState: () => managedSocket.getLegacyStatus(), // XXX This was newToLegacyStatus(context.connection.current.status) -- is that not the same?
+    getConnectionState: () => managedSocket.getLegacyStatus(),
     isSelfAware: () => context.sessionInfo.current !== null,
     getSelf: () => self.current,
 
