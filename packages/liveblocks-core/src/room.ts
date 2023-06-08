@@ -282,12 +282,38 @@ type SubscribeFn<
   (type: "error", listener: ErrorCallback): () => void;
 
   /**
-   * Subscribe to connection state updates.
+   * @deprecated This API will be removed in a future version of Liveblocks.
+   * Prefer using the newer `.subscribe('status')` API.
+   *
+   * We recommend making the following changes if you use these APIs:
+   *
+   *     OLD APIs                       NEW APIs
+   *     .getConnectionState()     -->  .getStatus()
+   *     .subscribe('connection')  -->  .subscribe('status')
+   *
+   *     OLD STATUSES         NEW STATUSES
+   *     closed          -->  initial
+   *     authenticating  -->  connecting
+   *     connecting      -->  connecting
+   *     open            -->  connected
+   *     unavailable     -->  reconnecting
+   *     failed          -->  disconnected
+   *
+   * Subscribe to legacy connection status updates.
    *
    * @returns Unsubscribe function.
    *
    */
   (type: "connection", listener: Callback<LegacyConnectionStatus>): () => void;
+
+  /**
+   * Subscribe to connection status updates. The callback will be called any
+   * time the status changes.
+   *
+   * @returns Unsubscribe function.
+   *
+   */
+  (type: "status", listener: Callback<Status>): () => void;
 
   /**
    * Subscribes to changes made on a Live structure. Returns an unsubscribe function.
@@ -388,7 +414,29 @@ export type Room<
    * metadata and connection ID (from the auth server).
    */
   isSelfAware(): boolean;
-  getConnectionState(): LegacyConnectionStatus; // XXX Deprecate this in favor of getStatus()
+  /**
+   * @deprecated This API will be removed in a future version of Liveblocks.
+   * Prefer using `.getStatus()` instead.
+   *
+   * We recommend making the following changes if you use these APIs:
+   *
+   *     OLD APIs                       NEW APIs
+   *     .getConnectionState()     -->  .getStatus()
+   *     .subscribe('connection')  -->  .subscribe('status')
+   *
+   *     OLD STATUSES         NEW STATUSES
+   *     closed          -->  initial
+   *     authenticating  -->  connecting
+   *     connecting      -->  connecting
+   *     open            -->  connected
+   *     unavailable     -->  reconnecting
+   *     failed          -->  disconnected
+   */
+  getConnectionState(): LegacyConnectionStatus;
+  /**
+   * Return the current connection status for this room. Can be used to display
+   * a status badge for your Liveblocks connection.
+   */
   getStatus(): Status;
   readonly subscribe: SubscribeFn<TPresence, TStorage, TUserMeta, TRoomEvent>;
 

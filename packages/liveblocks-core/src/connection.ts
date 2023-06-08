@@ -13,23 +13,7 @@ import type {
 } from "./types/IWebSocket";
 
 /**
- * XXX Mark as @deprecated (also... don't mark the _type_ deprecated, just the APIs!)
- * These are old connection statuses. Please rely on the newer
- * Status values instead. We recommend making the following changes
- * if you use these APIs:
- *
- *     OLD APIs                       NEW APIs
- *     .getConnectionState()     -->  .getStatus()
- *     .subscribe('connection')  -->  .subscribe('status')
- *
- *     OLD STATUSES         NEW STATUSES
- *     closed          -->  initial
- *     authenticating  -->  connecting
- *     connecting      -->  connecting
- *     open            -->  connected
- *     unavailable     -->  reconnecting
- *     failed          -->  disconnected
- *
+ * Old connection statuses, here for backward-compatibility reasons only.
  */
 export type LegacyConnectionStatus =
   | "closed" // Room hasn't been entered, or has left already
@@ -38,6 +22,11 @@ export type LegacyConnectionStatus =
   | "unavailable" // Connection lost unexpectedly, considered a temporary hiccup, will retry
   | "failed"; // Connection failed and we won't retry automatically (e.g. unauthorized)
 
+/**
+ * Returns a human-readable status indicating the current connection status of
+ * a Room, as returned by `room.getStatus()`. Can be used to implement
+ * a connection status badge.
+ */
 export type Status =
   | "initial"
   | "connecting"
