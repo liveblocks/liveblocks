@@ -7,6 +7,7 @@ import type {
   LiveObject,
   LsonObject,
   Others,
+  ReconnectionIssueEvent,
   Room,
   Status,
   User,
@@ -131,6 +132,30 @@ export type RoomContextBundle<
    * broadcast({ type: "CUSTOM_EVENT", data: { x: 0, y: 0 } });
    */
   useBroadcastEvent(): (event: TRoomEvent, options?: BroadcastOptions) => void;
+
+  /**
+   * Get informed when reconnecting to the Liveblocks servers is taking
+   * longer than usual. This typically is a sign of a client that has lost
+   * internet connectivity.
+   *
+   * This isn't problematic (because the Liveblocks client is still trying to
+   * reconnect), but it's typically a good idea to inform users about it if
+   * the connection takes too long to recover.
+   *
+   * @example
+   * useReconnectionIssueListener(event => {
+   *   if (event === 'issue') {
+   *     toast.warn('Reconnecting to the Liveblocks servers is taking longer than usual...')
+   *   } else if (event === 'error') {
+   *     toast.warn('Reconnecting to the Liveblocks servers failed.')
+   *   } else if (event === 'recovered') {
+   *     toast.clear();
+   *   }
+   * })
+   */
+  useReconnectionIssueListener(
+    callback: (event: ReconnectionIssueEvent) => void
+  ): void;
 
   /**
    * useErrorListener is a react hook that lets you react to potential room connection errors.
@@ -540,6 +565,30 @@ export type RoomContextBundle<
       event: TRoomEvent,
       options?: BroadcastOptions
     ) => void;
+
+    /**
+     * Get informed when reconnecting to the Liveblocks servers is taking
+     * longer than usual. This typically is a sign of a client that has lost
+     * internet connectivity.
+     *
+     * This isn't problematic (because the Liveblocks client is still trying to
+     * reconnect), but it's typically a good idea to inform users about it if
+     * the connection takes too long to recover.
+     *
+     * @example
+     * useReconnectionIssueListener(event => {
+     *   if (event === 'issue') {
+     *     toast.warn('Reconnecting to the Liveblocks servers is taking longer than usual...')
+     *   } else if (event === 'error') {
+     *     toast.warn('Reconnecting to the Liveblocks servers failed.')
+     *   } else if (event === 'recovered') {
+     *     toast.clear();
+     *   }
+     * })
+     */
+    useReconnectionIssueListener(
+      callback: (event: ReconnectionIssueEvent) => void
+    ): void;
 
     /**
      * useErrorListener is a react hook that lets you react to potential room connection errors.

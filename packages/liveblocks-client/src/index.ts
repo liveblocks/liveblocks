@@ -15,6 +15,7 @@ export type {
   Lson,
   LsonObject,
   Others,
+  ReconnectionIssueEvent,
   Room,
   Status,
   StorageStatus,

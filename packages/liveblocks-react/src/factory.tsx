@@ -8,6 +8,7 @@ import type {
   LiveObject,
   LsonObject,
   Others,
+  ReconnectionIssueEvent,
   Room,
   Status,
   User,
@@ -354,6 +355,25 @@ export function createRoomContext<
       ) => {
         room.broadcastEvent(event, options);
       },
+      [room]
+    );
+  }
+
+  function useReconnectionIssueListener(
+    callback: (event: ReconnectionIssueEvent) => void
+  ): void {
+    const room = useRoom();
+    const savedCallback = React.useRef(callback);
+
+    React.useEffect(() => {
+      savedCallback.current = callback;
+    });
+
+    React.useEffect(
+      () =>
+        room.events.reconnectionIssue.subscribe(
+          (event: ReconnectionIssueEvent) => savedCallback.current(event)
+        ),
       [room]
     );
   }
@@ -723,6 +743,7 @@ export function createRoomContext<
 
     useBatch,
     useBroadcastEvent,
+    useReconnectionIssueListener,
     useErrorListener,
     useEventListener,
 
@@ -759,6 +780,7 @@ export function createRoomContext<
 
       useBatch,
       useBroadcastEvent,
+      useReconnectionIssueListener,
       useErrorListener,
       useEventListener,
 
