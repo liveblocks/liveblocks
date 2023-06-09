@@ -17,6 +17,7 @@ import type {
  */
 export type LegacyConnectionStatus =
   | "closed" // Room hasn't been entered, or has left already
+  | "authenticating" // This state is no longer used, but older versions of the Liveblocks client still use it
   | "connecting" // In the process of authenticating and establishing a WebSocket connection
   | "open" // Successful room connection, on the happy path
   | "unavailable" // Connection lost unexpectedly, considered a temporary hiccup, will retry
