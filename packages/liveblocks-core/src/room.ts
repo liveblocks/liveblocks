@@ -1,4 +1,9 @@
-import type { Delegates, LegacyConnectionStatus, Status } from "./connection";
+import type {
+  Delegates,
+  LegacyConnectionStatus,
+  Status,
+  ReconnectionIssueEvent,
+} from "./connection";
 import { ManagedSocket, newToLegacyStatus, StopRetrying } from "./connection";
 import type { ApplyResult, ManagedPool } from "./crdts/AbstractCrdt";
 import { OpSource } from "./crdts/AbstractCrdt";
@@ -83,6 +88,7 @@ type RoomEventCallbackMap<
 > = {
   connection: Callback<LegacyConnectionStatus>; // Old/deprecated API
   status: Callback<Status>; // New/recommended API
+  "reconnection-issue": Callback<ReconnectionIssueEvent>;
   event: Callback<CustomEvent<TRoomEvent>>;
   "my-presence": Callback<TPresence>;
   //
@@ -316,6 +322,14 @@ type SubscribeFn<
   (type: "status", listener: Callback<Status>): () => void;
 
   /**
+   * XXX Document me.
+   */
+  (
+    type: "reconnection-issue",
+    listener: Callback<ReconnectionIssueEvent>
+  ): () => void;
+
+  /**
    * Subscribes to changes made on a Live structure. Returns an unsubscribe function.
    * In a future version, we will also expose what exactly changed in the Live structure.
    *
@@ -532,6 +546,7 @@ export type Room<
   readonly events: {
     readonly connection: Observable<LegacyConnectionStatus>; // Old/legacy API
     readonly status: Observable<Status>; // New/recommended API
+    readonly reconnectionIssue: Observable<ReconnectionIssueEvent>;
 
     readonly customEvent: Observable<{ connectionId: number; event: TRoomEvent; }>; // prettier-ignore
     readonly me: Observable<TPresence>;
@@ -916,6 +931,35 @@ export function createRoom<
     });
   }
 
+  // Number of seconds of continuously being in "reconnecting" state
+  const RECONNECTION_ISSUE_THRESHOLD = 5000;
+
+  let _reconnectionIssueTimerId: TimeoutID | undefined;
+  let _hasReportedIssue = false;
+
+  function onHandleReconnectionIssues(newStatus: Status) {
+    if (newStatus === "reconnecting") {
+      _reconnectionIssueTimerId = setTimeout(() => {
+        eventHub.reconnectionIssue.notify("issue");
+        _hasReportedIssue = true;
+      }, RECONNECTION_ISSUE_THRESHOLD);
+    } else {
+      clearTimeout(_reconnectionIssueTimerId);
+
+      if (_hasReportedIssue) {
+        if (newStatus === "disconnected") {
+          eventHub.reconnectionIssue.notify("error");
+        } else {
+          // Typically the case when going back to "connected", but really take
+          // *any* other state change as a recovery sign
+          eventHub.reconnectionIssue.notify("recovered");
+        }
+
+        _hasReportedIssue = false;
+      }
+    }
+  }
+
   function onDidConnect() {
     const sessionInfo = context.sessionInfo.current;
     if (sessionInfo === null) {
@@ -964,6 +1008,7 @@ export function createRoom<
   // will have the same life-time.
   managedSocket.events.onMessage.subscribe(handleServerMessage);
   managedSocket.events.statusDidChange.subscribe(onStatusDidChange);
+  managedSocket.events.statusDidChange.subscribe(onHandleReconnectionIssues);
   managedSocket.events.didConnect.subscribe(onDidConnect);
   managedSocket.events.didDisconnect.subscribe(onDidDisconnect);
   managedSocket.events.onLiveblocksError.subscribe((err) => {
@@ -1039,6 +1084,7 @@ export function createRoom<
   const eventHub = {
     connection: makeEventSource<LegacyConnectionStatus>(), // Old/deprecated API
     status: makeEventSource<Status>(), // New/recommended API
+    reconnectionIssue: makeEventSource<ReconnectionIssueEvent>(),
 
     customEvent: makeEventSource<CustomEvent<TRoomEvent>>(),
     me: makeEventSource<TPresence>(),
@@ -2015,6 +2061,7 @@ export function createRoom<
   const events = {
     connection: eventHub.connection.observable, // Old/deprecated API
     status: eventHub.status.observable, // New/recommended API
+    reconnectionIssue: eventHub.reconnectionIssue.observable,
 
     customEvent: eventHub.customEvent.observable,
     others: eventHub.others.observable,
@@ -2177,6 +2224,11 @@ function makeClassicSubscribeFn<
 
         case "status":
           return events.status.subscribe(callback as Callback<Status>);
+
+        case "reconnection-issue":
+          return events.reconnectionIssue.subscribe(
+            callback as Callback<ReconnectionIssueEvent>
+          );
 
         case "history":
           return events.history.subscribe(callback as Callback<HistoryEvent>);

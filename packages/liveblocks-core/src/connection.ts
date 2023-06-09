@@ -35,6 +35,20 @@ export type Status =
   | "reconnecting"
   | "disconnected";
 
+/**
+ * Used to report about app-level reconnection issues.
+ *
+ * Normal (quick) reconnects won't be reported about. Instead, the application
+ * will only get an event if the reconnection attempts by the client are taking
+ * (much) longer than usual. Definitely a situation you want to inform your
+ * users about, for example, by throwing a toast message on screen, or show
+ * a "trying to reconnect" banner.
+ */
+export type ReconnectionIssueEvent =
+  | "issue" // the client is trying to reconnect to Liveblocks, but it's taking (much) longer than usual
+  | "recovered" // the client did reconnect after all
+  | "error"; // the client was told to stop trying
+
 export function newToLegacyStatus(status: Status): LegacyConnectionStatus {
   switch (status) {
     case "connecting":
