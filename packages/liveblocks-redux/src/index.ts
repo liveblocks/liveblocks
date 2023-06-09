@@ -6,11 +6,11 @@ import type {
   LiveObject,
   LsonObject,
   Room,
-  User,
   Status,
+  User,
 } from "@liveblocks/client";
+import type { LegacyConnectionStatus } from "@liveblocks/core";
 import {
-  LegacyConnectionStatus,
   legacy_patchImmutableObject,
   lsonToJson,
   patchLiveObjectKey,
