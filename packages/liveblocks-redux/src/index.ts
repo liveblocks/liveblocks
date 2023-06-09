@@ -140,6 +140,7 @@ const internalEnhancer = <TState>(options: {
               liveblocks: {
                 ...state.liveblocks,
                 connection: action.connection,
+                status: action.status,
               },
             };
           }
@@ -179,6 +180,7 @@ const internalEnhancer = <TState>(options: {
                   others: [],
                   isStorageLoading: false,
                   connection: "closed",
+                  status: "initial",
                 },
               };
             }
