@@ -830,8 +830,16 @@ export class ManagedSocket<T extends BaseAuthResult> {
      * state.
      */
     readonly statusDidChange: Observable<Status>;
+    /**
+     * Emitted when the WebSocket connection is first opened.
+     */
     readonly didConnect: Observable<void>;
-    readonly didDisconnect: Observable<void>; // Deliberate close, temporary connection loss, permanent connection loss, etc.
+    /**
+     * Emitted when the current WebSocket connection is lost and the socket
+     * becomes useless. A new WebSocket connection must be made after this to
+     * restore connectivity.
+     */
+    readonly didDisconnect: Observable<void>; // Deliberate close, a connection loss, etc.
 
     /**
      * Emitted for every incoming message from the currently active WebSocket
