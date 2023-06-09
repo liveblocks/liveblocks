@@ -1,68 +1,9 @@
 ---
 meta:
-  title: "Managing rooms, users, and permissions"
-  parentTitle: "Guides"
-  description: "Learn more Liveblocks rooms, users, and permissions concepts"
+  title: "Room permissions"
+  parentTitle: "Rooms"
+  description: "Learn more Liveblocks room permissions"
 ---
-
-In this guide, we’ll walk you through different concepts to help you manage
-rooms in your product. Understanding these concepts will help you build
-experiences that are core to multiplayer products such as share dialogs,
-paginated overview pages, custom permission flows, and more.
-
-You can call the [API Endpoints](/docs/api-reference/rest-api-endpoints) to
-manage the rooms.
-
-## Metadata
-
-You can assign custom `metadata` to your room. For example, if you have
-different types of room experiences, you can store that type as `metadata`. This
-would then come handy when building an overview page listing all the rooms where
-the type `metadata` could be used as a filter, making it easy for people to find
-what they’re looking for.
-
-<Figure>
-  <video autoPlay loop muted playsInline>
-    <source
-      src="/images/docs/managing-rooms/rooms-type-metadata.mp4"
-      type="video/mp4"
-    />
-  </video>
-</Figure>
-
-One way to edit `metadata` is to use the
-[create room API](/docs/api-reference/rest-api-endpoints#post-rooms). In this
-example we’re creating a new room with a custom `roomType` property, and setting
-it to "whiteboard":
-
-```ts highlight="7"
-fetch("https://api.liveblocks.io/v2/rooms", {
-  method: "POST",
-  body: JSON.stringify({
-    id: "my-room-name",
-    defaultAccesses: [],
-    metadata: {
-      roomType: "whiteboard",
-    },
-  }),
-});
-```
-
-We can then use the
-[get rooms API](/docs/api-reference/rest-api-endpoints#get-rooms) to retrieve a
-list of rooms containing the "whiteboard" `roomType`:
-
-```ts
-const metadata = "metadata.roomType=whiteboard";
-const url = `https://api.liveblocks.io/v2/rooms?${metadata}`;
-const response = await fetch(url);
-const rooms = await response.json();
-```
-
-Metadata can be also be used within a number of our
-[other APIs](/docs/api-reference/rest-api-endpoints).
-
-## Permissions [#permissions]
 
 Rooms can have different permission types assigned at three different levels:
 default, groups, and users. The system is flexible enough to enable you to build
@@ -76,7 +17,7 @@ that drive more people to your product.
   />
 </Figure>
 
-### Types [#permissions-types]
+## Types [#permissions-types]
 
 Different permission types can be applied:
 
@@ -93,7 +34,7 @@ Different permission types can be applied:
   </dd>
 </dl>
 
-#### Read-only access
+### Read-only access
 
 To check if a user only has read-only access to storage in your app, the
 `isReadOnly` boolean can be retrieved from
@@ -110,7 +51,7 @@ const selfIsReadOnly = useSelf((me) => me.isReadOnly);
 You can also use our APIs to access this information, as well as set it, as
 we’ll detail below.
 
-### Levels [#permissions-levels]
+## Levels [#permissions-levels]
 
 Permission types can be applied at three different levels:
 
@@ -126,7 +67,7 @@ Permission types can be applied at three different levels:
 Each level further down will override access levels defined above, for example a
 room with private access will allow a user with `room:write` access to enter.
 
-### Default [#permissions-levels-default-accesses]
+## Default [#permissions-levels-default-accesses]
 
 The `defaultAccesses` level is used to set the default permissions of the entire
 room.
@@ -157,7 +98,7 @@ access level to your room.
 "defaultAccesses": ["room:read", "room:presence:write"]
 ```
 
-### Setting room access [#permissions-levels-default-accesses-example]
+## Setting room access [#permissions-levels-default-accesses-example]
 
 We can use the
 [create room API](/docs/api-reference/rest-api-endpoints#post-rooms) to create a
@@ -190,7 +131,7 @@ fetch(`https://api.liveblocks.io/v2/rooms/${roomId}`, {
 Default accesses can be also be used within a number of our
 [other APIs](/docs/api-reference/rest-api-endpoints).
 
-### Groups [#permissions-levels-groups-accesses]
+## Groups [#permissions-levels-groups-accesses]
 
 The `groupsAccesses` level is used to set the default permissions of any given
 group within room.
@@ -207,7 +148,7 @@ group within room.
 Groups are represented by a `groupId`—a custom string that represents a
 selection of users in your app. Groups can be attached to a user by passing an
 array of `groupId` values in `groupIds`, during
-[authentication](/docs/guides/authentication).
+[authentication](/docs/rooms/authentication).
 
 ```js highlight="3"
 import { authorize } from "@liveblocks/node";
@@ -227,7 +168,7 @@ and an array of permissions as the value.
 }
 ```
 
-#### Modifying group access [#permissions-levels-groups-accesses-example]
+### Modifying group access [#permissions-levels-groups-accesses-example]
 
 To allow an "engineering" group access to view a room, and modify their
 presence, we can use the
@@ -265,7 +206,7 @@ fetch(`https://api.liveblocks.io/v2/rooms/${roomId}`, {
 Group accesses can be also be used within a number of our
 [other APIs](/docs/api-reference/rest-api-endpoints).
 
-### Users [#permissions-levels-users-accesses]
+## Users [#permissions-levels-users-accesses]
 
 The `usersAccesses` level is used to set permissions of any give user within a
 room.
@@ -282,7 +223,7 @@ room.
 </Figure>
 
 To use this, first a user is given a `userId` during
-[authentication](/docs/guides/authentication).
+[authentication](/docs/rooms/authentication).
 
 ```js highlight="3"
 import { authorize } from "@liveblocks/node";
@@ -302,7 +243,7 @@ Then, if you want the user with the `userId` id to make edits, set `userId` to
 }
 ```
 
-#### Checking user access [#permissions-levels-users-accesses-example]
+### Checking user access [#permissions-levels-users-accesses-example]
 
 To create an invitation system, we can use the
 [update room API](/docs/api-reference/rest-api-endpoints#post-rooms-roomId) and

@@ -1,17 +1,17 @@
 ---
 meta:
   title: "Upgrading to 1.0"
-  parentTitle: "Guides"
+  parentTitle: "Platform"
   description: "Guide to upgrade to Liveblocks version 1.0"
 ---
 
 Liveblocks 1.0 is our first major release, marking the end of the beta period
 for storage and conflict-free data types. This release includes improvements to
 our pricing model that make billing more predictable. Additionally, we have
-vastly improved the ability to animate cursors at up to 60fps by updating the throttle
-option in `createClient`. The primary change you should note is the transition
-to making the `userId` mandatory in the `authorize` option. This change is in
-line with our [new pricing model](https://liveblocks.io/pricing).
+vastly improved the ability to animate cursors at up to 60fps by updating the
+throttle option in `createClient`. The primary change you should note is the
+transition to making the `userId` mandatory in the `authorize` option. This
+change is in line with our [new pricing model](https://liveblocks.io/pricing).
 
 Let’s take a look!
 
@@ -102,8 +102,8 @@ Set the following the request body:
 
 ## Improvements [#improvements]
 
-We added additional features to [Webhooks](/docs/guides/webhooks), enhancements
-to the `Room` class, and more. You can review the
+We added additional features to [Webhooks](/docs/platform/webhooks),
+enhancements to the `Room` class, and more. You can review the
 [release notes](https://github.com/liveblocks/liveblocks/releases) for more
 details.
 
@@ -131,8 +131,8 @@ const client = createClient({
 });
 ```
 
-You can see the marked improvement in the animation from 80ms (original limit) to
-16ms in this
+You can see the marked improvement in the animation from 80ms (original limit)
+to 16ms in this
 [tweet](https://twitter.com/ctnicholasdev/status/1622656511758700546). If you
 want to try it out for yourself, check out
 [live cursors example](https://liveblocks.io/examples/live-cursors/nextjs).
@@ -200,7 +200,7 @@ const event = webhookHandler.verifyRequest({
 
 Verification of events is critical to ensure that the events are coming from
 Liveblocks and not from a malicious source. Check out our
-[Webhooks guide](https://liveblocks.io/docs/guides/webhooks) for more details.
+[Webhooks guide](https://liveblocks.io/docs/platform/webhooks) for more details.
 
 That’s it!
 

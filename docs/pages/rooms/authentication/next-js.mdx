@@ -1,20 +1,19 @@
 ---
 meta:
-  title: "Authentication with Nuxt.js"
-  parentTitle: "Guides"
+  title: "Authentication with Next.js"
+  parentTitle: "Rooms"
   description:
-    "Learn how to setup a Liveblocks authentication endpoint with Nuxt.js"
+    "Learn how to setup a Liveblocks authentication endpoint with Next.js"
 ---
 
 This guide assumes that you already have
-[installed Liveblocks into your project](/docs/get-started/vue) and that you’re
-already familiar with
-[Nuxt.js](https://nuxtjs.org/docs/2.x/get-started/installation).
+[installed Liveblocks into your project](/docs/get-started/react) and that
+you’re already familiar with [Next.js](https://nextjs.org/docs/getting-started).
 
 Alternatively, you can copy this example and follow the instructions in the
 README:
 
-- [Live Avatar Stack](/examples/live-avatar-stack/nuxtjs)
+- [Live Avatar Stack](/examples/live-avatar-stack/nextjs)
 
 ## Install the Liveblocks package [#setup]
 
@@ -30,33 +29,18 @@ endpoint.
 ## Setup authentication endpoint [#authentication]
 
 Users can only interact with rooms they have access to. You can configure
-permission access by creating a REST endpoint in your Nuxt app. You will
-implement your own security and define if the current user has access to a
-specific room.
+permission access in an `api/auth` endpoint by creating the `pages/api/auth.js`
+file with the following code. This is where you will implement your security and
+define if the current user has access to a specific room.
 
-One way to create an API endpoint in your Nuxt app is to create a
-[server middleware to extend Express](https://nuxtjs.org/docs/2.x/configuration-glossary/configuration-servermiddleware#custom-api-endpoint).
-Modify your `nuxt.config.js` with the following config.
-
-```js file="nuxt.config.js"
-serverMiddleware: [{ path: "/api", handler: "~/api" }];
-```
-
-Then create a file called `api.js` at the root of your project and add an
-Express endpoint like below.
-
-```js file="api.js"
+```js
 import { authorize } from "@liveblocks/node";
-import express from "express";
 
 // Replace this key with your secret key provided at
 // https://liveblocks.io/dashboard/projects/{projectId}/apikeys
 const secret = "{{SECRET_KEY}}";
 
-const app = express();
-app.use(express.json());
-
-app.post("/auth", (req, res) => {
+export default async function auth(req, res) {
   /**
    * Implement your own security here.
    *
@@ -64,9 +48,10 @@ app.post("/auth", (req, res) => {
    * is a valid user by validating the cookies or authentication headers
    * and that it has access to the requested room.
    */
-  authorize({
-    room: req.body.room,
-    secret: secret,
+  const room = req.body.room;
+  const result = await authorize({
+    room,
+    secret,
     userId: "123",
     groupIds: ["456"], // Optional
     userInfo: {
@@ -74,14 +59,9 @@ app.post("/auth", (req, res) => {
       name: "Ada Lovelace",
       color: "red",
     },
-  })
-    .then((authResponse) => {
-      res.send(authResponse.body);
-    })
-    .catch((er) => {
-      res.status(403).end();
-    });
-});
+  });
+  return res.status(result.status).end(result.body);
+}
 ```
 
 The `userId` used in the `authorize` function corresponds to userId used in our
@@ -117,8 +97,9 @@ Here is a diagram that shows how things work behind the scenes:
 ## Connect to Liveblocks
 
 To connect to Liveblocks, you need to create a Liveblocks client with
-[`createClient`][] from the front-end and set the `authEndpoint` option based on
-the path of the endpoint created earlier.
+[`createClient`](/docs/api-reference/liveblocks-client#createClient) from the
+front-end and set the `authEndpoint` option based on the path of the endpoint
+created earlier.
 
 ```js
 import { createClient } from "@liveblocks/client";
