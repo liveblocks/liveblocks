@@ -47,7 +47,7 @@ export type Status =
 export type ReconnectionIssueEvent =
   | "issue" // the client is trying to reconnect to Liveblocks, but it's taking (much) longer than usual
   | "recovered" // the client did reconnect after all
-  | "error"; // the client was told to stop trying
+  | "failed"; // the client was told to stop trying
 
 export function newToLegacyStatus(status: Status): LegacyConnectionStatus {
   switch (status) {

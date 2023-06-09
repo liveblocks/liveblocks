@@ -948,7 +948,7 @@ export function createRoom<
 
       if (_hasReportedIssue) {
         if (newStatus === "disconnected") {
-          eventHub.reconnectionIssue.notify("error");
+          eventHub.reconnectionIssue.notify("failed");
         } else {
           // Typically the case when going back to "connected", but really take
           // *any* other state change as a recovery sign
