@@ -55,8 +55,20 @@ export type LiveblocksContext<
    */
   readonly isStorageLoading: boolean;
   /**
-   * @deprecated Old-style connection state of the room. Prefer using the newer
-   * connection statuses.
+   * Legacy connection status of the room.
+   *
+   * @deprecated This API will be removed in a future version of Liveblocks.
+   * Prefer using the newer `.status` property.
+   *
+   * We recommend making the following changes if you use these APIs:
+   *
+   *     OLD STATUSES         NEW STATUSES
+   *     closed          -->  initial
+   *     authenticating  -->  connecting
+   *     connecting      -->  connecting
+   *     open            -->  connected
+   *     unavailable     -->  reconnecting
+   *     failed          -->  disconnected
    */
   readonly connection: LegacyConnectionStatus;
   /**
