@@ -6,9 +6,10 @@ import type {
   LiveObject,
   LsonObject,
   Room,
+  Status,
   User,
 } from "@liveblocks/client";
-import type { StorageUpdate } from "@liveblocks/core";
+import type { LegacyConnectionStatus, StorageUpdate } from "@liveblocks/core";
 import {
   errorIf,
   legacy_patchImmutableObject,
@@ -54,15 +55,14 @@ export type LiveblocksContext<
    */
   readonly isStorageLoading: boolean;
   /**
-   * Connection state of the room
+   * @deprecated Old-style connection state of the room. Prefer using the newer
+   * connection statuses.
    */
-  readonly connection:
-    | "closed"
-    | "authenticating"
-    | "unavailable"
-    | "failed"
-    | "open"
-    | "connecting";
+  readonly connection: LegacyConnectionStatus;
+  /**
+   * Connection status of the room.
+   */
+  readonly status: Status;
 };
 
 /**
@@ -185,6 +185,7 @@ const middlewareImpl: InnerLiveblocksMiddleware = (config, options) => {
         room.events.connection.subscribe(() => {
           updateLiveblocksContext(set, {
             connection: room.getConnectionState(),
+            status: room.getStatus(),
           });
         })
       );

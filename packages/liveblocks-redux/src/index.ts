@@ -7,8 +7,10 @@ import type {
   LsonObject,
   Room,
   User,
+  Status,
 } from "@liveblocks/client";
 import {
+  LegacyConnectionStatus,
   legacy_patchImmutableObject,
   lsonToJson,
   patchLiveObjectKey,
@@ -50,15 +52,14 @@ type LiveblocksContext<
    */
   readonly isStorageLoading: boolean;
   /**
-   * Connection state of the room
+   * @deprecated Old-style connection state of the room. Prefer using the newer
+   * connection statuses.
    */
-  readonly connection:
-    | "closed"
-    | "authenticating"
-    | "unavailable"
-    | "failed"
-    | "open"
-    | "connecting";
+  readonly connection: LegacyConnectionStatus;
+  /**
+   * Connection status of the room.
+   */
+  readonly status: Status;
 };
 
 /**
@@ -205,6 +206,7 @@ const internalEnhancer = <TState>(options: {
             store.dispatch({
               type: ACTION_TYPES.UPDATE_CONNECTION,
               connection: room!.getConnectionState(),
+              status: room!.getStatus(),
             });
           })
         );
