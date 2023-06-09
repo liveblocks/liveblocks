@@ -156,7 +156,7 @@ describe("room / auth", () => {
       );
 
       room.connect();
-      await waitUntilStatus(room, "authenticating");
+      await waitUntilStatus(room, "connecting");
       await waitFor(() => consoleErrorSpy.mock.calls.length > 0);
       expect(consoleErrorSpy).toHaveBeenCalledWith(
         'Authentication failed: We expect the authentication callback to return a token, but it does not. Hint: the return value should look like: { token: "..." }'
@@ -178,7 +178,7 @@ describe("room / auth", () => {
     );
 
     room.connect();
-    await waitUntilStatus(room, "failed");
+    await waitUntilStatus(room, "disconnected");
     expect(consoleErrorSpy).toHaveBeenCalledWith(
       "Unauthorized: reason not provided in auth response (403 returned by POST /mocked-api/403)"
     );
@@ -198,7 +198,7 @@ describe("room / auth", () => {
     );
 
     room.connect();
-    await waitUntilStatus(room, "failed");
+    await waitUntilStatus(room, "disconnected");
     expect(consoleErrorSpy).toHaveBeenCalledWith(
       "Unauthorized: wrong key type (401 returned by POST /mocked-api/401-with-details)"
     );
@@ -218,7 +218,7 @@ describe("room / auth", () => {
     );
 
     room.connect();
-    await waitUntilStatus(room, "authenticating");
+    await waitUntilStatus(room, "connecting");
     await waitFor(() => consoleErrorSpy.mock.calls.length > 0);
     expect(consoleErrorSpy).toHaveBeenCalledWith(
       'Authentication failed: Expected a JSON response when doing a POST request on "/mocked-api/not-json". SyntaxError: Unexpected token h in JSON at position 1'
@@ -239,7 +239,7 @@ describe("room / auth", () => {
     );
 
     room.connect();
-    await waitUntilStatus(room, "authenticating");
+    await waitUntilStatus(room, "connecting");
     await waitFor(() => consoleErrorSpy.mock.calls.length > 0);
     expect(consoleErrorSpy).toHaveBeenCalledWith(
       'Authentication failed: Expected a JSON response of the form `{ token: "..." }` when doing a POST request on "/mocked-api/missing-token", but got {}'
@@ -253,7 +253,8 @@ describe("room", () => {
     const { room, delegates } = createTestableRoom({});
     expect(delegates.authenticate).not.toHaveBeenCalled();
     room.connect();
-    expect(room.getConnectionState()).toEqual("authenticating");
+    expect(room.getConnectionState()).toEqual("connecting");
+    expect(room.getStatus()).toEqual("connecting");
     expect(delegates.authenticate).toHaveBeenCalled();
     expect(delegates.createSocket).not.toHaveBeenCalled();
   });
@@ -261,25 +262,28 @@ describe("room", () => {
   test("connect should stay authenticating if connect is called multiple times and call authenticate only once", () => {
     const { room, delegates } = createTestableRoom({});
     room.connect();
-    expect(room.getConnectionState()).toEqual("authenticating");
+    expect(room.getConnectionState()).toEqual("connecting");
+    expect(room.getStatus()).toEqual("connecting");
     room.connect();
     room.connect();
     room.connect();
-    expect(room.getConnectionState()).toEqual("authenticating");
+    expect(room.getConnectionState()).toEqual("connecting");
+    expect(room.getStatus()).toEqual("connecting");
     expect(delegates.authenticate).toHaveBeenCalledTimes(1);
     expect(delegates.createSocket).not.toHaveBeenCalled();
   });
 
   test("authentication success should transition to connecting", async () => {
     const { room } = createTestableRoom({});
-    expect(room.getConnectionState()).toBe("closed");
+    expect(room.getConnectionState()).toBe("closed"); // This API will be deprecated in the future
+    expect(room.getStatus()).toEqual("initial");
 
     room.connect();
-    expect(room.getConnectionState()).toBe("authenticating");
-    await waitUntilStatus(room, "connecting");
     expect(room.getConnectionState()).toBe("connecting");
-    await waitUntilStatus(room, "open");
-    expect(room.getConnectionState()).toBe("open");
+    expect(room.getStatus()).toEqual("connecting");
+    await waitUntilStatus(room, "connected");
+    expect(room.getConnectionState()).toBe("open"); // This API will be deprecated in the future
+    expect(room.getStatus()).toEqual("connected");
   });
 
   test("initial presence should be sent once the connection is open", async () => {
@@ -289,7 +293,7 @@ describe("room", () => {
     await waitUntilStatus(room, "connecting");
     expect(wss.receivedMessages).toEqual([]);
 
-    await waitUntilStatus(room, "open");
+    await waitUntilStatus(room, "connected");
     expect(wss.receivedMessages).toEqual([
       [
         {
@@ -306,7 +310,7 @@ describe("room", () => {
     room.updatePresence({ x: 0 });
     room.connect();
 
-    await waitUntilStatus(room, "open");
+    await waitUntilStatus(room, "connected");
     expect(wss.receivedMessages).toEqual([
       [
         {
@@ -322,7 +326,7 @@ describe("room", () => {
     const { room, wss } = createTestableRoom({} as never);
     room.connect();
 
-    await waitUntilStatus(room, "open");
+    await waitUntilStatus(room, "connected");
     expect(wss.receivedMessages).toEqual([
       [{ type: ClientMsgCode.UPDATE_PRESENCE, targetActor: -1, data: {} }],
     ]);
@@ -333,7 +337,7 @@ describe("room", () => {
     room.connect();
 
     expect(wss.receivedMessages).toEqual([]);
-    await waitUntilStatus(room, "open");
+    await waitUntilStatus(room, "connected");
 
     expect(wss.receivedMessages.length).toBe(1);
     expect(wss.receivedMessages[0]).toEqual([
@@ -568,7 +572,7 @@ describe("room", () => {
       const { room, wss } = createTestableRoom({});
       room.connect();
 
-      await waitUntilStatus(room, "open");
+      await waitUntilStatus(room, "connected");
       expect(wss.receivedMessages).toEqual([
         [{ type: ClientMsgCode.UPDATE_PRESENCE, targetActor: -1, data: {} }],
       ]);
@@ -610,7 +614,7 @@ describe("room", () => {
       expect(wss.receivedMessages).toEqual([]);
 
       room.connect();
-      await waitUntilStatus(room, "open");
+      await waitUntilStatus(room, "connected");
 
       expect(wss.receivedMessages).toEqual([
         [{ type: ClientMsgCode.UPDATE_PRESENCE, targetActor: -1, data: {} }],
@@ -627,7 +631,7 @@ describe("room", () => {
       expect(wss.receivedMessages).toEqual([]);
 
       room.connect();
-      await waitUntilStatus(room, "open");
+      await waitUntilStatus(room, "connected");
 
       expect(wss.receivedMessages).toEqual([
         [
@@ -659,7 +663,7 @@ describe("room", () => {
     const { room } = createTestableRoom({ x: -1 });
     room.connect();
 
-    await waitUntilStatus(room, "open");
+    await waitUntilStatus(room, "connected");
     expect(room.__internal.buffer.me).toEqual(null); // Buffer was flushed
     room.updatePresence({ x: 0 }, { addToHistory: true });
     expect(room.__internal.buffer.me?.data).toEqual({ x: 0 });
@@ -1153,7 +1157,7 @@ describe("room", () => {
         (ev) => (others = ev.others)
       );
 
-      await waitUntilStatus(room, "open");
+      await waitUntilStatus(room, "connected");
 
       wss.last.send(
         serverMessage({
@@ -1510,7 +1514,8 @@ describe("room", () => {
 
       jest.useFakeTimers();
       try {
-        await waitUntilStatus(room, "open");
+        await jest.advanceTimersByTimeAsync(0);
+        await waitUntilStatus(room, "connected");
         await jest.advanceTimersByTimeAsync(1111);
         expect(consoleWarnSpy).toHaveBeenCalledWith(
           "Connection to Liveblocks websocket server closed (code: 1006). Retrying in 250ms."
@@ -1579,7 +1584,8 @@ describe("room", () => {
 
       jest.useFakeTimers();
       try {
-        await waitUntilStatus(room, "open");
+        await jest.advanceTimersByTimeAsync(0);
+        await waitUntilStatus(room, "connected");
         await jest.advanceTimersByTimeAsync(1111);
         expect(consoleWarnSpy).toHaveBeenCalledWith(
           "Connection to Liveblocks websocket server closed (code: 4002). Retrying in 2000ms."
@@ -1598,41 +1604,48 @@ describe("room", () => {
 
     test("manual reconnection", async () => {
       jest.useFakeTimers();
+      try {
+        const { room, wss } = createTestableRoom(
+          { x: 0 },
+          DEFAULT_AUTH,
+          MANUAL_SOCKETS // ⚠️  This will let us programmatically control opening the sockets
+        );
+        expect(room.getConnectionState()).toBe("closed"); // This API will be deprecated in the future
+        expect(room.getStatus()).toEqual("initial");
 
-      const { room, wss } = createTestableRoom(
-        { x: 0 },
-        DEFAULT_AUTH,
-        MANUAL_SOCKETS // ⚠️  This will let us programmatically control opening the sockets
-      );
-      expect(room.getConnectionState()).toBe("closed");
+        room.connect();
+        expect(room.getConnectionState()).toBe("connecting");
+        expect(room.getStatus()).toEqual("connecting");
+        await jest.advanceTimersByTimeAsync(0); // Resolve the auth promise, which will then start the socket connection
 
-      room.connect();
-      expect(room.getConnectionState()).toBe("authenticating");
-      await waitUntilStatus(room, "connecting");
-      expect(room.getConnectionState()).toBe("connecting");
+        const ws1 = wss.last;
+        ws1.accept();
+        await waitUntilStatus(room, "connected");
+        expect(room.getConnectionState()).toBe("open"); // This API will be deprecated in the future
+        expect(room.getStatus()).toEqual("connected");
 
-      const ws1 = wss.last;
-      ws1.accept();
-      await waitUntilStatus(room, "open");
-      expect(room.getConnectionState()).toBe("open");
+        room.reconnect();
+        expect(room.getConnectionState()).toBe("connecting");
+        expect(room.getStatus()).toEqual("connecting");
+        await jest.advanceTimersByTimeAsync(0); // There's a backoff delay here!
+        expect(room.getConnectionState()).toBe("connecting");
+        expect(room.getStatus()).toEqual("connecting");
+        await jest.advanceTimersByTimeAsync(500); // Wait for the increased backoff delay!
+        expect(room.getConnectionState()).toBe("connecting"); // This API will be deprecated in the future
+        expect(room.getStatus()).toEqual("connecting");
 
-      room.reconnect();
-      expect(room.getConnectionState()).toBe("authenticating");
-      await jest.advanceTimersByTimeAsync(0); // There's a backoff delay here!
-      expect(room.getConnectionState()).toBe("authenticating");
-      await jest.advanceTimersByTimeAsync(500); // Wait for the increased backoff delay!
-      expect(room.getConnectionState()).toBe("connecting");
+        const ws2 = wss.last;
+        ws2.accept();
 
-      const ws2 = wss.last;
-      ws2.accept();
+        // This "last" one is a new/different socket instance!
+        expect(ws1 === ws2).toBe(false);
 
-      // This "last" one is a new/different socket instance!
-      expect(ws1 === ws2).toBe(false);
-
-      await waitUntilStatus(room, "open");
-      expect(room.getConnectionState()).toBe("open");
-
-      jest.useRealTimers();
+        await waitUntilStatus(room, "connected");
+        expect(room.getConnectionState()).toBe("open");
+        expect(room.getStatus()).toEqual("connected");
+      } finally {
+        jest.useRealTimers();
+      }
     });
   });
 

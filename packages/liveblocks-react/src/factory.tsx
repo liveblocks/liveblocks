@@ -9,6 +9,7 @@ import type {
   LsonObject,
   Others,
   Room,
+  Status,
   User,
 } from "@liveblocks/client";
 import { shallow } from "@liveblocks/client";
@@ -212,6 +213,13 @@ export function createRoomContext<
       throw new Error("RoomProvider is missing from the react tree");
     }
     return room;
+  }
+
+  function useStatus(): Status {
+    const room = useRoom();
+    const subscribe = room.events.status.subscribe;
+    const getSnapshot = room.getStatus;
+    return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
   }
 
   function useMyPresence(): [
@@ -711,6 +719,7 @@ export function createRoomContext<
     RoomProvider,
 
     useRoom,
+    useStatus,
 
     useBatch,
     useBroadcastEvent,
@@ -746,6 +755,7 @@ export function createRoomContext<
       RoomProvider,
 
       useRoom,
+      useStatus,
 
       useBatch,
       useBroadcastEvent,

@@ -158,7 +158,7 @@ describe("createClient", () => {
     const room = client.enter("room", { initialPresence: {} });
 
     // Room will fail to connect, and move to "closed" state, basically giving up reconnecting
-    await waitUntilStatus(room, "failed");
+    await waitUntilStatus(room, "disconnected");
 
     expect(spy).toHaveBeenCalledWith(
       "To use Liveblocks client in a non-dom environment with a url as auth endpoint, you need to provide a fetch polyfill."
@@ -180,7 +180,7 @@ describe("createClient", () => {
     const room = client.enter("room", { initialPresence: {} });
 
     // Room will fail to connect, and move to "closed" state, basically giving up reconnecting
-    await waitUntilStatus(room, "failed");
+    await waitUntilStatus(room, "disconnected");
 
     expect(spy).toHaveBeenCalledWith(
       "To use Liveblocks client in a non-dom environment with a publicApiKey, you need to provide a fetch polyfill."
@@ -197,7 +197,7 @@ describe("createClient", () => {
     const room = client.enter("room", { initialPresence: {} });
 
     // Room will fail to connect, and move to "closed" state, basically giving up reconnecting
-    await waitUntilStatus(room, "failed");
+    await waitUntilStatus(room, "disconnected");
 
     expect(spy).toHaveBeenCalledWith(
       "To use Liveblocks client in a non-dom environment, you need to provide a WebSocket polyfill."

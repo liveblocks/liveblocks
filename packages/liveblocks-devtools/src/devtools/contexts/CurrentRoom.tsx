@@ -1,4 +1,9 @@
-import type { ConnectionStatus, DevTools, DevToolsMsg } from "@liveblocks/core";
+import type {
+  DevTools,
+  DevToolsMsg,
+  LegacyConnectionStatus,
+  Status,
+} from "@liveblocks/core";
 import type { ReactNode } from "react";
 import {
   createContext,
@@ -18,7 +23,7 @@ import type { FullBackgroundToPanelMessage } from "../protocol";
 
 type Room = {
   readonly roomId: string;
-  status: ConnectionStatus | null;
+  status: Status | LegacyConnectionStatus | null;
   storage: readonly DevTools.LsonTreeNode[] | null;
   me: DevTools.UserTreeNode | null;
   others: readonly DevTools.UserTreeNode[];
@@ -319,7 +324,7 @@ export function useRoomIds(): string[] {
   return useSyncExternalStore(onRoomCountChanged.subscribe, () => allRoomIds);
 }
 
-export function useStatus(): ConnectionStatus | null {
+export function useStatus(): Status | LegacyConnectionStatus | null {
   const currentRoomId = useCurrentRoomId();
   return useSyncExternalStore(
     getSubscribe(currentRoomId, "onStatus") ?? nosub,

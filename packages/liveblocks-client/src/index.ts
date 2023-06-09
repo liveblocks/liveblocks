@@ -16,6 +16,7 @@ export type {
   LsonObject,
   Others,
   Room,
+  Status,
   StorageStatus,
   StorageUpdate,
   User,

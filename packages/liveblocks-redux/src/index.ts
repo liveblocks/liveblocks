@@ -6,8 +6,10 @@ import type {
   LiveObject,
   LsonObject,
   Room,
+  Status,
   User,
 } from "@liveblocks/client";
+import type { LegacyConnectionStatus } from "@liveblocks/core";
 import {
   legacy_patchImmutableObject,
   lsonToJson,
@@ -50,15 +52,26 @@ type LiveblocksContext<
    */
   readonly isStorageLoading: boolean;
   /**
-   * Connection state of the room
+   * Legacy connection status of the room.
+   *
+   * @deprecated This API will be removed in a future version of Liveblocks.
+   * Prefer using the newer `.status` property.
+   *
+   * We recommend making the following changes if you use these APIs:
+   *
+   *     OLD STATUSES         NEW STATUSES
+   *     closed          -->  initial
+   *     authenticating  -->  connecting
+   *     connecting      -->  connecting
+   *     open            -->  connected
+   *     unavailable     -->  reconnecting
+   *     failed          -->  disconnected
    */
-  readonly connection:
-    | "closed"
-    | "authenticating"
-    | "unavailable"
-    | "failed"
-    | "open"
-    | "connecting";
+  readonly connection: LegacyConnectionStatus;
+  /**
+   * Connection status of the room.
+   */
+  readonly status: Status;
 };
 
 /**
@@ -139,6 +152,7 @@ const internalEnhancer = <TState>(options: {
               liveblocks: {
                 ...state.liveblocks,
                 connection: action.connection,
+                status: action.status,
               },
             };
           }
@@ -178,6 +192,7 @@ const internalEnhancer = <TState>(options: {
                   others: [],
                   isStorageLoading: false,
                   connection: "closed",
+                  status: "initial",
                 },
               };
             }
@@ -205,6 +220,7 @@ const internalEnhancer = <TState>(options: {
             store.dispatch({
               type: ACTION_TYPES.UPDATE_CONNECTION,
               connection: room!.getConnectionState(),
+              status: room!.getStatus(),
             });
           })
         );

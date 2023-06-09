@@ -12,39 +12,72 @@ import type {
   IWebSocketMessageEvent,
 } from "./types/IWebSocket";
 
-// TODO DRY this type up with the ConnectionStatus type in room.ts
-export type PublicConnectionStatus =
+/**
+ * Old connection statuses, here for backward-compatibility reasons only.
+ */
+export type LegacyConnectionStatus =
   | "closed" // Room hasn't been entered, or has left already
-  | "authenticating" // Authentication has started, but not finished yet
-  | "connecting" // Authentication succeeded, now attempting to connect to a room
+  | "authenticating" // This state is no longer used, but older versions of the Liveblocks client still use it
+  | "connecting" // In the process of authenticating and establishing a WebSocket connection
   | "open" // Successful room connection, on the happy path
   | "unavailable" // Connection lost unexpectedly, considered a temporary hiccup, will retry
   | "failed"; // Connection failed and we won't retry automatically (e.g. unauthorized)
 
 /**
- * Maps internal machine state to the public connection status API.
+ * Returns a human-readable status indicating the current connection status of
+ * a Room, as returned by `room.getStatus()`. Can be used to implement
+ * a connection status badge.
  */
-function toPublicConnectionStatus(state: State): PublicConnectionStatus {
+export type Status =
+  | "initial"
+  | "connecting"
+  | "connected"
+  | "reconnecting"
+  | "disconnected";
+
+export function newToLegacyStatus(status: Status): LegacyConnectionStatus {
+  switch (status) {
+    case "connecting":
+      return "connecting";
+
+    case "connected":
+      return "open";
+
+    case "reconnecting":
+      return "unavailable";
+
+    case "disconnected":
+      return "failed";
+
+    case "initial":
+      return "closed";
+
+    default:
+      return "closed";
+  }
+}
+
+/**
+ * Maps internal machine state to the public Status API.
+ */
+function toNewConnectionStatus(machine: FSM<Context, Event, State>): Status {
+  const state = machine.currentState;
   switch (state) {
     case "@ok.connected":
     case "@ok.awaiting-pong":
-      return "open";
+      return "connected";
 
     case "@idle.initial":
-      return "closed";
+      return "initial";
 
     case "@auth.busy":
     case "@auth.backoff":
-      return "authenticating";
-
     case "@connecting.busy":
-      return "connecting";
-
     case "@connecting.backoff":
-      return "unavailable";
+      return machine.context.successCount > 0 ? "reconnecting" : "connecting";
 
     case "@idle.failed":
-      return "failed";
+      return "disconnected";
 
     default:
       return assertNever(state, "Unknown state");
@@ -90,6 +123,16 @@ type State =
 export type BaseAuthResult = Record<string, unknown>;
 
 type Context = {
+  /**
+   * Count the number of times the machine reaches an "@ok.*" state. Once the
+   * machine reaches idle state again, this count is reset to 0 again.
+   *
+   * This lets us distinguish:
+   * - If successCount = 0, then it's an initial "connecting" state.
+   * - If successCount > 0, then it's an "reconnecting" state.
+   */
+  successCount: number;
+
   /**
    * Will be populated with the last known auth token.
    */
@@ -178,6 +221,10 @@ function increaseBackoffDelayAggressively(context: Patchable<Context>) {
   });
 }
 
+function resetSuccessCount(context: Patchable<Context>) {
+  context.patch({ successCount: 0 });
+}
+
 enum LogLevel {
   INFO,
   WARN,
@@ -238,23 +285,25 @@ function enableTracing(machine: FSM<Context, Event, State>) {
 }
 
 function defineConnectivityEvents(machine: FSM<Context, Event, State>) {
-  // Emitted whenever a new WebSocket connection attempt suceeds
-  const statusDidChange = makeEventSource<PublicConnectionStatus>();
+  // Emitted whenever a new WebSocket connection attempt succeeds
+  const statusDidChange = makeEventSource<Status>();
   const didConnect = makeEventSource<void>();
   const didDisconnect = makeEventSource<void>();
 
-  let oldPublicStatus: PublicConnectionStatus | null = null;
+  let lastStatus: Status | null = null;
 
-  const unsubscribe = machine.events.didEnterState.subscribe((newState) => {
-    const newPublicStatus = toPublicConnectionStatus(newState);
-    statusDidChange.notify(newPublicStatus);
+  const unsubscribe = machine.events.didEnterState.subscribe(() => {
+    const currStatus = toNewConnectionStatus(machine);
+    if (currStatus !== lastStatus) {
+      statusDidChange.notify(currStatus);
+    }
 
-    if (oldPublicStatus === "open" && newPublicStatus !== "open") {
+    if (lastStatus === "connected" && currStatus !== "connected") {
       didDisconnect.notify();
-    } else if (oldPublicStatus !== "open" && newPublicStatus === "open") {
+    } else if (lastStatus !== "connected" && currStatus === "connected") {
       didConnect.notify();
     }
-    oldPublicStatus = newPublicStatus;
+    lastStatus = currStatus;
   });
 
   return {
@@ -282,6 +331,7 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
   const onLiveblocksError = makeEventSource<LiveblocksError>();
 
   const initialContext: Context & { token: T | null } = {
+    successCount: 0,
     token: null,
     socket: null,
     backoffDelay: RESET_DELAY,
@@ -308,7 +358,7 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
   machine.addTransitions("*", {
     RECONNECT: {
       target: "@auth.backoff",
-      effect: increaseBackoffDelay,
+      effect: [increaseBackoffDelay, resetSuccessCount],
     },
 
     DISCONNECT: "@idle.initial",
@@ -317,12 +367,15 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
   //
   // Configure the @idle.* states
   //
-  machine.addTransitions("@idle.*", {
-    CONNECT: (_, ctx) =>
-      // If we still have a known token, try to reconnect to the socket directly,
-      // otherwise, try to obtain a new token
-      ctx.token !== null ? "@connecting.busy" : "@auth.busy",
-  });
+  machine
+    .onEnter("@idle.*", resetSuccessCount)
+
+    .addTransitions("@idle.*", {
+      CONNECT: (_, ctx) =>
+        // If we still have a known token, try to reconnect to the socket directly,
+        // otherwise, try to obtain a new token
+        ctx.token !== null ? "@connecting.busy" : "@auth.busy",
+    });
 
   //
   // Configure the @auth.* states
@@ -609,7 +662,9 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
   };
 
   machine
-    .onEnter("@ok.*", () => {
+    .onEnter("@ok.*", (ctx) => {
+      ctx.patch({ successCount: ctx.successCount + 1 });
+
       const timerID = setTimeout(
         // On the next tick, start delivering all messages that have already
         // been received, and continue synchronous delivery of all future
@@ -775,9 +830,17 @@ export class ManagedSocket<T extends BaseAuthResult> {
      * Emitted when the WebSocket connection goes in or out of "connected"
      * state.
      */
-    readonly statusDidChange: Observable<PublicConnectionStatus>;
+    readonly statusDidChange: Observable<Status>;
+    /**
+     * Emitted when the WebSocket connection is first opened.
+     */
     readonly didConnect: Observable<void>;
-    readonly didDisconnect: Observable<void>; // Deliberate close, temporary connection loss, permanent connection loss, etc.
+    /**
+     * Emitted when the current WebSocket connection is lost and the socket
+     * becomes useless. A new WebSocket connection must be made after this to
+     * restore connectivity.
+     */
+    readonly didDisconnect: Observable<void>; // Deliberate close, a connection loss, etc.
 
     /**
      * Emitted for every incoming message from the currently active WebSocket
@@ -802,11 +865,15 @@ export class ManagedSocket<T extends BaseAuthResult> {
     this.cleanups = cleanups;
   }
 
-  get status(): PublicConnectionStatus {
+  getLegacyStatus(): LegacyConnectionStatus {
+    return newToLegacyStatus(this.getStatus());
+  }
+
+  getStatus(): Status {
     try {
-      return toPublicConnectionStatus(this.machine.currentState);
+      return toNewConnectionStatus(this.machine);
     } catch {
-      return "closed";
+      return "initial";
     }
   }
 

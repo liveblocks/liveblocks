@@ -1,5 +1,5 @@
-import type { Delegates, PublicConnectionStatus } from "./connection";
-import { ManagedSocket, StopRetrying } from "./connection";
+import type { Delegates, LegacyConnectionStatus, Status } from "./connection";
+import { ManagedSocket, newToLegacyStatus, StopRetrying } from "./connection";
 import type { ApplyResult, ManagedPool } from "./crdts/AbstractCrdt";
 import { OpSource } from "./crdts/AbstractCrdt";
 import {
@@ -66,38 +66,6 @@ type CustomEvent<TRoomEvent extends Json> = {
   event: TRoomEvent;
 };
 
-export type Connection =
-  /* The initial state, before connecting */
-  | {
-      status: "closed";
-      sessionInfo?: never;
-      lastSessionInfo: SessionInfo | null;
-    }
-  /* Authentication has started, but not finished yet */
-  | {
-      status: "authenticating";
-      sessionInfo?: never;
-      lastSessionInfo: SessionInfo | null;
-    }
-  /* Authentication succeeded, now attempting to connect to a room */
-  | { status: "connecting"; sessionInfo: SessionInfo; lastSessionInfo?: never }
-  /* Successful room connection, on the happy path */
-  | { status: "open"; sessionInfo: SessionInfo; lastSessionInfo?: never }
-  /* Connection lost unexpectedly, considered a temporary hiccup, will retry */
-  | {
-      status: "unavailable";
-      sessionInfo?: never;
-      lastSessionInfo: SessionInfo | null;
-    }
-  /* Connection failed due to known reason (e.g. rejected). Will throw error, then immediately jump to "unavailable" state, to attempt to reconnect */
-  | {
-      status: "failed";
-      sessionInfo?: never;
-      lastSessionInfo: SessionInfo | null;
-    };
-
-export type ConnectionStatus = Connection["status"];
-
 export type StorageStatus =
   /* The storage is not loaded and has not been requested. */
   | "not-loaded"
@@ -113,6 +81,8 @@ type RoomEventCallbackMap<
   TUserMeta extends BaseUserMeta,
   TRoomEvent extends Json
 > = {
+  connection: Callback<LegacyConnectionStatus>; // Old/deprecated API
+  status: Callback<Status>; // New/recommended API
   event: Callback<CustomEvent<TRoomEvent>>;
   "my-presence": Callback<TPresence>;
   //
@@ -124,7 +94,6 @@ type RoomEventCallbackMap<
     event: OthersEvent<TPresence, TUserMeta>
   ) => void;
   error: Callback<Error>;
-  connection: Callback<ConnectionStatus>;
   history: Callback<HistoryEvent>;
   "storage-status": Callback<StorageStatus>;
 };
@@ -313,12 +282,38 @@ type SubscribeFn<
   (type: "error", listener: ErrorCallback): () => void;
 
   /**
-   * Subscribe to connection state updates.
+   * @deprecated This API will be removed in a future version of Liveblocks.
+   * Prefer using the newer `.subscribe('status')` API.
+   *
+   * We recommend making the following changes if you use these APIs:
+   *
+   *     OLD APIs                       NEW APIs
+   *     .getConnectionState()     -->  .getStatus()
+   *     .subscribe('connection')  -->  .subscribe('status')
+   *
+   *     OLD STATUSES         NEW STATUSES
+   *     closed          -->  initial
+   *     authenticating  -->  connecting
+   *     connecting      -->  connecting
+   *     open            -->  connected
+   *     unavailable     -->  reconnecting
+   *     failed          -->  disconnected
+   *
+   * Subscribe to legacy connection status updates.
    *
    * @returns Unsubscribe function.
    *
    */
-  (type: "connection", listener: Callback<ConnectionStatus>): () => void;
+  (type: "connection", listener: Callback<LegacyConnectionStatus>): () => void;
+
+  /**
+   * Subscribe to connection status updates. The callback will be called any
+   * time the status changes.
+   *
+   * @returns Unsubscribe function.
+   *
+   */
+  (type: "status", listener: Callback<Status>): () => void;
 
   /**
    * Subscribes to changes made on a Live structure. Returns an unsubscribe function.
@@ -419,7 +414,30 @@ export type Room<
    * metadata and connection ID (from the auth server).
    */
   isSelfAware(): boolean;
-  getConnectionState(): ConnectionStatus;
+  /**
+   * @deprecated This API will be removed in a future version of Liveblocks.
+   * Prefer using `.getStatus()` instead.
+   *
+   * We recommend making the following changes if you use these APIs:
+   *
+   *     OLD APIs                       NEW APIs
+   *     .getConnectionState()     -->  .getStatus()
+   *     .subscribe('connection')  -->  .subscribe('status')
+   *
+   *     OLD STATUSES         NEW STATUSES
+   *     closed          -->  initial
+   *     authenticating  -->  connecting
+   *     connecting      -->  connecting
+   *     open            -->  connected
+   *     unavailable     -->  reconnecting
+   *     failed          -->  disconnected
+   */
+  getConnectionState(): LegacyConnectionStatus;
+  /**
+   * Return the current connection status for this room. Can be used to display
+   * a status badge for your Liveblocks connection.
+   */
+  getStatus(): Status;
   readonly subscribe: SubscribeFn<TPresence, TStorage, TUserMeta, TRoomEvent>;
 
   /**
@@ -512,17 +530,20 @@ export type Room<
   getStorageSnapshot(): LiveObject<TStorage> | null;
 
   readonly events: {
+    readonly connection: Observable<LegacyConnectionStatus>; // Old/legacy API
+    readonly status: Observable<Status>; // New/recommended API
+
     readonly customEvent: Observable<{ connectionId: number; event: TRoomEvent; }>; // prettier-ignore
     readonly me: Observable<TPresence>;
     readonly others: Observable<{ others: Others<TPresence, TUserMeta>; event: OthersEvent<TPresence, TUserMeta>; }>; // prettier-ignore
     readonly error: Observable<Error>;
-    readonly connection: Observable<ConnectionStatus>;
     readonly storage: Observable<StorageUpdate[]>;
     readonly history: Observable<HistoryEvent>;
 
     /**
-     * Subscribe to the storage loaded event. Will fire at most once during the
-     * lifetime of a Room.
+     * Subscribe to the storage loaded event. Will fire any time a full Storage
+     * copy is downloaded. (This happens after the initial connect, and on
+     * every reconnect.)
      */
     readonly storageDidLoad: Observable<void>;
 
@@ -630,20 +651,6 @@ function makeIdFactory(connectionId: number): IdFactory {
   return () => `${connectionId}:${count++}`;
 }
 
-function hasSessionInfo(connection: Connection): boolean {
-  return (
-    connection.status === "open" ||
-    connection.status === "connecting" ||
-    connection.lastSessionInfo !== null
-  );
-}
-
-function getSessionInfo(connection: Connection): SessionInfo | null {
-  return connection.status === "open" || connection.status === "connecting"
-    ? connection.sessionInfo
-    : connection.lastSessionInfo;
-}
-
 type HistoryOp<TPresence extends JsonObject> =
   | Op
   | {
@@ -686,7 +693,10 @@ type RoomState<
     storageOperations: Op[];
   };
 
-  readonly connection: ValueRef<Connection>; // TODO Make this a derived property?
+  // A carbon-copy of the session information, all extracted from the JWT
+  // token, which is returned by the authenticate delegate and stored inside
+  // the machine.
+  readonly sessionInfo: ValueRef<SessionInfo | null>;
   readonly me: MeRef<TPresence>;
   readonly others: OthersRef<TPresence, TUserMeta>;
 
@@ -856,10 +866,7 @@ export function createRoom<
       storageOperations: [],
     },
 
-    connection: new ValueRef<Connection>({
-      status: "closed",
-      lastSessionInfo: null,
-    }),
+    sessionInfo: new ValueRef(null),
     me: new MeRef(initialPresence),
     others: new OthersRef<TPresence, TUserMeta>(),
 
@@ -889,66 +896,51 @@ export function createRoom<
   const doNotBatchUpdates = (cb: () => void): void => cb();
   const batchUpdates = config.unstable_batchedUpdates ?? doNotBatchUpdates;
 
-  function onStatusDidChange(newStatus: PublicConnectionStatus) {
+  let lastToken: RichToken["parsed"] | undefined;
+  function onStatusDidChange(newStatus: Status) {
     const token = managedSocket.token?.parsed;
-    const sessionInfo = token
-      ? {
-          id: token.actor,
-          userInfo: token.info,
-          userId: token.id,
-          isReadOnly: isStorageReadOnly(token.scopes),
-        }
-      : null;
-
-    if (newStatus === "open" || newStatus === "connecting") {
-      if (sessionInfo === null) {
-        throw new Error("Unexpected missing session info");
-      }
-      context.connection.set({
-        status: newStatus,
-        sessionInfo,
+    if (token !== undefined && token !== lastToken) {
+      context.sessionInfo.set({
+        id: token.actor,
+        userInfo: token.info,
+        userId: token.id,
+        isReadOnly: isStorageReadOnly(token.scopes),
       });
-    } else {
-      context.connection.set({
-        status: newStatus,
-        lastSessionInfo: sessionInfo,
-      });
+      lastToken = token;
     }
 
     // Forward to the outside world
     batchUpdates(() => {
-      eventHub.connection.notify(newStatus);
+      eventHub.status.notify(newStatus);
+      eventHub.connection.notify(newToLegacyStatus(newStatus));
     });
   }
 
   function onDidConnect() {
-    const conn = context.connection.current;
-    if (conn.status !== "open") {
+    const sessionInfo = context.sessionInfo.current;
+    if (sessionInfo === null) {
       // Totally unexpected by now
-      throw new Error("Unexpected not-open state");
+      throw new Error("Unexpected missing session info");
     }
 
-    // Re-broadcast the full user presence as soon as we reconnect
-    // NOTE: This condition tries to guard "is this a reconnect". There may be
-    // a more robust way to check that.
-    if (
-      (
-        context.connection.current.sessionInfo ??
-        context.connection.current.lastSessionInfo
-      )?.id !== null
-    ) {
-      context.buffer.me = {
-        type: "full",
-        data:
-          // Because state.me.current is a readonly object, we'll have to
-          // make a copy here. Otherwise, type errors happen later when
-          // "patching" my presence.
-          { ...context.me.current },
-      };
-      tryFlushing();
-    }
+    // Re-broadcast the full user presence as soon as we (re)connect
+    context.buffer.me = {
+      type: "full",
+      data:
+        // Because context.me.current is a readonly object, we'll have to
+        // make a copy here. Otherwise, type errors happen later when
+        // "patching" my presence.
+        { ...context.me.current },
+    };
 
-    context.idFactory = makeIdFactory(conn.sessionInfo.id);
+    // NOTE: There was a flush here before, but I don't think it's really
+    // needed anymore. We're now combining this flush with the one below, to
+    // combine them in a single batch.
+    // tryFlushing();
+
+    // NOTE: Soon, once the actor ID assignment gets delayed until after the
+    // room connection happens, we won't know the connection ID here just yet.
+    context.idFactory = makeIdFactory(sessionInfo.id);
 
     if (context.root) {
       context.buffer.messages.push({ type: ClientMsgCode.FETCH_STORAGE });
@@ -961,6 +953,7 @@ export function createRoom<
     clearTimeout(context.buffer.flushTimerID);
 
     batchUpdates(() => {
+      // TODO Move this clearing-of-others to the "connection-unstable" event
       context.others.clearOthers();
       notify({ others: [{ type: "reset" }] }, doNotBatchUpdates);
     });
@@ -1035,7 +1028,7 @@ export function createRoom<
     },
 
     assertStorageIsWritable: () => {
-      if (getSessionInfo(context.connection.current)?.isReadOnly) {
+      if (context.sessionInfo.current?.isReadOnly) {
         throw new Error(
           "Cannot write to storage with a read only user, please ensure the user has write permissions"
         );
@@ -1044,6 +1037,9 @@ export function createRoom<
   };
 
   const eventHub = {
+    connection: makeEventSource<LegacyConnectionStatus>(), // Old/deprecated API
+    status: makeEventSource<Status>(), // New/recommended API
+
     customEvent: makeEventSource<CustomEvent<TRoomEvent>>(),
     me: makeEventSource<TPresence>(),
     others: makeEventSource<{
@@ -1051,7 +1047,6 @@ export function createRoom<
       event: OthersEvent<TPresence, TUserMeta>;
     }>(),
     error: makeEventSource<Error>(),
-    connection: makeEventSource<ConnectionStatus>(),
     storage: makeEventSource<StorageUpdate[]>(),
     history: makeEventSource<HistoryEvent>(),
     storageDidLoad: makeEventSource<void>(),
@@ -1093,11 +1088,10 @@ export function createRoom<
   }
 
   const self = new DerivedRef(
-    context.connection,
+    context.sessionInfo as ImmutableRef<SessionInfo | null>,
     context.me,
-    (conn, me): User<TPresence, TUserMeta> | null => {
-      const info = conn.sessionInfo ?? conn.lastSessionInfo;
-      return info
+    (info, me): User<TPresence, TUserMeta> | null => {
+      return info !== null
         ? {
             connectionId: info.id,
             id: info.userId,
@@ -1213,8 +1207,7 @@ export function createRoom<
   }
 
   function getConnectionId() {
-    const conn = context.connection.current;
-    const info = conn.sessionInfo ?? conn.lastSessionInfo;
+    const info = context.sessionInfo.current;
     if (info) {
       return info.id;
     }
@@ -1656,8 +1649,8 @@ export function createRoom<
             const unacknowledgedOps = new Map(context.unacknowledgedOps);
             createOrUpdateRootFromMessage(message, doNotBatchUpdates);
             applyAndSendOps(unacknowledgedOps, doNotBatchUpdates);
-            if (_getInitialStateResolver !== null) {
-              _getInitialStateResolver();
+            if (_resolveInitialStatePromise !== null) {
+              _resolveInitialStatePromise();
             }
             notifyStorageStatus();
             eventHub.storageDidLoad.notify();
@@ -1725,7 +1718,7 @@ export function createRoom<
       notifyStorageStatus();
     }
 
-    if (managedSocket.status !== "open") {
+    if (managedSocket.getStatus() !== "connected") {
       context.buffer.storageOperations = [];
       return;
     }
@@ -1800,7 +1793,7 @@ export function createRoom<
     }
   ) {
     if (
-      managedSocket.status !== "open" &&
+      managedSocket.getStatus() !== "connected" &&
       !options.shouldQueueEventIfNotReady
     ) {
       return;
@@ -1819,14 +1812,14 @@ export function createRoom<
   }
 
   let _getInitialStatePromise: Promise<void> | null = null;
-  let _getInitialStateResolver: (() => void) | null = null;
+  let _resolveInitialStatePromise: (() => void) | null = null;
 
   function startLoadingStorage(): Promise<void> {
     if (_getInitialStatePromise === null) {
       context.buffer.messages.push({ type: ClientMsgCode.FETCH_STORAGE });
       tryFlushing();
       _getInitialStatePromise = new Promise(
-        (resolve) => (_getInitialStateResolver = resolve)
+        (resolve) => (_resolveInitialStatePromise = resolve)
       );
       notifyStorageStatus();
     }
@@ -2020,11 +2013,13 @@ export function createRoom<
   );
 
   const events = {
+    connection: eventHub.connection.observable, // Old/deprecated API
+    status: eventHub.status.observable, // New/recommended API
+
     customEvent: eventHub.customEvent.observable,
     others: eventHub.others.observable,
     me: eventHub.me.observable,
     error: eventHub.error.observable,
-    connection: eventHub.connection.observable,
     storage: eventHub.storage.observable,
     history: eventHub.history.observable,
     storageDidLoad: eventHub.storageDidLoad.observable,
@@ -2081,8 +2076,9 @@ export function createRoom<
     events,
 
     // Core
-    getConnectionState: () => context.connection.current.status,
-    isSelfAware: () => hasSessionInfo(context.connection.current),
+    getStatus: () => managedSocket.getStatus(),
+    getConnectionState: () => managedSocket.getLegacyStatus(),
+    isSelfAware: () => context.sessionInfo.current !== null,
     getSelf: () => self.current,
 
     // Presence
@@ -2176,8 +2172,11 @@ function makeClassicSubscribeFn<
 
         case "connection":
           return events.connection.subscribe(
-            callback as Callback<ConnectionStatus>
+            callback as Callback<LegacyConnectionStatus>
           );
+
+        case "status":
+          return events.status.subscribe(callback as Callback<Status>);
 
         case "history":
           return events.history.subscribe(callback as Callback<HistoryEvent>);

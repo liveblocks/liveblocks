@@ -908,7 +908,7 @@ describe("LiveList", () => {
           wasClean: false,
         })
       );
-      await waitUntilStatus(room, "open");
+      await waitUntilStatus(room, "connected");
 
       const items = root.get("items");
 

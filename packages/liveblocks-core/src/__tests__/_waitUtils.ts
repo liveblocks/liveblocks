@@ -1,8 +1,9 @@
+import type { Status } from "../connection";
 import type { LsonObject } from "../crdts/Lson";
 import type { Json, JsonObject } from "../lib/Json";
 import { withTimeout } from "../lib/utils";
 import type { BaseUserMeta } from "../protocol/BaseUserMeta";
-import type { ConnectionStatus, Room } from "../room";
+import type { Room } from "../room";
 
 export function sleep(delay: number) {
   return new Promise((resolve) => setTimeout(resolve, delay));
@@ -33,14 +34,14 @@ export async function waitFor(predicate: () => boolean): Promise<void> {
  */
 export async function waitUntilStatus(
   room: Room<JsonObject, LsonObject, BaseUserMeta, Json>,
-  targetStatus: ConnectionStatus
+  targetStatus: Status
 ): Promise<void> {
-  if (room.getConnectionState() === targetStatus) {
+  if (room.getStatus() === targetStatus) {
     return;
   }
 
   await withTimeout(
-    room.events.connection.waitUntil((status) => status === targetStatus),
+    room.events.status.waitUntil((status) => status === targetStatus),
     1000,
     `Room did not reach connection status "${targetStatus}" within 1s`
   );
