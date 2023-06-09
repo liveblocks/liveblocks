@@ -796,6 +796,7 @@ type RoomConfig = {
 
   roomId: string;
   throttleDelay: number;
+  reconnectionIssueTimeout: number;
 
   authentication: Authentication;
   liveblocksServer: string;
@@ -937,9 +938,6 @@ export function createRoom<
     });
   }
 
-  // Number of seconds of continuously being in "reconnecting" state
-  const RECONNECTION_ISSUE_THRESHOLD = 5000; // XXX Make this configurable as a client option
-
   let _reconnectionIssueTimerId: TimeoutID | undefined;
   let _hasReportedIssue = false;
 
@@ -948,7 +946,7 @@ export function createRoom<
       _reconnectionIssueTimerId = setTimeout(() => {
         eventHub.reconnectionIssue.notify("issue");
         _hasReportedIssue = true;
-      }, RECONNECTION_ISSUE_THRESHOLD);
+      }, config.reconnectionIssueTimeout);
     } else {
       clearTimeout(_reconnectionIssueTimerId);
 

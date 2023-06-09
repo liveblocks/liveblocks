@@ -55,6 +55,7 @@ function makeRoomConfig(mockedDelegates?: RoomDelegates) {
     enableDebugLogging: false,
     roomId: "room-id",
     throttleDelay: THROTTLE_DELAY,
+    reconnectionIssueTimeout: 99999,
     liveblocksServer: "wss://live.liveblocks.io/v6",
     authentication: {
       type: "private",
