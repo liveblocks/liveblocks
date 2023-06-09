@@ -322,7 +322,13 @@ type SubscribeFn<
   (type: "status", listener: Callback<Status>): () => void;
 
   /**
-   * XXX Document me.
+   * Subscribe to the exceptional event where reconnecting to the Liveblocks
+   * servers is taking longer than usual. This typically is a sign of a client
+   * that has lost internet connectivity.
+   *
+   * This isn't problematic (because the Liveblocks client is still trying to
+   * reconnect), but it's typically a good idea to inform users about it if
+   * the connection takes too long to recover.
    */
   (
     type: "reconnection-issue",
