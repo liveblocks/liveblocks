@@ -1,0 +1,70 @@
+---
+meta:
+  title: "How to use Liveblocks with Astro"
+  description: "Learn how to add Liveblocks to your Astro app"
+---
+
+When adding Liveblocks to [Astro](https://astro.build) apps, it's recommended to
+use
+[`client:only`](https://docs.astro.build/en/reference/directives-reference/#clientonly)
+with your components. This is recommended because Liveblocks only needs on the
+client, and in Astro, you may run into bundling issues if the app is rendered on
+both the server and client.
+
+## Example
+
+Here's an example of `client:only` used with various frameworks:
+
+```astro
+---
+import SvelteInput from "../components/SvelteInput.svelte";
+import ReactInput from "../components/ReactInput.tsx";
+import VueInput from "../components/VueInput.vue";
+---
+
+<main>
+  <ReactInput client:only="react" />
+  <SvelteInput client:only="svelte" />
+  <VueInput client:only="vue" />
+</main>
+```
+
+## Not required with .astro components
+
+Note that when using `.astro` components and the `<script>` tag, `client:only`
+is not necessary, because it always runs on the client:
+
+```astro
+---
+import VanillaInput from "../components/VanillaInput.astro";
+---
+
+<main>
+  <VanillaInput />
+</main>
+```
+
+```html
+<script>
+  import { room, myLiveObject } from "../liveblocksSetup.js";
+
+  const input = document.querySelector("#vanilla");
+
+  room.subscribe(myLiveObject, (updatedLiveObject) => {
+    input.value = updatedLiveObject.get("text");
+  });
+
+  room.addEventListener("input", (e) => {
+    myLiveObject.set("text", e.target.value);
+  });
+</script>
+
+<input id="vanilla" type="text" onClick="this.select()" />
+```
+
+## Using @liveblocks/react with Astro
+
+Note that when using our React package with Astro, `RoomProvider` does not work
+in nested `.astro` files, as each component is a separate "island", and cannot
+see the context in another island. Each React root in `.astro` files is like a
+new React app, and will need its own `RoomProvider`.

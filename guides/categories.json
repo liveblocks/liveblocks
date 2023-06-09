@@ -1,0 +1,50 @@
+{
+  "topics": [
+    {
+      "id": "data-fetching",
+      "name": "Data fetching"
+    },
+    {
+      "id": "authentication",
+      "name": "Authentication"
+    },
+    {
+      "id": "frameworks",
+      "name": "Frameworks"
+    },
+    {
+      "id": "state",
+      "name": "State"
+    }
+  ],
+  "technologies": [
+    {
+      "id": "react",
+      "name": "React"
+    },
+    {
+      "id": "nextjs",
+      "name": "Next.js"
+    },
+    {
+      "id": "vuejs",
+      "name": "Vue"
+    },
+    {
+      "id": "nuxtjs",
+      "name": "Nuxt.js"
+    },
+    {
+      "id": "svelte",
+      "name": "Svelte"
+    },
+    {
+      "id": "sveltekit",
+      "name": "SvelteKit"
+    },
+    {
+      "id": "astro",
+      "name": "Astro"
+    }
+  ]
+}

@@ -1,0 +1,47 @@
+---
+meta:
+  title: "Fixing Next.js server component errors"
+  description: "Learn how to fix Next.js server component problems"
+---
+
+## Fixing the warning: "Only plain objects can be passed to Client Components from Server Components"
+
+This error occurs when you create a Liveblocks data structure (`LiveObject`,
+`LiveList`, or `LiveMap`) within a server component. This is often occurs when
+creating a room with `RoomProvider`, for example:
+
+```tsx file="layout.tsx"
+import { ReactNode } from "react";
+import { RoomProvider } from "../liveblocks.config";
+import { LiveObject } from "@liveblocks/client";
+
+export default function Layout({ children }: { children: ReactNode }) {
+  return (
+    <html lang="en">
+      <body>
+        <RoomProvider
+          id="my-room-name"
+          initialPresence={{}}
+          initialStorage={{
+            // ❌ This line causes the error
+            session: new LiveObject(),
+          }}
+        >
+          {children}
+        </RoomProvider>
+      </body>
+    </html>
+  );
+}
+```
+
+This can be fixed by turning the file into a client file with `"use client";` at
+the top of the file. However, if your need a server component, you can extract
+the provider to a different file.
+
+## Structuring your app
+
+To take this further, and to learn how to structure your Next.js app in the best
+possible way, make sure to read our
+[How to use Liveblocks with Next.js /app directory](/docs/guides/how-to-use-liveblocks-with-nextjs-app-directory)
+guide.
