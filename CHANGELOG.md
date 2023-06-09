@@ -1,14 +1,17 @@
 # v1.1.0-beta1
 
-This release improves the client's internals to ensure a more reliable
+This release improves the client’s internals to ensure a more reliable
 connection with Liveblocks servers.
 
 ### `@liveblocks/core`
 
 - New APIs:
-  - `room.getStatus()`  (`"initial"`, `"connecting"`, `"connected"`,
+  - `room.getStatus()` (`"initial"`, `"connecting"`, `"connected"`,
     `"reconnecting"`, `"disconnected"`)
-  - `room.subscribe('status')`
+  - `room.subscribe("status")`
+  - `room.subscribe("reconnection-issue")` - High-level API to get informed when
+    Liveblocks’ automatic reconnection process is taking longer than usual, so
+    you can show a toast message on screen.
 - Client will stop retrying to establish a connection in cases where retrying
   would not help (explicit unauthorized/forbidden response, or a configuration
   error)
@@ -17,8 +20,10 @@ connection with Liveblocks servers.
 
 - New APIs:
   - `useStatus()`
+  - `useReconnectionIssueListener()`
 
 ### Deprecated APIs
+
 These APIs still work, but are replaced by newer APIs. The old APIs will be
 removed in a future release of Liveblocks.
 
