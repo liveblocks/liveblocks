@@ -2032,17 +2032,13 @@ export function createRoom<
   }
 
   function getStorageStatus(): StorageStatus {
-    if (_getInitialStatePromise === null) {
-      return "not-loaded";
-    }
-
     if (context.root === undefined) {
-      return "loading";
+      return _getInitialStatePromise === null ? "not-loaded" : "loading";
+    } else {
+      return context.unacknowledgedOps.size === 0
+        ? "synchronized"
+        : "synchronizing";
     }
-
-    return context.unacknowledgedOps.size === 0
-      ? "synchronized"
-      : "synchronizing";
   }
 
   /**
