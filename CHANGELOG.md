@@ -9,7 +9,7 @@ connection with Liveblocks servers.
   - `room.getStatus()` (`"initial"`, `"connecting"`, `"connected"`,
     `"reconnecting"`, `"disconnected"`)
   - `room.subscribe("status")`
-  - `room.subscribe("reconnection-issue")` - High-level API to get informed when
+  - `room.subscribe("lost-connection")` - High-level API to get informed when
     Liveblocks’ automatic reconnection process is taking longer than usual, so
     you can show a toast message on screen.
 - Client will stop retrying to establish a connection in cases where retrying
@@ -20,28 +20,22 @@ connection with Liveblocks servers.
 
 - New APIs:
   - `useStatus()`
-  - `useReconnectionIssueListener()`
+  - `useLostConnectionListener()`
 
 ### Deprecated APIs
 
 These APIs still work, but are replaced by newer APIs. The old APIs will be
 removed in a future release of Liveblocks.
 
-- Old connection status codes are replaced by the new ones:
-  | ❌ Old statuses | ✅ New statuses  |
-  |-----------------|-----------------|
-  | closed          | initial         |
-  | authenticating  | connecting      |
-  | connecting      | connecting      |
-  | open            | connected       |
-  | unavailable     | reconnecting    |
-  | failed          | disconnected    |
+- Old connection status codes are replaced by the new ones: | ❌ Old statuses |
+  ✅ New statuses | |-----------------|-----------------| | closed | initial | |
+  authenticating | connecting | | connecting | connecting | | open | connected |
+  | unavailable | reconnecting | | failed | disconnected |
 - ❌ `room.getConnectionState()` → ✅ `room.getStatus()`
 - ❌ `room.subscribe('connection')` → ✅ `room.subscribe('status')`
 - Old client options:
   - ❌ `fetchPolyfill` → ✅ `polyfills: { fetch }`
   - ❌ `WebSocketPolyfill` → ✅ `polyfills: { WebSocket }`
-
 
 # v1.0.12
 

@@ -5,9 +5,9 @@ import type {
   Json,
   JsonObject,
   LiveObject,
+  LostConnectionEvent,
   LsonObject,
   Others,
-  ReconnectionIssueEvent,
   Room,
   Status,
   User,
@@ -143,18 +143,18 @@ export type RoomContextBundle<
    * the connection takes too long to recover.
    *
    * @example
-   * useReconnectionIssueListener(event => {
-   *   if (event === 'issue') {
+   * useLostConnectionListener(event => {
+   *   if (event === 'lost') {
    *     toast.warn('Reconnecting to the Liveblocks servers is taking longer than usual...')
-   *   } else if (event === 'error') {
+   *   } else if (event === 'failed') {
    *     toast.warn('Reconnecting to the Liveblocks servers failed.')
-   *   } else if (event === 'recovered') {
+   *   } else if (event === 'restored') {
    *     toast.clear();
    *   }
    * })
    */
-  useReconnectionIssueListener(
-    callback: (event: ReconnectionIssueEvent) => void
+  useLostConnectionListener(
+    callback: (event: LostConnectionEvent) => void
   ): void;
 
   /**
@@ -576,18 +576,18 @@ export type RoomContextBundle<
      * the connection takes too long to recover.
      *
      * @example
-     * useReconnectionIssueListener(event => {
-     *   if (event === 'issue') {
+     * useLostConnectionListener(event => {
+     *   if (event === 'lost') {
      *     toast.warn('Reconnecting to the Liveblocks servers is taking longer than usual...')
-     *   } else if (event === 'error') {
+     *   } else if (event === 'failed') {
      *     toast.warn('Reconnecting to the Liveblocks servers failed.')
-     *   } else if (event === 'recovered') {
+     *   } else if (event === 'restored') {
      *     toast.clear();
      *   }
      * })
      */
-    useReconnectionIssueListener(
-      callback: (event: ReconnectionIssueEvent) => void
+    useLostConnectionListener(
+      callback: (event: LostConnectionEvent) => void
     ): void;
 
     /**
