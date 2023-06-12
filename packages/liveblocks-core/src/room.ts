@@ -1703,9 +1703,7 @@ export function createRoom<
             const unacknowledgedOps = new Map(context.unacknowledgedOps);
             createOrUpdateRootFromMessage(message, doNotBatchUpdates);
             applyAndSendOps(unacknowledgedOps, doNotBatchUpdates);
-            if (_resolveInitialStatePromise !== null) {
-              _resolveInitialStatePromise();
-            }
+            _resolveInitialStatePromise?.();
             notifyStorageStatus();
             eventHub.storageDidLoad.notify();
             break;
