@@ -26,6 +26,7 @@ import {
   DEFAULT_AUTH,
   defineBehavior,
   MANUAL_SOCKETS,
+  SOCKET_CONNECT_ONLY_ONCE,
 } from "./_behaviors";
 import { listUpdate, listUpdateInsert, listUpdateSet } from "./_updatesUtils";
 import {
@@ -464,8 +465,13 @@ describe("room", () => {
     ]);
   });
 
-  test("should clear users when socket close", async () => {
-    const { room, wss } = createTestableRoom({});
+  test("should clear users after the client is disconnected for a certain amount of time", async () => {
+    const { room, wss } = createTestableRoom(
+      {},
+      undefined,
+      SOCKET_CONNECT_ONLY_ONCE(),
+      { reconnectionIssueTimeout: 10 }
+    );
     room.connect();
 
     wss.onConnection((conn) => {
@@ -488,11 +494,14 @@ describe("room", () => {
       );
     });
 
+    await waitUntilStatus(room, "connected");
     await waitUntilOthersEvent(room);
     expect(room.getOthers()).toEqual([
       { connectionId: 1, presence: { x: 2 }, isReadOnly: false },
     ]);
 
+    // Closing this connection will trigger an endless retry loop, because the
+    // server is configured with a SOCKET_CONNECT_ONLY_ONCE strategy.
     wss.last.close(
       new CloseEvent("close", {
         code: WebsocketCloseCodes.CLOSE_ABNORMAL,
@@ -500,6 +509,13 @@ describe("room", () => {
       })
     );
 
+    // Not immediately cleared
+    expect(room.getOthers()).toEqual([
+      { connectionId: 1, presence: { x: 2 }, isReadOnly: false },
+    ]);
+
+    // But it will clear eventually (after reconnectionIssueTimeout milliseconds)
+    await waitUntilOthersEvent(room);
     expect(room.getOthers()).toEqual([]);
   });
 
