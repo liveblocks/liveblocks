@@ -470,7 +470,7 @@ describe("room", () => {
       {},
       undefined,
       SOCKET_CONNECT_ONLY_ONCE(),
-      { reconnectionIssueTimeout: 10 }
+      { lostConnectionTimeout: 10 }
     );
     room.connect();
 
@@ -514,7 +514,7 @@ describe("room", () => {
       { connectionId: 1, presence: { x: 2 }, isReadOnly: false },
     ]);
 
-    // But it will clear eventually (after reconnectionIssueTimeout milliseconds)
+    // But it will clear eventually (after lostConnectionTimeout milliseconds)
     await waitUntilOthersEvent(room);
     expect(room.getOthers()).toEqual([]);
   });
