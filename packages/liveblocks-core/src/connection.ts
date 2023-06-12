@@ -5,6 +5,7 @@ import * as console from "./lib/fancy-console";
 import type { BuiltinEvent, Patchable, Target } from "./lib/fsm";
 import { FSM } from "./lib/fsm";
 import { withTimeout } from "./lib/utils";
+import type { Json } from "./lib/Json";
 import type {
   IWebSocketCloseEvent,
   IWebSocketEvent,
@@ -132,9 +133,9 @@ type State =
  * value that is returned by calling the authentication delegate, and will get
  * passed to the connection factory delegate. This value will be remembered by
  * the connection manager, but its value will not be interpreted, so it can be
- * any object value.
+ * any value (except null).
  */
-export type BaseAuthResult = Record<string, unknown>;
+export type BaseAuthResult = NonNullable<Json>;
 
 type Context = {
   /**
