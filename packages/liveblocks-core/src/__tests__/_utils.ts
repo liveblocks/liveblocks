@@ -77,7 +77,7 @@ function makeRoomConfig(mockedDelegates: RoomDelegates) {
     delegates: mockedDelegates,
     roomId: "room-id",
     throttleDelay: -1, // No throttle for standard storage test
-    reconnectionIssueTimeout: 99999, // Don't trigger reconnection issue events in tests
+    lostConnectionTimeout: 99999, // Don't trigger connection loss events in tests
     liveblocksServer: "wss://live.liveblocks.io/v6",
     authentication: {
       type: "private",

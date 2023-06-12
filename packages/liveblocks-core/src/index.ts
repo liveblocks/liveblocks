@@ -16,7 +16,7 @@ export { createClient } from "./client";
 export type { BaseAuthResult, Delegates } from "./connection";
 export type {
   LegacyConnectionStatus,
-  ReconnectionIssueEvent,
+  LostConnectionEvent,
   Status,
 } from "./connection";
 export { LiveList } from "./crdts/LiveList";

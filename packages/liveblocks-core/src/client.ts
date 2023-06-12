@@ -77,7 +77,7 @@ export type AuthEndpoint =
  */
 export type ClientOptions = {
   throttle?: number; // in milliseconds
-  reconnectionIssueTimeout?: number; // in milliseconds
+  lostConnectionTimeout?: number; // in milliseconds
   polyfills?: Polyfills;
   unstable_fallbackToHTTP?: boolean;
 
@@ -182,8 +182,7 @@ export function createClient(options: ClientOptions): Client {
       {
         roomId,
         throttleDelay,
-        reconnectionIssueTimeout:
-          clientOptions.reconnectionIssueTimeout ?? 5000,
+        lostConnectionTimeout: clientOptions.lostConnectionTimeout ?? 5000,
         polyfills: clientOptions.polyfills,
         delegates: clientOptions.mockedDelegates,
         enableDebugLogging: clientOptions.enableDebugLogging,

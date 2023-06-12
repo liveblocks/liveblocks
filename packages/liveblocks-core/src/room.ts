@@ -1,8 +1,8 @@
 import type {
   Delegates,
   LegacyConnectionStatus,
+  LostConnectionEvent,
   Status,
-  ReconnectionIssueEvent,
 } from "./connection";
 import { ManagedSocket, newToLegacyStatus, StopRetrying } from "./connection";
 import type { ApplyResult, ManagedPool } from "./crdts/AbstractCrdt";
@@ -88,7 +88,7 @@ type RoomEventCallbackMap<
 > = {
   connection: Callback<LegacyConnectionStatus>; // Old/deprecated API
   status: Callback<Status>; // New/recommended API
-  "reconnection-issue": Callback<ReconnectionIssueEvent>;
+  "lost-connection": Callback<LostConnectionEvent>;
   event: Callback<CustomEvent<TRoomEvent>>;
   "my-presence": Callback<TPresence>;
   //
@@ -331,8 +331,8 @@ type SubscribeFn<
    * the connection takes too long to recover.
    */
   (
-    type: "reconnection-issue",
-    listener: Callback<ReconnectionIssueEvent>
+    type: "lost-connection",
+    listener: Callback<LostConnectionEvent>
   ): () => void;
 
   /**
@@ -552,7 +552,7 @@ export type Room<
   readonly events: {
     readonly connection: Observable<LegacyConnectionStatus>; // Old/legacy API
     readonly status: Observable<Status>; // New/recommended API
-    readonly reconnectionIssue: Observable<ReconnectionIssueEvent>;
+    readonly lostConnection: Observable<LostConnectionEvent>;
 
     readonly customEvent: Observable<{ connectionId: number; event: TRoomEvent; }>; // prettier-ignore
     readonly me: Observable<TPresence>;
@@ -796,7 +796,7 @@ type RoomConfig = {
 
   roomId: string;
   throttleDelay: number;
-  reconnectionIssueTimeout: number;
+  lostConnectionTimeout: number;
 
   authentication: Authentication;
   liveblocksServer: string;
@@ -938,28 +938,28 @@ export function createRoom<
     });
   }
 
-  let _reconnectionIssueTimerId: TimeoutID | undefined;
-  let _hasReportedIssue = false;
+  let _connectionLossTimerId: TimeoutID | undefined;
+  let _hasLostConnection = false;
 
-  function onHandleReconnectionIssues(newStatus: Status) {
+  function handleConnectionLossEvent(newStatus: Status) {
     if (newStatus === "reconnecting") {
-      _reconnectionIssueTimerId = setTimeout(() => {
-        eventHub.reconnectionIssue.notify("issue");
-        _hasReportedIssue = true;
-      }, config.reconnectionIssueTimeout);
+      _connectionLossTimerId = setTimeout(() => {
+        eventHub.lostConnection.notify("lost");
+        _hasLostConnection = true;
+      }, config.lostConnectionTimeout);
     } else {
-      clearTimeout(_reconnectionIssueTimerId);
+      clearTimeout(_connectionLossTimerId);
 
-      if (_hasReportedIssue) {
+      if (_hasLostConnection) {
         if (newStatus === "disconnected") {
-          eventHub.reconnectionIssue.notify("failed");
+          eventHub.lostConnection.notify("failed");
         } else {
           // Typically the case when going back to "connected", but really take
           // *any* other state change as a recovery sign
-          eventHub.reconnectionIssue.notify("recovered");
+          eventHub.lostConnection.notify("restored");
         }
 
-        _hasReportedIssue = false;
+        _hasLostConnection = false;
       }
     }
   }
@@ -1012,7 +1012,7 @@ export function createRoom<
   // will have the same life-time.
   managedSocket.events.onMessage.subscribe(handleServerMessage);
   managedSocket.events.statusDidChange.subscribe(onStatusDidChange);
-  managedSocket.events.statusDidChange.subscribe(onHandleReconnectionIssues);
+  managedSocket.events.statusDidChange.subscribe(handleConnectionLossEvent);
   managedSocket.events.didConnect.subscribe(onDidConnect);
   managedSocket.events.didDisconnect.subscribe(onDidDisconnect);
   managedSocket.events.onLiveblocksError.subscribe((err) => {
@@ -1088,7 +1088,7 @@ export function createRoom<
   const eventHub = {
     connection: makeEventSource<LegacyConnectionStatus>(), // Old/deprecated API
     status: makeEventSource<Status>(), // New/recommended API
-    reconnectionIssue: makeEventSource<ReconnectionIssueEvent>(),
+    lostConnection: makeEventSource<LostConnectionEvent>(),
 
     customEvent: makeEventSource<CustomEvent<TRoomEvent>>(),
     me: makeEventSource<TPresence>(),
@@ -2065,7 +2065,7 @@ export function createRoom<
   const events = {
     connection: eventHub.connection.observable, // Old/deprecated API
     status: eventHub.status.observable, // New/recommended API
-    reconnectionIssue: eventHub.reconnectionIssue.observable,
+    lostConnection: eventHub.lostConnection.observable,
 
     customEvent: eventHub.customEvent.observable,
     others: eventHub.others.observable,
@@ -2229,9 +2229,9 @@ function makeClassicSubscribeFn<
         case "status":
           return events.status.subscribe(callback as Callback<Status>);
 
-        case "reconnection-issue":
-          return events.reconnectionIssue.subscribe(
-            callback as Callback<ReconnectionIssueEvent>
+        case "lost-connection":
+          return events.lostConnection.subscribe(
+            callback as Callback<LostConnectionEvent>
           );
 
         case "history":

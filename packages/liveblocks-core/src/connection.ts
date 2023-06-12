@@ -38,15 +38,15 @@ export type Status =
 /**
  * Used to report about app-level reconnection issues.
  *
- * Normal (quick) reconnects won't be reported about. Instead, the application
- * will only get an event if the reconnection attempts by the client are taking
- * (much) longer than usual. Definitely a situation you want to inform your
- * users about, for example, by throwing a toast message on screen, or show
- * a "trying to reconnect" banner.
+ * Normal (quick) reconnects won't be reported as a "lost connection". Instead,
+ * the application will only get an event if the reconnection attempts by the
+ * client are taking (much) longer than usual. Definitely a situation you want
+ * to inform your users about, for example, by throwing a toast message on
+ * screen, or show a "trying to reconnect" banner.
  */
-export type ReconnectionIssueEvent =
-  | "issue" // the client is trying to reconnect to Liveblocks, but it's taking (much) longer than usual
-  | "recovered" // the client did reconnect after all
+export type LostConnectionEvent =
+  | "lost" // the client is trying to reconnect to Liveblocks, but it's taking (much) longer than usual
+  | "restored" // the client did reconnect after all
   | "failed"; // the client was told to stop trying
 
 export function newToLegacyStatus(status: Status): LegacyConnectionStatus {
