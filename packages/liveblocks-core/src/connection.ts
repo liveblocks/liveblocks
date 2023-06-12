@@ -4,8 +4,8 @@ import { makeEventSource } from "./lib/EventSource";
 import * as console from "./lib/fancy-console";
 import type { BuiltinEvent, Patchable, Target } from "./lib/fsm";
 import { FSM } from "./lib/fsm";
-import { withTimeout } from "./lib/utils";
 import type { Json } from "./lib/Json";
+import { withTimeout } from "./lib/utils";
 import type {
   IWebSocketCloseEvent,
   IWebSocketEvent,
@@ -417,7 +417,7 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
       (okEvent) => ({
         target: "@connecting.busy",
         effect: assign({
-          token: okEvent.data as BaseAuthResult,
+          token: okEvent.data,
           backoffDelay: RESET_DELAY,
         }),
       }),
