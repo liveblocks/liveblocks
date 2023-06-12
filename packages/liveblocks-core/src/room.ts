@@ -1000,7 +1000,7 @@ export function createRoom<
     // room connection happens, we won't know the connection ID here just yet.
     context.idFactory = makeIdFactory(sessionInfo.id);
 
-    if (context.root) {
+    if (context.root !== undefined) {
       context.buffer.messages.push({ type: ClientMsgCode.FETCH_STORAGE });
     }
 
@@ -1171,7 +1171,7 @@ export function createRoom<
       throw new Error("Internal error: cannot load storage without items");
     }
 
-    if (context.root) {
+    if (context.root !== undefined) {
       updateRoot(message.items, batchedUpdatesWrapper);
     } else {
       context.root = LiveObject._fromItems<TStorage>(message.items, pool);
@@ -1188,7 +1188,7 @@ export function createRoom<
     items: IdTuple<SerializedCrdt>[],
     batchedUpdatesWrapper: (cb: () => void) => void
   ) {
-    if (!context.root) {
+    if (context.root === undefined) {
       return;
     }
 
@@ -1901,7 +1901,7 @@ export function createRoom<
   async function getStorage(): Promise<{
     root: LiveObject<TStorage>;
   }> {
-    if (context.root) {
+    if (context.root !== undefined) {
       // Store has already loaded, so we can resolve it directly
       return Promise.resolve({
         root: context.root,
