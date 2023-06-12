@@ -1,14 +1,17 @@
 # v1.1.0-beta1
 
-This release improves the client's internals to ensure a more reliable
+This release improves the client’s internals to ensure a more reliable
 connection with Liveblocks servers.
 
 ### `@liveblocks/core`
 
 - New APIs:
-  - `room.getStatus()`  (`"initial"`, `"connecting"`, `"connected"`,
+  - `room.getStatus()` (`"initial"`, `"connecting"`, `"connected"`,
     `"reconnecting"`, `"disconnected"`)
-  - `room.subscribe('status')`
+  - `room.subscribe("status")`
+  - `room.subscribe("lost-connection")` - High-level API to get informed when
+    Liveblocks’ automatic reconnection process is taking longer than usual, so
+    you can show a toast message on screen.
 - Client will stop retrying to establish a connection in cases where retrying
   would not help (explicit unauthorized/forbidden response, or a configuration
   error)
@@ -17,26 +20,29 @@ connection with Liveblocks servers.
 
 - New APIs:
   - `useStatus()`
+  - `useLostConnectionListener()`
 
 ### Deprecated APIs
+
 These APIs still work, but are replaced by newer APIs. The old APIs will be
 removed in a future release of Liveblocks.
 
-- Old connection status codes are replaced by the new ones:
-  | ❌ Old statuses | ✅ New statuses  |
-  |-----------------|-----------------|
-  | closed          | initial         |
-  | authenticating  | connecting      |
-  | connecting      | connecting      |
-  | open            | connected       |
-  | unavailable     | reconnecting    |
-  | failed          | disconnected    |
+Old connection status codes are replaced by the new ones:
+
+| ❌ Old statuses | ✅ New statuses |
+| --------------- | --------------- |
+| closed          | initial         |
+| authenticating  | connecting      |
+| connecting      | connecting      |
+| open            | connected       |
+| unavailable     | reconnecting    |
+| failed          | disconnected    |
+
 - ❌ `room.getConnectionState()` → ✅ `room.getStatus()`
 - ❌ `room.subscribe('connection')` → ✅ `room.subscribe('status')`
 - Old client options:
   - ❌ `fetchPolyfill` → ✅ `polyfills: { fetch }`
   - ❌ `WebSocketPolyfill` → ✅ `polyfills: { WebSocket }`
-
 
 # v1.0.12
 

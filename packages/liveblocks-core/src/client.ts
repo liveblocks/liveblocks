@@ -76,7 +76,8 @@ export type AuthEndpoint =
  * Can be an url or a callback if you need to add additional headers.
  */
 export type ClientOptions = {
-  throttle?: number;
+  throttle?: number; // in milliseconds
+  lostConnectionTimeout?: number; // in milliseconds
   polyfills?: Polyfills;
   unstable_fallbackToHTTP?: boolean;
 
@@ -181,6 +182,7 @@ export function createClient(options: ClientOptions): Client {
       {
         roomId,
         throttleDelay,
+        lostConnectionTimeout: clientOptions.lostConnectionTimeout ?? 5000,
         polyfills: clientOptions.polyfills,
         delegates: clientOptions.mockedDelegates,
         enableDebugLogging: clientOptions.enableDebugLogging,

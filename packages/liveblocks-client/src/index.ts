@@ -12,6 +12,7 @@ export type {
   LiveMapUpdate,
   LiveObjectUpdate,
   LiveStructure,
+  LostConnectionEvent,
   Lson,
   LsonObject,
   Others,

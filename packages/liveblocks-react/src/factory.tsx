@@ -6,6 +6,7 @@ import type {
   Json,
   JsonObject,
   LiveObject,
+  LostConnectionEvent,
   LsonObject,
   Others,
   Room,
@@ -354,6 +355,25 @@ export function createRoomContext<
       ) => {
         room.broadcastEvent(event, options);
       },
+      [room]
+    );
+  }
+
+  function useLostConnectionListener(
+    callback: (event: LostConnectionEvent) => void
+  ): void {
+    const room = useRoom();
+    const savedCallback = React.useRef(callback);
+
+    React.useEffect(() => {
+      savedCallback.current = callback;
+    });
+
+    React.useEffect(
+      () =>
+        room.events.lostConnection.subscribe((event: LostConnectionEvent) =>
+          savedCallback.current(event)
+        ),
       [room]
     );
   }
@@ -723,6 +743,7 @@ export function createRoomContext<
 
     useBatch,
     useBroadcastEvent,
+    useLostConnectionListener,
     useErrorListener,
     useEventListener,
 
@@ -759,6 +780,7 @@ export function createRoomContext<
 
       useBatch,
       useBroadcastEvent,
+      useLostConnectionListener,
       useErrorListener,
       useEventListener,
 
