@@ -944,19 +944,25 @@ export function createRoom<
   function handleConnectionLossEvent(newStatus: Status) {
     if (newStatus === "reconnecting") {
       _connectionLossTimerId = setTimeout(() => {
-        eventHub.lostConnection.notify("lost");
-        _hasLostConnection = true;
+        batchUpdates(() => {
+          eventHub.lostConnection.notify("lost");
+          _hasLostConnection = true;
+        });
       }, config.lostConnectionTimeout);
     } else {
       clearTimeout(_connectionLossTimerId);
 
       if (_hasLostConnection) {
         if (newStatus === "disconnected") {
-          eventHub.lostConnection.notify("failed");
+          batchUpdates(() => {
+            eventHub.lostConnection.notify("failed");
+          });
         } else {
           // Typically the case when going back to "connected", but really take
           // *any* other state change as a recovery sign
-          eventHub.lostConnection.notify("restored");
+          batchUpdates(() => {
+            eventHub.lostConnection.notify("restored");
+          });
         }
 
         _hasLostConnection = false;
