@@ -791,7 +791,7 @@ export type RoomInitializers<
 export type RoomDelegates = Delegates<RichToken>;
 
 /** @internal */
-type RoomConfig = {
+export type RoomConfig = {
   delegates?: RoomDelegates;
 
   roomId: string;

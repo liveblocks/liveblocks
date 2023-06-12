@@ -17,7 +17,7 @@ import { OpCode } from "../protocol/Op";
 import type { IdTuple, SerializedCrdt } from "../protocol/SerializedCrdt";
 import { CrdtType } from "../protocol/SerializedCrdt";
 import { ServerMsgCode } from "../protocol/ServerMsg";
-import type { RoomDelegates } from "../room";
+import type { RoomDelegates, RoomConfig } from "../room";
 import { createRoom } from "../room";
 import { WebsocketCloseCodes } from "../types/IWebSocket";
 import type { Others } from "../types/Others";
@@ -49,18 +49,26 @@ import {
 
 const THROTTLE_DELAY = 100;
 
-function makeRoomConfig(mockedDelegates?: RoomDelegates) {
+const defaultRoomConfig: RoomConfig = {
+  enableDebugLogging: false,
+  roomId: "room-id",
+  throttleDelay: THROTTLE_DELAY,
+  lostConnectionTimeout: 99999,
+  liveblocksServer: "wss://live.liveblocks.io/v6",
+  authentication: {
+    type: "private",
+    url: "/mocked-api/auth",
+  } as Authentication,
+};
+
+function makeRoomConfig(
+  mockedDelegates?: RoomDelegates,
+  defaults?: Partial<RoomConfig>
+) {
   return {
+    ...defaultRoomConfig,
+    ...defaults,
     delegates: mockedDelegates,
-    enableDebugLogging: false,
-    roomId: "room-id",
-    throttleDelay: THROTTLE_DELAY,
-    lostConnectionTimeout: 99999,
-    liveblocksServer: "wss://live.liveblocks.io/v6",
-    authentication: {
-      type: "private",
-      url: "/mocked-api/auth",
-    } as Authentication,
   };
 }
 
@@ -77,7 +85,8 @@ function createTestableRoom<
 >(
   initialPresence: TPresence,
   authBehavior = DEFAULT_AUTH,
-  socketBehavior = AUTO_OPEN_SOCKETS
+  socketBehavior = AUTO_OPEN_SOCKETS,
+  config?: Partial<RoomConfig>
 ) {
   const { wss, delegates } = defineBehavior(authBehavior, socketBehavior);
 
@@ -86,7 +95,7 @@ function createTestableRoom<
       initialPresence,
       initialStorage: undefined,
     },
-    makeRoomConfig(delegates)
+    makeRoomConfig(delegates, config)
   );
 
   return {
