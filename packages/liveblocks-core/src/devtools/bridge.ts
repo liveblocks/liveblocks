@@ -67,7 +67,7 @@ if (process.env.NODE_ENV !== "production" && typeof window !== "undefined") {
       //   "%c[client ← panel] %c%s",
       //   "color: purple",
       //   "color: purple; font-weight: bold",
-      //   event.data.msg,
+      //   (event.data as Record<string, unknown>).msg,
       //   event.data
       // );
       eventSource.notify(event.data as DevTools.FullPanelToClientMessage);
