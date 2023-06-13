@@ -19,7 +19,8 @@
     "path": "/how-to-use-liveblocks-with-nextjs-app-directory",
     "topics": ["frameworks"],
     "technologies": ["nextjs"],
-    "date": "2023-06-02"
+    "date": "2023-06-02",
+    "featured": true
   },
   {
     "title": "Fixing Next.js server component errors",
@@ -33,6 +34,7 @@
     "path": "/revalidate-api-data-with-swr",
     "topics": ["data-fetching"],
     "technologies": ["react", "nextjs"],
-    "date": "2023-05-26"
+    "date": "2023-05-26",
+    "featured": true
   }
 ]
