@@ -106,3 +106,18 @@ export function MANUAL_SOCKETS(wss: MockWebSocketServer) {
 export function AUTO_OPEN_SOCKETS(wss: MockWebSocketServer) {
   return wss.newSocket((socket) => socket.server.accept());
 }
+
+/**
+ * Configures the MockWebSocketServer to automatically accept the first socket
+ * connection attempt, then fail all subsequent attempts.
+ */
+export function SOCKET_CONNECT_ONLY_ONCE() {
+  let n = 0;
+  return (wss: MockWebSocketServer) => {
+    n++;
+    if (n > 1) {
+      throw new Error("Nope");
+    }
+    return wss.newSocket((socket) => socket.server.accept());
+  };
+}

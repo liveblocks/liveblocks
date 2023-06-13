@@ -364,6 +364,20 @@ describe("useOthers", () => {
 
     act(() => sim.simulateAbnormalClose());
 
+    expect(result.current).toEqual([
+      { connectionId: 1, presence: { x: 2 }, isReadOnly: false },
+    ]);
+
+    // After 100ms (half the lostConnectionTimeout value), the others aren't
+    // cleared yet
+    await wait(100);
+    expect(result.current).toEqual([
+      { connectionId: 1, presence: { x: 2 }, isReadOnly: false },
+    ]);
+
+    // After another 100ms we crossed the lostConnectionTimeout, so the others
+    // are cleared out
+    await wait(100);
     expect(result.current).toEqual([]);
   });
 });

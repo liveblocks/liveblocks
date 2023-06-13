@@ -791,7 +791,7 @@ export type RoomInitializers<
 export type RoomDelegates = Delegates<RichToken>;
 
 /** @internal */
-type RoomConfig = {
+export type RoomConfig = {
   delegates?: RoomDelegates;
 
   roomId: string;
@@ -947,6 +947,10 @@ export function createRoom<
         batchUpdates(() => {
           eventHub.lostConnection.notify("lost");
           _hasLostConnection = true;
+
+          // Clear the others
+          context.others.clearOthers();
+          notify({ others: [{ type: "reset" }] }, doNotBatchUpdates);
         });
       }, config.lostConnectionTimeout);
     } else {
@@ -1005,12 +1009,6 @@ export function createRoom<
 
   function onDidDisconnect() {
     clearTimeout(context.buffer.flushTimerID);
-
-    batchUpdates(() => {
-      // TODO Move this clearing-of-others to the "connection-unstable" event
-      context.others.clearOthers();
-      notify({ others: [{ type: "reset" }] }, doNotBatchUpdates);
-    });
   }
 
   // Register events handlers for events coming from the socket

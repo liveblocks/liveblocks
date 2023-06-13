@@ -17,7 +17,7 @@ import { OpCode } from "../protocol/Op";
 import type { IdTuple, SerializedCrdt } from "../protocol/SerializedCrdt";
 import { CrdtType } from "../protocol/SerializedCrdt";
 import { ServerMsgCode } from "../protocol/ServerMsg";
-import type { RoomDelegates } from "../room";
+import type { RoomConfig, RoomDelegates } from "../room";
 import { createRoom } from "../room";
 import { WebsocketCloseCodes } from "../types/IWebSocket";
 import type { Others } from "../types/Others";
@@ -26,6 +26,7 @@ import {
   DEFAULT_AUTH,
   defineBehavior,
   MANUAL_SOCKETS,
+  SOCKET_CONNECT_ONLY_ONCE,
 } from "./_behaviors";
 import { listUpdate, listUpdateInsert, listUpdateSet } from "./_updatesUtils";
 import {
@@ -49,18 +50,26 @@ import {
 
 const THROTTLE_DELAY = 100;
 
-function makeRoomConfig(mockedDelegates?: RoomDelegates) {
+const defaultRoomConfig: RoomConfig = {
+  enableDebugLogging: false,
+  roomId: "room-id",
+  throttleDelay: THROTTLE_DELAY,
+  lostConnectionTimeout: 99999,
+  liveblocksServer: "wss://live.liveblocks.io/v6",
+  authentication: {
+    type: "private",
+    url: "/mocked-api/auth",
+  } as Authentication,
+};
+
+function makeRoomConfig(
+  mockedDelegates?: RoomDelegates,
+  defaults?: Partial<RoomConfig>
+) {
   return {
+    ...defaultRoomConfig,
+    ...defaults,
     delegates: mockedDelegates,
-    enableDebugLogging: false,
-    roomId: "room-id",
-    throttleDelay: THROTTLE_DELAY,
-    lostConnectionTimeout: 99999,
-    liveblocksServer: "wss://live.liveblocks.io/v6",
-    authentication: {
-      type: "private",
-      url: "/mocked-api/auth",
-    } as Authentication,
   };
 }
 
@@ -77,7 +86,8 @@ function createTestableRoom<
 >(
   initialPresence: TPresence,
   authBehavior = DEFAULT_AUTH,
-  socketBehavior = AUTO_OPEN_SOCKETS
+  socketBehavior = AUTO_OPEN_SOCKETS,
+  config?: Partial<RoomConfig>
 ) {
   const { wss, delegates } = defineBehavior(authBehavior, socketBehavior);
 
@@ -86,7 +96,7 @@ function createTestableRoom<
       initialPresence,
       initialStorage: undefined,
     },
-    makeRoomConfig(delegates)
+    makeRoomConfig(delegates, config)
   );
 
   return {
@@ -455,8 +465,13 @@ describe("room", () => {
     ]);
   });
 
-  test("should clear users when socket close", async () => {
-    const { room, wss } = createTestableRoom({});
+  test("should clear users after the client is disconnected for a certain amount of time", async () => {
+    const { room, wss } = createTestableRoom(
+      {},
+      undefined,
+      SOCKET_CONNECT_ONLY_ONCE(),
+      { lostConnectionTimeout: 10 }
+    );
     room.connect();
 
     wss.onConnection((conn) => {
@@ -479,11 +494,14 @@ describe("room", () => {
       );
     });
 
+    await waitUntilStatus(room, "connected");
     await waitUntilOthersEvent(room);
     expect(room.getOthers()).toEqual([
       { connectionId: 1, presence: { x: 2 }, isReadOnly: false },
     ]);
 
+    // Closing this connection will trigger an endless retry loop, because the
+    // server is configured with a SOCKET_CONNECT_ONLY_ONCE strategy.
     wss.last.close(
       new CloseEvent("close", {
         code: WebsocketCloseCodes.CLOSE_ABNORMAL,
@@ -491,6 +509,13 @@ describe("room", () => {
       })
     );
 
+    // Not immediately cleared
+    expect(room.getOthers()).toEqual([
+      { connectionId: 1, presence: { x: 2 }, isReadOnly: false },
+    ]);
+
+    // But it will clear eventually (after lostConnectionTimeout milliseconds)
+    await waitUntilOthersEvent(room);
     expect(room.getOthers()).toEqual([]);
   });
 
