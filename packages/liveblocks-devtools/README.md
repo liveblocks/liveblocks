@@ -40,8 +40,7 @@ Download the extension for your browser:
 
 ### Chrome
 
-1. Run `turbo build --filter @liveblocks/devtools` from the project root to
-   build the browser extension
+1. Run `turbo build` from this directory to build the browser extension
 1. Navigate to [chrome://extensions](chrome://extensions)
 1. Disable the production Liveblocks extension, if you already have it installed
    (it will conflict with the development version)
@@ -51,8 +50,7 @@ Download the extension for your browser:
 
 ### Firefox
 
-1. Run `turbo build:firefox --filter @liveblocks/devtools` from the project root
-   to build the browser extension
+1. Run `turbo build:firefox` from this directory to build the browser extension
 1. Navigate to
    [about:debugging#/runtime/this-firefox](about:debugging#/runtime/this-firefox)
 1. Disable the production Liveblocks extension, if you already have it installed
