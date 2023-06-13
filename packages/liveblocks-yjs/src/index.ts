@@ -83,7 +83,7 @@ export class Awareness extends Observable<any> {
     if (Object.keys(this.room.getPresence()).length === 0) {
       return null;
     }
-    return presence;
+    return presence["__yjs"] as JsonObject | null;
   }
 
   setLocalState(state: Partial<JsonObject> | null): void {
@@ -93,12 +93,12 @@ export class Awareness extends Observable<any> {
       return; // we're not connected
     }
 
-    this.room.updatePresence({ ...(state || {}) });
+    this.room.updatePresence({ __yjs: { ...(state || {}) } });
   }
 
   setLocalStateField(field: string, value: JsonObject | null): void {
     const update = { [field]: value } as Partial<JsonObject>;
-    this.room.updatePresence(update);
+    this.room.updatePresence({ __yjs: update });
   }
 
   // Translate
@@ -106,7 +106,7 @@ export class Awareness extends Observable<any> {
     const others = this.room.getOthers();
     const states = others.reduce((acc: Map<number, any>, currentValue) => {
       if (currentValue.connectionId) {
-        acc.set(currentValue.connectionId, currentValue.presence);
+        acc.set(currentValue.connectionId, currentValue.presence["__yjs"]);
       }
       return acc;
     }, new Map());
@@ -145,6 +145,7 @@ export default class LiveblocksProvider<
         this.doc.clientID =
           this.room.getSelf()?.connectionId || this.doc.clientID;
         this.awareness.clientID = this.doc.clientID;
+        this.room.getDoc();
       }
     });
 

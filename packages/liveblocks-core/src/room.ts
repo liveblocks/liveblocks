@@ -2037,10 +2037,6 @@ export function createRoom<
   }
 
   function updateDoc(data: string) {
-    if (context.socket === null) {
-      return;
-    }
-
     context.buffer.messages.push({
       type: ClientMsgCode.UPDATE_DOC,
       data,
@@ -2122,7 +2118,6 @@ export function createRoom<
   }
 
   function getDoc(): void {
-    console.warn("pushing fetch doc message");
     context.buffer.messages.push({ type: ClientMsgCode.FETCH_DOC });
     tryFlushing();
   }
