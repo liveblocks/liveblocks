@@ -481,7 +481,7 @@ export type Room<
   /**
    * Sends a request for the current document from liveblocks server
    */
-  getDoc(): void;
+  getDoc(stateVector?: string): void;
 
   /**
    * Broadcasts an event to other users in the room. Event broadcasted to the room can be listened with {@link Room.subscribe}("event").
@@ -2117,8 +2117,8 @@ export function createRoom<
     };
   }
 
-  function getDoc(): void {
-    context.buffer.messages.push({ type: ClientMsgCode.FETCH_DOC });
+  function getDoc(vector: string = ""): void {
+    context.buffer.messages.push({ type: ClientMsgCode.FETCH_DOC, vector });
     tryFlushing();
   }
 

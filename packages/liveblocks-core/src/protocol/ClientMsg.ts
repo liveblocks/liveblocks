@@ -83,6 +83,7 @@ export type FetchStorageClientMsg = {
 
 export type FetchDocClientMsg = {
   readonly type: ClientMsgCode.FETCH_DOC;
+  readonly vector?: string;
 };
 
 export type UpdateDocClientMsg = {

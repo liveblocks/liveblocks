@@ -11,8 +11,7 @@ import type {
 } from "@liveblocks/client";
 import { Base64 } from "js-base64";
 import { Observable } from "lib0/observable";
-import type { Doc } from "yjs";
-import { applyUpdate, mergeUpdates } from "yjs";
+import * as Y from "yjs";
 
 type RoomEvent = {
   type: "REFRESH";
@@ -27,24 +26,33 @@ type RefreshResponse = {
   lastUpdate: number;
 };
 
+type MetaClientState = {
+  clock: number;
+  lastUpdated: number;
+};
+
 export class Awareness extends Observable<any> {
   private room: Room<JsonObject, LsonObject, BaseUserMeta, Json>;
-  public doc: Doc;
+  public doc: Y.Doc;
   public clientID: number;
-  public states: Map<string, any> = new Map();
-  public meta: Map<string, any> = new Map();
+  public states: Map<number, any> = new Map();
+  // Meta is used to keep track and timeout users who disconnect. Liveblocks provides this for us, so we don't need to
+  // manage it here. Unfortunately, it's expected to exist by various integrations, so it's an empty map.
+  public meta: Map<number, MetaClientState> = new Map();
+  // _checkInterval this would hold a timer to remove users, but Liveblock's presence already handles this
+  // unfortunately it's expected to exist by various integrations.
   public _checkInterval: number = 0;
 
-  private unsub: () => void;
+  private othersUnsub: () => void;
   constructor(
-    doc: Doc,
+    doc: Y.Doc,
     room: Room<JsonObject, LsonObject, BaseUserMeta, Json>
   ) {
     super();
     this.doc = doc;
     this.room = room;
     this.clientID = doc.clientID;
-    this.unsub = this.room.events.others.subscribe(({ event }) => {
+    this.othersUnsub = this.room.events.others.subscribe(({ event }) => {
       if (event.type === "leave") {
         // REMOVED
         this.emit("change", [
@@ -73,9 +81,9 @@ export class Awareness extends Observable<any> {
 
   destroy(): void {
     this.emit("destroy", [this]);
-    this.unsub();
-    super.destroy();
+    this.othersUnsub();
     this.setLocalState(null);
+    super.destroy();
   }
 
   getLocalState(): JsonObject | null {
@@ -123,11 +131,17 @@ export default class LiveblocksProvider<
   private room: Room<P, S, U, E>;
   private httpEndpoint?: string;
   private lastUpdateDate: null | Date = null;
-  private doc: Doc;
+  private doc: Y.Doc;
+
+  private unsubscribers: Array<() => void> = [];
 
   public awareness: Awareness;
 
-  constructor(room: Room<P, S, U, E>, doc: Doc, config?: LiveblocksYjsOptions) {
+  constructor(
+    room: Room<P, S, U, E>,
+    doc: Y.Doc,
+    config?: LiveblocksYjsOptions
+  ) {
     this.doc = doc;
     this.room = room;
 
@@ -137,39 +151,55 @@ export default class LiveblocksProvider<
       this.doc.clientID = connectionId;
     }
     this.awareness = new Awareness(this.doc, this.room);
-    this.doc.on("update", this.handleUpdate);
+    this.doc.on("update", this.updateHandler);
 
-    // if the connection changes, set the new id
-    this.room.events.connection.subscribe((e) => {
-      if (e === "open") {
-        this.doc.clientID =
-          this.room.getSelf()?.connectionId || this.doc.clientID;
-        this.awareness.clientID = this.doc.clientID;
-        this.room.getDoc();
-      }
-    });
+    this.unsubscribers.push(
+      this.room.events.connection.subscribe((e) => {
+        if (e === "open") {
+          /**
+           * If the connection changes, set the new id, this is used by awareness
+           * yjs' only requirement for clientID is that it's truly unique and a number.
+           * Liveblock's connectionID satisfies those constraints
+           *  */
+          this.doc.clientID =
+            this.room.getSelf()?.connectionId || this.doc.clientID;
+          this.awareness.clientID = this.doc.clientID; // tell our awareness provider the new ID
 
-    this.room.events.docUpdated.subscribe((updates) => {
-      const decodedUpdates: Uint8Array[] = updates.map(Base64.toUint8Array);
-      const update = mergeUpdates(decodedUpdates);
-      applyUpdate(this.doc, update, "backend");
-    });
+          // The state vector is sent to the server so it knows what to send back
+          // if you don't send it, it returns everything
+          const encodedVector = Base64.fromUint8Array(
+            Y.encodeStateVector(this.doc)
+          );
+          this.room.getDoc(encodedVector);
+        }
+      })
+    );
+
+    this.unsubscribers.push(
+      this.room.events.docUpdated.subscribe((updates) => {
+        const decodedUpdates: Uint8Array[] = updates.map(Base64.toUint8Array);
+        const update = Y.mergeUpdates(decodedUpdates);
+        Y.applyUpdate(this.doc, update, "backend");
+      })
+    );
 
     if (config?.httpEndpoint) {
       this.httpEndpoint = config.httpEndpoint + "?room=" + this.room.id;
 
-      this.room.events.customEvent.subscribe(({ event }) => {
-        if ((event as RoomEvent)?.type === "REFRESH") {
-          void this.resyncHttp();
-        }
-      });
+      this.unsubscribers.push(
+        this.room.events.customEvent.subscribe(({ event }) => {
+          if ((event as RoomEvent)?.type === "REFRESH") {
+            void this.resyncHttp();
+          }
+        })
+      );
 
       void this.resyncHttp();
     }
     this.room.getDoc();
   }
 
-  private handleUpdate = async (update: Uint8Array, origin: string) => {
+  private updateHandler = async (update: Uint8Array, origin: string) => {
     if (origin !== "backend") {
       const encodedUpdate = Base64.fromUint8Array(update);
       this.room.updateDoc(encodedUpdate);
@@ -201,7 +231,13 @@ export default class LiveblocksProvider<
 
     this.lastUpdateDate = new Date(lastUpdate);
 
-    const update = mergeUpdates(updates.map(Base64.toUint8Array));
-    applyUpdate(this.doc, update, "backend");
+    const update = Y.mergeUpdates(updates.map(Base64.toUint8Array));
+    Y.applyUpdate(this.doc, update, "backend");
+  }
+
+  destroy(): void {
+    this.doc.off("update", this.updateHandler);
+    this.unsubscribers.forEach((unsub) => unsub());
+    this.awareness.destroy();
   }
 }
