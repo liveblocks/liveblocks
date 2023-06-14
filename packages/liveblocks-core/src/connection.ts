@@ -265,6 +265,18 @@ function sendHeartbeat(ctx: Context) {
   ctx.socket?.send("ping");
 }
 
+function isCloseEvent(
+  error: IWebSocketEvent | Error
+): error is IWebSocketCloseEvent {
+  return !(error instanceof Error) && error.type === "close";
+}
+
+function isCustomCloseEvent(
+  error: IWebSocketEvent | Error
+): error is IWebSocketCloseEvent {
+  return isCloseEvent(error) && error.code >= 4000 && error.code < 4100;
+}
+
 export type Delegates<T extends BaseAuthResult> = {
   authenticate: () => Promise<T>;
   createSocket: (token: T) => IWebSocketInstance;
@@ -605,10 +617,6 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
         // Stop retrying if this promise explicitly tells us so. This should,
         // in the case of a WebSocket connection attempt only be the case if
         // there is a configuration error.
-        //
-        // If a WebSocket connection is refused by the server, it could be that
-        // the token is expired or revoked, etc. In those cases, always go back
-        // to the authentication endpoint to try to obtain a new token.
         if (err instanceof StopRetrying) {
           return {
             target: "@idle.failed",
@@ -616,17 +624,42 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
           };
         }
 
+        // Alternatively, it can happen if the server refuses the connection
+        // after accepting-then-closing the connection.
+        if (isCloseEvent(err) && err.code === 4999 /* Close Without Retry */) {
+          return {
+            target: "@idle.failed",
+            effect: log(LogLevel.ERROR, err.reason),
+          };
+        }
+
+        // We may skip re-authenticating only if this is a close event with
+        // a known custom close code, *except* when it's a 4001 (explicitly Not
+        // Allowed).
+        if (isCustomCloseEvent(err) && err.code !== 4001 /* Not Allowed */) {
+          return {
+            target: "@connecting.backoff",
+            effect: [
+              increaseBackoffDelayAggressively,
+
+              // Produce a useful log message
+              (ctx) => {
+                // XXX DRY up these logs!!
+                console.warn(
+                  `Connection to Liveblocks websocket server closed prematurely (code: ${
+                    (err as IWebSocketCloseEvent).code
+                  }). Retrying in ${ctx.backoffDelay}ms.`
+                );
+              },
+            ],
+          };
+        }
+
+        // In all other cases, always re-authenticate!
         return {
           target: "@auth.backoff",
           effect: [
-            // Increase the backoff delay conditionally
-            // TODO: This is ugly. DRY this up with the other code 40xx checks elsewhere.
-            !(err instanceof Error) &&
-            err.type === "close" &&
-            (err as IWebSocketCloseEvent).code >= 4000 &&
-            (err as IWebSocketCloseEvent).code <= 4100
-              ? increaseBackoffDelayAggressively
-              : increaseBackoffDelay,
+            increaseBackoffDelay,
 
             // Produce a useful log message
             (ctx) => {
@@ -635,7 +668,8 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
               } else {
                 console.warn(
                   err.type === "close"
-                    ? `Connection to Liveblocks websocket server closed prematurely (code: ${
+                    ? // XXX DRY up these logs!!
+                      `Connection to Liveblocks websocket server closed prematurely (code: ${
                         (err as IWebSocketCloseEvent).code
                       }). Retrying in ${ctx.backoffDelay}ms.`
                     : "Connection to Liveblocks websocket server could not be established."
@@ -730,6 +764,8 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
             ),
           }; // Should not retry, give up
         }
+
+        // XXX Handle 4001 specially here? Must re-auth!
 
         // If this is a custom Liveblocks server close reason, back off more
         // aggressively, and emit a Liveblocks error event...
