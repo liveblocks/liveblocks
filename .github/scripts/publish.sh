@@ -75,7 +75,7 @@ publish_to_npm () {
 
     echo "I'm ready to publish $PKGNAME to NPM, under $VERSION!"
     # TODO: remove dry-run
-    npm publish --tag private
+    npm publish --tag private --access public
 }
 
 # Turns "packages/liveblocks-core" => "@liveblocks/core"
