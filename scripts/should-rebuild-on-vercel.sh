@@ -26,12 +26,12 @@ err () {
 }
 
 usage () {
-    err "usage: should-example-rebuild-on-vercel.sh [-hv] <example-name>"
+    err "usage: should-rebuild-on-vercel.sh [-hv] <project-path>"
     err
-    err "Returns a 0 or 1 exit code, indicating whether the given example should be redeployed."
+    err "Returns a 0 or 1 exit code, indicating whether the given project should be redeployed."
     err
     err "Options:"
-    err "-p    Also trigger on updates to packages dir (default is examples dir only)"
+    err "-p    Also trigger on updates to packages dir (default is project dir only)"
     err "-v    Be verbose"
     err "-h    Show this help"
 }
@@ -56,12 +56,10 @@ elif [ "$#" -gt 1 ]; then
     exit 4
 fi
 
-EXAMPLE="${1%/}"
+PROJECT="${1%/}"
 
-if [ ! -d "examples/$EXAMPLE" ]; then
-    err "Unknown example: $EXAMPLE"
-    err "Valid examples are:"
-    ls examples/ | cat >&2
+if [ ! -d "$PROJECT" ]; then
+    err "Invalid path: $PROJECT"
     exit 5
 fi
 
@@ -95,9 +93,9 @@ get_all_changed_files () {
         const data = require("./diff-since-main.json");
 
         // If some commits on this branch have the phrase "[no vercel]" or
-        // "[skip examples]" or some combination like that in their message, skip
+        // "[skip deploy]" or some combination like that in their message, skip
         // this build
-        if (data?.commits?.some(commit => /\[(no|skip).*(vercel|examples|deploy).*\]/i.test(commit.message))) {
+        if (data?.commits?.some(commit => /\[(no|skip).*(vercel|deploy).*\]/i.test(commit.message))) {
             process.exit(0);
         }
 
@@ -114,12 +112,13 @@ get_all_changed_files () {
 }
 
 #
-# We're only interested in checking the examples and packages folders, ignore
+# We're only interested in checking some folders, ignore
 # any other changed files.
 #
 get_interesting_changed_files () {
     get_all_changed_files \
       | grep -Ee '^examples/' \
+      | grep -Ee '^starter-kits/' \
       | grep -vEe "/[.]" \
       | grep -vEe "(\.md)\$" \
       | grep -vEe "\b(test|jest)\b"
@@ -127,18 +126,18 @@ get_interesting_changed_files () {
 
 files_that_should_trigger_rebuild () {
     get_interesting_changed_files \
-        | grep -Ee "examples/$EXAMPLE"
+        | grep -Ee "$PROJECT"
 }
 
 if [ "$(files_that_should_trigger_rebuild | wc -l)" -eq 0 ]; then
     if [ $verbose -eq 1 ]; then
-        err "Example \"$EXAMPLE\" unaffected by change."
+        err "Project at \"$PROJECT\" unaffected by change."
     fi
     rm -f changed-files.txt
     exit 0
 else
     if [ $verbose -eq 1 ]; then
-        err "⚠️  Example \"$EXAMPLE\" needs rebuild."
+        err "⚠️  Project at \"$PROJECT\" needs rebuild."
         files_that_should_trigger_rebuild >&2
         err
     fi
