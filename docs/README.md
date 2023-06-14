@@ -109,6 +109,15 @@ Creating a new page is only a matter of creating a new MDX file in the
 
 ## Assets
 
-Assets live under
-[the private repository](https://github.com/liveblocks/liveblocks.io) behind
-https://liveblocks.io.
+Assets live in the [`/assets`](/assets) directory.
+
+#### Example
+
+```
+<Image
+  src="/assets/devtools/spreadsheet-example.png"
+  alt="Liveblocks DevTools panel"
+  width={730}
+  height={504}
+/>
+```
