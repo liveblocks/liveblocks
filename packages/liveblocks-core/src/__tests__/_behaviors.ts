@@ -11,9 +11,12 @@
 import { StopRetrying } from "../connection";
 import type { RichToken } from "../protocol/AuthToken";
 import type { RoomDelegates } from "../room";
-import type { IWebSocketInstance } from "../types/IWebSocket";
+import type { MockWebSocket } from "./_MockWebSocketServer";
 import { MockWebSocketServer } from "./_MockWebSocketServer";
 import { makeRoomToken } from "./_utils";
+
+type AuthBehavior = () => RichToken;
+type SocketBehavior = (wss: MockWebSocketServer) => MockWebSocket;
 
 function makeRichToken(actor: number, scopes: string[]): RichToken {
   const raw = "<some fake JWT token>";
@@ -35,8 +38,8 @@ function makeRichToken(actor: number, scopes: string[]): RichToken {
  * observe the effects of the Room taking actions.
  */
 export function defineBehavior(
-  authBehavior: () => RichToken,
-  socketBehavior: (wss: MockWebSocketServer) => IWebSocketInstance
+  authBehavior: AuthBehavior,
+  socketBehavior: SocketBehavior
 ): {
   wss: MockWebSocketServer;
   delegates: RoomDelegates;
@@ -49,9 +52,8 @@ export function defineBehavior(
     }
   };
 
-  const createSocket = () => socketBehavior(wss);
-
   const wss = new MockWebSocketServer();
+  const createSocket = () => socketBehavior(wss);
 
   const delegates: RoomDelegates = {
     authenticate: jest.fn(authenticate),
@@ -76,11 +78,11 @@ export function ALWAYS_AUTH_AS(actor: number, scopes: string[] = []) {
   return () => makeRichToken(actor, scopes);
 }
 
-export function ALWAYS_FAIL_AUTH(): RichToken {
+export function ALWAYS_FAIL_AUTH(): never {
   throw new Error("Random error, like 503 Service Unavailable or whatever");
 }
 
-export function UNAUTHORIZED(): RichToken {
+export function UNAUTHORIZED(): never {
   // A type of error that gets treated specially
   throw new StopRetrying("Unauthorized");
 }
