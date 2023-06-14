@@ -3,10 +3,11 @@ import { defineConfig } from "tsup";
 export default defineConfig({
   entry: ["src/index.ts"],
   dts: true,
-  splitting: true,
+  splitting: false,
   clean: true,
-  target: "es2015",
-  format: ["cjs"],
+  bundle: true,
+  platform: "browser",
+  format: ["cjs", "esm"],
 
   // Perhaps enable later?
   // "minify": true,
