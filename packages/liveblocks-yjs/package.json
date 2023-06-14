@@ -20,7 +20,8 @@
   },
   "dependencies": {
     "@liveblocks/client": "1.0.12",
-    "@liveblocks/core": "1.0.12"
+    "@liveblocks/core": "1.0.12",
+    "js-base64": "^3.7.5"
   },
   "peerDependencies": {
     "yjs": "^13.6.1"

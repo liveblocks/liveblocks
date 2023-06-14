@@ -22,8 +22,5 @@
     "tsup": "^6.7.0",
     "turbo": "^1.10.1",
     "typescript": "<4.8"
-  },
-  "dependencies": {
-    "js-base64": "^3.7.5"
   }
 }
