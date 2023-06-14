@@ -118,7 +118,8 @@ If you are using CommonJS, downgrade `node-fetch` to v2.
 
 ### WebSocket throttle [#createClientThrottle]
 
-By default, the client throttle the WebSocket messages sent to 100 milliseconds.
+By default, the client throttles the WebSocket messages sent to 100
+milliseconds.
 
 It is possible to override that configuration with the `throttle` option.
 
@@ -356,8 +357,27 @@ user update its presence.
 Returns an unsubscribe function.
 
 ```ts
-const unsubscribe = room.subscribe("others", (others) => {
+const unsubscribe = room.subscribe("others", (others, event) => {
   // Do something
+
+  if (event.type === "leave") {
+    // A user has left the room
+    // event.user;
+  }
+
+  if (event.type === "enter") {
+    // A user has entered the room
+    // event.user;
+  }
+
+  if (event.type === "update") {
+    // A user has updated
+    // event.user;
+    // event.updates;
+  }
+
+  if (event.type === "reset") {
+    // A disconnection has occurred and others has reset
 });
 ```
 

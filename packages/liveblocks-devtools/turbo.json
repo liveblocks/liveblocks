@@ -2,12 +2,16 @@
   "$schema": "https://turborepo.org/schema.json",
   "extends": ["//"],
   "pipeline": {
+    "build": {
+      "outputs": ["dist/chrome-**"]
+    },
     "dev:firefox": {
       "dependsOn": ["^build"],
       "cache": false
     },
     "build:firefox": {
-      "dependsOn": ["^build"]
+      "dependsOn": ["^build"],
+      "outputs": ["dist/firefox-**"]
     }
   }
 }
