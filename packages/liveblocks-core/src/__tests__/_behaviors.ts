@@ -110,6 +110,15 @@ export function SOCKET_AUTOCONNECT(wss: MockWebSocketServer) {
 }
 
 /**
+ * The socket will behave by throwing once "new WebSocket()" is called.
+ */
+export function SOCKET_THROWS(errmsg: string = "You shall not pass") {
+  return (_wss: MockWebSocketServer) => {
+    throw new Error(errmsg);
+  };
+}
+
+/**
  * Configures the MockWebSocketServer to automatically accept the first socket
  * connection attempt, then fail all subsequent attempts.
  */
