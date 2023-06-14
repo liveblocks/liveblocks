@@ -119,6 +119,25 @@ export function SOCKET_THROWS(errmsg: string = "You shall not pass") {
 }
 
 /**
+ * Configures the MockWebSocketServer to respond with the given hardcoded
+ * sequence of behaviors. The last behavior will be repeated infinitely.
+ */
+export function SOCKET_SEQUENCE(
+  ...sequence: readonly SocketBehavior[]
+): SocketBehavior {
+  if (sequence.length === 0) {
+    throw new Error("Must specify at least one behavior");
+  }
+  const fallback = sequence[sequence.length - 1];
+
+  let index = 0;
+  return (wss: MockWebSocketServer) => {
+    const behavior = sequence[index++] ?? fallback;
+    return behavior(wss);
+  };
+}
+
+/**
  * Configures the MockWebSocketServer to automatically accept the first socket
  * connection attempt, then fail all subsequent attempts.
  */
