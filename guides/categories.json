@@ -15,9 +15,17 @@
     {
       "id": "state",
       "name": "State"
+    },
+    {
+      "id": "tutorials",
+      "name": "Tutorials"
     }
   ],
   "technologies": [
+    {
+      "id": "javascript",
+      "name": "JavaScript"
+    },
     {
       "id": "react",
       "name": "React"
@@ -45,6 +53,14 @@
     {
       "id": "astro",
       "name": "Astro"
+    },
+    {
+      "id": "redux",
+      "name": "Redux"
+    },
+    {
+      "id": "zustand",
+      "name": "Zustand"
     }
   ]
 }
