@@ -16,9 +16,20 @@ import { makeEventSource } from "../../lib/EventSource";
 import { onMessage, sendMessage } from "../port";
 import type { FullBackgroundToPanelMessage } from "../protocol";
 
+// We can remove this type definition by importing it from @liveblocks/core
+// once the 1.1 beta has landed
+type FutureConnectionStatus =
+  | "initial"
+  | "connecting"
+  | "connected"
+  | "reconnecting"
+  | "disconnected";
+
+type Status = ConnectionStatus | FutureConnectionStatus;
+
 type Room = {
   readonly roomId: string;
-  status: ConnectionStatus | null;
+  status: Status | null;
   storage: readonly DevTools.LsonTreeNode[] | null;
   me: DevTools.UserTreeNode | null;
   others: readonly DevTools.UserTreeNode[];
@@ -319,7 +330,7 @@ export function useRoomIds(): string[] {
   return useSyncExternalStore(onRoomCountChanged.subscribe, () => allRoomIds);
 }
 
-export function useStatus(): ConnectionStatus | null {
+export function useStatus(): Status | null {
   const currentRoomId = useCurrentRoomId();
   return useSyncExternalStore(
     getSubscribe(currentRoomId, "onStatus") ?? nosub,
