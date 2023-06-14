@@ -22,11 +22,11 @@ import { createRoom } from "../room";
 import { WebsocketCloseCodes } from "../types/IWebSocket";
 import type { Others } from "../types/Others";
 import {
-  AUTO_OPEN_SOCKETS,
-  DEFAULT_AUTH,
+  AUTH_SUCCESS,
   defineBehavior,
-  MANUAL_SOCKETS,
+  SOCKET_AUTOCONNECT,
   SOCKET_CONNECT_ONLY_ONCE,
+  SOCKET_NO_BEHAVIOR,
 } from "./_behaviors";
 import { listUpdate, listUpdateInsert, listUpdateSet } from "./_updatesUtils";
 import {
@@ -85,8 +85,8 @@ function createTestableRoom<
   TRoomEvent extends Json
 >(
   initialPresence: TPresence,
-  authBehavior = DEFAULT_AUTH,
-  socketBehavior = AUTO_OPEN_SOCKETS,
+  authBehavior = AUTH_SUCCESS,
+  socketBehavior = SOCKET_AUTOCONNECT,
   config?: Partial<RoomConfig>
 ) {
   const { wss, delegates } = defineBehavior(authBehavior, socketBehavior);
@@ -1633,8 +1633,8 @@ describe("room", () => {
       try {
         const { room, wss } = createTestableRoom(
           { x: 0 },
-          DEFAULT_AUTH,
-          MANUAL_SOCKETS // ⚠️  This will let us programmatically control opening the sockets
+          AUTH_SUCCESS,
+          SOCKET_NO_BEHAVIOR // ⚠️  This will let us programmatically control opening the sockets
         );
         expect(room.getConnectionState()).toBe("closed"); // This API will be deprecated in the future
         expect(room.getStatus()).toEqual("initial");

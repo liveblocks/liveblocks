@@ -1,17 +1,17 @@
 import { ManagedSocket } from "../connection";
 import {
   ALWAYS_FAIL_AUTH,
-  AUTO_OPEN_SOCKETS,
-  DEFAULT_AUTH,
+  AUTH_SUCCESS,
   defineBehavior,
-  MANUAL_SOCKETS,
+  SOCKET_AUTOCONNECT,
+  SOCKET_NO_BEHAVIOR,
 } from "./_behaviors";
 
 describe("ManagedSocket", () => {
   test("failure to authenticate", async () => {
     jest.useFakeTimers();
 
-    const { delegates } = defineBehavior(ALWAYS_FAIL_AUTH, MANUAL_SOCKETS);
+    const { delegates } = defineBehavior(ALWAYS_FAIL_AUTH, SOCKET_NO_BEHAVIOR);
 
     const didConnect = jest.fn();
     // const didDisconnect = jest.fn();
@@ -31,7 +31,7 @@ describe("ManagedSocket", () => {
   test("authenticate succeeds, but no websocket connection", async () => {
     jest.useFakeTimers();
 
-    const { delegates } = defineBehavior(DEFAULT_AUTH, AUTO_OPEN_SOCKETS);
+    const { delegates } = defineBehavior(AUTH_SUCCESS, SOCKET_AUTOCONNECT);
 
     const didConnect = jest.fn();
     // const didDisconnect = jest.fn();
