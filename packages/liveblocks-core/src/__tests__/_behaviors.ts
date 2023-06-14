@@ -11,6 +11,7 @@
 import { StopRetrying } from "../connection";
 import type { RichToken } from "../protocol/AuthToken";
 import type { RoomDelegates } from "../room";
+import type { WebsocketCloseCodes } from "../types/IWebSocket";
 import type { MockWebSocket } from "./_MockWebSocketServer";
 import { MockWebSocketServer } from "./_MockWebSocketServer";
 import { makeRoomToken } from "./_utils";
@@ -116,6 +117,29 @@ export function SOCKET_THROWS(errmsg: string = "You shall not pass") {
   return (_wss: MockWebSocketServer) => {
     throw new Error(errmsg);
   };
+}
+
+/**
+ * Configures the MockWebSocketServer to accept-and-immediately-close the
+ * connection.
+ */
+export function SOCKET_REFUSES(
+  code: WebsocketCloseCodes,
+  reason: string = "No good reason"
+): SocketBehavior {
+  return (wss: MockWebSocketServer) =>
+    wss.newSocket((socket) => {
+      // Accept-then-immediately-close the connection. This is how the
+      // websocket server will refuse a connection that isn't allowed.
+      socket.server.accept();
+      socket.server.close(
+        new CloseEvent("close", {
+          reason,
+          code,
+          wasClean: true,
+        })
+      );
+    });
 }
 
 /**

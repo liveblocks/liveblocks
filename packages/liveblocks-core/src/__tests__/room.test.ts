@@ -26,6 +26,7 @@ import {
   defineBehavior,
   SOCKET_AUTOCONNECT,
   SOCKET_NO_BEHAVIOR,
+  SOCKET_REFUSES,
   SOCKET_SEQUENCE,
   SOCKET_THROWS,
 } from "./_behaviors";
@@ -296,6 +297,195 @@ describe("room", () => {
     await waitUntilStatus(room, "connected");
     expect(room.getConnectionState()).toBe("open"); // This API will be deprecated in the future
     expect(room.getStatus()).toEqual("connected");
+  });
+
+  test("should fall back to get a new token if socket cannot connect (initially)", async () => {
+    const { room, delegates } = createTestableRoom(
+      {},
+      undefined,
+      SOCKET_SEQUENCE(
+        SOCKET_THROWS("😈"),
+        SOCKET_AUTOCONNECT // Repeats infinitely
+      )
+    );
+    room.connect();
+
+    await waitUntilStatus(room, "connecting");
+    await waitUntilStatus(room, "connected");
+
+    expect(delegates.authenticate).toHaveBeenCalledTimes(2); // It re-authed!
+    expect(delegates.createSocket).toHaveBeenCalledTimes(2);
+  });
+
+  test("should fall back to get a new token if socket cannot connect (when reconnecting)", async () => {
+    const { room, wss, delegates } = createTestableRoom(
+      {},
+      undefined,
+      SOCKET_SEQUENCE(
+        SOCKET_AUTOCONNECT,
+        SOCKET_THROWS("😈"),
+        SOCKET_AUTOCONNECT // Repeats infinitely
+      )
+    );
+    room.connect();
+
+    await waitUntilStatus(room, "connected");
+
+    // Closing this connection will trigger a reconnection...
+    wss.last.close(
+      new CloseEvent("close", {
+        code: WebsocketCloseCodes.CLOSE_ABNORMAL,
+        wasClean: false,
+      })
+    );
+
+    await waitUntilStatus(room, "reconnecting");
+    await waitUntilStatus(room, "connected");
+
+    // Because the socket cannot establish a connection (no network, or an
+    // non-2xx HTTP response), we cannot know what the issue is. It could be
+    // because the token is invalid or expired, aka a HTTP 403. But it could
+    // also be something else. In the HTTP 403 case, we would _definitely_ need
+    // to reauthorize. But since we don't know, we cannot optimize and must
+    // assume we have to. Once the backend starts to refuse (aka
+    // accept-then-immediately-close) WebSocket connections, then we would be
+    // able to know.
+    expect(delegates.authenticate).toHaveBeenCalledTimes(2); // It re-authed!
+    expect(delegates.createSocket).toHaveBeenCalledTimes(3);
+  });
+
+  test("should reconnect without getting a new auth token when told by server that room is full (as refusal)", async () => {
+    const { room, delegates } = createTestableRoom(
+      {},
+      undefined,
+      SOCKET_SEQUENCE(
+        SOCKET_REFUSES(
+          WebsocketCloseCodes.MAX_NUMBER_OF_CONCURRENT_CONNECTIONS,
+          "Room full"
+        ),
+        SOCKET_AUTOCONNECT // Repeated to infinity
+      ),
+      { enableDebugLogging: true } // XXX Remove!
+    );
+    room.connect();
+
+    await waitUntilStatus(room, "connecting");
+    await waitUntilStatus(room, "connected", 4000);
+
+    // ...but we should not hit authentication again here (instead, the token should be reused)
+    expect(delegates.authenticate).toHaveBeenCalledTimes(1); // Only once!
+    expect(delegates.createSocket).toHaveBeenCalledTimes(2);
+  });
+
+  test("should reconnect without getting a new auth token when told by server that room is full (while connected)", async () => {
+    const { room, wss, delegates } = createTestableRoom(
+      {},
+      undefined,
+      SOCKET_AUTOCONNECT
+    );
+    room.connect();
+
+    await waitUntilStatus(room, "connected");
+
+    // Closing this connection will trigger a reconnection...
+    wss.last.close(
+      new CloseEvent("close", {
+        code: WebsocketCloseCodes.MAX_NUMBER_OF_CONCURRENT_CONNECTIONS,
+        wasClean: true,
+      })
+    );
+
+    await waitUntilStatus(room, "reconnecting");
+    await waitUntilStatus(room, "connected", 4000);
+
+    expect(delegates.authenticate).toHaveBeenCalledTimes(1); // Only once!
+    expect(delegates.createSocket).toHaveBeenCalledTimes(2);
+  });
+
+  test("should get a new auth token if unauthorized (as refusal)", async () => {
+    const { room, delegates } = createTestableRoom(
+      {},
+      undefined,
+      SOCKET_SEQUENCE(
+        SOCKET_REFUSES(WebsocketCloseCodes.NOT_ALLOWED),
+        SOCKET_AUTOCONNECT
+      )
+    );
+    room.connect();
+
+    await waitUntilStatus(room, "connecting");
+    await waitUntilStatus(room, "connected", 4000);
+
+    expect(delegates.authenticate).toHaveBeenCalledTimes(2); // It re-authed!
+    expect(delegates.createSocket).toHaveBeenCalledTimes(2);
+  });
+
+  test("should get a new auth token if unauthorized (while connected)", async () => {
+    const { room, wss, delegates } = createTestableRoom(
+      {},
+      undefined,
+      SOCKET_AUTOCONNECT
+    );
+    room.connect();
+
+    await waitUntilStatus(room, "connected");
+
+    // Closing this connection will trigger a reconnection...
+    wss.last.close(
+      new CloseEvent("close", {
+        code: WebsocketCloseCodes.NOT_ALLOWED,
+        wasClean: true,
+      })
+    );
+
+    await waitUntilStatus(room, "reconnecting");
+    await waitUntilStatus(room, "connected");
+
+    expect(delegates.authenticate).toHaveBeenCalledTimes(2); // It re-authed!
+    expect(delegates.createSocket).toHaveBeenCalledTimes(2);
+  });
+
+  test("should disconnect if told by server to not try reconnecting again (as refusal)", async () => {
+    const { room, delegates } = createTestableRoom(
+      {},
+      undefined,
+      SOCKET_SEQUENCE(
+        SOCKET_REFUSES(WebsocketCloseCodes.CLOSE_WITHOUT_RETRY),
+        SOCKET_AUTOCONNECT
+      )
+    );
+    room.connect();
+
+    // Will try to reconnect, then gets refused, then disconnects
+    await waitUntilStatus(room, "connecting");
+    await waitUntilStatus(room, "disconnected", 4000);
+
+    expect(delegates.authenticate).toHaveBeenCalledTimes(1); // Only once!
+    expect(delegates.createSocket).toHaveBeenCalledTimes(1);
+  });
+
+  test("should disconnect if told by server to not try reconnecting again (while connected)", async () => {
+    const { room, wss, delegates } = createTestableRoom(
+      {},
+      undefined,
+      SOCKET_AUTOCONNECT
+    );
+    room.connect();
+
+    await waitUntilStatus(room, "connected");
+
+    // Closing this connection will trigger a reconnection...
+    wss.last.close(
+      new CloseEvent("close", {
+        code: WebsocketCloseCodes.CLOSE_WITHOUT_RETRY,
+        wasClean: true,
+      })
+    );
+
+    await waitUntilStatus(room, "disconnected");
+
+    expect(delegates.authenticate).toHaveBeenCalledTimes(1); // It re-authed!
+    expect(delegates.createSocket).toHaveBeenCalledTimes(1);
   });
 
   test("initial presence should be sent once the connection is open", async () => {
