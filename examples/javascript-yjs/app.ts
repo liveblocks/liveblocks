@@ -1,9 +1,9 @@
 import { createClient } from "@liveblocks/client";
+import LiveblocksProvider from "@liveblocks/yjs";
 import * as Y from "yjs";
 import Quill from "quill";
 import QuillCursors from "quill-cursors";
 import { QuillBinding } from "y-quill";
-import LiveblocksProvider from "@liveblocks/yjs";
 
 async function run() {
   let PUBLIC_KEY =
