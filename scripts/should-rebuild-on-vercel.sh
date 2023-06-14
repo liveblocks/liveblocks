@@ -117,8 +117,7 @@ get_all_changed_files () {
 #
 get_interesting_changed_files () {
     get_all_changed_files \
-      | grep -Ee '^examples/' \
-      | grep -Ee '^starter-kits/' \
+      | grep -Ee '^(examples|starter-kits)/' \
       | grep -vEe "/[.]" \
       | grep -vEe "(\.md)\$" \
       | grep -vEe "\b(test|jest)\b"
