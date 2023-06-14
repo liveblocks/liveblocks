@@ -25,8 +25,9 @@ import {
   AUTH_SUCCESS,
   defineBehavior,
   SOCKET_AUTOCONNECT,
-  SOCKET_CONNECT_ONLY_ONCE,
   SOCKET_NO_BEHAVIOR,
+  SOCKET_SEQUENCE,
+  SOCKET_THROWS,
 } from "./_behaviors";
 import { listUpdate, listUpdateInsert, listUpdateSet } from "./_updatesUtils";
 import {
@@ -469,7 +470,7 @@ describe("room", () => {
     const { room, wss } = createTestableRoom(
       {},
       undefined,
-      SOCKET_CONNECT_ONLY_ONCE(),
+      SOCKET_SEQUENCE(SOCKET_AUTOCONNECT, SOCKET_THROWS()),
       { lostConnectionTimeout: 10 }
     );
     room.connect();
