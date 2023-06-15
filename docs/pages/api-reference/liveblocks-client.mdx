@@ -288,6 +288,19 @@ Gets the current user. Returns `null` if it is not yet connected to the room.
 const { connectionId, presence, id, info, isReadOnly } = room.getSelf();
 ```
 
+### Room.getStatus
+
+Gets the current connection status of the room.
+
+```ts
+const status = room.getStatus();
+// "initial"
+// "connecting"
+// "connected"
+// "reconnecting"
+// "disconnected"
+```
+
 ### Room.subscribe(storageItem)
 
 Subscribe to updates for a particular storage item.
