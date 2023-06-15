@@ -10,9 +10,11 @@ export function Room({ children }: { children: ReactNode }) {
 
   return (
     <RoomProvider id={roomId} initialPresence={{}}>
-      <ClientSideSuspense fallback={<Loading />}>
-        {() => children}
-      </ClientSideSuspense>
+      <main className="main">
+        <ClientSideSuspense fallback={<Loading />}>
+          {() => children}
+        </ClientSideSuspense>
+      </main>
     </RoomProvider>
   );
 }

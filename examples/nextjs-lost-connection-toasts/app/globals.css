@@ -15,6 +15,14 @@ a {
   box-sizing: border-box;
 }
 
+.main {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
 .loading {
   position: absolute;
   width: 100vw;
