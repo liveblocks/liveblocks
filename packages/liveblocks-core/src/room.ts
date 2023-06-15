@@ -1000,16 +1000,11 @@ export function createRoom<
     // room connection happens, we won't know the connection ID here just yet.
     context.idFactory = makeIdFactory(sessionInfo.id);
 
-    // XXX This needs to be fixed! We _also_ need to fetch if storage was
-    // _attempted_ to load before, but it failed to do so!
-    // XXX However, not if it happened _too close_ to the last attempt (because
-    // that would be a double-fetch).
-    // XXX So the question is: how can we know when it would be a double-fetch
-    // vs when it would be considered old. We could
-    if (context.root !== undefined) {
-      context.buffer.messages.push({ type: ClientMsgCode.FETCH_STORAGE });
+    // If a storage fetch has ever been initiated, we assume the client is
+    // interested in storage, so we will refresh it after a reconnection.
+    if (_getStorage$ !== null) {
+      refreshStorage({ flush: false });
     }
-
     tryFlushing();
   }
 
@@ -1872,10 +1867,22 @@ export function createRoom<
   let _getStorage$: Promise<void> | null = null;
   let _resolveStoragePromise: (() => void) | null = null;
 
+  function refreshStorage(options: { flush: boolean }) {
+    // Only add the fetch message to the outgoing message queue if it isn't
+    // already there
+    const messages = context.buffer.messages;
+    if (!messages.some((msg) => msg.type === ClientMsgCode.FETCH_STORAGE)) {
+      messages.push({ type: ClientMsgCode.FETCH_STORAGE });
+    }
+
+    if (options.flush) {
+      tryFlushing();
+    }
+  }
+
   function startLoadingStorage(): Promise<void> {
     if (_getStorage$ === null) {
-      context.buffer.messages.push({ type: ClientMsgCode.FETCH_STORAGE });
-      tryFlushing();
+      refreshStorage({ flush: true });
       _getStorage$ = new Promise((resolve) => {
         _resolveStoragePromise = resolve;
       });
