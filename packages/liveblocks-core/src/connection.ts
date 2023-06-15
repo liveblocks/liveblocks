@@ -304,6 +304,10 @@ function isCloseEvent(
   return !(error instanceof Error) && error.type === "close";
 }
 
+/**
+ * Whether this is a Liveblocks-specific close event (a close code in the 40xx
+ * range).
+ */
 function isCustomCloseEvent(
   error: IWebSocketEvent | Error
 ): error is IWebSocketCloseEvent {
@@ -769,21 +773,25 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
           }; // Should not retry, give up
         }
 
-        // XXX Handle 4001 specially here? Must re-auth!
+        // Server instructs us to reauthenticate
+        if (e.event.code === 4001 /* Not Allowed */) {
+          return {
+            target: "@auth.backoff",
+            effect: [increaseBackoffDelay, logCloseEvent(e.event)],
+          };
+        }
 
         // If this is a custom Liveblocks server close reason, back off more
         // aggressively, and emit a Liveblocks error event...
-        if (e.event.code >= 4000 && e.event.code <= 4100) {
+        if (isCustomCloseEvent(e.event)) {
           return {
             target: "@connecting.backoff",
             effect: [
               increaseBackoffDelayAggressively,
               logCloseEvent(e.event),
-              (_, { event }) => {
-                if (event.code >= 4000 && event.code <= 4100) {
-                  const err = new LiveblocksError(event.reason, event.code);
-                  onLiveblocksError.notify(err);
-                }
+              () => {
+                const err = new LiveblocksError(e.event.reason, e.event.code);
+                onLiveblocksError.notify(err);
               },
             ],
           };
