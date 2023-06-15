@@ -1,7 +1,7 @@
 "use client";
 
 import { ReactNode, useMemo } from "react";
-import { RoomProvider } from "./liveblocks.config";
+import { RoomProvider } from "@/liveblocks.config";
 import { useSearchParams } from "next/navigation";
 import { ClientSideSuspense } from "@liveblocks/react";
 

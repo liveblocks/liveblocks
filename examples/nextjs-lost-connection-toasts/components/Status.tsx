@@ -1,30 +1,15 @@
 "use client";
 
 import styles from "./Status.module.css";
-import { useStatus } from "@/app/liveblocks.config";
-
-const statusColours = {
-  initial: "gray",
-  connecting: "yellow",
-  connected: "green",
-  reconnecting: "yellow",
-  disconnected: "red",
-};
-
-const statuses = {
-  connecting: {
-    text: "Connecting",
-  },
-  connected: {
-    text: "Connected",
-  },
-  reconnecting: {
-    text: "Reconnecting",
-  },
-};
+import { useStatus } from "@/liveblocks.config";
 
 export function Status() {
   const status = useStatus();
 
-  return <div className={styles.status}>{statuses[status].text}</div>;
+  return (
+    <div className={styles.status} data-status={status}>
+      <div className={styles.statusCircle} />
+      <div className={styles.statusText}>{status}</div>
+    </div>
+  );
 }

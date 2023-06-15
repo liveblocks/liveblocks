@@ -1,6 +1,6 @@
 "use client";
 
-import { useLostConnectionListener } from "@/app/liveblocks.config";
+import { useLostConnectionListener } from "@/liveblocks.config";
 import { useRef } from "react";
 import toast, { Toaster } from "react-hot-toast";
 
@@ -9,15 +9,20 @@ export function LostConnectionToasts() {
 
   useLostConnectionListener((event) => {
     if (event === "lost") {
-      toastId.current = toast.loading("Lost connection, trying to reconnect…");
+      toastId.current = toast.loading("Lost connection, reconnecting…");
     } else if (event === "restored") {
-      toastId.current = toast.success("Reconnected!", { id: toastId.current });
+      toast.success("Reconnected!", { id: toastId.current });
     } else if (event === "failed") {
-      toastId.current = toast.error("Could not reconnect, please refresh.", {
+      toast.error("Could not reconnect, please refresh.", {
         id: toastId.current,
       });
     }
   });
 
-  return <Toaster position="top-right" />;
+  return (
+    <Toaster
+      position="bottom-right"
+      toastOptions={{ style: { width: "290px", borderRadius: "9999px" } }}
+    />
+  );
 }
