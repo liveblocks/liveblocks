@@ -1005,7 +1005,7 @@ export function createRoom<
     if (_getStorage$ !== null) {
       refreshStorage({ flush: false });
     }
-    tryFlushing();
+    flushNowOrSoon();
   }
 
   function onDidDisconnect() {
@@ -1468,7 +1468,7 @@ export function createRoom<
       }
       context.activeBatch.updates.presence = true;
     } else {
-      tryFlushing();
+      flushNowOrSoon();
       batchUpdates(() => {
         if (options?.addToHistory) {
           addToUndoStack(
@@ -1581,7 +1581,7 @@ export function createRoom<
       data: context.me.current,
       targetActor: message.actor,
     });
-    tryFlushing();
+    flushNowOrSoon();
 
     // We recorded the connection, but we won't make the new user visible
     // unless we also know their initial presence data at this point.
@@ -1762,7 +1762,7 @@ export function createRoom<
     });
   }
 
-  function tryFlushing() {
+  function flushNowOrSoon() {
     const storageOps = context.buffer.storageOperations;
     if (storageOps.length > 0) {
       for (const op of storageOps) {
@@ -1798,7 +1798,7 @@ export function createRoom<
       // Or schedule the flush a few millis into the future
       clearTimeout(context.buffer.flushTimerID);
       context.buffer.flushTimerID = setTimeout(
-        tryFlushing,
+        flushNowOrSoon,
         config.throttleDelay - elapsedMillis
       );
     }
@@ -1856,12 +1856,12 @@ export function createRoom<
       type: ClientMsgCode.BROADCAST_EVENT,
       event,
     });
-    tryFlushing();
+    flushNowOrSoon();
   }
 
   function dispatchOps(ops: Op[]) {
     context.buffer.storageOperations.push(...ops);
-    tryFlushing();
+    flushNowOrSoon();
   }
 
   let _getStorage$: Promise<void> | null = null;
@@ -1876,7 +1876,7 @@ export function createRoom<
     }
 
     if (options.flush) {
-      tryFlushing();
+      flushNowOrSoon();
     }
   }
 
@@ -1950,7 +1950,7 @@ export function createRoom<
         context.buffer.storageOperations.push(op);
       }
     }
-    tryFlushing();
+    flushNowOrSoon();
   }
 
   function redo() {
@@ -1977,7 +1977,7 @@ export function createRoom<
         context.buffer.storageOperations.push(op);
       }
     }
-    tryFlushing();
+    flushNowOrSoon();
   }
 
   function batch<T>(callback: () => T): T {
@@ -2023,7 +2023,7 @@ export function createRoom<
         }
 
         notify(currentBatch.updates, doNotBatchUpdates);
-        tryFlushing();
+        flushNowOrSoon();
       }
     });
 
