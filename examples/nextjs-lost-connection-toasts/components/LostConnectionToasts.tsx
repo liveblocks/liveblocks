@@ -13,7 +13,7 @@ export function LostConnectionToasts() {
     } else if (event === "restored") {
       toastId.current = toast.success("Reconnected!", { id: toastId.current });
     } else if (event === "failed") {
-      toastId.current = toast("Could not reconnect, please refresh.", {
+      toastId.current = toast.error("Could not reconnect, please refresh.", {
         id: toastId.current,
       });
     }
