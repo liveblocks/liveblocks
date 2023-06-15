@@ -1000,11 +1000,12 @@ export function createRoom<
     // room connection happens, we won't know the connection ID here just yet.
     context.idFactory = makeIdFactory(sessionInfo.id);
 
-    if (context.root) {
-      context.buffer.messages.push({ type: ClientMsgCode.FETCH_STORAGE });
+    // If a storage fetch has ever been initiated, we assume the client is
+    // interested in storage, so we will refresh it after a reconnection.
+    if (_getStorage$ !== null) {
+      refreshStorage({ flush: false });
     }
-
-    tryFlushing();
+    flushNowOrSoon();
   }
 
   function onDidDisconnect() {
@@ -1171,7 +1172,7 @@ export function createRoom<
       throw new Error("Internal error: cannot load storage without items");
     }
 
-    if (context.root) {
+    if (context.root !== undefined) {
       updateRoot(message.items, batchedUpdatesWrapper);
     } else {
       context.root = LiveObject._fromItems<TStorage>(message.items, pool);
@@ -1188,7 +1189,7 @@ export function createRoom<
     items: IdTuple<SerializedCrdt>[],
     batchedUpdatesWrapper: (cb: () => void) => void
   ) {
-    if (!context.root) {
+    if (context.root === undefined) {
       return;
     }
 
@@ -1467,7 +1468,7 @@ export function createRoom<
       }
       context.activeBatch.updates.presence = true;
     } else {
-      tryFlushing();
+      flushNowOrSoon();
       batchUpdates(() => {
         if (options?.addToHistory) {
           addToUndoStack(
@@ -1580,7 +1581,7 @@ export function createRoom<
       data: context.me.current,
       targetActor: message.actor,
     });
-    tryFlushing();
+    flushNowOrSoon();
 
     // We recorded the connection, but we won't make the new user visible
     // unless we also know their initial presence data at this point.
@@ -1703,9 +1704,7 @@ export function createRoom<
             const unacknowledgedOps = new Map(context.unacknowledgedOps);
             createOrUpdateRootFromMessage(message, doNotBatchUpdates);
             applyAndSendOps(unacknowledgedOps, doNotBatchUpdates);
-            if (_resolveInitialStatePromise !== null) {
-              _resolveInitialStatePromise();
-            }
+            _resolveStoragePromise?.();
             notifyStorageStatus();
             eventHub.storageDidLoad.notify();
             break;
@@ -1763,7 +1762,7 @@ export function createRoom<
     });
   }
 
-  function tryFlushing() {
+  function flushNowOrSoon() {
     const storageOps = context.buffer.storageOperations;
     if (storageOps.length > 0) {
       for (const op of storageOps) {
@@ -1799,7 +1798,7 @@ export function createRoom<
       // Or schedule the flush a few millis into the future
       clearTimeout(context.buffer.flushTimerID);
       context.buffer.flushTimerID = setTimeout(
-        tryFlushing,
+        flushNowOrSoon,
         config.throttleDelay - elapsedMillis
       );
     }
@@ -1857,27 +1856,39 @@ export function createRoom<
       type: ClientMsgCode.BROADCAST_EVENT,
       event,
     });
-    tryFlushing();
+    flushNowOrSoon();
   }
 
   function dispatchOps(ops: Op[]) {
     context.buffer.storageOperations.push(...ops);
-    tryFlushing();
+    flushNowOrSoon();
   }
 
-  let _getInitialStatePromise: Promise<void> | null = null;
-  let _resolveInitialStatePromise: (() => void) | null = null;
+  let _getStorage$: Promise<void> | null = null;
+  let _resolveStoragePromise: (() => void) | null = null;
+
+  function refreshStorage(options: { flush: boolean }) {
+    // Only add the fetch message to the outgoing message queue if it isn't
+    // already there
+    const messages = context.buffer.messages;
+    if (!messages.some((msg) => msg.type === ClientMsgCode.FETCH_STORAGE)) {
+      messages.push({ type: ClientMsgCode.FETCH_STORAGE });
+    }
+
+    if (options.flush) {
+      flushNowOrSoon();
+    }
+  }
 
   function startLoadingStorage(): Promise<void> {
-    if (_getInitialStatePromise === null) {
-      context.buffer.messages.push({ type: ClientMsgCode.FETCH_STORAGE });
-      tryFlushing();
-      _getInitialStatePromise = new Promise(
-        (resolve) => (_resolveInitialStatePromise = resolve)
-      );
+    if (_getStorage$ === null) {
+      refreshStorage({ flush: true });
+      _getStorage$ = new Promise((resolve) => {
+        _resolveStoragePromise = resolve;
+      });
       notifyStorageStatus();
     }
-    return _getInitialStatePromise;
+    return _getStorage$;
   }
 
   /**
@@ -1903,7 +1914,7 @@ export function createRoom<
   async function getStorage(): Promise<{
     root: LiveObject<TStorage>;
   }> {
-    if (context.root) {
+    if (context.root !== undefined) {
       // Store has already loaded, so we can resolve it directly
       return Promise.resolve({
         root: context.root,
@@ -1939,7 +1950,7 @@ export function createRoom<
         context.buffer.storageOperations.push(op);
       }
     }
-    tryFlushing();
+    flushNowOrSoon();
   }
 
   function redo() {
@@ -1966,7 +1977,7 @@ export function createRoom<
         context.buffer.storageOperations.push(op);
       }
     }
-    tryFlushing();
+    flushNowOrSoon();
   }
 
   function batch<T>(callback: () => T): T {
@@ -2012,7 +2023,7 @@ export function createRoom<
         }
 
         notify(currentBatch.updates, doNotBatchUpdates);
-        tryFlushing();
+        flushNowOrSoon();
       }
     });
 
@@ -2032,17 +2043,13 @@ export function createRoom<
   }
 
   function getStorageStatus(): StorageStatus {
-    if (_getInitialStatePromise === null) {
-      return "not-loaded";
-    }
-
     if (context.root === undefined) {
-      return "loading";
+      return _getStorage$ === null ? "not-loaded" : "loading";
+    } else {
+      return context.unacknowledgedOps.size === 0
+        ? "synchronized"
+        : "synchronizing";
     }
-
-    return context.unacknowledgedOps.size === 0
-      ? "synchronized"
-      : "synchronizing";
   }
 
   /**
