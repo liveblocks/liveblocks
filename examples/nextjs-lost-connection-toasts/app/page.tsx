@@ -1,5 +1,5 @@
 import { Room } from "./Room";
-import { LostConnectionToasts } from "../components/LostConnectionToasts";
+import { LostConnectionToasts } from "@/components/LostConnectionToasts";
 import { Status } from "@/components/Status";
 
 export default function Home() {
