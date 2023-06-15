@@ -364,8 +364,7 @@ describe("room", () => {
           "Room full"
         ),
         SOCKET_AUTOCONNECT // Repeated to infinity
-      ),
-      { enableDebugLogging: true } // XXX Remove!
+      )
     );
     room.connect();
 
