@@ -1870,9 +1870,9 @@ export function createRoom<
     if (_getInitialStatePromise === null) {
       context.buffer.messages.push({ type: ClientMsgCode.FETCH_STORAGE });
       tryFlushing();
-      _getInitialStatePromise = new Promise(
-        (resolve) => (_resolveInitialStatePromise = resolve)
-      );
+      _getInitialStatePromise = new Promise((resolve) => {
+        _resolveInitialStatePromise = resolve;
+      });
       notifyStorageStatus();
     }
     return _getInitialStatePromise;
