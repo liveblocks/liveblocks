@@ -34,7 +34,8 @@ export async function waitFor(predicate: () => boolean): Promise<void> {
  */
 export async function waitUntilStatus(
   room: Room<JsonObject, LsonObject, BaseUserMeta, Json>,
-  targetStatus: Status
+  targetStatus: Status,
+  timeout = 1000
 ): Promise<void> {
   if (room.getStatus() === targetStatus) {
     return;
@@ -42,8 +43,10 @@ export async function waitUntilStatus(
 
   await withTimeout(
     room.events.status.waitUntil((status) => status === targetStatus),
-    1000,
-    `Room did not reach connection status "${targetStatus}" within 1s`
+    timeout,
+    `Room did not reach connection status "${targetStatus}" within ${
+      timeout / 1000
+    }s`
   );
 }
 
