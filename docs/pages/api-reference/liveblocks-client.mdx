@@ -290,7 +290,7 @@ const { connectionId, presence, id, info, isReadOnly } = room.getSelf();
 
 ### Room.getStatus
 
-Gets the current connection status of the room.
+Gets the current WebSocket connection status of the room.
 
 ```ts
 const status = room.getStatus();
@@ -417,14 +417,82 @@ const unsubscribe = room.subscribe("others", (others, event) => {
 });
 ```
 
+### Room.subscribe("status") [#Room.subscribe.status]
+
+Subscribe to WebSocket connection status updates.
+
+Takes a callback that is called whenever the connection status changes. The
+possible value are: `initial`, `connecting`, `connected`, `reconnecting`, or
+`disconnected`.
+
+Returns an unsubscribe function.
+
+```ts
+const unsubscribe = room.subscribe("status", (status) => {
+  // Do something
+});
+```
+
+This is a low-level API that exposes the WebSocket's connectivity status. You
+can use this, for example, to update a connection status indicator in your UI.
+It would be normal for a client to briefly lose the connection and restore it,
+using quick `connected` → `reconnecting` → `connected` status jumps. If you want
+to let users know that there may be connectivity issues, don't use this API, but
+instead refer to [`Room.subscribe("lost-connection")`][].
+
+<Banner title="Notice">
+
+Do not use this API to detect when Storage or Presence are initialized or
+loaded. "Connected" does not mean that storage or presence is loaded. To detect
+when Storage is loaded, rely on awaiting the [`Room.getStorage`][] promise or
+using the [`Room.subscribe("storage-status")`][] event.
+
+</Banner>
+
+### Room.subscribe("lost-connection") [#Room.subscribe.lost-connection]
+
+XXX document this. XXX mention that the `failed` case is very uncommon.
+
+```ts
+const unsubscribe = room.subscribe("lost-connection", (event) => {
+  switch (event) {
+    case "lost":
+      // Display a "Still trying to reconnect..." toast
+      break;
+
+    case "restored":
+      // Display a "Successfully reconnected again!" toast
+      break;
+
+    case "failed":
+      // Display a "Could not restore the connection" toast
+      break;
+  }
+});
+```
+
 ### Room.subscribe("connection") [#Room.subscribe.connection]
 
-Subscribe to the WebSocket connection status updates.
+<Banner title="Deprecated since 1.1" type="warning">
+
+Support for this subscription overload will be removed in a future version. We
+recommend switching to [`Room.subscribe("status")`][] instead.
+
+You can roughly map these legacy statuses to the new/simpler statuses as
+follows:
+
+- `authenticating` (equivalent to `connecting`)
+- `connecting` (equivalent to `connecting`)
+- `open` (equivalent to `connected`)
+- `failed` (equivalent to `disconnected`)
+- `closed` (equivalent to `initial`)
+- `unavailable` (equivalent to `reconnecting`)
+
+</Banner>
+
+Subscribe to our legacy WebSocket connection status updates.
 
 Takes a callback that is called when the connection status changes.
-
-The value can be : `authenticating`, `connecting`, `open`, `failed`, `closed` or
-`unavailable`.
 
 Returns an unsubscribe function.
 
