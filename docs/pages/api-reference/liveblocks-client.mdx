@@ -134,6 +134,29 @@ const client = createClient({
 });
 ```
 
+### Lost connection timeout [#createClientLostConnectionTimeout]
+
+If you are connected to a room and then that connection is somehow lost,
+Liveblocks will normally reconnect automatically and quickly. If for some reason
+this takes longer than usual (for example, your network is offline), then the
+room will emit an event that you can subscribe to to get informed about such
+exceptional circumstances.
+
+How quickly this happens can be configured with the `lostConnectionTimeout`
+setting.
+
+`lostConnectionTimeout` can be set between 1000 (pedantic) and 30000 (very
+relaxed) milliseconds. The default is 5000, or 5 seconds.
+
+```ts
+import { createClient } from "@liveblocks/client";
+
+const client = createClient({
+  /* ... other options ... */
+  lostConnectionTimeout: 5000,
+});
+```
+
 ## Client
 
 Client returned by [`createClient`][].
