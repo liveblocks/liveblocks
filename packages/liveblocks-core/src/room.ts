@@ -1869,19 +1869,19 @@ export function createRoom<
     tryFlushing();
   }
 
-  let _getInitialStatePromise: Promise<void> | null = null;
+  let _getStorage$: Promise<void> | null = null;
   let _resolveStoragePromise: (() => void) | null = null;
 
   function startLoadingStorage(): Promise<void> {
-    if (_getInitialStatePromise === null) {
+    if (_getStorage$ === null) {
       context.buffer.messages.push({ type: ClientMsgCode.FETCH_STORAGE });
       tryFlushing();
-      _getInitialStatePromise = new Promise((resolve) => {
+      _getStorage$ = new Promise((resolve) => {
         _resolveStoragePromise = resolve;
       });
       notifyStorageStatus();
     }
-    return _getInitialStatePromise;
+    return _getStorage$;
   }
 
   /**
@@ -2037,7 +2037,7 @@ export function createRoom<
 
   function getStorageStatus(): StorageStatus {
     if (context.root === undefined) {
-      return _getInitialStatePromise === null ? "not-loaded" : "loading";
+      return _getStorage$ === null ? "not-loaded" : "loading";
     } else {
       return context.unacknowledgedOps.size === 0
         ? "synchronized"
