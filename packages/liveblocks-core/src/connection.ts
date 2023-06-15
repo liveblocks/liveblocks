@@ -272,9 +272,7 @@ function logPrematureErrorOrCloseEvent(e: IWebSocketEvent | Error) {
     } else {
       console.warn(
         isCloseEvent(e)
-          ? `${conn} closed prematurely (code: ${
-              (e as IWebSocketCloseEvent).code
-            }). Retrying in ${ctx.backoffDelay}ms.`
+          ? `${conn} closed prematurely (code: ${e.code}). Retrying in ${ctx.backoffDelay}ms.`
           : `${conn} could not be established.`
       );
     }
