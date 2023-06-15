@@ -261,6 +261,37 @@ function log(level: LogLevel, message: string) {
   };
 }
 
+function logPrematureErrorOrCloseEvent(e: IWebSocketEvent | Error) {
+  // Produce a useful log message
+  const conn = "Connection to Liveblocks websocket server";
+  return (ctx: Readonly<Context>) => {
+    if (e instanceof Error) {
+      console.warn(`${conn} could not be established. ${String(e)}`);
+    } else {
+      console.warn(
+        isCloseEvent(e)
+          ? `${conn} closed prematurely (code: ${
+              (e as IWebSocketCloseEvent).code
+            }). Retrying in ${ctx.backoffDelay}ms.`
+          : `${conn} could not be established.`
+      );
+    }
+  };
+}
+
+function logCloseEvent(event: IWebSocketCloseEvent) {
+  return (ctx: Readonly<Context>) => {
+    console.warn(
+      `Connection to Liveblocks websocket server closed (code: ${event.code}). Retrying in ${ctx.backoffDelay}ms.`
+    );
+  };
+}
+
+const logPermanentClose = log(
+  LogLevel.WARN,
+  "Connection to WebSocket closed permanently. Won't retry."
+);
+
 function sendHeartbeat(ctx: Context) {
   ctx.socket?.send("ping");
 }
@@ -641,16 +672,7 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
             target: "@connecting.backoff",
             effect: [
               increaseBackoffDelayAggressively,
-
-              // Produce a useful log message
-              (ctx) => {
-                // XXX DRY up these logs!!
-                console.warn(
-                  `Connection to Liveblocks websocket server closed prematurely (code: ${
-                    (err as IWebSocketCloseEvent).code
-                  }). Retrying in ${ctx.backoffDelay}ms.`
-                );
-              },
+              logPrematureErrorOrCloseEvent(err),
             ],
           };
         }
@@ -658,25 +680,7 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
         // In all other cases, always re-authenticate!
         return {
           target: "@auth.backoff",
-          effect: [
-            increaseBackoffDelay,
-
-            // Produce a useful log message
-            (ctx) => {
-              if (err instanceof Error) {
-                console.warn(String(err));
-              } else {
-                console.warn(
-                  err.type === "close"
-                    ? // XXX DRY up these logs!!
-                      `Connection to Liveblocks websocket server closed prematurely (code: ${
-                        (err as IWebSocketCloseEvent).code
-                      }). Retrying in ${ctx.backoffDelay}ms.`
-                    : "Connection to Liveblocks websocket server could not be established."
-                );
-              }
-            },
-          ],
+          effect: [increaseBackoffDelay, logPrematureErrorOrCloseEvent(err)],
         };
       }
     );
@@ -758,10 +762,7 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
         if (e.event.code === 4999) {
           return {
             target: "@idle.failed",
-            effect: log(
-              LogLevel.WARN,
-              "Connection to WebSocket closed permanently. Won't retry."
-            ),
+            effect: logPermanentClose,
           }; // Should not retry, give up
         }
 
@@ -774,10 +775,7 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
             target: "@connecting.backoff",
             effect: [
               increaseBackoffDelayAggressively,
-              (ctx) =>
-                console.warn(
-                  `Connection to Liveblocks websocket server closed (code: ${e.event.code}). Retrying in ${ctx.backoffDelay}ms.`
-                ),
+              logCloseEvent(e.event),
               (_, { event }) => {
                 if (event.code >= 4000 && event.code <= 4100) {
                   const err = new LiveblocksError(event.reason, event.code);
@@ -792,13 +790,7 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
         // a new socket
         return {
           target: "@connecting.backoff",
-          effect: [
-            increaseBackoffDelay,
-            (ctx) =>
-              console.warn(
-                `Connection to Liveblocks websocket server closed (code: ${e.event.code}). Retrying in ${ctx.backoffDelay}ms.`
-              ),
-          ],
+          effect: [increaseBackoffDelay, logCloseEvent(e.event)],
         };
       },
     });
