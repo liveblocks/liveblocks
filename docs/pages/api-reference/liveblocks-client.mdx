@@ -294,12 +294,10 @@ Gets the current WebSocket connection status of the room.
 
 ```ts
 const status = room.getStatus();
-// "initial"
-// "connecting"
-// "connected"
-// "reconnecting"
-// "disconnected"
 ```
+
+The possible value are: `initial`, `connecting`, `connected`, `reconnecting`, or
+`disconnected`.
 
 ### Room.subscribe(storageItem)
 
@@ -421,8 +419,8 @@ const unsubscribe = room.subscribe("others", (others, event) => {
 
 Subscribe to WebSocket connection status updates.
 
-Takes a callback that is called whenever the connection status changes. The
-possible value are: `initial`, `connecting`, `connected`, `reconnecting`, or
+Takes a callback that is called whenever the connection status changes. Possible
+value are: `initial`, `connecting`, `connected`, `reconnecting`, or
 `disconnected`.
 
 Returns an unsubscribe function.
@@ -443,15 +441,15 @@ instead refer to [`Room.subscribe("lost-connection")`][].
 <Banner title="Notice">
 
 Do not use this API to detect when Storage or Presence are initialized or
-loaded. "Connected" does not mean that storage or presence is loaded. To detect
-when Storage is loaded, rely on awaiting the [`Room.getStorage`][] promise or
-using the [`Room.subscribe("storage-status")`][] event.
+loaded. "Connected" does not guarantee that Storage or Presence are ready. To
+detect when Storage is loaded, rely on awaiting the [`Room.getStorage`][]
+promise or using the [`Room.subscribe("storage-status")`][] event.
 
 </Banner>
 
 ### Room.subscribe("lost-connection") [#Room.subscribe.lost-connection]
 
-XXX document this. XXX mention that the `failed` case is very uncommon.
+XXX document this.
 
 ```ts
 const unsubscribe = room.subscribe("lost-connection", (event) => {
@@ -476,17 +474,15 @@ const unsubscribe = room.subscribe("lost-connection", (event) => {
 <Banner title="Deprecated since 1.1" type="warning">
 
 Support for this subscription overload will be removed in a future version. We
-recommend switching to [`Room.subscribe("status")`][] instead.
-
+recommend switching to [`Room.subscribe("status")`][] instead.  
 You can roughly map these legacy statuses to the new/simpler statuses as
-follows:
-
-- `authenticating` (equivalent to `connecting`)
-- `connecting` (equivalent to `connecting`)
-- `open` (equivalent to `connected`)
-- `failed` (equivalent to `disconnected`)
-- `closed` (equivalent to `initial`)
-- `unavailable` (equivalent to `reconnecting`)
+follows:  
+`connecting` → `connecting`  
+`authenticating` → `connecting` (also)  
+`open` → `connected`  
+`failed` → `disconnected`  
+`closed` → `initial`  
+`unavailable` → `reconnecting`
 
 </Banner>
 
@@ -711,8 +707,10 @@ same time. It persists even after everyone leaves the room. Liveblocks provides
 
 ### Room.getStorage
 
-Get the room’s storage asynchronously (returns a Promise). The storage’s root is
-a [`LiveObject`][].
+Get the room’s storage asynchronously (returns a Promise). The promise will
+resolve once the storage's root is loaded and available.
+
+The storage’s root will always be a [`LiveObject`][].
 
 ```ts
 const { root } = await room.getStorage();
@@ -1256,9 +1254,16 @@ list.toImmutable();
 [`node-fetch`]: npmjs.com/package/node-fetch
 [`room.broadcastevent`]:
   /docs/api-reference/liveblocks-client#Room.broadcastEvent
+[`room.getstorage`]: /docs/api-reference/liveblocks-client#Room.getStorage
 [`room.history`]: /docs/api-reference/liveblocks-client#Room.history
 [`room.subscribe("event")`]:
   /docs/api-reference/liveblocks-client#Room.subscribe.event
+[`room.subscribe("status")`]:
+  /docs/api-reference/liveblocks-client#Room.subscribe.status
+[`room.subscribe("lost-connection")`]:
+  /docs/api-reference/liveblocks-client#Room.subscribe.lost-connection
+[`room.subscribe("storage-status")`]:
+  /docs/api-reference/liveblocks-client#Room.subscribe.storage-status
 [`room.updatepresence`]:
   /docs/api-reference/liveblocks-client#Room.updatePresence
 [`websocket`]: https://developer.mozilla.org/en-US/docs/Web/API/WebSocket
