@@ -1703,7 +1703,7 @@ export function createRoom<
             const unacknowledgedOps = new Map(context.unacknowledgedOps);
             createOrUpdateRootFromMessage(message, doNotBatchUpdates);
             applyAndSendOps(unacknowledgedOps, doNotBatchUpdates);
-            _resolveInitialStatePromise?.();
+            _resolveStoragePromise?.();
             notifyStorageStatus();
             eventHub.storageDidLoad.notify();
             break;
@@ -1864,14 +1864,14 @@ export function createRoom<
   }
 
   let _getInitialStatePromise: Promise<void> | null = null;
-  let _resolveInitialStatePromise: (() => void) | null = null;
+  let _resolveStoragePromise: (() => void) | null = null;
 
   function startLoadingStorage(): Promise<void> {
     if (_getInitialStatePromise === null) {
       context.buffer.messages.push({ type: ClientMsgCode.FETCH_STORAGE });
       tryFlushing();
       _getInitialStatePromise = new Promise((resolve) => {
-        _resolveInitialStatePromise = resolve;
+        _resolveStoragePromise = resolve;
       });
       notifyStorageStatus();
     }
