@@ -434,9 +434,10 @@ const unsubscribe = room.subscribe("status", (status) => {
 This is a low-level API that exposes the WebSocket's connectivity status. You
 can use this, for example, to update a connection status indicator in your UI.
 It would be normal for a client to briefly lose the connection and restore it,
-using quick `connected` → `reconnecting` → `connected` status jumps. If you want
-to let users know that there may be connectivity issues, don't use this API, but
-instead refer to [`Room.subscribe("lost-connection")`][].
+using quick `connected` → `reconnecting` → `connected` status jumps.
+
+If you want to let users know that there may be connectivity issues, don't use
+this API, but instead refer to [`Room.subscribe("lost-connection")`][].
 
 <Banner title="Notice">
 
@@ -449,7 +450,23 @@ promise or using the [`Room.subscribe("storage-status")`][] event.
 
 ### Room.subscribe("lost-connection") [#Room.subscribe.lost-connection]
 
-XXX document this.
+A special-purpose event that will fire in the exceptional case where a
+Liveblocks client that was previously connected lost its connection (e.g. due to
+a network outage) and was unable to recover quickly.
+
+This event allows you to build high-quality UIs by warning your users that under
+the hood the app is still trying to re-establish the connection, but that they
+may want to take extra care in the mean time to ensure their changes won't go
+unsaved. Or to help them understand why they're not seeing updates made by
+others yet.
+
+When this happens, this callback is called with the event `lost`. Then, if/once
+the connection restores, the callback will be called with the value `restored`.
+If the connection could definitively not be restored, it will be called with
+`failed` (uncommon).
+
+The [`lostConnectionTimeout`][] configuration option will determine how quickly
+this event will fire after a connection loss (default: 5 seconds).
 
 ```ts
 const unsubscribe = room.subscribe("lost-connection", (event) => {
@@ -1250,6 +1267,8 @@ list.toImmutable();
 [`livelist`]: /docs/api-reference/liveblocks-client#LiveList
 [`livemap`]: /docs/api-reference/liveblocks-client#LiveMap
 [`liveobject`]: /docs/api-reference/liveblocks-client#LiveObject
+[`lostConnectionTimeout`]:
+  /docs/api-reference/liveblocks-client#createClientLostConnectionTimeout
 [`toimmutable`]: /docs/api-reference/liveblocks-client#LiveObject.toImmutable
 [`node-fetch`]: npmjs.com/package/node-fetch
 [`room.broadcastevent`]:
