@@ -67,6 +67,7 @@ export function newToLegacyStatus(status: Status): LegacyConnectionStatus {
     case "initial":
       return "closed";
 
+    // istanbul ignore next
     default:
       return "closed";
   }
@@ -94,6 +95,7 @@ function toNewConnectionStatus(machine: FSM<Context, Event, State>): Status {
     case "@idle.failed":
       return "disconnected";
 
+    // istanbul ignore next
     default:
       return assertNever(state, "Unknown state");
   }
@@ -546,6 +548,7 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
 
         const connect$ = new Promise<[IWebSocketInstance, () => void]>(
           (resolve, rej) => {
+            // istanbul ignore next
             if (ctx.token === null) {
               throw new Error("No auth token"); // This should never happen
             }
