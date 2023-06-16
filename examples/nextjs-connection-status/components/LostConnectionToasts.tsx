@@ -11,9 +11,9 @@ export function LostConnectionToasts() {
     if (event === "lost") {
       toastId.current = toast.loading("Still trying to reconnect…");
     } else if (event === "restored") {
-      toast.success("Reconnected!", { id: toastId.current });
+      toast.success("Reconnected", { id: toastId.current });
     } else if (event === "failed") {
-      toast.error("Could not reconnect, please refresh.", {
+      toast.error("Could not reconnect, please refresh", {
         id: toastId.current,
       });
     }
