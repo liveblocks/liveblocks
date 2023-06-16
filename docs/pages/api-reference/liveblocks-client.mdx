@@ -462,27 +462,29 @@ may want to take extra care in the mean time to ensure their changes won't go
 unsaved. Or to help them understand why they're not seeing updates made by
 others yet.
 
-When this happens, this callback is called with the event `lost`. Then, if/once
-the connection restores, the callback will be called with the value `restored`.
-If the connection could definitively not be restored, it will be called with
+When this happens, this callback is called with the event `lost`. Then, once the
+connection restores, the callback will be called with the value `restored`. If
+the connection could definitively not be restored, it will be called with
 `failed` (uncommon).
 
 The [`lostConnectionTimeout`][] configuration option will determine how quickly
 this event will fire after a connection loss (default: 5 seconds).
 
 ```ts
+import { toast } from "my-preferred-toast-library";
+
 const unsubscribe = room.subscribe("lost-connection", (event) => {
   switch (event) {
     case "lost":
-      // Display a "Still trying to reconnect..." toast
+      toast.warn("Still trying to reconnect...");
       break;
 
     case "restored":
-      // Display a "Successfully reconnected again!" toast
+      toast.success("Successfully reconnected again!");
       break;
 
     case "failed":
-      // Display a "Could not restore the connection" toast
+      toast.error("Could not restore the connection");
       break;
   }
 });
