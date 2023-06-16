@@ -4,7 +4,7 @@ import React, { CSSProperties } from "react";
 import { useOthers, useSelf } from "@/liveblocks.config";
 import styles from "./LiveAvatars.module.css";
 
-const IMAGE_SIZE = 36;
+const IMAGE_SIZE = 44;
 
 export function LiveAvatars() {
   const users = useOthers();
@@ -27,7 +27,7 @@ export function LiveAvatars() {
         );
       })}
 
-      {hasMoreUsers && <div className={styles.more}>+{users.length - 3}</div>}
+      {hasMoreUsers && <div className={styles.avatar}>+{users.length - 3}</div>}
 
       {currentUser && (
         <div className={styles.you}>

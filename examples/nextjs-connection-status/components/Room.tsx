@@ -6,11 +6,16 @@ import { useSearchParams } from "next/navigation";
 import { ClientSideSuspense } from "@liveblocks/react";
 
 export function Room({ children }: { children: ReactNode }) {
-  const roomId = useOverrideRoomId("nextjs-lost-connection-toasts");
+  const roomId = useOverrideRoomId("nextjs-connection-status");
 
   return (
-    <RoomProvider id={roomId} initialPresence={{}}>
-      <main className="main">
+    <RoomProvider
+      id={roomId}
+      initialPresence={{
+        cursor: null,
+      }}
+    >
+      <main>
         <ClientSideSuspense fallback={<Loading />}>
           {() => children}
         </ClientSideSuspense>

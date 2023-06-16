@@ -15,7 +15,7 @@ a {
   box-sizing: border-box;
 }
 
-.main {
+main {
   position: fixed;
   inset: 0;
   display: flex;

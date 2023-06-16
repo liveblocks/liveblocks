@@ -9,7 +9,7 @@ export function LostConnectionToasts() {
 
   useLostConnectionListener((event) => {
     if (event === "lost") {
-      toastId.current = toast.loading("Lost connection, reconnecting…");
+      toastId.current = toast.loading("Still trying to reconnect…");
     } else if (event === "restored") {
       toast.success("Reconnected!", { id: toastId.current });
     } else if (event === "failed") {
@@ -21,7 +21,7 @@ export function LostConnectionToasts() {
 
   return (
     <Toaster
-      position="top-center"
+      position="top-left"
       toastOptions={{
         style: {
           borderRadius: "10px",
