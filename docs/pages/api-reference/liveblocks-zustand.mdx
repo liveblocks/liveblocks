@@ -100,7 +100,9 @@ const {
 enterRoom("roomId");
 ```
 
-If this is the first time you’re entering the room, the room is initialized from your local Zustand state (only for the keys mentioned in your `storageMapping` configuration).
+If this is the first time you’re entering the room, the room is initialized from
+your local Zustand state (only for the keys mentioned in your `storageMapping`
+configuration).
 
 ### leaveRoom [#liveblocks-state-leave-room]
 
@@ -146,11 +148,32 @@ const {
 } = useStore();
 ```
 
-### connection [#liveblocks-state-connection]
+### status [#liveblocks-state-status]
 
-Connection state of the room.
+Gets the current WebSocket connection status of the room.
 
-The value can be : `authenticating`, `connecting`, `open`, `failed`, `closed` or
+```js
+const {
+  liveblocks: { status },
+} = useStore();
+```
+
+The possible value are: `initial`, `connecting`, `connected`, `reconnecting`, or
+`disconnected`.
+
+### connection (legacy) [#liveblocks-state-connection]
+
+<Banner title="Deprecated since 1.1" type="warning">
+
+Support for this property will be removed in a future version. We recommend
+switching to the newer and simpler [`status`][] property instead.
+
+</Banner>
+
+Legacy connection status of the room. This property exists for backward
+compatibility reasons, but it's no longer recommended.
+
+The value can be: `authenticating`, `connecting`, `open`, `failed`, `closed` or
 `unavailable`.
 
 ```js
@@ -161,3 +184,4 @@ const {
 
 [`createclient`]: /docs/api-reference/liveblocks-client#createClient
 [`room`]: /docs/api-reference/liveblocks-client#room
+[`status`]: /docs/api-reference/liveblocks-zustand#liveblocks-state-status
