@@ -710,7 +710,7 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
       WINDOW_GOT_FOCUS: { target: "@ok.awaiting-pong", effect: sendHeartbeat },
     });
 
-  const noPongAction: Target<Context, Event | BuiltinEvent, State> = {
+  const implicitNetworkLoss: Target<Context, Event | BuiltinEvent, State> = {
     target: "@connecting.busy",
     // Log implicit connection loss and drop the current open socket
     effect: log(
@@ -741,8 +741,8 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
       };
     })
 
-    .addTimedTransition("@ok.awaiting-pong", PONG_TIMEOUT, noPongAction)
-    .addTransitions("@ok.awaiting-pong", { PONG_TIMEOUT: noPongAction }) // Only needed for E2E testing application
+    .addTimedTransition("@ok.awaiting-pong", PONG_TIMEOUT, implicitNetworkLoss)
+    .addTransitions("@ok.awaiting-pong", { PONG_TIMEOUT: implicitNetworkLoss }) // Only needed for E2E testing application
 
     .addTransitions("@ok.awaiting-pong", { PONG: "@ok.connected" })
 
