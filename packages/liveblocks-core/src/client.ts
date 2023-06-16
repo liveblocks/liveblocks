@@ -12,6 +12,10 @@ const MIN_THROTTLE = 16;
 const MAX_THROTTLE = 1000;
 const DEFAULT_THROTTLE = 100;
 
+const MIN_LOST_CONNECTION_TIMEOUT = 1000;
+const MAX_LOST_CONNECTION_TIMEOUT = 30000;
+const DEFAULT_LOST_CONNECTION_TIMEOUT = 5000;
+
 type EnterOptions<
   TPresence extends JsonObject,
   TStorage extends LsonObject
@@ -136,7 +140,10 @@ function getServerFromClientOptions(clientOptions: ClientOptions) {
  */
 export function createClient(options: ClientOptions): Client {
   const clientOptions = options;
-  const throttleDelay = getThrottleDelayFromOptions(clientOptions);
+  const throttleDelay = getThrottle(clientOptions.throttle ?? DEFAULT_THROTTLE);
+  const lostConnectionTimeout = getLostConnectionTimeout(
+    clientOptions.lostConnectionTimeout ?? DEFAULT_LOST_CONNECTION_TIMEOUT
+  );
 
   const rooms = new Map<
     string,
@@ -182,7 +189,7 @@ export function createClient(options: ClientOptions): Client {
       {
         roomId,
         throttleDelay,
-        lostConnectionTimeout: clientOptions.lostConnectionTimeout ?? 5000,
+        lostConnectionTimeout,
         polyfills: clientOptions.polyfills,
         delegates: clientOptions.mockedDelegates,
         enableDebugLogging: clientOptions.enableDebugLogging,
@@ -239,22 +246,29 @@ export function createClient(options: ClientOptions): Client {
   };
 }
 
-function getThrottleDelayFromOptions(options: ClientOptions): number {
-  if (options.throttle === undefined) {
-    return DEFAULT_THROTTLE;
+function checkBounds(
+  option: string,
+  value: unknown,
+  min: number,
+  max: number
+): number {
+  if (typeof value !== "number" || value < min || value > max) {
+    throw new Error(`${option} should be a number between ${min} and ${max}.`);
   }
+  return value;
+}
 
-  if (
-    typeof options.throttle !== "number" ||
-    options.throttle < MIN_THROTTLE ||
-    options.throttle > MAX_THROTTLE
-  ) {
-    throw new Error(
-      `throttle should be a number between ${MIN_THROTTLE} and ${MAX_THROTTLE}.`
-    );
-  }
+function getThrottle(value: number): number {
+  return checkBounds("throttle", value, MIN_THROTTLE, MAX_THROTTLE);
+}
 
-  return options.throttle;
+function getLostConnectionTimeout(value: number): number {
+  return checkBounds(
+    "lostConnectionTimeout",
+    value,
+    MIN_LOST_CONNECTION_TIMEOUT,
+    MAX_LOST_CONNECTION_TIMEOUT
+  );
 }
 
 function prepareAuthentication(

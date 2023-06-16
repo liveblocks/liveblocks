@@ -245,6 +245,51 @@ describe("createClient", () => {
       })
     ).toThrow("throttle should be a number between 16 and 1000.");
   });
+
+  test("should throw if lostConnectionTimeout is not a number", () => {
+    expect(() =>
+      enterAndLeave({
+        lostConnectionTimeout: "invalid" as unknown as number, // Deliberately use wrong type at runtime
+        authEndpoint: "api/auth",
+        polyfills: {
+          WebSocket: MockWebSocket,
+          fetch: fetchMock,
+        },
+      })
+    ).toThrow(
+      "lostConnectionTimeout should be a number between 1000 and 30000."
+    );
+  });
+
+  test("should throw if lostConnectionTimeout is less than 1000", () => {
+    expect(() =>
+      enterAndLeave({
+        lostConnectionTimeout: 15,
+        authEndpoint: "api/auth",
+        polyfills: {
+          WebSocket: MockWebSocket,
+          fetch: fetchMock,
+        },
+      })
+    ).toThrow(
+      "lostConnectionTimeout should be a number between 1000 and 30000."
+    );
+  });
+
+  test("should throw if lostConnectionTimeout is more than 30000", () => {
+    expect(() =>
+      enterAndLeave({
+        lostConnectionTimeout: 30001,
+        authEndpoint: "api/auth",
+        polyfills: {
+          WebSocket: MockWebSocket,
+          fetch: fetchMock,
+        },
+      })
+    ).toThrow(
+      "lostConnectionTimeout should be a number between 1000 and 30000."
+    );
+  });
 });
 
 describe("when env atob does not exist (atob polyfill handling)", () => {
