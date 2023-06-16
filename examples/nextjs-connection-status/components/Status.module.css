@@ -1,11 +1,13 @@
 .status {
-  position: absolute;
-  top: 16px;
-  left: 16px;
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
+  background: #ffffff;
+  border-radius: 28px;
+  padding: 6px 12px;
+  box-shadow: 0 0 0 1px rgba(31, 41, 55, 0.04), 0 2px 4px rgba(31, 41, 55, 0.06),
+    0 4px 16px -2px rgba(31, 41, 55, 0.12);
 }
 
 .status[data-status="connected"] {
@@ -13,7 +15,7 @@
 }
 
 .status[data-status="connecting"],
-.status[data-status="reconnecting"]{
+.status[data-status="reconnecting"] {
   --status-block: #eab308;
 }
 
@@ -39,18 +41,20 @@
   width: 10px;
   height: 10px;
   border-radius: 9999px;
-  animation: ping 1.5s cubic-bezier(0,0,.2,1) infinite;
+  animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;
   opacity: 0.4;
 }
 
 .statusText {
   text-transform: capitalize;
-  opacity: 0.25;
+  font-size: 12px;
+  font-weight: 500;
 }
 
 @keyframes ping {
-  75%, to {
+  75%,
+  to {
     transform: scale(2);
-    opacity: 0
+    opacity: 0;
   }
 }

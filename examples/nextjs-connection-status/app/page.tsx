@@ -6,12 +6,17 @@ import { LiveAvatars } from "@/components/LiveAvatars";
 export default function Home() {
   return (
     <Room>
-      <div>
+      <header>
+        <Status />
+        <LiveAvatars />
+      </header>
+
+      <p>
         Try putting your web browser in "offline mode" mode to simulate losing a
-        connection.
-      </div>
-      <LiveAvatars />
-      <Status />
+        connection. By default, Liveblocks automatically tries to reconnect
+        after 5 seconds. You can override the <code>lostConnectionTimeout</code>{" "}
+        value when creating the Liveblocks client.
+      </p>
       <LostConnectionToasts />
     </Room>
   );

@@ -4,7 +4,7 @@ import React, { CSSProperties } from "react";
 import { useOthers, useSelf } from "@/liveblocks.config";
 import styles from "./LiveAvatars.module.css";
 
-const IMAGE_SIZE = 44;
+const IMAGE_SIZE = 36;
 
 export function LiveAvatars() {
   const users = useOthers();

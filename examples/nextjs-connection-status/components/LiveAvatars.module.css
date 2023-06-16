@@ -1,9 +1,6 @@
 .avatars {
-  --avatar-size: 48;
+  --avatar-size: 36;
   --wrapper-size: calc(calc(var(--avatar-size) * 1px) * 8px);
-  position: absolute;
-  top: 12px;
-  right: 12px;
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -22,18 +19,18 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  color: white;
+  color: #f3f4f6;
 }
 
 .you:not(:first-child) {
-  margin-left: 32px;
+  margin-left: 20px;
 }
 
 .avatar {
   display: flex;
   place-content: center;
   position: relative;
-  border: 4px solid #fff;
+  border: 4px solid #f3f4f6;
   border-radius: 9999px;
   width: var(--wrapper-size);
   height: var(--wrapper-size);

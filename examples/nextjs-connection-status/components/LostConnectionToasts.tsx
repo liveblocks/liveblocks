@@ -21,8 +21,14 @@ export function LostConnectionToasts() {
 
   return (
     <Toaster
-      position="bottom-right"
-      toastOptions={{ style: { width: "290px", borderRadius: "9999px" } }}
+      position="top-center"
+      toastOptions={{
+        style: {
+          borderRadius: "10px",
+          boxShadow:
+            "0 0 0 1px rgba(31, 41, 55, 0.04), 0 2px 4px rgba(31, 41, 55, 0.06), 0 4px 16px -2px rgba(31, 41, 55, 0.12)",
+        },
+      }}
     />
   );
 }
