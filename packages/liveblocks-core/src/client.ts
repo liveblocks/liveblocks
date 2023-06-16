@@ -12,7 +12,8 @@ const MIN_THROTTLE = 16;
 const MAX_THROTTLE = 1000;
 const DEFAULT_THROTTLE = 100;
 
-const MIN_LOST_CONNECTION_TIMEOUT = 1000;
+const MIN_LOST_CONNECTION_TIMEOUT = 200;
+const RECOMMENDED_MIN_LOST_CONNECTION_TIMEOUT = 1000;
 const MAX_LOST_CONNECTION_TIMEOUT = 30000;
 const DEFAULT_LOST_CONNECTION_TIMEOUT = 5000;
 
@@ -250,10 +251,15 @@ function checkBounds(
   option: string,
   value: unknown,
   min: number,
-  max: number
+  max: number,
+  recommendedMin?: number
 ): number {
   if (typeof value !== "number" || value < min || value > max) {
-    throw new Error(`${option} should be a number between ${min} and ${max}.`);
+    throw new Error(
+      `${option} should be a number between ${
+        recommendedMin ?? min
+      } and ${max}.`
+    );
   }
   return value;
 }
@@ -267,7 +273,8 @@ function getLostConnectionTimeout(value: number): number {
     "lostConnectionTimeout",
     value,
     MIN_LOST_CONNECTION_TIMEOUT,
-    MAX_LOST_CONNECTION_TIMEOUT
+    MAX_LOST_CONNECTION_TIMEOUT,
+    RECOMMENDED_MIN_LOST_CONNECTION_TIMEOUT
   );
 }
 
