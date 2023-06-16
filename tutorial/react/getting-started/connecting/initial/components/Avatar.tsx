@@ -1,4 +1,4 @@
-const IMAGE_SIZE = 48;
+const IMAGE_SIZE = 32;
 
 export function Avatar({ picture }: any) {
   return (
