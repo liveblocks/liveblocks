@@ -15,7 +15,7 @@ export default function Home() {
         Try putting your web browser in "offline mode" mode to simulate losing a
         connection. By default, Liveblocks automatically tries to reconnect
         after 5 seconds. You can override the <code>lostConnectionTimeout</code>{" "}
-        value when creating the Liveblocks client.
+        in <code>createClient()</code>.
       </p>
       <LostConnectionToasts />
     </Room>

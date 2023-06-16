@@ -1,9 +1,11 @@
 import { createClient } from "@liveblocks/client";
 import { createRoomContext } from "@liveblocks/react";
 
+// Try changing the lostConnectionTimeout value to increase
+// or reduct the time it takes to reconnect
 const client = createClient({
   publicApiKey: process.env.NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY as string,
-  lostConnectionTimeout: 1000,
+  // lostConnectionTimeout: 5000,
 });
 
 // Presence represents the properties that exist on every user in the Room
