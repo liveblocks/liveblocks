@@ -495,15 +495,7 @@ const unsubscribe = room.subscribe("lost-connection", (event) => {
 <Banner title="Deprecated since 1.1" type="warning">
 
 Support for this subscription overload will be removed in a future version. We
-recommend switching to [`Room.subscribe("status")`][] instead.  
-You can roughly map these legacy statuses to the new/simpler statuses as
-follows:  
-`connecting` → `connecting`  
-`authenticating` → `connecting` (also)  
-`open` → `connected`  
-`failed` → `disconnected`  
-`closed` → `initial`  
-`unavailable` → `reconnecting`
+recommend switching to [`Room.subscribe("status")`][] instead.
 
 </Banner>
 
