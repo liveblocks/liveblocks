@@ -2104,7 +2104,7 @@ export function createRoom<
       send: {
         // These exist only for our E2E testing app
         explicitClose: (event) => managedSocket._privateSendMachineEvent({ type: "EXPLICIT_SOCKET_CLOSE", event }),
-        implicitClose: () => managedSocket._privateSendMachineEvent({ type: "PONG_TIMEOUT" }),
+        implicitClose: () => managedSocket._privateSendMachineEvent({ type: "NAVIGATOR_OFFLINE" }), // XXX ...or just keep it?
       },
     },
 

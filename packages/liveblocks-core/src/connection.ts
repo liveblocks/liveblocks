@@ -111,6 +111,7 @@ type Event =
   | { type: "DISCONNECT" } // e.g. leaving the room
   | { type: "WINDOW_GOT_FOCUS" } // e.g. user's browser tab is refocused
   | { type: "NAVIGATOR_ONLINE" } // e.g. browser gets back online
+  | { type: "NAVIGATOR_OFFLINE" } // e.g. browser goes offline
 
   // Events that the connection manager will internally deal with
   | { type: "PONG" }
@@ -291,10 +292,6 @@ const logPermanentClose = log(
   LogLevel.WARN,
   "Connection to WebSocket closed permanently. Won't retry."
 );
-
-function sendHeartbeat(ctx: Context) {
-  ctx.socket?.send("ping");
-}
 
 function isCloseEvent(
   error: IWebSocketEvent | Error
@@ -701,23 +698,20 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
   // it as an implicit connection loss, and transition to reconnect (throw away
   // this socket, and open a new one).
   //
-  machine
-    .addTimedTransition("@ok.connected", HEARTBEAT_INTERVAL, {
-      target: "@ok.awaiting-pong",
-      effect: sendHeartbeat,
-    })
-    .addTransitions("@ok.connected", {
-      WINDOW_GOT_FOCUS: { target: "@ok.awaiting-pong", effect: sendHeartbeat },
-    });
 
-  const implicitNetworkLoss: Target<Context, Event | BuiltinEvent, State> = {
-    target: "@connecting.busy",
-    // Log implicit connection loss and drop the current open socket
-    effect: log(
-      LogLevel.WARN,
-      "Received no pong from server, assume implicit connection loss."
-    ),
+  const sendHeartbeat: Target<Context, Event | BuiltinEvent, State> = {
+    target: "@ok.awaiting-pong",
+    effect: (ctx: Context) => {
+      ctx.socket?.send("ping");
+    },
   };
+
+  machine
+    .addTimedTransition("@ok.connected", HEARTBEAT_INTERVAL, sendHeartbeat)
+    .addTransitions("@ok.connected", {
+      NAVIGATOR_OFFLINE: sendHeartbeat, // Don't take the browser's word for it when it says it's offline. Do a ping/pong to make sure.
+      WINDOW_GOT_FOCUS: sendHeartbeat,
+    });
 
   machine
     .onEnter("@ok.*", (ctx) => {
@@ -741,10 +735,15 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
       };
     })
 
-    .addTimedTransition("@ok.awaiting-pong", PONG_TIMEOUT, implicitNetworkLoss)
-    .addTransitions("@ok.awaiting-pong", { PONG_TIMEOUT: implicitNetworkLoss }) // Only needed for E2E testing application
-
     .addTransitions("@ok.awaiting-pong", { PONG: "@ok.connected" })
+    .addTimedTransition("@ok.awaiting-pong", PONG_TIMEOUT, {
+      target: "@connecting.busy",
+      // Log implicit connection loss and drop the current open socket
+      effect: log(
+        LogLevel.WARN,
+        "Received no pong from server, assume implicit connection loss."
+      ),
+    })
 
     .addTransitions("@ok.*", {
       // When a socket receives an error, this can cause the closing of the
@@ -813,7 +812,11 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
     const root = win ?? doc;
 
     machine.onEnter("*", (ctx) => {
-      function onBackOnline() {
+      function onNetworkOffline() {
+        machine.send({ type: "NAVIGATOR_OFFLINE" });
+      }
+
+      function onNetworkBackOnline() {
         machine.send({ type: "NAVIGATOR_ONLINE" });
       }
 
@@ -823,11 +826,13 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
         }
       }
 
-      win?.addEventListener("online", onBackOnline);
+      win?.addEventListener("online", onNetworkBackOnline);
+      win?.addEventListener("offline", onNetworkOffline);
       root?.addEventListener("visibilitychange", onVisibilityChange);
       return () => {
         root?.removeEventListener("visibilitychange", onVisibilityChange);
-        win?.removeEventListener("online", onBackOnline);
+        win?.removeEventListener("online", onNetworkBackOnline);
+        win?.removeEventListener("offline", onNetworkOffline);
 
         // Also tear down the old socket when stopping the machine, if there is one
         teardownSocket(ctx.socket);
