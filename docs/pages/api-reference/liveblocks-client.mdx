@@ -532,7 +532,7 @@ Subscribe to the current user’s history changes.
 Returns an unsubscribe function.
 
 ```ts
-room.subscribe("history", ({ canUndo, canRedo }) => {
+const unsubscribe = room.subscribe("history", ({ canUndo, canRedo }) => {
   // Do something
 });
 ```
@@ -544,7 +544,7 @@ Subscribe to storage status changes.
 Returns an unsubscribe function.
 
 ```typescript
-room.subscribe("storage-status", (status) => {
+const unsubscribe = room.subscribe("storage-status", (status) => {
   switch (status) {
     case "not-loaded":
       break;
