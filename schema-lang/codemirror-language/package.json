@@ -17,7 +17,7 @@
   "scripts": {
     "build": "tsup",
     "lint": "eslint src/",
-    "format": "eslint --fix src/; prettier --write src/",
+    "format": "eslint --fix src/ && prettier --write src/",
     "test": "jest --colors --verbose --no-coverage"
   },
   "repository": {

@@ -13,7 +13,7 @@
     "dev": "tsup --watch",
     "build": "tsup",
     "start": "tsup --watch",
-    "format": "eslint --fix src/; prettier --write src/",
+    "format": "eslint --fix src/ && prettier --write src/",
     "lint": "eslint src/; npm run check:exports",
     "check:exports": "tsc scripts/check-factory-exports.ts && node scripts/check-factory-exports.js",
     "test": "jest --silent --verbose --color=always",
