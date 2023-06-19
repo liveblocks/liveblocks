@@ -950,9 +950,9 @@ the hood the app is still trying to re-establish the connection, but that they
 may want to take extra care in the mean time to ensure their changes won't go
 unsaved.
 
-When this happens, this callback is called with the event lost. Then, once the
-connection restores, the callback will be called with the value restored. If the
-connection could definitively not be restored, it will be called with failed
+When this happens, this callback is called with the event `lost`. Then, once the
+connection restores, the callback will be called with the value `restored`. If the
+connection could definitively not be restored, it will be called with `failed`
 (uncommon).
 
 The [`lostConnectionTimeout`][] client option will determine how quickly this
