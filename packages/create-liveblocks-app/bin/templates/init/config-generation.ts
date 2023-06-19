@@ -142,7 +142,7 @@ function allHooks() {
   useCanRedo,
   useMutation,
   useStatus,
-  useLostConnectionListener`;
+  useLostConnectionListener,`;
 }
 
 function indentString(str: string) {
