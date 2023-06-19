@@ -22,17 +22,26 @@
 </p>
 
 **[Liveblocks](https://liveblocks.io) is a real-time collaboration
-infrastructure for developers.** A fully hosted solution and complete toolkit to
-modularly embed collaborative experiences into your product in just days, not
-months.
+infrastructure for building performant collaborative experiences.** The
+foundations of Liveblocks are built upon the following concepts:
 
-## Packages
+- **Products** enabling a different facet of collaborative experiences.
+  - [Presence](/docs/products/presence) to show who’s in a document
+  - [Broadcast](/docs/products/broadcast) to broadcast events in real-time
+  - [Storage](/docs/products/storage) for a shared real-time document state
+  - Comments (Private beta) to enable annotations, threads, and mentions
+- **Rooms** are the digital spaces in which people collaborate.
+- **Integrations** that developers can use to integrate with the Liveblocks
+  products within the rooms.
+- A fully-hosted **platform** built around a WebSocket edge infrastructure that
+  includes tools such as REST APIs, webhooks, schema validation, analytics, and
+  more.
 
-- [@liveblocks/client](./packages/liveblocks-client)
-- [@liveblocks/react](./packages/liveblocks-react)
-- [@liveblocks/node](./packages/liveblocks-node)
-- [@liveblocks/zustand](./packages/liveblocks-zustand)
-- [@liveblocks/redux](./packages/liveblocks-redux)
+## Getting started
+
+To get started take the
+[interactive tutorial for React and Next.js](https://liveblocks.io/docs/tutorial/react/getting-started),
+and read the [documentation](https://liveblocks.io/docs).
 
 ## Documentation
 
@@ -41,15 +50,6 @@ Liveblocks with our tutorials, guides, and API reference.
 
 > The documentation is open-source and live in this repository, within
 > [`/docs`](./docs).
-
-## Starter Kit
-
-Get started with Liveblocks using `npx create-liveblocks-app@latest --next`, to
-get the [Next.js Starter Kit](https://liveblocks.io/starter-kit) and kickstart
-your collaborative app.
-
-> The Next.js Starter Kit is open-source and lives
-> [in this repository](./starter-kits/nextjs-starter-kit).
 
 ## Examples
 
@@ -66,9 +66,11 @@ See the latest changes
 
 ## Community
 
-- [Discord](https://liveblocks.io/discord) - To get involved with the Liveblocks
+- [GitHub issues](./issues) to file bugs and errors you encounter using
+  Liveblocks.
+- [Discord](https://liveblocks.io/discord) to get involved with the Liveblocks
   community, ask questions and share tips.
-- [Twitter](https://twitter.com/liveblocks) - To receive updates, announcements,
+- [Twitter](https://twitter.com/liveblocks) to receive updates, announcements,
   blog posts, and general Liveblocks tips.
 
 ## License
