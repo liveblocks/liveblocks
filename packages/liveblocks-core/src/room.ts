@@ -1864,7 +1864,7 @@ export function createRoom<
       type: ClientMsgCode.UPDATE_DOC,
       data,
     });
-    tryFlushing();
+    flushNowOrSoon();
   }
 
   function broadcastEvent(
@@ -1957,7 +1957,7 @@ export function createRoom<
 
   function getDoc(vector: string = ""): void {
     context.buffer.messages.push({ type: ClientMsgCode.FETCH_DOC, vector });
-    tryFlushing();
+    flushNowOrSoon();
   }
 
   function undo() {
