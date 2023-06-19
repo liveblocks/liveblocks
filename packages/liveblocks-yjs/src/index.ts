@@ -95,12 +95,6 @@ export class Awareness extends Observable<any> {
   }
 
   setLocalState(state: Partial<JsonObject> | null): void {
-    const self = this.room.getSelf();
-
-    if (!self) {
-      return; // we're not connected
-    }
-
     this.room.updatePresence({ __yjs: { ...(state || {}) } });
   }
 
@@ -114,10 +108,14 @@ export class Awareness extends Observable<any> {
     const others = this.room.getOthers();
     const states = others.reduce((acc: Map<number, any>, currentValue) => {
       if (currentValue.connectionId) {
-        acc.set(currentValue.connectionId, currentValue.presence["__yjs"]);
+        acc.set(
+          currentValue.connectionId,
+          currentValue.presence["__yjs"] || {}
+        );
       }
       return acc;
     }, new Map());
+    console.log(states);
     return states;
   }
 }
