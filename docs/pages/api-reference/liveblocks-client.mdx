@@ -136,10 +136,10 @@ const client = createClient({
 
 ### Lost connection timeout [#createClientLostConnectionTimeout]
 
-If you’re connected to a room and you briefly lose connection,
-Liveblocks will normally reconnect automatically and quickly. However, if 
-this takes longer than usual (for example, your network is offline), then the
-room will emit an event informing you about such exceptional circumstances.
+If you’re connected to a room and you briefly lose connection, Liveblocks will
+normally reconnect automatically and quickly. However, if this takes longer than
+usual (for example, your network is offline), then the room will emit an event
+informing you about such exceptional circumstances.
 
 How quickly this happens can be configured with the `lostConnectionTimeout`
 setting.
@@ -156,9 +156,10 @@ const client = createClient({
 });
 ```
 
-You can listen to the event with [`room.subscribe("lost-connection")`][]. Note 
-that this also affects when `others` are reset to an empty array after a 
-disconnection. For a demonstration of this behavior, see our [connection status example][].
+You can listen to the event with [`room.subscribe("lost-connection")`][]. Note
+that this also affects when `others` are reset to an empty array after a
+disconnection. For a demonstration of this behavior, see our [connection status
+example][].
 
 ## Client
 
@@ -454,14 +455,14 @@ promise or using the [`Room.subscribe("storage-status")`][] event.
 ### Room.subscribe("lost-connection") [#Room.subscribe.lost-connection]
 
 A special-purpose event that will fire in the exceptional case where a
-previously connected Liveblocks client has lost its connection (e.g. due to
-a network outage) and was unable to recover quickly.
+previously connected Liveblocks client has lost its connection (e.g. due to a
+network outage) and was unable to recover quickly.
 
-This event allows you to build high-quality UIs by warning your users that the app
- is still trying to re-establish the connection, for example through a toast notification.
- You may want to take extra care in the mean time to ensure their changes won’t go
-unsaved, or to help them understand why they’re not seeing updates made by
-others yet.
+This event allows you to build high-quality UIs by warning your users that the
+app is still trying to re-establish the connection, for example through a toast
+notification. You may want to take extra care in the mean time to ensure their
+changes won’t go unsaved, or to help them understand why they’re not seeing
+updates made by others yet.
 
 When this happens, this callback is called with the event `lost`. Then, once the
 connection restores, the callback will be called with the value `restored`. If
