@@ -140,7 +140,9 @@ function allHooks() {
   useRedo,
   useCanUndo,
   useCanRedo,
-  useMutation,`;
+  useMutation,
+  useStatus,
+  useLostConnectionListener`;
 }
 
 function indentString(str: string) {
