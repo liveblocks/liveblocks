@@ -103,7 +103,7 @@ export class Awareness extends Observable<any> {
     this.room.updatePresence({ __yjs: update });
   }
 
-  // Translate
+  // Translate liveblocks presence to yjs awareness
   getStates(): Map<number, any> {
     const others = this.room.getOthers();
     const states = others.reduce((acc: Map<number, any>, currentValue) => {
@@ -115,7 +115,6 @@ export class Awareness extends Observable<any> {
       }
       return acc;
     }, new Map());
-    console.log(states);
     return states;
   }
 }
