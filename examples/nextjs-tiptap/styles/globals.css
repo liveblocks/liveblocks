@@ -101,16 +101,17 @@ body {
 
 /* Render the username above the caret */
 .collaboration-cursor__label {
-  border-radius: 3px 3px 3px 0;
-  color: #0d0d0d;
+  border-radius: 1.5em 1.5em 1.5em 0;
+  color: #373737;
   font-size: 12px;
   font-style: normal;
   font-weight: 600;
+  font-family: sans-serif;
   left: -1px;
+  padding: 0.5em .7em;
   line-height: normal;
-  padding: 0.1rem 0.3rem;
   position: absolute;
-  top: -1.4em;
+  top:-2.2em;
   user-select: none;
   white-space: nowrap;
 }

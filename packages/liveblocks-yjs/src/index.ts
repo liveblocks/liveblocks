@@ -95,12 +95,18 @@ export class Awareness extends Observable<any> {
   }
 
   setLocalState(state: Partial<JsonObject> | null): void {
-    this.room.updatePresence({ __yjs: { ...(state || {}) } });
+    const presence = this.room.getSelf()?.presence["__yjs"];
+    this.room.updatePresence({
+      __yjs: { ...((presence as JsonObject) || {}), ...(state || {}) },
+    });
   }
 
   setLocalStateField(field: string, value: JsonObject | null): void {
+    const presence = this.room.getSelf()?.presence["__yjs"];
     const update = { [field]: value } as Partial<JsonObject>;
-    this.room.updatePresence({ __yjs: update });
+    this.room.updatePresence({
+      __yjs: { ...((presence as JsonObject) || {}), ...update },
+    });
   }
 
   // Translate liveblocks presence to yjs awareness

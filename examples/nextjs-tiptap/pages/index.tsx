@@ -75,7 +75,6 @@ type EditorProps = {
 };
 
 function Editor({ doc, provider }: EditorProps) {
-  const [currentUser, setCurrentUser] = useState(USER_INFO[Math.floor(Math.random() * USER_INFO.length)])
 
   const editor = useEditor({
     extensions: [
@@ -95,15 +94,11 @@ function Editor({ doc, provider }: EditorProps) {
       }),
       CollaborationCursor.configure({
         provider: provider,
+        user: USER_INFO[Math.floor(Math.random() * USER_INFO.length)],
       }),
     ],
   });
 
-  useEffect(() => {
-    if (editor && currentUser) {
-      editor.chain().focus().updateUser(currentUser).run()
-    }
-  }, [editor, currentUser])
   return (
     <>
       {editor && <MenuBar editor={editor} />}
