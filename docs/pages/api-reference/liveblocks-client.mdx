@@ -433,7 +433,7 @@ const unsubscribe = room.subscribe("status", (status) => {
 });
 ```
 
-This is a low-level API that exposes the WebSocket's connectivity status. You
+This is a low-level API that exposes the WebSocket’s connectivity status. You
 can use this, for example, to update a connection status indicator in your UI.
 It would be normal for a client to briefly lose the connection and restore it,
 using quick `connected` → `reconnecting` → `connected` status jumps.
