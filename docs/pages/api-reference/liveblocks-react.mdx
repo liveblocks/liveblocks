@@ -945,9 +945,9 @@ The possible value are: `initial`, `connecting`, `connected`, `reconnecting`, or
 Calls the given callback in the exceptional situation that a connection is lost
 and reconnecting does not happen quickly enough.
 
-This event allows you to build high-quality UIs by warning your users that under
-the hood the app is still trying to re-establish the connection, but that they
-may want to take extra care in the mean time to ensure their changes won't go
+This event allows you to build high-quality UIs by warning your users that the app
+ is still trying to re-establish the connection, for example through a toast notification.
+ You may want to take extra care in the mean time to ensure their changes won’t go
 unsaved.
 
 When this happens, this callback is called with the event `lost`. Then, once the
