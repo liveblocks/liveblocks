@@ -2294,6 +2294,7 @@ function isRoomEventName(value: string): value is RoomEventName {
     value === "error" ||
     value === "connection" ||
     value === "history" ||
+    value === "status" ||
     value === "storage-status"
   );
 }
