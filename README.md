@@ -22,31 +22,55 @@
 </p>
 
 **[Liveblocks](https://liveblocks.io) is a real-time collaboration
-infrastructure for building performant collaborative experiences.** The
-foundations of Liveblocks are built upon the following concepts:
+infrastructure for building performant collaborative experiences.**
 
-- **Products** enabling a different facet of collaborative experiences.
-  - [Presence](/docs/products/presence) to show who’s in a document
-  - [Broadcast](/docs/products/broadcast) to broadcast events in real-time
-  - [Storage](/docs/products/storage) for a shared real-time document state
-  - Comments (Private beta) to enable annotations, threads, and mentions
-- **Rooms** are the digital spaces in which people collaborate.
-- **Integrations** that developers can use to integrate with the Liveblocks
-  products within the rooms.
-- A fully-hosted **platform** built around a WebSocket edge infrastructure that
-  includes tools such as REST APIs, webhooks, schema validation, analytics, and
-  more.
+> ## How Liveblocks works
 
-## Getting started
+Liveblocks is a real-time collaboration infrastructure for building performant
+collaborative experiences. The foundations of Liveblocks are built upon four
+core concepts: products, rooms, integrations, and platform.
 
-To get started take the
-[interactive tutorial for React and Next.js](https://liveblocks.io/docs/tutorial/react/getting-started),
-and read the [documentation](https://liveblocks.io/docs).
+### Products
+
+Liveblocks is a fully integrated solution built around core products, each
+enabling a different facet of collaborative experiences:
+[Presence](https://liveblocks.io/docs/products/presence),
+[Broadcast](https://liveblocks.io/docs/products/broadcast),
+[Storage](https://liveblocks.io/docs/products/storage), and Comments (private
+beta). You can decide what products you want to use based on your requirements
+and collaborative experiences you’re looking to build.
+
+### Rooms
+
+A room is the digital space in which people collaborate. You can require your
+users to be [authenticated](https://liveblocks.io/docs/rooms/authentication) to
+interact with rooms, and each room can have specific
+[permissions](https://liveblocks.io/docs/rooms/permissions) and
+[metadata](https://liveblocks.io/docs/rooms/metadata) associated with them.
+
+### Integrations
+
+Liveblocks and its community provide integrations that developers can use to
+integrate with the Liveblocks products within the rooms. You can use existing
+integrations for specific libraries and frameworks, or create a custom one for
+your needs.
+
+### Platform
+
+Liveblocks provides a fully-hosted platform built around a WebSocket edge
+infrastructure that scales to millions of users. With the platform, you get a
+lot of powerful tools such as
+[REST APIs](https://liveblocks.io/docs/api-reference/rest-api-endpoints),
+[webhooks](https://liveblocks.io/docs/platform/webhooks),
+[DevTools](https://liveblocks.io/docs/platform/devtools),
+[schema validation](https://liveblocks.io/docs/platform/schema-validation),
+analytics, and more.
 
 ## Documentation
 
-Read the [documentation](https://liveblocks.io/docs) to learn how to use
-Liveblocks with our tutorials, guides, and API reference.
+Read the [documentation](https://liveblocks.io/docs),
+[interactive tutorial](https://liveblocks.io/docs/tutorial/react/getting-started)
+and [guides](https://liveblocks.io/docs/guides) to learn how to use Liveblocks.
 
 > The documentation is open-source and live in this repository, within
 > [`/docs`](./docs).
