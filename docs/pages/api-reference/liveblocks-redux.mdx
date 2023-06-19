@@ -164,11 +164,32 @@ Whether or not the room storage is currently loading.
 const connection = useSelector((state) => state.liveblocks.isStorageLoading);
 ```
 
-### connection [#liveblocks-state-connection]
+### status [#liveblocks-state-status]
 
-Connection state of the room.
+Gets the current WebSocket connection status of the room.
 
-The value can be : `authenticating`, `connecting`, `open`, `failed`, `closed` or
+```js
+const {
+  liveblocks: { status },
+} = useStore();
+```
+
+The possible value are: `initial`, `connecting`, `connected`, `reconnecting`, or
+`disconnected`.
+
+### connection (legacy) [#liveblocks-state-connection]
+
+<Banner title="Deprecated since 1.1" type="warning">
+
+Support for this property will be removed in a future version. We recommend
+switching to the newer and simpler [`status`][] property instead.
+
+</Banner>
+
+Legacy connection status of the room. This property exists for backward
+compatibility reasons, but it’s no longer recommended.
+
+The value can be: `authenticating`, `connecting`, `open`, `failed`, `closed` or
 `unavailable`.
 
 ```js
@@ -176,3 +197,4 @@ const connection = useSelector((state) => state.liveblocks.connection);
 ```
 
 [`createclient`]: /docs/api-reference/liveblocks-client#createClient
+[`status`]: /docs/api-reference/liveblocks-redux#liveblocks-state-status

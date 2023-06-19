@@ -5,13 +5,13 @@ import {
   createSerializedRegister,
   prepareIsolatedStorageTest,
   prepareStorageTest,
-  reconnect,
+  replaceRemoteStorageAndReconnect,
 } from "../../__tests__/_utils";
+import { waitUntilStorageUpdate } from "../../__tests__/_waitUtils";
 import { RoomScope } from "../../protocol/AuthToken";
 import { OpCode } from "../../protocol/Op";
 import type { IdTuple, SerializedCrdt } from "../../protocol/SerializedCrdt";
 import { CrdtType } from "../../protocol/SerializedCrdt";
-import { WebsocketCloseCodes } from "../../types/IWebSocket";
 import { LiveList } from "../LiveList";
 import { LiveMap } from "../LiveMap";
 import { LiveObject } from "../LiveObject";
@@ -120,7 +120,7 @@ describe("LiveMap", () => {
     );
 
     const map = storage.root.get("map");
-    expect(() => map.set("key", new LiveObject({ a: 0 }))).toThrowError(
+    expect(() => map.set("key", new LiveObject({ a: 0 }))).toThrow(
       "Cannot write to storage with a read only user, please ensure the user has write permissions"
     );
   });
@@ -212,7 +212,7 @@ describe("LiveMap", () => {
       );
 
       const map = storage.root.get("map");
-      expect(() => map.delete("key")).toThrowError(
+      expect(() => map.delete("key")).toThrow(
         "Cannot write to storage with a read only user, please ensure the user has write permissions"
       );
     });
@@ -647,17 +647,18 @@ describe("LiveMap", () => {
   });
 
   describe("reconnect with remote changes and subscribe", () => {
-    test("Register added to map", async () => {
-      const { expectStorage, room, root } = await prepareIsolatedStorageTest<{
-        map: LiveMap<string, string>;
-      }>(
-        [
-          createSerializedObject("0:0", {}),
-          createSerializedMap("0:1", "0:0", "map"),
-          createSerializedRegister("0:2", "0:1", "first", "a"),
-        ],
-        1
-      );
+    test("register added to map", async () => {
+      const { expectStorage, room, root, wss } =
+        await prepareIsolatedStorageTest<{
+          map: LiveMap<string, string>;
+        }>(
+          [
+            createSerializedObject("0:0", {}),
+            createSerializedMap("0:1", "0:0", "map"),
+            createSerializedRegister("0:2", "0:1", "first", "a"),
+          ],
+          1
+        );
 
       const rootDeepCallback = jest.fn();
       const mapCallback = jest.fn();
@@ -668,13 +669,6 @@ describe("LiveMap", () => {
       room.subscribe(listItems, mapCallback);
 
       expectStorage({ map: new Map([["first", "a"]]) });
-
-      room.__internal.send.explicitClose(
-        new CloseEvent("close", {
-          code: WebsocketCloseCodes.CLOSE_ABNORMAL,
-          wasClean: false,
-        })
-      );
 
       const newInitStorage: IdTuple<SerializedCrdt>[] = [
         ["0:0", { type: CrdtType.OBJECT, data: {} }],
@@ -699,8 +693,9 @@ describe("LiveMap", () => {
         ],
       ];
 
-      reconnect(room, 3, newInitStorage);
+      replaceRemoteStorageAndReconnect(wss, newInitStorage);
 
+      await waitUntilStorageUpdate(room);
       expectStorage({
         map: new Map([
           ["first", "a"],

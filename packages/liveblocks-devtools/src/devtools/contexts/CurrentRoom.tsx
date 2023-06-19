@@ -1,4 +1,9 @@
-import type { ConnectionStatus, DevTools, DevToolsMsg } from "@liveblocks/core";
+import type {
+  DevTools,
+  DevToolsMsg,
+  LegacyConnectionStatus,
+  Status,
+} from "@liveblocks/core";
 import type { ReactNode } from "react";
 import {
   createContext,
@@ -16,20 +21,9 @@ import { makeEventSource } from "../../lib/EventSource";
 import { onMessage, sendMessage } from "../port";
 import type { FullBackgroundToPanelMessage } from "../protocol";
 
-// We can remove this type definition by importing it from @liveblocks/core
-// once the 1.1 beta has landed
-type FutureConnectionStatus =
-  | "initial"
-  | "connecting"
-  | "connected"
-  | "reconnecting"
-  | "disconnected";
-
-type Status = ConnectionStatus | FutureConnectionStatus;
-
 type Room = {
   readonly roomId: string;
-  status: Status | null;
+  status: Status | LegacyConnectionStatus | null;
   storage: readonly DevTools.LsonTreeNode[] | null;
   me: DevTools.UserTreeNode | null;
   others: readonly DevTools.UserTreeNode[];
@@ -330,7 +324,7 @@ export function useRoomIds(): string[] {
   return useSyncExternalStore(onRoomCountChanged.subscribe, () => allRoomIds);
 }
 
-export function useStatus(): Status | null {
+export function useStatus(): Status | LegacyConnectionStatus | null {
   const currentRoomId = useCurrentRoomId();
   return useSyncExternalStore(
     getSubscribe(currentRoomId, "onStatus") ?? nosub,

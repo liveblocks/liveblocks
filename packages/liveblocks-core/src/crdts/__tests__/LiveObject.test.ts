@@ -5,13 +5,13 @@ import {
   prepareDisconnectedStorageUpdateTest,
   prepareIsolatedStorageTest,
   prepareStorageTest,
-  reconnect,
+  replaceRemoteStorageAndReconnect,
 } from "../../__tests__/_utils";
+import { waitUntilStorageUpdate } from "../../__tests__/_waitUtils";
 import { RoomScope } from "../../protocol/AuthToken";
 import { OpCode } from "../../protocol/Op";
 import type { IdTuple, SerializedCrdt } from "../../protocol/SerializedCrdt";
 import { CrdtType } from "../../protocol/SerializedCrdt";
-import { WebsocketCloseCodes } from "../../types/IWebSocket";
 import { LiveList } from "../LiveList";
 import { LiveObject } from "../LiveObject";
 
@@ -88,7 +88,7 @@ describe("LiveObject", () => {
       [RoomScope.Read, RoomScope.PresenceWrite]
     );
 
-    expect(() => storage.root.update({ a: 1 })).toThrowError(
+    expect(() => storage.root.update({ a: 1 })).toThrow(
       "Cannot write to storage with a read only user, please ensure the user has write permissions"
     );
   });
@@ -153,7 +153,7 @@ describe("LiveObject", () => {
       [RoomScope.Read, RoomScope.PresenceWrite]
     );
 
-    expect(() => storage.root.set("a", 1)).toThrowError(
+    expect(() => storage.root.set("a", 1)).toThrow(
       "Cannot write to storage with a read only user, please ensure the user has write permissions"
     );
   });
@@ -559,7 +559,7 @@ describe("LiveObject", () => {
         [RoomScope.Read, RoomScope.PresenceWrite]
       );
 
-      expect(() => storage.root.get("child").delete("a")).toThrowError(
+      expect(() => storage.root.get("child").delete("a")).toThrow(
         "Cannot write to storage with a read only user, please ensure the user has write permissions"
       );
     });
@@ -905,15 +905,16 @@ describe("LiveObject", () => {
 
   describe("reconnect with remote changes and subscribe", () => {
     test("LiveObject updated", async () => {
-      const { expectStorage, room, root } = await prepareIsolatedStorageTest<{
-        obj: LiveObject<{ a: number }>;
-      }>(
-        [
-          createSerializedObject("0:0", {}),
-          createSerializedObject("0:1", { a: 1 }, "0:0", "obj"),
-        ],
-        1
-      );
+      const { expectStorage, room, root, wss } =
+        await prepareIsolatedStorageTest<{
+          obj: LiveObject<{ a: number }>;
+        }>(
+          [
+            createSerializedObject("0:0", {}),
+            createSerializedObject("0:1", { a: 1 }, "0:0", "obj"),
+          ],
+          1
+        );
 
       const rootDeepCallback = jest.fn();
       const liveObjectCallback = jest.fn();
@@ -922,13 +923,6 @@ describe("LiveObject", () => {
       room.subscribe(root.get("obj"), liveObjectCallback);
 
       expectStorage({ obj: { a: 1 } });
-
-      room.__internal.send.explicitClose(
-        new CloseEvent("close", {
-          code: WebsocketCloseCodes.CLOSE_ABNORMAL,
-          wasClean: false,
-        })
-      );
 
       const newInitStorage: IdTuple<SerializedCrdt>[] = [
         ["0:0", { type: CrdtType.OBJECT, data: {} }],
@@ -943,8 +937,9 @@ describe("LiveObject", () => {
         ],
       ];
 
-      reconnect(room, 3, newInitStorage);
+      replaceRemoteStorageAndReconnect(wss, newInitStorage);
 
+      await waitUntilStorageUpdate(room);
       expectStorage({
         obj: { a: 2 },
       });
@@ -963,15 +958,16 @@ describe("LiveObject", () => {
     });
 
     test("LiveObject updated nested", async () => {
-      const { expectStorage, room, root } = await prepareIsolatedStorageTest<{
-        obj: LiveObject<{ a: number; subObj?: LiveObject<{ b: number }> }>;
-      }>(
-        [
-          createSerializedObject("0:0", {}),
-          createSerializedObject("0:1", { a: 1 }, "0:0", "obj"),
-        ],
-        1
-      );
+      const { expectStorage, room, root, wss } =
+        await prepareIsolatedStorageTest<{
+          obj: LiveObject<{ a: number; subObj?: LiveObject<{ b: number }> }>;
+        }>(
+          [
+            createSerializedObject("0:0", {}),
+            createSerializedObject("0:1", { a: 1 }, "0:0", "obj"),
+          ],
+          1
+        );
 
       const rootDeepCallback = jest.fn();
       const liveObjectCallback = jest.fn();
@@ -980,13 +976,6 @@ describe("LiveObject", () => {
       room.subscribe(root.get("obj"), liveObjectCallback);
 
       expectStorage({ obj: { a: 1 } });
-
-      room.__internal.send.explicitClose(
-        new CloseEvent("close", {
-          code: WebsocketCloseCodes.CLOSE_ABNORMAL,
-          wasClean: false,
-        })
-      );
 
       const newInitStorage: IdTuple<SerializedCrdt>[] = [
         ["0:0", { type: CrdtType.OBJECT, data: {} }],
@@ -1010,8 +999,9 @@ describe("LiveObject", () => {
         ],
       ];
 
-      reconnect(room, 3, newInitStorage);
+      replaceRemoteStorageAndReconnect(wss, newInitStorage);
 
+      await waitUntilStorageUpdate(room);
       expectStorage({
         obj: { a: 1, subObj: { b: 1 } },
       });

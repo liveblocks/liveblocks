@@ -1,6 +1,6 @@
 {
   "name": "@liveblocks/redux",
-  "version": "1.0.12-yjs3",
+  "version": "1.1.0",
   "description": "A store enhancer to integrate Liveblocks into Redux stores. Liveblocks is the all-in-one toolkit to build collaborative products like Figma, Notion, and more.",
   "license": "Apache-2.0",
   "main": "./dist/index.js",
@@ -12,14 +12,14 @@
   "scripts": {
     "dev": "tsup --watch",
     "build": "tsup",
-    "format": "eslint --fix src/; prettier --write src/",
+    "format": "(eslint --fix src/ || true) && prettier --write src/",
     "lint": "eslint src/",
     "test": "jest --silent --verbose --color=always",
     "test:watch": "jest --silent --verbose --color=always --watch"
   },
   "dependencies": {
-    "@liveblocks/client": "1.0.12-yjs3",
-    "@liveblocks/core": "1.0.12-yjs3"
+    "@liveblocks/client": "1.1.0",
+    "@liveblocks/core": "1.1.0"
   },
   "peerDependencies": {
     "redux": "^4"

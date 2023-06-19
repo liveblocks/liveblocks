@@ -1,0 +1,32 @@
+.avatars {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+}
+
+.you:not(:first-child) {
+  margin-left: 20px;
+}
+
+.avatar {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  border: 4px solid #f3f4f6;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 500;
+  width: 44px;
+  height: 44px;
+  background-color: #dbdde2;
+  color: #6b7280;
+  margin-left: -0.75rem;
+}
+
+.avatar_picture {
+  width: 100%;
+  height: auto;
+  border-radius: 9999px;
+}

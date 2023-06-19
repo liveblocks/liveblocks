@@ -1,3 +1,70 @@
+# v1.1.0
+
+This release improves the client’s internals to ensure a more reliable
+connection with Liveblocks servers.
+
+### `@liveblocks/core`
+
+- New APIs:
+  - `room.getStatus()`: returns the current status of the WebSocket connection:
+    `"initial"`, `"connecting"`, `"connected"`, `"reconnecting"`, or
+    `"disconnected"`
+  - `room.subscribe("status")`: subscribe to changes of the connection status.
+  - `room.subscribe("lost-connection")`: high-level API to get informed when
+    Liveblocks’ automatic reconnection process is taking longer than usual, so
+    you can show a toast message on screen. (See this
+    [example](https://liveblocks.io/examples/connection-status) for an
+    illustration.)
+- New behavior:
+  - The client will stop retrying to establish a connection in cases where
+    retrying would not help. For example an explicit 403 forbidden response from
+    your backend, or a configuration error.
+  - The client will more quickly reconnect even after long periods of sleep.
+
+### `@liveblocks/react`
+
+- New APIs:
+  - `useStatus()` - React hook version of `room.getStatus()`
+  - `useLostConnectionListener()` - React hook version of
+    `room.subscribe("lost-connection")` (See this
+    [example](https://liveblocks.io/examples/connection-status) for an
+    illustration.)
+
+### Bugs fixed
+
+- Reconnection would sometimes not work after long periods of sleep. Waking up
+  is now instant.
+- React clients using Suspense could sometimes incorrectly bounce back to the
+  Suspense boundary after a successful load. No longer!
+- Client could sometimes not load storage after reconnecting. Not anymore!
+- Others array will no longer flash during an internal reconnect.
+- DevTools now keeps working even when the client goes offline.
+
+### Deprecated APIs
+
+These APIs still work, but are replaced by newer APIs. The old APIs will be
+removed in a future release of Liveblocks.
+
+Old connection status codes are replaced by the new ones:
+
+| ❌ Old statuses | ✅ New statuses |
+| --------------- | --------------- |
+| closed          | initial         |
+| authenticating  | connecting      |
+| connecting      | connecting      |
+| open            | connected       |
+| unavailable     | reconnecting    |
+| failed          | disconnected    |
+
+Recommended steps to upgrade:
+
+- ❌ `room.getConnectionState()` → ✅ `room.getStatus()`
+- ❌ `room.subscribe('connection')` → ✅ `room.subscribe('status')`
+- Old client options:
+  - ❌ `clientOptions.fetchPolyfill`
+  - ❌ `clientOptions.WebSocketPolyfill` → ✅
+    `clientOptions.polyfills: { fetch, WebSocket }`
+
 # v1.0.12
 
 ### `create-liveblocks-app`
