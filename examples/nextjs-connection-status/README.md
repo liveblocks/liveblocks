@@ -7,7 +7,7 @@
   </a>
 </p>
 
-# Live Cursors
+# Connection Status
 
 <p>
   <a href="https://liveblocks.io/examples/connection-status/nextjs/preview">
