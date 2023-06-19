@@ -142,8 +142,6 @@ async function prepareWithStorage<TState>(
 
   const socket = await waitForSocketToBeConnected();
 
-  socket.callbacks.open[0]!();
-
   socket.callbacks.message[0]!({
     data: JSON.stringify({
       type: ServerMsgCode.INITIAL_STORAGE_STATE,
@@ -199,8 +197,6 @@ describe("middleware", () => {
 
     const socket = await waitForSocketToBeConnected();
 
-    socket.callbacks.open[0]!();
-
     socket.callbacks.message[0]!({
       data: JSON.stringify({
         type: ServerMsgCode.INITIAL_STORAGE_STATE,
@@ -218,11 +214,10 @@ describe("middleware", () => {
 
     liveblocks.enterRoom("room");
 
-    const socket = await waitForSocketToBeConnected();
-
-    socket.callbacks.open[0]!();
+    await waitForSocketToBeConnected();
 
     expect(store.getState().liveblocks.connection).toBe("open");
+    expect(store.getState().liveblocks.status).toBe("connected");
   });
 
   describe("presence", () => {
@@ -234,8 +229,6 @@ describe("middleware", () => {
       liveblocks.enterRoom("room");
 
       const socket = await waitForSocketToBeConnected();
-
-      socket.callbacks.open[0]!();
 
       store
         .getState()
@@ -273,8 +266,6 @@ describe("middleware", () => {
 
       const socket = await waitForSocketToBeConnected();
 
-      socket.callbacks.open[0]!();
-
       expect(JSON.parse(socket.sentMessages[0]!)).toEqual([
         {
           type: ClientMsgCode.UPDATE_PRESENCE,
@@ -295,8 +286,6 @@ describe("middleware", () => {
       liveblocks.enterRoom("room");
 
       const socket = await waitForSocketToBeConnected();
-
-      socket.callbacks.open[0]!();
 
       expect(JSON.parse(socket.sentMessages[0]!)).toEqual([
         {
@@ -329,8 +318,6 @@ describe("middleware", () => {
       liveblocks.enterRoom("room");
 
       const socket = await waitForSocketToBeConnected();
-
-      socket.callbacks.open[0]!();
 
       socket.callbacks.message[0]!({
         data: JSON.stringify({

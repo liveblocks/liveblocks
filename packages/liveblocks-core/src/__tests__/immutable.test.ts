@@ -12,7 +12,6 @@ import {
 import * as console from "../lib/fancy-console";
 import type { Json, JsonObject } from "../lib/Json";
 import type { BaseUserMeta } from "../protocol/BaseUserMeta";
-import type { ClientMsg } from "../protocol/ClientMsg";
 import { ClientMsgCode } from "../protocol/ClientMsg";
 import type { IdTuple, SerializedCrdt } from "../protocol/SerializedCrdt";
 import { ServerMsgCode } from "../protocol/ServerMsg";
@@ -22,6 +21,7 @@ import {
   createSerializedRegister,
   FIRST_POSITION,
   FOURTH_POSITION,
+  parseAsClientMsgs,
   prepareRoomWithStorage,
   SECOND_POSITION,
   serverMessage,
@@ -39,29 +39,32 @@ export async function prepareStorageImmutableTest<
 
   let totalStorageOps = 0;
 
-  const { room: refRoom, storage: refStorage } = await prepareRoomWithStorage<
+  const ref = await prepareRoomWithStorage<
     TPresence,
     TStorage,
     TUserMeta,
     TRoomEvent
   >(items, -1);
 
-  const { room, storage } = await prepareRoomWithStorage<
+  const subject = await prepareRoomWithStorage<
     TPresence,
     TStorage,
     TUserMeta,
     TRoomEvent
-  >(items, actor, (messages: ClientMsg<TPresence, TRoomEvent>[]) => {
+  >(items, actor);
+
+  subject.wss.onReceive.subscribe((data) => {
+    const messages = parseAsClientMsgs(data);
     for (const message of messages) {
       if (message.type === ClientMsgCode.UPDATE_STORAGE) {
         totalStorageOps += message.ops.length;
-        refRoom.__internal.send.incomingMessage(
+        ref.wss.last.send(
           serverMessage({
             type: ServerMsgCode.UPDATE_STORAGE,
             ops: message.ops,
           })
         );
-        room.__internal.send.incomingMessage(
+        subject.wss.last.send(
           serverMessage({
             type: ServerMsgCode.UPDATE_STORAGE,
             ops: message.ops,
@@ -71,11 +74,11 @@ export async function prepareStorageImmutableTest<
     }
   });
 
-  state = lsonToJson(storage.root) as ToJson<TStorage>;
-  refState = lsonToJson(refStorage.root) as ToJson<TStorage>;
+  state = lsonToJson(subject.storage.root) as ToJson<TStorage>;
+  refState = lsonToJson(ref.storage.root) as ToJson<TStorage>;
 
-  refRoom.events.storage.subscribe(() => {
-    refState = lsonToJson(refStorage.root) as ToJson<TStorage>;
+  ref.room.events.storage.subscribe(() => {
+    refState = lsonToJson(ref.storage.root) as ToJson<TStorage>;
   });
 
   function expectStorageAndStateInBothClients(
@@ -86,7 +89,7 @@ export async function prepareStorageImmutableTest<
     expectStorageInBothClients(data);
 
     if (itemsCount !== undefined) {
-      expect(room.__internal.nodeCount).toBe(itemsCount);
+      expect(subject.room.__internal.nodeCount).toBe(itemsCount);
     }
     expect(state).toEqual(refState);
     expect(state).toEqual(data);
@@ -97,14 +100,14 @@ export async function prepareStorageImmutableTest<
   }
 
   function expectStorageInBothClients(data: ToJson<TStorage>) {
-    const json = lsonToJson(storage.root);
+    const json = lsonToJson(subject.storage.root);
     expect(json).toEqual(data);
-    expect(lsonToJson(refStorage.root)).toEqual(data);
+    expect(lsonToJson(ref.storage.root)).toEqual(data);
   }
 
   return {
-    storage,
-    refStorage,
+    storage: subject.storage,
+    refStorage: ref.storage,
     expectStorageAndState: expectStorageAndStateInBothClients,
     expectStorage: expectStorageInBothClients,
     state,
@@ -599,6 +602,7 @@ describe("2 ways tests with two clients", () => {
 
       expectStorageAndState({ syncList: ["a"] }, 3, 2);
     });
+
     test("remove all elements of array except last", async () => {
       const { storage, state, expectStorageAndState } =
         await prepareStorageImmutableTest<{
@@ -627,6 +631,7 @@ describe("2 ways tests with two clients", () => {
 
       expectStorageAndState({ syncList: ["c"] }, 3, 2);
     });
+
     test("remove all elements of array", async () => {
       const { storage, state, expectStorageAndState } =
         await prepareStorageImmutableTest<{

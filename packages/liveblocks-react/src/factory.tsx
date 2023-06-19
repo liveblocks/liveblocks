@@ -6,9 +6,11 @@ import type {
   Json,
   JsonObject,
   LiveObject,
+  LostConnectionEvent,
   LsonObject,
   Others,
   Room,
+  Status,
   User,
 } from "@liveblocks/client";
 import { shallow } from "@liveblocks/client";
@@ -214,6 +216,13 @@ export function createRoomContext<
     return room;
   }
 
+  function useStatus(): Status {
+    const room = useRoom();
+    const subscribe = room.events.status.subscribe;
+    const getSnapshot = room.getStatus;
+    return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+  }
+
   function useMyPresence(): [
     TPresence,
     (patch: Partial<TPresence>, options?: { addToHistory: boolean }) => void
@@ -346,6 +355,25 @@ export function createRoomContext<
       ) => {
         room.broadcastEvent(event, options);
       },
+      [room]
+    );
+  }
+
+  function useLostConnectionListener(
+    callback: (event: LostConnectionEvent) => void
+  ): void {
+    const room = useRoom();
+    const savedCallback = React.useRef(callback);
+
+    React.useEffect(() => {
+      savedCallback.current = callback;
+    });
+
+    React.useEffect(
+      () =>
+        room.events.lostConnection.subscribe((event: LostConnectionEvent) =>
+          savedCallback.current(event)
+        ),
       [room]
     );
   }
@@ -711,9 +739,11 @@ export function createRoomContext<
     RoomProvider,
 
     useRoom,
+    useStatus,
 
     useBatch,
     useBroadcastEvent,
+    useLostConnectionListener,
     useErrorListener,
     useEventListener,
 
@@ -746,9 +776,11 @@ export function createRoomContext<
       RoomProvider,
 
       useRoom,
+      useStatus,
 
       useBatch,
       useBroadcastEvent,
+      useLostConnectionListener,
       useErrorListener,
       useEventListener,
 

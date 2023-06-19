@@ -5,9 +5,11 @@ import type {
   Json,
   JsonObject,
   LiveObject,
+  LostConnectionEvent,
   LsonObject,
   Others,
   Room,
+  Status,
   User,
 } from "@liveblocks/client";
 import type { Resolve, RoomInitializers, ToImmutable } from "@liveblocks/core";
@@ -108,6 +110,12 @@ export type RoomContextBundle<
   useRoom(): Room<TPresence, TStorage, TUserMeta, TRoomEvent>;
 
   /**
+   * Returns the current connection status for the Room, and triggers
+   * a re-render whenever it changes. Can be used to render a status badge.
+   */
+  useStatus(): Status;
+
+  /**
    * Returns a function that batches modifications made during the given function.
    * All the modifications are sent to other clients in a single message.
    * All the modifications are merged in a single history item (undo/redo).
@@ -124,6 +132,30 @@ export type RoomContextBundle<
    * broadcast({ type: "CUSTOM_EVENT", data: { x: 0, y: 0 } });
    */
   useBroadcastEvent(): (event: TRoomEvent, options?: BroadcastOptions) => void;
+
+  /**
+   * Get informed when reconnecting to the Liveblocks servers is taking
+   * longer than usual. This typically is a sign of a client that has lost
+   * internet connectivity.
+   *
+   * This isn't problematic (because the Liveblocks client is still trying to
+   * reconnect), but it's typically a good idea to inform users about it if
+   * the connection takes too long to recover.
+   *
+   * @example
+   * useLostConnectionListener(event => {
+   *   if (event === 'lost') {
+   *     toast.warn('Reconnecting to the Liveblocks servers is taking longer than usual...')
+   *   } else if (event === 'failed') {
+   *     toast.warn('Reconnecting to the Liveblocks servers failed.')
+   *   } else if (event === 'restored') {
+   *     toast.clear();
+   *   }
+   * })
+   */
+  useLostConnectionListener(
+    callback: (event: LostConnectionEvent) => void
+  ): void;
 
   /**
    * useErrorListener is a react hook that lets you react to potential room connection errors.
@@ -508,6 +540,12 @@ export type RoomContextBundle<
     useRoom(): Room<TPresence, TStorage, TUserMeta, TRoomEvent>;
 
     /**
+     * Returns the current connection status for the Room, and triggers
+     * a re-render whenever it changes. Can be used to render a status badge.
+     */
+    useStatus(): Status;
+
+    /**
      * Returns a function that batches modifications made during the given function.
      * All the modifications are sent to other clients in a single message.
      * All the modifications are merged in a single history item (undo/redo).
@@ -527,6 +565,30 @@ export type RoomContextBundle<
       event: TRoomEvent,
       options?: BroadcastOptions
     ) => void;
+
+    /**
+     * Get informed when reconnecting to the Liveblocks servers is taking
+     * longer than usual. This typically is a sign of a client that has lost
+     * internet connectivity.
+     *
+     * This isn't problematic (because the Liveblocks client is still trying to
+     * reconnect), but it's typically a good idea to inform users about it if
+     * the connection takes too long to recover.
+     *
+     * @example
+     * useLostConnectionListener(event => {
+     *   if (event === 'lost') {
+     *     toast.warn('Reconnecting to the Liveblocks servers is taking longer than usual...')
+     *   } else if (event === 'failed') {
+     *     toast.warn('Reconnecting to the Liveblocks servers failed.')
+     *   } else if (event === 'restored') {
+     *     toast.clear();
+     *   }
+     * })
+     */
+    useLostConnectionListener(
+      callback: (event: LostConnectionEvent) => void
+    ): void;
 
     /**
      * useErrorListener is a react hook that lets you react to potential room connection errors.
