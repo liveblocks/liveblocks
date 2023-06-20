@@ -24,42 +24,13 @@
 **[Liveblocks](https://liveblocks.io) is a real-time collaboration
 infrastructure for building performant collaborative experiences.**
 
-## Documentation
-
-Read the [documentation](https://liveblocks.io/docs),
-[interactive tutorial](https://liveblocks.io/docs/tutorial/react/getting-started)
-and [guides](https://liveblocks.io/docs/guides) to learn how to use Liveblocks.
-
-> The documentation is open-source and live in this repository, within
-> [`/docs`](./docs).
-
-## Examples
-
-Explore our gallery of [collaborative examples](https://liveblocks.io/examples)
-to help you get started.
-
-> All examples are open-source and live in this repository, within
-> [`/examples`](./examples).
-
-## Releases
-
-See the latest changes
-[here](https://github.com/liveblocks/liveblocks/releases).
-
-## Community
-
-- [GitHub issues](./issues) to file bugs and errors you encounter using
-  Liveblocks.
-- [Discord](https://liveblocks.io/discord) to get involved with the Liveblocks
-  community, ask questions and share tips.
-- [Twitter](https://twitter.com/liveblocks) to receive updates, announcements,
-  blog posts, and general Liveblocks tips.
-
 ## How Liveblocks works
 
 Liveblocks is a real-time collaboration infrastructure for building performant
 collaborative experiences. The foundations of Liveblocks are built upon four
 core concepts: products, rooms, integrations, and platform.
+
+<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/assets/concepts/platform.png" alt="Liveblocks"   />
 
 ### Products
 
@@ -86,6 +57,13 @@ integrate with the Liveblocks products within the rooms. You can use existing
 integrations for specific libraries and frameworks, or create a custom one for
 your needs.
 
+|                                                                                      | Presence | Broadcast | Storage | Comments |
+| ------------------------------------------------------------------------------------ | -------- | --------- | ------- | -------- |
+| [`@liveblocks/client`](https://liveblocks.io/docs/api-reference/liveblocks-client)   | ✅       | ✅        | ✅      | ✅       |
+| [`@liveblocks/react`](https://liveblocks.io/docs/api-reference/liveblocks-react)     | ✅       | ✅        | ✅      | ✅       |
+| [`@liveblocks/redux`](https://liveblocks.io/docs/api-reference/liveblocks-redux)     | ✅       | ❌        | ✅      | ❌       |
+| [`@liveblocks/zustand`](https://liveblocks.io/docs/api-reference/liveblocks-zustand) | ✅       | ❌        | ✅      | ❌       |
+
 ### Platform
 
 Liveblocks provides a fully-hosted platform built around a WebSocket edge
@@ -96,6 +74,29 @@ lot of powerful tools such as
 [DevTools](https://liveblocks.io/docs/platform/devtools),
 [schema validation](https://liveblocks.io/docs/platform/schema-validation),
 analytics, and more.
+
+## Developers
+
+|                                                                       | Contribution              |
+| --------------------------------------------------------------------- | ------------------------- |
+| [Documentation](https://liveblocks.io/docs)                           | [`/docs`](./docs)         |
+| [Guides](https://liveblocks.io/docs/guides)                           | [`/guides`](./guides)     |
+| [Tutorial](https://liveblocks.io/docs/tutorial/react/getting-started) | [`/tutorial`](./tutorial) |
+| [Examples](https://liveblocks.io/examples)                            | [`/examples`](./examples) |
+
+See the latest changes
+[here](https://github.com/liveblocks/liveblocks/releases).
+
+## Community and support
+
+- [GitHub issues](./issues) to file bugs and errors you encounter using
+  Liveblocks.
+- [Discord](https://liveblocks.io/discord) to get involved with the Liveblocks
+  community, ask questions and share tips.
+- [Email](https://liveblocks.io/contact) to contact us directly for support and
+  sales enquiries.
+- [Twitter](https://twitter.com/liveblocks) to receive updates, announcements,
+  blog posts, and general Liveblocks tips.
 
 ## License
 
