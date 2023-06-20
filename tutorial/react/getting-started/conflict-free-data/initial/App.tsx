@@ -8,7 +8,7 @@ export default function App() {
 
   return (
     <RoomProvider id={roomId} initialPresence={{}}>
-      <ClientSideSuspense fallback={<div>Loading...</div>}>
+      <ClientSideSuspense fallback={<div>Loading…</div>}>
         {() => <Room />}
       </ClientSideSuspense>
     </RoomProvider>

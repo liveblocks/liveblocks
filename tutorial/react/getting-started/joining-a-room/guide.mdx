@@ -36,7 +36,7 @@ this, pass `<Room>`, and include a loading `fallback`:
 
 ```tsx highlight="2-4"
 <RoomProvider id={roomId} initialPresence={{}}>
-  <ClientSideSuspense fallback={<div>Loading...</div>}>
+  <ClientSideSuspense fallback={<div>Loading…</div>}>
     {() => <Room />}
   </ClientSideSuspense>
 </RoomProvider>
@@ -53,8 +53,8 @@ You can place this component anywhere inside your app, for example around an
 avatar stack—it doesn’t have to sit at the top-level. Add the code and click
 refresh in the preview window to see a brief loading message.
 
-[`RoomProvider`]: /docs/api-reference/liveblocks-react#RoomProvider
-[`ClientSideSuspense`]: /docs/api-reference/liveblocks-react#suspense-avoid-ssr
+[`roomprovider`]: /docs/api-reference/liveblocks-react#RoomProvider
+[`clientsidesuspense`]: /docs/api-reference/liveblocks-react#suspense-avoid-ssr
 [liveblocks.config.ts]: #/liveblocks.config.ts
-[App.tsx]: #/App.tsx
-[Room.tsx]: #/Room.tsx
+[app.tsx]: #/App.tsx
+[room.tsx]: #/Room.tsx

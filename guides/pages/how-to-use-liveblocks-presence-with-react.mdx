@@ -1,0 +1,257 @@
+---
+meta:
+  title: "How to use Liveblocks Presence with React"
+  description: "Learn how to use Liveblocks Presence with React"
+---
+
+In this guide, we’ll be learning how to use Liveblocks Presence with React using
+the hooks from the [`@liveblocks/react`][] package.
+
+This guide uses [TypeScript](https://www.typescriptlang.org/). Liveblocks can
+definitely be used without TypeScript. We believe typings are helpful to make
+collaborative apps more robust, but if you’d prefer to skip the TypeScript
+syntax, feel free to write your code in JavaScript.
+
+If you’re using a state-management library such as
+[Redux](https://redux.js.org/) or [Zustand](https://github.com/pmndrs/zustand),
+we recommend reading one of our dedicated guides:
+
+- [React + Redux guide](/docs/get-started/react-redux)
+- [React + Zustand guide](/docs/get-started/react-zustand)
+
+You can also take
+[our step-by-step tutorial](/docs/tutorials/react/getting-started) to learn how
+to use Liveblocks.
+
+## Get other users in the room [#get-others]
+
+<Banner title="Need help troubleshooting presence?">
+
+Try the [Liveblocks DevTools extension](/devtools) to visualize your
+collaborative experiences as you build them, in real-time.
+
+</Banner>
+
+Now that the provider is set up, we can start using the Liveblocks hooks. The
+first we’ll add is [`useOthers`][], a hook that provides us information about
+which _other_ users are connected to the room.
+
+We can re-export this from `liveblocks.config.ts`, exactly like we did for
+`RoomProvider`.
+
+```tsx file="liveblocks.config.ts" highlight="10"
+import { createClient } from "@liveblocks/client";
+import { createRoomContext } from "@liveblocks/react";
+
+const client = createClient({
+  publicApiKey: "{{PUBLIC_KEY}}",
+});
+
+export const {
+  RoomProvider,
+  useOthers, // 👈
+} = createRoomContext(client);
+```
+
+To show how many other users are in the room, import `useOthers` into a
+component and use it as below.
+
+```tsx highlight="1,4"
+import { RoomProvider, useOthers } from "./liveblocks.config";
+
+function App() {
+  const others = useOthers();
+
+  return <div>There are {others.length} other users with you in the room.</div>;
+}
+
+function Index() {
+  return (
+    <RoomProvider id="my-room-id" initialPresence={{}}>
+      <App />
+    </RoomProvider>
+  );
+}
+```
+
+Great! We’re connected, and we already have information about the other users
+currently online.
+
+## Define initial presence [#define-presence]
+
+Most collaborative features rely on each user having their own temporary state,
+which is then shared with others. For example, in an app using multiplayer
+cursors, the location of each user’s cursor will be their state. In Liveblocks,
+we call this _presence_.
+
+We can use _presence_ to hold any object that we wish to share with others. An
+example would be the pixel coordinates of a user’s cursor:
+
+```js
+cursor: { x: 256, y: 367 }
+```
+
+To start using presence, let’s define a type named `Presence` in
+`liveblocks.config.ts` and use it as a generic argument of `createRoomContext`.
+All of our _presence_ hooks returned by `createRoomContext` will be typed
+correspondingly to the newly defined `Presence` type.
+
+```tsx file="liveblocks.config.ts" highlight="8-10,12"
+import { createClient } from "@liveblocks/client";
+import { createRoomContext } from "@liveblocks/react";
+
+const client = createClient({
+  publicApiKey: "{{PUBLIC_KEY}}",
+});
+
+type Presence = {
+  cursor: { x: number; y: number } | null;
+};
+
+export const { RoomProvider, useOthers } = createRoomContext<Presence>(client);
+```
+
+Then, define an `initialPresence` value on our `RoomProvider`. We’ll set the
+initial cursor to `null` to represent a user whose cursor is currently
+off-screen.
+
+```tsx file="index.ts" highlight="7"
+import { RoomProvider, useOthers } from "./liveblocks.config";
+
+// App
+
+function Index() {
+  return (
+    <RoomProvider id="my-room-id" initialPresence={{ cursor: null }}>
+      <App />
+    </RoomProvider>
+  );
+}
+```
+
+## Update user presence [#update-presence]
+
+We can add the [`useUpdateMyPresence`][] hook to share this information in
+real-time, and in this case, update the current user cursor position when
+`onPointerMove` is called.
+
+First, re-export `useUpdateMyPresence` like we did with `useOthers`.
+
+```tsx file="liveblocks.config.ts" highlight="6"
+// ...
+
+export const {
+  RoomProvider,
+  useOthers,
+  useUpdateMyPresence, // 👈
+} = createRoomContext<Presence>(client);
+```
+
+To keep this guide concise, we’ll assume that you now understand how to
+re-export your hooks for every new hook.
+
+Next, import `updateMyPresence` and call it with the updated cursor coordinates
+whenever a pointer move event is detected.
+
+```tsx
+import { useUpdateMyPresence } from "./liveblocks.config";
+
+function App() {
+  const updateMyPresence = useUpdateMyPresence();
+
+  return (
+    <div
+      style={{ width: "100vw", height: "100vh" }}
+      onPointerMove={(e) =>
+        updateMyPresence({ cursor: { x: e.clientX, y: e.clientY } })
+      }
+      onPointerLeave={() => updateMyPresence({ cursor: null })}
+    />
+  );
+}
+```
+
+We’re setting `cursor` to `null` when the user’s pointer leaves the element.
+
+## Get other users’ presence [#get-others-presence]
+
+To retrieve each user’s presence, and cursor locations, we can once again add
+[`useOthers`][]. This time we’ll use a selector function to map through each
+user’s presence, and grab their cursor property. If a cursor is set to `null`, a
+user is off-screen, so we’ll skip rendering it.
+
+```tsx highlight="20-26"
+import {
+  useOthers,
+  useUpdateMyPresence,
+  RoomProvider,
+} from "./liveblocks.config";
+
+function App() {
+  const others = useOthers();
+  const updateMyPresence = useUpdateMyPresence();
+
+  return (
+    <div
+      style={{ width: "100vw", height: "100vh" }}
+      onPointerMove={(e) =>
+        updateMyPresence({ cursor: { x: e.clientX, y: e.clientY } })
+      }
+      onPointerLeave={() => updateMyPresence({ cursor: null })}
+    >
+      {others.map(({ connectionId, presence }) =>
+        presence.cursor ? (
+          <Cursor
+            key={connectionId}
+            x={presence.cursor.x}
+            y={presence.cursor.y}
+          />
+        ) : null
+      )}
+    </div>
+  );
+}
+
+// Basic cursor component
+function Cursor({ x, y }) {
+  return (
+    <img
+      style={{
+        position: "absolute",
+        transform: `translate(${x}px, ${y}px)`,
+      }}
+      src="https://liveblocks.io/images/cursor.svg"
+    />
+  );
+}
+```
+
+Presence isn’t only for [multiplayer cursors](/examples/browse/cursors), and can
+be helpful for a number of other use cases such as
+[live avatar stacks](/examples/browse/avatar-stack) and
+[real-time form presence](/examples/browse/forms).
+
+[`@liveblocks/client`]: /docs/api-reference/liveblocks-client
+[`@liveblocks/react`]: /docs/api-reference/liveblocks-react
+[`createroomcontext`]: /docs/api-reference/liveblocks-react#createRoomContext
+[`livelist`]: /docs/api-reference/liveblocks-client#LiveList
+[`livelist.push`]: /docs/api-reference/liveblocks-client#LiveList.push
+[`livemap`]: /docs/api-reference/liveblocks-client#LiveMap
+[`liveobject`]: /docs/api-reference/liveblocks-client#LiveObject
+[`liveobject.get`]: /docs/api-reference/liveblocks-client#LiveObject.get
+[`liveobject.set`]: /docs/api-reference/liveblocks-client#LiveObject.set
+[`room.history.pause`]: /docs/api-reference/liveblocks-client#Room.history.pause
+[`room.history.resume`]:
+  /docs/api-reference/liveblocks-client#Room.history.resume
+[`room.subscribe`]:
+  /docs/api-reference/liveblocks-client#Room.subscribe(storageItem)
+[`roomprovider`]: /docs/api-reference/liveblocks-react#RoomProvider
+[`usehistory`]: /docs/api-reference/liveblocks-react#useHistory
+[`useothers`]: /docs/api-reference/liveblocks-react#useOthers
+[`useredo`]: /docs/api-reference/liveblocks-react#useRedo
+[`useundo`]: /docs/api-reference/liveblocks-react#useUndo
+[`useupdatemypresence`]:
+  /docs/api-reference/liveblocks-react#useUpdateMyPresence
+[`useconnectionids`]: /docs/api-reference/liveblocks-react#useConnectionIds
+[`usestorage`]: /docs/api-reference/liveblocks-react#useStorage
+[`usemutation`]: /docs/api-reference/liveblocks-react#useMutation

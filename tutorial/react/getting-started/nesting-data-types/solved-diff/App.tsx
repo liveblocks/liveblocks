@@ -14,7 +14,7 @@ export default function App() {
         people: new LiveList([new LiveObject({ name: "Marie", age: 30 })]),
       }}
     >
-      <ClientSideSuspense fallback={<div>Loading...</div>}>
+      <ClientSideSuspense fallback={<div>Loading…</div>}>
         {() => <Room />}
       </ClientSideSuspense>
     </RoomProvider>
