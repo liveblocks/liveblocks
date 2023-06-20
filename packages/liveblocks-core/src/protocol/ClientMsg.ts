@@ -11,8 +11,8 @@ export enum ClientMsgCode {
   UPDATE_STORAGE = 201,
 
   // For YJS support
-  FETCH_DOC = 300,
-  UPDATE_DOC = 301,
+  FETCH_YDOC_UPDATE = 300,
+  UPDATE_YDOC = 301,
 }
 
 /**
@@ -28,8 +28,8 @@ export type ClientMsg<TPresence extends JsonObject, TRoomEvent extends Json> =
   | FetchStorageClientMsg
 
   // For YJS support
-  | FetchDocClientMsg
-  | UpdateDocClientMsg;
+  | FetchYDocClientMsg
+  | UpdateYDocClientMsg;
 
 export type BroadcastEventClientMsg<TRoomEvent extends Json> = {
   type: ClientMsgCode.BROADCAST_EVENT;
@@ -81,12 +81,12 @@ export type FetchStorageClientMsg = {
   readonly type: ClientMsgCode.FETCH_STORAGE;
 };
 
-export type FetchDocClientMsg = {
-  readonly type: ClientMsgCode.FETCH_DOC;
-  readonly vector?: string;
+export type FetchYDocClientMsg = {
+  readonly type: ClientMsgCode.FETCH_YDOC_UPDATE;
+  readonly vector: string;
 };
 
-export type UpdateDocClientMsg = {
-  readonly type: ClientMsgCode.UPDATE_DOC;
-  readonly data: string;
+export type UpdateYDocClientMsg = {
+  readonly type: ClientMsgCode.UPDATE_YDOC;
+  readonly update: string;
 };

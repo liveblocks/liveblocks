@@ -518,12 +518,12 @@ export type Room<
    *
    * @param {string} data the doc update to send to the server, base64 encoded uint8array
    */
-  updateDoc(data: string): void;
+  updateYDoc(data: string): void;
 
   /**
    * Sends a request for the current document from liveblocks server
    */
-  getDoc(stateVector?: string): void;
+  getYDoc(stateVector: string): void;
 
   /**
    * Broadcasts an event to other users in the room. Event broadcasted to the room can be listened with {@link Room.subscribe}("event").
@@ -582,7 +582,7 @@ export type Room<
     readonly storageDidLoad: Observable<void>;
 
     readonly storageStatus: Observable<StorageStatus>;
-    readonly docUpdated: Observable<string[]>;
+    readonly docUpdated: Observable<string>;
   };
 
   /**
@@ -1120,7 +1120,7 @@ export function createRoom<
     history: makeEventSource<HistoryEvent>(),
     storageDidLoad: makeEventSource<void>(),
     storageStatus: makeEventSource<StorageStatus>(),
-    docUpdated: makeEventSource<string[]>(),
+    docUpdated: makeEventSource<string>(),
   };
 
   function sendMessages(
@@ -1708,8 +1708,8 @@ export function createRoom<
             break;
           }
 
-          case ServerMsgCode.FETCH_DOC: {
-            eventHub.docUpdated.notify(message.data);
+          case ServerMsgCode.YDOC_UPDATE: {
+            eventHub.docUpdated.notify(message.update);
             break;
           }
 
@@ -1859,10 +1859,10 @@ export function createRoom<
     return messages;
   }
 
-  function updateDoc(data: string) {
+  function updateYDoc(update: string) {
     context.buffer.messages.push({
-      type: ClientMsgCode.UPDATE_DOC,
-      data,
+      type: ClientMsgCode.UPDATE_YDOC,
+      update,
     });
     flushNowOrSoon();
   }
@@ -1955,8 +1955,11 @@ export function createRoom<
     };
   }
 
-  function getDoc(vector: string = ""): void {
-    context.buffer.messages.push({ type: ClientMsgCode.FETCH_DOC, vector });
+  function getYDoc(vector: string): void {
+    context.buffer.messages.push({
+      type: ClientMsgCode.FETCH_YDOC_UPDATE,
+      vector,
+    });
     flushNowOrSoon();
   }
 
@@ -2152,7 +2155,7 @@ export function createRoom<
 
     // Presence
     updatePresence,
-    updateDoc,
+    updateYDoc,
     broadcastEvent,
 
     // Storage
@@ -2166,7 +2169,7 @@ export function createRoom<
       resume: resumeHistory,
     },
 
-    getDoc,
+    getYDoc,
     getStorage,
     getStorageSnapshot,
     getStorageStatus,

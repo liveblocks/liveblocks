@@ -75,11 +75,11 @@ export type { BaseUserMeta } from "./protocol/BaseUserMeta";
 export type {
   BroadcastEventClientMsg,
   ClientMsg,
-  FetchDocClientMsg,
   FetchStorageClientMsg,
-  UpdateDocClientMsg,
+  FetchYDocClientMsg,
   UpdatePresenceClientMsg,
   UpdateStorageClientMsg,
+  UpdateYDocClientMsg,
 } from "./protocol/ClientMsg";
 export { ClientMsgCode } from "./protocol/ClientMsg";
 export type {

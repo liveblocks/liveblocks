@@ -17,8 +17,7 @@ export enum ServerMsgCode {
   REJECT_STORAGE_OP = 299,
 
   // For YJS Docs
-  FETCH_DOC = 300,
-  DOC_UPDATE = 301, //
+  YDOC_UPDATE = 300,
 }
 
 /**
@@ -40,7 +39,7 @@ export type ServerMsg<
   | InitialDocumentStateServerMsg // For a single client
   | UpdateStorageServerMsg // Broadcasted
   | RejectedStorageOpServerMsg // For a single client
-  | FetchDoc; // For receiving doc from backend
+  | YDocUpdate; // For receiving doc from backend
 
 // For YJS Docs
 
@@ -139,9 +138,9 @@ export type UserLeftServerMsg = {
   readonly actor: number;
 };
 
-export type FetchDoc = {
-  readonly type: ServerMsgCode.FETCH_DOC;
-  readonly data: string[];
+export type YDocUpdate = {
+  readonly type: ServerMsgCode.YDOC_UPDATE;
+  readonly update: string;
 };
 
 /**

@@ -159,30 +159,14 @@ export default class LiveblocksProvider<
     this.unsubscribers.push(
       this.room.events.connection.subscribe((e) => {
         if (e === "open") {
-          /**
-           * If the connection changes, set the new id, this is used by awareness
-           * yjs' only requirement for clientID is that it's truly unique and a number.
-           * Liveblock's connectionID satisfies those constraints
-           *  */
-          this.doc.clientID =
-            this.room.getSelf()?.connectionId || this.doc.clientID;
-          this.awareness.clientID = this.doc.clientID; // tell our awareness provider the new ID
-
-          // The state vector is sent to the server so it knows what to send back
-          // if you don't send it, it returns everything
-          const encodedVector = Base64.fromUint8Array(
-            Y.encodeStateVector(this.doc)
-          );
-          this.room.getDoc(encodedVector);
+          this.syncDoc();
         }
       })
     );
 
     this.unsubscribers.push(
-      this.room.events.docUpdated.subscribe((updates) => {
-        const decodedUpdates: Uint8Array[] = updates.map(Base64.toUint8Array);
-        const update = Y.mergeUpdates(decodedUpdates);
-        Y.applyUpdate(this.doc, update, "backend");
+      this.room.events.docUpdated.subscribe((update) => {
+        Y.applyUpdate(this.doc, Base64.toUint8Array(update), "backend");
       })
     );
 
@@ -199,13 +183,28 @@ export default class LiveblocksProvider<
 
       void this.resyncHttp();
     }
-    this.room.getDoc();
+    this.syncDoc();
   }
+
+  private syncDoc = () => {
+    /**
+     * If the connection changes, set the new id, this is used by awareness
+     * yjs' only requirement for clientID is that it's truly unique and a number.
+     * Liveblock's connectionID satisfies those constraints
+     *  */
+    this.doc.clientID = this.room.getSelf()?.connectionId || this.doc.clientID;
+    this.awareness.clientID = this.doc.clientID; // tell our awareness provider the new ID
+
+    // The state vector is sent to the server so it knows what to send back
+    // if you don't send it, it returns everything
+    const encodedVector = Base64.fromUint8Array(Y.encodeStateVector(this.doc));
+    this.room.getYDoc(encodedVector);
+  };
 
   private updateHandler = async (update: Uint8Array, origin: string) => {
     if (origin !== "backend") {
       const encodedUpdate = Base64.fromUint8Array(update);
-      this.room.updateDoc(encodedUpdate);
+      this.room.updateYDoc(encodedUpdate);
       if (this.httpEndpoint) {
         await fetch(this.httpEndpoint, {
           method: "POST",
