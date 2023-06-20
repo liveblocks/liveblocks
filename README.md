@@ -24,12 +24,12 @@
 **[Liveblocks](https://liveblocks.io) is a real-time collaboration
 infrastructure for building performant collaborative experiences.**
 
+<img src="./assets/concepts/platform.png" alt="Liveblocks"   />
+
 ## How Liveblocks works
 
 The foundations of Liveblocks are built upon four core concepts: products,
 rooms, integrations, and platform.
-
-<img src="./assets/concepts/platform.png" alt="Liveblocks"   />
 
 ### Products
 
