@@ -26,9 +26,8 @@ infrastructure for building performant collaborative experiences.**
 
 ## How Liveblocks works
 
-Liveblocks is a real-time collaboration infrastructure for building performant
-collaborative experiences. The foundations of Liveblocks are built upon four
-core concepts: products, rooms, integrations, and platform.
+The foundations of Liveblocks are built upon four core concepts: products,
+rooms, integrations, and platform.
 
 <img src="./liveblocks/liveblocks/main/assets/concepts/platform.png" alt="Liveblocks"   />
 
@@ -77,14 +76,13 @@ analytics, and more.
 
 ## Developers
 
-|                                                                       | Contribution              |
-| --------------------------------------------------------------------- | ------------------------- |
-| [Documentation](https://liveblocks.io/docs)                           | [`/docs`](./docs)         |
-| [Guides](https://liveblocks.io/docs/guides)                           | [`/guides`](./guides)     |
-| [Tutorial](https://liveblocks.io/docs/tutorial/react/getting-started) | [`/tutorial`](./tutorial) |
-| [Examples](https://liveblocks.io/examples)                            | [`/examples`](./examples) |
+- [Documentation](https://liveblocks.io/docs) - [`/docs`](./docs)
+- [Guides](https://liveblocks.io/docs/guides) - [`/guides`](./guides)
+- [Tutorial](https://liveblocks.io/docs/tutorial/react/getting-started)
+  [`/tutorial`](./tutorial)
+- [Examples](https://liveblocks.io/examples) - [`/examples`](./examples)
 
-See the latest changes
+You can read our release notes
 [here](https://github.com/liveblocks/liveblocks/releases).
 
 ## Community and support
