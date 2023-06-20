@@ -24,7 +24,38 @@
 **[Liveblocks](https://liveblocks.io) is a real-time collaboration
 infrastructure for building performant collaborative experiences.**
 
-> ## How Liveblocks works
+## Documentation
+
+Read the [documentation](https://liveblocks.io/docs),
+[interactive tutorial](https://liveblocks.io/docs/tutorial/react/getting-started)
+and [guides](https://liveblocks.io/docs/guides) to learn how to use Liveblocks.
+
+> The documentation is open-source and live in this repository, within
+> [`/docs`](./docs).
+
+## Examples
+
+Explore our gallery of [collaborative examples](https://liveblocks.io/examples)
+to help you get started.
+
+> All examples are open-source and live in this repository, within
+> [`/examples`](./examples).
+
+## Releases
+
+See the latest changes
+[here](https://github.com/liveblocks/liveblocks/releases).
+
+## Community
+
+- [GitHub issues](./issues) to file bugs and errors you encounter using
+  Liveblocks.
+- [Discord](https://liveblocks.io/discord) to get involved with the Liveblocks
+  community, ask questions and share tips.
+- [Twitter](https://twitter.com/liveblocks) to receive updates, announcements,
+  blog posts, and general Liveblocks tips.
+
+## How Liveblocks works
 
 Liveblocks is a real-time collaboration infrastructure for building performant
 collaborative experiences. The foundations of Liveblocks are built upon four
@@ -65,37 +96,6 @@ lot of powerful tools such as
 [DevTools](https://liveblocks.io/docs/platform/devtools),
 [schema validation](https://liveblocks.io/docs/platform/schema-validation),
 analytics, and more.
-
-## Documentation
-
-Read the [documentation](https://liveblocks.io/docs),
-[interactive tutorial](https://liveblocks.io/docs/tutorial/react/getting-started)
-and [guides](https://liveblocks.io/docs/guides) to learn how to use Liveblocks.
-
-> The documentation is open-source and live in this repository, within
-> [`/docs`](./docs).
-
-## Examples
-
-Explore our gallery of [collaborative examples](https://liveblocks.io/examples)
-to help you get started.
-
-> All examples are open-source and live in this repository, within
-> [`/examples`](./examples).
-
-## Releases
-
-See the latest changes
-[here](https://github.com/liveblocks/liveblocks/releases).
-
-## Community
-
-- [GitHub issues](./issues) to file bugs and errors you encounter using
-  Liveblocks.
-- [Discord](https://liveblocks.io/discord) to get involved with the Liveblocks
-  community, ask questions and share tips.
-- [Twitter](https://twitter.com/liveblocks) to receive updates, announcements,
-  blog posts, and general Liveblocks tips.
 
 ## License
 
