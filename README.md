@@ -29,7 +29,7 @@ infrastructure for building performant collaborative experiences.**
 The foundations of Liveblocks are built upon four core concepts: products,
 rooms, integrations, and platform.
 
-<img src="./liveblocks/liveblocks/main/assets/concepts/platform.png" alt="Liveblocks"   />
+<img src="./assets/concepts/platform.png" alt="Liveblocks"   />
 
 ### Products
 
