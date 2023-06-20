@@ -1,7 +1,7 @@
-import React from 'react'
+import React, { ReactNode } from 'react'
 
 type MenuItemProps = {
-  icon?: string;
+  icon?: ReactNode;
   title?: string;
   action?: () => void;
   isActive?: null | (() => boolean);

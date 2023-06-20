@@ -9,9 +9,9 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@liveblocks/client": "^1.1.0-yjs3",
-    "@liveblocks/react": "^1.1.0-yjs3",
-    "@liveblocks/yjs": "^1.1.0-yjs3",
+    "@liveblocks/client": "^1.1.0-yjs5",
+    "@liveblocks/react": "^1.1.0-yjs5",
+    "@liveblocks/yjs": "^1.1.0-yjs5",
     "@next/font": "13.1.6",
     "@tiptap/extension-character-count": "^2.0.3",
     "@tiptap/extension-collaboration": "^2.0.3",
@@ -34,5 +34,8 @@
     "typescript": "4.9.5",
     "y-prosemirror": "^1.0.20",
     "yjs": "^13.6.4"
+  },
+  "devDependencies": {
+    "@iconify/react": "^4.1.0"
   }
 }

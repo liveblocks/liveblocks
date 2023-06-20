@@ -1,91 +1,152 @@
+html {
+  height: 100vh;
+  width: 100vw;
+}
+
 html,
 body {
   margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.container {
+  max-width: 1024px;
+}
+
+.editor {
+  border: 3px solid #000000;
+  border-radius: 0.3em;
+  width: 100%;
+  min-width: 640px;
+  display: flex;
+  flex-direction: column;
+  max-height: 26rem;
+}
+
+.editor__header {
+  align-items: center;
+  background: #313131;
+  border-bottom: 3px solid #000000;
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  padding: 0.25rem;
+}
+
+.editor__footer {
+  padding: 0.25rem;
+}
+
+.editor__content {
+  flex: 1 1 auto;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: 1.25rem 1rem;
+  -webkit-overflow-scrolling: touch;
+}
+
+.menu-item {
+  background-color: transparent;
+  border: none;
+  border-radius: 0.4rem;
+  color: #fff;
+  cursor: pointer;
+  margin-right: 0.25rem;
+  padding: 0.25rem;
+}
+
+.divider {
+  background-color: rgba(#fff, 0.25);
+  height: 1.25rem;
+  margin-left: 0.5rem;
+  margin-right: 0.75rem;
+  width: 1px;
 }
 
 /* Basic editor styles */
 .ProseMirror {
-  > * + * {
-    margin-top: 0.75em;
-  }
+  outline: none;
+}
+.ProseMirror p {
+  margin: 0;
+}
+.ProseMirror ul,
+.ProseMirror ol {
+  padding: 0 1rem;
+}
 
-  ul,
-  ol {
-    padding: 0 1rem;
-  }
+.ProseMirror h1,
+.ProseMirror h2,
+.ProseMirror h3,
+.ProseMirror h4,
+.ProseMirror h5,
+.ProseMirror h6 {
+  line-height: 1.1;
+}
 
-  h1,
-  h2,
-  h3,
-  h4,
-  h5,
-  h6 {
-    line-height: 1.1;
-  }
+.ProseMirror code {
+  background-color: rgba(#616161, 0.1);
+  color: #616161;
+}
 
-  code {
-    background-color: rgba(#616161, 0.1);
-    color: #616161;
-  }
+.ProseMirror pre {
+  background: #0d0d0d;
+  border-radius: 0.5rem;
+  color: #fff;
+  font-family: "JetBrainsMono", monospace;
+  padding: 0.75rem 1rem;
+}
 
-  pre {
-    background: #0d0d0d;
-    border-radius: 0.5rem;
-    color: #fff;
-    font-family: "JetBrainsMono", monospace;
-    padding: 0.75rem 1rem;
+.ProseMirror pre code {
+  background: none;
+  color: inherit;
+  font-size: 0.8rem;
+  padding: 0;
+}
 
-    code {
-      background: none;
-      color: inherit;
-      font-size: 0.8rem;
-      padding: 0;
-    }
-  }
+.ProseMirror mark {
+  background-color: #faf594;
+}
 
-  mark {
-    background-color: #faf594;
-  }
+.ProseMirror img {
+  height: auto;
+  max-width: 100%;
+}
 
-  img {
-    height: auto;
-    max-width: 100%;
-  }
+.ProseMirror hr {
+  margin: 1rem 0;
+}
 
-  hr {
-    margin: 1rem 0;
-  }
+.ProseMirror blockquote {
+  border-left: 2px solid rgba(#0d0d0d, 0.1);
+  padding-left: 1rem;
+}
 
-  blockquote {
-    border-left: 2px solid rgba(#0d0d0d, 0.1);
-    padding-left: 1rem;
-  }
+.ProseMirror hr {
+  border: none;
+  border-top: 2px solid rgba(#0d0d0d, 0.1);
+  margin: 2rem 0;
+}
 
-  hr {
-    border: none;
-    border-top: 2px solid rgba(#0d0d0d, 0.1);
-    margin: 2rem 0;
-  }
+.ProseMirror ul[data-type="taskList"] {
+  list-style: none;
+  padding: 0;
+}
+.ProseMirror ul[data-tyoe="taskList"] li {
+  align-items: center;
+  display: flex;
+}
 
-  ul[data-type="taskList"] {
-    list-style: none;
-    padding: 0;
+.ProseMirror ul[data-tyoe="taskList"] li label {
+  flex: 0 0 auto;
+  margin-right: 0.5rem;
+  user-select: none;
+}
 
-    li {
-      align-items: center;
-      display: flex;
-
-      > label {
-        flex: 0 0 auto;
-        margin-right: 0.5rem;
-        user-select: none;
-      }
-
-      > div {
-        flex: 1 1 auto;
-      }
-    }
-  }
+.ProseMirror ul[data-tyoe="taskList"] li div {
+  flex: 1 1 auto;
 }
 
 /* Give a remote user a caret */
@@ -108,10 +169,10 @@ body {
   font-weight: 600;
   font-family: sans-serif;
   left: -1px;
-  padding: 0.5em .7em;
+  padding: 0.5em 0.7em;
   line-height: normal;
   position: absolute;
-  top:-2.2em;
+  top: -2.2em;
   user-select: none;
   white-space: nowrap;
 }

@@ -102,7 +102,8 @@ function Editor({ doc, provider }: EditorProps) {
   return (
     <>
       {editor && <MenuBar editor={editor} />}
-      <EditorContent editor={editor} />
+      <div className="editor__content">
+        <EditorContent editor={editor} /></div>
     </>
   );
 }
