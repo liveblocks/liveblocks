@@ -1,0 +1,139 @@
+---
+meta:
+  title: "How to use Liveblocks Storage with Redux"
+  description: "Learn how to use Liveblocks Storage with React"
+---
+
+In this guide, we’ll be learning how to use Liveblocks Storage with Redux using
+the APIs from the [`@liveblocks/redux`][] package.
+
+<Banner title="Install Liveblocks">
+
+This guide assumes you already have Liveblocks set up into your Redux store. If
+you don’t make sure to follow
+[these quick steps to get started](/docs/get-started/redux) first.
+
+</Banner>
+
+## Sync and persist the state across client [#storage-intro]
+
+As opposed to `presence`, some collaborative features require that every user
+interacts with the same piece of state. For example, in Google Docs, it is the
+paragraphs, headings, images in the document. In Figma, it’s all the shapes that
+make your design. That’s what we call the room’s `storage`.
+
+<Banner title="Need help troubleshooting storage?">
+
+Try the [Liveblocks DevTools extension](/devtools) to inspect and debug your
+collaborative experiences as you build them, in real-time.
+
+</Banner>
+
+The room’s storage is a conflicts-free state that multiple users can edit at the
+same time. It is persisted to our backend even after everyone leaves the room.
+Liveblocks provides custom data structures inspired by
+[CRDTs](https://en.wikipedia.org/wiki/Conflict-free_replicated_data_type) that
+can be nested to create the state that you want.
+
+- [`LiveObject`][] - Similar to JavaScript object. If multiple users update the
+  same property simultaneously, the last modification received by the Liveblocks
+  servers is the winner.
+- [`LiveList`][] - An ordered collection of items synchronized across clients.
+  Even if multiple users add/remove/move elements simultaneously, LiveList will
+  solve the conflicts to ensure everyone sees the same collection of items.
+- [`LiveMap`][] - Similar to a JavaScript Map. If multiple users update the same
+  property simultaneously, the last modification received by the Liveblocks
+  servers is the winner.
+
+When using our Redux integration you cannot interact directly with these data
+structures. Our enhancer synchronizes your store with our data structures based
+on the `storageMapping` configuration.
+
+Here is an example to explain how it works under the hood. Imagine you have the
+following store:
+
+```js
+/* ...client setup... */
+
+const initialState = {
+  firstName: "Marie",
+  lastName: "Curie",
+  discoveries: ["Polonium", "Radium"],
+};
+
+const slice = createSlice({
+  name: "state",
+  initialState,
+  reducers: {
+    setFirstName: (state, action) => {
+      state.firstName = action.payload;
+    },
+    setLastName: (state, action) => {
+      state.lastName = action.payload;
+    },
+    addDiscovery: (state, action) => {
+      state.discoveries.push(action.payload);
+    },
+  },
+});
+
+export const { setScientist } = slice.actions;
+
+function makeStore() {
+  return configureStore({
+    reducer: slice.reducer,
+    enhancers: [
+      enhancer({
+        client,
+        storageMapping: { firstName: true, lastName: true, discoveries: true },
+      }),
+    ],
+  });
+}
+
+const store = makeStore();
+```
+
+With this setup, the room's `storage` root is :
+
+```js
+const root = new LiveObject({
+  firstName: "Marie",
+  lastName: "Curie",
+  discoveries: new LiveList(["Polonium", "Radium"]),
+});
+```
+
+If you update your store by dispatching `setFirstName("Pierre")`, the enhancer
+will do `root.set("firstName", "Pierre")` for you and update the store of all
+the users currently connected to the room. The enhancer compares the previous
+state and the new state to detect changes and patch our data structures
+accordingly.
+
+The reverse process happens when receiving updates from other clients; the
+enhancer patches your immutable state.
+
+When entering a room with `enterRoom`, the enhancer fetches the room's storage
+from our server and patches your store. If this is the first time you're
+entering a room, the storage will be empty. `enterRoom` takes an additional
+argument to initialize the room's storage.
+
+```js
+enterRoom("room-id", {
+  firstName: "Lise",
+  lastName: "Meitner",
+  discoveries: ["Nuclear fission", "Protactinium"],
+});
+```
+
+[`room.history.undo`]: /docs/api-reference/liveblocks-client#Room.history.undo
+[`room.history.redo`]: /docs/api-reference/liveblocks-client#Room.history.redo
+[`room.history.pause`]: /docs/api-reference/liveblocks-client#Room.history.pause
+[`room.history.resume`]:
+  /docs/api-reference/liveblocks-client#Room.history.resume
+[`liveobject`]: /docs/api-reference/liveblocks-client#LiveObject
+[`livemap`]: /docs/api-reference/liveblocks-client#LiveMap
+[`livelist`]: /docs/api-reference/liveblocks-client#LiveList
+[`createclient`]: /docs/api-reference/liveblocks-client#createClient
+[api reference]: /docs/api-reference/liveblocks-redux
+[authentication]: /docs/rooms/authentication

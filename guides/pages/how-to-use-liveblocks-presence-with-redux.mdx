@@ -1,0 +1,132 @@
+---
+meta:
+  title: "How to use Liveblocks Presence with Redux"
+  description: "Learn how to use Liveblocks Presence with React"
+---
+
+In this guide, we’ll be learning how to use Liveblocks Presence with Redux using
+the APIs from the [`@liveblocks/redux`][] package.
+
+<Banner title="Install Liveblocks">
+
+This guide assumes you already have Liveblocks set up into your Redux store. If
+you don’t make sure to follow
+[these quick steps to get started](/docs/get-started/redux) first.
+
+</Banner>
+
+## Get other users in the room [#get-others]
+
+<Banner title="Need help troubleshooting presence?">
+
+Try the [Liveblocks DevTools extension](/devtools) to inspect and debug your
+collaborative experiences as you build them, in real-time.
+
+</Banner>
+
+If you want to list all the people connected to the room, you can use
+`state.liveblocks.others` to get an array of the other users in the room.
+
+```jsx
+import { useSelector } from "react-redux";
+
+function App() {
+  const others = useSelector((state) => state.liveblocks.others);
+}
+```
+
+## Update user presence [#update-presence]
+
+To create immersive multiplayer experiences, it’s helpful for each person in the
+room to share their real‑time state with other connected users. That real‑time
+state often corresponds to a cursor position or even the item a user has
+currently selected. We call this concept "Presence".
+
+For instance, to share the cursor’s position in real‑time with others, we’re
+going to add a new `presenceMapping` option to our `enhancer` to specify which
+part of the state maps to the current user’s `presence`.
+
+```jsx file="src/store.js"
+/* ... imports and client setup ... */
+
+const initialState = {
+  cursor: { x: 0, y: 0 },
+};
+
+const slice = createSlice({
+  name: "state",
+  initialState,
+  reducers: {
+    setCursor: (state, action) => {
+      state.cursor = action.payload;
+    },
+  },
+});
+
+export const { setCursor } = slice.actions;
+
+function makeStore() {
+  return configureStore({
+    reducer: slice.reducer,
+    enhancers: [
+      enhancer({
+        client,
+        presenceMapping: { cursor: true },
+      }),
+    ],
+  });
+}
+
+const store = makeStore();
+
+export default store;
+```
+
+Then you can dispatch an action like in any redux app and we will broadcast this
+cursor to everyone in the room.
+
+```jsx
+import { useDispatch } from "react-redux";
+import { setCursor } from "./store.js";
+
+function YourComponent() {
+  const dispatch = useDispatch();
+
+  return (
+    <div
+      style={{ width: "100vw", height: "100vh" }}
+      onPointerMove={(e) => dispatch(setCursor({ x: e.clientX, y: e.clientY }))}
+    />
+  );
+}
+```
+
+## Get other users’ presence [#get-others-presence]
+
+Get people’s cursor positions with
+`liveblocks.others.map(user => user.presence?.cursor)`. It’s worth noting that a
+user presence can be `undefined`.
+
+```jsx
+import { useSelector } from "react-redux";
+
+function OthersCursors() {
+  const others = useSelector((state) => state.liveblocks.others);
+
+  const othersCursors = others.map((user) => user.presence?.cursor);
+
+  // Render cursors with custom SVGs based on x and y
+}
+```
+
+[`room.history.undo`]: /docs/api-reference/liveblocks-client#Room.history.undo
+[`room.history.redo`]: /docs/api-reference/liveblocks-client#Room.history.redo
+[`room.history.pause`]: /docs/api-reference/liveblocks-client#Room.history.pause
+[`room.history.resume`]:
+  /docs/api-reference/liveblocks-client#Room.history.resume
+[`liveobject`]: /docs/api-reference/liveblocks-client#LiveObject
+[`livemap`]: /docs/api-reference/liveblocks-client#LiveMap
+[`livelist`]: /docs/api-reference/liveblocks-client#LiveList
+[`createclient`]: /docs/api-reference/liveblocks-client#createClient
+[api reference]: /docs/api-reference/liveblocks-redux
+[authentication]: /docs/rooms/authentication

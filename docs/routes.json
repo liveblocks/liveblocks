@@ -16,12 +16,12 @@
             "path": "/get-started/react"
           },
           {
-            "title": "React + Redux",
-            "path": "/get-started/react-redux"
+            "title": "Redux",
+            "path": "/get-started/redux"
           },
           {
-            "title": "React + Zustand",
-            "path": "/get-started/react-zustand"
+            "title": "Zustand",
+            "path": "/get-started/zustand"
           },
           {
             "title": "JavaScript",

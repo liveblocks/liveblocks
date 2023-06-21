@@ -1,0 +1,127 @@
+---
+meta:
+  title: "Get started with Redux"
+  parentTitle: "Get started"
+  description: "Learn how to get started with Liveblocks and Redux"
+---
+
+Liveblocks is a real-time collaboration infrastructure for building performant
+collaborative experiences. Follow the following steps to start making your Redux
+state multiplayer by using the
+[store enhancer](https://redux.js.org/understanding/thinking-in-redux/glossary#store-enhancer)
+from the [`@liveblocks/redux`](/docs/api-reference/liveblocks-redux) package.
+
+## Quickstart
+
+<Steps
+  steps={[
+    {
+      title: "Install Liveblocks",
+      code: {
+        language: "bash",
+        code: `npm install @liveblocks/client @liveblocks/redux`,
+      },
+    },
+    {
+      title: "Connect your Redux store to Liveblocks",
+      description: (
+        <>
+          Create the Liveblocks client and use the <code>enhancer</code> in your
+          Redux store setup. This will add a new state called{" "}
+          <code>liveblocks</code> to your store, enabling you to interact with
+          our Presence and Storage APIs.
+        </>
+      ),
+      code: {
+        language: "jsx",
+        file: "store.js",
+        highlight: "5-7,23-25",
+        code: `import { createClient } from "@liveblocks/client";
+import { enhancer } from "@liveblocks/redux";
+import { configureStore, createSlice } from "@reduxjs/toolkit";
+\r
+const client = createClient({
+  publicApiKey: "{{PUBLIC_KEY}}",
+});
+\r
+const initialState = {};
+\r
+const slice = createSlice({
+  name: "state",
+  initialState,
+  reducers: {
+    /* logic will be added here */
+  },
+});
+\r
+function makeStore() {
+  return configureStore({
+    reducer: slice.reducer,
+    enhancers: [
+      enhancer({
+        client,
+      }),
+    ],
+  });
+}
+\r
+const store = makeStore();
+\r
+export default store;`,
+      },
+    },
+    {
+      title: "Join a Liveblocks room",
+      description: `Liveblocks uses the concept of rooms, separate virtual spaces where people collaborate. To create a real-time experience, multiple users must be connected to the same room.`,
+      code: {
+        language: "tsx",
+        file: "App.tsx",
+        highlight: "3,9,12",
+        code: `import { useEffect } from "react";
+import { useDispatch } from "react-redux";
+import { actions } from "@liveblocks/redux";
+\r
+export default function App() {
+  const dispatch = useDispatch();
+\r
+  useEffect(() => {
+    dispatch(actions.enterRoom("room-id"));
+\r
+    return () => {
+      dispatch(actions.leaveRoom("room-id"));
+    };
+  }, [dispatch]);
+\r
+  return <Room />;
+}`,
+      },
+    },
+    {
+      title: "Use the Liveblocks data from the store",
+      description: `Now that we’re connected to a room, we can start using the Liveblocks data from the Redux store.`,
+      code: {
+        file: "Room.tsx",
+        language: "tsx",
+        highlight: "4",
+        code: `import { useSelector } from "react-redux";
+\r
+export function Room() {
+  const others = useSelector((state) => state.liveblocks.others);
+  const userCount = others.length;
+  return <div>There are {userCount} other user(s) online</div>;
+}`,
+      },
+    },
+  ]}
+/>
+
+## Next steps
+
+Congratulations! You now have set up the foundation to start building
+collaborative experiences for your Redux state.
+
+- [API Reference](/docs/api-reference/liveblocks-redux)
+- [Authentication](/docs/authentication)
+- [How to use Liveblocks Presence with Redux](/docs/guides/how-to-use-liveblocks-presence-with-redux)
+- [How to use Liveblocks Storage with Redux](/docs/guides/how-to-use-liveblocks-stroage-with-redux)
+- [How to use Liveblocks multiplayer undo/redo with Redux](/docs/guides/how-to-use-liveblocks-multiplayer-undo-redo-with-redux)
