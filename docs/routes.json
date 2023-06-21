@@ -82,7 +82,7 @@
         "routes": [
           {
             "title": "Next.js",
-            "path": "/rooms/authentication/next-js"
+            "path": "/rooms/authentication/nextjs"
           },
           {
             "title": "Firebase",
@@ -90,7 +90,7 @@
           },
           {
             "title": "Nuxt.js",
-            "path": "/rooms/authentication/nuxt-js"
+            "path": "/rooms/authentication/nuxtjs"
           },
           {
             "title": "Express",
