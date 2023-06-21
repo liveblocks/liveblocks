@@ -117,7 +117,7 @@ Assets live in the [`/assets`](/assets) directory.
 <Image
   src="/assets/devtools/spreadsheet-example.png"
   alt="Liveblocks DevTools panel"
-  width={768}
-  width={576}
+  width={920}
+  width={542}
 />
 ```
