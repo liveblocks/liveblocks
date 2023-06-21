@@ -62,6 +62,10 @@
       {
         "title": "Storage",
         "path": "/products/storage"
+      },
+      {
+        "title": "Comments",
+        "path": "/products/comments"
       }
     ]
   },
