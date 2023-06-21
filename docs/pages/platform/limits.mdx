@@ -22,20 +22,24 @@ take a look at the [pricing guide](/platform/pricing).
 
 ## Other limits
 
-### Room `id`
+### `roomId` limit
 
-A room `id` cannot exceed 128 characters.
+A `roomId` cannot exceed 128 characters.
 
-### User `id`
+### `userId` limit
 
-A user `id` cannot exceed 128 characters.
+A `userId` cannot exceed 128 characters.
 
-### User information
+### `userInfo` limit
 
-User information sent from the authentication endpoint cannot exceed 1024
-characters once serialized to JSON.
+`userInfo` sent from the authentication endpoint cannot exceed 1024 characters
+once serialized to JSON.
 
-### Storage
+### Broadcast event limit
+
+Broadcast event messages have a limit of 1 MB.
+
+### Storage limits
 
 - A `LiveObject` cannot exceed 128 kB when totalling the size of the keys and
   values.
