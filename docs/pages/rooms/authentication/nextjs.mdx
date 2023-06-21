@@ -7,7 +7,7 @@ meta:
 ---
 
 Follow the following steps to start configure your authentication endpoint and
-start building your own security logic.
+start building your own security logic in Next.js’ `/app` directory.
 
 ## Quickstart
 
@@ -29,20 +29,21 @@ start building your own security logic.
       description: (
         <>
           Users can only interact with rooms they have access to. You can
-          configure permission access in an `api/auth` endpoint by creating the{" "}
-          <code>app/api/auth/route.ts</code>
-          file with the following code. This is where you will implement your security
-          and define if the current user has access to a specific room.
+          configure permission access in an <code>api/auth</code> endpoint by
+          creating the <code>app/api/auth/route.ts</code> file with the
+          following code. This is where you will implement your security and
+          define if the current user has access to a specific room.
         </>
       ),
       code: {
         file: "app/api/auth/route.ts",
         language: "ts",
-        code: `import { authorize } from "@liveblocks/node";
+        code: `import { NextResponse } from "next/server";
+import { authorize } from "@liveblocks/node";
 \r
 const secret = "{{SECRET_KEY}}";
 \r
-export default async function auth(req, res) {
+export async function POST(request: Request) {
   /**
    * Implement your own security here.
    *
@@ -50,7 +51,7 @@ export default async function auth(req, res) {
    * is a valid user by validating the cookies or authentication headers
    * and that it has access to the requested room.
    */
-  const room = req.body.room;
+  const { room } = await request.json();
   const result = await authorize({
     room,
     secret,
@@ -62,7 +63,8 @@ export default async function auth(req, res) {
       color: "red",
     },
   });
-  return res.status(result.status).end(result.body);
+\r
+  return NextResponse.json(JSON.parse(result.body));
 }`,
       },
     },
