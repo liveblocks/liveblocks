@@ -8,34 +8,38 @@ meta:
 
 ## General limits
 
-|                                   | Starter                                       | Pro                                          | Startup                                              | Enterprise |
-| --------------------------------- | --------------------------------------------- | -------------------------------------------- | ---------------------------------------------------- | ---------- |
-| MAUs included                     | <Limits.FreeMauMax />                         | <Limits.ProMauMin /> to <Limits.ProMauMax /> | <Limits.StartupMauMin /> to <Limits.StartupMauMax /> | Custom     |
-| Projects                          | Unlimited                                     | Unlimited                                    | Unlimited                                            | Custom     |
-| Average connections per MAU       | Up to <Limits.FreeAvgConnectionsPerMau />     | Up to <Limits.ProAvgConnectionsPerMau />     | Up to <Limits.StartupAvgConnectionsPerMau />         | Custom     |
-| Maximum storage size per room     | Up to <Limits.FreeMaxStorageSizePerRoom /> MB | Up to <Limits.ProMaxStorageSizePerRoom /> MB | Up to <Limits.StartupMaxStorageSizePerRoom /> MB     | Custom     |
-| Simultaneous connections per room | Up to <Limits.FreeMaxConnectionsPerRoom />    | Up to <Limits.ProMaxConnectionsPerRoom />    | Up to <Limits.StartupMaxConnectionsPerRoom />        | Custom     |
-| Team members per account          | <Limits.FreeTeamMembersPerAccount />          | Unlimited                                    | Unlimited                                            | Custom     |
+|                                   | Starter                                       | Pro                                          | Enterprise |
+| --------------------------------- | --------------------------------------------- | -------------------------------------------- | ---------- |
+| MAUs included                     | <Limits.FreeMauMax />                         | <Limits.ProMauMin /> to <Limits.ProMauMax /> | Custom     |
+| Projects                          | Unlimited                                     | Unlimited                                    | Custom     |
+| Average connections per MAU       | Up to <Limits.FreeAvgConnectionsPerMau />     | Up to <Limits.ProAvgConnectionsPerMau />     | Custom     |
+| Maximum storage size per room     | Up to <Limits.FreeMaxStorageSizePerRoom /> MB | Up to <Limits.ProMaxStorageSizePerRoom /> MB | Custom     |
+| Simultaneous connections per room | Up to <Limits.FreeMaxConnectionsPerRoom />    | Up to <Limits.ProMaxConnectionsPerRoom />    | Custom     |
+| Team members per account          | <Limits.FreeTeamMembersPerAccount />          | Unlimited                                    | Custom     |
 
 To learn more about how Monthly Active Users (MAU) are calculated for each plan,
 take a look at the [pricing guide](/platform/pricing).
 
 ## Other limits
 
-### Room `id`
+### `roomId` limit
 
-A room `id` cannot exceed 128 characters.
+A `roomId` cannot exceed 128 characters.
 
-### User `id`
+### `userId` limit
 
-A user `id` cannot exceed 128 characters.
+A `userId` cannot exceed 128 characters.
 
-### User information
+### `userInfo` limit
 
-User information sent from the authentication endpoint cannot exceed 1024
-characters once serialized to JSON.
+`userInfo` sent from the authentication endpoint cannot exceed 1024 characters
+once serialized to JSON.
 
-### Storage
+### Broadcast event limit
+
+Broadcast event messages have a limit of 1 MB.
+
+### Storage limits
 
 - A `LiveObject` cannot exceed 128 kB when totalling the size of the keys and
   values.
