@@ -1,5 +1,4 @@
 import { ready } from "./App";
-import Confettis from "./components/Confettis";
 
 export default function Page() {
   if (!ready) {
@@ -9,7 +8,6 @@ export default function Page() {
   return (
     <>
       <h1>Let’s start!</h1>
-      <Confettis />
     </>
   );
 }

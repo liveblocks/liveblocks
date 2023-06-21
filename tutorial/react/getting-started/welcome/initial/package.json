@@ -8,8 +8,7 @@
     "react-dom": "18.2.0",
     "react-scripts": "4.0.0",
     "@liveblocks/client": "latest",
-    "@liveblocks/react": "latest",
-    "react-confetti": "6.1.0"
+    "@liveblocks/react": "latest"
   },
   "devDependencies": {
     "@types/react": "18.2.0",
