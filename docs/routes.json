@@ -16,6 +16,10 @@
             "path": "/get-started/react"
           },
           {
+            "title": "Next.js",
+            "path": "/get-started/nextjs"
+          },
+          {
             "title": "Redux",
             "path": "/get-started/redux"
           },
