@@ -5,6 +5,5 @@ import { ClientSideSuspense } from "@liveblocks/react";
 export default function App() {
   const roomId = "{% ROOM_ID %}";
 
-  // Return Room inside RoomProvider
   return <>Not in a room</>;
 }

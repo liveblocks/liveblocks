@@ -20,9 +20,11 @@ Switch to [App.tsx][] and return a [`RoomProvider`][] component with the
 `roomId` string, and an empty object as the `initialPresence`.
 
 ```tsx
-<RoomProvider id={roomId} initialPresence={{}}>
-  <Room />
-</RoomProvider>
+return (
+  <RoomProvider id={roomId} initialPresence={{}}>
+    <Room />
+  </RoomProvider>
+);
 ```
 
 We’ll be building our custom real-time app inside [Room.tsx][], so we’re adding
@@ -34,12 +36,14 @@ Because we’re exporting the suspense version of our hooks, we can easily add a
 loading screen using [`ClientSideSuspense`][] from `@liveblocks/react`. To do
 this, pass `<Room>`, and include a loading `fallback`:
 
-```tsx highlight="2-4"
-<RoomProvider id={roomId} initialPresence={{}}>
-  <ClientSideSuspense fallback={<div>Loading…</div>}>
-    {() => <Room />}
-  </ClientSideSuspense>
-</RoomProvider>
+```tsx highlight="3-5"
+return (
+  <RoomProvider id={roomId} initialPresence={{}}>
+    <ClientSideSuspense fallback={<div>Loading…</div>}>
+      {() => <Room />}
+    </ClientSideSuspense>
+  </RoomProvider>
+);
 ```
 
 <Banner title="Suspense">
