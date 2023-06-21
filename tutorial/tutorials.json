@@ -49,14 +49,14 @@
             "description": "How to broadcast notification events"
           },
           {
-            "slug": "conflict-free-data",
-            "title": "Conflict-free data",
-            "description": "How to use useStorage and conflict-free data"
+            "slug": "storage",
+            "title": "Storage",
+            "description": "How to use useStorage and conflict-free data types"
           },
           {
-            "slug": "mutating-data",
-            "title": "Using mutations",
-            "description": "How to use useMutation and update storage"
+            "slug": "modifying-storage-data",
+            "title": "Modifying storage data",
+            "description": "How to use useMutation to update storage"
           },
           {
             "slug": "nesting-data-types",
