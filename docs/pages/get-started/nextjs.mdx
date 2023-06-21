@@ -91,11 +91,12 @@ export function Room({ children }: { children: ReactNode }) {
       code: {
         file: "app/page.tsx",
         language: "ts",
-        highlight: "8-12",
+        highlight: "9-13",
         code: `"use client";
 
 import { Room } from "./Room";
 import { CollaborativeApp } from "./CollaborativeApp";
+import { ClientSideSuspense } from "@liveblocks/react";
 
 export default function Page() {
   return (
