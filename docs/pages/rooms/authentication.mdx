@@ -5,8 +5,23 @@ meta:
   description: "Learn how to setup an authentication endpoint with Liveblocks"
 ---
 
-Setup your authentication endpoint following one of the guides below to
-configure who should have access to your Liveblocks rooms.
+By default, Liveblocks is configured to work without an authentication endpoint.
+This approach is great for prototyping and marketing pages where defining your
+own security isn’t always required. If you want to implement your own security
+logic to define if certain users should have access to a given room, you'll need
+to implement an authentication endpoint.
+
+<Figure highlight={false}>
+  <Image
+    src="/assets/auth-diagram.svg"
+    alt="Auth diagram"
+    width={730}
+    height={504}
+  />
+</Figure>
+
+Select the technology you want to use to configure your authentication endpoint
+and start building your own security logic.
 
 <ListGrid columns={3}>
   <DocsCard
