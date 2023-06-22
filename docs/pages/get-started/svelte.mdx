@@ -1,8 +1,8 @@
 ---
 meta:
-  title: "Get started with Liveblocks and Vue.js"
+  title: "Get started with Liveblocks and Svelte"
   parentTitle: "Get started"
-  description: "Learn how to get started with Liveblocks and Vue.js"
+  description: "Learn how to get started with Liveblocks and Svelte"
 ---
 
 Liveblocks is a real-time collaboration infrastructure for building performant
@@ -12,7 +12,7 @@ collaboration to your Vue.js application using the APIs from the
 
 <Banner title="Official package">
 
-Liveblocks does not have a package for Vue.js. If you would like to have one, or
+Liveblocks does not have a package for Svelte. If you would like to have one, or
 even better if you have ideas about what kind of API you would like to use,
 please let us know about it on this
 [Github issue](https://github.com/liveblocks/liveblocks/issues/1).
@@ -59,24 +59,23 @@ please let us know about it on this
       code: {
         language: "html",
         highlight: "7-9",
-        code: `<script setup>
-import { onUnmounted, ref } from "vue";
-import { room } from "./room.js";
+        code: `<script>
+  import { onDestroy } from "svelte";
+  import { room } from "./room.js";
 \r
-const others = ref([]]);
+  let others = [];
 \r
-const unsubscribeOthers = room.subscribe("others", (updatedOthers) => {
-  others.current = updatedOthers;
-});
+  const unsubscribeOthers = room.subscribe("others", (updatedOthers) => {
+    others = updatedOthers;
+  });
 \r
-onUnmounted(() => {
-  unsubscribeOthers();
-});
+  onDestroy(() => {
+    unsubscribeOthers();
+  });
 </script>
 \r
-<template>
-  <div>There are {{ others.length }} other user(s) online</div>
-</template>`,
+<div>There are {{ others.length }} other user(s) online</div>
+`,
       },
     },
     {
