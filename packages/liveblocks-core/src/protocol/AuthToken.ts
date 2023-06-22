@@ -70,7 +70,7 @@ function isStringList(value: unknown): value is string[] {
 }
 
 function isMinimalTokenPayload(
-  data: JsonObject
+  data: Json
 ): data is JwtMetadata & MinimalTokenPayload {
   //
   // NOTE: This is the hard-coded definition of the following decoder:
