@@ -52,6 +52,7 @@ export async function POST(request: Request) {
    * and that it has access to the requested room.
    */
   const { room } = await request.json();
+\r
   const result = await authorize({
     room,
     secret,

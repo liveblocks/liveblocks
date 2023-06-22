@@ -1,9 +1,9 @@
 ---
 meta:
-  title: "Authentication with SvelteKit"
+  title: "Authentication with Remix"
   parentTitle: "Rooms"
   description:
-    "Learn how to setup a Liveblocks authentication endpoint with SvelteKit"
+    "Learn how to setup a Liveblocks authentication endpoint with Remix"
 ---
 
 Follow the following steps to start configure your authentication endpoint and
@@ -30,20 +30,20 @@ start building your own security logic.
         <>
           Users can only interact with rooms they have access to. You can
           configure permission access in an <code>api/auth</code> endpoint by
-          creating the <code>src/routes/api/auth/+server.ts</code> file with the
+          creating the <code>app/routes/api/auth.ts</code> file with the
           following code. This is where you will implement your security and
           define if the current user has access to a specific room.
         </>
       ),
       code: {
-        file: "src/routes/api/auth/+server.ts",
+        file: "app/routes/api/auth.ts",
         language: "ts",
-        code: `import { type RequestEvent } from "@sveltejs/kit";
+        code: `import type { ActionFunction } from "@remix-run/node";
 import { authorize } from "@liveblocks/node";
 \r
 const secret = "{{SECRET_KEY}}";
 \r
-export async function POST({ request }: RequestEvent) {
+export const action: ActionFunction = async ({ request }) => {
   /**
    * Implement your own security here.
    *
@@ -65,7 +65,7 @@ export async function POST({ request }: RequestEvent) {
     },
   });
 \r
-  return new Response(result.body, { status: response.status });
+  return new Response(result.body, { status: result.status });
 }`,
       },
     },

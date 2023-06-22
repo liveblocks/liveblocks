@@ -89,6 +89,10 @@
             "path": "/rooms/authentication/nextjs"
           },
           {
+            "title": "Remix",
+            "path": "/rooms/authentication/remix"
+          },
+          {
             "title": "SvelteKit",
             "path": "/rooms/authentication/sveltekit"
           },
