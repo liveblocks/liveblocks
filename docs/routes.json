@@ -12,6 +12,10 @@
         "path": "/get-started",
         "routes": [
           {
+            "title": "Next.js",
+            "path": "/get-started/nextjs"
+          },
+          {
             "title": "React",
             "path": "/get-started/react"
           },
@@ -22,10 +26,6 @@
           {
             "title": "Zustand",
             "path": "/get-started/zustand"
-          },
-          {
-            "title": "Next.js",
-            "path": "/get-started/nextjs"
           },
           {
             "title": "Svelte",
@@ -89,12 +89,16 @@
             "path": "/rooms/authentication/nextjs"
           },
           {
-            "title": "Firebase",
-            "path": "/rooms/authentication/firebase"
+            "title": "SvelteKit",
+            "path": "/rooms/authentication/sveltekit"
           },
           {
             "title": "Nuxt.js",
             "path": "/rooms/authentication/nuxtjs"
+          },
+          {
+            "title": "Firebase",
+            "path": "/rooms/authentication/firebase"
           },
           {
             "title": "Express",
