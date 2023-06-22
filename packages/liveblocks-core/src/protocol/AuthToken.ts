@@ -50,15 +50,6 @@ export interface JwtMetadata extends JsonObject {
   exp: number;
 }
 
-function hasJwtMeta(data: unknown): data is JwtMetadata {
-  if (!isPlainObject(data)) {
-    return false;
-  }
-
-  const { iat, exp } = data;
-  return typeof iat === "number" && typeof exp === "number";
-}
-
 export function isTokenExpired(token: JwtMetadata): boolean {
   const now = Date.now() / 1000;
   const valid = now <= token.exp - 300 && now >= token.iat - 300;
@@ -76,6 +67,8 @@ function isMinimalTokenPayload(
   // NOTE: This is the hard-coded definition of the following decoder:
   //
   //   object({
+  //     iat: number,
+  //     exp: number,
   //     appId: string,
   //     roomId: string,
   //     actor: number,
@@ -86,7 +79,9 @@ function isMinimalTokenPayload(
   //   })
   //
   return (
-    hasJwtMeta(data) &&
+    isPlainObject(data) &&
+    typeof data.iat === "number" &&
+    typeof data.exp === "number" &&
     typeof data.appId === "string" &&
     typeof data.roomId === "string" &&
     typeof data.actor === "number" &&
