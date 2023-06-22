@@ -104,22 +104,17 @@ function isMinimalTokenPayload(data: JsonObject): data is MinimalTokenPayload {
  * NOTE: Doesn't do any validation, so always treat the metadata as other user
  * input: never trust these values for anything important.
  */
-function parseJwtToken(rawTokenString: string): JwtMetadata {
+export function parseAuthToken(rawTokenString: string): RichToken {
   const tokenParts = rawTokenString.split(".");
   if (tokenParts.length !== 3) {
     throw new Error("Authentication error: invalid JWT token");
   }
 
-  const data = tryParseJson(b64decode(tokenParts[1]));
-  if (!(data && hasJwtMeta(data))) {
+  const payload = tryParseJson(b64decode(tokenParts[1]));
+  if (!(payload && hasJwtMeta(payload))) {
     throw new Error("Authentication error: missing JWT metadata");
   }
 
-  return data;
-}
-
-export function parseAuthToken(rawTokenString: string): RichToken {
-  const payload = parseJwtToken(rawTokenString);
   if (!(payload && isMinimalTokenPayload(payload))) {
     throw new Error(
       "Authentication error: we expected a room token but did not get one. Hint: if you are using a callback, ensure the room is passed when creating the token. For more information: https://liveblocks.io/docs/api-reference/liveblocks-client#createClientCallback"
