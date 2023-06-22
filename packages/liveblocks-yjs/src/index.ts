@@ -31,6 +31,12 @@ type MetaClientState = {
   lastUpdated: number;
 };
 
+/**
+ * This class will store YJS awareness in Liveblock's presence under the __yjs key
+ * IMPORTANT: The yjs awareness protocol uses ydoc.clientId to reference users
+ * to their respective documents. To avoid mapping yjs clientIds to liveblock's connectionId,
+ * we simply set the clientId of the doc to the connectionId. Then no further mapping is required
+ */
 export class Awareness extends Observable<any> {
   private room: Room<JsonObject, LsonObject, BaseUserMeta, Json>;
   public doc: Y.Doc;
@@ -53,6 +59,7 @@ export class Awareness extends Observable<any> {
     this.room = room;
     this.clientID = doc.clientID;
     this.othersUnsub = this.room.events.others.subscribe(({ event }) => {
+      // When others are changed, we emit an event that contains arrays added/updated/removed.
       if (event.type === "leave") {
         // REMOVED
         this.emit("change", [
@@ -114,6 +121,7 @@ export class Awareness extends Observable<any> {
     const others = this.room.getOthers();
     const states = others.reduce((acc: Map<number, any>, currentValue) => {
       if (currentValue.connectionId) {
+        // connectionId == actorId == yjs.clientId
         acc.set(
           currentValue.connectionId,
           currentValue.presence["__yjs"] || {}
@@ -188,7 +196,7 @@ export default class LiveblocksProvider<
 
   private syncDoc = () => {
     /**
-     * If the connection changes, set the new id, this is used by awareness
+     * If the connection changes, set the new id, this is used by awareness.
      * yjs' only requirement for clientID is that it's truly unique and a number.
      * Liveblock's connectionID satisfies those constraints
      *  */
