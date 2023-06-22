@@ -97,8 +97,8 @@ function isMinimalTokenPayload(data: JsonObject): data is MinimalTokenPayload {
   );
 }
 
-function parseJwtToken(token: string): JwtMetadata {
-  const tokenParts = token.split(".");
+function parseJwtToken(rawTokenString: string): JwtMetadata {
+  const tokenParts = rawTokenString.split(".");
   if (tokenParts.length !== 3) {
     throw new Error("Authentication error: invalid JWT token");
   }
@@ -111,16 +111,16 @@ function parseJwtToken(token: string): JwtMetadata {
   }
 }
 
-export function parseAuthToken(tokenString: string): RichToken {
-  const data = parseJwtToken(tokenString);
-  if (!(data && isMinimalTokenPayload(data))) {
+export function parseAuthToken(rawTokenString: string): RichToken {
+  const payload = parseJwtToken(rawTokenString);
+  if (!(payload && isMinimalTokenPayload(payload))) {
     throw new Error(
       "Authentication error: we expected a room token but did not get one. Hint: if you are using a callback, ensure the room is passed when creating the token. For more information: https://liveblocks.io/docs/api-reference/liveblocks-client#createClientCallback"
     );
   }
 
   return {
-    raw: tokenString,
-    parsed: data,
+    raw: rawTokenString,
+    parsed: payload,
   };
 }
