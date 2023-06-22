@@ -97,6 +97,13 @@ function isMinimalTokenPayload(data: JsonObject): data is MinimalTokenPayload {
   );
 }
 
+/**
+ * Parses a raw JWT token string, which allows reading the metadata/payload of
+ * the token.
+ *
+ * NOTE: Doesn't do any validation, so always treat the metadata as other user
+ * input: never trust these values for anything important.
+ */
 function parseJwtToken(rawTokenString: string): JwtMetadata {
   const tokenParts = rawTokenString.split(".");
   if (tokenParts.length !== 3) {
