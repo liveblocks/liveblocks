@@ -33,13 +33,21 @@ and start building your own security logic.
   <DocsCard
     title="Remix"
     href="/docs/rooms/authentication/remix"
-    visual={<DocsNuxtjsIcon />}
+    visual={<DocsRemixIcon />}
   />
   
   <DocsCard
     title="SvelteKit"
     href="/docs/rooms/authentication/sveltekit"
-    visual={<DocsNuxtjsIcon />}
+    visual={
+      <img
+        alt="Svelte"
+        src="/assets/svelte.svg"
+        width={20}
+        height={24}
+        loading="lazy"
+      />
+    }
   />
 
   <DocsCard
@@ -59,6 +67,14 @@ and start building your own security logic.
     href="/docs/rooms/authentication/express"
     visual={<DocsExpressIcon />}
   />
+  
+  {/*
+  <DocsCard
+    title="Astro"
+    href="/docs/rooms/authentication/astro"
+    visual={<DocsAstroIcon />}
+  />
+  */}
 </ListGrid>
 
 <MissingTechnologyBanner />
