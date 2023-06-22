@@ -119,15 +119,8 @@ export function parseAuthToken(tokenString: string): RichToken {
     );
   }
 
-  const {
-    // If this legacy field is found on the token, pretend it wasn't there,
-    // to make all internally used token payloads uniform
-    maxConnections: _legacyField,
-    ...parsedToken
-  } = data;
-
   return {
     raw: tokenString,
-    parsed: parsedToken,
+    parsed: data,
   };
 }
