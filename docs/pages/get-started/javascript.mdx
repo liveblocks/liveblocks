@@ -49,18 +49,13 @@ collaboration to your JavaScript application using the APIs from the
       description: `Now that we’re connected to a room, we can start using the Liveblocks methods.`,
       code: {
         language: "ts",
-        code: `const room = client.enter("my-room", { initialPresence: {} });
+        highlight: "5-7",
+        code: `import { room } from "./room.js;"
 \r
-const container = document.getElementById("root-container");
+const div = document.querySelector("div");
 \r
 room.subscribe("others", (others) => {
-  if (others.count === 0) {
-    container.innerHTML = "You're the only one here.";
-  } else if (others.count === 1) {
-    container.innerHTML = "There is one other person here.";
-  } else {
-    container.innerHTML = "There are " + others.count + " other people here.";
-  }
+  div.innerText = \`There are \${others.length} other user(s) online\`;
 });`,
       },
     },
