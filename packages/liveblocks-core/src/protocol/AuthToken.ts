@@ -23,6 +23,10 @@ export type MinimalTokenPayload = {
   // opaque, and not relied on by the client.
   [other: string]: Json | undefined;
 
+  // Issued at and expiry fields (from JWT spec)
+  iat: number;
+  exp: number;
+
   // XXX Try to remove as many fields below from this type as possible
   appId: string;
   roomId: string; // Discriminating field for AuthToken type
@@ -42,7 +46,7 @@ export type MinimalTokenPayload = {
 // XXX Rename to ParsedAuthToken?
 export type RichToken = {
   readonly raw: string; // The raw JWT value, unchanged
-  readonly parsed: MinimalTokenPayload & JwtMetadata; // Rich data on the JWT value
+  readonly parsed: MinimalTokenPayload; // Rich data on the JWT value
 };
 
 export interface JwtMetadata extends JsonObject {
@@ -60,9 +64,7 @@ function isStringList(value: unknown): value is string[] {
   return Array.isArray(value) && value.every((i) => typeof i === "string");
 }
 
-function isMinimalTokenPayload(
-  data: Json
-): data is JwtMetadata & MinimalTokenPayload {
+function isMinimalTokenPayload(data: Json): data is MinimalTokenPayload {
   //
   // NOTE: This is the hard-coded definition of the following decoder:
   //

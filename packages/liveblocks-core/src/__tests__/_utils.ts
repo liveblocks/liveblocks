@@ -34,7 +34,7 @@ import { MockWebSocket } from "./_MockWebSocketServer";
 import type { JsonStorageUpdate } from "./_updatesUtils";
 import { serializeUpdateToJson } from "./_updatesUtils";
 
-export function makeRoomToken(
+export function makeMinimalTokenPayload(
   actor: number,
   scopes: string[]
 ): MinimalTokenPayload {
@@ -43,6 +43,8 @@ export function makeRoomToken(
   // defined in the (private) backend in case you're interested, see
   // https://github.com/liveblocks/liveblocks-cloudflare/blob/main/src/security.ts
   return {
+    iat: Date.now() / 1000,
+    exp: Date.now() / 1000 + 60, // Valid for 1 minute
     appId: "my-app",
     roomId: "my-room",
     id: "user1",
