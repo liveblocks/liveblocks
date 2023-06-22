@@ -29,11 +29,11 @@ the [`@liveblocks/react`](/docs/api-reference/liveblocks-react) package.
       ),
       code: {
         language: "bash",
-        code: `npm create-liveblocks-app@latest --init`,
+        code: `npm create-liveblocks-app@latest --init --react`,
       },
     },
     {
-      title: "Setup the client",
+      title: "Set up the client",
       description: (
         <>
           The first step in connecting to Liveblocks is creating a client which
@@ -64,16 +64,19 @@ the [`@liveblocks/react`](/docs/api-reference/liveblocks-react) package.
       code: {
         file: "app/Room.tsx",
         language: "ts",
-        highlight: "8-10",
+        highlight: "9-13",
         code: `"use client";
 
 import { ReactNode } from "react";
 import { RoomProvider } from "./liveblocks.config";
+import { ClientSideSuspense } from "@liveblocks/react";
 
 export function Room({ children }: { children: ReactNode }) {
   return (
     <RoomProvider id="my-room" initialPresence={{}}>
-      {children}
+      <ClientSideSuspense fallback={<div>Loading…</div>}>
+        {() => children}
+      </ClientSideSuspense>
     </RoomProvider>
   );
 }`,
@@ -91,19 +94,14 @@ export function Room({ children }: { children: ReactNode }) {
       code: {
         file: "app/page.tsx",
         language: "ts",
-        highlight: "9-13",
-        code: `"use client";
-
-import { Room } from "./Room";
+        highlight: "6-8",
+        code: `import { Room } from "./Room";
 import { CollaborativeApp } from "./CollaborativeApp";
-import { ClientSideSuspense } from "@liveblocks/react";
 
 export default function Page() {
   return (
     <Room>
-      <ClientSideSuspense fallback={<div>Loading…</div>}>
-        {() => <CollaborativeApp />}
-      </ClientSideSuspense>
+      <CollaborativeApp />
     </Room>
   );
 }`,
@@ -115,9 +113,11 @@ export default function Page() {
       code: {
         file: "CollaborativeApp.tsx",
         language: "ts",
-        highlight: "4",
-        code: `import { useOthers } from "./liveblocks.config";
-        
+        highlight: "6",
+        code: `"use client";
+
+import { useOthers } from "./liveblocks.config";
+
 export function CollaborativeApp() {
   const others = useOthers();
   const userCount = others.length;
@@ -126,7 +126,7 @@ export function CollaborativeApp() {
       },
     },
     {
-      title: "Bonus: setup authentication",
+      title: "Bonus: set up authentication",
       description: (
         <>
           By default, Liveblocks is configured to work without an authentication
@@ -139,7 +139,7 @@ export function CollaborativeApp() {
       ),
       action: {
         href: "/docs/rooms/authentication/nextjs",
-        label: "Setup authentication",
+        label: "Set up authentication",
       },
     },
 ]} />

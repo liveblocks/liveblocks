@@ -12,12 +12,12 @@
         "path": "/get-started",
         "routes": [
           {
-            "title": "React",
-            "path": "/get-started/react"
-          },
-          {
             "title": "Next.js",
             "path": "/get-started/nextjs"
+          },
+          {
+            "title": "React",
+            "path": "/get-started/react"
           },
           {
             "title": "Redux",
@@ -28,12 +28,16 @@
             "path": "/get-started/zustand"
           },
           {
-            "title": "JavaScript",
-            "path": "/get-started/javascript"
+            "title": "Svelte",
+            "path": "/get-started/svelte"
           },
           {
             "title": "Vue",
             "path": "/get-started/vue"
+          },
+          {
+            "title": "JavaScript",
+            "path": "/get-started/javascript"
           }
         ]
       }
@@ -85,12 +89,20 @@
             "path": "/rooms/authentication/nextjs"
           },
           {
-            "title": "Firebase",
-            "path": "/rooms/authentication/firebase"
+            "title": "Remix",
+            "path": "/rooms/authentication/remix"
+          },
+          {
+            "title": "SvelteKit",
+            "path": "/rooms/authentication/sveltekit"
           },
           {
             "title": "Nuxt.js",
             "path": "/rooms/authentication/nuxtjs"
+          },
+          {
+            "title": "Firebase",
+            "path": "/rooms/authentication/firebase"
           },
           {
             "title": "Express",

@@ -1,13 +1,13 @@
 ---
 meta:
-  title: "Authentication with Next.js"
+  title: "Authentication with SvelteKit"
   parentTitle: "Rooms"
   description:
-    "Learn how to setup a Liveblocks authentication endpoint with Next.js"
+    "Learn how to setup a Liveblocks authentication endpoint with SvelteKit"
 ---
 
 Follow the following steps to start configure your authentication endpoint and
-start building your own security logic in Next.js’ `/app` directory.
+start building your own security logic.
 
 ## Quickstart
 
@@ -30,20 +30,20 @@ start building your own security logic in Next.js’ `/app` directory.
         <>
           Users can only interact with rooms they have access to. You can
           configure permission access in an <code>api/auth</code> endpoint by
-          creating the <code>app/api/auth/route.ts</code> file with the
+          creating the <code>src/routes/api/auth/+server.ts</code> file with the
           following code. This is where you will implement your security and
           define if the current user has access to a specific room.
         </>
       ),
       code: {
-        file: "app/api/auth/route.ts",
+        file: "src/routes/api/auth/+server.ts",
         language: "ts",
-        code: `import { NextResponse } from "next/server";
+        code: `import { type RequestEvent } from "@sveltejs/kit";
 import { authorize } from "@liveblocks/node";
 \r
 const secret = "{{SECRET_KEY}}";
 \r
-export async function POST(request: Request) {
+export async function POST({ request }: RequestEvent) {
   /**
    * Implement your own security here.
    *
@@ -65,7 +65,7 @@ export async function POST(request: Request) {
     },
   });
 \r
-  return NextResponse.json(JSON.parse(result.body));
+  return new Response(result.body, { status: response.status });
 }`,
       },
     },

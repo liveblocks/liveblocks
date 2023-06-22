@@ -31,7 +31,7 @@ please let us know about it on this
       },
     },
     {
-      title: "Setup the client",
+      title: "Set up the client",
       description: (
         <>
           The first step in connecting to Liveblocks is creating a client which
@@ -55,47 +55,32 @@ please let us know about it on this
     },
     {
       title: "Use the Liveblocks methods",
-      description: `Now that we’re connected to a room, we can start using the Liveblocks methods.`,
+      description: `Now that we’re connected to a room, we can start using Liveblocks subscriptions. The first we’ll add is others, a subscription that provides information about which other users are connected to the room.`,
       code: {
         language: "html",
+        highlight: "7-9",
         code: `<script setup>
-  import { onUnmounted, ref } from "vue";
-  import { createClient } from "@liveblocks/client";
+import { onUnmounted, ref } from "vue";
+import { room } from "./room.js";
 \r
-  const client = createClient({
-    publicApiKey: "{{PUBLIC_KEY}}",
-  });
+const others = ref(room.getOthers());
 \r
-  const roomId = "my-room";
-  const room = client.enter(roomId, { initialPresence: {} });
+const unsubscribeOthers = room.subscribe("others", (updatedOthers) => {
+  others.current = updatedOthers;
+});
 \r
-  const message = ref("You’re the only one here.");
-\r
-  function onOthersChange(others) {
-    if (others.count === 0) {
-      message.value = "You’re the only one here.";
-    } else if (others.count === 1) {
-      message.value = "There is one other person here.";
-    } else {
-      message.value = "There are " + others.count + " other people here.";
-    }
-  }
-\r
-  const unsubscribeOthers = room.subscribe("others", onOthersChange);
-\r
-  onUnmounted(() => {
-    unsubscribeOthers();
-    client.leave(roomId);
-  });
+onUnmounted(() => {
+  unsubscribeOthers();
+});
 </script>
 \r
 <template>
-  <span>{{message}}</span>
+  <div>There are {{ others.length }} other user(s) online</div>
 </template>`,
       },
     },
     {
-      title: "Bonus: setup authentication",
+      title: "Bonus: set up authentication",
       description: (
         <>
           By default, Liveblocks is configured to work without an authentication
@@ -108,7 +93,7 @@ please let us know about it on this
       ),
       action: {
         href: "/docs/rooms/authentication",
-        label: "Setup authentication",
+        label: "Set up authentication",
       },
     },
   ]}
