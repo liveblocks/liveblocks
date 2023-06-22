@@ -7,6 +7,15 @@ export enum RoomScope {
   PresenceWrite = "room:presence:write",
 }
 
+/**
+ * Fields of the JWT payload that the client relies on and interprets. There
+ * exist more fields in the JWT payload, but those aren't needed by the client
+ * directly, and simply passed back to the backend.
+ *
+ * This type should only list the properties that client uses, so we're still
+ * free to change the other fields on the token without breaking backward
+ * compatibility.
+ */
 // XXX Rename to MinimalTokenMetadata
 // XXX Try to remove as many fields from this type as possible
 export type RoomAuthToken = {
