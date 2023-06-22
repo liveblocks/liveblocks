@@ -23,7 +23,6 @@ export type MinimalTokenPayload = {
   iat: number;
   exp: number;
 
-  // XXX Try to remove as many fields below from this type as possible
   scopes: string[]; // Think Scope[], but it could also hold scopes from the future, hence string[]
   actor: number;
 
