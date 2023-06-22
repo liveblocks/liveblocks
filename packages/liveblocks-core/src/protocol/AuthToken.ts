@@ -39,6 +39,7 @@ export type MinimalTokenPayload = {
 // metadata on it accessible. It's done right after hitting the backend, but
 // before the promise will get returned, so it's an inherent part of the
 // authentication step.
+// XXX Rename to ParsedAuthToken?
 export type RichToken = {
   readonly raw: string; // The raw JWT value, unchanged
   readonly parsed: MinimalTokenPayload & JwtMetadata; // Rich data on the JWT value
