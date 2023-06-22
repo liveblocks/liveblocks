@@ -1,11 +1,5 @@
-import type { Json, JsonObject } from "../lib/Json";
+import type { Json } from "../lib/Json";
 import { b64decode, isPlainObject, tryParseJson } from "../lib/utils";
-
-export type AppOnlyAuthToken = {
-  appId: string;
-  roomId?: never; // Discriminating field for AuthToken type
-  scopes: string[]; // Think Scope[], but it could also hold scopes from the future, hence string[]
-};
 
 export enum RoomScope {
   Read = "room:read",
@@ -13,42 +7,45 @@ export enum RoomScope {
   PresenceWrite = "room:presence:write",
 }
 
-export type RoomAuthToken = {
-  appId: string;
-  roomId: string; // Discriminating field for AuthToken type
+/**
+ * Fields of the JWT payload that the client relies on and interprets. There
+ * exist more fields in the JWT payload, but those aren't needed by the client
+ * directly, and simply passed back to the backend.
+ *
+ * This type should only list the properties that client uses, so we're still
+ * free to change the other fields on the token without breaking backward
+ * compatibility.
+ *
+ * @internal For unit tests only.
+ */
+export type MinimalTokenPayload = {
+  // Issued at and expiry fields (from JWT spec)
+  iat: number;
+  exp: number;
+
   scopes: string[]; // Think Scope[], but it could also hold scopes from the future, hence string[]
   actor: number;
-  maxConnectionsPerRoom?: number;
 
   // Extra payload as defined by the customer's own authorization
+  id?: string;
   info?: Json;
-  groupIds?: string[];
-} & ({ id: string; anonymousId?: never } | { id?: never; anonymousId: string });
 
-export type AuthToken = AppOnlyAuthToken | RoomAuthToken;
+  // IMPORTANT: All other fields on the JWT token are deliberately treated as
+  // opaque, and not relied on by the client.
+  [other: string]: Json | undefined;
+};
 
 // The "rich" token is data we obtain by parsing the JWT token and making all
 // metadata on it accessible. It's done right after hitting the backend, but
 // before the promise will get returned, so it's an inherent part of the
 // authentication step.
-export type RichToken = {
+export type ParsedAuthToken = {
   readonly raw: string; // The raw JWT value, unchanged
-  readonly parsed: RoomAuthToken & JwtMetadata; // Rich data on the JWT value
+  readonly parsed: MinimalTokenPayload; // Rich data on the JWT value
 };
 
-export interface JwtMetadata extends JsonObject {
-  iat: number;
-  exp: number;
-}
-
-function hasJwtMeta(data: unknown): data is JwtMetadata {
-  if (!isPlainObject(data)) {
-    return false;
-  }
-
-  const { iat, exp } = data;
-  return typeof iat === "number" && typeof exp === "number";
-}
+/** @internal - For unit tests only */
+export type JwtMetadata = Pick<MinimalTokenPayload, "iat" | "exp">;
 
 export function isTokenExpired(token: JwtMetadata): boolean {
   const now = Date.now() / 1000;
@@ -60,86 +57,52 @@ function isStringList(value: unknown): value is string[] {
   return Array.isArray(value) && value.every((i) => typeof i === "string");
 }
 
-export function isAppOnlyAuthToken(data: JsonObject): data is AppOnlyAuthToken {
+function isMinimalTokenPayload(data: Json): data is MinimalTokenPayload {
   //
   // NOTE: This is the hard-coded definition of the following decoder:
   //
-  //   object({
-  //     appId: string,
-  //     roomId?: never,
-  //     scopes: array(scope),
-  //   })
-  //
-  return (
-    typeof data.appId === "string" &&
-    data.roomId === undefined &&
-    isStringList(data.scopes)
-  );
-}
-
-export function isRoomAuthToken(data: JsonObject): data is RoomAuthToken {
-  //
-  // NOTE: This is the hard-coded definition of the following decoder:
-  //
-  //   object({
-  //     appId: string,
-  //     roomId: string,
+  //   inexact({
+  //     iat: number,
+  //     exp: number,
   //     actor: number,
   //     scopes: array(scope),
-  //     maxConnectionsPerRoom: optional(number),
   //     id: optional(string),
   //     info: optional(json),
   //   })
   //
   return (
-    typeof data.appId === "string" &&
-    typeof data.roomId === "string" &&
+    isPlainObject(data) &&
+    typeof data.iat === "number" &&
+    typeof data.exp === "number" &&
     typeof data.actor === "number" &&
     (data.id === undefined || typeof data.id === "string") &&
-    isStringList(data.scopes) &&
-    (data.maxConnectionsPerRoom === undefined ||
-      typeof data.maxConnectionsPerRoom === "number")
-    // NOTE: Nothing to validate for `info` field. It's already Json | undefined,
-    // because data is a JsonObject
-    // info?: Json;
+    isStringList(data.scopes)
+    // && data.info will already be `Json | undefined`, given the nature of the data here
   );
 }
 
-export function isAuthToken(data: JsonObject): data is AuthToken {
-  return isAppOnlyAuthToken(data) || isRoomAuthToken(data);
-}
-
-function parseJwtToken(token: string): JwtMetadata {
-  const tokenParts = token.split(".");
+/**
+ * Parses a raw JWT token string, which allows reading the metadata/payload of
+ * the token.
+ *
+ * NOTE: Doesn't do any validation, so always treat the metadata as other user
+ * input: never trust these values for anything important.
+ */
+export function parseAuthToken(rawTokenString: string): ParsedAuthToken {
+  const tokenParts = rawTokenString.split(".");
   if (tokenParts.length !== 3) {
     throw new Error("Authentication error: invalid JWT token");
   }
 
-  const data = tryParseJson(b64decode(tokenParts[1]));
-  if (data && hasJwtMeta(data)) {
-    return data;
-  } else {
-    throw new Error("Authentication error: missing JWT metadata");
-  }
-}
-
-export function parseRoomAuthToken(tokenString: string): RichToken {
-  const data = parseJwtToken(tokenString);
-  if (!(data && isRoomAuthToken(data))) {
+  const payload = tryParseJson(b64decode(tokenParts[1]));
+  if (!(payload && isMinimalTokenPayload(payload))) {
     throw new Error(
       "Authentication error: we expected a room token but did not get one. Hint: if you are using a callback, ensure the room is passed when creating the token. For more information: https://liveblocks.io/docs/api-reference/liveblocks-client#createClientCallback"
     );
   }
 
-  const {
-    // If this legacy field is found on the token, pretend it wasn't there,
-    // to make all internally used token payloads uniform
-    maxConnections: _legacyField,
-    ...parsedToken
-  } = data;
-
   return {
-    raw: tokenString,
-    parsed: parsedToken,
+    raw: rawTokenString,
+    parsed: payload,
   };
 }
