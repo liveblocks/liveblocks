@@ -39,8 +39,7 @@ export type MinimalTokenPayload = {
 // metadata on it accessible. It's done right after hitting the backend, but
 // before the promise will get returned, so it's an inherent part of the
 // authentication step.
-// XXX Rename to ParsedAuthToken?
-export type RichToken = {
+export type ParsedAuthToken = {
   readonly raw: string; // The raw JWT value, unchanged
   readonly parsed: MinimalTokenPayload; // Rich data on the JWT value
 };
@@ -89,7 +88,7 @@ function isMinimalTokenPayload(data: Json): data is MinimalTokenPayload {
  * NOTE: Doesn't do any validation, so always treat the metadata as other user
  * input: never trust these values for anything important.
  */
-export function parseAuthToken(rawTokenString: string): RichToken {
+export function parseAuthToken(rawTokenString: string): ParsedAuthToken {
   const tokenParts = rawTokenString.split(".");
   if (tokenParts.length !== 3) {
     throw new Error("Authentication error: invalid JWT token");

@@ -9,17 +9,17 @@
  */
 
 import { StopRetrying } from "../connection";
-import type { RichToken } from "../protocol/AuthToken";
+import type { ParsedAuthToken } from "../protocol/AuthToken";
 import type { RoomDelegates } from "../room";
 import type { WebsocketCloseCodes } from "../types/IWebSocket";
 import type { MockWebSocket } from "./_MockWebSocketServer";
 import { MockWebSocketServer } from "./_MockWebSocketServer";
 import { makeMinimalTokenPayload } from "./_utils";
 
-type AuthBehavior = () => RichToken;
+type AuthBehavior = () => ParsedAuthToken;
 type SocketBehavior = (wss: MockWebSocketServer) => MockWebSocket;
 
-function makeRichToken(actor: number, scopes: string[]): RichToken {
+function makeToken(actor: number, scopes: string[]): ParsedAuthToken {
   return {
     raw: "<some fake JWT token>",
     parsed: makeMinimalTokenPayload(actor, scopes),
@@ -73,7 +73,7 @@ export function defineBehavior(
 export const AUTH_SUCCESS = ALWAYS_AUTH_AS(1);
 
 export function ALWAYS_AUTH_AS(actor: number, scopes: string[] = []) {
-  return () => makeRichToken(actor, scopes);
+  return () => makeToken(actor, scopes);
 }
 
 export function ALWAYS_FAIL_AUTH(): never {
