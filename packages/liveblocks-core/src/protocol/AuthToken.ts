@@ -24,20 +24,17 @@ export type MinimalTokenPayload = {
   exp: number;
 
   // XXX Try to remove as many fields below from this type as possible
-  appId: string;
-  roomId: string; // Discriminating field for AuthToken type
   scopes: string[]; // Think Scope[], but it could also hold scopes from the future, hence string[]
   actor: number;
-  maxConnectionsPerRoom?: number;
 
   // Extra payload as defined by the customer's own authorization
+  id?: string;
   info?: Json;
-  groupIds?: string[];
 
   // IMPORTANT: All other fields on the JWT token are deliberately treated as
   // opaque, and not relied on by the client.
   [other: string]: Json | undefined;
-} & ({ id: string; anonymousId?: never } | { id?: never; anonymousId: string });
+};
 
 // The "rich" token is data we obtain by parsing the JWT token and making all
 // metadata on it accessible. It's done right after hitting the backend, but
@@ -66,14 +63,11 @@ function isMinimalTokenPayload(data: Json): data is MinimalTokenPayload {
   //
   // NOTE: This is the hard-coded definition of the following decoder:
   //
-  //   object({
+  //   inexact({
   //     iat: number,
   //     exp: number,
-  //     appId: string,
-  //     roomId: string,
   //     actor: number,
   //     scopes: array(scope),
-  //     maxConnectionsPerRoom: optional(number),
   //     id: optional(string),
   //     info: optional(json),
   //   })
@@ -82,16 +76,10 @@ function isMinimalTokenPayload(data: Json): data is MinimalTokenPayload {
     isPlainObject(data) &&
     typeof data.iat === "number" &&
     typeof data.exp === "number" &&
-    typeof data.appId === "string" &&
-    typeof data.roomId === "string" &&
     typeof data.actor === "number" &&
     (data.id === undefined || typeof data.id === "string") &&
-    isStringList(data.scopes) &&
-    (data.maxConnectionsPerRoom === undefined ||
-      typeof data.maxConnectionsPerRoom === "number")
-    // NOTE: Nothing to validate for `info` field. It's already Json | undefined,
-    // because data is a JsonObject
-    // info?: Json;
+    isStringList(data.scopes)
+    // && data.info will already be `Json | undefined`, given the nature of the data here
   );
 }
 
