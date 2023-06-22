@@ -69,7 +69,9 @@ function isStringList(value: unknown): value is string[] {
   return Array.isArray(value) && value.every((i) => typeof i === "string");
 }
 
-function isMinimalTokenPayload(data: JsonObject): data is MinimalTokenPayload {
+function isMinimalTokenPayload(
+  data: JsonObject
+): data is JwtMetadata & MinimalTokenPayload {
   //
   // NOTE: This is the hard-coded definition of the following decoder:
   //
@@ -84,6 +86,7 @@ function isMinimalTokenPayload(data: JsonObject): data is MinimalTokenPayload {
   //   })
   //
   return (
+    hasJwtMeta(data) &&
     typeof data.appId === "string" &&
     typeof data.roomId === "string" &&
     typeof data.actor === "number" &&
@@ -111,7 +114,7 @@ export function parseAuthToken(rawTokenString: string): RichToken {
   }
 
   const payload = tryParseJson(b64decode(tokenParts[1]));
-  if (!(payload && hasJwtMeta(payload) && isMinimalTokenPayload(payload))) {
+  if (!(payload && isMinimalTokenPayload(payload))) {
     throw new Error(
       "Authentication error: we expected a room token but did not get one. Hint: if you are using a callback, ensure the room is passed when creating the token. For more information: https://liveblocks.io/docs/api-reference/liveblocks-client#createClientCallback"
     );
