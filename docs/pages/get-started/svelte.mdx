@@ -63,7 +63,7 @@ please let us know about it on this
   import { onDestroy } from "svelte";
   import { room } from "./room.js";
 \r
-  let others = [];
+  let others = room.getOthers();
 \r
   const unsubscribeOthers = room.subscribe("others", (updatedOthers) => {
     others = updatedOthers;

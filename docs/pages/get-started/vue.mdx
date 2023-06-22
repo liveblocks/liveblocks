@@ -63,7 +63,7 @@ please let us know about it on this
 import { onUnmounted, ref } from "vue";
 import { room } from "./room.js";
 \r
-const others = ref([]]);
+const others = ref(room.getOthers());
 \r
 const unsubscribeOthers = room.subscribe("others", (updatedOthers) => {
   others.current = updatedOthers;
