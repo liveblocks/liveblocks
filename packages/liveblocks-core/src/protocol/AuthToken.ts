@@ -15,10 +15,15 @@ export enum RoomScope {
  * This type should only list the properties that client uses, so we're still
  * free to change the other fields on the token without breaking backward
  * compatibility.
+ *
+ * @internal For unit tests only.
  */
-// XXX Rename to MinimalTokenMetadata
-// XXX Try to remove as many fields from this type as possible
-export type RoomAuthToken = {
+export type MinimalTokenPayload = {
+  // IMPORTANT: All other fields on the JWT token are deliberately treated as
+  // opaque, and not relied on by the client.
+  [other: string]: Json | undefined;
+
+  // XXX Try to remove as many fields below from this type as possible
   appId: string;
   roomId: string; // Discriminating field for AuthToken type
   scopes: string[]; // Think Scope[], but it could also hold scopes from the future, hence string[]
@@ -30,16 +35,13 @@ export type RoomAuthToken = {
   groupIds?: string[];
 } & ({ id: string; anonymousId?: never } | { id?: never; anonymousId: string });
 
-// XXX Remove alias?
-export type AuthToken = RoomAuthToken;
-
 // The "rich" token is data we obtain by parsing the JWT token and making all
 // metadata on it accessible. It's done right after hitting the backend, but
 // before the promise will get returned, so it's an inherent part of the
 // authentication step.
 export type RichToken = {
   readonly raw: string; // The raw JWT value, unchanged
-  readonly parsed: RoomAuthToken & JwtMetadata; // Rich data on the JWT value
+  readonly parsed: MinimalTokenPayload & JwtMetadata; // Rich data on the JWT value
 };
 
 export interface JwtMetadata extends JsonObject {
@@ -66,7 +68,7 @@ function isStringList(value: unknown): value is string[] {
   return Array.isArray(value) && value.every((i) => typeof i === "string");
 }
 
-export function isRoomAuthToken(data: JsonObject): data is RoomAuthToken {
+function isMinimalTokenPayload(data: JsonObject): data is MinimalTokenPayload {
   //
   // NOTE: This is the hard-coded definition of the following decoder:
   //
@@ -94,11 +96,6 @@ export function isRoomAuthToken(data: JsonObject): data is RoomAuthToken {
   );
 }
 
-// XXX Remove alias
-export function isAuthToken(data: JsonObject): data is AuthToken {
-  return isRoomAuthToken(data);
-}
-
 function parseJwtToken(token: string): JwtMetadata {
   const tokenParts = token.split(".");
   if (tokenParts.length !== 3) {
@@ -115,7 +112,7 @@ function parseJwtToken(token: string): JwtMetadata {
 
 export function parseRoomAuthToken(tokenString: string): RichToken {
   const data = parseJwtToken(tokenString);
-  if (!(data && isRoomAuthToken(data))) {
+  if (!(data && isMinimalTokenPayload(data))) {
     throw new Error(
       "Authentication error: we expected a room token but did not get one. Hint: if you are using a callback, ensure the room is passed when creating the token. For more information: https://liveblocks.io/docs/api-reference/liveblocks-client#createClientCallback"
     );

@@ -4,7 +4,7 @@ import type { ToImmutable } from "../crdts/utils";
 import type { Json, JsonObject } from "../lib/Json";
 import { makePosition } from "../lib/position";
 import type { Authentication } from "../protocol/Authentication";
-import type { RoomAuthToken } from "../protocol/AuthToken";
+import type { MinimalTokenPayload } from "../protocol/AuthToken";
 import type { BaseUserMeta } from "../protocol/BaseUserMeta";
 import type { ClientMsg } from "../protocol/ClientMsg";
 import { ClientMsgCode } from "../protocol/ClientMsg";
@@ -34,7 +34,14 @@ import { MockWebSocket } from "./_MockWebSocketServer";
 import type { JsonStorageUpdate } from "./_updatesUtils";
 import { serializeUpdateToJson } from "./_updatesUtils";
 
-export function makeRoomToken(actor: number, scopes: string[]): RoomAuthToken {
+export function makeRoomToken(
+  actor: number,
+  scopes: string[]
+): MinimalTokenPayload {
+  // NOTE: This is not the complete JWT token, but one that has enough fields
+  // to we can run the unit tests. The actual full shape of these JWT tokens is
+  // defined in the (private) backend in case you're interested, see
+  // https://github.com/liveblocks/liveblocks-cloudflare/blob/main/src/security.ts
   return {
     appId: "my-app",
     roomId: "my-room",
