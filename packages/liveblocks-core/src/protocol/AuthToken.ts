@@ -1,4 +1,4 @@
-import type { Json, JsonObject } from "../lib/Json";
+import type { Json } from "../lib/Json";
 import { b64decode, isPlainObject, tryParseJson } from "../lib/utils";
 
 export enum RoomScope {
@@ -49,10 +49,8 @@ export type RichToken = {
   readonly parsed: MinimalTokenPayload; // Rich data on the JWT value
 };
 
-export interface JwtMetadata extends JsonObject {
-  iat: number;
-  exp: number;
-}
+/** @internal - For unit tests only */
+export type JwtMetadata = Pick<MinimalTokenPayload, "iat" | "exp">;
 
 export function isTokenExpired(token: JwtMetadata): boolean {
   const now = Date.now() / 1000;
