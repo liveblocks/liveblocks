@@ -1,18 +1,14 @@
 import type { Json, JsonObject } from "../lib/Json";
 import { b64decode, isPlainObject, tryParseJson } from "../lib/utils";
 
-export type AppOnlyAuthToken = {
-  appId: string;
-  roomId?: never; // Discriminating field for AuthToken type
-  scopes: string[]; // Think Scope[], but it could also hold scopes from the future, hence string[]
-};
-
 export enum RoomScope {
   Read = "room:read",
   Write = "room:write",
   PresenceWrite = "room:presence:write",
 }
 
+// XXX Rename to MinimalTokenMetadata
+// XXX Try to remove as many fields from this type as possible
 export type RoomAuthToken = {
   appId: string;
   roomId: string; // Discriminating field for AuthToken type
@@ -25,7 +21,8 @@ export type RoomAuthToken = {
   groupIds?: string[];
 } & ({ id: string; anonymousId?: never } | { id?: never; anonymousId: string });
 
-export type AuthToken = AppOnlyAuthToken | RoomAuthToken;
+// XXX Remove alias?
+export type AuthToken = RoomAuthToken;
 
 // The "rich" token is data we obtain by parsing the JWT token and making all
 // metadata on it accessible. It's done right after hitting the backend, but
@@ -60,23 +57,6 @@ function isStringList(value: unknown): value is string[] {
   return Array.isArray(value) && value.every((i) => typeof i === "string");
 }
 
-export function isAppOnlyAuthToken(data: JsonObject): data is AppOnlyAuthToken {
-  //
-  // NOTE: This is the hard-coded definition of the following decoder:
-  //
-  //   object({
-  //     appId: string,
-  //     roomId?: never,
-  //     scopes: array(scope),
-  //   })
-  //
-  return (
-    typeof data.appId === "string" &&
-    data.roomId === undefined &&
-    isStringList(data.scopes)
-  );
-}
-
 export function isRoomAuthToken(data: JsonObject): data is RoomAuthToken {
   //
   // NOTE: This is the hard-coded definition of the following decoder:
@@ -105,8 +85,9 @@ export function isRoomAuthToken(data: JsonObject): data is RoomAuthToken {
   );
 }
 
+// XXX Remove alias
 export function isAuthToken(data: JsonObject): data is AuthToken {
-  return isAppOnlyAuthToken(data) || isRoomAuthToken(data);
+  return isRoomAuthToken(data);
 }
 
 function parseJwtToken(token: string): JwtMetadata {
