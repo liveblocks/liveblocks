@@ -1708,7 +1708,7 @@ export function createRoom<
             break;
           }
 
-          case ServerMsgCode.YDOC_UPDATE: {
+          case ServerMsgCode.UPDATE_YDOC: {
             eventHub.docUpdated.notify(message.update);
             break;
           }
@@ -1957,7 +1957,7 @@ export function createRoom<
 
   function getYDoc(vector: string): void {
     context.buffer.messages.push({
-      type: ClientMsgCode.FETCH_YDOC_UPDATE,
+      type: ClientMsgCode.FETCH_YDOC,
       vector,
     });
     flushNowOrSoon();
