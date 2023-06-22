@@ -28,10 +28,10 @@ import { asPos } from "./lib/position";
 import type { Resolve } from "./lib/Resolve";
 import { compact, isPlainObject, tryParseJson } from "./lib/utils";
 import type { Authentication } from "./protocol/Authentication";
-import type { RichToken } from "./protocol/AuthToken";
+import type { ParsedAuthToken } from "./protocol/AuthToken";
 import {
   isTokenExpired,
-  parseRoomAuthToken,
+  parseAuthToken,
   RoomScope,
 } from "./protocol/AuthToken";
 import type { BaseUserMeta } from "./protocol/BaseUserMeta";
@@ -802,7 +802,7 @@ export type RoomInitializers<
   shouldInitiallyConnect?: boolean;
 }>;
 
-export type RoomDelegates = Delegates<RichToken>;
+export type RoomDelegates = Delegates<ParsedAuthToken>;
 
 /** @internal */
 export type RoomConfig = {
@@ -882,7 +882,7 @@ export function createRoom<
     ),
   };
 
-  const managedSocket: ManagedSocket<RichToken> = new ManagedSocket(
+  const managedSocket: ManagedSocket<ParsedAuthToken> = new ManagedSocket(
     delegates,
     config.enableDebugLogging
   );
@@ -932,7 +932,7 @@ export function createRoom<
   const doNotBatchUpdates = (cb: () => void): void => cb();
   const batchUpdates = config.unstable_batchedUpdates ?? doNotBatchUpdates;
 
-  let lastToken: RichToken["parsed"] | undefined;
+  let lastToken: ParsedAuthToken["parsed"] | undefined;
   function onStatusDidChange(newStatus: Status) {
     const token = managedSocket.token?.parsed;
     if (token !== undefined && token !== lastToken) {
@@ -2343,7 +2343,7 @@ function makeCreateSocketDelegateForRoom(
   liveblocksServer: string,
   WebSocketPolyfill?: IWebSocket
 ) {
-  return (richToken: RichToken): IWebSocketInstance => {
+  return (richToken: ParsedAuthToken): IWebSocketInstance => {
     const ws: IWebSocket | undefined =
       WebSocketPolyfill ??
       (typeof WebSocket === "undefined" ? undefined : WebSocket);
@@ -2387,7 +2387,7 @@ function makeAuthDelegateForRoom(
   roomId: string,
   authentication: Authentication,
   fetchPolyfill?: typeof window.fetch
-): () => Promise<RichToken> {
+): () => Promise<ParsedAuthToken> {
   const fetcher =
     fetchPolyfill ?? (typeof window === "undefined" ? undefined : window.fetch);
 
@@ -2402,7 +2402,7 @@ function makeAuthDelegateForRoom(
       return fetchAuthEndpoint(fetcher, authentication.url, {
         room: roomId,
         publicApiKey: authentication.publicApiKey,
-      }).then(({ token }) => parseRoomAuthToken(token));
+      }).then(({ token }) => parseAuthToken(token));
     };
   } else if (authentication.type === "private") {
     return async () => {
@@ -2414,7 +2414,7 @@ function makeAuthDelegateForRoom(
 
       return fetchAuthEndpoint(fetcher, authentication.url, {
         room: roomId,
-      }).then(({ token }) => parseRoomAuthToken(token));
+      }).then(({ token }) => parseAuthToken(token));
     };
   } else if (authentication.type === "custom") {
     return async () => {
@@ -2424,7 +2424,7 @@ function makeAuthDelegateForRoom(
           'We expect the authentication callback to return a token, but it does not. Hint: the return value should look like: { token: "..." }'
         );
       }
-      return parseRoomAuthToken(response.token);
+      return parseAuthToken(response.token);
     };
   } else {
     throw new Error("Internal error. Unexpected authentication type");

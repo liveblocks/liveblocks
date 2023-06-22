@@ -914,6 +914,41 @@ describe("legacy_patchImmutableObject", () => {
     });
   });
 
+  test("replace an element in Array/LiveList", () => {
+    const state = {
+      list: [{ a: 1 }, { a: 2 }, { a: 3 }],
+    };
+
+    const root = new LiveObject<{
+      list: typeof liveList;
+    }>();
+    const liveList = new LiveList<LiveObject<{ a: number }>>();
+    liveList.push(new LiveObject({ a: 1 }));
+    liveList.push(new LiveObject({ a: 2 }));
+    liveList.push(new LiveObject({ a: 3 }));
+    const obj1 = new LiveObject({ a: 4 });
+    liveList.set(1, obj1);
+    root.set("list", liveList);
+
+    const updates: StorageUpdate[] = [
+      {
+        type: "LiveList",
+        node: root.get("list"),
+        updates: [{ index: 1, item: obj1, type: "set" }],
+      },
+    ];
+
+    const newState = legacy_patchImmutableObject(state, updates);
+
+    expect(newState.list[0] === state.list[0]).toBeTruthy();
+    expect(newState.list[1] === state.list[1]).toBeFalsy();
+    expect(newState.list[2] === state.list[2]).toBeTruthy();
+
+    expect(newState).toEqual({
+      list: [{ a: 1 }, { a: 4 }, { a: 3 }],
+    });
+  });
+
   test("insert element at the end of Array/LiveList", () => {
     const state = {
       list: [{ a: 1 }, { a: 2 }],

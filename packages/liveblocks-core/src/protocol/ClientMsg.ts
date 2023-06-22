@@ -11,7 +11,7 @@ export enum ClientMsgCode {
   UPDATE_STORAGE = 201,
 
   // For YJS support
-  FETCH_YDOC_UPDATE = 300,
+  FETCH_YDOC = 300,
   UPDATE_YDOC = 301,
 }
 
@@ -82,11 +82,11 @@ export type FetchStorageClientMsg = {
 };
 
 export type FetchYDocClientMsg = {
-  readonly type: ClientMsgCode.FETCH_YDOC_UPDATE;
-  readonly vector: string;
+  readonly type: ClientMsgCode.FETCH_YDOC;
+  readonly vector: string; // base64 encoded stateVector a from yjs doc
 };
 
 export type UpdateYDocClientMsg = {
   readonly type: ClientMsgCode.UPDATE_YDOC;
-  readonly update: string;
+  readonly update: string; // base64 encoded update from a yjs doc
 };

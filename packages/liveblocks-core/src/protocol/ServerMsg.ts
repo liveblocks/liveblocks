@@ -17,7 +17,7 @@ export enum ServerMsgCode {
   REJECT_STORAGE_OP = 299,
 
   // For YJS Docs
-  YDOC_UPDATE = 300,
+  UPDATE_YDOC = 300,
 }
 
 /**
@@ -40,8 +40,6 @@ export type ServerMsg<
   | UpdateStorageServerMsg // Broadcasted
   | RejectedStorageOpServerMsg // For a single client
   | YDocUpdate; // For receiving doc from backend
-
-// For YJS Docs
 
 /**
  * Sent by the WebSocket server and broadcasted to all clients to announce that
@@ -138,8 +136,12 @@ export type UserLeftServerMsg = {
   readonly actor: number;
 };
 
+/**
+ * Sent by the WebSocket server when the ydoc is updated or when requested based on stateVector passed.
+ * Contains a base64 encoded update
+ */
 export type YDocUpdate = {
-  readonly type: ServerMsgCode.YDOC_UPDATE;
+  readonly type: ServerMsgCode.UPDATE_YDOC;
   readonly update: string;
 };
 

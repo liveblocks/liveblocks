@@ -61,16 +61,6 @@ export {
   tryParseJson,
   withTimeout,
 } from "./lib/utils";
-export type {
-  AppOnlyAuthToken,
-  AuthToken,
-  RoomAuthToken,
-} from "./protocol/AuthToken";
-export {
-  isAppOnlyAuthToken,
-  isAuthToken,
-  isRoomAuthToken,
-} from "./protocol/AuthToken";
 export type { BaseUserMeta } from "./protocol/BaseUserMeta";
 export type {
   BroadcastEventClientMsg,
