@@ -76,8 +76,10 @@ export type {
   BroadcastEventClientMsg,
   ClientMsg,
   FetchStorageClientMsg,
+  FetchYDocClientMsg,
   UpdatePresenceClientMsg,
   UpdateStorageClientMsg,
+  UpdateYDocClientMsg,
 } from "./protocol/ClientMsg";
 export { ClientMsgCode } from "./protocol/ClientMsg";
 export type {
