@@ -19,10 +19,6 @@ export enum RoomScope {
  * @internal For unit tests only.
  */
 export type MinimalTokenPayload = {
-  // IMPORTANT: All other fields on the JWT token are deliberately treated as
-  // opaque, and not relied on by the client.
-  [other: string]: Json | undefined;
-
   // Issued at and expiry fields (from JWT spec)
   iat: number;
   exp: number;
@@ -37,6 +33,10 @@ export type MinimalTokenPayload = {
   // Extra payload as defined by the customer's own authorization
   info?: Json;
   groupIds?: string[];
+
+  // IMPORTANT: All other fields on the JWT token are deliberately treated as
+  // opaque, and not relied on by the client.
+  [other: string]: Json | undefined;
 } & ({ id: string; anonymousId?: never } | { id?: never; anonymousId: string });
 
 // The "rich" token is data we obtain by parsing the JWT token and making all
