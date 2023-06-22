@@ -11,7 +11,6 @@ export function Cursor({ x, y }: Props) {
         left: 0,
         top: 0,
         transform: `translateX(${x}px) translateY(${y}px)`,
-        transition: "transform 100ms linear",
       }}
       width="16"
       height="16"
