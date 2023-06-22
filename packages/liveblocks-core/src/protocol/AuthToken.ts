@@ -110,7 +110,7 @@ function parseJwtToken(token: string): JwtMetadata {
   }
 }
 
-export function parseRoomAuthToken(tokenString: string): RichToken {
+export function parseAuthToken(tokenString: string): RichToken {
   const data = parseJwtToken(tokenString);
   if (!(data && isMinimalTokenPayload(data))) {
     throw new Error(

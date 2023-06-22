@@ -31,7 +31,7 @@ import type { Authentication } from "./protocol/Authentication";
 import type { RichToken } from "./protocol/AuthToken";
 import {
   isTokenExpired,
-  parseRoomAuthToken,
+  parseAuthToken,
   RoomScope,
 } from "./protocol/AuthToken";
 import type { BaseUserMeta } from "./protocol/BaseUserMeta";
@@ -2363,7 +2363,7 @@ function makeAuthDelegateForRoom(
       return fetchAuthEndpoint(fetcher, authentication.url, {
         room: roomId,
         publicApiKey: authentication.publicApiKey,
-      }).then(({ token }) => parseRoomAuthToken(token));
+      }).then(({ token }) => parseAuthToken(token));
     };
   } else if (authentication.type === "private") {
     return async () => {
@@ -2375,7 +2375,7 @@ function makeAuthDelegateForRoom(
 
       return fetchAuthEndpoint(fetcher, authentication.url, {
         room: roomId,
-      }).then(({ token }) => parseRoomAuthToken(token));
+      }).then(({ token }) => parseAuthToken(token));
     };
   } else if (authentication.type === "custom") {
     return async () => {
@@ -2385,7 +2385,7 @@ function makeAuthDelegateForRoom(
           'We expect the authentication callback to return a token, but it does not. Hint: the return value should look like: { token: "..." }'
         );
       }
-      return parseRoomAuthToken(response.token);
+      return parseAuthToken(response.token);
     };
   } else {
     throw new Error("Internal error. Unexpected authentication type");
