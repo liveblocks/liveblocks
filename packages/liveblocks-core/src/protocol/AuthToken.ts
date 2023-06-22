@@ -111,11 +111,11 @@ function parseJwtToken(rawTokenString: string): JwtMetadata {
   }
 
   const data = tryParseJson(b64decode(tokenParts[1]));
-  if (data && hasJwtMeta(data)) {
-    return data;
-  } else {
+  if (!(data && hasJwtMeta(data))) {
     throw new Error("Authentication error: missing JWT metadata");
   }
+
+  return data;
 }
 
 export function parseAuthToken(rawTokenString: string): RichToken {
