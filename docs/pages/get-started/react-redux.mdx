@@ -51,13 +51,13 @@ const client = createClient({
 
 ## Setup your Liveblocks real‑time enhancer [#setup-enhancer]
 
-Use our `enhancer` in your store setup and pass the client created previously as
-the configuration. This will add a new state called `liveblocks` to your store,
-enabling you to interact with our Presence and Storage APIs.
+Use our `liveblocksEnhancer` in your store setup and pass the client created
+previously as the configuration. This will add a new state called `liveblocks`
+to your store, enabling you to interact with our Presence and Storage APIs.
 
 ```jsx file="src/store.js"
 import { createClient } from "@liveblocks/client";
-import { enhancer } from "@liveblocks/redux";
+import { liveblocksEnhancer } from "@liveblocks/redux";
 import { configureStore, createSlice } from "@reduxjs/toolkit";
 
 const client = createClient({
@@ -78,7 +78,7 @@ function makeStore() {
   return configureStore({
     reducer: slice.reducer,
     enhancers: [
-      enhancer({
+      liveblocksEnhancer({
         client,
       }),
     ],
@@ -171,8 +171,8 @@ state often corresponds to a cursor position or even the item a user has
 currently selected. We call this concept "Presence".
 
 For instance, to share the cursor’s position in real‑time with others, we’re
-going to add a new `presenceMapping` option to our `enhancer` to specify which
-part of the state maps to the current user’s `presence`.
+going to add a new `presenceMapping` option to our `liveblocksEnhancer` to
+specify which part of the state maps to the current user’s `presence`.
 
 ```jsx file="src/store.js"
 /* ... imports and client setup ... */
@@ -197,7 +197,7 @@ function makeStore() {
   return configureStore({
     reducer: slice.reducer,
     enhancers: [
-      enhancer({
+      liveblocksEnhancer({
         client,
         presenceMapping: { cursor: true },
       }),
@@ -315,7 +315,7 @@ function makeStore() {
   return configureStore({
     reducer: slice.reducer,
     enhancers: [
-      enhancer({
+      liveblocksEnhancer({
         client,
         storageMapping: { firstName: true, lastName: true, discoveries: true },
       }),
@@ -347,15 +347,10 @@ enhancer patches your immutable state.
 
 When entering a room with `enterRoom`, the enhancer fetches the room's storage
 from our server and patches your store. If this is the first time you're
-entering a room, the storage will be empty. `enterRoom` takes an additional
-argument to initialize the room's storage.
+entering a room, the storage will be empty.
 
 ```js
-enterRoom("room-id", {
-  firstName: "Lise",
-  lastName: "Meitner",
-  discoveries: ["Nuclear fission", "Protactinium"],
-});
+enterRoom("room-id");
 ```
 
 ## Multiplayer undo/redo [#undo-redo]
