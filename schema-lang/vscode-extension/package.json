@@ -7,6 +7,10 @@
     "vscode": "^1.75.0"
   },
   "main": "./dist/main.js",
+  "files": [
+    "dist/**",
+    "README.md"
+  ],
   "categories": [
     "Programming Languages"
   ],

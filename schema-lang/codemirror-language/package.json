@@ -6,8 +6,14 @@
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
     }
   },
   "files": [
@@ -15,7 +21,7 @@
     "README.md"
   ],
   "scripts": {
-    "build": "tsup",
+    "build": "tsup && cp dist/index.d.ts dist/index.d.cts",
     "lint": "eslint src/",
     "lint:package": "npx -y publint@latest --strict && npx -y @arethetypeswrong/cli@latest /tmp/$( npm pack -q --pack-destination /tmp )",
     "format": "(eslint --fix src/ || true) && prettier --write src/",
