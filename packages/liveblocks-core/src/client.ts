@@ -5,12 +5,17 @@ import type { Json, JsonObject } from "./lib/Json";
 import type { Resolve } from "./lib/Resolve";
 import type { Authentication } from "./protocol/Authentication";
 import type { BaseUserMeta } from "./protocol/BaseUserMeta";
-import type { Polyfills, Room, RoomInitializers } from "./room";
+import type { Polyfills, Room, RoomDelegates, RoomInitializers } from "./room";
 import { createRoom } from "./room";
 
 const MIN_THROTTLE = 16;
 const MAX_THROTTLE = 1000;
 const DEFAULT_THROTTLE = 100;
+
+const MIN_LOST_CONNECTION_TIMEOUT = 200;
+const RECOMMENDED_MIN_LOST_CONNECTION_TIMEOUT = 1000;
+const MAX_LOST_CONNECTION_TIMEOUT = 30000;
+const DEFAULT_LOST_CONNECTION_TIMEOUT = 5000;
 
 type EnterOptions<
   TPresence extends JsonObject,
@@ -76,19 +81,27 @@ export type AuthEndpoint =
  * Can be an url or a callback if you need to add additional headers.
  */
 export type ClientOptions = {
-  throttle?: number;
+  throttle?: number; // in milliseconds
+  lostConnectionTimeout?: number; // in milliseconds
   polyfills?: Polyfills;
   unstable_fallbackToHTTP?: boolean;
 
   /**
-   * Backward-compatible way to set `polyfills.fetch`.
+   * @deprecated Use `polyfills: { fetch: ... }` instead.
+   * This option will be removed in a future release.
    */
   fetchPolyfill?: Polyfills["fetch"];
 
   /**
-   * Backward-compatible way to set `polyfills.WebSocket`.
+   * @deprecated Use `polyfills: { WebSocket: ... }` instead.
+   * This option will be removed in a future release.
    */
   WebSocketPolyfill?: Polyfills["WebSocket"];
+
+  /** @internal */
+  mockedDelegates?: RoomDelegates;
+  /** @internal */
+  enableDebugLogging?: boolean;
 } & (
   | { publicApiKey: string; authEndpoint?: never }
   | { publicApiKey?: never; authEndpoint: AuthEndpoint }
@@ -128,7 +141,10 @@ function getServerFromClientOptions(clientOptions: ClientOptions) {
  */
 export function createClient(options: ClientOptions): Client {
   const clientOptions = options;
-  const throttleDelay = getThrottleDelayFromOptions(clientOptions);
+  const throttleDelay = getThrottle(clientOptions.throttle ?? DEFAULT_THROTTLE);
+  const lostConnectionTimeout = getLostConnectionTimeout(
+    clientOptions.lostConnectionTimeout ?? DEFAULT_LOST_CONNECTION_TIMEOUT
+  );
 
   const rooms = new Map<
     string,
@@ -161,9 +177,6 @@ export function createClient(options: ClientOptions): Client {
       return existingRoom as Room<TPresence, TStorage, TUserMeta, TRoomEvent>;
     }
 
-    // console.trace("enter");
-    // console.log("enter(", roomId, options, ") called");
-
     deprecateIf(
       options.initialPresence === null || options.initialPresence === undefined,
       "Please provide an initial presence value for the current user when entering the room."
@@ -177,7 +190,10 @@ export function createClient(options: ClientOptions): Client {
       {
         roomId,
         throttleDelay,
+        lostConnectionTimeout,
         polyfills: clientOptions.polyfills,
+        delegates: clientOptions.mockedDelegates,
+        enableDebugLogging: clientOptions.enableDebugLogging,
         unstable_batchedUpdates: options?.unstable_batchedUpdates,
         liveblocksServer: getServerFromClientOptions(clientOptions),
         authentication: prepareAuthentication(clientOptions, roomId),
@@ -207,7 +223,7 @@ export function createClient(options: ClientOptions): Client {
         global.atob = clientOptions.polyfills.atob;
       }
 
-      newRoom.__internal.send.connect();
+      newRoom.connect();
     }
 
     return newRoom;
@@ -219,32 +235,9 @@ export function createClient(options: ClientOptions): Client {
 
     const room = rooms.get(roomId);
     if (room !== undefined) {
-      room.__internal.send.disconnect();
+      room.destroy();
       rooms.delete(roomId);
     }
-  }
-
-  if (
-    typeof window !== "undefined" &&
-    // istanbul ignore next: React Native environment doesn't implement window.addEventListener
-    typeof window.addEventListener !== "undefined"
-  ) {
-    // TODO: Expose a way to clear these
-    window.addEventListener("online", () => {
-      for (const [, room] of rooms) {
-        room.__internal.send.navigatorOnline();
-      }
-    });
-  }
-
-  if (typeof document !== "undefined") {
-    document.addEventListener("visibilitychange", () => {
-      if (document.visibilityState === "visible") {
-        for (const [, room] of rooms) {
-          room.__internal.send.windowGotFocus();
-        }
-      }
-    });
   }
 
   return {
@@ -254,22 +247,35 @@ export function createClient(options: ClientOptions): Client {
   };
 }
 
-function getThrottleDelayFromOptions(options: ClientOptions): number {
-  if (options.throttle === undefined) {
-    return DEFAULT_THROTTLE;
-  }
-
-  if (
-    typeof options.throttle !== "number" ||
-    options.throttle < MIN_THROTTLE ||
-    options.throttle > MAX_THROTTLE
-  ) {
+function checkBounds(
+  option: string,
+  value: unknown,
+  min: number,
+  max: number,
+  recommendedMin?: number
+): number {
+  if (typeof value !== "number" || value < min || value > max) {
     throw new Error(
-      `throttle should be a number between ${MIN_THROTTLE} and ${MAX_THROTTLE}.`
+      `${option} should be a number between ${
+        recommendedMin ?? min
+      } and ${max}.`
     );
   }
+  return value;
+}
 
-  return options.throttle;
+function getThrottle(value: number): number {
+  return checkBounds("throttle", value, MIN_THROTTLE, MAX_THROTTLE);
+}
+
+function getLostConnectionTimeout(value: number): number {
+  return checkBounds(
+    "lostConnectionTimeout",
+    value,
+    MIN_LOST_CONNECTION_TIMEOUT,
+    MAX_LOST_CONNECTION_TIMEOUT,
+    RECOMMENDED_MIN_LOST_CONNECTION_TIMEOUT
+  );
 }
 
 function prepareAuthentication(

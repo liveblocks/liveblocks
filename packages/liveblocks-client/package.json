@@ -1,6 +1,6 @@
 {
   "name": "@liveblocks/client",
-  "version": "1.0.12",
+  "version": "1.1.1-internal1",
   "description": "A client that lets you interact with Liveblocks servers. Liveblocks is the all-in-one toolkit to build collaborative products like Figma, Notion, and more.",
   "license": "Apache-2.0",
   "main": "./dist/index.js",
@@ -12,13 +12,13 @@
   "scripts": {
     "dev": "tsup --watch",
     "build": "tsup",
-    "format": "eslint --fix src/; prettier --write src/",
+    "format": "(eslint --fix src/ || true) && prettier --write src/",
     "lint": "eslint src/",
     "test": "jest --silent --verbose --color=always --passWithNoTests",
     "test:watch": "jest --silent --verbose --color=always --passWithNoTests --watch"
   },
   "dependencies": {
-    "@liveblocks/core": "1.0.12"
+    "@liveblocks/core": "1.1.1-internal1"
   },
   "devDependencies": {
     "@liveblocks/eslint-config": "*",

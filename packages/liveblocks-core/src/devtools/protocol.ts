@@ -1,4 +1,4 @@
-import type { ConnectionStatus } from "../room";
+import type { Status } from "../connection";
 import type * as DevTools from "../types/DevToolsTreeNode";
 
 /**
@@ -75,7 +75,7 @@ export type ClientToPanelMessage =
   | {
       msg: "room::sync::full";
       roomId: string;
-      status: ConnectionStatus;
+      status: Status;
       storage: readonly DevTools.LsonTreeNode[] | null;
       me: DevTools.UserTreeNode | null;
       others: readonly DevTools.UserTreeNode[];
@@ -87,7 +87,7 @@ export type ClientToPanelMessage =
   | {
       msg: "room::sync::partial";
       roomId: string;
-      status?: ConnectionStatus;
+      status?: Status;
       storage?: readonly DevTools.LsonTreeNode[];
       me?: DevTools.UserTreeNode;
       others?: readonly DevTools.UserTreeNode[];

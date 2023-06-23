@@ -17,7 +17,7 @@
     "build": "npm run esbuild -- --sourcemap",
     "dev": "npm run esbuild -- --sourcemap --watch",
     "lint": "eslint src/",
-    "format": "eslint --fix src/; prettier --write src/"
+    "format": "(eslint --fix src/ || true) && prettier --write src/"
   },
   "contributes": {
     "languages": [

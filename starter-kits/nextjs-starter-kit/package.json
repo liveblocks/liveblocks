@@ -10,9 +10,9 @@
     "typecheck": "tsc --project tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@liveblocks/client": "^1.0.11",
-    "@liveblocks/node": "^1.0.11",
-    "@liveblocks/react": "^1.0.11",
+    "@liveblocks/client": "^1.1.0",
+    "@liveblocks/node": "^1.1.0",
+    "@liveblocks/react": "^1.1.0",
     "@radix-ui/react-dialog": "^1.0.2",
     "@radix-ui/react-popover": "^1.0.2",
     "@radix-ui/react-select": "^1.1.1",

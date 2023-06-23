@@ -1,7 +1,7 @@
 import type { JwtMetadata } from "../../protocol/AuthToken";
 import {
   isTokenExpired,
-  parseRoomAuthToken,
+  parseAuthToken,
   RoomScope,
 } from "../../protocol/AuthToken";
 
@@ -55,7 +55,7 @@ describe("parseRoomAuthToken", () => {
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2MTY3MjM2NjcsImV4cCI6MTYxNjcyNzI2NywiYXBwSWQiOiI2MDVhNGZkMzFhMzZkNWVhN2EyZTA5MTQiLCJzY29wZXMiOlsicm9vbTpyZWFkIiwicm9vbTp3cml0ZSJdfQ.7Wplt6YV_YbpPAcAFyC8pX8tk5BGNy53GdoH1_u8sjo";
 
   test("should parse a valid token", () => {
-    const { parsed } = parseRoomAuthToken(roomToken);
+    const { parsed } = parseAuthToken(roomToken);
     expect(parsed).toEqual({
       actor: 87,
       appId: "605a4fd31a36d5ea7a2e08f1",
@@ -68,7 +68,7 @@ describe("parseRoomAuthToken", () => {
 
   test("should throw if token is not a room token", () => {
     try {
-      parseRoomAuthToken(apiToken);
+      parseAuthToken(apiToken);
     } catch (error) {
       expect(error).toEqual(
         new Error(

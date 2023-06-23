@@ -13,6 +13,12 @@
 
 export type { Client } from "./client";
 export { createClient } from "./client";
+export type { BaseAuthResult, Delegates } from "./connection";
+export type {
+  LegacyConnectionStatus,
+  LostConnectionEvent,
+  Status,
+} from "./connection";
 export { LiveList } from "./crdts/LiveList";
 export { LiveMap } from "./crdts/LiveMap";
 export { LiveObject } from "./crdts/LiveObject";
@@ -49,24 +55,21 @@ export { asArrayWithLegacyMethods } from "./lib/LegacyArray";
 export { asPos, makePosition } from "./lib/position";
 export type { Resolve } from "./lib/Resolve";
 export { shallow } from "./lib/shallow";
-export { b64decode, isPlainObject, tryParseJson } from "./lib/utils";
-export type {
-  AppOnlyAuthToken,
-  AuthToken,
-  RoomAuthToken,
-} from "./protocol/AuthToken";
 export {
-  isAppOnlyAuthToken,
-  isAuthToken,
-  isRoomAuthToken,
-} from "./protocol/AuthToken";
+  b64decode,
+  isPlainObject,
+  tryParseJson,
+  withTimeout,
+} from "./lib/utils";
 export type { BaseUserMeta } from "./protocol/BaseUserMeta";
 export type {
   BroadcastEventClientMsg,
   ClientMsg,
   FetchStorageClientMsg,
+  FetchYDocClientMsg,
   UpdatePresenceClientMsg,
   UpdateStorageClientMsg,
+  UpdateYDocClientMsg,
 } from "./protocol/ClientMsg";
 export { ClientMsgCode } from "./protocol/ClientMsg";
 export type {
@@ -111,7 +114,6 @@ export type {
 export { ServerMsgCode } from "./protocol/ServerMsg";
 export type {
   BroadcastOptions,
-  ConnectionStatus,
   History,
   Room,
   RoomInitializers,

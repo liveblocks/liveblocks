@@ -149,3 +149,30 @@ export function compactObject<O extends Record<string, unknown>>(obj: O): O {
   });
   return newObj;
 }
+
+/**
+ * Returns whatever the given promise returns, but will be rejected with
+ * a "Timed out" error if the given promise does not return or reject within
+ * the given timeout period (in milliseconds).
+ */
+export async function withTimeout<T>(
+  promise: Promise<T>,
+  millis: number,
+  errmsg = "Timed out"
+): Promise<T> {
+  let timerID: ReturnType<typeof setTimeout> | undefined;
+  const timer$ = new Promise<never>((_, reject) => {
+    timerID = setTimeout(() => {
+      reject(new Error(errmsg));
+    }, millis);
+  });
+  return (
+    Promise
+      // Race the given promise against the timer. Whichever one finishes
+      // first wins the race.
+      .race([promise, timer$])
+
+      // Either way, clear the timeout, no matter who won
+      .finally(() => clearTimeout(timerID))
+  );
+}

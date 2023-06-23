@@ -3,7 +3,9 @@ import type { Observable } from "./lib/EventSource";
 import { makeEventSource } from "./lib/EventSource";
 import * as console from "./lib/fancy-console";
 import type { BuiltinEvent, Patchable, Target } from "./lib/fsm";
-import { FSM, withTimeout } from "./lib/fsm";
+import { FSM } from "./lib/fsm";
+import type { Json } from "./lib/Json";
+import { withTimeout } from "./lib/utils";
 import type {
   IWebSocketCloseEvent,
   IWebSocketEvent,
@@ -11,40 +13,89 @@ import type {
   IWebSocketMessageEvent,
 } from "./types/IWebSocket";
 
-// TODO DRY this type up with the ConnectionStatus type in room.ts
-export type PublicConnectionStatus =
+/**
+ * Old connection statuses, here for backward-compatibility reasons only.
+ */
+export type LegacyConnectionStatus =
   | "closed" // Room hasn't been entered, or has left already
-  | "authenticating" // Authentication has started, but not finished yet
-  | "connecting" // Authentication succeeded, now attempting to connect to a room
+  | "authenticating" // This state is no longer used, but older versions of the Liveblocks client still use it
+  | "connecting" // In the process of authenticating and establishing a WebSocket connection
   | "open" // Successful room connection, on the happy path
   | "unavailable" // Connection lost unexpectedly, considered a temporary hiccup, will retry
   | "failed"; // Connection failed and we won't retry automatically (e.g. unauthorized)
 
 /**
- * Maps internal machine state to the public connection status API.
+ * Returns a human-readable status indicating the current connection status of
+ * a Room, as returned by `room.getStatus()`. Can be used to implement
+ * a connection status badge.
  */
-function toPublicConnectionStatus(state: State): PublicConnectionStatus {
+export type Status =
+  | "initial"
+  | "connecting"
+  | "connected"
+  | "reconnecting"
+  | "disconnected";
+
+/**
+ * Used to report about app-level reconnection issues.
+ *
+ * Normal (quick) reconnects won't be reported as a "lost connection". Instead,
+ * the application will only get an event if the reconnection attempts by the
+ * client are taking (much) longer than usual. Definitely a situation you want
+ * to inform your users about, for example, by throwing a toast message on
+ * screen, or show a "trying to reconnect" banner.
+ */
+export type LostConnectionEvent =
+  | "lost" // the client is trying to reconnect to Liveblocks, but it's taking (much) longer than usual
+  | "restored" // the client did reconnect after all
+  | "failed"; // the client was told to stop trying
+
+export function newToLegacyStatus(status: Status): LegacyConnectionStatus {
+  switch (status) {
+    case "connecting":
+      return "connecting";
+
+    case "connected":
+      return "open";
+
+    case "reconnecting":
+      return "unavailable";
+
+    case "disconnected":
+      return "failed";
+
+    case "initial":
+      return "closed";
+
+    // istanbul ignore next
+    default:
+      return "closed";
+  }
+}
+
+/**
+ * Maps internal machine state to the public Status API.
+ */
+function toNewConnectionStatus(machine: FSM<Context, Event, State>): Status {
+  const state = machine.currentState;
   switch (state) {
     case "@ok.connected":
     case "@ok.awaiting-pong":
-      return "open";
+      return "connected";
 
     case "@idle.initial":
-      return "closed";
+      return "initial";
 
     case "@auth.busy":
     case "@auth.backoff":
-      return "authenticating";
-
     case "@connecting.busy":
-      return "connecting";
-
     case "@connecting.backoff":
-      return "unavailable";
+      return machine.context.successCount > 0 ? "reconnecting" : "connecting";
 
     case "@idle.failed":
-      return "failed";
+      return "disconnected";
 
+    // istanbul ignore next
     default:
       return assertNever(state, "Unknown state");
   }
@@ -60,6 +111,7 @@ type Event =
   | { type: "DISCONNECT" } // e.g. leaving the room
   | { type: "WINDOW_GOT_FOCUS" } // e.g. user's browser tab is refocused
   | { type: "NAVIGATOR_ONLINE" } // e.g. browser gets back online
+  | { type: "NAVIGATOR_OFFLINE" } // e.g. browser goes offline
 
   // Events that the connection manager will internally deal with
   | { type: "PONG" }
@@ -84,11 +136,21 @@ type State =
  * value that is returned by calling the authentication delegate, and will get
  * passed to the connection factory delegate. This value will be remembered by
  * the connection manager, but its value will not be interpreted, so it can be
- * any object value.
+ * any value (except null).
  */
-export type BaseAuthResult = Record<string, unknown>;
+export type BaseAuthResult = NonNullable<Json>;
 
 type Context = {
+  /**
+   * Count the number of times the machine reaches an "@ok.*" state. Once the
+   * machine reaches idle state again, this count is reset to 0 again.
+   *
+   * This lets us distinguish:
+   * - If successCount = 0, then it's an initial "connecting" state.
+   * - If successCount > 0, then it's an "reconnecting" state.
+   */
+  successCount: number;
+
   /**
    * Will be populated with the last known auth token.
    */
@@ -146,7 +208,11 @@ const SOCKET_CONNECT_TIMEOUT = 10000;
  * Special error class that can be thrown during authentication to stop the
  * connection manager from retrying.
  */
-export class UnauthorizedError extends Error {}
+export class StopRetrying extends Error {
+  constructor(reason: string) {
+    super(reason);
+  }
+}
 
 class LiveblocksError extends Error {
   constructor(message: string, public code: number) {
@@ -173,6 +239,10 @@ function increaseBackoffDelayAggressively(context: Patchable<Context>) {
   });
 }
 
+function resetSuccessCount(context: Patchable<Context>) {
+  context.patch({ successCount: 0 });
+}
+
 enum LogLevel {
   INFO,
   WARN,
@@ -194,8 +264,49 @@ function log(level: LogLevel, message: string) {
   };
 }
 
-function sendHeartbeat(ctx: Context) {
-  ctx.socket?.send("ping");
+function logPrematureErrorOrCloseEvent(e: IWebSocketEvent | Error) {
+  // Produce a useful log message
+  const conn = "Connection to Liveblocks websocket server";
+  return (ctx: Readonly<Context>) => {
+    if (e instanceof Error) {
+      console.warn(`${conn} could not be established. ${String(e)}`);
+    } else {
+      console.warn(
+        isCloseEvent(e)
+          ? `${conn} closed prematurely (code: ${e.code}). Retrying in ${ctx.backoffDelay}ms.`
+          : `${conn} could not be established.`
+      );
+    }
+  };
+}
+
+function logCloseEvent(event: IWebSocketCloseEvent) {
+  return (ctx: Readonly<Context>) => {
+    console.warn(
+      `Connection to Liveblocks websocket server closed (code: ${event.code}). Retrying in ${ctx.backoffDelay}ms.`
+    );
+  };
+}
+
+const logPermanentClose = log(
+  LogLevel.WARN,
+  "Connection to WebSocket closed permanently. Won't retry."
+);
+
+function isCloseEvent(
+  error: IWebSocketEvent | Error
+): error is IWebSocketCloseEvent {
+  return !(error instanceof Error) && error.type === "close";
+}
+
+/**
+ * Whether this is a Liveblocks-specific close event (a close code in the 40xx
+ * range).
+ */
+function isCustomCloseEvent(
+  error: IWebSocketEvent | Error
+): error is IWebSocketCloseEvent {
+  return isCloseEvent(error) && error.code >= 4000 && error.code < 4100;
 }
 
 export type Delegates<T extends BaseAuthResult> = {
@@ -207,7 +318,6 @@ function enableTracing(machine: FSM<Context, Event, State>) {
   const start = new Date().getTime();
 
   function log(...args: unknown[]) {
-    // eslint-disable-next-line
     console.warn(
       `${((new Date().getTime() - start) / 1000).toFixed(2)} [FSM #${
         machine.id
@@ -216,21 +326,15 @@ function enableTracing(machine: FSM<Context, Event, State>) {
     );
   }
   const unsubs = [
-    machine.events.didReceiveEvent.subscribe((e) => {
-      log(`Event ${e.type}`);
-    }),
-    machine.events.willTransition.subscribe(({ from, to }) => {
-      log("Transitioning", from, "→", to);
-    }),
-    machine.events.didIgnoreEvent.subscribe((e) => {
-      log("Ignored event", e.type, e, "(current state won't handle it)");
-    }),
-    // machine.events.willExitState.subscribe((s) => {
-    //   log("Exiting state", s);
-    // }),
-    // machine.events.didEnterState.subscribe((s) => {
-    //   log("Entering state", s);
-    // }),
+    machine.events.didReceiveEvent.subscribe((e) => log(`Event ${e.type}`)),
+    machine.events.willTransition.subscribe(({ from, to }) =>
+      log("Transitioning", from, "→", to)
+    ),
+    machine.events.didIgnoreEvent.subscribe((e) =>
+      log("Ignored event", e.type, e, "(current state won't handle it)")
+    ),
+    // machine.events.willExitState.subscribe((s) => log("Exiting state", s)),
+    // machine.events.didEnterState.subscribe((s) => log("Entering state", s)),
   ];
   return () => {
     for (const unsub of unsubs) {
@@ -240,23 +344,25 @@ function enableTracing(machine: FSM<Context, Event, State>) {
 }
 
 function defineConnectivityEvents(machine: FSM<Context, Event, State>) {
-  // Emitted whenever a new WebSocket connection attempt suceeds
-  const statusDidChange = makeEventSource<PublicConnectionStatus>();
+  // Emitted whenever a new WebSocket connection attempt succeeds
+  const statusDidChange = makeEventSource<Status>();
   const didConnect = makeEventSource<void>();
   const didDisconnect = makeEventSource<void>();
 
-  let oldPublicStatus: PublicConnectionStatus | null = null;
+  let lastStatus: Status | null = null;
 
-  const unsubscribe = machine.events.didEnterState.subscribe((newState) => {
-    const newPublicStatus = toPublicConnectionStatus(newState);
-    statusDidChange.notify(newPublicStatus);
+  const unsubscribe = machine.events.didEnterState.subscribe(() => {
+    const currStatus = toNewConnectionStatus(machine);
+    if (currStatus !== lastStatus) {
+      statusDidChange.notify(currStatus);
+    }
 
-    if (oldPublicStatus === "open" && newPublicStatus !== "open") {
+    if (lastStatus === "connected" && currStatus !== "connected") {
       didDisconnect.notify();
-    } else if (oldPublicStatus !== "open" && newPublicStatus === "open") {
+    } else if (lastStatus !== "connected" && currStatus === "connected") {
       didConnect.notify();
     }
-    oldPublicStatus = newPublicStatus;
+    lastStatus = currStatus;
   });
 
   return {
@@ -271,7 +377,8 @@ const assign = (patch: Partial<Context>) => (ctx: Patchable<Context>) =>
   ctx.patch(patch);
 
 function createConnectionStateMachine<T extends BaseAuthResult>(
-  delegates: Delegates<T>
+  delegates: Delegates<T>,
+  enableDebugLogging: boolean
 ) {
   // Create observable event sources, which this machine will call into when
   // specific events happen
@@ -283,6 +390,7 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
   const onLiveblocksError = makeEventSource<LiveblocksError>();
 
   const initialContext: Context & { token: T | null } = {
+    successCount: 0,
     token: null,
     socket: null,
     backoffDelay: RESET_DELAY,
@@ -309,7 +417,7 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
   machine.addTransitions("*", {
     RECONNECT: {
       target: "@auth.backoff",
-      effect: increaseBackoffDelay,
+      effect: [increaseBackoffDelay, resetSuccessCount],
     },
 
     DISCONNECT: "@idle.initial",
@@ -318,12 +426,15 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
   //
   // Configure the @idle.* states
   //
-  machine.addTransitions("@idle.*", {
-    CONNECT: (_, ctx) =>
-      // If we still have a known token, try to reconnect to the socket directly,
-      // otherwise, try to obtain a new token
-      ctx.token !== null ? "@connecting.busy" : "@auth.busy",
-  });
+  machine
+    .onEnter("@idle.*", resetSuccessCount)
+
+    .addTransitions("@idle.*", {
+      CONNECT: (_, ctx) =>
+        // If we still have a known token, try to reconnect to the socket directly,
+        // otherwise, try to obtain a new token
+        ctx.token !== null ? "@connecting.busy" : "@auth.busy",
+    });
 
   //
   // Configure the @auth.* states
@@ -350,31 +461,35 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
       (okEvent) => ({
         target: "@connecting.busy",
         effect: assign({
-          token: okEvent.data as BaseAuthResult,
+          token: okEvent.data,
           backoffDelay: RESET_DELAY,
         }),
       }),
 
       // Auth failed
-      (failedEvent) =>
-        failedEvent.reason instanceof UnauthorizedError
-          ? {
-              target: "@idle.failed",
-              effect: log(
-                LogLevel.ERROR,
-                `Unauthorized: ${failedEvent.reason.message}`
-              ),
-            }
-          : {
-              target: "@auth.backoff",
-              effect: [
-                increaseBackoffDelay,
-                log(
-                  LogLevel.INFO,
-                  `Authentication failed: ${String(failedEvent.reason)}`
-                ),
-              ],
-            }
+      (failedEvent) => {
+        if (failedEvent.reason instanceof StopRetrying) {
+          return {
+            target: "@idle.failed",
+            effect: log(LogLevel.ERROR, failedEvent.reason.message),
+          };
+        }
+
+        return {
+          target: "@auth.backoff",
+          effect: [
+            increaseBackoffDelay,
+            log(
+              LogLevel.ERROR,
+              `Authentication failed: ${
+                failedEvent.reason instanceof Error
+                  ? failedEvent.reason.message
+                  : String(failedEvent.reason)
+              }`
+            ),
+          ],
+        };
+      }
     );
 
   //
@@ -432,6 +547,7 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
 
         const connect$ = new Promise<[IWebSocketInstance, () => void]>(
           (resolve, rej) => {
+            // istanbul ignore next
             if (ctx.token === null) {
               throw new Error("No auth token"); // This should never happen
             }
@@ -529,38 +645,44 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
 
       // If the WebSocket connection cannot be established
       (failure) => {
-        const err = failure.reason as IWebSocketEvent | Error;
+        const err = failure.reason as IWebSocketEvent | StopRetrying | Error;
 
-        // TODO In the future, when the WebSocket connection will potentially
-        // be closed with an explicit _UNAUTHORIZED_ message, we should stop
-        // retrying.
+        // Stop retrying if this promise explicitly tells us so. This should,
+        // in the case of a WebSocket connection attempt only be the case if
+        // there is a configuration error.
+        if (err instanceof StopRetrying) {
+          return {
+            target: "@idle.failed",
+            effect: log(LogLevel.ERROR, err.message),
+          };
+        }
+
+        // Alternatively, it can happen if the server refuses the connection
+        // after accepting-then-closing the connection.
+        if (isCloseEvent(err) && err.code === 4999 /* Close Without Retry */) {
+          return {
+            target: "@idle.failed",
+            effect: log(LogLevel.ERROR, err.reason),
+          };
+        }
+
+        // We may skip re-authenticating only if this is a close event with
+        // a known custom close code, *except* when it's a 4001 (explicitly Not
+        // Allowed).
+        if (isCustomCloseEvent(err) && err.code !== 4001 /* Not Allowed */) {
+          return {
+            target: "@connecting.backoff",
+            effect: [
+              increaseBackoffDelayAggressively,
+              logPrematureErrorOrCloseEvent(err),
+            ],
+          };
+        }
+
+        // In all other cases, always re-authenticate!
         return {
           target: "@auth.backoff",
-          effect: [
-            // Increase the backoff delay conditionally
-            // TODO: This is ugly. DRY this up with the other code 40xx checks elsewhere.
-            !(err instanceof Error) &&
-            err.type === "close" &&
-            (err as IWebSocketCloseEvent).code >= 4000 &&
-            (err as IWebSocketCloseEvent).code <= 4100
-              ? increaseBackoffDelayAggressively
-              : increaseBackoffDelay,
-
-            // Produce a useful log message
-            (ctx) => {
-              if (err instanceof Error) {
-                console.warn(String(err));
-              } else {
-                console.warn(
-                  err.type === "close"
-                    ? `Connection to Liveblocks websocket server closed prematurely (code: ${
-                        (err as IWebSocketCloseEvent).code
-                      }). Retrying in ${ctx.backoffDelay}ms.`
-                    : "Connection to Liveblocks websocket server could not be established."
-                );
-              }
-            },
-          ],
+          effect: [increaseBackoffDelay, logPrematureErrorOrCloseEvent(err)],
         };
       }
     );
@@ -576,26 +698,25 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
   // it as an implicit connection loss, and transition to reconnect (throw away
   // this socket, and open a new one).
   //
-  machine
-    .addTimedTransition("@ok.connected", HEARTBEAT_INTERVAL, {
-      target: "@ok.awaiting-pong",
-      effect: sendHeartbeat,
-    })
-    .addTransitions("@ok.connected", {
-      WINDOW_GOT_FOCUS: { target: "@ok.awaiting-pong", effect: sendHeartbeat },
-    });
 
-  const noPongAction: Target<Context, Event | BuiltinEvent, State> = {
-    target: "@connecting.busy",
-    // Log implicit connection loss and drop the current open socket
-    effect: log(
-      LogLevel.WARN,
-      "Received no pong from server, assume implicit connection loss."
-    ),
+  const sendHeartbeat: Target<Context, Event | BuiltinEvent, State> = {
+    target: "@ok.awaiting-pong",
+    effect: (ctx: Context) => {
+      ctx.socket?.send("ping");
+    },
   };
 
   machine
-    .onEnter("@ok.*", () => {
+    .addTimedTransition("@ok.connected", HEARTBEAT_INTERVAL, sendHeartbeat)
+    .addTransitions("@ok.connected", {
+      NAVIGATOR_OFFLINE: sendHeartbeat, // Don't take the browser's word for it when it says it's offline. Do a ping/pong to make sure.
+      WINDOW_GOT_FOCUS: sendHeartbeat,
+    });
+
+  machine
+    .onEnter("@ok.*", (ctx) => {
+      ctx.patch({ successCount: ctx.successCount + 1 });
+
       const timerID = setTimeout(
         // On the next tick, start delivering all messages that have already
         // been received, and continue synchronous delivery of all future
@@ -614,18 +735,23 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
       };
     })
 
-    .addTimedTransition("@ok.awaiting-pong", PONG_TIMEOUT, noPongAction)
-    .addTransitions("@ok.awaiting-pong", { PONG_TIMEOUT: noPongAction }) // Only needed for E2E testing application
-
     .addTransitions("@ok.awaiting-pong", { PONG: "@ok.connected" })
+    .addTimedTransition("@ok.awaiting-pong", PONG_TIMEOUT, {
+      target: "@connecting.busy",
+      // Log implicit connection loss and drop the current open socket
+      effect: log(
+        LogLevel.WARN,
+        "Received no pong from server, assume implicit connection loss."
+      ),
+    })
 
     .addTransitions("@ok.*", {
       // When a socket receives an error, this can cause the closing of the
       // socket, or not. So always check to see if the socket is still OPEN or
       // not. When still OPEN, don't transition.
       EXPLICIT_SOCKET_ERROR: (_, context) => {
-        if (context.socket?.readyState === WebSocket.OPEN) {
-          // TODO: Not here, but do we need to forward this error?
+        if (context.socket?.readyState === 1 /* WebSocket.OPEN */) {
+          // TODO Do we need to forward this error to the client?
           return null; /* Do not leave OK state, socket is still usable */
         }
 
@@ -640,29 +766,29 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
         if (e.event.code === 4999) {
           return {
             target: "@idle.failed",
-            effect: log(
-              LogLevel.WARN,
-              "Connection to WebSocket closed permanently. Won't retry."
-            ),
+            effect: logPermanentClose,
           }; // Should not retry, give up
+        }
+
+        // Server instructs us to reauthenticate
+        if (e.event.code === 4001 /* Not Allowed */) {
+          return {
+            target: "@auth.backoff",
+            effect: [increaseBackoffDelay, logCloseEvent(e.event)],
+          };
         }
 
         // If this is a custom Liveblocks server close reason, back off more
         // aggressively, and emit a Liveblocks error event...
-        if (e.event.code >= 4000 && e.event.code <= 4100) {
+        if (isCustomCloseEvent(e.event)) {
           return {
             target: "@connecting.backoff",
             effect: [
               increaseBackoffDelayAggressively,
-              (ctx) =>
-                console.warn(
-                  `Connection to Liveblocks websocket server closed (code: ${e.event.code}). Retrying in ${ctx.backoffDelay}ms.`
-                ),
-              (_, { event }) => {
-                if (event.code >= 4000 && event.code <= 4100) {
-                  const err = new LiveblocksError(event.reason, event.code);
-                  onLiveblocksError.notify(err);
-                }
+              logCloseEvent(e.event),
+              () => {
+                const err = new LiveblocksError(e.event.reason, e.event.code);
+                onLiveblocksError.notify(err);
               },
             ],
           };
@@ -672,13 +798,7 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
         // a new socket
         return {
           target: "@connecting.backoff",
-          effect: [
-            increaseBackoffDelay,
-            (ctx) =>
-              console.warn(
-                `Connection to Liveblocks websocket server closed (code: ${e.event.code}). Retrying in ${ctx.backoffDelay}ms.`
-              ),
-          ],
+          effect: [increaseBackoffDelay, logCloseEvent(e.event)],
         };
       },
     });
@@ -692,7 +812,11 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
     const root = win ?? doc;
 
     machine.onEnter("*", (ctx) => {
-      function onBackOnline() {
+      function onNetworkOffline() {
+        machine.send({ type: "NAVIGATOR_OFFLINE" });
+      }
+
+      function onNetworkBackOnline() {
         machine.send({ type: "NAVIGATOR_ONLINE" });
       }
 
@@ -702,11 +826,13 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
         }
       }
 
-      win?.addEventListener("online", onBackOnline);
+      win?.addEventListener("online", onNetworkBackOnline);
+      win?.addEventListener("offline", onNetworkOffline);
       root?.addEventListener("visibilitychange", onVisibilityChange);
       return () => {
         root?.removeEventListener("visibilitychange", onVisibilityChange);
-        win?.removeEventListener("online", onBackOnline);
+        win?.removeEventListener("online", onNetworkBackOnline);
+        win?.removeEventListener("offline", onNetworkOffline);
 
         // Also tear down the old socket when stopping the machine, if there is one
         teardownSocket(ctx.socket);
@@ -721,7 +847,9 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
   cleanups.push(unsubscribe);
 
   // Install debug logging
-  cleanups.push(enableTracing(machine)); // TODO Remove logging in production
+  if (enableDebugLogging) {
+    cleanups.push(enableTracing(machine));
+  }
 
   // Start the machine
   machine.start();
@@ -759,9 +887,17 @@ export class ManagedSocket<T extends BaseAuthResult> {
      * Emitted when the WebSocket connection goes in or out of "connected"
      * state.
      */
-    readonly statusDidChange: Observable<PublicConnectionStatus>;
+    readonly statusDidChange: Observable<Status>;
+    /**
+     * Emitted when the WebSocket connection is first opened.
+     */
     readonly didConnect: Observable<void>;
-    readonly didDisconnect: Observable<void>; // Deliberate close, temporary connection loss, permanent connection loss, etc.
+    /**
+     * Emitted when the current WebSocket connection is lost and the socket
+     * becomes useless. A new WebSocket connection must be made after this to
+     * restore connectivity.
+     */
+    readonly didDisconnect: Observable<void>; // Deliberate close, a connection loss, etc.
 
     /**
      * Emitted for every incoming message from the currently active WebSocket
@@ -776,31 +912,33 @@ export class ManagedSocket<T extends BaseAuthResult> {
     readonly onLiveblocksError: Observable<LiveblocksError>;
   };
 
-  constructor(delegates: Delegates<T>) {
-    const { machine, events, cleanups } =
-      createConnectionStateMachine(delegates);
+  constructor(delegates: Delegates<T>, enableDebugLogging: boolean = false) {
+    const { machine, events, cleanups } = createConnectionStateMachine(
+      delegates,
+      enableDebugLogging
+    );
     this.machine = machine;
     this.events = events;
     this.cleanups = cleanups;
   }
 
-  get status(): PublicConnectionStatus {
+  getLegacyStatus(): LegacyConnectionStatus {
+    return newToLegacyStatus(this.getStatus());
+  }
+
+  getStatus(): Status {
     try {
-      return toPublicConnectionStatus(this.machine.currentState);
+      return toNewConnectionStatus(this.machine);
     } catch {
-      return "closed";
+      return "initial";
     }
   }
 
   /**
    * Returns the current auth token.
    */
-  get token(): T {
-    const tok = this.machine.context.token;
-    if (tok === null) {
-      throw new Error("Unexpected null token here");
-    }
-    return tok as T;
+  get token(): T | null {
+    return this.machine.context.token as T | null;
   }
 
   /**
@@ -849,10 +987,18 @@ export class ManagedSocket<T extends BaseAuthResult> {
     const socket = this.machine.context?.socket;
     if (socket === null) {
       console.warn("Cannot send: not connected yet", data);
-    } else if (socket.readyState !== WebSocket.OPEN) {
+    } else if (socket.readyState !== 1 /* WebSocket.OPEN */) {
       console.warn("Cannot send: WebSocket no longer open", data);
     } else {
       socket.send(data);
     }
+  }
+
+  /**
+   * NOTE: Used by the E2E app only, to simulate explicit events.
+   * Not ideal to keep exposed :(
+   */
+  public _privateSendMachineEvent(event: Event): void {
+    this.machine.send(event);
   }
 }
