@@ -14,6 +14,7 @@
     "build": "tsup --format cjs,esm --dts --clean",
     "format": "eslint --fix src/; prettier --write src/",
     "lint": "eslint src/",
+    "lint:package": "npx -y publint@latest --strict && npx -y @arethetypeswrong/cli@latest /tmp/$( npm pack -q --pack-destination /tmp )",
     "test": "jest --silent --verbose --color=always",
     "test:types": "tsd",
     "test:watch": "jest --silent --verbose --color=always --watch"
