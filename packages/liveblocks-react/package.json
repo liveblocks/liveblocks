@@ -15,6 +15,7 @@
     "start": "tsup --watch",
     "format": "(eslint --fix src/ || true) && prettier --write src/",
     "lint": "(eslint src/ || true) && npm run check:exports",
+    "publint": "npx -y publint@latest --strict",
     "check:exports": "tsc scripts/check-factory-exports.ts && node scripts/check-factory-exports.js",
     "test": "jest --silent --verbose --color=always",
     "test:watch": "jest --silent --verbose --color=always --watch"

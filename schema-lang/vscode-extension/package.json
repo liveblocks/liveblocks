@@ -17,6 +17,7 @@
     "build": "npm run esbuild -- --sourcemap",
     "dev": "npm run esbuild -- --sourcemap --watch",
     "lint": "eslint src/",
+    "publint": "npx -y publint@latest --strict",
     "format": "(eslint --fix src/ || true) && prettier --write src/"
   },
   "contributes": {

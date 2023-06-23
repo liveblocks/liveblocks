@@ -17,6 +17,7 @@
   "scripts": {
     "build": "tsup",
     "lint": "eslint src/",
+    "publint": "npx -y publint@latest --strict",
     "format": "(eslint --fix src/ || true) && prettier --write src/",
     "test": "jest --colors --verbose --no-coverage"
   },
