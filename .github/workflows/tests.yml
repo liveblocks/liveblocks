@@ -57,6 +57,9 @@ jobs:
       - name: Run lint checks
         run: npm run lint -- --filter ${{ matrix.pkg }}
 
+      - name: Run public NPM packaging lint checks
+        run: npm run publint -- --filter ${{ matrix.pkg }}
+
   e2e-tests:
     runs-on: ubuntu-latest
 

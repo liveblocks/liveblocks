@@ -35,6 +35,10 @@
       // It also has no filesystem outputs.
       "outputs": []
     },
+    "publint": {
+      "dependsOn": ["build"],
+      "outputs": []
+    },
     "format": {
       "cache": false,
       "outputs": []

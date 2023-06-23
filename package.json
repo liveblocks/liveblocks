@@ -13,7 +13,8 @@
     "test:types": "turbo run test:types",
     "test:deps": "turbo run test:deps",
     "lint": "turbo run lint",
-    "format": "turbo run format"
+    "format": "turbo run format",
+    "publint": "turbo run publint"
   },
   "devDependencies": {
     "dependency-cruiser": "^12.11.1",
