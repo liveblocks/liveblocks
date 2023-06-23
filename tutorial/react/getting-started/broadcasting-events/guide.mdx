@@ -1,24 +1,28 @@
 ---
 openFile: "/Room.tsx"
-showFiles: [
-  "/App.tsx",
-  "/Room.tsx",
-  "/liveblocks.config.ts",
-]
+showFiles: ["/App.tsx", "/Room.tsx", "/liveblocks.config.ts"]
 ---
 
-Another key feature of Liveblocks is the ability to [broadcast custom events](/broadcast) to other users. Events are ephemeral, and are sent to all users currently connected to the room, which makes them useful for:
+Another key feature of Liveblocks is the ability to
+[broadcast custom events](/broadcast) to other users. Events are ephemeral, and
+are sent to all users currently connected to the room, which makes them useful
+for:
 
-- Creating state controls, for example “next/previous slide” buttons in presentations
+- Creating state controls, for example “next/previous slide” buttons in
+  presentations
 - Letting other users know when to revalidate data after a change
 - Sending short-lived chat messages to other users
 
-On this page, we’ll be using events to send [toast notifications](https://en.wikipedia.org/wiki/Pop-up_notification) to other users.
+On this page, we’ll be using events to send
+[toast notifications](https://en.wikipedia.org/wiki/Pop-up_notification) to
+other users.
 
 ### Setting up types
 
-The first step in broadcasting events is setting up your types. Navigate to [liveblocks.config.ts][] and create a `RoomEvent` types for our toasts.
-`RoomEvent` represents the object that will be broadcast to other users currently connected to the room. We’ll give it a `type` along with a `message`
+The first step in broadcasting events is setting up your types. Navigate to
+[liveblocks.config.ts][] and create a `RoomEvent` types for our toasts.
+`RoomEvent` represents the object that will be broadcast to other users
+currently connected to the room. We’ll give it a `type` along with a `message`
 that can appear in the toast notification.
 
 ```tsx
@@ -37,14 +41,16 @@ If your app uses multiple event types, you can make `RoomEvent` a union type.
 
 ### Broadcasting the events
 
-Events can be broadcast to other users with the [`useBroadcastEvent`][] hook. Switch to [Room.tsx][] and add the hook, imported from our config file.
+Events can be broadcast to other users with the [`useBroadcastEvent`][] hook.
+Switch to [Room.tsx][] and add the hook, imported from our config file.
 
 ```tsx
 // Broadcast event hook
 const broadcast = useBroadcastEvent();
 ```
 
-In the `onClick` event, pass an object to `broadcast` that matches the `RoomEvent` type specified above—this is how we send an event to other users.
+In the `onClick` event, pass an object to `broadcast` that matches the
+`RoomEvent` type specified above—this is how we send an event to other users.
 
 ```tsx highlight="5"
 return (
@@ -61,8 +67,10 @@ return (
 
 ### Listening for events
 
-We’re now _sending_ an event, but we’re not _listening_ for any. Import [`useEventListener`][] and add it to the component. In the callback, we’re checking if
-the received event is a toast notification, and if it is, we’re calling a function that sends a toast notification with the message.
+We’re now _sending_ an event, but we’re not _listening_ for any. Import
+[`useEventListener`][] and add it to the component. In the callback, we’re
+checking if the received event is a toast notification, and if it is, we’re
+calling a function that sends a toast notification with the message.
 
 ```tsx
 // Listen for incoming events
@@ -73,12 +81,12 @@ useEventListener(({ event }) => {
 });
 ```
 
-Try pressing the button to see other users receive toast notifications! You can also change the `message` and see an updated notification appear.
+Try pressing the button to see other users receive toast notifications! You can
+also change the `message` and see an updated notification appear.
 
 [`createRoomContext`]: /docs/api-reference/liveblocks-react#createRoomContext
 [`useBroadcastEvent`]: /docs/api-reference/liveblocks-react#useBroadcastEvent
 [`useEventListener`]: /docs/api-reference/liveblocks-react#useEventListener
-
 [liveblocks.config.ts]: #/liveblocks.config.ts
 [App.tsx]: #/App.tsx
 [Room.tsx]: #/Room.tsx

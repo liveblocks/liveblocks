@@ -18,7 +18,7 @@ export function Room() {
     <button
       onClick={() =>
         // Broadcast toast event
-        broadcast({ type: "TOAST", message: "Event has been broadcast" })
+        broadcast({ type: "TOAST", message: "Event received!" })
       }
     >
       Broadcast event
