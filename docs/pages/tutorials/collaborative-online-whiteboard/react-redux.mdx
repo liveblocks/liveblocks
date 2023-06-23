@@ -71,7 +71,7 @@ configuration.
 
 ```js file="src/store.js"
 import { createClient } from "@liveblocks/client";
-import { enhancer } from "@liveblocks/redux";
+import { liveblocksEnhancer } from "@liveblocks/redux";
 import { configureStore, createSlice } from "@reduxjs/toolkit";
 
 export const client = createClient({
@@ -94,7 +94,7 @@ export function makeStore() {
   return configureStore({
     reducer: slice.reducer,
     enhancers: [
-      enhancer({
+      liveblocksEnhancer({
         client,
       }),
     ],
@@ -178,7 +178,7 @@ synced with Liveblocks Storage.
 
 ```js file="src/store.js" highlight="10,27"
 import { createClient } from "@liveblocks/client";
-import { enhancer } from "@liveblocks/redux";
+import { liveblocksEnhancer } from "@liveblocks/redux";
 import { configureStore, createSlice } from "@reduxjs/toolkit";
 
 export const client = createClient({
@@ -201,7 +201,7 @@ export function makeStore() {
   return configureStore({
     reducer: slice.reducer,
     enhancers: [
-      enhancer({
+      liveblocksEnhancer({
         client,
         storageMapping: { shapes: true },
       }),
@@ -231,11 +231,7 @@ export default function App() {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    dispatch(
-      actions.enterRoom(roomId, {
-        shapes: {},
-      })
-    );
+    dispatch(actions.enterRoom(roomId));
 
     return () => {
       dispatch(actions.leaveRoom(roomId));
@@ -357,7 +353,7 @@ Add a new action to your store that randomly insert a rectangle on the board.
 
 ```js file="src/store.js" highlight="9-17,27-35,39"
 import { createClient } from "@liveblocks/client";
-import { enhancer } from "@liveblocks/redux";
+import { liveblocksEnhancer } from "@liveblocks/redux";
 import { configureStore, createSlice } from "@reduxjs/toolkit";
 
 export const client = createClient({
@@ -400,7 +396,7 @@ export function makeStore() {
   return configureStore({
     reducer: slice.reducer,
     enhancers: [
-      enhancer({
+      liveblocksEnhancer({
         client,
         storageMapping: { shapes: true },
       }),
@@ -507,7 +503,7 @@ export function makeStore() {
   return configureStore({
     reducer: slice.reducer,
     enhancers: [
-      enhancer({
+      liveblocksEnhancer({
         client,
         storageMapping: { shapes: true },
         presenceMapping: { selectedShape: true },
@@ -652,7 +648,7 @@ export function makeStore() {
   return configureStore({
     reducer: slice.reducer,
     enhancers: [
-      enhancer({
+      liveblocksEnhancer({
         client,
         presenceMapping: { selectedShape: true },
         storageMapping: { shapes: true },
@@ -768,7 +764,7 @@ export function makeStore() {
   return configureStore({
     reducer: slice.reducer,
     enhancers: [
-      enhancer({
+      liveblocksEnhancer({
         client,
         presenceMapping: { selectedShape: true },
         storageMapping: { shapes: true },
