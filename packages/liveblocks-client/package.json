@@ -14,7 +14,7 @@
     "build": "tsup",
     "format": "(eslint --fix src/ || true) && prettier --write src/",
     "lint": "eslint src/",
-    "publint": "npx -y publint@latest --strict",
+    "lint:package": "npx -y publint@latest --strict",
     "test": "jest --silent --verbose --color=always --passWithNoTests",
     "test:watch": "jest --silent --verbose --color=always --passWithNoTests --watch"
   },

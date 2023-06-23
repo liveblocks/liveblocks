@@ -35,7 +35,7 @@
       // It also has no filesystem outputs.
       "outputs": []
     },
-    "publint": {
+    "lint:package": {
       "dependsOn": ["build"],
       "outputs": []
     },
