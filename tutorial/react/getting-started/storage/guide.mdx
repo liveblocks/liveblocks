@@ -33,7 +33,7 @@ To add this to storage, first we must define our types. Open
 [liveblocks.config.ts][] and use a [`LiveObject`][] with the structure for
 `person` as a generic.
 
-```ts
+```ts modifyTutorialFile="/liveblocks.config.ts"
 // Storage types
 type Storage = {
   person: LiveObject<{
@@ -47,7 +47,7 @@ Now we’ve defined the type, we can switch to [App.tsx][] and add an
 `intialStorage` value, that is used when the room’s storage is created. We can
 match the `Storage` type by creating a new [`LiveObject`][].
 
-```tsx highlight="4-6"
+```tsx highlight="4-6" modifyTutorialFile="/App.tsx"
 <RoomProvider
   id={roomId}
   initialPresence={{}}
@@ -76,7 +76,7 @@ Each real-time data structure is converted to an _immutable copy_ of its
 JavaScript counterpart, so a `LiveObject` becomes a regular JavaScript object.
 We can implement this ourselves by adding the following code to [Room.tsx][]:
 
-```tsx
+```tsx modifyTutorialFile="/Room.tsx"
 import { useStorage } from "./liveblocks.config";
 
 export function Room() {

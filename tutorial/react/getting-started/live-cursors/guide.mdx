@@ -8,9 +8,10 @@ location—let’s use it to render live cursors.
 
 ### Getting others’ presence
 
-Switch to [Room.tsx][] and the imported [`useOthers`][] hook to your component.
+Switch to [Room.tsx][] and add the imported [`useOthers`][] hook to your
+component.
 
-```tsx
+```tsx modifyTutorialFile="/Room.tsx"
 // Get list of other users
 const others = useOthers();
 ```
@@ -38,14 +39,7 @@ To draw them, we can map through `others`, filtering for any cursors that are
 equal to `null` (therefore off-screen), and render each on-screen cursor. Switch
 back to [Room.tsx][] and return the following code.
 
-<Banner title="connectionId">
-
-`connectionId` is a unique number for each online user that can be used as a
-key.
-
-</Banner>
-
-```tsx highlight="8-16"
+```tsx highlight="8-16" modifyTutorialFile="/Room.tsx"
 return (
   <div
     style={{ width: "100vw", height: "100vh" }}
@@ -66,19 +60,25 @@ return (
 );
 ```
 
+<Banner title="connectionId">
+
+`connectionId` is a unique number for each online user that can be used as a
+key.
+
+</Banner>
+
 After adding this, hover over the preview windows to see functioning live
 cursors!
 
 ### Throttle rate
 
-We can actually make these cursors even smoother, by asking Liveblocks to send
-more frequent updates. You can do this in [liveblocks.config.ts][] by adding the
-`throttle` property.
+We can actually make these cursors even smoother, by requesting Liveblocks send
+more frequent updates. We can do this in [liveblocks.config.ts][] by adding the
+`throttle` property to the client.
 
-```tsx highlight="3"
+```tsx highlight="3" modifyTutorialFile="/liveblocks.config.ts"
 const client = createClient({
-  publicApiKey:
-    "pk_dev_PHigBerT_qlDHfGgAVlgreL1PZBL05meCHlRQkli3oZ3tERpzrqhoZV6ioNjrAOu",
+  publicApiKey: "{% LIVEBLOCKS_PUBLIC_KEY %}",
   throttle: 16,
 });
 ```

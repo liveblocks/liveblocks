@@ -22,7 +22,7 @@ To start using presence, let’s define a type for it in [liveblocks.config.ts][
 We’ll use the format above for displaying cursors, with the addition of `null`
 to represent an off-screen cursor.
 
-```ts
+```ts modifyTutorialFile="/liveblocks.config.ts"
 // Presence type
 type Presence = {
   cursor: { x: number; y: number } | null;
@@ -41,7 +41,7 @@ The last step in setting up presence is setting an initial value. Switch to
 [App.tsx][] and pass `cursor: null` to [`RoomProvider`][]—no one starts with
 their cursor on-screen.
 
-```tsx
+```tsx modifyTutorialFile="/App.tsx"
 <RoomProvider id={roomId} initialPresence={{ cursor: null }}>
 ```
 
@@ -50,7 +50,7 @@ their cursor on-screen.
 To display the current user’s presence, we’ll add [`useMyPresence`][] to
 [Room.tsx][], and quickly display its value, similarly to `useState`.
 
-```tsx
+```tsx modifyTutorialFile="/Room.tsx"
 import { useMyPresence } from "./liveblocks.config";
 
 export function Room() {

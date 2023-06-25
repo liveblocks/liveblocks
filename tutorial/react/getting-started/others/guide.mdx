@@ -12,7 +12,7 @@ _other_ users are connected to the room.
 Switch to [Room.tsx][] and import the hook from [liveblocks.config.ts][]—we’ll
 be building our real-time app in here.
 
-```ts highlight="3"
+```ts highlight="3" modifyTutorialFile="/Room.tsx"
 import { useOthers } from "./liveblocks.config";
 ```
 
@@ -20,7 +20,7 @@ The [`useOthers`][] hook returns a list of users that are currently online,
 along with their data. We can access `.length` to return the current online user
 count.
 
-```tsx
+```tsx modifyTutorialFile="/Room.tsx"
 // Add useOthers
 const others = useOthers();
 const userCount = others.length;

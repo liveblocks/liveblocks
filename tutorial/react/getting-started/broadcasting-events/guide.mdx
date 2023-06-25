@@ -19,13 +19,13 @@ other users.
 
 ### Setting up types
 
-The first step in broadcasting events is setting up your types. Navigate to
-[liveblocks.config.ts][] and create a `RoomEvent` types for our toasts.
+The first step in broadcasting events is setting up your types. Let’s navigate
+to [liveblocks.config.ts][] and create a `RoomEvent` type for our toasts.
 `RoomEvent` represents the object that will be broadcast to other users
 currently connected to the room. We’ll give it a `type` along with a `message`
 that can appear in the toast notification.
 
-```tsx
+```tsx modifyTutorialFile="/liveblocks.config.ts"
 // Event types
 type RoomEvent = {
   type: "TOAST";
@@ -44,7 +44,7 @@ If your app uses multiple event types, you can make `RoomEvent` a union type.
 Events can be broadcast to other users with the [`useBroadcastEvent`][] hook.
 Switch to [Room.tsx][] and add the hook, imported from our config file.
 
-```tsx
+```tsx modifyTutorialFile="/Room.tsx"
 // Broadcast event hook
 const broadcast = useBroadcastEvent();
 ```
@@ -52,7 +52,7 @@ const broadcast = useBroadcastEvent();
 In the `onClick` event, pass an object to `broadcast` that matches the
 `RoomEvent` type specified above—this is how we send an event to other users.
 
-```tsx highlight="5"
+```tsx highlight="5" modifyTutorialFile="/Room.tsx"
 return (
   <button
     onClick={() =>
@@ -72,7 +72,7 @@ We’re now _sending_ an event, but we’re not _listening_ for any. Import
 checking if the received event is a toast notification, and if it is, we’re
 calling a function that sends a toast notification with the message.
 
-```tsx
+```tsx modifyTutorialFile="/Room.tsx"
 // Listen for incoming events
 useEventListener(({ event }) => {
   if (event.type === "TOAST") {
