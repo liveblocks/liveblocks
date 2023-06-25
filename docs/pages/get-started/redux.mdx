@@ -26,10 +26,10 @@ from the [`@liveblocks/redux`](/docs/api-reference/liveblocks-redux) package.
       title: "Connect your Redux store to Liveblocks",
       description: (
         <>
-          Create the Liveblocks client and use the <code>enhancer</code> in your
-          Redux store setup. This will add a new state called{" "}
-          <code>liveblocks</code> to your store, enabling you to interact with
-          our Presence and Storage APIs.
+          Create the Liveblocks client and use the{" "}
+          <code>liveblocksEnhancer</code> in your Redux store setup. This will
+          add a new state called <code>liveblocks</code> to your store, enabling
+          you to interact with our Presence and Storage APIs.
         </>
       ),
       code: {
@@ -37,7 +37,7 @@ from the [`@liveblocks/redux`](/docs/api-reference/liveblocks-redux) package.
         file: "store.ts",
         highlight: "5-7,23-25",
         code: `import { createClient } from "@liveblocks/client";
-import { enhancer } from "@liveblocks/redux";
+import { liveblocksEnhancer } from "@liveblocks/redux";
 import { configureStore, createSlice } from "@reduxjs/toolkit";
 \r
 const client = createClient({
@@ -58,7 +58,7 @@ function makeStore() {
   return configureStore({
     reducer: slice.reducer,
     enhancers: [
-      enhancer({
+      liveblocksEnhancer({
         client,
       }),
     ],

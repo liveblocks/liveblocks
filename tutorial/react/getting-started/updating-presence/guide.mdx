@@ -15,7 +15,7 @@ Switch to [Room.tsx][] and add a function for `onPointerMove` that gets your
 cursor location using `clientX/clientY` and updates your current presence with
 the value.
 
-```tsx
+```tsx modifyTutorialFile="/Room.tsx"
 // Update cursor coordinates on pointer move
 function handlePointerMove(e) {
   const cursor = { x: Math.floor(e.clientX), y: Math.floor(e.clientY) };
@@ -35,7 +35,7 @@ just updates the given properties.
 Next, create a function for `onPointerLeave` that sets the `cursor` value to
 `null`.
 
-```tsx
+```tsx modifyTutorialFile="/Room.tsx"
 // Set cursor to null on pointer leave
 function handlePointerLeave(e) {
   updateMyPresence({ cursor: null });
@@ -45,7 +45,7 @@ function handlePointerLeave(e) {
 And finally, make sure that our `div` element spans the screen, add the two
 events.
 
-```tsx highlight="3-5"
+```tsx highlight="3-5" modifyTutorialFile="/Room.tsx"
 return (
   <div
     style={{ width: "100vw", height: "100vh" }}

@@ -17,7 +17,7 @@ The first step is to set up your types and initial state. Open
 [liveblocks.config.ts][] and modify your types so that we have a [`LiveList`][]
 of people, instead of a singular person.
 
-```ts
+```ts modifyTutorialFile="/liveblocks.config.ts"
 // Person type
 type Person = LiveObject<{
   name: string;
@@ -31,9 +31,9 @@ type Storage = {
 ```
 
 Then, open [App.tsx][], and modify the `initialStorage` value to match your
-types—we now want a [`LiveList`][] called `people` containing a person.
+types—we now need a [`LiveList`][] called `people` containing a person.
 
-```tsx
+```tsx modifyTutorialFile="/App.tsx"
 initialStorage={{
   people: new LiveList([
     new LiveObject({ name: "Marie", age: 30 })
@@ -45,11 +45,11 @@ Great, we’re ready to update our app!
 
 ### Updating the mutations
 
-Next, let’s modify the mutations—switch to [App.tsx][] and look at `updateName`.
-We need to update this function to take a list `index`, which we can then use to
-get the current `person` with [`LiveList.get`][].
+Next, let’s modify the mutations—switch to [Room.tsx][] and look at
+`updateName`. We need to update this function to take a list `index`, which we
+can then use to get the current `person` with [`LiveList.get`][].
 
-```tsx highlight="3,4"
+```tsx highlight="3,4" modifyTutorialFile="/Room.tsx"
 // Update name mutation
 const updateName = useMutation(
   ({ storage }, newName: string, index: number) => {
@@ -64,7 +64,7 @@ We can then create a mutation for adding a new person to the list. Within this
 mutation we’re creating a new [`LiveObject`][] with a default value, before
 adding it to the list with [`LiveList.push`][].
 
-```tsx
+```tsx modifyTutorialFile="/Room.tsx"
 // Add person mutation
 const addPerson = useMutation(({ storage }) => {
   const newPerson = new LiveObject({ name: "Grace", age: 45 });
@@ -86,7 +86,7 @@ We’ll call both of these mutations from the UI.
 To render the list, we first need to update the selector function to return
 `people` instead of `person`.
 
-```tsx
+```tsx modifyTutorialFile="/Room.tsx"
 const people = useStorage((root) => root.people);
 ```
 
@@ -94,7 +94,7 @@ Because [`useStorage`][] converts your conflict-free data structures into
 regular JavaScript structures, `people` is an `array`, meaning we can simply map
 through it in React like any other.
 
-```tsx highlight="3-9"
+```tsx highlight="3-9" modifyTutorialFile="/Room.tsx"
 return (
   <div>
     {people.map((person, index) => (
@@ -111,7 +111,7 @@ return (
 Make sure to pass the index to `updateName`! After adding this, we can then
 create a button that calls `addPerson`.
 
-```tsx highlight="10"
+```tsx highlight="10" modifyTutorialFile="/Room.tsx"
 return (
   <div>
     {people.map((person, index) => (

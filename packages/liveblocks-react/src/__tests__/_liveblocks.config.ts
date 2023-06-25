@@ -14,7 +14,10 @@ type Storage = {
   }>;
 };
 
-const client = createClient({ authEndpoint: "/api/auth" });
+const client = createClient({
+  authEndpoint: "/api/auth",
+  lostConnectionTimeout: 200, // Use a very quick 200ms
+});
 
 export const {
   RoomProvider,

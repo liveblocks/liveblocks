@@ -134,6 +134,33 @@ const client = createClient({
 });
 ```
 
+### Lost connection timeout [#createClientLostConnectionTimeout]
+
+If you’re connected to a room and you briefly lose connection, Liveblocks will
+normally reconnect automatically and quickly. However, if this takes longer than
+usual (for example, your network is offline), then the room will emit an event
+informing you about such exceptional circumstances.
+
+How quickly this happens can be configured with the `lostConnectionTimeout`
+setting.
+
+`lostConnectionTimeout` can be set between 1000 (pedantic) and 30000 (very
+relaxed) milliseconds. The default is 5000, or 5 seconds.
+
+```ts
+import { createClient } from "@liveblocks/client";
+
+const client = createClient({
+  /* ... other options ... */
+  lostConnectionTimeout: 5000,
+});
+```
+
+You can listen to the event with [`room.subscribe("lost-connection")`][]. Note
+that this also affects when `others` are reset to an empty array after a
+disconnection. For a demonstration of this behavior, see our [connection status
+example][].
+
 ## Client
 
 Client returned by [`createClient`][].
@@ -265,6 +292,17 @@ Gets the current user. Returns `null` if it is not yet connected to the room.
 const { connectionId, presence, id, info, isReadOnly } = room.getSelf();
 ```
 
+### Room.getStatus
+
+Gets the current WebSocket connection status of the room.
+
+```ts
+const status = room.getStatus();
+```
+
+The possible value are: `initial`, `connecting`, `connected`, `reconnecting`, or
+`disconnected`.
+
 ### Room.subscribe(storageItem)
 
 Subscribe to updates for a particular storage item.
@@ -381,14 +419,91 @@ const unsubscribe = room.subscribe("others", (others, event) => {
 });
 ```
 
+### Room.subscribe("status") [#Room.subscribe.status]
+
+Subscribe to WebSocket connection status updates.
+
+Takes a callback that is called whenever the connection status changes. Possible
+value are: `initial`, `connecting`, `connected`, `reconnecting`, or
+`disconnected`.
+
+Returns an unsubscribe function.
+
+```ts
+const unsubscribe = room.subscribe("status", (status) => {
+  // Do something
+});
+```
+
+This is a low-level API that exposes the WebSocket’s connectivity status. You
+can use this, for example, to update a connection status indicator in your UI.
+It would be normal for a client to briefly lose the connection and restore it,
+using quick `connected` → `reconnecting` → `connected` status jumps.
+
+If you want to let users know that there may be connectivity issues, don’t use
+this API, but instead refer to [`Room.subscribe("lost-connection")`][].
+
+<Banner title="Notice">
+
+Do not use this API to detect when Storage or Presence are initialized or
+loaded. "Connected" does not guarantee that Storage or Presence are ready. To
+detect when Storage is loaded, rely on awaiting the [`Room.getStorage`][]
+promise or using the [`Room.subscribe("storage-status")`][] event.
+
+</Banner>
+
+### Room.subscribe("lost-connection") [#Room.subscribe.lost-connection]
+
+A special-purpose event that will fire in the exceptional case where a
+previously connected Liveblocks client has lost its connection (e.g. due to a
+network outage) and was unable to recover quickly.
+
+This event allows you to build high-quality UIs by warning your users that the
+app is still trying to re-establish the connection, for example through a toast
+notification. You may want to take extra care in the mean time to ensure their
+changes won’t go unsaved, or to help them understand why they’re not seeing
+updates made by others yet.
+
+When this happens, this callback is called with the event `lost`. Then, once the
+connection restores, the callback will be called with the value `restored`. If
+the connection could definitively not be restored, it will be called with
+`failed` (uncommon).
+
+The [`lostConnectionTimeout`][] configuration option will determine how quickly
+this event will fire after a connection loss (default: 5 seconds).
+
+```ts
+import { toast } from "my-preferred-toast-library";
+
+const unsubscribe = room.subscribe("lost-connection", (event) => {
+  switch (event) {
+    case "lost":
+      toast.warn("Still trying to reconnect...");
+      break;
+
+    case "restored":
+      toast.success("Successfully reconnected again!");
+      break;
+
+    case "failed":
+      toast.error("Could not restore the connection");
+      break;
+  }
+});
+```
+
 ### Room.subscribe("connection") [#Room.subscribe.connection]
 
-Subscribe to the WebSocket connection status updates.
+<Banner title="Deprecated since 1.1" type="warning">
+
+Support for this subscription overload will be removed in a future version. We
+recommend switching to [`Room.subscribe("status")`][] instead.
+
+</Banner>
+
+Subscribe to our legacy WebSocket connection status updates.
 
 Takes a callback that is called when the connection status changes.
-
-The value can be : `authenticating`, `connecting`, `open`, `failed`, `closed` or
-`unavailable`.
 
 Returns an unsubscribe function.
 
@@ -419,7 +534,7 @@ Subscribe to the current user’s history changes.
 Returns an unsubscribe function.
 
 ```ts
-room.subscribe("history", ({ canUndo, canRedo }) => {
+const unsubscribe = room.subscribe("history", ({ canUndo, canRedo }) => {
   // Do something
 });
 ```
@@ -431,7 +546,7 @@ Subscribe to storage status changes.
 Returns an unsubscribe function.
 
 ```typescript
-room.subscribe("storage-status", (status) => {
+const unsubscribe = room.subscribe("storage-status", (status) => {
   switch (status) {
     case "not-loaded":
       break;
@@ -607,8 +722,10 @@ same time. It persists even after everyone leaves the room. Liveblocks provides
 
 ### Room.getStorage
 
-Get the room’s storage asynchronously (returns a Promise). The storage’s root is
-a [`LiveObject`][].
+Get the room’s storage asynchronously (returns a Promise). The promise will
+resolve once the storage’s root is loaded and available.
+
+The storage’s root will always be a [`LiveObject`][].
 
 ```ts
 const { root } = await room.getStorage();
@@ -1148,14 +1265,25 @@ list.toImmutable();
 [`livelist`]: /docs/api-reference/liveblocks-client#LiveList
 [`livemap`]: /docs/api-reference/liveblocks-client#LiveMap
 [`liveobject`]: /docs/api-reference/liveblocks-client#LiveObject
+[`lostConnectionTimeout`]:
+  /docs/api-reference/liveblocks-client#createClientLostConnectionTimeout
 [`toimmutable`]: /docs/api-reference/liveblocks-client#LiveObject.toImmutable
 [`node-fetch`]: npmjs.com/package/node-fetch
 [`room.broadcastevent`]:
   /docs/api-reference/liveblocks-client#Room.broadcastEvent
+[`room.getstorage`]: /docs/api-reference/liveblocks-client#Room.getStorage
 [`room.history`]: /docs/api-reference/liveblocks-client#Room.history
 [`room.subscribe("event")`]:
   /docs/api-reference/liveblocks-client#Room.subscribe.event
+[`room.subscribe("status")`]:
+  /docs/api-reference/liveblocks-client#Room.subscribe.status
+[`room.subscribe("lost-connection")`]:
+  /docs/api-reference/liveblocks-client#Room.subscribe.lost-connection
+[`room.subscribe("storage-status")`]:
+  /docs/api-reference/liveblocks-client#Room.subscribe.storage-status
 [`room.updatepresence`]:
   /docs/api-reference/liveblocks-client#Room.updatePresence
 [`websocket`]: https://developer.mozilla.org/en-US/docs/Web/API/WebSocket
 [`ws`]: https://www.npmjs.com/package/ws
+[connection status example]:
+  https://liveblocks.io/examples/connection-status/nextjs

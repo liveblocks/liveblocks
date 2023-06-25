@@ -65,7 +65,6 @@ hooks, which we recommend for easier development.
 ```ts
 export const {
   suspense: {
-    RoomProvider,
     // ...
   },
 };
@@ -73,6 +72,15 @@ export const {
 
 `RoomProvider` is the component that acts as the root of your real-time app—try
 uncommenting the export in the code panel to see the app connect to Liveblocks!
+
+```ts modifyTutorialFile="/liveblocks.config.ts" highlight="3"
+export const {
+  suspense: {
+    RoomProvider,
+    // ...
+  },
+};
+```
 
 [`@liveblocks/client`]: /docs/api-reference/liveblocks-client
 [`createClient`]: /docs/api-reference/liveblocks-client#createClient

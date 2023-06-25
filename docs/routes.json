@@ -32,8 +32,12 @@
             "path": "/get-started/svelte"
           },
           {
-            "title": "Vue",
-            "path": "/get-started/vue"
+            "title": "Vue.js",
+            "path": "/get-started/vuejs"
+          },
+          {
+            "title": "Solid.js",
+            "path": "/get-started/solidjs"
           },
           {
             "title": "JavaScript",

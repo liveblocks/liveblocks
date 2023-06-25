@@ -19,7 +19,7 @@ use the Liveblocks React hooks. [`RoomProvider`][] has two required properties:
 Switch to [App.tsx][] and return a [`RoomProvider`][] component with the
 `roomId` string, and an empty object as the `initialPresence`.
 
-```tsx
+```tsx modifyTutorialFile="/App.tsx"
 return (
   <RoomProvider id={roomId} initialPresence={{}}>
     <Room />
@@ -36,7 +36,7 @@ Because we’re exporting the suspense version of our hooks, we can easily add a
 loading screen using [`ClientSideSuspense`][] from `@liveblocks/react`. To do
 this, pass `<Room>`, and include a loading `fallback`:
 
-```tsx highlight="3-5"
+```tsx highlight="3-5" modifyTutorialFile="/App.tsx"
 return (
   <RoomProvider id={roomId} initialPresence={{}}>
     <ClientSideSuspense fallback={<div>Loading…</div>}>

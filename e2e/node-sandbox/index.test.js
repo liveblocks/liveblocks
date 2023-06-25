@@ -9,14 +9,18 @@ describe("node e2e", () => {
   test("presence should work in node environment", async () => {
     const clientA = createClient({
       publicApiKey: process.env.PUBLIC_LIVEBLOCKS_PUBLIC_KEY,
-      fetchPolyfill: fetch,
-      WebSocketPolyfill: WebSocket,
+      polyfills: {
+        fetch,
+        WebSocket,
+      },
     });
 
     const clientB = createClient({
       publicApiKey: process.env.PUBLIC_LIVEBLOCKS_PUBLIC_KEY,
-      fetchPolyfill: fetch,
-      WebSocketPolyfill: WebSocket,
+      polyfills: {
+        fetch,
+        WebSocket,
+      },
     });
 
     let roomAOthers = [];

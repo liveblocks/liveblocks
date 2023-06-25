@@ -1,48 +1,45 @@
 ---
 openFile: "/Room.tsx"
-showFiles: [
-  "/App.tsx",
-  "/Cursor.tsx",
-  "/Room.tsx",
-  "/liveblocks.config.ts",
-]
+showFiles: ["/App.tsx", "/Cursor.tsx", "/Room.tsx", "/liveblocks.config.ts"]
 ---
 
-On the previous page we learned to update presence with our cursor location—let’s use it to render live cursors.
+On the previous page we learned to update presence with our cursor
+location—let’s use it to render live cursors.
 
 ### Getting others’ presence
 
-Switch to [Room.tsx][], import the hook from [liveblocks.config.ts][], and add it to your component.
+Switch to [Room.tsx][] and add the imported [`useOthers`][] hook to your
+component.
 
-```tsx
+```tsx modifyTutorialFile="/Room.tsx"
 // Get list of other users
 const others = useOthers();
 ```
 
-[`useOthers`][] returns a list of information about the _other_ users currently online, such as presence. For example, you can find the first other user’s cursor position here:
+[`useOthers`][] returns a list of information about the _other_ users currently
+online, such as presence. For example, you can find the first other user’s
+cursor position here:
 
 ```tsx
 // { cursor: null }
-others[0].presence
+others[0].presence;
 ```
 
 ### Rendering the cursors
 
-To render the cursors, we first need a cursor component. If you look inside [Cursor.tsx][] you’ll find a simple component that does this using `x` and `y` coordinates.
+To render the cursors, we first need a cursor component. If you look inside
+[Cursor.tsx][] you’ll find a simple component that does this using `x` and `y`
+coordinates.
 
 ```tsx
 <Cursor x={141} y={252} />
 ```
 
-To draw them, we can map through `others`, filtering for any cursors that are equal to `null` (therefore off-screen), and render each on-screen cursor. Switch back to [Room.tsx][] and return the following code.
+To draw them, we can map through `others`, filtering for any cursors that are
+equal to `null` (therefore off-screen), and render each on-screen cursor. Switch
+back to [Room.tsx][] and return the following code.
 
-<Banner title="connectionId">
-
-`connectionId` is a unique number for each online user that can be used as a key.
-
-</Banner>
-
-```tsx highlight="8-16"
+```tsx highlight="8-16" modifyTutorialFile="/Room.tsx"
 return (
   <div
     style={{ width: "100vw", height: "100vh" }}
@@ -63,38 +60,48 @@ return (
 );
 ```
 
-After adding this, hover over the preview windows to see functioning live cursors!
+<Banner title="connectionId">
+
+`connectionId` is a unique number for each online user that can be used as a
+key.
+
+</Banner>
+
+After adding this, hover over the preview windows to see functioning live
+cursors!
 
 ### Throttle rate
 
-We can actually make these cursors even smoother, by asking Liveblocks to send more frequent updates. You can do this in [liveblocks.config.ts][] by adding the `throttle` property.
+We can actually make these cursors even smoother, by requesting Liveblocks send
+more frequent updates. We can do this in [liveblocks.config.ts][] by adding the
+`throttle` property to the client.
 
-```tsx highlight="3"
+```tsx highlight="3" modifyTutorialFile="/liveblocks.config.ts"
 const client = createClient({
-  publicApiKey: "pk_dev_PHigBerT_qlDHfGgAVlgreL1PZBL05meCHlRQkli3oZ3tERpzrqhoZV6ioNjrAOu",
+  publicApiKey: "{% LIVEBLOCKS_PUBLIC_KEY %}",
   throttle: 16,
 });
 ```
 
 <Banner title="Throttle rate">
 
-The default throttle rate is 100ms, and above we’re decreasing it to 16ms. This is equivalent to a 60fps animation.
+The default throttle rate is 100ms, and above we’re decreasing it to 16ms. This
+is equivalent to a 60fps animation.
 
 </Banner>
 
 ### Other uses
 
-Presence isn’t only used for cursors, there are also a number of other different applications such as:
+Presence isn’t only used for cursors, there are also a number of other different
+applications such as:
 
 - [Online avatars](/examples/live-avatar-stack/)
 - [Selection or location indicators](/examples/live-form-selection)
 - [“User currently typing...” messages](/examples/collaborative-todo-list)
 
-
 [`RoomProvider`]: /docs/api-reference/liveblocks-react#RoomProvider
 [`useMyPresence`]: /docs/api-reference/liveblocks-react#useMyPresence
 [`useOthers`]: /docs/api-reference/liveblocks-react#useOthers
-
 [liveblocks.config.ts]: #/liveblocks.config.ts
 [App.tsx]: #/App.tsx
 [Room.tsx]: #/Room.tsx

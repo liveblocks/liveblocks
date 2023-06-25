@@ -55,7 +55,7 @@ remember to place any dependencies in the array.
 We can also provide arguments to [`useMutation`][], for example to allow any
 `name` to be used. Try adding this code snippet to [Room.tsx][].
 
-```ts
+```ts modifyTutorialFile="/Room.tsx"
 // Add mutation
 const updateName = useMutation(({ storage }, newName: string) => {
   const person = storage.get("person");
@@ -74,7 +74,7 @@ updateName("Grace");
 To create an input in a collaborative form, we can combine the value returned
 from [`useStorage`][] to display the value, and [`useMutation`][] to modify it.
 
-```tsx
+```tsx modifyTutorialFile="/Room.tsx"
 return (
   <input
     type="text"
