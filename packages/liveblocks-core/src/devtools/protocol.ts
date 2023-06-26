@@ -91,6 +91,7 @@ export type ClientToPanelMessage =
       storage?: readonly DevTools.LsonTreeNode[];
       me?: DevTools.UserTreeNode;
       others?: readonly DevTools.UserTreeNode[];
+      yupdate?: string;
     };
 
 // ----------------------------------------------------------------------------

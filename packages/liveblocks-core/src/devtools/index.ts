@@ -111,6 +111,11 @@ function startSyncStream(
     // Any time "me" or "others" updates, send the new values accordingly
     room.events.me.subscribe(() => partialSyncMe(room)),
     room.events.others.subscribe(() => partialSyncOthers(room)),
+
+    // Any time a YJS Doc updates, send the update to dev tools as well
+    room.events.docUpdated.subscribe((update: string) =>
+      partialSyncYDoc(room, update)
+    ),
   ]);
 }
 
@@ -133,6 +138,20 @@ function partialSyncStorage(
       msg: "room::sync::partial",
       roomId: room.id,
       storage: root.toTreeNode("root").payload,
+    });
+  }
+}
+
+function partialSyncYDoc(
+  room: Room<JsonObject, LsonObject, BaseUserMeta, Json>,
+  update: string
+) {
+  const root = room.getStorageSnapshot();
+  if (root) {
+    sendToPanel({
+      msg: "room::sync::partial",
+      roomId: room.id,
+      yupdate: update,
     });
   }
 }
