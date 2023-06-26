@@ -75,7 +75,7 @@ configuration.
 
 ```js file="src/store.js"
 import { createClient } from "@liveblocks/client";
-import { enhancer } from "@liveblocks/redux";
+import { liveblocksEnhancer } from "@liveblocks/redux";
 import { configureStore, createSlice } from "@reduxjs/toolkit";
 
 const client = createClient({
@@ -96,7 +96,7 @@ export function makeStore() {
   return configureStore({
     reducer: slice.reducer,
     enhancers: [
-      enhancer({
+      liveblocksEnhancer({
         client,
       }),
     ],
@@ -153,11 +153,7 @@ export default function App() {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    dispatch(
-      actions.enterRoom("redux-demo-room", {
-        todos: [],
-      })
-    );
+    dispatch(actions.enterRoom("redux-demo-room"));
 
     return () => {
       dispatch(actions.leaveRoom("redux-demo-room"));
@@ -216,11 +212,7 @@ export default function App() {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    dispatch(
-      actions.enterRoom("redux-demo-room", {
-        todos: [],
-      })
-    );
+    dispatch(actions.enterRoom("redux-demo-room"));
 
     return () => {
       dispatch(actions.leaveRoom("redux-demo-room"));
@@ -343,7 +335,7 @@ to Liveblocks Presence.
 
 ```js highlight="10-11,18-21,25,33" file="src/store.js"
 import { createClient } from "@liveblocks/client";
-import { enhancer } from "@liveblocks/redux";
+import { liveblocksEnhancer } from "@liveblocks/redux";
 import { configureStore, createSlice } from "@reduxjs/toolkit";
 
 const client = createClient({
@@ -372,7 +364,7 @@ export function makeStore() {
   return configureStore({
     reducer: slice.reducer,
     enhancers: [
-      enhancer({
+      liveblocksEnhancer({
         client,
         presenceMapping: { isTyping: true },
       }),
@@ -415,11 +407,7 @@ export default function App() {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    dispatch(
-      actions.enterRoom("redux-demo-room", {
-        todos: [],
-      })
-    );
+    dispatch(actions.enterRoom("redux-demo-room"));
 
     return () => {
       dispatch(actions.leaveRoom("redux-demo-room"));
@@ -473,7 +461,7 @@ Storage.
 
 ```js highlight="10,23-30,34,42" file="src/store.js"
 import { createClient } from "@liveblocks/client";
-import { enhancer } from "@liveblocks/redux";
+import { liveblocksEnhancer } from "@liveblocks/redux";
 import { configureStore, createSlice } from "@reduxjs/toolkit";
 
 const client = createClient({
@@ -511,7 +499,7 @@ export function makeStore() {
   return configureStore({
     reducer: slice.reducer,
     enhancers: [
-      enhancer({
+      liveblocksEnhancer({
         client,
         storageMapping: { todos: true },
         presenceMapping: { isTyping: true },
@@ -546,11 +534,7 @@ export default function App() {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    dispatch(
-      actions.enterRoom("redux-demo-room", {
-        todos: [],
-      })
-    );
+    dispatch(actions.enterRoom("redux-demo-room"));
 
     return () => {
       dispatch(actions.leaveRoom("redux-demo-room"));
