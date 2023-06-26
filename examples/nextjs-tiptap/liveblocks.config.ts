@@ -3,10 +3,6 @@ import { createRoomContext } from "@liveblocks/react";
 
 const client = createClient({
   publicApiKey: process.env.NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY!,
-  // @ts-expect-error: overrides
-  liveblocksServer: "ws://127.0.0.1:8787/v6",
-  publicAuthorizeEndpoint:
-    "http://127.0.0.1:8787/v2/rooms/{roomId}/public/authorize",
 });
 
 // Presence represents the properties that will exist on every User in the Room

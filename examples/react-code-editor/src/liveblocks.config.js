@@ -1,8 +1,7 @@
 import { createClient } from "@liveblocks/client";
 import { createRoomContext } from "@liveblocks/react";
 
-let PUBLIC_KEY =
-  "pk_prod_-azD9Tpk-NWEPPh4Z0M6kr14_gf5G_LffyqBtkQUIRPbXfMrdTOOM7BWwXtm2pbo";
+let PUBLIC_KEY = "pk_YOUR_PUBLIC_KEY";
 
 if (!/^pk_(live|test)/.test(PUBLIC_KEY)) {
   console.warn(
@@ -15,9 +14,6 @@ overrideApiKey();
 
 const client = createClient({
   publicApiKey: PUBLIC_KEY,
-  liveblocksServer: "ws://127.0.0.1:8787/v6",
-  publicAuthorizeEndpoint:
-    "http://127.0.0.1:8787/v2/rooms/{roomId}/public/authorize",
 });
 
 export const {
