@@ -11,7 +11,7 @@ describe("authorize", () => {
         secret: "sk_xxx",
       }).then((response) => {
         expect(response.error && response.error.message).toBe(
-          "Invalid room. Please provide a non-empty string as the room. For more information: https://liveblocks.io/docs/api-reference/liveblocks-node#authorize"
+          'Invalid value for field "room". Please provide a non-empty string. For more information: https://liveblocks.io/docs/api-reference/liveblocks-node#authorize'
         );
       });
     }
@@ -27,7 +27,7 @@ describe("authorize", () => {
         secret: "sk_xxx",
       }).then((response) => {
         expect(response.error && response.error.message).toBe(
-          "Invalid userId. Please provide a non-empty string as the userId. For more information: https://liveblocks.io/docs/api-reference/liveblocks-node#authorize"
+          'Invalid value for field "userId". Please provide a non-empty string. For more information: https://liveblocks.io/docs/api-reference/liveblocks-node#authorize'
         );
       });
     }

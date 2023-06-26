@@ -1,5 +1,7 @@
 import fetch from "node-fetch";
 
+import { assertNonEmpty } from "./utils";
+
 type AuthorizeOptions = {
   /**
    * The secret API key for your Liveblocks account. You can find it on
@@ -85,19 +87,13 @@ export async function authorize(
   options: AuthorizeOptions
 ): Promise<AuthorizeResponse> {
   try {
-    const { room, secret, userId, userInfo, groupIds } = options;
+    const { room, secret, userId, userInfo, groupIds } =
+      // Ensure we'll validate inputs at runtime
+      options as Record<string, unknown>;
 
-    if (!(typeof room === "string" && room.length > 0)) {
-      throw new Error(
-        "Invalid room. Please provide a non-empty string as the room. For more information: https://liveblocks.io/docs/api-reference/liveblocks-node#authorize"
-      );
-    }
-
-    if (!(typeof userId === "string" && userId.length > 0)) {
-      throw new Error(
-        "Invalid userId. Please provide a non-empty string as the userId. For more information: https://liveblocks.io/docs/api-reference/liveblocks-node#authorize"
-      );
-    }
+    assertNonEmpty(secret, "secret");
+    assertNonEmpty(room, "room");
+    assertNonEmpty(userId, "userId");
 
     const resp = await fetch(buildLiveblocksAuthorizeEndpoint(options, room), {
       method: "POST",
