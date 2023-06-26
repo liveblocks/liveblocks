@@ -32,4 +32,20 @@ describe("authorize", () => {
       });
     }
   );
+
+  test.each([null, "", undefined, {}])(
+    "should check that secret is a non-empty string",
+    async (secret) => {
+      await authorize({
+        userId: "userA",
+        room: "123",
+        // @ts-expect-error: we want to test for anything passed as userId,
+        secret,
+      }).then((response) => {
+        expect(response.error && response.error.message).toBe(
+          'Invalid value for field "secret". Please provide a non-empty string. For more information: https://liveblocks.io/docs/api-reference/liveblocks-node#authorize'
+        );
+      });
+    }
+  );
 });
