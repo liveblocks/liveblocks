@@ -1,0 +1,194 @@
+---
+meta:
+  title: "Get started with YJS Documents"
+  parentTitle: "Get started"
+  description: "Learn YJS document concepts and implementation"
+---
+
+<Banner title="Open beta">
+
+YJS support is currently in open beta. If you have any questions or feedback,
+please reach out to us via the dedicated Discord channel,
+[#webhooks-beta](https://discord.com/channels/913109211746009108/1044705458872660088).
+We'd love to hear from you.
+
+</Banner>
+
+In this guide, you’ll learn how to integrate Liveblocks with YJS, a common CRDT
+implementation that works with many popular text editors. The `@liveblocks/yjs`
+package provides the Liveblocks provider that keeps YJS docs in sync accross
+clients and stores the document on the server.
+
+This guide assumes that you’re already familiar with JavaScript and the basics
+of Liveblocks including how to setup a room.
+
+## Install Liveblocks, Liveblocks/yjs, and YJS into your project [#install]
+
+Run the following command to install the Liveblocks client package:
+
+```bash
+npm install @liveblocks/client @liveblocks/yjs yjs
+```
+
+[`@liveblocks/yjs`][] lets you connect to a YJS document to Liveblocks servers.
+
+### Connect to Liveblocks
+
+To connect to Liveblocks, you need to create a Liveblocks client with
+[`createClient`][] and then connect to a room.
+
+```js
+import { createClient } from "@liveblocks/client";
+
+// Create a Liveblocks client
+const client = createClient({
+  publicApiKey: "{{PUBLIC_KEY}}",
+});
+// Enter a Liveblocks room
+const room = client.enter("your-room-id", { initialPresence: {} });
+```
+
+## Create a YJS document and Text shared data [#yjs-doc]
+
+A YJS document contains its information in a map accessible by methods specific
+to their types. For example, to get a text element from the document you use the
+`getText` method.
+
+```js highlight="2, 10-12"
+import { createClient } from "@liveblocks/client";
+import * as Y from "yjs";
+
+// Create a Liveblocks client
+const client = createClient({
+  publicApiKey: "{{PUBLIC_KEY}}",
+});
+// Eenter a Liveblocks room
+const room = client.enter("your-room-id", { initialPresence: {} });
+// Create a YJS Document and Text data
+const ydoc = new Y.Doc();
+const text = ydoc.getText("mytext");
+```
+
+## Sync the document using the Liveblocks Provider [#yjs-liveblocks-provider]
+
+The next step is to define a provider. This provider is a standard practice when
+working with YJS documents.
+
+```js highlight="2, 14-16"
+import { createClient } from "@liveblocks/client";
+import LiveblocksProvider from "@liveblocks/yjs";
+import * as Y from "yjs";
+
+// Create a Liveblocks client
+const client = createClient({
+  publicApiKey: "{{PUBLIC_KEY}}",
+});
+// Eenter a Liveblocks room
+const room = client.enter("your-room-id", { initialPresence: {} });
+// Create a YJS Document and Text data
+const ydoc = new Y.Doc();
+const text = ydoc.getText("mytext");
+// Connect the YJS Document to the Liveblocks room
+const provider = new LiveblocksProvider(room, ydoc);
+text.insert(0, "Hello from Liveblocks!", { bold: true }); // This is sync'd to all clients!
+```
+
+## Integrating with a text editor (Quill) [#text-editor]
+
+Next take it a step further and integrate with a text editor, in this example it
+will be Quill, but many others are available and the concept is the same. Lets
+start by installing Quill and Quill's YJS integration libray, `y-quill`.
+
+```bash
+npm install quill y-quill
+```
+
+Now create a quill editor.
+
+```js
+import Quill from "quill";
+import { QuillBinding } from "y-quill";
+const quill = new Quill(document.querySelector("#editor"), {
+  modules: {
+    cursors: true,
+    toolbar: [["bold", "italic", "underline"]],
+    history: {
+      userOnly: true,
+    },
+  },
+  theme: "snow",
+});
+```
+
+Then connect it to your YJS doc using the QuillBinding provided by `y-quill`.
+
+```js
+new QuillBinding(text, quill);
+```
+
+## Shared cursors [#shared-cursor]
+
+The `LiveblocksProvider` implements YJS' awareness protocol on top of
+Liveblock's presence feature. This allows to have shared text cursors compatible
+with many text editors while maintaing your ability to store presence data. To
+enable it, simply pass `provider.awareness` into the text editor binding you're
+using.
+
+For quill, we also require the `QuillCursors` library.
+
+```bash
+npm install QuillCursors
+```
+
+And then register the QuillCursors module and add `provider.awareness` to the
+QuillBinding instantiation.
+
+```js
+Quill.register("modules/cursors", QuillCursors);
+new QuillBinding(text, quill, provider.awareness);
+```
+
+## Complete Example [#complete-example]
+
+And here's the full code for a collaborative Quill text editor backed by
+Liveblocks.
+
+```js
+import { createClient } from "@liveblocks/client";
+import LiveblocksProvider from "@liveblocks/yjs";
+import Quill from "quill";
+import QuillCursors from "quill-cursors";
+import { QuillBinding } from "y-quill";
+import * as Y from "yjs";
+
+// Create a Liveblocks client
+const client = createClient({
+  publicApiKey: "{{PUBLIC_KEY}}",
+});
+
+// Eenter a Liveblocks room
+const room = client.enter("your-room-id", { initialPresence: {} });
+
+// Create a YJS Document and Text data
+const ydoc = new Y.Doc();
+const text = ydoc.getText("mytext");
+
+// Connect the YJS Document to the Liveblocks room
+const provider = new LiveblocksProvider(room, ydoc);
+
+// Setup Quill
+Quill.register("modules/cursors", QuillCursors);
+const quill = new Quill(document.querySelector("#editor"), {
+  modules: {
+    cursors: true,
+    toolbar: [["bold", "italic", "underline"]],
+    history: {
+      userOnly: true,
+    },
+  },
+  theme: "snow",
+});
+new QuillBinding(text, quill, provider.awareness);
+```
+
+That's all it takes for a full featured collaborative text editor.

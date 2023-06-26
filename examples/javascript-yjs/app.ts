@@ -2,12 +2,11 @@ import { createClient } from "@liveblocks/client";
 import LiveblocksProvider from "@liveblocks/yjs";
 import * as Y from "yjs";
 import Quill from "quill";
-import QuillCursors from "quill-cursors";
 import { QuillBinding } from "y-quill";
+import QuillCursors from "quill-cursors";
 
 async function run() {
-  let PUBLIC_KEY =
-    "pk_prod_-azD9Tpk-NWEPPh4Z0M6kr14_gf5G_LffyqBtkQUIRPbXfMrdTOOM7BWwXtm2pbo";
+  let PUBLIC_KEY = "pk_yourkey";
   let roomId = "javascript-yjs";
 
   overrideApiKeyAndRoomId();
@@ -21,10 +20,6 @@ async function run() {
 
   const client = createClient({
     publicApiKey: PUBLIC_KEY,
-    // @ts-expect-error
-    liveblocksServer: "ws://127.0.0.1:8787/v6",
-    publicAuthorizeEndpoint:
-      "http://127.0.0.1:8787/v2/rooms/{roomId}/public/authorize",
   });
 
   const room = client.enter<{}, never>(roomId, {
