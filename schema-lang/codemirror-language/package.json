@@ -6,8 +6,14 @@
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
     }
   },
   "files": [
@@ -17,6 +23,7 @@
   "scripts": {
     "build": "tsup",
     "lint": "eslint src/",
+    "lint:package": "publint --strict && attw /tmp/$( npm pack -q --pack-destination /tmp )",
     "format": "(eslint --fix src/ || true) && prettier --write src/",
     "test": "jest --colors --verbose --no-coverage"
   },
