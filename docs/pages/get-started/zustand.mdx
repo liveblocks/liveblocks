@@ -1,0 +1,136 @@
+---
+meta:
+  title: "Get started with Liveblocks and Zustand"
+  parentTitle: "Get started"
+  description: "Learn how to get started with Liveblocks and Zustand"
+---
+
+Liveblocks is a real-time collaboration infrastructure for building performant
+collaborative experiences. Follow the following steps to start making your
+Zustand store multiplayer by using the middleware from the
+[`@liveblocks/zustand`](/docs/api-reference/liveblocks-zustand) package.
+
+## Quickstart
+
+<Steps
+  steps={[
+    {
+      title: "Install Liveblocks",
+      code: {
+        language: "bash",
+        code: `npm install @liveblocks/client @liveblocks/zustand`,
+      },
+    },
+    {
+      title: "Connect your Zustand store to Liveblocks",
+      description: (
+        <>
+          Create the Liveblocks client and use the <code>middleware</code> in your
+          Zustand store setup. This will add a new state called{" "}
+          <code>liveblocks</code> to your store, enabling you to interact with
+          our Presence and Storage APIs.
+        </>
+      ),
+      code: {
+        language: "ts",
+        file: "store.ts",
+        highlight: "10-12,15-20",
+        code: `import create from "zustand";
+import { createClient } from "@liveblocks/client";
+import { liveblocks } from "@liveblocks/zustand";
+import type { WithLiveblocks } from "@liveblocks/zustand";
+\r
+type State = {
+  // Your Zustand state type will be defined here
+};
+\r
+const client = createClient({
+  publicApiKey: "{{PUBLIC_KEY}}",
+});
+\r
+const useStore = create<WithLiveblocks<State>>()(
+  liveblocks(
+    (set) => ({
+      // Your state and actions will go here
+    }),
+    { client }
+  )
+);
+
+export default useStore;`,
+      },
+    },
+    {
+      title: "Join a Liveblocks room",
+      description: `Liveblocks uses the concept of rooms, separate virtual spaces where people collaborate. To create a real-time experience, multiple users must be connected to the same room.`,
+      code: {
+        language: "tsx",
+        file: "App.tsx",
+        highlight: "11,13",
+        code: `import React, { useEffect } from "react";
+import useStore from "./store";
+import "./App.css";
+\r
+const App = () => {
+  const {
+    liveblocks: { enterRoom, leaveRoom },
+  } = useStore();
+\r
+  useEffect(() => {
+    enterRoom("room-id");
+    return () => {
+      leaveRoom("room-id");
+    };
+  }, [enterRoom, leaveRoom]);
+\r
+  return <Room />;
+};
+\r
+export default App;`,
+      },
+    },
+    {
+      title: "Use the Liveblocks data from the store",
+      description: `Now that we’re connected to a room, we can start using the Liveblocks data from the Zustand store.`,
+      code: {
+        file: "Room.tsx",
+        language: "tsx",
+        highlight: "4",
+        code: `import useStore from "./store";
+\r
+export function Room() {
+  const others = useStore((state) => state.liveblocks.others);
+  const userCount = others.length;
+  return <div>There are {userCount} other user(s) online</div>;
+}`,
+      },
+    },
+    {
+      title: "Bonus: set up authentication",
+      description: (
+        <>
+          By default, Liveblocks is configured to work without an authentication
+          endpoint. This approach is great for prototyping and marketing pages
+          where defining your own security isn’t always required. If you want to
+          implement your own security logic to define if certain users should
+          have access to a given room, you’ll need to implement an
+          authentication endpoint.
+        </>
+      ),
+      action: {
+        href: "/docs/rooms/authentication",
+        label: "Set up authentication",
+      },
+    },
+  ]}
+/>
+
+## Next steps
+
+Congratulations! You now have set up the foundation to start building
+collaborative experiences for your Zustand store.
+
+- [API Reference](/docs/api-reference/liveblocks-zustand)
+- [How to use Liveblocks Presence with Zustand](/docs/guides/how-to-use-liveblocks-presence-with-zustand)
+- [How to use Liveblocks Storage with Zustand](/docs/guides/how-to-use-liveblocks-strorage-with-zustand)
+- [How to use Liveblocks multiplayer undo/redo with Zustand](/docs/guides/how-to-use-liveblocks-multiplayer-undo-redo-with-zustand)

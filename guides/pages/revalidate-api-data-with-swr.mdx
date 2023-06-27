@@ -1,0 +1,98 @@
+---
+meta:
+  title: "Revalidate API data in real-time with SWR"
+  description:
+    "Learn how use Liveblocks and SWR to revalidate API data in real-time"
+---
+
+[SWR](https://swr.vercel.app) is a library that provides
+[React](https://react.dev) hooks for data fetching. It’s possible to revalidate
+your data in real-time by broadcasting events using Liveblocks.
+
+An example usage of this may be a share dialog containing a list of users—when a
+new user is added to the dialog, we can broadcast an event telling other online
+users to refresh their user list.
+
+## Broadcasting events
+
+A simple SWR hook that fetches a list of users may look similar to this:
+
+```tsx
+function Component() {
+  const { data: users, mutate } = useSWR("/api/users", fetcher);
+
+  return (
+     <div>
+       {users.map((user) => /* ... */)}:
+     </div>
+  );
+}
+```
+
+To create a function that allows us to update this data in real-time, we can
+broadcast an event telling other clients to revalidate their data with
+[useBroadcastEvent](https://liveblocks.io/docs/api-reference/liveblocks-react#useBroadcastEvent):
+
+```tsx
+const broadcast = useBroadcastEvent();
+
+// Sending a custom REVALIDATE event
+broadcast({ type: "REVALIDATE" });
+```
+
+We can then listen for the event with
+[useEventListener](https://liveblocks.io/docs/api-reference/liveblocks-react#useEventListener),
+and call the mutate function from SWR to update the data:
+
+```tsx
+const { data: users, mutate } = useSWR("/api/users", fetcher);
+
+useEventListener(({ event }) => {
+  if (event.type === "REVALIDATE") {
+    mutate();
+  }
+});
+```
+
+## Putting it together
+
+If we put everything together, we can display a list of users, broadcasting a
+revalidate event when a new user is added to the list.
+
+```tsx
+import { useBroadcastevent, useEventListener } from "../liveblocks.config";
+
+function Component() {
+  // Data updates on every button click
+  const { data, mutate } = useSWR("/api/user", fetcher);
+
+  // Listen for custom event
+  useEventListener(({ event }) => {
+    if (event.type === "REVALIDATE") {
+      mutate();
+    }
+  });
+
+  // Create broadcast hook
+  const broadcast = useBroadcastEvent();
+
+  function addUser() {
+    // Code to add a new user to your list
+    // ...
+
+    // Broadcast the custom event
+    broadcast({ type: "REVALIDATE" });
+  }
+
+  return (
+    <div>
+      {users.map((user) => /* ... */)}:
+      <button onClick={addUser}>Add new user</button>
+    </div>
+  );
+}
+```
+
+Great, data that revalidates in real-time at the click of a button! You can find
+an example of this technique being used in the
+[Next.js Starter Kit](https://github.com/liveblocks/liveblocks/blob/main/starter-kits/nextjs-starter-kit/components/ShareDialog/ShareDialog.tsx#L123-L131).

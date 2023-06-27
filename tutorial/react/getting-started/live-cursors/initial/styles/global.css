@@ -1,0 +1,9 @@
+{% DEFAULT_STYLES %}
+
+div {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-family: monospace;
+  white-space: pre;
+}

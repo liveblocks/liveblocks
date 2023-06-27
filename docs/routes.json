@@ -8,132 +8,119 @@
         "file": "/index.mdx"
       },
       {
-        "title": "Concepts",
-        "path": "/concepts"
-      },
-      {
         "title": "Get started",
         "path": "/get-started",
         "routes": [
+          {
+            "title": "Next.js",
+            "path": "/get-started/nextjs"
+          },
           {
             "title": "React",
             "path": "/get-started/react"
           },
           {
-            "title": "React + Redux",
-            "path": "/get-started/react-redux"
+            "title": "Redux",
+            "path": "/get-started/redux"
           },
           {
-            "title": "React + Zustand",
-            "path": "/get-started/react-zustand"
+            "title": "Zustand",
+            "path": "/get-started/zustand"
+          },
+          {
+            "title": "Svelte",
+            "path": "/get-started/svelte"
+          },
+          {
+            "title": "Vue.js",
+            "path": "/get-started/vuejs"
+          },
+          {
+            "title": "SolidJS",
+            "path": "/get-started/solidjs"
           },
           {
             "title": "JavaScript",
             "path": "/get-started/javascript"
-          },
-          {
-            "title": "Vue",
-            "path": "/get-started/vue"
           }
         ]
       }
     ]
   },
   {
-    "title": "Tutorials",
+    "title": "Concepts",
     "routes": [
       {
-        "title": "To-do list",
-        "path": "/tutorials/collaborative-to-do-list",
-        "routes": [
-          {
-            "title": "React",
-            "path": "/tutorials/collaborative-to-do-list/react"
-          },
-          {
-            "title": "React + Redux",
-            "path": "/tutorials/collaborative-to-do-list/react-redux"
-          },
-          {
-            "title": "React + Zustand",
-            "path": "/tutorials/collaborative-to-do-list/react-zustand"
-          },
-          {
-            "title": "JavaScript",
-            "path": "/tutorials/collaborative-to-do-list/javascript"
-          }
-        ]
+        "title": "Why Liveblocks",
+        "path": "/concepts/why-liveblocks"
       },
       {
-        "title": "Whiteboard",
-        "path": "/tutorials/collaborative-online-whiteboard",
-        "routes": [
-          {
-            "title": "React",
-            "path": "/tutorials/collaborative-online-whiteboard/react"
-          },
-          {
-            "title": "React + Redux",
-            "path": "/tutorials/collaborative-online-whiteboard/react-redux"
-          },
-          {
-            "title": "React + Zustand",
-            "path": "/tutorials/collaborative-online-whiteboard/react-zustand"
-          }
-        ]
+        "title": "How Liveblocks works",
+        "path": "/concepts/how-liveblocks-works"
       }
     ]
   },
   {
-    "title": "Guides",
+    "title": "Products",
     "routes": [
       {
-        "title": "Next.js Starter Kit",
-        "path": "/guides/nextjs-starter-kit"
+        "title": "Presence",
+        "path": "/products/presence"
       },
+      {
+        "title": "Broadcast",
+        "path": "/products/broadcast"
+      },
+      {
+        "title": "Storage",
+        "path": "/products/storage"
+      },
+      {
+        "title": "Comments",
+        "path": "/products/comments"
+      }
+    ]
+  },
+  {
+    "title": "Rooms",
+    "routes": [
       {
         "title": "Authentication",
-        "path": "/guides/authentication",
+        "path": "/rooms/authentication",
         "routes": [
           {
             "title": "Next.js",
-            "path": "/guides/authentication/next-js"
+            "path": "/rooms/authentication/nextjs"
           },
           {
-            "title": "Firebase",
-            "path": "/guides/authentication/firebase"
+            "title": "Remix",
+            "path": "/rooms/authentication/remix"
+          },
+          {
+            "title": "SvelteKit",
+            "path": "/rooms/authentication/sveltekit"
           },
           {
             "title": "Nuxt.js",
-            "path": "/guides/authentication/nuxt-js"
+            "path": "/rooms/authentication/nuxtjs"
+          },
+          {
+            "title": "Firebase",
+            "path": "/rooms/authentication/firebase"
           },
           {
             "title": "Express",
-            "path": "/guides/authentication/express"
+            "path": "/rooms/authentication/express"
           }
         ]
       },
       {
-        "title": "Managing rooms and users",
-        "path": "/guides/managing-rooms-users-permissions"
+        "title": "Metadata",
+        "path": "/rooms/metadata"
       },
       {
-        "title": "Webhooks",
-        "path": "/guides/webhooks"
-      },
-      {
-        "title": "Schema validation",
-        "path": "/guides/schema-validation",
-        "routes": [
-          {
-            "title": "Syntax",
-            "path": "/guides/schema-validation/syntax"
-          }
-        ]
-      },
-      {
-        "title": "DevTools",
-        "path": "/guides/devtools"
+        "title": "Permissions",
+        "path": "/rooms/permissions"
       }
     ]
   },
@@ -161,7 +148,7 @@
         "path": "/api-reference/liveblocks-node"
       },
       {
-        "title": "API Endpoints",
+        "title": "REST API",
         "href": "/api-reference/rest-api-endpoints"
       },
       {
@@ -172,48 +159,70 @@
     ]
   },
   {
-    "title": "Miscellaneous",
+    "title": "Platform",
     "routes": [
       {
+        "title": "Next.js Starter Kit",
+        "path": "/platform/nextjs-starter-kit"
+      },
+      {
+        "title": "DevTools",
+        "path": "/platform/devtools"
+      },
+      {
+        "title": "Webhooks",
+        "path": "/platform/webhooks"
+      },
+      {
+        "title": "Schema validation",
+        "path": "/platform/schema-validation",
+        "routes": [
+          {
+            "title": "Syntax",
+            "path": "/platform/schema-validation/syntax"
+          }
+        ]
+      },
+      {
         "title": "Pricing",
-        "path": "/guides/pricing"
+        "path": "/platform/pricing"
       },
       {
         "title": "Limits",
-        "path": "/guides/limits",
+        "path": "/platform/limits",
         "routes": [
           {
             "title": "Fair Use Policy",
-            "path": "/guides/limits/fair-use-policy"
+            "path": "/platform/limits/fair-use-policy"
           }
         ]
       },
       {
         "title": "Upgrading",
-        "path": "/guides/upgrading",
+        "path": "/platform/upgrading",
         "sort": "descending",
         "routes": [
           {
             "title": "Upgrading to 0.17",
-            "path": "/guides/upgrading/0.17"
+            "path": "/platform/upgrading/0.17"
           },
           {
             "title": "Upgrading to 0.18",
-            "path": "/guides/upgrading/0.18"
+            "path": "/platform/upgrading/0.18"
           },
           {
             "title": "Upgrading to 0.19",
-            "path": "/guides/upgrading/0.19"
+            "path": "/platform/upgrading/0.19"
           },
           {
             "title": "Upgrading to 1.0",
-            "path": "/guides/upgrading/1.0"
+            "path": "/platform/upgrading/1.0"
           }
         ]
       },
       {
         "title": "Troubleshooting",
-        "path": "/guides/troubleshooting"
+        "path": "/platform/troubleshooting"
       }
     ]
   },

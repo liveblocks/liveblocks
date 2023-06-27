@@ -11,41 +11,68 @@ Liveblocks into your project.
 
 <ListGrid>
   <DocsCard
+    title="Next.js"
+    href="/docs/get-started/nextjs"
+    visual={<DocsNextjsIcon />}
+  />
+  <DocsCard
     title="React"
     href="/docs/get-started/react"
-    visual={<img alt="React" src="/images/docs/react.svg" width={56} />}
+    visual={<DocsReactIcon />}
   />
   <DocsCard
-    title="React + Redux"
-    href="/docs/get-started/react-redux"
+    title="Redux"
+    href="/docs/get-started/redux"
+    visual={<DocsReduxIcon />}
+  />
+  <DocsCard
+    title="Zustand"
+    href="/docs/get-started/zustand"
     visual={
-      <>
-        <img alt="React" src="/images/docs/react.svg" width={56} />
-        <img alt="Redux" src="/images/docs/redux.svg" width={50} />
-      </>
+      <img
+        alt="Zustand"
+        src="/assets/zustand.png"
+        width={30}
+        height={24}
+        loading="lazy"
+      />
     }
   />
   <DocsCard
-    title="React + Zustand"
-    href="/docs/get-started/react-zustand"
+    title="Svelte"
+    href="/docs/get-started/svelte"
     visual={
-      <>
-        <img alt="React" src="/images/docs/react.svg" width={56} />
-        <img alt="Zustand" src="/images/docs/zustand.png" width={66} />
-      </>
+      <img
+        alt="Svelte"
+        src="/assets/svelte.svg"
+        width={20}
+        height={24}
+        loading="lazy"
+      />
     }
+  />
+  <DocsCard
+    title="Vue.js"
+    href="/docs/get-started/vuejs"
+    visual={<DocsVueIcon />}
   />
   <DocsCard
     title="JavaScript"
     href="/docs/get-started/javascript"
-    visual={
-      <img alt="JavaScript" src="/images/docs/javascript.svg" width={42} />
-    }
+    visual={<DocsJavascriptIcon />}
   />
   <DocsCard
-    title="Vue"
-    href="/docs/get-started/vue"
-    visual={<img alt="Vue" src="/images/docs/vue.svg" width={48} />}
+    title="SolidJS"
+    href="/docs/get-started/solidjs"
+    visual={
+      <img
+        alt="SolidJS"
+        src="/assets/solidjs.svg"
+        width={26}
+        height={28}
+        loading="lazy"
+      />
+    }
   />
 </ListGrid>
 
