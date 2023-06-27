@@ -1,9 +1,4 @@
-import type {
-  DevTools,
-  DevToolsMsg,
-  LegacyConnectionStatus,
-  Status,
-} from "@liveblocks/core";
+import type { DevTools, DevToolsMsg, Status } from "@liveblocks/core";
 import type { ReactNode } from "react";
 import {
   createContext,
@@ -21,9 +16,21 @@ import { makeEventSource } from "../../lib/EventSource";
 import { onMessage, sendMessage } from "../port";
 import type { FullBackgroundToPanelMessage } from "../protocol";
 
+// Old/legacy connection statuses sent by old clients, prior to Liveblocks 1.1.
+// These will be removed from a future version of Liveblocks, but DevTools will
+// have to support these status codes to remain backward compatible with old
+// clients.
+type OldConnectionStatus =
+  | "closed"
+  | "authenticating"
+  | "connecting"
+  | "open"
+  | "unavailable"
+  | "failed";
+
 type Room = {
   readonly roomId: string;
-  status: Status | LegacyConnectionStatus | null;
+  status: Status | OldConnectionStatus | null;
   storage: readonly DevTools.LsonTreeNode[] | null;
   me: DevTools.UserTreeNode | null;
   others: readonly DevTools.UserTreeNode[];
@@ -324,7 +331,7 @@ export function useRoomIds(): string[] {
   return useSyncExternalStore(onRoomCountChanged.subscribe, () => allRoomIds);
 }
 
-export function useStatus(): Status | LegacyConnectionStatus | null {
+export function useStatus(): Status | OldConnectionStatus | null {
   const currentRoomId = useCurrentRoomId();
   return useSyncExternalStore(
     getSubscribe(currentRoomId, "onStatus") ?? nosub,
