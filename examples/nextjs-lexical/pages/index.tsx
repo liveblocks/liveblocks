@@ -12,7 +12,7 @@ import { ContentEditable } from '@lexical/react/LexicalContentEditable';
 import { PlainTextPlugin } from '@lexical/react/LexicalPlainTextPlugin';
 import { CollaborationPlugin } from "@lexical/react/LexicalCollaborationPlugin";
 import LexicalErrorBoundary from '@lexical/react/LexicalErrorBoundary';
-import { ProviderAwareness } from '@lexical/yjs';
+import { Provider } from '@lexical/yjs';
 import { ClientSideSuspense } from "@liveblocks/react";
 
 const USER_INFO = [
@@ -58,23 +58,6 @@ const USER_INFO = [
   },
 ];
 
-declare interface Provider {
-  awareness: ProviderAwareness;
-  connect(): void | Promise<void>;
-  disconnect(): void;
-  off(type: 'sync', cb: (isSynced: boolean) => void): void;
-  off(type: 'update', cb: (arg0: unknown) => void): void;
-  off(type: 'status', cb: (arg0: {
-    status: string;
-  }) => void): void;
-  off(type: 'reload', cb: (doc: Y.Doc) => void): void;
-  on(type: 'sync', cb: (isSynced: boolean) => void): void;
-  on(type: 'status', cb: (arg0: {
-    status: string;
-  }) => void): void;
-  on(type: 'update', cb: (arg0: unknown) => void): void;
-  on(type: 'reload', cb: (doc: Y.Doc) => void): void;
-}
 
 function WhoIsHere() {
   const userCount = useOthers((others) => others.length);
@@ -124,10 +107,6 @@ function Editor() {
           const provider = new LiveblocksProvider(room, doc) as Provider;
           return provider;
         }}
-        // Optional initial editor state in case collaborative Y.Doc won't
-        // have any existing data on server. Then it'll user this value to populate editor. 
-        // It accepts same type of values as LexicalComposer editorState
-        // prop (json string, state object, or a function)
         initialEditorState={initialEditorState}
         shouldBootstrap={true}
       />
