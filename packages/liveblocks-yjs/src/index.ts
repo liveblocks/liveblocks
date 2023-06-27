@@ -152,8 +152,8 @@ export default class LiveblocksProvider<
     this.doc.on("update", this.updateHandler);
 
     this.unsubscribers.push(
-      this.room.events.connection.subscribe((e) => {
-        if (e === "open") {
+      this.room.events.status.subscribe((status) => {
+        if (status === "connected") {
           this.syncDoc();
         }
       })
