@@ -10,7 +10,7 @@ export enum ClientMsgCode {
   FETCH_STORAGE = 200,
   UPDATE_STORAGE = 201,
 
-  // For YJS support
+  // For Yjs support
   FETCH_YDOC = 300,
   UPDATE_YDOC = 301,
 }
@@ -27,7 +27,7 @@ export type ClientMsg<TPresence extends JsonObject, TRoomEvent extends Json> =
   | UpdateStorageClientMsg
   | FetchStorageClientMsg
 
-  // For YJS support
+  // For Yjs support
   | FetchYDocClientMsg
   | UpdateYDocClientMsg;
 

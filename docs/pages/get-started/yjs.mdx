@@ -1,28 +1,28 @@
 ---
 meta:
-  title: "Get started with YJS Documents"
+  title: "Get started with Yjs Documents"
   parentTitle: "Get started"
-  description: "Learn YJS document concepts and implementation"
+  description: "Learn Yjs document concepts and implementation"
 ---
 
 <Banner title="Open beta">
 
-YJS support is currently in open beta. If you have any questions or feedback,
+Yjs support is currently in open beta. If you have any questions or feedback,
 please reach out to us via the dedicated Discord channel,
 [#webhooks-beta](https://discord.com/channels/913109211746009108/1044705458872660088).
 We'd love to hear from you.
 
 </Banner>
 
-In this guide, you’ll learn how to integrate Liveblocks with YJS, a common CRDT
+In this guide, you’ll learn how to integrate Liveblocks with Yjs, a common CRDT
 implementation that works with many popular text editors. The `@liveblocks/yjs`
-package provides the Liveblocks provider that keeps YJS docs in sync accross
+package provides the Liveblocks provider that keeps Yjs docs in sync accross
 clients and stores the document on the server.
 
 This guide assumes that you’re already familiar with JavaScript and the basics
 of Liveblocks including how to setup a room.
 
-## Install Liveblocks, Liveblocks/yjs, and YJS into your project [#install]
+## Install Liveblocks, Liveblocks/yjs, and Yjs into your project [#install]
 
 Run the following command to install the Liveblocks client package:
 
@@ -30,7 +30,7 @@ Run the following command to install the Liveblocks client package:
 npm install @liveblocks/client @liveblocks/yjs yjs
 ```
 
-[`@liveblocks/yjs`][] lets you connect to a YJS document to Liveblocks servers.
+[`@liveblocks/yjs`][] lets you connect to a Yjs document to Liveblocks servers.
 
 ### Connect to Liveblocks
 
@@ -48,9 +48,9 @@ const client = createClient({
 const room = client.enter("your-room-id", { initialPresence: {} });
 ```
 
-## Create a YJS document and Text shared data [#yjs-doc]
+## Create a Yjs document and Text shared data [#yjs-doc]
 
-A YJS document contains its information in a map accessible by methods specific
+A Yjs document contains its information in a map accessible by methods specific
 to their types. For example, to get a text element from the document you use the
 `getText` method.
 
@@ -64,7 +64,7 @@ const client = createClient({
 });
 // Eenter a Liveblocks room
 const room = client.enter("your-room-id", { initialPresence: {} });
-// Create a YJS Document and Text data
+// Create a Yjs Document and Text data
 const ydoc = new Y.Doc();
 const text = ydoc.getText("mytext");
 ```
@@ -72,7 +72,7 @@ const text = ydoc.getText("mytext");
 ## Sync the document using the Liveblocks Provider [#yjs-liveblocks-provider]
 
 The next step is to define a provider. This provider is a standard practice when
-working with YJS documents.
+working with Yjs documents.
 
 ```js highlight="2, 14-16"
 import { createClient } from "@liveblocks/client";
@@ -85,10 +85,10 @@ const client = createClient({
 });
 // Eenter a Liveblocks room
 const room = client.enter("your-room-id", { initialPresence: {} });
-// Create a YJS Document and Text data
+// Create a Yjs Document and Text data
 const ydoc = new Y.Doc();
 const text = ydoc.getText("mytext");
-// Connect the YJS Document to the Liveblocks room
+// Connect the Yjs Document to the Liveblocks room
 const provider = new LiveblocksProvider(room, ydoc);
 text.insert(0, "Hello from Liveblocks!", { bold: true }); // This is sync'd to all clients!
 ```
@@ -97,7 +97,7 @@ text.insert(0, "Hello from Liveblocks!", { bold: true }); // This is sync'd to a
 
 Next take it a step further and integrate with a text editor, in this example it
 will be Quill, but many others are available and the concept is the same. Lets
-start by installing Quill and Quill's YJS integration libray, `y-quill`.
+start by installing Quill and Quill's Yjs integration libray, `y-quill`.
 
 ```bash
 npm install quill y-quill
@@ -120,7 +120,7 @@ const quill = new Quill(document.querySelector("#editor"), {
 });
 ```
 
-Then connect it to your YJS doc using the QuillBinding provided by `y-quill`.
+Then connect it to your Yjs doc using the QuillBinding provided by `y-quill`.
 
 ```js
 new QuillBinding(text, quill);
@@ -128,7 +128,7 @@ new QuillBinding(text, quill);
 
 ## Shared cursors [#shared-cursor]
 
-The `LiveblocksProvider` implements YJS' awareness protocol on top of
+The `LiveblocksProvider` implements Yjs' awareness protocol on top of
 Liveblock's presence feature. This allows to have shared text cursors compatible
 with many text editors while maintaing your ability to store presence data. To
 enable it, simply pass `provider.awareness` into the text editor binding you're
@@ -169,11 +169,11 @@ const client = createClient({
 // Eenter a Liveblocks room
 const room = client.enter("your-room-id", { initialPresence: {} });
 
-// Create a YJS Document and Text data
+// Create a Yjs Document and Text data
 const ydoc = new Y.Doc();
 const text = ydoc.getText("mytext");
 
-// Connect the YJS Document to the Liveblocks room
+// Connect the Yjs Document to the Liveblocks room
 const provider = new LiveblocksProvider(room, ydoc);
 
 // Setup Quill

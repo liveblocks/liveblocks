@@ -9,7 +9,7 @@
 
 # `@liveblocks/yjs`
 
-Provides YJS integration to effortlessly back your YJS apps with Liveblocks
+Provides Yjs integration to effortlessly back your Yjs apps with Liveblocks
 
 ## Installation
 

@@ -1,6 +1,6 @@
 {
   "name": "@liveblocks/react-code-editor",
-  "description": "This example shows how to build a collaborative code editor with Liveblocks, YJS, Monaco, and React.",
+  "description": "This example shows how to build a collaborative code editor with Liveblocks, Yjs, Monaco, and React.",
   "license": "Apache-2.0",
   "private": true,
   "scripts": {

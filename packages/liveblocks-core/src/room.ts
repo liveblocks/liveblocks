@@ -514,7 +514,7 @@ export type Room<
 
   /**
    *
-   * Sends YJS document updates to liveblocks server
+   * Sends Yjs document updates to liveblocks server
    *
    * @param {string} data the doc update to send to the server, base64 encoded uint8array
    */

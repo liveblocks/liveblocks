@@ -112,7 +112,7 @@ function startSyncStream(
     room.events.me.subscribe(() => partialSyncMe(room)),
     room.events.others.subscribe(() => partialSyncOthers(room)),
 
-    // Any time a YJS Doc updates, send the update to dev tools as well
+    // Any time a Yjs Doc updates, send the update to dev tools as well
     room.events.docUpdated.subscribe((update: string) =>
       partialSyncYDoc(room, update)
     ),

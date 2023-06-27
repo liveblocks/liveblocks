@@ -16,7 +16,7 @@ export enum ServerMsgCode {
   UPDATE_STORAGE = 201,
   REJECT_STORAGE_OP = 299,
 
-  // For YJS Docs
+  // For Yjs Docs
   UPDATE_YDOC = 300,
 }
 

@@ -1,4 +1,4 @@
-// TODO: apparently YJS is full of anys or something, see if we can fix this
+// TODO: apparently Yjs is full of anys or something, see if we can fix this
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
@@ -13,40 +13,27 @@ import { Base64 } from "js-base64";
 import { Observable } from "lib0/observable";
 import * as Y from "yjs";
 
-type RoomEvent = {
-  type: "REFRESH";
-};
-
-type LiveblocksYjsOptions = {
-  httpEndpoint?: string;
-};
-
-type RefreshResponse = {
-  updates: string[];
-  lastUpdate: number;
-};
-
 type MetaClientState = {
   clock: number;
   lastUpdated: number;
 };
 
 /**
- * This class will store YJS awareness in Liveblock's presence under the __yjs key
- * IMPORTANT: The yjs awareness protocol uses ydoc.clientId to reference users
- * to their respective documents. To avoid mapping yjs clientIds to liveblock's connectionId,
+ * This class will store Yjs awareness in Liveblock's presence under the __yjs key
+ * IMPORTANT: The Yjs awareness protocol uses ydoc.clientId to reference users
+ * to their respective documents. To avoid mapping Yjs clientIds to liveblock's connectionId,
  * we simply set the clientId of the doc to the connectionId. Then no further mapping is required
  */
-export class Awareness extends Observable<any> {
+export class Awareness extends Observable<unknown> {
   private room: Room<JsonObject, LsonObject, BaseUserMeta, Json>;
   public doc: Y.Doc;
   public clientID: number;
-  public states: Map<number, any> = new Map();
+  public states: Map<number, unknown> = new Map();
   // Meta is used to keep track and timeout users who disconnect. Liveblocks provides this for us, so we don't need to
   // manage it here. Unfortunately, it's expected to exist by various integrations, so it's an empty map.
   public meta: Map<number, MetaClientState> = new Map();
   // _checkInterval this would hold a timer to remove users, but Liveblock's presence already handles this
-  // unfortunately it's expected to exist by various integrations.
+  // unfortunately it's typed by various integrations
   public _checkInterval: number = 0;
 
   private othersUnsub: () => void;
@@ -117,9 +104,9 @@ export class Awareness extends Observable<any> {
   }
 
   // Translate liveblocks presence to yjs awareness
-  getStates(): Map<number, any> {
+  getStates(): Map<number, unknown> {
     const others = this.room.getOthers();
-    const states = others.reduce((acc: Map<number, any>, currentValue) => {
+    const states = others.reduce((acc: Map<number, unknown>, currentValue) => {
       if (currentValue.connectionId) {
         // connectionId == actorId == yjs.clientId
         acc.set(
@@ -141,18 +128,13 @@ export default class LiveblocksProvider<
 > {
   private room: Room<P, S, U, E>;
   private httpEndpoint?: string;
-  private lastUpdateDate: null | Date = null;
   private doc: Y.Doc;
 
   private unsubscribers: Array<() => void> = [];
 
   public awareness: Awareness;
 
-  constructor(
-    room: Room<P, S, U, E>,
-    doc: Y.Doc,
-    config?: LiveblocksYjsOptions
-  ) {
+  constructor(room: Room<P, S, U, E>, doc: Y.Doc) {
     this.doc = doc;
     this.room = room;
 
@@ -177,20 +159,6 @@ export default class LiveblocksProvider<
         Y.applyUpdate(this.doc, Base64.toUint8Array(update), "backend");
       })
     );
-
-    if (config?.httpEndpoint) {
-      this.httpEndpoint = config.httpEndpoint + "?room=" + this.room.id;
-
-      this.unsubscribers.push(
-        this.room.events.customEvent.subscribe(({ event }) => {
-          if ((event as RoomEvent)?.type === "REFRESH") {
-            void this.resyncHttp();
-          }
-        })
-      );
-
-      void this.resyncHttp();
-    }
     this.syncDoc();
   }
 
@@ -221,29 +189,6 @@ export default class LiveblocksProvider<
       }
     }
   };
-
-  private async resyncHttp() {
-    if (!this.httpEndpoint) {
-      return;
-    }
-    const response = await fetch(
-      `${this.httpEndpoint}${
-        this.lastUpdateDate !== null
-          ? `&after=${this.lastUpdateDate.toISOString()}`
-          : ""
-      }`
-    );
-    const { updates, lastUpdate } = (await response.json()) as RefreshResponse;
-
-    if (updates.length === 0) {
-      return;
-    }
-
-    this.lastUpdateDate = new Date(lastUpdate);
-
-    const update = Y.mergeUpdates(updates.map(Base64.toUint8Array));
-    Y.applyUpdate(this.doc, update, "backend");
-  }
 
   destroy(): void {
     this.doc.off("update", this.updateHandler);
