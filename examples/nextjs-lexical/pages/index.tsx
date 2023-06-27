@@ -4,19 +4,16 @@ import { useEffect, useMemo, useState } from "react";
 import { RoomProvider, useOthers, useRoom } from "../liveblocks.config";
 import "@liveblocks/react";
 import { useRouter } from "next/router";
-import { ClientSideSuspense } from "@liveblocks/react";
-import { useEditor, EditorContent } from "@tiptap/react";
-import StarterKit from "@tiptap/starter-kit";
-import Collaboration from "@tiptap/extension-collaboration";
-import CollaborationCursor from "@tiptap/extension-collaboration-cursor";
-import CharacterCount from "@tiptap/extension-character-count";
-import Highlight from "@tiptap/extension-highlight";
-import TaskItem from "@tiptap/extension-task-item";
-import TaskList from "@tiptap/extension-task-list";
 import * as Y from "yjs";
 import LiveblocksProvider from "@liveblocks/yjs";
-import MenuBar from "@/components/MenuBar";
-import 'remixicon/fonts/remixicon.css';
+import { $getRoot, $createParagraphNode, $createTextNode, LexicalEditor } from 'lexical';
+import { LexicalComposer } from '@lexical/react/LexicalComposer';
+import { ContentEditable } from '@lexical/react/LexicalContentEditable';
+import { PlainTextPlugin } from '@lexical/react/LexicalPlainTextPlugin';
+import { CollaborationPlugin } from "@lexical/react/LexicalCollaborationPlugin";
+import LexicalErrorBoundary from '@lexical/react/LexicalErrorBoundary';
+import { ProviderAwareness } from '@lexical/yjs';
+import { ClientSideSuspense } from "@liveblocks/react";
 
 const USER_INFO = [
   {
@@ -61,6 +58,24 @@ const USER_INFO = [
   },
 ];
 
+declare interface Provider {
+  awareness: ProviderAwareness;
+  connect(): void | Promise<void>;
+  disconnect(): void;
+  off(type: 'sync', cb: (isSynced: boolean) => void): void;
+  off(type: 'update', cb: (arg0: unknown) => void): void;
+  off(type: 'status', cb: (arg0: {
+    status: string;
+  }) => void): void;
+  off(type: 'reload', cb: (doc: Y.Doc) => void): void;
+  on(type: 'sync', cb: (isSynced: boolean) => void): void;
+  on(type: 'status', cb: (arg0: {
+    status: string;
+  }) => void): void;
+  on(type: 'update', cb: (arg0: unknown) => void): void;
+  on(type: 'reload', cb: (doc: Y.Doc) => void): void;
+}
+
 function WhoIsHere() {
   const userCount = useOthers((others) => others.length);
 
@@ -69,65 +84,63 @@ function WhoIsHere() {
   );
 }
 
-type EditorProps = {
-  doc: Y.Doc;
-  provider: any;
-};
+function initialEditorState(editor: LexicalEditor): void {
+  const root = $getRoot();
+  const paragraph = $createParagraphNode();
+  const text = $createTextNode('Welcome to collab!');
+  paragraph.append(text);
+  root.append(paragraph);
+}
 
-function Editor({ doc, provider }: EditorProps) {
 
-  const editor = useEditor({
-    extensions: [
-      StarterKit.configure({
-        // The Collaboration extension comes with its own history handling
-        history: false,
-      }),
-      Highlight,
-      TaskList,
-      TaskItem,
-      CharacterCount.configure({
-        limit: 10000,
-      }),
-      // Register the document with Tiptap
-      Collaboration.configure({
-        document: doc,
-      }),
-      CollaborationCursor.configure({
-        provider: provider,
-        user: USER_INFO[Math.floor(Math.random() * USER_INFO.length)],
-      }),
-    ],
-  });
+function Editor() {
+
+  const room = useRoom();
+  const initialConfig = {
+    // NOTE: This is critical for collaboration plugin to set editor state to null. It
+    // would indicate that the editor should not try to set any default state
+    // (not even empty one), and let collaboration plugin do it instead
+    editorState: null,
+    namespace: 'Demo',
+    nodes: [],
+    onError: (error: Error) => {
+      throw error;
+    },
+    theme: {},
+  };
 
   return (
-    <>
-      {editor && <MenuBar editor={editor} />}
-      <div className="editor__content">
-        <EditorContent editor={editor} /></div>
-    </>
+    <LexicalComposer initialConfig={initialConfig}>
+      <PlainTextPlugin
+        contentEditable={<ContentEditable />}
+        placeholder={<div>Enter some text...</div>}
+        ErrorBoundary={LexicalErrorBoundary}
+      />
+      <CollaborationPlugin
+        id="yjs-plugin"
+        providerFactory={(id, yjsDocMap) => {
+          const doc = new Y.Doc();
+          yjsDocMap.set(id, doc);
+          const provider = new LiveblocksProvider(room, doc) as Provider;
+          return provider;
+        }}
+        // Optional initial editor state in case collaborative Y.Doc won't
+        // have any existing data on server. Then it'll user this value to populate editor. 
+        // It accepts same type of values as LexicalComposer editorState
+        // prop (json string, state object, or a function)
+        initialEditorState={initialEditorState}
+        shouldBootstrap={true}
+      />
+    </LexicalComposer>
   );
 }
 
 function Example() {
-  const room = useRoom();
-  const [doc, setDoc] = useState<Y.Doc>();
-  const [provider, setProvider] = useState<any>();
-
-  useEffect(() => {
-    const _doc = new Y.Doc();
-    const _provider = new LiveblocksProvider(room, _doc);
-    setDoc(_doc);
-    setProvider(_provider);
-    return () => {
-      _doc.destroy();
-      _provider?.destroy();
-    };
-  }, [room]);
 
   return (
     <div className="container">
       <div className="editor">
-        {doc && provider && <Editor doc={doc} provider={provider}></Editor>}
+        <Editor />
         <div className="editor__footer">
           <div className={`editor__status editor__status--${status}`}>
             <WhoIsHere />

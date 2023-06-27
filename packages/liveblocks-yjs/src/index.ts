@@ -130,7 +130,7 @@ export default class LiveblocksProvider<
   S extends LsonObject,
   U extends BaseUserMeta,
   E extends Json
-> {
+> extends Observable<unknown> {
   private room: Room<P, S, U, E>;
   private httpEndpoint?: string;
   private doc: Y.Doc;
@@ -139,7 +139,10 @@ export default class LiveblocksProvider<
 
   public awareness: Awareness;
 
+  private _synced = false;
+
   constructor(room: Room<P, S, U, E>, doc: Y.Doc) {
+    super();
     this.doc = doc;
     this.room = room;
 
@@ -162,12 +165,14 @@ export default class LiveblocksProvider<
     this.unsubscribers.push(
       this.room.events.ydoc.subscribe((update: string) => {
         Y.applyUpdate(this.doc, Base64.toUint8Array(update), "backend");
+        this.synced = true;
       })
     );
     this.syncDoc();
   }
 
   private syncDoc = () => {
+    this.synced = false;
     /**
      * If the connection changes, set the new id, this is used by awareness.
      * yjs' only requirement for clientID is that it's truly unique and a number.
@@ -181,6 +186,19 @@ export default class LiveblocksProvider<
     const encodedVector = Base64.fromUint8Array(Y.encodeStateVector(this.doc));
     this.room.fetchYDoc(encodedVector);
   };
+
+  // The sync'd property is required by some provider implementations
+  get synced(): boolean {
+    return this._synced;
+  }
+
+  set synced(state: boolean) {
+    if (this._synced !== state) {
+      this._synced = state;
+      this.emit("synced", [state]);
+      this.emit("sync", [state]);
+    }
+  }
 
   private updateHandler = async (update: Uint8Array, origin: string) => {
     if (origin !== "backend") {
@@ -199,5 +217,14 @@ export default class LiveblocksProvider<
     this.doc.off("update", this.updateHandler);
     this.unsubscribers.forEach((unsub) => unsub());
     this.awareness.destroy();
+  }
+
+  // Some provider implementations expect to be able to call connect/disconnect, implement as noop
+  disconnect(): void {
+    // This is a noop for liveblocks as connections are managed by the room
+  }
+
+  connect(): void {
+    // This is a noop for liveblocks as connections are managed by the room
   }
 }
