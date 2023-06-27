@@ -11,6 +11,7 @@
   "scripts": {
     "build": "tsup",
     "lint": "eslint src/",
+    "lint:package": "publint --strict && attw /tmp/$( npm pack -q --pack-destination /tmp )",
     "format": "(eslint --fix src/ || true) && prettier --write src/",
     "test": "jest --colors --verbose --no-coverage"
   },

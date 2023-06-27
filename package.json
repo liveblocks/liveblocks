@@ -13,13 +13,16 @@
     "test:types": "turbo run test:types",
     "test:deps": "turbo run test:deps",
     "lint": "turbo run lint",
+    "lint:package": "turbo run lint:package",
     "format": "turbo run format"
   },
   "devDependencies": {
+    "@arethetypeswrong/cli": "^0.4.2",
     "dependency-cruiser": "^12.11.1",
     "prettier": "^2.8.7",
+    "publint": "^0.1.12",
     "tsd": "^0.24.1",
-    "tsup": "^6.7.0",
+    "tsup": "^7.1.0",
     "turbo": "^1.10.3",
     "typescript": "<4.8"
   }
