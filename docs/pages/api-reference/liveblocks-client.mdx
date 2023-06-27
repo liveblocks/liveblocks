@@ -12,7 +12,7 @@ Create a client that will be responsible to communicate with Liveblocks servers.
 
 ### createClient with public key [#createClientPublicKey]
 
-When creating a client with a public key, you don’t need to setup an
+When creating a client with a public key, you don’t need to set up an
 authorization endpoint:
 
 ```ts
@@ -25,8 +25,8 @@ const client = createClient({
 
 ### createClient with auth endpoint [#createClientAuthEndpoint]
 
-If you are not using a public key, you need to setup your own `authEndpoint`.
-Please refer to our [Authentication guide](/docs/guides/authentication).
+If you are not using a public key, you need to set up your own `authEndpoint`.
+Please refer to our [Authentication guide](/docs/rooms/authentication).
 
 ```ts
 import { createClient } from "@liveblocks/client";
@@ -1026,17 +1026,17 @@ map.toImmutable();
 
 The `LiveList` class represents an ordered collection of items that is
 synchorinized across clients. Items should be serializable to JSON or another
-Live data structure.
+Live data type.
 
 ### new LiveList [#LiveList.constructor]
 
-Create an empty `LiveList`
+Create an empty `LiveList`.
 
 ```ts
 const list = new LiveList();
 ```
 
-Create a `LiveList` with initial data
+Create a `LiveList` with initial data.
 
 ```ts
 const list = new LiveList(["🦁", "🦊", "🐵"]);

@@ -1,0 +1,109 @@
+---
+meta:
+  title: "Get started with Liveblocks and Solid.js"
+  parentTitle: "Get started"
+  description: "Learn how to get started with Liveblocks and Solid.js"
+---
+
+Liveblocks is a real-time collaboration infrastructure for building performant
+collaborative experiences. Follow the following steps to start adding
+collaboration to your Solid.js application using the APIs from the
+[`@liveblocks/client`](/docs/api-reference/liveblocks-client) package.
+
+<Banner title="Official package">
+
+Liveblocks does not have a package for Solid.js. If you would like to have one,
+or even better if you have ideas about what kind of API you would like to use,
+please let us know about it on this
+[Github issue](https://github.com/liveblocks/liveblocks/issues/1).
+
+</Banner>
+
+## Quickstart
+
+<Steps
+  steps={[
+    {
+      title: "Install Liveblocks",
+      code: {
+        language: "bash",
+        code: `npm install @liveblocks/client`,
+      },
+    },
+    {
+      title: "Set up the client",
+      description: (
+        <>
+          The first step in connecting to Liveblocks is creating a client which
+          will be responsible for communicating with the back end.
+        </>
+      ),
+      code: {
+        language: "ts",
+        code: `const client = createClient({
+  publicApiKey: "{{PUBLIC_KEY}}",
+});`,
+      },
+    },
+    {
+      title: "Join a Liveblocks room",
+      description: `Liveblocks uses the concept of rooms, separate virtual spaces where people collaborate. To create a real-time experience, multiple users must be connected to the same room.`,
+      code: {
+        language: "ts",
+        code: `const room = client.enter("my-room", { initialPresence: {} });`,
+      },
+    },
+    {
+      title: "Use the Liveblocks methods",
+      description: `Now that we’re connected to a room, we can start using Liveblocks subscriptions. The first we’ll add is others, a subscription that provides information about which other users are connected to the room.`,
+      code: {
+        language: "tsx",
+        highlight: "8-10",
+        code: `import { createSignal, onCleanup, onMount } from "solid-js";
+import { room } from "./room.js";
+\r
+export function Room() {
+  const [other, setOthers] = createSignal(room.getOthers());
+\r
+  onMount(() => {
+    const unsubscribeOthers = room.subscribe("others", (updatedOthers) => {
+      setOthers(updatedOthers);
+    });
+\r
+    onCleanup(() => {
+      unsubscribeOthers();
+    });
+  })
+\r
+  return (
+    <div>There are {others.length} other user(s) online</div>
+  );
+}`,
+      },
+    },
+    {
+      title: "Bonus: set up authentication",
+      description: (
+        <>
+          By default, Liveblocks is configured to work without an authentication
+          endpoint. This approach is great for prototyping and marketing pages
+          where defining your own security isn’t always required. If you want to
+          implement your own security logic to define if certain users should
+          have access to a given room, you’ll need to implement an
+          authentication endpoint.
+        </>
+      ),
+      action: {
+        href: "/docs/rooms/authentication",
+        label: "Set up authentication",
+      },
+    },
+  ]}
+/>
+
+## Next steps
+
+Congratulations! You now have set up the foundation to start building
+collaborative experiences for your Solid.js application.
+
+- [API Reference](/docs/api-reference/liveblocks-client)

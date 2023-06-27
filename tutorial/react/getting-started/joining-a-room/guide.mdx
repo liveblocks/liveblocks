@@ -1,0 +1,64 @@
+---
+openFile: "/App.tsx"
+showFiles: ["/App.tsx", "/Room.tsx", "/liveblocks.config.ts"]
+---
+
+Liveblocks uses the concept of rooms, separate virtual spaces where people can
+collaborate. To create a real-time experience, multiple users must be connected
+to the same room.
+
+### RoomProvider
+
+Remember how we exported [`RoomProvider`][] from [liveblocks.config.ts][]? This
+is the component we’ll be using to connect to a room, and it also enables us to
+use the Liveblocks React hooks. [`RoomProvider`][] has two required properties:
+
+1.  `id` - The unique name of the room, a string.
+2.  `initialPresence` - We’ll learn about this on the next page.
+
+Switch to [App.tsx][] and return a [`RoomProvider`][] component with the
+`roomId` string, and an empty object as the `initialPresence`.
+
+```tsx modifyTutorialFile="/App.tsx"
+return (
+  <RoomProvider id={roomId} initialPresence={{}}>
+    <Room />
+  </RoomProvider>
+);
+```
+
+We’ll be building our custom real-time app inside [Room.tsx][], so we’re adding
+this component as a child.
+
+### Displaying a loading screen
+
+Because we’re exporting the suspense version of our hooks, we can easily add a
+loading screen using [`ClientSideSuspense`][] from `@liveblocks/react`. To do
+this, pass `<Room>`, and include a loading `fallback`:
+
+```tsx highlight="3-5" modifyTutorialFile="/App.tsx"
+return (
+  <RoomProvider id={roomId} initialPresence={{}}>
+    <ClientSideSuspense fallback={<div>Loading…</div>}>
+      {() => <Room />}
+    </ClientSideSuspense>
+  </RoomProvider>
+);
+```
+
+<Banner title="Suspense">
+
+If you’re using a framework without server-side rendering, using `Suspense` from
+React works too.
+
+</Banner>
+
+You can place this component anywhere inside your app, for example around an
+avatar stack—it doesn’t have to sit at the top-level. Add the code and click
+refresh in the preview window to see a brief loading message.
+
+[`roomprovider`]: /docs/api-reference/liveblocks-react#RoomProvider
+[`clientsidesuspense`]: /docs/api-reference/liveblocks-react#suspense-avoid-ssr
+[liveblocks.config.ts]: #/liveblocks.config.ts
+[app.tsx]: #/App.tsx
+[room.tsx]: #/Room.tsx

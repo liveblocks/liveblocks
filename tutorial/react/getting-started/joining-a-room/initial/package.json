@@ -1,0 +1,19 @@
+{
+  "name": "learn-liveblocks",
+  "version": "0.1.0",
+  "private": true,
+  "main": "/index.tsx",
+  "dependencies": {
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "react-scripts": "4.0.0",
+    "@liveblocks/client": "latest",
+    "@liveblocks/react": "latest"
+  },
+  "devDependencies": {
+    "@types/react": "18.2.0",
+    "@types/react-dom": "18.2.0",
+    "typescript": "4.9.5"
+  }
+}
+

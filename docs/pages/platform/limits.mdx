@@ -1,0 +1,55 @@
+---
+meta:
+  title: "Limits"
+  parentTitle: "Platform"
+  description:
+    "A list of all the limits and limitations that apply on Liveblocks."
+---
+
+## General limits
+
+|                                   | Starter                                       | Pro                                          | Enterprise |
+| --------------------------------- | --------------------------------------------- | -------------------------------------------- | ---------- |
+| MAUs included                     | <Limits.FreeMauMax />                         | <Limits.ProMauMin /> to <Limits.ProMauMax /> | Custom     |
+| Projects                          | Unlimited                                     | Unlimited                                    | Custom     |
+| Average connections per MAU       | Up to <Limits.FreeAvgConnectionsPerMau />     | Up to <Limits.ProAvgConnectionsPerMau />     | Custom     |
+| Maximum storage size per room     | Up to <Limits.FreeMaxStorageSizePerRoom /> MB | Up to <Limits.ProMaxStorageSizePerRoom /> MB | Custom     |
+| Simultaneous connections per room | Up to <Limits.FreeMaxConnectionsPerRoom />    | Up to <Limits.ProMaxConnectionsPerRoom />    | Custom     |
+| Team members per account          | <Limits.FreeTeamMembersPerAccount />          | Unlimited                                    | Custom     |
+
+To learn more about how Monthly Active Users (MAU) are calculated for each plan,
+take a look at the [pricing guide](/platform/pricing).
+
+## Other limits
+
+### `roomId` limit
+
+A `roomId` cannot exceed 128 characters.
+
+### `userId` limit
+
+A `userId` cannot exceed 128 characters.
+
+### `userInfo` limit
+
+`userInfo` sent from the authentication endpoint cannot exceed 1024 characters
+once serialized to JSON.
+
+### Broadcast event limit
+
+Broadcast event messages have a limit of 1 MB.
+
+### Storage limits
+
+- A `LiveObject` cannot exceed 128 kB when totalling the size of the keys and
+  values.
+- A `LiveMap` can be any size, so long as each individual value does not exceed
+  128kB.
+- A `LiveList` can be any size, so long as each individual value does not exceed
+  128kB.
+
+Note that when one real-time data structure is nested inside another, it does
+not count towards the limit. Only the JSON leaves of your data structure count
+towards the limit. For example, if a `LiveList` is nested inside a `LiveObject`,
+the `LiveList` and its contents do not count towards the `LiveObject`'s data
+limit.

@@ -126,6 +126,78 @@ import { useRoom } from "./liveblocks.config";
 const room = useRoom();
 ```
 
+### useErrorListener
+
+Listen to potential room connection errors.
+
+```ts
+import { useErrorListener } from "./liveblocks.config";
+
+useErrorListener((error) => {
+  if (error.code === 4005) {
+    // Maximum concurrent connections per room exceeded.
+  }
+});
+```
+
+### useStatus
+
+Returns the current WebSocket connection status of the room, and will re-render
+your component whenever it changes.
+
+```ts
+import { useStatus } from "./liveblocks.config";
+
+const status = useStatus();
+```
+
+The possible value are: `initial`, `connecting`, `connected`, `reconnecting`, or
+`disconnected`.
+
+### useLostConnectionListener
+
+Calls the given callback in the exceptional situation that a connection is lost
+and reconnecting does not happen quickly enough.
+
+This event allows you to build high-quality UIs by warning your users that the
+app is still trying to re-establish the connection, for example through a toast
+notification. You may want to take extra care in the mean time to ensure their
+changes won’t go unsaved.
+
+When this happens, this callback is called with the event `lost`. Then, once the
+connection restores, the callback will be called with the value `restored`. If
+the connection could definitively not be restored, it will be called with
+`failed` (uncommon).
+
+The [`lostConnectionTimeout`][] client option will determine how quickly this
+event will fire after a connection loss (default: 5 seconds).
+
+```ts
+import { toast } from "my-preferred-toast-library";
+
+function App() {
+  useLostConnectionListener((event) => {
+    switch (event) {
+      case "lost":
+        toast.warn("Still trying to reconnect...");
+        break;
+
+      case "restored":
+        toast.success("Successfully reconnected again!");
+        break;
+
+      case "failed":
+        toast.error("Could not restore the connection");
+        break;
+    }
+  });
+}
+```
+
+Automatically unsubscribes when the component is unmounted.
+
+For a demonstration of this behavior, see our [connection status example][].
+
 ## Presence
 
 <Banner title="Need help troubleshooting presence?">
@@ -388,6 +460,8 @@ function Cursor({ connectionId }) {
 👉 A [Suspense version][] of this hook is also available, which will never
 return `null`.
 
+## Broadcast
+
 ### useBroadcastEvent
 
 Returns a callback that lets you broadcast custom events to other users in the
@@ -412,22 +486,6 @@ import { useEventListener } from "./liveblocks.config";
 useEventListener(({ connectionId, event }) => {
   if (event.type === "EMOJI") {
     // Do something
-  }
-});
-```
-
-Automatically unsubscribes when the component is unmounted.
-
-### useErrorListener
-
-Listen to potential room connection errors.
-
-```ts
-import { useErrorListener } from "./liveblocks.config";
-
-useErrorListener((error) => {
-  if (error.code === 4005) {
-    // Maximum concurrent connections per room exceeded.
   }
 });
 ```
@@ -924,66 +982,6 @@ the dependency arrays of your `useMutation` calls:
 }
 ```
 
-## Connectivity
-
-### useStatus
-
-Returns the current WebSocket connection status of the room, and will re-render
-your component whenever it changes.
-
-```ts
-import { useStatus } from "./liveblocks.config";
-
-const status = useStatus();
-```
-
-The possible value are: `initial`, `connecting`, `connected`, `reconnecting`, or
-`disconnected`.
-
-### useLostConnectionListener
-
-Calls the given callback in the exceptional situation that a connection is lost
-and reconnecting does not happen quickly enough.
-
-This event allows you to build high-quality UIs by warning your users that the
-app is still trying to re-establish the connection, for example through a toast
-notification. You may want to take extra care in the mean time to ensure their
-changes won’t go unsaved.
-
-When this happens, this callback is called with the event `lost`. Then, once the
-connection restores, the callback will be called with the value `restored`. If
-the connection could definitively not be restored, it will be called with
-`failed` (uncommon).
-
-The [`lostConnectionTimeout`][] client option will determine how quickly this
-event will fire after a connection loss (default: 5 seconds).
-
-```ts
-import { toast } from "my-preferred-toast-library";
-
-function App() {
-  useLostConnectionListener((event) => {
-    switch (event) {
-      case "lost":
-        toast.warn("Still trying to reconnect...");
-        break;
-
-      case "restored":
-        toast.success("Successfully reconnected again!");
-        break;
-
-      case "failed":
-        toast.error("Could not restore the connection");
-        break;
-    }
-  });
-}
-```
-
-Automatically unsubscribes when the component is unmounted.
-
-For a demonstration of this behavior, see our [connection status example][].
-
 ## Helpers
 
 ### shallow
@@ -1061,7 +1059,7 @@ The received input to all selector functions is a **read-only** and
 
 For example, suppose you have set up Storage in the typical way by setting
 `initialStorage` in your [`RoomProvider`][] to a tree that describes your app’s
-data model using `LiveList`, `LiveObject`, and `LiveMap`.  
+data model using `LiveList`, `LiveObject`, and `LiveMap`.
 The "root" argument for your selector function, however, will receive **an
 immutable and read-only representation** of that Storage tree, consisting of
 "normal" JavaScript datastructures. This makes consumption much easier.
@@ -1113,7 +1111,7 @@ Selectors you write can return _any_ value. You can use it to “just” select
 nodes from the root tree (first two examples above), but you can also return
 computed values, like in the last two examples.
 
-💡 **Important**  
+💡 **Important**
 One important rule is that selector functions **must return a stable result** to
 be efficient. This means calling the same selector twice with the same argument
 should return two results that are _referentially equal_. Special care needs to
@@ -1124,15 +1122,15 @@ call. (Why this is is detailed
 
 Some examples of what "a stable result" means:
 
-- ✅ `(root) => root.animals` is stable 👍  
+- ✅ `(root) => root.animals` is stable 👍
   Liveblocks guarantees this. All nodes in the Storage tree are stable
   references as long as their contents don’t change.
 
-- ⚠️ `(root) => root.animals.map(...)` is **not** stable 👎  
+- ⚠️ `(root) => root.animals.map(...)` is **not** stable 👎
   Because `.map()` creates a new array instance every time. You’ll need to use
   [`shallow`][] here.
 
-- ✅ `(root) => root.animals.map(...).join(', ')` is stable 👍  
+- ✅ `(root) => root.animals.map(...).join(', ')` is stable 👍
   Because `.join()` ultimately returns a string and all primitive values are
   always stable.
 
@@ -1334,7 +1332,7 @@ function Page() {
 <Banner type="error" title="Deprecated in 0.17, removed in 0.18">
 
 For more information, see our
-[Upgrade Guide to 0.17](/docs/guides/upgrading/0.17#recommended-upgrade-steps).
+[Upgrade Guide to 0.17](/docs/platform/upgrading/0.17#recommended-upgrade-steps).
 
 </Banner>
 

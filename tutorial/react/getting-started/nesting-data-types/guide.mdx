@@ -1,0 +1,148 @@
+---
+openFile: "/Room.tsx"
+showFiles: ["/App.tsx", "/Room.tsx", "/liveblocks.config.ts"]
+---
+
+Conflict-free data types often most useful when nested inside each of other, as
+this allows a parent data type to be edited at the same time as a child, without
+any conflicts occurring.
+
+On the previous page, we built a collaborative input field—on this page we’ll
+take the input and transform it into an editable list of fields using
+[`LiveList`][].
+
+### Initial state
+
+The first step is to set up your types and initial state. Open
+[liveblocks.config.ts][] and modify your types so that we have a [`LiveList`][]
+of people, instead of a singular person.
+
+```ts modifyTutorialFile="/liveblocks.config.ts"
+// Person type
+type Person = LiveObject<{
+  name: string;
+  age: number;
+}>;
+
+// Storage type
+type Storage = {
+  people: LiveList<Person>;
+};
+```
+
+Then, open [App.tsx][], and modify the `initialStorage` value to match your
+types—we now need a [`LiveList`][] called `people` containing a person.
+
+```tsx modifyTutorialFile="/App.tsx"
+initialStorage={{
+  people: new LiveList([
+    new LiveObject({ name: "Marie", age: 30 })
+  ]),
+}}
+```
+
+Great, we’re ready to update our app!
+
+### Updating the mutations
+
+Next, let’s modify the mutations—switch to [Room.tsx][] and look at
+`updateName`. We need to update this function to take a list `index`, which we
+can then use to get the current `person` with [`LiveList.get`][].
+
+```tsx highlight="3,4" modifyTutorialFile="/Room.tsx"
+// Update name mutation
+const updateName = useMutation(
+  ({ storage }, newName: string, index: number) => {
+    const person = storage.get("people").get(index);
+    person.set("name", newName);
+  },
+  []
+);
+```
+
+We can then create a mutation for adding a new person to the list. Within this
+mutation we’re creating a new [`LiveObject`][] with a default value, before
+adding it to the list with [`LiveList.push`][].
+
+```tsx modifyTutorialFile="/Room.tsx"
+// Add person mutation
+const addPerson = useMutation(({ storage }) => {
+  const newPerson = new LiveObject({ name: "Grace", age: 45 });
+  storage.get("people").push(newPerson);
+}, []);
+```
+
+<Banner title="Storage methods">
+
+You can find the different methods available to conflict-free data types under
+[`Storage`](/docs/api-reference/liveblocks-client#Storage) in our docs.
+
+</Banner>
+
+We’ll call both of these mutations from the UI.
+
+### Rendering the LiveList
+
+To render the list, we first need to update the selector function to return
+`people` instead of `person`.
+
+```tsx modifyTutorialFile="/Room.tsx"
+const people = useStorage((root) => root.people);
+```
+
+Because [`useStorage`][] converts your conflict-free data structures into
+regular JavaScript structures, `people` is an `array`, meaning we can simply map
+through it in React like any other.
+
+```tsx highlight="3-9" modifyTutorialFile="/Room.tsx"
+return (
+  <div>
+    {people.map((person, index) => (
+      <input
+        type="text"
+        value={person.name}
+        onChange={(e) => updateName(e.target.value, index)}
+      />
+    ))}
+  </div>
+);
+```
+
+Make sure to pass the index to `updateName`! After adding this, we can then
+create a button that calls `addPerson`.
+
+```tsx highlight="10" modifyTutorialFile="/Room.tsx"
+return (
+  <div>
+    {people.map((person, index) => (
+      <input
+        type="text"
+        value={person.name}
+        onChange={(e) => updateName(e.target.value, index)}
+      />
+    ))}
+    <button onClick={addPerson}>Add</button>
+  </div>
+);
+```
+
+We now have nested data structures working!
+
+<Banner title="Try it yourself" type="success">
+
+Try adding a “Reset” button by using [`LiveList.clear`][] inside a mutation!
+
+</Banner>
+
+[`LiveObject`]: /docs/api-reference/liveblocks-client#LiveObject
+[`LiveObject.get`]: /docs/api-reference/liveblocks-client#LiveObject.get
+[`LiveList`]: /docs/api-reference/liveblocks-client#LiveList
+[`LiveList.get`]: /docs/api-reference/liveblocks-client#LiveList.get
+[`LiveList.push`]: /docs/api-reference/liveblocks-client#LiveList.push
+[`LiveList.clear`]: /docs/api-reference/liveblocks-client#LiveList.clear
+[`LiveMap`]: /docs/api-reference/liveblocks-client#LiveMap
+[`useStorage`]: /docs/api-reference/liveblocks-react#useStorage
+[`useMutation`]: /docs/api-reference/liveblocks-react#useMutation
+[liveblocks.config.ts]: #/liveblocks.config.ts
+[App.tsx]: #/App.tsx
+[Room.tsx]: #/Room.tsx

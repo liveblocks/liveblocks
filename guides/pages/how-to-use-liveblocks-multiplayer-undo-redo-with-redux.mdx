@@ -1,0 +1,88 @@
+---
+meta:
+  title: "How to use Liveblocks multiplayer undo/redo with Redux"
+  description: "Learn how to use Liveblocks multiplayer undo/redo with Redux"
+---
+
+In this guide, we’ll be learning how to use Liveblocks multiplayer undo/redo
+with Redux using the APIs from the [`@liveblocks/redux`][] package.
+
+<Banner title="Install Liveblocks">
+
+This guide assumes you already have Liveblocks set up into your Redux store. If
+you don’t make sure to follow
+[these quick steps to get started](/docs/get-started/redux) first.
+
+</Banner>
+
+## Multiplayer undo/redo [#undo-redo]
+
+Implementing undo/redo when multiple users can edit the app state simultaneously
+is quite complex!
+
+**When only one user can edit the app state, undo/redo acts like a "time
+machine"**; undo/redo replaces the current app state with an app state that was
+already be seen by the user.
+
+When multiple users are involved, undo or redo can lead to an app state that no
+one has seen before. For example, let's imagine a design tool with two users
+editing the same circle.
+
+- Initial state => `{ radius: "10px", color: "yellow" }`
+- User A sets the `color` to `blue` => `{ radius: "10px", color: "blue" }`
+- User B sets the `radius` to `20px` => `{ radius: "20px", color: "blue" }`
+- User A realizes that it prefered the circle in yellow and undoes **its last
+  modification** => `{ radius: "20px", color: "yellow" }`
+
+A yellow circle with a radius of 20px in a completely new state. **Undo/redo in
+a multiplayer app does not act like a "time machine"; it only undoes local
+operation**.
+
+The good news is that [`room.history.undo`][] and [`room.history.redo`][] takes
+that complexity out of your hands so you can focus on the core features of your
+app.
+
+Access these two functions from the client like below so you can easily bind
+them to keyboard events (⌘+Z/⌘+⇧+Z on Mac and Ctrl+Z/Ctrl+Y on Windows) or undo
+and redo buttons in your application..
+
+```js
+const { undo, redo } = client.getRoom("room-id").history;
+```
+
+### Pause and resume history [#pause-resume]
+
+Some applications require skipping intermediate states from the undo/redo
+history. Let's consider a design tool; when a user drags a rectangle, the
+intermediate rectangle positions should not be part of the undo/redo history.
+But they should be shared with the rest of the room to create a great
+experience.
+
+[`room.history.pause`][] and [`room.history.resume`][] lets you skip these
+intermediate states. To go back to our design tool example, the sequence of
+calls would look like that:
+
+- User presses the rectangle
+- Call `room.history.pause` to skip future operations from the history
+- User drags the rectangle
+- User release the rectangle
+- Call `room.history.resume`
+
+At this point, if the user calls `room.history.undo`, the rectangle will go back
+to its initial position.
+
+```js
+const { pause, resume } = client.getRoom("room-id").history;
+```
+
+[`room.history.undo`]: /docs/api-reference/liveblocks-client#Room.history.undo
+[`room.history.redo`]: /docs/api-reference/liveblocks-client#Room.history.redo
+[`room.history.pause`]: /docs/api-reference/liveblocks-client#Room.history.pause
+[`room.history.resume`]:
+  /docs/api-reference/liveblocks-client#Room.history.resume
+[`liveobject`]: /docs/api-reference/liveblocks-client#LiveObject
+[`livemap`]: /docs/api-reference/liveblocks-client#LiveMap
+[`livelist`]: /docs/api-reference/liveblocks-client#LiveList
+[`createclient`]: /docs/api-reference/liveblocks-client#createClient
+[api reference]: /docs/api-reference/liveblocks-redux
+[authentication]: /docs/rooms/authentication

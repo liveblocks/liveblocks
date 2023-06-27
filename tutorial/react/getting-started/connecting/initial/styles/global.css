@@ -1,0 +1,60 @@
+{% DEFAULT_STYLES %}
+
+.liveblocksDemo {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.avatar {
+  display: flex;
+  place-content: center;
+  position: relative;
+  border: 2px solid var(--preview-background);
+  border-radius: 9999px;
+  background-color: transparent;
+  margin-left: -8px;
+  animation: fadeIn 0.4s ease-out;
+}
+
+@keyframes slideIn {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.avatar_picture {
+  border-radius: 9999px;
+}
+
+.avatars {
+  display: flex;
+  padding-left: 8px;
+  overflow: hidden;
+  position: absolute;
+  top: 12px;
+  left: 12px;
+}
+
+.connected, .notConnected {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.cursor {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  user-select: none;
+}

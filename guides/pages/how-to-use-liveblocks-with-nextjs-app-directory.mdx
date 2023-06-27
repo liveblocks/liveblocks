@@ -1,0 +1,81 @@
+---
+meta:
+  title: "How to use Liveblocks with Next.js /app directory"
+  description: "Learn how to add Liveblocks to your Next.js app directory"
+---
+
+A pattern we’d recommend when using [Next.js](https://nextjs.org) /app directory
+is creating a `Room.tsx` client component in the current route, and using
+`RoomProvider` within here.
+
+```tsx file="Room.tsx"
+"use client";
+
+import { ReactNode } from "react";
+import { RoomProvider } from "../liveblocks.config";
+import { LiveObject } from "@liveblocks/client";
+
+export default Room({ children }: { children: ReactNode }) {
+  return (
+    <RoomProvider
+      id="my-room-name"
+      initialPresence={{}}
+      initialStorage={{
+        // ✅ This is a client component, so everything works!
+        session: new LiveObject(),
+      }}
+    >
+      {children}
+    </RoomProvider>
+  );
+}
+```
+
+Doing this avoids an issue when importing `LiveObject/LiveMap/ListList` into
+server components. You can then use `Room.tsx` in your server component, and
+everything will work as expected.
+
+```tsx file="layout.tsx"
+import { ReactNode } from "react";
+import { Room } from "./Room";
+
+export default function Layout({ children }: { children: ReactNode }) {
+  return (
+    <html lang="en">
+      <body>
+        <Room>{children}</Room>
+      </body>
+    </html>
+  );
+}
+```
+
+## Structuring your app
+
+To take this one step further, you can then server-render your layout within
+`Room`’s `children`, whilst using other client components for real-time parts of
+your app:
+
+```tsx file="room.tsx"
+import { ReactNode } from "react";
+import { Room } from "./Room";
+import { LiveCanvas } from "./LiveCanvas";
+
+export default function Layout({ children }: { children: ReactNode }) {
+  return (
+    <html lang="en">
+      <body>
+        {/* Room.tsx is a client component that contains RoomProvider */}
+        <Room>
+          {/* This layout is server rendered */}
+          <header style={{ height: "150px" }}>My drawing app</header>
+          <main style={{ width: "100%" }}>
+            {/* LiveCanvas is a client component using Liveblocks features */}
+            <LiveCanvas />
+          </main>
+        </Room>
+      </body>
+    </html>
+  );
+}
+```

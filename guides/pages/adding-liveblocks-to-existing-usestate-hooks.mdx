@@ -1,0 +1,39 @@
+---
+meta:
+  title: "Adding Liveblocks to existing useState hooks"
+  description: "Learn how to add Liveblocks to your existing useState hooks"
+---
+
+<Banner title="Not recommended" type="warning">
+  Note that this is not the recommended way to build your app. We recommend
+  using conflict-free data types and the `useStorage` and `useMutation` hooks,
+  to take full advantage of our features.
+</Banner>
+
+You can easily add Liveblocks to an existing `useState` hook by broadcasting and
+listening to events.
+
+```ts
+import { useState } from "react";
+import { useBroadcastEvent, useEventListener } from "./liveblocks.config";
+
+function useCustomState() {
+  const [state, setState] = useState();
+  const broadcast = useBroadcastEvent();
+
+  // Update useState and broadcast an event
+  const setStateAndBroadcast = (newValue) => {
+    setState(newValue);
+    broadcast({ type: "STATE_UPDATE", data: newValue });
+  };
+
+  // Listen for the broadcast event
+  useEventListener(({ event }) => {
+    if (event.type === "STATE_UPDATE") {
+      setState(event.data);
+    }
+  });
+
+  return [state, setStateAndBroadcast];
+}
+```
