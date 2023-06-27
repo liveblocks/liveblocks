@@ -523,7 +523,7 @@ export type Room<
   /**
    * Sends a request for the current document from liveblocks server
    */
-  getYDoc(stateVector: string): void;
+  fetchYDoc(stateVector: string): void;
 
   /**
    * Broadcasts an event to other users in the room. Event broadcasted to the room can be listened with {@link Room.subscribe}("event").
@@ -582,7 +582,7 @@ export type Room<
     readonly storageDidLoad: Observable<void>;
 
     readonly storageStatus: Observable<StorageStatus>;
-    readonly docUpdated: Observable<string>;
+    readonly ydoc: Observable<string>;
   };
 
   /**
@@ -1120,7 +1120,7 @@ export function createRoom<
     history: makeEventSource<HistoryEvent>(),
     storageDidLoad: makeEventSource<void>(),
     storageStatus: makeEventSource<StorageStatus>(),
-    docUpdated: makeEventSource<string>(),
+    ydoc: makeEventSource<string>(),
   };
 
   function sendMessages(
@@ -1709,7 +1709,7 @@ export function createRoom<
           }
 
           case ServerMsgCode.UPDATE_YDOC: {
-            eventHub.docUpdated.notify(message.update);
+            eventHub.ydoc.notify(message.update);
             break;
           }
 
@@ -1955,7 +1955,7 @@ export function createRoom<
     };
   }
 
-  function getYDoc(vector: string): void {
+  function fetchYDoc(vector: string): void {
     context.buffer.messages.push({
       type: ClientMsgCode.FETCH_YDOC,
       vector,
@@ -2122,7 +2122,7 @@ export function createRoom<
     history: eventHub.history.observable,
     storageDidLoad: eventHub.storageDidLoad.observable,
     storageStatus: eventHub.storageStatus.observable,
-    docUpdated: eventHub.docUpdated.observable,
+    ydoc: eventHub.ydoc.observable,
   };
 
   return {
@@ -2169,7 +2169,7 @@ export function createRoom<
       resume: resumeHistory,
     },
 
-    getYDoc,
+    fetchYDoc,
     getStorage,
     getStorageSnapshot,
     getStorageStatus,

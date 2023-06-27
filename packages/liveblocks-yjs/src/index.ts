@@ -13,6 +13,8 @@ import { Base64 } from "js-base64";
 import { Observable } from "lib0/observable";
 import * as Y from "yjs";
 
+const Y_PRESENCE_KEY = "__yjs";
+
 type MetaClientState = {
   clock: number;
   lastUpdated: number;
@@ -82,21 +84,24 @@ export class Awareness extends Observable<unknown> {
 
   getLocalState(): JsonObject | null {
     const presence = this.room.getPresence();
-    if (Object.keys(this.room.getPresence()).length === 0) {
+    if (
+      Object.keys(presence).length === 0 ||
+      typeof presence[Y_PRESENCE_KEY] === "undefined"
+    ) {
       return null;
     }
-    return presence["__yjs"] as JsonObject | null;
+    return presence[Y_PRESENCE_KEY] as JsonObject | null;
   }
 
   setLocalState(state: Partial<JsonObject> | null): void {
-    const presence = this.room.getSelf()?.presence["__yjs"];
+    const presence = this.room.getSelf()?.presence[Y_PRESENCE_KEY];
     this.room.updatePresence({
       __yjs: { ...((presence as JsonObject) || {}), ...(state || {}) },
     });
   }
 
   setLocalStateField(field: string, value: JsonObject | null): void {
-    const presence = this.room.getSelf()?.presence["__yjs"];
+    const presence = this.room.getSelf()?.presence[Y_PRESENCE_KEY];
     const update = { [field]: value } as Partial<JsonObject>;
     this.room.updatePresence({
       __yjs: { ...((presence as JsonObject) || {}), ...update },
@@ -111,7 +116,7 @@ export class Awareness extends Observable<unknown> {
         // connectionId == actorId == yjs.clientId
         acc.set(
           currentValue.connectionId,
-          currentValue.presence["__yjs"] || {}
+          currentValue.presence[Y_PRESENCE_KEY] || {}
         );
       }
       return acc;
@@ -155,7 +160,7 @@ export default class LiveblocksProvider<
     );
 
     this.unsubscribers.push(
-      this.room.events.docUpdated.subscribe((update) => {
+      this.room.events.ydoc.subscribe((update: string) => {
         Y.applyUpdate(this.doc, Base64.toUint8Array(update), "backend");
       })
     );
@@ -174,7 +179,7 @@ export default class LiveblocksProvider<
     // The state vector is sent to the server so it knows what to send back
     // if you don't send it, it returns everything
     const encodedVector = Base64.fromUint8Array(Y.encodeStateVector(this.doc));
-    this.room.getYDoc(encodedVector);
+    this.room.fetchYDoc(encodedVector);
   };
 
   private updateHandler = async (update: Uint8Array, origin: string) => {
