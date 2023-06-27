@@ -21,7 +21,7 @@
     "README.md"
   ],
   "scripts": {
-    "build": "tsup && cp dist/index.d.ts dist/index.d.cts",
+    "build": "tsup",
     "lint": "eslint src/",
     "lint:package": "publint --strict && attw /tmp/$( npm pack -q --pack-destination /tmp )",
     "format": "(eslint --fix src/ || true) && prettier --write src/",
