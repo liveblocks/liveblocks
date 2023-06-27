@@ -13,7 +13,7 @@
     "build:ast": "generate-ast src/ast/ast.grammar src/ast/index.ts && tsc --noEmit src/ast/index.ts && node bin/update-returntypes.js",
     "build:parser": "bin/build-parser && tsc --noEmit src/parser/generated-parser.ts",
     "lint": "eslint src/",
-    "lint:package": "publint --strict && attw /tmp/$( npm pack -q --pack-destination /tmp )",
+    "lint:package": "publint --strict && attw --pack",
     "format": "(eslint --fix src/ || true) && prettier --write src/",
     "test": "jest --colors --verbose --no-coverage"
   },
