@@ -132,7 +132,6 @@ export default class LiveblocksProvider<
   E extends Json
 > extends Observable<unknown> {
   private room: Room<P, S, U, E>;
-  private httpEndpoint?: string;
   private doc: Y.Doc;
 
   private unsubscribers: Array<() => void> = [];
@@ -200,16 +199,10 @@ export default class LiveblocksProvider<
     }
   }
 
-  private updateHandler = async (update: Uint8Array, origin: string) => {
+  private updateHandler = (update: Uint8Array, origin: string) => {
     if (origin !== "backend") {
       const encodedUpdate = Base64.fromUint8Array(update);
       this.room.updateYDoc(encodedUpdate);
-      if (this.httpEndpoint) {
-        await fetch(this.httpEndpoint, {
-          method: "POST",
-          body: encodedUpdate,
-        });
-      }
     }
   };
 
