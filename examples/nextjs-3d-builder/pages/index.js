@@ -46,12 +46,10 @@ export default function Example() {
             position={[5, 25, 20]}
           />
           <Suspense fallback={null}>
-            {colors && (
-              <Shoe
-                snap={colors}
-                selectMaterial={(material) => setMaterial(material)}
-              />
-            )}
+            <Shoe
+              snap={colors}
+              selectMaterial={(material) => setMaterial(material)}
+            />
             <ContactShadows
               position={[0, -0.8, 0]}
               opacity={0.25}
