@@ -14,7 +14,7 @@
     "build": "tsup",
     "format": "(eslint --fix src/ || true) && prettier --write src/",
     "lint": "eslint src/",
-    "lint:package": "publint --strict && attw /tmp/$( npm pack -q --pack-destination /tmp )",
+    "lint:package": "publint --strict && attw --pack",
     "test": "jest --silent --verbose --color=always",
     "test:types": "tsd",
     "test:watch": "jest --silent --verbose --color=always --watch"
