@@ -10,9 +10,9 @@
   },
   "dependencies": {
     "@lexical/react": "^0.11.1",
-    "@liveblocks/client": "^1.1.1-yjs2",
-    "@liveblocks/react": "^1.1.1-yjs2",
-    "@liveblocks/yjs": "^1.1.1-yjs2",
+    "@liveblocks/client": "^1.1.1-yjs3",
+    "@liveblocks/react": "^1.1.1-yjs3",
+    "@liveblocks/yjs": "^1.1.1-yjs3",
     "@types/node": "18.11.18",
     "@types/react": "18.0.27",
     "@types/react-dom": "18.0.10",

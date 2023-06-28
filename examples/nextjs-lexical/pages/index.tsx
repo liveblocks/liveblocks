@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { RoomProvider, useOthers, useRoom } from "../liveblocks.config";
+import { useMemo } from "react";
+import { RoomProvider, useRoom } from "../liveblocks.config";
 import "@liveblocks/react";
 import { useRouter } from "next/router";
 import * as Y from "yjs";
@@ -58,27 +58,18 @@ const USER_INFO = [
   },
 ];
 
-
-function WhoIsHere() {
-  const userCount = useOthers((others) => others.length);
-
-  return (
-    <div className="who_is_here">There are {userCount} other users online</div>
-  );
-}
-
 function initialEditorState(editor: LexicalEditor): void {
   const root = $getRoot();
   const paragraph = $createParagraphNode();
-  const text = $createTextNode('Welcome to collab!');
+  const text = $createTextNode();
   paragraph.append(text);
   root.append(paragraph);
 }
 
-
 function Editor() {
 
   const room = useRoom();
+  const user = USER_INFO[Math.floor(Math.random() * USER_INFO.length)]
   const initialConfig = {
     // NOTE: This is critical for collaboration plugin to set editor state to null. It
     // would indicate that the editor should not try to set any default state
@@ -86,21 +77,35 @@ function Editor() {
     editorState: null,
     namespace: 'Demo',
     nodes: [],
-    onError: (error: Error) => {
+    onError: (error: unknown) => {
       throw error;
     },
-    theme: {},
+    theme: {
+      blockCursor: 'editor-block-cursor',
+      ltr: 'ltr',
+      placeholder: 'editor-placeholder',
+      paragraph: 'editor-paragraph',
+      quote: 'editor-quote',
+      cursor: 'cursor',
+      text: {
+        bold: 'editor-text-bold',
+        underline: 'editor-text-underline',
+        italic: 'editor-text-italic',
+      },
+    },
   };
 
   return (
     <LexicalComposer initialConfig={initialConfig}>
       <PlainTextPlugin
-        contentEditable={<ContentEditable />}
-        placeholder={<div>Enter some text...</div>}
+        contentEditable={<ContentEditable className="editor-content" />}
+        placeholder={null}
         ErrorBoundary={LexicalErrorBoundary}
       />
       <CollaborationPlugin
         id="yjs-plugin"
+        cursorColor={user.color}
+        username={user.name}
         providerFactory={(id, yjsDocMap) => {
           const doc = new Y.Doc();
           yjsDocMap.set(id, doc);
@@ -118,14 +123,7 @@ function Example() {
 
   return (
     <div className="container">
-      <div className="editor">
-        <Editor />
-        <div className="editor__footer">
-          <div className={`editor__status editor__status--${status}`}>
-            <WhoIsHere />
-          </div>
-        </div>
-      </div>
+      <Editor />
     </div>
   );
 }
