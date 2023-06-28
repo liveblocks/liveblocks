@@ -7,7 +7,7 @@
   </a>
 </p>
 
-# Collaborative To-do List
+# Collaborative Rich Text Editor (Quill)
 
 <p>
   <a href="https://liveblocks.io/examples/collaborative-todo-list/javascript/preview">
@@ -19,67 +19,22 @@
   <img src="https://img.shields.io/badge/javascript-message?style=flat&logo=javascript&color=db0&logoColor=fff" alt="JavaScript" />
 </p>
 
-This example shows how to build a collaborative to-do list with
-[Liveblocks](https://liveblocks.io) and [esbuild](https://esbuild.github.io/).
+This example shows how to build a collaborative rich text editor with
+[Liveblocks](https://liveblocks.io), [Quill](https://quilljs.com/) and
+[esbuild](https://esbuild.github.io/).
 
-As users edit the list, changes will be automatically persisted and
-synced—allowing for a list that updates in real-time across clients. Users will
-also be able to see who else is currently online and when a user is typing.
-
-<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/todo-list.png" width="536" alt="Collaborative To-do List" />
+<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/block-text-editor-advanced.png" width="536" alt="Collaborative Rich Text Editor (Quill)" />
 
 ## Getting started
 
-Run the following command to try this example locally:
-
-```bash
-npx create-liveblocks-app@latest --example javascript-todo-list --no-api-key --no-vercel
-```
-
-This will download the example and install the example. Next, you must:
-
-- Create an account on [liveblocks.io](https://liveblocks.io/dashboard)
-- Copy your **public** key from the [dashboard](https://liveblocks.io/dashboard/apikeys)
-- Replace `pk_YOUR_PUBLIC_KEY` in [`app.js`](./app.js) with your **public** key
-- Run `npm run build` and open `static/index.html` in your browser
-
-### Manual setup
-
-<details><summary>Read more</summary>
-
-<p></p>
-
-Alternatively, you can set up your project manually:
+Run the following command to set up your project manually:
 
 - Install all dependencies with `npm install`
 - Create an account on [liveblocks.io](https://liveblocks.io/dashboard)
-- Copy your **public** key from the [dashboard](https://liveblocks.io/dashboard/apikeys)
+- Copy your **public** key from the
+  [dashboard](https://liveblocks.io/dashboard/apikeys)
 - Replace `pk_YOUR_PUBLIC_KEY` in [`app.js`](./app.js) with your **public** key
 - Run `npm run build` and open `static/index.html` in your browser
-
-</details>
-
-### Deploy on Vercel
-
-<details><summary>Read more</summary>
-
-<p></p>
-
-To both deploy on [Vercel](https://vercel.com), and run the example locally, use the following command:
-
-```bash
-npx create-liveblocks-app@latest --example javascript-todo-list --vercel
-```
-
-This will download the example and ask permission to open your browser, enabling you to deploy to Vercel. Next, you must:
-
-- Create an account on [liveblocks.io](https://liveblocks.io/dashboard)
-- Copy your **public** key from the [dashboard](https://liveblocks.io/dashboard/apikeys)
-- Replace `pk_YOUR_PUBLIC_KEY` in [`app.js`](./app.js) with your **public** key
-- Push a commit to update the Vercel demo with the key
-- Run `npm run build` and open `static/index.html` in your browser
-
-</details>
 
 ### Develop on CodeSandbox
 
@@ -87,12 +42,9 @@ This will download the example and ask permission to open your browser, enabling
 
 <p></p>
 
-After forking [this example](https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/javascript-todo-list) on CodeSandbox, create the `pk_YOUR_PUBLIC_KEY` environment variable as a [public](https://codesandbox.io/docs/secrets).
+After forking
+[this example](https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/javascript-yjs-quill)
+on CodeSandbox, create the `pk_YOUR_PUBLIC_KEY` environment variable as a
+[public](https://codesandbox.io/docs/secrets).
 
 </details>
-
-### Tutorial
-
-Follow our
-[step by step tutorial](https://liveblocks.io/docs/tutorials/collaborative-to-do-list/javascript)
-to build it from scratch.
