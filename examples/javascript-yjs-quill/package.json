@@ -1,6 +1,6 @@
 {
-  "name": "@liveblocks/javascript-yjs",
-  "description": "This example shows how to build a collaborative text editor with liveblocks and yjs",
+  "name": "@liveblocks/javascript-yjs-quill",
+  "description": "This example shows how to build a collaborative text editor with Liveblocks, Quill, and Yjs.",
   "license": "Apache-2.0",
   "private": true,
   "main": "app.js",

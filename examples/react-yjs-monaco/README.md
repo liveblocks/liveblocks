@@ -7,7 +7,7 @@
   </a>
 </p>
 
-# Collaborative Code Editor
+# Collaborative Code Editor (Monaco)
 
 <p>
   <a href="https://liveblocks.io/examples/collaborative-todo-list/react/preview">
@@ -19,7 +19,7 @@
   <img src="https://img.shields.io/badge/react-message?style=flat&logo=react&color=0bd&logoColor=fff" alt="React" />
 </p>
 
-This example shows how to build a collaborative to-do list with [Liveblocks](https://liveblocks.io), Yjs, Monaco, and [React](https://reactjs.org/).
+This example shows how to build a collaborative to-do list with [Liveblocks](https://liveblocks.io), [Yjs](https://docs.yjs.dev), [Monaco](https://microsoft.github.io/monaco-editor/), and [React](https://reactjs.org/).
 
 As users edit the code, changes will be automatically persisted and synced—allowing for collaborative code editing experience. Users will also be able to see who else is currently online and each others cursors.
 
@@ -27,26 +27,7 @@ As users edit the code, changes will be automatically persisted and synced—all
 
 ## Getting started
 
-Run the following command to try this example locally:
-
-```bash
-npx create-liveblocks-app@latest --example react-code-editor --no-api-key --no-vercel
-```
-
-This will download the example and install the example. Next, you must:
-
-- Create an account on [liveblocks.io](https://liveblocks.io/dashboard)
-- Copy your **public** key from the [dashboard](https://liveblocks.io/dashboard/apikeys)
-- Replace `pk_YOUR_PUBLIC_KEY` in [`liveblocks.config.js`](./src/liveblocks.config.js) with your **public** key
-- Run `npm run start` and open `http://localhost:3000` in your browser
-
-### Manual setup
-
-<details><summary>Read more</summary>
-
-<p></p>
-
-Alternatively, you can set up your project manually:
+Run the following command to set up your project manually:
 
 - Install all dependencies with `npm install`
 - Create an account on [liveblocks.io](https://liveblocks.io/dashboard)
@@ -54,40 +35,12 @@ Alternatively, you can set up your project manually:
 - Replace `pk_YOUR_PUBLIC_KEY` in [`liveblocks.config.js`](./src/liveblocks.config.js) with your **public** key
 - Run `npm run start` and open `http://localhost:3000` in your browser
 
-</details>
-
-### Deploy on Vercel
-
-<details><summary>Read more</summary>
-
-<p></p>
-
-To both deploy on [Vercel](https://vercel.com), and run the example locally, use the following command:
-
-```bash
-npx create-liveblocks-app@latest --example react-todo-list --vercel
-```
-
-This will download the example and ask permission to open your browser, enabling you to deploy to Vercel. Next, you must:
-
-- Create an account on [liveblocks.io](https://liveblocks.io/dashboard)
-- Copy your **public** key from the [dashboard](https://liveblocks.io/dashboard/apikeys)
-- Replace `pk_YOUR_PUBLIC_KEY` in [`liveblocks.config.js`](./liveblocks.config.js) with your **public** key
-- Push a commit to update the Vercel demo with the key
-- Run `npm run start` and open `http://localhost:3000` in your browser
-
-</details>
-
 ### Develop on CodeSandbox
 
 <details><summary>Read more</summary>
 
 <p></p>
 
-After forking [this example](https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/react-todo-list) on CodeSandbox, create the `pk_YOUR_PUBLIC_KEY` environment variable as a [public](https://codesandbox.io/docs/secrets).
+After forking [this example](https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/react-yjs-monaco) on CodeSandbox, replace `pk_YOUR_PUBLIC_KEY` in [`liveblocks.config.js`](./src/liveblocks.config.js) with your **public** key.
 
 </details>
-
-### Tutorial
-
-Follow our [step by step tutorial](https://liveblocks.io/docs/tutorials/collaborative-to-do-list/react) to build it from scratch.
