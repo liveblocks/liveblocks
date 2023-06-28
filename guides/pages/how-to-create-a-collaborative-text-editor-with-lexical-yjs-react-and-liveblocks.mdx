@@ -81,7 +81,6 @@ Now that we set up Liveblocks, we can start integrating Lexical and Yjs in the
 
 ```tsx file="Editor.tsx"
 import { useRoom } from "../liveblocks.config";
-import "@liveblocks/react";
 import * as Y from "yjs";
 import LiveblocksProvider from "@liveblocks/yjs";
 import {
@@ -92,7 +91,7 @@ import {
 } from "lexical";
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
 import { ContentEditable } from "@lexical/react/LexicalContentEditable";
-import { PlainTextPlugin } from "@lexical/react/LexicalPlainTextPlugin";
+import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 import { CollaborationPlugin } from "@lexical/react/LexicalCollaborationPlugin";
 import LexicalErrorBoundary from "@lexical/react/LexicalErrorBoundary";
 import { Provider } from "@lexical/yjs";
@@ -125,7 +124,7 @@ export default function Editor() {
   return (
     <div className={styles.container}>
       <LexicalComposer initialConfig={initialConfig}>
-        <PlainTextPlugin
+        <RichTextPlugin
           contentEditable={<ContentEditable className={styles.editor} />}
           placeholder={
             <div className={styles.placeholder}>Start typing here…</div>
@@ -207,4 +206,140 @@ return (
     </LexicalComposer>
   </div>
 );
+```
+
+## Add a toolbar
+
+From this point onwards, you can build your Lexical app as normal! For example,
+should you wish to add a basic text-style toolbar to your app:
+
+```tsx file="Toolbar.tsx"
+import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
+import { FORMAT_TEXT_COMMAND } from "lexical";
+import styles from "./Toolbar.module.css";
+
+export function Toolbar() {
+  const [editor] = useLexicalComposerContext();
+
+  return (
+    <div className={styles.toolbar}>
+      <button
+        className={styles.buttonBold}
+        onClick={() => {
+          editor.dispatchCommand(FORMAT_TEXT_COMMAND, "bold");
+        }}
+        aria-label="Format bold"
+      >
+        B
+      </button>
+      <button
+        className={styles.buttonItalic}
+        onClick={() => {
+          editor.dispatchCommand(FORMAT_TEXT_COMMAND, "italic");
+        }}
+        aria-label="Format italic"
+      >
+        i
+      </button>
+      <button
+        className={styles.buttonUnderline}
+        onClick={() => {
+          editor.dispatchCommand(FORMAT_TEXT_COMMAND, "underline");
+        }}
+        aria-label="Format underline"
+      >
+        u
+      </button>
+    </div>
+  );
+}
+```
+
+Add some matching styles:
+
+```tsx file="Toolbar.module.css" isCollapsed isCollapsable
+// TODO add steven's toolbar styles
+```
+
+You can then import this into your editor to enable basic rich-text:
+
+```tsx file="Editor.tsx" highlight="1,10"
+import { Toolbar } from "./Toolbar";
+// ...
+
+export default function Editor() {
+  // ...
+
+  return (
+    <div className={styles.container}>
+      <LexicalComposer initialConfig={initialConfig}>
+        <Toolbar />
+        <RichTextPlugin
+          contentEditable={<ContentEditable className={styles.editor} />}
+          placeholder={
+            <div className={styles.placeholder}>Start typing here…</div>
+          }
+          ErrorBoundary={LexicalErrorBoundary}
+        />
+      </LexicalComposer>
+    </div>
+  );
+}
+```
+
+### Theme your text styles
+
+You can go a step further and theme your basic custom text styles by using the
+`theme` property, and adding corresponding styles:
+
+```tsx file="Editor.tsx"
+import styles from "./Editor.module.css";
+// ...
+
+export default function Editor() {
+  const room = useRoom();
+  const user = USER_INFO[Math.floor(Math.random() * USER_INFO.length)];
+  const initialConfig = {
+    // NOTE: This is critical for collaboration plugin to set editor state to null. It
+    // would indicate that the editor should not try to set any default state
+    // (not even empty one), and let collaboration plugin do it instead
+    editorState: null,
+    namespace: "Demo",
+    nodes: [],
+    onError: (error: unknown) => {
+      throw error;
+    },
+    theme: {
+      text: {
+        bold: styles.textBold,
+        italic: styles.textItalic,
+        underline: styles.textUnderline,
+      },
+      paragraph: styles.paragraph,
+    },
+  };
+
+  // ...
+}
+```
+
+And then in your CSS module, you can style your rich-text:
+
+```tsx file="Editor.module.css" isCollapsed isCollapsable
+// ...
+.textBold {
+  font-weight: bold;
+}
+
+.textItalic {
+  font-style: italic;
+}
+
+.textUnderline {
+  text-decoration: underline;
+}
+
+.paragraph {
+  margin: 0.2rem 0;
+}
 ```
