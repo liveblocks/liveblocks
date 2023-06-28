@@ -20,8 +20,8 @@
 </p>
 
 This example shows how to build a collaborative rich text editor with
-[Liveblocks](https://liveblocks.io), [Quill](https://quilljs.com/) and
-[esbuild](https://esbuild.github.io/).
+[Liveblocks](https://liveblocks.io), [Yjs](https://docs.yjs.dev),
+[Quill](https://quilljs.com/) and [esbuild](https://esbuild.github.io/).
 
 <img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/block-text-editor-advanced.png" width="536" alt="Collaborative Rich Text Editor (Quill)" />
 
@@ -44,7 +44,7 @@ Run the following command to set up your project manually:
 
 After forking
 [this example](https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/javascript-yjs-quill)
-on CodeSandbox, create the `pk_YOUR_PUBLIC_KEY` environment variable as a
-[public](https://codesandbox.io/docs/secrets).
+on CodeSandbox, replace `pk_YOUR_PUBLIC_KEY` in [`app.js`](./app.js) with your
+**public** key
 
 </details>
