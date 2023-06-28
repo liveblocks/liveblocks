@@ -55,26 +55,28 @@ export default function Editor() {
     <div className={styles.container}>
       <LexicalComposer initialConfig={initialConfig}>
         <Toolbar />
-        <RichTextPlugin
-          contentEditable={<ContentEditable className={styles.editor} />}
-          placeholder={
-            <div className={styles.placeholder}>Start typing here…</div>
-          }
-          ErrorBoundary={LexicalErrorBoundary}
-        />
-        <CollaborationPlugin
-          id="yjs-plugin"
-          cursorColor={user.color}
-          username={user.name}
-          providerFactory={(id, yjsDocMap) => {
-            const doc = new Y.Doc();
-            yjsDocMap.set(id, doc);
-            const provider = new LiveblocksProvider(room, doc) as Provider;
-            return provider;
-          }}
-          initialEditorState={initialEditorState}
-          shouldBootstrap={true}
-        />
+        <div className={styles.editorContainer}>
+          <RichTextPlugin
+            contentEditable={<ContentEditable className={styles.editor} />}
+            placeholder={
+              <p className={styles.placeholder}>Start typing here…</p>
+            }
+            ErrorBoundary={LexicalErrorBoundary}
+          />
+          <CollaborationPlugin
+            id="yjs-plugin"
+            cursorColor={user.color}
+            username={user.name}
+            providerFactory={(id, yjsDocMap) => {
+              const doc = new Y.Doc();
+              yjsDocMap.set(id, doc);
+              const provider = new LiveblocksProvider(room, doc) as Provider;
+              return provider;
+            }}
+            initialEditorState={initialEditorState}
+            shouldBootstrap={true}
+          />
+        </div>
       </LexicalComposer>
     </div>
   );
