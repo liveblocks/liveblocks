@@ -106,5 +106,12 @@
     "topics": ["tutorials"],
     "technologies": ["react"],
     "date": "2023-06-27"
+  },
+  {
+    "title": "How to create a collaborative text editor with Lexical, Yjs, React, and Liveblocks",
+    "path": "/how-to-create-a-collaborative-text-editor-with-lexical-yjs-react-and-liveblocks",
+    "topics": ["tutorials"],
+    "technologies": ["react"],
+    "date": "2023-06-28"
   }
 ]
