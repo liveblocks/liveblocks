@@ -47,11 +47,6 @@ export default function Editor() {
         italic: styles.textItalic,
         underline: styles.textUnderline,
       },
-      heading: {
-        h1: styles.headingH1,
-        h2: styles.headingH2,
-        h3: styles.headingH3,
-      },
       paragraph: styles.paragraph,
     },
   };
