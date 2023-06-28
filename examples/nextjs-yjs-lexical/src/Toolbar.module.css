@@ -1,0 +1,15 @@
+.toolbar {
+  display: flex;
+}
+
+.buttonBold {
+  font-weight: 900;
+}
+
+.buttonItalic {
+  font-style: italic;
+}
+
+.buttonUnderline {
+  text-decoration: underline;
+}

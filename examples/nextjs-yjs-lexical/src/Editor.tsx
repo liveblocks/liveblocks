@@ -12,12 +12,13 @@ import {
 } from "lexical";
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
 import { ContentEditable } from "@lexical/react/LexicalContentEditable";
-import { PlainTextPlugin } from "@lexical/react/LexicalPlainTextPlugin";
+import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 import { CollaborationPlugin } from "@lexical/react/LexicalCollaborationPlugin";
 import LexicalErrorBoundary from "@lexical/react/LexicalErrorBoundary";
 import { Provider } from "@lexical/yjs";
 import styles from "./Editor.module.css";
 import { USER_INFO } from "./constants";
+import { Toolbar } from "./Toolbar";
 
 function initialEditorState(editor: LexicalEditor): void {
   const root = $getRoot();
@@ -40,13 +41,26 @@ export default function Editor() {
     onError: (error: unknown) => {
       throw error;
     },
-    theme: {},
+    theme: {
+      text: {
+        bold: styles.textBold,
+        italic: styles.textItalic,
+        underline: styles.textUnderline,
+      },
+      heading: {
+        h1: styles.headingH1,
+        h2: styles.headingH2,
+        h3: styles.headingH3,
+      },
+      paragraph: styles.paragraph,
+    },
   };
 
   return (
     <div className={styles.container}>
       <LexicalComposer initialConfig={initialConfig}>
-        <PlainTextPlugin
+        <Toolbar />
+        <RichTextPlugin
           contentEditable={<ContentEditable className={styles.editor} />}
           placeholder={
             <div className={styles.placeholder}>Start typing here…</div>
