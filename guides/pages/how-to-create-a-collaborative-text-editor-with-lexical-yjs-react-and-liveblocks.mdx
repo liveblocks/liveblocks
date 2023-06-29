@@ -142,35 +142,40 @@ editor looks nice and tidy.
 
 ```css file="Editor.module.css" isCollapsed isCollapsable
 .container {
+  display: flex;
+  flex-direction: column;
   position: relative;
-  border-radius: 6px;
+  border-radius: 12px;
   background: #fff;
-  padding: 1em 0;
   width: 100%;
   height: 100%;
   color: #111827;
 }
 
 .editor {
-  position: absolute;
-  inset: 0;
   border-radius: inherit;
-  padding: inherit;
+  flex-grow: 1;
 }
 
 .editor:focus {
   outline: none;
 }
 
+.editorContainer {
+  position: relative;
+  padding: 0 1em;
+}
+
 .placeholder {
   pointer-events: none;
   position: absolute;
+  inset: 0;
   opacity: 0.3;
-  margin: 0 1em;
+  padding: 0 1em;
 }
 
 .editor p {
-  margin: 0 1em;
+  margin: 1em 0;
 }
 ```
 
@@ -257,8 +262,39 @@ export function Toolbar() {
 
 Add some matching styles:
 
-```tsx file="Toolbar.module.css" isCollapsed isCollapsable
-// TODO add steven's toolbar styles
+```css file="Toolbar.module.css" isCollapsed isCollapsable
+.toolbar {
+  display: flex;
+  padding: 1em;
+  gap: 6px;
+}
+
+.button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-radius: 6px;
+  height: 32px;
+  width: 32px;
+  background: #fff;
+  color: #1f2937;
+  border: none;
+  box-shadow: rgba(0, 0, 0, 0.12) 0 4px 8px 0, rgba(0, 0, 0, 0.02) 0 0 0 1px;
+}
+
+.button:hover {
+  color: #111827;
+  box-shadow: rgba(0, 0, 0, 0.16) 0 5px 8px 0, rgba(0, 0, 0, 0.04) 0 0 0 1px;
+}
+
+.button:focus-visible {
+  outline-offset: 2px;
+}
+
+.button:active {
+  box-shadow: rgba(0, 0, 0, 0.16) 0 2px 3px 0, rgba(0, 0, 0, 0.04) 0 0 0 1px;
+}
 ```
 
 You can then import this into your editor to enable basic rich-text:
@@ -325,8 +361,9 @@ export default function Editor() {
 
 And then in your CSS module, you can style your rich-text:
 
-```tsx file="Editor.module.css" isCollapsed isCollapsable
-// ...
+```css file="Editor.module.css" isCollapsed isCollapsable
+/* ... */
+
 .textBold {
   font-weight: bold;
 }
