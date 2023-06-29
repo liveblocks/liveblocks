@@ -212,10 +212,10 @@ collaborative experiences as you build them, in real-time.
 Return the presence of the current user, and a function to update it.
 Automatically subscribes to updates to the current user’s presence.
 
-Note that the `updateMyPresence` setter function is different from the setter
-function as returned by React’s `useState` hook. Unlike the normal React state
-setter, you can pass a partial presence object to `updateMyPresence`, and it
-will get merged.
+Note that the `updateMyPresence` setter function is different to the setter
+function returned by React’s `useState` hook. Instead, you can pass a partial
+presence object to `updateMyPresence`, and any changes will be merged into the
+current presence. It will not replace the entire presence object.
 
 ```ts
 import { useMyPresence } from "./liveblocks.config";
@@ -242,6 +242,11 @@ Use this if you don’t need the current user’s presence in your component, bu
 you need to update it (e.g. live cursor). It’s better to use
 `useUpdateMyPresence` because it won’t subscribe your component to get
 rerendered when the presence updates.
+
+Note that the `updateMyPresence` setter function is different to the setter
+function returned by React’s `useState` hook. Instead, you can pass a partial
+presence object to `updateMyPresence`, and any changes will be merged into the
+current presence. It will not replace the entire presence object.
 
 ```ts
 import { useUpdateMyPresence } from "./liveblocks.config";
@@ -1059,10 +1064,10 @@ The received input to all selector functions is a **read-only** and
 
 For example, suppose you have set up Storage in the typical way by setting
 `initialStorage` in your [`RoomProvider`][] to a tree that describes your app’s
-data model using `LiveList`, `LiveObject`, and `LiveMap`.
-The "root" argument for your selector function, however, will receive **an
-immutable and read-only representation** of that Storage tree, consisting of
-"normal" JavaScript datastructures. This makes consumption much easier.
+data model using `LiveList`, `LiveObject`, and `LiveMap`. The "root" argument
+for your selector function, however, will receive **an immutable and read-only
+representation** of that Storage tree, consisting of "normal" JavaScript
+datastructures. This makes consumption much easier.
 
 ```tsx file="Component.tsx"
 function Component() {
@@ -1111,28 +1116,26 @@ Selectors you write can return _any_ value. You can use it to “just” select
 nodes from the root tree (first two examples above), but you can also return
 computed values, like in the last two examples.
 
-💡 **Important**
-One important rule is that selector functions **must return a stable result** to
-be efficient. This means calling the same selector twice with the same argument
-should return two results that are _referentially equal_. Special care needs to
-be taken when filtering or mapping over arrays, or when returning object
-literals, because those operations create new array or object instances on every
-call. (Why this is is detailed
+💡 **Important** One important rule is that selector functions **must return a
+stable result** to be efficient. This means calling the same selector twice with
+the same argument should return two results that are _referentially equal_.
+Special care needs to be taken when filtering or mapping over arrays, or when
+returning object literals, because those operations create new array or object
+instances on every call. (Why this is is detailed
 [in the next section](#selectors-subscribe-to-updates).)
 
 Some examples of what "a stable result" means:
 
-- ✅ `(root) => root.animals` is stable 👍
-  Liveblocks guarantees this. All nodes in the Storage tree are stable
-  references as long as their contents don’t change.
+- ✅ `(root) => root.animals` is stable 👍 Liveblocks guarantees this. All nodes
+  in the Storage tree are stable references as long as their contents don’t
+  change.
 
-- ⚠️ `(root) => root.animals.map(...)` is **not** stable 👎
-  Because `.map()` creates a new array instance every time. You’ll need to use
-  [`shallow`][] here.
+- ⚠️ `(root) => root.animals.map(...)` is **not** stable 👎 Because `.map()`
+  creates a new array instance every time. You’ll need to use [`shallow`][]
+  here.
 
-- ✅ `(root) => root.animals.map(...).join(', ')` is stable 👍
-  Because `.join()` ultimately returns a string and all primitive values are
-  always stable.
+- ✅ `(root) => root.animals.map(...).join(', ')` is stable 👍 Because `.join()`
+  ultimately returns a string and all primitive values are always stable.
 
 If your selector function doesn’t return a stable result, it will lead to an
 explosion of unnecessary rerenders. In most cases, you’ll want to use a
