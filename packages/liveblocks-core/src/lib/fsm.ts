@@ -264,7 +264,11 @@ export class FSM<
 
   public get currentState(): TState {
     if (this.currentStateOrNull === null) {
-      throw new Error("Not started yet");
+      if (this.runningState === RunningState.NOT_STARTED_YET) {
+        throw new Error("Not started yet");
+      } else {
+        throw new Error("Already stopped");
+      }
     }
     return this.currentStateOrNull;
   }
@@ -289,10 +293,10 @@ export class FSM<
    */
   public stop(): void {
     if (this.runningState !== RunningState.STARTED) {
-      throw new Error("Cannot stop a state machine that isn't started yet");
+      throw new Error("Cannot stop a state machine that hasn't started yet");
     }
-    this.runningState = RunningState.STOPPED;
     this.exit(null);
+    this.runningState = RunningState.STOPPED;
     this.currentStateOrNull = null;
   }
 
@@ -511,10 +515,11 @@ export class FSM<
    * Exits the current state, and executes any necessary cleanup functions.
    * Call this before changing the current state to the next state.
    *
-   * @param levels Defines how many "levels" of nesting will be exited. For
-   * example, if you transition from `foo.bar.qux` to `foo.bar.baz`, then
-   * the level is 1. But if you transition from `foo.bar.qux` to `bla.bla`,
-   * then the level is 3.
+   * @param levels Defines how many "levels" of nesting will be
+   * exited. For example, if you transition from `foo.bar.qux` to
+   * `foo.bar.baz`, then the level is 1. But if you transition from
+   * `foo.bar.qux` to `bla.bla`, then the level is 3.
+   * If `null`, it will exit all levels.
    */
   private exit(levels: number | null) {
     this.eventHub.willExitState.notify(this.currentState);
@@ -557,16 +562,26 @@ export class FSM<
    * transition to happen. When that happens, will trigger side effects.
    */
   public send(event: TEvent): void {
+    // Throw if the event is unknown, which may likely be a configuration error
+    if (!this.knownEventTypes.has(event.type)) {
+      throw new Error(`Invalid event ${JSON.stringify(event.type)}`);
+    }
+
+    if (this.runningState === RunningState.STOPPED) {
+      // Ignore all events sent to the machine after it has stopped. This is
+      // similar to how we ignore events sent to the machine after it
+      // transitioned to a phase in which the event won't be handled: it would
+      // also get ignored.
+      // However, if the machine _hasn't started yet_, we still let it throw an
+      // error, because then it's most likely a usage error.
+      return;
+    }
+
     const targetFn = this.getTargetFn(event.type);
     if (targetFn !== undefined) {
       return this.transition(event, targetFn);
-    }
-
-    // Ignore the event otherwise, but throw if the event is entirely unknown,
-    // which may likely be a configuration error
-    if (!this.knownEventTypes.has(event.type)) {
-      throw new Error(`Invalid event ${JSON.stringify(event.type)}`);
     } else {
+      // Ignore the event otherwise
       this.eventHub.didIgnoreEvent.notify(event);
     }
   }

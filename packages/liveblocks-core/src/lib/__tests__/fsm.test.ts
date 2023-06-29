@@ -63,8 +63,40 @@ describe("finite state machine", () => {
   });
 
   test("cannot use FSM when it hasn't started yet", () => {
-    const fsm = new FSM({});
-    expect(() => fsm.send({ type: "SOME_EVENT" })).toThrow("Not started yet");
+    const fsm = new FSM({})
+      .addState("one")
+      .addState("two")
+      .addTransitions("one", { GO: "two" });
+
+    // Events sent before starting the machine will throw
+    expect(() => fsm.send({ type: "GO" })).toThrow("Not started yet");
+  });
+
+  test("stopping a machine that hasn't started yet will throw", () => {
+    const fsm = new FSM({}).addState("one");
+    expect(() => fsm.stop()).toThrow(
+      "Cannot stop a state machine that hasn't started yet"
+    );
+  });
+
+  test("sending *known* events after the FSM has stopped will get ignored", () => {
+    const fsm = new FSM({})
+      .addState("one")
+      .addState("two")
+      .addTransitions("one", { GO: "two" });
+    fsm.start();
+    fsm.stop();
+    // Events sent after stopping the machine will get ignored (but will NOT throw)
+    expect(() => fsm.send({ type: "GO" })).not.toThrow();
+  });
+
+  test("sending *unknown* events after the FSM has stopped will still throw", () => {
+    const fsm = new FSM({}).addState("initial");
+    fsm.start();
+    fsm.stop();
+    expect(() => fsm.send({ type: "UNKNOWN" })).toThrow(
+      'Invalid event "UNKNOWN"'
+    );
   });
 
   test("cannot get current state when machine hasn't started yet", () => {

@@ -1,3 +1,8 @@
+# v1.1.1
+
+Fixes a bug where under certain circumstances the Liveblocks client could
+incorrectly throw a `Not started yet` error message.
+
 # v1.1.0
 
 This release improves the client’s internals to ensure a more reliable
