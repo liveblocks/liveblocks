@@ -63,7 +63,7 @@ export class Liveblocks {
    * obtains such access token will have access to the allowed resources.
    *
    * @param userId Tell Liveblocks the user ID of the user to authorize. Must
-   * uniquely identity the user account in your system. The uniqueness of this
+   * uniquely identify the user account in your system. The uniqueness of this
    * value will determine how many MAUs will be counted/billed.
    *
    * @param permissions The PermissionSet instance describing what this user
@@ -135,7 +135,7 @@ export class Liveblocks {
    * .identifyUser()!
    *
    * @param identity Tell Liveblocks the user ID of the user to authenticate.
-   * Must uniquely identity the user account in your system. The uniqueness of
+   * Must uniquely identify the user account in your system. The uniqueness of
    * this value will determine how many MAUs will be counted/billed.
    *
    * If you also want to assign which groups this user belongs to, use the
