@@ -562,8 +562,7 @@ export class FSM<
    * transition to happen. When that happens, will trigger side effects.
    */
   public send(event: TEvent): void {
-    // Ignore the event otherwise, but throw if the event is entirely unknown,
-    // which may likely be a configuration error
+    // Throw if the event is unknown, which may likely be a configuration error
     if (!this.knownEventTypes.has(event.type)) {
       throw new Error(`Invalid event ${JSON.stringify(event.type)}`);
     }
@@ -582,6 +581,7 @@ export class FSM<
     if (targetFn !== undefined) {
       return this.transition(event, targetFn);
     } else {
+      // Ignore the event otherwise
       this.eventHub.didIgnoreEvent.notify(event);
     }
   }
