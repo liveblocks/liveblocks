@@ -47,10 +47,11 @@ type AuthorizeOptions = {
    * for how to configure your room's permissions to use this feature.
    */
   groupIds?: string[];
-};
 
-/** @internal */
-type AllAuthorizeOptions = AuthorizeOptions & {
+  /**
+   * @internal
+   * Can be overriden for testing purposes only.
+   */
   liveblocksAuthorizeEndpoint?: string;
 };
 
@@ -122,10 +123,9 @@ export async function authorize(
 }
 
 function buildLiveblocksAuthorizeEndpoint(
-  options: AllAuthorizeOptions,
+  options: AuthorizeOptions,
   roomId: string
 ): string {
-  // INTERNAL override for testing purpose.
   if (options.liveblocksAuthorizeEndpoint) {
     return options.liveblocksAuthorizeEndpoint.replace("{roomId}", roomId);
   }
