@@ -79,7 +79,7 @@ describe("finite state machine", () => {
     );
   });
 
-  test("sending events after the FSM has stopped will get ignored", () => {
+  test("sending *known* events after the FSM has stopped will get ignored", () => {
     const fsm = new FSM({})
       .addState("one")
       .addState("two")
@@ -90,12 +90,12 @@ describe("finite state machine", () => {
     expect(() => fsm.send({ type: "GO" })).not.toThrow();
   });
 
-  test("sending events after the FSM has stopped will get ignored", () => {
+  test("sending *unknown* events after the FSM has stopped will still throw", () => {
     const fsm = new FSM({}).addState("initial");
     fsm.start();
     fsm.stop();
-    expect(() => fsm.send({ type: "SOME_EVENT" })).toThrow(
-      'Invalid event "SOME_EVENT"'
+    expect(() => fsm.send({ type: "UNKNOWN" })).toThrow(
+      'Invalid event "UNKNOWN"'
     );
   });
 
