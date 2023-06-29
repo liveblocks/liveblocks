@@ -291,8 +291,8 @@ export class FSM<
     if (this.runningState !== RunningState.STARTED) {
       throw new Error("Cannot stop a state machine that isn't started yet");
     }
-    this.runningState = RunningState.STOPPED;
     this.exit(null);
+    this.runningState = RunningState.STOPPED;
     this.currentStateOrNull = null;
   }
 
