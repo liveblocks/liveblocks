@@ -1,0 +1,33 @@
+---
+meta:
+  title: "@liveblocks/yjs"
+  parentTitle: "API Reference"
+  description: "API Reference for the @liveblocks/yjs package"
+alwaysShowAllNavigationLevels: false
+---
+
+## LiveblocksProvider
+
+The `LiveblocksProvider` lets you connect a Yjs doc to Liveblocks Presence and
+Storage features. Any changes you make to the Yjs doc will be stored on
+Liveblocks servers and synced with other clients in the room.
+
+```js
+import { createClient } from "@liveblocks/client";
+import LiveblocksProvider from "@liveblocks/yjs";
+import * as Y from "yjs";
+
+const client = createClient({
+  publicApiKey: "{{PUBLIC_KEY}}",
+});
+
+const room = client.enter("your-room-id", { initialPresence: {} });
+const doc = new Y.Doc();
+
+const provider = new LiveblocksProvider(room, doc);
+```
+
+## Awareness
+
+A `LiveblocksProvider` has an `awareness` property, backed by Liveblocks
+presence. You can pass it to various bindings which implement awareness.

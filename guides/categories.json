@@ -19,6 +19,11 @@
     {
       "id": "tutorials",
       "name": "Tutorials"
+    },
+    {
+      "id": "text-editors",
+      "name": "Text editors",
+      "hidden": true
     }
   ],
   "technologies": [
@@ -61,6 +66,16 @@
     {
       "id": "zustand",
       "name": "Zustand"
+    },
+    {
+      "id": "yjs",
+      "name": "Yjs",
+      "hidden": true
+    },
+    {
+      "id": "lexical",
+      "name": "Lexical",
+      "hidden": true
     }
   ]
 }

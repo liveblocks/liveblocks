@@ -513,6 +513,19 @@ export type Room<
   ): void;
 
   /**
+   *
+   * Sends Yjs document updates to liveblocks server
+   *
+   * @param {string} data the doc update to send to the server, base64 encoded uint8array
+   */
+  updateYDoc(data: string): void;
+
+  /**
+   * Sends a request for the current document from liveblocks server
+   */
+  fetchYDoc(stateVector: string): void;
+
+  /**
    * Broadcasts an event to other users in the room. Event broadcasted to the room can be listened with {@link Room.subscribe}("event").
    * @param {any} event the event to broadcast. Should be serializable to JSON
    *
@@ -569,6 +582,7 @@ export type Room<
     readonly storageDidLoad: Observable<void>;
 
     readonly storageStatus: Observable<StorageStatus>;
+    readonly ydoc: Observable<string>;
   };
 
   /**
@@ -1106,6 +1120,7 @@ export function createRoom<
     history: makeEventSource<HistoryEvent>(),
     storageDidLoad: makeEventSource<void>(),
     storageStatus: makeEventSource<StorageStatus>(),
+    ydoc: makeEventSource<string>(),
   };
 
   function sendMessages(
@@ -1693,6 +1708,11 @@ export function createRoom<
             break;
           }
 
+          case ServerMsgCode.UPDATE_YDOC: {
+            eventHub.ydoc.notify(message.update);
+            break;
+          }
+
           case ServerMsgCode.ROOM_STATE: {
             updates.others.push(onRoomStateMessage(message));
             break;
@@ -1839,6 +1859,14 @@ export function createRoom<
     return messages;
   }
 
+  function updateYDoc(update: string) {
+    context.buffer.messages.push({
+      type: ClientMsgCode.UPDATE_YDOC,
+      update,
+    });
+    flushNowOrSoon();
+  }
+
   function broadcastEvent(
     event: TRoomEvent,
     options: BroadcastOptions = {
@@ -1925,6 +1953,14 @@ export function createRoom<
     return {
       root: nn(context.root) as LiveObject<TStorage>,
     };
+  }
+
+  function fetchYDoc(vector: string): void {
+    context.buffer.messages.push({
+      type: ClientMsgCode.FETCH_YDOC,
+      vector,
+    });
+    flushNowOrSoon();
   }
 
   function undo() {
@@ -2086,6 +2122,7 @@ export function createRoom<
     history: eventHub.history.observable,
     storageDidLoad: eventHub.storageDidLoad.observable,
     storageStatus: eventHub.storageStatus.observable,
+    ydoc: eventHub.ydoc.observable,
   };
 
   return {
@@ -2118,6 +2155,7 @@ export function createRoom<
 
     // Presence
     updatePresence,
+    updateYDoc,
     broadcastEvent,
 
     // Storage
@@ -2131,6 +2169,7 @@ export function createRoom<
       resume: resumeHistory,
     },
 
+    fetchYDoc,
     getStorage,
     getStorageSnapshot,
     getStorageStatus,
