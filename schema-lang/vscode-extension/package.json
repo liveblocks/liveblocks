@@ -21,7 +21,7 @@
     "build": "npm run esbuild -- --sourcemap",
     "dev": "npm run esbuild -- --sourcemap --watch",
     "lint": "eslint src/",
-    "lint:package": "publint --strict && attw /tmp/$( npm pack -q --pack-destination /tmp )",
+    "lint:package": "publint --strict && attw --pack",
     "format": "(eslint --fix src/ || true) && prettier --write src/"
   },
   "contributes": {

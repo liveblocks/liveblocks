@@ -159,6 +159,20 @@
     ]
   },
   {
+    "title": "Errors",
+    "hidden": true,
+    "routes": [
+      {
+        "title": "atob polyfill is missing",
+        "path": "/errors/liveblocks-client/atob-polyfill"
+      },
+      {
+        "title": "RoomProvider id property is required",
+        "path": "/errors/liveblocks-react/RoomProvider-id-property-is-required"
+      }
+    ]
+  },
+  {
     "title": "Platform",
     "routes": [
       {

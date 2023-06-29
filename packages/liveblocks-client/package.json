@@ -1,6 +1,6 @@
 {
   "name": "@liveblocks/client",
-  "version": "1.1.1-yjs3",
+  "version": "1.1.1",
   "description": "A client that lets you interact with Liveblocks servers. Liveblocks is the all-in-one toolkit to build collaborative products like Figma, Notion, and more.",
   "license": "Apache-2.0",
   "main": "./dist/index.js",
@@ -14,12 +14,12 @@
     "build": "tsup",
     "format": "(eslint --fix src/ || true) && prettier --write src/",
     "lint": "eslint src/",
-    "lint:package": "publint --strict && attw /tmp/$( npm pack -q --pack-destination /tmp )",
+    "lint:package": "publint --strict && attw --pack",
     "test": "jest --silent --verbose --color=always --passWithNoTests",
     "test:watch": "jest --silent --verbose --color=always --passWithNoTests --watch"
   },
   "dependencies": {
-    "@liveblocks/core": "1.1.1-yjs3"
+    "@liveblocks/core": "1.1.1"
   },
   "devDependencies": {
     "@liveblocks/eslint-config": "*",

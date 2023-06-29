@@ -1,6 +1,6 @@
 {
   "name": "@liveblocks/react",
-  "version": "1.1.1-yjs3",
+  "version": "1.1.1",
   "description": "A set of React hooks and providers to use Liveblocks declaratively. Liveblocks is the all-in-one toolkit to build collaborative products like Figma, Notion, and more.",
   "license": "Apache-2.0",
   "main": "./dist/index.js",
@@ -15,14 +15,14 @@
     "start": "tsup --watch",
     "format": "(eslint --fix src/ || true) && prettier --write src/",
     "lint": "(eslint src/ || true) && npm run check:exports",
-    "lint:package": "publint --strict && attw /tmp/$( npm pack -q --pack-destination /tmp )",
+    "lint:package": "publint --strict && attw --pack",
     "check:exports": "tsc scripts/check-factory-exports.ts && node scripts/check-factory-exports.js",
     "test": "jest --silent --verbose --color=always",
     "test:watch": "jest --silent --verbose --color=always --watch"
   },
   "dependencies": {
-    "@liveblocks/client": "1.1.1-yjs3",
-    "@liveblocks/core": "1.1.1-yjs3",
+    "@liveblocks/client": "1.1.1",
+    "@liveblocks/core": "1.1.1",
     "use-sync-external-store": "^1.2.0"
   },
   "peerDependencies": {
