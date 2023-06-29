@@ -18,3 +18,12 @@ export function normalizeStatusCode(statusCode: number): number {
     return 403; /* Forbidden */
   }
 }
+
+/**
+ * Concatenates a path to a URL.
+ */
+export function urljoin(baseUrl: string | URL, path: string): string {
+  const url = new URL(baseUrl);
+  url.pathname = path;
+  return url.toString();
+}
