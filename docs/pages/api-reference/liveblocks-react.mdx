@@ -1116,35 +1116,46 @@ Selectors you write can return _any_ value. You can use it to “just” select
 nodes from the root tree (first two examples above), but you can also return
 computed values, like in the last two examples.
 
-💡 **Important** One important rule is that selector functions **must return a
-stable result** to be efficient. This means calling the same selector twice with
-the same argument should return two results that are _referentially equal_.
-Special care needs to be taken when filtering or mapping over arrays, or when
-returning object literals, because those operations create new array or object
-instances on every call. (Why this is is detailed
-[in the next section](#selectors-subscribe-to-updates).)
+#### Selector functions must return a stable result
 
-Some examples of what "a stable result" means:
+One important rule is that selector functions **must return a stable result** to
+be efficient. This means calling the same selector twice with the same argument
+should return two results that are _referentially equal_. Special care needs to
+be taken when filtering or mapping over arrays, or when returning object
+literals, because those operations create new array or object instances on every
+call (the reason why is detailed
+[in the next section](#selectors-subscribe-to-updates)).
 
-- ✅ `(root) => root.animals` is stable 👍 Liveblocks guarantees this. All nodes
-  in the Storage tree are stable references as long as their contents don’t
-  change.
+#### Examples of stable results
 
-- ⚠️ `(root) => root.animals.map(...)` is **not** stable 👎 Because `.map()`
-  creates a new array instance every time. You’ll need to use [`shallow`][]
-  here.
+<dl>
+  <dt>✅ `(root) => root.animals` is stable</dt>
+  <dd>
+    Liveblocks guarantees this. All nodes in the Storage tree are stable
+    references as long as their contents don’t change.
+  </dd>
+  <dt>️️⚠️ `(root) => root.animals.map(...)` is not stable</dt>
+  <dd>
+    Because `.map()` creates a new array instance every time. You’ll need to use
+    [`shallow`][] here.
+  </dd>
+  <dt>✅ `(root) => root.animals.map(...).join(", ")` is stable</dt>
+  <dd>
+    Because `.join()` ultimately returns a string and all primitive values are
+    always stable.
+  </dd>
+</dl>
 
-- ✅ `(root) => root.animals.map(...).join(', ')` is stable 👍 Because `.join()`
-  ultimately returns a string and all primitive values are always stable.
+#### Use a shallow comparison if the result isn’t stable
 
 If your selector function doesn’t return a stable result, it will lead to an
-explosion of unnecessary rerenders. In most cases, you’ll want to use a
-[`shallow`][] comparison function to loosen the check:
+explosion of unnecessary rerenders. In most cases, you can use a [`shallow`][]
+comparison function to loosen the check:
 
 ```tsx
 import { shallow } from "@liveblocks/react";
 
-// ❌ Bad - many unneeded rerenders
+// ❌ Bad - many unnecessary rerenders
 const uncheckedItems = useStorage((root) =>
   root.todos.filter((item) => !item.done)
 );
