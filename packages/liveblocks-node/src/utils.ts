@@ -8,3 +8,13 @@ export function assertNonEmpty(
     );
   }
 }
+
+export function normalizeStatusCode(statusCode: number): number {
+  if (statusCode >= 200 && statusCode < 300) {
+    return 200; /* OK */
+  } else if (statusCode >= 500) {
+    return 503; /* Service Unavailable */
+  } else {
+    return 403; /* Forbidden */
+  }
+}

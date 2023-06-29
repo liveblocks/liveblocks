@@ -1,6 +1,6 @@
 import fetch from "node-fetch";
 
-import { assertNonEmpty } from "./utils";
+import { assertNonEmpty, normalizeStatusCode } from "./utils";
 
 type AuthorizeOptions = {
   /**
@@ -108,24 +108,10 @@ export async function authorize(
       }),
     });
 
-    if (resp.ok) {
-      return {
-        status: 200 /* OK */,
-        body: await resp.text(),
-      };
-    }
-
-    if (resp.status >= 500) {
-      return {
-        status: 503 /* Service Unavailable */,
-        body: await resp.text(),
-      };
-    } else {
-      return {
-        status: 403 /* Unauthorized */,
-        body: await resp.text(),
-      };
-    }
+    return {
+      status: normalizeStatusCode(resp.status),
+      body: await resp.text(),
+    };
   } catch (er) {
     return {
       status: 503 /* Service Unavailable */,
