@@ -68,9 +68,15 @@ describe("finite state machine", () => {
       .addState("two")
       .addTransitions("one", { GO: "two" });
 
-    // NOT calling fsm.start() heree
     // Events sent before starting the machine will throw
     expect(() => fsm.send({ type: "GO" })).toThrow("Not started yet");
+  });
+
+  test("stopping a machine that hasn't started yet will throw", () => {
+    const fsm = new FSM({}).addState("one");
+    expect(() => fsm.stop()).toThrow(
+      "Cannot stop a state machine that hasn't started yet"
+    );
   });
 
   test("sending events after the FSM has stopped will get ignored", () => {
