@@ -221,8 +221,9 @@ const presence = room.getPresence();
 
 ### Room.updatePresence
 
-Updates the presence of the current user. Only pass the properties you want to
-update. No need to send the full presence.
+Updates the presence of the current user. You need only pass the properties you
+wish to update—any changes will be merged into the current presence. The entire
+presence object will not be replaced.
 
 ```ts
 room.updatePresence({ x: 0 });
