@@ -18,12 +18,12 @@
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.4.2",
-    "dependency-cruiser": "^12.11.1",
-    "prettier": "^2.8.7",
-    "publint": "^0.1.12",
+    "dependency-cruiser": "^12.12.2",
+    "prettier": "^2.8.8",
+    "publint": "^0.1.13",
     "tsd": "^0.24.1",
     "tsup": "^7.1.0",
-    "turbo": "^1.10.3",
+    "turbo": "^1.10.6",
     "typescript": "<4.8"
   }
 }
