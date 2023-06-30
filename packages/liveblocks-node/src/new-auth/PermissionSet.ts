@@ -1,14 +1,21 @@
 // As defined in the source of truth in ApiScope in
 // https://github.com/liveblocks/liveblocks-cloudflare/blob/main/src/security.ts
-export type Permission =
-  | "room:write"
-  | "room:read"
-  | "room:presence:write"
-  | "comments:write"
-  | "comments:read"
-  | "events";
+const PERMISSIONS = [
+  "room:write",
+  "room:read",
+  "room:presence:write",
+  "comments:write",
+  "comments:read",
+  "events",
+] as const;
 
-const MAX_PERMS_PER_TOKEN = 10;
+export type Permission = (typeof PERMISSIONS)[number];
+
+function isPermission(value: string): value is Permission {
+  return (PERMISSIONS as readonly unknown[]).includes(value);
+}
+
+const MAX_PERMS_PER_SET = 10;
 
 // XXX Think about this: should these be exported as _symbols_ instead which
 // will be recognized and swapped out with the defaults?
@@ -69,6 +76,12 @@ export class PermissionSet {
     if (perms) {
       return perms;
     } else {
+      if (this._permissions.size >= MAX_PERMS_PER_SET) {
+        throw new Error(
+          "You cannot add permissions for more than 10 rooms in a single token"
+        );
+      }
+
       perms = new Set<Permission>();
       this._permissions.set(roomId, perms);
       return perms;
@@ -82,10 +95,15 @@ export class PermissionSet {
     if (!roomPatternRegex.test(roomIdOrPattern)) {
       throw new Error("Invalid room name or pattern");
     }
+
+    if (newPerms.length === 0) {
+      throw new Error("Permission list cannot be empty");
+    }
+
     const existingPerms = this.getOrCreate(roomIdOrPattern);
     for (const perm of newPerms) {
-      if (existingPerms.size > MAX_PERMS_PER_TOKEN) {
-        throw new Error("You cannot grant more than 10 permission per token");
+      if (!isPermission(perm)) {
+        throw new Error(`Not a valid permission: ${perm}`);
       }
       existingPerms.add(perm);
     }
