@@ -1,5 +1,5 @@
-import { assertNonEmpty, normalizeStatusCode, urljoin } from "./utils";
 import type { PermissionSet } from "./PermissionSet";
+import { assertNonEmpty, normalizeStatusCode, urljoin } from "./utils";
 
 export type LiveblocksOptions = {
   secret: string;
