@@ -114,5 +114,13 @@
     "technologies": ["yjs", "react", "lexical"],
     "date": "2023-06-28",
     "hidden": true
+  },
+  {
+    "title": "How to create a collaborative code editor with CodeMirror, Yjs, React, and Liveblocks",
+    "path": "/how-to-create-a-collaborative-code-editor-with-codemirror-yjs-react-and-liveblocks",
+    "topics": ["tutorials", "code-editors"],
+    "technologies": ["yjs", "react", "codemirror"],
+    "date": "2023-06-28",
+    "hidden": true
   }
 ]

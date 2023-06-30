@@ -24,6 +24,11 @@
       "id": "text-editors",
       "name": "Text editors",
       "hidden": true
+    },
+    {
+      "id": "code-editors",
+      "name": "Code editors",
+      "hidden": true
     }
   ],
   "technologies": [
@@ -75,6 +80,11 @@
     {
       "id": "lexical",
       "name": "Lexical",
+      "hidden": true
+    },
+    {
+      "id": "codemirror",
+      "name": "CodeMirror",
       "hidden": true
     }
   ]
