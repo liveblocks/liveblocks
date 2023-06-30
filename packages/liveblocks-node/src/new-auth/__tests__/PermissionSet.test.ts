@@ -56,7 +56,13 @@ describe("PermissionSet", () => {
 
   test("setting invalid permissions will throw", () => {
     expect(() =>
-      new PermissionSet().allow("foobar*", ["x", "y"] as any).toJSON()
+      new PermissionSet()
+        .allow(
+          "foobar*",
+          // @ts-expect-error - Deliberate incorrect string value
+          ["x", "y"]
+        )
+        .toJSON()
     ).toThrow("Not a valid permission: x");
   });
 

@@ -101,7 +101,7 @@ export class PermissionSet {
 
     const existingPerms = this.getOrCreate(roomIdOrPattern);
     for (const perm of newPerms) {
-      if (!isPermission(perm)) {
+      if (!isPermission(perm as string)) {
         throw new Error(`Not a valid permission: ${perm}`);
       }
       existingPerms.add(perm);
