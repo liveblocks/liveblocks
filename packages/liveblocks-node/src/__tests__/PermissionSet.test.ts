@@ -18,7 +18,13 @@ describe("PermissionSet", () => {
 
   test("adding permissions makes it not empty", () => {
     expect(new PermissionSet().allow("xyz", FULL_ACCESS).toJSON()).toEqual({
-      xyz: ["room:write", "comments:write"],
+      xyz: [
+        "room:write",
+        "room:read",
+        "room:presence:write",
+        "comments:write",
+        "comments:read",
+      ],
     });
   });
 
@@ -68,7 +74,13 @@ describe("PermissionSet", () => {
 
   test("allowing without explicit permissions grants full access", () => {
     expect(new PermissionSet().allow("foobar").toJSON()).toEqual({
-      foobar: ["room:write", "comments:write"],
+      foobar: [
+        "room:write",
+        "room:read",
+        "room:presence:write",
+        "comments:write",
+        "comments:read",
+      ],
     });
   });
 

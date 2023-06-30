@@ -1,31 +1,36 @@
 // As defined in the source of truth in ApiScope in
 // https://github.com/liveblocks/liveblocks-cloudflare/blob/main/src/security.ts
-const PERMISSIONS = Object.freeze([
+const ALL_PERMISSIONS = Object.freeze([
   "room:write",
   "room:read",
   "room:presence:write",
   "comments:write",
   "comments:read",
-  "events",
 ] as const);
 
-export type Permission = (typeof PERMISSIONS)[number];
+export type Permission = (typeof ALL_PERMISSIONS)[number];
 
 function isPermission(value: string): value is Permission {
-  return (PERMISSIONS as readonly unknown[]).includes(value);
+  return (ALL_PERMISSIONS as readonly unknown[]).includes(value);
 }
 
 const MAX_PERMS_PER_SET = 10;
 
+/**
+ * Assign this to a room or room pattern if you want to grant the user
+ * read-only permissions for this room.
+ */
 export const READ_ACCESS: readonly Permission[] = Object.freeze([
   "room:read",
+  // "room:presence:write",  // XXX Should this be included in the READ_ACCESS set?
   "comments:read",
 ]);
 
-export const FULL_ACCESS: readonly Permission[] = Object.freeze([
-  "room:write",
-  "comments:write",
-]);
+/**
+ * Assign this to a room or room pattern if you want to grant the user all
+ * permissions for this room.
+ */
+export const FULL_ACCESS: readonly Permission[] = ALL_PERMISSIONS;
 
 const roomPatternRegex = /^[^*]{1,50}[*]?$/;
 
