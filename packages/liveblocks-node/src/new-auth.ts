@@ -1,4 +1,4 @@
-import { assertNonEmpty, normalizeStatusCode, urljoin } from "../utils";
+import { assertNonEmpty, normalizeStatusCode, urljoin } from "./utils";
 import type { PermissionSet } from "./PermissionSet";
 export { FULL_ACCESS, PermissionSet, READ_ACCESS } from "./PermissionSet";
 
