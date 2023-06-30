@@ -1,0 +1,33 @@
+{
+  "name": "nextjs-yjs-codemirror",
+  "description": "This example shows how to build a collaborative text editor with Liveblocks, Yjs, CodeMirror, and Next.js.",
+  "license": "Apache-2.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@codemirror/lang-javascript": "^6.1.9",
+    "@liveblocks/client": "1.1.1-yjs3",
+    "@liveblocks/react": "1.1.1-yjs3",
+    "@liveblocks/yjs": "1.1.1-yjs3",
+    "@types/node": "18.11.18",
+    "@types/react": "18.0.27",
+    "@types/react-dom": "18.0.10",
+    "codemirror": "^6.0.1",
+    "eslint": "8.33.0",
+    "eslint-config-next": "13.1.6",
+    "next": "13.1.6",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "typescript": "4.9.5",
+    "y-codemirror.next": "^0.3.2",
+    "yjs": "^13.6.4"
+  },
+  "devDependencies": {
+    "@iconify/react": "^4.1.0"
+  }
+}
