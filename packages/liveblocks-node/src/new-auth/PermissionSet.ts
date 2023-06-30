@@ -17,16 +17,15 @@ function isPermission(value: string): value is Permission {
 
 const MAX_PERMS_PER_SET = 10;
 
-// XXX Think about this: should these be exported as _symbols_ instead which
-// will be recognized and swapped out with the defaults?
-export const READ_ACCESS = Object.freeze([
+export const READ_ACCESS: readonly Permission[] = Object.freeze([
   "room:read",
   "comments:read",
-] as Permission[]);
-export const FULL_ACCESS = Object.freeze([
+]);
+
+export const FULL_ACCESS: readonly Permission[] = Object.freeze([
   "room:write",
   "comments:write",
-] as Permission[]);
+]);
 
 const roomPatternRegex = /^[^*]{1,50}[*]?$/;
 
