@@ -30,7 +30,15 @@ export const READ_ACCESS: readonly Permission[] = Object.freeze([
  * Assign this to a room or room pattern if you want to grant the user all
  * permissions for this room.
  */
-export const FULL_ACCESS: readonly Permission[] = ALL_PERMISSIONS;
+export const FULL_ACCESS: readonly Permission[] = Object.freeze([
+  "room:write",
+  "comments:write",
+
+  // XXX Are these implied automatically if you have the two write permissions above? If so, it would be nice to keep the JWT payload as small as possible.
+  // "room:read",
+  // "room:presence:write",
+  // "comments:read",
+]);
 
 const roomPatternRegex = /^[^*]{1,50}[*]?$/;
 

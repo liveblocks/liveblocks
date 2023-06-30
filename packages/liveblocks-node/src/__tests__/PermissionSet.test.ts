@@ -20,10 +20,12 @@ describe("PermissionSet", () => {
     expect(new PermissionSet().allow("xyz", FULL_ACCESS).toJSON()).toEqual({
       xyz: [
         "room:write",
-        "room:read",
-        "room:presence:write",
         "comments:write",
-        "comments:read",
+
+        // TODO Make a decision: do we want to include these in the default preset?
+        // "room:read",
+        // "room:presence:write",
+        // "comments:read",
       ],
     });
   });
@@ -76,10 +78,12 @@ describe("PermissionSet", () => {
     expect(new PermissionSet().allow("foobar").toJSON()).toEqual({
       foobar: [
         "room:write",
-        "room:read",
-        "room:presence:write",
         "comments:write",
-        "comments:read",
+
+        // TODO Make a decision: do we want to include these in the default preset?
+        // "room:read",
+        // "room:presence:write",
+        // "comments:read",
       ],
     });
   });
