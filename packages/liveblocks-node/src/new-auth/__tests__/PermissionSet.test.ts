@@ -1,4 +1,4 @@
-import { PermissionSet, FULL_ACCESS } from "../PermissionSet";
+import { FULL_ACCESS, PermissionSet } from "../PermissionSet";
 
 const P1 = "room:read";
 const P2 = "room:write";
