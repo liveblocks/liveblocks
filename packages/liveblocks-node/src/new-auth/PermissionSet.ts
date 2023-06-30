@@ -1,13 +1,13 @@
 // As defined in the source of truth in ApiScope in
 // https://github.com/liveblocks/liveblocks-cloudflare/blob/main/src/security.ts
-const PERMISSIONS = [
+const PERMISSIONS = Object.freeze([
   "room:write",
   "room:read",
   "room:presence:write",
   "comments:write",
   "comments:read",
   "events",
-] as const;
+] as const);
 
 export type Permission = (typeof PERMISSIONS)[number];
 
