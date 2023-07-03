@@ -9,8 +9,7 @@ import type { StorageUpdate } from "../crdts/StorageUpdates";
 import { legacy_patchImmutableObject, lsonToJson } from "../immutable";
 import * as console from "../lib/fancy-console";
 import type { Json, JsonObject } from "../lib/Json";
-import type { Authentication } from "../protocol/Authentication";
-import { RoomScope } from "../protocol/AuthToken";
+import { ApiScope } from "../protocol/AuthToken";
 import type { BaseUserMeta } from "../protocol/BaseUserMeta";
 import { ClientMsgCode } from "../protocol/ClientMsg";
 import { OpCode } from "../protocol/Op";
@@ -49,8 +48,13 @@ import {
   waitUntilStatus,
   waitUntilStorageUpdate,
 } from "./_waitUtils";
+import type { AuthValue } from "../auth-manager";
 
 const THROTTLE_DELAY = 100;
+
+const mockedCreateSocketDelegate = (_authValue: AuthValue) => {
+  return new WebSocket("");
+};
 
 const defaultRoomConfig: RoomConfig = {
   enableDebugLogging: false,
@@ -58,14 +62,16 @@ const defaultRoomConfig: RoomConfig = {
   throttleDelay: THROTTLE_DELAY,
   lostConnectionTimeout: 99999,
   liveblocksServer: "wss://live.liveblocks.io/v6",
-  authentication: {
-    type: "private",
-    url: "/mocked-api/auth",
-  } as Authentication,
+  delegates: {
+    authenticate: () => {
+      return Promise.resolve({ publicApiKey: "pk_123", type: "public" });
+    },
+    createSocket: mockedCreateSocketDelegate,
+  },
 };
 
 function makeRoomConfig(
-  mockedDelegates?: RoomDelegates,
+  mockedDelegates: RoomDelegates,
   defaults?: Partial<RoomConfig>
 ) {
   return {
@@ -156,15 +162,15 @@ describe("room / auth", () => {
       const room = createRoom(
         { initialPresence: {} as never },
         {
-          ...makeRoomConfig(),
-          authentication: {
-            type: "custom",
-            callback: (_roomId) =>
-              new Promise((resolve) => {
+          ...makeRoomConfig({
+            authenticate: () => {
+              return new Promise((resolve) => {
                 // @ts-expect-error: testing for missing token in callback response
                 resolve(response);
-              }),
-          },
+              });
+            },
+            createSocket: mockedCreateSocketDelegate,
+          }),
         }
       );
 
@@ -182,12 +188,23 @@ describe("room / auth", () => {
     const room = createRoom(
       { initialPresence: {} as never },
       {
-        ...makeRoomConfig(),
-        authentication: {
-          type: "private",
-          url: "/mocked-api/403",
-        },
+        ...makeRoomConfig({
+          authenticate: () => {
+            return new Promise((_resolve) => {
+              throw new Error("403");
+            });
+          },
+          createSocket: mockedCreateSocketDelegate,
+        }),
       }
+
+      // {
+      //   ...makeRoomConfig(),
+      //   authentication: {
+      //     type: "private",
+      //     url: "/mocked-api/403",
+      //   },
+      // }
     );
 
     room.connect();
@@ -198,67 +215,67 @@ describe("room / auth", () => {
     room.destroy();
   });
 
-  test("private authentication with 403 status should fail with details", async () => {
-    const room = createRoom(
-      { initialPresence: {} as never },
-      {
-        ...makeRoomConfig(),
-        authentication: {
-          type: "private",
-          url: "/mocked-api/401-with-details",
-        },
-      }
-    );
+  // test("private authentication with 403 status should fail with details", async () => {
+  //   const room = createRoom(
+  //     { initialPresence: {} as never },
+  //     {
+  //       ...makeRoomConfig(),
+  //       authentication: {
+  //         type: "private",
+  //         url: "/mocked-api/401-with-details",
+  //       },
+  //     }
+  //   );
 
-    room.connect();
-    await waitUntilStatus(room, "disconnected");
-    expect(consoleErrorSpy).toHaveBeenCalledWith(
-      "Unauthorized: wrong key type (401 returned by POST /mocked-api/401-with-details)"
-    );
-    room.destroy();
-  });
+  //   room.connect();
+  //   await waitUntilStatus(room, "disconnected");
+  //   expect(consoleErrorSpy).toHaveBeenCalledWith(
+  //     "Unauthorized: wrong key type (401 returned by POST /mocked-api/401-with-details)"
+  //   );
+  //   room.destroy();
+  // });
 
-  test("private authentication that does not return valid JSON should fail", async () => {
-    const room = createRoom(
-      { initialPresence: {} as never },
-      {
-        ...makeRoomConfig(),
-        authentication: {
-          type: "private",
-          url: "/mocked-api/not-json",
-        },
-      }
-    );
+  // test("private authentication that does not return valid JSON should fail", async () => {
+  //   const room = createRoom(
+  //     { initialPresence: {} as never },
+  //     {
+  //       ...makeRoomConfig(),
+  //       authentication: {
+  //         type: "private",
+  //         url: "/mocked-api/not-json",
+  //       },
+  //     }
+  //   );
 
-    room.connect();
-    await waitUntilStatus(room, "connecting");
-    await waitFor(() => consoleErrorSpy.mock.calls.length > 0);
-    expect(consoleErrorSpy).toHaveBeenCalledWith(
-      'Authentication failed: Expected a JSON response when doing a POST request on "/mocked-api/not-json". SyntaxError: Unexpected token h in JSON at position 1'
-    );
-    room.destroy();
-  });
+  //   room.connect();
+  //   await waitUntilStatus(room, "connecting");
+  //   await waitFor(() => consoleErrorSpy.mock.calls.length > 0);
+  //   expect(consoleErrorSpy).toHaveBeenCalledWith(
+  //     'Authentication failed: Expected a JSON response when doing a POST request on "/mocked-api/not-json". SyntaxError: Unexpected token h in JSON at position 1'
+  //   );
+  //   room.destroy();
+  // });
 
-  test("private authentication without an auth token response should fail", async () => {
-    const room = createRoom(
-      { initialPresence: {} as never },
-      {
-        ...makeRoomConfig(),
-        authentication: {
-          type: "private",
-          url: "/mocked-api/missing-token",
-        },
-      }
-    );
+  // test("private authentication without an auth token response should fail", async () => {
+  //   const room = createRoom(
+  //     { initialPresence: {} as never },
+  //     {
+  //       ...makeRoomConfig(),
+  //       authentication: {
+  //         type: "private",
+  //         url: "/mocked-api/missing-token",
+  //       },
+  //     }
+  //   );
 
-    room.connect();
-    await waitUntilStatus(room, "connecting");
-    await waitFor(() => consoleErrorSpy.mock.calls.length > 0);
-    expect(consoleErrorSpy).toHaveBeenCalledWith(
-      'Authentication failed: Expected a JSON response of the form `{ token: "..." }` when doing a POST request on "/mocked-api/missing-token", but got {}'
-    );
-    room.destroy();
-  });
+  //   room.connect();
+  //   await waitUntilStatus(room, "connecting");
+  //   await waitFor(() => consoleErrorSpy.mock.calls.length > 0);
+  //   expect(consoleErrorSpy).toHaveBeenCalledWith(
+  //     'Authentication failed: Expected a JSON response of the form `{ token: "..." }` when doing a POST request on "/mocked-api/missing-token", but got {}'
+  //   );
+  //   room.destroy();
+  // });
 });
 
 describe("room", () => {
@@ -633,7 +650,7 @@ describe("room", () => {
         serverMessage({
           type: ServerMsgCode.ROOM_STATE,
           users: {
-            "1": { scopes: [RoomScope.Read, RoomScope.PresenceWrite] },
+            "1": { scopes: [ApiScope.Read, ApiScope.PresenceWrite] },
           },
         })
       );

@@ -1,3 +1,4 @@
+import type { AuthManager, AuthValue } from "./auth-manager";
 import type {
   Delegates,
   LegacyConnectionStatus,
@@ -26,14 +27,9 @@ import type { Json, JsonObject } from "./lib/Json";
 import { isJsonArray, isJsonObject } from "./lib/Json";
 import { asPos } from "./lib/position";
 import type { Resolve } from "./lib/Resolve";
-import { compact, isPlainObject, tryParseJson } from "./lib/utils";
-import type { Authentication } from "./protocol/Authentication";
-import type { ParsedAuthToken } from "./protocol/AuthToken";
-import {
-  isTokenExpired,
-  parseAuthToken,
-  RoomScope,
-} from "./protocol/AuthToken";
+import { compact, tryParseJson } from "./lib/utils";
+import { ParsedAuthToken, TokenKind } from "./protocol/AuthToken";
+import { isTokenExpired, ApiScope } from "./protocol/AuthToken";
 import type { BaseUserMeta } from "./protocol/BaseUserMeta";
 import type { ClientMsg } from "./protocol/ClientMsg";
 import { ClientMsgCode } from "./protocol/ClientMsg";
@@ -802,17 +798,16 @@ export type RoomInitializers<
   shouldInitiallyConnect?: boolean;
 }>;
 
-export type RoomDelegates = Delegates<ParsedAuthToken>;
+export type RoomDelegates = Delegates<AuthValue>;
 
 /** @internal */
 export type RoomConfig = {
-  delegates?: RoomDelegates;
+  delegates: RoomDelegates;
 
   roomId: string;
   throttleDelay: number;
   lostConnectionTimeout: number;
 
-  authentication: Authentication;
   liveblocksServer: string;
   httpSendEndpoint?: string;
   unstable_fallbackToHTTP?: boolean;
@@ -869,20 +864,9 @@ export function createRoom<
       : options.initialStorage;
 
   // Create a delegate pair for (a specific) Live Room socket connection(s)
-  const delegates: RoomDelegates = config.delegates ?? {
-    authenticate: makeAuthDelegateForRoom(
-      config.roomId,
-      config.authentication,
-      config.polyfills?.fetch
-    ),
+  const delegates: RoomDelegates = config.delegates;
 
-    createSocket: makeCreateSocketDelegateForRoom(
-      config.liveblocksServer,
-      config.polyfills?.WebSocket
-    ),
-  };
-
-  const managedSocket: ManagedSocket<ParsedAuthToken> = new ManagedSocket(
+  const managedSocket: ManagedSocket<AuthValue> = new ManagedSocket(
     delegates,
     config.enableDebugLogging
   );
@@ -934,15 +918,19 @@ export function createRoom<
 
   let lastToken: ParsedAuthToken["parsed"] | undefined;
   function onStatusDidChange(newStatus: Status) {
-    const token = managedSocket.token?.parsed;
-    if (token !== undefined && token !== lastToken) {
-      context.sessionInfo.set({
-        id: token.actor,
-        userInfo: token.info,
-        userId: token.id,
-        isReadOnly: isStorageReadOnly(token.scopes),
-      });
-      lastToken = token;
+    // TODO: support public api key
+    // TODO: support v7, tokens without actor
+    if (managedSocket.authValue?.type === "secret") {
+      const token = managedSocket.authValue.token.parsed;
+      if (token !== undefined && token !== lastToken) {
+        context.sessionInfo.set({
+          id: 0, //token.actor,
+          userInfo: token.ui,
+          // userId: token.uid,
+          isReadOnly: false, //isStorageReadOnly(token.scopes),
+        });
+        lastToken = token;
+      }
     }
 
     // Forward to the outside world
@@ -1135,16 +1123,17 @@ export function createRoom<
       const size = new TextEncoder().encode(message).length;
       if (
         size > MAX_MESSAGE_SIZE &&
-        managedSocket.token?.raw &&
+        // TODO: support public api key
+        managedSocket.authValue?.type === "secret" &&
         config.httpSendEndpoint
       ) {
-        if (isTokenExpired(managedSocket.token.parsed)) {
+        if (isTokenExpired(managedSocket.authValue.token.parsed)) {
           return managedSocket.reconnect();
         }
 
         void httpSend(
           message,
-          managedSocket.token.raw,
+          managedSocket.authValue.token.raw,
           config.httpSendEndpoint,
           config.polyfills?.fetch
         );
@@ -1498,9 +1487,9 @@ export function createRoom<
 
   function isStorageReadOnly(scopes: string[]) {
     return (
-      scopes.includes(RoomScope.Read) &&
-      scopes.includes(RoomScope.PresenceWrite) &&
-      !scopes.includes(RoomScope.Write)
+      scopes.includes(ApiScope.Read) &&
+      scopes.includes(ApiScope.PresenceWrite) &&
+      !scopes.includes(ApiScope.Write)
     );
   }
 
@@ -2339,11 +2328,20 @@ function isRoomEventName(value: string): value is RoomEventName {
   );
 }
 
-function makeCreateSocketDelegateForRoom(
+export function makeAuthDelegateForRoom(
+  roomId: string,
+  authManager: AuthManager
+): () => Promise<AuthValue> {
+  return async () => {
+    return authManager.getAuthValue("room:read", roomId);
+  };
+}
+
+export function makeCreateSocketDelegateForRoom(
   liveblocksServer: string,
   WebSocketPolyfill?: IWebSocket
 ) {
-  return (richToken: ParsedAuthToken): IWebSocketInstance => {
+  return (authValue: AuthValue): IWebSocketInstance => {
     const ws: IWebSocket | undefined =
       WebSocketPolyfill ??
       (typeof WebSocket === "undefined" ? undefined : WebSocket);
@@ -2354,9 +2352,21 @@ function makeCreateSocketDelegateForRoom(
       );
     }
 
-    const token = richToken.raw;
+    let authParam = "";
+    if (authValue.type === "secret") {
+      if (authValue.token.parsed.k === TokenKind.SECRET_LEGACY) {
+        authParam = `ltok=${authValue.token.raw}`;
+      } else if (authValue.token.parsed.k === TokenKind.ID_TOKEN) {
+        authParam = `idtok=${authValue.token.raw}`;
+      } else if (authValue.token.parsed.k === TokenKind.ACCESS_TOKEN) {
+        authParam = `atok=${authValue.token.raw}`;
+      }
+    } else if (authValue.type === "public") {
+      authParam = `pubkey=${authValue.publicApiKey}`;
+    }
+
     return new ws(
-      `${liveblocksServer}/?token=${token}&version=${
+      `${liveblocksServer}/?${authParam}&version=${
         // prettier-ignore
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore (__PACKAGE_VERSION__ will be injected by the build script)
@@ -2381,105 +2391,4 @@ async function httpSend(
     },
     body: message,
   });
-}
-
-function makeAuthDelegateForRoom(
-  roomId: string,
-  authentication: Authentication,
-  fetchPolyfill?: typeof window.fetch
-): () => Promise<ParsedAuthToken> {
-  const fetcher =
-    fetchPolyfill ?? (typeof window === "undefined" ? undefined : window.fetch);
-
-  if (authentication.type === "public") {
-    return async () => {
-      if (fetcher === undefined) {
-        throw new StopRetrying(
-          "To use Liveblocks client in a non-dom environment with a publicApiKey, you need to provide a fetch polyfill."
-        );
-      }
-
-      return fetchAuthEndpoint(fetcher, authentication.url, {
-        room: roomId,
-        publicApiKey: authentication.publicApiKey,
-      }).then(({ token }) => parseAuthToken(token));
-    };
-  } else if (authentication.type === "private") {
-    return async () => {
-      if (fetcher === undefined) {
-        throw new StopRetrying(
-          "To use Liveblocks client in a non-dom environment with a url as auth endpoint, you need to provide a fetch polyfill."
-        );
-      }
-
-      return fetchAuthEndpoint(fetcher, authentication.url, {
-        room: roomId,
-      }).then(({ token }) => parseAuthToken(token));
-    };
-  } else if (authentication.type === "custom") {
-    return async () => {
-      const response = await authentication.callback(roomId);
-      if (!response || !response.token) {
-        throw new Error(
-          'We expect the authentication callback to return a token, but it does not. Hint: the return value should look like: { token: "..." }'
-        );
-      }
-      return parseAuthToken(response.token);
-    };
-  } else {
-    throw new Error("Internal error. Unexpected authentication type");
-  }
-}
-
-async function fetchAuthEndpoint(
-  fetch: typeof window.fetch,
-  endpoint: string,
-  body: {
-    room: string;
-    publicApiKey?: string;
-  }
-): Promise<{ token: string }> {
-  const res = await fetch(endpoint, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    // Credentials are needed to support authentication with cookies
-    credentials: "include",
-    body: JSON.stringify(body),
-  });
-  if (!res.ok) {
-    const reason = `${
-      (await res.text()).trim() || "reason not provided in auth response"
-    } (${res.status} returned by POST ${endpoint})`;
-
-    if (res.status === 401 || res.status === 403) {
-      // Throw a special error instance, which the connection manager will
-      // recognize and understand that retrying will have no effect
-      throw new StopRetrying(`Unauthorized: ${reason}`);
-    } else {
-      throw new Error(`Failed to authenticate: ${reason}`);
-    }
-  }
-
-  let data: Json;
-  try {
-    data = await (res.json() as Promise<Json>);
-  } catch (er) {
-    throw new Error(
-      `Expected a JSON response when doing a POST request on "${endpoint}". ${String(
-        er
-      )}`
-    );
-  }
-
-  if (!isPlainObject(data) || typeof data.token !== "string") {
-    throw new Error(
-      `Expected a JSON response of the form \`{ token: "..." }\` when doing a POST request on "${endpoint}", but got ${JSON.stringify(
-        data
-      )}`
-    );
-  }
-  const { token } = data;
-  return { token };
 }

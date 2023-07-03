@@ -8,7 +8,7 @@ import {
   replaceRemoteStorageAndReconnect,
 } from "../../__tests__/_utils";
 import { waitUntilStorageUpdate } from "../../__tests__/_waitUtils";
-import { RoomScope } from "../../protocol/AuthToken";
+import { ApiScope } from "../../protocol/AuthToken";
 import { OpCode } from "../../protocol/Op";
 import type { IdTuple, SerializedCrdt } from "../../protocol/SerializedCrdt";
 import { CrdtType } from "../../protocol/SerializedCrdt";
@@ -116,7 +116,7 @@ describe("LiveMap", () => {
         createSerializedMap("0:1", "0:0", "map"),
       ],
       1,
-      [RoomScope.Read, RoomScope.PresenceWrite]
+      [ApiScope.Read, ApiScope.PresenceWrite]
     );
 
     const map = storage.root.get("map");
@@ -208,7 +208,7 @@ describe("LiveMap", () => {
           createSerializedMap("0:1", "0:0", "map"),
         ],
         1,
-        [RoomScope.Read, RoomScope.PresenceWrite]
+        [ApiScope.Read, ApiScope.PresenceWrite]
       );
 
       const map = storage.root.get("map");

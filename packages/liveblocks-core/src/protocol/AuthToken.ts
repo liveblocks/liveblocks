@@ -1,29 +1,35 @@
 import type { Json } from "../lib/Json";
 import { b64decode, isPlainObject, tryParseJson } from "../lib/utils";
 
-export enum RoomScope {
+export enum ApiScope {
   Read = "room:read",
   Write = "room:write",
   PresenceWrite = "room:presence:write",
+  CommentsWrite = "comments:write",
+  CommentsRead = "comments:read",
 }
 
-/**
- * Fields of the JWT payload that the client relies on and interprets. There
- * exist more fields in the JWT payload, but those aren't needed by the client
- * directly, and simply passed back to the backend.
- *
- * This type should only list the properties that client uses, so we're still
- * free to change the other fields on the token without breaking backward
- * compatibility.
- *
- * @internal For unit tests only.
- */
-export type MinimalTokenPayload = {
+export type LiveblocksPermissions = Record<string, ApiScope[]>;
+
+export enum TokenKind {
+  SECRET_LEGACY = "sec-legacy",
+  ACCESS_TOKEN = "acc",
+  ID_TOKEN = "id",
+}
+
+type BaseTokenPayload = {
   // Issued at and expiry fields (from JWT spec)
   iat: number;
   exp: number;
+};
 
-  scopes: string[]; // Think Scope[], but it could also hold scopes from the future, hence string[]
+/**
+ * Legacy Secret Token.
+ */
+export type LegacySecretToken = BaseTokenPayload & {
+  k: TokenKind.SECRET_LEGACY;
+  roomId: string;
+  scopes: string[];
   actor: number;
 
   // Extra payload as defined by the customer's own authorization
@@ -35,17 +41,39 @@ export type MinimalTokenPayload = {
   [other: string]: Json | undefined;
 };
 
+/**
+ * New authorization Access Token.
+ */
+export type AccessTokenV2 = BaseTokenPayload & {
+  k: TokenKind.ACCESS_TOKEN;
+  pid: string; // project id
+  uid: string; // user id
+  perms: LiveblocksPermissions; // permissions
+  ui?: Json; // user info
+};
+
+/**
+ * New authorization ID Token.
+ */
+export type IDTokenV2 = BaseTokenPayload & {
+  k: TokenKind.ID_TOKEN;
+  pid: string; // project id
+  uid: string; // user id
+  gids?: string[]; // group ids
+  ui?: Json; // user info
+};
+
 // The "rich" token is data we obtain by parsing the JWT token and making all
 // metadata on it accessible. It's done right after hitting the backend, but
 // before the promise will get returned, so it's an inherent part of the
 // authentication step.
 export type ParsedAuthToken = {
   readonly raw: string; // The raw JWT value, unchanged
-  readonly parsed: MinimalTokenPayload; // Rich data on the JWT value
+  readonly parsed: AccessTokenV2 | IDTokenV2 | LegacySecretToken; // Rich data on the JWT value
 };
 
 /** @internal - For unit tests only */
-export type JwtMetadata = Pick<MinimalTokenPayload, "iat" | "exp">;
+export type JwtMetadata = Pick<AccessTokenV2 | IDTokenV2, "iat" | "exp">;
 
 export function isTokenExpired(token: JwtMetadata): boolean {
   const now = Date.now() / 1000;
@@ -53,31 +81,16 @@ export function isTokenExpired(token: JwtMetadata): boolean {
   return !valid;
 }
 
-function isStringList(value: unknown): value is string[] {
-  return Array.isArray(value) && value.every((i) => typeof i === "string");
-}
-
-function isMinimalTokenPayload(data: Json): data is MinimalTokenPayload {
-  //
-  // NOTE: This is the hard-coded definition of the following decoder:
-  //
-  //   inexact({
-  //     iat: number,
-  //     exp: number,
-  //     actor: number,
-  //     scopes: array(scope),
-  //     id: optional(string),
-  //     info: optional(json),
-  //   })
-  //
+function isValidAuthTokenPayload(
+  data: Json
+): data is AccessTokenV2 | IDTokenV2 {
   return (
     isPlainObject(data) &&
     typeof data.iat === "number" &&
     typeof data.exp === "number" &&
-    typeof data.actor === "number" &&
-    (data.id === undefined || typeof data.id === "string") &&
-    isStringList(data.scopes)
-    // && data.info will already be `Json | undefined`, given the nature of the data here
+    (data.k === TokenKind.ACCESS_TOKEN ||
+      data.k === TokenKind.ID_TOKEN ||
+      data.k === TokenKind.SECRET_LEGACY)
   );
 }
 
@@ -95,7 +108,7 @@ export function parseAuthToken(rawTokenString: string): ParsedAuthToken {
   }
 
   const payload = tryParseJson(b64decode(tokenParts[1]));
-  if (!(payload && isMinimalTokenPayload(payload))) {
+  if (!(payload && isValidAuthTokenPayload(payload))) {
     throw new Error(
       "Authentication error: we expected a room token but did not get one. Hint: if you are using a callback, ensure the room is passed when creating the token. For more information: https://liveblocks.io/docs/api-reference/liveblocks-client#createClientCallback"
     );

@@ -8,6 +8,7 @@
  *   const { wss, delegates } = defineBehavior(ALWAYS_AUTH_AS(2), SOCKET_AUTO_OPEN);
  */
 
+import type { AuthValue } from "../auth-manager";
 import { StopRetrying } from "../connection";
 import type { ParsedAuthToken } from "../protocol/AuthToken";
 import type { RoomDelegates } from "../room";
@@ -36,7 +37,7 @@ function makeToken(actor: number, scopes: string[]): ParsedAuthToken {
  * observe the effects of the Room taking actions.
  */
 export function defineBehavior(
-  authBehavior: AuthBehavior,
+  authValue: AuthValue,
   socketBehavior: SocketBehavior
 ): {
   wss: MockWebSocketServer;
@@ -44,7 +45,7 @@ export function defineBehavior(
 } {
   const authenticate = () => {
     try {
-      return Promise.resolve(authBehavior());
+      return Promise.resolve(authValue);
     } catch (err) {
       return Promise.reject(err);
     }
