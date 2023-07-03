@@ -1,3 +1,6 @@
+import type { Response } from "node-fetch";
+import fetch from "node-fetch";
+
 import { Session } from "./Session";
 import { assertNonEmpty, normalizeStatusCode, urljoin } from "./utils";
 
@@ -50,7 +53,10 @@ export class Liveblocks {
   }
 
   /** @internal */
-  public async post(path: `/${string}`, json: Record<string, unknown>) {
+  public async post(
+    path: `/${string}`,
+    json: Record<string, unknown>
+  ): Promise<Response> {
     const url = urljoin(this._baseUrl, path);
     const headers = {
       Authorization: `Bearer ${this._secret}`,
