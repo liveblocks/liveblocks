@@ -604,6 +604,8 @@ describe("room", () => {
           users: {
             "1": { scopes: [] },
           },
+          actor: 2,
+          isReadOnly: false,
         })
       );
 
@@ -635,6 +637,8 @@ describe("room", () => {
           users: {
             "1": { scopes: [RoomScope.Read, RoomScope.PresenceWrite] },
           },
+          actor: 2,
+          isReadOnly: false,
         })
       );
 
@@ -671,6 +675,8 @@ describe("room", () => {
           users: {
             "1": { scopes: [] },
           },
+          actor: 2,
+          isReadOnly: false,
         })
       );
 
@@ -732,6 +738,8 @@ describe("room", () => {
             "1": { scopes: [] },
             "2": { scopes: [] },
           },
+          actor: 3,
+          isReadOnly: false,
         })
       );
 
@@ -774,6 +782,8 @@ describe("room", () => {
         users: {
           "1": { scopes: [] },
         },
+        actor: 2,
+        isReadOnly: false,
       })
     );
 
@@ -1379,6 +1389,8 @@ describe("room", () => {
         serverMessage({
           type: ServerMsgCode.ROOM_STATE,
           users: { 1: { scopes: [] } },
+          actor: 2,
+          isReadOnly: false,
         })
       );
 
@@ -1879,6 +1891,8 @@ describe("room", () => {
           serverMessage({
             type: ServerMsgCode.ROOM_STATE,
             users: { "1": { id: undefined, scopes: [] } },
+            actor: 2,
+            isReadOnly: false,
           })
         );
 

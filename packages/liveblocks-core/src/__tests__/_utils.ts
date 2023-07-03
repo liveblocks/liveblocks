@@ -276,6 +276,8 @@ export async function prepareStorageTest<
     serverMessage({
       type: ServerMsgCode.ROOM_STATE,
       users: { [currentActor]: { scopes: [] } },
+      actor: currentActor,
+      isReadOnly: false,
     })
   );
 
