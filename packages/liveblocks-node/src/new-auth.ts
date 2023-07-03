@@ -66,8 +66,11 @@ export class Liveblocks {
   }
 
   /**
-   * Creates a new, empty, set of permissions, which can be used in
-   * .authorizeUser() calls.
+   * Prepares a new session to authorize a user to access Liveblocks.
+   *
+   * IMPORTANT:
+   * Always make sure that you trust the user making the request to your
+   * backend before calling .prepareSession()!
    *
    * @param userId Tell Liveblocks the user ID of the user to authorize. Must
    * uniquely identify the user account in your system. The uniqueness of this
@@ -78,7 +81,7 @@ export class Liveblocks {
    * `other.info` property.
    *
    */
-  createSession(userId: string, options?: CreateSessionOptions): Session {
+  prepareSession(userId: string, options?: CreateSessionOptions): Session {
     return new Session(this, userId, options?.userInfo);
   }
 

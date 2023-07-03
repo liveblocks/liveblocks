@@ -27,7 +27,7 @@ const liveblocks = new Liveblocks({
 export async function authExample1(req, res) {
   const user = __getUserFromReq__(req);
 
-  const session = liveblocks.createSession(
+  const session = liveblocks.prepareSession(
     user.id
     // { userInfo: user.metadata },
   );
@@ -46,7 +46,7 @@ export async function authExample1(req, res) {
 export async function authExample2(req, res) {
   const user = __getUserFromReq__(req);
 
-  const session = liveblocks.createSession(user.id, {
+  const session = liveblocks.prepareSession(user.id, {
     userInfo: user.metadata,
   });
   if (req.body.room) {
@@ -74,7 +74,7 @@ export async function authExample2(req, res) {
 export async function authExample3(req, res) {
   const user = __getUserFromReq__(req);
 
-  const session = liveblocks.createSession(user.id, {
+  const session = liveblocks.prepareSession(user.id, {
     userInfo: user.metadata,
   });
   if (req.body.room) {

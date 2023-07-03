@@ -7,7 +7,7 @@ const P3 = "comments:read";
 
 function makeSession() {
   const client = new Liveblocks({ secret: "sk_testingtesting" });
-  return client.createSession("user-123");
+  return client.prepareSession("user-123");
 }
 
 describe("Session", () => {
