@@ -18,7 +18,7 @@
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.4.2",
-    "dependency-cruiser": "^12.12.2",
+    "dependency-cruiser": "^13.0.5",
     "prettier": "^2.8.8",
     "publint": "^0.1.13",
     "tsd": "^0.24.1",
