@@ -96,10 +96,7 @@ export class PermissionSet {
     }
   }
 
-  public allow(
-    roomIdOrPattern: string,
-    newPerms: readonly Permission[] = FULL_ACCESS
-  ): this {
+  public allow(roomIdOrPattern: string, newPerms: readonly Permission[]): this {
     if (!roomPatternRegex.test(roomIdOrPattern)) {
       throw new Error("Invalid room name or pattern");
     }

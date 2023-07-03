@@ -18,15 +18,7 @@ describe("PermissionSet", () => {
 
   test("adding permissions makes it not empty", () => {
     expect(new PermissionSet().allow("xyz", FULL_ACCESS).toJSON()).toEqual({
-      xyz: [
-        "room:write",
-        "comments:write",
-
-        // TODO Make a decision: do we want to include these in the default preset?
-        // "room:read",
-        // "room:presence:write",
-        // "comments:read",
-      ],
+      xyz: ["room:write", "comments:write"],
     });
   });
 
@@ -72,20 +64,6 @@ describe("PermissionSet", () => {
         )
         .toJSON()
     ).toThrow("Not a valid permission: x");
-  });
-
-  test("allowing without explicit permissions grants full access", () => {
-    expect(new PermissionSet().allow("foobar").toJSON()).toEqual({
-      foobar: [
-        "room:write",
-        "comments:write",
-
-        // TODO Make a decision: do we want to include these in the default preset?
-        // "room:read",
-        // "room:presence:write",
-        // "comments:read",
-      ],
-    });
   });
 
   test("permissions are additive", () => {
