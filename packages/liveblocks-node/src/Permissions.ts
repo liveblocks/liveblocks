@@ -71,7 +71,7 @@ const roomPatternRegex = /^[^*]{1,50}[*]?$/;
  * _adds_ read permissions, but that has no effect since full access
  * permissions were already added to the set.
  */
-export class PermissionSet {
+export class Permissions {
   private _sealed = false;
   private readonly _permissions: Map<string, Set<Permission>> = new Map();
 

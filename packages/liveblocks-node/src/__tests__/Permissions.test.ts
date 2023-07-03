@@ -1,4 +1,4 @@
-import { FULL_ACCESS, PermissionSet } from "../PermissionSet";
+import { FULL_ACCESS, Permissions } from "../Permissions";
 
 const P1 = "room:read";
 const P2 = "room:write";
@@ -7,56 +7,56 @@ const P3 = "comments:read";
 
 describe("PermissionSet", () => {
   test("empty throws error", () => {
-    expect(new PermissionSet().isEmpty()).toEqual(true);
+    expect(new Permissions().isEmpty()).toEqual(true);
   });
 
   test("adding permissions makes it not empty", () => {
-    expect(new PermissionSet().allow("xyz", FULL_ACCESS).isEmpty()).toEqual(
+    expect(new Permissions().allow("xyz", FULL_ACCESS).isEmpty()).toEqual(
       false
     );
   });
 
   test("adding permissions makes it not empty", () => {
-    expect(new PermissionSet().allow("xyz", FULL_ACCESS).toJSON()).toEqual({
+    expect(new Permissions().allow("xyz", FULL_ACCESS).toJSON()).toEqual({
       xyz: ["room:write", "comments:write"],
     });
   });
 
   test("throws when no room name", () => {
-    expect(() => new PermissionSet().allow("", []).toJSON()).toThrow(
+    expect(() => new Permissions().allow("", []).toJSON()).toThrow(
       "Invalid room name or pattern"
     );
   });
 
   test("throws when room name too long", () => {
     expect(() =>
-      new PermissionSet()
+      new Permissions()
         .allow("definitely-a-waaaaaaaaaaaaaaaaaaaay-too-long-room-name", [])
         .toJSON()
     ).toThrow("Invalid room name or pattern");
   });
 
   test("throws when permission list is empty", () => {
-    expect(() => new PermissionSet().allow("foobar", [])).toThrow(
+    expect(() => new Permissions().allow("foobar", [])).toThrow(
       "Permission list cannot be empty"
     );
   });
 
   test("throws when room name contains asterisk", () => {
-    expect(() => new PermissionSet().allow("foo*bar", []).toJSON()).toThrow(
+    expect(() => new Permissions().allow("foo*bar", []).toJSON()).toThrow(
       "Invalid room name or pattern"
     );
   });
 
   test("allows prefixes when room name contains asterisk", () => {
-    expect(new PermissionSet().allow("foobar*", [P1]).toJSON()).toEqual({
+    expect(new Permissions().allow("foobar*", [P1]).toJSON()).toEqual({
       "foobar*": [P1],
     });
   });
 
   test("setting invalid permissions will throw", () => {
     expect(() =>
-      new PermissionSet()
+      new Permissions()
         .allow(
           "foobar*",
           // @ts-expect-error - Deliberate incorrect string value
@@ -68,7 +68,7 @@ describe("PermissionSet", () => {
 
   test("permissions are additive", () => {
     expect(
-      new PermissionSet()
+      new Permissions()
         .allow("foo", [P1])
         .allow("bar", [P2])
         .allow("foo", [P3])
@@ -81,7 +81,7 @@ describe("PermissionSet", () => {
 
   test("permissions are deduped", () => {
     expect(
-      new PermissionSet()
+      new Permissions()
         .allow("r", [P1])
         .allow("r", [P2, P3])
         .allow("r", [P1, P3])
@@ -96,7 +96,7 @@ describe("PermissionSet", () => {
   });
 
   test("adding more than 10 permission entries throws", () => {
-    const p = new PermissionSet()
+    const p = new Permissions()
       .allow("room0", [P1])
       .allow("room1", [P1])
       .allow("room2", [P1])
@@ -131,7 +131,7 @@ describe("PermissionSet", () => {
   });
 
   test("sealing", () => {
-    const p = new PermissionSet().allow("r", [P1]).allow("r", [P2, P3]);
+    const p = new Permissions().allow("r", [P1]).allow("r", [P2, P3]);
 
     p.seal();
 

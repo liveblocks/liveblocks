@@ -1,4 +1,4 @@
-import type { PermissionSet } from "./PermissionSet";
+import { Permissions } from "./Permissions";
 import { assertNonEmpty, normalizeStatusCode, urljoin } from "./utils";
 
 export type LiveblocksOptions = {
@@ -51,6 +51,14 @@ export class Liveblocks {
   }
 
   /**
+   * Creates a new, empty, set of permissions, which can be used in
+   * .authorizeUser() calls.
+   */
+  createPermissions(): Permissions {
+    return new Permissions();
+  }
+
+  /**
    * Call this to authorize the user to access Liveblocks, and to describe
    * exactly what permissions this user should have.
    *
@@ -74,7 +82,7 @@ export class Liveblocks {
    */
   public async authorizeUser(
     userId: string,
-    permissions: PermissionSet,
+    permissions: Permissions,
     options?: {
       userInfo: unknown;
     }
