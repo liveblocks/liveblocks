@@ -132,9 +132,8 @@ export class Session {
     return this; // To allow chaining multiple allow calls
   }
 
-  // XXX Rename to "hasPermissions"
-  public isEmpty(): boolean {
-    return this._permissions.size === 0;
+  public hasPermissions(): boolean {
+    return this._permissions.size > 0;
   }
 
   public seal(): void {
@@ -162,7 +161,7 @@ export class Session {
    */
   public async authorize(): Promise<AuthResponse> {
     this.seal();
-    if (this.isEmpty()) {
+    if (!this.hasPermissions()) {
       return {
         status: 403,
         body: "Forbidden",

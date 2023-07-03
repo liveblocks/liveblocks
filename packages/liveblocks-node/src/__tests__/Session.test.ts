@@ -12,12 +12,14 @@ function makeSession() {
 
 describe("PermissionSet", () => {
   test("empty throws error", () => {
-    expect(makeSession().isEmpty()).toEqual(true);
+    expect(makeSession().hasPermissions()).toEqual(false);
   });
 
   test("adding permissions makes it not empty", () => {
     const session = makeSession();
-    expect(session.allow("xyz", session.FULL_ACCESS).isEmpty()).toEqual(false);
+    expect(session.allow("xyz", session.FULL_ACCESS).hasPermissions()).toEqual(
+      true
+    );
   });
 
   test("adding permissions makes it not empty", () => {
