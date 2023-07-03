@@ -1,4 +1,4 @@
-import { Liveblocks, FULL_ACCESS } from "./src";
+import { Liveblocks } from "./src";
 
 // -----------------------------------------------------------------------
 
@@ -16,9 +16,9 @@ const liveblocks = new Liveblocks({
   secret: "sk_prod_xxxxxxxxxxxxxxxxxxxxxxxx",
 });
 
-// req.body.room             // string            // 1.1
+// req.body.room    // string            // 1.1
 //     XOR
-// req.body.requestedRoomId  // string | null     // 1.2
+// req.body.room    // string | null     // 1.2
 
 /**
  * Typical usage pattern 1:
@@ -27,46 +27,41 @@ const liveblocks = new Liveblocks({
 export async function authExample1(req, res) {
   const user = __getUserFromReq__(req);
 
-  const permissions = new Permissions();
+  const session = liveblocks.session(
+    user.id
+    // { userInfo: user.metadata },
+  );
   if (req.body.room && __checkHasAccess__(user, req.body.room)) {
-    permissions.allow(req.body.room, FULL_ACCESS);
+    session.allow(req.body.room, session.FULL_ACCESS);
   }
 
-  const { status, body } = await liveblocks.authorizeUser(
-    user.id,
-    permissions
-    //user.metadata,
-  );
+  const { status, body } = await session.authorize();
   return res.status(status).end(body);
 }
 
 /**
  * Typical usage pattern 2:
- * Full access based on team/org prefix (potentially looking at req.body.requestedRoomId to know _which_ prefix to grant).
+ * Full access based on team/org prefix (potentially looking at req.body.room to know _which_ prefix to grant).
  */
 export async function authExample2(req, res) {
   const user = __getUserFromReq__(req);
 
-  const permissions = new Permissions();
-  if (req.body.requestedRoomId) {
+  const session = liveblocks.session(user.id, { userInfo: user.metadata });
+  if (req.body.room) {
     // Suppose this application organizes their Liveblocks rooms by keys
     // structured like `<team>:<room>`.
     // We can then use the passed-in requested room to infer which team to
     // check membership for.
-    const [team, _] = req.body.requestedRoomId.split(":");
+    const [team, _] = req.body.room.split(":");
     if (__checkIsMemberOfTeam__(user, team)) {
       // If the user is a member of this team, don't just grant full access to
       // the request room, but to _all_ of the team's rooms, using a prefix
       // pattern.
-      permissions.allow(`${team}:*`, FULL_ACCESS);
+      session.allow(`${team}:*`, session.FULL_ACCESS);
     }
   }
 
-  const { status, body } = await liveblocks.authorizeUser(
-    user.id,
-    user.metadata,
-    permissions
-  );
+  const { status, body } = await session.authorize();
   return res.status(status).end(body);
 }
 
@@ -77,26 +72,22 @@ export async function authExample2(req, res) {
 export async function authExample3(req, res) {
   const user = __getUserFromReq__(req);
 
-  const permissions = new Permissions();
-  if (req.body.requestedRoomId) {
+  const session = liveblocks.session(user.id, { userInfo: user.metadata });
+  if (req.body.room) {
     // Suppose this application organizes their Liveblocks rooms by keys
     // structured like `<org>:<team>:<room>`.
     // We can then use the passed-in requested room to infer which team to
     // check membership for.
-    const [org, team, _] = req.body.requestedRoomId.split(":");
+    const [org, team, _] = req.body.room.split(":");
     if (__checkIsMemberOfOrg__(user, org)) {
-      permissions.allow(`${org}:*`, READ_ACCESS);
+      session.allow(`${org}:*`, session.READ_ACCESS);
     }
     if (__checkIsMemberOfTeam__(user, team)) {
-      permissions.allow(`${team}:*`, FULL_ACCESS);
+      session.allow(`${team}:*`, session.FULL_ACCESS);
     }
   }
 
-  const { status, body } = await liveblocks.authorizeUser(
-    user.id,
-    user.metadata,
-    permissions
-  );
+  const { status, body } = await session.authorize();
   return res.status(status).end(body);
 }
 
@@ -110,9 +101,8 @@ export async function authExample4(req, res) {
   const groups = __getUserGroups__(user);
 
   const { status, body } = await liveblocks.identifyUser(
-    user.id,
-    user.metadata,
-    groups
+    { userId: user.id, groupIds: groups },
+    { userInfo: user.metadata }
   );
   return res.status(status).end(body);
 }
