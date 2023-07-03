@@ -1,3 +1,6 @@
+import type { Liveblocks, AuthResponse } from "./new-auth";
+import { assertNonEmpty, normalizeStatusCode } from "./utils";
+
 // As defined in the source of truth in ApiScope in
 // https://github.com/liveblocks/liveblocks-cloudflare/blob/main/src/security.ts
 const ALL_PERMISSIONS = Object.freeze([
@@ -21,7 +24,7 @@ const MAX_PERMS_PER_SET = 10;
  * read permissions to the storage and comments data for this room. (Note that
  * the user will still have permissions to update their own presence.)
  */
-export const READ_ACCESS: readonly Permission[] = Object.freeze([
+const READ_ACCESS: readonly Permission[] = Object.freeze([
   "room:read",
   "room:presence:write",
   "comments:read",
@@ -31,7 +34,7 @@ export const READ_ACCESS: readonly Permission[] = Object.freeze([
  * Assign this to a room (or wildcard pattern) if you want to grant the user
  * permissions to read and write to the room's storage and comments.
  */
-export const FULL_ACCESS: readonly Permission[] = Object.freeze([
+const FULL_ACCESS: readonly Permission[] = Object.freeze([
   "room:write",
   "comments:write",
 ]);
@@ -71,9 +74,23 @@ const roomPatternRegex = /^[^*]{1,50}[*]?$/;
  * _adds_ read permissions, but that has no effect since full access
  * permissions were already added to the set.
  */
-export class Permissions {
+export class Session {
+  public readonly FULL_ACCESS = FULL_ACCESS;
+  public readonly READ_ACCESS = READ_ACCESS;
+
+  private _client: Liveblocks;
+  private _userId: string;
+  private _userInfo?: unknown;
   private _sealed = false;
   private readonly _permissions: Map<string, Set<Permission>> = new Map();
+
+  constructor(client: Liveblocks, userId: string, userInfo?: unknown) {
+    assertNonEmpty(userId, "userId"); // TODO: Check if this is a legal userId value too
+
+    this._client = client;
+    this._userId = userId;
+    this._userInfo = userInfo;
+  }
 
   private getOrCreate(roomId: string): Set<Permission> {
     if (this._sealed) {
@@ -115,6 +132,7 @@ export class Permissions {
     return this; // To allow chaining multiple allow calls
   }
 
+  // XXX Rename to "hasPermissions"
   public isEmpty(): boolean {
     return this._permissions.size === 0;
   }
@@ -122,18 +140,55 @@ export class Permissions {
   public seal(): void {
     if (this._sealed) {
       throw new Error(
-        "You cannot reuse Permissions instances. Please create a new instance every time."
+        "You cannot reuse Session instances. Please create a new session every time."
       );
     }
     this._sealed = true;
   }
 
-  public toJSON(): Record<string, unknown> {
+  public serializePermissions(): Record<string, unknown> {
     return Object.fromEntries(
-      Array.from(this._permissions.entries()).map(([key, scopes]) => [
-        key,
-        Array.from(scopes),
+      Array.from(this._permissions.entries()).map(([pat, perms]) => [
+        pat,
+        Array.from(perms),
       ])
     );
+  }
+
+  /**
+   * Call this to authorize the session to access Liveblocks. Note that this
+   * will return a Liveblocks "access token". Anyone that obtains such access
+   * token will have access to the allowed resources.
+   */
+  public async authorize(): Promise<AuthResponse> {
+    this.seal();
+    if (this.isEmpty()) {
+      return {
+        status: 403,
+        body: "Forbidden",
+      };
+    }
+
+    try {
+      const resp = await this._client.post("/v2/authorize-user", {
+        // Required
+        userId: this._userId,
+        permissions: this.serializePermissions(),
+
+        // Optional metadata
+        userInfo: this._userInfo,
+      });
+
+      return {
+        status: normalizeStatusCode(resp.status),
+        body: await resp.text(),
+      };
+    } catch (er) {
+      return {
+        status: 503 /* Service Unavailable */,
+        body: 'Call to /v2/authorize-user failed. See "error" for more information.',
+        error: er as Error | undefined,
+      };
+    }
   }
 }

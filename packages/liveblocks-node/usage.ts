@@ -27,7 +27,7 @@ const liveblocks = new Liveblocks({
 export async function authExample1(req, res) {
   const user = __getUserFromReq__(req);
 
-  const session = liveblocks.session(
+  const session = liveblocks.createSession(
     user.id
     // { userInfo: user.metadata },
   );
@@ -46,7 +46,9 @@ export async function authExample1(req, res) {
 export async function authExample2(req, res) {
   const user = __getUserFromReq__(req);
 
-  const session = liveblocks.session(user.id, { userInfo: user.metadata });
+  const session = liveblocks.createSession(user.id, {
+    userInfo: user.metadata,
+  });
   if (req.body.room) {
     // Suppose this application organizes their Liveblocks rooms by keys
     // structured like `<team>:<room>`.
@@ -72,7 +74,9 @@ export async function authExample2(req, res) {
 export async function authExample3(req, res) {
   const user = __getUserFromReq__(req);
 
-  const session = liveblocks.session(user.id, { userInfo: user.metadata });
+  const session = liveblocks.createSession(user.id, {
+    userInfo: user.metadata,
+  });
   if (req.body.room) {
     // Suppose this application organizes their Liveblocks rooms by keys
     // structured like `<org>:<team>:<room>`.

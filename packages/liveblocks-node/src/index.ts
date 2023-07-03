@@ -1,7 +1,6 @@
 export { authorize } from "./authorize";
 export type { LiveblocksOptions } from "./new-auth";
 export { Liveblocks } from "./new-auth";
-export { FULL_ACCESS, READ_ACCESS } from "./Permissions";
 export type {
   StorageUpdatedEvent,
   UserEnteredEvent,

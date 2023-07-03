@@ -1,7 +1,11 @@
-import { Permissions } from "./Permissions";
+import { Session } from "./Session";
 import { assertNonEmpty, normalizeStatusCode, urljoin } from "./utils";
 
 export type LiveblocksOptions = {
+  /**
+   * The Liveblocks secret key. Must start with "sk_".
+   * Get it from https://liveblocks.io/dashboard/apikeys
+   */
   secret: string;
 
   /**
@@ -12,9 +16,13 @@ export type LiveblocksOptions = {
   liveblocksBaseUrl?: string;
 };
 
+export type CreateSessionOptions = {
+  userInfo: unknown;
+};
+
 const DEFAULT_BASE_URL = "https://api.liveblocks.io";
 
-type AuthResponse = {
+export type AuthResponse = {
   status: number;
   body: string;
   error?: Error;
@@ -41,7 +49,8 @@ export class Liveblocks {
     );
   }
 
-  private async post(path: `/${string}`, json: Record<string, unknown>) {
+  /** @internal */
+  public async post(path: `/${string}`, json: Record<string, unknown>) {
     const url = urljoin(this._baseUrl, path);
     const headers = {
       Authorization: `Bearer ${this._secret}`,
@@ -53,74 +62,18 @@ export class Liveblocks {
   /**
    * Creates a new, empty, set of permissions, which can be used in
    * .authorizeUser() calls.
-   */
-  createPermissions(): Permissions {
-    return new Permissions();
-  }
-
-  /**
-   * Call this to authorize the user to access Liveblocks, and to describe
-   * exactly what permissions this user should have.
-   *
-   * IMPORTANT:
-   * Always verify that you trust the user making the request before calling
-   * .authorizeUser()!
-   *
-   * Note that this will return a Liveblocks "access token". Anyone that
-   * obtains such access token will have access to the allowed resources.
    *
    * @param userId Tell Liveblocks the user ID of the user to authorize. Must
    * uniquely identify the user account in your system. The uniqueness of this
    * value will determine how many MAUs will be counted/billed.
    *
-   * @param permissions The PermissionSet instance describing what this user
-   * should have access to precisely.
-   *
    * @param options.userInfo Custom metadata to attach to this user. Data you
    * add here will be visible to all other clients in the room, through the
    * `other.info` property.
+   *
    */
-  public async authorizeUser(
-    userId: string,
-    permissions: Permissions,
-    options?: {
-      userInfo: unknown;
-    }
-  ): Promise<AuthResponse> {
-    permissions.seal();
-    if (permissions.isEmpty()) {
-      return {
-        status: 403,
-        body: "Forbidden",
-      };
-    }
-
-    try {
-      assertNonEmpty(userId, "userId"); // TODO: Check if this is a legal userId value too
-
-      const resp = await this.post("/v2/authorize-user", {
-        // Required
-        userId,
-        permissions,
-
-        // Optional metadata
-        userInfo: options?.userInfo,
-      });
-
-      return {
-        status: normalizeStatusCode(resp.status),
-        body: await resp.text(),
-      };
-    } catch (er) {
-      return {
-        status: 503 /* Service Unavailable */,
-        body: `Call to ${urljoin(
-          this._baseUrl,
-          "/v2/authorize"
-        )} failed. See "error" for more information.`,
-        error: er as Error | undefined,
-      };
-    }
+  createSession(userId: string, options?: CreateSessionOptions): Session {
+    return new Session(this, userId, options?.userInfo);
   }
 
   /**

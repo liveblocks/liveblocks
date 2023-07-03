@@ -1,78 +1,87 @@
-import { FULL_ACCESS, Permissions } from "../Permissions";
+import { Liveblocks } from "../new-auth";
 
 const P1 = "room:read";
 const P2 = "room:write";
 const P3 = "comments:read";
 // const P4 = "comments:write";
 
+function makeSession() {
+  const client = new Liveblocks({ secret: "sk_testingtesting" });
+  return client.createSession("user-123");
+}
+
 describe("PermissionSet", () => {
   test("empty throws error", () => {
-    expect(new Permissions().isEmpty()).toEqual(true);
+    expect(makeSession().isEmpty()).toEqual(true);
   });
 
   test("adding permissions makes it not empty", () => {
-    expect(new Permissions().allow("xyz", FULL_ACCESS).isEmpty()).toEqual(
-      false
-    );
+    const session = makeSession();
+    expect(session.allow("xyz", session.FULL_ACCESS).isEmpty()).toEqual(false);
   });
 
   test("adding permissions makes it not empty", () => {
-    expect(new Permissions().allow("xyz", FULL_ACCESS).toJSON()).toEqual({
+    const session = makeSession();
+    expect(
+      session.allow("xyz", session.FULL_ACCESS).serializePermissions()
+    ).toEqual({
       xyz: ["room:write", "comments:write"],
     });
   });
 
   test("throws when no room name", () => {
-    expect(() => new Permissions().allow("", []).toJSON()).toThrow(
+    expect(() => makeSession().allow("", []).serializePermissions()).toThrow(
       "Invalid room name or pattern"
     );
   });
 
   test("throws when room name too long", () => {
     expect(() =>
-      new Permissions()
+      makeSession()
         .allow("definitely-a-waaaaaaaaaaaaaaaaaaaay-too-long-room-name", [])
-        .toJSON()
+        .serializePermissions()
     ).toThrow("Invalid room name or pattern");
   });
 
   test("throws when permission list is empty", () => {
-    expect(() => new Permissions().allow("foobar", [])).toThrow(
+    expect(() => makeSession().allow("foobar", [])).toThrow(
       "Permission list cannot be empty"
     );
   });
 
   test("throws when room name contains asterisk", () => {
-    expect(() => new Permissions().allow("foo*bar", []).toJSON()).toThrow(
-      "Invalid room name or pattern"
-    );
+    expect(() =>
+      makeSession().allow("foo*bar", []).serializePermissions()
+    ).toThrow("Invalid room name or pattern");
   });
 
   test("allows prefixes when room name contains asterisk", () => {
-    expect(new Permissions().allow("foobar*", [P1]).toJSON()).toEqual({
-      "foobar*": [P1],
-    });
+    expect(makeSession().allow("foobar*", [P1]).serializePermissions()).toEqual(
+      {
+        "foobar*": [P1],
+      }
+    );
   });
 
   test("setting invalid permissions will throw", () => {
     expect(() =>
-      new Permissions()
+      makeSession()
         .allow(
           "foobar*",
           // @ts-expect-error - Deliberate incorrect string value
           ["x", "y"]
         )
-        .toJSON()
+        .serializePermissions()
     ).toThrow("Not a valid permission: x");
   });
 
   test("permissions are additive", () => {
     expect(
-      new Permissions()
+      makeSession()
         .allow("foo", [P1])
         .allow("bar", [P2])
         .allow("foo", [P3])
-        .toJSON()
+        .serializePermissions()
     ).toEqual({
       foo: [P1, P3],
       bar: [P2],
@@ -81,7 +90,7 @@ describe("PermissionSet", () => {
 
   test("permissions are deduped", () => {
     expect(
-      new Permissions()
+      makeSession()
         .allow("r", [P1])
         .allow("r", [P2, P3])
         .allow("r", [P1, P3])
@@ -89,14 +98,14 @@ describe("PermissionSet", () => {
         .allow("r", [P3])
         .allow("r", [P3])
         .allow("r", [P3])
-        .toJSON()
+        .serializePermissions()
     ).toEqual({
       r: [P1, P2, P3],
     });
   });
 
   test("adding more than 10 permission entries throws", () => {
-    const p = new Permissions()
+    const p = makeSession()
       .allow("room0", [P1])
       .allow("room1", [P1])
       .allow("room2", [P1])
@@ -109,7 +118,7 @@ describe("PermissionSet", () => {
       .allow("room9", [P1]);
 
     // 11 is still fine
-    expect(p.toJSON()).toEqual({
+    expect(p.serializePermissions()).toEqual({
       room0: [P1],
       room1: [P1],
       room2: [P1],
@@ -131,13 +140,13 @@ describe("PermissionSet", () => {
   });
 
   test("sealing", () => {
-    const p = new Permissions().allow("r", [P1]).allow("r", [P2, P3]);
+    const p = makeSession().allow("r", [P1]).allow("r", [P2, P3]);
 
     p.seal();
 
     // Cannot seal twice
     expect(() => p.seal()).toThrow(
-      "You cannot reuse Permissions instances. Please create a new instance every time."
+      "You cannot reuse Session instances. Please create a new session every time."
     );
 
     // After sealing, you cannot add more permissions
