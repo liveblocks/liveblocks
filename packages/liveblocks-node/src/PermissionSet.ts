@@ -17,27 +17,23 @@ function isPermission(value: string): value is Permission {
 const MAX_PERMS_PER_SET = 10;
 
 /**
- * Assign this to a room or room pattern if you want to grant the user
- * read-only permissions for this room.
+ * Assign this to a room (or wildcard pattern) if you want to grant the user
+ * read permissions to the storage and comments data for this room. (Note that
+ * the user will still have permissions to update their own presence.)
  */
 export const READ_ACCESS: readonly Permission[] = Object.freeze([
   "room:read",
-  // "room:presence:write",  // XXX Should this be included in the READ_ACCESS set?
+  "room:presence:write",
   "comments:read",
 ]);
 
 /**
- * Assign this to a room or room pattern if you want to grant the user all
- * permissions for this room.
+ * Assign this to a room (or wildcard pattern) if you want to grant the user
+ * permissions to read and write to the room's storage and comments.
  */
 export const FULL_ACCESS: readonly Permission[] = Object.freeze([
   "room:write",
   "comments:write",
-
-  // XXX Are these implied automatically if you have the two write permissions above? If so, it would be nice to keep the JWT payload as small as possible.
-  // "room:read",
-  // "room:presence:write",
-  // "comments:read",
 ]);
 
 const roomPatternRegex = /^[^*]{1,50}[*]?$/;
