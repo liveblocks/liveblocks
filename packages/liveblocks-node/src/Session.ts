@@ -1,4 +1,4 @@
-import type { Liveblocks, AuthResponse } from "./new-auth";
+import type { AuthResponse, Liveblocks } from "./new-auth";
 import { assertNonEmpty, normalizeStatusCode } from "./utils";
 
 // As defined in the source of truth in ApiScope in
