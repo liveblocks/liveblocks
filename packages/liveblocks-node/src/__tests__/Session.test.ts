@@ -10,7 +10,7 @@ function makeSession() {
   return client.createSession("user-123");
 }
 
-describe("PermissionSet", () => {
+describe("Session", () => {
   test("empty throws error", () => {
     expect(makeSession().hasPermissions()).toEqual(false);
   });
