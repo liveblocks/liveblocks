@@ -44,7 +44,7 @@ export type LegacySecretToken = BaseTokenPayload & {
 /**
  * New authorization Access Token.
  */
-export type AccessTokenV2 = BaseTokenPayload & {
+export type AccessToken = BaseTokenPayload & {
   k: TokenKind.ACCESS_TOKEN;
   pid: string; // project id
   uid: string; // user id
@@ -55,7 +55,7 @@ export type AccessTokenV2 = BaseTokenPayload & {
 /**
  * New authorization ID Token.
  */
-export type IDTokenV2 = BaseTokenPayload & {
+export type IDToken = BaseTokenPayload & {
   k: TokenKind.ID_TOKEN;
   pid: string; // project id
   uid: string; // user id
@@ -69,11 +69,11 @@ export type IDTokenV2 = BaseTokenPayload & {
 // authentication step.
 export type ParsedAuthToken = {
   readonly raw: string; // The raw JWT value, unchanged
-  readonly parsed: AccessTokenV2 | IDTokenV2 | LegacySecretToken; // Rich data on the JWT value
+  readonly parsed: AccessToken | IDToken | LegacySecretToken; // Rich data on the JWT value
 };
 
 /** @internal - For unit tests only */
-export type JwtMetadata = Pick<AccessTokenV2 | IDTokenV2, "iat" | "exp">;
+export type JwtMetadata = Pick<AccessToken | IDToken, "iat" | "exp">;
 
 export function isTokenExpired(token: JwtMetadata): boolean {
   const now = Date.now() / 1000;
@@ -81,9 +81,7 @@ export function isTokenExpired(token: JwtMetadata): boolean {
   return !valid;
 }
 
-function isValidAuthTokenPayload(
-  data: Json
-): data is AccessTokenV2 | IDTokenV2 {
+function isValidAuthTokenPayload(data: Json): data is AccessToken | IDToken {
   return (
     isPlainObject(data) &&
     typeof data.iat === "number" &&

@@ -918,19 +918,19 @@ export function createRoom<
 
   let lastToken: ParsedAuthToken["parsed"] | undefined;
   function onStatusDidChange(newStatus: Status) {
-    // TODO: support public api key
-    // TODO: support v7, tokens without actor
     if (managedSocket.authValue?.type === "secret") {
       const token = managedSocket.authValue.token.parsed;
       if (token !== undefined && token !== lastToken) {
         context.sessionInfo.set({
-          id: 0, //token.actor,
+          id: 0, //token.actor, // TODO: support v7 protocol
           userInfo: token.ui,
-          // userId: token.uid,
-          isReadOnly: false, //isStorageReadOnly(token.scopes),
+          userId: token.k === TokenKind.SECRET_LEGACY ? token.id : token.uid,
+          isReadOnly: false, // TODO: support v7 protocol
         });
         lastToken = token;
       }
+    } else if (managedSocket.authValue?.type === "public") {
+      // TODO: support public api key
     }
 
     // Forward to the outside world
