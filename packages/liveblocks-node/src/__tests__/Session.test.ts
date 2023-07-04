@@ -5,24 +5,47 @@ const P2 = "room:write";
 const P3 = "comments:read";
 // const P4 = "comments:write";
 
-function makeSession() {
-  const client = new Liveblocks({ secret: "sk_testingtesting" });
+function makeSession(options?: { secret?: string }) {
+  const client = new Liveblocks({
+    secret: options?.secret ?? "sk_testingtesting",
+  });
   return client.prepareSession("user-123");
 }
 
-describe("Session", () => {
-  test("empty throws error", () => {
+describe("authorization (new API)", () => {
+  test("throws when no secret key is provided", () => {
+    expect(() =>
+      makeSession({
+        // @ts-expect-error
+        secret: 123,
+      })
+    ).toThrow(
+      'Invalid value for field "secret". Secret keys must start with "sk_". Please provide the secret key from your Liveblocks dashboard at https://liveblocks.io/dashboard/apikeys.'
+    );
+  });
+
+  test("throws when an invalid secret key is provided", () => {
+    expect(() =>
+      makeSession({
+        secret: "pk_thisisntsecret",
+      })
+    ).toThrow(
+      'Invalid value for field "secret". Secret keys must start with "sk_". Please provide the secret key from your Liveblocks dashboard at https://liveblocks.io/dashboard/apikeys.'
+    );
+  });
+
+  test("default set has no permissions", () => {
     expect(makeSession().hasPermissions()).toEqual(false);
   });
 
-  test("adding permissions makes it not empty", () => {
+  test("adding permissions makes it have permissions", () => {
     const session = makeSession();
     expect(session.allow("xyz", session.FULL_ACCESS).hasPermissions()).toEqual(
       true
     );
   });
 
-  test("adding permissions makes it not empty", () => {
+  test("adding permissions", () => {
     const session = makeSession();
     expect(
       session.allow("xyz", session.FULL_ACCESS).serializePermissions()

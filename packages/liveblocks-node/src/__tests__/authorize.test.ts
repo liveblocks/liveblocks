@@ -1,6 +1,6 @@
 import { authorize } from "..";
 
-describe("authorize", () => {
+describe("authorize (legacy API)", () => {
   test.each([null, "", undefined, {}])(
     "should check that room is a non-empty string",
     async (room) => {

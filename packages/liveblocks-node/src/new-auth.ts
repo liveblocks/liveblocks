@@ -2,7 +2,12 @@ import type { Response } from "node-fetch";
 import fetch from "node-fetch";
 
 import { Session } from "./Session";
-import { assertNonEmpty, normalizeStatusCode, urljoin } from "./utils";
+import {
+  assertNonEmpty,
+  assertSecretKey,
+  normalizeStatusCode,
+  urljoin,
+} from "./utils";
 
 export type LiveblocksOptions = {
   /**
@@ -43,7 +48,7 @@ export class Liveblocks {
   constructor(options: LiveblocksOptions) {
     const options_ = options as Record<string, unknown>;
     const secret = options_.secret;
-    assertNonEmpty(secret, "secret"); // TODO: Also fail if this isn't a pk_XXXXXXXXX-shaped string
+    assertSecretKey(secret, "secret");
     this._secret = secret;
     this._baseUrl = new URL(
       typeof options_.liveblocksBaseUrl === "string"
