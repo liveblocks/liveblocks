@@ -4,7 +4,7 @@ import type { ToImmutable } from "../crdts/utils";
 import type { Json, JsonObject } from "../lib/Json";
 import { makePosition } from "../lib/position";
 import type { Authentication } from "../protocol/Authentication";
-import type { LegacySecretToken } from "../protocol/AuthToken";
+import { LegacySecretToken, TokenKind } from "../protocol/AuthToken";
 import type { BaseUserMeta } from "../protocol/BaseUserMeta";
 import type { ClientMsg } from "../protocol/ClientMsg";
 import { ClientMsgCode } from "../protocol/ClientMsg";
@@ -43,7 +43,7 @@ export function makeMinimalTokenPayload(
   // defined in the (private) backend in case you're interested, see
   // https://github.com/liveblocks/liveblocks-cloudflare/blob/main/src/security.ts
   return {
-    k: "sec-legacy",
+    k: TokenKind.SECRET_LEGACY,
     iat: Date.now() / 1000,
     exp: Date.now() / 1000 + 60, // Valid for 1 minute
     appId: "my-app",
