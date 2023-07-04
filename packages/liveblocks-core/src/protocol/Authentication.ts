@@ -9,5 +9,5 @@ export type Authentication =
     }
   | {
       type: "custom";
-      callback: (room: string) => Promise<{ token: string }>;
+      callback: (room?: string) => Promise<{ token: string }>;
     };
