@@ -696,9 +696,11 @@ type HistoryOp<TPresence extends JsonObject> =
 type IdFactory = () => string;
 
 type SessionInfo = {
-  readonly actor: number;
   readonly userId?: string;
   readonly userInfo?: Json;
+
+  // NOTE: In the future, these fields will get assigned in the connection phase
+  readonly actor: number;
   readonly isReadOnly: boolean;
 };
 
@@ -937,9 +939,11 @@ export function createRoom<
     const token = managedSocket.token?.parsed;
     if (token !== undefined && token !== lastToken) {
       context.sessionInfo.set({
-        actor: token.actor,
         userInfo: token.info,
         userId: token.id,
+
+        // NOTE: In the future, these fields will get assigned in the connection phase
+        actor: token.actor,
         isReadOnly: isStorageReadOnly(token.scopes),
       });
       lastToken = token;
