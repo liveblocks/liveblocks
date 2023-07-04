@@ -50,7 +50,7 @@ import type {
 } from "./protocol/ServerMsg";
 import { ServerMsgCode } from "./protocol/ServerMsg";
 import type { ImmutableRef } from "./refs/ImmutableRef";
-import { MeRef } from "./refs/MeRef";
+import { PatchableRef } from "./refs/PatchableRef";
 import { OthersRef } from "./refs/OthersRef";
 import { DerivedRef, ValueRef } from "./refs/ValueRef";
 import type * as DevTools from "./types/DevToolsTreeNode";
@@ -734,7 +734,7 @@ type RoomState<
   // token, which is returned by the authenticate delegate and stored inside
   // the machine.
   readonly sessionInfo: ValueRef<SessionInfo | null>;
-  readonly me: MeRef<TPresence>;
+  readonly me: PatchableRef<TPresence>;
   readonly others: OthersRef<TPresence, TUserMeta>;
 
   idFactory: IdFactory | null;
@@ -905,7 +905,7 @@ export function createRoom<
     },
 
     sessionInfo: new ValueRef(null),
-    me: new MeRef(initialPresence),
+    me: new PatchableRef(initialPresence),
     others: new OthersRef<TPresence, TUserMeta>(),
 
     initialStorage,
