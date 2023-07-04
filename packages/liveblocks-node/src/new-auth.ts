@@ -57,8 +57,7 @@ export class Liveblocks {
     );
   }
 
-  /** @internal */
-  public async post(
+  private async post(
     path: `/${string}`,
     json: Record<string, unknown>
   ): Promise<Response> {
@@ -87,7 +86,7 @@ export class Liveblocks {
    *
    */
   prepareSession(userId: string, options?: CreateSessionOptions): Session {
-    return new Session(this, userId, options?.userInfo);
+    return new Session(this.post.bind(this), userId, options?.userInfo);
   }
 
   /**

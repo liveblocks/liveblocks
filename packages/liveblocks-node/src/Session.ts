@@ -1,4 +1,6 @@
-import type { AuthResponse, Liveblocks } from "./new-auth";
+import type { Response } from "node-fetch";
+
+import type { AuthResponse } from "./new-auth";
 import { assertNonEmpty, normalizeStatusCode } from "./utils";
 
 // As defined in the source of truth in ApiScope in
@@ -41,6 +43,11 @@ const FULL_ACCESS: readonly Permission[] = Object.freeze([
 
 const roomPatternRegex = /^[^*]{1,50}[*]?$/;
 
+type PostFn = (
+  path: `/${string}`,
+  json: Record<string, unknown>
+) => Promise<Response>;
+
 /**
  * Class to help you construct the exact permission set to grant a user, used
  * when making `.authorizeUser()` calls.
@@ -78,16 +85,17 @@ export class Session {
   public readonly FULL_ACCESS = FULL_ACCESS;
   public readonly READ_ACCESS = READ_ACCESS;
 
-  private _client: Liveblocks;
+  private _postFn: PostFn;
   private _userId: string;
   private _userInfo?: unknown;
   private _sealed = false;
   private readonly _permissions: Map<string, Set<Permission>> = new Map();
 
-  constructor(client: Liveblocks, userId: string, userInfo?: unknown) {
+  /** @internal */
+  constructor(postFn: PostFn, userId: string, userInfo?: unknown) {
     assertNonEmpty(userId, "userId"); // TODO: Check if this is a legal userId value too
 
-    this._client = client;
+    this._postFn = postFn;
     this._userId = userId;
     this._userInfo = userInfo;
   }
@@ -169,7 +177,7 @@ export class Session {
     }
 
     try {
-      const resp = await this._client.post("/v2/authorize-user", {
+      const resp = await this._postFn("/v2/authorize-user", {
         // Required
         userId: this._userId,
         permissions: this.serializePermissions(),
