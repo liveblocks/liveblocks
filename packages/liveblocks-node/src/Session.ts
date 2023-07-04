@@ -26,20 +26,17 @@ const MAX_PERMS_PER_SET = 10;
  * read permissions to the storage and comments data for this room. (Note that
  * the user will still have permissions to update their own presence.)
  */
-const READ_ACCESS: readonly Permission[] = Object.freeze([
+const READ_ACCESS = Object.freeze([
   "room:read",
   "room:presence:write",
   "comments:read",
-]);
+] as const);
 
 /**
  * Assign this to a room (or wildcard pattern) if you want to grant the user
  * permissions to read and write to the room's storage and comments.
  */
-const FULL_ACCESS: readonly Permission[] = Object.freeze([
-  "room:write",
-  "comments:write",
-]);
+const FULL_ACCESS = Object.freeze(["room:write", "comments:write"] as const);
 
 const roomPatternRegex = /^[^*]{1,50}[*]?$/;
 
@@ -85,10 +82,15 @@ export class Session {
   public readonly FULL_ACCESS = FULL_ACCESS;
   public readonly READ_ACCESS = READ_ACCESS;
 
+  /** @internal */
   private _postFn: PostFn;
+  /** @internal */
   private _userId: string;
+  /** @internal */
   private _userInfo?: unknown;
+  /** @internal */
   private _sealed = false;
+  /** @internal */
   private readonly _permissions: Map<string, Set<Permission>> = new Map();
 
   /** @internal */
@@ -100,6 +102,7 @@ export class Session {
     this._userInfo = userInfo;
   }
 
+  /** @internal */
   private getOrCreate(roomId: string): Set<Permission> {
     if (this._sealed) {
       throw new Error("You can no longer change these permissions.");
@@ -140,10 +143,12 @@ export class Session {
     return this; // To allow chaining multiple allow calls
   }
 
+  /** @internal - For unit tests only */
   public hasPermissions(): boolean {
     return this._permissions.size > 0;
   }
 
+  /** @internal - For unit tests only */
   public seal(): void {
     if (this._sealed) {
       throw new Error(
@@ -153,6 +158,7 @@ export class Session {
     this._sealed = true;
   }
 
+  /** @internal - For unit tests only */
   public serializePermissions(): Record<string, unknown> {
     return Object.fromEntries(
       Array.from(this._permissions.entries()).map(([pat, perms]) => [

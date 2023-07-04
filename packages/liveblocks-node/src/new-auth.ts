@@ -41,10 +41,18 @@ type Identity = {
   groupIds: string[];
 };
 
+/**
+ * Interact with the Liveblocks API from your Node.js backend.
+ */
 export class Liveblocks {
+  /** @internal */
   private readonly _secret: string;
+  /** @internal */
   private readonly _baseUrl: URL;
 
+  /**
+   * Interact with the Liveblocks API from your Node.js backend.
+   */
   constructor(options: LiveblocksOptions) {
     const options_ = options as Record<string, unknown>;
     const secret = options_.secret;
@@ -57,6 +65,7 @@ export class Liveblocks {
     );
   }
 
+  /** @internal */
   private async post(
     path: `/${string}`,
     json: Record<string, unknown>
