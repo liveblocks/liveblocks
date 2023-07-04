@@ -11,7 +11,7 @@
   ],
   "scripts": {
     "dev": "tsup --watch",
-    "build": "tsup",
+    "build": "tsc --noEmit && tsup",
     "start": "tsup --watch",
     "format": "(eslint --fix src/ || true) && prettier --write src/",
     "lint": "(eslint src/ || true) && npm run check:exports",

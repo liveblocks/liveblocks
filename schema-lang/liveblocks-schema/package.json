@@ -9,7 +9,7 @@
     "README.md"
   ],
   "scripts": {
-    "build": "tsup",
+    "build": "tsc --noEmit && tsup",
     "build:ast": "generate-ast src/ast/ast.grammar src/ast/index.ts && tsc --noEmit src/ast/index.ts && node bin/update-returntypes.js",
     "build:parser": "bin/build-parser && tsc --noEmit src/parser/generated-parser.ts",
     "lint": "eslint src/",

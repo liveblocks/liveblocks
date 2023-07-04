@@ -21,7 +21,7 @@
     "README.md"
   ],
   "scripts": {
-    "build": "tsup",
+    "build": "tsc --noEmit && tsup",
     "lint": "eslint src/",
     "lint:package": "publint --strict && attw --pack",
     "format": "(eslint --fix src/ || true) && prettier --write src/",
