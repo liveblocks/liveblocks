@@ -50,8 +50,8 @@ import type {
 } from "./protocol/ServerMsg";
 import { ServerMsgCode } from "./protocol/ServerMsg";
 import type { ImmutableRef } from "./refs/ImmutableRef";
-import { PatchableRef } from "./refs/PatchableRef";
 import { OthersRef } from "./refs/OthersRef";
+import { PatchableRef } from "./refs/PatchableRef";
 import { DerivedRef, ValueRef } from "./refs/ValueRef";
 import type * as DevTools from "./types/DevToolsTreeNode";
 import type {
