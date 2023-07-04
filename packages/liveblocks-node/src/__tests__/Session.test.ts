@@ -16,7 +16,7 @@ describe("authorization (new API)", () => {
   test("throws when no secret key is provided", () => {
     expect(() =>
       makeSession({
-        // @ts-expect-error
+        // @ts-expect-error - Deliberately not a string value
         secret: 123,
       })
     ).toThrow(
