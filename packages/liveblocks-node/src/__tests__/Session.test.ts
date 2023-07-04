@@ -45,12 +45,21 @@ describe("authorization (new API)", () => {
     );
   });
 
-  test("adding permissions", () => {
+  test("can assign FULL_ACCESS permissions", () => {
     const session = makeSession();
     expect(
       session.allow("xyz", session.FULL_ACCESS).serializePermissions()
     ).toEqual({
       xyz: ["room:write", "comments:write"],
+    });
+  });
+
+  test("can assign READ_ACCESS permissions", () => {
+    const session = makeSession();
+    expect(
+      session.allow("xyz", session.READ_ACCESS).serializePermissions()
+    ).toEqual({
+      xyz: ["room:read", "room:presence:write", "comments:read"],
     });
   });
 
