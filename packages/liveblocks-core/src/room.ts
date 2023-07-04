@@ -696,7 +696,7 @@ type HistoryOp<TPresence extends JsonObject> =
 type IdFactory = () => string;
 
 type SessionInfo = {
-  readonly id: number; // This is the "actor" (otherwise known as the "connection ID")
+  readonly actor: number;
   readonly userId?: string;
   readonly userInfo?: Json;
   readonly isReadOnly: boolean;
@@ -937,7 +937,7 @@ export function createRoom<
     const token = managedSocket.token?.parsed;
     if (token !== undefined && token !== lastToken) {
       context.sessionInfo.set({
-        id: token.actor,
+        actor: token.actor,
         userInfo: token.info,
         userId: token.id,
         isReadOnly: isStorageReadOnly(token.scopes),
@@ -1012,7 +1012,7 @@ export function createRoom<
 
     // NOTE: Soon, once the actor ID assignment gets delayed until after the
     // room connection happens, we won't know the connection ID here just yet.
-    context.idFactory = makeIdFactory(sessionInfo.id);
+    context.idFactory = makeIdFactory(sessionInfo.actor);
 
     // If a storage fetch has ever been initiated, we assume the client is
     // interested in storage, so we will refresh it after a reconnection.
@@ -1163,7 +1163,7 @@ export function createRoom<
     (info, me): User<TPresence, TUserMeta> | null => {
       return info !== null
         ? {
-            connectionId: info.id,
+            connectionId: info.actor,
             id: info.userId,
             info: info.userInfo,
             presence: me,
@@ -1279,7 +1279,7 @@ export function createRoom<
   function getConnectionId() {
     const info = context.sessionInfo.current;
     if (info) {
-      return info.id;
+      return info.actor;
     }
 
     throw new Error(
