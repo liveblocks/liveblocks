@@ -14,7 +14,7 @@ export type AuthValue =
   | { type: "secret"; token: ParsedAuthToken }
   | { type: "public"; publicApiKey: string };
 
-type RequestedScope = "room:read" | "comments:read";
+export type RequestedScope = "room:read" | "comments:read";
 
 export type AuthManager = {
   getAuthValue(
@@ -23,9 +23,7 @@ export type AuthManager = {
   ): Promise<AuthValue>;
 };
 
-export type AuthEndpoint =
-  | string
-  | ((room?: string) => Promise<{ token: string }>);
+type AuthEndpoint = string | ((room?: string) => Promise<{ token: string }>);
 
 export type AuthenticationOptions = {
   polyfills?: Polyfills;
@@ -40,10 +38,6 @@ export function createAuthManager(
   const authentication = prepareAuthentication(authOptions);
 
   let tokens: ParsedAuthToken[] = [];
-
-  const fetcher =
-    authOptions.polyfills?.fetch ??
-    (typeof window === "undefined" ? undefined : window.fetch);
 
   function hasCorrespondingScopes(
     requestedScope: RequestedScope,
@@ -62,6 +56,7 @@ export function createAuthManager(
 
     return false;
   }
+
   function getCachedToken(
     requestedScope: RequestedScope,
     roomId: string
@@ -89,6 +84,38 @@ export function createAuthManager(
     return undefined;
   }
 
+  async function makeAuthRequest(roomId: string): Promise<ParsedAuthToken> {
+    const fetcher =
+      authOptions.polyfills?.fetch ??
+      (typeof window === "undefined" ? undefined : window.fetch);
+
+    if (authentication.type === "private") {
+      if (fetcher === undefined) {
+        throw new StopRetrying(
+          "To use Liveblocks client in a non-dom environment with a url as auth endpoint, you need to provide a fetch polyfill."
+        );
+      }
+
+      const response = await fetchAuthEndpoint(fetcher, authentication.url, {
+        room: roomId,
+      });
+      return parseAuthToken(response.token);
+    }
+
+    if (authentication.type === "custom") {
+      const response = await authentication.callback(roomId);
+
+      if (!response || !response.token) {
+        throw new Error(
+          'We expect the authentication callback to return a token, but it does not. Hint: the return value should look like: { token: "..." }'
+        );
+      }
+      return parseAuthToken(response.token);
+    }
+
+    throw new Error("Invalid Liveblocks client options");
+  }
+
   async function getAuthValue(
     requestedScope: RequestedScope,
     roomId: string
@@ -102,39 +129,11 @@ export function createAuthManager(
       return { type: "secret", token: cachedToken };
     }
 
-    if (authentication.type === "private") {
-      if (fetcher === undefined) {
-        throw new StopRetrying(
-          "To use Liveblocks client in a non-dom environment with a url as auth endpoint, you need to provide a fetch polyfill."
-        );
-      }
+    const token = await makeAuthRequest(roomId);
 
-      const response = await fetchAuthEndpoint(fetcher, authentication.url, {
-        room: roomId,
-      });
-      const token = parseAuthToken(response.token);
+    tokens.push(token);
 
-      tokens.push(token);
-
-      return { type: "secret", token };
-    }
-
-    if (authentication.type === "custom") {
-      const response = await authentication.callback(roomId);
-
-      if (!response || !response.token) {
-        throw new Error(
-          'We expect the authentication callback to return a token, but it does not. Hint: the return value should look like: { token: "..." }'
-        );
-      }
-      const token = parseAuthToken(response.token);
-
-      tokens.push(token);
-
-      return { type: "secret", token };
-    }
-
-    throw new Error("Invalid Liveblocks client options");
+    return { type: "secret", token };
   }
 
   return {
