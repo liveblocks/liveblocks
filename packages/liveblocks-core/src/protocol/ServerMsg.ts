@@ -169,9 +169,6 @@ export type BroadcastedEventServerMsg<TRoomEvent extends Json> = {
  */
 export type RoomStateServerMsg<TUserMeta extends BaseUserMeta> = {
   readonly type: ServerMsgCode.ROOM_STATE;
-  readonly users: {
-    readonly [actor: number]: TUserMeta & { scopes: string[] };
-  };
 
   /**
    * Informs the client what their actor ID is.
@@ -184,6 +181,10 @@ export type RoomStateServerMsg<TUserMeta extends BaseUserMeta> = {
    * @since v1.2 (WS API v7)
    */
   readonly isReadOnly: boolean;
+
+  readonly users: {
+    readonly [actor: number]: TUserMeta & { scopes: string[] };
+  };
 };
 
 /**
