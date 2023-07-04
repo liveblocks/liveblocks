@@ -2,6 +2,9 @@ import fetch from "node-fetch";
 
 import { assertNonEmpty, normalizeStatusCode } from "./utils";
 
+/**
+ * TODO Officially mark as DEPRECATED, point to migration guide.
+ */
 type AuthorizeOptions = {
   /**
    * The secret API key for your Liveblocks account. You can find it on
@@ -55,6 +58,9 @@ type AuthorizeOptions = {
   liveblocksAuthorizeEndpoint?: string;
 };
 
+/**
+ * TODO Officially mark as DEPRECATED, point to migration guide.
+ */
 type AuthorizeResponse = {
   status: number;
   body: string;
@@ -62,6 +68,8 @@ type AuthorizeResponse = {
 };
 
 /**
+ * TODO Officially mark as DEPRECATED, point to migration guide.
+ *
  * Tells Liveblocks that a user should be allowed access to a room, which user
  * this session is for, and what metadata to associate with the user (like
  * name, avatar, etc.)
