@@ -601,11 +601,11 @@ describe("room", () => {
       conn.server.send(
         serverMessage({
           type: ServerMsgCode.ROOM_STATE,
+          actor: 2,
+          isReadOnly: false,
           users: {
             "1": { scopes: [] },
           },
-          actor: 2,
-          isReadOnly: false,
         })
       );
 
@@ -634,11 +634,11 @@ describe("room", () => {
       conn.server.send(
         serverMessage({
           type: ServerMsgCode.ROOM_STATE,
+          actor: 2,
+          isReadOnly: false,
           users: {
             "1": { scopes: [RoomScope.Read, RoomScope.PresenceWrite] },
           },
-          actor: 2,
-          isReadOnly: false,
         })
       );
 
@@ -672,11 +672,11 @@ describe("room", () => {
       conn.server.send(
         serverMessage({
           type: ServerMsgCode.ROOM_STATE,
+          actor: 2,
+          isReadOnly: false,
           users: {
             "1": { scopes: [] },
           },
-          actor: 2,
-          isReadOnly: false,
         })
       );
 
@@ -734,12 +734,12 @@ describe("room", () => {
       conn.server.send(
         serverMessage({
           type: ServerMsgCode.ROOM_STATE,
+          actor: 3,
+          isReadOnly: false,
           users: {
             "1": { scopes: [] },
             "2": { scopes: [] },
           },
-          actor: 3,
-          isReadOnly: false,
         })
       );
 
@@ -779,11 +779,11 @@ describe("room", () => {
     wss.last.send(
       serverMessage({
         type: ServerMsgCode.ROOM_STATE,
+        actor: 2,
+        isReadOnly: false,
         users: {
           "1": { scopes: [] },
         },
-        actor: 2,
-        isReadOnly: false,
       })
     );
 
@@ -1388,9 +1388,9 @@ describe("room", () => {
       wss.last.send(
         serverMessage({
           type: ServerMsgCode.ROOM_STATE,
-          users: { 1: { scopes: [] } },
           actor: 2,
           isReadOnly: false,
+          users: { 1: { scopes: [] } },
         })
       );
 
@@ -1890,9 +1890,9 @@ describe("room", () => {
         conn.server.send(
           serverMessage({
             type: ServerMsgCode.ROOM_STATE,
-            users: { "1": { id: undefined, scopes: [] } },
             actor: 2,
             isReadOnly: false,
+            users: { "1": { id: undefined, scopes: [] } },
           })
         );
 

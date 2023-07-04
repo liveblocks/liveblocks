@@ -275,9 +275,9 @@ export async function prepareStorageTest<
   ref.wss.last.send(
     serverMessage({
       type: ServerMsgCode.ROOM_STATE,
-      users: { [currentActor]: { scopes: [] } },
       actor: currentActor,
       isReadOnly: false,
+      users: { [currentActor]: { scopes: [] } },
     })
   );
 
