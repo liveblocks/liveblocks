@@ -51,28 +51,30 @@ type PostFn = (
  *
  * Usage:
  *
- *    const p = new Permissions();
- *    p.allow(roomId, scopes)  // or...
+ *    const session = liveblocks.prepareSession();
+ *    session.allow(roomId, permissions)  // or...
  *
- * Example:
+ * For the `permissions` argument, you can pass a list of specific permissions,
+ * or use one of our presets:
  *
- *    p.allow('my-room', FULL_ACCESS)  // Grant read + write access to 'my-room'
- *    p.allow('my-room', READ_ACCESS)  // Grant read-only access to 'my-room'
+ *    session.allow('my-room', session.FULL_ACCESS)  // Read + write access to room storage and comments
+ *    session.allow('my-room', session.READ_ACCESS)  // Read-only access to room storage and comments
  *
  * Rooms can be specified with a prefix match, if the name ends in an asterisk.
- * In that case, access is granted to all rooms that start with that pattern:
+ * In that case, access is granted to *all* rooms that start with that prefix:
  *
- *    p.allow('abc:*', FULL_ACCESS)    // Grant read + write access to all rooms that start with "abc:"
+ *    // Read + write access to *all* rooms that start with "abc:"
+ *    session.allow('abc:*', session.FULL_ACCESS)
  *
- * You can define at most 10 room IDs or patterns in a single token, otherwise
- * the token would become too large and unwieldy.
+ * You can define at most 10 room IDs (or patterns) in a single token,
+ * otherwise the token would become too large and unwieldy.
  *
  * All permissions granted are additive. You cannot "remove" permissions once
  * you grant them. For example:
  *
- *    p
- *      .allow('abc:*',   FULL_ACCESS)
- *      .allow('abc:123', READ_ACCESS)
+ *    session
+ *      .allow('abc:*',   session.FULL_ACCESS)
+ *      .allow('abc:123', session.READ_ACCESS)
  *
  * Here, room `abc:123` would have full access. The second .allow() call only
  * _adds_ read permissions, but that has no effect since full access
