@@ -46,8 +46,8 @@ import type {
 } from "./protocol/ServerMsg";
 import { ServerMsgCode } from "./protocol/ServerMsg";
 import type { ImmutableRef } from "./refs/ImmutableRef";
-import { MeRef } from "./refs/MeRef";
 import { OthersRef } from "./refs/OthersRef";
+import { PatchableRef } from "./refs/PatchableRef";
 import { DerivedRef, ValueRef } from "./refs/ValueRef";
 import type * as DevTools from "./types/DevToolsTreeNode";
 import type {
@@ -692,9 +692,11 @@ type HistoryOp<TPresence extends JsonObject> =
 type IdFactory = () => string;
 
 type SessionInfo = {
-  readonly id: number; // This is the "actor" (otherwise known as the "connection ID")
   readonly userId?: string;
   readonly userInfo?: Json;
+
+  // NOTE: In the future, these fields will get assigned in the connection phase
+  readonly actor: number;
   readonly isReadOnly: boolean;
 };
 
@@ -728,7 +730,7 @@ type RoomState<
   // token, which is returned by the authenticate delegate and stored inside
   // the machine.
   readonly sessionInfo: ValueRef<SessionInfo | null>;
-  readonly me: MeRef<TPresence>;
+  readonly me: PatchableRef<TPresence>;
   readonly others: OthersRef<TPresence, TUserMeta>;
 
   idFactory: IdFactory | null;
@@ -887,7 +889,7 @@ export function createRoom<
     },
 
     sessionInfo: new ValueRef(null),
-    me: new MeRef(initialPresence),
+    me: new PatchableRef(initialPresence),
     others: new OthersRef<TPresence, TUserMeta>(),
 
     initialStorage,
@@ -922,9 +924,10 @@ export function createRoom<
       const token = managedSocket.authValue.token.parsed;
       if (token !== undefined && token !== lastToken) {
         context.sessionInfo.set({
-          id: 0, //token.actor, // TODO: support v7 protocol
-          userInfo: token.ui,
+          userInfo: token.k === TokenKind.SECRET_LEGACY ? token.info : token.ui,
           userId: token.k === TokenKind.SECRET_LEGACY ? token.id : token.uid,
+          // NOTE: In the future, these fields will get assigned in the connection phase
+          actor: 0, // TODO: support v7 protocol
           isReadOnly: false, // TODO: support v7 protocol
         });
         lastToken = token;
@@ -1000,7 +1003,7 @@ export function createRoom<
 
     // NOTE: Soon, once the actor ID assignment gets delayed until after the
     // room connection happens, we won't know the connection ID here just yet.
-    context.idFactory = makeIdFactory(sessionInfo.id);
+    context.idFactory = makeIdFactory(sessionInfo.actor);
 
     // If a storage fetch has ever been initiated, we assume the client is
     // interested in storage, so we will refresh it after a reconnection.
@@ -1152,7 +1155,7 @@ export function createRoom<
     (info, me): User<TPresence, TUserMeta> | null => {
       return info !== null
         ? {
-            connectionId: info.id,
+            connectionId: info.actor,
             id: info.userId,
             info: info.userInfo,
             presence: me,
@@ -1268,7 +1271,7 @@ export function createRoom<
   function getConnectionId() {
     const info = context.sessionInfo.current;
     if (info) {
-      return info.id;
+      return info.actor;
     }
 
     throw new Error(
