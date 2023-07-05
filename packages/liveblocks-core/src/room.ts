@@ -691,11 +691,14 @@ type HistoryOp<TPresence extends JsonObject> =
 
 type IdFactory = () => string;
 
-type SessionInfo = {
-  readonly actor: number;
-  readonly traits: Traits;
+type StaticSessionInfo = {
   readonly userId?: string;
   readonly userInfo?: Json;
+};
+
+type DynamicSessionInfo = {
+  readonly actor: number;
+  readonly traits: Traits;
 };
 
 type RoomState<
@@ -726,13 +729,14 @@ type RoomState<
 
   //
   // The "self" User takes assembly of three sources-of-truth:
-  // - The JWT token provides the static userId and userInfo metadata
+  // - The JWT token provides the userId and userInfo metadata (static)
   // - The server, in its initial ROOM_STATE message, will provide the actor ID
-  //   and the traits
-  // - The presence is provided by the client's initialPresence configuration
+  //   and the traits (dynamic)
+  // - The presence is provided by the client's initialPresence configuration (presence)
   //
-  readonly sessionInfo: ValueRef<SessionInfo | null>;
-  readonly me: PatchableRef<TPresence>;
+  readonly staticSessionInfo: ValueRef<StaticSessionInfo | null>;
+  readonly dynamicSessionInfo: ValueRef<DynamicSessionInfo | null>;
+  readonly myPresence: PatchableRef<TPresence>;
   readonly others: OthersRef<TPresence, TUserMeta>;
 
   idFactory: IdFactory | null;
@@ -902,8 +906,9 @@ export function createRoom<
       storageOperations: [],
     },
 
-    sessionInfo: new ValueRef(null),
-    me: new PatchableRef(initialPresence),
+    staticSessionInfo: new ValueRef(null),
+    dynamicSessionInfo: new ValueRef(null),
+    myPresence: new PatchableRef(initialPresence),
     others: new OthersRef<TPresence, TUserMeta>(),
 
     initialStorage,
@@ -936,13 +941,9 @@ export function createRoom<
   function onStatusDidChange(newStatus: Status) {
     const token = managedSocket.token?.parsed;
     if (token !== undefined && token !== lastToken) {
-      context.sessionInfo.set({
+      context.staticSessionInfo.set({
         userInfo: token.info,
         userId: token.id,
-
-        // NOTE: In the future, these fields will get assigned in the connection phase
-        actor: token.actor, // XXX This is wrong! As far as the client is concerned, the actor will no longer be on the token going forward!
-        traits: Traits.All, // XXX This is wrong! It should be set to whatever the server sends
       });
       lastToken = token;
     }
@@ -991,12 +992,6 @@ export function createRoom<
   }
 
   function onDidConnect() {
-    const sessionInfo = context.sessionInfo.current;
-    if (sessionInfo === null) {
-      // Totally unexpected by now
-      throw new Error("Unexpected missing session info");
-    }
-
     // Re-broadcast the full user presence as soon as we (re)connect
     context.buffer.me = {
       type: "full",
@@ -1004,17 +999,13 @@ export function createRoom<
         // Because context.me.current is a readonly object, we'll have to
         // make a copy here. Otherwise, type errors happen later when
         // "patching" my presence.
-        { ...context.me.current },
+        { ...context.myPresence.current },
     };
 
     // NOTE: There was a flush here before, but I don't think it's really
     // needed anymore. We're now combining this flush with the one below, to
     // combine them in a single batch.
     // tryFlushing();
-
-    // NOTE: Soon, once the actor ID assignment gets delayed until after the
-    // room connection happens, we won't know the connection ID here just yet.
-    context.idFactory = makeIdFactory(sessionInfo.actor);
 
     // If a storage fetch has ever been initiated, we assume the client is
     // interested in storage, so we will refresh it after a reconnection.
@@ -1098,7 +1089,14 @@ export function createRoom<
     },
 
     assertStorageIsWritable: () => {
-      const traits = context.sessionInfo.current?.traits ?? Traits.None;
+      const traits =
+        context.dynamicSessionInfo.current?.traits ??
+        // XXX Double-check if this is the sane thing to do! Previously this is
+        // how the context.sessionInfo?.isReadOnly check worked too. If the
+        // isReadOnly property wasn't known yet, the client assumed write
+        // access. Not sure if this will break anything if we flip it to
+        // Traits.None.
+        Traits.All; // XXX Make this Traits.None (but make sure it won't break anything)
       const canWrite =
         (traits & Traits.CanWriteDocument) === Traits.CanWriteDocument;
       if (!canWrite) {
@@ -1163,20 +1161,25 @@ export function createRoom<
   }
 
   const self = new DerivedRef(
-    context.sessionInfo as ImmutableRef<SessionInfo | null>,
-    context.me,
-    (session, me): User<TPresence, TUserMeta> | null => {
-      if (session === null) {
+    context.staticSessionInfo as ImmutableRef<StaticSessionInfo | null>,
+    context.dynamicSessionInfo as ImmutableRef<DynamicSessionInfo | null>,
+    context.myPresence,
+    (
+      staticSession,
+      dynamicSession,
+      myPresence
+    ): User<TPresence, TUserMeta> | null => {
+      if (staticSession === null || dynamicSession === null) {
         return null;
       } else {
         const canWrite =
-          (session.traits & Traits.CanWriteDocument) ===
+          (dynamicSession.traits & Traits.CanWriteDocument) ===
           Traits.CanWriteDocument;
         return {
-          connectionId: session.actor,
-          id: session.userId,
-          info: session.userInfo,
-          presence: me,
+          connectionId: dynamicSession.actor,
+          id: staticSession.userId,
+          info: staticSession.userInfo,
+          presence: myPresence,
           canWrite,
           isReadOnly: !canWrite, // Deprecated, kept for backward-compatibility
         };
@@ -1277,7 +1280,7 @@ export function createRoom<
       }
 
       if (presence) {
-        eventHub.me.notify(context.me.current);
+        eventHub.me.notify(context.myPresence.current);
       }
 
       if (storageUpdates.size > 0) {
@@ -1288,7 +1291,7 @@ export function createRoom<
   }
 
   function getConnectionId() {
-    const info = context.sessionInfo.current;
+    const info = context.dynamicSessionInfo.current;
     if (info) {
       return info.actor;
     }
@@ -1336,10 +1339,10 @@ export function createRoom<
         };
 
         for (const key in op.data) {
-          reverse.data[key] = context.me.current[key];
+          reverse.data[key] = context.myPresence.current[key];
         }
 
-        context.me.patch(op.data);
+        context.myPresence.patch(op.data);
 
         if (context.buffer.me === null) {
           context.buffer.me = { type: "partial", data: op.data };
@@ -1480,10 +1483,10 @@ export function createRoom<
         continue;
       }
       context.buffer.me.data[key] = overrideValue;
-      oldValues[key] = context.me.current[key];
+      oldValues[key] = context.myPresence.current[key];
     }
 
-    context.me.patch(patch);
+    context.myPresence.patch(patch);
 
     if (context.activeBatch) {
       if (options?.addToHistory) {
@@ -1555,6 +1558,13 @@ export function createRoom<
   function onRoomStateMessage(
     message: RoomStateServerMsg<TUserMeta>
   ): OthersEvent<TPresence, TUserMeta> {
+    // The server will inform the client about its assigned actor ID and traits
+    context.dynamicSessionInfo.set({
+      actor: message.actor,
+      traits: message.traits,
+    });
+    context.idFactory = makeIdFactory(message.actor);
+
     for (const connectionId in context.others._connections) {
       const user = message.users[connectionId];
       if (user === undefined) {
@@ -1596,7 +1606,7 @@ export function createRoom<
     // TODO: Consider storing it on the backend
     context.buffer.messages.push({
       type: ClientMsgCode.UPDATE_PRESENCE,
-      data: context.me.current,
+      data: context.myPresence.current,
       targetActor: message.actor,
     });
     flushNowOrSoon();
@@ -2182,11 +2192,11 @@ export function createRoom<
     // Core
     getStatus: () => managedSocket.getStatus(),
     getConnectionState: () => managedSocket.getLegacyStatus(),
-    isSelfAware: () => context.sessionInfo.current !== null,
+    isSelfAware: () => context.staticSessionInfo.current !== null,
     getSelf: () => self.current,
 
     // Presence
-    getPresence: () => context.me.current,
+    getPresence: () => context.myPresence.current,
     getOthers: () => context.others.current,
   };
 }
