@@ -171,19 +171,28 @@ export type RoomStateServerMsg<TUserMeta extends BaseUserMeta> = {
   readonly type: ServerMsgCode.ROOM_STATE;
 
   /**
-   * Informs the client what their actor ID is.
+   * Informs the client what their actor ID is going to be.
    * @since v1.2 (WS API v7)
    */
   readonly actor: number;
 
   /**
-   * Informs the client whether their access is read-only.
+   * Informs the client whether they can write to Storage™.
    * @since v1.2 (WS API v7)
    */
-  readonly isReadOnly: boolean;
+  readonly canWrite: boolean;
+
+  /**
+   * Informs the client whether they can leave Comments™.
+   * @since v1.2 (WS API v7)
+   */
+  readonly canComment: boolean;
 
   readonly users: {
-    readonly [actor: number]: TUserMeta & { scopes: string[] };
+    readonly [otherActor: number]: TUserMeta & {
+      canWrite: boolean;
+      canComment: boolean;
+    };
   };
 };
 
