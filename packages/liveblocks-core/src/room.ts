@@ -29,11 +29,7 @@ import type { Resolve } from "./lib/Resolve";
 import { compact, isPlainObject, tryParseJson } from "./lib/utils";
 import type { Authentication } from "./protocol/Authentication";
 import type { ParsedAuthToken } from "./protocol/AuthToken";
-import {
-  isTokenExpired,
-  parseAuthToken,
-  RoomScope,
-} from "./protocol/AuthToken";
+import { isTokenExpired, parseAuthToken } from "./protocol/AuthToken";
 import type { BaseUserMeta } from "./protocol/BaseUserMeta";
 import type { ClientMsg } from "./protocol/ClientMsg";
 import { ClientMsgCode } from "./protocol/ClientMsg";
@@ -696,12 +692,10 @@ type HistoryOp<TPresence extends JsonObject> =
 type IdFactory = () => string;
 
 type SessionInfo = {
+  readonly actor: number;
+  readonly traits: Traits;
   readonly userId?: string;
   readonly userInfo?: Json;
-
-  // NOTE: In the future, these fields will get assigned in the connection phase
-  readonly actor: number;
-  readonly isReadOnly: boolean;
 };
 
 type RoomState<
@@ -947,8 +941,8 @@ export function createRoom<
         userId: token.id,
 
         // NOTE: In the future, these fields will get assigned in the connection phase
-        actor: token.actor,
-        isReadOnly: isStorageReadOnly(token.scopes),
+        actor: token.actor, // XXX This is wrong! As far as the client is concerned, the actor will no longer be on the token going forward!
+        traits: Traits.All, // XXX This is wrong! It should be set to whatever the server sends
       });
       lastToken = token;
     }
@@ -1168,16 +1162,22 @@ export function createRoom<
   const self = new DerivedRef(
     context.sessionInfo as ImmutableRef<SessionInfo | null>,
     context.me,
-    (info, me): User<TPresence, TUserMeta> | null => {
-      return info !== null
-        ? {
-            connectionId: info.actor,
-            id: info.userId,
-            info: info.userInfo,
-            presence: me,
-            isReadOnly: info.isReadOnly,
-          }
-        : null;
+    (session, me): User<TPresence, TUserMeta> | null => {
+      if (session === null) {
+        return null;
+      } else {
+        const canWrite =
+          (session.traits & Traits.CanWriteDocument) ===
+          Traits.CanWriteDocument;
+        return {
+          connectionId: session.actor,
+          id: session.userId,
+          info: session.userInfo,
+          presence: me,
+          canWrite,
+          isReadOnly: !canWrite, // Deprecated, kept for backward-compatibility
+        };
+      }
     }
   );
 
@@ -1504,14 +1504,6 @@ export function createRoom<
     }
   }
 
-  function isStorageReadOnly(scopes: string[]) {
-    return (
-      scopes.includes(RoomScope.Read) &&
-      scopes.includes(RoomScope.PresenceWrite) &&
-      !scopes.includes(RoomScope.Write)
-    );
-  }
-
   function onUpdatePresenceMessage(
     message: UpdatePresenceServerMsg<TPresence>
   ): OthersEvent<TPresence, TUserMeta> | undefined {
@@ -1572,9 +1564,9 @@ export function createRoom<
       const connectionId = Number(key);
       context.others.setConnection(
         connectionId,
+        user.traits,
         user.id,
-        user.info,
-        user.traits
+        user.info
       );
     }
     return { type: "reset" };
@@ -1593,9 +1585,9 @@ export function createRoom<
   ): OthersEvent<TPresence, TUserMeta> | undefined {
     context.others.setConnection(
       message.actor,
+      message.traits,
       message.id,
-      message.info,
-      isStorageReadOnly(message.scopes)
+      message.info
     );
     // Send current presence to new user
     // TODO: Consider storing it on the backend
@@ -1620,7 +1612,7 @@ export function createRoom<
     }
 
     return data as ServerMsg<TPresence, TUserMeta, TRoomEvent>;
-    //          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ FIXME: Properly validate incoming external data instead!
+    //             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ FIXME: Properly validate incoming external data instead!
   }
 
   function parseServerMessages(

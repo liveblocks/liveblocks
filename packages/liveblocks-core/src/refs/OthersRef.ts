@@ -9,13 +9,10 @@ import type { User } from "../types/User";
 import { ImmutableRef, merge } from "./ImmutableRef";
 
 type Connection<TUserMeta extends BaseUserMeta> = {
-  // Extracted from the JWT token
-  readonly id: TUserMeta["id"];
-  readonly info: TUserMeta["info"];
-
-  // Provided by the initial server message
   readonly connectionId: number;
   readonly traits: Traits;
+  readonly id: TUserMeta["id"];
+  readonly info: TUserMeta["info"];
 };
 
 function makeUser<TPresence extends JsonObject, TUserMeta extends BaseUserMeta>(
@@ -130,9 +127,9 @@ export class OthersRef<
    */
   setConnection(
     connectionId: number,
+    traits: Traits,
     metaUserId: TUserMeta["id"],
-    metaUserInfo: TUserMeta["info"],
-    traits: Traits
+    metaUserInfo: TUserMeta["info"]
   ): void {
     this._connections[connectionId] = freeze({
       id: metaUserId,
