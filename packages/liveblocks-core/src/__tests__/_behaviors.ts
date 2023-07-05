@@ -101,7 +101,7 @@ export function SOCKET_NO_BEHAVIOR(wss: MockWebSocketServer) {
 
 /**
  * Configures the MockWebSocketServer to automatically accept each new socket
- * connection asynchronously. This is the default socket behavior.
+ * connection. This is the default socket behavior.
  */
 export function SOCKET_AUTOCONNECT(wss: MockWebSocketServer) {
   return wss.newSocket((socket) => socket.server.accept());
