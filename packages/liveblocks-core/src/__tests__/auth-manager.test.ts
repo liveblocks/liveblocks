@@ -53,4 +53,71 @@ describe("auth-manager - secret auth", () => {
     expect(authValue.type).toEqual("secret");
     expect(authValue.token.raw).toEqual(token);
   });
+
+  test.each([{ notAToken: "" }, undefined, null, ""])(
+    "custom authentication with missing token in callback response should fail",
+    async (response) => {
+      const authManager = createAuthManager({
+        authEndpoint: (_roomId) =>
+          new Promise((resolve) => {
+            // @ts-expect-error: testing for missing token in callback response
+            resolve(response);
+          }),
+      });
+
+      await expect(
+        authManager.getAuthValue("room:read", "room1")
+      ).rejects.toThrow(
+        'We expect the authentication callback to return a token, but it does not. Hint: the return value should look like: { token: "..." }'
+      );
+    }
+  );
+
+  test("private authentication with 403 status should fail", async () => {
+    const authManager = createAuthManager({
+      authEndpoint: "/mocked-api/403",
+    });
+
+    await expect(
+      authManager.getAuthValue("room:read", "room1")
+    ).rejects.toThrow(
+      "Unauthorized: reason not provided in auth response (403 returned by POST /mocked-api/403)"
+    );
+  });
+
+  test("private authentication with 403 status should fail with details", async () => {
+    const authManager = createAuthManager({
+      authEndpoint: "/mocked-api/401-with-details",
+    });
+
+    await expect(
+      authManager.getAuthValue("room:read", "room1")
+    ).rejects.toThrow(
+      "Unauthorized: wrong key type (401 returned by POST /mocked-api/401-with-details)"
+    );
+  });
+
+  test("private authentication that does not return valid JSON should fail", async () => {
+    const authManager = createAuthManager({
+      authEndpoint: "/mocked-api/not-json",
+    });
+
+    await expect(
+      authManager.getAuthValue("room:read", "room1")
+    ).rejects.toThrow(
+      'Expected a JSON response when doing a POST request on "/mocked-api/not-json". SyntaxError: Unexpected token h in JSON at position 1'
+    );
+  });
+
+  test("private authentication without an auth token response should fail", async () => {
+    const authManager = createAuthManager({
+      authEndpoint: "/mocked-api/missing-token",
+    });
+
+    await expect(
+      authManager.getAuthValue("room:read", "room1")
+    ).rejects.toThrow(
+      'Expected a JSON response of the form `{ token: "..." }` when doing a POST request on "/mocked-api/missing-token", but got {}'
+    );
+  });
 });
