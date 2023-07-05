@@ -156,9 +156,10 @@ export type UserJoinServerMsg<TUserMeta extends BaseUserMeta> = {
   readonly info: TUserMeta["info"];
 
   /**
-   * Permissions that the user has in the Room.
+   * Informs the client what Traits this (other) User has.
+   * @since v1.2 (WS API v7)
    */
-  readonly scopes: string[];
+  readonly traits: Traits;
 };
 
 /**
@@ -211,7 +212,7 @@ export type RoomStateServerMsg<TUserMeta extends BaseUserMeta> = {
   readonly actor: number;
 
   /**
-   * Informs the client what Traits the current user (self) has.
+   * Informs the client what Traits the current User (self) has.
    * @since v1.2 (WS API v7)
    */
   readonly traits: Traits;
