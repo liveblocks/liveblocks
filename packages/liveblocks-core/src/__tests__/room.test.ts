@@ -23,7 +23,8 @@ import type { Others } from "../types/Others";
 import {
   AUTH_SUCCESS,
   defineBehavior,
-  SOCKET_AUTOCONNECT,
+  SOCKET_AUTOCONNECT_AND_ROOM_STATE,
+  SOCKET_AUTOCONNECT_BUT_NO_ROOM_STATE,
   SOCKET_NO_BEHAVIOR,
   SOCKET_REFUSES,
   SOCKET_SEQUENCE,
@@ -87,7 +88,7 @@ function createTestableRoom<
 >(
   initialPresence: TPresence,
   authBehavior = AUTH_SUCCESS,
-  socketBehavior = SOCKET_AUTOCONNECT,
+  socketBehavior = SOCKET_AUTOCONNECT_AND_ROOM_STATE,
   config?: Partial<RoomConfig>
 ) {
   const { wss, delegates } = defineBehavior(authBehavior, socketBehavior);
@@ -304,7 +305,7 @@ describe("room", () => {
       undefined,
       SOCKET_SEQUENCE(
         SOCKET_THROWS("😈"),
-        SOCKET_AUTOCONNECT // Repeats infinitely
+        SOCKET_AUTOCONNECT_BUT_NO_ROOM_STATE // Repeats infinitely
       )
     );
     room.connect();
@@ -321,9 +322,9 @@ describe("room", () => {
       {},
       undefined,
       SOCKET_SEQUENCE(
-        SOCKET_AUTOCONNECT,
+        SOCKET_AUTOCONNECT_BUT_NO_ROOM_STATE,
         SOCKET_THROWS("😈"),
-        SOCKET_AUTOCONNECT // Repeats infinitely
+        SOCKET_AUTOCONNECT_BUT_NO_ROOM_STATE // Repeats infinitely
       )
     );
     room.connect();
@@ -362,7 +363,7 @@ describe("room", () => {
           WebsocketCloseCodes.MAX_NUMBER_OF_CONCURRENT_CONNECTIONS,
           "Room full"
         ),
-        SOCKET_AUTOCONNECT // Repeated to infinity
+        SOCKET_AUTOCONNECT_BUT_NO_ROOM_STATE // Repeated to infinity
       )
     );
     room.connect();
@@ -379,7 +380,7 @@ describe("room", () => {
     const { room, wss, delegates } = createTestableRoom(
       {},
       undefined,
-      SOCKET_AUTOCONNECT
+      SOCKET_AUTOCONNECT_BUT_NO_ROOM_STATE
     );
     room.connect();
 
@@ -406,7 +407,7 @@ describe("room", () => {
       undefined,
       SOCKET_SEQUENCE(
         SOCKET_REFUSES(WebsocketCloseCodes.NOT_ALLOWED),
-        SOCKET_AUTOCONNECT
+        SOCKET_AUTOCONNECT_BUT_NO_ROOM_STATE
       )
     );
     room.connect();
@@ -422,7 +423,7 @@ describe("room", () => {
     const { room, wss, delegates } = createTestableRoom(
       {},
       undefined,
-      SOCKET_AUTOCONNECT
+      SOCKET_AUTOCONNECT_BUT_NO_ROOM_STATE
     );
     room.connect();
 
@@ -449,7 +450,7 @@ describe("room", () => {
       undefined,
       SOCKET_SEQUENCE(
         SOCKET_REFUSES(WebsocketCloseCodes.CLOSE_WITHOUT_RETRY),
-        SOCKET_AUTOCONNECT
+        SOCKET_AUTOCONNECT_BUT_NO_ROOM_STATE
       )
     );
     room.connect();
@@ -466,7 +467,7 @@ describe("room", () => {
     const { room, wss, delegates } = createTestableRoom(
       {},
       undefined,
-      SOCKET_AUTOCONNECT
+      SOCKET_AUTOCONNECT_BUT_NO_ROOM_STATE
     );
     room.connect();
 
@@ -593,7 +594,11 @@ describe("room", () => {
   });
 
   test("others should be iterable", async () => {
-    const { room, wss } = createTestableRoom({});
+    const { room, wss } = createTestableRoom(
+      {},
+      undefined,
+      SOCKET_AUTOCONNECT_BUT_NO_ROOM_STATE
+    );
     room.connect();
 
     wss.onConnection((conn) => {
@@ -631,7 +636,11 @@ describe("room", () => {
   });
 
   test("others should be read-only when associated scopes are received", async () => {
-    const { room, wss } = createTestableRoom({});
+    const { room, wss } = createTestableRoom(
+      {},
+      undefined,
+      SOCKET_AUTOCONNECT_BUT_NO_ROOM_STATE
+    );
     room.connect();
 
     wss.onConnection((conn) => {
@@ -676,7 +685,7 @@ describe("room", () => {
     const { room, wss } = createTestableRoom(
       {},
       undefined,
-      SOCKET_SEQUENCE(SOCKET_AUTOCONNECT, SOCKET_THROWS()),
+      SOCKET_SEQUENCE(SOCKET_AUTOCONNECT_BUT_NO_ROOM_STATE, SOCKET_THROWS()),
       { lostConnectionTimeout: 10 }
     );
     room.connect();
@@ -750,7 +759,11 @@ describe("room", () => {
     - Client A should remove client B from others.
     */
 
-    const { room, wss } = createTestableRoom({});
+    const { room, wss } = createTestableRoom(
+      {},
+      undefined,
+      SOCKET_AUTOCONNECT_BUT_NO_ROOM_STATE
+    );
     room.connect();
 
     wss.onConnection((conn) => {
@@ -1411,7 +1424,11 @@ describe("room", () => {
     test("others", async () => {
       type P = { x?: number };
 
-      const { room, wss } = createTestableRoom<P, never, never, never>({});
+      const { room, wss } = createTestableRoom<P, never, never, never>(
+        {},
+        undefined,
+        SOCKET_AUTOCONNECT_BUT_NO_ROOM_STATE
+      );
       room.connect();
 
       let others: Others<P, never> | undefined;
@@ -1922,7 +1939,11 @@ describe("room", () => {
       type M = never;
       type E = never;
 
-      const { room, wss } = createTestableRoom<P, S, M, E>({});
+      const { room, wss } = createTestableRoom<P, S, M, E>(
+        {},
+        undefined,
+        SOCKET_AUTOCONNECT_BUT_NO_ROOM_STATE
+      );
 
       wss.onConnection((conn) => {
         conn.server.send(

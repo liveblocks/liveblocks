@@ -27,7 +27,7 @@ import { WebsocketCloseCodes } from "../types/IWebSocket";
 import {
   ALWAYS_AUTH_AS,
   defineBehavior,
-  SOCKET_AUTOCONNECT,
+  SOCKET_AUTOCONNECT_AND_ROOM_STATE,
 } from "./_behaviors";
 import type { MockWebSocketServer } from "./_MockWebSocketServer";
 import { MockWebSocket } from "./_MockWebSocketServer";
@@ -126,7 +126,7 @@ export async function prepareRoomWithStorage<
 
   const { wss, delegates } = defineBehavior(
     ALWAYS_AUTH_AS(actor, scopes),
-    SOCKET_AUTOCONNECT
+    SOCKET_AUTOCONNECT_AND_ROOM_STATE
   );
 
   const clonedItems = deepClone(items);
