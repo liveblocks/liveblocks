@@ -106,6 +106,19 @@ export type ClientOptions = {
   | { publicApiKey: string; authEndpoint?: never }
   | { publicApiKey?: never; authEndpoint: AuthEndpoint }
 );
+// ^^^^^^^^^^^^^^^
+// NOTE: Potential upgrade path by introducing a new property:
+//
+//   | { publicApiKey: string; authEndpoint?: never; authUrl?: never }
+//   | { publicApiKey?: never; authEndpoint: AuthEndpoint; authUrl?: never }
+//   | { publicApiKey?: never; authEndpoint?: never; authUrl?: AuthUrl }
+//
+// Where:
+//
+//   export type AuthUrl =
+//     | string
+//     | ((room?: string) => Promise<{ token: string }>);
+//
 
 function getServerFromClientOptions(clientOptions: ClientOptions) {
   const rawOptions = clientOptions as Record<string, unknown>;

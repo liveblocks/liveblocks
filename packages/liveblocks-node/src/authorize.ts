@@ -1,5 +1,10 @@
 import fetch from "node-fetch";
 
+import { assertNonEmpty, normalizeStatusCode } from "./utils";
+
+/**
+ * TODO Officially mark as DEPRECATED, point to migration guide.
+ */
 type AuthorizeOptions = {
   /**
    * The secret API key for your Liveblocks account. You can find it on
@@ -45,13 +50,17 @@ type AuthorizeOptions = {
    * for how to configure your room's permissions to use this feature.
    */
   groupIds?: string[];
-};
 
-/** @internal */
-type AllAuthorizeOptions = AuthorizeOptions & {
+  /**
+   * @internal
+   * Can be overriden for testing purposes only.
+   */
   liveblocksAuthorizeEndpoint?: string;
 };
 
+/**
+ * TODO Officially mark as DEPRECATED, point to migration guide.
+ */
 type AuthorizeResponse = {
   status: number;
   body: string;
@@ -59,6 +68,8 @@ type AuthorizeResponse = {
 };
 
 /**
+ * TODO Officially mark as DEPRECATED, point to migration guide.
+ *
  * Tells Liveblocks that a user should be allowed access to a room, which user
  * this session is for, and what metadata to associate with the user (like
  * name, avatar, etc.)
@@ -85,19 +96,13 @@ export async function authorize(
   options: AuthorizeOptions
 ): Promise<AuthorizeResponse> {
   try {
-    const { room, secret, userId, userInfo, groupIds } = options;
+    const { room, secret, userId, userInfo, groupIds } =
+      // Ensure we'll validate inputs at runtime
+      options as Record<string, unknown>;
 
-    if (!(typeof room === "string" && room.length > 0)) {
-      throw new Error(
-        "Invalid room. Please provide a non-empty string as the room. For more information: https://liveblocks.io/docs/api-reference/liveblocks-node#authorize"
-      );
-    }
-
-    if (!(typeof userId === "string" && userId.length > 0)) {
-      throw new Error(
-        "Invalid userId. Please provide a non-empty string as the userId. For more information: https://liveblocks.io/docs/api-reference/liveblocks-node#authorize"
-      );
-    }
+    assertNonEmpty(secret, "secret");
+    assertNonEmpty(room, "room");
+    assertNonEmpty(userId, "userId");
 
     const resp = await fetch(buildLiveblocksAuthorizeEndpoint(options, room), {
       method: "POST",
@@ -112,24 +117,10 @@ export async function authorize(
       }),
     });
 
-    if (resp.ok) {
-      return {
-        status: 200 /* OK */,
-        body: await resp.text(),
-      };
-    }
-
-    if (resp.status >= 500) {
-      return {
-        status: 503 /* Service Unavailable */,
-        body: await resp.text(),
-      };
-    } else {
-      return {
-        status: 403 /* Unauthorized */,
-        body: await resp.text(),
-      };
-    }
+    return {
+      status: normalizeStatusCode(resp.status),
+      body: await resp.text(),
+    };
   } catch (er) {
     return {
       status: 503 /* Service Unavailable */,
@@ -140,10 +131,9 @@ export async function authorize(
 }
 
 function buildLiveblocksAuthorizeEndpoint(
-  options: AllAuthorizeOptions,
+  options: AuthorizeOptions,
   roomId: string
 ): string {
-  // INTERNAL override for testing purpose.
   if (options.liveblocksAuthorizeEndpoint) {
     return options.liveblocksAuthorizeEndpoint.replace("{roomId}", roomId);
   }
