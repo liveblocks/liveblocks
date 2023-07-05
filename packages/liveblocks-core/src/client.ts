@@ -104,7 +104,7 @@ export type ClientOptions = {
   enableDebugLogging?: boolean;
 } & (
   | { publicApiKey: string; authEndpoint?: never }
-  | { publicApiKey?: never; authEndpoint?: AuthEndpoint }
+  | { publicApiKey?: never; authEndpoint: AuthEndpoint }
 );
 // ^^^^^^^^^^^^^^^
 // NOTE: Potential upgrade path by introducing a new property:
