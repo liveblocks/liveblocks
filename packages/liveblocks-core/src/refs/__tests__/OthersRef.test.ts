@@ -1,3 +1,4 @@
+import { Traits } from "../../protocol/ServerMsg";
 import { OthersRef } from "../OthersRef";
 
 type P = {
@@ -28,7 +29,7 @@ describe('Read-only "others" ref cache', () => {
       // information is known for this user. Normally, this information is
       // known before the .setOther() call is made, unlike how this test case
       // is structured.
-      others.setConnection(2, "user-123", undefined, false);
+      others.setConnection(2, "user-123", undefined, Traits.All);
       expect(others.current).toStrictEqual([
         {
           connectionId: 2,
@@ -41,8 +42,8 @@ describe('Read-only "others" ref cache', () => {
 
     it("setting other", () => {
       const others = new OthersRef<P, M>();
-      others.setConnection(2, "user-123", undefined, false);
-      others.setConnection(3, "user-567", undefined, false);
+      others.setConnection(2, "user-123", undefined, Traits.All);
+      others.setConnection(3, "user-567", undefined, Traits.All);
 
       others.setOther(2, { x: 2, y: 2 });
       others.setOther(3, { x: 3, y: 3 });
@@ -66,8 +67,8 @@ describe('Read-only "others" ref cache', () => {
 
     it("setting other as read-only", () => {
       const others = new OthersRef<P, M>();
-      others.setConnection(2, "user-123", undefined, true);
-      others.setConnection(3, "user-567", undefined, false);
+      others.setConnection(2, "user-123", undefined, Traits.None);
+      others.setConnection(3, "user-567", undefined, Traits.All);
 
       others.setOther(2, { x: 2, y: 2 });
       others.setOther(3, { x: 3, y: 3 });
@@ -90,9 +91,9 @@ describe('Read-only "others" ref cache', () => {
 
     it("setting others removes explicitly-undefined keys", () => {
       const others = new OthersRef<P, M>();
-      others.setConnection(2, "user-123", undefined, false);
+      others.setConnection(2, "user-123", undefined, Traits.All);
       others.setOther(2, { x: 2, y: 2, z: undefined });
-      //                             ^^^^^^^^^ 🔑
+      //                                  ^^^^^^^^^ 🔑
 
       expect(others.current).toStrictEqual([
         {
@@ -107,7 +108,7 @@ describe('Read-only "others" ref cache', () => {
 
     it("patching others ignores patches for unknown users", () => {
       const others = new OthersRef<P, M>();
-      others.setConnection(2, "user-123", undefined, false);
+      others.setConnection(2, "user-123", undefined, Traits.All);
       others.patchOther(2, { y: 1, z: 2 }); // .setOther() not called yet for actor 2
 
       expect(others.current).toStrictEqual([]);
@@ -115,7 +116,7 @@ describe('Read-only "others" ref cache', () => {
 
     it("patching others", () => {
       const others = new OthersRef<P, M>();
-      others.setConnection(2, "user-123", undefined, false);
+      others.setConnection(2, "user-123", undefined, Traits.All);
       others.setOther(2, { x: 2, y: 2 });
       expect(others.current).toStrictEqual([
         {
@@ -149,7 +150,7 @@ describe('Read-only "others" ref cache', () => {
 
     it("removing connections", () => {
       const others = new OthersRef<P, M>();
-      others.setConnection(2, "user-123", undefined, false);
+      others.setConnection(2, "user-123", undefined, Traits.All);
       others.setOther(2, { x: 2, y: 2 });
 
       expect(others.getUser(2)).toStrictEqual({
@@ -173,7 +174,7 @@ describe('Read-only "others" ref cache', () => {
   describe("caching", () => {
     it("caches immutable results (others)", () => {
       const others = new OthersRef<P, M>();
-      others.setConnection(2, "user-123", undefined, false);
+      others.setConnection(2, "user-123", undefined, Traits.All);
       others.setOther(2, { x: 2, y: 2 });
 
       const others1 = others.current;
@@ -202,7 +203,7 @@ describe('Read-only "others" ref cache', () => {
 
     it("getUser() returns stable cache results", () => {
       const others = new OthersRef<P, M>();
-      others.setConnection(2, "user-123", undefined, false);
+      others.setConnection(2, "user-123", undefined, Traits.All);
       others.setOther(2, { x: 2, y: 2 });
 
       expect(others.getUser(2)).toBe(others.getUser(2));

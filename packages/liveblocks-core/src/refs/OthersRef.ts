@@ -3,22 +3,38 @@ import type { JsonObject } from "../lib/Json";
 import { asArrayWithLegacyMethods } from "../lib/LegacyArray";
 import { compact, compactObject } from "../lib/utils";
 import type { BaseUserMeta } from "../protocol/BaseUserMeta";
+import { Traits } from "../protocol/ServerMsg";
 import type { Others } from "../types/Others";
 import type { User } from "../types/User";
 import { ImmutableRef, merge } from "./ImmutableRef";
 
 type Connection<TUserMeta extends BaseUserMeta> = {
-  readonly connectionId: number;
+  // Extracted from the JWT token
   readonly id: TUserMeta["id"];
   readonly info: TUserMeta["info"];
-  readonly isReadOnly: boolean;
+
+  // Provided by the initial server message
+  readonly connectionId: number;
+  readonly traits: Traits;
 };
 
 function makeUser<TPresence extends JsonObject, TUserMeta extends BaseUserMeta>(
   conn: Connection<TUserMeta>,
   presence: TPresence
 ): User<TPresence, TUserMeta> {
-  return freeze(compactObject({ ...conn, presence }));
+  const { connectionId, id, info, traits } = conn;
+  const canWrite =
+    (traits & Traits.CanWriteDocument) === Traits.CanWriteDocument;
+  return freeze(
+    compactObject({
+      connectionId,
+      id,
+      info,
+      canWrite,
+      isReadOnly: !canWrite, // Deprecated, kept for backward-compatibility
+      presence,
+    })
+  );
 }
 
 export class OthersRef<
@@ -116,13 +132,13 @@ export class OthersRef<
     connectionId: number,
     metaUserId: TUserMeta["id"],
     metaUserInfo: TUserMeta["info"],
-    metaIsReadonly: boolean
+    traits: Traits
   ): void {
     this._connections[connectionId] = freeze({
-      connectionId,
       id: metaUserId,
       info: metaUserInfo,
-      isReadOnly: metaIsReadonly,
+      connectionId,
+      traits,
     });
     if (this._presences[connectionId] !== undefined) {
       this._invalidateUser(connectionId);

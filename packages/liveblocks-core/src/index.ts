@@ -106,11 +106,11 @@ export type {
   RejectedStorageOpServerMsg,
   RoomStateServerMsg,
   ServerMsg,
+  Traits,
   UpdatePresenceServerMsg,
   UpdateStorageServerMsg,
   UserJoinServerMsg,
   UserLeftServerMsg,
-  Traits,
 } from "./protocol/ServerMsg";
 export { ServerMsgCode } from "./protocol/ServerMsg";
 export type {

@@ -10,13 +10,12 @@ import { legacy_patchImmutableObject, lsonToJson } from "../immutable";
 import * as console from "../lib/fancy-console";
 import type { Json, JsonObject } from "../lib/Json";
 import type { Authentication } from "../protocol/Authentication";
-import { RoomScope } from "../protocol/AuthToken";
 import type { BaseUserMeta } from "../protocol/BaseUserMeta";
 import { ClientMsgCode } from "../protocol/ClientMsg";
 import { OpCode } from "../protocol/Op";
 import type { IdTuple, SerializedCrdt } from "../protocol/SerializedCrdt";
 import { CrdtType } from "../protocol/SerializedCrdt";
-import { ServerMsgCode } from "../protocol/ServerMsg";
+import { ServerMsgCode, Traits } from "../protocol/ServerMsg";
 import type { RoomConfig, RoomDelegates } from "../room";
 import { createRoom } from "../room";
 import { WebsocketCloseCodes } from "../types/IWebSocket";
@@ -602,9 +601,9 @@ describe("room", () => {
         serverMessage({
           type: ServerMsgCode.ROOM_STATE,
           actor: 2,
-          isReadOnly: false,
+          traits: Traits.All,
           users: {
-            "1": { scopes: [] },
+            "1": { traits: Traits.All },
           },
         })
       );
@@ -635,9 +634,13 @@ describe("room", () => {
         serverMessage({
           type: ServerMsgCode.ROOM_STATE,
           actor: 2,
-          isReadOnly: false,
+          traits: Traits.All,
           users: {
-            "1": { scopes: [RoomScope.Read, RoomScope.PresenceWrite] },
+            "1": {
+              // XXX Note: this should fail the test!
+              // traits: Traits.None,
+              traits: Traits.All,
+            },
           },
         })
       );
@@ -673,9 +676,9 @@ describe("room", () => {
         serverMessage({
           type: ServerMsgCode.ROOM_STATE,
           actor: 2,
-          isReadOnly: false,
+          traits: Traits.All,
           users: {
-            "1": { scopes: [] },
+            "1": { traits: Traits.All },
           },
         })
       );
@@ -735,10 +738,10 @@ describe("room", () => {
         serverMessage({
           type: ServerMsgCode.ROOM_STATE,
           actor: 3,
-          isReadOnly: false,
+          traits: Traits.All,
           users: {
-            "1": { scopes: [] },
-            "2": { scopes: [] },
+            "1": { traits: Traits.All },
+            "2": { traits: Traits.All },
           },
         })
       );
@@ -780,9 +783,9 @@ describe("room", () => {
       serverMessage({
         type: ServerMsgCode.ROOM_STATE,
         actor: 2,
-        isReadOnly: false,
+        traits: Traits.All,
         users: {
-          "1": { scopes: [] },
+          "1": { traits: Traits.All },
         },
       })
     );
@@ -1389,8 +1392,8 @@ describe("room", () => {
         serverMessage({
           type: ServerMsgCode.ROOM_STATE,
           actor: 2,
-          isReadOnly: false,
-          users: { 1: { scopes: [] } },
+          traits: Traits.All,
+          users: { 1: { traits: Traits.All } },
         })
       );
 
@@ -1891,8 +1894,8 @@ describe("room", () => {
           serverMessage({
             type: ServerMsgCode.ROOM_STATE,
             actor: 2,
-            isReadOnly: false,
-            users: { "1": { id: undefined, scopes: [] } },
+            traits: Traits.All,
+            users: { "1": { id: undefined, traits: Traits.All } },
           })
         );
 

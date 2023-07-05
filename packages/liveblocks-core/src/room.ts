@@ -1566,7 +1566,7 @@ export function createRoom<
         connectionId,
         user.id,
         user.info,
-        isStorageReadOnly(user.scopes)
+        user.traits
       );
     }
     return { type: "reset" };
