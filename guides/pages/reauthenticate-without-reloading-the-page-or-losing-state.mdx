@@ -14,8 +14,10 @@ wish to display their details.
 By calling
 [`room.reconnect`](/docs/api-reference/liveblocks-client#Room.reconnect) you can
 reconnect and reauthenticate your collaborative application without refreshing
-the page or unmounting the `RoomProvider` component. Using this method will
-preserve the current client’s state, such as the undo/redo history.
+the page or unmounting the
+[`RoomProvider`](/docs/api-reference/liveblocks-react#RoomProvider) component.
+Using this method will preserve the current client’s state, such as the
+undo/redo history.
 
 ```ts highlight="5"
 const room = client.enter("my-room", {
