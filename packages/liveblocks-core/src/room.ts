@@ -48,7 +48,7 @@ import type {
   UserJoinServerMsg,
   UserLeftServerMsg,
 } from "./protocol/ServerMsg";
-import { ServerMsgCode } from "./protocol/ServerMsg";
+import { ServerMsgCode, Traits } from "./protocol/ServerMsg";
 import type { ImmutableRef } from "./refs/ImmutableRef";
 import { OthersRef } from "./refs/OthersRef";
 import { PatchableRef } from "./refs/PatchableRef";
@@ -730,9 +730,13 @@ type RoomState<
     storageOperations: Op[];
   };
 
-  // A carbon-copy of the session information, all extracted from the JWT
-  // token, which is returned by the authenticate delegate and stored inside
-  // the machine.
+  //
+  // The "self" User takes assembly of three sources-of-truth:
+  // - The JWT token provides the static userId and userInfo metadata
+  // - The server, in its initial ROOM_STATE message, will provide the actor ID
+  //   and the traits
+  // - The presence is provided by the client's initialPresence configuration
+  //
   readonly sessionInfo: ValueRef<SessionInfo | null>;
   readonly me: PatchableRef<TPresence>;
   readonly others: OthersRef<TPresence, TUserMeta>;
