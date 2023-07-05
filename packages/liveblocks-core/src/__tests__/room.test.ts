@@ -650,11 +650,7 @@ describe("room", () => {
           actor: 2,
           traits: Traits.All,
           users: {
-            "1": {
-              // XXX Note: this should fail the test!
-              // traits: Traits.None,
-              traits: Traits.All,
-            },
+            "1": { traits: Traits.None },
           },
         })
       );
