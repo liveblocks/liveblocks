@@ -39,6 +39,8 @@ export function createAuthManager(
 
   let tokens: ParsedAuthToken[] = [];
 
+  let requestPromises = new Map<string, Promise<ParsedAuthToken>>();
+
   function hasCorrespondingScopes(
     requestedScope: RequestedScope,
     scopes: ApiScope[]
@@ -129,11 +131,20 @@ export function createAuthManager(
       return { type: "secret", token: cachedToken };
     }
 
-    const token = await makeAuthRequest(roomId);
+    let currentPromise = requestPromises.get(roomId);
+    if (currentPromise === undefined) {
+      currentPromise = makeAuthRequest(roomId);
+      requestPromises.set(roomId, currentPromise);
+    }
+    try {
+      const token = await currentPromise;
 
-    tokens.push(token);
+      tokens.push(token);
 
-    return { type: "secret", token };
+      return { type: "secret", token };
+    } finally {
+      requestPromises.delete(roomId);
+    }
   }
 
   return {
