@@ -266,7 +266,7 @@ export async function prepareStorageTest<
       actor: -1,
       id: undefined,
       info: undefined,
-      scopes: [],
+      traits: Traits.All,
     })
   );
 
@@ -358,7 +358,7 @@ export async function prepareStorageTest<
           actor,
           id: undefined,
           info: undefined,
-          scopes: [],
+          traits: Traits.All,
         })
       );
     });

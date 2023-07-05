@@ -1098,7 +1098,10 @@ export function createRoom<
     },
 
     assertStorageIsWritable: () => {
-      if (context.sessionInfo.current?.isReadOnly) {
+      const traits = context.sessionInfo.current?.traits ?? Traits.None;
+      const canWrite =
+        (traits & Traits.CanWriteDocument) === Traits.CanWriteDocument;
+      if (!canWrite) {
         throw new Error(
           "Cannot write to storage with a read only user, please ensure the user has write permissions"
         );
