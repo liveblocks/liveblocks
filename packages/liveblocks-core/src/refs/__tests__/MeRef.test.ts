@@ -1,4 +1,4 @@
-import { MeRef } from "../MeRef";
+import { PatchableRef } from "../PatchableRef";
 
 type P = {
   x: number;
@@ -6,58 +6,58 @@ type P = {
   z?: number;
 };
 
-describe('Read-only "me" ref cache', () => {
+describe('Read-only "patchable" ref cache', () => {
   it("empty", () => {
-    const me = new MeRef({ x: 0, y: 0, z: undefined });
-    expect(me.current).toStrictEqual({ x: 0, y: 0 });
+    const ref = new PatchableRef({ x: 0, y: 0, z: undefined });
+    expect(ref.current).toStrictEqual({ x: 0, y: 0 });
   });
 
-  describe('Tracking "me"', () => {
-    it("patching me", () => {
-      const me = new MeRef<P>({ x: 0, y: 0 });
-      me.patch({ y: 1, z: 2 });
+  describe("tracking", () => {
+    it("patching", () => {
+      const ref = new PatchableRef<P>({ x: 0, y: 0 });
+      ref.patch({ y: 1, z: 2 });
 
-      expect(me.current).toStrictEqual({ x: 0, y: 1, z: 2 });
+      expect(ref.current).toStrictEqual({ x: 0, y: 1, z: 2 });
     });
 
     it("patching me with undefineds deletes keys", () => {
-      const me = new MeRef<P>({ x: 1, y: 2 });
+      const ref = new PatchableRef<P>({ x: 1, y: 2 });
 
-      me.patch({ x: undefined });
-      expect(me.current).toStrictEqual({ y: 2 });
+      ref.patch({ x: undefined });
+      expect(ref.current).toStrictEqual({ y: 2 });
 
-      me.patch({ y: undefined });
-      expect(me.current).toStrictEqual({});
+      ref.patch({ y: undefined });
+      expect(ref.current).toStrictEqual({});
 
-      me.patch({ z: undefined });
-      expect(me.current).toStrictEqual({});
+      ref.patch({ z: undefined });
+      expect(ref.current).toStrictEqual({});
     });
   });
 
   describe("caching", () => {
-    it("caches immutable results (me)", () => {
-      const me = new MeRef<P>({ x: 0, y: 0 });
+    it("caches immutable results", () => {
+      const ref = new PatchableRef<P>({ x: 0, y: 0 });
 
-      const me1 = me.current;
-      const me2 = me.current;
+      const me1 = ref.current;
+      const me2 = ref.current;
       expect(me1).toBe(me2);
 
       // These are effectively no-ops
-      me.patch({ x: 0 });
-      me.patch({ y: 0, z: undefined });
+      ref.patch({ x: 0 });
+      ref.patch({ y: 0, z: undefined });
 
-      const me3 = me.current;
+      const me3 = ref.current;
       expect(me2).toBe(me3); // No observable change!
 
-      me.patch({ y: -1 });
+      ref.patch({ y: -1 });
 
-      const me4 = me.current;
-      const me5 = me.current;
+      const me4 = ref.current;
+      const me5 = ref.current;
       expect(me3).not.toBe(me4); // Me changed...
       expect(me4).toBe(me5);
 
-      const me6 = me.current;
-      const me7 = me.current;
+      const me6 = ref.current;
+      const me7 = ref.current;
       expect(me5).toBe(me6); // Me did not change
       expect(me6).toBe(me7);
     });
