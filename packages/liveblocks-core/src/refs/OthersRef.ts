@@ -1,16 +1,16 @@
 import { freeze } from "../lib/freeze";
 import type { JsonObject } from "../lib/Json";
 import { asArrayWithLegacyMethods } from "../lib/LegacyArray";
+import { canWriteStorage } from "../protocol/AuthToken";
 import { compact, compactObject } from "../lib/utils";
 import type { BaseUserMeta } from "../protocol/BaseUserMeta";
-import { Traits } from "../protocol/ServerMsg";
 import type { Others } from "../types/Others";
 import type { User } from "../types/User";
 import { ImmutableRef, merge } from "./ImmutableRef";
 
 type Connection<TUserMeta extends BaseUserMeta> = {
   readonly connectionId: number;
-  readonly traits: Traits;
+  readonly scopes: string[];
   readonly id: TUserMeta["id"];
   readonly info: TUserMeta["info"];
 };
@@ -19,9 +19,8 @@ function makeUser<TPresence extends JsonObject, TUserMeta extends BaseUserMeta>(
   conn: Connection<TUserMeta>,
   presence: TPresence
 ): User<TPresence, TUserMeta> {
-  const { connectionId, id, info, traits } = conn;
-  const canWrite =
-    (traits & Traits.CanWriteDocument) === Traits.CanWriteDocument;
+  const { connectionId, id, info } = conn;
+  const canWrite = canWriteStorage(conn.scopes);
   return freeze(
     compactObject({
       connectionId,
@@ -127,15 +126,15 @@ export class OthersRef<
    */
   setConnection(
     connectionId: number,
-    traits: Traits,
     metaUserId: TUserMeta["id"],
-    metaUserInfo: TUserMeta["info"]
+    metaUserInfo: TUserMeta["info"],
+    scopes: string[]
   ): void {
     this._connections[connectionId] = freeze({
+      connectionId,
       id: metaUserId,
       info: metaUserInfo,
-      connectionId,
-      traits,
+      scopes,
     });
     if (this._presences[connectionId] !== undefined) {
       this._invalidateUser(connectionId);

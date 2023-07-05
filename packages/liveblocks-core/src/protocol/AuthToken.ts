@@ -1,11 +1,19 @@
 import type { Json } from "../lib/Json";
 import { b64decode, isPlainObject, tryParseJson } from "../lib/utils";
 
-// XXX Can this now be removed?
+// XXX Rename to just Scope, and add comments:write and comments:read in there too?
 export enum RoomScope {
   Read = "room:read",
   Write = "room:write",
   PresenceWrite = "room:presence:write",
+}
+
+/**
+ * Infers from the given scopes whether the user can write the document (e.g.
+ * Storage and/or YDoc).
+ */
+export function canWriteStorage(scopes: readonly string[]): boolean {
+  return scopes.includes(RoomScope.Write);
 }
 
 /**

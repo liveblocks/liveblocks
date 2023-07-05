@@ -21,40 +21,6 @@ export enum ServerMsgCode {
 }
 
 /**
- * Traits are bitflags that are used at the protocol level to communicate what
- * traits a given User has. Traits may or may not map to official permissions.
- * Users cannot see each other's true permissions, but they can see each
- * other's traits.
- *
- * Traits are not a security feature, but should only be used to optimize the
- * app experience (e.g. to visually indicate that another connected user has no
- * write access to the document).
- */
-export enum Traits {
-  None = 0,
-
-  /**
-   * Whether the user has write access to Storage™ + YDoc.
-   * Maps to the public `User.canWrite` property.
-   */
-  CanWriteDocument = 1 << 0, // 0001
-
-  /**
-   * Whether the user has access to Comments™.
-   * Maps to the public `User.canComment` property.
-   */
-  CanWriteComments = 1 << 1, // 0010
-
-  // CanDoMore = 1 << 2,
-  // etc.
-
-  /**
-   * Convenience accessor only, where all the bitflags are enabled.
-   */
-  All = Traits.CanWriteDocument | Traits.CanWriteComments,
-}
-
-/**
  * Messages that can be sent from the server to the client.
  */
 export type ServerMsg<
@@ -156,10 +122,10 @@ export type UserJoinServerMsg<TUserMeta extends BaseUserMeta> = {
   readonly info: TUserMeta["info"];
 
   /**
-   * Informs the client what Traits this (other) User has.
+   * Informs the client what (public) permissions this (other) User has.
    * @since v1.2 (WS API v7)
    */
-  readonly traits: Traits;
+  readonly scopes: string[];
 };
 
 /**
@@ -212,13 +178,13 @@ export type RoomStateServerMsg<TUserMeta extends BaseUserMeta> = {
   readonly actor: number;
 
   /**
-   * Informs the client what Traits the current User (self) has.
+   * Informs the client what permissions the current User (self) has.
    * @since v1.2 (WS API v7)
    */
-  readonly traits: Traits;
+  readonly scopes: string[];
 
   readonly users: {
-    readonly [otherActor: number]: TUserMeta & { traits: Traits };
+    readonly [otherActor: number]: TUserMeta & { scopes: string[] };
   };
 };
 

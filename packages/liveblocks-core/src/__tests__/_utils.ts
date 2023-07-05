@@ -20,7 +20,7 @@ import type {
 } from "../protocol/SerializedCrdt";
 import { CrdtType } from "../protocol/SerializedCrdt";
 import type { ServerMsg } from "../protocol/ServerMsg";
-import { ServerMsgCode, Traits } from "../protocol/ServerMsg";
+import { ServerMsgCode } from "../protocol/ServerMsg";
 import type { Room, RoomDelegates } from "../room";
 import { createRoom } from "../room";
 import { WebsocketCloseCodes } from "../types/IWebSocket";
@@ -266,7 +266,7 @@ export async function prepareStorageTest<
       actor: -1,
       id: undefined,
       info: undefined,
-      traits: Traits.All,
+      scopes: ["room:write"],
     })
   );
 
@@ -276,8 +276,8 @@ export async function prepareStorageTest<
     serverMessage({
       type: ServerMsgCode.ROOM_STATE,
       actor: currentActor,
-      traits: Traits.All,
-      users: { [currentActor]: { traits: Traits.All } },
+      scopes: ["room:write"],
+      users: { [currentActor]: { scopes: ["room:write"] } },
     })
   );
 
@@ -358,7 +358,7 @@ export async function prepareStorageTest<
           actor,
           id: undefined,
           info: undefined,
-          traits: Traits.All,
+          scopes: ["room:write"],
         })
       );
     });

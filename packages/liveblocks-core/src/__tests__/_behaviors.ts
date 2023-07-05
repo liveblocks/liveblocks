@@ -10,7 +10,7 @@
 
 import { StopRetrying } from "../connection";
 import type { ParsedAuthToken } from "../protocol/AuthToken";
-import { ServerMsgCode, Traits } from "../protocol/ServerMsg";
+import { ServerMsgCode } from "../protocol/ServerMsg";
 import type { RoomDelegates } from "../room";
 import type { WebsocketCloseCodes } from "../types/IWebSocket";
 import type { MockWebSocket } from "./_MockWebSocketServer";
@@ -125,7 +125,7 @@ export function SOCKET_AUTOCONNECT_AND_ROOM_STATE(wss: MockWebSocketServer) {
       serverMessage({
         type: ServerMsgCode.ROOM_STATE,
         actor: 1,
-        traits: Traits.All,
+        scopes: ["room:write"],
         users: {},
       })
     );

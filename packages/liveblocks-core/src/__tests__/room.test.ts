@@ -15,7 +15,7 @@ import { ClientMsgCode } from "../protocol/ClientMsg";
 import { OpCode } from "../protocol/Op";
 import type { IdTuple, SerializedCrdt } from "../protocol/SerializedCrdt";
 import { CrdtType } from "../protocol/SerializedCrdt";
-import { ServerMsgCode, Traits } from "../protocol/ServerMsg";
+import { ServerMsgCode } from "../protocol/ServerMsg";
 import type { RoomConfig, RoomDelegates } from "../room";
 import { createRoom } from "../room";
 import { WebsocketCloseCodes } from "../types/IWebSocket";
@@ -606,9 +606,9 @@ describe("room", () => {
         serverMessage({
           type: ServerMsgCode.ROOM_STATE,
           actor: 2,
-          traits: Traits.All,
+          scopes: ["room:write"],
           users: {
-            "1": { traits: Traits.All },
+            "1": { scopes: ["room:write"] },
           },
         })
       );
@@ -648,9 +648,9 @@ describe("room", () => {
         serverMessage({
           type: ServerMsgCode.ROOM_STATE,
           actor: 2,
-          traits: Traits.All,
+          scopes: ["room:write"],
           users: {
-            "1": { traits: Traits.None },
+            "1": { scopes: ["room:read"] },
           },
         })
       );
@@ -691,9 +691,9 @@ describe("room", () => {
         serverMessage({
           type: ServerMsgCode.ROOM_STATE,
           actor: 2,
-          traits: Traits.All,
+          scopes: ["room:write"],
           users: {
-            "1": { traits: Traits.All },
+            "1": { scopes: ["room:write"] },
           },
         })
       );
@@ -767,10 +767,10 @@ describe("room", () => {
         serverMessage({
           type: ServerMsgCode.ROOM_STATE,
           actor: 3,
-          traits: Traits.All,
+          scopes: ["room:write"],
           users: {
-            "1": { traits: Traits.All },
-            "2": { traits: Traits.All },
+            "1": { scopes: ["room:write"] },
+            "2": { scopes: ["room:write"] },
           },
         })
       );
@@ -822,9 +822,9 @@ describe("room", () => {
       serverMessage({
         type: ServerMsgCode.ROOM_STATE,
         actor: 2,
-        traits: Traits.All,
+        scopes: ["room:write"],
         users: {
-          "1": { traits: Traits.All },
+          "1": { scopes: ["room:write"] },
         },
       })
     );
@@ -1439,8 +1439,8 @@ describe("room", () => {
         serverMessage({
           type: ServerMsgCode.ROOM_STATE,
           actor: 2,
-          traits: Traits.All,
-          users: { 1: { traits: Traits.All } },
+          scopes: ["room:write"],
+          users: { 1: { scopes: ["room:write"] } },
         })
       );
 
@@ -1946,8 +1946,8 @@ describe("room", () => {
           serverMessage({
             type: ServerMsgCode.ROOM_STATE,
             actor: 2,
-            traits: Traits.All,
-            users: { "1": { id: undefined, traits: Traits.All } },
+            scopes: ["room:write"],
+            users: { "1": { id: undefined, scopes: ["room:write"] } },
           })
         );
 

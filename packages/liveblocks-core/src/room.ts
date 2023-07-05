@@ -29,7 +29,12 @@ import type { Resolve } from "./lib/Resolve";
 import { compact, isPlainObject, tryParseJson } from "./lib/utils";
 import type { Authentication } from "./protocol/Authentication";
 import type { ParsedAuthToken } from "./protocol/AuthToken";
-import { isTokenExpired, parseAuthToken } from "./protocol/AuthToken";
+import {
+  isTokenExpired,
+  parseAuthToken,
+  RoomScope,
+  canWriteStorage,
+} from "./protocol/AuthToken";
 import type { BaseUserMeta } from "./protocol/BaseUserMeta";
 import type { ClientMsg } from "./protocol/ClientMsg";
 import { ClientMsgCode } from "./protocol/ClientMsg";
@@ -44,7 +49,7 @@ import type {
   UserJoinServerMsg,
   UserLeftServerMsg,
 } from "./protocol/ServerMsg";
-import { ServerMsgCode, Traits } from "./protocol/ServerMsg";
+import { ServerMsgCode } from "./protocol/ServerMsg";
 import type { ImmutableRef } from "./refs/ImmutableRef";
 import { OthersRef } from "./refs/OthersRef";
 import { PatchableRef } from "./refs/PatchableRef";
@@ -698,7 +703,7 @@ type StaticSessionInfo = {
 
 type DynamicSessionInfo = {
   readonly actor: number;
-  readonly traits: Traits;
+  readonly scopes: string[];
 };
 
 type RoomState<
@@ -731,7 +736,7 @@ type RoomState<
   // The "self" User takes assembly of three sources-of-truth:
   // - The JWT token provides the userId and userInfo metadata (static)
   // - The server, in its initial ROOM_STATE message, will provide the actor ID
-  //   and the traits (dynamic)
+  //   and the scopes (dynamic)
   // - The presence is provided by the client's initialPresence configuration (presence)
   //
   readonly staticSessionInfo: ValueRef<StaticSessionInfo | null>;
@@ -1089,16 +1094,15 @@ export function createRoom<
     },
 
     assertStorageIsWritable: () => {
-      const traits =
-        context.dynamicSessionInfo.current?.traits ??
-        // XXX Double-check if this is the sane thing to do! Previously this is
-        // how the context.sessionInfo?.isReadOnly check worked too. If the
-        // isReadOnly property wasn't known yet, the client assumed write
-        // access. Not sure if this will break anything if we flip it to
-        // Traits.None.
-        Traits.All; // XXX Make this Traits.None (but make sure it won't break anything)
-      const canWrite =
-        (traits & Traits.CanWriteDocument) === Traits.CanWriteDocument;
+      // It's maybe weird to assume write permissions by default here. However,
+      // this is how the previous check for isReadOnly used to work here.
+      // XXX Try defaulting this to ["room:read"] maybe? (But make sure it won't break anything.)
+      const DEFAULT_SCOPES = [RoomScope.Write];
+
+      const scopes =
+        context.dynamicSessionInfo.current?.scopes ?? DEFAULT_SCOPES;
+      const canWrite = canWriteStorage(scopes);
+
       if (!canWrite) {
         throw new Error(
           "Cannot write to storage with a read only user, please ensure the user has write permissions"
@@ -1172,9 +1176,7 @@ export function createRoom<
       if (staticSession === null || dynamicSession === null) {
         return null;
       } else {
-        const canWrite =
-          (dynamicSession.traits & Traits.CanWriteDocument) ===
-          Traits.CanWriteDocument;
+        const canWrite = canWriteStorage(dynamicSession.scopes);
         return {
           connectionId: dynamicSession.actor,
           id: staticSession.userId,
@@ -1558,10 +1560,10 @@ export function createRoom<
   function onRoomStateMessage(
     message: RoomStateServerMsg<TUserMeta>
   ): OthersEvent<TPresence, TUserMeta> {
-    // The server will inform the client about its assigned actor ID and traits
+    // The server will inform the client about its assigned actor ID and scopes
     context.dynamicSessionInfo.set({
       actor: message.actor,
-      traits: message.traits,
+      scopes: message.scopes,
     });
     context.idFactory = makeIdFactory(message.actor);
 
@@ -1577,9 +1579,9 @@ export function createRoom<
       const connectionId = Number(key);
       context.others.setConnection(
         connectionId,
-        user.traits,
         user.id,
-        user.info
+        user.info,
+        user.scopes
       );
     }
     return { type: "reset" };
@@ -1598,9 +1600,9 @@ export function createRoom<
   ): OthersEvent<TPresence, TUserMeta> | undefined {
     context.others.setConnection(
       message.actor,
-      message.traits,
       message.id,
-      message.info
+      message.info,
+      message.scopes
     );
     // Send current presence to new user
     // TODO: Consider storing it on the backend
