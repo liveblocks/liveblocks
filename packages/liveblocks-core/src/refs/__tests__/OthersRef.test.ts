@@ -36,6 +36,7 @@ describe('Read-only "others" ref cache', () => {
           id: "user-123",
           presence: { x: 1, y: 1 },
           isReadOnly: false,
+          canWrite: true,
         },
       ]);
     });
@@ -55,12 +56,14 @@ describe('Read-only "others" ref cache', () => {
           id: "user-123",
           presence: { x: -2, y: -2 },
           isReadOnly: false,
+          canWrite: true,
         },
         {
           connectionId: 3,
           id: "user-567",
           presence: { x: 3, y: 3 },
           isReadOnly: false,
+          canWrite: true,
         },
       ]);
     });
@@ -79,12 +82,14 @@ describe('Read-only "others" ref cache', () => {
           id: "user-123",
           presence: { x: 2, y: 2 },
           isReadOnly: true,
+          canWrite: false,
         },
         {
           connectionId: 3,
           id: "user-567",
           presence: { x: 3, y: 3 },
           isReadOnly: false,
+          canWrite: true,
         },
       ]);
     });
@@ -102,6 +107,7 @@ describe('Read-only "others" ref cache', () => {
           presence: { x: 2, y: 2 },
           //          ^ 🔑 (no explicit undefined here)
           isReadOnly: false,
+          canWrite: true,
         },
       ]);
     });
@@ -124,6 +130,7 @@ describe('Read-only "others" ref cache', () => {
           id: "user-123",
           presence: { x: 2, y: 2 },
           isReadOnly: false,
+          canWrite: true,
         },
       ]);
 
@@ -134,6 +141,7 @@ describe('Read-only "others" ref cache', () => {
           id: "user-123",
           presence: { x: 2, y: -2, z: -2 },
           isReadOnly: false,
+          canWrite: true,
         },
       ]);
 
@@ -144,6 +152,7 @@ describe('Read-only "others" ref cache', () => {
           id: "user-123",
           presence: { x: 2, y: -2 },
           isReadOnly: false,
+          canWrite: true,
         },
       ]);
     });
@@ -158,6 +167,7 @@ describe('Read-only "others" ref cache', () => {
         id: "user-123",
         presence: { x: 2, y: 2 },
         isReadOnly: false,
+        canWrite: true,
       });
       others.removeConnection(2);
 

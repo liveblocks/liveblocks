@@ -621,7 +621,12 @@ describe("room", () => {
     await waitUntilOthersEvent(room);
 
     expect(room.getOthers()).toEqual([
-      { connectionId: 1, presence: { x: 2 }, isReadOnly: false },
+      {
+        connectionId: 1,
+        presence: { x: 2 },
+        isReadOnly: false,
+        canWrite: true,
+      },
     ]);
   });
 
@@ -658,7 +663,12 @@ describe("room", () => {
     await waitUntilOthersEvent(room);
 
     expect(room.getOthers()).toEqual([
-      { connectionId: 1, presence: { x: 2 }, isReadOnly: true },
+      {
+        connectionId: 1,
+        presence: { x: 2 },
+        isReadOnly: true,
+        canWrite: false,
+      },
     ]);
   });
 
@@ -696,7 +706,12 @@ describe("room", () => {
     await waitUntilStatus(room, "connected");
     await waitUntilOthersEvent(room);
     expect(room.getOthers()).toEqual([
-      { connectionId: 1, presence: { x: 2 }, isReadOnly: false },
+      {
+        connectionId: 1,
+        presence: { x: 2 },
+        isReadOnly: false,
+        canWrite: true,
+      },
     ]);
 
     // Closing this connection will trigger an endless retry loop, because the
@@ -710,7 +725,12 @@ describe("room", () => {
 
     // Not immediately cleared
     expect(room.getOthers()).toEqual([
-      { connectionId: 1, presence: { x: 2 }, isReadOnly: false },
+      {
+        connectionId: 1,
+        presence: { x: 2 },
+        isReadOnly: false,
+        canWrite: true,
+      },
     ]);
 
     // But it will clear eventually (after lostConnectionTimeout milliseconds)
@@ -769,8 +789,18 @@ describe("room", () => {
 
     await waitUntilOthersEvent(room);
     expect(room.getOthers()).toEqual([
-      { connectionId: 1, presence: { x: 2 }, isReadOnly: false },
-      { connectionId: 2, presence: { x: 2 }, isReadOnly: false },
+      {
+        connectionId: 1,
+        presence: { x: 2 },
+        isReadOnly: false,
+        canWrite: true,
+      },
+      {
+        connectionId: 2,
+        presence: { x: 2 },
+        isReadOnly: false,
+        canWrite: true,
+      },
     ]);
 
     // -----
@@ -792,7 +822,12 @@ describe("room", () => {
 
     // Only Client B is part of others.
     expect(room.getOthers()).toEqual([
-      { connectionId: 1, presence: { x: 2 }, isReadOnly: false },
+      {
+        connectionId: 1,
+        presence: { x: 2 },
+        isReadOnly: false,
+        canWrite: true,
+      },
     ]);
   });
 
@@ -1274,9 +1309,8 @@ describe("room", () => {
         {
           connectionId: 1,
           isReadOnly: false,
-          presence: {
-            x: 1,
-          },
+          canWrite: true,
+          presence: { x: 1 },
         },
       ]);
 
@@ -1421,9 +1455,8 @@ describe("room", () => {
         {
           connectionId: 1,
           isReadOnly: false,
-          presence: {
-            x: 2,
-          },
+          canWrite: true,
+          presence: { x: 2 },
         },
       ]);
     });
@@ -1624,6 +1657,7 @@ describe("room", () => {
           info: undefined,
           presence: { x: 1 },
           isReadOnly: false,
+          canWrite: true,
         }, // old user is not cleaned directly
         {
           connectionId: 2,
@@ -1631,6 +1665,7 @@ describe("room", () => {
           info: undefined,
           presence: { x: 1 },
           isReadOnly: false,
+          canWrite: true,
         },
       ]);
     });
@@ -1936,6 +1971,7 @@ describe("room", () => {
           id: undefined,
           info: undefined,
           isReadOnly: false,
+          canWrite: true,
           presence: {
             x: 2,
           },
