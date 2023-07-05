@@ -19,11 +19,11 @@ export type RequestedScope = "room:read" | "comments:read";
 export type AuthManager = {
   getAuthValue(
     requestedScope: RequestedScope,
-    roomId?: string
+    roomId: string
   ): Promise<AuthValue>;
 };
 
-type AuthEndpoint = string | ((room?: string) => Promise<{ token: string }>);
+type AuthEndpoint = string | ((room: string) => Promise<{ token: string }>);
 
 export type AuthenticationOptions = {
   polyfills?: Polyfills;
@@ -59,7 +59,7 @@ export function createAuthManager(
 
   function getCachedToken(
     requestedScope: RequestedScope,
-    roomId?: string
+    roomId: string
   ): ParsedAuthToken | undefined {
     for (const token of tokens) {
       if (token.parsed.k === TokenKind.ID_TOKEN) {
@@ -69,26 +69,14 @@ export function createAuthManager(
         // Legacy tokens are not cached.
         return undefined;
       } else if (token.parsed.k === TokenKind.ACCESS_TOKEN) {
-        if (roomId !== undefined) {
-          for (const [resource, scopes] of Object.entries(token.parsed.perms)) {
-            if (
-              (resource.includes("*") &&
-                roomId.startsWith(resource.replace("*", ""))) ||
-              (roomId === resource &&
-                hasCorrespondingScopes(requestedScope, scopes))
-            ) {
-              return token;
-            }
-          }
-        } else {
-          // No room id
-          for (const [resource, scopes] of Object.entries(token.parsed.perms)) {
-            if (
-              resource.includes("*") &&
-              hasCorrespondingScopes(requestedScope, scopes)
-            ) {
-              return token;
-            }
+        for (const [resource, scopes] of Object.entries(token.parsed.perms)) {
+          if (
+            (resource.includes("*") &&
+              roomId.startsWith(resource.replace("*", ""))) ||
+            (roomId === resource &&
+              hasCorrespondingScopes(requestedScope, scopes))
+          ) {
+            return token;
           }
         }
       }
@@ -96,7 +84,7 @@ export function createAuthManager(
     return undefined;
   }
 
-  async function makeAuthRequest(roomId?: string): Promise<ParsedAuthToken> {
+  async function makeAuthRequest(roomId: string): Promise<ParsedAuthToken> {
     const fetcher =
       authOptions.polyfills?.fetch ??
       (typeof window === "undefined" ? undefined : window.fetch);
@@ -130,7 +118,7 @@ export function createAuthManager(
 
   async function getAuthValue(
     requestedScope: RequestedScope,
-    roomId?: string
+    roomId: string
   ): Promise<AuthValue> {
     if (authentication.type === "public") {
       return { type: "public", publicApiKey: authentication.publicApiKey };
