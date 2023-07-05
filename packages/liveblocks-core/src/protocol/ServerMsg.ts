@@ -120,10 +120,8 @@ export type UserJoinServerMsg<TUserMeta extends BaseUserMeta> = {
    * endpoint.
    */
   readonly info: TUserMeta["info"];
-
   /**
    * Informs the client what (public) permissions this (other) User has.
-   * @since v1.2 (WS API v7)
    */
   readonly scopes: string[];
 };
