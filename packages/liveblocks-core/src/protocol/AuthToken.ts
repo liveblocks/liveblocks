@@ -1,6 +1,7 @@
 import type { Json } from "../lib/Json";
 import { b64decode, isPlainObject, tryParseJson } from "../lib/utils";
 
+// XXX Can this now be removed?
 export enum RoomScope {
   Read = "room:read",
   Write = "room:write",
@@ -23,7 +24,9 @@ export type MinimalTokenPayload = {
   iat: number;
   exp: number;
 
+  // XXX Remove `scopes` here (it's no longer on the token)
   scopes: string[]; // Think Scope[], but it could also hold scopes from the future, hence string[]
+  // XXX Remove `actor` here (it's no longer on the token)
   actor: number;
 
   // Extra payload as defined by the customer's own authorization
