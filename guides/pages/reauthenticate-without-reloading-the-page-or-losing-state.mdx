@@ -1,0 +1,36 @@
+---
+meta:
+  title: "Reauthenticate without reloading the page or losing state"
+  description:
+    "Learn how to reauthenticate the current room without refreshing the page"
+---
+
+By calling
+[room.reconnect](/docs/api-reference/liveblocks-client#Room.reconnect) you can
+reconnect and reauthenticate your collaborative application without refreshing
+the page or unmounting the `RoomProvider` component. Using this method will
+preserve the current client’s state, such as the undo/redo history.
+
+```ts highlight="5"
+const room = client.enter("my-room", {
+  // ...
+});
+
+room.reconnect();
+```
+
+### In React
+
+In our React package, you can retrieve the current room with the
+[`useRoom`](/docs/api-reference/liveblocks-react#useRoom) hook, and then use
+`room.reconnect` from there.
+
+```tsx highlight="4,6"
+import { useRoom } from "../liveblocks.config";
+
+export function App() {
+  const room = useRoom();
+
+  return <button onClick={room.reconnect}>Reauthenticate</button>;
+}
+```
