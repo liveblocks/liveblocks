@@ -110,6 +110,7 @@ export type {
   UpdateStorageServerMsg,
   UserJoinServerMsg,
   UserLeftServerMsg,
+  Traits,
 } from "./protocol/ServerMsg";
 export { ServerMsgCode } from "./protocol/ServerMsg";
 export type {
