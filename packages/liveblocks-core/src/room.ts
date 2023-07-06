@@ -71,6 +71,11 @@ type CustomEvent<TRoomEvent extends Json> = {
   event: TRoomEvent;
 };
 
+export type YDocUpdateEvent = {
+  update: string;
+  isSync: boolean;
+};
+
 export type StorageStatus =
   /* The storage is not loaded and has not been requested. */
   | "not-loaded"
@@ -582,7 +587,7 @@ export type Room<
     readonly storageDidLoad: Observable<void>;
 
     readonly storageStatus: Observable<StorageStatus>;
-    readonly ydoc: Observable<string>;
+    readonly ydoc: Observable<YDocUpdateEvent>;
   };
 
   /**
@@ -1124,7 +1129,7 @@ export function createRoom<
     history: makeEventSource<HistoryEvent>(),
     storageDidLoad: makeEventSource<void>(),
     storageStatus: makeEventSource<StorageStatus>(),
-    ydoc: makeEventSource<string>(),
+    ydoc: makeEventSource<YDocUpdateEvent>(),
   };
 
   function sendMessages(
@@ -1713,7 +1718,8 @@ export function createRoom<
           }
 
           case ServerMsgCode.UPDATE_YDOC: {
-            eventHub.ydoc.notify(message.update);
+            const { isSync, update } = message;
+            eventHub.ydoc.notify({ update, isSync });
             break;
           }
 
