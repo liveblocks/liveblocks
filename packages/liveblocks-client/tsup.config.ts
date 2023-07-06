@@ -5,8 +5,9 @@ export default defineConfig({
   dts: true,
   splitting: true,
   clean: true,
-  target: "es2015",
-  format: ["cjs"],
+  target: "es2020",
+  format: ["esm", "cjs"],
+  sourcemap: true,
 
   esbuildOptions(options, _context) {
     // Replace __PACKAGE_VERSION__ global constant with a concrete version
@@ -14,8 +15,4 @@ export default defineConfig({
       require("./package.json").version
     );
   },
-
-  // Perhaps enable later?
-  // "minify": true,
-  // "sourcemap": true,
 });

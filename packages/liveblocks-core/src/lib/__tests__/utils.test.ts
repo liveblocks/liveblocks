@@ -5,7 +5,6 @@ import {
   compact,
   compactObject,
   entries,
-  fromEntries,
   isPlainObject,
   keys,
   mapValues,
@@ -45,17 +44,6 @@ describe("TypeScript wrapper utils", () => {
       ["1", 1],
       ["2", 2],
     ]);
-  });
-
-  it("fromEntries (alias of Object.fromEntries)", () => {
-    expect(fromEntries([])).toEqual({});
-    expect(fromEntries([["a", 1]])).toEqual({ a: 1 });
-    expect(
-      fromEntries([
-        ["1", 1],
-        ["2", 2],
-      ])
-    ).toEqual({ [1]: 1, [2]: 2 });
   });
 });
 
