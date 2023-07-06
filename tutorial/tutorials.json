@@ -11,57 +11,57 @@
           {
             "slug": "welcome",
             "title": "Welcome to Liveblocks",
-            "description": "Interactively learn Liveblocks"
+            "description": "Learn how to build real-time collaborative applications using React, Next.js, TypeScript, and Liveblocks. Liveblocks is a real-time collaboration infrastructure for building performant collaborative experiences."
           },
           {
             "slug": "connecting",
             "title": "Connecting to Liveblocks",
-            "description": "How to connect with createClient"
+            "description": "Learn how to create a Liveblocks real-time client, and then connect to it with the JavaScript createClient function."
           },
           {
             "slug": "joining-a-room",
             "title": "Joining a room",
-            "description": "How to use RoomProvider"
+            "description": "Learn how to join a Liveblocks room in your React collaborative application, using the RoomProvider component."
           },
           {
             "slug": "others",
             "title": "Displaying others",
-            "description": "Using others to display online presence"
+            "description": "Learn how to use Liveblocks others to display online presence in your collaborative React application with useOthers."
           },
           {
             "slug": "presence",
             "title": "Using presence",
-            "description": "How to set the current user’s presence"
+            "description": "Learn how to set up and use the current user’s Liveblocks Presence values in your collaborative React application with useMyPresence."
           },
           {
             "slug": "updating-presence",
             "title": "Updating presence",
-            "description": "How to update the current user’s presence"
+            "description": "Learn how to update the current user’s Liveblocks Presence values in your multiplayer React application with updateMyPresence."
           },
           {
             "slug": "live-cursors",
             "title": "Live cursors using presence",
-            "description": "How to build real-time cursors with presence"
+            "description": "Learn how to build real-time cursors with Liveblocks Presence values in your collaborative React application with useOthers."
           },
           {
             "slug": "broadcasting-events",
             "title": "Broadcasting events",
-            "description": "How to broadcast notification events"
+            "description": "Learn how to broadcast real-time toast notification events using Liveblocks and useBroadcastEvent in your React application."
           },
           {
             "slug": "storage",
             "title": "Storage",
-            "description": "How to use useStorage and conflict-free data types"
+            "description": "Learn how to create real-time document storage in React with Liveblocks’ conflict-free data types and the useStorage hook."
           },
           {
             "slug": "modifying-storage-data",
             "title": "Modifying storage data",
-            "description": "How to use useMutation to update storage"
+            "description": "Learn how to modify real-time conflict-free data storage with the Liveblocks useMutation React hook."
           },
           {
             "slug": "nesting-data-types",
             "title": "Nesting data types",
-            "description": "How to nest conflict-free data types within each other"
+            "description": "Learn how to nest Liveblocks real-time conflict-free data types within each other, enabling more complex React applications."
           },
           {
             "slug": "undo-redo",
