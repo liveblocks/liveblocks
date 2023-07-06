@@ -12,8 +12,8 @@
     "prettier": "2.8.3"
   },
   "dependencies": {
-    "@liveblocks/client": "^1.1.0-yjs5",
-    "@liveblocks/yjs": "^1.1.0-yjs5",
+    "@liveblocks/client": "^1.1.1-dual4",
+    "@liveblocks/yjs": "^1.1.1-dual4",
     "lib0": "^0.2.78",
     "quill": "^1.3.7",
     "quill-cursors": "^4.0.2",

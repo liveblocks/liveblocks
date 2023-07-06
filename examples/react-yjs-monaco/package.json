@@ -10,9 +10,9 @@
     "eject": "react-scripts eject"
   },
   "dependencies": {
-    "@liveblocks/client": "^1.0.12-yjs3",
-    "@liveblocks/react": "^1.0.12-yjs3",
-    "@liveblocks/yjs": "^1.0.12-yjs3",
+    "@liveblocks/client": "^1.1.1-dual4",
+    "@liveblocks/react": "^1.1.1-dual4",
+    "@liveblocks/yjs": "^1.1.1-dual4",
     "@monaco-editor/react": "^4.5.1",
     "@testing-library/jest-dom": "^5.16.2",
     "@testing-library/react": "^12.1.3",
