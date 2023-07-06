@@ -1,8 +1,8 @@
-# v1.1.2-beta
+# v1.1.2
 
 ### `@liveblocks/yjs`
 
-Added yjs support to open beta through the new `@liveblocks/yjs` package.
+Added Yjs support to **open beta** through the new `@liveblocks/yjs` package (not stable yet).
 
 # v1.1.1
 
