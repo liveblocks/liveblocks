@@ -6,7 +6,9 @@ export default defineConfig({
   splitting: true,
   clean: true,
   target: "es2015",
-  format: ["cjs"],
+  format: ["esm", "cjs"],
+  minify: true,
+  sourcemap: true,
 
   esbuildOptions(options, _context) {
     // Replace __PACKAGE_VERSION__ global constant with a concrete version
@@ -14,8 +16,4 @@ export default defineConfig({
       require("./package.json").version
     );
   },
-
-  // Perhaps enable later?
-  // "minify": true,
-  // "sourcemap": true,
 });

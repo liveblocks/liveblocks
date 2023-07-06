@@ -6,9 +6,7 @@ export default defineConfig({
   splitting: true,
   clean: true,
   target: "es2015",
-  format: ["cjs"],
-
-  // Perhaps enable later?
-  // "minify": true,
-  // "sourcemap": true,
+  format: ["esm", "cjs"],
+  minify: true,
+  sourcemap: true,
 });
