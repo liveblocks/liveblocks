@@ -1,8 +1,26 @@
-# v1.1.2-beta
+# v1.1.3
+
+Ship all of our packages as both ESM and CJS modules. By upgrading, your
+project’s bundler can now perform (better) tree-shaking on the Liveblocks code.
+
+You can expect (at least) the following bundle size reductions:
+
+- `@liveblocks/client` from 80kB → 70kB
+- `@liveblocks/react` from 129kB → 80kB
+- `@liveblocks/redux` from 84kB → 38kB
+- `@liveblocks/zustand` from 83kB → 37kB
+- `@liveblocks/yjs` from 129kB → 74kB
+
+# v1.1.2
 
 ### `@liveblocks/yjs`
 
-Added yjs support to open beta through the new `@liveblocks/yjs` package.
+Added Yjs support to **open beta** through the new `@liveblocks/yjs` package
+(not stable yet).
+
+### Fixes
+
+Fixes a missing internal export.
 
 # v1.1.1
 
@@ -14,7 +32,7 @@ incorrectly throw a `Not started yet` error message.
 This release improves the client’s internals to ensure a more reliable
 connection with Liveblocks servers.
 
-### `@liveblocks/core`
+### `@liveblocks/client`
 
 - New APIs:
   - `room.getStatus()`: returns the current status of the WebSocket connection:
@@ -84,7 +102,7 @@ Recommended steps to upgrade:
 
 # v1.0.11
 
-### `@liveblocks/core`
+### `@liveblocks/client`
 
 - Fix a bug where undo/redo on `LiveObject` creates exponentially larger deltas
 
@@ -163,7 +181,7 @@ always work.
 Log stack traces of function calls that resulted in rejected storage mutations
 to the console in non-production builds to ease debugging.
 
-### `@liveblocks/core`
+### `@liveblocks/client`
 
 - Fixes bug where the state of `others` in a room was wrong when:
   - Client A disconnects improperly (ex: computer goes to sleep)
