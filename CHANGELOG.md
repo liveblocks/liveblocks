@@ -1,3 +1,16 @@
+# v1.1.3
+
+Ship all of our packages as both ESM and CJS modules. By upgrading, your
+project’s bundler can now perform (better) tree-shaking on the Liveblocks code.
+
+You can expect (at least) the following bundle size reductions:
+
+- `@liveblocks/client` from 80kB → 70kB
+- `@liveblocks/react` from 129kB → 80kB
+- `@liveblocks/redux` from 84kB → 38kB
+- `@liveblocks/zustand` from 83kB → 37kB
+- `@liveblocks/yjs` from 129kB → 74kB
+
 # v1.1.2
 
 ### `@liveblocks/yjs`
