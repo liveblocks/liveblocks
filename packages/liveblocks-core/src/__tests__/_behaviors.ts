@@ -17,6 +17,7 @@ import type { MockWebSocket } from "./_MockWebSocketServer";
 import { MockWebSocketServer } from "./_MockWebSocketServer";
 import { makeMinimalTokenPayload } from "./_utils";
 
+type AuthBehavior = () => AuthValue;
 type SocketBehavior = (wss: MockWebSocketServer) => MockWebSocket;
 
 function makeToken(actor: number, scopes: string[]): ParsedAuthToken {
@@ -36,7 +37,7 @@ function makeToken(actor: number, scopes: string[]): ParsedAuthToken {
  * observe the effects of the Room taking actions.
  */
 export function defineBehavior(
-  authValue: AuthValue,
+  authBehavior: AuthBehavior,
   socketBehavior: SocketBehavior
 ): {
   wss: MockWebSocketServer;
@@ -44,7 +45,7 @@ export function defineBehavior(
 } {
   const authenticate = () => {
     try {
-      return Promise.resolve(authValue);
+      return Promise.resolve(authBehavior());
     } catch (err) {
       return Promise.reject(err);
     }
@@ -75,8 +76,10 @@ export const AUTH_SUCCESS = ALWAYS_AUTH_AS(1);
 export function ALWAYS_AUTH_AS(
   actor: number,
   scopes: string[] = []
-): AuthValue {
-  return { type: "secret", token: makeToken(actor, scopes) };
+): () => AuthValue {
+  return () => {
+    return { type: "secret", token: makeToken(actor, scopes) };
+  };
 }
 
 export function ALWAYS_FAIL_AUTH(): never {
