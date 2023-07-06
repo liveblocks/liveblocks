@@ -7,6 +7,5 @@ export default defineConfig({
   clean: true,
   target: "es2015",
   format: ["esm", "cjs"],
-  minify: true,
   sourcemap: true,
 });
