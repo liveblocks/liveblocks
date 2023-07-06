@@ -5,7 +5,7 @@ export default defineConfig({
   dts: true,
   splitting: true,
   clean: true,
-  target: "es2015",
+  target: "es2020",
   format: ["esm", "cjs"],
   sourcemap: true,
 });
