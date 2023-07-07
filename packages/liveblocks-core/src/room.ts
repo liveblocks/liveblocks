@@ -47,6 +47,7 @@ import type {
   UpdatePresenceServerMsg,
   UserJoinServerMsg,
   UserLeftServerMsg,
+  YDocUpdate,
 } from "./protocol/ServerMsg";
 import { ServerMsgCode } from "./protocol/ServerMsg";
 import type { ImmutableRef } from "./refs/ImmutableRef";
@@ -69,11 +70,6 @@ type TimeoutID = ReturnType<typeof setTimeout>;
 type CustomEvent<TRoomEvent extends Json> = {
   connectionId: number;
   event: TRoomEvent;
-};
-
-export type YDocUpdateEvent = {
-  update: string;
-  isSync: boolean;
 };
 
 export type StorageStatus =
@@ -587,7 +583,7 @@ export type Room<
     readonly storageDidLoad: Observable<void>;
 
     readonly storageStatus: Observable<StorageStatus>;
-    readonly ydoc: Observable<YDocUpdateEvent>;
+    readonly ydoc: Observable<YDocUpdate>;
   };
 
   /**
@@ -1129,7 +1125,7 @@ export function createRoom<
     history: makeEventSource<HistoryEvent>(),
     storageDidLoad: makeEventSource<void>(),
     storageStatus: makeEventSource<StorageStatus>(),
-    ydoc: makeEventSource<YDocUpdateEvent>(),
+    ydoc: makeEventSource<YDocUpdate>(),
   };
 
   function sendMessages(
@@ -1718,8 +1714,7 @@ export function createRoom<
           }
 
           case ServerMsgCode.UPDATE_YDOC: {
-            const { isSync, update } = message;
-            eventHub.ydoc.notify({ update, isSync });
+            eventHub.ydoc.notify(message);
             break;
           }
 

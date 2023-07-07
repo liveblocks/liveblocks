@@ -165,7 +165,11 @@ export default class LiveblocksProvider<
 
     this.unsubscribers.push(
       this.room.events.ydoc.subscribe(({ update, isSync }) => {
-        Y.applyUpdate(this.doc, Base64.toUint8Array(update), "backend");
+        Y.applyUpdate(
+          this.doc,
+          Base64.toUint8Array(update as string),
+          "backend"
+        );
         if (isSync) {
           this.synced = true;
         }
