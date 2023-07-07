@@ -5,10 +5,7 @@ export default defineConfig({
   dts: true,
   splitting: true,
   clean: true,
-  target: "es2015",
-  format: ["cjs"],
-
-  // Perhaps enable later?
-  // "minify": true,
-  // "sourcemap": true,
+  target: "es2020",
+  format: ["esm", "cjs"],
+  sourcemap: true,
 });

@@ -3,9 +3,9 @@
   "extends": "../../shared/tsconfig.common.json",
 
   "compilerOptions": {
-    "target": "es2015",
-    "module": "es2015",
-    "lib": ["dom", "es2015"],
+    "target": "es2020",
+    "module": "es2020",
+    "lib": ["dom"],
 
     // TODO: Try to get rid of these overrides
     "noUncheckedIndexedAccess": false // OVERWRITTEN to relax a bit
