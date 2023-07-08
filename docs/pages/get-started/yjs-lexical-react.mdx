@@ -1,0 +1,175 @@
+---
+meta:
+  title: "Get started with Liveblocks, Lexical, Yjs, and React"
+  parentTitle: "Get started"
+  description:
+    "Learn how to get started with Liveblocks, Lexical, Yjs, and React."
+---
+
+Liveblocks is a real-time collaboration infrastructure for building performant
+collaborative experiences. Follow the following steps to start adding
+collaboration to your React application using the APIs from the
+[`@liveblocks/yjs`](/docs/api-reference/liveblocks-yjs) package.
+
+## Quickstart
+
+<Steps
+  steps={[
+    {
+      title: "Install Liveblocks, Yjs, and Lexical",
+      code: {
+        language: "bash",
+        code: `npm install @liveblocks/client @liveblocks/react @liveblocks/yjs yjs lexical @lexical/react @lexical/yjs`,
+      },
+    },
+    {
+      title: (
+        <>
+          Initialize the <code>liveblocks.config.ts</code> file
+        </>
+      ),
+      code: {
+        language: "bash",
+        code: `npm create-liveblocks-app@latest --init --framework react`,
+      },
+    },
+    {
+      title: "Set up the client",
+      description: (
+        <>
+          The first step in connecting to Liveblocks is creating a client which
+          will be responsible for communicating with the back end. You can do
+          this by modifying <code>createClient</code> in your config file, and
+          passing your public API key.
+        </>
+      ),
+      code: {
+        file: "liveblocks.config.ts",
+        language: "ts",
+        code: `const client = createClient({
+  publicApiKey: "{{PUBLIC_KEY}}",
+});`,
+      },
+    },
+    {
+      title: "Join a Liveblocks room",
+      description: `Liveblocks uses the concept of rooms, separate virtual spaces where people collaborate. To create a real-time experience, multiple users must be connected to the same room.`,
+      code: {
+        file: "App.tsx",
+        language: "tsx",
+        highlight: "7-11",
+        code: `import { RoomProvider } from "./liveblocks.config";
+import { Editor } from "./Editor";
+import { ClientSideSuspense } from "@liveblocks/react";
+\r
+export default function Page() {
+  return (
+    <RoomProvider id="my-room" initialPresence={{}}>
+      <ClientSideSuspense fallback="Loading…">
+        {() => <Editor />}
+      </ClientSideSuspense>
+    </RoomProvider>
+  );
+}`,
+      },
+    },
+    {
+      title: "Set up the collaborative Lexical editor",
+      description: (
+        <>
+          Now that we set up Liveblocks, we can start integrating Lexical and
+          Yjs in the <code>Editor.tsx</code> file to have a working
+          collaborative text editor.
+        </>
+      ),
+      code: {
+        file: "Editor.tsx",
+        language: "tsx",
+        code: `import { useRoom } from "../liveblocks.config";
+import * as Y from "yjs";
+import LiveblocksProvider from "@liveblocks/yjs";
+import {
+  $getRoot,
+  $createParagraphNode,
+  $createTextNode,
+  LexicalEditor,
+} from "lexical";
+import { LexicalComposer } from "@lexical/react/LexicalComposer";
+import { ContentEditable } from "@lexical/react/LexicalContentEditable";
+import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
+import { CollaborationPlugin } from "@lexical/react/LexicalCollaborationPlugin";
+import LexicalErrorBoundary from "@lexical/react/LexicalErrorBoundary";
+import { Provider } from "@lexical/yjs";
+\r
+function initialEditorState(editor: LexicalEditor): void {
+  const root = $getRoot();
+  const paragraph = $createParagraphNode();
+  const text = $createTextNode();
+  paragraph.append(text);
+  root.append(paragraph);
+}
+\r
+export default function Editor() {
+  const room = useRoom();
+  const user = USER_INFO[Math.floor(Math.random() * USER_INFO.length)];
+  const initialConfig = {
+    editorState: null,
+    namespace: "Demo",
+    nodes: [],
+    onError: (error: unknown) => {
+      throw error;
+    },
+    theme: {},
+  };
+\r
+  return (
+    <LexicalComposer initialConfig={initialConfig}>
+      <RichTextPlugin
+        contentEditable={<ContentEditable />}
+        placeholder={<>Start typing here…</>}
+        ErrorBoundary={LexicalErrorBoundary}
+      />
+      <CollaborationPlugin
+        id="yjs-plugin"
+        cursorColor={user.color}
+        username={user.name}
+        providerFactory={(id, yjsDocMap) => {
+          const doc = new Y.Doc();
+          yjsDocMap.set(id, doc);
+          const provider = new LiveblocksProvider(room, doc) as Provider;
+          return provider;
+        }}
+        initialEditorState={initialEditorState}
+        shouldBootstrap={true}
+      />
+    </LexicalComposer>
+  );
+}`,
+      },
+    },
+    {
+      title: "Bonus: set up authentication",
+      description: (
+        <>
+          By default, Liveblocks is configured to work without an authentication
+          endpoint. This approach is great for prototyping and marketing pages
+          where defining your own security isn’t always required. If you want to
+          implement your own security logic to define if certain users should
+          have access to a given room, you’ll need to implement an
+          authentication endpoint.
+        </>
+      ),
+      action: {
+        href: "/docs/rooms/authentication",
+        label: "Set up authentication",
+      },
+    },
+  ]}
+/>
+
+## Next steps
+
+Congratulations! You now have set up the foundation to start building
+collaborative experiences for your React application.
+
+- [API Reference](/docs/api-reference/liveblocks-yjs)

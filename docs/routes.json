@@ -9,39 +9,147 @@
       },
       {
         "title": "Get started",
-        "path": "/get-started",
+        "href": "/get-started",
         "routes": [
           {
             "title": "Next.js",
-            "path": "/get-started/nextjs"
+            "path": "/get-started/nextjs",
+            "hidden": true
           },
           {
             "title": "React",
-            "path": "/get-started/react"
+            "path": "/get-started/react",
+            "hidden": true
           },
           {
             "title": "Redux",
-            "path": "/get-started/redux"
+            "path": "/get-started/redux",
+            "hidden": true
           },
           {
             "title": "Zustand",
-            "path": "/get-started/zustand"
+            "path": "/get-started/zustand",
+            "hidden": true
           },
           {
             "title": "Svelte",
-            "path": "/get-started/svelte"
+            "path": "/get-started/svelte",
+            "hidden": true
           },
           {
             "title": "Vue.js",
-            "path": "/get-started/vuejs"
+            "path": "/get-started/vuejs",
+            "hidden": true
           },
           {
             "title": "SolidJS",
-            "path": "/get-started/solidjs"
+            "path": "/get-started/solidjs",
+            "hidden": true
           },
           {
             "title": "JavaScript",
-            "path": "/get-started/javascript"
+            "path": "/get-started/javascript",
+            "hidden": true
+          },
+          {
+            "title": "Yjs CodeMirror React",
+            "path": "/get-started/yjs-codemirror-react",
+            "hidden": true
+          },
+          {
+            "title": "Yjs Lexical React",
+            "path": "/get-started/yjs-lexical-react",
+            "hidden": true
+          },
+          {
+            "title": "Yjs Monaco React",
+            "path": "/get-started/yjs-monaco-react",
+            "hidden": true
+          },
+          {
+            "title": "Yjs ProseMirror",
+            "path": "/get-started/yjs-prosemirror",
+            "hidden": true
+          },
+          {
+            "title": "Yjs Quill React",
+            "path": "/get-started/yjs-quill-react",
+            "hidden": true
+          },
+          {
+            "title": "Yjs Slate React",
+            "path": "/get-started/yjs-slate-react",
+            "hidden": true
+          },
+          {
+            "title": "Yjs TipTap React",
+            "path": "/get-started/yjs-tiptap-react",
+            "hidden": true
+          },
+          {
+            "title": "Text editor",
+            "href": "/get-started/text-editor",
+            "hidden": true
+          },
+          {
+            "title": "Text editor / Lexical",
+            "href": "/get-started/text-editor/lexical",
+            "hidden": true
+          },
+          {
+            "title": "Text editor / Quill",
+            "href": "/get-started/text-editor/quill",
+            "hidden": true
+          },
+          {
+            "title": "Text editor / Slate",
+            "href": "/get-started/text-editor/slate",
+            "hidden": true
+          },
+          {
+            "title": "Text editor / ProseMirror",
+            "href": "/get-started/text-editor/prosemirror",
+            "hidden": true
+          },
+          {
+            "title": "Text editor / TipTap",
+            "href": "/get-started/text-editor/tiptap",
+            "hidden": true
+          },
+          {
+            "title": "Code editor",
+            "href": "/get-started/code-editor",
+            "hidden": true
+          },
+          {
+            "title": "Code editor / CodeMirror",
+            "href": "/get-started/code-editor/codemirror",
+            "hidden": true
+          },
+          {
+            "title": "Code editor / Monaco",
+            "href": "/get-started/code-editor/monaco",
+            "hidden": true
+          },
+          {
+            "title": "Whiteboard",
+            "href": "/get-started/whiteboard",
+            "hidden": true
+          },
+          {
+            "title": "Form",
+            "href": "/get-started/form",
+            "hidden": true
+          },
+          {
+            "title": "Creative tool",
+            "href": "/get-started/creative-tool",
+            "hidden": true
+          },
+          {
+            "title": "Custom",
+            "href": "/get-started/custom",
+            "hidden": true
           }
         ]
       }
@@ -237,19 +345,6 @@
       {
         "title": "Troubleshooting",
         "path": "/platform/troubleshooting"
-      }
-    ]
-  },
-  {
-    "title": "Updates",
-    "routes": [
-      {
-        "title": "System status",
-        "href": "https://liveblocks.statuspage.io/"
-      },
-      {
-        "title": "Release notes",
-        "href": "https://github.com/liveblocks/liveblocks/releases"
       }
     ]
   }
