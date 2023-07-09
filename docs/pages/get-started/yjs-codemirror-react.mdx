@@ -11,3 +11,141 @@ collaboration to your React application using the APIs from the
 [`@liveblocks/yjs`](/docs/api-reference/liveblocks-yjs) package.
 
 ## Quickstart
+
+<Steps>
+  <Step>
+    <StepTitle>Install Liveblocks, Yjs, and CodeMirror</StepTitle>
+    <StepContent>
+
+      ```bash
+      npm install @liveblocks/client @liveblocks/react @liveblocks/yjs yjs codemirror @codemirror/lang-javascript @y-codemirror.next
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Initialize the `liveblocks.config.ts` file</StepTitle>
+    <StepContent>
+
+      ```bash
+      npx create-liveblocks-app@latest --init --framework react
+      ```
+
+    </StepContent>
+
+  </Step>
+
+  <Step>
+    <StepTitle>Set up the Liveblocks client</StepTitle>
+    <StepContent>
+
+      The first step in connecting to Liveblocks is creating a client which
+      will be responsible for communicating with the back end. You can do
+      this by modifying `createClient` in your config file, and
+      passing your public API key.
+
+      ```ts file="liveblocks.config.ts"
+      const client = createClient({
+        publicApiKey: "{{PUBLIC_KEY}}",
+      });
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Join a Liveblocks room</StepTitle>
+    <StepContent>
+
+      Liveblocks uses the concept of rooms, separate virtual spaces where people
+      collaborate. To create a real-time experience, multiple users must be
+      connected to the same room.
+
+      ```tsx file="index.tsx" highlight="7-11"
+      import { RoomProvider } from "./liveblocks.config";
+      import { Editor } from "./Editor";
+      import { ClientSideSuspense } from "@liveblocks/react";
+
+      export default function Page() {
+        return (
+          <RoomProvider id="my-room" initialPresence={{}}>
+            <ClientSideSuspense fallback="Loading…">
+              {() => <Editor />}
+            </ClientSideSuspense>
+          </RoomProvider>
+        );
+      }
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Set up the collaborative CodeMirror editor</StepTitle>
+    <StepContent>
+
+      ```tsx
+      import * as Y from "yjs";
+      import { yCollab } from "y-codemirror.next";
+      import { EditorView, basicSetup } from "codemirror";
+      import { EditorState } from "@codemirror/state";
+      import { javascript } from "@codemirror/lang-javascript";
+      import { useCallback, useEffect, useState } from "react";
+      import LiveblocksProvider from "@liveblocks/yjs";
+      import { useRoom } from "@/liveblocks.config";
+      import styles from "./Editor.module.css";
+
+      export default function Editor() {
+        const [element, setElement] = useState<HTMLElement>();
+        const room = useRoom();
+
+        const ref = useCallback((node: HTMLElement | null) => {
+          if (!node) return;
+
+          setElement(node);
+        }, []);
+
+        useEffect(() => {
+          let provider: LiveblocksProvider<any, any, any, any>;
+          let ydoc: Y.Doc;
+          let view: EditorView;
+
+          if (!element || !room) {
+            return;
+          }
+
+          ydoc = new Y.Doc();
+          provider = new LiveblocksProvider(room as any, ydoc);
+
+          const ytext = ydoc.getText("codemirror");
+          const undoManager = new Y.UndoManager(ytext);
+
+          const state = EditorState.create({
+            doc: ytext.toString(),
+            extensions: [
+              basicSetup,
+              javascript(),
+              yCollab(ytext, provider.awareness, { undoManager }),
+            ],
+          });
+
+          view = new EditorView({
+            state,
+            parent: element,
+          });
+
+          return () => {
+            ydoc?.destroy();
+            provider?.destroy();
+            view?.destroy();
+          };
+        }, [element, room]);
+
+        return <div ref={ref} className={styles.editor} />;
+      }
+      ```
+    </StepContent>
+
+  </Step>
+</Steps>

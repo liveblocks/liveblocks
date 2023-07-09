@@ -12,137 +12,143 @@ the [`@liveblocks/react`](/docs/api-reference/liveblocks-react) package.
 
 ## Quickstart
 
-<Steps
-  steps={[
-    {
-      title: "Install Liveblocks",
-      code: {
-        language: "bash",
-        code: `npm install @liveblocks/client @liveblocks/react`,
-      },
-    },
-    {
-      title: (
-        <>
-          Initialize the <code>liveblocks.config.ts</code> file
-        </>
-      ),
-      code: {
-        language: "bash",
-        code: `npm create-liveblocks-app@latest --init --framework react`,
-      },
-    },
-    {
-      title: "Set up the client",
-      description: (
-        <>
-          The first step in connecting to Liveblocks is creating a client which
-          will be responsible for communicating with the back end. You can do
-          this by modifying <code>createClient</code> in your config file, and
-          passing your public API key.
-        </>
-      ),
-      code: {
-        file: "liveblocks.config.ts",
-        language: "ts",
-        code: `const client = createClient({
-  publicApiKey: "{{PUBLIC_KEY}}",
-});`,
-      },
-    },
-    {
-      title: "Create a Liveblocks room",
-      description: (
-        <>
-          Liveblocks uses the concept of rooms, separate virtual spaces where
-          collaborate. To create a real-time experience, multiple users must
-          be connected to the same room. When using Next.js’ <code>/app</code>
-          directory, we recommend creating your room in a <code>Room.tsx</code>{" "}
-          file in the same directory as your current route.
-        </>
-      ),
-      code: {
-        file: "app/Room.tsx",
-        language: "ts",
-        highlight: "9-13",
-        code: `"use client";
+<Steps>
 
-import { ReactNode } from "react";
-import { RoomProvider } from "./liveblocks.config";
-import { ClientSideSuspense } from "@liveblocks/react";
+  <Step>
+    <StepTitle>Install Liveblocks</StepTitle>
+    <StepContent>
 
-export function Room({ children }: { children: ReactNode }) {
-  return (
-    <RoomProvider id="my-room" initialPresence={{}}>
-      <ClientSideSuspense fallback={<div>Loading…</div>}>
-        {() => children}
-      </ClientSideSuspense>
-    </RoomProvider>
-  );
-}`,
-      },
-    },
-    {
-      title: "Add the Room to your page",
-      description: (
-        <>
-          After creating your room file, it’s time to join it. Import
-          your room into your <code>page.tsx</code> file, and place
-          your collaborative app components inside it.
-        </>
-      ),
-      code: {
-        file: "app/page.tsx",
-        language: "ts",
-        highlight: "6-8",
-        code: `import { Room } from "./Room";
-import { CollaborativeApp } from "./CollaborativeApp";
+      ```bash
+      npm install @liveblocks/client @liveblocks/react
+      ```
 
-export default function Page() {
-  return (
-    <Room>
-      <CollaborativeApp />
-    </Room>
-  );
-}`,
-      },
-    },
-    {
-      title: "Use the Liveblocks hooks",
-      description: `Now that we’re connected to a room, we can start using the Liveblocks hooks. The first we’ll add is useOthers, a hook that provides information about which other users are connected to the room.`,
-      code: {
-        file: "CollaborativeApp.tsx",
-        language: "ts",
-        highlight: "6",
-        code: `"use client";
+    </StepContent>
 
-import { useOthers } from "./liveblocks.config";
+  </Step>
+  <Step>
+    <StepTitle>Initialize the `liveblocks.config.ts` file</StepTitle>
+    <StepContent>
 
-export function CollaborativeApp() {
-  const others = useOthers();
-  const userCount = others.length;
-  return <div>There are {userCount} other user(s) online</div>;
-}`,
-      },
-    },
-    {
-      title: "Bonus: set up authentication",
-      description: (
-        <>
-          By default, Liveblocks is configured to work without an authentication
-          endpoint. This approach is great for prototyping and marketing pages
-          where defining your own security isn’t always required. If you want to
-          implement your own security logic to define if certain users should
-          have access to a given room, you’ll need to implement an
-          authentication endpoint.
-        </>
-      ),
-      action: {
-        href: "/docs/rooms/authentication/nextjs",
-        label: "Set up authentication",
-      },
-    },
-]} />
+      ```bash
+      npx create-liveblocks-app@latest --init --framework react
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Set up the Liveblocks client</StepTitle>
+    <StepContent>
+
+      The first step in connecting to Liveblocks is creating a client which
+      will be responsible for communicating with the back end. You can do
+      this by modifying `createClient` in your config file, and
+      passing your public API key.
+
+      ```tsx file="liveblocks.config.ts"
+      const client = createClient({
+        publicApiKey: "{{PUBLIC_KEY}}",
+      });
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Create a Liveblocks room</StepTitle>
+    <StepContent>
+
+      Liveblocks uses the concept of rooms, separate virtual spaces where
+      collaborate. To create a real-time experience, multiple users must
+      be connected to the same room. When using Next.js’ `/app`
+      directory, we recommend creating your room in a `Room.tsx`
+      file in the same directory as your current route.
+
+      ```tsx file="app/Room.tsx" highlight="9-13"
+      "use client";
+
+      import { ReactNode } from "react";
+      import { RoomProvider } from "./liveblocks.config";
+      import { ClientSideSuspense } from "@liveblocks/react";
+
+      export function Room({ children }: { children: ReactNode }) {
+        return (
+          <RoomProvider id="my-room" initialPresence={{}}>
+            <ClientSideSuspense fallback={<div>Loading…</div>}>
+              {() => children}
+            </ClientSideSuspense>
+          </RoomProvider>
+        );
+      }
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Add the Liveblocks room to your page</StepTitle>
+    <StepContent>
+
+      After creating your room file, it’s time to join it. Import
+      your room into your `page.tsx` file, and place
+      your collaborative app components inside it.
+
+      ```tsx file="app/page.tsx" highlight="6-8"
+      import { Room } from "./Room";
+      import { CollaborativeApp } from "./CollaborativeApp";
+
+      export default function Page() {
+        return (
+          <Room>
+            <CollaborativeApp />
+          </Room>
+        );
+      }
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Use the Liveblocks hooks</StepTitle>
+    <StepContent>
+
+      Now that we’re connected to a room, we can start using the Liveblocks hooks.
+      The first we’ll add is useOthers, a hook that provides information
+      about which other users are connected to the room.
+
+      ```tsx file="app/CollaborativeApp.tsx" highlight="6"
+      "use client";
+
+      import { useOthers } from "./liveblocks.config";
+
+      export function CollaborativeApp() {
+        const others = useOthers();
+        const userCount = others.length;
+        return <div>There are {userCount} other user(s) online</div>;
+      }
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step lastStep>
+    <StepTitle>Bonus: set up authentication</StepTitle>
+    <StepContent>
+      By default, Liveblocks is configured to work without an authentication
+      endpoint. This approach is great for prototyping and marketing pages
+      where defining your own security isn’t always required. If you want to
+      implement your own security logic to define if certain users should
+      have access to a given room, you’ll need to implement an
+      authentication endpoint.
+
+      <ButtonLink className="not-markdown" href="/docs/rooms/authentication/nextjs">
+        Set up authentication
+      </ButtonLink>
+    </StepContent>
+
+  </Step>
+</Steps>
 
 ## Next steps
 

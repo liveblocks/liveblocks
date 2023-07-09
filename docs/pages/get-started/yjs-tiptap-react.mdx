@@ -1,9 +1,9 @@
 ---
 meta:
-  title: "Get started with TipTap, Yjs, React, and Liveblocks"
+  title: "Get started with Liveblocks, Yjs, Tiptap, and React"
   parentTitle: "Get started"
   description:
-    "Learn how to get started with TipTap, Yjs, React, and Liveblocks."
+    "Learn how to get started with Liveblocks, Yjs, Tiptap, and React."
 ---
 
 Liveblocks is a real-time collaboration infrastructure for building performant
@@ -12,3 +12,158 @@ collaboration to your React application using the APIs from the
 [`@liveblocks/yjs`](/docs/api-reference/liveblocks-yjs) package.
 
 ## Quickstart
+
+<Steps>
+  <Step>
+    <StepTitle>Install Liveblocks, Yjs, and Tiptap</StepTitle>
+    <StepContent>
+
+      ```bash
+      npm install @liveblocks/client @liveblocks/react @liveblocks/yjs yjs @tiptap/react @tiptap/pm @tiptap/starter-kit @tiptap/extension-collaboration @tiptap/extension-collaboration-cursor
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Initialize the `liveblocks.config.ts` file</StepTitle>
+    <StepContent>
+
+      ```bash
+      npx create-liveblocks-app@latest --init --framework react
+      ```
+
+    </StepContent>
+
+  </Step>
+
+  <Step>
+    <StepTitle>Set up the Liveblocks client</StepTitle>
+    <StepContent>
+
+      The first step in connecting to Liveblocks is creating a client which
+      will be responsible for communicating with the back end. You can do
+      this by modifying `createClient` in your config file, and
+      passing your public API key.
+
+      ```ts file="liveblocks.config.ts"
+      const client = createClient({
+        publicApiKey: "{{PUBLIC_KEY}}",
+      });
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Join a Liveblocks room</StepTitle>
+    <StepContent>
+
+      Liveblocks uses the concept of rooms, separate virtual spaces where people
+      collaborate. To create a real-time experience, multiple users must be
+      connected to the same room.
+
+      ```tsx file="index.tsx" highlight="7-11"
+      import { RoomProvider } from "./liveblocks.config";
+      import { Editor } from "./Editor";
+      import { ClientSideSuspense } from "@liveblocks/react";
+
+      export default function Page() {
+        return (
+          <RoomProvider id="my-room" initialPresence={{}}>
+            <ClientSideSuspense fallback="Loading…">
+              {() => <Editor />}
+            </ClientSideSuspense>
+          </RoomProvider>
+        );
+      }
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Set up the collaborative Tiptap text editor</StepTitle>
+    <StepContent>
+
+      Now that we set up Liveblocks, we can start integrating Tiptap and Yjs in the `Editor.tsx` file.
+      To make the editor collaborative, we can rely on `Collaboration` and `CollaborationCursor`
+      from `@tiptap/extension-collaboration` and `@tiptap/extension-collaboration-cursor`.
+
+      ```tsx file="Editor.tsx"
+      import { useEditor, EditorContent } from '@tiptap/react'
+      import StarterKit from '@tiptap/starter-kit'
+      import Collaboration from '@tiptap/extension-collaboration'
+      import CollaborationCursor from '@tiptap/extension-collaboration-cursor'
+      import * as Y from 'yjs'
+      import LiveblocksProvider from "@liveblocks/yjs";
+
+      type EditorProps = {
+        doc: Y.Doc,
+        provider: any;
+      }
+
+      function Editor() {
+        const room = useRoom();
+        const [doc, setDoc] = useState<Y.Doc>();
+        const [provider, setProvider] = useState<any>();
+
+        useEffect(() => {
+          const yDoc = new Y.Doc();
+          const yProvider = new LiveblocksProvider(room, yDoc);
+          setDoc(yDoc);
+          setProvider(yProvider)
+          return () => {
+            if (yDoc) yDoc.destroy();
+            if (yProvider) yProvider.destroy();
+          }
+        }, [room]);
+
+        return doc && provider ? (
+          <TiptapEditor doc={doc} provider={provider} />
+        ) : null;
+      }
+
+
+      function TitapEditor({ doc, provider }: EditorProps) {
+        const editor = useEditor({
+          extensions: [
+            StarterKit.configure({
+              // The Collaboration extension comes with its own history handling
+              history: false,
+            }),
+            // Register the document with Tiptap
+            Collaboration.configure({
+              document: doc,
+            }),
+            CollaborationCursor.configure({
+              provider: provider,
+            }),
+          ],
+        })
+        return <EditorContent editor={editor} />
+      }
+      ```
+
+    </StepContent>
+
+  </Step>
+
+  <Step lastStep>
+    <StepTitle>Bonus: set up authentication</StepTitle>
+    <StepContent>
+      By default, Liveblocks is configured to work without an authentication
+      endpoint. This approach is great for prototyping and marketing pages
+      where defining your own security isn’t always required. If you want to
+      implement your own security logic to define if certain users should
+      have access to a given room, you’ll need to implement an
+      authentication endpoint.
+
+      <ButtonLink className="not-markdown" href="/docs/rooms/authentication">
+        Set up authentication
+      </ButtonLink>
+    </StepContent>
+
+  </Step>
+
+</Steps>

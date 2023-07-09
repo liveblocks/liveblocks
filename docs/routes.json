@@ -62,27 +62,12 @@
             "hidden": true
           },
           {
-            "title": "Yjs Monaco React",
-            "path": "/get-started/yjs-monaco-react",
+            "title": "Yjs Quill JavaScript",
+            "path": "/get-started/yjs-quill-javascript",
             "hidden": true
           },
           {
-            "title": "Yjs ProseMirror",
-            "path": "/get-started/yjs-prosemirror",
-            "hidden": true
-          },
-          {
-            "title": "Yjs Quill React",
-            "path": "/get-started/yjs-quill-react",
-            "hidden": true
-          },
-          {
-            "title": "Yjs Slate React",
-            "path": "/get-started/yjs-slate-react",
-            "hidden": true
-          },
-          {
-            "title": "Yjs TipTap React",
+            "title": "Yjs Tiptap React",
             "path": "/get-started/yjs-tiptap-react",
             "hidden": true
           },
@@ -102,17 +87,7 @@
             "hidden": true
           },
           {
-            "title": "Text editor / Slate",
-            "href": "/get-started/text-editor/slate",
-            "hidden": true
-          },
-          {
-            "title": "Text editor / ProseMirror",
-            "href": "/get-started/text-editor/prosemirror",
-            "hidden": true
-          },
-          {
-            "title": "Text editor / TipTap",
+            "title": "Text editor / Tiptap",
             "href": "/get-started/text-editor/tiptap",
             "hidden": true
           },
@@ -124,11 +99,6 @@
           {
             "title": "Code editor / CodeMirror",
             "href": "/get-started/code-editor/codemirror",
-            "hidden": true
-          },
-          {
-            "title": "Code editor / Monaco",
-            "href": "/get-started/code-editor/monaco",
             "hidden": true
           },
           {
