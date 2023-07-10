@@ -423,7 +423,7 @@ export type Room<
    * Liveblocks, NEVER USE ANY OF THESE METHODS DIRECTLY, because bad things
    * will probably happen if you do.
    */
-  readonly __internal: PrivateRoomAPI<TPresence, TStorage, TUserMeta, TRoomEvent>; // prettier-ignore
+  readonly __internal: PrivateRoomAPI; // prettier-ignore
 
   /**
    * The id of the room.
@@ -656,15 +656,10 @@ export type Room<
  * Liveblocks, NEVER USE ANY OF THESE METHODS DIRECTLY, because bad things
  * will probably happen if you do.
  */
-type PrivateRoomAPI<
-  TPresence extends JsonObject,
-  TStorage extends LsonObject,
-  TUserMeta extends BaseUserMeta,
-  TRoomEvent extends Json,
-> = {
+type PrivateRoomAPI = {
   // For introspection in unit tests only
-  buffer: RoomState<TPresence, TStorage, TUserMeta, TRoomEvent>["buffer"]; // prettier-ignore
-  undoStack: readonly (readonly Readonly<HistoryOp<TPresence>>[])[];
+  presenceBuffer: JsonObject | undefined;
+  undoStack: readonly (readonly Readonly<HistoryOp<JsonObject>>[])[];
   nodeCount: number;
 
   // For DevTools support (Liveblocks browser extension)
@@ -2132,8 +2127,8 @@ export function createRoom<
   return {
     /* NOTE: Exposing __internal here only to allow testing implementation details in unit tests */
     __internal: {
-      get buffer() { return context.buffer }, // prettier-ignore
-      get undoStack() { return context.undoStack }, // prettier-ignore
+      get presenceBuffer() { return JSON.parse(JSON.stringify(context.buffer.me?.data ?? null)) }, // prettier-ignore
+      get undoStack() { return JSON.parse(JSON.stringify(context.undoStack)) }, // prettier-ignore
       get nodeCount() { return context.nodes.size }, // prettier-ignore
 
       // Support for the Liveblocks browser extension
