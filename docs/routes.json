@@ -222,6 +222,11 @@
         "path": "/api-reference/liveblocks-zustand"
       },
       {
+        "title": "@liveblocks/yjs",
+        "hidden": true,
+        "path": "/api-reference/liveblocks-yjs"
+      },
+      {
         "title": "@liveblocks/node",
         "path": "/api-reference/liveblocks-node"
       },
