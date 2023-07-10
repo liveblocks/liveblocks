@@ -1455,10 +1455,15 @@ export function createRoom<
     const oldValues = {} as TPresence;
 
     if (context.buffer.presenceUpdates === null) {
+      // try {
       context.buffer.presenceUpdates = {
         type: "partial",
         data: {},
       };
+      // } catch (err) {
+      //   window.console.log({ context, patch, err });
+      //   throw err;
+      // }
     }
 
     for (const key in patch) {
