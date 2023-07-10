@@ -19,7 +19,7 @@
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.4.2",
     "dependency-cruiser": "^13.0.5",
-    "prettier": "^2.8.8",
+    "prettier": "^3.0.0",
     "publint": "^0.1.16",
     "tsd": "^0.24.1",
     "tsup": "^7.1.0",
