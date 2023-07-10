@@ -84,7 +84,7 @@ export type StorageStatus =
 type RoomEventCallbackMap<
   TPresence extends JsonObject,
   TUserMeta extends BaseUserMeta,
-  TRoomEvent extends Json
+  TRoomEvent extends Json,
 > = {
   connection: Callback<LegacyConnectionStatus>; // Old/deprecated API
   status: Callback<Status>; // New/recommended API
@@ -197,7 +197,7 @@ export type RoomEventCallbackFor<
   E extends RoomEventName,
   TPresence extends JsonObject,
   TUserMeta extends BaseUserMeta,
-  TRoomEvent extends Json
+  TRoomEvent extends Json,
 > = RoomEventCallbackMap<TPresence, TUserMeta, TRoomEvent>[E];
 
 export type RoomEventCallback = RoomEventCallbackFor<
@@ -220,7 +220,7 @@ type SubscribeFn<
   TPresence extends JsonObject,
   _TStorage extends LsonObject,
   TUserMeta extends BaseUserMeta,
-  TRoomEvent extends Json
+  TRoomEvent extends Json,
 > = {
   /**
    * Subscribes to changes made on any Live structure. Returns an unsubscribe function.
@@ -414,7 +414,7 @@ export type Room<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
   TUserMeta extends BaseUserMeta,
-  TRoomEvent extends Json
+  TRoomEvent extends Json,
 > = {
   /**
    * @internal
@@ -660,7 +660,7 @@ type PrivateRoomAPI<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
   TUserMeta extends BaseUserMeta,
-  TRoomEvent extends Json
+  TRoomEvent extends Json,
 > = {
   // For introspection in unit tests only
   buffer: RoomState<TPresence, TStorage, TUserMeta, TRoomEvent>["buffer"]; // prettier-ignore
@@ -708,7 +708,7 @@ type RoomState<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
   TUserMeta extends BaseUserMeta,
-  TRoomEvent extends Json
+  TRoomEvent extends Json,
 > = {
   /**
    * All pending changes that yet need to be synced.
@@ -784,7 +784,7 @@ export type Polyfills = {
 
 export type RoomInitializers<
   TPresence extends JsonObject,
-  TStorage extends LsonObject
+  TStorage extends LsonObject,
 > = Resolve<{
   /**
    * The initial Presence to use and announce when you enter the Room. The
@@ -853,7 +853,7 @@ export function createRoom<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
   TUserMeta extends BaseUserMeta,
-  TRoomEvent extends Json
+  TRoomEvent extends Json,
 >(
   options: Omit<
     RoomInitializers<TPresence, TStorage>,
@@ -2201,7 +2201,7 @@ function makeClassicSubscribeFn<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
   TUserMeta extends BaseUserMeta,
-  TRoomEvent extends Json
+  TRoomEvent extends Json,
 >(
   events: Room<TPresence, TStorage, TUserMeta, TRoomEvent>["events"]
 ): SubscribeFn<TPresence, TStorage, TUserMeta, TRoomEvent> {

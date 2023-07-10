@@ -84,7 +84,7 @@ function createTestableRoom<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
   TUserMeta extends BaseUserMeta,
-  TRoomEvent extends Json
+  TRoomEvent extends Json,
 >(
   initialPresence: TPresence,
   authBehavior = AUTH_SUCCESS,

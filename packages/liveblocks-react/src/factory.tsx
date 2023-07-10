@@ -73,7 +73,7 @@ function makeMutationContext<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
   TUserMeta extends BaseUserMeta,
-  TRoomEvent extends Json
+  TRoomEvent extends Json,
 >(
   room: Room<TPresence, TStorage, TUserMeta, TRoomEvent>
 ): MutationContext<TPresence, TStorage, TUserMeta> {
@@ -116,7 +116,7 @@ export function createRoomContext<
   TPresence extends JsonObject,
   TStorage extends LsonObject = LsonObject,
   TUserMeta extends BaseUserMeta = BaseUserMeta,
-  TRoomEvent extends Json = never
+  TRoomEvent extends Json = never,
 >(
   client: Client
 ): RoomContextBundle<TPresence, TStorage, TUserMeta, TRoomEvent> {
@@ -225,7 +225,7 @@ export function createRoomContext<
 
   function useMyPresence(): [
     TPresence,
-    (patch: Partial<TPresence>, options?: { addToHistory: boolean }) => void
+    (patch: Partial<TPresence>, options?: { addToHistory: boolean }) => void,
   ] {
     const room = useRoom();
     const subscribe = room.events.me.subscribe;
@@ -646,7 +646,7 @@ export function createRoomContext<
     F extends (
       context: MutationContext<TPresence, TStorage, TUserMeta>,
       ...args: any[]
-    ) => any
+    ) => any,
   >(callback: F, deps: readonly unknown[]): OmitFirstArg<F> {
     const room = useRoom();
     return React.useMemo(

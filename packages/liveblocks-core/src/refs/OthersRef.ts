@@ -23,7 +23,7 @@ function makeUser<TPresence extends JsonObject, TUserMeta extends BaseUserMeta>(
 
 export class OthersRef<
   TPresence extends JsonObject,
-  TUserMeta extends BaseUserMeta
+  TUserMeta extends BaseUserMeta,
 > extends ImmutableRef<Others<TPresence, TUserMeta>> {
   // To track "others"
   /** @internal */

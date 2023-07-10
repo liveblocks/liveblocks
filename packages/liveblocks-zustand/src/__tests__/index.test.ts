@@ -98,7 +98,7 @@ function prepareClientAndStore<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
   TUserMeta extends BaseUserMeta,
-  TRoomEvent extends Json
+  TRoomEvent extends Json,
 >(
   stateCreator: StateCreator<TState>,
   options: {
