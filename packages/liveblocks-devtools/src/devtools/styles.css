@@ -111,7 +111,8 @@ input[type="search"]::-webkit-search-cancel-button {
 
 #loading-top,
 #loading-bottom {
-  animation: loading-offset-distance var(--loading-duration) infinite
+  animation:
+    loading-offset-distance var(--loading-duration) infinite
       var(--ease-in-out-quart),
     loading-offset-rotate var(--loading-duration) infinite
       var(--ease-in-out-expo);

@@ -19,7 +19,7 @@ const DEFAULT_LOST_CONNECTION_TIMEOUT = 5000;
 
 type EnterOptions<
   TPresence extends JsonObject,
-  TStorage extends LsonObject
+  TStorage extends LsonObject,
 > = Resolve<
   // Enter options are just room initializers, plus an internal option
   RoomInitializers<TPresence, TStorage> & {
@@ -45,7 +45,7 @@ export type Client = {
     TPresence extends JsonObject,
     TStorage extends LsonObject = LsonObject,
     TUserMeta extends BaseUserMeta = BaseUserMeta,
-    TRoomEvent extends Json = never
+    TRoomEvent extends Json = never,
   >(
     roomId: string
   ): Room<TPresence, TStorage, TUserMeta, TRoomEvent> | null;
@@ -59,7 +59,7 @@ export type Client = {
     TPresence extends JsonObject,
     TStorage extends LsonObject = LsonObject,
     TUserMeta extends BaseUserMeta = BaseUserMeta,
-    TRoomEvent extends Json = never
+    TRoomEvent extends Json = never,
   >(
     roomId: string,
     options: EnterOptions<TPresence, TStorage>
@@ -155,7 +155,7 @@ export function createClient(options: ClientOptions): Client {
     TPresence extends JsonObject,
     TStorage extends LsonObject = LsonObject,
     TUserMeta extends BaseUserMeta = BaseUserMeta,
-    TRoomEvent extends Json = never
+    TRoomEvent extends Json = never,
   >(roomId: string): Room<TPresence, TStorage, TUserMeta, TRoomEvent> | null {
     const room = rooms.get(roomId);
     return room
@@ -167,7 +167,7 @@ export function createClient(options: ClientOptions): Client {
     TPresence extends JsonObject,
     TStorage extends LsonObject = LsonObject,
     TUserMeta extends BaseUserMeta = BaseUserMeta,
-    TRoomEvent extends Json = never
+    TRoomEvent extends Json = never,
   >(
     roomId: string,
     options: EnterOptions<TPresence, TStorage>

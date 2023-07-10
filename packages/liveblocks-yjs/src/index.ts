@@ -129,7 +129,7 @@ export default class LiveblocksProvider<
   P extends JsonObject,
   S extends LsonObject,
   U extends BaseUserMeta,
-  E extends Json
+  E extends Json,
 > extends Observable<unknown> {
   private room: Room<P, S, U, E>;
   private doc: Y.Doc;
