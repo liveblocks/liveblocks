@@ -26,7 +26,7 @@ import type { Json, JsonObject } from "./lib/Json";
 import { isJsonArray, isJsonObject } from "./lib/Json";
 import { asPos } from "./lib/position";
 import type { Resolve } from "./lib/Resolve";
-import { compact, isPlainObject, tryParseJson } from "./lib/utils";
+import { compact, deepClone, isPlainObject, tryParseJson } from "./lib/utils";
 import type { Authentication } from "./protocol/Authentication";
 import type { ParsedAuthToken } from "./protocol/AuthToken";
 import {
@@ -658,7 +658,7 @@ export type Room<
  */
 type PrivateRoomAPI = {
   // For introspection in unit tests only
-  presenceBuffer: JsonObject | undefined;
+  presenceBuffer: Json | undefined;
   undoStack: readonly (readonly Readonly<HistoryOp<JsonObject>>[])[];
   nodeCount: number;
 
@@ -2127,8 +2127,8 @@ export function createRoom<
   return {
     /* NOTE: Exposing __internal here only to allow testing implementation details in unit tests */
     __internal: {
-      get presenceBuffer() { return JSON.parse(JSON.stringify(context.buffer.presenceUpdates?.data ?? null)) }, // prettier-ignore
-      get undoStack() { return JSON.parse(JSON.stringify(context.undoStack)) }, // prettier-ignore
+      get presenceBuffer() { return deepClone(context.buffer.presenceUpdates?.data ?? null) }, // prettier-ignore
+      get undoStack() { return deepClone(context.undoStack) }, // prettier-ignore
       get nodeCount() { return context.nodes.size }, // prettier-ignore
 
       // Support for the Liveblocks browser extension
