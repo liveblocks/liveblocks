@@ -717,7 +717,7 @@ type RoomState<
     readonly lastFlushedAt: number;
 
     // Queued-up "my presence" updates to be flushed at the earliest convenience
-    me:
+    presenceUpdates:
       | { type: "partial"; data: Partial<TPresence> }
       | { type: "full"; data: TPresence }
       | null;
@@ -889,7 +889,7 @@ export function createRoom<
     buffer: {
       flushTimerID: undefined,
       lastFlushedAt: 0,
-      me:
+      presenceUpdates:
         // Queue up the initial presence message as a Full Presence™ update
         {
           type: "full",
@@ -995,7 +995,7 @@ export function createRoom<
     }
 
     // Re-broadcast the full user presence as soon as we (re)connect
-    context.buffer.me = {
+    context.buffer.presenceUpdates = {
       type: "full",
       data:
         // Because context.me.current is a readonly object, we'll have to
@@ -1329,13 +1329,13 @@ export function createRoom<
 
         context.me.patch(op.data);
 
-        if (context.buffer.me === null) {
-          context.buffer.me = { type: "partial", data: op.data };
+        if (context.buffer.presenceUpdates === null) {
+          context.buffer.presenceUpdates = { type: "partial", data: op.data };
         } else {
           // Merge the new fields with whatever is already queued up (doesn't
           // matter whether its a partial or full update)
           for (const key in op.data) {
-            context.buffer.me.data[key] = op.data[key];
+            context.buffer.presenceUpdates.data[key] = op.data[key];
           }
         }
 
@@ -1454,8 +1454,8 @@ export function createRoom<
   ) {
     const oldValues = {} as TPresence;
 
-    if (context.buffer.me === null) {
-      context.buffer.me = {
+    if (context.buffer.presenceUpdates === null) {
+      context.buffer.presenceUpdates = {
         type: "partial",
         data: {},
       };
@@ -1467,7 +1467,7 @@ export function createRoom<
       if (overrideValue === undefined) {
         continue;
       }
-      context.buffer.me.data[key] = overrideValue;
+      context.buffer.presenceUpdates.data[key] = overrideValue;
       oldValues[key] = context.me.current[key];
     }
 
@@ -1811,7 +1811,7 @@ export function createRoom<
         lastFlushedAt: now,
         messages: [],
         storageOperations: [],
-        me: null,
+        presenceUpdates: null,
       };
     } else {
       // Or schedule the flush a few millis into the future
@@ -1829,20 +1829,20 @@ export function createRoom<
    */
   function serializeBuffer() {
     const messages: ClientMsg<TPresence, TRoomEvent>[] = [];
-    if (context.buffer.me) {
+    if (context.buffer.presenceUpdates) {
       messages.push(
-        context.buffer.me.type === "full"
+        context.buffer.presenceUpdates.type === "full"
           ? {
               type: ClientMsgCode.UPDATE_PRESENCE,
               // Populating the `targetActor` field turns this message into
               // a Full Presence™ update message (not a patch), which will get
               // interpreted by other clients as such.
               targetActor: -1,
-              data: context.buffer.me.data,
+              data: context.buffer.presenceUpdates.data,
             }
           : {
               type: ClientMsgCode.UPDATE_PRESENCE,
-              data: context.buffer.me.data,
+              data: context.buffer.presenceUpdates.data,
             }
       );
     }
@@ -2127,7 +2127,7 @@ export function createRoom<
   return {
     /* NOTE: Exposing __internal here only to allow testing implementation details in unit tests */
     __internal: {
-      get presenceBuffer() { return JSON.parse(JSON.stringify(context.buffer.me?.data ?? null)) }, // prettier-ignore
+      get presenceBuffer() { return JSON.parse(JSON.stringify(context.buffer.presenceUpdates?.data ?? null)) }, // prettier-ignore
       get undoStack() { return JSON.parse(JSON.stringify(context.undoStack)) }, // prettier-ignore
       get nodeCount() { return context.nodes.size }, // prettier-ignore
 
