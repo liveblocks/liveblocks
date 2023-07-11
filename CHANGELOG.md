@@ -1,3 +1,9 @@
+# v1.1.4
+
+Undo the changes made in 1.1.3. We’ve got some bug reports where Liveblocks
+could still be doubly-included in production bundles (in some bundler setups
+only), with storage data corruptions as a possible result. We’re investigating.
+
 # v1.1.3
 
 Ship all of our packages as both ESM and CJS modules. By upgrading, your
