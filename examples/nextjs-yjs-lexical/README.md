@@ -7,9 +7,9 @@
   </a>
 </p>
 
-# Collaborative Rich Text Editor (TipTap)
+# Collaborative Rich Text Editor (Lexical)
 
-This example shows how to build a collaborative text editor with [Liveblocks](https://liveblocks.io), [Yjs](https://docs.yjs.dev), [TipTap](https://tiptap.dev), and [Next.js](https://nextjs.org/).
+This example shows how to build a collaborative text editor with [Liveblocks](https://liveblocks.io), [Yjs](https://docs.yjs.dev), [Lexical](https://lexical.dev), and [Next.js](https://nextjs.org/).
 
 As users edit the document, changes will be automatically persisted and synced—allowing for a list that updates in real-time across clients. Users will also be able to see who else is currently online and see their cursors in the document.
 
