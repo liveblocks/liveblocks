@@ -6,7 +6,7 @@ import type { BaseUserMeta } from "../protocol/BaseUserMeta";
  */
 export type User<
   TPresence extends JsonObject,
-  TUserMeta extends BaseUserMeta
+  TUserMeta extends BaseUserMeta,
 > = {
   /**
    * The connection ID of the User. It is unique and increment at every new connection.

@@ -8,12 +8,12 @@ import type { User } from "./User";
  */
 export type Others<
   TPresence extends JsonObject,
-  TUserMeta extends BaseUserMeta
+  TUserMeta extends BaseUserMeta,
 > = ReadonlyArrayWithLegacyMethods<User<TPresence, TUserMeta>>;
 
 export type OthersEvent<
   TPresence extends JsonObject,
-  TUserMeta extends BaseUserMeta
+  TUserMeta extends BaseUserMeta,
 > =
   | {
       type: "leave";

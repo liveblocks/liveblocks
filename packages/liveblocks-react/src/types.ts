@@ -16,7 +16,7 @@ import type { Resolve, RoomInitializers, ToImmutable } from "@liveblocks/core";
 
 export type RoomProviderProps<
   TPresence extends JsonObject,
-  TStorage extends LsonObject
+  TStorage extends LsonObject,
 > = Resolve<
   {
     /**
@@ -67,7 +67,7 @@ export type OmitFirstArg<F> = F extends (
 export type MutationContext<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
-  TUserMeta extends BaseUserMeta
+  TUserMeta extends BaseUserMeta,
 > = {
   storage: LiveObject<TStorage>;
   self: User<TPresence, TUserMeta>;
@@ -82,7 +82,7 @@ export type RoomContextBundle<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
   TUserMeta extends BaseUserMeta,
-  TRoomEvent extends Json
+  TRoomEvent extends Json,
 > = {
   /**
    * You normally don't need to directly interact with the RoomContext, but
@@ -334,7 +334,7 @@ export type RoomContextBundle<
    */
   useMyPresence(): [
     TPresence,
-    (patch: Partial<TPresence>, options?: { addToHistory: boolean }) => void
+    (patch: Partial<TPresence>, options?: { addToHistory: boolean }) => void,
   ];
 
   /**
@@ -507,7 +507,7 @@ export type RoomContextBundle<
     F extends (
       context: MutationContext<TPresence, TStorage, TUserMeta>,
       ...args: any[]
-    ) => any
+    ) => any,
   >(
     callback: F,
     deps: readonly unknown[]
@@ -725,7 +725,7 @@ export type RoomContextBundle<
      */
     useMyPresence(): [
       TPresence,
-      (patch: Partial<TPresence>, options?: { addToHistory: boolean }) => void
+      (patch: Partial<TPresence>, options?: { addToHistory: boolean }) => void,
     ];
 
     /**
@@ -900,7 +900,7 @@ export type RoomContextBundle<
       F extends (
         context: MutationContext<TPresence, TStorage, TUserMeta>,
         ...args: any[]
-      ) => any
+      ) => any,
     >(
       callback: F,
       deps: readonly unknown[]
