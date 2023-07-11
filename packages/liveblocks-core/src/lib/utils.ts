@@ -78,6 +78,19 @@ export function tryParseJson(rawMessage: string): Json | undefined {
 }
 
 /**
+ * Deep-clones a JSON-serializable value.
+ *
+ * NOTE: We should be able to replace `deepClone` by `structuredClone` once
+ * we've upgraded to Node 18.
+ */
+export function deepClone<T extends Json>(items: T): T {
+  // NOTE: In this case, the combination of JSON.parse() and JSON.stringify
+  // won't lead to type unsafety, so this use case is okay.
+  // eslint-disable-next-line no-restricted-syntax
+  return JSON.parse(JSON.stringify(items)) as T;
+}
+
+/**
  * Decode base64 string.
  */
 export function b64decode(b64value: string): string {

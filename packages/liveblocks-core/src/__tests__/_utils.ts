@@ -3,6 +3,7 @@ import type { LsonObject } from "../crdts/Lson";
 import type { ToImmutable } from "../crdts/utils";
 import type { Json, JsonObject } from "../lib/Json";
 import { makePosition } from "../lib/position";
+import { deepClone } from "../lib/utils";
 import type { Authentication } from "../protocol/Authentication";
 import type { MinimalTokenPayload } from "../protocol/AuthToken";
 import type { BaseUserMeta } from "../protocol/BaseUserMeta";
@@ -51,19 +52,6 @@ export function makeMinimalTokenPayload(
     actor,
     scopes,
   };
-}
-
-/**
- * Deep-clones a JSON-serializable value.
- *
- * NOTE: We should be able to replace `deepClone` by `structuredClone` once
- * we've upgraded to Node 18.
- */
-function deepClone<T extends Json>(items: T): T {
-  // NOTE: In this case, the combination of JSON.parse() and JSON.stringify
-  // won't lead to type unsafety, so this use case is okay.
-  // eslint-disable-next-line no-restricted-syntax
-  return JSON.parse(JSON.stringify(items)) as T;
 }
 
 // NOTE: we have some instability with opIds in the undo/redo stack and this should be investigated
