@@ -29,8 +29,8 @@ function error(msg: string): void {
  */
 export function detectDupes(
   pkgName: string,
-  pkgVersion: string | false,
-  pkgFormat: string | false // 'esm' | 'cjs'
+  pkgVersion: string | false, // false if not built yet
+  pkgFormat: string | false // false if not built yet
 ): void {
   const pkgId = Symbol.for(pkgName);
   const pkgBuildInfo = pkgFormat
