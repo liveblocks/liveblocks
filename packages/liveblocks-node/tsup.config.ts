@@ -8,4 +8,11 @@ export default defineConfig({
   target: "es2020",
   format: ["cjs"],
   sourcemap: true,
+
+  esbuildOptions(options, _context) {
+    const pkg = require("./package.json");
+    // Replace PKG_NAME and PKG_VERSION globals with concrete version
+    options.define.PKG_NAME = JSON.stringify(pkg.name);
+    options.define.PKG_VERSION = JSON.stringify(pkg.version);
+  },
 });
