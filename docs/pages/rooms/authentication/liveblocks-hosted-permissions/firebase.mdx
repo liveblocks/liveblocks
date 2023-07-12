@@ -1,13 +1,13 @@
 ---
 meta:
-  title: "Authentication with Next.js"
-  parentTitle: "Rooms"
+  title: "Liveblocks-hosted permissions with Firebase"
+  parentTitle: "Authentication"
   description:
-    "Learn how to setup a Liveblocks authentication endpoint with Next.js"
+    "Learn how to setup a Liveblocks authentication endpoint with Firebase"
 ---
 
 Follow the following steps to start configure your authentication endpoint and
-start building your own security logic in Next.js’ `/app` directory.
+start building your own security logic.
 
 ## Quickstart
 
@@ -15,7 +15,9 @@ start building your own security logic in Next.js’ `/app` directory.
   <Step>
     <StepTitle>Install the `liveblocks/node` package</StepTitle>
     <StepContent>
-
+      Let’s first install the `@liveblocks/node` package in your
+      Firebase functions project.
+      
       ```bash
       npm install @liveblocks/node
       ```
@@ -26,19 +28,16 @@ start building your own security logic in Next.js’ `/app` directory.
   <Step>
     <StepTitle>Set up authentication endpoint</StepTitle>
     <StepContent>
-      Users can only interact with rooms they have access to. You can
-      configure permission access in an `api/auth` endpoint by
-      creating the `app/api/auth/route.ts` file with the
-      following code. This is where you will implement your security and
+
+      Create a new Firebase [callable function](https://firebase.google.com/docs/functions/callable)
+      as shown below. This is where you will implement your security and
       define if the current user has access to a specific room.
 
-      ```ts file="app/api/auth/route.ts"
-      import { NextResponse } from "next/server";
-      import { authorize } from "@liveblocks/node";
+      ```js
+      const functions = require("firebase-functions");
+      const { authorize } = require("@liveblocks/node");
 
-      const secret = "{{SECRET_KEY}}";
-
-      export async function POST(request: Request) {
+      exports.auth = functions.https.onCall((data, context) => {
         /**
          * Implement your own security here.
          *
@@ -46,24 +45,24 @@ start building your own security logic in Next.js’ `/app` directory.
          * is a valid user by validating the cookies or authentication headers
          * and that it has access to the requested room.
          */
-        const { room } = await request.json();
-
-        const result = await authorize({
-          room,
-          secret,
+        return authorize({
+          room: data.room,
+          secret: "sk_prod_xxxxxxxxxxxxxxxxxxxxxxxx",
           userId: "123",
           groupIds: ["456"], // Optional
           userInfo: {
-            // Optional, corresponds to the UserMeta[info] type defined in liveblocks.config.ts
+            // Optional, corresponds to the UserMeta[info] info defined in liveblocks.config.ts
             name: "Ada Lovelace",
             color: "red",
           },
+        }).then((authResult) => {
+          if (authResult.status !== 200) {
+            throw new functions.https.HttpsError(authResult.status, authResult.body);
+          }
+          return JSON.parse(authResult.body);
         });
-
-        return NextResponse.json(JSON.parse(result.body));
-      }
+      });
       ```
-
     </StepContent>
 
   </Step>
@@ -74,11 +73,20 @@ start building your own security logic in Next.js’ `/app` directory.
       option with `authEndpoint` pointing to the endpoint you
       just created.
 
-      ```ts file="liveblocks.config.ts"
+      ```js
       import { createClient } from "@liveblocks/client";
+      import firebase from "firebase";
+      import "firebase/functions";
 
+      firebase.initializeApp({
+        /* Firebase config */
+      });
+
+      const auth = firebase.functions().httpsCallable("auth");
+
+      // Create a Liveblocks client
       const client = createClient({
-        authEndpoint: "/api/auth",
+        authEndpoint: async (room) => (await auth({ room })).data,
       });
       ```
 
@@ -91,10 +99,10 @@ start building your own security logic in Next.js’ `/app` directory.
 
 The `userId` used in the `authorize` function corresponds to `userId` used in
 our APIs when setting permissions when creating a room. Both `userId` and
-`userInfo` can then be used in your React application as such:
+`userInfo` can then be used in your JavaScript application as such:
 
 ```ts
-const self = useSelf();
+const self = room.getSelf(); // or useSelf() in React
 
 // "123"
 console.log(self.id);

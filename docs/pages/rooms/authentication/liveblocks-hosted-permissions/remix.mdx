@@ -1,9 +1,9 @@
 ---
 meta:
-  title: "Authentication with SvelteKit"
-  parentTitle: "Rooms"
+  title: "Liveblocks-hosted permissions with Remix"
+  parentTitle: "Authentication"
   description:
-    "Learn how to setup a Liveblocks authentication endpoint with SvelteKit"
+    "Learn how to setup a Liveblocks authentication endpoint with Remix"
 ---
 
 Follow the following steps to start configure your authentication endpoint and
@@ -28,17 +28,17 @@ start building your own security logic.
     <StepContent>
       Users can only interact with rooms they have access to. You can
       configure permission access in an `api/auth` endpoint by
-      creating the `src/routes/api/auth/+server.ts` file with the
+      creating the `app/routes/api/auth.ts` file with the
       following code. This is where you will implement your security and
       define if the current user has access to a specific room.
 
-      ```ts file="src/routes/api/auth/+server.ts"
-      import { type RequestEvent } from "@sveltejs/kit";
+      ```ts file="app/routes/api/auth.ts"
+      import type { ActionFunction } from "@remix-run/node";
       import { authorize } from "@liveblocks/node";
 
       const secret = "{{SECRET_KEY}}";
 
-      export async function POST({ request }: RequestEvent) {
+      export const action: ActionFunction = async ({ request }) => {
         /**
          * Implement your own security here.
          *
@@ -60,7 +60,7 @@ start building your own security logic.
           },
         });
 
-        return new Response(result.body, { status: response.status });
+        return new Response(result.body, { status: result.status });
       }
       ```
 
@@ -91,10 +91,10 @@ start building your own security logic.
 
 The `userId` used in the `authorize` function corresponds to `userId` used in
 our APIs when setting permissions when creating a room. Both `userId` and
-`userInfo` can then be used in your Svelte application as such:
+`userInfo` can then be used in your React application as such:
 
 ```ts
-const self = room.getSelf();
+const self = useSelf();
 
 // "123"
 console.log(self.id);

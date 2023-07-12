@@ -1,9 +1,9 @@
 ---
 meta:
-  title: "Authentication with Express"
-  parentTitle: "Rooms"
+  title: "Liveblocks-hosted permissions with SvelteKit"
+  parentTitle: "Authentication"
   description:
-    "Learn how to setup a Liveblocks authentication endpoint with Express"
+    "Learn how to setup a Liveblocks authentication endpoint with SvelteKit"
 ---
 
 Follow the following steps to start configure your authentication endpoint and
@@ -26,24 +26,19 @@ start building your own security logic.
   <Step>
     <StepTitle>Set up authentication endpoint</StepTitle>
     <StepContent>
-
       Users can only interact with rooms they have access to. You can
       configure permission access in an `api/auth` endpoint by
-      creating the `auth.ts` file with the
+      creating the `src/routes/api/auth/+server.ts` file with the
       following code. This is where you will implement your security and
       define if the current user has access to a specific room.
 
-      ```ts file="auth.ts"
-      const express = require("express");
-      const { authorize } = require("@liveblocks/node");
+      ```ts file="src/routes/api/auth/+server.ts"
+      import { type RequestEvent } from "@sveltejs/kit";
+      import { authorize } from "@liveblocks/node";
 
       const secret = "{{SECRET_KEY}}";
 
-      const app = express();
-
-      app.use(express.json());
-
-      app.post("/api/auth", (req, res) => {
+      export async function POST({ request }: RequestEvent) {
         /**
          * Implement your own security here.
          *
@@ -51,8 +46,10 @@ start building your own security logic.
          * is a valid user by validating the cookies or authentication headers
          * and that it has access to the requested room.
          */
-        authorize({
-          room: req.body.room,
+        const { room } = await request.json();
+
+        const result = await authorize({
+          room,
           secret,
           userId: "123",
           groupIds: ["456"], // Optional
@@ -61,15 +58,12 @@ start building your own security logic.
             name: "Ada Lovelace",
             color: "red",
           },
-        })
-          .then((authResponse) => {
-            res.send(authResponse.body);
-          })
-          .catch((er) => {
-            res.status(403).end();
-          });
-      });
+        });
+
+        return new Response(result.body, { status: response.status });
+      }
       ```
+
     </StepContent>
 
   </Step>
@@ -80,7 +74,7 @@ start building your own security logic.
       option with `authEndpoint` pointing to the endpoint you
       just created.
 
-      ```ts file="liveblocks.config.ts"
+      ```ts
       import { createClient } from "@liveblocks/client";
 
       const client = createClient({
@@ -97,10 +91,10 @@ start building your own security logic.
 
 The `userId` used in the `authorize` function corresponds to `userId` used in
 our APIs when setting permissions when creating a room. Both `userId` and
-`userInfo` can then be used in your JavaScript application as such:
+`userInfo` can then be used in your Svelte application as such:
 
 ```ts
-const self = room.getSelf(); // or useSelf() in React
+const self = room.getSelf();
 
 // "123"
 console.log(self.id);

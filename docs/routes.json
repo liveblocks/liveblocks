@@ -164,31 +164,47 @@
     "routes": [
       {
         "title": "Authentication",
-        "path": "/rooms/authentication",
+        "href": "/rooms/authentication",
         "routes": [
           {
+            "title": "Self-hosted permissions",
+            "href": "/rooms/authentication/self-hosted-permissions",
+            "hidden": true
+          },
+          {
+            "title": "Liveblocks-hosted permissions",
+            "href": "/rooms/authentication/liveblocks-hosted-permissions",
+            "hidden": true
+          },
+          {
             "title": "Next.js",
-            "path": "/rooms/authentication/nextjs"
+            "path": "/rooms/authentication/liveblocks-hosted-permissions/nextjs",
+            "hidden": true
           },
           {
             "title": "Remix",
-            "path": "/rooms/authentication/remix"
+            "path": "/rooms/authentication/liveblocks-hosted-permissions/remix",
+            "hidden": true
           },
           {
             "title": "SvelteKit",
-            "path": "/rooms/authentication/sveltekit"
+            "path": "/rooms/authentication/liveblocks-hosted-permissions/sveltekit",
+            "hidden": true
           },
           {
             "title": "Nuxt.js",
-            "path": "/rooms/authentication/nuxtjs"
+            "path": "/rooms/authentication/liveblocks-hosted-permissions/nuxtjs",
+            "hidden": true
           },
           {
             "title": "Firebase",
-            "path": "/rooms/authentication/firebase"
+            "path": "/rooms/authentication/liveblocks-hosted-permissions/firebase",
+            "hidden": true
           },
           {
             "title": "Express",
-            "path": "/rooms/authentication/express"
+            "path": "/rooms/authentication/liveblocks-hosted-permissions/express",
+            "hidden": true
           }
         ]
       },

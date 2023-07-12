@@ -1,13 +1,13 @@
 ---
 meta:
-  title: "Authentication with Nuxt.js"
-  parentTitle: "Rooms"
+  title: "Liveblocks-hosted permissions with Next.js"
+  parentTitle: "Authentication"
   description:
-    "Learn how to setup a Liveblocks authentication endpoint with Nuxt.js"
+    "Learn how to setup a Liveblocks authentication endpoint with Next.js"
 ---
 
 Follow the following steps to start configure your authentication endpoint and
-start building your own security logic.
+start building your own security logic in Next.js’ `/app` directory.
 
 ## Quickstart
 
@@ -28,16 +28,17 @@ start building your own security logic.
     <StepContent>
       Users can only interact with rooms they have access to. You can
       configure permission access in an `api/auth` endpoint by
-      creating the `server/api/auth.ts` file with the
+      creating the `app/api/auth/route.ts` file with the
       following code. This is where you will implement your security and
       define if the current user has access to a specific room.
 
-      ```ts file="server/api/auth.ts"
+      ```ts file="app/api/auth/route.ts"
+      import { NextResponse } from "next/server";
       import { authorize } from "@liveblocks/node";
 
       const secret = "{{SECRET_KEY}}";
 
-      export default defineEventHandler(async (event) => {
+      export async function POST(request: Request) {
         /**
          * Implement your own security here.
          *
@@ -45,7 +46,7 @@ start building your own security logic.
          * is a valid user by validating the cookies or authentication headers
          * and that it has access to the requested room.
          */
-        const { room } = await readBody(event)
+        const { room } = await request.json();
 
         const result = await authorize({
           room,
@@ -59,8 +60,8 @@ start building your own security logic.
           },
         });
 
-        return result.body
-      })
+        return NextResponse.json(JSON.parse(result.body));
+      }
       ```
 
     </StepContent>
@@ -73,7 +74,7 @@ start building your own security logic.
       option with `authEndpoint` pointing to the endpoint you
       just created.
 
-      ```ts
+      ```ts file="liveblocks.config.ts"
       import { createClient } from "@liveblocks/client";
 
       const client = createClient({
@@ -90,10 +91,10 @@ start building your own security logic.
 
 The `userId` used in the `authorize` function corresponds to `userId` used in
 our APIs when setting permissions when creating a room. Both `userId` and
-`userInfo` can then be used in your Vue.js application as such:
+`userInfo` can then be used in your React application as such:
 
 ```ts
-const self = ref(room.getSelf());
+const self = useSelf();
 
 // "123"
 console.log(self.id);

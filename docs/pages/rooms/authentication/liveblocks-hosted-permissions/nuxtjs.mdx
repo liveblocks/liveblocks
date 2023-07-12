@@ -1,9 +1,9 @@
 ---
 meta:
-  title: "Authentication with Remix"
-  parentTitle: "Rooms"
+  title: "Liveblocks-hosted permissions with Nuxt.js"
+  parentTitle: "Authentication"
   description:
-    "Learn how to setup a Liveblocks authentication endpoint with Remix"
+    "Learn how to setup a Liveblocks authentication endpoint with Nuxt.js"
 ---
 
 Follow the following steps to start configure your authentication endpoint and
@@ -28,17 +28,16 @@ start building your own security logic.
     <StepContent>
       Users can only interact with rooms they have access to. You can
       configure permission access in an `api/auth` endpoint by
-      creating the `app/routes/api/auth.ts` file with the
+      creating the `server/api/auth.ts` file with the
       following code. This is where you will implement your security and
       define if the current user has access to a specific room.
 
-      ```ts file="app/routes/api/auth.ts"
-      import type { ActionFunction } from "@remix-run/node";
+      ```ts file="server/api/auth.ts"
       import { authorize } from "@liveblocks/node";
 
       const secret = "{{SECRET_KEY}}";
 
-      export const action: ActionFunction = async ({ request }) => {
+      export default defineEventHandler(async (event) => {
         /**
          * Implement your own security here.
          *
@@ -46,7 +45,7 @@ start building your own security logic.
          * is a valid user by validating the cookies or authentication headers
          * and that it has access to the requested room.
          */
-        const { room } = await request.json();
+        const { room } = await readBody(event)
 
         const result = await authorize({
           room,
@@ -60,8 +59,8 @@ start building your own security logic.
           },
         });
 
-        return new Response(result.body, { status: result.status });
-      }
+        return result.body
+      })
       ```
 
     </StepContent>
@@ -91,10 +90,10 @@ start building your own security logic.
 
 The `userId` used in the `authorize` function corresponds to `userId` used in
 our APIs when setting permissions when creating a room. Both `userId` and
-`userInfo` can then be used in your React application as such:
+`userInfo` can then be used in your Vue.js application as such:
 
 ```ts
-const self = useSelf();
+const self = ref(room.getSelf());
 
 // "123"
 console.log(self.id);
