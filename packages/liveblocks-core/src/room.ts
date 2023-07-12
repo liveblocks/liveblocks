@@ -63,6 +63,7 @@ import type {
 import type { NodeMap } from "./types/NodeMap";
 import type { Others, OthersEvent } from "./types/Others";
 import type { User } from "./types/User";
+import { PKG_VERSION } from "./version";
 
 type TimeoutID = ReturnType<typeof setTimeout>;
 
@@ -2360,12 +2361,7 @@ function makeCreateSocketDelegateForRoom(
 
     const token = richToken.raw;
     return new ws(
-      `${liveblocksServer}/?token=${token}&version=${
-        // prettier-ignore
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore (PKG_VERSION will be injected by the build script)
-        typeof (PKG_VERSION as unknown) === "string" ? /* istanbul ignore next */ (PKG_VERSION as string) : "dev"
-      }`
+      `${liveblocksServer}/?token=${token}&version=${PKG_VERSION || "dev"}`
     );
   };
 }
