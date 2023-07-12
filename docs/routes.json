@@ -252,6 +252,14 @@
       {
         "title": "RoomProvider id property is required",
         "path": "/errors/liveblocks-react/RoomProvider-id-property-is-required"
+      },
+      {
+        "title": "Cross-linked Liveblocks versions are found in your project",
+        "path": "/errors/cross-linked"
+      },
+      {
+        "title": "Multiple copies of Liveblocks are being loaded in your project",
+        "path": "/errors/dupes"
       }
     ]
   },
