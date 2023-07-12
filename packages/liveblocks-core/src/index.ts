@@ -49,7 +49,14 @@ export {
   errorIf,
   throwUsageError,
 } from "./lib/deprecation";
+export { makeEventSource } from "./lib/EventSource";
+export type { EventSource } from "./lib/EventSource";
+export * as console from "./lib/fancy-console";
+export { makePoller } from "./lib/Poller";
 export { freeze } from "./lib/freeze";
+export { createAsyncCache } from "./lib/AsyncCache";
+export type { AsyncCache } from "./lib/AsyncCache";
+export type { RealtimeClient } from "./realtime-client";
 export type { Json, JsonArray, JsonObject, JsonScalar } from "./lib/Json";
 export { isJsonArray, isJsonObject, isJsonScalar } from "./lib/Json";
 export { asArrayWithLegacyMethods } from "./lib/LegacyArray";
@@ -160,3 +167,17 @@ import type * as DevToolsMsg from "./devtools/protocol";
 export type { DevToolsMsg };
 import type * as DevTools from "./types/DevToolsTreeNode";
 export type { DevTools };
+
+// Comments
+export type { CommentsApi } from "./comments";
+export { createCommentsApi } from "./comments";
+export type { BaseMetadata } from "./comments/types/BaseMetadata";
+export type {
+  CommentBody,
+  CommentBodyElement,
+  CommentBodyMention,
+  CommentBodyParagraph,
+} from "./comments/types/CommentBody";
+export type { CommentData } from "./comments/types/CommentData";
+export type { ThreadData } from "./comments/types/ThreadData";
+export { isCommentBodyMention } from "./comments/utils";
