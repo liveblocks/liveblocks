@@ -11,6 +11,7 @@ const g = (
 declare const PKG_VERSION: string;
 const crossLinkedDocs = "https://liveblocks.io/errors/cross-linked";
 const dupesDocs = "https://liveblocks.io/errors/dupes";
+const SPACE = " "; // Important space to make sure links in errors are clickable in all browsers
 
 function error(msg: string): void {
   if (process.env.NODE_ENV === "production") {
@@ -35,23 +36,31 @@ export function detectDupes(
   if (!g[pkgId]) {
     g[pkgId] = pkgBuildInfo;
   } else {
-    const msg = `Multiple copies of Liveblocks are being loaded in your project. This will cause issues! See ${dupesDocs}
-
-Conflicting copies in your bundle:
-- ${pkgName} ${g[pkgId]} (already loaded)
-- ${pkgName} ${pkgBuildInfo} (trying to load this now)`;
+    const msg = [
+      `Multiple copies of Liveblocks are being loaded in your project. This will cause issues! See ${
+        dupesDocs + SPACE
+      }`,
+      "",
+      "Conflicts:",
+      `- ${pkgName} ${g[pkgId]} (already loaded)`,
+      `- ${pkgName} ${pkgBuildInfo} (trying to load this now)`,
+    ].join("\n");
     error(msg);
   }
 
   if (pkgVersion !== PKG_VERSION) {
     error(
-      `Cross-linked versions of Liveblocks found, which will cause issues! See ${crossLinkedDocs}
-
-Conflicts:
-- @liveblocks/core is at ${PKG_VERSION}
-- ${pkgName} is at ${pkgVersion}
-
-Always upgrade all Liveblocks packages to the same version number.`
+      [
+        `Cross-linked versions of Liveblocks found, which will cause issues! See ${
+          crossLinkedDocs + SPACE
+        }`,
+        "",
+        "Conflicts:",
+        `- @liveblocks/core is at ${PKG_VERSION}`,
+        `- ${pkgName} is at ${pkgVersion}`,
+        "",
+        `Always upgrade all Liveblocks packages to the same version number.`,
+      ].join("\n")
     );
   }
 }
