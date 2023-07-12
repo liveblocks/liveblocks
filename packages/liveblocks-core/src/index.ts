@@ -160,3 +160,17 @@ import type * as DevToolsMsg from "./devtools/protocol";
 export type { DevToolsMsg };
 import type * as DevTools from "./types/DevToolsTreeNode";
 export type { DevTools };
+
+// Detect if duplicate copies of Liveblocks are being loaded
+import { detectDupes } from "./dupe-detection";
+export { detectDupes };
+
+declare const __PACKAGE_VERSION__: string;
+declare const TSUP_FORMAT: string;
+
+const pkgName = "@liveblocks/core";
+const pkgVersion =
+  (typeof __PACKAGE_VERSION__ === "string" && __PACKAGE_VERSION__) || "dev";
+const pkgFormat = (typeof TSUP_FORMAT === "string" && TSUP_FORMAT) || "esm";
+
+detectDupes(pkgName, pkgVersion, pkgFormat);
