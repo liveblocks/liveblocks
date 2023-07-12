@@ -2129,67 +2129,74 @@ export function createRoom<
     ydoc: eventHub.ydoc.observable,
   };
 
-  return {
-    /* NOTE: Exposing __internal here only to allow testing implementation details in unit tests */
-    __internal: {
-      get presenceBuffer() { return deepClone(context.buffer.presenceUpdates?.data ?? null) }, // prettier-ignore
-      get undoStack() { return deepClone(context.undoStack) }, // prettier-ignore
-      get nodeCount() { return context.nodes.size }, // prettier-ignore
+  return Object.defineProperty(
+    {
+      /* NOTE: Exposing __internal here only to allow testing implementation details in unit tests */
+      __internal: {
+        get presenceBuffer() { return deepClone(context.buffer.presenceUpdates?.data ?? null) }, // prettier-ignore
+        get undoStack() { return deepClone(context.undoStack) }, // prettier-ignore
+        get nodeCount() { return context.nodes.size }, // prettier-ignore
 
-      // Support for the Liveblocks browser extension
-      getSelf_forDevTools: () => selfAsTreeNode.current,
-      getOthers_forDevTools: (): readonly DevTools.UserTreeNode[] =>
-        others_forDevTools.current,
+        // Support for the Liveblocks browser extension
+        getSelf_forDevTools: () => selfAsTreeNode.current,
+        getOthers_forDevTools: (): readonly DevTools.UserTreeNode[] =>
+          others_forDevTools.current,
 
-      // prettier-ignore
-      send: {
-        // These exist only for our E2E testing app
-        explicitClose: (event) => managedSocket._privateSendMachineEvent({ type: "EXPLICIT_SOCKET_CLOSE", event }),
-        implicitClose: () => managedSocket._privateSendMachineEvent({ type: "NAVIGATOR_OFFLINE" }),
+        // prettier-ignore
+        send: {
+          // These exist only for our E2E testing app
+          explicitClose: (event) => managedSocket._privateSendMachineEvent({ type: "EXPLICIT_SOCKET_CLOSE", event }),
+          implicitClose: () => managedSocket._privateSendMachineEvent({ type: "NAVIGATOR_OFFLINE" }),
+        },
       },
+
+      id: config.roomId,
+      subscribe: makeClassicSubscribeFn(events),
+
+      connect: () => managedSocket.connect(),
+      reconnect: () => managedSocket.reconnect(),
+      disconnect: () => managedSocket.disconnect(),
+      destroy: () => managedSocket.destroy(),
+
+      // Presence
+      updatePresence,
+      updateYDoc,
+      broadcastEvent,
+
+      // Storage
+      batch,
+      history: {
+        undo,
+        redo,
+        canUndo,
+        canRedo,
+        pause: pauseHistory,
+        resume: resumeHistory,
+      },
+
+      fetchYDoc,
+      getStorage,
+      getStorageSnapshot,
+      getStorageStatus,
+
+      events,
+
+      // Core
+      getStatus: () => managedSocket.getStatus(),
+      getConnectionState: () => managedSocket.getLegacyStatus(),
+      isSelfAware: () => context.sessionInfo.current !== null,
+      getSelf: () => self.current,
+
+      // Presence
+      getPresence: () => context.me.current,
+      getOthers: () => context.others.current,
     },
 
-    id: config.roomId,
-    subscribe: makeClassicSubscribeFn(events),
-
-    connect: () => managedSocket.connect(),
-    reconnect: () => managedSocket.reconnect(),
-    disconnect: () => managedSocket.disconnect(),
-    destroy: () => managedSocket.destroy(),
-
-    // Presence
-    updatePresence,
-    updateYDoc,
-    broadcastEvent,
-
-    // Storage
-    batch,
-    history: {
-      undo,
-      redo,
-      canUndo,
-      canRedo,
-      pause: pauseHistory,
-      resume: resumeHistory,
-    },
-
-    fetchYDoc,
-    getStorage,
-    getStorageSnapshot,
-    getStorageStatus,
-
-    events,
-
-    // Core
-    getStatus: () => managedSocket.getStatus(),
-    getConnectionState: () => managedSocket.getLegacyStatus(),
-    isSelfAware: () => context.sessionInfo.current !== null,
-    getSelf: () => self.current,
-
-    // Presence
-    getPresence: () => context.me.current,
-    getOthers: () => context.others.current,
-  };
+    // Explictly make the __internal field non-enumerable, to avoid aggressive
+    // freezing when used with Immer
+    "__internal",
+    { enumerable: false }
+  );
 }
 
 /**
