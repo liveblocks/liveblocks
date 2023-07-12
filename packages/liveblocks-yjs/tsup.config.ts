@@ -10,9 +10,8 @@ export default defineConfig({
   sourcemap: true,
 
   esbuildOptions(options, _context) {
+    // Replace __VERSION__ globals with concrete version
     const pkg = require("./package.json");
-    // Replace PKG_NAME and PKG_VERSION globals with concrete version
-    options.define.PKG_NAME = JSON.stringify(pkg.name);
-    options.define.PKG_VERSION = JSON.stringify(pkg.version);
+    options.define.__VERSION__ = JSON.stringify(pkg.version);
   },
 });
