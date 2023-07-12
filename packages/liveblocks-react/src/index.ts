@@ -1,12 +1,8 @@
-// Detect if duplicate copies of Liveblocks are being loaded
 import { detectDupes } from "@liveblocks/core";
 
-declare const PKG_NAME: string;
-declare const PKG_VERSION: string;
-declare const TSUP_FORMAT: string;
-detectDupes(PKG_NAME, PKG_VERSION, TSUP_FORMAT);
+import { PKG_FORMAT, PKG_NAME, PKG_VERSION } from "./version";
 
-// -------------------------------------
+detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
 
 export { ClientSideSuspense } from "./ClientSideSuspense";
 export { createRoomContext } from "./factory";

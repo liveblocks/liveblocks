@@ -1,3 +1,8 @@
+import { detectDupes } from "./dupe-detection";
+import { PKG_FORMAT, PKG_NAME, PKG_VERSION } from "./version";
+
+detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
+
 /**
  * PRIVATE / INTERNAL APIS
  * -----------------------
@@ -139,6 +144,7 @@ export type {
   PlainLsonObject,
 } from "./types/PlainLson";
 export type { User } from "./types/User";
+export { detectDupes };
 
 /**
  * Helper type to help users adopt to Lson types from interface definitions.
@@ -160,12 +166,3 @@ import type * as DevToolsMsg from "./devtools/protocol";
 export type { DevToolsMsg };
 import type * as DevTools from "./types/DevToolsTreeNode";
 export type { DevTools };
-
-// Detect if duplicate copies of Liveblocks are being loaded
-import { detectDupes } from "./dupe-detection";
-export { detectDupes };
-
-declare const PKG_NAME: string;
-declare const PKG_VERSION: string;
-declare const TSUP_FORMAT: string;
-detectDupes(PKG_NAME, PKG_VERSION, TSUP_FORMAT);

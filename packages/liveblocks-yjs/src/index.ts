@@ -1,12 +1,3 @@
-import { detectDupes } from "@liveblocks/core";
-
-declare const PKG_NAME: string;
-declare const PKG_VERSION: string;
-declare const TSUP_FORMAT: string;
-detectDupes(PKG_NAME, PKG_VERSION, TSUP_FORMAT);
-
-// -------------------------------------
-
 // TODO: apparently Yjs is full of anys or something, see if we can fix this
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
@@ -18,9 +9,14 @@ import type {
   LsonObject,
   Room,
 } from "@liveblocks/client";
+import { detectDupes } from "@liveblocks/core";
 import { Base64 } from "js-base64";
 import { Observable } from "lib0/observable";
 import * as Y from "yjs";
+
+import { PKG_FORMAT, PKG_NAME, PKG_VERSION } from "./version";
+
+detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
 
 const Y_PRESENCE_KEY = "__yjs";
 

@@ -1,13 +1,3 @@
-// Detect if duplicate copies of Liveblocks are being loaded
-import { detectDupes } from "@liveblocks/core";
-
-declare const PKG_NAME: string;
-declare const PKG_VERSION: string;
-declare const TSUP_FORMAT: string;
-detectDupes(PKG_NAME, PKG_VERSION, TSUP_FORMAT);
-
-// -------------------------------------
-
 import type {
   BaseUserMeta,
   Client,
@@ -21,12 +11,17 @@ import type {
 } from "@liveblocks/client";
 import type { LegacyConnectionStatus, StorageUpdate } from "@liveblocks/core";
 import {
+  detectDupes,
   errorIf,
   legacy_patchImmutableObject,
   lsonToJson,
   patchLiveObjectKey,
 } from "@liveblocks/core";
 import type { StateCreator, StoreMutatorIdentifier } from "zustand";
+
+import { PKG_FORMAT, PKG_NAME, PKG_VERSION } from "./version";
+
+detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
 
 const ERROR_PREFIX = "Invalid @liveblocks/zustand middleware config.";
 

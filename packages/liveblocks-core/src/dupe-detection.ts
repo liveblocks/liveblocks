@@ -1,3 +1,5 @@
+import { PKG_NAME, PKG_VERSION } from "./version";
+
 const g = (
   typeof globalThis !== "undefined"
     ? globalThis
@@ -8,13 +10,13 @@ const g = (
     : {}
 ) as { [key: symbol]: string };
 
-declare const PKG_VERSION: string;
 const crossLinkedDocs = "https://liveblocks.io/errors/cross-linked";
 const dupesDocs = "https://liveblocks.io/errors/dupes";
 const SPACE = " "; // Important space to make sure links in errors are clickable in all browsers
 
 function error(msg: string): void {
   if (process.env.NODE_ENV === "production") {
+    // eslint-disable-next-line rulesdir/console-must-be-fancy
     console.error(msg);
   } else {
     throw new Error(msg);
@@ -27,11 +29,13 @@ function error(msg: string): void {
  */
 export function detectDupes(
   pkgName: string,
-  pkgVersion: string,
-  pkgFormat: string // 'esm' | 'cjs'
+  pkgVersion: string | false,
+  pkgFormat: string | false // 'esm' | 'cjs'
 ): void {
   const pkgId = Symbol.for(pkgName);
-  const pkgBuildInfo = `${pkgVersion} (${pkgFormat})`;
+  const pkgBuildInfo = pkgFormat
+    ? `${pkgVersion || "dev"} (${pkgFormat})`
+    : pkgVersion || "dev";
 
   if (!g[pkgId]) {
     g[pkgId] = pkgBuildInfo;
@@ -48,7 +52,7 @@ export function detectDupes(
     error(msg);
   }
 
-  if (pkgVersion !== PKG_VERSION) {
+  if (pkgVersion && PKG_VERSION && pkgVersion !== PKG_VERSION) {
     error(
       [
         `Cross-linked versions of Liveblocks found, which will cause issues! See ${
@@ -56,10 +60,10 @@ export function detectDupes(
         }`,
         "",
         "Conflicts:",
-        `- @liveblocks/core is at ${PKG_VERSION}`,
+        `- ${PKG_NAME} is at ${PKG_VERSION}`,
         `- ${pkgName} is at ${pkgVersion}`,
         "",
-        `Always upgrade all Liveblocks packages to the same version number.`,
+        "Always upgrade all Liveblocks packages to the same version number.",
       ].join("\n")
     );
   }
