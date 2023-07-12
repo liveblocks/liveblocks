@@ -1,3 +1,17 @@
+const pkgName = "@liveblocks/yjs";
+const pkgVersion =
+  (typeof __PACKAGE_VERSION__ === "string" && __PACKAGE_VERSION__) || "dev";
+const pkgFormat = (typeof TSUP_FORMAT === "string" && TSUP_FORMAT) || "esm";
+
+// Detect if duplicate copies of Liveblocks are being loaded
+import { detectDupes } from "@liveblocks/core";
+detectDupes(pkgName, pkgVersion, pkgFormat);
+
+declare const __PACKAGE_VERSION__: string;
+declare const TSUP_FORMAT: string;
+
+// -------------------------------------
+
 // TODO: apparently Yjs is full of anys or something, see if we can fix this
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */

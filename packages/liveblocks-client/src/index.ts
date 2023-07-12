@@ -1,3 +1,18 @@
+// Detect if duplicate copies of Liveblocks are being loaded
+import { detectDupes } from "@liveblocks/core";
+
+const pkgName = "@liveblocks/client";
+const pkgVersion =
+  (typeof __PACKAGE_VERSION__ === "string" && __PACKAGE_VERSION__) || "dev";
+const pkgFormat = (typeof TSUP_FORMAT === "string" && TSUP_FORMAT) || "esm";
+
+detectDupes(pkgName, pkgVersion, pkgFormat);
+
+declare const __PACKAGE_VERSION__: string;
+declare const TSUP_FORMAT: string;
+
+// -------------------------------------
+
 export type {
   BaseUserMeta,
   BroadcastOptions,
