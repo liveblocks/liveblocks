@@ -10,8 +10,8 @@ export default defineConfig({
   sourcemap: true,
 
   esbuildOptions(options, _context) {
-    // Replace __PACKAGE_VERSION__ global constant with a concrete version
-    options.define.__PACKAGE_VERSION__ = JSON.stringify(
+    // Replace PKG_VERSION global constant with a concrete version
+    options.define.PKG_VERSION = JSON.stringify(
       require("./package.json").version
     );
   },

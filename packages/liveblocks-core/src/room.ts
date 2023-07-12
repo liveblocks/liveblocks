@@ -2363,8 +2363,8 @@ function makeCreateSocketDelegateForRoom(
       `${liveblocksServer}/?token=${token}&version=${
         // prettier-ignore
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore (__PACKAGE_VERSION__ will be injected by the build script)
-        typeof (__PACKAGE_VERSION__ as unknown) === "string" ? /* istanbul ignore next */ (__PACKAGE_VERSION__ as string) : "dev"
+        // @ts-ignore (PKG_VERSION will be injected by the build script)
+        typeof (PKG_VERSION as unknown) === "string" ? /* istanbul ignore next */ (PKG_VERSION as string) : "dev"
       }`
     );
   };

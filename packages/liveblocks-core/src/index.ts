@@ -165,12 +165,12 @@ export type { DevTools };
 import { detectDupes } from "./dupe-detection";
 export { detectDupes };
 
-declare const __PACKAGE_VERSION__: string;
+declare const PKG_VERSION: string;
 declare const TSUP_FORMAT: string;
 
 const pkgName = "@liveblocks/core";
 const pkgVersion =
-  (typeof __PACKAGE_VERSION__ === "string" && __PACKAGE_VERSION__) || "dev";
+  (typeof PKG_VERSION === "string" && PKG_VERSION) || "dev";
 const pkgFormat = (typeof TSUP_FORMAT === "string" && TSUP_FORMAT) || "esm";
 
 detectDupes(pkgName, pkgVersion, pkgFormat);
