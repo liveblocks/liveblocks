@@ -53,14 +53,22 @@ export function createCommentsApi<ThreadMetadata extends BaseMetadata>(
     endpoint: string,
     options?: RequestInit
   ): Promise<T> {
-    const token = await client.__internal.getToken();
+    const authValue = await client.__internal.getAuthValue(
+      "comments:read",
+      roomId
+    );
+
+    if (authValue.type !== "secret") {
+      throw new Error("Only secret key are supported for client.");
+    }
+
     const url = `${API_URL}${roomId}${endpoint}`;
 
     const response = await fetch(url, {
       ...options,
       headers: {
         ...options?.headers,
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${authValue.token.raw}`,
       },
     });
 

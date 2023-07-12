@@ -1,4 +1,4 @@
-import { createAuthManager } from "./auth-manager";
+import { AuthManager, createAuthManager } from "./auth-manager";
 import type { LsonObject } from "./crdts/Lson";
 import { linkDevTools, setupDevTools, unlinkDevTools } from "./devtools";
 import { deprecateIf } from "./lib/deprecation";
@@ -45,7 +45,7 @@ type EnterOptions<
 
 export type Client = {
   __internal: {
-    getToken: () => Promise<string>;
+    getAuthValue: AuthManager["getAuthValue"];
     realtimeClient: RealtimeClient;
   };
 
@@ -275,9 +275,7 @@ export function createClient(options: ClientOptions): Client {
 
   return {
     __internal: {
-      getToken: () => {
-        throw new Error("TODO");
-      },
+      getAuthValue: authManager.getAuthValue,
       realtimeClient: createRealtimeClient(authManager),
     },
     getRoom,
