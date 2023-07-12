@@ -132,7 +132,7 @@ type State =
   | "@ok.awaiting-pong";
 
 /**
- * Arbitrary record that will be used as the authentication "token". It's the
+ * Arbitrary record that will be used as the authentication "authValue". It's the
  * value that is returned by calling the authentication delegate, and will get
  * passed to the connection factory delegate. This value will be remembered by
  * the connection manager, but its value will not be interpreted, so it can be
@@ -152,9 +152,9 @@ type Context = {
   successCount: number;
 
   /**
-   * Will be populated with the last known auth token.
+   * Will be populated with the last known auth authValue.
    */
-  token: BaseAuthResult | null;
+  authValue: BaseAuthResult | null;
 
   /**
    * The current active WebSocket connection to the room. If this is not null
@@ -194,7 +194,7 @@ const PONG_TIMEOUT = 2000;
 
 /**
  * Maximum amount of time that the authentication delegate take to return an
- * auth token, or else we consider authentication timed out.
+ * auth authValue, or else we consider authentication timed out.
  */
 const AUTH_TIMEOUT = 10000;
 
@@ -314,7 +314,7 @@ function isCustomCloseEvent(
 
 export type Delegates<T extends BaseAuthResult> = {
   authenticate: () => Promise<T>;
-  createSocket: (token: T) => IWebSocketInstance;
+  createSocket: (authValue: T) => IWebSocketInstance;
 };
 
 function enableTracing(machine: FSM<Context, Event, State>) {
@@ -392,9 +392,9 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
   // a specific Liveblocks reason
   const onLiveblocksError = makeEventSource<LiveblocksError>();
 
-  const initialContext: Context & { token: T | null } = {
+  const initialContext: Context & { authValue: T | null } = {
     successCount: 0,
-    token: null,
+    authValue: null,
     socket: null,
     backoffDelay: RESET_DELAY,
   };
@@ -434,9 +434,9 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
 
     .addTransitions("@idle.*", {
       CONNECT: (_, ctx) =>
-        // If we still have a known token, try to reconnect to the socket directly,
-        // otherwise, try to obtain a new token
-        ctx.token !== null ? "@connecting.busy" : "@auth.busy",
+        // If we still have a known authValue, try to reconnect to the socket directly,
+        // otherwise, try to obtain a new authValue
+        ctx.authValue !== null ? "@connecting.busy" : "@auth.busy",
     });
 
   //
@@ -464,7 +464,7 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
       (okEvent) => ({
         target: "@connecting.busy",
         effect: assign({
-          token: okEvent.data,
+          authValue: okEvent.data,
           backoffDelay: RESET_DELAY,
         }),
       }),
@@ -551,11 +551,11 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
         const connect$ = new Promise<[IWebSocketInstance, () => void]>(
           (resolve, rej) => {
             // istanbul ignore next
-            if (ctx.token === null) {
-              throw new Error("No auth token"); // This should never happen
+            if (ctx.authValue === null) {
+              throw new Error("No auth authValue"); // This should never happen
             }
 
-            const socket = delegates.createSocket(ctx.token as T);
+            const socket = delegates.createSocket(ctx.authValue as T);
 
             function reject(event: IWebSocketEvent) {
               capturedPrematureEvent = event;
@@ -938,10 +938,10 @@ export class ManagedSocket<T extends BaseAuthResult> {
   }
 
   /**
-   * Returns the current auth token.
+   * Returns the current auth authValue.
    */
-  get token(): T | null {
-    return this.machine.context.token as T | null;
+  get authValue(): T | null {
+    return this.machine.context.authValue as T | null;
   }
 
   /**
@@ -954,7 +954,7 @@ export class ManagedSocket<T extends BaseAuthResult> {
 
   /**
    * If idle, will try to connect. Otherwise, it will attempt to reconnect to
-   * the socket, potentially obtaining a new token first, if needed.
+   * the socket, potentially obtaining a new authValue first, if needed.
    */
   public reconnect(): void {
     this.machine.send({ type: "RECONNECT" });

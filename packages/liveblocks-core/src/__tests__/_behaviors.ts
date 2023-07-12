@@ -8,6 +8,7 @@
  *   const { wss, delegates } = defineBehavior(ALWAYS_AUTH_AS(2), SOCKET_AUTO_OPEN);
  */
 
+import type { AuthValue } from "../auth-manager";
 import { StopRetrying } from "../connection";
 import type { ParsedAuthToken } from "../protocol/AuthToken";
 import type { RoomDelegates } from "../room";
@@ -16,7 +17,7 @@ import type { MockWebSocket } from "./_MockWebSocketServer";
 import { MockWebSocketServer } from "./_MockWebSocketServer";
 import { makeMinimalTokenPayload } from "./_utils";
 
-type AuthBehavior = () => ParsedAuthToken;
+type AuthBehavior = () => AuthValue;
 type SocketBehavior = (wss: MockWebSocketServer) => MockWebSocket;
 
 function makeToken(actor: number, scopes: string[]): ParsedAuthToken {
@@ -72,8 +73,13 @@ export function defineBehavior(
  */
 export const AUTH_SUCCESS = ALWAYS_AUTH_AS(1);
 
-export function ALWAYS_AUTH_AS(actor: number, scopes: string[] = []) {
-  return () => makeToken(actor, scopes);
+export function ALWAYS_AUTH_AS(
+  actor: number,
+  scopes: string[] = []
+): () => AuthValue {
+  return () => {
+    return { type: "secret", token: makeToken(actor, scopes) };
+  };
 }
 
 export function ALWAYS_FAIL_AUTH(): never {

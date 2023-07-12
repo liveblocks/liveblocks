@@ -2,7 +2,7 @@ import type { JwtMetadata } from "../../protocol/AuthToken";
 import {
   isTokenExpired,
   parseAuthToken,
-  RoomScope,
+  ApiScope,
 } from "../../protocol/AuthToken";
 
 describe("isTokenExpired", () => {
@@ -62,7 +62,7 @@ describe("parseRoomAuthToken", () => {
       exp: 1664570010,
       iat: 1664566410,
       roomId: "KXa6UclvraeGZNdXVz67Z",
-      scopes: [RoomScope.Write],
+      scopes: [ApiScope.Write],
     });
   });
 
