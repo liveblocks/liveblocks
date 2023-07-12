@@ -10,6 +10,8 @@ import {
 } from "../liveblocks.config";
 import { ClientSideSuspense } from "@liveblocks/react";
 import { LiveList, LiveMap, LiveObject } from "@liveblocks/client";
+import { liveblocks } from "@liveblocks/zustand";
+console.log(liveblocks);
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Color,
