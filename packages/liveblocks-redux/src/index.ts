@@ -1,14 +1,10 @@
-const pkgName = "@liveblocks/redux";
-const pkgVersion =
-  (typeof PKG_VERSION === "string" && PKG_VERSION) || "dev";
-const pkgFormat = (typeof TSUP_FORMAT === "string" && TSUP_FORMAT) || "esm";
-
 // Detect if duplicate copies of Liveblocks are being loaded
 import { detectDupes } from "@liveblocks/core";
-detectDupes(pkgName, pkgVersion, pkgFormat);
 
+declare const PKG_NAME: string;
 declare const PKG_VERSION: string;
 declare const TSUP_FORMAT: string;
+detectDupes(PKG_NAME, PKG_VERSION, TSUP_FORMAT);
 
 // -------------------------------------
 
