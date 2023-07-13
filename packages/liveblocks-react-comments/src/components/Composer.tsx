@@ -20,7 +20,7 @@ import { Slot } from "@radix-ui/react-slot";
 import type {
   AriaAttributes,
   ComponentPropsWithoutRef,
-  ElementType,
+  ComponentType,
   FocusEvent,
   FormEvent,
   KeyboardEvent,
@@ -159,12 +159,12 @@ export interface ComposerBodyProps extends ComponentPropsWithoutRef<"div"> {
   /**
    * The component used to render mentions.
    */
-  renderMention?: ElementType<ComposerRenderMentionProps>;
+  renderMention?: ComponentType<ComposerRenderMentionProps>;
 
   /**
    * The component used to render mention suggestions.
    */
-  renderMentionSuggestions?: ElementType<ComposerRenderMentionSuggestionsProps>;
+  renderMentionSuggestions?: ComponentType<ComposerRenderMentionSuggestionsProps>;
 
   /**
    * An asynchronous function to get a list of suggested user IDs from a string.

@@ -1,6 +1,6 @@
 import { CommentBody, isCommentBodyMention } from "@liveblocks/core";
 import { Slot } from "@radix-ui/react-slot";
-import type { ElementType, ReactNode } from "react";
+import type { ComponentType, ReactNode } from "react";
 import React, { forwardRef } from "react";
 
 import { MENTION_CHARACTER } from "../slate/mentions";
@@ -29,7 +29,7 @@ export interface CommentBodyProps
   /**
    * The component used to render mentions.
    */
-  renderMention?: ElementType<CommentRenderMentionProps>;
+  renderMention?: ComponentType<CommentRenderMentionProps>;
 }
 
 function CommentDefaultRenderMention({ userId }: CommentRenderMentionProps) {
