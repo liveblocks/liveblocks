@@ -13,7 +13,7 @@ alwaysShowAllNavigationLevels: false
 Creates a set of typed hooks and methods. We recommend using it in
 `liveblocks.config.ts` and re-exporting your typed hooks and methods like below.
 
-```tsx
+```tsx file="liveblocks.config.ts"
 import { createClient } from "@liveblocks/client";
 import { createCommentsContext } from "@liveblocks/react-comments";
 
@@ -41,8 +41,8 @@ their ID. To display user information based on IDs, you can provide a resolver
 function to the `resolveUser` option in
 [`createCommentContext`](#createCommentContext).
 
-```tsx
-// …
+```tsx file="liveblocks.config.ts"
+// ...
 
 export const {
   /* ... */
@@ -56,8 +56,8 @@ The resulting user object can be typed based on the existing `UserMeta` type. If
 you were already using a custom `UserMeta` type with Presence, you can use it
 here as well.
 
-```tsx
-// …
+```tsx file="liveblocks.config.ts"
+// ...
 
 // Optionally, UserMeta represents metadata on each User.
 type UserMeta = {
@@ -167,7 +167,7 @@ deleteComment("room-id", { threadId: "th_xxx", commentId: "cm_xxx" });
 
 The `Comment` components are used to display comments.
 
-```tsx
+```tsx title="Anatomy"
 import { Comment } from "@liveblocks/react-comments";
 
 () => <Comment.Body renderMention={() => <Comment.Mention />} />;
@@ -212,7 +212,7 @@ Displays mentions within `Comment.Body`’s `renderMention` prop.
 
 The `Composer` components are used to write comments.
 
-```tsx
+```tsx title="Anatomy"
 import { Composer } from "@liveblocks/react-comments";
 
 () => (
