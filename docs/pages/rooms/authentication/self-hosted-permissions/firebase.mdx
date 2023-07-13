@@ -1,8 +1,8 @@
 ---
 meta:
-  title: "Set up Liveblocks-hosted permissions with Firebase"
+  title: "Set up self-hosted permissions with Firebase"
   parentTitle: "Authentication"
-  description: "Learn how to setup Liveblocks-hosted permissions with Firebase."
+  description: "Learn how to setup self-hosted permissions with Firebase."
 ---
 
 Follow the following steps to start configure your authentication endpoint and
@@ -45,20 +45,23 @@ start building your own security logic.
         // authentication provider here.
         const user = __getUserFromReq__(req);
 
-        const { status, body } = await liveblocks.identifyUser(
-          {
-            userId: user.id,
-            groupIds, // Optional
-          },
-          { userInfo: user.metadata },
+        const session = liveblocks.prepareSession(
+          user.id,
+          { userInfo: user.metadata },  // Optional
         );
+        // You'll need to implement your own security here.
+        if (req.body.room && __checkHasAccess__(user, req.body.room)) {
+          session.allow(req.body.room, session.FULL_ACCESS);
+        }
+
+        const { status, body } = await session.authorize();
         return res.status(status).end(body);
       });
       ```
     </StepContent>
 
   </Step>
-  <Step>
+  <Step lastStep>
     <StepTitle>Set up the client</StepTitle>
     <StepContent>
       On the front-end, you can now replace the `publicApiKey`
@@ -85,34 +88,6 @@ start building your own security logic.
     </StepContent>
 
   </Step>
-  <Step lastStep>
-    <StepTitle>Set permission accesses to a room</StepTitle>
-    <StepContent>
-      A room can have `defaultAccesses`, `usersAccesses`, and `groupsAccesses` defined.
-      Permissions are then checked when users try to connect to a room. For security purposes,
-      the [room permissions](/docs/rooms/permissions) can only be set on the back-end through a REST API.
-      For instance, you can use the [create room API](/docs/api-reference/rest-api-endpoints#post-rooms)
-      to create a new room with `read` public access levels while giving `write` access to specific users and groups.
-
-      ```ts
-      fetch("https://api.liveblocks.io/v2/rooms", {
-        method: "POST",
-        body: JSON.stringify({
-          id: "roomId",
-          defaultAccesses: ["room:read"],
-          usersAccesses: {
-            "userId": ["room:write"],
-          },
-          groupsAccesses: {
-            "groupId": ["room:write"],
-          },
-        }),
-      });
-      ```
-
-    </StepContent>
-
-  </Step>
 </Steps>
 
 ## More information
@@ -128,7 +103,7 @@ console.log(self.info);
 
 <Figure>
   <Image
-    src="/assets/liveblocks-hosted-auth-diagram.png"
+    src="/assets/self-hosted-auth-diagram.png"
     alt="Auth diagram"
     width={768}
     height={576}

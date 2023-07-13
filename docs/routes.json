@@ -203,6 +203,36 @@
           },
           {
             "title": "Express",
+            "path": "/rooms/authentication/self-hosted-permissions/express",
+            "hidden": true
+          },
+          {
+            "title": "Next.js",
+            "path": "/rooms/authentication/self-hosted-permissions/nextjs",
+            "hidden": true
+          },
+          {
+            "title": "Remix",
+            "path": "/rooms/authentication/self-hosted-permissions/remix",
+            "hidden": true
+          },
+          {
+            "title": "SvelteKit",
+            "path": "/rooms/authentication/self-hosted-permissions/sveltekit",
+            "hidden": true
+          },
+          {
+            "title": "Nuxt.js",
+            "path": "/rooms/authentication/self-hosted-permissions/nuxtjs",
+            "hidden": true
+          },
+          {
+            "title": "Firebase",
+            "path": "/rooms/authentication/self-hosted-permissions/firebase",
+            "hidden": true
+          },
+          {
+            "title": "Express",
             "path": "/rooms/authentication/liveblocks-hosted-permissions/express",
             "hidden": true
           }
@@ -214,7 +244,17 @@
       },
       {
         "title": "Permissions",
-        "path": "/rooms/permissions"
+        "path": "/rooms/permissions",
+        "routes": [
+          {
+            "title": "Self-hosted",
+            "path": "/rooms/permissions/self-hosted"
+          },
+          {
+            "title": "Liveblocks-hosted",
+            "path": "/rooms/permissions/liveblocks-hosted"
+          }
+        ]
       }
     ]
   },
