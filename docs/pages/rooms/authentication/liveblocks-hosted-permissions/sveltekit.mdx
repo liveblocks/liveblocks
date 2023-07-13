@@ -27,47 +27,39 @@ start building your own security logic.
     <StepTitle>Set up authentication endpoint</StepTitle>
     <StepContent>
       Users can only interact with rooms they have access to. You can
-      configure permission access in an `api/auth` endpoint by
-      creating the `src/routes/api/auth/+server.ts` file with the
+      configure permission access in an `api/liveblocks-auth` endpoint by
+      creating the `src/routes/api/liveblocks-auth/+server.ts` file with the
       following code. This is where you will implement your security and
       define if the current user has access to a specific room.
 
       ```ts file="src/routes/api/auth/+server.ts"
       import { type RequestEvent } from "@sveltejs/kit";
-      import { authorize } from "@liveblocks/node";
+      import { Liveblocks } from "@liveblocks/node";
 
-      const secret = "{{SECRET_KEY}}";
+      const liveblocks = new Liveblocks({
+        secret: "{{SECRET_KEY}}",
+      });
 
-      export async function POST({ request }: RequestEvent) {
-        /**
-         * Implement your own security here.
-         *
-         * It's your responsibility to ensure that the caller of this endpoint
-         * is a valid user by validating the cookies or authentication headers
-         * and that it has access to the requested room.
-         */
-        const { room } = await request.json();
+      export async function POST({ req }: RequestEvent) {
+        // You'll need to get the user from your
+        // authentication provider here.
+        const user = __getUserFromReq__(req);
 
-        const result = await authorize({
-          room,
-          secret,
-          userId: "123",
-          groupIds: ["456"], // Optional
-          userInfo: {
-            // Optional, corresponds to the UserMeta[info] type defined in liveblocks.config.ts
-            name: "Ada Lovelace",
-            color: "red",
+        const { status, body } = await liveblocks.identifyUser(
+          {
+            userId: user.id,
+            groupIds, // Optional
           },
-        });
-
-        return new Response(result.body, { status: response.status });
+          { userInfo: user.metadata },
+        );
+        return res.status(status).end(body);
       }
       ```
 
     </StepContent>
 
   </Step>
-  <Step lastStep>
+  <Step>
     <StepTitle>Set up the client</StepTitle>
     <StepContent>
       On the front-end, you can now replace the `publicApiKey`
@@ -78,7 +70,35 @@ start building your own security logic.
       import { createClient } from "@liveblocks/client";
 
       const client = createClient({
-        authEndpoint: "/api/auth",
+        authEndpoint: "/api/liveblocks-auth",
+      });
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step lastStep>
+    <StepTitle>Set permission accesses to a room</StepTitle>
+    <StepContent>
+      A room can have `defaultAccesses`, `usersAccesses`, and `groupsAccesses` defined.
+      Permissions are then checked when users try to connect to a room. For security purposes,
+      the [room permissions](/docs/rooms/permissions) can only be set on the back-end through a REST API.
+      For instance, you can use the [create room API](/docs/api-reference/rest-api-endpoints#post-rooms)
+      to create a new room with `read` public access levels while giving `write` access to specific users and groups.
+
+      ```ts
+      fetch("https://api.liveblocks.io/v2/rooms", {
+        method: "POST",
+        body: JSON.stringify({
+          id: "roomId",
+          defaultAccesses: ["room:read"],
+          usersAccesses: {
+            "userId": ["room:write"],
+          },
+          groupsAccesses: {
+            "groupId": ["room:write"],
+          },
+        }),
       });
       ```
 
@@ -89,23 +109,18 @@ start building your own security logic.
 
 ## More information
 
-The `userId` used in the `authorize` function corresponds to `userId` used in
-our APIs when setting permissions when creating a room. Both `userId` and
-`userInfo` can then be used in your Svelte application as such:
+Both `userId` and `userInfo` can then be used in your Svelte application as
+such:
 
 ```ts
 const self = room.getSelf();
-
-// "123"
 console.log(self.id);
-
-// "red"
 console.log(self.info.color);
 ```
 
 <Figure>
   <Image
-    src="/assets/auth-diagram.png"
+    src="/assets/liveblocks-hosted-auth-diagram.png"
     alt="Auth diagram"
     width={768}
     height={576}
