@@ -1,10 +1,15 @@
 # v1.1.5
 
-### `@liveblocks/client`
+### `@liveblocks/*`
 
-Fix a bug where the room internals could become non-functional when used in
-combination with Immer due to Immer’s excessive auto-freezing, which would break
-the room’s internals. (This became an issue since Liveblocks 1.1 was released.)
+- Ship all of our packages as both ESM and CJS modules again (restore the
+  changes that 1.1.3 originally introduced).
+- Auto-detect if multiple copies of Liveblocks are included in your production
+  bundle. If so, a help page is presented that will help you resolve this issue.
+- Fix a bug where the room internals could become non-functional when used in
+  combination with Immer due to Immer’s excessive auto-freezing, which would
+  break the room’s internals. (This became an issue since Liveblocks 1.1 was
+  released.)
 
 # v1.1.4
 

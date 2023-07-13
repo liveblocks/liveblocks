@@ -2,13 +2,10 @@ import type { LsonObject } from "../crdts/Lson";
 import type { Json, JsonObject } from "../lib/Json";
 import type { BaseUserMeta } from "../protocol/BaseUserMeta";
 import type { Room } from "../room";
+import { PKG_VERSION } from "../version";
 import { activateBridge, onMessageFromPanel, sendToPanel } from "./bridge";
 
-// prettier-ignore
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore (__PACKAGE_VERSION__ will be injected by the build script)
-const VERSION = typeof (__PACKAGE_VERSION__ as unknown) === "string" ? /* istanbul ignore next */ (__PACKAGE_VERSION__ as string) : "dev";
-
+const VERSION = PKG_VERSION || "dev";
 let _devtoolsSetupHasRun = false;
 
 /**
