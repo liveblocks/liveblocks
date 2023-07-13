@@ -1,0 +1,365 @@
+---
+meta:
+  title: "@liveblocks/react-comments"
+  parentTitle: "API Reference"
+  description: "API Reference for the @liveblocks/react-comments package"
+alwaysShowAllNavigationLevels: false
+---
+
+## Configuration
+
+### createCommentsContext
+
+Creates a set of typed hooks and methods. We recommend using it in
+`liveblocks.config.ts` and re-exporting your typed hooks and methods like below.
+
+```tsx
+import { createClient } from "@liveblocks/client";
+import { createCommentsContext } from "@liveblocks/react-comments";
+
+const client = createClient({
+  /* client options */
+});
+
+// Optionally, ThreadMetadata represents metadata on each thread.
+// Must only contain scalar values.
+type ThreadMetadata = {
+  status: "open" | "in-progress" | "resolved";
+};
+
+export const {
+  useThreads,
+  createThread,
+  /* ...all the other hooks and methods you’re using... */
+} = createCommentsContext<ThreadMetadata>();
+```
+
+#### Resolving users [#resolving-users]
+
+Anything that is linked to a user (comments, mentions, etc.) will reference
+their ID. To display user information based on IDs, you can provide a resolver
+function to the `resolveUser` option in
+[`createCommentContext`](#createCommentContext).
+
+```tsx
+// …
+
+export const {
+  /* ... */
+} = createCommentsContext<ThreadMetadata>({ resolveUser: getUserInfoFromDb });
+```
+
+Once that’s done, you can use the [`useUser`](#useUser) hook to get a user
+object from their ID.
+
+The resulting user object can be typed based on the existing `UserMeta` type. If
+you were already using a custom `UserMeta` type with Presence, you can use it
+here as well.
+
+```tsx
+// …
+
+// Optionally, UserMeta represents metadata on each User.
+type UserMeta = {
+  info: {
+    name: string;
+    avatar: string;
+    }
+  }
+};
+
+export const {
+  /* ... */
+} = createCommentsContext<ThreadMetadata, UserMeta>({
+  resolveUser: getUserInfoFromDb,
+});
+```
+
+## Hooks
+
+### useThreads
+
+Returns the threads within a given room.
+
+```tsx
+import { useThreads } from "./liveblocks.config";
+
+const { threads, error, isLoading } = useThreads("room-id");
+```
+
+### useUser
+
+Returns a user object from a given user ID.
+
+```tsx
+import { useUser } from "./liveblocks.config";
+
+const { user, error, isLoading } = useUser("user-id");
+```
+
+<Banner title="Providing a resolver function">
+
+To use `useUser`, you should provide a resolver function to the
+[`resolveUser` option in `createCommentContext`](#resolving-users).
+
+</Banner>
+
+### useErrorListener
+
+Listen to potential errors when creating and editing threads/comments.
+
+```tsx
+useErrorListener((error) => {
+  console.error(error);
+});
+```
+
+## Methods
+
+### createThread
+
+Creates a thread with an initial comment, and optionally some metadata.
+
+```tsx
+const thread = createThread("room-id", { body: {}, metadata: {} });
+```
+
+### editThread
+
+Edits a thread’s metadata.
+
+```tsx
+const thread = editThread("room-id", { threadId: "th_xxx", metadata: {} });
+```
+
+### createComment
+
+Adds a comment to a thread.
+
+```tsx
+const comment = createComment("room-id", { threadId: "th_xxx", body: {} });
+```
+
+### editComment
+
+Edits a comment’s body.
+
+```tsx
+const comment = editComment("room-id", {
+  threadId: "th_xxx",
+  commentId: "cm_xxx",
+  body: {},
+});
+```
+
+### deleteComment
+
+Deletes a comment. If it is the last non-deleted comment, the thread also gets
+deleted.
+
+```tsx
+deleteComment("room-id", { threadId: "th_xxx", commentId: "cm_xxx" });
+```
+
+## Components
+
+### Comment
+
+The `Comment` components are used to display comments.
+
+```tsx
+import { Comment } from "@liveblocks/react-comments";
+
+() => <Comment.Body renderMention={() => <Comment.Mention />} />;
+```
+
+#### Comment.Body
+
+Displays a comment body.
+
+```tsx
+<Comment.Body body={comment.body} />
+```
+
+| Prop            | Type                                                      | Description                                                                                     |
+| --------------- | --------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `body`          | `CommentBody \| undefined`                                | The comment body to be displayed. If not defined, the component will render `null`.             |
+| `renderMention` | `ComponentType\<CommentRenderMentionProps\> \| undefined` | The component used to render mentions.<br/>Defaults to the mention’s `userId` prefixed by an @. |
+
+##### renderMention
+
+A render prop that accepts a component used to render mentions.
+
+| Prop     | Type     | Description            |
+| -------- | -------- | ---------------------- |
+| `userId` | `string` | The mention’s user ID. |
+
+```tsx
+<Comment.Body
+  renderMention={({ userId }) => <Comment.Mention>@{userId}</Comment.Mention>}
+/>
+```
+
+#### Comment.Mention
+
+Displays mentions within `Comment.Body`’s `renderMention` prop.
+
+```tsx
+<Comment.Mention>@{userId}</Comment.Mention>
+```
+
+### Composer
+
+The `Composer` components are used to write comments.
+
+```tsx
+import { Composer } from "@liveblocks/react-comments";
+
+() => (
+  <Composer.Form>
+    <Composer.Body
+      renderMention={() => <Composer.Mention />}
+      renderMentionSuggestions={() => (
+        <Composer.Suggestions>
+          <Composer.SuggestionsList>
+            <Composer.SuggestionsListItem />
+          </Composer.SuggestionsList>
+        </Composer.Suggestions>
+      )}
+    />
+    <Composer.Submit />
+  </Composer.Form>
+);
+```
+
+#### Composer.Form
+
+Surrounds the composer’s content and handles submissions.
+
+```tsx
+<Composer.Form onCommentSubmit={({ body }) => {}}>
+  <Composer.Body />
+  <Composer.Submit />
+</Composer.Form>
+```
+
+| Prop              | Type                                                                                                              | Description                                          |
+| ----------------- | ----------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
+| `onCommentSubmit` | `((comment: ComposerSubmitComment, event: FormEvent\<HTMLFormElement\>) => Promise\<void\> \| void) \| undefined` | The event handler called when the form is submitted. |
+
+#### Composer.Body
+
+Displays the composer’s body editor.
+
+```tsx
+<Composer.Body placeholder="Write a comment…" />
+```
+
+| Prop                        | Type                                                                  | Description                                                                                            |
+| --------------------------- | --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| `initialValue`              | `CommentBody \| undefined`                                            | The editor’s initial value.                                                                            |
+| `placeholder`               | `string \| undefined`                                                 | The text to display when the editor is empty.                                                          |
+| `disabled`                  | `boolean \| undefined`                                                | Whether the editor is disabled.                                                                        |
+| `renderMention`             | `ComponentType\<ComposerRenderMentionProps\> \| undefined`            | The component used to render mentions.<br/>Defaults to the mention’s `userId` prefixed by an @.        |
+| `renderMentionSuggestions`  | `ComponentType\<ComposerRenderMentionSuggestionsProps\> \| undefined` | The component used to render mention suggestions.<br/>Defaults to a list of the suggestions’ `userId`. |
+| `resolveMentionSuggestions` | `(text: string) => Promise\<string[]\> \| undefined`                  | An asynchronous function to get a list of suggested user IDs from a string.                            |
+
+##### renderMention
+
+A render prop that accepts a component used to render mentions.
+
+| Prop         | Type      | Description                      |
+| ------------ | --------- | -------------------------------- |
+| `userId`     | `string`  | The mention’s user ID.           |
+| `isSelected` | `boolean` | Whether the mention is selected. |
+
+```tsx
+<Composer.Body
+  renderMention={({ userId, isSelected }) => (
+    <Composer.Mention>@{userId}</Composer.Mention>
+  )}
+/>
+```
+
+##### renderMentionSuggestions
+
+A render prop that accepts a component used to render mention suggestions.
+
+| Prop             | Type                    | Description                     |
+| ---------------- | ----------------------- | ------------------------------- |
+| `userIds`        | `string[] \| undefined` | The list of suggested user IDs. |
+| `selectedUserId` | `string \| undefined`   | The currently selected user ID. |
+
+```tsx
+<Composer.Body
+  renderMentionSuggestions={() => (
+    <Composer.Suggestions>
+      <Composer.SuggestionsList>
+        <Composer.SuggestionsListItem />
+      </Composer.SuggestionsList>
+    </Composer.Suggestions>
+  )}
+/>
+```
+
+#### Composer.Mention
+
+Displays mentions within `Composer.Body`’s `renderMention` prop.
+
+```tsx
+<Composer.Mention>@{userId}</Composer.Mention>
+```
+
+#### Composer.Suggestions
+
+Surrounds a list of suggestions within `Composer.Body`.
+
+```tsx
+<Composer.Suggestions>
+	<Composer.SuggestionsList>
+	  {/* … */}
+	</Composer.SuggestionsList>
+<Composer.Suggestions>
+```
+
+#### Composer.SuggestionsList
+
+Displays a list of suggestions within `Composer.Body`.
+
+```tsx
+<Composer.SuggestionsList>{/* … */}</Composer.SuggestionsList>
+```
+
+#### Composer.SuggestionsListItem
+
+Displays a suggestion within `Composer.SuggestionsList`.
+
+```tsx
+<Composer.SuggestionsList>
+  {userIds.map((userId) => (
+    <Composer.SuggestionsListItem key={userId} value={userId}>
+      @{userId}
+    </Composer.SuggestionsListItem>
+  ))}
+</Composer.SuggestionsList>
+```
+
+| Prop    | Type     | Description             |
+| ------- | -------- | ----------------------- |
+| `value` | `string` | The suggestion’s value. |
+
+### Time
+
+Displays a formatted date. Defaults to relative formatting with automatic
+re-rendering.
+
+```tsx
+<Time date={new Date()} />
+```
+
+| Prop       | Type                                              | Description                                                                                                                                 |
+| ---------- | ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| `date`     | `Date \| string \| number`                        | The date to be displayed.                                                                                                                   |
+| `children` | `((date: Date) => ReactNode) \| undefined`        | A function to format the displayed date.<br/>Defaults to a relative date formatting function.                                               |
+| `title`    | `string \| ((date: Date) => string) \| undefined` | The `title` attribute’s value or a function to format it.<br/>Defaults to an absolute date formatting function.                             |
+| `interval` | `number \| false \| undefined`                    | The interval in milliseconds at which the component will re-render. Can be set to `false` to disable re-rendering.<br/>Defaults to `30000`. |

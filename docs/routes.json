@@ -136,6 +136,11 @@
         "path": "/api-reference/liveblocks-react"
       },
       {
+        "title": "@liveblocks/react-comments",
+        "path": "/api-reference/liveblocks-react-comments",
+        "hidden": true
+      },
+      {
         "title": "@liveblocks/redux",
         "path": "/api-reference/liveblocks-redux"
       },
