@@ -10,8 +10,8 @@ const g = (
     : {}
 ) as { [key: symbol]: string };
 
-const crossLinkedDocs = "https://liveblocks.io/errors/cross-linked";
-const dupesDocs = "https://liveblocks.io/errors/dupes";
+const crossLinkedDocs = "https://liveblocks.io/docs/errors/cross-linked";
+const dupesDocs = "https://liveblocks.io/docs/errors/dupes";
 const SPACE = " "; // Important space to make sure links in errors are clickable in all browsers
 
 function error(msg: string): void {
