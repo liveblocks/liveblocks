@@ -2,6 +2,8 @@
 
 ### `@liveblocks/*`
 
+- Ship all of our packages as both ESM and CJS modules again (restore the
+  changes that 1.1.3 originally introduced).
 - Auto-detect if multiple copies of Liveblocks are included in your production
   bundle. If so, a help page is presented that will help you resolve this issue.
 - Fix a bug where the room internals could become non-functional when used in

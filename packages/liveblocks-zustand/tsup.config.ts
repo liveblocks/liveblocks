@@ -6,7 +6,7 @@ export default defineConfig({
   splitting: true,
   clean: true,
   target: "es2020",
-  format: ["cjs"],
+  format: ["esm", "cjs"],
   sourcemap: true,
 
   esbuildOptions(options, _context) {
