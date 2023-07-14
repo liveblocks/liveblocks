@@ -1013,8 +1013,8 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     this.invalidate();
 
     if (this._pool) {
-      const childRecordId = item._id;
-      if (childRecordId) {
+      const childId = item._id;
+      if (childId) {
         const storageUpdates = new Map<string, LiveListUpdates<TItem>>();
         storageUpdates.set(
           nn(this._id),
@@ -1024,7 +1024,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
         this._pool.dispatch(
           [
             {
-              id: childRecordId,
+              id: childId,
               opId: this._pool.generateOpId(),
               type: OpCode.DELETE_CRDT,
             },
