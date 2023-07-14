@@ -1,3 +1,22 @@
+# v1.1.5
+
+### `@liveblocks/*`
+
+- Ship all of our packages as both ESM and CJS modules again (restore the
+  changes that 1.1.3 originally introduced).
+- Auto-detect if multiple copies of Liveblocks are included in your production
+  bundle. If so, a help page is presented that will help you resolve this issue.
+- Fix a bug where the room internals could become non-functional when used in
+  combination with Immer due to Immer’s excessive auto-freezing, which would
+  break the room’s internals. (This became an issue since Liveblocks 1.1 was
+  released.)
+
+# v1.1.4
+
+Undo the changes made in 1.1.3. We’ve got some bug reports where Liveblocks
+could still be doubly-included in production bundles (in some bundler setups
+only), with storage data corruptions as a possible result. We’re investigating.
+
 # v1.1.3
 
 Ship all of our packages as both ESM and CJS modules. By upgrading, your
