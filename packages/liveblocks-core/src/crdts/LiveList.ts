@@ -76,6 +76,10 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
    * @internal 
    * Keep an set of all the ids that have been deleted by a set 
    * to ensure they are not reinserted by an insert acknowledge op
+   * 
+   * TODO: 
+   * Reuse this Set to apply the same logic for deleted items by LiveList.delete
+   * Refactor _detachChild to know if it's coming from an acklowledge op or not
    */
   private _unacknowledgedDeletedIds: Set<string>;
 
