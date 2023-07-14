@@ -270,6 +270,11 @@ Displays the composer’s body editor.
 | `renderMentionSuggestions`  | <code>ComponentType&lt;ComposerRenderMentionSuggestionsProps&gt; \| undefined</code> | The component used to render mention suggestions.<br/>Defaults to a list of the suggestions’ `userId`. |
 | `resolveMentionSuggestions` | <code>(text: string) => Promise&lt;string[]&gt; \| undefined</code>                  | An asynchronous function to get a list of suggested user IDs from a string.                            |
 
+| Attribute       | Value                                   |
+| --------------- | --------------------------------------- |
+| `data-focused`  | Present when the component is focused.  |
+| `data-disabled` | Present when the component is disabled. |
+
 ##### renderMention
 
 A render prop that accepts a component used to render mentions.
@@ -320,6 +325,10 @@ Displays mentions within `Composer.Body`’s `renderMention` prop.
 | --------- | ---------------------- | ----------------------------------------------------------------------------------- |
 | `asChild` | `boolean \| undefined` | Replace the rendered element by the one passed as a child.<br/>Defaults to `false`. |
 
+| Attribute       | Value                                 |
+| --------------- | ------------------------------------- |
+| `data-selected` | Present when the mention is selected. |
+
 #### Composer.Suggestions
 
 Surrounds a list of suggestions within `Composer.Body`.
@@ -366,6 +375,10 @@ Displays a suggestion within `Composer.SuggestionsList`.
 | --------- | ---------------------- | ----------------------------------------------------------------------------------- |
 | `value`   | `string`               | The suggestion’s value.                                                             |
 | `asChild` | `boolean \| undefined` | Replace the rendered element by the one passed as a child.<br/>Defaults to `false`. |
+
+| Attribute       | Value                              |
+| --------------- | ---------------------------------- |
+| `data-selected` | Present when the item is selected. |
 
 ### Time
 
