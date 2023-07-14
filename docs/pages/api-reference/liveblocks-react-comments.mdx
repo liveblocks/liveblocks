@@ -185,6 +185,7 @@ Displays a comment body.
 | --------------- | --------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
 | `body`          | `CommentBody \| undefined`                                | The comment body to be displayed. If not defined, the component will render `null`.             |
 | `renderMention` | `ComponentType\<CommentRenderMentionProps\> \| undefined` | The component used to render mentions.<br/>Defaults to the mention’s `userId` prefixed by an @. |
+| `asChild`       | `boolean \| undefined`                                    | Replace the rendered element by the one passed as a child.<br/>Defaults to `false`.             |
 
 ##### renderMention
 
@@ -207,6 +208,10 @@ Displays mentions within `Comment.Body`’s `renderMention` prop.
 ```tsx
 <Comment.Mention>@{userId}</Comment.Mention>
 ```
+
+| Prop      | Type                   | Description                                                                         |
+| --------- | ---------------------- | ----------------------------------------------------------------------------------- |
+| `asChild` | `boolean \| undefined` | Replace the rendered element by the one passed as a child.<br/>Defaults to `false`. |
 
 ### Composer
 
@@ -243,9 +248,10 @@ Surrounds the composer’s content and handles submissions.
 </Composer.Form>
 ```
 
-| Prop              | Type                                                                                                              | Description                                          |
-| ----------------- | ----------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
-| `onCommentSubmit` | `((comment: ComposerSubmitComment, event: FormEvent\<HTMLFormElement\>) => Promise\<void\> \| void) \| undefined` | The event handler called when the form is submitted. |
+| Prop              | Type                                                                                                              | Description                                                                         |
+| ----------------- | ----------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| `onCommentSubmit` | `((comment: ComposerSubmitComment, event: FormEvent\<HTMLFormElement\>) => Promise\<void\> \| void) \| undefined` | The event handler called when the form is submitted.                                |
+| `asChild`         | `boolean \| undefined`                                                                                            | Replace the rendered element by the one passed as a child.<br/>Defaults to `false`. |
 
 #### Composer.Body
 
@@ -310,6 +316,10 @@ Displays mentions within `Composer.Body`’s `renderMention` prop.
 <Composer.Mention>@{userId}</Composer.Mention>
 ```
 
+| Prop      | Type                   | Description                                                                         |
+| --------- | ---------------------- | ----------------------------------------------------------------------------------- |
+| `asChild` | `boolean \| undefined` | Replace the rendered element by the one passed as a child.<br/>Defaults to `false`. |
+
 #### Composer.Suggestions
 
 Surrounds a list of suggestions within `Composer.Body`.
@@ -322,6 +332,10 @@ Surrounds a list of suggestions within `Composer.Body`.
 <Composer.Suggestions>
 ```
 
+| Prop      | Type                   | Description                                                                         |
+| --------- | ---------------------- | ----------------------------------------------------------------------------------- |
+| `asChild` | `boolean \| undefined` | Replace the rendered element by the one passed as a child.<br/>Defaults to `false`. |
+
 #### Composer.SuggestionsList
 
 Displays a list of suggestions within `Composer.Body`.
@@ -329,6 +343,10 @@ Displays a list of suggestions within `Composer.Body`.
 ```tsx
 <Composer.SuggestionsList>{/* … */}</Composer.SuggestionsList>
 ```
+
+| Prop      | Type                   | Description                                                                         |
+| --------- | ---------------------- | ----------------------------------------------------------------------------------- |
+| `asChild` | `boolean \| undefined` | Replace the rendered element by the one passed as a child.<br/>Defaults to `false`. |
 
 #### Composer.SuggestionsListItem
 
@@ -344,9 +362,10 @@ Displays a suggestion within `Composer.SuggestionsList`.
 </Composer.SuggestionsList>
 ```
 
-| Prop    | Type     | Description             |
-| ------- | -------- | ----------------------- |
-| `value` | `string` | The suggestion’s value. |
+| Prop      | Type                   | Description                                                                         |
+| --------- | ---------------------- | ----------------------------------------------------------------------------------- |
+| `value`   | `string`               | The suggestion’s value.                                                             |
+| `asChild` | `boolean \| undefined` | Replace the rendered element by the one passed as a child.<br/>Defaults to `false`. |
 
 ### Time
 
@@ -363,3 +382,4 @@ re-rendering.
 | `children` | `((date: Date) => ReactNode) \| undefined`        | A function to format the displayed date.<br/>Defaults to a relative date formatting function.                                               |
 | `title`    | `string \| ((date: Date) => string) \| undefined` | The `title` attribute’s value or a function to format it.<br/>Defaults to an absolute date formatting function.                             |
 | `interval` | `number \| false \| undefined`                    | The interval in milliseconds at which the component will re-render. Can be set to `false` to disable re-rendering.<br/>Defaults to `30000`. |
+| `asChild`  | `boolean \| undefined`                            | Replace the rendered element by the one passed as a child.<br/>Defaults to `false`.                                                         |
