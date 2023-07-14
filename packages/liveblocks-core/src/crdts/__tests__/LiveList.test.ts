@@ -673,10 +673,10 @@ describe("LiveList", () => {
     it("set at invalid position should throw", () => {
       const list = new LiveList<string>(["A", "B", "C"]);
       expect(() => list.set(-1, "D")).toThrow(
-        'Cannot set list item at index "-1". index should be between 0 and 2'
+        'Cannot set list item at index "-1". index should be between 0 and 2'
       );
       expect(() => list.set(3, "D")).toThrow(
-        'Cannot set list item at index "3". index should be between 0 and 2'
+        'Cannot set list item at index "3". index should be between 0 and 2'
       );
     });
 
