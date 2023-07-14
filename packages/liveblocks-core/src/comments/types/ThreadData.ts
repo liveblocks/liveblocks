@@ -8,5 +8,7 @@ export type ThreadData<ThreadMetadata extends BaseMetadata = never> = {
   updatedAt?: string;
   roomId: string;
   comments: CommentData[];
-  metadata: ThreadMetadata;
+  metadata: [ThreadMetadata] extends [never]
+    ? Record<string, never>
+    : ThreadMetadata;
 };
