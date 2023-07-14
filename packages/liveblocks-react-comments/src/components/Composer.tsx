@@ -246,8 +246,8 @@ const ComposerBodyContext = createContext<ComposerBodyContext | null>(null);
 const ComposerSuggestionsContext =
   createContext<ComposerSuggestionsContext | null>(null);
 
-const mentionSuggestionsCache = createAsyncCache<string[], unknown>(
-  async () => []
+const mentionSuggestionsCache = createAsyncCache<string[], unknown>(() =>
+  Promise.resolve([])
 );
 
 function composerBodyMentionToCommentBodyMention(
@@ -317,7 +317,7 @@ export function toggleMark(editor: SlateEditor, format: ComposerBodyMarks) {
   }
 }
 
-const defaultResolveMentionSuggestions = async () => [];
+const defaultResolveMentionSuggestions = () => Promise.resolve([]);
 
 const emptyCommentBody: CommentBody = {
   content: [{ type: "paragraph", children: [{ text: "" }] }],
@@ -542,6 +542,7 @@ function ComposerBodyElement({
   renderMention,
   ...props
 }: ComposerBodyElementProps) {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
   const { attributes, children, element } = props;
 
   switch (element.type) {

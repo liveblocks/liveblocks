@@ -4,7 +4,7 @@ import type { CommentBody } from "./types/CommentBody";
 import type { CommentData } from "./types/CommentData";
 import type { ThreadData } from "./types/ThreadData";
 
-const API_URL = process.env.NEXT_PUBLIC_COMMENTS_API_URL;
+const API_URL = process.env.NEXT_PUBLIC_COMMENTS_API_URL as string;
 
 if (typeof API_URL !== "string") {
   throw new Error("Missing env variable NEXT_PUBLIC_COMMENTS_API_URL");
@@ -76,7 +76,7 @@ export function createCommentsApi<ThreadMetadata extends BaseMetadata>(
       if (response.status >= 400 && response.status < 600) {
         let errorMessage = "";
         try {
-          const errorBody = await response.json();
+          const errorBody = (await response.json()) as { message: string };
           errorMessage = errorBody.message;
         } catch (error) {
           errorMessage = response.statusText;
@@ -90,9 +90,9 @@ export function createCommentsApi<ThreadMetadata extends BaseMetadata>(
     let body;
 
     try {
-      body = await response.json();
+      body = (await response.json()) as T;
     } catch {
-      body = {};
+      body = {} as T;
     }
 
     return body;

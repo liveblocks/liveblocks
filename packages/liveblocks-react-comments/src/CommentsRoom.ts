@@ -265,7 +265,7 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
     startMutation();
     api
       .createThread({ roomId, threadId, commentId, body, metadata })
-      .catch((er) =>
+      .catch((er: Error) =>
         errorEventSource.notify(
           new CreateThreadError(er, {
             roomId,
@@ -304,7 +304,7 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
     startMutation();
     api
       .editThread({ roomId, metadata, threadId })
-      .catch((er) =>
+      .catch((er: Error) =>
         errorEventSource.notify(
           new EditThreadError(er, {
             roomId,
@@ -347,7 +347,7 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
     startMutation();
     api
       .createComment({ roomId, threadId, commentId, body })
-      .catch((er) =>
+      .catch((er: Error) =>
         errorEventSource.notify(
           new CreateCommentError(er, {
             roomId,
@@ -388,7 +388,7 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
     startMutation();
     api
       .editComment({ roomId, threadId, commentId, body })
-      .catch((er) =>
+      .catch((er: Error) =>
         errorEventSource.notify(
           new EditCommentError(er, {
             roomId,
@@ -437,7 +437,7 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
     startMutation();
     api
       .deleteComment({ roomId, threadId, commentId })
-      .catch((er) =>
+      .catch((er: Error) =>
         errorEventSource.notify(
           new DeleteCommentError(er, {
             roomId,

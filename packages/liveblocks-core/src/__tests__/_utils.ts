@@ -4,7 +4,8 @@ import type { ToImmutable } from "../crdts/utils";
 import type { Json, JsonObject } from "../lib/Json";
 import { makePosition } from "../lib/position";
 import type { Authentication } from "../protocol/Authentication";
-import { LegacySecretToken, TokenKind } from "../protocol/AuthToken";
+import type { LegacySecretToken } from "../protocol/AuthToken";
+import { TokenKind } from "../protocol/AuthToken";
 import type { BaseUserMeta } from "../protocol/BaseUserMeta";
 import type { ClientMsg } from "../protocol/ClientMsg";
 import { ClientMsgCode } from "../protocol/ClientMsg";
@@ -109,7 +110,7 @@ export async function prepareRoomWithStorage<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
   TUserMeta extends BaseUserMeta,
-  TRoomEvent extends Json,
+  TRoomEvent extends Json
 >(
   items: IdTuple<SerializedCrdt>[],
   actor: number = 0,
@@ -207,7 +208,7 @@ export async function prepareStorageTest<
   TStorage extends LsonObject,
   TPresence extends JsonObject = never,
   TUserMeta extends BaseUserMeta = never,
-  TRoomEvent extends Json = never,
+  TRoomEvent extends Json = never
 >(items: IdTuple<SerializedCrdt>[], actor: number = 0, scopes: string[] = []) {
   let currentActor = actor;
   const operations: Op[] = [];
@@ -403,7 +404,7 @@ export async function prepareStorageUpdateTest<
   TStorage extends LsonObject,
   TPresence extends JsonObject = never,
   TUserMeta extends BaseUserMeta = never,
-  TRoomEvent extends Json = never,
+  TRoomEvent extends Json = never
 >(
   items: IdTuple<SerializedCrdt>[]
 ): Promise<{
@@ -468,7 +469,7 @@ export async function prepareDisconnectedStorageUpdateTest<
   TStorage extends LsonObject,
   TPresence extends JsonObject = never,
   TUserMeta extends BaseUserMeta = never,
-  TRoomEvent extends Json = never,
+  TRoomEvent extends Json = never
 >(items: IdTuple<SerializedCrdt>[]) {
   const { storage, room } = await prepareRoomWithStorage<
     TPresence,

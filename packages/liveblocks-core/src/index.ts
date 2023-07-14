@@ -43,23 +43,30 @@ export {
   patchLiveObjectKey,
 } from "./immutable";
 export { assert, assertNever, nn } from "./lib/assert";
+export type {
+  AsyncCache,
+  AsyncState,
+  AsyncStateError,
+  AsyncStateInitial,
+  AsyncStateLoading,
+  AsyncStateResolved,
+  AsyncStateSuccess,
+} from "./lib/AsyncCache";
+export { createAsyncCache } from "./lib/AsyncCache";
 export {
   deprecate,
   deprecateIf,
   errorIf,
   throwUsageError,
 } from "./lib/deprecation";
+export type { EventSource, UnsubscribeCallback } from "./lib/EventSource";
 export { makeEventSource } from "./lib/EventSource";
-export type { EventSource } from "./lib/EventSource";
 export * as console from "./lib/fancy-console";
-export { makePoller } from "./lib/Poller";
 export { freeze } from "./lib/freeze";
-export { createAsyncCache } from "./lib/AsyncCache";
-export type { AsyncCache } from "./lib/AsyncCache";
-export type { RealtimeClient } from "./realtime-client";
 export type { Json, JsonArray, JsonObject, JsonScalar } from "./lib/Json";
 export { isJsonArray, isJsonObject, isJsonScalar } from "./lib/Json";
 export { asArrayWithLegacyMethods } from "./lib/LegacyArray";
+export { makePoller } from "./lib/Poller";
 export { asPos, makePosition } from "./lib/position";
 export type { Resolve } from "./lib/Resolve";
 export { shallow } from "./lib/shallow";
@@ -120,6 +127,7 @@ export type {
   UserLeftServerMsg,
 } from "./protocol/ServerMsg";
 export { ServerMsgCode } from "./protocol/ServerMsg";
+export type { RealtimeClient } from "./realtime-client";
 export type {
   BroadcastOptions,
   History,

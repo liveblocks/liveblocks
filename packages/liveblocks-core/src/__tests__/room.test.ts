@@ -1,4 +1,6 @@
 import { nn } from "..";
+import type { AuthValue } from "../auth-manager";
+import { StopRetrying } from "../connection";
 import { LiveList } from "../crdts/LiveList";
 import { LiveObject } from "../crdts/LiveObject";
 import type { LsonObject } from "../crdts/Lson";
@@ -44,8 +46,6 @@ import {
   waitUntilStatus,
   waitUntilStorageUpdate,
 } from "./_waitUtils";
-import type { AuthValue } from "../auth-manager";
-import { StopRetrying } from "../connection";
 
 const THROTTLE_DELAY = 100;
 
@@ -87,7 +87,7 @@ function createTestableRoom<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
   TUserMeta extends BaseUserMeta,
-  TRoomEvent extends Json,
+  TRoomEvent extends Json
 >(
   initialPresence: TPresence,
   authBehavior = AUTH_SUCCESS,
@@ -132,7 +132,7 @@ describe("room / auth", () => {
         ...makeRoomConfig({
           authenticate: () => {
             return new Promise((_resolve) => {
-              throw new StopRetrying(`Unauthorized: No access`);
+              throw new StopRetrying("Unauthorized: No access");
             });
           },
           createSocket: mockedCreateSocketDelegate,

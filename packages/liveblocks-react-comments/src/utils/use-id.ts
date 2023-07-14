@@ -11,7 +11,8 @@ function getId() {
 
 // Prevent bundlers from importing `useId` directly
 // See https://github.com/radix-ui/primitives/pull/1028
-const useReactId = (React as any)["useId".toString()] || (() => undefined);
+// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+const useReactId: typeof React.useId = (React as any)["useId".toString()];
 
 function useIncrementalId() {
   const [id, setId] = useState(isHydrated ? getId : null);
@@ -31,4 +32,4 @@ function useIncrementalId() {
   return String(id) ?? undefined;
 }
 
-export const useId: () => string = useReactId ?? useIncrementalId;
+export const useId: typeof React.useId = useReactId ?? useIncrementalId;

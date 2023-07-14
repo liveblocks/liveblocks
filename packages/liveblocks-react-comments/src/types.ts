@@ -1,8 +1,4 @@
-import type { ComponentPropsWithoutRef, ElementType, ReactNode } from "react";
-
-export type ChildrenProp = {
-  children?: ReactNode;
-};
+import type { ComponentPropsWithoutRef, ElementType } from "react";
 
 export type SlotProp = {
   asChild?: boolean;

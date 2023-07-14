@@ -25,6 +25,10 @@ module.exports = {
     // Enforce React best practices
     "react-hooks/rules-of-hooks": "error",
     "react-hooks/exhaustive-deps": "error",
+
+    // Relax promise rules given how we use them in this project
+    "@typescript-eslint/no-floating-promises": "off",
+    "@typescript-eslint/no-misused-promises": "off",
   },
 
   overrides: [

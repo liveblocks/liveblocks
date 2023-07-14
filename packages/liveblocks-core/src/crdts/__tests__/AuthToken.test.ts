@@ -1,8 +1,8 @@
 import type { JwtMetadata } from "../../protocol/AuthToken";
 import {
+  ApiScope,
   isTokenExpired,
   parseAuthToken,
-  ApiScope,
 } from "../../protocol/AuthToken";
 
 describe("isTokenExpired", () => {

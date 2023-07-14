@@ -20,7 +20,7 @@ export function isPlainObject(
  */
 export function entries<
   O extends { [key: string]: unknown },
-  K extends keyof O,
+  K extends keyof O
 >(obj: O): [K, O[K]][] {
   return Object.entries(obj) as [K, O[K]][];
 }

@@ -16,7 +16,7 @@ type Context =
     }
   | {
       state: "running";
-      timeoutHandle: number;
+      timeoutHandle: ReturnType<typeof setTimeout>;
       interval: number;
       lastScheduledAt: number;
       remainingInterval: null;
@@ -51,7 +51,7 @@ export function makePoller(callback: () => void): Poller {
       state: "running",
       interval: context.state !== "stopped" ? context.interval : interval,
       lastScheduledAt: performance.now(),
-      timeoutHandle: setTimeout(poll, interval) as any,
+      timeoutHandle: setTimeout(poll, interval),
       remainingInterval: null,
     };
   }
@@ -65,7 +65,7 @@ export function makePoller(callback: () => void): Poller {
       state: "running",
       interval: context.interval,
       lastScheduledAt: context.lastScheduledAt,
-      timeoutHandle: setTimeout(poll, remaining) as any,
+      timeoutHandle: setTimeout(poll, remaining),
       remainingInterval: null,
     };
   }

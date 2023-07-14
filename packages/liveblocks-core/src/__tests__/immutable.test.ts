@@ -32,7 +32,7 @@ export async function prepareStorageImmutableTest<
   TStorage extends LsonObject,
   TPresence extends JsonObject = never,
   TUserMeta extends BaseUserMeta = never,
-  TRoomEvent extends Json = never,
+  TRoomEvent extends Json = never
 >(items: IdTuple<SerializedCrdt>[], actor: number = 0) {
   let state = {} as ToJson<TStorage>;
   let refState = {} as ToJson<TStorage>;

@@ -41,7 +41,7 @@ const ACTION_TYPES = {
 
 type LiveblocksContext<
   TPresence extends JsonObject,
-  TUserMeta extends BaseUserMeta,
+  TUserMeta extends BaseUserMeta
 > = {
   /**
    * Other users in the room. Empty no room is currently synced
@@ -80,7 +80,7 @@ type LiveblocksContext<
 export type LiveblocksState<
   TState,
   TPresence extends JsonObject,
-  TUserMeta extends BaseUserMeta,
+  TUserMeta extends BaseUserMeta
 > = WithLiveblocks<TState, TPresence, TUserMeta>;
 
 /**
@@ -89,7 +89,7 @@ export type LiveblocksState<
 export type WithLiveblocks<
   TState,
   TPresence extends JsonObject,
-  TUserMeta extends BaseUserMeta,
+  TUserMeta extends BaseUserMeta
 > = TState & { readonly liveblocks: LiveblocksContext<TPresence, TUserMeta> };
 
 const internalEnhancer = <TState>(options: {

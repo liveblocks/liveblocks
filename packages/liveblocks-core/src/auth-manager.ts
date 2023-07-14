@@ -1,13 +1,9 @@
 import { StopRetrying } from "./connection";
 import type { Json } from "./lib/Json";
 import { isPlainObject } from "./lib/utils";
-import {
-  ApiScope,
-  ParsedAuthToken,
-  TokenKind,
-  parseAuthToken,
-} from "./protocol/AuthToken";
 import type { Authentication } from "./protocol/Authentication";
+import type { ParsedAuthToken } from "./protocol/AuthToken";
+import { ApiScope, parseAuthToken, TokenKind } from "./protocol/AuthToken";
 import type { Polyfills } from "./room";
 
 export type AuthValue =
@@ -37,9 +33,9 @@ export function createAuthManager(
 ): AuthManager {
   const authentication = prepareAuthentication(authOptions);
 
-  let tokens: ParsedAuthToken[] = [];
+  const tokens: ParsedAuthToken[] = [];
 
-  let requestPromises = new Map<string, Promise<ParsedAuthToken>>();
+  const requestPromises = new Map<string, Promise<ParsedAuthToken>>();
 
   function hasCorrespondingScopes(
     requestedScope: RequestedScope,

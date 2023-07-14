@@ -35,14 +35,14 @@ export type RealtimeClient = {
 const makeAuthenticationDelegate = (authManager: AuthManager) => async () => {
   const value = await authManager.getAuthValue("comments:read", "");
 
-  if(value.type === "secret") {
+  if (value.type === "secret") {
     return value.token.raw;
   } else {
     return value.publicApiKey;
   }
-}
+};
 
-const EVENTS_SERVER = process.env.NEXT_PUBLIC_EVENTS_SERVER;
+const EVENTS_SERVER = process.env.NEXT_PUBLIC_EVENTS_SERVER as string;
 
 const makeCreateWebSocketDelegate = () => {
   return (token: string) =>

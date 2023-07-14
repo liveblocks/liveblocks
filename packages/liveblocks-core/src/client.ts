@@ -1,4 +1,5 @@
-import { AuthManager, createAuthManager } from "./auth-manager";
+import type { AuthManager } from "./auth-manager";
+import { createAuthManager } from "./auth-manager";
 import type { LsonObject } from "./crdts/Lson";
 import { linkDevTools, setupDevTools, unlinkDevTools } from "./devtools";
 import { deprecateIf } from "./lib/deprecation";
@@ -6,15 +7,12 @@ import type { Json, JsonObject } from "./lib/Json";
 import type { Resolve } from "./lib/Resolve";
 import type { BaseUserMeta } from "./protocol/BaseUserMeta";
 import { createRealtimeClient, type RealtimeClient } from "./realtime-client";
+import type { Polyfills, Room, RoomDelegates, RoomInitializers } from "./room";
 import {
+  createRoom,
   makeAuthDelegateForRoom,
   makeCreateSocketDelegateForRoom,
-  Polyfills,
-  Room,
-  RoomDelegates,
-  RoomInitializers,
 } from "./room";
-import { createRoom } from "./room";
 
 const MIN_THROTTLE = 16;
 const MAX_THROTTLE = 1000;
