@@ -192,25 +192,33 @@ Displays a comment body.
 <Comment.Body body={comment.body} />
 ```
 
+<Table columns={["auto", "auto", "54%"]}>
+
 | Prop            | Type                                                                     | Description                                                                                     |
 | --------------- | ------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------- |
 | `body`          | `CommentBody \| undefined`                                               | The comment body to be displayed. If not defined, the component will render `null`.             |
 | `renderMention` | <code>ComponentType&lt;CommentRenderMentionProps&gt; \| undefined</code> | The component used to render mentions.<br/>Defaults to the mention’s `userId` prefixed by an @. |
 | `asChild`       | `boolean \| undefined`                                                   | Replace the rendered element by the one passed as a child.<br/>Defaults to `false`.             |
 
+</Table>
+
 ##### renderMention [#Comment.Body-renderMention]
 
 A render prop that accepts a component used to render mentions.
-
-| Prop     | Type     | Description            |
-| -------- | -------- | ---------------------- |
-| `userId` | `string` | The mention’s user ID. |
 
 ```tsx
 <Comment.Body
   renderMention={({ userId }) => <Comment.Mention>@{userId}</Comment.Mention>}
 />
 ```
+
+<Table columns={["auto", "auto", "54%"]}>
+
+| Prop     | Type     | Description            |
+| -------- | -------- | ---------------------- |
+| `userId` | `string` | The mention’s user ID. |
+
+</Table>
 
 #### Comment.Mention
 
@@ -220,9 +228,13 @@ Displays mentions within `Comment.Body`’s `renderMention` prop.
 <Comment.Mention>@{userId}</Comment.Mention>
 ```
 
+<Table columns={["auto", "auto", "54%"]}>
+
 | Prop      | Type                   | Description                                                                         |
 | --------- | ---------------------- | ----------------------------------------------------------------------------------- |
 | `asChild` | `boolean \| undefined` | Replace the rendered element by the one passed as a child.<br/>Defaults to `false`. |
+
+</Table>
 
 ### Composer
 
@@ -259,10 +271,14 @@ Surrounds the composer’s content and handles submissions.
 </Composer.Form>
 ```
 
+<Table columns={["auto", "auto", "54%"]}>
+
 | Prop              | Type                                                                                                                                 | Description                                                                         |
 | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------- |
 | `onCommentSubmit` | <code>((comment: ComposerSubmitComment, event: FormEvent&lt;HTMLFormElement&gt;) => Promise&lt;void&gt; \| void) \| undefined</code> | The event handler called when the form is submitted.                                |
 | `asChild`         | `boolean \| undefined`                                                                                                               | Replace the rendered element by the one passed as a child.<br/>Defaults to `false`. |
+
+</Table>
 
 #### Composer.Body
 
@@ -271,6 +287,8 @@ Displays the composer’s body editor.
 ```tsx
 <Composer.Body placeholder="Write a comment…" />
 ```
+
+<Table columns={["auto", "auto", "54%"]}>
 
 | Prop                        | Type                                                                                 | Description                                                                                            |
 | --------------------------- | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ |
@@ -281,19 +299,20 @@ Displays the composer’s body editor.
 | `renderMentionSuggestions`  | <code>ComponentType&lt;ComposerRenderMentionSuggestionsProps&gt; \| undefined</code> | The component used to render mention suggestions.<br/>Defaults to a list of the suggestions’ `userId`. |
 | `resolveMentionSuggestions` | <code>(text: string) => Promise&lt;string[]&gt; \| undefined</code>                  | An asynchronous function to get a list of suggested user IDs from a string.                            |
 
+</Table>
+
+<Table columns={["28%", "auto"]}>
+
 | Attribute       | Value                                   |
 | --------------- | --------------------------------------- |
 | `data-focused`  | Present when the component is focused.  |
 | `data-disabled` | Present when the component is disabled. |
 
+</Table>
+
 ##### renderMention [#Composer.Body-renderMention]
 
 A render prop that accepts a component used to render mentions.
-
-| Prop         | Type      | Description                      |
-| ------------ | --------- | -------------------------------- |
-| `userId`     | `string`  | The mention’s user ID.           |
-| `isSelected` | `boolean` | Whether the mention is selected. |
 
 ```tsx
 <Composer.Body
@@ -303,14 +322,27 @@ A render prop that accepts a component used to render mentions.
 />
 ```
 
+<Table columns={["auto", "auto", "54%"]}>
+
+| Prop         | Type      | Description                      |
+| ------------ | --------- | -------------------------------- |
+| `userId`     | `string`  | The mention’s user ID.           |
+| `isSelected` | `boolean` | Whether the mention is selected. |
+
+</Table>
+
 ##### renderMentionSuggestions [#Composer.Body-renderMentionSuggestions]
 
 A render prop that accepts a component used to render mention suggestions.
+
+<Table columns={["auto", "auto", "54%"]}>
 
 | Prop             | Type                    | Description                     |
 | ---------------- | ----------------------- | ------------------------------- |
 | `userIds`        | `string[] \| undefined` | The list of suggested user IDs. |
 | `selectedUserId` | `string \| undefined`   | The currently selected user ID. |
+
+</Table>
 
 ```tsx
 <Composer.Body
@@ -332,13 +364,21 @@ Displays mentions within `Composer.Body`’s `renderMention` prop.
 <Composer.Mention>@{userId}</Composer.Mention>
 ```
 
+<Table columns={["auto", "auto", "54%"]}>
+
 | Prop      | Type                   | Description                                                                         |
 | --------- | ---------------------- | ----------------------------------------------------------------------------------- |
 | `asChild` | `boolean \| undefined` | Replace the rendered element by the one passed as a child.<br/>Defaults to `false`. |
 
+</Table>
+
+<Table columns={["28%", "auto"]}>
+
 | Attribute       | Value                                 |
 | --------------- | ------------------------------------- |
 | `data-selected` | Present when the mention is selected. |
+
+</Table>
 
 #### Composer.Suggestions
 
@@ -352,9 +392,13 @@ Surrounds a list of suggestions within `Composer.Body`.
 <Composer.Suggestions>
 ```
 
+<Table columns={["auto", "auto", "54%"]}>
+
 | Prop      | Type                   | Description                                                                         |
 | --------- | ---------------------- | ----------------------------------------------------------------------------------- |
 | `asChild` | `boolean \| undefined` | Replace the rendered element by the one passed as a child.<br/>Defaults to `false`. |
+
+</Table>
 
 #### Composer.SuggestionsList
 
@@ -364,9 +408,13 @@ Displays a list of suggestions within `Composer.Body`.
 <Composer.SuggestionsList>{/* … */}</Composer.SuggestionsList>
 ```
 
+<Table columns={["auto", "auto", "54%"]}>
+
 | Prop      | Type                   | Description                                                                         |
 | --------- | ---------------------- | ----------------------------------------------------------------------------------- |
 | `asChild` | `boolean \| undefined` | Replace the rendered element by the one passed as a child.<br/>Defaults to `false`. |
+
+</Table>
 
 #### Composer.SuggestionsListItem
 
@@ -382,14 +430,22 @@ Displays a suggestion within `Composer.SuggestionsList`.
 </Composer.SuggestionsList>
 ```
 
+<Table columns={["auto", "auto", "54%"]}>
+
 | Prop      | Type                   | Description                                                                         |
 | --------- | ---------------------- | ----------------------------------------------------------------------------------- |
 | `value`   | `string`               | The suggestion’s value.                                                             |
 | `asChild` | `boolean \| undefined` | Replace the rendered element by the one passed as a child.<br/>Defaults to `false`. |
 
+</Table>
+
+<Table columns={["28%", "auto"]}>
+
 | Attribute       | Value                              |
 | --------------- | ---------------------------------- |
 | `data-selected` | Present when the item is selected. |
+
+</Table>
 
 ### Time
 
@@ -400,6 +456,8 @@ re-rendering.
 <Time date={new Date()} />
 ```
 
+<Table columns={["auto", "auto", "54%"]}>
+
 | Prop       | Type                                              | Description                                                                                                                                 |
 | ---------- | ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
 | `date`     | `Date \| string \| number`                        | The date to be displayed.                                                                                                                   |
@@ -407,3 +465,5 @@ re-rendering.
 | `title`    | `string \| ((date: Date) => string) \| undefined` | The `title` attribute’s value or a function to format it.<br/>Defaults to an absolute date formatting function.                             |
 | `interval` | `number \| false \| undefined`                    | The interval in milliseconds at which the component will re-render. Can be set to `false` to disable re-rendering.<br/>Defaults to `30000`. |
 | `asChild`  | `boolean \| undefined`                            | Replace the rendered element by the one passed as a child.<br/>Defaults to `false`.                                                         |
+
+</Table>
