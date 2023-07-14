@@ -196,6 +196,11 @@ export type ComposerContext = {
    * Whether the editor is currently valid.
    */
   isValid: boolean;
+
+  /**
+   * Submit the composer programmatically.
+   */
+  submit: () => void;
 };
 
 export interface ComposerMentionSuggestionsWrapperProps {
@@ -223,7 +228,6 @@ export interface ComposerMentionWrapperProps
 type SuggestionsPosition = "top" | "bottom";
 
 type ComposerEditorContext = ComposerContext & {
-  submit: () => void;
   validate: (value: SlateElement[]) => void;
   editor: SlateEditor;
 };
@@ -374,14 +378,22 @@ function useMentionSuggestions(
   return data;
 }
 
+/**
+ * Returns states and methods related to the composer.
+ *
+ * @example
+ * const { isValid, submit } = useComposer();
+ */
 export function useComposer(): ComposerContext {
   const composerEditorContext = useContext(ComposerEditorContext);
+  const context = nn(
+    composerEditorContext,
+    `useComposer can’t be used outside of ${COMPOSER_FORM_NAME}.`
+  );
 
   return {
-    isValid: nn(
-      composerEditorContext,
-      `useComposer can’t be used outside of ${COMPOSER_FORM_NAME}.`
-    ).isValid,
+    isValid: context.isValid,
+    submit: context.submit,
   };
 }
 
