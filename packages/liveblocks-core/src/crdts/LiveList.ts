@@ -278,8 +278,10 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
 
     const unacknowledgedOpId = this._unacknowledgedSets.get(op.parentKey);
 
-    if (unacknowledgedOpId !== undefined) {
-      if (unacknowledgedOpId !== op.opId) {
+    if (unacknowledgedOpId !== undefined) { 
+      // If the acknowledge set operation has been overriden by another local LiveList.set (it happens when the user does fast consecutive LiveList.set)... 
+      if (unacknowledgedOpId !== op.opId) { 
+        // ... we ignore the incoming operation ...
         return delta.length === 0
           ? { modified: false }
           : { modified: makeUpdate(this, delta), reverse: [] };
