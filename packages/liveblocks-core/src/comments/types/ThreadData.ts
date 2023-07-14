@@ -1,17 +1,12 @@
 import type { BaseMetadata } from "./BaseMetadata";
 import type { CommentData } from "./CommentData";
 
-type BaseThreadData = {
+export type ThreadData<ThreadMetadata extends BaseMetadata = never> = {
   id: string;
   type: "thread";
   createdAt: string;
   updatedAt?: string;
   roomId: string;
   comments: CommentData[];
+  metadata: ThreadMetadata;
 };
-
-export type ThreadData<ThreadMetadata extends BaseMetadata = never> = [
-  ThreadMetadata
-] extends [never]
-  ? BaseThreadData
-  : BaseThreadData & { metadata: ThreadMetadata };
