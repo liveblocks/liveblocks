@@ -72,11 +72,19 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
   /** @internal */
   private _unacknowledgedSets: Map<string, string>;
 
+  /** 
+   * @internal 
+   * Keep an set of all the ids that have been deleted by a set 
+   * to ensure they are not reinserted by an insert acknowledge op
+   */
+  private _unacknowledgedDeletedIds: Set<string>;
+
   constructor(items: TItem[] = []) {
     super();
     this._items = [];
     this._implicitlyDeletedItems = new WeakSet();
     this._unacknowledgedSets = new Map();
+    this._unacknowledgedDeletedIds = new Set();
 
     let position = undefined;
     for (const item of items) {
@@ -268,6 +276,8 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       throw new Error("Can't attach child if managed pool is not present");
     }
 
+    this._unacknowledgedDeletedIds.delete(nn(op.deletedId))
+
     const delta: LiveListUpdateDelta[] = [];
 
     // Deleted item can be re-inserted by remote undo/redo
@@ -426,6 +436,12 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
 
   /** @internal */
   private _applyInsertAck(op: CreateChildOp): ApplyResult {
+    if (this._unacknowledgedDeletedIds.has(op.id)) {
+      return {
+        modified: false
+      }
+    }
+
     const existingItem = this._items.find((item) => item._id === op.id);
     const key = asPos(op.parentKey);
 
@@ -1078,6 +1094,10 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
 
     const existingId = existingItem._id;
     existingItem._detach();
+
+    if(existingId !== undefined) {
+      this._unacknowledgedDeletedIds.add(existingId);
+    }
 
     const value = lsonToLiveNode(item);
     value._setParentLink(this, position);
