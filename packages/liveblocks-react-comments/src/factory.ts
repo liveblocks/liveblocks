@@ -168,7 +168,7 @@ function warnIfNoResolveUser(
 }
 
 export function createCommentsContext<
-  TThreadMetadata extends BaseMetadata = Record<never, never>,
+  TThreadMetadata extends BaseMetadata = never,
   TUserMeta extends BaseUserMeta = BaseUserMeta
 >(
   client: Client,

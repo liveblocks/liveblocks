@@ -39,19 +39,21 @@ export type CommentsRoom<TThreadMetadata extends BaseMetadata> = {
   disconnect(): void;
 };
 
-export type CreateThreadOptions<ThreadMetadata extends BaseMetadata> =
-  keyof ThreadMetadata extends never
-    ? {
-        body: CommentBody;
-      }
-    : { body: CommentBody; metadata: ThreadMetadata };
+export type CreateThreadOptions<TMetadata extends BaseMetadata> = [
+  TMetadata
+] extends [never]
+  ? {
+      body: CommentBody;
+    }
+  : { body: CommentBody; metadata: TMetadata };
 
-export type EditThreadOptions<ThreadMetadata extends BaseMetadata> =
-  keyof ThreadMetadata extends never
-    ? {
-        threadId: string;
-      }
-    : { threadId: string; metadata: Partial<ThreadMetadata> };
+export type EditThreadOptions<TMetadata extends BaseMetadata> = [
+  TMetadata
+] extends [never]
+  ? {
+      threadId: string;
+    }
+  : { threadId: string; metadata: Partial<TMetadata> };
 
 export type CreateCommentOptions = {
   threadId: string;
