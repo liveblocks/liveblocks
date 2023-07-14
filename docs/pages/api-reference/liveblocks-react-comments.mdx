@@ -181,11 +181,11 @@ Displays a comment body.
 <Comment.Body body={comment.body} />
 ```
 
-| Prop            | Type                                                      | Description                                                                                     |
-| --------------- | --------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| `body`          | `CommentBody \| undefined`                                | The comment body to be displayed. If not defined, the component will render `null`.             |
-| `renderMention` | `ComponentType\<CommentRenderMentionProps\> \| undefined` | The component used to render mentions.<br/>Defaults to the mention’s `userId` prefixed by an @. |
-| `asChild`       | `boolean \| undefined`                                    | Replace the rendered element by the one passed as a child.<br/>Defaults to `false`.             |
+| Prop            | Type                                                                     | Description                                                                                     |
+| --------------- | ------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------- |
+| `body`          | `CommentBody \| undefined`                                               | The comment body to be displayed. If not defined, the component will render `null`.             |
+| `renderMention` | <code>ComponentType&lt;CommentRenderMentionProps&gt; \| undefined</code> | The component used to render mentions.<br/>Defaults to the mention’s `userId` prefixed by an @. |
+| `asChild`       | `boolean \| undefined`                                                   | Replace the rendered element by the one passed as a child.<br/>Defaults to `false`.             |
 
 ##### renderMention
 
@@ -248,10 +248,10 @@ Surrounds the composer’s content and handles submissions.
 </Composer.Form>
 ```
 
-| Prop              | Type                                                                                                              | Description                                                                         |
-| ----------------- | ----------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
-| `onCommentSubmit` | `((comment: ComposerSubmitComment, event: FormEvent\<HTMLFormElement\>) => Promise\<void\> \| void) \| undefined` | The event handler called when the form is submitted.                                |
-| `asChild`         | `boolean \| undefined`                                                                                            | Replace the rendered element by the one passed as a child.<br/>Defaults to `false`. |
+| Prop              | Type                                                                                                                                 | Description                                                                         |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------- |
+| `onCommentSubmit` | <code>((comment: ComposerSubmitComment, event: FormEvent&lt;HTMLFormElement&gt;) => Promise&lt;void&gt; \| void) \| undefined</code> | The event handler called when the form is submitted.                                |
+| `asChild`         | `boolean \| undefined`                                                                                                               | Replace the rendered element by the one passed as a child.<br/>Defaults to `false`. |
 
 #### Composer.Body
 
@@ -261,14 +261,14 @@ Displays the composer’s body editor.
 <Composer.Body placeholder="Write a comment…" />
 ```
 
-| Prop                        | Type                                                                  | Description                                                                                            |
-| --------------------------- | --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| `initialValue`              | `CommentBody \| undefined`                                            | The editor’s initial value.                                                                            |
-| `placeholder`               | `string \| undefined`                                                 | The text to display when the editor is empty.                                                          |
-| `disabled`                  | `boolean \| undefined`                                                | Whether the editor is disabled.                                                                        |
-| `renderMention`             | `ComponentType\<ComposerRenderMentionProps\> \| undefined`            | The component used to render mentions.<br/>Defaults to the mention’s `userId` prefixed by an @.        |
-| `renderMentionSuggestions`  | `ComponentType\<ComposerRenderMentionSuggestionsProps\> \| undefined` | The component used to render mention suggestions.<br/>Defaults to a list of the suggestions’ `userId`. |
-| `resolveMentionSuggestions` | `(text: string) => Promise\<string[]\> \| undefined`                  | An asynchronous function to get a list of suggested user IDs from a string.                            |
+| Prop                        | Type                                                                                 | Description                                                                                            |
+| --------------------------- | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ |
+| `initialValue`              | `CommentBody \| undefined`                                                           | The editor’s initial value.                                                                            |
+| `placeholder`               | `string \| undefined`                                                                | The text to display when the editor is empty.                                                          |
+| `disabled`                  | `boolean \| undefined`                                                               | Whether the editor is disabled.                                                                        |
+| `renderMention`             | <code>ComponentType&lt;ComposerRenderMentionProps&gt; \| undefined</code>            | The component used to render mentions.<br/>Defaults to the mention’s `userId` prefixed by an @.        |
+| `renderMentionSuggestions`  | <code>ComponentType&lt;ComposerRenderMentionSuggestionsProps&gt; \| undefined</code> | The component used to render mention suggestions.<br/>Defaults to a list of the suggestions’ `userId`. |
+| `resolveMentionSuggestions` | <code>(text: string) => Promise&lt;string[]&gt; \| undefined</code>                  | An asynchronous function to get a list of suggested user IDs from a string.                            |
 
 ##### renderMention
 
