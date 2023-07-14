@@ -100,7 +100,8 @@ const { user, error, isLoading } = useUser("user-id");
 <Banner title="Providing a resolver function">
 
 To use `useUser`, you should provide a resolver function to the
-[`resolveUser` option in `createCommentContext`](#resolving-users).
+[`resolveUser`](#resolving-users) option in
+[`createCommentContext`](#createCommentContext).
 
 </Banner>
 
@@ -197,7 +198,7 @@ Displays a comment body.
 | `renderMention` | <code>ComponentType&lt;CommentRenderMentionProps&gt; \| undefined</code> | The component used to render mentions.<br/>Defaults to the mention’s `userId` prefixed by an @. |
 | `asChild`       | `boolean \| undefined`                                                   | Replace the rendered element by the one passed as a child.<br/>Defaults to `false`.             |
 
-##### renderMention
+##### renderMention [#Comment.Body-renderMention]
 
 A render prop that accepts a component used to render mentions.
 
@@ -285,7 +286,7 @@ Displays the composer’s body editor.
 | `data-focused`  | Present when the component is focused.  |
 | `data-disabled` | Present when the component is disabled. |
 
-##### renderMention
+##### renderMention [#Composer.Body-renderMention]
 
 A render prop that accepts a component used to render mentions.
 
@@ -302,7 +303,7 @@ A render prop that accepts a component used to render mentions.
 />
 ```
 
-##### renderMentionSuggestions
+##### renderMentionSuggestions [#Composer.Body-renderMentionSuggestions]
 
 A render prop that accepts a component used to render mention suggestions.
 
