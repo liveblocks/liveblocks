@@ -872,7 +872,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     this._pool?.assertStorageIsWritable();
     if (index < 0 || index > this._items.length) {
       throw new Error(
-        `Cannot insert list item at index "${index}". index should be between 0 and ${this._items.length}`
+        `Cannot insert list item at index "${index}". index should be between 0 and ${this._items.length}`
       );
     }
 
@@ -985,7 +985,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     this._pool?.assertStorageIsWritable();
     if (index < 0 || index >= this._items.length) {
       throw new Error(
-        `Cannot delete list item at index "${index}". index should be between 0 and ${
+        `Cannot delete list item at index "${index}". index should be between 0 and ${
           this._items.length - 1
         }`
       );
@@ -1067,7 +1067,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     this._pool?.assertStorageIsWritable();
     if (index < 0 || index >= this._items.length) {
       throw new Error(
-        `Cannot set list item at index "${index}". index should be between 0 and ${
+        `Cannot set list item at index "${index}". index should be between 0 and ${
           this._items.length - 1
         }`
       );
