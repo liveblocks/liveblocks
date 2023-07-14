@@ -1122,6 +1122,66 @@ describe("LiveList", () => {
         items: ["B", "C"], // C position is shifted
       });
     });
+
+    it("fast push + set", async () => {
+      const { root, expectStorage, applyRemoteOperations } =
+        await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
+          [
+            createSerializedObject("0:0", {}),
+            createSerializedList("0:1", "0:0", "items"),
+          ],
+          1
+        );
+
+      const items = root.get("items");
+
+      // Register id = 1:0
+      items.push("A");
+
+      expectStorage({
+        items: ["A"],
+      })
+
+      // Register id = 1:1
+      items.set(0, "B");
+
+      expectStorage({
+        items: ["B"],
+      })
+
+      applyRemoteOperations([
+        {
+          id: "1:0",
+          opId: "1:0",
+          type: OpCode.CREATE_REGISTER,
+          parentId: "0:1",
+          parentKey: FIRST_POSITION,
+          data: "A",
+        },
+      ]);
+
+      expectStorage({
+        items: ["B"],
+      })
+
+      applyRemoteOperations([
+        {
+          id: "1:0",
+          opId: "1:1",
+          type: OpCode.CREATE_REGISTER,
+          parentId: "0:1",
+          parentKey: FIRST_POSITION,
+          data: "B",
+          intent: "set",
+          deletedId: "1:0",
+        },
+      ]);
+
+
+      expectStorage({
+        items: ["B"],
+      });
+    });
   });
 
   describe("subscriptions", () => {
