@@ -25,6 +25,8 @@ import type {
   RoomThreads,
 } from "./CommentsRoom";
 import { createCommentsRoom } from "./CommentsRoom";
+import type { ComposerContext } from "./components/Composer";
+import { useComposer } from "./components/Composer";
 import type { CommentsApiError } from "./errors";
 import { useAsyncCache } from "./lib/use-async-cache";
 
@@ -125,6 +127,14 @@ type CommentsContext<
     onError: (error: CommentsApiError<TThreadMetadata>) => void
   ): void;
 
+  /**
+   * Returns states and methods related to the composer.
+   *
+   * @example
+   * const { isValid, submit } = useComposer();
+   */
+  useComposer(): ComposerContext;
+
   readonly suspense: {
     /**
      * Returns the threads within a given room.
@@ -141,6 +151,26 @@ type CommentsContext<
      * const { user, error, isLoading } = useUser("user-id");
      */
     useUser(userId: string): UserStateSuspense<TUserMeta>;
+
+    /**
+     * Listen to potential errors when creating and editing threads/comments.
+     *
+     * @example
+     * useErrorListener(error => {
+     *   console.error(error);
+     * })
+     */
+    useErrorListener(
+      onError: (error: CommentsApiError<TThreadMetadata>) => void
+    ): void;
+
+    /**
+     * Returns states and methods related to the composer.
+     *
+     * @example
+     * const { isValid, submit } = useComposer();
+     */
+    useComposer(): ComposerContext;
   };
 };
 
@@ -287,12 +317,15 @@ export function createCommentsContext<
     createComment,
     editComment,
     deleteComment,
-    useErrorListener,
     useThreads,
     useUser,
+    useErrorListener,
+    useComposer,
     suspense: {
       useThreads: useThreadsSuspense,
       useUser: useUserSuspense,
+      useErrorListener,
+      useComposer,
     },
   };
 }

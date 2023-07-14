@@ -378,12 +378,6 @@ function useMentionSuggestions(
   return data;
 }
 
-/**
- * Returns states and methods related to the composer.
- *
- * @example
- * const { isValid, submit } = useComposer();
- */
 export function useComposer(): ComposerContext {
   const composerEditorContext = useContext(ComposerEditorContext);
   const context = nn(

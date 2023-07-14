@@ -16,7 +16,7 @@ export type {
   ComposerSuggestionsListItemProps,
   ComposerSuggestionsListProps,
 } from "./components/Composer";
-export { Composer, useComposer } from "./components/Composer";
+export { Composer } from "./components/Composer";
 export type { TimeProps } from "./components/Time";
 export { Time } from "./components/Time";
 export { createCommentsContext } from "./factory";
