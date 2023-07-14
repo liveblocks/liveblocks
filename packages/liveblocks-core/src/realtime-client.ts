@@ -1,10 +1,11 @@
-import type { AuthManager } from "./auth-manager";
-import type { Status } from "./connection";
+import type { AuthManager, AuthValue } from "./auth-manager";
+import type { BaseAuthResult, Status } from "./connection";
 import { ManagedSocket } from "./connection";
 import { assertNever } from "./lib/assert";
 import type { Callback } from "./lib/EventSource";
 import { makeEventSource } from "./lib/EventSource";
 import { tryParseJson } from "./lib/utils";
+import { TokenKind } from "./protocol/AuthToken";
 import type {
   RealtimeEvent,
   RealtimeEventTypes,
@@ -21,77 +22,89 @@ type RoomEventCallbackMap = {
  * The RealtimeClient is the main entry point to the Liveblocks Realtime API.
  */
 export type RealtimeClient = {
-  connect(): void;
-  disconnect(): void;
   subscribe<E extends keyof RoomEventCallbackMap>(
     type: "events" | E,
     first: string | RoomEventCallbackMap[E],
     second?: RealtimeEventTypes[],
     third?: Callback<RealtimeEvent[]>
   ): () => void;
-  getConnectionState(): Status;
 };
 
-const makeAuthenticationDelegate = (authManager: AuthManager) => async () => {
-  const value = await authManager.getAuthValue("comments:read", "");
-
-  if (value.type === "secret") {
-    return value.token.raw;
-  } else {
-    return value.publicApiKey;
-  }
-};
+export function makeAuthenticationDelegate(
+  roomId: string,
+  authManager: AuthManager
+): () => Promise<AuthValue> {
+  return async () => {
+    return authManager.getAuthValue("room:read", roomId);
+  };
+}
 
 const EVENTS_SERVER = process.env.NEXT_PUBLIC_EVENTS_SERVER as string;
 
+
 const makeCreateWebSocketDelegate = () => {
-  return (token: string) =>
-    // TODO: handle prod & dev
-    new WebSocket(`${EVENTS_SERVER}?token=${token}`);
+  return (authValue: AuthValue) => {
+
+   let authParam = "";
+   if (authValue.type === "secret") {
+    authParam = `token=${authValue.token.raw}`
+   }
+   else {
+    authParam = `token=${authValue.publicApiKey}`
+   }
+
+  return new WebSocket(`${EVENTS_SERVER}?${authParam}`);
+  } 
 };
 
+
 export function createRealtimeClient(authManager: AuthManager): RealtimeClient {
-  const delegates = {
-    authenticate: makeAuthenticationDelegate(authManager),
-    createSocket: makeCreateWebSocketDelegate(),
-  };
-
-  const managedSocket = new ManagedSocket(delegates);
-
   const eventHub = {
     error: makeEventSource<Error>(),
     connection: makeEventSource<Status>(),
     events: makeEventSource<RealtimeEvent[]>(),
   };
 
-  /**
-   * Send connection events to eventHub
-   */
-  managedSocket.events.statusDidChange.subscribe((event) =>
-    eventHub.connection.notify(event)
-  );
-
-  /**
-   * Send error events to eventHub
-   */
-  managedSocket.events.onLiveblocksError.subscribe((event) =>
-    eventHub.error.notify(event)
-  );
-
-  /**
-   * Send regular events to eventHub
-   */
-  managedSocket.events.onMessage.subscribe((event) => {
-    if (typeof event.data !== "string") {
-      return;
-    }
-
-    const jsonEvent = tryParseJson(event.data);
-
-    if (jsonEvent) {
-      eventHub.events.notify([jsonEvent as RealtimeEvent]);
-    }
-  });
+  let managedSocket: ManagedSocket<BaseAuthResult> | null = null; 
+  
+  function createManagedSocket(roomId: string) {
+    const delegates = {
+      authenticate: makeAuthenticationDelegate(roomId, authManager),
+      createSocket: makeCreateWebSocketDelegate(),
+    };
+  
+    managedSocket = new ManagedSocket(delegates, true);
+  
+    /**
+     * Send connection events to eventHub
+     */
+    managedSocket.events.statusDidChange.subscribe((event) =>
+      eventHub.connection.notify(event)
+    );
+  
+    /**
+     * Send error events to eventHub
+     */
+    managedSocket.events.onLiveblocksError.subscribe((event) =>
+      eventHub.error.notify(event)
+    );
+  
+    /**
+     * Send regular events to eventHub
+     */
+    managedSocket.events.onMessage.subscribe((event) => {
+      if (typeof event.data !== "string") {
+        return;
+      }
+  
+      const jsonEvent = tryParseJson(event.data);
+  
+      if (jsonEvent) {
+        eventHub.events.notify([jsonEvent as RealtimeEvent]);
+      }
+    });
+  }
+  
 
   function subscribe<E extends keyof RoomEventCallbackMap>(
     type: E,
@@ -109,19 +122,51 @@ export function createRealtimeClient(authManager: AuthManager): RealtimeClient {
     second?: RealtimeEventTypes[],
     third?: Callback<RealtimeEvent[]>
   ): () => void {
+    console.log("____SUBSCRIBE____", type, first, second, third)
     switch (type) {
       case "events":
+        if(
+          // If roomId
+          typeof first === "string"
+        ) {
+          const roomId = first;
+          authManager.getAuthValue("comments:read", roomId).then((authValue) => {
+            const subscribeMessage: {
+              type: string;
+              rooms: string[];
+              token?: string;
+            } = {
+              type: "subscribeToRooms",
+              rooms: [roomId],
+            }
+
+            if(authValue.type === "secret" && authValue.token.parsed.k === TokenKind.ACCESS_TOKEN) {
+              subscribeMessage.token = authValue.token.raw
+            }
+           
+            if(!managedSocket) {
+              console.log("____CREATE MANAGED SOCKET____", roomId)
+              createManagedSocket(roomId);
+            }
+
+            if (managedSocket) {
+              managedSocket.connect();
+              managedSocket.send(JSON.stringify(subscribeMessage));
+            }
+           
+          })
+
         return eventHub.events.subscribe((events) => {
           const filteredEvents = events.filter(
             (event) =>
               (second as RealtimeEventTypes[]).includes(event.type) &&
               first === event.roomId
-          );
-          if (filteredEvents.length > 0) {
+          );          
+          if (filteredEvents.length > 0) {              
             (third as RealtimeCallback)(filteredEvents);
           }
         });
-
+      }
       case "error":
         return eventHub.error.subscribe(first as Callback<Error>);
 
@@ -134,9 +179,6 @@ export function createRealtimeClient(authManager: AuthManager): RealtimeClient {
   }
 
   return {
-    connect: () => managedSocket.connect(),
-    disconnect: () => managedSocket.disconnect(),
-    getConnectionState: () => managedSocket.getStatus(),
     subscribe,
   };
 }

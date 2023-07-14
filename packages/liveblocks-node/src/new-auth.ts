@@ -28,6 +28,7 @@ export type CreateSessionOptions = {
   userInfo: unknown;
 };
 
+// TODO: update to DEV API URL
 const DEFAULT_BASE_URL = "https://api.liveblocks.io";
 
 export type AuthResponse = {

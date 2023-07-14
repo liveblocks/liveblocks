@@ -8,5 +8,8 @@
       "language": "markdown",
       "scheme": "file"
     }
-  ]
+  ],
+  "[ignore]": {
+    "editor.defaultFormatter": "foxundermoon.shell-format"
+  }
 }

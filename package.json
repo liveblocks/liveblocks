@@ -4,6 +4,7 @@
   "workspaces": [
     "shared/*",
     "packages/*",
+    "examples/nextjs-comments",
     "schema-lang/*",
     "e2e/next-sandbox"
   ],
