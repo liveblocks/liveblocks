@@ -98,7 +98,6 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
   realtimeClient: RealtimeClient,
   errorEventSource: EventSource<CommentsApiError<TThreadMetadata>>
 ): CommentsRoom<TThreadMetadata> {
-  console.log("___CREATE COMMENTS ROOM___")
   const store = createStore<RoomThreads<TThreadMetadata>>({
     isLoading: true,
   });
@@ -237,14 +236,14 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
   ): ThreadData<TThreadMetadata> {
     const body = options.body;
     const metadata: TThreadMetadata =
-      "metadata" in options ? options.metadata : ({} as TThreadMetadata);
+      "metadata" in options ? options.metadata : {} as TThreadMetadata;
     const threads = getLocalThreadsOrThrow();
 
     const threadId = createOptimisticId(THREAD_ID_PREFIX);
     const commentId = createOptimisticId(COMMENT_ID_PREFIX);
     const now = new Date().toISOString();
 
-    const newThread: ThreadData<TThreadMetadata> = {
+    const newThread = {
       id: threadId,
       type: "thread",
       createdAt: now,
@@ -259,7 +258,7 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
           body,
         },
       ],
-    };
+    } as ThreadData<TThreadMetadata>; // TODO: Figure out metadata typing
 
     setThreads([...threads, newThread]);
 
@@ -273,7 +272,7 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
             threadId,
             commentId,
             body,
-            metadata, // TODO
+            metadata
           })
         )
       )
