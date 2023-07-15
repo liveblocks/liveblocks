@@ -98,6 +98,7 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
   realtimeClient: RealtimeClient,
   errorEventSource: EventSource<CommentsApiError<TThreadMetadata>>
 ): CommentsRoom<TThreadMetadata> {
+  console.log("___CREATE COMMENTS ROOM___")
   const store = createStore<RoomThreads<TThreadMetadata>>({
     isLoading: true,
   });
@@ -158,12 +159,9 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
 
   subscribeThreads(() => {});
 
-  function subscribeThreads(
+  async function subscribeThreads(
     callback: (threads: RoomThreads<TThreadMetadata>) => void
   ) {
-    // Will only connect if not already connected
-    realtimeClient.connect();
-
     if (!unsubscribeRealtimeEvents) {
       unsubscribeRealtimeEvents = realtimeClient.subscribe(
         "events",
@@ -184,6 +182,7 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
     }
 
     if (!unsubscribeRealtimeConnection) {
+      console.log("___COMMENTS ROOM SUBSCRIBE___")
       unsubscribeRealtimeConnection = realtimeClient.subscribe(
         "connection",
         (connection) => {
