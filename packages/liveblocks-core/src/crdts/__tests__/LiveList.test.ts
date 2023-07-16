@@ -732,6 +732,70 @@ describe("LiveList", () => {
 
       assertUndoRedo();
     });
+
+    it("fast consecutive set operations should not temporarily override local changes", async () => {
+      const { root, expectStorage, applyRemoteOperations } =
+        await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
+          [
+            createSerializedObject("0:0", {}),
+            createSerializedList("0:1", "0:0", "items"),
+            createSerializedRegister("0:2", "0:1", FIRST_POSITION, "A"),
+          ],
+          1
+        );
+
+      const items = root.get("items");
+
+      // Register id = 1:0
+      items.set(0, "B");
+
+      expectStorage({
+        items: ["B"],
+      })
+
+      // Register id = 1:1
+      items.set(0, "C");
+
+      expectStorage({
+        items: ["C"],
+      })
+
+      // Ack of LiveList.set(0, "B") should be ignored
+      applyRemoteOperations([
+        {
+          id: "1:0",
+          opId: "1:0",
+          type: OpCode.CREATE_REGISTER,
+          parentId: "0:1",
+          parentKey: FIRST_POSITION,
+          data: "B",
+          intent: "set",
+          deletedId: "1:0",
+        },
+      ]);
+
+      expectStorage({
+        items: ["C"],
+      })
+
+      applyRemoteOperations([
+        {
+          id: "1:0",
+          opId: "1:1",
+          type: OpCode.CREATE_REGISTER,
+          parentId: "0:1",
+          parentKey: FIRST_POSITION,
+          data: "C",
+          intent: "set",
+          deletedId: "1:0",
+        },
+      ]);
+
+
+      expectStorage({
+        items: ["C"],
+      });
+    })
   });
 
   describe("conflict", () => {
