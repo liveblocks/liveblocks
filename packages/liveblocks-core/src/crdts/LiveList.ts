@@ -69,9 +69,6 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
   /** @internal */
   private _implicitlyDeletedItems: WeakSet<LiveNode>;
 
-  /** @internal */
-  private _unacknowledgedSets: Map<string, string>;
-
   /** 
    * @internal 
    * Keep an set of all the ids that have been deleted by a set 
@@ -87,7 +84,6 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     super();
     this._items = [];
     this._implicitlyDeletedItems = new WeakSet();
-    this._unacknowledgedSets = new Map();
     this._unacknowledgedDeletedIds = new Set();
 
     let position = undefined;
@@ -280,8 +276,6 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       throw new Error("Can't attach child if managed pool is not present");
     }
 
-    this._unacknowledgedDeletedIds.delete(nn(op.deletedId))
-
     const delta: LiveListUpdateDelta[] = [];
 
     // Deleted item can be re-inserted by remote undo/redo
@@ -290,18 +284,11 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       delta.push(deletedDelta);
     }
 
-    const unacknowledgedOpId = this._unacknowledgedSets.get(op.parentKey);
-
-    if (unacknowledgedOpId !== undefined) { 
-      // If the acknowledge set operation has been overriden by another local LiveList.set (it happens when the user does fast consecutive LiveList.set)... 
-      if (unacknowledgedOpId !== op.opId) { 
-        // ... we ignore the incoming operation ...
-        return delta.length === 0
-          ? { modified: false }
-          : { modified: makeUpdate(this, delta), reverse: [] };
-      } else {
-        this._unacknowledgedSets.delete(op.parentKey);
-      }
+    if(this._unacknowledgedDeletedIds.has(op.id)) {
+      this._unacknowledgedDeletedIds.delete(op.id);
+      return delta.length === 0
+        ? { modified: false }
+        : { modified: makeUpdate(this, delta), reverse: [] };
     }
 
     const indexOfItemWithSamePosition = this._indexOfPosition(op.parentKey);
@@ -551,8 +538,6 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     if (this._pool?.getNode(id) !== undefined) {
       return { modified: false };
     }
-
-    this._unacknowledgedSets.set(key, nn(op.opId));
 
     const indexOfItemWithSameKey = this._indexOfPosition(key);
 
@@ -1119,7 +1104,6 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
         value._toOps(this._id, position, this._pool),
         existingId
       );
-      this._unacknowledgedSets.set(position, nn(ops[0].opId));
       const reverseOps = HACK_addIntentAndDeletedIdToOperation(
         existingItem._toOps(this._id, position, undefined),
         id
