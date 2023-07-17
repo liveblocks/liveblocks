@@ -3,7 +3,7 @@ import {
   ALWAYS_FAIL_AUTH,
   AUTH_SUCCESS,
   defineBehavior,
-  SOCKET_AUTOCONNECT,
+  SOCKET_AUTOCONNECT_BUT_NO_ROOM_STATE,
   SOCKET_NO_BEHAVIOR,
 } from "./_behaviors";
 
@@ -31,7 +31,10 @@ describe("ManagedSocket", () => {
   test("authenticate succeeds, but no websocket connection", async () => {
     jest.useFakeTimers();
 
-    const { delegates } = defineBehavior(AUTH_SUCCESS, SOCKET_AUTOCONNECT);
+    const { delegates } = defineBehavior(
+      AUTH_SUCCESS,
+      SOCKET_AUTOCONNECT_BUT_NO_ROOM_STATE
+    );
 
     const didConnect = jest.fn();
     // const didDisconnect = jest.fn();

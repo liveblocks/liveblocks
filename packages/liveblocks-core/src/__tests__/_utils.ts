@@ -29,7 +29,7 @@ import { WebsocketCloseCodes } from "../types/IWebSocket";
 import {
   ALWAYS_AUTH_AS,
   defineBehavior,
-  SOCKET_AUTOCONNECT,
+  SOCKET_AUTOCONNECT_AND_ROOM_STATE,
 } from "./_behaviors";
 import type { MockWebSocketServer } from "./_MockWebSocketServer";
 import { MockWebSocket } from "./_MockWebSocketServer";
@@ -116,7 +116,7 @@ export async function prepareRoomWithStorage<
 
   const { wss, delegates } = defineBehavior(
     ALWAYS_AUTH_AS(actor, scopes),
-    SOCKET_AUTOCONNECT
+    SOCKET_AUTOCONNECT_AND_ROOM_STATE
   );
 
   const clonedItems = deepClone(items);
@@ -256,7 +256,7 @@ export async function prepareStorageTest<
       actor: -1,
       id: undefined,
       info: undefined,
-      scopes: [],
+      scopes: ["room:write"],
     })
   );
 
@@ -265,7 +265,9 @@ export async function prepareStorageTest<
   ref.wss.last.send(
     serverMessage({
       type: ServerMsgCode.ROOM_STATE,
-      users: { [currentActor]: { scopes: [] } },
+      actor: currentActor,
+      scopes: ["room:write"],
+      users: { [currentActor]: { scopes: ["room:write"] } },
     })
   );
 
@@ -346,7 +348,7 @@ export async function prepareStorageTest<
           actor,
           id: undefined,
           info: undefined,
-          scopes: [],
+          scopes: ["room:write"],
         })
       );
     });

@@ -328,6 +328,8 @@ describe("middleware", () => {
               scopes: [],
             },
           },
+          actor: 2,
+          isReadOnly: false,
         } as RoomStateServerMsg<BaseUserMeta>),
       } as MessageEvent);
 

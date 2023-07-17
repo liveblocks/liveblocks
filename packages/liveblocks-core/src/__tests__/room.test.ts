@@ -8,7 +8,6 @@ import type { StorageUpdate } from "../crdts/StorageUpdates";
 import { legacy_patchImmutableObject, lsonToJson } from "../immutable";
 import * as console from "../lib/fancy-console";
 import type { Json, JsonObject } from "../lib/Json";
-import { Permission } from "../protocol/AuthToken";
 import type { BaseUserMeta } from "../protocol/BaseUserMeta";
 import { ClientMsgCode } from "../protocol/ClientMsg";
 import { OpCode } from "../protocol/Op";
@@ -22,7 +21,8 @@ import type { Others } from "../types/Others";
 import {
   AUTH_SUCCESS,
   defineBehavior,
-  SOCKET_AUTOCONNECT,
+  SOCKET_AUTOCONNECT_AND_ROOM_STATE,
+  SOCKET_AUTOCONNECT_BUT_NO_ROOM_STATE,
   SOCKET_NO_BEHAVIOR,
   SOCKET_REFUSES,
   SOCKET_SEQUENCE,
@@ -91,7 +91,7 @@ function createTestableRoom<
 >(
   initialPresence: TPresence,
   authBehavior = AUTH_SUCCESS,
-  socketBehavior = SOCKET_AUTOCONNECT,
+  socketBehavior = SOCKET_AUTOCONNECT_AND_ROOM_STATE,
   config?: Partial<RoomConfig>
 ) {
   const { wss, delegates } = defineBehavior(authBehavior, socketBehavior);
@@ -191,7 +191,7 @@ describe("room", () => {
       undefined,
       SOCKET_SEQUENCE(
         SOCKET_THROWS("😈"),
-        SOCKET_AUTOCONNECT // Repeats infinitely
+        SOCKET_AUTOCONNECT_BUT_NO_ROOM_STATE // Repeats infinitely
       )
     );
     room.connect();
@@ -208,9 +208,9 @@ describe("room", () => {
       {},
       undefined,
       SOCKET_SEQUENCE(
-        SOCKET_AUTOCONNECT,
+        SOCKET_AUTOCONNECT_BUT_NO_ROOM_STATE,
         SOCKET_THROWS("😈"),
-        SOCKET_AUTOCONNECT // Repeats infinitely
+        SOCKET_AUTOCONNECT_BUT_NO_ROOM_STATE // Repeats infinitely
       )
     );
     room.connect();
@@ -249,7 +249,7 @@ describe("room", () => {
           WebsocketCloseCodes.MAX_NUMBER_OF_CONCURRENT_CONNECTIONS,
           "Room full"
         ),
-        SOCKET_AUTOCONNECT // Repeated to infinity
+        SOCKET_AUTOCONNECT_BUT_NO_ROOM_STATE // Repeated to infinity
       )
     );
     room.connect();
@@ -266,7 +266,7 @@ describe("room", () => {
     const { room, wss, delegates } = createTestableRoom(
       {},
       undefined,
-      SOCKET_AUTOCONNECT
+      SOCKET_AUTOCONNECT_BUT_NO_ROOM_STATE
     );
     room.connect();
 
@@ -293,7 +293,7 @@ describe("room", () => {
       undefined,
       SOCKET_SEQUENCE(
         SOCKET_REFUSES(WebsocketCloseCodes.NOT_ALLOWED),
-        SOCKET_AUTOCONNECT
+        SOCKET_AUTOCONNECT_BUT_NO_ROOM_STATE
       )
     );
     room.connect();
@@ -309,7 +309,7 @@ describe("room", () => {
     const { room, wss, delegates } = createTestableRoom(
       {},
       undefined,
-      SOCKET_AUTOCONNECT
+      SOCKET_AUTOCONNECT_BUT_NO_ROOM_STATE
     );
     room.connect();
 
@@ -336,7 +336,7 @@ describe("room", () => {
       undefined,
       SOCKET_SEQUENCE(
         SOCKET_REFUSES(WebsocketCloseCodes.CLOSE_WITHOUT_RETRY),
-        SOCKET_AUTOCONNECT
+        SOCKET_AUTOCONNECT_BUT_NO_ROOM_STATE
       )
     );
     room.connect();
@@ -353,7 +353,7 @@ describe("room", () => {
     const { room, wss, delegates } = createTestableRoom(
       {},
       undefined,
-      SOCKET_AUTOCONNECT
+      SOCKET_AUTOCONNECT_BUT_NO_ROOM_STATE
     );
     room.connect();
 
@@ -480,15 +480,21 @@ describe("room", () => {
   });
 
   test("others should be iterable", async () => {
-    const { room, wss } = createTestableRoom({});
+    const { room, wss } = createTestableRoom(
+      {},
+      undefined,
+      SOCKET_AUTOCONNECT_BUT_NO_ROOM_STATE
+    );
     room.connect();
 
     wss.onConnection((conn) => {
       conn.server.send(
         serverMessage({
           type: ServerMsgCode.ROOM_STATE,
+          actor: 2,
+          scopes: ["room:write"],
           users: {
-            "1": { scopes: [] },
+            "1": { scopes: ["room:write"] },
           },
         })
       );
@@ -506,20 +512,31 @@ describe("room", () => {
     await waitUntilOthersEvent(room);
 
     expect(room.getOthers()).toEqual([
-      { connectionId: 1, presence: { x: 2 }, isReadOnly: false },
+      {
+        connectionId: 1,
+        presence: { x: 2 },
+        isReadOnly: false,
+        canWrite: true,
+      },
     ]);
   });
 
   test("others should be read-only when associated scopes are received", async () => {
-    const { room, wss } = createTestableRoom({});
+    const { room, wss } = createTestableRoom(
+      {},
+      undefined,
+      SOCKET_AUTOCONNECT_BUT_NO_ROOM_STATE
+    );
     room.connect();
 
     wss.onConnection((conn) => {
       conn.server.send(
         serverMessage({
           type: ServerMsgCode.ROOM_STATE,
+          actor: 2,
+          scopes: ["room:write"],
           users: {
-            "1": { scopes: [Permission.Read, Permission.PresenceWrite] },
+            "1": { scopes: ["room:read"] },
           },
         })
       );
@@ -537,7 +554,12 @@ describe("room", () => {
     await waitUntilOthersEvent(room);
 
     expect(room.getOthers()).toEqual([
-      { connectionId: 1, presence: { x: 2 }, isReadOnly: true },
+      {
+        connectionId: 1,
+        presence: { x: 2 },
+        isReadOnly: true,
+        canWrite: false,
+      },
     ]);
   });
 
@@ -545,7 +567,7 @@ describe("room", () => {
     const { room, wss } = createTestableRoom(
       {},
       undefined,
-      SOCKET_SEQUENCE(SOCKET_AUTOCONNECT, SOCKET_THROWS()),
+      SOCKET_SEQUENCE(SOCKET_AUTOCONNECT_BUT_NO_ROOM_STATE, SOCKET_THROWS()),
       { lostConnectionTimeout: 10 }
     );
     room.connect();
@@ -554,8 +576,10 @@ describe("room", () => {
       conn.server.send(
         serverMessage({
           type: ServerMsgCode.ROOM_STATE,
+          actor: 2,
+          scopes: ["room:write"],
           users: {
-            "1": { scopes: [] },
+            "1": { scopes: ["room:write"] },
           },
         })
       );
@@ -573,7 +597,12 @@ describe("room", () => {
     await waitUntilStatus(room, "connected");
     await waitUntilOthersEvent(room);
     expect(room.getOthers()).toEqual([
-      { connectionId: 1, presence: { x: 2 }, isReadOnly: false },
+      {
+        connectionId: 1,
+        presence: { x: 2 },
+        isReadOnly: false,
+        canWrite: true,
+      },
     ]);
 
     // Closing this connection will trigger an endless retry loop, because the
@@ -587,7 +616,12 @@ describe("room", () => {
 
     // Not immediately cleared
     expect(room.getOthers()).toEqual([
-      { connectionId: 1, presence: { x: 2 }, isReadOnly: false },
+      {
+        connectionId: 1,
+        presence: { x: 2 },
+        isReadOnly: false,
+        canWrite: true,
+      },
     ]);
 
     // But it will clear eventually (after lostConnectionTimeout milliseconds)
@@ -607,16 +641,22 @@ describe("room", () => {
     - Client A should remove client B from others.
     */
 
-    const { room, wss } = createTestableRoom({});
+    const { room, wss } = createTestableRoom(
+      {},
+      undefined,
+      SOCKET_AUTOCONNECT_BUT_NO_ROOM_STATE
+    );
     room.connect();
 
     wss.onConnection((conn) => {
       conn.server.send(
         serverMessage({
           type: ServerMsgCode.ROOM_STATE,
+          actor: 3,
+          scopes: ["room:write"],
           users: {
-            "1": { scopes: [] },
-            "2": { scopes: [] },
+            "1": { scopes: ["room:write"] },
+            "2": { scopes: ["room:write"] },
           },
         })
       );
@@ -644,8 +684,18 @@ describe("room", () => {
 
     await waitUntilOthersEvent(room);
     expect(room.getOthers()).toEqual([
-      { connectionId: 1, presence: { x: 2 }, isReadOnly: false },
-      { connectionId: 2, presence: { x: 2 }, isReadOnly: false },
+      {
+        connectionId: 1,
+        presence: { x: 2 },
+        isReadOnly: false,
+        canWrite: true,
+      },
+      {
+        connectionId: 2,
+        presence: { x: 2 },
+        isReadOnly: false,
+        canWrite: true,
+      },
     ]);
 
     // -----
@@ -657,15 +707,22 @@ describe("room", () => {
     wss.last.send(
       serverMessage({
         type: ServerMsgCode.ROOM_STATE,
+        actor: 2,
+        scopes: ["room:write"],
         users: {
-          "1": { scopes: [] },
+          "1": { scopes: ["room:write"] },
         },
       })
     );
 
     // Only Client B is part of others.
     expect(room.getOthers()).toEqual([
-      { connectionId: 1, presence: { x: 2 }, isReadOnly: false },
+      {
+        connectionId: 1,
+        presence: { x: 2 },
+        isReadOnly: false,
+        canWrite: true,
+      },
     ]);
   });
 
@@ -1147,9 +1204,8 @@ describe("room", () => {
         {
           connectionId: 1,
           isReadOnly: false,
-          presence: {
-            x: 1,
-          },
+          canWrite: true,
+          presence: { x: 1 },
         },
       ]);
 
@@ -1250,7 +1306,11 @@ describe("room", () => {
     test("others", async () => {
       type P = { x?: number };
 
-      const { room, wss } = createTestableRoom<P, never, never, never>({});
+      const { room, wss } = createTestableRoom<P, never, never, never>(
+        {},
+        undefined,
+        SOCKET_AUTOCONNECT_BUT_NO_ROOM_STATE
+      );
       room.connect();
 
       let others: Others<P, never> | undefined;
@@ -1264,7 +1324,9 @@ describe("room", () => {
       wss.last.send(
         serverMessage({
           type: ServerMsgCode.ROOM_STATE,
-          users: { 1: { scopes: [] } },
+          actor: 2,
+          scopes: ["room:write"],
+          users: { 1: { scopes: ["room:write"] } },
         })
       );
 
@@ -1292,9 +1354,8 @@ describe("room", () => {
         {
           connectionId: 1,
           isReadOnly: false,
-          presence: {
-            x: 2,
-          },
+          canWrite: true,
+          presence: { x: 2 },
         },
       ]);
     });
@@ -1495,6 +1556,7 @@ describe("room", () => {
           info: undefined,
           presence: { x: 1 },
           isReadOnly: false,
+          canWrite: true,
         }, // old user is not cleaned directly
         {
           connectionId: 2,
@@ -1502,6 +1564,7 @@ describe("room", () => {
           info: undefined,
           presence: { x: 1 },
           isReadOnly: false,
+          canWrite: true,
         },
       ]);
     });
@@ -1758,13 +1821,19 @@ describe("room", () => {
       type M = never;
       type E = never;
 
-      const { room, wss } = createTestableRoom<P, S, M, E>({});
+      const { room, wss } = createTestableRoom<P, S, M, E>(
+        {},
+        undefined,
+        SOCKET_AUTOCONNECT_BUT_NO_ROOM_STATE
+      );
 
       wss.onConnection((conn) => {
         conn.server.send(
           serverMessage({
             type: ServerMsgCode.ROOM_STATE,
-            users: { "1": { id: undefined, scopes: [] } },
+            actor: 2,
+            scopes: ["room:write"],
+            users: { "1": { id: undefined, scopes: ["room:write"] } },
           })
         );
 
@@ -1805,6 +1874,7 @@ describe("room", () => {
           id: undefined,
           info: undefined,
           isReadOnly: false,
+          canWrite: true,
           presence: {
             x: 2,
           },

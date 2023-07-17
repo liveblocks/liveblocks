@@ -11,11 +11,12 @@
 import type { AuthValue } from "../auth-manager";
 import { StopRetrying } from "../connection";
 import type { ParsedAuthToken } from "../protocol/AuthToken";
+import { ServerMsgCode } from "../protocol/ServerMsg";
 import type { RoomDelegates } from "../room";
 import type { WebsocketCloseCodes } from "../types/IWebSocket";
 import type { MockWebSocket } from "./_MockWebSocketServer";
 import { MockWebSocketServer } from "./_MockWebSocketServer";
-import { makeMinimalTokenPayload } from "./_utils";
+import { makeMinimalTokenPayload, serverMessage } from "./_utils";
 
 type AuthBehavior = () => AuthValue;
 type SocketBehavior = (wss: MockWebSocketServer) => MockWebSocket;
@@ -107,10 +108,34 @@ export function SOCKET_NO_BEHAVIOR(wss: MockWebSocketServer) {
 
 /**
  * Configures the MockWebSocketServer to automatically accept each new socket
- * connection asynchronously. This is the default socket behavior.
+ * connection. This is the default socket behavior.
  */
-export function SOCKET_AUTOCONNECT(wss: MockWebSocketServer) {
+export function SOCKET_AUTOCONNECT_BUT_NO_ROOM_STATE(wss: MockWebSocketServer) {
   return wss.newSocket((socket) => socket.server.accept());
+}
+
+/**
+ * Configures the MockWebSocketServer to automatically accept each new socket
+ * connection attempt, and then send an initial ROOM_STATE message (for an
+ * empty room, where the connecting client is the first user in the room).
+ * Since 1.2, a client isn't considered ready until it has received the
+ * ROOM_STATE message.
+ */
+export function SOCKET_AUTOCONNECT_AND_ROOM_STATE(wss: MockWebSocketServer) {
+  return wss.newSocket((socket) => {
+    // Accept the socket connection...
+    socket.server.accept();
+
+    // ...and respond with a ROOM_STATE server message immediately
+    socket.server.send(
+      serverMessage({
+        type: ServerMsgCode.ROOM_STATE,
+        actor: 1,
+        scopes: ["room:write"],
+        users: {},
+      })
+    );
+  });
 }
 
 /**

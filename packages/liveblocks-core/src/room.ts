@@ -29,7 +29,7 @@ import { asPos } from "./lib/position";
 import type { Resolve } from "./lib/Resolve";
 import { compact, deepClone, tryParseJson } from "./lib/utils";
 import type { ParsedAuthToken } from "./protocol/AuthToken";
-import { Permission, TokenKind } from "./protocol/AuthToken";
+import { canWriteStorage, Permission, TokenKind } from "./protocol/AuthToken";
 import type { BaseUserMeta } from "./protocol/BaseUserMeta";
 import type { ClientMsg } from "./protocol/ClientMsg";
 import { ClientMsgCode } from "./protocol/ClientMsg";
@@ -687,13 +687,14 @@ type HistoryOp<TPresence extends JsonObject> =
 
 type IdFactory = () => string;
 
-type SessionInfo = {
+type StaticSessionInfo = {
   readonly userId?: string;
   readonly userInfo?: Json;
+};
 
-  // NOTE: In the future, these fields will get assigned in the connection phase
+type DynamicSessionInfo = {
   readonly actor: number;
-  readonly isReadOnly: boolean;
+  readonly scopes: string[];
 };
 
 type RoomState<
@@ -722,11 +723,16 @@ type RoomState<
     storageOperations: Op[];
   };
 
-  // A carbon-copy of the session information, all extracted from the JWT
-  // token, which is returned by the authenticate delegate and stored inside
-  // the machine.
-  readonly sessionInfo: ValueRef<SessionInfo | null>;
-  readonly me: PatchableRef<TPresence>;
+  //
+  // The "self" User takes assembly of three sources-of-truth:
+  // - The JWT token provides the userId and userInfo metadata (static)
+  // - The server, in its initial ROOM_STATE message, will provide the actor ID
+  //   and the scopes (dynamic)
+  // - The presence is provided by the client's initialPresence configuration (presence)
+  //
+  readonly staticSessionInfo: ValueRef<StaticSessionInfo | null>;
+  readonly dynamicSessionInfo: ValueRef<DynamicSessionInfo | null>;
+  readonly myPresence: PatchableRef<TPresence>;
   readonly others: OthersRef<TPresence, TUserMeta>;
 
   idFactory: IdFactory | null;
@@ -884,8 +890,9 @@ export function createRoom<
       storageOperations: [],
     },
 
-    sessionInfo: new ValueRef(null),
-    me: new PatchableRef(initialPresence),
+    staticSessionInfo: new ValueRef(null),
+    dynamicSessionInfo: new ValueRef(null),
+    myPresence: new PatchableRef(initialPresence),
     others: new OthersRef<TPresence, TUserMeta>(),
 
     initialStorage,
@@ -919,12 +926,9 @@ export function createRoom<
     if (managedSocket.authValue?.type === "secret") {
       const token = managedSocket.authValue.token.parsed;
       if (token !== undefined && token !== lastToken) {
-        context.sessionInfo.set({
+        context.staticSessionInfo.set({
           userInfo: token.k === TokenKind.SECRET_LEGACY ? token.info : token.ui,
           userId: token.k === TokenKind.SECRET_LEGACY ? token.id : token.uid,
-          // NOTE: In the future, these fields will get assigned in the connection phase
-          actor: 0, // TODO: support v7 protocol
-          isReadOnly: false, // TODO: support v7 protocol
         });
         lastToken = token;
       }
@@ -976,12 +980,6 @@ export function createRoom<
   }
 
   function onDidConnect() {
-    const sessionInfo = context.sessionInfo.current;
-    if (sessionInfo === null) {
-      // Totally unexpected by now
-      throw new Error("Unexpected missing session info");
-    }
-
     // Re-broadcast the full user presence as soon as we (re)connect
     context.buffer.presenceUpdates = {
       type: "full",
@@ -989,17 +987,13 @@ export function createRoom<
         // Because context.me.current is a readonly object, we'll have to
         // make a copy here. Otherwise, type errors happen later when
         // "patching" my presence.
-        { ...context.me.current },
+        { ...context.myPresence.current },
     };
 
     // NOTE: There was a flush here before, but I don't think it's really
     // needed anymore. We're now combining this flush with the one below, to
     // combine them in a single batch.
     // tryFlushing();
-
-    // NOTE: Soon, once the actor ID assignment gets delayed until after the
-    // room connection happens, we won't know the connection ID here just yet.
-    context.idFactory = makeIdFactory(sessionInfo.actor);
 
     // If a storage fetch has ever been initiated, we assume the client is
     // interested in storage, so we will refresh it after a reconnection.
@@ -1083,7 +1077,16 @@ export function createRoom<
     },
 
     assertStorageIsWritable: () => {
-      if (context.sessionInfo.current?.isReadOnly) {
+      // It's maybe weird to assume write permissions by default here. However,
+      // this is how the previous check for isReadOnly used to work here.
+      // XXX Try defaulting this to ["room:read"] maybe? (But make sure it won't break anything.)
+      const DEFAULT_SCOPES = [Permission.Write];
+
+      const scopes =
+        context.dynamicSessionInfo.current?.scopes ?? DEFAULT_SCOPES;
+      const canWrite = canWriteStorage(scopes);
+
+      if (!canWrite) {
         throw new Error(
           "Cannot write to storage with a read only user, please ensure the user has write permissions"
         );
@@ -1146,18 +1149,27 @@ export function createRoom<
   }
 
   const self = new DerivedRef(
-    context.sessionInfo as ImmutableRef<SessionInfo | null>,
-    context.me,
-    (info, me): User<TPresence, TUserMeta> | null => {
-      return info !== null
-        ? {
-            connectionId: info.actor,
-            id: info.userId,
-            info: info.userInfo,
-            presence: me,
-            isReadOnly: info.isReadOnly,
-          }
-        : null;
+    context.staticSessionInfo as ImmutableRef<StaticSessionInfo | null>,
+    context.dynamicSessionInfo as ImmutableRef<DynamicSessionInfo | null>,
+    context.myPresence,
+    (
+      staticSession,
+      dynamicSession,
+      myPresence
+    ): User<TPresence, TUserMeta> | null => {
+      if (staticSession === null || dynamicSession === null) {
+        return null;
+      } else {
+        const canWrite = canWriteStorage(dynamicSession.scopes);
+        return {
+          connectionId: dynamicSession.actor,
+          id: staticSession.userId,
+          info: staticSession.userInfo,
+          presence: myPresence,
+          canWrite,
+          isReadOnly: !canWrite, // Deprecated, kept for backward-compatibility
+        };
+      }
     }
   );
 
@@ -1254,7 +1266,7 @@ export function createRoom<
       }
 
       if (presence) {
-        eventHub.me.notify(context.me.current);
+        eventHub.me.notify(context.myPresence.current);
       }
 
       if (storageUpdates.size > 0) {
@@ -1265,7 +1277,7 @@ export function createRoom<
   }
 
   function getConnectionId() {
-    const info = context.sessionInfo.current;
+    const info = context.dynamicSessionInfo.current;
     if (info) {
       return info.actor;
     }
@@ -1313,10 +1325,10 @@ export function createRoom<
         };
 
         for (const key in op.data) {
-          reverse.data[key] = context.me.current[key];
+          reverse.data[key] = context.myPresence.current[key];
         }
 
-        context.me.patch(op.data);
+        context.myPresence.patch(op.data);
 
         if (context.buffer.presenceUpdates === null) {
           context.buffer.presenceUpdates = { type: "partial", data: op.data };
@@ -1462,10 +1474,10 @@ export function createRoom<
         continue;
       }
       context.buffer.presenceUpdates.data[key] = overrideValue;
-      oldValues[key] = context.me.current[key];
+      oldValues[key] = context.myPresence.current[key];
     }
 
-    context.me.patch(patch);
+    context.myPresence.patch(patch);
 
     if (context.activeBatch) {
       if (options?.addToHistory) {
@@ -1487,14 +1499,6 @@ export function createRoom<
         notify({ presence: true }, doNotBatchUpdates);
       });
     }
-  }
-
-  function isStorageReadOnly(scopes: string[]) {
-    return (
-      scopes.includes(Permission.Read) &&
-      scopes.includes(Permission.PresenceWrite) &&
-      !scopes.includes(Permission.Write)
-    );
   }
 
   function onUpdatePresenceMessage(
@@ -1545,6 +1549,13 @@ export function createRoom<
   function onRoomStateMessage(
     message: RoomStateServerMsg<TUserMeta>
   ): OthersEvent<TPresence, TUserMeta> {
+    // The server will inform the client about its assigned actor ID and scopes
+    context.dynamicSessionInfo.set({
+      actor: message.actor,
+      scopes: message.scopes,
+    });
+    context.idFactory = makeIdFactory(message.actor);
+
     for (const connectionId in context.others._connections) {
       const user = message.users[connectionId];
       if (user === undefined) {
@@ -1559,7 +1570,7 @@ export function createRoom<
         connectionId,
         user.id,
         user.info,
-        isStorageReadOnly(user.scopes)
+        user.scopes
       );
     }
     return { type: "reset" };
@@ -1580,13 +1591,13 @@ export function createRoom<
       message.actor,
       message.id,
       message.info,
-      isStorageReadOnly(message.scopes)
+      message.scopes
     );
     // Send current presence to new user
     // TODO: Consider storing it on the backend
     context.buffer.messages.push({
       type: ClientMsgCode.UPDATE_PRESENCE,
-      data: context.me.current,
+      data: context.myPresence.current,
       targetActor: message.actor,
     });
     flushNowOrSoon();
@@ -1605,7 +1616,7 @@ export function createRoom<
     }
 
     return data as ServerMsg<TPresence, TUserMeta, TRoomEvent>;
-    //          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ FIXME: Properly validate incoming external data instead!
+    //             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ FIXME: Properly validate incoming external data instead!
   }
 
   function parseServerMessages(
@@ -2173,11 +2184,11 @@ export function createRoom<
       // Core
       getStatus: () => managedSocket.getStatus(),
       getConnectionState: () => managedSocket.getLegacyStatus(),
-      isSelfAware: () => context.sessionInfo.current !== null,
+      isSelfAware: () => context.staticSessionInfo.current !== null,
       getSelf: () => self.current,
 
       // Presence
-      getPresence: () => context.me.current,
+      getPresence: () => context.myPresence.current,
       getOthers: () => context.others.current,
     },
 
