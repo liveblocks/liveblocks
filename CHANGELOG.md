@@ -1,3 +1,11 @@
+# v1.1.6
+
+### `@liveblocks/*`
+
+Loosen duplicate import detection so it won't throw when used in test runners
+that deliberately run multiple instances of a module (like Jest or Playwright
+can do).
+
 # v1.1.5
 
 ### `@liveblocks/*`
