@@ -1,0 +1,55 @@
+---
+meta:
+  title: "Multiple copies of Liveblocks are being loaded in your project"
+  parentTitle: "Error"
+  description:
+    "Multiple copies of Liveblocks are being loaded in your project. This will
+    cause issues!"
+---
+
+### Why this error occured
+
+Multiple copies of some Liveblocks package ended up being bundled in your
+application bundle.
+
+This can happen because your production bundle includes two entire copies of two
+different versions of Liveblocks. Or it can be the case that it includes the
+same version of Liveblocks in the bundle twice because the ESM and the CJS
+version got bundled separately.
+
+It’s important that only a single copy of Liveblocks exists in your application
+bundle at runtime, otherwise bugs will happen. Plus your bundle will be
+unnecessarily large.
+
+### Possible causes
+
+- Your project is using multiple internal packages that all rely on Liveblocks,
+  but maybe some are on different versions.
+- Your project is using a non-standard bundler setup. If you believe this is an
+  issue with the way Liveblocks is packaged, feel free to open a support
+  request.
+
+### Possible ways to fix it
+
+To investigate your set up, run the following command to see if all your
+Liveblocks dependencies are on the same version:
+
+```bash
+$ npm ls | grep @liveblocks
+```
+
+If they’re not all on the same version, please fix that. You could manually
+upgrade that, but we recommend declaring Liveblocks as a `"peerDependency"` in
+those internal packages’ `package.json` files, and only declare it in the actual
+`"dependencies"` in the outermost `package.json` for your project. That way,
+your package manager will keep all the versions the same.
+
+If all your Liveblocks dependencies are on the same version already, and you’re
+still seeing this error, you’re experiencing the
+[dual-package hazard](https://nodejs.org/api/packages.html#dual-package-hazard)
+problem, which means that both the ESM and the CJS version of Liveblocks end up
+in your production bundle as two separate "instances". Of course, this isn’t
+supposed to happen. Please let us know about this by
+[opening a GitHub issue](https://github.com/liveblocks/liveblocks/issues/new?template=bug_report.md),
+or reaching out in our support channel on
+[Discord](https://liveblocks.io/discord).

@@ -3,6 +3,7 @@ import type { LsonObject } from "../crdts/Lson";
 import type { ToImmutable } from "../crdts/utils";
 import type { Json, JsonObject } from "../lib/Json";
 import { makePosition } from "../lib/position";
+import { deepClone } from "../lib/utils";
 import type { Authentication } from "../protocol/Authentication";
 import type { MinimalTokenPayload } from "../protocol/AuthToken";
 import type { BaseUserMeta } from "../protocol/BaseUserMeta";
@@ -53,19 +54,6 @@ export function makeMinimalTokenPayload(
   };
 }
 
-/**
- * Deep-clones a JSON-serializable value.
- *
- * NOTE: We should be able to replace `deepClone` by `structuredClone` once
- * we've upgraded to Node 18.
- */
-function deepClone<T extends Json>(items: T): T {
-  // NOTE: In this case, the combination of JSON.parse() and JSON.stringify
-  // won't lead to type unsafety, so this use case is okay.
-  // eslint-disable-next-line no-restricted-syntax
-  return JSON.parse(JSON.stringify(items)) as T;
-}
-
 // NOTE: we have some instability with opIds in the undo/redo stack and this should be investigated
 function deepCloneWithoutOpId<T>(item: T) {
   return JSON.parse(
@@ -108,7 +96,7 @@ export async function prepareRoomWithStorage<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
   TUserMeta extends BaseUserMeta,
-  TRoomEvent extends Json
+  TRoomEvent extends Json,
 >(
   items: IdTuple<SerializedCrdt>[],
   actor: number = 0,
@@ -206,7 +194,7 @@ export async function prepareStorageTest<
   TStorage extends LsonObject,
   TPresence extends JsonObject = never,
   TUserMeta extends BaseUserMeta = never,
-  TRoomEvent extends Json = never
+  TRoomEvent extends Json = never,
 >(items: IdTuple<SerializedCrdt>[], actor: number = 0, scopes: string[] = []) {
   let currentActor = actor;
   const operations: Op[] = [];
@@ -402,7 +390,7 @@ export async function prepareStorageUpdateTest<
   TStorage extends LsonObject,
   TPresence extends JsonObject = never,
   TUserMeta extends BaseUserMeta = never,
-  TRoomEvent extends Json = never
+  TRoomEvent extends Json = never,
 >(
   items: IdTuple<SerializedCrdt>[]
 ): Promise<{
@@ -467,7 +455,7 @@ export async function prepareDisconnectedStorageUpdateTest<
   TStorage extends LsonObject,
   TPresence extends JsonObject = never,
   TUserMeta extends BaseUserMeta = never,
-  TRoomEvent extends Json = never
+  TRoomEvent extends Json = never,
 >(items: IdTuple<SerializedCrdt>[]) {
   const { storage, room } = await prepareRoomWithStorage<
     TPresence,

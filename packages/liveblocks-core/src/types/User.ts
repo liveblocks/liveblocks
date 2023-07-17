@@ -6,14 +6,14 @@ import type { BaseUserMeta } from "../protocol/BaseUserMeta";
  */
 export type User<
   TPresence extends JsonObject,
-  TUserMeta extends BaseUserMeta
+  TUserMeta extends BaseUserMeta,
 > = {
   /**
-   * The connection id of the user. It is unique and increment at every new connection.
+   * The connection ID of the User. It is unique and increment at every new connection.
    */
-  readonly connectionId: number;
+  readonly connectionId: number; // Same as "actor" in the Liveblocks protocol
   /**
-   * The id of the user that has been set in the authentication endpoint.
+   * The ID of the User that has been set in the authentication endpoint.
    * Useful to get additional information about the connected user.
    */
   readonly id: TUserMeta["id"];
@@ -22,7 +22,7 @@ export type User<
    */
   readonly info: TUserMeta["info"];
   /**
-   * The user presence.
+   * The user’s presence data.
    */
   readonly presence: TPresence;
 

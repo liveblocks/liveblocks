@@ -40,7 +40,7 @@ export type EnterFn<TContext> = (
 export type TargetFn<
   TContext extends object,
   TEvent extends BaseEvent,
-  TState extends string
+  TState extends string,
 > = (
   event: TEvent,
   context: Readonly<TContext>
@@ -57,7 +57,7 @@ export type Effect<TContext, TEvent extends BaseEvent> = (
 export type TargetObject<
   TContext extends object,
   TEvent extends BaseEvent,
-  TState extends string
+  TState extends string,
 > = {
   target: TState;
 
@@ -71,7 +71,7 @@ export type TargetObject<
 export type Target<
   TContext extends object,
   TEvent extends BaseEvent,
-  TState extends string
+  TState extends string,
 > =
   | TState // Static, e.g. 'complete'
   | TargetObject<TContext, TEvent, TState>
@@ -160,7 +160,7 @@ class SafeContext<TContext extends object> {
           for (const pair of Object.entries(patch)) {
             const [key, value] = pair as [
               keyof TContext,
-              TContext[keyof TContext]
+              TContext[keyof TContext],
             ];
             if (key !== "patch") {
               (this as TContext)[key] = value;
@@ -191,7 +191,7 @@ let nextId = 1;
 export class FSM<
   TContext extends object,
   TEvent extends BaseEvent,
-  TState extends string
+  TState extends string,
 > {
   public id: number;
 

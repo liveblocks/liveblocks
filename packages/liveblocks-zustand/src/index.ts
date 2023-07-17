@@ -11,12 +11,17 @@ import type {
 } from "@liveblocks/client";
 import type { LegacyConnectionStatus, StorageUpdate } from "@liveblocks/core";
 import {
+  detectDupes,
   errorIf,
   legacy_patchImmutableObject,
   lsonToJson,
   patchLiveObjectKey,
 } from "@liveblocks/core";
 import type { StateCreator, StoreMutatorIdentifier } from "zustand";
+
+import { PKG_FORMAT, PKG_NAME, PKG_VERSION } from "./version";
+
+detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
 
 const ERROR_PREFIX = "Invalid @liveblocks/zustand middleware config.";
 
@@ -30,7 +35,7 @@ export type LiveblocksContext<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
   TUserMeta extends BaseUserMeta,
-  TRoomEvent extends Json
+  TRoomEvent extends Json,
 > = {
   /**
    * Enters a room and starts sync it with zustand state
@@ -85,7 +90,7 @@ export type LiveblocksState<
   TPresence extends JsonObject = JsonObject,
   TStorage extends LsonObject = LsonObject,
   TUserMeta extends BaseUserMeta = BaseUserMeta,
-  TRoomEvent extends Json = Json
+  TRoomEvent extends Json = Json,
 > = WithLiveblocks<TState, TPresence, TStorage, TUserMeta, TRoomEvent>;
 
 /**
@@ -96,7 +101,7 @@ export type WithLiveblocks<
   TPresence extends JsonObject = JsonObject,
   TStorage extends LsonObject = LsonObject,
   TUserMeta extends BaseUserMeta = BaseUserMeta,
-  TRoomEvent extends Json = Json
+  TRoomEvent extends Json = Json,
 > = TState & {
   readonly liveblocks: LiveblocksContext<
     TPresence,
@@ -128,7 +133,7 @@ type Options<T> = {
 type OuterLiveblocksMiddleware = <
   TState,
   Mps extends [StoreMutatorIdentifier, unknown][] = [],
-  Mcs extends [StoreMutatorIdentifier, unknown][] = []
+  Mcs extends [StoreMutatorIdentifier, unknown][] = [],
 >(
   config: StateCreator<TState, Mps, Mcs, Omit<TState, "liveblocks">>,
   options: Options<Omit<TState, "liveblocks">>
@@ -142,18 +147,18 @@ type InnerLiveblocksMiddleware = <
       BaseUserMeta,
       Json
     >;
-  }
+  },
 >(
   config: StateCreator<TState, [], []>,
   options: Options<TState>
 ) => StateCreator<TState, [], []>;
 
 type ExtractPresence<
-  TRoom extends Room<JsonObject, LsonObject, BaseUserMeta, Json>
+  TRoom extends Room<JsonObject, LsonObject, BaseUserMeta, Json>,
 > = TRoom extends Room<infer P, any, any, any> ? P : never;
 
 type ExtractStorage<
-  TRoom extends Room<JsonObject, LsonObject, BaseUserMeta, Json>
+  TRoom extends Room<JsonObject, LsonObject, BaseUserMeta, Json>,
 > = TRoom extends Room<any, infer S, any, any> ? S : never;
 
 const middlewareImpl: InnerLiveblocksMiddleware = (config, options) => {
@@ -361,7 +366,7 @@ function updateLiveblocksContext<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
   TUserMeta extends BaseUserMeta,
-  TRoomEvent extends Json
+  TRoomEvent extends Json,
 >(
   set: (
     callbackOrPartial: (
@@ -387,7 +392,7 @@ function updatePresence<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
   TUserMeta extends BaseUserMeta,
-  TRoomEvent extends Json
+  TRoomEvent extends Json,
 >(
   room: Room<TPresence, TStorage, TUserMeta, TRoomEvent>,
   oldState: TPresence,

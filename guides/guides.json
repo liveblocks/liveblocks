@@ -108,6 +108,13 @@
     "date": "2023-06-27"
   },
   {
+    "title": "Reauthenticate without reloading the page or losing state",
+    "path": "/reauthenticate-without-reloading-the-page-or-losing-state",
+    "topics": ["authentication", "state"],
+    "technologies": ["javascript", "react"],
+    "date": "2023-07-05"
+  },
+  {
     "title": "How to create a collaborative text editor with Lexical, Yjs, React, and Liveblocks",
     "path": "/how-to-create-a-collaborative-text-editor-with-lexical-yjs-react-and-liveblocks",
     "topics": ["tutorials", "text-editors"],

@@ -215,7 +215,10 @@ export class StopRetrying extends Error {
 }
 
 class LiveblocksError extends Error {
-  constructor(message: string, public code: number) {
+  constructor(
+    message: string,
+    public code: number
+  ) {
     super(message);
   }
 }

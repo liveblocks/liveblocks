@@ -3,9 +3,9 @@
   "extends": "../../shared/tsconfig.common.json",
 
   "compilerOptions": {
-    "target": "es2015",
-    "module": "es2015",
-    "lib": ["dom", "es2015"],
+    "target": "es2020",
+    "module": "es2020",
+    "lib": ["dom"],
 
     // Transform JSX syntax from input *.tsx files into React.createElement()
     // calls in the *.js build output.

@@ -26,7 +26,7 @@ export enum ServerMsgCode {
 export type ServerMsg<
   TPresence extends JsonObject,
   TUserMeta extends BaseUserMeta,
-  TRoomEvent extends Json
+  TRoomEvent extends Json,
 > =
   // For Presence
   | UpdatePresenceServerMsg<TPresence> // Broadcasted
