@@ -1,4 +1,4 @@
-import { RoomScope, parseAuthToken } from "../../protocol/AuthToken";
+import { parseAuthToken, RoomScope } from "../../protocol/AuthToken";
 
 describe("parseRoomAuthToken", () => {
   const roomToken =
