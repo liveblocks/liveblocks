@@ -25,7 +25,7 @@ const DEFAULT_LOST_CONNECTION_TIMEOUT = 5000;
 
 type EnterOptions<
   TPresence extends JsonObject,
-  TStorage extends LsonObject
+  TStorage extends LsonObject,
 > = Resolve<
   // Enter options are just room initializers, plus an internal option
   RoomInitializers<TPresence, TStorage> & {
@@ -56,7 +56,7 @@ export type Client = {
     TPresence extends JsonObject,
     TStorage extends LsonObject = LsonObject,
     TUserMeta extends BaseUserMeta = BaseUserMeta,
-    TRoomEvent extends Json = never
+    TRoomEvent extends Json = never,
   >(
     roomId: string
   ): Room<TPresence, TStorage, TUserMeta, TRoomEvent> | null;
@@ -70,7 +70,7 @@ export type Client = {
     TPresence extends JsonObject,
     TStorage extends LsonObject = LsonObject,
     TUserMeta extends BaseUserMeta = BaseUserMeta,
-    TRoomEvent extends Json = never
+    TRoomEvent extends Json = never,
   >(
     roomId: string,
     options: EnterOptions<TPresence, TStorage>
@@ -181,7 +181,7 @@ export function createClient(options: ClientOptions): Client {
     TPresence extends JsonObject,
     TStorage extends LsonObject = LsonObject,
     TUserMeta extends BaseUserMeta = BaseUserMeta,
-    TRoomEvent extends Json = never
+    TRoomEvent extends Json = never,
   >(roomId: string): Room<TPresence, TStorage, TUserMeta, TRoomEvent> | null {
     const room = rooms.get(roomId);
     return room
@@ -193,7 +193,7 @@ export function createClient(options: ClientOptions): Client {
     TPresence extends JsonObject,
     TStorage extends LsonObject = LsonObject,
     TUserMeta extends BaseUserMeta = BaseUserMeta,
-    TRoomEvent extends Json = never
+    TRoomEvent extends Json = never,
   >(
     roomId: string,
     options: EnterOptions<TPresence, TStorage>
@@ -274,7 +274,10 @@ export function createClient(options: ClientOptions): Client {
   return {
     __internal: {
       getAuthValue: authManager.getAuthValue,
-      realtimeClient: createRealtimeClient(authManager),
+      realtimeClient: createRealtimeClient(
+        authManager,
+        getWsEventServerEndpoint(options)
+      ),
     },
     getRoom,
     enter,
@@ -325,4 +328,15 @@ function buildLiveblocksHttpSendEndpoint(
   return `https://api.liveblocks.io/v2/rooms/${encodeURIComponent(
     roomId
   )}/send-message`;
+}
+
+// TODO: Return prod url
+function getWsEventServerEndpoint(
+  options: ClientOptions & { eventsServerEndpoint?: string }
+): string {
+  if (typeof options.eventsServerEndpoint !== "string") {
+    throw new Error("Missing events server endpoint");
+  }
+
+  return options.eventsServerEndpoint;
 }

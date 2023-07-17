@@ -39,56 +39,52 @@ export function makeAuthenticationDelegate(
   };
 }
 
-const EVENTS_SERVER = process.env.NEXT_PUBLIC_EVENTS_SERVER as string;
-
-
-const makeCreateWebSocketDelegate = () => {
+const makeCreateWebSocketDelegate = (serverEndpoint: string) => {
   return (authValue: AuthValue) => {
-
-   let authParam = "";
-   if (authValue.type === "secret") {
-    authParam = `token=${authValue.token.raw}`
-   }
-   else {
-    authParam = `token=${authValue.publicApiKey}`
-   }
-
-  return new WebSocket(`${EVENTS_SERVER}?${authParam}`);
-  } 
+    return new WebSocket(
+      `${serverEndpoint}?token=${
+        authValue.type === "secret"
+          ? authValue.token.raw
+          : authValue.publicApiKey
+      }`
+    );
+  };
 };
 
-
-export function createRealtimeClient(authManager: AuthManager): RealtimeClient {
+export function createRealtimeClient(
+  authManager: AuthManager,
+  serverEndpoint: string
+): RealtimeClient {
   const eventHub = {
     error: makeEventSource<Error>(),
     connection: makeEventSource<Status>(),
     events: makeEventSource<RealtimeEvent[]>(),
   };
 
-  let managedSocket: ManagedSocket<BaseAuthResult> | null = null; 
-  
+  let managedSocket: ManagedSocket<BaseAuthResult> | null = null;
+
   function createManagedSocket(roomId: string) {
     const delegates = {
       authenticate: makeAuthenticationDelegate(roomId, authManager),
-      createSocket: makeCreateWebSocketDelegate(),
+      createSocket: makeCreateWebSocketDelegate(serverEndpoint),
     };
-  
+
     managedSocket = new ManagedSocket(delegates, true);
-  
+
     /**
      * Send connection events to eventHub
      */
     managedSocket.events.statusDidChange.subscribe((event) =>
       eventHub.connection.notify(event)
     );
-  
+
     /**
      * Send error events to eventHub
      */
     managedSocket.events.onLiveblocksError.subscribe((event) =>
       eventHub.error.notify(event)
     );
-  
+
     /**
      * Send regular events to eventHub
      */
@@ -96,15 +92,14 @@ export function createRealtimeClient(authManager: AuthManager): RealtimeClient {
       if (typeof event.data !== "string") {
         return;
       }
-  
+
       const jsonEvent = tryParseJson(event.data);
-  
+
       if (jsonEvent) {
         eventHub.events.notify([jsonEvent as RealtimeEvent]);
       }
     });
   }
-  
 
   function subscribe<E extends keyof RoomEventCallbackMap>(
     type: E,
@@ -122,51 +117,55 @@ export function createRealtimeClient(authManager: AuthManager): RealtimeClient {
     second?: RealtimeEventTypes[],
     third?: Callback<RealtimeEvent[]>
   ): () => void {
-    console.log("____SUBSCRIBE____", type, first, second, third)
+    console.log("____SUBSCRIBE____", type, first, second, third);
     switch (type) {
       case "events":
-        if(
+        if (
           // If roomId
           typeof first === "string"
         ) {
           const roomId = first;
-          authManager.getAuthValue("comments:read", roomId).then((authValue) => {
-            const subscribeMessage: {
-              type: string;
-              rooms: string[];
-              token?: string;
-            } = {
-              type: "subscribeToRooms",
-              rooms: [roomId],
-            }
+          authManager
+            .getAuthValue("comments:read", roomId)
+            .then((authValue) => {
+              const subscribeMessage: {
+                type: string;
+                rooms: string[];
+                token?: string;
+              } = {
+                type: "subscribeToRooms",
+                rooms: [roomId],
+              };
 
-            if(authValue.type === "secret" && authValue.token.parsed.k === TokenKind.ACCESS_TOKEN) {
-              subscribeMessage.token = authValue.token.raw
-            }
-           
-            if(!managedSocket) {
-              console.log("____CREATE MANAGED SOCKET____", roomId)
-              createManagedSocket(roomId);
-            }
+              if (
+                authValue.type === "secret" &&
+                authValue.token.parsed.k === TokenKind.ACCESS_TOKEN
+              ) {
+                subscribeMessage.token = authValue.token.raw;
+              }
 
-            if (managedSocket) {
-              managedSocket.connect();
-              managedSocket.send(JSON.stringify(subscribeMessage));
-            }
-           
-          })
+              if (!managedSocket) {
+                console.log("____CREATE MANAGED SOCKET____", roomId);
+                createManagedSocket(roomId);
+              }
 
-        return eventHub.events.subscribe((events) => {
-          const filteredEvents = events.filter(
-            (event) =>
-              (second as RealtimeEventTypes[]).includes(event.type) &&
-              first === event.roomId
-          );          
-          if (filteredEvents.length > 0) {              
-            (third as RealtimeCallback)(filteredEvents);
-          }
-        });
-      }
+              if (managedSocket) {
+                managedSocket.connect();
+                managedSocket.send(JSON.stringify(subscribeMessage));
+              }
+            });
+
+          return eventHub.events.subscribe((events) => {
+            const filteredEvents = events.filter(
+              (event) =>
+                (second as RealtimeEventTypes[]).includes(event.type) &&
+                first === event.roomId
+            );
+            if (filteredEvents.length > 0) {
+              (third as RealtimeCallback)(filteredEvents);
+            }
+          });
+        }
       case "error":
         return eventHub.error.subscribe(first as Callback<Error>);
 

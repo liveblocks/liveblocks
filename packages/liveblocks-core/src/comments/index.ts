@@ -4,11 +4,9 @@ import type { CommentBody } from "./types/CommentBody";
 import type { CommentData } from "./types/CommentData";
 import type { ThreadData } from "./types/ThreadData";
 
-const API_URL = process.env.NEXT_PUBLIC_COMMENTS_API_URL as string;
-
-if (typeof API_URL !== "string") {
-  throw new Error("Missing env variable NEXT_PUBLIC_COMMENTS_API_URL");
-}
+type Options = {
+  serverEndpoint: string;
+};
 
 export type CommentsApi<ThreadMetadata extends BaseMetadata> = {
   getThreads(options: {
@@ -46,7 +44,8 @@ export type CommentsApi<ThreadMetadata extends BaseMetadata> = {
 };
 
 export function createCommentsApi<ThreadMetadata extends BaseMetadata>(
-  client: Client
+  client: Client,
+  { serverEndpoint }: Options
 ): CommentsApi<ThreadMetadata> {
   async function fetchApi<T>(
     roomId: string,
@@ -54,7 +53,7 @@ export function createCommentsApi<ThreadMetadata extends BaseMetadata>(
     options?: RequestInit
   ): Promise<T> {
     const authValue = await client.__internal.getAuthValue(
-      "comments:read",
+      "comments:read", // TODO: Use the right scope
       roomId
     );
 
@@ -62,7 +61,7 @@ export function createCommentsApi<ThreadMetadata extends BaseMetadata>(
       throw new Error("Only secret key are supported for client.");
     }
 
-    const url = `${API_URL}${roomId}${endpoint}`;
+    const url = `${serverEndpoint}/rooms/${roomId}${endpoint}`;
 
     const response = await fetch(url, {
       ...options,

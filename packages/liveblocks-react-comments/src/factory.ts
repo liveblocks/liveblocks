@@ -53,7 +53,7 @@ type UserStateSuspense<T extends BaseUserMeta> = Resolve<
 
 type CommentsContext<
   TThreadMetadata extends BaseMetadata,
-  TUserMeta extends BaseUserMeta
+  TUserMeta extends BaseUserMeta,
 > = {
   /**
    * Creates a thread with an initial comment, and optionally some metadata.
@@ -178,6 +178,10 @@ type UserResolver<T> = (userId: string) => Promise<T | undefined>;
 
 type Options<TUserMeta extends BaseUserMeta> = {
   resolveUser?: UserResolver<TUserMeta>;
+  /**
+   * @internal Internal endpoint t
+   */
+  serverEndpoint?: string;
 };
 
 let hasWarnedIfNoResolveUser = false;
@@ -199,13 +203,19 @@ function warnIfNoResolveUser(
 
 export function createCommentsContext<
   TThreadMetadata extends BaseMetadata = never,
-  TUserMeta extends BaseUserMeta = BaseUserMeta
+  TUserMeta extends BaseUserMeta = BaseUserMeta,
 >(
   client: Client,
-  { resolveUser }: Options<TUserMeta>
+  { resolveUser, serverEndpoint }: Options<TUserMeta>
 ): CommentsContext<TThreadMetadata, TUserMeta> {
+  if (typeof serverEndpoint !== "string") {
+    throw new Error("Missing comments server endpoint.");
+  }
+
   const errorEventSource = makeEventSource<CommentsApiError<TThreadMetadata>>();
-  const restApi = createCommentsApi<TThreadMetadata>(client);
+  const restApi = createCommentsApi<TThreadMetadata>(client, {
+    serverEndpoint,
+  });
 
   const usersCache = resolveUser
     ? createAsyncCache(resolveUser as UserResolver<BaseUserMeta>)
