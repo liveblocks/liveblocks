@@ -11,90 +11,87 @@ start building your own security logic in Next.js’ `/app` directory.
 
 ## Quickstart
 
-<Steps
-  steps={[
-    {
-      title: (
-        <>
-          Install the <code>@liveblocks/node</code> package
-        </>
-      ),
-      code: {
-        language: "bash",
-        code: `npm install @liveblocks/node`,
-      },
-    },
-    {
-      title: "Setup authentication endpoint",
-      description: (
-        <>
-          Users can only interact with rooms they have access to. You can
-          configure permission access in an <code>api/auth</code> endpoint by
-          creating the <code>app/api/auth/route.ts</code> file with the
-          following code. This is where you will implement your security and
-          define if the current user has access to a specific room.
-        </>
-      ),
-      code: {
-        file: "app/api/auth/route.ts",
-        language: "ts",
-        code: `import { NextResponse } from "next/server";
-import { authorize } from "@liveblocks/node";
-\r
-const secret = "{{SECRET_KEY}}";
-\r
-export async function POST(request: Request) {
-  /**
-   * Implement your own security here.
-   *
-   * It's your responsibility to ensure that the caller of this endpoint
-   * is a valid user by validating the cookies or authentication headers
-   * and that it has access to the requested room.
-   */
-  const { room } = await request.json();
-\r
-  const result = await authorize({
-    room,
-    secret,
-    userId: "123",
-    groupIds: ["456"], // Optional
-    userInfo: {
-      // Optional, corresponds to the UserMeta[info] type defined in liveblocks.config.ts
-      name: "Ada Lovelace",
-      color: "red",
-    },
-  });
-\r
-  return NextResponse.json(JSON.parse(result.body));
-}`,
-      },
-    },
-    {
-      title: "Setup the client",
-      description: (
-        <>
-          On the front-end, you can now replace the <code>publicApiKey</code>{" "}
-          option with <code>authEndpoint</code> pointing to the endpoint you
-          just created.
-        </>
-      ),
-      code: {
-        language: "ts",
-        code: `import { createClient } from "@liveblocks/client";
-\r
-const client = createClient({
-  authEndpoint: "/api/auth",
-});`,
-      },
-    },
-  ]}
-/>
+<Steps>
+  <Step>
+    <StepTitle>Install the `liveblocks/node` package</StepTitle>
+    <StepContent>
+
+      ```bash
+      npm install @liveblocks/node
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Set up authentication endpoint</StepTitle>
+    <StepContent>
+      Users can only interact with rooms they have access to. You can
+      configure permission access in an `api/auth` endpoint by
+      creating the `app/api/auth/route.ts` file with the
+      following code. This is where you will implement your security and
+      define if the current user has access to a specific room.
+
+      ```ts file="app/api/auth/route.ts"
+      import { NextResponse } from "next/server";
+      import { authorize } from "@liveblocks/node";
+
+      const secret = "{{SECRET_KEY}}";
+
+      export async function POST(request: Request) {
+        /**
+         * Implement your own security here.
+         *
+         * It's your responsibility to ensure that the caller of this endpoint
+         * is a valid user by validating the cookies or authentication headers
+         * and that it has access to the requested room.
+         */
+        const { room } = await request.json();
+
+        const result = await authorize({
+          room,
+          secret,
+          userId: "123",
+          groupIds: ["456"], // Optional
+          userInfo: {
+            // Optional, corresponds to the UserMeta[info] type defined in liveblocks.config.ts
+            name: "Ada Lovelace",
+            color: "red",
+          },
+        });
+
+        return NextResponse.json(JSON.parse(result.body));
+      }
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step lastStep>
+    <StepTitle>Set up the client</StepTitle>
+    <StepContent>
+      On the front-end, you can now replace the `publicApiKey`
+      option with `authEndpoint` pointing to the endpoint you
+      just created.
+
+      ```ts file="liveblocks.config.ts"
+      import { createClient } from "@liveblocks/client";
+
+      const client = createClient({
+        authEndpoint: "/api/auth",
+      });
+      ```
+
+    </StepContent>
+
+  </Step>
+</Steps>
 
 ## More information
 
-The `userId` used in the `authorize` function corresponds to userId used in our
-APIs when setting permissions (e.g. in create room). You can use the following
-example to use data from `userId` and `userInfo` on the front-end.
+The `userId` used in the `authorize` function corresponds to `userId` used in
+our APIs when setting permissions when creating a room. Both `userId` and
+`userInfo` can then be used in your React application as such:
 
 ```ts
 const self = useSelf();

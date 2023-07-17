@@ -443,7 +443,7 @@ describe("room", () => {
 
       await jest.advanceTimersByTimeAsync(0);
       expect(wss.receivedMessages.length).toBe(1); // Still no new data received
-      expect(room.__internal.buffer.me?.data).toEqual({ x: 2 });
+      expect(room.__internal.presenceBuffer).toEqual({ x: 2 });
 
       // Forwarding time by the flush threshold will trigger the future flush
       await jest.advanceTimersByTimeAsync(THROTTLE_DELAY);
@@ -463,7 +463,7 @@ describe("room", () => {
     room.updatePresence({ x: 0 });
 
     expect(room.getPresence()).toStrictEqual({ x: 0 });
-    expect(room.__internal.buffer.me?.data).toStrictEqual({ x: 0 });
+    expect(room.__internal.presenceBuffer).toStrictEqual({ x: 0 });
   });
 
   test("should merge current presence and set flushData presence when connection is closed", () => {
@@ -472,11 +472,11 @@ describe("room", () => {
     room.updatePresence({ x: 0 });
 
     expect(room.getPresence()).toStrictEqual({ x: 0 });
-    expect(room.__internal.buffer.me?.data).toStrictEqual({ x: 0 });
+    expect(room.__internal.presenceBuffer).toStrictEqual({ x: 0 });
 
     room.updatePresence({ y: 0 });
     expect(room.getPresence()).toStrictEqual({ x: 0, y: 0 });
-    expect(room.__internal.buffer.me?.data).toStrictEqual({ x: 0, y: 0 });
+    expect(room.__internal.presenceBuffer).toStrictEqual({ x: 0, y: 0 });
   });
 
   test("others should be iterable", async () => {
@@ -766,20 +766,20 @@ describe("room", () => {
     room.connect();
 
     await waitUntilStatus(room, "connected");
-    expect(room.__internal.buffer.me).toEqual(null); // Buffer was flushed
+    expect(room.__internal.presenceBuffer).toEqual(null); // Buffer was flushed
     room.updatePresence({ x: 0 }, { addToHistory: true });
-    expect(room.__internal.buffer.me?.data).toEqual({ x: 0 });
+    expect(room.__internal.presenceBuffer).toEqual({ x: 0 });
     room.updatePresence({ x: 1 }, { addToHistory: true });
-    expect(room.__internal.buffer.me?.data).toEqual({ x: 1 });
+    expect(room.__internal.presenceBuffer).toEqual({ x: 1 });
 
     room.history.undo();
 
-    expect(room.__internal.buffer.me?.data).toEqual({ x: 0 });
+    expect(room.__internal.presenceBuffer).toEqual({ x: 0 });
     expect(room.getPresence()).toEqual({ x: 0 });
 
     room.history.redo();
 
-    expect(room.__internal.buffer.me?.data).toEqual({ x: 1 });
+    expect(room.__internal.presenceBuffer).toEqual({ x: 1 });
     expect(room.getPresence()).toEqual({ x: 1 });
   });
 
@@ -849,14 +849,14 @@ describe("room", () => {
 
     room.updatePresence({ x: 0 }, { addToHistory: true });
     room.updatePresence({ x: 1 }, { addToHistory: true });
-    expect(room.__internal.buffer.me?.data).toEqual({ x: 1 });
+    expect(room.__internal.presenceBuffer).toEqual({ x: 1 });
 
     room.history.pause();
     room.history.resume();
 
     room.history.undo();
 
-    expect(room.__internal.buffer.me?.data).toEqual({ x: 0 });
+    expect(room.__internal.presenceBuffer).toEqual({ x: 0 });
     expect(room.getPresence()).toEqual({ x: 0 });
   });
 
@@ -877,28 +877,28 @@ describe("room", () => {
     // room.connect();  // Seems not even needed?
 
     room.updatePresence({ x: 0 }, { addToHistory: true });
-    expect(room.__internal.buffer.me?.data).toEqual({ x: 0 });
+    expect(room.__internal.presenceBuffer).toEqual({ x: 0 });
 
     room.history.pause();
 
     for (let i = 1; i <= 10; i++) {
       room.updatePresence({ x: i }, { addToHistory: true });
-      expect(room.__internal.buffer.me?.data).toEqual({ x: i });
+      expect(room.__internal.presenceBuffer).toEqual({ x: i });
     }
 
     expect(room.getPresence()).toEqual({ x: 10 });
-    expect(room.__internal.buffer.me?.data).toEqual({ x: 10 });
+    expect(room.__internal.presenceBuffer).toEqual({ x: 10 });
 
     room.history.resume();
 
     room.history.undo();
 
-    expect(room.__internal.buffer.me?.data).toEqual({ x: 0 });
+    expect(room.__internal.presenceBuffer).toEqual({ x: 0 });
     expect(room.getPresence()).toEqual({ x: 0 });
 
     room.history.redo();
 
-    expect(room.__internal.buffer.me?.data).toEqual({ x: 10 });
+    expect(room.__internal.presenceBuffer).toEqual({ x: 10 });
     expect(room.getPresence()).toEqual({ x: 10 });
   });
 
@@ -918,7 +918,7 @@ describe("room", () => {
     room.history.undo();
 
     expect(room.getPresence()).toEqual({ x: 0 });
-    expect(room.__internal.buffer.me?.data).toEqual({ x: 0 });
+    expect(room.__internal.presenceBuffer).toEqual({ x: 0 });
   });
 
   test("undo redo with presence + storage", async () => {
@@ -944,17 +944,17 @@ describe("room", () => {
       storage.root.set("x", 1);
     });
 
-    expect(room.__internal.buffer.me?.data).toEqual({ x: 1 });
+    expect(room.__internal.presenceBuffer).toEqual({ x: 1 });
 
     room.history.undo();
 
-    expect(room.__internal.buffer.me?.data).toEqual({ x: 0 });
+    expect(room.__internal.presenceBuffer).toEqual({ x: 0 });
     expect(room.getPresence()).toEqual({ x: 0 });
     expect(storage.root.toObject()).toEqual({ x: 0 });
 
     room.history.redo();
 
-    expect(room.__internal.buffer.me?.data).toEqual({ x: 1 });
+    expect(room.__internal.presenceBuffer).toEqual({ x: 1 });
     expect(storage.root.toObject()).toEqual({ x: 1 });
     expect(room.getPresence()).toEqual({ x: 1 });
   });

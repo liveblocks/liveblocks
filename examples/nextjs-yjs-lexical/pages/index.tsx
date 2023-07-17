@@ -1,5 +1,3 @@
-"use client";
-
 import { useMemo } from "react";
 import { RoomProvider } from "../liveblocks.config";
 import { useRouter } from "next/router";
@@ -15,7 +13,7 @@ function Loading() {
 }
 
 export default function Page() {
-  const roomId = useOverrideRoomId("nextjs-lexical");
+  const roomId = useOverrideRoomId("nextjs-yjs-lexical");
 
   return (
     <main>
@@ -32,9 +30,9 @@ export async function getStaticProps() {
   const API_KEY = process.env.NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY;
   const API_KEY_WARNING = process.env.CODESANDBOX_SSE
     ? `Add your public key from https://liveblocks.io/dashboard/apikeys as the \`NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY\` secret in CodeSandbox.\n` +
-      `Learn more: https://github.com/liveblocks/liveblocks/tree/main/examples/nextjs-live-cursors#codesandbox.`
+      `Learn more: https://github.com/liveblocks/liveblocks/tree/main/examples/nextjs-yjs-lexical#codesandbox.`
     : `Create an \`.env.local\` file and add your public key from https://liveblocks.io/dashboard/apikeys as the \`NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY\` environment variable.\n` +
-      `Learn more: https://github.com/liveblocks/liveblocks/tree/main/examples/nextjs-live-cursors#getting-started.`;
+      `Learn more: https://github.com/liveblocks/liveblocks/tree/main/examples/nextjs-yjs-lexical#getting-started.`;
 
   if (!API_KEY) {
     console.warn(API_KEY_WARNING);

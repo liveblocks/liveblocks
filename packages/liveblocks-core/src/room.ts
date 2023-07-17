@@ -27,9 +27,13 @@ import type { Json, JsonObject } from "./lib/Json";
 import { isJsonArray, isJsonObject } from "./lib/Json";
 import { asPos } from "./lib/position";
 import type { Resolve } from "./lib/Resolve";
-import { compact, tryParseJson } from "./lib/utils";
-import { ParsedAuthToken, TokenKind } from "./protocol/AuthToken";
-import { isTokenExpired, ApiScope } from "./protocol/AuthToken";
+import { compact, deepClone, tryParseJson } from "./lib/utils";
+import {
+  ApiScope,
+  ParsedAuthToken,
+  TokenKind,
+  isTokenExpired,
+} from "./protocol/AuthToken";
 import type { BaseUserMeta } from "./protocol/BaseUserMeta";
 import type { ClientMsg } from "./protocol/ClientMsg";
 import { ClientMsgCode } from "./protocol/ClientMsg";
@@ -59,6 +63,7 @@ import type {
 import type { NodeMap } from "./types/NodeMap";
 import type { Others, OthersEvent } from "./types/Others";
 import type { User } from "./types/User";
+import { PKG_VERSION } from "./version";
 
 type TimeoutID = ReturnType<typeof setTimeout>;
 
@@ -419,7 +424,7 @@ export type Room<
    * Liveblocks, NEVER USE ANY OF THESE METHODS DIRECTLY, because bad things
    * will probably happen if you do.
    */
-  readonly __internal: PrivateRoomAPI<TPresence, TStorage, TUserMeta, TRoomEvent>; // prettier-ignore
+  readonly __internal: PrivateRoomAPI; // prettier-ignore
 
   /**
    * The id of the room.
@@ -652,15 +657,10 @@ export type Room<
  * Liveblocks, NEVER USE ANY OF THESE METHODS DIRECTLY, because bad things
  * will probably happen if you do.
  */
-type PrivateRoomAPI<
-  TPresence extends JsonObject,
-  TStorage extends LsonObject,
-  TUserMeta extends BaseUserMeta,
-  TRoomEvent extends Json,
-> = {
+type PrivateRoomAPI = {
   // For introspection in unit tests only
-  buffer: RoomState<TPresence, TStorage, TUserMeta, TRoomEvent>["buffer"]; // prettier-ignore
-  undoStack: readonly (readonly Readonly<HistoryOp<TPresence>>[])[];
+  presenceBuffer: Json | undefined;
+  undoStack: readonly (readonly Readonly<HistoryOp<JsonObject>>[])[];
   nodeCount: number;
 
   // For DevTools support (Liveblocks browser extension)
@@ -718,7 +718,7 @@ type RoomState<
     readonly lastFlushedAt: number;
 
     // Queued-up "my presence" updates to be flushed at the earliest convenience
-    me:
+    presenceUpdates:
       | { type: "partial"; data: Partial<TPresence> }
       | { type: "full"; data: TPresence }
       | null;
@@ -878,7 +878,7 @@ export function createRoom<
     buffer: {
       flushTimerID: undefined,
       lastFlushedAt: 0,
-      me:
+      presenceUpdates:
         // Queue up the initial presence message as a Full Presence™ update
         {
           type: "full",
@@ -987,7 +987,7 @@ export function createRoom<
     }
 
     // Re-broadcast the full user presence as soon as we (re)connect
-    context.buffer.me = {
+    context.buffer.presenceUpdates = {
       type: "full",
       data:
         // Because context.me.current is a readonly object, we'll have to
@@ -1322,13 +1322,13 @@ export function createRoom<
 
         context.me.patch(op.data);
 
-        if (context.buffer.me === null) {
-          context.buffer.me = { type: "partial", data: op.data };
+        if (context.buffer.presenceUpdates === null) {
+          context.buffer.presenceUpdates = { type: "partial", data: op.data };
         } else {
           // Merge the new fields with whatever is already queued up (doesn't
           // matter whether its a partial or full update)
           for (const key in op.data) {
-            context.buffer.me.data[key] = op.data[key];
+            context.buffer.presenceUpdates.data[key] = op.data[key];
           }
         }
 
@@ -1447,11 +1447,16 @@ export function createRoom<
   ) {
     const oldValues = {} as TPresence;
 
-    if (context.buffer.me === null) {
-      context.buffer.me = {
+    if (context.buffer.presenceUpdates === null) {
+      // try {
+      context.buffer.presenceUpdates = {
         type: "partial",
         data: {},
       };
+      // } catch (err) {
+      //   window.console.log({ context, patch, err });
+      //   throw err;
+      // }
     }
 
     for (const key in patch) {
@@ -1460,7 +1465,7 @@ export function createRoom<
       if (overrideValue === undefined) {
         continue;
       }
-      context.buffer.me.data[key] = overrideValue;
+      context.buffer.presenceUpdates.data[key] = overrideValue;
       oldValues[key] = context.me.current[key];
     }
 
@@ -1804,7 +1809,7 @@ export function createRoom<
         lastFlushedAt: now,
         messages: [],
         storageOperations: [],
-        me: null,
+        presenceUpdates: null,
       };
     } else {
       // Or schedule the flush a few millis into the future
@@ -1822,20 +1827,20 @@ export function createRoom<
    */
   function serializeBuffer() {
     const messages: ClientMsg<TPresence, TRoomEvent>[] = [];
-    if (context.buffer.me) {
+    if (context.buffer.presenceUpdates) {
       messages.push(
-        context.buffer.me.type === "full"
+        context.buffer.presenceUpdates.type === "full"
           ? {
               type: ClientMsgCode.UPDATE_PRESENCE,
               // Populating the `targetActor` field turns this message into
               // a Full Presence™ update message (not a patch), which will get
               // interpreted by other clients as such.
               targetActor: -1,
-              data: context.buffer.me.data,
+              data: context.buffer.presenceUpdates.data,
             }
           : {
               type: ClientMsgCode.UPDATE_PRESENCE,
-              data: context.buffer.me.data,
+              data: context.buffer.presenceUpdates.data,
             }
       );
     }
@@ -2117,67 +2122,74 @@ export function createRoom<
     ydoc: eventHub.ydoc.observable,
   };
 
-  return {
-    /* NOTE: Exposing __internal here only to allow testing implementation details in unit tests */
-    __internal: {
-      get buffer() { return context.buffer }, // prettier-ignore
-      get undoStack() { return context.undoStack }, // prettier-ignore
-      get nodeCount() { return context.nodes.size }, // prettier-ignore
+  return Object.defineProperty(
+    {
+      /* NOTE: Exposing __internal here only to allow testing implementation details in unit tests */
+      __internal: {
+        get presenceBuffer() { return deepClone(context.buffer.presenceUpdates?.data ?? null) }, // prettier-ignore
+        get undoStack() { return deepClone(context.undoStack) }, // prettier-ignore
+        get nodeCount() { return context.nodes.size }, // prettier-ignore
 
-      // Support for the Liveblocks browser extension
-      getSelf_forDevTools: () => selfAsTreeNode.current,
-      getOthers_forDevTools: (): readonly DevTools.UserTreeNode[] =>
-        others_forDevTools.current,
+        // Support for the Liveblocks browser extension
+        getSelf_forDevTools: () => selfAsTreeNode.current,
+        getOthers_forDevTools: (): readonly DevTools.UserTreeNode[] =>
+          others_forDevTools.current,
 
-      // prettier-ignore
-      send: {
-        // These exist only for our E2E testing app
-        explicitClose: (event) => managedSocket._privateSendMachineEvent({ type: "EXPLICIT_SOCKET_CLOSE", event }),
-        implicitClose: () => managedSocket._privateSendMachineEvent({ type: "NAVIGATOR_OFFLINE" }),
+        // prettier-ignore
+        send: {
+          // These exist only for our E2E testing app
+          explicitClose: (event) => managedSocket._privateSendMachineEvent({ type: "EXPLICIT_SOCKET_CLOSE", event }),
+          implicitClose: () => managedSocket._privateSendMachineEvent({ type: "NAVIGATOR_OFFLINE" }),
+        },
       },
+
+      id: config.roomId,
+      subscribe: makeClassicSubscribeFn(events),
+
+      connect: () => managedSocket.connect(),
+      reconnect: () => managedSocket.reconnect(),
+      disconnect: () => managedSocket.disconnect(),
+      destroy: () => managedSocket.destroy(),
+
+      // Presence
+      updatePresence,
+      updateYDoc,
+      broadcastEvent,
+
+      // Storage
+      batch,
+      history: {
+        undo,
+        redo,
+        canUndo,
+        canRedo,
+        pause: pauseHistory,
+        resume: resumeHistory,
+      },
+
+      fetchYDoc,
+      getStorage,
+      getStorageSnapshot,
+      getStorageStatus,
+
+      events,
+
+      // Core
+      getStatus: () => managedSocket.getStatus(),
+      getConnectionState: () => managedSocket.getLegacyStatus(),
+      isSelfAware: () => context.sessionInfo.current !== null,
+      getSelf: () => self.current,
+
+      // Presence
+      getPresence: () => context.me.current,
+      getOthers: () => context.others.current,
     },
 
-    id: config.roomId,
-    subscribe: makeClassicSubscribeFn(events),
-
-    connect: () => managedSocket.connect(),
-    reconnect: () => managedSocket.reconnect(),
-    disconnect: () => managedSocket.disconnect(),
-    destroy: () => managedSocket.destroy(),
-
-    // Presence
-    updatePresence,
-    updateYDoc,
-    broadcastEvent,
-
-    // Storage
-    batch,
-    history: {
-      undo,
-      redo,
-      canUndo,
-      canRedo,
-      pause: pauseHistory,
-      resume: resumeHistory,
-    },
-
-    fetchYDoc,
-    getStorage,
-    getStorageSnapshot,
-    getStorageStatus,
-
-    events,
-
-    // Core
-    getStatus: () => managedSocket.getStatus(),
-    getConnectionState: () => managedSocket.getLegacyStatus(),
-    isSelfAware: () => context.sessionInfo.current !== null,
-    getSelf: () => self.current,
-
-    // Presence
-    getPresence: () => context.me.current,
-    getOthers: () => context.others.current,
-  };
+    // Explictly make the __internal field non-enumerable, to avoid aggressive
+    // freezing when used with Immer
+    "__internal",
+    { enumerable: false }
+  );
 }
 
 /**
@@ -2369,12 +2381,7 @@ export function makeCreateSocketDelegateForRoom(
     }
 
     return new ws(
-      `${liveblocksServer}/?${authParam}&version=${
-        // prettier-ignore
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore (__PACKAGE_VERSION__ will be injected by the build script)
-        typeof (__PACKAGE_VERSION__ as unknown) === "string" ? /* istanbul ignore next */ (__PACKAGE_VERSION__ as string) : "dev"
-      }`
+      `${liveblocksServer}/?${authParam}&version=${PKG_VERSION || "dev"}`
     );
   };
 }
