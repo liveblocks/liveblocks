@@ -39,6 +39,8 @@ export function detectDupes(
 
   if (!g[pkgId]) {
     g[pkgId] = pkgBuildInfo;
+  } else if (g[pkgId] === pkgBuildInfo) {
+    // Allow it, see https://github.com/liveblocks/liveblocks/pull/1004
   } else {
     const msg = [
       `Multiple copies of Liveblocks are being loaded in your project. This will cause issues! See ${
