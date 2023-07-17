@@ -29,11 +29,7 @@ import type { Resolve } from "./lib/Resolve";
 import { compact, deepClone, isPlainObject, tryParseJson } from "./lib/utils";
 import type { Authentication } from "./protocol/Authentication";
 import type { ParsedAuthToken } from "./protocol/AuthToken";
-import {
-  isTokenExpired,
-  parseAuthToken,
-  RoomScope,
-} from "./protocol/AuthToken";
+import { parseAuthToken, RoomScope } from "./protocol/AuthToken";
 import type { BaseUserMeta } from "./protocol/BaseUserMeta";
 import type { ClientMsg } from "./protocol/ClientMsg";
 import { ClientMsgCode } from "./protocol/ClientMsg";
@@ -1138,16 +1134,16 @@ export function createRoom<
         managedSocket.token?.raw &&
         config.httpSendEndpoint
       ) {
-        if (isTokenExpired(managedSocket.token.parsed)) {
-          return managedSocket.reconnect();
-        }
-
         void httpSend(
           message,
           managedSocket.token.raw,
           config.httpSendEndpoint,
           config.polyfills?.fetch
-        );
+        ).then((resp) => {
+          if (!resp.ok && resp.status === 403) {
+            managedSocket.reconnect();
+          }
+        });
         console.warn(
           "Message was too large for websockets and sent over HTTP instead"
         );

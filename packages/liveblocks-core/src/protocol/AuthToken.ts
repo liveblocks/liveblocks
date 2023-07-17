@@ -19,10 +19,6 @@ export enum RoomScope {
  * @internal For unit tests only.
  */
 export type MinimalTokenPayload = {
-  // Issued at and expiry fields (from JWT spec)
-  iat: number;
-  exp: number;
-
   scopes: string[]; // Think Scope[], but it could also hold scopes from the future, hence string[]
   actor: number;
 
@@ -44,15 +40,6 @@ export type ParsedAuthToken = {
   readonly parsed: MinimalTokenPayload; // Rich data on the JWT value
 };
 
-/** @internal - For unit tests only */
-export type JwtMetadata = Pick<MinimalTokenPayload, "iat" | "exp">;
-
-export function isTokenExpired(token: JwtMetadata): boolean {
-  const now = Date.now() / 1000;
-  const valid = now <= token.exp - 300 && now >= token.iat - 300;
-  return !valid;
-}
-
 function isStringList(value: unknown): value is string[] {
   return Array.isArray(value) && value.every((i) => typeof i === "string");
 }
@@ -62,8 +49,6 @@ function isMinimalTokenPayload(data: Json): data is MinimalTokenPayload {
   // NOTE: This is the hard-coded definition of the following decoder:
   //
   //   inexact({
-  //     iat: number,
-  //     exp: number,
   //     actor: number,
   //     scopes: array(scope),
   //     id: optional(string),
@@ -72,8 +57,6 @@ function isMinimalTokenPayload(data: Json): data is MinimalTokenPayload {
   //
   return (
     isPlainObject(data) &&
-    typeof data.iat === "number" &&
-    typeof data.exp === "number" &&
     typeof data.actor === "number" &&
     (data.id === undefined || typeof data.id === "string") &&
     isStringList(data.scopes)
