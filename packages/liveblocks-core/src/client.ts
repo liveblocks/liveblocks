@@ -5,15 +5,12 @@ import { deprecateIf } from "./lib/deprecation";
 import type { Json, JsonObject } from "./lib/Json";
 import type { Resolve } from "./lib/Resolve";
 import type { BaseUserMeta } from "./protocol/BaseUserMeta";
+import type { Polyfills, Room, RoomDelegates, RoomInitializers } from "./room";
 import {
+  createRoom,
   makeAuthDelegateForRoom,
   makeCreateSocketDelegateForRoom,
-  Polyfills,
-  Room,
-  RoomDelegates,
-  RoomInitializers,
 } from "./room";
-import { createRoom } from "./room";
 
 const MIN_THROTTLE = 16;
 const MAX_THROTTLE = 1000;

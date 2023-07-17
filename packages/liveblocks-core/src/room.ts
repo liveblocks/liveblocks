@@ -28,12 +28,8 @@ import { isJsonArray, isJsonObject } from "./lib/Json";
 import { asPos } from "./lib/position";
 import type { Resolve } from "./lib/Resolve";
 import { compact, deepClone, tryParseJson } from "./lib/utils";
-import {
-  ApiScope,
-  ParsedAuthToken,
-  TokenKind,
-  isTokenExpired,
-} from "./protocol/AuthToken";
+import type { ParsedAuthToken } from "./protocol/AuthToken";
+import { ApiScope, isTokenExpired, TokenKind } from "./protocol/AuthToken";
 import type { BaseUserMeta } from "./protocol/BaseUserMeta";
 import type { ClientMsg } from "./protocol/ClientMsg";
 import { ClientMsgCode } from "./protocol/ClientMsg";

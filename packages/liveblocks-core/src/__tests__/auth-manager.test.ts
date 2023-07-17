@@ -1,5 +1,6 @@
 import { rest } from "msw";
 import { setupServer } from "msw/node";
+
 import { createAuthManager } from "../auth-manager";
 import type { ParsedAuthToken } from "../protocol/AuthToken";
 
