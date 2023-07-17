@@ -8,7 +8,7 @@ import type { StorageUpdate } from "../crdts/StorageUpdates";
 import { legacy_patchImmutableObject, lsonToJson } from "../immutable";
 import * as console from "../lib/fancy-console";
 import type { Json, JsonObject } from "../lib/Json";
-import { ApiScope } from "../protocol/AuthToken";
+import { Permission } from "../protocol/AuthToken";
 import type { BaseUserMeta } from "../protocol/BaseUserMeta";
 import { ClientMsgCode } from "../protocol/ClientMsg";
 import { OpCode } from "../protocol/Op";
@@ -519,7 +519,7 @@ describe("room", () => {
         serverMessage({
           type: ServerMsgCode.ROOM_STATE,
           users: {
-            "1": { scopes: [ApiScope.Read, ApiScope.PresenceWrite] },
+            "1": { scopes: [Permission.Read, Permission.PresenceWrite] },
           },
         })
       );

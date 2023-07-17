@@ -3,7 +3,7 @@ import type { Json } from "./lib/Json";
 import { isPlainObject } from "./lib/utils";
 import type { Authentication } from "./protocol/Authentication";
 import type { ParsedAuthToken } from "./protocol/AuthToken";
-import { ApiScope, parseAuthToken, TokenKind } from "./protocol/AuthToken";
+import { parseAuthToken, Permission, TokenKind } from "./protocol/AuthToken";
 import type { Polyfills } from "./room";
 
 export type AuthValue =
@@ -39,17 +39,19 @@ export function createAuthManager(
 
   function hasCorrespondingScopes(
     requestedScope: RequestedScope,
-    scopes: ApiScope[]
+    scopes: Permission[]
   ) {
     if (requestedScope === "comments:read") {
       return (
-        scopes.includes(ApiScope.CommentsRead) ||
-        scopes.includes(ApiScope.CommentsWrite) ||
-        scopes.includes(ApiScope.Read) ||
-        scopes.includes(ApiScope.Write)
+        scopes.includes(Permission.CommentsRead) ||
+        scopes.includes(Permission.CommentsWrite) ||
+        scopes.includes(Permission.Read) ||
+        scopes.includes(Permission.Write)
       );
     } else if (requestedScope === "room:read") {
-      return scopes.includes(ApiScope.Read) || scopes.includes(ApiScope.Write);
+      return (
+        scopes.includes(Permission.Read) || scopes.includes(Permission.Write)
+      );
     }
 
     return false;

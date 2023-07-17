@@ -29,7 +29,7 @@ import { asPos } from "./lib/position";
 import type { Resolve } from "./lib/Resolve";
 import { compact, deepClone, tryParseJson } from "./lib/utils";
 import type { ParsedAuthToken } from "./protocol/AuthToken";
-import { ApiScope, isTokenExpired, TokenKind } from "./protocol/AuthToken";
+import { isTokenExpired, Permission, TokenKind } from "./protocol/AuthToken";
 import type { BaseUserMeta } from "./protocol/BaseUserMeta";
 import type { ClientMsg } from "./protocol/ClientMsg";
 import { ClientMsgCode } from "./protocol/ClientMsg";
@@ -1491,9 +1491,9 @@ export function createRoom<
 
   function isStorageReadOnly(scopes: string[]) {
     return (
-      scopes.includes(ApiScope.Read) &&
-      scopes.includes(ApiScope.PresenceWrite) &&
-      !scopes.includes(ApiScope.Write)
+      scopes.includes(Permission.Read) &&
+      scopes.includes(Permission.PresenceWrite) &&
+      !scopes.includes(Permission.Write)
     );
   }
 

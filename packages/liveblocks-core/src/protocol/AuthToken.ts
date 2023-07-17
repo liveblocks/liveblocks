@@ -1,7 +1,7 @@
 import type { Json } from "../lib/Json";
 import { b64decode, isPlainObject, tryParseJson } from "../lib/utils";
 
-export enum ApiScope {
+export enum Permission {
   Read = "room:read",
   Write = "room:write",
   PresenceWrite = "room:presence:write",
@@ -9,7 +9,7 @@ export enum ApiScope {
   CommentsRead = "comments:read",
 }
 
-export type LiveblocksPermissions = Record<string, ApiScope[]>;
+export type LiveblocksPermissions = Record<string, Permission[]>;
 
 export enum TokenKind {
   SECRET_LEGACY = "sec-legacy",
