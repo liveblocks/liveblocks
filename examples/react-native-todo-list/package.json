@@ -7,7 +7,6 @@
     "android": "react-native run-android",
     "ios": "react-native run-ios",
     "dev": "react-native start",
-    "start": "react-native start",
     "test": "jest"
   },
   "dependencies": {
