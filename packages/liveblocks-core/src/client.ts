@@ -213,6 +213,7 @@ export function createClient(options: ClientOptions): Client {
         polyfills: clientOptions.polyfills,
         delegates: clientOptions.mockedDelegates ?? {
           createSocket: makeCreateSocketDelegateForRoom(
+            roomId,
             getServerFromClientOptions(clientOptions),
             clientOptions.polyfills?.WebSocket
           ),

@@ -2360,6 +2360,7 @@ export function makeAuthDelegateForRoom(
 }
 
 export function makeCreateSocketDelegateForRoom(
+  roomId: string,
   liveblocksServer: string,
   WebSocketPolyfill?: IWebSocket
 ) {
@@ -2375,6 +2376,7 @@ export function makeCreateSocketDelegateForRoom(
     }
 
     const url = new URL(liveblocksServer);
+    url.searchParams.set("roomId", roomId);
     if (authValue.type === "secret") {
       url.searchParams.set("tok", authValue.token.raw);
     } else if (authValue.type === "public") {
