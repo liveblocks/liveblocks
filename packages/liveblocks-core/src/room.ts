@@ -2374,22 +2374,16 @@ export function makeCreateSocketDelegateForRoom(
       );
     }
 
-    let authParam = "";
+    const url = new URL(liveblocksServer);
     if (authValue.type === "secret") {
-      if (authValue.token.parsed.k === TokenKind.SECRET_LEGACY) {
-        authParam = `tok=${authValue.token.raw}`;
-      } else if (authValue.token.parsed.k === TokenKind.ID_TOKEN) {
-        authParam = `tok=${authValue.token.raw}`;
-      } else if (authValue.token.parsed.k === TokenKind.ACCESS_TOKEN) {
-        authParam = `tok=${authValue.token.raw}`;
-      }
+      url.searchParams.set("tok", authValue.token.raw);
     } else if (authValue.type === "public") {
-      authParam = `pubkey=${authValue.publicApiKey}`;
+      url.searchParams.set("pubkey", authValue.publicApiKey);
+    } else {
+      return assertNever(authValue, "Unhandled case");
     }
-
-    return new ws(
-      `${liveblocksServer}/?${authParam}&version=${PKG_VERSION || "dev"}`
-    );
+    url.searchParams.set("version", PKG_VERSION || "dev");
+    return new ws(url.toString());
   };
 }
 
