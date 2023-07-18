@@ -1,5 +1,6 @@
 import { Liveblocks } from "@liveblocks/node";
 import type { NextApiRequest, NextApiResponse } from "next";
+import { NAMES } from "../../constants";
 
 const liveblocks = new Liveblocks({
   secret: process.env.LIVEBLOCKS_SECRET_KEY!,
@@ -20,14 +21,3 @@ export default async function auth(req: NextApiRequest, res: NextApiResponse) {
 
   return res.status(status).end(body);
 }
-
-export const NAMES = [
-  "Charlie Layne",
-  "Mislav Abha",
-  "Tatum Paolo",
-  "Anjali Wanda",
-  "Jody Hekla",
-  "Emil Joyce",
-  "Jory Quispe",
-  "Quinn Elton",
-];

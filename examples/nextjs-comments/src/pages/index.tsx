@@ -1,12 +1,52 @@
 import React, { Suspense, useMemo } from "react";
 import { useRouter } from "next/router";
 import {
+  Comment,
   createThread,
   deleteComment,
   useThreads,
 } from "../../liveblocks.config";
-import { Comment, Composer } from "@liveblocks/react-comments";
+import { Composer } from "@liveblocks/react-comments";
 import { useHydrated } from "../utils/use-hydrated";
+
+// function Example({ roomId }: { roomId: string }) {
+//   const threads = useThreads(roomId);
+
+//   return (
+//     <main>
+//       <div>
+//         {threads.map((thread) => (
+//           <div key={thread.id}>
+//             {thread.comments
+//               .filter((comment) => comment.body !== undefined)
+//               .map((comment) => (
+//                 <div key={comment.id}>
+//                   {comment.body && <Comment.Body body={comment.body} />}
+//                   <button
+//                     onClick={() =>
+//                       deleteComment(roomId, {
+//                         commentId: comment.id,
+//                         threadId: thread.id,
+//                       })
+//                     }
+//                   >
+//                     Delete
+//                   </button>
+//                 </div>
+//               ))}
+//           </div>
+//         ))}
+//         <Composer.Form
+//           onCommentSubmit={({ body }) => {
+//             createThread(roomId, { body, metadata: { resolved: false } });
+//           }}
+//         >
+//           <Composer.Body />
+//         </Composer.Form>
+//       </div>
+//     </main>
+//   );
+// }
 
 function Example({ roomId }: { roomId: string }) {
   const threads = useThreads(roomId);
@@ -16,23 +56,9 @@ function Example({ roomId }: { roomId: string }) {
       <div>
         {threads.map((thread) => (
           <div key={thread.id}>
-            {thread.comments
-              .filter((comment) => comment.body !== undefined)
-              .map((comment) => (
-                <div key={comment.id}>
-                  {comment.body && <Comment.Body body={comment.body} />}
-                  <button
-                    onClick={() =>
-                      deleteComment(roomId, {
-                        commentId: comment.id,
-                        threadId: thread.id,
-                      })
-                    }
-                  >
-                    Delete
-                  </button>
-                </div>
-              ))}
+            {thread.comments.map((comment) => (
+              <Comment key={comment.id} comment={comment} />
+            ))}
           </div>
         ))}
         <Composer.Form
@@ -41,6 +67,7 @@ function Example({ roomId }: { roomId: string }) {
           }}
         >
           <Composer.Body />
+          <Composer.Submit>Send</Composer.Submit>
         </Composer.Form>
       </div>
     </main>
@@ -48,6 +75,7 @@ function Example({ roomId }: { roomId: string }) {
 }
 
 export default function Page() {
+  // TODO: Change room ID
   const roomId = useOverrideRoomId("comments-react");
   const isHydrated = useHydrated();
 

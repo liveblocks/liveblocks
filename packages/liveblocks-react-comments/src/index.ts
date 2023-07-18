@@ -20,4 +20,5 @@ export { Composer } from "./components/Composer";
 export type { TimeProps } from "./components/Time";
 export { Time } from "./components/Time";
 export { createCommentsContext } from "./factory";
+export { withComponents } from "./with-components";
 export type { CommentData, ThreadData } from "@liveblocks/core";

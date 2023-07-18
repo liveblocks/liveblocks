@@ -51,7 +51,7 @@ type UserStateSuspense<T extends BaseUserMeta> = Resolve<
   Extract<UserState<T>, { isLoading: false }>
 >;
 
-type CommentsContext<
+export type CommentsContext<
   TThreadMetadata extends BaseMetadata,
   TUserMeta extends BaseUserMeta,
 > = {
@@ -178,8 +178,9 @@ type UserResolver<T> = (userId: string) => Promise<T | undefined>;
 
 type Options<TUserMeta extends BaseUserMeta> = {
   resolveUser?: UserResolver<TUserMeta>;
+
   /**
-   * @internal Internal endpoint t
+   * @internal Internal endpoint
    */
   serverEndpoint?: string;
 };
@@ -206,8 +207,10 @@ export function createCommentsContext<
   TUserMeta extends BaseUserMeta = BaseUserMeta,
 >(
   client: Client,
-  { resolveUser, serverEndpoint }: Options<TUserMeta>
+  options?: Options<TUserMeta>
 ): CommentsContext<TThreadMetadata, TUserMeta> {
+  const { resolveUser, serverEndpoint } = options ?? {};
+
   if (typeof serverEndpoint !== "string") {
     throw new Error("Missing comments server endpoint.");
   }
