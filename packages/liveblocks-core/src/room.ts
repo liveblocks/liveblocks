@@ -2377,11 +2377,11 @@ export function makeCreateSocketDelegateForRoom(
     let authParam = "";
     if (authValue.type === "secret") {
       if (authValue.token.parsed.k === TokenKind.SECRET_LEGACY) {
-        authParam = `ltok=${authValue.token.raw}`;
+        authParam = `tok=${authValue.token.raw}`;
       } else if (authValue.token.parsed.k === TokenKind.ID_TOKEN) {
-        authParam = `idtok=${authValue.token.raw}`;
+        authParam = `tok=${authValue.token.raw}`;
       } else if (authValue.token.parsed.k === TokenKind.ACCESS_TOKEN) {
-        authParam = `atok=${authValue.token.raw}`;
+        authParam = `tok=${authValue.token.raw}`;
       }
     } else if (authValue.type === "public") {
       authParam = `pubkey=${authValue.publicApiKey}`;
