@@ -9,7 +9,7 @@ const client = createClient({
 const { RoomProvider, useSelf, useOthers } = createRoomContext(client);
 
 export default function Home() {
-  let roomId = "e2e-auth-id-token";
+  let roomId = "e2e-auth";
   if (typeof window !== "undefined") {
     const queryParam = window.location.search;
     if (queryParam.split("room=").length > 1) {
