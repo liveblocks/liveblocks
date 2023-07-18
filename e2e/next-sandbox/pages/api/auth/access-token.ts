@@ -25,7 +25,12 @@ export default async function accessTokenAuth(
   const session = await liveblocks.prepareSession(
     // Unique user ID
     `user-${user.id}`,
-    { userInfo: { name: user.name } }
+    {
+      userInfo: {
+        name: user.name,
+        issuedBy: "/api/auth/access-token",
+      },
+    }
   );
   session.allow("e2e-*", session.FULL_ACCESS);
   const response = await session.authorize();

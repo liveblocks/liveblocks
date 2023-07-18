@@ -19,7 +19,10 @@ export default async function legacyAuth(
   const response = await authorize({
     room,
     userId: `user-${user.id}`,
-    userInfo: { name: user.name },
+    userInfo: {
+      name: user.name,
+      issuedBy: "/api/auth/legacy-token",
+    },
     secret: API_KEY,
 
     // @ts-expect-error - Hidden setting

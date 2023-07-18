@@ -22,7 +22,10 @@ export default async function idTokenBasedAuth(
 ) {
   const user = randomUser();
   const response = await liveblocks.identifyUser(`user-${user.id}`, {
-    userInfo: { name: user.name },
+    userInfo: {
+      name: user.name,
+      issuedBy: "/api/auth/id-token",
+    },
   });
   return res.status(response.status).end(response.body);
 }
