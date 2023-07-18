@@ -1,6 +1,4 @@
-import type { LsonObject } from "@liveblocks/client";
 import { createClient } from "@liveblocks/client";
-import { createRoomContext } from "@liveblocks/react";
 import { createCommentsContext } from "@liveblocks/react-comments";
 
 const WORKERS_ENDPOINT = process.env.NEXT_PUBLIC_WORKERS_ENDPOINT;
@@ -12,26 +10,16 @@ export const client = createClient({
   eventsServerEndpoint: `wss://${EVENTS_ENDPOINT}/v1`,
 });
 
-export async function resolveUser(userId: string) {
-  const response = await fetch(`/api/users/${userId}`);
-  const user = await response.json();
+export async function resolveUser(userId: string): Promise<UserMeta> {
+  const userIndex = Number(userId.replace(/^\D+/g, "")) ?? 0;
 
   return {
-    id: user.id,
+    id: userId,
     info: {
-      name: user.name,
-      avatar: user.avatar,
+      name: userId, // TODO: NAMES[userIndex],
+      avatar: `https://liveblocks.io/avatars/avatar-${userIndex}.png`,
     },
   };
-}
-
-export async function resolveMentionSuggestions(value: string) {
-  const response = await fetch(
-    `/api/users/search?query=${encodeURIComponent(value)}`
-  );
-  const users = await response.json();
-
-  return users;
 }
 
 export type ThreadMetadata = {
@@ -46,10 +34,6 @@ export type UserMeta = {
   };
 };
 
-export type Presence = {
-  isTyping: string | boolean;
-};
-
 export const {
   suspense: { useThreads, useUser },
   createComment,
@@ -61,6 +45,3 @@ export const {
   resolveUser,
   serverEndpoint: `https://${WORKERS_ENDPOINT}/v2`,
 });
-
-export const { RoomProvider, useOthers, useUpdateMyPresence } =
-  createRoomContext<Presence, LsonObject, UserMeta>(client);

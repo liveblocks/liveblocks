@@ -7,11 +7,12 @@ const liveblocks = new Liveblocks({
 });
 
 export default async function auth(req: NextApiRequest, res: NextApiResponse) {
-  if (!process.env.LIVEBLOCKS_SECRET_KEY || !req.cookies.userId) {
+  if (!process.env.LIVEBLOCKS_SECRET_KEY) {
     return res.status(403).end();
   }
 
-  const session = liveblocks.prepareSession(req.cookies.userId);
+  const userIndex = Math.floor(Math.random() * NAMES.length);
+  const session = liveblocks.prepareSession(`user-${userIndex}`);
 
   session.allow(req.body.room, session.FULL_ACCESS);
 
@@ -19,3 +20,14 @@ export default async function auth(req: NextApiRequest, res: NextApiResponse) {
 
   return res.status(status).end(body);
 }
+
+export const NAMES = [
+  "Charlie Layne",
+  "Mislav Abha",
+  "Tatum Paolo",
+  "Anjali Wanda",
+  "Jody Hekla",
+  "Emil Joyce",
+  "Jory Quispe",
+  "Quinn Elton",
+];

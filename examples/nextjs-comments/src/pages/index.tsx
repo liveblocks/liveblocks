@@ -1,115 +1,100 @@
-import { Comment, Composer } from "@liveblocks/react-comments";
+import React, { Suspense, useMemo } from "react";
 import { useRouter } from "next/router";
-import React, { useEffect, useMemo } from "react";
-import { useCookies } from "react-cookie";
-
 import {
-  createComment,
   createThread,
   deleteComment,
   useThreads,
-} from "../../liveblocks.suspense.config";
-import { Button } from "../components/Button";
+} from "../../liveblocks.config";
+import { Comment, Composer } from "@liveblocks/react-comments";
 import { useHydrated } from "../utils/use-hydrated";
-
-const USER_ID = "user";
-const ROOM_ID = "comments-react";
 
 function Example({ roomId }: { roomId: string }) {
   const threads = useThreads(roomId);
 
   return (
-    <main className="mt-14">
-      <div className="mx-auto flex w-full max-w-lg flex-col px-4">
-        <div className="flex w-full flex-col gap-8">
-          {threads.map((thread) => (
-            <div key={thread.id} className="rounded-lg bg-white shadow-lg">
-              <div className="flex flex-col transition">
-                {thread.comments
-                  .filter((comment) => comment.body !== undefined)
-                  .map((comment) => (
-                    <div key={comment.id} className="p-4">
-                      {comment.body && <Comment.Body body={comment.body} />}
-                      <Button
-                        variant="secondary"
-                        onClick={() =>
-                          deleteComment(roomId, {
-                            commentId: comment.id,
-                            threadId: thread.id,
-                          })
-                        }
-                      >
-                        Delete
-                      </Button>
-                    </div>
-                  ))}
-              </div>
-            </div>
-          ))}
-
-          <Composer.Form
-            className="relative flex flex-col rounded-[inherit] bg-white"
-            onCommentSubmit={({ body }) => {
-              if (threads.length === 0) {
-                createThread(roomId, { body, metadata: { resolved: false } });
-              } else {
-                createComment(roomId, { threadId: threads[0].id, body });
-              }
-            }}
-          >
-            <Composer.Body className="max-h-[10lh] flex-1 overflow-y-auto p-4 outline-none data-[disabled]:cursor-not-allowed data-[disabled]:opacity-50" />
-          </Composer.Form>
-        </div>
+    <main>
+      <div>
+        {threads.map((thread) => (
+          <div key={thread.id}>
+            {thread.comments
+              .filter((comment) => comment.body !== undefined)
+              .map((comment) => (
+                <div key={comment.id}>
+                  {comment.body && <Comment.Body body={comment.body} />}
+                  <button
+                    onClick={() =>
+                      deleteComment(roomId, {
+                        commentId: comment.id,
+                        threadId: thread.id,
+                      })
+                    }
+                  >
+                    Delete
+                  </button>
+                </div>
+              ))}
+          </div>
+        ))}
+        <Composer.Form
+          onCommentSubmit={({ body }) => {
+            createThread(roomId, { body, metadata: { resolved: false } });
+          }}
+        >
+          <Composer.Body />
+        </Composer.Form>
       </div>
     </main>
   );
 }
 
 export default function Page() {
-  const userId = useOverrideUserId(USER_ID);
-  const roomId = useOverrideRoomId(ROOM_ID);
+  const roomId = useOverrideRoomId("comments-react");
   const isHydrated = useHydrated();
 
-  if (!roomId || !userId || !isHydrated) {
-    return null;
+  // TODO: Fix SSR
+  if (!isHydrated) {
+    return <Loading />;
   }
 
-  return <Example roomId={roomId} />;
+  return (
+    <Suspense fallback={<Loading />}>
+      <Example roomId={roomId} />
+    </Suspense>
+  );
 }
 
+function Loading() {
+  return (
+    <div className="loading">
+      <img src="https://liveblocks.io/loading.svg" alt="Loading" />
+    </div>
+  );
+}
+
+export async function getStaticProps() {
+  const API_KEY = process.env.LIVEBLOCKS_SECRET_KEY;
+  const API_KEY_WARNING = process.env.CODESANDBOX_SSE
+    ? `Add your secret key from https://liveblocks.io/dashboard/apikeys as the \`LIVEBLOCKS_SECRET_KEY\` secret in CodeSandbox.\n` +
+      `Learn more: https://github.com/liveblocks/liveblocks/tree/main/examples/nextjs-comments#codesandbox.`
+    : `Create an \`.env.local\` file and add your secret key from https://liveblocks.io/dashboard/apikeys as the \`LIVEBLOCKS_SECRET_KEY\` environment variable.\n` +
+      `Learn more: https://github.com/liveblocks/liveblocks/tree/main/examples/nextjs-comments#getting-started.`;
+
+  if (!API_KEY) {
+    console.warn(API_KEY_WARNING);
+  }
+
+  return { props: {} };
+}
+
+/**
+ * This function is used when deploying an example on liveblocks.io.
+ * You can ignore it completely if you run the example locally.
+ */
 function useOverrideRoomId(roomId: string) {
-  const { query, isReady } = useRouter();
+  const { query } = useRouter();
   const overrideRoomId = useMemo(() => {
-    return isReady
-      ? query?.roomId
-        ? `${roomId}-${query.roomId}`
-        : roomId
-      : undefined;
-  }, [isReady, query.roomId, roomId]);
+    return query?.roomId ? `${roomId}-${query.roomId}` : roomId;
+  }, [query, roomId]);
 
   return overrideRoomId;
-}
-
-function useOverrideUserId(userId: string) {
-  const [, setCookie] = useCookies(["userId"]);
-  const { query, isReady } = useRouter();
-  const overrideUserId = useMemo(() => {
-    return isReady
-      ? query?.userId
-        ? `${userId}-${query.userId}`
-        : userId
-      : undefined;
-  }, [isReady, query, userId]);
-
-  useEffect(() => {
-    if (overrideUserId) {
-      setCookie("userId", overrideUserId, {
-        path: "/",
-        maxAge: 3600,
-        sameSite: true,
-      });
-    }
-  }, [overrideUserId, setCookie]);
-
-  return overrideUserId;
 }
