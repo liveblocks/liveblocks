@@ -28,7 +28,6 @@ import { isJsonArray, isJsonObject } from "./lib/Json";
 import { asPos } from "./lib/position";
 import type { Resolve } from "./lib/Resolve";
 import { compact, deepClone, tryParseJson } from "./lib/utils";
-import type { ParsedAuthToken } from "./protocol/AuthToken";
 import { canWriteStorage, Permission, TokenKind } from "./protocol/AuthToken";
 import type { BaseUserMeta } from "./protocol/BaseUserMeta";
 import type { ClientMsg } from "./protocol/ClientMsg";
@@ -921,19 +920,32 @@ export function createRoom<
   const doNotBatchUpdates = (cb: () => void): void => cb();
   const batchUpdates = config.unstable_batchedUpdates ?? doNotBatchUpdates;
 
-  let lastToken: ParsedAuthToken["parsed"] | undefined;
+  let lastTokenKey: string | undefined;
   function onStatusDidChange(newStatus: Status) {
-    if (managedSocket.authValue?.type === "secret") {
-      const token = managedSocket.authValue.token.parsed;
-      if (token !== undefined && token !== lastToken) {
-        context.staticSessionInfo.set({
-          userInfo: token.k === TokenKind.SECRET_LEGACY ? token.info : token.ui,
-          userId: token.k === TokenKind.SECRET_LEGACY ? token.id : token.uid,
-        });
-        lastToken = token;
+    const authValue = managedSocket.authValue;
+    if (authValue !== null) {
+      const tokenKey =
+        authValue.type === "secret"
+          ? authValue.token.raw
+          : authValue.publicApiKey;
+
+      if (tokenKey !== lastTokenKey) {
+        lastTokenKey = tokenKey;
+
+        if (authValue.type === "secret") {
+          const token = authValue.token.parsed;
+          context.staticSessionInfo.set({
+            userId: token.k === TokenKind.SECRET_LEGACY ? token.id : token.uid,
+            userInfo:
+              token.k === TokenKind.SECRET_LEGACY ? token.info : token.ui,
+          });
+        } else {
+          context.staticSessionInfo.set({
+            userId: undefined,
+            userInfo: undefined,
+          });
+        }
       }
-    } else if (managedSocket.authValue?.type === "public") {
-      // TODO: support public api key
     }
 
     // Forward to the outside world
