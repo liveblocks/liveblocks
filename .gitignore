@@ -10,7 +10,6 @@ build/
 coverage/
 dist/
 node_modules/
-examples/nextjs-comments/
 
 *.tsbuildinfo
 
