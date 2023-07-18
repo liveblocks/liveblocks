@@ -1137,7 +1137,7 @@ export function createRoom<
       const size = new TextEncoder().encode(message).length;
       if (
         size > MAX_MESSAGE_SIZE &&
-        // TODO: support public api key
+        // TODO: support public api key auth in REST API
         managedSocket.authValue?.type === "secret" &&
         config.httpSendEndpoint
       ) {
