@@ -43,6 +43,7 @@ import type {
   UpdatePresenceServerMsg,
   UserJoinServerMsg,
   UserLeftServerMsg,
+  YDocUpdate,
 } from "./protocol/ServerMsg";
 import { ServerMsgCode } from "./protocol/ServerMsg";
 import type { ImmutableRef } from "./refs/ImmutableRef";
@@ -579,7 +580,7 @@ export type Room<
     readonly storageDidLoad: Observable<void>;
 
     readonly storageStatus: Observable<StorageStatus>;
-    readonly ydoc: Observable<string>;
+    readonly ydoc: Observable<YDocUpdate>;
   };
 
   /**
@@ -1116,7 +1117,7 @@ export function createRoom<
     history: makeEventSource<HistoryEvent>(),
     storageDidLoad: makeEventSource<void>(),
     storageStatus: makeEventSource<StorageStatus>(),
-    ydoc: makeEventSource<string>(),
+    ydoc: makeEventSource<YDocUpdate>(),
   };
 
   function sendMessages(
@@ -1710,7 +1711,7 @@ export function createRoom<
           }
 
           case ServerMsgCode.UPDATE_YDOC: {
-            eventHub.ydoc.notify(message.update);
+            eventHub.ydoc.notify(message);
             break;
           }
 
