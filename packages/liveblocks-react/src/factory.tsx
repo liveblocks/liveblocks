@@ -427,8 +427,9 @@ export function createRoomContext<
 
     const subscribe = React.useCallback(
       (onChange: () => void) => {
+        // XXX Replace both of these with room.events.self, once we have it
         const unsub1 = room.events.me.subscribe(onChange);
-        const unsub2 = room.events.connection.subscribe(onChange);
+        const unsub2 = room.events.status.subscribe(onChange);
         return () => {
           unsub1();
           unsub2();
