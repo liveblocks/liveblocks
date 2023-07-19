@@ -427,24 +427,11 @@ export function createRoomContext<
     type Selection = T | null;
 
     const room = useRoom();
-
-    const subscribe = React.useCallback(
-      (onChange: () => void) => {
-        const unsub1 = room.events.myPresence.subscribe(onChange);
-        const unsub2 = room.events.status.subscribe(onChange);
-        return () => {
-          unsub1();
-          unsub2();
-        };
-      },
-      [room]
-    );
-
+    const subscribe = room.events.self.subscribe;
     const getSnapshot: () => Snapshot = room.getSelf;
 
     const selector =
       maybeSelector ?? (identity as (me: User<TPresence, TUserMeta>) => T);
-
     const wrappedSelector = React.useCallback(
       (me: Snapshot): Selection => (me !== null ? selector(me) : null),
       [selector]
