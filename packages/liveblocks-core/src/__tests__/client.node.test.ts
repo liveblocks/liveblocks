@@ -43,12 +43,12 @@ describe("createClient", () => {
     [
       undefined,
       undefined,
-      "Invalid Liveblocks client options. For more information: https://liveblocks.io/docs/api-reference/liveblocks-client#createClient",
+      "Invalid Liveblocks client options. Please provide either publicApiKey or authEndpoint. Both options cannot be empty. For more information: https://liveblocks.io/docs/api-reference/liveblocks-client#createClient",
     ],
     [
       null,
       undefined,
-      "Invalid Liveblocks client options. For more information: https://liveblocks.io/docs/api-reference/liveblocks-client#createClient",
+      "Invalid Liveblocks client options. Please provide either publicApiKey or authEndpoint. Both options cannot be empty. For more information: https://liveblocks.io/docs/api-reference/liveblocks-client#createClient",
     ],
     [
       undefined,
