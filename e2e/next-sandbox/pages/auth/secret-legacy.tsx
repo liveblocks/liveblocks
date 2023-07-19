@@ -7,7 +7,7 @@ const client = createClient({
   authEndpoint: "/api/auth/legacy-token",
 });
 
-const { RoomProvider, useSelf, useOthers, useStatus } =
+const { RoomProvider, useMyPresence, useSelf, useOthers, useStatus } =
   createRoomContext(client);
 
 export default function Home() {
@@ -85,7 +85,10 @@ export default function Home() {
 
 function Sandbox() {
   const status = useStatus();
-  const me = useSelf();
+  const self = useSelf();
+  const [myPresence] = useMyPresence();
   const others = useOthers();
-  return <pre>{JSON.stringify({ status, me, others }, null, 2)}</pre>;
+  return (
+    <pre>{JSON.stringify({ status, self, myPresence, others }, null, 2)}</pre>
+  );
 }
