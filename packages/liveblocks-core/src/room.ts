@@ -1285,6 +1285,7 @@ export function createRoom<
         const updates = Array.from(storageUpdates.values());
         eventHub.storage.notify(updates);
       }
+      notifyStorageStatus();
     });
   }
 
@@ -1396,10 +1397,6 @@ export function createRoom<
         }
       }
     }
-
-    notifyStorageStatus();
-    notifySelfChanged(doNotBatchUpdates);
-    //                ^^^^^^^^^^^^^^^^^ Incorrect! This entire applyOps function should be called in a batched updates wrapper
 
     return {
       ops,
