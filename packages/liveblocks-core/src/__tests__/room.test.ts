@@ -1064,7 +1064,7 @@ describe("room", () => {
 
       const callback = jest.fn();
 
-      room.events.me.subscribe(callback);
+      room.events.myPresence.subscribe(callback);
 
       room.batch(() => {
         room.updatePresence({ x: 0 });
@@ -1291,7 +1291,7 @@ describe("room", () => {
       const { room } = createTestableRoom({});
 
       const callback = jest.fn();
-      const unsubscribe = room.events.me.subscribe(callback);
+      const unsubscribe = room.events.myPresence.subscribe(callback);
 
       room.updatePresence({ x: 0 });
 
