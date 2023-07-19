@@ -91,9 +91,6 @@ function makeMutationContext<
 
     get self() {
       const self = room.getSelf();
-      // NOTE: We could use room.isSelfAware() here to keep the check
-      // consistent with `others`, but we also want to refine the `null` case
-      // away here.
       if (self === null) {
         throw new Error(errmsg);
       }
@@ -102,7 +99,7 @@ function makeMutationContext<
 
     get others() {
       const others = room.getOthers();
-      if (!room.isSelfAware()) {
+      if (room.getSelf() === null) {
         throw new Error(errmsg);
       }
       return others;
@@ -628,7 +625,7 @@ export function createRoomContext<
 
   function useSuspendUntilPresenceLoaded(): void {
     const room = useRoom();
-    if (room.isSelfAware()) {
+    if (room.getSelf() === null) {
       return;
     }
 

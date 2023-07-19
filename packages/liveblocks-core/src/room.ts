@@ -426,11 +426,6 @@ export type Room<
    */
   readonly id: string;
   /**
-   * A client is considered "self aware" if it knows its own
-   * metadata and connection ID (from the auth server).
-   */
-  isSelfAware(): boolean;
-  /**
    * @deprecated This API will be removed in a future version of Liveblocks.
    * Prefer using `.getStatus()` instead.
    *
@@ -2196,7 +2191,6 @@ export function createRoom<
       // Core
       getStatus: () => managedSocket.getStatus(),
       getConnectionState: () => managedSocket.getLegacyStatus(),
-      isSelfAware: () => context.staticSessionInfo.current !== null,
       getSelf: () => self.current,
 
       // Presence
