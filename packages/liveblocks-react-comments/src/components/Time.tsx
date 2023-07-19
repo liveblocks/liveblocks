@@ -87,7 +87,6 @@ export const Time = forwardRef<HTMLTimeElement, TimeProps>(
 
     return (
       <Component
-        data-liveblocks-time=""
         {...props}
         ref={forwardedRef}
         dateTime={dateTime ?? normalizedDate}

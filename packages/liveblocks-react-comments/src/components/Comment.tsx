@@ -46,11 +46,7 @@ const CommentMention = forwardRef<HTMLSpanElement, CommentMentionProps>(
     const Component = asChild ? Slot : "span";
 
     return (
-      <Component
-        data-liveblocks-comment-mention=""
-        {...props}
-        ref={forwardedRef}
-      >
+      <Component {...props} ref={forwardedRef}>
         {children}
       </Component>
     );
@@ -74,7 +70,7 @@ const CommentBody = forwardRef<HTMLDivElement, CommentBodyProps>(
     }
 
     return (
-      <Component data-liveblocks-comment-body="" {...props} ref={forwardedRef}>
+      <Component {...props} ref={forwardedRef}>
         {body.content.map((block, index) => {
           switch (block.type) {
             case "paragraph":

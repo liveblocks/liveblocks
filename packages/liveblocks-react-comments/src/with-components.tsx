@@ -13,6 +13,7 @@ import type { ComposerSubmitComment } from "./components/Composer";
 import { Composer as DefaultComposer } from "./components/Composer";
 import { Time } from "./components/Time";
 import type { CommentsContext } from "./factory";
+import { classNames } from "./utils/class-names";
 import { getInitials } from "./utils/get-initials";
 
 export type CommentsContextWithComponents<
@@ -73,7 +74,7 @@ export function withComponents<
   const { resolveUserName, resolveUserAvatar } = options ?? {};
 
   // TODO: Handle loading and error states
-  function Avatar({ userId, ...props }: AvatarProps) {
+  function Avatar({ userId, className, ...props }: AvatarProps) {
     const { user } = useUser(userId);
     const resolvedUserName = useResolvedUserString(
       userId,
@@ -91,11 +92,17 @@ export function withComponents<
     );
 
     return (
-      <div {...props}>
+      <div className={classNames(className, "lb-avatar")} {...props}>
         {resolvedUserAvatar && (
-          <img src={resolvedUserAvatar} alt={resolvedUserName} />
+          <img
+            className="lb-avatar-image"
+            src={resolvedUserAvatar}
+            alt={resolvedUserName}
+          />
         )}
-        {resolvedUserInitials && <span>{resolvedUserInitials}</span>}
+        {resolvedUserInitials && (
+          <span className="lb-avatar-placeholder">{resolvedUserInitials}</span>
+        )}
       </div>
     );
   }
@@ -114,7 +121,7 @@ export function withComponents<
 
   // TODO: Add option to align the body with the avatar or the name (adds/removes a class name)
   const Comment = forwardRef<HTMLDivElement, CommentProps>(
-    ({ comment, ...props }, forwardedRef) => {
+    ({ comment, className, ...props }, forwardedRef) => {
       const [isEditing, setEditing] = useState(false);
 
       const handleEditCancel = useCallback(() => {
@@ -148,9 +155,13 @@ export function withComponents<
       }
 
       return (
-        <div {...props} ref={forwardedRef}>
-          <Avatar userId={comment.userId} />
-          <Name userId={comment.userId} />
+        <div
+          className={classNames(className, "lb-avatar")}
+          {...props}
+          ref={forwardedRef}
+        >
+          <Avatar className="lb-comment-avatar" userId={comment.userId} />
+          <Name className="lb-comment-name" userId={comment.userId} />
           <span>
             {/* TODO: Add "edited" label */}
             <Time date={comment.createdAt} />
@@ -168,7 +179,10 @@ export function withComponents<
               </div>
             </DefaultComposer.Form>
           ) : (
-            <DefaultComment.Body body={comment.body} />
+            <DefaultComment.Body
+              className="lb-comment-body"
+              body={comment.body}
+            />
           )}
         </div>
       );

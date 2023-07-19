@@ -82,6 +82,7 @@ import type {
   ComposerBodyMarks,
   ComposerBodyMention,
 } from "../types";
+import { classNames } from "../utils/class-names";
 import { isKey } from "../utils/is-key";
 import { Portal } from "../utils/Portal";
 import { requestSubmit } from "../utils/request-submit";
@@ -607,7 +608,6 @@ const ComposerMention = forwardRef<HTMLSpanElement, ComposerMentionProps>(
 
     return (
       <Component
-        data-liveblocks-composer-mention=""
         data-selected={isSelected || undefined}
         {...props}
         ref={forwardedRef}
@@ -628,7 +628,6 @@ const ComposerSuggestions = forwardRef<
 
   return (
     <Component
-      data-liveblocks-composer-suggestions=""
       {...props}
       style={{
         display: "flex",
@@ -655,7 +654,6 @@ const ComposerSuggestionsList = forwardRef<
       role="listbox"
       id={id}
       aria-label="Suggestions list"
-      data-liveblocks-composer-suggestions-list=""
       {...props}
       ref={forwardedRef}
     >
@@ -725,7 +723,6 @@ const ComposerSuggestionsListItem = forwardRef<
       <Component
         role="option"
         id={id}
-        data-liveblocks-composer-suggestions-list-item=""
         data-selected={isSelected || undefined}
         aria-selected={isSelected || undefined}
         onPointerMove={handlePointerMove}
@@ -983,7 +980,6 @@ const ComposerBody = forwardRef<HTMLDivElement, ComposerBodyProps>(
             enterKeyHint={mentionDraft ? "enter" : "send"}
             autoCapitalize="sentences"
             aria-label="Comment body"
-            data-liveblocks-composer-body=""
             data-focused={isFocused || undefined}
             data-disabled={disabled || undefined}
             {...propsWhileSuggesting}
@@ -1080,12 +1076,7 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
           validate,
         }}
       >
-        <Component
-          data-liveblocks-composer-form=""
-          {...props}
-          onSubmit={handleSubmit}
-          ref={mergedRefs}
-        >
+        <Component {...props} onSubmit={handleSubmit} ref={mergedRefs}>
           {children}
         </Component>
       </ComposerEditorContext.Provider>
@@ -1100,7 +1091,6 @@ const ComposerSubmit = forwardRef<HTMLButtonElement, ComposerSubmitProps>(
 
     return (
       <Component
-        data-liveblocks-composer-submit=""
         type="submit"
         {...props}
         ref={forwardedRef}
