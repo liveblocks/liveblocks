@@ -947,6 +947,7 @@ export function createRoom<
     batchUpdates(() => {
       eventHub.status.notify(newStatus);
       eventHub.connection.notify(newToLegacyStatus(newStatus));
+      notifySelfChanged(doNotBatchUpdates);
     });
   }
 
@@ -1172,6 +1173,17 @@ export function createRoom<
     }
   );
 
+  let _lastSelf: Readonly<User<TPresence, TUserMeta>> | undefined;
+  function notifySelfChanged(batchedUpdatesWrapper: (cb: () => void) => void) {
+    const currSelf = self.current;
+    if (currSelf !== null && currSelf !== _lastSelf) {
+      batchedUpdatesWrapper(() => {
+        eventHub.self.notify(currSelf);
+      });
+      _lastSelf = currSelf;
+    }
+  }
+
   // For use in DevTools
   const selfAsTreeNode = new DerivedRef(
     self as ImmutableRef<User<TPresence, TUserMeta> | null>,
@@ -1265,6 +1277,7 @@ export function createRoom<
       }
 
       if (presence) {
+        notifySelfChanged(doNotBatchUpdates);
         eventHub.myPresence.notify(context.me.current);
       }
 
@@ -1385,6 +1398,8 @@ export function createRoom<
     }
 
     notifyStorageStatus();
+    notifySelfChanged(doNotBatchUpdates);
+    //                ^^^^^^^^^^^^^^^^^ Incorrect! This entire applyOps function should be called in a batched updates wrapper
 
     return {
       ops,
@@ -1573,6 +1588,7 @@ export function createRoom<
         isStorageReadOnly(user.scopes)
       );
     }
+
     return { type: "reset" };
   }
 
