@@ -1579,10 +1579,10 @@ export function createRoom<
     context.idFactory = makeIdFactory(message.actor);
     notifySelfChanged(batchedUpdatesWrapper);
 
-    for (const connectionId in context.others._connections) {
+    for (const connectionId of context.others.connectionIds()) {
       const user = message.users[connectionId];
       if (user === undefined) {
-        context.others.removeConnection(Number(connectionId));
+        context.others.removeConnection(connectionId);
       }
     }
 
