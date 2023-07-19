@@ -1554,32 +1554,35 @@ export function createRoom<
   }
 
   function onRoomStateMessage(
-    message: RoomStateServerMsg<TUserMeta>
+    message: RoomStateServerMsg<TUserMeta>,
+    batchedUpdatesWrapper: (cb: () => void) => void
   ): OthersEvent<TPresence, TUserMeta> {
-    // The server will inform the client about its assigned actor ID and scopes
-    context.dynamicSessionInfo.set({
-      actor: message.actor,
-      scopes: message.scopes,
-    });
-    context.idFactory = makeIdFactory(message.actor);
+    batchedUpdatesWrapper(() => {
+      // The server will inform the client about its assigned actor ID and scopes
+      context.dynamicSessionInfo.set({
+        actor: message.actor,
+        scopes: message.scopes,
+      });
+      context.idFactory = makeIdFactory(message.actor);
 
-    for (const connectionId in context.others._connections) {
-      const user = message.users[connectionId];
-      if (user === undefined) {
-        context.others.removeConnection(Number(connectionId));
+      for (const connectionId in context.others._connections) {
+        const user = message.users[connectionId];
+        if (user === undefined) {
+          context.others.removeConnection(Number(connectionId));
+        }
       }
-    }
 
-    for (const key in message.users) {
-      const user = message.users[key];
-      const connectionId = Number(key);
-      context.others.setConnection(
-        connectionId,
-        user.id,
-        user.info,
-        user.scopes
-      );
-    }
+      for (const key in message.users) {
+        const user = message.users[key];
+        const connectionId = Number(key);
+        context.others.setConnection(
+          connectionId,
+          user.id,
+          user.info,
+          user.scopes
+        );
+      }
+    });
     return { type: "reset" };
   }
 
@@ -1725,7 +1728,7 @@ export function createRoom<
           }
 
           case ServerMsgCode.ROOM_STATE: {
-            updates.others.push(onRoomStateMessage(message));
+            updates.others.push(onRoomStateMessage(message, doNotBatchUpdates));
             break;
           }
 
