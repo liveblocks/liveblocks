@@ -54,7 +54,8 @@ export default function Home() {
           <li>
             <Link href={"/auth/secret-legacy?room=" + encodeURIComponent(text)}>
               <a>with legacy token</a>
-            </Link>
+            </Link>{" "}
+            👈
           </li>
         </ul>
       </div>

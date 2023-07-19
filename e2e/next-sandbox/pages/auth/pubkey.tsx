@@ -45,7 +45,8 @@ export default function Home() {
           <li>
             <Link href={"/auth/pubkey?room=" + encodeURIComponent(text)}>
               <a>with pubkey</a>
-            </Link>
+            </Link>{" "}
+            👈
           </li>
           <li>
             <Link href={"/auth/acc-token?room=" + encodeURIComponent(text)}>

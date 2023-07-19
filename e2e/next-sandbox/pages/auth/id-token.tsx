@@ -48,7 +48,8 @@ export default function Home() {
           <li>
             <Link href={"/auth/id-token?room=" + encodeURIComponent(text)}>
               <a>with ID token</a>
-            </Link>
+            </Link>{" "}
+            👈
           </li>
           <li>
             <Link href={"/auth/secret-legacy?room=" + encodeURIComponent(text)}>
