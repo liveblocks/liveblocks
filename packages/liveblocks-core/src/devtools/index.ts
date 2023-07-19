@@ -106,7 +106,7 @@ function startSyncStream(
     room.events.storage.subscribe(() => partialSyncStorage(room)),
 
     // Any time "me" or "others" updates, send the new values accordingly
-    room.events.me.subscribe(() => partialSyncMe(room)),
+    room.events.myPresence.subscribe(() => partialSyncMe(room)),
     room.events.others.subscribe(() => partialSyncOthers(room)),
   ]);
 }

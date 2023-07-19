@@ -228,7 +228,7 @@ export function createRoomContext<
     (patch: Partial<TPresence>, options?: { addToHistory: boolean }) => void,
   ] {
     const room = useRoom();
-    const subscribe = room.events.me.subscribe;
+    const subscribe = room.events.myPresence.subscribe;
     const getSnapshot = room.getPresence;
     const presence = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
     const setPresence = room.updatePresence;
@@ -430,8 +430,8 @@ export function createRoomContext<
 
     const subscribe = React.useCallback(
       (onChange: () => void) => {
-        const unsub1 = room.events.me.subscribe(onChange);
-        const unsub2 = room.events.connection.subscribe(onChange);
+        const unsub1 = room.events.myPresence.subscribe(onChange);
+        const unsub2 = room.events.status.subscribe(onChange);
         return () => {
           unsub1();
           unsub2();

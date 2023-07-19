@@ -566,7 +566,7 @@ export type Room<
     readonly lostConnection: Observable<LostConnectionEvent>;
 
     readonly customEvent: Observable<{ connectionId: number; event: TRoomEvent; }>; // prettier-ignore
-    readonly me: Observable<TPresence>;
+    readonly myPresence: Observable<TPresence>;
     readonly others: Observable<{ others: Others<TPresence, TUserMeta>; event: OthersEvent<TPresence, TUserMeta>; }>; // prettier-ignore
     readonly error: Observable<Error>;
     readonly storage: Observable<StorageUpdate[]>;
@@ -1107,7 +1107,7 @@ export function createRoom<
     lostConnection: makeEventSource<LostConnectionEvent>(),
 
     customEvent: makeEventSource<CustomEvent<TRoomEvent>>(),
-    me: makeEventSource<TPresence>(),
+    myPresence: makeEventSource<TPresence>(),
     others: makeEventSource<{
       others: Others<TPresence, TUserMeta>;
       event: OthersEvent<TPresence, TUserMeta>;
@@ -1263,7 +1263,7 @@ export function createRoom<
       }
 
       if (presence) {
-        eventHub.me.notify(context.me.current);
+        eventHub.myPresence.notify(context.me.current);
       }
 
       if (storageUpdates.size > 0) {
@@ -2118,7 +2118,7 @@ export function createRoom<
 
     customEvent: eventHub.customEvent.observable,
     others: eventHub.others.observable,
-    me: eventHub.me.observable,
+    myPresence: eventHub.myPresence.observable,
     error: eventHub.error.observable,
     storage: eventHub.storage.observable,
     history: eventHub.history.observable,
@@ -2263,7 +2263,7 @@ function makeClassicSubscribeFn<
           );
 
         case "my-presence":
-          return events.me.subscribe(callback as Callback<TPresence>);
+          return events.myPresence.subscribe(callback as Callback<TPresence>);
 
         case "others": {
           // NOTE: Others have a different callback structure, where the API
