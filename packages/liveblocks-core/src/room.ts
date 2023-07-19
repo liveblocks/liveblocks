@@ -1571,32 +1571,37 @@ export function createRoom<
     message: RoomStateServerMsg<TUserMeta>,
     batchedUpdatesWrapper: (cb: () => void) => void
   ): OthersEvent<TPresence, TUserMeta> {
-    batchedUpdatesWrapper(() => {
-      // The server will inform the client about its assigned actor ID and scopes
-      context.dynamicSessionInfo.set({
-        actor: message.actor,
-        scopes: message.scopes,
-      });
-      context.idFactory = makeIdFactory(message.actor);
-
-      for (const connectionId in context.others._connections) {
-        const user = message.users[connectionId];
-        if (user === undefined) {
-          context.others.removeConnection(Number(connectionId));
-        }
-      }
-
-      for (const key in message.users) {
-        const user = message.users[key];
-        const connectionId = Number(key);
-        context.others.setConnection(
-          connectionId,
-          user.id,
-          user.info,
-          user.scopes
-        );
-      }
+    // The server will inform the client about its assigned actor ID and scopes
+    context.dynamicSessionInfo.set({
+      actor: message.actor,
+      scopes: message.scopes,
     });
+    context.idFactory = makeIdFactory(message.actor);
+    notifySelfChanged(batchedUpdatesWrapper);
+
+    for (const connectionId in context.others._connections) {
+      const user = message.users[connectionId];
+      if (user === undefined) {
+        context.others.removeConnection(Number(connectionId));
+      }
+    }
+
+    for (const key in message.users) {
+      const user = message.users[key];
+      const connectionId = Number(key);
+      context.others.setConnection(
+        connectionId,
+        user.id,
+        user.info,
+        user.scopes
+      );
+    }
+
+    // NOTE: We could be notifying the "others" event here, but the reality is
+    // that ROOM_STATE is often the first message to be received from the
+    // server, and it won't contain all the information needed to update the
+    // other views yet. Instead, we'll let the others' presences trickle in,
+    // and notify each time that happens.
 
     return { type: "reset" };
   }
