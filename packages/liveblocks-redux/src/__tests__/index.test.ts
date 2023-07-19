@@ -386,7 +386,7 @@ describe("middleware", () => {
             },
           },
           actor: 2,
-          isReadOnly: false,
+          scopes: ["room:write"],
         } as RoomStateServerMsg<BaseUserMeta>),
       } as MessageEvent);
 
@@ -701,7 +701,7 @@ describe("middleware", () => {
       expect(store.getState().value).toBe(2);
     });
 
-    test("updating presence should not reset redo stack", async () => {
+    test("updating presence should not reset redo stack #1", async () => {
       const { store, client } = await prepareBasicStoreWithStorage([
         obj("root", { value: 1 }),
       ]);
@@ -721,7 +721,7 @@ describe("middleware", () => {
       expect(store.getState().value).toBe(2);
     });
 
-    test("updating presence should not reset redo stack", async () => {
+    test("updating presence should not reset redo stack #2", async () => {
       const { store, client } = await prepareBasicStoreWithStorage([
         obj("root", { value: 1 }),
       ]);
