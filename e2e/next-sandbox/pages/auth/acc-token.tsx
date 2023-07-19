@@ -62,12 +62,10 @@ export default function Home() {
         <input
           type="text"
           value={text}
-          onChange={(e) => {
-            setText(e.currentTarget.value);
-            setRoomId(null);
-          }}
+          onChange={(e) => setText(e.currentTarget.value)}
         />
         <input type="submit" value="enter" onClick={() => setRoomId(text)} />
+        <input type="submit" value="leave" onClick={() => setRoomId(null)} />
       </div>
       <hr />
       {roomId ? (
