@@ -69,7 +69,7 @@ import { useInitial } from "../lib/use-initial";
 import type { MentionDraft } from "../slate/mentions";
 import {
   getMentionDraftAtSelection,
-  insertMention,
+  insertMention as insertComposerMention,
   isMention as isComposerBodyMention,
   MENTION_CHARACTER,
   withMentions,
@@ -82,7 +82,6 @@ import type {
   ComposerBodyMarks,
   ComposerBodyMention,
 } from "../types";
-import { classNames } from "../utils/class-names";
 import { isKey } from "../utils/is-key";
 import { Portal } from "../utils/Portal";
 import { requestSubmit } from "../utils/request-submit";
@@ -202,6 +201,16 @@ export type ComposerContext = {
    * Submit the composer programmatically.
    */
   submit: () => void;
+
+  /**
+   * Clear the composer programmatically.
+   */
+  clear: () => void;
+
+  /**
+   * Insert text in the composer at the current selection.
+   */
+  insertText: (text: string) => void;
 };
 
 export interface ComposerMentionSuggestionsWrapperProps {
@@ -228,7 +237,7 @@ export interface ComposerMentionWrapperProps
 
 type SuggestionsPosition = "top" | "bottom";
 
-type ComposerEditorContext = ComposerContext & {
+type ComposerEditorContext = {
   validate: (value: SlateElement[]) => void;
   editor: SlateEditor;
 };
@@ -246,6 +255,7 @@ type ComposerSuggestionsContext = {
   ref: Ref<HTMLDivElement>;
 };
 
+const ComposerContext = createContext<ComposerContext | null>(null);
 const ComposerEditorContext = createContext<ComposerEditorContext | null>(null);
 const ComposerBodyContext = createContext<ComposerBodyContext | null>(null);
 const ComposerSuggestionsContext =
@@ -380,16 +390,12 @@ function useMentionSuggestions(
 }
 
 export function useComposer(): ComposerContext {
-  const composerEditorContext = useContext(ComposerEditorContext);
-  const context = nn(
-    composerEditorContext,
+  const composerContext = useContext(ComposerContext);
+
+  return nn(
+    composerContext,
     `useComposer can’t be used outside of ${COMPOSER_FORM_NAME}.`
   );
-
-  return {
-    isValid: context.isValid,
-    submit: context.submit,
-  };
 }
 
 function ComposerDefaultRenderMention({ userId }: ComposerRenderMentionProps) {
@@ -752,8 +758,8 @@ const ComposerBody = forwardRef<HTMLDivElement, ComposerBodyProps>(
     },
     forwardedRef
   ) => {
-    const { editor, submit, validate, isValid } =
-      useComposerEditorContext(COMPOSER_BODY_NAME);
+    const { editor, validate } = useComposerEditorContext(COMPOSER_BODY_NAME);
+    const { submit, isValid } = useComposer();
     const [isFocused, setFocused] = useState(false);
     const initialBody = useInitial(initialValue ?? emptyCommentBody);
     const initialEditorValue = useMemo(() => {
@@ -804,7 +810,7 @@ const ComposerBody = forwardRef<HTMLDivElement, ComposerBodyProps>(
         }
 
         SlateTransforms.select(editor, mentionDraft.range);
-        insertMention(editor, userId);
+        insertComposerMention(editor, userId);
         setMentionDraft(undefined);
         setSelectedMentionSuggestionIndex(0);
       },
@@ -1034,6 +1040,28 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
       [editor]
     );
 
+    const submit = useCallback(() => {
+      if (ref.current) {
+        requestSubmit(ref.current);
+      }
+    }, []);
+
+    const clear = useCallback(() => {
+      SlateTransforms.delete(editor, {
+        at: {
+          anchor: SlateEditor.start(editor, []),
+          focus: SlateEditor.end(editor, []),
+        },
+      });
+    }, [editor]);
+
+    const insertText = useCallback(
+      (text: string) => {
+        SlateTransforms.insertText(editor, text);
+      },
+      [editor]
+    );
+
     const handleSubmit = useCallback(
       async (event: FormEvent<HTMLFormElement>) => {
         onSubmit?.(event);
@@ -1051,34 +1079,25 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
 
         await onCommentSubmit?.(comment, event);
 
-        SlateTransforms.delete(editor, {
-          at: {
-            anchor: SlateEditor.start(editor, []),
-            focus: SlateEditor.end(editor, []),
-          },
-        });
+        clear();
       },
-      [editor, onCommentSubmit, onSubmit]
+      [clear, editor, onCommentSubmit, onSubmit]
     );
-
-    const submit = useCallback(() => {
-      if (ref.current) {
-        requestSubmit(ref.current);
-      }
-    }, []);
 
     return (
       <ComposerEditorContext.Provider
         value={{
           editor,
-          isValid,
-          submit,
           validate,
         }}
       >
-        <Component {...props} onSubmit={handleSubmit} ref={mergedRefs}>
-          {children}
-        </Component>
+        <ComposerContext.Provider
+          value={{ isValid, submit, clear, insertText }}
+        >
+          <Component {...props} onSubmit={handleSubmit} ref={mergedRefs}>
+            {children}
+          </Component>
+        </ComposerContext.Provider>
       </ComposerEditorContext.Provider>
     );
   }
@@ -1087,7 +1106,7 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
 const ComposerSubmit = forwardRef<HTMLButtonElement, ComposerSubmitProps>(
   ({ children, disabled, asChild, ...props }, forwardedRef) => {
     const Component = asChild ? Slot : "button";
-    const { isValid } = useComposerEditorContext(COMPOSER_SUBMIT_NAME);
+    const { isValid } = useComposer();
 
     return (
       <Component
