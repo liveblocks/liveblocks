@@ -566,6 +566,7 @@ export type Room<
     readonly lostConnection: Observable<LostConnectionEvent>;
 
     readonly customEvent: Observable<{ connectionId: number; event: TRoomEvent; }>; // prettier-ignore
+    readonly self: Observable<User<TPresence, TUserMeta>>;
     readonly myPresence: Observable<TPresence>;
     readonly others: Observable<{ others: Others<TPresence, TUserMeta>; event: OthersEvent<TPresence, TUserMeta>; }>; // prettier-ignore
     readonly error: Observable<Error>;
@@ -1107,6 +1108,7 @@ export function createRoom<
     lostConnection: makeEventSource<LostConnectionEvent>(),
 
     customEvent: makeEventSource<CustomEvent<TRoomEvent>>(),
+    self: makeEventSource<User<TPresence, TUserMeta>>(),
     myPresence: makeEventSource<TPresence>(),
     others: makeEventSource<{
       others: Others<TPresence, TUserMeta>;
@@ -2118,6 +2120,7 @@ export function createRoom<
 
     customEvent: eventHub.customEvent.observable,
     others: eventHub.others.observable,
+    self: eventHub.self.observable,
     myPresence: eventHub.myPresence.observable,
     error: eventHub.error.observable,
     storage: eventHub.storage.observable,
