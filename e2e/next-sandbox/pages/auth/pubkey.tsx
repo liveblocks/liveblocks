@@ -14,7 +14,8 @@ const client = createClient({
   liveblocksServer: process.env.NEXT_PUBLIC_LIVEBLOCKS_SERVER,
 });
 
-const { RoomProvider, useSelf, useOthers } = createRoomContext(client);
+const { RoomProvider, useSelf, useOthers, useStatus } =
+  createRoomContext(client);
 
 export default function Home() {
   React.useEffect(() => {
@@ -90,7 +91,8 @@ export default function Home() {
 }
 
 function Sandbox() {
+  const status = useStatus();
   const me = useSelf();
   const others = useOthers();
-  return <pre>{JSON.stringify({ me, others }, null, 2)}</pre>;
+  return <pre>{JSON.stringify({ status, me, others }, null, 2)}</pre>;
 }
