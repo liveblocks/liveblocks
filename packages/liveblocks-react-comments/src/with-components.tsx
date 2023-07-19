@@ -6,9 +6,11 @@ import type {
   ForwardRefExoticComponent,
   RefAttributes,
 } from "react";
-import React, { forwardRef, useMemo } from "react";
+import React, { forwardRef, useCallback, useMemo, useState } from "react";
 
 import { Comment as DefaultComment } from "./components/Comment";
+import type { ComposerSubmitComment } from "./components/Composer";
+import { Composer as DefaultComposer } from "./components/Composer";
 import { Time } from "./components/Time";
 import type { CommentsContext } from "./factory";
 import { getInitials } from "./utils/get-initials";
@@ -65,6 +67,8 @@ export function withComponents<
 ): CommentsContextWithComponents<TThreadMetadata, TUserMeta> {
   const {
     suspense: { useUser },
+    editComment,
+    deleteComment,
   } = context;
   const { resolveUserName, resolveUserAvatar } = options ?? {};
 
@@ -108,9 +112,35 @@ export function withComponents<
     return <span {...props}>{resolvedUserName}</span>;
   }
 
+  // TODO: Add option to align the body with the avatar or the name (adds/removes a class name)
   const Comment = forwardRef<HTMLDivElement, CommentProps>(
     ({ comment, ...props }, forwardedRef) => {
-      // const [isEditing, setEditing] = useState(false);
+      const [isEditing, setEditing] = useState(false);
+
+      const handleEditCancel = useCallback(() => {
+        setEditing(false);
+      }, []);
+
+      const handleEditSubmit = useCallback(
+        ({ body }: ComposerSubmitComment) => {
+          // TODO: How do we get the room ID and thread ID here?
+          // editComment("TODO", {
+          //   commentId: comment.id,
+          //   threadId: "TODO",
+          //   body,
+          // });
+          setEditing(false);
+        },
+        []
+      );
+
+      const handleDelete = useCallback(() => {
+        // TODO: How do we get the room ID and thread ID here?
+        // deleteComment("TODO", {
+        //   commentId: comment.id,
+        //   threadId: "TODO",
+        // });
+      }, []);
 
       // TODO: Add option to render a `This comment was deleted` placeholder instead
       if (!comment.body) {
@@ -126,7 +156,20 @@ export function withComponents<
             <Time date={comment.createdAt} />
           </span>
           {/* TODO: Add dropdown to edit and delete */}
-          <DefaultComment.Body body={comment.body} />
+          {isEditing ? (
+            <DefaultComposer.Form onCommentSubmit={handleEditSubmit}>
+              <DefaultComposer.Body
+                placeholder="Edit comment…"
+                initialValue={comment.body}
+              />
+              <div>
+                <button onClick={handleEditCancel}>Cancel</button>
+                <DefaultComposer.Submit>Save</DefaultComposer.Submit>
+              </div>
+            </DefaultComposer.Form>
+          ) : (
+            <DefaultComment.Body body={comment.body} />
+          )}
         </div>
       );
     }
