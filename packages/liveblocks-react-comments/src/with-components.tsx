@@ -12,7 +12,7 @@ import React, { forwardRef, useCallback, useMemo, useState } from "react";
 import { Comment as DefaultComment } from "./components/Comment";
 import type { ComposerSubmitComment } from "./components/Composer";
 import { Composer as DefaultComposer } from "./components/Composer";
-import { Time } from "./components/Time";
+import { Timestamp } from "./components/Timestamp";
 import type { CommentsContext } from "./factory";
 import { EllipsisIcon } from "./icons/ellipsis";
 import { classNames } from "./utils/class-names";
@@ -168,7 +168,10 @@ export function withComponents<
           <Avatar className="lb-comment-avatar" userId={comment.userId} />
           <Name className="lb-comment-name" userId={comment.userId} />
           <span className="lb-comment-date">
-            <Time date={comment.createdAt} className="lb-comment-date-time" />
+            <Timestamp
+              date={comment.createdAt}
+              className="lb-comment-date-timestamp"
+            />
             {comment.editedAt && (
               <>
                 {" "}

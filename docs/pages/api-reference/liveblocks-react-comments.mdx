@@ -447,13 +447,14 @@ Displays a suggestion within `Composer.SuggestionsList`.
 
 </Table>
 
-### Time
+### Timestamp
 
-Displays a formatted date. Defaults to relative formatting with automatic
-re-rendering.
+Displays a formatted date, and automatically re-renders to support relative
+formatting. Defaults to relative formatting for recent dates and a short
+absolute formatting for older ones.
 
 ```tsx
-<Time date={new Date()} />
+<Timestamp date={new Date()} />
 ```
 
 <Table columns={["auto", "auto", "54%"]}>

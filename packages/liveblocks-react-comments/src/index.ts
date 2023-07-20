@@ -17,8 +17,8 @@ export type {
   ComposerSuggestionsListProps,
 } from "./components/Composer";
 export { Composer } from "./components/Composer";
-export type { TimeProps } from "./components/Time";
-export { Time } from "./components/Time";
+export type { TimestampProps } from "./components/Timestamp";
+export { Timestamp } from "./components/Timestamp";
 export { createCommentsContext } from "./factory";
 export { withComponents } from "./with-components";
 export type { CommentData, ThreadData } from "@liveblocks/core";
