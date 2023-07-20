@@ -48,6 +48,9 @@ export interface IWebSocket {
 export enum WebsocketCloseCodes {
   CLOSE_ABNORMAL = 1006,
 
+  UNEXPECTED_CONDITION = 1011,
+  TRY_AGAIN_LATER = 1013,
+
   NOT_ALLOWED = 4001,
   TOKEN_EXPIRED = 4009,
 
