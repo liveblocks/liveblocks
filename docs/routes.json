@@ -267,6 +267,20 @@
         ]
       },
       {
+        "title": "Account management",
+        "path": "/platform/account-management",
+        "routes": [
+          {
+            "title": "Create an account",
+            "path": "/platform/account-management/create-an-account"
+          },
+          {
+            "title": "Manage team members",
+            "path": "/platform/account-management/manage-team-members"
+          }
+        ]
+      },
+      {
         "title": "Pricing",
         "path": "/platform/pricing"
       },
