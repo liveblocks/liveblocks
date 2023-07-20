@@ -40,7 +40,7 @@ export type CommentsRoom<TThreadMetadata extends BaseMetadata> = {
 };
 
 export type CreateThreadOptions<TMetadata extends BaseMetadata> = [
-  TMetadata
+  TMetadata,
 ] extends [never]
   ? {
       body: CommentBody;
@@ -48,7 +48,7 @@ export type CreateThreadOptions<TMetadata extends BaseMetadata> = [
   : { body: CommentBody; metadata: TMetadata };
 
 export type EditThreadOptions<TMetadata extends BaseMetadata> = [
-  TMetadata
+  TMetadata,
 ] extends [never]
   ? {
       threadId: string;
@@ -162,28 +162,14 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
     callback: (threads: RoomThreads<TThreadMetadata>) => void
   ) {
     if (!unsubscribeRealtimeEvents) {
-      unsubscribeRealtimeEvents = realtimeClient.subscribe(
-        "events",
-        roomId,
-        [
-          "threadCreated",
-          "threadUpdated",
-          "threadDeleted",
-          "commentCreated",
-          "commentDeleted",
-          "commentEdited",
-        ],
-        () => {
-          pollingHub.threads.restart(getPollingInterval());
-          revalidateThreads();
-        }
-      );
+      unsubscribeRealtimeEvents = realtimeClient.subscribe(roomId, () => {
+        pollingHub.threads.restart(getPollingInterval());
+        revalidateThreads();
+      });
     }
 
     if (!unsubscribeRealtimeConnection) {
-      console.log("___COMMENTS ROOM SUBSCRIBE___")
-      unsubscribeRealtimeConnection = realtimeClient.subscribe(
-        "connection",
+      unsubscribeRealtimeConnection = realtimeClient.connection.subscribe(
         (connection) => {
           const nextRealtimeClientConnected = connection === "connected";
 
@@ -236,7 +222,7 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
   ): ThreadData<TThreadMetadata> {
     const body = options.body;
     const metadata: TThreadMetadata =
-      "metadata" in options ? options.metadata : {} as TThreadMetadata;
+      "metadata" in options ? options.metadata : ({} as TThreadMetadata);
     const threads = getLocalThreadsOrThrow();
 
     const threadId = createOptimisticId(THREAD_ID_PREFIX);
@@ -272,7 +258,7 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
             threadId,
             commentId,
             body,
-            metadata
+            metadata,
           })
         )
       )
