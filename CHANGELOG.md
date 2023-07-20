@@ -1,3 +1,14 @@
+# v1.2.0
+
+### `@liveblocks/*`
+
+Support the new and improved Liveblocks authorization.
+
+### `@liveblocks/node`
+
+Add new APIs for authorization. See our migration guide for tips on how to adopt
+the new style of authorizing your Liveblocks clients.
+
 # v1.1.6
 
 ### `@liveblocks/*`
