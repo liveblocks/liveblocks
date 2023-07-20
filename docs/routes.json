@@ -238,8 +238,51 @@
     ]
   },
   {
+    "title": "API Reference",
+    "routes": [
+      {
+        "title": "@liveblocks/client",
+        "path": "/api-reference/liveblocks-client"
+      },
+      {
+        "title": "@liveblocks/react",
+        "path": "/api-reference/liveblocks-react"
+      },
+      {
+        "title": "@liveblocks/redux",
+        "path": "/api-reference/liveblocks-redux"
+      },
+      {
+        "title": "@liveblocks/zustand",
+        "path": "/api-reference/liveblocks-zustand"
+      },
+      {
+        "title": "@liveblocks/yjs",
+        "hidden": true,
+        "path": "/api-reference/liveblocks-yjs"
+      },
+      {
+        "title": "@liveblocks/node",
+        "path": "/api-reference/liveblocks-node"
+      },
+      {
+        "title": "REST API",
+        "href": "/api-reference/rest-api-endpoints"
+      },
+      {
+        "title": "API v1 Endpoints",
+        "hidden": true,
+        "path": "/api-reference/rest-api-endpoints-v1"
+      }
+    ]
+  },
+  {
     "title": "Platform",
     "routes": [
+      {
+        "title": "WebSocket infrastructure",
+        "path": "/platform/websocket-infrastructure"
+      },
       {
         "title": "Projects",
         "path": "/platform/projects"
@@ -320,45 +363,6 @@
       {
         "title": "Troubleshooting",
         "path": "/platform/troubleshooting"
-      }
-    ]
-  },
-  {
-    "title": "API Reference",
-    "routes": [
-      {
-        "title": "@liveblocks/client",
-        "path": "/api-reference/liveblocks-client"
-      },
-      {
-        "title": "@liveblocks/react",
-        "path": "/api-reference/liveblocks-react"
-      },
-      {
-        "title": "@liveblocks/redux",
-        "path": "/api-reference/liveblocks-redux"
-      },
-      {
-        "title": "@liveblocks/zustand",
-        "path": "/api-reference/liveblocks-zustand"
-      },
-      {
-        "title": "@liveblocks/yjs",
-        "hidden": true,
-        "path": "/api-reference/liveblocks-yjs"
-      },
-      {
-        "title": "@liveblocks/node",
-        "path": "/api-reference/liveblocks-node"
-      },
-      {
-        "title": "REST API",
-        "href": "/api-reference/rest-api-endpoints"
-      },
-      {
-        "title": "API v1 Endpoints",
-        "hidden": true,
-        "path": "/api-reference/rest-api-endpoints-v1"
       }
     ]
   }
