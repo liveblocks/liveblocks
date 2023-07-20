@@ -4,10 +4,11 @@ import React, { forwardRef, useMemo } from "react";
 
 import { useRerender } from "../lib/use-rerender";
 import type { ComponentPropsWithSlot } from "../types";
+import { capitalize } from "../utils/capitalize";
 import { useInterval } from "../utils/use-interval";
 
-const DYNAMIC_DATE_THRESHOLD = 7 * 24 * 60 * 60 * 1000;
-const RENDER_INTERVAL = 30 * 1000;
+const DYNAMIC_DATE_THRESHOLD = 3 * 24 * 60 * 60 * 1000; // 3 days
+const RENDER_INTERVAL = 30 * 1000; // 30 seconds
 
 const TIMESTAMP_NAME = "Timestamp";
 
@@ -65,14 +66,14 @@ const relativeUnits = {
  * Formats a date absolutely.
  */
 function formatVerboseDate(date: Date) {
-  return verboseFormatter.format(date);
+  return capitalize(verboseFormatter.format(date));
 }
 
 /**
  * Formats a date absolutely with only the day and month.
  */
 function formatShortDate(date: Date) {
-  return shortFormatter.format(date);
+  return capitalize(shortFormatter.format(date));
 }
 
 /**
@@ -99,11 +100,11 @@ function formatRelativeDate(date: Date) {
     difference /= length;
   }
 
-  return relativeFormatter.format(Math.round(difference), "years");
+  return capitalize(relativeFormatter.format(Math.round(difference), "years"));
 }
 
 /**
- * Formats a date relatively if it is less than a week old,
+ * Formats a date relatively if it's recent,
  * otherwise absolutely with only the day and month.
  */
 function formatDynamicDate(date: Date) {
