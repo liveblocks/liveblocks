@@ -311,7 +311,7 @@ function isCloseEvent(
 function isCustomCloseEvent(
   error: IWebSocketEvent | Error
 ): error is IWebSocketCloseEvent {
-  return isCloseEvent(error) && error.code >= 4000 && error.code < 4100;
+  return isCloseEvent(error) && error.code >= 4000 && error.code < 5000;
 }
 
 export type Delegates<T extends BaseAuthResult> = {
