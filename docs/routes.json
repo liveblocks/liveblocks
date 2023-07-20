@@ -203,45 +203,6 @@
     ]
   },
   {
-    "title": "API Reference",
-    "routes": [
-      {
-        "title": "@liveblocks/client",
-        "path": "/api-reference/liveblocks-client"
-      },
-      {
-        "title": "@liveblocks/react",
-        "path": "/api-reference/liveblocks-react"
-      },
-      {
-        "title": "@liveblocks/redux",
-        "path": "/api-reference/liveblocks-redux"
-      },
-      {
-        "title": "@liveblocks/zustand",
-        "path": "/api-reference/liveblocks-zustand"
-      },
-      {
-        "title": "@liveblocks/yjs",
-        "hidden": true,
-        "path": "/api-reference/liveblocks-yjs"
-      },
-      {
-        "title": "@liveblocks/node",
-        "path": "/api-reference/liveblocks-node"
-      },
-      {
-        "title": "REST API",
-        "href": "/api-reference/rest-api-endpoints"
-      },
-      {
-        "title": "API v1 Endpoints",
-        "hidden": true,
-        "path": "/api-reference/rest-api-endpoints-v1"
-      }
-    ]
-  },
-  {
     "title": "Errors",
     "hidden": true,
     "routes": [
@@ -264,6 +225,19 @@
     ]
   },
   {
+    "title": "Tools",
+    "routes": [
+      {
+        "title": "DevTools",
+        "path": "/tools/devtools"
+      },
+      {
+        "title": "Next.js Starter Kit",
+        "path": "/tools/nextjs-starter-kit"
+      }
+    ]
+  },
+  {
     "title": "Platform",
     "routes": [
       {
@@ -271,16 +245,16 @@
         "path": "/platform/projects"
       },
       {
-        "title": "Next.js Starter Kit",
-        "path": "/platform/nextjs-starter-kit"
-      },
-      {
-        "title": "DevTools",
-        "path": "/platform/devtools"
+        "title": "Analytics",
+        "path": "/platform/analytics"
       },
       {
         "title": "Webhooks",
         "path": "/platform/webhooks"
+      },
+      {
+        "title": "REST API",
+        "path": "/platform/rest-api"
       },
       {
         "title": "Schema validation",
@@ -332,6 +306,45 @@
       {
         "title": "Troubleshooting",
         "path": "/platform/troubleshooting"
+      }
+    ]
+  },
+  {
+    "title": "API Reference",
+    "routes": [
+      {
+        "title": "@liveblocks/client",
+        "path": "/api-reference/liveblocks-client"
+      },
+      {
+        "title": "@liveblocks/react",
+        "path": "/api-reference/liveblocks-react"
+      },
+      {
+        "title": "@liveblocks/redux",
+        "path": "/api-reference/liveblocks-redux"
+      },
+      {
+        "title": "@liveblocks/zustand",
+        "path": "/api-reference/liveblocks-zustand"
+      },
+      {
+        "title": "@liveblocks/yjs",
+        "hidden": true,
+        "path": "/api-reference/liveblocks-yjs"
+      },
+      {
+        "title": "@liveblocks/node",
+        "path": "/api-reference/liveblocks-node"
+      },
+      {
+        "title": "REST API",
+        "href": "/api-reference/rest-api-endpoints"
+      },
+      {
+        "title": "API v1 Endpoints",
+        "hidden": true,
+        "path": "/api-reference/rest-api-endpoints-v1"
       }
     ]
   }
