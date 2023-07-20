@@ -62,7 +62,7 @@ export function createAuthManager(
     requestedScope: RequestedScope,
     roomId: string
   ): ParsedAuthToken | undefined {
-    const now = Math.floor(Date.now() / 1000);
+    const now = Math.ceil(Date.now() / 1000);
 
     for (let i = tokens.length - 1; i >= 0; i--) {
       const token = tokens[i];
@@ -153,8 +153,12 @@ export function createAuthManager(
     try {
       const token = await currentPromise;
       // Translate "server timestamps" to "local timestamps" in case clocks aren't in sync
+      const BUFFER = 0; // Expire tokens 30 seconds sooner than they have to
+      // XXX         ^ Update to 30, after I'm done testing with super short token lifetimes
       const expiresAt =
-        Math.floor(Date.now() / 1000) + (token.parsed.exp - token.parsed.iat);
+        Math.floor(Date.now() / 1000) +
+        (token.parsed.exp - token.parsed.iat) -
+        BUFFER;
 
       tokens.push(token);
       expiryTimes.push(expiresAt);
