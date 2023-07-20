@@ -245,7 +245,7 @@ import { Composer } from "@liveblocks/react-comments";
 
 () => (
   <Composer.Form>
-    <Composer.Body
+    <Composer.Editor
       renderMention={() => <Composer.Mention />}
       renderMentionSuggestions={() => (
         <Composer.Suggestions>
@@ -266,7 +266,7 @@ Surrounds the composer’s content and handles submissions.
 
 ```tsx
 <Composer.Form onCommentSubmit={({ body }) => {}}>
-  <Composer.Body />
+  <Composer.Editor />
   <Composer.Submit />
 </Composer.Form>
 ```
@@ -280,12 +280,12 @@ Surrounds the composer’s content and handles submissions.
 
 </Table>
 
-#### Composer.Body
+#### Composer.Editor
 
-Displays the composer’s body editor.
+Displays the composer’s editor.
 
 ```tsx
-<Composer.Body placeholder="Write a comment…" />
+<Composer.Editor placeholder="Write a comment…" />
 ```
 
 <Table columns={["auto", "auto", "54%"]}>
@@ -310,12 +310,12 @@ Displays the composer’s body editor.
 
 </Table>
 
-##### renderMention [#Composer.Body-renderMention]
+##### renderMention [#Composer.Editor-renderMention]
 
 A render prop that accepts a component used to render mentions.
 
 ```tsx
-<Composer.Body
+<Composer.Editor
   renderMention={({ userId, isSelected }) => (
     <Composer.Mention>@{userId}</Composer.Mention>
   )}
@@ -331,7 +331,7 @@ A render prop that accepts a component used to render mentions.
 
 </Table>
 
-##### renderMentionSuggestions [#Composer.Body-renderMentionSuggestions]
+##### renderMentionSuggestions [#Composer.Editor-renderMentionSuggestions]
 
 A render prop that accepts a component used to render mention suggestions.
 
@@ -345,7 +345,7 @@ A render prop that accepts a component used to render mention suggestions.
 </Table>
 
 ```tsx
-<Composer.Body
+<Composer.Editor
   renderMentionSuggestions={() => (
     <Composer.Suggestions>
       <Composer.SuggestionsList>
@@ -358,7 +358,7 @@ A render prop that accepts a component used to render mention suggestions.
 
 #### Composer.Mention
 
-Displays mentions within `Composer.Body`’s `renderMention` prop.
+Displays mentions within `Composer.Editor`’s `renderMention` prop.
 
 ```tsx
 <Composer.Mention>@{userId}</Composer.Mention>
@@ -382,7 +382,7 @@ Displays mentions within `Composer.Body`’s `renderMention` prop.
 
 #### Composer.Suggestions
 
-Surrounds a list of suggestions within `Composer.Body`.
+Surrounds a list of suggestions within `Composer.Editor`.
 
 ```tsx
 <Composer.Suggestions>
@@ -402,7 +402,7 @@ Surrounds a list of suggestions within `Composer.Body`.
 
 #### Composer.SuggestionsList
 
-Displays a list of suggestions within `Composer.Body`.
+Displays a list of suggestions within `Composer.Editor`.
 
 ```tsx
 <Composer.SuggestionsList>{/* … */}</Composer.SuggestionsList>

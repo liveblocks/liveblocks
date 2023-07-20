@@ -21,11 +21,13 @@ import type {
   AriaAttributes,
   ComponentPropsWithoutRef,
   ComponentType,
+  Dispatch,
   FocusEvent,
   FormEvent,
   KeyboardEvent,
   PointerEvent,
   Ref,
+  SetStateAction,
 } from "react";
 import React, {
   createContext,
@@ -78,7 +80,7 @@ import { withNormalize } from "../slate/normalize";
 import { getDOMRange } from "../slate/utils/get-dom-range";
 import type {
   ComponentPropsWithSlot,
-  ComposerBody as ComposerBodyType,
+  ComposerBody as ComposerBodyData,
   ComposerBodyMarks,
   ComposerBodyMention,
 } from "../types";
@@ -94,12 +96,13 @@ import { useRovingIndex } from "../utils/use-roving-index";
 const MENTION_SUGGESTIONS_DEBOUNCE = 500;
 const MENTION_SUGGESTIONS_POSITION: SuggestionsPosition = "top";
 const MENTION_SUGGESTIONS_INSET = 10;
+
 const COMPOSER_MENTION_NAME = "ComposerMention";
 const COMPOSER_SUGGESTIONS_NAME = "ComposerSuggestions";
 const COMPOSER_SUGGESTIONS_LIST_NAME = "ComposerSuggestionsList";
 const COMPOSER_SUGGESTIONS_LIST_ITEM_NAME = "ComposerSuggestionsListItem";
 const COMPOSER_SUBMIT_NAME = "ComposerSubmit";
-const COMPOSER_BODY_NAME = "ComposerBody";
+const COMPOSER_EDITOR_NAME = "ComposerEditor";
 const COMPOSER_FORM_NAME = "ComposerForm";
 
 export interface ComposerRenderMentionProps {
@@ -140,7 +143,7 @@ export interface ComposerSuggestionsListItemProps
   value: string;
 }
 
-export interface ComposerBodyProps extends ComponentPropsWithoutRef<"div"> {
+export interface ComposerEditorProps extends ComponentPropsWithoutRef<"div"> {
   /**
    * The editor's initial value.
    */
@@ -220,19 +223,19 @@ export interface ComposerMentionSuggestionsWrapperProps {
   userIds?: string[];
   selectedUserId?: string;
   setSelectedUserId: (userId: string) => void;
-  children?: ComposerBodyProps["renderMentionSuggestions"];
+  children?: ComposerEditorProps["renderMentionSuggestions"];
   onItemSelect: (userId: string) => void;
   position?: SuggestionsPosition;
   inset?: number;
 }
 
-export interface ComposerBodyElementProps extends RenderElementProps {
-  renderMention: ComposerBodyProps["renderMention"];
+export interface ComposerEditorElementProps extends RenderElementProps {
+  renderMention: ComposerEditorProps["renderMention"];
 }
 
 export interface ComposerMentionWrapperProps
   extends RenderElementSpecificProps<ComposerBodyMention> {
-  renderMention: ComposerBodyProps["renderMention"];
+  renderMention: ComposerEditorProps["renderMention"];
 }
 
 type SuggestionsPosition = "top" | "bottom";
@@ -240,10 +243,8 @@ type SuggestionsPosition = "top" | "bottom";
 type ComposerEditorContext = {
   validate: (value: SlateElement[]) => void;
   editor: SlateEditor;
-};
-
-type ComposerBodyContext = {
   isFocused: boolean;
+  setFocused: Dispatch<SetStateAction<boolean>>;
 };
 
 type ComposerSuggestionsContext = {
@@ -257,7 +258,6 @@ type ComposerSuggestionsContext = {
 
 const ComposerContext = createContext<ComposerContext | null>(null);
 const ComposerEditorContext = createContext<ComposerEditorContext | null>(null);
-const ComposerBodyContext = createContext<ComposerBodyContext | null>(null);
 const ComposerSuggestionsContext =
   createContext<ComposerSuggestionsContext | null>(null);
 
@@ -284,7 +284,7 @@ function commentBodyMentionToComposerBodyMention(
   };
 }
 
-export function composerBodyToCommentBody(body: ComposerBodyType): CommentBody {
+export function composerBodyToCommentBody(body: ComposerBodyData): CommentBody {
   return {
     content: body.map((block) => ({
       ...block,
@@ -303,7 +303,7 @@ export function composerBodyToCommentBody(body: ComposerBodyType): CommentBody {
   };
 }
 
-export function commentBodyToComposerBody(body: CommentBody): ComposerBodyType {
+export function commentBodyToComposerBody(body: CommentBody): ComposerBodyData {
   return body.content.map((block) => ({
     ...block,
     children: block.children.map((inline) => {
@@ -338,7 +338,7 @@ const emptyCommentBody: CommentBody = {
   content: [{ type: "paragraph", children: [{ text: "" }] }],
 };
 
-function createComposerBodyEditor() {
+function createComposerEditor() {
   return withNormalize(withMentions(withHistory(withReact(createEditor()))));
 }
 
@@ -348,15 +348,6 @@ function useComposerEditorContext(source = "useComposerEditorContext") {
   return nn(
     composerEditorContext,
     `${source} can’t be used outside of ${COMPOSER_FORM_NAME}.`
-  );
-}
-
-function useComposerBodyContext(source = "useComposerBodyContext") {
-  const composerBodyContext = useContext(ComposerBodyContext);
-
-  return nn(
-    composerBodyContext,
-    `${source} can’t be used outside of ${COMPOSER_BODY_NAME}.`
   );
 }
 
@@ -407,7 +398,7 @@ function ComposerDefaultRenderMention({ userId }: ComposerRenderMentionProps) {
   );
 }
 
-function ComposerBodyRenderMentionWrapper({
+function ComposerEditorRenderMentionWrapper({
   renderMention: RenderMention = ComposerDefaultRenderMention,
   attributes,
   children,
@@ -452,7 +443,7 @@ function ComposerMentionSuggestionsWrapper({
   children: RenderMentionSuggestions = ComposerDefaultRenderMentionSuggestions,
 }: ComposerMentionSuggestionsWrapperProps) {
   const editor = useSlateStatic();
-  const { isFocused } = useComposerBodyContext();
+  const { isFocused } = useComposerEditorContext();
   const [content, setContent] = useState<HTMLDivElement | null>(null);
   const [contentZIndex, setContentZIndex] = useState<string>();
   const contentRef = useCallback(setContent, [setContent]);
@@ -551,17 +542,17 @@ function ComposerMentionSuggestionsWrapper({
   ) : null;
 }
 
-function ComposerBodyElement({
+function ComposerEditorElement({
   renderMention,
   ...props
-}: ComposerBodyElementProps) {
+}: ComposerEditorElementProps) {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
   const { attributes, children, element } = props;
 
   switch (element.type) {
     case "mention":
       return (
-        <ComposerBodyRenderMentionWrapper
+        <ComposerEditorRenderMentionWrapper
           renderMention={renderMention}
           {...(props as RenderElementSpecificProps<ComposerBodyMention>)}
         />
@@ -575,7 +566,7 @@ function ComposerBodyElement({
   }
 }
 
-function ComposerBodyLeaf({ attributes, children, leaf }: RenderLeafProps) {
+function ComposerEditorLeaf({ attributes, children, leaf }: RenderLeafProps) {
   if (leaf.bold) {
     children = <strong>{children}</strong>;
   }
@@ -587,7 +578,7 @@ function ComposerBodyLeaf({ attributes, children, leaf }: RenderLeafProps) {
   return <span {...attributes}>{children}</span>;
 }
 
-function ComposerBodyPlaceholder({
+function ComposerEditorPlaceholder({
   children,
   attributes,
 }: RenderPlaceholderProps) {
@@ -742,7 +733,7 @@ const ComposerSuggestionsListItem = forwardRef<
   }
 );
 
-const ComposerBody = forwardRef<HTMLDivElement, ComposerBodyProps>(
+const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
   (
     {
       initialValue,
@@ -758,9 +749,9 @@ const ComposerBody = forwardRef<HTMLDivElement, ComposerBodyProps>(
     },
     forwardedRef
   ) => {
-    const { editor, validate } = useComposerEditorContext(COMPOSER_BODY_NAME);
+    const { editor, validate, isFocused, setFocused } =
+      useComposerEditorContext(COMPOSER_EDITOR_NAME);
     const { submit, isValid } = useComposer();
-    const [isFocused, setFocused] = useState(false);
     const initialBody = useInitial(initialValue ?? emptyCommentBody);
     const initialEditorValue = useMemo(() => {
       return commentBodyToComposerBody(initialBody);
@@ -789,7 +780,9 @@ const ComposerBody = forwardRef<HTMLDivElement, ComposerBodyProps>(
     );
     const renderElement = useCallback(
       (props: RenderElementProps) => {
-        return <ComposerBodyElement renderMention={renderMention} {...props} />;
+        return (
+          <ComposerEditorElement renderMention={renderMention} {...props} />
+        );
       },
       [renderMention]
     );
@@ -898,7 +891,7 @@ const ComposerBody = forwardRef<HTMLDivElement, ComposerBodyProps>(
           setFocused(true);
         }
       },
-      [onFocus]
+      [onFocus, setFocused]
     );
 
     const handleBlur = useCallback(
@@ -909,7 +902,7 @@ const ComposerBody = forwardRef<HTMLDivElement, ComposerBodyProps>(
           setFocused(false);
         }
       },
-      [onBlur]
+      [onBlur, setFocused]
     );
 
     const selectedMentionSuggestionUserId = useMemo(
@@ -981,39 +974,37 @@ const ComposerBody = forwardRef<HTMLDivElement, ComposerBodyProps>(
         initialValue={initialEditorValue}
         onChange={handleChange}
       >
-        <ComposerBodyContext.Provider value={{ isFocused }}>
-          <Editable
-            enterKeyHint={mentionDraft ? "enter" : "send"}
-            autoCapitalize="sentences"
-            aria-label="Comment body"
-            data-focused={isFocused || undefined}
-            data-disabled={disabled || undefined}
-            {...propsWhileSuggesting}
-            {...props}
-            readOnly={disabled}
-            disabled={disabled}
-            placeholder={placeholder}
-            onKeyDown={handleKeyDown}
-            onFocus={handleFocus}
-            onBlur={handleBlur}
-            renderElement={renderElement}
-            renderLeaf={ComposerBodyLeaf}
-            renderPlaceholder={ComposerBodyPlaceholder}
-          />
-          {mentionDraft && (
-            <ComposerMentionSuggestionsWrapper
-              mentionDraft={mentionDraft}
-              selectedUserId={selectedMentionSuggestionUserId}
-              setSelectedUserId={setSelectedMentionSuggestionUserId}
-              userIds={mentionSuggestions}
-              id={suggestionsListId}
-              itemId={suggestionsListItemId}
-              onItemSelect={createMention}
-            >
-              {renderMentionSuggestions}
-            </ComposerMentionSuggestionsWrapper>
-          )}
-        </ComposerBodyContext.Provider>
+        <Editable
+          enterKeyHint={mentionDraft ? "enter" : "send"}
+          autoCapitalize="sentences"
+          aria-label="Comment body"
+          data-focused={isFocused || undefined}
+          data-disabled={disabled || undefined}
+          {...propsWhileSuggesting}
+          {...props}
+          readOnly={disabled}
+          disabled={disabled}
+          placeholder={placeholder}
+          onKeyDown={handleKeyDown}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
+          renderElement={renderElement}
+          renderLeaf={ComposerEditorLeaf}
+          renderPlaceholder={ComposerEditorPlaceholder}
+        />
+        {mentionDraft && (
+          <ComposerMentionSuggestionsWrapper
+            mentionDraft={mentionDraft}
+            selectedUserId={selectedMentionSuggestionUserId}
+            setSelectedUserId={setSelectedMentionSuggestionUserId}
+            userIds={mentionSuggestions}
+            id={suggestionsListId}
+            itemId={suggestionsListItemId}
+            onItemSelect={createMention}
+          >
+            {renderMentionSuggestions}
+          </ComposerMentionSuggestionsWrapper>
+        )}
       </Slate>
     );
   }
@@ -1025,8 +1016,9 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
     forwardedRef
   ) => {
     const Component = asChild ? Slot : "form";
-    const editor = useInitial(createComposerBodyEditor);
+    const editor = useInitial(createComposerEditor);
     const [isValid, setValid] = useState(false);
+    const [isFocused, setFocused] = useState(false);
     const ref = useRef<HTMLFormElement>(null);
     const mergedRefs = useRefs(forwardedRef, ref);
 
@@ -1073,7 +1065,7 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
         event.preventDefault();
 
         const body = composerBodyToCommentBody(
-          editor.children as ComposerBodyType
+          editor.children as ComposerBodyData
         );
         const comment = { body };
 
@@ -1089,6 +1081,8 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
         value={{
           editor,
           validate,
+          isFocused,
+          setFocused,
         }}
       >
         <ComposerContext.Provider
@@ -1122,7 +1116,7 @@ const ComposerSubmit = forwardRef<HTMLButtonElement, ComposerSubmitProps>(
 );
 
 if (process.env.NODE_ENV !== "production") {
-  ComposerBody.displayName = COMPOSER_BODY_NAME;
+  ComposerEditor.displayName = COMPOSER_EDITOR_NAME;
   ComposerForm.displayName = COMPOSER_FORM_NAME;
   ComposerMention.displayName = COMPOSER_MENTION_NAME;
   ComposerSubmit.displayName = COMPOSER_SUBMIT_NAME;
@@ -1133,29 +1127,29 @@ if (process.env.NODE_ENV !== "production") {
 
 export const Composer = {
   /**
-   * Displays the composer's body editor.
+   * Displays the composer's editor.
    *
    * @example
-   * <Composer.Body placeholder="Write a comment…" />
+   * <Composer.Editor placeholder="Write a comment…" />
    */
-  Body: ComposerBody,
+  Editor: ComposerEditor,
 
   /**
    * Surrounds the composer's content and handles submissions.
    *
    * @example
    * <Composer.Form onCommentSubmit={({ body }) => {}}>
-   *	 <Composer.Body />
+   *	 <Composer.Editor />
    *   <Composer.Submit />
    * </Composer.Form>
    */
   Form: ComposerForm,
 
   /**
-   * Displays mentions within `Composer.Body`.
+   * Displays mentions within `Composer.Editor`.
    *
    * @example
-   * <Composer.Body
+   * <Composer.Editor
    *   renderMention={({ userId, isSelected }) => (
    *     <Composer.Mention>
    *       @{userId}
@@ -1174,10 +1168,10 @@ export const Composer = {
   Submit: ComposerSubmit,
 
   /**
-   * Surrounds a list of suggestions within `Composer.Body`.
+   * Surrounds a list of suggestions within `Composer.Editor`.
    *
    * @example
-   * <Composer.Body
+   * <Composer.Editor
    *   renderMention={({ userId, isSelected }) => (
    *     <Composer.SuggestionsList>
    *       {userIds.map((userId) => (
@@ -1195,10 +1189,10 @@ export const Composer = {
   Suggestions: ComposerSuggestions,
 
   /**
-   * Displays a list of suggestions within `Composer.Body`.
+   * Displays a list of suggestions within `Composer.Editor`.
    *
    * @example
-   * <Composer.Body
+   * <Composer.Editor
    *   renderMention={({ userId, isSelected }) => (
    *     <Composer.SuggestionsList>
    *       {userIds.map((userId) => (

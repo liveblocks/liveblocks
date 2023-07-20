@@ -41,7 +41,7 @@ import { useHydrated } from "../utils/use-hydrated";
 //             createThread(roomId, { body, metadata: { resolved: false } });
 //           }}
 //         >
-//           <Composer.Body />
+//           <Composer.Editor />
 //         </Composer.Form>
 //       </div>
 //     </main>
@@ -66,7 +66,7 @@ function Example({ roomId }: { roomId: string }) {
             createThread(roomId, { body, metadata: { resolved: false } });
           }}
         >
-          <Composer.Body />
+          <Composer.Editor />
           <Composer.Submit>Send</Composer.Submit>
         </Composer.Form>
       </div>

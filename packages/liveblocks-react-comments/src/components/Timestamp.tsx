@@ -7,7 +7,8 @@ import type { ComponentPropsWithSlot } from "../types";
 import { useInterval } from "../utils/use-interval";
 
 const DYNAMIC_DATE_THRESHOLD = 7 * 24 * 60 * 60 * 1000;
-const RENDER_INTERVAL = 30000;
+const RENDER_INTERVAL = 30 * 1000;
+
 const TIMESTAMP_NAME = "Timestamp";
 
 export interface TimestampProps

@@ -14,7 +14,10 @@ import type { ComposerSubmitComment } from "./components/Composer";
 import { Composer as DefaultComposer } from "./components/Composer";
 import { Timestamp } from "./components/Timestamp";
 import type { CommentsContext } from "./factory";
+import { CheckIcon } from "./icons/check";
+import { CrossIcon } from "./icons/cross";
 import { EllipsisIcon } from "./icons/ellipsis";
+import { MentionIcon } from "./icons/mention";
 import { classNames } from "./utils/class-names";
 import { getInitials } from "./utils/get-initials";
 
@@ -172,14 +175,39 @@ export function withComponents<
             </DropdownMenu.Root>
           )}
           {isEditing ? (
-            <DefaultComposer.Form onCommentSubmit={handleEditSubmit}>
-              <DefaultComposer.Body
+            <DefaultComposer.Form
+              className="lb-composer-form lb-comment-composer"
+              onCommentSubmit={handleEditSubmit}
+            >
+              <DefaultComposer.Editor
+                className="lb-composer-editor"
                 placeholder="Edit comment…"
                 initialValue={comment.body}
               />
-              <div>
-                <button onClick={handleEditCancel}>Cancel</button>
-                <DefaultComposer.Submit>Save</DefaultComposer.Submit>
+              <div className="TODO:">
+                <div className="lb-composer-actions">
+                  <button
+                    className="lb-composer-button lb-composer-action"
+                    aria-label="Insert mention"
+                  >
+                    <MentionIcon />
+                  </button>
+                </div>
+                <div className="TODO:">
+                  <button
+                    className="lb-composer-button TODO:"
+                    aria-label="Cancel"
+                    onClick={handleEditCancel}
+                  >
+                    <CrossIcon />
+                  </button>
+                  <DefaultComposer.Submit
+                    className="lb-composer-button TODO:"
+                    aria-label="Save"
+                  >
+                    <CheckIcon />
+                  </DefaultComposer.Submit>
+                </div>
               </div>
             </DefaultComposer.Form>
           ) : (

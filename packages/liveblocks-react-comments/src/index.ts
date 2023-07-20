@@ -5,8 +5,8 @@ export type {
 } from "./components/Comment";
 export { Comment } from "./components/Comment";
 export type {
-  ComposerBodyProps,
   ComposerContext,
+  ComposerEditorProps,
   ComposerFormProps,
   ComposerMentionProps,
   ComposerRenderMentionProps,
