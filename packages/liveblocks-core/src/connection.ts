@@ -304,16 +304,6 @@ function isCloseEvent(
   return !(error instanceof Error) && error.type === "close";
 }
 
-/**
- * Whether this is a Liveblocks-specific close event (a close code in the 40xx
- * range).
- */
-function isCustomCloseEvent(
-  error: IWebSocketEvent | Error
-): error is IWebSocketCloseEvent {
-  return isCloseEvent(error) && error.code >= 4000 && error.code < 5000;
-}
-
 export type Delegates<T extends BaseAuthResult> = {
   authenticate: () => Promise<T>;
   createSocket: (authValue: T) => IWebSocketInstance;
@@ -715,7 +705,7 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
         }
 
         // If the token was expired we can reauthorize immediately
-        if (isCloseEvent(err) && err.code !== 4009 /* Token Expired */) {
+        if (isCloseEvent(err) && err.code === 4009 /* Token Expired */) {
           return {
             target: "@auth.busy",
             effect: [
@@ -729,7 +719,9 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
         return {
           target: "@auth.backoff",
           effect: [
-            increaseBackoffDelayAggressively,
+            isCloseEvent(err) && err.code >= 4000 && err.code < 5000
+              ? increaseBackoffDelayAggressively
+              : increaseBackoffDelay,
             logPrematureErrorOrCloseEvent(err),
           ],
         };
@@ -812,7 +804,10 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
 
       EXPLICIT_SOCKET_CLOSE: (e) => {
         // Server instructed us to stop retrying, so move to failed state
-        if (e.event.code === 4999) {
+        if (
+          e.event.code === 4001 /* Not Allowed */ ||
+          e.event.code === 4999 /* Close Without Retry */
+        ) {
           return {
             target: "@idle.failed",
             effect: logPermanentClose,
@@ -820,7 +815,7 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
         }
 
         // Server instructs us to reauthenticate
-        if (e.event.code === 4001 /* Not Allowed */) {
+        if (e.event.code === 4009 /* Token Expired */) {
           return {
             target: "@auth.backoff",
             effect: [increaseBackoffDelay, logCloseEvent(e.event)],
@@ -829,7 +824,7 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
 
         // If this is a custom Liveblocks server close reason, back off more
         // aggressively, and emit a Liveblocks error event...
-        if (isCustomCloseEvent(e.event)) {
+        if (e.event.code >= 4000 && e.event.code < 5000) {
           return {
             target: "@connecting.backoff",
             effect: [
