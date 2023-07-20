@@ -48,10 +48,14 @@ export interface IWebSocket {
 export enum WebsocketCloseCodes {
   CLOSE_ABNORMAL = 1006,
 
+  /** Like an "HTTP 500" */
   UNEXPECTED_CONDITION = 1011,
+  /** Please back off for now, but try again in a few moments */
   TRY_AGAIN_LATER = 1013,
 
+  /** Like an "HTTP 403". Server understood the request, but refused to allow it. Re-authorizing won't help. */
   NOT_ALLOWED = 4001,
+  /** The auth token used is expired, getting a fresh one and retrying might work. In spirit, it's a bit more akin to an "HTTP 401". */
   TOKEN_EXPIRED = 4009,
 
   INVALID_MESSAGE_FORMAT = 4000,
@@ -60,5 +64,6 @@ export enum WebsocketCloseCodes {
   MAX_NUMBER_OF_MESSAGES_PER_DAY_PER_APP = 4004,
   MAX_NUMBER_OF_CONCURRENT_CONNECTIONS_PER_ROOM = 4005,
 
-  CLOSE_WITHOUT_RETRY = 4999, // Puts the client in "disconnected" state, don't try to connect again
+  // Puts the client in "disconnected" state immediately, don't try to connect again
+  CLOSE_WITHOUT_RETRY = 4999,
 }
