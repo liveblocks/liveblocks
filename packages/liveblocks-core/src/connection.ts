@@ -702,32 +702,36 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
           };
         }
 
-        // Alternatively, it can happen if the server refuses the connection
-        // after accepting-then-closing the connection.
-        if (isCloseEvent(err) && err.code === 4999 /* Close Without Retry */) {
+        // If the server actively refuses the connection attempt, stop trying.
+        if (
+          isCloseEvent(err) &&
+          (err.code === 4001 /* Not Allowed */ ||
+            err.code === 4999) /* Close Without Retry */
+        ) {
           return {
             target: "@idle.failed",
             effect: log(LogLevel.ERROR, err.reason),
           };
         }
 
-        // We may skip re-authenticating only if this is a close event with
-        // a known custom close code, *except* when it's a 4001 (explicitly Not
-        // Allowed).
-        if (isCustomCloseEvent(err) && err.code !== 4001 /* Not Allowed */) {
+        // If the token was expired we can reauthorize immediately
+        if (isCloseEvent(err) && err.code !== 4009 /* Token Expired */) {
           return {
-            target: "@connecting.backoff",
+            target: "@auth.busy",
             effect: [
-              increaseBackoffDelayAggressively,
-              logPrematureErrorOrCloseEvent(err),
+              // XXX Remove this log?
+              log(LogLevel.INFO, "Token expired, getting a new one"),
             ],
           };
         }
 
-        // In all other cases, always re-authenticate!
+        // In all other (unknown) cases, always re-authenticate, but with a back off!
         return {
           target: "@auth.backoff",
-          effect: [increaseBackoffDelay, logPrematureErrorOrCloseEvent(err)],
+          effect: [
+            increaseBackoffDelayAggressively,
+            logPrematureErrorOrCloseEvent(err),
+          ],
         };
       }
     );
