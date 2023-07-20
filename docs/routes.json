@@ -267,6 +267,10 @@
     "title": "Platform",
     "routes": [
       {
+        "title": "Projects",
+        "path": "/platform/projects"
+      },
+      {
         "title": "Next.js Starter Kit",
         "path": "/platform/nextjs-starter-kit"
       },
