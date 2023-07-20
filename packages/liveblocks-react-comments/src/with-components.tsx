@@ -1,6 +1,6 @@
 "use client";
 
-import type { BaseMetadata, BaseUserMeta, CommentData } from "@liveblocks/core";
+import type { BaseMetadata, BaseUserInfo, CommentData } from "@liveblocks/core";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import type {
   ComponentPropsWithoutRef,
@@ -20,23 +20,11 @@ import { getInitials } from "./utils/get-initials";
 
 export type CommentsContextWithComponents<
   TThreadMetadata extends BaseMetadata,
-  TUserMeta extends BaseUserMeta,
-> = CommentsContext<TThreadMetadata, TUserMeta> & {
+  TUserInfo extends BaseUserInfo,
+> = CommentsContext<TThreadMetadata, TUserInfo> & {
   Comment: ForwardRefExoticComponent<
     CommentProps & RefAttributes<HTMLDivElement>
   >;
-};
-
-type UserStringResolver<TUserMeta extends BaseUserMeta> = (
-  user: TUserMeta,
-  userId: string
-) => string;
-
-type Options<TUserMeta extends BaseUserMeta> = {
-  resolveUserName?: UserStringResolver<TUserMeta>;
-  resolveUserAvatar?: UserStringResolver<TUserMeta>;
-
-  // TODO: Option to override the strings of all components
 };
 
 export interface CommentProps extends ComponentPropsWithoutRef<"div"> {
@@ -51,41 +39,21 @@ interface NameProps extends ComponentPropsWithoutRef<"span"> {
   userId: string;
 }
 
-function useResolvedUserString<TUserMeta extends BaseUserMeta>(
-  userId: string,
-  user?: TUserMeta | undefined,
-  resolver?: UserStringResolver<TUserMeta> | undefined
-) {
-  return useMemo(() => {
-    return user ? resolver?.(user, userId) : undefined;
-  }, [resolver, user, userId]);
-}
-
 export function withComponents<
   TThreadMetadata extends BaseMetadata,
-  TUserMeta extends BaseUserMeta,
+  TUserInfo extends BaseUserInfo,
 >(
-  context: CommentsContext<TThreadMetadata, TUserMeta>,
-  options?: Options<TUserMeta>
-): CommentsContextWithComponents<TThreadMetadata, TUserMeta> {
+  context: CommentsContext<TThreadMetadata, TUserInfo>
+): CommentsContextWithComponents<TThreadMetadata, TUserInfo> {
   const {
     suspense: { useUser },
   } = context;
-  const { resolveUserName, resolveUserAvatar } = options ?? {};
 
   // TODO: Handle loading and error states
   function Avatar({ userId, className, ...props }: AvatarProps) {
     const { user } = useUser(userId);
-    const resolvedUserName = useResolvedUserString(
-      userId,
-      user,
-      resolveUserName
-    );
-    const resolvedUserAvatar = useResolvedUserString(
-      userId,
-      user,
-      resolveUserAvatar
-    );
+    const resolvedUserName = useMemo(() => user?.name, [user]);
+    const resolvedUserAvatar = useMemo(() => user?.avatar, [user]);
     const resolvedUserInitials = useMemo(
       () => (resolvedUserName ? getInitials(resolvedUserName) : undefined),
       [resolvedUserName]
@@ -110,11 +78,7 @@ export function withComponents<
   // TODO: Handle loading and error states
   function Name({ userId, ...props }: NameProps) {
     const { user } = useUser(userId);
-    const resolvedUserName = useResolvedUserString(
-      userId,
-      user,
-      resolveUserName
-    );
+    const resolvedUserName = useMemo(() => user?.name, [user]);
 
     return <span {...props}>{resolvedUserName}</span>;
   }

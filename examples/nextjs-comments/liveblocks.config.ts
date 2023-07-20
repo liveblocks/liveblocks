@@ -4,6 +4,8 @@ import {
   withComponents,
 } from "@liveblocks/react-comments";
 import { NAMES } from "./src/constants";
+// TODO: It needs to be exported from @liveblocks/client or @liveblocks/react-comments
+import { BaseUserInfo } from "@liveblocks/core";
 
 const WORKERS_ENDPOINT = process.env.NEXT_PUBLIC_WORKERS_ENDPOINT;
 const EVENTS_ENDPOINT = process.env.NEXT_PUBLIC_EVENTS_ENDPOINT;
@@ -18,23 +20,12 @@ export type ThreadMetadata = {
   resolved: boolean;
 };
 
-export type UserMeta = {
-  id: string;
-  info: {
-    name: string;
-    avatar: string;
-  };
-};
-
-export async function resolveUser(userId: string): Promise<UserMeta> {
+export async function resolveUser(userId: string): Promise<BaseUserInfo> {
   const userIndex = Number(userId.replace(/^\D+/g, "")) ?? 0;
 
   return {
-    id: userId,
-    info: {
-      name: NAMES[userIndex],
-      avatar: `https://liveblocks.io/avatars/avatar-${userIndex}.png`,
-    },
+    name: NAMES[userIndex],
+    avatar: `https://liveblocks.io/avatars/avatar-${userIndex}.png`,
   };
 }
 
@@ -47,12 +38,8 @@ export const {
   editThread,
   Comment,
 } = withComponents(
-  createCommentsContext<ThreadMetadata, UserMeta>(client, {
+  createCommentsContext<ThreadMetadata>(client, {
     resolveUser,
     serverEndpoint: `https://${WORKERS_ENDPOINT}/v2`,
-  }),
-  {
-    resolveUserName: (user) => user.info.name,
-    resolveUserAvatar: (user) => user.info.avatar,
-  }
+  })
 );

@@ -1,7 +1,7 @@
 import type {
   AsyncCache,
   BaseMetadata,
-  BaseUserMeta,
+  BaseUserInfo,
   Client,
   CommentData,
   Resolve,
@@ -30,7 +30,7 @@ import { useComposer } from "./components/Composer";
 import type { CommentsApiError } from "./errors";
 import { useAsyncCache } from "./lib/use-async-cache";
 
-type UserState<T extends BaseUserMeta> =
+type UserState<T extends BaseUserInfo> =
   | {
       user?: never;
       error?: never;
@@ -47,13 +47,13 @@ type UserState<T extends BaseUserMeta> =
       error: Error;
     };
 
-type UserStateSuspense<T extends BaseUserMeta> = Resolve<
+type UserStateSuspense<T extends BaseUserInfo> = Resolve<
   Extract<UserState<T>, { isLoading: false }>
 >;
 
 export type CommentsContext<
   TThreadMetadata extends BaseMetadata,
-  TUserMeta extends BaseUserMeta,
+  TUserInfo extends BaseUserInfo,
 > = {
   /**
    * Creates a thread with an initial comment, and optionally some metadata.
@@ -113,7 +113,7 @@ export type CommentsContext<
    * @example
    * const { user, error, isLoading } = useUser("user-id");
    */
-  useUser(userId: string): UserState<TUserMeta>;
+  useUser(userId: string): UserState<TUserInfo>;
 
   /**
    * Listen to potential errors when creating and editing threads/comments.
@@ -150,7 +150,7 @@ export type CommentsContext<
      * @example
      * const { user, error, isLoading } = useUser("user-id");
      */
-    useUser(userId: string): UserStateSuspense<TUserMeta>;
+    useUser(userId: string): UserStateSuspense<TUserInfo>;
 
     /**
      * Listen to potential errors when creating and editing threads/comments.
@@ -176,8 +176,8 @@ export type CommentsContext<
 
 type UserResolver<T> = (userId: string) => Promise<T | undefined>;
 
-type Options<TUserMeta extends BaseUserMeta> = {
-  resolveUser?: UserResolver<TUserMeta>;
+type Options<TUserInfo extends BaseUserInfo> = {
+  resolveUser?: UserResolver<TUserInfo>;
 
   /**
    * @internal Internal endpoint
@@ -188,7 +188,7 @@ type Options<TUserMeta extends BaseUserMeta> = {
 let hasWarnedIfNoResolveUser = false;
 
 function warnIfNoResolveUser(
-  usersCache?: AsyncCache<BaseUserMeta | undefined, unknown>
+  usersCache?: AsyncCache<BaseUserInfo | undefined, unknown>
 ) {
   if (
     !hasWarnedIfNoResolveUser &&
@@ -204,11 +204,11 @@ function warnIfNoResolveUser(
 
 export function createCommentsContext<
   TThreadMetadata extends BaseMetadata = never,
-  TUserMeta extends BaseUserMeta = BaseUserMeta,
+  TUserInfo extends BaseUserInfo = BaseUserInfo,
 >(
   client: Client,
-  options?: Options<TUserMeta>
-): CommentsContext<TThreadMetadata, TUserMeta> {
+  options?: Options<TUserInfo>
+): CommentsContext<TThreadMetadata, TUserInfo> {
   const { resolveUser, serverEndpoint } = options ?? {};
 
   if (typeof serverEndpoint !== "string") {
@@ -221,7 +221,7 @@ export function createCommentsContext<
   });
 
   const usersCache = resolveUser
-    ? createAsyncCache(resolveUser as UserResolver<BaseUserMeta>)
+    ? createAsyncCache(resolveUser as UserResolver<BaseUserInfo>)
     : undefined;
 
   const commentsRooms = new Map<string, CommentsRoom<TThreadMetadata>>();
@@ -260,13 +260,13 @@ export function createCommentsContext<
     if (state?.isLoading) {
       return {
         isLoading: true,
-      } as UserState<TUserMeta>;
+      } as UserState<TUserInfo>;
     } else {
       return {
         user: state?.data,
         error: state?.error,
         isLoading: false,
-      } as UserState<TUserMeta>;
+      } as UserState<TUserInfo>;
     }
   }
 
@@ -281,7 +281,7 @@ export function createCommentsContext<
       user: state?.data,
       error: state?.error,
       isLoading: false,
-    } as UserStateSuspense<TUserMeta>;
+    } as UserStateSuspense<TUserInfo>;
   }
 
   function getCommentsRoom(roomId: string) {
