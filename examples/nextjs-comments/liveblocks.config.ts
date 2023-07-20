@@ -1,8 +1,5 @@
 import { createClient } from "@liveblocks/client";
-import {
-  createCommentsContext,
-  withComponents,
-} from "@liveblocks/react-comments";
+import { createCommentsContext } from "@liveblocks/react-comments";
 import { NAMES } from "./src/constants";
 // TODO: It needs to be exported from @liveblocks/client or @liveblocks/react-comments
 import { BaseUserInfo } from "@liveblocks/core";
@@ -30,16 +27,14 @@ export async function resolveUser(userId: string): Promise<BaseUserInfo> {
 }
 
 export const {
-  suspense: { useThreads, useUser },
+  CommentsProvider,
+  suspense: { useThreads, useUser, useRoomId },
   createComment,
   createThread,
   deleteComment,
   editComment,
   editThread,
-  Comment,
-} = withComponents(
-  createCommentsContext<ThreadMetadata>(client, {
-    resolveUser,
-    serverEndpoint: `https://${WORKERS_ENDPOINT}/v2`,
-  })
-);
+} = createCommentsContext<ThreadMetadata>(client, {
+  resolveUser,
+  serverEndpoint: `https://${WORKERS_ENDPOINT}/v2`,
+});

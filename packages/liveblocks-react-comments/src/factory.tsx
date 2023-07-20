@@ -12,8 +12,17 @@ import {
   createAsyncCache,
   createCommentsApi,
   makeEventSource,
+  nn,
 } from "@liveblocks/core";
-import { useEffect, useRef } from "react";
+import type { NamedExoticComponent, PropsWithChildren } from "react";
+import React, {
+  createContext,
+  memo,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+} from "react";
 
 import type {
   CommentsRoom,
@@ -25,10 +34,10 @@ import type {
   RoomThreads,
 } from "./CommentsRoom";
 import { createCommentsRoom } from "./CommentsRoom";
-import type { ComposerContext } from "./components/Composer";
-import { useComposer } from "./components/Composer";
 import type { CommentsApiError } from "./errors";
 import { useAsyncCache } from "./lib/use-async-cache";
+import type { ComposerContext } from "./primitives/Composer";
+import { useComposer } from "./primitives/Composer";
 
 type UserState<T extends BaseUserInfo> =
   | {
@@ -51,10 +60,19 @@ type UserStateSuspense<T extends BaseUserInfo> = Resolve<
   Extract<UserState<T>, { isLoading: false }>
 >;
 
-export type CommentsContext<
+type CommentsProviderProps = PropsWithChildren<{
+  roomId: string;
+}>;
+
+type CommentsContextBundle<
   TThreadMetadata extends BaseMetadata,
   TUserInfo extends BaseUserInfo,
 > = {
+  /**
+   * TODO: Add description
+   */
+  CommentsProvider: NamedExoticComponent<CommentsProviderProps>;
+
   /**
    * Creates a thread with an initial comment, and optionally some metadata.
    *
@@ -100,12 +118,12 @@ export type CommentsContext<
   deleteComment(roomId: string, options: DeleteCommentOptions): void;
 
   /**
-   * Returns the threads within a given room.
+   * Returns the threads within the current room.
    *
    * @example
-   * const { user, error, isLoading } = useUser("user-id");
+   * const { threads, error, isLoading } = useThreads();
    */
-  useThreads(roomId: string): RoomThreads<TThreadMetadata>;
+  useThreads(): RoomThreads<TThreadMetadata>;
 
   /**
    * Returns a user object from a given user ID.
@@ -114,6 +132,11 @@ export type CommentsContext<
    * const { user, error, isLoading } = useUser("user-id");
    */
   useUser(userId: string): UserState<TUserInfo>;
+
+  /**
+   * TODO: Add description
+   */
+  useRoomId(): string;
 
   /**
    * Listen to potential errors when creating and editing threads/comments.
@@ -137,12 +160,12 @@ export type CommentsContext<
 
   readonly suspense: {
     /**
-     * Returns the threads within a given room.
+     * Returns the threads within the current room.
      *
      * @example
-     * const { user, error, isLoading } = useUser("user-id");
+     * const threads = useThreads();
      */
-    useThreads(roomId: string): ThreadData<TThreadMetadata>[];
+    useThreads(): ThreadData<TThreadMetadata>[];
 
     /**
      * Returns a user object from a given user ID.
@@ -151,6 +174,11 @@ export type CommentsContext<
      * const { user, error, isLoading } = useUser("user-id");
      */
     useUser(userId: string): UserStateSuspense<TUserInfo>;
+
+    /**
+     * TODO: Add description
+     */
+    useRoomId(): string;
 
     /**
      * Listen to potential errors when creating and editing threads/comments.
@@ -173,6 +201,18 @@ export type CommentsContext<
     useComposer(): ComposerContext;
   };
 };
+
+type CommentsContext<
+  TThreadMetadata extends BaseMetadata,
+  TUserInfo extends BaseUserInfo,
+> = Resolve<
+  Omit<
+    CommentsContextBundle<TThreadMetadata, TUserInfo>,
+    "CommentsProvider"
+  > & {
+    roomId: string;
+  }
+>;
 
 type UserResolver<T> = (userId: string) => Promise<T | undefined>;
 
@@ -202,13 +242,30 @@ function warnIfNoResolveUser(
   }
 }
 
+const CommentsContext = createContext<CommentsContext<
+  BaseMetadata,
+  BaseUserInfo
+> | null>(null);
+
+export function useCommentsContext<
+  TThreadMetadata extends BaseMetadata,
+  TUserInfo extends BaseUserInfo,
+>(): CommentsContext<TThreadMetadata, TUserInfo> {
+  const commentsContext = useContext(CommentsContext);
+
+  return nn(
+    commentsContext as CommentsContext<TThreadMetadata, TUserInfo> | null,
+    "CommentsProvider is missing from the React tree."
+  );
+}
+
 export function createCommentsContext<
   TThreadMetadata extends BaseMetadata = never,
   TUserInfo extends BaseUserInfo = BaseUserInfo,
 >(
   client: Client,
   options?: Options<TUserInfo>
-): CommentsContext<TThreadMetadata, TUserInfo> {
+): CommentsContextBundle<TThreadMetadata, TUserInfo> {
   const { resolveUser, serverEndpoint } = options ?? {};
 
   if (typeof serverEndpoint !== "string") {
@@ -225,6 +282,25 @@ export function createCommentsContext<
     : undefined;
 
   const commentsRooms = new Map<string, CommentsRoom<TThreadMetadata>>();
+
+  function getCommentsRoom(roomId: string) {
+    let commentsRoom = commentsRooms.get(roomId);
+    if (commentsRoom === undefined) {
+      commentsRoom = createCommentsRoom(
+        roomId,
+        restApi,
+        client.__internal.realtimeClient,
+        errorEventSource
+      );
+      commentsRooms.set(roomId, commentsRoom);
+    }
+    return commentsRoom;
+  }
+
+  function useRoomId() {
+    const { roomId } = useCommentsContext();
+    return roomId;
+  }
 
   function useErrorListener(
     callback: (error: CommentsApiError<TThreadMetadata>) => void
@@ -244,12 +320,18 @@ export function createCommentsContext<
     );
   }
 
-  function useThreads(roomId: string): RoomThreads<TThreadMetadata> {
-    return getCommentsRoom(roomId).useThreads();
+  function useThreads(): RoomThreads<TThreadMetadata> {
+    const { roomId } = useCommentsContext();
+    const commentsRoom = useMemo(() => getCommentsRoom(roomId), [roomId]);
+
+    return commentsRoom.useThreads();
   }
 
-  function useThreadsSuspense(roomId: string) {
-    return getCommentsRoom(roomId).useThreadsSuspense();
+  function useThreadsSuspense() {
+    const { roomId } = useCommentsContext();
+    const commentsRoom = useMemo(() => getCommentsRoom(roomId), [roomId]);
+
+    return commentsRoom.useThreadsSuspense();
   }
 
   function useUser(userId: string) {
@@ -284,20 +366,6 @@ export function createCommentsContext<
     } as UserStateSuspense<TUserInfo>;
   }
 
-  function getCommentsRoom(roomId: string) {
-    let commentsRoom = commentsRooms.get(roomId);
-    if (commentsRoom === undefined) {
-      commentsRoom = createCommentsRoom(
-        roomId,
-        restApi,
-        client.__internal.realtimeClient,
-        errorEventSource
-      );
-      commentsRooms.set(roomId, commentsRoom);
-    }
-    return commentsRoom;
-  }
-
   function createThread(
     roomId: string,
     options: CreateThreadOptions<TThreadMetadata>
@@ -324,7 +392,10 @@ export function createCommentsContext<
     return getCommentsRoom(roomId).deleteComment(options);
   }
 
-  return {
+  const bundle: Omit<
+    CommentsContextBundle<TThreadMetadata, TUserInfo>,
+    "CommentsProvider"
+  > = {
     createThread,
     editThread,
     createComment,
@@ -334,11 +405,36 @@ export function createCommentsContext<
     useUser,
     useErrorListener,
     useComposer,
+    useRoomId,
     suspense: {
       useThreads: useThreadsSuspense,
       useUser: useUserSuspense,
       useErrorListener,
       useComposer,
+      useRoomId,
     },
+  };
+
+  const CommentsProvider = memo<CommentsProviderProps>(
+    ({ roomId, children }) => {
+      return (
+        <CommentsContext.Provider
+          value={{
+            ...(bundle as unknown as CommentsContextBundle<
+              BaseMetadata,
+              BaseUserInfo
+            >),
+            roomId,
+          }}
+        >
+          {children}
+        </CommentsContext.Provider>
+      );
+    }
+  );
+
+  return {
+    ...bundle,
+    CommentsProvider,
   };
 }

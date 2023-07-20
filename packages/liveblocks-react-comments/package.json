@@ -16,6 +16,17 @@
         "module": "./dist/index.mjs",
         "default": "./dist/index.js"
       }
+    },
+    "./primitives": {
+      "import": {
+        "types": "./dist/primitives/index.d.mts",
+        "default": "./dist/primitives/index.mjs"
+      },
+      "require": {
+        "types": "./dist/primitives/index.d.ts",
+        "module": "./dist/primitives/index.mjs",
+        "default": "./dist/primitives/index.js"
+      }
     }
   },
   "files": [

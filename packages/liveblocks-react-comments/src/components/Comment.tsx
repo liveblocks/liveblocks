@@ -1,129 +1,148 @@
-import { CommentBody, isCommentBodyMention } from "@liveblocks/core";
-import { Slot } from "@radix-ui/react-slot";
-import type { ComponentType, ReactNode } from "react";
-import React, { forwardRef } from "react";
+import type { CommentData } from "@liveblocks/core";
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import type { ComponentPropsWithoutRef } from "react";
+import React, { forwardRef, useCallback, useState } from "react";
 
-import { MENTION_CHARACTER } from "../slate/mentions";
-import type { ComponentPropsWithSlot } from "../types";
+import { CheckIcon } from "../icons/check";
+import { CrossIcon } from "../icons/cross";
+import { EllipsisIcon } from "../icons/ellipsis";
+import { Comment as CommentPrimitive } from "../primitives/Comment";
+import type { ComposerSubmitComment } from "../primitives/Composer";
+import { Composer as ComposerPrimitive } from "../primitives/Composer";
+import { Timestamp } from "../primitives/Timestamp";
+import { classNames } from "../utils/class-names";
+import { Avatar } from "./Avatar";
+import { ComposerMenu } from "./Composer";
+import { Name } from "./Name";
 
-const COMMENT_MENTION_NAME = "CommentMention";
-const COMMENT_BODY_NAME = "CommentBody";
-
-export type CommentMentionProps = ComponentPropsWithSlot<"span">;
-
-export type CommentRenderMentionProps = {
-  /**
-   * The mention's user ID.
-   */
-  userId: string;
-};
-
-export interface CommentBodyProps
-  extends Omit<ComponentPropsWithSlot<"div">, "children"> {
-  /**
-   * The comment body to be displayed.
-   * If not defined, the component will render `null`.
-   */
-  body?: CommentBody;
-
-  /**
-   * The component used to render mentions.
-   */
-  renderMention?: ComponentType<CommentRenderMentionProps>;
+export interface CommentProps extends ComponentPropsWithoutRef<"div"> {
+  comment: CommentData;
 }
 
-function CommentDefaultRenderMention({ userId }: CommentRenderMentionProps) {
-  return (
-    <CommentMention>
-      {MENTION_CHARACTER}
-      {userId}
-    </CommentMention>
-  );
-}
+// TODO: Add option to align the body with the avatar or the name (adds/removes a class name)
+export const Comment = forwardRef<HTMLDivElement, CommentProps>(
+  ({ comment, className, ...props }, forwardedRef) => {
+    const [isEditing, setEditing] = useState(false);
 
-const CommentMention = forwardRef<HTMLSpanElement, CommentMentionProps>(
-  ({ children, asChild, ...props }, forwardedRef) => {
-    const Component = asChild ? Slot : "span";
+    const handleEdit = useCallback(() => {
+      setEditing(true);
+    }, []);
 
-    return (
-      <Component {...props} ref={forwardedRef}>
-        {children}
-      </Component>
-    );
-  }
-);
+    const handleEditCancel = useCallback(() => {
+      setEditing(false);
+    }, []);
 
-const CommentBody = forwardRef<HTMLDivElement, CommentBodyProps>(
-  (
-    {
-      body,
-      renderMention: Mention = CommentDefaultRenderMention,
-      asChild,
-      ...props
-    },
-    forwardedRef
-  ) => {
-    const Component = asChild ? Slot : "div";
+    const handleEditSubmit = useCallback(({ body }: ComposerSubmitComment) => {
+      // TODO: How do we get the room ID and thread ID here?
+      // editComment("TODO", {
+      //   commentId: comment.id,
+      //   threadId: "TODO",
+      //   body,
+      // });
+      console.log(body);
+      setEditing(false);
+    }, []);
 
-    if (!body) {
+    const handleDelete = useCallback(() => {
+      // TODO: How do we get the room ID and thread ID here?
+      // deleteComment("TODO", {
+      //   commentId: comment.id,
+      //   threadId: "TODO",
+      // });
+    }, []);
+
+    // TODO: Add option to render a `This comment was deleted` placeholder instead
+    if (!comment.body) {
       return null;
     }
 
     return (
-      <Component {...props} ref={forwardedRef}>
-        {body.content.map((block, index) => {
-          switch (block.type) {
-            case "paragraph":
-              return (
-                <p key={index}>
-                  {block.children.map((inline, index) => {
-                    if (isCommentBodyMention(inline)) {
-                      return <Mention userId={inline.userId} key={index} />;
-                    }
-
-                    let children: ReactNode = inline.text;
-
-                    if (inline.bold) {
-                      children = <strong key={index}>{children}</strong>;
-                    }
-
-                    if (inline.italic) {
-                      children = <em key={index}>{children}</em>;
-                    }
-
-                    return <span key={index}>{children}</span>;
-                  })}
-                </p>
-              );
-          }
-        })}
-      </Component>
+      <div
+        className={classNames(className, "lb-avatar")}
+        {...props}
+        ref={forwardedRef}
+      >
+        <Avatar className="lb-comment-avatar" userId={comment.userId} />
+        <Name className="lb-comment-name" userId={comment.userId} />
+        <span className="lb-comment-date">
+          <Timestamp
+            date={comment.createdAt}
+            className="lb-comment-date-timestamp"
+          />
+          {comment.editedAt && (
+            <>
+              {" "}
+              <span className="lb-comment-date-edited">(edited)</span>
+            </>
+          )}
+        </span>
+        {!isEditing && (
+          <div className="lb-comment-actions">
+            {/* TODO: Only show if permissions (for now = own comments) allow edit/delete */}
+            <DropdownMenu.Root>
+              <DropdownMenu.Trigger
+                className="lb-comment-button lb-comment-action"
+                aria-label="Comment options"
+              >
+                <EllipsisIcon />
+              </DropdownMenu.Trigger>
+              <DropdownMenu.Portal>
+                {/* TODO: Share viewport padding/spacing values with the mentions suggestions inset */}
+                <DropdownMenu.Content className="lb-comment-options">
+                  <DropdownMenu.Item
+                    className="lb-comment-option"
+                    onSelect={handleEdit}
+                  >
+                    Edit
+                  </DropdownMenu.Item>
+                  <DropdownMenu.Item
+                    className="lb-comment-option"
+                    onSelect={handleDelete}
+                  >
+                    Delete
+                  </DropdownMenu.Item>
+                </DropdownMenu.Content>
+              </DropdownMenu.Portal>
+            </DropdownMenu.Root>
+          </div>
+        )}
+        {isEditing ? (
+          <ComposerPrimitive.Form
+            className="lb-composer-form lb-comment-composer"
+            onCommentSubmit={handleEditSubmit}
+          >
+            <ComposerPrimitive.Editor
+              className="lb-composer-editor"
+              placeholder="Edit comment…"
+              initialValue={comment.body}
+            />
+            <ComposerMenu
+              actions={
+                <>
+                  <button
+                    className="lb-composer-button lb-composer-action"
+                    aria-label="Cancel"
+                    onClick={handleEditCancel}
+                  >
+                    <CrossIcon />
+                  </button>
+                  <ComposerPrimitive.Submit
+                    className="lb-composer-button lb-composer-action"
+                    aria-label="Save"
+                  >
+                    <CheckIcon />
+                  </ComposerPrimitive.Submit>
+                </>
+              }
+            />
+          </ComposerPrimitive.Form>
+        ) : (
+          <CommentPrimitive.Body
+            className="lb-comment-body"
+            body={comment.body}
+          />
+        )}
+      </div>
     );
   }
 );
-
-if (process.env.NODE_ENV !== "production") {
-  CommentBody.displayName = COMMENT_BODY_NAME;
-  CommentMention.displayName = COMMENT_MENTION_NAME;
-}
-
-export const Comment = {
-  /**
-   * Displays a comment body.
-   *
-   * @example
-   * <Comment.Body body={comment.body} />
-   */
-  Body: CommentBody,
-
-  /**
-   * Displays mentions within `Comment.Body`.
-   *
-   * @example
-   * <Comment.Body
-   *   body={comment.body}
-   *   renderMention={({ userId }) => <Comment.Mention>@{userId}</Comment.Mention>}
-   * />
-   */
-  Mention: CommentMention,
-};

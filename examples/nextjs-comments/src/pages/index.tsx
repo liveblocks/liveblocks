@@ -1,13 +1,14 @@
 import React, { Suspense, useMemo } from "react";
 import { useRouter } from "next/router";
 import {
-  Comment,
+  CommentsProvider,
   createThread,
-  deleteComment,
+  useRoomId,
   useThreads,
 } from "../../liveblocks.config";
-import { Composer } from "@liveblocks/react-comments";
 import { useHydrated } from "../utils/use-hydrated";
+import { Comment } from "@liveblocks/react-comments";
+import { Composer } from "@liveblocks/react-comments/primitives";
 
 // function Example({ roomId }: { roomId: string }) {
 //   const threads = useThreads(roomId);
@@ -48,8 +49,11 @@ import { useHydrated } from "../utils/use-hydrated";
 //   );
 // }
 
-function Example({ roomId }: { roomId: string }) {
-  const threads = useThreads(roomId);
+function Example() {
+  const threads = useThreads();
+  const roomId = useRoomId();
+
+  console.log(roomId);
 
   return (
     <main>
@@ -85,9 +89,11 @@ export default function Page() {
   }
 
   return (
-    <Suspense fallback={<Loading />}>
-      <Example roomId={roomId} />
-    </Suspense>
+    <CommentsProvider roomId={roomId}>
+      <Suspense fallback={<Loading />}>
+        <Example />
+      </Suspense>
+    </CommentsProvider>
   );
 }
 
