@@ -203,7 +203,7 @@
           },
           {
             "title": "Express",
-            "path": "/rooms/authentication/access-token-permissions/express",
+            "path": "/rooms/authentication/id-token-permissions/express",
             "hidden": true
           },
           {
