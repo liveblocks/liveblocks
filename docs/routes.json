@@ -370,6 +370,10 @@
           {
             "title": "Upgrading to 1.0",
             "path": "/platform/upgrading/1.0"
+          },
+          {
+            "title": "Upgrading to 1.2",
+            "path": "/platform/upgrading/1.2"
           }
         ]
       },
