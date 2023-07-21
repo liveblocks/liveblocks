@@ -119,7 +119,7 @@ export const Composer = forwardRef<HTMLFormElement, ComposerProps>(
 
     return (
       <ComposerPrimitive.Form
-        className={classNames(className, "lb-composer-form")}
+        className={classNames(className, "lb-composer lb-composer-form")}
         {...props}
         ref={forwardedRef}
         onCommentSubmit={handleCommentSubmit}

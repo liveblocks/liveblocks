@@ -11,9 +11,7 @@ export interface AvatarProps extends ComponentProps<"div"> {
 
 // TODO: Handle loading and error states
 export function Avatar({ userId, className, ...props }: AvatarProps) {
-  const {
-    suspense: { useUser },
-  } = useCommentsContext();
+  const { useUser } = useCommentsContext();
   const { user } = useUser(userId);
   const resolvedUserName = useMemo(() => user?.name, [user]);
   const resolvedUserAvatar = useMemo(() => user?.avatar, [user]);
