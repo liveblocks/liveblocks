@@ -167,73 +167,73 @@
         "href": "/rooms/authentication",
         "routes": [
           {
-            "title": "Self-hosted permissions",
-            "href": "/rooms/authentication/self-hosted-permissions",
+            "title": "Access token permissions",
+            "href": "/rooms/authentication/access-token-permissions",
             "hidden": true
           },
           {
-            "title": "Liveblocks-hosted permissions",
-            "href": "/rooms/authentication/liveblocks-hosted-permissions",
-            "hidden": true
-          },
-          {
-            "title": "Next.js",
-            "path": "/rooms/authentication/liveblocks-hosted-permissions/nextjs",
-            "hidden": true
-          },
-          {
-            "title": "Remix",
-            "path": "/rooms/authentication/liveblocks-hosted-permissions/remix",
-            "hidden": true
-          },
-          {
-            "title": "SvelteKit",
-            "path": "/rooms/authentication/liveblocks-hosted-permissions/sveltekit",
-            "hidden": true
-          },
-          {
-            "title": "Nuxt.js",
-            "path": "/rooms/authentication/liveblocks-hosted-permissions/nuxtjs",
-            "hidden": true
-          },
-          {
-            "title": "Firebase",
-            "path": "/rooms/authentication/liveblocks-hosted-permissions/firebase",
-            "hidden": true
-          },
-          {
-            "title": "Express",
-            "path": "/rooms/authentication/self-hosted-permissions/express",
+            "title": "ID token permissions",
+            "href": "/rooms/authentication/id-token-permissions",
             "hidden": true
           },
           {
             "title": "Next.js",
-            "path": "/rooms/authentication/self-hosted-permissions/nextjs",
+            "path": "/rooms/authentication/id-token-permissions/nextjs",
             "hidden": true
           },
           {
             "title": "Remix",
-            "path": "/rooms/authentication/self-hosted-permissions/remix",
+            "path": "/rooms/authentication/id-token-permissions/remix",
             "hidden": true
           },
           {
             "title": "SvelteKit",
-            "path": "/rooms/authentication/self-hosted-permissions/sveltekit",
+            "path": "/rooms/authentication/id-token-permissions/sveltekit",
             "hidden": true
           },
           {
             "title": "Nuxt.js",
-            "path": "/rooms/authentication/self-hosted-permissions/nuxtjs",
+            "path": "/rooms/authentication/id-token-permissions/nuxtjs",
             "hidden": true
           },
           {
             "title": "Firebase",
-            "path": "/rooms/authentication/self-hosted-permissions/firebase",
+            "path": "/rooms/authentication/id-token-permissions/firebase",
             "hidden": true
           },
           {
             "title": "Express",
-            "path": "/rooms/authentication/liveblocks-hosted-permissions/express",
+            "path": "/rooms/authentication/access-token-permissions/express",
+            "hidden": true
+          },
+          {
+            "title": "Next.js",
+            "path": "/rooms/authentication/access-token-permissions/nextjs",
+            "hidden": true
+          },
+          {
+            "title": "Remix",
+            "path": "/rooms/authentication/access-token-permissions/remix",
+            "hidden": true
+          },
+          {
+            "title": "SvelteKit",
+            "path": "/rooms/authentication/access-token-permissions/sveltekit",
+            "hidden": true
+          },
+          {
+            "title": "Nuxt.js",
+            "path": "/rooms/authentication/access-token-permissions/nuxtjs",
+            "hidden": true
+          },
+          {
+            "title": "Firebase",
+            "path": "/rooms/authentication/access-token-permissions/firebase",
+            "hidden": true
+          },
+          {
+            "title": "Express",
+            "path": "/rooms/authentication/access-token-permissions/express",
             "hidden": true
           }
         ]
@@ -247,12 +247,12 @@
         "path": "/rooms/permissions",
         "routes": [
           {
-            "title": "Self-hosted",
-            "path": "/rooms/permissions/self-hosted"
+            "title": "With access tokens",
+            "path": "/rooms/permissions/access-token"
           },
           {
-            "title": "Liveblocks-hosted",
-            "path": "/rooms/permissions/liveblocks-hosted"
+            "title": "With ID tokens",
+            "path": "/rooms/permissions/id-token"
           }
         ]
       }
