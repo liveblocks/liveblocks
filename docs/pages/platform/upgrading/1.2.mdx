@@ -29,7 +29,7 @@ but for more serious applications where security matters, do not use it!
 
 ## Private key authentication changes [#private-auth-changes]
 
-<Banner type=“warning” title=“We recommend changing your auth backend”>
+<Banner type="warning" title="We recommend changing your auth backend">
   If you’re using your Liveblocks **private key**, there is nothing you _have_
   to change. But we **strongly recommend** you to upgrade your auth backend.
 </Banner>
@@ -184,8 +184,8 @@ on.
 In the previous section, we set up our new auth backend to issue access tokens,
 but we were only giving users access to a single room every time.
 
-This means that if a user enters room `“my-room-1”`, and then subsequently tries
-to enter `“my-room-2”`, the client will still have to authorize each such join
+This means that if a user enters room `"my-room-1"`, and then subsequently tries
+to enter `"my-room-2"`, the client will still have to authorize each such join
 attempt separately, hitting your auth backend twice.
 
 We can fix that now!
