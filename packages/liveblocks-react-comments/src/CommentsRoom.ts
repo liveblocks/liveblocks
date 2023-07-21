@@ -162,10 +162,13 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
     callback: (threads: RoomThreads<TThreadMetadata>) => void
   ) {
     if (!unsubscribeRealtimeEvents) {
-      unsubscribeRealtimeEvents = realtimeClient.subscribe(roomId, () => {
-        pollingHub.threads.restart(getPollingInterval());
-        revalidateThreads();
-      });
+      unsubscribeRealtimeEvents = realtimeClient.subscribeToEvents(
+        roomId,
+        () => {
+          pollingHub.threads.restart(getPollingInterval());
+          revalidateThreads();
+        }
+      );
     }
 
     if (!unsubscribeRealtimeConnection) {
