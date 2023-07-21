@@ -26,14 +26,14 @@ const liveblocks = new Liveblocks({
 export default async function authEndpoint(req, res) {
   // You'll need to get the user from your
   // authentication provider here.
-  const user = __getUserFromReq__(req);
+  const user = __getUserFromDB__(req);
 
   const session = liveblocks.prepareSession(
     user.id,
     { userInfo: user.metadata } // Optional
   );
   // You'll need to implement your own security here.
-  if (req.body.room && __checkHasAccess__(user, req.body.room)) {
+  if (req.body.room && __shouldUserHaveAccess__(user, req.body.room)) {
     session.allow(req.body.room, session.FULL_ACCESS);
   }
 
@@ -54,7 +54,7 @@ const liveblocks = new Liveblocks({
 export default async function authEndpoint(req, res) {
   // You'll need to get the user from your
   // authentication provider here.
-  const user = __getUserFromReq__(req);
+  const user = __getUserFromDB__(req);
 
   const session = liveblocks.prepareSession(
     user.id,
@@ -66,7 +66,7 @@ export default async function authEndpoint(req, res) {
     // We can then use the passed-in requested room to infer which team to
     // check membership for.
     const [team, _] = req.body.room.split(":");
-    if (__checkIsMemberOfTeam__(user, team)) {
+    if (__isMemberOfTeam__(user, team)) {
       // If the user is a member of this team, don't just grant full access to
       // the request room, but to _all_ of the team's rooms, using a prefix
       // pattern.
@@ -91,7 +91,7 @@ const liveblocks = new Liveblocks({
 export default async function authEndpoint(req, res) {
   // You'll need to get the user from your
   // authentication provider here.
-  const user = __getUserFromReq__(req);
+  const user = __getUserFromDB__(req);
 
   const session = liveblocks.prepareSession(user.id);
   if (req.body.room) {
@@ -100,10 +100,10 @@ export default async function authEndpoint(req, res) {
     // We can then use the passed-in requested room to infer which team to
     // check membership for.
     const [org, team, _] = req.body.room.split(":");
-    if (__checkIsMemberOfOrg__(user, org)) {
+    if (__isMemberOfOrg__(user, org)) {
       session.allow(`${org}:*`, READ_ACCESS);
     }
-    if (__checkIsMemberOfTeam__(user, team)) {
+    if (__isMemberOfTeam__(user, team)) {
       session.allow(`${org}:${team}:*`, FULL_ACCESS);
     }
   }

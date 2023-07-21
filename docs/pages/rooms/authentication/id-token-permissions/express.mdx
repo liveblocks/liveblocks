@@ -46,7 +46,7 @@ Follow the following steps to start configure your authentication endpoint where
       app.post("/api/liveblocks-auth", (req, res) => {
         // You'll need to get the user from your
         // authentication provider here.
-        const user = __getUserFromReq__(req);
+        const user = __getUserFromDB__(req);
 
         const { status, body } = await liveblocks.identifyUser(
           {

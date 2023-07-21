@@ -41,7 +41,7 @@ start building your own security logic.
       export default defineEventHandler(async (event) => {
         // You'll need to get the user from your
         // authentication provider here.
-        const user = __getUserFromEvent__(event);
+        const user = __getUserFromDB__(event);
 
         const { status, body } = await liveblocks.identifyUser(
           {

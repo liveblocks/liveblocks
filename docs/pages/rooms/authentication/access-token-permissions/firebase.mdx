@@ -43,14 +43,14 @@ start building your own security logic.
       exports.auth = functions.https.onCall((data, context) => {
         // You'll need to get the user from your
         // authentication provider here.
-        const user = __getUserFromReq__(req);
+        const user = __getUserFromDB__(req);
 
         const session = liveblocks.prepareSession(
           user.id,
           { userInfo: user.metadata },  // Optional
         );
         // You'll need to implement your own security here.
-        if (req.body.room && __checkHasAccess__(user, req.body.room)) {
+        if (req.body.room && __shouldUserHaveAccess__(user, req.body.room)) {
           session.allow(req.body.room, session.FULL_ACCESS);
         }
 

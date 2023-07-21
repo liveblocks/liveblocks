@@ -42,7 +42,7 @@ start building your own security logic.
       export async function POST({ req }: RequestEvent) {
         // You'll need to get the user from your
         // authentication provider here.
-        const user = __getUserFromReq__(req);
+        const user = __getUserFromDB__(req);
 
         const { status, body } = await liveblocks.identifyUser(
           {
