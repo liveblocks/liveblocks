@@ -1,0 +1,48 @@
+:root {
+  --lb-background: #fff;
+  --lb-foreground: #000;
+  --lb-accent: #08f;
+  --lb-accent-foreground: #fff;
+  --lb-radius: 0.5em;
+  --lb-spacing: 1rem;
+}
+
+.lb-avatar {
+  border-radius: var(--lb-radius);
+  overflow: hidden;
+}
+
+.lb-dropdown {
+}
+
+.lb-dropdown-item {
+}
+
+.lb-comment {
+  background: var(--lb-background);
+  color: var(--lb-foreground);
+  font-weight: 400;
+}
+
+.lb-comment-user {
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lb-comment-date {
+  color: color-mix(in srgb, var(--lb-foreground), transparent 60%);
+}
+
+.lb-comment-actions {
+}
+
+.lb-comment-body {
+  text-wrap: pretty;
+}
+
+.lb-comment-mention {
+  font-weight: 500;
+  color: var(--lb-accent);
+}

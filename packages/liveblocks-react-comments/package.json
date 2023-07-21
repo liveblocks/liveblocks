@@ -27,10 +27,13 @@
         "module": "./dist/primitives/index.mjs",
         "default": "./dist/primitives/index.js"
       }
-    }
+    },
+    "./default.css": "./default.css"
   },
   "files": [
     "dist/**",
+    "/*.css",
+    "/*.css.map",
     "README.md"
   ],
   "scripts": {
@@ -63,8 +66,10 @@
     "@testing-library/jest-dom": "^5.16.5",
     "@testing-library/react": "^13.1.1",
     "@types/use-sync-external-store": "^0.0.3",
+    "browserslist": "^4.21.9",
     "eslint-plugin-react-hooks": "^4.6.0",
     "fast-check": "^3.11.0",
+    "lightningcss": "^1.21.5",
     "msw": "^0.27.1",
     "react-error-boundary": "^3.1.1"
   },

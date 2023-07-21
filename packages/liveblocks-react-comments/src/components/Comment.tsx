@@ -3,25 +3,38 @@ import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import type { ComponentPropsWithoutRef } from "react";
 import React, { forwardRef, useCallback, useState } from "react";
 
+// import { useCommentsContext } from "../factory";
 import { CheckIcon } from "../icons/check";
 import { CrossIcon } from "../icons/cross";
 import { EllipsisIcon } from "../icons/ellipsis";
+import type { CommentRenderMentionProps } from "../primitives/Comment";
 import { Comment as CommentPrimitive } from "../primitives/Comment";
 import type { ComposerSubmitComment } from "../primitives/Composer";
 import { Composer as ComposerPrimitive } from "../primitives/Composer";
 import { Timestamp } from "../primitives/Timestamp";
+import { MENTION_CHARACTER } from "../slate/mentions";
 import { classNames } from "../utils/class-names";
 import { Avatar } from "./Avatar";
 import { ComposerMenu } from "./Composer";
-import { Name } from "./Name";
+import { User } from "./User";
 
 export interface CommentProps extends ComponentPropsWithoutRef<"div"> {
   comment: CommentData;
 }
 
+function CommentMention({ userId }: CommentRenderMentionProps) {
+  return (
+    <CommentPrimitive.Mention className="lb-comment-mention">
+      {MENTION_CHARACTER}
+      <User userId={userId} />
+    </CommentPrimitive.Mention>
+  );
+}
+
 // TODO: Add option to align the body with the avatar or the name (adds/removes a class name)
 export const Comment = forwardRef<HTMLDivElement, CommentProps>(
   ({ comment, className, ...props }, forwardedRef) => {
+    // const { roomId } = useCommentsContext();
     const [isEditing, setEditing] = useState(false);
 
     const handleEdit = useCallback(() => {
@@ -33,8 +46,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
     }, []);
 
     const handleEditSubmit = useCallback(({ body }: ComposerSubmitComment) => {
-      // TODO: How do we get the room ID and thread ID here?
-      // editComment("TODO", {
+      // editComment(roomId, {
       //   commentId: comment.id,
       //   threadId: "TODO",
       //   body,
@@ -44,8 +56,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
     }, []);
 
     const handleDelete = useCallback(() => {
-      // TODO: How do we get the room ID and thread ID here?
-      // deleteComment("TODO", {
+      // deleteComment(roomId, {
       //   commentId: comment.id,
       //   threadId: "TODO",
       // });
@@ -58,12 +69,12 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
 
     return (
       <div
-        className={classNames(className, "lb-avatar")}
+        className={classNames(className, "lb-comment")}
         {...props}
         ref={forwardedRef}
       >
         <Avatar className="lb-comment-avatar" userId={comment.userId} />
-        <Name className="lb-comment-name" userId={comment.userId} />
+        <User className="lb-comment-user" userId={comment.userId} />
         <span className="lb-comment-date">
           <Timestamp
             date={comment.createdAt}
@@ -88,15 +99,15 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
               </DropdownMenu.Trigger>
               <DropdownMenu.Portal>
                 {/* TODO: Share viewport padding/spacing values with the mentions suggestions inset */}
-                <DropdownMenu.Content className="lb-comment-options">
+                <DropdownMenu.Content className="lb-dropdown">
                   <DropdownMenu.Item
-                    className="lb-comment-option"
+                    className="lb-dropdown-item"
                     onSelect={handleEdit}
                   >
                     Edit
                   </DropdownMenu.Item>
                   <DropdownMenu.Item
-                    className="lb-comment-option"
+                    className="lb-dropdown-item"
                     onSelect={handleDelete}
                   >
                     Delete
@@ -140,6 +151,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
           <CommentPrimitive.Body
             className="lb-comment-body"
             body={comment.body}
+            renderMention={CommentMention}
           />
         )}
       </div>
