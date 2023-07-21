@@ -1,8 +1,8 @@
 ---
 meta:
-  title: "Set up self-hosted permissions with SvelteKit"
+  title: "Set up access token permissions with Firebase"
   parentTitle: "Authentication"
-  description: "Learn how to setup self-hosted permissions with SvelteKit."
+  description: "Learn how to setup access token permissions with Firebase."
 ---
 
 Follow the following steps to start configure your authentication endpoint and
@@ -14,7 +14,9 @@ start building your own security logic.
   <Step>
     <StepTitle>Install the `liveblocks/node` package</StepTitle>
     <StepContent>
-
+      Let’s first install the `@liveblocks/node` package in your
+      Firebase functions project.
+      
       ```bash
       npm install @liveblocks/node
       ```
@@ -25,21 +27,20 @@ start building your own security logic.
   <Step>
     <StepTitle>Set up authentication endpoint</StepTitle>
     <StepContent>
-      Users can only interact with rooms they have access to. You can
-      configure permission access in an `api/liveblocks-auth` endpoint by
-      creating the `src/routes/api/liveblocks-auth/+server.ts` file with the
-      following code. This is where you will implement your security and
+
+      Create a new Firebase [callable function](https://firebase.google.com/docs/functions/callable)
+      as shown below. This is where you will implement your security and
       define if the current user has access to a specific room.
 
-      ```ts file="src/routes/api/auth/+server.ts"
-      import { type RequestEvent } from "@sveltejs/kit";
-      import { Liveblocks } from "@liveblocks/node";
+      ```js
+      const functions = require("firebase-functions");
+      const { Liveblocks } = require("@liveblocks/node");
 
       const liveblocks = new Liveblocks({
         secret: "{{SECRET_KEY}}",
       });
 
-      export async function POST({ req }: RequestEvent) {
+      exports.auth = functions.https.onCall((data, context) => {
         // You'll need to get the user from your
         // authentication provider here.
         const user = __getUserFromReq__(req);
@@ -55,9 +56,8 @@ start building your own security logic.
 
         const { status, body } = await session.authorize();
         return res.status(status).end(body);
-      }
+      });
       ```
-
     </StepContent>
 
   </Step>
@@ -68,11 +68,20 @@ start building your own security logic.
       option with `authEndpoint` pointing to the endpoint you
       just created.
 
-      ```ts
+      ```js
       import { createClient } from "@liveblocks/client";
+      import firebase from "firebase";
+      import "firebase/functions";
 
+      firebase.initializeApp({
+        /* Firebase config */
+      });
+
+      const auth = firebase.functions().httpsCallable("liveblocks-auth");
+
+      // Create a Liveblocks client
       const client = createClient({
-        authEndpoint: "/api/liveblocks-auth",
+        authEndpoint: async (room) => (await auth({ room })).data,
       });
       ```
 
@@ -83,13 +92,13 @@ start building your own security logic.
 
 ## More information
 
-Both `userId` and `userInfo` can then be used in your Svelte application as
+Both `userId` and `userInfo` can then be used in your JavaScript application as
 such:
 
 ```ts
-const self = room.getSelf();
+const self = room.getSelf(); // or useSelf() in React
 console.log(self.id);
-console.log(self.info.color);
+console.log(self.info);
 ```
 
 <Figure>

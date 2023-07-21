@@ -1,12 +1,12 @@
 ---
 meta:
-  title: "Set up Liveblocks-hosted permissions with Nuxt.js"
+  title: "Set up ID token permissions with Next.js"
   parentTitle: "Authentication"
-  description: "Learn how to setup Liveblocks-hosted permissions with Nuxt.js."
+  description: "Learn how to setup ID token permissions with Next.js."
 ---
 
 Follow the following steps to start configure your authentication endpoint and
-start building your own security logic.
+start building your own security logic in Next.js’ `/app` directory.
 
 ## Quickstart
 
@@ -27,21 +27,21 @@ start building your own security logic.
     <StepContent>
       Users can only interact with rooms they have access to. You can
       configure permission access in an `api/liveblocks-auth` endpoint by
-      creating the `server/api/liveblocks-auth.ts` file with the
+      creating the `app/api/liveblocks-auth/route.ts` file with the
       following code. This is where you will implement your security and
       define if the current user has access to a specific room.
 
-      ```ts file="server/api/liveblocks-auth.ts"
+      ```ts file="app/api/liveblocks-auth/route.ts"
       import { Liveblocks } from "@liveblocks/node";
 
       const liveblocks = new Liveblocks({
         secret: "{{SECRET_KEY}}",
       });
 
-      export default defineEventHandler(async (event) => {
+      export default async function authEndpoint(req, res) {
         // You'll need to get the user from your
         // authentication provider here.
-        const user = __getUserFromEvent__(event);
+        const user = __getUserFromReq__(req);
 
         const { status, body } = await liveblocks.identifyUser(
           {
@@ -51,7 +51,7 @@ start building your own security logic.
           { userInfo: user.metadata },
         );
         return res.status(status).end(body);
-      })
+      }
       ```
 
     </StepContent>
@@ -64,7 +64,7 @@ start building your own security logic.
       option with `authEndpoint` pointing to the endpoint you
       just created.
 
-      ```ts
+      ```ts file="liveblocks.config.ts"
       import { createClient } from "@liveblocks/client";
 
       const client = createClient({
@@ -107,11 +107,10 @@ start building your own security logic.
 
 ## More information
 
-Both `userId` and `userInfo` can then be used in your Vue.js application as
-such:
+Both `userId` and `userInfo` can then be used in your React application as such:
 
 ```ts
-const self = ref(room.getSelf());
+const self = useSelf();
 console.log(self.id);
 console.log(self.info);
 ```

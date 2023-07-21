@@ -1,12 +1,12 @@
 ---
 meta:
-  title: "Set up Liveblocks-hosted permissions with Next.js"
+  title: "Set up ID token permissions with SvelteKit"
   parentTitle: "Authentication"
-  description: "Learn how to setup Liveblocks-hosted permissions with Next.js."
+  description: "Learn how to setup ID token permissions with SvelteKit."
 ---
 
 Follow the following steps to start configure your authentication endpoint and
-start building your own security logic in Next.js’ `/app` directory.
+start building your own security logic.
 
 ## Quickstart
 
@@ -27,18 +27,19 @@ start building your own security logic in Next.js’ `/app` directory.
     <StepContent>
       Users can only interact with rooms they have access to. You can
       configure permission access in an `api/liveblocks-auth` endpoint by
-      creating the `app/api/liveblocks-auth/route.ts` file with the
+      creating the `src/routes/api/liveblocks-auth/+server.ts` file with the
       following code. This is where you will implement your security and
       define if the current user has access to a specific room.
 
-      ```ts file="app/api/liveblocks-auth/route.ts"
+      ```ts file="src/routes/api/auth/+server.ts"
+      import { type RequestEvent } from "@sveltejs/kit";
       import { Liveblocks } from "@liveblocks/node";
 
       const liveblocks = new Liveblocks({
         secret: "{{SECRET_KEY}}",
       });
 
-      export default async function authEndpoint(req, res) {
+      export async function POST({ req }: RequestEvent) {
         // You'll need to get the user from your
         // authentication provider here.
         const user = __getUserFromReq__(req);
@@ -64,7 +65,7 @@ start building your own security logic in Next.js’ `/app` directory.
       option with `authEndpoint` pointing to the endpoint you
       just created.
 
-      ```ts file="liveblocks.config.ts"
+      ```ts
       import { createClient } from "@liveblocks/client";
 
       const client = createClient({
@@ -107,12 +108,13 @@ start building your own security logic in Next.js’ `/app` directory.
 
 ## More information
 
-Both `userId` and `userInfo` can then be used in your React application as such:
+Both `userId` and `userInfo` can then be used in your Svelte application as
+such:
 
 ```ts
-const self = useSelf();
+const self = room.getSelf();
 console.log(self.id);
-console.log(self.info);
+console.log(self.info.color);
 ```
 
 <Figure>

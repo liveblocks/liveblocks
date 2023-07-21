@@ -1,8 +1,8 @@
 ---
 meta:
-  title: "Set up self-hosted permissions with Nuxt.js"
+  title: "Set up access token permissions with Remix"
   parentTitle: "Authentication"
-  description: "Learn how to setup self-hosted permissions with Nuxt.js."
+  description: "Learn how to setup access token permissions with Remix."
 ---
 
 Follow the following steps to start configure your authentication endpoint and
@@ -27,21 +27,22 @@ start building your own security logic.
     <StepContent>
       Users can only interact with rooms they have access to. You can
       configure permission access in an `api/liveblocks-auth` endpoint by
-      creating the `server/api/liveblocks-auth.ts` file with the
+      creating the `app/routes/api/liveblocks-auth.ts` file with the
       following code. This is where you will implement your security and
       define if the current user has access to a specific room.
 
-      ```ts file="server/api/liveblocks-auth.ts"
+      ```ts file="app/routes/api/liveblocks-auth.ts"
+      import type { ActionFunction } from "@remix-run/node";
       import { Liveblocks } from "@liveblocks/node";
 
       const liveblocks = new Liveblocks({
         secret: "{{SECRET_KEY}}",
       });
 
-      export default defineEventHandler(async (event) => {
+      export const action: ActionFunction = async ({ req }) => {
         // You'll need to get the user from your
         // authentication provider here.
-        const user = __getUserFromEvent__(event);
+        const user = __getUserFromReq__(req);
 
         const session = liveblocks.prepareSession(
           user.id,
@@ -54,7 +55,7 @@ start building your own security logic.
 
         const { status, body } = await session.authorize();
         return res.status(status).end(body);
-      })
+      }
       ```
 
     </StepContent>
@@ -82,11 +83,10 @@ start building your own security logic.
 
 ## More information
 
-Both `userId` and `userInfo` can then be used in your Vue.js application as
-such:
+Both `userId` and `userInfo` can then be used in your React application as such:
 
 ```ts
-const self = ref(room.getSelf());
+const self = useSelf();
 console.log(self.id);
 console.log(self.info);
 ```

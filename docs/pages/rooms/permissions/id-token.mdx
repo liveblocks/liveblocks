@@ -1,25 +1,23 @@
 ---
 meta:
-  title: "Liveblocks-hosted permissions"
+  title: "Manage permissions with ID tokens"
   parentTitle: "Permissions"
-  description: "Learn more about Liveblocks-hosted permissions"
+  description: "Learn more about ID token permissions"
 ---
 
-Liveblocks-hosted permissions follows the analogy of a "membership card" through
-an ID token. Anyone with that membership card can try to enter a room, but your
-permissions are checked at the door. It’s like a clerk sits at the room’s door
-that will look your membership card up in the system to see if you have access
-every time you try to enter a room. This approach to permissions is powerful but
-can be hard to manage, because you will have to make sure all the access
-information is entered into our system and kept up to date.
+Managing permissions by issuing ID (identity) tokens follows the analogy of
+issuing “membership cards”. Anyone with such membership card can try to enter a
+room, but your permissions will be checked at the door, every time you try to
+enter a room. This approach to permissions is powerful but can be hard to
+manage, because you will have to make sure all the access information is entered
+into our system and kept up to date.
 
 Rooms can have different permission types assigned at three different levels:
 default, groups, and users. The system is flexible enough to enable you to build
 a permission system that fits your needs. With that, you can build invite flows
 that drive more people to your product.
 
-To set up your authentication endpoint with Liveblocks-hosted permissions, make
-sure to
+To set up your authentication endpoint to issue ID tokens, make sure to
 [follow these quick steps](/docs/rooms/authentication/id-token-permissions).
 
 <Figure>

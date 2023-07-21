@@ -13,37 +13,37 @@ to [set up an authentication endpoint](/docs/rooms/authentication) to enable
 permissions.
 
 There are ways to set up authentication with Liveblocks. You can either through
-self-hosted permissions where a global access token is generated with accesses
-are directly embedded in that token, or through fine grained Liveblocks-hosted
+access token permissions where a global access token is generated with accesses
+are directly embedded in that token, or through fine grained ID token
 permissions at the room level where users get verified every time they enter the
 room.
 
 <ListGrid columns={2}>
   <DocsCard
-    title="Self-hosted permissions"
-    href="/docs/rooms/permissions/self-hosted"
+    title="Access token permissions"
+    href="/docs/rooms/permissions/access-token"
     type="image"
     description="Simple and flexible global permission rules"
     center={false}
     visual={
       <Image
         src="/assets/authentication-access-token-permissions.png"
-        alt="Self-hosted permissions"
+        alt="Access token permissions"
         width={498}
         height={280}
       />
     }
   />
   <DocsCard
-    title="Liveblocks-hosted permissions"
-    href="/docs/rooms/permissions/liveblocks-hosted"
+    title="ID token permissions"
+    href="/docs/rooms/permissions/id-token"
     type="image"
     description="Fine grained permissions at the room level"
     center={false}
     visual={
       <Image
         src="/assets/authentication-id-token-permissions.png"
-        alt="Liveblocks-hosted permissions"
+        alt="ID token permissions"
         width={498}
         height={280}
       />
