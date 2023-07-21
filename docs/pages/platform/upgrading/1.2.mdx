@@ -16,7 +16,7 @@ faster, and let you reuse those authorization tokens between multiple rooms.
 ## Public key authentication changes [#public-auth-changes]
 
 <Banner type="success" title="No changes required">
-  If you're using your Liveblocks **public key**, great! There is nothing you
+  If you’re using your Liveblocks **public key**, great! There is nothing you
   have to change.
 </Banner>
 
@@ -29,8 +29,8 @@ but for more serious applications where security matters, do not use it!
 
 ## Private key authentication changes [#private-auth-changes]
 
-<Banner type="warning" title="We recommend changing your auth backend">
-  If you're using your Liveblocks **private key**, there is nothing you _have_
+<Banner type=“warning” title=“We recommend changing your auth backend”>
+  If you’re using your Liveblocks **private key**, there is nothing you _have_
   to change. But we **strongly recommend** you to upgrade your auth backend.
 </Banner>
 
@@ -40,33 +40,33 @@ auth tokens which offer the following benefits:
 - When you authorize a user, you can grant them permissions to access multiple
   rooms in one transaction. The client will then be able to join many rooms
   without having to reauthorize those requests every time.
-- In most cases, it's going to be faster to enter the first room
-- It's much faster to enter subsequent rooms
+- In most cases, it’s going to be faster to enter the first room
+- It’s much faster to enter subsequent rooms
 - Less pressure on your backend if you have many users
 - You can use our upcoming features like [Comments](/comments) (currently in
   private beta)
 
 ## How to upgrade? [#how]
 
-We'll walk you through the necessary code changes below in a minute, but let's
-talk about the rollout plan first. We cannot "just change" the backend
+We’ll walk you through the necessary code changes below in a minute, but let’s
+talk about the rollout plan first. We cannot “just change” the backend
 implementation to use new-style tokens. If you have a running Liveblocks
 application in production, then people may have old browser tabs open that are
-still running an old Liveblocks client (< 1.2) which won't expect or understand
-our new-style auth tokens, causing them to crash. We don't want that of course,
-and we'll responsibly replace the auth backend using the following steps:
+still running an old Liveblocks client (< 1.2) which won’t expect or understand
+our new-style auth tokens, causing them to crash. We don’t want that of course,
+and we’ll responsibly replace the auth backend using the following steps:
 
 1. Keep your existing backend endpoint (likely `/api/auth`).
 1. Add a second auth backend endpoint, and only use the new auth APIs in there.
-1. In your front-end, point `createClient()`'s `authEndpoint` URL to the new
+1. In your front-end, point `createClient()`’s `authEndpoint` URL to the new
    backend endpoint.
 1. Done! You can deploy your application now.
-1. Later, when all your application's clients have been upgraded to the latest
+1. Later, when all your application’s clients have been upgraded to the latest
    version, you can safely remove the old `/api/auth` endpoint.
 
 ## Deciding what to upgrade to [#deciding]
 
-After you upgrade your backend's `@liveblocks/node` dependency to 1.2, it now
+After you upgrade your backend’s `@liveblocks/node` dependency to 1.2, it now
 offers three (instead of one) APIs to obtain an auth token:
 
 |     | Token                                                     | API                                                     | Supported before 1.2 | Supported since 1.2 | Multi-room | Setup         |
@@ -75,25 +75,25 @@ offers three (instead of one) APIs to obtain an auth token:
 | 2.  | **Access token**<br /><small>✨&nbsp;Recommended!</small> | <code><small>liveblocks.prepareSession()</small></code> | –                    | ✅                  | ✅         | easy          |
 | 3.  | **ID token**                                              | <code><small>liveblocks.identifyUser()</small></code>   | –                    | ✅                  | ✅         | more involved |
 
-1. **Single-room tokens** are what you're currently using.
+1. **Single-room tokens** are what you’re currently using.
 1. **Access tokens** is our new preferred/recommended way to to auth, because it
    is very easy to manage from your own backend.
-1. **ID tokens** are used to look up permissions on-the-fly as you're entering
-   rooms. It requires more upfront setup of your room's permissions, and
+1. **ID tokens** are used to look up permissions on-the-fly as you’re entering
+   rooms. It requires more upfront setup of your room’s permissions, and
    requires you to keep your permissions in sync with Liveblocks proactively,
    using our [Permission REST APIs](/docs/rooms/permissions/liveblocks-hosted).
 
 <Banner title="What's the difference?">
 
-**Access tokens** follow the analogy of a "hotel room key card". Anyone that has
+**Access tokens** follow the analogy of a “hotel room key card”. Anyone that has
 that key card can enter any room that the card gives access to. It’s easy to
 give out those key cards right from your backend.<br /><br />**ID tokens**
-follow the analogy of a "membership card". Anyone with that membership card can
+follow the analogy of a “membership card”. Anyone with that membership card can
 try to enter a room, but your permissions will get checked at the door. This
 approach to permissions is most powerful because it can be set up very
 fine-grained and exactly, but it comes at the cost of having to keep those
 permissions programmatically in sync with Liveblocks. We recommend it for
-advanced use cases only, and only if Access Tokens don't cut it for you.
+advanced use cases only, and only if Access Tokens don’t cut it for you.
 
 </Banner>
 
@@ -108,7 +108,7 @@ Continue reading:
 First, create a new endpoint in your backend, next to your existing `/api/auth`
 endpoint. We recommend going with `/api/liveblocks-auth`.
 
-Let's first implement it to issue tokens that would be equivalent to your
+Let’s first implement it to issue tokens that would be equivalent to your
 current single-room token based setup:
 
 ```ts file="app/api/liveblocks-auth/route.ts"
@@ -140,13 +140,13 @@ export default async function myNewAuthEndpoint(req, res) {
 }
 ```
 
-Let's break it down!
+Let’s break it down!
 
-- In step 1️⃣, we're setting up a Liveblocks instance for your account once.
-- In step 2️⃣, we're starting a new auth session. Every session should have a
-  unique user ID, which typically is just the ID of the user as it's known in
+- In step 1️⃣, we’re setting up a Liveblocks instance for your account once.
+- In step 2️⃣, we’re starting a new auth session. Every session should have a
+  unique user ID, which typically is just the ID of the user as it’s known in
   your own database.
-- Step 3️⃣ is where the magic happens. Using the builder pattern, we're going to
+- Step 3️⃣ is where the magic happens. Using the builder pattern, we’re going to
   describe exactly what rooms this users should be allowed to enter, and what
   permissions they should have. In this case, we give the user access to exactly
   the room that this auth request was made for, using
@@ -174,9 +174,9 @@ const client = createClient({
 });
 ```
 
-That's it! You're migrated!
+That’s it! You’re migrated!
 
-However, we're still not utilizing our new multi-room support yet! Please read
+However, we’re still not utilizing our new multi-room support yet! Please read
 on.
 
 ## Giving access to multiple rooms at once [#multi-room-access]
@@ -184,13 +184,13 @@ on.
 In the previous section, we set up our new auth backend to issue access tokens,
 but we were only giving users access to a single room every time.
 
-This means that if a user enters room `"my-room-1"`, and then subsequently tries
-to enter `"my-room-2"`, the client will still have to authorize each such join
+This means that if a user enters room `“my-room-1”`, and then subsequently tries
+to enter `“my-room-2”`, the client will still have to authorize each such join
 attempt separately, hitting your auth backend twice.
 
 We can fix that now!
 
-We're allowed to make multiple `allow()` calls on the session. For example, you
+We’re allowed to make multiple `allow()` calls on the session. For example, you
 could do:
 
 ```ts
@@ -225,12 +225,12 @@ lot faster.
 
 Being able to specify permissions for inifite rooms using prefix pattern
 matching offers great powers, but it does assume that you design your room names
-a bit more cautiously. For example, granting room prefix permissions won't work
-if you use random room IDs for your project, because there won't be a shared
+a bit more cautiously. For example, granting room prefix permissions won’t work
+if you use random room IDs for your project, because there won’t be a shared
 prefix.
 
 Therefore, if you want to adopt this pattern, we recommend designing your room
-names hierarchically in namespaced "buckets" in a way that makes sense for your
+names hierarchically in namespaced “buckets” in a way that makes sense for your
 app.
 
 For example, if your app manages documents by team, each room could be named
@@ -245,7 +245,7 @@ For example:
 
 Please note that the `:` separator used here has no specific meaning. You can
 use any separator you like. Just make sure the separator character you pick
-cannot occur in the IDs you're generating.
+cannot occur in the IDs you’re generating.
 
 As another example, if your app is a SAAS product and you have many customers,
 you can add an additional top-level key to prefix your room names, e.g.
