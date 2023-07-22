@@ -127,21 +127,26 @@ export function SOCKET_AUTOCONNECT_BUT_NO_ROOM_STATE(wss: MockWebSocketServer) {
  * Since 1.2, a client isn't considered ready until it has received the
  * ROOM_STATE message.
  */
-export function SOCKET_AUTOCONNECT_AND_ROOM_STATE(wss: MockWebSocketServer) {
-  return wss.newSocket((socket) => {
-    // Accept the socket connection...
-    socket.server.accept();
+export function SOCKET_AUTOCONNECT_AND_ROOM_STATE(
+  actor: number = 1,
+  scopes: string[] = ["room:write"]
+) {
+  return (wss: MockWebSocketServer) => {
+    return wss.newSocket((socket) => {
+      // Accept the socket connection...
+      socket.server.accept();
 
-    // ...and respond with a ROOM_STATE server message immediately
-    socket.server.send(
-      serverMessage({
-        type: ServerMsgCode.ROOM_STATE,
-        actor: 1,
-        scopes: ["room:write"],
-        users: {},
-      })
-    );
-  });
+      // ...and respond with a ROOM_STATE server message immediately
+      socket.server.send(
+        serverMessage({
+          type: ServerMsgCode.ROOM_STATE,
+          actor,
+          scopes,
+          users: {},
+        })
+      );
+    });
+  };
 }
 
 /**

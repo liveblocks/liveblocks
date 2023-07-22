@@ -106,7 +106,7 @@ export async function prepareRoomWithStorage<
     | ((messages: ClientMsg<TPresence, TRoomEvent>[]) => void)
     | undefined = undefined,
   defaultStorage?: TStorage,
-  scopes: string[] = []
+  scopes: string[] = ["room:write"]
 ) {
   if (onSend_DEPRECATED !== undefined) {
     throw new Error(
@@ -116,7 +116,7 @@ export async function prepareRoomWithStorage<
 
   const { wss, delegates } = defineBehavior(
     ALWAYS_AUTH_AS(actor, scopes),
-    SOCKET_AUTOCONNECT_AND_ROOM_STATE
+    SOCKET_AUTOCONNECT_AND_ROOM_STATE(actor, scopes)
   );
 
   const clonedItems = deepClone(items);
@@ -197,7 +197,11 @@ export async function prepareStorageTest<
   TPresence extends JsonObject = never,
   TUserMeta extends BaseUserMeta = never,
   TRoomEvent extends Json = never,
->(items: IdTuple<SerializedCrdt>[], actor: number = 0, scopes: string[] = []) {
+>(
+  items: IdTuple<SerializedCrdt>[],
+  actor: number = 0,
+  scopes: string[] = ["room:write"]
+) {
   let currentActor = actor;
   const operations: Op[] = [];
 
@@ -266,7 +270,7 @@ export async function prepareStorageTest<
     serverMessage({
       type: ServerMsgCode.ROOM_STATE,
       actor: currentActor,
-      scopes: ["room:write"],
+      scopes,
       users: { [currentActor]: { scopes: ["room:write"] } },
     })
   );

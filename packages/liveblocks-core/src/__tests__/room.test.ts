@@ -91,7 +91,7 @@ function createTestableRoom<
 >(
   initialPresence: TPresence,
   authBehavior = AUTH_SUCCESS,
-  socketBehavior = SOCKET_AUTOCONNECT_AND_ROOM_STATE,
+  socketBehavior = SOCKET_AUTOCONNECT_AND_ROOM_STATE(),
   config?: Partial<RoomConfig>
 ) {
   const { wss, delegates } = defineBehavior(authBehavior, socketBehavior);
