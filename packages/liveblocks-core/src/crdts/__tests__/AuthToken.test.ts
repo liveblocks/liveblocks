@@ -1,27 +1,64 @@
-import { parseAuthToken, Permission } from "../../protocol/AuthToken";
+import { parseAuthToken } from "../../protocol/AuthToken";
 
 describe("parseRoomAuthToken", () => {
-  const roomToken =
-    "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2NjQ1NjY0MTAsImV4cCI6MTY2NDU3MDAxMCwicm9vbUlkIjoiS1hhNlVjbHZyYWVHWk5kWFZ6NjdaIiwiYXBwSWQiOiI2MDVhNGZkMzFhMzZkNWVhN2EyZTA4ZjEiLCJhY3RvciI6ODcsInNjb3BlcyI6WyJyb29tOndyaXRlIl19.uS0VcdeAPdMfJ2rseRRUnL_X3I-h6ljPKEiu1xfKRG0Qrth0zdqo2ngn7NZ8_fLcQBaIvaZ4q5vXg_Nex81Ae9sjmmLhjxHcE-iA-BC82NROVSnyGdVHJRMNqs6h57pCdiXwCwpcLjqi_EOIS8gmMB8dcRX748Wpa4C2T0e94An8_vP6eD66JKndxjFvVPrB_LSOOlQZoxW9USPS7ZUTAECeGQscrXnss_-1TJEaGf0RxVkNQsDfUKu4TjWYa3iBvBPip--Ev1bBETh0IHrGNsWVUd-691cCRAemiC_ADBaOg5IEszqoEw96Xe9BtQeWrjAgMKKrPS72cwkikVmiJQ";
+  const exampleLegacyToken =
+    "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2OTAwMzMzMjgsImV4cCI6MTY5MDAzMzMzMywiayI6InNlYy1sZWdhY3kiLCJyb29tSWQiOiJlTFB3dU9tTXVUWEN6Q0dSaTVucm4iLCJhcHBJZCI6IjYyNDFjYjk1ZWQ2ODdkNWRlNWFhYTEzMiIsImFjdG9yIjoxLCJzY29wZXMiOlsicm9vbTp3cml0ZSJdLCJpZCI6InVzZXItMyIsIm1heENvbm5lY3Rpb25zUGVyUm9vbSI6MjB9.QoRc9dJJp-C1LzmQ-S_scHfFsAZ7dBcqep0bUZNyWxEWz_VeBHBBNdJpNs7b7RYRFDBi7RxkywKJlO-gNE8h3wkhebgLQVeSgI3YfTJo7J8Jzj38TzH85ZIbybaiGcxda_sYn3VohDtUHA1k67ns08Q2orJBNr30Gc88jJmc1He_7bLStsDP4M2F1NRMuFuqLULWHnPeEM7jMvLZYkbu3SBeCH4TQGyweu7qAXvP-HHtmvzOi8LdEnpxgxGjxefdu6m4a-fJj6LwoYCGi1rlLDHH9aOHFwYVrBBBVwoeIDSHoAonkPaae9AWM6igJhNt9-ihgEH6sF-qgFiPxHNXdg";
 
-  const apiToken =
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2MTY3MjM2NjcsImV4cCI6MTYxNjcyNzI2NywiYXBwSWQiOiI2MDVhNGZkMzFhMzZkNWVhN2EyZTA5MTQiLCJzY29wZXMiOlsicm9vbTpyZWFkIiwicm9vbTp3cml0ZSJdfQ.7Wplt6YV_YbpPAcAFyC8pX8tk5BGNy53GdoH1_u8sjo";
+  const exampleAccessToken =
+    "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2OTAwMzM1MjEsImV4cCI6MTY5MDAzMzUyNiwiayI6ImFjYyIsInBpZCI6IjYyNDFjYjk1ZWQ2ODdkNWRlNWFhYTEzMiIsInVpZCI6InVzZXItMTEiLCJwZXJtcyI6eyJ0ZXN0LXJvb20iOlsicm9vbTp3cml0ZSIsImNvbW1lbnRzOndyaXRlIl19LCJtY3ByIjoyMH0.YanPltrzS9ct5E9w6i14s_JEy9rpm4MNSMGPgN1B26JP0LVaj0ac3kK5m1owjWS_HTANB87KYk0tOHGDjEESIN0Kr-1d6Qv31IX1yUTsRiPyaD4J6co0M9ONDEbhiWc-ScV2UI-fQlY1qvqFAP5VR4CIwCRnA_hwBFzzhAQhb7VWSKASaqL72ySv9f-LU4cekqJ_nWLLpOGnnjiQSqOFqe7PSPjQiawm8R8UU_P5kEtKr53YS0oBhIiH9e3dpP8HPiaP6kCN1ViDo0jHIX3oyNB4IcwNf-VMPCUHi8oXG09Kfa2rdI2MT7E_Tblg78ZPnSCKLjTEHykGZsc4v-kDIg";
 
-  test("should parse a valid token", () => {
-    const { parsed } = parseAuthToken(roomToken);
+  const exampleIdToken =
+    "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2OTAwMzM2MTQsImV4cCI6MTY5MDAzMzYxOSwiayI6ImlkIiwicGlkIjoiNjI0MWNiOTVlZDY4N2Q1ZGU1YWFhMTMyIiwidWlkIjoidXNlci0yIiwiZ2lkcyI6W10sIm1jcHIiOjIwfQ.qg6lme3yhWYZ77l_ignjEwVuow1f79xYEdFYTO39VnyuQRv39xJU_lRpUC053p5UEYR9wV2f9B_U1G1xBtS0Yk894O078JiKN1zvizAgJmTrG0ZFzzEJLoMo00RpeGKP2qZEXNyHPqFVdzP9vHUVK0D4CIEHanLUOYaHA3JTslUWiKfF7OoWIMpYMx_oIgdkAV3pvkMpYuV0UkVGuMgrxUXCNKcURAfTK2BhtfmT3n7pDBpstrIYEotcWjpBcm6Xat5kG9FECUs_iEJvlnWKidCSbSp3YGutCxH0XXwbTK9O-a6YBrQTAOofHFHsy6_dE4Z3uyQe79uX82YqdxJIzg";
+
+  const exampleInvalidJwtToken =
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c";
+
+  test("should parse a valid (legacy) token", () => {
+    const { parsed } = parseAuthToken(exampleLegacyToken);
     expect(parsed).toEqual({
-      actor: 87,
-      appId: "605a4fd31a36d5ea7a2e08f1",
-      exp: 1664570010,
-      iat: 1664566410,
-      roomId: "KXa6UclvraeGZNdXVz67Z",
-      scopes: [Permission.Write],
+      k: "sec-legacy",
+      actor: 1,
+      appId: "6241cb95ed687d5de5aaa132",
+      exp: 1690033333,
+      iat: 1690033328,
+      id: "user-3",
+      maxConnectionsPerRoom: 20,
+      roomId: "eLPwuOmMuTXCzCGRi5nrn",
+      scopes: ["room:write"],
+    });
+  });
+
+  test("should parse a valid (id) token", () => {
+    const { parsed } = parseAuthToken(exampleIdToken);
+    expect(parsed).toEqual({
+      exp: 1690033619,
+      gids: [],
+      iat: 1690033614,
+      k: "id",
+      mcpr: 20,
+      pid: "6241cb95ed687d5de5aaa132",
+      uid: "user-2",
+    });
+  });
+
+  test("should parse a valid (access) token", () => {
+    const { parsed } = parseAuthToken(exampleAccessToken);
+    expect(parsed).toEqual({
+      k: "acc",
+      exp: 1690033526,
+      iat: 1690033521,
+      mcpr: 20,
+      perms: {
+        "test-room": ["room:write", "comments:write"],
+      },
+      pid: "6241cb95ed687d5de5aaa132",
+      uid: "user-11",
     });
   });
 
   test("should throw if token is not a room token", () => {
     try {
-      parseAuthToken(apiToken);
+      parseAuthToken(exampleInvalidJwtToken);
     } catch (error) {
       expect(error).toEqual(
         new Error(
