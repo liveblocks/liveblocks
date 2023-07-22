@@ -16,15 +16,18 @@ import type { RoomDelegates } from "../room";
 import type { WebsocketCloseCodes } from "../types/IWebSocket";
 import type { MockWebSocket } from "./_MockWebSocketServer";
 import { MockWebSocketServer } from "./_MockWebSocketServer";
-import { makeMinimalTokenPayload, serverMessage } from "./_utils";
+import { makeSecretLegacyToken, serverMessage } from "./_utils";
 
 type AuthBehavior = () => AuthValue;
 type SocketBehavior = (wss: MockWebSocketServer) => MockWebSocket;
 
-function makeToken(actor: number, scopes: string[]): ParsedAuthToken {
+function makeSecretLegacyParsedToken(
+  actor: number,
+  scopes: string[]
+): ParsedAuthToken {
   return {
     raw: "<some fake JWT token>",
-    parsed: makeMinimalTokenPayload(actor, scopes),
+    parsed: makeSecretLegacyToken(actor, scopes),
   };
 }
 
@@ -79,7 +82,10 @@ export function ALWAYS_AUTH_AS(
   scopes: string[] = []
 ): () => AuthValue {
   return () => {
-    return { type: "secret", token: makeToken(actor, scopes) };
+    return {
+      type: "secret",
+      token: makeSecretLegacyParsedToken(actor, scopes),
+    };
   };
 }
 

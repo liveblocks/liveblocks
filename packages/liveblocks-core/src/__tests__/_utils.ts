@@ -36,7 +36,7 @@ import { MockWebSocket } from "./_MockWebSocketServer";
 import type { JsonStorageUpdate } from "./_updatesUtils";
 import { serializeUpdateToJson } from "./_updatesUtils";
 
-export function makeMinimalTokenPayload(
+export function makeSecretLegacyToken(
   actor: number,
   scopes: string[]
 ): LegacySecretToken {
