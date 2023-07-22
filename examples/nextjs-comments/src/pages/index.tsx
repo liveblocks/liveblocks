@@ -2,8 +2,7 @@ import React, { Suspense, useMemo } from "react";
 import { useRouter } from "next/router";
 import {
   CommentsProvider,
-  createThread,
-  useRoomId,
+  useCreateThread,
   useThreads,
 } from "../../liveblocks.config";
 import { useHydrated } from "../utils/use-hydrated";
@@ -51,9 +50,7 @@ import { Composer } from "@liveblocks/react-comments/primitives";
 
 function Example() {
   const threads = useThreads();
-  const roomId = useRoomId();
-
-  console.log(roomId);
+  const createThread = useCreateThread();
 
   return (
     <main>
@@ -67,7 +64,7 @@ function Example() {
         ))}
         <Composer.Form
           onCommentSubmit={({ body }) => {
-            createThread(roomId, { body, metadata: { resolved: false } });
+            createThread({ body, metadata: { resolved: false } });
           }}
         >
           <Composer.Editor />

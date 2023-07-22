@@ -29,11 +29,11 @@ export async function resolveUser(userId: string): Promise<BaseUserInfo> {
 export const {
   CommentsProvider,
   suspense: { useThreads, useUser, useRoomId },
-  createComment,
-  createThread,
-  deleteComment,
-  editComment,
-  editThread,
+  useCreateComment,
+  useEditComment,
+  useDeleteComment,
+  useCreateThread,
+  useEditThread,
 } = createCommentsContext<ThreadMetadata>(client, {
   resolveUser,
   serverEndpoint: `https://${WORKERS_ENDPOINT}/v2`,

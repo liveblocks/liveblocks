@@ -18,6 +18,7 @@ import type { NamedExoticComponent, PropsWithChildren } from "react";
 import React, {
   createContext,
   memo,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
@@ -74,48 +75,52 @@ type CommentsContextBundle<
   CommentsProvider: NamedExoticComponent<CommentsProviderProps>;
 
   /**
-   * Creates a thread with an initial comment, and optionally some metadata.
+   * Returns a function that creates a thread with an initial comment, and optionally some metadata.
    *
    * @example
-   * const thread = createThread("room-id", { body: {}, metadata: {} })
+   * const createThread = useCreateThread();
+   * createThread({ body: {}, metadata: {} });
    */
-  createThread(
-    roomId: string,
+  useCreateThread(): (
     options: CreateThreadOptions<TThreadMetadata>
-  ): ThreadData<TThreadMetadata>;
+  ) => ThreadData<TThreadMetadata>;
 
   /**
-   * Edits a thread's metadata.
+   * Returns a function that edits a thread's metadata.
    *
    * @example
-   * const thread = editThread("room-id", { threadId: "th_xxx", metadata: {} } })
+   * const editThread = useEditThread();
+   * editThread({ threadId: "th_xxx", metadata: {} } })
    */
-  editThread(roomId: string, options: EditThreadOptions<TThreadMetadata>): void;
+  useEditThread(): (options: EditThreadOptions<TThreadMetadata>) => void;
 
   /**
-   * Adds a comment to a thread.
+   * Returns a function that adds a comment to a thread.
    *
    * @example
-   * const comment = createComment("room-id", { threadId: "th_xxx", body: { {} } })
+   * const createComment = useCreateComment();
+   * createComment({ threadId: "th_xxx", body: { {} } });
    */
-  createComment(roomId: string, options: CreateCommentOptions): CommentData;
+  useCreateComment(): (options: CreateCommentOptions) => CommentData;
 
   /**
-   * Edits a comment's body.
+   * Returns a function that edits a comment's body.
    *
    * @example
-   * const comment = editComment("room-id", { threadId: "th_xxx", commentId: "cm_xxx", body: {} })
+   * const editComment = useEditComment()
+   * editComment({ threadId: "th_xxx", commentId: "cm_xxx", body: {} })
    */
-  editComment(roomId: string, options: EditCommentOptions): void;
+  useEditComment(): (options: EditCommentOptions) => void;
 
   /**
-   * Deletes a comment.
+   * Returns a function that deletes a comment.
    * If it is the last non-deleted comment, the thread also gets deleted.
    *
    * @example
-   * deleteComment("room-id", { threadId: "th_xxx", commentId: "cm_xxx" })
+   * const deleteComment = useDeleteComment();
+   * deleteComment({ threadId: "th_xxx", commentId: "cm_xxx" })
    */
-  deleteComment(roomId: string, options: DeleteCommentOptions): void;
+  useDeleteComment(): (options: DeleteCommentOptions) => void;
 
   /**
    * Returns the threads within the current room.
@@ -366,41 +371,65 @@ export function createCommentsContext<
     } as UserStateSuspense<TUserInfo>;
   }
 
-  function createThread(
-    roomId: string,
-    options: CreateThreadOptions<TThreadMetadata>
-  ) {
-    return getCommentsRoom(roomId).createThread(options);
+  function useCreateThread() {
+    const { roomId } = useCommentsContext();
+
+    return useCallback(
+      (options: CreateThreadOptions<TThreadMetadata>) =>
+        getCommentsRoom(roomId).createThread(options),
+      [roomId]
+    );
   }
 
-  function editThread(
-    roomId: string,
-    options: EditThreadOptions<TThreadMetadata>
-  ) {
-    return getCommentsRoom(roomId).editThread(options);
+  function useEditThread() {
+    const { roomId } = useCommentsContext();
+
+    return useCallback(
+      (options: EditThreadOptions<TThreadMetadata>) =>
+        getCommentsRoom(roomId).editThread(options),
+      [roomId]
+    );
   }
 
-  function createComment(roomId: string, options: CreateCommentOptions) {
-    return getCommentsRoom(roomId).createComment(options);
+  function useCreateComment(): (options: CreateCommentOptions) => CommentData {
+    const { roomId } = useCommentsContext();
+
+    return useCallback(
+      (options: CreateCommentOptions) =>
+        getCommentsRoom(roomId).createComment(options),
+      [roomId]
+    );
   }
 
-  function editComment(roomId: string, options: EditCommentOptions) {
-    return getCommentsRoom(roomId).editComment(options);
+  function useEditComment(): (options: EditCommentOptions) => void {
+    const { roomId } = useCommentsContext();
+
+    return useCallback(
+      (options: EditCommentOptions) =>
+        getCommentsRoom(roomId).editComment(options),
+      [roomId]
+    );
   }
 
-  function deleteComment(roomId: string, options: DeleteCommentOptions) {
-    return getCommentsRoom(roomId).deleteComment(options);
+  function useDeleteComment() {
+    const { roomId } = useCommentsContext();
+
+    return useCallback(
+      (options: DeleteCommentOptions) =>
+        getCommentsRoom(roomId).deleteComment(options),
+      [roomId]
+    );
   }
 
   const bundle: Omit<
     CommentsContextBundle<TThreadMetadata, TUserInfo>,
     "CommentsProvider"
   > = {
-    createThread,
-    editThread,
-    createComment,
-    editComment,
-    deleteComment,
+    useCreateThread,
+    useEditThread,
+    useCreateComment,
+    useEditComment,
+    useDeleteComment,
     useThreads,
     useUser,
     useErrorListener,
