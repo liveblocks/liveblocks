@@ -1781,6 +1781,14 @@ describe("room", () => {
 
         const ws1 = wss.last;
         ws1.accept();
+        ws1.send(
+          serverMessage({
+            type: ServerMsgCode.ROOM_STATE,
+            actor: 1,
+            scopes: ["room:write"],
+            users: {},
+          })
+        );
         await waitUntilStatus(room, "connected");
         expect(room.getConnectionState()).toBe("open"); // This API will be deprecated in the future
         expect(room.getStatus()).toEqual("connected");
@@ -1797,6 +1805,14 @@ describe("room", () => {
 
         const ws2 = wss.last;
         ws2.accept();
+        ws2.send(
+          serverMessage({
+            type: ServerMsgCode.ROOM_STATE,
+            actor: 1,
+            scopes: ["room:write"],
+            users: {},
+          })
+        );
 
         // This "last" one is a new/different socket instance!
         expect(ws1 === ws2).toBe(false);
