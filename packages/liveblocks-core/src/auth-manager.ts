@@ -153,8 +153,7 @@ export function createAuthManager(
     try {
       const token = await currentPromise;
       // Translate "server timestamps" to "local timestamps" in case clocks aren't in sync
-      const BUFFER = 0; // Expire tokens 30 seconds sooner than they have to
-      // XXX         ^ Update to 30, after I'm done testing with super short token lifetimes
+      const BUFFER = 30; // Expire tokens 30 seconds sooner than they have to
       const expiresAt =
         Math.floor(Date.now() / 1000) +
         (token.parsed.exp - token.parsed.iat) -
