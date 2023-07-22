@@ -28,7 +28,7 @@ import { isJsonArray, isJsonObject } from "./lib/Json";
 import { asPos } from "./lib/position";
 import type { Resolve } from "./lib/Resolve";
 import { compact, deepClone, tryParseJson } from "./lib/utils";
-import { canWriteStorage, Permission, TokenKind } from "./protocol/AuthToken";
+import { canWriteStorage, TokenKind } from "./protocol/AuthToken";
 import type { BaseUserMeta } from "./protocol/BaseUserMeta";
 import type { ClientMsg } from "./protocol/ClientMsg";
 import { ClientMsgCode } from "./protocol/ClientMsg";
@@ -1086,15 +1086,13 @@ export function createRoom<
     },
 
     assertStorageIsWritable: () => {
-      // It's maybe weird to assume write permissions by default here. However,
-      // this is how the previous check for isReadOnly used to work here.
-      // XXX Try defaulting this to ["room:read"] maybe? (But make sure it won't break anything.)
-      const DEFAULT_SCOPES = [Permission.Write];
+      const scopes = context.dynamicSessionInfo.current?.scopes;
+      if (scopes === undefined) {
+        // If we aren't connected yet, assume we can write
+        return;
+      }
 
-      const scopes =
-        context.dynamicSessionInfo.current?.scopes ?? DEFAULT_SCOPES;
       const canWrite = canWriteStorage(scopes);
-
       if (!canWrite) {
         throw new Error(
           "Cannot write to storage with a read only user, please ensure the user has write permissions"
