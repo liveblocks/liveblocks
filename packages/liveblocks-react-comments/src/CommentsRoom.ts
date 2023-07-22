@@ -142,25 +142,17 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
     return state.threads;
   }
 
-  async function fetchThreads() {
-    return api.getThreads({ roomId });
-  }
-
   async function revalidateThreads() {
     pollingHub.threads.pause();
 
     if (numberOfMutations === 0) {
-      setThreads(await fetchThreads());
+      setThreads(await api.getThreads({ roomId }));
     }
 
     pollingHub.threads.resume();
   }
 
-  subscribeThreads(() => {});
-
-  async function subscribeThreads(
-    callback: (threads: RoomThreads<TThreadMetadata>) => void
-  ) {
+  function startSubcribingToThreads() {
     if (!unsubscribeRealtimeEvents) {
       unsubscribeRealtimeEvents = realtimeClient.subscribeToEvents(
         roomId,
@@ -184,26 +176,11 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
       );
     }
 
-    const unsubscribeEvents = store.subscribe(callback);
-
     // Will only start if not already started
     pollingHub.threads.start(getPollingInterval());
 
+    // TODO: improve thread revalidation
     revalidateThreads();
-
-    return () => {
-      unsubscribeEvents();
-
-      // If there aren't any subscribers left, we stop
-      // the polling and unsubscribe from realtime client
-      if (!store.subscribersCount()) {
-        pollingHub.threads.stop();
-        unsubscribeRealtimeEvents?.();
-        unsubscribeRealtimeEvents = undefined;
-        unsubscribeRealtimeConnection?.();
-        unsubscribeRealtimeConnection = undefined;
-      }
-    };
   }
 
   function disconnect() {
@@ -438,11 +415,43 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
       .finally(endMutation);
   }
 
+  function getThreadsSnapshot() {
+    const result = store.get();
+
+    if (result.isLoading) {
+      startSubcribingToThreads();
+    }
+
+    return result;
+  }
+
+  function subscribe(
+    cb: (threads: RoomThreads<TThreadMetadata>) => void
+  ): () => void {
+    const unsubscribe = store.subscribe(cb);
+
+    return () => {
+      unsubscribe();
+
+      // If there aren't any subscribers left, we stop
+      // the polling and unsubscribe from realtime client
+      if (!store.subscribersCount()) {
+        pollingHub.threads.stop();
+        unsubscribeRealtimeEvents?.();
+        unsubscribeRealtimeEvents = undefined;
+        unsubscribeRealtimeConnection?.();
+        unsubscribeRealtimeConnection = undefined;
+      }
+    };
+  }
+
   function useThreads() {
     return useSyncExternalStore<RoomThreads<TThreadMetadata>>(
-      store.subscribe,
-      store.get,
-      store.get
+      // In suspense mode, subscribe is not called if a promise is thrown ...
+      subscribe,
+      // ... so getThreadsSnapshot is responsible to trigger the initial loading
+      getThreadsSnapshot,
+      getThreadsSnapshot
     );
   }
 
@@ -450,9 +459,7 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
     const result = useThreads();
 
     if (result.isLoading) {
-      throw new Promise<void>((res) => {
-        store.subscribeOnce(() => res());
-      });
+      throw new Promise(store.subscribeOnce);
     }
 
     if (result.error) {
