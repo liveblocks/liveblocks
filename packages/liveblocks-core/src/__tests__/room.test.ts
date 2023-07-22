@@ -287,25 +287,22 @@ describe("room", () => {
     expect(delegates.createSocket).toHaveBeenCalledTimes(2);
   });
 
-  test("should get a new auth token if unauthorized (as refusal)", async () => {
+  test("should stop trying and disconnect if unauthorized (as refusal)", async () => {
     const { room, delegates } = createTestableRoom(
       {},
       undefined,
-      SOCKET_SEQUENCE(
-        SOCKET_REFUSES(WebsocketCloseCodes.NOT_ALLOWED),
-        SOCKET_AUTOCONNECT_AND_ROOM_STATE()
-      )
+      SOCKET_REFUSES(WebsocketCloseCodes.NOT_ALLOWED)
     );
     room.connect();
 
     await waitUntilStatus(room, "connecting");
-    await waitUntilStatus(room, "connected", 4000);
+    await waitUntilStatus(room, "disconnected");
 
-    expect(delegates.authenticate).toHaveBeenCalledTimes(2); // It re-authed!
-    expect(delegates.createSocket).toHaveBeenCalledTimes(2);
+    expect(delegates.authenticate).toHaveBeenCalledTimes(1); // Only once!
+    expect(delegates.createSocket).toHaveBeenCalledTimes(1);
   });
 
-  test("should get a new auth token if unauthorized (while connected)", async () => {
+  test("should stop trying and disconnect if unauthorized (while connected)", async () => {
     const { room, wss, delegates } = createTestableRoom(
       {},
       undefined,
@@ -323,11 +320,10 @@ describe("room", () => {
       })
     );
 
-    await waitUntilStatus(room, "reconnecting");
-    await waitUntilStatus(room, "connected");
+    await waitUntilStatus(room, "disconnected");
 
-    expect(delegates.authenticate).toHaveBeenCalledTimes(2); // It re-authed!
-    expect(delegates.createSocket).toHaveBeenCalledTimes(2);
+    expect(delegates.authenticate).toHaveBeenCalledTimes(1); // Only once!
+    expect(delegates.createSocket).toHaveBeenCalledTimes(1);
   });
 
   test("should disconnect if told by server to not try reconnecting again (as refusal)", async () => {
