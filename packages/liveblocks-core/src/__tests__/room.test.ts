@@ -191,7 +191,7 @@ describe("room", () => {
       undefined,
       SOCKET_SEQUENCE(
         SOCKET_THROWS("😈"),
-        SOCKET_AUTOCONNECT_BUT_NO_ROOM_STATE // Repeats infinitely
+        SOCKET_AUTOCONNECT_AND_ROOM_STATE() // Repeats infinitely
       )
     );
     room.connect();
@@ -208,9 +208,9 @@ describe("room", () => {
       {},
       undefined,
       SOCKET_SEQUENCE(
-        SOCKET_AUTOCONNECT_BUT_NO_ROOM_STATE,
+        SOCKET_AUTOCONNECT_AND_ROOM_STATE(),
         SOCKET_THROWS("😈"),
-        SOCKET_AUTOCONNECT_BUT_NO_ROOM_STATE // Repeats infinitely
+        SOCKET_AUTOCONNECT_AND_ROOM_STATE() // Repeats infinitely
       )
     );
     room.connect();
@@ -249,7 +249,7 @@ describe("room", () => {
           WebsocketCloseCodes.MAX_NUMBER_OF_CONCURRENT_CONNECTIONS,
           "Room full"
         ),
-        SOCKET_AUTOCONNECT_BUT_NO_ROOM_STATE // Repeated to infinity
+        SOCKET_AUTOCONNECT_AND_ROOM_STATE() // Repeated to infinity
       )
     );
     room.connect();
@@ -266,7 +266,7 @@ describe("room", () => {
     const { room, wss, delegates } = createTestableRoom(
       {},
       undefined,
-      SOCKET_AUTOCONNECT_BUT_NO_ROOM_STATE
+      SOCKET_AUTOCONNECT_AND_ROOM_STATE()
     );
     room.connect();
 
@@ -293,7 +293,7 @@ describe("room", () => {
       undefined,
       SOCKET_SEQUENCE(
         SOCKET_REFUSES(WebsocketCloseCodes.NOT_ALLOWED),
-        SOCKET_AUTOCONNECT_BUT_NO_ROOM_STATE
+        SOCKET_AUTOCONNECT_AND_ROOM_STATE()
       )
     );
     room.connect();
@@ -309,7 +309,7 @@ describe("room", () => {
     const { room, wss, delegates } = createTestableRoom(
       {},
       undefined,
-      SOCKET_AUTOCONNECT_BUT_NO_ROOM_STATE
+      SOCKET_AUTOCONNECT_AND_ROOM_STATE()
     );
     room.connect();
 
@@ -336,7 +336,7 @@ describe("room", () => {
       undefined,
       SOCKET_SEQUENCE(
         SOCKET_REFUSES(WebsocketCloseCodes.CLOSE_WITHOUT_RETRY),
-        SOCKET_AUTOCONNECT_BUT_NO_ROOM_STATE
+        SOCKET_AUTOCONNECT_AND_ROOM_STATE()
       )
     );
     room.connect();
@@ -353,7 +353,7 @@ describe("room", () => {
     const { room, wss, delegates } = createTestableRoom(
       {},
       undefined,
-      SOCKET_AUTOCONNECT_BUT_NO_ROOM_STATE
+      SOCKET_AUTOCONNECT_AND_ROOM_STATE()
     );
     room.connect();
 
@@ -1309,7 +1309,7 @@ describe("room", () => {
       const { room, wss } = createTestableRoom<P, never, never, never>(
         {},
         undefined,
-        SOCKET_AUTOCONNECT_BUT_NO_ROOM_STATE
+        SOCKET_AUTOCONNECT_AND_ROOM_STATE()
       );
       room.connect();
 
