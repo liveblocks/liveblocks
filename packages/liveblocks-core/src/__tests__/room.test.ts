@@ -240,6 +240,24 @@ describe("room", () => {
     expect(delegates.createSocket).toHaveBeenCalledTimes(3);
   });
 
+  test("should reauth when getting an unknown server response (as refusal)", async () => {
+    const { room, delegates } = createTestableRoom(
+      {},
+      undefined,
+      SOCKET_SEQUENCE(
+        SOCKET_REFUSES(4242 /* Unknown code */, "An unknown error reason"),
+        SOCKET_AUTOCONNECT_AND_ROOM_STATE() // Repeated to infinity
+      )
+    );
+    room.connect();
+
+    await waitUntilStatus(room, "connecting");
+    await waitUntilStatus(room, "connected", 4000);
+
+    expect(delegates.authenticate).toHaveBeenCalledTimes(2); // Reauth!
+    expect(delegates.createSocket).toHaveBeenCalledTimes(2);
+  });
+
   test("should reconnect without getting a new auth token when told by server that room is full (as refusal)", async () => {
     const { room, delegates } = createTestableRoom(
       {},

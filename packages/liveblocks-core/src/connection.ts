@@ -14,6 +14,7 @@ import type {
   IWebSocketInstance,
   IWebSocketMessageEvent,
 } from "./types/IWebSocket";
+import { WebsocketCloseCodes } from "./types/IWebSocket";
 
 /**
  * Old connection statuses, here for backward-compatibility reasons only.
@@ -303,6 +304,21 @@ function isCloseEvent(
 ): error is IWebSocketCloseEvent {
   return !(error instanceof Error) && error.type === "close";
 }
+
+/**
+ * The set of server side error codes for which reauthorizing won't have an
+ * effect. When these codes happen, we'll back off but don't need to get a new
+ * auth token.
+ */
+const NO_REAUTH_CLOSE_CODES = [
+  // XXX Are we still using all these?
+  WebsocketCloseCodes.TRY_AGAIN_LATER,
+  WebsocketCloseCodes.INVALID_MESSAGE_FORMAT,
+  WebsocketCloseCodes.MAX_NUMBER_OF_MESSAGES_PER_SECONDS,
+  WebsocketCloseCodes.MAX_NUMBER_OF_CONCURRENT_CONNECTIONS,
+  WebsocketCloseCodes.MAX_NUMBER_OF_MESSAGES_PER_DAY_PER_APP,
+  WebsocketCloseCodes.MAX_NUMBER_OF_CONCURRENT_CONNECTIONS_PER_ROOM,
+];
 
 export type Delegates<T extends BaseAuthResult> = {
   authenticate: () => Promise<T>;
@@ -693,37 +709,42 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
         }
 
         // If the server actively refuses the connection attempt, stop trying.
-        if (
-          isCloseEvent(err) &&
-          (err.code === 4001 /* Not Allowed */ ||
-            err.code === 4999) /* Close Without Retry */
-        ) {
-          return {
-            target: "@idle.failed",
-            effect: log(LogLevel.ERROR, err.reason),
-          };
+        if (isCloseEvent(err)) {
+          // If the token was expired we can reauthorize immediately (no back-off)
+          if (err.code === 4009 /* Token Expired */) {
+            return "@auth.busy";
+          }
+
+          // If the token was not allowed we can stop trying because getting
+          // another token for the same user won't help
+          if (
+            err.code === 4001 /* Not Allowed */ ||
+            err.code === 4999 /* Close Without Retry */
+          ) {
+            return {
+              target: "@idle.failed",
+              effect: log(LogLevel.ERROR, err.reason),
+            };
+          }
+
+          // The set of server side error codes for which reauthorizing won't
+          // have an effect. When these codes happen, we'll back off
+          // (aggressively) but don't need to get a new auth token.
+          if (NO_REAUTH_CLOSE_CODES.includes(err.code)) {
+            return {
+              target: "@connecting.backoff",
+              effect: [
+                increaseBackoffDelayAggressively,
+                logPrematureErrorOrCloseEvent(err),
+              ],
+            };
+          }
         }
 
-        // If the token was expired we can reauthorize immediately
-        if (isCloseEvent(err) && err.code === 4009 /* Token Expired */) {
-          return {
-            target: "@auth.busy",
-            effect: [
-              // XXX Remove this log?
-              log(LogLevel.INFO, "Token expired, getting a new one"),
-            ],
-          };
-        }
-
-        // In all other (unknown) cases, always re-authenticate, but with a back off!
+        // In all other (unknown) cases, always re-authenticate (but after a back-off)
         return {
           target: "@auth.backoff",
-          effect: [
-            isCloseEvent(err) && err.code >= 4000 && err.code < 5000
-              ? increaseBackoffDelayAggressively
-              : increaseBackoffDelay,
-            logPrematureErrorOrCloseEvent(err),
-          ],
+          effect: [increaseBackoffDelay, logPrematureErrorOrCloseEvent(err)],
         };
       }
     );
