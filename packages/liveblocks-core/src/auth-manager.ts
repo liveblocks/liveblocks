@@ -71,7 +71,7 @@ export function createAuthManager(
       // If this token is expired, remove it from cache, as if it never existed
       // in the first place
       if (expiresAt <= now) {
-        console.warn("🧀 TOKEN EXPIRED, removing it from cache");
+        console.warn("🧀 TOKEN EXPIRED, removing it from cache"); // XXX Remove this debug line
         tokens.splice(i, 1);
         expiryTimes.splice(i, 1);
         continue;
@@ -141,7 +141,7 @@ export function createAuthManager(
 
     const cachedToken = getCachedToken(requestedScope, roomId);
     if (cachedToken !== undefined) {
-      console.warn("🎯 CACHE HIT!");
+      console.warn("🎯 CACHE HIT!"); // XXX Remove this debug line
       return { type: "secret", token: cachedToken };
     }
 
@@ -161,7 +161,7 @@ export function createAuthManager(
 
       tokens.push(token);
       expiryTimes.push(expiresAt);
-      console.warn("📥 Token stored in cache!");
+      console.warn("📥 Token stored in cache!"); // XXX Remove this debug line
 
       return { type: "secret", token };
     } finally {
