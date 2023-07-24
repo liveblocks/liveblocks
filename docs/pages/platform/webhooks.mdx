@@ -413,7 +413,39 @@ const roomDeletedEvent = {
 };
 ```
 
-## Use cases
+#### YDocUpdatedEvent
+
+Yjs document is updated when a user makes a change to a Yjs doc connected to a room.
+This event is throttled at five minutes and, as such, may not be triggered for every write.
+
+For example, if a user updates a yjs document at 1:00 pm, the `YDocUpdatedEvent`
+event will be triggered shortly after. If the user writes to storage again at
+1:01 pm, the `YDocUpdatedEvent` event will be triggered 5 minutes after the
+first event was sent, around 1:05 pm.
+
+```ts
+// Schema
+type YDocUpdatedEvent = {
+  type: "ydocUpdated";
+  data: {
+    appId: string;
+    roomId: string;
+    deletedAt: string;
+  };
+};
+
+// Example
+const ydocUpdatedEvent = {
+  type: "ydocUpdated",
+  data: {
+    "appId": "my-app-id",
+    "roomId": "my-room-id",
+    "updatedAt": "2013-06-26T19:10:19Z"
+  },
+};
+```
+
+## Use Cases
 
 With webhooks, you can subscribe to the events you are interested in, and be
 alerted of the change when it happens. Powerful ways to leverage webhooks with
