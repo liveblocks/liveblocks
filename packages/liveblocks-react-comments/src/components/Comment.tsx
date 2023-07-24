@@ -3,7 +3,6 @@ import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import type { ComponentPropsWithoutRef } from "react";
 import React, { forwardRef, useCallback, useState } from "react";
 
-// import { useCommentsContext } from "../factory";
 import { CheckIcon } from "../icons/check";
 import { CrossIcon } from "../icons/cross";
 import { EllipsisIcon } from "../icons/ellipsis";
@@ -34,7 +33,9 @@ function CommentMention({ userId }: CommentRenderMentionProps) {
 
 export const Comment = forwardRef<HTMLDivElement, CommentProps>(
   ({ comment, indentBody = true, className, ...props }, forwardedRef) => {
-    // const { roomId } = useCommentsContext();
+    // const { useEditComment, useDeleteComment } = useCommentsContext();
+    // const editComment = useEditComment();
+    // const deleteComment = useDeleteComment();
     const [isEditing, setEditing] = useState(false);
 
     const handleEdit = useCallback(() => {
@@ -46,7 +47,8 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
     }, []);
 
     const handleEditSubmit = useCallback(({ body }: ComposerSubmitComment) => {
-      // editComment(roomId, {
+      // TODO: Add comment.threadId to the model
+      // editComment({
       //   commentId: comment.id,
       //   threadId: "TODO",
       //   body,
@@ -56,7 +58,8 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
     }, []);
 
     const handleDelete = useCallback(() => {
-      // deleteComment(roomId, {
+      // TODO: Add comment.threadId to the model
+      // deleteComment({
       //   commentId: comment.id,
       //   threadId: "TODO",
       // });

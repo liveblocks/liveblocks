@@ -2,6 +2,7 @@ import type { CommentBody } from "@liveblocks/core";
 import type { ComponentProps, FormEvent, ReactNode } from "react";
 import React, { forwardRef, useCallback } from "react";
 
+import { useCommentsContext } from "../factory";
 import { MentionIcon } from "../icons/mention";
 import { SendIcon } from "../icons/send";
 import type {
@@ -21,21 +22,18 @@ interface ComposerMenuProps extends ComponentProps<"div"> {
 type ComposerCreateThreadProps = {
   threadId?: never;
   commentId?: never;
-  metadata?: any; // TODO: How do we type this?
   body?: never;
 };
 
 type ComposerCreateCommentProps = {
   threadId: string;
   commentId?: never;
-  metadata?: never;
   body?: never;
 };
 
 type ComposerEditCommentProps = {
   threadId: string;
   commentId: string;
-  metadata?: never;
   body: CommentBody;
 };
 
@@ -56,7 +54,7 @@ export function ComposerMenu({
     <div className={classNames("lb-composer-menu", className)} {...props}>
       <div className="lb-composer-editor-actions">
         <button
-          className="lb-composer-button lb-composer-editor-action"
+          className="lb-button lb-composer-editor-action"
           aria-label="Insert mention"
         >
           <MentionIcon />
@@ -73,8 +71,6 @@ export const Composer = forwardRef<HTMLFormElement, ComposerProps>(
     {
       threadId,
       commentId,
-      // metadata,
-      // body,
       onCommentSubmit,
       initialValue,
       disabled,
@@ -83,6 +79,12 @@ export const Composer = forwardRef<HTMLFormElement, ComposerProps>(
     },
     forwardedRef
   ) => {
+    const { useCreateThread, useCreateComment, useEditComment } =
+      useCommentsContext();
+    const createThread = useCreateThread();
+    const createComment = useCreateComment();
+    const editComment = useEditComment();
+
     const handleCommentSubmit = useCallback(
       (comment: ComposerSubmitComment, event: FormEvent<HTMLFormElement>) => {
         onCommentSubmit?.(comment, event);
@@ -91,30 +93,32 @@ export const Composer = forwardRef<HTMLFormElement, ComposerProps>(
           return;
         }
 
-        if (commentId) {
-          // TODO: How do we get the room ID and thread ID here?
-          // editComment("TODO", {
-          //   commentId: comment.id,
-          //   threadId: "TODO",
-          //   body,
-          // });
+        if (commentId && threadId) {
+          editComment({
+            commentId,
+            threadId,
+            body: comment.body,
+          });
         } else if (threadId) {
-          // TODO: How do we get the room ID here?
-          // createThread("TODO", {
-          //   commentId: comment.id,
-          //   body,
-          //   metadata
-          // });
+          createComment({
+            threadId,
+            body: comment.body,
+          });
         } else {
-          // TODO: How do we get the room ID and thread ID here?
-          // createComment("TODO", {
-          //   commentId: comment.id,
-          //   threadId: "TODO",
-          //   body,
-          // });
+          createThread({
+            body: comment.body,
+            metadata: {},
+          });
         }
       },
-      [commentId, onCommentSubmit, threadId]
+      [
+        commentId,
+        createComment,
+        createThread,
+        editComment,
+        onCommentSubmit,
+        threadId,
+      ]
     );
 
     return (
@@ -133,7 +137,7 @@ export const Composer = forwardRef<HTMLFormElement, ComposerProps>(
         <ComposerMenu
           actions={
             <ComposerPrimitive.Submit
-              className="lb-composer-button lb-composer-action"
+              className="lb-button lb-composer-action"
               aria-label="Send"
             >
               <SendIcon />
