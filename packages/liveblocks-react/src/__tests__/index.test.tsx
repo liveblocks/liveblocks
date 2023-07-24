@@ -220,7 +220,7 @@ async function websocketSimulator() {
       actor,
       id: undefined,
       info: undefined,
-      scopes: [],
+      scopes: ["room:write"],
     });
 
     simulateIncomingMessage({
@@ -342,7 +342,12 @@ describe("useOthers", () => {
     act(() => sim.simulateUserJoins(1, { x: 2 }));
 
     expect(result.current).toEqual([
-      { connectionId: 1, presence: { x: 2 }, isReadOnly: false },
+      {
+        connectionId: 1,
+        presence: { x: 2 },
+        canWrite: true,
+        isReadOnly: false,
+      },
     ]);
   });
 
@@ -353,7 +358,12 @@ describe("useOthers", () => {
     act(() => sim.simulateUserJoins(1, { x: 0 }));
 
     expect(result.current).toEqual([
-      { connectionId: 1, presence: { x: 0 }, isReadOnly: false },
+      {
+        connectionId: 1,
+        presence: { x: 0 },
+        canWrite: true,
+        isReadOnly: false,
+      },
     ]);
 
     act(() =>
@@ -365,7 +375,12 @@ describe("useOthers", () => {
     );
 
     expect(result.current).toEqual([
-      { connectionId: 1, presence: { x: 0, y: 0 }, isReadOnly: false },
+      {
+        connectionId: 1,
+        presence: { x: 0, y: 0 },
+        canWrite: true,
+        isReadOnly: false,
+      },
     ]);
   });
 
@@ -376,20 +391,35 @@ describe("useOthers", () => {
     act(() => sim.simulateUserJoins(1, { x: 2 }));
 
     expect(result.current).toEqual([
-      { connectionId: 1, presence: { x: 2 }, isReadOnly: false },
+      {
+        connectionId: 1,
+        presence: { x: 2 },
+        canWrite: true,
+        isReadOnly: false,
+      },
     ]);
 
     act(() => sim.simulateAbnormalClose());
 
     expect(result.current).toEqual([
-      { connectionId: 1, presence: { x: 2 }, isReadOnly: false },
+      {
+        connectionId: 1,
+        presence: { x: 2 },
+        canWrite: true,
+        isReadOnly: false,
+      },
     ]);
 
     // After 100ms (half the lostConnectionTimeout value), the others aren't
     // cleared yet
     await wait(100);
     expect(result.current).toEqual([
-      { connectionId: 1, presence: { x: 2 }, isReadOnly: false },
+      {
+        connectionId: 1,
+        presence: { x: 2 },
+        canWrite: true,
+        isReadOnly: false,
+      },
     ]);
 
     // After another 100ms we crossed the lostConnectionTimeout, so the others
