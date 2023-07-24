@@ -203,6 +203,41 @@
     ]
   },
   {
+    "title": "Errors",
+    "hidden": true,
+    "routes": [
+      {
+        "title": "atob polyfill is missing",
+        "path": "/errors/liveblocks-client/atob-polyfill"
+      },
+      {
+        "title": "RoomProvider id property is required",
+        "path": "/errors/liveblocks-react/RoomProvider-id-property-is-required"
+      },
+      {
+        "title": "Cross-linked Liveblocks versions are found in your project",
+        "path": "/errors/cross-linked"
+      },
+      {
+        "title": "Multiple copies of Liveblocks are being loaded in your project",
+        "path": "/errors/dupes"
+      }
+    ]
+  },
+  {
+    "title": "Tools",
+    "routes": [
+      {
+        "title": "DevTools",
+        "path": "/tools/devtools"
+      },
+      {
+        "title": "Next.js Starter Kit",
+        "path": "/tools/nextjs-starter-kit"
+      }
+    ]
+  },
+  {
     "title": "API Reference",
     "routes": [
       {
@@ -242,41 +277,27 @@
     ]
   },
   {
-    "title": "Errors",
-    "hidden": true,
-    "routes": [
-      {
-        "title": "atob polyfill is missing",
-        "path": "/errors/liveblocks-client/atob-polyfill"
-      },
-      {
-        "title": "RoomProvider id property is required",
-        "path": "/errors/liveblocks-react/RoomProvider-id-property-is-required"
-      },
-      {
-        "title": "Cross-linked Liveblocks versions are found in your project",
-        "path": "/errors/cross-linked"
-      },
-      {
-        "title": "Multiple copies of Liveblocks are being loaded in your project",
-        "path": "/errors/dupes"
-      }
-    ]
-  },
-  {
     "title": "Platform",
     "routes": [
       {
-        "title": "Next.js Starter Kit",
-        "path": "/platform/nextjs-starter-kit"
+        "title": "WebSocket infrastructure",
+        "path": "/platform/websocket-infrastructure"
       },
       {
-        "title": "DevTools",
-        "path": "/platform/devtools"
+        "title": "Projects",
+        "path": "/platform/projects"
+      },
+      {
+        "title": "Analytics",
+        "path": "/platform/analytics"
       },
       {
         "title": "Webhooks",
         "path": "/platform/webhooks"
+      },
+      {
+        "title": "REST API",
+        "path": "/platform/rest-api"
       },
       {
         "title": "Schema validation",
@@ -289,8 +310,22 @@
         ]
       },
       {
-        "title": "Pricing",
-        "path": "/platform/pricing"
+        "title": "Account management",
+        "path": "/platform/account-management",
+        "routes": [
+          {
+            "title": "Create an account",
+            "path": "/platform/account-management/create-an-account"
+          },
+          {
+            "title": "Manage team members",
+            "path": "/platform/account-management/manage-team-members"
+          }
+        ]
+      },
+      {
+        "title": "Plans",
+        "path": "/platform/plans"
       },
       {
         "title": "Limits",
