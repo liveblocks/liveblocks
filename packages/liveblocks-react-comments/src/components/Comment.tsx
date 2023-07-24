@@ -20,6 +20,7 @@ import { User } from "./User";
 
 export interface CommentProps extends ComponentPropsWithoutRef<"div"> {
   comment: CommentData;
+  indentBody?: boolean;
 }
 
 function CommentMention({ userId }: CommentRenderMentionProps) {
@@ -33,7 +34,7 @@ function CommentMention({ userId }: CommentRenderMentionProps) {
 
 // TODO: Add option to align the body with the avatar or the name (adds/removes a class name)
 export const Comment = forwardRef<HTMLDivElement, CommentProps>(
-  ({ comment, className, ...props }, forwardedRef) => {
+  ({ comment, indentBody = true, className, ...props }, forwardedRef) => {
     // const { roomId } = useCommentsContext();
     const [isEditing, setEditing] = useState(false);
 
@@ -69,54 +70,64 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
 
     return (
       <div
-        className={classNames(className, "lb-comment")}
+        className={classNames(
+          "lb-comment",
+          indentBody && "lb-comment:indent-body",
+          className
+        )}
         {...props}
         ref={forwardedRef}
       >
-        <Avatar className="lb-comment-avatar" userId={comment.userId} />
-        <User className="lb-comment-user" userId={comment.userId} />
-        <span className="lb-comment-date">
-          <Timestamp
-            date={comment.createdAt}
-            className="lb-comment-date-timestamp"
-          />
-          {comment.editedAt && (
-            <>
-              {" "}
-              <span className="lb-comment-date-edited">(edited)</span>
-            </>
-          )}
-        </span>
-        {!isEditing && (
-          <div className="lb-comment-actions">
-            {/* TODO: Only show if permissions (for now = own comments) allow edit/delete */}
-            <DropdownMenu.Root>
-              <DropdownMenu.Trigger
-                className="lb-comment-button lb-comment-action"
-                aria-label="Comment options"
-              >
-                <EllipsisIcon />
-              </DropdownMenu.Trigger>
-              <DropdownMenu.Portal>
-                {/* TODO: Share viewport padding/spacing values with the mentions suggestions inset */}
-                <DropdownMenu.Content className="lb-dropdown">
-                  <DropdownMenu.Item
-                    className="lb-dropdown-item"
-                    onSelect={handleEdit}
-                  >
-                    Edit
-                  </DropdownMenu.Item>
-                  <DropdownMenu.Item
-                    className="lb-dropdown-item"
-                    onSelect={handleDelete}
-                  >
-                    Delete
-                  </DropdownMenu.Item>
-                </DropdownMenu.Content>
-              </DropdownMenu.Portal>
-            </DropdownMenu.Root>
+        <div className="lb-comment-header">
+          <div className="lb-comment-info">
+            <Avatar className="lb-comment-avatar" userId={comment.userId} />
+            <span className="lb-comment-info-labels">
+              <User className="lb-comment-user" userId={comment.userId} />
+              <span className="lb-comment-date">
+                <Timestamp
+                  date={comment.createdAt}
+                  className="lb-comment-date-timestamp"
+                />
+                {comment.editedAt && (
+                  <>
+                    {" "}
+                    <span className="lb-comment-date-edited">(edited)</span>
+                  </>
+                )}
+              </span>
+            </span>
           </div>
-        )}
+          {!isEditing && (
+            <div className="lb-comment-actions">
+              {/* TODO: Only show if permissions (for now = own comments) allow edit/delete */}
+              <DropdownMenu.Root>
+                <DropdownMenu.Trigger
+                  className="lb-comment-button lb-comment-action"
+                  aria-label="Comment options"
+                >
+                  <EllipsisIcon />
+                </DropdownMenu.Trigger>
+                <DropdownMenu.Portal>
+                  {/* TODO: Share viewport padding/spacing values with the mentions suggestions inset */}
+                  <DropdownMenu.Content className="lb-dropdown">
+                    <DropdownMenu.Item
+                      className="lb-dropdown-item"
+                      onSelect={handleEdit}
+                    >
+                      Edit
+                    </DropdownMenu.Item>
+                    <DropdownMenu.Item
+                      className="lb-dropdown-item"
+                      onSelect={handleDelete}
+                    >
+                      Delete
+                    </DropdownMenu.Item>
+                  </DropdownMenu.Content>
+                </DropdownMenu.Portal>
+              </DropdownMenu.Root>
+            </div>
+          )}
+        </div>
         {isEditing ? (
           <ComposerPrimitive.Form
             className="lb-composer-form lb-comment-composer"

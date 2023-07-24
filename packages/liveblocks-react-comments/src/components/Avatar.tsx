@@ -7,10 +7,16 @@ import { getInitials } from "../utils/get-initials";
 
 export interface AvatarProps extends ComponentProps<"div"> {
   userId: string;
+  round?: boolean;
 }
 
 // TODO: Handle loading and error states
-export function Avatar({ userId, className, ...props }: AvatarProps) {
+export function Avatar({
+  userId,
+  round = true,
+  className,
+  ...props
+}: AvatarProps) {
   const { useUser } = useCommentsContext();
   const { user } = useUser(userId);
   const resolvedUserName = useMemo(() => user?.name, [user]);
@@ -21,7 +27,10 @@ export function Avatar({ userId, className, ...props }: AvatarProps) {
   );
 
   return (
-    <div className={classNames(className, "lb-avatar")} {...props}>
+    <div
+      className={classNames("lb-avatar", round && "lb-avatar:round", className)}
+      {...props}
+    >
       {resolvedUserAvatar && (
         <img
           className="lb-avatar-image"
@@ -30,7 +39,7 @@ export function Avatar({ userId, className, ...props }: AvatarProps) {
         />
       )}
       {resolvedUserInitials && (
-        <span className="lb-avatar-placeholder">{resolvedUserInitials}</span>
+        <span className="lb-avatar-fallback">{resolvedUserInitials}</span>
       )}
     </div>
   );

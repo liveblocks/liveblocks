@@ -53,7 +53,7 @@ export function ComposerMenu({
   ...props
 }: ComposerMenuProps) {
   return (
-    <div className={classNames(className, "lb-composer-menu")} {...props}>
+    <div className={classNames("lb-composer-menu", className)} {...props}>
       <div className="lb-composer-editor-actions">
         <button
           className="lb-composer-button lb-composer-editor-action"
@@ -119,7 +119,7 @@ export const Composer = forwardRef<HTMLFormElement, ComposerProps>(
 
     return (
       <ComposerPrimitive.Form
-        className={classNames(className, "lb-composer lb-composer-form")}
+        className={classNames("lb-composer lb-composer-form", className)}
         {...props}
         ref={forwardedRef}
         onCommentSubmit={handleCommentSubmit}

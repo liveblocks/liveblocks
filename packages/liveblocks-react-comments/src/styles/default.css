@@ -7,21 +7,95 @@
   --lb-spacing: 1rem;
 }
 
+/**
+ * Avatar
+ */
+
 .lb-avatar {
+  container: avatar / inline-size;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  aspect-ratio: 1;
   border-radius: var(--lb-radius);
+  background: color-mix(in srgb, var(--lb-foreground), transparent 90%);
   overflow: hidden;
 }
 
-.lb-dropdown {
+.lb-avatar\:round {
+  border-radius: 50%;
 }
 
-.lb-dropdown-item {
+.lb-avatar-image {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
+
+.lb-avatar-fallback {
+  font-size: 35cqw;
+  white-space: nowrap;
+  color: color-mix(in srgb, var(--lb-foreground), transparent 60%);
+}
+
+/**
+ * Composer
+ */
+
+.lb-composer {
+  font-size: 1rem;
+}
+
+/**
+ * Comment
+ */
 
 .lb-comment {
+  --lb-comment-avatar-size: 1.75rem;
+
+  position: relative;
   background: var(--lb-background);
   color: var(--lb-foreground);
+  font-size: 1rem;
   font-weight: 400;
+}
+
+.lb-comment-header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: calc(0.75 * var(--lb-spacing));
+}
+
+.lb-comment-info {
+  display: flex;
+  align-items: center;
+  gap: calc(0.75 * var(--lb-spacing));
+}
+
+.lb-comment-avatar {
+  width: var(--lb-comment-avatar-size);
+}
+
+.lb-comment\:indent-body .lb-comment-avatar {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.lb-comment-info-labels {
+  display: flex;
+  align-items: baseline;
+  gap: calc(0.5 * var(--lb-spacing));
+}
+
+.lb-comment\:indent-body .lb-comment-info-labels {
+  margin-left: calc(var(--lb-comment-avatar-size) + 0.75 * var(--lb-spacing));
 }
 
 .lb-comment-user {
@@ -32,14 +106,21 @@
 }
 
 .lb-comment-date {
-  color: color-mix(in srgb, var(--lb-foreground), transparent 60%);
+  font-size: 0.85em;
+  color: color-mix(in srgb, var(--lb-foreground), transparent 40%);
 }
 
 .lb-comment-actions {
+  margin-left: auto;
 }
 
 .lb-comment-body {
   text-wrap: pretty;
+  color: color-mix(in srgb, var(--lb-foreground), transparent 20%);
+}
+
+.lb-comment\:indent-body .lb-comment-body {
+  padding-left: calc(var(--lb-comment-avatar-size) + 0.75 * var(--lb-spacing));
 }
 
 .lb-comment-mention {
