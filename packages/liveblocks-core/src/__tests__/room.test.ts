@@ -174,6 +174,9 @@ describe("room / auth", () => {
       expect(consoleErrorSpy).toHaveBeenCalledWith(
         'Authentication failed: We expect the authentication callback to return a token, but it does not. Hint: the return value should look like: { token: "..." }'
       );
+
+      // Keeps trying to reconnect
+      await waitUntilStatus(room, "connecting");
       room.destroy();
     }
   );
