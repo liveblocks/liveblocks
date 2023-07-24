@@ -382,7 +382,7 @@ describe("middleware", () => {
           users: {
             "1": {
               info: { name: "Testy McTester" },
-              scopes: [],
+              scopes: ["room:write"],
             },
           },
           actor: 2,
@@ -407,6 +407,7 @@ describe("middleware", () => {
             name: "Testy McTester",
           },
           presence: { x: 1 },
+          canWrite: true,
           isReadOnly: false,
         },
       ]);
