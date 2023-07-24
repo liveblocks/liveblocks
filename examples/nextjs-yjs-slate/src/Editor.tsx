@@ -10,6 +10,7 @@ import { Editable, Slate, withReact } from "slate-react";
 import { useEffect, useMemo, useState } from "react";
 import { createEditor, Editor, Transforms } from "slate";
 import { YXmlText } from "yjs/dist/src/types/YXmlText";
+import { Loading } from "@/pages";
 
 // <p className={styles.placeholder}>Start typing here…</p>
 
@@ -42,7 +43,7 @@ export default function EditorWrapper() {
   }, [provider]);
 
   if (!connected) {
-    return <div>Loading...</div>;
+    return <Loading />;
   }
 
   return <CollaborativeEditor sharedType={sharedType} />;
@@ -81,12 +82,8 @@ function CollaborativeEditor({ sharedType }: { sharedType: Y.XmlText }) {
   }, [editor]);
 
   return (
-    <div className={styles.container}>
-      <div className={styles.editorContainer}>
-        <Slate editor={editor} initialValue={initialValue}>
-          <Editable className={styles.editor} />
-        </Slate>
-      </div>
-    </div>
+    <Slate editor={editor} initialValue={initialValue}>
+      <Editable className={styles.editor} />
+    </Slate>
   );
 }

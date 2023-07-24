@@ -3,8 +3,9 @@ import { RoomProvider } from "../liveblocks.config";
 import { useRouter } from "next/router";
 import { ClientSideSuspense } from "@liveblocks/react";
 import Editor from "@/src/Editor";
+import styles from "@/src/Editor.module.css";
 
-function Loading() {
+export function Loading() {
   return (
     <div className="loading">
       <img src="https://liveblocks.io/loading.svg" alt="Loading" />
@@ -17,11 +18,15 @@ export default function Page() {
 
   return (
     <main>
-      <RoomProvider id={roomId} initialPresence={{}}>
-        <ClientSideSuspense fallback={<Loading />}>
-          {() => <Editor />}
-        </ClientSideSuspense>
-      </RoomProvider>
+      <div className={styles.container}>
+        <div className={styles.editorContainer}>
+          <RoomProvider id={roomId} initialPresence={{}}>
+            <ClientSideSuspense fallback={<Loading />}>
+              {() => <Editor />}
+            </ClientSideSuspense>
+          </RoomProvider>
+        </div>
+      </div>{" "}
     </main>
   );
 }
