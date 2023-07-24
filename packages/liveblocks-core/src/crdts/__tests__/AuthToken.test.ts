@@ -56,13 +56,13 @@ describe("parseRoomAuthToken", () => {
     });
   });
 
-  test("should throw if token is not a room token", () => {
+  test("should throw if token is not a valid token", () => {
     try {
       parseAuthToken(exampleInvalidJwtToken);
     } catch (error) {
       expect(error).toEqual(
         new Error(
-          "Authentication error: we expected a room token but did not get one. Hint: if you are using a callback, ensure the room is passed when creating the token. For more information: https://liveblocks.io/docs/api-reference/liveblocks-client#createClientCallback"
+          "Authentication error: expected a valid token but did not get one. Hint: if you are using a callback, ensure the room is passed when creating the token. For more information: https://liveblocks.io/docs/api-reference/liveblocks-client#createClientCallback"
         )
       );
     }
