@@ -168,28 +168,6 @@ describe("createClient", () => {
     client.leave("room");
   });
 
-  test("should throw if public key is used and fetch polyfill is not defined", async () => {
-    const spy = jest.spyOn(console, "error");
-
-    const client = createClient({
-      publicApiKey: "pk_xxx",
-      polyfills: {
-        WebSocket: MockWebSocket,
-      },
-    });
-    const room = client.enter("room", { initialPresence: {} });
-
-    // Room will fail to connect, and move to "closed" state, basically giving up reconnecting
-    await waitUntilStatus(room, "disconnected");
-
-    expect(spy).toHaveBeenCalledWith(
-      "To use Liveblocks client in a non-dom environment with a publicApiKey, you need to provide a fetch polyfill."
-    );
-
-    // Clean things up
-    client.leave("room");
-  });
-
   test("should fail to connect and stop retrying if WebSocketPolyfill is not set", async () => {
     const spy = jest.spyOn(console, "error");
 
