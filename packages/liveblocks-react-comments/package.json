@@ -40,8 +40,8 @@
     "dev": "tsup --watch",
     "build": "tsup",
     "start": "tsup --watch",
-    "format": "eslint --fix src/; prettier --write src/",
-    "lint": "eslint src/",
+    "format": "eslint --fix src/; stylelint --fix src/styles/; prettier --write src/",
+    "lint": "eslint src/; stylelint src/styles/",
     "test": "jest --silent --verbose --color=always",
     "test:watch": "jest --silent --verbose --color=always --watch"
   },
@@ -71,7 +71,10 @@
     "fast-check": "^3.11.0",
     "lightningcss": "^1.21.5",
     "msw": "^0.27.1",
-    "react-error-boundary": "^3.1.1"
+    "react-error-boundary": "^3.1.1",
+    "stylelint": "^15.10.2",
+    "stylelint-config-standard": "^34.0.0",
+    "stylelint-order": "^6.0.3"
   },
   "sideEffects": false,
   "bugs": {
@@ -85,6 +88,7 @@
   "homepage": "https://liveblocks.io",
   "keywords": [
     "react",
+    "comments",
     "liveblocks",
     "real-time",
     "toolkit",

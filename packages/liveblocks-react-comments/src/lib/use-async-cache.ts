@@ -26,7 +26,7 @@ export type UseAsyncCacheOptions<T> = {
 type UseAsyncCacheState<
   T,
   E,
-  O extends UseAsyncCacheOptions<T> = UseAsyncCacheOptions<T>
+  O extends UseAsyncCacheOptions<T> = UseAsyncCacheOptions<T>,
 > = O extends {
   suspense: true;
 }
@@ -36,7 +36,7 @@ type UseAsyncCacheState<
 export type UseAsyncCacheResponse<
   T,
   E,
-  O extends UseAsyncCacheOptions<T> = UseAsyncCacheOptions<T>
+  O extends UseAsyncCacheOptions<T> = UseAsyncCacheOptions<T>,
 > = UseAsyncCacheState<T, E, O> & {
   /**
    * Returns the current state of the key synchronously.

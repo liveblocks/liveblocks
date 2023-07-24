@@ -12,16 +12,16 @@
  */
 
 .lb-avatar {
-  container: avatar / inline-size;
   position: relative;
+  container: avatar / inline-size;
   display: flex;
-  align-items: center;
   justify-content: center;
-  font-size: 1rem;
+  align-items: center;
+  overflow: hidden;
   aspect-ratio: 1;
   border-radius: var(--lb-radius);
   background: color-mix(in srgb, var(--lb-foreground), transparent 90%);
-  overflow: hidden;
+  font-size: 1rem;
 }
 
 .lb-avatar\:round {
@@ -32,15 +32,15 @@
   position: absolute;
   top: 0;
   left: 0;
+  object-fit: cover;
   width: 100%;
   height: 100%;
-  object-fit: cover;
 }
 
 .lb-avatar-fallback {
+  color: color-mix(in srgb, var(--lb-foreground), transparent 60%);
   font-size: 35cqw;
   white-space: nowrap;
-  color: color-mix(in srgb, var(--lb-foreground), transparent 60%);
 }
 
 /**
@@ -61,21 +61,21 @@
   position: relative;
   background: var(--lb-background);
   color: var(--lb-foreground);
-  font-size: 1rem;
   font-weight: 400;
+  font-size: 1rem;
 }
 
 .lb-comment-header {
   position: relative;
   display: flex;
-  align-items: center;
   gap: calc(0.75 * var(--lb-spacing));
+  align-items: center;
 }
 
 .lb-comment-info {
   display: flex;
-  align-items: center;
   gap: calc(0.75 * var(--lb-spacing));
+  align-items: center;
 }
 
 .lb-comment-avatar {
@@ -90,8 +90,8 @@
 
 .lb-comment-info-labels {
   display: flex;
-  align-items: baseline;
   gap: calc(0.5 * var(--lb-spacing));
+  align-items: baseline;
 }
 
 .lb-comment\:indent-body .lb-comment-info-labels {
@@ -99,15 +99,15 @@
 }
 
 .lb-comment-user {
-  font-weight: 500;
-  white-space: nowrap;
   overflow: hidden;
+  font-weight: 500;
   text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .lb-comment-date {
-  font-size: 0.85em;
   color: color-mix(in srgb, var(--lb-foreground), transparent 40%);
+  font-size: 0.85em;
 }
 
 .lb-comment-actions {
@@ -115,8 +115,8 @@
 }
 
 .lb-comment-body {
-  text-wrap: pretty;
   color: color-mix(in srgb, var(--lb-foreground), transparent 20%);
+  text-wrap: pretty;
 }
 
 .lb-comment\:indent-body .lb-comment-body {
@@ -124,6 +124,6 @@
 }
 
 .lb-comment-mention {
-  font-weight: 500;
   color: var(--lb-accent);
+  font-weight: 500;
 }
