@@ -311,7 +311,6 @@ function isCloseEvent(
  * auth token.
  */
 const NO_REAUTH_CLOSE_CODES = [
-  // XXX Are we still using all these?
   WebsocketCloseCodes.TRY_AGAIN_LATER,
   WebsocketCloseCodes.INVALID_MESSAGE_FORMAT,
   WebsocketCloseCodes.MAX_NUMBER_OF_MESSAGES_PER_SECONDS,
