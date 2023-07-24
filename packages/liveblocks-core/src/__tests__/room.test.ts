@@ -58,7 +58,7 @@ const defaultRoomConfig: RoomConfig = {
   roomId: "room-id",
   throttleDelay: THROTTLE_DELAY,
   lostConnectionTimeout: 99999,
-  liveblocksServer: "wss://live.liveblocks.io/v6",
+  liveblocksServer: "wss://live.liveblocks.io/v7",
   delegates: {
     authenticate: () => {
       return Promise.resolve({ publicApiKey: "pk_123", type: "public" });
