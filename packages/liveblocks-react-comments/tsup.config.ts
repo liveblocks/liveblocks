@@ -29,6 +29,9 @@ function minifyAndCopyCssFiles() {
       targets: TARGETS,
       minify: true,
       sourceMap: true,
+      drafts: {
+        nesting: true,
+      },
     });
 
     fs.writeFileSync(`./${file.name}`, code);
