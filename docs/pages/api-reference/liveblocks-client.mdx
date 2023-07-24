@@ -43,7 +43,8 @@ Allowed responses:
 
 1. A valid token. Return a `{ "token": "..." }` shaped response.
 1. Explicitly forbid access. Return an
-   `{ "error": "forbidden", "reason": "..." }` shaped response.
+   `{ "error": "forbidden", "reason": "..." }` shaped response. If you return
+   this response, the client will disconnect and won't keep trying to authorize.
 
 Example implementation:
 
