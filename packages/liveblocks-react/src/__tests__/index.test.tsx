@@ -1,7 +1,12 @@
 import type { BaseUserMeta, Json, JsonObject } from "@liveblocks/client";
 import { createClient, shallow } from "@liveblocks/client";
 import type { ServerMsg } from "@liveblocks/core";
-import { ClientMsgCode, CrdtType, ServerMsgCode } from "@liveblocks/core";
+import {
+  ClientMsgCode,
+  CrdtType,
+  ServerMsgCode,
+  RoomStateServerMsg,
+} from "@liveblocks/core";
 import { render } from "@testing-library/react";
 import { rest } from "msw";
 import { setupServer } from "msw/node";
@@ -55,7 +60,7 @@ class MockWebSocket {
   sentMessages: string[] = [];
 
   constructor(public url: string) {
-    MockWebSocket.instances.push(this);
+    const actor = MockWebSocket.instances.push(this) - 1;
     this.readyState = 0 /* CONNECTING */;
 
     // Fake the server accepting the new connection
@@ -63,6 +68,17 @@ class MockWebSocket {
       this.readyState = 1 /* OPEN */;
       for (const openCb of this.callbacks.open) {
         openCb();
+      }
+
+      // Send a ROOM_STATE message to the newly connected client
+      for (const msgCb of this.callbacks.message) {
+        const msg: RoomStateServerMsg<never> = {
+          type: ServerMsgCode.ROOM_STATE,
+          actor,
+          scopes: ["room:write"],
+          users: {},
+        };
+        msgCb({ data: JSON.stringify(msg) } as MessageEvent);
       }
     }, 0);
   }
@@ -141,7 +157,8 @@ async function waitForSocketToBeConnected() {
   await waitFor(() => expect(MockWebSocket.instances.length).toBe(1));
 
   const socket = MockWebSocket.instances[0];
-  expect(socket.callbacks.open.length).toBe(1);
+  expect(socket.callbacks.open.length).toBe(1); // Got open callback
+  expect(socket.callbacks.message.length).toBe(1); // Got ROOM_STATE message callback
 
   // Give open callback (scheduled for next tick) a chance to finish before returning
   await wait(0);
