@@ -2424,9 +2424,13 @@ function makeAuthDelegateForRoom(
     return async () => {
       const response = await authentication.callback(roomId);
       if (!response || !response.token) {
-        throw new Error(
-          'We expect the authentication callback to return a token, but it does not. Hint: the return value should look like: { token: "..." }'
-        );
+        if(response.error && response.error === 'forbidden') {
+          throw new StopRetrying(response.reason ?? "The callback didn't return a token.");
+        } else {
+          throw new Error(
+            'We expect the authentication callback to return a token, but it does not. Hint: the return value should look like: { token: "..." }'
+          );
+        }
       }
       return parseAuthToken(response.token);
     };
