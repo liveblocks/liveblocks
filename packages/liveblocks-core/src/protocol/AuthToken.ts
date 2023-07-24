@@ -38,8 +38,6 @@ export type LegacySecretToken = {
   k: TokenKind.SECRET_LEGACY;
   roomId: string;
   scopes: string[];
-  // XXX Remove `actor` here (it's no longer on the token)
-  actor: number;
 
   // Extra payload as defined by the customer's own authorization
   id?: string;
