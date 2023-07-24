@@ -1,7 +1,6 @@
 import type { Json } from "../lib/Json";
 import { b64decode, isPlainObject, tryParseJson } from "../lib/utils";
 
-// XXX Rename to just Scope, and add comments:write and comments:read in there too?
 export enum Permission {
   Read = "room:read",
   Write = "room:write",
