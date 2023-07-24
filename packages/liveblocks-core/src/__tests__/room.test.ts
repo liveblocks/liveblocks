@@ -8,7 +8,6 @@ import type { StorageUpdate } from "../crdts/StorageUpdates";
 import { legacy_patchImmutableObject, lsonToJson } from "../immutable";
 import * as console from "../lib/fancy-console";
 import type { Json, JsonObject } from "../lib/Json";
-import { Permission } from "../protocol/AuthToken";
 import type { BaseUserMeta } from "../protocol/BaseUserMeta";
 import { ClientMsgCode } from "../protocol/ClientMsg";
 import { OpCode } from "../protocol/Op";
@@ -22,7 +21,8 @@ import type { Others } from "../types/Others";
 import {
   AUTH_SUCCESS,
   defineBehavior,
-  SOCKET_AUTOCONNECT,
+  SOCKET_AUTOCONNECT_AND_ROOM_STATE,
+  SOCKET_AUTOCONNECT_BUT_NO_ROOM_STATE,
   SOCKET_NO_BEHAVIOR,
   SOCKET_REFUSES,
   SOCKET_SEQUENCE,
@@ -58,7 +58,7 @@ const defaultRoomConfig: RoomConfig = {
   roomId: "room-id",
   throttleDelay: THROTTLE_DELAY,
   lostConnectionTimeout: 99999,
-  liveblocksServer: "wss://live.liveblocks.io/v6",
+  liveblocksServer: "wss://live.liveblocks.io/v7",
   delegates: {
     authenticate: () => {
       return Promise.resolve({ publicApiKey: "pk_123", type: "public" });
@@ -91,7 +91,7 @@ function createTestableRoom<
 >(
   initialPresence: TPresence,
   authBehavior = AUTH_SUCCESS,
-  socketBehavior = SOCKET_AUTOCONNECT,
+  socketBehavior = SOCKET_AUTOCONNECT_AND_ROOM_STATE(),
   config?: Partial<RoomConfig>
 ) {
   const { wss, delegates } = defineBehavior(authBehavior, socketBehavior);
@@ -191,7 +191,7 @@ describe("room", () => {
       undefined,
       SOCKET_SEQUENCE(
         SOCKET_THROWS("😈"),
-        SOCKET_AUTOCONNECT // Repeats infinitely
+        SOCKET_AUTOCONNECT_AND_ROOM_STATE() // Repeats infinitely
       )
     );
     room.connect();
@@ -208,9 +208,9 @@ describe("room", () => {
       {},
       undefined,
       SOCKET_SEQUENCE(
-        SOCKET_AUTOCONNECT,
+        SOCKET_AUTOCONNECT_AND_ROOM_STATE(),
         SOCKET_THROWS("😈"),
-        SOCKET_AUTOCONNECT // Repeats infinitely
+        SOCKET_AUTOCONNECT_AND_ROOM_STATE() // Repeats infinitely
       )
     );
     room.connect();
@@ -240,6 +240,24 @@ describe("room", () => {
     expect(delegates.createSocket).toHaveBeenCalledTimes(3);
   });
 
+  test("should reauth when getting an unknown server response (as refusal)", async () => {
+    const { room, delegates } = createTestableRoom(
+      {},
+      undefined,
+      SOCKET_SEQUENCE(
+        SOCKET_REFUSES(4242 /* Unknown code */, "An unknown error reason"),
+        SOCKET_AUTOCONNECT_AND_ROOM_STATE() // Repeated to infinity
+      )
+    );
+    room.connect();
+
+    await waitUntilStatus(room, "connecting");
+    await waitUntilStatus(room, "connected", 4000);
+
+    expect(delegates.authenticate).toHaveBeenCalledTimes(2); // Reauth!
+    expect(delegates.createSocket).toHaveBeenCalledTimes(2);
+  });
+
   test("should reconnect without getting a new auth token when told by server that room is full (as refusal)", async () => {
     const { room, delegates } = createTestableRoom(
       {},
@@ -249,7 +267,7 @@ describe("room", () => {
           WebsocketCloseCodes.MAX_NUMBER_OF_CONCURRENT_CONNECTIONS,
           "Room full"
         ),
-        SOCKET_AUTOCONNECT // Repeated to infinity
+        SOCKET_AUTOCONNECT_AND_ROOM_STATE() // Repeated to infinity
       )
     );
     room.connect();
@@ -266,7 +284,7 @@ describe("room", () => {
     const { room, wss, delegates } = createTestableRoom(
       {},
       undefined,
-      SOCKET_AUTOCONNECT
+      SOCKET_AUTOCONNECT_AND_ROOM_STATE()
     );
     room.connect();
 
@@ -287,29 +305,72 @@ describe("room", () => {
     expect(delegates.createSocket).toHaveBeenCalledTimes(2);
   });
 
-  test("should get a new auth token if unauthorized (as refusal)", async () => {
+  test("should reauth immediately when told by server that token is expired (as refusal)", async () => {
     const { room, delegates } = createTestableRoom(
       {},
       undefined,
       SOCKET_SEQUENCE(
-        SOCKET_REFUSES(WebsocketCloseCodes.NOT_ALLOWED),
-        SOCKET_AUTOCONNECT
+        SOCKET_REFUSES(WebsocketCloseCodes.TOKEN_EXPIRED, "Token expired"),
+        SOCKET_AUTOCONNECT_AND_ROOM_STATE() // Repeated to infinity
       )
     );
     room.connect();
 
-    await waitUntilStatus(room, "connecting");
-    await waitUntilStatus(room, "connected", 4000);
+    await waitUntilStatus(room, "connected");
 
-    expect(delegates.authenticate).toHaveBeenCalledTimes(2); // It re-authed!
+    // First connection attempt was rejected, but second worked
+    expect(delegates.authenticate).toHaveBeenCalledTimes(2);
     expect(delegates.createSocket).toHaveBeenCalledTimes(2);
   });
 
-  test("should get a new auth token if unauthorized (while connected)", async () => {
+  test("should reauth immediately when told by server that token is expired (while connected)", async () => {
     const { room, wss, delegates } = createTestableRoom(
       {},
       undefined,
-      SOCKET_AUTOCONNECT
+      SOCKET_AUTOCONNECT_AND_ROOM_STATE()
+    );
+    room.connect();
+
+    await waitUntilStatus(room, "connected");
+
+    expect(delegates.authenticate).toHaveBeenCalledTimes(1);
+    expect(delegates.createSocket).toHaveBeenCalledTimes(1);
+
+    // Closing this connection will trigger a reconnection...
+    wss.last.close(
+      new CloseEvent("close", {
+        code: WebsocketCloseCodes.TOKEN_EXPIRED,
+        wasClean: true,
+      })
+    );
+
+    await waitUntilStatus(room, "reconnecting");
+    await waitUntilStatus(room, "connected");
+
+    expect(delegates.authenticate).toHaveBeenCalledTimes(2);
+    expect(delegates.createSocket).toHaveBeenCalledTimes(2);
+  });
+
+  test("should stop trying and disconnect if unauthorized (as refusal)", async () => {
+    const { room, delegates } = createTestableRoom(
+      {},
+      undefined,
+      SOCKET_REFUSES(WebsocketCloseCodes.NOT_ALLOWED)
+    );
+    room.connect();
+
+    await waitUntilStatus(room, "connecting");
+    await waitUntilStatus(room, "disconnected");
+
+    expect(delegates.authenticate).toHaveBeenCalledTimes(1); // Only once!
+    expect(delegates.createSocket).toHaveBeenCalledTimes(1);
+  });
+
+  test("should stop trying and disconnect if unauthorized (while connected)", async () => {
+    const { room, wss, delegates } = createTestableRoom(
+      {},
+      undefined,
+      SOCKET_AUTOCONNECT_AND_ROOM_STATE()
     );
     room.connect();
 
@@ -323,11 +384,10 @@ describe("room", () => {
       })
     );
 
-    await waitUntilStatus(room, "reconnecting");
-    await waitUntilStatus(room, "connected");
+    await waitUntilStatus(room, "disconnected");
 
-    expect(delegates.authenticate).toHaveBeenCalledTimes(2); // It re-authed!
-    expect(delegates.createSocket).toHaveBeenCalledTimes(2);
+    expect(delegates.authenticate).toHaveBeenCalledTimes(1); // Only once!
+    expect(delegates.createSocket).toHaveBeenCalledTimes(1);
   });
 
   test("should disconnect if told by server to not try reconnecting again (as refusal)", async () => {
@@ -336,7 +396,7 @@ describe("room", () => {
       undefined,
       SOCKET_SEQUENCE(
         SOCKET_REFUSES(WebsocketCloseCodes.CLOSE_WITHOUT_RETRY),
-        SOCKET_AUTOCONNECT
+        SOCKET_AUTOCONNECT_AND_ROOM_STATE()
       )
     );
     room.connect();
@@ -353,7 +413,7 @@ describe("room", () => {
     const { room, wss, delegates } = createTestableRoom(
       {},
       undefined,
-      SOCKET_AUTOCONNECT
+      SOCKET_AUTOCONNECT_AND_ROOM_STATE()
     );
     room.connect();
 
@@ -480,15 +540,21 @@ describe("room", () => {
   });
 
   test("others should be iterable", async () => {
-    const { room, wss } = createTestableRoom({});
+    const { room, wss } = createTestableRoom(
+      {},
+      undefined,
+      SOCKET_AUTOCONNECT_BUT_NO_ROOM_STATE
+    );
     room.connect();
 
     wss.onConnection((conn) => {
       conn.server.send(
         serverMessage({
           type: ServerMsgCode.ROOM_STATE,
+          actor: 2,
+          scopes: ["room:write"],
           users: {
-            "1": { scopes: [] },
+            "1": { scopes: ["room:write"] },
           },
         })
       );
@@ -506,20 +572,31 @@ describe("room", () => {
     await waitUntilOthersEvent(room);
 
     expect(room.getOthers()).toEqual([
-      { connectionId: 1, presence: { x: 2 }, isReadOnly: false },
+      {
+        connectionId: 1,
+        presence: { x: 2 },
+        isReadOnly: false,
+        canWrite: true,
+      },
     ]);
   });
 
   test("others should be read-only when associated scopes are received", async () => {
-    const { room, wss } = createTestableRoom({});
+    const { room, wss } = createTestableRoom(
+      {},
+      undefined,
+      SOCKET_AUTOCONNECT_BUT_NO_ROOM_STATE
+    );
     room.connect();
 
     wss.onConnection((conn) => {
       conn.server.send(
         serverMessage({
           type: ServerMsgCode.ROOM_STATE,
+          actor: 2,
+          scopes: ["room:write"],
           users: {
-            "1": { scopes: [Permission.Read, Permission.PresenceWrite] },
+            "1": { scopes: ["room:read"] },
           },
         })
       );
@@ -537,7 +614,12 @@ describe("room", () => {
     await waitUntilOthersEvent(room);
 
     expect(room.getOthers()).toEqual([
-      { connectionId: 1, presence: { x: 2 }, isReadOnly: true },
+      {
+        connectionId: 1,
+        presence: { x: 2 },
+        isReadOnly: true,
+        canWrite: false,
+      },
     ]);
   });
 
@@ -545,7 +627,7 @@ describe("room", () => {
     const { room, wss } = createTestableRoom(
       {},
       undefined,
-      SOCKET_SEQUENCE(SOCKET_AUTOCONNECT, SOCKET_THROWS()),
+      SOCKET_SEQUENCE(SOCKET_AUTOCONNECT_BUT_NO_ROOM_STATE, SOCKET_THROWS()),
       { lostConnectionTimeout: 10 }
     );
     room.connect();
@@ -554,8 +636,10 @@ describe("room", () => {
       conn.server.send(
         serverMessage({
           type: ServerMsgCode.ROOM_STATE,
+          actor: 2,
+          scopes: ["room:write"],
           users: {
-            "1": { scopes: [] },
+            "1": { scopes: ["room:write"] },
           },
         })
       );
@@ -573,7 +657,12 @@ describe("room", () => {
     await waitUntilStatus(room, "connected");
     await waitUntilOthersEvent(room);
     expect(room.getOthers()).toEqual([
-      { connectionId: 1, presence: { x: 2 }, isReadOnly: false },
+      {
+        connectionId: 1,
+        presence: { x: 2 },
+        isReadOnly: false,
+        canWrite: true,
+      },
     ]);
 
     // Closing this connection will trigger an endless retry loop, because the
@@ -587,7 +676,12 @@ describe("room", () => {
 
     // Not immediately cleared
     expect(room.getOthers()).toEqual([
-      { connectionId: 1, presence: { x: 2 }, isReadOnly: false },
+      {
+        connectionId: 1,
+        presence: { x: 2 },
+        isReadOnly: false,
+        canWrite: true,
+      },
     ]);
 
     // But it will clear eventually (after lostConnectionTimeout milliseconds)
@@ -607,16 +701,22 @@ describe("room", () => {
     - Client A should remove client B from others.
     */
 
-    const { room, wss } = createTestableRoom({});
+    const { room, wss } = createTestableRoom(
+      {},
+      undefined,
+      SOCKET_AUTOCONNECT_BUT_NO_ROOM_STATE
+    );
     room.connect();
 
     wss.onConnection((conn) => {
       conn.server.send(
         serverMessage({
           type: ServerMsgCode.ROOM_STATE,
+          actor: 3,
+          scopes: ["room:write"],
           users: {
-            "1": { scopes: [] },
-            "2": { scopes: [] },
+            "1": { scopes: ["room:write"] },
+            "2": { scopes: ["room:write"] },
           },
         })
       );
@@ -644,8 +744,18 @@ describe("room", () => {
 
     await waitUntilOthersEvent(room);
     expect(room.getOthers()).toEqual([
-      { connectionId: 1, presence: { x: 2 }, isReadOnly: false },
-      { connectionId: 2, presence: { x: 2 }, isReadOnly: false },
+      {
+        connectionId: 1,
+        presence: { x: 2 },
+        isReadOnly: false,
+        canWrite: true,
+      },
+      {
+        connectionId: 2,
+        presence: { x: 2 },
+        isReadOnly: false,
+        canWrite: true,
+      },
     ]);
 
     // -----
@@ -657,15 +767,22 @@ describe("room", () => {
     wss.last.send(
       serverMessage({
         type: ServerMsgCode.ROOM_STATE,
+        actor: 2,
+        scopes: ["room:write"],
         users: {
-          "1": { scopes: [] },
+          "1": { scopes: ["room:write"] },
         },
       })
     );
 
     // Only Client B is part of others.
     expect(room.getOthers()).toEqual([
-      { connectionId: 1, presence: { x: 2 }, isReadOnly: false },
+      {
+        connectionId: 1,
+        presence: { x: 2 },
+        isReadOnly: false,
+        canWrite: true,
+      },
     ]);
   });
 
@@ -1007,7 +1124,7 @@ describe("room", () => {
 
       const callback = jest.fn();
 
-      room.events.me.subscribe(callback);
+      room.events.myPresence.subscribe(callback);
 
       room.batch(() => {
         room.updatePresence({ x: 0 });
@@ -1147,9 +1264,8 @@ describe("room", () => {
         {
           connectionId: 1,
           isReadOnly: false,
-          presence: {
-            x: 1,
-          },
+          canWrite: true,
+          presence: { x: 1 },
         },
       ]);
 
@@ -1235,7 +1351,7 @@ describe("room", () => {
       const { room } = createTestableRoom({});
 
       const callback = jest.fn();
-      const unsubscribe = room.events.me.subscribe(callback);
+      const unsubscribe = room.events.myPresence.subscribe(callback);
 
       room.updatePresence({ x: 0 });
 
@@ -1250,7 +1366,11 @@ describe("room", () => {
     test("others", async () => {
       type P = { x?: number };
 
-      const { room, wss } = createTestableRoom<P, never, never, never>({});
+      const { room, wss } = createTestableRoom<P, never, never, never>(
+        {},
+        undefined,
+        SOCKET_AUTOCONNECT_AND_ROOM_STATE()
+      );
       room.connect();
 
       let others: Others<P, never> | undefined;
@@ -1264,7 +1384,9 @@ describe("room", () => {
       wss.last.send(
         serverMessage({
           type: ServerMsgCode.ROOM_STATE,
-          users: { 1: { scopes: [] } },
+          actor: 2,
+          scopes: ["room:write"],
+          users: { 1: { scopes: ["room:write"] } },
         })
       );
 
@@ -1292,9 +1414,8 @@ describe("room", () => {
         {
           connectionId: 1,
           isReadOnly: false,
-          presence: {
-            x: 2,
-          },
+          canWrite: true,
+          presence: { x: 2 },
         },
       ]);
     });
@@ -1495,6 +1616,7 @@ describe("room", () => {
           info: undefined,
           presence: { x: 1 },
           isReadOnly: false,
+          canWrite: true,
         }, // old user is not cleaned directly
         {
           connectionId: 2,
@@ -1502,6 +1624,7 @@ describe("room", () => {
           info: undefined,
           presence: { x: 1 },
           isReadOnly: false,
+          canWrite: true,
         },
       ]);
     });
@@ -1722,6 +1845,14 @@ describe("room", () => {
 
         const ws1 = wss.last;
         ws1.accept();
+        ws1.send(
+          serverMessage({
+            type: ServerMsgCode.ROOM_STATE,
+            actor: 1,
+            scopes: ["room:write"],
+            users: {},
+          })
+        );
         await waitUntilStatus(room, "connected");
         expect(room.getConnectionState()).toBe("open"); // This API will be deprecated in the future
         expect(room.getStatus()).toEqual("connected");
@@ -1738,6 +1869,14 @@ describe("room", () => {
 
         const ws2 = wss.last;
         ws2.accept();
+        ws2.send(
+          serverMessage({
+            type: ServerMsgCode.ROOM_STATE,
+            actor: 1,
+            scopes: ["room:write"],
+            users: {},
+          })
+        );
 
         // This "last" one is a new/different socket instance!
         expect(ws1 === ws2).toBe(false);
@@ -1758,13 +1897,19 @@ describe("room", () => {
       type M = never;
       type E = never;
 
-      const { room, wss } = createTestableRoom<P, S, M, E>({});
+      const { room, wss } = createTestableRoom<P, S, M, E>(
+        {},
+        undefined,
+        SOCKET_AUTOCONNECT_BUT_NO_ROOM_STATE
+      );
 
       wss.onConnection((conn) => {
         conn.server.send(
           serverMessage({
             type: ServerMsgCode.ROOM_STATE,
-            users: { "1": { id: undefined, scopes: [] } },
+            actor: 2,
+            scopes: ["room:write"],
+            users: { "1": { id: undefined, scopes: ["room:write"] } },
           })
         );
 
@@ -1805,6 +1950,7 @@ describe("room", () => {
           id: undefined,
           info: undefined,
           isReadOnly: false,
+          canWrite: true,
           presence: {
             x: 2,
           },

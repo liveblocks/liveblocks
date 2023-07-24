@@ -9,6 +9,18 @@ Support the new and improved Liveblocks authorization.
 Add new APIs for authorization. See our migration guide for tips on how to adopt
 the new style of authorizing your Liveblocks clients.
 
+# v1.1.7
+
+### `@liveblocks/react`
+
+Fix a bug with `useSelf()` where it would not correctly re-render after entering
+an empty room. It’s now consistent again with `useMyPresence()`.
+
+### DevTools
+
+Fix a bug in the Liveblocks [DevTools](https://liveblocks.io/devtools) panel
+where the "me" view would incorrectly stay empty after entering an empty room.
+
 # v1.1.6
 
 ### `@liveblocks/*`

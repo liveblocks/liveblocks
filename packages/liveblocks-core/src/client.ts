@@ -128,7 +128,7 @@ function getServerFromClientOptions(clientOptions: ClientOptions) {
   const rawOptions = clientOptions as Record<string, unknown>;
   return typeof rawOptions.liveblocksServer === "string"
     ? rawOptions.liveblocksServer
-    : "wss://api.liveblocks.io/v6";
+    : "wss://api.liveblocks.io/v7";
 }
 
 /**
@@ -213,6 +213,7 @@ export function createClient(options: ClientOptions): Client {
         polyfills: clientOptions.polyfills,
         delegates: clientOptions.mockedDelegates ?? {
           createSocket: makeCreateSocketDelegateForRoom(
+            roomId,
             getServerFromClientOptions(clientOptions),
             clientOptions.polyfills?.WebSocket
           ),

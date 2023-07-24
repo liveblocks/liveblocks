@@ -52,6 +52,31 @@ export default function Home() {
             <a>/zustand</a>
           </Link>
         </li>
+        <li>
+          <div>/auth</div>
+          <ul>
+            <li>
+              <Link href="/auth/pubkey">
+                <a>/auth/pubkey</a>
+              </Link>
+            </li>
+            <li>
+              <Link href="/auth/secret-legacy">
+                <a>/auth/secret-legacy</a>
+              </Link>
+            </li>
+            <li>
+              <Link href="/auth/id-token">
+                <a>/auth/id-token</a>
+              </Link>
+            </li>
+            <li>
+              <Link href="/auth/acc-token">
+                <a>/auth/acc-token</a>
+              </Link>
+            </li>
+          </ul>
+        </li>
       </ul>
     </div>
   );

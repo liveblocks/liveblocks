@@ -10,20 +10,26 @@
 
 import type { AuthValue } from "../auth-manager";
 import { StopRetrying } from "../connection";
-import type { ParsedAuthToken } from "../protocol/AuthToken";
+import type { AuthToken, ParsedAuthToken } from "../protocol/AuthToken";
+import { ServerMsgCode } from "../protocol/ServerMsg";
 import type { RoomDelegates } from "../room";
 import type { WebsocketCloseCodes } from "../types/IWebSocket";
 import type { MockWebSocket } from "./_MockWebSocketServer";
 import { MockWebSocketServer } from "./_MockWebSocketServer";
-import { makeMinimalTokenPayload } from "./_utils";
+import {
+  makeAccessToken,
+  makeIDToken,
+  makeSecretLegacyToken,
+  serverMessage,
+} from "./_utils";
 
 type AuthBehavior = () => AuthValue;
 type SocketBehavior = (wss: MockWebSocketServer) => MockWebSocket;
 
-function makeToken(actor: number, scopes: string[]): ParsedAuthToken {
+function makeParsed(authToken: AuthToken): ParsedAuthToken {
   return {
     raw: "<some fake JWT token>",
-    parsed: makeMinimalTokenPayload(actor, scopes),
+    parsed: authToken,
   };
 }
 
@@ -71,14 +77,56 @@ export function defineBehavior(
  * Configures the authentication delegate to always successfully authorize as
  * user 1. This is the default auth behavior.
  */
-export const AUTH_SUCCESS = ALWAYS_AUTH_AS(1);
+export const AUTH_SUCCESS = ROUND_ROBIN(
+  ALWAYS_AUTH_WITH_ACCESS_TOKEN,
+  ALWAYS_AUTH_WITH_ID_TOKEN,
+  ALWAYS_AUTH_WITH_LEGACY_TOKEN(1),
+  ALWAYS_AUTH_WITH_PUBKEY
+);
 
-export function ALWAYS_AUTH_AS(
+function ROUND_ROBIN(...behaviors: readonly AuthBehavior[]): AuthBehavior {
+  if (behaviors.length === 0) {
+    throw new Error("Must specify at least one behavior");
+  }
+
+  let index = -1;
+  return () => {
+    index = (index + 1) % behaviors.length;
+    const behavior = behaviors[index];
+    return behavior();
+  };
+}
+
+export function ALWAYS_AUTH_WITH_PUBKEY(): AuthValue {
+  return {
+    type: "public",
+    publicApiKey: "pk_xxx",
+  };
+}
+
+export function ALWAYS_AUTH_WITH_LEGACY_TOKEN(
   actor: number,
   scopes: string[] = []
 ): () => AuthValue {
   return () => {
-    return { type: "secret", token: makeToken(actor, scopes) };
+    return {
+      type: "secret",
+      token: makeParsed(makeSecretLegacyToken(actor, scopes)),
+    };
+  };
+}
+
+export function ALWAYS_AUTH_WITH_ID_TOKEN(): AuthValue {
+  return {
+    type: "secret",
+    token: makeParsed(makeIDToken()),
+  };
+}
+
+export function ALWAYS_AUTH_WITH_ACCESS_TOKEN(): AuthValue {
+  return {
+    type: "secret",
+    token: makeParsed(makeAccessToken()),
   };
 }
 
@@ -107,10 +155,39 @@ export function SOCKET_NO_BEHAVIOR(wss: MockWebSocketServer) {
 
 /**
  * Configures the MockWebSocketServer to automatically accept each new socket
- * connection asynchronously. This is the default socket behavior.
+ * connection. This is the default socket behavior.
  */
-export function SOCKET_AUTOCONNECT(wss: MockWebSocketServer) {
+export function SOCKET_AUTOCONNECT_BUT_NO_ROOM_STATE(wss: MockWebSocketServer) {
   return wss.newSocket((socket) => socket.server.accept());
+}
+
+/**
+ * Configures the MockWebSocketServer to automatically accept each new socket
+ * connection attempt, and then send an initial ROOM_STATE message (for an
+ * empty room, where the connecting client is the first user in the room).
+ * Since 1.2, a client isn't considered ready until it has received the
+ * ROOM_STATE message.
+ */
+export function SOCKET_AUTOCONNECT_AND_ROOM_STATE(
+  actor: number = 1,
+  scopes: string[] = ["room:write"]
+) {
+  return (wss: MockWebSocketServer) => {
+    return wss.newSocket((socket) => {
+      // Accept the socket connection...
+      socket.server.accept();
+
+      // ...and respond with a ROOM_STATE server message immediately
+      socket.server.send(
+        serverMessage({
+          type: ServerMsgCode.ROOM_STATE,
+          actor,
+          scopes,
+          users: {},
+        })
+      );
+    });
+  };
 }
 
 /**

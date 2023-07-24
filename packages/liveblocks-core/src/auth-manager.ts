@@ -34,6 +34,7 @@ export function createAuthManager(
   const authentication = prepareAuthentication(authOptions);
 
   const tokens: ParsedAuthToken[] = [];
+  const expiryTimes: number[] = []; // Supposed to always contain the same number of elements as `tokens`
 
   const requestPromises = new Map<string, Promise<ParsedAuthToken>>();
 
@@ -61,7 +62,20 @@ export function createAuthManager(
     requestedScope: RequestedScope,
     roomId: string
   ): ParsedAuthToken | undefined {
-    for (const token of tokens) {
+    const now = Math.ceil(Date.now() / 1000);
+
+    for (let i = tokens.length - 1; i >= 0; i--) {
+      const token = tokens[i];
+      const expiresAt = expiryTimes[i];
+
+      // If this token is expired, remove it from cache, as if it never existed
+      // in the first place
+      if (expiresAt <= now) {
+        tokens.splice(i, 1);
+        expiryTimes.splice(i, 1);
+        continue;
+      }
+
       if (token.parsed.k === TokenKind.ID_TOKEN) {
         // When ID token method is used, only one token per user should be used and cached at the same time.
         return token;
@@ -136,8 +150,15 @@ export function createAuthManager(
     }
     try {
       const token = await currentPromise;
+      // Translate "server timestamps" to "local timestamps" in case clocks aren't in sync
+      const BUFFER = 30; // Expire tokens 30 seconds sooner than they have to
+      const expiresAt =
+        Math.floor(Date.now() / 1000) +
+        (token.parsed.exp - token.parsed.iat) -
+        BUFFER;
 
       tokens.push(token);
+      expiryTimes.push(expiresAt);
 
       return { type: "secret", token };
     } finally {

@@ -18,13 +18,25 @@ export enum TokenKind {
 }
 
 /**
+ * Infers from the given scopes whether the user can write the document (e.g.
+ * Storage and/or YDoc).
+ */
+export function canWriteStorage(scopes: readonly string[]): boolean {
+  return scopes.includes(Permission.Write);
+}
+
+type JwtMeta = {
+  iat: number;
+  exp: number;
+};
+
+/**
  * Legacy Secret Token.
  */
 export type LegacySecretToken = {
   k: TokenKind.SECRET_LEGACY;
   roomId: string;
   scopes: string[];
-  actor: number;
 
   // Extra payload as defined by the customer's own authorization
   id?: string;
@@ -33,7 +45,7 @@ export type LegacySecretToken = {
   // IMPORTANT: All other fields on the JWT token are deliberately treated as
   // opaque, and not relied on by the client.
   [other: string]: Json | undefined;
-};
+} & JwtMeta;
 
 /**
  * New authorization Access Token.
@@ -44,7 +56,7 @@ export type AccessToken = {
   uid: string; // user id
   perms: LiveblocksPermissions; // permissions
   ui?: Json; // user info
-};
+} & JwtMeta;
 
 /**
  * New authorization ID Token.
@@ -55,7 +67,9 @@ export type IDToken = {
   uid: string; // user id
   gids?: string[]; // group ids
   ui?: Json; // user info
-};
+} & JwtMeta;
+
+export type AuthToken = AccessToken | IDToken | LegacySecretToken;
 
 // The "rich" token is data we obtain by parsing the JWT token and making all
 // metadata on it accessible. It's done right after hitting the backend, but
@@ -63,7 +77,7 @@ export type IDToken = {
 // authentication step.
 export type ParsedAuthToken = {
   readonly raw: string; // The raw JWT value, unchanged
-  readonly parsed: AccessToken | IDToken | LegacySecretToken; // Rich data on the JWT value
+  readonly parsed: AuthToken; // Rich data on the JWT value
 };
 
 function isValidAuthTokenPayload(
@@ -93,7 +107,7 @@ export function parseAuthToken(rawTokenString: string): ParsedAuthToken {
   const payload = tryParseJson(b64decode(tokenParts[1]));
   if (!(payload && isValidAuthTokenPayload(payload))) {
     throw new Error(
-      "Authentication error: we expected a room token but did not get one. Hint: if you are using a callback, ensure the room is passed when creating the token. For more information: https://liveblocks.io/docs/api-reference/liveblocks-client#createClientCallback"
+      "Authentication error: expected a valid token but did not get one. Hint: if you are using a callback, ensure the room is passed when creating the token. For more information: https://liveblocks.io/docs/api-reference/liveblocks-client#createClientCallback"
     );
   }
 

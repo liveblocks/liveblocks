@@ -120,9 +120,8 @@ export type UserJoinServerMsg<TUserMeta extends BaseUserMeta> = {
    * endpoint.
    */
   readonly info: TUserMeta["info"];
-
   /**
-   * Permissions that the user has in the Room.
+   * Informs the client what (public) permissions this (other) User has.
    */
   readonly scopes: string[];
 };
@@ -169,8 +168,21 @@ export type BroadcastedEventServerMsg<TRoomEvent extends Json> = {
  */
 export type RoomStateServerMsg<TUserMeta extends BaseUserMeta> = {
   readonly type: ServerMsgCode.ROOM_STATE;
+
+  /**
+   * Informs the client what their actor ID is going to be.
+   * @since v1.2 (WS API v7)
+   */
+  readonly actor: number;
+
+  /**
+   * Informs the client what permissions the current User (self) has.
+   * @since v1.2 (WS API v7)
+   */
+  readonly scopes: string[];
+
   readonly users: {
-    readonly [actor: number]: TUserMeta & { scopes: string[] };
+    readonly [otherActor: number]: TUserMeta & { scopes: string[] };
   };
 };
 
