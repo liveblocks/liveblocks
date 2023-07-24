@@ -1,10 +1,72 @@
 :root {
+  /* Basics */
   --lb-background: #fff;
   --lb-foreground: #000;
   --lb-accent: #08f;
   --lb-accent-foreground: #fff;
   --lb-radius: 0.5em;
   --lb-spacing: 1rem;
+
+  /* More specific */
+  --lb-button-size: 1.75rem;
+  --lb-dropdown-background: #fff;
+}
+
+/**
+ * Button
+ */
+
+.lb-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 1;
+  width: var(--lb-button-size);
+  border-radius: 50%;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  padding: 0;
+  outline: none;
+  color: color-mix(in srgb, var(--lb-foreground), transparent 60%);
+}
+
+.lb-button:hover,
+.lb-button:focus-visible {
+  background: color-mix(in srgb, var(--lb-foreground), transparent 95%);
+}
+
+.lb-button:focus-visible {
+  box-shadow:
+    var(--lb-background) 0px 0px 0px 2px,
+    var(--lb-accent) 0px 0px 0px 4px;
+}
+
+/**
+ * Dropdown
+ * TODO: Rename to share with mentions autocomplete (any floating sheet)
+ */
+
+.lb-dropdown {
+  padding: 2px;
+  border-radius: var(--lb-radius);
+  background: var(--lb-background);
+  box-shadow:
+    0px 0px 0px 1px rgba(0, 0, 0, 0.04),
+    0px 2px 6px rgba(0, 0, 0, 0.08),
+    0px 8px 26px rgba(0, 0, 0, 0.16);
+}
+
+.lb-dropdown-item {
+  padding: calc(0.25 * var(--lb-spacing)) calc(0.5 * var(--lb-spacing));
+  border-radius: calc(var(--lb-radius) - 2px);
+  outline: none;
+  cursor: pointer;
+}
+
+.lb-dropdown-item[data-highlighted] {
+  background: var(--lb-accent);
+  color: var(--lb-accent-foreground);
 }
 
 /**
@@ -19,13 +81,9 @@
   align-items: center;
   overflow: hidden;
   aspect-ratio: 1;
-  border-radius: var(--lb-radius);
+  border-radius: 50%;
   background: color-mix(in srgb, var(--lb-foreground), transparent 90%);
   font-size: 1rem;
-}
-
-.lb-avatar\:round {
-  border-radius: 50%;
 }
 
 .lb-avatar-image {
@@ -56,7 +114,7 @@
  */
 
 .lb-comment {
-  --lb-comment-avatar-size: 1.75rem;
+  --lb-comment-avatar-size: 2rem;
 
   position: relative;
   background: var(--lb-background);
@@ -70,6 +128,7 @@
   display: flex;
   gap: calc(0.75 * var(--lb-spacing));
   align-items: center;
+  height: var(--lb-button-size);
 }
 
 .lb-comment-info {
@@ -95,7 +154,9 @@
 }
 
 .lb-comment\:indent-body .lb-comment-info-labels {
-  margin-left: calc(var(--lb-comment-avatar-size) + 0.75 * var(--lb-spacing));
+  margin-inline-start: calc(
+    var(--lb-comment-avatar-size) + 0.75 * var(--lb-spacing)
+  );
 }
 
 .lb-comment-user {
@@ -111,16 +172,34 @@
 }
 
 .lb-comment-actions {
-  margin-left: auto;
+  display: flex;
+  gap: calc(0.5 * var(--lb-spacing));
+  margin-inline-start: auto;
 }
 
 .lb-comment-body {
   color: color-mix(in srgb, var(--lb-foreground), transparent 20%);
   text-wrap: pretty;
+  margin-block-start: calc(0.75 * var(--lb-spacing));
+}
+
+.lb-comment-body p {
+  margin-block-start: 1em;
+  margin-block-end: 1em;
+}
+
+.lb-comment-body p:first-of-type {
+  margin-block-start: 0;
+}
+
+.lb-comment-body p:last-of-type {
+  margin-block-end: 0;
 }
 
 .lb-comment\:indent-body .lb-comment-body {
-  padding-left: calc(var(--lb-comment-avatar-size) + 0.75 * var(--lb-spacing));
+  padding-inline-start: calc(
+    var(--lb-comment-avatar-size) + 0.75 * var(--lb-spacing)
+  );
 }
 
 .lb-comment-mention {

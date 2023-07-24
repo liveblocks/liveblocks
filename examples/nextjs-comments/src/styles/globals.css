@@ -44,3 +44,18 @@ main {
   height: 64px;
   opacity: 0.2;
 }
+
+.threads {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.thread {
+  display: flex;
+  flex-direction: column;
+  padding: 1rem;
+  gap: 1rem;
+  background: #fff;
+  border-radius: 1rem;
+}

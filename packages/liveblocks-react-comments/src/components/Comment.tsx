@@ -32,7 +32,6 @@ function CommentMention({ userId }: CommentRenderMentionProps) {
   );
 }
 
-// TODO: Add option to align the body with the avatar or the name (adds/removes a class name)
 export const Comment = forwardRef<HTMLDivElement, CommentProps>(
   ({ comment, indentBody = true, className, ...props }, forwardedRef) => {
     // const { roomId } = useCommentsContext();
@@ -102,14 +101,14 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
               {/* TODO: Only show if permissions (for now = own comments) allow edit/delete */}
               <DropdownMenu.Root>
                 <DropdownMenu.Trigger
-                  className="lb-comment-button lb-comment-action"
+                  className="lb-button lb-comment-action"
                   aria-label="Comment options"
                 >
                   <EllipsisIcon />
                 </DropdownMenu.Trigger>
                 <DropdownMenu.Portal>
                   {/* TODO: Share viewport padding/spacing values with the mentions suggestions inset */}
-                  <DropdownMenu.Content className="lb-dropdown">
+                  <DropdownMenu.Content className="lb-dropdown" align="end">
                     <DropdownMenu.Item
                       className="lb-dropdown-item"
                       onSelect={handleEdit}

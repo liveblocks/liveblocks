@@ -54,23 +54,23 @@ function Example() {
 
   return (
     <main>
-      <div>
+      <div className="threads">
         {threads.map((thread) => (
-          <div key={thread.id}>
+          <div key={thread.id} className="thread">
             {thread.comments.map((comment) => (
               <Comment key={comment.id} comment={comment} />
             ))}
           </div>
         ))}
-        <Composer.Form
-          onCommentSubmit={({ body }) => {
-            createThread({ body, metadata: { resolved: false } });
-          }}
-        >
-          <Composer.Editor />
-          <Composer.Submit>Send</Composer.Submit>
-        </Composer.Form>
       </div>
+      <Composer.Form
+        onCommentSubmit={({ body }) => {
+          createThread({ body, metadata: { resolved: false } });
+        }}
+      >
+        <Composer.Editor />
+        <Composer.Submit>Send</Composer.Submit>
+      </Composer.Form>
     </main>
   );
 }
