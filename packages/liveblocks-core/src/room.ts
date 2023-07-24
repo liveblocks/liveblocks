@@ -2423,7 +2423,7 @@ function makeAuthDelegateForRoom(
   } else if (authentication.type === "custom") {
     return async () => {
       const response = await authentication.callback(roomId);
-      if (response == null || typeof response !== "object") {
+      if (!response || typeof response !== "object") {
         throw new Error(
           'We expect the authentication callback to return a token, but it does not. Hint: the return value should look like: { token: "..." }'
         );
