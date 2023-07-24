@@ -10,24 +10,26 @@
 
 import type { AuthValue } from "../auth-manager";
 import { StopRetrying } from "../connection";
-import type { ParsedAuthToken } from "../protocol/AuthToken";
+import type { AuthToken, ParsedAuthToken } from "../protocol/AuthToken";
 import { ServerMsgCode } from "../protocol/ServerMsg";
 import type { RoomDelegates } from "../room";
 import type { WebsocketCloseCodes } from "../types/IWebSocket";
 import type { MockWebSocket } from "./_MockWebSocketServer";
 import { MockWebSocketServer } from "./_MockWebSocketServer";
-import { makeSecretLegacyToken, serverMessage } from "./_utils";
+import {
+  makeAccessToken,
+  makeIDToken,
+  makeSecretLegacyToken,
+  serverMessage,
+} from "./_utils";
 
 type AuthBehavior = () => AuthValue;
 type SocketBehavior = (wss: MockWebSocketServer) => MockWebSocket;
 
-function makeSecretLegacyParsedToken(
-  actor: number,
-  scopes: string[]
-): ParsedAuthToken {
+function makeParsed(authToken: AuthToken): ParsedAuthToken {
   return {
     raw: "<some fake JWT token>",
-    parsed: makeSecretLegacyToken(actor, scopes),
+    parsed: authToken,
   };
 }
 
@@ -75,17 +77,56 @@ export function defineBehavior(
  * Configures the authentication delegate to always successfully authorize as
  * user 1. This is the default auth behavior.
  */
-export const AUTH_SUCCESS = ALWAYS_AUTH_AS(1);
+export const AUTH_SUCCESS = ROUND_ROBIN(
+  ALWAYS_AUTH_WITH_ACCESS_TOKEN,
+  ALWAYS_AUTH_WITH_ID_TOKEN,
+  ALWAYS_AUTH_WITH_LEGACY_TOKEN(1),
+  ALWAYS_AUTH_WITH_PUBKEY
+);
 
-export function ALWAYS_AUTH_AS(
+function ROUND_ROBIN(...behaviors: readonly AuthBehavior[]): AuthBehavior {
+  if (behaviors.length === 0) {
+    throw new Error("Must specify at least one behavior");
+  }
+
+  let index = -1;
+  return () => {
+    index = (index + 1) % behaviors.length;
+    const behavior = behaviors[index];
+    return behavior();
+  };
+}
+
+export function ALWAYS_AUTH_WITH_PUBKEY(): AuthValue {
+  return {
+    type: "public",
+    publicApiKey: "pk_xxx",
+  };
+}
+
+export function ALWAYS_AUTH_WITH_LEGACY_TOKEN(
   actor: number,
   scopes: string[] = []
 ): () => AuthValue {
   return () => {
     return {
       type: "secret",
-      token: makeSecretLegacyParsedToken(actor, scopes),
+      token: makeParsed(makeSecretLegacyToken(actor, scopes)),
     };
+  };
+}
+
+export function ALWAYS_AUTH_WITH_ID_TOKEN(): AuthValue {
+  return {
+    type: "secret",
+    token: makeParsed(makeIDToken()),
+  };
+}
+
+export function ALWAYS_AUTH_WITH_ACCESS_TOKEN(): AuthValue {
+  return {
+    type: "secret",
+    token: makeParsed(makeAccessToken()),
   };
 }
 

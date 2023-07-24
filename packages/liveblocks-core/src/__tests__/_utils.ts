@@ -5,8 +5,12 @@ import type { Json, JsonObject } from "../lib/Json";
 import { makePosition } from "../lib/position";
 import { deepClone } from "../lib/utils";
 import type { Authentication } from "../protocol/Authentication";
-import type { LegacySecretToken } from "../protocol/AuthToken";
-import { TokenKind } from "../protocol/AuthToken";
+import type {
+  AccessToken,
+  IDToken,
+  LegacySecretToken,
+} from "../protocol/AuthToken";
+import { Permission, TokenKind } from "../protocol/AuthToken";
 import type { BaseUserMeta } from "../protocol/BaseUserMeta";
 import type { ClientMsg } from "../protocol/ClientMsg";
 import { ClientMsgCode } from "../protocol/ClientMsg";
@@ -27,7 +31,7 @@ import type { Room, RoomDelegates } from "../room";
 import { createRoom } from "../room";
 import { WebsocketCloseCodes } from "../types/IWebSocket";
 import {
-  ALWAYS_AUTH_AS,
+  ALWAYS_AUTH_WITH_LEGACY_TOKEN,
   defineBehavior,
   SOCKET_AUTOCONNECT_AND_ROOM_STATE,
 } from "./_behaviors";
@@ -53,6 +57,28 @@ export function makeSecretLegacyToken(
     id: "user1",
     actor,
     scopes,
+  };
+}
+
+export function makeAccessToken(): AccessToken {
+  return {
+    k: TokenKind.ACCESS_TOKEN,
+    iat: Date.now() / 1000,
+    exp: Date.now() / 1000 + 60, // Valid for 1 minute
+    pid: "my-app",
+    uid: "user1",
+    perms: { "my-room": [Permission.Write] },
+  };
+}
+
+export function makeIDToken(): IDToken {
+  return {
+    k: TokenKind.ID_TOKEN,
+    iat: Date.now() / 1000,
+    exp: Date.now() / 1000 + 60, // Valid for 1 minute
+    pid: "my-app",
+    uid: "user1",
+    gids: ["group1"],
   };
 }
 
@@ -115,7 +141,7 @@ export async function prepareRoomWithStorage<
   }
 
   const { wss, delegates } = defineBehavior(
-    ALWAYS_AUTH_AS(actor, scopes),
+    ALWAYS_AUTH_WITH_LEGACY_TOKEN(actor, scopes),
     SOCKET_AUTOCONNECT_AND_ROOM_STATE(actor, scopes)
   );
 

@@ -324,6 +324,7 @@ export type Delegates<T extends BaseAuthResult> = {
   createSocket: (authValue: T) => IWebSocketInstance;
 };
 
+// istanbul ignore next
 function enableTracing(machine: FSM<Context, Event, State>) {
   const start = new Date().getTime();
 
@@ -911,6 +912,7 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
   cleanups.push(unsubscribe);
 
   // Install debug logging
+  // istanbul ignore next
   if (options.enableDebugLogging) {
     cleanups.push(enableTracing(machine));
   }

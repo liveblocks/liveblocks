@@ -305,6 +305,52 @@ describe("room", () => {
     expect(delegates.createSocket).toHaveBeenCalledTimes(2);
   });
 
+  test("should reauth immediately when told by server that token is expired (as refusal)", async () => {
+    const { room, delegates } = createTestableRoom(
+      {},
+      undefined,
+      SOCKET_SEQUENCE(
+        SOCKET_REFUSES(WebsocketCloseCodes.TOKEN_EXPIRED, "Token expired"),
+        SOCKET_AUTOCONNECT_AND_ROOM_STATE() // Repeated to infinity
+      )
+    );
+    room.connect();
+
+    await waitUntilStatus(room, "connected");
+
+    // First connection attempt was rejected, but second worked
+    expect(delegates.authenticate).toHaveBeenCalledTimes(2);
+    expect(delegates.createSocket).toHaveBeenCalledTimes(2);
+  });
+
+  test("should reauth immediately when told by server that token is expired (while connected)", async () => {
+    const { room, wss, delegates } = createTestableRoom(
+      {},
+      undefined,
+      SOCKET_AUTOCONNECT_AND_ROOM_STATE()
+    );
+    room.connect();
+
+    await waitUntilStatus(room, "connected");
+
+    expect(delegates.authenticate).toHaveBeenCalledTimes(1);
+    expect(delegates.createSocket).toHaveBeenCalledTimes(1);
+
+    // Closing this connection will trigger a reconnection...
+    wss.last.close(
+      new CloseEvent("close", {
+        code: WebsocketCloseCodes.TOKEN_EXPIRED,
+        wasClean: true,
+      })
+    );
+
+    await waitUntilStatus(room, "reconnecting");
+    await waitUntilStatus(room, "connected");
+
+    expect(delegates.authenticate).toHaveBeenCalledTimes(2);
+    expect(delegates.createSocket).toHaveBeenCalledTimes(2);
+  });
+
   test("should stop trying and disconnect if unauthorized (as refusal)", async () => {
     const { room, delegates } = createTestableRoom(
       {},
