@@ -54,7 +54,8 @@ async function waitForSocketToBeConnected() {
   await waitFor(() => MockWebSocket.instances.length === 1);
 
   const socket = MockWebSocket.instances[0]!;
-  expect(socket.callbacks.open.length).toBe(1);
+  expect(socket.callbacks.open.length).toBe(1); // Got open callback
+  expect(socket.callbacks.message.length).toBe(1); // Got ROOM_STATE message callback
 
   return socket;
 }
@@ -325,7 +326,7 @@ describe("middleware", () => {
           users: {
             "1": {
               info: { name: "Testy McTester" },
-              scopes: [],
+              scopes: ["room:write"],
             },
           },
           actor: 2,
@@ -349,6 +350,7 @@ describe("middleware", () => {
           info: {
             name: "Testy McTester",
           },
+          canWrite: true,
           isReadOnly: false,
           presence: { x: 1 },
         },
