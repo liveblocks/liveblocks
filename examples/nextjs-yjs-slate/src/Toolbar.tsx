@@ -1,16 +1,18 @@
-import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-import { FORMAT_TEXT_COMMAND } from "lexical";
+import { Editor } from "slate";
+import { useSlate } from "slate-react";
 import styles from "./Toolbar.module.css";
 
 export function Toolbar() {
-  const [editor] = useLexicalComposerContext();
+  const editor = useSlate();
 
   return (
     <div className={styles.toolbar}>
       <button
         className={styles.button}
-        onClick={() => {
-          editor.dispatchCommand(FORMAT_TEXT_COMMAND, "bold");
+        data-active={isMarkActive(editor, "bold") || undefined}
+        onClick={(event) => {
+          event.preventDefault();
+          toggleMark(editor, "bold");
         }}
         aria-label="Bold"
       >
@@ -29,8 +31,10 @@ export function Toolbar() {
       </button>
       <button
         className={styles.button}
-        onClick={() => {
-          editor.dispatchCommand(FORMAT_TEXT_COMMAND, "italic");
+        data-active={isMarkActive(editor, "italic") || undefined}
+        onClick={(event) => {
+          event.preventDefault();
+          toggleMark(editor, "italic");
         }}
         aria-label="Italic"
       >
@@ -49,8 +53,10 @@ export function Toolbar() {
       </button>
       <button
         className={styles.button}
-        onClick={() => {
-          editor.dispatchCommand(FORMAT_TEXT_COMMAND, "underline");
+        data-active={isMarkActive(editor, "underline") || undefined}
+        onClick={(event) => {
+          event.preventDefault();
+          toggleMark(editor, "underline");
         }}
         aria-label="Underline"
       >
@@ -69,4 +75,24 @@ export function Toolbar() {
       </button>
     </div>
   );
+}
+
+type Formattings = "bold" | "italic" | "underline";
+
+function toggleMark(editor: Editor, format: Formattings) {
+  const isActive = isMarkActive(editor, format);
+
+  if (isActive) {
+    console.log("remove", format);
+    Editor.removeMark(editor, format);
+  } else {
+    console.log("add", format);
+    Editor.addMark(editor, format, true);
+  }
+}
+
+function isMarkActive(editor: Editor, format: Formattings) {
+  const marks = Editor.marks(editor);
+  console.log(marks);
+  return marks ? marks?.[format] === true : false;
 }

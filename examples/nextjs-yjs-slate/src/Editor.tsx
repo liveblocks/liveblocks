@@ -1,7 +1,7 @@
 "use client";
 
 import LiveblocksProvider from "@liveblocks/yjs";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { createEditor, Editor, Transforms } from "slate";
 import { Editable, Slate, withReact } from "slate-react";
 import { withYjs, YjsEditor } from "@slate-yjs/core";
@@ -9,6 +9,8 @@ import * as Y from "yjs";
 import { useRoom } from "@/liveblocks.config";
 import { Loading } from "@/pages";
 import styles from "./Editor.module.css";
+import { Toolbar } from "@/src/Toolbar";
+import { Leaf } from "@/src/Leaf";
 
 export default function CollaborativeEditor() {
   const room = useRoom();
@@ -59,7 +61,9 @@ function SlateEditor({ sharedType }: { sharedType: Y.XmlText }) {
     };
 
     return e;
-  }, []);
+  }, [sharedType]);
+
+  const renderLeaf = useCallback((props: any) => <Leaf {...props} />, []);
 
   useEffect(() => {
     YjsEditor.connect(editor);
@@ -68,7 +72,12 @@ function SlateEditor({ sharedType }: { sharedType: Y.XmlText }) {
 
   return (
     <Slate editor={editor} initialValue={[emptyNode]}>
-      <Editable className={styles.editor} placeholder="Start typing here…" />
+      <Toolbar />
+      <Editable
+        className={styles.editor}
+        placeholder="Start typing here…"
+        renderLeaf={renderLeaf}
+      />
     </Slate>
   );
 }
