@@ -45,25 +45,35 @@ export interface IWebSocket {
   new (address: string): IWebSocketInstance;
 }
 
+/**
+ * The following ranges will be respected by the client:
+ *
+ *   40xx: client will disconnect
+ *   41xx: client will reauthorize
+ *   42xx: client will retry without reauthorizing (currently not used)
+ *
+ */
 export enum WebsocketCloseCodes {
+  /** Unexpected error happened with the network/infra level. In spirit akin to HTTP 503 */
   CLOSE_ABNORMAL = 1006,
-
-  /** Like an "HTTP 500" */
+  /** Unexpected error happened. In spirit akin to HTTP 500 */
   UNEXPECTED_CONDITION = 1011,
   /** Please back off for now, but try again in a few moments */
   TRY_AGAIN_LATER = 1013,
-
-  /** Like an "HTTP 403". Server understood the request, but refused to allow it. Re-authorizing won't help. */
-  NOT_ALLOWED = 4001,
-  /** The auth token used is expired, getting a fresh one and retrying might work. In spirit, it's a bit more akin to an "HTTP 401". */
-  TOKEN_EXPIRED = 4109,
-
+  /** Message wasn't understood, disconnect */
   INVALID_MESSAGE_FORMAT = 4000,
+  /** Server refused to allow connection. Re-authorizing won't help. Disconnect. In spirit akin to HTTP 403 */
+  NOT_ALLOWED = 4001,
+  /** Unused */
   MAX_NUMBER_OF_MESSAGES_PER_SECONDS = 4002,
+  /** Unused */
   MAX_NUMBER_OF_CONCURRENT_CONNECTIONS = 4003,
+  /** Unused */
   MAX_NUMBER_OF_MESSAGES_PER_DAY_PER_APP = 4004,
+  /** Room is full, disconnect */
   MAX_NUMBER_OF_CONCURRENT_CONNECTIONS_PER_ROOM = 4005,
-
-  // Puts the client in "disconnected" state immediately, don't try to connect again
+  /** The auth token is expired, reauthorize to get a fresh one. In spirit akin to HTTP 401 */
+  TOKEN_EXPIRED = 4109,
+  /** Disconnect immediately */
   CLOSE_WITHOUT_RETRY = 4999,
 }
