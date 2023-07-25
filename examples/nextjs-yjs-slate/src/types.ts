@@ -1,3 +1,8 @@
+export type Cursor = {
+  name: string;
+  color: string;
+};
+
 export type EmptyText = {
   text: string;
 };

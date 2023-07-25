@@ -4,13 +4,15 @@ import LiveblocksProvider from "@liveblocks/yjs";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { createEditor, Editor, Transforms } from "slate";
 import { Editable, Slate, withReact } from "slate-react";
-import { withYjs, YjsEditor } from "@slate-yjs/core";
+import { withCursors, withYjs, YjsEditor } from "@slate-yjs/core";
 import * as Y from "yjs";
-import { useRoom } from "@/liveblocks.config";
+import { LiveblocksProviderType, useRoom } from "@/liveblocks.config";
 import { Loading } from "@/pages";
 import styles from "./Editor.module.css";
 import { Toolbar } from "@/src/Toolbar";
 import { Leaf } from "@/src/Leaf";
+import { Cursors } from "@/src/Cursors";
+import { USER_INFO } from "@/src/constants";
 
 export default function CollaborativeEditor() {
   const room = useRoom();
@@ -37,16 +39,33 @@ export default function CollaborativeEditor() {
     return <Loading />;
   }
 
-  return <SlateEditor sharedType={sharedType} />;
+  return <SlateEditor provider={provider} sharedType={sharedType} />;
 }
 
 const emptyNode = {
   children: [{ text: "" }],
 };
 
-function SlateEditor({ sharedType }: { sharedType: Y.XmlText }) {
+function SlateEditor({
+  sharedType,
+  provider,
+}: {
+  sharedType: Y.XmlText;
+  provider: LiveblocksProviderType;
+}) {
   const editor = useMemo(() => {
-    const e = withReact(withYjs(createEditor(), sharedType));
+    // Set the current user's info
+    const user = USER_INFO[Math.floor(Math.random() * USER_INFO.length)];
+
+    const e = withReact(
+      withCursors(
+        withYjs(createEditor(), sharedType),
+        provider.awareness as any,
+        {
+          data: user,
+        }
+      )
+    );
 
     // Ensure editor always has at least 1 valid child
     const { normalizeNode } = e;
@@ -61,7 +80,7 @@ function SlateEditor({ sharedType }: { sharedType: Y.XmlText }) {
     };
 
     return e;
-  }, [sharedType]);
+  }, [sharedType, provider.awareness]);
 
   const renderLeaf = useCallback((props: any) => <Leaf {...props} />, []);
 
@@ -72,12 +91,14 @@ function SlateEditor({ sharedType }: { sharedType: Y.XmlText }) {
 
   return (
     <Slate editor={editor} initialValue={[emptyNode]}>
-      <Toolbar />
-      <Editable
-        className={styles.editor}
-        placeholder="Start typing here…"
-        renderLeaf={renderLeaf}
-      />
+      <Cursors>
+        <Toolbar />
+        <Editable
+          className={styles.editor}
+          placeholder="Start typing here…"
+          renderLeaf={renderLeaf}
+        />
+      </Cursors>
     </Slate>
   );
 }
