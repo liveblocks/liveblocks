@@ -4,6 +4,7 @@ import { linkDevTools, setupDevTools, unlinkDevTools } from "./devtools";
 import { deprecateIf } from "./lib/deprecation";
 import type { Json, JsonObject } from "./lib/Json";
 import type { Resolve } from "./lib/Resolve";
+import type { CustomAuthenticationResult } from "./protocol/Authentication";
 import type { BaseUserMeta } from "./protocol/BaseUserMeta";
 import type { Polyfills, Room, RoomDelegates, RoomInitializers } from "./room";
 import {
@@ -78,7 +79,7 @@ export type Client = {
 
 export type AuthEndpoint =
   | string
-  | ((room?: string) => Promise<{ token: string }>);
+  | ((room?: string) => Promise<CustomAuthenticationResult>);
 
 /**
  * The authentication endpoint that is called to ensure that the current user has access to a room.

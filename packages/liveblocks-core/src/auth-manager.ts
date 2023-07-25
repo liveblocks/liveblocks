@@ -1,7 +1,10 @@
 import { StopRetrying } from "./connection";
 import type { Json } from "./lib/Json";
 import { isPlainObject } from "./lib/utils";
-import type { Authentication } from "./protocol/Authentication";
+import type {
+  Authentication,
+  CustomAuthenticationResult,
+} from "./protocol/Authentication";
 import type { ParsedAuthToken } from "./protocol/AuthToken";
 import { parseAuthToken, Permission, TokenKind } from "./protocol/AuthToken";
 import type { Polyfills } from "./room";
@@ -19,7 +22,9 @@ export type AuthManager = {
   ): Promise<AuthValue>;
 };
 
-type AuthEndpoint = string | ((room: string) => Promise<{ token: string }>);
+type AuthEndpoint =
+  | string
+  | ((room: string) => Promise<CustomAuthenticationResult>);
 
 export type AuthenticationOptions = {
   polyfills?: Polyfills;

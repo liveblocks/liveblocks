@@ -142,6 +142,7 @@ export type UserLeftServerMsg = {
 export type YDocUpdate = {
   readonly type: ServerMsgCode.UPDATE_YDOC;
   readonly update: string;
+  readonly isSync: boolean;
 };
 
 /**
