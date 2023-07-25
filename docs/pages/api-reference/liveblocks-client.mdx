@@ -31,7 +31,7 @@ Please refer to our [Authentication guide](/docs/rooms/authentication).
 ```ts
 import { createClient } from "@liveblocks/client";
 
-const client = createClient({ authEndpoint: "/api/auth" });
+const client = createClient({ authEndpoint: "/api/liveblocks-auth" });
 ```
 
 ### createClient with callback [#createClientCallback]
@@ -57,7 +57,7 @@ import { createClient } from "@liveblocks/client";
 
 const client = createClient({
   authEndpoint: async (room) => {
-    const response = await fetch("/api/auth", {
+    const response = await fetch("/api/liveblocks-auth", {
       method: "POST",
       headers: {
         Authentication: "<your own headers here>",
