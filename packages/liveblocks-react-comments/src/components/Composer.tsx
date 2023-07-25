@@ -8,12 +8,15 @@ import { SendIcon } from "../icons/send";
 import type {
   ComposerEditorProps,
   ComposerFormProps,
+  ComposerRenderMentionProps,
   ComposerSubmitComment,
 } from "../primitives/Composer";
 import { Composer as ComposerPrimitive } from "../primitives/Composer";
+import { MENTION_CHARACTER } from "../slate/mentions";
 import type { SlotProp } from "../types";
 import { classNames } from "../utils/class-names";
 import { Logo } from "./Logo";
+import { User } from "./User";
 
 interface ComposerMenuProps extends ComponentProps<"div"> {
   actions: ReactNode;
@@ -63,6 +66,15 @@ export function ComposerMenu({
       <Logo className="lb-composer-logo" />
       <div className="lb-composer-actions">{actions}</div>
     </div>
+  );
+}
+
+function ComposerMention({ userId }: ComposerRenderMentionProps) {
+  return (
+    <ComposerPrimitive.Mention className="lb-composer-mention">
+      {MENTION_CHARACTER}
+      <User userId={userId} />
+    </ComposerPrimitive.Mention>
   );
 }
 
@@ -133,6 +145,8 @@ export const Composer = forwardRef<HTMLFormElement, ComposerProps>(
           initialValue={initialValue}
           placeholder="Write a comment…"
           disabled={disabled}
+          renderMention={ComposerMention}
+          // renderMentionSuggestions={}
         />
         <ComposerMenu
           actions={

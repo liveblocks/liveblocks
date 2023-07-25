@@ -464,11 +464,11 @@ function ComposerMentionSuggestionsWrapper({
         ...detectOverflowOptions,
         apply({ availableWidth, availableHeight, elements }) {
           elements.floating.style.setProperty(
-            "--liveblocks-composer-suggestions-available-width",
+            "--lb-composer-suggestions-available-width",
             `${availableWidth}px`
           );
           elements.floating.style.setProperty(
-            "--liveblocks-composer-suggestions-available-height",
+            "--lb-composer-suggestions-available-height",
             `${availableHeight}px`
           );
         },
@@ -629,7 +629,7 @@ const ComposerSuggestions = forwardRef<
       style={{
         display: "flex",
         flexDirection: "column",
-        maxHeight: "var(--liveblocks-composer-suggestions-available-height)",
+        maxHeight: "var(--lb-composer-suggestions-available-height)",
         ...style,
       }}
       ref={mergedRefs}
