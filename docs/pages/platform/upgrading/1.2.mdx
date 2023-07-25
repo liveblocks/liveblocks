@@ -81,10 +81,10 @@ offers three (instead of one) APIs to obtain an auth token:
    and drop support for them.</small>
 1. **Access tokens** is our new preferred/recommended way to to auth, because it
    is very easy to manage from your own backend.
-1. **ID tokens** are used to look up permissions on-the-fly as you’re entering
-   rooms. It requires more upfront setup of your room’s permissions, and
-   requires you to keep your permissions in sync with Liveblocks proactively,
-   using our [Permission REST APIs](/docs/rooms/permissions/id-token).
+1. **ID tokens** are best used if you create rooms from your backend before your
+   clients enter them. You can specify who has access to those rooms using our
+   [Permission REST APIs](/docs/rooms/permissions/id-token), and let the source
+   of truth for those permissions be Liveblocks.
 
 <Banner title="What's the difference?">
 
