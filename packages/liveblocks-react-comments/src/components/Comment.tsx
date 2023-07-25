@@ -6,6 +6,8 @@ import React, { forwardRef, useCallback, useState } from "react";
 import { useCommentsContext } from "../factory";
 import { CheckIcon } from "../icons/check";
 import { CrossIcon } from "../icons/cross";
+import { DeleteIcon } from "../icons/delete";
+import { EditIcon } from "../icons/edit";
 import { EllipsisIcon } from "../icons/ellipsis";
 import type { CommentRenderMentionProps } from "../primitives/Comment";
 import { Comment as CommentPrimitive } from "../primitives/Comment";
@@ -117,12 +119,14 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
                       className="lb-dropdown-item"
                       onSelect={handleEdit}
                     >
+                      <EditIcon className="lb-dropdown-item-icon" />
                       Edit
                     </DropdownMenu.Item>
                     <DropdownMenu.Item
                       className="lb-dropdown-item"
                       onSelect={handleDelete}
                     >
+                      <DeleteIcon className="lb-dropdown-item-icon" />
                       Delete
                     </DropdownMenu.Item>
                   </DropdownMenu.Content>

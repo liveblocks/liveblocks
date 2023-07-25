@@ -6,8 +6,10 @@
   --lb-accent-foreground: #fff;
   --lb-radius: 0.5em;
   --lb-spacing: 1rem;
+  --lb-stroke: 1.5px;
 
   /* More specific */
+  --lb-avatar-radius: var(--lb-radius);
   --lb-button-size: 1.75rem;
   --lb-dropdown-background: #fff;
 }
@@ -44,6 +46,10 @@
       var(--lb-background) 0 0 0 2px,
       var(--lb-accent) 0 0 0 4px;
   }
+
+  & svg {
+    stroke-width: var(--lb-stroke);
+  }
 }
 
 /**
@@ -62,6 +68,8 @@
 }
 
 .lb-dropdown-item {
+  display: flex;
+  align-items: center;
   padding: calc(0.25 * var(--lb-spacing)) calc(0.5 * var(--lb-spacing));
   border-radius: calc(var(--lb-radius) - 4px);
   outline: none;
@@ -71,6 +79,11 @@
     background: var(--lb-accent);
     color: var(--lb-accent-foreground);
   }
+
+  & svg {
+    margin-inline-start: calc(-4px + 0.125 * var(--lb-spacing));
+    margin-inline-end: calc(0.5 * var(--lb-spacing));
+  }
 }
 
 /**
@@ -79,13 +92,13 @@
 
 .lb-avatar {
   position: relative;
-  container: inline-size;
+  container: avatar / inline-size;
   display: flex;
   justify-content: center;
   align-items: center;
   overflow: hidden;
   aspect-ratio: 1;
-  border-radius: 50%;
+  border-radius: var(--lb-avatar-radius);
   background: color-mix(
     in srgb,
     var(--lb-foreground),
@@ -106,6 +119,7 @@
 .lb-avatar-fallback {
   color: color-mix(in srgb, var(--lb-foreground), var(--lb-background) 60%);
   font-size: 35cqw;
+  font-weight: 500;
   white-space: nowrap;
 }
 
@@ -149,10 +163,9 @@
  */
 
 .lb-comment {
-  --lb-comment-avatar-size: 2rem;
+  --lb-comment-avatar-size: 2.5rem;
 
   position: relative;
-  min-height: var(--lb-comment-avatar-size);
   background: var(--lb-background);
   color: var(--lb-foreground);
   font-weight: 400;
@@ -164,7 +177,7 @@
   display: flex;
   gap: calc(0.75 * var(--lb-spacing));
   align-items: center;
-  height: var(--lb-button-size);
+  height: var(--lb-comment-avatar-size);
 }
 
 .lb-comment-info {
@@ -177,6 +190,7 @@
   width: var(--lb-comment-avatar-size);
 }
 
+/* TODO: Find better class name */
 .lb-comment-info-labels {
   display: flex;
   gap: calc(0.5 * var(--lb-spacing));
@@ -203,24 +217,35 @@
 
 .lb-comment-body {
   color: color-mix(in srgb, var(--lb-foreground), var(--lb-background) 20%);
-  text-wrap: pretty;
   margin-block-start: calc(0.75 * var(--lb-spacing));
 }
 
+/* Prevent empty lines from collapsing */
+.lb-comment-body p span:only-child:empty::before {
+  content: "\FEFF";
+  user-select: none;
+}
+
 .lb-comment\:indent-body {
-  .lb-comment-avatar {
+  min-height: var(--lb-comment-avatar-size);
+
+  & .lb-comment-header {
+    height: var(--lb-button-size);
+  }
+
+  & .lb-comment-avatar {
     position: absolute;
     top: 0;
     left: 0;
   }
 
-  .lb-comment-info-labels {
+  & .lb-comment-info-labels {
     margin-inline-start: calc(
       var(--lb-comment-avatar-size) + 0.75 * var(--lb-spacing)
     );
   }
 
-  .lb-comment-body {
+  & .lb-comment-body {
     padding-inline-start: calc(
       var(--lb-comment-avatar-size) + 0.75 * var(--lb-spacing)
     );
@@ -233,8 +258,8 @@
 
 .lb-comment-body p,
 .lb-composer-editor p {
-  margin-block-start: 1em;
-  margin-block-end: 1em;
+  margin-block-start: 0.25em;
+  margin-block-end: 0.25em;
 
   &:first-of-type {
     margin-block-start: 0;
