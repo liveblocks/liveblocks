@@ -529,17 +529,35 @@ const unsubscribe = room.subscribe("connection", (status) => {
 
 ### Room.subscribe("error") [#Room.subscribe.error]
 
-Subscribe to potential room connection errors.
+Subscribe to unrecoverable room connection errors. This event will be emitted
+right before the client disconnects and won’t try reconnecting again.
 
 Returns an unsubscribe function.
 
 ```ts
 const unsubscribe = room.subscribe("error", (error) => {
-  if (error.code === 4005) {
-    // Maximum concurrent connections per room exceeded.
+  switch (error.code) {
+    case -1:
+      // Authentication error
+      break;
+
+    case 4001:
+      // Could not connect because you don't have access to this room
+      break;
+
+    case 4005:
+      // Could not connect because room was full
+      break;
+
+    default:
+      // Unexpected error
+      break;
   }
 });
 ```
+
+You can use this event to trigger a “Not allowed” screen/dialog. If you want to
+offer retrying connecting, call `room.reconnect()`.
 
 ### Room.subscribe("history") [#Room.subscribe.history]
 
