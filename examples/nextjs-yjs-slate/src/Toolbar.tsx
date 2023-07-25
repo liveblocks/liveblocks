@@ -1,6 +1,7 @@
 import { Editor } from "slate";
 import { useSlate } from "slate-react";
 import styles from "./Toolbar.module.css";
+import { CustomText } from "./types";
 
 export function Toolbar() {
   const editor = useSlate();
@@ -77,22 +78,17 @@ export function Toolbar() {
   );
 }
 
-type Formattings = "bold" | "italic" | "underline";
-
-function toggleMark(editor: Editor, format: Formattings) {
+function toggleMark(editor: Editor, format: keyof CustomText) {
   const isActive = isMarkActive(editor, format);
 
   if (isActive) {
-    console.log("remove", format);
     Editor.removeMark(editor, format);
   } else {
-    console.log("add", format);
     Editor.addMark(editor, format, true);
   }
 }
 
-function isMarkActive(editor: Editor, format: Formattings) {
+function isMarkActive(editor: Editor, format: keyof CustomText) {
   const marks = Editor.marks(editor);
-  console.log(marks);
   return marks ? marks?.[format] === true : false;
 }
