@@ -221,50 +221,11 @@ lot faster.
   You can make maximally 10 `.allow()` calls per session.
 </Banner>
 
-## Best practices for naming your rooms
-
-<Banner type="error" title="TODO!">
-  I think we should move this section to a dedicated page instead of include it
-  here in this guide. Maybe somewhere underneath "Authentication"?
-</Banner>
-
-Being able to specify permissions for inifite rooms using prefix pattern
-matching offers great powers, but it does assume that you design your room names
-a bit more cautiously. For example, granting room prefix permissions won’t work
-if you use random room IDs for your project, because there won’t be a shared
-prefix.
-
-Therefore, if you want to adopt this pattern, we recommend designing your room
-names hierarchically in namespaced “buckets” in a way that makes sense for your
-app.
-
-For example, if your app manages documents by team, each room could be named
-using a `<team-id>:<room-id>` pattern:
-
-For example:
-
-- `"engineering:R5AhJlTSKwBR"`
-- `"engineering:PqY3oqRcV-7Z"`
-- `"marketing:SVUPHaboSc10"`
-- `"marketing:Y7Uyw44YRxjY"`
-
-Please note that the `:` separator used here has no specific meaning. You can
-use any separator you like. Just make sure the separator character you pick
-cannot occur in the IDs you’re generating.
-
-As another example, if your app is a SAAS product and you have many customers,
-you can add an additional top-level key to prefix your room names, e.g.
-`<app-id>::<group-id>/<room-id>`:
-
-Example room IDs:
-
-- `"jOzGLFEAedV5::engineering/R5AhJlTSKwBR"`
-- `"jOzGLFEAedV5::engineering/PqY3oqRcV-7Z"`
-- `"rGSoepTL7r-Y::marketing/SVUPHaboSc10"`
-- `"rGSoepTL7r-Y::marketing/Y7Uyw44YRxjY"`
-
-Again, the `::` and `/` separators here are used for illustrative purposes. You
-can use any separator you want.
+If you want to adopt this pattern, you’ll have to structurally name your
+Liveblocks rooms to follow a specific pattern. See
+[authentication patterns](/docs/rooms/permissions/access-token#patterns) to
+learn about common patterns you can use, or learn about our
+[naming best practices](/docs/rooms/permissions/access-token#naming-best-practices).
 
 ## Upgrading to ID tokens (advanced) [#upgrade-to-id-tokens]
 

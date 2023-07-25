@@ -12,7 +12,7 @@ gives access to. It’s easy to give out those key cards right from your backend
 To set up your authentication endpoint with access token permissions, make sure
 to [follow these quick steps](/docs/rooms/authentication/id-token-permissions).
 
-## Authentication patterns
+## Authentication patterns [#patterns]
 
 ### Full access to just one room
 
@@ -43,6 +43,10 @@ export default async function authEndpoint(req, res) {
 ```
 
 ### Full access to all rooms from a team
+
+To be able to use this pattern, you will have to name your rooms using a fixed
+pattern of `<team>:<room>`. For suggestions, read more on our
+[naming best practices](#naming-best-practices).
 
 ```ts
 import { Liveblocks } from "@liveblocks/node";
@@ -81,6 +85,10 @@ export default async function authEndpoint(req, res) {
 
 ### Full access to all rooms from a team, but read-only access to rooms from the organization level
 
+To be able to use this pattern, you will have to name your rooms using a fixed
+pattern of `<org>:<team>:<room>`. For suggestions, read more on our
+[naming best practices](#naming-best-practices).
+
 ```ts
 import { Liveblocks } from "@liveblocks/node";
 
@@ -112,3 +120,54 @@ export default async function authEndpoint(req, res) {
   return res.status(status).end(body);
 }
 ```
+
+## Best practices for naming your rooms [#naming-best-practices]
+
+Being able to specify permissions for inifite rooms using prefix pattern
+matching offers great powers, but it does assume that you design your room names
+a bit more cautiously. For example, granting room prefix permissions won’t work
+if you use random room IDs for your project, because there won’t be a shared
+prefix.
+
+Therefore, if you want to adopt this pattern, we recommend designing your room
+names hierarchically in namespaced “buckets” in a way that makes sense for your
+app.
+
+For example, if your app manages documents by team, each room could be named
+using a `<team-id>:<room-id>` pattern:
+
+For example:
+
+- `"engineering:R5AhJlTSKwBR"`
+- `"engineering:PqY3oqRcV-7Z"`
+- `"marketing:SVUPHaboSc10"`
+- `"marketing:Y7Uyw44YRxjY"`
+
+<Banner title="Punctuation doesn't matter">
+  Please note that the `:` separator used here carries no specific meaning. You
+  can use any separator you like. Just make sure the separator character you
+  pick cannot occur in the IDs you’re generating.
+</Banner>
+
+As another example, if your app is a SAAS product and you have many customers,
+you can add an additional top-level key to prefix your room names, e.g.
+`<app-id>::<group-id>/<room-id>`:
+
+Example room IDs:
+
+- `"jOzGLFEAedV5::engineering/R5AhJlTSKwBR"`
+- `"jOzGLFEAedV5::engineering/PqY3oqRcV-7Z"`
+- `"rGSoepTL7r-Y::marketing/SVUPHaboSc10"`
+- `"rGSoepTL7r-Y::marketing/Y7Uyw44YRxjY"`
+
+Again, the `::` and `/` separators here are used for illustrative purposes. You
+can use any separator you want.
+
+<Banner title="How can I rename my rooms?" type="success">
+  If you have existing rooms that aren't created with this naming scheme in
+  mind, it may be hard to change them. We currently don't offer a REST API to
+  rename your rooms (yet). If you need assistence with renaming your rooms, our
+  team can help! Please reach out at
+  [support@liveblocks.io](mailto:support@liveblocks.io) or
+  [Discord](https://liveblocks.io/discord).
+</Banner>
