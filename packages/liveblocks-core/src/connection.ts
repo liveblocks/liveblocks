@@ -401,6 +401,13 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
   // a specific Liveblocks reason
   const onLiveblocksError = makeEventSource<LiveblocksError>();
 
+  function fireErrorEvent(errmsg: string, errcode: number) {
+    return () => {
+      const err = new LiveblocksError(errmsg, errcode);
+      onLiveblocksError.notify(err);
+    };
+  }
+
   const initialContext: Context & { authValue: T | null } = {
     successCount: 0,
     authValue: null,
@@ -483,7 +490,10 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
         if (failedEvent.reason instanceof StopRetrying) {
           return {
             target: "@idle.failed",
-            effect: log(LogLevel.ERROR, failedEvent.reason.message),
+            effect: [
+              log(LogLevel.ERROR, failedEvent.reason.message),
+              fireErrorEvent(failedEvent.reason.message, -1),
+            ],
           };
         }
 
@@ -695,7 +705,10 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
         if (err instanceof StopRetrying) {
           return {
             target: "@idle.failed",
-            effect: log(LogLevel.ERROR, err.message),
+            effect: [
+              log(LogLevel.ERROR, err.message),
+              fireErrorEvent(err.message, -1),
+            ],
           };
         }
 
@@ -724,7 +737,10 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
           if (shouldDisconnect(err.code)) {
             return {
               target: "@idle.failed",
-              effect: log(LogLevel.ERROR, err.reason),
+              effect: [
+                log(LogLevel.ERROR, err.reason),
+                fireErrorEvent(err.reason, err.code),
+              ],
             };
           }
         }
@@ -816,7 +832,10 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
         if (shouldDisconnect(e.event.code)) {
           return {
             target: "@idle.failed",
-            effect: logPermanentClose,
+            effect: [
+              logPermanentClose,
+              fireErrorEvent(e.event.reason, e.event.code),
+            ],
           };
         }
 
@@ -838,15 +857,7 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
           // aggressively, and emit a Liveblocks error event...
           return {
             target: "@connecting.backoff",
-            effect: [
-              increaseBackoffDelayAggressively,
-              logCloseEvent(e.event),
-              () => {
-                const err = new LiveblocksError(e.event.reason, e.event.code);
-                // XXX Only "throw errors" when disconnecting!
-                onLiveblocksError.notify(err);
-              },
-            ],
+            effect: [increaseBackoffDelayAggressively, logCloseEvent(e.event)],
           };
         }
 

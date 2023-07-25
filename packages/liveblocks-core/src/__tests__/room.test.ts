@@ -355,15 +355,21 @@ describe("room", () => {
     const { room, delegates } = createTestableRoom(
       {},
       undefined,
-      SOCKET_REFUSES(WebsocketCloseCodes.NOT_ALLOWED)
+      SOCKET_REFUSES(WebsocketCloseCodes.NOT_ALLOWED, "whatever")
     );
     room.connect();
+
+    let err = {} as any;
+    room.events.error.subscribeOnce((e) => (err = e));
 
     await waitUntilStatus(room, "connecting");
     await waitUntilStatus(room, "disconnected");
 
     expect(delegates.authenticate).toHaveBeenCalledTimes(1); // Only once!
     expect(delegates.createSocket).toHaveBeenCalledTimes(1);
+
+    expect(err.message).toEqual("whatever");
+    expect(err.code).toEqual(4001 /* NOT_ALLOWED */);
   });
 
   test("should stop trying and disconnect if unauthorized (while connected)", async () => {
@@ -1755,14 +1761,18 @@ describe("room", () => {
       }
     });
 
-    test.only("when error code 40xx (immediately)", async () => {
+    test("when error code 40xx (immediately)", async () => {
       const { room, wss } = createTestableRoom({ x: 0 });
       room.connect();
+
+      let err = {} as any;
+      room.events.error.subscribeOnce((e) => (err = e));
 
       wss.onConnection((conn) => {
         conn.server.close(
           new CloseEvent("close", {
             code: 4042,
+            reason: "whatever",
             wasClean: false,
           })
         );
@@ -1775,14 +1785,19 @@ describe("room", () => {
         await jest.advanceTimersByTimeAsync(0);
         await waitUntilStatus(room, "disconnected");
         expect(wss.connections.size).toBe(1);
+        expect(err.message).toEqual("whatever");
+        expect(err.code).toEqual(4042);
       } finally {
         jest.useRealTimers();
       }
     });
 
-    test.only("when error code 40xx (after delay)", async () => {
+    test("when error code 40xx (after delay)", async () => {
       const { room, wss } = createTestableRoom({ x: 0 });
       room.connect();
+
+      let err = {} as any;
+      room.events.error.subscribeOnce((e) => (err = e));
 
       // Close the connection 1.111 second after it opened
       wss.onConnection((conn) => {
@@ -1790,6 +1805,7 @@ describe("room", () => {
           conn.server.close(
             new CloseEvent("close", {
               code: 4042,
+              reason: "whatever",
               wasClean: false,
             })
           );
@@ -1806,6 +1822,8 @@ describe("room", () => {
 
         await waitUntilStatus(room, "disconnected");
         expect(wss.connections.size).toBe(1);
+        expect(err.message).toEqual("whatever");
+        expect(err.code).toEqual(4042);
       } finally {
         jest.useRealTimers();
       }
