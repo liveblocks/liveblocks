@@ -139,10 +139,15 @@ describe("room / auth", () => {
         }),
       }
     );
-
     room.connect();
+
+    let err = {} as any;
+    room.events.error.subscribeOnce((e) => (err = e));
+
     await waitUntilStatus(room, "disconnected");
     expect(consoleErrorSpy).toHaveBeenCalledWith("Unauthorized: No access");
+    expect(err.message).toEqual("Unauthorized: No access");
+    expect(err.code).toEqual(-1); // Not a WebSocket close code
     room.destroy();
   });
 });
@@ -240,12 +245,30 @@ describe("room", () => {
     expect(delegates.createSocket).toHaveBeenCalledTimes(3);
   });
 
-  test("should reauth when getting an unknown server response (as refusal)", async () => {
+  test("should not reauth when getting an unknown server response in the 42xx range (as refusal)", async () => {
     const { room, delegates } = createTestableRoom(
       {},
       undefined,
       SOCKET_SEQUENCE(
         SOCKET_REFUSES(4242 /* Unknown code */, "An unknown error reason"),
+        SOCKET_AUTOCONNECT_AND_ROOM_STATE() // Repeated to infinity
+      )
+    );
+    room.connect();
+
+    await waitUntilStatus(room, "connecting");
+    await waitUntilStatus(room, "connected", 4000);
+
+    expect(delegates.authenticate).toHaveBeenCalledTimes(1); // No reauth!
+    expect(delegates.createSocket).toHaveBeenCalledTimes(2);
+  });
+
+  test("should reauth when getting an unknown server response in the 43xx range (as refusal)", async () => {
+    const { room, delegates } = createTestableRoom(
+      {},
+      undefined,
+      SOCKET_SEQUENCE(
+        SOCKET_REFUSES(4342 /* Unknown code */, "An unknown error reason"),
         SOCKET_AUTOCONNECT_AND_ROOM_STATE() // Repeated to infinity
       )
     );
@@ -262,22 +285,24 @@ describe("room", () => {
     const { room, delegates } = createTestableRoom(
       {},
       undefined,
-      SOCKET_SEQUENCE(
-        SOCKET_REFUSES(
-          WebsocketCloseCodes.MAX_NUMBER_OF_CONCURRENT_CONNECTIONS,
-          "Room full"
-        ),
-        SOCKET_AUTOCONNECT_AND_ROOM_STATE() // Repeated to infinity
+      SOCKET_REFUSES(
+        WebsocketCloseCodes.MAX_NUMBER_OF_CONCURRENT_CONNECTIONS_PER_ROOM,
+        "room full"
       )
     );
     room.connect();
 
-    await waitUntilStatus(room, "connecting");
-    await waitUntilStatus(room, "connected", 4000);
+    let err = {} as any;
+    room.events.error.subscribeOnce((e) => (err = e));
 
-    // ...but we should not hit authentication again here (instead, the token should be reused)
-    expect(delegates.authenticate).toHaveBeenCalledTimes(1); // Only once!
-    expect(delegates.createSocket).toHaveBeenCalledTimes(2);
+    await waitUntilStatus(room, "disconnected");
+
+    expect(delegates.authenticate).toHaveBeenCalledTimes(1);
+    expect(delegates.createSocket).toHaveBeenCalledTimes(1);
+    expect(err.message).toEqual("room full");
+    expect(err.code).toEqual(
+      4005 /* MAX_NUMBER_OF_CONCURRENT_CONNECTIONS_PER_ROOM */
+    );
   });
 
   test("should reconnect without getting a new auth token when told by server that room is full (while connected)", async () => {
@@ -288,21 +313,28 @@ describe("room", () => {
     );
     room.connect();
 
+    let err = {} as any;
+    room.events.error.subscribeOnce((e) => (err = e));
+
     await waitUntilStatus(room, "connected");
 
     // Closing this connection will trigger a reconnection...
     wss.last.close(
       new CloseEvent("close", {
-        code: WebsocketCloseCodes.MAX_NUMBER_OF_CONCURRENT_CONNECTIONS,
+        code: WebsocketCloseCodes.MAX_NUMBER_OF_CONCURRENT_CONNECTIONS_PER_ROOM,
+        reason: "room full",
         wasClean: true,
       })
     );
 
-    await waitUntilStatus(room, "reconnecting");
-    await waitUntilStatus(room, "connected", 4000);
+    await waitUntilStatus(room, "disconnected");
 
-    expect(delegates.authenticate).toHaveBeenCalledTimes(1); // Only once!
-    expect(delegates.createSocket).toHaveBeenCalledTimes(2);
+    expect(delegates.authenticate).toHaveBeenCalledTimes(1);
+    expect(delegates.createSocket).toHaveBeenCalledTimes(1);
+    expect(err.message).toEqual("room full");
+    expect(err.code).toEqual(
+      4005 /* MAX_NUMBER_OF_CONCURRENT_CONNECTIONS_PER_ROOM */
+    );
   });
 
   test("should reauth immediately when told by server that token is expired (as refusal)", async () => {
@@ -380,12 +412,16 @@ describe("room", () => {
     );
     room.connect();
 
+    let err = {} as any;
+    room.events.error.subscribeOnce((e) => (err = e));
+
     await waitUntilStatus(room, "connected");
 
     // Closing this connection will trigger a reconnection...
     wss.last.close(
       new CloseEvent("close", {
         code: WebsocketCloseCodes.NOT_ALLOWED,
+        reason: "whatever",
         wasClean: true,
       })
     );
@@ -394,6 +430,8 @@ describe("room", () => {
 
     expect(delegates.authenticate).toHaveBeenCalledTimes(1); // Only once!
     expect(delegates.createSocket).toHaveBeenCalledTimes(1);
+    expect(err.message).toEqual("whatever");
+    expect(err.code).toEqual(4001 /* NOT_ALLOWED */);
   });
 
   test("should disconnect if told by server to not try reconnecting again (as refusal)", async () => {
@@ -401,11 +439,14 @@ describe("room", () => {
       {},
       undefined,
       SOCKET_SEQUENCE(
-        SOCKET_REFUSES(WebsocketCloseCodes.CLOSE_WITHOUT_RETRY),
+        SOCKET_REFUSES(WebsocketCloseCodes.CLOSE_WITHOUT_RETRY, "whaever"),
         SOCKET_AUTOCONNECT_AND_ROOM_STATE()
       )
     );
     room.connect();
+
+    let err = {} as any;
+    room.events.error.subscribeOnce((e) => (err = e));
 
     // Will try to reconnect, then gets refused, then disconnects
     await waitUntilStatus(room, "connecting");
@@ -413,6 +454,8 @@ describe("room", () => {
 
     expect(delegates.authenticate).toHaveBeenCalledTimes(1); // Only once!
     expect(delegates.createSocket).toHaveBeenCalledTimes(1);
+    expect(err.message).toEqual("whaever");
+    expect(err.code).toEqual(4999 /* CLOSE_WITHOUT_RETRY */);
   });
 
   test("should disconnect if told by server to not try reconnecting again (while connected)", async () => {
@@ -423,12 +466,16 @@ describe("room", () => {
     );
     room.connect();
 
+    let err = {} as any;
+    room.events.error.subscribeOnce((e) => (err = e));
+
     await waitUntilStatus(room, "connected");
 
     // Closing this connection will trigger a reconnection...
     wss.last.close(
       new CloseEvent("close", {
         code: WebsocketCloseCodes.CLOSE_WITHOUT_RETRY,
+        reason: "wha'er",
         wasClean: true,
       })
     );
@@ -437,6 +484,8 @@ describe("room", () => {
 
     expect(delegates.authenticate).toHaveBeenCalledTimes(1); // It re-authed!
     expect(delegates.createSocket).toHaveBeenCalledTimes(1);
+    expect(err.message).toEqual("wha'er");
+    expect(err.code).toEqual(4999 /* CLOSE_WITHOUT_RETRY */);
   });
 
   test("initial presence should be sent once the connection is open", async () => {
