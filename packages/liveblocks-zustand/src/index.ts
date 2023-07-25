@@ -208,7 +208,7 @@ const middlewareImpl: InnerLiveblocksMiddleware = (config, options) => {
       );
 
       unsubscribeCallbacks.push(
-        room.events.me.subscribe(() => {
+        room.events.myPresence.subscribe(() => {
           if (isPatching === false) {
             set(
               selectFields(
