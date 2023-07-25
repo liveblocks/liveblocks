@@ -612,7 +612,7 @@ export function createRoomContext<
 
   function useSuspendUntilPresenceLoaded(): void {
     const room = useRoom();
-    if (room.getSelf() === null) {
+    if (room.getSelf() !== null) {
       return;
     }
 
@@ -622,7 +622,7 @@ export function createRoomContext<
     // promise resolves (aka until storage has loaded). After that, it will
     // render this component tree again.
     throw new Promise<void>((res) => {
-      room.events.connection.subscribeOnce(() => res());
+      room.events.status.subscribeOnce(() => res());
     });
   }
 

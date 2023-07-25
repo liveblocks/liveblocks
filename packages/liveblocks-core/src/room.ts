@@ -555,6 +555,7 @@ export type Room<
   getStorageSnapshot(): LiveObject<TStorage> | null;
 
   readonly events: {
+    /** @deprecated Prefer `status` instead. */
     readonly connection: Observable<LegacyConnectionStatus>; // Old/legacy API
     readonly status: Observable<Status>; // New/recommended API
     readonly lostConnection: Observable<LostConnectionEvent>;

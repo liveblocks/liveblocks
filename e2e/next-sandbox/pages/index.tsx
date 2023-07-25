@@ -8,9 +8,19 @@ export default function Home() {
 
       <ul>
         <li>
-          <Link href="/presence">
-            <a>/presence</a>
-          </Link>
+          <div>/storage</div>
+          <ul>
+            <li>
+              <Link href="/presence">
+                <a>/presence</a>
+              </Link>
+            </li>
+            <li>
+              <Link href="/presence/with-suspense">
+                <a>/presence/with-suspense</a>
+              </Link>
+            </li>
+          </ul>
         </li>
         <li>
           <div>/storage</div>
@@ -28,6 +38,11 @@ export default function Home() {
             <li>
               <Link href="/storage/object">
                 <a>/storage/object</a>
+              </Link>
+            </li>
+            <li>
+              <Link href="/storage/with-suspense">
+                <a>/storage/with-suspense</a>
               </Link>
             </li>
           </ul>
