@@ -6,7 +6,8 @@ import { QuillBinding } from "y-quill";
 import QuillCursors from "quill-cursors";
 
 async function run() {
-  let PUBLIC_KEY = "pk_YOUR_PUBLIC_KEY";
+  let PUBLIC_KEY =
+    "pk_dev_3aIEe7MqrySdb8P1PW3_eVSVDPjflnVutaBj3Qr2WJY_K3dsswx1qlbPtEIVgtIG";
   let roomId = "javascript-yjs";
 
   overrideApiKeyAndRoomId();

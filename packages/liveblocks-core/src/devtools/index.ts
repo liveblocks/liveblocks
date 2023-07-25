@@ -129,7 +129,6 @@ function syncYdocUpdate(
 function partialSyncConnection(
   room: Room<JsonObject, LsonObject, BaseUserMeta, Json>
 ) {
-  room.fetchYDoc(""); // grab the whole doc
   sendToPanel({
     msg: "room::sync::partial",
     roomId: room.id,
@@ -179,6 +178,9 @@ function fullSync(room: Room<JsonObject, LsonObject, BaseUserMeta, Json>) {
   const root = room.getStorageSnapshot();
   const me = room.__internal.getSelf_forDevTools();
   const others = room.__internal.getOthers_forDevTools();
+  // Because the room doesn't have access to the YJS doc, we must tell it to go get the full doc
+  // sending an empty vector will return the whole document and then devtools will be up to date
+  room.fetchYDoc("");
   sendToPanel({
     msg: "room::sync::full",
     roomId: room.id,
@@ -208,8 +210,6 @@ export function linkDevTools(
   roomId: string,
   room: Room<JsonObject, LsonObject, BaseUserMeta, Json>
 ): void {
-  // eslint-disable-next-line rulesdir/console-must-be-fancy
-  console.log("link devtools called");
   // Define it as a no-op in production environments or when run outside of a browser context
   if (process.env.NODE_ENV === "production" || typeof window === "undefined") {
     return;
