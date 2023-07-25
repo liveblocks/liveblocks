@@ -1,34 +1,23 @@
 "use client";
 
-import { useRoom } from "@/liveblocks.config";
-import "@liveblocks/react";
-import * as Y from "yjs";
 import LiveblocksProvider from "@liveblocks/yjs";
-import styles from "./Editor.module.css";
-import { withYjs, YjsEditor } from "@slate-yjs/core";
-import { Editable, Slate, withReact } from "slate-react";
 import { useEffect, useMemo, useState } from "react";
 import { createEditor, Editor, Transforms } from "slate";
-import { YXmlText } from "yjs/dist/src/types/YXmlText";
+import { Editable, Slate, withReact } from "slate-react";
+import { withYjs, YjsEditor } from "@slate-yjs/core";
+import * as Y from "yjs";
+import { useRoom } from "@/liveblocks.config";
 import { Loading } from "@/pages";
+import styles from "./Editor.module.css";
 
-// <p className={styles.placeholder}>Start typing here…</p>
-
-const initialValue = [
-  {
-    type: "paragraph",
-    children: [{ text: "" }],
-  },
-];
-
-export default function EditorWrapper() {
+export default function CollaborativeEditor() {
   const room = useRoom();
   const [connected, setConnected] = useState(false);
 
   const [provider, sharedType] = useMemo(() => {
     const yDoc = new Y.Doc();
     const provider = new LiveblocksProvider(room, yDoc);
-    const sharedDoc = yDoc.get("slate", Y.XmlText) as YXmlText;
+    const sharedDoc = yDoc.get("slate", Y.XmlText) as Y.XmlText;
     return [provider, sharedDoc];
   }, [room]);
 
@@ -46,10 +35,14 @@ export default function EditorWrapper() {
     return <Loading />;
   }
 
-  return <CollaborativeEditor sharedType={sharedType} />;
+  return <SlateEditor sharedType={sharedType} />;
 }
 
-function CollaborativeEditor({ sharedType }: { sharedType: Y.XmlText }) {
+const emptyNode = {
+  children: [{ text: "" }],
+};
+
+function SlateEditor({ sharedType }: { sharedType: Y.XmlText }) {
   const editor = useMemo(() => {
     const e = withReact(withYjs(createEditor(), sharedType));
 
@@ -62,15 +55,7 @@ function CollaborativeEditor({ sharedType }: { sharedType: Y.XmlText }) {
         return normalizeNode(entry);
       }
 
-      console.log("adding");
-
-      Transforms.insertNodes(
-        editor,
-        {
-          children: [{ text: "" }],
-        },
-        { at: [0] }
-      );
+      Transforms.insertNodes(editor, emptyNode, { at: [0] });
     };
 
     return e;
@@ -82,8 +67,8 @@ function CollaborativeEditor({ sharedType }: { sharedType: Y.XmlText }) {
   }, [editor]);
 
   return (
-    <Slate editor={editor} initialValue={initialValue}>
-      <Editable className={styles.editor} />
+    <Slate editor={editor} initialValue={[emptyNode]}>
+      <Editable className={styles.editor} placeholder="Start typing here…" />
     </Slate>
   );
 }

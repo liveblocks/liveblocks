@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { RoomProvider } from "../liveblocks.config";
+import { RoomProvider } from "@/liveblocks.config";
 import { useRouter } from "next/router";
 import { ClientSideSuspense } from "@liveblocks/react";
 import Editor from "@/src/Editor";
@@ -14,7 +14,7 @@ export function Loading() {
 }
 
 export default function Page() {
-  const roomId = useOverrideRoomId("nextjs-yjs-sfssfsladsd  t2e");
+  const roomId = useOverrideRoomId("nextjs-yjs-slate");
 
   return (
     <main>
