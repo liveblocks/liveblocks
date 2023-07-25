@@ -79,7 +79,7 @@ export type Client = {
 
 export type AuthEndpoint =
   | string
-  | ((room?: string) => Promise<CustomAuthenticationResult>);
+  | ((room: string) => Promise<CustomAuthenticationResult>);
 
 /**
  * The authentication endpoint that is called to ensure that the current user has access to a room.
@@ -122,7 +122,7 @@ export type ClientOptions = {
 //
 //   export type AuthUrl =
 //     | string
-//     | ((room?: string) => Promise<{ token: string }>);
+//     | ((room: string) => Promise<{ token: string }>);
 //
 
 function getServerFromClientOptions(clientOptions: ClientOptions) {
