@@ -711,7 +711,7 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
         // If the server actively refuses the connection attempt, stop trying.
         if (isCloseEvent(err)) {
           // If the token was expired we can reauthorize immediately (no back-off)
-          if (err.code === 4009 /* Token Expired */) {
+          if (err.code === 4109 /* Token Expired */) {
             return "@auth.busy";
           }
 
@@ -836,7 +836,7 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
         }
 
         // Server instructs us to reauthenticate
-        if (e.event.code === 4009 /* Token Expired */) {
+        if (e.event.code === 4109 /* Token Expired */) {
           return {
             target: "@auth.backoff",
             effect: [increaseBackoffDelay, logCloseEvent(e.event)],

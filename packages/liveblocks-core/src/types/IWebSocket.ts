@@ -56,7 +56,7 @@ export enum WebsocketCloseCodes {
   /** Like an "HTTP 403". Server understood the request, but refused to allow it. Re-authorizing won't help. */
   NOT_ALLOWED = 4001,
   /** The auth token used is expired, getting a fresh one and retrying might work. In spirit, it's a bit more akin to an "HTTP 401". */
-  TOKEN_EXPIRED = 4009,
+  TOKEN_EXPIRED = 4109,
 
   INVALID_MESSAGE_FORMAT = 4000,
   MAX_NUMBER_OF_MESSAGES_PER_SECONDS = 4002,
