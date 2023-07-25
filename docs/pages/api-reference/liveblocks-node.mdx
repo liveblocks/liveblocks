@@ -6,60 +6,137 @@ meta:
 alwaysShowAllNavigationLevels: false
 ---
 
-The two main things offered by `@liveblocks/node`:
+Note that this library offers Node APIs only. It’s only supposed to be used in
+your Node backend. **Don’t use it in your front-end.**
 
-1. [The `authorize` function](#authorize), which helps you implement custom
-   authentication in your backend.
+The main APIs offered by `@liveblocks/node`:
+
+1. [The `Liveblocks` client](#Liveblocks-class), which is a Node client for
+   safely authenticating your clients with Liveblocks (currently), and for
+   talking to the Liveblocks REST API (eventually).
 1. [The `WebhookHandler` class](#WebhookHandler), which helps you implement
    webhook handlers.
+1. **Deprecated.** [The `authorize` function](#authorize), which helps you
+   implement single-room token based authentication in your backend.
 
-## authorize
+## The `Liveblocks` client [#Liveblocks-class]
 
-The purpose of `authorize()` is to help you implement your custom authentication
-backend, i.e. the blue "server" part of this diagram:
+The `Liveblocks` class is new in 1.2, and offers access to our REST APIs.
 
-<Figure highlight={false}>
+```ts showLineNumbers={false}
+const liveblocks = new Liveblocks({
+  // Replace this key with your secret key provided at https://liveblocks.io/dashboard/apikeys
+  secret: "{{SECRET_KEY}}",
+});
+```
+
+To authorize your users with Liveblocks, you have the choice between two
+different APIs.
+
+- [`Liveblocks.prepareSession`](#access-tokens); or
+- [`Liveblocks.identifyUser`](#id-tokens) API.
+
+### `Liveblocks.prepareSession` [#access-tokens]
+
+The purpose of this API is to help you implement your custom authentication
+backend, i.e. the "server" part of this diagram. You use the
+`liveblocks.prepareSession()` API if you want to issue
+[access tokens](/docs/rooms/permissions/access-token) from your backend.
+
+<Banner title="What are access tokens?">
+  Access tokens are like issuing a “hotel room key card” from a hotel’s front
+  desk (your backend). Any client with that key card can enter any room that the
+  card gives access to. It’s easy to give out those key cards right from your
+  backend.
+</Banner>
+
+<Figure>
   <Image
-    src="/assets/auth-diagram.png"
+    src="/assets/access-token-auth-diagram.png"
     alt="Auth diagram"
     width={768}
     height={576}
   />
 </Figure>
 
-If the current user has access to the provided room, call this function from
-your authorization endpoint and return the result as an HTTP response.
+To implement your backend, follow these steps:
 
-When calling the `authorize` function, you are _telling_ (!) Liveblocks that the
-user you specify is authenticated, for which rooms, and which permissions they
-will have.
+<Steps>
+  <Step>
+    <StepTitle>Create a `Session`</StepTitle>
 
-At the very least, you must pass a `userId` and a `roomId`. Optionally,
-`userInfo` can be used to add information about the current user that will not
-change during the session. This information will be accessible in the client to
-all other users in [`Room.getOthers`][]. It can be helpful to implement avatars
-or display the user’s name without introducing a potential impersonification
-security issue.
+    <StepContent>
+      ```ts showLineNumbers={false}
+      const session = liveblocks.prepareSession(
+        "user-123",   // Required, user ID from your DB
+        {
+          // Optional, custom static metadata for the session
+          userInfo: {
+            name: "Shorty",
+            avatar: "https://example.com/avatar/user123.jpg",
+          },
+        }
+      );
+      ```
 
-- `userId` cannot be longer than 128 characters.
-- `userInfo` cannot be longer than 1024 characters once serialized to JSON.
+      The `userId` (required) is an identifier to uniquely identifies
+      your user with Liveblocks. This value will be used when counting
+      unique MAUs in your Liveblocks dashboard.
 
-<Banner title="Live or test mode?">
+      The `userInfo` (optional) is any custom JSON value, which you can
+      use to attach static metadata to this user’s session. This will be
+      publicly visible to all other people in the room. Useful for
+      metadata like the user’s full name, or their avatar URL.
 
-You can use the Liveblocks API in test mode, which is separated from the live
-environment. Which SECRET_KEY you use to authenticate the request determines
-whether the request is live mode or test mode.
+      </StepContent>
 
-</Banner>
+    </Step>
 
-### Example using Next.js [#nextjs-example]
+    <Step>
+      <StepTitle>Decide what permissions to allow this session</StepTitle>
+      <StepContent>
+        ```ts showLineNumbers={false}
+        session.allow("my-room-1", session.FULL_ACCESS);
+        session.allow("my-room-2", session.FULL_ACCESS);
+        session.allow("my-room-3", session.FULL_ACCESS);
+        session.allow("my-team:*", session.READ_ACCESS);
+        ```
 
-```js
-import { authorize } from "@liveblocks/node";
+        <Banner title="Be diligent" type="warning">
+          You’re specifying what’s going to be allowed so be careful what
+          permissions you’re giving your users. You’re responsible for this
+          part.
+        </Banner>
+      </StepContent>
+    </Step>
 
-// Replace this key with your secret key provided at
-// https://liveblocks.io/dashboard/projects/{projectId}/apikeys
-const secret = "{{SECRET_KEY}}";
+  <Step lastStep>
+    <StepTitle>Authorize the session</StepTitle>
+    <StepContent>
+      Finally, authorize the session. This step makes the HTTP call to the
+      Liveblocks servers. Liveblocks will return a signed **access token** that
+      you can return to your client.
+
+      ```ts showLineNumbers={false}
+      // Tells the Liveblocks servers to authorize this session
+      const { status, body } = await session.authorize();
+      return res.status(status).end(body);
+      ```
+    </StepContent>
+
+    </Step>
+
+</Steps>
+
+#### Full example using Next.js
+
+```ts
+import { Liveblocks } from "@liveblocks/node";
+
+const liveblocks = new Liveblocks({
+  // Replace this key with your secret key provided at https://liveblocks.io/dashboard/apikeys
+  secret: "{{SECRET_KEY}}",
+});
 
 export default async function auth(req, res) {
   /**
@@ -69,38 +146,44 @@ export default async function auth(req, res) {
    * is a valid user by validating the cookies or authentication headers
    * and that it has access to the requested room.
    */
-  const room = req.body.room;
-  const response = await authorize({
-    room,
-    secret,
-    // Corresponds to the UserMeta[id] type defined in liveblocks.config.ts
-    userId: "123",
-    groupIds: ["456"], // Optional
+  const user = __getUserFromDB__(req);
+
+  const session = await liveblocks.prepareSession("123", {
     userInfo: {
-      // Optional, corresponds to the UserMeta[info] type defined in liveblocks.config.ts
-      name: "Ada Lovelace",
-      color: "red",
+      name: user.fullName,
+      color: user.favoriteColor,
     },
   });
-  return res.status(response.status).end(response.body);
+
+  // Check if the user should have access to the room requested by the
+  // client. If so, allow it.
+  if (__shouldUserHaveAccess__(user, req.body.room)) {
+    session.allow(req.body.room, session.FULL_ACCESS);
+  }
+
+  // Finally, get a token from the Liveblocks servers and pass it to the
+  // requesting client
+  const { status, body } = await session.authorize();
+  return res.status(status).end(body);
 }
 ```
 
-### Example using Express.js [#express-example]
+#### Full example using Express.js
 
-```js
+```ts
 const express = require("express");
-const { authorize } = require("@liveblocks/node");
+const { Liveblocks } = require("@liveblocks/node");
 
-// Replace this key with your secret key provided at
-// https://liveblocks.io/dashboard/projects/{projectId}/apikeys
-const secret = "{{SECRET_KEY}}";
+const liveblocks = new Liveblocks({
+  // Replace this key with your secret key provided at https://liveblocks.io/dashboard/apikeys
+  secret: "{{SECRET_KEY}}",
+});
 
 const app = express();
 
 app.use(express.json());
 
-app.post("/api/liveblocks-auth", (req, res) => {
+app.post("/api/liveblocks-auth", async (req, res) => {
   /**
    * Implement your own security here.
    *
@@ -108,24 +191,157 @@ app.post("/api/liveblocks-auth", (req, res) => {
    * is a valid user by validating the cookies or authentication headers
    * and that it has access to the requested room.
    */
-  authorize({
-    room: req.body.room,
-    secret,
-    userId: "123",
+  const user = __getUserFromDB__(req);
+
+  const session = await liveblocks.prepareSession("123", {
     userInfo: {
-      // Optional
-      name: "Ada Lovelace",
-      color: "red",
+      name: user.fullName,
+      color: user.favoriteColor,
     },
-  })
-    .then((authResponse) => {
-      res.send(authResponse.body);
-    })
-    .catch((er) => {
-      res.status(403).end();
-    });
+  });
+
+  // Check if the user should have access to the room requested by the
+  // client. If so, allow it.
+  if (__shouldUserHaveAccess__(user, req.body.room)) {
+    session.allow(req.body.room, session.FULL_ACCESS);
+  }
+
+  // Finally, get a token from the Liveblocks servers and pass it to the
+  // requesting client
+  const { status, body } = await session.authorize();
+  return res.status(status).end(body);
 });
 ```
+
+### `Liveblocks.identifyUser` [#id-tokens]
+
+The purpose of this API is to help you implement your custom authentication
+backend, i.e. the "server" part of this diagram. You use the
+`liveblocks.identifyUser()` API if you want to issue
+[ID tokens](/docs/rooms/permissions/id-token) from your backend. An ID token
+does not grant any permissions in the token directly. Instead, it only securely
+identifies your user, and then uses any permissions set via the [Permissions
+REST API][] to decide whether to allow the user on a room-by-room basis.
+
+Use this approach if you want Liveblocks to the source of truth for your user’s
+permissions.
+
+<Banner title="What are ID tokens?">
+  Issuing identity tokens is like issuing "membership cards". Anyone with such
+  membership card can try to enter a room, but their permissions will be checked
+  at the door every time. The Liveblocks servers perform this authorization, so
+  your permissions need to be set upfront using the Liveblocks REST API.
+</Banner>
+
+<Figure>
+  <Image
+    src="/assets/id-token-auth-diagram.png"
+    alt="Auth diagram"
+    width={768}
+    height={576}
+  />
+</Figure>
+
+Implement your backend endpoint as follows:
+
+```ts showLineNumbers={false}
+const { status, body } = await liveblocks.identifyUser(
+  {
+    userId: "user-123", // Required, user ID from your DB
+    groupIds: ["marketing", "engineering"],
+  },
+
+  // Optional
+  {
+    userInfo: {
+      name: "Shorty",
+      avatar: "https://example.com/avatar/user123.jpg",
+    },
+  }
+);
+return res.status(status).end(body);
+```
+
+The `userId` (required) is an identifier to uniquely identifies your user with
+Liveblocks. This value will be used when counting unique MAUs in your Liveblocks
+dashboard. You can refer to these user IDs in the [Permissions REST API][] when
+assigning group permissions.
+
+The `groupIds` (optional) can be used to specify which groups this user belongs
+to. These are arbitrary identifiers that make sense to your app, and that you
+can refer to in the [Permissions REST API][] when assigning group permissions.
+
+The `userInfo` (optional) is any custom JSON value, which you can use to attach
+static metadata to this user’s session. This will be publicly visible to all
+other people in the room. Useful for metadata like the user’s full name, or
+their avatar URL.
+
+#### Full example using Next.js
+
+```ts
+import { Liveblocks } from "@liveblocks/node";
+
+const liveblocks = new Liveblocks({
+  // Replace this key with your secret key provided at https://liveblocks.io/dashboard/apikeys
+  secret: "{{SECRET_KEY}}",
+});
+
+export default async function auth(req, res) {
+  /**
+   * Implement your own security here.
+   *
+   * It's your responsibility to ensure that the caller of this endpoint
+   * is a valid user by validating the cookies or authentication headers
+   * and that it has access to the requested room.
+   */
+  const user = __getUserFromDB__(req);
+
+  const { status, body } = await liveblocks.identifyUser(user.id, {
+    userInfo: {
+      name: user.fullName,
+      color: user.favoriteColor,
+    },
+  });
+  return res.status(status).end(body);
+}
+```
+
+#### Full example using Express.js
+
+```ts
+const express = require("express");
+const { Liveblocks } = require("@liveblocks/node");
+
+const liveblocks = new Liveblocks({
+  // Replace this key with your secret key provided at https://liveblocks.io/dashboard/apikeys
+  secret: "{{SECRET_KEY}}",
+});
+
+const app = express();
+
+app.use(express.json());
+
+app.post("/api/liveblocks-auth", async (req, res) => {
+  /**
+   * Implement your own security here.
+   *
+   * It's your responsibility to ensure that the caller of this endpoint
+   * is a valid user by validating the cookies or authentication headers
+   * and that it has access to the requested room.
+   */
+  const user = __getUserFromDB__(req);
+
+  const { status, body } = await liveblocks.identifyUser(user.id, {
+    userInfo: {
+      name: user.fullName,
+      color: user.favoriteColor,
+    },
+  });
+  return res.status(status).end(body);
+});
+```
+
+---
 
 ## WebhookHandler [#WebhookHandler]
 
@@ -191,4 +407,22 @@ export default function yourCustomWebhookRequestHandler(req, res) {
 }
 ```
 
+---
+
+## authorize (deprecated) [#authorize]
+
+<Banner title="Deprecated" type="error">
+  For now, it’s still supported, but this way of authorizing will eventually get
+  deprecated.
+</Banner>
+
+The purpose of `authorize()` was to help you implement your custom
+authentication backend. It generates old-style single-room tokens.
+
+Please refer to [our upgrade guide](/docs/platform/upgrading/1.2) if you're
+using the `authorize` function in your backend. You should adopt
+[`Liveblocks.prepareSession`](#access-tokens) or
+[`Liveblocks.identifyUser`](#id-tokens) APIs instead.
+
 [`room.getothers`]: /docs/api-reference/liveblocks-client#Room.getOthers
+[Permissions REST API]: /docs/rooms/permissions/id-token
