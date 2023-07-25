@@ -3,6 +3,7 @@ import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import type { ComponentPropsWithoutRef } from "react";
 import React, { forwardRef, useCallback, useState } from "react";
 
+import { useCommentsContext } from "../factory";
 import { CheckIcon } from "../icons/check";
 import { CrossIcon } from "../icons/cross";
 import { EllipsisIcon } from "../icons/ellipsis";
@@ -33,9 +34,9 @@ function CommentMention({ userId }: CommentRenderMentionProps) {
 
 export const Comment = forwardRef<HTMLDivElement, CommentProps>(
   ({ comment, indentBody = true, className, ...props }, forwardedRef) => {
-    // const { useEditComment, useDeleteComment } = useCommentsContext();
-    // const editComment = useEditComment();
-    // const deleteComment = useDeleteComment();
+    const { useEditComment, useDeleteComment } = useCommentsContext();
+    const editComment = useEditComment();
+    const deleteComment = useDeleteComment();
     const [isEditing, setEditing] = useState(false);
 
     const handleEdit = useCallback(() => {
@@ -46,24 +47,24 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
       setEditing(false);
     }, []);
 
-    const handleEditSubmit = useCallback(({ body }: ComposerSubmitComment) => {
-      // TODO: Add comment.threadId to the model
-      // editComment({
-      //   commentId: comment.id,
-      //   threadId: "TODO",
-      //   body,
-      // });
-      console.log(body);
-      setEditing(false);
-    }, []);
+    const handleEditSubmit = useCallback(
+      ({ body }: ComposerSubmitComment) => {
+        editComment({
+          commentId: comment.id,
+          threadId: comment.threadId,
+          body,
+        });
+        setEditing(false);
+      },
+      [comment.id, comment.threadId, editComment]
+    );
 
     const handleDelete = useCallback(() => {
-      // TODO: Add comment.threadId to the model
-      // deleteComment({
-      //   commentId: comment.id,
-      //   threadId: "TODO",
-      // });
-    }, []);
+      deleteComment({
+        commentId: comment.id,
+        threadId: comment.threadId,
+      });
+    }, [comment.id, comment.threadId, deleteComment]);
 
     // TODO: Add option to render a `This comment was deleted` placeholder instead
     if (!comment.body) {

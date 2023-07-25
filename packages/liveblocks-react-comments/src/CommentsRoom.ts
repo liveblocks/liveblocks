@@ -293,6 +293,8 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
 
     const comment: CommentData = {
       id: commentId,
+      threadId,
+      roomId,
       type: "comment",
       createdAt: now,
       userId: "optimistic", // TODO: Get current user id
@@ -339,11 +341,11 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
               ...thread,
               comments: thread.comments.map((comment) =>
                 comment.id === commentId
-                  ? {
+                  ? ({
                       ...comment,
                       editedAt: now,
                       body,
-                    }
+                    } as CommentData)
                   : comment
               ),
             }

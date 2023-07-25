@@ -1,11 +1,14 @@
 import type { CommentBody } from "./CommentBody";
 
 export type CommentData = {
-  id: string;
   type: "comment";
+  id: string;
+  threadId: string;
+  roomId: string;
+  userId: string;
   createdAt: string;
   editedAt?: string;
-  deletedAt?: string;
-  userId: string;
-  body?: CommentBody;
-};
+} & (
+  | { body: CommentBody; deletedAt?: never }
+  | { body?: never; deletedAt: string }
+);
