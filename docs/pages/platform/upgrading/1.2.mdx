@@ -145,18 +145,19 @@ export default async function myNewAuthEndpoint(req, res) {
 
 Let’s break it down!
 
-- In step 1️⃣, we’re setting up a Liveblocks instance for your account once.
+- In step 1️⃣, we’re setting up a `new Liveblocks()` client instance for your
+  account once. This is a Node client, so it will run in your backend.
 - In step 2️⃣, we’re starting a new auth session. Every session should have a
   unique user ID, which typically is just the ID of the user as it’s known in
   your own database.
-- Step 3️⃣ is where the magic happens. Using the builder pattern, we’re going to
-  describe exactly what rooms this users should be allowed to enter, and what
-  permissions they should have. In this case, we give the user access to exactly
-  the room that this auth request was made for, using
-  `session.allow(req.body.room, session.FULL_ACCESS)` which might be called at
-  runtime as `session.allow("my-room", ["room:write"])`. Here, `FULL_ACCESS` is
-  just a convenient preset that you can use to not have to write out the exact
-  permissions yourself. There also exists a `READ_ACCESS` preset.
+- Step 3️⃣ is where we’re going to describe exactly what rooms this users should
+  be allowed to enter, and what permissions they should have. In this case, we
+  give the user access to exactly the room that this auth request was made for,
+  using `session.allow(req.body.room, session.FULL_ACCESS)` which might be
+  called at runtime as `session.allow("my-room", ["room:write"])`. Here,
+  `FULL_ACCESS` is just a convenient preset that you can use to not have to
+  write out the exact permissions yourself. There also exists a `READ_ACCESS`
+  preset.
 - Finally, in step 4️⃣, we hit the Liveblocks backend to get a token that can be
   used to enter any of the allowed rooms!
 
