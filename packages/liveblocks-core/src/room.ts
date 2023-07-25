@@ -2439,12 +2439,31 @@ function makeAuthDelegateForRoom(
   } else if (authentication.type === "custom") {
     return async () => {
       const response = await authentication.callback(roomId);
-      if (!response || !response.token) {
+      if (!response || typeof response !== "object") {
         throw new Error(
           'We expect the authentication callback to return a token, but it does not. Hint: the return value should look like: { token: "..." }'
         );
       }
-      return parseAuthToken(response.token);
+
+      if (typeof response.token === "string") {
+        return parseAuthToken(response.token);
+      } else if (typeof response.error === "string") {
+        const reason = `Authentication failed: ${
+          "reason" in response && typeof response.reason === "string"
+            ? response.reason
+            : "Forbidden"
+        }`;
+
+        if (response.error === "forbidden") {
+          throw new StopRetrying(reason);
+        } else {
+          throw new Error(reason);
+        }
+      } else {
+        throw new Error(
+          'We expect the authentication callback to return a token, but it does not. Hint: the return value should look like: { token: "..." }'
+        );
+      }
     };
   } else {
     throw new Error("Internal error. Unexpected authentication type");

@@ -1,5 +1,14 @@
 # v1.1.7
 
+### `@liveblocks/client`
+
+When initializing the client with a
+[custom auth callback](https://liveblocks.io/docs/api-reference/liveblocks-client#createClientCallback),
+you can now return `{ error: "forbidden", reason: ... }` as the response, which
+the client will treat as a sign to stop retrying. The client will then
+disconnect from the room, instead of remaining in `"connecting"` status
+indefinitely.
+
 ### `@liveblocks/react`
 
 Fix a bug with `useSelf()` where it would not correctly re-render after entering
