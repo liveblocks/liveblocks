@@ -70,13 +70,15 @@ and we’ll responsibly replace the auth backend using the following steps:
 After you upgrade your backend’s `@liveblocks/node` dependency to 1.2, it now
 offers three (instead of one) APIs to obtain an auth token:
 
-|     | Token                                                     | API                                                     | Supported before 1.2 | Supported since 1.2 | Multi-room | Setup         |
-| :-- | :-------------------------------------------------------- | :------------------------------------------------------ | :------------------- | :------------------ | :--------- | :------------ |
-| 1.  | **Single-room token**                                     | <code><small>authorize()</small></code>                 | ✅                   | ✅                  | –          | easy          |
-| 2.  | **Access token**<br /><small>✨&nbsp;Recommended!</small> | <code><small>liveblocks.prepareSession()</small></code> | –                    | ✅                  | ✅         | easy          |
-| 3.  | **ID token**                                              | <code><small>liveblocks.identifyUser()</small></code>   | –                    | ✅                  | ✅         | more involved |
+|     | Token                                                     | API                                                     | Multi-room | Source of truth | Support in 1.1 | Support in 1.2 |
+| :-- | :-------------------------------------------------------- | :------------------------------------------------------ | :--------- | :-------------- | :------------- | :------------- |
+| 1.  | **Single-room token**                                     | <code><small>authorize()</small></code>                 | –          | Your backend    | ✅             | ⚠️             |
+| 2.  | **Access token**<br /><small>✨&nbsp;Recommended!</small> | <code><small>liveblocks.prepareSession()</small></code> | ✅         | Your backend    | –              | ✅             |
+| 3.  | **ID token**                                              | <code><small>liveblocks.identifyUser()</small></code>   | ✅         | Liveblocks      | –              | ✅             |
 
-1. **Single-room tokens** are what you’re currently using.
+1. **Single-room tokens** are what you’re currently using.  
+   ⚠️ <small>These tokens will be supported, but we will eventually deprecate
+   and drop support for them.</small>
 1. **Access tokens** is our new preferred/recommended way to to auth, because it
    is very easy to manage from your own backend.
 1. **ID tokens** are used to look up permissions on-the-fly as you’re entering
