@@ -25,6 +25,7 @@ import type {
   FocusEvent,
   FormEvent,
   KeyboardEvent,
+  MouseEvent,
   PointerEvent,
   Ref,
   SetStateAction,
@@ -160,6 +161,11 @@ export interface ComposerEditorProps extends ComponentPropsWithoutRef<"div"> {
   disabled?: boolean;
 
   /**
+   * Whether to focus the editor on mount.
+   */
+  autoFocus?: boolean;
+
+  /**
    * The component used to render mentions.
    */
   renderMention?: ComponentType<ComposerRenderMentionProps>;
@@ -196,6 +202,11 @@ export interface ComposerSubmitComment {
 
 export type ComposerContext = {
   /**
+   * Whether the editor is currently focused.
+   */
+  isFocused: boolean;
+
+  /**
    * Whether the editor is currently valid.
    */
   isValid: boolean;
@@ -206,9 +217,19 @@ export type ComposerContext = {
   submit: () => void;
 
   /**
-   * Clear the composer programmatically.
+   * Clear the editor programmatically.
    */
   clear: () => void;
+
+  /**
+   * Focus the editor programmatically.
+   */
+  focus: () => void;
+
+  /**
+   * Blur the editor programmatically.
+   */
+  blur: () => void;
 
   /**
    * Insert text in the composer at the current selection.
@@ -243,7 +264,6 @@ type SuggestionsPosition = "top" | "bottom";
 type ComposerEditorContext = {
   validate: (value: SlateElement[]) => void;
   editor: SlateEditor;
-  isFocused: boolean;
   setFocused: Dispatch<SetStateAction<boolean>>;
 };
 
@@ -340,6 +360,22 @@ const emptyCommentBody: CommentBody = {
 
 function createComposerEditor() {
   return withNormalize(withMentions(withHistory(withReact(createEditor()))));
+}
+
+// The default focus behavior has some issues (e.g. setting the cursor at the beginning)
+function focusSlateReactEditor(node: HTMLDivElement) {
+  if (window.getSelection && document.createRange) {
+    const range = document.createRange();
+    node.focus();
+    range.setStart(node, node.childNodes.length);
+    range.setEnd(node, node.childNodes.length);
+
+    const selection = window.getSelection();
+    selection?.removeAllRanges();
+    selection?.addRange(range);
+  } else {
+    node.focus();
+  }
 }
 
 function useComposerEditorContext(source = "useComposerEditorContext") {
@@ -443,7 +479,7 @@ function ComposerMentionSuggestionsWrapper({
   children: RenderMentionSuggestions = ComposerDefaultRenderMentionSuggestions,
 }: ComposerMentionSuggestionsWrapperProps) {
   const editor = useSlateStatic();
-  const { isFocused } = useComposerEditorContext();
+  const { isFocused } = useComposer();
   const [content, setContent] = useState<HTMLDivElement | null>(null);
   const [contentZIndex, setContentZIndex] = useState<string>();
   const contentRef = useCallback(setContent, [setContent]);
@@ -740,8 +776,8 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
       onKeyDown,
       onFocus,
       onBlur,
-      placeholder,
       disabled,
+      autoFocus,
       renderMention,
       renderMentionSuggestions,
       resolveMentionSuggestions = defaultResolveMentionSuggestions,
@@ -749,9 +785,9 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
     },
     forwardedRef
   ) => {
-    const { editor, validate, isFocused, setFocused } =
+    const { editor, validate, setFocused } =
       useComposerEditorContext(COMPOSER_EDITOR_NAME);
-    const { submit, isValid } = useComposer();
+    const { submit, isValid, isFocused } = useComposer();
     const initialBody = useInitial(initialValue ?? emptyCommentBody);
     const initialEditorValue = useMemo(() => {
       return commentBodyToComposerBody(initialBody);
@@ -948,25 +984,28 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
 
         return {
           ...node,
-          // The default focus behavior has some issues (e.g. setting the cursor at the beginning).
           focus: () => {
-            if (window.getSelection && document.createRange) {
-              const range = document.createRange();
-              node.focus();
-              range.setStart(node, node.childNodes.length);
-              range.setEnd(node, node.childNodes.length);
-
-              const selection = window.getSelection();
-              selection?.removeAllRanges();
-              selection?.addRange(range);
-            } else {
-              node.focus();
-            }
+            focusSlateReactEditor(node);
+          },
+          blur: () => {
+            ReactEditor.blur(editor);
           },
         };
       },
       [editor]
     );
+
+    // The default autoFocus behavior doesn't always work
+    useEffect(() => {
+      if (autoFocus) {
+        setTimeout(() => {
+          console.log("autoFocus", ReactEditor.toDOMNode(editor, editor));
+          focusSlateReactEditor(
+            ReactEditor.toDOMNode(editor, editor) as HTMLDivElement
+          );
+        }, 0);
+      }
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
     return (
       <Slate
@@ -982,9 +1021,9 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
           data-disabled={disabled || undefined}
           {...propsWhileSuggesting}
           {...props}
+          autoFocus={autoFocus}
           readOnly={disabled}
           disabled={disabled}
-          placeholder={placeholder}
           onKeyDown={handleKeyDown}
           onFocus={handleFocus}
           onBlur={handleBlur}
@@ -1047,11 +1086,22 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
       });
     }, [editor]);
 
+    const focus = useCallback(() => {
+      focusSlateReactEditor(
+        ReactEditor.toDOMNode(editor, editor) as HTMLDivElement
+      );
+    }, [editor]);
+
+    const blur = useCallback(() => {
+      ReactEditor.blur(editor);
+    }, [editor]);
+
     const insertText = useCallback(
       (text: string) => {
         SlateTransforms.insertText(editor, text);
+        focus();
       },
-      [editor]
+      [editor, focus]
     );
 
     const handleSubmit = useCallback(
@@ -1081,12 +1131,11 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
         value={{
           editor,
           validate,
-          isFocused,
           setFocused,
         }}
       >
         <ComposerContext.Provider
-          value={{ isValid, submit, clear, insertText }}
+          value={{ isFocused, isValid, submit, clear, focus, blur, insertText }}
         >
           <Component {...props} onSubmit={handleSubmit} ref={mergedRefs}>
             {children}
@@ -1098,13 +1147,22 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
 );
 
 const ComposerSubmit = forwardRef<HTMLButtonElement, ComposerSubmitProps>(
-  ({ children, disabled, asChild, ...props }, forwardedRef) => {
+  ({ children, disabled, onMouseDown, asChild, ...props }, forwardedRef) => {
     const Component = asChild ? Slot : "button";
     const { isValid } = useComposer();
+
+    const handleMouseDown = useCallback(
+      (event: MouseEvent<HTMLButtonElement>) => {
+        onMouseDown?.(event);
+        event.preventDefault();
+      },
+      [onMouseDown]
+    );
 
     return (
       <Component
         type="submit"
+        onMouseDown={handleMouseDown}
         {...props}
         ref={forwardedRef}
         disabled={disabled ?? !isValid}

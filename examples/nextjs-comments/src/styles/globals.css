@@ -64,7 +64,6 @@ main {
 }
 
 .composer {
-  padding: 1rem;
-  background: #e3f5ff;
   border-radius: 1rem;
+  overflow: hidden;
 }

@@ -1,5 +1,10 @@
 import type { CommentBody } from "@liveblocks/core";
-import type { ComponentProps, FormEvent, ReactNode } from "react";
+import type {
+  ComponentProps,
+  FormEvent,
+  ReactNode,
+  SyntheticEvent,
+} from "react";
 import React, { forwardRef, useCallback } from "react";
 
 import { useCommentsContext } from "../factory";
@@ -11,7 +16,10 @@ import type {
   ComposerRenderMentionProps,
   ComposerSubmitComment,
 } from "../primitives/Composer";
-import { Composer as ComposerPrimitive } from "../primitives/Composer";
+import {
+  Composer as ComposerPrimitive,
+  useComposer,
+} from "../primitives/Composer";
 import { MENTION_CHARACTER } from "../slate/mentions";
 import type { SlotProp } from "../types";
 import { classNames } from "../utils/class-names";
@@ -53,12 +61,25 @@ export function ComposerMenu({
   className,
   ...props
 }: ComposerMenuProps) {
+  const { insertText } = useComposer();
+
+  const preventDefault = useCallback((event: SyntheticEvent) => {
+    event.preventDefault();
+  }, []);
+
+  const handleInsertMention = useCallback(() => {
+    insertText(` ${MENTION_CHARACTER}`);
+  }, [insertText]);
+
   return (
     <div className={classNames("lb-composer-menu", className)} {...props}>
       <div className="lb-composer-editor-actions">
         <button
+          type="button"
           className="lb-button lb-composer-editor-action"
           aria-label="Insert mention"
+          onMouseDown={preventDefault}
+          onClick={handleInsertMention}
         >
           <MentionIcon />
         </button>

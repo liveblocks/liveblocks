@@ -144,19 +144,21 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
               className="lb-composer-editor"
               placeholder="Edit comment…"
               initialValue={comment.body}
+              autoFocus
             />
             <ComposerMenu
               actions={
                 <>
                   <button
-                    className="lb-composer-button lb-composer-action"
+                    type="button"
+                    className="lb-button lb-composer-action"
                     aria-label="Cancel"
                     onClick={handleEditCancel}
                   >
                     <CrossIcon />
                   </button>
                   <ComposerPrimitive.Submit
-                    className="lb-composer-button lb-composer-action"
+                    className="lb-button lb-composer-action"
                     aria-label="Save"
                   >
                     <CheckIcon />

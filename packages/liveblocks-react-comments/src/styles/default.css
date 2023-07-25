@@ -134,12 +134,15 @@
 
 .lb-composer-editor {
   outline: none;
+  padding: var(--lb-spacing);
 }
 
 .lb-composer-menu {
   display: flex;
+  height: calc(var(--lb-button-size) + var(--lb-spacing));
   gap: calc(0.75 * var(--lb-spacing));
   align-items: center;
+  padding: 0 var(--lb-spacing) var(--lb-spacing);
 }
 
 .lb-composer-actions,
