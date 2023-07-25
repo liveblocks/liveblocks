@@ -1,3 +1,7 @@
+# v1.1.8
+
+Fix a small TypeScript issue introduced in 1.1.7.
+
 # v1.1.7
 
 ### `@liveblocks/client`
