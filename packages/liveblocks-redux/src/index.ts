@@ -239,7 +239,7 @@ const internalEnhancer = <TState>(options: {
         );
 
         unsubscribeCallbacks.push(
-          room.events.me.subscribe(() => {
+          room.events.myPresence.subscribe(() => {
             if (isPatching === false) {
               store.dispatch({
                 type: ACTION_TYPES.PATCH_REDUX_STATE,

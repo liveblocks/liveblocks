@@ -1144,6 +1144,52 @@
           }
         ]
       }
+    },
+     "/rooms/{roomId}/ydoc": {
+      "parameters": [
+        {
+          "schema": {
+            "type": "string"
+          },
+          "name": "roomId",
+          "in": "path",
+          "required": true
+        }
+      ],
+      "get": {
+        "summary": "Returns a JSON representation of the room's Yjs document.",
+        "tags": [],
+        "responses":  {
+          "200": {
+            "description": "Success. Returns the room's Yjs document as JSON.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "examples": {
+                  "example-1": {
+                    "value": {
+                      "someYText":"contents of ytext"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          }
+        },
+        "operationId": "get-rooms-roomId-ydoc",
+        "description": "Returns a JSON representation of the room's Yjs document."
+      }
     }
   },
   "components": {
