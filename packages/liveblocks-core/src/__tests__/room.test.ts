@@ -1755,14 +1755,70 @@ describe("room", () => {
       }
     });
 
-    test("when error code 4002 (immediately)", async () => {
+    test.only("when error code 40xx (immediately)", async () => {
       const { room, wss } = createTestableRoom({ x: 0 });
       room.connect();
 
       wss.onConnection((conn) => {
         conn.server.close(
           new CloseEvent("close", {
-            code: 4002,
+            code: 4042,
+            wasClean: false,
+          })
+        );
+      });
+
+      await waitUntilStatus(room, "connecting");
+
+      jest.useFakeTimers();
+      try {
+        await jest.advanceTimersByTimeAsync(0);
+        await waitUntilStatus(room, "disconnected");
+        expect(wss.connections.size).toBe(1);
+      } finally {
+        jest.useRealTimers();
+      }
+    });
+
+    test.only("when error code 40xx (after delay)", async () => {
+      const { room, wss } = createTestableRoom({ x: 0 });
+      room.connect();
+
+      // Close the connection 1.111 second after it opened
+      wss.onConnection((conn) => {
+        setTimeout(() => {
+          conn.server.close(
+            new CloseEvent("close", {
+              code: 4042,
+              wasClean: false,
+            })
+          );
+        }, 1111);
+      });
+
+      await waitUntilStatus(room, "connecting");
+
+      jest.useFakeTimers();
+      try {
+        await jest.advanceTimersByTimeAsync(0);
+        await waitUntilStatus(room, "connected");
+        await jest.advanceTimersByTimeAsync(1111);
+
+        await waitUntilStatus(room, "disconnected");
+        expect(wss.connections.size).toBe(1);
+      } finally {
+        jest.useRealTimers();
+      }
+    });
+
+    test("when error code TRY_AGAIN_LATER 1013 (immediately)", async () => {
+      const { room, wss } = createTestableRoom({ x: 0 });
+      room.connect();
+
+      wss.onConnection((conn) => {
+        conn.server.close(
+          new CloseEvent("close", {
+            code: 1013,
             wasClean: false,
           })
         );
@@ -1774,7 +1830,7 @@ describe("room", () => {
       try {
         await jest.advanceTimersByTimeAsync(0);
         expect(consoleWarnSpy).toHaveBeenCalledWith(
-          "Connection to Liveblocks websocket server closed prematurely (code: 4002). Retrying in 2000ms."
+          "Connection to Liveblocks websocket server closed prematurely (code: 1013). Retrying in 2000ms."
         );
 
         expect(wss.connections.size).toBe(1);
@@ -1789,7 +1845,7 @@ describe("room", () => {
       }
     });
 
-    test("when error code 4002 (after delay)", async () => {
+    test("when error code TRY_AGAIN_LATER 1013 (after delay)", async () => {
       const { room, wss } = createTestableRoom({ x: 0 });
       room.connect();
 
@@ -1798,7 +1854,7 @@ describe("room", () => {
         setTimeout(() => {
           conn.server.close(
             new CloseEvent("close", {
-              code: 4002,
+              code: 1013,
               wasClean: false,
             })
           );
@@ -1813,7 +1869,202 @@ describe("room", () => {
         await waitUntilStatus(room, "connected");
         await jest.advanceTimersByTimeAsync(1111);
         expect(consoleWarnSpy).toHaveBeenCalledWith(
-          "Connection to Liveblocks websocket server closed (code: 4002). Retrying in 2000ms."
+          "Connection to Liveblocks websocket server closed (code: 1013). Retrying in 2000ms."
+        );
+        expect(wss.connections.size).toBe(1);
+
+        // A new connection attempt will be made after a LONG backoff delay
+        await jest.advanceTimersByTimeAsync(500); // Waiting our normal short delay isn't enough here...
+        expect(wss.connections.size).toBe(1);
+        await jest.advanceTimersByTimeAsync(1500); // Wait an additional 1500 seconds (for a total of 2000ms)
+        expect(wss.connections.size).toBe(2);
+      } finally {
+        jest.useRealTimers();
+      }
+    });
+
+    test("when error code 41xx (immediately)", async () => {
+      const { room, wss } = createTestableRoom({ x: 0 });
+      room.connect();
+
+      wss.onConnection((conn) => {
+        conn.server.close(
+          new CloseEvent("close", {
+            code: 4142,
+            wasClean: false,
+          })
+        );
+      });
+
+      await waitUntilStatus(room, "connecting");
+
+      jest.useFakeTimers();
+      try {
+        await jest.advanceTimersByTimeAsync(0);
+        expect(consoleWarnSpy).toHaveBeenCalledWith(
+          "Connection to Liveblocks websocket server closed prematurely (code: 4142). Retrying in 250ms."
+        );
+
+        expect(wss.connections.size).toBe(1);
+
+        // A new connection attempt will be made after a normal backoff delay
+        await jest.advanceTimersByTimeAsync(250);
+        expect(wss.connections.size).toBe(2);
+      } finally {
+        jest.useRealTimers();
+      }
+    });
+
+    test("when error code 41xx (after delay)", async () => {
+      const { room, wss } = createTestableRoom({ x: 0 });
+      room.connect();
+
+      // Close the connection 1.111 second after it opened
+      wss.onConnection((conn) => {
+        setTimeout(() => {
+          conn.server.close(
+            new CloseEvent("close", {
+              code: 4142,
+              wasClean: false,
+            })
+          );
+        }, 1111);
+      });
+
+      await waitUntilStatus(room, "connecting");
+
+      jest.useFakeTimers();
+      try {
+        await jest.advanceTimersByTimeAsync(0);
+        await waitUntilStatus(room, "connected");
+        await jest.advanceTimersByTimeAsync(1111);
+        expect(consoleWarnSpy).toHaveBeenCalledWith(
+          "Connection to Liveblocks websocket server closed (code: 4142). Retrying in 250ms."
+        );
+        expect(wss.connections.size).toBe(1);
+
+        // A new connection attempt will be made after a normal backoff delay
+        await jest.advanceTimersByTimeAsync(250);
+        expect(wss.connections.size).toBe(2);
+      } finally {
+        jest.useRealTimers();
+      }
+    });
+
+    test("when error code 4109 (special case TOKEN_EXPIRED) (immediately)", async () => {
+      const { room, wss } = createTestableRoom({ x: 0 });
+      room.connect();
+
+      wss.onConnection((conn) => {
+        conn.server.close(
+          new CloseEvent("close", {
+            code: 4109,
+            wasClean: false,
+          })
+        );
+      });
+
+      await waitUntilStatus(room, "connecting");
+
+      jest.useFakeTimers();
+      try {
+        await jest.advanceTimersByTimeAsync(0);
+        expect(wss.connections.size).toBe(2); // Instantly gets a new token, no backoff
+      } finally {
+        jest.useRealTimers();
+      }
+    });
+
+    test("when error code 4109 (special case TOKEN_EXPIRED) (after delay)", async () => {
+      const { room, wss } = createTestableRoom({ x: 0 });
+      room.connect();
+
+      // Close the connection 1.111 second after it opened
+      wss.onConnection((conn) => {
+        setTimeout(() => {
+          conn.server.close(
+            new CloseEvent("close", {
+              code: 4109,
+              wasClean: false,
+            })
+          );
+        }, 1111);
+      });
+
+      await waitUntilStatus(room, "connecting");
+
+      jest.useFakeTimers();
+      try {
+        await jest.advanceTimersByTimeAsync(0);
+        await waitUntilStatus(room, "connected");
+        await jest.advanceTimersByTimeAsync(1111);
+
+        // Instantly gets a new token (no backoff)
+        expect(wss.connections.size).toBe(2);
+      } finally {
+        jest.useRealTimers();
+      }
+    });
+
+    test("when error code 42xx (immediately)", async () => {
+      const { room, wss } = createTestableRoom({ x: 0 });
+      room.connect();
+
+      wss.onConnection((conn) => {
+        conn.server.close(
+          new CloseEvent("close", {
+            code: 4242,
+            wasClean: false,
+          })
+        );
+      });
+
+      await waitUntilStatus(room, "connecting");
+
+      jest.useFakeTimers();
+      try {
+        await jest.advanceTimersByTimeAsync(0);
+        expect(consoleWarnSpy).toHaveBeenCalledWith(
+          "Connection to Liveblocks websocket server closed prematurely (code: 4242). Retrying in 2000ms."
+        );
+
+        expect(wss.connections.size).toBe(1);
+
+        // A new connection attempt will be made after a longer backoff delay
+        await jest.advanceTimersByTimeAsync(500); // Waiting our normal short delay isn't enough here...
+        expect(wss.connections.size).toBe(1);
+        await jest.advanceTimersByTimeAsync(1500); // Wait an additional 1500 seconds
+        expect(wss.connections.size).toBe(2);
+      } finally {
+        jest.useRealTimers();
+      }
+    });
+
+    test("when error code 42xx (after delay)", async () => {
+      const { room, wss } = createTestableRoom({ x: 0 });
+      room.connect();
+
+      // Close the connection 1.111 second after it opened
+      wss.onConnection((conn) => {
+        setTimeout(() => {
+          conn.server.close(
+            new CloseEvent("close", {
+              code: 4242,
+              wasClean: false,
+            })
+          );
+        }, 1111);
+      });
+
+      await waitUntilStatus(room, "connecting");
+
+      jest.useFakeTimers();
+      try {
+        await jest.advanceTimersByTimeAsync(0);
+        await waitUntilStatus(room, "connected");
+        await jest.advanceTimersByTimeAsync(1111);
+        expect(consoleWarnSpy).toHaveBeenCalledWith(
+          "Connection to Liveblocks websocket server closed (code: 4242). Retrying in 2000ms."
         );
         expect(wss.connections.size).toBe(1);
 
