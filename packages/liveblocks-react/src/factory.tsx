@@ -612,7 +612,7 @@ export function createRoomContext<
 
   function useSuspendUntilPresenceLoaded(): void {
     const room = useRoom();
-    if (room.getSelf() === null) {
+    if (room.getSelf() !== null) {
       return;
     }
 
