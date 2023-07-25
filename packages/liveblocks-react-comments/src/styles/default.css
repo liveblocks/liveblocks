@@ -79,7 +79,7 @@
 
 .lb-avatar {
   position: relative;
-  container: avatar / inline-size;
+  container: inline-size;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -124,15 +124,15 @@
 
 .lb-composer-menu {
   display: flex;
-  align-items: center;
   gap: calc(0.75 * var(--lb-spacing));
+  align-items: center;
 }
 
 .lb-composer-actions,
 .lb-composer-editor-actions {
   display: flex;
-  align-items: center;
   gap: calc(0.5 * var(--lb-spacing));
+  align-items: center;
 }
 
 .lb-composer-editor-actions {
@@ -152,6 +152,7 @@
   --lb-comment-avatar-size: 2rem;
 
   position: relative;
+  min-height: var(--lb-comment-avatar-size);
   background: var(--lb-background);
   color: var(--lb-foreground);
   font-weight: 400;
