@@ -14,7 +14,12 @@ import type {
   IWebSocketInstance,
   IWebSocketMessageEvent,
 } from "./types/IWebSocket";
-import { WebsocketCloseCodes } from "./types/IWebSocket";
+import {
+  shouldDisconnect,
+  shouldReauth,
+  shouldRetryWithoutReauth,
+  WebsocketCloseCodes,
+} from "./types/IWebSocket";
 
 /**
  * Old connection statuses, here for backward-compatibility reasons only.
@@ -304,20 +309,6 @@ function isCloseEvent(
 ): error is IWebSocketCloseEvent {
   return !(error instanceof Error) && error.type === "close";
 }
-
-/**
- * The set of server side error codes for which reauthorizing won't have an
- * effect. When these codes happen, we'll back off but don't need to get a new
- * auth token.
- */
-const NO_REAUTH_CLOSE_CODES = [
-  WebsocketCloseCodes.TRY_AGAIN_LATER,
-  WebsocketCloseCodes.INVALID_MESSAGE_FORMAT,
-  WebsocketCloseCodes.MAX_NUMBER_OF_MESSAGES_PER_SECONDS,
-  WebsocketCloseCodes.MAX_NUMBER_OF_CONCURRENT_CONNECTIONS,
-  WebsocketCloseCodes.MAX_NUMBER_OF_MESSAGES_PER_DAY_PER_APP,
-  WebsocketCloseCodes.MAX_NUMBER_OF_CONCURRENT_CONNECTIONS_PER_ROOM,
-];
 
 export type Delegates<T extends BaseAuthResult> = {
   authenticate: () => Promise<T>;
@@ -710,33 +701,30 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
 
         // If the server actively refuses the connection attempt, stop trying.
         if (isCloseEvent(err)) {
-          // If the token was expired we can reauthorize immediately (no back-off)
-          if (err.code === 4109 /* Token Expired */) {
+          // The default fall-through behavior is going to be reauthorizing
+          // with a back-off strategy. If we know the token was expired however
+          // we can reauthorize immediately (without back-off).
+          if (err.code === WebsocketCloseCodes.TOKEN_EXPIRED) {
             return "@auth.busy";
           }
 
-          // If the token was not allowed we can stop trying because getting
-          // another token for the same user won't help
-          if (
-            err.code === 4001 /* Not Allowed */ ||
-            err.code === 4999 /* Close Without Retry */
-          ) {
-            return {
-              target: "@idle.failed",
-              effect: log(LogLevel.ERROR, err.reason),
-            };
-          }
-
-          // The set of server side error codes for which reauthorizing won't
-          // have an effect. When these codes happen, we'll back off
-          // (aggressively) but don't need to get a new auth token.
-          if (NO_REAUTH_CLOSE_CODES.includes(err.code)) {
+          if (shouldRetryWithoutReauth(err.code)) {
+            // Retry after backoff, but don't get a new token
             return {
               target: "@connecting.backoff",
               effect: [
                 increaseBackoffDelayAggressively,
                 logPrematureErrorOrCloseEvent(err),
               ],
+            };
+          }
+
+          // If the token was not allowed we can stop trying because getting
+          // another token for the same user won't help
+          if (shouldDisconnect(err.code)) {
+            return {
+              target: "@idle.failed",
+              effect: log(LogLevel.ERROR, err.reason),
             };
           }
         }
@@ -825,27 +813,29 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
 
       EXPLICIT_SOCKET_CLOSE: (e) => {
         // Server instructed us to stop retrying, so move to failed state
-        if (
-          e.event.code === 4001 /* Not Allowed */ ||
-          e.event.code === 4999 /* Close Without Retry */
-        ) {
+        if (shouldDisconnect(e.event.code)) {
           return {
             target: "@idle.failed",
             effect: logPermanentClose,
-          }; // Should not retry, give up
-        }
-
-        // Server instructs us to reauthenticate
-        if (e.event.code === 4109 /* Token Expired */) {
-          return {
-            target: "@auth.backoff",
-            effect: [increaseBackoffDelay, logCloseEvent(e.event)],
           };
         }
 
-        // If this is a custom Liveblocks server close reason, back off more
-        // aggressively, and emit a Liveblocks error event...
-        if (e.event.code >= 4000 && e.event.code < 5000) {
+        if (shouldReauth(e.event.code)) {
+          if (e.event.code === WebsocketCloseCodes.TOKEN_EXPIRED) {
+            // Token expiry is a special case, we can reauthorize immediately
+            // (without back-off)
+            return "@auth.busy";
+          } else {
+            return {
+              target: "@auth.backoff",
+              effect: [increaseBackoffDelay, logCloseEvent(e.event)],
+            };
+          }
+        }
+
+        if (shouldRetryWithoutReauth(e.event.code)) {
+          // If this is a custom Liveblocks server close reason, back off more
+          // aggressively, and emit a Liveblocks error event...
           return {
             target: "@connecting.backoff",
             effect: [
@@ -853,14 +843,15 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
               logCloseEvent(e.event),
               () => {
                 const err = new LiveblocksError(e.event.reason, e.event.code);
+                // XXX Only "throw errors" when disconnecting!
                 onLiveblocksError.notify(err);
               },
             ],
           };
         }
 
-        // Consider this close event a temporary hiccup, and try re-opening
-        // a new socket
+        // Consider any other close event a temporary network hiccup, and retry
+        // after a normal backoff delay
         return {
           target: "@connecting.backoff",
           effect: [increaseBackoffDelay, logCloseEvent(e.event)],

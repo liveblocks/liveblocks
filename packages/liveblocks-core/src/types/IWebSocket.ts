@@ -77,3 +77,21 @@ export enum WebsocketCloseCodes {
   /** Disconnect immediately */
   CLOSE_WITHOUT_RETRY = 4999,
 }
+
+export function shouldDisconnect(code: WebsocketCloseCodes): boolean {
+  return (
+    code === WebsocketCloseCodes.CLOSE_WITHOUT_RETRY ||
+    (code >= 4000 && code < 4100)
+  );
+}
+
+export function shouldReauth(code: WebsocketCloseCodes): boolean {
+  return code >= 4100 && code < 4200;
+}
+
+export function shouldRetryWithoutReauth(code: WebsocketCloseCodes): boolean {
+  return (
+    code === WebsocketCloseCodes.TRY_AGAIN_LATER ||
+    (code >= 4200 && code < 4300)
+  );
+}
