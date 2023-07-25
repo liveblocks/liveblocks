@@ -1,5 +1,5 @@
-import { useStorage, useMutation } from "./liveblocks.config";
 import { LiveObject } from "@liveblocks/client";
+import { useStorage, useMutation } from "./liveblocks.config";
 
 export function Room() {
   const person = useStorage((root) => root.person);
