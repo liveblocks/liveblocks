@@ -37,19 +37,3 @@
 .editor p {
   margin: 1em 0;
 }
-
-.textBold {
-  font-weight: bold;
-}
-
-.textItalic {
-  font-style: italic;
-}
-
-.textUnderline {
-  text-decoration: underline;
-}
-
-.paragraph {
-  margin: 0.2rem 0;
-}

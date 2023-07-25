@@ -1,13 +1,13 @@
 ---
 meta:
   title:
-    "How to create a collaborative text editor with Lexical, Yjs, React, and
+    "How to create a collaborative text editor with Slate, Yjs, React, and
     Liveblocks"
   description:
-    "Build a collaborative text editor with Lexical, Yjs, React, and Liveblocks"
+    "Build a collaborative text editor with Slate, Yjs, React, and Liveblocks"
 ---
 
-In this tutorial, we’ll be building a collaborative text editor using Lexical,
+In this tutorial, we’ll be building a collaborative text editor using Slate,
 Yjs, React, and Liveblocks.
 
 <Banner title="Private beta">
@@ -21,14 +21,14 @@ We’d love to hear from you.
 
 This guide assumes that you’re already familiar with
 [React](https://react.dev/), [TypeScript](https://www.typescriptlang.org/), and
-[Lexical](https://lexical.dev).
+[Slate](https://docs.slatejs.org/).
 
-## Install Lexical, Yjs, and Liveblocks into your React application
+## Install Slate, Yjs, and Liveblocks into your React application
 
-Run the following command to install the Lexical, Yjs, and Liveblocks packages:
+Run the following command to install the Slate, Yjs, and Liveblocks packages:
 
 ```bash
-npm install lexical @lexical/react @lexical/yjs @liveblocks/client @liveblocks/react @liveblocks/yjs yjs
+npm install @liveblocks/client @liveblocks/react @liveblocks/yjs yjs slate slate-react @slate-yjs/core @slate-yjs/react
 ```
 
 ## Initialize the `liveblocks.config.ts` file
@@ -74,64 +74,93 @@ export default function Page() {
 }
 ```
 
-## Set up the Lexical editor
+## Set up the Slate editor
 
-Now that we set up Liveblocks, we can start integrating Lexical and Yjs in the
+Now that we set up Liveblocks, we can start integrating Slate and Yjs in the
 `Editor.tsx` file.
 
 ```tsx file="Editor.tsx"
-import { useRoom } from "../liveblocks.config";
-import * as Y from "yjs";
 import LiveblocksProvider from "@liveblocks/yjs";
-import {
-  $getRoot,
-  $createParagraphNode,
-  $createTextNode,
-  LexicalEditor,
-} from "lexical";
-import { LexicalComposer } from "@lexical/react/LexicalComposer";
-import { ContentEditable } from "@lexical/react/LexicalContentEditable";
-import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
-import { CollaborationPlugin } from "@lexical/react/LexicalCollaborationPlugin";
-import LexicalErrorBoundary from "@lexical/react/LexicalErrorBoundary";
-import { Provider } from "@lexical/yjs";
+import { useEffect, useMemo, useState } from "react";
+import { createEditor, Editor, Transforms } from "slate";
+import { Editable, Slate, withReact } from "slate-react";
+import { withYjs, YjsEditor } from "@slate-yjs/core";
+import * as Y from "yjs";
+import { useRoom } from "@/liveblocks.config";
+import { Loading } from "@/pages";
 import styles from "./Editor.module.css";
+import { Toolbar } from "@/src/Toolbar";
+import { Cursors } from "@/src/Cursors";
 
-function initialEditorState(editor: LexicalEditor): void {
-  const root = $getRoot();
-  const paragraph = $createParagraphNode();
-  const text = $createTextNode();
-  paragraph.append(text);
-  root.append(paragraph);
+export default function CollaborativeEditor() {
+  const room = useRoom();
+  const [connected, setConnected] = useState(false);
+
+  const [provider, sharedType] = useMemo(() => {
+    const yDoc = new Y.Doc();
+    const provider = new LiveblocksProvider(room, yDoc);
+    const sharedDoc = yDoc.get("slate", Y.XmlText) as Y.XmlText;
+    return [provider, sharedDoc];
+  }, [room]);
+
+  useEffect(() => {
+    provider.on("sync", setConnected);
+    provider.connect();
+
+    return () => {
+      provider.disconnect();
+      provider.off("sync", setConnected);
+    };
+  }, [provider]);
+
+  if (!connected) {
+    return <Loading />;
+  }
+
+  return <SlateEditor sharedType={sharedType} />;
 }
 
-export default function Editor() {
-  const room = useRoom();
-  const user = USER_INFO[Math.floor(Math.random() * USER_INFO.length)];
-  const initialConfig = {
-    // NOTE: This is critical for collaboration plugin to set editor state to null. It
-    // would indicate that the editor should not try to set any default state
-    // (not even empty one), and let collaboration plugin do it instead
-    editorState: null,
-    namespace: "Demo",
-    nodes: [],
-    onError: (error: unknown) => {
-      throw error;
-    },
-    theme: {},
-  };
+const emptyNode = {
+  children: [{ text: "" }],
+};
+
+function SlateEditor({ sharedType }: { sharedType: Y.XmlText }) {
+  const editor = useMemo(() => {
+    const e = withReact(withYjs(createEditor(), sharedType));
+
+    // Ensure editor always has at least 1 valid child
+    const { normalizeNode } = e;
+    e.normalizeNode = (entry) => {
+      const [node] = entry;
+
+      if (!Editor.isEditor(node) || node.children.length > 0) {
+        return normalizeNode(entry);
+      }
+
+      Transforms.insertNodes(editor, emptyNode, { at: [0] });
+    };
+
+    return e;
+  }, [sharedType]);
+
+  useEffect(() => {
+    YjsEditor.connect(editor);
+    return () => YjsEditor.disconnect(editor);
+  }, [editor]);
 
   return (
     <div className={styles.container}>
-      <LexicalComposer initialConfig={initialConfig}>
-        <RichTextPlugin
-          contentEditable={<ContentEditable className={styles.editor} />}
-          placeholder={
-            <div className={styles.placeholder}>Start typing here…</div>
-          }
-          ErrorBoundary={LexicalErrorBoundary}
-        />
-      </LexicalComposer>
+      <div className={styles.editorContainer}>
+        <Slate editor={editor} initialValue={[emptyNode]}>
+          <Cursors>
+            <Toolbar />
+            <Editable
+              className={styles.editor}
+              placeholder="Start typing here…"
+            />
+          </Cursors>
+        </Slate>
+      </div>
     </div>
   );
 }
@@ -155,6 +184,9 @@ editor looks nice and tidy.
 .editor {
   border-radius: inherit;
   flex-grow: 1;
+  width: 100%;
+  height: 100%;
+  padding: 1rem;
 }
 
 .editor:focus {
@@ -163,7 +195,7 @@ editor looks nice and tidy.
 
 .editorContainer {
   position: relative;
-  padding: 0 1em;
+  height: 100%;
 }
 
 .placeholder {
@@ -181,41 +213,139 @@ editor looks nice and tidy.
 
 ## Add live cursors
 
-To add live cursors to the text editor, we can rely on the `CollaborationPlugin`
-from `@lexical/react/LexicalCollaborationPlugin`.
+To add live cursors to the text editor, we can rely on hooks from the
+`@slate-yjs/react` package.
 
-```tsx file="Editor.tsx" highlight="11-23"
-return (
-  <div className={styles.container}>
-    <LexicalComposer initialConfig={initialConfig}>
-      <PlainTextPlugin
-        contentEditable={<ContentEditable className={styles.editor} />}
-        placeholder={
-          <div className={styles.placeholder}>Start typing here…</div>
-        }
-        ErrorBoundary={LexicalErrorBoundary}
-      />
-      <CollaborationPlugin
-        id="yjs-plugin"
-        cursorColor={user.color}
-        username={user.name}
-        providerFactory={(id, yjsDocMap) => {
-          const doc = new Y.Doc();
-          yjsDocMap.set(id, doc);
-          const provider = new LiveblocksProvider(room, doc) as Provider;
-          return provider;
-        }}
-        initialEditorState={initialEditorState}
-        shouldBootstrap={true}
-      />
-    </LexicalComposer>
-  </div>
-);
+```tsx file="Cursors.tsx" highlight="11-23"
+import {
+  CursorOverlayData,
+  useRemoteCursorOverlayPositions,
+} from "@slate-yjs/react";
+import React, { CSSProperties, PropsWithChildren, useRef } from "react";
+import { Cursor } from "./types";
+import styles from "./Cursors.module.css";
+
+export function Cursors({ children }: PropsWithChildren) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [cursors] = useRemoteCursorOverlayPositions<Cursor>({
+    containerRef,
+  });
+
+  return (
+    <div className={styles.cursors} ref={containerRef}>
+      {children}
+      {cursors.map((cursor) => (
+        <Selection key={cursor.clientId} {...cursor} />
+      ))}
+    </div>
+  );
+}
+
+function Selection({
+  data,
+  selectionRects,
+  caretPosition,
+}: CursorOverlayData<Cursor>) {
+  if (!data) {
+    return null;
+  }
+
+  const selectionStyle: CSSProperties = {
+    backgroundColor: data.color,
+  };
+
+  return (
+    <>
+      {selectionRects.map((position, i) => (
+        <div
+          style={{ ...selectionStyle, ...position }}
+          className={styles.selection}
+          key={i}
+        />
+      ))}
+      {caretPosition && <Caret caretPosition={caretPosition} data={data} />}
+    </>
+  );
+}
+
+type CaretProps = Pick<CursorOverlayData<Cursor>, "caretPosition" | "data">;
+
+function Caret({ caretPosition, data }: CaretProps) {
+  const caretStyle: CSSProperties = {
+    ...caretPosition,
+    background: data?.color,
+  };
+
+  const labelStyle: CSSProperties = {
+    transform: "translateY(-100%)",
+    background: data?.color,
+  };
+
+  return (
+    <div style={caretStyle} className={styles.caretMarker}>
+      <div className={styles.caret} style={labelStyle}>
+        {data?.name}
+      </div>
+    </div>
+  );
+}
 ```
+
+And of course we need some corresponding CSS to keep the cursors in the correct
+positions.
+
+```css file="Cursors.module.css" isCollapsed isCollapsable
+.cursors {
+  position: relative;
+}
+
+.caretMarker {
+  position: absolute;
+  width: 2px;
+}
+
+.caret {
+  /* absolute text-xs text-white whitespace-nowrap top-0 rounded rounded-bl-none px-1.5 py-0.5 */
+  position: absolute;
+  font-size: 14px;
+  color: #fff;
+  white-space: nowrap;
+  top: 0;
+  border-radius: 6px;
+  border-bottom-left-radius: 0;
+  padding: 2px 6px;
+  pointer-events: none;
+}
+
+.selection {
+  position: absolute;
+  pointer-events: none;
+  opacity: 0.2;
+}
+```
+
+<Banner>
+
+If you’re using Next.js, make sure to add `transpilePackages` to your
+`next.config.ts` file to allow `@slate-yjs/react` to be bundled correctly.
+
+```js highlight="2"
+module.exports = {
+  transpilePackages: ["@slate-yjs/react"],
+
+  // ...
+};
+```
+
+</Banner>
+
+// ==========================================
+
+TODO BELOW
 
 ## Add a toolbar
 
-From this point onwards, you can build your Lexical app as normal! For example,
+From this point onwards, you can build your Slate app as normal! For example,
 should you wish to add a basic text-style toolbar to your app:
 
 ```tsx file="Toolbar.tsx"
