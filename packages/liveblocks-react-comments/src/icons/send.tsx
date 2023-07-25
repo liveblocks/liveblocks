@@ -13,9 +13,9 @@ export function SendIcon(props: ComponentProps<"svg">) {
       {...props}
     >
       <path
-        d="m4 16 12-6L4 4l2 6-2 6ZM6 10h10"
+        d="m5 16 12-6L5 4l2 6-2 6ZM7 10h10"
         stroke="currentColor"
-        strokeWidth={2}
+        strokeWidth={1.5}
         strokeLinecap="round"
         strokeLinejoin="round"
       />

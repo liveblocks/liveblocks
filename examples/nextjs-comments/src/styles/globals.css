@@ -27,7 +27,10 @@ a {
 }
 
 main {
-  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  padding: 1rem;
+  gap: 1rem;
 }
 
 .loading {
@@ -56,6 +59,12 @@ main {
   flex-direction: column;
   padding: 1rem;
   gap: 1rem;
-  background: #fff;
+  background: #e3f5ff;
+  border-radius: 1rem;
+}
+
+.composer {
+  padding: 1rem;
+  background: #e3f5ff;
   border-radius: 1rem;
 }

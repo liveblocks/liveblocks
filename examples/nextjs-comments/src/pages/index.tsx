@@ -58,7 +58,9 @@ function Example() {
           </div>
         ))}
       </div>
-      <Composer />
+      <div className="composer">
+        <Composer />
+      </div>
     </main>
   );
 }

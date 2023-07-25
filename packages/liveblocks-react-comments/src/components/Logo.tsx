@@ -5,8 +5,8 @@ export function Logo(props: ComponentProps<"svg">) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 128 24"
-      role="presentation"
+      viewBox="0 0 384 72"
+      aria-label="Liveblocks"
       {...props}
     >
       <path
