@@ -2,7 +2,9 @@
 
 ### `@liveblocks/*`
 
-Support the new and improved Liveblocks authorization.
+- Support the new and improved Liveblocks authorization.
+- Change client logic to stop retrying if room is full. Instead, the client will
+  now disconnect. To retry, call `room.reconnect()` explicitly.
 
 ### `@liveblocks/node`
 
