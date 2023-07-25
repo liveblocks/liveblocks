@@ -176,8 +176,8 @@ export function CurrentRoomProvider(props: Props) {
     (newRoomId: string | null): void =>
       _setCurrentRoomId((currentRoomId) =>
         currentRoomId === null ||
-        (!roomsById.has(currentRoomId) &&
-          (newRoomId === null || roomsById.has(newRoomId)))
+          (!roomsById.has(currentRoomId) &&
+            (newRoomId === null || roomsById.has(newRoomId)))
           ? newRoomId
           : currentRoomId
       ),
@@ -216,6 +216,11 @@ export function CurrentRoomProvider(props: Props) {
         case "room::unavailable": {
           deleteRoom(msg.roomId);
           softSetCurrentRoomId(allRoomIds[0] ?? null);
+          break;
+        }
+
+        case "room::sync::ydoc": {
+          console.log("go update", msg.update);
           break;
         }
 
@@ -325,7 +330,7 @@ export function useSetCurrentRoomId(): (roomId: string) => void {
 }
 
 // Helper "no-op" subscription
-const nosub: SubscribeFn = () => () => {};
+const nosub: SubscribeFn = () => () => { };
 
 export function useRoomIds(): string[] {
   return useSyncExternalStore(onRoomCountChanged.subscribe, () => allRoomIds);

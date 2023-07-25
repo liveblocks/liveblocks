@@ -9,6 +9,8 @@ import type {
 
 const portsByTabId: Map<number, Runtime.Port> = new Map();
 
+console.log("background running");
+
 /**
  * Handles messages being sent from the DevTools, intended for the browser tab
  * running the client.
@@ -17,6 +19,7 @@ browser.runtime.onConnect.addListener((port) => {
   function handleMessage(
     message: DevToolsMsg.FullPanelToClientMessage | FullPanelToBackgroundMessage
   ) {
+    console.log("got message", message.msg);
     switch (message.msg) {
       // The panel has requested to reload the current tab.
       case "reload":

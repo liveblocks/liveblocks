@@ -1,4 +1,5 @@
 import type { Status } from "../connection";
+import type { YDocUpdate } from "../protocol/ServerMsg";
 import type * as DevTools from "../types/DevToolsTreeNode";
 
 /**
@@ -91,8 +92,17 @@ export type ClientToPanelMessage =
       storage?: readonly DevTools.LsonTreeNode[];
       me?: DevTools.UserTreeNode;
       others?: readonly DevTools.UserTreeNode[];
-    };
+    }
 
+  /**
+   * Sent whenever the ydoc is updated
+   */
+  | {
+    msg: "room::sync::ydoc";
+    roomId: string;
+    update: YDocUpdate;
+  }
+;
 // ----------------------------------------------------------------------------
 
 export type FullPanelToClientMessage = PanelToClientMessage & {

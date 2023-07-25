@@ -172,7 +172,7 @@ export default class LiveblocksProvider<
       this.room.events.ydoc.subscribe(({ update, isSync }) => {
         Y.applyUpdate(
           this.doc,
-          Base64.toUint8Array(update as string),
+          Base64.toUint8Array(update),
           "backend"
         );
         if (isSync) {

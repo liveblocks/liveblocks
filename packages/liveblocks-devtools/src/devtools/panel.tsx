@@ -15,6 +15,7 @@ import { CurrentRoomProvider, useCurrentRoomId } from "./contexts/CurrentRoom";
 import { sendMessage } from "./port";
 import { Presence } from "./tabs/presence";
 import { Storage } from "./tabs/storage";
+import { Ydoc } from "./tabs/ydoc";
 
 function buildRegex(searchText: string): RegExp {
   // Interpret the search string as a regular expression if the search string
@@ -158,6 +159,18 @@ function Panel() {
             title: "Storage",
             content: (
               <Storage
+                key={currentRoomId}
+                search={search}
+                searchText={searchText}
+                onSearchClear={handleSearchClear}
+              />
+            ),
+          },
+          {
+            value: "yjs",
+            title: "Yjs",
+            content: (
+              <Ydoc
                 key={currentRoomId}
                 search={search}
                 searchText={searchText}
