@@ -8,8 +8,15 @@
 
 ### `@liveblocks/node`
 
-Add new APIs for authorization. See our migration guide for tips on how to adopt
-the new style of authorizing your Liveblocks clients.
+- Add new APIs for authorization. See our migration guide for tips on how to
+  adopt the new style of authorizing your Liveblocks clients.
+
+### `@liveblocks/client`
+
+- Removed long deprecated methods:
+  - `others.count` → Use `others.length` instead
+  - `others.toArray()` → Use `others` instead (it’s already an array)
+- Deprecated the `Others<P, U>` type → Use `readonly User<P, U>[]` instead
 
 # v1.1.8
 
