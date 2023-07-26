@@ -8,18 +8,13 @@ import type {
   LiveObject,
   LostConnectionEvent,
   LsonObject,
-  Others,
   Room,
   Status,
   User,
 } from "@liveblocks/client";
 import { shallow } from "@liveblocks/client";
 import type { ToImmutable } from "@liveblocks/core";
-import {
-  asArrayWithLegacyMethods,
-  deprecateIf,
-  errorIf,
-} from "@liveblocks/core";
+import { deprecateIf, errorIf } from "@liveblocks/core";
 import * as React from "react";
 import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector.js";
 
@@ -61,12 +56,9 @@ function useSyncExternalStore<Snapshot>(
   return useSyncExternalStoreWithSelector(s, gs, gss, identity);
 }
 
-const EMPTY_OTHERS =
-  // NOTE: asArrayWithLegacyMethods() wrapping should no longer be necessary in 0.19
-  asArrayWithLegacyMethods([]);
-
+// Don't try to inline this. This function itself must be a stable reference.
 function getEmptyOthers() {
-  return EMPTY_OTHERS;
+  return [];
 }
 
 function makeMutationContext<
@@ -200,7 +192,7 @@ export function createRoomContext<
   }
 
   function connectionIdSelector(
-    others: Others<TPresence, TUserMeta>
+    others: readonly User<TPresence, TUserMeta>[]
   ): number[] {
     return others.map((user) => user.connectionId);
   }
@@ -239,15 +231,15 @@ export function createRoomContext<
     return useRoom().updatePresence;
   }
 
-  function useOthers(): Others<TPresence, TUserMeta>;
+  function useOthers(): readonly User<TPresence, TUserMeta>[];
   function useOthers<T>(
-    selector: (others: Others<TPresence, TUserMeta>) => T,
+    selector: (others: readonly User<TPresence, TUserMeta>[]) => T,
     isEqual?: (prev: T, curr: T) => boolean
   ): T;
   function useOthers<T>(
-    selector?: (others: Others<TPresence, TUserMeta>) => T,
+    selector?: (others: readonly User<TPresence, TUserMeta>[]) => T,
     isEqual?: (prev: T, curr: T) => boolean
-  ): T | Others<TPresence, TUserMeta> {
+  ): T | readonly User<TPresence, TUserMeta>[] {
     const room = useRoom();
     const subscribe = room.events.others.subscribe;
     const getSnapshot = room.getOthers;
@@ -256,7 +248,8 @@ export function createRoomContext<
       subscribe,
       getSnapshot,
       getServerSnapshot,
-      selector ?? (identity as (others: Others<TPresence, TUserMeta>) => T),
+      selector ??
+        (identity as (others: readonly User<TPresence, TUserMeta>[]) => T),
       isEqual
     );
   }
@@ -270,7 +263,7 @@ export function createRoomContext<
     itemIsEqual?: (prev: T, curr: T) => boolean
   ): ReadonlyArray<readonly [connectionId: number, data: T]> {
     const wrappedSelector = React.useCallback(
-      (others: Others<TPresence, TUserMeta>) =>
+      (others: readonly User<TPresence, TUserMeta>[]) =>
         others.map(
           (other) => [other.connectionId, itemSelector(other)] as const
         ),
@@ -307,7 +300,7 @@ export function createRoomContext<
     isEqual?: (prev: T, curr: T) => boolean
   ): T {
     const wrappedSelector = React.useCallback(
-      (others: Others<TPresence, TUserMeta>) => {
+      (others: readonly User<TPresence, TUserMeta>[]) => {
         // TODO: Make this O(1) instead of O(n)?
         const other = others.find(
           (other) => other.connectionId === connectionId
@@ -679,14 +672,14 @@ export function createRoomContext<
   }
 
   function useOthersSuspense<T>(
-    selector?: (others: Others<TPresence, TUserMeta>) => T,
+    selector?: (others: readonly User<TPresence, TUserMeta>[]) => T,
     isEqual?: (prev: T, curr: T) => boolean
-  ): T | Others<TPresence, TUserMeta> {
+  ): T | readonly User<TPresence, TUserMeta>[] {
     useSuspendUntilPresenceLoaded();
     return useOthers(
-      selector as (others: Others<TPresence, TUserMeta>) => T,
+      selector as (others: readonly User<TPresence, TUserMeta>[]) => T,
       isEqual as (prev: T, curr: T) => boolean
-    ) as T | Others<TPresence, TUserMeta>;
+    ) as T | readonly User<TPresence, TUserMeta>[];
   }
 
   function useOthersConnectionIdsSuspense(): readonly number[] {

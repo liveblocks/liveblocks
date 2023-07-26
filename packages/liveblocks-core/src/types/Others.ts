@@ -1,15 +1,15 @@
 import type { JsonObject } from "../lib/Json";
-import type { ReadonlyArrayWithLegacyMethods } from "../lib/LegacyArray";
 import type { BaseUserMeta } from "../protocol/BaseUserMeta";
 import type { User } from "./User";
 
 /**
+ * @deprecated Use `readonly User<TPresence, TUserMeta>[]` instead of `Others<TPresence, TUserMeta>`.
  * Represents all the other users connected in the room. Treated as immutable.
  */
 export type Others<
   TPresence extends JsonObject,
   TUserMeta extends BaseUserMeta,
-> = ReadonlyArrayWithLegacyMethods<User<TPresence, TUserMeta>>;
+> = readonly User<TPresence, TUserMeta>[];
 
 export type OthersEvent<
   TPresence extends JsonObject,

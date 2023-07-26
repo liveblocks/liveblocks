@@ -57,7 +57,7 @@ import type {
   IWebSocketMessageEvent,
 } from "./types/IWebSocket";
 import type { NodeMap } from "./types/NodeMap";
-import type { Others, OthersEvent } from "./types/Others";
+import type { OthersEvent } from "./types/Others";
 import type { User } from "./types/User";
 import { PKG_VERSION } from "./version";
 
@@ -93,7 +93,7 @@ type RoomEventCallbackMap<
   // since this API historically has taken _two_ callback arguments instead of
   // just one.
   others: (
-    others: Others<TPresence, TUserMeta>,
+    others: readonly User<TPresence, TUserMeta>[],
     event: OthersEvent<TPresence, TUserMeta>
   ) => void;
   error: Callback<Error>;
@@ -256,7 +256,7 @@ type SubscribeFn<
   (
     type: "others",
     listener: (
-      others: Others<TPresence, TUserMeta>,
+      others: readonly User<TPresence, TUserMeta>[],
       event: OthersEvent<TPresence, TUserMeta>
     ) => void
   ): () => void;
@@ -480,7 +480,7 @@ export type Room<
    * @example
    * const others = room.getOthers();
    */
-  getOthers(): Others<TPresence, TUserMeta>;
+  getOthers(): readonly User<TPresence, TUserMeta>[];
 
   /**
    * Updates the presence of the current user. Only pass the properties you want to update. No need to send the full presence.
@@ -563,7 +563,7 @@ export type Room<
     readonly customEvent: Observable<{ connectionId: number; event: TRoomEvent; }>; // prettier-ignore
     readonly self: Observable<User<TPresence, TUserMeta>>;
     readonly myPresence: Observable<TPresence>;
-    readonly others: Observable<{ others: Others<TPresence, TUserMeta>; event: OthersEvent<TPresence, TUserMeta>; }>; // prettier-ignore
+    readonly others: Observable<{ others: readonly User<TPresence, TUserMeta>[]; event: OthersEvent<TPresence, TUserMeta>; }>; // prettier-ignore
     readonly error: Observable<Error>;
     readonly storage: Observable<StorageUpdate[]>;
     readonly history: Observable<HistoryEvent>;
@@ -1112,7 +1112,7 @@ export function createRoom<
     self: makeEventSource<User<TPresence, TUserMeta>>(),
     myPresence: makeEventSource<TPresence>(),
     others: makeEventSource<{
-      others: Others<TPresence, TUserMeta>;
+      others: readonly User<TPresence, TUserMeta>[];
       event: OthersEvent<TPresence, TUserMeta>;
     }>(),
     error: makeEventSource<Error>(),
@@ -2300,7 +2300,7 @@ function makeClassicSubscribeFn<
           // NOTE: Others have a different callback structure, where the API
           // exposed on the outside takes _two_ callback arguments!
           const cb = callback as (
-            others: Others<TPresence, TUserMeta>,
+            others: readonly User<TPresence, TUserMeta>[],
             event: OthersEvent<TPresence, TUserMeta>
           ) => void;
           return events.others.subscribe(({ others, event }) =>
