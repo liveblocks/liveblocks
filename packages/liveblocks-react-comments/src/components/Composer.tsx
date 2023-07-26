@@ -1,3 +1,5 @@
+"use client";
+
 import type { CommentBody } from "@liveblocks/core";
 import type {
   ComponentProps,

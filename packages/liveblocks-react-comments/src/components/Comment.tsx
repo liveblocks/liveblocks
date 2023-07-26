@@ -1,3 +1,5 @@
+"use client";
+
 import type { CommentData } from "@liveblocks/core";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import type { ComponentPropsWithoutRef } from "react";

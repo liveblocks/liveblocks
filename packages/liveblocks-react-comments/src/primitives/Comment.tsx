@@ -1,3 +1,5 @@
+"use client";
+
 import { CommentBody, isCommentBodyMention } from "@liveblocks/core";
 import { Slot } from "@radix-ui/react-slot";
 import type { ComponentType, ReactNode } from "react";
