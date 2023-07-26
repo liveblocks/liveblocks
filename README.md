@@ -39,8 +39,8 @@ enabling a different facet of collaborative experiences:
 [Broadcast](https://liveblocks.io/docs/products/broadcast),
 [Storage](https://liveblocks.io/docs/products/storage), and
 [Comments (private beta)](https://liveblocks.io/docs/products/comments). You can
-decide what products you want to use based on your requirements and
-collaborative experiences you’re looking to build.
+decide which products you’d like to use based on the requirements of the
+collaborative experiences you’re building.
 
 ### Rooms
 
@@ -66,8 +66,8 @@ your needs.
 ### Platform
 
 Liveblocks provides a fully-hosted platform built around a WebSocket edge
-infrastructure that effortlessly scales to millions of users. With the platform,
-you get a lot of powerful tools such as
+infrastructure that effortlessly scales to millions of users. The platform
+equips you with a set of powerful tools such as our
 [REST API](https://liveblocks.io/docs/api-reference/rest-api-endpoints),
 [webhooks](https://liveblocks.io/docs/platform/webhooks),
 [schema validation](https://liveblocks.io/docs/platform/schema-validation),
