@@ -625,6 +625,110 @@
         "description": "Deletes all of the room’s storage data. Calling this endpoint will disconnect all users from the room if there are any.\n"
       }
     },
+    "/authorize-user": {
+      "post": {
+        "summary": "Get an access token to enter rooms",
+        "operationId": "post-authorize-user",
+        "responses": {
+          "200": {
+            "description": "Success. Returns an access token that can be used to enter one or more rooms.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenResponse"
+                },
+                "examples": {
+                  "example-1": {
+                    "value": {
+                      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIi..."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AuthorizeUserRequest"
+              },
+              "examples": {
+                "example-1": {
+                  "value": {
+                    "userId": "user-123",
+                    "userInfo": {
+                      "name": "bob",
+                      "avatar": "https://example.org/images/user123.jpg"
+                    },
+                    "permissions": {
+                      "my-room-1": ["room:write"],
+                      "my-room-2": ["room:write"],
+                      "my-room-*": ["room:read"]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": "This endpoint lets your application server (= your backend) obtain a token that one of its clients (= your frontend) can use to enter a Liveblocks room. You use this endpoint to implement your own application’s custom authentication endpoint. When making this request, you’ll have to use your secret key.\n\n**Important:** The difference with an [ID token](#post-identify-user) is that an access token holds all the permissions, and is the source of truth. With ID tokens, permissions are set in the Liveblocks backend (through REST API calls) and \"checked at the door\" every time they are used to enter a room.\n\n**Note:** When using our `@liveblocks/node` package in your backend, you don’t have to manually construct this request.\n\nYou can pass the property `userId` in the request's body. This can be whatever internal identifier you use for your user accounts as long as it uniquely identifies an account. The property `userId` is used by Liveblocks to calculate your account’s Monthly Active Users. One unique `userId` corresponds to one MAU.\n\nAdditionally, you can set custom metadata to the token, which will be publicly accessible by other clients through the `user.info` property. This is useful for storing static data like avatar images or the user’s display name.\n\nLastly, you’ll specify the exact permissions to give to the user using the `permissions` field. This is done in an object where the keys are room names, or room name patterns (ending in a `*`), and a list of permissions to assign the user for any room that matches that name exactly (or starts with the pattern’s prefix)."
+      }
+    },
+    "/identify-user": {
+      "post": {
+        "summary": "Get an ID token to enter rooms",
+        "operationId": "post-identify-user",
+        "responses": {
+          "200": {
+            "description": "Success. Returns an ID token that can be used to enter one or more rooms.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenResponse"
+                },
+                "examples": {
+                  "example-1": {
+                    "value": {
+                      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIi..."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IdentifyUserRequest"
+              },
+              "examples": {
+                "example-1": {
+                  "value": {
+                    "userId": "user-123",
+                    "groupIds": ["marketing", "engineering"],
+                    "userInfo": {
+                      "name": "bob",
+                      "avatar": "https://example.org/images/user123.jpg"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": "This endpoint lets your application server (= your backend) obtain a token that one of its clients (= your frontend) can use to enter a Liveblocks room. You use this endpoint to implement your own application’s custom authentication endpoint. When using this endpoint to obtain ID tokens, you should manage your permissions by assigning user and/or group permissions to rooms explicitly, see our [Manage permissions with ID tokens](/docs/rooms/permissions/id-token) section.\n\n**Important:** The difference with an [access token](#post-authorize-user) is that an ID token doesn’t hold any permissions itself. With ID tokens, permissions are set in the Liveblocks backend (through REST API calls) and \"checked at the door\" every time they are used to enter a room. With access tokens, all permissions are set in the token itself, and thus controlled from your backend entirely.\n\n**Note:** When using our `@liveblocks/node` package in your backend, you don’t have to manually construct this request.\n\nYou can pass the property `userId` in the request's body. This can be whatever internal identifier you use for your user accounts as long as it uniquely identifies an account. The property `userId` is used by Liveblocks to calculate your account’s Monthly Active Users. One unique `userId` corresponds to one MAU.\n\nIf you want to use group permissions, you can also declare which `groupIds` this user belongs to. The group ID values are yours, but they will have to match the group IDs you assign permissions to when assigning permissions to rooms, see [Manage permissions with ID tokens](/docs/rooms/permissions/id-token)).\n\nAdditionally, you can set custom metadata to the token, which will be publicly accessible by other clients through the `user.info` property. This is useful for storing static data like avatar images or the user’s display name.\n\nLastly, you’ll specify the exact permissions to give to the user using the `permissions` field. This is done in an object where the keys are room names, or room name patterns (ending in a `*`), and a list of permissions to assign the user for any room that matches that name exactly (or starts with the pattern’s prefix)."
+      }
+    },
     "/rooms/{roomId}/authorize": {
       "post": {
         "summary": "Get a single-room token (deprecated)",
@@ -1275,6 +1379,54 @@
         "properties": {
           "token": {
             "type": "string"
+          }
+        }
+      },
+      "TokenResponse": {
+        "title": "An HTTP response body containing a token.",
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string"
+          }
+        }
+      },
+      "AuthorizeUserRequest": {
+        "title": "AuthorizeUserRequest",
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string"
+          },
+          "userInfo": {
+            "type": "object"
+          },
+          "permissions": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "IdentifyUserRequest": {
+        "title": "IdentifyUserRequest",
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string"
+          },
+          "groupIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "userInfo": {
+            "type": "object"
           }
         }
       },
