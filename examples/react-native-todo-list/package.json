@@ -6,12 +6,12 @@
   "scripts": {
     "android": "react-native run-android",
     "ios": "react-native run-ios",
-    "start": "react-native start",
+    "dev": "react-native start",
     "test": "jest"
   },
   "dependencies": {
-    "@liveblocks/client": "^1.1.3",
-    "@liveblocks/react": "^1.1.3",
+    "@liveblocks/client": "^1.1.6",
+    "@liveblocks/react": "^1.1.6",
     "base-64": "^1.0.0",
     "react": "^17.0.2",
     "react-native": "^0.68.2",

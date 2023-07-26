@@ -16,14 +16,18 @@ while maintaining the stability of our infrastructure.
 
 ### Typical usage guidelines
 
-|                                   | Starter                                       | Pro                                          | Startup                                              | Enterprise |
-| --------------------------------- | --------------------------------------------- | -------------------------------------------- | ---------------------------------------------------- | ---------- |
-| MAUs included                     | <Limits.FreeMauMax />                         | <Limits.ProMauMin /> to <Limits.ProMauMax /> | <Limits.StartupMauMin /> to <Limits.StartupMauMax /> | Custom     |
-| Projects                          | Unlimited                                     | Unlimited                                    | Unlimited                                            | Custom     |
-| Average connections per MAU       | Up to <Limits.FreeAvgConnectionsPerMau />     | Up to <Limits.ProAvgConnectionsPerMau />     | Up to <Limits.StartupAvgConnectionsPerMau />         | Custom     |
-| Maximum storage size per room     | Up to <Limits.FreeMaxStorageSizePerRoom /> MB | Up to <Limits.ProMaxStorageSizePerRoom /> MB | Up to <Limits.StartupMaxStorageSizePerRoom /> MB     | Custom     |
-| Simultaneous connections per room | Up to <Limits.FreeMaxConnectionsPerRoom />    | Up to <Limits.ProMaxConnectionsPerRoom />    | Up to <Limits.StartupMaxConnectionsPerRoom />        | Custom     |
-| Team members per account          | <Limits.FreeTeamMembersPerAccount />          | Unlimited                                    | Unlimited                                            | Custom     |
+|                                   | Starter                                       | Pro                                          | Enterprise |
+| --------------------------------- | --------------------------------------------- | -------------------------------------------- | ---------- |
+| Monthly active users included     | <Limits.FreeMauMax />                         | <Limits.ProMauMin />                         | Custom     |
+| Monthly active users limit        | <Limits.FreeMauMax />                         | <Limits.ProMauMax />                         | Unlimited  |
+| Projects limit                    | Unlimited                                     | Unlimited                                    | Unlimited  |
+| Average connections per MAU       | Up to <Limits.FreeAvgConnectionsPerMau />     | Up to <Limits.ProAvgConnectionsPerMau />     | Custom     |
+| Maximum storage size per room     | Up to <Limits.FreeMaxStorageSizePerRoom /> MB | Up to <Limits.ProMaxStorageSizePerRoom /> MB | Custom     |
+| Simultaneous connections per room | Up to <Limits.FreeMaxConnectionsPerRoom />    | Up to <Limits.ProMaxConnectionsPerRoom />    | Custom     |
+| Team members per account          | <Limits.FreeTeamMembersPerAccount />          | Unlimited                                    | Custom     |
+
+To learn more about how monthly active users are calculated for each plan, take
+a look at the [plans](/platform/pricing) docs.
 
 ### Other guidelines
 

@@ -174,9 +174,59 @@ describe("room / auth", () => {
       expect(consoleErrorSpy).toHaveBeenCalledWith(
         'Authentication failed: We expect the authentication callback to return a token, but it does not. Hint: the return value should look like: { token: "..." }'
       );
+
+      // Keeps trying to reconnect
+      await waitUntilStatus(room, "connecting");
       room.destroy();
     }
   );
+
+  test("custom authentication that throws should fail", async () => {
+    const room = createRoom(
+      { initialPresence: {} as never },
+      {
+        ...makeRoomConfig(),
+        authentication: {
+          type: "custom",
+          callback: () => {
+            throw new Error("Oops");
+          },
+        },
+      }
+    );
+
+    room.connect();
+    await waitUntilStatus(room, "connecting");
+    await waitFor(() => consoleErrorSpy.mock.calls.length > 0);
+    expect(consoleErrorSpy).toHaveBeenCalledWith("Authentication failed: Oops");
+
+    // Keeps trying to reconnect
+    await waitUntilStatus(room, "connecting");
+    room.destroy();
+  });
+
+  test('custom authentication that returns explicit "forbidden" error should disconnect', async () => {
+    const room = createRoom(
+      { initialPresence: {} as never },
+      {
+        ...makeRoomConfig(),
+        authentication: {
+          type: "custom",
+          callback: () =>
+            Promise.resolve({ error: "forbidden", reason: "Nope" }),
+        },
+      }
+    );
+
+    room.connect();
+    await waitUntilStatus(room, "connecting");
+    await waitFor(() => consoleErrorSpy.mock.calls.length > 0);
+    expect(consoleErrorSpy).toHaveBeenCalledWith("Authentication failed: Nope");
+
+    // Should stop retrying
+    await waitUntilStatus(room, "disconnected");
+    room.destroy();
+  });
 
   test("private authentication with 403 status should fail", async () => {
     const room = createRoom(
@@ -1121,7 +1171,7 @@ describe("room", () => {
 
       const callback = jest.fn();
 
-      room.events.me.subscribe(callback);
+      room.events.myPresence.subscribe(callback);
 
       room.batch(() => {
         room.updatePresence({ x: 0 });
@@ -1349,7 +1399,7 @@ describe("room", () => {
       const { room } = createTestableRoom({});
 
       const callback = jest.fn();
-      const unsubscribe = room.events.me.subscribe(callback);
+      const unsubscribe = room.events.myPresence.subscribe(callback);
 
       room.updatePresence({ x: 0 });
 

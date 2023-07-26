@@ -29,11 +29,7 @@ import type { Resolve } from "./lib/Resolve";
 import { compact, deepClone, isPlainObject, tryParseJson } from "./lib/utils";
 import type { Authentication } from "./protocol/Authentication";
 import type { ParsedAuthToken } from "./protocol/AuthToken";
-import {
-  isTokenExpired,
-  parseAuthToken,
-  RoomScope,
-} from "./protocol/AuthToken";
+import { parseAuthToken, RoomScope } from "./protocol/AuthToken";
 import type { BaseUserMeta } from "./protocol/BaseUserMeta";
 import type { ClientMsg } from "./protocol/ClientMsg";
 import { ClientMsgCode } from "./protocol/ClientMsg";
@@ -47,6 +43,7 @@ import type {
   UpdatePresenceServerMsg,
   UserJoinServerMsg,
   UserLeftServerMsg,
+  YDocUpdate,
 } from "./protocol/ServerMsg";
 import { ServerMsgCode } from "./protocol/ServerMsg";
 import type { ImmutableRef } from "./refs/ImmutableRef";
@@ -63,6 +60,7 @@ import type {
 import type { NodeMap } from "./types/NodeMap";
 import type { Others, OthersEvent } from "./types/Others";
 import type { User } from "./types/User";
+import { PKG_VERSION } from "./version";
 
 type TimeoutID = ReturnType<typeof setTimeout>;
 
@@ -568,7 +566,8 @@ export type Room<
     readonly lostConnection: Observable<LostConnectionEvent>;
 
     readonly customEvent: Observable<{ connectionId: number; event: TRoomEvent; }>; // prettier-ignore
-    readonly me: Observable<TPresence>;
+    readonly self: Observable<User<TPresence, TUserMeta>>;
+    readonly myPresence: Observable<TPresence>;
     readonly others: Observable<{ others: Others<TPresence, TUserMeta>; event: OthersEvent<TPresence, TUserMeta>; }>; // prettier-ignore
     readonly error: Observable<Error>;
     readonly storage: Observable<StorageUpdate[]>;
@@ -582,7 +581,7 @@ export type Room<
     readonly storageDidLoad: Observable<void>;
 
     readonly storageStatus: Observable<StorageStatus>;
-    readonly ydoc: Observable<string>;
+    readonly ydoc: Observable<YDocUpdate>;
   };
 
   /**
@@ -948,6 +947,7 @@ export function createRoom<
     batchUpdates(() => {
       eventHub.status.notify(newStatus);
       eventHub.connection.notify(newToLegacyStatus(newStatus));
+      notifySelfChanged(doNotBatchUpdates);
     });
   }
 
@@ -1109,7 +1109,8 @@ export function createRoom<
     lostConnection: makeEventSource<LostConnectionEvent>(),
 
     customEvent: makeEventSource<CustomEvent<TRoomEvent>>(),
-    me: makeEventSource<TPresence>(),
+    self: makeEventSource<User<TPresence, TUserMeta>>(),
+    myPresence: makeEventSource<TPresence>(),
     others: makeEventSource<{
       others: Others<TPresence, TUserMeta>;
       event: OthersEvent<TPresence, TUserMeta>;
@@ -1119,7 +1120,7 @@ export function createRoom<
     history: makeEventSource<HistoryEvent>(),
     storageDidLoad: makeEventSource<void>(),
     storageStatus: makeEventSource<StorageStatus>(),
-    ydoc: makeEventSource<string>(),
+    ydoc: makeEventSource<YDocUpdate>(),
   };
 
   function sendMessages(
@@ -1137,16 +1138,16 @@ export function createRoom<
         managedSocket.token?.raw &&
         config.httpSendEndpoint
       ) {
-        if (isTokenExpired(managedSocket.token.parsed)) {
-          return managedSocket.reconnect();
-        }
-
         void httpSend(
           message,
           managedSocket.token.raw,
           config.httpSendEndpoint,
           config.polyfills?.fetch
-        );
+        ).then((resp) => {
+          if (!resp.ok && resp.status === 403) {
+            managedSocket.reconnect();
+          }
+        });
         console.warn(
           "Message was too large for websockets and sent over HTTP instead"
         );
@@ -1171,6 +1172,17 @@ export function createRoom<
         : null;
     }
   );
+
+  let _lastSelf: Readonly<User<TPresence, TUserMeta>> | undefined;
+  function notifySelfChanged(batchedUpdatesWrapper: (cb: () => void) => void) {
+    const currSelf = self.current;
+    if (currSelf !== null && currSelf !== _lastSelf) {
+      batchedUpdatesWrapper(() => {
+        eventHub.self.notify(currSelf);
+      });
+      _lastSelf = currSelf;
+    }
+  }
 
   // For use in DevTools
   const selfAsTreeNode = new DerivedRef(
@@ -1265,13 +1277,15 @@ export function createRoom<
       }
 
       if (presence) {
-        eventHub.me.notify(context.me.current);
+        notifySelfChanged(doNotBatchUpdates);
+        eventHub.myPresence.notify(context.me.current);
       }
 
       if (storageUpdates.size > 0) {
         const updates = Array.from(storageUpdates.values());
         eventHub.storage.notify(updates);
       }
+      notifyStorageStatus();
     });
   }
 
@@ -1383,8 +1397,6 @@ export function createRoom<
         }
       }
     }
-
-    notifyStorageStatus();
 
     return {
       ops,
@@ -1573,6 +1585,7 @@ export function createRoom<
         isStorageReadOnly(user.scopes)
       );
     }
+
     return { type: "reset" };
   }
 
@@ -1713,7 +1726,7 @@ export function createRoom<
           }
 
           case ServerMsgCode.UPDATE_YDOC: {
-            eventHub.ydoc.notify(message.update);
+            eventHub.ydoc.notify(message);
             break;
           }
 
@@ -2120,7 +2133,8 @@ export function createRoom<
 
     customEvent: eventHub.customEvent.observable,
     others: eventHub.others.observable,
-    me: eventHub.me.observable,
+    self: eventHub.self.observable,
+    myPresence: eventHub.myPresence.observable,
     error: eventHub.error.observable,
     storage: eventHub.storage.observable,
     history: eventHub.history.observable,
@@ -2129,67 +2143,74 @@ export function createRoom<
     ydoc: eventHub.ydoc.observable,
   };
 
-  return {
-    /* NOTE: Exposing __internal here only to allow testing implementation details in unit tests */
-    __internal: {
-      get presenceBuffer() { return deepClone(context.buffer.presenceUpdates?.data ?? null) }, // prettier-ignore
-      get undoStack() { return deepClone(context.undoStack) }, // prettier-ignore
-      get nodeCount() { return context.nodes.size }, // prettier-ignore
+  return Object.defineProperty(
+    {
+      /* NOTE: Exposing __internal here only to allow testing implementation details in unit tests */
+      __internal: {
+        get presenceBuffer() { return deepClone(context.buffer.presenceUpdates?.data ?? null) }, // prettier-ignore
+        get undoStack() { return deepClone(context.undoStack) }, // prettier-ignore
+        get nodeCount() { return context.nodes.size }, // prettier-ignore
 
-      // Support for the Liveblocks browser extension
-      getSelf_forDevTools: () => selfAsTreeNode.current,
-      getOthers_forDevTools: (): readonly DevTools.UserTreeNode[] =>
-        others_forDevTools.current,
+        // Support for the Liveblocks browser extension
+        getSelf_forDevTools: () => selfAsTreeNode.current,
+        getOthers_forDevTools: (): readonly DevTools.UserTreeNode[] =>
+          others_forDevTools.current,
 
-      // prettier-ignore
-      send: {
-        // These exist only for our E2E testing app
-        explicitClose: (event) => managedSocket._privateSendMachineEvent({ type: "EXPLICIT_SOCKET_CLOSE", event }),
-        implicitClose: () => managedSocket._privateSendMachineEvent({ type: "NAVIGATOR_OFFLINE" }),
+        // prettier-ignore
+        send: {
+          // These exist only for our E2E testing app
+          explicitClose: (event) => managedSocket._privateSendMachineEvent({ type: "EXPLICIT_SOCKET_CLOSE", event }),
+          implicitClose: () => managedSocket._privateSendMachineEvent({ type: "NAVIGATOR_OFFLINE" }),
+        },
       },
+
+      id: config.roomId,
+      subscribe: makeClassicSubscribeFn(events),
+
+      connect: () => managedSocket.connect(),
+      reconnect: () => managedSocket.reconnect(),
+      disconnect: () => managedSocket.disconnect(),
+      destroy: () => managedSocket.destroy(),
+
+      // Presence
+      updatePresence,
+      updateYDoc,
+      broadcastEvent,
+
+      // Storage
+      batch,
+      history: {
+        undo,
+        redo,
+        canUndo,
+        canRedo,
+        pause: pauseHistory,
+        resume: resumeHistory,
+      },
+
+      fetchYDoc,
+      getStorage,
+      getStorageSnapshot,
+      getStorageStatus,
+
+      events,
+
+      // Core
+      getStatus: () => managedSocket.getStatus(),
+      getConnectionState: () => managedSocket.getLegacyStatus(),
+      isSelfAware: () => context.sessionInfo.current !== null,
+      getSelf: () => self.current,
+
+      // Presence
+      getPresence: () => context.me.current,
+      getOthers: () => context.others.current,
     },
 
-    id: config.roomId,
-    subscribe: makeClassicSubscribeFn(events),
-
-    connect: () => managedSocket.connect(),
-    reconnect: () => managedSocket.reconnect(),
-    disconnect: () => managedSocket.disconnect(),
-    destroy: () => managedSocket.destroy(),
-
-    // Presence
-    updatePresence,
-    updateYDoc,
-    broadcastEvent,
-
-    // Storage
-    batch,
-    history: {
-      undo,
-      redo,
-      canUndo,
-      canRedo,
-      pause: pauseHistory,
-      resume: resumeHistory,
-    },
-
-    fetchYDoc,
-    getStorage,
-    getStorageSnapshot,
-    getStorageStatus,
-
-    events,
-
-    // Core
-    getStatus: () => managedSocket.getStatus(),
-    getConnectionState: () => managedSocket.getLegacyStatus(),
-    isSelfAware: () => context.sessionInfo.current !== null,
-    getSelf: () => self.current,
-
-    // Presence
-    getPresence: () => context.me.current,
-    getOthers: () => context.others.current,
-  };
+    // Explictly make the __internal field non-enumerable, to avoid aggressive
+    // freezing when used with Immer
+    "__internal",
+    { enumerable: false }
+  );
 }
 
 /**
@@ -2258,7 +2279,7 @@ function makeClassicSubscribeFn<
           );
 
         case "my-presence":
-          return events.me.subscribe(callback as Callback<TPresence>);
+          return events.myPresence.subscribe(callback as Callback<TPresence>);
 
         case "others": {
           // NOTE: Others have a different callback structure, where the API
@@ -2360,12 +2381,7 @@ function makeCreateSocketDelegateForRoom(
 
     const token = richToken.raw;
     return new ws(
-      `${liveblocksServer}/?token=${token}&version=${
-        // prettier-ignore
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore (__PACKAGE_VERSION__ will be injected by the build script)
-        typeof (__PACKAGE_VERSION__ as unknown) === "string" ? /* istanbul ignore next */ (__PACKAGE_VERSION__ as string) : "dev"
-      }`
+      `${liveblocksServer}/?token=${token}&version=${PKG_VERSION || "dev"}`
     );
   };
 }
@@ -2423,12 +2439,31 @@ function makeAuthDelegateForRoom(
   } else if (authentication.type === "custom") {
     return async () => {
       const response = await authentication.callback(roomId);
-      if (!response || !response.token) {
+      if (!response || typeof response !== "object") {
         throw new Error(
           'We expect the authentication callback to return a token, but it does not. Hint: the return value should look like: { token: "..." }'
         );
       }
-      return parseAuthToken(response.token);
+
+      if (typeof response.token === "string") {
+        return parseAuthToken(response.token);
+      } else if (typeof response.error === "string") {
+        const reason = `Authentication failed: ${
+          "reason" in response && typeof response.reason === "string"
+            ? response.reason
+            : "Forbidden"
+        }`;
+
+        if (response.error === "forbidden") {
+          throw new StopRetrying(reason);
+        } else {
+          throw new Error(reason);
+        }
+      } else {
+        throw new Error(
+          'We expect the authentication callback to return a token, but it does not. Hint: the return value should look like: { token: "..." }'
+        );
+      }
     };
   } else {
     throw new Error("Internal error. Unexpected authentication type");

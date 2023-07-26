@@ -37,7 +37,20 @@ const client = createClient({ authEndpoint: "/api/auth" });
 ### createClient with callback [#createClientCallback]
 
 If you need to add additional headers or use your own function to call the
-endpoint, `authEndpoint` also supports a callback.
+endpoint, `authEndpoint` can be provided as a custom callback.
+
+Your async function should return either of the following values:
+
+1. **A valid token.** Return a `{ "token": "..." }` shaped response.
+1. **Explicitly forbid access.** Return an
+   `{ "error": "forbidden", "reason": "..." }` shaped response. If you return
+   this response, the client will disconnect and won't keep trying to authorize.
+
+Any other error will be treated as an unexpected error, after which the client
+will retry making the request until it gets either (1) or (2).
+
+You’re responsible for making the fetch to your own backend. Example
+implementation:
 
 ```ts
 import { createClient } from "@liveblocks/client";
@@ -47,10 +60,10 @@ const client = createClient({
     const response = await fetch("/api/auth", {
       method: "POST",
       headers: {
-        Authentication: "token",
+        Authentication: "<your own headers here>",
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ room }),
+      body: JSON.stringify({ room }), // Don't forget to pass `room` down
     });
     return await response.json();
   },
