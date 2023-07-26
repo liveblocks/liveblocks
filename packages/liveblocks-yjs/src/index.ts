@@ -9,12 +9,13 @@ import type {
   LsonObject,
   Room,
 } from "@liveblocks/client";
-import { detectDupes } from "@liveblocks/core";
+import { ClientMsgCode, detectDupes, YDocUpdate } from "@liveblocks/core";
 import { Base64 } from "js-base64";
 import { Observable } from "lib0/observable";
 import * as Y from "yjs";
 
 import { PKG_FORMAT, PKG_NAME, PKG_VERSION } from "./version";
+2;
 
 detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
 
@@ -169,13 +170,13 @@ export default class LiveblocksProvider<
     );
 
     this.unsubscribers.push(
-      this.room.events.ydoc.subscribe(({ update, isSync }) => {
-        Y.applyUpdate(
-          this.doc,
-          Base64.toUint8Array(update),
-          "backend"
-        );
-        if (isSync) {
+      this.room.events.ydoc.subscribe((message) => {
+        if (message.type === ClientMsgCode.UPDATE_YDOC) {
+          // don't apply updates that came from the client
+          return;
+        }
+        Y.applyUpdate(this.doc, Base64.toUint8Array(message.update), "backend");
+        if ((message as YDocUpdate).isSync) {
           this.synced = true;
         }
       })
