@@ -58,7 +58,9 @@
  */
 
 .lb-dropdown {
-  padding: 4px;
+  --lb-dropdown-padding: 4px;
+
+  padding: var(--lb-dropdown-padding);
   border-radius: var(--lb-radius);
   background: var(--lb-background);
   box-shadow:
@@ -68,16 +70,21 @@
 }
 
 .lb-dropdown-item {
+  font-size: 0.875rem;
   display: flex;
   align-items: center;
   padding: calc(0.25 * var(--lb-spacing)) calc(0.5 * var(--lb-spacing));
-  border-radius: calc(var(--lb-radius) - 4px);
+  border-radius: calc(var(--lb-radius) - 0.5 * var(--lb-dropdown-padding));
+  color: color-mix(in srgb, var(--lb-foreground), var(--lb-background) 20%);
   outline: none;
   cursor: pointer;
 
   &[data-highlighted] {
-    background: var(--lb-accent);
-    color: var(--lb-accent-foreground);
+    background: color-mix(
+      in srgb,
+      var(--lb-foreground),
+      var(--lb-background) 95%
+    );
   }
 
   & svg {
@@ -102,7 +109,7 @@
   background: color-mix(
     in srgb,
     var(--lb-foreground),
-    var(--lb-background) 90%
+    var(--lb-background) 95%
   );
   font-size: 1rem;
 }
@@ -128,6 +135,7 @@
  */
 
 .lb-composer {
+  color: var(--lb-foreground);
   background: var(--lb-background);
   font-size: 1rem;
 }
@@ -181,6 +189,7 @@
   gap: calc(0.75 * var(--lb-spacing));
   align-items: center;
   height: var(--lb-comment-avatar-size);
+  margin-block-end: calc(0.75 * var(--lb-spacing));
 }
 
 .lb-comment-info {
@@ -218,9 +227,8 @@
   margin-inline-start: auto;
 }
 
-.lb-comment-body {
-  color: color-mix(in srgb, var(--lb-foreground), var(--lb-background) 20%);
-  margin-block-start: calc(0.75 * var(--lb-spacing));
+.lb-comment-composer {
+  margin: calc(-1 * var(--lb-spacing));
 }
 
 /* Prevent empty lines from collapsing */
@@ -248,7 +256,8 @@
     );
   }
 
-  & .lb-comment-body {
+  & .lb-comment-body,
+  & .lb-comment-composer {
     padding-inline-start: calc(
       var(--lb-comment-avatar-size) + 0.75 * var(--lb-spacing)
     );
@@ -259,17 +268,21 @@
  * Body 
  */
 
-.lb-comment-body p,
-.lb-composer-editor p {
-  margin-block-start: 0.25em;
-  margin-block-end: 0.25em;
+.lb-comment-body,
+.lb-composer-editor {
+  color: color-mix(in srgb, var(--lb-foreground), var(--lb-background) 20%);
 
-  &:first-of-type {
-    margin-block-start: 0;
-  }
+  & p {
+    margin-block-start: 0.25em;
+    margin-block-end: 0.25em;
 
-  &:last-of-type {
-    margin-block-end: 0;
+    &:first-of-type {
+      margin-block-start: 0;
+    }
+
+    &:last-of-type {
+      margin-block-end: 0;
+    }
   }
 }
 

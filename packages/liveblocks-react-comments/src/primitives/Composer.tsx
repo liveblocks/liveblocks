@@ -1105,23 +1105,27 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
     );
 
     const handleSubmit = useCallback(
-      async (event: FormEvent<HTMLFormElement>) => {
+      (event: FormEvent<HTMLFormElement>) => {
         onSubmit?.(event);
 
-        if (event.defaultPrevented) {
+        if (event.isDefaultPrevented()) {
           return;
         }
-
-        event.preventDefault();
 
         const body = composerBodyToCommentBody(
           editor.children as ComposerBodyData
         );
         const comment = { body };
 
-        await onCommentSubmit?.(comment, event);
+        const promise = onCommentSubmit?.(comment, event);
 
-        clear();
+        if (promise) {
+          promise.then(clear);
+        } else {
+          clear();
+        }
+
+        event.preventDefault();
       },
       [clear, editor, onCommentSubmit, onSubmit]
     );
