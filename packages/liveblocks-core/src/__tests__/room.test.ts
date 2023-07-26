@@ -17,7 +17,7 @@ import { ServerMsgCode } from "../protocol/ServerMsg";
 import type { RoomConfig, RoomDelegates } from "../room";
 import { createRoom } from "../room";
 import { WebsocketCloseCodes } from "../types/IWebSocket";
-import type { Others } from "../types/Others";
+import type { User } from "../types/User";
 import {
   AUTH_SUCCESS,
   defineBehavior,
@@ -1332,7 +1332,7 @@ describe("room", () => {
 
       const items = storage.root.get("items");
 
-      let refOthers: Others<P, M> | undefined;
+      let refOthers: readonly User<P, M>[] | undefined;
       refRoom.events.others.subscribe((ev) => (refOthers = ev.others));
 
       room.batch(() => {
@@ -1461,7 +1461,7 @@ describe("room", () => {
       );
       room.connect();
 
-      let others: Others<P, never> | undefined;
+      let others: readonly User<P, never>[] | undefined;
 
       const unsubscribe = room.events.others.subscribe(
         (ev) => (others = ev.others)
@@ -2279,7 +2279,7 @@ describe("room", () => {
 
       room.connect();
 
-      let others: Others<P, M> | undefined;
+      let others: readonly User<P, M>[] | undefined;
 
       room.events.others.subscribe((ev) => (others = ev.others));
 

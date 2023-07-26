@@ -1,10 +1,8 @@
 import { freeze } from "../lib/freeze";
 import type { JsonObject } from "../lib/Json";
-import { asArrayWithLegacyMethods } from "../lib/LegacyArray";
 import { compact, compactObject } from "../lib/utils";
 import { canComment, canWriteStorage } from "../protocol/AuthToken";
 import type { BaseUserMeta } from "../protocol/BaseUserMeta";
-import type { Others } from "../types/Others";
 import type { User } from "../types/User";
 import { ImmutableRef, merge } from "./ImmutableRef";
 
@@ -37,7 +35,7 @@ function makeUser<TPresence extends JsonObject, TUserMeta extends BaseUserMeta>(
 export class OthersRef<
   TPresence extends JsonObject,
   TUserMeta extends BaseUserMeta,
-> extends ImmutableRef<Others<TPresence, TUserMeta>> {
+> extends ImmutableRef<readonly User<TPresence, TUserMeta>[]> {
   // To track "others"
   private _connections: Map</* connectionId */ number, Connection<TUserMeta>>;
   private _presences: Map</* connectionId */ number, TPresence>;
@@ -71,14 +69,14 @@ export class OthersRef<
   }
 
   /** @internal */
-  _toImmutable(): Readonly<Others<TPresence, TUserMeta>> {
+  _toImmutable(): readonly User<TPresence, TUserMeta>[] {
     const users = compact(
       Array.from(this._presences.keys()).map((connectionId) =>
         this.getUser(Number(connectionId))
       )
     );
 
-    return asArrayWithLegacyMethods(users);
+    return users;
   }
 
   clearOthers(): void {
