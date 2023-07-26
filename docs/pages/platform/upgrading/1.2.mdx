@@ -285,20 +285,6 @@ export default async function myNewAuthEndpoint(req, res) {
 }
 ```
 
-<Banner title="What's the difference?">
-
-**Access tokens** follow the analogy of a “hotel room key card”. Anyone that has
-that key card can enter any room that the card gives access to. It’s easy to
-give out those key cards right from your backend.<br /><br />**ID tokens**
-follow the analogy of a “membership card”. Anyone with that membership card can
-try to enter a room, but your permissions will get checked at the door. This
-approach to permissions is most powerful because it can be set up very
-fine-grained and exactly, but it comes at the cost of having to keep those
-permissions programmatically in sync with Liveblocks. We recommend it for
-advanced use cases only, and only if Access Tokens don’t cut it for you.
-
-</Banner>
-
 ## ID tokens
 
 Are you already using our REST API to assign fine-grained permissions to each
@@ -376,7 +362,7 @@ All you have to do now is implement it as follows:
     </StepContent>
   </Step>
   
-  <Step>
+  <Step lastStep>
     <StepTitle>You’re migrated!</StepTitle>
     <StepContent>
     You’ve successfully migrated to id tokens!
