@@ -26,6 +26,7 @@ import { MENTION_CHARACTER } from "../slate/mentions";
 import type { SlotProp } from "../types";
 import { classNames } from "../utils/class-names";
 import { Logo } from "./Logo";
+import { Tooltip, TooltipProvider } from "./Tooltip";
 import { User } from "./User";
 
 interface ComposerMenuProps extends ComponentProps<"div"> {
@@ -76,15 +77,17 @@ export function ComposerMenu({
   return (
     <div className={classNames("lb-composer-menu", className)} {...props}>
       <div className="lb-composer-editor-actions">
-        <button
-          type="button"
-          className="lb-button lb-composer-editor-action"
-          aria-label="Insert mention"
-          onMouseDown={preventDefault}
-          onClick={handleInsertMention}
-        >
-          <MentionIcon />
-        </button>
+        <Tooltip content="Mention someone">
+          <button
+            type="button"
+            className="lb-button lb-composer-editor-action"
+            aria-label="Insert mention"
+            onMouseDown={preventDefault}
+            onClick={handleInsertMention}
+          >
+            <MentionIcon />
+          </button>
+        </Tooltip>
       </div>
       <Logo className="lb-composer-logo" />
       <div className="lb-composer-actions">{actions}</div>
@@ -157,31 +160,35 @@ export const Composer = forwardRef<HTMLFormElement, ComposerProps>(
     );
 
     return (
-      <ComposerPrimitive.Form
-        className={classNames("lb-composer lb-composer-form", className)}
-        {...props}
-        ref={forwardedRef}
-        onCommentSubmit={handleCommentSubmit}
-      >
-        <ComposerPrimitive.Editor
-          className="lb-composer-editor"
-          initialValue={initialValue}
-          placeholder="Write a comment…"
-          disabled={disabled}
-          renderMention={ComposerMention}
-          // renderMentionSuggestions={}
-        />
-        <ComposerMenu
-          actions={
-            <ComposerPrimitive.Submit
-              className="lb-button lb-composer-action"
-              aria-label="Send"
-            >
-              <SendIcon />
-            </ComposerPrimitive.Submit>
-          }
-        />
-      </ComposerPrimitive.Form>
+      <TooltipProvider>
+        <ComposerPrimitive.Form
+          className={classNames("lb-composer lb-composer-form", className)}
+          {...props}
+          ref={forwardedRef}
+          onCommentSubmit={handleCommentSubmit}
+        >
+          <ComposerPrimitive.Editor
+            className="lb-composer-editor"
+            initialValue={initialValue}
+            placeholder="Write a comment…"
+            disabled={disabled}
+            renderMention={ComposerMention}
+            // renderMentionSuggestions={}
+          />
+          <ComposerMenu
+            actions={
+              <Tooltip content="Send">
+                <ComposerPrimitive.Submit
+                  className="lb-button lb-composer-action"
+                  aria-label="Send"
+                >
+                  <SendIcon />
+                </ComposerPrimitive.Submit>
+              </Tooltip>
+            }
+          />
+        </ComposerPrimitive.Form>
+      </TooltipProvider>
     );
   }
 );

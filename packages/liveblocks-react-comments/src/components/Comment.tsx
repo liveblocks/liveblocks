@@ -20,6 +20,8 @@ import { MENTION_CHARACTER } from "../slate/mentions";
 import { classNames } from "../utils/class-names";
 import { Avatar } from "./Avatar";
 import { ComposerMenu } from "./Composer";
+import { Dropdown, DropdownTrigger } from "./Dropdown";
+import { Tooltip, TooltipProvider } from "./Tooltip";
 import { User } from "./User";
 
 export interface CommentProps extends ComponentPropsWithoutRef<"div"> {
@@ -76,107 +78,116 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
     }
 
     return (
-      <div
-        className={classNames(
-          "lb-comment",
-          indentBody && "lb-comment:indent-body",
-          className
-        )}
-        {...props}
-        ref={forwardedRef}
-      >
-        <div className="lb-comment-header">
-          <div className="lb-comment-info">
-            <Avatar className="lb-comment-avatar" userId={comment.userId} />
-            <span className="lb-comment-info-labels">
-              <User className="lb-comment-user" userId={comment.userId} />
-              <span className="lb-comment-date">
-                <Timestamp
-                  date={comment.createdAt}
-                  className="lb-comment-date-timestamp"
-                />
-                {comment.editedAt && (
-                  <>
-                    {" "}
-                    <span className="lb-comment-date-edited">(edited)</span>
-                  </>
-                )}
+      <TooltipProvider>
+        <div
+          className={classNames(
+            "lb-comment",
+            indentBody && "lb-comment:indent-body",
+            className
+          )}
+          {...props}
+          ref={forwardedRef}
+        >
+          <div className="lb-comment-header">
+            <div className="lb-comment-info">
+              <Avatar className="lb-comment-avatar" userId={comment.userId} />
+              <span className="lb-comment-info-labels">
+                <User className="lb-comment-user" userId={comment.userId} />
+                <span className="lb-comment-date">
+                  <Timestamp
+                    date={comment.createdAt}
+                    className="lb-comment-date-timestamp"
+                  />
+                  {comment.editedAt && (
+                    <>
+                      {" "}
+                      <span className="lb-comment-date-edited">(edited)</span>
+                    </>
+                  )}
+                </span>
               </span>
-            </span>
-          </div>
-          {!isEditing && (
-            <div className="lb-comment-actions">
-              {/* TODO: Only show if permissions (for now = own comments) allow edit/delete */}
-              <DropdownMenu.Root>
-                <DropdownMenu.Trigger
-                  className="lb-button lb-comment-action"
-                  aria-label="Comment options"
-                >
-                  <EllipsisIcon />
-                </DropdownMenu.Trigger>
-                <DropdownMenu.Portal>
-                  {/* TODO: Share viewport padding/spacing values with the mentions suggestions inset */}
-                  <DropdownMenu.Content className="lb-dropdown" align="end">
-                    <DropdownMenu.Item
-                      className="lb-dropdown-item"
-                      onSelect={handleEdit}
-                    >
-                      <EditIcon className="lb-dropdown-item-icon" />
-                      Edit
-                    </DropdownMenu.Item>
-                    <DropdownMenu.Item
-                      className="lb-dropdown-item"
-                      onSelect={handleDelete}
-                    >
-                      <DeleteIcon className="lb-dropdown-item-icon" />
-                      Delete
-                    </DropdownMenu.Item>
-                  </DropdownMenu.Content>
-                </DropdownMenu.Portal>
-              </DropdownMenu.Root>
             </div>
+            {!isEditing && (
+              <div className="lb-comment-actions">
+                {/* TODO: Only show if permissions (for now = own comments) allow edit/delete */}
+                <Dropdown
+                  align="end"
+                  content={
+                    <>
+                      <DropdownMenu.Item
+                        className="lb-dropdown-item"
+                        onSelect={handleEdit}
+                      >
+                        <EditIcon className="lb-dropdown-item-icon" />
+                        Edit
+                      </DropdownMenu.Item>
+                      <DropdownMenu.Item
+                        className="lb-dropdown-item"
+                        onSelect={handleDelete}
+                      >
+                        <DeleteIcon className="lb-dropdown-item-icon" />
+                        Delete
+                      </DropdownMenu.Item>
+                    </>
+                  }
+                >
+                  <Tooltip content="Actions">
+                    <DropdownTrigger
+                      className="lb-button lb-comment-action"
+                      aria-label="Actions"
+                    >
+                      <EllipsisIcon />
+                    </DropdownTrigger>
+                  </Tooltip>
+                </Dropdown>
+              </div>
+            )}
+          </div>
+          {isEditing ? (
+            <ComposerPrimitive.Form
+              className="lb-composer-form lb-comment-composer"
+              onCommentSubmit={handleEditSubmit}
+            >
+              <ComposerPrimitive.Editor
+                className="lb-composer-editor"
+                placeholder="Edit comment…"
+                initialValue={comment.body}
+                autoFocus
+              />
+              <ComposerMenu
+                actions={
+                  <>
+                    <Tooltip content="Cancel">
+                      <button
+                        type="button"
+                        className="lb-button lb-composer-action"
+                        aria-label="Cancel"
+                        onClick={handleEditCancel}
+                      >
+                        <CrossIcon />
+                      </button>
+                    </Tooltip>
+                    <Tooltip content="Save">
+                      <ComposerPrimitive.Submit
+                        className="lb-button lb-composer-action"
+                        aria-label="Save"
+                      >
+                        <CheckIcon />
+                      </ComposerPrimitive.Submit>
+                    </Tooltip>
+                  </>
+                }
+              />
+            </ComposerPrimitive.Form>
+          ) : (
+            <CommentPrimitive.Body
+              className="lb-comment-body"
+              body={comment.body}
+              renderMention={CommentMention}
+            />
           )}
         </div>
-        {isEditing ? (
-          <ComposerPrimitive.Form
-            className="lb-composer-form lb-comment-composer"
-            onCommentSubmit={handleEditSubmit}
-          >
-            <ComposerPrimitive.Editor
-              className="lb-composer-editor"
-              placeholder="Edit comment…"
-              initialValue={comment.body}
-              autoFocus
-            />
-            <ComposerMenu
-              actions={
-                <>
-                  <button
-                    type="button"
-                    className="lb-button lb-composer-action"
-                    aria-label="Cancel"
-                    onClick={handleEditCancel}
-                  >
-                    <CrossIcon />
-                  </button>
-                  <ComposerPrimitive.Submit
-                    className="lb-button lb-composer-action"
-                    aria-label="Save"
-                  >
-                    <CheckIcon />
-                  </ComposerPrimitive.Submit>
-                </>
-              }
-            />
-          </ComposerPrimitive.Form>
-        ) : (
-          <CommentPrimitive.Body
-            className="lb-comment-body"
-            body={comment.body}
-            renderMention={CommentMention}
-          />
-        )}
-      </div>
+      </TooltipProvider>
     );
   }
 );
