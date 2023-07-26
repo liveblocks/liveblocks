@@ -159,7 +159,7 @@ function Panel() {
             title: "Storage",
             content: (
               <Storage
-                key={currentRoomId}
+                key={`${currentRoomId}:storage`}
                 search={search}
                 searchText={searchText}
                 onSearchClear={handleSearchClear}
@@ -171,7 +171,7 @@ function Panel() {
             title: "Yjs",
             content: (
               <Ydoc
-                key={currentRoomId}
+                key={`${currentRoomId}:ydoc`}
                 search={search}
                 searchText={searchText}
                 onSearchClear={handleSearchClear}

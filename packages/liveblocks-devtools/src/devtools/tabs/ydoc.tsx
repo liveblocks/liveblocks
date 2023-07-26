@@ -23,13 +23,12 @@ export function Ydoc({
 }: Props) {
   const ydoc = useYdoc();
   const currentStatus = useStatus();
-  const ydocString = JSON.stringify(yDocToJson(ydoc));
   if (
     currentStatus === "connected" ||
     currentStatus === "open" || // Same as "connected", but only sent by old clients (prior to 1.1)
     currentStatus === "reconnecting"
   ) {
-    return <div>{ydocString}</div>
+    return <div>{ydoc}</div>
   }
   return <EmptyState visual={<Loading />} />;
 

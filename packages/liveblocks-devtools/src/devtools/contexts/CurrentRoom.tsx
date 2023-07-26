@@ -15,6 +15,7 @@ import * as Y from "yjs";
 import { assertNever } from "../../lib/assert";
 import type { EventSource, Observable } from "../../lib/EventSource";
 import { makeEventSource } from "../../lib/EventSource";
+import { yDocToJson } from "../../lib/ydoc";
 import { onMessage, sendMessage } from "../port";
 import type { FullBackgroundToPanelMessage } from "../protocol";
 
@@ -385,10 +386,10 @@ export function useStorage(): readonly DevTools.LsonTreeNode[] {
   );
 }
 
-export function useYdoc(): Y.Doc {
+export function useYdoc(): string {
   const currentRoomId = useCurrentRoomId();
   return useSyncExternalStore(
     getSubscribe(currentRoomId, "onYdoc") ?? nosub,
-    () => getRoom(currentRoomId)?.ydoc ?? new Y.Doc()
+    () => JSON.stringify(yDocToJson(getRoom(currentRoomId)?.ydoc ?? new Y.Doc()))
   );
 }

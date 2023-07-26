@@ -19,7 +19,6 @@ browser.runtime.onConnect.addListener((port) => {
   function handleMessage(
     message: DevToolsMsg.FullPanelToClientMessage | FullPanelToBackgroundMessage
   ) {
-    console.log("got message", message.msg);
     switch (message.msg) {
       // The panel has requested to reload the current tab.
       case "reload":
