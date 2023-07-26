@@ -25,6 +25,8 @@ export type ComposerBodyMention = {
 export type ComposerBodyText = {
   bold?: boolean;
   italic?: boolean;
+  strikethrough?: boolean;
+  code?: boolean;
   text: string;
 };
 

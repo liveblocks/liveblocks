@@ -9,16 +9,14 @@ export function CheckIcon(props: ComponentProps<"svg">) {
       height={20}
       viewBox="0 0 20 20"
       fill="none"
+      stroke="currentColor"
+      strokeWidth={1.5}
+      strokeLinecap="round"
+      strokeLinejoin="round"
       role="presentation"
       {...props}
     >
-      <path
-        d="M16 6L8 14L4 10"
-        stroke="currentColor"
-        strokeWidth={1.5}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
+      <path d="M16 6L8 14L4 10" />
     </svg>
   );
 }

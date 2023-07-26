@@ -306,6 +306,7 @@ function commentBodyMentionToComposerBodyMention(
 
 export function composerBodyToCommentBody(body: ComposerBodyData): CommentBody {
   return {
+    version: 1,
     content: body.map((block) => ({
       ...block,
       children: block.children.map((inline) => {
@@ -355,6 +356,7 @@ export function toggleMark(editor: SlateEditor, format: ComposerBodyMarks) {
 const defaultResolveMentionSuggestions = () => Promise.resolve([]);
 
 const emptyCommentBody: CommentBody = {
+  version: 1,
   content: [{ type: "paragraph", children: [{ text: "" }] }],
 };
 
@@ -602,6 +604,7 @@ function ComposerEditorElement({
   }
 }
 
+// <code><s><em><strong>text</strong></s></em></code>
 function ComposerEditorLeaf({ attributes, children, leaf }: RenderLeafProps) {
   if (leaf.bold) {
     children = <strong>{children}</strong>;
@@ -609,6 +612,14 @@ function ComposerEditorLeaf({ attributes, children, leaf }: RenderLeafProps) {
 
   if (leaf.italic) {
     children = <em>{children}</em>;
+  }
+
+  if (leaf.strikethrough) {
+    children = <s>{children}</s>;
+  }
+
+  if (leaf.code) {
+    children = <code>{children}</code>;
   }
 
   return <span {...attributes}>{children}</span>;
@@ -623,10 +634,12 @@ function ComposerEditorPlaceholder({
       {...attributes}
       style={{
         ...attributes.style,
-        // Prevent the placeholder from inheriting block styling.
+        // Prevent the placeholder from inheriting formatting styles.
         // See https://github.com/ianstormtaylor/slate/issues/2908
         fontWeight: "initial",
         fontStyle: "initial",
+        textDecoration: "initial",
+        // TODO: Inline code applies a monospace font-family and can't be unset.
       }}
     >
       {children}
@@ -878,29 +891,46 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
             setSelectedMentionSuggestionIndex(0);
           }
         } else {
+          // ⎋
           if (isKey(event, "Escape")) {
             event.preventDefault();
             ReactEditor.blur(editor);
           }
 
+          // ⏎
           if (isKey(event, "Enter", { shift: false }) && isValid) {
             event.preventDefault();
             submit();
           }
 
+          // ⇧ + ⏎
           if (isKey(event, "Enter", { shift: true })) {
             event.preventDefault();
             editor.insertBreak();
           }
 
+          // ⌘/⌃ + B
           if (isKey(event, "b", { mod: true })) {
             event.preventDefault();
             toggleMark(editor, "bold");
           }
 
+          // ⌘/⌃ + I
           if (isKey(event, "i", { mod: true })) {
             event.preventDefault();
             toggleMark(editor, "italic");
+          }
+
+          // ⌘/⌃ + ⇧ + S
+          if (isKey(event, "s", { mod: true, shift: true })) {
+            event.preventDefault();
+            toggleMark(editor, "strikethrough");
+          }
+
+          // ⌘/⌃ + E
+          if (isKey(event, "e", { mod: true })) {
+            event.preventDefault();
+            toggleMark(editor, "code");
           }
         }
       },

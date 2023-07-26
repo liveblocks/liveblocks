@@ -83,6 +83,7 @@ const CommentBody = forwardRef<HTMLDivElement, CommentBodyProps>(
                       return <Mention userId={inline.userId} key={index} />;
                     }
 
+                    // <code><s><em><strong>text</strong></s></em></code>
                     let children: ReactNode = inline.text;
 
                     if (inline.bold) {
@@ -91,6 +92,14 @@ const CommentBody = forwardRef<HTMLDivElement, CommentBodyProps>(
 
                     if (inline.italic) {
                       children = <em key={index}>{children}</em>;
+                    }
+
+                    if (inline.strikethrough) {
+                      children = <s key={index}>{children}</s>;
+                    }
+
+                    if (inline.code) {
+                      children = <code key={index}>{children}</code>;
                     }
 
                     return <span key={index}>{children}</span>;

@@ -19,9 +19,12 @@ export type CommentBodyMention = {
 export type CommentBodyText = {
   bold?: boolean;
   italic?: boolean;
+  strikethrough?: boolean;
+  code?: boolean;
   text: string;
 };
 
 export type CommentBody = {
+  version: 1;
   content: CommentBodyBlockElement[];
 };
