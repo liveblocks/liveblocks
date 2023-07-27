@@ -5,6 +5,7 @@ module.exports = {
   rules: {
     "selector-class-pattern": null,
     "keyframes-name-pattern": null,
+    "max-nesting-depth": 1,
     "order/order": [
       [
         "dollar-variables",
