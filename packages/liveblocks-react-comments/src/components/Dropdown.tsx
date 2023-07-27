@@ -5,7 +5,11 @@ import React from "react";
 import { classNames } from "../utils/class-names";
 
 interface DropdownProps
-  extends Pick<DropdownMenuPrimitive.DropdownMenuTriggerProps, "children">,
+  extends Pick<
+      DropdownMenuPrimitive.DropdownMenuProps,
+      "defaultOpen" | "open" | "onOpenChange"
+    >,
+    Pick<DropdownMenuPrimitive.DropdownMenuTriggerProps, "children">,
     DropdownMenuPrimitive.DropdownMenuContentProps {
   content: ReactNode;
 }
@@ -13,11 +17,18 @@ interface DropdownProps
 export function Dropdown({
   children,
   content,
+  defaultOpen,
+  open,
+  onOpenChange,
   className,
   ...props
 }: DropdownProps) {
   return (
-    <DropdownMenuPrimitive.Root>
+    <DropdownMenuPrimitive.Root
+      defaultOpen={defaultOpen}
+      open={open}
+      onOpenChange={onOpenChange}
+    >
       {children}
       <DropdownMenuPrimitive.Portal>
         <DropdownMenuPrimitive.Content

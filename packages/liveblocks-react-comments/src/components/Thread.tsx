@@ -49,42 +49,49 @@ export const Thread = forwardRef<HTMLDivElement, ThreadProps>(
           ref={forwardedRef}
         >
           <div className="lb-thread-comments">
-            {thread.comments.map((comment, index) => (
-              <Comment
-                key={comment.id}
-                className="lb-thread-comment"
-                comment={comment}
-                indentBody={indentBody}
-                additionalActions={
-                  index === 0 ? (
-                    <Tooltip
-                      content={
-                        thread.metadata.resolved
-                          ? "Re-open thread"
-                          : "Resolve thread"
-                      }
-                    >
-                      <TogglePrimitive.Root
-                        className="lb-button lb-comment-action"
-                        pressed={thread.metadata?.resolved}
-                        onPressedChange={handleResolvedChange}
-                        aria-label={
+            {thread.comments.map((comment, index) => {
+              const isFirstComment = index === 0;
+
+              return (
+                <Comment
+                  key={comment.id}
+                  className="lb-thread-comment"
+                  comment={comment}
+                  indentBody={indentBody}
+                  additionalActionsClassName={
+                    isFirstComment ? "lb-thread-actions" : undefined
+                  }
+                  additionalActions={
+                    isFirstComment ? (
+                      <Tooltip
+                        content={
                           thread.metadata.resolved
                             ? "Re-open thread"
                             : "Resolve thread"
                         }
                       >
-                        {thread.metadata.resolved ? (
-                          <ResolvedIcon className="lb-button-icon" />
-                        ) : (
-                          <ResolveIcon className="lb-button-icon" />
-                        )}
-                      </TogglePrimitive.Root>
-                    </Tooltip>
-                  ) : null
-                }
-              />
-            ))}
+                        <TogglePrimitive.Root
+                          className="lb-button lb-comment-action"
+                          pressed={thread.metadata?.resolved}
+                          onPressedChange={handleResolvedChange}
+                          aria-label={
+                            thread.metadata.resolved
+                              ? "Re-open thread"
+                              : "Resolve thread"
+                          }
+                        >
+                          {thread.metadata.resolved ? (
+                            <ResolvedIcon className="lb-button-icon" />
+                          ) : (
+                            <ResolveIcon className="lb-button-icon" />
+                          )}
+                        </TogglePrimitive.Root>
+                      </Tooltip>
+                    ) : null
+                  }
+                />
+              );
+            })}
           </div>
           {/* TODO: Change placeholder and button label to indicate that it's a reply */}
           {showComposer && (

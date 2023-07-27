@@ -40,6 +40,13 @@ export interface CommentProps extends ComponentPropsWithoutRef<"div"> {
    * This is a private API and should not be used.
    */
   additionalActions?: ReactNode;
+
+  /**
+   * @internal
+   *
+   * This is a private API and should not be used.
+   */
+  additionalActionsClassName?: string;
 }
 
 function CommentMention({ userId }: CommentRenderMentionProps) {
@@ -53,12 +60,20 @@ function CommentMention({ userId }: CommentRenderMentionProps) {
 
 export const Comment = forwardRef<HTMLDivElement, CommentProps>(
   (
-    { comment, indentBody = true, additionalActions, className, ...props },
+    {
+      comment,
+      indentBody = true,
+      additionalActions,
+      additionalActionsClassName,
+      className,
+      ...props
+    },
     forwardedRef
   ) => {
     const { useDeleteComment } = useCommentsContext();
     const deleteComment = useDeleteComment();
     const [isEditing, setEditing] = useState(false);
+    const [isMoreOpen, setMoreOpen] = useState(false);
 
     const handleEdit = useCallback(() => {
       setEditing(true);
@@ -92,6 +107,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
             indentBody && "lb-comment:indent-body",
             className
           )}
+          data-dropdown-open={isMoreOpen ? "" : undefined}
           {...props}
           ref={forwardedRef}
         >
@@ -115,9 +131,16 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
               </span>
             </div>
             {!isEditing && (
-              <div className="lb-comment-actions">
+              <div
+                className={classNames(
+                  "lb-comment-actions",
+                  additionalActionsClassName
+                )}
+              >
                 {additionalActions ?? null}
                 <Dropdown
+                  open={isMoreOpen}
+                  onOpenChange={setMoreOpen}
                   align="end"
                   content={
                     <>

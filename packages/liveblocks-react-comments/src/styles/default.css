@@ -10,7 +10,7 @@
   /* Public: Specific */
   --lb-icon-weight: 1.5px;
   --lb-icon-size: 1.25rem;
-  --lb-avatar-radius: var(--lb-radius);
+  --lb-avatar-radius: 50%;
   --lb-button-radius: var(--lb-radius);
   --lb-tooltip-background: var(--lb-foreground);
   --lb-tooltip-foreground: var(--lb-background);
@@ -251,7 +251,7 @@
 .lb-composer-actions,
 .lb-composer-editor-actions {
   display: flex;
-  gap: calc(0.5 * var(--lb-spacing));
+  gap: calc(0.25 * var(--lb-spacing));
   align-items: center;
 }
 
@@ -270,7 +270,7 @@
 
 .lb-comment {
   /* Public: Specific */
-  --lb-comment-avatar-size: 2.5rem;
+  --lb-comment-avatar-size: var(--lb-button-size);
 
   position: relative;
   padding: var(--lb-spacing);
@@ -319,8 +319,15 @@
 
 .lb-comment-actions {
   display: flex;
-  gap: calc(0.5 * var(--lb-spacing));
+  gap: calc(0.25 * var(--lb-spacing));
   margin-inline-start: auto;
+  opacity: 0;
+}
+
+.lb-comment:hover .lb-comment-actions,
+.lb-comment:focus-within .lb-comment-actions,
+.lb-comment[data-dropdown-open] .lb-comment-actions {
+  opacity: 1;
 }
 
 .lb-comment-composer {
@@ -374,6 +381,11 @@
 .lb-thread-comments {
   display: flex;
   flex-direction: column;
+}
+
+.lb-thread:hover .lb-thread-actions,
+.lb-thread:focus-within .lb-thread-actions {
+  opacity: 1;
 }
 
 .lb-thread-comment {
