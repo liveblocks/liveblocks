@@ -4,6 +4,7 @@ import { CommentsProvider, useThreads } from "../../liveblocks.config";
 import { useHydrated } from "../utils/use-hydrated";
 import { Comment } from "@liveblocks/react-comments";
 import { Composer } from "@liveblocks/react-comments";
+import { Thread } from "@liveblocks/react-comments";
 
 // function Example({ roomId }: { roomId: string }) {
 //   const threads = useThreads(roomId);
@@ -49,14 +50,21 @@ function Example() {
 
   return (
     <main>
-      <div className="threads">
-        {threads.map((thread) => (
-          <div key={thread.id} className="thread">
-            {thread.comments.map((comment) => (
-              <Comment key={comment.id} comment={comment} />
-            ))}
-          </div>
-        ))}
+      <div className="split">
+        <div className="threads">
+          {threads.map((thread) => (
+            <Thread key={thread.id} thread={thread} />
+          ))}
+        </div>
+        <div className="threads">
+          {threads.map((thread) => (
+            <div key={thread.id} className="thread">
+              {thread.comments.map((comment) => (
+                <Comment key={comment.id} comment={comment} />
+              ))}
+            </div>
+          ))}
+        </div>
       </div>
       <div className="composer">
         <Composer />

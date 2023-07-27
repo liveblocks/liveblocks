@@ -1,7 +1,9 @@
 import type { ComponentProps } from "react";
 import React from "react";
 
-export function EmojiIcon(props: ComponentProps<"svg">) {
+import { classNames } from "../utils/class-names";
+
+export function EmojiIcon({ className, ...props }: ComponentProps<"svg">) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -14,6 +16,7 @@ export function EmojiIcon(props: ComponentProps<"svg">) {
       strokeLinecap="round"
       strokeLinejoin="round"
       role="presentation"
+      className={classNames("lb-icon", className)}
       {...props}
     >
       <path d="M10 17a7 7 0 1 0 0-14 7 7 0 0 0 0 14Z" />

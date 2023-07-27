@@ -1,7 +1,9 @@
 import type { ComponentProps } from "react";
 import React from "react";
 
-export function EllipsisIcon(props: ComponentProps<"svg">) {
+import { classNames } from "../utils/class-names";
+
+export function EllipsisIcon({ className, ...props }: ComponentProps<"svg">) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -12,6 +14,7 @@ export function EllipsisIcon(props: ComponentProps<"svg">) {
       stroke="currentColor"
       strokeWidth={1.5}
       role="presentation"
+      className={classNames("lb-icon", className)}
       {...props}
     >
       <circle cx={5} cy={10} r={0.75} />

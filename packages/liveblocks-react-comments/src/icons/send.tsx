@@ -1,7 +1,9 @@
 import type { ComponentProps } from "react";
 import React from "react";
 
-export function SendIcon(props: ComponentProps<"svg">) {
+import { classNames } from "../utils/class-names";
+
+export function SendIcon({ className, ...props }: ComponentProps<"svg">) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -14,6 +16,7 @@ export function SendIcon(props: ComponentProps<"svg">) {
       strokeLinecap="round"
       strokeLinejoin="round"
       role="presentation"
+      className={classNames("lb-icon", className)}
       {...props}
     >
       <path d="m5 16 12-6L5 4l2 6-2 6ZM7 10h10" />

@@ -33,6 +33,8 @@ module.exports = {
         "left",
         "z-index",
         "container",
+        "container-name",
+        "container-type",
         "display",
         "vertical-align",
         "flex",

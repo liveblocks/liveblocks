@@ -29,41 +29,76 @@ import { Logo } from "./Logo";
 import { Tooltip, TooltipProvider } from "./Tooltip";
 import { User } from "./User";
 
-interface ComposerMenuProps extends ComponentProps<"div"> {
-  actions: ReactNode;
-}
-
 type ComposerCreateThreadProps = {
+  /**
+   * TODO: JSDoc
+   */
   threadId?: never;
+
+  /**
+   * TODO: JSDoc
+   */
   commentId?: never;
+
+  /**
+   * TODO: JSDoc
+   */
   body?: never;
 };
 
 type ComposerCreateCommentProps = {
+  /**
+   * TODO: JSDoc
+   */
   threadId: string;
+
+  /**
+   * TODO: JSDoc
+   */
   commentId?: never;
+
+  /**
+   * TODO: JSDoc
+   */
   body?: never;
 };
 
 type ComposerEditCommentProps = {
+  /**
+   * TODO: JSDoc
+   */
   threadId: string;
+
+  /**
+   * TODO: JSDoc
+   */
   commentId: string;
+
+  /**
+   * TODO: JSDoc
+   */
   body: CommentBody;
 };
 
 export type ComposerProps = Omit<ComposerFormProps, keyof SlotProp> &
-  Pick<ComposerEditorProps, "initialValue" | "disabled"> &
+  Pick<ComposerEditorProps, "initialValue" | "disabled" | "autoFocus"> &
   (
     | ComposerCreateThreadProps
     | ComposerCreateCommentProps
     | ComposerEditCommentProps
-  );
+  ) & {
+    /**
+     * @internal
+     *
+     * This is a private API and should not be used.
+     */
+    actions?: ReactNode;
+  };
 
-export function ComposerMenu({
-  actions,
+function ComposerInsertMentionAction({
   className,
   ...props
-}: ComposerMenuProps) {
+}: ComponentProps<"button">) {
   const { insertText } = useComposer();
 
   const preventDefault = useCallback((event: SyntheticEvent) => {
@@ -75,23 +110,18 @@ export function ComposerMenu({
   }, [insertText]);
 
   return (
-    <div className={classNames("lb-composer-menu", className)} {...props}>
-      <div className="lb-composer-editor-actions">
-        <Tooltip content="Mention someone">
-          <button
-            type="button"
-            className="lb-button lb-composer-editor-action"
-            aria-label="Insert mention"
-            onMouseDown={preventDefault}
-            onClick={handleInsertMention}
-          >
-            <MentionIcon />
-          </button>
-        </Tooltip>
-      </div>
-      <Logo className="lb-composer-logo" />
-      <div className="lb-composer-actions">{actions}</div>
-    </div>
+    <Tooltip content="Mention someone">
+      <button
+        type="button"
+        className={classNames("lb-button lb-composer-editor-action", className)}
+        onMouseDown={preventDefault}
+        onClick={handleInsertMention}
+        aria-label="Mention someone"
+        {...props}
+      >
+        <MentionIcon className="lb-button-icon" />
+      </button>
+    </Tooltip>
   );
 }
 
@@ -112,6 +142,7 @@ export const Composer = forwardRef<HTMLFormElement, ComposerProps>(
       onCommentSubmit,
       initialValue,
       disabled,
+      actions,
       className,
       ...props
     },
@@ -122,6 +153,10 @@ export const Composer = forwardRef<HTMLFormElement, ComposerProps>(
     const createThread = useCreateThread();
     const createComment = useCreateComment();
     const editComment = useEditComment();
+
+    const preventDefault = useCallback((event: SyntheticEvent) => {
+      event.preventDefault();
+    }, []);
 
     const handleCommentSubmit = useCallback(
       (comment: ComposerSubmitComment, event: FormEvent<HTMLFormElement>) => {
@@ -175,18 +210,27 @@ export const Composer = forwardRef<HTMLFormElement, ComposerProps>(
             renderMention={ComposerMention}
             // renderMentionSuggestions={}
           />
-          <ComposerMenu
-            actions={
-              <Tooltip content="Send">
-                <ComposerPrimitive.Submit
-                  className="lb-button lb-composer-action"
-                  aria-label="Send"
-                >
-                  <SendIcon />
-                </ComposerPrimitive.Submit>
-              </Tooltip>
-            }
-          />
+          <div className="lb-composer-footer">
+            <div className="lb-composer-editor-actions">
+              <ComposerInsertMentionAction />
+            </div>
+            <Logo className="lb-composer-logo" />
+            <div className="lb-composer-actions">
+              {actions ?? (
+                <>
+                  <Tooltip content="Send">
+                    <ComposerPrimitive.Submit
+                      onMouseDown={preventDefault}
+                      className="lb-button lb-composer-action"
+                      aria-label="Send"
+                    >
+                      <SendIcon />
+                    </ComposerPrimitive.Submit>
+                  </Tooltip>
+                </>
+              )}
+            </div>
+          </div>
         </ComposerPrimitive.Form>
       </TooltipProvider>
     );

@@ -2,7 +2,7 @@
 
 import type { CommentData } from "@liveblocks/core";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import type { ComponentPropsWithoutRef } from "react";
+import type { ComponentPropsWithoutRef, ReactNode } from "react";
 import React, { forwardRef, useCallback, useState } from "react";
 
 import { useCommentsContext } from "../factory";
@@ -13,20 +13,33 @@ import { EditIcon } from "../icons/edit";
 import { EllipsisIcon } from "../icons/ellipsis";
 import type { CommentRenderMentionProps } from "../primitives/Comment";
 import { Comment as CommentPrimitive } from "../primitives/Comment";
-import type { ComposerSubmitComment } from "../primitives/Composer";
 import { Composer as ComposerPrimitive } from "../primitives/Composer";
 import { Timestamp } from "../primitives/Timestamp";
 import { MENTION_CHARACTER } from "../slate/mentions";
 import { classNames } from "../utils/class-names";
 import { Avatar } from "./Avatar";
-import { ComposerMenu } from "./Composer";
+import { Composer } from "./Composer";
 import { Dropdown, DropdownTrigger } from "./Dropdown";
 import { Tooltip, TooltipProvider } from "./Tooltip";
 import { User } from "./User";
 
 export interface CommentProps extends ComponentPropsWithoutRef<"div"> {
+  /**
+   * TODO: JSDoc
+   */
   comment: CommentData;
+
+  /**
+   * TODO: JSDoc
+   */
   indentBody?: boolean;
+
+  /**
+   * @internal
+   *
+   * This is a private API and should not be used.
+   */
+  additionalActions?: ReactNode;
 }
 
 function CommentMention({ userId }: CommentRenderMentionProps) {
@@ -39,9 +52,11 @@ function CommentMention({ userId }: CommentRenderMentionProps) {
 }
 
 export const Comment = forwardRef<HTMLDivElement, CommentProps>(
-  ({ comment, indentBody = true, className, ...props }, forwardedRef) => {
-    const { useEditComment, useDeleteComment } = useCommentsContext();
-    const editComment = useEditComment();
+  (
+    { comment, indentBody = true, additionalActions, className, ...props },
+    forwardedRef
+  ) => {
+    const { useDeleteComment } = useCommentsContext();
     const deleteComment = useDeleteComment();
     const [isEditing, setEditing] = useState(false);
 
@@ -53,17 +68,9 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
       setEditing(false);
     }, []);
 
-    const handleEditSubmit = useCallback(
-      ({ body }: ComposerSubmitComment) => {
-        editComment({
-          commentId: comment.id,
-          threadId: comment.threadId,
-          body,
-        });
-        setEditing(false);
-      },
-      [comment.id, comment.threadId, editComment]
-    );
+    const handleEditSubmit = useCallback(() => {
+      setEditing(false);
+    }, []);
 
     const handleDelete = useCallback(() => {
       deleteComment({
@@ -109,7 +116,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
             </div>
             {!isEditing && (
               <div className="lb-comment-actions">
-                {/* TODO: Only show if permissions (for now = own comments) allow edit/delete */}
+                {additionalActions ?? null}
                 <Dropdown
                   align="end"
                   content={
@@ -119,24 +126,24 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
                         onSelect={handleEdit}
                       >
                         <EditIcon className="lb-dropdown-item-icon" />
-                        Edit
+                        Edit comment
                       </DropdownMenu.Item>
                       <DropdownMenu.Item
                         className="lb-dropdown-item"
                         onSelect={handleDelete}
                       >
                         <DeleteIcon className="lb-dropdown-item-icon" />
-                        Delete
+                        Delete comment
                       </DropdownMenu.Item>
                     </>
                   }
                 >
-                  <Tooltip content="Actions">
+                  <Tooltip content="More">
                     <DropdownTrigger
                       className="lb-button lb-comment-action"
-                      aria-label="Actions"
+                      aria-label="More"
                     >
-                      <EllipsisIcon />
+                      <EllipsisIcon className="lb-button-icon" />
                     </DropdownTrigger>
                   </Tooltip>
                 </Dropdown>
@@ -144,41 +151,33 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
             )}
           </div>
           {isEditing ? (
-            <ComposerPrimitive.Form
-              className="lb-composer-form lb-comment-composer"
+            <Composer
+              className="lb-comment-composer"
               onCommentSubmit={handleEditSubmit}
-            >
-              <ComposerPrimitive.Editor
-                className="lb-composer-editor"
-                placeholder="Edit comment…"
-                initialValue={comment.body}
-                autoFocus
-              />
-              <ComposerMenu
-                actions={
-                  <>
-                    <Tooltip content="Cancel">
-                      <button
-                        type="button"
-                        className="lb-button lb-composer-action"
-                        aria-label="Cancel"
-                        onClick={handleEditCancel}
-                      >
-                        <CrossIcon />
-                      </button>
-                    </Tooltip>
-                    <Tooltip content="Save">
-                      <ComposerPrimitive.Submit
-                        className="lb-button lb-composer-action"
-                        aria-label="Save"
-                      >
-                        <CheckIcon />
-                      </ComposerPrimitive.Submit>
-                    </Tooltip>
-                  </>
-                }
-              />
-            </ComposerPrimitive.Form>
+              autoFocus
+              initialValue={comment.body}
+              actions={
+                <>
+                  <Tooltip content="Cancel" aria-label="Cancel">
+                    <button
+                      type="button"
+                      className="lb-button lb-composer-action"
+                      onClick={handleEditCancel}
+                    >
+                      <CrossIcon className="lb-button-icon" />
+                    </button>
+                  </Tooltip>
+                  <Tooltip content="Save">
+                    <ComposerPrimitive.Submit
+                      className="lb-button lb-composer-action"
+                      aria-label="Save"
+                    >
+                      <CheckIcon className="lb-button-icon" />
+                    </ComposerPrimitive.Submit>
+                  </Tooltip>
+                </>
+              }
+            />
           ) : (
             <CommentPrimitive.Body
               className="lb-comment-body"

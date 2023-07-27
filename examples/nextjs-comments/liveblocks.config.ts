@@ -15,6 +15,8 @@ export const client = createClient({
 
 export type ThreadMetadata = {
   resolved: boolean;
+  x: number;
+  y: number;
 };
 
 export async function resolveUser(userId: string): Promise<BaseUserInfo> {

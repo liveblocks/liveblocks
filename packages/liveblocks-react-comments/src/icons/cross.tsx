@@ -1,7 +1,9 @@
 import type { ComponentProps } from "react";
 import React from "react";
 
-export function CrossIcon(props: ComponentProps<"svg">) {
+import { classNames } from "../utils/class-names";
+
+export function CrossIcon({ className, ...props }: ComponentProps<"svg">) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -14,6 +16,7 @@ export function CrossIcon(props: ComponentProps<"svg">) {
       strokeLinecap="round"
       strokeLinejoin="round"
       role="presentation"
+      className={classNames("lb-icon", className)}
       {...props}
     >
       <path d="M15 5L5 15" />

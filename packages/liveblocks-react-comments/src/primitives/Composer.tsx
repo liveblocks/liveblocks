@@ -25,7 +25,6 @@ import type {
   FocusEvent,
   FormEvent,
   KeyboardEvent,
-  MouseEvent,
   PointerEvent,
   Ref,
   SetStateAction,
@@ -1181,22 +1180,13 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
 );
 
 const ComposerSubmit = forwardRef<HTMLButtonElement, ComposerSubmitProps>(
-  ({ children, disabled, onMouseDown, asChild, ...props }, forwardedRef) => {
+  ({ children, disabled, asChild, ...props }, forwardedRef) => {
     const Component = asChild ? Slot : "button";
     const { isValid } = useComposer();
-
-    const handleMouseDown = useCallback(
-      (event: MouseEvent<HTMLButtonElement>) => {
-        onMouseDown?.(event);
-        event.preventDefault();
-      },
-      [onMouseDown]
-    );
 
     return (
       <Component
         type="submit"
-        onMouseDown={handleMouseDown}
         {...props}
         ref={forwardedRef}
         disabled={disabled ?? !isValid}

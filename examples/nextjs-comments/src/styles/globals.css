@@ -48,7 +48,13 @@ main {
   opacity: 0.2;
 }
 
+.split {
+  display: flex;
+  gap: 1rem;
+}
+
 .threads {
+  flex: 1 0 auto;
   display: flex;
   flex-direction: column;
   gap: 1rem;
