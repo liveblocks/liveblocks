@@ -93,6 +93,13 @@ export type ComposerProps = Omit<ComposerFormProps, keyof SlotProp> &
      * This is a private API and should not be used.
      */
     actions?: ReactNode;
+
+    /**
+     * @internal
+     *
+     * This is a private API and should not be used.
+     */
+    showLogo?: boolean;
   };
 
 function ComposerInsertMentionAction({
@@ -142,7 +149,9 @@ export const Composer = forwardRef<HTMLFormElement, ComposerProps>(
       onCommentSubmit,
       initialValue,
       disabled,
+      autoFocus,
       actions,
+      showLogo = true,
       className,
       ...props
     },
@@ -204,9 +213,10 @@ export const Composer = forwardRef<HTMLFormElement, ComposerProps>(
         >
           <ComposerPrimitive.Editor
             className="lb-composer-editor"
-            initialValue={initialValue}
             placeholder="Write a comment…"
+            initialValue={initialValue}
             disabled={disabled}
+            autoFocus={autoFocus}
             renderMention={ComposerMention}
             // renderMentionSuggestions={}
           />
@@ -214,7 +224,7 @@ export const Composer = forwardRef<HTMLFormElement, ComposerProps>(
             <div className="lb-composer-editor-actions">
               <ComposerInsertMentionAction />
             </div>
-            <Logo className="lb-composer-logo" />
+            {showLogo && <Logo className="lb-composer-logo" />}
             <div className="lb-composer-actions">
               {actions ?? (
                 <>

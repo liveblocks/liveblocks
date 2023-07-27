@@ -48,17 +48,26 @@ import { Thread } from "@liveblocks/react-comments";
 function Example() {
   const threads = useThreads();
 
+  // return (
+  //   <main>
+  //     {threads.map((thread) => (
+  //       <Thread key={thread.id} thread={thread} />
+  //     ))}
+  //     <Composer />
+  //   </main>
+  // );
+
   return (
     <main>
       <div className="split">
         <div className="threads">
           {threads.map((thread) => (
-            <Thread key={thread.id} thread={thread} />
+            <Thread key={thread.id} thread={thread} className="thread" />
           ))}
         </div>
         <div className="threads">
           {threads.map((thread) => (
-            <div key={thread.id} className="thread">
+            <div key={thread.id} className="custom-thread">
               {thread.comments.map((comment) => (
                 <Comment key={comment.id} comment={comment} />
               ))}

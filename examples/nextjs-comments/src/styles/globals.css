@@ -60,7 +60,7 @@ main {
   gap: 1rem;
 }
 
-.thread {
+.custom-thread {
   display: flex;
   flex-direction: column;
   padding: 1rem;
@@ -69,6 +69,7 @@ main {
   border-radius: 1rem;
 }
 
+.thread,
 .composer {
   border-radius: 1rem;
   overflow: hidden;

@@ -32,7 +32,7 @@ export const Thread = forwardRef<HTMLDivElement, ThreadProps>(
       thread,
       indentBody,
       alwaysShowActions,
-      showComposer = true,
+      showComposer,
       className,
       ...props
     },

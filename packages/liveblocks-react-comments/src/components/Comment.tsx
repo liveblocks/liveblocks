@@ -184,8 +184,9 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
             <Composer
               className="lb-comment-composer"
               onCommentSubmit={handleEditSubmit}
-              autoFocus
               initialValue={comment.body}
+              autoFocus
+              showLogo={false}
               actions={
                 <>
                   <Tooltip content="Cancel" aria-label="Cancel">
