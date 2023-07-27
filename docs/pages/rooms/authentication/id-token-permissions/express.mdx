@@ -40,14 +40,13 @@ Follow the following steps to start configure your authentication endpoint where
       });
 
       const app = express();
-
       app.use(express.json());
 
       app.post("/api/liveblocks-auth", (req, res) => {
-        // You'll need to get the user from your
-        // authentication provider here.
+        // Get the current user from your database
         const user = __getUserFromDB__(req);
 
+        // Identify the user and return the result
         const { status, body } = await liveblocks.identifyUser(
           {
             userId: user.id,
@@ -55,6 +54,7 @@ Follow the following steps to start configure your authentication endpoint where
           },
           { userInfo: user.metadata },
         );
+
         return res.status(status).end(body);
       });
       ```

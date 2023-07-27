@@ -40,23 +40,24 @@ Follow the following steps to start configure your authentication endpoint where
       });
 
       const app = express();
-
       app.use(express.json());
 
       app.post("/api/liveblocks-auth", (req, res) => {
-        // You'll need to get the user from your
-        // authentication provider here.
+        // Get the current user from your database
         const user = __getUserFromDB__(req);
 
+        // Start an auth session inside your endpoint
         const session = liveblocks.prepareSession(
           user.id,
           { userInfo: user.metadata },  // Optional
         );
-        // You'll need to implement your own security here.
+
+        // Implement your own security, and give the user access to the room
         if (req.body.room && __shouldUserHaveAccess__(user, req.body.room)) {
           session.allow(req.body.room, session.FULL_ACCESS);
         }
 
+        // Authorize the user and return the result
         const { status, body } = await session.authorize();
         return res.status(status).end(body);
       });

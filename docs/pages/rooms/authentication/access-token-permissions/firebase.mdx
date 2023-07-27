@@ -40,22 +40,24 @@ start building your own security logic.
         secret: "{{SECRET_KEY}}",
       });
 
-      exports.auth = functions.https.onCall((data, context) => {
-        // You'll need to get the user from your
-        // authentication provider here.
-        const user = __getUserFromDB__(req);
+      exports.auth = functions.https.onCall(async (data, context) => {
+        // Get the current user from your database
+        const user = __getUserFromDB__(data);
 
+        // Start an auth session inside your endpoint
         const session = liveblocks.prepareSession(
           user.id,
           { userInfo: user.metadata },  // Optional
         );
-        // You'll need to implement your own security here.
-        if (req.body.room && __shouldUserHaveAccess__(user, req.body.room)) {
-          session.allow(req.body.room, session.FULL_ACCESS);
+
+        // Implement your own security, and give the user access to the room
+        if (data.room && __shouldUserHaveAccess__(user, data.room)) {
+          session.allow(data.room, session.FULL_ACCESS);
         }
 
+        // Authorize the user and return the result
         const { status, body } = await session.authorize();
-        return res.status(status).end(body);
+        return JSON.parse(body);
       });
       ```
     </StepContent>

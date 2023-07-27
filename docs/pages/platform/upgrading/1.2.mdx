@@ -135,7 +135,7 @@ single-room token based setup.
         secret: "sk_prod_xxxxxxxxxxxxxxxxxxxxxxxx",
       });
       
-      export function POST() {
+      export async function POST() {
         const user = { id: "olivier@example.com", info: { name: "Olivier" }};
   
         const session = liveblocks.prepareSession(
@@ -158,7 +158,7 @@ single-room token based setup.
         secret: "sk_prod_xxxxxxxxxxxxxxxxxxxxxxxx",
       });
       
-      export function POST() {
+      export async function POST() {
         const user = { id: "olivier@example.com", info: { name: "Olivier" }};
   
         const session = liveblocks.prepareSession(
@@ -184,7 +184,7 @@ single-room token based setup.
         secret: "sk_prod_xxxxxxxxxxxxxxxxxxxxxxxx",
       });
       
-      export function POST() {
+      export async function POST() {
         const user = { id: "olivier@example.com", info: { name: "Olivier" }};
   
         const session = liveblocks.prepareSession(
@@ -195,7 +195,7 @@ single-room token based setup.
         session.allow("my-room-name", session.FULL_ACCESS);
 
         const { status, body } = await session.authorize();
-        return body;
+        return new Response(body, { status });
       }
       ```
     </StepContent>
@@ -234,7 +234,7 @@ single-room token based setup.
         secret: "sk_prod_xxxxxxxxxxxxxxxxxxxxxxxx",
       });
       
-      export function POST() {
+      export async function POST() {
         const user = { id: "olivier@example.com", info: { name: "Olivier" }};
   
         const session = liveblocks.prepareSession(
@@ -247,7 +247,7 @@ single-room token based setup.
         session.allow("my-other-room", session.READ_ACCESS);
 
         const { status, body } = await session.authorize();
-        return body;
+        return new Response(body, { status });
       }
       ```
     </StepContent>
@@ -266,8 +266,8 @@ const liveblocks = new Liveblocks({
   secret: "sk_prod_xxxxxxxxxxxxxxxxxxxxxxxx",
 });
 
-export default async function myNewAuthEndpoint(req, res) {
-  const user = __getUserFromDB__(req);
+export async function POST(request: Request) {
+  const user = __getUserFromDB__(request);
 
   // Start an auth session inside your endpoint
   const session = liveblocks.prepareSession(
@@ -276,14 +276,15 @@ export default async function myNewAuthEndpoint(req, res) {
   );
 
   // Give the user access to the room
-  if (req.body.room && __shouldUserHaveAccess__(user, req.body.room)) {
+  const { room } = await request.json();
+  if (room && __shouldUserHaveAccess__(user, room)) {
     // e.g. session.allow("my-room", ["room:write"])
-    session.allow(req.body.room, session.FULL_ACCESS);
+    session.allow(room, session.FULL_ACCESS);
   }
 
   // Authorize the user and return the result
   const { status, body } = await session.authorize();
-  return res.status(status).end(body);
+  return new Response(body, { status });
 }
 ```
 
@@ -338,7 +339,7 @@ All you have to do now is implement it as follows:
         secret: "sk_prod_xxxxxxxxxxxxxxxxxxxxxxxx",
       });
       
-      export function POST() {
+      export async function POST() {
         const user = { id: "olivier@example.com", info: { name: "Olivier" }};
   
         const { status, body } = await liveblocks.identifyUser({
@@ -346,7 +347,7 @@ All you have to do now is implement it as follows:
           groupIds, // Optional
         });
         
-        return body;
+        return new Response(body, { status });
       }
       ```
     </StepContent>
@@ -384,15 +385,16 @@ const liveblocks = new Liveblocks({
   secret: "sk_prod_xxxxxxxxxxxxxxxxxxxxxxxx",
 });
 
-export default async function myNewAuthEndpoint(req, res) {
-  const user = __getUserFromDB__(req);
+export async function POST(request: Request) {
+  const user = __getUserFromDB__(request);
 
   // Identify the user and return the result
   const { status, body } = await liveblocks.identifyUser({
     userId: user.id,
     groupIds, // Optional
   });
-  return res.status(status).end(body);
+
+  return new Response(body, { status });
 }
 ```
 

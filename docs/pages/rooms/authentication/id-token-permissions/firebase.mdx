@@ -40,11 +40,11 @@ start building your own security logic.
         secret: "{{SECRET_KEY}}",
       });
 
-      exports.auth = functions.https.onCall((data, context) => {
-        // You'll need to get the user from your
-        // authentication provider here.
-        const user = __getUserFromDB__(req);
+      exports.auth = functions.https.onCall(async (data, context) => {
+        // Get the current user from your database
+        const user = __getUserFromDB__(data);
 
+        // Identify the user and return the result
         const { status, body } = await liveblocks.identifyUser(
           {
             userId: user.id,
@@ -52,7 +52,8 @@ start building your own security logic.
           },
           { userInfo: user.metadata },
         );
-        return res.status(status).end(body);
+
+        return JSON.parse(body);
       });
       ```
     </StepContent>

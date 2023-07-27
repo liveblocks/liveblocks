@@ -39,10 +39,10 @@ start building your own security logic.
       });
 
       export default defineEventHandler(async (event) => {
-        // You'll need to get the user from your
-        // authentication provider here.
+        // Get the current user from your database
         const user = __getUserFromDB__(event);
 
+        // Identify the user and return the result
         const { status, body } = await liveblocks.identifyUser(
           {
             userId: user.id,
@@ -50,7 +50,7 @@ start building your own security logic.
           },
           { userInfo: user.metadata },
         );
-        return res.status(status).end(body);
+        return body;
       })
       ```
 

@@ -35,22 +35,20 @@ start building your own security logic in Next.js’ `/app` directory.
       import { Liveblocks } from "@liveblocks/node";
 
       const liveblocks = new Liveblocks({
-        secret: "{{SECRET_KEY}}",
+        secret: "sk_prod_xxxxxxxxxxxxxxxxxxxxxxxx",
       });
 
-      export default async function authEndpoint(req, res) {
-        // You'll need to get the user from your
-        // authentication provider here.
-        const user = __getUserFromDB__(req);
+      export async function POST(request: Request) {
+        // Get the current user from your database
+        const user = __getUserFromDB__(request);
 
-        const { status, body } = await liveblocks.identifyUser(
-          {
-            userId: user.id,
-            groupIds, // Optional
-          },
-          { userInfo: user.metadata },
-        );
-        return res.status(status).end(body);
+        // Identify the user and return the result
+        const { status, body } = await liveblocks.identifyUser({
+          userId: user.id,
+          groupIds, // Optional
+        });
+
+        return new Response(body, { status });
       }
       ```
 

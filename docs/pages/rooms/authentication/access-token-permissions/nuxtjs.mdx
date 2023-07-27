@@ -39,21 +39,24 @@ start building your own security logic.
       });
 
       export default defineEventHandler(async (event) => {
-        // You'll need to get the user from your
-        // authentication provider here.
+      // Get the current user from your database
         const user = __getUserFromDB__(event);
 
+        // Start an auth session inside your endpoint
         const session = liveblocks.prepareSession(
           user.id,
           { userInfo: user.metadata },  // Optional
         );
-        // You'll need to implement your own security here.
-        if (req.body.room && __shouldUserHaveAccess__(user, req.body.room)) {
-          session.allow(req.body.room, session.FULL_ACCESS);
+
+        // Implement your own security, and give the user access to the room
+        const { room } = await readBody(event);
+        if (room && __shouldUserHaveAccess__(user, room)) {
+          session.allow(room, session.FULL_ACCESS);
         }
 
+        // Authorize the user and return the result
         const { status, body } = await session.authorize();
-        return res.status(status).end(body);
+        return body;
       })
       ```
 
