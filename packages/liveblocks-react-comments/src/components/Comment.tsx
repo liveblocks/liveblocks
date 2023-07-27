@@ -35,6 +35,11 @@ export interface CommentProps extends ComponentPropsWithoutRef<"div"> {
   indentBody?: boolean;
 
   /**
+   * TODO: JSDoc
+   */
+  alwaysShowActions?: boolean;
+
+  /**
    * @internal
    *
    * This is a private API and should not be used.
@@ -63,6 +68,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
     {
       comment,
       indentBody = true,
+      alwaysShowActions,
       additionalActions,
       additionalActionsClassName,
       className,
@@ -105,6 +111,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
           className={classNames(
             "lb-comment",
             indentBody && "lb-comment:indent-body",
+            alwaysShowActions && "lb-comment:always-show-actions",
             className
           )}
           data-dropdown-open={isMoreOpen ? "" : undefined}

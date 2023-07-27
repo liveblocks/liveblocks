@@ -4,6 +4,7 @@ module.exports = {
   plugins: ["stylelint-order"],
   rules: {
     "selector-class-pattern": null,
+    "keyframes-name-pattern": null,
     "order/order": [
       [
         "dollar-variables",

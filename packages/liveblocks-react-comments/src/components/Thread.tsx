@@ -14,7 +14,7 @@ import { Tooltip, TooltipProvider } from "./Tooltip";
 
 export interface ThreadProps
   extends ComponentPropsWithoutRef<"div">,
-    Pick<CommentProps, "indentBody"> {
+    Pick<CommentProps, "indentBody" | "alwaysShowActions"> {
   /**
    * TODO: JSDoc
    */
@@ -28,7 +28,14 @@ export interface ThreadProps
 
 export const Thread = forwardRef<HTMLDivElement, ThreadProps>(
   (
-    { thread, indentBody, showComposer = true, className, ...props },
+    {
+      thread,
+      indentBody,
+      alwaysShowActions,
+      showComposer = true,
+      className,
+      ...props
+    },
     forwardedRef
   ) => {
     const { useEditThread } = useCommentsContext();
@@ -44,7 +51,11 @@ export const Thread = forwardRef<HTMLDivElement, ThreadProps>(
     return (
       <TooltipProvider>
         <div
-          className={classNames("lb-thread", className)}
+          className={classNames(
+            "lb-thread",
+            alwaysShowActions && "lb-thread:always-show-actions",
+            className
+          )}
           {...props}
           ref={forwardedRef}
         >
@@ -59,6 +70,7 @@ export const Thread = forwardRef<HTMLDivElement, ThreadProps>(
                   className="lb-thread-comment"
                   comment={comment}
                   indentBody={indentBody}
+                  alwaysShowActions={alwaysShowActions}
                   additionalActionsClassName={
                     isFirstComment ? "lb-thread-actions" : undefined
                   }
