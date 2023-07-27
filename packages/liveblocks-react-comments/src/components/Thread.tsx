@@ -50,6 +50,7 @@ export const Thread = forwardRef<HTMLDivElement, ThreadProps>(
         >
           <div className="lb-thread-comments">
             {thread.comments.map((comment, index) => {
+              // TODO: Take into account that deleted comments will not render by default, unless there's an option to show them with a placeholder
               const isFirstComment = index === 0;
 
               return (

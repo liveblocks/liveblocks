@@ -14,6 +14,8 @@
   --lb-button-radius: var(--lb-radius);
   --lb-tooltip-background: var(--lb-foreground);
   --lb-tooltip-foreground: var(--lb-background);
+  --lb-transition-duration: 0.1s;
+  --lb-transition-easing: cubic-bezier(0.4, 0, 0.2, 1);
 
   /* Internal */
   --lb-button-size: calc(2 * 0.25 * var(--lb-spacing) + var(--lb-icon-size));
@@ -40,17 +42,20 @@
   /* Internal */
   --lb-button-background: var(--lb-background);
 
+  all: unset;
   display: flex;
   justify-content: center;
   align-items: center;
   aspect-ratio: 1;
   padding: calc(0.25 * var(--lb-spacing));
-  border: none;
   border-radius: var(--lb-button-radius);
   background: var(--lb-button-background);
   color: color-mix(in srgb, var(--lb-foreground), var(--lb-background) 60%);
   outline: none;
   cursor: pointer;
+  transition-property: background, color, box-shadow, opacity;
+  transition-duration: var(--lb-transition-duration);
+  transition-timing-function: var(--lb-transition-easing);
 
   &:hover,
   &:focus-visible {
@@ -94,6 +99,17 @@
 
   padding: var(--lb-dropdown-padding);
   border-radius: var(--lb-radius);
+  animation-duration: var(--lb-transition-duration);
+  animation-timing-function: var(--lb-transition-easing);
+  will-change: transform, opacity;
+}
+
+.lb-dropdown[data-side="top"] {
+  animation-name: lb-animation-slide\:from-top;
+}
+
+.lb-dropdown[data-side="bottom"] {
+  animation-name: lb-animation-slide\:from-bottom;
 }
 
 .lb-dropdown-item {
@@ -105,6 +121,9 @@
   outline: none;
   font-size: 0.875rem;
   cursor: pointer;
+  transition-property: background, color, opacity;
+  transition-duration: var(--lb-transition-duration);
+  transition-timing-function: var(--lb-transition-easing);
 
   &[data-highlighted] {
     background: color-mix(
@@ -322,6 +341,9 @@
   gap: calc(0.25 * var(--lb-spacing));
   margin-inline-start: auto;
   opacity: 0;
+  transition-property: opacity;
+  transition-duration: var(--lb-transition-duration);
+  transition-timing-function: var(--lb-transition-easing);
 }
 
 .lb-comment:hover .lb-comment-actions,
@@ -403,4 +425,32 @@
 .lb-thread-composer .lb-composer-editor {
   border-block-start: 1px solid
     color-mix(in srgb, var(--lb-foreground), var(--lb-background) 90%);
+}
+
+/**
+ * Animations
+ */
+
+@keyframes lb-animation-slide\:from-top {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes lb-animation-slide\:from-bottom {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
