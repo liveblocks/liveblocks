@@ -199,7 +199,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
                   </Tooltip>
                   <Tooltip content="Save">
                     <ComposerPrimitive.Submit
-                      className="lb-button lb-composer-action"
+                      className="lb-button lb-button:primary lb-composer-action"
                       aria-label="Save"
                     >
                       <CheckIcon className="lb-button-icon" />

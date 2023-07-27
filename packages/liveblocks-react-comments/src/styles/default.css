@@ -11,7 +11,7 @@
   --lb-icon-weight: 1.5px;
   --lb-icon-size: 1.25rem;
   --lb-avatar-radius: 50%;
-  --lb-button-radius: var(--lb-radius);
+  --lb-button-radius: calc(0.75 * var(--lb-radius));
   --lb-tooltip-background: var(--lb-foreground);
   --lb-tooltip-foreground: var(--lb-background);
   --lb-transition-duration: 0.1s;
@@ -57,19 +57,43 @@
   transition-duration: var(--lb-transition-duration);
   transition-timing-function: var(--lb-transition-easing);
 
-  &:hover,
-  &:focus-visible {
+  &:enabled:hover,
+  &:enabled:focus-visible {
     --lb-button-background: color-mix(
       in srgb,
       var(--lb-foreground),
       var(--lb-background) 90%
     );
+
+    color: color-mix(in srgb, var(--lb-foreground), var(--lb-background) 50%);
   }
 
   &:focus-visible {
     box-shadow:
       var(--lb-background) 0 0 0 2px,
       var(--lb-accent) 0 0 0 4px;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  &.lb-button\:primary {
+    --lb-button-background: var(--lb-accent);
+
+    color: var(--lb-accent-foreground);
+
+    &:enabled:hover,
+    &:enabled:focus-visible {
+      --lb-button-background: color-mix(
+        in srgb,
+        var(--lb-accent),
+        var(--lb-background) 10%
+      );
+
+      color: var(--lb-accent-foreground);
+    }
   }
 }
 
@@ -252,6 +276,22 @@
 .lb-composer {
   background: var(--lb-background);
   color: var(--lb-foreground);
+}
+
+/* TODO: Improve logic, currently having an action focused would count */
+.lb-composer:not(:focus-within) .lb-button\:primary {
+  --lb-button-background: color-mix(
+    in srgb,
+    var(--lb-foreground),
+    var(--lb-background) 90%
+  );
+
+  color: color-mix(in srgb, var(--lb-foreground), var(--lb-background) 50%);
+
+  &:enabled:hover,
+  &:enabled:focus-visible {
+    color: var(--lb-background);
+  }
 }
 
 .lb-composer-editor {

@@ -221,7 +221,7 @@ export const Composer = forwardRef<HTMLFormElement, ComposerProps>(
                   <Tooltip content="Send">
                     <ComposerPrimitive.Submit
                       onMouseDown={preventDefault}
-                      className="lb-button lb-composer-action"
+                      className="lb-button lb-button:primary lb-composer-action"
                       aria-label="Send"
                     >
                       <SendIcon />
