@@ -263,7 +263,7 @@ import { Liveblocks } from "@liveblocks/node";
 
 // Create a client
 const liveblocks = new Liveblocks({
-  secret: "sk_prod_xxxxxxxxxxxxxxxxxxxxxxxx",
+  secret: "{{SECRET_KEY}}",
 });
 
 export async function POST(request: Request) {
@@ -382,7 +382,7 @@ import { Liveblocks } from "@liveblocks/node";
 
 // Create a client
 const liveblocks = new Liveblocks({
-  secret: "sk_prod_xxxxxxxxxxxxxxxxxxxxxxxx",
+  secret: "{{SECRET_KEY}}",
 });
 
 export async function POST(request: Request) {

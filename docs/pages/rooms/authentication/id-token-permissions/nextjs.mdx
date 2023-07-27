@@ -35,7 +35,7 @@ start building your own security logic in Next.js’ `/app` directory.
       import { Liveblocks } from "@liveblocks/node";
 
       const liveblocks = new Liveblocks({
-        secret: "sk_prod_xxxxxxxxxxxxxxxxxxxxxxxx",
+        secret: "{{SECRET_KEY}}",
       });
 
       export async function POST(request: Request) {
