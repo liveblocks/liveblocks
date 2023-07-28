@@ -135,7 +135,7 @@ single-room token based setup.
         secret: "sk_prod_xxxxxxxxxxxxxxxxxxxxxxxx",
       });
       
-      export async function POST() {
+      export async function POST(request) {
         const user = { id: "olivier@example.com", info: { name: "Olivier" }};
   
         const session = liveblocks.prepareSession(
@@ -151,14 +151,14 @@ single-room token based setup.
     <StepTitle>Give the user access to the room</StepTitle>
     <StepContent>
     Give if the current user access to the room, with either `session.FULL_ACCESS`, or `session.READ_ACCESS`.
-      ```tsx highlight="15"
+      ```tsx highlight="15,16"
       import { Liveblocks } from "@liveblocks/node";
       
       const liveblocks = new Liveblocks({
         secret: "sk_prod_xxxxxxxxxxxxxxxxxxxxxxxx",
       });
       
-      export async function POST() {
+      export async function POST(request) {
         const user = { id: "olivier@example.com", info: { name: "Olivier" }};
   
         const session = liveblocks.prepareSession(
@@ -166,7 +166,8 @@ single-room token based setup.
           { userInfo: user.info } // Optional
         );
 
-        session.allow("my-room-name", session.FULL_ACCESS);
+        const { room } = await request.json();
+        session.allow(room, session.FULL_ACCESS);
       }
       ```
     </StepContent>
@@ -177,22 +178,23 @@ single-room token based setup.
     <StepTitle>Authorize the user and return the result</StepTitle>
     <StepContent>
     Give if the current user access to the room, with either `session.FULL_ACCESS`, or `session.READ_ACCESS`.
-      ```tsx highlight="17,18"
+      ```tsx highlight="18,19"
       import { Liveblocks } from "@liveblocks/node";
       
       const liveblocks = new Liveblocks({
         secret: "sk_prod_xxxxxxxxxxxxxxxxxxxxxxxx",
       });
       
-      export async function POST() {
+      export async function POST(request) {
         const user = { id: "olivier@example.com", info: { name: "Olivier" }};
   
         const session = liveblocks.prepareSession(
           user.id,
           { userInfo: user.info } // Optional
         );
-
-        session.allow("my-room-name", session.FULL_ACCESS);
+        
+        const { room } = await request.json();
+        session.allow(room, session.FULL_ACCESS);
 
         const { status, body } = await session.authorize();
         return new Response(body, { status });
@@ -227,22 +229,23 @@ single-room token based setup.
     <StepTitle>Bonus: Issue access to multiple rooms</StepTitle>
     <StepContent>
     With Liveblocks 1.2, you can also issue access to multiple rooms, or even use a prefix-based wildcard in the room name, enabling any amount of rooms! You can learn more about this in our [access token](/docs/rooms/permissions/access-token#patterns) guide.
-      ```tsx highlight="15-17"
+      ```tsx highlight="15-18"
       import { Liveblocks } from "@liveblocks/node";
       
       const liveblocks = new Liveblocks({
         secret: "sk_prod_xxxxxxxxxxxxxxxxxxxxxxxx",
       });
       
-      export async function POST() {
+      export async function POST(request) {
         const user = { id: "olivier@example.com", info: { name: "Olivier" }};
   
         const session = liveblocks.prepareSession(
           user.id,
           { userInfo: user.info } // Optional
         );
-
-        session.allow("my-room-name", session.FULL_ACCESS);
+        
+        const { room } = await request.json();
+        session.allow(room, session.FULL_ACCESS);
         session.allow("my-room-*", session.READ_ACCESS);
         session.allow("my-other-room", session.READ_ACCESS);
 
@@ -346,7 +349,7 @@ All you have to do now is implement it as follows:
         secret: "sk_prod_xxxxxxxxxxxxxxxxxxxxxxxx",
       });
       
-      export async function POST() {
+      export async function POST(request) {
         const user = { id: "olivier@example.com", info: { name: "Olivier" }};
   
         const { status, body } = await liveblocks.identifyUser({
