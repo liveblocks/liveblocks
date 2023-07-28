@@ -68,11 +68,24 @@ $lb-button-size: calc(2 * 0.25 * var(--lb-spacing) + var(--lb-icon-size));
   --lb-foreground-contrast: 6%;
 
   /* @public Modern CSS (color-mix) */
+  // TODO: Use contrast variable to control these like the foreground ones?
   --lb-accent-emphasis: color-mix(
     in srgb,
     var(--lb-accent),
     var(--lb-background) 20%
   );
+  --lb-accent-subtle: color-mix(
+    in srgb,
+    var(--lb-accent),
+    var(--lb-background) 80%
+  );
+  --lb-accent-subtlest: color-mix(
+    in srgb,
+    var(--lb-accent),
+    var(--lb-background) 90%
+  );
+
+  // TODO: Use "semantic" names to remove the unused ones?
   --lb-foreground-100: #{generate-foreground(100)};
   --lb-foreground-200: #{generate-foreground(200)};
   --lb-foreground-300: #{generate-foreground(300)};
@@ -172,12 +185,39 @@ $lb-button-size: calc(2 * 0.25 * var(--lb-spacing) + var(--lb-icon-size));
  * Floating
  */
 
-.lb-dropdown {
+.lb-dropdown,
+.lb-composer-suggestions {
+  border-radius: var(--lb-radius);
   background: var(--lb-background);
   box-shadow:
     0 0 0 1px rgb(0 0 0 / 4%),
     0 2px 6px rgb(0 0 0 / 8%),
     0 8px 26px rgb(0 0 0 / 12%);
+  animation-duration: var(--lb-transition-duration);
+  animation-timing-function: var(--lb-transition-easing);
+  will-change: transform, opacity;
+
+  &[data-side="top"] {
+    animation-name: lb-animation-slide\:from-top;
+  }
+
+  &[data-side="bottom"] {
+    animation-name: lb-animation-slide\:from-bottom;
+  }
+}
+
+.lb-dropdown-item,
+.lb-composer-suggestions-list-item {
+  display: flex;
+  align-items: center;
+  padding: calc(0.25 * var(--lb-spacing)) calc(0.5 * var(--lb-spacing));
+  color: var(--lb-foreground-800);
+  outline: none;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition-timing-function: var(--lb-transition-easing);
+  transition-duration: var(--lb-transition-duration);
+  transition-property: background, color, opacity;
 }
 
 /**
@@ -189,32 +229,10 @@ $lb-button-size: calc(2 * 0.25 * var(--lb-spacing) + var(--lb-icon-size));
   --lb-dropdown-padding: 4px;
 
   padding: var(--lb-dropdown-padding);
-  border-radius: var(--lb-radius);
-  animation-duration: var(--lb-transition-duration);
-  animation-timing-function: var(--lb-transition-easing);
-  will-change: transform, opacity;
-}
-
-.lb-dropdown[data-side="top"] {
-  animation-name: lb-animation-slide\:from-top;
-}
-
-.lb-dropdown[data-side="bottom"] {
-  animation-name: lb-animation-slide\:from-bottom;
 }
 
 .lb-dropdown-item {
-  display: flex;
-  align-items: center;
-  padding: calc(0.25 * var(--lb-spacing)) calc(0.5 * var(--lb-spacing));
   border-radius: calc(var(--lb-radius) - 0.5 * var(--lb-dropdown-padding));
-  color: var(--lb-foreground-800);
-  outline: none;
-  font-size: 0.875rem;
-  cursor: pointer;
-  transition-timing-function: var(--lb-transition-easing);
-  transition-duration: var(--lb-transition-duration);
-  transition-property: background, color, opacity;
 
   &[data-highlighted] {
     background: var(--lb-foreground-100);
@@ -222,7 +240,53 @@ $lb-button-size: calc(2 * 0.25 * var(--lb-spacing) + var(--lb-icon-size));
 }
 
 .lb-dropdown-item-icon {
-  margin-inline-start: calc(-4px + 0.125 * var(--lb-spacing));
+  margin-inline-start: calc(-0.125 * var(--lb-spacing));
+  margin-inline-end: calc(0.375 * var(--lb-spacing));
+}
+
+/**
+ * Composer suggestions
+ */
+
+.lb-composer-suggestions {
+  /* @public */
+  --lb-composer-suggestions-padding: 4px;
+
+  padding: var(--lb-composer-suggestions-padding);
+}
+
+.lb-composer-suggestions-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.lb-composer-suggestions-list-item {
+  border-radius: calc(
+    var(--lb-radius) - 0.5 * var(--lb-composer-suggestions-padding)
+  );
+
+  &[data-selected] {
+    background: var(--lb-foreground-100);
+  }
+}
+
+/**
+ * Composer mention suggestions
+ */
+
+.lb-composer-mention-suggestions {
+  /* @public */
+  --lb-composer-mention-suggestion-avatar-size: 1.25rem;
+}
+
+.lb-composer-mention-suggestion {
+  padding: calc(0.375 * var(--lb-spacing)) calc(0.625 * var(--lb-spacing));
+}
+
+.lb-composer-mention-suggestion-avatar {
+  width: var(--lb-composer-mention-suggestion-avatar-size);
+  margin-inline-start: calc(-0.125 * var(--lb-spacing));
   margin-inline-end: calc(0.375 * var(--lb-spacing));
 }
 
@@ -350,6 +414,16 @@ $lb-button-size: calc(2 * 0.25 * var(--lb-spacing) + var(--lb-icon-size));
 .lb-composer-editor {
   padding: var(--lb-spacing);
   outline: none;
+}
+
+.lb-composer-mention {
+  padding: 0.2em 0.4em;
+  border-radius: calc(0.75 * var(--lb-radius));
+  background: var(--lb-accent-subtlest);
+
+  &[data-selected] {
+    background: var(--lb-accent-subtle);
+  }
 }
 
 .lb-composer-footer {

@@ -16,6 +16,7 @@ import type {
   ComposerEditorProps,
   ComposerFormProps,
   ComposerRenderMentionProps,
+  ComposerRenderMentionSuggestionsProps,
   ComposerSubmitComment,
 } from "../primitives/Composer";
 import {
@@ -25,6 +26,7 @@ import {
 import { MENTION_CHARACTER } from "../slate/mentions";
 import type { SlotProp } from "../types";
 import { classNames } from "../utils/class-names";
+import { Avatar } from "./Avatar";
 import { Logo } from "./Logo";
 import { Tooltip, TooltipProvider } from "./Tooltip";
 import { User } from "./User";
@@ -141,6 +143,32 @@ function ComposerMention({ userId }: ComposerRenderMentionProps) {
   );
 }
 
+function ComposerMentionSuggestions({
+  userIds,
+}: ComposerRenderMentionSuggestionsProps) {
+  return userIds.length > 0 ? (
+    <ComposerPrimitive.Suggestions className="lb-composer-suggestions lb-composer-mention-suggestions">
+      <ComposerPrimitive.SuggestionsList className="lb-composer-suggestions-list lb-composer-mention-suggestions-list">
+        {userIds.map((userId) => (
+          <ComposerPrimitive.SuggestionsListItem
+            className="lb-composer-suggestions-list-item lb-composer-mention-suggestion"
+            value={userId}
+          >
+            <Avatar
+              userId={userId}
+              className="lb-composer-mention-suggestion-avatar"
+            />
+            <User
+              userId={userId}
+              className="lb-composer-mention-suggestion-user"
+            />
+          </ComposerPrimitive.SuggestionsListItem>
+        ))}
+      </ComposerPrimitive.SuggestionsList>
+    </ComposerPrimitive.Suggestions>
+  ) : null;
+}
+
 export const Composer = forwardRef<HTMLFormElement, ComposerProps>(
   (
     {
@@ -218,7 +246,7 @@ export const Composer = forwardRef<HTMLFormElement, ComposerProps>(
             disabled={disabled}
             autoFocus={autoFocus}
             renderMention={ComposerMention}
-            // renderMentionSuggestions={}
+            renderMentionSuggestions={ComposerMentionSuggestions}
           />
           <div className="lb-composer-footer">
             <div className="lb-composer-editor-actions">

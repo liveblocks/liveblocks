@@ -19,13 +19,19 @@ export type ThreadMetadata = {
   y: number;
 };
 
-export async function resolveUser(userId: string): Promise<BaseUserInfo> {
+async function resolveUser(userId: string): Promise<BaseUserInfo> {
   const userIndex = Number(userId.replace(/^\D+/g, "")) ?? 0;
 
   return {
     name: NAMES[userIndex],
     avatar: `https://liveblocks.io/avatars/avatar-${userIndex}.png`,
   };
+}
+
+async function resolveMentionSuggestions(text: string): Promise<string[]> {
+  const userIndices = [...NAMES.keys()];
+
+  return userIndices.map((userIndex) => `user-${userIndex}`);
 }
 
 export const {
@@ -38,5 +44,6 @@ export const {
   useEditThreadMetadata,
 } = createCommentsContext<ThreadMetadata>(client, {
   resolveUser,
+  resolveMentionSuggestions,
   serverEndpoint: `https://${WORKERS_ENDPOINT}/v2`,
 });

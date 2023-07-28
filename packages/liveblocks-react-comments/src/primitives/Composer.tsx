@@ -15,7 +15,7 @@ import {
   useFloating,
 } from "@floating-ui/react-dom";
 import type { CommentBody, CommentBodyMention } from "@liveblocks/core";
-import { createAsyncCache, isCommentBodyMention, nn } from "@liveblocks/core";
+import { isCommentBodyMention, nn } from "@liveblocks/core";
 import { Slot } from "@radix-ui/react-slot";
 import type {
   AriaAttributes,
@@ -66,7 +66,7 @@ import {
   withReact,
 } from "slate-react";
 
-import { useAsyncCache } from "../lib/use-async-cache";
+import { useCommentsContext } from "../factory";
 import { useInitial } from "../lib/use-initial";
 import type { MentionDraft } from "../slate/mentions";
 import {
@@ -87,13 +87,11 @@ import type {
 import { isKey } from "../utils/is-key";
 import { Portal } from "../utils/Portal";
 import { requestSubmit } from "../utils/request-submit";
-import { useDebounce } from "../utils/use-debounce";
 import { useId } from "../utils/use-id";
 import { useLayoutEffect } from "../utils/use-layout-effect";
 import { useRefs } from "../utils/use-refs";
 import { useRovingIndex } from "../utils/use-roving-index";
 
-const MENTION_SUGGESTIONS_DEBOUNCE = 500;
 const MENTION_SUGGESTIONS_POSITION: SuggestionsPosition = "top";
 const MENTION_SUGGESTIONS_INSET = 10;
 
@@ -123,7 +121,7 @@ export type ComposerRenderMentionSuggestionsProps = {
   /**
    * The list of suggested user IDs.
    */
-  userIds?: string[];
+  userIds: string[];
 
   /**
    * The currently selected user ID.
@@ -173,11 +171,6 @@ export interface ComposerEditorProps extends ComponentPropsWithoutRef<"div"> {
    * The component used to render mention suggestions.
    */
   renderMentionSuggestions?: ComponentType<ComposerRenderMentionSuggestionsProps>;
-
-  /**
-   * An asynchronous function to get a list of suggested user IDs from a string.
-   */
-  resolveMentionSuggestions?: (text: string) => Promise<string[]>;
 }
 
 export interface ComposerFormProps extends ComponentPropsWithSlot<"form"> {
@@ -269,6 +262,7 @@ type ComposerEditorContext = {
 type ComposerSuggestionsContext = {
   id: string;
   itemId: (value?: string) => string | undefined;
+  placement: Placement;
   selectedValue?: string;
   setSelectedValue: (value: string) => void;
   onItemSelect: (value: string) => void;
@@ -279,10 +273,6 @@ const ComposerContext = createContext<ComposerContext | null>(null);
 const ComposerEditorContext = createContext<ComposerEditorContext | null>(null);
 const ComposerSuggestionsContext =
   createContext<ComposerSuggestionsContext | null>(null);
-
-const mentionSuggestionsCache = createAsyncCache<string[], unknown>(() =>
-  Promise.resolve([])
-);
 
 function composerBodyMentionToCommentBodyMention(
   mention: ComposerBodyMention
@@ -352,8 +342,6 @@ export function toggleMark(editor: SlateEditor, format: ComposerBodyMarks) {
   }
 }
 
-const defaultResolveMentionSuggestions = () => Promise.resolve([]);
-
 const emptyCommentBody: CommentBody = {
   version: 1,
   content: [{ type: "paragraph", children: [{ text: "" }] }],
@@ -379,6 +367,12 @@ function focusSlateReactEditor(node: HTMLDivElement) {
   }
 }
 
+function getSideAndAlignFromPlacement(placement: Placement) {
+  const [side, align = "center"] = placement.split("-");
+
+  return [side, align] as const;
+}
+
 function useComposerEditorContext(source = "useComposerEditorContext") {
   const composerEditorContext = useContext(ComposerEditorContext);
 
@@ -397,24 +391,6 @@ function useComposerSuggestionsContext(
     composerSuggestionsContext,
     `${source} can’t be used outside of renderMentionSuggestions.`
   );
-}
-
-function useMentionSuggestions(
-  value: string | undefined,
-  resolveMentionSuggestions: (text: string) => Promise<string[]>,
-  delay: number | false = MENTION_SUGGESTIONS_DEBOUNCE
-) {
-  const debouncedValue = useDebounce(value, delay);
-  const { data } = useAsyncCache(
-    mentionSuggestionsCache,
-    debouncedValue ?? null,
-    {
-      overrideFunction: resolveMentionSuggestions,
-      keepPreviousDataWhileLoading: true,
-    }
-  );
-
-  return data;
 }
 
 export function useComposer(): ComposerContext {
@@ -454,7 +430,7 @@ function ComposerEditorRenderMentionWrapper({
 function ComposerDefaultRenderMentionSuggestions({
   userIds,
 }: ComposerRenderMentionSuggestionsProps) {
-  return userIds && userIds.length > 0 ? (
+  return userIds.length > 0 ? (
     <ComposerSuggestions>
       <ComposerSuggestionsList>
         {userIds.map((userId) => (
@@ -484,7 +460,6 @@ function ComposerMentionSuggestionsWrapper({
   const [content, setContent] = useState<HTMLDivElement | null>(null);
   const [contentZIndex, setContentZIndex] = useState<string>();
   const contentRef = useCallback(setContent, [setContent]);
-  const placement = useMemo(() => `${position}-start` as Placement, [position]);
   const floatingMiddlewares: UseFloatingOptions["middleware"] = useMemo(() => {
     const detectOverflowOptions: DetectOverflowOptions = {
       padding: inset,
@@ -516,15 +491,16 @@ function ComposerMentionSuggestionsWrapper({
     return {
       strategy: "fixed",
       open: Boolean(mentionDraft?.range && isFocused),
-      placement,
+      placement: `${position}-start` as Placement,
       middleware: floatingMiddlewares,
       whileElementsMounted: autoUpdate,
     };
-  }, [floatingMiddlewares, isFocused, placement, mentionDraft?.range]);
+  }, [floatingMiddlewares, isFocused, position, mentionDraft?.range]);
   const {
     refs: { setReference, setFloating },
     strategy,
     isPositioned,
+    placement,
     x,
     y,
   } = useFloating(floatingOptions);
@@ -546,7 +522,7 @@ function ComposerMentionSuggestionsWrapper({
     }
   }, [content]);
 
-  return isFocused ? (
+  return isFocused && userIds ? (
     <ComposerSuggestionsContext.Provider
       value={{
         id,
@@ -554,6 +530,7 @@ function ComposerMentionSuggestionsWrapper({
         selectedValue: selectedUserId,
         setSelectedValue: setSelectedUserId,
         onItemSelect,
+        placement,
         ref: contentRef,
       }}
     >
@@ -667,13 +644,21 @@ const ComposerSuggestions = forwardRef<
   HTMLDivElement,
   ComposerSuggestionsProps
 >(({ children, style, asChild, ...props }, forwardedRef) => {
-  const { ref } = useComposerSuggestionsContext(COMPOSER_SUGGESTIONS_NAME);
+  const { ref, placement } = useComposerSuggestionsContext(
+    COMPOSER_SUGGESTIONS_NAME
+  );
+  const [side, align] = useMemo(
+    () => getSideAndAlignFromPlacement(placement),
+    [placement]
+  );
   const mergedRefs = useRefs(forwardedRef, ref);
   const Component = asChild ? Slot : "div";
 
   return (
     <Component
       {...props}
+      data-side={side}
+      data-align={align}
       style={{
         display: "flex",
         flexDirection: "column",
@@ -792,11 +777,11 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
       autoFocus,
       renderMention,
       renderMentionSuggestions,
-      resolveMentionSuggestions = defaultResolveMentionSuggestions,
       ...props
     },
     forwardedRef
   ) => {
+    const { useMentionSuggestions } = useCommentsContext();
     const { editor, validate, setFocused } =
       useComposerEditorContext(COMPOSER_EDITOR_NAME);
     const { submit, isValid, isFocused } = useComposer();
@@ -806,10 +791,7 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
     }, [initialBody]);
 
     const [mentionDraft, setMentionDraft] = useState<MentionDraft>();
-    const mentionSuggestions = useMentionSuggestions(
-      mentionDraft?.text,
-      resolveMentionSuggestions
-    );
+    const mentionSuggestions = useMentionSuggestions(mentionDraft?.text);
     const [
       selectedMentionSuggestionIndex,
       setPreviousSelectedMentionSuggestionIndex,

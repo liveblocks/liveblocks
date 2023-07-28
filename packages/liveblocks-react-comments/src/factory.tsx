@@ -39,6 +39,9 @@ import type { CommentsApiError } from "./errors";
 import { useAsyncCache } from "./lib/use-async-cache";
 import type { ComposerContext } from "./primitives/Composer";
 import { useComposer } from "./primitives/Composer";
+import { useDebounce } from "./utils/use-debounce";
+
+const MENTION_SUGGESTIONS_DEBOUNCE = 500;
 
 type UserState<T extends BaseUserInfo> =
   | {
@@ -217,6 +220,7 @@ type CommentsContext<
     CommentsContextBundle<TThreadMetadata, TUserInfo>,
     "CommentsProvider"
   > & {
+    useMentionSuggestions: (value: string | undefined) => string[] | undefined;
     roomId: string;
   }
 >;
@@ -224,7 +228,15 @@ type CommentsContext<
 type UserResolver<T> = (userId: string) => Promise<T | undefined>;
 
 type Options<TUserInfo extends BaseUserInfo> = {
+  /**
+   * An asynchronous function that returns a user object from a user ID.
+   */
   resolveUser?: UserResolver<TUserInfo>;
+
+  /**
+   * An asynchronous function to get a list of suggested user IDs from a string.
+   */
+  resolveMentionSuggestions?: (text: string) => Promise<string[]>;
 
   /**
    * @internal Internal endpoint
@@ -273,7 +285,8 @@ export function createCommentsContext<
   client: Client,
   options?: Options<TUserInfo>
 ): CommentsContextBundle<TThreadMetadata, TUserInfo> {
-  const { resolveUser, serverEndpoint } = options ?? {};
+  const { resolveUser, resolveMentionSuggestions, serverEndpoint } =
+    options ?? {};
 
   if (typeof serverEndpoint !== "string") {
     throw new Error("Missing comments server endpoint.");
@@ -287,6 +300,9 @@ export function createCommentsContext<
   const usersCache = resolveUser
     ? createAsyncCache(resolveUser as UserResolver<BaseUserInfo>)
     : undefined;
+  const mentionSuggestionsCache = createAsyncCache<string[], unknown>(
+    resolveMentionSuggestions ?? (() => Promise.resolve([]))
+  );
 
   const commentsRooms = new Map<string, CommentsRoom<TThreadMetadata>>();
 
@@ -339,6 +355,19 @@ export function createCommentsContext<
     const commentsRoom = useMemo(() => getCommentsRoom(roomId), [roomId]);
 
     return commentsRoom.useThreadsSuspense();
+  }
+
+  function useMentionSuggestions(value: string | undefined) {
+    const debouncedValue = useDebounce(value, MENTION_SUGGESTIONS_DEBOUNCE);
+    const { data } = useAsyncCache(
+      mentionSuggestionsCache,
+      debouncedValue ?? null,
+      {
+        keepPreviousDataWhileLoading: true,
+      }
+    );
+
+    return data;
   }
 
   function useUser(userId: string) {
@@ -455,6 +484,7 @@ export function createCommentsContext<
               BaseMetadata,
               BaseUserInfo
             >),
+            useMentionSuggestions,
             roomId,
           }}
         >
