@@ -8,11 +8,13 @@ interface TooltipProps
   extends Pick<TooltipPrimitive.TooltipTriggerProps, "children">,
     TooltipPrimitive.TooltipContentProps {
   content: ReactNode;
+  shortcut?: ReactNode;
 }
 
 export function Tooltip({
   children,
   content,
+  shortcut,
   className,
   ...props
 }: TooltipProps) {
@@ -30,6 +32,7 @@ export function Tooltip({
           {...props}
         >
           {content}
+          {shortcut && <span className="lb-tooltip-shortcut">{shortcut}</span>}
         </TooltipPrimitive.Content>
       </TooltipPrimitive.Portal>
     </TooltipPrimitive.Root>

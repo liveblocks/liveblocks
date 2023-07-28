@@ -198,10 +198,10 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
                       <CrossIcon className="lb-button-icon" />
                     </button>
                   </Tooltip>
-                  <Tooltip content="Save">
+                  <Tooltip content="Save comment" shortcut={<kbd>↵</kbd>}>
                     <ComposerPrimitive.Submit
                       className="lb-button lb-button:primary lb-composer-action"
-                      aria-label="Save"
+                      aria-label="Save comment"
                     >
                       <CheckIcon className="lb-button-icon" />
                     </ComposerPrimitive.Submit>

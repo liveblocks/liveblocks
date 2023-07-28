@@ -256,11 +256,11 @@ export const Composer = forwardRef<HTMLFormElement, ComposerProps>(
             <div className="lb-composer-actions">
               {actions ?? (
                 <>
-                  <Tooltip content="Send">
+                  <Tooltip content="Send comment" shortcut={<kbd>↵</kbd>}>
                     <ComposerPrimitive.Submit
                       onMouseDown={preventDefault}
                       className="lb-button lb-button:primary lb-composer-action"
-                      aria-label="Send"
+                      aria-label="Send comment"
                     >
                       <SendIcon />
                     </ComposerPrimitive.Submit>

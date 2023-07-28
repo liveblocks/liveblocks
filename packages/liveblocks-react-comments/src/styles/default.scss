@@ -23,7 +23,7 @@
  *              └──────────────┬──┬──┬──┬──┬──┬──┤  │  │
  *                             ◇  ◇  ◇  ◇  ◇  ◇  ◇  ◇  ◇
 */
-@function generate-foreground($increment) {
+@function generate-foreground($from-color, $to-color, $increment) {
   $index: math.div($increment, 100);
   $percentage: calc(
     100% -
@@ -34,35 +34,27 @@
       )
   );
 
-  @return color-mix(
-    in srgb,
-    var(--lb-foreground),
-    var(--lb-background) #{$percentage}
-  );
+  @return color-mix(in srgb, #{$to-color}, #{$from-color} #{$percentage});
 }
 
 $lb-button-size: calc(2 * 0.25 * var(--lb-spacing) + var(--lb-icon-size));
 
 :root {
   /* @public Basic */
-  --lb-background: #fff;
-  --lb-foreground: #111;
   --lb-accent: #08f;
   --lb-accent-foreground: #fff;
+  --lb-background: #fff;
+  --lb-foreground: #111;
+  --lb-tooltip-background: #222;
+  --lb-tooltip-foreground: #fff;
   --lb-radius: 0.5em;
   --lb-spacing: 1rem;
-  --lb-font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", "Roboto",
-    "Helvetica Neue", "Arial", "Noto Sans", sans-serif;
-  --lb-font-mono: ui-monospace, "Menlo", "Monaco", "Consolas", "Liberation Mono",
-    "Courier New", monospace;
 
   /* @public Advanced */
   --lb-icon-weight: 1.5px;
   --lb-icon-size: 1.25rem;
   --lb-avatar-radius: 50%;
   --lb-button-radius: calc(0.75 * var(--lb-radius));
-  --lb-tooltip-background: var(--lb-foreground);
-  --lb-tooltip-foreground: var(--lb-background);
   --lb-transition-duration: 0.1s;
   --lb-transition-easing: cubic-bezier(0.4, 0, 0.2, 1);
   --lb-foreground-contrast: 6%;
@@ -84,19 +76,63 @@ $lb-button-size: calc(2 * 0.25 * var(--lb-spacing) + var(--lb-icon-size));
     var(--lb-accent),
     var(--lb-background) 90%
   );
+  --lb-tooltip-foreground-100: #{generate-foreground(
+      var(--lb-tooltip-background),
+      var(--lb-tooltip-foreground),
+      100
+    )};
+  --lb-tooltip-foreground-400: #{generate-foreground(
+      var(--lb-tooltip-background),
+      var(--lb-tooltip-foreground),
+      400
+    )};
 
   // TODO: Use "semantic" names to remove the unused ones?
-  --lb-foreground-100: #{generate-foreground(100)};
-  --lb-foreground-200: #{generate-foreground(200)};
-  --lb-foreground-300: #{generate-foreground(300)};
-  --lb-foreground-400: #{generate-foreground(400)};
-  --lb-foreground-500: #{generate-foreground(500)};
-  --lb-foreground-600: #{generate-foreground(600)};
-  --lb-foreground-700: #{generate-foreground(700)};
-  --lb-foreground-800: #{generate-foreground(800)};
-  --lb-foreground-900: #{generate-foreground(900)};
-
-  font-family: var(--lb-font-sans);
+  --lb-foreground-100: #{generate-foreground(
+      var(--lb-background),
+      var(--lb-foreground),
+      100
+    )};
+  --lb-foreground-200: #{generate-foreground(
+      var(--lb-background),
+      var(--lb-foreground),
+      200
+    )};
+  --lb-foreground-300: #{generate-foreground(
+      var(--lb-background),
+      var(--lb-foreground),
+      300
+    )};
+  --lb-foreground-400: #{generate-foreground(
+      var(--lb-background),
+      var(--lb-foreground),
+      400
+    )};
+  --lb-foreground-500: #{generate-foreground(
+      var(--lb-background),
+      var(--lb-foreground),
+      500
+    )};
+  --lb-foreground-600: #{generate-foreground(
+      var(--lb-background),
+      var(--lb-foreground),
+      600
+    )};
+  --lb-foreground-700: #{generate-foreground(
+      var(--lb-background),
+      var(--lb-foreground),
+      700
+    )};
+  --lb-foreground-800: #{generate-foreground(
+      var(--lb-background),
+      var(--lb-foreground),
+      800
+    )};
+  --lb-foreground-900: #{generate-foreground(
+      var(--lb-background),
+      var(--lb-foreground),
+      900
+    )};
 
   *,
   ::before,
@@ -291,11 +327,15 @@ $lb-button-size: calc(2 * 0.25 * var(--lb-spacing) + var(--lb-icon-size));
 }
 
 /**
- * Avatar
+ * Tooltip
  */
 
 .lb-tooltip {
-  padding: calc(0.25 * var(--lb-spacing)) calc(0.5 * var(--lb-spacing));
+  display: flex;
+  line-height: 1;
+  align-items: center;
+  padding: 0 calc(0.5 * var(--lb-spacing));
+  height: calc(1em + 0.875 * var(--lb-spacing));
   border-radius: var(--lb-radius);
   background: var(--lb-tooltip-background);
   color: var(--lb-tooltip-foreground);
@@ -304,6 +344,25 @@ $lb-button-size: calc(2 * 0.25 * var(--lb-spacing) + var(--lb-icon-size));
     0 4px 12px rgb(0 0 0 / 12%);
   font-size: 0.75rem;
   pointer-events: none;
+}
+
+.lb-tooltip-shortcut {
+  display: flex;
+  gap: calc(0.25 * var(--lb-spacing));
+  margin-inline-start: calc(0.375 * var(--lb-spacing));
+  margin-inline-end: calc(-0.25 * var(--lb-spacing));
+
+  kbd {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    aspect-ratio: 1;
+    width: 1.5em;
+    border-radius: calc(0.625 * var(--lb-radius));
+    background: var(--lb-tooltip-foreground-100);
+    color: var(--lb-tooltip-foreground-400);
+    text-transform: uppercase;
+  }
 }
 
 /**
@@ -365,7 +424,6 @@ $lb-button-size: calc(2 * 0.25 * var(--lb-spacing) + var(--lb-icon-size));
     background: var(--lb-foreground-100);
     color: var(--lb-foreground-600);
     box-decoration-break: clone;
-    font-family: var(--lb-font-mono);
     line-height: 1;
   }
 
