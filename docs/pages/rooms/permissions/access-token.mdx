@@ -9,6 +9,15 @@ Managing permissions by issuing access tokens follows the analogy of a “hotel
 room key card”. Anyone that has that key card can open the doors that the card
 gives access to. It’s easy to give out those key cards right from your backend.
 
+<Banner title="Using our REST API?">
+
+If you’re using our REST API to handle room permissions, or if you need more
+complex permissions to be handled by Liveblocks,
+[ID tokens](/docs/rooms/permissions/id-token) may be better suited for your use
+case.
+
+</Banner>
+
 To set up your authentication endpoint with access token permissions, make sure
 to [follow these quick steps](/docs/rooms/authentication/id-token-permissions).
 
@@ -129,7 +138,7 @@ export async function POST(request: Request) {
 
 ## Best practices for naming your rooms [#naming-best-practices]
 
-Being able to specify permissions for inifite rooms using prefix pattern
+Being able to specify permissions for infinite rooms using prefix pattern
 matching offers great powers, but it does assume that you design your room names
 a bit more cautiously. For example, granting room prefix permissions won’t work
 if you use random room IDs for your project, because there won’t be a shared
@@ -155,7 +164,7 @@ For example:
   pick cannot occur in the IDs you’re generating.
 </Banner>
 
-As another example, if your app is a SAAS product and you have many customers,
+As another example, if your app is a SAAS product, and you have many customers,
 you can add an additional top-level key to prefix your room names, e.g.
 `<app-id>::<group-id>/<room-id>`:
 
