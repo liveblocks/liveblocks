@@ -4,29 +4,20 @@ import styles from "./Avatars.module.css";
 export function Avatars() {
   const users = useOthers();
   const currentUser = useSelf();
-  const hasMoreUsers = users.length > 3;
 
   return (
     <div className={styles.avatars}>
       {users.slice(0, 3).map(({ connectionId, info }) => {
         return (
-          <Avatar
-            key={connectionId}
-            picture={`https://liveblocks.io/avatars/avatar-${
-              connectionId % 30
-            }.png`}
-          />
+          <Avatar key={connectionId} picture={info.picture} name={info.name} />
         );
       })}
-
-      {hasMoreUsers && <div className={styles.more}>+{users.length - 3}</div>}
 
       {currentUser && (
         <div className="relative ml-8 first:ml-0">
           <Avatar
-            picture={`https://liveblocks.io/avatars/avatar-${
-              currentUser.connectionId % 30
-            }.png`}
+            picture={currentUser.info.picture}
+            name={currentUser.info.name}
           />
         </div>
       )}
@@ -34,10 +25,14 @@ export function Avatars() {
   );
 }
 
-export function Avatar({ picture }: { picture: string }) {
+export function Avatar({ picture, name }: { picture: string; name: string }) {
   return (
-    <div className={styles.avatar}>
-      <img src={picture} className={styles.avatar_picture} />
+    <div className={styles.avatar} data-tooltip={name}>
+      <img
+        src={picture}
+        className={styles.avatar_picture}
+        data-tooltip={name}
+      />
     </div>
   );
 }

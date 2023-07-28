@@ -3,7 +3,7 @@ import { createRoomContext } from "@liveblocks/react";
 import LiveblocksProvider from "@liveblocks/yjs";
 
 const client = createClient({
-  publicApiKey: process.env.NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY!,
+  authEndpoint: "/api/auth",
 });
 
 // Presence represents the properties that will exist on every User in the Room
@@ -20,22 +20,25 @@ type Storage = {};
 // Optionally, UserMeta represents static/readonly metadata on each User, as
 // provided by your own custom auth backend (if used). Useful for data that
 // will not change during a session, like a User's name or avatar.
-// type UserMeta = {
-//   id?: string,  // Accessible through `user.id`
-//   info?: Json,  // Accessible through `user.info`
-// };
+type UserMeta = {
+  id: string; // Accessible through `user.id`
+  info: {
+    name: string;
+    picture: string;
+  }; // Accessible through `user.info`
+};
 
-// Optionally, the type of custom events broadcasted and listened for in this
+// Optionally, the type of custom events broadcast and listened for in this
 // room. Must be JSON-serializable.
 // type RoomEvent = {};
 
 export const {
   suspense: { RoomProvider, useRoom, useOthers, useSelf },
-} = createRoomContext<Presence, Storage /* UserMeta, RoomEvent */>(client);
+} = createRoomContext<Presence, Storage, UserMeta /*, RoomEvent */>(client);
 
 export type LiveblocksProviderType = LiveblocksProvider<
   Presence,
   Storage,
-  {},
+  UserMeta,
   {}
 >;

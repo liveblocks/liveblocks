@@ -31,6 +31,21 @@ Run the following command to install the Slate, Yjs, and Liveblocks packages:
 npm install @liveblocks/client @liveblocks/react @liveblocks/yjs yjs slate slate-react @slate-yjs/core @slate-yjs/react
 ```
 
+<Banner>
+
+If you’re using Next.js, make sure to add `transpilePackages` to your
+`next.config.ts` file to allow `@slate-yjs/react` to be bundled correctly.
+
+```js highlight="2"
+module.exports = {
+  transpilePackages: ["@slate-yjs/react"],
+
+  // ...
+};
+```
+
+</Banner>
+
 ## Initialize the `liveblocks.config.ts` file
 
 Let’s initialize the `liveblocks.config.ts` file in which you’ll set up the
@@ -152,13 +167,10 @@ function SlateEditor({ sharedType }: { sharedType: Y.XmlText }) {
     <div className={styles.container}>
       <div className={styles.editorContainer}>
         <Slate editor={editor} initialValue={[emptyNode]}>
-          <Cursors>
-            <Toolbar />
-            <Editable
-              className={styles.editor}
-              placeholder="Start typing here…"
-            />
-          </Cursors>
+          <Editable
+            className={styles.editor}
+            placeholder="Start typing here…"
+          />
         </Slate>
       </div>
     </div>
@@ -324,24 +336,31 @@ positions.
 }
 ```
 
-<Banner>
+Wrap your editor in the Cursors component to see them in action.
 
-If you’re using Next.js, make sure to add `transpilePackages` to your
-`next.config.ts` file to allow `@slate-yjs/react` to be bundled correctly.
+```tsx file="Editor.tsx" highlight="11,16"
+import { Cursors } from "@/src/Cursors";
+// ...
 
-```js highlight="2"
-module.exports = {
-  transpilePackages: ["@slate-yjs/react"],
-
+export default function SlateEditor() {
   // ...
-};
+
+  return (
+    <div className={styles.container}>
+      <div className={styles.editorContainer}>
+        <Slate editor={editor} initialValue={[emptyNode]}>
+          <Cursors>
+            <Editable
+              className={styles.editor}
+              placeholder="Start typing here…"
+            />
+          </Cursors>
+        </Slate>
+      </div>
+    </div>
+  );
+}
 ```
-
-</Banner>
-
-// ==========================================
-
-TODO BELOW
 
 ## Add a toolbar
 
@@ -349,44 +368,63 @@ From this point onwards, you can build your Slate app as normal! For example,
 should you wish to add a basic text-style toolbar to your app:
 
 ```tsx file="Toolbar.tsx"
-import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-import { FORMAT_TEXT_COMMAND } from "lexical";
+import { Editor } from "slate";
+import { useSlate } from "slate-react";
 import styles from "./Toolbar.module.css";
+import { CustomText } from "./types";
 
 export function Toolbar() {
-  const [editor] = useLexicalComposerContext();
+  const editor = useSlate();
 
   return (
     <div className={styles.toolbar}>
       <button
-        className={styles.buttonBold}
-        onClick={() => {
-          editor.dispatchCommand(FORMAT_TEXT_COMMAND, "bold");
+        className={styles.button}
+        data-active={isMarkActive(editor, "bold") || undefined}
+        onClick={(event) => {
+          event.preventDefault();
+          toggleMark(editor, "bold");
         }}
-        aria-label="Format bold"
       >
         B
       </button>
       <button
-        className={styles.buttonItalic}
-        onClick={() => {
-          editor.dispatchCommand(FORMAT_TEXT_COMMAND, "italic");
+        className={styles.button}
+        data-active={isMarkActive(editor, "italic") || undefined}
+        onClick={(event) => {
+          event.preventDefault();
+          toggleMark(editor, "italic");
         }}
-        aria-label="Format italic"
       >
         i
       </button>
       <button
-        className={styles.buttonUnderline}
-        onClick={() => {
-          editor.dispatchCommand(FORMAT_TEXT_COMMAND, "underline");
+        className={styles.button}
+        data-active={isMarkActive(editor, "underline") || undefined}
+        onClick={(event) => {
+          event.preventDefault();
+          toggleMark(editor, "underline");
         }}
-        aria-label="Format underline"
       >
         u
       </button>
     </div>
   );
+}
+
+function toggleMark(editor: Editor, format: keyof CustomText) {
+  const isActive = isMarkActive(editor, format);
+
+  if (isActive) {
+    Editor.removeMark(editor, format);
+  } else {
+    Editor.addMark(editor, format, true);
+  }
+}
+
+function isMarkActive(editor: Editor, format: keyof CustomText) {
+  const marks = Editor.marks(editor);
+  return marks ? marks?.[format] === true : false;
 }
 ```
 
@@ -431,88 +469,75 @@ Add some matching styles:
     rgba(0, 0, 0, 0.16) 0 2px 3px 0,
     rgba(0, 0, 0, 0.04) 0 0 0 1px;
 }
+
+.button[data-active] {
+  background: #fafafa;
+}
 ```
+
+### Theme your leaf styles
+
+These styles are rendered with leaf components, which we’ll add to a new file:
+
+```tsx file="Leaf.tsx"
+import { PropsWithChildren } from "react";
+import { CustomText } from "@/src/types";
+
+type Props = PropsWithChildren<{
+  attributes: Record<string, string>;
+  leaf: CustomText;
+}>;
+
+export function Leaf({ attributes, children, leaf }: Props) {
+  if (leaf.bold) {
+    children = <strong>{children}</strong>;
+  }
+
+  if (leaf.italic) {
+    children = <em>{children}</em>;
+  }
+
+  if (leaf.underline) {
+    children = <u>{children}</u>;
+  }
+
+  return <span {...attributes}>{children}</span>;
+}
+```
+
+### Add to your editor
 
 You can then import this into your editor to enable basic rich-text:
 
-```tsx file="Editor.tsx" highlight="1,10"
-import { Toolbar } from "./Toolbar";
+```tsx file="Editor.tsx" highlight="1,2,6,13,17"
+import { Toolbar } from "@/src/Toolbar";
+import { Leaf } from "@/src/Leaf";
 // ...
 
-export default function Editor() {
+export default function SlateEditor() {
   // ...
+
+  const renderLeaf = useCallback((props: any) => <Leaf {...props} />, []);
 
   return (
     <div className={styles.container}>
-      <LexicalComposer initialConfig={initialConfig}>
-        <Toolbar />
-        <RichTextPlugin
-          contentEditable={<ContentEditable className={styles.editor} />}
-          placeholder={
-            <div className={styles.placeholder}>Start typing here…</div>
-          }
-          ErrorBoundary={LexicalErrorBoundary}
-        />
-      </LexicalComposer>
+      <div className={styles.editorContainer}>
+        <Slate editor={editor} initialValue={[emptyNode]}>
+          <Cursors>
+            <Toolbar />
+            <Editable
+              className={styles.editor}
+              placeholder="Start typing here…"
+              renderLeaf={renderLeaf}
+            />
+          </Cursors>
+        </Slate>
+      </div>
     </div>
   );
 }
 ```
 
-### Theme your text styles
-
-You can go a step further and theme your basic custom text styles by using the
-`theme` property, and adding corresponding styles:
-
-```tsx file="Editor.tsx"
-import styles from "./Editor.module.css";
-// ...
-
-export default function Editor() {
-  const room = useRoom();
-  const user = USER_INFO[Math.floor(Math.random() * USER_INFO.length)];
-  const initialConfig = {
-    // NOTE: This is critical for collaboration plugin to set editor state to null. It
-    // would indicate that the editor should not try to set any default state
-    // (not even empty one), and let collaboration plugin do it instead
-    editorState: null,
-    namespace: "Demo",
-    nodes: [],
-    onError: (error: unknown) => {
-      throw error;
-    },
-    theme: {
-      text: {
-        bold: styles.textBold,
-        italic: styles.textItalic,
-        underline: styles.textUnderline,
-      },
-      paragraph: styles.paragraph,
-    },
-  };
-
-  // ...
-}
-```
-
-And then in your CSS module, you can style your rich-text:
-
-```css file="Editor.module.css" isCollapsed isCollapsable
-/* ... */
-
-.textBold {
-  font-weight: bold;
-}
-
-.textItalic {
-  font-style: italic;
-}
-
-.textUnderline {
-  text-decoration: underline;
-}
-
-.paragraph {
-  margin: 0.2rem 0;
-}
-```
+On GitHub we have a working example of a
+[Yjs Slate editor](https://github.com/liveblocks/liveblocks/tree/main/examples/nextjs-yjs-lexical)
+with added Liveblocks authentication and avatars.

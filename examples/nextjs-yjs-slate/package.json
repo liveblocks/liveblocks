@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@liveblocks/client": "^1.1.6",
+    "@liveblocks/node": "^1.1.8",
     "@liveblocks/react": "^1.1.6",
     "@liveblocks/yjs": "^1.1.6",
     "@slate-yjs/core": "^1.0.2",
