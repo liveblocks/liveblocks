@@ -13,6 +13,7 @@ import { Toolbar } from "@/src/Toolbar";
 import { Leaf } from "@/src/Leaf";
 import { Cursors } from "@/src/Cursors";
 import { USER_INFO } from "@/src/constants";
+import { Avatars } from "./Avatars";
 
 export default function CollaborativeEditor() {
   const room = useRoom();
@@ -92,7 +93,10 @@ function SlateEditor({
   return (
     <Slate editor={editor} initialValue={[emptyNode]}>
       <Cursors>
-        <Toolbar />
+        <div className={styles.editorHeader}>
+          <Toolbar />
+          <Avatars />
+        </div>
         <Editable
           className={styles.editor}
           placeholder="Start typing here…"

@@ -1,0 +1,20 @@
+.avatars {
+  display: flex;
+  padding: 0 0.75rem;
+}
+
+.avatar {
+  display: flex;
+  place-content: center;
+  position: relative;
+  border: 4px solid #fff;
+  border-radius: 9999px;
+  width: 42px;
+  height: 42px;
+  background-color: #9ca3af;
+  margin-left: -0.75rem;
+}
+
+.avatar_picture {
+  border-radius: 9999px;
+}

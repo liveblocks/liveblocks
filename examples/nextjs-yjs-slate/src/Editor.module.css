@@ -9,6 +9,12 @@
   color: #111827;
 }
 
+.editorHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
 .editor {
   border-radius: inherit;
   flex-grow: 1;

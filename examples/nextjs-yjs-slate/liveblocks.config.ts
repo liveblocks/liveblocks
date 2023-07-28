@@ -30,7 +30,7 @@ type Storage = {};
 // type RoomEvent = {};
 
 export const {
-  suspense: { RoomProvider, useRoom, useOthers },
+  suspense: { RoomProvider, useRoom, useOthers, useSelf },
 } = createRoomContext<Presence, Storage /* UserMeta, RoomEvent */>(client);
 
 export type LiveblocksProviderType = LiveblocksProvider<
