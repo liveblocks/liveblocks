@@ -566,7 +566,8 @@ export type Room<
     readonly lostConnection: Observable<LostConnectionEvent>;
 
     readonly customEvent: Observable<{ connectionId: number; event: TRoomEvent; }>; // prettier-ignore
-    readonly me: Observable<TPresence>;
+    readonly self: Observable<User<TPresence, TUserMeta>>;
+    readonly myPresence: Observable<TPresence>;
     readonly others: Observable<{ others: Others<TPresence, TUserMeta>; event: OthersEvent<TPresence, TUserMeta>; }>; // prettier-ignore
     readonly error: Observable<Error>;
     readonly storage: Observable<StorageUpdate[]>;
@@ -946,6 +947,7 @@ export function createRoom<
     batchUpdates(() => {
       eventHub.status.notify(newStatus);
       eventHub.connection.notify(newToLegacyStatus(newStatus));
+      notifySelfChanged(doNotBatchUpdates);
     });
   }
 
@@ -1107,7 +1109,8 @@ export function createRoom<
     lostConnection: makeEventSource<LostConnectionEvent>(),
 
     customEvent: makeEventSource<CustomEvent<TRoomEvent>>(),
-    me: makeEventSource<TPresence>(),
+    self: makeEventSource<User<TPresence, TUserMeta>>(),
+    myPresence: makeEventSource<TPresence>(),
     others: makeEventSource<{
       others: Others<TPresence, TUserMeta>;
       event: OthersEvent<TPresence, TUserMeta>;
@@ -1169,6 +1172,17 @@ export function createRoom<
         : null;
     }
   );
+
+  let _lastSelf: Readonly<User<TPresence, TUserMeta>> | undefined;
+  function notifySelfChanged(batchedUpdatesWrapper: (cb: () => void) => void) {
+    const currSelf = self.current;
+    if (currSelf !== null && currSelf !== _lastSelf) {
+      batchedUpdatesWrapper(() => {
+        eventHub.self.notify(currSelf);
+      });
+      _lastSelf = currSelf;
+    }
+  }
 
   // For use in DevTools
   const selfAsTreeNode = new DerivedRef(
@@ -1263,13 +1277,15 @@ export function createRoom<
       }
 
       if (presence) {
-        eventHub.me.notify(context.me.current);
+        notifySelfChanged(doNotBatchUpdates);
+        eventHub.myPresence.notify(context.me.current);
       }
 
       if (storageUpdates.size > 0) {
         const updates = Array.from(storageUpdates.values());
         eventHub.storage.notify(updates);
       }
+      notifyStorageStatus();
     });
   }
 
@@ -1381,8 +1397,6 @@ export function createRoom<
         }
       }
     }
-
-    notifyStorageStatus();
 
     return {
       ops,
@@ -1571,6 +1585,7 @@ export function createRoom<
         isStorageReadOnly(user.scopes)
       );
     }
+
     return { type: "reset" };
   }
 
@@ -2118,7 +2133,8 @@ export function createRoom<
 
     customEvent: eventHub.customEvent.observable,
     others: eventHub.others.observable,
-    me: eventHub.me.observable,
+    self: eventHub.self.observable,
+    myPresence: eventHub.myPresence.observable,
     error: eventHub.error.observable,
     storage: eventHub.storage.observable,
     history: eventHub.history.observable,
@@ -2263,7 +2279,7 @@ function makeClassicSubscribeFn<
           );
 
         case "my-presence":
-          return events.me.subscribe(callback as Callback<TPresence>);
+          return events.myPresence.subscribe(callback as Callback<TPresence>);
 
         case "others": {
           // NOTE: Others have a different callback structure, where the API
@@ -2423,12 +2439,31 @@ function makeAuthDelegateForRoom(
   } else if (authentication.type === "custom") {
     return async () => {
       const response = await authentication.callback(roomId);
-      if (!response || !response.token) {
+      if (!response || typeof response !== "object") {
         throw new Error(
           'We expect the authentication callback to return a token, but it does not. Hint: the return value should look like: { token: "..." }'
         );
       }
-      return parseAuthToken(response.token);
+
+      if (typeof response.token === "string") {
+        return parseAuthToken(response.token);
+      } else if (typeof response.error === "string") {
+        const reason = `Authentication failed: ${
+          "reason" in response && typeof response.reason === "string"
+            ? response.reason
+            : "Forbidden"
+        }`;
+
+        if (response.error === "forbidden") {
+          throw new StopRetrying(reason);
+        } else {
+          throw new Error(reason);
+        }
+      } else {
+        throw new Error(
+          'We expect the authentication callback to return a token, but it does not. Hint: the return value should look like: { token: "..." }'
+        );
+      }
     };
   } else {
     throw new Error("Internal error. Unexpected authentication type");

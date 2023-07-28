@@ -303,7 +303,7 @@
           }
         },
         "operationId": "post-rooms-roomId",
-        "description": "Updates specific properties of a room. It's not necessary to provide the entire room's information. \nSetting a property to `null` means to delete this property. For example, if you want to remove access to a specific user without losing other users: \n``{\n    \"usersAccesses\": {\n        \"john\": null\n    }\n}``\n`defaultAccessess`, `metadata`, `usersAccesses`, `groupsAccesses` can be updated.\n\n- `defaultAccessess` could be `[]` or `[\"room:write\"]` (private or public). \n- `metadata` could be key/value as `string` or `string[]`. `metadata` supports maximum 50 entries. Key length has a limit of 40 characters maximum. Value length has a limit of 256 characters maximum. `metadata` is optional field.\n- `usersAccesses` could be `[]` or `[\"room:write\"]` for every records. `usersAccesses` can contain 100 ids maximum. Id length has a limit of 256 characters. `usersAccesses` is optional field.\n- `groupsAccesses` could be `[]` or `[\"room:write\"]` for every records. `groupsAccesses` can contain 100 ids maximum. Id length has a limit of 256 characters. `groupsAccesses` is optional field.\n\n",
+        "description": "Updates specific properties of a room. It’s not necessary to provide the entire room’s information. \nSetting a property to `null` means to delete this property. For example, if you want to remove access to a specific user without losing other users: \n``{\n    \"usersAccesses\": {\n        \"john\": null\n    }\n}``\n`defaultAccessess`, `metadata`, `usersAccesses`, `groupsAccesses` can be updated.\n\n- `defaultAccessess` could be `[]` or `[\"room:write\"]` (private or public). \n- `metadata` could be key/value as `string` or `string[]`. `metadata` supports maximum 50 entries. Key length has a limit of 40 characters maximum. Value length has a limit of 256 characters maximum. `metadata` is optional field.\n- `usersAccesses` could be `[]` or `[\"room:write\"]` for every records. `usersAccesses` can contain 100 ids maximum. Id length has a limit of 256 characters. `usersAccesses` is optional field.\n- `groupsAccesses` could be `[]` or `[\"room:write\"]` for every records. `groupsAccesses` can contain 100 ids maximum. Id length has a limit of 256 characters. `groupsAccesses` is optional field.\n\n",
         "requestBody": {
           "content": {
             "application/json": {
@@ -428,6 +428,56 @@
         }
       }
     },
+    "/rooms/{roomId}/broadcast_event": {
+      "post": {
+        "summary": "Broadcast event to a room",
+        "operationId": "post-broadcast-event",
+        "responses": {
+          "204": {
+            "description": "Success. An event was broadcasted to the room."
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          },
+          "422": {
+            "$ref": "#/components/responses/422"
+          }
+        },
+        "description": "This endpoint enables the broadcast of an event to a room without having to connect to it via the `client` from `@liveblocks/client`. It takes any valid JSON as a request body.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "example-1": {
+                  "value": {
+                    "type": "EMOJI",
+                    "emoji": "🔥"
+                  }
+                }
+              }
+            },
+            "description": "Any valid JSON."
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "description": "ID of the room"
+          }
+        ]
+      }
+    },
     "/rooms/{roomId}/storage": {
       "parameters": [
         {
@@ -441,11 +491,11 @@
         }
       ],
       "get": {
-        "summary": "Get storage",
+        "summary": "Get Storage document",
         "tags": [],
         "responses": {
           "200": {
-            "description": "Success. Returns the room storage as JSON.",
+            "description": "Success. Returns the room’s Storage as JSON.",
             "content": {
               "application/json": {
                 "schema": {
@@ -499,14 +549,14 @@
           }
         },
         "operationId": "get-rooms-roomId-storage",
-        "description": "Returns a room storage as JSON.\n\nSome implementation details:\nEach Liveblocks data structure is represented by a JSON element having two properties:\n`\"liveblocksType\": \"LiveObject\" | \"LiveList\" | \"LiveMap\"`\n`\"data\"` => contains the nested data structures (children) and data.\nThe root is always a `LiveObject`."
+        "description": "Returns a room’s Storage as JSON.\n\nSome implementation details:\nEach Liveblocks data structure is represented by a JSON element having two properties:\n`\"liveblocksType\": \"LiveObject\" | \"LiveList\" | \"LiveMap\"`\n`\"data\"` => contains the nested data structures (children) and data.\nThe root is always a `LiveObject`."
       },
       "post": {
-        "summary": "Initialize storage",
+        "summary": "Initialize Storage document",
         "operationId": "post-rooms-roomId-storage",
         "responses": {
           "200": {
-            "description": "Success. The storage is initialized. Returns the room storage as JSON.",
+            "description": "Success. The Storage is initialized. Returns the room’s Storage as JSON.",
             "content": {
               "application/json": {
                 "schema": {
@@ -559,7 +609,7 @@
             "$ref": "#/components/responses/404"
           }
         },
-        "description": "Initializes a room storage. The room must already exist and have an empty storage. Calling this endpoint will disconnect all users from the room if there are any.\n\nThe format of the request body is the same as what’s returned by the get storage endpoint.\n\nFor each Liveblocks data structure that you want to create, you need a JSON element having two properties:\n- `\"liveblocksType\"` => `\"LiveObject\" | \"LiveList\" | \"LiveMap\"`\n- `\"data\"` => contains the nested data structures (children) and data.\n\nThe root’s type can only be LiveObject.\n\nA utility function, `toPlainLson` is included in `@liveblocks/client` from `1.0.9` to help convert `LiveObject`, `LiveList`, and `LiveMap` to the structure expected by the endpoint.",
+        "description": "Initializes a room’s Storage. The room must already exist and have an empty Storage. Calling this endpoint will disconnect all users from the room if there are any.\n\nThe format of the request body is the same as what’s returned by the get Storage endpoint.\n\nFor each Liveblocks data structure that you want to create, you need a JSON element having two properties:\n- `\"liveblocksType\"` => `\"LiveObject\" | \"LiveList\" | \"LiveMap\"`\n- `\"data\"` => contains the nested data structures (children) and data.\n\nThe root’s type can only be LiveObject.\n\nA utility function, `toPlainLson` is included in `@liveblocks/client` from `1.0.9` to help convert `LiveObject`, `LiveList`, and `LiveMap` to the structure expected by the endpoint.",
         "requestBody": {
           "content": {
             "application/json": {
@@ -606,11 +656,11 @@
         }
       },
       "delete": {
-        "summary": "Delete storage",
+        "summary": "Delete Storage",
         "operationId": "delete-rooms-roomId-storage",
         "responses": {
           "200": {
-            "description": "Success. The room has no more storage."
+            "description": "Success. The room has no more Storage."
           },
           "401": {
             "$ref": "#/components/responses/401"
@@ -622,12 +672,59 @@
             "$ref": "#/components/responses/404"
           }
         },
-        "description": "Deletes all of the room’s storage data. Calling this endpoint will disconnect all users from the room if there are any.\n"
+        "description": "Deletes all of the room’s Storage data. Calling this endpoint will disconnect all users from the room if there are any.\n"
+      }
+    },
+
+    "/rooms/{roomId}/ydoc": {
+      "parameters": [
+        {
+          "schema": {
+            "type": "string"
+          },
+          "name": "roomId",
+          "in": "path",
+          "required": true
+        }
+      ],
+      "get": {
+        "summary": "Get Yjs document",
+        "tags": [],
+        "responses": {
+          "200": {
+            "description": "Success. Returns the room’s Yjs document as JSON.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "examples": {
+                  "example-1": {
+                    "value": {
+                      "someYText": "contents of ytext"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          }
+        },
+        "operationId": "get-rooms-roomId-ydoc",
+        "description": "Returns a JSON representation of the room’s Yjs document."
       }
     },
     "/rooms/{roomId}/authorize": {
       "post": {
-        "summary": "Get an access token to enter a room",
+        "summary": "Get access token with secret key",
         "operationId": "post-authorize",
         "responses": {
           "200": {
@@ -681,7 +778,7 @@
             }
           }
         },
-        "description": "This endpoint lets your application server (= your backend) obtain a token that one of its clients (= your frontend) can use to enter a Liveblocks room. You use this endpoint to implement your own application’s custom authentication endpoint. When making this request, you’ll have to use your secret key.\n\nYou can pass the property `userId` in the request's body. This can be whatever internal identifier you use for your user accounts as long as it uniquely identifies an account. Setting the `userId` is optional if you want to use public rooms, but it is required to enter a private room (because permissions are assigned to specific user IDs). In case you want to use the group permission system, you can also declare which `groupIds` this user belongs to.\n\nThe property userId is used by Liveblocks to calculate your account’s Monthly Active Users. One unique userId corresponds to one MAU. If you don’t pass a userId, we will create for you a new anonymous userId on each connection, but your MAUs will be higher.\n\nAdditionally, you can set custom metadata to the token, which will be publicly accessible by other clients through the `user.info` property. This is useful for storing static data like avatar images or the user’s display name.",
+        "description": "This endpoint lets your application server (your backend) obtain a token that one of its clients (your frontend) can use to enter a Liveblocks room. You use this endpoint to implement your own application’s custom authentication endpoint. When making this request, you’ll have to use your secret key.\n\nYou can pass the property `userId` in the request’s body. This can be whatever internal identifier you use for your user accounts as long as it uniquely identifies an account. Setting the `userId` is optional if you want to use public rooms, but it is required to enter a private room (because permissions are assigned to specific user IDs). In case you want to use the group permission system, you can also declare which `groupIds` this user belongs to.\n\nThe property userId is used by Liveblocks to calculate your account’s Monthly Active Users. One unique userId corresponds to one MAU. If you don’t pass a userId, we will create for you a new anonymous userId on each connection, but your MAUs will be higher.\n\nAdditionally, you can set custom metadata to the token, which will be publicly accessible by other clients through the `user.info` property. This is useful for storing static data like avatar images or the user’s display name.",
         "parameters": []
       },
       "parameters": [
@@ -696,59 +793,9 @@
         }
       ]
     },
-    "/rooms/{roomId}/broadcast_event": {
-      "post": {
-        "summary": "Broadcast an event to a room",
-        "operationId": "post-broadcast-event",
-        "responses": {
-          "204": {
-            "description": "Success. An event was broadcasted to the room."
-          },
-          "401": {
-            "$ref": "#/components/responses/401"
-          },
-          "403": {
-            "$ref": "#/components/responses/403"
-          },
-          "404": {
-            "$ref": "#/components/responses/404"
-          },
-          "422": {
-            "$ref": "#/components/responses/422"
-          }
-        },
-        "description": "This endpoint enables the broadcast of an event to a room without having to connect to it via the `client` from `@liveblocks/client`. It takes any valid JSON as a request body.",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "examples": {
-                "example-1": {
-                  "value": {
-                    "type": "EMOJI",
-                    "emoji": "🔥"
-                  }
-                }
-              }
-            },
-            "description": "Any valid JSON."
-          }
-        },
-        "parameters": [
-          {
-            "schema": {
-              "type": "string"
-            },
-            "name": "roomId",
-            "in": "path",
-            "required": true,
-            "description": "ID of the room"
-          }
-        ]
-      }
-    },
     "/rooms/{roomId}/public/authorize": {
       "post": {
-        "summary": "Get JWT token for WebSocket with public key",
+        "summary": "Get access token with public key",
         "operationId": "post-public-authorize",
         "responses": {
           "200": {
@@ -778,7 +825,7 @@
             "$ref": "#/components/responses/422"
           }
         },
-        "description": "This endpoint works with the public key and can be used client side. That means you don't need to implement a dedicated authorization endpoint server side. \nThe generated JWT token works only with public room (`defaultAccesses: [\"room:write\"]`).",
+        "description": "This endpoint works with the public key and can be used client side. That means you don’t need to implement a dedicated authorization endpoint server side. \nThe generated JWT token works only with public room (`defaultAccesses: [\"room:write\"]`).",
         "requestBody": {
           "content": {
             "application/json": {
@@ -813,7 +860,7 @@
       "post": {
         "summary": "Create schema",
         "operationId": "post-create-new-schema",
-        "description": "Creates a new schema which can be referenced later to enforce a room's storage data structure. The schema consists of a name (for referencing it), and a body, which specifies the exact allowed shape of data in the room. This body is a multi-line string written in the Liveblocks [schema syntax](/docs/platform/schema-validation/syntax).",
+        "description": "Creates a new schema which can be referenced later to enforce a room’s Storage data structure. The schema consists of a name (for referencing it), and a body, which specifies the exact allowed shape of data in the room. This body is a multi-line string written in the Liveblocks [schema syntax](/docs/platform/schema-validation/syntax).",
         "requestBody": {
           "content": {
             "application/json": {
@@ -1057,7 +1104,7 @@
       "post": {
         "summary": "Attach schema to room",
         "operationId": "post-attach-schema-to-room",
-        "description": "This endpoint attachs a schema to a room, and instantly enables runtime schema validation for the room. If the current contents of the room's storage do not match the schema, attaching will fail and the error message will give details on why the schema failed to attach.",
+        "description": "This endpoint attachs a schema to a room, and instantly enables runtime schema validation for the room. If the current contents of the room’s Storage do not match the schema, attaching will fail and the error message will give details on why the schema failed to attach.",
         "requestBody": {
           "content": {
             "application/json": {
@@ -1210,11 +1257,11 @@
           },
           "usersAccesses": {
             "type": ["object", "null"],
-            "description": "A map of user identifiers to permissions list. Setting the value as `null` will clear all users' accesses. Setting one user identifier as `null` will clear this user's accesses."
+            "description": "A map of user identifiers to permissions list. Setting the value as `null` will clear all users' accesses. Setting one user identifier as `null` will clear this user’s accesses."
           },
           "groupsAccesses": {
             "type": ["object", "null"],
-            "description": "A map of group identifiers to permissions list. Setting the value as `null` will clear all groups' accesses. Setting one group identifier as `null` will clear this group's accesses."
+            "description": "A map of group identifiers to permissions list. Setting the value as `null` will clear all groups' accesses. Setting one group identifier as `null` will clear this group’s accesses."
           },
           "metadata": {
             "type": ["object", "null"],
@@ -1487,7 +1534,7 @@
                 "value": {
                   "error": "UNAUTHORIZED_ROOM_ACCESS",
                   "message": "The user does not have permission to access the room.",
-                  "suggestion": "Please add the user's ID or one of the user's group IDs to the room first.",
+                  "suggestion": "Please add the user’s ID or one of the user’s group IDs to the room first.",
                   "docs": ""
                 }
               }
@@ -1530,7 +1577,7 @@
                 "value": {
                   "error": "UNAUTHORIZED_ROOM_ACCESS",
                   "message": "The user does not have permission to access the room.",
-                  "suggestion": "Please add the user's ID or one of the user's group IDs to the room first.",
+                  "suggestion": "Please add the user’s ID or one of the user’s group IDs to the room first.",
                   "docs": ""
                 }
               }
