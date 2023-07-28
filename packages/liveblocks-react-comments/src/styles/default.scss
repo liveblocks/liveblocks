@@ -1,5 +1,50 @@
-.lb-root {
-  /* Public: Basic */
+@use "sass:math";
+
+/**
+ * Generates a scale of foreground colors based on the --lb-foreground-contrast
+ * variable, which indicates the lowest percentage of the scale.
+ *
+ * ╔═══════════════════╗                        ╔═══════════════════╗
+ * ║  --lb-background  ║                        ║  --lb-foreground  ║
+ * ╚═══════════════════╝                        ╚═══════════════════╝
+ *
+ *        0% ●────────────────────────────────────────────● 100%
+ *           ● ─ ─ ─ ─●───┬───┬───┬───┬───┬───┬───┬───┬───●
+ *   ┌────────────────┴───┴───┴───┴───┤   │   │   │   │
+ *   │ --lb-foreground-contrast = 15% │   │   │   │   │
+ *   └────────────────┬───┬───┬───┬───┤   │   │   │   │
+ *                    ◇   ◇   ◇   ◇   ◇   ◇   ◇   ◇   ◇
+ *                   100 200 300 400 500 600 700 800 900
+ *
+ *        0% ●────────────────────────────────────────────● 100%
+ *           ● ─ ─ ─ ─ ─ ─ ─ ─ ●──┬──┬──┬──┬──┬──┬──┬──┬──●
+ *              ┌──────────────┴──┴──┴──┴──┴──┴──┤  │  │
+ *              │ --lb-foreground-contrast = 40% │  │  │
+ *              └──────────────┬──┬──┬──┬──┬──┬──┤  │  │
+ *                             ◇  ◇  ◇  ◇  ◇  ◇  ◇  ◇  ◇
+*/
+@function generate-foreground($increment) {
+  $index: math.div($increment, 100);
+  $percentage: calc(
+    100% -
+      (
+        var(--lb-foreground-contrast) + #{math.max($index - 1, 0)} * ((
+                100% - var(--lb-foreground-contrast)
+              ) / 9)
+      )
+  );
+
+  @return color-mix(
+    in srgb,
+    var(--lb-foreground),
+    var(--lb-background) #{$percentage}
+  );
+}
+
+$lb-button-size: calc(2 * 0.25 * var(--lb-spacing) + var(--lb-icon-size));
+
+:root {
+  /* @public Basic */
   --lb-background: #fff;
   --lb-foreground: #111;
   --lb-accent: #08f;
@@ -11,7 +56,7 @@
   --lb-font-mono: ui-monospace, "Menlo", "Monaco", "Consolas", "Liberation Mono",
     "Courier New", monospace;
 
-  /* Public: Advanced */
+  /* @public Advanced */
   --lb-icon-weight: 1.5px;
   --lb-icon-size: 1.25rem;
   --lb-avatar-radius: 50%;
@@ -20,78 +65,23 @@
   --lb-tooltip-foreground: var(--lb-background);
   --lb-transition-duration: 0.1s;
   --lb-transition-easing: cubic-bezier(0.4, 0, 0.2, 1);
-  --lb-foreground-contrast: 5%;
+  --lb-foreground-contrast: 6%;
 
-  /* Internal: Computed */
-  --lb-button-size: calc(2 * 0.25 * var(--lb-spacing) + var(--lb-icon-size));
-  --lb-foreground-unit: calc((100% - var(--lb-foreground-contrast)) / 9);
-  --lb-foreground-100: color-mix(
+  /* @public Modern CSS (color-mix) */
+  --lb-accent-emphasis: color-mix(
     in srgb,
-    var(--lb-foreground),
-    var(--lb-background) calc(100% - var(--lb-foreground-contrast))
+    var(--lb-accent),
+    var(--lb-background) 20%
   );
-  --lb-foreground-200: color-mix(
-    in srgb,
-    var(--lb-foreground),
-    var(--lb-background)
-      calc(100% - (var(--lb-foreground-contrast) + var(--lb-foreground-unit)))
-  );
-  --lb-foreground-300: color-mix(
-    in srgb,
-    var(--lb-foreground),
-    var(--lb-background)
-      calc(
-        100% - (var(--lb-foreground-contrast) + 2 * var(--lb-foreground-unit))
-      )
-  );
-  --lb-foreground-400: color-mix(
-    in srgb,
-    var(--lb-foreground),
-    var(--lb-background)
-      calc(
-        100% - (var(--lb-foreground-contrast) + 3 * var(--lb-foreground-unit))
-      )
-  );
-  --lb-foreground-500: color-mix(
-    in srgb,
-    var(--lb-foreground),
-    var(--lb-background)
-      calc(
-        100% - (var(--lb-foreground-contrast) + 4 * var(--lb-foreground-unit))
-      )
-  );
-  --lb-foreground-600: color-mix(
-    in srgb,
-    var(--lb-foreground),
-    var(--lb-background)
-      calc(
-        100% - (var(--lb-foreground-contrast) + 5 * var(--lb-foreground-unit))
-      )
-  );
-  --lb-foreground-700: color-mix(
-    in srgb,
-    var(--lb-foreground),
-    var(--lb-background)
-      calc(
-        100% - (var(--lb-foreground-contrast) + 6 * var(--lb-foreground-unit))
-      )
-  );
-  --lb-foreground-800: color-mix(
-    in srgb,
-    var(--lb-foreground),
-    var(--lb-background)
-      calc(
-        100% - (var(--lb-foreground-contrast) + 7 * var(--lb-foreground-unit))
-      )
-  );
-  --lb-foreground-900: color-mix(
-    in srgb,
-    var(--lb-foreground),
-    var(--lb-background)
-      calc(
-        100% - (var(--lb-foreground-contrast) + 8 * var(--lb-foreground-unit))
-      )
-  );
+  --lb-foreground-100: #{generate-foreground(100)};
+  --lb-foreground-200: #{generate-foreground(200)};
+  --lb-foreground-300: #{generate-foreground(300)};
+  --lb-foreground-400: #{generate-foreground(400)};
+  --lb-foreground-500: #{generate-foreground(500)};
+  --lb-foreground-600: #{generate-foreground(600)};
+  --lb-foreground-700: #{generate-foreground(700)};
+  --lb-foreground-800: #{generate-foreground(800)};
+  --lb-foreground-900: #{generate-foreground(900)};
 
   font-family: var(--lb-font-sans);
 
@@ -107,7 +97,7 @@
  */
 
 .lb-icon {
-  /* Public: Specific */
+  /* @public */
   --lb-icon-background: var(--lb-background);
 
   width: var(--lb-icon-size);
@@ -120,7 +110,7 @@
  */
 
 .lb-button {
-  /* Internal: Dynamic */
+  /* @internal */
   --lb-button-background: var(--lb-background);
 
   all: unset;
@@ -134,16 +124,9 @@
   color: var(--lb-foreground-400);
   outline: none;
   cursor: pointer;
-  transition-property: background, color, box-shadow, opacity;
-  transition-duration: var(--lb-transition-duration);
   transition-timing-function: var(--lb-transition-easing);
-
-  &:enabled:hover,
-  &:enabled:focus-visible {
-    --lb-button-background: var(--lb-foreground-100);
-
-    color: var(--lb-foreground-600);
-  }
+  transition-duration: var(--lb-transition-duration);
+  transition-property: background, color, box-shadow, opacity;
 
   &:focus-visible {
     box-shadow:
@@ -156,25 +139,32 @@
     cursor: not-allowed;
   }
 
-  &.lb-button\:primary {
-    --lb-button-background: var(--lb-accent);
+  &:enabled:hover,
+  &:enabled:focus-visible {
+    /* @internal */
+    --lb-button-background: var(--lb-foreground-100);
+
+    color: var(--lb-foreground-600);
+  }
+}
+
+.lb-button.lb-button\:primary {
+  /* @internal */
+  --lb-button-background: var(--lb-accent);
+
+  color: var(--lb-accent-foreground);
+
+  &:enabled:hover,
+  &:enabled:focus-visible {
+    /* @internal */
+    --lb-button-background: var(--lb-accent-emphasis);
 
     color: var(--lb-accent-foreground);
-
-    &:enabled:hover,
-    &:enabled:focus-visible {
-      --lb-button-background: color-mix(
-        in srgb,
-        var(--lb-accent),
-        var(--lb-background) 20%
-      );
-
-      color: var(--lb-accent-foreground);
-    }
   }
 }
 
 .lb-button-icon {
+  /* @public */
   --lb-icon-background: var(--lb-button-background);
 }
 
@@ -195,7 +185,7 @@
  */
 
 .lb-dropdown {
-  /* Public: Specific */
+  /* @public */
   --lb-dropdown-padding: 4px;
 
   padding: var(--lb-dropdown-padding);
@@ -222,9 +212,9 @@
   outline: none;
   font-size: 0.875rem;
   cursor: pointer;
-  transition-property: background, color, opacity;
-  transition-duration: var(--lb-transition-duration);
   transition-timing-function: var(--lb-transition-easing);
+  transition-duration: var(--lb-transition-duration);
+  transition-property: background, color, opacity;
 
   &[data-highlighted] {
     background: var(--lb-foreground-100);
@@ -306,12 +296,12 @@
   }
 
   & code {
-    font-family: var(--lb-font-mono);
     padding: 0.2em 0.4em;
     border-radius: calc(0.75 * var(--lb-radius));
     background: var(--lb-foreground-100);
     color: var(--lb-foreground-600);
     box-decoration-break: clone;
+    font-family: var(--lb-font-mono);
     line-height: 1;
   }
 
@@ -346,6 +336,7 @@
 
 /* TODO: Improve logic, currently having an action button focused would count */
 .lb-composer:not(:focus-within) .lb-button\:primary {
+  /* @internal */
   --lb-button-background: var(--lb-foreground-100);
 
   color: var(--lb-foreground-600);
@@ -365,7 +356,7 @@
   display: flex;
   gap: calc(0.75 * var(--lb-spacing));
   align-items: center;
-  height: calc(var(--lb-button-size) + var(--lb-spacing));
+  height: calc(#{$lb-button-size} + var(--lb-spacing));
   padding: 0 var(--lb-spacing) var(--lb-spacing);
 }
 
@@ -381,7 +372,7 @@
 }
 
 .lb-composer-logo {
-  height: calc(0.75 * var(--lb-button-size));
+  height: calc(0.75 * #{$lb-button-size});
   color: var(--lb-foreground-400);
 }
 
@@ -390,8 +381,8 @@
  */
 
 .lb-comment {
-  /* Public: Specific */
-  --lb-comment-avatar-size: var(--lb-button-size);
+  /* @public */
+  --lb-comment-avatar-size: #{$lb-button-size};
 
   position: relative;
   padding: var(--lb-spacing);
@@ -441,10 +432,10 @@
 .lb-comment-actions {
   display: flex;
   gap: calc(0.25 * var(--lb-spacing));
-  margin-inline-start: auto;
-  transition-property: opacity;
-  transition-duration: var(--lb-transition-duration);
   transition-timing-function: var(--lb-transition-easing);
+  transition-duration: var(--lb-transition-duration);
+  transition-property: opacity;
+  margin-inline-start: auto;
 }
 
 .lb-comment:not(.lb-comment\:always-show-actions) {
@@ -475,7 +466,7 @@
   min-height: var(--lb-comment-avatar-size);
 
   & .lb-comment-header {
-    height: var(--lb-button-size);
+    height: $lb-button-size;
     margin-block-end: calc(0.5 * var(--lb-spacing));
   }
 

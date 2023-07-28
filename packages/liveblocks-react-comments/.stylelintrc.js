@@ -1,11 +1,11 @@
 module.exports = {
   defaultSeverity: "warning",
-  extends: ["stylelint-config-standard"],
+  extends: ["stylelint-config-standard-scss"],
   plugins: ["stylelint-order"],
   rules: {
     "selector-class-pattern": null,
     "keyframes-name-pattern": null,
-    "max-nesting-depth": 1,
+    "scss/operator-no-newline-after": null,
     "order/order": [
       [
         "dollar-variables",

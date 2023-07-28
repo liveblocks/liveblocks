@@ -21,7 +21,7 @@ export function Tooltip({
       <TooltipPrimitive.Trigger asChild>{children}</TooltipPrimitive.Trigger>
       <TooltipPrimitive.Portal>
         <TooltipPrimitive.Content
-          className={classNames("lb-root lb-tooltip", className)}
+          className={classNames("lb-tooltip", className)}
           side="top"
           align="center"
           // TODO: Share these values between all floating elements

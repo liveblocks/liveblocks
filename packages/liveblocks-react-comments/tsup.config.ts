@@ -2,8 +2,9 @@ import { defineConfig } from "tsup";
 import { transform, browserslistToTargets } from "lightningcss";
 import browserslist from "browserslist";
 import fs from "fs";
+import path from "path";
+import * as sass from "sass";
 
-const STYLES_PATH = "./src/styles";
 const TARGETS = browserslistToTargets(
   browserslist("last 2 versions and not dead")
 );
@@ -13,25 +14,19 @@ type File = {
   path: string;
 };
 
-function minifyAndCopyCssFiles() {
-  const files: File[] = fs
-    .readdirSync(STYLES_PATH, { withFileTypes: true })
-    .filter((item) => !item.isDirectory())
-    .map((item) => ({
-      name: item.name,
-      path: `${STYLES_PATH}/${item.name}`,
-    }));
-
+function buildStyles(files: File[]) {
   for (const file of files) {
+    console.log(`🎨 Building ${file.name}…`);
+    const { css, sourceMap } = sass.compile(file.path, { sourceMap: true });
+
+    console.log(`🎨 Minifying ${file.name}…`);
     const { code, map } = transform({
       filename: file.name,
-      code: fs.readFileSync(file.path),
+      code: Buffer.from(css),
       targets: TARGETS,
       minify: true,
       sourceMap: true,
-      drafts: {
-        nesting: true,
-      },
+      inputSourceMap: sourceMap ? JSON.stringify(sourceMap) : undefined,
     });
 
     fs.writeFileSync(`./${file.name}`, code);
@@ -52,6 +47,11 @@ export default defineConfig({
   format: ["esm", "cjs"],
   sourcemap: true,
   async onSuccess() {
-    minifyAndCopyCssFiles();
+    buildStyles([
+      {
+        name: "default.css",
+        path: "src/styles/default.scss",
+      },
+    ]);
   },
 });

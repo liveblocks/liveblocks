@@ -74,8 +74,9 @@
     "lightningcss": "^1.21.5",
     "msw": "^0.27.1",
     "react-error-boundary": "^3.1.1",
+    "sass": "^1.64.1",
     "stylelint": "^15.10.2",
-    "stylelint-config-standard": "^34.0.0",
+    "stylelint-config-standard-scss": "^10.0.0",
     "stylelint-order": "^6.0.3"
   },
   "sideEffects": false,
@@ -91,6 +92,7 @@
   "keywords": [
     "react",
     "comments",
+    "threads",
     "liveblocks",
     "real-time",
     "toolkit",

@@ -109,7 +109,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
       <TooltipProvider>
         <div
           className={classNames(
-            "lb-root lb-comment",
+            "lb-comment",
             indentBody && "lb-comment:indent-body",
             alwaysShowActions && "lb-comment:always-show-actions",
             className
