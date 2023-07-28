@@ -94,6 +94,12 @@
   );
 
   font-family: var(--lb-font-sans);
+
+  *,
+  ::before,
+  ::after {
+    box-sizing: border-box;
+  }
 }
 
 /**
@@ -304,7 +310,7 @@
     padding: 0.2em 0.4em;
     border-radius: calc(0.75 * var(--lb-radius));
     background: var(--lb-foreground-100);
-    color: var(--lb-foreground-400);
+    color: var(--lb-foreground-600);
     box-decoration-break: clone;
     line-height: 1;
   }
@@ -527,7 +533,15 @@
 }
 
 .lb-thread-composer {
-  & .lb-composer-editor {
+  position: relative;
+
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
     border-block-start: 1px solid var(--lb-foreground-100);
   }
 }

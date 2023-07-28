@@ -38,14 +38,14 @@ export const Thread = forwardRef<HTMLDivElement, ThreadProps>(
     },
     forwardedRef
   ) => {
-    const { useEditThread } = useCommentsContext();
-    const editThread = useEditThread();
+    const { useEditThreadMetadata } = useCommentsContext();
+    const editThreadMetadata = useEditThreadMetadata();
 
     const handleResolvedChange = useCallback(
       (resolved: boolean) => {
-        editThread({ threadId: thread.id, metadata: { resolved } });
+        editThreadMetadata({ threadId: thread.id, metadata: { resolved } });
       },
-      [editThread, thread.id]
+      [editThreadMetadata, thread.id]
     );
 
     return (
@@ -56,6 +56,7 @@ export const Thread = forwardRef<HTMLDivElement, ThreadProps>(
             alwaysShowActions && "lb-thread:always-show-actions",
             className
           )}
+          data-resolved={thread.metadata.resolved ? "" : undefined}
           {...props}
           ref={forwardedRef}
         >

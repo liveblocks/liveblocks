@@ -17,7 +17,7 @@ import {
   CreateThreadError,
   DeleteCommentError,
   EditCommentError,
-  EditThreadError,
+  EditThreadMetadataError,
 } from "./errors";
 import { createStore } from "./lib/store";
 
@@ -32,7 +32,7 @@ export type CommentsRoom<TThreadMetadata extends BaseMetadata> = {
   createThread(
     options: CreateThreadOptions<TThreadMetadata>
   ): ThreadData<TThreadMetadata>;
-  editThread(options: EditThreadOptions<TThreadMetadata>): void;
+  editThreadMetadata(options: EditThreadMetadataOptions<TThreadMetadata>): void;
   createComment(options: CreateCommentOptions): CommentData;
   editComment(options: EditCommentOptions): void;
   deleteComment(options: DeleteCommentOptions): void;
@@ -47,7 +47,7 @@ export type CreateThreadOptions<TMetadata extends BaseMetadata> = [
     }
   : { body: CommentBody; metadata: TMetadata };
 
-export type EditThreadOptions<TMetadata extends BaseMetadata> = [
+export type EditThreadMetadataOptions<TMetadata extends BaseMetadata> = [
   TMetadata,
 ] extends [never]
   ? {
@@ -247,7 +247,9 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
     return newThread;
   }
 
-  function editThread(options: EditThreadOptions<TThreadMetadata>): void {
+  function editThreadMetadata(
+    options: EditThreadMetadataOptions<TThreadMetadata>
+  ): void {
     const threadId = options.threadId;
     const metadata: Partial<TThreadMetadata> =
       "metadata" in options ? options.metadata : {};
@@ -269,10 +271,10 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
 
     startMutation();
     api
-      .editThread({ roomId, metadata, threadId })
+      .editThreadMetadata({ roomId, metadata, threadId })
       .catch((er: Error) =>
         errorEventSource.notify(
-          new EditThreadError(er, {
+          new EditThreadMetadataError(er, {
             roomId,
             threadId,
             metadata,
@@ -475,7 +477,7 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
     useThreads,
     useThreadsSuspense,
     createThread,
-    editThread,
+    editThreadMetadata,
     createComment,
     editComment,
     deleteComment,

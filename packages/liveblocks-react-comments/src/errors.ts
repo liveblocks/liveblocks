@@ -16,7 +16,9 @@ export class CreateThreadError<TMetadata extends BaseMetadata> extends Error {
   }
 }
 
-export class EditThreadError<TMetadata extends BaseMetadata> extends Error {
+export class EditThreadMetadataError<
+  TMetadata extends BaseMetadata,
+> extends Error {
   constructor(
     public cause: Error,
     public context: {
@@ -25,8 +27,8 @@ export class EditThreadError<TMetadata extends BaseMetadata> extends Error {
       metadata: Partial<TMetadata>;
     }
   ) {
-    super("Edit thread failed.");
-    this.name = "EditThreadError";
+    super("Edit thread metadata failed.");
+    this.name = "EditThreadMetadataError";
   }
 }
 
@@ -76,7 +78,7 @@ export class DeleteCommentError extends Error {
 
 export type CommentsApiError<TThreadMetadata extends BaseMetadata> =
   | CreateThreadError<TThreadMetadata>
-  | EditThreadError<TThreadMetadata>
+  | EditThreadMetadataError<TThreadMetadata>
   | CreateCommentError
   | EditCommentError
   | DeleteCommentError;

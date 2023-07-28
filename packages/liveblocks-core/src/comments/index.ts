@@ -19,7 +19,7 @@ export type CommentsApi<ThreadMetadata extends BaseMetadata> = {
     metadata: ThreadMetadata | undefined;
     body: CommentBody;
   }): Promise<ThreadData<ThreadMetadata>>;
-  editThread(options: {
+  editThreadMetadata(options: {
     roomId: string;
     metadata: Partial<ThreadMetadata>;
     threadId: string;
@@ -134,7 +134,7 @@ export function createCommentsApi<ThreadMetadata extends BaseMetadata>(
     });
   }
 
-  function editThread({
+  function editThreadMetadata({
     roomId,
     metadata,
     threadId,
@@ -145,15 +145,13 @@ export function createCommentsApi<ThreadMetadata extends BaseMetadata>(
   }) {
     return fetchApi<ThreadData<ThreadMetadata>>(
       roomId,
-      `/threads/${threadId}`,
+      `/threads/${threadId}/metadata`,
       {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          metadata,
-        }),
+        body: JSON.stringify(metadata),
       }
     );
   }
@@ -224,7 +222,7 @@ export function createCommentsApi<ThreadMetadata extends BaseMetadata>(
   return {
     getThreads,
     createThread,
-    editThread,
+    editThreadMetadata,
     createComment,
     editComment,
     deleteComment,

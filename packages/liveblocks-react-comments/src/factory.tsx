@@ -31,7 +31,7 @@ import type {
   CreateThreadOptions,
   DeleteCommentOptions,
   EditCommentOptions,
-  EditThreadOptions,
+  EditThreadMetadataOptions,
   RoomThreads,
 } from "./CommentsRoom";
 import { createCommentsRoom } from "./CommentsRoom";
@@ -89,10 +89,12 @@ type CommentsContextBundle<
    * Returns a function that edits a thread's metadata.
    *
    * @example
-   * const editThread = useEditThread();
-   * editThread({ threadId: "th_xxx", metadata: {} } })
+   * const editThreadMetadata = useEditThreadMetadata();
+   * editThreadMetadata({ threadId: "th_xxx", metadata: {} } })
    */
-  useEditThread(): (options: EditThreadOptions<TThreadMetadata>) => void;
+  useEditThreadMetadata(): (
+    options: EditThreadMetadataOptions<TThreadMetadata>
+  ) => void;
 
   /**
    * Returns a function that adds a comment to a thread.
@@ -381,12 +383,12 @@ export function createCommentsContext<
     );
   }
 
-  function useEditThread() {
+  function useEditThreadMetadata() {
     const { roomId } = useCommentsContext();
 
     return useCallback(
-      (options: EditThreadOptions<TThreadMetadata>) =>
-        getCommentsRoom(roomId).editThread(options),
+      (options: EditThreadMetadataOptions<TThreadMetadata>) =>
+        getCommentsRoom(roomId).editThreadMetadata(options),
       [roomId]
     );
   }
@@ -426,7 +428,7 @@ export function createCommentsContext<
     "CommentsProvider"
   > = {
     useCreateThread,
-    useEditThread,
+    useEditThreadMetadata,
     useCreateComment,
     useEditComment,
     useDeleteComment,

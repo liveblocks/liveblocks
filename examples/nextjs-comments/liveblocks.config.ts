@@ -35,7 +35,7 @@ export const {
   useEditComment,
   useDeleteComment,
   useCreateThread,
-  useEditThread,
+  useEditThreadMetadata,
 } = createCommentsContext<ThreadMetadata>(client, {
   resolveUser,
   serverEndpoint: `https://${WORKERS_ENDPOINT}/v2`,
