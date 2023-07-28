@@ -374,15 +374,37 @@ All you have to do now is implement it as follows:
     </StepContent>
   </Step>
   
-  <Step lastStep>
+  <Step>
     <StepTitle>You’re migrated!</StepTitle>
     <StepContent>
     You’ve successfully migrated to id tokens!
     </StepContent>
   </Step>
+
+  <Step lastStep>
+    <StepTitle>Bonus: Use our REST API to handle permissions</StepTitle>
+    <StepContent>
+    ID tokens use permissions set with our [REST API](/docs/api-reference/rest-api-endpoints).
+    For example, this is how you [create a room](/docs/api-reference/rest-api-endpoints#post-rooms),
+    and give a user full access to write and read.
+    
+    ```ts
+    fetch("https://api.liveblocks.io/v2/rooms", {
+      method: "POST",
+      body: JSON.stringify({
+        id: "my-room-name",
+        defaultAccesses: [],
+        userAccesses: {
+          "olivier@example.com": ["room:write"]
+        }
+      }),
+    });
+    ```
+    </StepContent>
+  </Step>
 </Steps>
 
-### Learn more about id tokens
+### Learn more about ID tokens
 
 You can find guides for your specific framework in our
 [ID tokens authentication guides](/docs/rooms/authentication/id-token-permissions)
