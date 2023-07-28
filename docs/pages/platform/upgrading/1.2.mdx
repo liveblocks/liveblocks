@@ -224,9 +224,9 @@ single-room token based setup.
   </Step>
   
   <Step lastStep>
-    <StepTitle>Bonus: Give access to multiple rooms</StepTitle>
+    <StepTitle>Bonus: Issue access to multiple rooms</StepTitle>
     <StepContent>
-    With Liveblocks 1.2, you can also give access to multiple rooms, or even use a prefix-based wildcard in the room name, enabling any amount of rooms! You can learn more about this in our [access token](/docs/rooms/permissions/access-token#patterns) guide.
+    With Liveblocks 1.2, you can also issue access to multiple rooms, or even use a prefix-based wildcard in the room name, enabling any amount of rooms! You can learn more about this in our [access token](/docs/rooms/permissions/access-token#patterns) guide.
       ```tsx highlight="15-17"
       import { Liveblocks } from "@liveblocks/node";
       
@@ -386,9 +386,9 @@ All you have to do now is implement it as follows:
     <StepContent>
     ID tokens use permissions set with our [REST API](/docs/api-reference/rest-api-endpoints).
     For example, this is how you [create a room](/docs/api-reference/rest-api-endpoints#post-rooms),
-    and give a user full access to write and read.
+    and give a user full access.
     
-    ```ts
+    ```ts highlight="6-8"
     fetch("https://api.liveblocks.io/v2/rooms", {
       method: "POST",
       body: JSON.stringify({
