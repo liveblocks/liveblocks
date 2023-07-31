@@ -255,25 +255,23 @@ export class Liveblocks {
 
 export type Comment = {
   type: "comment";
-  id: string; // cm_xxxxx
-  createdAt: string; // ISO 8601
-  editedAt: string | undefined; // ISO 8601
+  id: string;
+  createdAt: string;
+  editedAt: string | undefined;
   userId: string;
   body: CommentBody | undefined;
-  deletedAt: string | undefined; // ISO 8601
+  deletedAt: string | undefined;
   mentionedIds: string[];
 };
 
 export type Thread = {
   type: "thread";
-  id: string; // th_xxxxx
-  createdAt: string; // ISO 8601
+  id: string;
+  createdAt: string;
   roomId: string;
   comments: Comment[];
   metadata: Record<string, string | number | boolean>;
-  // updatedAt value is updated when the metadata is updated
-  // or when a comment is created/edited/deleted
-  updatedAt: string | undefined; // ISO 8601
+  updatedAt: string | undefined;
 };
 
 export type CommentBodyInlineElement = CommentBodyText | CommentBodyMention;
@@ -294,6 +292,6 @@ type CommentBodyText = {
   text: string;
 };
 
-export type CommentBody = {
+type CommentBody = {
   content: CommentBodyParagraph[];
 };
