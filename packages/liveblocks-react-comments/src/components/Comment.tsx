@@ -154,6 +154,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
                       <DropdownMenu.Item
                         className="lb-dropdown-item"
                         onSelect={handleEdit}
+                        disabled={!comment.body}
                       >
                         <EditIcon className="lb-dropdown-item-icon" />
                         Edit comment
@@ -161,6 +162,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
                       <DropdownMenu.Item
                         className="lb-dropdown-item"
                         onSelect={handleDelete}
+                        disabled={!comment.body}
                       >
                         <DeleteIcon className="lb-dropdown-item-icon" />
                         Delete comment
