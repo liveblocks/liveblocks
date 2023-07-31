@@ -34,6 +34,7 @@ export function Dropdown({
         <DropdownMenuPrimitive.Content
           className={classNames("lb-root lb-elevation lb-dropdown", className)}
           // TODO: Share these values between all floating elements
+          sideOffset={6}
           collisionPadding={10}
           {...props}
         >

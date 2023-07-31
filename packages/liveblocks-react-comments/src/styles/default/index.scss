@@ -181,7 +181,8 @@
   }
 
   &:enabled:hover,
-  &:enabled:focus-visible {
+  &:enabled:focus-visible,
+  &[aria-expanded="true"] {
     --lb-button-background: var(--lb-foreground-subtle);
 
     color: var(--lb-foreground-tertiary);
