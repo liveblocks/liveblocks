@@ -255,13 +255,31 @@
   animation-duration: var(--lb-transition-duration);
   animation-timing-function: var(--lb-transition-easing);
   will-change: transform, opacity;
+}
 
+.lb-dropdown,
+.lb-tooltip[data-state="delayed-open"] {
   &[data-side="top"] {
-    animation-name: lb-animation-slide\:from-bottom;
+    animation-name: lb-animation-slide-up;
   }
 
   &[data-side="bottom"] {
-    animation-name: lb-animation-slide\:from-top;
+    animation-name: lb-animation-slide-down;
+  }
+
+  &[data-state="closed"] {
+    animation-name: lb-animation-disappear;
+  }
+}
+
+// TODO: Support exit animations like Radix' Dropdown and Tooltip with data-state="closed"
+.lb-composer-suggestions {
+  &[data-side="top"] {
+    animation-name: lb-animation-slide-up;
+  }
+
+  &[data-side="bottom"] {
+    animation-name: lb-animation-slide-down;
   }
 }
 
@@ -655,7 +673,7 @@
  * Animations
  */
 
-@keyframes lb-animation-slide\:from-top {
+@keyframes lb-animation-slide-down {
   from {
     opacity: 0;
     transform: translateY(-4px);
@@ -667,7 +685,7 @@
   }
 }
 
-@keyframes lb-animation-slide\:from-bottom {
+@keyframes lb-animation-slide-up {
   from {
     opacity: 0;
     transform: translateY(4px);
@@ -676,5 +694,15 @@
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@keyframes lb-animation-disappear {
+  from {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0;
   }
 }
