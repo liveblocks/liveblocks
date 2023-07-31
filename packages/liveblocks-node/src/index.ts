@@ -5,6 +5,13 @@ export type {
   StorageUpdatedEvent,
   UserEnteredEvent,
   UserLeftEvent,
+  RoomCreatedEvent,
+  RoomDeletedEvent,
+  CommentCreated,
+  CommentDeleted,
+  CommentEdited,
+  ThreadCreated,
+  ThreadMetadataUpdated,
   WebhookEvent,
   WebhookRequest,
 } from "./webhooks";
