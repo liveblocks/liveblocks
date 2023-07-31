@@ -121,6 +121,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
                 <User className="lb-comment-user" userId={comment.userId} />
                 <span className="lb-comment-date">
                   <Timestamp
+                    locale="en-US"
                     date={comment.createdAt}
                     className="lb-comment-date-timestamp"
                   />
