@@ -23,10 +23,9 @@
   --lb-tooltip-shadow: #{$lb-tooltip-shadow};
   --lb-transition-duration: 0.1s;
   --lb-transition-easing: cubic-bezier(0.4, 0, 0.2, 1);
-  --lb-contrast: 6%;
-  --lb-accent-contrast: var(--lb-contrast);
-  --lb-foreground-contrast: var(--lb-contrast);
-  --lb-elevation-foreground-contrast: var(--lb-contrast);
+  --lb-accent-contrast: 8%;
+  --lb-foreground-contrast: 6%;
+  --lb-elevation-foreground-contrast: 6%;
   --lb-tooltip-foreground-contrast: 10%;
 
   // Automatic color scales
@@ -451,10 +450,10 @@
 .lb-composer-mention {
   padding: 0.2em 0.4em;
   border-radius: calc(0.75 * var(--lb-radius));
-  background: var(--lb-accent-subtle);
+  background: var(--lb-foreground-subtle);
 
   &[data-selected] {
-    background: var(--lb-accent-moderate);
+    background: var(--lb-accent-subtle);
   }
 }
 

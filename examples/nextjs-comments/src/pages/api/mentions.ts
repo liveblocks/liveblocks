@@ -17,16 +17,14 @@ export default async function user(req: UserApiRequest, res: NextApiResponse) {
     query: { text },
   } = req;
 
-  if (!text) {
-    return res.json([]);
-  }
-
   const userIndices = [...NAMES.keys()];
   const users = userIndices.map(
     (userIndex) => ({ id: `user-${userIndex}`, name: NAMES[userIndex] }) as User
   );
   const filteredUserIds = users
-    .filter((user) => user.name.toLowerCase().includes(text.toLowerCase()))
+    .filter((user) =>
+      text ? user.name.toLowerCase().includes(text.toLowerCase()) : true
+    )
     .map((user) => user.id);
 
   return res.json(filteredUserIds);
