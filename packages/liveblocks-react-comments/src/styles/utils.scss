@@ -29,3 +29,9 @@
 
   @return color-mix(in srgb, #{$to}, #{$from} #{$percentage});
 }
+
+@mixin truncate() {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

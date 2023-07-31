@@ -508,9 +508,11 @@
   display: flex;
   gap: calc(0.75 * var(--lb-spacing));
   align-items: center;
+  min-width: 0;
 }
 
 .lb-comment-avatar {
+  flex: none;
   width: var(--lb-comment-avatar-size);
 }
 
@@ -519,18 +521,25 @@
   display: flex;
   gap: calc(0.5 * var(--lb-spacing));
   align-items: baseline;
+  min-width: 0;
 }
 
 .lb-comment-user {
-  overflow: hidden;
+  @include truncate;
+
   font-weight: 500;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .lb-comment-date {
+  @include truncate;
+
   color: var(--lb-foreground-tertiary);
   font-size: 0.85em;
+}
+
+.lb-comment-date-timestamp,
+.lb-comment-date-edited {
+  display: contents;
 }
 
 .lb-comment-actions {
@@ -571,7 +580,7 @@
 
   & .lb-comment-header {
     height: $lb-button-size;
-    margin-block-end: calc(0.5 * var(--lb-spacing));
+    margin-block-end: calc(0.25 * var(--lb-spacing));
   }
 
   & .lb-comment-avatar {
