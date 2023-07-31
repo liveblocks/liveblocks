@@ -9,9 +9,14 @@ import type {
   LsonObject,
   Room,
 } from "@liveblocks/client";
+import { detectDupes } from "@liveblocks/core";
 import { Base64 } from "js-base64";
 import { Observable } from "lib0/observable";
 import * as Y from "yjs";
+
+import { PKG_FORMAT, PKG_NAME, PKG_VERSION } from "./version";
+
+detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
 
 const Y_PRESENCE_KEY = "__yjs";
 
@@ -157,14 +162,22 @@ export default class LiveblocksProvider<
       this.room.events.status.subscribe((status) => {
         if (status === "connected") {
           this.syncDoc();
+        } else {
+          this.synced = false;
         }
       })
     );
 
     this.unsubscribers.push(
-      this.room.events.ydoc.subscribe((update: string) => {
-        Y.applyUpdate(this.doc, Base64.toUint8Array(update), "backend");
-        this.synced = true;
+      this.room.events.ydoc.subscribe(({ update, isSync }) => {
+        Y.applyUpdate(
+          this.doc,
+          Base64.toUint8Array(update as string),
+          "backend"
+        );
+        if (isSync) {
+          this.synced = true;
+        }
       })
     );
     this.syncDoc();

@@ -38,7 +38,7 @@ import { createClient } from "@liveblocks/client";
 import { liveblocks } from "@liveblocks/zustand";
 
 const client = createClient({
-  authEndpoint: "/api/auth",
+  authEndpoint: "/api/liveblocks-auth",
 });
 
 liveblocks(/* Zustand config */, { client })

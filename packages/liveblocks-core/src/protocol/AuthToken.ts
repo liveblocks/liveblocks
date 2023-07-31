@@ -1,7 +1,7 @@
 import type { Json } from "../lib/Json";
 import { b64decode, isPlainObject, tryParseJson } from "../lib/utils";
 
-export enum ApiScope {
+export enum Permission {
   Read = "room:read",
   Write = "room:write",
   PresenceWrite = "room:presence:write",
@@ -9,7 +9,7 @@ export enum ApiScope {
   CommentsRead = "comments:read",
 }
 
-export type LiveblocksPermissions = Record<string, ApiScope[]>;
+export type LiveblocksPermissions = Record<string, Permission[]>;
 
 export enum TokenKind {
   SECRET_LEGACY = "sec-legacy",
@@ -17,8 +17,15 @@ export enum TokenKind {
   ID_TOKEN = "id",
 }
 
-type BaseTokenPayload = {
-  // Issued at and expiry fields (from JWT spec)
+/**
+ * Infers from the given scopes whether the user can write the document (e.g.
+ * Storage and/or YDoc).
+ */
+export function canWriteStorage(scopes: readonly string[]): boolean {
+  return scopes.includes(Permission.Write);
+}
+
+type JwtMeta = {
   iat: number;
   exp: number;
 };
@@ -26,11 +33,10 @@ type BaseTokenPayload = {
 /**
  * Legacy Secret Token.
  */
-export type LegacySecretToken = BaseTokenPayload & {
+export type LegacySecretToken = {
   k: TokenKind.SECRET_LEGACY;
   roomId: string;
   scopes: string[];
-  actor: number;
 
   // Extra payload as defined by the customer's own authorization
   id?: string;
@@ -39,29 +45,31 @@ export type LegacySecretToken = BaseTokenPayload & {
   // IMPORTANT: All other fields on the JWT token are deliberately treated as
   // opaque, and not relied on by the client.
   [other: string]: Json | undefined;
-};
+} & JwtMeta;
 
 /**
  * New authorization Access Token.
  */
-export type AccessToken = BaseTokenPayload & {
+export type AccessToken = {
   k: TokenKind.ACCESS_TOKEN;
   pid: string; // project id
   uid: string; // user id
   perms: LiveblocksPermissions; // permissions
   ui?: Json; // user info
-};
+} & JwtMeta;
 
 /**
  * New authorization ID Token.
  */
-export type IDToken = BaseTokenPayload & {
+export type IDToken = {
   k: TokenKind.ID_TOKEN;
   pid: string; // project id
   uid: string; // user id
   gids?: string[]; // group ids
   ui?: Json; // user info
-};
+} & JwtMeta;
+
+export type AuthToken = AccessToken | IDToken | LegacySecretToken;
 
 // The "rich" token is data we obtain by parsing the JWT token and making all
 // metadata on it accessible. It's done right after hitting the backend, but
@@ -69,23 +77,14 @@ export type IDToken = BaseTokenPayload & {
 // authentication step.
 export type ParsedAuthToken = {
   readonly raw: string; // The raw JWT value, unchanged
-  readonly parsed: AccessToken | IDToken | LegacySecretToken; // Rich data on the JWT value
+  readonly parsed: AuthToken; // Rich data on the JWT value
 };
 
-/** @internal - For unit tests only */
-export type JwtMetadata = Pick<AccessToken | IDToken, "iat" | "exp">;
-
-export function isTokenExpired(token: JwtMetadata): boolean {
-  const now = Date.now() / 1000;
-  const valid = now <= token.exp - 300 && now >= token.iat - 300;
-  return !valid;
-}
-
-function isValidAuthTokenPayload(data: Json): data is AccessToken | IDToken {
+function isValidAuthTokenPayload(
+  data: Json
+): data is AccessToken | IDToken | LegacySecretToken {
   return (
     isPlainObject(data) &&
-    typeof data.iat === "number" &&
-    typeof data.exp === "number" &&
     (data.k === TokenKind.ACCESS_TOKEN ||
       data.k === TokenKind.ID_TOKEN ||
       data.k === TokenKind.SECRET_LEGACY)
@@ -108,7 +107,7 @@ export function parseAuthToken(rawTokenString: string): ParsedAuthToken {
   const payload = tryParseJson(b64decode(tokenParts[1]));
   if (!(payload && isValidAuthTokenPayload(payload))) {
     throw new Error(
-      "Authentication error: we expected a room token but did not get one. Hint: if you are using a callback, ensure the room is passed when creating the token. For more information: https://liveblocks.io/docs/api-reference/liveblocks-client#createClientCallback"
+      "Authentication error: expected a valid token but did not get one. Hint: if you are using a callback, ensure the room is passed when creating the token. For more information: https://liveblocks.io/docs/api-reference/liveblocks-client#createClientCallback"
     );
   }
 

@@ -194,6 +194,27 @@ describe("auth-manager - secret auth", () => {
     }
   );
 
+  test("custom authentication with missing token in callback response should fail", async () => {
+    const authManager = createAuthManager({
+      authEndpoint: (_roomId) =>
+        Promise.resolve({ error: "forbidden", reason: "Nope" }),
+    });
+
+    await expect(
+      authManager.getAuthValue("room:read", "room1")
+    ).rejects.toThrow("Authentication failed: Nope");
+  });
+
+  test("custom authentication with missing token in callback response should fail", async () => {
+    const authManager = createAuthManager({
+      authEndpoint: (_roomId) => Promise.reject(new Error("Huh?")),
+    });
+
+    await expect(
+      authManager.getAuthValue("room:read", "room1")
+    ).rejects.toThrow("Huh?");
+  });
+
   test("private authentication with 403 status should fail", async () => {
     const authManager = createAuthManager({
       authEndpoint: "/mocked-api/403",

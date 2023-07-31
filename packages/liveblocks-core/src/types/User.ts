@@ -27,7 +27,15 @@ export type User<
   readonly presence: TPresence;
 
   /**
-   * False if the user can modify the room storage, true otherwise.
+   * @deprecated Use `!user.canWrite` instead.
+   * False if the user can mutate the Room’s Storage and/or YDoc, true if they
+   * can only read but not mutate it.
    */
   readonly isReadOnly: boolean;
+
+  /**
+   * True if the user can mutate the Room’s Storage and/or YDoc, false if they
+   * can only read but not mutate it.
+   */
+  readonly canWrite: boolean;
 };

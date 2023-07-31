@@ -3,9 +3,14 @@ import type { LsonObject } from "../crdts/Lson";
 import type { ToImmutable } from "../crdts/utils";
 import type { Json, JsonObject } from "../lib/Json";
 import { makePosition } from "../lib/position";
+import { deepClone } from "../lib/utils";
 import type { Authentication } from "../protocol/Authentication";
-import type { LegacySecretToken } from "../protocol/AuthToken";
-import { TokenKind } from "../protocol/AuthToken";
+import type {
+  AccessToken,
+  IDToken,
+  LegacySecretToken,
+} from "../protocol/AuthToken";
+import { Permission, TokenKind } from "../protocol/AuthToken";
 import type { BaseUserMeta } from "../protocol/BaseUserMeta";
 import type { ClientMsg } from "../protocol/ClientMsg";
 import { ClientMsgCode } from "../protocol/ClientMsg";
@@ -26,16 +31,16 @@ import type { Room, RoomDelegates } from "../room";
 import { createRoom } from "../room";
 import { WebsocketCloseCodes } from "../types/IWebSocket";
 import {
-  ALWAYS_AUTH_AS,
+  ALWAYS_AUTH_WITH_LEGACY_TOKEN,
   defineBehavior,
-  SOCKET_AUTOCONNECT,
+  SOCKET_AUTOCONNECT_AND_ROOM_STATE,
 } from "./_behaviors";
 import type { MockWebSocketServer } from "./_MockWebSocketServer";
 import { MockWebSocket } from "./_MockWebSocketServer";
 import type { JsonStorageUpdate } from "./_updatesUtils";
 import { serializeUpdateToJson } from "./_updatesUtils";
 
-export function makeMinimalTokenPayload(
+export function makeSecretLegacyToken(
   actor: number,
   scopes: string[]
 ): LegacySecretToken {
@@ -55,17 +60,26 @@ export function makeMinimalTokenPayload(
   };
 }
 
-/**
- * Deep-clones a JSON-serializable value.
- *
- * NOTE: We should be able to replace `deepClone` by `structuredClone` once
- * we've upgraded to Node 18.
- */
-function deepClone<T extends Json>(items: T): T {
-  // NOTE: In this case, the combination of JSON.parse() and JSON.stringify
-  // won't lead to type unsafety, so this use case is okay.
-  // eslint-disable-next-line no-restricted-syntax
-  return JSON.parse(JSON.stringify(items)) as T;
+export function makeAccessToken(): AccessToken {
+  return {
+    k: TokenKind.ACCESS_TOKEN,
+    iat: Date.now() / 1000,
+    exp: Date.now() / 1000 + 60, // Valid for 1 minute
+    pid: "my-app",
+    uid: "user1",
+    perms: { "my-room": [Permission.Write] },
+  };
+}
+
+export function makeIDToken(): IDToken {
+  return {
+    k: TokenKind.ID_TOKEN,
+    iat: Date.now() / 1000,
+    exp: Date.now() / 1000 + 60, // Valid for 1 minute
+    pid: "my-app",
+    uid: "user1",
+    gids: ["group1"],
+  };
 }
 
 // NOTE: we have some instability with opIds in the undo/redo stack and this should be investigated
@@ -89,7 +103,7 @@ function makeRoomConfig(mockedDelegates: RoomDelegates) {
     roomId: "room-id",
     throttleDelay: -1, // No throttle for standard storage test
     lostConnectionTimeout: 99999, // Don't trigger connection loss events in tests
-    liveblocksServer: "wss://live.liveblocks.io/v6",
+    liveblocksServer: "wss://live.liveblocks.io/v7",
     authentication: {
       type: "private",
       url: "/api/auth",
@@ -110,7 +124,7 @@ export async function prepareRoomWithStorage<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
   TUserMeta extends BaseUserMeta,
-  TRoomEvent extends Json
+  TRoomEvent extends Json,
 >(
   items: IdTuple<SerializedCrdt>[],
   actor: number = 0,
@@ -118,7 +132,7 @@ export async function prepareRoomWithStorage<
     | ((messages: ClientMsg<TPresence, TRoomEvent>[]) => void)
     | undefined = undefined,
   defaultStorage?: TStorage,
-  scopes: string[] = []
+  scopes: string[] = ["room:write"]
 ) {
   if (onSend_DEPRECATED !== undefined) {
     throw new Error(
@@ -127,8 +141,8 @@ export async function prepareRoomWithStorage<
   }
 
   const { wss, delegates } = defineBehavior(
-    ALWAYS_AUTH_AS(actor, scopes),
-    SOCKET_AUTOCONNECT
+    ALWAYS_AUTH_WITH_LEGACY_TOKEN(actor, scopes),
+    SOCKET_AUTOCONNECT_AND_ROOM_STATE(actor, scopes)
   );
 
   const clonedItems = deepClone(items);
@@ -208,8 +222,12 @@ export async function prepareStorageTest<
   TStorage extends LsonObject,
   TPresence extends JsonObject = never,
   TUserMeta extends BaseUserMeta = never,
-  TRoomEvent extends Json = never
->(items: IdTuple<SerializedCrdt>[], actor: number = 0, scopes: string[] = []) {
+  TRoomEvent extends Json = never,
+>(
+  items: IdTuple<SerializedCrdt>[],
+  actor: number = 0,
+  scopes: string[] = ["room:write"]
+) {
   let currentActor = actor;
   const operations: Op[] = [];
 
@@ -268,7 +286,7 @@ export async function prepareStorageTest<
       actor: -1,
       id: undefined,
       info: undefined,
-      scopes: [],
+      scopes: ["room:write"],
     })
   );
 
@@ -277,7 +295,9 @@ export async function prepareStorageTest<
   ref.wss.last.send(
     serverMessage({
       type: ServerMsgCode.ROOM_STATE,
-      users: { [currentActor]: { scopes: [] } },
+      actor: currentActor,
+      scopes,
+      users: { [currentActor]: { scopes: ["room:write"] } },
     })
   );
 
@@ -358,7 +378,7 @@ export async function prepareStorageTest<
           actor,
           id: undefined,
           info: undefined,
-          scopes: [],
+          scopes: ["room:write"],
         })
       );
     });
@@ -404,7 +424,7 @@ export async function prepareStorageUpdateTest<
   TStorage extends LsonObject,
   TPresence extends JsonObject = never,
   TUserMeta extends BaseUserMeta = never,
-  TRoomEvent extends Json = never
+  TRoomEvent extends Json = never,
 >(
   items: IdTuple<SerializedCrdt>[]
 ): Promise<{
@@ -469,7 +489,7 @@ export async function prepareDisconnectedStorageUpdateTest<
   TStorage extends LsonObject,
   TPresence extends JsonObject = never,
   TUserMeta extends BaseUserMeta = never,
-  TRoomEvent extends Json = never
+  TRoomEvent extends Json = never,
 >(items: IdTuple<SerializedCrdt>[]) {
   const { storage, room } = await prepareRoomWithStorage<
     TPresence,

@@ -68,7 +68,11 @@ type AuthorizeResponse = {
 };
 
 /**
- * TODO Officially mark as DEPRECATED, point to migration guide.
+ * @deprecated Since 1.2, we’re deprecating single-room tokens in favor of
+ * either access tokens or ID tokens. Single-room tokens are still supported,
+ * but support for them will be dropped in the future. Please refer to our
+ * Upgrade Guide to learn how to adopt the new-style authorization, see
+ * https://liveblocks.io/docs/platform/upgrading/1.2
  *
  * Tells Liveblocks that a user should be allowed access to a room, which user
  * this session is for, and what metadata to associate with the user (like
