@@ -1,29 +1,29 @@
-import { authorize } from "@liveblocks/node";
+import { Liveblocks } from "@liveblocks/node";
 import { NextApiRequest, NextApiResponse } from "next";
 
-const API_KEY = process.env.LIVEBLOCKS_SECRET_KEY;
+const API_KEY = process.env.LIVEBLOCKS_SECRET_KEY!;
+
+const liveblocks = new Liveblocks({ secret: API_KEY });
 
 export default async function auth(req: NextApiRequest, res: NextApiResponse) {
-  if (!API_KEY) {
-    return res.status(403).end();
-  }
-
-  // For the avatar example, we're generating random users
-  // and set their info from the authentication endpoint
-  // See https://liveblocks.io/docs/api-reference/liveblocks-node#authorize for more information
+  // We're generating random users and avatars here.
+  // In a real-world scenario, this is where you'd assign the
+  // user based on their real identity from your auth provider.
+  // See https://liveblocks.io/docs/rooms/authentication for more information
   const userIndex = Math.floor(Math.random() * NAMES.length);
-  const response = await authorize({
-    room: req.body.room,
-    secret: API_KEY,
-    userId: `user-${userIndex}`,
+
+  const session = liveblocks.prepareSession(`user-${userIndex}`, {
     userInfo: {
       name: NAMES[userIndex],
-      picture: `https://liveblocks.io/avatars/avatar-${Math.floor(
+      imageUrl: `https://liveblocks.io/avatars/avatar-${Math.floor(
         Math.random() * 30
       )}.png`,
     },
   });
-  return res.status(response.status).end(response.body);
+  session.allow(req.body.room, session.FULL_ACCESS);
+
+  const { status, body } = await session.authorize();
+  return res.status(status).end(body);
 }
 
 const NAMES = [
