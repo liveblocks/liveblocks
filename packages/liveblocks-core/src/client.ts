@@ -1,15 +1,17 @@
+import { createAuthManager } from "./auth-manager";
 import type { LsonObject } from "./crdts/Lson";
 import { linkDevTools, setupDevTools, unlinkDevTools } from "./devtools";
 import { deprecateIf } from "./lib/deprecation";
 import type { Json, JsonObject } from "./lib/Json";
 import type { Resolve } from "./lib/Resolve";
-import type {
-  Authentication,
-  CustomAuthenticationResult,
-} from "./protocol/Authentication";
+import type { CustomAuthenticationResult } from "./protocol/Authentication";
 import type { BaseUserMeta } from "./protocol/BaseUserMeta";
 import type { Polyfills, Room, RoomDelegates, RoomInitializers } from "./room";
-import { createRoom } from "./room";
+import {
+  createRoom,
+  makeAuthDelegateForRoom,
+  makeCreateSocketDelegateForRoom,
+} from "./room";
 
 const MIN_THROTTLE = 16;
 const MAX_THROTTLE = 1000;
@@ -109,12 +111,25 @@ export type ClientOptions = {
   | { publicApiKey: string; authEndpoint?: never }
   | { publicApiKey?: never; authEndpoint: AuthEndpoint }
 );
+// ^^^^^^^^^^^^^^^
+// NOTE: Potential upgrade path by introducing a new property:
+//
+//   | { publicApiKey: string; authEndpoint?: never; authUrl?: never }
+//   | { publicApiKey?: never; authEndpoint: AuthEndpoint; authUrl?: never }
+//   | { publicApiKey?: never; authEndpoint?: never; authUrl?: AuthUrl }
+//
+// Where:
+//
+//   export type AuthUrl =
+//     | string
+//     | ((room: string) => Promise<{ token: string }>);
+//
 
 function getServerFromClientOptions(clientOptions: ClientOptions) {
   const rawOptions = clientOptions as Record<string, unknown>;
   return typeof rawOptions.liveblocksServer === "string"
     ? rawOptions.liveblocksServer
-    : "wss://api.liveblocks.io/v6";
+    : "wss://api.liveblocks.io/v7";
 }
 
 /**
@@ -148,6 +163,8 @@ export function createClient(options: ClientOptions): Client {
   const lostConnectionTimeout = getLostConnectionTimeout(
     clientOptions.lostConnectionTimeout ?? DEFAULT_LOST_CONNECTION_TIMEOUT
   );
+
+  const authManager = createAuthManager(options);
 
   const rooms = new Map<
     string,
@@ -195,11 +212,17 @@ export function createClient(options: ClientOptions): Client {
         throttleDelay,
         lostConnectionTimeout,
         polyfills: clientOptions.polyfills,
-        delegates: clientOptions.mockedDelegates,
+        delegates: clientOptions.mockedDelegates ?? {
+          createSocket: makeCreateSocketDelegateForRoom(
+            roomId,
+            getServerFromClientOptions(clientOptions),
+            clientOptions.polyfills?.WebSocket
+          ),
+          authenticate: makeAuthDelegateForRoom(roomId, authManager),
+        },
         enableDebugLogging: clientOptions.enableDebugLogging,
         unstable_batchedUpdates: options?.unstable_batchedUpdates,
         liveblocksServer: getServerFromClientOptions(clientOptions),
-        authentication: prepareAuthentication(clientOptions, roomId),
         httpSendEndpoint: buildLiveblocksHttpSendEndpoint(
           clientOptions,
           roomId
@@ -281,56 +304,6 @@ function getLostConnectionTimeout(value: number): number {
   );
 }
 
-function prepareAuthentication(
-  clientOptions: ClientOptions,
-  roomId: string
-): Authentication {
-  const { publicApiKey, authEndpoint } = clientOptions;
-
-  if (authEndpoint !== undefined && publicApiKey !== undefined) {
-    throw new Error(
-      "You cannot use both publicApiKey and authEndpoint. Please use either publicApiKey or authEndpoint, but not both. For more information: https://liveblocks.io/docs/api-reference/liveblocks-client#createClient"
-    );
-  }
-
-  if (typeof publicApiKey === "string") {
-    if (publicApiKey.startsWith("sk_")) {
-      throw new Error(
-        "Invalid publicApiKey. You are using the secret key which is not supported. Please use the public key instead. For more information: https://liveblocks.io/docs/api-reference/liveblocks-client#createClientPublicKey"
-      );
-    } else if (!publicApiKey.startsWith("pk_")) {
-      throw new Error(
-        "Invalid key. Please use the public key format: pk_<public key>. For more information: https://liveblocks.io/docs/api-reference/liveblocks-client#createClientPublicKey"
-      );
-    }
-    return {
-      type: "public",
-      publicApiKey,
-      url: buildLiveblocksPublicAuthorizeEndpoint(clientOptions, roomId),
-    };
-  }
-
-  if (typeof authEndpoint === "string") {
-    return {
-      type: "private",
-      url: authEndpoint,
-    };
-  } else if (typeof authEndpoint === "function") {
-    return {
-      type: "custom",
-      callback: authEndpoint,
-    };
-  } else if (authEndpoint !== undefined) {
-    throw new Error(
-      "authEndpoint must be a string or a function. For more information: https://liveblocks.io/docs/api-reference/liveblocks-client#createClientAuthEndpoint"
-    );
-  }
-
-  throw new Error(
-    "Invalid Liveblocks client options. For more information: https://liveblocks.io/docs/api-reference/liveblocks-client#createClient"
-  );
-}
-
 function buildLiveblocksHttpSendEndpoint(
   options: ClientOptions & { httpSendEndpoint?: string | undefined },
   roomId: string
@@ -343,18 +316,4 @@ function buildLiveblocksHttpSendEndpoint(
   return `https://api.liveblocks.io/v2/rooms/${encodeURIComponent(
     roomId
   )}/send-message`;
-}
-
-function buildLiveblocksPublicAuthorizeEndpoint(
-  options: ClientOptions & { publicAuthorizeEndpoint?: string | undefined },
-  roomId: string
-): string {
-  // INTERNAL override for testing purpose.
-  if (options.publicAuthorizeEndpoint) {
-    return options.publicAuthorizeEndpoint.replace("{roomId}", roomId);
-  }
-
-  return `https://api.liveblocks.io/v2/rooms/${encodeURIComponent(
-    roomId
-  )}/public/authorize`;
 }
