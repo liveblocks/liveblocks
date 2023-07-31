@@ -1,137 +1,164 @@
 @use "sass:math";
 
 /**
- * Generates a scale of foreground colors based on the --lb-foreground-contrast
+ * Generates a scale of [100...900] colors based on a contrast
  * variable, which indicates the lowest percentage of the scale.
  *
- * ╔═══════════════════╗                        ╔═══════════════════╗
- * ║  --lb-background  ║                        ║  --lb-foreground  ║
- * ╚═══════════════════╝                        ╚═══════════════════╝
- *
- *        0% ●────────────────────────────────────────────● 100%
- *           ● ─ ─ ─ ─●───┬───┬───┬───┬───┬───┬───┬───┬───●
- *   ┌────────────────┴───┴───┴───┴───┤   │   │   │   │
- *   │ --lb-foreground-contrast = 15% │   │   │   │   │
- *   └────────────────┬───┬───┬───┬───┤   │   │   │   │
- *                    ◇   ◇   ◇   ◇   ◇   ◇   ◇   ◇   ◇
- *                   100 200 300 400 500 600 700 800 900
- *
- *        0% ●────────────────────────────────────────────● 100%
- *           ● ─ ─ ─ ─ ─ ─ ─ ─ ●──┬──┬──┬──┬──┬──┬──┬──┬──●
- *              ┌──────────────┴──┴──┴──┴──┴──┴──┤  │  │
- *              │ --lb-foreground-contrast = 40% │  │  │
- *              └──────────────┬──┬──┬──┬──┬──┬──┤  │  │
- *                             ◇  ◇  ◇  ◇  ◇  ◇  ◇  ◇  ◇
-*/
-@function generate-foreground($from-color, $to-color, $increment) {
+ *   ╔═════════╗                                  ╔═════════╗
+ *   ║  $from  ║                                  ║   $to   ║
+ *   ╚═════════╝                                  ╚═════════╝
+ *  
+ *     0% ●────────────────────────────────────────────● 100%
+ *        ● ─ ─ ─ ─●───┬───┬───┬───┬───┬───┬───┬───┬───●
+ *       ┌─────────┴───┴───┤   │   │   │   │   │   │
+ *       │ $contrast = 15% │   │   │   │   │   │   │
+ *       └─────────┬───┬───┤   │   │   │   │   │   │
+ *                 ◇   ◇   ◇   ◇   ◇   ◇   ◇   ◇   ◇
+ *                100 200 300 400 500 600 700 800 900
+ *  
+ *     0% ●────────────────────────────────────────────● 100%
+ *        ● ─ ─ ─ ─ ─ ─ ─ ─ ●──┬──┬──┬──┬──┬──┬──┬──┬──●
+ *                 ┌────────┴──┴──┴──┤  │  │  │  │  │
+ *                 │ $contrast = 40% │  │  │  │  │  │
+ *                 └────────┬──┬──┬──┤  │  │  │  │  │
+ *                          ◇  ◇  ◇  ◇  ◇  ◇  ◇  ◇  ◇
+ */
+@function color-scale($from, $to, $contrast, $increment) {
   $index: math.div($increment, 100);
-  $percentage: calc(
-    100% -
-      (
-        var(--lb-foreground-contrast) + #{math.max($index - 1, 0)} * ((
-                100% - var(--lb-foreground-contrast)
-              ) / 9)
-      )
-  );
+  $percentage: "calc(100% - (#{$contrast} + #{math.max($index - 1, 0)} * ((100% - #{$contrast}) / 9)))";
 
-  @return color-mix(in srgb, #{$to-color}, #{$from-color} #{$percentage});
+  @return color-mix(in srgb, #{$to}, #{$from} #{$percentage});
 }
 
+$lb-empty-shadow: 0 0 #0000;
 $lb-button-size: calc(2 * 0.25 * var(--lb-spacing) + var(--lb-icon-size));
+$lb-list-padding: 4px;
 
 :root {
-  /* @public Basic */
+  /* Basic */
+  --lb-radius: 0.5em;
+  --lb-spacing: 1rem;
   --lb-accent: #08f;
   --lb-accent-foreground: #fff;
   --lb-background: #fff;
   --lb-foreground: #111;
+  --lb-elevation-background: var(--lb-background);
+  --lb-elevation-foreground: var(--lb-foreground);
   --lb-tooltip-background: #222;
   --lb-tooltip-foreground: #fff;
-  --lb-radius: 0.5em;
-  --lb-spacing: 1rem;
 
-  /* @public Advanced */
-  --lb-icon-weight: 1.5px;
+  /* Advanced */
   --lb-icon-size: 1.25rem;
+  --lb-icon-weight: 1.5px;
   --lb-avatar-radius: 50%;
   --lb-button-radius: calc(0.75 * var(--lb-radius));
+  --lb-elevation-shadow: 0 0 0 1px rgb(0 0 0 / 4%), 0 2px 6px rgb(0 0 0 / 8%),
+    0 8px 26px rgb(0 0 0 / 12%);
+  --lb-tooltip-shadow: 0 2px 4px rgb(0 0 0 / 8%), 0 4px 12px rgb(0 0 0 / 12%);
   --lb-transition-duration: 0.1s;
   --lb-transition-easing: cubic-bezier(0.4, 0, 0.2, 1);
-  --lb-foreground-contrast: 6%;
+  --lb-contrast: 6%;
+  --lb-accent-contrast: var(--lb-contrast);
+  --lb-foreground-contrast: var(--lb-contrast);
+  --lb-elevation-foreground-contrast: var(--lb-contrast);
+  --lb-tooltip-foreground-contrast: 10%;
 
-  /* @public Modern CSS (color-mix) */
-  // TODO: Use contrast variable to control these like the foreground ones?
-  --lb-accent-emphasis: color-mix(
-    in srgb,
-    var(--lb-accent),
-    var(--lb-background) 20%
-  );
-  --lb-accent-subtle: color-mix(
-    in srgb,
-    var(--lb-accent),
-    var(--lb-background) 80%
-  );
-  --lb-accent-subtlest: color-mix(
-    in srgb,
-    var(--lb-accent),
-    var(--lb-background) 90%
-  );
-  --lb-tooltip-foreground-100: #{generate-foreground(
-      var(--lb-tooltip-background),
-      var(--lb-tooltip-foreground),
+  /* Automatic color scales */
+  --lb-accent-subtle: #{color-scale(
+      var(--lb-background),
+      var(--lb-accent),
+      var(--lb-accent-contrast),
       100
     )};
-  --lb-tooltip-foreground-400: #{generate-foreground(
-      var(--lb-tooltip-background),
-      var(--lb-tooltip-foreground),
+  --lb-accent-moderate: #{color-scale(
+      var(--lb-background),
+      var(--lb-accent),
+      var(--lb-accent-contrast),
       400
     )};
-
-  // TODO: Use "semantic" names to remove the unused ones?
-  --lb-foreground-100: #{generate-foreground(
+  --lb-accent-tertiary: #{color-scale(
       var(--lb-background),
-      var(--lb-foreground),
-      100
-    )};
-  --lb-foreground-200: #{generate-foreground(
-      var(--lb-background),
-      var(--lb-foreground),
-      200
-    )};
-  --lb-foreground-300: #{generate-foreground(
-      var(--lb-background),
-      var(--lb-foreground),
-      300
-    )};
-  --lb-foreground-400: #{generate-foreground(
-      var(--lb-background),
-      var(--lb-foreground),
-      400
-    )};
-  --lb-foreground-500: #{generate-foreground(
-      var(--lb-background),
-      var(--lb-foreground),
-      500
-    )};
-  --lb-foreground-600: #{generate-foreground(
-      var(--lb-background),
-      var(--lb-foreground),
+      var(--lb-accent),
+      var(--lb-accent-contrast),
       600
     )};
-  --lb-foreground-700: #{generate-foreground(
+  --lb-accent-secondary: #{color-scale(
       var(--lb-background),
-      var(--lb-foreground),
-      700
-    )};
-  --lb-foreground-800: #{generate-foreground(
-      var(--lb-background),
-      var(--lb-foreground),
+      var(--lb-accent),
+      var(--lb-accent-contrast),
       800
     )};
-  --lb-foreground-900: #{generate-foreground(
+  --lb-foreground-subtle: #{color-scale(
       var(--lb-background),
       var(--lb-foreground),
-      900
+      var(--lb-foreground-contrast),
+      100
+    )};
+  --lb-foreground-moderate: #{color-scale(
+      var(--lb-background),
+      var(--lb-foreground),
+      var(--lb-foreground-contrast),
+      400
+    )};
+  --lb-foreground-tertiary: #{color-scale(
+      var(--lb-background),
+      var(--lb-foreground),
+      var(--lb-foreground-contrast),
+      600
+    )};
+  --lb-foreground-secondary: #{color-scale(
+      var(--lb-background),
+      var(--lb-foreground),
+      var(--lb-foreground-contrast),
+      800
+    )};
+  --lb-elevation-foreground-subtle: #{color-scale(
+      var(--lb-elevation-background),
+      var(--lb-elevation-foreground),
+      var(--lb-elevation-foreground-contrast),
+      100
+    )};
+  --lb-elevation-foreground-moderate: #{color-scale(
+      var(--lb-elevation-background),
+      var(--lb-elevation-foreground),
+      var(--lb-elevation-foreground-contrast),
+      400
+    )};
+  --lb-elevation-foreground-tertiary: #{color-scale(
+      var(--lb-elevation-background),
+      var(--lb-elevation-foreground),
+      var(--lb-elevation-foreground-contrast),
+      600
+    )};
+  --lb-elevation-foreground-secondary: #{color-scale(
+      var(--lb-elevation-background),
+      var(--lb-elevation-foreground),
+      var(--lb-elevation-foreground-contrast),
+      800
+    )};
+  --lb-tooltip-foreground-subtle: #{color-scale(
+      var(--lb-tooltip-background),
+      var(--lb-tooltip-foreground),
+      var(--lb-tooltip-foreground-contrast),
+      100
+    )};
+  --lb-tooltip-foreground-moderate: #{color-scale(
+      var(--lb-tooltip-background),
+      var(--lb-tooltip-foreground),
+      var(--lb-tooltip-foreground-contrast),
+      400
+    )};
+  --lb-tooltip-foreground-tertiary: #{color-scale(
+      var(--lb-tooltip-background),
+      var(--lb-tooltip-foreground),
+      var(--lb-tooltip-foreground-contrast),
+      600
+    )};
+  --lb-tooltip-foreground-secondary: #{color-scale(
+      var(--lb-tooltip-background),
+      var(--lb-tooltip-foreground),
+      var(--lb-tooltip-foreground-contrast),
+      800
     )};
 
   *,
@@ -146,7 +173,6 @@ $lb-button-size: calc(2 * 0.25 * var(--lb-spacing) + var(--lb-icon-size));
  */
 
 .lb-icon {
-  /* @public */
   --lb-icon-background: var(--lb-background);
 
   width: var(--lb-icon-size);
@@ -159,8 +185,8 @@ $lb-button-size: calc(2 * 0.25 * var(--lb-spacing) + var(--lb-icon-size));
  */
 
 .lb-button {
-  /* @internal */
   --lb-button-background: var(--lb-background);
+  --lb-button-shadow: ;
 
   all: unset;
   display: flex;
@@ -170,7 +196,8 @@ $lb-button-size: calc(2 * 0.25 * var(--lb-spacing) + var(--lb-icon-size));
   padding: calc(0.25 * var(--lb-spacing));
   border-radius: var(--lb-button-radius);
   background: var(--lb-button-background);
-  color: var(--lb-foreground-400);
+  color: var(--lb-foreground-moderate);
+  box-shadow: var(--lb-button-shadow, $lb-empty-shadow);
   outline: none;
   cursor: pointer;
   transition-timing-function: var(--lb-transition-easing);
@@ -180,7 +207,8 @@ $lb-button-size: calc(2 * 0.25 * var(--lb-spacing) + var(--lb-icon-size));
   &:focus-visible {
     box-shadow:
       var(--lb-background) 0 0 0 2px,
-      var(--lb-accent) 0 0 0 4px;
+      var(--lb-accent) 0 0 0 4px,
+      $lb-empty-shadow;
   }
 
   &:disabled {
@@ -190,45 +218,46 @@ $lb-button-size: calc(2 * 0.25 * var(--lb-spacing) + var(--lb-icon-size));
 
   &:enabled:hover,
   &:enabled:focus-visible {
-    /* @internal */
-    --lb-button-background: var(--lb-foreground-100);
+    --lb-button-background: var(--lb-foreground-subtle);
 
-    color: var(--lb-foreground-600);
+    color: var(--lb-foreground-tertiary);
   }
 }
 
 .lb-button.lb-button\:primary {
-  /* @internal */
   --lb-button-background: var(--lb-accent);
 
   color: var(--lb-accent-foreground);
 
   &:enabled:hover,
   &:enabled:focus-visible {
-    /* @internal */
-    --lb-button-background: var(--lb-accent-emphasis);
+    --lb-button-background: var(--lb-accent-secondary);
 
     color: var(--lb-accent-foreground);
   }
 }
 
 .lb-button-icon {
-  /* @public */
   --lb-icon-background: var(--lb-button-background);
 }
 
 /**
- * Floating
+ * Elevation
+ */
+
+.lb-elevation {
+  background: var(--lb-background);
+  box-shadow: var(--lb-elevation-shadow);
+}
+
+/**
+ * TODO
  */
 
 .lb-dropdown,
 .lb-composer-suggestions {
+  padding: $lb-list-padding;
   border-radius: var(--lb-radius);
-  background: var(--lb-background);
-  box-shadow:
-    0 0 0 1px rgb(0 0 0 / 4%),
-    0 2px 6px rgb(0 0 0 / 8%),
-    0 8px 26px rgb(0 0 0 / 12%);
   animation-duration: var(--lb-transition-duration);
   animation-timing-function: var(--lb-transition-easing);
   will-change: transform, opacity;
@@ -247,33 +276,24 @@ $lb-button-size: calc(2 * 0.25 * var(--lb-spacing) + var(--lb-icon-size));
   display: flex;
   align-items: center;
   padding: calc(0.25 * var(--lb-spacing)) calc(0.5 * var(--lb-spacing));
-  color: var(--lb-foreground-800);
+  border-radius: calc(var(--lb-radius) - 0.75 * #{$lb-list-padding});
+  color: var(--lb-elevation-foreground-secondary);
   outline: none;
   font-size: 0.875rem;
   cursor: pointer;
   transition-timing-function: var(--lb-transition-easing);
   transition-duration: var(--lb-transition-duration);
   transition-property: background, color, opacity;
+
+  &[data-highlighted],
+  &[data-selected] {
+    background: var(--lb-elevation-foreground-subtle);
+  }
 }
 
 /**
  * Dropdown
  */
-
-.lb-dropdown {
-  /* @public */
-  --lb-dropdown-padding: 4px;
-
-  padding: var(--lb-dropdown-padding);
-}
-
-.lb-dropdown-item {
-  border-radius: calc(var(--lb-radius) - 0.5 * var(--lb-dropdown-padding));
-
-  &[data-highlighted] {
-    background: var(--lb-foreground-100);
-  }
-}
 
 .lb-dropdown-item-icon {
   margin-inline-start: calc(-0.125 * var(--lb-spacing));
@@ -284,27 +304,10 @@ $lb-button-size: calc(2 * 0.25 * var(--lb-spacing) + var(--lb-icon-size));
  * Composer suggestions
  */
 
-.lb-composer-suggestions {
-  /* @public */
-  --lb-composer-suggestions-padding: 4px;
-
-  padding: var(--lb-composer-suggestions-padding);
-}
-
 .lb-composer-suggestions-list {
   margin: 0;
   padding: 0;
   list-style: none;
-}
-
-.lb-composer-suggestions-list-item {
-  border-radius: calc(
-    var(--lb-radius) - 0.5 * var(--lb-composer-suggestions-padding)
-  );
-
-  &[data-selected] {
-    background: var(--lb-foreground-100);
-  }
 }
 
 /**
@@ -312,7 +315,6 @@ $lb-button-size: calc(2 * 0.25 * var(--lb-spacing) + var(--lb-icon-size));
  */
 
 .lb-composer-mention-suggestions {
-  /* @public */
   --lb-composer-mention-suggestion-avatar-size: 1.25rem;
 }
 
@@ -322,6 +324,8 @@ $lb-button-size: calc(2 * 0.25 * var(--lb-spacing) + var(--lb-icon-size));
 
 .lb-composer-mention-suggestion-avatar {
   width: var(--lb-composer-mention-suggestion-avatar-size);
+  background: var(--lb-elevation-foreground-subtle);
+  color: var(--lb-elevation-foreground-moderate);
   margin-inline-start: calc(-0.125 * var(--lb-spacing));
   margin-inline-end: calc(0.375 * var(--lb-spacing));
 }
@@ -332,17 +336,15 @@ $lb-button-size: calc(2 * 0.25 * var(--lb-spacing) + var(--lb-icon-size));
 
 .lb-tooltip {
   display: flex;
-  line-height: 1;
   align-items: center;
-  padding: 0 calc(0.5 * var(--lb-spacing));
   height: calc(1em + 0.875 * var(--lb-spacing));
+  padding: 0 calc(0.5 * var(--lb-spacing));
   border-radius: var(--lb-radius);
   background: var(--lb-tooltip-background);
   color: var(--lb-tooltip-foreground);
-  box-shadow:
-    0 2px 4px rgb(0 0 0 / 8%),
-    0 4px 12px rgb(0 0 0 / 12%);
+  box-shadow: var(--lb-tooltip-shadow);
   font-size: 0.75rem;
+  line-height: 1;
   pointer-events: none;
 }
 
@@ -359,8 +361,8 @@ $lb-button-size: calc(2 * 0.25 * var(--lb-spacing) + var(--lb-icon-size));
     aspect-ratio: 1;
     width: 1.5em;
     border-radius: calc(0.625 * var(--lb-radius));
-    background: var(--lb-tooltip-foreground-100);
-    color: var(--lb-tooltip-foreground-400);
+    background: var(--lb-tooltip-foreground-subtle);
+    color: var(--lb-tooltip-foreground-moderate);
     text-transform: uppercase;
   }
 }
@@ -378,7 +380,8 @@ $lb-button-size: calc(2 * 0.25 * var(--lb-spacing) + var(--lb-icon-size));
   overflow: hidden;
   aspect-ratio: 1;
   border-radius: var(--lb-avatar-radius);
-  background: var(--lb-foreground-100);
+  background: var(--lb-foreground-subtle);
+  color: var(--lb-foreground-moderate);
 }
 
 .lb-avatar-image {
@@ -391,7 +394,6 @@ $lb-button-size: calc(2 * 0.25 * var(--lb-spacing) + var(--lb-icon-size));
 }
 
 .lb-avatar-fallback {
-  color: var(--lb-foreground-500);
   font-weight: 500;
   font-size: 35cqw;
   white-space: nowrap;
@@ -403,7 +405,7 @@ $lb-button-size: calc(2 * 0.25 * var(--lb-spacing) + var(--lb-icon-size));
 
 .lb-comment-body,
 .lb-composer-editor {
-  color: var(--lb-foreground-800);
+  color: var(--lb-foreground-secondary);
 
   & p {
     margin-block-start: 0.25em;
@@ -421,8 +423,7 @@ $lb-button-size: calc(2 * 0.25 * var(--lb-spacing) + var(--lb-icon-size));
   & code {
     padding: 0.2em 0.4em;
     border-radius: calc(0.75 * var(--lb-radius));
-    background: var(--lb-foreground-100);
-    color: var(--lb-foreground-600);
+    background: var(--lb-foreground-subtle);
     box-decoration-break: clone;
     line-height: 1;
   }
@@ -458,10 +459,9 @@ $lb-button-size: calc(2 * 0.25 * var(--lb-spacing) + var(--lb-icon-size));
 
 /* TODO: Improve logic, currently having an action button focused would count */
 .lb-composer:not(:focus-within) .lb-button\:primary {
-  /* @internal */
-  --lb-button-background: var(--lb-foreground-100);
+  --lb-button-background: var(--lb-foreground-subtle);
 
-  color: var(--lb-foreground-600);
+  color: var(--lb-foreground-tertiary);
 
   &:enabled:hover,
   &:enabled:focus-visible {
@@ -477,10 +477,10 @@ $lb-button-size: calc(2 * 0.25 * var(--lb-spacing) + var(--lb-icon-size));
 .lb-composer-mention {
   padding: 0.2em 0.4em;
   border-radius: calc(0.75 * var(--lb-radius));
-  background: var(--lb-accent-subtlest);
+  background: var(--lb-accent-subtle);
 
   &[data-selected] {
-    background: var(--lb-accent-subtle);
+    background: var(--lb-accent-moderate);
   }
 }
 
@@ -505,7 +505,7 @@ $lb-button-size: calc(2 * 0.25 * var(--lb-spacing) + var(--lb-icon-size));
 
 .lb-composer-logo {
   height: calc(0.75 * #{$lb-button-size});
-  color: var(--lb-foreground-400);
+  color: var(--lb-foreground-moderate);
 }
 
 /**
@@ -513,7 +513,6 @@ $lb-button-size: calc(2 * 0.25 * var(--lb-spacing) + var(--lb-icon-size));
  */
 
 .lb-comment {
-  /* @public */
   --lb-comment-avatar-size: #{$lb-button-size};
 
   position: relative;
@@ -557,7 +556,7 @@ $lb-button-size: calc(2 * 0.25 * var(--lb-spacing) + var(--lb-icon-size));
 }
 
 .lb-comment-date {
-  color: var(--lb-foreground-500);
+  color: var(--lb-foreground-tertiary);
   font-size: 0.85em;
 }
 
@@ -665,7 +664,7 @@ $lb-button-size: calc(2 * 0.25 * var(--lb-spacing) + var(--lb-icon-size));
     width: 100%;
     height: 100%;
     pointer-events: none;
-    border-block-start: 1px solid var(--lb-foreground-100);
+    border-block-start: 1px solid var(--lb-foreground-subtle);
   }
 }
 

@@ -147,7 +147,7 @@ function ComposerMentionSuggestions({
   userIds,
 }: ComposerRenderMentionSuggestionsProps) {
   return userIds.length > 0 ? (
-    <ComposerPrimitive.Suggestions className="lb-composer-suggestions lb-composer-mention-suggestions">
+    <ComposerPrimitive.Suggestions className="lb-elevation lb-composer-suggestions lb-composer-mention-suggestions">
       <ComposerPrimitive.SuggestionsList className="lb-composer-suggestions-list lb-composer-mention-suggestions-list">
         {userIds.map((userId) => (
           <ComposerPrimitive.SuggestionsListItem
