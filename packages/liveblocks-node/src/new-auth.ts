@@ -171,4 +171,129 @@ export class Liveblocks {
       };
     }
   }
+
+  public async getThreadComment(
+    roomId: string,
+    threadId: string,
+    commentId: string
+  ): Promise<Comment> {
+    try {
+      const resp = await this.post(
+        `/v2/rooms/${roomId}/threads/${threadId}/comments/${commentId}`,
+        {
+          roomId,
+          threadId,
+          commentId,
+        }
+      );
+
+      const body = await resp.json();
+
+      if (resp.status !== 200) {
+        throw {
+          status: resp.status,
+          ...body,
+        };
+      }
+
+      return body;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  public async getThread(roomId: string, threadId: string): Promise<Thread> {
+    try {
+      const resp = await this.post(`/v2/rooms/${roomId}/threads/${threadId}`, {
+        roomId,
+        threadId,
+      });
+
+      const body = await resp.json();
+
+      if (resp.status !== 200) {
+        throw {
+          status: resp.status,
+          ...body,
+        };
+      }
+
+      return body;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  public async getThreadParticipants(
+    roomId: string,
+    threadId: string
+  ): Promise<{
+    participantIds: string[];
+  }> {
+    try {
+      const resp = await this.post(`/v2/rooms/${roomId}/threads/${threadId}`, {
+        roomId,
+        threadId,
+      });
+
+      const body = await resp.json();
+
+      if (resp.status !== 204) {
+        const errorBody = await resp.json();
+        throw {
+          status: resp.status,
+          ...errorBody,
+        };
+      }
+
+      return body;
+    } catch (error) {
+      throw error;
+    }
+  }
 }
+
+export type Comment = {
+  type: "comment";
+  id: string; // cm_xxxxx
+  createdAt: string; // ISO 8601
+  editedAt: string | undefined; // ISO 8601
+  userId: string;
+  body: CommentBody | undefined;
+  deletedAt: string | undefined; // ISO 8601
+  mentionedIds: string[];
+};
+
+export type Thread = {
+  type: "thread";
+  id: string; // th_xxxxx
+  createdAt: string; // ISO 8601
+  roomId: string;
+  comments: Comment[];
+  metadata: Record<string, string | number | boolean>;
+  // updatedAt value is updated when the metadata is updated
+  // or when a comment is created/edited/deleted
+  updatedAt: string | undefined; // ISO 8601
+};
+
+export type CommentBodyInlineElement = CommentBodyText | CommentBodyMention;
+
+export type CommentBodyMention = {
+  type: "mention";
+  userId: string;
+};
+
+type CommentBodyParagraph = {
+  type: "paragraph";
+  children: CommentBodyInlineElement[];
+};
+
+type CommentBodyText = {
+  bold?: boolean;
+  italic?: boolean;
+  text: string;
+};
+
+export type CommentBody = {
+  content: CommentBodyParagraph[];
+};
