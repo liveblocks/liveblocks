@@ -129,6 +129,11 @@ export class WebhookHandler {
         "userLeft",
         "roomCreated",
         "roomDeleted",
+        "commentCreated",
+        "commentEdited",
+        "commentDeleted",
+        "threadMetadataUpdated",
+        "threadCreated",
       ].includes(event.type)
     )
       return;
@@ -167,7 +172,12 @@ type WebhookEvent =
   | UserEnteredEvent
   | UserLeftEvent
   | RoomCreatedEvent
-  | RoomDeletedEvent;
+  | RoomDeletedEvent
+  | CommentCreated
+  | CommentEdited
+  | CommentDeleted
+  | ThreadMetadataUpdated
+  | ThreadCreated;
 
 type StorageUpdatedEvent = {
   type: "storageUpdated";
@@ -244,7 +254,88 @@ type RoomDeletedEvent = {
   };
 };
 
+type CommentCreated = {
+  type: "commentCreated";
+  data: {
+    projectId: string;
+    roomId: string;
+    threadId: string;
+    commentId: string;
+    /**
+     * ISO 8601 datestring
+     * @example "2021-03-01T12:00:00.000Z"
+     */
+    createdAt: string;
+    createdBy: string;
+  };
+};
+
+type CommentEdited = {
+  type: "commentEdited";
+  data: {
+    projectId: string;
+    roomId: string;
+    threadId: string;
+    commentId: string;
+    /**
+     * ISO 8601 datestring
+     * @example "2021-03-01T12:00:00.000Z"
+     */
+    editedAt: string;
+  };
+};
+
+type CommentDeleted = {
+  type: "commentDeleted";
+  data: {
+    projectId: string;
+    roomId: string;
+    threadId: string;
+    commentId: string;
+    /**
+     * ISO 8601 datestring
+     * @example "2021-03-01T12:00:00.000Z"
+     */
+    deletedAt: string;
+  };
+};
+
+type ThreadMetadataUpdated = {
+  type: "threadMetadataUpdated";
+  data: {
+    projectId: string;
+    roomId: string;
+    threadId: string;
+    updatedAt: string;
+    /**
+     * ISO 8601 datestring
+     * @example "2021-03-01T12:00:00.000Z"
+     */
+    updatedBy: string;
+  };
+};
+
+type ThreadCreated = {
+  type: "threadCreated";
+  data: {
+    projectId: string;
+    roomId: string;
+    threadId: string;
+    /**
+     * ISO 8601 datestring
+     * @example "2021-03-01T12:00:00.000Z"
+     */
+    createdAt: string;
+    createdBy: string;
+  };
+};
+
 export type {
+  CommentCreated,
+  CommentDeleted,
+  CommentEdited,
+  ThreadCreated,
+  ThreadMetadataUpdated,
   RoomCreatedEvent,
   RoomDeletedEvent,
   StorageUpdatedEvent,
