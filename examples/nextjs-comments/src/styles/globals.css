@@ -1,5 +1,7 @@
 html,
 body {
+  --lb-accent: #44f;
+
   background: #f3f3f3;
   padding: 0;
   margin: 0;
@@ -64,6 +66,8 @@ main {
 @media (prefers-color-scheme: dark) {
   html,
   body {
+    --lb-accent: #77f;
+
     background: #111;
   }
 

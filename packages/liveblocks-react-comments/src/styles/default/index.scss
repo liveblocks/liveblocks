@@ -5,7 +5,7 @@
   // Basic
   --lb-radius: 0.5em;
   --lb-spacing: 1rem;
-  --lb-accent: #08f;
+  --lb-accent: #17f;
   --lb-accent-foreground: #fff;
   --lb-background: #fff;
   --lb-foreground: #111;
@@ -469,10 +469,11 @@
 .lb-composer-mention {
   padding: 0.2em 0.4em;
   border-radius: calc(0.75 * var(--lb-radius));
-  background: var(--lb-foreground-subtle);
+  background: var(--lb-accent-subtle);
 
   &[data-selected] {
-    background: var(--lb-accent-subtle);
+    background: var(--lb-accent);
+    color: var(--lb-accent-foreground);
   }
 }
 
