@@ -25,31 +25,27 @@ import { User } from "./User";
 
 export interface CommentProps extends ComponentPropsWithoutRef<"div"> {
   /**
-   * TODO: JSDoc
+   * The comment to display.
    */
   comment: CommentData;
 
   /**
-   * TODO: JSDoc
+   * Whether to indent the comment body.
    */
   indentBody?: boolean;
 
   /**
-   * TODO: JSDoc
+   * Whether to always show the actions instead of only on hover.
    */
   alwaysShowActions?: boolean;
 
   /**
    * @internal
-   *
-   * This is a private API and should not be used.
    */
   additionalActions?: ReactNode;
 
   /**
    * @internal
-   *
-   * This is a private API and should not be used.
    */
   additionalActionsClassName?: string;
 }

@@ -196,7 +196,7 @@ Displays a comment body.
 
 | Prop            | Type                                                                     | Description                                                                                     |
 | --------------- | ------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------- |
-| `body`          | `CommentBody \| undefined`                                               | The comment body to be displayed. If not defined, the component will render `null`.             |
+| `body`          | `CommentBody \| undefined`                                               | The comment body to display. If not defined, the component will render `null`.                  |
 | `renderMention` | <code>ComponentType&lt;CommentRenderMentionProps&gt; \| undefined</code> | The component used to render mentions.<br/>Defaults to the mention’s `userId` prefixed by an @. |
 | `asChild`       | `boolean \| undefined`                                                   | Replace the rendered element by the one passed as a child.<br/>Defaults to `false`.             |
 
@@ -461,7 +461,7 @@ absolute formatting for older ones.
 
 | Prop       | Type                                              | Description                                                                                                                                 |
 | ---------- | ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| `date`     | `Date \| string \| number`                        | The date to be displayed.                                                                                                                   |
+| `date`     | `Date \| string \| number`                        | The date to display.                                                                                                                        |
 | `children` | `((date: Date) => ReactNode) \| undefined`        | A function to format the displayed date.<br/>Defaults to a relative date formatting function.                                               |
 | `title`    | `string \| ((date: Date) => string) \| undefined` | The `title` attribute’s value or a function to format it.<br/>Defaults to an absolute date formatting function.                             |
 | `interval` | `number \| false \| undefined`                    | The interval in milliseconds at which the component will re-render. Can be set to `false` to disable re-rendering.<br/>Defaults to `30000`. |

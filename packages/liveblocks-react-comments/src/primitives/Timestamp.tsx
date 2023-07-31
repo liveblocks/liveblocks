@@ -17,7 +17,7 @@ const TIMESTAMP_NAME = "Timestamp";
 export interface TimestampProps
   extends Omit<ComponentPropsWithSlot<"time">, "children" | "title"> {
   /**
-   * The date to be displayed.
+   * The date to display.
    */
   date: Date | string | number;
 

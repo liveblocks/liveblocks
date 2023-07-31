@@ -16,12 +16,12 @@ export interface ThreadProps
   extends ComponentPropsWithoutRef<"div">,
     Pick<CommentProps, "indentBody" | "alwaysShowActions"> {
   /**
-   * TODO: JSDoc
+   * The thread to display.
    */
   thread: ThreadData<{ resolved?: boolean }>;
 
   /**
-   * TODO: JSDoc
+   * Whether to show the composer to reply to the thread.
    */
   showComposer?: boolean;
 }

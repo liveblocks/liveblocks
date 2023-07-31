@@ -23,7 +23,7 @@ export type CommentRenderMentionProps = {
 export interface CommentBodyProps
   extends Omit<ComponentPropsWithSlot<"div">, "children"> {
   /**
-   * The comment body to be displayed.
+   * The comment body to display.
    * If not defined, the component will render `null`.
    */
   body?: CommentBody;

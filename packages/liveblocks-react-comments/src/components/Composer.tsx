@@ -33,53 +33,38 @@ import { User } from "./User";
 
 type ComposerCreateThreadProps = {
   /**
-   * TODO: JSDoc
+   * The ID of the thread to reply to.
    */
   threadId?: never;
 
   /**
-   * TODO: JSDoc
+   * The ID of the comment to edit.
    */
   commentId?: never;
-
-  /**
-   * TODO: JSDoc
-   */
-  body?: never;
 };
 
 type ComposerCreateCommentProps = {
   /**
-   * TODO: JSDoc
+   * The ID of the thread to reply to.
    */
   threadId: string;
 
   /**
-   * TODO: JSDoc
+   * The ID of the comment to edit.
    */
   commentId?: never;
-
-  /**
-   * TODO: JSDoc
-   */
-  body?: never;
 };
 
 type ComposerEditCommentProps = {
   /**
-   * TODO: JSDoc
+   * The ID of the thread to reply to.
    */
   threadId: string;
 
   /**
-   * TODO: JSDoc
+   * The ID of the comment to edit.
    */
   commentId: string;
-
-  /**
-   * TODO: JSDoc
-   */
-  body: CommentBody;
 };
 
 export type ComposerProps = Omit<ComposerFormProps, keyof SlotProp> &
@@ -91,15 +76,11 @@ export type ComposerProps = Omit<ComposerFormProps, keyof SlotProp> &
   ) & {
     /**
      * @internal
-     *
-     * This is a private API and should not be used.
      */
     actions?: ReactNode;
 
     /**
      * @internal
-     *
-     * This is a private API and should not be used.
      */
     showLogo?: boolean;
   };
