@@ -52,7 +52,7 @@ export const Thread = forwardRef<HTMLDivElement, ThreadProps>(
       <TooltipProvider>
         <div
           className={classNames(
-            "lb-thread",
+            "lb-root lb-thread",
             alwaysShowActions && "lb-thread:always-show-actions",
             className
           )}

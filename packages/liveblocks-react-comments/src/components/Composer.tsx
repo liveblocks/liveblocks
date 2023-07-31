@@ -147,7 +147,7 @@ function ComposerMentionSuggestions({
   userIds,
 }: ComposerRenderMentionSuggestionsProps) {
   return userIds.length > 0 ? (
-    <ComposerPrimitive.Suggestions className="lb-elevation lb-composer-suggestions lb-composer-mention-suggestions">
+    <ComposerPrimitive.Suggestions className="lb-root lb-elevation lb-composer-suggestions lb-composer-mention-suggestions">
       <ComposerPrimitive.SuggestionsList className="lb-composer-suggestions-list lb-composer-mention-suggestions-list">
         {userIds.map((userId) => (
           <ComposerPrimitive.SuggestionsListItem
@@ -234,7 +234,10 @@ export const Composer = forwardRef<HTMLFormElement, ComposerProps>(
     return (
       <TooltipProvider>
         <ComposerPrimitive.Form
-          className={classNames("lb-composer lb-composer-form", className)}
+          className={classNames(
+            "lb-root lb-composer lb-composer-form",
+            className
+          )}
           {...props}
           ref={forwardedRef}
           onCommentSubmit={handleCommentSubmit}

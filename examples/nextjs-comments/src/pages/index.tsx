@@ -2,48 +2,8 @@ import React, { Suspense, useMemo } from "react";
 import { useRouter } from "next/router";
 import { CommentsProvider, useThreads } from "../../liveblocks.config";
 import { useHydrated } from "../utils/use-hydrated";
-import { Comment } from "@liveblocks/react-comments";
 import { Composer } from "@liveblocks/react-comments";
 import { Thread } from "@liveblocks/react-comments";
-
-// function Example({ roomId }: { roomId: string }) {
-//   const threads = useThreads(roomId);
-
-//   return (
-//     <main>
-//       <div>
-//         {threads.map((thread) => (
-//           <div key={thread.id}>
-//             {thread.comments
-//               .filter((comment) => comment.body !== undefined)
-//               .map((comment) => (
-//                 <div key={comment.id}>
-//                   {comment.body && <Comment.Body body={comment.body} />}
-//                   <button
-//                     onClick={() =>
-//                       deleteComment(roomId, {
-//                         commentId: comment.id,
-//                         threadId: thread.id,
-//                       })
-//                     }
-//                   >
-//                     Delete
-//                   </button>
-//                 </div>
-//               ))}
-//           </div>
-//         ))}
-//         <Composer.Form
-//           onCommentSubmit={({ body }) => {
-//             createThread(roomId, { body, metadata: { resolved: false } });
-//           }}
-//         >
-//           <Composer.Editor />
-//         </Composer.Form>
-//       </div>
-//     </main>
-//   );
-// }
 
 function Example() {
   const threads = useThreads();
@@ -51,39 +11,15 @@ function Example() {
   return (
     <main>
       {threads.map((thread) => (
-        <Thread key={thread.id} thread={thread} showComposer />
+        <Thread key={thread.id} thread={thread} className="thread" />
       ))}
-      <Composer />
+      <Composer className="composer" />
     </main>
   );
-
-  // return (
-  //   <main>
-  //     <div className="split">
-  //       <div className="threads">
-  //         {threads.map((thread) => (
-  //           <Thread key={thread.id} thread={thread} className="thread" />
-  //         ))}
-  //       </div>
-  //       <div className="threads">
-  //         {threads.map((thread) => (
-  //           <div key={thread.id} className="custom-thread">
-  //             {thread.comments.map((comment) => (
-  //               <Comment key={comment.id} comment={comment} />
-  //             ))}
-  //           </div>
-  //         ))}
-  //       </div>
-  //     </div>
-  //     <div className="composer">
-  //       <Composer />
-  //     </div>
-  //   </main>
-  // );
 }
 
 export default function Page() {
-  // TODO: Change room ID
+  // TODO: Change room ID to nextjs-comments
   const roomId = useOverrideRoomId("comments-react");
   const isHydrated = useHydrated();
 

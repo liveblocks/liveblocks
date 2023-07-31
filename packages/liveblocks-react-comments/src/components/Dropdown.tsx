@@ -32,7 +32,7 @@ export function Dropdown({
       {children}
       <DropdownMenuPrimitive.Portal>
         <DropdownMenuPrimitive.Content
-          className={classNames("lb-elevation lb-dropdown", className)}
+          className={classNames("lb-root lb-elevation lb-dropdown", className)}
           // TODO: Share these values between all floating elements
           collisionPadding={10}
           {...props}

@@ -1,41 +1,8 @@
-@use "sass:math";
+@import "../utils";
+@import "./constants";
 
-/**
- * Generates a scale of [100...900] colors based on a contrast
- * variable, which indicates the lowest percentage of the scale.
- *
- *   ╔═════════╗                                  ╔═════════╗
- *   ║  $from  ║                                  ║   $to   ║
- *   ╚═════════╝                                  ╚═════════╝
- *  
- *     0% ●────────────────────────────────────────────● 100%
- *        ● ─ ─ ─ ─●───┬───┬───┬───┬───┬───┬───┬───┬───●
- *       ┌─────────┴───┴───┤   │   │   │   │   │   │
- *       │ $contrast = 15% │   │   │   │   │   │   │
- *       └─────────┬───┬───┤   │   │   │   │   │   │
- *                 ◇   ◇   ◇   ◇   ◇   ◇   ◇   ◇   ◇
- *                100 200 300 400 500 600 700 800 900
- *  
- *     0% ●────────────────────────────────────────────● 100%
- *        ● ─ ─ ─ ─ ─ ─ ─ ─ ●──┬──┬──┬──┬──┬──┬──┬──┬──●
- *                 ┌────────┴──┴──┴──┤  │  │  │  │  │
- *                 │ $contrast = 40% │  │  │  │  │  │
- *                 └────────┬──┬──┬──┤  │  │  │  │  │
- *                          ◇  ◇  ◇  ◇  ◇  ◇  ◇  ◇  ◇
- */
-@function color-scale($from, $to, $contrast, $increment) {
-  $index: math.div($increment, 100);
-  $percentage: "calc(100% - (#{$contrast} + #{math.max($index - 1, 0)} * ((100% - #{$contrast}) / 9)))";
-
-  @return color-mix(in srgb, #{$to}, #{$from} #{$percentage});
-}
-
-$lb-empty-shadow: 0 0 #0000;
-$lb-button-size: calc(2 * 0.25 * var(--lb-spacing) + var(--lb-icon-size));
-$lb-list-padding: 4px;
-
-:root {
-  /* Basic */
+:where(:root) {
+  // Basic
   --lb-radius: 0.5em;
   --lb-spacing: 1rem;
   --lb-accent: #08f;
@@ -47,14 +14,13 @@ $lb-list-padding: 4px;
   --lb-tooltip-background: #222;
   --lb-tooltip-foreground: #fff;
 
-  /* Advanced */
+  // Advanced
   --lb-icon-size: 1.25rem;
   --lb-icon-weight: 1.5px;
   --lb-avatar-radius: 50%;
   --lb-button-radius: calc(0.75 * var(--lb-radius));
-  --lb-elevation-shadow: 0 0 0 1px rgb(0 0 0 / 4%), 0 2px 6px rgb(0 0 0 / 8%),
-    0 8px 26px rgb(0 0 0 / 12%);
-  --lb-tooltip-shadow: 0 2px 4px rgb(0 0 0 / 8%), 0 4px 12px rgb(0 0 0 / 12%);
+  --lb-elevation-shadow: #{$lb-elevation-shadow};
+  --lb-tooltip-shadow: #{$lb-tooltip-shadow};
   --lb-transition-duration: 0.1s;
   --lb-transition-easing: cubic-bezier(0.4, 0, 0.2, 1);
   --lb-contrast: 6%;
@@ -63,7 +29,7 @@ $lb-list-padding: 4px;
   --lb-elevation-foreground-contrast: var(--lb-contrast);
   --lb-tooltip-foreground-contrast: 10%;
 
-  /* Automatic color scales */
+  // Automatic color scales
   --lb-accent-subtle: #{color-scale(
       var(--lb-background),
       var(--lb-accent),
@@ -160,7 +126,9 @@ $lb-list-padding: 4px;
       var(--lb-tooltip-foreground-contrast),
       800
     )};
+}
 
+.lb-root {
   *,
   ::before,
   ::after {
@@ -186,7 +154,6 @@ $lb-list-padding: 4px;
 
 .lb-button {
   --lb-button-background: var(--lb-background);
-  --lb-button-shadow: ;
 
   all: unset;
   display: flex;
@@ -197,7 +164,6 @@ $lb-list-padding: 4px;
   border-radius: var(--lb-button-radius);
   background: var(--lb-button-background);
   color: var(--lb-foreground-moderate);
-  box-shadow: var(--lb-button-shadow, $lb-empty-shadow);
   outline: none;
   cursor: pointer;
   transition-timing-function: var(--lb-transition-easing);
@@ -207,8 +173,7 @@ $lb-list-padding: 4px;
   &:focus-visible {
     box-shadow:
       var(--lb-background) 0 0 0 2px,
-      var(--lb-accent) 0 0 0 4px,
-      $lb-empty-shadow;
+      var(--lb-accent) 0 0 0 4px;
   }
 
   &:disabled {
@@ -246,17 +211,17 @@ $lb-list-padding: 4px;
  */
 
 .lb-elevation {
-  background: var(--lb-background);
+  background: var(--lb-elevation-background);
   box-shadow: var(--lb-elevation-shadow);
 }
 
 /**
- * TODO
+ * Elevation lists
  */
 
 .lb-dropdown,
 .lb-composer-suggestions {
-  padding: $lb-list-padding;
+  padding: $lb-elevation-list-padding;
   border-radius: var(--lb-radius);
   animation-duration: var(--lb-transition-duration);
   animation-timing-function: var(--lb-transition-easing);
@@ -276,7 +241,7 @@ $lb-list-padding: 4px;
   display: flex;
   align-items: center;
   padding: calc(0.25 * var(--lb-spacing)) calc(0.5 * var(--lb-spacing));
-  border-radius: calc(var(--lb-radius) - 0.75 * #{$lb-list-padding});
+  border-radius: calc(var(--lb-radius) - 0.75 * #{$lb-elevation-list-padding});
   color: var(--lb-elevation-foreground-secondary);
   outline: none;
   font-size: 0.875rem;
@@ -428,7 +393,7 @@ $lb-list-padding: 4px;
     line-height: 1;
   }
 
-  /* Merge adjacent inline code elements */
+  // Merge adjacent inline code elements
   & span:has(code) + span code {
     border-start-start-radius: 0;
     border-end-start-radius: 0;
@@ -457,7 +422,7 @@ $lb-list-padding: 4px;
   color: var(--lb-foreground);
 }
 
-/* TODO: Improve logic, currently having an action button focused would count */
+// TODO: Improve logic, currently having an action button focused would count
 .lb-composer:not(:focus-within) .lb-button\:primary {
   --lb-button-background: var(--lb-foreground-subtle);
 
@@ -541,7 +506,7 @@ $lb-list-padding: 4px;
   width: var(--lb-comment-avatar-size);
 }
 
-/* TODO: Find better class name */
+// TODO: Find better class name
 .lb-comment-info-labels {
   display: flex;
   gap: calc(0.5 * var(--lb-spacing));
@@ -586,7 +551,7 @@ $lb-list-padding: 4px;
 }
 
 .lb-comment-body {
-  /* Prevent empty lines from collapsing */
+  // Prevent empty lines from collapsing
   & p span:only-child:empty::before {
     content: "\FEFF";
     user-select: none;

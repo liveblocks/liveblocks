@@ -9,30 +9,40 @@ const TARGETS = browserslistToTargets(
   browserslist("last 2 versions and not dead")
 );
 
-type File = {
-  name: string;
-  path: string;
+type StylesFile = {
+  entry: string;
+  destination: string;
 };
 
-function buildStyles(files: File[]) {
-  for (const file of files) {
-    console.log(`🎨 Building ${file.name}…`);
-    const { css, sourceMap } = sass.compile(file.path, { sourceMap: true });
+function createFile(file: string, data: string | NodeJS.ArrayBufferView) {
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.writeFileSync(file, data);
+}
 
-    console.log(`🎨 Minifying ${file.name}…`);
-    const { code, map } = transform({
-      filename: file.name,
+function buildStyles(files: StylesFile[]) {
+  for (const file of files) {
+    console.log(`🎨 Building ${file.entry}…`);
+
+    const entry = path.resolve(file.entry);
+
+    const { css, sourceMap: sassSourceMap } = sass.compile(entry, {
+      sourceMap: true,
+    });
+    const { code, map: cssSourceMap } = transform({
+      filename: entry,
       code: Buffer.from(css),
       targets: TARGETS,
       minify: true,
       sourceMap: true,
-      inputSourceMap: sourceMap ? JSON.stringify(sourceMap) : undefined,
+      inputSourceMap: sassSourceMap ? JSON.stringify(sassSourceMap) : undefined,
     });
 
-    fs.writeFileSync(`./${file.name}`, code);
+    const destination = path.resolve(file.destination);
 
-    if (map) {
-      fs.writeFileSync(`./${file.name}.map`, map);
+    createFile(destination, code);
+
+    if (cssSourceMap) {
+      createFile(`${destination}.map`, cssSourceMap);
     }
   }
 }
@@ -49,8 +59,16 @@ export default defineConfig({
   async onSuccess() {
     buildStyles([
       {
-        name: "default.css",
-        path: "src/styles/default.scss",
+        entry: "src/styles/default/index.scss",
+        destination: "./default.css",
+      },
+      {
+        entry: "src/styles/default/dark/media-query.scss",
+        destination: "./default/dark/media-query.css",
+      },
+      {
+        entry: "src/styles/default/dark/attributes.scss",
+        destination: "./default/dark/attributes.css",
       },
     ]);
   },

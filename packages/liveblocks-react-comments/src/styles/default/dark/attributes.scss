@@ -1,0 +1,10 @@
+@import "./styles";
+
+:where(.dark),
+:where([data-theme="dark"]) {
+  @include dark-styles;
+
+  :where(:root) {
+    @include dark-variables;
+  }
+}
