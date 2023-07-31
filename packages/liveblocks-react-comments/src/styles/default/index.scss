@@ -223,17 +223,6 @@
 .lb-composer-suggestions {
   padding: $lb-elevation-list-padding;
   border-radius: var(--lb-radius);
-  animation-duration: var(--lb-transition-duration);
-  animation-timing-function: var(--lb-transition-easing);
-  will-change: transform, opacity;
-
-  &[data-side="top"] {
-    animation-name: lb-animation-slide\:from-top;
-  }
-
-  &[data-side="bottom"] {
-    animation-name: lb-animation-slide\:from-bottom;
-  }
 }
 
 .lb-dropdown-item,
@@ -253,6 +242,26 @@
   &[data-highlighted],
   &[data-selected] {
     background: var(--lb-elevation-foreground-subtle);
+  }
+}
+
+/**
+ * Elevation lists and tooltip
+ */
+
+.lb-dropdown,
+.lb-composer-suggestions,
+.lb-tooltip {
+  animation-duration: var(--lb-transition-duration);
+  animation-timing-function: var(--lb-transition-easing);
+  will-change: transform, opacity;
+
+  &[data-side="top"] {
+    animation-name: lb-animation-slide\:from-bottom;
+  }
+
+  &[data-side="bottom"] {
+    animation-name: lb-animation-slide\:from-top;
   }
 }
 
@@ -430,7 +439,7 @@
 
   &:enabled:hover,
   &:enabled:focus-visible {
-    color: var(--lb-background);
+    color: var(--lb-accent-foreground);
   }
 }
 
