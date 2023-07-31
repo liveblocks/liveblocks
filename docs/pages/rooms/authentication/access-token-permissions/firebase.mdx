@@ -1,9 +1,8 @@
 ---
 meta:
-  title: "Authentication with Firebase"
-  parentTitle: "Rooms"
-  description:
-    "Learn how to setup a Liveblocks authentication endpoint with Firebase"
+  title: "Set up access token permissions with Firebase"
+  parentTitle: "Authentication"
+  description: "Learn how to setup access token permissions with Firebase."
 ---
 
 Follow the following steps to start configure your authentication endpoint and
@@ -35,32 +34,30 @@ start building your own security logic.
 
       ```js
       const functions = require("firebase-functions");
-      const { authorize } = require("@liveblocks/node");
+      const { Liveblocks } = require("@liveblocks/node");
 
-      exports.auth = functions.https.onCall((data, context) => {
-        /**
-         * Implement your own security here.
-         *
-         * It's your responsibility to ensure that the caller of this endpoint
-         * is a valid user by validating the cookies or authentication headers
-         * and that it has access to the requested room.
-         */
-        return authorize({
-          room: data.room,
-          secret: "sk_prod_xxxxxxxxxxxxxxxxxxxxxxxx",
-          userId: "123",
-          groupIds: ["456"], // Optional
-          userInfo: {
-            // Optional, corresponds to the UserMeta[info] info defined in liveblocks.config.ts
-            name: "Ada Lovelace",
-            color: "red",
-          },
-        }).then((authResult) => {
-          if (authResult.status !== 200) {
-            throw new functions.https.HttpsError(authResult.status, authResult.body);
-          }
-          return JSON.parse(authResult.body);
-        });
+      const liveblocks = new Liveblocks({
+        secret: "{{SECRET_KEY}}",
+      });
+
+      exports.auth = functions.https.onCall(async (data, context) => {
+        // Get the current user from your database
+        const user = __getUserFromDB__(data);
+
+        // Start an auth session inside your endpoint
+        const session = liveblocks.prepareSession(
+          user.id,
+          { userInfo: user.metadata },  // Optional
+        );
+
+        // Implement your own security, and give the user access to the room
+        if (data.room && __shouldUserHaveAccess__(user, data.room)) {
+          session.allow(data.room, session.FULL_ACCESS);
+        }
+
+        // Authorize the user and return the result
+        const { status, body } = await session.authorize();
+        return JSON.parse(body);
       });
       ```
     </StepContent>
@@ -82,7 +79,7 @@ start building your own security logic.
         /* Firebase config */
       });
 
-      const auth = firebase.functions().httpsCallable("auth");
+      const auth = firebase.functions().httpsCallable("liveblocks-auth");
 
       // Create a Liveblocks client
       const client = createClient({
@@ -97,23 +94,18 @@ start building your own security logic.
 
 ## More information
 
-The `userId` used in the `authorize` function corresponds to `userId` used in
-our APIs when setting permissions when creating a room. Both `userId` and
-`userInfo` can then be used in your JavaScript application as such:
+Both `userId` and `userInfo` can then be used in your JavaScript application as
+such:
 
 ```ts
 const self = room.getSelf(); // or useSelf() in React
-
-// "123"
 console.log(self.id);
-
-// "red"
-console.log(self.info.color);
+console.log(self.info);
 ```
 
 <Figure>
   <Image
-    src="/assets/auth-diagram.png"
+    src="/assets/access-token-auth-diagram.png"
     alt="Auth diagram"
     width={768}
     height={576}
