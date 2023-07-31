@@ -19,19 +19,26 @@ export type ThreadMetadata = {
   y: number;
 };
 
-async function resolveUser(userId: string): Promise<BaseUserInfo> {
-  const userIndex = Number(userId.replace(/^\D+/g, "")) ?? 0;
+async function resolveUser(userId: string) {
+  try {
+    const response = await fetch(`/api/user?userId=${userId}`);
 
-  return {
-    name: NAMES[userIndex],
-    avatar: `https://liveblocks.io/avatars/avatar-${userIndex}.png`,
-  };
+    return response.json() as Promise<BaseUserInfo>;
+  } catch (error) {
+    console.error(error);
+  }
 }
 
-async function resolveMentionSuggestions(text: string): Promise<string[]> {
-  const userIndices = [...NAMES.keys()];
+async function resolveMentionSuggestions(text: string) {
+  try {
+    const response = await fetch(`/api/mentions?text=${text}`);
 
-  return userIndices.map((userIndex) => `user-${userIndex}`);
+    return response.json() as Promise<string[]>;
+  } catch (error) {
+    console.error(error);
+
+    return [];
+  }
 }
 
 export const {
