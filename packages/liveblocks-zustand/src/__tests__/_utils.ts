@@ -1,13 +1,14 @@
 import type { Json } from "@liveblocks/client";
 import type {
   IdTuple,
+  RoomStateServerMsg,
   SerializedList,
   SerializedMap,
   SerializedObject,
   SerializedRegister,
   SerializedRootObject,
 } from "@liveblocks/core";
-import { CrdtType } from "@liveblocks/core";
+import { CrdtType, ServerMsgCode } from "@liveblocks/core";
 
 export function remove<T>(array: T[], item: T): void {
   for (let i = 0; i < array.length; i++) {
@@ -34,7 +35,7 @@ export class MockWebSocket {
   sentMessages: string[] = [];
 
   constructor(public url: string) {
-    MockWebSocket.instances.push(this);
+    const actor = MockWebSocket.instances.push(this) - 1;
     this.readyState = 0 /* CONNECTING */;
 
     // Fake the server accepting the new connection
@@ -42,6 +43,17 @@ export class MockWebSocket {
       this.readyState = 1 /* OPEN */;
       for (const openCb of this.callbacks.open) {
         openCb();
+      }
+
+      // Send a ROOM_STATE message to the newly connected client
+      for (const msgCb of this.callbacks.message) {
+        const msg: RoomStateServerMsg<never> = {
+          type: ServerMsgCode.ROOM_STATE,
+          actor,
+          scopes: ["room:write"],
+          users: {},
+        };
+        msgCb({ data: JSON.stringify(msg) } as MessageEvent);
       }
     }, 0);
   }

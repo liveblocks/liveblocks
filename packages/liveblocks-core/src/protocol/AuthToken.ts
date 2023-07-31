@@ -1,26 +1,42 @@
 import type { Json } from "../lib/Json";
 import { b64decode, isPlainObject, tryParseJson } from "../lib/utils";
 
-export enum RoomScope {
+export enum Permission {
   Read = "room:read",
   Write = "room:write",
   PresenceWrite = "room:presence:write",
+  CommentsWrite = "comments:write",
+  CommentsRead = "comments:read",
+}
+
+export type LiveblocksPermissions = Record<string, Permission[]>;
+
+export enum TokenKind {
+  SECRET_LEGACY = "sec-legacy",
+  ACCESS_TOKEN = "acc",
+  ID_TOKEN = "id",
 }
 
 /**
- * Fields of the JWT payload that the client relies on and interprets. There
- * exist more fields in the JWT payload, but those aren't needed by the client
- * directly, and simply passed back to the backend.
- *
- * This type should only list the properties that client uses, so we're still
- * free to change the other fields on the token without breaking backward
- * compatibility.
- *
- * @internal For unit tests only.
+ * Infers from the given scopes whether the user can write the document (e.g.
+ * Storage and/or YDoc).
  */
-export type MinimalTokenPayload = {
-  scopes: string[]; // Think Scope[], but it could also hold scopes from the future, hence string[]
-  actor: number;
+export function canWriteStorage(scopes: readonly string[]): boolean {
+  return scopes.includes(Permission.Write);
+}
+
+type JwtMeta = {
+  iat: number;
+  exp: number;
+};
+
+/**
+ * Legacy Secret Token.
+ */
+export type LegacySecretToken = {
+  k: TokenKind.SECRET_LEGACY;
+  roomId: string;
+  scopes: string[];
 
   // Extra payload as defined by the customer's own authorization
   id?: string;
@@ -29,7 +45,31 @@ export type MinimalTokenPayload = {
   // IMPORTANT: All other fields on the JWT token are deliberately treated as
   // opaque, and not relied on by the client.
   [other: string]: Json | undefined;
-};
+} & JwtMeta;
+
+/**
+ * New authorization Access Token.
+ */
+export type AccessToken = {
+  k: TokenKind.ACCESS_TOKEN;
+  pid: string; // project id
+  uid: string; // user id
+  perms: LiveblocksPermissions; // permissions
+  ui?: Json; // user info
+} & JwtMeta;
+
+/**
+ * New authorization ID Token.
+ */
+export type IDToken = {
+  k: TokenKind.ID_TOKEN;
+  pid: string; // project id
+  uid: string; // user id
+  gids?: string[]; // group ids
+  ui?: Json; // user info
+} & JwtMeta;
+
+export type AuthToken = AccessToken | IDToken | LegacySecretToken;
 
 // The "rich" token is data we obtain by parsing the JWT token and making all
 // metadata on it accessible. It's done right after hitting the backend, but
@@ -37,30 +77,17 @@ export type MinimalTokenPayload = {
 // authentication step.
 export type ParsedAuthToken = {
   readonly raw: string; // The raw JWT value, unchanged
-  readonly parsed: MinimalTokenPayload; // Rich data on the JWT value
+  readonly parsed: AuthToken; // Rich data on the JWT value
 };
 
-function isStringList(value: unknown): value is string[] {
-  return Array.isArray(value) && value.every((i) => typeof i === "string");
-}
-
-function isMinimalTokenPayload(data: Json): data is MinimalTokenPayload {
-  //
-  // NOTE: This is the hard-coded definition of the following decoder:
-  //
-  //   inexact({
-  //     actor: number,
-  //     scopes: array(scope),
-  //     id: optional(string),
-  //     info: optional(json),
-  //   })
-  //
+function isValidAuthTokenPayload(
+  data: Json
+): data is AccessToken | IDToken | LegacySecretToken {
   return (
     isPlainObject(data) &&
-    typeof data.actor === "number" &&
-    (data.id === undefined || typeof data.id === "string") &&
-    isStringList(data.scopes)
-    // && data.info will already be `Json | undefined`, given the nature of the data here
+    (data.k === TokenKind.ACCESS_TOKEN ||
+      data.k === TokenKind.ID_TOKEN ||
+      data.k === TokenKind.SECRET_LEGACY)
   );
 }
 
@@ -78,9 +105,9 @@ export function parseAuthToken(rawTokenString: string): ParsedAuthToken {
   }
 
   const payload = tryParseJson(b64decode(tokenParts[1]));
-  if (!(payload && isMinimalTokenPayload(payload))) {
+  if (!(payload && isValidAuthTokenPayload(payload))) {
     throw new Error(
-      "Authentication error: we expected a room token but did not get one. Hint: if you are using a callback, ensure the room is passed when creating the token. For more information: https://liveblocks.io/docs/api-reference/liveblocks-client#createClientCallback"
+      "Authentication error: expected a valid token but did not get one. Hint: if you are using a callback, ensure the room is passed when creating the token. For more information: https://liveblocks.io/docs/api-reference/liveblocks-client#createClientCallback"
     );
   }
 

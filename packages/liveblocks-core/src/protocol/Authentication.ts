@@ -7,7 +7,6 @@ export type Authentication =
   | {
       type: "public";
       publicApiKey: string;
-      url: string;
     }
   | {
       type: "private";
