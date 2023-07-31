@@ -107,7 +107,11 @@ function initialEditorState(editor: LexicalEditor): void {
 
 export default function Editor() {
   const room = useRoom();
-  const user = USER_INFO[Math.floor(Math.random() * USER_INFO.length)];
+  // Get the current user
+  const user = {
+    name: "Charlie Layne",
+    color: "#D583F0",
+  };
   const initialConfig = {
     // NOTE: This is critical for collaboration plugin to set editor state to null. It
     // would indicate that the editor should not try to set any default state
@@ -188,7 +192,7 @@ from `@lexical/react/LexicalCollaborationPlugin`.
 return (
   <div className={styles.container}>
     <LexicalComposer initialConfig={initialConfig}>
-      <PlainTextPlugin
+      <RichTextPlugin
         contentEditable={<ContentEditable className={styles.editor} />}
         placeholder={
           <div className={styles.placeholder}>Start typing here…</div>
@@ -280,12 +284,16 @@ Add some matching styles:
   background: #fff;
   color: #1f2937;
   border: none;
-  box-shadow: rgba(0, 0, 0, 0.12) 0 4px 8px 0, rgba(0, 0, 0, 0.02) 0 0 0 1px;
+  box-shadow:
+    rgba(0, 0, 0, 0.12) 0 4px 8px 0,
+    rgba(0, 0, 0, 0.02) 0 0 0 1px;
 }
 
 .button:hover {
   color: #111827;
-  box-shadow: rgba(0, 0, 0, 0.16) 0 5px 8px 0, rgba(0, 0, 0, 0.04) 0 0 0 1px;
+  box-shadow:
+    rgba(0, 0, 0, 0.16) 0 5px 8px 0,
+    rgba(0, 0, 0, 0.04) 0 0 0 1px;
 }
 
 .button:focus-visible {
@@ -293,7 +301,9 @@ Add some matching styles:
 }
 
 .button:active {
-  box-shadow: rgba(0, 0, 0, 0.16) 0 2px 3px 0, rgba(0, 0, 0, 0.04) 0 0 0 1px;
+  box-shadow:
+    rgba(0, 0, 0, 0.16) 0 2px 3px 0,
+    rgba(0, 0, 0, 0.04) 0 0 0 1px;
 }
 ```
 
@@ -328,13 +338,17 @@ export default function Editor() {
 You can go a step further and theme your basic custom text styles by using the
 `theme` property, and adding corresponding styles:
 
-```tsx file="Editor.tsx"
+```tsx file="Editor.tsx" highlight="21-28"
 import styles from "./Editor.module.css";
 // ...
 
 export default function Editor() {
   const room = useRoom();
-  const user = USER_INFO[Math.floor(Math.random() * USER_INFO.length)];
+  // Get the current user
+  const user = {
+    name: "Charlie Layne",
+    color: "#D583F0",
+  };
   const initialConfig = {
     // NOTE: This is critical for collaboration plugin to set editor state to null. It
     // would indicate that the editor should not try to set any default state
