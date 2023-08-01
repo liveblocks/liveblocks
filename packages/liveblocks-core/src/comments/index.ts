@@ -47,29 +47,12 @@ export function createCommentsApi<ThreadMetadata extends BaseMetadata>(
   client: Client,
   { serverEndpoint }: Options
 ): CommentsApi<ThreadMetadata> {
-  async function fetchApi<T>(
+  async function fetchJson<T>(
     roomId: string,
     endpoint: string,
     options?: RequestInit
   ): Promise<T> {
-    const authValue = await client.__internal.getAuthValue(
-      "comments:read", // TODO: Use the right scope
-      roomId
-    );
-
-    if (authValue.type !== "secret") {
-      throw new Error("Only secret key are supported for client.");
-    }
-
-    const url = `${serverEndpoint}/rooms/${roomId}${endpoint}`;
-
-    const response = await fetch(url, {
-      ...options,
-      headers: {
-        ...options?.headers,
-        Authorization: `Bearer ${authValue.token.raw}`,
-      },
-    });
+    const response = await fetchApi(roomId, endpoint, options);
 
     if (!response.ok) {
       if (response.status >= 400 && response.status < 600) {
@@ -97,12 +80,46 @@ export function createCommentsApi<ThreadMetadata extends BaseMetadata>(
     return body;
   }
 
-  async function getThreads({ roomId }: { roomId: string }) {
-    const { data } = await fetchApi<{ data: ThreadData<ThreadMetadata>[] }>(
-      roomId,
-      "/threads"
+  async function fetchApi(
+    roomId: string,
+    endpoint: string,
+    options?: RequestInit
+  ): Promise<Response> {
+    const authValue = await client.__internal.getAuthValue(
+      "comments:read", // TODO: Use the right scope
+      roomId
     );
-    return data;
+
+    if (authValue.type !== "secret") {
+      throw new Error("Only secret key are supported for client.");
+    }
+
+    const url = `${serverEndpoint}/rooms/${roomId}${endpoint}`;
+
+    return await fetch(url, {
+      ...options,
+      headers: {
+        ...options?.headers,
+        Authorization: `Bearer ${authValue.token.raw}`,
+      },
+    });
+  }
+
+  async function getThreads({
+    roomId,
+  }: {
+    roomId: string;
+  }): Promise<ThreadData<ThreadMetadata>[]> {
+    const response = await fetchApi(roomId, "/threads");
+
+    if (response.ok) {
+      const json = await response.json();
+      return json.data;
+    } else if (response.status === 404) {
+      return [];
+    } else {
+      throw new Error("FAIL");
+    }
   }
 
   function createThread({
@@ -118,7 +135,7 @@ export function createCommentsApi<ThreadMetadata extends BaseMetadata>(
     metadata: ThreadMetadata | undefined;
     body: CommentBody;
   }) {
-    return fetchApi<ThreadData<ThreadMetadata>>(roomId, "/threads", {
+    return fetchJson<ThreadData<ThreadMetadata>>(roomId, "/threads", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -143,7 +160,7 @@ export function createCommentsApi<ThreadMetadata extends BaseMetadata>(
     metadata: Partial<ThreadMetadata>;
     threadId: string;
   }) {
-    return fetchApi<ThreadData<ThreadMetadata>>(
+    return fetchJson<ThreadData<ThreadMetadata>>(
       roomId,
       `/threads/${threadId}/metadata`,
       {
@@ -167,7 +184,7 @@ export function createCommentsApi<ThreadMetadata extends BaseMetadata>(
     commentId: string;
     body: CommentBody;
   }) {
-    return fetchApi<CommentData>(roomId, `/threads/${threadId}/comments`, {
+    return fetchJson<CommentData>(roomId, `/threads/${threadId}/comments`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -190,7 +207,7 @@ export function createCommentsApi<ThreadMetadata extends BaseMetadata>(
     commentId: string;
     body: CommentBody;
   }) {
-    return fetchApi<CommentData>(
+    return fetchJson<CommentData>(
       roomId,
       `/threads/${threadId}/comments/${commentId}`,
       {
@@ -214,7 +231,7 @@ export function createCommentsApi<ThreadMetadata extends BaseMetadata>(
     threadId: string;
     commentId: string;
   }) {
-    await fetchApi(roomId, `/threads/${threadId}/comments/${commentId}`, {
+    await fetchJson(roomId, `/threads/${threadId}/comments/${commentId}`, {
       method: "DELETE",
     });
   }
