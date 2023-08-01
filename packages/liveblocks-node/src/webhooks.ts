@@ -173,11 +173,11 @@ type WebhookEvent =
   | UserLeftEvent
   | RoomCreatedEvent
   | RoomDeletedEvent
-  | CommentCreated
-  | CommentEdited
-  | CommentDeleted
-  | ThreadMetadataUpdated
-  | ThreadCreated;
+  | CommentCreatedEvent
+  | CommentEditedEvent
+  | CommentDeletedEvent
+  | ThreadMetadataUpdatedEvent
+  | ThreadCreatedEvent;
 
 type StorageUpdatedEvent = {
   type: "storageUpdated";
@@ -254,7 +254,7 @@ type RoomDeletedEvent = {
   };
 };
 
-type CommentCreated = {
+type CommentCreatedEvent = {
   type: "commentCreated";
   data: {
     projectId: string;
@@ -270,7 +270,7 @@ type CommentCreated = {
   };
 };
 
-type CommentEdited = {
+type CommentEditedEvent = {
   type: "commentEdited";
   data: {
     projectId: string;
@@ -285,7 +285,7 @@ type CommentEdited = {
   };
 };
 
-type CommentDeleted = {
+type CommentDeletedEvent = {
   type: "commentDeleted";
   data: {
     projectId: string;
@@ -300,7 +300,7 @@ type CommentDeleted = {
   };
 };
 
-type ThreadMetadataUpdated = {
+type ThreadMetadataUpdatedEvent = {
   type: "threadMetadataUpdated";
   data: {
     projectId: string;
@@ -315,7 +315,7 @@ type ThreadMetadataUpdated = {
   };
 };
 
-type ThreadCreated = {
+type ThreadCreatedEvent = {
   type: "threadCreated";
   data: {
     projectId: string;
@@ -331,11 +331,11 @@ type ThreadCreated = {
 };
 
 export type {
-  CommentCreated,
-  CommentDeleted,
-  CommentEdited,
-  ThreadCreated,
-  ThreadMetadataUpdated,
+  CommentCreatedEvent,
+  CommentDeletedEvent,
+  CommentEditedEvent,
+  ThreadCreatedEvent,
+  ThreadMetadataUpdatedEvent,
   RoomCreatedEvent,
   RoomDeletedEvent,
   StorageUpdatedEvent,
