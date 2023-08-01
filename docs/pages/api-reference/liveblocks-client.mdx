@@ -6,6 +6,10 @@ meta:
 alwaysShowAllNavigationLevels: false
 ---
 
+`@liveblocks/client` provides you with JavaScript bindings for our real-time
+collaboration APIs, built on top of WebSockets. Read our
+[getting started](/docs/get-started) guides to learn more.
+
 ## createClient
 
 Create a client that will be responsible to communicate with Liveblocks servers.
@@ -556,8 +560,8 @@ const unsubscribe = room.subscribe("error", (error) => {
 });
 ```
 
-You can use this event to trigger a “Not allowed” screen/dialog. If you’d like to
-retry connecting, call `room.reconnect()`.
+You can use this event to trigger a “Not allowed” screen/dialog. If you’d like
+to retry connecting, call `room.reconnect()`.
 
 ### Room.subscribe("history") [#Room.subscribe.history]
 
