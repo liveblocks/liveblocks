@@ -223,7 +223,10 @@ export class StopRetrying extends Error {
 }
 
 class LiveblocksError extends Error {
-  constructor(message: string, public code: number) {
+  constructor(
+    message: string,
+    public code: number
+  ) {
     super(message);
   }
 }
@@ -977,10 +980,14 @@ export class ManagedSocket<T extends BaseAuthResult> {
     readonly onLiveblocksError: Observable<LiveblocksError>;
   };
 
-  constructor(delegates: Delegates<T>, enableDebugLogging: boolean = false) {
+  constructor(
+    delegates: Delegates<T>,
+    enableDebugLogging: boolean = false,
+    waitForActorId: boolean = true
+  ) {
     const { machine, events, cleanups } = createConnectionStateMachine(
       delegates,
-      { waitForActorId: true, enableDebugLogging }
+      { waitForActorId, enableDebugLogging }
     );
     this.machine = machine;
     this.events = events;

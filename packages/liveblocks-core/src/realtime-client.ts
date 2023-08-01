@@ -56,7 +56,8 @@ export function createRealtimeClient(
             }`
           ),
       },
-      true
+      true,
+      false
     );
 
     managedSocket.events.statusDidChange.subscribe((status) => {

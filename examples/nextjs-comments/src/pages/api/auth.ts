@@ -4,7 +4,6 @@ import { NAMES } from "../../constants";
 
 const liveblocks = new Liveblocks({
   secret: process.env.LIVEBLOCKS_SECRET_KEY!,
-  liveblocksBaseUrl: `https://${process.env.NEXT_PUBLIC_WORKERS_ENDPOINT}/`,
 });
 
 export default async function auth(req: NextApiRequest, res: NextApiResponse) {

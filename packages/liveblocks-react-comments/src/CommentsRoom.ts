@@ -432,6 +432,8 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
   function subscribe(
     cb: (threads: RoomThreads<TThreadMetadata>) => void
   ): () => void {
+    // TODO: We should not subscribe twice
+    startSubcribingToThreads();
     const unsubscribe = store.subscribe(cb);
 
     return () => {

@@ -8,8 +8,6 @@ const EVENTS_ENDPOINT = process.env.NEXT_PUBLIC_EVENTS_ENDPOINT;
 
 export const client = createClient({
   authEndpoint: "/api/auth",
-  liveblocksServer: `wss://${WORKERS_ENDPOINT}/v6`,
-  eventsServerEndpoint: `wss://${EVENTS_ENDPOINT}/v1`,
 });
 
 export type ThreadMetadata = {
@@ -46,5 +44,4 @@ export const {
 } = createCommentsContext<ThreadMetadata>(client, {
   resolveUser,
   resolveMentionSuggestions,
-  serverEndpoint: `https://${WORKERS_ENDPOINT}/v2`,
 });
