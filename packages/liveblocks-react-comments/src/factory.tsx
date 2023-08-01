@@ -37,6 +37,7 @@ import type {
 import { createCommentsRoom } from "./CommentsRoom";
 import type { CommentsApiError } from "./errors";
 import { useAsyncCache } from "./lib/use-async-cache";
+import { defaultOverrides, type Overrides } from "./overrides";
 import type { ComposerContext } from "./primitives/Composer";
 import { useComposer } from "./primitives/Composer";
 import { useDebounce } from "./utils/use-debounce";
@@ -66,6 +67,7 @@ type UserStateSuspense<T extends BaseUserInfo> = Resolve<
 
 type CommentsProviderProps = PropsWithChildren<{
   roomId: string;
+  overrides?: Partial<Overrides>;
 }>;
 
 type CommentsContextBundle<
@@ -73,7 +75,22 @@ type CommentsContextBundle<
   TUserInfo extends BaseUserInfo,
 > = {
   /**
-   * TODO: Add description
+   * Makes comments from a room available in the component hierarchy below.
+   * Multiple instances with the same `roomId` can coexist in the same hierarchy.
+   *
+   * @example
+   * <CommentsProvider roomId="my-room">
+   *   <MyCommentsSidebar />
+   * </CommentsProvider>
+   *
+   * @example
+   * <CommentsProvider roomId="my-room">
+   *   <MyFloatingComments />
+   * </CommentsProvider>
+   * ...
+   * <CommentsProvider roomId="my-room">
+   *   <MyCommentsSidebar />
+   * </CommentsProvider>
    */
   CommentsProvider: NamedExoticComponent<CommentsProviderProps>;
 
@@ -128,7 +145,7 @@ type CommentsContextBundle<
   useDeleteComment(): (options: DeleteCommentOptions) => void;
 
   /**
-   * Returns the threads within the current room.
+   * Returns the threads within the current room, from the nearest `CommentsProvider`.
    *
    * @example
    * const { threads, error, isLoading } = useThreads();
@@ -144,7 +161,7 @@ type CommentsContextBundle<
   useUser(userId: string): UserState<TUserInfo>;
 
   /**
-   * TODO: Add description
+   * Returns the current room ID, from the nearest `CommentsProvider`.
    */
   useRoomId(): string;
 
@@ -161,7 +178,8 @@ type CommentsContextBundle<
   ): void;
 
   /**
-   * Returns states and methods related to the composer.
+   * Returns states and methods related to the composer. Can only be used
+   * within `Composer.Form`.
    *
    * @example
    * const { isValid, submit } = useComposer();
@@ -170,7 +188,7 @@ type CommentsContextBundle<
 
   readonly suspense: {
     /**
-     * Returns the threads within the current room.
+     * Returns the threads within the current room, from the nearest `CommentsProvider`.
      *
      * @example
      * const threads = useThreads();
@@ -186,7 +204,10 @@ type CommentsContextBundle<
     useUser(userId: string): UserStateSuspense<TUserInfo>;
 
     /**
-     * TODO: Add description
+     * Returns the current room ID, from the nearest `CommentsProvider`.
+     *
+     * @example
+     * const roomId = useRoomId();
      */
     useRoomId(): string;
 
@@ -220,6 +241,7 @@ type CommentsContext<
     CommentsContextBundle<TThreadMetadata, TUserInfo>,
     "CommentsProvider"
   > & {
+    useOverrides: (overrides?: Partial<Overrides>) => Overrides;
     useMentionSuggestions: (value: string | undefined) => string[] | undefined;
     roomId: string;
   }
@@ -352,19 +374,6 @@ export function createCommentsContext<
     return commentsRoom.useThreadsSuspense();
   }
 
-  function useMentionSuggestions(value: string | undefined) {
-    const debouncedValue = useDebounce(value, MENTION_SUGGESTIONS_DEBOUNCE);
-    const { data } = useAsyncCache(
-      mentionSuggestionsCache,
-      debouncedValue ?? null,
-      {
-        keepPreviousDataWhileLoading: true,
-      }
-    );
-
-    return data;
-  }
-
   function useUser(userId: string) {
     const state = useAsyncCache(usersCache, userId);
 
@@ -470,8 +479,29 @@ export function createCommentsContext<
     },
   };
 
+  function useMentionSuggestions(value: string | undefined) {
+    const debouncedValue = useDebounce(value, MENTION_SUGGESTIONS_DEBOUNCE);
+    const { data } = useAsyncCache(
+      mentionSuggestionsCache,
+      debouncedValue ?? null,
+      {
+        keepPreviousDataWhileLoading: true,
+      }
+    );
+
+    return data;
+  }
+
   const CommentsProvider = memo<CommentsProviderProps>(
-    ({ roomId, children }) => {
+    ({ roomId, overrides: globalOverrides, children }) => {
+      const useOverrides = useMemo(() => {
+        return (overrides?: Partial<Overrides>) => ({
+          ...defaultOverrides,
+          ...globalOverrides,
+          ...overrides,
+        });
+      }, [globalOverrides]);
+
       return (
         <CommentsContext.Provider
           value={{
@@ -480,6 +510,7 @@ export function createCommentsContext<
               BaseUserInfo
             >),
             useMentionSuggestions,
+            useOverrides,
             roomId,
           }}
         >

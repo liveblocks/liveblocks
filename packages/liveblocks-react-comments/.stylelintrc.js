@@ -6,6 +6,7 @@ module.exports = {
     "selector-class-pattern": null,
     "keyframes-name-pattern": null,
     "scss/operator-no-newline-after": null,
+    "scss/dollar-variable-colon-space-after": null,
     "order/order": [
       [
         "dollar-variables",

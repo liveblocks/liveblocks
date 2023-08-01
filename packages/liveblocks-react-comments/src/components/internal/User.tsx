@@ -3,7 +3,7 @@
 import type { ComponentProps } from "react";
 import React, { useMemo } from "react";
 
-import { useCommentsContext } from "../factory";
+import { useCommentsContext } from "../../factory";
 
 export interface UserProps extends ComponentProps<"span"> {
   userId: string;

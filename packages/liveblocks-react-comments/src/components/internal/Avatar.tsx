@@ -3,9 +3,9 @@
 import type { ComponentProps } from "react";
 import React, { useMemo } from "react";
 
-import { useCommentsContext } from "../factory";
-import { classNames } from "../utils/class-names";
-import { getInitials } from "../utils/get-initials";
+import { useCommentsContext } from "../../factory";
+import { classNames } from "../../utils/class-names";
+import { getInitials } from "../../utils/get-initials";
 
 export interface AvatarProps extends ComponentProps<"div"> {
   userId: string;

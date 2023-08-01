@@ -1,8 +1,11 @@
+"use client";
+
 import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu";
 import type { ReactNode } from "react";
 import React from "react";
 
-import { classNames } from "../utils/class-names";
+import { useCommentsContext } from "../../factory";
+import { classNames } from "../../utils/class-names";
 
 interface DropdownProps
   extends Pick<
@@ -23,11 +26,15 @@ export function Dropdown({
   className,
   ...props
 }: DropdownProps) {
+  const { useOverrides } = useCommentsContext();
+  const $ = useOverrides();
+
   return (
     <DropdownMenuPrimitive.Root
       defaultOpen={defaultOpen}
       open={open}
       onOpenChange={onOpenChange}
+      dir={$.dir}
     >
       {children}
       <DropdownMenuPrimitive.Portal>

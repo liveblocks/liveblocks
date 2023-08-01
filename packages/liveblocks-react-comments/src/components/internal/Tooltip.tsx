@@ -1,8 +1,10 @@
+"use client";
+
 import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 import type { ReactNode } from "react";
 import React from "react";
 
-import { classNames } from "../utils/class-names";
+import { classNames } from "../../utils/class-names";
 
 interface TooltipProps
   extends Pick<TooltipPrimitive.TooltipTriggerProps, "children">,

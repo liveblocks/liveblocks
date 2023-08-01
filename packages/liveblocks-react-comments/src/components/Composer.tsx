@@ -11,6 +11,7 @@ import React, { forwardRef, useCallback } from "react";
 import { useCommentsContext } from "../factory";
 import { MentionIcon } from "../icons/mention";
 import { SendIcon } from "../icons/send";
+import type { ComposerOverrides } from "../overrides";
 import type {
   ComposerEditorProps,
   ComposerFormProps,
@@ -25,10 +26,14 @@ import {
 import { MENTION_CHARACTER } from "../slate/mentions";
 import type { SlotProp } from "../types";
 import { classNames } from "../utils/class-names";
-import { Avatar } from "./Avatar";
-import { Logo } from "./Logo";
-import { Tooltip, TooltipProvider } from "./Tooltip";
-import { User } from "./User";
+import { Avatar } from "./internal/Avatar";
+import { Logo } from "./internal/Logo";
+import { Tooltip, TooltipProvider } from "./internal/Tooltip";
+import { User } from "./internal/User";
+
+interface EditorActionProps extends ComponentProps<"button"> {
+  label: string;
+}
 
 type ComposerCreateThreadProps = {
   /**
@@ -74,6 +79,11 @@ export type ComposerProps = Omit<ComposerFormProps, keyof SlotProp> &
     | ComposerEditCommentProps
   ) & {
     /**
+     * TODO: Add description
+     */
+    overrides?: Partial<ComposerOverrides>;
+
+    /**
      * @internal
      */
     actions?: ReactNode;
@@ -84,10 +94,11 @@ export type ComposerProps = Omit<ComposerFormProps, keyof SlotProp> &
     showLogo?: boolean;
   };
 
-function ComposerInsertMentionAction({
+function ComposerInsertMentionEditorAction({
+  label,
   className,
   ...props
-}: ComponentProps<"button">) {
+}: EditorActionProps) {
   const { insertText } = useComposer();
 
   const preventDefault = useCallback((event: SyntheticEvent) => {
@@ -99,13 +110,13 @@ function ComposerInsertMentionAction({
   }, [insertText]);
 
   return (
-    <Tooltip content="Mention someone">
+    <Tooltip content={label}>
       <button
         type="button"
         className={classNames("lb-button lb-composer-editor-action", className)}
         onMouseDown={preventDefault}
         onClick={handleInsertMention}
-        aria-label="Mention someone"
+        aria-label={label}
         {...props}
       >
         <MentionIcon className="lb-button-icon" />
@@ -131,6 +142,7 @@ function ComposerMentionSuggestions({
       <ComposerPrimitive.SuggestionsList className="lb-composer-suggestions-list lb-composer-mention-suggestions-list">
         {userIds.map((userId) => (
           <ComposerPrimitive.SuggestionsListItem
+            key={userId}
             className="lb-composer-suggestions-list-item lb-composer-mention-suggestion"
             value={userId}
           >
@@ -158,6 +170,7 @@ export const Composer = forwardRef<HTMLFormElement, ComposerProps>(
       initialValue,
       disabled,
       autoFocus,
+      overrides,
       actions,
       showLogo = true,
       className,
@@ -165,11 +178,12 @@ export const Composer = forwardRef<HTMLFormElement, ComposerProps>(
     },
     forwardedRef
   ) => {
-    const { useCreateThread, useCreateComment, useEditComment } =
+    const { useCreateThread, useCreateComment, useEditComment, useOverrides } =
       useCommentsContext();
     const createThread = useCreateThread();
     const createComment = useCreateComment();
     const editComment = useEditComment();
+    const $ = useOverrides(overrides);
 
     const preventDefault = useCallback((event: SyntheticEvent) => {
       event.preventDefault();
@@ -218,32 +232,36 @@ export const Composer = forwardRef<HTMLFormElement, ComposerProps>(
             "lb-root lb-composer lb-composer-form",
             className
           )}
+          dir={$.dir}
           {...props}
           ref={forwardedRef}
           onCommentSubmit={handleCommentSubmit}
         >
           <ComposerPrimitive.Editor
             className="lb-composer-editor"
-            placeholder="Write a comment…"
+            placeholder={$.COMPOSER_PLACEHOLDER}
             initialValue={initialValue}
             disabled={disabled}
             autoFocus={autoFocus}
             renderMention={ComposerMention}
             renderMentionSuggestions={ComposerMentionSuggestions}
+            dir={$.dir}
           />
           <div className="lb-composer-footer">
             <div className="lb-composer-editor-actions">
-              <ComposerInsertMentionAction />
+              <ComposerInsertMentionEditorAction
+                label={$.COMPOSER_INSERT_MENTION}
+              />
             </div>
             {showLogo && <Logo className="lb-composer-logo" />}
             <div className="lb-composer-actions">
               {actions ?? (
                 <>
-                  <Tooltip content="Send comment" shortcut={<kbd>↵</kbd>}>
+                  <Tooltip content={$.COMPOSER_SEND} shortcut={<kbd>↵</kbd>}>
                     <ComposerPrimitive.Submit
                       onMouseDown={preventDefault}
                       className="lb-button lb-button:primary lb-composer-action"
-                      aria-label="Send comment"
+                      aria-label={$.COMPOSER_SEND}
                     >
                       <SendIcon />
                     </ComposerPrimitive.Submit>

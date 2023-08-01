@@ -11,17 +11,18 @@ import { CrossIcon } from "../icons/cross";
 import { DeleteIcon } from "../icons/delete";
 import { EditIcon } from "../icons/edit";
 import { EllipsisIcon } from "../icons/ellipsis";
+import type { CommentOverrides, ComposerOverrides } from "../overrides";
 import type { CommentRenderMentionProps } from "../primitives/Comment";
 import { Comment as CommentPrimitive } from "../primitives/Comment";
 import { Composer as ComposerPrimitive } from "../primitives/Composer";
 import { Timestamp } from "../primitives/Timestamp";
 import { MENTION_CHARACTER } from "../slate/mentions";
 import { classNames } from "../utils/class-names";
-import { Avatar } from "./Avatar";
 import { Composer } from "./Composer";
-import { Dropdown, DropdownTrigger } from "./Dropdown";
-import { Tooltip, TooltipProvider } from "./Tooltip";
-import { User } from "./User";
+import { Avatar } from "./internal/Avatar";
+import { Dropdown, DropdownTrigger } from "./internal/Dropdown";
+import { Tooltip, TooltipProvider } from "./internal/Tooltip";
+import { User } from "./internal/User";
 
 export interface CommentProps extends ComponentPropsWithoutRef<"div"> {
   /**
@@ -35,9 +36,14 @@ export interface CommentProps extends ComponentPropsWithoutRef<"div"> {
   indentBody?: boolean;
 
   /**
-   * Whether to always show the actions instead of only on hover.
+   * When to show or hide the actions.
    */
-  alwaysShowActions?: boolean;
+  showActions?: boolean | "hover";
+
+  /**
+   * TODO: Add description
+   */
+  overrides?: Partial<CommentOverrides & ComposerOverrides>;
 
   /**
    * @internal
@@ -64,7 +70,8 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
     {
       comment,
       indentBody = true,
-      alwaysShowActions,
+      showActions = "hover",
+      overrides,
       additionalActions,
       additionalActionsClassName,
       className,
@@ -72,8 +79,9 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
     },
     forwardedRef
   ) => {
-    const { useDeleteComment } = useCommentsContext();
+    const { useDeleteComment, useOverrides } = useCommentsContext();
     const deleteComment = useDeleteComment();
+    const $ = useOverrides(overrides);
     const [isEditing, setEditing] = useState(false);
     const [isMoreOpen, setMoreOpen] = useState(false);
 
@@ -107,10 +115,11 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
           className={classNames(
             "lb-root lb-comment",
             indentBody && "lb-comment:indent-body",
-            alwaysShowActions && "lb-comment:always-show-actions",
+            showActions === "hover" && "lb-comment:show-actions-hover",
             className
           )}
           data-dropdown-open={isMoreOpen ? "" : undefined}
+          dir={$.dir}
           {...props}
           ref={forwardedRef}
         >
@@ -128,13 +137,15 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
                   {comment.editedAt && (
                     <>
                       {" "}
-                      <span className="lb-comment-date-edited">(edited)</span>
+                      <span className="lb-comment-date-edited">
+                        {$.COMMENT_EDITED}
+                      </span>
                     </>
                   )}
                 </span>
               </span>
             </div>
-            {!isEditing && (
+            {showActions && !isEditing && (
               <div
                 className={classNames(
                   "lb-comment-actions",
@@ -154,7 +165,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
                         disabled={!comment.body}
                       >
                         <EditIcon className="lb-dropdown-item-icon" />
-                        Edit comment
+                        {$.COMMENT_EDIT}
                       </DropdownMenu.Item>
                       <DropdownMenu.Item
                         className="lb-dropdown-item"
@@ -162,15 +173,15 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
                         disabled={!comment.body}
                       >
                         <DeleteIcon className="lb-dropdown-item-icon" />
-                        Delete comment
+                        {$.COMMENT_DELETE}
                       </DropdownMenu.Item>
                     </>
                   }
                 >
-                  <Tooltip content="More">
+                  <Tooltip content={$.COMMENT_MORE}>
                     <DropdownTrigger
                       className="lb-button lb-comment-action"
-                      aria-label="More"
+                      aria-label={$.COMMENT_MORE}
                     >
                       <EllipsisIcon className="lb-button-icon" />
                     </DropdownTrigger>
@@ -184,11 +195,15 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
               className="lb-comment-composer"
               onCommentSubmit={handleEditSubmit}
               initialValue={comment.body}
+              placeholder={$.COMMENT_EDIT_COMPOSER_PLACEHOLDER}
               autoFocus
               showLogo={false}
               actions={
                 <>
-                  <Tooltip content="Cancel" aria-label="Cancel">
+                  <Tooltip
+                    content={$.COMMENT_EDIT_COMPOSER_CANCEL}
+                    aria-label={$.COMMENT_EDIT_COMPOSER_CANCEL}
+                  >
                     <button
                       type="button"
                       className="lb-button lb-composer-action"
@@ -197,16 +212,22 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
                       <CrossIcon className="lb-button-icon" />
                     </button>
                   </Tooltip>
-                  <Tooltip content="Save comment" shortcut={<kbd>↵</kbd>}>
+                  <Tooltip
+                    content={$.COMMENT_EDIT_COMPOSER_SAVE}
+                    shortcut={<kbd>↵</kbd>}
+                  >
                     <ComposerPrimitive.Submit
                       className="lb-button lb-button:primary lb-composer-action"
-                      aria-label="Save comment"
+                      aria-label={$.COMMENT_EDIT_COMPOSER_SAVE}
                     >
                       <CheckIcon className="lb-button-icon" />
                     </ComposerPrimitive.Submit>
                   </Tooltip>
                 </>
               }
+              overrides={{
+                COMPOSER_PLACEHOLDER: $.COMMENT_EDIT_COMPOSER_PLACEHOLDER,
+              }}
             />
           ) : (
             <CommentPrimitive.Body

@@ -10,8 +10,8 @@ alwaysShowAllNavigationLevels: false
 
 ### createCommentsContext
 
-Creates a set of typed hooks and methods. We recommend using it in
-`liveblocks.config.ts` and re-exporting your typed hooks and methods like below.
+Creates a [`CommentsProvider`][] and a set of typed hooks. We recommend using it
+in `liveblocks.config.ts` and re-exporting your typed hooks like below.
 
 ```tsx file="liveblocks.config.ts"
 import { createClient } from "@liveblocks/client";
@@ -24,13 +24,13 @@ const client = createClient({
 // Optionally, ThreadMetadata represents metadata on each thread.
 // Must only contain scalar values.
 type ThreadMetadata = {
-  status: "open" | "in-progress" | "resolved";
+  resolved?: boolean;
 };
 
 export const {
+  CommentsProvider,
   useThreads,
-  createThread,
-  /* ...all the other hooks and methods you’re using... */
+  /* ...all the other hooks you’re using... */
 } = createCommentsContext<ThreadMetadata>();
 ```
 
@@ -38,8 +38,7 @@ export const {
 
 Anything that is linked to a user (comments, mentions, etc.) will reference
 their ID. To display user information based on IDs, you can provide a resolver
-function to the `resolveUser` option in
-[`createCommentContext`](#createCommentContext).
+function to the `resolveUser` option in [`createCommentContext`][].
 
 ```tsx file="liveblocks.config.ts"
 // ...
@@ -52,39 +51,48 @@ export const {
 Once that’s done, you can use the [`useUser`](#useUser) hook to get a user
 object from their ID.
 
-The resulting user object can be typed based on the existing `UserMeta` type. If
-you were already using a custom `UserMeta` type with Presence, you can use it
-here as well.
+The resulting user object can be typed based on a `UserInfo` type.
 
 ```tsx file="liveblocks.config.ts"
 // ...
 
-// Optionally, UserMeta represents metadata on each User.
-type UserMeta = {
-  info: {
-    name: string;
-    avatar: string;
-    }
-  }
+// Optionally, UserInfo represents metadata on each User.
+type UserInfo = {
+  name: string;
+  avatar?: string;
 };
 
 export const {
   /* ... */
-} = createCommentsContext<ThreadMetadata, UserMeta>({
-  resolveUser: getUserInfoFromDb,
+} = createCommentsContext<ThreadMetadata, UserInfo>({
+  resolveUser: (userId) => __getUserFromDB__(userId),
 });
+```
+
+### CommentsProvider
+
+Makes comments from a room available in the component hierarchy below. Multiple
+instances with the same `roomId` can coexist in the same hierarchy.
+
+```tsx
+import { CommentsProvider } from "./liveblocks.config";
+
+function AppRoot() {
+  return <CommentsProvider roomId="my-room">{/* children */}</CommentsProvider>;
+}
 ```
 
 ## Hooks
 
 ### useThreads
 
-Returns the threads within a given room.
+Returns the threads within the current room, from the nearest
+[`CommentsProvider`][].
 
 ```tsx
 import { useThreads } from "./liveblocks.config";
 
-const { threads, error, isLoading } = useThreads("room-id");
+const { threads, error, isLoading } = useThreads();
 ```
 
 ### useUser
@@ -105,6 +113,57 @@ To use `useUser`, you should provide a resolver function to the
 
 </Banner>
 
+### useCreateThread
+
+Returns a function that creates a thread with an initial comment, and optionally
+some metadata.
+
+```tsx
+const createThread = useCreateThread();
+const thread = createThread("room-id", { body: {}, metadata: {} });
+```
+
+### useEditThread
+
+Returns a function that edits a thread’s metadata.
+
+```tsx
+const editThread = useEditThread();
+const thread = editThread("room-id", { threadId: "th_xxx", metadata: {} });
+```
+
+### useCreateComment
+
+Returns a function that adds a comment to a thread.
+
+```tsx
+const createComment = useCreateComment();
+const comment = createComment("room-id", { threadId: "th_xxx", body: {} });
+```
+
+### useEditComment
+
+Returns a function that edits a comment’s body.
+
+```tsx
+const editComment = useEditComment();
+const comment = editComment("room-id", {
+  threadId: "th_xxx",
+  commentId: "cm_xxx",
+  body: {},
+});
+```
+
+### useDeleteComment
+
+Returns a function that deletes a comment. If it is the last non-deleted
+comment, the thread also gets deleted.
+
+```tsx
+const deleteComment = useDeleteComment();
+deleteComment("room-id", { threadId: "th_xxx", commentId: "cm_xxx" });
+```
+
 ### useErrorListener
 
 Listen to potential errors when creating and editing threads/comments.
@@ -117,59 +176,19 @@ useErrorListener((error) => {
 
 ### useComposer
 
-Returns states and methods related to the composer.
+Returns states and methods related to the composer. Can only be used within
+`Composer.Form`.
 
 ```tsx
-import { useComposer } from "@liveblocks/react-comments";
-
 const { isValid, submit } = useComposer();
 ```
 
-## Methods
+### useRoomId
 
-### createThread
-
-Creates a thread with an initial comment, and optionally some metadata.
+Returns the current room ID, from the nearest [`CommentsProvider`][].
 
 ```tsx
-const thread = createThread("room-id", { body: {}, metadata: {} });
-```
-
-### editThread
-
-Edits a thread’s metadata.
-
-```tsx
-const thread = editThread("room-id", { threadId: "th_xxx", metadata: {} });
-```
-
-### createComment
-
-Adds a comment to a thread.
-
-```tsx
-const comment = createComment("room-id", { threadId: "th_xxx", body: {} });
-```
-
-### editComment
-
-Edits a comment’s body.
-
-```tsx
-const comment = editComment("room-id", {
-  threadId: "th_xxx",
-  commentId: "cm_xxx",
-  body: {},
-});
-```
-
-### deleteComment
-
-Deletes a comment. If it is the last non-deleted comment, the thread also gets
-deleted.
-
-```tsx
-deleteComment("room-id", { threadId: "th_xxx", commentId: "cm_xxx" });
+const roomId = useRoomId();
 ```
 
 ## Components
@@ -295,6 +314,7 @@ Displays the composer’s editor.
 | `initialValue`              | `CommentBody \| undefined`                                                           | The editor’s initial value.                                                                            |
 | `placeholder`               | `string \| undefined`                                                                | The text to display when the editor is empty.                                                          |
 | `disabled`                  | `boolean \| undefined`                                                               | Whether the editor is disabled.                                                                        |
+| `dir`                       | `"ltr" \| "rtl" \| undefined`                                                        | The reading direction of the editor and related elements.                                              |
 | `renderMention`             | <code>ComponentType&lt;ComposerRenderMentionProps&gt; \| undefined</code>            | The component used to render mentions.<br/>Defaults to the mention’s `userId` prefixed by an @.        |
 | `renderMentionSuggestions`  | <code>ComponentType&lt;ComposerRenderMentionSuggestionsProps&gt; \| undefined</code> | The component used to render mention suggestions.<br/>Defaults to a list of the suggestions’ `userId`. |
 | `resolveMentionSuggestions` | <code>(text: string) => Promise&lt;string[]&gt; \| undefined</code>                  | An asynchronous function to get a list of suggested user IDs from a string.                            |
@@ -468,3 +488,8 @@ absolute formatting for older ones.
 | `asChild`  | `boolean \| undefined`                            | Replace the rendered element by the one passed as a child.<br/>Defaults to `false`.                                                         |
 
 </Table>
+
+[`createCommentContext`]:
+  /docs/api-reference/liveblocks-react-comments#createCommentContext
+[`commentsprovider`]:
+  /docs/api-reference/liveblocks-react-comments#CommentsProvider
