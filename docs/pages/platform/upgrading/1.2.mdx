@@ -96,9 +96,9 @@ with `authorize`, is still supported but will eventually be deprecated.
 ## Access tokens [#access-tokens]
 
 Access tokens are the new recommended way to authenticate, because they’re easy
-to manage from your custom back end. They follow the analogy of a “hotel room
-key card”. Anyone that has a key card can enter any room that the card gives
-access to. It’s easy to give out these key cards right from your back end.
+to manage from your custom back end. They follow the analogy of a _hotel key
+card_. Anyone that has a key card can enter any room that the card gives access
+to. It’s easy to give out these key cards right from your back end.
 
 ### Upgrading to access tokens [#upgrade-to-access-tokens]
 
@@ -305,8 +305,8 @@ room, via [Create room](/docs/api-reference/rest-api-endpoints#post-rooms) or
 [Update room](/docs/api-reference/rest-api-endpoints#post-rooms-roomId) APIs? If
 so, ID tokens may work best for you.
 
-ID tokens follow the analogy of a “membership card”. Anyone with that membership
-card can try to enter a room, but your permissions will get checked at the door.
+ID tokens follow the analogy of a _membership card_. Anyone with that membership
+card can try to enter a room, but your permissions will be checked at the door.
 This approach to permissions is most powerful because it can be set up very
 finely, but it comes at the cost of having to keep those permissions
 programmatically in sync with Liveblocks. We recommend it for advanced use cases
