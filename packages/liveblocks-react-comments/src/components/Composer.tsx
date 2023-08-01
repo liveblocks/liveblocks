@@ -142,6 +142,7 @@ function ComposerMentionSuggestions({
       <ComposerPrimitive.SuggestionsList className="lb-composer-suggestions-list lb-composer-mention-suggestions-list">
         {userIds.map((userId) => (
           <ComposerPrimitive.SuggestionsListItem
+            key={userId}
             className="lb-composer-suggestions-list-item lb-composer-mention-suggestion"
             value={userId}
           >
@@ -244,6 +245,7 @@ export const Composer = forwardRef<HTMLFormElement, ComposerProps>(
             autoFocus={autoFocus}
             renderMention={ComposerMention}
             renderMentionSuggestions={ComposerMentionSuggestions}
+            dir={$.dir}
           />
           <div className="lb-composer-footer">
             <div className="lb-composer-editor-actions">

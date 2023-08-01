@@ -83,6 +83,7 @@ import type {
   ComposerBody as ComposerBodyData,
   ComposerBodyMarks,
   ComposerBodyMention,
+  Direction,
 } from "../types";
 import { isKey } from "../utils/is-key";
 import { Portal } from "../utils/Portal";
@@ -142,6 +143,11 @@ export interface ComposerSuggestionsListItemProps
 }
 
 export interface ComposerEditorProps extends ComponentPropsWithoutRef<"div"> {
+  /**
+   * TODO: Add description
+   */
+  dir?: Direction;
+
   /**
    * The editor's initial value.
    */
@@ -230,6 +236,7 @@ export type ComposerContext = {
 };
 
 export interface ComposerMentionSuggestionsWrapperProps {
+  dir?: ComposerEditorProps["dir"];
   id: string;
   itemId: (userId?: string) => string | undefined;
   mentionDraft: MentionDraft;
@@ -260,6 +267,7 @@ type ComposerEditorContext = {
 };
 
 type ComposerSuggestionsContext = {
+  dir?: Direction;
   id: string;
   itemId: (value?: string) => string | undefined;
   placement: Placement;
@@ -367,6 +375,13 @@ function focusSlateReactEditor(node: HTMLDivElement) {
   }
 }
 
+function getPlacementFromPosition(
+  position: SuggestionsPosition,
+  direction: Direction = "ltr"
+): Placement {
+  return `${position}-${direction === "rtl" ? "end" : "start"}`;
+}
+
 function getSideAndAlignFromPlacement(placement: Placement) {
   const [side, align = "center"] = placement.split("-");
 
@@ -453,6 +468,7 @@ function ComposerMentionSuggestionsWrapper({
   onItemSelect,
   position = MENTION_SUGGESTIONS_POSITION,
   inset = MENTION_SUGGESTIONS_INSET,
+  dir,
   children: RenderMentionSuggestions = ComposerDefaultRenderMentionSuggestions,
 }: ComposerMentionSuggestionsWrapperProps) {
   const editor = useSlateStatic();
@@ -491,11 +507,11 @@ function ComposerMentionSuggestionsWrapper({
     return {
       strategy: "fixed",
       open: Boolean(mentionDraft?.range && isFocused),
-      placement: `${position}-start` as Placement,
+      placement: getPlacementFromPosition(position, dir),
       middleware: floatingMiddlewares,
       whileElementsMounted: autoUpdate,
     };
-  }, [floatingMiddlewares, isFocused, position, mentionDraft?.range]);
+  }, [floatingMiddlewares, isFocused, position, dir, mentionDraft?.range]);
   const {
     refs: { setReference, setFloating },
     strategy,
@@ -531,6 +547,7 @@ function ComposerMentionSuggestionsWrapper({
         setSelectedValue: setSelectedUserId,
         onItemSelect,
         placement,
+        dir,
         ref: contentRef,
       }}
     >
@@ -644,7 +661,7 @@ const ComposerSuggestions = forwardRef<
   HTMLDivElement,
   ComposerSuggestionsProps
 >(({ children, style, asChild, ...props }, forwardedRef) => {
-  const { ref, placement } = useComposerSuggestionsContext(
+  const { ref, placement, dir } = useComposerSuggestionsContext(
     COMPOSER_SUGGESTIONS_NAME
   );
   const [side, align] = useMemo(
@@ -656,6 +673,7 @@ const ComposerSuggestions = forwardRef<
 
   return (
     <Component
+      dir={dir}
       {...props}
       data-side={side}
       data-align={align}
@@ -777,6 +795,7 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
       autoFocus,
       renderMention,
       renderMentionSuggestions,
+      dir,
       ...props
     },
     forwardedRef
@@ -1010,7 +1029,6 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
     useEffect(() => {
       if (autoFocus) {
         setTimeout(() => {
-          console.log("autoFocus", ReactEditor.toDOMNode(editor, editor));
           focusSlateReactEditor(
             ReactEditor.toDOMNode(editor, editor) as HTMLDivElement
           );
@@ -1025,6 +1043,7 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
         onChange={handleChange}
       >
         <Editable
+          dir={dir}
           enterKeyHint={mentionDraft ? "enter" : "send"}
           autoCapitalize="sentences"
           aria-label="Comment body"
@@ -1044,6 +1063,7 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
         />
         {mentionDraft && (
           <ComposerMentionSuggestionsWrapper
+            dir={dir}
             mentionDraft={mentionDraft}
             selectedUserId={selectedMentionSuggestionUserId}
             setSelectedUserId={setSelectedMentionSuggestionUserId}

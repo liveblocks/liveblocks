@@ -1,6 +1,8 @@
+import type { Direction } from "./types";
+
 export interface LocalizationOverrides {
   locale: string;
-  dir: "ltr" | "rtl";
+  dir: Direction;
 }
 
 export interface CommentOverrides {

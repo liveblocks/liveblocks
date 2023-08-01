@@ -1,5 +1,7 @@
 import type { ComponentPropsWithoutRef, ElementType } from "react";
 
+export type Direction = "ltr" | "rtl";
+
 export type SlotProp = {
   asChild?: boolean;
 };
