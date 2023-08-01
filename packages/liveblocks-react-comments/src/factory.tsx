@@ -73,7 +73,22 @@ type CommentsContextBundle<
   TUserInfo extends BaseUserInfo,
 > = {
   /**
-   * TODO: Add description
+   * Makes comments from a room available in the component hierarchy below.
+   * Multiple instances with the same `roomId` can coexist in the same hierarchy.
+   *
+   * @example
+   * <CommentsProvider roomId="my-room">
+   *   <MyCommentsSidebar />
+   * </CommentsProvider>
+   *
+   * @example
+   * <CommentsProvider roomId="my-room">
+   *   <MyFloatingComments />
+   * </CommentsProvider>
+   * ...
+   * <CommentsProvider roomId="my-room">
+   *   <MyCommentsSidebar />
+   * </CommentsProvider>
    */
   CommentsProvider: NamedExoticComponent<CommentsProviderProps>;
 

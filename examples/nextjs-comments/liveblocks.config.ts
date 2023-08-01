@@ -1,6 +1,5 @@
 import { createClient } from "@liveblocks/client";
 import { createCommentsContext } from "@liveblocks/react-comments";
-import { NAMES } from "./src/constants";
 // TODO: It needs to be exported from @liveblocks/client or @liveblocks/react-comments
 import { BaseUserInfo } from "@liveblocks/core";
 
@@ -43,12 +42,7 @@ async function resolveMentionSuggestions(text: string) {
 
 export const {
   CommentsProvider,
-  suspense: { useThreads, useUser, useRoomId },
-  useCreateComment,
-  useEditComment,
-  useDeleteComment,
-  useCreateThread,
-  useEditThreadMetadata,
+  suspense: { useThreads },
 } = createCommentsContext<ThreadMetadata>(client, {
   resolveUser,
   resolveMentionSuggestions,

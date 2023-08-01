@@ -10,8 +10,8 @@ alwaysShowAllNavigationLevels: false
 
 ### createCommentsContext
 
-Creates a set of typed hooks and methods. We recommend using it in
-`liveblocks.config.ts` and re-exporting your typed hooks and methods like below.
+Creates a [`CommentsProvider`][] and a set of typed hooks. We recommend using it
+in `liveblocks.config.ts` and re-exporting your typed hooks like below.
 
 ```tsx file="liveblocks.config.ts"
 import { createClient } from "@liveblocks/client";
@@ -24,13 +24,13 @@ const client = createClient({
 // Optionally, ThreadMetadata represents metadata on each thread.
 // Must only contain scalar values.
 type ThreadMetadata = {
-  status: "open" | "in-progress" | "resolved";
+  resolved?: boolean;
 };
 
 export const {
+  CommentsProvider,
   useThreads,
-  createThread,
-  /* ...all the other hooks and methods you’re using... */
+  /* ...all the other hooks you’re using... */
 } = createCommentsContext<ThreadMetadata>();
 ```
 
@@ -38,8 +38,7 @@ export const {
 
 Anything that is linked to a user (comments, mentions, etc.) will reference
 their ID. To display user information based on IDs, you can provide a resolver
-function to the `resolveUser` option in
-[`createCommentContext`](#createCommentContext).
+function to the `resolveUser` option in [`createCommentContext`][].
 
 ```tsx file="liveblocks.config.ts"
 // ...
@@ -52,39 +51,48 @@ export const {
 Once that’s done, you can use the [`useUser`](#useUser) hook to get a user
 object from their ID.
 
-The resulting user object can be typed based on the existing `UserMeta` type. If
-you were already using a custom `UserMeta` type with Presence, you can use it
-here as well.
+The resulting user object can be typed based on a `UserInfo` type.
 
 ```tsx file="liveblocks.config.ts"
 // ...
 
-// Optionally, UserMeta represents metadata on each User.
-type UserMeta = {
-  info: {
-    name: string;
-    avatar: string;
-    }
-  }
+// Optionally, UserInfo represents metadata on each User.
+type UserInfo = {
+  name: string;
+  avatar?: string;
 };
 
 export const {
   /* ... */
-} = createCommentsContext<ThreadMetadata, UserMeta>({
+} = createCommentsContext<ThreadMetadata, UserInfo>({
   resolveUser: getUserInfoFromDb,
 });
+```
+
+### CommentsProvider
+
+Makes comments from a room available in the component hierarchy below. Multiple
+instances with the same `roomId` can coexist in the same hierarchy.
+
+```tsx
+import { CommentsProvider } from "./liveblocks.config";
+
+function AppRoot() {
+  return <CommentsProvider roomId="my-room">{/* children */}</CommentsProvider>;
+}
 ```
 
 ## Hooks
 
 ### useThreads
 
-Returns the threads within a given room.
+Returns the threads within the current room, from the nearest
+[`CommentsProvider`][].
 
 ```tsx
 import { useThreads } from "./liveblocks.config";
 
-const { threads, error, isLoading } = useThreads("room-id");
+const { threads, error, isLoading } = useThreads();
 ```
 
 ### useUser
@@ -468,3 +476,8 @@ absolute formatting for older ones.
 | `asChild`  | `boolean \| undefined`                            | Replace the rendered element by the one passed as a child.<br/>Defaults to `false`.                                                         |
 
 </Table>
+
+[`createCommentContext`]:
+  /docs/api-reference/liveblocks-react-comments#createCommentContext
+[`commentsprovider`]:
+  /docs/api-reference/liveblocks-react-comments#CommentsProvider
