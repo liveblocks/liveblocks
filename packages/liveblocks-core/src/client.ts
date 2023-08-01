@@ -332,13 +332,12 @@ function buildLiveblocksHttpSendEndpoint(
   )}/send-message`;
 }
 
-// TODO: Return prod url
 function getWsEventServerEndpoint(
   options: ClientOptions & { eventsServerEndpoint?: string }
 ): string {
-  if (typeof options.eventsServerEndpoint !== "string") {
-    throw new Error("Missing events server endpoint");
+  if (typeof options.eventsServerEndpoint === "string") {
+    return options.eventsServerEndpoint;
   }
 
-  return options.eventsServerEndpoint;
+  return `wss://events.liveblocks.io/v1`;
 }

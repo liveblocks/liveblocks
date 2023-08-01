@@ -285,16 +285,11 @@ export function createCommentsContext<
   client: Client,
   options?: Options<TUserInfo>
 ): CommentsContextBundle<TThreadMetadata, TUserInfo> {
-  const { resolveUser, resolveMentionSuggestions, serverEndpoint } =
-    options ?? {};
-
-  if (typeof serverEndpoint !== "string") {
-    throw new Error("Missing comments server endpoint.");
-  }
+  const { resolveUser, resolveMentionSuggestions } = options ?? {};
 
   const errorEventSource = makeEventSource<CommentsApiError<TThreadMetadata>>();
   const restApi = createCommentsApi<TThreadMetadata>(client, {
-    serverEndpoint,
+    serverEndpoint: `https://api.liveblocks.io/v2`,
   });
 
   const usersCache = resolveUser
