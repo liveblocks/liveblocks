@@ -14,7 +14,7 @@ import { Tooltip, TooltipProvider } from "./Tooltip";
 
 export interface ThreadProps
   extends ComponentPropsWithoutRef<"div">,
-    Pick<CommentProps, "indentBody" | "alwaysShowActions"> {
+    Pick<CommentProps, "indentBody" | "showActions"> {
   /**
    * The thread to display.
    */
@@ -31,7 +31,7 @@ export const Thread = forwardRef<HTMLDivElement, ThreadProps>(
     {
       thread,
       indentBody,
-      alwaysShowActions,
+      showActions = "hover",
       showComposer,
       className,
       ...props
@@ -53,7 +53,7 @@ export const Thread = forwardRef<HTMLDivElement, ThreadProps>(
         <div
           className={classNames(
             "lb-root lb-thread",
-            alwaysShowActions && "lb-thread:always-show-actions",
+            showActions === "hover" && "lb-thread:show-actions-hover",
             className
           )}
           data-resolved={thread.metadata.resolved ? "" : undefined}
@@ -71,7 +71,7 @@ export const Thread = forwardRef<HTMLDivElement, ThreadProps>(
                   className="lb-thread-comment"
                   comment={comment}
                   indentBody={indentBody}
-                  alwaysShowActions={alwaysShowActions}
+                  showActions={showActions}
                   additionalActionsClassName={
                     isFirstComment ? "lb-thread-actions" : undefined
                   }

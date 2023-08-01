@@ -35,9 +35,9 @@ export interface CommentProps extends ComponentPropsWithoutRef<"div"> {
   indentBody?: boolean;
 
   /**
-   * Whether to always show the actions instead of only on hover.
+   * When to show or hide the actions.
    */
-  alwaysShowActions?: boolean;
+  showActions?: boolean | "hover";
 
   /**
    * @internal
@@ -64,7 +64,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
     {
       comment,
       indentBody = true,
-      alwaysShowActions,
+      showActions = "hover",
       additionalActions,
       additionalActionsClassName,
       className,
@@ -107,7 +107,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
           className={classNames(
             "lb-root lb-comment",
             indentBody && "lb-comment:indent-body",
-            alwaysShowActions && "lb-comment:always-show-actions",
+            showActions === "hover" && "lb-comment:show-actions-hover",
             className
           )}
           data-dropdown-open={isMoreOpen ? "" : undefined}
@@ -134,7 +134,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
                 </span>
               </span>
             </div>
-            {!isEditing && (
+            {showActions && !isEditing && (
               <div
                 className={classNames(
                   "lb-comment-actions",
