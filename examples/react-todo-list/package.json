@@ -5,14 +5,13 @@
   "private": true,
   "scripts": {
     "dev": "react-scripts start",
-    "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
   "dependencies": {
-    "@liveblocks/client": "^1.1.6",
-    "@liveblocks/react": "^1.1.6",
+    "@liveblocks/client": "^1.2.0",
+    "@liveblocks/react": "^1.2.0",
     "react": "^18.1.0",
     "react-dom": "^18.1.0",
     "react-scripts": "^5.0.1"
