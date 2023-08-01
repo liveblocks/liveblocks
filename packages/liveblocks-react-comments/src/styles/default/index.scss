@@ -275,6 +275,7 @@
 }
 
 // TODO: Support exit animations like Radix' Dropdown and Tooltip with data-state="closed"
+// TODO: Support RTL placement
 .lb-composer-suggestions {
   &[data-side="top"] {
     animation-name: lb-animation-slide-up;
@@ -380,8 +381,7 @@
 
 .lb-avatar-image {
   position: absolute;
-  top: 0;
-  left: 0;
+  inset: 0;
   object-fit: cover;
   width: 100%;
   height: 100%;
@@ -608,8 +608,8 @@
 
   & .lb-comment-avatar {
     position: absolute;
-    top: 0;
-    left: 0;
+    inset-block-start: 0;
+    inset-inline-start: 0;
   }
 
   & .lb-comment-info-labels {

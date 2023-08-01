@@ -6,11 +6,16 @@ import React, { forwardRef, useCallback } from "react";
 import { useCommentsContext } from "../factory";
 import { ResolveIcon } from "../icons/resolve";
 import { ResolvedIcon } from "../icons/resolved";
+import type {
+  CommentOverrides,
+  ComposerOverrides,
+  ThreadOverrides,
+} from "../overrides";
 import { classNames } from "../utils/class-names";
 import type { CommentProps } from "./Comment";
 import { Comment } from "./Comment";
 import { Composer } from "./Composer";
-import { Tooltip, TooltipProvider } from "./Tooltip";
+import { Tooltip, TooltipProvider } from "./internal/Tooltip";
 
 export interface ThreadProps
   extends ComponentPropsWithoutRef<"div">,
@@ -24,6 +29,11 @@ export interface ThreadProps
    * Whether to show the composer to reply to the thread.
    */
   showComposer?: boolean;
+
+  /**
+   * TODO: Add description
+   */
+  overrides?: Partial<ThreadOverrides & CommentOverrides & ComposerOverrides>;
 }
 
 export const Thread = forwardRef<HTMLDivElement, ThreadProps>(
@@ -33,13 +43,15 @@ export const Thread = forwardRef<HTMLDivElement, ThreadProps>(
       indentBody,
       showActions = "hover",
       showComposer,
+      overrides,
       className,
       ...props
     },
     forwardedRef
   ) => {
-    const { useEditThreadMetadata } = useCommentsContext();
+    const { useEditThreadMetadata, useOverrides } = useCommentsContext();
     const editThreadMetadata = useEditThreadMetadata();
+    const $ = useOverrides(overrides);
 
     const handleResolvedChange = useCallback(
       (resolved: boolean) => {
@@ -57,6 +69,7 @@ export const Thread = forwardRef<HTMLDivElement, ThreadProps>(
             className
           )}
           data-resolved={thread.metadata.resolved ? "" : undefined}
+          dir={$.dir}
           {...props}
           ref={forwardedRef}
         >
@@ -80,8 +93,8 @@ export const Thread = forwardRef<HTMLDivElement, ThreadProps>(
                       <Tooltip
                         content={
                           thread.metadata.resolved
-                            ? "Re-open thread"
-                            : "Resolve thread"
+                            ? $.THREAD_UNRESOLVE
+                            : $.THREAD_RESOLVE
                         }
                       >
                         <TogglePrimitive.Root
@@ -90,8 +103,8 @@ export const Thread = forwardRef<HTMLDivElement, ThreadProps>(
                           onPressedChange={handleResolvedChange}
                           aria-label={
                             thread.metadata.resolved
-                              ? "Re-open thread"
-                              : "Resolve thread"
+                              ? $.THREAD_UNRESOLVE
+                              : $.THREAD_RESOLVE
                           }
                         >
                           {thread.metadata.resolved ? (
@@ -109,7 +122,14 @@ export const Thread = forwardRef<HTMLDivElement, ThreadProps>(
           </div>
           {/* TODO: Change placeholder and button label to indicate that it's a reply */}
           {showComposer && (
-            <Composer className="lb-thread-composer" threadId={thread.id} />
+            <Composer
+              className="lb-thread-composer"
+              threadId={thread.id}
+              overrides={{
+                COMPOSER_PLACEHOLDER: $.THREAD_COMPOSER_PLACEHOLDER,
+                COMPOSER_SEND: $.THREAD_COMPOSER_SEND,
+              }}
+            />
           )}
         </div>
       </TooltipProvider>

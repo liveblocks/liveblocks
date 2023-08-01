@@ -37,6 +37,7 @@ import type {
 import { createCommentsRoom } from "./CommentsRoom";
 import type { CommentsApiError } from "./errors";
 import { useAsyncCache } from "./lib/use-async-cache";
+import { defaultOverrides, type Overrides } from "./overrides";
 import type { ComposerContext } from "./primitives/Composer";
 import { useComposer } from "./primitives/Composer";
 import { useDebounce } from "./utils/use-debounce";
@@ -66,6 +67,7 @@ type UserStateSuspense<T extends BaseUserInfo> = Resolve<
 
 type CommentsProviderProps = PropsWithChildren<{
   roomId: string;
+  overrides?: Partial<Overrides>;
 }>;
 
 type CommentsContextBundle<
@@ -235,6 +237,7 @@ type CommentsContext<
     CommentsContextBundle<TThreadMetadata, TUserInfo>,
     "CommentsProvider"
   > & {
+    useOverrides: (overrides?: Partial<Overrides>) => Overrides;
     useMentionSuggestions: (value: string | undefined) => string[] | undefined;
     roomId: string;
   }
@@ -372,19 +375,6 @@ export function createCommentsContext<
     return commentsRoom.useThreadsSuspense();
   }
 
-  function useMentionSuggestions(value: string | undefined) {
-    const debouncedValue = useDebounce(value, MENTION_SUGGESTIONS_DEBOUNCE);
-    const { data } = useAsyncCache(
-      mentionSuggestionsCache,
-      debouncedValue ?? null,
-      {
-        keepPreviousDataWhileLoading: true,
-      }
-    );
-
-    return data;
-  }
-
   function useUser(userId: string) {
     const state = useAsyncCache(usersCache, userId);
 
@@ -490,8 +480,29 @@ export function createCommentsContext<
     },
   };
 
+  function useMentionSuggestions(value: string | undefined) {
+    const debouncedValue = useDebounce(value, MENTION_SUGGESTIONS_DEBOUNCE);
+    const { data } = useAsyncCache(
+      mentionSuggestionsCache,
+      debouncedValue ?? null,
+      {
+        keepPreviousDataWhileLoading: true,
+      }
+    );
+
+    return data;
+  }
+
   const CommentsProvider = memo<CommentsProviderProps>(
-    ({ roomId, children }) => {
+    ({ roomId, overrides: globalOverrides, children }) => {
+      const useOverrides = useMemo(() => {
+        return (overrides?: Partial<Overrides>) => ({
+          ...defaultOverrides,
+          ...globalOverrides,
+          ...overrides,
+        });
+      }, [globalOverrides]);
+
       return (
         <CommentsContext.Provider
           value={{
@@ -500,6 +511,7 @@ export function createCommentsContext<
               BaseUserInfo
             >),
             useMentionSuggestions,
+            useOverrides,
             roomId,
           }}
         >
