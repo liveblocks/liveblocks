@@ -144,7 +144,7 @@ export interface ComposerSuggestionsListItemProps
 
 export interface ComposerEditorProps extends ComponentPropsWithoutRef<"div"> {
   /**
-   * TODO: Add description
+   * The reading direction of the editor and related elements.
    */
   dir?: Direction;
 

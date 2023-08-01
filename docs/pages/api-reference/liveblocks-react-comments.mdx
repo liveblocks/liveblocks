@@ -65,7 +65,7 @@ type UserInfo = {
 export const {
   /* ... */
 } = createCommentsContext<ThreadMetadata, UserInfo>({
-  resolveUser: getUserInfoFromDb,
+  resolveUser: (userId) => __getUserFromDB__(userId),
 });
 ```
 
@@ -113,6 +113,57 @@ To use `useUser`, you should provide a resolver function to the
 
 </Banner>
 
+### useCreateThread
+
+Returns a function that creates a thread with an initial comment, and optionally
+some metadata.
+
+```tsx
+const createThread = useCreateThread();
+const thread = createThread("room-id", { body: {}, metadata: {} });
+```
+
+### useEditThread
+
+Returns a function that edits a thread’s metadata.
+
+```tsx
+const editThread = useEditThread();
+const thread = editThread("room-id", { threadId: "th_xxx", metadata: {} });
+```
+
+### useCreateComment
+
+Returns a function that adds a comment to a thread.
+
+```tsx
+const createComment = useCreateComment();
+const comment = createComment("room-id", { threadId: "th_xxx", body: {} });
+```
+
+### useEditComment
+
+Returns a function that edits a comment’s body.
+
+```tsx
+const editComment = useEditComment();
+const comment = editComment("room-id", {
+  threadId: "th_xxx",
+  commentId: "cm_xxx",
+  body: {},
+});
+```
+
+### useDeleteComment
+
+Returns a function that deletes a comment. If it is the last non-deleted
+comment, the thread also gets deleted.
+
+```tsx
+const deleteComment = useDeleteComment();
+deleteComment("room-id", { threadId: "th_xxx", commentId: "cm_xxx" });
+```
+
 ### useErrorListener
 
 Listen to potential errors when creating and editing threads/comments.
@@ -125,59 +176,19 @@ useErrorListener((error) => {
 
 ### useComposer
 
-Returns states and methods related to the composer.
+Returns states and methods related to the composer. Can only be used within
+`Composer.Form`.
 
 ```tsx
-import { useComposer } from "@liveblocks/react-comments";
-
 const { isValid, submit } = useComposer();
 ```
 
-## Methods
+### useRoomId
 
-### createThread
-
-Creates a thread with an initial comment, and optionally some metadata.
+Returns the current room ID, from the nearest [`CommentsProvider`][].
 
 ```tsx
-const thread = createThread("room-id", { body: {}, metadata: {} });
-```
-
-### editThread
-
-Edits a thread’s metadata.
-
-```tsx
-const thread = editThread("room-id", { threadId: "th_xxx", metadata: {} });
-```
-
-### createComment
-
-Adds a comment to a thread.
-
-```tsx
-const comment = createComment("room-id", { threadId: "th_xxx", body: {} });
-```
-
-### editComment
-
-Edits a comment’s body.
-
-```tsx
-const comment = editComment("room-id", {
-  threadId: "th_xxx",
-  commentId: "cm_xxx",
-  body: {},
-});
-```
-
-### deleteComment
-
-Deletes a comment. If it is the last non-deleted comment, the thread also gets
-deleted.
-
-```tsx
-deleteComment("room-id", { threadId: "th_xxx", commentId: "cm_xxx" });
+const roomId = useRoomId();
 ```
 
 ## Components
@@ -303,6 +314,7 @@ Displays the composer’s editor.
 | `initialValue`              | `CommentBody \| undefined`                                                           | The editor’s initial value.                                                                            |
 | `placeholder`               | `string \| undefined`                                                                | The text to display when the editor is empty.                                                          |
 | `disabled`                  | `boolean \| undefined`                                                               | Whether the editor is disabled.                                                                        |
+| `dir`                       | `"ltr" \| "rtl" \| undefined`                                                        | The reading direction of the editor and related elements.                                              |
 | `renderMention`             | <code>ComponentType&lt;ComposerRenderMentionProps&gt; \| undefined</code>            | The component used to render mentions.<br/>Defaults to the mention’s `userId` prefixed by an @.        |
 | `renderMentionSuggestions`  | <code>ComponentType&lt;ComposerRenderMentionSuggestionsProps&gt; \| undefined</code> | The component used to render mention suggestions.<br/>Defaults to a list of the suggestions’ `userId`. |
 | `resolveMentionSuggestions` | <code>(text: string) => Promise&lt;string[]&gt; \| undefined</code>                  | An asynchronous function to get a list of suggested user IDs from a string.                            |

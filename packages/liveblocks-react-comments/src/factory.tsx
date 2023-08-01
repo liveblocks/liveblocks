@@ -145,7 +145,7 @@ type CommentsContextBundle<
   useDeleteComment(): (options: DeleteCommentOptions) => void;
 
   /**
-   * Returns the threads within the current room.
+   * Returns the threads within the current room, from the nearest `CommentsProvider`.
    *
    * @example
    * const { threads, error, isLoading } = useThreads();
@@ -161,7 +161,7 @@ type CommentsContextBundle<
   useUser(userId: string): UserState<TUserInfo>;
 
   /**
-   * TODO: Add description
+   * Returns the current room ID, from the nearest `CommentsProvider`.
    */
   useRoomId(): string;
 
@@ -178,7 +178,8 @@ type CommentsContextBundle<
   ): void;
 
   /**
-   * Returns states and methods related to the composer.
+   * Returns states and methods related to the composer. Can only be used
+   * within `Composer.Form`.
    *
    * @example
    * const { isValid, submit } = useComposer();
@@ -187,7 +188,7 @@ type CommentsContextBundle<
 
   readonly suspense: {
     /**
-     * Returns the threads within the current room.
+     * Returns the threads within the current room, from the nearest `CommentsProvider`.
      *
      * @example
      * const threads = useThreads();
@@ -203,7 +204,10 @@ type CommentsContextBundle<
     useUser(userId: string): UserStateSuspense<TUserInfo>;
 
     /**
-     * TODO: Add description
+     * Returns the current room ID, from the nearest `CommentsProvider`.
+     *
+     * @example
+     * const roomId = useRoomId();
      */
     useRoomId(): string;
 
