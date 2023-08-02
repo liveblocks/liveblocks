@@ -502,6 +502,11 @@ export function createCommentsContext<
         });
       }, [globalOverrides]);
 
+      useEffect(() => {
+        // TODO: Handle multiple CommentsProvider
+        return getCommentsRoom(roomId).subscribe();
+      }, [roomId]);
+
       return (
         <CommentsContext.Provider
           value={{
