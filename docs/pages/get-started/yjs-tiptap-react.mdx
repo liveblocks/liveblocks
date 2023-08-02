@@ -108,20 +108,24 @@ collaboration to your React application using the APIs from the
         const [doc, setDoc] = useState<Y.Doc>();
         const [provider, setProvider] = useState<any>();
 
+        // Set up Liveblocks Yjs provider
         useEffect(() => {
           const yDoc = new Y.Doc();
           const yProvider = new LiveblocksProvider(room, yDoc);
           setDoc(yDoc);
-          setProvider(yProvider)
+          setProvider(yProvider);
+
           return () => {
-            if (yDoc) yDoc.destroy();
-            if (yProvider) yProvider.destroy();
-          }
+            yDoc?.destroy();
+            yProvider?.destroy();
+          };
         }, [room]);
 
-        return doc && provider ? (
-          <TiptapEditor doc={doc} provider={provider} />
-        ) : null;
+        if (!doc || !provider) {
+          return null;
+        }
+
+        return <TiptapEditor doc={doc} provider={provider} />;
       }
 
 
