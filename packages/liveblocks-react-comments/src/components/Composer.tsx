@@ -28,7 +28,11 @@ import type { SlotProp } from "../types";
 import { classNames } from "../utils/class-names";
 import { Avatar } from "./internal/Avatar";
 import { Logo } from "./internal/Logo";
-import { Tooltip, TooltipProvider } from "./internal/Tooltip";
+import {
+  Tooltip,
+  TooltipProvider,
+  TooltipShortcutKey,
+} from "./internal/Tooltip";
 import { User } from "./internal/User";
 
 interface EditorActionProps extends ComponentProps<"button"> {
@@ -257,7 +261,10 @@ export const Composer = forwardRef<HTMLFormElement, ComposerProps>(
             <div className="lb-composer-actions">
               {actions ?? (
                 <>
-                  <Tooltip content={$.COMPOSER_SEND} shortcut={<kbd>↵</kbd>}>
+                  <Tooltip
+                    content={$.COMPOSER_SEND}
+                    shortcut={<TooltipShortcutKey name="enter" />}
+                  >
                     <ComposerPrimitive.Submit
                       onMouseDown={preventDefault}
                       className="lb-button lb-button:primary lb-composer-action"

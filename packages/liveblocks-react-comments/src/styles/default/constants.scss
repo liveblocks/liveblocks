@@ -1,5 +1,8 @@
 $lb-button-size: calc(2 * 0.25 * var(--lb-spacing) + var(--lb-icon-size));
 $lb-elevation-list-padding: 4px;
+$lb-tooltip-padding: calc(0.625 * var(--lb-spacing));
+$lb-tooltip-additional-padding: 4px;
+$lb-tooltip-shortcut-height: calc(1em + 2 * 0.25 * var(--lb-spacing));
 $lb-elevation-shadow:
   0 0 0 1px rgb(0 0 0 / 4%),
   0 2px 6px rgb(0 0 0 / 8%),

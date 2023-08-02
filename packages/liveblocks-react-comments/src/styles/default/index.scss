@@ -4,7 +4,7 @@
 :where(:root) {
   // Basic
   --lb-radius: 0.5em;
-  --lb-spacing: 1rem;
+  --lb-spacing: 1em;
   --lb-accent: #17f;
   --lb-accent-foreground: #fff;
   --lb-background: #fff;
@@ -15,7 +15,7 @@
   --lb-tooltip-foreground: #fff;
 
   // Advanced
-  --lb-icon-size: 1.25rem;
+  --lb-icon-size: 20px;
   --lb-icon-weight: 1.5px;
   --lb-avatar-radius: 50%;
   --lb-button-radius: calc(0.75 * var(--lb-radius));
@@ -26,7 +26,7 @@
   --lb-accent-contrast: 8%;
   --lb-foreground-contrast: 6%;
   --lb-elevation-foreground-contrast: 6%;
-  --lb-tooltip-foreground-contrast: 10%;
+  --lb-tooltip-foreground-contrast: 18%;
 
   // Automatic color scales
   --lb-accent-subtle: #{color-scale(
@@ -331,8 +331,10 @@
 .lb-tooltip {
   display: flex;
   align-items: center;
-  height: calc(1em + 0.875 * var(--lb-spacing));
-  padding: 0 calc(0.5 * var(--lb-spacing));
+  height: calc(
+    #{$lb-tooltip-shortcut-height} + 2 * #{$lb-tooltip-additional-padding}
+  );
+  padding-inline: $lb-tooltip-padding;
   border-radius: var(--lb-radius);
   background: var(--lb-tooltip-background);
   color: var(--lb-tooltip-foreground);
@@ -344,20 +346,25 @@
 
 .lb-tooltip-shortcut {
   display: flex;
-  gap: calc(0.25 * var(--lb-spacing));
-  margin-inline-start: calc(0.375 * var(--lb-spacing));
-  margin-inline-end: calc(-0.25 * var(--lb-spacing));
+  gap: calc(0.125 * var(--lb-spacing));
+  justify-content: center;
+  align-items: center;
+  height: $lb-tooltip-shortcut-height;
+  padding-inline: calc(0.25 * var(--lb-spacing));
+  border-radius: calc(
+    var(--lb-radius) - 0.75 * #{$lb-tooltip-additional-padding}
+  );
+  background: var(--lb-tooltip-foreground-subtle);
+  color: var(--lb-tooltip-foreground-moderate);
+  font-family: inherit;
+  text-transform: uppercase;
+  margin-inline-start: $lb-tooltip-padding;
+  margin-inline-end: calc(
+    -1 * #{$lb-tooltip-padding} + #{$lb-tooltip-additional-padding}
+  );
 
-  kbd {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    aspect-ratio: 1;
-    width: 1.5em;
-    border-radius: calc(0.625 * var(--lb-radius));
-    background: var(--lb-tooltip-foreground-subtle);
-    color: var(--lb-tooltip-foreground-moderate);
-    text-transform: uppercase;
+  abbr {
+    text-decoration: none;
   }
 }
 
