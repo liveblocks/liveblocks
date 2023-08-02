@@ -9,7 +9,7 @@ import type {
 } from "@liveblocks/core";
 import { makePoller } from "@liveblocks/core";
 import { nanoid } from "nanoid";
-import { useSyncExternalStore } from "use-sync-external-store/shim";
+import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
 
 import type { CommentsApiError } from "./errors";
 import {

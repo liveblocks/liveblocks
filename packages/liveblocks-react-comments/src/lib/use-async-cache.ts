@@ -5,7 +5,7 @@ import type {
   AsyncStateResolved,
 } from "@liveblocks/core";
 import { useCallback, useEffect, useMemo, useRef } from "react";
-import { useSyncExternalStore } from "use-sync-external-store/shim";
+import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
 
 import { useInitial } from "./use-initial";
 
