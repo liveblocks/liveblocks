@@ -3,9 +3,6 @@ import { createCommentsContext } from "@liveblocks/react-comments";
 // TODO: It needs to be exported from @liveblocks/client or @liveblocks/react-comments
 import { BaseUserInfo } from "@liveblocks/core";
 
-const WORKERS_ENDPOINT = process.env.NEXT_PUBLIC_WORKERS_ENDPOINT;
-const EVENTS_ENDPOINT = process.env.NEXT_PUBLIC_EVENTS_ENDPOINT;
-
 export const client = createClient({
   authEndpoint: "/api/auth",
 });
