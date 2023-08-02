@@ -4,9 +4,7 @@ import { createRoomContext } from "@liveblocks/react";
 // Try changing the lostConnectionTimeout value to increase
 // or reduct the time it takes to reconnect
 const client = createClient({
-  publicApiKey: process.env.NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY as string,
-  throttle: 16,
-  // lostConnectionTimeout: 5000,
+  authEndpoint: "/api/liveblocks-auth",
 });
 
 // Presence represents the properties that exist on every user in the Room
@@ -30,8 +28,11 @@ type Storage = {
 // provided by your own custom auth back end (if used). Useful for data that
 // will not change during a session, like a user's name or avatar.
 type UserMeta = {
-  // id?: string,  // Accessible through `user.id`
-  // info?: Json,  // Accessible through `user.info`
+  id: string; // Accessible through `user.id`
+  info: {
+    name: string;
+    picture: string;
+  }; // Accessible through `user.info`
 };
 
 // Optionally, the type of custom events broadcast and listened to in this

@@ -9,9 +9,10 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@liveblocks/client": "^1.1.8",
-    "@liveblocks/react": "^1.1.8",
-    "@liveblocks/yjs": "^1.1.8",
+    "@liveblocks/client": "^1.2.0",
+    "@liveblocks/node": "^1.2.0",
+    "@liveblocks/react": "^1.2.0",
+    "@liveblocks/yjs": "^1.2.0",
     "@tiptap/extension-collaboration": "^2.0.4",
     "@tiptap/extension-collaboration-cursor": "^2.0.4",
     "@tiptap/pm": "^2.0.4",
@@ -20,7 +21,7 @@
     "@types/node": "20.3.1",
     "@types/react": "18.2.12",
     "@types/react-dom": "18.2.5",
-    "next": "13.4.5",
+    "next": "^13.4.12",
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "typescript": "5.1.3",

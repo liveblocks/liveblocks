@@ -6,31 +6,35 @@ import Collaboration from "@tiptap/extension-collaboration";
 import CollaborationCursor from "@tiptap/extension-collaboration-cursor";
 import * as Y from "yjs";
 import LiveblocksProvider from "@liveblocks/yjs";
-import { useRoom } from "@/liveblocks.config";
+import { useRoom, useSelf } from "@/liveblocks.config";
 import { useEffect, useState } from "react";
 import { Toolbar } from "./Toolbar";
 import styles from "./CollaborativeEditor.module.css";
 import { Avatars } from "@/components/Avatars";
 
+// Collaborative text editor with simple rich text, live cursors, and live avatars
 export function CollaborativeEditor() {
   const room = useRoom();
   const [doc, setDoc] = useState<Y.Doc>();
   const [provider, setProvider] = useState<any>();
 
+  // Set up Liveblocks Yjs provider
   useEffect(() => {
     const yDoc = new Y.Doc();
     const yProvider = new LiveblocksProvider(room, yDoc);
     setDoc(yDoc);
     setProvider(yProvider);
     return () => {
-      if (yDoc) yDoc.destroy();
-      if (yProvider) yProvider.destroy();
+      yDoc?.destroy();
+      yProvider?.destroy();
     };
   }, [room]);
 
-  return doc && provider ? (
-    <TiptapEditor doc={doc} provider={provider} />
-  ) : null;
+  if (!doc || !provider) {
+    return null;
+  }
+
+  return <TiptapEditor doc={doc} provider={provider} />;
 }
 
 type EditorProps = {
@@ -39,6 +43,10 @@ type EditorProps = {
 };
 
 function TiptapEditor({ doc, provider }: EditorProps) {
+  // Get user info from Liveblocks authentication endpoint
+  const userInfo = useSelf((me) => me.info);
+
+  // Set up editor with plugins, and place user info into Yjs awareness and cursors
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -51,13 +59,11 @@ function TiptapEditor({ doc, provider }: EditorProps) {
       }),
       CollaborationCursor.configure({
         provider: provider,
-        user: {
-          name: "Mislav Abha",
-          color: "#0000ff",
-        },
+        user: userInfo,
       }),
     ],
   });
+
   return (
     <div className={styles.container}>
       <div className={styles.editorHeader}>
