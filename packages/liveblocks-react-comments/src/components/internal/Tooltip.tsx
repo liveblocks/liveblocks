@@ -1,16 +1,33 @@
 "use client";
 
 import * as TooltipPrimitive from "@radix-ui/react-tooltip";
-import type { ReactNode } from "react";
-import React from "react";
+import type { ComponentProps, ReactNode } from "react";
+import React, { useMemo } from "react";
 
 import { classNames } from "../../utils/class-names";
+import { isApple } from "../../utils/is-apple";
+
+const KEYS = {
+  alt: () => ({ title: "Alt", key: "⌥" }),
+  mod: () =>
+    isApple() ? { title: "Command", key: "⌘" } : { title: "Ctrl", key: "⌃" },
+  shift: () => {
+    return { title: "Shift", key: "⇧" };
+  },
+  enter: () => {
+    return { title: "Enter", key: "⏎" };
+  },
+} as const;
 
 interface TooltipProps
   extends Pick<TooltipPrimitive.TooltipTriggerProps, "children">,
     TooltipPrimitive.TooltipContentProps {
   content: ReactNode;
   shortcut?: ReactNode;
+}
+
+interface TooltipShortcutKeyProps extends ComponentProps<"abbr"> {
+  name: keyof typeof KEYS;
 }
 
 export function Tooltip({
@@ -34,10 +51,23 @@ export function Tooltip({
           {...props}
         >
           {content}
-          {shortcut && <span className="lb-tooltip-shortcut">{shortcut}</span>}
+          {shortcut && <kbd className="lb-tooltip-shortcut">{shortcut}</kbd>}
         </TooltipPrimitive.Content>
       </TooltipPrimitive.Portal>
     </TooltipPrimitive.Root>
+  );
+}
+
+export function TooltipShortcutKey({
+  name,
+  ...props
+}: TooltipShortcutKeyProps) {
+  const { title, key } = useMemo(() => KEYS[name]?.(), [name]);
+
+  return (
+    <abbr title={title} {...props}>
+      {key}
+    </abbr>
   );
 }
 

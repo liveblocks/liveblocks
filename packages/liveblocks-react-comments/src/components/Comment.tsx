@@ -21,7 +21,11 @@ import { classNames } from "../utils/class-names";
 import { Composer } from "./Composer";
 import { Avatar } from "./internal/Avatar";
 import { Dropdown, DropdownTrigger } from "./internal/Dropdown";
-import { Tooltip, TooltipProvider } from "./internal/Tooltip";
+import {
+  Tooltip,
+  TooltipProvider,
+  TooltipShortcutKey,
+} from "./internal/Tooltip";
 import { User } from "./internal/User";
 
 export interface CommentProps extends ComponentPropsWithoutRef<"div"> {
@@ -214,7 +218,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
                   </Tooltip>
                   <Tooltip
                     content={$.COMMENT_EDIT_COMPOSER_SAVE}
-                    shortcut={<kbd>↵</kbd>}
+                    shortcut={<TooltipShortcutKey name="enter" />}
                   >
                     <ComposerPrimitive.Submit
                       className="lb-button lb-button:primary lb-composer-action"
