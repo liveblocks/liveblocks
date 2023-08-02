@@ -164,27 +164,27 @@ import styles from "./Editor.module.css";
 export default function CollaborativeEditor() {
   const room = useRoom();
   const [connected, setConnected] = useState(false);
+  const [sharedType, setSharedType] = useState<Y.XmlText>();
+  const [provider, setProvider] = useState<LiveblocksProviderType>();
 
   // Set up Liveblocks Yjs provider
-  const [provider, sharedType] = useMemo(() => {
-    const yDoc = new Y.Doc();
-    const provider = new LiveblocksProvider(room, yDoc);
-    const sharedDoc = yDoc.get("slate", Y.XmlText) as Y.XmlText;
-    return [provider, sharedDoc];
-  }, [room]);
-
-  // Wait for connection before loading editor
   useEffect(() => {
-    provider.on("sync", setConnected);
-    provider.connect();
+    const yDoc = new Y.Doc();
+    const yProvider = new LiveblocksProvider(room, yDoc);
+    const sharedDoc = yDoc.get("slate", Y.XmlText) as Y.XmlText;
+    yProvider.on("sync", setConnected);
+
+    setSharedType(sharedDoc);
+    setProvider(yProvider);
 
     return () => {
-      provider.disconnect();
-      provider.off("sync", setConnected);
+      yDoc?.destroy();
+      yProvider?.off("sync", setConnected);
+      yProvider?.destroy();
     };
-  }, [provider]);
+  }, [room]);
 
-  if (!connected) {
+  if (!connected || !sharedType || !provider) {
     return <div>Loading…</div>;
   }
 
@@ -399,7 +399,6 @@ positions.
 }
 
 .caret {
-  /* absolute text-xs text-white whitespace-nowrap top-0 rounded rounded-bl-none px-1.5 py-0.5 */
   position: absolute;
   font-size: 14px;
   color: #fff;

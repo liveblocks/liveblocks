@@ -231,5 +231,21 @@
     ],
     "date": "2023-06-28",
     "hidden": true
+  },
+  {
+    "title": "How to create a collaborative text editor with Tiptap, Yjs, Next.js, and Liveblocks",
+    "path": "/how-to-create-a-collaborative-text-editor-with-tiptap-yjs-nextjs-and-liveblocks",
+    "topics": [
+      "tutorials",
+      "text-editors"
+    ],
+    "technologies": [
+      "yjs",
+      "react",
+      "nextjs",
+      "tiptap"
+    ],
+    "date": "2023-06-28",
+    "hidden": true
   }
 ]
