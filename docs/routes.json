@@ -67,6 +67,11 @@
             "hidden": true
           },
           {
+            "title": "Yjs Slate React",
+            "path": "/get-started/yjs-slate-react",
+            "hidden": true
+          },
+          {
             "title": "Yjs Tiptap React",
             "path": "/get-started/yjs-tiptap-react",
             "hidden": true
@@ -84,6 +89,11 @@
           {
             "title": "Text editor / Quill",
             "href": "/get-started/text-editor/quill",
+            "hidden": true
+          },
+          {
+            "title": "Text editor / Slate",
+            "href": "/get-started/text-editor/slate",
             "hidden": true
           },
           {
@@ -164,31 +174,77 @@
     "routes": [
       {
         "title": "Authentication",
-        "path": "/rooms/authentication",
+        "href": "/rooms/authentication",
         "routes": [
           {
+            "title": "Access token permissions",
+            "href": "/rooms/authentication/access-token-permissions",
+            "hidden": true
+          },
+          {
+            "title": "ID token permissions",
+            "href": "/rooms/authentication/id-token-permissions",
+            "hidden": true
+          },
+          {
             "title": "Next.js",
-            "path": "/rooms/authentication/nextjs"
+            "path": "/rooms/authentication/id-token-permissions/nextjs",
+            "hidden": true
           },
           {
             "title": "Remix",
-            "path": "/rooms/authentication/remix"
+            "path": "/rooms/authentication/id-token-permissions/remix",
+            "hidden": true
           },
           {
             "title": "SvelteKit",
-            "path": "/rooms/authentication/sveltekit"
+            "path": "/rooms/authentication/id-token-permissions/sveltekit",
+            "hidden": true
           },
           {
             "title": "Nuxt.js",
-            "path": "/rooms/authentication/nuxtjs"
+            "path": "/rooms/authentication/id-token-permissions/nuxtjs",
+            "hidden": true
           },
           {
             "title": "Firebase",
-            "path": "/rooms/authentication/firebase"
+            "path": "/rooms/authentication/id-token-permissions/firebase",
+            "hidden": true
           },
           {
             "title": "Express",
-            "path": "/rooms/authentication/express"
+            "path": "/rooms/authentication/id-token-permissions/express",
+            "hidden": true
+          },
+          {
+            "title": "Next.js",
+            "path": "/rooms/authentication/access-token-permissions/nextjs",
+            "hidden": true
+          },
+          {
+            "title": "Remix",
+            "path": "/rooms/authentication/access-token-permissions/remix",
+            "hidden": true
+          },
+          {
+            "title": "SvelteKit",
+            "path": "/rooms/authentication/access-token-permissions/sveltekit",
+            "hidden": true
+          },
+          {
+            "title": "Nuxt.js",
+            "path": "/rooms/authentication/access-token-permissions/nuxtjs",
+            "hidden": true
+          },
+          {
+            "title": "Firebase",
+            "path": "/rooms/authentication/access-token-permissions/firebase",
+            "hidden": true
+          },
+          {
+            "title": "Express",
+            "path": "/rooms/authentication/access-token-permissions/express",
+            "hidden": true
           }
         ]
       },
@@ -198,7 +254,17 @@
       },
       {
         "title": "Permissions",
-        "path": "/rooms/permissions"
+        "path": "/rooms/permissions",
+        "routes": [
+          {
+            "title": "With access tokens",
+            "path": "/rooms/permissions/access-token"
+          },
+          {
+            "title": "With ID tokens",
+            "path": "/rooms/permissions/id-token"
+          }
+        ]
       }
     ]
   },
@@ -357,6 +423,10 @@
           {
             "title": "Upgrading to 1.0",
             "path": "/platform/upgrading/1.0"
+          },
+          {
+            "title": "Upgrading to 1.2",
+            "path": "/platform/upgrading/1.2"
           }
         ]
       },

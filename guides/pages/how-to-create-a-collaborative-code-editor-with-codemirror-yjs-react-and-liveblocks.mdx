@@ -62,7 +62,7 @@ to the same room.
 
 ```tsx file="index.tsx" highlight="7-11"
 import { RoomProvider } from "./liveblocks.config";
-import { Editor } from "./Editor";
+import Editor from "./Editor";
 import { ClientSideSuspense } from "@liveblocks/react";
 
 export default function Page() {
@@ -89,7 +89,7 @@ import { EditorState } from "@codemirror/state";
 import { javascript } from "@codemirror/lang-javascript";
 import { useCallback, useEffect, useState } from "react";
 import LiveblocksProvider from "@liveblocks/yjs";
-import { useRoom } from "@/liveblocks.config";
+import { useRoom } from "./liveblocks.config";
 import styles from "./Editor.module.css";
 
 export default function Editor() {
@@ -117,7 +117,11 @@ export default function Editor() {
     const ytext = ydoc.getText("codemirror");
     const undoManager = new Y.UndoManager(ytext);
 
-    const user = USER_INFO[Math.floor(Math.random() * USER_INFO.length)];
+    // Get the current user
+    const user = {
+      name: "Charlie Layne",
+      color: "#D583F0",
+    };
     provider.awareness.setLocalStateField("user", {
       name: user.name,
       color: user.color,

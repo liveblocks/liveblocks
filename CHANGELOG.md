@@ -1,3 +1,16 @@
+# v1.2.0
+
+### `@liveblocks/*`
+
+- Support the new and improved Liveblocks authorization.
+- Change client logic to stop retrying if room is full. Instead, the client will
+  now disconnect. To retry, call `room.reconnect()` explicitly.
+
+### `@liveblocks/node`
+
+Add new APIs for authorization. See our migration guide for tips on how to adopt
+the new style of authorizing your Liveblocks clients.
+
 # v1.1.8
 
 Fix a small TypeScript issue introduced in 1.1.7.

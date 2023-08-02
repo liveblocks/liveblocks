@@ -6,6 +6,10 @@ meta:
 alwaysShowAllNavigationLevels: false
 ---
 
+`@liveblocks/react` provides you with [React](https://react.dev/) bindings for
+our real-time collaboration APIs, built on top of WebSockets. Read our
+[getting started](/docs/get-started) guides to learn more.
+
 ## Room
 
 ### createRoomContext
@@ -134,8 +138,22 @@ Listen to potential room connection errors.
 import { useErrorListener } from "./liveblocks.config";
 
 useErrorListener((error) => {
-  if (error.code === 4005) {
-    // Maximum concurrent connections per room exceeded.
+  switch (error.code) {
+    case -1:
+      // Authentication error
+      break;
+
+    case 4001:
+      // Could not connect because you don't have access to this room
+      break;
+
+    case 4005:
+      // Could not connect because room was full
+      break;
+
+    default:
+      // Unexpected error
+      break;
   }
 });
 ```
@@ -1358,7 +1376,7 @@ import { createClient } from "@liveblocks/client";
 import { LiveblocksProvider } from "@liveblocks/react";
 
 const client = createClient({
-  authEndpoint: "/api/auth",
+  authEndpoint: "/api/liveblocks-auth",
 });
 
 function AppRoot() {
