@@ -11,7 +11,12 @@ function Example() {
   return (
     <main>
       {threads.map((thread) => (
-        <Thread key={thread.id} thread={thread} className="thread" />
+        <Thread
+          key={thread.id}
+          thread={thread}
+          showComposer
+          className="thread"
+        />
       ))}
       <Composer className="composer" />
     </main>
@@ -19,8 +24,7 @@ function Example() {
 }
 
 export default function Page() {
-  // TODO: Change room ID to nextjs-comments
-  const roomId = useOverrideRoomId("comments-react");
+  const roomId = useOverrideRoomId("nextjs-comments");
   const isHydrated = useHydrated();
 
   // TODO: Fix SSR
