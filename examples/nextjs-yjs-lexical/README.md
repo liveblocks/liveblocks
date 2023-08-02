@@ -9,6 +9,16 @@
 
 # Collaborative Rich Text Editor (Lexical)
 
+<p>
+  <a href="https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/nextjs-yjs-lexical">
+    <img src="https://img.shields.io/badge/open%20in%20codesandbox-message?style=flat&logo=codesandbox&color=333&logoColor=fff" alt="Open in CodeSandbox" />
+  </a>
+  <img src="https://img.shields.io/badge/react-message?style=flat&logo=react&color=0bd&logoColor=fff" alt="React" />
+  <img src="https://img.shields.io/badge/next.js-message?style=flat&logo=next.js&color=07f&logoColor=fff" alt="Next.js" />
+  <img src="https://img.shields.io/badge/yjs-message?style=flat&color=0bd" alt="Yjs" />
+  <img src="https://img.shields.io/badge/lexical-message?style=flat&color=7bf" alt="Lexical" />
+</p>
+
 This example shows how to build a collaborative text editor with [Liveblocks](https://liveblocks.io), [Yjs](https://docs.yjs.dev), [Lexical](https://lexical.dev), and [Next.js](https://nextjs.org/).
 
 As users edit the document, changes will be automatically persisted and synced—allowing for an editor that updates in real-time across clients. Users will also be able to see who see each other’s cursors in the document.
