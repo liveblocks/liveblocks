@@ -10,10 +10,10 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@liveblocks/client": "^1.1.6",
-    "@liveblocks/node": "^1.1.8",
-    "@liveblocks/react": "^1.1.6",
-    "@liveblocks/yjs": "^1.1.6",
+    "@liveblocks/client": "^1.2.0",
+    "@liveblocks/node": "^1.2.0",
+    "@liveblocks/react": "^1.2.0",
+    "@liveblocks/yjs": "^1.2.0",
     "@slate-yjs/core": "^1.0.2",
     "@slate-yjs/react": "^1.1.0",
     "@types/node": "18.11.18",
@@ -21,7 +21,7 @@
     "@types/react-dom": "18.0.10",
     "eslint": "8.33.0",
     "eslint-config-next": "13.1.6",
-    "next": "13.1.6",
+    "next": "^13.4.12",
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "slate": "^0.94.1",

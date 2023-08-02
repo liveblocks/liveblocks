@@ -1,6 +1,9 @@
 import { Liveblocks } from "@liveblocks/node";
 import { NextRequest } from "next/server";
 
+// Authenticating your Liveblocks application
+// https://liveblocks.io/docs/rooms/authentication/access-token-permissions/nextjs
+
 const API_KEY = process.env.LIVEBLOCKS_SECRET_KEY;
 
 const liveblocks = new Liveblocks({
@@ -8,17 +11,20 @@ const liveblocks = new Liveblocks({
 });
 
 export async function POST(request: NextRequest) {
-  // For the avatar example, we're generating random users
-  // and set their info from the authentication endpoint
-  // See https://liveblocks.io/docs/api-reference/liveblocks-node#authorize for more information
-  const userIndex = Math.floor(Math.random() * 1000);
-  const session = liveblocks.prepareSession(`user-${userIndex}`, {
+  // Get the current user's unique id from your database
+  const userId = Math.floor(Math.random() * 10000);
+
+  // Create a session for the current user
+  // userInfo is made available in Liveblocks presence hooks, e.g. useOthers
+  const session = liveblocks.prepareSession(`user-${userId}`, {
     userInfo: USER_INFO[Math.floor(Math.random() * 10) % USER_INFO.length],
   });
 
+  // Give the user access to the room
   const { room } = await request.json();
   session.allow(room, session.FULL_ACCESS);
 
+  // Authorize the user and return the result
   const { body, status } = await session.authorize();
   return new Response(body, { status });
 }

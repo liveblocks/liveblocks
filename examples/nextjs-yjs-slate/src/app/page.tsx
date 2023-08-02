@@ -1,6 +1,9 @@
 import { Room } from "@/app/Room";
-import styles from "@/src/Editor.module.css";
-import CollaborativeEditor from "@/src/Editor";
+import styles from "@/components/Editor.module.css";
+import CollaborativeEditor from "@/components/Editor";
+
+// Learn how to structure your collaborative Next.js app
+// https://liveblocks.io/docs/guides/how-to-use-liveblocks-with-nextjs-app-directory
 
 export default function Page() {
   return (

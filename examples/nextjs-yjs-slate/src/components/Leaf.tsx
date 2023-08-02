@@ -1,11 +1,12 @@
 import { PropsWithChildren } from "react";
-import { CustomText } from "@/src/types";
+import { CustomText } from "@/types";
 
 type Props = PropsWithChildren<{
   attributes: Record<string, string>;
   leaf: CustomText;
 }>;
 
+// Create inline Leaf components for Slate
 export function Leaf({ attributes, children, leaf }: Props) {
   if (leaf.bold) {
     children = <strong>{children}</strong>;

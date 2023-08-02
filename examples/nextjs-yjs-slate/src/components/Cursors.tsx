@@ -3,9 +3,10 @@ import {
   useRemoteCursorOverlayPositions,
 } from "@slate-yjs/react";
 import React, { CSSProperties, PropsWithChildren, useRef } from "react";
-import { Cursor } from "./types";
+import { Cursor } from "@/types";
 import styles from "./Cursors.module.css";
 
+// Create live cursors inside the text editor
 export function Cursors({ children }: PropsWithChildren) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [cursors] = useRemoteCursorOverlayPositions<Cursor>({

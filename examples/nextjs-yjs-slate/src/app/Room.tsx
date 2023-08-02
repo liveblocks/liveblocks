@@ -4,7 +4,7 @@ import { ReactNode, useMemo } from "react";
 import { RoomProvider } from "@/liveblocks.config";
 import { useSearchParams } from "next/navigation";
 import { ClientSideSuspense } from "@liveblocks/react";
-import { Loading } from "@/src/Loading";
+import { Loading } from "@/components/Loading";
 
 export function Room({ children }: { children: ReactNode }) {
   const roomId = useOverrideRoomId("nextjs-yjs-slate");
@@ -16,11 +16,9 @@ export function Room({ children }: { children: ReactNode }) {
         cursor: null,
       }}
     >
-      <main>
-        <ClientSideSuspense fallback={<Loading />}>
-          {() => children}
-        </ClientSideSuspense>
-      </main>
+      <ClientSideSuspense fallback={<Loading />}>
+        {() => children}
+      </ClientSideSuspense>
     </RoomProvider>
   );
 }

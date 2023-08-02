@@ -1,13 +1,15 @@
 import { useOthers, useSelf } from "@/liveblocks.config";
 import styles from "./Avatars.module.css";
 
+// Create live avatars using Liveblocks presence
+// https://liveblocks.io/docs/api-reference/liveblocks-react#useOthers
 export function Avatars() {
   const users = useOthers();
   const currentUser = useSelf();
 
   return (
     <div className={styles.avatars}>
-      {users.slice(0, 3).map(({ connectionId, info }) => {
+      {users.map(({ connectionId, info }) => {
         return (
           <Avatar key={connectionId} picture={info.picture} name={info.name} />
         );

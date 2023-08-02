@@ -7,13 +7,14 @@ import { Editable, Slate, withReact } from "slate-react";
 import { withCursors, withYjs, YjsEditor } from "@slate-yjs/core";
 import * as Y from "yjs";
 import { LiveblocksProviderType, useRoom, useSelf } from "@/liveblocks.config";
-import { Loading } from "@/pages";
+import { Loading } from "@/components/Loading";
 import styles from "./Editor.module.css";
-import { Toolbar } from "@/src/Toolbar";
-import { Leaf } from "@/src/Leaf";
-import { Cursors } from "@/src/Cursors";
+import { Toolbar } from "@/components/Toolbar";
+import { Leaf } from "@/components/Leaf";
+import { Cursors } from "@/components/Cursors";
 import { Avatars } from "./Avatars";
 
+// Collaborative text editor with simple rich text, live cursors, and live avatars
 export default function CollaborativeEditor() {
   const room = useRoom();
   const [connected, setConnected] = useState(false);
@@ -55,7 +56,7 @@ function SlateEditor({
   sharedType: Y.XmlText;
   provider: LiveblocksProviderType;
 }) {
-  // Get user info from authentication endpoint
+  // Get user info from Liveblocks authentication endpoint
   const userInfo = useSelf((self) => self.info);
 
   // Set up editor with plugins, and place user info into Yjs awareness and cursors
