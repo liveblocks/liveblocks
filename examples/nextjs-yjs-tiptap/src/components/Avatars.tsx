@@ -7,7 +7,7 @@ export function Avatars() {
 
   return (
     <div className={styles.avatars}>
-      {users.slice(0, 3).map(({ connectionId, info }) => {
+      {users.map(({ connectionId, info }) => {
         return (
           <Avatar key={connectionId} picture={info.picture} name={info.name} />
         );

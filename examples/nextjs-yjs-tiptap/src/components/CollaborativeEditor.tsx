@@ -24,6 +24,7 @@ export function CollaborativeEditor() {
     const yProvider = new LiveblocksProvider(room, yDoc);
     setDoc(yDoc);
     setProvider(yProvider);
+
     return () => {
       yDoc?.destroy();
       yProvider?.destroy();
@@ -48,6 +49,12 @@ function TiptapEditor({ doc, provider }: EditorProps) {
 
   // Set up editor with plugins, and place user info into Yjs awareness and cursors
   const editor = useEditor({
+    editorProps: {
+      attributes: {
+        // Add styles to editor element
+        class: styles.editor,
+      },
+    },
     extensions: [
       StarterKit.configure({
         // The Collaboration extension comes with its own history handling
@@ -57,6 +64,7 @@ function TiptapEditor({ doc, provider }: EditorProps) {
       Collaboration.configure({
         document: doc,
       }),
+      // Attach provider and user info
       CollaborationCursor.configure({
         provider: provider,
         user: userInfo,
@@ -70,9 +78,7 @@ function TiptapEditor({ doc, provider }: EditorProps) {
         <Toolbar editor={editor} />
         <Avatars />
       </div>
-      <div className={styles.editor}>
-        <EditorContent editor={editor} />
-      </div>
+      <EditorContent editor={editor} className={styles.editorContainer} />
     </div>
   );
 }
