@@ -7,7 +7,7 @@ meta:
     "Build a collaborative text editor with Tiptap, Yjs, Next.js, and Liveblocks"
 ---
 
-In this tutorial, we’ll be building a collaborative text editor using Slate,
+In this tutorial, we’ll be building a collaborative text editor using Tiptap,
 Yjs, Next.js, and Liveblocks.
 
 <Banner title="Private beta">
@@ -22,35 +22,22 @@ We’d love to hear from you.
 This guide assumes that you’re already familiar with
 [React](https://react.dev/), [Next.js](https://nextjs.org/),
 [TypeScript](https://www.typescriptlang.org/), and
-[Slate](https://docs.slatejs.org/).
+[Tiptap](https://tiptap.dev/).
 
-## Install Slate, Yjs, and Liveblocks into your Next.js application
+## Install Tiptap, Yjs, and Liveblocks into your Next.js application
 
 <Banner title="Download the example">
 
 On GitHub we have a working example of this
-[collaborative Slate editor](https://github.com/liveblocks/liveblocks/tree/main/examples/nextjs-yjs-slate)
+[collaborative Tiptap editor](https://github.com/liveblocks/liveblocks/tree/main/examples/nextjs-yjs-tiptap)
 for you to download and run.
 
 </Banner>
 
-Run the following command to install the Slate, Yjs, and Liveblocks packages:
+Run the following command to install the Tiptap, Yjs, and Liveblocks packages:
 
 ```bash
-npm install @liveblocks/client @liveblocks/react @liveblocks/yjs yjs slate slate-react @slate-yjs/core @slate-yjs/react
-```
-
-### Transpile slate-yjs
-
-Add `transpilePackages` to your `next.config.ts` file to allow
-`@slate-yjs/react` to be bundled correctly.
-
-```js highlight="2"
-module.exports = {
-  transpilePackages: ["@slate-yjs/react"],
-
-  // ...
-};
+npm install @liveblocks/client @liveblocks/react @liveblocks/yjs yjs @tiptap/extension-collaboration @tiptap/extension-collaboration-cursor @tiptap/pm @tiptap/react @tiptap/starter-kit
 ```
 
 ## Set up access token authentication
@@ -146,90 +133,83 @@ export function Room({ children }: { children: ReactNode }) {
 }
 ```
 
-## Set up the Slate editor
+## Set up the Tiptap editor
 
-Now that we’ve set up Liveblocks, we can start integrating Slate and Yjs in the
+Now that we’ve set up Liveblocks, we can start integrating Tiptap and Yjs in the
 `Editor.tsx` file.
 
 ```tsx file="Editor.tsx"
-import LiveblocksProvider from "@liveblocks/yjs";
-import { useEffect, useMemo, useState } from "react";
-import { createEditor, Editor, Transforms } from "slate";
-import { Editable, Slate, withReact } from "slate-react";
-import { withYjs, YjsEditor } from "@slate-yjs/core";
-import * as Y from "yjs";
-import { useRoom } from "../liveblocks.config";
-import styles from "./Editor.module.css";
+"use client";
 
-export default function CollaborativeEditor() {
+import { useEditor, EditorContent } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
+import Collaboration from "@tiptap/extension-collaboration";
+import CollaborationCursor from "@tiptap/extension-collaboration-cursor";
+import * as Y from "yjs";
+import LiveblocksProvider from "@liveblocks/yjs";
+import { useRoom } from "@/liveblocks.config";
+import { useEffect, useState } from "react";
+import styles from "./CollaborativeEditor.module.css";
+
+// Collaborative text editor with simple rich text, live cursors, and live avatars
+export function CollaborativeEditor() {
   const room = useRoom();
-  const [connected, setConnected] = useState(false);
-  const [sharedType, setSharedType] = useState<Y.XmlText>();
-  const [provider, setProvider] = useState<LiveblocksProviderType>();
+  const [doc, setDoc] = useState<Y.Doc>();
+  const [provider, setProvider] = useState<any>();
 
   // Set up Liveblocks Yjs provider
   useEffect(() => {
     const yDoc = new Y.Doc();
     const yProvider = new LiveblocksProvider(room, yDoc);
-    const sharedDoc = yDoc.get("slate", Y.XmlText) as Y.XmlText;
-    yProvider.on("sync", setConnected);
-
-    setSharedType(sharedDoc);
+    setDoc(yDoc);
     setProvider(yProvider);
 
     return () => {
       yDoc?.destroy();
-      yProvider?.off("sync", setConnected);
       yProvider?.destroy();
     };
   }, [room]);
 
-  if (!connected || !sharedType || !provider) {
-    return <div>Loading…</div>;
+  if (!doc || !provider) {
+    return null;
   }
 
-  return <SlateEditor sharedType={sharedType} />;
+  return <TiptapEditor doc={doc} provider={provider} />;
 }
 
-const emptyNode = {
-  children: [{ text: "" }],
+type EditorProps = {
+  doc: Y.Doc;
+  provider: any;
 };
 
-function SlateEditor({ sharedType }: { sharedType: Y.XmlText }) {
+function TiptapEditor({ doc, provider }: EditorProps) {
   // Set up editor with plugins
-  const editor = useMemo(() => {
-    const e = withReact(withYjs(createEditor(), sharedType));
-
-    // Ensure editor always has at least 1 valid child
-    const { normalizeNode } = e;
-    e.normalizeNode = (entry) => {
-      const [node] = entry;
-
-      if (!Editor.isEditor(node) || node.children.length > 0) {
-        return normalizeNode(entry);
-      }
-
-      Transforms.insertNodes(editor, emptyNode, { at: [0] });
-    };
-
-    return e;
-  }, [sharedType]);
-
-  useEffect(() => {
-    YjsEditor.connect(editor);
-    return () => YjsEditor.disconnect(editor);
-  }, [editor]);
+  const editor = useEditor({
+    editorProps: {
+      attributes: {
+        // Add styles to editor element
+        class: styles.editor,
+      },
+    },
+    extensions: [
+      StarterKit.configure({
+        // The Collaboration extension comes with its own history handling
+        history: false,
+      }),
+      // Register the document with Tiptap
+      Collaboration.configure({
+        document: doc,
+      }),
+      // Attach provider and user info
+      CollaborationCursor.configure({
+        provider: provider,
+      }),
+    ],
+  });
 
   return (
     <div className={styles.container}>
-      <div className={styles.editorContainer}>
-        <Slate editor={editor} initialValue={[emptyNode]}>
-          <Editable
-            className={styles.editor}
-            placeholder="Start typing here…"
-          />
-        </Slate>
-      </div>
+      <EditorContent editor={editor} className={styles.editorContainer} />
     </div>
   );
 }
@@ -293,7 +273,7 @@ Next, add the `CollaborativeEditor` into the page file, and place it inside the
 collaborative editor!
 
 ```tsx file="/app/page.tsx"
-import { Room } from "@/app/Room";
+import { Room } from "./Room";
 import CollaborativeEditor from "@/components/Editor";
 
 export default function Page() {
@@ -307,227 +287,122 @@ export default function Page() {
 
 ## Add live cursors
 
-To add live cursors to the text editor, we can rely on hooks from the
-`@slate-yjs/react` package.
+To add live cursors to the text editor, we can get the `userInfo` for the
+current user with [`useSelf`](/docs/api-reference/liveblocks-react#useSelf), and
+feed it into `editor`. We should now see some cursors with names.
 
-```tsx file="Cursors.tsx"
-import {
-  CursorOverlayData,
-  useRemoteCursorOverlayPositions,
-} from "@slate-yjs/react";
-import React, { CSSProperties, ReactNode, useRef } from "react";
-import { Cursor } from "./types";
-import styles from "./Cursors.module.css";
+```tsx file="CollaborativeEditor.tsx" highlight="1,5-6,17"
+import { useSelf } from "../liveblocks.config.ts";
+// ...
 
-export function Cursors({ children }: { children: ReactNode }) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [cursors] = useRemoteCursorOverlayPositions<Cursor>({
-    containerRef,
+function TiptapEditor({ doc, provider }: EditorProps) {
+  // Get user info from Liveblocks authentication endpoint
+  const userInfo = useSelf((me) => me.info);
+
+  // Set up editor with plugins, and place user info into Yjs awareness and cursors
+  const editor = useEditor({
+    // ...
+    extensions: [
+      // ...
+
+      // Attach provider and user info
+      CollaborationCursor.configure({
+        provider: provider,
+        user: userInfo,
+      }),
+    ],
   });
 
   return (
-    <div className={styles.cursors} ref={containerRef}>
-      {children}
-      {cursors.map((cursor) => (
-        <Selection key={cursor.clientId} {...cursor} />
-      ))}
-    </div>
-  );
-}
-
-function Selection({
-  data,
-  selectionRects,
-  caretPosition,
-}: CursorOverlayData<Cursor>) {
-  if (!data) {
-    return null;
-  }
-
-  const selectionStyle: CSSProperties = {
-    backgroundColor: data.color,
-  };
-
-  return (
-    <>
-      {selectionRects.map((position, i) => (
-        <div
-          style={{ ...selectionStyle, ...position }}
-          className={styles.selection}
-          key={i}
-        />
-      ))}
-      {caretPosition && <Caret caretPosition={caretPosition} data={data} />}
-    </>
-  );
-}
-
-type CaretProps = Pick<CursorOverlayData<Cursor>, "caretPosition" | "data">;
-
-function Caret({ caretPosition, data }: CaretProps) {
-  const caretStyle: CSSProperties = {
-    ...caretPosition,
-    background: data?.color,
-  };
-
-  const labelStyle: CSSProperties = {
-    transform: "translateY(-100%)",
-    background: data?.color,
-  };
-
-  return (
-    <div style={caretStyle} className={styles.caretMarker}>
-      <div className={styles.caret} style={labelStyle}>
-        {data?.name}
-      </div>
+    <div className={styles.container}>
+      <EditorContent editor={editor} className={styles.editorContainer} />
     </div>
   );
 }
 ```
 
-And of course we need some corresponding CSS to keep the cursors in the correct
-positions.
+We can style these cursors by placing CSS in a global CSS file.
 
-```css file="Cursors.module.css" isCollapsed isCollapsable
-.cursors {
+```css file="globals.css" isCollapsed isCollapsable
+/* Give a remote user a caret */
+.collaboration-cursor__caret {
+  border-left: 1px solid #0d0d0d;
+  border-right: 1px solid #0d0d0d;
+  margin-left: -1px;
+  margin-right: -1px;
+  pointer-events: none;
   position: relative;
+  word-break: normal;
 }
 
-.caretMarker {
+/* Render the username above the caret */
+.collaboration-cursor__label {
+  font-style: normal;
+  font-weight: 600;
+  left: -1px;
+  line-height: normal;
   position: absolute;
-  width: 2px;
-}
-
-.caret {
-  /* absolute text-xs text-white whitespace-nowrap top-0 rounded rounded-bl-none px-1.5 py-0.5 */
-  position: absolute;
+  user-select: none;
+  white-space: nowrap;
   font-size: 14px;
   color: #fff;
-  white-space: nowrap;
-  top: 0;
+  top: -1.4em;
   border-radius: 6px;
   border-bottom-left-radius: 0;
   padding: 2px 6px;
   pointer-events: none;
 }
-
-.selection {
-  position: absolute;
-  pointer-events: none;
-  opacity: 0.2;
-}
-```
-
-Back in your `Editor` component, get the current user’s info with
-[`useSelf`](/docs/api-reference/liveblocks-react#useSelf), add the `withCursors`
-plugin, and pass the user info and awareness. Then wrap your editor in the
-Cursors component to see them working.
-
-```tsx file="Editor.tsx" highlight="1-3,7-8,12-20,29,34"
-import { withCursors, withYjs, YjsEditor } from "@slate-yjs/core";
-import { useSelf } from "../liveblocks.config";
-import { Cursors } from "./Cursors";
-// ...
-
-export default function SlateEditor() {
-  // Get user info from Liveblocks authentication endpoint
-  const userInfo = useSelf((self) => self.info);
-
-  // Set up editor with plugins, and place user info into Yjs awareness and cursors
-  const editor = useMemo(() => {
-    const e = withReact(
-      withCursors(
-        withYjs(createEditor(), sharedType),
-        provider.awareness as any,
-        {
-          data: userInfo,
-        }
-      )
-    );
-
-    // ...
-  }, [sharedType, provider.awareness, userInfo]);
-
-  return (
-    <div className={styles.container}>
-      <div className={styles.editorContainer}>
-        <Slate editor={editor} initialValue={[emptyNode]}>
-          <Cursors>
-            <Editable
-              className={styles.editor}
-              placeholder="Start typing here…"
-            />
-          </Cursors>
-        </Slate>
-      </div>
-    </div>
-  );
-}
 ```
 
 ## Add a toolbar
 
-From this point onwards, you can build your Slate app as normal! For example,
+From this point onwards, you can build your Tiptap app as normal! For example,
 should you wish to add a basic text-style toolbar to your app:
 
 ```tsx file="Toolbar.tsx"
-import { Editor } from "slate";
-import { useSlate } from "slate-react";
+import { Editor } from "@tiptap/react";
 import styles from "./Toolbar.module.css";
-import { CustomText } from "./types";
 
-export function Toolbar() {
-  const editor = useSlate();
+type Props = {
+  editor: Editor | null;
+};
+
+export function Toolbar({ editor }: Props) {
+  if (!editor) {
+    return null;
+  }
 
   return (
     <div className={styles.toolbar}>
       <button
         className={styles.button}
-        data-active={isMarkActive(editor, "bold") || undefined}
-        onClick={(event) => {
-          event.preventDefault();
-          toggleMark(editor, "bold");
-        }}
+        onClick={() => editor.chain().focus().toggleBold().run()}
+        disabled={!editor.can().chain().focus().toggleBold().run()}
+        data-active={editor.isActive("bold") ? "is-active" : undefined}
+        aria-label="bold"
       >
         B
       </button>
       <button
         className={styles.button}
-        data-active={isMarkActive(editor, "italic") || undefined}
-        onClick={(event) => {
-          event.preventDefault();
-          toggleMark(editor, "italic");
-        }}
+        onClick={() => editor.chain().focus().toggleItalic().run()}
+        disabled={!editor.can().chain().focus().toggleItalic().run()}
+        data-active={editor.isActive("italic") ? "is-active" : undefined}
+        aria-label="italic"
       >
         i
       </button>
       <button
         className={styles.button}
-        data-active={isMarkActive(editor, "underline") || undefined}
-        onClick={(event) => {
-          event.preventDefault();
-          toggleMark(editor, "underline");
-        }}
+        onClick={() => editor.chain().focus().toggleStrike().run()}
+        disabled={!editor.can().chain().focus().toggleStrike().run()}
+        data-active={editor.isActive("strike") ? "is-active" : undefined}
+        aria-label="strikethrough"
       >
-        u
+        S
       </button>
     </div>
   );
-}
-
-function toggleMark(editor: Editor, format: keyof CustomText) {
-  const isActive = isMarkActive(editor, format);
-
-  if (isActive) {
-    Editor.removeMark(editor, format);
-  } else {
-    Editor.addMark(editor, format, true);
-  }
-}
-
-function isMarkActive(editor: Editor, format: keyof CustomText) {
-  const marks = Editor.marks(editor);
-  return marks ? marks?.[format] === true : false;
 }
 ```
 
@@ -578,64 +453,21 @@ Add some matching styles:
 }
 ```
 
-### Theme your leaf styles
-
-These styles are rendered with leaf components, which we’ll add to a new file:
-
-```tsx file="Leaf.tsx"
-import { PropsWithChildren } from "react";
-import { CustomText } from "@/src/types";
-
-type Props = PropsWithChildren<{
-  attributes: Record<string, string>;
-  leaf: CustomText;
-}>;
-
-export function Leaf({ attributes, children, leaf }: Props) {
-  if (leaf.bold) {
-    children = <strong>{children}</strong>;
-  }
-
-  if (leaf.italic) {
-    children = <em>{children}</em>;
-  }
-
-  if (leaf.underline) {
-    children = <u>{children}</u>;
-  }
-
-  return <span {...attributes}>{children}</span>;
-}
-```
-
 You can then import this into your editor to enable basic rich-text:
 
-```tsx file="Editor.tsx" highlight="1,2,8,13,15-17"
-import { Toolbar } from "@/src/Toolbar";
-import { Leaf } from "@/src/Leaf";
+```tsx file="Editor.tsx" highlight="1,9-11"
+import { Toolbar } from "./Toolbar";
 // ...
 
-export default function SlateEditor() {
+function TiptapEditor({ doc, provider }: EditorProps) {
   // ...
-
-  const renderLeaf = useCallback((props: any) => <Leaf {...props} />, []);
 
   return (
     <div className={styles.container}>
-      <div className={styles.editorContainer}>
-        <Slate editor={editor} initialValue={[emptyNode]}>
-          <Cursors>
-            <div className={styles.editorHeader}>
-              <Toolbar />
-            </div>
-            <Editable
-              className={styles.editor}
-              placeholder="Start typing here…"
-              renderLeaf={renderLeaf}
-            />
-          </Cursors>
-        </Slate>
+      <div className={styles.editorHeader}>
+        <Toolbar editor={editor} />
       </div>
+      <EditorContent editor={editor} className={styles.editorContainer} />
     </div>
   );
 }
@@ -737,30 +569,20 @@ And here’s the styles:
 
 You can then import this to your editor to see it in action:
 
-```tsx file="Editor.tsx" highlight="1,14"
+```tsx file="Editor.tsx" highlight="11"
 import { Avatars } from "./Avatars";
 // ...
 
-export default function SlateEditor() {
+function TiptapEditor({ doc, provider }: EditorProps) {
   // ...
 
   return (
     <div className={styles.container}>
-      <div className={styles.editorContainer}>
-        <Slate editor={editor} initialValue={[emptyNode]}>
-          <Cursors>
-            <div className={styles.editorHeader}>
-              <Toolbar />
-              <Avatars />
-            </div>
-            <Editable
-              className={styles.editor}
-              placeholder="Start typing here…"
-              renderLeaf={renderLeaf}
-            />
-          </Cursors>
-        </Slate>
+      <div className={styles.editorHeader}>
+        <Toolbar editor={editor} />
+        <Avatars />
       </div>
+      <EditorContent editor={editor} className={styles.editorContainer} />
     </div>
   );
 }
@@ -772,5 +594,5 @@ is sourced from the Liveblocks authentication endpoint.
 ## Try it out
 
 On GitHub we have a working example of a
-[Yjs Slate editor](https://github.com/liveblocks/liveblocks/tree/main/examples/nextjs-yjs-slate)
+[Yjs Tiptap editor](https://github.com/liveblocks/liveblocks/tree/main/examples/nextjs-yjs-tiptap)
 with added Liveblocks authentication and avatars.
