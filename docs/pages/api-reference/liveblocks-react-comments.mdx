@@ -34,38 +34,49 @@ export const {
 } = createCommentsContext<ThreadMetadata>();
 ```
 
-#### Resolving users [#resolving-users]
+#### Resolving users [#createCommentsContext.resolveUser]
 
 Anything that is linked to a user (comments, mentions, etc.) will reference
 their ID. To display user information based on IDs, you can provide a resolver
 function to the `resolveUser` option in [`createCommentContext`][].
 
+This resolver function will receive a user ID and should return a user object
+asynchronously.
+
 ```tsx file="liveblocks.config.ts"
 // ...
 
 export const {
   /* ... */
-} = createCommentsContext<ThreadMetadata>({ resolveUser: getUserInfoFromDb });
+} = createCommentsContext<ThreadMetadata>({
+  resolveUser: (userId) => __getUserInfoFromDB__(userId),
+});
 ```
 
-Once that’s done, you can use the [`useUser`](#useUser) hook to get a user
-object from their ID.
+Once that’s done, components will show user names and avatars accordingly.
 
-The resulting user object can be typed based on a `UserInfo` type.
+{/* TODO: Explain UserInfo.name and UserInfo.avatar */}
+
+{/* TODO: Explain that you can go beyond that and use a custom UserInfo type (pass it to createCommentsContext, it should extend the default UserInfo type), then use the useUser hook to get full user objects while using the primitives instead of the components */}
+
+#### Resolving mention suggestions [#createCommentsContext.resolveMentionSuggestions]
+
+Liveblocks only knows users' IDs, so to enable creating mentions in composer
+editors, you can provide a resolver function to the `resolveMentionSuggestions`
+option in [`createCommentContext`][].
+
+This resolver function will receive the mention currently being written (e.g.
+when writing “@jan”, `text` will be `jan`) and should return a list of user IDs
+matching that text. This function will be called every time the text changes but
+with some debouncing.
 
 ```tsx file="liveblocks.config.ts"
 // ...
 
-// Optionally, UserInfo represents metadata on each User.
-type UserInfo = {
-  name: string;
-  avatar?: string;
-};
-
 export const {
   /* ... */
-} = createCommentsContext<ThreadMetadata, UserInfo>({
-  resolveUser: (userId) => __getUserFromDB__(userId),
+} = createCommentsContext<ThreadMetadata>({
+  resolveMentionSuggestions: (text) => __getSuggestedUserIds__(text),
 });
 ```
 
@@ -77,7 +88,7 @@ instances with the same `roomId` can coexist in the same hierarchy.
 ```tsx
 import { CommentsProvider } from "./liveblocks.config";
 
-function AppRoot() {
+function Panel() {
   return <CommentsProvider roomId="my-room">{/* children */}</CommentsProvider>;
 }
 ```
@@ -108,7 +119,7 @@ const { user, error, isLoading } = useUser("user-id");
 <Banner title="Providing a resolver function">
 
 To use `useUser`, you should provide a resolver function to the
-[`resolveUser`](#resolving-users) option in
+[`resolveUser`](#createCommentsContext.resolveUser) option in
 [`createCommentContext`](#createCommentContext).
 
 </Banner>
@@ -191,19 +202,20 @@ Returns the current room ID, from the nearest [`CommentsProvider`][].
 const roomId = useRoomId();
 ```
 
-## Components
+## Primitives
 
-### Comment
+Primitives are unopinionated and unstyled components that can be used to create
+custom experiences with full control.
 
-The `Comment` components are used to display comments.
+### Comment [#primitives-Comment]
 
 ```tsx title="Anatomy"
-import { Comment } from "@liveblocks/react-comments";
+import { Comment } from "@liveblocks/react-comments/primitives";
 
 () => <Comment.Body renderMention={() => <Comment.Mention />} />;
 ```
 
-#### Comment.Body
+#### Comment.Body [#primitives-Comment.Body]
 
 Displays a comment body.
 
@@ -221,7 +233,7 @@ Displays a comment body.
 
 </Table>
 
-##### renderMention [#Comment.Body-renderMention]
+##### renderMention [#primitives-Comment.Body-renderMention]
 
 A render prop that accepts a component used to render mentions.
 
@@ -239,7 +251,7 @@ A render prop that accepts a component used to render mentions.
 
 </Table>
 
-#### Comment.Mention
+#### Comment.Mention [#primitives-Comment.Mention]
 
 Displays mentions within `Comment.Body`’s `renderMention` prop.
 
@@ -255,9 +267,7 @@ Displays mentions within `Comment.Body`’s `renderMention` prop.
 
 </Table>
 
-### Composer
-
-The `Composer` components are used to write comments.
+### Composer [#primitives-Composer]
 
 ```tsx title="Anatomy"
 import { Composer } from "@liveblocks/react-comments";
@@ -279,7 +289,7 @@ import { Composer } from "@liveblocks/react-comments";
 );
 ```
 
-#### Composer.Form
+#### Composer.Form [#primitives-Composer.Form]
 
 Surrounds the composer’s content and handles submissions.
 
@@ -299,7 +309,7 @@ Surrounds the composer’s content and handles submissions.
 
 </Table>
 
-#### Composer.Editor
+#### Composer.Editor [#primitives-Composer.Editor]
 
 Displays the composer’s editor.
 
@@ -330,7 +340,7 @@ Displays the composer’s editor.
 
 </Table>
 
-##### renderMention [#Composer.Editor-renderMention]
+##### renderMention [#primitives-Composer.Editor-renderMention]
 
 A render prop that accepts a component used to render mentions.
 
@@ -351,7 +361,7 @@ A render prop that accepts a component used to render mentions.
 
 </Table>
 
-##### renderMentionSuggestions [#Composer.Editor-renderMentionSuggestions]
+##### renderMentionSuggestions [#primitives-Composer.Editor-renderMentionSuggestions]
 
 A render prop that accepts a component used to render mention suggestions.
 
@@ -376,7 +386,7 @@ A render prop that accepts a component used to render mention suggestions.
 />
 ```
 
-#### Composer.Mention
+#### Composer.Mention [#primitives-Composer.Mention]
 
 Displays mentions within `Composer.Editor`’s `renderMention` prop.
 
@@ -400,7 +410,7 @@ Displays mentions within `Composer.Editor`’s `renderMention` prop.
 
 </Table>
 
-#### Composer.Suggestions
+#### Composer.Suggestions [#primitives-Composer.Suggestions]
 
 Surrounds a list of suggestions within `Composer.Editor`.
 
@@ -420,7 +430,7 @@ Surrounds a list of suggestions within `Composer.Editor`.
 
 </Table>
 
-#### Composer.SuggestionsList
+#### Composer.SuggestionsList [#primitives-Composer.SuggestionsList]
 
 Displays a list of suggestions within `Composer.Editor`.
 
@@ -436,7 +446,7 @@ Displays a list of suggestions within `Composer.Editor`.
 
 </Table>
 
-#### Composer.SuggestionsListItem
+#### Composer.SuggestionsListItem [#primitives-Composer.SuggestionsListItem]
 
 Displays a suggestion within `Composer.SuggestionsList`.
 
@@ -467,7 +477,7 @@ Displays a suggestion within `Composer.SuggestionsList`.
 
 </Table>
 
-### Timestamp
+### Timestamp [#primitives-Timestamp]
 
 Displays a formatted date, and automatically re-renders to support relative
 formatting. Defaults to relative formatting for recent dates and a short
