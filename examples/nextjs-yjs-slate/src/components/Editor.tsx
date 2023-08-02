@@ -27,7 +27,7 @@ export default function CollaborativeEditor() {
     return [provider, sharedDoc];
   }, [room]);
 
-  // Waiting for connection before loading editor
+  // Wait for connection before loading editor
   useEffect(() => {
     provider.on("sync", setConnected);
     provider.connect();

@@ -1,14 +1,14 @@
 ---
 meta:
   title:
-    "How to create a collaborative text editor with Slate, Yjs, React, and
+    "How to create a collaborative text editor with Slate, Yjs, Next.js, and
     Liveblocks"
   description:
-    "Build a collaborative text editor with Slate, Yjs, React, and Liveblocks"
+    "Build a collaborative text editor with Slate, Yjs, Next.js, and Liveblocks"
 ---
 
 In this tutorial, we’ll be building a collaborative text editor using Slate,
-Yjs, React, and Liveblocks.
+Yjs, Next.js, and Liveblocks.
 
 <Banner title="Private beta">
 
@@ -20,10 +20,19 @@ We’d love to hear from you.
 </Banner>
 
 This guide assumes that you’re already familiar with
-[React](https://react.dev/), [TypeScript](https://www.typescriptlang.org/), and
+[React](https://react.dev/), [Next.js](https://nextjs.org/),
+[TypeScript](https://www.typescriptlang.org/), and
 [Slate](https://docs.slatejs.org/).
 
-## Install Slate, Yjs, and Liveblocks into your React application
+## Install Slate, Yjs, and Liveblocks into your Next.js application
+
+<Banner title="Download the example">
+
+On GitHub we have a working example of this
+[collaborative Slate editor](https://github.com/liveblocks/liveblocks/tree/main/examples/nextjs-yjs-slate)
+for you to download and run.
+
+</Banner>
 
 Run the following command to install the Slate, Yjs, and Liveblocks packages:
 
@@ -31,10 +40,10 @@ Run the following command to install the Slate, Yjs, and Liveblocks packages:
 npm install @liveblocks/client @liveblocks/react @liveblocks/yjs yjs slate slate-react @slate-yjs/core @slate-yjs/react
 ```
 
-<Banner>
+### Transpile slate-yjs
 
-If you’re using Next.js, make sure to add `transpilePackages` to your
-`next.config.ts` file to allow `@slate-yjs/react` to be bundled correctly.
+Add `transpilePackages` to your `next.config.ts` file to allow
+`@slate-yjs/react` to be bundled correctly.
 
 ```js highlight="2"
 module.exports = {
@@ -44,9 +53,49 @@ module.exports = {
 };
 ```
 
-</Banner>
+## Set up access token authentication
 
-## Initialize the `liveblocks.config.ts` file
+The first step in connecting to Liveblocks is to set up an authentication
+endpoint in `/app/api/liveblocks-auth/route.ts`.
+
+```ts
+import { Liveblocks } from "@liveblocks/node";
+import { NextRequest } from "next/server";
+
+const API_KEY = "{{SECRET_KEY}}";
+
+const liveblocks = new Liveblocks({
+  secret: API_KEY!,
+});
+
+export async function POST(request: NextRequest) {
+  // Get the current user's info from your database
+  const user = {
+    id: "charlielayne@example.com",
+    info: {
+      name: "Charlie Layne",
+      color: "#D583F0",
+      picture: "https://liveblocks.io/avatars/avatar-1.png",
+    },
+  };
+
+  // Create a session for the current user
+  // userInfo is made available in Liveblocks presence hooks, e.g. useOthers
+  const session = liveblocks.prepareSession(user.id, {
+    userInfo: user.info,
+  });
+
+  // Give the user access to the room
+  const { room } = await request.json();
+  session.allow(room, session.FULL_ACCESS);
+
+  // Authorize the user and return the result
+  const { body, status } = await session.authorize();
+  return new Response(body, { status });
+}
+```
+
+## Initialize your Liveblocks config file
 
 Let’s initialize the `liveblocks.config.ts` file in which you’ll set up the
 Liveblocks client.
@@ -57,13 +106,13 @@ npx create-liveblocks-app@latest --init --framework react
 
 ## Set up the client
 
-The first step in connecting to Liveblocks is creating a client which will be
-responsible for communicating with the back end. You can do this by modifying
-`createClient` in your config file, and passing your public API key.
+Next, we can create the front end client which will be responsible for
+communicating with the back end. You can do this by modifying `createClient` in
+your config file, and passing the location of your endpoint.
 
 ```ts
 const client = createClient({
-  publicApiKey: "{{PUBLIC_KEY}}",
+  authEndpoint: "/api/liveblocks-auth",
 });
 ```
 
@@ -71,18 +120,26 @@ const client = createClient({
 
 Liveblocks uses the concept of rooms, separate virtual spaces where people
 collaborate. To create a real-time experience, multiple users must be connected
-to the same room.
+to the same room. Create a file in the current directory within `/app`, and name
+it `Room.tsx`.
 
-```tsx file="index.tsx" highlight="7-11"
-import { RoomProvider } from "./liveblocks.config";
-import { Editor } from "./Editor";
+```tsx file="/app/Room.tsx"
+"use client";
+
+import { ReactNode } from "react";
+import { RoomProvider } from "../liveblocks.config";
 import { ClientSideSuspense } from "@liveblocks/react";
 
-export default function Page() {
+export function Room({ children }: { children: ReactNode }) {
   return (
-    <RoomProvider id="my-room" initialPresence={{}}>
-      <ClientSideSuspense fallback="Loading…">
-        {() => <Editor />}
+    <RoomProvider
+      id={roomId}
+      initialPresence={{
+        cursor: null,
+      }}
+    >
+      <ClientSideSuspense fallback={<div>Loading…</div>}>
+        {() => children}
       </ClientSideSuspense>
     </RoomProvider>
   );
@@ -91,7 +148,7 @@ export default function Page() {
 
 ## Set up the Slate editor
 
-Now that we set up Liveblocks, we can start integrating Slate and Yjs in the
+Now that we’ve set up Liveblocks, we can start integrating Slate and Yjs in the
 `Editor.tsx` file.
 
 ```tsx file="Editor.tsx"
@@ -101,16 +158,14 @@ import { createEditor, Editor, Transforms } from "slate";
 import { Editable, Slate, withReact } from "slate-react";
 import { withYjs, YjsEditor } from "@slate-yjs/core";
 import * as Y from "yjs";
-import { useRoom } from "@/liveblocks.config";
-import { Loading } from "@/pages";
+import { useRoom } from "../liveblocks.config";
 import styles from "./Editor.module.css";
-import { Toolbar } from "@/src/Toolbar";
-import { Cursors } from "@/src/Cursors";
 
 export default function CollaborativeEditor() {
   const room = useRoom();
   const [connected, setConnected] = useState(false);
 
+  // Set up Liveblocks Yjs provider
   const [provider, sharedType] = useMemo(() => {
     const yDoc = new Y.Doc();
     const provider = new LiveblocksProvider(room, yDoc);
@@ -118,6 +173,7 @@ export default function CollaborativeEditor() {
     return [provider, sharedDoc];
   }, [room]);
 
+  // Wait for connection before loading editor
   useEffect(() => {
     provider.on("sync", setConnected);
     provider.connect();
@@ -129,7 +185,7 @@ export default function CollaborativeEditor() {
   }, [provider]);
 
   if (!connected) {
-    return <Loading />;
+    return <div>Loading…</div>;
   }
 
   return <SlateEditor sharedType={sharedType} />;
@@ -140,6 +196,7 @@ const emptyNode = {
 };
 
 function SlateEditor({ sharedType }: { sharedType: Y.XmlText }) {
+  // Set up editor with plugins
   const editor = useMemo(() => {
     const e = withReact(withYjs(createEditor(), sharedType));
 
@@ -193,6 +250,12 @@ editor looks nice and tidy.
   color: #111827;
 }
 
+.editorHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
 .editor {
   border-radius: inherit;
   flex-grow: 1;
@@ -223,21 +286,40 @@ editor looks nice and tidy.
 }
 ```
 
+## Add your editor to the current page
+
+Next, add the `CollaborativeEditor` into the page file, and place it inside the
+`Room` component we created earlier. We should now be seeing a basic
+collaborative editor!
+
+```tsx file="/app/page.tsx"
+import { Room } from "@/app/Room";
+import CollaborativeEditor from "@/components/Editor";
+
+export default function Page() {
+  return (
+    <Room>
+      <CollaborativeEditor />
+    </Room>
+  );
+}
+```
+
 ## Add live cursors
 
 To add live cursors to the text editor, we can rely on hooks from the
 `@slate-yjs/react` package.
 
-```tsx file="Cursors.tsx" highlight="11-23"
+```tsx file="Cursors.tsx"
 import {
   CursorOverlayData,
   useRemoteCursorOverlayPositions,
 } from "@slate-yjs/react";
-import React, { CSSProperties, PropsWithChildren, useRef } from "react";
+import React, { CSSProperties, ReactNode, useRef } from "react";
 import { Cursor } from "./types";
 import styles from "./Cursors.module.css";
 
-export function Cursors({ children }: PropsWithChildren) {
+export function Cursors({ children }: { children: ReactNode }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [cursors] = useRemoteCursorOverlayPositions<Cursor>({
     containerRef,
@@ -336,14 +418,35 @@ positions.
 }
 ```
 
-Wrap your editor in the Cursors component to see them in action.
+Back in your `Editor` component, get the current user’s info with
+[`useSelf`](/docs/api-reference/liveblocks-react#useSelf), add the `withCursors`
+plugin, and pass the user info and awareness. Then wrap your editor in the
+Cursors component to see them working.
 
-```tsx file="Editor.tsx" highlight="11,16"
-import { Cursors } from "@/src/Cursors";
+```tsx file="Editor.tsx" highlight="1-3,7-8,12-20,29,34"
+import { withCursors, withYjs, YjsEditor } from "@slate-yjs/core";
+import { useSelf } from "../liveblocks.config";
+import { Cursors } from "./Cursors";
 // ...
 
 export default function SlateEditor() {
-  // ...
+  // Get user info from Liveblocks authentication endpoint
+  const userInfo = useSelf((self) => self.info);
+
+  // Set up editor with plugins, and place user info into Yjs awareness and cursors
+  const editor = useMemo(() => {
+    const e = withReact(
+      withCursors(
+        withYjs(createEditor(), sharedType),
+        provider.awareness as any,
+        {
+          data: userInfo,
+        }
+      )
+    );
+
+    // ...
+  }, [sharedType, provider.awareness, userInfo]);
 
   return (
     <div className={styles.container}>
@@ -505,11 +608,9 @@ export function Leaf({ attributes, children, leaf }: Props) {
 }
 ```
 
-### Add to your editor
-
 You can then import this into your editor to enable basic rich-text:
 
-```tsx file="Editor.tsx" highlight="1,2,6,13,17"
+```tsx file="Editor.tsx" highlight="1,2,8,13,15-17"
 import { Toolbar } from "@/src/Toolbar";
 import { Leaf } from "@/src/Leaf";
 // ...
@@ -524,7 +625,9 @@ export default function SlateEditor() {
       <div className={styles.editorContainer}>
         <Slate editor={editor} initialValue={[emptyNode]}>
           <Cursors>
-            <Toolbar />
+            <div className={styles.editorHeader}>
+              <Toolbar />
+            </div>
             <Editable
               className={styles.editor}
               placeholder="Start typing here…"
@@ -537,6 +640,136 @@ export default function SlateEditor() {
   );
 }
 ```
+
+## Create live avatars with Liveblocks hooks
+
+Along with building out your text editor, you can now use other Liveblocks
+features, such as [Presence](/docs/products/presence). The
+[`useOthers`](/docs/api-reference/liveblocks-react#useOthers) hook allows us to
+view information about each user currently online, and we can turn this into a
+live avatars component.
+
+```tsx file="Avatars.tsx"
+import { useOthers, useSelf } from "@/liveblocks.config";
+import styles from "./Avatars.module.css";
+
+export function Avatars() {
+  const users = useOthers();
+  const currentUser = useSelf();
+
+  return (
+    <div className={styles.avatars}>
+      {users.map(({ connectionId, info }) => {
+        return (
+          <Avatar key={connectionId} picture={info.picture} name={info.name} />
+        );
+      })}
+
+      {currentUser && (
+        <div className="relative ml-8 first:ml-0">
+          <Avatar
+            picture={currentUser.info.picture}
+            name={currentUser.info.name}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
+export function Avatar({ picture, name }: { picture: string; name: string }) {
+  return (
+    <div className={styles.avatar} data-tooltip={name}>
+      <img
+        src={picture}
+        className={styles.avatar_picture}
+        data-tooltip={name}
+      />
+    </div>
+  );
+}
+```
+
+And here’s the styles:
+
+```css file="Avatars.module.css" isCollapsed isCollapsable
+.avatars {
+  display: flex;
+  padding: 0 0.75rem;
+}
+
+.avatar {
+  display: flex;
+  place-content: center;
+  position: relative;
+  border: 4px solid #fff;
+  border-radius: 9999px;
+  width: 42px;
+  height: 42px;
+  background-color: #9ca3af;
+  margin-left: -0.75rem;
+}
+
+.avatar:before {
+  content: attr(data-tooltip);
+  position: absolute;
+  top: 100%;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  padding: 5px 10px;
+  color: white;
+  font-size: 0.75rem;
+  border-radius: 8px;
+  margin-top: 10px;
+  z-index: 1;
+  background: black;
+  white-space: nowrap;
+}
+
+.avatar:hover:before {
+  opacity: 1;
+}
+
+.avatar_picture {
+  border-radius: 9999px;
+}
+```
+
+You can then import this to your editor to see it in action:
+
+```tsx file="Editor.tsx" highlight="1,14"
+import { Avatars } from "./Avatars";
+// ...
+
+export default function SlateEditor() {
+  // ...
+
+  return (
+    <div className={styles.container}>
+      <div className={styles.editorContainer}>
+        <Slate editor={editor} initialValue={[emptyNode]}>
+          <Cursors>
+            <div className={styles.editorHeader}>
+              <Toolbar />
+              <Avatars />
+            </div>
+            <Editable
+              className={styles.editor}
+              placeholder="Start typing here…"
+              renderLeaf={renderLeaf}
+            />
+          </Cursors>
+        </Slate>
+      </div>
+    </div>
+  );
+}
+```
+
+Note that the cursors and avatars match in color and name, as the info for both
+is sourced from the Liveblocks authentication endpoint.
+
+## Try it out
 
 On GitHub we have a working example of a
 [Yjs Slate editor](https://github.com/liveblocks/liveblocks/tree/main/examples/nextjs-yjs-slate)
