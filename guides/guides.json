@@ -187,6 +187,18 @@
     "date": "2023-07-05"
   },
   {
+    "title": "What happens when a user joins a room at maximum capacity?",
+    "path": "/what-happens-when-a-user-joins-a-room-at-maximum-capacity",
+    "topics": [
+      "errors"
+    ],
+    "technologies": [
+      "javascript",
+      "react"
+    ],
+    "date": "2023-08-03"
+  },
+  {
     "title": "How to create a collaborative text editor with Lexical, Yjs, Next.js, and Liveblocks",
     "path": "/how-to-create-a-collaborative-text-editor-with-lexical-yjs-nextjs-and-liveblocks",
     "topics": [

@@ -1,0 +1,108 @@
+---
+meta:
+  title: "What happens when a user joins a room at maximum capacity?"
+  description:
+    "Learn what happens when a room reaches the maximum simultaneous connections
+    per room"
+---
+
+Liveblocks allows you to gracefully handle maximum user limits in rooms. But
+first, when is a room at maximum capacity?
+
+- A room is full when it’s hit your maximum simultaneous connections per room
+  limit.
+- Your maximum simultaneous connections limit is defined by your current
+  [plan](/pricing).
+- Any users above that count will not be able to join the room.
+- Any users already in the room will not be affected by another user trying to
+  join.
+- [TODO CHECK THIS] If a user can’t join a room, they will not be counted
+  towards your MAUs.
+
+## Example
+
+For example, let’s say your plan allows for 50 simultaneous connections. If
+there’s a room that currently has 50 users inside, Marie (the 51st user) will
+not be able to join the room. If Marie tries to join, the first 50 users in the
+room will be unaffected, and the room will function as normal. However, Marie’s
+client will receive an error, which can be handled.
+
+## Handling users that are over the count
+
+No JavaScript `Error` is thrown when a user tries to join a room that’s full,
+instead you can listen for error events, which are helpful for displaying a
+warning or redirecting the user elsewhere.
+
+### In React
+
+With our
+[`@liveblocks/react`](https://liveblocks.io/docs/api-reference/liveblocks-react)
+package, you can listen for error events with
+[`useErrorListener`](/docs/api-reference/liveblocks-react#useErrorListener).
+When `error.code === 4005`, that means the room was full when the user tried to
+join.
+
+```tsx highlight="15-17"
+import { useErrorListener } from "../liveblocks.config";
+
+function App() {
+  // Listen for errors
+  useErrorListener((error) => {
+    switch (error.code) {
+      case -1:
+        // Authentication error
+        break;
+
+      case 4001:
+        // Could not connect because you don't have access to this room
+        break;
+
+      case 4005:
+        // Could not connect because room was full
+        break;
+
+      default:
+        // Unexpected error
+        break;
+    }
+  });
+
+  // ...
+}
+```
+
+### In JavaScript
+
+With our [`@liveblocks/client`](/docs/api-reference/liveblocks-client) package,
+you can listen for error events with
+[`room.subscribe("error")`](/docs/api-reference/liveblocks-client#Room.subscribe.error).
+When `error.code === 4005`, that means the room was full when the user tried to
+join.
+
+```ts highlight="17-19"
+// No error is thrown when the room is full
+const room = client.enter("my-room", {
+  /* ... */
+});
+
+// Listen for errors
+const unsubscribe = room.subscribe("error", (error) => {
+  switch (error.code) {
+    case -1:
+      // Authentication error
+      break;
+
+    case 4001:
+      // Could not connect because you don't have access to this room
+      break;
+
+    case 4005:
+      // Could not connect because room was full
+      break;
+
+    default:
+      // Unexpected error
+      break;
+  }
+});
+```
