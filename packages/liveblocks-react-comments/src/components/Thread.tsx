@@ -19,7 +19,7 @@ import { Tooltip, TooltipProvider } from "./internal/Tooltip";
 
 export interface ThreadProps
   extends ComponentPropsWithoutRef<"div">,
-    Pick<CommentProps, "indentBody" | "showActions"> {
+    Pick<CommentProps, "showActions"> {
   /**
    * The thread to display.
    */
@@ -31,16 +31,37 @@ export interface ThreadProps
   showComposer?: boolean;
 
   /**
-   * TODO: Add description
+   * How to show or hide the actions.
+   */
+  showActions?: CommentProps["showActions"];
+
+  /**
+   * Whether to indent the comments' bodies.
+   */
+  indentBody?: CommentProps["indentBody"];
+
+  /**
+   * Override the component's strings.
    */
   overrides?: Partial<ThreadOverrides & CommentOverrides & ComposerOverrides>;
 }
 
+/**
+ * Displays a thread of comments, with a composer to reply
+ * to it.
+ *
+ * @example
+ * <>
+ *   {threads.map((thread) => (
+ *     <Thread key={thread.id} thread={thread} />
+ *   ))}
+ * </>
+ */
 export const Thread = forwardRef<HTMLDivElement, ThreadProps>(
   (
     {
       thread,
-      indentBody,
+      indentBody = true,
       showActions = "hover",
       showComposer,
       overrides,

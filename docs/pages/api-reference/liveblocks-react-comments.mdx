@@ -61,7 +61,7 @@ Once that’s done, components will show user names and avatars accordingly.
 
 #### Resolving mention suggestions [#createCommentsContext.resolveMentionSuggestions]
 
-Liveblocks only knows users' IDs, so to enable creating mentions in composer
+Liveblocks only knows users’ IDs, so to enable creating mentions in composer
 editors, you can provide a resolver function to the `resolveMentionSuggestions`
 option in [`createCommentContext`][].
 
@@ -92,6 +92,95 @@ function Panel() {
   return <CommentsProvider roomId="my-room">{/* children */}</CommentsProvider>;
 }
 ```
+
+## Components
+
+{/* TODO: Explain customization (CSS variables, dark mode, etc.) */}
+
+{/* TODO: Explain overrides */}
+
+### Thread
+
+Displays a thread of comments, with a composer to reply to it.
+
+```tsx
+<>
+  {threads.map((thread) => (
+    <Thread key={thread.id} thread={thread} />
+  ))}
+</>
+```
+
+<Table columns={["auto", "auto", "54%"]}>
+
+| Prop           | Type                                                                                              | Description                                                                   |
+| -------------- | ------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| `thread`       | <code>ThreadData&lt;\{ resolved?: boolean \}&gt;</code>                                           | The thread to display.                                                        |
+| `showComposer` | `boolean \| undefined`                                                                            | Whether to show the composer to reply to the thread.<br/>Defaults to `false`. |
+| `showActions`  | `boolean \| "hover" \| undefined`                                                                 | How to show or hide the actions.<br/>Defaults to `"hover"`.                   |
+| `indentBody`   | `boolean \| undefined`                                                                            | Whether to indent the comments’ bodies.<br/>Defaults to `true`.               |
+| `overrides`    | <code>Partial&lt;ThreadOverrides \& CommentOverrides \& ComposerOverrides&gt; \| undefined</code> | Override the component’s strings.                                             |
+
+</Table>
+
+<Table columns={["28%", "auto"]}>
+
+| Attribute       | Value                                |
+| --------------- | ------------------------------------ |
+| `data-resolved` | Present when the thread is resolved. |
+
+</Table>
+
+### Comment
+
+Displays a single comment.
+
+```tsx
+<>
+  {thread.comments.map((comment) => (
+    <Comment key={comment.id} comment={comment} />
+  ))}
+</>
+```
+
+<Table columns={["auto", "auto", "54%"]}>
+
+| Prop          | Type                                                                           | Description                                                   |
+| ------------- | ------------------------------------------------------------------------------ | ------------------------------------------------------------- |
+| `comment`     | `CommentData`                                                                  | The thread to display.                                        |
+| `showActions` | `boolean \| "hover" \| undefined`                                              | How to show or hide the actions.<br/>Defaults to `"hover"`.   |
+| `indentBody`  | `boolean \| undefined`                                                         | Whether to indent the comment’s body.<br/>Defaults to `true`. |
+| `overrides`   | <code>Partial&lt;CommentOverrides \& ComposerOverrides&gt; \| undefined</code> | Override the component’s strings.                             |
+
+</Table>
+
+<Table columns={["28%", "auto"]}>
+
+| Attribute      | Value                                |
+| -------------- | ------------------------------------ |
+| `data-deleted` | Present when the comment is deleted. |
+
+</Table>
+
+### Composer
+
+Displays a composer to create comments.
+
+```tsx
+<Composer />
+```
+
+<Table columns={["auto", "auto", "54%"]}>
+
+| Prop           | Type                                                       | Description                                               |
+| -------------- | ---------------------------------------------------------- | --------------------------------------------------------- |
+| `threadId`     | `string \| undefined`                                      | The ID of the thread to reply to or to edit a comment in. |
+| `commentId`    | `string \| undefined`                                      | The ID of the comment to edit.                            |
+| `initialValue` | `CommentBody \| undefined`                                 | The editor’s initial value.                               |
+| `disabled`     | `boolean \| undefined`                                     | Whether the editor is disabled.                           |
+| `overrides`    | <code>Partial&lt;ComposerOverrides&gt; \| undefined</code> | Override the component’s strings.                         |
+
+</Table>
 
 ## Hooks
 
@@ -324,6 +413,7 @@ Displays the composer’s editor.
 | `initialValue`              | `CommentBody \| undefined`                                                           | The editor’s initial value.                                                                            |
 | `placeholder`               | `string \| undefined`                                                                | The text to display when the editor is empty.                                                          |
 | `disabled`                  | `boolean \| undefined`                                                               | Whether the editor is disabled.                                                                        |
+| `autoFocus`                 | `boolean \| undefined`                                                               | Whether to focus the editor on mount.                                                                  |
 | `dir`                       | `"ltr" \| "rtl" \| undefined`                                                        | The reading direction of the editor and related elements.                                              |
 | `renderMention`             | <code>ComponentType&lt;ComposerRenderMentionProps&gt; \| undefined</code>            | The component used to render mentions.<br/>Defaults to the mention’s `userId` prefixed by an @.        |
 | `renderMentionSuggestions`  | <code>ComponentType&lt;ComposerRenderMentionSuggestionsProps&gt; \| undefined</code> | The component used to render mention suggestions.<br/>Defaults to a list of the suggestions’ `userId`. |

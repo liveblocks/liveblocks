@@ -2,7 +2,7 @@ import React, { Suspense, useMemo } from "react";
 import { useRouter } from "next/router";
 import { CommentsProvider, useThreads } from "../../liveblocks.config";
 import { useHydrated } from "../utils/use-hydrated";
-import { Composer } from "@liveblocks/react-comments";
+import { Comment, Composer } from "@liveblocks/react-comments";
 import { Thread } from "@liveblocks/react-comments";
 
 function Example() {
