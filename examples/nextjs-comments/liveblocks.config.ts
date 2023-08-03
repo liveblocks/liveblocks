@@ -39,7 +39,8 @@ async function resolveMentionSuggestions(text: string) {
 
 export const {
   CommentsProvider,
-  suspense: { useThreads },
+  useThreads,
+  suspense: { useThreads: useThreadsSuspense },
 } = createCommentsContext<ThreadMetadata>(client, {
   resolveUser,
   resolveMentionSuggestions,

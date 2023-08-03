@@ -1,20 +1,16 @@
 import React, { useMemo } from "react";
 import { useRouter } from "next/router";
-import { CommentsProvider, useThreads } from "../../liveblocks.config";
-import { Composer } from "@liveblocks/react-comments";
+import {
+  CommentsProvider,
+  useThreadsSuspense as useThreads,
+} from "../../liveblocks.config";
+import { Comment, Composer } from "@liveblocks/react-comments";
 import { Thread } from "@liveblocks/react-comments";
+import { ClientSideSuspense } from "@liveblocks/react";
 import { Loading } from "../components/Loading";
 
 function Example() {
-  const { isLoading, threads, error } = useThreads();
-
-  if (isLoading) {
-    return <Loading />;
-  }
-
-  if (error) {
-    return <div>Fail!</div>;
-  }
+  const threads = useThreads();
 
   return (
     <main>
@@ -36,7 +32,9 @@ export default function Page() {
 
   return (
     <CommentsProvider roomId={roomId}>
-      <Example />
+      <ClientSideSuspense fallback={<Loading />}>
+        {() => <Example />}
+      </ClientSideSuspense>
     </CommentsProvider>
   );
 }

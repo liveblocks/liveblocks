@@ -1,21 +1,17 @@
 "use client";
 
 import React from "react";
-import { CommentsProvider, useThreads } from "../../../liveblocks.config";
+import {
+  CommentsProvider,
+  useThreadsSuspense as useThreads,
+} from "../../../../liveblocks.config";
 import { Composer } from "@liveblocks/react-comments";
 import { Thread } from "@liveblocks/react-comments";
-import { Loading } from "../../components/Loading";
+import { ClientSideSuspense } from "../../../components/ClientSideSuspense";
+import { Loading } from "../../../components/Loading";
 
 function Example() {
-  const { isLoading, threads, error } = useThreads();
-
-  if (isLoading) {
-    return <Loading />;
-  }
-
-  if (error) {
-    return <div>Fail!</div>;
-  }
+  const threads = useThreads();
 
   return (
     <main>
@@ -30,7 +26,9 @@ function Example() {
 export default function Home() {
   return (
     <CommentsProvider roomId="nextjs-comments">
-      <Example />
+      <ClientSideSuspense fallback={<Loading />}>
+        {() => <Example />}
+      </ClientSideSuspense>
     </CommentsProvider>
   );
 }
