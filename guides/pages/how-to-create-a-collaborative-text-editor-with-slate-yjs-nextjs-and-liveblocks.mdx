@@ -103,11 +103,9 @@ export async function POST(request: NextRequest) {
 }
 ```
 
-<details>
-<summary>Example for the older Next pages API routes.</summary>
+Here is an example for the older Next pages API routes.
 
-`/pages/api/liveblocks-auth.ts`:
-```ts
+```ts file="/pages/api/liveblocks-auth.ts" isCollapsed isCollapsable
 import { Liveblocks } from '@liveblocks/node';
 import type { NextApiRequest, NextApiResponse } from 'next';
 
@@ -143,7 +141,6 @@ export default async function POST(request: NextApiRequest, response: NextApiRes
   response.status(status).send(body);
 }
 ```
-</details>
 
 ## Initialize your Liveblocks config file
 
