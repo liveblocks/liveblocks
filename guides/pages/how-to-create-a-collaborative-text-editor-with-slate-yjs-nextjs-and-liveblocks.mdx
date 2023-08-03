@@ -37,7 +37,7 @@ for you to download and run.
 Run the following command to install the Slate, Yjs, and Liveblocks packages:
 
 ```bash
-npm install @liveblocks/client @liveblocks/react @liveblocks/yjs yjs slate slate-react @slate-yjs/core @slate-yjs/react
+npm install @liveblocks/client @liveblocks/react @liveblocks/yjs @liveblocks/node yjs slate slate-react @slate-yjs/core @slate-yjs/react
 ```
 
 ### Transpile slate-yjs
@@ -53,6 +53,22 @@ module.exports = {
 };
 ```
 
+#### Got an error?
+
+Note that if you’re seeing an error that resembles the following, you’re
+probably using an older version of Next.js that doesn’t support
+`transpilePackages`.
+
+```
+Error: Directory import '/node_modules/use-sync-external-store/shim' is not supported resolving ES modules imported from /node_modules/@slate-yjs/react/dist/index.js
+Did you mean to import use-sync-external-store/shim/index.js?
+```
+
+You may need to upgrade to a newer version of Next.js for this to work.
+
+```bash
+npm i next@latest
+```
 ## Set up access token authentication
 
 The first step in connecting to Liveblocks is to set up an authentication
@@ -92,6 +108,45 @@ export async function POST(request: NextRequest) {
   // Authorize the user and return the result
   const { body, status } = await session.authorize();
   return new Response(body, { status });
+}
+```
+
+Here’s an example using the Next.js API routes format in `/pages`.
+
+```ts file="/pages/api/liveblocks-auth.ts" isCollapsed isCollapsable
+import { Liveblocks } from '@liveblocks/node';
+import type { NextApiRequest, NextApiResponse } from 'next';
+
+const API_KEY = "{{SECRET_KEY}}";
+
+const liveblocks = new Liveblocks({
+  secret: API_KEY!,
+});
+
+export default async function POST(request: NextApiRequest, response: NextApiResponse) {
+  // Get the current user's info from your database
+  const user = {
+    id: 'charlielayne@example.com',
+    info: {
+      name: 'Charlie Layne',
+      color: '#D583F0',
+      picture: 'https://liveblocks.io/avatars/avatar-1.png',
+    },
+  };
+
+  // Create a session for the current user
+  // userInfo is made available in Liveblocks presence hooks, e.g. useOthers
+  const session = liveblocks.prepareSession(user.id, {
+    userInfo: user.info,
+  });
+
+  // Give the user access to the room
+  const { room } = request.body;
+  session.allow(room, session.FULL_ACCESS);
+
+  // Authorize the user and return the result
+  const { body, status } = await session.authorize();
+  response.status(status).send(body);
 }
 ```
 
@@ -158,7 +213,7 @@ import { createEditor, Editor, Transforms } from "slate";
 import { Editable, Slate, withReact } from "slate-react";
 import { withYjs, YjsEditor } from "@slate-yjs/core";
 import * as Y from "yjs";
-import { useRoom } from "../liveblocks.config";
+import { LiveblocksProviderType, useRoom } from "../liveblocks.config";
 import styles from "./Editor.module.css";
 
 export default function CollaborativeEditor() {
