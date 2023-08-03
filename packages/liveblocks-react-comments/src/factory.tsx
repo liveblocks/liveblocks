@@ -311,7 +311,7 @@ export function createCommentsContext<
 
   const errorEventSource = makeEventSource<CommentsApiError<TThreadMetadata>>();
   const restApi = createCommentsApi<TThreadMetadata>(client, {
-    serverEndpoint: `https://api.liveblocks.io/v2`,
+    serverEndpoint: "https://api.liveblocks.io/v2",
   });
 
   const usersCache = resolveUser

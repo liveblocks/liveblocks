@@ -40,14 +40,7 @@ interface EditorActionProps extends ComponentProps<"button"> {
 }
 
 type ComposerCreateThreadProps = {
-  /**
-   * The ID of the thread to reply to.
-   */
   threadId?: never;
-
-  /**
-   * The ID of the comment to edit.
-   */
   commentId?: never;
 };
 
@@ -56,16 +49,12 @@ type ComposerCreateCommentProps = {
    * The ID of the thread to reply to.
    */
   threadId: string;
-
-  /**
-   * The ID of the comment to edit.
-   */
   commentId?: never;
 };
 
 type ComposerEditCommentProps = {
   /**
-   * The ID of the thread to reply to.
+   * The ID of the thread to edit a comment in.
    */
   threadId: string;
 
@@ -83,7 +72,7 @@ export type ComposerProps = Omit<ComposerFormProps, keyof SlotProp> &
     | ComposerEditCommentProps
   ) & {
     /**
-     * TODO: Add description
+     * Override the component's strings.
      */
     overrides?: Partial<ComposerOverrides>;
 
@@ -165,6 +154,12 @@ function ComposerMentionSuggestions({
   ) : null;
 }
 
+/**
+ * Displays a composer to create comments.
+ *
+ * @example
+ * <Composer />
+ */
 export const Composer = forwardRef<HTMLFormElement, ComposerProps>(
   (
     {

@@ -587,7 +587,7 @@
 
   &:hover .lb-comment-actions,
   &:focus-within .lb-comment-actions,
-  &[data-dropdown-open] .lb-comment-actions {
+  &.lb-comment\:dropdown-open .lb-comment-actions {
     opacity: 1;
   }
 }

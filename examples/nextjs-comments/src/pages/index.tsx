@@ -1,7 +1,7 @@
 import React, { useMemo } from "react";
 import { useRouter } from "next/router";
 import { CommentsProvider, useThreads } from "../../liveblocks.config";
-import { Composer } from "@liveblocks/react-comments";
+import { Comment, Composer } from "@liveblocks/react-comments";
 import { Thread } from "@liveblocks/react-comments";
 import { ClientSideSuspense } from "@liveblocks/react";
 

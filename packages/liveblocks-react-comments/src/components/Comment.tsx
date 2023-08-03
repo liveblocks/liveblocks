@@ -35,17 +35,17 @@ export interface CommentProps extends ComponentPropsWithoutRef<"div"> {
   comment: CommentData;
 
   /**
-   * Whether to indent the comment body.
-   */
-  indentBody?: boolean;
-
-  /**
-   * When to show or hide the actions.
+   * How to show or hide the actions.
    */
   showActions?: boolean | "hover";
 
   /**
-   * TODO: Add description
+   * Whether to indent the comment's body.
+   */
+  indentBody?: boolean;
+
+  /**
+   * Override the component's strings.
    */
   overrides?: Partial<CommentOverrides & ComposerOverrides>;
 
@@ -69,6 +69,16 @@ function CommentMention({ userId }: CommentRenderMentionProps) {
   );
 }
 
+/**
+ * Displays a single comment.
+ *
+ * @example
+ * <>
+ *   {thread.comments.map((comment) => (
+ *     <Comment key={comment.id} comment={comment} />
+ *   ))}
+ * </>
+ */
 export const Comment = forwardRef<HTMLDivElement, CommentProps>(
   (
     {
@@ -120,9 +130,10 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
             "lb-root lb-comment",
             indentBody && "lb-comment:indent-body",
             showActions === "hover" && "lb-comment:show-actions-hover",
+            isMoreOpen && "lb-comment:dropdown-open",
             className
           )}
-          data-dropdown-open={isMoreOpen ? "" : undefined}
+          data-deleted={!comment.body ? "" : undefined}
           dir={$.dir}
           {...props}
           ref={forwardedRef}
