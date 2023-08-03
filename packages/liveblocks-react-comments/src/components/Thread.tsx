@@ -31,6 +31,11 @@ export interface ThreadProps
   showComposer?: boolean;
 
   /**
+   * Whether to show the action to resolve the thread.
+   */
+  showResolveAction?: boolean;
+
+  /**
    * How to show or hide the actions.
    */
   showActions?: CommentProps["showActions"];
@@ -63,6 +68,7 @@ export const Thread = forwardRef<HTMLDivElement, ThreadProps>(
       thread,
       indentBody = true,
       showActions = "hover",
+      showResolveAction = true,
       showComposer,
       overrides,
       className,
@@ -110,7 +116,7 @@ export const Thread = forwardRef<HTMLDivElement, ThreadProps>(
                     isFirstComment ? "lb-thread-actions" : undefined
                   }
                   additionalActions={
-                    isFirstComment ? (
+                    isFirstComment && showResolveAction ? (
                       <Tooltip
                         content={
                           thread.metadata.resolved
@@ -141,7 +147,6 @@ export const Thread = forwardRef<HTMLDivElement, ThreadProps>(
               );
             })}
           </div>
-          {/* TODO: Change placeholder and button label to indicate that it's a reply */}
           {showComposer && (
             <Composer
               className="lb-thread-composer"
