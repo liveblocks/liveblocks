@@ -1,6 +1,6 @@
 {
   "name": "@liveblocks/core",
-  "version": "1.2.0-comments4",
+  "version": "1.2.0-comments5",
   "description": "Private internals for Liveblocks. DO NOT import directly from this package!",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
