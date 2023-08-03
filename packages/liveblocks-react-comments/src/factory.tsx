@@ -494,10 +494,6 @@ export function createCommentsContext<
 
   const CommentsProvider = memo<CommentsProviderProps>(
     ({ roomId, overrides: globalOverrides, children }) => {
-      if (typeof window === "undefined") {
-        throw Error("CommentsProvider can only be used on the client");
-      }
-
       const useOverrides = useMemo(() => {
         return (overrides?: Partial<Overrides>) => ({
           ...defaultOverrides,

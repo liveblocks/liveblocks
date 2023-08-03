@@ -1,9 +1,9 @@
-import React, { Suspense, useMemo } from "react";
+import React, { useMemo } from "react";
 import { useRouter } from "next/router";
 import { CommentsProvider, useThreads } from "../../liveblocks.config";
-import { useHydrated } from "../utils/use-hydrated";
 import { Composer } from "@liveblocks/react-comments";
 import { Thread } from "@liveblocks/react-comments";
+import { ClientSideSuspense } from "@liveblocks/react";
 
 function Example() {
   const threads = useThreads();
@@ -25,18 +25,12 @@ function Example() {
 
 export default function Page() {
   const roomId = useOverrideRoomId("nextjs-comments");
-  const isHydrated = useHydrated();
-
-  // TODO: Fix SSR
-  if (!isHydrated) {
-    return <Loading />;
-  }
 
   return (
     <CommentsProvider roomId={roomId}>
-      <Suspense fallback={<Loading />}>
-        <Example />
-      </Suspense>
+      <ClientSideSuspense fallback={<Loading />}>
+        {() => <Example />}
+      </ClientSideSuspense>
     </CommentsProvider>
   );
 }

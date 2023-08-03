@@ -1,9 +1,10 @@
 "use client";
 
-import React, { Suspense } from "react";
+import React from "react";
 import { CommentsProvider, useThreads } from "../../../liveblocks.config";
 import { Composer } from "@liveblocks/react-comments";
 import { Thread } from "@liveblocks/react-comments";
+import { ClientSideSuspense } from "../../utils/ClientSideSuspense";
 
 function Example() {
   const threads = useThreads();
@@ -21,9 +22,9 @@ function Example() {
 export default function Home() {
   return (
     <CommentsProvider roomId="comments-react">
-      <Suspense fallback={<Loading />}>
-        <Example />
-      </Suspense>
+      <ClientSideSuspense fallback={<Loading />}>
+        {() => <Example />}
+      </ClientSideSuspense>
     </CommentsProvider>
   );
 }
