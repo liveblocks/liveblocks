@@ -311,7 +311,7 @@ export function createCommentsContext<
 
   const errorEventSource = makeEventSource<CommentsApiError<TThreadMetadata>>();
   const restApi = createCommentsApi<TThreadMetadata>(client, {
-    serverEndpoint: `https://api.liveblocks.io/v2`,
+    serverEndpoint: "https://api.liveblocks.io/v2",
   });
 
   const usersCache = resolveUser
@@ -495,7 +495,7 @@ export function createCommentsContext<
   const CommentsProvider = memo<CommentsProviderProps>(
     ({ roomId, overrides: globalOverrides, children }) => {
       if (typeof window === "undefined") {
-        throw Error("CommentsProvider can only be used on the client");
+        throw Error("CommentsProvider can only be used on the client.");
       }
 
       const useOverrides = useMemo(() => {

@@ -20,7 +20,7 @@ function Example() {
 
 export default function Home() {
   return (
-    <CommentsProvider roomId="comments-react">
+    <CommentsProvider roomId="nextjs-comments">
       <Suspense fallback={<Loading />}>
         <Example />
       </Suspense>
