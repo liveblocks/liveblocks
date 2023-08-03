@@ -386,10 +386,10 @@ export function useStorage(): readonly DevTools.LsonTreeNode[] {
   );
 }
 
-export function useYdoc(): string {
+export function useYdoc(): Y.Doc {
   const currentRoomId = useCurrentRoomId();
   return useSyncExternalStore(
     getSubscribe(currentRoomId, "onYdoc") ?? nosub,
-    () => JSON.stringify(yDocToJson(getRoom(currentRoomId)?.ydoc ?? new Y.Doc()))
+    () => getRoom(currentRoomId)?.ydoc ?? new Y.Doc()
   );
 }

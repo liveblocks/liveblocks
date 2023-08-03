@@ -33,6 +33,7 @@ export function sendToPanel(
   };
 
   if (!(options?.force || _bridgeActive)) {
+    /*
     // eslint-disable-next-line rulesdir/console-must-be-fancy
     console.log(
       "%c[client → panel] %c%s",
@@ -41,9 +42,10 @@ export function sendToPanel(
       fullMsg.msg,
       "[🚫 NOT sent!]"
     );
+    */
     return;
   }
-
+  /*
   // eslint-disable-next-line rulesdir/console-must-be-fancy
   console.log(
     "%c[client → panel] %c%s",
@@ -51,7 +53,7 @@ export function sendToPanel(
     "color: green; font-weight: bold",
     fullMsg.msg,
     fullMsg
-  );
+  );*/
   window.postMessage(fullMsg, "*");
 }
 

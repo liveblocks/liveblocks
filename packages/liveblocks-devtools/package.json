@@ -29,6 +29,7 @@
     "react": "18.2.0",
     "react-arborist": "^2.2.0",
     "react-dom": "18.2.0",
+    "reactflow": "^11.7.4",
     "unquoted-property-validator": "^1.1.0",
     "use-resize-observer": "^9.1.0",
     "yjs": "^13.6.7"
