@@ -24,18 +24,3 @@ main {
   padding: 16px;
   background: #e8eaee;
 }
-
-.loading {
-  position: absolute;
-  width: 100vw;
-  height: 100vh;
-  display: flex;
-  place-content: center;
-  place-items: center;
-}
-
-.loading img {
-  width: 64px;
-  height: 64px;
-  opacity: 0.2;
-}

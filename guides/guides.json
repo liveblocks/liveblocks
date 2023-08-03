@@ -187,8 +187,8 @@
     "date": "2023-07-05"
   },
   {
-    "title": "How to create a collaborative text editor with Lexical, Yjs, React, and Liveblocks",
-    "path": "/how-to-create-a-collaborative-text-editor-with-lexical-yjs-react-and-liveblocks",
+    "title": "How to create a collaborative text editor with Lexical, Yjs, Next.js, and Liveblocks",
+    "path": "/how-to-create-a-collaborative-text-editor-with-lexical-yjs-nextjs-and-liveblocks",
     "topics": [
       "tutorials",
       "text-editors"

@@ -1,0 +1,604 @@
+---
+meta:
+  title:
+    "How to create a collaborative text editor with Lexical, Yjs, Next.js, and
+    Liveblocks"
+  description:
+    "Build a collaborative text editor with Lexical, Yjs, Next.js, and
+    Liveblocks"
+---
+
+In this tutorial, we’ll be building a collaborative text editor using Lexical,
+Yjs, Next.js, and Liveblocks.
+
+<Banner title="Private beta">
+
+Yjs support is currently in private beta. If you have any questions or feedback,
+please reach out to us via the dedicated Discord channel,
+[#yjs-beta](https://discord.com/channels/913109211746009108/1123560088997728328).
+We’d love to hear from you.
+
+</Banner>
+
+This guide assumes that you’re already familiar with
+[React](https://react.dev/), [Next.js](https://nextjs.org),
+[TypeScript](https://www.typescriptlang.org/), and
+[Lexical](https://lexical.dev).
+
+## Install Lexical, Yjs, and Liveblocks into your React application
+
+<Banner title="Download the example">
+
+On GitHub we have a working example of this
+[collaborative Lexical editor](https://github.com/liveblocks/liveblocks/tree/main/examples/nextjs-yjs-lexical)
+for you to download and run.
+
+</Banner>
+
+Run the following command to install the Lexical, Yjs, and Liveblocks packages:
+
+```bash
+npm install lexical @lexical/react @lexical/yjs @liveblocks/client @liveblocks/react @liveblocks/yjs yjs
+```
+
+## Set up access token authentication
+
+The first step in connecting to Liveblocks is to set up an authentication
+endpoint in `/app/api/liveblocks-auth/route.ts`.
+
+```ts
+import { Liveblocks } from "@liveblocks/node";
+import { NextRequest } from "next/server";
+
+const API_KEY = "{{SECRET_KEY}}";
+
+const liveblocks = new Liveblocks({
+  secret: API_KEY!,
+});
+
+export async function POST(request: NextRequest) {
+  // Get the current user's info from your database
+  const user = {
+    id: "charlielayne@example.com",
+    info: {
+      name: "Charlie Layne",
+      color: "#D583F0",
+      picture: "https://liveblocks.io/avatars/avatar-1.png",
+    },
+  };
+
+  // Create a session for the current user
+  // userInfo is made available in Liveblocks presence hooks, e.g. useOthers
+  const session = liveblocks.prepareSession(user.id, {
+    userInfo: user.info,
+  });
+
+  // Give the user access to the room
+  const { room } = await request.json();
+  session.allow(room, session.FULL_ACCESS);
+
+  // Authorize the user and return the result
+  const { body, status } = await session.authorize();
+  return new Response(body, { status });
+}
+```
+
+## Initialize your Liveblocks config file
+
+Let’s initialize the `liveblocks.config.ts` file in which you’ll set up the
+Liveblocks client.
+
+```bash
+npx create-liveblocks-app@latest --init --framework react
+```
+
+## Set up the client
+
+Next, we can create the front end client which will be responsible for
+communicating with the back end. You can do this by modifying `createClient` in
+your config file, and passing the location of your endpoint.
+
+```ts
+const client = createClient({
+  authEndpoint: "/api/liveblocks-auth",
+});
+```
+
+## Join a Liveblocks room
+
+Liveblocks uses the concept of rooms, separate virtual spaces where people
+collaborate. To create a real-time experience, multiple users must be connected
+to the same room. Create a file in the current directory within `/app`, and name
+it `Room.tsx`.
+
+```tsx file="/app/Room.tsx"
+"use client";
+
+import { ReactNode } from "react";
+import { RoomProvider } from "../liveblocks.config";
+import { ClientSideSuspense } from "@liveblocks/react";
+
+export function Room({ children }: { children: ReactNode }) {
+  return (
+    <RoomProvider
+      id={roomId}
+      initialPresence={{
+        cursor: null,
+      }}
+    >
+      <ClientSideSuspense fallback={<div>Loading…</div>}>
+        {() => children}
+      </ClientSideSuspense>
+    </RoomProvider>
+  );
+}
+```
+
+## Set up the Lexical editor
+
+Now that we set up Liveblocks, we can start integrating Lexical and Yjs in the
+`Editor.tsx` file.
+
+```tsx file="Editor.tsx"
+"use client";
+
+import LiveblocksProvider from "@liveblocks/yjs";
+import * as Y from "yjs";
+import { useRoom } from "@/liveblocks.config";
+import styles from "./Editor.module.css";
+import {
+  $createParagraphNode,
+  $createTextNode,
+  $getRoot,
+  LexicalEditor,
+} from "lexical";
+import { LexicalComposer } from "@lexical/react/LexicalComposer";
+import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
+import { ContentEditable } from "@lexical/react/LexicalContentEditable";
+import LexicalErrorBoundary from "@lexical/react/LexicalErrorBoundary";
+import { CollaborationPlugin } from "@lexical/react/LexicalCollaborationPlugin";
+import { Provider } from "@lexical/yjs";
+
+// Set up editor config
+const initialConfig = {
+  // NOTE: This is critical for collaboration plugin to set editor state to null. It
+  // would indicate that the editor should not try to set any default state
+  // (not even empty one), and let collaboration plugin do it instead
+  editorState: null,
+  namespace: "Demo",
+  nodes: [],
+  onError: (error: unknown) => {
+    throw error;
+  },
+};
+
+// Define initial editor state
+function initialEditorState(editor: LexicalEditor): void {
+  const root = $getRoot();
+  const paragraph = $createParagraphNode();
+  const text = $createTextNode();
+  paragraph.append(text);
+  root.append(paragraph);
+}
+
+// Collaborative text editor with simple rich text
+
+export default function Editor() {
+  // Get Liveblocks room
+  const room = useRoom();
+
+  return (
+    <div className={styles.container}>
+      <LexicalComposer initialConfig={initialConfig}>
+        <div className={styles.editorContainer}>
+          <RichTextPlugin
+            contentEditable={<ContentEditable className={styles.editor} />}
+            placeholder={
+              <p className={styles.placeholder}>Start typing here…</p>
+            }
+            ErrorBoundary={LexicalErrorBoundary}
+          />
+          <CollaborationPlugin
+            id="yjs-plugin"
+            providerFactory={(id, yjsDocMap) => {
+              // Set up Liveblocks Yjs provider
+              const doc = new Y.Doc();
+              yjsDocMap.set(id, doc);
+              const provider = new LiveblocksProvider(room, doc) as Provider;
+              return provider;
+            }}
+            initialEditorState={initialEditorState}
+            shouldBootstrap={true}
+          />
+        </div>
+      </LexicalComposer>
+    </div>
+  );
+}
+```
+
+And here is the `Editor.module.css` file to make sure your multiplayer text
+editor looks nice and tidy.
+
+```css file="Editor.module.css" isCollapsed isCollapsable
+.container {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  border-radius: 12px;
+  background: #fff;
+  width: 100%;
+  height: 100%;
+  color: #111827;
+}
+
+.editorHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.editor {
+  border-radius: inherit;
+  flex-grow: 1;
+  width: 100%;
+  height: 100%;
+  padding: 1rem;
+}
+
+.editor:focus {
+  outline: none;
+}
+
+.editorContainer {
+  position: relative;
+  height: 100%;
+}
+
+.placeholder {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  opacity: 0.3;
+  padding: 0 1em;
+}
+```
+
+## Add live cursors
+
+To add live cursors to the text editor, we can pass the current user’s
+information from our authentication endpoint into `CollaborationPlugin`.
+
+```tsx file="Editor.tsx" highlight="1,7,22-23"
+import { useSelf } from "../liveblocks.config";
+// ...
+
+export default function Editor() {
+  // Get Liveblocks room, and user info from Liveblocks authentication endpoint
+  const room = useRoom();
+  const userInfo = useSelf((me) => me.info);
+
+  return (
+    <div className={styles.container}>
+      <LexicalComposer initialConfig={initialConfig}>
+        <div className={styles.editorContainer}>
+          <RichTextPlugin
+            contentEditable={<ContentEditable className={styles.editor} />}
+            placeholder={
+              <p className={styles.placeholder}>Start typing here…</p>
+            }
+            ErrorBoundary={LexicalErrorBoundary}
+          />
+          <CollaborationPlugin
+            id="yjs-plugin"
+            cursorColor={userInfo.color}
+            username={userInfo.name}
+            providerFactory={(id, yjsDocMap) => {
+              // Set up Liveblocks Yjs provider
+              const doc = new Y.Doc();
+              yjsDocMap.set(id, doc);
+              const provider = new LiveblocksProvider(room, doc) as Provider;
+              return provider;
+            }}
+            initialEditorState={initialEditorState}
+            shouldBootstrap={true}
+          />
+        </div>
+      </LexicalComposer>
+    </div>
+  );
+}
+```
+
+## Add a toolbar
+
+From this point onwards, you can build your Lexical app as normal! For example,
+should you wish to add a basic text-style toolbar to your app:
+
+```tsx file="Toolbar.tsx"
+import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
+import { FORMAT_TEXT_COMMAND } from "lexical";
+import styles from "./Toolbar.module.css";
+
+export function Toolbar() {
+  const [editor] = useLexicalComposerContext();
+
+  return (
+    <div className={styles.toolbar}>
+      <button
+        className={styles.buttonBold}
+        onClick={() => {
+          editor.dispatchCommand(FORMAT_TEXT_COMMAND, "bold");
+        }}
+        aria-label="Format bold"
+      >
+        B
+      </button>
+      <button
+        className={styles.buttonItalic}
+        onClick={() => {
+          editor.dispatchCommand(FORMAT_TEXT_COMMAND, "italic");
+        }}
+        aria-label="Format italic"
+      >
+        i
+      </button>
+      <button
+        className={styles.buttonUnderline}
+        onClick={() => {
+          editor.dispatchCommand(FORMAT_TEXT_COMMAND, "underline");
+        }}
+        aria-label="Format underline"
+      >
+        u
+      </button>
+    </div>
+  );
+}
+```
+
+Add some matching styles:
+
+```css file="Toolbar.module.css" isCollapsed isCollapsable
+.toolbar {
+  display: flex;
+  padding: 1em;
+  gap: 6px;
+}
+
+.button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-radius: 6px;
+  height: 32px;
+  width: 32px;
+  background: #fff;
+  color: #1f2937;
+  border: none;
+  box-shadow:
+    rgba(0, 0, 0, 0.12) 0 4px 8px 0,
+    rgba(0, 0, 0, 0.02) 0 0 0 1px;
+}
+
+.button:hover {
+  color: #111827;
+  box-shadow:
+    rgba(0, 0, 0, 0.16) 0 5px 8px 0,
+    rgba(0, 0, 0, 0.04) 0 0 0 1px;
+}
+
+.button:focus-visible {
+  outline-offset: 2px;
+}
+
+.button:active {
+  box-shadow:
+    rgba(0, 0, 0, 0.16) 0 2px 3px 0,
+    rgba(0, 0, 0, 0.04) 0 0 0 1px;
+}
+```
+
+You can then import this into your editor to enable basic rich-text:
+
+```tsx file="Editor.tsx" highlight="1,10-12"
+import { Toolbar } from "./Toolbar";
+// ...
+
+export default function Editor() {
+  // ...
+
+  return (
+    <div className={styles.container}>
+      <LexicalComposer initialConfig={initialConfig}>
+        <div className={styles.editorHeader}>
+          <Toolbar />
+        </div>
+        <div className={styles.editorContainer}>{/* ... */}</div>
+      </LexicalComposer>
+    </div>
+  );
+}
+```
+
+### Theme your text styles
+
+You can go a step further and theme your basic custom text styles by using the
+`theme` property, and adding corresponding styles:
+
+```tsx file="Editor.tsx" highlight="15-22"
+import styles from "./Editor.module.css";
+// ...
+
+// Set up editor config and theme
+const initialConfig = {
+  // NOTE: This is critical for collaboration plugin to set editor state to null. It
+  // would indicate that the editor should not try to set any default state
+  // (not even empty one), and let collaboration plugin do it instead
+  editorState: null,
+  namespace: "Demo",
+  nodes: [],
+  onError: (error: unknown) => {
+    throw error;
+  },
+  theme: {
+    text: {
+      bold: styles.textBold,
+      italic: styles.textItalic,
+      underline: styles.textUnderline,
+    },
+    paragraph: styles.paragraph,
+  },
+};
+
+// ...
+```
+
+And then in your CSS module, you can style your rich-text:
+
+```css file="Editor.module.css" isCollapsed isCollapsable
+/* ... */
+
+.textBold {
+  font-weight: bold;
+}
+
+.textItalic {
+  font-style: italic;
+}
+
+.textUnderline {
+  text-decoration: underline;
+}
+
+.paragraph {
+  margin: 0.2rem 0;
+}
+```
+
+## Create live avatars with Liveblocks hooks
+
+Along with building out your text editor, you can now use other Liveblocks
+features, such as [Presence](/docs/products/presence). The
+[`useOthers`](/docs/api-reference/liveblocks-react#useOthers) hook allows us to
+view information about each user currently online, and we can turn this into a
+live avatars component.
+
+```tsx file="Avatars.tsx"
+import { useOthers, useSelf } from "@/liveblocks.config";
+import styles from "./Avatars.module.css";
+
+export function Avatars() {
+  const users = useOthers();
+  const currentUser = useSelf();
+
+  return (
+    <div className={styles.avatars}>
+      {users.map(({ connectionId, info }) => {
+        return (
+          <Avatar key={connectionId} picture={info.picture} name={info.name} />
+        );
+      })}
+
+      {currentUser && (
+        <div className="relative ml-8 first:ml-0">
+          <Avatar
+            picture={currentUser.info.picture}
+            name={currentUser.info.name}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
+export function Avatar({ picture, name }: { picture: string; name: string }) {
+  return (
+    <div className={styles.avatar} data-tooltip={name}>
+      <img
+        src={picture}
+        className={styles.avatar_picture}
+        data-tooltip={name}
+      />
+    </div>
+  );
+}
+```
+
+And here’s the styles:
+
+```css file="Avatars.module.css" isCollapsed isCollapsable
+.avatars {
+  display: flex;
+  padding: 0 0.75rem;
+}
+
+.avatar {
+  display: flex;
+  place-content: center;
+  position: relative;
+  border: 4px solid #fff;
+  border-radius: 9999px;
+  width: 42px;
+  height: 42px;
+  background-color: #9ca3af;
+  margin-left: -0.75rem;
+}
+
+.avatar:before {
+  content: attr(data-tooltip);
+  position: absolute;
+  top: 100%;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  padding: 5px 10px;
+  color: white;
+  font-size: 0.75rem;
+  border-radius: 8px;
+  margin-top: 10px;
+  z-index: 1;
+  background: black;
+  white-space: nowrap;
+}
+
+.avatar:hover:before {
+  opacity: 1;
+}
+
+.avatar_picture {
+  border-radius: 9999px;
+}
+```
+
+You can then import this to your editor to see it in action:
+
+```tsx file="Editor.tsx" highlight="1,12"
+import { Avatars } from "./Avatars";
+// ...
+
+export default function Editor() {
+  // ...
+
+  return (
+    <div className={styles.container}>
+      <LexicalComposer initialConfig={initialConfig}>
+        <div className={styles.editorHeader}>
+          <Toolbar />
+          <Avatars />
+        </div>
+        <div className={styles.editorContainer}>{/* ... */}</div>
+      </LexicalComposer>
+    </div>
+  );
+}
+```
+
+Note that the cursors and avatars match in color and name, as the info for both
+is sourced from the Liveblocks authentication endpoint.
+
+## Try it out
+
+On GitHub we have a working example of a
+[Yjs Lexical editor](https://github.com/liveblocks/liveblocks/tree/main/examples/nextjs-yjs-lexical)
+with added Liveblocks authentication and avatars.

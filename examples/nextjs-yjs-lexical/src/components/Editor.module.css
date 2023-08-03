@@ -9,9 +9,18 @@
   color: #111827;
 }
 
+.editorHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
 .editor {
   border-radius: inherit;
   flex-grow: 1;
+  width: 100%;
+  height: 100%;
+  padding: 1rem;
 }
 
 .editor:focus {
@@ -20,7 +29,7 @@
 
 .editorContainer {
   position: relative;
-  padding: 0 1em;
+  height: 100%;
 }
 
 .placeholder {
@@ -29,10 +38,6 @@
   inset: 0;
   opacity: 0.3;
   padding: 0 1em;
-}
-
-.editor p {
-  margin: 1em 0;
 }
 
 .textBold {
@@ -48,5 +53,5 @@
 }
 
 .paragraph {
-  margin: 0.2rem 0;
+  margin: 1em 0;
 }
