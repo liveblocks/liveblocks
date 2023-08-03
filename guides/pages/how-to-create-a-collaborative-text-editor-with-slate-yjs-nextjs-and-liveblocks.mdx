@@ -53,14 +53,22 @@ module.exports = {
 };
 ```
 
-Note: if you see an error resembling:
+#### Got an error?
+
+Note that if you’re seeing an error that resembles the following, you’re
+probably using an older version of Next.js that doesn’t support
+`transpilePackages`.
+
 ```
 Error: Directory import '/node_modules/use-sync-external-store/shim' is not supported resolving ES modules imported from /node_modules/@slate-yjs/react/dist/index.js
 Did you mean to import use-sync-external-store/shim/index.js?
 ```
-The `transpilePackages` setting is not working correctly and you may need to upgrade to a newer version of the `next`
-package.
 
+You may need to upgrade to a newer version of Next.js for this to work.
+
+```bash
+npm i next@latest
+```
 ## Set up access token authentication
 
 The first step in connecting to Liveblocks is to set up an authentication
