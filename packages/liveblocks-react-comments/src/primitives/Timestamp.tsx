@@ -1,5 +1,3 @@
-"use client";
-
 import { Slot } from "@radix-ui/react-slot";
 import type { ReactNode } from "react";
 import React, { forwardRef, useMemo } from "react";

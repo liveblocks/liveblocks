@@ -12,17 +12,15 @@ import { useCommentsContext } from "../factory";
 import { MentionIcon } from "../icons/mention";
 import { SendIcon } from "../icons/send";
 import type { ComposerOverrides } from "../overrides";
+import * as ComposerPrimitive from "../primitives/Composer";
+import { useComposer } from "../primitives/Composer/contexts";
 import type {
   ComposerEditorProps,
   ComposerFormProps,
   ComposerRenderMentionProps,
   ComposerRenderMentionSuggestionsProps,
   ComposerSubmitComment,
-} from "../primitives/Composer";
-import {
-  Composer as ComposerPrimitive,
-  useComposer,
-} from "../primitives/Composer";
+} from "../primitives/Composer/types";
 import { MENTION_CHARACTER } from "../slate/mentions";
 import type { SlotProp } from "../types";
 import { classNames } from "../utils/class-names";

@@ -1,7 +1,6 @@
 "use client";
 
 import type { CommentData } from "@liveblocks/core";
-import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import type { ComponentPropsWithoutRef, ReactNode } from "react";
 import React, { forwardRef, useCallback, useState } from "react";
 
@@ -12,15 +11,15 @@ import { DeleteIcon } from "../icons/delete";
 import { EditIcon } from "../icons/edit";
 import { EllipsisIcon } from "../icons/ellipsis";
 import type { CommentOverrides, ComposerOverrides } from "../overrides";
-import type { CommentRenderMentionProps } from "../primitives/Comment";
-import { Comment as CommentPrimitive } from "../primitives/Comment";
-import { Composer as ComposerPrimitive } from "../primitives/Composer";
+import * as CommentPrimitive from "../primitives/Comment";
+import type { CommentRenderMentionProps } from "../primitives/Comment/types";
+import * as ComposerPrimitive from "../primitives/Composer";
 import { Timestamp } from "../primitives/Timestamp";
 import { MENTION_CHARACTER } from "../slate/mentions";
 import { classNames } from "../utils/class-names";
 import { Composer } from "./Composer";
 import { Avatar } from "./internal/Avatar";
-import { Dropdown, DropdownTrigger } from "./internal/Dropdown";
+import { Dropdown, DropdownItem, DropdownTrigger } from "./internal/Dropdown";
 import {
   Tooltip,
   TooltipProvider,
@@ -174,22 +173,22 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
                   align="end"
                   content={
                     <>
-                      <DropdownMenu.Item
+                      <DropdownItem
                         className="lb-dropdown-item"
                         onSelect={handleEdit}
                         disabled={!comment.body}
                       >
                         <EditIcon className="lb-dropdown-item-icon" />
                         {$.COMMENT_EDIT}
-                      </DropdownMenu.Item>
-                      <DropdownMenu.Item
+                      </DropdownItem>
+                      <DropdownItem
                         className="lb-dropdown-item"
                         onSelect={handleDelete}
                         disabled={!comment.body}
                       >
                         <DeleteIcon className="lb-dropdown-item-icon" />
                         {$.COMMENT_DELETE}
-                      </DropdownMenu.Item>
+                      </DropdownItem>
                     </>
                   }
                 >
