@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
   return new Response(body, { status });
 }
 
-export const USER_INFO = [
+const USER_INFO = [
   {
     name: "Charlie Layne",
     color: "#D583F0",
