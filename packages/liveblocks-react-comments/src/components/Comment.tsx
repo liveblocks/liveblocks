@@ -1,5 +1,3 @@
-"use client";
-
 import type { CommentData } from "@liveblocks/core";
 import type { ComponentPropsWithoutRef, ReactNode } from "react";
 import React, { forwardRef, useCallback, useState } from "react";

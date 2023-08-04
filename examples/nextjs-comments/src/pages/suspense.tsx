@@ -4,8 +4,7 @@ import {
   CommentsProvider,
   useThreadsSuspense as useThreads,
 } from "../../liveblocks.config";
-import { Comment, Composer } from "@liveblocks/react-comments";
-import { Thread } from "@liveblocks/react-comments";
+import { Composer, Thread } from "@liveblocks/react-comments";
 import { ClientSideSuspense } from "@liveblocks/react";
 import { Loading } from "../components/Loading";
 

@@ -1,5 +1,3 @@
-"use client";
-
 import type { ComponentProps } from "react";
 import React, { useMemo } from "react";
 

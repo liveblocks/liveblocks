@@ -1,27 +1,10 @@
-"use client";
+// "use client";
 
 import React from "react";
-import {
-  CommentsProvider,
-  useThreadsSuspense as useThreads,
-} from "../../../../liveblocks.config";
-import { Composer } from "@liveblocks/react-comments";
-import { Thread } from "@liveblocks/react-comments";
+import { CommentsProvider } from "../../../../liveblocks.config";
 import { ClientSideSuspense } from "../../../components/ClientSideSuspense";
 import { Loading } from "../../../components/Loading";
-
-function Example() {
-  const threads = useThreads();
-
-  return (
-    <main>
-      {threads.map((thread) => (
-        <Thread key={thread.id} thread={thread} className="thread" />
-      ))}
-      <Composer className="composer" />
-    </main>
-  );
-}
+import { Example } from "./Example";
 
 export default function Home() {
   return (
