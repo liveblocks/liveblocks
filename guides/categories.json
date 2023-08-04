@@ -37,6 +37,10 @@
       "name": "JavaScript"
     },
     {
+      "id": "nodejs",
+      "name": "Node.js"
+    },
+    {
       "id": "react",
       "name": "React"
     },
