@@ -69,6 +69,7 @@ You may need to upgrade to a newer version of Next.js for this to work.
 ```bash
 npm i next@latest
 ```
+
 ## Set up access token authentication
 
 The first step in connecting to Liveblocks is to set up an authentication
@@ -111,11 +112,11 @@ export async function POST(request: NextRequest) {
 }
 ```
 
-Here’s an example using the Next.js API routes format in `/pages`.
+Here’s an example using the older API routes format in `/pages`.
 
 ```ts file="/pages/api/liveblocks-auth.ts" isCollapsed isCollapsable
-import { Liveblocks } from '@liveblocks/node';
-import type { NextApiRequest, NextApiResponse } from 'next';
+import { Liveblocks } from "@liveblocks/node";
+import type { NextApiRequest, NextApiResponse } from "next";
 
 const API_KEY = "{{SECRET_KEY}}";
 
@@ -123,14 +124,17 @@ const liveblocks = new Liveblocks({
   secret: API_KEY!,
 });
 
-export default async function POST(request: NextApiRequest, response: NextApiResponse) {
+export default async function handler(
+  request: NextApiRequest,
+  response: NextApiResponse
+) {
   // Get the current user's info from your database
   const user = {
-    id: 'charlielayne@example.com',
+    id: "charlielayne@example.com",
     info: {
-      name: 'Charlie Layne',
-      color: '#D583F0',
-      picture: 'https://liveblocks.io/avatars/avatar-1.png',
+      name: "Charlie Layne",
+      color: "#D583F0",
+      picture: "https://liveblocks.io/avatars/avatar-1.png",
     },
   };
 
