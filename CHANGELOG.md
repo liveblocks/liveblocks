@@ -1,3 +1,10 @@
+# v1.2.1
+
+### `@liveblocks/node`
+
+- Fix session.allow to support path up to 128 characters to meet room id length
+  requirement.
+
 # v1.2.0
 
 ### `@liveblocks/*`
