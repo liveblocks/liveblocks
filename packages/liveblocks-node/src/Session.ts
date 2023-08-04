@@ -38,7 +38,7 @@ const READ_ACCESS = Object.freeze([
  */
 const FULL_ACCESS = Object.freeze(["room:write", "comments:write"] as const);
 
-const roomPatternRegex = /^[^*]{1,50}[*]?$/;
+const roomPatternRegex = /^[^*]{1,128}[*]?$/;
 
 type PostFn = (
   path: `/${string}`,

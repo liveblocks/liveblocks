@@ -52,6 +52,34 @@ start building your own security logic in Next.js’ `/app` directory.
       }
       ```
 
+      Here’s an example using the older API routes format in `/pages`.
+
+      ```ts file="pages/api/liveblocks-auth.ts" isCollapsed isCollapsable
+      import { Liveblocks } from "@liveblocks/node";
+      import type { NextApiRequest, NextApiResponse } from "next";
+
+      const API_KEY = "{{SECRET_KEY}}";
+
+      const liveblocks = new Liveblocks({
+        secret: API_KEY!,
+      });
+
+      export default async function handler(request: NextApiRequest, response: NextApiResponse) {
+        // Get the current user from your database
+        const user = __getUserFromDB__(request);
+
+        // Identify the user and return the result
+        const { status, body } = await liveblocks.identifyUser({
+          userId: user.id,
+          groupIds, // Optional
+        });
+
+        // Authorize the user and return the result
+        const { status, body } = await session.authorize();
+        response.status(status).send(body);
+      }
+      ```
+
     </StepContent>
 
   </Step>
