@@ -6,4 +6,187 @@ meta:
     within Node.js"
 ---
 
-Liveblocks is
+In real-time applications, Liveblocks Storage is generally modified from the
+browser with [`useMutation`](/docs/api-reference/liveblocks-react#useMutation)
+or through
+[conflict-free data methods](/docs/api-reference/liveblocks-client#Storage).
+However, sometimes it can be useful to modify your real-time storage from
+server-side Node.js too.
+
+## What we’re building
+
+In this guide, we’ll be building a function that allows you to easily modify
+storage from the server. We’ll do this by running `@liveblocks/client`
+server-side using Node.js polyfills, and by signing in with a service account
+`userId`.
+
+<Banner title="This solution has caveats" type="warning">
+
+When using this solution, the service account user will appear in presence, and
+you must account for this in your front end (e.g. filtering out the service
+account when displaying live avatars). We are investigating other solutions, and
+hope to provide a superior API in future.
+
+</Banner>
+
+```ts
+await modifyStorage("my-room-name", (root) => {
+  root.get("list").push("item3");
+});
+```
+
+## Set up Liveblocks server config
+
+<Banner title="Liveblocks already set up">
+
+This tutorials assumes you’ve already set up Liveblocks on the client-side, and
+you’ve created a `liveblocks.config.ts` file containing your types.
+
+</Banner>
+
+The first thing we need to do is to install the required Node.js polyfills.
+
+```bash
+npm i node-fetch ws
+```
+
+After this we can create a server config file, which we’ll name
+`liveblocks.server.config.ts`. In this file we’re implementing the following.
+
+<Steps>
+  <StepCompact>Creating a node client with `new Liveblocks`.</StepCompact>
+  <StepCompact>
+    Creating a regular client to be used on the server, `serverClient`.
+  </StepCompact>
+  <StepCompact>Authenticating inside the regular client.</StepCompact>
+  <StepCompact>
+    Using the same `userId` for server changes, so that MAUs do not increase.
+  </StepCompact>
+  <StepCompact>Adding Node.js polyfills to the regular client.</StepCompact>
+  <StepCompact lastStep>Creating a typed enter room function.</StepCompact>
+</Steps>
+
+Here’s the full file:
+
+```ts file="liveblocks.server.config.ts"
+import { createClient } from "@liveblocks/client";
+import type {
+  Presence,
+  Storage,
+  UserMeta,
+  RoomEvent,
+} from "./liveblocks.config";
+import { Liveblocks } from "@liveblocks/node";
+import fetch from "node-fetch";
+import WebSocket from "ws";
+
+// 1. Creating a node client
+const liveblocks = new Liveblocks({
+  secret: "{{SECRET_KEY}}",
+});
+
+// 2. Creating a regular client
+export const serverClient = createClient({
+  // 3. Authenticating inside the client
+  authEndpoint: async (room) => {
+    const session = liveblocks.prepareSession(
+      // 4. Using a specific userId for all server changes
+      "_SERVICE_ACCOUNT"
+    );
+    session.allow(room, session.FULL_ACCESS);
+    const { body } = await session.authorize();
+    return JSON.parse(body);
+  },
+
+  // 5. Adding polyfills
+  polyfills: {
+    fetch: fetch as any,
+    WebSocket,
+  },
+});
+
+// 6. Creating a typed enter room function
+export const enterRoom = (roomId: string) => {
+  return serverClient.enter<Presence, Storage, UserMeta, RoomEvent>(roomId, {
+    // Match the options in your browser code
+  });
+};
+```
+
+## Create the modify storage function
+
+Using `serverClient` and `enterRoom` from the previous file, we can create a
+typed `modifyStorage` function that allows us to join a room, modify storage
+(batching all changes into one request), before leaving the room.
+
+```ts
+import type { LiveObject } from "@liveblocks/client";
+import type { Storage } from "./liveblocks.config";
+import { serverClient, enterRoom } from "./liveblocks.server.config";
+
+export async function modifyStorage(
+  roomId: string,
+  storageChanges: (root: LiveObject<Storage>) => void
+) {
+  return new Promise(async (resolve) => {
+    const room = enterRoom(roomId);
+    const { root } = await room.getStorage();
+
+    // Make storage adjustments in a batch, so they all happen at once
+    room.batch(() => {
+      storageChanges(root);
+
+      // Leave when storage has been synchronized
+      room.subscribe("storage-status", (status) => {
+        if (status === "synchronized") {
+          serverClient.leave(roomId);
+          resolve();
+        }
+      });
+    });
+  });
+}
+```
+
+## Start modifying storage
+
+We can now start modify storage from the server! Import `modifyStorage`, pass a
+room name, and use the callback to modify as you like.
+
+```ts file="route.ts" highlight="6-8"
+import { modifyStorage } from "./modifyStorage";
+
+export async function POST() {
+  console.log("Updating storage");
+
+  await modifyStorage("my-liveblocks-room", (root) => {
+    root.get("list").push("item3");
+  });
+
+  console.log("Storage update complete!");
+}
+```
+
+## Account for the service user in your app
+
+Remember to account for the service user appearing in your presence. In our
+`liveblocks.server.config.ts` we authenticated with `"_SERVICE_ACCOUNT"` as the
+`userId`, so we’ll filter it out when using others in our application.
+
+```tsx
+import { shallow } from "@liveblocks/react";
+import { useOthers } from "./liveblocks.config.ts";
+
+function LiveAvatars() {
+  // Others, with the service account filtered out
+  const others = useOthers(
+    (others) => others.filter((other) => other.id !== "_SERVICE_ACCOUNT"),
+    shallow
+  );
+
+  // ...
+}
+```
+
+A `shallow` equality check is necessary here, because `filter` creates a new
+array every time.
