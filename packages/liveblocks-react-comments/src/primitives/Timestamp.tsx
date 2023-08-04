@@ -135,6 +135,7 @@ export const Timestamp = forwardRef<HTMLTimeElement, TimestampProps>(
   (
     {
       date,
+      locale,
       children: renderChildren = formatDynamicDate,
       title: renderTitle = formatVerboseDate,
       dateTime,
@@ -154,7 +155,7 @@ export const Timestamp = forwardRef<HTMLTimeElement, TimestampProps>(
     const title = useMemo(
       () =>
         typeof renderTitle === "function"
-          ? renderTitle(parsedDate)
+          ? renderTitle(parsedDate, locale)
           : renderTitle,
       // eslint-disable-next-line react-hooks/exhaustive-deps
       [renderTitle, parsedDate, key]
@@ -162,7 +163,7 @@ export const Timestamp = forwardRef<HTMLTimeElement, TimestampProps>(
     const children = useMemo(
       () =>
         typeof renderChildren === "function"
-          ? renderChildren(parsedDate)
+          ? renderChildren(parsedDate, locale)
           : renderChildren,
       // eslint-disable-next-line react-hooks/exhaustive-deps
       [renderChildren, parsedDate, key]
