@@ -145,7 +145,7 @@ const initialValue: CustomElement[] = [
 ];
 
 export default function Page() {
-  const roomId = useOverrideRoomId("nextjs-block-text-editor-advanced");
+  const roomId = useOverrideRoomId("nextjs-block-text-editor");
 
   return (
     <RoomProvider
