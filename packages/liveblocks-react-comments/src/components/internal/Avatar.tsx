@@ -9,7 +9,6 @@ export interface AvatarProps extends ComponentProps<"div"> {
   userId: string;
 }
 
-// TODO: Handle loading and error states
 export function Avatar({ userId, className, ...props }: AvatarProps) {
   const { useUser } = useCommentsContext();
   const { user } = useUser(userId);

@@ -429,7 +429,7 @@
     line-height: 1;
   }
 
-  // Merge adjacent inline code elements
+  // Progressive enhancement: Merge adjacent inline code elements
   & span:has(code) + span code {
     border-start-start-radius: 0;
     border-end-start-radius: 0;
@@ -458,15 +458,31 @@
   color: var(--lb-foreground);
 }
 
-// TODO: Improve logic, currently having an action button focused would count
-.lb-composer:not(:focus-within) .lb-button\:primary {
-  --lb-button-background: var(--lb-foreground-subtle);
+// Progressive enhancement: Use :has instead of :focus-within to target the editor specifically
+@supports selector(:has(*)) {
+  .lb-composer:has(.lb-composer-editor:not(:focus-visible))
+    .lb-button\:primary {
+    --lb-button-background: var(--lb-foreground-subtle);
 
-  color: var(--lb-foreground-tertiary);
+    color: var(--lb-foreground-tertiary);
 
-  &:enabled:hover,
-  &:enabled:focus-visible {
-    color: var(--lb-accent-foreground);
+    &:enabled:hover,
+    &:enabled:focus-visible {
+      color: var(--lb-accent-foreground);
+    }
+  }
+}
+
+@supports not selector(:has(*)) {
+  .lb-composer:not(:focus-within) .lb-button\:primary {
+    --lb-button-background: var(--lb-foreground-subtle);
+
+    color: var(--lb-foreground-tertiary);
+
+    &:enabled:hover,
+    &:enabled:focus-visible {
+      color: var(--lb-accent-foreground);
+    }
   }
 }
 
@@ -533,7 +549,7 @@
   margin-block-end: calc(0.75 * var(--lb-spacing));
 }
 
-.lb-comment-info {
+.lb-comment-details {
   display: flex;
   gap: calc(0.75 * var(--lb-spacing));
   align-items: center;
@@ -545,8 +561,7 @@
   width: var(--lb-comment-avatar-size);
 }
 
-// TODO: Find better class name
-.lb-comment-info-labels {
+.lb-comment-details-labels {
   display: flex;
   gap: calc(0.5 * var(--lb-spacing));
   align-items: baseline;
@@ -623,7 +638,7 @@
     inset-inline-start: 0;
   }
 
-  & .lb-comment-info-labels {
+  & .lb-comment-details-labels {
     margin-inline-start: calc(
       var(--lb-comment-avatar-size) + 0.75 * var(--lb-spacing)
     );

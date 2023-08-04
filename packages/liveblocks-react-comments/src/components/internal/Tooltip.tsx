@@ -2,6 +2,10 @@ import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 import type { ComponentProps, ReactNode } from "react";
 import React, { useMemo } from "react";
 
+import {
+  FLOATING_ELEMENT_COLLISION_PADDING,
+  FLOATING_ELEMENT_SIDE_OFFSET,
+} from "../../constants";
 import { classNames } from "../../utils/class-names";
 import { isApple } from "../../utils/is-apple";
 
@@ -43,9 +47,8 @@ export function Tooltip({
           className={classNames("lb-root lb-tooltip", className)}
           side="top"
           align="center"
-          // TODO: Share these values between all floating elements
-          sideOffset={6}
-          collisionPadding={10}
+          sideOffset={FLOATING_ELEMENT_SIDE_OFFSET}
+          collisionPadding={FLOATING_ELEMENT_COLLISION_PADDING}
           {...props}
         >
           {content}

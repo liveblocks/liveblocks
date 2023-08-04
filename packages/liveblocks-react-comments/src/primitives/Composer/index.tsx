@@ -54,6 +54,7 @@ import {
   withReact,
 } from "slate-react";
 
+import { FLOATING_ELEMENT_COLLISION_PADDING } from "../../constants";
 import { useCommentsContext } from "../../factory";
 import { useInitial } from "../../lib/use-initial";
 import type { MentionDraft } from "../../slate/mentions";
@@ -109,7 +110,6 @@ import {
 } from "./utils";
 
 const MENTION_SUGGESTIONS_POSITION: SuggestionsPosition = "top";
-const MENTION_SUGGESTIONS_INSET = 10;
 
 const COMPOSER_MENTION_NAME = "ComposerMention";
 const COMPOSER_SUGGESTIONS_NAME = "ComposerSuggestions";
@@ -178,7 +178,6 @@ function ComposerMentionSuggestionsWrapper({
   mentionDraft,
   onItemSelect,
   position = MENTION_SUGGESTIONS_POSITION,
-  inset = MENTION_SUGGESTIONS_INSET,
   dir,
   children: RenderMentionSuggestions = ComposerDefaultRenderMentionSuggestions,
 }: ComposerMentionSuggestionsWrapperProps) {
@@ -189,7 +188,7 @@ function ComposerMentionSuggestionsWrapper({
   const contentRef = useCallback(setContent, [setContent]);
   const floatingMiddlewares: UseFloatingOptions["middleware"] = useMemo(() => {
     const detectOverflowOptions: DetectOverflowOptions = {
-      padding: inset,
+      padding: FLOATING_ELEMENT_COLLISION_PADDING,
     };
 
     return [
@@ -213,7 +212,7 @@ function ComposerMentionSuggestionsWrapper({
         },
       }),
     ];
-  }, [inset]);
+  }, []);
   const floatingOptions: UseFloatingOptions = useMemo(() => {
     return {
       strategy: "fixed",
