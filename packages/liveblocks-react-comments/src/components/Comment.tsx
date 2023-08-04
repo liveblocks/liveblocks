@@ -37,6 +37,11 @@ export interface CommentProps extends ComponentPropsWithoutRef<"div"> {
   showActions?: boolean | "hover";
 
   /**
+   * Whether to show the comment if it was deleted. If set to `false`, it will render deleted comments as `null`.
+   */
+  showDeleted?: boolean;
+
+  /**
    * Whether to indent the comment's body.
    */
   indentBody?: boolean;
@@ -81,6 +86,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
     {
       comment,
       indentBody = true,
+      showDeleted,
       showActions = "hover",
       overrides,
       additionalActions,
@@ -115,8 +121,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
       });
     }, [comment.id, comment.threadId, deleteComment]);
 
-    // TODO: Add option to render a `This comment was deleted` placeholder instead
-    if (!comment.body) {
+    if (!showDeleted && !comment.body) {
       return null;
     }
 
@@ -146,7 +151,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
                     date={comment.createdAt}
                     className="lb-comment-date-timestamp"
                   />
-                  {comment.editedAt && (
+                  {comment.editedAt && comment.body && (
                     <>
                       {" "}
                       <span className="lb-comment-date-edited">
@@ -174,7 +179,6 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
                       <DropdownItem
                         className="lb-dropdown-item"
                         onSelect={handleEdit}
-                        disabled={!comment.body}
                       >
                         <EditIcon className="lb-dropdown-item-icon" />
                         {$.COMMENT_EDIT}
@@ -182,7 +186,6 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
                       <DropdownItem
                         className="lb-dropdown-item"
                         onSelect={handleDelete}
-                        disabled={!comment.body}
                       >
                         <DeleteIcon className="lb-dropdown-item-icon" />
                         {$.COMMENT_DELETE}
@@ -193,6 +196,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
                   <Tooltip content={$.COMMENT_MORE}>
                     <DropdownTrigger
                       className="lb-button lb-comment-action"
+                      disabled={!comment.body}
                       aria-label={$.COMMENT_MORE}
                     >
                       <EllipsisIcon className="lb-button-icon" />
@@ -241,12 +245,16 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
                 COMPOSER_PLACEHOLDER: $.COMMENT_EDIT_COMPOSER_PLACEHOLDER,
               }}
             />
-          ) : (
+          ) : comment.body ? (
             <CommentPrimitive.Body
               className="lb-comment-body"
               body={comment.body}
               renderMention={CommentMention}
             />
+          ) : (
+            <div className="lb-comment-body">
+              <p className="lb-comment-deleted">{$.COMMENT_DELETED}</p>
+            </div>
           )}
         </div>
       </TooltipProvider>

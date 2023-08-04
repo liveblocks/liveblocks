@@ -604,6 +604,11 @@
   }
 }
 
+.lb-comment-deleted {
+  color: var(--lb-foreground-tertiary);
+  font-size: 0.85em;
+}
+
 .lb-comment\:indent-body {
   min-height: var(--lb-comment-avatar-size);
 
