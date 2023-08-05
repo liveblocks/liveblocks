@@ -1,4 +1,4 @@
-import type { Client } from "../client";
+import type { AuthValue } from "../auth-manager";
 import type { BaseMetadata } from "./types/BaseMetadata";
 import type { CommentBody } from "./types/CommentBody";
 import type { CommentData } from "./types/CommentData";
@@ -9,46 +9,39 @@ type Options = {
 };
 
 export type CommentsApi<ThreadMetadata extends BaseMetadata> = {
-  getThreads(options: {
-    roomId: string;
-  }): Promise<ThreadData<ThreadMetadata>[]>;
+  getThreads(): Promise<ThreadData<ThreadMetadata>[]>;
   createThread(options: {
-    roomId: string;
     threadId: string;
     commentId: string;
     metadata: ThreadMetadata | undefined;
     body: CommentBody;
   }): Promise<ThreadData<ThreadMetadata>>;
   editThreadMetadata(options: {
-    roomId: string;
     metadata: Partial<ThreadMetadata>;
     threadId: string;
   }): Promise<ThreadData<ThreadMetadata>>;
   createComment(options: {
-    roomId: string;
     threadId: string;
     commentId: string;
     body: CommentBody;
   }): Promise<CommentData>;
   editComment(options: {
-    roomId: string;
     threadId: string;
     commentId: string;
     body: CommentBody;
   }): Promise<CommentData>;
   deleteComment(options: {
-    roomId: string;
     threadId: string;
     commentId: string;
   }): Promise<void>;
 };
 
 export function createCommentsApi<ThreadMetadata extends BaseMetadata>(
-  client: Client,
+  roomId: string,
+  getAuthValue: () => Promise<AuthValue>,
   { serverEndpoint }: Options
 ): CommentsApi<ThreadMetadata> {
   async function fetchJson<T>(
-    roomId: string,
     endpoint: string,
     options?: RequestInit
   ): Promise<T> {
@@ -85,10 +78,8 @@ export function createCommentsApi<ThreadMetadata extends BaseMetadata>(
     endpoint: string,
     options?: RequestInit
   ): Promise<Response> {
-    const authValue = await client.__internal.getAuthValue(
-      "comments:read", // TODO: Use the right scope
-      roomId
-    );
+    // TODO: Use the right scope
+    const authValue = await getAuthValue();
 
     if (authValue.type !== "secret") {
       throw new Error("Only secret key are supported for client.");
@@ -105,11 +96,7 @@ export function createCommentsApi<ThreadMetadata extends BaseMetadata>(
     });
   }
 
-  async function getThreads({
-    roomId,
-  }: {
-    roomId: string;
-  }): Promise<ThreadData<ThreadMetadata>[]> {
+  async function getThreads(): Promise<ThreadData<ThreadMetadata>[]> {
     const response = await fetchApi(roomId, "/threads");
 
     if (response.ok) {
@@ -123,7 +110,6 @@ export function createCommentsApi<ThreadMetadata extends BaseMetadata>(
   }
 
   function createThread({
-    roomId,
     metadata,
     body,
     commentId,
@@ -135,7 +121,7 @@ export function createCommentsApi<ThreadMetadata extends BaseMetadata>(
     metadata: ThreadMetadata | undefined;
     body: CommentBody;
   }) {
-    return fetchJson<ThreadData<ThreadMetadata>>(roomId, "/threads", {
+    return fetchJson<ThreadData<ThreadMetadata>>("/threads", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -152,7 +138,6 @@ export function createCommentsApi<ThreadMetadata extends BaseMetadata>(
   }
 
   function editThreadMetadata({
-    roomId,
     metadata,
     threadId,
   }: {
@@ -161,7 +146,6 @@ export function createCommentsApi<ThreadMetadata extends BaseMetadata>(
     threadId: string;
   }) {
     return fetchJson<ThreadData<ThreadMetadata>>(
-      roomId,
       `/threads/${threadId}/metadata`,
       {
         method: "POST",
@@ -174,17 +158,15 @@ export function createCommentsApi<ThreadMetadata extends BaseMetadata>(
   }
 
   function createComment({
-    roomId,
     threadId,
     commentId,
     body,
   }: {
-    roomId: string;
     threadId: string;
     commentId: string;
     body: CommentBody;
   }) {
-    return fetchJson<CommentData>(roomId, `/threads/${threadId}/comments`, {
+    return fetchJson<CommentData>(`/threads/${threadId}/comments`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -197,18 +179,15 @@ export function createCommentsApi<ThreadMetadata extends BaseMetadata>(
   }
 
   function editComment({
-    roomId,
     threadId,
     commentId,
     body,
   }: {
-    roomId: string;
     threadId: string;
     commentId: string;
     body: CommentBody;
   }) {
     return fetchJson<CommentData>(
-      roomId,
       `/threads/${threadId}/comments/${commentId}`,
       {
         method: "POST",
@@ -223,7 +202,6 @@ export function createCommentsApi<ThreadMetadata extends BaseMetadata>(
   }
 
   async function deleteComment({
-    roomId,
     threadId,
     commentId,
   }: {
@@ -231,7 +209,7 @@ export function createCommentsApi<ThreadMetadata extends BaseMetadata>(
     threadId: string;
     commentId: string;
   }) {
-    await fetchJson(roomId, `/threads/${threadId}/comments/${commentId}`, {
+    await fetchJson(`/threads/${threadId}/comments/${commentId}`, {
       method: "DELETE",
     });
   }

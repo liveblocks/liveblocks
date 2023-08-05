@@ -25,6 +25,10 @@ export function canWriteStorage(scopes: readonly string[]): boolean {
   return scopes.includes(Permission.Write);
 }
 
+export function canComment(scopes: readonly string[]): boolean {
+  return scopes.includes(Permission.CommentsWrite);
+}
+
 type JwtMeta = {
   iat: number;
   exp: number;

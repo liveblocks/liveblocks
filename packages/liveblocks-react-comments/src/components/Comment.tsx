@@ -5,7 +5,7 @@ import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import type { ComponentPropsWithoutRef, ReactNode } from "react";
 import React, { forwardRef, useCallback, useState } from "react";
 
-import { useCommentsContext } from "../factory";
+import { useRoomContextBundle } from "@liveblocks/react";
 import { CheckIcon } from "../icons/check";
 import { CrossIcon } from "../icons/cross";
 import { DeleteIcon } from "../icons/delete";
@@ -93,7 +93,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
     },
     forwardedRef
   ) => {
-    const { useDeleteComment, useOverrides } = useCommentsContext();
+    const { useDeleteComment, useOverrides } = useRoomContextBundle();
     const deleteComment = useDeleteComment();
     const $ = useOverrides(overrides);
     const [isEditing, setEditing] = useState(false);

@@ -3,14 +3,14 @@
 import type { ComponentProps } from "react";
 import React, { useMemo } from "react";
 
-import { useCommentsContext } from "../../factory";
+import { useRoomContextBundle } from "@liveblocks/react";
 
 export interface UserProps extends ComponentProps<"span"> {
   userId: string;
 }
 
 export function User({ userId, ...props }: UserProps) {
-  const { useUser } = useCommentsContext();
+  const { useUser } = useRoomContextBundle();
   const { user } = useUser(userId);
   const resolvedUserName = useMemo(() => user?.name, [user]);
 

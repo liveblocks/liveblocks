@@ -1,10 +1,13 @@
 import type {
   BaseMetadata,
+  BaseUserMeta,
   CommentBody,
   CommentData,
-  CommentsApi,
   EventSource,
-  RealtimeClient,
+  Json,
+  JsonObject,
+  LsonObject,
+  Room,
   ThreadData,
 } from "@liveblocks/core";
 import { makePoller } from "@liveblocks/core";
@@ -93,9 +96,7 @@ export type RoomThreads<TThreadMetadata extends BaseMetadata> =
     };
 
 export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
-  roomId: string,
-  api: CommentsApi<TThreadMetadata>,
-  realtimeClient: RealtimeClient,
+  room: Room<JsonObject, LsonObject, BaseUserMeta, Json>,
   errorEventSource: EventSource<CommentsApiError<TThreadMetadata>>
 ): CommentsRoom<TThreadMetadata> {
   const store = createStore<RoomThreads<TThreadMetadata>>({
@@ -134,10 +135,12 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
       : POLLING_INTERVAL;
   }
 
-  function getLocalThreadsOrThrow() {
+  function ensureThreadsAreLoadedForMutations() {
     const state = store.get();
     if (state.isLoading || state.error) {
-      throw new Error("TODO");
+      throw new Error(
+        "Cannot update threads or comments before they are loaded"
+      );
     }
     return state.threads;
   }
@@ -146,7 +149,7 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
     pollingHub.threads.pause();
 
     if (numberOfMutations === 0) {
-      setThreads(await api.getThreads({ roomId }));
+      setThreads(await room.getThreads());
     }
 
     pollingHub.threads.resume();
@@ -154,26 +157,26 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
 
   function subscribe() {
     if (!unsubscribeRealtimeEvents) {
-      unsubscribeRealtimeEvents = realtimeClient.subscribeToEvents(
-        roomId,
-        () => {
-          pollingHub.threads.restart(getPollingInterval());
-          revalidateThreads();
-        }
-      );
+      unsubscribeRealtimeEvents = () => {}; // TODO
+
+      // realtimeClient.subscribeToEvents(
+      //   roomId,
+      //   () => {
+      //     pollingHub.threads.restart(getPollingInterval());
+      //     revalidateThreads();
+      //   }
+      // );
     }
 
     if (!unsubscribeRealtimeConnection) {
-      unsubscribeRealtimeConnection = realtimeClient.connection.subscribe(
-        (connection) => {
-          const nextRealtimeClientConnected = connection === "connected";
+      unsubscribeRealtimeConnection = room.events.status.subscribe((status) => {
+        const nextRealtimeClientConnected = status === "connected";
 
-          if (nextRealtimeClientConnected !== realtimeClientConnected) {
-            realtimeClientConnected = nextRealtimeClientConnected;
-            pollingHub.threads.restart(getPollingInterval());
-          }
+        if (nextRealtimeClientConnected !== realtimeClientConnected) {
+          realtimeClientConnected = nextRealtimeClientConnected;
+          pollingHub.threads.restart(getPollingInterval());
         }
-      );
+      });
     }
 
     // Will only start if not already started
@@ -198,13 +201,22 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
     });
   }
 
+  function getCurrentUserId() {
+    const self = room.getSelf();
+    if (self === null || self.id === undefined) {
+      return "anonymous";
+    } else {
+      return self.id;
+    }
+  }
+
   function createThread(
     options: CreateThreadOptions<TThreadMetadata>
   ): ThreadData<TThreadMetadata> {
     const body = options.body;
     const metadata: TThreadMetadata =
       "metadata" in options ? options.metadata : ({} as TThreadMetadata);
-    const threads = getLocalThreadsOrThrow();
+    const threads = ensureThreadsAreLoadedForMutations();
 
     const threadId = createOptimisticId(THREAD_ID_PREFIX);
     const commentId = createOptimisticId(COMMENT_ID_PREFIX);
@@ -214,14 +226,14 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
       id: threadId,
       type: "thread",
       createdAt: now,
-      roomId,
+      roomId: room.id,
       metadata,
       comments: [
         {
           id: commentId,
           createdAt: now,
           type: "comment",
-          userId: "optimistic", // TODO: Get current user id
+          userId: getCurrentUserId(),
           body,
         },
       ],
@@ -230,12 +242,12 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
     setThreads([...threads, newThread]);
 
     startMutation();
-    api
-      .createThread({ roomId, threadId, commentId, body, metadata })
+    room
+      .createThread({ threadId, commentId, body, metadata })
       .catch((er: Error) =>
         errorEventSource.notify(
           new CreateThreadError(er, {
-            roomId,
+            roomId: room.id,
             threadId,
             commentId,
             body,
@@ -254,7 +266,7 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
     const threadId = options.threadId;
     const metadata: Partial<TThreadMetadata> =
       "metadata" in options ? options.metadata : {};
-    const threads = getLocalThreadsOrThrow();
+    const threads = ensureThreadsAreLoadedForMutations();
 
     setThreads(
       threads.map((thread) =>
@@ -271,12 +283,12 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
     );
 
     startMutation();
-    api
-      .editThreadMetadata({ roomId, metadata, threadId })
+    room
+      .editThreadMetadata({ metadata, threadId })
       .catch((er: Error) =>
         errorEventSource.notify(
           new EditThreadMetadataError(er, {
-            roomId,
+            roomId: room.id,
             threadId,
             metadata,
           })
@@ -289,7 +301,7 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
     threadId,
     body,
   }: CreateCommentOptions): CommentData {
-    const threads = getLocalThreadsOrThrow();
+    const threads = ensureThreadsAreLoadedForMutations();
 
     const commentId = createOptimisticId(COMMENT_ID_PREFIX);
     const now = new Date().toISOString();
@@ -297,10 +309,10 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
     const comment: CommentData = {
       id: commentId,
       threadId,
-      roomId,
+      roomId: room.id,
       type: "comment",
       createdAt: now,
-      userId: "optimistic", // TODO: Get current user id
+      userId: getCurrentUserId(),
       body,
     };
 
@@ -316,12 +328,12 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
     );
 
     startMutation();
-    api
-      .createComment({ roomId, threadId, commentId, body })
+    room
+      .createComment({ threadId, commentId, body })
       .catch((er: Error) =>
         errorEventSource.notify(
           new CreateCommentError(er, {
-            roomId,
+            roomId: room.id,
             threadId,
             commentId,
             body,
@@ -334,7 +346,7 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
   }
 
   function editComment({ threadId, commentId, body }: EditCommentOptions) {
-    const threads = getLocalThreadsOrThrow();
+    const threads = ensureThreadsAreLoadedForMutations();
     const now = new Date().toISOString();
 
     setThreads(
@@ -357,12 +369,12 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
     );
 
     startMutation();
-    api
-      .editComment({ roomId, threadId, commentId, body })
+    room
+      .editComment({ threadId, commentId, body })
       .catch((er: Error) =>
         errorEventSource.notify(
           new EditCommentError(er, {
-            roomId,
+            roomId: room.id,
             threadId,
             commentId,
             body,
@@ -373,7 +385,7 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
   }
 
   function deleteComment({ threadId, commentId }: DeleteCommentOptions): void {
-    const threads = getLocalThreadsOrThrow();
+    const threads = ensureThreadsAreLoadedForMutations();
     const now = new Date().toISOString();
 
     const newThreads: ThreadData<TThreadMetadata>[] = [];
@@ -406,12 +418,12 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
     setThreads(newThreads);
 
     startMutation();
-    api
-      .deleteComment({ roomId, threadId, commentId })
+    room
+      .deleteComment({ threadId, commentId })
       .catch((er: Error) =>
         errorEventSource.notify(
           new DeleteCommentError(er, {
-            roomId,
+            roomId: room.id,
             threadId,
             commentId,
           })

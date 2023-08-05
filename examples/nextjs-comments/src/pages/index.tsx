@@ -1,9 +1,8 @@
 import React, { useMemo } from "react";
 import { useRouter } from "next/router";
-import { CommentsProvider, useThreads } from "../../liveblocks.config";
-import { Composer } from "@liveblocks/react-comments";
-import { Thread } from "@liveblocks/react-comments";
+import { RoomProvider, useThreads } from "../../liveblocks.config";
 import { Loading } from "../components/Loading";
+import { Composer, Thread } from "@liveblocks/react-comments";
 
 function Example() {
   const { isLoading, threads, error } = useThreads();
@@ -35,9 +34,9 @@ export default function Page() {
   const roomId = useOverrideRoomId("nextjs-comments");
 
   return (
-    <CommentsProvider roomId={roomId}>
+    <RoomProvider id={roomId} initialPresence={{}}>
       <Example />
-    </CommentsProvider>
+    </RoomProvider>
   );
 }
 

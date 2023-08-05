@@ -66,7 +66,7 @@ import {
   withReact,
 } from "slate-react";
 
-import { useCommentsContext } from "../factory";
+import { useRoomContextBundle } from "@liveblocks/react";
 import { useInitial } from "../lib/use-initial";
 import type { MentionDraft } from "../slate/mentions";
 import {
@@ -800,7 +800,7 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
     },
     forwardedRef
   ) => {
-    const { useMentionSuggestions } = useCommentsContext();
+    const { useMentionSuggestions } = useRoomContextBundle();
     const { editor, validate, setFocused } =
       useComposerEditorContext(COMPOSER_EDITOR_NAME);
     const { submit, isValid, isFocused } = useComposer();

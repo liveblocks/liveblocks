@@ -1,4 +1,6 @@
+import type { ThreadData } from "./comments/types/ThreadData";
 import type { AuthManager, AuthValue } from "./auth-manager";
+import { CommentsApi, createCommentsApi } from "./comments";
 import type {
   Delegates,
   LegacyConnectionStatus,
@@ -28,7 +30,7 @@ import { isJsonArray, isJsonObject } from "./lib/Json";
 import { asPos } from "./lib/position";
 import type { Resolve } from "./lib/Resolve";
 import { compact, deepClone, tryParseJson } from "./lib/utils";
-import { canWriteStorage, TokenKind } from "./protocol/AuthToken";
+import { canComment, canWriteStorage, TokenKind } from "./protocol/AuthToken";
 import type { BaseUserMeta } from "./protocol/BaseUserMeta";
 import type { ClientMsg } from "./protocol/ClientMsg";
 import { ClientMsgCode } from "./protocol/ClientMsg";
@@ -412,7 +414,7 @@ export type Room<
   TStorage extends LsonObject,
   TUserMeta extends BaseUserMeta,
   TRoomEvent extends Json,
-> = {
+> = CommentsApi<any> & {
   /**
    * @internal
    * Private methods to directly control the underlying state machine for this
@@ -641,6 +643,8 @@ export type Room<
    * connection. If the room is not connected yet, initiate it.
    */
   reconnect(): void;
+
+  getThreads(): Promise<ThreadData<any>[]>;
 };
 
 /**
@@ -1177,6 +1181,7 @@ export function createRoom<
           info: staticSession.userInfo,
           presence: myPresence,
           canWrite,
+          canComment: canComment(dynamicSession.scopes),
           isReadOnly: !canWrite, // Deprecated, kept for backward-compatibility
         };
       }
@@ -2159,6 +2164,10 @@ export function createRoom<
     ydoc: eventHub.ydoc.observable,
   };
 
+  const commentsApi = createCommentsApi(config.roomId, delegates.authenticate, {
+    serverEndpoint: "https://api.liveblocks.io/v2",
+  });
+
   return Object.defineProperty(
     {
       /* NOTE: Exposing __internal here only to allow testing implementation details in unit tests */
@@ -2219,6 +2228,8 @@ export function createRoom<
       // Presence
       getPresence: () => context.myPresence.current,
       getOthers: () => context.others.current,
+
+      ...commentsApi,
     },
 
     // Explictly make the __internal field non-enumerable, to avoid aggressive

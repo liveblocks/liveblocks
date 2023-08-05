@@ -3,7 +3,7 @@
 import type { ComponentProps } from "react";
 import React, { useMemo } from "react";
 
-import { useCommentsContext } from "../../factory";
+import { useRoomContextBundle } from "@liveblocks/react";
 import { classNames } from "../../utils/class-names";
 import { getInitials } from "../../utils/get-initials";
 
@@ -13,7 +13,7 @@ export interface AvatarProps extends ComponentProps<"div"> {
 
 // TODO: Handle loading and error states
 export function Avatar({ userId, className, ...props }: AvatarProps) {
-  const { useUser } = useCommentsContext();
+  const { useUser } = useRoomContextBundle();
   const { user } = useUser(userId);
   const resolvedUserName = useMemo(() => user?.name, [user]);
   const resolvedUserAvatar = useMemo(() => user?.avatar, [user]);

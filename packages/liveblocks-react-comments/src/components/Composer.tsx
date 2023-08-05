@@ -8,7 +8,7 @@ import type {
 } from "react";
 import React, { forwardRef, useCallback } from "react";
 
-import { useCommentsContext } from "../factory";
+import { useRoomContextBundle } from "@liveblocks/react";
 import { MentionIcon } from "../icons/mention";
 import { SendIcon } from "../icons/send";
 import type { ComposerOverrides } from "../overrides";
@@ -178,7 +178,7 @@ export const Composer = forwardRef<HTMLFormElement, ComposerProps>(
     forwardedRef
   ) => {
     const { useCreateThread, useCreateComment, useEditComment, useOverrides } =
-      useCommentsContext();
+      useRoomContextBundle();
     const createThread = useCreateThread();
     const createComment = useCreateComment();
     const editComment = useEditComment();

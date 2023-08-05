@@ -3,7 +3,7 @@ import * as TogglePrimitive from "@radix-ui/react-toggle";
 import type { ComponentPropsWithoutRef } from "react";
 import React, { forwardRef, useCallback } from "react";
 
-import { useCommentsContext } from "../factory";
+import { useRoomContextBundle } from "@liveblocks/react";
 import { ResolveIcon } from "../icons/resolve";
 import { ResolvedIcon } from "../icons/resolved";
 import type {
@@ -76,7 +76,7 @@ export const Thread = forwardRef<HTMLDivElement, ThreadProps>(
     },
     forwardedRef
   ) => {
-    const { useEditThreadMetadata, useOverrides } = useCommentsContext();
+    const { useEditThreadMetadata, useOverrides } = useRoomContextBundle();
     const editThreadMetadata = useEditThreadMetadata();
     const $ = useOverrides(overrides);
 

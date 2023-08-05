@@ -2,12 +2,12 @@
 
 import React from "react";
 import {
-  CommentsProvider,
+  RoomProvider,
   useThreadsSuspense as useThreads,
 } from "../../../../liveblocks.config";
 import { Composer } from "@liveblocks/react-comments";
 import { Thread } from "@liveblocks/react-comments";
-import { ClientSideSuspense } from "../../../components/ClientSideSuspense";
+import { ClientSideSuspense } from "@liveblocks/react";
 import { Loading } from "../../../components/Loading";
 
 function Example() {
@@ -25,10 +25,10 @@ function Example() {
 
 export default function Home() {
   return (
-    <CommentsProvider roomId="nextjs-comments">
+    <RoomProvider id="nextjs-comments" initialPresence={{}}>
       <ClientSideSuspense fallback={<Loading />}>
         {() => <Example />}
       </ClientSideSuspense>
-    </CommentsProvider>
+    </RoomProvider>
   );
 }

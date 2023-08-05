@@ -1,7 +1,7 @@
 import React, { useMemo } from "react";
 import { useRouter } from "next/router";
 import {
-  CommentsProvider,
+  RoomProvider,
   useThreadsSuspense as useThreads,
 } from "../../liveblocks.config";
 import { Composer } from "@liveblocks/react-comments";
@@ -31,11 +31,11 @@ export default function Page() {
   const roomId = useOverrideRoomId("nextjs-comments");
 
   return (
-    <CommentsProvider roomId={roomId}>
+    <RoomProvider id={roomId} initialPresence={{}}>
       <ClientSideSuspense fallback={<Loading />}>
         {() => <Example />}
       </ClientSideSuspense>
-    </CommentsProvider>
+    </RoomProvider>
   );
 }
 

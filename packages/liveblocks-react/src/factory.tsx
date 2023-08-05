@@ -14,11 +14,19 @@ import type {
   User,
 } from "@liveblocks/client";
 import { shallow } from "@liveblocks/client";
-import type { ToImmutable } from "@liveblocks/core";
+import type {
+  AsyncCache,
+  BaseMetadata,
+  BaseUserInfo,
+  CommentData,
+  ToImmutable,
+} from "@liveblocks/core";
 import {
   asArrayWithLegacyMethods,
+  createAsyncCache,
   deprecateIf,
   errorIf,
+  makeEventSource,
 } from "@liveblocks/core";
 import * as React from "react";
 import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector.js";
@@ -30,6 +38,19 @@ import type {
   RoomContextBundle,
   RoomProviderProps,
 } from "./types";
+import {
+  createCommentsRoom,
+  type CommentsRoom,
+  RoomThreads,
+  CreateCommentOptions,
+  CreateThreadOptions,
+  DeleteCommentOptions,
+  EditCommentOptions,
+  EditThreadMetadataOptions,
+} from "./comments/CommentsRoom";
+import type { CommentsApiError } from "./comments/errors";
+import { useAsyncCache } from "./comments/lib/use-async-cache";
+import { useDebounce } from "./comments/lib/use-debounce";
 
 const noop = () => {};
 const identity: <T>(x: T) => T = (x) => x;
@@ -109,14 +130,93 @@ function makeMutationContext<
   };
 }
 
+type UserState<T extends BaseUserInfo> =
+  | {
+      user?: never;
+      error?: never;
+      isLoading: true;
+    }
+  | {
+      user?: T;
+      isLoading: false;
+      error?: never;
+    }
+  | {
+      user?: never;
+      isLoading: false;
+      error: Error;
+    };
+
+// TODO
+// type UserStateSuspense<T extends BaseUserInfo> = Resolve<
+//   Extract<UserState<T>, { isLoading: false }>
+// >;
+
+type UserResolver<T> = (userId: string) => Promise<T | undefined>;
+
+type Options<TUserInfo extends BaseUserInfo> = {
+  /**
+   * An asynchronous function that returns a user object from a user ID.
+   */
+  resolveUser?: UserResolver<TUserInfo>;
+
+  /**
+   * An asynchronous function to get a list of suggested user IDs from a string.
+   */
+  resolveMentionSuggestions?: (text: string) => Promise<string[]>;
+
+  /**
+   * @internal Internal endpoint
+   */
+  serverEndpoint?: string;
+};
+
+let hasWarnedIfNoResolveUser = false;
+
+function warnIfNoResolveUser(
+  usersCache?: AsyncCache<BaseUserInfo | undefined, unknown>
+) {
+  if (
+    !hasWarnedIfNoResolveUser &&
+    !usersCache &&
+    process.env.NODE_ENV !== "production"
+  ) {
+    console.warn(
+      "To use useUser, you should provide a resolver function to the resolveUser option in createCommentContext."
+    );
+    hasWarnedIfNoResolveUser = true;
+  }
+}
+
+const ContextBundle = React.createContext<RoomContextBundle<
+  JsonObject,
+  LsonObject,
+  BaseMetadata,
+  never,
+  BaseMetadata
+> | null>(null);
+
+// TODO: Internal?
+export function useRoomContextBundle() {
+  return React.useContext(ContextBundle)!;
+}
+
 export function createRoomContext<
   TPresence extends JsonObject,
   TStorage extends LsonObject = LsonObject,
   TUserMeta extends BaseUserMeta = BaseUserMeta,
   TRoomEvent extends Json = never,
+  TThreadMetadata extends BaseMetadata = BaseMetadata,
 >(
-  client: Client
-): RoomContextBundle<TPresence, TStorage, TUserMeta, TRoomEvent> {
+  client: Client,
+  options?: Options<BaseUserInfo>
+): RoomContextBundle<
+  TPresence,
+  TStorage,
+  TUserMeta,
+  TRoomEvent,
+  TThreadMetadata
+> {
   const RoomContext = React.createContext<Room<
     TPresence,
     TStorage,
@@ -194,8 +294,21 @@ export function createRoomContext<
       };
     }, [roomId, frozen]);
 
+    React.useEffect(() => {
+      const unsubscribe = getCommentsRoom(room).subscribe();
+
+      return () => {
+        commentsRooms.delete(room.id);
+        unsubscribe();
+      };
+    }, [room]);
+
     return (
-      <RoomContext.Provider value={room}>{props.children}</RoomContext.Provider>
+      <RoomContext.Provider value={room}>
+        <ContextBundle.Provider value={bundle as any}>
+          {props.children}
+        </ContextBundle.Provider>
+      </RoomContext.Provider>
     );
   }
 
@@ -718,7 +831,172 @@ export function createRoomContext<
     return useLegacyKey(key) as TStorage[TKey];
   }
 
-  return {
+  /*
+   * START COMMMENTS
+   */
+
+  const errorEventSource = makeEventSource<CommentsApiError<TThreadMetadata>>();
+
+  const commentsRooms = new Map<string, CommentsRoom<TThreadMetadata>>();
+
+  function getCommentsRoom(
+    room: Room<TPresence, TStorage, TUserMeta, TRoomEvent>
+  ) {
+    let commentsRoom = commentsRooms.get(room.id);
+    if (commentsRoom === undefined) {
+      commentsRoom = createCommentsRoom(room, errorEventSource);
+      commentsRooms.set(room.id, commentsRoom);
+    }
+    return commentsRoom;
+  }
+
+  function useThreads(): RoomThreads<TThreadMetadata> {
+    const room = useRoom();
+    return getCommentsRoom(room).useThreads();
+  }
+
+  function useThreadsSuspense() {
+    const room = useRoom();
+    return getCommentsRoom(room).useThreadsSuspense();
+  }
+
+  function useCreateThread() {
+    const room = useRoom();
+
+    return React.useCallback(
+      (options: CreateThreadOptions<TThreadMetadata>) =>
+        getCommentsRoom(room).createThread(options),
+      [room]
+    );
+  }
+
+  function useEditThreadMetadata() {
+    const room = useRoom();
+
+    return React.useCallback(
+      (options: EditThreadMetadataOptions<TThreadMetadata>) =>
+        getCommentsRoom(room).editThreadMetadata(options),
+      [room]
+    );
+  }
+
+  function useCreateComment(): (options: CreateCommentOptions) => CommentData {
+    const room = useRoom();
+
+    return React.useCallback(
+      (options: CreateCommentOptions) =>
+        getCommentsRoom(room).createComment(options),
+      [room]
+    );
+  }
+
+  function useEditComment(): (options: EditCommentOptions) => void {
+    const room = useRoom();
+
+    return React.useCallback(
+      (options: EditCommentOptions) =>
+        getCommentsRoom(room).editComment(options),
+      [room]
+    );
+  }
+
+  function useDeleteComment() {
+    const room = useRoom();
+
+    return React.useCallback(
+      (options: DeleteCommentOptions) =>
+        getCommentsRoom(room).deleteComment(options),
+      [room]
+    );
+  }
+
+  type TUserInfo = {};
+
+  const { resolveUser /* resolveMentionSuggestions */ } = options ?? {};
+
+  const usersCache = resolveUser
+    ? createAsyncCache(resolveUser as UserResolver<BaseUserInfo>)
+    : undefined;
+
+  function useUser(userId: string) {
+    const state = useAsyncCache(usersCache, userId);
+
+    React.useEffect(() => warnIfNoResolveUser(usersCache), []);
+
+    if (state?.isLoading) {
+      return {
+        isLoading: true,
+      } as UserState<TUserInfo>;
+    } else {
+      return {
+        user: state?.data,
+        error: state?.error,
+        isLoading: false,
+      } as UserState<TUserInfo>;
+    }
+  }
+
+  // TODO
+  // function useUserSuspense(userId: string) {
+  //   const state = useAsyncCache(usersCache, userId, {
+  //     suspense: true,
+  //   });
+
+  //   React.useEffect(() => warnIfNoResolveUser(usersCache), []);
+
+  //   return {
+  //     user: state?.data,
+  //     error: state?.error,
+  //     isLoading: false,
+  //   } as UserStateSuspense<TUserInfo>;
+  // }
+
+  const resolveMentionSuggestions = null;
+
+  const mentionSuggestionsCache = createAsyncCache<string[], unknown>(
+    resolveMentionSuggestions ?? (() => Promise.resolve([]))
+  );
+
+  function useMentionSuggestions(value: string | undefined) {
+    const debouncedValue = useDebounce(value, 500);
+    const { data } = useAsyncCache(
+      mentionSuggestionsCache,
+      debouncedValue ?? null,
+      {
+        keepPreviousDataWhileLoading: true,
+      }
+    );
+
+    return data;
+  }
+
+  function useOverrides() {
+    return {
+      locale: "en",
+      dir: "ltr",
+      COMPOSER_INSERT_MENTION: "Mention someone",
+      COMPOSER_PLACEHOLDER: "Write a comment…",
+      COMPOSER_SEND: "Send",
+      COMMENT_EDITED: "(edited)",
+      // COMMENT_DELETED: "",
+      COMMENT_MORE: "More",
+      COMMENT_EDIT: "Edit comment",
+      COMMENT_EDIT_COMPOSER_PLACEHOLDER: "Edit comment…",
+      COMMENT_EDIT_COMPOSER_CANCEL: "Cancel",
+      COMMENT_EDIT_COMPOSER_SAVE: "Save",
+      COMMENT_DELETE: "Delete comment",
+      THREAD_RESOLVE: "Resolve thread",
+      THREAD_UNRESOLVE: "Re-open thread",
+      THREAD_COMPOSER_PLACEHOLDER: "Reply to thread…",
+      THREAD_COMPOSER_SEND: "Reply",
+    };
+  }
+
+  /*
+   * END COMMENTS
+   */
+
+  const bundle = {
     RoomContext,
     RoomProvider,
 
@@ -754,6 +1032,16 @@ export function createRoomContext<
     useOther,
 
     useMutation,
+
+    useThreads,
+    useCreateThread,
+    useEditThreadMetadata,
+    useCreateComment,
+    useEditComment,
+    useDeleteComment,
+    useUser,
+    useOverrides, // TODO: this is likely not going go live here
+    useMentionSuggestions,
 
     suspense: {
       RoomContext,
@@ -791,6 +1079,10 @@ export function createRoomContext<
       useOther: useOtherSuspense,
 
       useMutation,
+
+      useThreads: useThreadsSuspense,
     },
   };
+
+  return bundle;
 }
