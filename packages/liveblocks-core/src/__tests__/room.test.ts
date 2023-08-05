@@ -1,7 +1,6 @@
-import { rest } from "msw";
-import { setupServer } from "msw/node";
-
 import { nn } from "..";
+import type { AuthValue } from "../auth-manager";
+import { StopRetrying } from "../connection";
 import { LiveList } from "../crdts/LiveList";
 import { LiveObject } from "../crdts/LiveObject";
 import type { LsonObject } from "../crdts/Lson";
@@ -9,8 +8,6 @@ import type { StorageUpdate } from "../crdts/StorageUpdates";
 import { legacy_patchImmutableObject, lsonToJson } from "../immutable";
 import * as console from "../lib/fancy-console";
 import type { Json, JsonObject } from "../lib/Json";
-import type { Authentication } from "../protocol/Authentication";
-import { RoomScope } from "../protocol/AuthToken";
 import type { BaseUserMeta } from "../protocol/BaseUserMeta";
 import { ClientMsgCode } from "../protocol/ClientMsg";
 import { OpCode } from "../protocol/Op";
@@ -24,7 +21,8 @@ import type { Others } from "../types/Others";
 import {
   AUTH_SUCCESS,
   defineBehavior,
-  SOCKET_AUTOCONNECT,
+  SOCKET_AUTOCONNECT_AND_ROOM_STATE,
+  SOCKET_AUTOCONNECT_BUT_NO_ROOM_STATE,
   SOCKET_NO_BEHAVIOR,
   SOCKET_REFUSES,
   SOCKET_SEQUENCE,
@@ -43,7 +41,6 @@ import {
   serverMessage,
 } from "./_utils";
 import {
-  waitFor,
   waitUntilCustomEvent,
   waitUntilOthersEvent,
   waitUntilStatus,
@@ -52,20 +49,26 @@ import {
 
 const THROTTLE_DELAY = 100;
 
+const mockedCreateSocketDelegate = (_authValue: AuthValue) => {
+  return new WebSocket("");
+};
+
 const defaultRoomConfig: RoomConfig = {
   enableDebugLogging: false,
   roomId: "room-id",
   throttleDelay: THROTTLE_DELAY,
   lostConnectionTimeout: 99999,
-  liveblocksServer: "wss://live.liveblocks.io/v6",
-  authentication: {
-    type: "private",
-    url: "/mocked-api/auth",
-  } as Authentication,
+  liveblocksServer: "wss://live.liveblocks.io/v7",
+  delegates: {
+    authenticate: () => {
+      return Promise.resolve({ publicApiKey: "pk_123", type: "public" });
+    },
+    createSocket: mockedCreateSocketDelegate,
+  },
 };
 
 function makeRoomConfig(
-  mockedDelegates?: RoomDelegates,
+  mockedDelegates: RoomDelegates,
   defaults?: Partial<RoomConfig>
 ) {
   return {
@@ -88,7 +91,7 @@ function createTestableRoom<
 >(
   initialPresence: TPresence,
   authBehavior = AUTH_SUCCESS,
-  socketBehavior = SOCKET_AUTOCONNECT,
+  socketBehavior = SOCKET_AUTOCONNECT_AND_ROOM_STATE(),
   config?: Partial<RoomConfig>
 ) {
   const { wss, delegates } = defineBehavior(authBehavior, socketBehavior);
@@ -112,151 +115,39 @@ function createTestableRoom<
 }
 
 describe("room / auth", () => {
-  const token =
-    "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2NjQ1NjY0MTAsImV4cCI6MTY2NDU3MDAxMCwicm9vbUlkIjoiS1hhNlVjbHZyYWVHWk5kWFZ6NjdaIiwiYXBwSWQiOiI2MDVhNGZkMzFhMzZkNWVhN2EyZTA4ZjEiLCJhY3RvciI6ODcsInNjb3BlcyI6WyJyb29tOndyaXRlIl19.uS0VcdeAPdMfJ2rseRRUnL_X3I-h6ljPKEiu1xfKRG0Qrth0zdqo2ngn7NZ8_fLcQBaIvaZ4q5vXg_Nex81Ae9sjmmLhjxHcE-iA-BC82NROVSnyGdVHJRMNqs6h57pCdiXwCwpcLjqi_EOIS8gmMB8dcRX748Wpa4C2T0e94An8_vP6eD66JKndxjFvVPrB_LSOOlQZoxW9USPS7ZUTAECeGQscrXnss_-1TJEaGf0RxVkNQsDfUKu4TjWYa3iBvBPip--Ev1bBETh0IHrGNsWVUd-691cCRAemiC_ADBaOg5IEszqoEw96Xe9BtQeWrjAgMKKrPS72cwkikVmiJQ";
-  const server = setupServer(
-    rest.post("/mocked-api/auth", (_req, res, ctx) => {
-      return res(ctx.json({ token }));
-    }),
-    rest.post("/mocked-api/403", (_req, res, ctx) => {
-      return res(ctx.status(403));
-    }),
-    rest.post("/mocked-api/401-with-details", (_req, res, ctx) => {
-      return res(ctx.status(401), ctx.text("wrong key type"));
-    }),
-    rest.post("/mocked-api/not-json", (_req, res, ctx) => {
-      return res(ctx.status(202), ctx.text("this is not json"));
-    }),
-    rest.post("/mocked-api/missing-token", (_req, res, ctx) => {
-      return res(ctx.status(202), ctx.json({}));
-    })
-  );
-
-  beforeAll(() => server.listen());
-  afterEach(() => server.resetHandlers());
-  afterAll(() => server.close());
-
-  let originalEnv: NodeJS.ProcessEnv;
   let consoleErrorSpy: jest.SpyInstance;
 
   beforeEach(() => {
-    originalEnv = process.env;
     consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
   });
 
   afterEach(() => {
-    process.env = originalEnv;
     consoleErrorSpy.mockRestore();
   });
 
-  test.each([{ notAToken: "" }, undefined, null, ""])(
-    "custom authentication with missing token in callback response should fail",
-
-    async (response) => {
-      const room = createRoom(
-        { initialPresence: {} as never },
-        {
-          ...makeRoomConfig(),
-          authentication: {
-            type: "custom",
-            callback: (_roomId) =>
-              new Promise((resolve) => {
-                // @ts-expect-error: testing for missing token in callback response
-                resolve(response);
-              }),
+  test("when auth-manager throws StopRetrying error - should fail", async () => {
+    const room = createRoom(
+      { initialPresence: {} as never },
+      {
+        ...makeRoomConfig({
+          authenticate: () => {
+            return new Promise((_resolve) => {
+              throw new StopRetrying("Unauthorized: No access");
+            });
           },
-        }
-      );
-
-      room.connect();
-      await waitUntilStatus(room, "connecting");
-      await waitFor(() => consoleErrorSpy.mock.calls.length > 0);
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        'Authentication failed: We expect the authentication callback to return a token, but it does not. Hint: the return value should look like: { token: "..." }'
-      );
-      room.destroy();
-    }
-  );
-
-  test("private authentication with 403 status should fail", async () => {
-    const room = createRoom(
-      { initialPresence: {} as never },
-      {
-        ...makeRoomConfig(),
-        authentication: {
-          type: "private",
-          url: "/mocked-api/403",
-        },
+          createSocket: mockedCreateSocketDelegate,
+        }),
       }
     );
-
     room.connect();
+
+    let err = {} as any;
+    room.events.error.subscribeOnce((e) => (err = e));
+
     await waitUntilStatus(room, "disconnected");
-    expect(consoleErrorSpy).toHaveBeenCalledWith(
-      "Unauthorized: reason not provided in auth response (403 returned by POST /mocked-api/403)"
-    );
-    room.destroy();
-  });
-
-  test("private authentication with 403 status should fail with details", async () => {
-    const room = createRoom(
-      { initialPresence: {} as never },
-      {
-        ...makeRoomConfig(),
-        authentication: {
-          type: "private",
-          url: "/mocked-api/401-with-details",
-        },
-      }
-    );
-
-    room.connect();
-    await waitUntilStatus(room, "disconnected");
-    expect(consoleErrorSpy).toHaveBeenCalledWith(
-      "Unauthorized: wrong key type (401 returned by POST /mocked-api/401-with-details)"
-    );
-    room.destroy();
-  });
-
-  test("private authentication that does not return valid JSON should fail", async () => {
-    const room = createRoom(
-      { initialPresence: {} as never },
-      {
-        ...makeRoomConfig(),
-        authentication: {
-          type: "private",
-          url: "/mocked-api/not-json",
-        },
-      }
-    );
-
-    room.connect();
-    await waitUntilStatus(room, "connecting");
-    await waitFor(() => consoleErrorSpy.mock.calls.length > 0);
-    expect(consoleErrorSpy).toHaveBeenCalledWith(
-      'Authentication failed: Expected a JSON response when doing a POST request on "/mocked-api/not-json". SyntaxError: Unexpected token h in JSON at position 1'
-    );
-    room.destroy();
-  });
-
-  test("private authentication without an auth token response should fail", async () => {
-    const room = createRoom(
-      { initialPresence: {} as never },
-      {
-        ...makeRoomConfig(),
-        authentication: {
-          type: "private",
-          url: "/mocked-api/missing-token",
-        },
-      }
-    );
-
-    room.connect();
-    await waitUntilStatus(room, "connecting");
-    await waitFor(() => consoleErrorSpy.mock.calls.length > 0);
-    expect(consoleErrorSpy).toHaveBeenCalledWith(
-      'Authentication failed: Expected a JSON response of the form `{ token: "..." }` when doing a POST request on "/mocked-api/missing-token", but got {}'
-    );
+    expect(consoleErrorSpy).toHaveBeenCalledWith("Unauthorized: No access");
+    expect(err.message).toEqual("Unauthorized: No access");
+    expect(err.code).toEqual(-1); // Not a WebSocket close code
     room.destroy();
   });
 });
@@ -305,7 +196,7 @@ describe("room", () => {
       undefined,
       SOCKET_SEQUENCE(
         SOCKET_THROWS("😈"),
-        SOCKET_AUTOCONNECT // Repeats infinitely
+        SOCKET_AUTOCONNECT_AND_ROOM_STATE() // Repeats infinitely
       )
     );
     room.connect();
@@ -322,9 +213,9 @@ describe("room", () => {
       {},
       undefined,
       SOCKET_SEQUENCE(
-        SOCKET_AUTOCONNECT,
+        SOCKET_AUTOCONNECT_AND_ROOM_STATE(),
         SOCKET_THROWS("😈"),
-        SOCKET_AUTOCONNECT // Repeats infinitely
+        SOCKET_AUTOCONNECT_AND_ROOM_STATE() // Repeats infinitely
       )
     );
     room.connect();
@@ -354,16 +245,13 @@ describe("room", () => {
     expect(delegates.createSocket).toHaveBeenCalledTimes(3);
   });
 
-  test("should reconnect without getting a new auth token when told by server that room is full (as refusal)", async () => {
+  test("should not reauth when getting an unknown server response in the 42xx range (as refusal)", async () => {
     const { room, delegates } = createTestableRoom(
       {},
       undefined,
       SOCKET_SEQUENCE(
-        SOCKET_REFUSES(
-          WebsocketCloseCodes.MAX_NUMBER_OF_CONCURRENT_CONNECTIONS,
-          "Room full"
-        ),
-        SOCKET_AUTOCONNECT // Repeated to infinity
+        SOCKET_REFUSES(4242 /* Unknown code */, "An unknown error reason"),
+        SOCKET_AUTOCONNECT_AND_ROOM_STATE() // Repeated to infinity
       )
     );
     room.connect();
@@ -371,61 +259,161 @@ describe("room", () => {
     await waitUntilStatus(room, "connecting");
     await waitUntilStatus(room, "connected", 4000);
 
-    // ...but we should not hit authentication again here (instead, the token should be reused)
-    expect(delegates.authenticate).toHaveBeenCalledTimes(1); // Only once!
+    expect(delegates.authenticate).toHaveBeenCalledTimes(1); // No reauth!
     expect(delegates.createSocket).toHaveBeenCalledTimes(2);
+  });
+
+  test("should reauth when getting an unknown server response in the 43xx range (as refusal)", async () => {
+    const { room, delegates } = createTestableRoom(
+      {},
+      undefined,
+      SOCKET_SEQUENCE(
+        SOCKET_REFUSES(4342 /* Unknown code */, "An unknown error reason"),
+        SOCKET_AUTOCONNECT_AND_ROOM_STATE() // Repeated to infinity
+      )
+    );
+    room.connect();
+
+    await waitUntilStatus(room, "connecting");
+    await waitUntilStatus(room, "connected", 4000);
+
+    expect(delegates.authenticate).toHaveBeenCalledTimes(2); // Reauth!
+    expect(delegates.createSocket).toHaveBeenCalledTimes(2);
+  });
+
+  test("should reconnect without getting a new auth token when told by server that room is full (as refusal)", async () => {
+    const { room, delegates } = createTestableRoom(
+      {},
+      undefined,
+      SOCKET_REFUSES(
+        WebsocketCloseCodes.MAX_NUMBER_OF_CONCURRENT_CONNECTIONS_PER_ROOM,
+        "room full"
+      )
+    );
+    room.connect();
+
+    let err = {} as any;
+    room.events.error.subscribeOnce((e) => (err = e));
+
+    await waitUntilStatus(room, "disconnected");
+
+    expect(delegates.authenticate).toHaveBeenCalledTimes(1);
+    expect(delegates.createSocket).toHaveBeenCalledTimes(1);
+    expect(err.message).toEqual("room full");
+    expect(err.code).toEqual(
+      4005 /* MAX_NUMBER_OF_CONCURRENT_CONNECTIONS_PER_ROOM */
+    );
   });
 
   test("should reconnect without getting a new auth token when told by server that room is full (while connected)", async () => {
     const { room, wss, delegates } = createTestableRoom(
       {},
       undefined,
-      SOCKET_AUTOCONNECT
+      SOCKET_AUTOCONNECT_AND_ROOM_STATE()
     );
     room.connect();
+
+    let err = {} as any;
+    room.events.error.subscribeOnce((e) => (err = e));
 
     await waitUntilStatus(room, "connected");
 
     // Closing this connection will trigger a reconnection...
     wss.last.close(
       new CloseEvent("close", {
-        code: WebsocketCloseCodes.MAX_NUMBER_OF_CONCURRENT_CONNECTIONS,
+        code: WebsocketCloseCodes.MAX_NUMBER_OF_CONCURRENT_CONNECTIONS_PER_ROOM,
+        reason: "room full",
+        wasClean: true,
+      })
+    );
+
+    await waitUntilStatus(room, "disconnected");
+
+    expect(delegates.authenticate).toHaveBeenCalledTimes(1);
+    expect(delegates.createSocket).toHaveBeenCalledTimes(1);
+    expect(err.message).toEqual("room full");
+    expect(err.code).toEqual(
+      4005 /* MAX_NUMBER_OF_CONCURRENT_CONNECTIONS_PER_ROOM */
+    );
+  });
+
+  test("should reauth immediately when told by server that token is expired (as refusal)", async () => {
+    const { room, delegates } = createTestableRoom(
+      {},
+      undefined,
+      SOCKET_SEQUENCE(
+        SOCKET_REFUSES(WebsocketCloseCodes.TOKEN_EXPIRED, "Token expired"),
+        SOCKET_AUTOCONNECT_AND_ROOM_STATE() // Repeated to infinity
+      )
+    );
+    room.connect();
+
+    await waitUntilStatus(room, "connected");
+
+    // First connection attempt was rejected, but second worked
+    expect(delegates.authenticate).toHaveBeenCalledTimes(2);
+    expect(delegates.createSocket).toHaveBeenCalledTimes(2);
+  });
+
+  test("should reauth immediately when told by server that token is expired (while connected)", async () => {
+    const { room, wss, delegates } = createTestableRoom(
+      {},
+      undefined,
+      SOCKET_AUTOCONNECT_AND_ROOM_STATE()
+    );
+    room.connect();
+
+    await waitUntilStatus(room, "connected");
+
+    expect(delegates.authenticate).toHaveBeenCalledTimes(1);
+    expect(delegates.createSocket).toHaveBeenCalledTimes(1);
+
+    // Closing this connection will trigger a reconnection...
+    wss.last.close(
+      new CloseEvent("close", {
+        code: WebsocketCloseCodes.TOKEN_EXPIRED,
         wasClean: true,
       })
     );
 
     await waitUntilStatus(room, "reconnecting");
-    await waitUntilStatus(room, "connected", 4000);
+    await waitUntilStatus(room, "connected");
 
-    expect(delegates.authenticate).toHaveBeenCalledTimes(1); // Only once!
+    expect(delegates.authenticate).toHaveBeenCalledTimes(2);
     expect(delegates.createSocket).toHaveBeenCalledTimes(2);
   });
 
-  test("should get a new auth token if unauthorized (as refusal)", async () => {
+  test("should stop trying and disconnect if unauthorized (as refusal)", async () => {
     const { room, delegates } = createTestableRoom(
       {},
       undefined,
-      SOCKET_SEQUENCE(
-        SOCKET_REFUSES(WebsocketCloseCodes.NOT_ALLOWED),
-        SOCKET_AUTOCONNECT
-      )
+      SOCKET_REFUSES(WebsocketCloseCodes.NOT_ALLOWED, "whatever")
     );
     room.connect();
 
-    await waitUntilStatus(room, "connecting");
-    await waitUntilStatus(room, "connected", 4000);
+    let err = {} as any;
+    room.events.error.subscribeOnce((e) => (err = e));
 
-    expect(delegates.authenticate).toHaveBeenCalledTimes(2); // It re-authed!
-    expect(delegates.createSocket).toHaveBeenCalledTimes(2);
+    await waitUntilStatus(room, "connecting");
+    await waitUntilStatus(room, "disconnected");
+
+    expect(delegates.authenticate).toHaveBeenCalledTimes(1); // Only once!
+    expect(delegates.createSocket).toHaveBeenCalledTimes(1);
+
+    expect(err.message).toEqual("whatever");
+    expect(err.code).toEqual(4001 /* NOT_ALLOWED */);
   });
 
-  test("should get a new auth token if unauthorized (while connected)", async () => {
+  test("should stop trying and disconnect if unauthorized (while connected)", async () => {
     const { room, wss, delegates } = createTestableRoom(
       {},
       undefined,
-      SOCKET_AUTOCONNECT
+      SOCKET_AUTOCONNECT_AND_ROOM_STATE()
     );
     room.connect();
+
+    let err = {} as any;
+    room.events.error.subscribeOnce((e) => (err = e));
 
     await waitUntilStatus(room, "connected");
 
@@ -433,15 +421,17 @@ describe("room", () => {
     wss.last.close(
       new CloseEvent("close", {
         code: WebsocketCloseCodes.NOT_ALLOWED,
+        reason: "whatever",
         wasClean: true,
       })
     );
 
-    await waitUntilStatus(room, "reconnecting");
-    await waitUntilStatus(room, "connected");
+    await waitUntilStatus(room, "disconnected");
 
-    expect(delegates.authenticate).toHaveBeenCalledTimes(2); // It re-authed!
-    expect(delegates.createSocket).toHaveBeenCalledTimes(2);
+    expect(delegates.authenticate).toHaveBeenCalledTimes(1); // Only once!
+    expect(delegates.createSocket).toHaveBeenCalledTimes(1);
+    expect(err.message).toEqual("whatever");
+    expect(err.code).toEqual(4001 /* NOT_ALLOWED */);
   });
 
   test("should disconnect if told by server to not try reconnecting again (as refusal)", async () => {
@@ -449,11 +439,14 @@ describe("room", () => {
       {},
       undefined,
       SOCKET_SEQUENCE(
-        SOCKET_REFUSES(WebsocketCloseCodes.CLOSE_WITHOUT_RETRY),
-        SOCKET_AUTOCONNECT
+        SOCKET_REFUSES(WebsocketCloseCodes.CLOSE_WITHOUT_RETRY, "whaever"),
+        SOCKET_AUTOCONNECT_AND_ROOM_STATE()
       )
     );
     room.connect();
+
+    let err = {} as any;
+    room.events.error.subscribeOnce((e) => (err = e));
 
     // Will try to reconnect, then gets refused, then disconnects
     await waitUntilStatus(room, "connecting");
@@ -461,15 +454,20 @@ describe("room", () => {
 
     expect(delegates.authenticate).toHaveBeenCalledTimes(1); // Only once!
     expect(delegates.createSocket).toHaveBeenCalledTimes(1);
+    expect(err.message).toEqual("whaever");
+    expect(err.code).toEqual(4999 /* CLOSE_WITHOUT_RETRY */);
   });
 
   test("should disconnect if told by server to not try reconnecting again (while connected)", async () => {
     const { room, wss, delegates } = createTestableRoom(
       {},
       undefined,
-      SOCKET_AUTOCONNECT
+      SOCKET_AUTOCONNECT_AND_ROOM_STATE()
     );
     room.connect();
+
+    let err = {} as any;
+    room.events.error.subscribeOnce((e) => (err = e));
 
     await waitUntilStatus(room, "connected");
 
@@ -477,6 +475,7 @@ describe("room", () => {
     wss.last.close(
       new CloseEvent("close", {
         code: WebsocketCloseCodes.CLOSE_WITHOUT_RETRY,
+        reason: "wha'er",
         wasClean: true,
       })
     );
@@ -485,6 +484,8 @@ describe("room", () => {
 
     expect(delegates.authenticate).toHaveBeenCalledTimes(1); // It re-authed!
     expect(delegates.createSocket).toHaveBeenCalledTimes(1);
+    expect(err.message).toEqual("wha'er");
+    expect(err.code).toEqual(4999 /* CLOSE_WITHOUT_RETRY */);
   });
 
   test("initial presence should be sent once the connection is open", async () => {
@@ -594,15 +595,21 @@ describe("room", () => {
   });
 
   test("others should be iterable", async () => {
-    const { room, wss } = createTestableRoom({});
+    const { room, wss } = createTestableRoom(
+      {},
+      undefined,
+      SOCKET_AUTOCONNECT_BUT_NO_ROOM_STATE
+    );
     room.connect();
 
     wss.onConnection((conn) => {
       conn.server.send(
         serverMessage({
           type: ServerMsgCode.ROOM_STATE,
+          actor: 2,
+          scopes: ["room:write"],
           users: {
-            "1": { scopes: [] },
+            "1": { scopes: ["room:write"] },
           },
         })
       );
@@ -620,20 +627,31 @@ describe("room", () => {
     await waitUntilOthersEvent(room);
 
     expect(room.getOthers()).toEqual([
-      { connectionId: 1, presence: { x: 2 }, isReadOnly: false },
+      {
+        connectionId: 1,
+        presence: { x: 2 },
+        isReadOnly: false,
+        canWrite: true,
+      },
     ]);
   });
 
   test("others should be read-only when associated scopes are received", async () => {
-    const { room, wss } = createTestableRoom({});
+    const { room, wss } = createTestableRoom(
+      {},
+      undefined,
+      SOCKET_AUTOCONNECT_BUT_NO_ROOM_STATE
+    );
     room.connect();
 
     wss.onConnection((conn) => {
       conn.server.send(
         serverMessage({
           type: ServerMsgCode.ROOM_STATE,
+          actor: 2,
+          scopes: ["room:write"],
           users: {
-            "1": { scopes: [RoomScope.Read, RoomScope.PresenceWrite] },
+            "1": { scopes: ["room:read"] },
           },
         })
       );
@@ -651,7 +669,12 @@ describe("room", () => {
     await waitUntilOthersEvent(room);
 
     expect(room.getOthers()).toEqual([
-      { connectionId: 1, presence: { x: 2 }, isReadOnly: true },
+      {
+        connectionId: 1,
+        presence: { x: 2 },
+        isReadOnly: true,
+        canWrite: false,
+      },
     ]);
   });
 
@@ -659,7 +682,7 @@ describe("room", () => {
     const { room, wss } = createTestableRoom(
       {},
       undefined,
-      SOCKET_SEQUENCE(SOCKET_AUTOCONNECT, SOCKET_THROWS()),
+      SOCKET_SEQUENCE(SOCKET_AUTOCONNECT_BUT_NO_ROOM_STATE, SOCKET_THROWS()),
       { lostConnectionTimeout: 10 }
     );
     room.connect();
@@ -668,8 +691,10 @@ describe("room", () => {
       conn.server.send(
         serverMessage({
           type: ServerMsgCode.ROOM_STATE,
+          actor: 2,
+          scopes: ["room:write"],
           users: {
-            "1": { scopes: [] },
+            "1": { scopes: ["room:write"] },
           },
         })
       );
@@ -687,7 +712,12 @@ describe("room", () => {
     await waitUntilStatus(room, "connected");
     await waitUntilOthersEvent(room);
     expect(room.getOthers()).toEqual([
-      { connectionId: 1, presence: { x: 2 }, isReadOnly: false },
+      {
+        connectionId: 1,
+        presence: { x: 2 },
+        isReadOnly: false,
+        canWrite: true,
+      },
     ]);
 
     // Closing this connection will trigger an endless retry loop, because the
@@ -701,7 +731,12 @@ describe("room", () => {
 
     // Not immediately cleared
     expect(room.getOthers()).toEqual([
-      { connectionId: 1, presence: { x: 2 }, isReadOnly: false },
+      {
+        connectionId: 1,
+        presence: { x: 2 },
+        isReadOnly: false,
+        canWrite: true,
+      },
     ]);
 
     // But it will clear eventually (after lostConnectionTimeout milliseconds)
@@ -721,16 +756,22 @@ describe("room", () => {
     - Client A should remove client B from others.
     */
 
-    const { room, wss } = createTestableRoom({});
+    const { room, wss } = createTestableRoom(
+      {},
+      undefined,
+      SOCKET_AUTOCONNECT_BUT_NO_ROOM_STATE
+    );
     room.connect();
 
     wss.onConnection((conn) => {
       conn.server.send(
         serverMessage({
           type: ServerMsgCode.ROOM_STATE,
+          actor: 3,
+          scopes: ["room:write"],
           users: {
-            "1": { scopes: [] },
-            "2": { scopes: [] },
+            "1": { scopes: ["room:write"] },
+            "2": { scopes: ["room:write"] },
           },
         })
       );
@@ -758,8 +799,18 @@ describe("room", () => {
 
     await waitUntilOthersEvent(room);
     expect(room.getOthers()).toEqual([
-      { connectionId: 1, presence: { x: 2 }, isReadOnly: false },
-      { connectionId: 2, presence: { x: 2 }, isReadOnly: false },
+      {
+        connectionId: 1,
+        presence: { x: 2 },
+        isReadOnly: false,
+        canWrite: true,
+      },
+      {
+        connectionId: 2,
+        presence: { x: 2 },
+        isReadOnly: false,
+        canWrite: true,
+      },
     ]);
 
     // -----
@@ -771,15 +822,22 @@ describe("room", () => {
     wss.last.send(
       serverMessage({
         type: ServerMsgCode.ROOM_STATE,
+        actor: 2,
+        scopes: ["room:write"],
         users: {
-          "1": { scopes: [] },
+          "1": { scopes: ["room:write"] },
         },
       })
     );
 
     // Only Client B is part of others.
     expect(room.getOthers()).toEqual([
-      { connectionId: 1, presence: { x: 2 }, isReadOnly: false },
+      {
+        connectionId: 1,
+        presence: { x: 2 },
+        isReadOnly: false,
+        canWrite: true,
+      },
     ]);
   });
 
@@ -1121,7 +1179,7 @@ describe("room", () => {
 
       const callback = jest.fn();
 
-      room.events.me.subscribe(callback);
+      room.events.myPresence.subscribe(callback);
 
       room.batch(() => {
         room.updatePresence({ x: 0 });
@@ -1261,9 +1319,8 @@ describe("room", () => {
         {
           connectionId: 1,
           isReadOnly: false,
-          presence: {
-            x: 1,
-          },
+          canWrite: true,
+          presence: { x: 1 },
         },
       ]);
 
@@ -1349,7 +1406,7 @@ describe("room", () => {
       const { room } = createTestableRoom({});
 
       const callback = jest.fn();
-      const unsubscribe = room.events.me.subscribe(callback);
+      const unsubscribe = room.events.myPresence.subscribe(callback);
 
       room.updatePresence({ x: 0 });
 
@@ -1364,7 +1421,11 @@ describe("room", () => {
     test("others", async () => {
       type P = { x?: number };
 
-      const { room, wss } = createTestableRoom<P, never, never, never>({});
+      const { room, wss } = createTestableRoom<P, never, never, never>(
+        {},
+        undefined,
+        SOCKET_AUTOCONNECT_AND_ROOM_STATE()
+      );
       room.connect();
 
       let others: Others<P, never> | undefined;
@@ -1378,7 +1439,9 @@ describe("room", () => {
       wss.last.send(
         serverMessage({
           type: ServerMsgCode.ROOM_STATE,
-          users: { 1: { scopes: [] } },
+          actor: 2,
+          scopes: ["room:write"],
+          users: { 1: { scopes: ["room:write"] } },
         })
       );
 
@@ -1406,9 +1469,8 @@ describe("room", () => {
         {
           connectionId: 1,
           isReadOnly: false,
-          presence: {
-            x: 2,
-          },
+          canWrite: true,
+          presence: { x: 2 },
         },
       ]);
     });
@@ -1609,6 +1671,7 @@ describe("room", () => {
           info: undefined,
           presence: { x: 1 },
           isReadOnly: false,
+          canWrite: true,
         }, // old user is not cleaned directly
         {
           connectionId: 2,
@@ -1616,6 +1679,7 @@ describe("room", () => {
           info: undefined,
           presence: { x: 1 },
           isReadOnly: false,
+          canWrite: true,
         },
       ]);
     });
@@ -1746,14 +1810,82 @@ describe("room", () => {
       }
     });
 
-    test("when error code 4002 (immediately)", async () => {
+    test("when error code 40xx (immediately)", async () => {
+      const { room, wss } = createTestableRoom({ x: 0 });
+      room.connect();
+
+      let err = {} as any;
+      room.events.error.subscribeOnce((e) => (err = e));
+
+      wss.onConnection((conn) => {
+        conn.server.close(
+          new CloseEvent("close", {
+            code: 4042,
+            reason: "whatever",
+            wasClean: false,
+          })
+        );
+      });
+
+      await waitUntilStatus(room, "connecting");
+
+      jest.useFakeTimers();
+      try {
+        await jest.advanceTimersByTimeAsync(0);
+        await waitUntilStatus(room, "disconnected");
+        expect(wss.connections.size).toBe(1);
+        expect(err.message).toEqual("whatever");
+        expect(err.code).toEqual(4042);
+      } finally {
+        jest.useRealTimers();
+      }
+    });
+
+    test("when error code 40xx (after delay)", async () => {
+      const { room, wss } = createTestableRoom({ x: 0 });
+      room.connect();
+
+      let err = {} as any;
+      room.events.error.subscribeOnce((e) => (err = e));
+
+      // Close the connection 1.111 second after it opened
+      wss.onConnection((conn) => {
+        setTimeout(() => {
+          conn.server.close(
+            new CloseEvent("close", {
+              code: 4042,
+              reason: "whatever",
+              wasClean: false,
+            })
+          );
+        }, 1111);
+      });
+
+      await waitUntilStatus(room, "connecting");
+
+      jest.useFakeTimers();
+      try {
+        await jest.advanceTimersByTimeAsync(0);
+        await waitUntilStatus(room, "connected");
+        await jest.advanceTimersByTimeAsync(1111);
+
+        await waitUntilStatus(room, "disconnected");
+        expect(wss.connections.size).toBe(1);
+        expect(err.message).toEqual("whatever");
+        expect(err.code).toEqual(4042);
+      } finally {
+        jest.useRealTimers();
+      }
+    });
+
+    test("when error code TRY_AGAIN_LATER 1013 (immediately)", async () => {
       const { room, wss } = createTestableRoom({ x: 0 });
       room.connect();
 
       wss.onConnection((conn) => {
         conn.server.close(
           new CloseEvent("close", {
-            code: 4002,
+            code: 1013,
             wasClean: false,
           })
         );
@@ -1765,7 +1897,7 @@ describe("room", () => {
       try {
         await jest.advanceTimersByTimeAsync(0);
         expect(consoleWarnSpy).toHaveBeenCalledWith(
-          "Connection to Liveblocks websocket server closed prematurely (code: 4002). Retrying in 2000ms."
+          "Connection to Liveblocks websocket server closed prematurely (code: 1013). Retrying in 2000ms."
         );
 
         expect(wss.connections.size).toBe(1);
@@ -1780,7 +1912,7 @@ describe("room", () => {
       }
     });
 
-    test("when error code 4002 (after delay)", async () => {
+    test("when error code TRY_AGAIN_LATER 1013 (after delay)", async () => {
       const { room, wss } = createTestableRoom({ x: 0 });
       room.connect();
 
@@ -1789,7 +1921,7 @@ describe("room", () => {
         setTimeout(() => {
           conn.server.close(
             new CloseEvent("close", {
-              code: 4002,
+              code: 1013,
               wasClean: false,
             })
           );
@@ -1804,7 +1936,202 @@ describe("room", () => {
         await waitUntilStatus(room, "connected");
         await jest.advanceTimersByTimeAsync(1111);
         expect(consoleWarnSpy).toHaveBeenCalledWith(
-          "Connection to Liveblocks websocket server closed (code: 4002). Retrying in 2000ms."
+          "Connection to Liveblocks websocket server closed (code: 1013). Retrying in 2000ms."
+        );
+        expect(wss.connections.size).toBe(1);
+
+        // A new connection attempt will be made after a LONG backoff delay
+        await jest.advanceTimersByTimeAsync(500); // Waiting our normal short delay isn't enough here...
+        expect(wss.connections.size).toBe(1);
+        await jest.advanceTimersByTimeAsync(1500); // Wait an additional 1500 seconds (for a total of 2000ms)
+        expect(wss.connections.size).toBe(2);
+      } finally {
+        jest.useRealTimers();
+      }
+    });
+
+    test("when error code 41xx (immediately)", async () => {
+      const { room, wss } = createTestableRoom({ x: 0 });
+      room.connect();
+
+      wss.onConnection((conn) => {
+        conn.server.close(
+          new CloseEvent("close", {
+            code: 4142,
+            wasClean: false,
+          })
+        );
+      });
+
+      await waitUntilStatus(room, "connecting");
+
+      jest.useFakeTimers();
+      try {
+        await jest.advanceTimersByTimeAsync(0);
+        expect(consoleWarnSpy).toHaveBeenCalledWith(
+          "Connection to Liveblocks websocket server closed prematurely (code: 4142). Retrying in 250ms."
+        );
+
+        expect(wss.connections.size).toBe(1);
+
+        // A new connection attempt will be made after a normal backoff delay
+        await jest.advanceTimersByTimeAsync(250);
+        expect(wss.connections.size).toBe(2);
+      } finally {
+        jest.useRealTimers();
+      }
+    });
+
+    test("when error code 41xx (after delay)", async () => {
+      const { room, wss } = createTestableRoom({ x: 0 });
+      room.connect();
+
+      // Close the connection 1.111 second after it opened
+      wss.onConnection((conn) => {
+        setTimeout(() => {
+          conn.server.close(
+            new CloseEvent("close", {
+              code: 4142,
+              wasClean: false,
+            })
+          );
+        }, 1111);
+      });
+
+      await waitUntilStatus(room, "connecting");
+
+      jest.useFakeTimers();
+      try {
+        await jest.advanceTimersByTimeAsync(0);
+        await waitUntilStatus(room, "connected");
+        await jest.advanceTimersByTimeAsync(1111);
+        expect(consoleWarnSpy).toHaveBeenCalledWith(
+          "Connection to Liveblocks websocket server closed (code: 4142). Retrying in 250ms."
+        );
+        expect(wss.connections.size).toBe(1);
+
+        // A new connection attempt will be made after a normal backoff delay
+        await jest.advanceTimersByTimeAsync(250);
+        expect(wss.connections.size).toBe(2);
+      } finally {
+        jest.useRealTimers();
+      }
+    });
+
+    test("when error code 4109 (special case TOKEN_EXPIRED) (immediately)", async () => {
+      const { room, wss } = createTestableRoom({ x: 0 });
+      room.connect();
+
+      wss.onConnection((conn) => {
+        conn.server.close(
+          new CloseEvent("close", {
+            code: 4109,
+            wasClean: false,
+          })
+        );
+      });
+
+      await waitUntilStatus(room, "connecting");
+
+      jest.useFakeTimers();
+      try {
+        await jest.advanceTimersByTimeAsync(0);
+        expect(wss.connections.size).toBe(2); // Instantly gets a new token, no backoff
+      } finally {
+        jest.useRealTimers();
+      }
+    });
+
+    test("when error code 4109 (special case TOKEN_EXPIRED) (after delay)", async () => {
+      const { room, wss } = createTestableRoom({ x: 0 });
+      room.connect();
+
+      // Close the connection 1.111 second after it opened
+      wss.onConnection((conn) => {
+        setTimeout(() => {
+          conn.server.close(
+            new CloseEvent("close", {
+              code: 4109,
+              wasClean: false,
+            })
+          );
+        }, 1111);
+      });
+
+      await waitUntilStatus(room, "connecting");
+
+      jest.useFakeTimers();
+      try {
+        await jest.advanceTimersByTimeAsync(0);
+        await waitUntilStatus(room, "connected");
+        await jest.advanceTimersByTimeAsync(1111);
+
+        // Instantly gets a new token (no backoff)
+        expect(wss.connections.size).toBe(2);
+      } finally {
+        jest.useRealTimers();
+      }
+    });
+
+    test("when error code 42xx (immediately)", async () => {
+      const { room, wss } = createTestableRoom({ x: 0 });
+      room.connect();
+
+      wss.onConnection((conn) => {
+        conn.server.close(
+          new CloseEvent("close", {
+            code: 4242,
+            wasClean: false,
+          })
+        );
+      });
+
+      await waitUntilStatus(room, "connecting");
+
+      jest.useFakeTimers();
+      try {
+        await jest.advanceTimersByTimeAsync(0);
+        expect(consoleWarnSpy).toHaveBeenCalledWith(
+          "Connection to Liveblocks websocket server closed prematurely (code: 4242). Retrying in 2000ms."
+        );
+
+        expect(wss.connections.size).toBe(1);
+
+        // A new connection attempt will be made after a longer backoff delay
+        await jest.advanceTimersByTimeAsync(500); // Waiting our normal short delay isn't enough here...
+        expect(wss.connections.size).toBe(1);
+        await jest.advanceTimersByTimeAsync(1500); // Wait an additional 1500 seconds
+        expect(wss.connections.size).toBe(2);
+      } finally {
+        jest.useRealTimers();
+      }
+    });
+
+    test("when error code 42xx (after delay)", async () => {
+      const { room, wss } = createTestableRoom({ x: 0 });
+      room.connect();
+
+      // Close the connection 1.111 second after it opened
+      wss.onConnection((conn) => {
+        setTimeout(() => {
+          conn.server.close(
+            new CloseEvent("close", {
+              code: 4242,
+              wasClean: false,
+            })
+          );
+        }, 1111);
+      });
+
+      await waitUntilStatus(room, "connecting");
+
+      jest.useFakeTimers();
+      try {
+        await jest.advanceTimersByTimeAsync(0);
+        await waitUntilStatus(room, "connected");
+        await jest.advanceTimersByTimeAsync(1111);
+        expect(consoleWarnSpy).toHaveBeenCalledWith(
+          "Connection to Liveblocks websocket server closed (code: 4242). Retrying in 2000ms."
         );
         expect(wss.connections.size).toBe(1);
 
@@ -1836,6 +2163,14 @@ describe("room", () => {
 
         const ws1 = wss.last;
         ws1.accept();
+        ws1.send(
+          serverMessage({
+            type: ServerMsgCode.ROOM_STATE,
+            actor: 1,
+            scopes: ["room:write"],
+            users: {},
+          })
+        );
         await waitUntilStatus(room, "connected");
         expect(room.getConnectionState()).toBe("open"); // This API will be deprecated in the future
         expect(room.getStatus()).toEqual("connected");
@@ -1852,6 +2187,14 @@ describe("room", () => {
 
         const ws2 = wss.last;
         ws2.accept();
+        ws2.send(
+          serverMessage({
+            type: ServerMsgCode.ROOM_STATE,
+            actor: 1,
+            scopes: ["room:write"],
+            users: {},
+          })
+        );
 
         // This "last" one is a new/different socket instance!
         expect(ws1 === ws2).toBe(false);
@@ -1872,13 +2215,19 @@ describe("room", () => {
       type M = never;
       type E = never;
 
-      const { room, wss } = createTestableRoom<P, S, M, E>({});
+      const { room, wss } = createTestableRoom<P, S, M, E>(
+        {},
+        undefined,
+        SOCKET_AUTOCONNECT_BUT_NO_ROOM_STATE
+      );
 
       wss.onConnection((conn) => {
         conn.server.send(
           serverMessage({
             type: ServerMsgCode.ROOM_STATE,
-            users: { "1": { id: undefined, scopes: [] } },
+            actor: 2,
+            scopes: ["room:write"],
+            users: { "1": { id: undefined, scopes: ["room:write"] } },
           })
         );
 
@@ -1919,6 +2268,7 @@ describe("room", () => {
           id: undefined,
           info: undefined,
           isReadOnly: false,
+          canWrite: true,
           presence: {
             x: 2,
           },

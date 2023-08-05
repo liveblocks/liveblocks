@@ -29,12 +29,20 @@
       "id": "code-editors",
       "name": "Code editors",
       "hidden": true
+    },
+    {
+      "id": "errors",
+      "name": "Errors"
     }
   ],
   "technologies": [
     {
       "id": "javascript",
       "name": "JavaScript"
+    },
+    {
+      "id": "nodejs",
+      "name": "Node.js"
     },
     {
       "id": "react",

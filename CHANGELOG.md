@@ -1,3 +1,56 @@
+# v1.2.1
+
+### `@liveblocks/node`
+
+- Fix session.allow to support path up to 128 characters to meet room id length
+  requirement.
+
+# v1.2.0
+
+### `@liveblocks/*`
+
+- Support the new and improved Liveblocks authorization.
+- Change client logic to stop retrying if room is full. Instead, the client will
+  now disconnect. To retry, call `room.reconnect()` explicitly.
+
+### `@liveblocks/node`
+
+Add new APIs for authorization. See our migration guide for tips on how to adopt
+the new style of authorizing your Liveblocks clients.
+
+# v1.1.8
+
+Fix a small TypeScript issue introduced in 1.1.7.
+
+# v1.1.7
+
+### `@liveblocks/client`
+
+When initializing the client with a
+[custom auth callback](https://liveblocks.io/docs/api-reference/liveblocks-client#createClientCallback),
+you can now return `{ error: "forbidden", reason: ... }` as the response, which
+the client will treat as a sign to stop retrying. The client will then
+disconnect from the room, instead of remaining in `"connecting"` status
+indefinitely.
+
+### `@liveblocks/react`
+
+Fix a bug with `useSelf()` where it would not correctly re-render after entering
+an empty room. It’s now consistent again with `useMyPresence()`.
+
+### DevTools
+
+Fix a bug in the Liveblocks [DevTools](https://liveblocks.io/devtools) panel
+where the "me" view would incorrectly stay empty after entering an empty room.
+
+# v1.1.6
+
+### `@liveblocks/*`
+
+Loosen duplicate import detection so it won't throw when used in test runners
+that deliberately run multiple instances of a module (like Jest or Playwright
+can do).
+
 # v1.1.5
 
 ### `@liveblocks/*`

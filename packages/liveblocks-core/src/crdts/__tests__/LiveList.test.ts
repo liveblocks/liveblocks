@@ -22,7 +22,7 @@ import {
   waitUntilStatus,
   waitUntilStorageUpdate,
 } from "../../__tests__/_waitUtils";
-import { RoomScope } from "../../protocol/AuthToken";
+import { Permission } from "../../protocol/AuthToken";
 import { OpCode } from "../../protocol/Op";
 import type { IdTuple, SerializedCrdt } from "../../protocol/SerializedCrdt";
 import { CrdtType } from "../../protocol/SerializedCrdt";
@@ -112,7 +112,7 @@ describe("LiveList", () => {
           createSerializedList("0:1", "0:0", "items"),
         ],
         1,
-        [RoomScope.Read, RoomScope.PresenceWrite]
+        [Permission.Read, Permission.PresenceWrite]
       );
 
       const root = storage.root;
@@ -249,7 +249,7 @@ describe("LiveList", () => {
           createSerializedList("0:1", "0:0", "items"),
         ],
         1,
-        [RoomScope.Read, RoomScope.PresenceWrite]
+        [Permission.Read, Permission.PresenceWrite]
       );
 
       const root = storage.root;
@@ -321,7 +321,7 @@ describe("LiveList", () => {
           createSerializedList("0:1", "0:0", "items"),
         ],
         1,
-        [RoomScope.Read, RoomScope.PresenceWrite]
+        [Permission.Read, Permission.PresenceWrite]
       );
 
       const root = storage.root;
@@ -419,7 +419,7 @@ describe("LiveList", () => {
           createSerializedList("0:1", "0:0", "items"),
         ],
         1,
-        [RoomScope.Read, RoomScope.PresenceWrite]
+        [Permission.Read, Permission.PresenceWrite]
       );
 
       const root = storage.root;
@@ -543,7 +543,7 @@ describe("LiveList", () => {
           createSerializedList("0:1", "0:0", "items"),
         ],
         1,
-        [RoomScope.Read, RoomScope.PresenceWrite]
+        [Permission.Read, Permission.PresenceWrite]
       );
 
       const root = storage.root;
@@ -653,7 +653,7 @@ describe("LiveList", () => {
           createSerializedList("0:1", "0:0", "items"),
         ],
         1,
-        [RoomScope.Read, RoomScope.PresenceWrite]
+        [Permission.Read, Permission.PresenceWrite]
       );
 
       const root = storage.root;

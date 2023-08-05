@@ -162,14 +162,22 @@ export default class LiveblocksProvider<
       this.room.events.status.subscribe((status) => {
         if (status === "connected") {
           this.syncDoc();
+        } else {
+          this.synced = false;
         }
       })
     );
 
     this.unsubscribers.push(
-      this.room.events.ydoc.subscribe((update: string) => {
-        Y.applyUpdate(this.doc, Base64.toUint8Array(update), "backend");
-        this.synced = true;
+      this.room.events.ydoc.subscribe(({ update, isSync }) => {
+        Y.applyUpdate(
+          this.doc,
+          Base64.toUint8Array(update as string),
+          "backend"
+        );
+        if (isSync) {
+          this.synced = true;
+        }
       })
     );
     this.syncDoc();

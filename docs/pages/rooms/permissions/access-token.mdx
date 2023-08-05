@@ -1,0 +1,188 @@
+---
+meta:
+  title: "Manage permissions with access tokens"
+  parentTitle: "Permissions"
+  description: "Learn more about access token permissions"
+---
+
+Managing permissions by issuing access tokens follows the analogy of a “hotel
+room key card”. Anyone that has that key card can open the doors that the card
+gives access to. It’s easy to give out those key cards right from your backend.
+
+<Banner title="Using our REST API?">
+
+If you’re using our REST API to handle room permissions, or if you need more
+complex permissions to be handled by Liveblocks,
+[ID tokens](/docs/rooms/permissions/id-token) may be better suited for your use
+case.
+
+</Banner>
+
+To set up your authentication endpoint with access token permissions, make sure
+to [follow these quick steps](/docs/rooms/authentication/id-token-permissions).
+
+## Authentication patterns [#patterns]
+
+### Full access to just one room
+
+```ts
+import { Liveblocks } from "@liveblocks/node";
+
+const liveblocks = new Liveblocks({
+  secret: "{{SECRET_KEY}}",
+});
+
+export async function POST(request: Request) {
+  // Get the current user from your database
+  const user = __getUserFromDB__(request);
+
+  // Start an auth session inside your endpoint
+  const session = liveblocks.prepareSession(
+    user.id,
+    { userInfo: user.metadata } // Optional
+  );
+
+  // Implement your own security, and give the user access to the room
+  const { room } = await request.json();
+  if (room && __shouldUserHaveAccess__(user, room)) {
+    session.allow(room, session.FULL_ACCESS);
+  }
+
+  // Authorize the user and return the result
+  const { status, body } = await session.authorize();
+  return new Response(body, { status });
+}
+```
+
+### Full access to all rooms from a team
+
+To be able to use this pattern, you will have to name your rooms using a fixed
+pattern of `<team>:<room>`. For suggestions, read more on our
+[naming best practices](#naming-best-practices).
+
+```ts
+import { Liveblocks } from "@liveblocks/node";
+
+const liveblocks = new Liveblocks({
+  secret: "{{SECRET_KEY}}",
+});
+
+export async function POST(request: Request) {
+  const user = __getUserFromDB__(request);
+
+  const session = liveblocks.prepareSession(user.id, {
+    userInfo: user.metadata,
+  });
+
+  // Implement your own security, and give the user access to the room
+  const { room } = await request.json();
+  if (room && __shouldUserHaveAccess__(user, room)) {
+    // Suppose this application organizes their Liveblocks rooms by keys
+    // structured like `<team>:<room>`.
+    // We can then use the passed-in requested room to infer which team to
+    // check membership for.
+    const [team, _] = room.split(":");
+    if (__isMemberOfTeam__(user, team)) {
+      // If the user is a member of this team, don't just grant full access to
+      // the request room, but to _all_ of the team's rooms, using a prefix
+      // pattern.
+      session.allow(`${team}:*`, session.FULL_ACCESS);
+    }
+    session.allow(room, session.FULL_ACCESS);
+  }
+
+  const { status, body } = await session.authorize();
+  return new Response(body, { status });
+}
+```
+
+### Full access to all rooms from a team, but read-only access to rooms from the organization level
+
+To be able to use this pattern, you will have to name your rooms using a fixed
+pattern of `<org>:<team>:<room>`. For suggestions, read more on our
+[naming best practices](#naming-best-practices).
+
+```ts
+import { Liveblocks } from "@liveblocks/node";
+
+const liveblocks = new Liveblocks({
+  secret: "{{SECRET_KEY}}",
+});
+
+export async function POST(request: Request) {
+  const user = __getUserFromDB__(request);
+
+  const session = liveblocks.prepareSession(user.id, {
+    userInfo: user.metadata,
+  });
+
+  const { room } = await request.json();
+  if (room && __shouldUserHaveAccess__(user, room)) {
+    // Suppose this application organizes their Liveblocks rooms by keys
+    // structured like `<org>:<team>:<room>`.
+    // We can then use the passed-in requested room to infer which team to
+    // check membership for.
+    const [org, team, _] = room.split(":");
+    if (__isMemberOfOrg__(user, org)) {
+      session.allow(`${org}:*`, session.READ_ACCESS);
+    }
+    if (__isMemberOfTeam__(user, team)) {
+      session.allow(`${org}:${team}:*`, session.FULL_ACCESS);
+    }
+  }
+
+  const { status, body } = await session.authorize();
+  return new Response(body, { status });
+}
+```
+
+## Best practices for naming your rooms [#naming-best-practices]
+
+Being able to specify permissions for infinite rooms using prefix pattern
+matching offers great powers, but it does assume that you design your room names
+a bit more cautiously. For example, granting room prefix permissions won’t work
+if you use random room IDs for your project, because there won’t be a shared
+prefix.
+
+Therefore, if you want to adopt this pattern, we recommend designing your room
+names hierarchically in namespaced “buckets” in a way that makes sense for your
+app.
+
+For example, if your app manages documents by team, each room could be named
+using a `<team-id>:<room-id>` pattern:
+
+For example:
+
+- `"engineering:R5AhJlTSKwBR"`
+- `"engineering:PqY3oqRcV-7Z"`
+- `"marketing:SVUPHaboSc10"`
+- `"marketing:Y7Uyw44YRxjY"`
+
+<Banner title="Punctuation doesn't matter">
+  Please note that the `:` separator used here carries no specific meaning. You
+  can use any separator you like. Just make sure the separator character you
+  pick cannot occur in the IDs you’re generating.
+</Banner>
+
+As another example, if your app is a SAAS product, and you have many customers,
+you can add an additional top-level key to prefix your room names, e.g.
+`<app-id>::<group-id>/<room-id>`:
+
+Example room IDs:
+
+- `"jOzGLFEAedV5::engineering/R5AhJlTSKwBR"`
+- `"jOzGLFEAedV5::engineering/PqY3oqRcV-7Z"`
+- `"rGSoepTL7r-Y::marketing/SVUPHaboSc10"`
+- `"rGSoepTL7r-Y::marketing/Y7Uyw44YRxjY"`
+
+Again, the `::` and `/` separators here are used for illustrative purposes. You
+can use any separator you want.
+
+<Banner title="How can I rename my rooms?" type="success">
+  If you have existing rooms that aren't created with this naming scheme in
+  mind, it may be hard to change them. We currently don't offer a REST API to
+  rename your rooms (yet). If you need assistance with renaming your rooms, our
+  team can help! Please reach out at
+  [support@liveblocks.io](mailto:support@liveblocks.io) or
+  [Discord](https://liveblocks.io/discord).
+</Banner>

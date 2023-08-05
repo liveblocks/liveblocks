@@ -36,7 +36,7 @@ This will download the example and install the example. Next, you must:
 - Create an account on [liveblocks.io](https://liveblocks.io/dashboard)
 - Copy your **public** key from the [dashboard](https://liveblocks.io/dashboard/apikeys)
 - Replace `pk_YOUR_PUBLIC_KEY` in [`liveblocks.config.js`](./src/liveblocks.config.js) with your **public** key
-- Run `npm run start` and open `http://localhost:3000` in your browser
+- Run `npm run dev` and open `http://localhost:3000` in your browser
 
 ### Manual setup
 
@@ -50,7 +50,7 @@ Alternatively, you can set up your project manually:
 - Create an account on [liveblocks.io](https://liveblocks.io/dashboard)
 - Copy your **public** key from the [dashboard](https://liveblocks.io/dashboard/apikeys)
 - Replace `pk_YOUR_PUBLIC_KEY` in [`liveblocks.config.js`](./src/liveblocks.config.js) with your **public** key
-- Run `npm run start` and open `http://localhost:3000` in your browser
+- Run `npm run dev` and open `http://localhost:3000` in your browser
 
 </details>
 
@@ -72,6 +72,6 @@ This will download the example and ask permission to open your browser, enabling
 - Copy your **public** key from the [dashboard](https://liveblocks.io/dashboard/apikeys)
 - Replace `pk_YOUR_PUBLIC_KEY` in [`liveblocks.config.js`](./liveblocks.config.js) with your **public** key
 - Push a commit to update the Vercel demo with the key
-- Run `npm run start` and open `http://localhost:3000` in your browser
+- Run `npm run dev` and open `http://localhost:3000` in your browser
 
 </details>

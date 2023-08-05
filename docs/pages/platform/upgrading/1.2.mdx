@@ -1,0 +1,449 @@
+---
+meta:
+  title: "Upgrading to 1.2"
+  parentTitle: "Upgrading"
+  description: "Guide to upgrade to Liveblocks version 1.2"
+---
+
+There are no breaking changes in this update, however we are introducing a new
+authentication method. If you’re currently using `createClient()` with the
+`authEndpoint` option, we recommend you read on.
+
+Liveblocks 1.2 provides new ways to specify who can access certain rooms, and
+with which permissions they can enter. Our new-style security tokens also bring
+speed improvements, allowing clients to connect Liveblocks rooms even quicker,
+as well as permitting authorization tokens that can be used for multiple rooms.
+
+## Public key authentication changes [#public-auth-changes]
+
+<Banner type="success" title="No changes required">
+  If you’re currently using Liveblocks **public keys**, no changes are required.
+</Banner>
+
+With Liveblocks 1.2, entering rooms with your public key will be noticeably
+quicker. If you’re currently using Liveblocks public keys, no changes are
+required to your application.
+
+## Private key authentication changes [#private-auth-changes]
+
+<Banner type="warning" title="We recommend changing your auth back end">
+  If you’re currently using Liveblocks **private keys** we **highly recommend**
+  you upgrade your auth back end.
+</Banner>
+
+Upgrading your existing auth back end will opt you in to using our new-style
+auth tokens, which offer the following benefits:
+
+- Grant users permission to multiple rooms in one transaction, meaning fewer
+  requests on your back end.
+- Much quicker to join rooms, particularly any after the first.
+- Unlock access to upcoming features, such as [Comments](/comments) (currently
+  in private beta).
+
+If you’re currently using Liveblocks private keys, no changes are strictly
+necessary, but we do highly recommend you upgrade your application’s back end.
+
+## How to upgrade? [#how]
+
+You can upgrade to 1.2 by downloading the latest version of each Liveblocks
+package you’re using, for example in a React app:
+
+```bash
+npm install @liveblocks/client@latest @liveblocks/node@latest @liveblocks/react@latest
+```
+
+<Banner title="Update every Liveblocks package">
+
+If you’re using any other Liveblocks packages make sure to update those too.
+
+</Banner>
+
+We’ll walk you through the necessary changes below, but first, if you currently
+have a Liveblocks application in production, we recommend following a rollout
+plan, to prevent any users running an old Liveblocks client, during the upgrade,
+from having issues.
+
+### Rollout plan
+
+<Steps>
+  <StepCompact>
+    Keep your existing back end endpoint (e.g. `/api/auth`).
+  </StepCompact>
+  
+  <StepCompact>
+    Create a new authentication endpoint for the upgrade (e.g. `/api/liveblocks-auth`).
+  </StepCompact>
+
+  <StepCompact>
+    In your front end, point `createClient()`’s `authEndpoint` URL to the new endpoint.
+  </StepCompact>
+  
+  <StepCompact>
+    Done! You can deploy your application now.
+  </StepCompact>
+  
+  <StepCompact lastStep>
+    Later, when all your application’s clients have been upgraded to the latest version, you can safely remove the old endpoint.
+  </StepCompact>
+</Steps>
+
+## Deciding which token to use [#deciding]
+
+In Liveblocks 1.2 there are two new ways to authenticate with
+`@liveblocks/node`.
+
+- [Access tokens](#access-tokens) are recommend for most applications.
+- [ID tokens](#id-tokens) are best if you’re using fine-grained permissions with
+  our REST API.
+
+Access tokens and ID tokens both allow for multiple room support, but have
+different sources of truth. The old authentication method, single-room tokens
+with `authorize`, is still supported but will eventually be deprecated.
+
+## Access tokens [#access-tokens]
+
+Access tokens are the new recommended way to authenticate, because they’re easy
+to manage from your custom back end. They follow the analogy of a _hotel key
+card_. Anyone that has a key card can enter any room that the card gives access
+to. It’s easy to give out these key cards right from your back end.
+
+### Upgrading to access tokens [#upgrade-to-access-tokens]
+
+First, create a new endpoint in your back end, next to your existing `/api/auth`
+endpoint. We recommend going with `/api/liveblocks-auth`.
+
+Let’s implement it to issue tokens that would be equivalent to your current
+single-room token based setup.
+
+<Steps>
+
+  <Step>
+    <StepTitle>Create a client</StepTitle>
+    <StepContent>
+    Create a Node.js client that allows you to interact with our REST API.
+      ```tsx
+      import { Liveblocks } from "@liveblocks/node";
+      
+      const liveblocks = new Liveblocks({
+        secret: "sk_prod_xxxxxxxxxxxxxxxxxxxxxxxx",
+      });
+      ```
+    </StepContent>
+  </Step>
+  
+  <Step>
+    <StepTitle>Start an auth session inside your endpoint</StepTitle>
+    <StepContent>
+    Every session should have a unique user ID, which is typically the ID of the user in your database.
+      ```tsx highlight="10-13"
+      import { Liveblocks } from "@liveblocks/node";
+      
+      const liveblocks = new Liveblocks({
+        secret: "sk_prod_xxxxxxxxxxxxxxxxxxxxxxxx",
+      });
+      
+      export async function POST(request) {
+        const user = { id: "olivier@example.com", info: { name: "Olivier" }};
+  
+        const session = liveblocks.prepareSession(
+          user.id,
+          { userInfo: user.info } // Optional
+        );
+      }
+      ```
+    </StepContent>
+  </Step>
+  
+  <Step>
+    <StepTitle>Give the user access to the room</StepTitle>
+    <StepContent>
+    Give if the current user access to the room, with either `session.FULL_ACCESS`, or `session.READ_ACCESS`.
+      ```tsx highlight="15,16"
+      import { Liveblocks } from "@liveblocks/node";
+      
+      const liveblocks = new Liveblocks({
+        secret: "sk_prod_xxxxxxxxxxxxxxxxxxxxxxxx",
+      });
+      
+      export async function POST(request) {
+        const user = { id: "olivier@example.com", info: { name: "Olivier" }};
+  
+        const session = liveblocks.prepareSession(
+          user.id,
+          { userInfo: user.info } // Optional
+        );
+
+        const { room } = await request.json();
+        session.allow(room, session.FULL_ACCESS);
+      }
+      ```
+    </StepContent>
+
+  </Step>
+  
+  <Step>
+    <StepTitle>Authorize the user and return the result</StepTitle>
+    <StepContent>
+    Give if the current user access to the room, with either `session.FULL_ACCESS`, or `session.READ_ACCESS`.
+      ```tsx highlight="18,19"
+      import { Liveblocks } from "@liveblocks/node";
+      
+      const liveblocks = new Liveblocks({
+        secret: "sk_prod_xxxxxxxxxxxxxxxxxxxxxxxx",
+      });
+      
+      export async function POST(request) {
+        const user = { id: "olivier@example.com", info: { name: "Olivier" }};
+  
+        const session = liveblocks.prepareSession(
+          user.id,
+          { userInfo: user.info } // Optional
+        );
+        
+        const { room } = await request.json();
+        session.allow(room, session.FULL_ACCESS);
+
+        const { status, body } = await session.authorize();
+        return new Response(body, { status });
+      }
+      ```
+    </StepContent>
+
+  </Step>
+  
+  <Step>
+    <StepTitle>Point to the new endpoint</StepTitle>
+    <StepContent>
+    In the front end of your app, update your `liveblocks.config.ts` file to connect to the new endpoint.
+    ```ts file="liveblocks.config.ts" highlight="4"
+      import { createClient } from "@liveblocks/client";
+    
+      const client = createClient({
+        authEndpoint: "/api/liveblocks-auth",
+      });
+      ```
+    </StepContent>
+  </Step>
+  
+  <Step>
+    <StepTitle>You’re migrated!</StepTitle>
+    <StepContent>
+    You’ve successfully migrated, and now have a similar authentication set up as before! However, there are other new features we can take advantage of.
+    </StepContent>
+  </Step>
+  
+  <Step lastStep>
+    <StepTitle>Bonus: Issue access to multiple rooms</StepTitle>
+    <StepContent>
+    With Liveblocks 1.2, you can also issue access to multiple rooms, or even use a prefix-based wildcard in the room name, enabling any amount of rooms! You can learn more about this in our [access token](/docs/rooms/permissions/access-token#patterns) guide.
+      ```tsx highlight="15-18"
+      import { Liveblocks } from "@liveblocks/node";
+      
+      const liveblocks = new Liveblocks({
+        secret: "sk_prod_xxxxxxxxxxxxxxxxxxxxxxxx",
+      });
+      
+      export async function POST(request) {
+        const user = { id: "olivier@example.com", info: { name: "Olivier" }};
+  
+        const session = liveblocks.prepareSession(
+          user.id,
+          { userInfo: user.info } // Optional
+        );
+        
+        const { room } = await request.json();
+        session.allow(room, session.FULL_ACCESS);
+        session.allow("my-room-*", session.READ_ACCESS);
+        session.allow("my-other-room", session.READ_ACCESS);
+
+        const { status, body } = await session.authorize();
+        return new Response(body, { status });
+      }
+      ```
+    </StepContent>
+
+  </Step>
+
+</Steps>
+
+### Learn more about access tokens
+
+You can find guides for your specific framework in our
+[access tokens authentication guides](/docs/rooms/authentication/access-token-permissions)
+section and learn more about permissions in our
+[access tokens permissions guide](/docs/rooms/permissions/access-token).
+
+Here’s a full working example of access tokens in a Next.js endpoint.
+
+```ts file="app/api/liveblocks-auth/route.ts" isCollapsed isCollapsable
+import { Liveblocks } from "@liveblocks/node";
+
+// Create a client
+const liveblocks = new Liveblocks({
+  secret: "{{SECRET_KEY}}",
+});
+
+export async function POST(request: Request) {
+  const user = __getUserFromDB__(request);
+
+  // Start an auth session inside your endpoint
+  const session = liveblocks.prepareSession(
+    user.id,
+    { userInfo: user.metadata } // Optional
+  );
+
+  // Give the user access to the room
+  const { room } = await request.json();
+  if (room && __shouldUserHaveAccess__(user, room)) {
+    // e.g. session.allow("my-room", ["room:write"])
+    session.allow(room, session.FULL_ACCESS);
+  }
+
+  // Authorize the user and return the result
+  const { status, body } = await session.authorize();
+  return new Response(body, { status });
+}
+```
+
+## ID tokens [#id-tokens]
+
+Are you already using our REST API to assign fine-grained permissions to each
+room, via [Create room](/docs/api-reference/rest-api-endpoints#post-rooms) or
+[Update room](/docs/api-reference/rest-api-endpoints#post-rooms-roomId) APIs? If
+so, ID tokens may work best for you.
+
+ID tokens follow the analogy of a _membership card_. Anyone with that membership
+card can try to enter a room, but your permissions will be checked at the door.
+This approach to permissions is most powerful because it can be set up very
+finely, but it comes at the cost of having to keep those permissions
+programmatically in sync with Liveblocks. We recommend it for advanced use cases
+only.
+
+### Upgrading to ID tokens [#upgrade-to-id-tokens]
+
+If you’ve already set up room permissions using our REST API, then this should
+be easy!
+
+First, let’s create a new endpoint in your back end, next to your existing
+`/api/auth` endpoint. We recommend going with `/api/liveblocks-auth`.
+
+All you have to do now is implement it as follows:
+
+<Steps>
+
+  <Step>
+    <StepTitle>Create a client</StepTitle>
+    <StepContent>
+    Create a Node.js client that allows you to interact with our REST API.
+      ```tsx
+      import { Liveblocks } from "@liveblocks/node";
+      
+      const liveblocks = new Liveblocks({
+        secret: "sk_prod_xxxxxxxxxxxxxxxxxxxxxxxx",
+      });
+      ```
+    </StepContent>
+  </Step>
+  
+  <Step>
+    <StepTitle>Identify the user and return the result</StepTitle>
+    <StepContent>
+    Whichever `userId` (or `groupIds`) you pass will be used to check the permissions you configured in your Liveblocks account already.
+      ```tsx highlight="10-15"
+      import { Liveblocks } from "@liveblocks/node";
+      
+      const liveblocks = new Liveblocks({
+        secret: "sk_prod_xxxxxxxxxxxxxxxxxxxxxxxx",
+      });
+      
+      export async function POST(request) {
+        const user = { id: "olivier@example.com", info: { name: "Olivier" }};
+  
+        const { status, body } = await liveblocks.identifyUser({
+          userId: user.id,
+          groupIds, // Optional
+        });
+        
+        return new Response(body, { status });
+      }
+      ```
+    </StepContent>
+  </Step>
+  
+  <Step>
+    <StepTitle>Point to the new endpoint</StepTitle>
+    <StepContent>
+    In the front end of your app, update your `liveblocks.config.ts` file to connect to the new endpoint.
+    ```ts file="liveblocks.config.ts" highlight="4"
+      import { createClient } from "@liveblocks/client";
+    
+      const client = createClient({
+        authEndpoint: "/api/liveblocks-auth",
+      });
+      ```
+    </StepContent>
+  </Step>
+  
+  <Step>
+    <StepTitle>You’re migrated!</StepTitle>
+    <StepContent>
+    You’ve successfully migrated to id tokens!
+    </StepContent>
+  </Step>
+
+  <Step lastStep>
+    <StepTitle>Bonus: Use our REST API to handle permissions</StepTitle>
+    <StepContent>
+    ID tokens use permissions set with our [REST API](/docs/api-reference/rest-api-endpoints).
+    For example, this is how you [create a room](/docs/api-reference/rest-api-endpoints#post-rooms),
+    and give a user full access.
+    
+    ```ts highlight="6-8"
+    fetch("https://api.liveblocks.io/v2/rooms", {
+      method: "POST",
+      body: JSON.stringify({
+        id: "my-room-name",
+        defaultAccesses: [],
+        userAccesses: {
+          "olivier@example.com": ["room:write"]
+        }
+      }),
+    });
+    ```
+    </StepContent>
+  </Step>
+</Steps>
+
+### Learn more about ID tokens
+
+You can find guides for your specific framework in our
+[ID tokens authentication guides](/docs/rooms/authentication/id-token-permissions)
+and learn more about permissions in our
+[ID tokens permissions guide](/docs/rooms/permissions/id-token).
+
+Here’s a full working example of ID tokens in a Next.js endpoint.
+
+```ts file="app/api/liveblocks-auth/route.ts" isCollapsed isCollapsable
+import { Liveblocks } from "@liveblocks/node";
+
+// Create a client
+const liveblocks = new Liveblocks({
+  secret: "{{SECRET_KEY}}",
+});
+
+export async function POST(request: Request) {
+  const user = __getUserFromDB__(request);
+
+  // Identify the user and return the result
+  const { status, body } = await liveblocks.identifyUser({
+    userId: user.id,
+    groupIds, // Optional
+  });
+
+  return new Response(body, { status });
+}
+```
+
+If you have issues with these new patterns and need help, please let us know
+[by email](mailto:support@liveblocks.io) or by joining our
+[Discord community](/discord)! We’re here to help!

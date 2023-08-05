@@ -1,3 +1,4 @@
+import type { AuthManager, AuthValue } from "./auth-manager";
 import type {
   Delegates,
   LegacyConnectionStatus,
@@ -26,14 +27,8 @@ import type { Json, JsonObject } from "./lib/Json";
 import { isJsonArray, isJsonObject } from "./lib/Json";
 import { asPos } from "./lib/position";
 import type { Resolve } from "./lib/Resolve";
-import { compact, deepClone, isPlainObject, tryParseJson } from "./lib/utils";
-import type { Authentication } from "./protocol/Authentication";
-import type { ParsedAuthToken } from "./protocol/AuthToken";
-import {
-  isTokenExpired,
-  parseAuthToken,
-  RoomScope,
-} from "./protocol/AuthToken";
+import { compact, deepClone, tryParseJson } from "./lib/utils";
+import { canWriteStorage, TokenKind } from "./protocol/AuthToken";
 import type { BaseUserMeta } from "./protocol/BaseUserMeta";
 import type { ClientMsg } from "./protocol/ClientMsg";
 import { ClientMsgCode } from "./protocol/ClientMsg";
@@ -47,6 +42,7 @@ import type {
   UpdatePresenceServerMsg,
   UserJoinServerMsg,
   UserLeftServerMsg,
+  YDocUpdate,
 } from "./protocol/ServerMsg";
 import { ServerMsgCode } from "./protocol/ServerMsg";
 import type { ImmutableRef } from "./refs/ImmutableRef";
@@ -431,11 +427,6 @@ export type Room<
    */
   readonly id: string;
   /**
-   * A client is considered "self aware" if it knows its own
-   * metadata and connection ID (from the auth server).
-   */
-  isSelfAware(): boolean;
-  /**
    * @deprecated This API will be removed in a future version of Liveblocks.
    * Prefer using `.getStatus()` instead.
    *
@@ -564,12 +555,14 @@ export type Room<
   getStorageSnapshot(): LiveObject<TStorage> | null;
 
   readonly events: {
+    /** @deprecated Prefer `status` instead. */
     readonly connection: Observable<LegacyConnectionStatus>; // Old/legacy API
     readonly status: Observable<Status>; // New/recommended API
     readonly lostConnection: Observable<LostConnectionEvent>;
 
     readonly customEvent: Observable<{ connectionId: number; event: TRoomEvent; }>; // prettier-ignore
-    readonly me: Observable<TPresence>;
+    readonly self: Observable<User<TPresence, TUserMeta>>;
+    readonly myPresence: Observable<TPresence>;
     readonly others: Observable<{ others: Others<TPresence, TUserMeta>; event: OthersEvent<TPresence, TUserMeta>; }>; // prettier-ignore
     readonly error: Observable<Error>;
     readonly storage: Observable<StorageUpdate[]>;
@@ -583,7 +576,7 @@ export type Room<
     readonly storageDidLoad: Observable<void>;
 
     readonly storageStatus: Observable<StorageStatus>;
-    readonly ydoc: Observable<string>;
+    readonly ydoc: Observable<YDocUpdate>;
   };
 
   /**
@@ -691,13 +684,14 @@ type HistoryOp<TPresence extends JsonObject> =
 
 type IdFactory = () => string;
 
-type SessionInfo = {
+type StaticSessionInfo = {
   readonly userId?: string;
   readonly userInfo?: Json;
+};
 
-  // NOTE: In the future, these fields will get assigned in the connection phase
+type DynamicSessionInfo = {
   readonly actor: number;
-  readonly isReadOnly: boolean;
+  readonly scopes: string[];
 };
 
 type RoomState<
@@ -726,11 +720,16 @@ type RoomState<
     storageOperations: Op[];
   };
 
-  // A carbon-copy of the session information, all extracted from the JWT
-  // token, which is returned by the authenticate delegate and stored inside
-  // the machine.
-  readonly sessionInfo: ValueRef<SessionInfo | null>;
-  readonly me: PatchableRef<TPresence>;
+  //
+  // The "self" User takes assembly of three sources-of-truth:
+  // - The JWT token provides the userId and userInfo metadata (static)
+  // - The server, in its initial ROOM_STATE message, will provide the actor ID
+  //   and the scopes (dynamic)
+  // - The presence is provided by the client's initialPresence configuration (presence)
+  //
+  readonly staticSessionInfo: ValueRef<StaticSessionInfo | null>;
+  readonly dynamicSessionInfo: ValueRef<DynamicSessionInfo | null>;
+  readonly myPresence: PatchableRef<TPresence>;
   readonly others: OthersRef<TPresence, TUserMeta>;
 
   idFactory: IdFactory | null;
@@ -800,17 +799,16 @@ export type RoomInitializers<
   shouldInitiallyConnect?: boolean;
 }>;
 
-export type RoomDelegates = Delegates<ParsedAuthToken>;
+export type RoomDelegates = Delegates<AuthValue>;
 
 /** @internal */
 export type RoomConfig = {
-  delegates?: RoomDelegates;
+  delegates: RoomDelegates;
 
   roomId: string;
   throttleDelay: number;
   lostConnectionTimeout: number;
 
-  authentication: Authentication;
   liveblocksServer: string;
   httpSendEndpoint?: string;
   unstable_fallbackToHTTP?: boolean;
@@ -867,20 +865,9 @@ export function createRoom<
       : options.initialStorage;
 
   // Create a delegate pair for (a specific) Live Room socket connection(s)
-  const delegates: RoomDelegates = config.delegates ?? {
-    authenticate: makeAuthDelegateForRoom(
-      config.roomId,
-      config.authentication,
-      config.polyfills?.fetch
-    ),
+  const delegates: RoomDelegates = config.delegates;
 
-    createSocket: makeCreateSocketDelegateForRoom(
-      config.liveblocksServer,
-      config.polyfills?.WebSocket
-    ),
-  };
-
-  const managedSocket: ManagedSocket<ParsedAuthToken> = new ManagedSocket(
+  const managedSocket: ManagedSocket<AuthValue> = new ManagedSocket(
     delegates,
     config.enableDebugLogging
   );
@@ -900,8 +887,9 @@ export function createRoom<
       storageOperations: [],
     },
 
-    sessionInfo: new ValueRef(null),
-    me: new PatchableRef(initialPresence),
+    staticSessionInfo: new ValueRef(null),
+    dynamicSessionInfo: new ValueRef(null),
+    myPresence: new PatchableRef(initialPresence),
     others: new OthersRef<TPresence, TUserMeta>(),
 
     initialStorage,
@@ -930,25 +918,39 @@ export function createRoom<
   const doNotBatchUpdates = (cb: () => void): void => cb();
   const batchUpdates = config.unstable_batchedUpdates ?? doNotBatchUpdates;
 
-  let lastToken: ParsedAuthToken["parsed"] | undefined;
+  let lastTokenKey: string | undefined;
   function onStatusDidChange(newStatus: Status) {
-    const token = managedSocket.token?.parsed;
-    if (token !== undefined && token !== lastToken) {
-      context.sessionInfo.set({
-        userInfo: token.info,
-        userId: token.id,
+    const authValue = managedSocket.authValue;
+    if (authValue !== null) {
+      const tokenKey =
+        authValue.type === "secret"
+          ? authValue.token.raw
+          : authValue.publicApiKey;
 
-        // NOTE: In the future, these fields will get assigned in the connection phase
-        actor: token.actor,
-        isReadOnly: isStorageReadOnly(token.scopes),
-      });
-      lastToken = token;
+      if (tokenKey !== lastTokenKey) {
+        lastTokenKey = tokenKey;
+
+        if (authValue.type === "secret") {
+          const token = authValue.token.parsed;
+          context.staticSessionInfo.set({
+            userId: token.k === TokenKind.SECRET_LEGACY ? token.id : token.uid,
+            userInfo:
+              token.k === TokenKind.SECRET_LEGACY ? token.info : token.ui,
+          });
+        } else {
+          context.staticSessionInfo.set({
+            userId: undefined,
+            userInfo: undefined,
+          });
+        }
+      }
     }
 
     // Forward to the outside world
     batchUpdates(() => {
       eventHub.status.notify(newStatus);
       eventHub.connection.notify(newToLegacyStatus(newStatus));
+      notifySelfChanged(doNotBatchUpdates);
     });
   }
 
@@ -989,12 +991,6 @@ export function createRoom<
   }
 
   function onDidConnect() {
-    const sessionInfo = context.sessionInfo.current;
-    if (sessionInfo === null) {
-      // Totally unexpected by now
-      throw new Error("Unexpected missing session info");
-    }
-
     // Re-broadcast the full user presence as soon as we (re)connect
     context.buffer.presenceUpdates = {
       type: "full",
@@ -1002,17 +998,13 @@ export function createRoom<
         // Because context.me.current is a readonly object, we'll have to
         // make a copy here. Otherwise, type errors happen later when
         // "patching" my presence.
-        { ...context.me.current },
+        { ...context.myPresence.current },
     };
 
     // NOTE: There was a flush here before, but I don't think it's really
     // needed anymore. We're now combining this flush with the one below, to
     // combine them in a single batch.
     // tryFlushing();
-
-    // NOTE: Soon, once the actor ID assignment gets delayed until after the
-    // room connection happens, we won't know the connection ID here just yet.
-    context.idFactory = makeIdFactory(sessionInfo.actor);
 
     // If a storage fetch has ever been initiated, we assume the client is
     // interested in storage, so we will refresh it after a reconnection.
@@ -1096,7 +1088,14 @@ export function createRoom<
     },
 
     assertStorageIsWritable: () => {
-      if (context.sessionInfo.current?.isReadOnly) {
+      const scopes = context.dynamicSessionInfo.current?.scopes;
+      if (scopes === undefined) {
+        // If we aren't connected yet, assume we can write
+        return;
+      }
+
+      const canWrite = canWriteStorage(scopes);
+      if (!canWrite) {
         throw new Error(
           "Cannot write to storage with a read only user, please ensure the user has write permissions"
         );
@@ -1110,7 +1109,8 @@ export function createRoom<
     lostConnection: makeEventSource<LostConnectionEvent>(),
 
     customEvent: makeEventSource<CustomEvent<TRoomEvent>>(),
-    me: makeEventSource<TPresence>(),
+    self: makeEventSource<User<TPresence, TUserMeta>>(),
+    myPresence: makeEventSource<TPresence>(),
     others: makeEventSource<{
       others: Others<TPresence, TUserMeta>;
       event: OthersEvent<TPresence, TUserMeta>;
@@ -1120,7 +1120,7 @@ export function createRoom<
     history: makeEventSource<HistoryEvent>(),
     storageDidLoad: makeEventSource<void>(),
     storageStatus: makeEventSource<StorageStatus>(),
-    ydoc: makeEventSource<string>(),
+    ydoc: makeEventSource<YDocUpdate>(),
   };
 
   function sendMessages(
@@ -1135,19 +1135,20 @@ export function createRoom<
       const size = new TextEncoder().encode(message).length;
       if (
         size > MAX_MESSAGE_SIZE &&
-        managedSocket.token?.raw &&
+        // TODO: support public api key auth in REST API
+        managedSocket.authValue?.type === "secret" &&
         config.httpSendEndpoint
       ) {
-        if (isTokenExpired(managedSocket.token.parsed)) {
-          return managedSocket.reconnect();
-        }
-
         void httpSend(
           message,
-          managedSocket.token.raw,
+          managedSocket.authValue.token.raw,
           config.httpSendEndpoint,
           config.polyfills?.fetch
-        );
+        ).then((resp) => {
+          if (!resp.ok && resp.status === 403) {
+            managedSocket.reconnect();
+          }
+        });
         console.warn(
           "Message was too large for websockets and sent over HTTP instead"
         );
@@ -1158,20 +1159,40 @@ export function createRoom<
   }
 
   const self = new DerivedRef(
-    context.sessionInfo as ImmutableRef<SessionInfo | null>,
-    context.me,
-    (info, me): User<TPresence, TUserMeta> | null => {
-      return info !== null
-        ? {
-            connectionId: info.actor,
-            id: info.userId,
-            info: info.userInfo,
-            presence: me,
-            isReadOnly: info.isReadOnly,
-          }
-        : null;
+    context.staticSessionInfo as ImmutableRef<StaticSessionInfo | null>,
+    context.dynamicSessionInfo as ImmutableRef<DynamicSessionInfo | null>,
+    context.myPresence,
+    (
+      staticSession,
+      dynamicSession,
+      myPresence
+    ): User<TPresence, TUserMeta> | null => {
+      if (staticSession === null || dynamicSession === null) {
+        return null;
+      } else {
+        const canWrite = canWriteStorage(dynamicSession.scopes);
+        return {
+          connectionId: dynamicSession.actor,
+          id: staticSession.userId,
+          info: staticSession.userInfo,
+          presence: myPresence,
+          canWrite,
+          isReadOnly: !canWrite, // Deprecated, kept for backward-compatibility
+        };
+      }
     }
   );
+
+  let _lastSelf: Readonly<User<TPresence, TUserMeta>> | undefined;
+  function notifySelfChanged(batchedUpdatesWrapper: (cb: () => void) => void) {
+    const currSelf = self.current;
+    if (currSelf !== null && currSelf !== _lastSelf) {
+      batchedUpdatesWrapper(() => {
+        eventHub.self.notify(currSelf);
+      });
+      _lastSelf = currSelf;
+    }
+  }
 
   // For use in DevTools
   const selfAsTreeNode = new DerivedRef(
@@ -1266,18 +1287,20 @@ export function createRoom<
       }
 
       if (presence) {
-        eventHub.me.notify(context.me.current);
+        notifySelfChanged(doNotBatchUpdates);
+        eventHub.myPresence.notify(context.myPresence.current);
       }
 
       if (storageUpdates.size > 0) {
         const updates = Array.from(storageUpdates.values());
         eventHub.storage.notify(updates);
       }
+      notifyStorageStatus();
     });
   }
 
   function getConnectionId() {
-    const info = context.sessionInfo.current;
+    const info = context.dynamicSessionInfo.current;
     if (info) {
       return info.actor;
     }
@@ -1325,10 +1348,10 @@ export function createRoom<
         };
 
         for (const key in op.data) {
-          reverse.data[key] = context.me.current[key];
+          reverse.data[key] = context.myPresence.current[key];
         }
 
-        context.me.patch(op.data);
+        context.myPresence.patch(op.data);
 
         if (context.buffer.presenceUpdates === null) {
           context.buffer.presenceUpdates = { type: "partial", data: op.data };
@@ -1384,8 +1407,6 @@ export function createRoom<
         }
       }
     }
-
-    notifyStorageStatus();
 
     return {
       ops,
@@ -1474,10 +1495,10 @@ export function createRoom<
         continue;
       }
       context.buffer.presenceUpdates.data[key] = overrideValue;
-      oldValues[key] = context.me.current[key];
+      oldValues[key] = context.myPresence.current[key];
     }
 
-    context.me.patch(patch);
+    context.myPresence.patch(patch);
 
     if (context.activeBatch) {
       if (options?.addToHistory) {
@@ -1499,14 +1520,6 @@ export function createRoom<
         notify({ presence: true }, doNotBatchUpdates);
       });
     }
-  }
-
-  function isStorageReadOnly(scopes: string[]) {
-    return (
-      scopes.includes(RoomScope.Read) &&
-      scopes.includes(RoomScope.PresenceWrite) &&
-      !scopes.includes(RoomScope.Write)
-    );
   }
 
   function onUpdatePresenceMessage(
@@ -1555,12 +1568,21 @@ export function createRoom<
   }
 
   function onRoomStateMessage(
-    message: RoomStateServerMsg<TUserMeta>
+    message: RoomStateServerMsg<TUserMeta>,
+    batchedUpdatesWrapper: (cb: () => void) => void
   ): OthersEvent<TPresence, TUserMeta> {
-    for (const connectionId in context.others._connections) {
+    // The server will inform the client about its assigned actor ID and scopes
+    context.dynamicSessionInfo.set({
+      actor: message.actor,
+      scopes: message.scopes,
+    });
+    context.idFactory = makeIdFactory(message.actor);
+    notifySelfChanged(batchedUpdatesWrapper);
+
+    for (const connectionId of context.others.connectionIds()) {
       const user = message.users[connectionId];
       if (user === undefined) {
-        context.others.removeConnection(Number(connectionId));
+        context.others.removeConnection(connectionId);
       }
     }
 
@@ -1571,9 +1593,15 @@ export function createRoom<
         connectionId,
         user.id,
         user.info,
-        isStorageReadOnly(user.scopes)
+        user.scopes
       );
     }
+
+    // NOTE: We could be notifying the "others" event here, but the reality is
+    // that ROOM_STATE is often the first message to be received from the
+    // server, and it won't contain all the information needed to update the
+    // other views yet. Instead, we'll let the others' presences trickle in,
+    // and notify each time that happens.
     return { type: "reset" };
   }
 
@@ -1592,13 +1620,13 @@ export function createRoom<
       message.actor,
       message.id,
       message.info,
-      isStorageReadOnly(message.scopes)
+      message.scopes
     );
     // Send current presence to new user
     // TODO: Consider storing it on the backend
     context.buffer.messages.push({
       type: ClientMsgCode.UPDATE_PRESENCE,
-      data: context.me.current,
+      data: context.myPresence.current,
       targetActor: message.actor,
     });
     flushNowOrSoon();
@@ -1617,7 +1645,7 @@ export function createRoom<
     }
 
     return data as ServerMsg<TPresence, TUserMeta, TRoomEvent>;
-    //          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ FIXME: Properly validate incoming external data instead!
+    //             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ FIXME: Properly validate incoming external data instead!
   }
 
   function parseServerMessages(
@@ -1714,12 +1742,12 @@ export function createRoom<
           }
 
           case ServerMsgCode.UPDATE_YDOC: {
-            eventHub.ydoc.notify(message.update);
+            eventHub.ydoc.notify(message);
             break;
           }
 
           case ServerMsgCode.ROOM_STATE: {
-            updates.others.push(onRoomStateMessage(message));
+            updates.others.push(onRoomStateMessage(message, doNotBatchUpdates));
             break;
           }
 
@@ -2121,7 +2149,8 @@ export function createRoom<
 
     customEvent: eventHub.customEvent.observable,
     others: eventHub.others.observable,
-    me: eventHub.me.observable,
+    self: eventHub.self.observable,
+    myPresence: eventHub.myPresence.observable,
     error: eventHub.error.observable,
     storage: eventHub.storage.observable,
     history: eventHub.history.observable,
@@ -2185,11 +2214,10 @@ export function createRoom<
       // Core
       getStatus: () => managedSocket.getStatus(),
       getConnectionState: () => managedSocket.getLegacyStatus(),
-      isSelfAware: () => context.sessionInfo.current !== null,
       getSelf: () => self.current,
 
       // Presence
-      getPresence: () => context.me.current,
+      getPresence: () => context.myPresence.current,
       getOthers: () => context.others.current,
     },
 
@@ -2266,7 +2294,7 @@ function makeClassicSubscribeFn<
           );
 
         case "my-presence":
-          return events.me.subscribe(callback as Callback<TPresence>);
+          return events.myPresence.subscribe(callback as Callback<TPresence>);
 
         case "others": {
           // NOTE: Others have a different callback structure, where the API
@@ -2351,11 +2379,21 @@ function isRoomEventName(value: string): value is RoomEventName {
   );
 }
 
-function makeCreateSocketDelegateForRoom(
+export function makeAuthDelegateForRoom(
+  roomId: string,
+  authManager: AuthManager
+): () => Promise<AuthValue> {
+  return async () => {
+    return authManager.getAuthValue("room:read", roomId);
+  };
+}
+
+export function makeCreateSocketDelegateForRoom(
+  roomId: string,
   liveblocksServer: string,
   WebSocketPolyfill?: IWebSocket
 ) {
-  return (richToken: ParsedAuthToken): IWebSocketInstance => {
+  return (authValue: AuthValue): IWebSocketInstance => {
     const ws: IWebSocket | undefined =
       WebSocketPolyfill ??
       (typeof WebSocket === "undefined" ? undefined : WebSocket);
@@ -2366,10 +2404,17 @@ function makeCreateSocketDelegateForRoom(
       );
     }
 
-    const token = richToken.raw;
-    return new ws(
-      `${liveblocksServer}/?token=${token}&version=${PKG_VERSION || "dev"}`
-    );
+    const url = new URL(liveblocksServer);
+    url.searchParams.set("roomId", roomId);
+    if (authValue.type === "secret") {
+      url.searchParams.set("tok", authValue.token.raw);
+    } else if (authValue.type === "public") {
+      url.searchParams.set("pubkey", authValue.publicApiKey);
+    } else {
+      return assertNever(authValue, "Unhandled case");
+    }
+    url.searchParams.set("version", PKG_VERSION || "dev");
+    return new ws(url.toString());
   };
 }
 
@@ -2388,105 +2433,4 @@ async function httpSend(
     },
     body: message,
   });
-}
-
-function makeAuthDelegateForRoom(
-  roomId: string,
-  authentication: Authentication,
-  fetchPolyfill?: typeof window.fetch
-): () => Promise<ParsedAuthToken> {
-  const fetcher =
-    fetchPolyfill ?? (typeof window === "undefined" ? undefined : window.fetch);
-
-  if (authentication.type === "public") {
-    return async () => {
-      if (fetcher === undefined) {
-        throw new StopRetrying(
-          "To use Liveblocks client in a non-dom environment with a publicApiKey, you need to provide a fetch polyfill."
-        );
-      }
-
-      return fetchAuthEndpoint(fetcher, authentication.url, {
-        room: roomId,
-        publicApiKey: authentication.publicApiKey,
-      }).then(({ token }) => parseAuthToken(token));
-    };
-  } else if (authentication.type === "private") {
-    return async () => {
-      if (fetcher === undefined) {
-        throw new StopRetrying(
-          "To use Liveblocks client in a non-dom environment with a url as auth endpoint, you need to provide a fetch polyfill."
-        );
-      }
-
-      return fetchAuthEndpoint(fetcher, authentication.url, {
-        room: roomId,
-      }).then(({ token }) => parseAuthToken(token));
-    };
-  } else if (authentication.type === "custom") {
-    return async () => {
-      const response = await authentication.callback(roomId);
-      if (!response || !response.token) {
-        throw new Error(
-          'We expect the authentication callback to return a token, but it does not. Hint: the return value should look like: { token: "..." }'
-        );
-      }
-      return parseAuthToken(response.token);
-    };
-  } else {
-    throw new Error("Internal error. Unexpected authentication type");
-  }
-}
-
-async function fetchAuthEndpoint(
-  fetch: typeof window.fetch,
-  endpoint: string,
-  body: {
-    room: string;
-    publicApiKey?: string;
-  }
-): Promise<{ token: string }> {
-  const res = await fetch(endpoint, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    // Credentials are needed to support authentication with cookies
-    credentials: "include",
-    body: JSON.stringify(body),
-  });
-  if (!res.ok) {
-    const reason = `${
-      (await res.text()).trim() || "reason not provided in auth response"
-    } (${res.status} returned by POST ${endpoint})`;
-
-    if (res.status === 401 || res.status === 403) {
-      // Throw a special error instance, which the connection manager will
-      // recognize and understand that retrying will have no effect
-      throw new StopRetrying(`Unauthorized: ${reason}`);
-    } else {
-      throw new Error(`Failed to authenticate: ${reason}`);
-    }
-  }
-
-  let data: Json;
-  try {
-    data = await (res.json() as Promise<Json>);
-  } catch (er) {
-    throw new Error(
-      `Expected a JSON response when doing a POST request on "${endpoint}". ${String(
-        er
-      )}`
-    );
-  }
-
-  if (!isPlainObject(data) || typeof data.token !== "string") {
-    throw new Error(
-      `Expected a JSON response of the form \`{ token: "..." }\` when doing a POST request on "${endpoint}", but got ${JSON.stringify(
-        data
-      )}`
-    );
-  }
-  const { token } = data;
-  return { token };
 }
