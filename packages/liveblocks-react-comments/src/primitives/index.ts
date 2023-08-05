@@ -1,11 +1,12 @@
+export * as Comment from "./Comment";
 export type {
   CommentBodyProps,
   CommentMentionProps,
   CommentRenderMentionProps,
-} from "./Comment";
-export { Comment } from "./Comment";
+} from "./Comment/types";
+export * as Composer from "./Composer";
+export type { ComposerContext } from "./Composer/contexts";
 export type {
-  ComposerContext,
   ComposerEditorProps,
   ComposerFormProps,
   ComposerMentionProps,
@@ -15,7 +16,6 @@ export type {
   ComposerSubmitProps,
   ComposerSuggestionsListItemProps,
   ComposerSuggestionsListProps,
-} from "./Composer";
-export { Composer } from "./Composer";
+} from "./Composer/types";
 export type { TimestampProps } from "./Timestamp";
 export { Timestamp } from "./Timestamp";

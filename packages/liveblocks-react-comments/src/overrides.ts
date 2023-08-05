@@ -7,7 +7,7 @@ export interface LocalizationOverrides {
 
 export interface CommentOverrides {
   COMMENT_EDITED: string;
-  // COMMENT_DELETED: string;
+  COMMENT_DELETED: string;
   COMMENT_MORE: string;
   COMMENT_EDIT: string;
   COMMENT_EDIT_COMPOSER_PLACEHOLDER: string;
@@ -41,7 +41,7 @@ export const defaultOverrides: Overrides = {
   COMPOSER_PLACEHOLDER: "Write a comment…",
   COMPOSER_SEND: "Send",
   COMMENT_EDITED: "(edited)",
-  // COMMENT_DELETED: "",
+  COMMENT_DELETED: "This comment has been deleted.",
   COMMENT_MORE: "More",
   COMMENT_EDIT: "Edit comment",
   COMMENT_EDIT_COMPOSER_PLACEHOLDER: "Edit comment…",

@@ -1,7 +1,7 @@
 import type { ThreadData } from "@liveblocks/core";
 import * as TogglePrimitive from "@radix-ui/react-toggle";
 import type { ComponentPropsWithoutRef } from "react";
-import React, { forwardRef, useCallback } from "react";
+import React, { forwardRef, useCallback, useMemo } from "react";
 
 import { useCommentsContext } from "../factory";
 import { ResolveIcon } from "../icons/resolve";
@@ -43,7 +43,12 @@ export interface ThreadProps
   /**
    * Whether to indent the comments' bodies.
    */
-  indentBody?: CommentProps["indentBody"];
+  indentCommentBody?: CommentProps["indentBody"];
+
+  /**
+   * Whether to show deleted comments.
+   */
+  showDeletedComments?: CommentProps["showDeleted"];
 
   /**
    * Override the component's strings.
@@ -66,8 +71,9 @@ export const Thread = forwardRef<HTMLDivElement, ThreadProps>(
   (
     {
       thread,
-      indentBody = true,
+      indentCommentBody = true,
       showActions = "hover",
+      showDeletedComments,
       showResolveAction = true,
       showComposer,
       overrides,
@@ -79,6 +85,11 @@ export const Thread = forwardRef<HTMLDivElement, ThreadProps>(
     const { useEditThreadMetadata, useOverrides } = useCommentsContext();
     const editThreadMetadata = useEditThreadMetadata();
     const $ = useOverrides(overrides);
+    const firstCommentIndex = useMemo(() => {
+      return showDeletedComments
+        ? 0
+        : thread.comments.findIndex((comment) => comment.body);
+    }, [showDeletedComments, thread.comments]);
 
     const handleResolvedChange = useCallback(
       (resolved: boolean) => {
@@ -102,15 +113,15 @@ export const Thread = forwardRef<HTMLDivElement, ThreadProps>(
         >
           <div className="lb-thread-comments">
             {thread.comments.map((comment, index) => {
-              // TODO: Take into account that deleted comments will not render by default, unless there's an option to show them with a placeholder
-              const isFirstComment = index === 0;
+              const isFirstComment = index === firstCommentIndex;
 
               return (
                 <Comment
                   key={comment.id}
                   className="lb-thread-comment"
                   comment={comment}
-                  indentBody={indentBody}
+                  indentBody={indentCommentBody}
+                  showDeleted={showDeletedComments}
                   showActions={showActions}
                   additionalActionsClassName={
                     isFirstComment ? "lb-thread-actions" : undefined

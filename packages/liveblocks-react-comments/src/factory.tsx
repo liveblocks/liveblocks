@@ -38,8 +38,8 @@ import { createCommentsRoom } from "./CommentsRoom";
 import type { CommentsApiError } from "./errors";
 import { useAsyncCache } from "./lib/use-async-cache";
 import { defaultOverrides, type Overrides } from "./overrides";
-import type { ComposerContext } from "./primitives/Composer";
-import { useComposer } from "./primitives/Composer";
+import type { ComposerContext } from "./primitives/Composer/contexts";
+import { useComposer } from "./primitives/Composer/contexts";
 import { useDebounce } from "./utils/use-debounce";
 
 const MENTION_SUGGESTIONS_DEBOUNCE = 500;

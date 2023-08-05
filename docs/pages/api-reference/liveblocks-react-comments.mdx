@@ -113,14 +113,15 @@ Displays a thread of comments, with a composer to reply to it.
 
 <Table columns={["auto", "auto", "54%"]}>
 
-| Prop                | Type                                                                                              | Description                                                                   |
-| ------------------- | ------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
-| `thread`            | <code>ThreadData&lt;\{ resolved?: boolean \}&gt;</code>                                           | The thread to display.                                                        |
-| `showComposer`      | `boolean \| undefined`                                                                            | Whether to show the composer to reply to the thread.<br/>Defaults to `false`. |
-| `showActions`       | `boolean \| "hover" \| undefined`                                                                 | How to show or hide the actions.<br/>Defaults to `"hover"`.                   |
-| `showResolveAction` | `boolean \| undefined`                                                                            | Whether to show the action to resolve the thread.<br/>Defaults to `true`.     |
-| `indentBody`        | `boolean \| undefined`                                                                            | Whether to indent the comments’ bodies.<br/>Defaults to `true`.               |
-| `overrides`         | <code>Partial&lt;ThreadOverrides \& CommentOverrides \& ComposerOverrides&gt; \| undefined</code> | Override the component’s strings.                                             |
+| Prop                  | Type                                                                                              | Description                                                                   |
+| --------------------- | ------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| `thread`              | <code>ThreadData&lt;\{ resolved?: boolean \}&gt;</code>                                           | The thread to display.                                                        |
+| `showComposer`        | `boolean \| undefined`                                                                            | Whether to show the composer to reply to the thread.<br/>Defaults to `false`. |
+| `showActions`         | `boolean \| "hover" \| undefined`                                                                 | How to show or hide the actions.<br/>Defaults to `"hover"`.                   |
+| `showResolveAction`   | `boolean \| undefined`                                                                            | Whether to show the action to resolve the thread.<br/>Defaults to `true`.     |
+| `indentCommentBody`   | `boolean \| undefined`                                                                            | Whether to indent the comments’ bodies.<br/>Defaults to `true`.               |
+| `showDeletedComments` | `boolean \| undefined`                                                                            | Whether to show deleted comments.<br/>Defaults to `false`.                    |
+| `overrides`           | <code>Partial&lt;ThreadOverrides \& CommentOverrides \& ComposerOverrides&gt; \| undefined</code> | Override the component’s strings.                                             |
 
 </Table>
 
@@ -146,12 +147,13 @@ Displays a single comment.
 
 <Table columns={["auto", "auto", "54%"]}>
 
-| Prop          | Type                                                                           | Description                                                   |
-| ------------- | ------------------------------------------------------------------------------ | ------------------------------------------------------------- |
-| `comment`     | `CommentData`                                                                  | The thread to display.                                        |
-| `showActions` | `boolean \| "hover" \| undefined`                                              | How to show or hide the actions.<br/>Defaults to `"hover"`.   |
-| `indentBody`  | `boolean \| undefined`                                                         | Whether to indent the comment’s body.<br/>Defaults to `true`. |
-| `overrides`   | <code>Partial&lt;CommentOverrides \& ComposerOverrides&gt; \| undefined</code> | Override the component’s strings.                             |
+| Prop          | Type                                                                           | Description                                                                                                                           |
+| ------------- | ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `comment`     | `CommentData`                                                                  | The thread to display.                                                                                                                |
+| `showActions` | `boolean \| "hover" \| undefined`                                              | How to show or hide the actions.<br/>Defaults to `"hover"`.                                                                           |
+| `indentBody`  | `boolean \| undefined`                                                         | Whether to indent the comment’s body.<br/>Defaults to `true`.                                                                         |
+| `showDeleted` | `boolean \| undefined`                                                         | Whether to show the comment if it was deleted. If set to `false`, it will render deleted comments as `null`.<br/>Defaults to `false`. |
+| `overrides`   | <code>Partial&lt;CommentOverrides \& ComposerOverrides&gt; \| undefined</code> | Override the component’s strings.                                                                                                     |
 
 </Table>
 

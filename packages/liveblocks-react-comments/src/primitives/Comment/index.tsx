@@ -1,38 +1,27 @@
-"use client";
-
 import { CommentBody, isCommentBodyMention } from "@liveblocks/core";
 import { Slot } from "@radix-ui/react-slot";
-import type { ComponentType, ReactNode } from "react";
+import type { ReactNode } from "react";
 import React, { forwardRef } from "react";
 
-import { MENTION_CHARACTER } from "../slate/mentions";
-import type { ComponentPropsWithSlot } from "../types";
+import { MENTION_CHARACTER } from "../../slate/mentions";
+import type {
+  CommentBodyProps,
+  CommentMentionProps,
+  CommentRenderMentionProps,
+} from "./types";
 
 const COMMENT_MENTION_NAME = "CommentMention";
 const COMMENT_BODY_NAME = "CommentBody";
 
-export type CommentMentionProps = ComponentPropsWithSlot<"span">;
-
-export type CommentRenderMentionProps = {
-  /**
-   * The mention's user ID.
-   */
-  userId: string;
-};
-
-export interface CommentBodyProps
-  extends Omit<ComponentPropsWithSlot<"div">, "children"> {
-  /**
-   * The comment body to display.
-   * If not defined, the component will render `null`.
-   */
-  body?: CommentBody;
-
-  /**
-   * The component used to render mentions.
-   */
-  renderMention?: ComponentType<CommentRenderMentionProps>;
-}
+/**
+ * Displays mentions within `Comment.Body`.
+ *
+ * @example
+ * <Comment.Body
+ *   body={comment.body}
+ *   renderMention={({ userId }) => <Comment.Mention>@{userId}</Comment.Mention>}
+ * />
+ */
 
 function CommentDefaultRenderMention({ userId }: CommentRenderMentionProps) {
   return (
@@ -55,6 +44,12 @@ const CommentMention = forwardRef<HTMLSpanElement, CommentMentionProps>(
   }
 );
 
+/**
+ * Displays a comment body.
+ *
+ * @example
+ * <Comment.Body body={comment.body} />
+ */
 const CommentBody = forwardRef<HTMLDivElement, CommentBodyProps>(
   (
     {
@@ -118,24 +113,5 @@ if (process.env.NODE_ENV !== "production") {
   CommentMention.displayName = COMMENT_MENTION_NAME;
 }
 
-// TODO: Use `export *` to export all components in a tree-shakeable way
-export const Comment = {
-  /**
-   * Displays a comment body.
-   *
-   * @example
-   * <Comment.Body body={comment.body} />
-   */
-  Body: CommentBody,
-
-  /**
-   * Displays mentions within `Comment.Body`.
-   *
-   * @example
-   * <Comment.Body
-   *   body={comment.body}
-   *   renderMention={({ userId }) => <Comment.Mention>@{userId}</Comment.Mention>}
-   * />
-   */
-  Mention: CommentMention,
-};
+// NOTE: Every export from this file will be available publicly as Comment.*
+export { CommentBody as Body, CommentMention as Mention };

@@ -37,7 +37,17 @@ async function resolveMentionSuggestions(text: string) {
   }
 }
 
-export const {
+// TODO: Doesn't mark CommentsProvider as a Client component
+// export const {
+//   CommentsProvider,
+//   useThreads,
+//   suspense: { useThreads: useThreadsSuspense },
+// } = createCommentsContext<ThreadMetadata>(client, {
+//   resolveUser,
+//   resolveMentionSuggestions,
+// });
+
+const {
   CommentsProvider,
   useThreads,
   suspense: { useThreads: useThreadsSuspense },
@@ -45,3 +55,5 @@ export const {
   resolveUser,
   resolveMentionSuggestions,
 });
+
+export { CommentsProvider, useThreads, useThreadsSuspense };
