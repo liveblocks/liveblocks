@@ -555,6 +555,8 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       return { modified: false };
     }
 
+    this._unacknowledgedSets.set(key, nn(op.opId));
+
     const indexOfItemWithSameKey = this._indexOfPosition(key);
 
     child._attach(id, nn(this._pool));
