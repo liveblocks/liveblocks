@@ -69,22 +69,26 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
   /** @internal */
   private _implicitlyDeletedItems: WeakSet<LiveNode>;
 
-  /** 
-   * @internal 
-   * Keep an set of all the ids that have been deleted by a set 
+  /**
+   * @internal
+   * Keep an set of all the ids that have been deleted by a set
    * to ensure they are not reinserted by an insert acknowledge op
-   * 
-   * TODO: 
+   *
+   * TODO:
    * Reuse this Set to apply the same logic for deleted items by LiveList.delete
    * Refactor _detachChild to know if it's coming from an acklowledge op or not
    */
   private _unacknowledgedDeletedIds: Set<string>;
+
+  /** @internal */
+  private _unacknowledgedSets: Map<string, string>;
 
   constructor(items: TItem[] = []) {
     super();
     this._items = [];
     this._implicitlyDeletedItems = new WeakSet();
     this._unacknowledgedDeletedIds = new Set();
+    this._unacknowledgedSets = new Map();
 
     let position = undefined;
     for (const item of items) {
@@ -284,7 +288,19 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       delta.push(deletedDelta);
     }
 
-    if(this._unacknowledgedDeletedIds.has(op.id)) {
+    const unacknowledgedOpId = this._unacknowledgedSets.get(op.parentKey);
+
+    if (unacknowledgedOpId !== undefined) {
+      if (unacknowledgedOpId !== op.opId) {
+        return delta.length === 0
+          ? { modified: false }
+          : { modified: makeUpdate(this, delta), reverse: [] };
+      } else {
+        this._unacknowledgedSets.delete(op.parentKey);
+      }
+    }
+
+    if (this._unacknowledgedDeletedIds.has(op.id)) {
       this._unacknowledgedDeletedIds.delete(op.id);
       return delta.length === 0
         ? { modified: false }
@@ -429,8 +445,8 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
   private _applyInsertAck(op: CreateChildOp): ApplyResult {
     if (this._unacknowledgedDeletedIds.has(op.id)) {
       return {
-        modified: false
-      }
+        modified: false,
+      };
     }
 
     const existingItem = this._items.find((item) => item._id === op.id);
@@ -1084,7 +1100,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     const existingId = existingItem._id;
     existingItem._detach();
 
-    if(existingId !== undefined) {
+    if (existingId !== undefined) {
       this._unacknowledgedDeletedIds.add(existingId);
     }
 
@@ -1104,6 +1120,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
         value._toOps(this._id, position, this._pool),
         existingId
       );
+      this._unacknowledgedSets.set(position, nn(ops[0].opId));
       const reverseOps = HACK_addIntentAndDeletedIdToOperation(
         existingItem._toOps(this._id, position, undefined),
         id
