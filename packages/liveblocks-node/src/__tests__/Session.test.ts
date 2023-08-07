@@ -1,4 +1,4 @@
-import { Liveblocks } from "../new-auth";
+import { Liveblocks } from "../client";
 
 const P1 = "room:read";
 const P2 = "room:write";

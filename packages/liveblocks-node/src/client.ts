@@ -1,5 +1,6 @@
 import type { Response } from "node-fetch";
 import fetch from "node-fetch";
+import type { CommentData, ThreadData } from "@liveblocks/core"
 
 import { Session } from "./Session";
 import {
@@ -28,7 +29,6 @@ export type CreateSessionOptions = {
   userInfo: unknown;
 };
 
-// TODO: update to DEV API URL
 const DEFAULT_BASE_URL = "https://api.liveblocks.io";
 
 export type AuthResponse = {
@@ -170,6 +170,107 @@ export class Liveblocks {
         )} failed. See "error" for more information.`,
         error: er as Error | undefined,
       };
+    }
+  }
+
+  public async getThreads(roomId: string): Promise<ThreadData[]> {
+    try {
+      const resp = await this.post(`/v2/rooms/${roomId}/threads`, {
+        roomId,
+      });
+
+      const body = await resp.json();
+
+      if (resp.status !== 200) {
+        throw {
+          status: resp.status,
+          ...body,
+        };
+      }
+
+      return body;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  public async getComment(
+    roomId: string,
+    threadId: string,
+    commentId: string
+  ): Promise<CommentData> {
+    try {
+      const resp = await this.post(
+        `/v2/rooms/${roomId}/threads/${threadId}/comments/${commentId}`,
+        {
+          roomId,
+          threadId,
+          commentId,
+        }
+      );
+
+      const body = await resp.json();
+
+      if (resp.status !== 200) {
+        throw {
+          status: resp.status,
+          ...body,
+        };
+      }
+
+      return body;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  public async getThread(roomId: string, threadId: string): Promise<ThreadData> {
+    try {
+      const resp = await this.post(`/v2/rooms/${roomId}/threads/${threadId}`, {
+        roomId,
+        threadId,
+      });
+
+      const body = await resp.json();
+
+      if (resp.status !== 200) {
+        throw {
+          status: resp.status,
+          ...body,
+        };
+      }
+
+      return body;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  public async getThreadParticipants(
+    roomId: string,
+    threadId: string
+  ): Promise<{
+    participantIds: string[];
+  }> {
+    try {
+      const resp = await this.post(`/v2/rooms/${roomId}/threads/${threadId}`, {
+        roomId,
+        threadId,
+      });
+
+      const body = await resp.json();
+
+      if (resp.status !== 204) {
+        const errorBody = await resp.json();
+        throw {
+          status: resp.status,
+          ...errorBody,
+        };
+      }
+
+      return body;
+    } catch (error) {
+      throw error;
     }
   }
 }
