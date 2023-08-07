@@ -251,15 +251,15 @@ export default function App() {
     window.getSelection()?.empty();
   };
 
-  const handlersRef = useRef(new Map());
+  const handlersRef = useRef(new WeakMap());
 
   const renderElement = useCallback((props: RenderElementProps) => {
     const path = ReactEditor.findPath(editor, props.element);
     const isTopLevel = path.length === 1;
 
-    const currentHandlers = handlersRef.current.get(props.element);
+    const currentHandlersExist = handlersRef.current.has(props.element);
 
-    if (!currentHandlers) {
+    if (!currentHandlersExist) {
       handlersRef.current.set(props.element, {
         onDelete: () => {
           Transforms.removeNodes(editor, {
