@@ -7,6 +7,7 @@ import { useDraggable } from "@dnd-kit/core";
 import Tooltip from "./Tooltip";
 import BlockTypeSelector from "./BlockTypeSelector";
 import { CustomElement } from "../types";
+import { memo } from "react";
 
 type Props = {
   blockId: string;
@@ -14,11 +15,7 @@ type Props = {
   onInsertBelow: (block: CustomElement) => void;
 };
 
-export default function BlockInlineActions({
-  blockId,
-  onDelete,
-  onInsertBelow,
-}: Props) {
+function BlockInlineActions({ blockId, onDelete, onInsertBelow }: Props) {
   const { listeners, setActivatorNodeRef } = useDraggable({
     id: blockId,
   });
@@ -55,3 +52,5 @@ export default function BlockInlineActions({
     </div>
   );
 }
+
+export default memo(BlockInlineActions);
