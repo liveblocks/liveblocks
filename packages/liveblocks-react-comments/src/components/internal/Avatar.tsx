@@ -29,7 +29,9 @@ export function Avatar({ userId, className, ...props }: AvatarProps) {
         />
       )}
       {resolvedUserInitials && (
-        <span className="lb-avatar-fallback">{resolvedUserInitials}</span>
+        <span className="lb-avatar-fallback" aria-hidden>
+          {resolvedUserInitials}
+        </span>
       )}
     </div>
   );
