@@ -1,3 +1,5 @@
+import { createContext, useContext, useMemo } from "react";
+import * as React from "react";
 import type { Direction } from "./types";
 
 export interface LocalizationOverrides {
@@ -53,3 +55,39 @@ export const defaultOverrides: Overrides = {
   THREAD_COMPOSER_PLACEHOLDER: "Reply to thread…",
   THREAD_COMPOSER_SEND: "Reply",
 };
+
+export const OverridesContext = createContext<Overrides>(defaultOverrides);
+
+export function useOverrides(overrides?: Partial<Overrides>): Overrides {
+  const contextOverrides = useContext(OverridesContext);
+
+  return useMemo(
+    () => ({
+      ...contextOverrides,
+      ...overrides,
+    }),
+    [contextOverrides, overrides]
+  );
+}
+
+export function OverridesProvider({
+  children,
+  overrides: globalOverrides,
+}: {
+  children: React.ReactNode;
+  overrides: Partial<Overrides>;
+}) {
+  const overrides = useMemo(
+    () => ({
+      ...defaultOverrides,
+      ...globalOverrides,
+    }),
+    [globalOverrides]
+  );
+
+  return (
+    <OverridesContext.Provider value={overrides}>
+      {children}
+    </OverridesContext.Provider>
+  );
+}

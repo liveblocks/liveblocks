@@ -617,8 +617,6 @@ export type RoomContextBundle<
    */
   useThreads(): RoomThreads<TThreadMetadata>;
 
-  useOverrides(overrides: any): any;
-
   useMentionSuggestions(value: string | undefined): string[] | undefined;
 
   suspense: {

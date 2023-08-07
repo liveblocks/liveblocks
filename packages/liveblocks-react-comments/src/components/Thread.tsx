@@ -6,10 +6,11 @@ import React, { forwardRef, useCallback } from "react";
 import { useRoomContextBundle } from "@liveblocks/react";
 import { ResolveIcon } from "../icons/resolve";
 import { ResolvedIcon } from "../icons/resolved";
-import type {
-  CommentOverrides,
-  ComposerOverrides,
-  ThreadOverrides,
+import {
+  useOverrides,
+  type CommentOverrides,
+  type ComposerOverrides,
+  type ThreadOverrides,
 } from "../overrides";
 import { classNames } from "../utils/class-names";
 import type { CommentProps } from "./Comment";
@@ -76,7 +77,7 @@ export const Thread = forwardRef<HTMLDivElement, ThreadProps>(
     },
     forwardedRef
   ) => {
-    const { useEditThreadMetadata, useOverrides } = useRoomContextBundle();
+    const { useEditThreadMetadata } = useRoomContextBundle();
     const editThreadMetadata = useEditThreadMetadata();
     const $ = useOverrides(overrides);
 

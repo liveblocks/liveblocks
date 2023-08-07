@@ -5,3 +5,4 @@ export { Composer } from "./components/Composer";
 export type { ThreadProps } from "./components/Thread";
 export { Thread } from "./components/Thread";
 export type { CommentData, ThreadData } from "@liveblocks/core";
+export { OverridesProvider } from "./overrides";

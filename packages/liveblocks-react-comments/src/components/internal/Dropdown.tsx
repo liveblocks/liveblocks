@@ -4,8 +4,8 @@ import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu";
 import type { ReactNode } from "react";
 import React from "react";
 
-import { useRoomContextBundle } from "@liveblocks/react";
 import { classNames } from "../../utils/class-names";
+import { useOverrides } from "../../overrides";
 
 interface DropdownProps
   extends Pick<
@@ -26,7 +26,6 @@ export function Dropdown({
   className,
   ...props
 }: DropdownProps) {
-  const { useOverrides } = useRoomContextBundle();
   const $ = useOverrides();
 
   return (

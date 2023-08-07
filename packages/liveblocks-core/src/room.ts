@@ -1,4 +1,3 @@
-import type { ThreadData } from "./comments/types/ThreadData";
 import type { AuthManager, AuthValue } from "./auth-manager";
 import { CommentsApi, createCommentsApi } from "./comments";
 import type {
@@ -414,7 +413,7 @@ export type Room<
   TStorage extends LsonObject,
   TUserMeta extends BaseUserMeta,
   TRoomEvent extends Json,
-> = CommentsApi<any> & {
+> = CommentsApi<any /* TODO: Remove this any by adding a proper thread metadata on the Room type */> & {
   /**
    * @internal
    * Private methods to directly control the underlying state machine for this
@@ -643,8 +642,6 @@ export type Room<
    * connection. If the room is not connected yet, initiate it.
    */
   reconnect(): void;
-
-  getThreads(): Promise<ThreadData<any>[]>;
 };
 
 /**

@@ -19,6 +19,7 @@ import type {
   BaseMetadata,
   BaseUserInfo,
   CommentData,
+  Resolve,
   ToImmutable,
 } from "@liveblocks/core";
 import {
@@ -147,10 +148,9 @@ type UserState<T extends BaseUserInfo> =
       error: Error;
     };
 
-// TODO
-// type UserStateSuspense<T extends BaseUserInfo> = Resolve<
-//   Extract<UserState<T>, { isLoading: false }>
-// >;
+type UserStateSuspense<T extends BaseUserInfo> = Resolve<
+  Extract<UserState<T>, { isLoading: false }>
+>;
 
 type UserResolver<T> = (userId: string) => Promise<T | undefined>;
 
@@ -910,6 +910,7 @@ export function createRoomContext<
     );
   }
 
+  // TODO: Use UserMeta instead
   type TUserInfo = {};
 
   const { resolveUser /* resolveMentionSuggestions */ } = options ?? {};
@@ -936,20 +937,19 @@ export function createRoomContext<
     }
   }
 
-  // TODO
-  // function useUserSuspense(userId: string) {
-  //   const state = useAsyncCache(usersCache, userId, {
-  //     suspense: true,
-  //   });
+  function useUserSuspense(userId: string) {
+    const state = useAsyncCache(usersCache, userId, {
+      suspense: true,
+    });
 
-  //   React.useEffect(() => warnIfNoResolveUser(usersCache), []);
+    React.useEffect(() => warnIfNoResolveUser(usersCache), []);
 
-  //   return {
-  //     user: state?.data,
-  //     error: state?.error,
-  //     isLoading: false,
-  //   } as UserStateSuspense<TUserInfo>;
-  // }
+    return {
+      user: state?.data,
+      error: state?.error,
+      isLoading: false,
+    } as UserStateSuspense<TUserInfo>;
+  }
 
   const resolveMentionSuggestions = null;
 
@@ -968,28 +968,6 @@ export function createRoomContext<
     );
 
     return data;
-  }
-
-  function useOverrides() {
-    return {
-      locale: "en",
-      dir: "ltr",
-      COMPOSER_INSERT_MENTION: "Mention someone",
-      COMPOSER_PLACEHOLDER: "Write a comment…",
-      COMPOSER_SEND: "Send",
-      COMMENT_EDITED: "(edited)",
-      // COMMENT_DELETED: "",
-      COMMENT_MORE: "More",
-      COMMENT_EDIT: "Edit comment",
-      COMMENT_EDIT_COMPOSER_PLACEHOLDER: "Edit comment…",
-      COMMENT_EDIT_COMPOSER_CANCEL: "Cancel",
-      COMMENT_EDIT_COMPOSER_SAVE: "Save",
-      COMMENT_DELETE: "Delete comment",
-      THREAD_RESOLVE: "Resolve thread",
-      THREAD_UNRESOLVE: "Re-open thread",
-      THREAD_COMPOSER_PLACEHOLDER: "Reply to thread…",
-      THREAD_COMPOSER_SEND: "Reply",
-    };
   }
 
   /*
@@ -1040,7 +1018,6 @@ export function createRoomContext<
     useEditComment,
     useDeleteComment,
     useUser,
-    useOverrides, // TODO: this is likely not going go live here
     useMentionSuggestions,
 
     suspense: {
@@ -1081,6 +1058,7 @@ export function createRoomContext<
       useMutation,
 
       useThreads: useThreadsSuspense,
+      useUserSuspense: useUserSuspense,
     },
   };
 

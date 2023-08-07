@@ -11,7 +11,11 @@ import { CrossIcon } from "../icons/cross";
 import { DeleteIcon } from "../icons/delete";
 import { EditIcon } from "../icons/edit";
 import { EllipsisIcon } from "../icons/ellipsis";
-import type { CommentOverrides, ComposerOverrides } from "../overrides";
+import {
+  useOverrides,
+  type CommentOverrides,
+  type ComposerOverrides,
+} from "../overrides";
 import type { CommentRenderMentionProps } from "../primitives/Comment";
 import { Comment as CommentPrimitive } from "../primitives/Comment";
 import { Composer as ComposerPrimitive } from "../primitives/Composer";
@@ -93,7 +97,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
     },
     forwardedRef
   ) => {
-    const { useDeleteComment, useOverrides } = useRoomContextBundle();
+    const { useDeleteComment } = useRoomContextBundle();
     const deleteComment = useDeleteComment();
     const $ = useOverrides(overrides);
     const [isEditing, setEditing] = useState(false);
