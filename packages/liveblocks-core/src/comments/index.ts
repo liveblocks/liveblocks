@@ -8,6 +8,14 @@ type Options = {
   serverEndpoint: string;
 };
 
+function getAuthBearerHeaderFromAuthValue(authValue: AuthValue) {
+  if (authValue.type === "public") {
+    return authValue.publicApiKey;
+  } else {
+    return authValue.token.raw;
+  }
+}
+
 export type CommentsApi<ThreadMetadata extends BaseMetadata> = {
   getThreads(): Promise<ThreadData<ThreadMetadata>[]>;
   createThread(options: {
@@ -81,17 +89,13 @@ export function createCommentsApi<ThreadMetadata extends BaseMetadata>(
     // TODO: Use the right scope
     const authValue = await getAuthValue();
 
-    if (authValue.type !== "secret") {
-      throw new Error("Only secret key are supported for client.");
-    }
-
     const url = `${serverEndpoint}/rooms/${roomId}${endpoint}`;
 
     return await fetch(url, {
       ...options,
       headers: {
         ...options?.headers,
-        Authorization: `Bearer ${authValue.token.raw}`,
+        Authorization: `Bearer ${getAuthBearerHeaderFromAuthValue(authValue)}`,
       },
     });
   }
