@@ -31,7 +31,7 @@ export const {
   CommentsProvider,
   useThreads,
   /* ...all the other hooks you’re using... */
-} = createCommentsContext<ThreadMetadata>();
+} = createCommentsContext<ThreadMetadata>(client);
 ```
 
 #### Resolving users [#createCommentsContext.resolveUser]
@@ -48,7 +48,7 @@ asynchronously.
 
 export const {
   /* ... */
-} = createCommentsContext<ThreadMetadata>({
+} = createCommentsContext<ThreadMetadata>(client, {
   resolveUser: (userId) => __getUserInfoFromDB__(userId),
 });
 ```
@@ -75,7 +75,7 @@ with some debouncing.
 
 export const {
   /* ... */
-} = createCommentsContext<ThreadMetadata>({
+} = createCommentsContext<ThreadMetadata>(client, {
   resolveMentionSuggestions: (text) => __getSuggestedUserIds__(text),
 });
 ```
