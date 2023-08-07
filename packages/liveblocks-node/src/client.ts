@@ -260,11 +260,10 @@ export class Liveblocks {
 
       const body = await resp.json();
 
-      if (resp.status !== 204) {
-        const errorBody = await resp.json();
+      if (resp.status !== 200) {
         throw {
           status: resp.status,
-          ...errorBody,
+          ...body,
         };
       }
 
