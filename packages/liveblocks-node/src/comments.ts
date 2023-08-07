@@ -1,9 +1,8 @@
 import type { CommentBody, CommentBodyParagraph } from "@liveblocks/core";
 
 /**
- * 
- * @param 
- * @returns 
+ * Gets the plain text from a comment body.
+ * TODO: add parsing options for each element type and text formatting.
  */
 function getPlainTextFromCommentBody(body: CommentBody): string {
   function traverseElementsV1(elements: CommentBodyParagraph['children']): string {
