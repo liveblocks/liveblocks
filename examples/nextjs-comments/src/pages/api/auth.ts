@@ -1,6 +1,6 @@
 import { Liveblocks } from "@liveblocks/node";
 import type { NextApiRequest, NextApiResponse } from "next";
-import { NAMES } from "../../constants";
+import { NAMES } from "../../database";
 
 const liveblocks = new Liveblocks({
   secret: process.env.LIVEBLOCKS_SECRET_KEY!,

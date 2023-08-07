@@ -1,6 +1,6 @@
 import "../styles/globals.css";
-import "@liveblocks/react-comments/default.css";
-import "@liveblocks/react-comments/default/dark/media-query.css";
+import "@liveblocks/react-comments/styles.css";
+import "@liveblocks/react-comments/styles/dark/media-query.css";
 
 export default function RootLayout({
   children,

@@ -1,9 +1,11 @@
-"use client";
-
 import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu";
 import type { ReactNode } from "react";
 import React from "react";
 
+import {
+  FLOATING_ELEMENT_COLLISION_PADDING,
+  FLOATING_ELEMENT_SIDE_OFFSET,
+} from "../../constants";
 import { classNames } from "../../utils/class-names";
 import { useOverrides } from "../../overrides";
 
@@ -39,9 +41,8 @@ export function Dropdown({
       <DropdownMenuPrimitive.Portal>
         <DropdownMenuPrimitive.Content
           className={classNames("lb-root lb-elevation lb-dropdown", className)}
-          // TODO: Share these values between all floating elements
-          sideOffset={6}
-          collisionPadding={10}
+          sideOffset={FLOATING_ELEMENT_SIDE_OFFSET}
+          collisionPadding={FLOATING_ELEMENT_COLLISION_PADDING}
           {...props}
         >
           {content}

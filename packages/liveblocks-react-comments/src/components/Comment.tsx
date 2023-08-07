@@ -1,7 +1,4 @@
-"use client";
-
 import type { CommentData } from "@liveblocks/core";
-import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import type { ComponentPropsWithoutRef, ReactNode } from "react";
 import React, { forwardRef, useCallback, useState } from "react";
 
@@ -16,15 +13,15 @@ import {
   type CommentOverrides,
   type ComposerOverrides,
 } from "../overrides";
-import type { CommentRenderMentionProps } from "../primitives/Comment";
-import { Comment as CommentPrimitive } from "../primitives/Comment";
-import { Composer as ComposerPrimitive } from "../primitives/Composer";
+import * as CommentPrimitive from "../primitives/Comment";
+import type { CommentRenderMentionProps } from "../primitives/Comment/types";
+import * as ComposerPrimitive from "../primitives/Composer";
 import { Timestamp } from "../primitives/Timestamp";
 import { MENTION_CHARACTER } from "../slate/mentions";
 import { classNames } from "../utils/class-names";
 import { Composer } from "./Composer";
 import { Avatar } from "./internal/Avatar";
-import { Dropdown, DropdownTrigger } from "./internal/Dropdown";
+import { Dropdown, DropdownItem, DropdownTrigger } from "./internal/Dropdown";
 import {
   Tooltip,
   TooltipProvider,
@@ -42,6 +39,11 @@ export interface CommentProps extends ComponentPropsWithoutRef<"div"> {
    * How to show or hide the actions.
    */
   showActions?: boolean | "hover";
+
+  /**
+   * Whether to show the comment if it was deleted. If set to `false`, it will render deleted comments as `null`.
+   */
+  showDeleted?: boolean;
 
   /**
    * Whether to indent the comment's body.
@@ -88,6 +90,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
     {
       comment,
       indentBody = true,
+      showDeleted,
       showActions = "hover",
       overrides,
       additionalActions,
@@ -122,8 +125,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
       });
     }, [comment.id, comment.threadId, deleteComment]);
 
-    // TODO: Add option to render a `This comment was deleted` placeholder instead
-    if (!comment.body) {
+    if (!showDeleted && !comment.body) {
       return null;
     }
 
@@ -143,17 +145,17 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
           ref={forwardedRef}
         >
           <div className="lb-comment-header">
-            <div className="lb-comment-info">
+            <div className="lb-comment-details">
               <Avatar className="lb-comment-avatar" userId={comment.userId} />
-              <span className="lb-comment-info-labels">
+              <span className="lb-comment-details-labels">
                 <User className="lb-comment-user" userId={comment.userId} />
                 <span className="lb-comment-date">
                   <Timestamp
-                    locale="en-US"
+                    locale={$.locale}
                     date={comment.createdAt}
                     className="lb-comment-date-timestamp"
                   />
-                  {comment.editedAt && (
+                  {comment.editedAt && comment.body && (
                     <>
                       {" "}
                       <span className="lb-comment-date-edited">
@@ -178,28 +180,27 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
                   align="end"
                   content={
                     <>
-                      <DropdownMenu.Item
+                      <DropdownItem
                         className="lb-dropdown-item"
                         onSelect={handleEdit}
-                        disabled={!comment.body}
                       >
                         <EditIcon className="lb-dropdown-item-icon" />
                         {$.COMMENT_EDIT}
-                      </DropdownMenu.Item>
-                      <DropdownMenu.Item
+                      </DropdownItem>
+                      <DropdownItem
                         className="lb-dropdown-item"
                         onSelect={handleDelete}
-                        disabled={!comment.body}
                       >
                         <DeleteIcon className="lb-dropdown-item-icon" />
                         {$.COMMENT_DELETE}
-                      </DropdownMenu.Item>
+                      </DropdownItem>
                     </>
                   }
                 >
                   <Tooltip content={$.COMMENT_MORE}>
                     <DropdownTrigger
                       className="lb-button lb-comment-action"
+                      disabled={!comment.body}
                       aria-label={$.COMMENT_MORE}
                     >
                       <EllipsisIcon className="lb-button-icon" />
@@ -248,12 +249,16 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
                 COMPOSER_PLACEHOLDER: $.COMMENT_EDIT_COMPOSER_PLACEHOLDER,
               }}
             />
-          ) : (
+          ) : comment.body ? (
             <CommentPrimitive.Body
               className="lb-comment-body"
               body={comment.body}
               renderMention={CommentMention}
             />
+          ) : (
+            <div className="lb-comment-body">
+              <p className="lb-comment-deleted">{$.COMMENT_DELETED}</p>
+            </div>
           )}
         </div>
       </TooltipProvider>

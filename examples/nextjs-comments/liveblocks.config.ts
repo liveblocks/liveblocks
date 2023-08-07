@@ -2,7 +2,7 @@
 
 import { createClient } from "@liveblocks/client";
 import { createRoomContext } from "@liveblocks/react";
-// TODO: It needs to be exported from @liveblocks/client or @liveblocks/react-comments
+// TODO: Remove and use UserMeta info instead
 import { BaseUserInfo } from "@liveblocks/core";
 
 export const client = createClient({

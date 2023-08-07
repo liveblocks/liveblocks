@@ -1,5 +1,3 @@
-"use client";
-
 import type { ComponentProps } from "react";
 import React, { useMemo } from "react";
 
@@ -11,7 +9,6 @@ export interface AvatarProps extends ComponentProps<"div"> {
   userId: string;
 }
 
-// TODO: Handle loading and error states
 export function Avatar({ userId, className, ...props }: AvatarProps) {
   const { useUser } = useRoomContextBundle();
   const { user } = useUser(userId);
@@ -32,7 +29,9 @@ export function Avatar({ userId, className, ...props }: AvatarProps) {
         />
       )}
       {resolvedUserInitials && (
-        <span className="lb-avatar-fallback">{resolvedUserInitials}</span>
+        <span className="lb-avatar-fallback" aria-hidden>
+          {resolvedUserInitials}
+        </span>
       )}
     </div>
   );

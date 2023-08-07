@@ -12,7 +12,9 @@ function Example() {
   }
 
   if (error) {
-    return <div>Fail!</div>;
+    return (
+      <div className="error">There was an error while fetching the threads</div>
+    );
   }
 
   return (

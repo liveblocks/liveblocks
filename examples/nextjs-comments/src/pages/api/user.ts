@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { NAMES } from "../../constants";
+import { NAMES } from "../../database";
 
 type UserApiRequest = NextApiRequest & {
   query: {

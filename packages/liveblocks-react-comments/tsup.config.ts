@@ -59,16 +59,16 @@ export default defineConfig({
   async onSuccess() {
     buildStyles([
       {
-        entry: "src/styles/default/index.scss",
-        destination: "./default.css",
+        entry: "src/styles/index.scss",
+        destination: "./styles.css",
       },
       {
-        entry: "src/styles/default/dark/media-query.scss",
-        destination: "./default/dark/media-query.css",
+        entry: "src/styles/dark/media-query.scss",
+        destination: "./styles/dark/media-query.css",
       },
       {
-        entry: "src/styles/default/dark/attributes.scss",
-        destination: "./default/dark/attributes.css",
+        entry: "src/styles/dark/attributes.scss",
+        destination: "./styles/dark/attributes.css",
       },
     ]);
   },
