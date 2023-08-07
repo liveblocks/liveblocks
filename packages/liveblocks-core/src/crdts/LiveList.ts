@@ -288,6 +288,10 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       delta.push(deletedDelta);
     }
 
+    if (this._unacknowledgedDeletedIds.has(nn(op.deletedId))) {
+      this._unacknowledgedDeletedIds.delete(nn(op.deletedId));
+    }
+
     const unacknowledgedOpId = this._unacknowledgedSets.get(op.parentKey);
 
     if (unacknowledgedOpId !== undefined) {
@@ -298,13 +302,6 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       } else {
         this._unacknowledgedSets.delete(op.parentKey);
       }
-    }
-
-    if (this._unacknowledgedDeletedIds.has(op.id)) {
-      this._unacknowledgedDeletedIds.delete(op.id);
-      return delta.length === 0
-        ? { modified: false }
-        : { modified: makeUpdate(this, delta), reverse: [] };
     }
 
     const indexOfItemWithSamePosition = this._indexOfPosition(op.parentKey);
