@@ -1,8 +1,8 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "API v2",
-    "version": "2.0"
+    "version": "2.0",
+    "title": "API v2"
   },
   "servers": [
     {
@@ -13,7 +13,56 @@
     "/rooms": {
       "get": {
         "summary": "Get rooms",
-        "tags": [],
+        "description": "Returns a list of your rooms. The rooms are returned sorted by creation date, from newest to oldest. You can filter rooms by metadata, users accesses and groups accesses.\n\nThere is a pagination system where the next page URL is returned in the response as `nextPage`.\nYou can also limit the number of rooms by query.\n\nFiltering by metadata works by giving key values like `metadata.color=red`. Of course you can combine multiple metadata clauses to refine the response like `metadata.color=red&metadata.type=text`. Notice here the operator AND is applied between each clauses.\n\nFiltering by groups or userId works by giving a list of groups like `groupIds=marketing,GZo7tQ,product` or/and a userId like `userId=user1`.\nNotice here the operator OR is applied between each `groupIds` and the `userId`.\n",
+        "operationId": "get-rooms",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "A limit on the number of rooms to be returned. The limit can range between 1 and 100, and defaults to 20.",
+            "schema": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          },
+          {
+            "name": "startingAfter",
+            "in": "query",
+            "description": "A cursor used for pagination. You get the value from the response of the previous page.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "metadata.KEY",
+            "in": "query",
+            "description": "A filter on metadata. Multiple metadata keys can be used to filter rooms.",
+            "schema": {
+              "type": "string",
+              "examples": ["metadata.colors=blue"]
+            }
+          },
+          {
+            "name": "userId",
+            "in": "query",
+            "description": "A filter on users accesses.",
+            "schema": {
+              "type": "string",
+              "examples": ["userId=user1"]
+            }
+          },
+          {
+            "name": "groupIds",
+            "in": "query",
+            "description": "A filter on groups accesses. Multiple groups can be used.",
+            "schema": {
+              "type": "string",
+              "examples": ["groupsIds=group1,group2"]
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Success. Returns the list of rooms and the next page URL.",
@@ -61,60 +110,42 @@
             "$ref": "#/components/responses/422"
           }
         },
-        "operationId": "get-rooms",
-        "description": "Returns a list of your rooms. The rooms are returned sorted by creation date, from newest to oldest. You can filter rooms by metadata, users accesses and groups accesses.\n\nThere is a pagination system where the next page URL is returned in the response as `nextPage`.\nYou can also limit the number of rooms by query.\n\nFiltering by metadata works by giving key values like `metadata.color=red`. Of course you can combine multiple metadata clauses to refine the response like `metadata.color=red&metadata.type=text`. Notice here the operator AND is applied between each clauses.\n\nFiltering by groups or userId works by giving a list of groups like `groupIds=marketing,GZo7tQ,product` or/and a userId like `userId=user1`.\nNotice here the operator OR is applied between each `groupIds` and the `userId`.\n",
-        "parameters": [
+        "servers": [
           {
-            "schema": {
-              "type": "number",
-              "minimum": 1,
-              "maximum": 100,
-              "default": 20
-            },
-            "in": "query",
-            "name": "limit",
-            "description": "A limit on the number of rooms to be returned. The limit can range between 1 and 100, and defaults to 20."
-          },
-          {
-            "schema": {
-              "type": "string"
-            },
-            "in": "query",
-            "name": "startingAfter",
-            "description": "A cursor used for pagination. You get the value from the response of the previous page."
-          },
-          {
-            "schema": {
-              "type": "string",
-              "example": "metadata.colors=blue"
-            },
-            "in": "query",
-            "name": "metadata.KEY",
-            "description": "A filter on metadata. Multiple metadata keys can be used to filter rooms."
-          },
-          {
-            "schema": {
-              "type": "string",
-              "example": "userId=user1"
-            },
-            "in": "query",
-            "name": "userId",
-            "description": "A filter on users accesses."
-          },
-          {
-            "schema": {
-              "type": "string",
-              "example": "groupsIds=group1,group2"
-            },
-            "in": "query",
-            "name": "groupIds",
-            "description": "A filter on groups accesses. Multiple groups can be used."
+            "url": "https://api.liveblocks.io/v2"
           }
         ]
       },
       "post": {
         "summary": "Create room",
-        "tags": [],
+        "description": "Create a new room. `id` and `defaultAccesses` are required. \n- `defaultAccessess` could be `[]` or `[\"room:write\"]` (private or public). \n- `metadata` could be key/value as `string` or `string[]`. `metadata` supports maximum 50 entries. Key length has a limit of 40 characters maximum. Value length has a limit of 256 characters maximum. `metadata` is optional field.\n- `usersAccesses` could be `[]` or `[\"room:write\"]` for every records. `usersAccesses` can contain 100 ids maximum. Id length has a limit of 40 characters. `usersAccesses` is optional field.\n- `groupsAccesses` are optional fields.\n",
+        "operationId": "post-rooms",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateRoom"
+              },
+              "examples": {
+                "example": {
+                  "value": {
+                    "id": "my-room-3ebc26e2bf96",
+                    "defaultAccesses": ["room:write"],
+                    "metadata": {
+                      "color": "blue"
+                    },
+                    "usersAccesses": {
+                      "alice": ["room:write"]
+                    },
+                    "groupsAccesses": {
+                      "product": ["room:write"]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "Success. Returns the created room.",
@@ -159,52 +190,29 @@
             "$ref": "#/components/responses/422"
           }
         },
-        "operationId": "post-rooms",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateRoom"
-              },
-              "examples": {
-                "example": {
-                  "value": {
-                    "id": "my-room-3ebc26e2bf96",
-                    "defaultAccesses": ["room:write"],
-                    "metadata": {
-                      "color": "blue"
-                    },
-                    "usersAccesses": {
-                      "alice": ["room:write"]
-                    },
-                    "groupsAccesses": {
-                      "product": ["room:write"]
-                    }
-                  }
-                }
-              }
-            }
+        "servers": [
+          {
+            "url": "https://api.liveblocks.io/v2"
           }
-        },
-        "description": "Create a new room. `id` and `defaultAccesses` are required. \n- `defaultAccessess` could be `[]` or `[\"room:write\"]` (private or public). \n- `metadata` could be key/value as `string` or `string[]`. `metadata` supports maximum 50 entries. Key length has a limit of 40 characters maximum. Value length has a limit of 256 characters maximum. `metadata` is optional field.\n- `usersAccesses` could be `[]` or `[\"room:write\"]` for every records. `usersAccesses` can contain 100 ids maximum. Id length has a limit of 40 characters. `usersAccesses` is optional field.\n- `groupsAccesses` are optional fields.\n"
-      },
-      "parameters": []
+        ]
+      }
     },
     "/rooms/{roomId}": {
-      "parameters": [
-        {
-          "schema": {
-            "type": "string"
-          },
-          "name": "roomId",
-          "in": "path",
-          "required": true,
-          "description": "ID of the room"
-        }
-      ],
       "get": {
         "summary": "Get room",
+        "description": "Get a room by its ID. ",
         "operationId": "get-rooms-roomId",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "description": "ID of the room",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Success. Returns the room.",
@@ -249,12 +257,64 @@
             "$ref": "#/components/responses/404"
           }
         },
-        "description": "Get a room by its ID. ",
-        "parameters": []
+        "servers": [
+          {
+            "url": "https://api.liveblocks.io/v2"
+          }
+        ]
       },
       "post": {
         "summary": "Update room",
-        "tags": [],
+        "description": "Updates specific properties of a room. It's not necessary to provide the entire room's information. \nSetting a property to `null` means to delete this property. For example, if you want to remove access to a specific user without losing other users: \n``{\n    \"usersAccesses\": {\n        \"john\": null\n    }\n}``\n`defaultAccessess`, `metadata`, `usersAccesses`, `groupsAccesses` can be updated.\n\n- `defaultAccessess` could be `[]` or `[\"room:write\"]` (private or public). \n- `metadata` could be key/value as `string` or `string[]`. `metadata` supports maximum 50 entries. Key length has a limit of 40 characters maximum. Value length has a limit of 256 characters maximum. `metadata` is optional field.\n- `usersAccesses` could be `[]` or `[\"room:write\"]` for every records. `usersAccesses` can contain 100 ids maximum. Id length has a limit of 256 characters. `usersAccesses` is optional field.\n- `groupsAccesses` could be `[]` or `[\"room:write\"]` for every records. `groupsAccesses` can contain 100 ids maximum. Id length has a limit of 256 characters. `groupsAccesses` is optional field.\n\n",
+        "operationId": "post-rooms-roomId",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "description": "ID of the room",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateRoom"
+              },
+              "examples": {
+                "example-1": {
+                  "value": {
+                    "defaultAccesses": ["room:write"],
+                    "usersAccesses": {
+                      "vinod": ["room:write"],
+                      "alice": ["room:write"]
+                    },
+                    "groupsAccesses": {
+                      "marketing": ["room:write"]
+                    },
+                    "metadata": {
+                      "color": "blue"
+                    }
+                  }
+                }
+              }
+            },
+            "application/xml": {
+              "schema": {
+                "type": "object"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "Success. Returns the updated room.",
@@ -302,51 +362,27 @@
             "$ref": "#/components/responses/422"
           }
         },
-        "operationId": "post-rooms-roomId",
-        "description": "Updates specific properties of a room. It's not necessary to provide the entire room's information. \nSetting a property to `null` means to delete this property. For example, if you want to remove access to a specific user without losing other users: \n``{\n    \"usersAccesses\": {\n        \"john\": null\n    }\n}``\n`defaultAccessess`, `metadata`, `usersAccesses`, `groupsAccesses` can be updated.\n\n- `defaultAccessess` could be `[]` or `[\"room:write\"]` (private or public). \n- `metadata` could be key/value as `string` or `string[]`. `metadata` supports maximum 50 entries. Key length has a limit of 40 characters maximum. Value length has a limit of 256 characters maximum. `metadata` is optional field.\n- `usersAccesses` could be `[]` or `[\"room:write\"]` for every records. `usersAccesses` can contain 100 ids maximum. Id length has a limit of 256 characters. `usersAccesses` is optional field.\n- `groupsAccesses` could be `[]` or `[\"room:write\"]` for every records. `groupsAccesses` can contain 100 ids maximum. Id length has a limit of 256 characters. `groupsAccesses` is optional field.\n\n",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateRoom"
-              },
-              "examples": {
-                "example-1": {
-                  "value": {
-                    "defaultAccesses": ["room:write"],
-                    "usersAccesses": {
-                      "vinod": ["room:write"],
-                      "alice": ["room:write"]
-                    },
-                    "groupsAccesses": {
-                      "marketing": ["room:write"]
-                    },
-                    "metadata": {
-                      "color": "blue"
-                    }
-                  }
-                }
-              }
-            },
-            "application/xml": {
-              "schema": {
-                "type": "object",
-                "properties": {}
-              }
-            },
-            "multipart/form-data": {
-              "schema": {
-                "type": "object",
-                "properties": {}
-              }
-            }
-          },
-          "description": ""
-        }
+        "servers": [
+          {
+            "url": "https://api.liveblocks.io/v2"
+          }
+        ]
       },
       "delete": {
         "summary": "Delete room",
-        "tags": [],
+        "description": "Deletes a room. A deleted room is no longer accessible from the API or the dashboard and it cannot be restored. \n\n",
+        "operationId": "delete-rooms-roomId",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "description": "ID of the room",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "204": {
             "description": "Success. The room was deleted"
@@ -364,27 +400,29 @@
             "$ref": "#/components/responses/422"
           }
         },
-        "operationId": "delete-rooms-roomId",
-        "description": "Deletes a room. A deleted room is no longer accessible from the API or the dashboard and it cannot be restored. \n\n"
+        "servers": [
+          {
+            "url": "https://api.liveblocks.io/v2"
+          }
+        ]
       }
     },
     "/rooms/{roomId}/active_users": {
-      "parameters": [
-        {
-          "schema": {
-            "type": "string"
-          },
-          "name": "roomId",
-          "in": "path",
-          "required": true,
-          "description": "ID of the room"
-        }
-      ],
       "get": {
         "summary": "Get active users",
-        "tags": [],
-        "operationId": "get-rooms-roomId-active-users",
         "description": "Returns a list of users currently present in the requested room. For better performance, we recommand to call this endpoint every 10 seconds maximum. \nDuplicates can happen if a user is in the requested room with multiple browser tabs opened.",
+        "operationId": "get-rooms-roomId-active-users",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "description": "ID of the room",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Success. Returns the list of active users for the specified room.",
@@ -425,24 +463,30 @@
           "404": {
             "$ref": "#/components/responses/404"
           }
-        }
+        },
+        "servers": [
+          {
+            "url": "https://api.liveblocks.io/v2"
+          }
+        ]
       }
     },
     "/rooms/{roomId}/storage": {
-      "parameters": [
-        {
-          "schema": {
-            "type": "string"
-          },
-          "name": "roomId",
-          "in": "path",
-          "required": true,
-          "description": "ID of the room"
-        }
-      ],
       "get": {
         "summary": "Get storage",
-        "tags": [],
+        "description": "Returns a room storage as JSON.\n\nSome implementation details:\nEach Liveblocks data structure is represented by a JSON element having two properties:\n`\"liveblocksType\": \"LiveObject\" | \"LiveList\" | \"LiveMap\"`\n`\"data\"` => contains the nested data structures (children) and data.\nThe root is always a `LiveObject`.",
+        "operationId": "get-rooms-roomId-storage",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "description": "ID of the room",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Success. Returns the room storage as JSON.",
@@ -455,7 +499,14 @@
                       "type": "string"
                     },
                     "data": {
-                      "type": ["string", "object"]
+                      "oneOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "object"
+                        }
+                      ]
                     }
                   }
                 },
@@ -498,69 +549,29 @@
             "$ref": "#/components/responses/404"
           }
         },
-        "operationId": "get-rooms-roomId-storage",
-        "description": "Returns a room storage as JSON.\n\nSome implementation details:\nEach Liveblocks data structure is represented by a JSON element having two properties:\n`\"liveblocksType\": \"LiveObject\" | \"LiveList\" | \"LiveMap\"`\n`\"data\"` => contains the nested data structures (children) and data.\nThe root is always a `LiveObject`."
+        "servers": [
+          {
+            "url": "https://api.liveblocks.io/v2"
+          }
+        ]
       },
       "post": {
         "summary": "Initialize storage",
-        "operationId": "post-rooms-roomId-storage",
-        "responses": {
-          "200": {
-            "description": "Success. The storage is initialized. Returns the room storage as JSON.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "liveblocksType": {
-                      "type": "string"
-                    },
-                    "data": {
-                      "type": ["string", "object"]
-                    }
-                  }
-                },
-                "examples": {
-                  "example-1": {
-                    "value": {
-                      "liveblocksType": "LiveObject",
-                      "data": {
-                        "aLiveObject": {
-                          "liveblocksType": "LiveObject",
-                          "data": {
-                            "a": 1
-                          }
-                        },
-                        "aLiveList": {
-                          "liveblocksType": "LiveList",
-                          "data": ["a", "b"]
-                        },
-                        "aLiveMap": {
-                          "liveblocksType": "LiveMap",
-                          "data": {
-                            "a": 1,
-                            "b": 2
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "$ref": "#/components/responses/401"
-          },
-          "403": {
-            "$ref": "#/components/responses/403"
-          },
-          "404": {
-            "$ref": "#/components/responses/404"
-          }
-        },
         "description": "Initializes a room storage. The room must already exist and have an empty storage. Calling this endpoint will disconnect all users from the room if there are any.\n\nThe format of the request body is the same as what’s returned by the get storage endpoint.\n\nFor each Liveblocks data structure that you want to create, you need a JSON element having two properties:\n- `\"liveblocksType\"` => `\"LiveObject\" | \"LiveList\" | \"LiveMap\"`\n- `\"data\"` => contains the nested data structures (children) and data.\n\nThe root’s type can only be LiveObject.\n\nA utility function, `toPlainLson` is included in `@liveblocks/client` from `1.0.9` to help convert `LiveObject`, `LiveList`, and `LiveMap` to the structure expected by the endpoint.",
+        "operationId": "post-rooms-roomId-storage",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "description": "ID of the room",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "requestBody": {
+          "description": "",
           "content": {
             "application/json": {
               "schema": {
@@ -601,13 +612,91 @@
                 }
               }
             }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success. The storage is initialized. Returns the room storage as JSON.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "liveblocksType": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "oneOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "object"
+                        }
+                      ]
+                    }
+                  }
+                },
+                "examples": {
+                  "example-1": {
+                    "value": {
+                      "liveblocksType": "LiveObject",
+                      "data": {
+                        "aLiveObject": {
+                          "liveblocksType": "LiveObject",
+                          "data": {
+                            "a": 1
+                          }
+                        },
+                        "aLiveList": {
+                          "liveblocksType": "LiveList",
+                          "data": ["a", "b"]
+                        },
+                        "aLiveMap": {
+                          "liveblocksType": "LiveMap",
+                          "data": {
+                            "a": 1,
+                            "b": 2
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
           },
-          "description": ""
-        }
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          }
+        },
+        "servers": [
+          {
+            "url": "https://api.liveblocks.io/v2"
+          }
+        ]
       },
       "delete": {
         "summary": "Delete storage",
+        "description": "Deletes all of the room’s storage data. Calling this endpoint will disconnect all users from the room if there are any.\n",
         "operationId": "delete-rooms-roomId-storage",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "description": "ID of the room",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Success. The room has no more storage."
@@ -622,13 +711,50 @@
             "$ref": "#/components/responses/404"
           }
         },
-        "description": "Deletes all of the room’s storage data. Calling this endpoint will disconnect all users from the room if there are any.\n"
+        "servers": [
+          {
+            "url": "https://api.liveblocks.io/v2"
+          }
+        ]
       }
     },
     "/rooms/{roomId}/authorize": {
       "post": {
         "summary": "Get an access token to enter a room",
+        "description": "This endpoint lets your application server (= your backend) obtain a token that one of its clients (= your frontend) can use to enter a Liveblocks room. You use this endpoint to implement your own application’s custom authentication endpoint. When making this request, you’ll have to use your secret key.\n\nYou can pass the property `userId` in the request's body. This can be whatever internal identifier you use for your user accounts as long as it uniquely identifies an account. Setting the `userId` is optional if you want to use public rooms, but it is required to enter a private room (because permissions are assigned to specific user IDs). In case you want to use the group permission system, you can also declare which `groupIds` this user belongs to.\n\nThe property userId is used by Liveblocks to calculate your account’s Monthly Active Users. One unique userId corresponds to one MAU. If you don’t pass a userId, we will create for you a new anonymous userId on each connection, but your MAUs will be higher.\n\nAdditionally, you can set custom metadata to the token, which will be publicly accessible by other clients through the `user.info` property. This is useful for storing static data like avatar images or the user’s display name.",
         "operationId": "post-authorize",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "description": "ID of the room",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAuthorization"
+              },
+              "examples": {
+                "example-1": {
+                  "value": {
+                    "userId": "b2c1c290-f2c9-45de-a74e-6b7aa0690f59",
+                    "groupIds": ["g1", "g2"],
+                    "userInfo": {
+                      "name": "bob",
+                      "colors": ["blue", "red"]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "Success. Returns the JWT token.",
@@ -660,46 +786,43 @@
             "$ref": "#/components/responses/422"
           }
         },
+        "servers": [
+          {
+            "url": "https://api.liveblocks.io/v2"
+          }
+        ]
+      }
+    },
+    "/rooms/{roomId}/broadcast_event": {
+      "post": {
+        "summary": "Broadcast an event to a room",
+        "description": "This endpoint enables the broadcast of an event to a room without having to connect to it via the `client` from `@liveblocks/client`. It takes any valid JSON as a request body.",
+        "operationId": "post-broadcast-event",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "description": "ID of the room",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateAuthorization"
-              },
               "examples": {
                 "example-1": {
                   "value": {
-                    "userId": "b2c1c290-f2c9-45de-a74e-6b7aa0690f59",
-                    "groupIds": ["g1", "g2"],
-                    "userInfo": {
-                      "name": "bob",
-                      "colors": ["blue", "red"]
-                    }
+                    "type": "EMOJI",
+                    "emoji": "🔥"
                   }
                 }
               }
             }
           }
         },
-        "description": "This endpoint lets your application server (= your backend) obtain a token that one of its clients (= your frontend) can use to enter a Liveblocks room. You use this endpoint to implement your own application’s custom authentication endpoint. When making this request, you’ll have to use your secret key.\n\nYou can pass the property `userId` in the request's body. This can be whatever internal identifier you use for your user accounts as long as it uniquely identifies an account. Setting the `userId` is optional if you want to use public rooms, but it is required to enter a private room (because permissions are assigned to specific user IDs). In case you want to use the group permission system, you can also declare which `groupIds` this user belongs to.\n\nThe property userId is used by Liveblocks to calculate your account’s Monthly Active Users. One unique userId corresponds to one MAU. If you don’t pass a userId, we will create for you a new anonymous userId on each connection, but your MAUs will be higher.\n\nAdditionally, you can set custom metadata to the token, which will be publicly accessible by other clients through the `user.info` property. This is useful for storing static data like avatar images or the user’s display name.",
-        "parameters": []
-      },
-      "parameters": [
-        {
-          "schema": {
-            "type": "string"
-          },
-          "name": "roomId",
-          "in": "path",
-          "required": true,
-          "description": "ID of the room"
-        }
-      ]
-    },
-    "/rooms/{roomId}/broadcast_event": {
-      "post": {
-        "summary": "Broadcast an event to a room",
-        "operationId": "post-broadcast-event",
         "responses": {
           "204": {
             "description": "Success. An event was broadcasted to the room."
@@ -717,31 +840,9 @@
             "$ref": "#/components/responses/422"
           }
         },
-        "description": "This endpoint enables the broadcast of an event to a room without having to connect to it via the `client` from `@liveblocks/client`. It takes any valid JSON as a request body.",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "examples": {
-                "example-1": {
-                  "value": {
-                    "type": "EMOJI",
-                    "emoji": "🔥"
-                  }
-                }
-              }
-            },
-            "description": "Any valid JSON."
-          }
-        },
-        "parameters": [
+        "servers": [
           {
-            "schema": {
-              "type": "string"
-            },
-            "name": "roomId",
-            "in": "path",
-            "required": true,
-            "description": "ID of the room"
+            "url": "https://api.liveblocks.io/v2"
           }
         ]
       }
@@ -749,7 +850,36 @@
     "/rooms/{roomId}/public/authorize": {
       "post": {
         "summary": "Get JWT token for WebSocket with public key",
+        "description": "This endpoint works with the public key and can be used client side. That means you don't need to implement a dedicated authorization endpoint server side. \nThe generated JWT token works only with public room (`defaultAccesses: [\"room:write\"]`).",
         "operationId": "post-public-authorize",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "description": "ID of the room",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublicAuthorizeBodyRequest"
+              },
+              "examples": {
+                "example": {
+                  "value": {
+                    "publicApiKey": "pk_test_lOMrmwejSWLaPYQc5_JuGHXXX"
+                  }
+                }
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "Success. Returns the JWT token.",
@@ -778,42 +908,18 @@
             "$ref": "#/components/responses/422"
           }
         },
-        "description": "This endpoint works with the public key and can be used client side. That means you don't need to implement a dedicated authorization endpoint server side. \nThe generated JWT token works only with public room (`defaultAccesses: [\"room:write\"]`).",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/PublicAuthorizeBodyRequest"
-              },
-              "examples": {
-                "example": {
-                  "value": {
-                    "publicApiKey": "pk_test_lOMrmwejSWLaPYQc5_JuGHXXX"
-                  }
-                }
-              }
-            }
-          },
-          "description": ""
-        }
-      },
-      "parameters": [
-        {
-          "schema": {
-            "type": "string"
-          },
-          "name": "roomId",
-          "in": "path",
-          "required": true,
-          "description": "ID of the room"
-        }
-      ]
+        "servers": [
+          {
+            "url": "https://api.liveblocks.io/v2"
+          }
+        ]
+      }
     },
     "/schemas": {
       "post": {
         "summary": "Create schema",
-        "operationId": "post-create-new-schema",
         "description": "Creates a new schema which can be referenced later to enforce a room's storage data structure. The schema consists of a name (for referencing it), and a body, which specifies the exact allowed shape of data in the room. This body is a multi-line string written in the Liveblocks [schema syntax](/docs/platform/schema-validation/syntax).",
+        "operationId": "post-create-new-schema",
         "requestBody": {
           "content": {
             "application/json": {
@@ -861,14 +967,29 @@
             "$ref": "#/components/responses/422schema"
           }
         },
-        "parameters": []
+        "servers": [
+          {
+            "url": "https://api.liveblocks.io/v2"
+          }
+        ]
       }
     },
     "/schemas/{id}": {
       "get": {
         "summary": "Get schema",
-        "operationId": "get-create-new-schema",
         "description": "This endpoint retrieves a schema by its id. The id is a combination of the schema name and version. For example, `my-schema@1`.",
+        "operationId": "get-create-new-schema",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID of the schema",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Success. Found the schema and returns it as JSON.",
@@ -899,22 +1020,27 @@
             "$ref": "#/components/responses/404schema"
           }
         },
-        "parameters": [
+        "servers": [
           {
-            "schema": {
-              "type": "string"
-            },
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "description": "ID of the schema"
+            "url": "https://api.liveblocks.io/v2"
           }
         ]
       },
       "put": {
         "summary": "Update schema",
-        "operationId": "put-update-new-schema",
         "description": "Updates the body for the schema. A schema can only be updated if it is not used by any room.",
+        "operationId": "put-update-new-schema",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID of the schema",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -937,7 +1063,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Schema"
+                  "$ref": "#/components/schemas/SchemaResponse"
                 },
                 "examples": {
                   "example-1": {
@@ -964,22 +1090,27 @@
             "$ref": "#/components/responses/422schema"
           }
         },
-        "parameters": [
+        "servers": [
           {
-            "schema": {
-              "type": "string"
-            },
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "description": "ID of the schema"
+            "url": "https://api.liveblocks.io/v2"
           }
         ]
       },
       "delete": {
         "summary": "Delete schema",
-        "operationId": "delete-a-schema",
         "description": "This endpoint deletes a schema by its ID. The ID is a combination of the schema name and version. For example, `my-schema@1`. A schema can only be deleted if it is not attached to a room.",
+        "operationId": "delete-a-schema",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID of the schema",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Success. Schema was delated"
@@ -991,15 +1122,9 @@
             "$ref": "#/components/responses/403schema"
           }
         },
-        "parameters": [
+        "servers": [
           {
-            "schema": {
-              "type": "string"
-            },
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "description": "ID of the schema"
+            "url": "https://api.liveblocks.io/v2"
           }
         ]
       }
@@ -1007,15 +1132,26 @@
     "/rooms/{roomId}/schema": {
       "get": {
         "summary": "Get schema by room",
-        "operationId": "get-new-schema",
         "description": "This endpoint retrieves the schema attached to a room.",
+        "operationId": "get-new-schema",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "description": "ID of the room",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Success. Found the schema attached to the room and returns it as JSON.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Schema"
+                  "$ref": "#/components/schemas/SchemaResponse"
                 },
                 "examples": {
                   "example-1": {
@@ -1035,29 +1171,34 @@
           "401": {
             "$ref": "#/components/responses/401"
           },
-          "404": {
-            "$ref": "#/components/responses/404schema"
-          },
           "403": {
             "$ref": "#/components/responses/403schema"
+          },
+          "404": {
+            "$ref": "#/components/responses/404schema"
           }
         },
-        "parameters": [
+        "servers": [
           {
-            "schema": {
-              "type": "string"
-            },
-            "name": "roomId",
-            "in": "path",
-            "required": true,
-            "description": "ID of the room"
+            "url": "https://api.liveblocks.io/v2"
           }
         ]
       },
       "post": {
         "summary": "Attach schema to room",
-        "operationId": "post-attach-schema-to-room",
         "description": "This endpoint attachs a schema to a room, and instantly enables runtime schema validation for the room. If the current contents of the room's storage do not match the schema, attaching will fail and the error message will give details on why the schema failed to attach.",
+        "operationId": "post-attach-schema-to-room",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "description": "ID of the room",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -1102,22 +1243,27 @@
             "$ref": "#/components/responses/409schema"
           }
         },
-        "parameters": [
+        "servers": [
           {
-            "schema": {
-              "type": "string"
-            },
-            "name": "roomId",
-            "in": "path",
-            "required": true,
-            "description": "ID of the room"
+            "url": "https://api.liveblocks.io/v2"
           }
         ]
       },
       "delete": {
         "summary": "Detach schema from room",
-        "operationId": "delete-detach-schema-to-room",
         "description": "This endpoint detaches the schema from a room.",
+        "operationId": "delete-detach-schema-to-room",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "description": "ID of the room",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Success. Detached the schema from the room."
@@ -1132,301 +1278,256 @@
             "$ref": "#/components/responses/409schema"
           }
         },
+        "servers": [
+          {
+            "url": "https://api.liveblocks.io/v2"
+          }
+        ]
+      }
+    },
+    "/rooms/{roomId}/threads": {
+      "get": {
+        "summary": "Get room threads",
+        "operationId": "get-threads",
         "parameters": [
           {
-            "schema": {
-              "type": "string"
-            },
             "name": "roomId",
             "in": "path",
             "required": true,
-            "description": "ID of the room"
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Returns list of threads in a room.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Thread"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          }
+        },
+        "servers": [
+          {
+            "url": "https://api.liveblocks.io/v2"
+          }
+        ]
+      }
+    },
+    "/rooms/{roomId}/threads/{threadId}": {
+      "get": {
+        "summary": "Get thread",
+        "description": "Get a thread.",
+        "operationId": "get-thread",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "threadId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Returns requested thread.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Thread"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          }
+        },
+        "servers": [
+          {
+            "url": "https://api.liveblocks.io/v2"
+          }
+        ]
+      }
+    },
+    "/rooms/{roomId}/threads/{threadId}/comments/{commentId}": {
+      "get": {
+        "summary": "Get comment",
+        "description": "Get a thread.",
+        "operationId": "get-thread",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "threadId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "commentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Returns the requested comment.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Comment"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          }
+        },
+        "servers": [
+          {
+            "url": "https://api.liveblocks.io/v2"
+          }
+        ]
+      }
+    },
+    "/rooms/{roomId}/threads/{threadId}/participants": {
+      "get": {
+        "summary": "Get thread participants",
+        "description": "Gets the list of thread participants. It is a list of unique user IDs representing all the thread comment authors and mentioned users in comments.",
+        "operationId": "get-thread-participants",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "threadId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Returns the thread's participants",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "participantIds": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          },
+          "": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "participantIds": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "servers": [
+          {
+            "url": "https://api.liveblocks.io/v2"
           }
         ]
       }
     }
   },
   "components": {
-    "schemas": {
-      "Room": {
-        "title": "Room",
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "type": {
-            "type": "string",
-            "enum": ["room"]
-          },
-          "lastConnectionAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "metadata": {
-            "type": "object",
-            "additionalProperties": {
-              "type": "string"
-            }
-          },
-          "defaultAccesses": {
-            "type": ["string", "array"],
-            "uniqueItems": true,
-            "items": {}
-          },
-          "usersAccesses": {
-            "type": "object"
-          },
-          "groupsAccesses": {
-            "type": "object"
-          }
-        },
-        "examples": [],
-        "x-internal": false
-      },
-      "UpdateRoom": {
-        "type": "object",
-        "title": "UpdateRoom",
-        "additionalProperties": false,
-        "properties": {
-          "defaultAccesses": {
-            "type": [
-              "null",
-              {
-                "type": "object",
-                "additionalProperties": {
-                  "type": "array"
-                }
-              },
-              "array"
-            ],
-            "items": {
-              "type": "string"
-            }
-          },
-          "usersAccesses": {
-            "type": ["object", "null"],
-            "description": "A map of user identifiers to permissions list. Setting the value as `null` will clear all users' accesses. Setting one user identifier as `null` will clear this user's accesses."
-          },
-          "groupsAccesses": {
-            "type": ["object", "null"],
-            "description": "A map of group identifiers to permissions list. Setting the value as `null` will clear all groups' accesses. Setting one group identifier as `null` will clear this group's accesses."
-          },
-          "metadata": {
-            "type": ["object", "null"],
-            "description": "A map of metadata keys to their values (`string` or `string[]`). Setting the value as `null` will clear all metadata. Setting a key as `null` will clear the key."
-          }
-        }
-      },
-      "CreateRoom": {
-        "title": "CreateRoom",
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "defaultAccesses": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "usersAccesses": {
-            "type": "object"
-          },
-          "groupsAccesses": {
-            "type": "object"
-          },
-          "metadata": {
-            "type": "object"
-          }
-        },
-        "required": ["id", "defaultAccesses"]
-      },
-      "Error": {
-        "title": "Error",
-        "type": "object",
-        "properties": {
-          "error": {
-            "type": "string",
-            "description": "Error code"
-          },
-          "message": {
-            "type": "string",
-            "description": "Message explaining the error"
-          },
-          "suggestion": {
-            "type": "string",
-            "description": "A suggestion on how to fix the error"
-          },
-          "docs": {
-            "type": "string",
-            "description": "A link to the documentation"
-          }
-        }
-      },
-      "Authorization": {
-        "title": "Authorization",
-        "type": "object",
-        "properties": {
-          "token": {
-            "type": "string"
-          }
-        }
-      },
-      "CreateAuthorization": {
-        "title": "CreateAuthorization",
-        "type": "object",
-        "properties": {
-          "userId": {
-            "type": "string"
-          },
-          "userInfo": {
-            "type": "object"
-          },
-          "groupIds": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          }
-        }
-      },
-      "GetRooms": {
-        "title": "GetRooms",
-        "type": "object",
-        "properties": {
-          "nextPage": {
-            "type": "string"
-          },
-          "data": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "id": {
-                  "type": "string"
-                },
-                "type": {
-                  "type": "string"
-                },
-                "lastConnectionAt": {
-                  "type": "string"
-                },
-                "createdAt": {
-                  "type": "string"
-                },
-                "metadata": {
-                  "type": "object"
-                },
-                "defaultAccesses": {
-                  "type": ["string", "array"],
-                  "items": {}
-                },
-                "usersAccesses": {
-                  "type": "object"
-                },
-                "groupsAccesses": {
-                  "type": "object"
-                }
-              }
-            }
-          }
-        }
-      },
-      "ActiveUsersResponse": {
-        "title": "ActiveUsersResponse",
-        "type": "object",
-        "properties": {
-          "data": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "type": {
-                  "type": "string"
-                },
-                "connectionId": {
-                  "type": "number"
-                },
-                "": {
-                  "type": "string"
-                }
-              }
-            }
-          }
-        }
-      },
-      "PublicAuthorizeBodyRequest": {
-        "title": "PublicAuthorizeBodyRequest",
-        "type": "object",
-        "properties": {
-          "publicApiKey": {
-            "type": "string"
-          }
-        }
-      },
-      "SchemaResponse": {
-        "title": "Schema",
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "name": {
-            "type": "string"
-          },
-          "version": {
-            "type": "number"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "updatedAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "body": {
-            "type": "string"
-          }
-        },
-        "examples": [],
-        "x-internal": false
-      },
-      "SchemaRequest": {
-        "title": "SchemaRequest",
-        "type": "object",
-        "properties": {
-          "name": "string",
-          "body": "string"
-        }
-      },
-      "UpdateSchema": {
-        "title": "UpdateSchema",
-        "type": "object",
-        "properties": {
-          "body": "string"
-        }
-      },
-      "AttachSchema": {
-        "title": "AttachSchema",
-        "type": "object",
-        "properties": {
-          "schema": {
-            "type": "string"
-          }
-        }
-      }
-    },
     "securitySchemes": {
       "Authorization": {
-        "name": "Bearer sk_xxx",
         "type": "apiKey",
+        "name": "Bearer sk_xxx",
         "in": "header"
       }
     },
@@ -1495,6 +1596,71 @@
           }
         }
       },
+      "404": {
+        "description": "Resource not found.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "examples": {
+              "ROOM_NOT_FOUND": {
+                "value": {
+                  "error": "ROOM_NOT_FOUND",
+                  "message": "Room not found.",
+                  "suggestion": "Please use a valid room ID, room IDs are available in the dashboard: https://liveblocks.io/dashboard/rooms.",
+                  "docs": ""
+                }
+              }
+            }
+          }
+        }
+      },
+      "409": {
+        "description": "Room already exists.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "examples": {
+              "ROOM_ALREADY_EXISTS": {
+                "value": {
+                  "error": "ROOM_ALREADY_EXISTS",
+                  "message": "The room already exists.",
+                  "suggestion": "Please use a different room id or update the existing room.",
+                  "doc": ""
+                }
+              }
+            }
+          },
+          "application/xml": {
+            "schema": {
+              "type": "object"
+            }
+          }
+        }
+      },
+      "422": {
+        "description": "Unprocessable entity.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "examples": {
+              "UNPROCESSABLE_ENTITY": {
+                "value": {
+                  "error": "UNPROCESSABLE_ENTITY",
+                  "message": "Missing key: 'defaultAccesses'.",
+                  "suggestion": "Please ensure the data follows the correct format.",
+                  "docs": ""
+                }
+              }
+            }
+          }
+        }
+      },
       "403schema": {
         "description": "Unauthorized access.",
         "content": {
@@ -1538,26 +1704,6 @@
           }
         }
       },
-      "404": {
-        "description": "Room not found.",
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/Error"
-            },
-            "examples": {
-              "ROOM_NOT_FOUND": {
-                "value": {
-                  "error": "ROOM_NOT_FOUND",
-                  "message": "Room not found.",
-                  "suggestion": "Please use a valid room ID, room IDs are available in the dashboard: https://liveblocks.io/dashboard/rooms.",
-                  "docs": ""
-                }
-              }
-            }
-          }
-        }
-      },
       "404schema": {
         "description": "Schema not found.",
         "content": {
@@ -1574,32 +1720,6 @@
                   "docs": ""
                 }
               }
-            }
-          }
-        }
-      },
-      "409": {
-        "description": "Room already exists.",
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/Error"
-            },
-            "examples": {
-              "ROOM_ALREADY_EXISTS": {
-                "value": {
-                  "error": "ROOM_ALREADY_EXISTS",
-                  "message": "The room already exists.",
-                  "suggestion": "Please use a different room id or update the existing room.",
-                  "doc": ""
-                }
-              }
-            }
-          },
-          "application/xml": {
-            "schema": {
-              "type": "object",
-              "properties": {}
             }
           }
         }
@@ -1624,28 +1744,7 @@
           },
           "application/xml": {
             "schema": {
-              "type": "object",
-              "properties": {}
-            }
-          }
-        }
-      },
-      "422": {
-        "description": "Unprocessable entity.",
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/Error"
-            },
-            "examples": {
-              "UNPROCESSABLE_ENTITY": {
-                "value": {
-                  "error": "UNPROCESSABLE_ENTITY",
-                  "message": "Missing key: 'defaultAccesses'.",
-                  "suggestion": "Please ensure the data follows the correct format.",
-                  "docs": ""
-                }
-              }
+              "type": "object"
             }
           }
         }
@@ -1679,7 +1778,360 @@
         }
       }
     },
-    "requestBodies": {}
+    "schemas": {
+      "GetRooms": {
+        "type": "object",
+        "title": "GetRooms",
+        "properties": {
+          "nextPage": {
+            "type": "string"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "type": {
+                  "type": "string"
+                },
+                "lastConnectionAt": {
+                  "type": "string"
+                },
+                "createdAt": {
+                  "type": "string"
+                },
+                "metadata": {
+                  "type": "object"
+                },
+                "defaultAccesses": {
+                  "oneOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "array"
+                    }
+                  ]
+                },
+                "usersAccesses": {
+                  "type": "object"
+                },
+                "groupsAccesses": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      },
+      "CreateRoom": {
+        "type": "object",
+        "title": "CreateRoom",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "defaultAccesses": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "usersAccesses": {
+            "type": "object"
+          },
+          "groupsAccesses": {
+            "type": "object"
+          },
+          "metadata": {
+            "type": "object"
+          }
+        },
+        "required": ["id", "defaultAccesses"]
+      },
+      "Room": {
+        "type": "object",
+        "title": "Room",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "type": {
+            "const": "room"
+          },
+          "lastConnectionAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "metadata": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "defaultAccesses": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "array",
+                "uniqueItems": true
+              }
+            ]
+          },
+          "usersAccesses": {
+            "type": "object"
+          },
+          "groupsAccesses": {
+            "type": "object"
+          }
+        },
+        "examples": []
+      },
+      "UpdateRoom": {
+        "type": "object",
+        "title": "UpdateRoom",
+        "additionalProperties": false,
+        "properties": {
+          "defaultAccesses": {
+            "type": ["array", "null"],
+            "items": {
+              "type": "string"
+            }
+          },
+          "usersAccesses": {
+            "type": ["object", "null"],
+            "description": "A map of user identifiers to permissions list. Setting the value as `null` will clear all users' accesses. Setting one user identifier as `null` will clear this user's accesses."
+          },
+          "groupsAccesses": {
+            "type": ["object", "null"],
+            "description": "A map of group identifiers to permissions list. Setting the value as `null` will clear all groups' accesses. Setting one group identifier as `null` will clear this group's accesses."
+          },
+          "metadata": {
+            "type": ["object", "null"],
+            "description": "A map of metadata keys to their values (`string` or `string[]`). Setting the value as `null` will clear all metadata. Setting a key as `null` will clear the key."
+          }
+        }
+      },
+      "ActiveUsersResponse": {
+        "type": "object",
+        "title": "ActiveUsersResponse",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string"
+                },
+                "connectionId": {
+                  "type": "number"
+                },
+                "": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "CreateAuthorization": {
+        "type": "object",
+        "title": "CreateAuthorization",
+        "properties": {
+          "userId": {
+            "type": "string"
+          },
+          "userInfo": {
+            "type": "object"
+          },
+          "groupIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "Authorization": {
+        "type": "object",
+        "title": "Authorization",
+        "properties": {
+          "token": {
+            "type": "string"
+          }
+        }
+      },
+      "PublicAuthorizeBodyRequest": {
+        "type": "object",
+        "title": "PublicAuthorizeBodyRequest",
+        "properties": {
+          "publicApiKey": {
+            "type": "string"
+          }
+        }
+      },
+      "SchemaRequest": {
+        "type": "object",
+        "title": "SchemaRequest"
+      },
+      "SchemaResponse": {
+        "type": "object",
+        "title": "Schema",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "version": {
+            "type": "number"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "body": {
+            "type": "string"
+          }
+        },
+        "examples": []
+      },
+      "UpdateSchema": {
+        "type": "object",
+        "title": "UpdateSchema"
+      },
+      "AttachSchema": {
+        "type": "object",
+        "title": "AttachSchema",
+        "properties": {
+          "schema": {
+            "type": "string"
+          }
+        }
+      },
+      "Thread": {
+        "type": "object",
+        "title": "Thread",
+        "properties": {
+          "type": {
+            "const": "thread"
+          },
+          "id": {
+            "type": "string"
+          },
+          "roomId": {
+            "type": "string"
+          },
+          "comments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Comment"
+            }
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "metadata": {
+            "type": "object"
+          },
+          "updatedAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "id",
+          "roomId",
+          "comments",
+          "createdAt",
+          "metadata"
+        ]
+      },
+      "Comment": {
+        "type": "object",
+        "title": "Comment",
+        "properties": {
+          "type": {
+            "const": "comment",
+            "readOnly": true,
+            "default": "comment",
+            "examples": ["comment"]
+          },
+          "threadId": {
+            "type": "string"
+          },
+          "roomId": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "editedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "deletedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "mentionedIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "body": {
+            "type": "object"
+          }
+        },
+        "required": ["type", "threadId", "roomId", "id", "userId", "createdAt"]
+      },
+      "Error": {
+        "type": "object",
+        "title": "Error",
+        "properties": {
+          "error": {
+            "type": "string",
+            "description": "Error code"
+          },
+          "message": {
+            "type": "string",
+            "description": "Message explaining the error"
+          },
+          "suggestion": {
+            "type": "string",
+            "description": "A suggestion on how to fix the error"
+          },
+          "docs": {
+            "type": "string",
+            "description": "A link to the documentation"
+          }
+        }
+      }
+    }
   },
   "x-internal": true
 }
