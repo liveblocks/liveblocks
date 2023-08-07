@@ -12,7 +12,7 @@ describe("WebhookHandler", () => {
 
   const userEnteredBody = {
     data: {
-      appId: "605a50b01a36d5ea7a2e9104",
+      projectId: "605a50b01a36d5ea7a2e9104",
       connectionId: 2196,
       enteredAt: "2023-01-27T20:08:40.693Z",
       numActiveUsers: 2,
@@ -57,7 +57,7 @@ describe("WebhookHandler", () => {
       [
         "storageUpdated",
         {
-          appId: "605a50b01a36d5ea7a2e9104",
+          projectId: "605a50b01a36d5ea7a2e9104",
           roomId: "hero-grid-12-01-2022",
           updatedAt: "2023-01-27T20:27:48.744Z",
         },
@@ -65,7 +65,7 @@ describe("WebhookHandler", () => {
       [
         "userLeft",
         {
-          appId: "605a50b01a36d5ea7a2e9104",
+          projectId: "605a50b01a36d5ea7a2e9104",
           connectionId: 34597,
           leftAt: "2023-01-27T20:33:23.737Z",
           numActiveUsers: 4,
@@ -77,7 +77,7 @@ describe("WebhookHandler", () => {
       [
         "roomCreated",
         {
-          appId: "605a50b01a36d5ea7a2e9104",
+          projectId: "605a50b01a36d5ea7a2e9104",
           createdAt: "2023-01-27T20:33:23.737Z",
           roomId: "examples-hero-21-07-2022",
         },
@@ -85,7 +85,7 @@ describe("WebhookHandler", () => {
       [
         "roomDeleted",
         {
-          appId: "605a50b01a36d5ea7a2e9104",
+          projectId: "605a50b01a36d5ea7a2e9104",
           deletedAt: "2023-01-27T20:33:23.737Z",
           roomId: "examples-hero-21-07-2022",
         },
@@ -308,7 +308,7 @@ describe("WebhookHandler", () => {
 
       const body = {
         data: {
-          appId: "605a50b01a36d5ea7a2e9104",
+          projectId: "605a50b01a36d5ea7a2e9104",
           roomId: "hero-grid-12-01-2022",
           updatedAt: "2023-01-27T20:27:48.744Z",
         },

@@ -183,7 +183,7 @@ type StorageUpdatedEvent = {
   type: "storageUpdated";
   data: {
     roomId: string;
-    appId: string;
+    projectId: string;
     /**
      * ISO 8601 datestring
      * @example "2021-03-01T12:00:00.000Z"
@@ -195,7 +195,7 @@ type StorageUpdatedEvent = {
 type UserEnteredEvent = {
   type: "userEntered";
   data: {
-    appId: string;
+    projectId: string;
     roomId: string;
     connectionId: number;
     userId: string | null;
@@ -213,7 +213,7 @@ type UserEnteredEvent = {
 type UserLeftEvent = {
   type: "userLeft";
   data: {
-    appId: string;
+    projectId: string;
     roomId: string;
     connectionId: number;
     userId: string | null;
@@ -231,7 +231,7 @@ type UserLeftEvent = {
 type RoomCreatedEvent = {
   type: "roomCreated";
   data: {
-    appId: string;
+    projectId: string;
     roomId: string;
     /**
      * ISO 8601 datestring
@@ -244,7 +244,7 @@ type RoomCreatedEvent = {
 type RoomDeletedEvent = {
   type: "roomDeleted";
   data: {
-    appId: string;
+    projectId: string;
     roomId: string;
     /**
      * ISO 8601 datestring
