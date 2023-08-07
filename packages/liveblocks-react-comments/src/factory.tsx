@@ -70,10 +70,7 @@ type CommentsProviderProps = PropsWithChildren<{
   overrides?: Partial<Overrides>;
 }>;
 
-type CommentsContextBundle<
-  TThreadMetadata extends BaseMetadata,
-  TUserInfo extends BaseUserInfo,
-> = {
+type NonSuspenseCommentsContextExports<TThreadMetadata extends BaseMetadata> = {
   /**
    * Makes comments from a room available in the component hierarchy below.
    * Multiple instances with the same `roomId` can coexist in the same hierarchy.
@@ -145,22 +142,6 @@ type CommentsContextBundle<
   useDeleteComment(): (options: DeleteCommentOptions) => void;
 
   /**
-   * Returns the threads within the current room, from the nearest `CommentsProvider`.
-   *
-   * @example
-   * const { threads, error, isLoading } = useThreads();
-   */
-  useThreads(): RoomThreads<TThreadMetadata>;
-
-  /**
-   * Returns a user object from a given user ID.
-   *
-   * @example
-   * const { user, error, isLoading } = useUser("user-id");
-   */
-  useUser(userId: string): UserState<TUserInfo>;
-
-  /**
    * Returns the current room ID, from the nearest `CommentsProvider`.
    */
   useRoomId(): string;
@@ -185,8 +166,29 @@ type CommentsContextBundle<
    * const { isValid, submit } = useComposer();
    */
   useComposer(): ComposerContext;
+};
 
-  readonly suspense: {
+type CommentsContextBundle<
+  TThreadMetadata extends BaseMetadata,
+  TUserInfo extends BaseUserInfo,
+> = NonSuspenseCommentsContextExports<TThreadMetadata> & {
+  /**
+   * Returns the threads within the current room, from the nearest `CommentsProvider`.
+   *
+   * @example
+   * const { threads, error, isLoading } = useThreads();
+   */
+  useThreads(): RoomThreads<TThreadMetadata>;
+
+  /**
+   * Returns a user object from a given user ID.
+   *
+   * @example
+   * const { user, error, isLoading } = useUser("user-id");
+   */
+  useUser(userId: string): UserState<TUserInfo>;
+
+  readonly suspense: NonSuspenseCommentsContextExports<TThreadMetadata> & {
     /**
      * Returns the threads within the current room, from the nearest `CommentsProvider`.
      *
@@ -202,34 +204,6 @@ type CommentsContextBundle<
      * const { user, error, isLoading } = useUser("user-id");
      */
     useUser(userId: string): UserStateSuspense<TUserInfo>;
-
-    /**
-     * Returns the current room ID, from the nearest `CommentsProvider`.
-     *
-     * @example
-     * const roomId = useRoomId();
-     */
-    useRoomId(): string;
-
-    /**
-     * Listen to potential errors when creating and editing threads/comments.
-     *
-     * @example
-     * useErrorListener(error => {
-     *   console.error(error);
-     * })
-     */
-    useErrorListener(
-      onError: (error: CommentsApiError<TThreadMetadata>) => void
-    ): void;
-
-    /**
-     * Returns states and methods related to the composer.
-     *
-     * @example
-     * const { isValid, submit } = useComposer();
-     */
-    useComposer(): ComposerContext;
   };
 };
 
@@ -458,8 +432,13 @@ export function createCommentsContext<
 
   const bundle: Omit<
     CommentsContextBundle<TThreadMetadata, TUserInfo>,
-    "CommentsProvider"
-  > = {
+    "CommentsProvider" | "suspense"
+  > & {
+    readonly suspense: Omit<
+      CommentsContextBundle<TThreadMetadata, TUserInfo>["suspense"],
+      "CommentsProvider"
+    >;
+  } = {
     useCreateThread,
     useEditThreadMetadata,
     useCreateComment,
@@ -471,6 +450,11 @@ export function createCommentsContext<
     useComposer,
     useRoomId,
     suspense: {
+      useCreateThread,
+      useEditThreadMetadata,
+      useCreateComment,
+      useEditComment,
+      useDeleteComment,
       useThreads: useThreadsSuspense,
       useUser: useUserSuspense,
       useErrorListener,
@@ -526,7 +510,11 @@ export function createCommentsContext<
   );
 
   return {
-    ...bundle,
     CommentsProvider,
+    ...bundle,
+    suspense: {
+      CommentsProvider,
+      ...bundle.suspense,
+    },
   };
 }
