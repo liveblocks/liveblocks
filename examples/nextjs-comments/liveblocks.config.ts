@@ -37,7 +37,7 @@ async function resolveMentionSuggestions(text: string) {
   }
 }
 
-export const {
+const {
   RoomProvider,
   useThreads,
   suspense: { useThreads: useThreadsSuspense },
@@ -45,3 +45,5 @@ export const {
   resolveUser,
   resolveMentionSuggestions,
 });
+
+export { RoomProvider, useThreads, useThreadsSuspense };

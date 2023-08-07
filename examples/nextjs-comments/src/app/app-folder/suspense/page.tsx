@@ -1,17 +1,16 @@
 // "use client";
 
-import React from "react";
+import React, { Suspense } from "react";
 import { RoomProvider } from "../../../../liveblocks.config";
-import { ClientSideSuspense } from "@liveblocks/react";
-import { Loading } from "../../../components/Loading";
 import { Example } from "./Example";
+import { Loading } from "../../../components/Loading";
 
 export default function Home() {
   return (
     <RoomProvider id="nextjs-comments" initialPresence={{}}>
-      <ClientSideSuspense fallback={<Loading />}>
-        {() => <Example />}
-      </ClientSideSuspense>
+      <Suspense fallback={<Loading />}>
+        <Example />
+      </Suspense>
     </RoomProvider>
   );
 }
