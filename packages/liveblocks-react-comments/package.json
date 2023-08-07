@@ -28,9 +28,9 @@
         "default": "./dist/primitives/index.js"
       }
     },
-    "./default.css": "./default.css",
-    "./default/dark/media-query.css": "./default/dark/media-query.css",
-    "./default/dark/attributes.css": "./default/dark/attributes.css"
+    "./styles.css": "./styles.css",
+    "./styles/dark/media-query.css": "./styles/dark/media-query.css",
+    "./styles/dark/attributes.css": "./styles/dark/attributes.css"
   },
   "files": [
     "dist/**",
