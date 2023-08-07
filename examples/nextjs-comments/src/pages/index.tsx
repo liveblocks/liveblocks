@@ -33,7 +33,7 @@ function Example() {
 }
 
 export default function Page() {
-  const roomId = useOverrideRoomId("nextjs-comments");
+  const roomId = useOverrideRoomId("nextjs-comments-2");
 
   return (
     <RoomProvider id={roomId} initialPresence={{}}>

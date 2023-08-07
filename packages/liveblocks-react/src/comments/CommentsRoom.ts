@@ -157,15 +157,10 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
 
   function subscribe() {
     if (!unsubscribeRealtimeEvents) {
-      unsubscribeRealtimeEvents = () => {}; // TODO
-
-      // realtimeClient.subscribeToEvents(
-      //   roomId,
-      //   () => {
-      //     pollingHub.threads.restart(getPollingInterval());
-      //     revalidateThreads();
-      //   }
-      // );
+      unsubscribeRealtimeEvents = room.events.comments.subscribe(() => {
+        pollingHub.threads.restart(getPollingInterval());
+        revalidateThreads();
+      });
     }
 
     if (!unsubscribeRealtimeConnection) {

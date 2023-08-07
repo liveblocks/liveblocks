@@ -579,6 +579,8 @@ export type Room<
 
     readonly storageStatus: Observable<StorageStatus>;
     readonly ydoc: Observable<YDocUpdate>;
+
+    readonly comments: Observable<CommentsEventServerMsg>;
   };
 
   /**
@@ -2171,6 +2173,8 @@ export function createRoom<
     storageDidLoad: eventHub.storageDidLoad.observable,
     storageStatus: eventHub.storageStatus.observable,
     ydoc: eventHub.ydoc.observable,
+
+    comments: eventHub.comments.observable,
   };
 
   const commentsApi = createCommentsApi(config.roomId, delegates.authenticate, {
@@ -2259,7 +2263,10 @@ function makeClassicSubscribeFn<
   TUserMeta extends BaseUserMeta,
   TRoomEvent extends Json,
 >(
-  events: Room<TPresence, TStorage, TUserMeta, TRoomEvent>["events"]
+  events: Omit<
+    Room<TPresence, TStorage, TUserMeta, TRoomEvent>["events"],
+    "comments" // comments is an internal events so we omit it from the subscribe method
+  >
 ): SubscribeFn<TPresence, TStorage, TUserMeta, TRoomEvent> {
   // Set up the "subscribe" wrapper API
   function subscribeToLiveStructureDeeply<L extends LiveStructure>(
