@@ -18,8 +18,6 @@
   --lb-tooltip-shadow: var(--lb-inset-shadow), #{$lb-tooltip-shadow};
 }
 
-@mixin dark-styles {
-  .lb-root {
-    color-scheme: dark;
-  }
+@mixin dark-root-styles {
+  color-scheme: dark;
 }
