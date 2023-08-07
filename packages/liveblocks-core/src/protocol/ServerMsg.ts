@@ -142,7 +142,8 @@ export type UserLeftServerMsg = {
 export type YDocUpdate = {
   readonly type: ServerMsgCode.UPDATE_YDOC;
   readonly update: string;
-  readonly isSync: boolean;
+  readonly isSync: boolean; // dropped after 1.2, we use presence of stateVector instead
+  readonly stateVector: string | null; // server's state vector, sent in response to fetch
 };
 
 /**
