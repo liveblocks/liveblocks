@@ -37,6 +37,7 @@ import type { Op } from "./protocol/Op";
 import { isAckOp, OpCode } from "./protocol/Op";
 import type { IdTuple, SerializedCrdt } from "./protocol/SerializedCrdt";
 import type {
+  CommentsEventServerMsg,
   InitialDocumentStateServerMsg,
   RoomStateServerMsg,
   ServerMsg,
@@ -1122,6 +1123,8 @@ export function createRoom<
     storageDidLoad: makeEventSource<void>(),
     storageStatus: makeEventSource<StorageStatus>(),
     ydoc: makeEventSource<YDocUpdate>(),
+
+    comments: makeEventSource<CommentsEventServerMsg>(),
   };
 
   function sendMessages(
@@ -1808,6 +1811,15 @@ export function createRoom<
               );
             }
 
+            break;
+          }
+
+          case ServerMsgCode.THREAD_CREATED:
+          case ServerMsgCode.THREAD_METADATA_UPDATED:
+          case ServerMsgCode.COMMENT_CREATED:
+          case ServerMsgCode.COMMENT_EDITED:
+          case ServerMsgCode.COMMENT_DELETED: {
+            eventHub.comments.notify(message);
             break;
           }
         }

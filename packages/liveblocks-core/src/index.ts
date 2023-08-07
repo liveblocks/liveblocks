@@ -133,7 +133,6 @@ export type {
   UserLeftServerMsg,
 } from "./protocol/ServerMsg";
 export { ServerMsgCode } from "./protocol/ServerMsg";
-export type { RealtimeClient } from "./realtime-client";
 export type {
   BroadcastOptions,
   History,

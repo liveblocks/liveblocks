@@ -1,4 +1,3 @@
-import type { AuthManager } from "./auth-manager";
 import { createAuthManager } from "./auth-manager";
 import type { LsonObject } from "./crdts/Lson";
 import { linkDevTools, setupDevTools, unlinkDevTools } from "./devtools";
@@ -7,7 +6,6 @@ import type { Json, JsonObject } from "./lib/Json";
 import type { Resolve } from "./lib/Resolve";
 import type { CustomAuthenticationResult } from "./protocol/Authentication";
 import type { BaseUserMeta } from "./protocol/BaseUserMeta";
-import { createRealtimeClient, type RealtimeClient } from "./realtime-client";
 import type { Polyfills, Room, RoomDelegates, RoomInitializers } from "./room";
 import {
   createRoom,
@@ -43,11 +41,6 @@ type EnterOptions<
 >;
 
 export type Client = {
-  __internal: {
-    getAuthValue: AuthManager["getAuthValue"];
-    realtimeClient: RealtimeClient;
-  };
-
   /**
    * Gets a room. Returns null if {@link Client.enter} has not been called previously.
    *
@@ -274,13 +267,6 @@ export function createClient(options: ClientOptions): Client {
   }
 
   return {
-    __internal: {
-      getAuthValue: authManager.getAuthValue,
-      realtimeClient: createRealtimeClient(
-        authManager,
-        getWsEventServerEndpoint(options)
-      ),
-    },
     getRoom,
     enter,
     leave,
@@ -330,14 +316,4 @@ function buildLiveblocksHttpSendEndpoint(
   return `https://api.liveblocks.io/v2/rooms/${encodeURIComponent(
     roomId
   )}/send-message`;
-}
-
-function getWsEventServerEndpoint(
-  options: ClientOptions & { eventsServerEndpoint?: string }
-): string {
-  if (typeof options.eventsServerEndpoint === "string") {
-    return options.eventsServerEndpoint;
-  }
-
-  return `wss://events.liveblocks.io/v1`;
 }

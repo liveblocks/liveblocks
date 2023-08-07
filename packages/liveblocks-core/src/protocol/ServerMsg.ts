@@ -18,6 +18,12 @@ export enum ServerMsgCode {
 
   // For Yjs Docs
   UPDATE_YDOC = 300,
+
+  THREAD_CREATED = 400,
+  THREAD_METADATA_UPDATED = 401,
+  COMMENT_CREATED = 402,
+  COMMENT_EDITED = 403,
+  COMMENT_DELETED = 404,
 }
 
 /**
@@ -26,7 +32,7 @@ export enum ServerMsgCode {
 export type ServerMsg<
   TPresence extends JsonObject,
   TUserMeta extends BaseUserMeta,
-  TRoomEvent extends Json
+  TRoomEvent extends Json,
 > =
   // For Presence
   | UpdatePresenceServerMsg<TPresence> // Broadcasted
@@ -39,7 +45,45 @@ export type ServerMsg<
   | InitialDocumentStateServerMsg // For a single client
   | UpdateStorageServerMsg // Broadcasted
   | RejectedStorageOpServerMsg // For a single client
-  | YDocUpdate; // For receiving doc from backend
+  | YDocUpdate // For receiving doc from backend
+
+  // Comments
+  | CommentsEventServerMsg;
+
+export type CommentsEventServerMsg =
+  | ThreadCreatedEvent
+  | ThreadMetadataUpdatedEvent
+  | CommentCreatedEvent
+  | CommentEditedEvent
+  | CommentDeletedEvent;
+
+type ThreadCreatedEvent = {
+  type: ServerMsgCode.THREAD_CREATED;
+  threadId: string;
+};
+
+type ThreadMetadataUpdatedEvent = {
+  type: ServerMsgCode.THREAD_METADATA_UPDATED;
+  threadId: string;
+};
+
+type CommentCreatedEvent = {
+  type: ServerMsgCode.COMMENT_CREATED;
+  threadId: string;
+  commentId: string;
+};
+
+type CommentEditedEvent = {
+  type: ServerMsgCode.COMMENT_EDITED;
+  threadId: string;
+  commentId: string;
+};
+
+type CommentDeletedEvent = {
+  type: ServerMsgCode.COMMENT_DELETED;
+  threadId: string;
+  commentId: string;
+};
 
 /**
  * Sent by the WebSocket server and broadcasted to all clients to announce that
