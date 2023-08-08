@@ -7,25 +7,28 @@ import { BlockType, CustomElement } from "../types";
 import BlockToDo from "./BlockToDo";
 import BlockList from "./BlockList";
 import { nanoid } from "nanoid";
+import { memo } from "react";
 
 // If new block created when old block selected, create the following block
 // Example: create checkbox block, press enter, new unchecked checkbox is created
-export const CreateNewBlockFromBlock: Record<
-  string,
-  () => CustomElement
-> = {
-  [BlockType.ToDo]: () => ({ type: BlockType.ToDo, checked: false, id: nanoid(), children: [] }),
-  [BlockType.BulletedList]: () => ({ type: BlockType.BulletedList, id: nanoid(), children: [] }),
+export const CreateNewBlockFromBlock: Record<string, () => CustomElement> = {
+  [BlockType.ToDo]: () => ({
+    type: BlockType.ToDo,
+    checked: false,
+    id: nanoid(),
+    children: [],
+  }),
+  [BlockType.BulletedList]: () => ({
+    type: BlockType.BulletedList,
+    id: nanoid(),
+    children: [],
+  }),
 };
 
 // Note: {children} must be rendered in every element otherwise bugs occur
 // https://docs.slatejs.org/api/nodes/element#rendering-void-elements
 // https://github.com/ianstormtaylor/slate/issues/3930
-export default function Block({
-  element,
-  children,
-  attributes,
-}: RenderElementProps) {
+function Block({ element, children, attributes }: RenderElementProps) {
   if (element.type === BlockType.Title) {
     return (
       <div className="title" {...attributes}>
@@ -108,3 +111,5 @@ export default function Block({
     </DefaultElement>
   );
 }
+
+export default memo(Block);
