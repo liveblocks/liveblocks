@@ -507,8 +507,8 @@
 }
 
 .lb-composer-mention {
-  padding: 0.2em 0.4em;
-  border-radius: calc(0.75 * var(--lb-radius));
+  padding: 0.1em 0.2em;
+  border-radius: calc(0.675 * var(--lb-radius));
   background: var(--lb-accent-subtle);
 
   &[data-selected] {
