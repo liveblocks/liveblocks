@@ -464,6 +464,13 @@
   font-weight: 500;
 }
 
+.lb-comment-mention[data-self],
+.lb-composer-mention {
+  padding: 0.1em 0.2em;
+  border-radius: calc(0.675 * var(--lb-radius));
+  background: var(--lb-accent-subtle);
+}
+
 /**
  * Composer
  */
@@ -507,10 +514,6 @@
 }
 
 .lb-composer-mention {
-  padding: 0.1em 0.2em;
-  border-radius: calc(0.675 * var(--lb-radius));
-  background: var(--lb-accent-subtle);
-
   &[data-selected] {
     background: var(--lb-accent);
     color: var(--lb-accent-foreground);

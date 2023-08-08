@@ -67,8 +67,14 @@ export interface CommentProps extends ComponentPropsWithoutRef<"div"> {
 }
 
 function CommentMention({ userId }: CommentRenderMentionProps) {
+  const { useSelf } = useRoomContextBundle();
+  const self = useSelf();
+
   return (
-    <CommentPrimitive.Mention className="lb-comment-mention">
+    <CommentPrimitive.Mention
+      className="lb-comment-mention"
+      data-self={userId === self?.id ? "" : undefined}
+    >
       {MENTION_CHARACTER}
       <User userId={userId} />
     </CommentPrimitive.Mention>
