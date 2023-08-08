@@ -971,10 +971,10 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
 );
 
 /**
- * Submits the composer.
+ * A button to submit the composer.
  *
  * @example
- * <Composer.Submit>Comment</Composer.Submit>
+ * <Composer.Submit>Send</Composer.Submit>
  */
 const ComposerSubmit = forwardRef<HTMLButtonElement, ComposerSubmitProps>(
   ({ children, disabled, asChild, ...props }, forwardedRef) => {
