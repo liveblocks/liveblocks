@@ -187,7 +187,6 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
                 </span>
               </span>
             </div>
-            {/* TODO: Use permissions from `self` */}
             {showActions && !isEditing && comment.userId === self?.id && (
               <div
                 className={classNames(
