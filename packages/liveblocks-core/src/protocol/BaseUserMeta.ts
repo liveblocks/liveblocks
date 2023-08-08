@@ -1,6 +1,7 @@
 import type { Json } from "../lib/Json";
 
 export type BaseUserInfo = {
+  [key: string]: Json | undefined;
   name?: string;
   avatar?: string;
 };
@@ -18,5 +19,5 @@ export type BaseUserMeta = {
   /**
    * Additional user information that has been set in the authentication endpoint.
    */
-  info?: Json | BaseUserInfo;
+  info?: BaseUserInfo;
 };

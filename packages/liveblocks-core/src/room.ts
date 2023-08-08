@@ -1,5 +1,6 @@
 import type { AuthManager, AuthValue } from "./auth-manager";
-import { CommentsApi, createCommentsApi } from "./comments";
+import type { CommentsApi } from "./comments";
+import { createCommentsApi } from "./comments";
 import type {
   Delegates,
   LegacyConnectionStatus,
@@ -30,7 +31,7 @@ import { asPos } from "./lib/position";
 import type { Resolve } from "./lib/Resolve";
 import { compact, deepClone, tryParseJson } from "./lib/utils";
 import { canComment, canWriteStorage, TokenKind } from "./protocol/AuthToken";
-import type { BaseUserMeta } from "./protocol/BaseUserMeta";
+import type { BaseUserInfo, BaseUserMeta } from "./protocol/BaseUserMeta";
 import type { ClientMsg } from "./protocol/ClientMsg";
 import { ClientMsgCode } from "./protocol/ClientMsg";
 import type { Op } from "./protocol/Op";
@@ -690,7 +691,7 @@ type IdFactory = () => string;
 
 type StaticSessionInfo = {
   readonly userId?: string;
-  readonly userInfo?: Json;
+  readonly userInfo?: BaseUserInfo;
 };
 
 type DynamicSessionInfo = {

@@ -82,7 +82,7 @@ export {
   withTimeout,
 } from "./lib/utils";
 export type { CustomAuthenticationResult } from "./protocol/Authentication";
-export type { BaseUserInfo, BaseUserMeta } from "./protocol/BaseUserMeta";
+export type { BaseUserMeta } from "./protocol/BaseUserMeta";
 export type {
   BroadcastEventClientMsg,
   ClientMsg,

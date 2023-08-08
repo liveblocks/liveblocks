@@ -1,4 +1,3 @@
-import type { BaseUserInfo } from "@liveblocks/core";
 import { useRoomContextBundle } from "@liveblocks/react";
 import type { ComponentProps } from "react";
 import React, { useMemo } from "react";
@@ -13,11 +12,8 @@ export interface AvatarProps extends ComponentProps<"div"> {
 export function Avatar({ userId, className, ...props }: AvatarProps) {
   const { useUser } = useRoomContextBundle();
   const { user } = useUser(userId);
-  const resolvedUserName = useMemo(() => (user as BaseUserInfo)?.name, [user]);
-  const resolvedUserAvatar = useMemo(
-    () => (user as BaseUserInfo)?.avatar,
-    [user]
-  );
+  const resolvedUserName = useMemo(() => user?.name, [user]);
+  const resolvedUserAvatar = useMemo(() => user?.avatar, [user]);
   const resolvedUserInitials = useMemo(
     () => (resolvedUserName ? getInitials(resolvedUserName) : undefined),
     [resolvedUserName]
