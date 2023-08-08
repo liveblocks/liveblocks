@@ -120,7 +120,8 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
     },
     forwardedRef
   ) => {
-    const { useDeleteComment } = useRoomContextBundle();
+    const { useDeleteComment, useSelf } = useRoomContextBundle();
+    const self = useSelf();
     const deleteComment = useDeleteComment();
     const $ = useOverrides(overrides);
     const [isEditing, setEditing] = useState(false);
@@ -186,7 +187,8 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
                 </span>
               </span>
             </div>
-            {showActions && !isEditing && (
+            {/* TODO: Use permissions from `self` */}
+            {showActions && !isEditing && comment.userId === self?.id && (
               <div
                 className={classNames(
                   "lb-comment-actions",
