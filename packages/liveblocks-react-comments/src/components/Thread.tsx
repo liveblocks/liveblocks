@@ -1,16 +1,16 @@
 import type { ThreadData } from "@liveblocks/core";
+import { useRoomContextBundle } from "@liveblocks/react";
 import * as TogglePrimitive from "@radix-ui/react-toggle";
 import type { ComponentPropsWithoutRef } from "react";
 import React, { forwardRef, useCallback, useMemo } from "react";
 
-import { useRoomContextBundle } from "@liveblocks/react";
 import { ResolveIcon } from "../icons/resolve";
 import { ResolvedIcon } from "../icons/resolved";
 import {
-  useOverrides,
   type CommentOverrides,
   type ComposerOverrides,
   type ThreadOverrides,
+  useOverrides,
 } from "../overrides";
 import { classNames } from "../utils/class-names";
 import type { CommentProps } from "./Comment";

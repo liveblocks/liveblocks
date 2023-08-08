@@ -8,12 +8,14 @@ function App({ room }) {
   const hasMoreUsers = () => users().length > 3;
 
   onMount(() => {
-    const unsubscribePresence = room.subscribe("my-presence", presence => {
+    const unsubscribePresence = room.subscribe("my-presence", (presence) => {
       setCurrentUser(presence);
     });
 
-    const unsubscribeOthers = room.subscribe("others", others => {
-      const othersWithPresence = others.toArray().filter(other => other?.presence);
+    const unsubscribeOthers = room.subscribe("others", (others) => {
+      const othersWithPresence = others
+        .toArray()
+        .filter((other) => other?.presence);
       setUsers(othersWithPresence);
     });
 
@@ -25,9 +27,11 @@ function App({ room }) {
 
   return (
     <main class={styles.App}>
-      <For each={users().slice(0, 3)}>{({ presence }) => (
-        <Avatar picture={presence.picture} name={presence.name} />
-      )}</For>
+      <For each={users().slice(0, 3)}>
+        {({ presence }) => (
+          <Avatar src={presence.avatar} name={presence.name} />
+        )}
+      </For>
 
       <Show when={hasMoreUsers()}>
         <div class={styles.more}>+{users().length - 3}</div>
@@ -35,7 +39,7 @@ function App({ room }) {
 
       <Show when={currentUser()}>
         <div class={styles.you}>
-          <Avatar picture={currentUser().picture} name="You" />
+          <Avatar src={currentUser().avatar} name="You" />
         </div>
       </Show>
     </main>

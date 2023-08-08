@@ -6,8 +6,8 @@ import {
   FLOATING_ELEMENT_COLLISION_PADDING,
   FLOATING_ELEMENT_SIDE_OFFSET,
 } from "../../constants";
-import { classNames } from "../../utils/class-names";
 import { useOverrides } from "../../overrides";
+import { classNames } from "../../utils/class-names";
 
 interface DropdownProps
   extends Pick<

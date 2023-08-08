@@ -20,7 +20,7 @@ export function LiveAvatars() {
         return (
           <Avatar
             key={connectionId}
-            picture={`https://liveblocks.io/avatars/avatar-${Math.floor(
+            src={`https://liveblocks.io/avatars/avatar-${Math.floor(
               connectionId % 30
             )}.png`}
           />
@@ -32,7 +32,7 @@ export function LiveAvatars() {
       {currentUser && (
         <div className={styles.you}>
           <Avatar
-            picture={`https://liveblocks.io/avatars/avatar-${Math.floor(
+            src={`https://liveblocks.io/avatars/avatar-${Math.floor(
               currentUser.connectionId % 30
             )}.png`}
           />
@@ -42,11 +42,11 @@ export function LiveAvatars() {
   );
 }
 
-function Avatar({ picture }: { picture: string }) {
+function Avatar({ src }: { src: string }) {
   return (
     <div className={styles.avatar} data-tooltip={name}>
       <img
-        src={picture}
+        src={src}
         height={IMAGE_SIZE}
         width={IMAGE_SIZE}
         className={styles.avatar_picture}

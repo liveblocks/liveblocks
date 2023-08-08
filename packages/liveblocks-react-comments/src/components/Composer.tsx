@@ -1,3 +1,4 @@
+import { useRoomContextBundle } from "@liveblocks/react";
 import type {
   ComponentProps,
   FormEvent,
@@ -6,10 +7,9 @@ import type {
 } from "react";
 import React, { forwardRef, useCallback } from "react";
 
-import { useRoomContextBundle } from "@liveblocks/react";
 import { MentionIcon } from "../icons/mention";
 import { SendIcon } from "../icons/send";
-import { useOverrides, type ComposerOverrides } from "../overrides";
+import { type ComposerOverrides, useOverrides } from "../overrides";
 import * as ComposerPrimitive from "../primitives/Composer";
 import { useComposer } from "../primitives/Composer/contexts";
 import type {

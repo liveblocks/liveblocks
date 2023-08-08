@@ -82,7 +82,7 @@ export {
   withTimeout,
 } from "./lib/utils";
 export type { CustomAuthenticationResult } from "./protocol/Authentication";
-export type { BaseUserMeta } from "./protocol/BaseUserMeta";
+export type { BaseUserInfo, BaseUserMeta } from "./protocol/BaseUserMeta";
 export type {
   BroadcastEventClientMsg,
   ClientMsg,
@@ -186,7 +186,6 @@ export type { DevTools };
 export type { CommentsApi } from "./comments";
 export { createCommentsApi } from "./comments";
 export type { BaseMetadata } from "./comments/types/BaseMetadata";
-export type { BaseUserInfo } from "./comments/types/BaseUserInfo";
 export type {
   CommentBody,
   CommentBodyElement,

@@ -17,9 +17,7 @@ import { shallow } from "@liveblocks/client";
 import type {
   AsyncCache,
   BaseMetadata,
-  BaseUserInfo,
   CommentData,
-  Resolve,
   ToImmutable,
 } from "@liveblocks/core";
 import {
@@ -32,26 +30,28 @@ import {
 import * as React from "react";
 import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector.js";
 
+import type {
+  CommentsRoom,
+  CreateCommentOptions,
+  CreateThreadOptions,
+  DeleteCommentOptions,
+  EditCommentOptions,
+  EditThreadMetadataOptions,
+  RoomThreads,
+} from "./comments/CommentsRoom";
+import { createCommentsRoom } from "./comments/CommentsRoom";
+import type { CommentsApiError } from "./comments/errors";
+import { useAsyncCache } from "./comments/lib/use-async-cache";
+import { useDebounce } from "./comments/lib/use-debounce";
 import { useInitial, useRerender } from "./hooks";
 import type {
   MutationContext,
   OmitFirstArg,
   RoomContextBundle,
   RoomProviderProps,
+  UserState,
+  UserStateSuspense,
 } from "./types";
-import {
-  createCommentsRoom,
-  type CommentsRoom,
-  RoomThreads,
-  CreateCommentOptions,
-  CreateThreadOptions,
-  DeleteCommentOptions,
-  EditCommentOptions,
-  EditThreadMetadataOptions,
-} from "./comments/CommentsRoom";
-import type { CommentsApiError } from "./comments/errors";
-import { useAsyncCache } from "./comments/lib/use-async-cache";
-import { useDebounce } from "./comments/lib/use-debounce";
 
 const noop = () => {};
 const identity: <T>(x: T) => T = (x) => x;
@@ -131,34 +131,11 @@ function makeMutationContext<
   };
 }
 
-type UserState<T extends BaseUserInfo> =
-  | {
-      user?: never;
-      error?: never;
-      isLoading: true;
-    }
-  | {
-      user?: T;
-      isLoading: false;
-      error?: never;
-    }
-  | {
-      user?: never;
-      isLoading: false;
-      error: Error;
-    };
-
-type UserStateSuspense<T extends BaseUserInfo> = Resolve<
-  Extract<UserState<T>, { isLoading: false }>
->;
-
-type UserResolver<T> = (userId: string) => Promise<T | undefined>;
-
-type Options<TUserInfo extends BaseUserInfo> = {
+type Options<TUserMeta extends BaseUserMeta> = {
   /**
-   * An asynchronous function that returns a user object from a user ID.
+   * An asynchronous function that returns user info from a user ID.
    */
-  resolveUser?: UserResolver<TUserInfo>;
+  resolveUser?: (userId: string) => Promise<TUserMeta["info"] | undefined>;
 
   /**
    * An asynchronous function to get a list of suggested user IDs from a string.
@@ -173,16 +150,14 @@ type Options<TUserInfo extends BaseUserInfo> = {
 
 let hasWarnedIfNoResolveUser = false;
 
-function warnIfNoResolveUser(
-  usersCache?: AsyncCache<BaseUserInfo | undefined, unknown>
-) {
+function warnIfNoResolveUser(usersCache?: AsyncCache<unknown, unknown>) {
   if (
     !hasWarnedIfNoResolveUser &&
     !usersCache &&
     process.env.NODE_ENV !== "production"
   ) {
     console.warn(
-      "To use useUser, you should provide a resolver function to the resolveUser option in createCommentContext."
+      "To use useUser, you should provide a resolver function to the resolveUser option in createRoomContext."
     );
     hasWarnedIfNoResolveUser = true;
   }
@@ -191,7 +166,7 @@ function warnIfNoResolveUser(
 const ContextBundle = React.createContext<RoomContextBundle<
   JsonObject,
   LsonObject,
-  BaseMetadata,
+  BaseUserMeta,
   never,
   BaseMetadata
 > | null>(null);
@@ -209,7 +184,7 @@ export function createRoomContext<
   TThreadMetadata extends BaseMetadata = BaseMetadata,
 >(
   client: Client,
-  options?: Options<BaseUserInfo>
+  options?: Options<TUserMeta>
 ): RoomContextBundle<
   TPresence,
   TStorage,
@@ -910,14 +885,9 @@ export function createRoomContext<
     );
   }
 
-  // TODO: Use UserMeta instead
-  type TUserInfo = {};
-
   const { resolveUser /* resolveMentionSuggestions */ } = options ?? {};
 
-  const usersCache = resolveUser
-    ? createAsyncCache(resolveUser as UserResolver<BaseUserInfo>)
-    : undefined;
+  const usersCache = resolveUser ? createAsyncCache(resolveUser) : undefined;
 
   function useUser(userId: string) {
     const state = useAsyncCache(usersCache, userId);
@@ -927,13 +897,13 @@ export function createRoomContext<
     if (state?.isLoading) {
       return {
         isLoading: true,
-      } as UserState<TUserInfo>;
+      } as UserState<TUserMeta["info"]>;
     } else {
       return {
         user: state?.data,
         error: state?.error,
         isLoading: false,
-      } as UserState<TUserInfo>;
+      } as UserState<TUserMeta["info"]>;
     }
   }
 
@@ -948,7 +918,7 @@ export function createRoomContext<
       user: state?.data,
       error: state?.error,
       isLoading: false,
-    } as UserStateSuspense<TUserInfo>;
+    } as UserStateSuspense<TUserMeta["info"]>;
   }
 
   const resolveMentionSuggestions = null;
@@ -1012,12 +982,14 @@ export function createRoomContext<
     useMutation,
 
     useThreads,
+    useUser,
+
     useCreateThread,
     useEditThreadMetadata,
     useCreateComment,
     useEditComment,
     useDeleteComment,
-    useUser,
+
     useMentionSuggestions,
 
     suspense: {
@@ -1058,7 +1030,15 @@ export function createRoomContext<
       useMutation,
 
       useThreads: useThreadsSuspense,
-      useUserSuspense: useUserSuspense,
+      useUser: useUserSuspense,
+
+      useCreateThread,
+      useEditThreadMetadata,
+      useCreateComment,
+      useEditComment,
+      useDeleteComment,
+
+      useMentionSuggestions,
     },
   };
 

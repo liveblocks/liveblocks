@@ -10,7 +10,7 @@ export const client = createClient({
 // `user.presence` property. Must be JSON-serializable.
 type Presence = {
   name: string;
-  picture: string;
+  avatar: string;
   // ...
 };
 

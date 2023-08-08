@@ -14,23 +14,23 @@ import type {
 } from "@liveblocks/client";
 import type {
   BaseMetadata,
-  BaseUserInfo,
   CommentData,
   Resolve,
   RoomInitializers,
   ThreadData,
   ToImmutable,
 } from "@liveblocks/core";
+
 import type {
-  CreateThreadOptions,
-  EditThreadMetadataOptions,
   CreateCommentOptions,
-  EditCommentOptions,
+  CreateThreadOptions,
   DeleteCommentOptions,
+  EditCommentOptions,
+  EditThreadMetadataOptions,
   RoomThreads,
 } from "./comments/CommentsRoom";
 
-type UserState<T extends BaseUserInfo> =
+export type UserState<T> =
   | {
       user?: never;
       error?: never;
@@ -47,9 +47,9 @@ type UserState<T extends BaseUserInfo> =
       error: Error;
     };
 
-// type UserStateSuspense<T extends BaseUserInfo> = Resolve<
-//   Extract<UserState<T>, { isLoading: false }>
-// >;
+export type UserStateSuspense<T> = Resolve<
+  Extract<UserState<T>, { isLoading: false; error?: never }>
+>;
 
 export type RoomProviderProps<
   TPresence extends JsonObject,
@@ -602,12 +602,12 @@ export type RoomContextBundle<
   useDeleteComment(): (options: DeleteCommentOptions) => void;
 
   /**
-   * Returns a user object from a given user ID.
+   * Returns user info from a given user ID.
    *
    * @example
    * const { user, error, isLoading } = useUser("user-id");
    */
-  useUser(userId: string): UserState<any>;
+  useUser(userId: string): UserState<TUserMeta["info"]>;
 
   /**
    * Returns the threads within the current room, from the nearest `CommentsProvider`.
@@ -617,6 +617,7 @@ export type RoomContextBundle<
    */
   useThreads(): RoomThreads<TThreadMetadata>;
 
+  // TODO: Internal?
   useMentionSuggestions(value: string | undefined): string[] | undefined;
 
   suspense: {
@@ -958,7 +959,16 @@ export type RoomContextBundle<
       options?: { addToHistory: boolean }
     ) => void;
 
+    // TODO: Add description and add all other hooks under the suspense key as well
     useThreads(): ThreadData<TThreadMetadata>[];
+
+    /**
+     * Returns user info from a given user ID.
+     *
+     * @example
+     * const { user, error, isLoading } = useUser("user-id");
+     */
+    useUser(userId: string): UserStateSuspense<TUserMeta["info"]>;
 
     /**
      * Create a callback function that lets you mutate Liveblocks state.

@@ -1,5 +1,10 @@
 import type { Json } from "../lib/Json";
 
+export type BaseUserInfo = {
+  name?: string;
+  avatar?: string;
+};
+
 /**
  * This type is used by clients to define the metadata for a user.
  */
@@ -13,5 +18,5 @@ export type BaseUserMeta = {
   /**
    * Additional user information that has been set in the authentication endpoint.
    */
-  info?: Json;
+  info?: Json | BaseUserInfo;
 };

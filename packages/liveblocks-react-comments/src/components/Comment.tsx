@@ -1,17 +1,17 @@
 import type { CommentData } from "@liveblocks/core";
+import { useRoomContextBundle } from "@liveblocks/react";
 import type { ComponentPropsWithoutRef, ReactNode } from "react";
 import React, { forwardRef, useCallback, useState } from "react";
 
-import { useRoomContextBundle } from "@liveblocks/react";
 import { CheckIcon } from "../icons/check";
 import { CrossIcon } from "../icons/cross";
 import { DeleteIcon } from "../icons/delete";
 import { EditIcon } from "../icons/edit";
 import { EllipsisIcon } from "../icons/ellipsis";
 import {
-  useOverrides,
   type CommentOverrides,
   type ComposerOverrides,
+  useOverrides,
 } from "../overrides";
 import * as CommentPrimitive from "../primitives/Comment";
 import type { CommentRenderMentionProps } from "../primitives/Comment/types";

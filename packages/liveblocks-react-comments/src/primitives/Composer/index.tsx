@@ -12,6 +12,7 @@ import {
   useFloating,
 } from "@floating-ui/react-dom";
 import type { CommentBody } from "@liveblocks/core";
+import { useRoomContextBundle } from "@liveblocks/react";
 import { Slot } from "@radix-ui/react-slot";
 import type {
   AriaAttributes,
@@ -54,7 +55,6 @@ import {
   withReact,
 } from "slate-react";
 
-import { useRoomContextBundle } from "@liveblocks/react";
 import { FLOATING_ELEMENT_COLLISION_PADDING } from "../../constants";
 import { useInitial } from "../../lib/use-initial";
 import type { MentionDraft } from "../../slate/mentions";

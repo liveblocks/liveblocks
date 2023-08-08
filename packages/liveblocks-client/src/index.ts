@@ -6,7 +6,6 @@ detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
 
 export type {
   BaseMetadata,
-  BaseUserInfo,
   BaseUserMeta,
   BroadcastOptions,
   Client,

@@ -1,11 +1,11 @@
 const IMAGE_SIZE = 32;
 
-export function Avatar({ picture }: any) {
+export function Avatar({ avatar }: { avatar: string }) {
   return (
     <div className="avatar">
       <img
         alt="User avatar"
-        src={picture}
+        src={avatar}
         height={IMAGE_SIZE}
         width={IMAGE_SIZE}
         className="avatar_picture"
