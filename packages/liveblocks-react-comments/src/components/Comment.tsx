@@ -1,6 +1,6 @@
 import type { CommentData } from "@liveblocks/core";
 import { useRoomContextBundle } from "@liveblocks/react";
-import type { ComponentPropsWithoutRef, ReactNode } from "react";
+import type { ComponentPropsWithoutRef, MouseEvent, ReactNode } from "react";
 import React, { forwardRef, useCallback, useState } from "react";
 
 import { CheckIcon } from "../icons/check";
@@ -14,7 +14,10 @@ import {
   useOverrides,
 } from "../overrides";
 import * as CommentPrimitive from "../primitives/Comment";
-import type { CommentRenderMentionProps } from "../primitives/Comment/types";
+import type {
+  CommentMentionProps,
+  CommentRenderMentionProps,
+} from "../primitives/Comment/types";
 import * as ComposerPrimitive from "../primitives/Composer";
 import { Timestamp } from "../primitives/Timestamp";
 import { MENTION_CHARACTER } from "../slate/mentions";
@@ -51,6 +54,11 @@ export interface CommentProps extends ComponentPropsWithoutRef<"div"> {
   indentBody?: boolean;
 
   /**
+   * TODO: Add description
+   */
+  onMentionClick?: (userId: string, event: MouseEvent<HTMLSpanElement>) => void;
+
+  /**
    * Override the component's strings.
    */
   overrides?: Partial<CommentOverrides & ComposerOverrides>;
@@ -66,14 +74,19 @@ export interface CommentProps extends ComponentPropsWithoutRef<"div"> {
   additionalActionsClassName?: string;
 }
 
-function CommentMention({ userId }: CommentRenderMentionProps) {
+function CommentMention({
+  userId,
+  className,
+  ...props
+}: CommentRenderMentionProps & CommentMentionProps) {
   const { useSelf } = useRoomContextBundle();
   const self = useSelf();
 
   return (
     <CommentPrimitive.Mention
-      className="lb-comment-mention"
+      className={classNames("lb-comment-mention", className)}
       data-self={userId === self?.id ? "" : undefined}
+      {...props}
     >
       {MENTION_CHARACTER}
       <User userId={userId} />
@@ -98,6 +111,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
       indentBody = true,
       showDeleted,
       showActions = "hover",
+      onMentionClick,
       overrides,
       additionalActions,
       additionalActionsClassName,
@@ -259,7 +273,12 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
             <CommentPrimitive.Body
               className="lb-comment-body"
               body={comment.body}
-              renderMention={CommentMention}
+              renderMention={({ userId }) => (
+                <CommentMention
+                  userId={userId}
+                  onClick={(event) => onMentionClick?.(userId, event)}
+                />
+              )}
             />
           ) : (
             <div className="lb-comment-body">

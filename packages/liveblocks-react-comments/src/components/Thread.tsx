@@ -52,6 +52,11 @@ export interface ThreadProps
   showDeletedComments?: CommentProps["showDeleted"];
 
   /**
+   * TODO: Add description
+   */
+  onMentionClick?: CommentProps["onMentionClick"];
+
+  /**
    * Override the component's strings.
    */
   overrides?: Partial<ThreadOverrides & CommentOverrides & ComposerOverrides>;
@@ -77,6 +82,7 @@ export const Thread = forwardRef<HTMLDivElement, ThreadProps>(
       showDeletedComments,
       showResolveAction = true,
       showComposer,
+      onMentionClick,
       overrides,
       className,
       ...props
@@ -124,6 +130,7 @@ export const Thread = forwardRef<HTMLDivElement, ThreadProps>(
                   indentBody={indentCommentBody}
                   showDeleted={showDeletedComments}
                   showActions={showActions}
+                  onMentionClick={onMentionClick}
                   additionalActionsClassName={
                     isFirstComment ? "lb-thread-actions" : undefined
                   }
