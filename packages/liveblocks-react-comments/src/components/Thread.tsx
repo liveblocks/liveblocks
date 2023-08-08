@@ -54,6 +54,16 @@ export interface ThreadProps
   /**
    * TODO: Add description
    */
+  onCommentEdit?: CommentProps["onEdit"];
+
+  /**
+   * TODO: Add description
+   */
+  onCommentDelete?: CommentProps["onDelete"];
+
+  /**
+   * TODO: Add description
+   */
   onMentionClick?: CommentProps["onMentionClick"];
 
   /**

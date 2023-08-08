@@ -13,6 +13,7 @@ import {
   type ComposerOverrides,
   useOverrides,
 } from "../overrides";
+import type { ComposerSubmitComment } from "../primitives";
 import * as CommentPrimitive from "../primitives/Comment";
 import type {
   CommentMentionProps,
@@ -52,6 +53,16 @@ export interface CommentProps extends ComponentPropsWithoutRef<"div"> {
    * Whether to indent the comment's body.
    */
   indentBody?: boolean;
+
+  /**
+   * TODO: Add description
+   */
+  onEdit?: (comment: CommentData) => void;
+
+  /**
+   * TODO: Add description
+   */
+  onDelete?: (comment: CommentData) => void;
 
   /**
    * TODO: Add description
@@ -112,6 +123,8 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
       showDeleted,
       showActions = "hover",
       onMentionClick,
+      onEdit,
+      onDelete,
       overrides,
       additionalActions,
       additionalActionsClassName,
@@ -120,9 +133,11 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
     },
     forwardedRef
   ) => {
-    const { useDeleteComment, useSelf } = useRoomContextBundle();
+    const { useDeleteComment, useEditComment, useSelf } =
+      useRoomContextBundle();
     const self = useSelf();
     const deleteComment = useDeleteComment();
+    const editComment = useEditComment();
     const $ = useOverrides(overrides);
     const [isEditing, setEditing] = useState(false);
     const [isMoreOpen, setMoreOpen] = useState(false);
@@ -135,16 +150,30 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
       setEditing(false);
     }, []);
 
-    const handleEditSubmit = useCallback(() => {
-      setEditing(false);
-    }, []);
+    const handleEditSubmit = useCallback(
+      ({ body }: ComposerSubmitComment) => {
+        // TODO: Add a way to preventDefault from within this callback, to override the default behavior (e.g. showing a confirmation dialog)
+        onEdit?.(comment);
+
+        setEditing(false);
+        editComment({
+          commentId: comment.id,
+          threadId: comment.threadId,
+          body,
+        });
+      },
+      [comment, editComment, onEdit]
+    );
 
     const handleDelete = useCallback(() => {
+      // TODO: Add a way to preventDefault from within this callback, to override the default behavior (e.g. showing a confirmation dialog)
+      onDelete?.(comment);
+
       deleteComment({
         commentId: comment.id,
         threadId: comment.threadId,
       });
-    }, [comment.id, comment.threadId, deleteComment]);
+    }, [comment, deleteComment, onDelete]);
 
     if (!showDeleted && !comment.body) {
       return null;
