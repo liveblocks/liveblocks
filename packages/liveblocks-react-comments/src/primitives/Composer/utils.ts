@@ -1,9 +1,5 @@
 import type { Placement } from "@floating-ui/react-dom";
-import {
-  type CommentBody,
-  type CommentBodyMention,
-  isCommentBodyMention,
-} from "@liveblocks/core";
+import type { CommentBody, CommentBodyMention } from "@liveblocks/core";
 import { Editor as SlateEditor, Text as SlateText } from "slate";
 
 import { isComposerBodyMention } from "../../slate/mentions";
@@ -14,6 +10,7 @@ import type {
   Direction,
 } from "../../types";
 import type { SuggestionsPosition } from "./types";
+import { isCommentBodyMention } from "../Comment/utils";
 
 export function composerBodyMentionToCommentBodyMention(
   mention: ComposerBodyMention
