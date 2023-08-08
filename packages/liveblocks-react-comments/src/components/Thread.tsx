@@ -54,6 +54,11 @@ export interface ThreadProps
   /**
    * TODO: Add description
    */
+  onResolveChange?: (resolved: boolean) => void;
+
+  /**
+   * TODO: Add description
+   */
   onCommentEdit?: CommentProps["onEdit"];
 
   /**
@@ -92,6 +97,7 @@ export const Thread = forwardRef<HTMLDivElement, ThreadProps>(
       showDeletedComments,
       showResolveAction = true,
       showComposer,
+      onResolveChange,
       onCommentEdit,
       onCommentDelete,
       onMentionClick,
@@ -112,9 +118,11 @@ export const Thread = forwardRef<HTMLDivElement, ThreadProps>(
 
     const handleResolvedChange = useCallback(
       (resolved: boolean) => {
+        onResolveChange?.(resolved);
+
         editThreadMetadata({ threadId: thread.id, metadata: { resolved } });
       },
-      [editThreadMetadata, thread.id]
+      [editThreadMetadata, onResolveChange, thread.id]
     );
 
     return (
