@@ -161,7 +161,7 @@ export const Composer = forwardRef<HTMLFormElement, ComposerProps>(
     {
       threadId,
       commentId,
-      onCommentSubmit,
+      onComposerSubmit,
       initialValue,
       disabled,
       autoFocus,
@@ -191,7 +191,7 @@ export const Composer = forwardRef<HTMLFormElement, ComposerProps>(
 
     const handleCommentSubmit = useCallback(
       (comment: ComposerSubmitComment, event: FormEvent<HTMLFormElement>) => {
-        onCommentSubmit?.(comment, event);
+        onComposerSubmit?.(comment, event);
 
         if (event.isDefaultPrevented()) {
           return;
@@ -220,7 +220,7 @@ export const Composer = forwardRef<HTMLFormElement, ComposerProps>(
         createComment,
         createThread,
         editComment,
-        onCommentSubmit,
+        onComposerSubmit,
         threadId,
       ]
     );
@@ -235,7 +235,7 @@ export const Composer = forwardRef<HTMLFormElement, ComposerProps>(
           dir={$.dir}
           {...props}
           ref={forwardedRef}
-          onCommentSubmit={handleCommentSubmit}
+          onComposerSubmit={handleCommentSubmit}
         >
           <ComposerPrimitive.Editor
             className="lb-composer-editor"

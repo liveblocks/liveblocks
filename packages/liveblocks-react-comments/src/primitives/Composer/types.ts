@@ -91,7 +91,7 @@ export interface ComposerFormProps extends ComponentPropsWithSlot<"form"> {
   /**
    * The event handler called when the form is submitted.
    */
-  onCommentSubmit?: (
+  onComposerSubmit?: (
     comment: ComposerSubmitComment,
     event: FormEvent<HTMLFormElement>
   ) => Promise<void> | void;

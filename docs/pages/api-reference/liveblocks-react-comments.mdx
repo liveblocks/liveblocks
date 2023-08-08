@@ -372,7 +372,7 @@ import { Composer } from "@liveblocks/react-comments";
 Surrounds the composer’s content and handles submissions.
 
 ```tsx
-<Composer.Form onCommentSubmit={({ body }) => {}}>
+<Composer.Form onComposerSubmit={({ body }) => {}}>
   <Composer.Editor />
   <Composer.Submit />
 </Composer.Form>
@@ -380,10 +380,10 @@ Surrounds the composer’s content and handles submissions.
 
 <Table columns={["auto", "auto", "54%"]}>
 
-| Prop              | Type                                                                                                                                 | Description                                                                         |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------- |
-| `onCommentSubmit` | <code>((comment: ComposerSubmitComment, event: FormEvent&lt;HTMLFormElement&gt;) => Promise&lt;void&gt; \| void) \| undefined</code> | The event handler called when the form is submitted.                                |
-| `asChild`         | `boolean \| undefined`                                                                                                               | Replace the rendered element by the one passed as a child.<br/>Defaults to `false`. |
+| Prop               | Type                                                                                                                                 | Description                                                                         |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------- |
+| `onComposerSubmit` | <code>((comment: ComposerSubmitComment, event: FormEvent&lt;HTMLFormElement&gt;) => Promise&lt;void&gt; \| void) \| undefined</code> | The event handler called when the form is submitted.                                |
+| `asChild`          | `boolean \| undefined`                                                                                                               | Replace the rendered element by the one passed as a child.<br/>Defaults to `false`. |
 
 </Table>
 

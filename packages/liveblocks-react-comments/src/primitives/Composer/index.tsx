@@ -864,14 +864,14 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
  * Surrounds the composer's content and handles submissions.
  *
  * @example
- * <Composer.Form onCommentSubmit={({ body }) => {}}>
+ * <Composer.Form onComposerSubmit={({ body }) => {}}>
  *	 <Composer.Editor />
  *   <Composer.Submit />
  * </Composer.Form>
  */
 const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
   (
-    { children, onSubmit, onCommentSubmit, asChild, ...props },
+    { children, onSubmit, onComposerSubmit, asChild, ...props },
     forwardedRef
   ) => {
     const Component = asChild ? Slot : "form";
@@ -937,7 +937,7 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
         );
         const comment = { body };
 
-        const promise = onCommentSubmit?.(comment, event);
+        const promise = onComposerSubmit?.(comment, event);
 
         if (promise) {
           promise.then(clear);
@@ -947,7 +947,7 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
 
         event.preventDefault();
       },
-      [clear, editor, onCommentSubmit, onSubmit]
+      [clear, editor, onComposerSubmit, onSubmit]
     );
 
     return (

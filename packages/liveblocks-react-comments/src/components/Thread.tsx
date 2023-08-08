@@ -92,6 +92,8 @@ export const Thread = forwardRef<HTMLDivElement, ThreadProps>(
       showDeletedComments,
       showResolveAction = true,
       showComposer,
+      onCommentEdit,
+      onCommentDelete,
       onMentionClick,
       overrides,
       className,
@@ -140,6 +142,8 @@ export const Thread = forwardRef<HTMLDivElement, ThreadProps>(
                   indentBody={indentCommentBody}
                   showDeleted={showDeletedComments}
                   showActions={showActions}
+                  onEdit={onCommentEdit}
+                  onDelete={onCommentDelete}
                   onMentionClick={onMentionClick}
                   additionalActionsClassName={
                     isFirstComment ? "lb-thread-actions" : undefined

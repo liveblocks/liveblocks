@@ -263,7 +263,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
           {isEditing ? (
             <Composer
               className="lb-comment-composer"
-              onCommentSubmit={handleEditSubmit}
+              onComposerSubmit={handleEditSubmit}
               initialValue={comment.body}
               placeholder={$.COMMENT_EDIT_COMPOSER_PLACEHOLDER}
               autoFocus
