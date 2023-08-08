@@ -1,9 +1,12 @@
 import type { Placement } from "@floating-ui/react-dom";
-import type { CommentBody, CommentBodyMention } from "@liveblocks/core";
-import { isCommentBodyMention } from "@liveblocks/core";
+import {
+  type CommentBody,
+  type CommentBodyMention,
+  isCommentBodyMention,
+} from "@liveblocks/core";
 import { Editor as SlateEditor, Text as SlateText } from "slate";
 
-import { isMention as isComposerBodyMention } from "../../slate/mentions";
+import { isComposerBodyMention } from "../../slate/mentions";
 import type {
   ComposerBody,
   ComposerBodyMarks,

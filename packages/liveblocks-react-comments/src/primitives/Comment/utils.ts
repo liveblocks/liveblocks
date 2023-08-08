@@ -1,7 +1,4 @@
-import type {
-  CommentBodyElement,
-  CommentBodyMention,
-} from "./types/CommentBody";
+import type { CommentBodyElement, CommentBodyMention } from "@liveblocks/core";
 
 export function isCommentBodyMention(
   element: CommentBodyElement

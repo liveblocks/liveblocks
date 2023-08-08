@@ -118,7 +118,9 @@ export function getMentionDraftAtSelection(
   };
 }
 
-export function isMention(node: SlateNode): node is ComposerBodyMention {
+export function isComposerBodyMention(
+  node: SlateNode
+): node is ComposerBodyMention {
   return SlateElement.isElement(node) && node.type === "mention";
 }
 
@@ -137,15 +139,15 @@ export function withMentions<T extends SlateEditor>(editor: T): T {
   const { isInline, isVoid, markableVoid, deleteBackward } = editor;
 
   editor.isInline = (element) => {
-    return isMention(element) || isInline(element);
+    return isComposerBodyMention(element) || isInline(element);
   };
 
   editor.isVoid = (element) => {
-    return isMention(element) || isVoid(element);
+    return isComposerBodyMention(element) || isVoid(element);
   };
 
   editor.markableVoid = (element) => {
-    return isMention(element) || markableVoid(element);
+    return isComposerBodyMention(element) || markableVoid(element);
   };
 
   editor.deleteBackward = (unit) => {
@@ -157,7 +159,7 @@ export function withMentions<T extends SlateEditor>(editor: T): T {
           unit === "character"
             ? SlateEditor.before(editor, selection, { unit: "character" })
             : selection,
-        match: isMention,
+        match: isComposerBodyMention,
       });
 
       deleteBackward(unit);

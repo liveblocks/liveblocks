@@ -2,10 +2,10 @@ import { Slot } from "@radix-ui/react-slot";
 import type { ReactNode } from "react";
 import React, { forwardRef, useMemo } from "react";
 
-import { useRerender } from "../lib/use-rerender";
 import type { ComponentPropsWithSlot } from "../types";
 import { capitalize } from "../utils/capitalize";
 import { useInterval } from "../utils/use-interval";
+import { useRerender } from "../utils/use-rerender";
 
 const DYNAMIC_DATE_THRESHOLD = 3 * 24 * 60 * 60 * 1000; // 3 days
 const RENDER_INTERVAL = 30 * 1000; // 30 seconds

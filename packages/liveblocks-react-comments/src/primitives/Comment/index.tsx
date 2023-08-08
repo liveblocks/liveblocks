@@ -1,4 +1,3 @@
-import { CommentBody, isCommentBodyMention } from "@liveblocks/core";
 import { Slot } from "@radix-ui/react-slot";
 import type { ReactNode } from "react";
 import React, { forwardRef } from "react";
@@ -9,6 +8,7 @@ import type {
   CommentMentionProps,
   CommentRenderMentionProps,
 } from "./types";
+import { isCommentBodyMention } from "./utils";
 
 const COMMENT_MENTION_NAME = "CommentMention";
 const COMMENT_BODY_NAME = "CommentBody";

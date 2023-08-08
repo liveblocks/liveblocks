@@ -56,7 +56,6 @@ import {
 } from "slate-react";
 
 import { FLOATING_ELEMENT_COLLISION_PADDING } from "../../constants";
-import { useInitial } from "../../lib/use-initial";
 import type { MentionDraft } from "../../slate/mentions";
 import {
   getMentionDraftAtSelection,
@@ -74,6 +73,7 @@ import { isKey } from "../../utils/is-key";
 import { Portal } from "../../utils/Portal";
 import { requestSubmit } from "../../utils/request-submit";
 import { useId } from "../../utils/use-id";
+import { useInitial } from "../../utils/use-initial";
 import { useLayoutEffect } from "../../utils/use-layout-effect";
 import { useRefs } from "../../utils/use-refs";
 import { useRovingIndex } from "../../utils/use-roving-index";

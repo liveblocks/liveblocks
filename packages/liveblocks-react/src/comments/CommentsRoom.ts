@@ -308,6 +308,7 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
       type: "comment",
       createdAt: now,
       userId: getCurrentUserId(),
+      mentionedIds: [],
       body,
     };
 
@@ -395,6 +396,7 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
                   ...comment,
                   deletedAt: now,
                   body: undefined,
+                  mentionedIds: [],
                 }
               : comment
           ),
