@@ -167,7 +167,7 @@ export const Composer = forwardRef<HTMLFormElement, ComposerProps>(
       autoFocus,
       overrides,
       actions,
-      showLogo = true,
+      showLogo,
       className,
       ...props
     },
