@@ -1,3 +1,9 @@
+# v1.2.2
+
+### `@liveblocks/node`
+
+- Add Yjs document change event (`YDocUpdatedEvent`) to `WebhookHandler`.
+
 # v1.2.1
 
 ### `@liveblocks/node`
