@@ -4,6 +4,7 @@ import type { IncomingHttpHeaders } from "http";
 export class WebhookHandler {
   private secretBuffer: Buffer;
   private static secretPrefix = "whsec_";
+
   constructor(
     /**
      * The signing secret provided on the dashboard's webhooks page
@@ -58,11 +59,20 @@ export class WebhookHandler {
   /**
    * Verifies the headers and returns the webhookId, timestamp and rawSignatures
    */
-  private verifyHeaders(headers: IncomingHttpHeaders) {
+  private verifyHeaders(headers: IncomingHttpHeaders | Headers) {
     const sanitizedHeaders: IncomingHttpHeaders = {};
-    Object.keys(headers).forEach((key) => {
-      sanitizedHeaders[key.toLowerCase()] = headers[key];
-    });
+
+    if (headers.constructor === Headers) {
+      for (const [key, value] of headers) {
+        sanitizedHeaders[key.toLowerCase()] = value;
+      }
+    } else {
+      Object.keys(headers).forEach((key) => {
+        sanitizedHeaders[key.toLowerCase()] = (headers as IncomingHttpHeaders)[
+          key
+        ];
+      });
+    }
 
     const webhookId = sanitizedHeaders["webhook-id"];
     if (typeof webhookId !== "string")
@@ -154,7 +164,7 @@ type WebhookRequest = {
    *  "webhook-signature": "v1,bm9ldHUjKzFob2VudXRob2VodWUzMjRvdWVvdW9ldQo= v2,MzJsNDk4MzI0K2VvdSMjMTEjQEBAQDEyMzMzMzEyMwo="
    * }
    */
-  headers: IncomingHttpHeaders;
+  headers: IncomingHttpHeaders | Headers;
   /**
    * Raw body of the request, do not parse it
    * @example '{"type":"storageUpdated","data":{"roomId":"my-room-id","appId":"my-app-id","updatedAt":"2021-03-01T12:00:00.000Z"}}'
