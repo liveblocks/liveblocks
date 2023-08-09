@@ -244,6 +244,7 @@
   &[data-highlighted],
   &[data-selected] {
     background: var(--lb-elevation-foreground-subtle);
+    transition-duration: calc(var(--lb-transition-duration) / 2);
   }
 }
 
