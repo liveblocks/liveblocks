@@ -1,3 +1,4 @@
+import type { PropsWithChildren } from "react";
 import { createContext, useContext, useMemo } from "react";
 import * as React from "react";
 
@@ -37,6 +38,10 @@ export type Overrides = LocalizationOverrides &
   CommentOverrides &
   ThreadOverrides;
 
+type OverridesProviderProps = PropsWithChildren<{
+  overrides?: Partial<Overrides>;
+}>;
+
 export const defaultOverrides: Overrides = {
   locale: "en",
   dir: "ltr",
@@ -57,13 +62,14 @@ export const defaultOverrides: Overrides = {
   THREAD_COMPOSER_SEND: "Reply",
 };
 
-export const OverridesContext = createContext<Overrides>(defaultOverrides);
+export const OverridesContext = createContext<Overrides | undefined>(undefined);
 
 export function useOverrides(overrides?: Partial<Overrides>): Overrides {
   const contextOverrides = useContext(OverridesContext);
 
   return useMemo(
     () => ({
+      ...defaultOverrides,
       ...contextOverrides,
       ...overrides,
     }),
@@ -73,17 +79,16 @@ export function useOverrides(overrides?: Partial<Overrides>): Overrides {
 
 export function OverridesProvider({
   children,
-  overrides: globalOverrides,
-}: {
-  children: React.ReactNode;
-  overrides: Partial<Overrides>;
-}) {
+  overrides: providerOverrides,
+}: OverridesProviderProps) {
+  const contextOverrides = useContext(OverridesContext);
   const overrides = useMemo(
     () => ({
       ...defaultOverrides,
-      ...globalOverrides,
+      ...contextOverrides,
+      ...providerOverrides,
     }),
-    [globalOverrides]
+    [contextOverrides, providerOverrides]
   );
 
   return (
