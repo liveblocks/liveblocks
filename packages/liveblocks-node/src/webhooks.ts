@@ -60,8 +60,11 @@ export class WebhookHandler {
    * Verifies the headers and returns the webhookId, timestamp and rawSignatures
    */
   private verifyHeaders(headers: IncomingHttpHeaders | Headers) {
-    const normalizedHeaders =
-      headers instanceof Headers ? Object.fromEntries(headers) : headers;
+    const usingNativeHeaders =
+      typeof Headers !== "undefined" && headers instanceof Headers;
+    const normalizedHeaders = usingNativeHeaders
+      ? Object.fromEntries(headers)
+      : (headers as IncomingHttpHeaders);
 
     const sanitizedHeaders: IncomingHttpHeaders = {};
     Object.keys(normalizedHeaders).forEach((key) => {
