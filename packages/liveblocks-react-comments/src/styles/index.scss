@@ -711,7 +711,11 @@
   }
 
   &:last-of-type {
-    padding-block-end: calc(1.25 * var(--lb-spacing));
+    padding-block-end: var(--lb-spacing);
+
+    .lb-comment-body {
+      margin-block-end: calc(0.25 * var(--lb-spacing));
+    }
 
     &.lb-comment\:indent-body {
       min-height: calc(
