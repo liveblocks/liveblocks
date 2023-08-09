@@ -136,6 +136,7 @@ export class WebhookHandler {
         "userLeft",
         "roomCreated",
         "roomDeleted",
+        "ydocUpdated",
       ].includes(event.type)
     )
       return;
@@ -174,7 +175,8 @@ type WebhookEvent =
   | UserEnteredEvent
   | UserLeftEvent
   | RoomCreatedEvent
-  | RoomDeletedEvent;
+  | RoomDeletedEvent
+  | YDocUpdatedEvent;
 
 type StorageUpdatedEvent = {
   type: "storageUpdated";
@@ -251,6 +253,19 @@ type RoomDeletedEvent = {
   };
 };
 
+type YDocUpdatedEvent = {
+  type: "ydocUpdated";
+  data: {
+    appId: string;
+    roomId: string;
+    /**
+     * ISO 8601 datestring
+     * @example "2021-03-01T12:00:00.000Z"
+     */
+    deletedAt: string;
+  };
+};
+
 export type {
   RoomCreatedEvent,
   RoomDeletedEvent,
@@ -259,4 +274,5 @@ export type {
   UserLeftEvent,
   WebhookEvent,
   WebhookRequest,
+  YDocUpdatedEvent,
 };
