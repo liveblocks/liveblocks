@@ -261,17 +261,18 @@
 }
 
 .lb-dropdown,
-.lb-tooltip {
-  &[data-state="delayed-open"] {
-    &[data-side="top"] {
-      animation-name: lb-animation-slide-up;
-    }
-
-    &[data-side="bottom"] {
-      animation-name: lb-animation-slide-down;
-    }
+.lb-tooltip[data-state="delayed-open"] {
+  &[data-side="top"] {
+    animation-name: lb-animation-slide-up;
   }
 
+  &[data-side="bottom"] {
+    animation-name: lb-animation-slide-down;
+  }
+}
+
+.lb-dropdown,
+.lb-tooltip {
   &[data-state="closed"] {
     animation-name: lb-animation-disappear;
   }
