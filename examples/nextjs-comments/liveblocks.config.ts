@@ -21,9 +21,9 @@ const {
       console.error(error);
     }
   },
-  resolveMentionSuggestions: async (text) => {
+  resolveUserSearch: async (search) => {
     try {
-      const response = await fetch(`/api/mentions?text=${text}`);
+      const response = await fetch(`/api/users?search=${search}`);
 
       return response.json();
     } catch (error) {

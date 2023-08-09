@@ -618,7 +618,7 @@ export type RoomContextBundle<
   useThreads(): RoomThreads<TThreadMetadata>;
 
   // TODO: Internal?
-  useMentionSuggestions(value: string | undefined): string[] | undefined;
+  useUserSearch(search?: string): string[] | undefined;
 
   suspense: {
     /**

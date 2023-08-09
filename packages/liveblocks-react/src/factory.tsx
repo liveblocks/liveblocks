@@ -138,9 +138,9 @@ type Options<TUserMeta extends BaseUserMeta> = {
   resolveUser?: (userId: string) => Promise<TUserMeta["info"] | undefined>;
 
   /**
-   * An asynchronous function to get a list of suggested user IDs from a string.
+   * An asynchronous function that returns a list of user IDs matching a string.
    */
-  resolveMentionSuggestions?: (text: string) => Promise<string[]>;
+  resolveUserSearch?: (search: string) => Promise<string[]>;
 
   /**
    * @internal Internal endpoint
@@ -885,7 +885,7 @@ export function createRoomContext<
     );
   }
 
-  const { resolveUser /* resolveMentionSuggestions */ } = options ?? {};
+  const { resolveUser, resolveUserSearch } = options ?? {};
 
   const usersCache = resolveUser ? createAsyncCache(resolveUser) : undefined;
 
@@ -921,21 +921,15 @@ export function createRoomContext<
     } as UserStateSuspense<TUserMeta["info"]>;
   }
 
-  const resolveMentionSuggestions = null;
-
-  const mentionSuggestionsCache = createAsyncCache<string[], unknown>(
-    resolveMentionSuggestions ?? (() => Promise.resolve([]))
+  const userSearchCache = createAsyncCache<string[], unknown>(
+    resolveUserSearch ?? (() => Promise.resolve([]))
   );
 
-  function useMentionSuggestions(value: string | undefined) {
-    const debouncedValue = useDebounce(value, 500);
-    const { data } = useAsyncCache(
-      mentionSuggestionsCache,
-      debouncedValue ?? null,
-      {
-        keepPreviousDataWhileLoading: true,
-      }
-    );
+  function useUserSearch(search?: string) {
+    const debouncedSearch = useDebounce(search, 500);
+    const { data } = useAsyncCache(userSearchCache, debouncedSearch ?? null, {
+      keepPreviousDataWhileLoading: true,
+    });
 
     return data;
   }
@@ -990,7 +984,7 @@ export function createRoomContext<
     useEditComment,
     useDeleteComment,
 
-    useMentionSuggestions,
+    useUserSearch,
 
     suspense: {
       RoomContext,
@@ -1038,7 +1032,7 @@ export function createRoomContext<
       useEditComment,
       useDeleteComment,
 
-      useMentionSuggestions,
+      useUserSearch,
     },
   };
 

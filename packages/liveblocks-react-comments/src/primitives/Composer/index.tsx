@@ -581,7 +581,7 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
     },
     forwardedRef
   ) => {
-    const { useMentionSuggestions } = useRoomContextBundle();
+    const { useUserSearch } = useRoomContextBundle();
     const { editor, validate, setFocused } = useComposerEditorContext();
     const { submit, isValid, isFocused } = useComposer();
     const initialBody = useInitial(initialValue ?? emptyCommentBody);
@@ -590,7 +590,7 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
     }, [initialBody]);
 
     const [mentionDraft, setMentionDraft] = useState<MentionDraft>();
-    const mentionSuggestions = useMentionSuggestions(mentionDraft?.text);
+    const mentionSuggestions = useUserSearch(mentionDraft?.text);
     const [
       selectedMentionSuggestionIndex,
       setPreviousSelectedMentionSuggestionIndex,

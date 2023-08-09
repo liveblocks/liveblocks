@@ -8,13 +8,13 @@ interface User {
 
 type UserApiRequest = NextApiRequest & {
   query: {
-    text?: string;
+    search?: string;
   };
 };
 
 export default async function user(req: UserApiRequest, res: NextApiResponse) {
   const {
-    query: { text },
+    query: { search },
   } = req;
 
   const userIndices = [...NAMES.keys()];
@@ -23,7 +23,7 @@ export default async function user(req: UserApiRequest, res: NextApiResponse) {
   );
   const filteredUserIds = users
     .filter((user) =>
-      text ? user.name.toLowerCase().includes(text.toLowerCase()) : true
+      search ? user.name.toLowerCase().includes(search.toLowerCase()) : true
     )
     .map((user) => user.id);
 
