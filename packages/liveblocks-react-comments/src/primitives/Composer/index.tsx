@@ -56,6 +56,7 @@ import {
 } from "slate-react";
 
 import { FLOATING_ELEMENT_COLLISION_PADDING } from "../../constants";
+import { withEmptyClearFormatting } from "../../slate/empty-clear-formatting";
 import type { MentionDraft } from "../../slate/mentions";
 import {
   getMentionDraftAtSelection,
@@ -65,6 +66,8 @@ import {
 } from "../../slate/mentions";
 import { withNormalize } from "../../slate/normalize";
 import { getDOMRange } from "../../slate/utils/get-dom-range";
+import { isEmpty } from "../../slate/utils/is-empty";
+import { toggleMark } from "../../slate/utils/marks";
 import type {
   ComposerBody as ComposerBodyData,
   ComposerBodyMention,
@@ -103,10 +106,8 @@ import type {
 import {
   commentBodyToComposerBody,
   composerBodyToCommentBody,
-  focusSlateReactEditor,
   getPlacementFromPosition,
   getSideAndAlignFromPlacement,
-  toggleMark,
 } from "./utils";
 
 const MENTION_SUGGESTIONS_POSITION: SuggestionsPosition = "top";
@@ -125,7 +126,11 @@ const emptyCommentBody: CommentBody = {
 };
 
 function createComposerEditor() {
-  return withNormalize(withMentions(withHistory(withReact(createEditor()))));
+  return withNormalize(
+    withMentions(
+      withEmptyClearFormatting(withHistory(withReact(createEditor())))
+    )
+  );
 }
 
 function ComposerDefaultRenderMention({ userId }: ComposerRenderMentionProps) {
@@ -326,28 +331,6 @@ function ComposerEditorLeaf({ attributes, children, leaf }: RenderLeafProps) {
   }
 
   return <span {...attributes}>{children}</span>;
-}
-
-function ComposerEditorPlaceholder({
-  children,
-  attributes,
-}: RenderPlaceholderProps) {
-  return (
-    <span
-      {...attributes}
-      style={{
-        ...attributes.style,
-        // Prevent the placeholder from inheriting formatting styles.
-        // See https://github.com/ianstormtaylor/slate/issues/2908
-        fontWeight: "initial",
-        fontStyle: "initial",
-        textDecoration: "initial",
-        // TODO: Inline code applies a monospace font-family and can't be unset.
-      }}
-    >
-      {children}
-    </span>
-  );
 }
 
 /**
@@ -573,7 +556,6 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
       onFocus,
       onBlur,
       disabled,
-      autoFocus,
       renderMention,
       renderMentionSuggestions,
       dir,
@@ -790,31 +772,10 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
     useImperativeHandle(
       forwardedRef,
       () => {
-        const node = ReactEditor.toDOMNode(editor, editor) as HTMLDivElement;
-
-        return {
-          ...node,
-          focus: () => {
-            focusSlateReactEditor(node);
-          },
-          blur: () => {
-            ReactEditor.blur(editor);
-          },
-        };
+        return ReactEditor.toDOMNode(editor, editor) as HTMLDivElement;
       },
       [editor]
     );
-
-    // The default autoFocus behavior doesn't always work
-    useEffect(() => {
-      if (autoFocus) {
-        setTimeout(() => {
-          focusSlateReactEditor(
-            ReactEditor.toDOMNode(editor, editor) as HTMLDivElement
-          );
-        }, 0);
-      }
-    }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
     return (
       <Slate
@@ -831,7 +792,6 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
           data-disabled={disabled || undefined}
           {...propsWhileSuggesting}
           {...props}
-          autoFocus={autoFocus}
           readOnly={disabled}
           disabled={disabled}
           onKeyDown={handleKeyDown}
@@ -839,7 +799,6 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
           onBlur={handleBlur}
           renderElement={renderElement}
           renderLeaf={ComposerEditorLeaf}
-          renderPlaceholder={ComposerEditorPlaceholder}
         />
         {mentionDraft && (
           <ComposerMentionSuggestionsWrapper
@@ -883,10 +842,7 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
 
     const validate = useCallback(
       (value: SlateElement[]) => {
-        const isEmpty =
-          value.length <= 1 && SlateEditor.isEmpty(editor, value[0]);
-
-        setValid(!isEmpty);
+        setValid(!isEmpty(editor, value));
       },
       [editor]
     );
@@ -907,9 +863,7 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
     }, [editor]);
 
     const focus = useCallback(() => {
-      focusSlateReactEditor(
-        ReactEditor.toDOMNode(editor, editor) as HTMLDivElement
-      );
+      ReactEditor.focus(editor);
     }, [editor]);
 
     const blur = useCallback(() => {
@@ -918,8 +872,8 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
 
     const insertText = useCallback(
       (text: string) => {
-        SlateTransforms.insertText(editor, text);
         focus();
+        SlateTransforms.insertText(editor, text);
       },
       [editor, focus]
     );
