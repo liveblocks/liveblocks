@@ -255,28 +255,26 @@ export function createRoomContext<
     );
 
     React.useEffect(() => {
-      setRoom(
-        client.enter(roomId, {
+      const room = client.enter<TPresence, TStorage, TUserMeta, TRoomEvent>(
+        roomId,
+        {
           initialPresence: frozen.initialPresence,
           initialStorage: frozen.initialStorage,
           shouldInitiallyConnect: frozen.shouldInitiallyConnect,
           unstable_batchedUpdates: frozen.unstable_batchedUpdates,
-        })
+        }
       );
 
-      return () => {
-        client.leave(roomId);
-      };
-    }, [roomId, frozen]);
+      setRoom(room);
 
-    React.useEffect(() => {
       const unsubscribe = getCommentsRoom(room).subscribe();
 
       return () => {
-        commentsRooms.delete(room.id);
         unsubscribe();
+        commentsRooms.delete(room.id);
+        client.leave(roomId);
       };
-    }, [room]);
+    }, [roomId, frozen]);
 
     return (
       <RoomContext.Provider value={room}>
