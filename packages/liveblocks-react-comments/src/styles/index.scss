@@ -490,6 +490,8 @@
 
     &:enabled:hover,
     &:enabled:focus-visible {
+      --lb-button-background: var(--lb-accent);
+
       color: var(--lb-accent-foreground);
     }
   }
@@ -503,6 +505,8 @@
 
     &:enabled:hover,
     &:enabled:focus-visible {
+      --lb-button-background: var(--lb-accent);
+
       color: var(--lb-accent-foreground);
     }
   }
