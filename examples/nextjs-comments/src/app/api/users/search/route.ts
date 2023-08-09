@@ -1,21 +1,14 @@
-import type { NextApiRequest, NextApiResponse } from "next";
-import { NAMES } from "../../database";
+import { NextRequest, NextResponse } from "next/server";
+import { NAMES } from "../../../../database";
 
 interface User {
   id: string;
   name: string;
 }
 
-type UserApiRequest = NextApiRequest & {
-  query: {
-    search?: string;
-  };
-};
-
-export default async function user(req: UserApiRequest, res: NextApiResponse) {
-  const {
-    query: { search },
-  } = req;
+export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url);
+  const search = searchParams.get("search");
 
   const userIndices = [...NAMES.keys()];
   const users = userIndices.map(
@@ -27,5 +20,5 @@ export default async function user(req: UserApiRequest, res: NextApiResponse) {
     )
     .map((user) => user.id);
 
-  return res.json(filteredUserIds);
+  return NextResponse.json(filteredUserIds);
 }

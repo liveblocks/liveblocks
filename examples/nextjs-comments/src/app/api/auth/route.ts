@@ -1,22 +1,23 @@
 import { Liveblocks } from "@liveblocks/node";
-import type { NextApiRequest, NextApiResponse } from "next";
-import { NAMES } from "../../database";
+import { NAMES } from "../../../database";
+import { NextRequest, NextResponse } from "next/server";
 
 const liveblocks = new Liveblocks({
   secret: process.env.LIVEBLOCKS_SECRET_KEY!,
 });
 
-export default async function auth(req: NextApiRequest, res: NextApiResponse) {
+export async function POST(request: NextRequest) {
   if (!process.env.LIVEBLOCKS_SECRET_KEY) {
-    return res.status(403).end();
+    return new NextResponse("Missing LIVEBLOCKS_SECRET_KEY", { status: 403 });
   }
 
   const userIndex = Math.floor(Math.random() * NAMES.length);
   const session = liveblocks.prepareSession(`user-${userIndex}`);
 
-  session.allow(req.body.room, session.FULL_ACCESS);
+  const { room } = await request.json();
+  session.allow(room, session.FULL_ACCESS);
 
   const { status, body } = await session.authorize();
 
-  return res.status(status).end(body);
+  return new NextResponse(body, { status });
 }

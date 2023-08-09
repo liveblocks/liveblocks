@@ -9,12 +9,11 @@ export const client = createClient({
 
 const {
   RoomProvider,
-  useThreads,
-  suspense: { useThreads: useThreadsSuspense },
+  suspense: { useThreads },
 } = createRoomContext(client, {
   resolveUser: async (userId) => {
     try {
-      const response = await fetch(`/api/user?userId=${userId}`);
+      const response = await fetch(`/api/users?userId=${userId}`);
 
       return response.json();
     } catch (error) {
@@ -23,7 +22,7 @@ const {
   },
   resolveUserSearch: async (search) => {
     try {
-      const response = await fetch(`/api/users?search=${search}`);
+      const response = await fetch(`/api/users/search?search=${search}`);
 
       return response.json();
     } catch (error) {
@@ -34,4 +33,4 @@ const {
   },
 });
 
-export { RoomProvider, useThreads, useThreadsSuspense };
+export { RoomProvider, useThreads };
