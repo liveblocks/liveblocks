@@ -271,5 +271,20 @@
     ],
     "date": "2023-06-28",
     "hidden": true
+  },
+  {
+    "title": "How to synchronize your Yjs Storage data to a Vercel Postgres database",
+    "path": "/how-to-synchronize-your-yjs-storage-data-to-a-vercel-postgres-database",
+    "topics": [
+      "tutorials",
+      "webhooks",
+      "databases"
+    ],
+    "technologies": [
+      "yjs",
+      "nodejs"
+    ],
+    "date": "2023-06-28",
+    "hidden": true
   }
 ]

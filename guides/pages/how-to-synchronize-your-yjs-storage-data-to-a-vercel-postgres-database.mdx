@@ -1,0 +1,24 @@
+---
+meta:
+  title:
+    "How to synchronize your Yjs Storage data to a Vercel Postgres database"
+  description:
+    "Learn how to automatically update your Vercel Postgres database with
+    changes from your Yjs application."
+---
+
+Liveblocks allows you to build collaborative applications with
+[Yjs](https://yjs.dev/), which is tightly integrated into our infrastructure.
+Using our Webhooks and REST API, you can then retrieve the Yjs document data as
+it changes, and store it in your database.
+
+## What we’re building
+
+In this guide we’ll be linking a Yjs application up to a
+[Vercel Postgres](https://vercel.com/docs/storage/vercel-postgres) database so
+that Yjs Storage data is automatically synchronized. This is enabled through the
+following:
+
+- [`YDocUpdated`](/docs/platform/webhooks#YDocUpdatedEvent) Webhook event
+- [Get Yjs Document](/docs/api-reference/rest-api-endpoints#get-rooms-roomId-ydoc)
+  REST API
