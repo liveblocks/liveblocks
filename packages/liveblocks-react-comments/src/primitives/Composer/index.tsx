@@ -986,7 +986,7 @@ const ComposerSubmit = forwardRef<HTMLButtonElement, ComposerSubmitProps>(
         type="submit"
         {...props}
         ref={forwardedRef}
-        disabled={disabled ?? !isValid}
+        disabled={disabled || !isValid}
       >
         {children}
       </Component>
