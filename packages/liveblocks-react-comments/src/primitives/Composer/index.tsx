@@ -44,7 +44,6 @@ import type {
   RenderElementProps,
   RenderElementSpecificProps,
   RenderLeafProps,
-  RenderPlaceholderProps,
 } from "slate-react";
 import {
   Editable,
@@ -556,6 +555,7 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
       onFocus,
       onBlur,
       disabled,
+      autoFocus,
       renderMention,
       renderMentionSuggestions,
       dir,
@@ -565,7 +565,7 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
   ) => {
     const { useUserSearch } = useRoomContextBundle();
     const { editor, validate, setFocused } = useComposerEditorContext();
-    const { submit, isValid, isFocused } = useComposer();
+    const { submit, focus, isValid, isFocused } = useComposer();
     const initialBody = useInitial(initialValue ?? emptyCommentBody);
     const initialEditorValue = useMemo(() => {
       return commentBodyToComposerBody(initialBody);
@@ -777,6 +777,12 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
       [editor]
     );
 
+    useEffect(() => {
+      if (autoFocus) {
+        focus();
+      }
+    }, [autoFocus, editor, focus]);
+
     return (
       <Slate
         editor={editor}
@@ -863,7 +869,10 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
     }, [editor]);
 
     const focus = useCallback(() => {
-      ReactEditor.focus(editor);
+      if (!ReactEditor.isFocused(editor)) {
+        SlateTransforms.select(editor, SlateEditor.end(editor, []));
+        ReactEditor.focus(editor);
+      }
     }, [editor]);
 
     const blur = useCallback(() => {
@@ -873,7 +882,7 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
     const insertText = useCallback(
       (text: string) => {
         focus();
-        SlateTransforms.insertText(editor, text);
+        editor.insertText(text);
       },
       [editor, focus]
     );
