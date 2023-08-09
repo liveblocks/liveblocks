@@ -62,15 +62,13 @@ export class WebhookHandler {
   private verifyHeaders(headers: IncomingHttpHeaders | Headers) {
     const sanitizedHeaders: IncomingHttpHeaders = {};
 
-    if (headers.constructor === Headers) {
+    if (headers instanceof Headers) {
       for (const [key, value] of headers) {
         sanitizedHeaders[key.toLowerCase()] = value;
       }
     } else {
       Object.keys(headers).forEach((key) => {
-        sanitizedHeaders[key.toLowerCase()] = (headers as IncomingHttpHeaders)[
-          key
-        ];
+        sanitizedHeaders[key.toLowerCase()] = headers[key];
       });
     }
 
