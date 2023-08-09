@@ -216,7 +216,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
                 </span>
               </span>
             </div>
-            {showActions && !isEditing && comment.userId === self?.id && (
+            {showActions && !isEditing && (
               <div
                 className={classNames(
                   "lb-comment-actions",
@@ -224,39 +224,41 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
                 )}
               >
                 {additionalActions ?? null}
-                <Dropdown
-                  open={isMoreOpen}
-                  onOpenChange={setMoreOpen}
-                  align="end"
-                  content={
-                    <>
-                      <DropdownItem
-                        className="lb-dropdown-item"
-                        onSelect={handleEdit}
+                {comment.userId === self?.id && (
+                  <Dropdown
+                    open={isMoreOpen}
+                    onOpenChange={setMoreOpen}
+                    align="end"
+                    content={
+                      <>
+                        <DropdownItem
+                          className="lb-dropdown-item"
+                          onSelect={handleEdit}
+                        >
+                          <EditIcon className="lb-dropdown-item-icon" />
+                          {$.COMMENT_EDIT}
+                        </DropdownItem>
+                        <DropdownItem
+                          className="lb-dropdown-item"
+                          onSelect={handleDelete}
+                        >
+                          <DeleteIcon className="lb-dropdown-item-icon" />
+                          {$.COMMENT_DELETE}
+                        </DropdownItem>
+                      </>
+                    }
+                  >
+                    <Tooltip content={$.COMMENT_MORE}>
+                      <DropdownTrigger
+                        className="lb-button lb-comment-action"
+                        disabled={!comment.body}
+                        aria-label={$.COMMENT_MORE}
                       >
-                        <EditIcon className="lb-dropdown-item-icon" />
-                        {$.COMMENT_EDIT}
-                      </DropdownItem>
-                      <DropdownItem
-                        className="lb-dropdown-item"
-                        onSelect={handleDelete}
-                      >
-                        <DeleteIcon className="lb-dropdown-item-icon" />
-                        {$.COMMENT_DELETE}
-                      </DropdownItem>
-                    </>
-                  }
-                >
-                  <Tooltip content={$.COMMENT_MORE}>
-                    <DropdownTrigger
-                      className="lb-button lb-comment-action"
-                      disabled={!comment.body}
-                      aria-label={$.COMMENT_MORE}
-                    >
-                      <EllipsisIcon className="lb-button-icon" />
-                    </DropdownTrigger>
-                  </Tooltip>
-                </Dropdown>
+                        <EllipsisIcon className="lb-button-icon" />
+                      </DropdownTrigger>
+                    </Tooltip>
+                  </Dropdown>
+                )}
               </div>
             )}
           </div>
