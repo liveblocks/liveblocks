@@ -297,6 +297,30 @@ describe("WebhookHandler", () => {
       expect(event).toEqual(userEnteredBody);
     });
 
+    it("should allow a native Headers object", () => {
+      jest.useFakeTimers({
+        now: 1674850126000,
+      });
+      const webhookHandler = new WebhookHandler(secret);
+
+      const headers = new Headers({
+        ...userEnteredHeaders,
+        "webhook-signature": generateSignatureWithSvix(
+          secret,
+          userEnteredHeaders["webhook-id"],
+          userEnteredHeaders["webhook-timestamp"],
+          rawUserEnteredBody
+        ),
+      });
+
+      const event = webhookHandler.verifyRequest({
+        headers,
+        rawBody: rawUserEnteredBody,
+      });
+
+      expect(event).toEqual(userEnteredBody);
+    });
+
     it("should throw if the signature is invalid", () => {
       jest.useFakeTimers({
         now: 1674850126000,
