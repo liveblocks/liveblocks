@@ -1568,38 +1568,6 @@
       "post": {
         "summary": "Get single-room token with secret key (deprecated)",
         "operationId": "post-authorize",
-        "parameters": [
-          {
-            "name": "roomId",
-            "in": "path",
-            "description": "ID of the room",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateAuthorization"
-              },
-              "examples": {
-                "example-1": {
-                  "value": {
-                    "userId": "b2c1c290-f2c9-45de-a74e-6b7aa0690f59",
-                    "groupIds": ["g1", "g2"],
-                    "userInfo": {
-                      "name": "bob",
-                      "colors": ["blue", "red"]
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
         "responses": {
           "200": {
             "description": "Success. Returns an old-style single-room token.",
@@ -1631,37 +1599,21 @@
             "$ref": "#/components/responses/422"
           }
         },
-        "servers": [
-          {
-            "url": "https://api.liveblocks.io/v2"
-          }
-        ]
-      }
-    },
-    "/rooms/{roomId}/broadcast_event": {
-      "post": {
-        "summary": "Broadcast an event to a room",
-        "description": "This endpoint enables the broadcast of an event to a room without having to connect to it via the `client` from `@liveblocks/client`. It takes any valid JSON as a request body.",
-        "operationId": "post-broadcast-event",
-        "parameters": [
-          {
-            "name": "roomId",
-            "in": "path",
-            "description": "ID of the room",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
         "requestBody": {
           "content": {
             "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAuthorization"
+              },
               "examples": {
                 "example-1": {
                   "value": {
-                    "type": "EMOJI",
-                    "emoji": "🔥"
+                    "userId": "b2c1c290-f2c9-45de-a74e-6b7aa0690f59",
+                    "groupIds": ["g1", "g2"],
+                    "userInfo": {
+                      "name": "bob",
+                      "colors": ["blue", "red"]
+                    }
                   }
                 }
               }
@@ -1687,34 +1639,6 @@
       "post": {
         "summary": "Get single-room token with public key (deprecated)",
         "operationId": "post-public-authorize",
-        "parameters": [
-          {
-            "name": "roomId",
-            "in": "path",
-            "description": "ID of the room",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "description": "",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/PublicAuthorizeBodyRequest"
-              },
-              "examples": {
-                "example": {
-                  "value": {
-                    "publicApiKey": "pk_test_lOMrmwejSWLaPYQc5_JuGHXXX"
-                  }
-                }
-              }
-            }
-          }
-        },
         "responses": {
           "200": {
             "description": "Success. Returns the JWT token.",
@@ -1841,71 +1765,6 @@
                   "error": "UNAUTHORIZED_ROOM_ACCESS",
                   "message": "The user does not have permission to access the room.",
                   "suggestion": "Please add the user’s ID or one of the user’s group IDs to the room first.",
-                  "docs": ""
-                }
-              }
-            }
-          }
-        }
-      },
-      "404": {
-        "description": "Resource not found.",
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/Error"
-            },
-            "examples": {
-              "ROOM_NOT_FOUND": {
-                "value": {
-                  "error": "ROOM_NOT_FOUND",
-                  "message": "Room not found.",
-                  "suggestion": "Please use a valid room ID, room IDs are available in the dashboard: https://liveblocks.io/dashboard/rooms.",
-                  "docs": ""
-                }
-              }
-            }
-          }
-        }
-      },
-      "409": {
-        "description": "Room already exists.",
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/Error"
-            },
-            "examples": {
-              "ROOM_ALREADY_EXISTS": {
-                "value": {
-                  "error": "ROOM_ALREADY_EXISTS",
-                  "message": "The room already exists.",
-                  "suggestion": "Please use a different room id or update the existing room.",
-                  "doc": ""
-                }
-              }
-            }
-          },
-          "application/xml": {
-            "schema": {
-              "type": "object"
-            }
-          }
-        }
-      },
-      "422": {
-        "description": "Unprocessable entity.",
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/Error"
-            },
-            "examples": {
-              "UNPROCESSABLE_ENTITY": {
-                "value": {
-                  "error": "UNPROCESSABLE_ENTITY",
-                  "message": "Missing key: 'defaultAccesses'.",
-                  "suggestion": "Please ensure the data follows the correct format.",
                   "docs": ""
                 }
               }
