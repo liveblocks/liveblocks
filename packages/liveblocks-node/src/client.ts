@@ -173,7 +173,11 @@ export class Liveblocks {
     }
   }
 
-  public async getThreads(roomId: string): Promise<ThreadData[]> {
+  public async getThreads(params: {
+    roomId: string;
+  }): Promise<ThreadData[]> {
+    const { roomId } = params;
+
     try {
       const resp = await this.post(`/v2/rooms/${roomId}/threads`, {
         roomId,
@@ -194,11 +198,14 @@ export class Liveblocks {
     }
   }
 
-  public async getComment(
-    roomId: string,
-    threadId: string,
-    commentId: string
-  ): Promise<CommentData> {
+  public async getComment(params:
+    {
+      roomId: string;
+      threadId: string;
+      commentId: string;
+    }): Promise<CommentData> {
+    const { roomId, threadId, commentId } = params;
+
     try {
       const resp = await this.post(
         `/v2/rooms/${roomId}/threads/${threadId}/comments/${commentId}`,
@@ -224,7 +231,9 @@ export class Liveblocks {
     }
   }
 
-  public async getThread(roomId: string, threadId: string): Promise<ThreadData> {
+  public async getThread(params: { roomId: string; threadId: string; }): Promise<ThreadData> {
+    const { roomId, threadId } = params;
+
     try {
       const resp = await this.post(`/v2/rooms/${roomId}/threads/${threadId}`, {
         roomId,
@@ -246,12 +255,14 @@ export class Liveblocks {
     }
   }
 
-  public async getThreadParticipants(
-    roomId: string,
-    threadId: string
-  ): Promise<{
+  public async getThreadParticipants(params: {
+    roomId: string;
+    threadId: string;
+  }): Promise<{
     participantIds: string[];
   }> {
+    const { roomId, threadId } = params;
+
     try {
       const resp = await this.post(`/v2/rooms/${roomId}/threads/${threadId}`, {
         roomId,
