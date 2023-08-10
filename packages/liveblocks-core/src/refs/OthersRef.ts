@@ -2,7 +2,7 @@ import { freeze } from "../lib/freeze";
 import type { JsonObject } from "../lib/Json";
 import { asArrayWithLegacyMethods } from "../lib/LegacyArray";
 import { compact, compactObject } from "../lib/utils";
-import { canWriteStorage } from "../protocol/AuthToken";
+import { canComment, canWriteStorage } from "../protocol/AuthToken";
 import type { BaseUserMeta } from "../protocol/BaseUserMeta";
 import type { Others } from "../types/Others";
 import type { User } from "../types/User";
@@ -27,6 +27,7 @@ function makeUser<TPresence extends JsonObject, TUserMeta extends BaseUserMeta>(
       id,
       info,
       canWrite,
+      canComment: canComment(conn.scopes),
       isReadOnly: !canWrite, // Deprecated, kept for backward-compatibility
       presence,
     })
@@ -35,7 +36,7 @@ function makeUser<TPresence extends JsonObject, TUserMeta extends BaseUserMeta>(
 
 export class OthersRef<
   TPresence extends JsonObject,
-  TUserMeta extends BaseUserMeta
+  TUserMeta extends BaseUserMeta,
 > extends ImmutableRef<Others<TPresence, TUserMeta>> {
   // To track "others"
   private _connections: Map</* connectionId */ number, Connection<TUserMeta>>;

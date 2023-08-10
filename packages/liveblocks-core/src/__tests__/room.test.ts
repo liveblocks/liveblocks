@@ -87,7 +87,7 @@ function createTestableRoom<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
   TUserMeta extends BaseUserMeta,
-  TRoomEvent extends Json
+  TRoomEvent extends Json,
 >(
   initialPresence: TPresence,
   authBehavior = AUTH_SUCCESS,
@@ -632,6 +632,7 @@ describe("room", () => {
         presence: { x: 2 },
         isReadOnly: false,
         canWrite: true,
+        canComment: true,
       },
     ]);
   });
@@ -674,6 +675,7 @@ describe("room", () => {
         presence: { x: 2 },
         isReadOnly: true,
         canWrite: false,
+        canComment: false,
       },
     ]);
   });
@@ -717,6 +719,7 @@ describe("room", () => {
         presence: { x: 2 },
         isReadOnly: false,
         canWrite: true,
+        canComment: true,
       },
     ]);
 
@@ -736,6 +739,7 @@ describe("room", () => {
         presence: { x: 2 },
         isReadOnly: false,
         canWrite: true,
+        canComment: true,
       },
     ]);
 
@@ -804,12 +808,14 @@ describe("room", () => {
         presence: { x: 2 },
         isReadOnly: false,
         canWrite: true,
+        canComment: true,
       },
       {
         connectionId: 2,
         presence: { x: 2 },
         isReadOnly: false,
         canWrite: true,
+        canComment: true,
       },
     ]);
 
@@ -837,6 +843,7 @@ describe("room", () => {
         presence: { x: 2 },
         isReadOnly: false,
         canWrite: true,
+        canComment: true,
       },
     ]);
   });
@@ -1320,6 +1327,7 @@ describe("room", () => {
           connectionId: 1,
           isReadOnly: false,
           canWrite: true,
+          canComment: true,
           presence: { x: 1 },
         },
       ]);
@@ -1470,6 +1478,7 @@ describe("room", () => {
           connectionId: 1,
           isReadOnly: false,
           canWrite: true,
+          canComment: true,
           presence: { x: 2 },
         },
       ]);
@@ -1672,6 +1681,7 @@ describe("room", () => {
           presence: { x: 1 },
           isReadOnly: false,
           canWrite: true,
+          canComment: true,
         }, // old user is not cleaned directly
         {
           connectionId: 2,
@@ -1680,6 +1690,7 @@ describe("room", () => {
           presence: { x: 1 },
           isReadOnly: false,
           canWrite: true,
+          canComment: true,
         },
       ]);
     });
@@ -2269,6 +2280,7 @@ describe("room", () => {
           info: undefined,
           isReadOnly: false,
           canWrite: true,
+          canComment: true,
           presence: {
             x: 2,
           },
