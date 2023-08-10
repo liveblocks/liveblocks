@@ -16,6 +16,3 @@ export type {
   WebhookRequest,
 } from "./webhooks";
 export { WebhookHandler } from "./webhooks";
-export {
-  getPlainTextFromCommentBody
-} from './comments'
