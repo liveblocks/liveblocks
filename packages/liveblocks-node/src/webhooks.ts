@@ -154,13 +154,19 @@ const isNotUndefined = <T>(value: T | undefined): value is T =>
 
 type WebhookRequest = {
   /**
-   * Headers of the request
+   * Headers of the request, can be a regular object or a Headers object
    * @example
    * {
    *  "webhook-id": "123",
    *  "webhook-timestamp": "1614588800000",
    *  "webhook-signature": "v1,bm9ldHUjKzFob2VudXRob2VodWUzMjRvdWVvdW9ldQo= v2,MzJsNDk4MzI0K2VvdSMjMTEjQEBAQDEyMzMzMzEyMwo="
    * }
+   *
+   * new Headers({
+   *  "webhook-id": "123",
+   *  "webhook-timestamp": "1614588800000",
+   *  "webhook-signature": "v1,bm9ldHUjKzFob2VudXRob2VodWUzMjRvdWVvdW9ldQo= v2,MzJsNDk4MzI0K2VvdSMjMTEjQEBAQDEyMzMzMzEyMwo="
+   * }}
    */
   headers: IncomingHttpHeaders | Headers;
   /**
