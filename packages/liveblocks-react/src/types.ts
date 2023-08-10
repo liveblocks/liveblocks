@@ -51,27 +51,6 @@ export type UserStateSuspense<T> = Resolve<
   Extract<UserState<T>, { isLoading: false; error?: never }>
 >;
 
-export type UserSearchState =
-  | {
-      userIds?: string[];
-      isLoading: true;
-      error?: never;
-    }
-  | {
-      userIds?: string[];
-      isLoading: false;
-      error?: never;
-    }
-  | {
-      userIds?: never;
-      isLoading: false;
-      error: Error;
-    };
-
-export type UserSearchStateSuspense = Resolve<
-  Extract<UserSearchState, { isLoading: false; error?: never }>
->;
-
 export type RoomProviderProps<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
@@ -613,12 +592,9 @@ export type RoomContextBundle<
     useUser(userId: string): UserState<TUserMeta["info"]>;
 
     /**
-     * Returns a list of user IDs matching a search.
-     *
-     * @example
-     * const { userIds, error, isLoading } = useUserSearch("jane");
+     * @private
      */
-    useUserSearch(search?: string): UserSearchState;
+    useMentionSuggestions(search?: string): string[] | undefined;
 
     //
     // Legacy hooks
@@ -753,14 +729,6 @@ export type RoomContextBundle<
          * const { user, error, isLoading } = useUser("user-id");
          */
         useUser(userId: string): UserStateSuspense<TUserMeta["info"]>;
-
-        /**
-         * Returns a list of user IDs matching a search.
-         *
-         * @example
-         * const { userIds, error, isLoading } = useUserSearch("jane");
-         */
-        useUserSearch(search?: string): UserSearchStateSuspense;
 
         //
         // Legacy hooks

@@ -49,7 +49,6 @@ import type {
   OmitFirstArg,
   RoomContextBundle,
   RoomProviderProps,
-  UserSearchStateSuspense,
   UserState,
   UserStateSuspense,
 } from "./types";
@@ -141,7 +140,7 @@ type Options<TUserMeta extends BaseUserMeta> = {
   /**
    * An asynchronous function that returns a list of user IDs matching a string.
    */
-  resolveUserSearch?: (search: string) => Promise<string[]>;
+  resolveMentionSuggestions?: (search: string) => Promise<string[]>;
 
   /**
    * @internal Internal endpoint
@@ -150,7 +149,7 @@ type Options<TUserMeta extends BaseUserMeta> = {
 };
 
 let hasWarnedIfNoResolveUser = false;
-let hasWarnedIfNoResolveUserSearch = false;
+let hasWarnedIfNoResolveMentionSuggestions = false;
 
 function warnIfNoResolveUser(usersCache?: AsyncCache<unknown, unknown>) {
   if (
@@ -158,25 +157,23 @@ function warnIfNoResolveUser(usersCache?: AsyncCache<unknown, unknown>) {
     !usersCache &&
     process.env.NODE_ENV !== "production"
   ) {
-    console.warn(
-      "To use useUser, you should provide a resolver function to the resolveUser option in createRoomContext."
-    );
+    console.warn("The resolveUser option wasn't set in createRoomContext.");
     hasWarnedIfNoResolveUser = true;
   }
 }
 
-function warnIfNoResolveUserSearch(
-  userSearchCache?: AsyncCache<unknown, unknown>
+function warnIfNoResolveMentionSuggestions(
+  mentionSuggestionsCache?: AsyncCache<unknown, unknown>
 ) {
   if (
-    !hasWarnedIfNoResolveUserSearch &&
-    !userSearchCache &&
+    !hasWarnedIfNoResolveMentionSuggestions &&
+    !mentionSuggestionsCache &&
     process.env.NODE_ENV !== "production"
   ) {
     console.warn(
-      "To use useUserSearch, you should provide a resolver function to the resolveUserSearch option in createRoomContext."
+      "The resolveMentionSuggestions option wasn't set in createRoomContext."
     );
-    hasWarnedIfNoResolveUserSearch = true;
+    hasWarnedIfNoResolveMentionSuggestions = true;
   }
 }
 
@@ -900,7 +897,7 @@ export function createRoomContext<
     );
   }
 
-  const { resolveUser, resolveUserSearch } = options ?? {};
+  const { resolveUser, resolveMentionSuggestions } = options ?? {};
 
   const usersCache = resolveUser ? createAsyncCache(resolveUser) : undefined;
 
@@ -936,39 +933,26 @@ export function createRoomContext<
     } as UserStateSuspense<TUserMeta["info"]>;
   }
 
-  const userSearchCache = createAsyncCache<string[], unknown>(
-    resolveUserSearch ?? (() => Promise.resolve([]))
+  const mentionSuggestionsCache = createAsyncCache<string[], unknown>(
+    resolveMentionSuggestions ?? (() => Promise.resolve([]))
   );
 
-  function useUserSearch(search?: string) {
+  function useMentionSuggestions(search?: string) {
     const debouncedSearch = useDebounce(search, 500);
-    const state = useAsyncCache(userSearchCache, debouncedSearch ?? null, {
-      keepPreviousDataWhileLoading: true,
-    });
+    const { data } = useAsyncCache(
+      mentionSuggestionsCache,
+      debouncedSearch ?? null,
+      {
+        keepPreviousDataWhileLoading: true,
+      }
+    );
 
-    React.useEffect(() => warnIfNoResolveUserSearch(userSearchCache), []);
+    React.useEffect(
+      () => warnIfNoResolveMentionSuggestions(mentionSuggestionsCache),
+      []
+    );
 
-    return {
-      userIds: state.data,
-      error: state.error,
-      isLoading: state.isLoading,
-    } as UserSearchStateSuspense;
-  }
-
-  function useUserSearchSuspense(search?: string) {
-    const debouncedSearch = useDebounce(search, 500);
-    const state = useAsyncCache(userSearchCache, debouncedSearch ?? null, {
-      keepPreviousDataWhileLoading: true,
-      suspense: true,
-    });
-
-    React.useEffect(() => warnIfNoResolveUserSearch(userSearchCache), []);
-
-    return {
-      userIds: state.data,
-      error: state.error,
-      isLoading: false,
-    } as UserSearchStateSuspense;
+    return data;
   }
 
   /*
@@ -1014,13 +998,14 @@ export function createRoomContext<
 
     useThreads,
     useUser,
-    useUserSearch,
 
     useCreateThread,
     useEditThreadMetadata,
     useCreateComment,
     useEditComment,
     useDeleteComment,
+
+    useMentionSuggestions,
 
     suspense: {
       RoomContext,
@@ -1061,7 +1046,6 @@ export function createRoomContext<
 
       useThreads: useThreadsSuspense,
       useUser: useUserSuspense,
-      useUserSearch: useUserSearchSuspense,
 
       useCreateThread,
       useEditThreadMetadata,

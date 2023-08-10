@@ -19,7 +19,7 @@ const {
       console.error(error);
     }
   },
-  resolveUserSearch: async (search) => {
+  resolveMentionSuggestions: async (search) => {
     try {
       const response = await fetch(`/api/users/search?search=${search}`);
 
