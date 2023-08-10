@@ -12,7 +12,7 @@ describe("WebhookHandler", () => {
 
   const userEnteredBody = {
     data: {
-      appId: "605a50b01a36d5ea7a2e9104",
+      projectId: "605a50b01a36d5ea7a2e9104",
       connectionId: 2196,
       enteredAt: "2023-01-27T20:08:40.693Z",
       numActiveUsers: 2,
@@ -51,74 +51,21 @@ describe("WebhookHandler", () => {
     afterEach(() => {
       jest.useRealTimers();
     });
-    it('should verify a "userEntered" event', () => {
-      jest.useFakeTimers({
-        now: 1674850126000,
-      });
-      const webhookHandler = new WebhookHandler(secret);
 
-      const headers = {
-        ...userEnteredHeaders,
-        "webhook-signature": generateSignatureWithSvix(
-          secret,
-          userEnteredHeaders["webhook-id"],
-          userEnteredHeaders["webhook-timestamp"],
-          rawUserEnteredBody
-        ),
-      };
-
-      const event = webhookHandler.verifyRequest({
-        headers,
-        rawBody: rawUserEnteredBody,
-      });
-
-      expect(event).toEqual(userEnteredBody);
-    });
-
-    it('should verify a "storageUpdated" event', () => {
-      const storageUpdated = {
-        data: {
-          appId: "605a50b01a36d5ea7a2e9104",
+    it.each([
+      ["userEntered", userEnteredBody],
+      [
+        "storageUpdated",
+        {
+          projectId: "605a50b01a36d5ea7a2e9104",
           roomId: "hero-grid-12-01-2022",
           updatedAt: "2023-01-27T20:27:48.744Z",
         },
-        type: "storageUpdated",
-      };
-      const rawStorageUpdated = JSON.stringify(storageUpdated);
-
-      const headersStorageUpdated = {
-        "webhook-id": "msg_2KvOK6yK9FO0U0nIyJYkM3jPwBs",
-        "webhook-timestamp": "1674851522",
-        "webhook-signature": generateSignatureWithSvix(
-          secret,
-          "msg_2KvOK6yK9FO0U0nIyJYkM3jPwBs",
-          "1674851522",
-          rawStorageUpdated
-        ),
-      };
-
-      jest.useFakeTimers({
-        now: 1674851522000,
-      });
-
-      const webhookHandler = new WebhookHandler(secret);
-
-      const event = webhookHandler.verifyRequest({
-        headers: headersStorageUpdated,
-        rawBody: rawStorageUpdated,
-      });
-
-      expect(event).toEqual(storageUpdated);
-    });
-
-    it('should verify a "userLeft" event', () => {
-      jest.useFakeTimers({
-        now: 1674851609000,
-      });
-
-      const userLeft = {
-        data: {
-          appId: "605a50b01a36d5ea7a2e9104",
+      ],
+      [
+        "userLeft",
+        {
+          projectId: "605a50b01a36d5ea7a2e9104",
           connectionId: 34597,
           leftAt: "2023-01-27T20:33:23.737Z",
           numActiveUsers: 4,
@@ -126,102 +73,109 @@ describe("WebhookHandler", () => {
           userId: "zY8DF2NMqvKrzkuL5KkDIYY-da",
           userInfo: null,
         },
-        type: "userLeft",
-      };
-
-      const rawUserLeft = JSON.stringify(userLeft);
-
-      const headersUserLeft = {
-        "webhook-id": "msg_2KvOUwNvJ8ozHKdSJRPdqJwSuiu",
-        "webhook-timestamp": "1674851609",
-        "webhook-signature": generateSignatureWithSvix(
-          secret,
-          "msg_2KvOUwNvJ8ozHKdSJRPdqJwSuiu",
-          "1674851609",
-          rawUserLeft
-        ),
-      };
-
-      const webhookHandler = new WebhookHandler(secret);
-
-      const event = webhookHandler.verifyRequest({
-        headers: headersUserLeft,
-        rawBody: rawUserLeft,
-      });
-
-      expect(event).toEqual(userLeft);
-    });
-
-    it('should verify a "roomCreated" event', () => {
-      jest.useFakeTimers({
-        now: 1674851609000,
-      });
-      const roomCreated = {
-        data: {
-          appId: "605a50b01a36d5ea7a2e9104",
+      ],
+      [
+        "roomCreated",
+        {
+          projectId: "605a50b01a36d5ea7a2e9104",
           createdAt: "2023-01-27T20:33:23.737Z",
           roomId: "examples-hero-21-07-2022",
         },
-        type: "roomCreated",
-      };
-
-      const rawRoomCreated = JSON.stringify(roomCreated);
-
-      const headersRoomCreated = {
-        "webhook-id": "msg_2KvOUwNvJ8oYoL0SJRPdqJwSuiu",
-        "webhook-timestamp": "1674851609",
-        "webhook-signature": generateSignatureWithSvix(
-          secret,
-          "msg_2KvOUwNvJ8oYoL0SJRPdqJwSuiu",
-          "1674851609",
-          rawRoomCreated
-        ),
-      };
-
-      const webhookHandler = new WebhookHandler(secret);
-
-      const event = webhookHandler.verifyRequest({
-        headers: headersRoomCreated,
-        rawBody: rawRoomCreated,
-      });
-
-      expect(event).toEqual(roomCreated);
-    });
-
-    it('should verify a "roomDeleted" event', () => {
-      jest.useFakeTimers({
-        now: 1674851609000,
-      });
-      const roomDeleted = {
-        data: {
-          appId: "605a50b01a36d5ea7a2e9104",
+      ],
+      [
+        "roomDeleted",
+        {
+          projectId: "605a50b01a36d5ea7a2e9104",
           deletedAt: "2023-01-27T20:33:23.737Z",
           roomId: "examples-hero-21-07-2022",
         },
-        type: "roomDeleted",
+      ],
+      [
+        "commentCreated",
+        {
+          projectId: "605a50b01a36d5ea7a2e9104",
+          threadId: "605a50b01a36d5ea7a2e9104",
+          commentId: "605a50b01a36d5ea7a2e9104",
+          content: "Hello world",
+          createdAt: "2023-01-27T20:33:23.737Z",
+          createdBy: "authorId",
+          roomId: "examples-hero-21-07-2022",
+        },
+      ],
+      [
+        "commentDeleted",
+        {
+          projectId: "605a50b01a36d5ea7a2e9104",
+          threadId: "605a50b01a36d5ea7a2e9104",
+          commentId: "605a50b01a36d5ea7a2e9104",
+          deletedAt: "2023-01-27T20:33:23.737Z",
+          roomId: "examples-hero-21-07-2022",
+        },
+      ],
+      [
+        "commentEdited",
+        {
+          projectId: "605a50b01a36d5ea7a2e9104",
+          threadId: "605a50b01a36d5ea7a2e9104",
+          roomId: "examples-hero-21-07-2022",
+          commentId: "605a50b01a36d5ea7a2e9104",
+          content: "Hello world",
+          editedAt: "2023-01-27T20:33:23.737Z",
+        },
+      ],
+      [
+        "threadMetadataUpdated",
+        {
+          projectId: "605a50b01a36d5ea7a2e9104",
+          threadId: "605a50b01a36d5ea7a2e9104",
+          roomId: "examples-hero-21-07-2022",
+          updatedBy: "authorId",
+          updatedAt: "2023-01-27T20:33:23.737Z",
+        },
+      ],
+      [
+        "threadCreated",
+        {
+          projectId: "605a50b01a36d5ea7a2e9104",
+          threadId: "605a50b01a36d5ea7a2e9104",
+          roomId: "examples-hero-21-07-2022",
+          createdBy: "authorId",
+          createdAt: "2023-01-27T20:33:23.737Z",
+        },
+      ],
+    ])(`should verify a "%s" event`, (type, data) => {
+      const now = 1674851609000;
+      jest.useFakeTimers({
+        now,
+      });
+
+      const timestamp = (now / 1000).toString();
+
+      const body = {
+        data,
+        type,
       };
 
-      const rawRoomDeleted = JSON.stringify(roomDeleted);
+      const rawBody = JSON.stringify(body);
 
-      const headersRoomDeleted = {
-        "webhook-id": "msg_2KvOUwNvJ8oYoL0SJRPdqJwSuiu",
-        "webhook-timestamp": "1674851609",
+      const headers = {
+        "webhook-id": "msg_2KvOK6yK9FO0U0nIyJYkM3jPwBs",
+        "webhook-timestamp": timestamp,
         "webhook-signature": generateSignatureWithSvix(
           secret,
-          "msg_2KvOUwNvJ8oYoL0SJRPdqJwSuiu",
-          "1674851609",
-          rawRoomDeleted
+          "msg_2KvOK6yK9FO0U0nIyJYkM3jPwBs",
+          timestamp,
+          rawBody
         ),
       };
 
       const webhookHandler = new WebhookHandler(secret);
-
       const event = webhookHandler.verifyRequest({
-        headers: headersRoomDeleted,
-        rawBody: rawRoomDeleted,
+        headers,
+        rawBody,
       });
 
-      expect(event).toEqual(roomDeleted);
+      expect(event).toEqual(body);
     });
 
     it("should verify an event with multiple signatures", () => {
@@ -354,7 +308,7 @@ describe("WebhookHandler", () => {
 
       const body = {
         data: {
-          appId: "605a50b01a36d5ea7a2e9104",
+          projectId: "605a50b01a36d5ea7a2e9104",
           roomId: "hero-grid-12-01-2022",
           updatedAt: "2023-01-27T20:27:48.744Z",
         },

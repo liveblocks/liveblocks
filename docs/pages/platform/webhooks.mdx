@@ -261,7 +261,7 @@ after the user has joined. This event is not throttled.
 type UserEnteredEvent = {
   type: "userEntered";
   data: {
-    appId: string;
+    projectId: string;
     roomId: string;
     connectionId: number;
     userId: string | null;
@@ -275,7 +275,7 @@ type UserEnteredEvent = {
 const userEnteredEvent = {
   type: "userEntered",
   data: {
-    appId: "my-app-id",
+    projectId: "my-project-id",
     roomId: "my-room-id",
     connectionId: 4,
     userId: "a-user-id",
@@ -297,7 +297,7 @@ room after the user has left. This event, like `UserEntered`, is not throttled.
 type UserLeftEvent = {
   type: "userLeft";
   data: {
-    appId: string;
+    projectId: string;
     roomId: string;
     connectionId: number;
     userId: string | null;
@@ -311,7 +311,7 @@ type UserLeftEvent = {
 const userLeftEvent = {
   type: "userLeft",
   data: {
-    appId: "my-app-id",
+    projectId: "my-project-id",
     roomId: "my-room-id",
     connectionId: 4,
     userId: "a-user-id",
@@ -340,7 +340,7 @@ type StorageUpdatedEvent = {
   type: "storageUpdated";
   data: {
     roomId: string;
-    appId: string;
+    projectId: string;
     updatedAt: string;
   };
 };
@@ -349,7 +349,7 @@ type StorageUpdatedEvent = {
 const storageUpdatedEvent = {
   type: "storageUpdated",
   data: {
-    appId: "my-app-id",
+    projectId: "my-project-id",
     roomId: "my-room-id",
     updatedAt: "2021-10-06T01:45:56.558Z", // 👈 time of the last write
   },
@@ -370,7 +370,7 @@ are two ways for rooms to be created:
 type RoomCreatedEvent = {
   type: "roomCreated";
   data: {
-    appId: string;
+    projectId: string;
     roomId: string;
     createdAt: string;
   };
@@ -380,7 +380,7 @@ type RoomCreatedEvent = {
 const roomCreatedEvent = {
   type: "roomCreated",
   data: {
-    appId: "my-app-id",
+    projectId: "my-project-id",
     roomId: "my-room-id",
     createdAt: "2021-10-06T01:45:56.558Z",
   },
@@ -396,7 +396,7 @@ An event is triggered when a room is deleted. This event is not throttled.
 type RoomDeletedEvent = {
   type: "roomDeleted";
   data: {
-    appId: string;
+    projectId: string;
     roomId: string;
     deletedAt: string;
   };
@@ -406,41 +406,162 @@ type RoomDeletedEvent = {
 const roomDeletedEvent = {
   type: "roomDeleted",
   data: {
-    appId: "my-app-id",
+    projectId: "my-project-id",
     roomId: "my-room-id",
     deletedAt: "2021-10-06T01:45:56.558Z",
   },
 };
 ```
 
-#### YDocUpdatedEvent
+#### CommentCreatedEvent
 
-Yjs document is updated when a user makes a change to a Yjs doc connected to a room.
-This event is throttled at five minutes and, as such, may not be triggered for every write.
-
-For example, if a user updates a yjs document at 1:00 pm, the `YDocUpdatedEvent`
-event will be triggered shortly after. If the user writes to storage again at
-1:01 pm, the `YDocUpdatedEvent` event will be triggered 5 minutes after the
-first event was sent, around 1:05 pm.
+An event is triggered when a comment is created. This event is not throttled.
 
 ```ts
 // Schema
-type YDocUpdatedEvent = {
-  type: "ydocUpdated";
+type CommentCreatedEvent = {
+  type: "commentCreated";
   data: {
-    appId: string;
+    projectId: string;
     roomId: string;
+    threadId: string;
+    commentId: string;
+    createdAt: string;
+    createdBy: string;
+  };
+};
+
+// Example
+const commentCreatedEvent = {
+  type: "commentCreated",
+  data: {
+    projectId: "my-project-id",
+    roomId: "my-room-id",
+    threadId: "my-thread-id",
+    commentId: "my-comment-id",
+    createdAt: "2021-10-06T01:45:56.558Z",
+    createdBy: "my-user-id",
+  },
+};
+```
+
+#### CommentEditedEvent
+
+An event is triggered when a comment is edited. This event is not throttled.
+
+```ts
+// Schema
+type CommentEditedEvent = {
+  type: "commentEdited";
+  data: {
+    projectId: string;
+    roomId: string;
+    threadId: string;
+    commentId: string;
+    editedAt: string;
+  };
+};
+
+// Example
+const commentEditedEvent = {
+  type: "commentEdited",
+  data: {
+    projectId: "my-project-id",
+    roomId: "my-room-id",
+    threadId: "my-thread-id",
+    commentId: "my-comment-id",
+    editedAt: "2021-10-06T01:45:56.558Z",
+  },
+};
+```
+
+#### CommentDeletedEvent
+
+An event is triggered when a comment is deleted. This event is not throttled.
+
+```ts
+// Schema
+type CommentDeletedEvent = {
+  type: "commentDeleted";
+  data: {
+    projectId: string;
+    roomId: string;
+    threadId: string;
+    commentId: string;
     deletedAt: string;
   };
 };
 
 // Example
-const ydocUpdatedEvent = {
-  type: "ydocUpdated",
+const commentDeletedEvent = {
+  type: "commentDeleted",
   data: {
-    "appId": "my-app-id",
-    "roomId": "my-room-id",
-    "updatedAt": "2013-06-26T19:10:19Z"
+    projectId: "my-project-id",
+    roomId: "my-room-id",
+    threadId: "my-thread-id",
+    commentId: "my-comment-id",
+    deletedAt: "2021-10-06T01:45:56.558Z",
+  },
+};
+```
+
+#### ThreadCreatedEvent
+
+An event is triggered when a thread is created. This event is not throttled.
+
+```ts
+// Schema
+type ThreadCreatedEvent = {
+  type: "threadCreated";
+  data: {
+    projectId: string;
+    roomId: string;
+    threadId: string;
+    createdAt: string;
+    createdBy: string;
+  };
+};
+
+// Example
+const threadCreatedEvent = {
+  type: "threadCreated",
+  data: {
+    projectId: "my-project-id",
+    roomId: "my-room-id",
+    threadId: "my-thread-id",
+    createdAt: "2021-10-06T01:45:56.558Z",
+    createdBy: "my-user-id",
+  },
+};
+```
+
+#### ThreadMetadaUpdatedEvent
+
+An event is triggered when a thread metadata is updated. This event is not
+throttled.
+
+```ts
+// Schema
+type ThreadMetadataUpdatedEvent = {
+  type: "threadMetadataUpdated";
+  data: {
+    projectId: string;
+    roomId: string;
+    threadId: string;
+    updatedAt: string;
+    updatedBy: string;
+  };
+};
+
+// Example
+const threadMetadataUpdatedEvent = {
+  type: "threadMetadataUpdated",
+  data: {
+    projectId: "my-project-id",
+    roomId: "my-room-id",
+    threadId: "my-thread-id",
+    updatedAt: "2021-10-06T01:45:56.558Z",
+    updatedBy: "my-user-id",
   },
 };
 ```

@@ -129,6 +129,11 @@ export class WebhookHandler {
         "userLeft",
         "roomCreated",
         "roomDeleted",
+        "commentCreated",
+        "commentEdited",
+        "commentDeleted",
+        "threadMetadataUpdated",
+        "threadCreated",
       ].includes(event.type)
     )
       return;
@@ -167,13 +172,18 @@ type WebhookEvent =
   | UserEnteredEvent
   | UserLeftEvent
   | RoomCreatedEvent
-  | RoomDeletedEvent;
+  | RoomDeletedEvent
+  | CommentCreatedEvent
+  | CommentEditedEvent
+  | CommentDeletedEvent
+  | ThreadMetadataUpdatedEvent
+  | ThreadCreatedEvent;
 
 type StorageUpdatedEvent = {
   type: "storageUpdated";
   data: {
     roomId: string;
-    appId: string;
+    projectId: string;
     /**
      * ISO 8601 datestring
      * @example "2021-03-01T12:00:00.000Z"
@@ -185,7 +195,7 @@ type StorageUpdatedEvent = {
 type UserEnteredEvent = {
   type: "userEntered";
   data: {
-    appId: string;
+    projectId: string;
     roomId: string;
     connectionId: number;
     userId: string | null;
@@ -203,7 +213,7 @@ type UserEnteredEvent = {
 type UserLeftEvent = {
   type: "userLeft";
   data: {
-    appId: string;
+    projectId: string;
     roomId: string;
     connectionId: number;
     userId: string | null;
@@ -221,7 +231,7 @@ type UserLeftEvent = {
 type RoomCreatedEvent = {
   type: "roomCreated";
   data: {
-    appId: string;
+    projectId: string;
     roomId: string;
     /**
      * ISO 8601 datestring
@@ -234,7 +244,7 @@ type RoomCreatedEvent = {
 type RoomDeletedEvent = {
   type: "roomDeleted";
   data: {
-    appId: string;
+    projectId: string;
     roomId: string;
     /**
      * ISO 8601 datestring
@@ -244,7 +254,88 @@ type RoomDeletedEvent = {
   };
 };
 
+type CommentCreatedEvent = {
+  type: "commentCreated";
+  data: {
+    projectId: string;
+    roomId: string;
+    threadId: string;
+    commentId: string;
+    /**
+     * ISO 8601 datestring
+     * @example "2021-03-01T12:00:00.000Z"
+     */
+    createdAt: string;
+    createdBy: string;
+  };
+};
+
+type CommentEditedEvent = {
+  type: "commentEdited";
+  data: {
+    projectId: string;
+    roomId: string;
+    threadId: string;
+    commentId: string;
+    /**
+     * ISO 8601 datestring
+     * @example "2021-03-01T12:00:00.000Z"
+     */
+    editedAt: string;
+  };
+};
+
+type CommentDeletedEvent = {
+  type: "commentDeleted";
+  data: {
+    projectId: string;
+    roomId: string;
+    threadId: string;
+    commentId: string;
+    /**
+     * ISO 8601 datestring
+     * @example "2021-03-01T12:00:00.000Z"
+     */
+    deletedAt: string;
+  };
+};
+
+type ThreadMetadataUpdatedEvent = {
+  type: "threadMetadataUpdated";
+  data: {
+    projectId: string;
+    roomId: string;
+    threadId: string;
+    updatedAt: string;
+    /**
+     * ISO 8601 datestring
+     * @example "2021-03-01T12:00:00.000Z"
+     */
+    updatedBy: string;
+  };
+};
+
+type ThreadCreatedEvent = {
+  type: "threadCreated";
+  data: {
+    projectId: string;
+    roomId: string;
+    threadId: string;
+    /**
+     * ISO 8601 datestring
+     * @example "2021-03-01T12:00:00.000Z"
+     */
+    createdAt: string;
+    createdBy: string;
+  };
+};
+
 export type {
+  CommentCreatedEvent,
+  CommentDeletedEvent,
+  CommentEditedEvent,
+  ThreadCreatedEvent,
+  ThreadMetadataUpdatedEvent,
   RoomCreatedEvent,
   RoomDeletedEvent,
   StorageUpdatedEvent,
