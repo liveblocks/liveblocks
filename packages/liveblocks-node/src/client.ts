@@ -184,24 +184,20 @@ export class Liveblocks {
   }): Promise<ThreadData[]> {
     const { roomId } = params;
 
-    try {
-      const resp = await this.post(`/v2/rooms/${roomId}/threads`, {
-        roomId,
-      });
+    const resp = await this.post(`/v2/rooms/${roomId}/threads`, {
+      roomId,
+    });
 
-      const body = await resp.json();
+    const body = await resp.json();
 
-      if (resp.status !== 200) {
-        throw {
-          status: resp.status,
-          ...body,
-        };
-      }
-
-      return body;
-    } catch (error) {
-      throw error;
+    if (resp.status !== 200) {
+      throw {
+        status: resp.status,
+        ...body,
+      };
     }
+
+    return body;
   }
 
   /**
@@ -214,25 +210,21 @@ export class Liveblocks {
   public async getThread(params: { roomId: string; threadId: string; }): Promise<ThreadData> {
     const { roomId, threadId } = params;
 
-    try {
-      const resp = await this.post(`/v2/rooms/${roomId}/threads/${threadId}`, {
-        roomId,
-        threadId,
-      });
+    const resp = await this.post(`/v2/rooms/${roomId}/threads/${threadId}`, {
+      roomId,
+      threadId,
+    });
 
-      const body = await resp.json();
+    const body = await resp.json();
 
-      if (resp.status !== 200) {
-        throw {
-          status: resp.status,
-          ...body,
-        };
-      }
-
-      return body;
-    } catch (error) {
-      throw error;
+    if (resp.status !== 200) {
+      throw {
+        status: resp.status,
+        ...body,
+      };
     }
+
+    return body;
   }
 
   /**
@@ -253,25 +245,21 @@ export class Liveblocks {
   }> {
     const { roomId, threadId } = params;
 
-    try {
-      const resp = await this.post(`/v2/rooms/${roomId}/threads/${threadId}`, {
-        roomId,
-        threadId,
-      });
+    const resp = await this.post(`/v2/rooms/${roomId}/threads/${threadId}`, {
+      roomId,
+      threadId,
+    });
 
-      const body = await resp.json();
+    const body = await resp.json();
 
-      if (resp.status !== 200) {
-        throw {
-          status: resp.status,
-          ...body,
-        };
-      }
-
-      return body;
-    } catch (error) {
-      throw error;
+    if (resp.status !== 200) {
+      throw {
+        status: resp.status,
+        ...body,
+      };
     }
+
+    return body;
   }
 
   /**
@@ -290,28 +278,24 @@ export class Liveblocks {
     }): Promise<CommentData> {
     const { roomId, threadId, commentId } = params;
 
-    try {
-      const resp = await this.post(
-        `/v2/rooms/${roomId}/threads/${threadId}/comments/${commentId}`,
-        {
-          roomId,
-          threadId,
-          commentId,
-        }
-      );
-
-      const body = await resp.json();
-
-      if (resp.status !== 200) {
-        throw {
-          status: resp.status,
-          ...body,
-        };
+    const resp = await this.post(
+      `/v2/rooms/${roomId}/threads/${threadId}/comments/${commentId}`,
+      {
+        roomId,
+        threadId,
+        commentId,
       }
+    );
 
-      return body;
-    } catch (error) {
-      throw error;
+    const body = await resp.json();
+
+    if (resp.status !== 200) {
+      throw {
+        status: resp.status,
+        ...body,
+      };
     }
+
+    return body;
   }
 }
