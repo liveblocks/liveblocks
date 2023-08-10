@@ -8,7 +8,13 @@ export const client = createClient({
 });
 
 const {
-  suspense: { RoomProvider, useThreads },
+  suspense: {
+    RoomProvider,
+    useThreads,
+    useUser,
+    useCreateComment,
+    useCreateThread,
+  },
 } = createRoomContext(client, {
   resolveUser: async (userId) => {
     try {
@@ -32,4 +38,4 @@ const {
   },
 });
 
-export { RoomProvider, useThreads };
+export { RoomProvider, useThreads, useUser, useCreateThread, useCreateComment };

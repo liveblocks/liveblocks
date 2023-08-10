@@ -49,6 +49,7 @@ import type {
   OmitFirstArg,
   RoomContextBundle,
   RoomProviderProps,
+  UserSearchStateSuspense,
   UserState,
   UserStateSuspense,
 } from "./types";
@@ -149,6 +150,7 @@ type Options<TUserMeta extends BaseUserMeta> = {
 };
 
 let hasWarnedIfNoResolveUser = false;
+let hasWarnedIfNoResolveUserSearch = false;
 
 function warnIfNoResolveUser(usersCache?: AsyncCache<unknown, unknown>) {
   if (
@@ -160,6 +162,21 @@ function warnIfNoResolveUser(usersCache?: AsyncCache<unknown, unknown>) {
       "To use useUser, you should provide a resolver function to the resolveUser option in createRoomContext."
     );
     hasWarnedIfNoResolveUser = true;
+  }
+}
+
+function warnIfNoResolveUserSearch(
+  userSearchCache?: AsyncCache<unknown, unknown>
+) {
+  if (
+    !hasWarnedIfNoResolveUserSearch &&
+    !userSearchCache &&
+    process.env.NODE_ENV !== "production"
+  ) {
+    console.warn(
+      "To use useUserSearch, you should provide a resolver function to the resolveUserSearch option in createRoomContext."
+    );
+    hasWarnedIfNoResolveUserSearch = true;
   }
 }
 
@@ -181,7 +198,7 @@ export function createRoomContext<
   TStorage extends LsonObject = LsonObject,
   TUserMeta extends BaseUserMeta = BaseUserMeta,
   TRoomEvent extends Json = never,
-  TThreadMetadata extends BaseMetadata = BaseMetadata,
+  TThreadMetadata extends BaseMetadata = never,
 >(
   client: Client,
   options?: Options<TUserMeta>
@@ -892,14 +909,14 @@ export function createRoomContext<
 
     React.useEffect(() => warnIfNoResolveUser(usersCache), []);
 
-    if (state?.isLoading) {
+    if (state.isLoading) {
       return {
         isLoading: true,
       } as UserState<TUserMeta["info"]>;
     } else {
       return {
-        user: state?.data,
-        error: state?.error,
+        user: state.data,
+        error: state.error,
         isLoading: false,
       } as UserState<TUserMeta["info"]>;
     }
@@ -913,8 +930,8 @@ export function createRoomContext<
     React.useEffect(() => warnIfNoResolveUser(usersCache), []);
 
     return {
-      user: state?.data,
-      error: state?.error,
+      user: state.data,
+      error: state.error,
       isLoading: false,
     } as UserStateSuspense<TUserMeta["info"]>;
   }
@@ -925,11 +942,33 @@ export function createRoomContext<
 
   function useUserSearch(search?: string) {
     const debouncedSearch = useDebounce(search, 500);
-    const { data } = useAsyncCache(userSearchCache, debouncedSearch ?? null, {
+    const state = useAsyncCache(userSearchCache, debouncedSearch ?? null, {
       keepPreviousDataWhileLoading: true,
     });
 
-    return data;
+    React.useEffect(() => warnIfNoResolveUserSearch(userSearchCache), []);
+
+    return {
+      userIds: state.data,
+      error: state.error,
+      isLoading: state.isLoading,
+    } as UserSearchStateSuspense;
+  }
+
+  function useUserSearchSuspense(search?: string) {
+    const debouncedSearch = useDebounce(search, 500);
+    const state = useAsyncCache(userSearchCache, debouncedSearch ?? null, {
+      keepPreviousDataWhileLoading: true,
+      suspense: true,
+    });
+
+    React.useEffect(() => warnIfNoResolveUserSearch(userSearchCache), []);
+
+    return {
+      userIds: state.data,
+      error: state.error,
+      isLoading: false,
+    } as UserSearchStateSuspense;
   }
 
   /*
@@ -975,14 +1014,13 @@ export function createRoomContext<
 
     useThreads,
     useUser,
+    useUserSearch,
 
     useCreateThread,
     useEditThreadMetadata,
     useCreateComment,
     useEditComment,
     useDeleteComment,
-
-    useUserSearch,
 
     suspense: {
       RoomContext,
@@ -1023,14 +1061,13 @@ export function createRoomContext<
 
       useThreads: useThreadsSuspense,
       useUser: useUserSuspense,
+      useUserSearch: useUserSearchSuspense,
 
       useCreateThread,
       useEditThreadMetadata,
       useCreateComment,
       useEditComment,
       useDeleteComment,
-
-      useUserSearch,
     },
   };
 

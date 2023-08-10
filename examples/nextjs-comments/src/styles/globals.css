@@ -52,11 +52,6 @@ main {
   opacity: 0.2;
 }
 
-.error {
-  text-align: center;
-  margin: 80px auto;
-}
-
 .thread,
 .composer {
   position: relative;

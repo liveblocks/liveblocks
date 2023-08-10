@@ -576,7 +576,7 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
     }, [initialBody]);
 
     const [mentionDraft, setMentionDraft] = useState<MentionDraft>();
-    const mentionSuggestions = useUserSearch(mentionDraft?.text);
+    const { userIds: mentionSuggestions } = useUserSearch(mentionDraft?.text);
     const [
       selectedMentionSuggestionIndex,
       setPreviousSelectedMentionSuggestionIndex,
