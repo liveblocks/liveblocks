@@ -2,7 +2,7 @@ import { Slot } from "@radix-ui/react-slot";
 import type { ReactNode } from "react";
 import React, { forwardRef } from "react";
 
-import { MENTION_CHARACTER } from "../../slate/mentions";
+import { MENTION_CHARACTER } from "../../slate/plugins/mentions";
 import type {
   CommentBodyProps,
   CommentMentionProps,

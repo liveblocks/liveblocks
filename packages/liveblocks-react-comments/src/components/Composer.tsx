@@ -19,7 +19,7 @@ import type {
   ComposerRenderMentionSuggestionsProps,
   ComposerSubmitComment,
 } from "../primitives/Composer/types";
-import { MENTION_CHARACTER } from "../slate/mentions";
+import { MENTION_CHARACTER } from "../slate/plugins/mentions";
 import type { SlotProp } from "../types";
 import { classNames } from "../utils/class-names";
 import { Avatar } from "./internal/Avatar";

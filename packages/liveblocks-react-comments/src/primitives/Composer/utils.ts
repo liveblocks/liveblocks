@@ -2,7 +2,7 @@ import type { Placement } from "@floating-ui/react-dom";
 import type { CommentBody, CommentBodyMention } from "@liveblocks/core";
 import { Text as SlateText } from "slate";
 
-import { isComposerBodyMention } from "../../slate/mentions";
+import { isComposerBodyMention } from "../../slate/plugins/mentions";
 import type { ComposerBody, ComposerBodyMention, Direction } from "../../types";
 import { isCommentBodyMention } from "../Comment/utils";
 import type { SuggestionsPosition } from "./types";

@@ -21,7 +21,7 @@ import type {
 } from "../primitives/Comment/types";
 import * as ComposerPrimitive from "../primitives/Composer";
 import { Timestamp } from "../primitives/Timestamp";
-import { MENTION_CHARACTER } from "../slate/mentions";
+import { MENTION_CHARACTER } from "../slate/plugins/mentions";
 import { classNames } from "../utils/class-names";
 import { Composer } from "./Composer";
 import { Avatar } from "./internal/Avatar";

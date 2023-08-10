@@ -55,15 +55,16 @@ import {
 } from "slate-react";
 
 import { FLOATING_ELEMENT_COLLISION_PADDING } from "../../constants";
-import { withEmptyClearFormatting } from "../../slate/empty-clear-formatting";
-import type { MentionDraft } from "../../slate/mentions";
+import { withAutoFormatting } from "../../slate/plugins/auto-formatting";
+import { withEmptyClearFormatting } from "../../slate/plugins/empty-clear-formatting";
+import type { MentionDraft } from "../../slate/plugins/mentions";
 import {
   getMentionDraftAtSelection,
   insertMention as insertComposerMention,
   MENTION_CHARACTER,
   withMentions,
-} from "../../slate/mentions";
-import { withNormalize } from "../../slate/normalize";
+} from "../../slate/plugins/mentions";
+import { withNormalize } from "../../slate/plugins/normalize";
 import { getDOMRange } from "../../slate/utils/get-dom-range";
 import { isEmpty } from "../../slate/utils/is-empty";
 import { toggleMark } from "../../slate/utils/marks";
@@ -127,7 +128,9 @@ const emptyCommentBody: CommentBody = {
 function createComposerEditor() {
   return withNormalize(
     withMentions(
-      withEmptyClearFormatting(withHistory(withReact(createEditor())))
+      withEmptyClearFormatting(
+        withAutoFormatting(withHistory(withReact(createEditor())))
+      )
     )
   );
 }
@@ -629,7 +632,7 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
           return;
         }
 
-        if (mentionDraft) {
+        if (mentionDraft && mentionSuggestions?.length) {
           if (isKey(event, "ArrowDown")) {
             event.preventDefault();
             setNextSelectedMentionSuggestionIndex();

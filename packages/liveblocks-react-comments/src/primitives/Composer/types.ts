@@ -5,7 +5,7 @@ import type {
   RenderElementSpecificProps,
 } from "slate-react";
 
-import type { MentionDraft } from "../../slate/mentions";
+import type { MentionDraft } from "../../slate/plugins/mentions";
 import type {
   ComponentPropsWithSlot,
   ComposerBodyMention,
