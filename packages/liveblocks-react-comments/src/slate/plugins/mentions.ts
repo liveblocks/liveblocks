@@ -7,8 +7,8 @@ import {
 } from "slate";
 
 import type { ComposerBodyMention } from "../../types";
+import { getCharacterAfter, getCharacterBefore } from "../utils/get-character";
 import { getMatchRange } from "../utils/get-match-range";
-import { getPreviousCharacter } from "../utils/get-previous-character";
 import { isSelectionCollapsed } from "../utils/is-selection-collapsed";
 
 export const MENTION_CHARACTER = "@";
@@ -29,13 +29,11 @@ export function getMentionDraftAtSelection(
 
   const match = getMatchRange(editor, selection, [MENTION_CHARACTER]);
 
-  console.log(match, match ? SlateEditor.string(editor, match) : undefined);
-
   if (!match) {
     return;
   }
 
-  const mentionCharacter = getPreviousCharacter(editor, match);
+  const mentionCharacter = getCharacterBefore(editor, match);
 
   // Check if the match is preceded by the mention character
   if (!mentionCharacter || mentionCharacter.text !== MENTION_CHARACTER) {
@@ -67,6 +65,55 @@ export function insertMention(editor: SlateEditor, userId: string) {
 
   SlateTransforms.insertNodes(editor, mention);
   SlateTransforms.move(editor);
+}
+
+export function insertMentionCharacter(editor: SlateEditor) {
+  if (!editor.selection) {
+    return;
+  }
+
+  // Check if the selection is preceded or followed by a non-whitespace character
+  const beforeCharacter = getCharacterBefore(editor, editor.selection, {
+    filterVoids: true,
+  });
+  const afterCharacter = getCharacterAfter(editor, editor.selection, {
+    filterVoids: true,
+  });
+  const shouldInsertSpaceBefore =
+    beforeCharacter && beforeCharacter.text.trim() !== "";
+  const shouldInsertSpaceAfter =
+    afterCharacter && afterCharacter.text.trim() !== "";
+
+  if (isSelectionCollapsed(editor.selection)) {
+    const text =
+      (shouldInsertSpaceBefore ? " " : "") +
+      MENTION_CHARACTER +
+      (shouldInsertSpaceAfter ? " " : "");
+
+    // If the selection is collapsed, insert the mention character at the current selection
+    editor.insertText(text);
+
+    // If a following space was inserted, move the selection back by one
+    if (shouldInsertSpaceAfter) {
+      SlateTransforms.move(editor, {
+        distance: 1,
+        unit: "character",
+        reverse: true,
+      });
+    }
+  } else {
+    const beforeText = (shouldInsertSpaceBefore ? " " : "") + MENTION_CHARACTER;
+
+    // If the selection is not collapsed, insert the mention character before the selection
+    editor.insertText(beforeText, { at: SlateRange.start(editor.selection) });
+
+    if (shouldInsertSpaceAfter) {
+      editor.insertText(" ", { at: SlateRange.end(editor.selection) });
+    }
+
+    // Collapse the selection at its end
+    SlateTransforms.collapse(editor, { edge: "end" });
+  }
 }
 
 export function withMentions<T extends SlateEditor>(editor: T): T {

@@ -60,7 +60,8 @@ import { withEmptyClearFormatting } from "../../slate/plugins/empty-clear-format
 import type { MentionDraft } from "../../slate/plugins/mentions";
 import {
   getMentionDraftAtSelection,
-  insertMention as insertComposerMention,
+  insertMention,
+  insertMentionCharacter,
   MENTION_CHARACTER,
   withMentions,
 } from "../../slate/plugins/mentions";
@@ -617,7 +618,7 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
         }
 
         SlateTransforms.select(editor, mentionDraft.range);
-        insertComposerMention(editor, userId);
+        insertMention(editor, userId);
         setMentionDraft(undefined);
         setSelectedMentionSuggestionIndex(0);
       },
@@ -882,13 +883,10 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
       ReactEditor.blur(editor);
     }, [editor]);
 
-    const insertText = useCallback(
-      (text: string) => {
-        focus();
-        editor.insertText(text);
-      },
-      [editor, focus]
-    );
+    const createMention = useCallback(() => {
+      focus();
+      insertMentionCharacter(editor);
+    }, [editor, focus]);
 
     const handleSubmit = useCallback(
       (event: FormEvent<HTMLFormElement>) => {
@@ -925,7 +923,15 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
         }}
       >
         <ComposerContext.Provider
-          value={{ isFocused, isValid, submit, clear, focus, blur, insertText }}
+          value={{
+            isFocused,
+            isValid,
+            submit,
+            clear,
+            focus,
+            blur,
+            createMention,
+          }}
         >
           <Component {...props} onSubmit={handleSubmit} ref={mergedRefs}>
             {children}

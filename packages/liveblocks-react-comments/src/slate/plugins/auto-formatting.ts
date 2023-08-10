@@ -5,8 +5,8 @@ import {
   Transforms as SlateTransforms,
 } from "slate";
 
+import { getCharacterBefore } from "../utils/get-character";
 import { getMatchRange } from "../utils/get-match-range";
-import { getPreviousCharacter } from "../utils/get-previous-character";
 import { isSelectionCollapsed } from "../utils/is-selection-collapsed";
 
 interface MarkFormatter {
@@ -59,7 +59,7 @@ function formatMark<T extends SlateEditor>(
     return false;
   }
 
-  const formattingCharacter = getPreviousCharacter(editor, match);
+  const formattingCharacter = getCharacterBefore(editor, match);
 
   // Check if the match is preceded by the formatting character
   if (
@@ -69,10 +69,7 @@ function formatMark<T extends SlateEditor>(
     return false;
   }
 
-  const beforeCharacter = getPreviousCharacter(
-    editor,
-    formattingCharacter.range
-  );
+  const beforeCharacter = getCharacterBefore(editor, formattingCharacter.range);
 
   // Check if the formatting character is preceded by a non-whitespace character (or another formatting character)
   if (

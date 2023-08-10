@@ -37,9 +37,9 @@ export type ComposerContext = {
   blur: () => void;
 
   /**
-   * Insert text in the composer at the current selection.
+   * Start creating a mention at the current selection.
    */
-  insertText: (text: string) => void;
+  createMention: () => void;
 };
 
 export type ComposerEditorContext = {

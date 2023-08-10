@@ -88,15 +88,11 @@ function ComposerInsertMentionEditorAction({
   className,
   ...props
 }: EditorActionProps) {
-  const { insertText } = useComposer();
+  const { createMention } = useComposer();
 
   const preventDefault = useCallback((event: SyntheticEvent) => {
     event.preventDefault();
   }, []);
-
-  const handleInsertMention = useCallback(() => {
-    insertText(` ${MENTION_CHARACTER}`);
-  }, [insertText]);
 
   return (
     <Tooltip content={label}>
@@ -104,7 +100,7 @@ function ComposerInsertMentionEditorAction({
         type="button"
         className={classNames("lb-button lb-composer-editor-action", className)}
         onMouseDown={preventDefault}
-        onClick={handleInsertMention}
+        onClick={createMention}
         aria-label={label}
         {...props}
       >
