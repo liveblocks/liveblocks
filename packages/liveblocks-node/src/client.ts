@@ -173,6 +173,12 @@ export class Liveblocks {
     }
   }
 
+  /**
+   * Gets all the threads in a room.
+   * 
+   * @param params.roomId The room ID to get the threads from.
+   * @returns A list of threads.
+   */
   public async getThreads(params: {
     roomId: string;
   }): Promise<ThreadData[]> {
@@ -198,39 +204,13 @@ export class Liveblocks {
     }
   }
 
-  public async getComment(params:
-    {
-      roomId: string;
-      threadId: string;
-      commentId: string;
-    }): Promise<CommentData> {
-    const { roomId, threadId, commentId } = params;
-
-    try {
-      const resp = await this.post(
-        `/v2/rooms/${roomId}/threads/${threadId}/comments/${commentId}`,
-        {
-          roomId,
-          threadId,
-          commentId,
-        }
-      );
-
-      const body = await resp.json();
-
-      if (resp.status !== 200) {
-        throw {
-          status: resp.status,
-          ...body,
-        };
-      }
-
-      return body;
-    } catch (error) {
-      throw error;
-    }
-  }
-
+  /**
+   * Gets a thread.
+   * 
+   * @param params.roomId The room ID to get the thread from.
+   * @param params.threadId The thread ID.
+   * @returns A thread.
+   */
   public async getThread(params: { roomId: string; threadId: string; }): Promise<ThreadData> {
     const { roomId, threadId } = params;
 
@@ -255,6 +235,16 @@ export class Liveblocks {
     }
   }
 
+  /**
+   * Gets a thread's participants.
+   * 
+   * Participants are users who have commented on the thread 
+   * or users and groups that have been mentioned in a comment.
+   * 
+   * @param params.roomId The room ID to get the thread participants from.
+   * @param params.threadId The thread ID to get the participants from.
+   * @returns An object containing an array of participant IDs.
+   */
   public async getThreadParticipants(params: {
     roomId: string;
     threadId: string;
@@ -268,6 +258,47 @@ export class Liveblocks {
         roomId,
         threadId,
       });
+
+      const body = await resp.json();
+
+      if (resp.status !== 200) {
+        throw {
+          status: resp.status,
+          ...body,
+        };
+      }
+
+      return body;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  /**
+   * Gets a thread's comment.
+   * 
+   * @param params.roomId The room ID to get the comment from.
+   * @param params.threadId The thread ID to get the comment from.
+   * @param params.commentId The comment ID.
+   * @returns A comment.
+   */
+  public async getComment(params:
+    {
+      roomId: string;
+      threadId: string;
+      commentId: string;
+    }): Promise<CommentData> {
+    const { roomId, threadId, commentId } = params;
+
+    try {
+      const resp = await this.post(
+        `/v2/rooms/${roomId}/threads/${threadId}/comments/${commentId}`,
+        {
+          roomId,
+          threadId,
+          commentId,
+        }
+      );
 
       const body = await resp.json();
 
