@@ -1,7 +1,16 @@
+import { detectDupes } from "@liveblocks/core";
+
+import { PKG_FORMAT, PKG_NAME, PKG_VERSION } from "./version";
+
+detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
+
 export type {
+  BaseMetadata,
   BaseUserMeta,
   BroadcastOptions,
   Client,
+  CommentBody,
+  CommentData,
   History,
   Immutable,
   Json,
@@ -20,6 +29,7 @@ export type {
   Status,
   StorageStatus,
   StorageUpdate,
+  ThreadData,
   User,
 } from "@liveblocks/core";
 export {

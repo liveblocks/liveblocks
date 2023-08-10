@@ -1,32 +1,30 @@
-import { authorize } from "@liveblocks/node";
+import { Liveblocks } from "@liveblocks/node";
 import { NextApiRequest, NextApiResponse } from "next";
 
-const API_KEY = process.env.LIVEBLOCKS_SECRET_KEY;
-const API_KEY_WARNING = noKeyWarning();
+const API_KEY = process.env.LIVEBLOCKS_SECRET_KEY!;
+
+const liveblocks = new Liveblocks({ secret: API_KEY });
 
 export default async function auth(req: NextApiRequest, res: NextApiResponse) {
-  if (!API_KEY) {
-    console.warn(API_KEY_WARNING);
-    return res.status(403).end();
-  }
-
   // For the avatar example, we're generating random users
   // and set their info from the authentication endpoint
   // See https://liveblocks.io/docs/api-reference/liveblocks-node#authorize for more information
   const userIndex = Math.floor(Math.random() * NAMES.length);
-  const response = await authorize({
-    room: req.body.room,
-    secret: API_KEY,
-    userId: `user-${userIndex}`,
+
+  const session = liveblocks.prepareSession(`user-${userIndex}`, {
     userInfo: {
       name: NAMES[userIndex],
       color: COLORS[Math.floor(Math.random() * COLORS.length)],
 
       // Uncomment below and refresh to see with avatar graphics
-      // picture: `https://liveblocks.io/avatars/avatar-${Math.floor(Math.random() * 30)}.png`,
+      // avatar: `https://liveblocks.io/avatars/avatar-${Math.floor(Math.random() * 30)}.png`,
     },
   });
-  return res.status(response.status).end(response.body);
+
+  session.allow(req.body.room, session.FULL_ACCESS);
+
+  const { status, body } = await session.authorize();
+  return res.status(status).end(body);
 }
 
 const NAMES = [
@@ -71,12 +69,3 @@ const COLORS = [
   ["#F07777", "#4E0073"],
   ["#AC77F0", "#003C73"],
 ];
-
-// Just checking you have your liveblocks.io API key added, can be removed
-function noKeyWarning() {
-  return process.env.CODESANDBOX_SSE
-    ? `Add your secret key from https://liveblocks.io/dashboard/apikeys as the \`LIVEBLOCKS_SECRET_KEY\` secret in CodeSandbox.\n` +
-        `Learn more: https://github.com/liveblocks/liveblocks/tree/main/examples/nextjs-live-avatars-advanced#codesandbox.\n`
-    : `Create an \`.env.local\` file and add your secret key from https://liveblocks.io/dashboard/apikeys as the \`LIVEBLOCKS_SECRET_KEY\` environment variable.\n` +
-        `Learn more: https://github.com/liveblocks/liveblocks/tree/main/examples/nextjs-live-avatars-advanced#getting-started.\n`;
-}

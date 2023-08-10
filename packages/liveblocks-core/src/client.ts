@@ -1,12 +1,11 @@
-import type { AuthManager } from "./auth-manager";
 import { createAuthManager } from "./auth-manager";
 import type { LsonObject } from "./crdts/Lson";
 import { linkDevTools, setupDevTools, unlinkDevTools } from "./devtools";
 import { deprecateIf } from "./lib/deprecation";
 import type { Json, JsonObject } from "./lib/Json";
 import type { Resolve } from "./lib/Resolve";
+import type { CustomAuthenticationResult } from "./protocol/Authentication";
 import type { BaseUserMeta } from "./protocol/BaseUserMeta";
-import { createRealtimeClient, type RealtimeClient } from "./realtime-client";
 import type { Polyfills, Room, RoomDelegates, RoomInitializers } from "./room";
 import {
   createRoom,
@@ -42,11 +41,6 @@ type EnterOptions<
 >;
 
 export type Client = {
-  __internal: {
-    getAuthValue: AuthManager["getAuthValue"];
-    realtimeClient: RealtimeClient;
-  };
-
   /**
    * Gets a room. Returns null if {@link Client.enter} has not been called previously.
    *
@@ -85,7 +79,7 @@ export type Client = {
 
 export type AuthEndpoint =
   | string
-  | ((room?: string) => Promise<{ token: string }>);
+  | ((room: string) => Promise<CustomAuthenticationResult>);
 
 /**
  * The authentication endpoint that is called to ensure that the current user has access to a room.
@@ -128,14 +122,14 @@ export type ClientOptions = {
 //
 //   export type AuthUrl =
 //     | string
-//     | ((room?: string) => Promise<{ token: string }>);
+//     | ((room: string) => Promise<{ token: string }>);
 //
 
 function getServerFromClientOptions(clientOptions: ClientOptions) {
   const rawOptions = clientOptions as Record<string, unknown>;
   return typeof rawOptions.liveblocksServer === "string"
     ? rawOptions.liveblocksServer
-    : "wss://api.liveblocks.io/v6";
+    : "wss://api.liveblocks.io/v7";
 }
 
 /**
@@ -220,6 +214,7 @@ export function createClient(options: ClientOptions): Client {
         polyfills: clientOptions.polyfills,
         delegates: clientOptions.mockedDelegates ?? {
           createSocket: makeCreateSocketDelegateForRoom(
+            roomId,
             getServerFromClientOptions(clientOptions),
             clientOptions.polyfills?.WebSocket
           ),
@@ -272,13 +267,6 @@ export function createClient(options: ClientOptions): Client {
   }
 
   return {
-    __internal: {
-      getAuthValue: authManager.getAuthValue,
-      realtimeClient: createRealtimeClient(
-        authManager,
-        getWsEventServerEndpoint(options)
-      ),
-    },
     getRoom,
     enter,
     leave,
@@ -328,15 +316,4 @@ function buildLiveblocksHttpSendEndpoint(
   return `https://api.liveblocks.io/v2/rooms/${encodeURIComponent(
     roomId
   )}/send-message`;
-}
-
-// TODO: Return prod url
-function getWsEventServerEndpoint(
-  options: ClientOptions & { eventsServerEndpoint?: string }
-): string {
-  if (typeof options.eventsServerEndpoint !== "string") {
-    throw new Error("Missing events server endpoint");
-  }
-
-  return options.eventsServerEndpoint;
 }

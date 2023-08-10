@@ -14,21 +14,43 @@ import type {
   User,
 } from "@liveblocks/client";
 import { shallow } from "@liveblocks/client";
-import type { ToImmutable } from "@liveblocks/core";
+import type {
+  AsyncCache,
+  BaseMetadata,
+  CommentData,
+  ToImmutable,
+} from "@liveblocks/core";
 import {
   asArrayWithLegacyMethods,
+  createAsyncCache,
   deprecateIf,
   errorIf,
+  makeEventSource,
 } from "@liveblocks/core";
 import * as React from "react";
 import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector.js";
 
+import type {
+  CommentsRoom,
+  CreateCommentOptions,
+  CreateThreadOptions,
+  DeleteCommentOptions,
+  EditCommentOptions,
+  EditThreadMetadataOptions,
+  RoomThreads,
+} from "./comments/CommentsRoom";
+import { createCommentsRoom } from "./comments/CommentsRoom";
+import type { CommentsApiError } from "./comments/errors";
+import { useAsyncCache } from "./comments/lib/use-async-cache";
+import { useDebounce } from "./comments/lib/use-debounce";
 import { useInitial, useRerender } from "./hooks";
 import type {
   MutationContext,
   OmitFirstArg,
   RoomContextBundle,
   RoomProviderProps,
+  UserState,
+  UserStateSuspense,
 } from "./types";
 
 const noop = () => {};
@@ -91,9 +113,6 @@ function makeMutationContext<
 
     get self() {
       const self = room.getSelf();
-      // NOTE: We could use room.isSelfAware() here to keep the check
-      // consistent with `others`, but we also want to refine the `null` case
-      // away here.
       if (self === null) {
         throw new Error(errmsg);
       }
@@ -102,7 +121,7 @@ function makeMutationContext<
 
     get others() {
       const others = room.getOthers();
-      if (!room.isSelfAware()) {
+      if (room.getSelf() === null) {
         throw new Error(errmsg);
       }
       return others;
@@ -112,14 +131,67 @@ function makeMutationContext<
   };
 }
 
+type Options<TUserMeta extends BaseUserMeta> = {
+  /**
+   * An asynchronous function that returns user info from a user ID.
+   */
+  resolveUser?: (userId: string) => Promise<TUserMeta["info"] | undefined>;
+
+  /**
+   * An asynchronous function that returns a list of user IDs matching a string.
+   */
+  resolveUserSearch?: (search: string) => Promise<string[]>;
+
+  /**
+   * @internal Internal endpoint
+   */
+  serverEndpoint?: string;
+};
+
+let hasWarnedIfNoResolveUser = false;
+
+function warnIfNoResolveUser(usersCache?: AsyncCache<unknown, unknown>) {
+  if (
+    !hasWarnedIfNoResolveUser &&
+    !usersCache &&
+    process.env.NODE_ENV !== "production"
+  ) {
+    console.warn(
+      "To use useUser, you should provide a resolver function to the resolveUser option in createRoomContext."
+    );
+    hasWarnedIfNoResolveUser = true;
+  }
+}
+
+const ContextBundle = React.createContext<RoomContextBundle<
+  JsonObject,
+  LsonObject,
+  BaseUserMeta,
+  never,
+  BaseMetadata
+> | null>(null);
+
+// TODO: Internal?
+export function useRoomContextBundle() {
+  return React.useContext(ContextBundle)!;
+}
+
 export function createRoomContext<
   TPresence extends JsonObject,
   TStorage extends LsonObject = LsonObject,
   TUserMeta extends BaseUserMeta = BaseUserMeta,
   TRoomEvent extends Json = never,
+  TThreadMetadata extends BaseMetadata = BaseMetadata,
 >(
-  client: Client
-): RoomContextBundle<TPresence, TStorage, TUserMeta, TRoomEvent> {
+  client: Client,
+  options?: Options<TUserMeta>
+): RoomContextBundle<
+  TPresence,
+  TStorage,
+  TUserMeta,
+  TRoomEvent,
+  TThreadMetadata
+> {
   const RoomContext = React.createContext<Room<
     TPresence,
     TStorage,
@@ -183,22 +255,33 @@ export function createRoomContext<
     );
 
     React.useEffect(() => {
-      setRoom(
-        client.enter(roomId, {
+      const room = client.enter<TPresence, TStorage, TUserMeta, TRoomEvent>(
+        roomId,
+        {
           initialPresence: frozen.initialPresence,
           initialStorage: frozen.initialStorage,
           shouldInitiallyConnect: frozen.shouldInitiallyConnect,
           unstable_batchedUpdates: frozen.unstable_batchedUpdates,
-        })
+        }
       );
 
+      setRoom(room);
+
+      const unsubscribe = getCommentsRoom(room).subscribe();
+
       return () => {
+        unsubscribe();
+        commentsRooms.delete(room.id);
         client.leave(roomId);
       };
     }, [roomId, frozen]);
 
     return (
-      <RoomContext.Provider value={room}>{props.children}</RoomContext.Provider>
+      <RoomContext.Provider value={room}>
+        <ContextBundle.Provider value={bundle as any}>
+          {props.children}
+        </ContextBundle.Provider>
+      </RoomContext.Provider>
     );
   }
 
@@ -228,7 +311,7 @@ export function createRoomContext<
     (patch: Partial<TPresence>, options?: { addToHistory: boolean }) => void,
   ] {
     const room = useRoom();
-    const subscribe = room.events.me.subscribe;
+    const subscribe = room.events.myPresence.subscribe;
     const getSnapshot = room.getPresence;
     const presence = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
     const setPresence = room.updatePresence;
@@ -427,24 +510,11 @@ export function createRoomContext<
     type Selection = T | null;
 
     const room = useRoom();
-
-    const subscribe = React.useCallback(
-      (onChange: () => void) => {
-        const unsub1 = room.events.me.subscribe(onChange);
-        const unsub2 = room.events.connection.subscribe(onChange);
-        return () => {
-          unsub1();
-          unsub2();
-        };
-      },
-      [room]
-    );
-
+    const subscribe = room.events.self.subscribe;
     const getSnapshot: () => Snapshot = room.getSelf;
 
     const selector =
       maybeSelector ?? (identity as (me: User<TPresence, TUserMeta>) => T);
-
     const wrappedSelector = React.useCallback(
       (me: Snapshot): Selection => (me !== null ? selector(me) : null),
       [selector]
@@ -628,7 +698,7 @@ export function createRoomContext<
 
   function useSuspendUntilPresenceLoaded(): void {
     const room = useRoom();
-    if (room.isSelfAware()) {
+    if (room.getSelf() !== null) {
       return;
     }
 
@@ -638,7 +708,7 @@ export function createRoomContext<
     // promise resolves (aka until storage has loaded). After that, it will
     // render this component tree again.
     throw new Promise<void>((res) => {
-      room.events.connection.subscribeOnce(() => res());
+      room.events.status.subscribeOnce(() => res());
     });
   }
 
@@ -734,7 +804,139 @@ export function createRoomContext<
     return useLegacyKey(key) as TStorage[TKey];
   }
 
-  return {
+  /*
+   * START COMMMENTS
+   */
+
+  const errorEventSource = makeEventSource<CommentsApiError<TThreadMetadata>>();
+
+  const commentsRooms = new Map<string, CommentsRoom<TThreadMetadata>>();
+
+  function getCommentsRoom(
+    room: Room<TPresence, TStorage, TUserMeta, TRoomEvent>
+  ) {
+    let commentsRoom = commentsRooms.get(room.id);
+    if (commentsRoom === undefined) {
+      commentsRoom = createCommentsRoom(room, errorEventSource);
+      commentsRooms.set(room.id, commentsRoom);
+    }
+    return commentsRoom;
+  }
+
+  function useThreads(): RoomThreads<TThreadMetadata> {
+    const room = useRoom();
+    return getCommentsRoom(room).useThreads();
+  }
+
+  function useThreadsSuspense() {
+    const room = useRoom();
+    return getCommentsRoom(room).useThreadsSuspense();
+  }
+
+  function useCreateThread() {
+    const room = useRoom();
+
+    return React.useCallback(
+      (options: CreateThreadOptions<TThreadMetadata>) =>
+        getCommentsRoom(room).createThread(options),
+      [room]
+    );
+  }
+
+  function useEditThreadMetadata() {
+    const room = useRoom();
+
+    return React.useCallback(
+      (options: EditThreadMetadataOptions<TThreadMetadata>) =>
+        getCommentsRoom(room).editThreadMetadata(options),
+      [room]
+    );
+  }
+
+  function useCreateComment(): (options: CreateCommentOptions) => CommentData {
+    const room = useRoom();
+
+    return React.useCallback(
+      (options: CreateCommentOptions) =>
+        getCommentsRoom(room).createComment(options),
+      [room]
+    );
+  }
+
+  function useEditComment(): (options: EditCommentOptions) => void {
+    const room = useRoom();
+
+    return React.useCallback(
+      (options: EditCommentOptions) =>
+        getCommentsRoom(room).editComment(options),
+      [room]
+    );
+  }
+
+  function useDeleteComment() {
+    const room = useRoom();
+
+    return React.useCallback(
+      (options: DeleteCommentOptions) =>
+        getCommentsRoom(room).deleteComment(options),
+      [room]
+    );
+  }
+
+  const { resolveUser, resolveUserSearch } = options ?? {};
+
+  const usersCache = resolveUser ? createAsyncCache(resolveUser) : undefined;
+
+  function useUser(userId: string) {
+    const state = useAsyncCache(usersCache, userId);
+
+    React.useEffect(() => warnIfNoResolveUser(usersCache), []);
+
+    if (state?.isLoading) {
+      return {
+        isLoading: true,
+      } as UserState<TUserMeta["info"]>;
+    } else {
+      return {
+        user: state?.data,
+        error: state?.error,
+        isLoading: false,
+      } as UserState<TUserMeta["info"]>;
+    }
+  }
+
+  function useUserSuspense(userId: string) {
+    const state = useAsyncCache(usersCache, userId, {
+      suspense: true,
+    });
+
+    React.useEffect(() => warnIfNoResolveUser(usersCache), []);
+
+    return {
+      user: state?.data,
+      error: state?.error,
+      isLoading: false,
+    } as UserStateSuspense<TUserMeta["info"]>;
+  }
+
+  const userSearchCache = createAsyncCache<string[], unknown>(
+    resolveUserSearch ?? (() => Promise.resolve([]))
+  );
+
+  function useUserSearch(search?: string) {
+    const debouncedSearch = useDebounce(search, 500);
+    const { data } = useAsyncCache(userSearchCache, debouncedSearch ?? null, {
+      keepPreviousDataWhileLoading: true,
+    });
+
+    return data;
+  }
+
+  /*
+   * END COMMENTS
+   */
+
+  const bundle = {
     RoomContext,
     RoomProvider,
 
@@ -770,6 +972,17 @@ export function createRoomContext<
     useOther,
 
     useMutation,
+
+    useThreads,
+    useUser,
+
+    useCreateThread,
+    useEditThreadMetadata,
+    useCreateComment,
+    useEditComment,
+    useDeleteComment,
+
+    useUserSearch,
 
     suspense: {
       RoomContext,
@@ -807,6 +1020,19 @@ export function createRoomContext<
       useOther: useOtherSuspense,
 
       useMutation,
+
+      useThreads: useThreadsSuspense,
+      useUser: useUserSuspense,
+
+      useCreateThread,
+      useEditThreadMetadata,
+      useCreateComment,
+      useEditComment,
+      useDeleteComment,
+
+      useUserSearch,
     },
   };
+
+  return bundle;
 }

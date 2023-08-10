@@ -15,7 +15,7 @@ import { ReactNode } from "react";
 import { RoomProvider } from "../liveblocks.config";
 import { LiveObject } from "@liveblocks/client";
 
-export default Room({ children }: { children: ReactNode }) {
+export default function Room({ children }: { children: ReactNode }) {
   return (
     <RoomProvider
       id="my-room-name"

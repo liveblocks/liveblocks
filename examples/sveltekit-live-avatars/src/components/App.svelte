@@ -37,7 +37,7 @@
     <!-- Show the first 3 users' avatars -->
     {#if users}
       {#each [...users].slice(0, 3) as { connectionId, info } (connectionId)}
-        <Avatar picture={info?.picture} name={info?.name} />
+        <Avatar src={info?.avatar} name={info?.name} />
       {/each}
     {/if}
 
@@ -50,7 +50,7 @@
     {#if currentUser}
       <div class="current_user_container">
         <Avatar
-          picture={currentUser.info?.picture}
+          src={currentUser.info?.avatar}
           name={currentUser.info?.name}
         />
       </div>

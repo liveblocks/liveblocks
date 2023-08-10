@@ -1,0 +1,43 @@
+---
+meta:
+  title: "WebSocket infrastructure"
+  parentTitle: "Platform"
+  description: "Learn about the Liveblocks WebSocket infrastructure."
+---
+
+## WebSocket edge network
+
+The Liveblocks WebSocket edge network enables you to automatically create
+collaborative rooms in regions close to your users, reducing latency and
+improving end-user performance while enabling you to scale effortlessly.
+
+<Figure highlight>
+  <Image
+    src="/assets/websocket-infrastructure/edge-network.png"
+    alt="Liveblocks WebSocket edge network"
+    width={768}
+    height={440}
+  />
+</Figure>
+
+The Liveblocks WebSocket edge network primarily uses the
+[Cloudflare Workers](https://workers.cloudflare.com/) global network, spanning
+300 cities and 100+ countries, enabling a ~50ms connection to 95% of the world’s
+internet-connected population.
+
+## WebSocket connection engine
+
+The Liveblocks WebSocket connection engine ensures a reliable real-time
+experience for users. It handles offline, reconnections, and all sorts of
+edge-cases automatically so you don’t have to. See
+[API reference](/docs/api-reference/liveblocks-client#Room.getStatus) to learn
+more.
+
+<Figure highlight>
+  <Image
+    src="/assets/websocket-infrastructure/connection-engine.png"
+    alt="Liveblocks WebSocket connection engine"
+    width={820}
+    height={482}
+  />
+</Figure>

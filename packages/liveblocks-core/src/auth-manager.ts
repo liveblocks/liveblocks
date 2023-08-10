@@ -1,9 +1,12 @@
 import { StopRetrying } from "./connection";
 import type { Json } from "./lib/Json";
 import { isPlainObject } from "./lib/utils";
-import type { Authentication } from "./protocol/Authentication";
+import type {
+  Authentication,
+  CustomAuthenticationResult,
+} from "./protocol/Authentication";
 import type { ParsedAuthToken } from "./protocol/AuthToken";
-import { ApiScope, parseAuthToken, TokenKind } from "./protocol/AuthToken";
+import { parseAuthToken, Permission, TokenKind } from "./protocol/AuthToken";
 import type { Polyfills } from "./room";
 
 export type AuthValue =
@@ -19,7 +22,9 @@ export type AuthManager = {
   ): Promise<AuthValue>;
 };
 
-type AuthEndpoint = string | ((room: string) => Promise<{ token: string }>);
+type AuthEndpoint =
+  | string
+  | ((room: string) => Promise<CustomAuthenticationResult>);
 
 export type AuthenticationOptions = {
   polyfills?: Polyfills;
@@ -34,22 +39,25 @@ export function createAuthManager(
   const authentication = prepareAuthentication(authOptions);
 
   const tokens: ParsedAuthToken[] = [];
+  const expiryTimes: number[] = []; // Supposed to always contain the same number of elements as `tokens`
 
   const requestPromises = new Map<string, Promise<ParsedAuthToken>>();
 
   function hasCorrespondingScopes(
     requestedScope: RequestedScope,
-    scopes: ApiScope[]
+    scopes: Permission[]
   ) {
     if (requestedScope === "comments:read") {
       return (
-        scopes.includes(ApiScope.CommentsRead) ||
-        scopes.includes(ApiScope.CommentsWrite) ||
-        scopes.includes(ApiScope.Read) ||
-        scopes.includes(ApiScope.Write)
+        scopes.includes(Permission.CommentsRead) ||
+        scopes.includes(Permission.CommentsWrite) ||
+        scopes.includes(Permission.Read) ||
+        scopes.includes(Permission.Write)
       );
     } else if (requestedScope === "room:read") {
-      return scopes.includes(ApiScope.Read) || scopes.includes(ApiScope.Write);
+      return (
+        scopes.includes(Permission.Read) || scopes.includes(Permission.Write)
+      );
     }
 
     return false;
@@ -59,7 +67,20 @@ export function createAuthManager(
     requestedScope: RequestedScope,
     roomId: string
   ): ParsedAuthToken | undefined {
-    for (const token of tokens) {
+    const now = Math.ceil(Date.now() / 1000);
+
+    for (let i = tokens.length - 1; i >= 0; i--) {
+      const token = tokens[i];
+      const expiresAt = expiryTimes[i];
+
+      // If this token is expired, remove it from cache, as if it never existed
+      // in the first place
+      if (expiresAt <= now) {
+        tokens.splice(i, 1);
+        expiryTimes.splice(i, 1);
+        continue;
+      }
+
       if (token.parsed.k === TokenKind.ID_TOKEN) {
         // When ID token method is used, only one token per user should be used and cached at the same time.
         return token;
@@ -102,13 +123,31 @@ export function createAuthManager(
 
     if (authentication.type === "custom") {
       const response = await authentication.callback(roomId);
-
-      if (!response || !response.token) {
+      if (!response || typeof response !== "object") {
         throw new Error(
           'We expect the authentication callback to return a token, but it does not. Hint: the return value should look like: { token: "..." }'
         );
       }
-      return parseAuthToken(response.token);
+
+      if (typeof response.token === "string") {
+        return parseAuthToken(response.token);
+      } else if (typeof response.error === "string") {
+        const reason = `Authentication failed: ${
+          "reason" in response && typeof response.reason === "string"
+            ? response.reason
+            : "Forbidden"
+        }`;
+
+        if (response.error === "forbidden") {
+          throw new StopRetrying(reason);
+        } else {
+          throw new Error(reason);
+        }
+      } else {
+        throw new Error(
+          'We expect the authentication callback to return a token, but it does not. Hint: the return value should look like: { token: "..." }'
+        );
+      }
     }
 
     throw new Error("Invalid Liveblocks client options");
@@ -134,8 +173,15 @@ export function createAuthManager(
     }
     try {
       const token = await currentPromise;
+      // Translate "server timestamps" to "local timestamps" in case clocks aren't in sync
+      const BUFFER = 30; // Expire tokens 30 seconds sooner than they have to
+      const expiresAt =
+        Math.floor(Date.now() / 1000) +
+        (token.parsed.exp - token.parsed.iat) -
+        BUFFER;
 
       tokens.push(token);
+      expiryTimes.push(expiresAt);
 
       return { type: "secret", token };
     } finally {

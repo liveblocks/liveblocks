@@ -1,0 +1,103 @@
+---
+meta:
+  title: "Plans"
+  parentTitle: "Platform"
+  description: "Learn about the different plans available on Liveblocks."
+---
+
+Liveblocks offers three plans: Starter, Pro, and Enterprise. Each plan is
+designed to meet the needs of different types of users, from passion projects to
+large-scale applications. The Starter plan is free and includes all the features
+you need to get started, while the Pro and Enterprise plans offer enhanced
+features and resources.
+
+## Starter plan
+
+The Starter plan is **free** and designed for passion projects and testing. It
+offers a generous set of features for individual users:
+
+- Unlimited projects
+- Up to <Limits.FreeMauMax /> monthly active users
+- Up to <Limits.FreeMaxConnectionsPerRoom /> simultaneous connections per room
+- <Limits.FreeTeamMembersPerAccount /> team member per account
+- Community support
+
+## Pro plan
+
+The Pro plan starts at **$29/month** and is designed for production applications
+with the ability to scale. Key features include:
+
+- Unlimited projects
+- Up to <Limits.ProMauMax /> monthly active users
+- Up to <Limits.ProMaxConnectionsPerRoom /> simultaneous connections per room
+- 10 team members per account
+- Email support
+
+## Enterprise plan
+
+The Enterprise plan is tailored for organizations with custom needs, advanced
+security, and premium support. Key features include:
+
+- Unlimited projects
+- Unlimited monthly active users
+- Custom simultaneous connections per room
+- Custom team members per account
+- Premium support
+- Volume discounts
+- SOC2 Report
+- 99.9% Uptime SLA
+
+## General billing information
+
+### What is a monthly active user?
+
+A monthly active user is an identified or anonymous user who connects to a
+Liveblocks room at lease once a month.
+
+If you use the public API key to create the Liveblocks client, all users will be
+anonymous. A cookie will be automatically set on the browser for 30 days to
+avoid counting the same user multiple times.
+
+If you use a backend endpoint with the secret API key to create the Liveblocks
+client, all users will be identified through the `userId` property. We recommend
+using this method for counting accuracy. See the
+[authentication](/docs/rooms/authentication) docs for more information.
+
+One user will be counted as one monthly active user, no matter how frequently
+they connect to Liveblocks rooms in any given month as long as it falls under
+our [Fair Use Policy](/docs/platform/limits/fair-use-policy).
+
+Users coming from `localhost` and `.test` domains are not counted towards your
+billing.
+
+<Banner>
+  You must use the 1.0 or newer Liveblocks packages to have monthly active users
+  counted appropriately. We will count each connection as one MAU if you do not
+  update your packages to 1.0. See the [upgrade
+  guide](/docs/platform/upgrading/1.0) for more information.
+</Banner>
+
+### Do you count monthly active users during testing?
+
+If you connect to rooms and call the Liveblocks API during any automated
+testing, you may want to provide a static `userId` to avoid hitting limits.
+
+For example, you could do this by setting an environment variable and checking
+the process when you call `authorize` from `@liveblocks/node`.
+
+```dotenv file=".env.test"
+ TEST_USERID="machine"
+```
+
+```ts file="liveblocks.config.ts"
+export default async function auth(req, res) {
+  const room = req.body.room;
+  const response = await authorize({
+    room,
+    secret,
+    userId:
+      process.env.NODE_ENV === "test" ? process.env.TEST_USERID : "user123",
+  });
+  return res.status(response.status).end(response.body);
+}
+```

@@ -1,56 +1,36 @@
-import { createClient } from "@liveblocks/client";
-import { createCommentsContext } from "@liveblocks/react-comments";
-import { NAMES } from "./src/constants";
-// TODO: It needs to be exported from @liveblocks/client or @liveblocks/react-comments
-import { BaseUserInfo } from "@liveblocks/core";
+"use client";
 
-const WORKERS_ENDPOINT = process.env.NEXT_PUBLIC_WORKERS_ENDPOINT;
-const EVENTS_ENDPOINT = process.env.NEXT_PUBLIC_EVENTS_ENDPOINT;
+import { createClient } from "@liveblocks/client";
+import { createRoomContext } from "@liveblocks/react";
 
 export const client = createClient({
   authEndpoint: "/api/auth",
-  liveblocksServer: `wss://${WORKERS_ENDPOINT}/v6`,
-  eventsServerEndpoint: `wss://${EVENTS_ENDPOINT}/v1`,
 });
 
-export type ThreadMetadata = {
-  resolved: boolean;
-  x: number;
-  y: number;
-};
+const {
+  RoomProvider,
+  suspense: { useThreads },
+} = createRoomContext(client, {
+  resolveUser: async (userId) => {
+    try {
+      const response = await fetch(`/api/users?userId=${userId}`);
 
-async function resolveUser(userId: string) {
-  try {
-    const response = await fetch(`/api/user?userId=${userId}`);
+      return response.json();
+    } catch (error) {
+      console.error(error);
+    }
+  },
+  resolveUserSearch: async (search) => {
+    try {
+      const response = await fetch(`/api/users/search?search=${search}`);
 
-    return response.json() as Promise<BaseUserInfo>;
-  } catch (error) {
-    console.error(error);
-  }
-}
+      return response.json();
+    } catch (error) {
+      console.error(error);
 
-async function resolveMentionSuggestions(text: string) {
-  try {
-    const response = await fetch(`/api/mentions?text=${text}`);
-
-    return response.json() as Promise<string[]>;
-  } catch (error) {
-    console.error(error);
-
-    return [];
-  }
-}
-
-export const {
-  CommentsProvider,
-  suspense: { useThreads, useUser, useRoomId },
-  useCreateComment,
-  useEditComment,
-  useDeleteComment,
-  useCreateThread,
-  useEditThreadMetadata,
-} = createCommentsContext<ThreadMetadata>(client, {
-  resolveUser,
-  resolveMentionSuggestions,
-  serverEndpoint: `https://${WORKERS_ENDPOINT}/v2`,
+      return [];
+    }
+  },
 });
+
+export { RoomProvider, useThreads };

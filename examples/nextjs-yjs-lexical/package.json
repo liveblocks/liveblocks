@@ -1,6 +1,6 @@
 {
   "name": "nextjs-yjs-lexical",
-  "description": "This example shows how to build a collaborative text editor with Liveblocks, Yjs, TipTap, and Next.js.",
+  "description": "This example shows how to build a collaborative text editor with Liveblocks, Yjs, Lexical, and Next.js.",
   "license": "Apache-2.0",
   "private": true,
   "scripts": {
@@ -11,9 +11,9 @@
   },
   "dependencies": {
     "@lexical/react": "^0.11.1",
-    "@liveblocks/client": "^1.1.3",
-    "@liveblocks/react": "^1.1.3",
-    "@liveblocks/yjs": "^1.1.3",
+    "@liveblocks/client": "^1.2.0",
+    "@liveblocks/react": "^1.2.0",
+    "@liveblocks/yjs": "^1.2.0",
     "@types/node": "18.11.18",
     "@types/react": "18.0.27",
     "@types/react-dom": "18.0.10",

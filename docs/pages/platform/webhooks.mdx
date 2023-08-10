@@ -2,23 +2,12 @@
 meta:
   title: "Webhooks"
   parentTitle: "Platform"
-  description: "Learn Liveblocks webhooks concepts and implementation"
+  description: "Learn Liveblocks webhooks concepts and implementation."
 ---
 
-<Banner title="Open beta">
-
-Webhooks are currently in open beta and included in our Startup
-[pricing](/pricing) plan. If you have any questions or feedback, please reach
-out to us via the dedicated Discord channel,
-[#webhooks-beta](https://discord.com/channels/913109211746009108/1044705458872660088).
-We'd love to hear from you.
-
-</Banner>
-
-In this guide, we will explain how to use webhooks within your product so that
-you can react to Liveblocks events as they happen. Now that our platform is
-observable, you can use webhooks to reduce development time and the need for
-polling.
+Webhooks enable developers to extend the Liveblocks platform. From your system,
+you can listen to events that get automatically triggered as users interact with
+collaborative rooms.
 
 ## Configuring webhooks
 
@@ -169,7 +158,7 @@ export default function webhookRequestHandler(req, res) {
 }
 ```
 
-### Manual Process
+### Manual process
 
 #### 1. Construct the signed content [@hidden]
 
@@ -241,7 +230,7 @@ comparing signatures to prevent timing attacks.
 
 </Banner>
 
-## Liveblocks Events
+## Liveblocks events
 
 An event occurs when a change is made to Liveblocks data. Each endpoint you
 provide in the webhooks dashboard listens to all events by default but can be
