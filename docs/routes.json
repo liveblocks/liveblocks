@@ -156,6 +156,11 @@
       {
         "title": "Comments",
         "path": "/products/comments"
+      },
+      {
+        "title": "Comments Private Beta",
+        "path": "/products/comments-private-beta",
+        "hidden": true
       }
     ]
   },
