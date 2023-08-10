@@ -1,6 +1,6 @@
 import type { Response } from "node-fetch";
 
-import type { AuthResponse } from "./new-auth";
+import type { AuthResponse } from "./client";
 import { assertNonEmpty, normalizeStatusCode } from "./utils";
 
 // As defined in the source of truth in ApiScope in
