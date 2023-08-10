@@ -27,7 +27,9 @@ export function getMentionDraftAtSelection(
     return;
   }
 
-  const match = getMatchRange(editor, selection, [" ", MENTION_CHARACTER]);
+  const match = getMatchRange(editor, selection, [MENTION_CHARACTER]);
+
+  console.log(match, match ? SlateEditor.string(editor, match) : undefined);
 
   if (!match) {
     return;

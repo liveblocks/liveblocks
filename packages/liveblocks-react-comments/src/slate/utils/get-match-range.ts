@@ -1,13 +1,22 @@
 import type { Point as SlatePoint } from "slate";
 import { Editor as SlateEditor, Range as SlateRange } from "slate";
 
+interface Options {
+  include?: boolean;
+  direction?: "before" | "after" | "both";
+}
+
+const defaultOptions: Options = {
+  direction: "before",
+};
+
 export function getMatchRange(
   editor: SlateEditor,
   at: SlateRange,
   terminators: string[] = [" "],
-  include: boolean = false,
-  direction: "before" | "after" | "both" = "both"
+  options: Options = defaultOptions
 ): SlateRange | undefined {
+  const { include, direction } = { ...defaultOptions, ...options };
   let [start, end] = SlateRange.edges(at);
   let point: SlatePoint = start;
 

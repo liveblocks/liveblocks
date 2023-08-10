@@ -52,13 +52,7 @@ function formatMark<T extends SlateEditor>(
     return false;
   }
 
-  const match = getMatchRange(
-    editor,
-    editor.selection!,
-    [formatter.character],
-    false,
-    "before"
-  );
+  const match = getMatchRange(editor, editor.selection!, [formatter.character]);
 
   // Check if the match exists and is not empty
   if (!match || Range.isCollapsed(match)) {
