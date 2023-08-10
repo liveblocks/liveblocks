@@ -59,7 +59,7 @@ export function isComposerBodyMention(
 export function insertMention(editor: SlateEditor, userId: string) {
   const mention: ComposerBodyMention = {
     type: "mention",
-    userId,
+    id: userId,
     children: [{ text: "" }],
   };
 

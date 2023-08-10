@@ -20,7 +20,7 @@ export type ComposerBodyParagraph = {
 
 export type ComposerBodyMention = {
   type: "mention";
-  userId: string;
+  id: string;
   children: [ComposerBodyEmptyText];
 };
 

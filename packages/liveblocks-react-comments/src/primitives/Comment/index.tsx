@@ -75,7 +75,7 @@ const CommentBody = forwardRef<HTMLDivElement, CommentBodyProps>(
                 <p key={index}>
                   {block.children.map((inline, index) => {
                     if (isCommentBodyMention(inline)) {
-                      return <Mention userId={inline.userId} key={index} />;
+                      return <Mention userId={inline.id} key={index} />;
                     }
 
                     // <code><s><em><strong>text</strong></s></em></code>

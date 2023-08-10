@@ -13,7 +13,7 @@ export type CommentBodyParagraph = {
 
 export type CommentBodyMention = {
   type: "mention";
-  userId: string;
+  id: string;
 };
 
 export type CommentBodyText = {

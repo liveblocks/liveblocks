@@ -155,7 +155,7 @@ function ComposerEditorRenderMentionWrapper({
 
   return (
     <span {...attributes}>
-      <RenderMention userId={element.userId} isSelected={isSelected} />
+      <RenderMention userId={element.id} isSelected={isSelected} />
       {children}
     </span>
   );
