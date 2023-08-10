@@ -1,13 +1,11 @@
-"use client";
-
 import { Slot } from "@radix-ui/react-slot";
 import type { ReactNode } from "react";
 import React, { forwardRef, useMemo } from "react";
 
-import { useRerender } from "../lib/use-rerender";
 import type { ComponentPropsWithSlot } from "../types";
 import { capitalize } from "../utils/capitalize";
 import { useInterval } from "../utils/use-interval";
+import { useRerender } from "../utils/use-rerender";
 
 const DYNAMIC_DATE_THRESHOLD = 3 * 24 * 60 * 60 * 1000; // 3 days
 const RENDER_INTERVAL = 30 * 1000; // 30 seconds
@@ -24,36 +22,24 @@ export interface TimestampProps
   /**
    * A function to format the displayed date.
    */
-  children?: (date: Date) => ReactNode;
+  children?: (date: Date, locale?: string) => ReactNode;
 
   /**
    * The `title` attribute's value or a function to format it.
    */
-  title?: string | ((date: Date) => string);
+  title?: string | ((date: Date, locale?: string) => string);
 
   /**
    * The interval in milliseconds at which the component will re-render.
    * Can be set to `false` to disable re-rendering.
    */
   interval?: number | false;
+
+  /**
+   * Optionally provide a locale to the formatting functions.
+   */
+  locale?: string;
 }
-
-const verboseFormatter = new Intl.DateTimeFormat(undefined, {
-  year: "numeric",
-  month: "numeric",
-  day: "numeric",
-  hour: "numeric",
-  minute: "numeric",
-});
-
-const shortFormatter = new Intl.DateTimeFormat(undefined, {
-  month: "short",
-  day: "numeric",
-});
-
-const relativeFormatter = new Intl.RelativeTimeFormat(undefined, {
-  numeric: "auto",
-});
 
 const relativeUnits = {
   seconds: 60,
@@ -67,33 +53,50 @@ const relativeUnits = {
 /**
  * Formats a date absolutely.
  */
-function formatVerboseDate(date: Date) {
-  return capitalize(verboseFormatter.format(date));
+function formatVerboseDate(date: Date, locale?: string) {
+  const formatter = new Intl.DateTimeFormat(locale, {
+    year: "numeric",
+    month: "numeric",
+    day: "numeric",
+    hour: "numeric",
+    minute: "numeric",
+  });
+
+  return capitalize(formatter.format(date));
 }
 
 /**
  * Formats a date absolutely with only the day and month.
  */
-function formatShortDate(date: Date) {
-  return capitalize(shortFormatter.format(date));
+function formatShortDate(date: Date, locale?: string) {
+  const formatter = new Intl.DateTimeFormat(locale, {
+    month: "short",
+    day: "numeric",
+  });
+
+  return capitalize(formatter.format(date));
 }
 
 /**
  * Formats a date relatively.
  */
-function formatRelativeDate(date: Date) {
+function formatRelativeDate(date: Date, locale?: string) {
+  const formatter = new Intl.RelativeTimeFormat(locale, {
+    numeric: "auto",
+  });
+
   let difference = (date.getTime() - Date.now()) / 1000;
 
   if (
     difference > -relativeUnits.seconds &&
     difference < relativeUnits.seconds
   ) {
-    return relativeFormatter.format(0, "seconds");
+    return formatter.format(0, "seconds");
   }
 
   for (const [unit, length] of Object.entries(relativeUnits)) {
     if (Math.abs(difference) < length) {
-      return relativeFormatter.format(
+      return formatter.format(
         Math.round(difference),
         unit as Intl.RelativeTimeFormatUnit
       );
@@ -102,17 +105,17 @@ function formatRelativeDate(date: Date) {
     difference /= length;
   }
 
-  return capitalize(relativeFormatter.format(Math.round(difference), "years"));
+  return capitalize(formatter.format(Math.round(difference), "years"));
 }
 
 /**
  * Formats a date relatively if it's recent,
  * otherwise absolutely with only the day and month.
  */
-function formatDynamicDate(date: Date) {
+function formatDynamicDate(date: Date, locale?: string) {
   return date.getTime() > Date.now() - DYNAMIC_DATE_THRESHOLD
-    ? formatRelativeDate(date)
-    : formatShortDate(date);
+    ? formatRelativeDate(date, locale)
+    : formatShortDate(date, locale);
 }
 
 /**
@@ -132,6 +135,7 @@ export const Timestamp = forwardRef<HTMLTimeElement, TimestampProps>(
   (
     {
       date,
+      locale,
       children: renderChildren = formatDynamicDate,
       title: renderTitle = formatVerboseDate,
       dateTime,
@@ -151,7 +155,7 @@ export const Timestamp = forwardRef<HTMLTimeElement, TimestampProps>(
     const title = useMemo(
       () =>
         typeof renderTitle === "function"
-          ? renderTitle(parsedDate)
+          ? renderTitle(parsedDate, locale)
           : renderTitle,
       // eslint-disable-next-line react-hooks/exhaustive-deps
       [renderTitle, parsedDate, key]
@@ -159,7 +163,7 @@ export const Timestamp = forwardRef<HTMLTimeElement, TimestampProps>(
     const children = useMemo(
       () =>
         typeof renderChildren === "function"
-          ? renderChildren(parsedDate)
+          ? renderChildren(parsedDate, locale)
           : renderChildren,
       // eslint-disable-next-line react-hooks/exhaustive-deps
       [renderChildren, parsedDate, key]

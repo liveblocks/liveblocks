@@ -1,5 +1,5 @@
 <script>
-  export let picture = "";
+  export let src = "";
   export let name = "";
 
   const IMAGE_SIZE = 48;
@@ -10,7 +10,7 @@
     alt="Avatar"
     class="avatar_picture"
     height={IMAGE_SIZE}
-    src={picture}
+    src={src}
     width={IMAGE_SIZE}
   />
 </div>

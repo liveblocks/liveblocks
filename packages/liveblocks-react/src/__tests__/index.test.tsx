@@ -1,6 +1,6 @@
 import type { BaseUserMeta, Json, JsonObject } from "@liveblocks/client";
 import { createClient, shallow } from "@liveblocks/client";
-import type { ServerMsg } from "@liveblocks/core";
+import type { RoomStateServerMsg, ServerMsg } from "@liveblocks/core";
 import { ClientMsgCode, CrdtType, ServerMsgCode } from "@liveblocks/core";
 import { render } from "@testing-library/react";
 import { rest } from "msw";
@@ -55,7 +55,7 @@ class MockWebSocket {
   sentMessages: string[] = [];
 
   constructor(public url: string) {
-    MockWebSocket.instances.push(this);
+    const actor = MockWebSocket.instances.push(this) - 1;
     this.readyState = 0 /* CONNECTING */;
 
     // Fake the server accepting the new connection
@@ -63,6 +63,17 @@ class MockWebSocket {
       this.readyState = 1 /* OPEN */;
       for (const openCb of this.callbacks.open) {
         openCb();
+      }
+
+      // Send a ROOM_STATE message to the newly connected client
+      for (const msgCb of this.callbacks.message) {
+        const msg: RoomStateServerMsg<never> = {
+          type: ServerMsgCode.ROOM_STATE,
+          actor,
+          scopes: ["room:write"],
+          users: {},
+        };
+        msgCb({ data: JSON.stringify(msg) } as MessageEvent);
       }
     }, 0);
   }
@@ -118,7 +129,7 @@ const server = setupServer(
     return res(
       ctx.json({
         token:
-          "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2MTY3MjM2NjcsImV4cCI6MTYxNjcyNzI2Nywicm9vbUlkIjoiazV3bWgwRjlVTGxyek1nWnRTMlpfIiwiYXBwSWQiOiI2MDVhNGZkMzFhMzZkNWVhN2EyZTA5MTQiLCJhY3RvciI6MCwic2NvcGVzIjpbIndlYnNvY2tldDpwcmVzZW5jZSIsIndlYnNvY2tldDpzdG9yYWdlIiwicm9vbTpyZWFkIiwicm9vbTp3cml0ZSJdfQ.IQFyw54-b4F6P0MTSzmBVwdZi2pwPaxZwzgkE2l0Mi4",
+          "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2OTAwMzMzMjgsImV4cCI6MTY5MDAzMzMzMywiayI6InNlYy1sZWdhY3kiLCJyb29tSWQiOiJlTFB3dU9tTXVUWEN6Q0dSaTVucm4iLCJhcHBJZCI6IjYyNDFjYjk1ZWQ2ODdkNWRlNWFhYTEzMiIsImFjdG9yIjoxLCJzY29wZXMiOlsicm9vbTp3cml0ZSJdLCJpZCI6InVzZXItMyIsIm1heENvbm5lY3Rpb25zUGVyUm9vbSI6MjB9.QoRc9dJJp-C1LzmQ-S_scHfFsAZ7dBcqep0bUZNyWxEWz_VeBHBBNdJpNs7b7RYRFDBi7RxkywKJlO-gNE8h3wkhebgLQVeSgI3YfTJo7J8Jzj38TzH85ZIbybaiGcxda_sYn3VohDtUHA1k67ns08Q2orJBNr30Gc88jJmc1He_7bLStsDP4M2F1NRMuFuqLULWHnPeEM7jMvLZYkbu3SBeCH4TQGyweu7qAXvP-HHtmvzOi8LdEnpxgxGjxefdu6m4a-fJj6LwoYCGi1rlLDHH9aOHFwYVrBBBVwoeIDSHoAonkPaae9AWM6igJhNt9-ihgEH6sF-qgFiPxHNXdg",
       })
     );
   }),
@@ -141,7 +152,8 @@ async function waitForSocketToBeConnected() {
   await waitFor(() => expect(MockWebSocket.instances.length).toBe(1));
 
   const socket = MockWebSocket.instances[0];
-  expect(socket.callbacks.open.length).toBe(1);
+  expect(socket.callbacks.open.length).toBe(1); // Got open callback
+  expect(socket.callbacks.message.length).toBe(1); // Got ROOM_STATE message callback
 
   // Give open callback (scheduled for next tick) a chance to finish before returning
   await wait(0);
@@ -203,7 +215,7 @@ async function websocketSimulator() {
       actor,
       id: undefined,
       info: undefined,
-      scopes: [],
+      scopes: ["room:write"],
     });
 
     simulateIncomingMessage({
@@ -325,7 +337,12 @@ describe("useOthers", () => {
     act(() => sim.simulateUserJoins(1, { x: 2 }));
 
     expect(result.current).toEqual([
-      { connectionId: 1, presence: { x: 2 }, isReadOnly: false },
+      {
+        connectionId: 1,
+        presence: { x: 2 },
+        canWrite: true,
+        isReadOnly: false,
+      },
     ]);
   });
 
@@ -336,7 +353,12 @@ describe("useOthers", () => {
     act(() => sim.simulateUserJoins(1, { x: 0 }));
 
     expect(result.current).toEqual([
-      { connectionId: 1, presence: { x: 0 }, isReadOnly: false },
+      {
+        connectionId: 1,
+        presence: { x: 0 },
+        canWrite: true,
+        isReadOnly: false,
+      },
     ]);
 
     act(() =>
@@ -348,7 +370,12 @@ describe("useOthers", () => {
     );
 
     expect(result.current).toEqual([
-      { connectionId: 1, presence: { x: 0, y: 0 }, isReadOnly: false },
+      {
+        connectionId: 1,
+        presence: { x: 0, y: 0 },
+        canWrite: true,
+        isReadOnly: false,
+      },
     ]);
   });
 
@@ -359,20 +386,35 @@ describe("useOthers", () => {
     act(() => sim.simulateUserJoins(1, { x: 2 }));
 
     expect(result.current).toEqual([
-      { connectionId: 1, presence: { x: 2 }, isReadOnly: false },
+      {
+        connectionId: 1,
+        presence: { x: 2 },
+        canWrite: true,
+        isReadOnly: false,
+      },
     ]);
 
     act(() => sim.simulateAbnormalClose());
 
     expect(result.current).toEqual([
-      { connectionId: 1, presence: { x: 2 }, isReadOnly: false },
+      {
+        connectionId: 1,
+        presence: { x: 2 },
+        canWrite: true,
+        isReadOnly: false,
+      },
     ]);
 
     // After 100ms (half the lostConnectionTimeout value), the others aren't
     // cleared yet
     await wait(100);
     expect(result.current).toEqual([
-      { connectionId: 1, presence: { x: 2 }, isReadOnly: false },
+      {
+        connectionId: 1,
+        presence: { x: 2 },
+        canWrite: true,
+        isReadOnly: false,
+      },
     ]);
 
     // After another 100ms we crossed the lostConnectionTimeout, so the others

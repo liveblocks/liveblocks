@@ -471,6 +471,56 @@
         ]
       }
     },
+    "/rooms/{roomId}/broadcast_event": {
+      "post": {
+        "summary": "Broadcast event to a room",
+        "operationId": "post-broadcast-event",
+        "responses": {
+          "204": {
+            "description": "Success. An event was broadcasted to the room."
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          },
+          "422": {
+            "$ref": "#/components/responses/422"
+          }
+        },
+        "description": "This endpoint enables the broadcast of an event to a room without having to connect to it via the `client` from `@liveblocks/client`. It takes any valid JSON as a request body.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "example-1": {
+                  "value": {
+                    "type": "EMOJI",
+                    "emoji": "🔥"
+                  }
+                }
+              }
+            },
+            "description": "Any valid JSON."
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "description": "ID of the room"
+          }
+        ]
+      }
+    },
     "/rooms/{roomId}/storage": {
       "get": {
         "summary": "Get storage",
@@ -489,7 +539,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Success. Returns the room storage as JSON.",
+            "description": "Success. Returns the room’s Storage as JSON.",
             "content": {
               "application/json": {
                 "schema": {
@@ -699,7 +749,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Success. The room has no more storage."
+            "description": "Success. The room has no more Storage."
           },
           "401": {
             "$ref": "#/components/responses/401"
@@ -757,16 +807,16 @@
         },
         "responses": {
           "200": {
-            "description": "Success. Returns the JWT token.",
+            "description": "Success. Returns the room’s Yjs document as JSON.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Authorization"
+                  "type": "object"
                 },
                 "examples": {
                   "example-1": {
                     "value": {
-                      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
+                      "someYText": "contents of ytext"
                     }
                   }
                 }
@@ -781,9 +831,6 @@
           },
           "404": {
             "$ref": "#/components/responses/404"
-          },
-          "422": {
-            "$ref": "#/components/responses/422"
           }
         },
         "servers": [
@@ -847,7 +894,7 @@
         ]
       }
     },
-    "/rooms/{roomId}/public/authorize": {
+    "/authorize-user": {
       "post": {
         "summary": "Get JWT token for WebSocket with public key",
         "description": "This endpoint works with the public key and can be used client side. That means you don't need to implement a dedicated authorization endpoint server side. \nThe generated JWT token works only with public room (`defaultAccesses: [\"room:write\"]`).",
@@ -882,16 +929,16 @@
         },
         "responses": {
           "200": {
-            "description": "Success. Returns the JWT token.",
+            "description": "Success. Returns an access token that can be used to enter one or more rooms.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Authorization"
+                  "$ref": "#/components/schemas/TokenResponse"
                 },
                 "examples": {
-                  "example": {
+                  "example-1": {
                     "value": {
-                      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
+                      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIi..."
                     }
                   }
                 }
@@ -899,13 +946,7 @@
             }
           },
           "403": {
-            "$ref": "#/components/responses/403/content"
-          },
-          "404": {
-            "$ref": "#/components/responses/404"
-          },
-          "422": {
-            "$ref": "#/components/responses/422"
+            "$ref": "#/components/responses/403"
           }
         },
         "servers": [
@@ -1521,6 +1562,217 @@
           }
         ]
       }
+    },
+
+    "/rooms/{roomId}/authorize": {
+      "post": {
+        "summary": "Get single-room token with secret key (deprecated)",
+        "operationId": "post-authorize",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "description": "ID of the room",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAuthorization"
+              },
+              "examples": {
+                "example-1": {
+                  "value": {
+                    "userId": "b2c1c290-f2c9-45de-a74e-6b7aa0690f59",
+                    "groupIds": ["g1", "g2"],
+                    "userInfo": {
+                      "name": "bob",
+                      "colors": ["blue", "red"]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success. Returns an old-style single-room token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Authorization"
+                },
+                "examples": {
+                  "example-1": {
+                    "value": {
+                      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          },
+          "422": {
+            "$ref": "#/components/responses/422"
+          }
+        },
+        "servers": [
+          {
+            "url": "https://api.liveblocks.io/v2"
+          }
+        ]
+      }
+    },
+    "/rooms/{roomId}/broadcast_event": {
+      "post": {
+        "summary": "Broadcast an event to a room",
+        "description": "This endpoint enables the broadcast of an event to a room without having to connect to it via the `client` from `@liveblocks/client`. It takes any valid JSON as a request body.",
+        "operationId": "post-broadcast-event",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "description": "ID of the room",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "example-1": {
+                  "value": {
+                    "type": "EMOJI",
+                    "emoji": "🔥"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": "**Deprecated.** Prefer using [access tokens](#post-authorize-user) or [ID tokens](#post-identify-user) instead. Read more in our [migration guide](/docs/platform/upgrading/1.2).\n\nThis endpoint lets your application server (your backend) obtain a token that one of its clients (your frontend) can use to enter a Liveblocks room. You use this endpoint to implement your own application’s custom authentication endpoint. When making this request, you’ll have to use your secret key.\n\nYou can pass the property `userId` in the request’s body. This can be whatever internal identifier you use for your user accounts as long as it uniquely identifies an account. Setting the `userId` is optional if you want to use public rooms, but it is required to enter a private room (because permissions are assigned to specific user IDs). In case you want to use the group permission system, you can also declare which `groupIds` this user belongs to.\n\nThe property userId is used by Liveblocks to calculate your account’s Monthly Active Users. One unique userId corresponds to one MAU. If you don’t pass a userId, we will create for you a new anonymous userId on each connection, but your MAUs will be higher.\n\nAdditionally, you can set custom metadata to the token, which will be publicly accessible by other clients through the `user.info` property. This is useful for storing static data like avatar images or the user’s display name.",
+        "parameters": []
+      },
+      "parameters": [
+        {
+          "schema": {
+            "type": "string"
+          },
+          "name": "roomId",
+          "in": "path",
+          "required": true,
+          "description": "ID of the room"
+        }
+      ]
+    },
+    "/rooms/{roomId}/public/authorize": {
+      "post": {
+        "summary": "Get single-room token with public key (deprecated)",
+        "operationId": "post-public-authorize",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "description": "ID of the room",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublicAuthorizeBodyRequest"
+              },
+              "examples": {
+                "example": {
+                  "value": {
+                    "publicApiKey": "pk_test_lOMrmwejSWLaPYQc5_JuGHXXX"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success. Returns the JWT token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Authorization"
+                },
+                "examples": {
+                  "example": {
+                    "value": {
+                      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/403/content"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          },
+          "422": {
+            "$ref": "#/components/responses/422"
+          }
+        },
+        "description": "**Deprecated.** When you update Liveblocks to 1.2, you no longer need to get a JWT token when using a public key.\n\nThis endpoint works with the public key and can be used client side. That means you don’t need to implement a dedicated authorization endpoint server side. \nThe generated JWT token works only with public room (`defaultAccesses: [\"room:write\"]`).",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublicAuthorizeBodyRequest"
+              },
+              "examples": {
+                "example": {
+                  "value": {
+                    "publicApiKey": "pk_test_lOMrmwejSWLaPYQc5_JuGHXXX"
+                  }
+                }
+              }
+            }
+          },
+          "description": ""
+        }
+      },
+      "parameters": [
+        {
+          "schema": {
+            "type": "string"
+          },
+          "name": "roomId",
+          "in": "path",
+          "required": true,
+          "description": "ID of the room"
+        }
+      ]
     }
   },
   "components": {
@@ -1588,7 +1840,72 @@
                 "value": {
                   "error": "UNAUTHORIZED_ROOM_ACCESS",
                   "message": "The user does not have permission to access the room.",
-                  "suggestion": "Please add the user's ID or one of the user's group IDs to the room first.",
+                  "suggestion": "Please add the user’s ID or one of the user’s group IDs to the room first.",
+                  "docs": ""
+                }
+              }
+            }
+          }
+        }
+      },
+      "404": {
+        "description": "Resource not found.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "examples": {
+              "ROOM_NOT_FOUND": {
+                "value": {
+                  "error": "ROOM_NOT_FOUND",
+                  "message": "Room not found.",
+                  "suggestion": "Please use a valid room ID, room IDs are available in the dashboard: https://liveblocks.io/dashboard/rooms.",
+                  "docs": ""
+                }
+              }
+            }
+          }
+        }
+      },
+      "409": {
+        "description": "Room already exists.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "examples": {
+              "ROOM_ALREADY_EXISTS": {
+                "value": {
+                  "error": "ROOM_ALREADY_EXISTS",
+                  "message": "The room already exists.",
+                  "suggestion": "Please use a different room id or update the existing room.",
+                  "doc": ""
+                }
+              }
+            }
+          },
+          "application/xml": {
+            "schema": {
+              "type": "object"
+            }
+          }
+        }
+      },
+      "422": {
+        "description": "Unprocessable entity.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "examples": {
+              "UNPROCESSABLE_ENTITY": {
+                "value": {
+                  "error": "UNPROCESSABLE_ENTITY",
+                  "message": "Missing key: 'defaultAccesses'.",
+                  "suggestion": "Please ensure the data follows the correct format.",
                   "docs": ""
                 }
               }
@@ -1696,7 +2013,7 @@
                 "value": {
                   "error": "UNAUTHORIZED_ROOM_ACCESS",
                   "message": "The user does not have permission to access the room.",
-                  "suggestion": "Please add the user's ID or one of the user's group IDs to the room first.",
+                  "suggestion": "Please add the user’s ID or one of the user’s group IDs to the room first.",
                   "docs": ""
                 }
               }

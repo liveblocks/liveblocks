@@ -14,93 +14,108 @@ collaboration to your Svelte application using the APIs from the
 
 Liveblocks does not have a package for Svelte. If you would like to have one, or
 even better if you have ideas about what kind of API you would like to use,
-please let us know about it on this
-[Github issue](https://github.com/liveblocks/liveblocks/issues/1).
+please let us know on
+[GitHub](https://github.com/liveblocks/liveblocks/issues/1).
 
 </Banner>
 
 ## Quickstart
 
-<Steps
-  steps={[
-    {
-      title: "Install Liveblocks",
-      code: {
-        language: "bash",
-        code: `npm install @liveblocks/client`,
-      },
-    },
-    {
-      title: "Set up the client",
-      description: (
-        <>
-          The first step in connecting to Liveblocks is creating a client which
-          will be responsible for communicating with the back end.
-        </>
-      ),
-      code: {
-        language: "ts",
-        code: `const client = createClient({
-  publicApiKey: "{{PUBLIC_KEY}}",
-});`,
-      },
-    },
-    {
-      title: "Join a Liveblocks room",
-      description: `Liveblocks uses the concept of rooms, separate virtual spaces where people collaborate. To create a real-time experience, multiple users must be connected to the same room.`,
-      code: {
-        language: "ts",
-        code: `const room = client.enter("my-room", { initialPresence: {} });`,
-      },
-    },
-    {
-      title: "Use the Liveblocks methods",
-      description: `Now that we’re connected to a room, we can start using Liveblocks subscriptions. The first we’ll add is others, a subscription that provides information about which other users are connected to the room.`,
-      code: {
-        language: "html",
-        highlight: "7-9",
-        code: `<script>
-  import { onDestroy } from "svelte";
-  import { room } from "./room.js";
-\r
-  let others = room.getOthers();
-\r
-  const unsubscribeOthers = room.subscribe("others", (updatedOthers) => {
-    others = updatedOthers;
-  });
-\r
-  onDestroy(() => {
-    unsubscribeOthers();
-  });
-</script>
-\r
-<div>There are {others.length} other user(s) online</div>
-`,
-      },
-    },
-    {
-      title: "Bonus: set up authentication",
-      description: (
-        <>
-          By default, Liveblocks is configured to work without an authentication
-          endpoint. This approach is great for prototyping and marketing pages
-          where defining your own security isn’t always required. If you want to
-          implement your own security logic to define if certain users should
-          have access to a given room, you’ll need to implement an
-          authentication endpoint.
-        </>
-      ),
-      action: {
-        href: "/docs/rooms/authentication",
-        label: "Set up authentication",
-      },
-    },
-  ]}
-/>
+<Steps>
+  <Step>
+    <StepTitle>Install Liveblocks</StepTitle>
+    <StepContent>
 
-## Next steps
+      ```bash
+      npm install @liveblocks/client
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Set up the Liveblocks client</StepTitle>
+    <StepContent>
+
+      The first step in connecting to Liveblocks is creating a client which
+      will be responsible for communicating with the back end.
+
+      ```ts file="room.js"
+      const client = createClient({
+        publicApiKey: "{{PUBLIC_KEY}}",
+      });
+      ```
+
+    </StepContent>
+
+  </Step>
+
+  <Step>
+    <StepTitle>Join a Liveblocks room</StepTitle>
+    <StepContent>
+
+      Liveblocks uses the concept of rooms, separate virtual spaces where people collaborate.
+      To create a real-time experience, multiple users must be connected to the same room.
+
+      ```js
+      const room = client.enter("my-room", { initialPresence: {} });
+      ```
+
+    </StepContent>
+
+  </Step>
+
+  <Step>
+    <StepTitle>Use the Liveblocks methods</StepTitle>
+    <StepContent>
+
+      Now that we’re connected to a room, we can start using Liveblocks subscriptions.
+      The first we’ll add is `others`, a subscription that provides information
+      about which other users are connected to the room.
+
+      ```js highlight="7-9"
+      <script>
+        import { onDestroy } from "svelte";
+        import { room } from "./room.js";
+
+        let others = room.getOthers();
+
+        const unsubscribeOthers = room.subscribe("others", (updatedOthers) => {
+          others = updatedOthers;
+        });
+
+        onDestroy(() => {
+          unsubscribeOthers();
+        });
+      </script>
+
+      <div>There are {others.length} other user(s) online</div>
+      ```
+
+    </StepContent>
+
+  </Step>
+  
+  <Step lastStep>
+    <StepTitle>Next: set up authentication</StepTitle>
+    <StepContent>
+      By default, Liveblocks is configured to work without an authentication endpoint
+      where everyone automatically has access to rooms. This approach is great for
+      prototyping and marketing pages where setting up your own security isn’t always
+      required. If you want to limit access to a room for certain users, you’ll need
+      to set up an authentication endpoint to enable permissions.
+
+      <ButtonLink className="not-markdown" href="/docs/rooms/authentication">
+        Set up authentication
+      </ButtonLink>
+    </StepContent>
+
+  </Step>
+</Steps>
+
+## What to read next
 
 Congratulations! You now have set up the foundation to start building
 collaborative experiences for your Svelte application.
 
-- [API Reference](/docs/api-reference/liveblocks-client)
+- [@liveblocks/client API Reference](/docs/api-reference/liveblocks-client)

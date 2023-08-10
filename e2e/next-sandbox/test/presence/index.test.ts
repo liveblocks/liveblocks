@@ -109,7 +109,7 @@ test.describe("Presence", () => {
 
     await firstPage.close();
 
-    await delay(100);
+    await delay(300);
 
     othersSecondPage = await getOthers(secondPage);
     expect(othersSecondPage.length).toEqual(0);

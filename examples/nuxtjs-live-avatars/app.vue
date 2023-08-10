@@ -4,7 +4,7 @@
       <Avatar
         v-for="user in others.slice(0, 3)"
         v-bind:key="user.connectionId"
-        v-bind:picture="user.picture"
+        v-bind:src="user.avatar"
         v-bind:name="user.name"
       />
 
@@ -13,7 +13,7 @@
       <div class="self">
         <Avatar
           v-if="currentUser"
-          v-bind:picture="currentUser.info.picture"
+          v-bind:src="currentUser.info.avatar"
           name="You"
         />
       </div>
@@ -87,7 +87,7 @@ export default {
     this._unsubscribeOthers = room.subscribe("others", this.onOthersChange);
     this._unsubscribeConnection = room.subscribe(
       "connection",
-      this.onConnectionChange,
+      this.onConnectionChange
     );
     this._room = room;
   },
@@ -98,11 +98,11 @@ export default {
   },
   methods: {
     onOthersChange(others) {
-      // The picture and name are coming from the authentication endpoint
+      // The avatar and name are coming from the authentication endpoint
       // See api.js for and https://liveblocks.io/docs/api-reference/liveblocks-node#authorize for more information
       this.others = others.map((user) => ({
         connectionId: user.connectionId,
-        picture: user.info?.picture,
+        avatar: user.info?.avatar,
         name: user.info?.name,
       }));
     },

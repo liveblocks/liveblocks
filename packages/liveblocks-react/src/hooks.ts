@@ -4,15 +4,14 @@ import { useReducer, useRef } from "react";
  * Trigger a re-render programmatically, without changing the component's
  * state.
  *
- * Usage:
+ * @example
+ * const rerender = useRerender();
  *
- *   const rerender = useRerender();
- *   return (
- *     <button onClick={rerender}>
- *       {Math.random()}
- *     </button>
- *   )
- *
+ * return (
+ *   <button onClick={rerender}>
+ *     {Math.random()}
+ *   </button>
+ * )
  */
 export function useRerender(): () => void {
   const [, update] = useReducer(

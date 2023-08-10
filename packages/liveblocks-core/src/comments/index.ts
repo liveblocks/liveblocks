@@ -1,4 +1,4 @@
-import type { Client } from "../client";
+import type { AuthValue } from "../auth-manager";
 import type { BaseMetadata } from "./types/BaseMetadata";
 import type { CommentBody } from "./types/CommentBody";
 import type { CommentData } from "./types/CommentData";
@@ -8,68 +8,52 @@ type Options = {
   serverEndpoint: string;
 };
 
+function getAuthBearerHeaderFromAuthValue(authValue: AuthValue) {
+  if (authValue.type === "public") {
+    return authValue.publicApiKey;
+  } else {
+    return authValue.token.raw;
+  }
+}
+
 export type CommentsApi<ThreadMetadata extends BaseMetadata> = {
-  getThreads(options: {
-    roomId: string;
-  }): Promise<ThreadData<ThreadMetadata>[]>;
+  getThreads(): Promise<ThreadData<ThreadMetadata>[]>;
   createThread(options: {
-    roomId: string;
     threadId: string;
     commentId: string;
     metadata: ThreadMetadata | undefined;
     body: CommentBody;
   }): Promise<ThreadData<ThreadMetadata>>;
   editThreadMetadata(options: {
-    roomId: string;
     metadata: Partial<ThreadMetadata>;
     threadId: string;
   }): Promise<ThreadData<ThreadMetadata>>;
   createComment(options: {
-    roomId: string;
     threadId: string;
     commentId: string;
     body: CommentBody;
   }): Promise<CommentData>;
   editComment(options: {
-    roomId: string;
     threadId: string;
     commentId: string;
     body: CommentBody;
   }): Promise<CommentData>;
   deleteComment(options: {
-    roomId: string;
     threadId: string;
     commentId: string;
   }): Promise<void>;
 };
 
 export function createCommentsApi<ThreadMetadata extends BaseMetadata>(
-  client: Client,
+  roomId: string,
+  getAuthValue: () => Promise<AuthValue>,
   { serverEndpoint }: Options
 ): CommentsApi<ThreadMetadata> {
-  async function fetchApi<T>(
-    roomId: string,
+  async function fetchJson<T>(
     endpoint: string,
     options?: RequestInit
   ): Promise<T> {
-    const authValue = await client.__internal.getAuthValue(
-      "comments:read", // TODO: Use the right scope
-      roomId
-    );
-
-    if (authValue.type !== "secret") {
-      throw new Error("Only secret key are supported for client.");
-    }
-
-    const url = `${serverEndpoint}/rooms/${roomId}${endpoint}`;
-
-    const response = await fetch(url, {
-      ...options,
-      headers: {
-        ...options?.headers,
-        Authorization: `Bearer ${authValue.token.raw}`,
-      },
-    });
+    const response = await fetchApi(roomId, endpoint, options);
 
     if (!response.ok) {
       if (response.status >= 400 && response.status < 600) {
@@ -97,16 +81,39 @@ export function createCommentsApi<ThreadMetadata extends BaseMetadata>(
     return body;
   }
 
-  async function getThreads({ roomId }: { roomId: string }) {
-    const { data } = await fetchApi<{ data: ThreadData<ThreadMetadata>[] }>(
-      roomId,
-      "/threads"
-    );
-    return data;
+  async function fetchApi(
+    roomId: string,
+    endpoint: string,
+    options?: RequestInit
+  ): Promise<Response> {
+    // TODO: Use the right scope
+    const authValue = await getAuthValue();
+
+    const url = `${serverEndpoint}/c/rooms/${roomId}${endpoint}`;
+
+    return await fetch(url, {
+      ...options,
+      headers: {
+        ...options?.headers,
+        Authorization: `Bearer ${getAuthBearerHeaderFromAuthValue(authValue)}`,
+      },
+    });
+  }
+
+  async function getThreads(): Promise<ThreadData<ThreadMetadata>[]> {
+    const response = await fetchApi(roomId, "/threads");
+
+    if (response.ok) {
+      const json = await response.json();
+      return json.data;
+    } else if (response.status === 404) {
+      return [];
+    } else {
+      throw new Error("FAIL");
+    }
   }
 
   function createThread({
-    roomId,
     metadata,
     body,
     commentId,
@@ -118,7 +125,7 @@ export function createCommentsApi<ThreadMetadata extends BaseMetadata>(
     metadata: ThreadMetadata | undefined;
     body: CommentBody;
   }) {
-    return fetchApi<ThreadData<ThreadMetadata>>(roomId, "/threads", {
+    return fetchJson<ThreadData<ThreadMetadata>>("/threads", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -135,7 +142,6 @@ export function createCommentsApi<ThreadMetadata extends BaseMetadata>(
   }
 
   function editThreadMetadata({
-    roomId,
     metadata,
     threadId,
   }: {
@@ -143,8 +149,7 @@ export function createCommentsApi<ThreadMetadata extends BaseMetadata>(
     metadata: Partial<ThreadMetadata>;
     threadId: string;
   }) {
-    return fetchApi<ThreadData<ThreadMetadata>>(
-      roomId,
+    return fetchJson<ThreadData<ThreadMetadata>>(
       `/threads/${threadId}/metadata`,
       {
         method: "POST",
@@ -157,17 +162,15 @@ export function createCommentsApi<ThreadMetadata extends BaseMetadata>(
   }
 
   function createComment({
-    roomId,
     threadId,
     commentId,
     body,
   }: {
-    roomId: string;
     threadId: string;
     commentId: string;
     body: CommentBody;
   }) {
-    return fetchApi<CommentData>(roomId, `/threads/${threadId}/comments`, {
+    return fetchJson<CommentData>(`/threads/${threadId}/comments`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -180,18 +183,15 @@ export function createCommentsApi<ThreadMetadata extends BaseMetadata>(
   }
 
   function editComment({
-    roomId,
     threadId,
     commentId,
     body,
   }: {
-    roomId: string;
     threadId: string;
     commentId: string;
     body: CommentBody;
   }) {
-    return fetchApi<CommentData>(
-      roomId,
+    return fetchJson<CommentData>(
       `/threads/${threadId}/comments/${commentId}`,
       {
         method: "POST",
@@ -206,7 +206,6 @@ export function createCommentsApi<ThreadMetadata extends BaseMetadata>(
   }
 
   async function deleteComment({
-    roomId,
     threadId,
     commentId,
   }: {
@@ -214,7 +213,7 @@ export function createCommentsApi<ThreadMetadata extends BaseMetadata>(
     threadId: string;
     commentId: string;
   }) {
-    await fetchApi(roomId, `/threads/${threadId}/comments/${commentId}`, {
+    await fetchJson(`/threads/${threadId}/comments/${commentId}`, {
       method: "DELETE",
     });
   }

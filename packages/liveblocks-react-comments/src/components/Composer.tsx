@@ -1,45 +1,42 @@
-"use client";
-
-import type { CommentBody } from "@liveblocks/core";
+import { useRoomContextBundle } from "@liveblocks/react";
 import type {
   ComponentProps,
   FormEvent,
   ReactNode,
   SyntheticEvent,
 } from "react";
-import React, { forwardRef, useCallback } from "react";
+import React, { forwardRef, useCallback, useMemo } from "react";
 
-import { useCommentsContext } from "../factory";
 import { MentionIcon } from "../icons/mention";
 import { SendIcon } from "../icons/send";
+import { type ComposerOverrides, useOverrides } from "../overrides";
+import * as ComposerPrimitive from "../primitives/Composer";
+import { useComposer } from "../primitives/Composer/contexts";
 import type {
   ComposerEditorProps,
   ComposerFormProps,
   ComposerRenderMentionProps,
   ComposerRenderMentionSuggestionsProps,
   ComposerSubmitComment,
-} from "../primitives/Composer";
-import {
-  Composer as ComposerPrimitive,
-  useComposer,
-} from "../primitives/Composer";
-import { MENTION_CHARACTER } from "../slate/mentions";
+} from "../primitives/Composer/types";
+import { MENTION_CHARACTER } from "../slate/plugins/mentions";
 import type { SlotProp } from "../types";
 import { classNames } from "../utils/class-names";
-import { Avatar } from "./Avatar";
-import { Logo } from "./Logo";
-import { Tooltip, TooltipProvider } from "./Tooltip";
-import { User } from "./User";
+import { Avatar } from "./internal/Avatar";
+import { Logo } from "./internal/Logo";
+import {
+  Tooltip,
+  TooltipProvider,
+  TooltipShortcutKey,
+} from "./internal/Tooltip";
+import { User } from "./internal/User";
+
+interface EditorActionProps extends ComponentProps<"button"> {
+  label: string;
+}
 
 type ComposerCreateThreadProps = {
-  /**
-   * The ID of the thread to reply to.
-   */
   threadId?: never;
-
-  /**
-   * The ID of the comment to edit.
-   */
   commentId?: never;
 };
 
@@ -48,16 +45,12 @@ type ComposerCreateCommentProps = {
    * The ID of the thread to reply to.
    */
   threadId: string;
-
-  /**
-   * The ID of the comment to edit.
-   */
   commentId?: never;
 };
 
 type ComposerEditCommentProps = {
   /**
-   * The ID of the thread to reply to.
+   * The ID of the thread to edit a comment in.
    */
   threadId: string;
 
@@ -75,6 +68,11 @@ export type ComposerProps = Omit<ComposerFormProps, keyof SlotProp> &
     | ComposerEditCommentProps
   ) & {
     /**
+     * Override the component's strings.
+     */
+    overrides?: Partial<ComposerOverrides>;
+
+    /**
      * @internal
      */
     actions?: ReactNode;
@@ -85,28 +83,25 @@ export type ComposerProps = Omit<ComposerFormProps, keyof SlotProp> &
     showLogo?: boolean;
   };
 
-function ComposerInsertMentionAction({
+function ComposerInsertMentionEditorAction({
+  label,
   className,
   ...props
-}: ComponentProps<"button">) {
-  const { insertText } = useComposer();
+}: EditorActionProps) {
+  const { createMention } = useComposer();
 
   const preventDefault = useCallback((event: SyntheticEvent) => {
     event.preventDefault();
   }, []);
 
-  const handleInsertMention = useCallback(() => {
-    insertText(` ${MENTION_CHARACTER}`);
-  }, [insertText]);
-
   return (
-    <Tooltip content="Mention someone">
+    <Tooltip content={label}>
       <button
         type="button"
         className={classNames("lb-button lb-composer-editor-action", className)}
         onMouseDown={preventDefault}
-        onClick={handleInsertMention}
-        aria-label="Mention someone"
+        onClick={createMention}
+        aria-label={label}
         {...props}
       >
         <MentionIcon className="lb-button-icon" />
@@ -132,6 +127,7 @@ function ComposerMentionSuggestions({
       <ComposerPrimitive.SuggestionsList className="lb-composer-suggestions-list lb-composer-mention-suggestions-list">
         {userIds.map((userId) => (
           <ComposerPrimitive.SuggestionsListItem
+            key={userId}
             className="lb-composer-suggestions-list-item lb-composer-mention-suggestion"
             value={userId}
           >
@@ -150,27 +146,40 @@ function ComposerMentionSuggestions({
   ) : null;
 }
 
+/**
+ * Displays a composer to create comments.
+ *
+ * @example
+ * <Composer />
+ */
 export const Composer = forwardRef<HTMLFormElement, ComposerProps>(
   (
     {
       threadId,
       commentId,
-      onCommentSubmit,
+      onComposerSubmit,
       initialValue,
       disabled,
       autoFocus,
+      overrides,
       actions,
-      showLogo = true,
+      showLogo,
       className,
       ...props
     },
     forwardedRef
   ) => {
-    const { useCreateThread, useCreateComment, useEditComment } =
-      useCommentsContext();
+    const { useCreateThread, useCreateComment, useEditComment, useSelf } =
+      useRoomContextBundle();
+    const self = useSelf();
+    const isDisabled = useMemo(
+      () => disabled || !self?.canComment,
+      [disabled, self?.canComment]
+    );
     const createThread = useCreateThread();
     const createComment = useCreateComment();
     const editComment = useEditComment();
+    const $ = useOverrides(overrides);
 
     const preventDefault = useCallback((event: SyntheticEvent) => {
       event.preventDefault();
@@ -178,7 +187,7 @@ export const Composer = forwardRef<HTMLFormElement, ComposerProps>(
 
     const handleCommentSubmit = useCallback(
       (comment: ComposerSubmitComment, event: FormEvent<HTMLFormElement>) => {
-        onCommentSubmit?.(comment, event);
+        onComposerSubmit?.(comment, event);
 
         if (event.isDefaultPrevented()) {
           return;
@@ -207,7 +216,7 @@ export const Composer = forwardRef<HTMLFormElement, ComposerProps>(
         createComment,
         createThread,
         editComment,
-        onCommentSubmit,
+        onComposerSubmit,
         threadId,
       ]
     );
@@ -219,32 +228,40 @@ export const Composer = forwardRef<HTMLFormElement, ComposerProps>(
             "lb-root lb-composer lb-composer-form",
             className
           )}
+          dir={$.dir}
           {...props}
           ref={forwardedRef}
-          onCommentSubmit={handleCommentSubmit}
+          onComposerSubmit={handleCommentSubmit}
         >
           <ComposerPrimitive.Editor
             className="lb-composer-editor"
-            placeholder="Write a comment…"
+            placeholder={$.COMPOSER_PLACEHOLDER}
             initialValue={initialValue}
-            disabled={disabled}
+            disabled={isDisabled}
             autoFocus={autoFocus}
             renderMention={ComposerMention}
             renderMentionSuggestions={ComposerMentionSuggestions}
+            dir={$.dir}
           />
           <div className="lb-composer-footer">
             <div className="lb-composer-editor-actions">
-              <ComposerInsertMentionAction />
+              <ComposerInsertMentionEditorAction
+                label={$.COMPOSER_INSERT_MENTION}
+              />
             </div>
             {showLogo && <Logo className="lb-composer-logo" />}
             <div className="lb-composer-actions">
               {actions ?? (
                 <>
-                  <Tooltip content="Send comment" shortcut={<kbd>↵</kbd>}>
+                  <Tooltip
+                    content={$.COMPOSER_SEND}
+                    shortcut={<TooltipShortcutKey name="enter" />}
+                  >
                     <ComposerPrimitive.Submit
+                      disabled={isDisabled}
                       onMouseDown={preventDefault}
                       className="lb-button lb-button:primary lb-composer-action"
-                      aria-label="Send comment"
+                      aria-label={$.COMPOSER_SEND}
                     >
                       <SendIcon />
                     </ComposerPrimitive.Submit>

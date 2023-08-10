@@ -1,4 +1,6 @@
 import type { AuthManager, AuthValue } from "./auth-manager";
+import type { CommentsApi } from "./comments";
+import { createCommentsApi } from "./comments";
 import type {
   Delegates,
   LegacyConnectionStatus,
@@ -27,22 +29,23 @@ import type { Json, JsonObject } from "./lib/Json";
 import { isJsonArray, isJsonObject } from "./lib/Json";
 import { asPos } from "./lib/position";
 import type { Resolve } from "./lib/Resolve";
-import { compact, tryParseJson } from "./lib/utils";
-import type { ParsedAuthToken } from "./protocol/AuthToken";
-import { ApiScope, isTokenExpired, TokenKind } from "./protocol/AuthToken";
-import type { BaseUserMeta } from "./protocol/BaseUserMeta";
+import { compact, deepClone, tryParseJson } from "./lib/utils";
+import { canComment, canWriteStorage, TokenKind } from "./protocol/AuthToken";
+import type { BaseUserInfo, BaseUserMeta } from "./protocol/BaseUserMeta";
 import type { ClientMsg } from "./protocol/ClientMsg";
 import { ClientMsgCode } from "./protocol/ClientMsg";
 import type { Op } from "./protocol/Op";
 import { isAckOp, OpCode } from "./protocol/Op";
 import type { IdTuple, SerializedCrdt } from "./protocol/SerializedCrdt";
 import type {
+  CommentsEventServerMsg,
   InitialDocumentStateServerMsg,
   RoomStateServerMsg,
   ServerMsg,
   UpdatePresenceServerMsg,
   UserJoinServerMsg,
   UserLeftServerMsg,
+  YDocUpdate,
 } from "./protocol/ServerMsg";
 import { ServerMsgCode } from "./protocol/ServerMsg";
 import type { ImmutableRef } from "./refs/ImmutableRef";
@@ -59,6 +62,7 @@ import type {
 import type { NodeMap } from "./types/NodeMap";
 import type { Others, OthersEvent } from "./types/Others";
 import type { User } from "./types/User";
+import { PKG_VERSION } from "./version";
 
 type TimeoutID = ReturnType<typeof setTimeout>;
 
@@ -80,7 +84,7 @@ export type StorageStatus =
 type RoomEventCallbackMap<
   TPresence extends JsonObject,
   TUserMeta extends BaseUserMeta,
-  TRoomEvent extends Json
+  TRoomEvent extends Json,
 > = {
   connection: Callback<LegacyConnectionStatus>; // Old/deprecated API
   status: Callback<Status>; // New/recommended API
@@ -193,7 +197,7 @@ export type RoomEventCallbackFor<
   E extends RoomEventName,
   TPresence extends JsonObject,
   TUserMeta extends BaseUserMeta,
-  TRoomEvent extends Json
+  TRoomEvent extends Json,
 > = RoomEventCallbackMap<TPresence, TUserMeta, TRoomEvent>[E];
 
 export type RoomEventCallback = RoomEventCallbackFor<
@@ -216,7 +220,7 @@ type SubscribeFn<
   TPresence extends JsonObject,
   _TStorage extends LsonObject,
   TUserMeta extends BaseUserMeta,
-  TRoomEvent extends Json
+  TRoomEvent extends Json,
 > = {
   /**
    * Subscribes to changes made on any Live structure. Returns an unsubscribe function.
@@ -410,8 +414,8 @@ export type Room<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
   TUserMeta extends BaseUserMeta,
-  TRoomEvent extends Json
-> = {
+  TRoomEvent extends Json,
+> = CommentsApi<any /* TODO: Remove this any by adding a proper thread metadata on the Room type */> & {
   /**
    * @internal
    * Private methods to directly control the underlying state machine for this
@@ -419,17 +423,12 @@ export type Room<
    * Liveblocks, NEVER USE ANY OF THESE METHODS DIRECTLY, because bad things
    * will probably happen if you do.
    */
-  readonly __internal: PrivateRoomAPI<TPresence, TStorage, TUserMeta, TRoomEvent>; // prettier-ignore
+  readonly __internal: PrivateRoomAPI; // prettier-ignore
 
   /**
    * The id of the room.
    */
   readonly id: string;
-  /**
-   * A client is considered "self aware" if it knows its own
-   * metadata and connection ID (from the auth server).
-   */
-  isSelfAware(): boolean;
   /**
    * @deprecated This API will be removed in a future version of Liveblocks.
    * Prefer using `.getStatus()` instead.
@@ -559,12 +558,14 @@ export type Room<
   getStorageSnapshot(): LiveObject<TStorage> | null;
 
   readonly events: {
+    /** @deprecated Prefer `status` instead. */
     readonly connection: Observable<LegacyConnectionStatus>; // Old/legacy API
     readonly status: Observable<Status>; // New/recommended API
     readonly lostConnection: Observable<LostConnectionEvent>;
 
     readonly customEvent: Observable<{ connectionId: number; event: TRoomEvent; }>; // prettier-ignore
-    readonly me: Observable<TPresence>;
+    readonly self: Observable<User<TPresence, TUserMeta>>;
+    readonly myPresence: Observable<TPresence>;
     readonly others: Observable<{ others: Others<TPresence, TUserMeta>; event: OthersEvent<TPresence, TUserMeta>; }>; // prettier-ignore
     readonly error: Observable<Error>;
     readonly storage: Observable<StorageUpdate[]>;
@@ -578,7 +579,9 @@ export type Room<
     readonly storageDidLoad: Observable<void>;
 
     readonly storageStatus: Observable<StorageStatus>;
-    readonly ydoc: Observable<string>;
+    readonly ydoc: Observable<YDocUpdate>;
+
+    readonly comments: Observable<CommentsEventServerMsg>;
   };
 
   /**
@@ -652,15 +655,10 @@ export type Room<
  * Liveblocks, NEVER USE ANY OF THESE METHODS DIRECTLY, because bad things
  * will probably happen if you do.
  */
-type PrivateRoomAPI<
-  TPresence extends JsonObject,
-  TStorage extends LsonObject,
-  TUserMeta extends BaseUserMeta,
-  TRoomEvent extends Json
-> = {
+type PrivateRoomAPI = {
   // For introspection in unit tests only
-  buffer: RoomState<TPresence, TStorage, TUserMeta, TRoomEvent>["buffer"]; // prettier-ignore
-  undoStack: readonly (readonly Readonly<HistoryOp<TPresence>>[])[];
+  presenceBuffer: Json | undefined;
+  undoStack: readonly (readonly Readonly<HistoryOp<JsonObject>>[])[];
   nodeCount: number;
 
   // For DevTools support (Liveblocks browser extension)
@@ -691,20 +689,21 @@ type HistoryOp<TPresence extends JsonObject> =
 
 type IdFactory = () => string;
 
-type SessionInfo = {
+type StaticSessionInfo = {
   readonly userId?: string;
-  readonly userInfo?: Json;
+  readonly userInfo?: BaseUserInfo;
+};
 
-  // NOTE: In the future, these fields will get assigned in the connection phase
+type DynamicSessionInfo = {
   readonly actor: number;
-  readonly isReadOnly: boolean;
+  readonly scopes: string[];
 };
 
 type RoomState<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
   TUserMeta extends BaseUserMeta,
-  TRoomEvent extends Json
+  TRoomEvent extends Json,
 > = {
   /**
    * All pending changes that yet need to be synced.
@@ -718,7 +717,7 @@ type RoomState<
     readonly lastFlushedAt: number;
 
     // Queued-up "my presence" updates to be flushed at the earliest convenience
-    me:
+    presenceUpdates:
       | { type: "partial"; data: Partial<TPresence> }
       | { type: "full"; data: TPresence }
       | null;
@@ -726,11 +725,16 @@ type RoomState<
     storageOperations: Op[];
   };
 
-  // A carbon-copy of the session information, all extracted from the JWT
-  // token, which is returned by the authenticate delegate and stored inside
-  // the machine.
-  readonly sessionInfo: ValueRef<SessionInfo | null>;
-  readonly me: PatchableRef<TPresence>;
+  //
+  // The "self" User takes assembly of three sources-of-truth:
+  // - The JWT token provides the userId and userInfo metadata (static)
+  // - The server, in its initial ROOM_STATE message, will provide the actor ID
+  //   and the scopes (dynamic)
+  // - The presence is provided by the client's initialPresence configuration (presence)
+  //
+  readonly staticSessionInfo: ValueRef<StaticSessionInfo | null>;
+  readonly dynamicSessionInfo: ValueRef<DynamicSessionInfo | null>;
+  readonly myPresence: PatchableRef<TPresence>;
   readonly others: OthersRef<TPresence, TUserMeta>;
 
   idFactory: IdFactory | null;
@@ -780,7 +784,7 @@ export type Polyfills = {
 
 export type RoomInitializers<
   TPresence extends JsonObject,
-  TStorage extends LsonObject
+  TStorage extends LsonObject,
 > = Resolve<{
   /**
    * The initial Presence to use and announce when you enter the Room. The
@@ -848,7 +852,7 @@ export function createRoom<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
   TUserMeta extends BaseUserMeta,
-  TRoomEvent extends Json
+  TRoomEvent extends Json,
 >(
   options: Omit<
     RoomInitializers<TPresence, TStorage>,
@@ -878,7 +882,7 @@ export function createRoom<
     buffer: {
       flushTimerID: undefined,
       lastFlushedAt: 0,
-      me:
+      presenceUpdates:
         // Queue up the initial presence message as a Full Presence™ update
         {
           type: "full",
@@ -888,8 +892,9 @@ export function createRoom<
       storageOperations: [],
     },
 
-    sessionInfo: new ValueRef(null),
-    me: new PatchableRef(initialPresence),
+    staticSessionInfo: new ValueRef(null),
+    dynamicSessionInfo: new ValueRef(null),
+    myPresence: new PatchableRef(initialPresence),
     others: new OthersRef<TPresence, TUserMeta>(),
 
     initialStorage,
@@ -918,28 +923,39 @@ export function createRoom<
   const doNotBatchUpdates = (cb: () => void): void => cb();
   const batchUpdates = config.unstable_batchedUpdates ?? doNotBatchUpdates;
 
-  let lastToken: ParsedAuthToken["parsed"] | undefined;
+  let lastTokenKey: string | undefined;
   function onStatusDidChange(newStatus: Status) {
-    if (managedSocket.authValue?.type === "secret") {
-      const token = managedSocket.authValue.token.parsed;
-      if (token !== undefined && token !== lastToken) {
-        context.sessionInfo.set({
-          userInfo: token.k === TokenKind.SECRET_LEGACY ? token.info : token.ui,
-          userId: token.k === TokenKind.SECRET_LEGACY ? token.id : token.uid,
-          // NOTE: In the future, these fields will get assigned in the connection phase
-          actor: 0, // TODO: support v7 protocol
-          isReadOnly: false, // TODO: support v7 protocol
-        });
-        lastToken = token;
+    const authValue = managedSocket.authValue;
+    if (authValue !== null) {
+      const tokenKey =
+        authValue.type === "secret"
+          ? authValue.token.raw
+          : authValue.publicApiKey;
+
+      if (tokenKey !== lastTokenKey) {
+        lastTokenKey = tokenKey;
+
+        if (authValue.type === "secret") {
+          const token = authValue.token.parsed;
+          context.staticSessionInfo.set({
+            userId: token.k === TokenKind.SECRET_LEGACY ? token.id : token.uid,
+            userInfo:
+              token.k === TokenKind.SECRET_LEGACY ? token.info : token.ui,
+          });
+        } else {
+          context.staticSessionInfo.set({
+            userId: undefined,
+            userInfo: undefined,
+          });
+        }
       }
-    } else if (managedSocket.authValue?.type === "public") {
-      // TODO: support public api key
     }
 
     // Forward to the outside world
     batchUpdates(() => {
       eventHub.status.notify(newStatus);
       eventHub.connection.notify(newToLegacyStatus(newStatus));
+      notifySelfChanged(doNotBatchUpdates);
     });
   }
 
@@ -980,30 +996,20 @@ export function createRoom<
   }
 
   function onDidConnect() {
-    const sessionInfo = context.sessionInfo.current;
-    if (sessionInfo === null) {
-      // Totally unexpected by now
-      throw new Error("Unexpected missing session info");
-    }
-
     // Re-broadcast the full user presence as soon as we (re)connect
-    context.buffer.me = {
+    context.buffer.presenceUpdates = {
       type: "full",
       data:
         // Because context.me.current is a readonly object, we'll have to
         // make a copy here. Otherwise, type errors happen later when
         // "patching" my presence.
-        { ...context.me.current },
+        { ...context.myPresence.current },
     };
 
     // NOTE: There was a flush here before, but I don't think it's really
     // needed anymore. We're now combining this flush with the one below, to
     // combine them in a single batch.
     // tryFlushing();
-
-    // NOTE: Soon, once the actor ID assignment gets delayed until after the
-    // room connection happens, we won't know the connection ID here just yet.
-    context.idFactory = makeIdFactory(sessionInfo.actor);
 
     // If a storage fetch has ever been initiated, we assume the client is
     // interested in storage, so we will refresh it after a reconnection.
@@ -1087,7 +1093,14 @@ export function createRoom<
     },
 
     assertStorageIsWritable: () => {
-      if (context.sessionInfo.current?.isReadOnly) {
+      const scopes = context.dynamicSessionInfo.current?.scopes;
+      if (scopes === undefined) {
+        // If we aren't connected yet, assume we can write
+        return;
+      }
+
+      const canWrite = canWriteStorage(scopes);
+      if (!canWrite) {
         throw new Error(
           "Cannot write to storage with a read only user, please ensure the user has write permissions"
         );
@@ -1101,7 +1114,8 @@ export function createRoom<
     lostConnection: makeEventSource<LostConnectionEvent>(),
 
     customEvent: makeEventSource<CustomEvent<TRoomEvent>>(),
-    me: makeEventSource<TPresence>(),
+    self: makeEventSource<User<TPresence, TUserMeta>>(),
+    myPresence: makeEventSource<TPresence>(),
     others: makeEventSource<{
       others: Others<TPresence, TUserMeta>;
       event: OthersEvent<TPresence, TUserMeta>;
@@ -1111,7 +1125,9 @@ export function createRoom<
     history: makeEventSource<HistoryEvent>(),
     storageDidLoad: makeEventSource<void>(),
     storageStatus: makeEventSource<StorageStatus>(),
-    ydoc: makeEventSource<string>(),
+    ydoc: makeEventSource<YDocUpdate>(),
+
+    comments: makeEventSource<CommentsEventServerMsg>(),
   };
 
   function sendMessages(
@@ -1126,20 +1142,20 @@ export function createRoom<
       const size = new TextEncoder().encode(message).length;
       if (
         size > MAX_MESSAGE_SIZE &&
-        // TODO: support public api key
+        // TODO: support public api key auth in REST API
         managedSocket.authValue?.type === "secret" &&
         config.httpSendEndpoint
       ) {
-        if (isTokenExpired(managedSocket.authValue.token.parsed)) {
-          return managedSocket.reconnect();
-        }
-
         void httpSend(
           message,
           managedSocket.authValue.token.raw,
           config.httpSendEndpoint,
           config.polyfills?.fetch
-        );
+        ).then((resp) => {
+          if (!resp.ok && resp.status === 403) {
+            managedSocket.reconnect();
+          }
+        });
         console.warn(
           "Message was too large for websockets and sent over HTTP instead"
         );
@@ -1150,20 +1166,41 @@ export function createRoom<
   }
 
   const self = new DerivedRef(
-    context.sessionInfo as ImmutableRef<SessionInfo | null>,
-    context.me,
-    (info, me): User<TPresence, TUserMeta> | null => {
-      return info !== null
-        ? {
-            connectionId: info.actor,
-            id: info.userId,
-            info: info.userInfo,
-            presence: me,
-            isReadOnly: info.isReadOnly,
-          }
-        : null;
+    context.staticSessionInfo as ImmutableRef<StaticSessionInfo | null>,
+    context.dynamicSessionInfo as ImmutableRef<DynamicSessionInfo | null>,
+    context.myPresence,
+    (
+      staticSession,
+      dynamicSession,
+      myPresence
+    ): User<TPresence, TUserMeta> | null => {
+      if (staticSession === null || dynamicSession === null) {
+        return null;
+      } else {
+        const canWrite = canWriteStorage(dynamicSession.scopes);
+        return {
+          connectionId: dynamicSession.actor,
+          id: staticSession.userId,
+          info: staticSession.userInfo,
+          presence: myPresence,
+          canWrite,
+          canComment: canComment(dynamicSession.scopes),
+          isReadOnly: !canWrite, // Deprecated, kept for backward-compatibility
+        };
+      }
     }
   );
+
+  let _lastSelf: Readonly<User<TPresence, TUserMeta>> | undefined;
+  function notifySelfChanged(batchedUpdatesWrapper: (cb: () => void) => void) {
+    const currSelf = self.current;
+    if (currSelf !== null && currSelf !== _lastSelf) {
+      batchedUpdatesWrapper(() => {
+        eventHub.self.notify(currSelf);
+      });
+      _lastSelf = currSelf;
+    }
+  }
 
   // For use in DevTools
   const selfAsTreeNode = new DerivedRef(
@@ -1258,18 +1295,20 @@ export function createRoom<
       }
 
       if (presence) {
-        eventHub.me.notify(context.me.current);
+        notifySelfChanged(doNotBatchUpdates);
+        eventHub.myPresence.notify(context.myPresence.current);
       }
 
       if (storageUpdates.size > 0) {
         const updates = Array.from(storageUpdates.values());
         eventHub.storage.notify(updates);
       }
+      notifyStorageStatus();
     });
   }
 
   function getConnectionId() {
-    const info = context.sessionInfo.current;
+    const info = context.dynamicSessionInfo.current;
     if (info) {
       return info.actor;
     }
@@ -1317,18 +1356,18 @@ export function createRoom<
         };
 
         for (const key in op.data) {
-          reverse.data[key] = context.me.current[key];
+          reverse.data[key] = context.myPresence.current[key];
         }
 
-        context.me.patch(op.data);
+        context.myPresence.patch(op.data);
 
-        if (context.buffer.me === null) {
-          context.buffer.me = { type: "partial", data: op.data };
+        if (context.buffer.presenceUpdates === null) {
+          context.buffer.presenceUpdates = { type: "partial", data: op.data };
         } else {
           // Merge the new fields with whatever is already queued up (doesn't
           // matter whether its a partial or full update)
           for (const key in op.data) {
-            context.buffer.me.data[key] = op.data[key];
+            context.buffer.presenceUpdates.data[key] = op.data[key];
           }
         }
 
@@ -1376,8 +1415,6 @@ export function createRoom<
         }
       }
     }
-
-    notifyStorageStatus();
 
     return {
       ops,
@@ -1447,11 +1484,16 @@ export function createRoom<
   ) {
     const oldValues = {} as TPresence;
 
-    if (context.buffer.me === null) {
-      context.buffer.me = {
+    if (context.buffer.presenceUpdates === null) {
+      // try {
+      context.buffer.presenceUpdates = {
         type: "partial",
         data: {},
       };
+      // } catch (err) {
+      //   window.console.log({ context, patch, err });
+      //   throw err;
+      // }
     }
 
     for (const key in patch) {
@@ -1460,11 +1502,11 @@ export function createRoom<
       if (overrideValue === undefined) {
         continue;
       }
-      context.buffer.me.data[key] = overrideValue;
-      oldValues[key] = context.me.current[key];
+      context.buffer.presenceUpdates.data[key] = overrideValue;
+      oldValues[key] = context.myPresence.current[key];
     }
 
-    context.me.patch(patch);
+    context.myPresence.patch(patch);
 
     if (context.activeBatch) {
       if (options?.addToHistory) {
@@ -1486,14 +1528,6 @@ export function createRoom<
         notify({ presence: true }, doNotBatchUpdates);
       });
     }
-  }
-
-  function isStorageReadOnly(scopes: string[]) {
-    return (
-      scopes.includes(ApiScope.Read) &&
-      scopes.includes(ApiScope.PresenceWrite) &&
-      !scopes.includes(ApiScope.Write)
-    );
   }
 
   function onUpdatePresenceMessage(
@@ -1542,12 +1576,21 @@ export function createRoom<
   }
 
   function onRoomStateMessage(
-    message: RoomStateServerMsg<TUserMeta>
+    message: RoomStateServerMsg<TUserMeta>,
+    batchedUpdatesWrapper: (cb: () => void) => void
   ): OthersEvent<TPresence, TUserMeta> {
-    for (const connectionId in context.others._connections) {
+    // The server will inform the client about its assigned actor ID and scopes
+    context.dynamicSessionInfo.set({
+      actor: message.actor,
+      scopes: message.scopes,
+    });
+    context.idFactory = makeIdFactory(message.actor);
+    notifySelfChanged(batchedUpdatesWrapper);
+
+    for (const connectionId of context.others.connectionIds()) {
       const user = message.users[connectionId];
       if (user === undefined) {
-        context.others.removeConnection(Number(connectionId));
+        context.others.removeConnection(connectionId);
       }
     }
 
@@ -1558,9 +1601,15 @@ export function createRoom<
         connectionId,
         user.id,
         user.info,
-        isStorageReadOnly(user.scopes)
+        user.scopes
       );
     }
+
+    // NOTE: We could be notifying the "others" event here, but the reality is
+    // that ROOM_STATE is often the first message to be received from the
+    // server, and it won't contain all the information needed to update the
+    // other views yet. Instead, we'll let the others' presences trickle in,
+    // and notify each time that happens.
     return { type: "reset" };
   }
 
@@ -1579,13 +1628,13 @@ export function createRoom<
       message.actor,
       message.id,
       message.info,
-      isStorageReadOnly(message.scopes)
+      message.scopes
     );
     // Send current presence to new user
     // TODO: Consider storing it on the backend
     context.buffer.messages.push({
       type: ClientMsgCode.UPDATE_PRESENCE,
-      data: context.me.current,
+      data: context.myPresence.current,
       targetActor: message.actor,
     });
     flushNowOrSoon();
@@ -1604,7 +1653,7 @@ export function createRoom<
     }
 
     return data as ServerMsg<TPresence, TUserMeta, TRoomEvent>;
-    //          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ FIXME: Properly validate incoming external data instead!
+    //             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ FIXME: Properly validate incoming external data instead!
   }
 
   function parseServerMessages(
@@ -1701,12 +1750,12 @@ export function createRoom<
           }
 
           case ServerMsgCode.UPDATE_YDOC: {
-            eventHub.ydoc.notify(message.update);
+            eventHub.ydoc.notify(message);
             break;
           }
 
           case ServerMsgCode.ROOM_STATE: {
-            updates.others.push(onRoomStateMessage(message));
+            updates.others.push(onRoomStateMessage(message, doNotBatchUpdates));
             break;
           }
 
@@ -1767,6 +1816,15 @@ export function createRoom<
 
             break;
           }
+
+          case ServerMsgCode.THREAD_CREATED:
+          case ServerMsgCode.THREAD_METADATA_UPDATED:
+          case ServerMsgCode.COMMENT_CREATED:
+          case ServerMsgCode.COMMENT_EDITED:
+          case ServerMsgCode.COMMENT_DELETED: {
+            eventHub.comments.notify(message);
+            break;
+          }
         }
       }
 
@@ -1804,7 +1862,7 @@ export function createRoom<
         lastFlushedAt: now,
         messages: [],
         storageOperations: [],
-        me: null,
+        presenceUpdates: null,
       };
     } else {
       // Or schedule the flush a few millis into the future
@@ -1822,20 +1880,20 @@ export function createRoom<
    */
   function serializeBuffer() {
     const messages: ClientMsg<TPresence, TRoomEvent>[] = [];
-    if (context.buffer.me) {
+    if (context.buffer.presenceUpdates) {
       messages.push(
-        context.buffer.me.type === "full"
+        context.buffer.presenceUpdates.type === "full"
           ? {
               type: ClientMsgCode.UPDATE_PRESENCE,
               // Populating the `targetActor` field turns this message into
               // a Full Presence™ update message (not a patch), which will get
               // interpreted by other clients as such.
               targetActor: -1,
-              data: context.buffer.me.data,
+              data: context.buffer.presenceUpdates.data,
             }
           : {
               type: ClientMsgCode.UPDATE_PRESENCE,
-              data: context.buffer.me.data,
+              data: context.buffer.presenceUpdates.data,
             }
       );
     }
@@ -2108,76 +2166,91 @@ export function createRoom<
 
     customEvent: eventHub.customEvent.observable,
     others: eventHub.others.observable,
-    me: eventHub.me.observable,
+    self: eventHub.self.observable,
+    myPresence: eventHub.myPresence.observable,
     error: eventHub.error.observable,
     storage: eventHub.storage.observable,
     history: eventHub.history.observable,
     storageDidLoad: eventHub.storageDidLoad.observable,
     storageStatus: eventHub.storageStatus.observable,
     ydoc: eventHub.ydoc.observable,
+
+    comments: eventHub.comments.observable,
   };
 
-  return {
-    /* NOTE: Exposing __internal here only to allow testing implementation details in unit tests */
-    __internal: {
-      get buffer() { return context.buffer }, // prettier-ignore
-      get undoStack() { return context.undoStack }, // prettier-ignore
-      get nodeCount() { return context.nodes.size }, // prettier-ignore
+  const commentsApi = createCommentsApi(config.roomId, delegates.authenticate, {
+    serverEndpoint: "https://api.liveblocks.io/v2",
+  });
 
-      // Support for the Liveblocks browser extension
-      getSelf_forDevTools: () => selfAsTreeNode.current,
-      getOthers_forDevTools: (): readonly DevTools.UserTreeNode[] =>
-        others_forDevTools.current,
+  return Object.defineProperty(
+    {
+      /* NOTE: Exposing __internal here only to allow testing implementation details in unit tests */
+      __internal: {
+        get presenceBuffer() { return deepClone(context.buffer.presenceUpdates?.data ?? null) }, // prettier-ignore
+        get undoStack() { return deepClone(context.undoStack) }, // prettier-ignore
+        get nodeCount() { return context.nodes.size }, // prettier-ignore
 
-      // prettier-ignore
-      send: {
-        // These exist only for our E2E testing app
-        explicitClose: (event) => managedSocket._privateSendMachineEvent({ type: "EXPLICIT_SOCKET_CLOSE", event }),
-        implicitClose: () => managedSocket._privateSendMachineEvent({ type: "NAVIGATOR_OFFLINE" }),
+        // Support for the Liveblocks browser extension
+        getSelf_forDevTools: () => selfAsTreeNode.current,
+        getOthers_forDevTools: (): readonly DevTools.UserTreeNode[] =>
+          others_forDevTools.current,
+
+        // prettier-ignore
+        send: {
+          // These exist only for our E2E testing app
+          explicitClose: (event) => managedSocket._privateSendMachineEvent({ type: "EXPLICIT_SOCKET_CLOSE", event }),
+          implicitClose: () => managedSocket._privateSendMachineEvent({ type: "NAVIGATOR_OFFLINE" }),
+        },
       },
+
+      id: config.roomId,
+      subscribe: makeClassicSubscribeFn(events),
+
+      connect: () => managedSocket.connect(),
+      reconnect: () => managedSocket.reconnect(),
+      disconnect: () => managedSocket.disconnect(),
+      destroy: () => managedSocket.destroy(),
+
+      // Presence
+      updatePresence,
+      updateYDoc,
+      broadcastEvent,
+
+      // Storage
+      batch,
+      history: {
+        undo,
+        redo,
+        canUndo,
+        canRedo,
+        pause: pauseHistory,
+        resume: resumeHistory,
+      },
+
+      fetchYDoc,
+      getStorage,
+      getStorageSnapshot,
+      getStorageStatus,
+
+      events,
+
+      // Core
+      getStatus: () => managedSocket.getStatus(),
+      getConnectionState: () => managedSocket.getLegacyStatus(),
+      getSelf: () => self.current,
+
+      // Presence
+      getPresence: () => context.myPresence.current,
+      getOthers: () => context.others.current,
+
+      ...commentsApi,
     },
 
-    id: config.roomId,
-    subscribe: makeClassicSubscribeFn(events),
-
-    connect: () => managedSocket.connect(),
-    reconnect: () => managedSocket.reconnect(),
-    disconnect: () => managedSocket.disconnect(),
-    destroy: () => managedSocket.destroy(),
-
-    // Presence
-    updatePresence,
-    updateYDoc,
-    broadcastEvent,
-
-    // Storage
-    batch,
-    history: {
-      undo,
-      redo,
-      canUndo,
-      canRedo,
-      pause: pauseHistory,
-      resume: resumeHistory,
-    },
-
-    fetchYDoc,
-    getStorage,
-    getStorageSnapshot,
-    getStorageStatus,
-
-    events,
-
-    // Core
-    getStatus: () => managedSocket.getStatus(),
-    getConnectionState: () => managedSocket.getLegacyStatus(),
-    isSelfAware: () => context.sessionInfo.current !== null,
-    getSelf: () => self.current,
-
-    // Presence
-    getPresence: () => context.me.current,
-    getOthers: () => context.others.current,
-  };
+    // Explictly make the __internal field non-enumerable, to avoid aggressive
+    // freezing when used with Immer
+    "__internal",
+    { enumerable: false }
+  );
 }
 
 /**
@@ -2189,9 +2262,12 @@ function makeClassicSubscribeFn<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
   TUserMeta extends BaseUserMeta,
-  TRoomEvent extends Json
+  TRoomEvent extends Json,
 >(
-  events: Room<TPresence, TStorage, TUserMeta, TRoomEvent>["events"]
+  events: Omit<
+    Room<TPresence, TStorage, TUserMeta, TRoomEvent>["events"],
+    "comments" // comments is an internal events so we omit it from the subscribe method
+  >
 ): SubscribeFn<TPresence, TStorage, TUserMeta, TRoomEvent> {
   // Set up the "subscribe" wrapper API
   function subscribeToLiveStructureDeeply<L extends LiveStructure>(
@@ -2246,7 +2322,7 @@ function makeClassicSubscribeFn<
           );
 
         case "my-presence":
-          return events.me.subscribe(callback as Callback<TPresence>);
+          return events.myPresence.subscribe(callback as Callback<TPresence>);
 
         case "others": {
           // NOTE: Others have a different callback structure, where the API
@@ -2341,6 +2417,7 @@ export function makeAuthDelegateForRoom(
 }
 
 export function makeCreateSocketDelegateForRoom(
+  roomId: string,
   liveblocksServer: string,
   WebSocketPolyfill?: IWebSocket
 ) {
@@ -2355,27 +2432,17 @@ export function makeCreateSocketDelegateForRoom(
       );
     }
 
-    let authParam = "";
+    const url = new URL(liveblocksServer);
+    url.searchParams.set("roomId", roomId);
     if (authValue.type === "secret") {
-      if (authValue.token.parsed.k === TokenKind.SECRET_LEGACY) {
-        authParam = `ltok=${authValue.token.raw}`;
-      } else if (authValue.token.parsed.k === TokenKind.ID_TOKEN) {
-        authParam = `idtok=${authValue.token.raw}`;
-      } else if (authValue.token.parsed.k === TokenKind.ACCESS_TOKEN) {
-        authParam = `atok=${authValue.token.raw}`;
-      }
+      url.searchParams.set("tok", authValue.token.raw);
     } else if (authValue.type === "public") {
-      authParam = `pubkey=${authValue.publicApiKey}`;
+      url.searchParams.set("pubkey", authValue.publicApiKey);
+    } else {
+      return assertNever(authValue, "Unhandled case");
     }
-
-    return new ws(
-      `${liveblocksServer}/?${authParam}&version=${
-        // prettier-ignore
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore (__PACKAGE_VERSION__ will be injected by the build script)
-        typeof (__PACKAGE_VERSION__ as unknown) === "string" ? /* istanbul ignore next */ (__PACKAGE_VERSION__ as string) : "dev"
-      }`
-    );
+    url.searchParams.set("version", PKG_VERSION || "dev");
+    return new ws(url.toString());
   };
 }
 

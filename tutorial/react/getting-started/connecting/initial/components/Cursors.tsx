@@ -84,7 +84,7 @@ export default function Cursors({ cursorPanel }: Props) {
             color={["red", "blue"]}
             x={other.cursor.x}
             y={other.cursor.y}
-            picture={`https://liveblocks.io/avatars/avatar-${Math.floor(
+            avatar={`https://liveblocks.io/avatars/avatar-${Math.floor(
               id % 30
             )}.png`}
           />

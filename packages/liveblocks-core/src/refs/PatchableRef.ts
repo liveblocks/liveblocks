@@ -25,10 +25,10 @@ export class PatchableRef<T extends JsonObject> extends ImmutableRef<T> {
    * Patches the current object.
    */
   patch(patch: Partial<T>): void {
-    const oldMe = this._data;
-    const newMe = merge(oldMe, patch);
-    if (oldMe !== newMe) {
-      this._data = freeze(newMe);
+    const oldData = this._data;
+    const newData = merge(oldData, patch);
+    if (oldData !== newData) {
+      this._data = freeze(newData);
       this.invalidate();
     }
   }

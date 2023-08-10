@@ -1,3 +1,8 @@
+import { detectDupes } from "./dupe-detection";
+import { PKG_FORMAT, PKG_NAME, PKG_VERSION } from "./version";
+
+detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
+
 /**
  * PRIVATE / INTERNAL APIS
  * -----------------------
@@ -76,6 +81,7 @@ export {
   tryParseJson,
   withTimeout,
 } from "./lib/utils";
+export type { CustomAuthenticationResult } from "./protocol/Authentication";
 export type { BaseUserMeta } from "./protocol/BaseUserMeta";
 export type {
   BroadcastEventClientMsg,
@@ -127,7 +133,6 @@ export type {
   UserLeftServerMsg,
 } from "./protocol/ServerMsg";
 export { ServerMsgCode } from "./protocol/ServerMsg";
-export type { RealtimeClient } from "./realtime-client";
 export type {
   BroadcastOptions,
   History,
@@ -154,6 +159,7 @@ export type {
   PlainLsonObject,
 } from "./types/PlainLson";
 export type { User } from "./types/User";
+export { detectDupes };
 
 /**
  * Helper type to help users adopt to Lson types from interface definitions.
@@ -180,7 +186,6 @@ export type { DevTools };
 export type { CommentsApi } from "./comments";
 export { createCommentsApi } from "./comments";
 export type { BaseMetadata } from "./comments/types/BaseMetadata";
-export type { BaseUserInfo } from "./comments/types/BaseUserInfo";
 export type {
   CommentBody,
   CommentBodyElement,
@@ -189,4 +194,3 @@ export type {
 } from "./comments/types/CommentBody";
 export type { CommentData } from "./comments/types/CommentData";
 export type { ThreadData } from "./comments/types/ThreadData";
-export { isCommentBodyMention } from "./comments/utils";

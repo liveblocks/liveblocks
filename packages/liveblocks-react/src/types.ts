@@ -12,11 +12,48 @@ import type {
   Status,
   User,
 } from "@liveblocks/client";
-import type { Resolve, RoomInitializers, ToImmutable } from "@liveblocks/core";
+import type {
+  BaseMetadata,
+  CommentData,
+  Resolve,
+  RoomInitializers,
+  ThreadData,
+  ToImmutable,
+} from "@liveblocks/core";
+
+import type {
+  CreateCommentOptions,
+  CreateThreadOptions,
+  DeleteCommentOptions,
+  EditCommentOptions,
+  EditThreadMetadataOptions,
+  RoomThreads,
+} from "./comments/CommentsRoom";
+
+export type UserState<T> =
+  | {
+      user?: never;
+      error?: never;
+      isLoading: true;
+    }
+  | {
+      user?: T;
+      isLoading: false;
+      error?: never;
+    }
+  | {
+      user?: never;
+      isLoading: false;
+      error: Error;
+    };
+
+export type UserStateSuspense<T> = Resolve<
+  Extract<UserState<T>, { isLoading: false; error?: never }>
+>;
 
 export type RoomProviderProps<
   TPresence extends JsonObject,
-  TStorage extends LsonObject
+  TStorage extends LsonObject,
 > = Resolve<
   {
     /**
@@ -67,7 +104,7 @@ export type OmitFirstArg<F> = F extends (
 export type MutationContext<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
-  TUserMeta extends BaseUserMeta
+  TUserMeta extends BaseUserMeta,
 > = {
   storage: LiveObject<TStorage>;
   self: User<TPresence, TUserMeta>;
@@ -82,7 +119,8 @@ export type RoomContextBundle<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
   TUserMeta extends BaseUserMeta,
-  TRoomEvent extends Json
+  TRoomEvent extends Json,
+  TThreadMetadata extends BaseMetadata,
 > = {
   /**
    * You normally don't need to directly interact with the RoomContext, but
@@ -334,7 +372,7 @@ export type RoomContextBundle<
    */
   useMyPresence(): [
     TPresence,
-    (patch: Partial<TPresence>, options?: { addToHistory: boolean }) => void
+    (patch: Partial<TPresence>, options?: { addToHistory: boolean }) => void,
   ];
 
   /**
@@ -507,11 +545,80 @@ export type RoomContextBundle<
     F extends (
       context: MutationContext<TPresence, TStorage, TUserMeta>,
       ...args: any[]
-    ) => any
+    ) => any,
   >(
     callback: F,
     deps: readonly unknown[]
   ): OmitFirstArg<F>;
+
+  /**
+   * Returns a function that creates a thread with an initial comment, and optionally some metadata.
+   *
+   * @example
+   * const createThread = useCreateThread();
+   * createThread({ body: {}, metadata: {} });
+   */
+  useCreateThread(): (
+    options: CreateThreadOptions<TThreadMetadata>
+  ) => ThreadData<TThreadMetadata>;
+
+  /**
+   * Returns a function that edits a thread's metadata.
+   *
+   * @example
+   * const editThreadMetadata = useEditThreadMetadata();
+   * editThreadMetadata({ threadId: "th_xxx", metadata: {} } })
+   */
+  useEditThreadMetadata(): (
+    options: EditThreadMetadataOptions<TThreadMetadata>
+  ) => void;
+
+  /**
+   * Returns a function that adds a comment to a thread.
+   *
+   * @example
+   * const createComment = useCreateComment();
+   * createComment({ threadId: "th_xxx", body: { {} } });
+   */
+  useCreateComment(): (options: CreateCommentOptions) => CommentData;
+
+  /**
+   * Returns a function that edits a comment's body.
+   *
+   * @example
+   * const editComment = useEditComment()
+   * editComment({ threadId: "th_xxx", commentId: "cm_xxx", body: {} })
+   */
+  useEditComment(): (options: EditCommentOptions) => void;
+
+  /**
+   * Returns a function that deletes a comment.
+   * If it is the last non-deleted comment, the thread also gets deleted.
+   *
+   * @example
+   * const deleteComment = useDeleteComment();
+   * deleteComment({ threadId: "th_xxx", commentId: "cm_xxx" })
+   */
+  useDeleteComment(): (options: DeleteCommentOptions) => void;
+
+  /**
+   * Returns user info from a given user ID.
+   *
+   * @example
+   * const { user, error, isLoading } = useUser("user-id");
+   */
+  useUser(userId: string): UserState<TUserMeta["info"]>;
+
+  /**
+   * Returns the threads within the current room, from the nearest `CommentsProvider`.
+   *
+   * @example
+   * const { threads, error, isLoading } = useThreads();
+   */
+  useThreads(): RoomThreads<TThreadMetadata>;
+
+  // TODO: Internal?
+  useUserSearch(search?: string): string[] | undefined;
 
   suspense: {
     /**
@@ -725,7 +832,7 @@ export type RoomContextBundle<
      */
     useMyPresence(): [
       TPresence,
-      (patch: Partial<TPresence>, options?: { addToHistory: boolean }) => void
+      (patch: Partial<TPresence>, options?: { addToHistory: boolean }) => void,
     ];
 
     /**
@@ -852,6 +959,17 @@ export type RoomContextBundle<
       options?: { addToHistory: boolean }
     ) => void;
 
+    // TODO: Add description and add all other hooks under the suspense key as well
+    useThreads(): ThreadData<TThreadMetadata>[];
+
+    /**
+     * Returns user info from a given user ID.
+     *
+     * @example
+     * const { user, error, isLoading } = useUser("user-id");
+     */
+    useUser(userId: string): UserStateSuspense<TUserMeta["info"]>;
+
     /**
      * Create a callback function that lets you mutate Liveblocks state.
      *
@@ -900,7 +1018,7 @@ export type RoomContextBundle<
       F extends (
         context: MutationContext<TPresence, TStorage, TUserMeta>,
         ...args: any[]
-      ) => any
+      ) => any,
     >(
       callback: F,
       deps: readonly unknown[]

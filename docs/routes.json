@@ -164,31 +164,77 @@
     "routes": [
       {
         "title": "Authentication",
-        "path": "/rooms/authentication",
+        "href": "/rooms/authentication",
         "routes": [
           {
+            "title": "Access token permissions",
+            "href": "/rooms/authentication/access-token-permissions",
+            "hidden": true
+          },
+          {
+            "title": "ID token permissions",
+            "href": "/rooms/authentication/id-token-permissions",
+            "hidden": true
+          },
+          {
             "title": "Next.js",
-            "path": "/rooms/authentication/nextjs"
+            "path": "/rooms/authentication/id-token-permissions/nextjs",
+            "hidden": true
           },
           {
             "title": "Remix",
-            "path": "/rooms/authentication/remix"
+            "path": "/rooms/authentication/id-token-permissions/remix",
+            "hidden": true
           },
           {
             "title": "SvelteKit",
-            "path": "/rooms/authentication/sveltekit"
+            "path": "/rooms/authentication/id-token-permissions/sveltekit",
+            "hidden": true
           },
           {
             "title": "Nuxt.js",
-            "path": "/rooms/authentication/nuxtjs"
+            "path": "/rooms/authentication/id-token-permissions/nuxtjs",
+            "hidden": true
           },
           {
             "title": "Firebase",
-            "path": "/rooms/authentication/firebase"
+            "path": "/rooms/authentication/id-token-permissions/firebase",
+            "hidden": true
           },
           {
             "title": "Express",
-            "path": "/rooms/authentication/express"
+            "path": "/rooms/authentication/id-token-permissions/express",
+            "hidden": true
+          },
+          {
+            "title": "Next.js",
+            "path": "/rooms/authentication/access-token-permissions/nextjs",
+            "hidden": true
+          },
+          {
+            "title": "Remix",
+            "path": "/rooms/authentication/access-token-permissions/remix",
+            "hidden": true
+          },
+          {
+            "title": "SvelteKit",
+            "path": "/rooms/authentication/access-token-permissions/sveltekit",
+            "hidden": true
+          },
+          {
+            "title": "Nuxt.js",
+            "path": "/rooms/authentication/access-token-permissions/nuxtjs",
+            "hidden": true
+          },
+          {
+            "title": "Firebase",
+            "path": "/rooms/authentication/access-token-permissions/firebase",
+            "hidden": true
+          },
+          {
+            "title": "Express",
+            "path": "/rooms/authentication/access-token-permissions/express",
+            "hidden": true
           }
         ]
       },
@@ -198,7 +244,52 @@
       },
       {
         "title": "Permissions",
-        "path": "/rooms/permissions"
+        "path": "/rooms/permissions",
+        "routes": [
+          {
+            "title": "With access tokens",
+            "path": "/rooms/permissions/access-token"
+          },
+          {
+            "title": "With ID tokens",
+            "path": "/rooms/permissions/id-token"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "title": "Errors",
+    "hidden": true,
+    "routes": [
+      {
+        "title": "atob polyfill is missing",
+        "path": "/errors/liveblocks-client/atob-polyfill"
+      },
+      {
+        "title": "RoomProvider id property is required",
+        "path": "/errors/liveblocks-react/RoomProvider-id-property-is-required"
+      },
+      {
+        "title": "Cross-linked Liveblocks versions are found in your project",
+        "path": "/errors/cross-linked"
+      },
+      {
+        "title": "Multiple copies of Liveblocks are being loaded in your project",
+        "path": "/errors/dupes"
+      }
+    ]
+  },
+  {
+    "title": "Tools",
+    "routes": [
+      {
+        "title": "DevTools",
+        "path": "/tools/devtools"
+      },
+      {
+        "title": "Next.js Starter Kit",
+        "path": "/tools/nextjs-starter-kit"
       }
     ]
   },
@@ -247,33 +338,27 @@
     ]
   },
   {
-    "title": "Errors",
-    "hidden": true,
-    "routes": [
-      {
-        "title": "atob polyfill is missing",
-        "path": "/errors/liveblocks-client/atob-polyfill"
-      },
-      {
-        "title": "RoomProvider id property is required",
-        "path": "/errors/liveblocks-react/RoomProvider-id-property-is-required"
-      }
-    ]
-  },
-  {
     "title": "Platform",
     "routes": [
       {
-        "title": "Next.js Starter Kit",
-        "path": "/platform/nextjs-starter-kit"
+        "title": "WebSocket infrastructure",
+        "path": "/platform/websocket-infrastructure"
       },
       {
-        "title": "DevTools",
-        "path": "/platform/devtools"
+        "title": "Projects",
+        "path": "/platform/projects"
+      },
+      {
+        "title": "Analytics",
+        "path": "/platform/analytics"
       },
       {
         "title": "Webhooks",
         "path": "/platform/webhooks"
+      },
+      {
+        "title": "REST API",
+        "path": "/platform/rest-api"
       },
       {
         "title": "Schema validation",
@@ -286,8 +371,22 @@
         ]
       },
       {
-        "title": "Pricing",
-        "path": "/platform/pricing"
+        "title": "Account management",
+        "path": "/platform/account-management",
+        "routes": [
+          {
+            "title": "Create an account",
+            "path": "/platform/account-management/create-an-account"
+          },
+          {
+            "title": "Manage team members",
+            "path": "/platform/account-management/manage-team-members"
+          }
+        ]
+      },
+      {
+        "title": "Plans",
+        "path": "/platform/plans"
       },
       {
         "title": "Limits",
@@ -319,6 +418,10 @@
           {
             "title": "Upgrading to 1.0",
             "path": "/platform/upgrading/1.0"
+          },
+          {
+            "title": "Upgrading to 1.2",
+            "path": "/platform/upgrading/1.2"
           }
         ]
       },

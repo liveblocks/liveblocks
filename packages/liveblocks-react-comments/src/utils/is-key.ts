@@ -1,6 +1,7 @@
 import type { KeyboardEvent as ReactKeyboardEvent } from "react";
 
-const APPLE_REGEX = /Mac|iPod|iPhone|iPad/;
+import { isApple } from "./is-apple";
+
 const MODIFIERS = {
   alt: () => "altKey" as const,
   ctrl: () => "ctrlKey" as const,
@@ -8,12 +9,6 @@ const MODIFIERS = {
   mod: () => (isApple() ? ("metaKey" as const) : ("ctrlKey" as const)),
   shift: () => "shiftKey" as const,
 } as const;
-
-function isApple() {
-  return (
-    typeof window !== "undefined" && APPLE_REGEX.test(window.navigator.platform)
-  );
-}
 
 export function isKey(
   event: KeyboardEvent | ReactKeyboardEvent,
