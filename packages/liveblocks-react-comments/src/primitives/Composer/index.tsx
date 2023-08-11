@@ -66,9 +66,18 @@ import {
   withMentions,
 } from "../../slate/plugins/mentions";
 import { withNormalize } from "../../slate/plugins/normalize";
+import {
+  getCharacterAfter,
+  getCharacterBefore,
+} from "../../slate/utils/get-character";
 import { getDOMRange } from "../../slate/utils/get-dom-range";
 import { isEmpty } from "../../slate/utils/is-empty";
-import { toggleMark } from "../../slate/utils/marks";
+import { isSelectionCollapsed } from "../../slate/utils/is-selection-collapsed";
+import {
+  leaveMarkEdge,
+  removeMarks,
+  toggleMark,
+} from "../../slate/utils/marks";
 import type {
   ComposerBody as ComposerBodyData,
   ComposerBodyMention,
@@ -633,17 +642,30 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
           return;
         }
 
+        // Allow leaving marks with ArrowLeft
+        if (isKey(event, "ArrowLeft")) {
+          leaveMarkEdge(editor, "start");
+        }
+
+        // Allow leaving marks with ArrowRight
+        if (isKey(event, "ArrowRight")) {
+          leaveMarkEdge(editor, "end");
+        }
+
         if (mentionDraft && mentionSuggestions?.length) {
+          // Select the next mention suggestion on ArrowDown
           if (isKey(event, "ArrowDown")) {
             event.preventDefault();
             setNextSelectedMentionSuggestionIndex();
           }
 
+          // Select the previous mention suggestion on ArrowUp
           if (isKey(event, "ArrowUp")) {
             event.preventDefault();
             setPreviousSelectedMentionSuggestionIndex();
           }
 
+          // Create a mention on Enter/Tab
           if (isKey(event, "Enter") || isKey(event, "Tab")) {
             event.preventDefault();
 
@@ -651,49 +673,50 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
             createMention(userId);
           }
 
+          // Close the suggestions on Escape
           if (isKey(event, "Escape")) {
             event.preventDefault();
             setMentionDraft(undefined);
             setSelectedMentionSuggestionIndex(0);
           }
         } else {
-          // ⎋
+          // Blur the editor on Escape
           if (isKey(event, "Escape")) {
             event.preventDefault();
             ReactEditor.blur(editor);
           }
 
-          // ⏎
+          // Submit the editor on Enter
           if (isKey(event, "Enter", { shift: false }) && isValid) {
             event.preventDefault();
             submit();
           }
 
-          // ⇧ + ⏎
+          // Create a new line on Shift + Enter
           if (isKey(event, "Enter", { shift: true })) {
             event.preventDefault();
             editor.insertBreak();
           }
 
-          // ⌘/⌃ + B
+          // Toggle bold on Command/Control + B
           if (isKey(event, "b", { mod: true })) {
             event.preventDefault();
             toggleMark(editor, "bold");
           }
 
-          // ⌘/⌃ + I
+          // Toggle italic on Command/Control + I
           if (isKey(event, "i", { mod: true })) {
             event.preventDefault();
             toggleMark(editor, "italic");
           }
 
-          // ⌘/⌃ + ⇧ + S
+          // Toggle strikethrough on Command/Control + Shift + S
           if (isKey(event, "s", { mod: true, shift: true })) {
             event.preventDefault();
             toggleMark(editor, "strikethrough");
           }
 
-          // ⌘/⌃ + E
+          // Toggle code on Command/Control + E
           if (isKey(event, "e", { mod: true })) {
             event.preventDefault();
             toggleMark(editor, "code");
