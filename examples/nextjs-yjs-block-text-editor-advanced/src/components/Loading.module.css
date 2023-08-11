@@ -1,0 +1,15 @@
+.loading {
+  position: absolute;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  place-content: center;
+  place-items: center;
+  background-color: rgb(var(--color-surface));
+}
+
+.loading img {
+  width: 64px;
+  height: 64px;
+  opacity: 0.2;
+}

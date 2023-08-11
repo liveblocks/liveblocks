@@ -1,0 +1,7 @@
+.placeholder {
+  position: absolute;
+  color: rgba(var(--color-foreground), 0.3);
+  pointer-events: none;
+  user-select: none;
+  z-index: -1;
+}

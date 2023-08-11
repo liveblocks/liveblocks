@@ -1,0 +1,9 @@
+.inline_actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.button_drag {
+  cursor: grab;
+}
