@@ -66,18 +66,9 @@ import {
   withMentions,
 } from "../../slate/plugins/mentions";
 import { withNormalize } from "../../slate/plugins/normalize";
-import {
-  getCharacterAfter,
-  getCharacterBefore,
-} from "../../slate/utils/get-character";
 import { getDOMRange } from "../../slate/utils/get-dom-range";
 import { isEmpty } from "../../slate/utils/is-empty";
-import { isSelectionCollapsed } from "../../slate/utils/is-selection-collapsed";
-import {
-  leaveMarkEdge,
-  removeMarks,
-  toggleMark,
-} from "../../slate/utils/marks";
+import { leaveMarkEdge, toggleMark } from "../../slate/utils/marks";
 import type {
   ComposerBody as ComposerBodyData,
   ComposerBodyMention,
@@ -164,7 +155,9 @@ function ComposerEditorRenderMentionWrapper({
 
   return (
     <span {...attributes}>
-      <RenderMention userId={element.id} isSelected={isSelected} />
+      {element.id ? (
+        <RenderMention userId={element.id} isSelected={isSelected} />
+      ) : null}
       {children}
     </span>
   );
@@ -321,6 +314,8 @@ function ComposerEditorElement({
           {children}
         </p>
       );
+    default:
+      return null;
   }
 }
 
