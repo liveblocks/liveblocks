@@ -22,6 +22,11 @@
             "hidden": true
           },
           {
+            "title": "Comments",
+            "path": "/get-started/react-comments",
+            "hidden": true
+          },
+          {
             "title": "Redux",
             "path": "/get-started/redux",
             "hidden": true
@@ -155,12 +160,21 @@
       },
       {
         "title": "Comments",
-        "path": "/products/comments"
-      },
-      {
-        "title": "Comments Private Beta",
-        "path": "/products/comments-private-beta",
-        "hidden": true
+        "path": "/products/comments",
+        "routes": [
+          {
+            "title": "Private Beta",
+            "path": "/products/comments/beta",
+            "hidden": true,
+            "routes": [
+              {
+                "title": "Reference",
+                "path": "/products/comments/beta/reference",
+                "hidden": true
+              }
+            ]
+          }
+        ]
       }
     ]
   },
@@ -308,11 +322,6 @@
       {
         "title": "@liveblocks/react",
         "path": "/api-reference/liveblocks-react"
-      },
-      {
-        "title": "@liveblocks/react-comments",
-        "path": "/api-reference/liveblocks-react-comments",
-        "hidden": true
       },
       {
         "title": "@liveblocks/redux",
