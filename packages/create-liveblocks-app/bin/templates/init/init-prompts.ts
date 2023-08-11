@@ -25,6 +25,10 @@ export async function initPrompts(flags: Record<string, any>) {
     },
     {
       type: (prev) => {
+        if (flags.framework === "react" && !flags.suspense) {
+          return "confirm";
+        }
+
         if (flags.suspense || prev !== "react") {
           return null;
         }
@@ -39,12 +43,6 @@ export async function initPrompts(flags: Record<string, any>) {
       type: flags.typescript !== undefined ? null : "confirm",
       name: "typescript",
       message: "Are you using TypeScript?",
-      initial: true,
-    },
-    {
-      type: flags.comments !== undefined ? null : "confirm",
-      name: "comments",
-      message: "Add helpful comments?",
       initial: true,
     },
   ];
