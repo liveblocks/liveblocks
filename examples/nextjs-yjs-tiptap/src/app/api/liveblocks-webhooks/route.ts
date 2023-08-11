@@ -2,15 +2,21 @@ import { WebhookHandler } from "@liveblocks/node";
 import { NextRequest } from "next/server";
 import { headers } from "next/headers";
 
-// An example of a webhook endpoint that listens for Yjs changes
-// You can use this setup to sync Yjs Storage data to your database
-// https://liveblocks.io/docs/platform/webhooks
+/**
+ * An example of a webhook endpoint that listens for Yjs changes
+ * You can use this setup to sync Yjs Storage data to your database
+ * https://liveblocks.io/docs/platform/webhooks
+ *
+ * Find your API keys on the Liveblocks dashboard
+ * https://liveblocks.io/dashboard
+ */
 
-const API_KEY = process.env.LIVEBLOCKS_SECRET_KEY as string;
+// "Secret key" found in a project's API keys page
+const SECRET_KEY = process.env.LIVEBLOCKS_SECRET_KEY as string;
 
-// Obtained from the webhook page inside a project
-// https://liveblocks.io/dashboard
-const webhookHandler = new WebhookHandler(API_KEY);
+// "Signing secret" found in a project's webhooks page
+const WEBHOOK_KEY = process.env.LIVEBLOCKS_WEBHOOK_KEY as string;
+const webhookHandler = new WebhookHandler(WEBHOOK_KEY);
 
 export async function POST(request: NextRequest) {
   const body = await request.json();
@@ -35,7 +41,7 @@ export async function POST(request: NextRequest) {
     // https://liveblocks.io/docs/api-reference/rest-api-endpoints#get-rooms-roomId-ydoc
     const url = `https://api.liveblocks.io/v2/rooms/${roomId}/ydoc`;
     const response = await fetch(url, {
-      headers: { Authorization: `Bearer ${API_KEY}` },
+      headers: { Authorization: `Bearer ${SECRET_KEY}` },
     });
 
     if (!response.ok) {
