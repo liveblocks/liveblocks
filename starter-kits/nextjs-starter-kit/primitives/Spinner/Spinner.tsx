@@ -26,3 +26,11 @@ export function Spinner({ size = 16, className, ...props }: Props) {
     </svg>
   );
 }
+
+export function DocumentSpinner() {
+  return (
+    <div className={styles.documentSpinner}>
+      <Spinner size={24} />
+    </div>
+  );
+}

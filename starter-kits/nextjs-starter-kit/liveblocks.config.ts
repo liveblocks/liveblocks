@@ -94,6 +94,7 @@ export const {
     useCanRedo,
     useMutation,
     useOthers,
+    useRoom,
     useSelf,
     useStorage,
     useUpdateMyPresence,

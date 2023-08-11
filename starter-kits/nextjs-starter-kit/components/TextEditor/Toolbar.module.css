@@ -1,0 +1,13 @@
+.toolbar {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.toolbarButton {
+  padding: var(--space-4);
+}
+
+.toolbarButton svg {
+  height: 20px;
+  width: 20px;
+}
