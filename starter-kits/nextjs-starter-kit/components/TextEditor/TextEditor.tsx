@@ -74,6 +74,11 @@ function TiptapEditor({ doc, provider }: EditorProps) {
             class: "tiptap-heading",
           },
         },
+        blockquote: {
+          HTMLAttributes: {
+            class: "tiptap-blockquote",
+          },
+        },
       }),
       // Register the document with Tiptap
       Collaboration.configure({

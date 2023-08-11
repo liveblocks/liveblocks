@@ -41,3 +41,10 @@ h3.tiptap-heading {
   font-size: 21px;
   font-weight: bold;
 }
+
+.tiptap-blockquote {
+  margin-left: var(--space-8);
+  padding-left: var(--space-8);
+  display: block;
+  border-left: var(--space-2) solid var(--color-border-contrasted)
+}
