@@ -120,6 +120,43 @@ function Panel() {
 }
 ```
 
+## Types
+
+### ThreadData
+
+Represents a thread of comments.
+
+```tsx
+type ThreadData<ThreadMetadata> = {
+  type: "thread";
+  id: string;
+  roomId: string;
+  createdAt: string;
+  updatedAt?: string;
+  comments: CommentData[];
+  metadata: ThreadMetadata;
+};
+```
+
+### CommentData
+
+Represents a comment.
+
+```tsx
+type CommentData = {
+  type: "comment";
+  id: string;
+  threadId: string;
+  roomId: string;
+  userId: string;
+  body?: CommentBody;
+  createdAt: string;
+  editedAt?: string;
+  deletedAt?: string;
+  mentionedIds: string[];
+};
+```
+
 ## Components
 
 {/* TODO: Explain customization (CSS variables, dark mode, etc.) */}
