@@ -6,22 +6,49 @@ meta:
 alwaysShowAllNavigationLevels: false
 ---
 
-{/* TODO: Explain the concept of thread metadata */}
-
 ## Configuration
 
-### createCommentsContext
+### createRoomContext
 
-Creates a [`CommentsProvider`][] and a set of typed hooks. We recommend using it
-in `liveblocks.config.ts` and re-exporting your typed hooks like below.
+Creates a [`RoomContext`][] and a set of typed hooks. We recommend using it in
+`liveblocks.config.ts` and re-exporting your typed hooks like below.
 
 ```tsx file="liveblocks.config.ts"
 import { createClient } from "@liveblocks/client";
-import { createCommentsContext } from "@liveblocks/react-comments";
+import { createRoomContext } from "@liveblocks/react-comments";
 
 const client = createClient({
   /* client options */
 });
+
+// Presence represents the properties that will exist on every User in the Room
+// and that will automatically be kept in sync. Accessible through the
+// `user.presence` property. Must be JSON-serializable.
+type Presence = {
+  // cursor: { x: number, y: number } | null,
+  // ...
+};
+
+// Optionally, Storage represents the shared document that persists in the
+// Room, even after all Users leave. Fields under Storage typically are
+// LiveList, LiveMap, LiveObject instances, for which updates are
+// automatically persisted and synced to all connected clients.
+type Storage = {
+  // animals: LiveList<string>,
+  // ...
+};
+
+// Optionally, UserMeta represents static/readonly metadata on each User, as
+// provided by your own custom auth backend (if used). Useful for data that
+// will not change during a session, like a User's name or avatar.
+type UserMeta = {
+  id?: string; // Accessible through `user.id`
+  info?: Json; // Accessible through `user.info`
+};
+
+// Optionally, the type of custom events broadcasted and listened for in this
+// room. Must be JSON-serializable.
+type RoomEvent = {};
 
 // Optionally, ThreadMetadata represents metadata on each thread.
 // Must only contain scalar values.
@@ -30,17 +57,20 @@ type ThreadMetadata = {
 };
 
 export const {
-  CommentsProvider,
+  RoomProvider,
   useThreads,
   /* ...all the other hooks you’re using... */
-} = createCommentsContext<ThreadMetadata>(client);
+} = createRoomContext<Presence, Storage, UserMeta, RoomEvent, ThreadMetadata>(
+  client
+);
 ```
 
-#### Resolving users [#createCommentsContext.resolveUser]
+#### Resolving users [#createRoomContext.resolveUser]
 
 Anything that is linked to a user (comments, mentions, etc.) will reference
 their ID. To display user information based on IDs, you can provide a resolver
-function to the `resolveUser` option in [`createCommentContext`][].
+function to the `resolveUser` option in
+[`createRoomContext`](#createRoomContext).
 
 This resolver function will receive a user ID and should return a user object
 asynchronously.
@@ -50,48 +80,43 @@ asynchronously.
 
 export const {
   /* ... */
-} = createCommentsContext<ThreadMetadata>(client, {
+} = createRoomContext<ThreadMetadata>(client, {
   resolveUser: (userId) => __getUserInfoFromDB__(userId),
 });
 ```
 
 Once that’s done, components will show user names and avatars accordingly.
 
-{/* TODO: Explain UserInfo.name and UserInfo.avatar which are here by default */}
-
-{/* TODO: Explain that you can go beyond that and use a custom UserInfo type (pass it to createCommentsContext, it should extend the default UserInfo type), then use the useUser hook to get full user objects while using the primitives instead of the components */}
-
-#### Resolving mention suggestions [#createCommentsContext.resolveMentionSuggestions]
+#### Resolving mention suggestions [#createRoomContext.resolveMentionSuggestions]
 
 Liveblocks only knows users’ IDs, so to enable creating mentions in composer
 editors, you can provide a resolver function to the `resolveMentionSuggestions`
-option in [`createCommentContext`][].
+option in [`createRoomContext`](#createRoomContext).
 
 This resolver function will receive the mention currently being written (e.g.
-when writing “@jan”, `text` will be `jan`) and should return a list of user IDs
-matching that text. This function will be called every time the text changes but
-with some debouncing.
+when writing “@jane”, `text` will be `jane`) and should return a list of user
+IDs matching that text. This function will be called every time the text changes
+but with some debouncing.
 
 ```tsx file="liveblocks.config.ts"
 // ...
 
 export const {
   /* ... */
-} = createCommentsContext<ThreadMetadata>(client, {
+} = createRoomContext<ThreadMetadata>(client, {
   resolveMentionSuggestions: (text) => __getSuggestedUserIds__(text),
 });
 ```
 
-### CommentsProvider
+### RoomProvider
 
-Makes comments from a room available in the component hierarchy below. Multiple
-instances with the same `roomId` can coexist in the same hierarchy.
+Makes comments from a room available in the component hierarchy below.
 
 ```tsx
-import { CommentsProvider } from "./liveblocks.config";
+import { RoomProvider } from "./liveblocks.config";
 
 function Panel() {
-  return <CommentsProvider roomId="my-room">{/* children */}</CommentsProvider>;
+  return <RoomProvider id="my-room">{/* children */}</RoomProvider>;
 }
 ```
 
@@ -177,8 +202,7 @@ Displays a composer to create comments.
 
 ### useThreads
 
-Returns the threads within the current room, from the nearest
-[`CommentsProvider`][].
+Returns the threads within the current room.
 
 ```tsx
 import { useThreads } from "./liveblocks.config";
@@ -199,8 +223,8 @@ const { user, error, isLoading } = useUser("user-id");
 <Banner title="Providing a resolver function">
 
 To use `useUser`, you should provide a resolver function to the
-[`resolveUser`](#createCommentsContext.resolveUser) option in
-[`createCommentContext`](#createCommentContext).
+[`resolveUser`](#createRoomContext.resolveUser) option in
+[`createRoomContext`](#createRoomContext).
 
 </Banner>
 
@@ -211,7 +235,7 @@ some metadata.
 
 ```tsx
 const createThread = useCreateThread();
-const thread = createThread("room-id", { body: {}, metadata: {} });
+const thread = createThread({ body: {}, metadata: {} });
 ```
 
 ### useEditThread
@@ -220,7 +244,7 @@ Returns a function that edits a thread’s metadata.
 
 ```tsx
 const editThread = useEditThread();
-const thread = editThread("room-id", { threadId: "th_xxx", metadata: {} });
+const thread = editThread({ threadId: "th_xxx", metadata: {} });
 ```
 
 ### useCreateComment
@@ -229,7 +253,7 @@ Returns a function that adds a comment to a thread.
 
 ```tsx
 const createComment = useCreateComment();
-const comment = createComment("room-id", { threadId: "th_xxx", body: {} });
+const comment = createComment({ threadId: "th_xxx", body: {} });
 ```
 
 ### useEditComment
@@ -238,7 +262,7 @@ Returns a function that edits a comment’s body.
 
 ```tsx
 const editComment = useEditComment();
-const comment = editComment("room-id", {
+const comment = editComment({
   threadId: "th_xxx",
   commentId: "cm_xxx",
   body: {},
@@ -252,17 +276,7 @@ comment, the thread also gets deleted.
 
 ```tsx
 const deleteComment = useDeleteComment();
-deleteComment("room-id", { threadId: "th_xxx", commentId: "cm_xxx" });
-```
-
-### useErrorListener
-
-Listen to potential errors when creating and editing threads/comments.
-
-```tsx
-useErrorListener((error) => {
-  console.error(error);
-});
+deleteComment({ threadId: "th_xxx", commentId: "cm_xxx" });
 ```
 
 ### useComposer
@@ -271,15 +285,9 @@ Returns states and methods related to the composer. Can only be used within
 `Composer.Form`.
 
 ```tsx
+import { useComposer } from "@liveblocks/react-comments/primitives";
+
 const { isValid, submit } = useComposer();
-```
-
-### useRoomId
-
-Returns the current room ID, from the nearest [`CommentsProvider`][].
-
-```tsx
-const roomId = useRoomId();
 ```
 
 ## Primitives
@@ -350,7 +358,7 @@ Displays mentions within `Comment.Body`’s `renderMention` prop.
 ### Composer [#primitives-Composer]
 
 ```tsx title="Anatomy"
-import { Composer } from "@liveblocks/react-comments";
+import { Composer } from "@liveblocks/react-comments/primitives";
 
 () => (
   <Composer.Form>
@@ -399,16 +407,15 @@ Displays the composer’s editor.
 
 <Table columns={["auto", "auto", "54%"]}>
 
-| Prop                        | Type                                                                                 | Description                                                                                            |
-| --------------------------- | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ |
-| `initialValue`              | `CommentBody \| undefined`                                                           | The editor’s initial value.                                                                            |
-| `placeholder`               | `string \| undefined`                                                                | The text to display when the editor is empty.                                                          |
-| `disabled`                  | `boolean \| undefined`                                                               | Whether the editor is disabled.                                                                        |
-| `autoFocus`                 | `boolean \| undefined`                                                               | Whether to focus the editor on mount.                                                                  |
-| `dir`                       | `"ltr" \| "rtl" \| undefined`                                                        | The reading direction of the editor and related elements.                                              |
-| `renderMention`             | <code>ComponentType&lt;ComposerRenderMentionProps&gt; \| undefined</code>            | The component used to render mentions.<br/>Defaults to the mention’s `userId` prefixed by an @.        |
-| `renderMentionSuggestions`  | <code>ComponentType&lt;ComposerRenderMentionSuggestionsProps&gt; \| undefined</code> | The component used to render mention suggestions.<br/>Defaults to a list of the suggestions’ `userId`. |
-| `resolveMentionSuggestions` | <code>(text: string) => Promise&lt;string[]&gt; \| undefined</code>                  | An asynchronous function to get a list of suggested user IDs from a string.                            |
+| Prop                       | Type                                                                                 | Description                                                                                            |
+| -------------------------- | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ |
+| `initialValue`             | `CommentBody \| undefined`                                                           | The editor’s initial value.                                                                            |
+| `placeholder`              | `string \| undefined`                                                                | The text to display when the editor is empty.                                                          |
+| `disabled`                 | `boolean \| undefined`                                                               | Whether the editor is disabled.                                                                        |
+| `autoFocus`                | `boolean \| undefined`                                                               | Whether to focus the editor on mount.                                                                  |
+| `dir`                      | `"ltr" \| "rtl" \| undefined`                                                        | The reading direction of the editor and related elements.                                              |
+| `renderMention`            | <code>ComponentType&lt;ComposerRenderMentionProps&gt; \| undefined</code>            | The component used to render mentions.<br/>Defaults to the mention’s `userId` prefixed by an @.        |
+| `renderMentionSuggestions` | <code>ComponentType&lt;ComposerRenderMentionSuggestionsProps&gt; \| undefined</code> | The component used to render mention suggestions.<br/>Defaults to a list of the suggestions’ `userId`. |
 
 </Table>
 
@@ -595,8 +602,3 @@ absolute formatting for older ones.
 | `asChild`  | `boolean \| undefined`                            | Replace the rendered element by the one passed as a child.<br/>Defaults to `false`.                                                         |
 
 </Table>
-
-[`createCommentContext`]:
-  /docs/api-reference/liveblocks-react-comments#createCommentContext
-[`commentsprovider`]:
-  /docs/api-reference/liveblocks-react-comments#CommentsProvider

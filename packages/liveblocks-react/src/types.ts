@@ -576,7 +576,7 @@ export type RoomContextBundle<
     ): T | null;
 
     /**
-     * Returns the threads within the current room, from the nearest `CommentsProvider`.
+     * Returns the threads within the current room.
      *
      * @example
      * const { threads, error, isLoading } = useThreads();
@@ -715,7 +715,7 @@ export type RoomContextBundle<
         ): T;
 
         /**
-         * Returns the threads within the current room, from the nearest `CommentsProvider`.
+         * Returns the threads within the current room.
          *
          * @example
          * const threads = useThreads();
