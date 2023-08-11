@@ -55,19 +55,24 @@ export interface CommentProps extends ComponentPropsWithoutRef<"div"> {
   indentBody?: boolean;
 
   /**
-   * TODO: Add description
+   * An event handler called when the comment is edited.
    */
   onEdit?: (comment: CommentData) => void;
 
   /**
-   * TODO: Add description
+   * An event handler called when the comment is deleted.
    */
   onDelete?: (comment: CommentData) => void;
 
   /**
-   * TODO: Add description
+   * An event handler called when clicking on the user.
    */
-  onMentionClick?: (userId: string, event: MouseEvent<HTMLSpanElement>) => void;
+  onUserClick?: (userId: string, event: MouseEvent<HTMLElement>) => void;
+
+  /**
+   * An event handler called when clicking on a mention.
+   */
+  onMentionClick?: (userId: string, event: MouseEvent<HTMLElement>) => void;
 
   /**
    * Override the component's strings.
@@ -122,6 +127,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
       indentBody = true,
       showDeleted,
       showActions = "hover",
+      onUserClick,
       onMentionClick,
       onEdit,
       onDelete,
@@ -175,6 +181,13 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
       });
     }, [comment, deleteComment, onDelete]);
 
+    const handleUserClick = useCallback(
+      (event: MouseEvent<HTMLElement>) => {
+        onUserClick?.(comment.userId, event);
+      },
+      [comment.userId, onUserClick]
+    );
+
     if (!showDeleted && !comment.body) {
       return null;
     }
@@ -196,9 +209,17 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
         >
           <div className="lb-comment-header">
             <div className="lb-comment-details">
-              <Avatar className="lb-comment-avatar" userId={comment.userId} />
+              <Avatar
+                className="lb-comment-avatar"
+                userId={comment.userId}
+                onClick={handleUserClick}
+              />
               <span className="lb-comment-details-labels">
-                <User className="lb-comment-user" userId={comment.userId} />
+                <User
+                  className="lb-comment-user"
+                  userId={comment.userId}
+                  onClick={handleUserClick}
+                />
                 <span className="lb-comment-date">
                   <Timestamp
                     locale={$.locale}

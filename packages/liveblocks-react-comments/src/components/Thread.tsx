@@ -18,9 +18,7 @@ import { Comment } from "./Comment";
 import { Composer } from "./Composer";
 import { Tooltip, TooltipProvider } from "./internal/Tooltip";
 
-export interface ThreadProps
-  extends ComponentPropsWithoutRef<"div">,
-    Pick<CommentProps, "showActions"> {
+export interface ThreadProps extends ComponentPropsWithoutRef<"div"> {
   /**
    * The thread to display.
    */
@@ -52,22 +50,27 @@ export interface ThreadProps
   showDeletedComments?: CommentProps["showDeleted"];
 
   /**
-   * TODO: Add description
+   * An event handler called when changing the resolved status.
    */
   onResolveChange?: (resolved: boolean) => void;
 
   /**
-   * TODO: Add description
+   * An event handler called when a comment is edited.
    */
   onCommentEdit?: CommentProps["onEdit"];
 
   /**
-   * TODO: Add description
+   * An event handler called when a comment is deleted.
    */
   onCommentDelete?: CommentProps["onDelete"];
 
   /**
-   * TODO: Add description
+   * An event handler called when clicking on a comment's user.
+   */
+  onUserClick?: CommentProps["onUserClick"];
+
+  /**
+   * An event handler called when clicking on a mention.
    */
   onMentionClick?: CommentProps["onMentionClick"];
 
@@ -100,6 +103,7 @@ export const Thread = forwardRef<HTMLDivElement, ThreadProps>(
       onResolveChange,
       onCommentEdit,
       onCommentDelete,
+      onUserClick,
       onMentionClick,
       overrides,
       className,
@@ -152,6 +156,7 @@ export const Thread = forwardRef<HTMLDivElement, ThreadProps>(
                   showActions={showActions}
                   onEdit={onCommentEdit}
                   onDelete={onCommentDelete}
+                  onUserClick={onUserClick}
                   onMentionClick={onMentionClick}
                   additionalActionsClassName={
                     isFirstComment ? "lb-thread-actions" : undefined
