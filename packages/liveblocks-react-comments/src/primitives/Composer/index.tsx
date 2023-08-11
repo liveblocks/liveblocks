@@ -571,7 +571,12 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
     },
     forwardedRef
   ) => {
-    const { useMentionSuggestions } = useRoomContextBundle();
+    const { useMentionSuggestions, useSelf } = useRoomContextBundle();
+    const self = useSelf();
+    const isDisabled = useMemo(
+      () => disabled || !self?.canComment,
+      [disabled, self?.canComment]
+    );
     const { editor, validate, setFocused } = useComposerEditorContext();
     const { submit, focus, isValid, isFocused } = useComposer();
     const initialBody = useInitial(initialValue ?? emptyCommentBody);
@@ -817,11 +822,11 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
           autoCapitalize="sentences"
           aria-label="Comment body"
           data-focused={isFocused || undefined}
-          data-disabled={disabled || undefined}
+          data-disabled={isDisabled || undefined}
           {...propsWhileSuggesting}
           {...props}
-          readOnly={disabled}
-          disabled={disabled}
+          readOnly={isDisabled}
+          disabled={isDisabled}
           onKeyDown={handleKeyDown}
           onFocus={handleFocus}
           onBlur={handleBlur}
@@ -969,14 +974,20 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
 const ComposerSubmit = forwardRef<HTMLButtonElement, ComposerSubmitProps>(
   ({ children, disabled, asChild, ...props }, forwardedRef) => {
     const Component = asChild ? Slot : "button";
+    const { useSelf } = useRoomContextBundle();
     const { isValid } = useComposer();
+    const self = useSelf();
+    const isDisabled = useMemo(
+      () => disabled || !isValid || !self?.canComment,
+      [disabled, isValid, self?.canComment]
+    );
 
     return (
       <Component
         type="submit"
         {...props}
         ref={forwardedRef}
-        disabled={disabled || !isValid}
+        disabled={isDisabled}
       >
         {children}
       </Component>

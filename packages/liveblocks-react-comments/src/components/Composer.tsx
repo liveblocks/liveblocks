@@ -5,7 +5,7 @@ import type {
   ReactNode,
   SyntheticEvent,
 } from "react";
-import React, { forwardRef, useCallback, useMemo } from "react";
+import React, { forwardRef, useCallback } from "react";
 
 import { MentionIcon } from "../icons/mention";
 import { SendIcon } from "../icons/send";
@@ -169,13 +169,8 @@ export const Composer = forwardRef<HTMLFormElement, ComposerProps>(
     },
     forwardedRef
   ) => {
-    const { useCreateThread, useCreateComment, useEditComment, useSelf } =
+    const { useCreateThread, useCreateComment, useEditComment } =
       useRoomContextBundle();
-    const self = useSelf();
-    const isDisabled = useMemo(
-      () => disabled || !self?.canComment,
-      [disabled, self?.canComment]
-    );
     const createThread = useCreateThread();
     const createComment = useCreateComment();
     const editComment = useEditComment();
@@ -237,7 +232,7 @@ export const Composer = forwardRef<HTMLFormElement, ComposerProps>(
             className="lb-composer-editor"
             placeholder={$.COMPOSER_PLACEHOLDER}
             initialValue={initialValue}
-            disabled={isDisabled}
+            disabled={disabled}
             autoFocus={autoFocus}
             renderMention={ComposerMention}
             renderMentionSuggestions={ComposerMentionSuggestions}
@@ -258,7 +253,7 @@ export const Composer = forwardRef<HTMLFormElement, ComposerProps>(
                     shortcut={<TooltipShortcutKey name="enter" />}
                   >
                     <ComposerPrimitive.Submit
-                      disabled={isDisabled}
+                      disabled={disabled}
                       onMouseDown={preventDefault}
                       className="lb-button lb-button:primary lb-composer-action"
                       aria-label={$.COMPOSER_SEND}

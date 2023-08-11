@@ -19,9 +19,11 @@
     "react-dom": "^18.2.0"
   },
   "devDependencies": {
+    "@tailwindcss/typography": "^0.5.9",
     "@types/node": "^20.4.2",
     "@types/react": "^18.2.15",
     "prettier": "^3.0.0",
+    "prettier-plugin-tailwindcss": "^0.5.1",
     "typescript": "^5.1.6"
   }
 }
