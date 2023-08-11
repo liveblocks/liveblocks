@@ -14,9 +14,19 @@
   outline: none;
 }
 
+.triggerSubtle {
+  background: none;
+}
+
 .trigger:hover,
 .trigger:focus-visible {
   background: var(--color-surface-hover);
+  color: var(--color-text);
+}
+
+.triggerSubtle:hover,
+.triggerSubtle:focus-visible {
+  background: var(--color-surface);
   color: var(--color-text);
 }
 

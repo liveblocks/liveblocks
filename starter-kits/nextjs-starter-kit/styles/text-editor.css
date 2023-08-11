@@ -28,17 +28,17 @@
 }
 
 h1.tiptap-heading {
-  font-size: 32px;
+  font-size: var(--size-3xl);
   font-weight: bold;
 }
 
 h2.tiptap-heading {
-  font-size: 24px;
+  font-size: var(--size-2xl);
   font-weight: bold;
 }
 
 h3.tiptap-heading {
-  font-size: 21px;
+  font-size: var(--size-xl);
   font-weight: bold;
 }
 
