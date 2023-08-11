@@ -68,6 +68,12 @@ function TiptapEditor({ doc, provider }: EditorProps) {
       StarterKit.configure({
         // The Collaboration extension comes with its own history handling
         history: false,
+        heading: {
+          levels: [1, 2, 3],
+          HTMLAttributes: {
+            class: "tiptap-heading",
+          },
+        },
       }),
       // Register the document with Tiptap
       Collaboration.configure({
