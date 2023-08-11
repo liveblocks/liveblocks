@@ -12,8 +12,9 @@ import { Toolbar } from "./Toolbar";
 import styles from "./TextEditor.module.css";
 import { ClientSideSuspense } from "@liveblocks/react";
 import { DocumentSpinner } from "../../primitives/Spinner";
-import Placeholder from "@tiptap/extension-placeholder";
 import { InlineStyles } from "./ToolbarItems/InlineStyles";
+import Placeholder from "@tiptap/extension-placeholder";
+import { TextAlign } from "@tiptap/extension-text-align";
 
 export function TextEditor() {
   return (
@@ -96,6 +97,9 @@ function TiptapEditor({ doc, provider }: EditorProps) {
       Placeholder.configure({
         placeholder: "Start writing…",
         emptyEditorClass: "tiptap-empty",
+      }),
+      TextAlign.configure({
+        types: ["heading", "paragraph"],
       }),
       // Register the document with Tiptap
       Collaboration.configure({

@@ -19,13 +19,14 @@ export function BlockStyles({ editor }: Props) {
       >
         <div style={{ fontSize: "35px", padding: "13px 2px 0 2px" }}>”</div>
       </Button>
+
       <Button
         className={styles.toolbarButton}
         variant="subtle"
         onClick={() => editor.chain().focus().toggleCodeBlock().run()}
         disabled={!editor.can().chain().focus().toggleCodeBlock().run()}
         data-active={editor.isActive("codeBlock") ? "is-active" : undefined}
-        aria-label="blockquote"
+        aria-label="code block"
       >
         <div>{"</>"}</div>
       </Button>
