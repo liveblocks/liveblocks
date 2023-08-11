@@ -65,9 +65,9 @@ export interface ThreadProps extends ComponentPropsWithoutRef<"div"> {
   onCommentDelete?: CommentProps["onDelete"];
 
   /**
-   * An event handler called when clicking on a comment's user.
+   * An event handler called when clicking on a comment's author.
    */
-  onUserClick?: CommentProps["onUserClick"];
+  onAuthorClick?: CommentProps["onAuthorClick"];
 
   /**
    * An event handler called when clicking on a mention.
@@ -103,7 +103,7 @@ export const Thread = forwardRef<HTMLDivElement, ThreadProps>(
       onResolveChange,
       onCommentEdit,
       onCommentDelete,
-      onUserClick,
+      onAuthorClick,
       onMentionClick,
       overrides,
       className,
@@ -156,7 +156,7 @@ export const Thread = forwardRef<HTMLDivElement, ThreadProps>(
                   showActions={showActions}
                   onEdit={onCommentEdit}
                   onDelete={onCommentDelete}
-                  onUserClick={onUserClick}
+                  onAuthorClick={onAuthorClick}
                   onMentionClick={onMentionClick}
                   additionalActionsClassName={
                     isFirstComment ? "lb-thread-actions" : undefined

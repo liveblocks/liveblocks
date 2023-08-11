@@ -65,9 +65,9 @@ export interface CommentProps extends ComponentPropsWithoutRef<"div"> {
   onDelete?: (comment: CommentData) => void;
 
   /**
-   * An event handler called when clicking on the user.
+   * An event handler called when clicking on the author.
    */
-  onUserClick?: (userId: string, event: MouseEvent<HTMLElement>) => void;
+  onAuthorClick?: (userId: string, event: MouseEvent<HTMLElement>) => void;
 
   /**
    * An event handler called when clicking on a mention.
@@ -127,7 +127,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
       indentBody = true,
       showDeleted,
       showActions = "hover",
-      onUserClick,
+      onAuthorClick,
       onMentionClick,
       onEdit,
       onDelete,
@@ -181,11 +181,11 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
       });
     }, [comment, deleteComment, onDelete]);
 
-    const handleUserClick = useCallback(
+    const handleAuthorClick = useCallback(
       (event: MouseEvent<HTMLElement>) => {
-        onUserClick?.(comment.userId, event);
+        onAuthorClick?.(comment.userId, event);
       },
-      [comment.userId, onUserClick]
+      [comment.userId, onAuthorClick]
     );
 
     if (!showDeleted && !comment.body) {
@@ -212,13 +212,13 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
               <Avatar
                 className="lb-comment-avatar"
                 userId={comment.userId}
-                onClick={handleUserClick}
+                onClick={handleAuthorClick}
               />
               <span className="lb-comment-details-labels">
                 <User
-                  className="lb-comment-user"
+                  className="lb-comment-author"
                   userId={comment.userId}
-                  onClick={handleUserClick}
+                  onClick={handleAuthorClick}
                 />
                 <span className="lb-comment-date">
                   <Timestamp

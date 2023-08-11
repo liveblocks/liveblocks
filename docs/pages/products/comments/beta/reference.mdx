@@ -190,7 +190,7 @@ Displays a thread of comments, with a composer to reply to it.
 | `onResolveChange`     | `(resolved: boolean) => void`                                                                     | An event handler called when changing the resolved status.                    |
 | `onCommentEdit`       | `(comment: CommentData) => void`                                                                  | An event handler called when a comment is edited.                             |
 | `onCommentDelete`     | `(comment: CommentData) => void`                                                                  | An event handler called when a comment is deleted.                            |
-| `onUserClick`         | <code>(userId: string, event: MouseEvent&lt;HTMLElement&gt;) => void \| undefined</code>          | An event handler called when clicking on a comment’s user.                    |
+| `onAuthorClick`       | <code>(userId: string, event: MouseEvent&lt;HTMLElement&gt;) => void \| undefined</code>          | An event handler called when clicking on a comment’s author.                  |
 | `onMentionClick`      | <code>(userId: string, event: MouseEvent&lt;HTMLElement&gt;) => void \| undefined</code>          | An event handler called when clicking on a mention.                           |
 | `overrides`           | <code>Partial&lt;ThreadOverrides \& CommentOverrides \& ComposerOverrides&gt; \| undefined</code> | Override the component’s strings.                                             |
 
@@ -218,7 +218,7 @@ Displays a single comment.
 | `showDeleted`    | `boolean \| undefined`                                                                   | Whether to show the comment if it was deleted. If set to `false`, it will render deleted comments as `null`.<br/>Defaults to `false`. |
 | `onEdit`         | `(comment: CommentData) => void`                                                         | An event handler called when the comment is edited.                                                                                   |
 | `onDelete`       | `(comment: CommentData) => void`                                                         | An event handler called when the comment is deleted.                                                                                  |
-| `onUserClick`    | <code>(userId: string, event: MouseEvent&lt;HTMLElement&gt;) => void \| undefined</code> | An event handler called when clicking on the user.                                                                                    |
+| `onAuthorClick`  | <code>(userId: string, event: MouseEvent&lt;HTMLElement&gt;) => void \| undefined</code> | An event handler called when clicking on the author.                                                                                  |
 | `onMentionClick` | <code>(userId: string, event: MouseEvent&lt;HTMLElement&gt;) => void \| undefined</code> | An event handler called when clicking on a mention.                                                                                   |
 | `overrides`      | <code>Partial&lt;CommentOverrides \& ComposerOverrides&gt; \| undefined</code>           | Override the component’s strings.                                                                                                     |
 
