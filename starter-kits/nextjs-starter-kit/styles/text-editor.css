@@ -27,6 +27,16 @@
   pointer-events: none;
 }
 
+/* Placeholder in first line */
+p.tiptap-empty:first-child::before {
+  color: #adb5bd;
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+
+/* Inline styles below */
 h1.tiptap-heading {
   font-size: var(--size-3xl);
   font-weight: bold;
@@ -62,6 +72,7 @@ h1 .tiptap-code, h2 .tiptap-code, h3 .tiptap-code {
   font-size: 1em;
 }
 
+/* Block styles below */
 .tiptap-blockquote {
   margin-left: var(--space-8);
   padding-left: var(--space-8);

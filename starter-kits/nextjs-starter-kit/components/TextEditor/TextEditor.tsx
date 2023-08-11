@@ -1,6 +1,6 @@
 "use client";
 
-import { useEditor, EditorContent } from "@tiptap/react";
+import { useEditor, EditorContent, BubbleMenu } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Collaboration from "@tiptap/extension-collaboration";
 import CollaborationCursor from "@tiptap/extension-collaboration-cursor";
@@ -12,6 +12,8 @@ import { Toolbar } from "./Toolbar";
 import styles from "./TextEditor.module.css";
 import { ClientSideSuspense } from "@liveblocks/react";
 import { DocumentSpinner } from "../../primitives/Spinner";
+import Placeholder from "@tiptap/extension-placeholder";
+import { InlineStyles } from "./ToolbarItems/InlineStyles";
 
 export function TextEditor() {
   return (
@@ -91,6 +93,10 @@ function TiptapEditor({ doc, provider }: EditorProps) {
           },
         },
       }),
+      Placeholder.configure({
+        placeholder: "Start writing…",
+        emptyEditorClass: "tiptap-empty",
+      }),
       // Register the document with Tiptap
       Collaboration.configure({
         document: doc,
@@ -113,6 +119,13 @@ function TiptapEditor({ doc, provider }: EditorProps) {
         <Toolbar editor={editor} />
       </div>
       <div className={styles.editorPanel}>
+        {editor ? (
+          <BubbleMenu editor={editor}>
+            <div className={styles.bubbleMenuWrapper}>
+              <InlineStyles editor={editor} />
+            </div>
+          </BubbleMenu>
+        ) : null}
         <EditorContent editor={editor} className={styles.editorContainer} />
       </div>
     </div>
