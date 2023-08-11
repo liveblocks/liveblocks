@@ -417,6 +417,31 @@
 }
 
 /**
+ * User
+ */
+
+.lb-user[data-loading]::before {
+  content: "\FEFF";
+  display: inline-block;
+  vertical-align: middle;
+  width: 10ch;
+  height: 1.75ex;
+  border-radius: calc(0.375 * var(--lb-radius));
+  background: currentcolor;
+  opacity: 0.2;
+  user-select: none;
+}
+
+/**
+ * Loading
+ */
+
+.lb-avatar[data-loading],
+.lb-user[data-loading] {
+  animation: lb-animation-pulse 2s infinite ease-in-out;
+}
+
+/**
  * Body 
  */
 
@@ -790,5 +815,16 @@
 
   to {
     opacity: 0;
+  }
+}
+
+@keyframes lb-animation-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.5;
   }
 }

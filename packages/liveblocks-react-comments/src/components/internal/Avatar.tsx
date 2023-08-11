@@ -11,7 +11,7 @@ export interface AvatarProps extends ComponentProps<"div"> {
 
 export function Avatar({ userId, className, ...props }: AvatarProps) {
   const { useUser } = useRoomContextBundle();
-  const { user } = useUser(userId);
+  const { user, isLoading } = useUser(userId);
   const resolvedUserName = useMemo(() => user?.name, [user]);
   const resolvedUserAvatar = useMemo(() => user?.avatar, [user]);
   const resolvedUserInitials = useMemo(
@@ -20,7 +20,11 @@ export function Avatar({ userId, className, ...props }: AvatarProps) {
   );
 
   return (
-    <div className={classNames("lb-avatar", className)} {...props}>
+    <div
+      className={classNames("lb-avatar", className)}
+      data-loading={isLoading ? "" : undefined}
+      {...props}
+    >
       {resolvedUserAvatar && (
         <img
           className="lb-avatar-image"

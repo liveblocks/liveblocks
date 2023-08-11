@@ -9,6 +9,10 @@ export interface LocalizationOverrides {
   dir: Direction;
 }
 
+export interface GlobalOverrides {
+  UNKNOWN_USER: string;
+}
+
 export interface CommentOverrides {
   COMMENT_EDITED: string;
   COMMENT_DELETED: string;
@@ -34,6 +38,7 @@ export interface ThreadOverrides {
 }
 
 export type Overrides = LocalizationOverrides &
+  GlobalOverrides &
   ComposerOverrides &
   CommentOverrides &
   ThreadOverrides;
@@ -45,6 +50,7 @@ type OverridesProviderProps = PropsWithChildren<{
 export const defaultOverrides: Overrides = {
   locale: "en",
   dir: "ltr",
+  UNKNOWN_USER: "Anonymous",
   COMPOSER_INSERT_MENTION: "Mention someone",
   COMPOSER_PLACEHOLDER: "Write a comment…",
   COMPOSER_SEND: "Send",
