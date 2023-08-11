@@ -10,7 +10,7 @@ function Example() {
   const hasMoreUsers = users.length > 3;
 
   return (
-    <main className="flex place-items-center place-content-center w-full h-screen select-none">
+    <main className="flex h-screen w-full select-none place-content-center place-items-center">
       <div className="flex pl-3">
         {users.slice(0, 3).map(({ connectionId, info }) => {
           return (

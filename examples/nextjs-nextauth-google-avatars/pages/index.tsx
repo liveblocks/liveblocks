@@ -14,8 +14,8 @@ function Example() {
   const hasMoreUsers = users.length > 3;
 
   return (
-    <div className="flex flex-col place-items-center place-content-center h-screen space-y-5 > * + *">
-      <div className="flex place-items-center place-content-center w-full  select-none">
+    <div className="> * + * flex h-screen flex-col place-content-center place-items-center space-y-5">
+      <div className="flex w-full select-none place-content-center  place-items-center">
         <div className="flex pl-3">
           {users.slice(0, 3).map(({ connectionId, info }) => {
             return (
@@ -36,7 +36,7 @@ function Example() {
       </div>
       <div>
         <Button
-          className="flex gap-2 select none"
+          className="select none flex gap-2"
           appearance="secondary"
           onClick={() => signOut()}
         >

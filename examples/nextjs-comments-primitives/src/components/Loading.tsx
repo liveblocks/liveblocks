@@ -1,10 +1,10 @@
 export function Loading() {
   return (
-    <div className="absolute w-screen h-screen flex items-center place-content-center">
+    <div className="absolute flex h-screen w-screen place-content-center items-center">
       <img
         src="https://liveblocks.io/loading.svg"
         alt="Loading"
-        className="w-16 h-16 opacity-20"
+        className="h-16 w-16 opacity-20"
       />
     </div>
   );

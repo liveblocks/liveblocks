@@ -10,7 +10,7 @@ type Props = {
 export default function Cursor({ color, x, y, message }: Props) {
   return (
     <div
-      className="absolute pointer-events-none top-0 left-0"
+      className="pointer-events-none absolute top-0 left-0"
       style={{
         transform: `translateX(${x}px) translateY(${y}px)`,
       }}
@@ -32,10 +32,10 @@ export default function Cursor({ color, x, y, message }: Props) {
 
       {message && (
         <div
-          className="absolute top-5 left-2 px-4 py-2 rounded-3xl"
+          className="absolute top-5 left-2 rounded-3xl px-4 py-2"
           style={{ backgroundColor: color, borderRadius: 20 }}
         >
-          <p className="leading-relaxed text-white whitespace-nowrap text-sm">
+          <p className="whitespace-nowrap text-sm leading-relaxed text-white">
             {message}
           </p>
         </div>

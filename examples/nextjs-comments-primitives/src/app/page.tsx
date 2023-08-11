@@ -44,7 +44,7 @@ function Button({ className, ...props }: ComponentProps<"button">) {
     <button
       className={clsx(
         className,
-        "h-9 flex items-center px-4 font-semibold text-sm text-white bg-indigo-500 outline-none focus-visible:ring-2 ring-offset-2 ring-indigo-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
+        "flex h-9 items-center rounded-md bg-blue-500 px-4 text-sm font-semibold text-white outline-none ring-blue-300 ring-offset-2 focus-visible:ring-2 disabled:cursor-not-allowed disabled:opacity-50"
       )}
       {...props}
     />
@@ -58,7 +58,7 @@ function Avatar({ userId, className, ...props }: AvatarProps) {
     <div
       className={clsx(
         className,
-        "relative aspect-square rounded-full overflow-hidden bg-gray-100"
+        "relative aspect-square overflow-hidden rounded-full bg-gray-100"
       )}
       {...props}
     >
@@ -91,12 +91,48 @@ function Composer({
 }: ComposerProps) {
   return (
     <ComposerPrimitive.Form
-      className={clsx(className, "p-4 flex gap-4")}
+      className={clsx(className, "flex gap-4 p-4")}
       {...props}
     >
       <ComposerPrimitive.Editor
         placeholder={placeholder}
-        className="bg-gray-50 outline-none focus-visible:ring-2 ring-offset-2 ring-indigo-300 prose prose-sm flex-1 px-3 py-2 min-h-[theme(spacing.9)] rounded-md"
+        className="prose prose-sm min-h-[theme(spacing.9)] flex-1 rounded-md border border-gray-200 px-3 py-1.5 outline-none ring-blue-300 ring-offset-2 focus-visible:ring-2"
+        renderMention={({ userId }) => {
+          return (
+            <ComposerPrimitive.Mention className="rounded bg-blue-50 px-1 py-0.5 font-semibold text-blue-500 data-[selected]:bg-blue-500 data-[selected]:text-white">
+              @
+              <Suspense fallback={userId}>
+                <User userId={userId} />
+              </Suspense>
+            </ComposerPrimitive.Mention>
+          );
+        }}
+        renderMentionSuggestions={({ userIds }) => {
+          return (
+            <ComposerPrimitive.Suggestions className="rounded-lg bg-white p-1 shadow-xl">
+              <ComposerPrimitive.SuggestionsList>
+                {userIds.map((userId) => (
+                  <ComposerPrimitive.SuggestionsListItem
+                    key={userId}
+                    value={userId}
+                    className="flex cursor-pointer gap-2 rounded-md px-2 py-1.5 data-[selected]:bg-gray-100"
+                  >
+                    <Suspense
+                      fallback={
+                        <div className="relative aspect-square w-6 flex-none animate-pulse rounded-full bg-gray-100" />
+                      }
+                    >
+                      <Avatar userId={userId} className="w-6 flex-none" />
+                    </Suspense>
+                    <Suspense fallback={userId}>
+                      <User userId={userId} />
+                    </Suspense>
+                  </ComposerPrimitive.SuggestionsListItem>
+                ))}
+              </ComposerPrimitive.SuggestionsList>
+            </ComposerPrimitive.Suggestions>
+          );
+        }}
       />
       <ComposerPrimitive.Submit className="self-end" asChild>
         <Button>{submit}</Button>
@@ -112,25 +148,38 @@ function Comment({ comment, className, ...props }: CommentProps) {
 
   return (
     <div className={clsx(className, "p-4")} {...props}>
-      <div className="flex gap-3 items-center">
+      <div className="flex items-center gap-3">
         <Suspense
           fallback={
-            <div className="relative aspect-square rounded-full bg-gray-100 animate-pulse flex-none w-8" />
+            <div className="relative aspect-square w-8 flex-none animate-pulse rounded-full bg-gray-100" />
           }
         >
-          <Avatar userId={comment.userId} className="flex-none w-8" />
+          <Avatar userId={comment.userId} className="w-8 flex-none" />
         </Suspense>
-        <div className="flex gap-2 items-baseline min-w-0">
+        <div className="flex min-w-0 items-baseline gap-2">
           <Suspense fallback={comment.userId}>
             <User userId={comment.userId} className="truncate" />
           </Suspense>
           <Timestamp
             date={comment.createdAt}
-            className="text-sm text-gray-500 truncate"
+            className="truncate text-sm text-gray-500"
           />
         </div>
       </div>
-      <CommentPrimitive.Body body={comment.body} className="prose mt-3" />
+      <CommentPrimitive.Body
+        body={comment.body}
+        className="prose mt-3"
+        renderMention={({ userId }) => {
+          return (
+            <CommentPrimitive.Mention className="font-semibold text-blue-500">
+              @
+              <Suspense fallback={userId}>
+                <User userId={userId} />
+              </Suspense>
+            </CommentPrimitive.Mention>
+          );
+        }}
+      />
     </div>
   );
 }
@@ -146,7 +195,7 @@ function Thread({ thread, className, ...props }: ThreadProps) {
         ))}
       </div>
       <Composer
-        className="border-gray-100 border-t"
+        className="border-t border-gray-200"
         placeholder="Reply to thread…"
         submit="Reply"
         onComposerSubmit={({ body }) => {
@@ -165,19 +214,19 @@ function Example() {
   const createThread = useCreateThread();
 
   return (
-    <main className="max-w-2xl mx-auto px-4 py-16 flex flex-col gap-4">
+    <main className="mx-auto flex max-w-2xl flex-col gap-4 px-4 py-16">
       {threads.map((thread) => (
         <Thread
           key={thread.id}
           thread={thread}
-          className="bg-white rounded-xl shadow-md"
+          className="rounded-xl bg-white shadow-md"
         />
       ))}
       <Composer
         onComposerSubmit={({ body }) => {
           createThread({ body });
         }}
-        className="bg-white rounded-xl shadow-md"
+        className="rounded-xl bg-white shadow-md"
       />
     </main>
   );
