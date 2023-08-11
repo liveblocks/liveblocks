@@ -30,16 +30,23 @@
 h1.tiptap-heading {
   font-size: var(--size-3xl);
   font-weight: bold;
+  margin-top: var(--space-12);
 }
 
 h2.tiptap-heading {
   font-size: var(--size-2xl);
   font-weight: bold;
+  margin-top: var(--space-12);
 }
 
 h3.tiptap-heading {
   font-size: var(--size-xl);
   font-weight: bold;
+  margin-top: var(--space-12);
+}
+
+h1.tiptap-heading:first-child, h2.tiptap-heading:first-child, h3.tiptap-heading:first-child {
+  margin-top: 0;
 }
 
 .tiptap-code {
