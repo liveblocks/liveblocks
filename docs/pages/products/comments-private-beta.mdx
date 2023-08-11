@@ -1,0 +1,201 @@
+---
+meta:
+  title: "Comments Private Beta"
+  parentTitle: "Products"
+  description:
+    "Embed a customizable commenting experience into your product to enable
+    people to collaborate."
+---
+
+Embed a customizable commenting experience into your product to enable people to
+collaborate. Liveblocks Comments is fully customizable, enabling you to create
+all kinds of commenting experiences that look and feel like your product. With
+comments, you can build things like mentions, thread resolution, text
+annotations, video annotations, and more.
+
+<Banner title="Private beta">
+
+Comments is currently in private beta and is only available to a select group of
+users. If you want to participate in the beta,
+[sign up for the waitlist](https://forms.gle/xgp54aTMsoH8hrjU9). During this
+beta period, breaking changes may occur, but no data loss. We use beta testers’
+feedback to improve our product. Your input is important and helps us shape the
+final version.
+
+</Banner>
+
+## Features
+
+### UserId
+
+For comments to function, Liveblocks only needs to store your users’ IDs. Your
+user data remains on your server, giving you full control and ownership of it.
+Any changes made to your app, such as profile updates or user deletions, do not
+need to be mirrored in Liveblocks.
+
+```tsx
+{
+    "type": "comment",
+    "threadId": "th_hhhFMlEx4whFcV0EJJ4o9",
+    "roomId": "my-room",
+    "id": "cm_hhhFMlEx3whFcV0EJJ4o9",
+    "userId": "user1", // 👈 Your user’s identification
+    "createdAt": "2023-07-04T20:40:28.068Z",
+    "body": {
+        "content": [
+            {
+                "type": "paragraph",
+                "children": [
+                    {
+                        "text": "Hello world!"
+                    }
+                ]
+            }
+        ]
+    },
+    "mentionedIds": []
+},
+```
+
+```tsx
+resolveUser: async (userId) => {
+    try {
+      const response = await fetch(`/api/users?userId=${userId}`); // 👈 your own logic to fetch user information
+
+      return response.json();
+    } catch (error) {
+      console.error(error);
+    }
+  },
+```
+
+### Webhooks
+
+Webhooks are the foundation for extending Liveblocks in any way you want. You
+can subscribe to any comments-related events, such as creation, edition and
+deletion.
+
+```tsx
+{
+  type: "commentCreated",
+  data: {
+    projectId: "acmeinc",
+    roomId: "besttrips2023",
+    threadId: "th_hhhFMlEx4whFcV0EJJ4o9",
+    commentId: "cm_hhhFMlEx3whFcV0EJJ4o9",
+    createdAt: "2023-07-04T20:40:28.068Z",
+    createdBy: "florent.l",
+  }
+```
+
+With Webhooks, you can leverage your own email marketing tool to send emails,
+apply your product’s branding, choose your notification strategy, or even
+synchronize threads in Slack.
+
+### Opinionated components and Primitives
+
+To integrate the Comments feature, you have two primary design implementation
+pathways:
+
+#### Opinionated components
+
+- Our components are designed to be easily integrated using plug-and-play
+  functionality.
+- You’ll benefit from our team’s UX and UI expertise incorporated into these
+  components.
+- Although our components have a default style, you can adjust the CSS to meet
+  your needs.
+- We constantly improve and update our components to ensure they are optimized
+  and current.
+
+```tsx
+function App() {
+  const threads = useThreads();
+
+  return (
+    <>
+      {threads.map((thread) => (
+        <Thread key={thread.id} thread={thread} />
+      ))}
+      <Composer />
+    </>
+  );
+}
+```
+
+#### Primitives
+
+- Unstyled components.
+- Accessible building blocks to fully customize the experience if CSS is not
+  enough.
+- Available hooks to access all the context of your threads and comments.
+
+```tsx
+// TO BE ADDED
+```
+
+Note that these two options are not separate paths. Both approaches can be
+combined to suit your needs for both speed (opinionated components) and
+customization (primitives). One could imagine building their own thread
+component from scratch using our primitives but still using our opinionated
+`<Composer />` component.
+
+### Metadata
+
+With metadata available at the threads level, you can tailor your commenting
+experience to your specific needs by refining and shaping it.
+
+Some examples of custom requirements include:
+
+- Anchor threads to specific spots on your platform for contextual discussions
+  linked to any aspect of your product.
+- Label your threads based on your business logic, like status, priority and
+  category.
+
+```tsx
+{
+    "type": "thread",
+    "id": "th_hhhFMlEx4whFcV0EJJ4o9",
+    "roomId": "my-room",
+    "comments": [...],
+    "createdAt": "2023-07-04T19:23:09.983Z",
+    "metadata": { // 👈 Metadata associated with the thread
+        "location": "#image-3",
+        "resolved": true
+    },
+    "updatedAt": "2023-08-09T15:42:59.135Z" // 👈 When was the thread last updated
+}
+```
+
+### Deletion
+
+Comments are not deleted, only the body. We keep a placeholder so that the
+missing comment can still be noticed, giving you the option on how to display
+deleted comments; either through a clear “message deleted” indicator or by not
+displaying it. Note that we only delete a thread when all its comments have been
+deleted.
+
+```tsx
+{
+    "type": "comment",
+    "threadId": "th_hhhFMlEx4whFcV0EJJ4o9",
+    "roomId": "my-room",
+    "id": "cm_h34Ed2DB2Nml1f33JhRo9",
+    "userId": "user1",
+    "createdAt": "2023-07-09T11:23:55.388Z",
+    "editedAt": "2023-08-01T18:43:21.566Z",
+    "deletedAt": "2023-08-09T15:39:35.567Z" // 👈 When was the comment deleted
+}
+```
+
+### Radix: inspiration
+
+Our admiration for Radix runs deep. Their approach to low-level components has
+been a beacon of inspiration as we crafted our suite of tools.
+
+- We prioritize making our components usable for everyone.
+- Our components are designed for complete stylistic customization without
+  default style constraints. They are also modular, allowing for easy
+  combination and extensibility.
+- We minimize dependencies to ensure our components remain efficient and
+  lightweight.
