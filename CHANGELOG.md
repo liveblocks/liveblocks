@@ -1,3 +1,10 @@
+# Unreleased
+
+### `create-liveblocks-app`
+
+- Fix Suspense option when specifying a framework
+- Add comments by default
+
 # v1.2.2
 
 ### `@liveblocks/node`
