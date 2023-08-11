@@ -42,9 +42,34 @@ h3.tiptap-heading {
   font-weight: bold;
 }
 
+.tiptap-code {
+  font-size: 1.2em;
+  line-height: 1em;
+  background: var(--color-surface-hover);
+  border-radius: var(--radius-xs);
+  font-weight: 400;
+  padding: 0 var(--space-2);
+}
+
+h1 .tiptap-code, h2 .tiptap-code, h3 .tiptap-code {
+  font-size: 1em;
+}
+
 .tiptap-blockquote {
   margin-left: var(--space-8);
   padding-left: var(--space-8);
   display: block;
   border-left: var(--space-2) solid var(--color-border-contrasted)
 }
+
+.tiptap-code-block {
+  font-size: var(--size-sm);
+  line-height: 1.6;
+  white-space: pre;
+  background: rgb(var(--color-gray-850));
+  color: rgb(var(--color-gray-100));
+  padding: var(--space-8);
+  border-radius: var(--radius-xs);
+  margin: var(--space-6) 0;
+}
+

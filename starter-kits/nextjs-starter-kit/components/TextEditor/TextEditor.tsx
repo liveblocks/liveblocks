@@ -74,9 +74,20 @@ function TiptapEditor({ doc, provider }: EditorProps) {
             class: "tiptap-heading",
           },
         },
+        code: {
+          HTMLAttributes: {
+            class: "tiptap-code",
+          },
+        },
         blockquote: {
           HTMLAttributes: {
             class: "tiptap-blockquote",
+          },
+        },
+        codeBlock: {
+          languageClassPrefix: "language-",
+          HTMLAttributes: {
+            class: "tiptap-code-block",
           },
         },
       }),

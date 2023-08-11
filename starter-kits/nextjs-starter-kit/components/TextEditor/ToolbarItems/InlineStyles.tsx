@@ -9,12 +9,12 @@ type Props = {
   editor: Editor;
 };
 
-export function BaseStyles({ editor }: Props) {
+export function InlineStyles({ editor }: Props) {
   return (
     <>
       <Button
-        className={styles.toolbarButton}
         variant="subtle"
+        className={styles.toolbarButton}
         onClick={() => editor.chain().focus().toggleBold().run()}
         disabled={!editor.can().chain().focus().toggleBold().run()}
         data-active={editor.isActive("bold") ? "is-active" : undefined}
@@ -24,8 +24,8 @@ export function BaseStyles({ editor }: Props) {
       </Button>
 
       <Button
-        className={styles.toolbarButton}
         variant="subtle"
+        className={styles.toolbarButton}
         onClick={() => editor.chain().focus().toggleItalic().run()}
         disabled={!editor.can().chain().focus().toggleItalic().run()}
         data-active={editor.isActive("italic") ? "is-active" : undefined}
@@ -35,14 +35,33 @@ export function BaseStyles({ editor }: Props) {
       </Button>
 
       <Button
-        className={styles.toolbarButton}
         variant="subtle"
+        className={styles.toolbarButton}
         onClick={() => editor.chain().focus().toggleStrike().run()}
         disabled={!editor.can().chain().focus().toggleStrike().run()}
         data-active={editor.isActive("strike") ? "is-active" : undefined}
         aria-label="strikethrough"
       >
         <StrikethroughIcon />
+      </Button>
+
+      <Button
+        variant="subtle"
+        className={styles.toolbarButton}
+        onClick={() => editor.chain().focus().toggleCode().run()}
+        disabled={!editor.can().chain().focus().toggleCode().run()}
+        data-active={editor.isActive("code") ? "is-active" : undefined}
+        aria-label="strikethrough"
+      >
+        <div
+          style={{
+            fontFamily: "monospace",
+            fontSize: "25px",
+            marginTop: "-2px",
+          }}
+        >
+          c
+        </div>
       </Button>
     </>
   );
