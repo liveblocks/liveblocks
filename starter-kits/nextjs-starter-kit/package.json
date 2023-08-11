@@ -23,6 +23,7 @@
     "@tiptap/extension-collaboration-cursor": "^2.0.4",
     "@tiptap/extension-placeholder": "^2.0.4",
     "@tiptap/extension-text-align": "^2.0.4",
+    "@tiptap/extension-typography": "^2.0.4",
     "@tiptap/pm": "^2.0.4",
     "@tiptap/react": "^2.0.4",
     "@tiptap/starter-kit": "^2.0.4",

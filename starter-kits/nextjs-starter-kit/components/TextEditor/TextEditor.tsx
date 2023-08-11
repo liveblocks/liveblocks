@@ -15,6 +15,8 @@ import { DocumentSpinner } from "../../primitives/Spinner";
 import { InlineStyles } from "./ToolbarItems/InlineStyles";
 import Placeholder from "@tiptap/extension-placeholder";
 import { TextAlign } from "@tiptap/extension-text-align";
+import { EditorView } from "prosemirror-view";
+import { Typography } from "@tiptap/extension-typography";
 
 export function TextEditor() {
   return (
@@ -101,6 +103,7 @@ function TiptapEditor({ doc, provider }: EditorProps) {
       TextAlign.configure({
         types: ["heading", "paragraph"],
       }),
+      Typography,
       // Register the document with Tiptap
       Collaboration.configure({
         document: doc,
@@ -135,3 +138,11 @@ function TiptapEditor({ doc, provider }: EditorProps) {
     </div>
   );
 }
+
+// Prevents a matchesNode error on hot reloading
+EditorView.prototype.updateState = function updateState(state) {
+  // @ts-ignore
+  if (!this.docView) return;
+  // @ts-ignore
+  this.updateStateInner(state, this.state.plugins != state.plugins);
+};
