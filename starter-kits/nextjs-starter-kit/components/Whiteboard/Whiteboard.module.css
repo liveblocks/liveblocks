@@ -5,7 +5,7 @@
   height: 100%;
 }
 
-.textEditorToolbar {
+.toolbar {
   position: absolute;
   z-index: var(--z-above);
   bottom: var(--space-10);
