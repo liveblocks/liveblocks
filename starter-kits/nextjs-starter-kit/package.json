@@ -23,6 +23,7 @@
     "@tiptap/extension-collaboration": "^2.0.4",
     "@tiptap/extension-collaboration-cursor": "^2.0.4",
     "@tiptap/extension-image": "^2.0.4",
+    "@tiptap/extension-link": "^2.0.4",
     "@tiptap/extension-placeholder": "^2.0.4",
     "@tiptap/extension-text-align": "^2.0.4",
     "@tiptap/extension-typography": "^2.0.4",

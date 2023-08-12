@@ -11,6 +11,12 @@ p.tiptap-empty:first-child::before {
   margin: var(--space-8) 0;
 }
 
+.tiptap-link {
+  color: var(--color-accent);
+  font-weight: 600;
+  cursor: pointer;
+}
+
 /* Inline styles below */
 h1.tiptap-heading {
   font-size: var(--size-3xl);

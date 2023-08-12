@@ -3,7 +3,6 @@ import styles from "./Toolbar.module.css";
 import { Editor } from "@tiptap/react";
 import { ListUnorderedIcon } from "../../icons/ListUnordered";
 import { ListOrderedIcon } from "../../icons/ListOrdered";
-import { CodeBlockIcon } from "../../icons/CodeBlock";
 import { BlockquoteIcon } from "../../icons/Blockquote";
 
 type Props = {

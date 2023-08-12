@@ -1,6 +1,5 @@
 import { Button } from "../../primitives/Button";
 import styles from "./Toolbar.module.css";
-import { ItalicIcon } from "../../icons/Italic";
 import { Editor } from "@tiptap/react";
 import { AlignLeftIcon } from "../../icons/AlignLeft";
 import { AlignCenterIcon } from "../../icons/AlignCenter";

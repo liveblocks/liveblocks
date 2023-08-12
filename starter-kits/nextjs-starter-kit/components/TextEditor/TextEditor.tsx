@@ -1,11 +1,6 @@
 "use client";
 
-import {
-  useEditor,
-  EditorContent,
-  BubbleMenu,
-  isTextSelection,
-} from "@tiptap/react";
+import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Collaboration from "@tiptap/extension-collaboration";
 import CollaborationCursor from "@tiptap/extension-collaboration-cursor";
@@ -17,7 +12,6 @@ import { Toolbar } from "./Toolbar";
 import styles from "./TextEditor.module.css";
 import { ClientSideSuspense } from "@liveblocks/react";
 import { DocumentSpinner } from "../../primitives/Spinner";
-import { ToolbarInline } from "./ToolbarInline";
 import Placeholder from "@tiptap/extension-placeholder";
 import { TextAlign } from "@tiptap/extension-text-align";
 import { EditorView } from "prosemirror-view";
@@ -27,6 +21,7 @@ import { Image } from "@tiptap/extension-image";
 import { WordCount } from "./WordCount";
 import { SelectionMenu } from "./SelectionMenu";
 import Youtube from "@tiptap/extension-youtube";
+import Link from "@tiptap/extension-link";
 
 export function TextEditor() {
   return (
@@ -125,6 +120,11 @@ function TiptapEditor({ doc, provider }: EditorProps) {
       Image.configure({
         HTMLAttributes: {
           class: "tiptap-image",
+        },
+      }),
+      Link.configure({
+        HTMLAttributes: {
+          class: "tiptap-link",
         },
       }),
       Placeholder.configure({
