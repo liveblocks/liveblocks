@@ -26,7 +26,7 @@ export default async function auth(req: NextApiRequest, res: NextApiResponse) {
   const anonymousUser: User = {
     id: "anonymous",
     name: "Anonymous",
-    color: "red",
+    color: "#ff0000",
     groupIds: [],
   };
 
