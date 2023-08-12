@@ -10,7 +10,7 @@ type Props = {
   editor: Editor;
 };
 
-export function InlineStyles({ editor }: Props) {
+export function ToolbarInline({ editor }: Props) {
   return (
     <>
       <Button

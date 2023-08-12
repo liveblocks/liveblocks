@@ -11,7 +11,7 @@ type Props = {
   editor: Editor;
 };
 
-export function AlignmentStyles({ editor }: Props) {
+export function ToolbarAlignment({ editor }: Props) {
   return (
     <>
       <Button

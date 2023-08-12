@@ -110,6 +110,15 @@ h1 .tiptap-code, h2 .tiptap-code, h3 .tiptap-code {
   list-style: decimal;
 }
 
+/* Media blocks below */
+.tiptap-image.ProseMirror-selectednode, .tiptap-youtube.ProseMirror-selectednode {
+  outline: 1.5px solid var(--color-accent);
+}
+
+.tiptap-youtube {
+  border: 0;
+}
+
 /* Give a remote user a caret */
 .collaboration-cursor__caret {
   border-left: 1px solid #0d0d0d;

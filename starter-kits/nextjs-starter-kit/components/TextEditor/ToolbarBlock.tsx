@@ -2,7 +2,6 @@ import { Button } from "../../primitives/Button";
 import styles from "./Toolbar.module.css";
 import { Editor } from "@tiptap/react";
 import { ListUnorderedIcon } from "../../icons/ListUnordered";
-import { CodeIcon } from "../../icons/Code";
 import { ListOrderedIcon } from "../../icons/ListOrdered";
 import { CodeBlockIcon } from "../../icons/CodeBlock";
 import { BlockquoteIcon } from "../../icons/Blockquote";
@@ -11,7 +10,7 @@ type Props = {
   editor: Editor;
 };
 
-export function BlockStyles({ editor }: Props) {
+export function ToolbarBlock({ editor }: Props) {
   return (
     <>
       <Button
@@ -45,17 +44,6 @@ export function BlockStyles({ editor }: Props) {
         aria-label="Blockquote"
       >
         <BlockquoteIcon />
-      </Button>
-
-      <Button
-        className={styles.toolbarButton}
-        variant="subtle"
-        onClick={() => editor.chain().focus().toggleCodeBlock().run()}
-        disabled={!editor.can().chain().focus().toggleCodeBlock().run()}
-        data-active={editor.isActive("codeBlock") ? "is-active" : undefined}
-        aria-label="Code block"
-      >
-        <CodeBlockIcon />
       </Button>
     </>
   );

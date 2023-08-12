@@ -7,7 +7,7 @@ type Props = {
   editor: Editor;
 };
 
-export function Commands({ editor }: Props) {
+export function ToolbarCommands({ editor }: Props) {
   return (
     <>
       <Button

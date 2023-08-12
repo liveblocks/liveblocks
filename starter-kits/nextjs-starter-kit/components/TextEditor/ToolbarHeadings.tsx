@@ -1,9 +1,9 @@
 import { useCallback } from "react";
 import { Editor } from "@tiptap/react";
 import { Select } from "../../primitives/Select";
-import styles from "./Headings.module.css";
+import styles from "./ToolbarHeadings.module.css";
 
-const headings = [
+const toolbarHeadings = [
   { value: "p", title: "Paragraph" },
   { value: "h1", title: "Heading 1" },
   { value: "h2", title: "Heading 2" },
@@ -47,8 +47,8 @@ export function Headings({ editor }: Props) {
       variant="subtle"
       className={styles.headingsSelect}
       value={getCurrentHeading(editor)}
-      initialValue={headings[0].value}
-      items={headings}
+      initialValue={toolbarHeadings[0].value}
+      items={toolbarHeadings}
       onChange={onHeadingChange}
     />
   );

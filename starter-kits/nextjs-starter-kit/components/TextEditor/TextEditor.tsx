@@ -1,6 +1,11 @@
 "use client";
 
-import { useEditor, EditorContent, BubbleMenu } from "@tiptap/react";
+import {
+  useEditor,
+  EditorContent,
+  BubbleMenu,
+  isTextSelection,
+} from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Collaboration from "@tiptap/extension-collaboration";
 import CollaborationCursor from "@tiptap/extension-collaboration-cursor";
@@ -12,13 +17,16 @@ import { Toolbar } from "./Toolbar";
 import styles from "./TextEditor.module.css";
 import { ClientSideSuspense } from "@liveblocks/react";
 import { DocumentSpinner } from "../../primitives/Spinner";
-import { InlineStyles } from "./InlineStyles";
+import { ToolbarInline } from "./ToolbarInline";
 import Placeholder from "@tiptap/extension-placeholder";
 import { TextAlign } from "@tiptap/extension-text-align";
 import { EditorView } from "prosemirror-view";
 import { Typography } from "@tiptap/extension-typography";
 import { CharacterCount } from "@tiptap/extension-character-count";
+import { Image } from "@tiptap/extension-image";
 import { WordCount } from "./WordCount";
+import { SelectionMenu } from "./SelectionMenu";
+import Youtube from "@tiptap/extension-youtube";
 
 export function TextEditor() {
   return (
@@ -114,6 +122,11 @@ function TiptapEditor({ doc, provider }: EditorProps) {
         },
       }),
       CharacterCount,
+      Image.configure({
+        HTMLAttributes: {
+          class: "tiptap-image",
+        },
+      }),
       Placeholder.configure({
         placeholder: "Start writing…",
         emptyEditorClass: "tiptap-empty",
@@ -122,6 +135,12 @@ function TiptapEditor({ doc, provider }: EditorProps) {
         types: ["heading", "paragraph"],
       }),
       Typography,
+      Youtube.configure({
+        modestBranding: true,
+        HTMLAttributes: {
+          class: "tiptap-youtube",
+        },
+      }),
       // Register the document with Tiptap
       Collaboration.configure({
         document: doc,
@@ -144,13 +163,7 @@ function TiptapEditor({ doc, provider }: EditorProps) {
         {editor && <Toolbar editor={editor} />}
       </div>
       <div className={styles.editorPanel}>
-        {editor && (
-          <BubbleMenu editor={editor}>
-            <div className={styles.bubbleMenuWrapper}>
-              <InlineStyles editor={editor} />
-            </div>
-          </BubbleMenu>
-        )}
+        {editor && <SelectionMenu editor={editor} />}
         <EditorContent editor={editor} className={styles.editorContainer} />
       </div>
       {editor && <WordCount editor={editor} />}
