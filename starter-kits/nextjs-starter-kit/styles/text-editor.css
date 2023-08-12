@@ -66,29 +66,48 @@ h1 .tiptap-code, h2 .tiptap-code, h3 .tiptap-code {
   margin: var(--space-6) 0;
 }
 
-.tiptap-ul-item {
+.tiptap-list-item p {
+  margin: var(--space-2) 0;
+}
+
+.tiptap-list-item {
   margin-left: var(--space-12);
   list-style: disc;
 }
 
-.tiptap-ul-item .tiptap-ul-item,
-.tiptap-ul-item .tiptap-ul-item .tiptap-ul-item .tiptap-ul-item {
+.tiptap-list-item .tiptap-list-item,
+.tiptap-list-item .tiptap-list-item .tiptap-list-item .tiptap-list-item .tiptap-list-item {
   margin-left: var(--space-8);
   list-style: circle;
 }
 
-.tiptap-ul-item .tiptap-ul-item .tiptap-ul-item,
-.tiptap-ul-item .tiptap-ul-item .tiptap-ul-item .tiptap-ul-item .tiptap-ul-item {
+.tiptap-list-item .tiptap-list-item .tiptap-list-item,
+.tiptap-list-item .tiptap-list-item .tiptap-list-item .tiptap-list-item .tiptap-list-item .tiptap-list-item {
   list-style: square;
 }
 
-.tiptap-ul-item .tiptap-ul-item .tiptap-ul-item .tiptap-ul-item,
-.tiptap-ul-item .tiptap-ul-item .tiptap-ul-item .tiptap-ul-item .tiptap-ul-item .tiptap-ul-item {
+.tiptap-list-item .tiptap-list-item .tiptap-list-item .tiptap-list-item,
+.tiptap-list-item .tiptap-list-item .tiptap-list-item .tiptap-list-item .tiptap-list-item .tiptap-list-item .tiptap-list-item {
   list-style: disc;
 }
 
-.tiptap-ul-item p {
-  margin: var(--space-2) 0;
+.tiptap-ordered-list .tiptap-list-item {
+  list-style: decimal;
+}
+
+.tiptap-ordered-list .tiptap-list-item .tiptap-list-item,
+.tiptap-ordered-list .tiptap-list-item .tiptap-list-item .tiptap-list-item .tiptap-list-item .tiptap-list-item {
+  list-style: lower-alpha;
+}
+
+.tiptap-ordered-list .tiptap-list-item .tiptap-list-item .tiptap-list-item,
+.tiptap-ordered-list .tiptap-list-item .tiptap-list-item .tiptap-list-item .tiptap-list-item .tiptap-list-item .tiptap-list-item {
+  list-style: lower-roman;
+}
+
+.tiptap-ordered-list .tiptap-list-item .tiptap-list-item .tiptap-list-item .tiptap-list-item,
+.tiptap-ordered-list .tiptap-list-item .tiptap-list-item .tiptap-list-item .tiptap-list-item .tiptap-list-item .tiptap-list-item .tiptap-list-item {
+  list-style: decimal;
 }
 
 /* Give a remote user a caret */

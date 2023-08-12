@@ -99,7 +99,12 @@ function TiptapEditor({ doc, provider }: EditorProps) {
         },
         listItem: {
           HTMLAttributes: {
-            class: "tiptap-ul-item",
+            class: "tiptap-list-item",
+          },
+        },
+        orderedList: {
+          HTMLAttributes: {
+            class: "tiptap-ordered-list",
           },
         },
         paragraph: {

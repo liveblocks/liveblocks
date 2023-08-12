@@ -16,7 +16,18 @@ export function BlockStyles({ editor }: Props) {
         onClick={() => editor.chain().focus().toggleBulletList().run()}
         disabled={!editor.can().chain().focus().toggleBulletList().run()}
         data-active={editor.isActive("bulletList") ? "is-active" : undefined}
-        aria-label="code block"
+        aria-label="unordered list"
+      >
+        <ListUnorderedIcon />
+      </Button>
+
+      <Button
+        className={styles.toolbarButton}
+        variant="subtle"
+        onClick={() => editor.chain().focus().toggleOrderedList().run()}
+        disabled={!editor.can().chain().focus().toggleOrderedList().run()}
+        data-active={editor.isActive("orderedList") ? "is-active" : undefined}
+        aria-label="ordered list"
       >
         <ListUnorderedIcon />
       </Button>
