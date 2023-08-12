@@ -4,6 +4,7 @@ import { Headings } from "./Headings";
 import { InlineStyles } from "./InlineStyles";
 import { BlockStyles } from "./BlockStyles";
 import { AlignmentStyles } from "./AlignmentStyles";
+import { Commands } from "./Commands";
 
 type Props = {
   editor: Editor;
@@ -12,6 +13,8 @@ type Props = {
 export function Toolbar({ editor }: Props) {
   return (
     <div className={styles.toolbar}>
+      <Commands editor={editor} />
+      <div className={styles.toolbarSeparator} />
       <Headings editor={editor} />
       <div className={styles.toolbarSeparator} />
       <InlineStyles editor={editor} />

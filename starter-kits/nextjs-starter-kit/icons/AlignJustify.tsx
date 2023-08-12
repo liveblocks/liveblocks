@@ -1,4 +1,6 @@
-export function AlignJustifyIcon() {
+import { ComponentProps } from "react";
+
+export function AlignJustifyIcon(props: ComponentProps<"svg">) {
   return (
     <svg
       width="20"
@@ -6,6 +8,7 @@ export function AlignJustifyIcon() {
       viewBox="0 0 16 16"
       fill="currentColor"
       xmlns="http://www.w3.org/2000/svg"
+      {...props}
     >
       <path
         fillRule="evenodd"

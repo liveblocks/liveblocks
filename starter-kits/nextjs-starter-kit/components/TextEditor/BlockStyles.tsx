@@ -2,6 +2,10 @@ import { Button } from "../../primitives/Button";
 import styles from "./Toolbar.module.css";
 import { Editor } from "@tiptap/react";
 import { ListUnorderedIcon } from "../../icons/ListUnordered";
+import { CodeIcon } from "../../icons/Code";
+import { ListOrderedIcon } from "../../icons/ListOrdered";
+import { CodeBlockIcon } from "../../icons/CodeBlock";
+import { BlockquoteIcon } from "../../icons/Blockquote";
 
 type Props = {
   editor: Editor;
@@ -16,7 +20,7 @@ export function BlockStyles({ editor }: Props) {
         onClick={() => editor.chain().focus().toggleBulletList().run()}
         disabled={!editor.can().chain().focus().toggleBulletList().run()}
         data-active={editor.isActive("bulletList") ? "is-active" : undefined}
-        aria-label="unordered list"
+        aria-label="Unordered list"
       >
         <ListUnorderedIcon />
       </Button>
@@ -27,9 +31,9 @@ export function BlockStyles({ editor }: Props) {
         onClick={() => editor.chain().focus().toggleOrderedList().run()}
         disabled={!editor.can().chain().focus().toggleOrderedList().run()}
         data-active={editor.isActive("orderedList") ? "is-active" : undefined}
-        aria-label="ordered list"
+        aria-label="Ordered list"
       >
-        <ListUnorderedIcon />
+        <ListOrderedIcon />
       </Button>
 
       <Button
@@ -38,9 +42,9 @@ export function BlockStyles({ editor }: Props) {
         onClick={() => editor.chain().focus().toggleBlockquote().run()}
         disabled={!editor.can().chain().focus().toggleBlockquote().run()}
         data-active={editor.isActive("blockquote") ? "is-active" : undefined}
-        aria-label="blockquote"
+        aria-label="Blockquote"
       >
-        <div style={{ fontSize: "35px", padding: "13px 2px 0 2px" }}>”</div>
+        <BlockquoteIcon />
       </Button>
 
       <Button
@@ -49,9 +53,9 @@ export function BlockStyles({ editor }: Props) {
         onClick={() => editor.chain().focus().toggleCodeBlock().run()}
         disabled={!editor.can().chain().focus().toggleCodeBlock().run()}
         data-active={editor.isActive("codeBlock") ? "is-active" : undefined}
-        aria-label="code block"
+        aria-label="Code block"
       >
-        <div>{"</>"}</div>
+        <CodeBlockIcon />
       </Button>
     </>
   );

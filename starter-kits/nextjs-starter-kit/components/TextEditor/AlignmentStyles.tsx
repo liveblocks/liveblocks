@@ -22,7 +22,7 @@ export function AlignmentStyles({ editor }: Props) {
         data-active={
           editor.isActive({ textAlign: "left" }) ? "is-active" : undefined
         }
-        aria-label="align left"
+        aria-label="Align left"
       >
         <AlignLeftIcon />
       </Button>
@@ -35,7 +35,7 @@ export function AlignmentStyles({ editor }: Props) {
         data-active={
           editor.isActive({ textAlign: "center" }) ? "is-active" : undefined
         }
-        aria-label="align center"
+        aria-label="Align center"
       >
         <AlignCenterIcon />
       </Button>
@@ -48,7 +48,7 @@ export function AlignmentStyles({ editor }: Props) {
         data-active={
           editor.isActive({ textAlign: "right" }) ? "is-active" : undefined
         }
-        aria-label="align right"
+        aria-label="Align right"
       >
         <AlignRightIcon />
       </Button>
@@ -61,7 +61,7 @@ export function AlignmentStyles({ editor }: Props) {
         data-active={
           editor.isActive({ textAlign: "justify" }) ? "is-active" : undefined
         }
-        aria-label="justify"
+        aria-label="Justify"
       >
         <AlignJustifyIcon />
       </Button>
