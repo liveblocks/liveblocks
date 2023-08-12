@@ -43,13 +43,12 @@
 
 .editorContainer {
   position: relative;
-  height: 100%;
+  min-height: 100%;
   width: 100%;
   max-width: 900px;
   margin: var(--space-8) auto;
   border: 1px solid var(--color-border);
   background: var(--color-surface-elevated);
-  aspect-ratio: 1 / 1.41;
 }
 
 .placeholder {
