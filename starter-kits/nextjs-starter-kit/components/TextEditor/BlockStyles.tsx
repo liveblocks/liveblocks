@@ -1,6 +1,7 @@
-import { Button } from "../../../primitives/Button";
-import styles from "../Toolbar.module.css";
+import { Button } from "../../primitives/Button";
+import styles from "./Toolbar.module.css";
 import { Editor } from "@tiptap/react";
+import { ListUnorderedIcon } from "../../icons/ListUnordered";
 
 type Props = {
   editor: Editor;
@@ -9,6 +10,17 @@ type Props = {
 export function BlockStyles({ editor }: Props) {
   return (
     <>
+      <Button
+        className={styles.toolbarButton}
+        variant="subtle"
+        onClick={() => editor.chain().focus().toggleBulletList().run()}
+        disabled={!editor.can().chain().focus().toggleBulletList().run()}
+        data-active={editor.isActive("bulletList") ? "is-active" : undefined}
+        aria-label="code block"
+      >
+        <ListUnorderedIcon />
+      </Button>
+
       <Button
         className={styles.toolbarButton}
         variant="subtle"

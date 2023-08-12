@@ -12,11 +12,13 @@ import { Toolbar } from "./Toolbar";
 import styles from "./TextEditor.module.css";
 import { ClientSideSuspense } from "@liveblocks/react";
 import { DocumentSpinner } from "../../primitives/Spinner";
-import { InlineStyles } from "./ToolbarItems/InlineStyles";
+import { InlineStyles } from "./InlineStyles";
 import Placeholder from "@tiptap/extension-placeholder";
 import { TextAlign } from "@tiptap/extension-text-align";
 import { EditorView } from "prosemirror-view";
 import { Typography } from "@tiptap/extension-typography";
+import { CharacterCount } from "@tiptap/extension-character-count";
+import { WordCount } from "./WordCount";
 
 export function TextEditor() {
   return (
@@ -95,7 +97,18 @@ function TiptapEditor({ doc, provider }: EditorProps) {
             class: "tiptap-code-block",
           },
         },
+        listItem: {
+          HTMLAttributes: {
+            class: "tiptap-ul-item",
+          },
+        },
+        paragraph: {
+          HTMLAttributes: {
+            class: "tiptap-paragraph",
+          },
+        },
       }),
+      CharacterCount,
       Placeholder.configure({
         placeholder: "Start writing…",
         emptyEditorClass: "tiptap-empty",
@@ -123,18 +136,19 @@ function TiptapEditor({ doc, provider }: EditorProps) {
   return (
     <div className={styles.container}>
       <div className={styles.editorHeader}>
-        <Toolbar editor={editor} />
+        {editor && <Toolbar editor={editor} />}
       </div>
       <div className={styles.editorPanel}>
-        {editor ? (
+        {editor && (
           <BubbleMenu editor={editor}>
             <div className={styles.bubbleMenuWrapper}>
               <InlineStyles editor={editor} />
             </div>
           </BubbleMenu>
-        ) : null}
+        )}
         <EditorContent editor={editor} className={styles.editorContainer} />
       </div>
+      {editor && <WordCount editor={editor} />}
     </div>
   );
 }

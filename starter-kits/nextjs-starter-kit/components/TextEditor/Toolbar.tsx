@@ -1,19 +1,15 @@
 import { Editor } from "@tiptap/react";
 import styles from "./Toolbar.module.css";
-import { Headings } from "./ToolbarItems/Headings";
-import { InlineStyles } from "./ToolbarItems/InlineStyles";
-import { BlockStyles } from "./ToolbarItems/BlockStyles";
-import { AlignmentStyles } from "./ToolbarItems/AlignmentStyles";
+import { Headings } from "./Headings";
+import { InlineStyles } from "./InlineStyles";
+import { BlockStyles } from "./BlockStyles";
+import { AlignmentStyles } from "./AlignmentStyles";
 
 type Props = {
-  editor: Editor | null;
+  editor: Editor;
 };
 
 export function Toolbar({ editor }: Props) {
-  if (!editor) {
-    return null;
-  }
-
   return (
     <div className={styles.toolbar}>
       <Headings editor={editor} />
