@@ -22,6 +22,8 @@ import { WordCount } from "./WordCount";
 import { SelectionMenu } from "./SelectionMenu";
 import Youtube from "@tiptap/extension-youtube";
 import Link from "@tiptap/extension-link";
+import { useDocumentsFunctionSWR } from "../../lib/client";
+import { useInitialDocument } from "../../lib/client/hooks/useInitialDocument";
 
 export function TextEditor() {
   return (

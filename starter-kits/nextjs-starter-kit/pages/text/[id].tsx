@@ -9,7 +9,7 @@ import {
 } from "../../components/Document";
 import { DocumentLayout } from "../../layouts/Document";
 import { ErrorLayout } from "../../layouts/Error";
-import { updateDocumentName } from "../../lib/client";
+import { updateDocumentName, InitialDocumentProvider } from "../../lib/client";
 import * as Server from "../../lib/server";
 import { RoomProvider } from "../../liveblocks.config";
 import { Document, ErrorData } from "../../types";
@@ -63,13 +63,13 @@ export default function TextDocumentView({
       initialPresence={{ cursor: null }}
       initialStorage={{ notes: new LiveMap() }}
     >
-      <DocumentLayout
-        header={
-          <DocumentHeader document={document} onDocumentRename={updateName} />
-        }
-      >
-        <TextEditor />
-      </DocumentLayout>
+      <InitialDocumentProvider initialDocument={document}>
+        <DocumentLayout
+          header={<DocumentHeader onDocumentRename={updateName} />}
+        >
+          <TextEditor />
+        </DocumentLayout>
+      </InitialDocumentProvider>
     </RoomProvider>
   );
 }

@@ -19,19 +19,12 @@ import { ShareDialogInviteUser } from "./ShareDialogInviteUser";
 import { ShareDialogUsers } from "./ShareDialogUsers";
 import { ShareDialogGroups } from "./ShareDialogGroups";
 import styles from "./ShareDialog.module.css";
+import { useInitialDocument } from "../../lib/client/hooks/useInitialDocument";
 
-interface Props
-  extends Omit<ComponentProps<typeof Dialog>, "content" | "title"> {
-  documentAccesses: DocumentAccesses;
-  documentId: string;
-}
+type Props = Omit<ComponentProps<typeof Dialog>, "content" | "title">;
 
-export function ShareDialog({
-  children,
-  documentId,
-  documentAccesses,
-  ...props
-}: Props) {
+export function ShareDialog({ children, ...props }: Props) {
+  const { id: documentId, accesses: documentAccesses } = useInitialDocument();
   const router = useRouter();
 
   const { data: session } = useSession();
