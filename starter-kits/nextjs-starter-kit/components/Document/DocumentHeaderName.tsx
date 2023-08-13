@@ -7,11 +7,10 @@ import {
   useState,
 } from "react";
 import { EditIcon } from "../../icons";
+import { useInitialDocument } from "../../lib/client";
 import { useSelf } from "../../liveblocks.config";
 import { Tooltip } from "../../primitives/Tooltip";
-import { Document } from "../../types";
 import styles from "./DocumentHeaderName.module.css";
-import { useInitialDocument } from "../../lib/client/hooks/useInitialDocument";
 
 interface Props extends ComponentProps<"div"> {
   onDocumentRename: (name: string) => void;

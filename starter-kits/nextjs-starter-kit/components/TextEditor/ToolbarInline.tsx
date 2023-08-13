@@ -1,14 +1,14 @@
-import { Button } from "../../primitives/Button";
-import styles from "./Toolbar.module.css";
+import { Editor } from "@tiptap/react";
+import { useState } from "react";
+import { CrossIcon, LinkIcon } from "../../icons";
 import { BoldIcon } from "../../icons/Bold";
+import { CodeIcon } from "../../icons/Code";
 import { ItalicIcon } from "../../icons/Italic";
 import { StrikethroughIcon } from "../../icons/Strikethrough";
-import { Editor } from "@tiptap/react";
-import { CodeIcon } from "../../icons/Code";
-import { useState } from "react";
+import { Button } from "../../primitives/Button";
 import { Input } from "../../primitives/Input";
-import { CrossIcon, LinkIcon } from "../../icons";
 import { Popover } from "../../primitives/Popover";
+import styles from "./Toolbar.module.css";
 
 type Props = {
   editor: Editor;

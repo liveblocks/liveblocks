@@ -1,12 +1,12 @@
-import { Button } from "../../primitives/Button";
 import { Editor } from "@tiptap/react";
-import { Popover } from "../../primitives/Popover";
-import { Input } from "../../primitives/Input";
 import { useState } from "react";
-import styles from "./Toolbar.module.css";
+import { CodeBlockIcon } from "../../icons/CodeBlock";
 import { ImageIcon } from "../../icons/Image";
 import { YouTubeIcon } from "../../icons/YouTube";
-import { CodeBlockIcon } from "../../icons/CodeBlock";
+import { Button } from "../../primitives/Button";
+import { Input } from "../../primitives/Input";
+import { Popover } from "../../primitives/Popover";
+import styles from "./Toolbar.module.css";
 
 type Props = {
   editor: Editor;

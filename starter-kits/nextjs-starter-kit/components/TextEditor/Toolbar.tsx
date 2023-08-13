@@ -1,11 +1,11 @@
 import { Editor } from "@tiptap/react";
-import styles from "./Toolbar.module.css";
+import { ToolbarAlignment } from "./ToolbarAlignment";
+import { ToolbarBlock } from "./ToolbarBlock";
+import { ToolbarCommands } from "./ToolbarCommands";
 import { Headings } from "./ToolbarHeadings";
 import { ToolbarInline } from "./ToolbarInline";
-import { ToolbarBlock } from "./ToolbarBlock";
-import { ToolbarAlignment } from "./ToolbarAlignment";
-import { ToolbarCommands } from "./ToolbarCommands";
 import { ToolbarMedia } from "./ToolbarMedia";
+import styles from "./Toolbar.module.css";
 
 type Props = {
   editor: Editor;

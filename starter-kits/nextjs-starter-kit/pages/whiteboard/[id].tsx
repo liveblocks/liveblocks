@@ -1,7 +1,7 @@
 import { LiveMap } from "@liveblocks/client";
 import { GetServerSideProps, InferGetServerSidePropsType } from "next";
-import { Session } from "next-auth";
 import { useRouter } from "next/router";
+import { Session } from "next-auth";
 import { useEffect, useState } from "react";
 import {
   DocumentHeader,

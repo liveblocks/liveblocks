@@ -12,7 +12,14 @@ module.exports = {
     "next",
   ],
   parser: "@typescript-eslint/parser",
-  plugins: ["@typescript-eslint", "react", "react-hooks", "import", "unused-imports", "prettier"],
+  plugins: [
+    "@typescript-eslint",
+    "react",
+    "react-hooks",
+    "import",
+    "unused-imports",
+    "prettier",
+  ],
   rules: {
     "@typescript-eslint/ban-ts-comment": "off",
     "@typescript-eslint/ban-types": "off",

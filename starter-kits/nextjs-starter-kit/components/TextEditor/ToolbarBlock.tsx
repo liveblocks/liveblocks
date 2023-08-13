@@ -1,9 +1,9 @@
+import { Editor } from "@tiptap/react";
+import { BlockquoteIcon } from "../../icons/Blockquote";
+import { ListOrderedIcon } from "../../icons/ListOrdered";
+import { ListUnorderedIcon } from "../../icons/ListUnordered";
 import { Button } from "../../primitives/Button";
 import styles from "./Toolbar.module.css";
-import { Editor } from "@tiptap/react";
-import { ListUnorderedIcon } from "../../icons/ListUnordered";
-import { ListOrderedIcon } from "../../icons/ListOrdered";
-import { BlockquoteIcon } from "../../icons/Blockquote";
 
 type Props = {
   editor: Editor;

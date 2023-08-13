@@ -1,25 +1,25 @@
 import * as Tabs from "@radix-ui/react-tabs";
 import { useRouter } from "next/router";
-import { ComponentProps, useCallback, useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
+import { ComponentProps, useCallback, useEffect, useState } from "react";
 import { UserIcon, UsersIcon } from "../../icons";
 import {
   getDocument,
+  getDocumentAccess,
   getDocumentGroups,
   getDocumentUsers,
   useDocumentsFunctionSWR,
-  getDocumentAccess,
+  useInitialDocument,
 } from "../../lib/client";
 import { useBroadcastEvent, useEventListener } from "../../liveblocks.config";
 import { Dialog } from "../../primitives/Dialog";
-import { DocumentAccess, DocumentAccesses } from "../../types";
+import { DocumentAccess } from "../../types";
 import { ShareDialogDefault } from "./ShareDialogDefault";
+import { ShareDialogGroups } from "./ShareDialogGroups";
 import { ShareDialogInviteGroup } from "./ShareDialogInviteGroup";
 import { ShareDialogInviteUser } from "./ShareDialogInviteUser";
 import { ShareDialogUsers } from "./ShareDialogUsers";
-import { ShareDialogGroups } from "./ShareDialogGroups";
 import styles from "./ShareDialog.module.css";
-import { useInitialDocument } from "../../lib/client/hooks/useInitialDocument";
 
 type Props = Omit<ComponentProps<typeof Dialog>, "content" | "title">;
 
@@ -35,7 +35,7 @@ export function ShareDialog({ children, ...props }: Props) {
   // Get a list of users attached to the document (+ their info)
   const {
     data: users,
-    error: usersError,
+    // error: usersError,
     mutate: revalidateUsers,
   } = useDocumentsFunctionSWR([getDocumentUsers, { documentId }], {
     refreshInterval: 0,
@@ -44,7 +44,7 @@ export function ShareDialog({ children, ...props }: Props) {
   // Get a list of groups attached to the document (+ their info)
   const {
     data: groups,
-    error: groupsError,
+    // error: groupsError,
     mutate: revalidateGroups,
   } = useDocumentsFunctionSWR([getDocumentGroups, { documentId }], {
     refreshInterval: 0,

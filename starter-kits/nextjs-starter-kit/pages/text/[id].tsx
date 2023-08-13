@@ -1,19 +1,19 @@
 import { LiveMap } from "@liveblocks/client";
 import { GetServerSideProps, InferGetServerSidePropsType } from "next";
-import { Session } from "next-auth";
 import { useRouter } from "next/router";
+import { Session } from "next-auth";
 import { useEffect, useState } from "react";
 import {
   DocumentHeader,
   DocumentHeaderSkeleton,
 } from "../../components/Document";
+import { TextEditor } from "../../components/TextEditor/TextEditor";
 import { DocumentLayout } from "../../layouts/Document";
 import { ErrorLayout } from "../../layouts/Error";
-import { updateDocumentName, InitialDocumentProvider } from "../../lib/client";
+import { InitialDocumentProvider, updateDocumentName } from "../../lib/client";
 import * as Server from "../../lib/server";
 import { RoomProvider } from "../../liveblocks.config";
 import { Document, ErrorData } from "../../types";
-import { TextEditor } from "../../components/TextEditor/TextEditor";
 
 export default function TextDocumentView({
   initialDocument,

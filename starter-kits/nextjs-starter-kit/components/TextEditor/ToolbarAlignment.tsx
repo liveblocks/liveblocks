@@ -1,10 +1,10 @@
+import { Editor } from "@tiptap/react";
+import { AlignCenterIcon } from "../../icons/AlignCenter";
+import { AlignJustifyIcon } from "../../icons/AlignJustify";
+import { AlignLeftIcon } from "../../icons/AlignLeft";
+import { AlignRightIcon } from "../../icons/AlignRight";
 import { Button } from "../../primitives/Button";
 import styles from "./Toolbar.module.css";
-import { Editor } from "@tiptap/react";
-import { AlignLeftIcon } from "../../icons/AlignLeft";
-import { AlignCenterIcon } from "../../icons/AlignCenter";
-import { AlignRightIcon } from "../../icons/AlignRight";
-import { AlignJustifyIcon } from "../../icons/AlignJustify";
 
 type Props = {
   editor: Editor;

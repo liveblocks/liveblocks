@@ -1,6 +1,6 @@
-import styles from "./TextEditor.module.css";
-import { ToolbarInline } from "./ToolbarInline";
 import { BubbleMenu, Editor } from "@tiptap/react";
+import { ToolbarInline } from "./ToolbarInline";
+import styles from "./TextEditor.module.css";
 
 type Props = {
   editor: Editor;

@@ -1,7 +1,8 @@
-import clsx from "clsx";
 import { LiveObject, shallow } from "@liveblocks/client";
 import { ClientSideSuspense } from "@liveblocks/react";
+import clsx from "clsx";
 import { nanoid } from "nanoid";
+import { useSession } from "next-auth/react";
 import {
   ChangeEvent,
   ComponentProps,
@@ -11,7 +12,6 @@ import {
   useState,
 } from "react";
 import { PlusIcon, RedoIcon, UndoIcon } from "../../icons";
-import { useSession } from "next-auth/react";
 import {
   UserMeta,
   useCanRedo,

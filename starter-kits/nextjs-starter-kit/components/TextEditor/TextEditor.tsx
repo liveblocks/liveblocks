@@ -1,29 +1,27 @@
 "use client";
 
-import { useEditor, EditorContent } from "@tiptap/react";
-import StarterKit from "@tiptap/starter-kit";
+import { ClientSideSuspense } from "@liveblocks/react";
+import LiveblocksProvider from "@liveblocks/yjs";
+import { CharacterCount } from "@tiptap/extension-character-count";
 import Collaboration from "@tiptap/extension-collaboration";
 import CollaborationCursor from "@tiptap/extension-collaboration-cursor";
-import * as Y from "yjs";
-import LiveblocksProvider from "@liveblocks/yjs";
-import { useRoom, useSelf } from "../../liveblocks.config";
-import { useEffect, useState } from "react";
-import { Toolbar } from "./Toolbar";
-import styles from "./TextEditor.module.css";
-import { ClientSideSuspense } from "@liveblocks/react";
-import { DocumentSpinner } from "../../primitives/Spinner";
+import { Image } from "@tiptap/extension-image";
+import Link from "@tiptap/extension-link";
 import Placeholder from "@tiptap/extension-placeholder";
 import { TextAlign } from "@tiptap/extension-text-align";
-import { EditorView } from "prosemirror-view";
 import { Typography } from "@tiptap/extension-typography";
-import { CharacterCount } from "@tiptap/extension-character-count";
-import { Image } from "@tiptap/extension-image";
-import { WordCount } from "./WordCount";
-import { SelectionMenu } from "./SelectionMenu";
 import Youtube from "@tiptap/extension-youtube";
-import Link from "@tiptap/extension-link";
-import { useDocumentsFunctionSWR } from "../../lib/client";
-import { useInitialDocument } from "../../lib/client/hooks/useInitialDocument";
+import { EditorContent, useEditor } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
+import { EditorView } from "prosemirror-view";
+import { useEffect, useState } from "react";
+import * as Y from "yjs";
+import { useRoom, useSelf } from "../../liveblocks.config";
+import { DocumentSpinner } from "../../primitives/Spinner";
+import { SelectionMenu } from "./SelectionMenu";
+import { Toolbar } from "./Toolbar";
+import { WordCount } from "./WordCount";
+import styles from "./TextEditor.module.css";
 
 export function TextEditor() {
   return (

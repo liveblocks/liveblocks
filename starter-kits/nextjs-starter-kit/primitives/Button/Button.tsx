@@ -1,6 +1,6 @@
 import clsx from "clsx";
 import Link from "next/link";
-import { ComponentProps, forwardRef, ReactNode } from "react";
+import { ComponentProps, ReactNode, forwardRef } from "react";
 import styles from "./Button.module.css";
 
 interface Props {

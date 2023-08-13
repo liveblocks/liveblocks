@@ -1,7 +1,7 @@
-import { Button } from "../../primitives/Button";
-import styles from "./Toolbar.module.css";
 import { Editor } from "@tiptap/react";
 import { RedoIcon, UndoIcon } from "../../icons";
+import { Button } from "../../primitives/Button";
+import styles from "./Toolbar.module.css";
 
 type Props = {
   editor: Editor;

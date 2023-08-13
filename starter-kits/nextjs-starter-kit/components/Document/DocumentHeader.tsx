@@ -2,15 +2,14 @@ import { ClientSideSuspense } from "@liveblocks/react";
 import clsx from "clsx";
 import Link from "next/link";
 import { ComponentProps } from "react";
-
 import { ShareIcon } from "../../icons";
 import { Button } from "../../primitives/Button";
 import { Skeleton } from "../../primitives/Skeleton";
 import { Logo } from "../Logo";
 import { ShareDialog } from "../ShareDialog";
-import styles from "./DocumentHeader.module.css";
 import { DocumentHeaderAvatars } from "./DocumentHeaderAvatars";
 import { DocumentHeaderName } from "./DocumentHeaderName";
+import styles from "./DocumentHeader.module.css";
 
 interface Props extends ComponentProps<"header"> {
   onDocumentRename: (name: string) => void;

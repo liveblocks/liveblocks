@@ -1,6 +1,6 @@
-import { PropsWithChildren } from "react";
-import { Session } from "next-auth";
 import { useRouter } from "next/router";
+import { Session } from "next-auth";
+import { PropsWithChildren } from "react";
 
 type Props = PropsWithChildren<{ session: Session }>;
 

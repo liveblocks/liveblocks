@@ -1,11 +1,11 @@
 import {
   Document,
   DocumentAccess,
-  DocumentType,
   DocumentGroup,
+  DocumentType,
   DocumentUser,
 } from "./document";
-import { RoomActiveUser, Room } from "./room";
+import { Room, RoomActiveUser } from "./room";
 
 /**
  * These types are used to unify the client/server API endpoints
