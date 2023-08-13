@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 import { Editor } from "@tiptap/react";
 import { Select } from "../../primitives/Select";
-import styles from "./ToolbarHeadings.module.css";
+import styles from "./Toolbar.module.css";
 
 const toolbarHeadings = [
   { value: "p", title: "Paragraph" },

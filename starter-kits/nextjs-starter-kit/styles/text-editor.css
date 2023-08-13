@@ -15,6 +15,7 @@ p.tiptap-empty:first-child::before {
   color: var(--color-accent);
   font-weight: 600;
   cursor: pointer;
+  text-decoration: underline;
 }
 
 /* Inline styles below */

@@ -3,8 +3,7 @@ import { Editor } from "@tiptap/react";
 import { Popover } from "../../primitives/Popover";
 import { Input } from "../../primitives/Input";
 import { useState } from "react";
-import styles from "./ToolbarMedia.module.css";
-import toolbarStyles from "./Toolbar.module.css";
+import styles from "./Toolbar.module.css";
 import { ImageIcon } from "../../icons/Image";
 import { YouTubeIcon } from "../../icons/YouTube";
 import { CodeBlockIcon } from "../../icons/CodeBlock";
@@ -33,7 +32,7 @@ export function ToolbarMedia({ editor }: Props) {
   return (
     <>
       <Button
-        className={toolbarStyles.toolbarButton}
+        className={styles.toolbarButton}
         variant="subtle"
         onClick={() => editor.chain().focus().toggleCodeBlock().run()}
         disabled={!editor.can().chain().focus().toggleCodeBlock().run()}
@@ -45,7 +44,7 @@ export function ToolbarMedia({ editor }: Props) {
 
       <Popover content={<MediaPopover variant="image" onSubmit={addImage} />}>
         <Button
-          className={toolbarStyles.toolbarButton}
+          className={styles.toolbarButton}
           variant="subtle"
           disabled={!editor.can().chain().setImage({ src: "" }).run()}
           data-active={editor.isActive("image") ? "is-active" : undefined}
@@ -59,7 +58,7 @@ export function ToolbarMedia({ editor }: Props) {
         content={<MediaPopover variant="youtube" onSubmit={addYouTube} />}
       >
         <Button
-          className={toolbarStyles.toolbarButton}
+          className={styles.toolbarButton}
           variant="subtle"
           disabled={!editor.can().chain().setImage({ src: "" }).run()}
           data-active={editor.isActive("youtube") ? "is-active" : undefined}
@@ -82,22 +81,22 @@ function MediaPopover({ variant, onSubmit }: MediaPopoverProps) {
 
   return (
     <form
-      className={styles.mediaPopover}
+      className={styles.toolbarPopover}
       onSubmit={(e) => {
         e.preventDefault();
         onSubmit(value);
       }}
     >
-      <label className={styles.mediaPopoverLabel} htmlFor="">
+      <label className={styles.toolbarPopoverLabel} htmlFor="">
         Add {variant === "image" ? "image" : "YouTube"} URL
       </label>
-      <div className={styles.mediaPopoverBar}>
+      <div className={styles.toolbarPopoverBar}>
         <Input
-          className={styles.mediaPopoverInput}
+          className={styles.toolbarPopoverInput}
           value={value}
           onChange={(e) => setValue(e.target.value)}
         />
-        <Button className={styles.mediaPopoverButton}>
+        <Button className={styles.toolbarPopoverButton}>
           Add {variant === "image" ? "image" : "video"}
         </Button>
       </div>

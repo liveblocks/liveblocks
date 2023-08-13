@@ -19,3 +19,36 @@
   background: var(--color-border);
   margin: 0 var(--space-2);
 }
+
+.toolbarPopover {
+  display: flex;
+  min-width: 160px;
+  max-width: 320px;
+  flex-direction: column;
+  padding: var(--space-4);
+  box-shadow: var(--shadow-xl);
+}
+
+.toolbarPopoverLabel {
+  font-size: var(--size-sm);
+  font-weight: 500;
+  padding: var(--space-2) var(--space-1) var(--space-4);
+}
+
+.toolbarPopoverBar {
+  display: flex;
+  gap: var(--space-3)
+}
+
+.toolbarPopoverInput {
+  width: 300px;
+}
+
+.toolbarPopoverButton {
+  white-space: nowrap;
+}
+
+.headingsSelect {
+  width: 130px;
+}
+
