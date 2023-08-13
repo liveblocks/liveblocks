@@ -98,6 +98,7 @@ function TiptapEditor({ doc, provider }: EditorProps) {
           languageClassPrefix: "language-",
           HTMLAttributes: {
             class: "tiptap-code-block",
+            spellcheck: false,
           },
         },
         listItem: {
