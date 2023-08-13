@@ -23,7 +23,6 @@
 .toolbarPopover {
   display: flex;
   min-width: 160px;
-  max-width: 320px;
   flex-direction: column;
   padding: var(--space-4);
   box-shadow: var(--shadow-xl);
@@ -41,7 +40,7 @@
 }
 
 .toolbarPopoverInput {
-  width: 300px;
+  width: 200px;
 }
 
 .toolbarPopoverButton {

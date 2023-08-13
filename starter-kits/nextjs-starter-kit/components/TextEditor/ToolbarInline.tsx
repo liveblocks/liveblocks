@@ -7,7 +7,7 @@ import { Editor } from "@tiptap/react";
 import { CodeIcon } from "../../icons/Code";
 import { useState } from "react";
 import { Input } from "../../primitives/Input";
-import { LinkIcon } from "../../icons";
+import { CrossIcon, LinkIcon } from "../../icons";
 import { Popover } from "../../primitives/Popover";
 
 type Props = {
@@ -15,9 +15,12 @@ type Props = {
 };
 
 export function ToolbarInline({ editor }: Props) {
-  function addLink(link: string) {
-    editor.chain().focus().setLink({ href: link }).run();
+  function toggleLink(link: string) {
+    console.log(link);
+    editor.chain().focus().toggleLink({ href: link }).run();
   }
+
+  // console.log(editor.getAttributes("link").href);
 
   return (
     <>
@@ -65,7 +68,15 @@ export function ToolbarInline({ editor }: Props) {
         <CodeIcon />
       </Button>
 
-      <Popover content={<LinkPopover onSubmit={addLink} />}>
+      <Popover
+        content={
+          <LinkPopover
+            onSubmit={toggleLink}
+            onRemoveLink={toggleLink}
+            showRemove={editor.getAttributes("link").href}
+          />
+        }
+      >
         <Button
           variant="subtle"
           className={styles.toolbarButton}
@@ -82,9 +93,11 @@ export function ToolbarInline({ editor }: Props) {
 
 type LinkPopoverProps = {
   onSubmit: (url: string) => void;
+  onRemoveLink: (url: string) => void;
+  showRemove: boolean;
 };
 
-function LinkPopover({ onSubmit }: LinkPopoverProps) {
+function LinkPopover({ onSubmit, onRemoveLink, showRemove }: LinkPopoverProps) {
   const [value, setValue] = useState("");
 
   return (
@@ -104,6 +117,18 @@ function LinkPopover({ onSubmit }: LinkPopoverProps) {
           value={value}
           onChange={(e) => setValue(e.target.value)}
         />
+        {showRemove ? (
+          <Button
+            variant="secondary"
+            onClick={(e) => {
+              e.stopPropagation();
+              onRemoveLink(value);
+            }}
+            aria-label="Remove link"
+          >
+            <CrossIcon />
+          </Button>
+        ) : null}
         <Button className={styles.toolbarPopoverButton}>Add link</Button>
       </div>
     </form>
