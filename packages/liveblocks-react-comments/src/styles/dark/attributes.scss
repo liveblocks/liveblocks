@@ -1,13 +1,11 @@
 @import "./index";
 
-:where(.dark),
-:where([data-theme="dark"]) {
+$dark-attributes: '.dark, [data-theme="dark"], [data-dark]';
+
+:where(#{$dark-attributes}) {
   @include dark-variables;
 }
 
-:where(.dark .lb-root),
-:where(.lb-root.dark),
-:where([data-theme="dark"] .lb-root),
-:where(.lb-root[data-theme="dark"]) {
+:where(.lb-root:is(#{$dark-attributes}), :is(#{$dark-attributes}) .lb-root) {
   @include dark-root-styles;
 }
