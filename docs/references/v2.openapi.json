@@ -265,7 +265,7 @@
       },
       "post": {
         "summary": "Update room",
-        "description": "Updates specific properties of a room. It's not necessary to provide the entire room's information. \nSetting a property to `null` means to delete this property. For example, if you want to remove access to a specific user without losing other users: \n``{\n    \"usersAccesses\": {\n        \"john\": null\n    }\n}``\n`defaultAccessess`, `metadata`, `usersAccesses`, `groupsAccesses` can be updated.\n\n- `defaultAccessess` could be `[]` or `[\"room:write\"]` (private or public). \n- `metadata` could be key/value as `string` or `string[]`. `metadata` supports maximum 50 entries. Key length has a limit of 40 characters maximum. Value length has a limit of 256 characters maximum. `metadata` is optional field.\n- `usersAccesses` could be `[]` or `[\"room:write\"]` for every records. `usersAccesses` can contain 100 ids maximum. Id length has a limit of 256 characters. `usersAccesses` is optional field.\n- `groupsAccesses` could be `[]` or `[\"room:write\"]` for every records. `groupsAccesses` can contain 100 ids maximum. Id length has a limit of 256 characters. `groupsAccesses` is optional field.\n\n",
+        "description": "Updates specific properties of a room. It’s not necessary to provide the entire room’s information. \nSetting a property to `null` means to delete this property. For example, if you want to remove access to a specific user without losing other users: \n``{\n    \"usersAccesses\": {\n        \"john\": null\n    }\n}``\n`defaultAccessess`, `metadata`, `usersAccesses`, `groupsAccesses` can be updated.\n\n- `defaultAccessess` could be `[]` or `[\"room:write\"]` (private or public). \n- `metadata` could be key/value as `string` or `string[]`. `metadata` supports maximum 50 entries. Key length has a limit of 40 characters maximum. Value length has a limit of 256 characters maximum. `metadata` is optional field.\n- `usersAccesses` could be `[]` or `[\"room:write\"]` for every records. `usersAccesses` can contain 100 ids maximum. Id length has a limit of 256 characters. `usersAccesses` is optional field.\n- `groupsAccesses` could be `[]` or `[\"room:write\"]` for every records. `groupsAccesses` can contain 100 ids maximum. Id length has a limit of 256 characters. `groupsAccesses` is optional field.\n\n",
         "operationId": "post-rooms-roomId",
         "parameters": [
           {
@@ -385,7 +385,7 @@
         ],
         "responses": {
           "204": {
-            "description": "Success. The room was deleted"
+            "description": "Success. The room was deleted."
           },
           "401": {
             "$ref": "#/components/responses/401"
@@ -473,7 +473,7 @@
     },
     "/rooms/{roomId}/broadcast_event": {
       "post": {
-        "summary": "Broadcast event to a room",
+        "summary": "Broadcast an event to a room",
         "operationId": "post-broadcast-event",
         "responses": {
           "204": {
@@ -494,8 +494,10 @@
         },
         "description": "This endpoint enables the broadcast of an event to a room without having to connect to it via the `client` from `@liveblocks/client`. It takes any valid JSON as a request body.",
         "requestBody": {
+          "description": "Any valid JSON.",
           "content": {
             "application/json": {
+              "schema": {},
               "examples": {
                 "example-1": {
                   "value": {
@@ -504,8 +506,7 @@
                   }
                 }
               }
-            },
-            "description": "Any valid JSON."
+            }
           }
         },
         "parameters": [
@@ -517,6 +518,11 @@
             "in": "path",
             "required": true,
             "description": "ID of the room"
+          }
+        ],
+        "servers": [
+          {
+            "url": "https://api.liveblocks.io/v2"
           }
         ]
       }
@@ -771,7 +777,7 @@
     "/rooms/{roomId}/authorize": {
       "post": {
         "summary": "Get an access token to enter a room",
-        "description": "This endpoint lets your application server (= your backend) obtain a token that one of its clients (= your frontend) can use to enter a Liveblocks room. You use this endpoint to implement your own application’s custom authentication endpoint. When making this request, you’ll have to use your secret key.\n\nYou can pass the property `userId` in the request's body. This can be whatever internal identifier you use for your user accounts as long as it uniquely identifies an account. Setting the `userId` is optional if you want to use public rooms, but it is required to enter a private room (because permissions are assigned to specific user IDs). In case you want to use the group permission system, you can also declare which `groupIds` this user belongs to.\n\nThe property userId is used by Liveblocks to calculate your account’s Monthly Active Users. One unique userId corresponds to one MAU. If you don’t pass a userId, we will create for you a new anonymous userId on each connection, but your MAUs will be higher.\n\nAdditionally, you can set custom metadata to the token, which will be publicly accessible by other clients through the `user.info` property. This is useful for storing static data like avatar images or the user’s display name.",
+        "description": "This endpoint lets your application server (= your backend) obtain a token that one of its clients (= your frontend) can use to enter a Liveblocks room. You use this endpoint to implement your own application’s custom authentication endpoint. When making this request, you’ll have to use your secret key.\n\nYou can pass the property `userId` in the request’s body. This can be whatever internal identifier you use for your user accounts as long as it uniquely identifies an account. Setting the `userId` is optional if you want to use public rooms, but it is required to enter a private room (because permissions are assigned to specific user IDs). In case you want to use the group permission system, you can also declare which `groupIds` this user belongs to.\n\nThe property userId is used by Liveblocks to calculate your account’s Monthly Active Users. One unique userId corresponds to one MAU. If you don’t pass a userId, we will create for you a new anonymous userId on each connection, but your MAUs will be higher.\n\nAdditionally, you can set custom metadata to the token, which will be publicly accessible by other clients through the `user.info` property. This is useful for storing static data like avatar images or the user’s display name.",
         "operationId": "post-authorize",
         "parameters": [
           {
@@ -840,64 +846,10 @@
         ]
       }
     },
-    "/rooms/{roomId}/broadcast_event": {
-      "post": {
-        "summary": "Broadcast an event to a room",
-        "description": "This endpoint enables the broadcast of an event to a room without having to connect to it via the `client` from `@liveblocks/client`. It takes any valid JSON as a request body.",
-        "operationId": "post-broadcast-event",
-        "parameters": [
-          {
-            "name": "roomId",
-            "in": "path",
-            "description": "ID of the room",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "examples": {
-                "example-1": {
-                  "value": {
-                    "type": "EMOJI",
-                    "emoji": "🔥"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "204": {
-            "description": "Success. An event was broadcasted to the room."
-          },
-          "401": {
-            "$ref": "#/components/responses/401"
-          },
-          "403": {
-            "$ref": "#/components/responses/403"
-          },
-          "404": {
-            "$ref": "#/components/responses/404"
-          },
-          "422": {
-            "$ref": "#/components/responses/422"
-          }
-        },
-        "servers": [
-          {
-            "url": "https://api.liveblocks.io/v2"
-          }
-        ]
-      }
-    },
     "/authorize-user": {
       "post": {
         "summary": "Get JWT token for WebSocket with public key",
-        "description": "This endpoint works with the public key and can be used client side. That means you don't need to implement a dedicated authorization endpoint server side. \nThe generated JWT token works only with public room (`defaultAccesses: [\"room:write\"]`).",
+        "description": "This endpoint works with the public key and can be used client side. That means you don’t need to implement a dedicated authorization endpoint server side. \nThe generated JWT token works only with public room (`defaultAccesses: [\"room:write\"]`).",
         "operationId": "post-public-authorize",
         "parameters": [
           {
@@ -959,7 +911,7 @@
     "/schemas": {
       "post": {
         "summary": "Create schema",
-        "description": "Creates a new schema which can be referenced later to enforce a room's storage data structure. The schema consists of a name (for referencing it), and a body, which specifies the exact allowed shape of data in the room. This body is a multi-line string written in the Liveblocks [schema syntax](/docs/platform/schema-validation/syntax).",
+        "description": "Creates a new schema which can be referenced later to enforce a room’s storage data structure. The schema consists of a name (for referencing it), and a body, which specifies the exact allowed shape of data in the room. This body is a multi-line string written in the Liveblocks [schema syntax](/docs/platform/schema-validation/syntax).",
         "operationId": "post-create-new-schema",
         "requestBody": {
           "content": {
@@ -1005,7 +957,7 @@
             "$ref": "#/components/responses/401"
           },
           "422": {
-            "$ref": "#/components/responses/422schema"
+            "$ref": "#/components/responses/422-schema-validation"
           }
         },
         "servers": [
@@ -1125,10 +1077,10 @@
             "$ref": "#/components/responses/401"
           },
           "403": {
-            "$ref": "#/components/responses/403schema"
+            "$ref": "#/components/responses/403-schema-validation"
           },
           "422": {
-            "$ref": "#/components/responses/422schema"
+            "$ref": "#/components/responses/422-schema-validation"
           }
         },
         "servers": [
@@ -1154,13 +1106,13 @@
         ],
         "responses": {
           "200": {
-            "description": "Success. Schema was delated"
+            "description": "Success. Schema was delated."
           },
           "401": {
             "$ref": "#/components/responses/401"
           },
           "403": {
-            "$ref": "#/components/responses/403schema"
+            "$ref": "#/components/responses/403-schema-validation"
           }
         },
         "servers": [
@@ -1213,7 +1165,7 @@
             "$ref": "#/components/responses/401"
           },
           "403": {
-            "$ref": "#/components/responses/403schema"
+            "$ref": "#/components/responses/403-schema-validation"
           },
           "404": {
             "$ref": "#/components/responses/404schema"
@@ -1227,7 +1179,7 @@
       },
       "post": {
         "summary": "Attach schema to room",
-        "description": "This endpoint attachs a schema to a room, and instantly enables runtime schema validation for the room. If the current contents of the room's storage do not match the schema, attaching will fail and the error message will give details on why the schema failed to attach.",
+        "description": "This endpoint attachs a schema to a room, and instantly enables runtime schema validation for the room. If the current contents of the room’s storage do not match the schema, attaching will fail and the error message will give details on why the schema failed to attach.",
         "operationId": "post-attach-schema-to-room",
         "parameters": [
           {
@@ -1431,7 +1383,7 @@
       "get": {
         "summary": "Get comment",
         "description": "Get a thread.",
-        "operationId": "get-thread",
+        "operationId": "get-comment",
         "parameters": [
           {
             "name": "roomId",
@@ -1511,7 +1463,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Success. Returns the thread's participants",
+            "description": "Success. Returns the thread’s participants.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1536,24 +1488,6 @@
           },
           "404": {
             "$ref": "#/components/responses/404"
-          },
-          "": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "participantIds": {
-                      "type": "array",
-                      "items": {
-                        "type": "string"
-                      }
-                    }
-                  }
-                }
-              }
-            }
           }
         },
         "servers": [
@@ -1563,7 +1497,6 @@
         ]
       }
     },
-
     "/rooms/{roomId}/authorize": {
       "post": {
         "summary": "Get single-room token with secret key (deprecated)",
@@ -1658,7 +1591,7 @@
             }
           },
           "403": {
-            "$ref": "#/components/responses/403/content"
+            "$ref": "#/components/responses/403"
           },
           "404": {
             "$ref": "#/components/responses/404"
@@ -1837,7 +1770,7 @@
           }
         }
       },
-      "403schema": {
+      "403-schema-validation": {
         "description": "Unauthorized access.",
         "content": {
           "application/json": {
@@ -1925,7 +1858,7 @@
           }
         }
       },
-      "422schema": {
+      "422-schema-validation": {
         "description": "Unprocessable entity.",
         "content": {
           "application/json": {
@@ -2085,11 +2018,11 @@
           },
           "usersAccesses": {
             "type": ["object", "null"],
-            "description": "A map of user identifiers to permissions list. Setting the value as `null` will clear all users' accesses. Setting one user identifier as `null` will clear this user's accesses."
+            "description": "A map of user identifiers to permissions list. Setting the value as `null` will clear all users’ accesses. Setting one user identifier as `null` will clear this user’s accesses."
           },
           "groupsAccesses": {
             "type": ["object", "null"],
-            "description": "A map of group identifiers to permissions list. Setting the value as `null` will clear all groups' accesses. Setting one group identifier as `null` will clear this group's accesses."
+            "description": "A map of group identifiers to permissions list. Setting the value as `null` will clear all groups’ accesses. Setting one group identifier as `null` will clear this group’s accesses."
           },
           "metadata": {
             "type": ["object", "null"],
@@ -2111,9 +2044,6 @@
                 },
                 "connectionId": {
                   "type": "number"
-                },
-                "": {
-                  "type": "string"
                 }
               }
             }
