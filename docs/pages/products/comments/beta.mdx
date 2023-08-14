@@ -24,49 +24,26 @@ final version.
 
 </Banner>
 
-## Features
+## Philosophy
 
-### UserId
+### No need to synchronize your users info with Liveblocks
 
-For comments to function, Liveblocks only needs to store your users’ IDs. Your
-user data remains on your server, giving you full control and ownership of it.
-Any changes made to your app, such as profile updates or user deletions, do not
-need to be mirrored in Liveblocks.
-
-```tsx
-{
-    "type": "comment",
-    "threadId": "th_hhhFMlEx4whFcV0EJJ4o9",
-    "roomId": "my-room",
-    "id": "cm_hhhFMlEx3whFcV0EJJ4o9",
-    "userId": "user1", // 👈 Your user’s identification
-    "createdAt": "2023-07-04T20:40:28.068Z",
-    "body": {
-        "content": [
-            {
-                "type": "paragraph",
-                "children": [
-                    {
-                        "text": "Hello world!"
-                    }
-                ]
-            }
-        ]
-    },
-    "mentionedIds": []
-},
-```
+When posting a comment, we do not store the author name or picture. We only
+store the author id. We believe that it’s easier for you to retrieve users
+metadata when needed instead of synchronizing your database of users with
+Liveblocks.
 
 ```tsx
-resolveUser: async (userId) => {
-    try {
-      const response = await fetch(`/api/users?userId=${userId}`); // 👈 your own logic to fetch user information
+createRoomContext(client, {
+  resolveUser: async (userId) => {
+    // Fetch user metadata from a local cache or a backend endpoint
 
-      return response.json();
-    } catch (error) {
-      console.error(error);
-    }
+    return {
+      picture: "/images/marie-curie.png",
+      name: "Marie Curie",
+    };
   },
+});
 ```
 
 ### Webhooks
@@ -86,6 +63,7 @@ deletion.
     createdAt: "2023-07-04T20:40:28.068Z",
     createdBy: "florent.l",
   }
+}
 ```
 
 With Webhooks, you can leverage your own email marketing tool to send emails,
@@ -94,8 +72,8 @@ synchronize threads in Slack.
 
 ### Components
 
-To integrate the Comments feature, you have two primary design implementation
-pathways:
+To build comments in your application, you have two primary design
+implementation pathways:
 
 #### Default components
 
@@ -127,18 +105,15 @@ export function App() {
 
 #### Primitives
 
-- Unstyled components.
+- Headless, unstyled components.
 - Accessible building blocks to fully customize the experience if CSS is not
   enough.
 - Available hooks to access all the context of your threads and comments.
 
-```tsx file="Comment.tsx" highlight="1-4,8,10"
-import {
-  Comment as CommentPrimitive,
-  Timestamp,
-} from "@liveblocks/react-comments/primitives";
+```tsx file="Comment.tsx" highlight="1,8,10"
+import { Comment, Timestamp } from "@liveblocks/react-comments/primitives";
 
-export function Comment({ comment }) {
+export function CustomComment({ comment }) {
   return (
     <div>
       <div>
@@ -170,45 +145,36 @@ Some examples of custom requirements include:
   category.
 
 ```tsx
-{
-    "type": "thread",
-    "id": "th_hhhFMlEx4whFcV0EJJ4o9",
-    "roomId": "my-room",
-    "comments": [...],
-    "createdAt": "2023-07-04T19:23:09.983Z",
-    "metadata": { // 👈 Metadata associated with the thread
-        "location": "#image-3",
-        "resolved": true
-    },
-    "updatedAt": "2023-08-09T15:42:59.135Z" // 👈 When was the thread last updated
-}
+// Example to annotate a video at a specific timestamp
+createThread({
+  body,
+  metadata: {
+    timestamp: 42,
+  },
+});
+
+// Example to start a thread on a specific element in your document
+createThread({
+  body,
+  metadata: {
+    elementId: "xxx",
+  },
+});
 ```
 
 ### Deletion
 
-Comments are not deleted, only the body. We keep a placeholder so that the
-missing comment can still be noticed, giving you the option on how to display
-deleted comments; either through a clear “message deleted” indicator or by not
-displaying it. Note that we only delete a thread when all its comments have been
-deleted.
+Deleting a comment from the client, only soft deletes it. We set the
+`comment.body` to null. We keep a placeholder so that the missing comment can
+still be noticed, giving you the option on how to display deleted comments;
+either through a clear “message deleted” indicator or by not displaying it. Note
+that we only delete a thread when all its comments have been deleted.
 
-```tsx
-{
-    "type": "comment",
-    "threadId": "th_hhhFMlEx4whFcV0EJJ4o9",
-    "roomId": "my-room",
-    "id": "cm_h34Ed2DB2Nml1f33JhRo9",
-    "userId": "user1",
-    "createdAt": "2023-07-09T11:23:55.388Z",
-    "editedAt": "2023-08-01T18:43:21.566Z",
-    "deletedAt": "2023-08-09T15:39:35.567Z" // 👈 When was the comment deleted
-}
-```
+### Inspired by Radix
 
-### Radix: inspiration
-
-Our admiration for Radix runs deep. Their approach to low-level components has
-been a beacon of inspiration as we crafted our suite of tools.
+Our admiration for [Radix](https://www.radix-ui.com/) runs deep. Their approach
+to low-level components has been a beacon of inspiration as we crafted our suite
+of tools.
 
 - We prioritize making the components usable for everyone.
 - The components are designed for complete stylistic customization without
