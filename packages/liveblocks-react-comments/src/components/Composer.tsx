@@ -1,3 +1,5 @@
+"use client";
+
 import { useRoomContextBundle } from "@liveblocks/react";
 import type {
   ComponentProps,

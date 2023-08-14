@@ -39,9 +39,9 @@
     "README.md"
   ],
   "scripts": {
-    "dev": "tsup --watch",
-    "build": "tsup",
-    "start": "tsup --watch",
+    "dev": "rollup --config --watch",
+    "build": "rollup --config",
+    "start": "rollup --config --watch",
     "format": "eslint --fix src/; stylelint --fix src/styles/; prettier --write src/",
     "lint": "eslint src/; stylelint src/styles/",
     "test": "jest --silent --verbose --color=always",
@@ -50,8 +50,8 @@
   "dependencies": {
     "@floating-ui/react-dom": "^2.0.1",
     "@liveblocks/client": "1.2.0-comments6",
-    "@liveblocks/react": "1.2.0-comments6",
     "@liveblocks/core": "1.2.0-comments6",
+    "@liveblocks/react": "1.2.0-comments6",
     "@radix-ui/react-dropdown-menu": "^2.0.5",
     "@radix-ui/react-slot": "^1.0.2",
     "@radix-ui/react-toggle": "^1.0.3",
@@ -76,6 +76,9 @@
     "lightningcss": "^1.21.5",
     "msw": "^0.27.1",
     "react-error-boundary": "^3.1.1",
+    "rollup": "^3.28.0",
+    "rollup-plugin-dts": "^5.3.1",
+    "rollup-plugin-esbuild": "^5.0.0",
     "sass": "^1.65.1",
     "stylelint": "^15.10.2",
     "stylelint-config-standard-scss": "^10.0.0",

@@ -1,3 +1,5 @@
+"use client";
+
 import type { ThreadData } from "@liveblocks/core";
 import { useRoomContextBundle } from "@liveblocks/react";
 import * as TogglePrimitive from "@radix-ui/react-toggle";

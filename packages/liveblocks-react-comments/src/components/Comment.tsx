@@ -1,3 +1,5 @@
+"use client";
+
 import type { CommentData } from "@liveblocks/core";
 import { useRoomContextBundle } from "@liveblocks/react";
 import type { ComponentPropsWithoutRef, MouseEvent, ReactNode } from "react";
