@@ -13,7 +13,7 @@
     "/rooms": {
       "get": {
         "summary": "Get rooms",
-        "tags": [],
+        "tags": ["Room"],
         "responses": {
           "200": {
             "description": "Success. Returns the list of rooms and the next page URL.",
@@ -114,7 +114,7 @@
       },
       "post": {
         "summary": "Create room",
-        "tags": [],
+        "tags": ["Room"],
         "responses": {
           "200": {
             "description": "Success. Returns the created room.",
@@ -204,6 +204,7 @@
       ],
       "get": {
         "summary": "Get room",
+        "tags": ["Room"],
         "operationId": "get-rooms-roomId",
         "responses": {
           "200": {
@@ -254,7 +255,7 @@
       },
       "post": {
         "summary": "Update room",
-        "tags": [],
+        "tags": ["Room"],
         "responses": {
           "200": {
             "description": "Success. Returns the updated room.",
@@ -346,7 +347,7 @@
       },
       "delete": {
         "summary": "Delete room",
-        "tags": [],
+        "tags": ["Room"],
         "responses": {
           "204": {
             "description": "Success. The room was deleted"
@@ -382,7 +383,7 @@
       ],
       "get": {
         "summary": "Get active users",
-        "tags": [],
+        "tags": ["Room"],
         "operationId": "get-rooms-roomId-active-users",
         "description": "Returns a list of users currently present in the requested room. For better performance, we recommand to call this endpoint every 10 seconds maximum. \nDuplicates can happen if a user is in the requested room with multiple browser tabs opened.",
         "responses": {
@@ -431,6 +432,7 @@
     "/rooms/{roomId}/broadcast_event": {
       "post": {
         "summary": "Broadcast event to a room",
+        "tags": ["Room"],
         "operationId": "post-broadcast-event",
         "responses": {
           "204": {
@@ -493,7 +495,7 @@
       ],
       "get": {
         "summary": "Get Storage document",
-        "tags": [],
+        "tags": ["Storage"],
         "responses": {
           "200": {
             "description": "Success. Returns the room’s Storage as JSON.",
@@ -554,6 +556,7 @@
       },
       "post": {
         "summary": "Initialize Storage document",
+        "tags": ["Storage"],
         "operationId": "post-rooms-roomId-storage",
         "responses": {
           "200": {
@@ -658,6 +661,7 @@
       },
       "delete": {
         "summary": "Delete Storage",
+        "tags": ["Storage"],
         "operationId": "delete-rooms-roomId-storage",
         "responses": {
           "200": {
@@ -690,7 +694,7 @@
       ],
       "get": {
         "summary": "Get Yjs document",
-        "tags": [],
+        "tags": ["Yjs"],
         "responses": {
           "200": {
             "description": "Success. Returns the room’s Yjs document as JSON.",
@@ -726,6 +730,7 @@
     "/authorize-user": {
       "post": {
         "summary": "Get access token with secret key",
+        "tags": ["Authentication"],
         "operationId": "post-authorize-user",
         "responses": {
           "200": {
@@ -780,6 +785,7 @@
     "/identify-user": {
       "post": {
         "summary": "Get ID token with secret key",
+        "tags": ["Authentication"],
         "operationId": "post-identify-user",
         "responses": {
           "200": {
@@ -830,6 +836,7 @@
     "/schemas": {
       "post": {
         "summary": "Create schema",
+        "tags": ["Schema validation"],
         "operationId": "post-create-new-schema",
         "description": "Creates a new schema which can be referenced later to enforce a room’s Storage data structure. The schema consists of a name (for referencing it), and a body, which specifies the exact allowed shape of data in the room. This body is a multi-line string written in the Liveblocks [schema syntax](/docs/platform/schema-validation/syntax).",
         "requestBody": {
@@ -885,6 +892,7 @@
     "/schemas/{id}": {
       "get": {
         "summary": "Get schema",
+        "tags": ["Schema validation"],
         "operationId": "get-create-new-schema",
         "description": "This endpoint retrieves a schema by its id. The id is a combination of the schema name and version. For example, `my-schema@1`.",
         "responses": {
@@ -931,6 +939,7 @@
       },
       "put": {
         "summary": "Update schema",
+        "tags": ["Schema validation"],
         "operationId": "put-update-new-schema",
         "description": "Updates the body for the schema. A schema can only be updated if it is not used by any room.",
         "requestBody": {
@@ -996,6 +1005,7 @@
       },
       "delete": {
         "summary": "Delete schema",
+        "tags": ["Schema validation"],
         "operationId": "delete-a-schema",
         "description": "This endpoint deletes a schema by its ID. The ID is a combination of the schema name and version. For example, `my-schema@1`. A schema can only be deleted if it is not attached to a room.",
         "responses": {
@@ -1025,6 +1035,7 @@
     "/rooms/{roomId}/schema": {
       "get": {
         "summary": "Get schema by room",
+        "tags": ["Schema validation"],
         "operationId": "get-new-schema",
         "description": "This endpoint retrieves the schema attached to a room.",
         "responses": {
@@ -1074,6 +1085,7 @@
       },
       "post": {
         "summary": "Attach schema to room",
+        "tags": ["Schema validation"],
         "operationId": "post-attach-schema-to-room",
         "description": "This endpoint attachs a schema to a room, and instantly enables runtime schema validation for the room. If the current contents of the room’s Storage do not match the schema, attaching will fail and the error message will give details on why the schema failed to attach.",
         "requestBody": {
@@ -1134,6 +1146,7 @@
       },
       "delete": {
         "summary": "Detach schema from room",
+        "tags": ["Schema validation"],
         "operationId": "delete-detach-schema-to-room",
         "description": "This endpoint detaches the schema from a room.",
         "responses": {
@@ -1166,6 +1179,7 @@
     "/rooms/{roomId}/threads": {
       "get": {
         "summary": "Get room threads",
+        "tags": ["Comments"],
         "operationId": "get-threads",
         "parameters": [
           {
@@ -1211,6 +1225,7 @@
     "/rooms/{roomId}/threads/{threadId}": {
       "get": {
         "summary": "Get thread",
+        "tags": ["Comments"],
         "description": "Get a thread.",
         "operationId": "get-thread",
         "parameters": [
@@ -1257,6 +1272,7 @@
     "/rooms/{roomId}/threads/{threadId}/comments/{commentId}": {
       "get": {
         "summary": "Get comment",
+        "tags": ["Comments"],
         "description": "Get a thread.",
         "operationId": "get-comment",
         "parameters": [
@@ -1311,6 +1327,7 @@
     "/rooms/{roomId}/threads/{threadId}/participants": {
       "get": {
         "summary": "Get thread participants",
+        "tags": ["Comments"],
         "description": "Gets the list of thread participants. It is a list of unique user IDs representing all the thread comment authors and mentioned users in comments.",
         "operationId": "get-thread-participants",
         "parameters": [
@@ -1365,6 +1382,7 @@
     "/rooms/{roomId}/authorize": {
       "post": {
         "summary": "Get single-room token with secret key (deprecated)",
+        "tags": ["Deprecated"],
         "operationId": "post-authorize",
         "responses": {
           "200": {
@@ -1436,6 +1454,7 @@
     "/rooms/{roomId}/public/authorize": {
       "post": {
         "summary": "Get single-room token with public key (deprecated)",
+        "tags": ["Deprecated"],
         "operationId": "post-public-authorize",
         "responses": {
           "200": {
@@ -2154,5 +2173,14 @@
       }
     }
   },
+  "tags": [
+    { "name": "Authentication" },
+    { "name": "Room" },
+    { "name": "Storage" },
+    { "name": "Yjs" },
+    { "name": "Schema validation" },
+    { "name": "Comments" },
+    { "name": "Deprecated" }
+  ],
   "x-internal": true
 }
