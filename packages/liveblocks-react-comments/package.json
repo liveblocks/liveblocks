@@ -1,7 +1,7 @@
 {
   "name": "@liveblocks/react-comments",
   "version": "1.2.0-comments6",
-  "description": "A set of React hooks and components to add real time comments a la Notion, Figma, Google Docs in your product.",
+  "description": "A set of React components to add real time comments a la Notion, Figma, Google Docs in your product.",
   "license": "Apache-2.0",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -74,6 +74,7 @@
     "browserslist": "^4.21.10",
     "eslint-plugin-react-hooks": "^4.6.0",
     "lightningcss": "^1.21.5",
+    "msw": "^0.27.1",
     "react-error-boundary": "^3.1.1",
     "sass": "^1.65.1",
     "stylelint": "^15.10.2",
