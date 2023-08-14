@@ -11,36 +11,47 @@ p.tiptap-empty:first-child::before {
   margin: var(--space-8) 0;
 }
 
-.tiptap-link {
-  color: var(--color-accent);
-  font-weight: 600;
-  cursor: pointer;
-  text-decoration: underline;
+.tiptap-hr {
+  margin: var(--space-14) 0;
+  border-bottom: 1px solid var(--color-border);
 }
 
-/* Inline styles below */
+/* Heading styles below */
 h1.tiptap-heading {
   font-size: var(--size-3xl);
   font-weight: bold;
   margin-top: var(--space-12);
+  margin-bottom: var(--space-8);
 }
 
 h2.tiptap-heading {
   font-size: var(--size-2xl);
   font-weight: bold;
   margin-top: var(--space-12);
+  margin-bottom: var(--space-8);
 }
 
 h3.tiptap-heading {
   font-size: var(--size-xl);
   font-weight: bold;
   margin-top: var(--space-12);
+  margin-bottom: var(--space-8);
 }
 
 h1.tiptap-heading:first-child, h2.tiptap-heading:first-child, h3.tiptap-heading:first-child {
   margin-top: 0;
 }
 
+h1.tiptap-heading + h2.tiptap-heading,
+h1.tiptap-heading + h3.tiptap-heading,
+h2.tiptap-heading + h1.tiptap-heading,
+h2.tiptap-heading + h3.tiptap-heading,
+h3.tiptap-heading + h1.tiptap-heading,
+h3.tiptap-heading + h2.tiptap-heading {
+  margin-top: 0;
+}
+
+/* Advanced inline styles below */
 .tiptap-code {
   font-size: 1.2em;
   line-height: 1em;
@@ -54,6 +65,17 @@ h1 .tiptap-code, h2 .tiptap-code, h3 .tiptap-code {
   font-size: 1em;
 }
 
+.tiptap-highlight {
+  background: yellow;
+}
+
+.tiptap-link {
+  color: var(--color-accent);
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
 /* Block styles below */
 .tiptap-blockquote {
   margin-left: var(--space-8);
@@ -62,23 +84,13 @@ h1 .tiptap-code, h2 .tiptap-code, h3 .tiptap-code {
   border-left: var(--space-2) solid var(--color-border-contrasted)
 }
 
-.tiptap-code-block {
-  font-size: var(--size-sm);
-  line-height: 1.6;
-  white-space: pre;
-  background: rgb(var(--color-gray-850));
-  color: rgb(var(--color-gray-100));
-  padding: var(--space-8);
-  border-radius: var(--radius-xs);
-  margin: var(--space-6) 0;
-}
-
 .tiptap-list-item p {
   margin: var(--space-2) 0;
 }
 
 .tiptap-list-item {
   margin-left: var(--space-12);
+  padding-left: var(--space-2);
   list-style: disc;
 }
 
@@ -117,7 +129,47 @@ h1 .tiptap-code, h2 .tiptap-code, h3 .tiptap-code {
   list-style: decimal;
 }
 
+.tiptap-task-list {
+  list-style: none;
+  padding: 0;
+}
+
+.tiptap-task-list p {
+  margin: 0;
+}
+
+.tiptap-task-item {
+  display: flex;
+  margin-left: var(--space-8);
+}
+
+.tiptap-task-item > label {
+  flex: 0 0 auto;
+  margin-right: 0.5rem;
+  user-select: none;
+}
+
+.tiptap-task-item > div {
+  flex: 1 1 auto;
+  padding-left: var(--space-2);
+}
+
 /* Media blocks below */
+.tiptap-code-block {
+  font-size: var(--size-sm);
+  line-height: 1.6;
+  white-space: pre;
+  background: rgb(var(--color-gray-850));
+  color: rgb(var(--color-gray-100));
+  padding: var(--space-8);
+  border-radius: var(--radius-xs);
+  margin: var(--space-8) 0;
+}
+
+.tiptap-image, .tiptap-youtube {
+  margin: var(--space-8) 0;
+}
+
 .tiptap-image.ProseMirror-selectednode, .tiptap-youtube.ProseMirror-selectednode {
   outline: 1.5px solid var(--color-accent);
 }

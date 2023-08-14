@@ -14,7 +14,7 @@ type Props = {
   editor: Editor;
 };
 
-export function Headings({ editor }: Props) {
+export function ToolbarHeadings({ editor }: Props) {
   const onHeadingChange = useCallback(
     (value: string) => {
       if (!editor) {

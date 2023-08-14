@@ -5,9 +5,12 @@ import LiveblocksProvider from "@liveblocks/yjs";
 import { CharacterCount } from "@tiptap/extension-character-count";
 import Collaboration from "@tiptap/extension-collaboration";
 import CollaborationCursor from "@tiptap/extension-collaboration-cursor";
+import Highlight from "@tiptap/extension-highlight";
 import { Image } from "@tiptap/extension-image";
 import Link from "@tiptap/extension-link";
 import Placeholder from "@tiptap/extension-placeholder";
+import TaskItem from "@tiptap/extension-task-item";
+import TaskList from "@tiptap/extension-task-list";
 import { TextAlign } from "@tiptap/extension-text-align";
 import { Typography } from "@tiptap/extension-typography";
 import Youtube from "@tiptap/extension-youtube";
@@ -76,12 +79,9 @@ function TiptapEditor({ doc, provider }: EditorProps) {
     },
     extensions: [
       StarterKit.configure({
-        // The Collaboration extension comes with its own history handling
-        history: false,
-        heading: {
-          levels: [1, 2, 3],
+        blockquote: {
           HTMLAttributes: {
-            class: "tiptap-heading",
+            class: "tiptap-blockquote",
           },
         },
         code: {
@@ -89,16 +89,24 @@ function TiptapEditor({ doc, provider }: EditorProps) {
             class: "tiptap-code",
           },
         },
-        blockquote: {
-          HTMLAttributes: {
-            class: "tiptap-blockquote",
-          },
-        },
         codeBlock: {
           languageClassPrefix: "language-",
           HTMLAttributes: {
             class: "tiptap-code-block",
             spellcheck: false,
+          },
+        },
+        heading: {
+          levels: [1, 2, 3],
+          HTMLAttributes: {
+            class: "tiptap-heading",
+          },
+        },
+        // The Collaboration extension comes with its own history handling
+        history: false,
+        horizontalRule: {
+          HTMLAttributes: {
+            class: "tiptap-hr",
           },
         },
         listItem: {
@@ -118,6 +126,11 @@ function TiptapEditor({ doc, provider }: EditorProps) {
         },
       }),
       CharacterCount,
+      Highlight.configure({
+        HTMLAttributes: {
+          class: "tiptap-highlight",
+        },
+      }),
       Image.configure({
         HTMLAttributes: {
           class: "tiptap-image",
@@ -131,6 +144,16 @@ function TiptapEditor({ doc, provider }: EditorProps) {
       Placeholder.configure({
         placeholder: "Start writing…",
         emptyEditorClass: "tiptap-empty",
+      }),
+      TaskItem.configure({
+        HTMLAttributes: {
+          class: "tiptap-task-item",
+        },
+      }),
+      TaskList.configure({
+        HTMLAttributes: {
+          class: "tiptap-task-list",
+        },
       }),
       TextAlign.configure({
         types: ["heading", "paragraph"],

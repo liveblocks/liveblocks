@@ -1,5 +1,6 @@
 import { Editor } from "@tiptap/react";
 import { BlockquoteIcon } from "../../icons/Blockquote";
+import { CheckboxIcon } from "../../icons/Checkbox";
 import { ListOrderedIcon } from "../../icons/ListOrdered";
 import { ListUnorderedIcon } from "../../icons/ListUnordered";
 import { Button } from "../../primitives/Button";
@@ -43,6 +44,17 @@ export function ToolbarBlock({ editor }: Props) {
         aria-label="Blockquote"
       >
         <BlockquoteIcon />
+      </Button>
+
+      <Button
+        className={styles.toolbarButton}
+        variant="subtle"
+        onClick={() => editor.chain().focus().toggleTaskList().run()}
+        disabled={!editor.can().chain().focus().toggleTaskList().run()}
+        data-active={editor.isActive("taskList") ? "is-active" : undefined}
+        aria-label="Task list"
+      >
+        <CheckboxIcon style={{ width: "16px" }} />
       </Button>
     </>
   );
