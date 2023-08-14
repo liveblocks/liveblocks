@@ -492,6 +492,7 @@ const ComposerSuggestionsListItem = forwardRef<
       () => selectedValue === value,
       [selectedValue, value]
     );
+    // TODO: Support props.id if provided, it will need to be sent up to Composer.Editor to use it in aria-activedescendant
     const id = useMemo(() => itemId(value), [itemId, value]);
 
     useEffect(() => {

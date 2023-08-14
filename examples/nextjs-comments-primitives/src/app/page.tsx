@@ -96,7 +96,7 @@ function Composer({
     >
       <ComposerPrimitive.Editor
         placeholder={placeholder}
-        className="prose prose-sm min-h-[theme(spacing.9)] flex-1 rounded-md border border-gray-200 px-3 py-1.5 outline-none ring-blue-300 ring-offset-2 focus-visible:ring-2"
+        className="prose prose-sm min-h-[theme(spacing.9)] flex-1 rounded-md px-3 py-1.5 outline outline-1 -outline-offset-1 outline-gray-200 ring-blue-300 ring-offset-2 focus-visible:ring-2"
         renderMention={({ userId }) => {
           return (
             <ComposerPrimitive.Mention className="rounded bg-blue-50 px-1 py-0.5 font-semibold text-blue-500 data-[selected]:bg-blue-500 data-[selected]:text-white">
@@ -158,7 +158,7 @@ function Comment({ comment, className, ...props }: CommentProps) {
         </Suspense>
         <div className="flex min-w-0 items-baseline gap-2">
           <Suspense fallback={comment.userId}>
-            <User userId={comment.userId} className="truncate" />
+            <User userId={comment.userId} className="truncate font-semibold" />
           </Suspense>
           <Timestamp
             date={comment.createdAt}
