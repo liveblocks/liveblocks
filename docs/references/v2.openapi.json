@@ -62,7 +62,7 @@
           }
         },
         "operationId": "get-rooms",
-        "description": "Returns a list of your rooms. The rooms are returned sorted by creation date, from newest to oldest. You can filter rooms by metadata, users accesses and groups accesses.\n\nThere is a pagination system where the next page URL is returned in the response as `nextPage`.\nYou can also limit the number of rooms by query.\n\nFiltering by metadata works by giving key values like `metadata.color=red`. Of course you can combine multiple metadata clauses to refine the response like `metadata.color=red&metadata.type=text`. Notice here the operator AND is applied between each clauses.\n\nFiltering by groups or userId works by giving a list of groups like `groupIds=marketing,GZo7tQ,product` or/and a userId like `userId=user1`.\nNotice here the operator OR is applied between each `groupIds` and the `userId`.\n",
+        "description": "This endpoint returns a list of your rooms. The rooms are returned sorted by creation date, from newest to oldest. You can filter rooms by metadata, users accesses and groups accesses.\n\nThere is a pagination system where the next page URL is returned in the response as `nextPage`.\nYou can also limit the number of rooms by query.\n\nFiltering by metadata works by giving key values like `metadata.color=red`. Of course you can combine multiple metadata clauses to refine the response like `metadata.color=red&metadata.type=text`. Notice here the operator AND is applied between each clauses.\n\nFiltering by groups or userId works by giving a list of groups like `groupIds=marketing,GZo7tQ,product` or/and a userId like `userId=user1`.\nNotice here the operator OR is applied between each `groupIds` and the `userId`.\n",
         "parameters": [
           {
             "schema": {
@@ -186,7 +186,7 @@
             }
           }
         },
-        "description": "Create a new room. `id` and `defaultAccesses` are required. \n- `defaultAccessess` could be `[]` or `[\"room:write\"]` (private or public). \n- `metadata` could be key/value as `string` or `string[]`. `metadata` supports maximum 50 entries. Key length has a limit of 40 characters maximum. Value length has a limit of 256 characters maximum. `metadata` is optional field.\n- `usersAccesses` could be `[]` or `[\"room:write\"]` for every records. `usersAccesses` can contain 100 ids maximum. Id length has a limit of 40 characters. `usersAccesses` is optional field.\n- `groupsAccesses` are optional fields.\n"
+        "description": "This endpoint creates a new room. `id` and `defaultAccesses` are required. \n- `defaultAccessess` could be `[]` or `[\"room:write\"]` (private or public). \n- `metadata` could be key/value as `string` or `string[]`. `metadata` supports maximum 50 entries. Key length has a limit of 40 characters maximum. Value length has a limit of 256 characters maximum. `metadata` is optional field.\n- `usersAccesses` could be `[]` or `[\"room:write\"]` for every records. `usersAccesses` can contain 100 ids maximum. Id length has a limit of 40 characters. `usersAccesses` is optional field.\n- `groupsAccesses` are optional fields.\n"
       },
       "parameters": []
     },
@@ -250,7 +250,7 @@
             "$ref": "#/components/responses/404"
           }
         },
-        "description": "Get a room by its ID. ",
+        "description": "This endpoint returns a room by its ID.",
         "parameters": []
       },
       "post": {
@@ -304,7 +304,7 @@
           }
         },
         "operationId": "post-rooms-roomId",
-        "description": "Updates specific properties of a room. It’s not necessary to provide the entire room’s information. \nSetting a property to `null` means to delete this property. For example, if you want to remove access to a specific user without losing other users: \n``{\n    \"usersAccesses\": {\n        \"john\": null\n    }\n}``\n`defaultAccessess`, `metadata`, `usersAccesses`, `groupsAccesses` can be updated.\n\n- `defaultAccessess` could be `[]` or `[\"room:write\"]` (private or public). \n- `metadata` could be key/value as `string` or `string[]`. `metadata` supports maximum 50 entries. Key length has a limit of 40 characters maximum. Value length has a limit of 256 characters maximum. `metadata` is optional field.\n- `usersAccesses` could be `[]` or `[\"room:write\"]` for every records. `usersAccesses` can contain 100 ids maximum. Id length has a limit of 256 characters. `usersAccesses` is optional field.\n- `groupsAccesses` could be `[]` or `[\"room:write\"]` for every records. `groupsAccesses` can contain 100 ids maximum. Id length has a limit of 256 characters. `groupsAccesses` is optional field.\n\n",
+        "description": "This endpoint updates specific properties of a room. It’s not necessary to provide the entire room’s information. \nSetting a property to `null` means to delete this property. For example, if you want to remove access to a specific user without losing other users: \n``{\n    \"usersAccesses\": {\n        \"john\": null\n    }\n}``\n`defaultAccessess`, `metadata`, `usersAccesses`, `groupsAccesses` can be updated.\n\n- `defaultAccessess` could be `[]` or `[\"room:write\"]` (private or public). \n- `metadata` could be key/value as `string` or `string[]`. `metadata` supports maximum 50 entries. Key length has a limit of 40 characters maximum. Value length has a limit of 256 characters maximum. `metadata` is optional field.\n- `usersAccesses` could be `[]` or `[\"room:write\"]` for every records. `usersAccesses` can contain 100 ids maximum. Id length has a limit of 256 characters. `usersAccesses` is optional field.\n- `groupsAccesses` could be `[]` or `[\"room:write\"]` for every records. `groupsAccesses` can contain 100 ids maximum. Id length has a limit of 256 characters. `groupsAccesses` is optional field.\n\n",
         "requestBody": {
           "content": {
             "application/json": {
@@ -341,8 +341,7 @@
                 "properties": {}
               }
             }
-          },
-          "description": ""
+          }
         }
       },
       "delete": {
@@ -366,7 +365,7 @@
           }
         },
         "operationId": "delete-rooms-roomId",
-        "description": "Deletes a room. A deleted room is no longer accessible from the API or the dashboard and it cannot be restored. \n\n"
+        "description": "This endpoint deletes a room. A deleted room is no longer accessible from the API or the dashboard and it cannot be restored. \n\n"
       }
     },
     "/rooms/{roomId}/active_users": {
@@ -385,7 +384,7 @@
         "summary": "Get active users",
         "tags": ["Room"],
         "operationId": "get-rooms-roomId-active-users",
-        "description": "Returns a list of users currently present in the requested room. For better performance, we recommand to call this endpoint every 10 seconds maximum. \nDuplicates can happen if a user is in the requested room with multiple browser tabs opened.",
+        "description": "This endpoint returns a list of users currently present in the requested room. For better performance, we recommand to call this endpoint every 10 seconds maximum. \nDuplicates can happen if a user is in the requested room with multiple browser tabs opened.",
         "responses": {
           "200": {
             "description": "Success. Returns the list of active users for the specified room.",
@@ -552,7 +551,7 @@
           }
         },
         "operationId": "get-rooms-roomId-storage",
-        "description": "Returns a room’s Storage as JSON.\n\nSome implementation details:\nEach Liveblocks data structure is represented by a JSON element having two properties:\n`\"liveblocksType\": \"LiveObject\" | \"LiveList\" | \"LiveMap\"`\n`\"data\"` => contains the nested data structures (children) and data.\nThe root is always a `LiveObject`."
+        "description": "This endpoint returns a room’s Storage as JSON.\n\nSome implementation details:\nEach Liveblocks data structure is represented by a JSON element having two properties:\n`\"liveblocksType\": \"LiveObject\" | \"LiveList\" | \"LiveMap\"`\n`\"data\"` => contains the nested data structures (children) and data.\nThe root is always a `LiveObject`."
       },
       "post": {
         "summary": "Initialize Storage document",
@@ -613,7 +612,7 @@
             "$ref": "#/components/responses/404"
           }
         },
-        "description": "Initializes a room’s Storage. The room must already exist and have an empty Storage. Calling this endpoint will disconnect all users from the room if there are any.\n\nThe format of the request body is the same as what’s returned by the get Storage endpoint.\n\nFor each Liveblocks data structure that you want to create, you need a JSON element having two properties:\n- `\"liveblocksType\"` => `\"LiveObject\" | \"LiveList\" | \"LiveMap\"`\n- `\"data\"` => contains the nested data structures (children) and data.\n\nThe root’s type can only be LiveObject.\n\nA utility function, `toPlainLson` is included in `@liveblocks/client` from `1.0.9` to help convert `LiveObject`, `LiveList`, and `LiveMap` to the structure expected by the endpoint.",
+        "description": "This endpoint initializes a room’s Storage. The room must already exist and have an empty Storage. Calling this endpoint will disconnect all users from the room if there are any.\n\nThe format of the request body is the same as what’s returned by the get Storage endpoint.\n\nFor each Liveblocks data structure that you want to create, you need a JSON element having two properties:\n- `\"liveblocksType\"` => `\"LiveObject\" | \"LiveList\" | \"LiveMap\"`\n- `\"data\"` => contains the nested data structures (children) and data.\n\nThe root’s type can only be LiveObject.\n\nA utility function, `toPlainLson` is included in `@liveblocks/client` from `1.0.9` to help convert `LiveObject`, `LiveList`, and `LiveMap` to the structure expected by the endpoint.",
         "requestBody": {
           "content": {
             "application/json": {
@@ -655,8 +654,7 @@
                 }
               }
             }
-          },
-          "description": ""
+          }
         }
       },
       "delete": {
@@ -677,7 +675,7 @@
             "$ref": "#/components/responses/404"
           }
         },
-        "description": "Deletes all of the room’s Storage data. Calling this endpoint will disconnect all users from the room if there are any.\n"
+        "description": "This endpoint deletes all of the room’s Storage data. Calling this endpoint will disconnect all users from the room if there are any.\n"
       }
     },
 
@@ -724,113 +722,7 @@
           }
         },
         "operationId": "get-rooms-roomId-ydoc",
-        "description": "Returns a JSON representation of the room’s Yjs document."
-      }
-    },
-    "/authorize-user": {
-      "post": {
-        "summary": "Get access token with secret key",
-        "tags": ["Authentication"],
-        "operationId": "post-authorize-user",
-        "responses": {
-          "200": {
-            "description": "Success. Returns an access token that can be used to enter one or more rooms.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TokenResponse"
-                },
-                "examples": {
-                  "example": {
-                    "value": {
-                      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIi..."
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "403": {
-            "$ref": "#/components/responses/403"
-          }
-        },
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/AuthorizeUserRequest"
-              },
-              "examples": {
-                "example": {
-                  "value": {
-                    "userId": "user-123",
-                    "userInfo": {
-                      "name": "bob",
-                      "avatar": "https://example.org/images/user123.jpg"
-                    },
-                    "permissions": {
-                      "my-room-1": ["room:write"],
-                      "my-room-2": ["room:write"],
-                      "my-room-*": ["room:read"]
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        "description": "This endpoint lets your application server (your backend) obtain a token that one of its clients (your frontend) can use to enter a Liveblocks room. You use this endpoint to implement your own application’s custom authentication endpoint. When making this request, you’ll have to use your secret key.\n\n**Important:** The difference with an [ID token](#post-identify-user) is that an access token holds all the permissions, and is the source of truth. With ID tokens, permissions are set in the Liveblocks backend (through REST API calls) and \"checked at the door\" every time they are used to enter a room.\n\n**Note:** When using the `@liveblocks/node` package, you can use [`Liveblocks.prepareSession`](/docs/api-reference/liveblocks-node#access-tokens) in your backend to build this request.\n\nYou can pass the property `userId` in the request's body. This can be whatever internal identifier you use for your user accounts as long as it uniquely identifies an account. The property `userId` is used by Liveblocks to calculate your account’s Monthly Active Users. One unique `userId` corresponds to one MAU.\n\nAdditionally, you can set custom metadata to the token, which will be publicly accessible by other clients through the `user.info` property. This is useful for storing static data like avatar images or the user’s display name.\n\nLastly, you’ll specify the exact permissions to give to the user using the `permissions` field. This is done in an object where the keys are room names, or room name patterns (ending in a `*`), and a list of permissions to assign the user for any room that matches that name exactly (or starts with the pattern’s prefix). For tips, see [Manage permissions with access tokens](/docs/rooms/permissions/access-token)."
-      }
-    },
-    "/identify-user": {
-      "post": {
-        "summary": "Get ID token with secret key",
-        "tags": ["Authentication"],
-        "operationId": "post-identify-user",
-        "responses": {
-          "200": {
-            "description": "Success. Returns an ID token that can be used to enter one or more rooms.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TokenResponse"
-                },
-                "examples": {
-                  "example": {
-                    "value": {
-                      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIi..."
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "403": {
-            "$ref": "#/components/responses/403"
-          }
-        },
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/IdentifyUserRequest"
-              },
-              "examples": {
-                "example": {
-                  "value": {
-                    "userId": "user-123",
-                    "groupIds": ["marketing", "engineering"],
-                    "userInfo": {
-                      "name": "bob",
-                      "avatar": "https://example.org/images/user123.jpg"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        "description": "This endpoint lets your application server (your backend) obtain a token that one of its clients (your frontend) can use to enter a Liveblocks room. You use this endpoint to implement your own application’s custom authentication endpoint. When using this endpoint to obtain ID tokens, you should manage your permissions by assigning user and/or group permissions to rooms explicitly, see our [Manage permissions with ID tokens](/docs/rooms/permissions/id-token) section.\n\n**Important:** The difference with an [access token](#post-authorize-user) is that an ID token doesn’t hold any permissions itself. With ID tokens, permissions are set in the Liveblocks backend (through REST API calls) and \"checked at the door\" every time they are used to enter a room. With access tokens, all permissions are set in the token itself, and thus controlled from your backend entirely.\n\n**Note:** When using the `@liveblocks/node` package, you can use [`Liveblocks.identifyUser`](/docs/api-reference/liveblocks-node) in your backend to build this request.\n\nYou can pass the property `userId` in the request's body. This can be whatever internal identifier you use for your user accounts as long as it uniquely identifies an account. The property `userId` is used by Liveblocks to calculate your account’s Monthly Active Users. One unique `userId` corresponds to one MAU.\n\nIf you want to use group permissions, you can also declare which `groupIds` this user belongs to. The group ID values are yours, but they will have to match the group IDs you assign permissions to when assigning permissions to rooms, see [Manage permissions with ID tokens](/docs/rooms/permissions/id-token)).\n\nAdditionally, you can set custom metadata to the token, which will be publicly accessible by other clients through the `user.info` property. This is useful for storing static data like avatar images or the user’s display name."
+        "description": "This endpoint returns a JSON representation of the room’s Yjs document."
       }
     },
     "/schemas": {
@@ -838,7 +730,7 @@
         "summary": "Create schema",
         "tags": ["Schema validation"],
         "operationId": "post-create-new-schema",
-        "description": "Creates a new schema which can be referenced later to enforce a room’s Storage data structure. The schema consists of a name (for referencing it), and a body, which specifies the exact allowed shape of data in the room. This body is a multi-line string written in the Liveblocks [schema syntax](/docs/platform/schema-validation/syntax).",
+        "description": "This endpoint creates a new schema which can be referenced later to enforce a room’s Storage data structure. The schema consists of a name (for referencing it), and a body, which specifies the exact allowed shape of data in the room. This body is a multi-line string written in the Liveblocks [schema syntax](/docs/platform/schema-validation/syntax).",
         "requestBody": {
           "content": {
             "application/json": {
@@ -941,7 +833,7 @@
         "summary": "Update schema",
         "tags": ["Schema validation"],
         "operationId": "put-update-new-schema",
-        "description": "Updates the body for the schema. A schema can only be updated if it is not used by any room.",
+        "description": "This endpoint updates the body for the schema. A schema can only be updated if it is not used by any room.",
         "requestBody": {
           "content": {
             "application/json": {
@@ -1180,6 +1072,7 @@
       "get": {
         "summary": "Get room threads",
         "tags": ["Comments"],
+        "description": "This endpoint returns the threads in the requested room.",
         "operationId": "get-threads",
         "parameters": [
           {
@@ -1226,7 +1119,7 @@
       "get": {
         "summary": "Get thread",
         "tags": ["Comments"],
-        "description": "Get a thread.",
+        "description": "This endpoint returns a thread by its ID.",
         "operationId": "get-thread",
         "parameters": [
           {
@@ -1273,7 +1166,7 @@
       "get": {
         "summary": "Get comment",
         "tags": ["Comments"],
-        "description": "Get a thread.",
+        "description": "This endpoint returns a comment by its ID.",
         "operationId": "get-comment",
         "parameters": [
           {
@@ -1328,7 +1221,7 @@
       "get": {
         "summary": "Get thread participants",
         "tags": ["Comments"],
-        "description": "Gets the list of thread participants. It is a list of unique user IDs representing all the thread comment authors and mentioned users in comments.",
+        "description": "This endpoint returns the list of thread participants. It is a list of unique user IDs representing all the thread comment authors and mentioned users in comments.",
         "operationId": "get-thread-participants",
         "parameters": [
           {
@@ -1350,7 +1243,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Success. Returns the thread's participants",
+            "description": "Success. Returns the thread’s participants",
             "content": {
               "application/json": {
                 "schema": {
@@ -1377,6 +1270,112 @@
             "$ref": "#/components/responses/404"
           }
         }
+      }
+    },
+    "/authorize-user": {
+      "post": {
+        "summary": "Get access token with secret key",
+        "tags": ["Authentication"],
+        "operationId": "post-authorize-user",
+        "responses": {
+          "200": {
+            "description": "Success. Returns an access token that can be used to enter one or more rooms.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenResponse"
+                },
+                "examples": {
+                  "example": {
+                    "value": {
+                      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIi..."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AuthorizeUserRequest"
+              },
+              "examples": {
+                "example": {
+                  "value": {
+                    "userId": "user-123",
+                    "userInfo": {
+                      "name": "bob",
+                      "avatar": "https://example.org/images/user123.jpg"
+                    },
+                    "permissions": {
+                      "my-room-1": ["room:write"],
+                      "my-room-2": ["room:write"],
+                      "my-room-*": ["room:read"]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": "This endpoint lets your application server (your backend) obtain a token that one of its clients (your frontend) can use to enter a Liveblocks room. You use this endpoint to implement your own application’s custom authentication endpoint. When making this request, you’ll have to use your secret key.\n\n**Important:** The difference with an [ID token](#post-identify-user) is that an access token holds all the permissions, and is the source of truth. With ID tokens, permissions are set in the Liveblocks backend (through REST API calls) and \"checked at the door\" every time they are used to enter a room.\n\n**Note:** When using the `@liveblocks/node` package, you can use [`Liveblocks.prepareSession`](/docs/api-reference/liveblocks-node#access-tokens) in your backend to build this request.\n\nYou can pass the property `userId` in the request’s body. This can be whatever internal identifier you use for your user accounts as long as it uniquely identifies an account. The property `userId` is used by Liveblocks to calculate your account’s Monthly Active Users. One unique `userId` corresponds to one MAU.\n\nAdditionally, you can set custom metadata to the token, which will be publicly accessible by other clients through the `user.info` property. This is useful for storing static data like avatar images or the user’s display name.\n\nLastly, you’ll specify the exact permissions to give to the user using the `permissions` field. This is done in an object where the keys are room names, or room name patterns (ending in a `*`), and a list of permissions to assign the user for any room that matches that name exactly (or starts with the pattern’s prefix). For tips, see [Manage permissions with access tokens](/docs/rooms/permissions/access-token)."
+      }
+    },
+    "/identify-user": {
+      "post": {
+        "summary": "Get ID token with secret key",
+        "tags": ["Authentication"],
+        "operationId": "post-identify-user",
+        "responses": {
+          "200": {
+            "description": "Success. Returns an ID token that can be used to enter one or more rooms.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenResponse"
+                },
+                "examples": {
+                  "example": {
+                    "value": {
+                      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIi..."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IdentifyUserRequest"
+              },
+              "examples": {
+                "example": {
+                  "value": {
+                    "userId": "user-123",
+                    "groupIds": ["marketing", "engineering"],
+                    "userInfo": {
+                      "name": "bob",
+                      "avatar": "https://example.org/images/user123.jpg"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": "This endpoint lets your application server (your backend) obtain a token that one of its clients (your frontend) can use to enter a Liveblocks room. You use this endpoint to implement your own application’s custom authentication endpoint. When using this endpoint to obtain ID tokens, you should manage your permissions by assigning user and/or group permissions to rooms explicitly, see our [Manage permissions with ID tokens](/docs/rooms/permissions/id-token) section.\n\n**Important:** The difference with an [access token](#post-authorize-user) is that an ID token doesn’t hold any permissions itself. With ID tokens, permissions are set in the Liveblocks backend (through REST API calls) and \"checked at the door\" every time they are used to enter a room. With access tokens, all permissions are set in the token itself, and thus controlled from your backend entirely.\n\n**Note:** When using the `@liveblocks/node` package, you can use [`Liveblocks.identifyUser`](/docs/api-reference/liveblocks-node) in your backend to build this request.\n\nYou can pass the property `userId` in the request’s body. This can be whatever internal identifier you use for your user accounts as long as it uniquely identifies an account. The property `userId` is used by Liveblocks to calculate your account’s Monthly Active Users. One unique `userId` corresponds to one MAU.\n\nIf you want to use group permissions, you can also declare which `groupIds` this user belongs to. The group ID values are yours, but they will have to match the group IDs you assign permissions to when assigning permissions to rooms, see [Manage permissions with ID tokens](/docs/rooms/permissions/id-token)).\n\nAdditionally, you can set custom metadata to the token, which will be publicly accessible by other clients through the `user.info` property. This is useful for storing static data like avatar images or the user’s display name."
       }
     },
     "/rooms/{roomId}/authorize": {
@@ -1499,8 +1498,7 @@
                 }
               }
             }
-          },
-          "description": ""
+          }
         }
       },
       "parameters": [
@@ -1569,11 +1567,11 @@
           },
           "usersAccesses": {
             "type": ["object", "null"],
-            "description": "A map of user identifiers to permissions list. Setting the value as `null` will clear all users' accesses. Setting one user identifier as `null` will clear this user’s accesses."
+            "description": "A map of user identifiers to permissions list. Setting the value as `null` will clear all users’ accesses. Setting one user identifier as `null` will clear this user’s accesses."
           },
           "groupsAccesses": {
             "type": ["object", "null"],
-            "description": "A map of group identifiers to permissions list. Setting the value as `null` will clear all groups' accesses. Setting one group identifier as `null` will clear this group’s accesses."
+            "description": "A map of group identifiers to permissions list. Setting the value as `null` will clear all groups’ accesses. Setting one group identifier as `null` will clear this group’s accesses."
           },
           "metadata": {
             "type": ["object", "null"],
@@ -2110,7 +2108,7 @@
                   "error": "SCHEMA_NOT_COMPATIBLE",
                   "message": "Existing room data does not match this schema.",
                   "suggestion": "Check the following error and make adjustments to your schema to be able to attach it to this room.",
-                  "doc": ""
+                  "docs": ""
                 }
               }
             }
