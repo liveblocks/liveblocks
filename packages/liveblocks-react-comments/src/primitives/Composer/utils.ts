@@ -12,7 +12,7 @@ export function composerBodyMentionToCommentBodyMention(
 ): CommentBodyMention {
   return {
     type: "mention",
-    userId: mention.userId,
+    id: mention.id,
   };
 }
 
@@ -21,7 +21,7 @@ export function commentBodyMentionToComposerBodyMention(
 ): ComposerBodyMention {
   return {
     type: "mention",
-    userId: mention.userId,
+    id: mention.id,
     children: [{ text: "" }],
   };
 }
