@@ -8,7 +8,7 @@ type Props = {
 
 export function SelectionMenu({ editor }: Props) {
   return (
-    <BubbleMenu editor={editor}>
+    <BubbleMenu editor={editor} tippyOptions={{ zIndex: 99 }}>
       {shouldShowBubbleMenu(editor) ? (
         <div className={styles.bubbleMenuWrapper}>
           <ToolbarInline editor={editor} />
