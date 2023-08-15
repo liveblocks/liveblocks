@@ -254,17 +254,11 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
                     align="end"
                     content={
                       <>
-                        <DropdownItem
-                          className="lb-dropdown-item"
-                          onSelect={handleEdit}
-                        >
+                        <DropdownItem onSelect={handleEdit}>
                           <EditIcon className="lb-dropdown-item-icon" />
                           {$.COMMENT_EDIT}
                         </DropdownItem>
-                        <DropdownItem
-                          className="lb-dropdown-item"
-                          onSelect={handleDelete}
-                        >
+                        <DropdownItem onSelect={handleDelete}>
                           <DeleteIcon className="lb-dropdown-item-icon" />
                           {$.COMMENT_DELETE}
                         </DropdownItem>

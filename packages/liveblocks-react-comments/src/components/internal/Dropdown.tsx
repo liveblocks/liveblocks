@@ -2,7 +2,7 @@
 
 import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu";
 import type { ReactNode } from "react";
-import React from "react";
+import React, { forwardRef } from "react";
 
 import {
   FLOATING_ELEMENT_COLLISION_PADDING,
@@ -54,7 +54,19 @@ export function Dropdown({
   );
 }
 
-export {
-  DropdownMenuItem as DropdownItem,
-  DropdownMenuTrigger as DropdownTrigger,
-} from "@radix-ui/react-dropdown-menu";
+export const DropdownItem = forwardRef<
+  HTMLDivElement,
+  DropdownMenuPrimitive.DropdownMenuItemProps
+>(({ children, className, ...props }, forwardedRef) => {
+  return (
+    <DropdownMenuPrimitive.DropdownMenuItem
+      className={classNames("lb-dropdown-item", className)}
+      {...props}
+      ref={forwardedRef}
+    >
+      {children}
+    </DropdownMenuPrimitive.DropdownMenuItem>
+  );
+});
+
+export { DropdownMenuTrigger as DropdownTrigger } from "@radix-ui/react-dropdown-menu";
