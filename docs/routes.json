@@ -160,21 +160,7 @@
       },
       {
         "title": "Comments",
-        "path": "/products/comments",
-        "routes": [
-          {
-            "title": "Private Beta",
-            "path": "/products/comments/beta",
-            "hidden": true,
-            "routes": [
-              {
-                "title": "Reference",
-                "path": "/products/comments/beta/reference",
-                "hidden": true
-              }
-            ]
-          }
-        ]
+        "path": "/products/comments"
       }
     ]
   },
@@ -322,6 +308,11 @@
       {
         "title": "@liveblocks/react",
         "path": "/api-reference/liveblocks-react"
+      },
+      {
+        "title": "@liveblocks/react-comments",
+        "path": "/api-reference/liveblocks-react-comments",
+        "hidden": true
       },
       {
         "title": "@liveblocks/redux",
