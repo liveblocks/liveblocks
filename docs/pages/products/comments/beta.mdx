@@ -26,12 +26,11 @@ final version.
 
 ## Philosophy
 
-### No need to synchronize your users info with Liveblocks
+### No need to synchronize your users’ info with Liveblocks
 
-When posting a comment, we do not store the author name or picture. We only
-store the author id. We believe that it’s easier for you to retrieve users
-metadata when needed instead of synchronizing your database of users with
-Liveblocks.
+When posting a comment, we do not store the author name or avatar. We only store
+the author ID. We believe that it’s easier for you to retrieve users metadata
+when needed instead of synchronizing your database of users with Liveblocks.
 
 ```tsx
 createRoomContext(client, {
@@ -39,8 +38,8 @@ createRoomContext(client, {
     // Fetch user metadata from a local cache or a backend endpoint
 
     return {
-      picture: "/images/marie-curie.png",
       name: "Marie Curie",
+      avatar: "/images/marie-curie.png",
     };
   },
 });
@@ -77,14 +76,11 @@ implementation pathways:
 
 #### Default components
 
-- The default components are designed to be easily integrated using
-  plug-and-play functionality.
+- The default components are designed to be easily integrated as plug-and-play.
+- They come with a customizable default style (including support for dark mode),
+  but you can override them in any way to meet your needs.
 - You’ll benefit from our UX and UI expertise incorporated into these
   components.
-- Although our components have a default style, you can adjust the CSS to meet
-  your needs.
-- We constantly improve and update the components to ensure they are optimized
-  and current.
 
 ```tsx file="App.tsx" highlight="2,9,11"
 import { useThreads } from "./liveblocks.config";
@@ -108,9 +104,8 @@ export function App() {
 - Headless, unstyled components.
 - Accessible building blocks to fully customize the experience if CSS is not
   enough.
-- Available hooks to access all the context of your threads and comments.
 
-```tsx file="Comment.tsx" highlight="1,8,10"
+```tsx file="CustomComment.tsx" highlight="1,8,10"
 import { Comment, Timestamp } from "@liveblocks/react-comments/primitives";
 
 export function CustomComment({ comment }) {
@@ -125,6 +120,21 @@ export function CustomComment({ comment }) {
   );
 }
 ```
+
+##### Inspired by Radix
+
+Our admiration for [Radix](https://www.radix-ui.com/) runs deep. Their approach
+to low-level components has been a beacon of inspiration as we crafted the
+primitives.
+
+- We prioritize making the components usable for everyone.
+- The components are designed for complete stylistic customization without
+  default style constraints. They are also modular, allowing for easy
+  combination and extensibility.
+- We minimize dependencies to ensure the components remain efficient and
+  lightweight.
+
+#### Combining default components and primitives
 
 Note that these two options are not separate paths. Both approaches can be
 combined to suit your needs for both speed (default components) and
@@ -164,24 +174,12 @@ createThread({
 
 ### Deletion
 
-Deleting a comment from the client, only soft deletes it. We set the
-`comment.body` to null. We keep a placeholder so that the missing comment can
-still be noticed, giving you the option on how to display deleted comments;
-either through a clear “message deleted” indicator or by not displaying it. Note
-that we only delete a thread when all its comments have been deleted.
-
-### Inspired by Radix
-
-Our admiration for [Radix](https://www.radix-ui.com/) runs deep. Their approach
-to low-level components has been a beacon of inspiration as we crafted our suite
-of tools.
-
-- We prioritize making the components usable for everyone.
-- The components are designed for complete stylistic customization without
-  default style constraints. They are also modular, allowing for easy
-  combination and extensibility.
-- We minimize dependencies to ensure the components remain efficient and
-  lightweight.
+Deleting a comment from the client only soft deletes it, `comment.body` is
+removed and `comment.deletedAt` is added. We keep a placeholder so that the
+missing comments can still be noticed, giving you the option on how to display
+deleted comments: either through a clear “message deleted” indicator or by not
+displaying it. Note that a thread is fully deleted when all its comments have
+been deleted.
 
 ## Getting started
 
