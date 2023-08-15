@@ -18,15 +18,14 @@ export const CustomTaskItem = TaskItem.extend({
 function TiptapCheckbox({ node, updateAttributes }: NodeViewProps) {
   return (
     <NodeViewWrapper className={styles.tiptapTaskItem}>
-      <label className={styles.tiptipTaskItemCheckbox}>
+      <label className={styles.tiptipTaskItemCheckbox} contentEditable={false}>
         <Checkbox
-          contentEditable={false}
           initialValue={false}
           checked={node.attrs.checked}
           onValueChange={(checked: boolean) => updateAttributes({ checked })}
         />
       </label>
-      <NodeViewContent className="content" />
+      <NodeViewContent className={styles.tiptipTaskItemContent} />
     </NodeViewWrapper>
   );
 }

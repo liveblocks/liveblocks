@@ -146,13 +146,6 @@ function TiptapEditor({ doc, provider }: EditorProps) {
         emptyEditorClass: "tiptap-empty",
       }),
       CustomTaskItem,
-      /*
-      TaskItem.configure({
-        HTMLAttributes: {
-          class: "tiptap-task-item",
-        },
-      }),
-      */
       TaskList.configure({
         HTMLAttributes: {
           class: "tiptap-task-list",
