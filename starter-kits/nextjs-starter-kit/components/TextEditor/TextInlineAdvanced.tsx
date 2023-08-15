@@ -1,8 +1,6 @@
 import { Editor } from "@tiptap/react";
 import { useState } from "react";
-import { CrossIcon, LinkIcon } from "../../icons";
-import { CodeIcon } from "../../icons/Code";
-import { HighlightIcon } from "../../icons/Highlight";
+import { CodeIcon, CrossIcon, HighlightIcon, LinkIcon } from "../../icons";
 import { Button } from "../../primitives/Button";
 import { Input } from "../../primitives/Input";
 import { Popover } from "../../primitives/Popover";

@@ -1,8 +1,6 @@
 import { Editor } from "@tiptap/react";
 import { useState } from "react";
-import { CodeBlockIcon } from "../../icons/CodeBlock";
-import { ImageIcon } from "../../icons/Image";
-import { YouTubeIcon } from "../../icons/YouTube";
+import { CodeBlockIcon, ImageIcon, YouTubeIcon } from "../../icons";
 import { Button } from "../../primitives/Button";
 import { Input } from "../../primitives/Input";
 import { Popover } from "../../primitives/Popover";

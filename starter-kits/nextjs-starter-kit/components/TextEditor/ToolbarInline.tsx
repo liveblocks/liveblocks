@@ -1,6 +1,5 @@
 import { Editor } from "@tiptap/react";
-import { BoldIcon } from "../../icons/Bold";
-import { ItalicIcon } from "../../icons/Italic";
+import { BoldIcon, ItalicIcon } from "../../icons";
 import { StrikethroughIcon } from "../../icons/Strikethrough";
 import { Button } from "../../primitives/Button";
 import styles from "./Toolbar.module.css";

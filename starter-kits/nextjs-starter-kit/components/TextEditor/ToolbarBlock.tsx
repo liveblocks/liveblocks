@@ -1,8 +1,10 @@
 import { Editor } from "@tiptap/react";
-import { BlockquoteIcon } from "../../icons/Blockquote";
-import { CheckboxIcon } from "../../icons/Checkbox";
-import { ListOrderedIcon } from "../../icons/ListOrdered";
-import { ListUnorderedIcon } from "../../icons/ListUnordered";
+import {
+  BlockquoteIcon,
+  CheckboxIcon,
+  ListOrderedIcon,
+  ListUnorderedIcon,
+} from "../../icons";
 import { Button } from "../../primitives/Button";
 import styles from "./Toolbar.module.css";
 
