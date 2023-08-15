@@ -6,6 +6,17 @@ meta:
 alwaysShowAllNavigationLevels: false
 ---
 
+<Banner title="Private beta">
+
+Comments is currently in private beta and is only available to a select group of
+users. If you want to participate in the beta,
+[sign up for the waitlist](https://forms.gle/xgp54aTMsoH8hrjU9). During this
+beta period, breaking changes may occur, but no data loss. We use beta testers’
+feedback to improve the product. Your input is important and helps us shape the
+final version.
+
+</Banner>
+
 ## Configuration
 
 ### createRoomContext
@@ -15,7 +26,7 @@ using it in `liveblocks.config.ts` and re-exporting your typed hooks like below.
 
 ```tsx file="liveblocks.config.ts"
 import { createClient } from "@liveblocks/client";
-import { createRoomContext } from "@liveblocks/react-comments";
+import { createRoomContext } from "@liveblocks/react";
 
 const client = createClient({
   /* client options */
@@ -80,7 +91,7 @@ asynchronously.
 
 export const {
   /* ... */
-} = createRoomContext<ThreadMetadata>(client, {
+} = createRoomContext(client, {
   resolveUser: (userId) => __getUserInfoFromDB__(userId),
 });
 ```
@@ -103,7 +114,7 @@ but with some debouncing.
 
 export const {
   /* ... */
-} = createRoomContext<ThreadMetadata>(client, {
+} = createRoomContext(client, {
   resolveMentionSuggestions: (text) => __getSuggestedUserIds__(text),
 });
 ```
@@ -153,7 +164,6 @@ type CommentData = {
   createdAt: string;
   editedAt?: string;
   deletedAt?: string;
-  mentionedIds: string[];
 };
 ```
 
