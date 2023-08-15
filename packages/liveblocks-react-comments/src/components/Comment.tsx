@@ -27,6 +27,7 @@ import { MENTION_CHARACTER } from "../slate/plugins/mentions";
 import { classNames } from "../utils/class-names";
 import { Composer } from "./Composer";
 import { Avatar } from "./internal/Avatar";
+import { Button } from "./internal/Button";
 import { Dropdown, DropdownItem, DropdownTrigger } from "./internal/Dropdown";
 import {
   Tooltip,
@@ -266,12 +267,14 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
                     }
                   >
                     <Tooltip content={$.COMMENT_MORE}>
-                      <DropdownTrigger
-                        className="lb-button lb-comment-action"
-                        disabled={!comment.body}
-                        aria-label={$.COMMENT_MORE}
-                      >
-                        <EllipsisIcon className="lb-button-icon" />
+                      <DropdownTrigger asChild>
+                        <Button
+                          className="lb-comment-action"
+                          disabled={!comment.body}
+                          aria-label={$.COMMENT_MORE}
+                        >
+                          <EllipsisIcon className="lb-button-icon" />
+                        </Button>
                       </DropdownTrigger>
                     </Tooltip>
                   </Dropdown>
@@ -293,23 +296,26 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
                     content={$.COMMENT_EDIT_COMPOSER_CANCEL}
                     aria-label={$.COMMENT_EDIT_COMPOSER_CANCEL}
                   >
-                    <button
+                    <Button
                       type="button"
-                      className="lb-button lb-composer-action"
+                      className="lb-composer-action"
                       onClick={handleEditCancel}
                     >
                       <CrossIcon className="lb-button-icon" />
-                    </button>
+                    </Button>
                   </Tooltip>
                   <Tooltip
                     content={$.COMMENT_EDIT_COMPOSER_SAVE}
                     shortcut={<TooltipShortcutKey name="enter" />}
                   >
-                    <ComposerPrimitive.Submit
-                      className="lb-button lb-button:primary lb-composer-action"
-                      aria-label={$.COMMENT_EDIT_COMPOSER_SAVE}
-                    >
-                      <CheckIcon className="lb-button-icon" />
+                    <ComposerPrimitive.Submit asChild>
+                      <Button
+                        variant="primary"
+                        className="lb-composer-action"
+                        aria-label={$.COMMENT_EDIT_COMPOSER_SAVE}
+                      >
+                        <CheckIcon className="lb-button-icon" />
+                      </Button>
                     </ComposerPrimitive.Submit>
                   </Tooltip>
                 </>

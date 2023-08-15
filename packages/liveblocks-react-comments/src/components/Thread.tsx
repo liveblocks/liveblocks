@@ -18,6 +18,7 @@ import { classNames } from "../utils/class-names";
 import type { CommentProps } from "./Comment";
 import { Comment } from "./Comment";
 import { Composer } from "./Composer";
+import { Button } from "./internal/Button";
 import { Tooltip, TooltipProvider } from "./internal/Tooltip";
 
 export interface ThreadProps extends ComponentPropsWithoutRef<"div"> {
@@ -173,20 +174,24 @@ export const Thread = forwardRef<HTMLDivElement, ThreadProps>(
                         }
                       >
                         <TogglePrimitive.Root
-                          className="lb-button lb-comment-action"
                           pressed={thread.metadata?.resolved}
                           onPressedChange={handleResolvedChange}
-                          aria-label={
-                            thread.metadata.resolved
-                              ? $.THREAD_UNRESOLVE
-                              : $.THREAD_RESOLVE
-                          }
+                          asChild
                         >
-                          {thread.metadata.resolved ? (
-                            <ResolvedIcon className="lb-button-icon" />
-                          ) : (
-                            <ResolveIcon className="lb-button-icon" />
-                          )}
+                          <Button
+                            className="lb-comment-action"
+                            aria-label={
+                              thread.metadata.resolved
+                                ? $.THREAD_UNRESOLVE
+                                : $.THREAD_RESOLVE
+                            }
+                          >
+                            {thread.metadata.resolved ? (
+                              <ResolvedIcon className="lb-button-icon" />
+                            ) : (
+                              <ResolveIcon className="lb-button-icon" />
+                            )}
+                          </Button>
                         </TogglePrimitive.Root>
                       </Tooltip>
                     ) : null

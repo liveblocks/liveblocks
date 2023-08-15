@@ -3,6 +3,7 @@
 import { useRoomContextBundle } from "@liveblocks/react";
 import type {
   ComponentProps,
+  ComponentPropsWithoutRef,
   FormEvent,
   ReactNode,
   SyntheticEvent,
@@ -16,15 +17,14 @@ import * as ComposerPrimitive from "../primitives/Composer";
 import { useComposer } from "../primitives/Composer/contexts";
 import type {
   ComposerEditorProps,
-  ComposerFormProps,
   ComposerRenderMentionProps,
   ComposerRenderMentionSuggestionsProps,
   ComposerSubmitComment,
 } from "../primitives/Composer/types";
 import { MENTION_CHARACTER } from "../slate/plugins/mentions";
-import type { SlotProp } from "../types";
 import { classNames } from "../utils/class-names";
 import { Avatar } from "./internal/Avatar";
+import { Button } from "./internal/Button";
 import { Logo } from "./internal/Logo";
 import {
   Tooltip,
@@ -62,13 +62,35 @@ type ComposerEditCommentProps = {
   commentId: string;
 };
 
-export type ComposerProps = Omit<ComposerFormProps, keyof SlotProp> &
-  Pick<ComposerEditorProps, "initialValue" | "disabled" | "autoFocus"> &
+export type ComposerProps = ComponentPropsWithoutRef<"form"> &
   (
     | ComposerCreateThreadProps
     | ComposerCreateCommentProps
     | ComposerEditCommentProps
   ) & {
+    /**
+     * The event handler called when the composer is submitted.
+     */
+    onComposerSubmit?: (
+      comment: ComposerSubmitComment,
+      event: FormEvent<HTMLFormElement>
+    ) => Promise<void> | void;
+
+    /**
+     * The composer's initial value.
+     */
+    initialValue?: ComposerEditorProps["initialValue"];
+
+    /**
+     * Whether the composer is disabled.
+     */
+    disabled?: ComposerEditorProps["disabled"];
+
+    /**
+     * Whether to focus the composer on mount.
+     */
+    autoFocus?: ComposerEditorProps["autoFocus"];
+
     /**
      * Override the component's strings.
      */
@@ -98,16 +120,16 @@ function ComposerInsertMentionEditorAction({
 
   return (
     <Tooltip content={label}>
-      <button
+      <Button
         type="button"
-        className={classNames("lb-button lb-composer-editor-action", className)}
+        className={classNames("lb-composer-editor-action", className)}
         onMouseDown={preventDefault}
         onClick={createMention}
         aria-label={label}
         {...props}
       >
         <MentionIcon className="lb-button-icon" />
-      </button>
+      </Button>
     </Tooltip>
   );
 }
@@ -254,13 +276,16 @@ export const Composer = forwardRef<HTMLFormElement, ComposerProps>(
                     content={$.COMPOSER_SEND}
                     shortcut={<TooltipShortcutKey name="enter" />}
                   >
-                    <ComposerPrimitive.Submit
-                      disabled={disabled}
-                      onMouseDown={preventDefault}
-                      className="lb-button lb-button:primary lb-composer-action"
-                      aria-label={$.COMPOSER_SEND}
-                    >
-                      <SendIcon />
+                    <ComposerPrimitive.Submit asChild>
+                      <Button
+                        disabled={disabled}
+                        onMouseDown={preventDefault}
+                        className="lb-composer-action"
+                        variant="primary"
+                        aria-label={$.COMPOSER_SEND}
+                      >
+                        <SendIcon />
+                      </Button>
                     </ComposerPrimitive.Submit>
                   </Tooltip>
                 </>

@@ -9,20 +9,20 @@
   --lb-accent-foreground: #fff;
   --lb-background: #fff;
   --lb-foreground: #111;
-  --lb-elevation-background: var(--lb-background);
-  --lb-elevation-foreground: var(--lb-foreground);
-  --lb-tooltip-background: #222;
-  --lb-tooltip-foreground: #fff;
 
   // Advanced
   --lb-icon-size: 20px;
   --lb-icon-weight: 1.5px;
   --lb-avatar-radius: 50%;
   --lb-button-radius: calc(0.75 * var(--lb-radius));
-  --lb-elevation-shadow: #{$lb-elevation-shadow};
-  --lb-tooltip-shadow: #{$lb-tooltip-shadow};
   --lb-transition-duration: 0.1s;
   --lb-transition-easing: cubic-bezier(0.4, 0, 0.2, 1);
+  --lb-elevation-shadow: #{$lb-elevation-shadow};
+  --lb-tooltip-shadow: #{$lb-tooltip-shadow};
+  --lb-elevation-background: var(--lb-background);
+  --lb-elevation-foreground: var(--lb-foreground);
+  --lb-tooltip-background: #222;
+  --lb-tooltip-foreground: #fff;
   --lb-accent-contrast: 8%;
   --lb-foreground-contrast: 6%;
   --lb-elevation-foreground-contrast: 6%;
@@ -196,7 +196,7 @@
   }
 }
 
-.lb-button.lb-button\:primary {
+.lb-button[data-variant="primary"] {
   --lb-button-background: var(--lb-accent);
 
   color: var(--lb-accent-foreground);
@@ -515,7 +515,7 @@
 // Progressive enhancement: Use :has instead of :focus-within to target the editor specifically
 @supports selector(:has(*)) {
   .lb-composer:has(.lb-composer-editor:not(:focus-visible))
-    .lb-button\:primary {
+    .lb-button[data-variant="primary"] {
     --lb-button-background: var(--lb-foreground-subtle);
 
     color: var(--lb-foreground-tertiary);
@@ -530,7 +530,7 @@
 }
 
 @supports not selector(:has(*)) {
-  .lb-composer:not(:focus-within) .lb-button\:primary {
+  .lb-composer:not(:focus-within) .lb-button[data-variant="primary"] {
     --lb-button-background: var(--lb-foreground-subtle);
 
     color: var(--lb-foreground-tertiary);
