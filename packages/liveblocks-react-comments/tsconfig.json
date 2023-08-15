@@ -3,9 +3,12 @@
   "extends": "../../shared/tsconfig.common.json",
 
   "compilerOptions": {
-    "target": "es2015",
-    "module": "es2015",
-    "lib": ["dom", "es2015"],
+    "target": "es2020",
+    "module": "es2020",
+    "lib": ["dom", "es2020"],
+
+    // Allow importing JSON files
+    "resolveJsonModule": true,
 
     // Transform JSX syntax from input *.tsx files into React.createElement()
     // calls in the *.js build output.
@@ -15,5 +18,5 @@
     // TODO: Try to get rid of these overrides
     "noUncheckedIndexedAccess": false // OVERWRITTEN to relax a bit
   },
-  "include": ["src/**/*"]
+  "include": ["**/*.ts", "**/*.tsx"]
 }
