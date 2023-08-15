@@ -377,16 +377,18 @@ const ComposerMention = forwardRef<HTMLSpanElement, ComposerMentionProps>(
  * @example
  * <Composer.Editor
  *   renderMention={({ userId, isSelected }) => (
- *     <Composer.SuggestionsList>
- *       {userIds.map((userId) => (
- *         <Composer.SuggestionsListItem
- *           key={userId}
- *           value={userId}
- *         >
- *           @{userId}
- *         </Composer.SuggestionsListItem>
- *       ))}
- *     </Composer.SuggestionsList>
+ *     <Composer.Suggestions>
+ *       <Composer.SuggestionsList>
+ *         {userIds.map((userId) => (
+ *           <Composer.SuggestionsListItem
+ *             key={userId}
+ *             value={userId}
+ *           >
+ *             @{userId}
+ *           </Composer.SuggestionsListItem>
+ *         ))}
+ *       </Composer.SuggestionsList>
+ *     </Composer.Suggestions>
  *   )}
  * />
  */
@@ -429,16 +431,18 @@ const ComposerSuggestions = forwardRef<
  * @example
  * <Composer.Editor
  *   renderMention={({ userId, isSelected }) => (
- *     <Composer.SuggestionsList>
- *       {userIds.map((userId) => (
- *         <Composer.SuggestionsListItem
- *           key={userId}
- *           value={userId}
- *         >
- *           @{userId}
- *         </Composer.SuggestionsListItem>
- *       ))}
- *     </Composer.SuggestionsList>
+ *     <Composer.Suggestions>
+ *       <Composer.SuggestionsList>
+ *         {userIds.map((userId) => (
+ *           <Composer.SuggestionsListItem
+ *             key={userId}
+ *             value={userId}
+ *           >
+ *             @{userId}
+ *           </Composer.SuggestionsListItem>
+ *         ))}
+ *       </Composer.SuggestionsList>
+ *     </Composer.Suggestions>
  *   )}
  * />
  */

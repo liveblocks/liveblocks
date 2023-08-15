@@ -595,10 +595,7 @@ import { Composer } from "@liveblocks/react-comments/primitives";
 Surrounds the composer’s content and handles submissions.
 
 ```tsx
-<Composer.Form onComposerSubmit={({ body }) => {}}>
-  <Composer.Editor />
-  <Composer.Submit />
-</Composer.Form>
+<Composer.Form onComposerSubmit={({ body }) => {}}>{/* ... */}</Composer.Form>
 ```
 
 <Table columns={["26%", "32%", "42%"]}>
@@ -716,11 +713,7 @@ Displays mentions within `Composer.Editor`’s `renderMention` prop.
 Surrounds a list of suggestions within `Composer.Editor`.
 
 ```tsx
-<Composer.Suggestions>
-	<Composer.SuggestionsList>
-	  {/* … */}
-	</Composer.SuggestionsList>
-<Composer.Suggestions>
+<Composer.Suggestions>{/* … */}<Composer.Suggestions>
 ```
 
 <Table columns={["26%", "32%", "42%"]}>
