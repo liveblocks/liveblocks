@@ -39,7 +39,7 @@ start building your own security logic in Next.js’ `/app` directory.
       });
 
       export async function POST(request: Request) {
-      // Get the current user from your database
+        // Get the current user from your database
         const user = __getUserFromDB__(request);
 
         // Start an auth session inside your endpoint
@@ -57,6 +57,40 @@ start building your own security logic in Next.js’ `/app` directory.
         // Authorize the user and return the result
         const { status, body } = await session.authorize();
         return new Response(body, { status });
+      }
+      ```
+
+      Here’s an example using the older API routes format in `/pages`.
+
+      ```ts file="pages/api/liveblocks-auth.ts" isCollapsed isCollapsable
+      import { Liveblocks } from "@liveblocks/node";
+      import type { NextApiRequest, NextApiResponse } from "next";
+
+      const API_KEY = "{{SECRET_KEY}}";
+
+      const liveblocks = new Liveblocks({
+        secret: API_KEY!,
+      });
+
+      export default async function handler(request: NextApiRequest, response: NextApiResponse) {
+        // Get the current user from your database
+        const user = __getUserFromDB__(request);
+
+        // Start an auth session inside your endpoint
+        const session = liveblocks.prepareSession(
+          user.id,
+          { userInfo: user.metadata } // Optional
+        );
+
+        // Implement your own security, and give the user access to the room
+        const { room } = request.body;
+        if (room && __shouldUserHaveAccess__(user, room)) {
+          session.allow(room, session.FULL_ACCESS);
+        }
+
+        // Authorize the user and return the result
+        const { status, body } = await session.authorize();
+        response.status(status).send(body);
       }
       ```
 

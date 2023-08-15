@@ -2006,10 +2006,20 @@ export function createRoom<
   }
 
   function fetchYDoc(vector: string): void {
-    context.buffer.messages.push({
-      type: ClientMsgCode.FETCH_YDOC,
-      vector,
-    });
+    // don't allow multiple fetches in the same buffer with the same vector
+    // dev tools may also call with a different vector (if its opened later), and that's okay
+    // because the updates will be ignored by the provider
+    if (
+      !context.buffer.messages.find((m) => {
+        return m.type === ClientMsgCode.FETCH_YDOC && m.vector === vector;
+      })
+    ) {
+      context.buffer.messages.push({
+        type: ClientMsgCode.FETCH_YDOC,
+        vector,
+      });
+    }
+
     flushNowOrSoon();
   }
 

@@ -4,6 +4,7 @@ import type { IncomingHttpHeaders } from "http";
 export class WebhookHandler {
   private secretBuffer: Buffer;
   private static secretPrefix = "whsec_";
+
   constructor(
     /**
      * The signing secret provided on the dashboard's webhooks page
@@ -58,10 +59,16 @@ export class WebhookHandler {
   /**
    * Verifies the headers and returns the webhookId, timestamp and rawSignatures
    */
-  private verifyHeaders(headers: IncomingHttpHeaders) {
+  private verifyHeaders(headers: IncomingHttpHeaders | Headers) {
+    const usingNativeHeaders =
+      typeof Headers !== "undefined" && headers instanceof Headers;
+    const normalizedHeaders = usingNativeHeaders
+      ? Object.fromEntries(headers)
+      : (headers as IncomingHttpHeaders);
+
     const sanitizedHeaders: IncomingHttpHeaders = {};
-    Object.keys(headers).forEach((key) => {
-      sanitizedHeaders[key.toLowerCase()] = headers[key];
+    Object.keys(normalizedHeaders).forEach((key) => {
+      sanitizedHeaders[key.toLowerCase()] = normalizedHeaders[key];
     });
 
     const webhookId = sanitizedHeaders["webhook-id"];
@@ -134,6 +141,7 @@ export class WebhookHandler {
         "commentDeleted",
         "threadMetadataUpdated",
         "threadCreated",
+        "ydocUpdated",
       ].includes(event.type)
     )
       return;
@@ -151,15 +159,21 @@ const isNotUndefined = <T>(value: T | undefined): value is T =>
 
 type WebhookRequest = {
   /**
-   * Headers of the request
+   * Headers of the request, can be a regular object or a Headers object
    * @example
    * {
    *  "webhook-id": "123",
    *  "webhook-timestamp": "1614588800000",
    *  "webhook-signature": "v1,bm9ldHUjKzFob2VudXRob2VodWUzMjRvdWVvdW9ldQo= v2,MzJsNDk4MzI0K2VvdSMjMTEjQEBAQDEyMzMzMzEyMwo="
    * }
+   *
+   * new Headers({
+   *  "webhook-id": "123",
+   *  "webhook-timestamp": "1614588800000",
+   *  "webhook-signature": "v1,bm9ldHUjKzFob2VudXRob2VodWUzMjRvdWVvdW9ldQo= v2,MzJsNDk4MzI0K2VvdSMjMTEjQEBAQDEyMzMzMzEyMwo="
+   * }}
    */
-  headers: IncomingHttpHeaders;
+  headers: IncomingHttpHeaders | Headers;
   /**
    * Raw body of the request, do not parse it
    * @example '{"type":"storageUpdated","data":{"roomId":"my-room-id","appId":"my-app-id","updatedAt":"2021-03-01T12:00:00.000Z"}}'
@@ -177,7 +191,8 @@ type WebhookEvent =
   | CommentEditedEvent
   | CommentDeletedEvent
   | ThreadMetadataUpdatedEvent
-  | ThreadCreatedEvent;
+  | ThreadCreatedEvent
+  | YDocUpdatedEvent;
 
 type StorageUpdatedEvent = {
   type: "storageUpdated";
@@ -300,6 +315,14 @@ type CommentDeletedEvent = {
   };
 };
 
+type YDocUpdatedEvent = {
+  type: "ydocUpdated";
+  data: {
+    projectId: string;
+    roomId: string;
+  };
+};
+
 type ThreadMetadataUpdatedEvent = {
   type: "threadMetadataUpdated";
   data: {
@@ -343,4 +366,5 @@ export type {
   UserLeftEvent,
   WebhookEvent,
   WebhookRequest,
+  YDocUpdatedEvent,
 };

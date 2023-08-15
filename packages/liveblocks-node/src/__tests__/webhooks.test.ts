@@ -178,6 +178,42 @@ describe("WebhookHandler", () => {
       expect(event).toEqual(body);
     });
 
+    it('should verify a "ydocUpdated" event', () => {
+      const ydocUpdated = {
+        data: {
+          appId: "605a50b01a36d5ea7a2e9104",
+          roomId: "hero-grid-12-01-2022",
+          updatedAt: "2023-01-27T20:27:48.744Z",
+        },
+        type: "ydocUpdated",
+      };
+      const rawYdocUpdated = JSON.stringify(ydocUpdated);
+
+      const headersYdocUpdated = {
+        "webhook-id": "msg_2KvOK6yK9FO0U0nIyJYkM3jPwBs",
+        "webhook-timestamp": "1674851522",
+        "webhook-signature": generateSignatureWithSvix(
+          secret,
+          "msg_2KvOK6yK9FO0U0nIyJYkM3jPwBs",
+          "1674851522",
+          rawYdocUpdated
+        ),
+      };
+
+      jest.useFakeTimers({
+        now: 1674851522000,
+      });
+
+      const webhookHandler = new WebhookHandler(secret);
+
+      const event = webhookHandler.verifyRequest({
+        headers: headersYdocUpdated,
+        rawBody: rawYdocUpdated,
+      });
+
+      expect(event).toEqual(ydocUpdated);
+    });
+
     it("should verify an event with multiple signatures", () => {
       jest.useFakeTimers({
         now: 1674850126000,
@@ -206,6 +242,30 @@ describe("WebhookHandler", () => {
         ...userEnteredHeaders,
         "webhook-signature": signature,
       };
+
+      const event = webhookHandler.verifyRequest({
+        headers,
+        rawBody: rawUserEnteredBody,
+      });
+
+      expect(event).toEqual(userEnteredBody);
+    });
+
+    it("should allow a native Headers object", () => {
+      jest.useFakeTimers({
+        now: 1674850126000,
+      });
+      const webhookHandler = new WebhookHandler(secret);
+
+      const headers = new Headers({
+        ...userEnteredHeaders,
+        "webhook-signature": generateSignatureWithSvix(
+          secret,
+          userEnteredHeaders["webhook-id"],
+          userEnteredHeaders["webhook-timestamp"],
+          rawUserEnteredBody
+        ),
+      });
 
       const event = webhookHandler.verifyRequest({
         headers,

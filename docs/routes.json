@@ -72,6 +72,11 @@
             "hidden": true
           },
           {
+            "title": "Yjs Slate React",
+            "path": "/get-started/yjs-slate-react",
+            "hidden": true
+          },
+          {
             "title": "Yjs Tiptap React",
             "path": "/get-started/yjs-tiptap-react",
             "hidden": true
@@ -89,6 +94,11 @@
           {
             "title": "Text editor / Quill",
             "href": "/get-started/text-editor/quill",
+            "hidden": true
+          },
+          {
+            "title": "Text editor / Slate",
+            "href": "/get-started/text-editor/slate",
             "hidden": true
           },
           {

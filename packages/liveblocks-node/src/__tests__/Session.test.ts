@@ -71,9 +71,7 @@ describe("authorization (new API)", () => {
 
   test("throws when room name too long", () => {
     expect(() =>
-      makeSession()
-        .allow("definitely-a-waaaaaaaaaaaaaaaaaaaay-too-long-room-name", [])
-        .serializePermissions()
+      makeSession().allow("a".repeat(129), []).serializePermissions()
     ).toThrow("Invalid room name or pattern");
   });
 

@@ -18,7 +18,7 @@ const client = createClient({
     };
 
     // Call auth API route to get Liveblocks access token
-    const response = await fetch(ENDPOINT_BASE_URL + "/auth", {
+    const response = await fetch(ENDPOINT_BASE_URL + "/liveblocks-auth", {
       method: "POST",
       headers: {
         Authentication: "token",
