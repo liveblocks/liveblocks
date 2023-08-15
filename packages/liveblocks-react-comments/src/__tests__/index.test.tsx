@@ -13,6 +13,7 @@ import React from "react";
 import { Comment } from "../components/Comment";
 import { Composer } from "../components/Composer";
 import { Thread } from "../components/Thread";
+import { Timestamp } from "../primitives";
 import { render } from "./_utils"; // Basically re-exports from @testing-library/react
 
 function remove<T>(array: T[], item: T) {
@@ -235,21 +236,51 @@ const thread: ThreadData = {
 };
 
 describe("Components", () => {
-  test("Thread", () => {
-    const { debug } = render(<Thread thread={thread} />);
+  describe("Thread", () => {
+    test("should render", () => {
+      const { container } = render(<Thread thread={thread} />);
 
-    debug();
+      expect(container).not.toBeEmptyDOMElement();
+    });
   });
 
-  test("Comment", () => {
-    const { debug } = render(<Comment comment={comment} />);
+  describe("Comment", () => {
+    test("should render", () => {
+      const { container } = render(<Comment comment={comment} />);
 
-    debug();
+      expect(container).not.toBeEmptyDOMElement();
+    });
   });
 
-  test("Composer", () => {
-    const { debug } = render(<Composer />);
+  describe("Composer", () => {
+    test("should render", () => {
+      const { container } = render(<Composer />);
 
-    debug();
+      expect(container).not.toBeEmptyDOMElement();
+    });
+  });
+});
+
+describe("Primitives", () => {
+  describe("Timestamp", () => {
+    const now = Date.now();
+
+    test("should render", () => {
+      const { container } = render(<Timestamp date={now} />);
+
+      expect(container).not.toBeEmptyDOMElement();
+    });
+
+    test.todo("should have a datetime attribute");
+
+    test.todo("should rerender at an interval");
+
+    test.todo("should support changing the rerender interval");
+
+    test.todo("should support a title string");
+
+    test.todo("should support a title function");
+
+    test.todo("should support a children function");
   });
 });
