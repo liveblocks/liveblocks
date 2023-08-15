@@ -9,7 +9,6 @@ import Highlight from "@tiptap/extension-highlight";
 import { Image } from "@tiptap/extension-image";
 import Link from "@tiptap/extension-link";
 import Placeholder from "@tiptap/extension-placeholder";
-import TaskItem from "@tiptap/extension-task-item";
 import TaskList from "@tiptap/extension-task-list";
 import { TextAlign } from "@tiptap/extension-text-align";
 import { Typography } from "@tiptap/extension-typography";
@@ -21,6 +20,7 @@ import { useEffect, useState } from "react";
 import * as Y from "yjs";
 import { useRoom, useSelf } from "../../liveblocks.config";
 import { DocumentSpinner } from "../../primitives/Spinner";
+import { CustomTaskItem } from "./CustomTaskItem";
 import { SelectionMenu } from "./SelectionMenu";
 import { Toolbar } from "./Toolbar";
 import { WordCount } from "./WordCount";
@@ -145,11 +145,14 @@ function TiptapEditor({ doc, provider }: EditorProps) {
         placeholder: "Start writing…",
         emptyEditorClass: "tiptap-empty",
       }),
+      CustomTaskItem,
+      /*
       TaskItem.configure({
         HTMLAttributes: {
           class: "tiptap-task-item",
         },
       }),
+      */
       TaskList.configure({
         HTMLAttributes: {
           class: "tiptap-task-list",
