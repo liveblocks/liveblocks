@@ -1,0 +1,59 @@
+@keyframes fade {
+  0% {
+    opacity: 0;
+  }
+
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes up {
+  0% {
+    opacity: 0;
+    transform: translateY(var(--space-5));
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.dialog {
+  overflow: hidden;
+  max-width: calc(100% - var(--space-8) * 2);
+  max-height: calc(100% - var(--space-8) * 2);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-elevated);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-xl);
+  animation: up 0.15s ease-in-out;
+}
+
+.overlay {
+  position: fixed;
+  z-index: var(--z-overlay);
+  display: flex;
+  place-content: center;
+  place-items: center;
+  background: var(--color-overlay);
+  inset: 0;
+  animation: fade 0.15s ease-in-out;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  padding: var(--space-5) var(--space-8);
+  border-bottom: 1px solid var(--color-border);
+  place-items: center;
+}
+
+.title {
+  font-weight: 500;
+}
+
+.closeButton {
+  margin-right: calc(-1 * var(--space-3));
+}
