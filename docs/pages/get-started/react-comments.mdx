@@ -123,8 +123,8 @@ commenting experience to your React application using the hooks from
     <StepTitle>Import default styles</StepTitle>
     <StepContent>
 
-    The default components come with default styles, import them either as a module or
-    directly in CSS depending on your setup.
+    The default components come with default styles, import them either at
+    the root of your app or directly in CSS depending on your setup.
 
     ```tsx file="layout.tsx"
     import "@liveblocks/react-comments/styles.css";
@@ -142,12 +142,10 @@ commenting experience to your React application using the hooks from
     <StepContent>
 
       By default, Liveblocks is configured to work without an authentication endpoint
-      where everyone automatically has access to rooms. This approach is great for
-      prototyping and marketing pages where setting up your own security isn’t always
-      required. If you want to limit access to a room for certain users, you’ll need
-      to set up an authentication endpoint to enable permissions.
-
-      TODO: Start explaining user IDs, resolveUser, etc.
+      where everyone automatically has access to rooms and where users are assigned a random ID. This approach is great for
+      prototyping where setting up your own security isn’t always
+      required. If you want to start using real user IDs and permissions, you’ll need
+      to set up an authentication endpoint.
 
       <ButtonLink className="not-markdown" href="/docs/rooms/authentication">
         Set up authentication
