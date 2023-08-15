@@ -29,6 +29,7 @@ export * from "./Select";
 export * from "./Share";
 export * from "./SignIn";
 export * from "./SignOut";
+export * from "./Strikethrough";
 export * from "./Undo";
 export * from "./User";
 export * from "./Users";
