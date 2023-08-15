@@ -77,10 +77,10 @@ implementation pathways:
 #### Default components
 
 - The default components are designed to be easily integrated as plug-and-play.
-- They come with a customizable default style (including support for dark mode),
-  but you can override them in any way to meet your needs.
-- You’ll benefit from our UX and UI expertise incorporated into these
-  components.
+- They come with customizable but optional (and overridable) default styles,
+  including support for dark mode.
+- They are opinionated with a few options, you’ll benefit from our UX and UI
+  expertise incorporated into these components.
 
 ```tsx file="App.tsx" highlight="2,9,11"
 import { useThreads } from "./liveblocks.config";
@@ -174,9 +174,9 @@ createThread({
 
 ### Deletion
 
-Deleting a comment from the client only soft deletes it, `comment.body` is
+Deleting a comment from the client only soft deletes it: `comment.body` is
 removed and `comment.deletedAt` is added. We keep a placeholder so that the
-missing comments can still be noticed, giving you the option on how to display
+missing comments can still be noticed, giving you the choice on how to display
 deleted comments: either through a clear “message deleted” indicator or by not
 displaying it. Note that a thread is fully deleted when all its comments have
 been deleted.

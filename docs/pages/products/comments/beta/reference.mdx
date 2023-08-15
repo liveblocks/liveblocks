@@ -251,9 +251,124 @@ const { isValid, submit } = useComposer();
 
 ## Components
 
-{/* TODO: Explain customization (CSS variables, dark mode, classes, classes with ":" are private, data attributes (e.g. data-resolved, data-self, data-loading) etc.) */}
+### Customization
 
-{/* TODO: Explain overrides */}
+#### Styling
+
+The default components come with default styles, import them either at the root
+of your app or directly in CSS depending on your setup.
+
+```tsx file="layout.tsx"
+import "@liveblocks/react-comments/styles.css";
+```
+
+```tsx file="globals.css"
+@import "@liveblocks/react-comments/styles.css";
+```
+
+They are built around a few customizable CSS variables:
+
+```css
+/* Basic */
+--lb-radius: 0.5em;
+--lb-spacing: 1em;
+--lb-accent: #17f;
+--lb-accent-foreground: #fff;
+--lb-background: #fff;
+--lb-foreground: #111;
+
+/* Advanced */
+--lb-icon-size: 20px;
+--lb-icon-weight: 1.5px;
+--lb-avatar-radius: 50%;
+--lb-button-radius: calc(0.75 * var(--lb-radius));
+--lb-transition-duration: 0.1s;
+--lb-transition-easing: cubic-bezier(0.4, 0, 0.2, 1);
+--lb-elevation-shadow: 0 0 0 1px rgb(0 0 0 / 4%), 0 2px 6px rgb(0 0 0 / 8%),
+  0 8px 26px rgb(0 0 0 / 12%);
+--lb-tooltip-shadow: 0 2px 4px rgb(0 0 0 / 8%), 0 4px 12px rgb(0 0 0 / 12%);
+--lb-elevation-background: var(--lb-background);
+--lb-elevation-foreground: var(--lb-foreground);
+--lb-tooltip-background: #222;
+--lb-tooltip-foreground: #fff;
+--lb-accent-contrast: 8%;
+--lb-foreground-contrast: 6%;
+--lb-elevation-foreground-contrast: 6%;
+--lb-tooltip-foreground-contrast: 18%;
+```
+
+If these CSS variables aren't enough, every elements within the components have
+clearly defined classes. Additionaly, some elements also have data attributes to
+provide contextual information (e.g. `data-variant="primary"` on `.lb-button`,
+`data-self` on `.lb-comment-mention`, `data-loading` on `.lb-avatar` and
+`.lb-user`, etc.).
+
+<Banner title="Internal classes">
+
+Classes containing `:` are internal and may change over time.
+
+</Banner>
+
+##### Dark mode
+
+Dark mode can be implemented by customizing some of the default CSS variables,
+and we provide styles that do so out-of-the-box. They exist in two versions:
+
+- `media-query` uses the
+  [`prefers-color-scheme`](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-color-scheme)
+  media query.
+- `attributes` targets either the `dark` class, the `data-theme` attribute if
+  it’s set to `"dark"`, or the `data-dark` attribute.
+
+```tsx file="layout.tsx"
+import "@liveblocks/react-comments/styles.css";
+
+// Choose one depending on your setup
+import "@liveblocks/react-comments/styles/dark/media-query.css";
+import "@liveblocks/react-comments/styles/dark/attributes.css";
+```
+
+```tsx file="globals.css"
+@import "@liveblocks/react-comments/styles.css";
+
+/* Choose one depending on your setup */
+@import "@liveblocks/react-comments/styles/dark/media-query.css";
+@import "@liveblocks/react-comments/styles/dark/attributes.css";
+```
+
+#### Overrides
+
+Overrides can be used to customize the components’ strings and
+localization-related properties like the locale and reading direction.
+
+They can be set globally once for all components using `CommentsConfig`:
+
+```tsx
+import { CommentsConfig } from "@liveblocks/react-comments";
+
+export function App() {
+  return (
+    <CommentsConfig
+      overrides={{ locale: "fr", UNKNOWN_USER: "Anonyme" /* ... */ }}
+    >
+      {/* ... */}
+    </CommentsConfig>
+  );
+}
+```
+
+Or they can be set per-component (which will take precedence over the global
+ones) for contextual cases like a `<Composer />` used specifically to reply for
+example:
+
+```tsx
+<Composer
+  overrides={{
+    COMPOSER_PLACEHOLDER: "Reply to thread…",
+    COMPOSER_SEND: "Reply",
+  }}
+/>
+```
 
 ### Thread
 
@@ -326,26 +441,72 @@ Displays a composer to create comments.
 <Composer />
 ```
 
+By default, submitting the composer will create a new thread. If you provide a
+`threadId` prop, it will reply to that thread, and if you also provide a
+`commentId` prop, it will edit that comment. If you want to customize this, you
+can use `event.preventDefault()` in `onComposerSubmit` to disable the default
+behavior and call the mutation methods (e.g. `createThread`) manually.
+
+```tsx
+<Composer
+  onComposerSubmit={({ body }, event) => {
+    event.preventDefault();
+
+    createThread({
+      body,
+      metadata: {
+        x: 80,
+        y: 120,
+      },
+    });
+  }}
+/>
+```
+
 <Table columns={["26%", "32%", "42%"]}>
 
-| Prop           | Type                                                       | Description                                               |
-| -------------- | ---------------------------------------------------------- | --------------------------------------------------------- |
-| `threadId`     | `string \| undefined`                                      | The ID of the thread to reply to or to edit a comment in. |
-| `commentId`    | `string \| undefined`                                      | The ID of the comment to edit.                            |
-| `initialValue` | `CommentBody \| undefined`                                 | The editor’s initial value.                               |
-| `disabled`     | `boolean \| undefined`                                     | Whether the editor is disabled.                           |
-| `overrides`    | <code>Partial&lt;ComposerOverrides&gt; \| undefined</code> | Override the component’s strings.                         |
+| Prop               | Type                                                                                                                                 | Description                                               |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------- |
+| `threadId`         | `string \| undefined`                                                                                                                | The ID of the thread to reply to or to edit a comment in. |
+| `commentId`        | `string \| undefined`                                                                                                                | The ID of the comment to edit.                            |
+| `onComposerSubmit` | <code>((comment: ComposerSubmitComment, event: FormEvent&lt;HTMLFormElement&gt;) => Promise&lt;void&gt; \| void) \| undefined</code> | The event handler called when the composer is submitted.  |
+| `initialValue`     | `CommentBody \| undefined`                                                                                                           | The composer’s initial value.                             |
+| `disabled`         | `boolean \| undefined`                                                                                                               | Whether the composer is disabled.                         |
+| `autoFocus`        | `boolean \| undefined`                                                                                                               | Whether to focus the composer on mount.                   |
+| `overrides`        | <code>Partial&lt;ComposerOverrides&gt; \| undefined</code>                                                                           | Override the component’s strings.                         |
 
 </Table>
 
 {/* TODO: Document classes and data attributes */}
 
-{/* TODO: Explain how the default behavior can be overridden using event.preventDefault() and calling the mutation methods manually */}
-
 ## Primitives
 
-Primitives are unopinionated and unstyled components that can be used to create
-custom experiences with full control.
+Primitives are headless/unstyled components that can be used to create custom
+experiences with full control.
+
+### Composition
+
+All primitives are composable: they forward their props and refs, merge their
+classes and styles, and chain their event handlers.
+
+Inspired by [Radix](https://www.radix-ui.com/) (and powered by its
+[`Slot`](https://www.radix-ui.com/primitives/docs/utilities/slot) utility), most
+of the primitives also support an `asChild` prop to replace the rendered element
+by any provided child, and both set of props will be merged. Learn more about
+this concept on
+[Radix’s composition guide](https://www.radix-ui.com/primitives/docs/guides/composition).
+
+```tsx
+import { Button } from "@/my-design-system";
+
+// A default <button> element
+<Composer.Submit disabled>Send</Composer.Submit>;
+
+// An existing custom <Button> component
+<Composer.Submit disabled asChild>
+  <Button variant="primary">Send</Button>
+</Composer.Submit>;
+```
 
 ### Comment [#primitives-Comment]
 
