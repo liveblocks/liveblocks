@@ -2,7 +2,6 @@
 
 import { useRoomContextBundle } from "@liveblocks/react";
 import type {
-  ComponentProps,
   ComponentPropsWithoutRef,
   FormEvent,
   ReactNode,
@@ -33,7 +32,7 @@ import {
 } from "./internal/Tooltip";
 import { User } from "./internal/User";
 
-interface EditorActionProps extends ComponentProps<"button"> {
+interface EditorActionProps extends ComponentPropsWithoutRef<"button"> {
   label: string;
 }
 
