@@ -1,5 +1,8 @@
 import type { CommentBody } from "./CommentBody";
 
+/**
+ * Represents a comment.
+ */
 export type CommentData = {
   type: "comment";
   id: string;

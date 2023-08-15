@@ -157,93 +157,6 @@ type CommentData = {
 };
 ```
 
-## Components
-
-{/* TODO: Explain customization (CSS variables, dark mode, etc.) */}
-
-{/* TODO: Explain overrides */}
-
-{/* TODO: Explain how the default Composer behavior can be overridden using event.preventDefault() and calling the mutation methods manually */}
-
-### Thread
-
-Displays a thread of comments, with a composer to reply to it.
-
-```tsx
-<>
-  {threads.map((thread) => (
-    <Thread key={thread.id} thread={thread} />
-  ))}
-</>
-```
-
-<Table columns={["auto", "auto", "54%"]}>
-
-| Prop                  | Type                                                                                              | Description                                                                   |
-| --------------------- | ------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
-| `thread`              | <code>ThreadData&lt;\{ resolved?: boolean \}&gt;</code>                                           | The thread to display.                                                        |
-| `showComposer`        | `boolean \| undefined`                                                                            | Whether to show the composer to reply to the thread.<br/>Defaults to `false`. |
-| `showActions`         | `boolean \| "hover" \| undefined`                                                                 | How to show or hide the actions.<br/>Defaults to `"hover"`.                   |
-| `showResolveAction`   | `boolean \| undefined`                                                                            | Whether to show the action to resolve the thread.<br/>Defaults to `true`.     |
-| `indentCommentBody`   | `boolean \| undefined`                                                                            | Whether to indent the comments’ bodies.<br/>Defaults to `true`.               |
-| `showDeletedComments` | `boolean \| undefined`                                                                            | Whether to show deleted comments.<br/>Defaults to `false`.                    |
-| `onResolveChange`     | `(resolved: boolean) => void`                                                                     | An event handler called when changing the resolved status.                    |
-| `onCommentEdit`       | `(comment: CommentData) => void`                                                                  | An event handler called when a comment is edited.                             |
-| `onCommentDelete`     | `(comment: CommentData) => void`                                                                  | An event handler called when a comment is deleted.                            |
-| `onAuthorClick`       | <code>(userId: string, event: MouseEvent&lt;HTMLElement&gt;) => void \| undefined</code>          | An event handler called when clicking on a comment’s author.                  |
-| `onMentionClick`      | <code>(userId: string, event: MouseEvent&lt;HTMLElement&gt;) => void \| undefined</code>          | An event handler called when clicking on a mention.                           |
-| `overrides`           | <code>Partial&lt;ThreadOverrides \& CommentOverrides \& ComposerOverrides&gt; \| undefined</code> | Override the component’s strings.                                             |
-
-</Table>
-
-### Comment
-
-Displays a single comment.
-
-```tsx
-<>
-  {thread.comments.map((comment) => (
-    <Comment key={comment.id} comment={comment} />
-  ))}
-</>
-```
-
-<Table columns={["auto", "auto", "54%"]}>
-
-| Prop             | Type                                                                                     | Description                                                                                                                           |
-| ---------------- | ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| `comment`        | `CommentData`                                                                            | The thread to display.                                                                                                                |
-| `showActions`    | `boolean \| "hover" \| undefined`                                                        | How to show or hide the actions.<br/>Defaults to `"hover"`.                                                                           |
-| `indentBody`     | `boolean \| undefined`                                                                   | Whether to indent the comment’s body.<br/>Defaults to `true`.                                                                         |
-| `showDeleted`    | `boolean \| undefined`                                                                   | Whether to show the comment if it was deleted. If set to `false`, it will render deleted comments as `null`.<br/>Defaults to `false`. |
-| `onEdit`         | `(comment: CommentData) => void`                                                         | An event handler called when the comment is edited.                                                                                   |
-| `onDelete`       | `(comment: CommentData) => void`                                                         | An event handler called when the comment is deleted.                                                                                  |
-| `onAuthorClick`  | <code>(userId: string, event: MouseEvent&lt;HTMLElement&gt;) => void \| undefined</code> | An event handler called when clicking on the author.                                                                                  |
-| `onMentionClick` | <code>(userId: string, event: MouseEvent&lt;HTMLElement&gt;) => void \| undefined</code> | An event handler called when clicking on a mention.                                                                                   |
-| `overrides`      | <code>Partial&lt;CommentOverrides \& ComposerOverrides&gt; \| undefined</code>           | Override the component’s strings.                                                                                                     |
-
-</Table>
-
-### Composer
-
-Displays a composer to create comments.
-
-```tsx
-<Composer />
-```
-
-<Table columns={["auto", "auto", "54%"]}>
-
-| Prop           | Type                                                       | Description                                               |
-| -------------- | ---------------------------------------------------------- | --------------------------------------------------------- |
-| `threadId`     | `string \| undefined`                                      | The ID of the thread to reply to or to edit a comment in. |
-| `commentId`    | `string \| undefined`                                      | The ID of the comment to edit.                            |
-| `initialValue` | `CommentBody \| undefined`                                 | The editor’s initial value.                               |
-| `disabled`     | `boolean \| undefined`                                     | Whether the editor is disabled.                           |
-| `overrides`    | <code>Partial&lt;ComposerOverrides&gt; \| undefined</code> | Override the component’s strings.                         |
-
-</Table>
-
 ## Hooks
 
 ### useThreads
@@ -336,6 +249,99 @@ import { useComposer } from "@liveblocks/react-comments/primitives";
 const { isValid, submit } = useComposer();
 ```
 
+## Components
+
+{/* TODO: Explain customization (CSS variables, dark mode, classes, classes with ":" are private, data attributes (e.g. data-resolved, data-self, data-loading) etc.) */}
+
+{/* TODO: Explain overrides */}
+
+### Thread
+
+Displays a thread of comments, with a composer to reply to it.
+
+```tsx
+<>
+  {threads.map((thread) => (
+    <Thread key={thread.id} thread={thread} />
+  ))}
+</>
+```
+
+<Table columns={["26%", "32%", "42%"]}>
+
+| Prop                  | Type                                                                                              | Description                                                                   |
+| --------------------- | ------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| `thread`              | <code>ThreadData&lt;\{ resolved?: boolean \}&gt;</code>                                           | The thread to display.                                                        |
+| `showComposer`        | `boolean \| undefined`                                                                            | Whether to show the composer to reply to the thread.<br/>Defaults to `false`. |
+| `showActions`         | `boolean \| "hover" \| undefined`                                                                 | How to show or hide the actions.<br/>Defaults to `"hover"`.                   |
+| `showResolveAction`   | `boolean \| undefined`                                                                            | Whether to show the action to resolve the thread.<br/>Defaults to `true`.     |
+| `indentCommentBody`   | `boolean \| undefined`                                                                            | Whether to indent the comments’ bodies.<br/>Defaults to `true`.               |
+| `showDeletedComments` | `boolean \| undefined`                                                                            | Whether to show deleted comments.<br/>Defaults to `false`.                    |
+| `onResolveChange`     | `(resolved: boolean) => void`                                                                     | An event handler called when changing the resolved status.                    |
+| `onCommentEdit`       | `(comment: CommentData) => void`                                                                  | An event handler called when a comment is edited.                             |
+| `onCommentDelete`     | `(comment: CommentData) => void`                                                                  | An event handler called when a comment is deleted.                            |
+| `onAuthorClick`       | <code>(userId: string, event: MouseEvent&lt;HTMLElement&gt;) => void \| undefined</code>          | An event handler called when clicking on a comment’s author.                  |
+| `onMentionClick`      | <code>(userId: string, event: MouseEvent&lt;HTMLElement&gt;) => void \| undefined</code>          | An event handler called when clicking on a mention.                           |
+| `overrides`           | <code>Partial&lt;ThreadOverrides \& CommentOverrides \& ComposerOverrides&gt; \| undefined</code> | Override the component’s strings.                                             |
+
+</Table>
+
+{/* TODO: Document classes and data attributes */}
+
+### Comment
+
+Displays a single comment.
+
+```tsx
+<>
+  {thread.comments.map((comment) => (
+    <Comment key={comment.id} comment={comment} />
+  ))}
+</>
+```
+
+<Table columns={["26%", "32%", "42%"]}>
+
+| Prop             | Type                                                                                     | Description                                                                                                                           |
+| ---------------- | ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `comment`        | `CommentData`                                                                            | The thread to display.                                                                                                                |
+| `showActions`    | `boolean \| "hover" \| undefined`                                                        | How to show or hide the actions.<br/>Defaults to `"hover"`.                                                                           |
+| `indentBody`     | `boolean \| undefined`                                                                   | Whether to indent the comment’s body.<br/>Defaults to `true`.                                                                         |
+| `showDeleted`    | `boolean \| undefined`                                                                   | Whether to show the comment if it was deleted. If set to `false`, it will render deleted comments as `null`.<br/>Defaults to `false`. |
+| `onEdit`         | `(comment: CommentData) => void`                                                         | An event handler called when the comment is edited.                                                                                   |
+| `onDelete`       | `(comment: CommentData) => void`                                                         | An event handler called when the comment is deleted.                                                                                  |
+| `onAuthorClick`  | <code>(userId: string, event: MouseEvent&lt;HTMLElement&gt;) => void \| undefined</code> | An event handler called when clicking on the author.                                                                                  |
+| `onMentionClick` | <code>(userId: string, event: MouseEvent&lt;HTMLElement&gt;) => void \| undefined</code> | An event handler called when clicking on a mention.                                                                                   |
+| `overrides`      | <code>Partial&lt;CommentOverrides \& ComposerOverrides&gt; \| undefined</code>           | Override the component’s strings.                                                                                                     |
+
+</Table>
+
+{/* TODO: Document classes and data attributes */}
+
+### Composer
+
+Displays a composer to create comments.
+
+```tsx
+<Composer />
+```
+
+<Table columns={["26%", "32%", "42%"]}>
+
+| Prop           | Type                                                       | Description                                               |
+| -------------- | ---------------------------------------------------------- | --------------------------------------------------------- |
+| `threadId`     | `string \| undefined`                                      | The ID of the thread to reply to or to edit a comment in. |
+| `commentId`    | `string \| undefined`                                      | The ID of the comment to edit.                            |
+| `initialValue` | `CommentBody \| undefined`                                 | The editor’s initial value.                               |
+| `disabled`     | `boolean \| undefined`                                     | Whether the editor is disabled.                           |
+| `overrides`    | <code>Partial&lt;ComposerOverrides&gt; \| undefined</code> | Override the component’s strings.                         |
+
+</Table>
+
+{/* TODO: Document classes and data attributes */}
+
+{/* TODO: Explain how the default behavior can be overridden using event.preventDefault() and calling the mutation methods manually */}
+
 ## Primitives
 
 Primitives are unopinionated and unstyled components that can be used to create
@@ -357,7 +363,7 @@ Displays a comment body.
 <Comment.Body body={comment.body} />
 ```
 
-<Table columns={["auto", "auto", "54%"]}>
+<Table columns={["26%", "32%", "42%"]}>
 
 | Prop            | Type                                                                     | Description                                                                                     |
 | --------------- | ------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------- |
@@ -377,7 +383,7 @@ A render prop that accepts a component used to render mentions.
 />
 ```
 
-<Table columns={["auto", "auto", "54%"]}>
+<Table columns={["26%", "32%", "42%"]}>
 
 | Prop     | Type     | Description            |
 | -------- | -------- | ---------------------- |
@@ -393,7 +399,7 @@ Displays mentions within `Comment.Body`’s `renderMention` prop.
 <Comment.Mention>@{userId}</Comment.Mention>
 ```
 
-<Table columns={["auto", "auto", "54%"]}>
+<Table columns={["26%", "32%", "42%"]}>
 
 | Prop      | Type                   | Description                                                                         |
 | --------- | ---------------------- | ----------------------------------------------------------------------------------- |
@@ -434,7 +440,7 @@ Surrounds the composer’s content and handles submissions.
 </Composer.Form>
 ```
 
-<Table columns={["auto", "auto", "54%"]}>
+<Table columns={["26%", "32%", "42%"]}>
 
 | Prop               | Type                                                                                                                                 | Description                                                                         |
 | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------- |
@@ -451,7 +457,7 @@ Displays the composer’s editor.
 <Composer.Editor placeholder="Write a comment…" />
 ```
 
-<Table columns={["auto", "auto", "54%"]}>
+<Table columns={["26%", "32%", "42%"]}>
 
 | Prop                       | Type                                                                                 | Description                                                                                            |
 | -------------------------- | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ |
@@ -486,7 +492,7 @@ A render prop that accepts a component used to render mentions.
 />
 ```
 
-<Table columns={["auto", "auto", "54%"]}>
+<Table columns={["26%", "32%", "42%"]}>
 
 | Prop         | Type      | Description                      |
 | ------------ | --------- | -------------------------------- |
@@ -499,7 +505,7 @@ A render prop that accepts a component used to render mentions.
 
 A render prop that accepts a component used to render mention suggestions.
 
-<Table columns={["auto", "auto", "54%"]}>
+<Table columns={["26%", "32%", "42%"]}>
 
 | Prop             | Type                  | Description                     |
 | ---------------- | --------------------- | ------------------------------- |
@@ -528,7 +534,7 @@ Displays mentions within `Composer.Editor`’s `renderMention` prop.
 <Composer.Mention>@{userId}</Composer.Mention>
 ```
 
-<Table columns={["auto", "auto", "54%"]}>
+<Table columns={["26%", "32%", "42%"]}>
 
 | Prop      | Type                   | Description                                                                         |
 | --------- | ---------------------- | ----------------------------------------------------------------------------------- |
@@ -556,7 +562,7 @@ Surrounds a list of suggestions within `Composer.Editor`.
 <Composer.Suggestions>
 ```
 
-<Table columns={["auto", "auto", "54%"]}>
+<Table columns={["26%", "32%", "42%"]}>
 
 | Prop      | Type                   | Description                                                                         |
 | --------- | ---------------------- | ----------------------------------------------------------------------------------- |
@@ -572,7 +578,7 @@ Displays a list of suggestions within `Composer.Editor`.
 <Composer.SuggestionsList>{/* … */}</Composer.SuggestionsList>
 ```
 
-<Table columns={["auto", "auto", "54%"]}>
+<Table columns={["26%", "32%", "42%"]}>
 
 | Prop      | Type                   | Description                                                                         |
 | --------- | ---------------------- | ----------------------------------------------------------------------------------- |
@@ -594,7 +600,7 @@ Displays a suggestion within `Composer.SuggestionsList`.
 </Composer.SuggestionsList>
 ```
 
-<Table columns={["auto", "auto", "54%"]}>
+<Table columns={["26%", "32%", "42%"]}>
 
 | Prop      | Type                   | Description                                                                         |
 | --------- | ---------------------- | ----------------------------------------------------------------------------------- |
@@ -619,7 +625,7 @@ A button to submit the composer.
 <Composer.Submit>Send</Composer.Submit>
 ```
 
-<Table columns={["auto", "auto", "54%"]}>
+<Table columns={["26%", "32%", "42%"]}>
 
 | Prop      | Type                   | Description                                                                         |
 | --------- | ---------------------- | ----------------------------------------------------------------------------------- |
@@ -637,7 +643,7 @@ absolute formatting for older ones.
 <Timestamp date={new Date()} />
 ```
 
-<Table columns={["auto", "auto", "54%"]}>
+<Table columns={["26%", "32%", "42%"]}>
 
 | Prop       | Type                                              | Description                                                                                                                                 |
 | ---------- | ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
