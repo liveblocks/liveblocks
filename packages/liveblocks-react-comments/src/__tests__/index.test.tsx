@@ -1,12 +1,18 @@
 import "@testing-library/jest-dom";
 
-import type { RoomStateServerMsg } from "@liveblocks/core";
+import type {
+  CommentData,
+  RoomStateServerMsg,
+  ThreadData,
+} from "@liveblocks/core";
 import { ServerMsgCode } from "@liveblocks/core";
 import { rest } from "msw";
 import { setupServer } from "msw/node";
 import React from "react";
 
+import { Comment } from "../components/Comment";
 import { Composer } from "../components/Composer";
+import { Thread } from "../components/Thread";
 import { render } from "./_utils"; // Basically re-exports from @testing-library/react
 
 function remove<T>(array: T[], item: T) {
@@ -124,8 +130,126 @@ beforeEach(() => {
 afterEach(() => server.resetHandlers());
 afterAll(() => server.close());
 
-test("Composer", () => {
-  const { debug } = render(<Composer />);
+const comment: CommentData = {
+  type: "comment",
+  id: "cm_1",
+  threadId: "th_1",
+  roomId: "room",
+  userId: "user",
+  createdAt: "2023-08-14T12:41:50.243Z",
+  mentionedIds: [],
+  body: {
+    version: 1,
+    content: [
+      {
+        type: "paragraph",
+        children: [
+          {
+            text: "hello ",
+          },
+          {
+            text: "hello",
+            italic: true,
+          },
+          {
+            text: " ",
+          },
+          {
+            text: "hello",
+            bold: true,
+          },
+          {
+            text: " ",
+          },
+          {
+            text: "hello",
+            code: true,
+          },
+          {
+            text: " ",
+          },
+          {
+            text: "hello",
+            strikethrough: true,
+          },
+          {
+            text: " ",
+          },
+          {
+            type: "mention",
+            id: "user-0",
+          },
+          {
+            text: "",
+          },
+        ],
+      },
+    ],
+  },
+};
 
-  debug();
+const editedComment: CommentData = {
+  type: "comment",
+  id: "cm_2",
+  threadId: "th_1",
+  roomId: "room",
+  userId: "user",
+  createdAt: "2023-08-14T12:41:50.243Z",
+  editedAt: "2023-08-14T12:41:50.243Z",
+  mentionedIds: [],
+  body: {
+    version: 1,
+    content: [
+      {
+        type: "paragraph",
+        children: [
+          {
+            text: "hello",
+          },
+        ],
+      },
+    ],
+  },
+};
+
+const deletedComment: CommentData = {
+  type: "comment",
+  id: "cm_3",
+  threadId: "th_1",
+  roomId: "room",
+  userId: "user",
+  createdAt: "2023-08-14T12:41:50.243Z",
+  editedAt: "2023-08-14T12:41:50.243Z",
+  deletedAt: "2023-08-14T12:41:50.243Z",
+  mentionedIds: [],
+};
+
+const thread: ThreadData = {
+  type: "thread",
+  id: "th_1",
+  roomId: "room",
+  createdAt: "2023-08-14T12:41:50.243Z",
+  updatedAt: "2023-08-14T12:41:50.243Z",
+  comments: [comment, editedComment, deletedComment],
+  metadata: {},
+};
+
+describe("Components", () => {
+  test("Thread", () => {
+    const { debug } = render(<Thread thread={thread} />);
+
+    debug();
+  });
+
+  test("Comment", () => {
+    const { debug } = render(<Comment comment={comment} />);
+
+    debug();
+  });
+
+  test("Composer", () => {
+    const { debug } = render(<Composer />);
+
+    debug();
+  });
 });
