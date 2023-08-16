@@ -12,6 +12,6 @@ export type CommentData = {
   createdAt: string;
   editedAt?: string;
 } & (
-  | { body: CommentBody; mentionedIds: string[]; deletedAt?: never }
-  | { body?: never; mentionedIds: []; deletedAt: string }
+  | { body: CommentBody; deletedAt?: never }
+  | { body?: never; deletedAt: string }
 );
