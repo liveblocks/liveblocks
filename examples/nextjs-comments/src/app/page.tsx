@@ -5,6 +5,11 @@ import { RoomProvider, useThreads } from "../../liveblocks.config";
 import { Loading } from "../components/Loading";
 import { Composer, Thread } from "@liveblocks/react-comments";
 
+/**
+ * Displays a list of threads, along with a composer for creating
+ * new threads.
+ */
+
 function Example() {
   const threads = useThreads();
 

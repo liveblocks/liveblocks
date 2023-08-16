@@ -18,6 +18,11 @@ import {
 } from "@liveblocks/react-comments/primitives";
 import { ComposerFormProps } from "@liveblocks/react-comments/primitives";
 
+/**
+ * Displays a list of threads, each allowing replies, along with a composer
+ * for creating new threads.
+ */
+
 interface AvatarProps extends ComponentProps<"div"> {
   userId: string;
 }
@@ -44,7 +49,7 @@ function Button({ className, ...props }: ComponentProps<"button">) {
     <button
       className={clsx(
         className,
-        "flex h-9 items-center rounded-md bg-blue-500 px-4 text-sm font-semibold text-white outline-none ring-blue-300 ring-offset-2 focus-visible:ring-2 disabled:cursor-not-allowed disabled:opacity-50"
+        "flex h-9 items-center rounded-md bg-blue-500 px-4 text-sm font-semibold text-white outline-none ring-blue-300 ring-offset-2 focus-visible:ring-2 disabled:cursor-not-allowed disabled:opacity-50",
       )}
       {...props}
     />
@@ -58,7 +63,7 @@ function Avatar({ userId, className, ...props }: AvatarProps) {
     <div
       className={clsx(
         className,
-        "relative aspect-square overflow-hidden rounded-full bg-gray-100"
+        "relative aspect-square overflow-hidden rounded-full bg-gray-100",
       )}
       {...props}
     >

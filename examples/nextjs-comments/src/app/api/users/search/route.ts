@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { NAMES } from "../../../../database";
 
+/**
+ * Returns a list of user IDs from a partial search input
+ * For `resolveMentionSuggestions` in liveblocks.config.ts
+ */
+
 interface User {
   id: string;
   name: string;
