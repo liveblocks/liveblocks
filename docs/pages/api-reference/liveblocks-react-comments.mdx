@@ -181,6 +181,9 @@ type ThreadData<ThreadMetadata> = {
 };
 ```
 
+A thread cannot be manually deleted yet. To delete a thread, you need to delete
+all the comments in the thread.
+
 ### CommentData
 
 Represents a comment.
@@ -198,6 +201,9 @@ type CommentData = {
   deletedAt?: string;
 };
 ```
+
+Note that `body` can be `undefined` when the comment has been deleted. Read this
+[section](/docs/get-started/react-comments#deletion) for more information.
 
 ## Hooks
 
