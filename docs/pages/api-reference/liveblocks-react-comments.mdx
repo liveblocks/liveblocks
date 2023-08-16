@@ -92,9 +92,25 @@ asynchronously.
 export const {
   /* ... */
 } = createRoomContext(client, {
-  resolveUser: (userId) => __getUserInfoFromDB__(userId),
+  resolveUser: async (userId) => {
+    const userData = __getUserFromDB__(userId);
+
+    return {
+      name: userData.name,
+      avatar: userData.avatar.src,
+    };
+  },
 });
 ```
+
+<Banner title="User object">
+  The user object returned by the resolver function takes the shape of
+  `UserMeta["info"]`, which contains `name` and `avatar` (both optional) by
+  default. If you provided your own `UserMeta` type to `createRoomContext`, your
+  own `UserMeta["info"]` will be required here as well. But keep in mind that
+  the default components will look for the `name` and `avatar` properties to
+  display user names and avatars.
+</Banner>
 
 Once that’s done, components will show user names and avatars accordingly.
 
