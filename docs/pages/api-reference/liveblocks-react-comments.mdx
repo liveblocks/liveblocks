@@ -131,7 +131,19 @@ but with some debouncing.
 export const {
   /* ... */
 } = createRoomContext(client, {
-  resolveMentionSuggestions: ({ text }) => __getSuggestedUserIds__(text),
+  resolveMentionSuggestions: ({ text, roomId }) => {
+    const workspaceUsers = __getWorkspaceUsersFromDB__(roomId);
+
+    if (!text) {
+      // Show all workspace users by default
+
+      return __getUserIds__(workspaceUsers);
+    } else {
+      const matchingUsers = __findUsers__(workspaceUsers, text);
+
+      return __getUserIds__(matchingUsers);
+    }
+  },
 });
 ```
 
