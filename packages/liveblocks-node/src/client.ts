@@ -79,6 +79,16 @@ export class Liveblocks {
     return fetch(url, { method: "POST", headers, body: JSON.stringify(json) });
   }
 
+  /** @internal */
+  private async get(path: `/${string}`): Promise<Response> {
+    const url = urljoin(this._baseUrl, path);
+    const headers = {
+      Authorization: `Bearer ${this._secret}`,
+      "Content-Type": "application/json",
+    };
+    return fetch(url, { method: "GET", headers });
+  }
+
   /**
    * Prepares a new session to authorize a user to access Liveblocks.
    *
@@ -184,9 +194,7 @@ export class Liveblocks {
   }): Promise<ThreadData[]> {
     const { roomId } = params;
 
-    const resp = await this.post(`/v2/rooms/${roomId}/threads`, {
-      roomId,
-    });
+    const resp = await this.get(`/v2/rooms/${roomId}/threads`);
 
     const body = await resp.json();
 
@@ -210,10 +218,7 @@ export class Liveblocks {
   public async getThread(params: { roomId: string; threadId: string; }): Promise<ThreadData> {
     const { roomId, threadId } = params;
 
-    const resp = await this.post(`/v2/rooms/${roomId}/threads/${threadId}`, {
-      roomId,
-      threadId,
-    });
+    const resp = await this.get(`/v2/rooms/${roomId}/threads/${threadId}`);
 
     const body = await resp.json();
 
@@ -245,10 +250,7 @@ export class Liveblocks {
   }> {
     const { roomId, threadId } = params;
 
-    const resp = await this.post(`/v2/rooms/${roomId}/threads/${threadId}`, {
-      roomId,
-      threadId,
-    });
+    const resp = await this.get(`/v2/rooms/${roomId}/threads/${threadId}/participants`);
 
     const body = await resp.json();
 
@@ -278,13 +280,8 @@ export class Liveblocks {
     }): Promise<CommentData> {
     const { roomId, threadId, commentId } = params;
 
-    const resp = await this.post(
-      `/v2/rooms/${roomId}/threads/${threadId}/comments/${commentId}`,
-      {
-        roomId,
-        threadId,
-        commentId,
-      }
+    const resp = await this.get(
+      `/v2/rooms/${roomId}/threads/${threadId}/comments/${commentId}`
     );
 
     const body = await resp.json();
