@@ -250,7 +250,7 @@ export class Liveblocks {
   }> {
     const { roomId, threadId } = params;
 
-    const resp = await this.get(`/v2/rooms/${roomId}/threads/${threadId}`);
+    const resp = await this.get(`/v2/rooms/${roomId}/threads/${threadId}/participants`);
 
     const body = await resp.json();
 
