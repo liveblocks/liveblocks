@@ -44,7 +44,7 @@ const getParagraphText = (elements: CommentBodyElement[]): string => {
 
       paragraphText += text;
     } else if (element.type === "mention") {
-      paragraphText += ` @${element.id}`;
+      paragraphText += `@${element.id}`;
     }
   }
 
