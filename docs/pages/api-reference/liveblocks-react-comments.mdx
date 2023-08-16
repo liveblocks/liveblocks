@@ -127,7 +127,11 @@ Makes comments from a room available in the component hierarchy below.
 import { RoomProvider } from "./liveblocks.config";
 
 function Panel() {
-  return <RoomProvider id="my-room">{/* children */}</RoomProvider>;
+  return (
+    <RoomProvider id="my-room" initialPresence={{}}>
+      {/* children */}
+    </RoomProvider>
+  );
 }
 ```
 
