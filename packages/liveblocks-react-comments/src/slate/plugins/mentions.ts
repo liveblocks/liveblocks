@@ -9,6 +9,7 @@ import {
 import type { ComposerBodyMention } from "../../types";
 import { getCharacterAfter, getCharacterBefore } from "../utils/get-character";
 import { getMatchRange } from "../utils/get-match-range";
+import { isEmptyString } from "../utils/is-empty-string";
 import { isSelectionCollapsed } from "../utils/is-selection-collapsed";
 
 export const MENTION_CHARACTER = "@";
@@ -63,8 +64,21 @@ export function insertMention(editor: SlateEditor, userId: string) {
     children: [{ text: "" }],
   };
 
+  // Insert the mention
   SlateTransforms.insertNodes(editor, mention);
   SlateTransforms.move(editor);
+
+  const afterCharacter = editor.selection
+    ? getCharacterAfter(editor, editor.selection)
+    : undefined;
+
+  if (!afterCharacter || afterCharacter.void) {
+    // Insert a following space if needed
+    SlateTransforms.insertText(editor, " ");
+  } else if (isEmptyString(afterCharacter.text)) {
+    // Move the selection if it's already followed by a space
+    SlateTransforms.move(editor);
+  }
 }
 
 export function insertMentionCharacter(editor: SlateEditor) {
@@ -80,9 +94,9 @@ export function insertMentionCharacter(editor: SlateEditor) {
     filterVoids: true,
   });
   const shouldInsertSpaceBefore =
-    beforeCharacter && beforeCharacter.text.trim() !== "";
+    beforeCharacter && !isEmptyString(beforeCharacter.text);
   const shouldInsertSpaceAfter =
-    afterCharacter && afterCharacter.text.trim() !== "";
+    afterCharacter && !isEmptyString(afterCharacter.text);
 
   if (isSelectionCollapsed(editor.selection)) {
     const text =

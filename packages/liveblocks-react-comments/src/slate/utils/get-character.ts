@@ -22,10 +22,12 @@ export function getCharacterBefore<T extends SlateEditor>(
       before,
       SlateRange.isRange(at) ? SlateRange.start(at) : at
     );
+    const text = SlateEditor.string(editor, range);
 
     return {
       range,
-      text: SlateEditor.string(editor, range),
+      text,
+      void: text.length === 0,
     };
   }
 
@@ -49,10 +51,12 @@ export function getCharacterAfter<T extends SlateEditor>(
       after,
       SlateRange.isRange(at) ? SlateRange.end(at) : at
     );
+    const text = SlateEditor.string(editor, range);
 
     return {
       range,
-      text: SlateEditor.string(editor, range),
+      text,
+      void: text.length === 0,
     };
   }
 

@@ -7,6 +7,7 @@ import {
 
 import { getCharacterBefore } from "../utils/get-character";
 import { getMatchRange } from "../utils/get-match-range";
+import { isEmptyString } from "../utils/is-empty-string";
 import { isSelectionCollapsed } from "../utils/is-selection-collapsed";
 
 interface MarkFormatter {
@@ -75,7 +76,7 @@ function formatMark<T extends SlateEditor>(
   if (
     beforeCharacter &&
     !markFormattingCharacters.includes(beforeCharacter.text) &&
-    beforeCharacter.text.trim() !== ""
+    !isEmptyString(beforeCharacter.text)
   ) {
     return false;
   }
