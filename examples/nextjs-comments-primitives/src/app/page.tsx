@@ -115,14 +115,14 @@ function Composer({
                   <ComposerPrimitive.SuggestionsListItem
                     key={userId}
                     value={userId}
-                    className="flex cursor-pointer gap-2 rounded-md px-2 py-1.5 data-[selected]:bg-gray-100"
+                    className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm data-[selected]:bg-gray-100"
                   >
                     <Suspense
                       fallback={
                         <div className="relative aspect-square w-6 flex-none animate-pulse rounded-full bg-gray-100" />
                       }
                     >
-                      <Avatar userId={userId} className="w-6 flex-none" />
+                      <Avatar userId={userId} className="w-5 flex-none" />
                     </Suspense>
                     <Suspense fallback={userId}>
                       <User userId={userId} />
