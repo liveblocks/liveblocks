@@ -3,11 +3,10 @@ import clsx from "clsx";
 import { ReactNode, forwardRef } from "react";
 import styles from "./Tooltip.module.css";
 
-export interface Props
-  extends RadixTooltip.TooltipProps,
-    RadixTooltip.TooltipContentProps {
-  content: ReactNode;
-}
+export type Props = RadixTooltip.TooltipProps &
+  RadixTooltip.TooltipContentProps & {
+    content: ReactNode;
+  };
 
 export const Tooltip = forwardRef<HTMLDivElement, Props>(
   (
