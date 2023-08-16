@@ -10,7 +10,7 @@ export const client = createClient({
 const {
   suspense: { RoomProvider, useThreads },
 } = createRoomContext(client, {
-  resolveUser: async (userId) => {
+  resolveUser: async ({ userId }) => {
     try {
       const response = await fetch(`/api/users?userId=${userId}`);
 
@@ -19,9 +19,9 @@ const {
       console.error(error);
     }
   },
-  resolveMentionSuggestions: async (search) => {
+  resolveMentionSuggestions: async ({ text }) => {
     try {
-      const response = await fetch(`/api/users/search?search=${search}`);
+      const response = await fetch(`/api/users/search?text=${text}`);
 
       return response.json();
     } catch (error) {

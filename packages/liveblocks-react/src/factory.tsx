@@ -47,6 +47,8 @@ import { useInitial, useRerender } from "./hooks";
 import type {
   MutationContext,
   OmitFirstArg,
+  ResolveMentionSuggestionsOptions,
+  ResolveUserOptions,
   RoomContextBundle,
   RoomProviderProps,
   UserState,
@@ -135,12 +137,16 @@ type Options<TUserMeta extends BaseUserMeta> = {
   /**
    * An asynchronous function that returns user info from a user ID.
    */
-  resolveUser?: (userId: string) => Promise<TUserMeta["info"] | undefined>;
+  resolveUser?: (
+    options: ResolveUserOptions
+  ) => Promise<TUserMeta["info"] | undefined>;
 
   /**
    * An asynchronous function that returns a list of user IDs matching a string.
    */
-  resolveMentionSuggestions?: (search: string) => Promise<string[]>;
+  resolveMentionSuggestions?: (
+    options: ResolveMentionSuggestionsOptions
+  ) => Promise<string[]>;
 
   /**
    * @internal Internal endpoint
@@ -899,10 +905,20 @@ export function createRoomContext<
 
   const { resolveUser, resolveMentionSuggestions } = options ?? {};
 
-  const usersCache = resolveUser ? createAsyncCache(resolveUser) : undefined;
+  const usersCache = resolveUser
+    ? createAsyncCache((stringifiedOptions: string) => {
+        return resolveUser(
+          JSON.parse(stringifiedOptions) as ResolveUserOptions
+        );
+      })
+    : undefined;
 
   function useUser(userId: string) {
-    const state = useAsyncCache(usersCache, userId);
+    const resolverKey = React.useMemo(
+      () => JSON.stringify({ userId }),
+      [userId]
+    );
+    const state = useAsyncCache(usersCache, resolverKey);
 
     React.useEffect(() => warnIfNoResolveUser(usersCache), []);
 
@@ -920,7 +936,11 @@ export function createRoomContext<
   }
 
   function useUserSuspense(userId: string) {
-    const state = useAsyncCache(usersCache, userId, {
+    const resolverKey = React.useMemo(
+      () => JSON.stringify({ userId }),
+      [userId]
+    );
+    const state = useAsyncCache(usersCache, resolverKey, {
       suspense: true,
     });
 
@@ -934,18 +954,28 @@ export function createRoomContext<
   }
 
   const mentionSuggestionsCache = createAsyncCache<string[], unknown>(
-    resolveMentionSuggestions ?? (() => Promise.resolve([]))
+    resolveMentionSuggestions
+      ? (stringifiedOptions: string) => {
+          return resolveMentionSuggestions(
+            JSON.parse(stringifiedOptions) as ResolveMentionSuggestionsOptions
+          );
+        }
+      : () => Promise.resolve([])
   );
 
   function useMentionSuggestions(search?: string) {
+    const room = useRoom();
     const debouncedSearch = useDebounce(search, 500);
-    const { data } = useAsyncCache(
-      mentionSuggestionsCache,
-      debouncedSearch ?? null,
-      {
-        keepPreviousDataWhileLoading: true,
-      }
+    const resolverKey = React.useMemo(
+      () =>
+        debouncedSearch !== undefined
+          ? JSON.stringify({ text: debouncedSearch, roomId: room.id })
+          : null,
+      [debouncedSearch, room.id]
     );
+    const { data } = useAsyncCache(mentionSuggestionsCache, resolverKey, {
+      keepPreviousDataWhileLoading: true,
+    });
 
     React.useEffect(
       () => warnIfNoResolveMentionSuggestions(mentionSuggestionsCache),

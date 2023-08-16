@@ -8,7 +8,7 @@ interface User {
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
-  const search = searchParams.get("search");
+  const text = searchParams.get("text");
 
   const userIndices = [...NAMES.keys()];
   const users = userIndices.map(
@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
   );
   const filteredUserIds = users
     .filter((user) =>
-      search ? user.name.toLowerCase().includes(search.toLowerCase()) : true
+      text ? user.name.toLowerCase().includes(text.toLowerCase()) : true
     )
     .map((user) => user.id);
 

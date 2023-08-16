@@ -30,6 +30,15 @@ import type {
   RoomThreads,
 } from "./comments/CommentsRoom";
 
+export type ResolveUserOptions = {
+  userId: string;
+};
+
+export type ResolveMentionSuggestionsOptions = {
+  roomId: string;
+  text: string;
+};
+
 export type UserState<T> =
   | {
       user?: never;
