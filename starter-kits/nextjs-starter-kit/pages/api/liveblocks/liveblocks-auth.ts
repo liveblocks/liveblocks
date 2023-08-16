@@ -1,8 +1,8 @@
+import { Liveblocks } from "@liveblocks/node";
 import { NextApiRequest, NextApiResponse } from "next";
 import { getDraftsGroupName, getServerSession } from "../../../lib/server";
-import { User } from "../../../types";
-import { Liveblocks } from "@liveblocks/node";
 import { SECRET_API_KEY } from "../../../liveblocks.server.config";
+import { User } from "../../../types";
 
 const liveblocks = new Liveblocks({
   secret: SECRET_API_KEY as string,
@@ -26,7 +26,7 @@ export default async function auth(req: NextApiRequest, res: NextApiResponse) {
   const anonymousUser: User = {
     id: "anonymous",
     name: "Anonymous",
-    color: "red",
+    color: "#ff0000",
     groupIds: [],
   };
 

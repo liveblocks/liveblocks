@@ -1,5 +1,5 @@
-import { ComponentProps, forwardRef, ReactNode } from "react";
 import clsx from "clsx";
+import { ComponentProps, ReactNode, forwardRef } from "react";
 import styles from "./Document.module.css";
 
 interface Props extends ComponentProps<"div"> {

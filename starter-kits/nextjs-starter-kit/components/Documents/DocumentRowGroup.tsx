@@ -1,6 +1,6 @@
-import { Document } from "../../types";
 import { memo } from "react";
 import { getLiveUsers, useDocumentsFunctionSWR } from "../../lib/client";
+import { Document } from "../../types";
 import { DocumentRow } from "./DocumentRow";
 import styles from "../../layouts/Documents/Documents.module.css";
 

@@ -22,7 +22,7 @@
 
 This example shows how to build a collaborative whiteboard with [Liveblocks](https://liveblocks.io) and [Next.js](https://nextjs.org/).
 
-<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/whiteboard.png" width="536" alt="Collaborative Whiteboard" />
+<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/collaborative-whiteboard.png" width="536" alt="Collaborative Whiteboard" />
 
 ## Getting started
 

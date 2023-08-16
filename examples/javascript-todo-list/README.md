@@ -26,7 +26,7 @@ As users edit the list, changes will be automatically persisted and
 synced—allowing for a list that updates in real-time across clients. Users will
 also be able to see who else is currently online and when a user is typing.
 
-<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/todo-list.png" width="536" alt="Collaborative To-do List" />
+<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/collaborative-todo-list.png" width="536" alt="Collaborative To-do List" />
 
 ## Getting started
 
@@ -39,7 +39,8 @@ npx create-liveblocks-app@latest --example javascript-todo-list --no-api-key --n
 This will download the example and install the example. Next, you must:
 
 - Create an account on [liveblocks.io](https://liveblocks.io/dashboard)
-- Copy your **public** key from the [dashboard](https://liveblocks.io/dashboard/apikeys)
+- Copy your **public** key from the
+  [dashboard](https://liveblocks.io/dashboard/apikeys)
 - Replace `pk_YOUR_PUBLIC_KEY` in [`app.js`](./app.js) with your **public** key
 - Run `npm run build` and open `static/index.html` in your browser
 
@@ -53,7 +54,8 @@ Alternatively, you can set up your project manually:
 
 - Install all dependencies with `npm install`
 - Create an account on [liveblocks.io](https://liveblocks.io/dashboard)
-- Copy your **public** key from the [dashboard](https://liveblocks.io/dashboard/apikeys)
+- Copy your **public** key from the
+  [dashboard](https://liveblocks.io/dashboard/apikeys)
 - Replace `pk_YOUR_PUBLIC_KEY` in [`app.js`](./app.js) with your **public** key
 - Run `npm run build` and open `static/index.html` in your browser
 
@@ -65,16 +67,19 @@ Alternatively, you can set up your project manually:
 
 <p></p>
 
-To both deploy on [Vercel](https://vercel.com), and run the example locally, use the following command:
+To both deploy on [Vercel](https://vercel.com), and run the example locally, use
+the following command:
 
 ```bash
 npx create-liveblocks-app@latest --example javascript-todo-list --vercel
 ```
 
-This will download the example and ask permission to open your browser, enabling you to deploy to Vercel. Next, you must:
+This will download the example and ask permission to open your browser, enabling
+you to deploy to Vercel. Next, you must:
 
 - Create an account on [liveblocks.io](https://liveblocks.io/dashboard)
-- Copy your **public** key from the [dashboard](https://liveblocks.io/dashboard/apikeys)
+- Copy your **public** key from the
+  [dashboard](https://liveblocks.io/dashboard/apikeys)
 - Replace `pk_YOUR_PUBLIC_KEY` in [`app.js`](./app.js) with your **public** key
 - Push a commit to update the Vercel demo with the key
 - Run `npm run build` and open `static/index.html` in your browser
@@ -87,7 +92,10 @@ This will download the example and ask permission to open your browser, enabling
 
 <p></p>
 
-After forking [this example](https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/javascript-todo-list) on CodeSandbox, create the `pk_YOUR_PUBLIC_KEY` environment variable as a [public](https://codesandbox.io/docs/secrets).
+After forking
+[this example](https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/javascript-todo-list)
+on CodeSandbox, create the `pk_YOUR_PUBLIC_KEY` environment variable as a
+[public](https://codesandbox.io/docs/secrets).
 
 </details>
 

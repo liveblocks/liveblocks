@@ -23,7 +23,7 @@
 
 This example shows how to build a live avatar stack with [Liveblocks](https://liveblocks.io), [NextAuth.js](https://next-auth.js.org/), and [Next.js](https://nextjs.org/).
 
-<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/live-avatars.png" width="536" alt="Live Avatar Stack" />
+<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/live-avatar-stack.png" width="536" alt="Live Avatar Stack" />
 
 ## Getting started
 

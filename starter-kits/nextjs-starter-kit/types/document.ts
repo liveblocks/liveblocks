@@ -1,4 +1,4 @@
-import { User, Group } from "./data";
+import { Group, User } from "./data";
 import { RoomMetadata } from "./room";
 
 /**
