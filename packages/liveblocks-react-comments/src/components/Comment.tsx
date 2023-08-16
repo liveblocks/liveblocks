@@ -2,7 +2,12 @@
 
 import type { CommentData } from "@liveblocks/core";
 import { useRoomContextBundle } from "@liveblocks/react";
-import type { ComponentPropsWithoutRef, MouseEvent, ReactNode } from "react";
+import type {
+  ComponentPropsWithoutRef,
+  FormEvent,
+  MouseEvent,
+  ReactNode,
+} from "react";
 import React, { forwardRef, useCallback, useState } from "react";
 
 import { CheckIcon } from "../icons/check";
@@ -160,10 +165,11 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
     }, []);
 
     const handleEditSubmit = useCallback(
-      ({ body }: ComposerSubmitComment) => {
+      ({ body }: ComposerSubmitComment, event: FormEvent<HTMLFormElement>) => {
         // TODO: Add a way to preventDefault from within this callback, to override the default behavior (e.g. showing a confirmation dialog)
         onEdit?.(comment);
 
+        event.preventDefault();
         setEditing(false);
         editComment({
           commentId: comment.id,
