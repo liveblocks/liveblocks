@@ -92,7 +92,7 @@ asynchronously.
 export const {
   /* ... */
 } = createRoomContext(client, {
-  resolveUser: async (userId) => {
+  resolveUser: async ({ userId }) => {
     const userData = __getUserFromDB__(userId);
 
     return {
@@ -131,7 +131,7 @@ but with some debouncing.
 export const {
   /* ... */
 } = createRoomContext(client, {
-  resolveMentionSuggestions: (text) => __getSuggestedUserIds__(text),
+  resolveMentionSuggestions: ({ text }) => __getSuggestedUserIds__(text),
 });
 ```
 

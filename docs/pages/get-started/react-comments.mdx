@@ -184,7 +184,7 @@ when needed instead of synchronizing your database of users with Liveblocks.
 
 ```tsx
 createRoomContext(client, {
-  resolveUser: async (userId) => {
+  resolveUser: async ({ userId }) => {
     // Fetch user metadata from a local cache or a backend endpoint
 
     return {
