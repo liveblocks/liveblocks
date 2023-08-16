@@ -307,6 +307,8 @@ They are built around a few customizable CSS variables:
 --lb-tooltip-foreground-contrast: 18%;
 ```
 
+{/* TODO: Explain automatic color scales (with a palette-type visual) */}
+
 If these CSS variables aren't enough, every elements within the components have
 clearly defined classes. Additionaly, some elements also have data attributes to
 provide contextual information (e.g. `data-variant="primary"` on `.lb-button`,
@@ -344,6 +346,36 @@ import "@liveblocks/react-comments/styles/dark/attributes.css";
 /* Choose one depending on your setup */
 @import "@liveblocks/react-comments/styles/dark/media-query.css";
 @import "@liveblocks/react-comments/styles/dark/attributes.css";
+```
+
+##### Browser support
+
+The default styles use modern CSS features like
+[container queries](https://caniuse.com/css-container-queries),
+[`:has()`](https://caniuse.com/css-has) and
+[`color-mix()`](https://caniuse.com/mdn-css_types_color_color-mix). While
+container queries and `:has()` are used as progressive enhancements and aren’t
+required, `color-mix()` is used extensively to generate the various color
+scales. If you need to support browser versions that don’t support
+`color-mix()`, you can specify the color scales manually:
+
+```css
+--lb-accent-subtle: ;
+--lb-accent-moderate: ;
+--lb-accent-tertiary: ;
+--lb-accent-secondary: ;
+--lb-foreground-subtle: ;
+--lb-foreground-moderate: ;
+--lb-foreground-tertiary: ;
+--lb-foreground-secondary: ;
+--lb-elevation-foreground-subtle: ;
+--lb-elevation-foreground-moderate: ;
+--lb-elevation-foreground-tertiary: ;
+--lb-elevation-foreground-secondary: ;
+--lb-tooltip-foreground-subtle: ;
+--lb-tooltip-foreground-moderate: ;
+--lb-tooltip-foreground-tertiary: ;
+--lb-tooltip-foreground-secondary: ;
 ```
 
 #### Overrides
