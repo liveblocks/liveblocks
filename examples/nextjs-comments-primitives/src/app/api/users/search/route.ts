@@ -17,11 +17,11 @@ export async function GET(request: NextRequest) {
 
   const userIndices = [...NAMES.keys()];
   const users = userIndices.map(
-    (userIndex) => ({ id: `user-${userIndex}`, name: NAMES[userIndex] }) as User,
+    (userIndex) => ({ id: `user-${userIndex}`, name: NAMES[userIndex] }) as User
   );
   const filteredUserIds = users
     .filter((user) =>
-      text ? user.name.toLowerCase().includes(text.toLowerCase()) : true,
+      text ? user.name.toLowerCase().includes(text.toLowerCase()) : true
     )
     .map((user) => user.id);
 

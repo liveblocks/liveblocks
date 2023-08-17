@@ -1,14 +1,16 @@
-import { CommentBodyMention, CommentBodyElement, CommentBody } from "@liveblocks/core";
+import {
+  CommentBodyMention,
+  CommentBodyElement,
+  CommentBody,
+} from "@liveblocks/core";
 
-export const formatDate = (date: string) => {
-  const d = new Date(date);
-  const formatMinutes = (minutes: number) => {
-    if (minutes < 10) {
-      return `0${minutes}`;
-    }
-    return minutes;
-  };
-  return `${d.getHours()}:${formatMinutes(d.getMinutes())}`;
+export const formatDate = (date: Date | string) => {
+  const formatter = new Intl.DateTimeFormat("en", {
+    hour: "numeric",
+    minute: "numeric",
+  });
+
+  return formatter.format(new Date(date));
 };
 
 export const getPlainTextFromCommentBody = (body: CommentBody): string => {
@@ -19,7 +21,7 @@ export const getPlainTextFromCommentBody = (body: CommentBody): string => {
   }
 
   return plainText;
-}
+};
 
 export const getMentionedIdsFromCommentBody = (body: CommentBody): string[] => {
   const mentionedIdsSet = new Set<string>();
@@ -31,9 +33,7 @@ export const getMentionedIdsFromCommentBody = (body: CommentBody): string[] => {
   }
 
   return Array.from(mentionedIdsSet);
-}
-
-
+};
 
 const getParagraphText = (elements: CommentBodyElement[]): string => {
   let paragraphText = "";
@@ -49,9 +49,7 @@ const getParagraphText = (elements: CommentBodyElement[]): string => {
   }
 
   return paragraphText;
-}
-
-
+};
 
 const isMention = (
   element: CommentBodyElement
@@ -66,4 +64,4 @@ const isMention = (
   }
 
   return false;
-}
+};

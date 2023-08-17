@@ -7,7 +7,6 @@ export const client = createClient({
   authEndpoint: "/api/liveblocks-auth",
 });
 
-
 const {
   suspense: {
     RoomProvider,
@@ -17,29 +16,29 @@ const {
     useCreateThread,
   },
 } = createRoomContext(client, {
-// Get the current user's info from their ID
-resolveUser: async ({ userId }) => {
-  try {
-    const response = await fetch(`/api/users?userId=${userId}`);
+  // Get the current user's info from their ID
+  resolveUser: async ({ userId }) => {
+    try {
+      const response = await fetch(`/api/users?userId=${userId}`);
 
-    return response.json();
-  } catch (error) {
-    console.error(123, error);
-  }
-},
+      return response.json();
+    } catch (error) {
+      console.error(123, error);
+    }
+  },
 
-// Find a list of users that match the current search term
-resolveMentionSuggestions: async ({ text }) => {
-  try {
-    const response = await fetch(`/api/users/search?text=${text}`);
+  // Find a list of users that match the current search term
+  resolveMentionSuggestions: async ({ text }) => {
+    try {
+      const response = await fetch(`/api/users/search?text=${text}`);
 
-    return response.json();
-  } catch (error) {
-    console.error(456, error);
+      return response.json();
+    } catch (error) {
+      console.error(456, error);
 
-    return [];
-  }
-},
+      return [];
+    }
+  },
 });
 
 export { RoomProvider, useThreads, useUser, useCreateThread, useCreateComment };

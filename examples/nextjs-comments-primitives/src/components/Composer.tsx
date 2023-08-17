@@ -1,4 +1,7 @@
-import { Composer as ComposerPrimitive, ComposerFormProps } from "@liveblocks/react-comments/primitives";
+import {
+  Composer as ComposerPrimitive,
+  ComposerFormProps,
+} from "@liveblocks/react-comments/primitives";
 import clsx from "clsx";
 import React, { Suspense } from "react";
 import { User } from "./User";

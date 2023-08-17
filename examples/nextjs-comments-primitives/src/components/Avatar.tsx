@@ -13,7 +13,7 @@ export function Avatar({ userId, className, ...props }: AvatarProps) {
     <div
       className={clsx(
         className,
-        "relative aspect-square overflow-hidden rounded-full bg-gray-100",
+        "relative aspect-square overflow-hidden rounded-full bg-gray-100"
       )}
       {...props}
     >

@@ -3,7 +3,10 @@ import { CommentData } from "@liveblocks/client";
 import clsx from "clsx";
 import { Avatar } from "./Avatar";
 import { User } from "./User";
-import { Comment as CommentPrimitive, Timestamp } from "@liveblocks/react-comments/primitives";
+import {
+  Comment as CommentPrimitive,
+  Timestamp,
+} from "@liveblocks/react-comments/primitives";
 
 /**
  * Custom comment component.
