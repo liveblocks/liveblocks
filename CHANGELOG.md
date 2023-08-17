@@ -1,3 +1,18 @@
+# Unreleased
+
+### `create-liveblocks-app`
+
+- Fix Suspense option when specifying a framework
+- Add comments by default
+
+# v1.2.2
+
+### `@liveblocks/node`
+
+- Add Yjs document change event (`YDocUpdatedEvent`) to `WebhookHandler`.
+- Allow `Header` object to be passed to `headers` in
+  `WebhookHandler.verifyRequest()`
+
 # v1.2.1
 
 ### `@liveblocks/node`
@@ -415,17 +430,17 @@ To migrate, make the following code changes:
   create<WithLiveblocks<MyState, ...>>()(liveblocks(...))
   ```
   To be clear:
-  1. First, move the type annotation away from the `liveblocks` middleware call,
-     and onto the `create` call.
-  2. Next, wrap your `MyState` type in a `WithLiveblocks<...>` wrapper. This
-     will make sure the injected `liveblocks` property on your Zustand state
-     will be correctly typed.
-  3. Finally, make sure to add the extra call `()` wrapper, needed by Zustand v4
-     now:
-     ```ts
-     create<WithLiveblocks<MyState, ...>>()(liveblocks(...))
-     //                                  ^^ Not a typo
-     ```
+  1.  First, move the type annotation away from the `liveblocks` middleware
+      call, and onto the `create` call.
+  2.  Next, wrap your `MyState` type in a `WithLiveblocks<...>` wrapper. This
+      will make sure the injected `liveblocks` property on your Zustand state
+      will be correctly typed.
+  3.  Finally, make sure to add the extra call `()` wrapper, needed by Zustand
+      v4 now:
+      ```ts
+      create<WithLiveblocks<MyState, ...>>()(liveblocks(...))
+      //                                  ^^ Not a typo
+      ```
 - Remove the second argument to `state.liveblocks.enterRoom()`: it no longer
   takes an explicit initial state. Instead, it's automatically be populated from
   your Zustand state.

@@ -23,6 +23,8 @@ This example shows how to build a collaborative code editor with [Liveblocks](ht
 
 As users edit the code, changes will be automatically persisted and synced—allowing for collaborative code editing experience. Users will also be able to see who else is currently online and each others cursors.
 
+<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/code-editor.png" width="536" alt="Collaborative Code Editor" />
+
 ## Getting started
 
 Run the following command to set up your project manually:
