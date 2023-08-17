@@ -314,46 +314,10 @@ editor looks nice and tidy.
 ```
 
 We recommend importing some global styles into your `layout.tsx` or `page.tsx`
-file too:
+file too. We’ll be creating a custom UI, but some classes are still necessary
+for Quill:
 
 ```css file="globals.css" isCollapsed isCollapsable
-html,
-body {
-  padding: 0;
-  margin: 0;
-  font-family:
-    -apple-system,
-    BlinkMacSystemFont,
-    Segoe UI,
-    Roboto,
-    Oxygen,
-    Ubuntu,
-    Cantarell,
-    Fira Sans,
-    Droid Sans,
-    Helvetica Neue,
-    sans-serif;
-}
-
-a {
-  color: inherit;
-  text-decoration: none;
-}
-
-* {
-  box-sizing: border-box;
-}
-
-main {
-  position: fixed;
-  inset: 0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 16px;
-  background: #e8eaee;
-}
-
 /* Let cursor flags show on the first line */
 div.ql-container {
   overflow: unset;
@@ -686,7 +650,7 @@ And here’s the styles:
 }
 ```
 
-You can then import this to your editor to see it in action:
+You can then import this into your editor to see it in action:
 
 ```tsx file="Editor.tsx" highlight="1,11"
 import { Avatars } from "./Avatars";
