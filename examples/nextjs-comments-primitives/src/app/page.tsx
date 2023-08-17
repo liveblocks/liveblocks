@@ -1,6 +1,5 @@
 "use client";
 
-import React, { Suspense } from "react";
 import {
   RoomProvider,
   useCreateThread,
@@ -9,6 +8,7 @@ import {
 import { Loading } from "../components/Loading";
 import { Composer } from "../components/Composer";
 import { Thread } from "../components/Thread";
+import { ClientSideSuspense } from "@liveblocks/react";
 
 /**
  * Displays a list of threads, each allowing comment replies, along
@@ -41,9 +41,9 @@ function Example() {
 export default function Page() {
   return (
     <RoomProvider id="nextjs-comments-primitives" initialPresence={{}}>
-      <Suspense fallback={<Loading />}>
-        <Example />
-      </Suspense>
+      <ClientSideSuspense fallback={<Loading />}>
+        {() => <Example />}
+      </ClientSideSuspense>
     </RoomProvider>
   );
 }
