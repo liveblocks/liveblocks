@@ -7,11 +7,11 @@
   </a>
 </p>
 
-# Collaborative Rich Text Editor (Tiptap)
+# Collaborative Rich Text Editor (Quill)
 
 This example shows how to build a collaborative text editor with
 [Liveblocks](https://liveblocks.io), [Yjs](https://docs.yjs.dev),
-[Tiptap](https://tiptap.dev), and [Next.js](https://nextjs.org/).
+[Quill](https://quilljs.com), and [Next.js](https://nextjs.org/).
 
 As users edit the document, changes will be automatically persisted and
 synced—allowing for an editor that updates in real-time across clients. Users
@@ -24,7 +24,7 @@ will also be able to see each other’s cursors in the document.
 Run the following command to try this example locally:
 
 ```bash
-npx create-liveblocks-app@latest --example nextjs-yjs-tiptap --api-key
+npx create-liveblocks-app@latest --example nextjs-yjs-quill --api-key
 ```
 
 This will download the example and ask permission to open your browser, enabling
@@ -59,7 +59,7 @@ To both deploy on [Vercel](https://vercel.com), and run the example locally, use
 the following command:
 
 ```bash
-npx create-liveblocks-app@latest --example nextjs-yjs-tiptap --vercel
+npx create-liveblocks-app@latest --example nextjs-yjs-quill --vercel
 ```
 
 This will download the example and ask permission to open your browser, enabling
@@ -74,7 +74,7 @@ you to deploy to Vercel.
 <p></p>
 
 After forking
-[this example](https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/nextjs-yjs-tiptap)
+[this example](https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/nextjs-yjs-quill)
 on CodeSandbox, create the `LIVEBLOCKS_SECRET_KEY` environment variable as a
 [secret](https://codesandbox.io/docs/secrets).
 
