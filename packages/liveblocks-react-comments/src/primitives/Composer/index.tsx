@@ -67,7 +67,6 @@ import {
   MENTION_CHARACTER,
   withMentions,
 } from "../../slate/plugins/mentions";
-import { withNormalize } from "../../slate/plugins/normalize";
 import { getDOMRange } from "../../slate/utils/get-dom-range";
 import { isEmpty } from "../../slate/utils/is-empty";
 import { leaveMarkEdge, toggleMark } from "../../slate/utils/marks";
@@ -129,11 +128,9 @@ const emptyCommentBody: CommentBody = {
 };
 
 function createComposerEditor() {
-  return withNormalize(
-    withMentions(
-      withEmptyClearFormatting(
-        withAutoFormatting(withHistory(withReact(createEditor())))
-      )
+  return withMentions(
+    withEmptyClearFormatting(
+      withAutoFormatting(withHistory(withReact(createEditor())))
     )
   );
 }
