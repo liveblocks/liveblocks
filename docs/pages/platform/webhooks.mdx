@@ -413,6 +413,39 @@ const roomDeletedEvent = {
 };
 ```
 
+#### YDocUpdatedEvent
+
+Yjs document is updated when a user makes a change to a Yjs doc connected to a
+room. This event is throttled at five minutes and, as such, may not be triggered
+for every write.
+
+For example, if a user updates a yjs document at 1:00 pm, the `YDocUpdatedEvent`
+event will be triggered shortly after. If the user writes to storage again at
+1:01 pm, the `YDocUpdatedEvent` event will be triggered 5 minutes after the
+first event was sent, around 1:05 pm.
+
+```ts
+// Schema
+type YDocUpdatedEvent = {
+  type: "ydocUpdated";
+  data: {
+    projectId: string;
+    roomId: string;
+    deletedAt: string;
+  };
+};
+
+// Example
+const ydocUpdatedEvent = {
+  type: "ydocUpdated",
+  data: {
+    projectId: "my-project-id",
+    roomId: "my-room-id",
+    updatedAt: "2013-06-26T19:10:19Z",
+  },
+};
+```
+
 #### CommentCreatedEvent
 
 An event is triggered when a comment is created. This event is not throttled.

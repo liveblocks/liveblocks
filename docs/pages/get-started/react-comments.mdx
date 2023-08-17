@@ -31,7 +31,7 @@ final version.
     <StepContent>
 
       ```bash
-      npm install @liveblocks/client@comments @liveblocks/react@comments @liveblocks/react-comments@comments
+      npm install @liveblocks/client@comments @liveblocks/react@comments @liveblocks/react-comments@comments -E
       ```
 
     </StepContent>
@@ -184,7 +184,7 @@ when needed instead of synchronizing your database of users with Liveblocks.
 
 ```tsx
 createRoomContext(client, {
-  resolveUser: async (userId) => {
+  resolveUser: async ({ userId }) => {
     // Fetch user metadata from a local cache or a backend endpoint
 
     return {
@@ -313,23 +313,13 @@ Webhooks are the foundation for extending Liveblocks in any way you want. You
 can subscribe to any comments-related events, such as creation, edition and
 deletion.
 
-```tsx
-{
-  type: "commentCreated",
-  data: {
-    projectId: "acmeinc",
-    roomId: "besttrips2023",
-    threadId: "th_hhhFMlEx4whFcV0EJJ4o9",
-    commentId: "cm_hhhFMlEx3whFcV0EJJ4o9",
-    createdAt: "2023-07-04T20:40:28.068Z",
-    createdBy: "florent.l",
-  }
-}
-```
-
 With Webhooks, you can leverage your own email marketing tool to send emails,
 apply your product’s branding, choose your notification strategy, or even
 synchronize threads in Slack.
+
+To use our Webhooks, please follow [our guide](/docs/platform/webhooks) and/or
+take a look at our
+[example specific to comments events](https://github.com/liveblocks/liveblocks/tree/comments/examples/nextjs-comments/src/app/api/webhooks/route.ts).
 
 ## What to read next
 

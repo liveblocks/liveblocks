@@ -6,6 +6,17 @@ meta:
 alwaysShowAllNavigationLevels: false
 ---
 
+<Banner title="Private beta">
+
+Comments is currently in private beta and is only available to a select group of
+users. If you want to participate in the beta,
+[sign up for the waitlist](https://forms.gle/xgp54aTMsoH8hrjU9). During this
+beta period, breaking changes may occur, but no data loss. We use beta testers’
+feedback to improve the product. Your input is important and helps us shape the
+final version.
+
+</Banner>
+
 ## Configuration
 
 ### createRoomContext
@@ -15,7 +26,7 @@ using it in `liveblocks.config.ts` and re-exporting your typed hooks like below.
 
 ```tsx file="liveblocks.config.ts"
 import { createClient } from "@liveblocks/client";
-import { createRoomContext } from "@liveblocks/react-comments";
+import { createRoomContext } from "@liveblocks/react";
 
 const client = createClient({
   /* client options */
@@ -80,10 +91,26 @@ asynchronously.
 
 export const {
   /* ... */
-} = createRoomContext<ThreadMetadata>(client, {
-  resolveUser: (userId) => __getUserInfoFromDB__(userId),
+} = createRoomContext(client, {
+  resolveUser: async ({ userId }) => {
+    const userData = __getUserFromDB__(userId);
+
+    return {
+      name: userData.name,
+      avatar: userData.avatar.src,
+    };
+  },
 });
 ```
+
+<Banner title="User object">
+  The user object returned by the resolver function takes the shape of
+  `UserMeta["info"]`, which contains `name` and `avatar` (both optional) by
+  default. If you provided your own `UserMeta` type to `createRoomContext`, your
+  own `UserMeta["info"]` will be required here as well. But keep in mind that
+  the default components will look for the `name` and `avatar` properties to
+  display user names and avatars.
+</Banner>
 
 Once that’s done, components will show user names and avatars accordingly.
 
@@ -103,8 +130,20 @@ but with some debouncing.
 
 export const {
   /* ... */
-} = createRoomContext<ThreadMetadata>(client, {
-  resolveMentionSuggestions: (text) => __getSuggestedUserIds__(text),
+} = createRoomContext(client, {
+  resolveMentionSuggestions: ({ text, roomId }) => {
+    const workspaceUsers = __getWorkspaceUsersFromDB__(roomId);
+
+    if (!text) {
+      // Show all workspace users by default
+
+      return __getUserIds__(workspaceUsers);
+    } else {
+      const matchingUsers = __findUsers__(workspaceUsers, text);
+
+      return __getUserIds__(matchingUsers);
+    }
+  },
 });
 ```
 
@@ -116,7 +155,11 @@ Makes comments from a room available in the component hierarchy below.
 import { RoomProvider } from "./liveblocks.config";
 
 function Panel() {
-  return <RoomProvider id="my-room">{/* children */}</RoomProvider>;
+  return (
+    <RoomProvider id="my-room" initialPresence={{}}>
+      {/* children */}
+    </RoomProvider>
+  );
 }
 ```
 
@@ -138,6 +181,9 @@ type ThreadData<ThreadMetadata> = {
 };
 ```
 
+A thread cannot be manually deleted yet. To delete a thread, you need to delete
+all the comments in the thread.
+
 ### CommentData
 
 Represents a comment.
@@ -153,9 +199,11 @@ type CommentData = {
   createdAt: string;
   editedAt?: string;
   deletedAt?: string;
-  mentionedIds: string[];
 };
 ```
+
+Note that `body` can be `undefined` when the comment has been deleted. Read this
+[section](/docs/get-started/react-comments#deletion) for more information.
 
 ## Hooks
 
@@ -297,6 +345,8 @@ They are built around a few customizable CSS variables:
 --lb-tooltip-foreground-contrast: 18%;
 ```
 
+{/* TODO: Explain automatic color scales (with a palette-type visual) */}
+
 If these CSS variables aren't enough, every elements within the components have
 clearly defined classes. Additionaly, some elements also have data attributes to
 provide contextual information (e.g. `data-variant="primary"` on `.lb-button`,
@@ -334,6 +384,36 @@ import "@liveblocks/react-comments/styles/dark/attributes.css";
 /* Choose one depending on your setup */
 @import "@liveblocks/react-comments/styles/dark/media-query.css";
 @import "@liveblocks/react-comments/styles/dark/attributes.css";
+```
+
+##### Browser support
+
+The default styles use modern CSS features like
+[container queries](https://caniuse.com/css-container-queries),
+[`:has()`](https://caniuse.com/css-has) and
+[`color-mix()`](https://caniuse.com/mdn-css_types_color_color-mix). While
+container queries and `:has()` are used as progressive enhancements and aren’t
+required, `color-mix()` is used extensively to generate the various color
+scales. If you need to support browser versions that don’t support
+`color-mix()`, you can specify the color scales manually:
+
+```css
+--lb-accent-subtle: ;
+--lb-accent-moderate: ;
+--lb-accent-tertiary: ;
+--lb-accent-secondary: ;
+--lb-foreground-subtle: ;
+--lb-foreground-moderate: ;
+--lb-foreground-tertiary: ;
+--lb-foreground-secondary: ;
+--lb-elevation-foreground-subtle: ;
+--lb-elevation-foreground-moderate: ;
+--lb-elevation-foreground-tertiary: ;
+--lb-elevation-foreground-secondary: ;
+--lb-tooltip-foreground-subtle: ;
+--lb-tooltip-foreground-moderate: ;
+--lb-tooltip-foreground-tertiary: ;
+--lb-tooltip-foreground-secondary: ;
 ```
 
 #### Overrides

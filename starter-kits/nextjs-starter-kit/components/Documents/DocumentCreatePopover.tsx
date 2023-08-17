@@ -53,7 +53,6 @@ export function DocumentCreatePopover({
       content={
         <div className={styles.popover}>
           <Button
-            disabled
             icon={<PlusIcon />}
             onClick={() => {
               createNewDocument(documentName, "text");
