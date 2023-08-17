@@ -1,5 +1,7 @@
 "use client";
 
+import { useMemo } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   RoomProvider,
   useCreateThread,
@@ -39,11 +41,28 @@ function Example() {
 }
 
 export default function Page() {
+  const roomId = useOverrideRoomId("nextjs-comments-primitives");
+
   return (
-    <RoomProvider id="nextjs-comments-primitives" initialPresence={{}}>
+    <RoomProvider id={roomId} initialPresence={{}}>
       <ClientSideSuspense fallback={<Loading />}>
         {() => <Example />}
       </ClientSideSuspense>
     </RoomProvider>
   );
+}
+
+/**
+ * This function is used when deploying an example on liveblocks.io.
+ * You can ignore it completely if you run the example locally.
+ */
+function useOverrideRoomId(roomId: string) {
+  const params = useSearchParams();
+  const roomIdParam = params?.get("roomId");
+
+  const overrideRoomId = useMemo(() => {
+    return roomIdParam ? `${roomId}-${roomIdParam}` : roomId;
+  }, [roomId, roomIdParam]);
+
+  return overrideRoomId;
 }
