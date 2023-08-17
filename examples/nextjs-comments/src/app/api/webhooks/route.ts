@@ -2,12 +2,18 @@ import { NextRequest, NextResponse } from "next/server";
 import { Liveblocks, WebhookHandler } from "@liveblocks/node";
 import { formatDate, getPlainTextFromCommentBody } from "./utils";
 
-const webhookHandler = new WebhookHandler(process.env.WEBHOOK_SECRET!);
+const webhookHandler = process.env.WEBHOOK_SECRET
+  ? new WebhookHandler(process.env.WEBHOOK_SECRET)
+  : undefined;
 const liveblocks = new Liveblocks({
   secret: process.env.LIVEBLOCKS_SECRET_KEY!,
 });
 
 export async function POST(req: NextRequest) {
+  if (!webhookHandler) {
+    return new NextResponse(null, { status: 403 });
+  }
+
   try {
     const rawBody = await req.text();
 
