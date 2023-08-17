@@ -10,20 +10,19 @@
 # Collaborative Code Editor (Monaco)
 
 <p>
-  <a href="https://liveblocks.io/examples/collaborative-todo-list/react/preview">
-    <img src="https://img.shields.io/badge/live%20preview-message?style=flat&logo=data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgMjQgMjQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTE2Ljg0OSA0Ljc1SDBsNC44NDggNS4wNzV2Ny4wMDhsMTItMTIuMDgzWk03LjE1IDE5LjI1SDI0bC00Ljg0OS01LjA3NVY3LjE2N2wtMTIgMTIuMDgzWiIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==&color=333" alt="Live Preview" />
-  </a>
-  <a href="https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/react-todo-list">
+  <a href="https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/react-yjs-monaco">
     <img src="https://img.shields.io/badge/open%20in%20codesandbox-message?style=flat&logo=codesandbox&color=333&logoColor=fff" alt="Open in CodeSandbox" />
   </a>
   <img src="https://img.shields.io/badge/react-message?style=flat&logo=react&color=0bd&logoColor=fff" alt="React" />
+  <img src="https://img.shields.io/badge/yjs-message?style=flat&color=0bd" alt="Yjs" />
+  <img src="https://img.shields.io/badge/monaco-message?style=flat&color=627" alt="Monaco" />
 </p>
 
-This example shows how to build a collaborative to-do list with [Liveblocks](https://liveblocks.io), [Yjs](https://docs.yjs.dev), [Monaco](https://microsoft.github.io/monaco-editor/), and [React](https://reactjs.org/).
+This example shows how to build a collaborative code editor with [Liveblocks](https://liveblocks.io), [Yjs](https://docs.yjs.dev), [Monaco](https://microsoft.github.io/monaco-editor/), and [React](https://reactjs.org/).
 
 As users edit the code, changes will be automatically persisted and synced—allowing for collaborative code editing experience. Users will also be able to see who else is currently online and each others cursors.
 
-<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/todo-list.png" width="536" alt="Collaborative To-do List" />
+<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/code-editor.png" width="536" alt="Collaborative Code Editor" />
 
 ## Getting started
 
@@ -33,7 +32,7 @@ Run the following command to set up your project manually:
 - Create an account on [liveblocks.io](https://liveblocks.io/dashboard)
 - Copy your **public** key from the [dashboard](https://liveblocks.io/dashboard/apikeys)
 - Replace `pk_YOUR_PUBLIC_KEY` in [`liveblocks.config.js`](./src/liveblocks.config.js) with your **public** key
-- Run `npm run start` and open `http://localhost:3000` in your browser
+- Run `npm run dev` and open `http://localhost:3000` in your browser
 
 ### Develop on CodeSandbox
 

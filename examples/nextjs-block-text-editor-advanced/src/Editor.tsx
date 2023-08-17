@@ -1,7 +1,7 @@
 import styles from "./Editor.module.css";
 
 import isHotkey from "is-hotkey";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import {
   createEditor,
@@ -80,6 +80,8 @@ const useEditor = () =>
 function isNodeWithId(editor: Editor, id: string) {
   return (node: Node) => Editor.isBlock(editor, node) && node.id === id;
 }
+
+const blockFunction = (props: any) => <Block {...props} />;
 
 export default function App() {
   const editor = useEditor();
@@ -249,20 +251,22 @@ export default function App() {
     window.getSelection()?.empty();
   };
 
+  const handlersRef = useRef(new WeakMap());
+
   const renderElement = useCallback((props: RenderElementProps) => {
     const path = ReactEditor.findPath(editor, props.element);
     const isTopLevel = path.length === 1;
 
-    return isTopLevel && path[0] !== 0 ? (
-      <SortableElement
-        {...props}
-        renderElement={Block}
-        onDelete={() =>
+    const currentHandlersExist = handlersRef.current.has(props.element);
+
+    if (!currentHandlersExist) {
+      handlersRef.current.set(props.element, {
+        onDelete: () => {
           Transforms.removeNodes(editor, {
             at: ReactEditor.findPath(editor, props.element),
-          })
-        }
-        onInsertBelow={(block: CustomElement) => {
+          });
+        },
+        onInsertBelow: (block: CustomElement) => {
           const path = [ReactEditor.findPath(editor, props.element)[0] + 1];
 
           Transforms.insertNodes(editor, block, {
@@ -277,7 +281,18 @@ export default function App() {
               focus: { path: [path[0], 0], offset: 0 },
             });
           }, 0);
-        }}
+        },
+      });
+    }
+
+    const { onDelete, onInsertBelow } = handlersRef.current.get(props.element);
+
+    return isTopLevel && path[0] !== 0 ? (
+      <SortableElement
+        {...props}
+        renderElement={blockFunction}
+        onDelete={onDelete}
+        onInsertBelow={onInsertBelow}
       />
     ) : (
       <Block {...props} />
@@ -462,73 +477,75 @@ export default function App() {
   );
 }
 
-function SortableElement({
-  attributes,
-  element,
-  children,
-  renderElement,
-  onDelete,
-  onInsertBelow,
-}: RenderElementProps & {
-  renderElement: any;
-  onDelete: () => void;
-  onInsertBelow: (block: CustomElement) => void;
-}) {
-  const sortable = useSortable({ id: element.id });
-  const othersByBlockId = useOthers()
-    .toArray()
-    .filter((user) => user.presence?.selectedBlockId === element.id);
+const SortableElement = memo(
+  ({
+    attributes,
+    element,
+    children,
+    renderElement,
+    onDelete,
+    onInsertBelow,
+  }: RenderElementProps & {
+    renderElement: any;
+    onDelete: () => void;
+    onInsertBelow: (block: CustomElement) => void;
+  }) => {
+    const sortable = useSortable({ id: element.id });
+    const othersByBlockId = useOthers()
+      .toArray()
+      .filter((user) => user.presence?.selectedBlockId === element.id);
 
-  return (
-    <div className={styles.block} {...attributes}>
-      <div
-        className={styles.sortable}
-        {...sortable.attributes}
-        ref={sortable.setNodeRef}
-        style={
-          {
-            transition: sortable.transition,
-            transform: CSS.Transform.toString(sortable.transform),
-            pointerEvents: sortable.isSorting ? "none" : undefined,
-            opacity: sortable.isDragging ? 0 : 1,
-          } as React.CSSProperties /* cast because of css variable */
-        }
-      >
-        {renderElement({ element, children })}
-        {othersByBlockId.length > 0 && (
+    return (
+      <div className={styles.block} {...attributes}>
+        <div
+          className={styles.sortable}
+          {...sortable.attributes}
+          ref={sortable.setNodeRef}
+          style={
+            {
+              transition: sortable.transition,
+              transform: CSS.Transform.toString(sortable.transform),
+              pointerEvents: sortable.isSorting ? "none" : undefined,
+              opacity: sortable.isDragging ? 0 : 1,
+            } as React.CSSProperties /* cast because of css variable */
+          }
+        >
+          {renderElement({ element, children })}
+          {othersByBlockId.length > 0 && (
+            <div
+              className={classNames(styles.avatars, "avatars")}
+              contentEditable={false}
+              style={{ userSelect: "none" }}
+            >
+              {othersByBlockId.map((user) => {
+                return (
+                  <Avatar
+                    key={user.connectionId}
+                    imageUrl={user.info.imageUrl}
+                    name={user.info.name}
+                    size="sm"
+                    color={USER_COLORS[user.connectionId % USER_COLORS.length]}
+                  />
+                );
+              })}
+            </div>
+          )}
           <div
-            className={classNames(styles.avatars, "avatars")}
+            className={classNames(styles.inline_actions, "inline_actions")}
             contentEditable={false}
             style={{ userSelect: "none" }}
           >
-            {othersByBlockId.map((user) => {
-              return (
-                <Avatar
-                  key={user.connectionId}
-                  imageUrl={user.info.imageUrl}
-                  name={user.info.name}
-                  size="sm"
-                  color={USER_COLORS[user.connectionId % USER_COLORS.length]}
-                />
-              );
-            })}
+            <BlockInlineActions
+              blockId={element.id}
+              onDelete={onDelete}
+              onInsertBelow={onInsertBelow}
+            />
           </div>
-        )}
-        <div
-          className={classNames(styles.inline_actions, "inline_actions")}
-          contentEditable={false}
-          style={{ userSelect: "none" }}
-        >
-          <BlockInlineActions
-            blockId={element.id}
-            onDelete={onDelete}
-            onInsertBelow={onInsertBelow}
-          />
         </div>
       </div>
-    </div>
-  );
-}
+    );
+  }
+);
 
 function DragOverlayContent({
   element,

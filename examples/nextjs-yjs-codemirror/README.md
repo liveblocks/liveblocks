@@ -9,9 +9,21 @@
 
 # Collaborative Rich Text Editor (CodeMirror)
 
-This example shows how to build a collaborative text editor with [Liveblocks](https://liveblocks.io), [Yjs](https://docs.yjs.dev), [CodeMirror](https://codemirror.net/), and [Next.js](https://nextjs.org/).
+<p>
+  <a href="https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/nextjs-yjs-codemirror">
+    <img src="https://img.shields.io/badge/open%20in%20codesandbox-message?style=flat&logo=codesandbox&color=333&logoColor=fff" alt="Open in CodeSandbox" />
+  </a>
+  <img src="https://img.shields.io/badge/react-message?style=flat&logo=react&color=0bd&logoColor=fff" alt="React" />
+  <img src="https://img.shields.io/badge/next.js-message?style=flat&logo=next.js&color=07f&logoColor=fff" alt="Next.js" />
+  <img src="https://img.shields.io/badge/yjs-message?style=flat&color=0bd" alt="Yjs" />
+  <img src="https://img.shields.io/badge/codemirror-message?style=flat&color=07f" alt="CodeMirror" />
+</p>
 
-As users edit the document, changes will be automatically persisted and synced—allowing for a code editor that updates in real-time across clients. Users will also be able to see each other’s their cursors in the document.
+This example shows how to build a collaborative code editor with [Liveblocks](https://liveblocks.io), [Yjs](https://docs.yjs.dev), [CodeMirror](https://codemirror.net/), and [Next.js](https://nextjs.org/).
+
+As users edit the code, changes will be automatically persisted and synced—allowing for collaborative code editing experience. Users will also be able to see who else is currently online and each others cursors.
+
+<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/code-editor.png" width="536" alt="Collaborative Code Editor" />
 
 ## Getting started
 

@@ -1,8 +1,8 @@
 import clsx from "clsx";
 import formatDistanceToNow from "date-fns/formatDistanceToNow";
 import Link from "next/link";
-import { ComponentProps, useCallback, useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
+import { ComponentProps, useCallback, useEffect, useState } from "react";
 import { DOCUMENT_URL } from "../../constants";
 import { DeleteIcon, MoreIcon } from "../../icons";
 import { getDocumentAccess, getGroups } from "../../lib/client";

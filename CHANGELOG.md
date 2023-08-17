@@ -1,3 +1,63 @@
+# Unreleased
+
+### `create-liveblocks-app`
+
+- Fix Suspense option when specifying a framework
+- Add comments by default
+
+# v1.2.2
+
+### `@liveblocks/node`
+
+- Add Yjs document change event (`YDocUpdatedEvent`) to `WebhookHandler`.
+- Allow `Header` object to be passed to `headers` in
+  `WebhookHandler.verifyRequest()`
+
+# v1.2.1
+
+### `@liveblocks/node`
+
+- Fix session.allow to support path up to 128 characters to meet room id length
+  requirement.
+
+# v1.2.0
+
+### `@liveblocks/*`
+
+- Support the new and improved Liveblocks authorization.
+- Change client logic to stop retrying if room is full. Instead, the client will
+  now disconnect. To retry, call `room.reconnect()` explicitly.
+
+### `@liveblocks/node`
+
+Add new APIs for authorization. See our migration guide for tips on how to adopt
+the new style of authorizing your Liveblocks clients.
+
+# v1.1.8
+
+Fix a small TypeScript issue introduced in 1.1.7.
+
+# v1.1.7
+
+### `@liveblocks/client`
+
+When initializing the client with a
+[custom auth callback](https://liveblocks.io/docs/api-reference/liveblocks-client#createClientCallback),
+you can now return `{ error: "forbidden", reason: ... }` as the response, which
+the client will treat as a sign to stop retrying. The client will then
+disconnect from the room, instead of remaining in `"connecting"` status
+indefinitely.
+
+### `@liveblocks/react`
+
+Fix a bug with `useSelf()` where it would not correctly re-render after entering
+an empty room. It’s now consistent again with `useMyPresence()`.
+
+### DevTools
+
+Fix a bug in the Liveblocks [DevTools](https://liveblocks.io/devtools) panel
+where the "me" view would incorrectly stay empty after entering an empty room.
+
 # v1.1.6
 
 ### `@liveblocks/*`
@@ -370,17 +430,17 @@ To migrate, make the following code changes:
   create<WithLiveblocks<MyState, ...>>()(liveblocks(...))
   ```
   To be clear:
-  1. First, move the type annotation away from the `liveblocks` middleware call,
-     and onto the `create` call.
-  2. Next, wrap your `MyState` type in a `WithLiveblocks<...>` wrapper. This
-     will make sure the injected `liveblocks` property on your Zustand state
-     will be correctly typed.
-  3. Finally, make sure to add the extra call `()` wrapper, needed by Zustand v4
-     now:
-     ```ts
-     create<WithLiveblocks<MyState, ...>>()(liveblocks(...))
-     //                                  ^^ Not a typo
-     ```
+  1.  First, move the type annotation away from the `liveblocks` middleware
+      call, and onto the `create` call.
+  2.  Next, wrap your `MyState` type in a `WithLiveblocks<...>` wrapper. This
+      will make sure the injected `liveblocks` property on your Zustand state
+      will be correctly typed.
+  3.  Finally, make sure to add the extra call `()` wrapper, needed by Zustand
+      v4 now:
+      ```ts
+      create<WithLiveblocks<MyState, ...>>()(liveblocks(...))
+      //                                  ^^ Not a typo
+      ```
 - Remove the second argument to `state.liveblocks.enterRoom()`: it no longer
   takes an explicit initial state. Instead, it's automatically be populated from
   your Zustand state.

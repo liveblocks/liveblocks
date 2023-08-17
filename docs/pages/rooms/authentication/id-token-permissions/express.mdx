@@ -1,0 +1,130 @@
+---
+meta:
+  title: "Set up ID token permissions with Express"
+  parentTitle: "Authentication"
+  description: "Learn how to setup ID token permissions with Express."
+---
+
+Follow the following steps to start configure your authentication endpoint where
+
+## Quickstart
+
+<Steps>
+  <Step>
+    <StepTitle>Install the `liveblocks/node` package</StepTitle>
+    <StepContent>
+
+      ```bash
+      npm install @liveblocks/node
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Set up authentication endpoint</StepTitle>
+    <StepContent>
+
+      Users can only interact with rooms they have access to. You can
+      configure permission access in an `api/liveblocks-auth` endpoint by
+      creating the `liveblocks-auth.ts` file with the
+      following code. This is where you will implement your security and
+      define if the current user has access to a specific room.
+
+      ```ts file="liveblocks-auth.ts"
+      const express = require("express");
+      import { Liveblocks } from "@liveblocks/node";
+
+      const liveblocks = new Liveblocks({
+        secret: "{{SECRET_KEY}}",
+      });
+
+      const app = express();
+      app.use(express.json());
+
+      app.post("/api/liveblocks-auth", (req, res) => {
+        // Get the current user from your database
+        const user = __getUserFromDB__(req);
+
+        // Identify the user and return the result
+        const { status, body } = await liveblocks.identifyUser(
+          {
+            userId: user.id,
+            groupIds, // Optional
+          },
+          { userInfo: user.metadata },
+        );
+
+        return res.status(status).end(body);
+      });
+      ```
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Set up the client</StepTitle>
+    <StepContent>
+      On the front-end, you can now replace the `publicApiKey`
+      option with `authEndpoint` pointing to the endpoint you
+      just created.
+
+      ```ts file="liveblocks.config.ts"
+      import { createClient } from "@liveblocks/client";
+
+      const client = createClient({
+        authEndpoint: "/api/liveblocks-auth",
+      });
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step lastStep>
+    <StepTitle>Set permission accesses to a room</StepTitle>
+    <StepContent>
+      A room can have `defaultAccesses`, `usersAccesses`, and `groupsAccesses` defined.
+      Permissions are then checked when users try to connect to a room. For security purposes,
+      the [room permissions](/docs/rooms/permissions) can only be set on the back-end through a REST API.
+      For instance, you can use the [create room API](/docs/api-reference/rest-api-endpoints#post-rooms)
+      to create a new room with `read` public access levels while giving `write` access to specific users and groups.
+
+      ```ts
+      fetch("https://api.liveblocks.io/v2/rooms", {
+        method: "POST",
+        body: JSON.stringify({
+          id: "roomId",
+          defaultAccesses: ["room:read"],
+          usersAccesses: {
+            "userId": ["room:write"],
+          },
+          groupsAccesses: {
+            "groupId": ["room:write"],
+          },
+        }),
+      });
+      ```
+
+    </StepContent>
+
+  </Step>
+</Steps>
+
+## More information
+
+Both `userId` and `userInfo` can then be used in your JavaScript application as
+such:
+
+```ts
+const self = room.getSelf(); // or useSelf() in React
+console.log(self.id);
+console.log(self.info);
+```
+
+<Figure>
+  <Image
+    src="/assets/id-token-auth-diagram.png"
+    alt="Auth diagram"
+    width={768}
+    height={576}
+  />
+</Figure>

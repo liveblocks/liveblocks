@@ -6,6 +6,10 @@ meta:
 alwaysShowAllNavigationLevels: false
 ---
 
+`@liveblocks/redux` provides you with [ZUstand](https://docs.pmnd.rs/zustand)
+bindings for our real-time collaboration APIs, built on top of WebSockets. Read
+our [getting started](/docs/get-started) guides to learn more.
+
 ## Middleware
 
 The `liveblocks` middleware lets you connect a Zustand state to Liveblocks
@@ -38,7 +42,7 @@ import { createClient } from "@liveblocks/client";
 import { liveblocks } from "@liveblocks/zustand";
 
 const client = createClient({
-  authEndpoint: "/api/auth",
+  authEndpoint: "/api/liveblocks-auth",
 });
 
 liveblocks(/* Zustand config */, { client })

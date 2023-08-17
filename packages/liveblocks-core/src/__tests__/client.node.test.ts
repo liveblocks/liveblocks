@@ -12,7 +12,7 @@ import { MockWebSocket } from "./_MockWebSocketServer";
 import { waitUntilStatus } from "./_waitUtils";
 
 const token =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2MTY3MjM2NjcsImV4cCI6MTYxNjcyNzI2Nywicm9vbUlkIjoiazV3bWgwRjlVTGxyek1nWnRTMlpfIiwiYXBwSWQiOiI2MDVhNGZkMzFhMzZkNWVhN2EyZTA5MTQiLCJhY3RvciI6MCwic2NvcGVzIjpbIndlYnNvY2tldDpwcmVzZW5jZSIsIndlYnNvY2tldDpzdG9yYWdlIiwicm9vbTpyZWFkIiwicm9vbTp3cml0ZSJdfQ.IQFyw54-b4F6P0MTSzmBVwdZi2pwPaxZwzgkE2l0Mi4";
+  "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2OTAwMzMzMjgsImV4cCI6MTY5MDAzMzMzMywiayI6InNlYy1sZWdhY3kiLCJyb29tSWQiOiJlTFB3dU9tTXVUWEN6Q0dSaTVucm4iLCJhcHBJZCI6IjYyNDFjYjk1ZWQ2ODdkNWRlNWFhYTEzMiIsImFjdG9yIjoxLCJzY29wZXMiOlsicm9vbTp3cml0ZSJdLCJpZCI6InVzZXItMyIsIm1heENvbm5lY3Rpb25zUGVyUm9vbSI6MjB9.QoRc9dJJp-C1LzmQ-S_scHfFsAZ7dBcqep0bUZNyWxEWz_VeBHBBNdJpNs7b7RYRFDBi7RxkywKJlO-gNE8h3wkhebgLQVeSgI3YfTJo7J8Jzj38TzH85ZIbybaiGcxda_sYn3VohDtUHA1k67ns08Q2orJBNr30Gc88jJmc1He_7bLStsDP4M2F1NRMuFuqLULWHnPeEM7jMvLZYkbu3SBeCH4TQGyweu7qAXvP-HHtmvzOi8LdEnpxgxGjxefdu6m4a-fJj6LwoYCGi1rlLDHH9aOHFwYVrBBBVwoeIDSHoAonkPaae9AWM6igJhNt9-ihgEH6sF-qgFiPxHNXdg";
 
 const fetchMock = (async () =>
   Promise.resolve(
@@ -162,28 +162,6 @@ describe("createClient", () => {
 
     expect(spy).toHaveBeenCalledWith(
       "To use Liveblocks client in a non-dom environment with a url as auth endpoint, you need to provide a fetch polyfill."
-    );
-
-    // Clean things up
-    client.leave("room");
-  });
-
-  test("should throw if public key is used and fetch polyfill is not defined", async () => {
-    const spy = jest.spyOn(console, "error");
-
-    const client = createClient({
-      publicApiKey: "pk_xxx",
-      polyfills: {
-        WebSocket: MockWebSocket,
-      },
-    });
-    const room = client.enter("room", { initialPresence: {} });
-
-    // Room will fail to connect, and move to "closed" state, basically giving up reconnecting
-    await waitUntilStatus(room, "disconnected");
-
-    expect(spy).toHaveBeenCalledWith(
-      "To use Liveblocks client in a non-dom environment with a publicApiKey, you need to provide a fetch polyfill."
     );
 
     // Clean things up

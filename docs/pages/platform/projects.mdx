@@ -1,0 +1,120 @@
+---
+meta:
+  title: "Projects"
+  parentTitle: "Platform"
+  description:
+    "To use Liveblocks, you need to create a project, a place to group your
+    collaborative rooms. Learn how to set up and configure projects in this
+    guide."
+---
+
+To use Liveblocks, you need to create a project, a place to group your
+collaborative rooms. Learn how to set up and configure projects in this guide.
+
+## Creating a project
+
+You can create a new project from the [Liveblocks dashboard](/dashboard) by
+clicking on the **Create project…** button.
+
+<Figure>
+  <Image
+    src="/assets/projects/create-project.png"
+    alt="Start creating a project from the Liveblocks dashboard"
+    width={768}
+    height={162}
+  />
+</Figure>
+
+A project’s environment can either be set to **Development** or **Production**,
+helping you map projects to your deployment model. This setting cannot be
+changed later.
+
+<Figure>
+  <Image
+    src="/assets/projects/create-project-dialog.png"
+    alt="Creating a project from the Liveblocks dashboard"
+    width={768}
+    height={520}
+  />
+</Figure>
+
+We recommend setting up a new project for each different environment your
+collaborative application uses.
+
+## Managing a project
+
+Each Liveblocks project has a separate dashboard to monitor usage, configure
+settings, manage API keys, and more.
+
+### Project overview
+
+The **Overview** tab displays an overview of your project usage, providing
+information on active rooms, users, and connections.
+
+<Figure>
+  <Image
+    src="/assets/projects/project-overview.png"
+    alt="Liveblocks project overview"
+    width={768}
+    height={406}
+  />
+</Figure>
+
+### Project rooms
+
+The **Rooms** tab provides a list of all the existing rooms for your project.
+
+<Figure>
+  <Image
+    src="/assets/projects/project-rooms.png"
+    alt="Liveblocks project rooms"
+    width={768}
+    height={406}
+  />
+</Figure>
+
+You can learn more about any given by room by clicking on it. On the room detail
+view, you’re able to view the stored document’s data, and common actions you can
+take on that such as [attaching a schema](/docs/platform/schema-validation) or
+deleting the document’s data altogether.
+
+<Figure>
+  <Image
+    src="/assets/projects/project-rooms-detail.png"
+    alt="Liveblocks project rooms detail"
+    width={768}
+    height={406}
+  />
+</Figure>
+
+### Project API keys
+
+The **API keys** tab enables you to manage, view, and roll your **public** and
+**secret** API keys.
+
+<Figure>
+  <Image
+    src="/assets/projects/project-api-keys.png"
+    alt="Liveblocks project API keys"
+    width={768}
+    height={406}
+  />
+</Figure>
+
+### Project schemas
+
+The **Schemas** tab enables you to manage your document’s schemas. Schemas can
+be attached to any room’s Storage document to validate incoming changes and
+ensure data integrity and facilitate future potential data migrations for your
+application. See our [schema validation](/docs/platform/schema-validation) docs
+to learn more.
+
+### Project webhooks
+
+The **Webhooks** tab enables you to configure your webhook endpoints allowing
+you to respond to Liveblocks events, such as a user entering a room, or storage
+being updated. See our [webhooks](/docs/platform/webhooks) docs to learn more.
+
+### Project settings
+
+The **Settings** tab enables you to rename and delete your project.

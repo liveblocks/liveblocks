@@ -67,6 +67,7 @@ export {
   tryParseJson,
   withTimeout,
 } from "./lib/utils";
+export type { CustomAuthenticationResult } from "./protocol/Authentication";
 export type { BaseUserMeta } from "./protocol/BaseUserMeta";
 export type {
   BroadcastEventClientMsg,

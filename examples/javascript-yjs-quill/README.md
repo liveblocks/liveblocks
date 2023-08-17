@@ -10,20 +10,23 @@
 # Collaborative Rich Text Editor (Quill)
 
 <p>
-  <a href="https://liveblocks.io/examples/collaborative-todo-list/javascript/preview">
-    <img src="https://img.shields.io/badge/live%20preview-message?style=flat&logo=data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgMjQgMjQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTE2Ljg0OSA0Ljc1SDBsNC44NDggNS4wNzV2Ny4wMDhsMTItMTIuMDgzWk03LjE1IDE5LjI1SDI0bC00Ljg0OS01LjA3NVY3LjE2N2wtMTIgMTIuMDgzWiIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==&color=333" alt="Live Preview" />
-  </a>
-  <a href="https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/javascript-todo-list">
+  <a href="https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/javascript-yjs-quill">
     <img src="https://img.shields.io/badge/open%20in%20codesandbox-message?style=flat&logo=codesandbox&color=333&logoColor=fff" alt="Open in CodeSandbox" />
   </a>
   <img src="https://img.shields.io/badge/javascript-message?style=flat&logo=javascript&color=db0&logoColor=fff" alt="JavaScript" />
+  <img src="https://img.shields.io/badge/yjs-message?style=flat&color=0bd" alt="Yjs" />
+  <img src="https://img.shields.io/badge/quill-message?style=flat&color=db0" alt="Quill" />
 </p>
 
 This example shows how to build a collaborative rich text editor with
 [Liveblocks](https://liveblocks.io), [Yjs](https://docs.yjs.dev),
 [Quill](https://quilljs.com/) and [esbuild](https://esbuild.github.io/).
 
-<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/block-text-editor-advanced.png" width="536" alt="Collaborative Rich Text Editor (Quill)" />
+As users edit the document, changes will be automatically persisted and
+synced—allowing for an editor that updates in real-time across clients. Users
+will also be able to see who see each other’s cursors in the document.
+
+<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/text-editor.png" width="536" alt="Collaborative Text Editor" />
 
 ## Getting started
 

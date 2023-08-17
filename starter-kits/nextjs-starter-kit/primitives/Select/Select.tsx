@@ -11,6 +11,7 @@ interface Item extends RadixSelect.SelectItemProps {
 }
 
 interface Props extends Omit<RadixSelect.SelectProps, "onValueChange"> {
+  variant?: "regular" | "subtle";
   initialValue?: string;
   value?: string;
   items: Item[];
@@ -21,6 +22,7 @@ interface Props extends Omit<RadixSelect.SelectProps, "onValueChange"> {
 }
 
 export function Select({
+  variant = "regular",
   initialValue,
   value,
   items,
@@ -53,7 +55,11 @@ export function Select({
       defaultValue={initialValue}
       {...props}
     >
-      <RadixSelect.Trigger className={clsx(className, styles.trigger)}>
+      <RadixSelect.Trigger
+        className={clsx(className, styles.trigger, {
+          [styles.triggerSubtle]: variant === "subtle",
+        })}
+      >
         <RadixSelect.Value
           placeholder={placeholder}
           className={styles.triggerValue}

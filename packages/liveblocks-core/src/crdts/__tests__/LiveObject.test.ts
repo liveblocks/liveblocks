@@ -8,7 +8,7 @@ import {
   replaceRemoteStorageAndReconnect,
 } from "../../__tests__/_utils";
 import { waitUntilStorageUpdate } from "../../__tests__/_waitUtils";
-import { RoomScope } from "../../protocol/AuthToken";
+import { Permission } from "../../protocol/AuthToken";
 import { OpCode } from "../../protocol/Op";
 import type { IdTuple, SerializedCrdt } from "../../protocol/SerializedCrdt";
 import { CrdtType } from "../../protocol/SerializedCrdt";
@@ -85,7 +85,7 @@ describe("LiveObject", () => {
     const { storage } = await prepareStorageTest(
       [createSerializedObject("0:0", { a: 0 })],
       1,
-      [RoomScope.Read, RoomScope.PresenceWrite]
+      [Permission.Read, Permission.PresenceWrite]
     );
 
     expect(() => storage.root.update({ a: 1 })).toThrow(
@@ -150,7 +150,7 @@ describe("LiveObject", () => {
     const { storage } = await prepareStorageTest(
       [createSerializedObject("0:0", {})],
       1,
-      [RoomScope.Read, RoomScope.PresenceWrite]
+      [Permission.Read, Permission.PresenceWrite]
     );
 
     expect(() => storage.root.set("a", 1)).toThrow(
@@ -556,7 +556,7 @@ describe("LiveObject", () => {
           createSerializedObject("0:1", { b: 2 }, "0:0", "child"),
         ],
         1,
-        [RoomScope.Read, RoomScope.PresenceWrite]
+        [Permission.Read, Permission.PresenceWrite]
       );
 
       expect(() => storage.root.get("child").delete("a")).toThrow(

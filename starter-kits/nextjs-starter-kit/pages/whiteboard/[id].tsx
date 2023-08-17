@@ -1,7 +1,7 @@
 import { LiveMap } from "@liveblocks/client";
 import { GetServerSideProps, InferGetServerSidePropsType } from "next";
-import { Session } from "next-auth";
 import { useRouter } from "next/router";
+import { Session } from "next-auth";
 import { useEffect, useState } from "react";
 import {
   DocumentHeader,
@@ -10,7 +10,7 @@ import {
 import { Whiteboard } from "../../components/Whiteboard";
 import { DocumentLayout } from "../../layouts/Document";
 import { ErrorLayout } from "../../layouts/Error";
-import { updateDocumentName } from "../../lib/client";
+import { InitialDocumentProvider, updateDocumentName } from "../../lib/client";
 import * as Server from "../../lib/server";
 import { RoomProvider } from "../../liveblocks.config";
 import { Document, ErrorData } from "../../types";
@@ -63,13 +63,13 @@ export default function WhiteboardDocumentView({
       initialPresence={{ cursor: null }}
       initialStorage={{ notes: new LiveMap() }}
     >
-      <DocumentLayout
-        header={
-          <DocumentHeader document={document} onDocumentRename={updateName} />
-        }
-      >
-        <Whiteboard />
-      </DocumentLayout>
+      <InitialDocumentProvider initialDocument={document}>
+        <DocumentLayout
+          header={<DocumentHeader onDocumentRename={updateName} />}
+        >
+          <Whiteboard />
+        </DocumentLayout>
+      </InitialDocumentProvider>
     </RoomProvider>
   );
 }
