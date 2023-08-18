@@ -678,7 +678,6 @@
         "description": "This endpoint deletes all of the room’s Storage data. Calling this endpoint will disconnect all users from the room if there are any.\n"
       }
     },
-
     "/rooms/{roomId}/ydoc": {
       "parameters": [
         {
@@ -956,11 +955,11 @@
           "401": {
             "$ref": "#/components/responses/401"
           },
-          "404": {
-            "$ref": "#/components/responses/404-schema-validation"
-          },
           "403": {
             "$ref": "#/components/responses/403-schema-validation"
+          },
+          "404": {
+            "$ref": "#/components/responses/404-schema-validation"
           }
         },
         "parameters": [
@@ -1099,6 +1098,35 @@
                       }
                     }
                   }
+                },
+                "examples": {
+                  "Success": {
+                    "value": {
+                      "data": [
+                        {
+                          "type": "thread",
+                          "id": "thread-id",
+                          "roomId": "room-id",
+                          "comments": [
+                            {
+                              "type": "comment",
+                              "threadId": "thread-id",
+                              "roomId": "room-id",
+                              "id": "comment-id",
+                              "userId": "string",
+                              "createdAt": "2019-08-24T14:15:22Z",
+                              "editedAt": "2019-08-24T14:15:22Z",
+                              "deletedAt": "2019-08-24T14:15:22Z",
+                              "body": {}
+                            }
+                          ],
+                          "createdAt": "2019-08-24T14:15:22Z",
+                          "metadata": {},
+                          "updatedAt": "2019-08-24T14:15:22Z"
+                        }
+                      ]
+                    }
+                  }
                 }
               }
             }
@@ -1146,6 +1174,31 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Thread"
+                },
+                "examples": {
+                  "Success": {
+                    "value": {
+                      "type": "thread",
+                      "id": "thread-id",
+                      "roomId": "room-id",
+                      "comments": [
+                        {
+                          "type": "comment",
+                          "threadId": "thread-id",
+                          "roomId": "room-id",
+                          "id": "comment-id",
+                          "userId": "string",
+                          "createdAt": "2019-08-24T14:15:22Z",
+                          "editedAt": "2019-08-24T14:15:22Z",
+                          "deletedAt": "2019-08-24T14:15:22Z",
+                          "body": {}
+                        }
+                      ],
+                      "createdAt": "2019-08-24T14:15:22Z",
+                      "metadata": {},
+                      "updatedAt": "2019-08-24T14:15:22Z"
+                    }
+                  }
                 }
               }
             }
@@ -1201,6 +1254,21 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Comment"
+                },
+                "examples": {
+                  "Success": {
+                    "value": {
+                      "type": "comment",
+                      "threadId": "thread-id",
+                      "roomId": "room-id",
+                      "id": "comment-id",
+                      "userId": "string",
+                      "createdAt": "2019-08-24T14:15:22Z",
+                      "editedAt": "2019-08-24T14:15:22Z",
+                      "deletedAt": "2019-08-24T14:15:22Z",
+                      "body": {}
+                    }
+                  }
                 }
               }
             }
@@ -1254,6 +1322,13 @@
                       "items": {
                         "type": "string"
                       }
+                    }
+                  }
+                },
+                "examples": {
+                  "Success": {
+                    "value": {
+                      "participantIds": ["user-1", "user-2"]
                     }
                   }
                 }
@@ -1855,7 +1930,8 @@
             "type": "object"
           },
           "updatedAt": {
-            "type": "string"
+            "type": "string",
+            "format": "date-time"
           }
         },
         "required": [
@@ -1865,7 +1941,31 @@
           "comments",
           "createdAt",
           "metadata"
-        ]
+        ],
+        "examples": [
+          {
+            "type": "thread",
+            "id": "thread-id",
+            "roomId": "room-id",
+            "comments": [
+              {
+                "type": "comment",
+                "threadId": "thread-id",
+                "roomId": "room-id",
+                "id": "comment-id",
+                "userId": "string",
+                "createdAt": "2019-08-24T14:15:22Z",
+                "editedAt": "2019-08-24T14:15:22Z",
+                "deletedAt": "2019-08-24T14:15:22Z",
+                "body": {}
+              }
+            ],
+            "createdAt": "2019-08-24T14:15:22Z",
+            "metadata": {},
+            "updatedAt": "2019-08-24T14:15:22Z"
+          }
+        ],
+        "description": ""
       },
       "Comment": {
         "type": "object",
@@ -1905,7 +2005,20 @@
             "type": "object"
           }
         },
-        "required": ["type", "threadId", "roomId", "id", "userId", "createdAt"]
+        "required": ["type", "threadId", "roomId", "id", "userId", "createdAt"],
+        "examples": [
+          {
+            "type": "comment",
+            "threadId": "thread-id",
+            "roomId": "room-id",
+            "id": "comment-id",
+            "userId": "string",
+            "createdAt": "2019-08-24T14:15:22Z",
+            "editedAt": "2019-08-24T14:15:22Z",
+            "deletedAt": "2019-08-24T14:15:22Z",
+            "body": {}
+          }
+        ]
       }
     },
     "securitySchemes": {
@@ -1980,6 +2093,72 @@
           }
         }
       },
+      "404": {
+        "description": "Room not found.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "examples": {
+              "ROOM_NOT_FOUND": {
+                "value": {
+                  "error": "ROOM_NOT_FOUND",
+                  "message": "Room not found.",
+                  "suggestion": "Please use a valid room ID, room IDs are available in the dashboard: https://liveblocks.io/dashboard/rooms.",
+                  "docs": ""
+                }
+              }
+            }
+          }
+        }
+      },
+      "409": {
+        "description": "Room already exists.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "examples": {
+              "ROOM_ALREADY_EXISTS": {
+                "value": {
+                  "error": "ROOM_ALREADY_EXISTS",
+                  "message": "The room already exists.",
+                  "suggestion": "Please use a different room id or update the existing room.",
+                  "doc": ""
+                }
+              }
+            }
+          },
+          "application/xml": {
+            "schema": {
+              "type": "object",
+              "properties": {}
+            }
+          }
+        }
+      },
+      "422": {
+        "description": "Unprocessable entity.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "examples": {
+              "UNPROCESSABLE_ENTITY": {
+                "value": {
+                  "error": "UNPROCESSABLE_ENTITY",
+                  "message": "Missing key: 'defaultAccesses'.",
+                  "suggestion": "Please ensure the data follows the correct format.",
+                  "docs": ""
+                }
+              }
+            }
+          }
+        }
+      },
       "403-schema-validation": {
         "description": "Unauthorized access.",
         "content": {
@@ -2023,26 +2202,6 @@
           }
         }
       },
-      "404": {
-        "description": "Room not found.",
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/Error"
-            },
-            "examples": {
-              "ROOM_NOT_FOUND": {
-                "value": {
-                  "error": "ROOM_NOT_FOUND",
-                  "message": "Room not found.",
-                  "suggestion": "Please use a valid room ID, room IDs are available in the dashboard: https://liveblocks.io/dashboard/rooms.",
-                  "docs": ""
-                }
-              }
-            }
-          }
-        }
-      },
       "404-schema-validation": {
         "description": "Schema not found.",
         "content": {
@@ -2059,32 +2218,6 @@
                   "docs": ""
                 }
               }
-            }
-          }
-        }
-      },
-      "409": {
-        "description": "Room already exists.",
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/Error"
-            },
-            "examples": {
-              "ROOM_ALREADY_EXISTS": {
-                "value": {
-                  "error": "ROOM_ALREADY_EXISTS",
-                  "message": "The room already exists.",
-                  "suggestion": "Please use a different room id or update the existing room.",
-                  "doc": ""
-                }
-              }
-            }
-          },
-          "application/xml": {
-            "schema": {
-              "type": "object",
-              "properties": {}
             }
           }
         }
@@ -2111,26 +2244,6 @@
             "schema": {
               "type": "object",
               "properties": {}
-            }
-          }
-        }
-      },
-      "422": {
-        "description": "Unprocessable entity.",
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/Error"
-            },
-            "examples": {
-              "UNPROCESSABLE_ENTITY": {
-                "value": {
-                  "error": "UNPROCESSABLE_ENTITY",
-                  "message": "Missing key: 'defaultAccesses'.",
-                  "suggestion": "Please ensure the data follows the correct format.",
-                  "docs": ""
-                }
-              }
             }
           }
         }
@@ -2166,13 +2279,27 @@
     }
   },
   "tags": [
-    { "name": "Authentication" },
-    { "name": "Room" },
-    { "name": "Storage" },
-    { "name": "Yjs" },
-    { "name": "Schema validation" },
-    { "name": "Comments" },
-    { "name": "Deprecated" }
+    {
+      "name": "Authentication"
+    },
+    {
+      "name": "Room"
+    },
+    {
+      "name": "Storage"
+    },
+    {
+      "name": "Yjs"
+    },
+    {
+      "name": "Schema validation"
+    },
+    {
+      "name": "Comments"
+    },
+    {
+      "name": "Deprecated"
+    }
   ],
   "x-internal": true
 }
