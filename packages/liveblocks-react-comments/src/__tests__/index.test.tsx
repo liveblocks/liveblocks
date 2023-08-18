@@ -239,6 +239,12 @@ describe("Components", () => {
 
       expect(container).not.toBeEmptyDOMElement();
     });
+
+    test.todo(
+      "should not render deleted comments, unless the showDeletedComments prop is set"
+    );
+
+    test.todo("should support overrides");
   });
 
   describe("Comment", () => {
@@ -247,6 +253,12 @@ describe("Components", () => {
 
       expect(container).not.toBeEmptyDOMElement();
     });
+
+    test.todo(
+      "should not render if deleted, unless the showDeleted prop is set"
+    );
+
+    test.todo("should support overrides");
   });
 
   describe("Composer", () => {
@@ -255,6 +267,8 @@ describe("Components", () => {
 
       expect(container).not.toBeEmptyDOMElement();
     });
+
+    test.todo("should support overrides");
   });
 });
 

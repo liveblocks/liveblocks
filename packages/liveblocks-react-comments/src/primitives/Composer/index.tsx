@@ -824,7 +824,7 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
           dir={dir}
           enterKeyHint={mentionDraft ? "enter" : "send"}
           autoCapitalize="sentences"
-          aria-label="Comment body"
+          aria-label="Composer editor"
           data-focused={isFocused || undefined}
           data-disabled={isDisabled || undefined}
           {...propsWhileSuggesting}
