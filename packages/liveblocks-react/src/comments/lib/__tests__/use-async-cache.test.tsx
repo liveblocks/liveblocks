@@ -6,13 +6,18 @@ import type { RenderHookResult } from "@testing-library/react";
 import { act, render, renderHook, waitFor } from "@testing-library/react";
 import React, { Suspense } from "react";
 import { hydrateRoot } from "react-dom/client";
-import { renderToString } from "react-dom/server";
 
 import type {
   UseAsyncCacheOptions,
   UseAsyncCacheResponse,
 } from "../use-async-cache";
 import { useAsyncCache } from "../use-async-cache";
+
+// https://github.com/jsdom/jsdom/issues/2524#issuecomment-897707183
+const { TextEncoder, TextDecoder } = require("util");
+global.TextEncoder = TextEncoder;
+global.TextDecoder = TextDecoder;
+import { renderToString } from "react-dom/server";
 
 const REQUEST_DELAY = 20;
 const KEY_ABC = "abc";

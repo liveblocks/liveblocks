@@ -341,6 +341,7 @@ describe("useOthers", () => {
         connectionId: 1,
         presence: { x: 2 },
         canWrite: true,
+        canComment: true,
         isReadOnly: false,
       },
     ]);
@@ -357,6 +358,7 @@ describe("useOthers", () => {
         connectionId: 1,
         presence: { x: 0 },
         canWrite: true,
+        canComment: true,
         isReadOnly: false,
       },
     ]);
@@ -374,6 +376,7 @@ describe("useOthers", () => {
         connectionId: 1,
         presence: { x: 0, y: 0 },
         canWrite: true,
+        canComment: true,
         isReadOnly: false,
       },
     ]);
@@ -389,6 +392,7 @@ describe("useOthers", () => {
       {
         connectionId: 1,
         presence: { x: 2 },
+        canComment: true,
         canWrite: true,
         isReadOnly: false,
       },
@@ -401,6 +405,7 @@ describe("useOthers", () => {
         connectionId: 1,
         presence: { x: 2 },
         canWrite: true,
+        canComment: true,
         isReadOnly: false,
       },
     ]);
@@ -413,6 +418,7 @@ describe("useOthers", () => {
         connectionId: 1,
         presence: { x: 2 },
         canWrite: true,
+        canComment: true,
         isReadOnly: false,
       },
     ]);
