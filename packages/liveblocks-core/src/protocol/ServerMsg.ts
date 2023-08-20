@@ -144,6 +144,7 @@ export type YDocUpdate = {
   readonly update: string;
   readonly isSync: boolean; // dropped after 1.2, we use presence of stateVector instead
   readonly stateVector: string | null; // server's state vector, sent in response to fetch
+  readonly guid?: string; // an optional guid to identify which subdoc this update to
 };
 
 /**

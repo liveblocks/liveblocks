@@ -20,20 +20,27 @@ export default class yDocHandler extends Observable<unknown> {
   private updateRoomDoc: (update: string) => void;
   private fetchRoomDoc: (vector: string) => void;
 
-  constructor(
-    doc: Y.Doc,
-    updateDoc: (update: string, guid: string) => void,
-    fetchDoc: (vector: string, guid: string) => void
-  ) {
+  constructor({
+    doc,
+    isRoot,
+    updateDoc,
+    fetchDoc,
+  }: {
+    doc: Y.Doc;
+    isRoot: boolean;
+    updateDoc: (update: string, guid?: string) => void;
+    fetchDoc: (vector: string, guid?: string) => void;
+  }) {
     super();
     this.doc = doc;
+    // this.doc.load(); // this just emits a load event, it doesn't actually load anything
     this.doc.on("update", this.updateHandler);
     this.syncDoc();
     this.updateRoomDoc = (update: string) => {
-      updateDoc(update, this.doc.guid);
+      updateDoc(update, isRoot ? undefined : this.doc.guid);
     };
     this.fetchRoomDoc = (vector: string) => {
-      fetchDoc(vector, this.doc.guid);
+      fetchDoc(vector, isRoot ? undefined : this.doc.guid);
     };
   }
 
@@ -42,7 +49,7 @@ export default class yDocHandler extends Observable<unknown> {
     stateVector,
   }: {
     update: string;
-    stateVector: string;
+    stateVector: string | null;
   }): void => {
     // apply update from the server
     Y.applyUpdate(this.doc, Base64.toUint8Array(update), "backend");
@@ -66,7 +73,7 @@ export default class yDocHandler extends Observable<unknown> {
     }
   };
 
-  private syncDoc = () => {
+  public syncDoc = (): void => {
     this.synced = false;
 
     // The state vector is sent to the server so it knows what to send back
