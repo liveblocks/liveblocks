@@ -910,6 +910,11 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
       ReactEditor.blur(editor);
     }, [editor]);
 
+    const onSubmitEnd = useCallback(() => {
+      clear();
+      blur();
+    }, [blur, clear]);
+
     const createMention = useCallback(() => {
       focus();
       insertMentionCharacter(editor);
@@ -933,12 +938,12 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
         event.preventDefault();
 
         if (promise) {
-          promise.then(clear);
+          promise.then(onSubmitEnd);
         } else {
-          clear();
+          onSubmitEnd();
         }
       },
-      [clear, editor, onComposerSubmit, onSubmit]
+      [editor.children, onComposerSubmit, onSubmit, onSubmitEnd]
     );
 
     return (
