@@ -431,7 +431,7 @@
   vertical-align: middle;
   width: 8ch;
   height: 1.75ex;
-  border-radius: calc(0.375 * var(--lb-radius));
+  border-radius: calc(0.5 * var(--lb-radius));
   background: currentcolor;
   opacity: 0.15;
   user-select: none;
@@ -443,7 +443,7 @@
 
 .lb-avatar[data-loading],
 .lb-user[data-loading] {
-  animation: lb-animation-pulse 2s infinite ease-in-out;
+  animation: lb-animation-shimmer 8s linear infinite;
 }
 
 /**
@@ -827,13 +827,24 @@
   }
 }
 
-@keyframes lb-animation-pulse {
-  0%,
-  100% {
-    opacity: 1;
+@keyframes lb-animation-shimmer {
+  from,
+  to {
+    mask-image: linear-gradient(
+      90deg,
+      rgb(0 0 0 / 50%),
+      #000,
+      #000,
+      rgb(0 0 0 / 50%)
+    );
+    mask-size: 400% 100%;
   }
 
-  50% {
-    opacity: 0.5;
+  from {
+    mask-position: 200% 0;
+  }
+
+  to {
+    mask-position: -200% 0;
   }
 }
