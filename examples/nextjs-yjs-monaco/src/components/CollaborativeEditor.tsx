@@ -2,8 +2,14 @@
 
 import * as Y from "yjs";
 import LiveblocksProvider from "@liveblocks/yjs";
-import { TypedLiveblocksProvider, useRoom, useSelf } from "@/liveblocks.config";
-import { useCallback, useEffect, useState } from "react";
+import {
+  AwarenessList,
+  TypedLiveblocksProvider,
+  UserAwareness,
+  useRoom,
+  useSelf,
+} from "@/liveblocks.config";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import styles from "./CollaborativeEditor.module.css";
 import { Avatars } from "@/components/Avatars";
 import { Editor } from "@monaco-editor/react";
@@ -19,6 +25,8 @@ export function CollaborativeEditor() {
   // Get user info from Liveblocks authentication endpoint
   const userInfo = useSelf((me) => me.info);
 
+  const [awarenessUsers, setAwarenessUsers] = useState<AwarenessList>([]);
+
   // Set up Liveblocks Yjs provider and attach Monaco editor
   useEffect(() => {
     let yProvider: TypedLiveblocksProvider;
@@ -30,13 +38,13 @@ export function CollaborativeEditor() {
       const yText = yDoc.getText("monaco");
       yProvider = new LiveblocksProvider(room, yDoc);
 
-      // Add user color to awareness and render in cursors
-      const localUser: UserAwareness = {
-        color: userInfo.color,
-      };
+      // Add userInfo to Yjs awareness and set list of online users
+      const localUser: UserAwareness["user"] = userInfo;
       yProvider.awareness.setLocalStateField("user", localUser);
-      yProvider.awareness.on("change", () => renderCursors(yProvider));
-      renderCursors(yProvider);
+      yProvider.awareness.on("change", () =>
+        setAwarenessUsers([...yProvider.awareness.getStates()] as AwarenessList)
+      );
+      setAwarenessUsers([...yProvider.awareness.getStates()] as AwarenessList);
 
       // Attach Yjs to Monaco
       binding = new MonacoBinding(
@@ -58,12 +66,31 @@ export function CollaborativeEditor() {
     setEditorRef(e);
   }, []);
 
+  // Insert awareness colours into cursors
+  const styleSheet = useMemo(() => {
+    let cursorStyles = "";
+
+    for (const [clientId, client] of awarenessUsers) {
+      if (client?.user) {
+        cursorStyles += `
+          .yRemoteSelection-${clientId}, 
+          .yRemoteSelectionHead-${clientId}  {
+            --user-color: ${client.user.color};
+          }
+        `;
+      }
+    }
+
+    return { __html: cursorStyles };
+  }, [awarenessUsers]);
+
   return (
     <div className={styles.container}>
       <div className={styles.editorHeader}>
         <div className={styles.editorFileName}>file.ts</div>
         <Avatars />
       </div>
+      <style dangerouslySetInnerHTML={styleSheet} />
       <Editor
         onMount={handleOnMount}
         height="100vh"
@@ -77,31 +104,4 @@ export function CollaborativeEditor() {
       />
     </div>
   );
-}
-
-type UserAwareness =
-  | {
-      color: string;
-    }
-  | undefined;
-
-// Insert a style tag into the page and set cursor styles for each online user
-function renderCursors(yProvider: TypedLiveblocksProvider) {
-  const id = "monaco-cursors-styles";
-  let style: HTMLStyleElement | null = document.querySelector(`style#${id}`);
-
-  if (!style) {
-    style = document.createElement("style");
-    style.id = id;
-    document.head.appendChild(style);
-  }
-
-  for (const [clientId, client] of yProvider.awareness.getStates()) {
-    const user: UserAwareness = (client as any).user;
-
-    if (user) {
-      const selector = `.yRemoteSelection-${clientId}, .yRemoteSelectionHead-${clientId}`;
-      style.sheet!.insertRule(`${selector} { --user-color: ${user.color}; }`);
-    }
-  }
 }

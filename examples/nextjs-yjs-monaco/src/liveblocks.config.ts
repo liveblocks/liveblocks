@@ -37,6 +37,12 @@ type UserMeta = {
   }; // Accessible through `user.info`
 };
 
+export type UserAwareness = {
+  user?: UserMeta["info"];
+};
+
+export type AwarenessList = [number, UserAwareness][];
+
 // Optionally, the type of custom events broadcast and listened to in this
 // room. Use a union for multiple events. Must be JSON-serializable.
 type RoomEvent = {
