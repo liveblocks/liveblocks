@@ -1,9 +1,14 @@
+:root {
+  --user-color: #000000;
+  --font-sans: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen,
+  Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
+}
+
 html,
 body {
   padding: 0;
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen,
-  Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
+  font-family: var(--font-sans);
 }
 
 a {
@@ -25,31 +30,39 @@ main {
   background: #e8eaee;
 }
 
-:root {
-  --user-color: #000000;
-}
-
 /* Cursor selection background */
 .yRemoteSelection {
   opacity: 0.5;
   background-color: var(--user-color);
+  margin-right: -1px;
 }
 
 /* Cursor caret */
 .yRemoteSelectionHead {
   position: absolute;
-  border-left: var(--user-color) solid 2px;
-  border-top: var(--user-color) solid 2px;
-  border-bottom: var(--user-color) solid 2px;
-  height: 100%;
   box-sizing: border-box;
+  height: 100%;
+  border-left: 2px solid var(--user-color);
 }
 
-.yRemoteSelectionHead::before {
+/* Cursor name */
+.yRemoteSelectionHead::after {
   position: absolute;
-  content: "";
-  border: 3px solid var(--user-color);
-  border-radius: 4px;
-  left: -4px;
-  top: -5px;
+  top: -1.4em;
+  left: -2px;
+  padding: 2px 6px;
+  background: var(--user-color);
+  color: #fff;
+  border: 0;
+  border-radius: 6px;
+  border-bottom-left-radius: 0;
+  line-height: normal;
+  white-space: nowrap;
+  font-size: 14px;
+  font-family: var(--font-sans);
+  font-style: normal;
+  font-weight: 600;
+  pointer-events: none;
+  user-select: none;
+  z-index: 1000;
 }

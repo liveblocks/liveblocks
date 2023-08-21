@@ -76,6 +76,10 @@ export function CollaborativeEditor() {
           .yRemoteSelectionHead-${clientId}  {
             --user-color: ${client.user.color};
           }
+          
+          .yRemoteSelectionHead-${clientId}::after {
+            content: "${client.user.name}";
+          }
         `;
       }
     }
