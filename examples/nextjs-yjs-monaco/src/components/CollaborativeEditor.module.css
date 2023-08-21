@@ -7,6 +7,7 @@
   width: 100%;
   height: 100%;
   color: #111827;
+  overflow: hidden;
 }
 
 .editorHeader {
@@ -14,6 +15,11 @@
   justify-content: space-between;
   align-items: center;
   padding: 10px 0;
+}
+
+.editorContainer {
+  position: relative;
+  flex-grow: 1;
 }
 
 .editor {
@@ -30,21 +36,4 @@
 
 .editorFileName {
   margin-left: 16px;
-}
-
-.editorContainer {
-  position: relative;
-  height: 100%;
-}
-
-.placeholder {
-  pointer-events: none;
-  position: absolute;
-  inset: 0;
-  opacity: 0.3;
-  padding: 0 1em;
-}
-
-.editor p {
-  margin: 1em 0;
 }

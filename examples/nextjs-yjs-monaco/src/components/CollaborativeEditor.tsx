@@ -89,22 +89,24 @@ export function CollaborativeEditor() {
 
   return (
     <div className={styles.container}>
+      <style dangerouslySetInnerHTML={styleSheet} />
       <div className={styles.editorHeader}>
         <div className={styles.editorFileName}>file.ts</div>
         <Avatars />
       </div>
-      <style dangerouslySetInnerHTML={styleSheet} />
-      <Editor
-        onMount={handleOnMount}
-        height="100vh"
-        width="100hw"
-        theme="vs-light"
-        defaultLanguage="typescript"
-        defaultValue=""
-        options={{
-          tabSize: 2,
-        }}
-      />
+      <div className={styles.editorContainer}>
+        <Editor
+          onMount={handleOnMount}
+          height="100%"
+          width="100hw"
+          theme="vs-light"
+          defaultLanguage="typescript"
+          defaultValue=""
+          options={{
+            tabSize: 2,
+          }}
+        />
+      </div>
     </div>
   );
 }
