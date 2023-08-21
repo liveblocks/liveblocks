@@ -26,7 +26,7 @@
   --lb-accent-contrast: 8%;
   --lb-foreground-contrast: 6%;
   --lb-elevation-foreground-contrast: 6%;
-  --lb-tooltip-foreground-contrast: 18%;
+  --lb-tooltip-foreground-contrast: 10%;
 
   // Colors
   --lb-accent-subtle: #{color-scale(
@@ -372,7 +372,7 @@
     var(--lb-radius) - 0.75 * #{$lb-tooltip-additional-padding}
   );
   background: var(--lb-tooltip-foreground-subtle);
-  color: var(--lb-tooltip-foreground-moderate);
+  color: var(--lb-tooltip-foreground-tertiary);
   font-family: inherit;
   text-transform: uppercase;
   margin-inline-start: $lb-tooltip-padding;
