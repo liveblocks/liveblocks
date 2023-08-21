@@ -512,6 +512,10 @@
   color: var(--lb-foreground);
 }
 
+.lb-composer-form {
+  margin: 0;
+}
+
 // Progressive enhancement: Use :has instead of :focus-within to target the editor specifically
 @supports selector(:has(*)) {
   .lb-composer:has(.lb-composer-editor:not(:focus-visible))

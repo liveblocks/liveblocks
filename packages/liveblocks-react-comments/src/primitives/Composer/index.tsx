@@ -930,13 +930,13 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
 
         const promise = onComposerSubmit?.(comment, event);
 
+        event.preventDefault();
+
         if (promise) {
           promise.then(clear);
         } else {
           clear();
         }
-
-        event.preventDefault();
       },
       [clear, editor, onComposerSubmit, onSubmit]
     );
