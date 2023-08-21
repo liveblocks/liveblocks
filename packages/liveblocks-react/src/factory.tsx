@@ -44,6 +44,7 @@ import type { CommentsApiError } from "./comments/errors";
 import { useAsyncCache } from "./comments/lib/use-async-cache";
 import { useDebounce } from "./comments/lib/use-debounce";
 import { useInitial, useRerender } from "./hooks";
+import { stableStringify } from "./lib/stable-stringify";
 import type {
   MutationContext,
   OmitFirstArg,
@@ -901,7 +902,7 @@ export function createRoomContext<
 
   function useUser(userId: string) {
     const resolverKey = React.useMemo(
-      () => JSON.stringify({ userId }),
+      () => stableStringify({ userId }),
       [userId]
     );
     const state = useAsyncCache(usersCache, resolverKey);
@@ -923,7 +924,7 @@ export function createRoomContext<
 
   function useUserSuspense(userId: string) {
     const resolverKey = React.useMemo(
-      () => JSON.stringify({ userId }),
+      () => stableStringify({ userId }),
       [userId]
     );
     const state = useAsyncCache(usersCache, resolverKey, {
@@ -955,7 +956,7 @@ export function createRoomContext<
     const resolverKey = React.useMemo(
       () =>
         debouncedSearch !== undefined
-          ? JSON.stringify({ text: debouncedSearch, roomId: room.id })
+          ? stableStringify({ text: debouncedSearch, roomId: room.id })
           : null,
       [debouncedSearch, room.id]
     );
