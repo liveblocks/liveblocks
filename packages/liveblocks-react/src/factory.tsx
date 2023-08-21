@@ -155,7 +155,6 @@ type Options<TUserMeta extends BaseUserMeta> = {
 };
 
 let hasWarnedIfNoResolveUser = false;
-let hasWarnedIfNoResolveMentionSuggestions = false;
 
 function warnIfNoResolveUser(usersCache?: AsyncCache<unknown, unknown>) {
   if (
@@ -163,23 +162,10 @@ function warnIfNoResolveUser(usersCache?: AsyncCache<unknown, unknown>) {
     !usersCache &&
     process.env.NODE_ENV !== "production"
   ) {
-    console.warn("The resolveUser option wasn't set in createRoomContext.");
-    hasWarnedIfNoResolveUser = true;
-  }
-}
-
-function warnIfNoResolveMentionSuggestions(
-  mentionSuggestionsCache?: AsyncCache<unknown, unknown>
-) {
-  if (
-    !hasWarnedIfNoResolveMentionSuggestions &&
-    !mentionSuggestionsCache &&
-    process.env.NODE_ENV !== "production"
-  ) {
     console.warn(
-      "The resolveMentionSuggestions option wasn't set in createRoomContext."
+      "Set the resolveUser option in createRoomContext to specify user info."
     );
-    hasWarnedIfNoResolveMentionSuggestions = true;
+    hasWarnedIfNoResolveUser = true;
   }
 }
 
@@ -976,11 +962,6 @@ export function createRoomContext<
     const { data } = useAsyncCache(mentionSuggestionsCache, resolverKey, {
       keepPreviousDataWhileLoading: true,
     });
-
-    React.useEffect(
-      () => warnIfNoResolveMentionSuggestions(mentionSuggestionsCache),
-      []
-    );
 
     return data;
   }
