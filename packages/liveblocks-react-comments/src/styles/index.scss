@@ -400,6 +400,11 @@
   border-radius: var(--lb-avatar-radius);
   background: var(--lb-foreground-subtle);
   color: var(--lb-foreground-moderate);
+
+  &[data-loading] {
+    background: var(--lb-foreground);
+    opacity: $lb-loading-opacity;
+  }
 }
 
 .lb-avatar-image {
@@ -433,7 +438,7 @@
   height: 1.75ex;
   border-radius: calc(0.5 * var(--lb-radius));
   background: currentcolor;
-  opacity: 0.15;
+  opacity: $lb-loading-opacity;
   user-select: none;
 }
 
