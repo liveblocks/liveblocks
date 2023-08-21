@@ -7,7 +7,8 @@
     "schema-lang/*",
     "e2e/next-sandbox",
     "examples/nextjs-comments",
-    "examples/nextjs-comments-primitives"
+    "examples/nextjs-comments-primitives",
+    "examples/react-comments"
   ],
   "scripts": {
     "build": "turbo run build",

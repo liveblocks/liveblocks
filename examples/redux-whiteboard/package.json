@@ -1,5 +1,5 @@
 {
-  "name": "@liveblocks/redux-whiteboard",
+  "name": "@liveblocks-examples/redux-whiteboard",
   "description": "This example shows how to build a collaborative whiteboard with Liveblocks, Next.js and Redux.",
   "license": "Apache-2.0",
   "private": true,

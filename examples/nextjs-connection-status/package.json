@@ -1,5 +1,5 @@
 {
-  "name": "@liveblocks/nextjs-connection-status",
+  "name": "@liveblocks-examples/nextjs-connection-status",
   "description": "This example shows how to build connection toasts with Liveblocks and Next.js.",
   "license": "Apache-2.0",
   "private": true,

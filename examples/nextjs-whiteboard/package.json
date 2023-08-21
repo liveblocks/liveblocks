@@ -1,5 +1,5 @@
 {
-  "name": "@liveblocks/nextjs-whiteboard",
+  "name": "@liveblocks-examples/nextjs-whiteboard",
   "description": "This example shows how to build a collaborative whiteboard with Liveblocks and Next.js.",
   "license": "Apache-2.0",
   "private": true,
