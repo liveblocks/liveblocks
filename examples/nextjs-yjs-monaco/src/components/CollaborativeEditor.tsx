@@ -21,11 +21,10 @@ import { Awareness } from "y-protocols/awareness";
 export function CollaborativeEditor() {
   const [editorRef, setEditorRef] = useState<editor.IStandaloneCodeEditor>();
   const room = useRoom();
+  const [awarenessUsers, setAwarenessUsers] = useState<AwarenessList>([]);
 
   // Get user info from Liveblocks authentication endpoint
   const userInfo = useSelf((me) => me.info);
-
-  const [awarenessUsers, setAwarenessUsers] = useState<AwarenessList>([]);
 
   // Set up Liveblocks Yjs provider and attach Monaco editor
   useEffect(() => {
