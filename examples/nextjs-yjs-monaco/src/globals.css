@@ -54,25 +54,30 @@ main {
   pointer-events: none;
 }
 
+:root {
+  --user-color: #000000;
+}
+
 /* Cursor selection background */
 .yRemoteSelection {
-  background-color: rgb(250, 129, 0, .5);
+  opacity: 0.5;
+  background-color: var(--user-color);
 }
 
 /* Cursor caret */
 .yRemoteSelectionHead {
   position: absolute;
-  border-left: orange solid 2px;
-  border-top: orange solid 2px;
-  border-bottom: orange solid 2px;
+  border-left: var(--user-color) solid 2px;
+  border-top: var(--user-color) solid 2px;
+  border-bottom: var(--user-color) solid 2px;
   height: 100%;
   box-sizing: border-box;
 }
 
-.yRemoteSelectionHead::after {
+.yRemoteSelectionHead::before {
   position: absolute;
-  content: ' ';
-  border: 3px solid orange;
+  content: "";
+  border: 3px solid var(--user-color);
   border-radius: 4px;
   left: -4px;
   top: -5px;
