@@ -35,13 +35,14 @@ export default class yDocHandler extends Observable<unknown> {
     this.doc = doc;
     // this.doc.load(); // this just emits a load event, it doesn't actually load anything
     this.doc.on("update", this.updateHandler);
-    this.syncDoc();
     this.updateRoomDoc = (update: string) => {
       updateDoc(update, isRoot ? undefined : this.doc.guid);
     };
     this.fetchRoomDoc = (vector: string) => {
       fetchDoc(vector, isRoot ? undefined : this.doc.guid);
     };
+
+    this.syncDoc();
   }
 
   public handleServerUpdate = ({
@@ -53,7 +54,6 @@ export default class yDocHandler extends Observable<unknown> {
   }): void => {
     // apply update from the server
     Y.applyUpdate(this.doc, Base64.toUint8Array(update), "backend");
-
     // if this update is the result of a fetch, the state vector is included
     if (stateVector) {
       // Use server state to calculate a diff and send it

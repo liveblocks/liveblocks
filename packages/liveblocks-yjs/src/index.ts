@@ -23,6 +23,10 @@ type ProviderOptions = {
   autoloadSubdocs: boolean;
 };
 
+const DefaultOptions: ProviderOptions = {
+  autoloadSubdocs: false,
+};
+
 export default class LiveblocksProvider<
   P extends JsonObject,
   S extends LsonObject,
@@ -42,7 +46,7 @@ export default class LiveblocksProvider<
   constructor(
     room: Room<P, S, U, E>,
     doc: Y.Doc,
-    { autoloadSubdocs }: ProviderOptions
+    { autoloadSubdocs }: ProviderOptions | undefined = DefaultOptions
   ) {
     super();
     this.rootDoc = doc;
@@ -50,14 +54,9 @@ export default class LiveblocksProvider<
     this.rootDocHandler = new yDocHandler({
       doc,
       isRoot: true,
-      updateDoc: (update: string, guid?: string) => {
-        this.room.updateYDoc(update, guid);
-      },
-      fetchDoc: (vector: string, guid?: string) => {
-        this.room.fetchYDoc(vector, guid);
-      },
+      updateDoc: this.updateDoc,
+      fetchDoc: this.fetchDoc,
     });
-
     // if we have a connectionId already during construction, use that
     const connectionId = this.room.getSelf()?.connectionId;
     if (connectionId) {
@@ -67,11 +66,11 @@ export default class LiveblocksProvider<
     const onRootSync = () => {
       const state = this.rootDocHandler.synced;
       if (autoloadSubdocs) {
-        for (const subdoc of this.rootDoc.subdocs) {
+        for (const subdoc of this.rootDoc.getSubdocs()) {
           this.createSubdocHandler(subdoc);
         }
       } else {
-        // if we're not autoloading all subdocs, just sync the ones we have
+        // if we're not autoloading all subdocs, just sync the ones we have loaded manually (lazily)
         for (const [_, handler] of this.subdocHandlers) {
           handler.syncDoc();
         }
@@ -107,8 +106,19 @@ export default class LiveblocksProvider<
       })
     );
 
+    /*this.rootDoc.on("subdocs", (args) => {
+      console.log(args);
+    });*/
     this.syncDoc();
   }
+
+  private updateDoc = (update: string, guid?: string) => {
+    this.room.updateYDoc(update, guid);
+  };
+
+  private fetchDoc = (vector: string, guid?: string) => {
+    this.room.fetchYDoc(vector, guid);
+  };
 
   private createSubdocHandler = (subdoc: Y.Doc): void => {
     if (this.subdocHandlers.has(subdoc.guid)) {
@@ -119,15 +129,13 @@ export default class LiveblocksProvider<
     const handler = new yDocHandler({
       doc: subdoc,
       isRoot: false,
-      updateDoc: (update: string, guid?: string) => {
-        this.room.updateYDoc(update, guid);
-      },
-      fetchDoc: (vector: string, guid?: string) => {
-        this.room.fetchYDoc(vector, guid);
-      },
+      updateDoc: this.updateDoc,
+      fetchDoc: this.fetchDoc,
     });
     this.subdocHandlers.set(subdoc.guid, handler);
   };
+
+  // attempt to load a subdoc of a given guid
   public loadSubdoc = (guid: string): boolean => {
     for (const subdoc of this.rootDoc.subdocs) {
       if (subdoc.guid === guid) {
