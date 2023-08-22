@@ -14,26 +14,10 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px 0;
 }
 
 .editorContainer {
   position: relative;
   flex-grow: 1;
-}
-
-.editor {
-  border-radius: inherit;
-  flex-grow: 1;
-  width: 100%;
-  height: 100%;
-  padding: 1rem;
-}
-
-.editor:focus {
-  outline: none;
-}
-
-.editorFileName {
-  margin-left: 16px;
+  padding: 1rem 0;
 }
