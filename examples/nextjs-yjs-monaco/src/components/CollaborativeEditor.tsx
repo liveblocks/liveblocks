@@ -13,7 +13,7 @@ import { Awareness } from "y-protocols/awareness";
 import { Cursors } from "@/components/Cursors";
 import { Toolbar } from "@/components/Toolbar";
 
-// Collaborative text editor with simple rich text, live cursors, and live avatars
+// Collaborative code editor with undo/redo, live cursors, and live avatars
 export function CollaborativeEditor() {
   const room = useRoom();
   const [provider, setProvider] = useState<TypedLiveblocksProvider>();
