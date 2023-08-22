@@ -12,6 +12,7 @@
   "dependencies": {
     "@codemirror/lang-javascript": "^6.1.9",
     "@liveblocks/client": "^1.2.2",
+    "@liveblocks/node": "^1.2.2",
     "@liveblocks/react": "^1.2.2",
     "@liveblocks/yjs": "^1.2.2",
     "@types/node": "18.11.18",
