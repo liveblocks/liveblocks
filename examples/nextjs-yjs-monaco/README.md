@@ -21,7 +21,7 @@
 This example shows how to build a collaborative code editor with
 [Liveblocks](https://liveblocks.io), [Yjs](https://docs.yjs.dev),
 [Monaco](https://microsoft.github.io/monaco-editor/), and
-[React](https://reactjs.org/).
+[Next.js](https://nextjs.org/).
 
 As users edit the code, changes will be automatically persisted and
 synced—allowing for collaborative code editing experience. Users will also be
@@ -34,7 +34,7 @@ able to see who else is currently online and each other’s cursors.
 Run the following command to try this example locally:
 
 ```bash
-npx create-liveblocks-app@latest --example nextjs-yjs-tiptap --api-key
+npx create-liveblocks-app@latest --example nextjs-yjs-monaco --api-key
 ```
 
 This will download the example and ask permission to open your browser, enabling
@@ -69,7 +69,7 @@ To both deploy on [Vercel](https://vercel.com), and run the example locally, use
 the following command:
 
 ```bash
-npx create-liveblocks-app@latest --example nextjs-yjs-tiptap --vercel
+npx create-liveblocks-app@latest --example nextjs-yjs-monaco --vercel
 ```
 
 This will download the example and ask permission to open your browser, enabling
@@ -84,7 +84,7 @@ you to deploy to Vercel.
 <p></p>
 
 After forking
-[this example](https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/nextjs-yjs-tiptap)
+[this example](https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/nextjs-yjs-monaco)
 on CodeSandbox, create the `LIVEBLOCKS_SECRET_KEY` environment variable as a
 [secret](https://codesandbox.io/docs/secrets).
 
