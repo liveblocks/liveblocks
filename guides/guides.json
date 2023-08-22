@@ -287,5 +287,21 @@
     ],
     "date": "2023-09-05",
     "hidden": true
+  },
+  {
+    "title": "How to create a collaborative code editor with Monaco, Yjs, Next.js, and Liveblocks",
+    "path": "/how-to-create-a-collaborative-code-editor-with-monaco-yjs-nextjs-and-liveblocks",
+    "topics": [
+      "tutorials",
+      "code-editors"
+    ],
+    "technologies": [
+      "yjs",
+      "react",
+      "nextjs",
+      "monaco"
+    ],
+    "date": "2023-09-05",
+    "hidden": true
   }
 ]

@@ -16,7 +16,6 @@ export function Cursors({ yProvider }: Props) {
 
   const [awarenessUsers, setAwarenessUsers] = useState<AwarenessList>([]);
 
-  // Add userInfo to Yjs awareness and set list of online users
   useEffect(() => {
     // Add user info to Yjs awareness
     const localUser: UserAwareness["user"] = userInfo;
@@ -26,6 +25,7 @@ export function Cursors({ yProvider }: Props) {
     function setUsers() {
       setAwarenessUsers([...yProvider.awareness.getStates()] as AwarenessList);
     }
+
     yProvider.awareness.on("change", setUsers);
     setUsers();
 
