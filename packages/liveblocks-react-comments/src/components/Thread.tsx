@@ -3,7 +3,7 @@
 import type { ThreadData } from "@liveblocks/core";
 import { useRoomContextBundle } from "@liveblocks/react";
 import * as TogglePrimitive from "@radix-ui/react-toggle";
-import type { ComponentPropsWithoutRef } from "react";
+import type { ComponentPropsWithoutRef, SyntheticEvent } from "react";
 import React, { forwardRef, useCallback, useMemo } from "react";
 
 import { ResolveIcon } from "../icons/resolve";
@@ -123,6 +123,10 @@ export const Thread = forwardRef<HTMLDivElement, ThreadProps>(
         : thread.comments.findIndex((comment) => comment.body);
     }, [showDeletedComments, thread.comments]);
 
+    const stopPropagation = useCallback((event: SyntheticEvent) => {
+      event.stopPropagation();
+    }, []);
+
     const handleResolvedChange = useCallback(
       (resolved: boolean) => {
         onResolveChange?.(resolved);
@@ -180,6 +184,7 @@ export const Thread = forwardRef<HTMLDivElement, ThreadProps>(
                         >
                           <Button
                             className="lb-comment-action"
+                            onClick={stopPropagation}
                             aria-label={
                               thread.metadata.resolved
                                 ? $.THREAD_UNRESOLVE

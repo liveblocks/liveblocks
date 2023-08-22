@@ -4,6 +4,7 @@ import { useRoomContextBundle } from "@liveblocks/react";
 import type {
   ComponentPropsWithoutRef,
   FormEvent,
+  MouseEvent,
   ReactNode,
   SyntheticEvent,
 } from "react";
@@ -109,6 +110,7 @@ export type ComposerProps = ComponentPropsWithoutRef<"form"> &
 function ComposerInsertMentionEditorAction({
   label,
   className,
+  onClick,
   ...props
 }: EditorActionProps) {
   const { createMention } = useComposer();
@@ -117,13 +119,25 @@ function ComposerInsertMentionEditorAction({
     event.preventDefault();
   }, []);
 
+  const handleClick = useCallback(
+    (event: MouseEvent<HTMLButtonElement>) => {
+      onClick?.(event);
+
+      if (!event.isDefaultPrevented()) {
+        event.stopPropagation();
+        createMention();
+      }
+    },
+    [createMention, onClick]
+  );
+
   return (
     <Tooltip content={label}>
       <Button
         type="button"
         className={classNames("lb-composer-editor-action", className)}
         onMouseDown={preventDefault}
-        onClick={createMention}
+        onClick={handleClick}
         aria-label={label}
         {...props}
       >
@@ -203,6 +217,10 @@ export const Composer = forwardRef<HTMLFormElement, ComposerProps>(
       event.preventDefault();
     }, []);
 
+    const stopPropagation = useCallback((event: SyntheticEvent) => {
+      event.stopPropagation();
+    }, []);
+
     const handleCommentSubmit = useCallback(
       (comment: ComposerSubmitComment, event: FormEvent<HTMLFormElement>) => {
         onComposerSubmit?.(comment, event);
@@ -253,6 +271,7 @@ export const Composer = forwardRef<HTMLFormElement, ComposerProps>(
         >
           <ComposerPrimitive.Editor
             className="lb-composer-editor"
+            onClick={stopPropagation}
             placeholder={$.COMPOSER_PLACEHOLDER}
             initialValue={initialValue}
             disabled={disabled}
@@ -279,6 +298,7 @@ export const Composer = forwardRef<HTMLFormElement, ComposerProps>(
                       <Button
                         disabled={disabled}
                         onMouseDown={preventDefault}
+                        onClick={stopPropagation}
                         className="lb-composer-action"
                         variant="primary"
                         aria-label={$.COMPOSER_SEND}

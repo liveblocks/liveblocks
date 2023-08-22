@@ -7,6 +7,7 @@ import type {
   FormEvent,
   MouseEvent,
   ReactNode,
+  SyntheticEvent,
 } from "react";
 import React, { forwardRef, useCallback, useState } from "react";
 
@@ -156,13 +157,21 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
     const [isEditing, setEditing] = useState(false);
     const [isMoreOpen, setMoreOpen] = useState(false);
 
+    const stopPropagation = useCallback((event: SyntheticEvent) => {
+      event.stopPropagation();
+    }, []);
+
     const handleEdit = useCallback(() => {
       setEditing(true);
     }, []);
 
-    const handleEditCancel = useCallback(() => {
-      setEditing(false);
-    }, []);
+    const handleEditCancel = useCallback(
+      (event: MouseEvent<HTMLButtonElement>) => {
+        event.stopPropagation();
+        setEditing(false);
+      },
+      []
+    );
 
     const handleEditSubmit = useCallback(
       ({ body }: ComposerSubmitComment, event: FormEvent<HTMLFormElement>) => {
@@ -261,11 +270,17 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
                     align="end"
                     content={
                       <>
-                        <DropdownItem onSelect={handleEdit}>
+                        <DropdownItem
+                          onSelect={handleEdit}
+                          onClick={stopPropagation}
+                        >
                           <EditIcon className="lb-dropdown-item-icon" />
                           {$.COMMENT_EDIT}
                         </DropdownItem>
-                        <DropdownItem onSelect={handleDelete}>
+                        <DropdownItem
+                          onSelect={handleDelete}
+                          onClick={stopPropagation}
+                        >
                           <DeleteIcon className="lb-dropdown-item-icon" />
                           {$.COMMENT_DELETE}
                         </DropdownItem>
@@ -277,6 +292,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
                         <Button
                           className="lb-comment-action"
                           disabled={!comment.body}
+                          onClick={stopPropagation}
                           aria-label={$.COMMENT_MORE}
                         >
                           <EllipsisIcon className="lb-button-icon" />
@@ -318,6 +334,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
                       <Button
                         variant="primary"
                         className="lb-composer-action"
+                        onClick={stopPropagation}
                         aria-label={$.COMMENT_EDIT_COMPOSER_SAVE}
                       >
                         <CheckIcon className="lb-button-icon" />
