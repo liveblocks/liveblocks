@@ -1,14 +1,15 @@
 ---
 meta:
   title:
-    "How to create a collaborative code editor with Monaco, Yjs, Next.js, and
-    Liveblocks"
+    "How to create a collaborative code editor with CodeMirror, Yjs, Next.js,
+    and Liveblocks"
   description:
-    "Build a collaborative code editor with Monaco, Yjs, Next.js, and Liveblocks"
+    "Build a collaborative code editor with CodeMirror, Yjs, Next.js, and
+    Liveblocks"
 ---
 
-In this tutorial, we’ll be building a collaborative code editor using Monaco,
-Yjs, Next.js, and Liveblocks.
+In this tutorial, we’ll be building a collaborative code editor using
+CodeMirror, Yjs, Next.js, and Liveblocks.
 
 <Banner title="Private beta">
 
@@ -22,22 +23,23 @@ We’d love to hear from you.
 This guide assumes that you’re already familiar with
 [React](https://react.dev/), [Next.js](https://nextjs.org/),
 [TypeScript](https://www.typescriptlang.org/), and
-[Monaco](https://microsoft.github.io/monaco-editor/).
+[CodeMirror](https://codemirror.net/).
 
-## Install Monaco, Yjs, and Liveblocks into your Next.js application
+## Install CodeMirror, Yjs, and Liveblocks into your Next.js application
 
 <Banner title="Download the example">
 
 On GitHub we have a working example of this
-[collaborative Monaco editor](https://github.com/liveblocks/liveblocks/tree/main/examples/nextjs-yjs-monaco)
+[collaborative CodeMirror editor](https://github.com/liveblocks/liveblocks/tree/main/examples/nextjs-yjs-codemirror)
 for you to download and run.
 
 </Banner>
 
-Run the following command to install the Monaco, Yjs, and Liveblocks packages:
+Run the following command to install the CodeMirror, Yjs, and Liveblocks
+packages:
 
 ```bash
-npm install @liveblocks/client @liveblocks/react @liveblocks/yjs yjs @monaco-editor/react y-monaco y-protocols
+npm install @liveblocks/client @liveblocks/react @liveblocks/node @liveblocks/yjs yjs codemirror @codemirror/lang-javascript @y-codemirror.next
 ```
 
 ## Set up access token authentication
@@ -191,7 +193,7 @@ export function Room({ children }: { children: ReactNode }) {
 }
 ```
 
-## Set up the Monaco editor
+## Set up the CodeMirror editor
 
 Now that we’ve set up Liveblocks, we can start integrating Monaco and Yjs in the
 `Editor.tsx` file.
@@ -200,68 +202,69 @@ Now that we’ve set up Liveblocks, we can start integrating Monaco and Yjs in t
 "use client";
 
 import * as Y from "yjs";
+import { yCollab } from "y-codemirror.next";
+import { EditorView, basicSetup } from "codemirror";
+import { EditorState } from "@codemirror/state";
+import { javascript } from "@codemirror/lang-javascript";
+import { useCallback, useEffect, useState } from "react";
 import LiveblocksProvider from "@liveblocks/yjs";
 import { TypedLiveblocksProvider, useRoom } from "@/liveblocks.config";
-import { useCallback, useEffect, useState } from "react";
 import styles from "./CollaborativeEditor.module.css";
-import { Editor } from "@monaco-editor/react";
-import { editor } from "monaco-editor";
-import { MonacoBinding } from "y-monaco";
-import { Awareness } from "y-protocols/awareness";
 
 // Collaborative code editor with undo/redo, live cursors, and live avatars
 export function CollaborativeEditor() {
   const room = useRoom();
-  const [provider, setProvider] = useState<TypedLiveblocksProvider>();
-  const [editorRef, setEditorRef] = useState<editor.IStandaloneCodeEditor>();
+  const [element, setElement] = useState<HTMLElement>();
+  const [yUndoManager, setYUndoManager] = useState<Y.UndoManager>();
 
-  // Set up Liveblocks Yjs provider and attach Monaco editor
+  const ref = useCallback((node: HTMLElement | null) => {
+    if (!node) return;
+    setElement(node);
+  }, []);
+
+  // Set up Liveblocks Yjs provider and attach CodeMirror editor
   useEffect(() => {
-    let yProvider: TypedLiveblocksProvider;
-    let yDoc: Y.Doc;
-    let binding: MonacoBinding;
+    let provider: TypedLiveblocksProvider;
+    let ydoc: Y.Doc;
+    let view: EditorView;
 
-    if (editorRef) {
-      yDoc = new Y.Doc();
-      const yText = yDoc.getText("monaco");
-      yProvider = new LiveblocksProvider(room, yDoc);
-      setProvider(yProvider);
-
-      // Attach Yjs to Monaco
-      binding = new MonacoBinding(
-        yText,
-        editorRef.getModel() as editor.ITextModel,
-        new Set([editorRef]),
-        yProvider.awareness as Awareness
-      );
+    if (!element || !room || !userInfo) {
+      return;
     }
 
-    return () => {
-      yDoc?.destroy();
-      yProvider?.destroy();
-      binding?.destroy();
-    };
-  }, [editorRef, room]);
+    // Create Yjs provider and document
+    ydoc = new Y.Doc();
+    provider = new LiveblocksProvider(room as any, ydoc);
+    const ytext = ydoc.getText("codemirror");
+    const undoManager = new Y.UndoManager(ytext);
+    setYUndoManager(undoManager);
 
-  const handleOnMount = useCallback((e: editor.IStandaloneCodeEditor) => {
-    setEditorRef(e);
-  }, []);
+    // Set up CodeMirror and extensions
+    const state = EditorState.create({
+      doc: ytext.toString(),
+      extensions: [
+        basicSetup,
+        javascript(),
+        yCollab(ytext, provider.awareness, { undoManager }),
+      ],
+    });
+
+    // Attach CodeMirror to element
+    view = new EditorView({
+      state,
+      parent: element,
+    });
+
+    return () => {
+      ydoc?.destroy();
+      provider?.destroy();
+      view?.destroy();
+    };
+  }, [element, room, userInfo]);
 
   return (
     <div className={styles.container}>
-      <div className={styles.editorContainer}>
-        <Editor
-          onMount={handleOnMount}
-          height="100%"
-          width="100hw"
-          theme="vs-light"
-          defaultLanguage="typescript"
-          defaultValue=""
-          options={{
-            tabSize: 2,
-          }}
-        />
-      </div>
+      <div className={styles.editorContainer} ref={ref}></div>
     </div>
   );
 }
@@ -292,7 +295,7 @@ editor looks nice and tidy.
 .editorContainer {
   position: relative;
   flex-grow: 1;
-  padding-top: 1rem;
+  overflow: auto;
 }
 ```
 
@@ -319,98 +322,92 @@ export default function Page() {
 
 To add live cursors to the code editor, we can get the `userInfo` for the
 current user with [`useSelf`](/docs/api-reference/liveblocks-react#useSelf), and
-attach it Yjs awareness. Currently, the only way to style this is to loop
-through each Yjs user, and dynamically insert CSS styles into the page, using
-`::after` to display users’ names. We’ll place this in a new file:
+attach it Yjs awareness. After adding the following, you should see live
+cursors:
 
-```tsx file="Cursors.tsx"
-import { useEffect, useMemo, useState } from "react";
-import {
-  AwarenessList,
-  TypedLiveblocksProvider,
-  UserAwareness,
-  useSelf,
-} from "@/liveblocks.config";
+```tsx file="Cursors.tsx" highlight="1,10-11,35-40"
+import { useRoom, useSelf } from "@/liveblocks.config";
+// ...
 
-type Props = {
-  yProvider: TypedLiveblocksProvider;
-};
+// Collaborative code editor with undo/redo, live cursors, and live avatars
+export function CollaborativeEditor() {
+  const room = useRoom();
+  const [element, setElement] = useState<HTMLElement>();
+  const [yUndoManager, setYUndoManager] = useState<Y.UndoManager>();
 
-export function Cursors({ yProvider }: Props) {
   // Get user info from Liveblocks authentication endpoint
   const userInfo = useSelf((me) => me.info);
 
-  const [awarenessUsers, setAwarenessUsers] = useState<AwarenessList>([]);
+  const ref = useCallback((node: HTMLElement | null) => {
+    if (!node) return;
+    setElement(node);
+  }, []);
 
+  // Set up Liveblocks Yjs provider and attach CodeMirror editor
   useEffect(() => {
-    // Add user info to Yjs awareness
-    const localUser: UserAwareness["user"] = userInfo;
-    yProvider.awareness.setLocalStateField("user", localUser);
+    let provider: TypedLiveblocksProvider;
+    let ydoc: Y.Doc;
+    let view: EditorView;
 
-    // On changes, update `awarenessUsers`
-    function setUsers() {
-      setAwarenessUsers([...yProvider.awareness.getStates()] as AwarenessList);
+    if (!element || !room || !userInfo) {
+      return;
     }
-    yProvider.awareness.on("change", setUsers);
-    setUsers();
+
+    // Create Yjs provider and document
+    ydoc = new Y.Doc();
+    provider = new LiveblocksProvider(room as any, ydoc);
+    const ytext = ydoc.getText("codemirror");
+    const undoManager = new Y.UndoManager(ytext);
+    setYUndoManager(undoManager);
+
+    // Attach user info to Yjs
+    provider.awareness.setLocalStateField("user", {
+      name: userInfo.name,
+      color: userInfo.color,
+      colorLight: userInfo.color + "80", // 6-digit hex code at 50% opacity
+    });
+
+    // Set up CodeMirror and extensions
+    const state = EditorState.create({
+      doc: ytext.toString(),
+      extensions: [
+        basicSetup,
+        javascript(),
+        yCollab(ytext, provider.awareness, { undoManager }),
+      ],
+    });
+
+    // Attach CodeMirror to element
+    view = new EditorView({
+      state,
+      parent: element,
+    });
 
     return () => {
-      yProvider.awareness.off("change", setUsers);
+      ydoc?.destroy();
+      provider?.destroy();
+      view?.destroy();
     };
-  }, [yProvider]);
+  }, [element, room, userInfo]);
 
-  // Insert awareness info into cursors with styles
-  const styleSheet = useMemo(() => {
-    let cursorStyles = "";
-
-    for (const [clientId, client] of awarenessUsers) {
-      if (client?.user) {
-        cursorStyles += `
-          .yRemoteSelection-${clientId},
-          .yRemoteSelectionHead-${clientId}  {
-            --user-color: ${client.user.color};
-          }
-          
-          .yRemoteSelectionHead-${clientId}::after {
-            content: "${client.user.name}";
-          }
-        `;
-      }
-    }
-
-    return { __html: cursorStyles };
-  }, [awarenessUsers]);
-
-  return <style dangerouslySetInnerHTML={styleSheet} />;
+  return (
+    <div className={styles.container}>
+      <div className={styles.editorContainer} ref={ref}></div>
+    </div>
+  );
 }
 ```
 
-This CSS will work in combination with some other styles, which we can place in
-a global CSS file:
+We can style these cursors by placing CSS in a global CSS file.
 
 ```css file="globals.css" isCollapsed isCollapsable
-/* Cursor selection background */
-.yRemoteSelection {
-  opacity: 0.5;
-  background-color: var(--user-color);
-  margin-right: -1px;
-}
-
-/* Cursor caret */
-.yRemoteSelectionHead {
-  position: absolute;
-  box-sizing: border-box;
-  height: 100%;
-  border-left: 2px solid var(--user-color);
-}
-
 /* Cursor name */
-.yRemoteSelectionHead::after {
+.cm-editor .cm-ySelectionInfo {
   position: absolute;
-  top: -1.4em;
-  left: -2px;
+  top: -1.6em;
+  left: -1px;
   padding: 2px 6px;
-  background: var(--user-color);
+  opacity: 1;
   color: #fff;
   border: 0;
   border-radius: 6px;
@@ -418,70 +415,63 @@ a global CSS file:
   line-height: normal;
   white-space: nowrap;
   font-size: 14px;
+  font-family: sans-serif;
   font-style: normal;
   font-weight: 600;
   pointer-events: none;
   user-select: none;
   z-index: 1000;
 }
-```
 
-You can then import this into your editor to enable live cursors:
+.cm-editor .cm-ySelectionCaretDot {
+  display: none;
+}
 
-```tsx file="Editor.tsx" highlight="1,9"
-import { Cursors } from "@/components/Cursors";
-// ...
+/* Other CodeMirror styles */
+.cm-editor {
+  height: 100%;
+  font-size: 14px;
+}
 
-export function CollaborativeEditor() {
-  // ...
+.cm-editor.cm-focused {
+  outline: none;
+}
 
-  return (
-    <div className={styles.container}>
-      {provider ? <Cursors yProvider={provider} /> : null}
-      <div className={styles.editorContainer}>
-        <Editor
-          onMount={handleOnMount}
-          height="100%"
-          width="100hw"
-          theme="vs-light"
-          defaultLanguage="typescript"
-          defaultValue=""
-          options={{
-            tabSize: 2,
-          }}
-        />
-      </div>
-    </div>
-  );
+.cm-editor .cm-scroller {
+  padding-top: 1rem;
+}
+
+.cm-editor .cm-gutters {
+  background: none;
+  border: 0;
+}
+
+.cm-editor .cm-lineNumbers .cm-gutterElement {
+  padding-left: 1rem;
+  padding-right: 0.5rem;
 }
 ```
 
 ## Add a toolbar
 
-From this point onwards, you can build your Monaco app as normal! For example,
-should you wish to add a basic undo/redo toolbar to your app:
+From this point onwards, you can build your CodeMirror app as normal! For
+example, should you wish to add a basic undo/redo toolbar to your app:
 
 ```tsx file="Toolbar.tsx"
+import * as Y from "yjs";
 import styles from "./Toolbar.module.css";
-import { editor } from "monaco-editor";
 
 type Props = {
-  editor: editor.IStandaloneCodeEditor;
+  yUndoManager: Y.UndoManager;
 };
 
-export function Toolbar({ editor }: Props) {
+export function Toolbar({ yUndoManager }: Props) {
   return (
     <div className={styles.toolbar}>
-      <button
-        className={styles.button}
-        onClick={() => editor.trigger("", "undo", null)}
-      >
+      <button className={styles.button} onClick={() => yUndoManager.undo()}>
         Undo
       </button>
-      <button
-        className={styles.button}
-        onClick={() => editor.trigger("", "redo", null)}
-      >
+      <button className={styles.button} onClick={() => yUndoManager.redo()}>
         Redo
       </button>
     </div>
@@ -524,17 +514,11 @@ Add some matching styles:
 .button:focus-visible {
   outline-offset: 2px;
 }
-
-.button:active {
-  box-shadow:
-    rgba(0, 0, 0, 0.16) 0 2px 3px 0,
-    rgba(0, 0, 0, 0.04) 0 0 0 1px;
-}
 ```
 
-You can then import this into your editor to enable basic Monaco features:
+You can then import this into your editor to enable basic CodeMirror features:
 
-```tsx file="Editor.tsx" highlight="1,10-12"
+```tsx file="Editor.tsx" highlight="1,9-13"
 import { Toolbar } from "@/components/Toolbar";
 // ...
 
@@ -543,23 +527,12 @@ export function CollaborativeEditor() {
 
   return (
     <div className={styles.container}>
-      {provider ? <Cursors yProvider={provider} /> : null}
       <div className={styles.editorHeader}>
-        <div>{editorRef ? <Toolbar editor={editorRef} /> : null}</div>
+        <div>
+          {yUndoManager ? <Toolbar yUndoManager={yUndoManager} /> : null}
+        </div>
       </div>
-      <div className={styles.editorContainer}>
-        <Editor
-          onMount={handleOnMount}
-          height="100%"
-          width="100hw"
-          theme="vs-light"
-          defaultLanguage="typescript"
-          defaultValue=""
-          options={{
-            tabSize: 2,
-          }}
-        />
-      </div>
+      <div className={styles.editorContainer} ref={ref}></div>
     </div>
   );
 }
@@ -661,7 +634,7 @@ And here’s the styles:
 
 You can then import this to your editor to see it in action:
 
-```tsx file="Editor.tsx" highlight="1,12"
+```tsx file="Editor.tsx" highlight="1,13"
 import { Avatars } from "@/components/Avatars";
 // ...
 
@@ -670,24 +643,13 @@ export function CollaborativeEditor() {
 
   return (
     <div className={styles.container}>
-      {provider ? <Cursors yProvider={provider} /> : null}
       <div className={styles.editorHeader}>
-        <div>{editorRef ? <Toolbar editor={editorRef} /> : null}</div>
+        <div>
+          {yUndoManager ? <Toolbar yUndoManager={yUndoManager} /> : null}
+        </div>
         <Avatars />
       </div>
-      <div className={styles.editorContainer}>
-        <Editor
-          onMount={handleOnMount}
-          height="100%"
-          width="100hw"
-          theme="vs-light"
-          defaultLanguage="typescript"
-          defaultValue=""
-          options={{
-            tabSize: 2,
-          }}
-        />
-      </div>
+      <div className={styles.editorContainer} ref={ref}></div>
     </div>
   );
 }
@@ -699,5 +661,5 @@ is sourced from the Liveblocks authentication endpoint.
 ## Try it out
 
 On GitHub we have a working example of a
-[Yjs Monaco editor](https://github.com/liveblocks/liveblocks/tree/main/examples/nextjs-yjs-monaco)
+[Yjs CodeMirror editor](https://github.com/liveblocks/liveblocks/tree/main/examples/nextjs-yjs-codemirror)
 with added Liveblocks authentication and avatars.

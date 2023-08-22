@@ -50,7 +50,7 @@ Alternatively, you can set up your project manually:
 - Copy your **public** key from the
   [dashboard](https://liveblocks.io/dashboard/apikeys)
 - Create an `.env.local` file and add your **public** key as the
-  `NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY` environment variable
+  `LIVEBLOCKS_SECRET_KEY` environment variable
 - Run `npm run dev` and go to [http://localhost:3000](http://localhost:3000)
 
 </details>
@@ -81,7 +81,7 @@ you to deploy to Vercel.
 
 After forking
 [this example](https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/nextjs-yjs-codemirror)
-on CodeSandbox, create the `NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY` environment
+on CodeSandbox, create the `LIVEBLOCKS_SECRET_KEY` environment
 variable as a [secret](https://codesandbox.io/docs/secrets).
 
 </details>
