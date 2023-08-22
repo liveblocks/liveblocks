@@ -1,0 +1,703 @@
+---
+meta:
+  title:
+    "How to create a collaborative code editor with Monaco, Yjs, Next.js, and
+    Liveblocks"
+  description:
+    "Build a collaborative code editor with Monaco, Yjs, Next.js, and Liveblocks"
+---
+
+In this tutorial, we’ll be building a collaborative code editor using Monaco,
+Yjs, Next.js, and Liveblocks.
+
+<Banner title="Private beta">
+
+Yjs support is currently in private beta. If you have any questions or feedback,
+please reach out to us via the dedicated Discord channel,
+[#yjs-beta](https://discord.com/channels/913109211746009108/1123560088997728328).
+We’d love to hear from you.
+
+</Banner>
+
+This guide assumes that you’re already familiar with
+[React](https://react.dev/), [Next.js](https://nextjs.org/),
+[TypeScript](https://www.typescriptlang.org/), and
+[Monaco](https://microsoft.github.io/monaco-editor/).
+
+## Install Monaco, Yjs, and Liveblocks into your Next.js application
+
+<Banner title="Download the example">
+
+On GitHub we have a working example of this
+[collaborative Monaco editor](https://github.com/liveblocks/liveblocks/tree/main/examples/nextjs-yjs-monaco)
+for you to download and run.
+
+</Banner>
+
+Run the following command to install the Monaco, Yjs, and Liveblocks packages:
+
+```bash
+npm install @liveblocks/client @liveblocks/react @liveblocks/yjs yjs @monaco-editor/react y-monaco y-protocols
+```
+
+## Set up access token authentication
+
+The first step in connecting to Liveblocks is to set up an authentication
+endpoint in `/app/api/liveblocks-auth/route.ts`.
+
+```ts
+import { Liveblocks } from "@liveblocks/node";
+import { NextRequest } from "next/server";
+
+const API_KEY = "{{SECRET_KEY}}";
+
+const liveblocks = new Liveblocks({
+  secret: API_KEY!,
+});
+
+export async function POST(request: NextRequest) {
+  // Get the current user's info from your database
+  const user = {
+    id: "charlielayne@example.com",
+    info: {
+      name: "Charlie Layne",
+      color: "#D583F0",
+      picture: "https://liveblocks.io/avatars/avatar-1.png",
+    },
+  };
+
+  // Create a session for the current user
+  // userInfo is made available in Liveblocks presence hooks, e.g. useOthers
+  const session = liveblocks.prepareSession(user.id, {
+    userInfo: user.info,
+  });
+
+  // Give the user access to the room
+  const { room } = await request.json();
+  session.allow(room, session.FULL_ACCESS);
+
+  // Authorize the user and return the result
+  const { body, status } = await session.authorize();
+  return new Response(body, { status });
+}
+```
+
+Here’s an example using the older API routes format in `/pages`.
+
+```ts file="pages/api/liveblocks-auth.ts" isCollapsed isCollapsable
+import { Liveblocks } from "@liveblocks/node";
+import type { NextApiRequest, NextApiResponse } from "next";
+
+const API_KEY = "{{SECRET_KEY}}";
+
+const liveblocks = new Liveblocks({
+  secret: API_KEY!,
+});
+
+export default async function handler(
+  request: NextApiRequest,
+  response: NextApiResponse
+) {
+  // Get the current user's info from your database
+  const user = {
+    id: "charlielayne@example.com",
+    info: {
+      name: "Charlie Layne",
+      color: "#D583F0",
+      picture: "https://liveblocks.io/avatars/avatar-1.png",
+    },
+  };
+
+  // Create a session for the current user
+  // userInfo is made available in Liveblocks presence hooks, e.g. useOthers
+  const session = liveblocks.prepareSession(user.id, {
+    userInfo: user.info,
+  });
+
+  // Give the user access to the room
+  const { room } = request.body;
+  session.allow(room, session.FULL_ACCESS);
+
+  // Authorize the user and return the result
+  const { status, body } = await session.authorize();
+  response.status(status).send(body);
+}
+```
+
+## Initialize your Liveblocks config file
+
+Let’s initialize the `liveblocks.config.ts` file in which you’ll set up the
+Liveblocks client.
+
+```bash
+npx create-liveblocks-app@latest --init --framework react
+```
+
+We’ll also need another type for this tutorial. After creating the config file,
+open it up and insert the following:
+
+```tsx file="liveblocks.config.ts"
+import LiveblocksProvider from "@liveblocks/yjs";
+
+// ...
+
+export type TypedLiveblocksProvider = LiveblocksProvider<
+  Presence,
+  Storage,
+  UserMeta,
+  RoomEvent
+>;
+```
+
+## Set up the client
+
+Next, we can create the front end client which will be responsible for
+communicating with the back end. You can do this by modifying `createClient` in
+your config file, and passing the location of your endpoint.
+
+```ts
+const client = createClient({
+  authEndpoint: "/api/liveblocks-auth",
+});
+```
+
+## Join a Liveblocks room
+
+Liveblocks uses the concept of rooms, separate virtual spaces where people
+collaborate. To create a real-time experience, multiple users must be connected
+to the same room. Create a file in the current directory within `/app`, and name
+it `Room.tsx`.
+
+```tsx file="/app/Room.tsx"
+"use client";
+
+import { ReactNode } from "react";
+import { RoomProvider } from "../liveblocks.config";
+import { ClientSideSuspense } from "@liveblocks/react";
+
+export function Room({ children }: { children: ReactNode }) {
+  return (
+    <RoomProvider
+      id={roomId}
+      initialPresence={{
+        cursor: null,
+      }}
+    >
+      <ClientSideSuspense fallback={<div>Loading…</div>}>
+        {() => children}
+      </ClientSideSuspense>
+    </RoomProvider>
+  );
+}
+```
+
+## Set up the Monaco editor
+
+Now that we’ve set up Liveblocks, we can start integrating Monaco and Yjs in the
+`Editor.tsx` file.
+
+```tsx file="Editor.tsx"
+"use client";
+
+import * as Y from "yjs";
+import LiveblocksProvider from "@liveblocks/yjs";
+import { TypedLiveblocksProvider, useRoom } from "@/liveblocks.config";
+import { useCallback, useEffect, useState } from "react";
+import styles from "./CollaborativeEditor.module.css";
+import { Editor } from "@monaco-editor/react";
+import { editor } from "monaco-editor";
+import { MonacoBinding } from "y-monaco";
+import { Awareness } from "y-protocols/awareness";
+
+// Collaborative code editor with undo/redo, live cursors, and live avatars
+export function CollaborativeEditor() {
+  const room = useRoom();
+  const [provider, setProvider] = useState<TypedLiveblocksProvider>();
+  const [editorRef, setEditorRef] = useState<editor.IStandaloneCodeEditor>();
+
+  // Set up Liveblocks Yjs provider and attach Monaco editor
+  useEffect(() => {
+    let yProvider: TypedLiveblocksProvider;
+    let yDoc: Y.Doc;
+    let binding: MonacoBinding;
+
+    if (editorRef) {
+      yDoc = new Y.Doc();
+      const yText = yDoc.getText("monaco");
+      yProvider = new LiveblocksProvider(room, yDoc);
+      setProvider(yProvider);
+
+      // Attach Yjs to Monaco
+      binding = new MonacoBinding(
+        yText,
+        editorRef.getModel() as editor.ITextModel,
+        new Set([editorRef]),
+        yProvider.awareness as Awareness
+      );
+    }
+
+    return () => {
+      yDoc?.destroy();
+      yProvider?.destroy();
+      binding?.destroy();
+    };
+  }, [editorRef, room]);
+
+  const handleOnMount = useCallback((e: editor.IStandaloneCodeEditor) => {
+    setEditorRef(e);
+  }, []);
+
+  return (
+    <div className={styles.container}>
+      <div className={styles.editorContainer}>
+        <Editor
+          onMount={handleOnMount}
+          height="100%"
+          width="100hw"
+          theme="vs-light"
+          defaultLanguage="typescript"
+          defaultValue=""
+          options={{
+            tabSize: 2,
+          }}
+        />
+      </div>
+    </div>
+  );
+}
+```
+
+And here is the `Editor.module.css` file to make sure your multiplayer text
+editor looks nice and tidy.
+
+```css file="Editor.module.css" isCollapsed isCollapsable
+.container {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  border-radius: 12px;
+  background: #fff;
+  width: 100%;
+  height: 100%;
+  color: #111827;
+  overflow: hidden;
+}
+
+.editorHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.editorContainer {
+  position: relative;
+  flex-grow: 1;
+  padding-top: 1rem;
+}
+```
+
+## Add your editor to the current page
+
+Next, add the `CollaborativeEditor` into the page file, and place it inside the
+`Room` component we created earlier. We should now be seeing a basic
+collaborative editor!
+
+```tsx file="/app/page.tsx"
+import { Room } from "./Room";
+import CollaborativeEditor from "@/components/Editor";
+
+export default function Page() {
+  return (
+    <Room>
+      <CollaborativeEditor />
+    </Room>
+  );
+}
+```
+
+## Add live cursors
+
+To add live cursors to the code editor, we can get the `userInfo` for the
+current user with [`useSelf`](/docs/api-reference/liveblocks-react#useSelf), and
+attach it Yjs awareness. Currently, the only way to style this is to loop
+through each Yjs user, and dynamically insert CSS styles into the page, using
+`::after` to display users’ names. We’ll place this in a new file:
+
+```tsx file="Cursors.tsx"
+import { useEffect, useMemo, useState } from "react";
+import {
+  AwarenessList,
+  TypedLiveblocksProvider,
+  UserAwareness,
+  useSelf,
+} from "@/liveblocks.config";
+
+type Props = {
+  yProvider: TypedLiveblocksProvider;
+};
+
+export function Cursors({ yProvider }: Props) {
+  // Get user info from Liveblocks authentication endpoint
+  const userInfo = useSelf((me) => me.info);
+
+  const [awarenessUsers, setAwarenessUsers] = useState<AwarenessList>([]);
+
+  useEffect(() => {
+    // Add user info to Yjs awareness
+    const localUser: UserAwareness["user"] = userInfo;
+    yProvider.awareness.setLocalStateField("user", localUser);
+
+    // On changes, update `awarenessUsers`
+    function setUsers() {
+      setAwarenessUsers([...yProvider.awareness.getStates()] as AwarenessList);
+    }
+    yProvider.awareness.on("change", setUsers);
+    setUsers();
+
+    return () => {
+      yProvider.awareness.off("change", setUsers);
+    };
+  }, [yProvider]);
+
+  // Insert awareness info into cursors with styles
+  const styleSheet = useMemo(() => {
+    let cursorStyles = "";
+
+    for (const [clientId, client] of awarenessUsers) {
+      if (client?.user) {
+        cursorStyles += `
+          .yRemoteSelection-${clientId},
+          .yRemoteSelectionHead-${clientId}  {
+            --user-color: ${client.user.color};
+          }
+          
+          .yRemoteSelectionHead-${clientId}::after {
+            content: "${client.user.name}";
+          }
+        `;
+      }
+    }
+
+    return { __html: cursorStyles };
+  }, [awarenessUsers]);
+
+  return <style dangerouslySetInnerHTML={styleSheet} />;
+}
+```
+
+This CSS will work in combination with some other styles, which we can place in
+a global CSS file:
+
+```css file="globals.css" isCollapsed isCollapsable
+/* Cursor selection background */
+.yRemoteSelection {
+  opacity: 0.5;
+  background-color: var(--user-color);
+  margin-right: -1px;
+}
+
+/* Cursor caret */
+.yRemoteSelectionHead {
+  position: absolute;
+  box-sizing: border-box;
+  height: 100%;
+  border-left: 2px solid var(--user-color);
+}
+
+/* Cursor name */
+.yRemoteSelectionHead::after {
+  position: absolute;
+  top: -1.4em;
+  left: -2px;
+  padding: 2px 6px;
+  background: var(--user-color);
+  color: #fff;
+  border: 0;
+  border-radius: 6px;
+  border-bottom-left-radius: 0;
+  line-height: normal;
+  white-space: nowrap;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 600;
+  pointer-events: none;
+  user-select: none;
+  z-index: 1000;
+}
+```
+
+You can then import this into your editor to enable live cursors:
+
+```tsx file="Editor.tsx" highlight="1,9"
+import { Cursors } from "@/components/Cursors";
+// ...
+
+export function CollaborativeEditor() {
+  // ...
+
+  return (
+    <div className={styles.container}>
+      {provider ? <Cursors yProvider={provider} /> : null}
+      <div className={styles.editorContainer}>
+        <Editor
+          onMount={handleOnMount}
+          height="100%"
+          width="100hw"
+          theme="vs-light"
+          defaultLanguage="typescript"
+          defaultValue=""
+          options={{
+            tabSize: 2,
+          }}
+        />
+      </div>
+    </div>
+  );
+}
+```
+
+## Add a toolbar
+
+From this point onwards, you can build your Monaco app as normal! For example,
+should you wish to add a basic undo/redo toolbar to your app:
+
+```tsx file="Toolbar.tsx"
+import styles from "./Toolbar.module.css";
+import { editor } from "monaco-editor";
+
+type Props = {
+  editor: editor.IStandaloneCodeEditor;
+};
+
+export function Toolbar({ editor }: Props) {
+  return (
+    <div className={styles.toolbar}>
+      <button
+        className={styles.button}
+        onClick={() => editor.trigger("", "undo", null)}
+      >
+        Undo
+      </button>
+      <button
+        className={styles.button}
+        onClick={() => editor.trigger("", "redo", null)}
+      >
+        Redo
+      </button>
+    </div>
+  );
+}
+```
+
+Add some matching styles:
+
+```css file="Toolbar.module.css" isCollapsed isCollapsable
+.toolbar {
+  display: flex;
+  padding: 1em;
+  gap: 6px;
+}
+
+.button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-radius: 6px;
+  height: 32px;
+  width: 32px;
+  background: #fff;
+  color: #1f2937;
+  border: none;
+  box-shadow:
+    rgba(0, 0, 0, 0.12) 0 4px 8px 0,
+    rgba(0, 0, 0, 0.02) 0 0 0 1px;
+}
+
+.button:hover {
+  color: #111827;
+  box-shadow:
+    rgba(0, 0, 0, 0.16) 0 5px 8px 0,
+    rgba(0, 0, 0, 0.04) 0 0 0 1px;
+}
+
+.button:focus-visible {
+  outline-offset: 2px;
+}
+
+.button:active {
+  box-shadow:
+    rgba(0, 0, 0, 0.16) 0 2px 3px 0,
+    rgba(0, 0, 0, 0.04) 0 0 0 1px;
+}
+```
+
+You can then import this into your editor to enable basic Monaco features:
+
+```tsx file="Editor.tsx" highlight="1,10-12"
+import { Toolbar } from "@/components/Toolbar";
+// ...
+
+export function CollaborativeEditor() {
+  // ...
+
+  return (
+    <div className={styles.container}>
+      {provider ? <Cursors yProvider={provider} /> : null}
+      <div className={styles.editorHeader}>
+        <div>{editorRef ? <Toolbar editor={editorRef} /> : null}</div>
+      </div>
+      <div className={styles.editorContainer}>
+        <Editor
+          onMount={handleOnMount}
+          height="100%"
+          width="100hw"
+          theme="vs-light"
+          defaultLanguage="typescript"
+          defaultValue=""
+          options={{
+            tabSize: 2,
+          }}
+        />
+      </div>
+    </div>
+  );
+}
+```
+
+## Create live avatars with Liveblocks hooks
+
+Along with building out your code editor, you can now use other Liveblocks
+features, such as [Presence](/docs/products/presence). The
+[`useOthers`](/docs/api-reference/liveblocks-react#useOthers) hook allows us to
+view information about each user currently online, and we can turn this into a
+live avatars component.
+
+```tsx file="Avatars.tsx"
+import { useOthers, useSelf } from "@/liveblocks.config";
+import styles from "./Avatars.module.css";
+
+export function Avatars() {
+  const users = useOthers();
+  const currentUser = useSelf();
+
+  return (
+    <div className={styles.avatars}>
+      {users.map(({ connectionId, info }) => {
+        return (
+          <Avatar key={connectionId} picture={info.picture} name={info.name} />
+        );
+      })}
+
+      {currentUser && (
+        <div className="relative ml-8 first:ml-0">
+          <Avatar
+            picture={currentUser.info.picture}
+            name={currentUser.info.name}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
+export function Avatar({ picture, name }: { picture: string; name: string }) {
+  return (
+    <div className={styles.avatar} data-tooltip={name}>
+      <img
+        src={picture}
+        className={styles.avatar_picture}
+        data-tooltip={name}
+      />
+    </div>
+  );
+}
+```
+
+And here’s the styles:
+
+```css file="Avatars.module.css" isCollapsed isCollapsable
+.avatars {
+  display: flex;
+  padding: 0 0.75rem;
+}
+
+.avatar {
+  display: flex;
+  place-content: center;
+  position: relative;
+  border: 4px solid #fff;
+  border-radius: 9999px;
+  width: 42px;
+  height: 42px;
+  background-color: #9ca3af;
+  margin-left: -0.75rem;
+}
+
+.avatar:before {
+  content: attr(data-tooltip);
+  position: absolute;
+  top: 100%;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  padding: 5px 10px;
+  color: white;
+  font-size: 0.75rem;
+  border-radius: 8px;
+  margin-top: 10px;
+  z-index: 1;
+  background: black;
+  white-space: nowrap;
+}
+
+.avatar:hover:before {
+  opacity: 1;
+}
+
+.avatar_picture {
+  border-radius: 9999px;
+}
+```
+
+You can then import this to your editor to see it in action:
+
+```tsx file="Editor.tsx" highlight="1,12"
+import { Avatars } from "@/components/Avatars";
+// ...
+
+export function CollaborativeEditor() {
+  // ...
+
+  return (
+    <div className={styles.container}>
+      {provider ? <Cursors yProvider={provider} /> : null}
+      <div className={styles.editorHeader}>
+        <div>{editorRef ? <Toolbar editor={editorRef} /> : null}</div>
+        <Avatars />
+      </div>
+      <div className={styles.editorContainer}>
+        <Editor
+          onMount={handleOnMount}
+          height="100%"
+          width="100hw"
+          theme="vs-light"
+          defaultLanguage="typescript"
+          defaultValue=""
+          options={{
+            tabSize: 2,
+          }}
+        />
+      </div>
+    </div>
+  );
+}
+```
+
+Note that the cursors and avatars match in color and name, as the info for both
+is sourced from the Liveblocks authentication endpoint.
+
+## Try it out
+
+On GitHub we have a working example of a
+[Yjs Monaco editor](https://github.com/liveblocks/liveblocks/tree/main/examples/nextjs-yjs-monaco)
+with added Liveblocks authentication and avatars.

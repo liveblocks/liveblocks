@@ -22,6 +22,11 @@
             "hidden": true
           },
           {
+            "title": "Comments",
+            "path": "/get-started/react-comments",
+            "hidden": true
+          },
+          {
             "title": "Redux",
             "path": "/get-started/redux",
             "hidden": true
@@ -313,6 +318,11 @@
       {
         "title": "@liveblocks/react",
         "path": "/api-reference/liveblocks-react"
+      },
+      {
+        "title": "@liveblocks/react-comments",
+        "path": "/api-reference/liveblocks-react-comments",
+        "hidden": true
       },
       {
         "title": "@liveblocks/redux",
