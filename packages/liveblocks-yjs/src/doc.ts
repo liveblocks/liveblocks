@@ -1,8 +1,3 @@
-// TODO: apparently Yjs is full of anys or something, see if we can fix this
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-
 import { detectDupes } from "@liveblocks/core";
 import { Base64 } from "js-base64";
 import { Observable } from "lib0/observable";
@@ -105,5 +100,7 @@ export default class yDocHandler extends Observable<unknown> {
   destroy(): void {
     this.doc.off("update", this.updateHandler);
     this.unsubscribers.forEach((unsub) => unsub());
+    this._observers = new Map();
+    this.doc.destroy();
   }
 }

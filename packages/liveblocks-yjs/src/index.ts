@@ -1,7 +1,3 @@
-// TODO: apparently Yjs is full of anys or something, see if we can fix this
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import type {
   BaseUserMeta,
   Json,
@@ -35,6 +31,7 @@ export default class LiveblocksProvider<
 > extends Observable<unknown> {
   private room: Room<P, S, U, E>;
   private rootDoc: Y.Doc;
+  private options: ProviderOptions;
 
   private unsubscribers: Array<() => void> = [];
 
@@ -46,11 +43,12 @@ export default class LiveblocksProvider<
   constructor(
     room: Room<P, S, U, E>,
     doc: Y.Doc,
-    { autoloadSubdocs }: ProviderOptions | undefined = DefaultOptions
+    options: ProviderOptions | undefined = DefaultOptions
   ) {
     super();
     this.rootDoc = doc;
     this.room = room;
+    this.options = options;
     this.rootDocHandler = new yDocHandler({
       doc,
       isRoot: true,
@@ -63,25 +61,6 @@ export default class LiveblocksProvider<
       this.rootDoc.clientID = connectionId;
     }
     this.awareness = new Awareness(this.rootDoc, this.room);
-    const onRootSync = () => {
-      const state = this.rootDocHandler.synced;
-      if (autoloadSubdocs) {
-        for (const subdoc of this.rootDoc.getSubdocs()) {
-          this.createSubdocHandler(subdoc);
-        }
-      } else {
-        // if we're not autoloading all subdocs, just sync the ones we have loaded manually (lazily)
-        for (const [_, handler] of this.subdocHandlers) {
-          handler.syncDoc();
-        }
-      }
-      this.emit("synced", [state]);
-      this.emit("sync", [state]);
-    };
-    this.rootDocHandler.on("synced", onRootSync);
-    this.unsubscribers.push(() => {
-      this.rootDocHandler.off("synced", onRootSync);
-    });
 
     this.unsubscribers.push(
       this.room.events.status.subscribe((status) => {
@@ -106,11 +85,42 @@ export default class LiveblocksProvider<
       })
     );
 
-    /*this.rootDoc.on("subdocs", (args) => {
-      console.log(args);
-    });*/
+    this.rootDocHandler.on("synced", () => {
+      const state = this.rootDocHandler.synced;
+      for (const [_, handler] of this.subdocHandlers) {
+        handler.syncDoc();
+      }
+      this.emit("synced", [state]);
+      this.emit("sync", [state]);
+    });
+    this.rootDoc.on("subdocs", this.handleSubdocs);
     this.syncDoc();
   }
+
+  private handleSubdocs = ({
+    loaded,
+    removed,
+    added,
+  }: {
+    loaded: Y.Doc[];
+    removed: Y.Doc[];
+    added: Y.Doc[];
+  }) => {
+    loaded.forEach(this.createSubdocHandler);
+    if (this.options.autoloadSubdocs) {
+      for (const subdoc of added) {
+        if (!this.subdocHandlers.has(subdoc.guid)) {
+          subdoc.load();
+        }
+      }
+    }
+    for (const subdoc of removed) {
+      if (this.subdocHandlers.has(subdoc.guid)) {
+        this.subdocHandlers.get(subdoc.guid)?.destroy();
+        this.subdocHandlers.delete(subdoc.guid);
+      }
+    }
+  };
 
   private updateDoc = (update: string, guid?: string) => {
     this.room.updateYDoc(update, guid);
@@ -139,7 +149,7 @@ export default class LiveblocksProvider<
   public loadSubdoc = (guid: string): boolean => {
     for (const subdoc of this.rootDoc.subdocs) {
       if (subdoc.guid === guid) {
-        this.createSubdocHandler(subdoc);
+        subdoc.load();
         return true;
       }
     }
@@ -172,9 +182,11 @@ export default class LiveblocksProvider<
     this.unsubscribers.forEach((unsub) => unsub());
     this.awareness.destroy();
     this.rootDocHandler.destroy();
+    this._observers = new Map();
     for (const [_, handler] of this.subdocHandlers) {
       handler.destroy();
     }
+    this.subdocHandlers.clear();
   }
 
   // Some provider implementations expect to be able to call connect/disconnect, implement as noop
