@@ -129,21 +129,28 @@ export async function modifyStorage(
   storageChanges: (root: LiveObject<Storage>) => void
 ) {
   return new Promise(async (resolve) => {
-    const room = enterRoom(roomId);
+    const room = enterRoom();
     const { root } = await room.getStorage();
 
     // Make storage adjustments in a batch, so they all happen at once
     room.batch(() => {
-      storageChanges(root);
-
-      // Leave when storage has been synchronized
-      room.subscribe("storage-status", (status) => {
-        if (status === "synchronized") {
-          serverClient.leave(roomId);
-          resolve();
-        }
-      });
+      try {
+        storageChanges(root);
+      } catch (error) {
+        console.log("Problem modifying Liveblocks Storage from Node.js", error);
+      }
     });
+
+    // If storage changes are not synchronized, wait for them to finish
+    if (room.getStorageStatus() !== "synchronized") {
+      await room.events.storageStatus.waitUntil(
+        (status) => status === "synchronized"
+      );
+    }
+
+    // Leave when storage has been synchronized
+    serverClient.leave(roomId);
+    resolve();
   });
 }
 ```
