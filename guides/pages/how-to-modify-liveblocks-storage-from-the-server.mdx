@@ -134,11 +134,7 @@ export async function modifyStorage(
 
     // Make storage adjustments in a batch, so they all happen at once
     room.batch(() => {
-      try {
-        storageChanges(root);
-      } catch (error) {
-        console.log("Problem modifying Liveblocks Storage from Node.js", error);
-      }
+      storageChanges(root);
     });
 
     // If storage changes are not synchronized, wait for them to finish
