@@ -68,7 +68,7 @@ import {
   withMentions,
 } from "../../slate/plugins/mentions";
 import { getDOMRange } from "../../slate/utils/get-dom-range";
-import { isEmpty } from "../../slate/utils/is-empty";
+import { isEmpty as isEditorEmpty } from "../../slate/utils/is-empty";
 import { leaveMarkEdge, toggleMark } from "../../slate/utils/marks";
 import type {
   ComposerBody as ComposerBodyData,
@@ -562,7 +562,7 @@ const ComposerSuggestionsListItem = forwardRef<
 const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
   (
     {
-      initialValue,
+      defaultValue,
       onKeyDown,
       onFocus,
       onBlur,
@@ -582,8 +582,8 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
       [disabled, self?.canComment]
     );
     const { editor, validate, setFocused } = useComposerEditorContext();
-    const { submit, focus, isValid, isFocused } = useComposer();
-    const initialBody = useInitial(initialValue ?? emptyCommentBody);
+    const { submit, focus, isEmpty, isFocused } = useComposer();
+    const initialBody = useInitial(defaultValue ?? emptyCommentBody);
     const initialEditorValue = useMemo(() => {
       return commentBodyToComposerBody(initialBody);
     }, [initialBody]);
@@ -691,7 +691,7 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
           }
 
           // Submit the editor on Enter
-          if (isKey(event, "Enter", { shift: false }) && isValid) {
+          if (isKey(event, "Enter", { shift: false }) && !isEmpty) {
             event.preventDefault();
             submit();
           }
@@ -730,7 +730,7 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
       [
         createMention,
         editor,
-        isValid,
+        isEmpty,
         mentionDraft,
         mentionSuggestions,
         selectedMentionSuggestionIndex,
@@ -872,14 +872,14 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
   ) => {
     const Component = asChild ? Slot : "form";
     const editor = useInitial(createComposerEditor);
-    const [isValid, setValid] = useState(false);
+    const [isEmpty, setEmpty] = useState(true);
     const [isFocused, setFocused] = useState(false);
     const ref = useRef<HTMLFormElement>(null);
     const mergedRefs = useRefs(forwardedRef, ref);
 
     const validate = useCallback(
       (value: SlateElement[]) => {
-        setValid(!isEmpty(editor, value));
+        setEmpty(isEditorEmpty(editor, value));
       },
       [editor]
     );
@@ -957,7 +957,7 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
         <ComposerContext.Provider
           value={{
             isFocused,
-            isValid,
+            isEmpty,
             submit,
             clear,
             focus,
@@ -984,11 +984,11 @@ const ComposerSubmit = forwardRef<HTMLButtonElement, ComposerSubmitProps>(
   ({ children, disabled, asChild, ...props }, forwardedRef) => {
     const Component = asChild ? Slot : "button";
     const { useSelf } = useRoomContextBundle();
-    const { isValid } = useComposer();
+    const { isEmpty } = useComposer();
     const self = useSelf();
     const isDisabled = useMemo(
-      () => disabled || !isValid || !self?.canComment,
-      [disabled, isValid, self?.canComment]
+      () => disabled || isEmpty || !self?.canComment,
+      [disabled, isEmpty, self?.canComment]
     );
 
     return (

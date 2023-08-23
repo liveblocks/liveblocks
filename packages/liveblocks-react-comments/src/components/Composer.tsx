@@ -3,6 +3,7 @@
 import { useRoomContextBundle } from "@liveblocks/react";
 import type {
   ComponentPropsWithoutRef,
+  FocusEvent,
   FormEvent,
   MouseEvent,
   ReactNode,
@@ -23,6 +24,7 @@ import type {
 } from "../primitives/Composer/types";
 import { MENTION_CHARACTER } from "../slate/plugins/mentions";
 import { classNames } from "../utils/class-names";
+import { useControllableState } from "../utils/use-controllable-state";
 import { Avatar } from "./internal/Avatar";
 import { Button } from "./internal/Button";
 import { Logo } from "./internal/Logo";
@@ -62,7 +64,10 @@ type ComposerEditCommentProps = {
   commentId: string;
 };
 
-export type ComposerProps = ComponentPropsWithoutRef<"form"> &
+export type ComposerProps = Omit<
+  ComponentPropsWithoutRef<"form">,
+  "defaultValue"
+> &
   (
     | ComposerCreateThreadProps
     | ComposerCreateCommentProps
@@ -79,7 +84,22 @@ export type ComposerProps = ComponentPropsWithoutRef<"form"> &
     /**
      * The composer's initial value.
      */
-    initialValue?: ComposerEditorProps["initialValue"];
+    defaultValue?: ComposerEditorProps["defaultValue"];
+
+    /**
+     * Whether the composer is collapsed. Setting a value will make the composer controlled.
+     */
+    collapsed?: boolean;
+
+    /**
+     * The event handler called when the collapsed state of the composer changes.
+     */
+    onCollapsedChange?: (collapsed: boolean) => void;
+
+    /**
+     * Whether the composer is initially collapsed. Setting a value will make the composer uncontrolled.
+     */
+    defaultCollapsed?: boolean;
 
     /**
      * Whether the composer is disabled.
@@ -183,35 +203,38 @@ function ComposerMentionSuggestions({
   ) : null;
 }
 
-/**
- * Displays a composer to create comments.
- *
- * @example
- * <Composer />
- */
-export const Composer = forwardRef<HTMLFormElement, ComposerProps>(
+const ComposerWithContext = forwardRef<
+  HTMLFormElement,
+  Omit<ComposerProps, "threadId" | "commentId" | "onComposerSubmit">
+>(
   (
     {
-      threadId,
-      commentId,
-      onComposerSubmit,
-      initialValue,
+      defaultValue,
       disabled,
       autoFocus,
-      overrides,
+      collapsed: controlledCollapsed,
+      defaultCollapsed,
+      onCollapsedChange: controlledOnCollapsedChange,
       actions,
+      overrides,
       showLogo,
+      onFocus,
+      onBlur,
       className,
       ...props
     },
     forwardedRef
   ) => {
-    const { useCreateThread, useCreateComment, useEditComment } =
-      useRoomContextBundle();
-    const createThread = useCreateThread();
-    const createComment = useCreateComment();
-    const editComment = useEditComment();
+    const { isEmpty } = useComposer();
     const $ = useOverrides(overrides);
+    const [collapsed, onCollapsedChange] = useControllableState(
+      // If the composer is neither controlled nor uncontrolled, it defaults to controlled as uncollapsed.
+      controlledCollapsed === undefined && defaultCollapsed === undefined
+        ? false
+        : controlledCollapsed,
+      controlledOnCollapsedChange,
+      defaultCollapsed
+    );
 
     const preventDefault = useCallback((event: SyntheticEvent) => {
       event.preventDefault();
@@ -220,6 +243,124 @@ export const Composer = forwardRef<HTMLFormElement, ComposerProps>(
     const stopPropagation = useCallback((event: SyntheticEvent) => {
       event.stopPropagation();
     }, []);
+
+    const handleEditorClick = useCallback(
+      (event: MouseEvent<HTMLDivElement>) => {
+        event.stopPropagation();
+
+        if (isEmpty) {
+          onCollapsedChange?.(false);
+        }
+      },
+      [isEmpty, onCollapsedChange]
+    );
+
+    const handleFocus = useCallback(
+      (event: FocusEvent<HTMLFormElement>) => {
+        onFocus?.(event);
+
+        if (event.isDefaultPrevented()) {
+          return;
+        }
+
+        if (isEmpty) {
+          onCollapsedChange?.(false);
+        }
+      },
+      [isEmpty, onCollapsedChange, onFocus]
+    );
+
+    const handleBlur = useCallback(
+      (event: FocusEvent<HTMLFormElement>) => {
+        onBlur?.(event);
+
+        if (event.isDefaultPrevented()) {
+          return;
+        }
+
+        const isOutside = !event.currentTarget.contains(event.relatedTarget);
+
+        if (isOutside && isEmpty) {
+          onCollapsedChange?.(true);
+        }
+      },
+      [isEmpty, onBlur, onCollapsedChange]
+    );
+
+    return (
+      <form
+        className={classNames(
+          "lb-root lb-composer lb-composer-form",
+          className
+        )}
+        dir={$.dir}
+        {...props}
+        ref={forwardedRef}
+        data-collapsed={collapsed ? "" : undefined}
+        onFocus={handleFocus}
+        onBlur={handleBlur}
+      >
+        <ComposerPrimitive.Editor
+          className="lb-composer-editor"
+          onClick={handleEditorClick}
+          placeholder={$.COMPOSER_PLACEHOLDER}
+          defaultValue={defaultValue}
+          disabled={disabled}
+          autoFocus={autoFocus}
+          renderMention={ComposerMention}
+          renderMentionSuggestions={ComposerMentionSuggestions}
+          dir={$.dir}
+        />
+        {!collapsed && (
+          <div className="lb-composer-footer">
+            <div className="lb-composer-editor-actions">
+              <ComposerInsertMentionEditorAction
+                label={$.COMPOSER_INSERT_MENTION}
+              />
+            </div>
+            {showLogo && <Logo className="lb-composer-logo" />}
+            <div className="lb-composer-actions">
+              {actions ?? (
+                <>
+                  <Tooltip
+                    content={$.COMPOSER_SEND}
+                    shortcut={<TooltipShortcutKey name="enter" />}
+                  >
+                    <ComposerPrimitive.Submit disabled={disabled} asChild>
+                      <Button
+                        onMouseDown={preventDefault}
+                        onClick={stopPropagation}
+                        className="lb-composer-action"
+                        variant="primary"
+                        aria-label={$.COMPOSER_SEND}
+                      >
+                        <SendIcon />
+                      </Button>
+                    </ComposerPrimitive.Submit>
+                  </Tooltip>
+                </>
+              )}
+            </div>
+          </div>
+        )}
+      </form>
+    );
+  }
+);
+
+/**
+ * Displays a composer to create comments.
+ *
+ * @example
+ * <Composer />
+ */
+export const Composer = forwardRef<HTMLFormElement, ComposerProps>(
+  ({ threadId, commentId, onComposerSubmit, ...props }, forwardedRef) => {
+    const { useCreateThread, useCreateComment, useEditComment } =
+      useRoomContextBundle();
+    const createThread = useCreateThread();
+    const createComment = useCreateComment();
+    const editComment = useEditComment();
 
     const handleCommentSubmit = useCallback(
       (comment: ComposerSubmitComment, event: FormEvent<HTMLFormElement>) => {
@@ -259,58 +400,8 @@ export const Composer = forwardRef<HTMLFormElement, ComposerProps>(
 
     return (
       <TooltipProvider>
-        <ComposerPrimitive.Form
-          className={classNames(
-            "lb-root lb-composer lb-composer-form",
-            className
-          )}
-          dir={$.dir}
-          {...props}
-          ref={forwardedRef}
-          onComposerSubmit={handleCommentSubmit}
-        >
-          <ComposerPrimitive.Editor
-            className="lb-composer-editor"
-            onClick={stopPropagation}
-            placeholder={$.COMPOSER_PLACEHOLDER}
-            initialValue={initialValue}
-            disabled={disabled}
-            autoFocus={autoFocus}
-            renderMention={ComposerMention}
-            renderMentionSuggestions={ComposerMentionSuggestions}
-            dir={$.dir}
-          />
-          <div className="lb-composer-footer">
-            <div className="lb-composer-editor-actions">
-              <ComposerInsertMentionEditorAction
-                label={$.COMPOSER_INSERT_MENTION}
-              />
-            </div>
-            {showLogo && <Logo className="lb-composer-logo" />}
-            <div className="lb-composer-actions">
-              {actions ?? (
-                <>
-                  <Tooltip
-                    content={$.COMPOSER_SEND}
-                    shortcut={<TooltipShortcutKey name="enter" />}
-                  >
-                    <ComposerPrimitive.Submit asChild>
-                      <Button
-                        disabled={disabled}
-                        onMouseDown={preventDefault}
-                        onClick={stopPropagation}
-                        className="lb-composer-action"
-                        variant="primary"
-                        aria-label={$.COMPOSER_SEND}
-                      >
-                        <SendIcon />
-                      </Button>
-                    </ComposerPrimitive.Submit>
-                  </Tooltip>
-                </>
-              )}
-            </div>
-          </div>
+        <ComposerPrimitive.Form onComposerSubmit={handleCommentSubmit} asChild>
+          <ComposerWithContext {...props} ref={forwardedRef} />
         </ComposerPrimitive.Form>
       </TooltipProvider>
     );
