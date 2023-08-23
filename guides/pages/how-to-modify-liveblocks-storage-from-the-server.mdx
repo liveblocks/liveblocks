@@ -129,7 +129,7 @@ export async function modifyStorage(
   storageChanges: (root: LiveObject<Storage>) => void
 ) {
   return new Promise(async (resolve) => {
-    const room = enterRoom();
+    const room = enterRoom(roomId);
     const { root } = await room.getStorage();
 
     // Make storage adjustments in a batch, so they all happen at once
