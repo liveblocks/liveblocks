@@ -274,11 +274,11 @@ export function createRoomContext<
 
       setRoom(room);
 
-      const unsubscribe = getCommentsRoom(room).subscribe();
-
       return () => {
-        unsubscribe();
-        commentsRooms.delete(room.id);
+        const commentsRoom = commentsRooms.get(roomId);
+        if (commentsRoom) {
+          commentsRooms.delete(roomId);
+        }
         client.leave(roomId);
       };
     }, [roomId, frozen]);

@@ -1,3 +1,5 @@
+/// <reference types="react/experimental" />
+
 import type {
   BaseMetadata,
   BaseUserMeta,
@@ -23,6 +25,7 @@ import {
   EditThreadMetadataError,
 } from "./errors";
 import { createStore } from "./lib/store";
+import { useEffect } from "react";
 
 const POLLING_INTERVAL_REALTIME = 30000;
 const POLLING_INTERVAL = 5000;
@@ -39,7 +42,6 @@ export type CommentsRoom<TThreadMetadata extends BaseMetadata> = {
   createComment(options: CreateCommentOptions): CommentData;
   editComment(options: EditCommentOptions): void;
   deleteComment(options: DeleteCommentOptions): void;
-  subscribe(): () => void;
 };
 
 export type CreateThreadOptions<TMetadata extends BaseMetadata> = [
@@ -103,6 +105,8 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
     isLoading: true,
   });
 
+  let fetchThreadsPromise: Promise<any> | null = null;
+
   // Temporary solution
   // The most basic conflict resolution
   // If there are any pending mutation, we simply ignore any threads coming from the server
@@ -149,7 +153,11 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
     pollingHub.threads.pause();
 
     if (numberOfMutations === 0) {
-      setThreads(await room.getThreads());
+      if (fetchThreadsPromise === null) {
+        fetchThreadsPromise = room.getThreads();
+      }
+      setThreads(await fetchThreadsPromise);
+      fetchThreadsPromise = null;
     }
 
     pollingHub.threads.resume();
@@ -177,10 +185,11 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
     // Will only start if not already started
     pollingHub.threads.start(getPollingInterval());
 
-    // TODO: improve thread revalidation
-    revalidateThreads();
-
     return () => {
+      if (store.subscribersCount() > 1) {
+        return;
+      }
+
       pollingHub.threads.stop();
       unsubscribeRealtimeEvents?.();
       unsubscribeRealtimeEvents = undefined;
@@ -194,6 +203,38 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
       threads: newThreads,
       isLoading: false,
     });
+  }
+
+  function useThreadsInternal(): RoomThreads<TThreadMetadata> {
+    useEffect(subscribe, []);
+
+    return useSyncExternalStore<RoomThreads<TThreadMetadata>>(
+      store.subscribe,
+      store.get,
+      store.get
+    );
+  }
+
+  function useThreads(): RoomThreads<TThreadMetadata> {
+    useEffect(() => {
+      void revalidateThreads();
+    }, []);
+
+    return useThreadsInternal();
+  }
+
+  function useThreadsSuspense() {
+    const result = useThreadsInternal();
+
+    if (result.isLoading) {
+      throw revalidateThreads();
+    }
+
+    if (result.error) {
+      throw result.error;
+    }
+
+    return result.threads;
   }
 
   function getCurrentUserId() {
@@ -427,28 +468,6 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
       .finally(endMutation);
   }
 
-  function useThreads(): RoomThreads<TThreadMetadata> {
-    return useSyncExternalStore<RoomThreads<TThreadMetadata>>(
-      store.subscribe,
-      store.get,
-      store.get
-    );
-  }
-
-  function useThreadsSuspense() {
-    const result = useThreads();
-
-    if (result.isLoading) {
-      throw new Promise(store.subscribeOnce);
-    }
-
-    if (result.error) {
-      throw result.error;
-    }
-
-    return result.threads;
-  }
-
   return {
     useThreads,
     useThreadsSuspense,
@@ -457,6 +476,5 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
     createComment,
     editComment,
     deleteComment,
-    subscribe,
   };
 }
