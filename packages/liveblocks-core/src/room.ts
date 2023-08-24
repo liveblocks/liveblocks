@@ -1214,11 +1214,17 @@ export function createRoom<
       context.root = LiveObject._fromItems<TStorage>(message.items, pool);
     }
 
+    // Populate missing top-level keys using `initialStorage`
+    const stackSizeBefore = context.undoStack.length;
     for (const key in context.initialStorage) {
       if (context.root.get(key) === undefined) {
         context.root.set(key, context.initialStorage[key]);
       }
     }
+
+    // Initial storage is populated using normal "set" operations in the loop
+    // above, those updates can end up in the undo stack, so let's prune it.
+    context.undoStack.length = stackSizeBefore;
   }
 
   function updateRoot(
