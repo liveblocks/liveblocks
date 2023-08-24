@@ -1,6 +1,7 @@
 {
-  "name": "nextjs-yjs-monaco",
-  "version": "0.1.0",
+  "name": "@liveblocks-examples/nextjs-yjs-monaco",
+  "description": "This example shows how to build a collaborative code editor with Liveblocks, Yjs, Monaco, and Next.js.",
+  "license": "Apache-2.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
