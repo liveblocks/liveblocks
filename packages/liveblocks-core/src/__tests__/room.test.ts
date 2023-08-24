@@ -938,6 +938,7 @@ describe("room", () => {
     const storage = await room.getStorage();
     expect(storage.root.toObject()).toEqual({ foo: 1234 });
     //                                        ^^^ Added by the client, from initialStorage
+    expect(room.history.canUndo()).toBe(false);
   });
 
   test("storage should be initialized properly", async () => {
