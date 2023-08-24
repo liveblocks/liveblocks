@@ -3,6 +3,8 @@
 ### `@liveblocks/client`
 
 - Improve configuration error messages to be more user friendly
+- Fix bug where entering a new room could potentially initialize the undo stack
+  incorrectly
 
 ### `create-liveblocks-app`
 
