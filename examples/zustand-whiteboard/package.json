@@ -1,11 +1,11 @@
 {
-  "name": "@liveblocks/zustand-whiteboard",
+  "name": "@liveblocks-examples/zustand-whiteboard",
   "description": "This example shows how to build a collaborative whiteboard with Liveblocks, React and Zustand.",
   "license": "Apache-2.0",
   "private": true,
   "dependencies": {
-    "@liveblocks/client": "^1.2.0",
-    "@liveblocks/zustand": "^1.2.0",
+    "@liveblocks/client": "^1.2.3",
+    "@liveblocks/zustand": "^1.2.3",
     "@types/jest": "^27.5.2",
     "@types/node": "^16.11.45",
     "@types/react": "^18.0.15",

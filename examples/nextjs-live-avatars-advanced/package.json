@@ -1,5 +1,5 @@
 {
-  "name": "@liveblocks/nextjs-live-avatars-advanced",
+  "name": "@liveblocks-examples/nextjs-live-avatars-advanced",
   "description": "This example shows how to build an advanced live avatar stack with Liveblocks, Framer Motion, and Next.js.",
   "license": "Apache-2.0",
   "private": true,
@@ -9,9 +9,9 @@
     "start": "next start"
   },
   "dependencies": {
-    "@liveblocks/client": "^1.2.0",
-    "@liveblocks/node": "^1.2.0",
-    "@liveblocks/react": "^1.2.0",
+    "@liveblocks/client": "^1.2.3",
+    "@liveblocks/node": "^1.2.3",
+    "@liveblocks/react": "^1.2.3",
     "classnames": "^2.3.1",
     "framer-motion": "^6.3.6",
     "next": "^12.2.5",

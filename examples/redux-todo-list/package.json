@@ -1,5 +1,5 @@
 {
-  "name": "@liveblocks/redux-todo-list",
+  "name": "@liveblocks-examples/redux-todo-list",
   "description": "This example shows how to build a collaborative to-do list with Liveblocks, React and Redux.",
   "license": "Apache-2.0",
   "private": true,
@@ -9,8 +9,8 @@
     "dev": "next dev"
   },
   "dependencies": {
-    "@liveblocks/client": "^1.2.0",
-    "@liveblocks/redux": "^1.2.0",
+    "@liveblocks/client": "^1.2.3",
+    "@liveblocks/redux": "^1.2.3",
     "@reduxjs/toolkit": "^1.8.4",
     "next": "^12.1.6",
     "react": "^18.1.0",

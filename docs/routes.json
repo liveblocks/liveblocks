@@ -62,8 +62,18 @@
             "hidden": true
           },
           {
+            "title": "Yjs Monaco React",
+            "path": "/get-started/yjs-monaco-react",
+            "hidden": true
+          },
+          {
             "title": "Yjs Lexical React",
             "path": "/get-started/yjs-lexical-react",
+            "hidden": true
+          },
+          {
+            "title": "Yjs Quill React",
+            "path": "/get-started/yjs-quill-react",
             "hidden": true
           },
           {

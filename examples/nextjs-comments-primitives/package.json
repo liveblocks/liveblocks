@@ -1,5 +1,5 @@
 {
-  "name": "@liveblocks/nextjs-comments-primitives",
+  "name": "@liveblocks-examples/nextjs-comments-primitives",
   "description": "This example shows how to build comments with Liveblocks and Next.js, using the primitives instead of the default components.",
   "license": "Apache-2.0",
   "private": true,
