@@ -8,7 +8,7 @@
 </p>
 <p align="center">
   <a href="https://twitter.com/liveblocks">
-    <img src="https://img.shields.io/badge/liveblocks-message?style=flat&logo=twitter&color=555&logoColor=fff" alt="Twitter" />
+    <img src="https://img.shields.io/badge/liveblocks-message?style=flat&logo=x&color=555&logoColor=fff" alt="X" />
   </a>
   <a href="https://liveblocks.io/discord">
     <img src="https://img.shields.io/discord/913109211746009108?style=flat&label=discord&logo=discord&color=85f&logoColor=fff" alt="Discord" />
@@ -93,8 +93,8 @@ You can read our release notes
   community, ask questions and share tips.
 - [Email](https://liveblocks.io/contact) to contact us directly for support and
   sales enquiries.
-- [Twitter](https://twitter.com/liveblocks) to receive updates, announcements,
-  blog posts, and general Liveblocks tips.
+- [X](https://x.com/liveblocks) to receive updates, announcements, blog posts,
+  and general Liveblocks tips.
 
 ## License
 
