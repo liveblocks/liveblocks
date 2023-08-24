@@ -1,6 +1,7 @@
 {
-  "name": "zustand-flowchart",
-  "version": "0.1.0",
+  "name": "@liveblocks-examples/zustand-flowchart",
+  "description": "This example shows how to build a collaborative flowchart with Liveblocks, Zustand, React Flow, and Next.js.",
+  "license": "Apache-2.0",
   "private": true,
   "scripts": {
     "dev": "next dev",

@@ -189,7 +189,7 @@ describe("auth-manager - secret auth", () => {
       await expect(
         authManager.getAuthValue("room:read", "room1")
       ).rejects.toThrow(
-        'We expect the authentication callback to return a token, but it does not. Hint: the return value should look like: { token: "..." }'
+        'Your authentication callback function should return a token, but it did not. Hint: the return value should look like: { token: "..." }'
       );
     }
   );
