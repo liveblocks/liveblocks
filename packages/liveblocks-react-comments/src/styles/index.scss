@@ -559,6 +559,11 @@
 }
 
 .lb-composer-mention {
+  &::selection,
+  *::selection {
+    background: transparent;
+  }
+
   &[data-selected] {
     background: var(--lb-accent);
     color: var(--lb-accent-foreground);
