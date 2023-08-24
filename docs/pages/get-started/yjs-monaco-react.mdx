@@ -1,8 +1,9 @@
 ---
 meta:
-  title: "Get started with Liveblocks, CodeMirror, Yjs, and React"
+  title: "Get started with Liveblocks, Yjs, Monaco, and React"
   parentTitle: "Get started"
-  description: "Learn how to get started with CodeMirror, Yjs, and Liveblocks."
+  description:
+    "Learn how to get started with Liveblocks, Yjs, Monaco, and React."
 ---
 
 Liveblocks is a real-time collaboration infrastructure for building performant
@@ -14,11 +15,11 @@ collaboration to your React application using the APIs from the
 
 <Steps>
   <Step>
-    <StepTitle>Install Liveblocks, Yjs, and CodeMirror</StepTitle>
+    <StepTitle>Install Liveblocks, Yjs, and Monaco</StepTitle>
     <StepContent>
 
       ```bash
-      npm install @liveblocks/client @liveblocks/react @liveblocks/yjs yjs codemirror @codemirror/lang-javascript y-codemirror.next
+      npm install @liveblocks/client @liveblocks/react @liveblocks/yjs yjs @monaco-editor/react y-monaco y-protocols
       ```
 
     </StepContent>
@@ -82,82 +83,83 @@ collaboration to your React application using the APIs from the
 
   </Step>
   <Step>
-    <StepTitle>Set up the collaborative CodeMirror editor</StepTitle>
+    <StepTitle>Set up the collaborative Monaco code editor</StepTitle>
     <StepContent>
 
-      Now that we set up Liveblocks, we can start integrating CodeMirror and Yjs in the `Editor.tsx` file.
-      To make the editor collaborative, we can rely on the `yCollab` from `y-codemirror.next`.
+      Now that we set up Liveblocks, we can start integrating Monaco and Yjs in the `Editor.tsx` file.
+      To make the editor collaborative, we can rely on `MonacoBinding` from `y-monaco`.
 
-      ```tsx
+      ```tsx file="Editor.tsx"
+      "use client";
+
       import * as Y from "yjs";
-      import { yCollab } from "y-codemirror.next";
-      import { EditorView, basicSetup } from "codemirror";
-      import { EditorState } from "@codemirror/state";
-      import { javascript } from "@codemirror/lang-javascript";
-      import { useCallback, useEffect, useState } from "react";
       import LiveblocksProvider from "@liveblocks/yjs";
       import { useRoom } from "@/liveblocks.config";
-      import styles from "./Editor.module.css";
+      import { useCallback, useEffect, useState } from "react";
+      import { Editor } from "@monaco-editor/react";
+      import { editor } from "monaco-editor";
+      import { MonacoBinding } from "y-monaco";
+      import { Awareness } from "y-protocols/awareness";
 
-      export default function Editor() {
+      // Collaborative text editor with simple rich text, live cursors, and live avatars
+      export function CollaborativeEditor() {
+        const [editorRef, setEditorRef] = useState<editor.IStandaloneCodeEditor>();
         const room = useRoom();
-        const [element, setElement] = useState<HTMLElement>();
 
-        const ref = useCallback((node: HTMLElement | null) => {
-          if (!node) return;
-
-          setElement(node);
-        }, []);
-
-        // Set up Liveblocks Yjs provider and attach CodeMirror editor
+        // Set up Liveblocks Yjs provider and attach Monaco editor
         useEffect(() => {
-          let provider: LiveblocksProvider<any, any, any, any>;
-          let ydoc: Y.Doc;
-          let view: EditorView;
+          let yProvider: any;
+          let yDoc: Y.Doc;
+          let binding: MonacoBinding;
 
-          if (!element || !room) {
-            return;
+          if (editorRef) {
+            yDoc = new Y.Doc();
+            const yText = yDoc.getText("monaco");
+            yProvider = new LiveblocksProvider(room, yDoc);
+
+            // Attach Yjs to Monaco
+            binding = new MonacoBinding(
+              yText,
+              editorRef.getModel() as editor.ITextModel,
+              new Set([editorRef]),
+              yProvider.awareness as Awareness
+            );
           }
 
-          // Create Yjs provider and document
-          ydoc = new Y.Doc();
-          provider = new LiveblocksProvider(room as any, ydoc);
-          const ytext = ydoc.getText("codemirror");
-          const undoManager = new Y.UndoManager(ytext);
-
-          // Set up CodeMirror and extensions
-          const state = EditorState.create({
-            doc: ytext.toString(),
-            extensions: [
-              basicSetup,
-              javascript(),
-              yCollab(ytext, provider.awareness, { undoManager }),
-            ],
-          });
-
-          // Attach CodeMirror to element
-          view = new EditorView({
-            state,
-            parent: element,
-          });
-
           return () => {
-            ydoc?.destroy();
-            provider?.destroy();
-            view?.destroy();
+            yDoc?.destroy();
+            yProvider?.destroy();
+            binding?.destroy();
           };
-        }, [element, room]);
+        }, [editorRef, room]);
 
-        return <div ref={ref} className={styles.editor} />;
+        const handleOnMount = useCallback((e: editor.IStandaloneCodeEditor) => {
+          setEditorRef(e);
+        }, []);
+
+        return (
+          <Editor
+            onMount={handleOnMount}
+            height="100vh"
+            width="100hw"
+            theme="vs-light"
+            defaultLanguage="typescript"
+            defaultValue=""
+            options={{
+              tabSize: 2,
+            }}
+          />
+        );
       }
       ```
+
     </StepContent>
 
   </Step>
+
   <Step lastStep>
     <StepTitle>Next: set up authentication</StepTitle>
     <StepContent>
-    
       By default, Liveblocks is configured to work without an authentication endpoint
       where everyone automatically has access to rooms. This approach is great for
       prototyping and marketing pages where setting up your own security isn’t always
@@ -170,13 +172,14 @@ collaboration to your React application using the APIs from the
     </StepContent>
 
   </Step>
+
 </Steps>
 
 ## What to read next
 
 Congratulations! You now have set up the foundation for your collaborative
-CodeMirror editor inside your React application.
+Monaco code editor inside your React application.
 
-- [How to create a collaborative code editor with CodeMirror, Yjs, Next.js, and Liveblocks](/docs/guides/how-to-create-a-collaborative-code-editor-with-codemirror-yjs-nextjs-and-liveblocks)
+- [How to create a collaborative code editor with Monaco, Yjs, Next.js, and Liveblocks](/docs/guides/how-to-create-a-collaborative-code-editor-with-monaco-yjs-nextjs-and-liveblocks)
 - [@liveblocks/yjs API Reference](/docs/api-reference/liveblocks-yjs)
-- [CodeMirror website](https://codemirror.net)
+- [Monaco website](https://microsoft.github.io/monaco-editor/)
