@@ -1,5 +1,5 @@
 {
-  "name": "vuejs-live-cursors",
+  "name": "@liveblocks-examples/vuejs-live-cursors",
   "description": "This example shows how to build live cursors with Liveblocks and Vue",
   "license": "Apache-2.0",
   "private": true,

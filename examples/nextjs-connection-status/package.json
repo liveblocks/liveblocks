@@ -1,6 +1,7 @@
 {
-  "name": "nextjs-lost-connection-toasts",
-  "version": "0.1.0",
+  "name": "@liveblocks-examples/nextjs-connection-status",
+  "description": "This example shows how to a connection status with Liveblocks and Next.js",
+  "license": "Apache-2.0",
   "private": true,
   "scripts": {
     "dev": "next dev",

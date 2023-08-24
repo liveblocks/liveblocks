@@ -1,6 +1,7 @@
 {
-  "name": "nextjs-yjs-tiptap-advanced",
-  "version": "0.1.0",
+  "name": "@liveblocks-examples/nextjs-yjs-tiptap-advanced",
+  "description": "This example shows how to build a collaborative text editor with Liveblocks, Yjs, Tiptap, and Next.js.",
+  "license": "Apache-2.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
