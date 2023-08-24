@@ -64,22 +64,22 @@ export interface CommentProps extends ComponentPropsWithoutRef<"div"> {
   indentBody?: boolean;
 
   /**
-   * An event handler called when the comment is edited.
+   * The event handler called when the comment is edited.
    */
   onEdit?: (comment: CommentData) => void;
 
   /**
-   * An event handler called when the comment is deleted.
+   * The event handler called when the comment is deleted.
    */
   onDelete?: (comment: CommentData) => void;
 
   /**
-   * An event handler called when clicking on the author.
+   * The event handler called when clicking on the author.
    */
   onAuthorClick?: (userId: string, event: MouseEvent<HTMLElement>) => void;
 
   /**
-   * An event handler called when clicking on a mention.
+   * The event handler called when clicking on a mention.
    */
   onMentionClick?: (userId: string, event: MouseEvent<HTMLElement>) => void;
 
@@ -308,7 +308,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
             <Composer
               className="lb-comment-composer"
               onComposerSubmit={handleEditSubmit}
-              initialValue={comment.body}
+              defaultValue={comment.body}
               placeholder={$.COMMENT_EDIT_COMPOSER_PLACEHOLDER}
               autoFocus
               showLogo={false}
