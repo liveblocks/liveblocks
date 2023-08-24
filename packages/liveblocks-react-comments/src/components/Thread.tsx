@@ -28,9 +28,9 @@ export interface ThreadProps extends ComponentPropsWithoutRef<"div"> {
   thread: ThreadData<{ resolved?: boolean }>;
 
   /**
-   * Whether to show the composer to reply to the thread.
+   * How to show or hide the composer to reply to the thread.
    */
-  showComposer?: boolean;
+  showComposer?: boolean | "collapsed";
 
   /**
    * Whether to show the action to resolve the thread.
@@ -53,27 +53,27 @@ export interface ThreadProps extends ComponentPropsWithoutRef<"div"> {
   showDeletedComments?: CommentProps["showDeleted"];
 
   /**
-   * An event handler called when changing the resolved status.
+   * The event handler called when changing the resolved status.
    */
   onResolveChange?: (resolved: boolean) => void;
 
   /**
-   * An event handler called when a comment is edited.
+   * The event handler called when a comment is edited.
    */
   onCommentEdit?: CommentProps["onEdit"];
 
   /**
-   * An event handler called when a comment is deleted.
+   * The event handler called when a comment is deleted.
    */
   onCommentDelete?: CommentProps["onDelete"];
 
   /**
-   * An event handler called when clicking on a comment's author.
+   * The event handler called when clicking on a comment's author.
    */
   onAuthorClick?: CommentProps["onAuthorClick"];
 
   /**
-   * An event handler called when clicking on a mention.
+   * The event handler called when clicking on a mention.
    */
   onMentionClick?: CommentProps["onMentionClick"];
 
@@ -102,7 +102,7 @@ export const Thread = forwardRef<HTMLDivElement, ThreadProps>(
       showActions = "hover",
       showDeletedComments,
       showResolveAction = true,
-      showComposer,
+      showComposer = "collapsed",
       onResolveChange,
       onCommentEdit,
       onCommentDelete,
@@ -209,6 +209,7 @@ export const Thread = forwardRef<HTMLDivElement, ThreadProps>(
             <Composer
               className="lb-thread-composer"
               threadId={thread.id}
+              defaultCollapsed={showComposer === "collapsed" ? true : undefined}
               overrides={{
                 COMPOSER_PLACEHOLDER: $.THREAD_COMPOSER_PLACEHOLDER,
                 COMPOSER_SEND: $.THREAD_COMPOSER_SEND,

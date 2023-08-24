@@ -1,5 +1,9 @@
 # Unreleased
 
+### `@liveblocks/client`
+
+- Improve configuration error messages to be more user friendly
+
 ### `create-liveblocks-app`
 
 - Fix Suspense option when specifying a framework

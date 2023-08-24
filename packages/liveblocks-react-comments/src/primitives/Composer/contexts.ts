@@ -12,9 +12,9 @@ export type ComposerContext = {
   isFocused: boolean;
 
   /**
-   * Whether the editor is currently valid.
+   * Whether the editor is currently empty.
    */
-  isValid: boolean;
+  isEmpty: boolean;
 
   /**
    * Submit the composer programmatically.

@@ -50,7 +50,8 @@ export interface ComposerSuggestionsListItemProps
   value: string;
 }
 
-export interface ComposerEditorProps extends ComponentPropsWithoutRef<"div"> {
+export interface ComposerEditorProps
+  extends Omit<ComponentPropsWithoutRef<"div">, "defaultValue"> {
   /**
    * The reading direction of the editor and related elements.
    */
@@ -59,7 +60,7 @@ export interface ComposerEditorProps extends ComponentPropsWithoutRef<"div"> {
   /**
    * The editor's initial value.
    */
-  initialValue?: CommentBody;
+  defaultValue?: CommentBody;
 
   /**
    * The text to display when the editor is empty.
