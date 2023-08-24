@@ -22,7 +22,7 @@
   <img src="https://img.shields.io/badge/lexical-message?style=flat&color=7bf" alt="Lexical" />
 </p>
 
-This example shows how to build a collaborative text editor with [Liveblocks](https://liveblocks.io), [Yjs](https://docs.yjs.dev), [Lexical](https://lexical.dev), and [Next.js](https://nextjs.org/).
+This example shows how to build a collaborative text editor with [Liveblocks](https://liveblocks.io), [Yjs](https://docs.yjs.dev), [Lexical](https://lexical.dev/), and [Next.js](https://nextjs.org/).
 
 As users edit the document, changes will be automatically persisted and synced—allowing for an editor that updates in real-time across clients. Users will also be able to see who see each other’s cursors in the document.
 
