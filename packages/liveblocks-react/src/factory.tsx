@@ -46,6 +46,7 @@ import { useDebounce } from "./comments/lib/use-debounce";
 import { useInitial, useRerender } from "./hooks";
 import { stableStringify } from "./lib/stable-stringify";
 import type {
+  InternalRoomContextBundle,
   MutationContext,
   OmitFirstArg,
   ResolveMentionSuggestionsOptions,
@@ -170,7 +171,7 @@ function warnIfNoResolveUser(usersCache?: AsyncCache<unknown, unknown>) {
   }
 }
 
-const ContextBundle = React.createContext<RoomContextBundle<
+const ContextBundle = React.createContext<InternalRoomContextBundle<
   JsonObject,
   LsonObject,
   BaseUserMeta,
@@ -178,9 +179,17 @@ const ContextBundle = React.createContext<RoomContextBundle<
   BaseMetadata
 > | null>(null);
 
-// TODO: Internal?
+/**
+ * @private
+ *
+ * This is an internal API, use `createRoomContext` instead.
+ */
 export function useRoomContextBundle() {
-  return React.useContext(ContextBundle)!;
+  const bundle = React.useContext(ContextBundle);
+  if (bundle === null) {
+    throw new Error("RoomProvider is missing from the React tree.");
+  }
+  return bundle;
 }
 
 export function createRoomContext<
@@ -285,7 +294,7 @@ export function createRoomContext<
 
     return (
       <RoomContext.Provider value={room}>
-        <ContextBundle.Provider value={bundle as any}>
+        <ContextBundle.Provider value={internalBundle}>
           {props.children}
         </ContextBundle.Provider>
       </RoomContext.Provider>
@@ -971,7 +980,13 @@ export function createRoomContext<
    * END COMMENTS
    */
 
-  const bundle = {
+  const bundle: RoomContextBundle<
+    TPresence,
+    TStorage,
+    TUserMeta,
+    TRoomEvent,
+    TThreadMetadata
+  > = {
     RoomContext,
     RoomProvider,
 
@@ -1016,8 +1031,6 @@ export function createRoomContext<
     useCreateComment,
     useEditComment,
     useDeleteComment,
-
-    useMentionSuggestions,
 
     suspense: {
       RoomContext,
@@ -1066,6 +1079,17 @@ export function createRoomContext<
       useDeleteComment,
     },
   };
+
+  const internalBundle = {
+    ...bundle,
+    useMentionSuggestions,
+  } as unknown as InternalRoomContextBundle<
+    JsonObject,
+    LsonObject,
+    BaseUserMeta,
+    never,
+    BaseMetadata
+  >;
 
   return bundle;
 }
