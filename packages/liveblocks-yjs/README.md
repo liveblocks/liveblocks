@@ -9,7 +9,10 @@
 
 # `@liveblocks/yjs`
 
-Provides Yjs integration to effortlessly back your Yjs apps with Liveblocks
+`@liveblocks/yjs` provides a provider to integrate
+[Yjs](https://github.com/yjs/yjs) applications with Liveblocks—a platform to
+build, host, and scale collaborative applications with zero configuration, no
+maintenance required.
 
 ## Installation
 
@@ -24,6 +27,12 @@ Read the
 guides and API references.
 
 ## Examples
+
+Explore our [collaborative examples](https://liveblocks.io/examples) to help you
+get started.
+
+> All examples are open-source and live in this repository, within
+> [`/examples`](../../examples).
 
 ## Releases
 

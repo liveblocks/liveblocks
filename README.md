@@ -51,17 +51,16 @@ interact with rooms, and each room can have specific
 
 ### Integrations
 
-Liveblocks and its community provide integrations that developers can use to
-integrate with the Liveblocks products within the rooms. You can use existing
-integrations for specific libraries and frameworks, or create a custom one for
-your needs.
+Integrations for specific libraries and frameworks to add Liveblocks-powered
+collaborative experiences to your product. Integrations are designed to serve
+various collaboration use cases such as text editors, comments, creative tools,
+forms, and more.
 
-|                                                                                      | Presence | Broadcast | Storage | Comments |
-| ------------------------------------------------------------------------------------ | -------- | --------- | ------- | -------- |
-| [`@liveblocks/client`](https://liveblocks.io/docs/api-reference/liveblocks-client)   | ✅       | ✅        | ✅      | ✅       |
-| [`@liveblocks/react`](https://liveblocks.io/docs/api-reference/liveblocks-react)     | ✅       | ✅        | ✅      | ✅       |
-| [`@liveblocks/redux`](https://liveblocks.io/docs/api-reference/liveblocks-redux)     | ✅       | ❌        | ✅      | ❌       |
-| [`@liveblocks/zustand`](https://liveblocks.io/docs/api-reference/liveblocks-zustand) | ✅       | ❌        | ✅      | ❌       |
+- [`@liveblocks/client`](https://liveblocks.io/docs/api-reference/liveblocks-client)
+- [`@liveblocks/react`](https://liveblocks.io/docs/api-reference/liveblocks-react)
+- [`@liveblocks/yjs`](https://liveblocks.io/docs/api-reference/liveblocks-yjs)
+- [`@liveblocks/zustand`](https://liveblocks.io/docs/api-reference/liveblocks-zustand)
+- [`@liveblocks/redux`](https://liveblocks.io/docs/api-reference/liveblocks-redux)
 
 ### Platform
 

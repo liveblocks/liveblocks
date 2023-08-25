@@ -21,8 +21,9 @@
   </a>
 </p>
 
-A set of [React](https://reactjs.org/) hooks and providers to use
-[Liveblocks](https://liveblocks.io) declaratively.
+`@liveblocks/react` provides [React](https://reactjs.org/) hooks and providers
+to integrate with Liveblocks—a platform to build, host, and scale collaborative
+applications with zero configuration, no maintenance required.
 
 ## Installation
 

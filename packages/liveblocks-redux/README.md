@@ -21,10 +21,11 @@
   </a>
 </p>
 
-A
+`@liveblocks/redux` provides a
 [store enhancer](https://redux.js.org/understanding/thinking-in-redux/glossary#store-enhancer)
-to integrate [Liveblocks](https://liveblocks.io) into
-[Redux](https://redux-toolkit.js.org/) stores.
+to make [Redux](https://redux-toolkit.js.org/) stores collaborative with
+Liveblocks—a platform to build, host, and scale collaborative applications with
+zero configuration, no maintenance required.
 
 ## Installation
 

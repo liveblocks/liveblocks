@@ -21,8 +21,9 @@
   </a>
 </p>
 
-A client that lets you interact with [Liveblocks](https://liveblocks.io)
-servers.
+`@liveblocks/client` provides the APIs to integrate with Liveblocks—a platform
+to build, host, and scale collaborative applications with zero configuration, no
+maintenance required.
 
 ## Installation
 
