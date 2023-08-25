@@ -225,6 +225,7 @@ const ComposerWithContext = forwardRef<
     },
     forwardedRef
   ) => {
+    const { hasResolveMentionSuggestions } = useRoomContextBundle();
     const { isEmpty } = useComposer();
     const $ = useOverrides(overrides);
     const [collapsed, onCollapsedChange] = useControllableState(
@@ -314,9 +315,11 @@ const ComposerWithContext = forwardRef<
         {!collapsed && (
           <div className="lb-composer-footer">
             <div className="lb-composer-editor-actions">
-              <ComposerInsertMentionEditorAction
-                label={$.COMPOSER_INSERT_MENTION}
-              />
+              {hasResolveMentionSuggestions && (
+                <ComposerInsertMentionEditorAction
+                  label={$.COMPOSER_INSERT_MENTION}
+                />
+              )}
             </div>
             {showLogo && <Logo className="lb-composer-logo" />}
             <div className="lb-composer-actions">

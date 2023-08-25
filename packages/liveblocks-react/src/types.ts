@@ -801,6 +801,7 @@ export type InternalRoomContextBundle<
     TRoomEvent,
     TThreadMetadata
   > & {
+    hasResolveMentionSuggestions: boolean;
     useMentionSuggestions(search?: string): string[] | undefined;
   }
 >;

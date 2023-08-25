@@ -294,7 +294,17 @@ export function createRoomContext<
 
     return (
       <RoomContext.Provider value={room}>
-        <ContextBundle.Provider value={internalBundle}>
+        <ContextBundle.Provider
+          value={
+            internalBundle as unknown as InternalRoomContextBundle<
+              JsonObject,
+              LsonObject,
+              BaseUserMeta,
+              never,
+              BaseMetadata
+            >
+          }
+        >
           {props.children}
         </ContextBundle.Provider>
       </RoomContext.Provider>
@@ -1080,16 +1090,17 @@ export function createRoomContext<
     },
   };
 
-  const internalBundle = {
+  const internalBundle: InternalRoomContextBundle<
+    TPresence,
+    TStorage,
+    TUserMeta,
+    TRoomEvent,
+    TThreadMetadata
+  > = {
     ...bundle,
+    hasResolveMentionSuggestions: resolveMentionSuggestions !== undefined,
     useMentionSuggestions,
-  } as unknown as InternalRoomContextBundle<
-    JsonObject,
-    LsonObject,
-    BaseUserMeta,
-    never,
-    BaseMetadata
-  >;
+  };
 
   return bundle;
 }
