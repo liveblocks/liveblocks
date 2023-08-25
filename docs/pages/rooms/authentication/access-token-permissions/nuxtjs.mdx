@@ -70,7 +70,7 @@ start building your own security logic.
       option with `authEndpoint` pointing to the endpoint you
       just created.
 
-      ```ts
+      ```ts file="liveblocks.config.ts"
       import { createClient } from "@liveblocks/client";
 
       const client = createClient({
@@ -78,6 +78,42 @@ start building your own security logic.
       });
       ```
 
+      If you need to pass custom headers or data to your endpoint, you can
+      use
+      [authEndpoint as a callback](/docs/api-reference/liveblocks-client#createClientCallback)
+      instead.
+
+      ```ts file="liveblocks.config.ts" isCollapsed isCollapsable
+      import { createClient } from "@liveblocks/client";
+
+      // Passing custom headers and body to your endpoint
+      const client = createClient({
+        authEndpoint: async (room) => {
+          const headers = {
+            // Custom headers
+            // ...
+
+            "Content-Type": "application/json",
+          };
+
+          const body = JSON.stringify({
+            // Custom body
+            // ...
+
+            room,
+          });
+
+          const response = await fetch("/api/liveblocks-auth", {
+            method: "POST",
+            headers,
+            body,
+          });
+
+          return await response.json();
+        },
+      });
+      ```
+      
     </StepContent>
 
   </Step>
