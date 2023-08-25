@@ -2,10 +2,13 @@
 
 $dark-attributes: '.dark, [data-theme="dark"], [data-dark]';
 
-:where(#{$dark-attributes}) {
-  @include dark-variables;
-}
+@layer {
+  #{$dark-attributes} {
+    @include dark-variables;
+  }
 
-:where(.lb-root:is(#{$dark-attributes}), :is(#{$dark-attributes}) .lb-root) {
-  @include dark-root-styles;
+  .lb-root:is(#{$dark-attributes}),
+  :is(#{$dark-attributes}) .lb-root {
+    @include dark-root-styles;
+  }
 }

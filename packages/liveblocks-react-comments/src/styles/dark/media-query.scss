@@ -1,11 +1,13 @@
 @import "./index";
 
-@media (prefers-color-scheme: dark) {
-  :where(:root) {
-    @include dark-variables;
-  }
+@layer {
+  @media (prefers-color-scheme: dark) {
+    :root {
+      @include dark-variables;
+    }
 
-  :where(.lb-root) {
-    @include dark-root-styles;
+    .lb-root {
+      @include dark-root-styles;
+    }
   }
 }
