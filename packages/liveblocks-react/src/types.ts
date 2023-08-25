@@ -600,11 +600,6 @@ export type RoomContextBundle<
      */
     useUser(userId: string): UserState<TUserMeta["info"]>;
 
-    /**
-     * @private
-     */
-    useMentionSuggestions(search?: string): string[] | undefined;
-
     //
     // Legacy hooks
     //
@@ -789,5 +784,24 @@ export type RoomContextBundle<
         ): TStorage[TKey];
       }
     >;
+  }
+>;
+
+export type InternalRoomContextBundle<
+  TPresence extends JsonObject,
+  TStorage extends LsonObject,
+  TUserMeta extends BaseUserMeta,
+  TRoomEvent extends Json,
+  TThreadMetadata extends BaseMetadata,
+> = Resolve<
+  RoomContextBundle<
+    TPresence,
+    TStorage,
+    TUserMeta,
+    TRoomEvent,
+    TThreadMetadata
+  > & {
+    hasResolveMentionSuggestions: boolean;
+    useMentionSuggestions(search?: string): string[] | undefined;
   }
 >;
