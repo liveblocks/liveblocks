@@ -3,7 +3,7 @@
   position: absolute;
   top: calc(0px - var(--space-9));
   left: -1px;
-  padding: 2px 6px;
+  padding: var(--space-1) var(--space-3);
   opacity: 1;
   color: #fff;
   border: 0;
@@ -34,7 +34,7 @@
 /* Other CodeMirror styles */
 .cm-editor {
   height: 100%;
-  font-size: 14px;
+  font-size: var(--size-sm);
 }
 
 .cm-editor.cm-focused {
@@ -47,6 +47,6 @@
 }
 
 .cm-editor .cm-lineNumbers .cm-gutterElement {
-  padding-left: 1rem;
-  padding-right: 0.5rem;
+  padding-left: var(--space-8);
+  padding-right: var(--space-3);
 }
