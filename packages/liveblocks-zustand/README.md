@@ -21,9 +21,11 @@
   </a>
 </p>
 
-A [middleware](https://github.com/pmndrs/zustand#middleware) to integrate
-[Liveblocks](https://liveblocks.io) into
-[Zustand](https://github.com/pmndrs/zustand) stores.
+`@liveblocks/redux` provides a
+[middleware](https://github.com/pmndrs/zustand#middleware) to make
+[Zustand](https://github.com/pmndrs/zustand) stores collaborative with
+Liveblocks—a platform to build, host, and scale collaborative applications with
+zero configuration, no maintenance required.
 
 ## Installation
 
@@ -55,8 +57,8 @@ learn more about
 
 - [Discord](https://liveblocks.io/discord) - To get involved with the Liveblocks
   community, ask questions and share tips.
-- [Twitter](https://twitter.com/liveblocks) - To receive updates, announcements,
-  blog posts, and general Liveblocks tips.
+- [X](https://x.com/liveblocks) - To receive updates, announcements, blog posts,
+  and general Liveblocks tips.
 
 ## License
 
