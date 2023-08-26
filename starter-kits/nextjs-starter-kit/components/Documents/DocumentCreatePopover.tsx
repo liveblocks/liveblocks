@@ -64,21 +64,20 @@ export function DocumentCreatePopover({
           <Button
             icon={<PlusIcon />}
             onClick={() => {
+              createNewDocument(documentName, "code");
+            }}
+            variant="subtle"
+          >
+            Code
+          </Button>
+          <Button
+            icon={<PlusIcon />}
+            onClick={() => {
               createNewDocument(documentName, "whiteboard");
             }}
             variant="subtle"
           >
             Whiteboard
-          </Button>
-          <Button
-            disabled
-            icon={<PlusIcon />}
-            onClick={() => {
-              createNewDocument(documentName, "spreadsheet");
-            }}
-            variant="subtle"
-          >
-            Spreadsheet
           </Button>
         </div>
       }

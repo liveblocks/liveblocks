@@ -6,6 +6,7 @@ import { SessionProvider } from "next-auth/react";
 import { Badge } from "../components/Badge";
 import "../styles/globals.css";
 import "../styles/text-editor.css";
+import "../styles/code-editor.css";
 
 export default function App({
   Component,
