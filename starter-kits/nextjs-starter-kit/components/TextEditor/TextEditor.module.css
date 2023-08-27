@@ -28,7 +28,6 @@
   overflow-y: scroll;
 }
 
-
 .editor {
   border-radius: inherit;
   flex-grow: 1;
@@ -39,6 +38,10 @@
 
 .editor:focus {
   outline: none;
+}
+
+.editor[contenteditable="false"] {
+  cursor: default;
 }
 
 .editorContainer {

@@ -69,8 +69,12 @@ function TiptapEditor({ doc, provider }: EditorProps) {
   // Get user info from Liveblocks authentication endpoint
   const { name, color, avatar: picture } = useSelf((me) => me.info);
 
+  // Check if user has write access in current room
+  const canWrite = useSelf((me) => me.canWrite);
+
   // Set up editor with plugins, and place user info into Yjs awareness and cursors
   const editor = useEditor({
+    editable: canWrite,
     editorProps: {
       attributes: {
         // Add styles to editor element
@@ -179,14 +183,16 @@ function TiptapEditor({ doc, provider }: EditorProps) {
 
   return (
     <div className={styles.container}>
-      <div className={styles.editorHeader}>
-        {editor && <Toolbar editor={editor} />}
-      </div>
+      {canWrite ? (
+        <div className={styles.editorHeader}>
+          {editor ? <Toolbar editor={editor} /> : null}
+        </div>
+      ) : null}
       <div className={styles.editorPanel}>
         {editor && <SelectionMenu editor={editor} />}
         <EditorContent editor={editor} className={styles.editorContainer} />
       </div>
-      {editor && <WordCount editor={editor} />}
+      {editor ? <WordCount editor={editor} /> : null}
     </div>
   );
 }
