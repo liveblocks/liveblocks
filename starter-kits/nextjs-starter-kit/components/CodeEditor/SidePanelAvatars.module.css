@@ -1,8 +1,3 @@
-.sidePanelAvatars {
-  display: flex;
-}
-
-.sidePanelAvatar {
-  box-shadow: 0 0 0 var(--space-1) var(--color-surface);
-  margin-left: calc(0px - var(--space-2));
+.sidePanelAvatarStack {
+  --avatar-stack-outline-color: var(--color-surface);
 }

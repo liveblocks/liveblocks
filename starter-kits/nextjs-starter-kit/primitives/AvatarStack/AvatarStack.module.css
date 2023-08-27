@@ -1,11 +1,16 @@
 .stack {
+  --avatar-stack-outline-color: var(--color-surface-elevated);
   display: flex;
   flex-direction: row-reverse;
   place-items: center;
 }
 
 .avatar {
-  box-shadow: 0 0 0 6px var(--color-surface-elevated);
+  box-shadow: 0 0 0 6px var(--avatar-stack-outline-color);
+}
+
+.avatar::before {
+  box-shadow: 0 0 0 2px var(--avatar-stack-outline-color), 0 0 0 4px currentColor;
 }
 
 .avatar:not(:last-child),
