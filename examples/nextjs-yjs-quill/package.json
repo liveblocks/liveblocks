@@ -1,0 +1,33 @@
+{
+  "name": "@liveblocks-examples/nextjs-yjs-quill",
+  "description": "This example shows how to build a collaborative text editor with Liveblocks, Yjs, Quill, and Next.js.",
+  "license": "Apache-2.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@liveblocks/client": "^1.2.3",
+    "@liveblocks/node": "^1.2.3",
+    "@liveblocks/react": "^1.2.3",
+    "@liveblocks/yjs": "^1.2.3",
+    "@types/node": "20.3.1",
+    "@types/react": "18.2.12",
+    "@types/react-dom": "18.2.5",
+    "next": "^13.4.12",
+    "quill": "^1.3.7",
+    "quill-cursors": "^4.0.2",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "react-quill": "^2.0.0",
+    "typescript": "5.1.3",
+    "y-quill": "^0.1.5",
+    "yjs": "^13.6.7"
+  },
+  "devDependencies": {
+    "@types/quill": "^2.0.10"
+  }
+}

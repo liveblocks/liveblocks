@@ -10,7 +10,7 @@
 # Connection Status
 
 <p>
-  <a href="https://liveblocks.io/examples/connection-status/nextjs/preview">
+  <a href="https://liveblocks.io/examples/connection-status/nextjs-connection-status/preview">
     <img src="https://img.shields.io/badge/live%20preview-message?style=flat&logo=data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgMjQgMjQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTE2Ljg0OSA0Ljc1SDBsNC44NDggNS4wNzV2Ny4wMDhsMTItMTIuMDgzWk03LjE1IDE5LjI1SDI0bC00Ljg0OS01LjA3NVY3LjE2N2wtMTIgMTIuMDgzWiIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==&color=333" alt="Live Preview" />
   </a>
   <a href="https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/nextjs-connection-status">
@@ -20,7 +20,7 @@
   <img src="https://img.shields.io/badge/next.js-message?style=flat&logo=next.js&color=07f&logoColor=fff" alt="Next.js" />
 </p>
 
-This example shows how to build live cursors with
+This example shows how to a connection status with
 [Liveblocks](https://liveblocks.io) and [Next.js](https://nextjs.org/).
 
 <img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/connection-status.png" width="536" alt="Live Cursors" />

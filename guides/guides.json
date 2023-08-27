@@ -222,7 +222,7 @@
       "react",
       "lexical"
     ],
-    "date": "2023-06-28",
+    "date": "2023-09-05",
     "hidden": true
   },
   {
@@ -237,7 +237,7 @@
       "react",
       "codemirror"
     ],
-    "date": "2023-06-28",
+    "date": "2023-09-05",
     "hidden": true
   },
   {
@@ -253,7 +253,7 @@
       "nextjs",
       "slate"
     ],
-    "date": "2023-06-28",
+    "date": "2023-09-05",
     "hidden": true
   },
   {
@@ -269,7 +269,55 @@
       "nextjs",
       "tiptap"
     ],
-    "date": "2023-06-28",
+    "date": "2023-09-05",
+    "hidden": true
+  },
+  {
+    "title": "How to create a collaborative text editor with Quill, Yjs, Next.js, and Liveblocks",
+    "path": "/how-to-create-a-collaborative-text-editor-with-quill-yjs-nextjs-and-liveblocks",
+    "topics": [
+      "tutorials",
+      "text-editors"
+    ],
+    "technologies": [
+      "yjs",
+      "react",
+      "nextjs",
+      "quill"
+    ],
+    "date": "2023-09-05",
+    "hidden": true
+  },
+  {
+    "title": "How to create a collaborative code editor with Monaco, Yjs, Next.js, and Liveblocks",
+    "path": "/how-to-create-a-collaborative-code-editor-with-monaco-yjs-nextjs-and-liveblocks",
+    "topics": [
+      "tutorials",
+      "code-editors"
+    ],
+    "technologies": [
+      "yjs",
+      "react",
+      "nextjs",
+      "monaco"
+    ],
+    "date": "2023-09-05",
+    "hidden": true
+  },
+  {
+    "title": "How to create a collaborative code editor with CodeMirror, Yjs, Next.js, and Liveblocks",
+    "path": "/how-to-create-a-collaborative-code-editor-with-codemirror-yjs-nextjs-and-liveblocks",
+    "topics": [
+      "tutorials",
+      "code-editors"
+    ],
+    "technologies": [
+      "yjs",
+      "react",
+      "nextjs",
+      "codemirror"
+    ],
+    "date": "2023-09-05",
     "hidden": true
   },
   {

@@ -1,8 +1,8 @@
-import { Document, DocumentAccess, DocumentGroup } from "../../types";
-import { ComponentProps } from "react";
 import clsx from "clsx";
+import { ComponentProps } from "react";
 import { removeGroupAccess, updateGroupAccess } from "../../lib/client";
 import { Select } from "../../primitives/Select";
+import { Document, DocumentAccess, DocumentGroup } from "../../types";
 import styles from "./ShareDialogRows.module.css";
 
 interface Props extends ComponentProps<"div"> {

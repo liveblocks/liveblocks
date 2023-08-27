@@ -1214,11 +1214,17 @@ export function createRoom<
       context.root = LiveObject._fromItems<TStorage>(message.items, pool);
     }
 
+    // Populate missing top-level keys using `initialStorage`
+    const stackSizeBefore = context.undoStack.length;
     for (const key in context.initialStorage) {
       if (context.root.get(key) === undefined) {
         context.root.set(key, context.initialStorage[key]);
       }
     }
+
+    // Initial storage is populated using normal "set" operations in the loop
+    // above, those updates can end up in the undo stack, so let's prune it.
+    context.undoStack.length = stackSizeBefore;
   }
 
   function updateRoot(
@@ -1989,10 +1995,20 @@ export function createRoom<
   }
 
   function fetchYDoc(vector: string): void {
-    context.buffer.messages.push({
-      type: ClientMsgCode.FETCH_YDOC,
-      vector,
-    });
+    // don't allow multiple fetches in the same buffer with the same vector
+    // dev tools may also call with a different vector (if its opened later), and that's okay
+    // because the updates will be ignored by the provider
+    if (
+      !context.buffer.messages.find((m) => {
+        return m.type === ClientMsgCode.FETCH_YDOC && m.vector === vector;
+      })
+    ) {
+      context.buffer.messages.push({
+        type: ClientMsgCode.FETCH_YDOC,
+        vector,
+      });
+    }
+
     flushNowOrSoon();
   }
 

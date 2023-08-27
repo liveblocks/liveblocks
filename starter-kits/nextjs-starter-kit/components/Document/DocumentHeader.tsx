@@ -5,7 +5,6 @@ import { ComponentProps } from "react";
 import { ShareIcon } from "../../icons";
 import { Button } from "../../primitives/Button";
 import { Skeleton } from "../../primitives/Skeleton";
-import { Document } from "../../types";
 import { Logo } from "../Logo";
 import { ShareDialog } from "../ShareDialog";
 import { DocumentHeaderAvatars } from "./DocumentHeaderAvatars";
@@ -13,12 +12,10 @@ import { DocumentHeaderName } from "./DocumentHeaderName";
 import styles from "./DocumentHeader.module.css";
 
 interface Props extends ComponentProps<"header"> {
-  document: Document;
   onDocumentRename: (name: string) => void;
 }
 
 export function DocumentHeader({
-  document,
   onDocumentRename,
   className,
   ...props
@@ -32,12 +29,7 @@ export function DocumentHeader({
       </div>
       <div className={styles.document}>
         <ClientSideSuspense fallback={null}>
-          {() => (
-            <DocumentHeaderName
-              document={document}
-              onDocumentRename={onDocumentRename}
-            />
-          )}
+          {() => <DocumentHeaderName onDocumentRename={onDocumentRename} />}
         </ClientSideSuspense>
       </div>
       <div className={styles.collaboration}>
@@ -46,10 +38,7 @@ export function DocumentHeader({
             {() => <DocumentHeaderAvatars />}
           </ClientSideSuspense>
         </div>
-        <ShareDialog
-          documentAccesses={document.accesses}
-          documentId={document.id}
-        >
+        <ShareDialog>
           <Button icon={<ShareIcon />}>Share</Button>
         </ShareDialog>
       </div>

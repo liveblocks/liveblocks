@@ -99,8 +99,28 @@
       "hidden": true
     },
     {
+      "id": "slate",
+      "name": "Slate",
+      "hidden": true
+    },
+    {
+      "id": "tiptap",
+      "name": "Tiptap",
+      "hidden": true
+    },
+    {
+      "id": "quill",
+      "name": "Quill",
+      "hidden": true
+    },
+    {
       "id": "codemirror",
       "name": "CodeMirror",
+      "hidden": true
+    },
+    {
+      "id": "monaco",
+      "name": "Monaco",
       "hidden": true
     }
   ]

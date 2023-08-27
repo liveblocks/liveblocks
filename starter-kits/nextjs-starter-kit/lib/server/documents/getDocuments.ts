@@ -7,8 +7,11 @@ import {
 } from "../../../types";
 import { getServerSession } from "../auth";
 import { getRooms } from "../liveblocks";
-import { buildDocuments, userAllowedInRooms } from "../utils";
-import { getDraftsGroupName } from "../utils";
+import {
+  buildDocuments,
+  getDraftsGroupName,
+  userAllowedInRooms,
+} from "../utils";
 
 /**
  * Get a list of documents.

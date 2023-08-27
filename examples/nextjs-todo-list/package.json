@@ -1,5 +1,6 @@
 {
-  "name": "nextjs-todo-list",
+  "name": "@liveblocks-examples/nextjs-todo-list",
+  "description": "This example shows how to build a collaborative to-do list with Liveblocks and Next.js.",
   "license": "Apache-2.0",
   "private": true,
   "scripts": {
@@ -9,8 +10,8 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@liveblocks/client": "^1.2.0",
-    "@liveblocks/react": "^1.2.0",
+    "@liveblocks/client": "^1.2.3",
+    "@liveblocks/react": "^1.2.3",
     "@next/font": "13.1.6",
     "@types/node": "18.11.18",
     "@types/react": "18.0.27",
