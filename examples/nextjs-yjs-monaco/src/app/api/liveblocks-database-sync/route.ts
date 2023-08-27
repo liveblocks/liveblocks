@@ -1,31 +1,29 @@
 import { WebhookHandler } from "@liveblocks/node";
-import { NextRequest } from "next/server";
-import { headers } from "next/headers";
 
 /**
  * An example of a webhook endpoint that listens for Yjs changes
- * You can use this setup to sync Yjs Storage data to your database
+ * You can use this setup to sync Yjs document data to your database
  * https://liveblocks.io/docs/platform/webhooks
  *
  * Find your API keys on the Liveblocks dashboard
  * https://liveblocks.io/dashboard
  */
 
-// "Secret key" found in a project's API keys page
-const SECRET_KEY = process.env.LIVEBLOCKS_SECRET_KEY as string;
-
 // "Signing secret" found in a project's webhooks page
-const WEBHOOK_KEY = process.env.LIVEBLOCKS_WEBHOOK_KEY as string;
-const webhookHandler = new WebhookHandler(WEBHOOK_KEY);
+const WEBHOOK_SECRET = process.env.LIVEBLOCKS_WEBHOOK_KEY as string;
+const webhookHandler = new WebhookHandler(WEBHOOK_SECRET);
 
-export async function POST(request: NextRequest) {
+// "Secret key" found in a project's API keys page
+const API_SECRET = process.env.LIVEBLOCKS_SECRET_KEY as string;
+
+export async function POST(request: Request) {
   const body = await request.json();
-  let event;
 
+  let event;
   try {
     event = webhookHandler.verifyRequest({
-      headers: headers() as any,
-      rawBody: body,
+      headers: request.headers,
+      rawBody: JSON.stringify(body),
     });
   } catch (err) {
     console.error(err);
@@ -41,7 +39,7 @@ export async function POST(request: NextRequest) {
     // https://liveblocks.io/docs/api-reference/rest-api-endpoints#get-rooms-roomId-ydoc
     const url = `https://api.liveblocks.io/v2/rooms/${roomId}/ydoc`;
     const response = await fetch(url, {
-      headers: { Authorization: `Bearer ${SECRET_KEY}` },
+      headers: { Authorization: `Bearer ${API_SECRET}` },
     });
 
     if (!response.ok) {
@@ -50,10 +48,10 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // The Yjs Storage data
-    const yjsDoc = await response.json();
+    // The Yjs document  data
+    const yjsDocData = await response.json();
 
-    // Update your database with the current Yjs Storage data
+    // Update your database with the Yjs data
     // ...
   }
 
