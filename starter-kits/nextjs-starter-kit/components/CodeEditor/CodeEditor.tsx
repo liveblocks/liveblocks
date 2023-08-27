@@ -12,6 +12,7 @@ import {
   TypedLiveblocksProvider,
   useRoom,
   useSelf,
+  useUpdateMyPresence,
 } from "../../liveblocks.config";
 import { DocumentSpinner } from "../../primitives/Spinner";
 import { SidePanel } from "./SidePanel";
@@ -72,7 +73,7 @@ export function Editor() {
     <CodeMirrorEditor
       yMap={yMap}
       yProvider={yProvider}
-      initialFile={"/index.ts"}
+      initialFile={"index.ts"}
     />
   );
 }
@@ -80,7 +81,7 @@ export function Editor() {
 type CodeMirrorProps = {
   yMap: Y.Map<Y.Text>;
   yProvider: TypedLiveblocksProvider;
-  initialFile: `/${string}`;
+  initialFile: string;
 };
 
 function CodeMirrorEditor({ yMap, yProvider, initialFile }: CodeMirrorProps) {
@@ -89,12 +90,14 @@ function CodeMirrorEditor({ yMap, yProvider, initialFile }: CodeMirrorProps) {
   const [yUndoManager, setYUndoManager] = useState<Y.UndoManager>();
   const [files, setFiles] = useState<Array<[string, Y.Text]>>([]);
   const [currentFile, setCurrentFile] = useState<string>("");
+  const updateMyPresence = useUpdateMyPresence();
 
   const ref = useCallback((node: HTMLElement | null) => {
     if (!node) return;
     setElement(node);
   }, []);
 
+  // Set up initial file and state
   useEffect(() => {
     function setInitial() {
       if (!yMap.has(initialFile)) {
@@ -104,14 +107,16 @@ function CodeMirrorEditor({ yMap, yProvider, initialFile }: CodeMirrorProps) {
       setYText(yMap.get(initialFile));
       setCurrentFile(initialFile);
       setFiles([...yMap.entries()]);
+      updateMyPresence({ currentFile: initialFile });
     }
 
     yProvider.on("synced", setInitial);
     return () => {
       yProvider.off("synced", setInitial);
     };
-  }, [yProvider, yMap, initialFile]);
+  }, [updateMyPresence, yProvider, yMap, initialFile]);
 
+  // Set up CodeMirror editor
   useEffect(() => {
     if (!yText || !yProvider) {
       return;
@@ -142,6 +147,7 @@ function CodeMirrorEditor({ yMap, yProvider, initialFile }: CodeMirrorProps) {
     };
   }, [yText, yProvider, element]);
 
+  // Change to another file
   const changeFile = useCallback(
     (fileName: string) => {
       const text = yMap.get(fileName);
@@ -149,9 +155,38 @@ function CodeMirrorEditor({ yMap, yProvider, initialFile }: CodeMirrorProps) {
       if (text) {
         setYText(text);
         setCurrentFile(fileName);
+        updateMyPresence({ currentFile: fileName });
       }
     },
-    [yMap]
+    [yMap, updateMyPresence]
+  );
+
+  // Create a new file
+  const createFile = useCallback(
+    (fileName: string) => {
+      const text = new Y.Text();
+      yMap.set(fileName, text);
+
+      setYText(text);
+      setCurrentFile(fileName);
+      setFiles([...yMap.entries()]);
+      updateMyPresence({ currentFile: fileName });
+    },
+    [yMap, updateMyPresence]
+  );
+
+  // Delete a file
+  const deleteFile = useCallback(
+    (fileName: string) => {
+      yMap.delete(fileName);
+
+      const [anotherFileName, anotherText] = [...yMap.entries()][0];
+      setYText(anotherText);
+      setCurrentFile(anotherFileName);
+      setFiles([...yMap.entries()]);
+      updateMyPresence({ currentFile: anotherFileName });
+    },
+    [yMap, updateMyPresence]
   );
 
   return (
@@ -163,7 +198,9 @@ function CodeMirrorEditor({ yMap, yProvider, initialFile }: CodeMirrorProps) {
               yUndoManager={yUndoManager}
               currentFile={currentFile}
               files={files}
-              onFileChange={(fileName) => changeFile(fileName)}
+              onFileChange={changeFile}
+              onCreateFile={() => createFile("OK.js")}
+              onDeleteFile={deleteFile}
             />
           ) : null}
         </div>

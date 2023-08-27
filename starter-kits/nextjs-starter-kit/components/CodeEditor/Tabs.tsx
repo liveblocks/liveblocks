@@ -8,13 +8,19 @@ type Props = {
   onFileChange: (fileName: string) => void;
 };
 
-export function Tabs({ files, onFileChange }: Props) {
+export function Tabs({ currentFile, files, onFileChange }: Props) {
+  console.log(currentFile);
   return (
-    <div className={styles.toolbar}>
+    <div className={styles.tabs}>
       {files.map(([name]) => (
-        <div key={name} onClick={() => onFileChange(name)}>
+        <button
+          key={name}
+          className={styles.tab}
+          data-active={name === currentFile || undefined}
+          onClick={() => onFileChange(name)}
+        >
           {name}
-        </div>
+        </button>
       ))}
     </div>
   );

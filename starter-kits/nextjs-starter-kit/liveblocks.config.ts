@@ -50,6 +50,7 @@ const client = createClient({
 // `user.presence` property. Must be JSON-serializable.
 export type Presence = {
   cursor: { x: number; y: number } | null;
+  currentFile?: string;
 };
 
 export type Note = LiveObject<{
