@@ -9,7 +9,7 @@ import type {
   LsonObject,
   Room,
 } from "@liveblocks/client";
-import { ClientMsgCode, detectDupes, YDocUpdate } from "@liveblocks/core";
+import { ClientMsgCode, detectDupes } from "@liveblocks/core";
 import { Base64 } from "js-base64";
 import { Observable } from "lib0/observable";
 import * as Y from "yjs";
@@ -171,10 +171,10 @@ export default class LiveblocksProvider<
 
     this.unsubscribers.push(
       this.room.events.ydoc.subscribe(({ update, stateVector, type }) => {
-         if (type === ClientMsgCode.UPDATE_YDOC) {
-           // don't apply updates that came from the client
-           return;
-         }
+        if (type === ClientMsgCode.UPDATE_YDOC) {
+          // don't apply updates that came from the client
+          return;
+        }
         // apply update from the server
         Y.applyUpdate(this.doc, Base64.toUint8Array(update), "backend");
 
@@ -184,7 +184,7 @@ export default class LiveblocksProvider<
           try {
             const localUpdate = Y.encodeStateAsUpdate(
               this.doc,
-              Base64.toUint8Array(stateVector as string)
+              Base64.toUint8Array(stateVector)
             );
             this.room.updateYDoc(Base64.fromUint8Array(localUpdate));
           } catch (e) {
