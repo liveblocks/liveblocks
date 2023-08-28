@@ -6,6 +6,10 @@ meta:
 alwaysShowAllNavigationLevels: false
 ---
 
+`@liveblocks/redux` provides you with [Redux](https://react-redux.js.org/)
+bindings for our real-time collaboration APIs, built on top of WebSockets. Read
+our [getting started](/docs/get-started) guides to learn more.
+
 ## Enhancer
 
 Enhancer that lets you connect a Redux state to Liveblocks Presence and Storage
@@ -36,7 +40,7 @@ import { createClient } from "@liveblocks/client";
 import { liveblocksEnhancer } from "@liveblocks/redux";
 
 const client = createClient({
-  authEndpoint: "/api/auth",
+  authEndpoint: "/api/liveblocks-auth",
 });
 
 const store = configureStore({

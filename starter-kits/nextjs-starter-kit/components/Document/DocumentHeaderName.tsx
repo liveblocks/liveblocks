@@ -7,24 +7,23 @@ import {
   useState,
 } from "react";
 import { EditIcon } from "../../icons";
+import { useInitialDocument } from "../../lib/client";
 import { useSelf } from "../../liveblocks.config";
 import { Tooltip } from "../../primitives/Tooltip";
-import { Document } from "../../types";
 import styles from "./DocumentHeaderName.module.css";
 
 interface Props extends ComponentProps<"div"> {
-  document: Document;
   onDocumentRename: (name: string) => void;
 }
 
 export function DocumentHeaderName({
-  document,
   onDocumentRename,
   className,
   ...props
 }: Props) {
+  const initialDocument = useInitialDocument();
   const isReadOnly = useSelf((me) => me.isReadOnly);
-  const [draftName, setDraftName] = useState(document.name);
+  const [draftName, setDraftName] = useState(initialDocument.name);
   const [isRenaming, setRenaming] = useState(false);
 
   const handleRenamingStart = useCallback(() => {
@@ -32,9 +31,9 @@ export function DocumentHeaderName({
   }, []);
 
   const handleRenamingCancel = useCallback(() => {
-    setDraftName(document.name);
+    setDraftName(initialDocument.name);
     setRenaming(false);
-  }, [document]);
+  }, [initialDocument]);
 
   const handleRenamingSave = useCallback(() => {
     onDocumentRename(draftName);

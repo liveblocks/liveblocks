@@ -170,13 +170,29 @@ export default class LiveblocksProvider<
     );
 
     this.unsubscribers.push(
-      this.room.events.ydoc.subscribe((message) => {
-        if (message.type === ClientMsgCode.UPDATE_YDOC) {
-          // don't apply updates that came from the client
-          return;
-        }
-        Y.applyUpdate(this.doc, Base64.toUint8Array(message.update), "backend");
-        if ((message as YDocUpdate).isSync) {
+      this.room.events.ydoc.subscribe(({ update, stateVector, type }) => {
+         if (type === ClientMsgCode.UPDATE_YDOC) {
+           // don't apply updates that came from the client
+           return;
+         }
+        // apply update from the server
+        Y.applyUpdate(this.doc, Base64.toUint8Array(update), "backend");
+
+        // if this update is the result of a fetch, the state vector is included
+        if (stateVector) {
+          // Use server state to calculate a diff and send it
+          try {
+            const localUpdate = Y.encodeStateAsUpdate(
+              this.doc,
+              Base64.toUint8Array(stateVector as string)
+            );
+            this.room.updateYDoc(Base64.fromUint8Array(localUpdate));
+          } catch (e) {
+            // something went wrong encoding local state to send to the server
+            console.warn(e);
+          }
+          // now that we've sent our local  and received from server, we're in sync
+          // calling `syncDoc` again will sync up the documents
           this.synced = true;
         }
       })

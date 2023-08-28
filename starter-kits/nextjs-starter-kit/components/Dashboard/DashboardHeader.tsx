@@ -1,8 +1,8 @@
 import clsx from "clsx";
 import Link from "next/link";
+import { signOut, useSession } from "next-auth/react";
 import { ComponentProps, MouseEventHandler } from "react";
 import { CrossIcon, MenuIcon, SignOutIcon } from "../../icons";
-import { signOut, useSession } from "next-auth/react";
 import { Avatar } from "../../primitives/Avatar";
 import { Button } from "../../primitives/Button";
 import { Popover } from "../../primitives/Popover";

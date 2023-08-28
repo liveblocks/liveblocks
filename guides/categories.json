@@ -29,12 +29,20 @@
       "id": "code-editors",
       "name": "Code editors",
       "hidden": true
+    },
+    {
+      "id": "errors",
+      "name": "Errors"
     }
   ],
   "technologies": [
     {
       "id": "javascript",
       "name": "JavaScript"
+    },
+    {
+      "id": "nodejs",
+      "name": "Node.js"
     },
     {
       "id": "react",
@@ -83,8 +91,28 @@
       "hidden": true
     },
     {
+      "id": "slate",
+      "name": "Slate",
+      "hidden": true
+    },
+    {
+      "id": "tiptap",
+      "name": "Tiptap",
+      "hidden": true
+    },
+    {
+      "id": "quill",
+      "name": "Quill",
+      "hidden": true
+    },
+    {
       "id": "codemirror",
       "name": "CodeMirror",
+      "hidden": true
+    },
+    {
+      "id": "monaco",
+      "name": "Monaco",
       "hidden": true
     }
   ]

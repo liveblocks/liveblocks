@@ -1,3 +1,4 @@
+import { LiveObject } from "@liveblocks/client";
 import { useStorage, useMutation } from "./liveblocks.config";
 
 export function Room() {

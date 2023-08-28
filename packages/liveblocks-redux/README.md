@@ -21,10 +21,11 @@
   </a>
 </p>
 
-A
+`@liveblocks/redux` provides a
 [store enhancer](https://redux.js.org/understanding/thinking-in-redux/glossary#store-enhancer)
-to integrate [Liveblocks](https://liveblocks.io) into
-[Redux](https://redux-toolkit.js.org/) stores.
+to make [Redux](https://redux-toolkit.js.org/) stores collaborative with
+Liveblocks—a platform to build, host, and scale collaborative applications with
+zero configuration, no maintenance required.
 
 ## Installation
 
@@ -56,8 +57,8 @@ learn more about
 
 - [Discord](https://liveblocks.io/discord) - To get involved with the Liveblocks
   community, ask questions and share tips.
-- [Twitter](https://twitter.com/liveblocks) - To receive updates, announcements,
-  blog posts, and general Liveblocks tips.
+- [X](https://x.com/liveblocks) - To receive updates, announcements, blog posts,
+  and general Liveblocks tips.
 
 ## License
 

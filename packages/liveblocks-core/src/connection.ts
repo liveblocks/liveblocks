@@ -1,16 +1,24 @@
 import { assertNever } from "./lib/assert";
+import { controlledPromise } from "./lib/controlledPromise";
 import type { Observable } from "./lib/EventSource";
 import { makeEventSource } from "./lib/EventSource";
 import * as console from "./lib/fancy-console";
 import type { BuiltinEvent, Patchable, Target } from "./lib/fsm";
 import { FSM } from "./lib/fsm";
 import type { Json } from "./lib/Json";
-import { withTimeout } from "./lib/utils";
+import { tryParseJson, withTimeout } from "./lib/utils";
+import { ServerMsgCode } from "./protocol/ServerMsg";
 import type {
   IWebSocketCloseEvent,
   IWebSocketEvent,
   IWebSocketInstance,
   IWebSocketMessageEvent,
+} from "./types/IWebSocket";
+import {
+  shouldDisconnect,
+  shouldReauth,
+  shouldRetryWithoutReauth,
+  WebsocketCloseCodes,
 } from "./types/IWebSocket";
 
 /**
@@ -132,7 +140,7 @@ type State =
   | "@ok.awaiting-pong";
 
 /**
- * Arbitrary record that will be used as the authentication "token". It's the
+ * Arbitrary record that will be used as the authentication "authValue". It's the
  * value that is returned by calling the authentication delegate, and will get
  * passed to the connection factory delegate. This value will be remembered by
  * the connection manager, but its value will not be interpreted, so it can be
@@ -152,9 +160,9 @@ type Context = {
   successCount: number;
 
   /**
-   * Will be populated with the last known auth token.
+   * Will be populated with the last known auth authValue.
    */
-  token: BaseAuthResult | null;
+  authValue: BaseAuthResult | null;
 
   /**
    * The current active WebSocket connection to the room. If this is not null
@@ -194,7 +202,7 @@ const PONG_TIMEOUT = 2000;
 
 /**
  * Maximum amount of time that the authentication delegate take to return an
- * auth token, or else we consider authentication timed out.
+ * auth authValue, or else we consider authentication timed out.
  */
 const AUTH_TIMEOUT = 10000;
 
@@ -302,21 +310,12 @@ function isCloseEvent(
   return !(error instanceof Error) && error.type === "close";
 }
 
-/**
- * Whether this is a Liveblocks-specific close event (a close code in the 40xx
- * range).
- */
-function isCustomCloseEvent(
-  error: IWebSocketEvent | Error
-): error is IWebSocketCloseEvent {
-  return isCloseEvent(error) && error.code >= 4000 && error.code < 4100;
-}
-
 export type Delegates<T extends BaseAuthResult> = {
   authenticate: () => Promise<T>;
-  createSocket: (token: T) => IWebSocketInstance;
+  createSocket: (authValue: T) => IWebSocketInstance;
 };
 
+// istanbul ignore next
 function enableTracing(machine: FSM<Context, Event, State>) {
   const start = new Date().getTime();
 
@@ -381,7 +380,17 @@ const assign = (patch: Partial<Context>) => (ctx: Patchable<Context>) =>
 
 function createConnectionStateMachine<T extends BaseAuthResult>(
   delegates: Delegates<T>,
-  enableDebugLogging: boolean
+  options: {
+    enableDebugLogging: boolean;
+    /** In protocol V7, the actor will no longer be available on the token.
+     * Instead, the `actor` will be sent to the client via a ROOM_STATE message
+     * over an established WebSocket connection. If this setting is set to
+     * `true`, the state machine will only jump to "connected" state _after_
+     * this message has been received. If this setting is `false`, the machine
+     * won't wait for the actor to be received, and instead jump to "connected"
+     * as soon as the WebSocket connection is established. */
+    waitForActorId: boolean;
+  }
 ) {
   // Create observable event sources, which this machine will call into when
   // specific events happen
@@ -392,9 +401,16 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
   // a specific Liveblocks reason
   const onLiveblocksError = makeEventSource<LiveblocksError>();
 
-  const initialContext: Context & { token: T | null } = {
+  function fireErrorEvent(errmsg: string, errcode: number) {
+    return () => {
+      const err = new LiveblocksError(errmsg, errcode);
+      onLiveblocksError.notify(err);
+    };
+  }
+
+  const initialContext: Context & { authValue: T | null } = {
     successCount: 0,
-    token: null,
+    authValue: null,
     socket: null,
     backoffDelay: RESET_DELAY,
   };
@@ -434,9 +450,9 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
 
     .addTransitions("@idle.*", {
       CONNECT: (_, ctx) =>
-        // If we still have a known token, try to reconnect to the socket directly,
-        // otherwise, try to obtain a new token
-        ctx.token !== null ? "@connecting.busy" : "@auth.busy",
+        // If we still have a known authValue, try to reconnect to the socket directly,
+        // otherwise, try to obtain a new authValue
+        ctx.authValue !== null ? "@connecting.busy" : "@auth.busy",
     });
 
   //
@@ -464,7 +480,7 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
       (okEvent) => ({
         target: "@connecting.busy",
         effect: assign({
-          token: okEvent.data,
+          authValue: okEvent.data,
           backoffDelay: RESET_DELAY,
         }),
       }),
@@ -474,7 +490,10 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
         if (failedEvent.reason instanceof StopRetrying) {
           return {
             target: "@idle.failed",
-            effect: log(LogLevel.ERROR, failedEvent.reason.message),
+            effect: [
+              log(LogLevel.ERROR, failedEvent.reason.message),
+              fireErrorEvent(failedEvent.reason.message, -1),
+            ],
           };
         }
 
@@ -551,16 +570,33 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
         const connect$ = new Promise<[IWebSocketInstance, () => void]>(
           (resolve, rej) => {
             // istanbul ignore next
-            if (ctx.token === null) {
-              throw new Error("No auth token"); // This should never happen
+            if (ctx.authValue === null) {
+              throw new Error("No auth authValue"); // This should never happen
             }
 
-            const socket = delegates.createSocket(ctx.token as T);
+            const socket = delegates.createSocket(ctx.authValue as T);
 
             function reject(event: IWebSocketEvent) {
               capturedPrematureEvent = event;
               socket.removeEventListener("message", onSocketMessage);
               rej(event);
+            }
+
+            const [actor$, didReceiveActor] = controlledPromise<void>();
+            if (!options.waitForActorId) {
+              // Just mark the promise as "resolved" immediately, so it won't
+              // be a blocker.
+              didReceiveActor();
+            }
+
+            /** Waits until actor is received (from the ROOM_STATE message) */
+            function waitForActorId(event: IWebSocketMessageEvent) {
+              const serverMsg = tryParseJson(event.data as string) as
+                | Record<string, Json>
+                | undefined;
+              if (serverMsg?.type === ServerMsgCode.ROOM_STATE) {
+                didReceiveActor();
+              }
             }
 
             //
@@ -570,6 +606,9 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
             // When those get triggered, we reject this promise.
             //
             socket.addEventListener("message", onSocketMessage);
+            if (options.waitForActorId) {
+              socket.addEventListener("message", waitForActorId);
+            }
             socket.addEventListener("error", reject); // (*)
             socket.addEventListener("close", reject); // (*)
             socket.addEventListener("open", () => {
@@ -603,10 +642,20 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
               const unsub = () => {
                 socket.removeEventListener("error", reject); // Remove (*)
                 socket.removeEventListener("close", reject); // Remove (*)
+                socket.removeEventListener("message", waitForActorId);
               };
 
-              // Resolve the promise, which will take us to the @ok.* state
-              resolve([socket, unsub]);
+              // Resolve the promise only once we received the actor ID from
+              // the server. This will act like a traffic light, going green
+              // only once the actor is received. If the machine is configured
+              // not to wait for the actor, the traffic light will already be
+              // green.
+              // All messages received in the mean time while waiting for the
+              // green light will be played back to the client after the
+              // transition to "connected".
+              void actor$.then(() => {
+                resolve([socket, unsub]);
+              });
             });
           }
         );
@@ -656,33 +705,47 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
         if (err instanceof StopRetrying) {
           return {
             target: "@idle.failed",
-            effect: log(LogLevel.ERROR, err.message),
-          };
-        }
-
-        // Alternatively, it can happen if the server refuses the connection
-        // after accepting-then-closing the connection.
-        if (isCloseEvent(err) && err.code === 4999 /* Close Without Retry */) {
-          return {
-            target: "@idle.failed",
-            effect: log(LogLevel.ERROR, err.reason),
-          };
-        }
-
-        // We may skip re-authenticating only if this is a close event with
-        // a known custom close code, *except* when it's a 4001 (explicitly Not
-        // Allowed).
-        if (isCustomCloseEvent(err) && err.code !== 4001 /* Not Allowed */) {
-          return {
-            target: "@connecting.backoff",
             effect: [
-              increaseBackoffDelayAggressively,
-              logPrematureErrorOrCloseEvent(err),
+              log(LogLevel.ERROR, err.message),
+              fireErrorEvent(err.message, -1),
             ],
           };
         }
 
-        // In all other cases, always re-authenticate!
+        // If the server actively refuses the connection attempt, stop trying.
+        if (isCloseEvent(err)) {
+          // The default fall-through behavior is going to be reauthorizing
+          // with a back-off strategy. If we know the token was expired however
+          // we can reauthorize immediately (without back-off).
+          if (err.code === WebsocketCloseCodes.TOKEN_EXPIRED) {
+            return "@auth.busy";
+          }
+
+          if (shouldRetryWithoutReauth(err.code)) {
+            // Retry after backoff, but don't get a new token
+            return {
+              target: "@connecting.backoff",
+              effect: [
+                increaseBackoffDelayAggressively,
+                logPrematureErrorOrCloseEvent(err),
+              ],
+            };
+          }
+
+          // If the token was not allowed we can stop trying because getting
+          // another token for the same user won't help
+          if (shouldDisconnect(err.code)) {
+            return {
+              target: "@idle.failed",
+              effect: [
+                log(LogLevel.ERROR, err.reason),
+                fireErrorEvent(err.reason, err.code),
+              ],
+            };
+          }
+        }
+
+        // In all other (unknown) cases, always re-authenticate (but after a back-off)
         return {
           target: "@auth.backoff",
           effect: [increaseBackoffDelay, logPrematureErrorOrCloseEvent(err)],
@@ -766,39 +829,40 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
 
       EXPLICIT_SOCKET_CLOSE: (e) => {
         // Server instructed us to stop retrying, so move to failed state
-        if (e.event.code === 4999) {
+        if (shouldDisconnect(e.event.code)) {
           return {
             target: "@idle.failed",
-            effect: logPermanentClose,
-          }; // Should not retry, give up
-        }
-
-        // Server instructs us to reauthenticate
-        if (e.event.code === 4001 /* Not Allowed */) {
-          return {
-            target: "@auth.backoff",
-            effect: [increaseBackoffDelay, logCloseEvent(e.event)],
-          };
-        }
-
-        // If this is a custom Liveblocks server close reason, back off more
-        // aggressively, and emit a Liveblocks error event...
-        if (isCustomCloseEvent(e.event)) {
-          return {
-            target: "@connecting.backoff",
             effect: [
-              increaseBackoffDelayAggressively,
-              logCloseEvent(e.event),
-              () => {
-                const err = new LiveblocksError(e.event.reason, e.event.code);
-                onLiveblocksError.notify(err);
-              },
+              logPermanentClose,
+              fireErrorEvent(e.event.reason, e.event.code),
             ],
           };
         }
 
-        // Consider this close event a temporary hiccup, and try re-opening
-        // a new socket
+        if (shouldReauth(e.event.code)) {
+          if (e.event.code === WebsocketCloseCodes.TOKEN_EXPIRED) {
+            // Token expiry is a special case, we can reauthorize immediately
+            // (without back-off)
+            return "@auth.busy";
+          } else {
+            return {
+              target: "@auth.backoff",
+              effect: [increaseBackoffDelay, logCloseEvent(e.event)],
+            };
+          }
+        }
+
+        if (shouldRetryWithoutReauth(e.event.code)) {
+          // If this is a custom Liveblocks server close reason, back off more
+          // aggressively, and emit a Liveblocks error event...
+          return {
+            target: "@connecting.backoff",
+            effect: [increaseBackoffDelayAggressively, logCloseEvent(e.event)],
+          };
+        }
+
+        // Consider any other close event a temporary network hiccup, and retry
+        // after a normal backoff delay
         return {
           target: "@connecting.backoff",
           effect: [increaseBackoffDelay, logCloseEvent(e.event)],
@@ -850,7 +914,8 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
   cleanups.push(unsubscribe);
 
   // Install debug logging
-  if (enableDebugLogging) {
+  // istanbul ignore next
+  if (options.enableDebugLogging) {
     cleanups.push(enableTracing(machine));
   }
 
@@ -918,7 +983,7 @@ export class ManagedSocket<T extends BaseAuthResult> {
   constructor(delegates: Delegates<T>, enableDebugLogging: boolean = false) {
     const { machine, events, cleanups } = createConnectionStateMachine(
       delegates,
-      enableDebugLogging
+      { waitForActorId: true, enableDebugLogging }
     );
     this.machine = machine;
     this.events = events;
@@ -938,10 +1003,10 @@ export class ManagedSocket<T extends BaseAuthResult> {
   }
 
   /**
-   * Returns the current auth token.
+   * Returns the current auth authValue.
    */
-  get token(): T | null {
-    return this.machine.context.token as T | null;
+  get authValue(): T | null {
+    return this.machine.context.authValue as T | null;
   }
 
   /**
@@ -954,7 +1019,7 @@ export class ManagedSocket<T extends BaseAuthResult> {
 
   /**
    * If idle, will try to connect. Otherwise, it will attempt to reconnect to
-   * the socket, potentially obtaining a new token first, if needed.
+   * the socket, potentially obtaining a new authValue first, if needed.
    */
   public reconnect(): void {
     this.machine.send({ type: "RECONNECT" });

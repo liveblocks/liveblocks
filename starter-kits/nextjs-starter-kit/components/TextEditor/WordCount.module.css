@@ -1,0 +1,6 @@
+.wordCount {
+  padding: var(--space-2) var(--space-4);
+  color: var(--color-text-lightest);
+  font-size: var(--size-xs);
+  opacity: 0.6;
+}

@@ -1,6 +1,8 @@
 .container {
   display: grid;
   min-height: 100vh;
+  max-height: 100vh;
+  overflow: hidden;
   background: var(--color-surface);
   grid-template-rows: var(--header-height) 1fr;
 }

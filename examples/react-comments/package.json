@@ -1,0 +1,28 @@
+{
+  "name": "@liveblocks-examples/react-comments",
+  "description": "This example shows how to build comments with Liveblocks and React.",
+  "license": "Apache-2.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@liveblocks/client": "1.2.2-comments6",
+    "@liveblocks/node": "1.2.2-comments6",
+    "@liveblocks/react": "1.2.2-comments6",
+    "@liveblocks/react-comments": "1.2.2-comments6",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.20",
+    "@types/react-dom": "^18.2.7",
+    "@vitejs/plugin-react": "^4.0.4",
+    "prettier": "^3.0.2",
+    "typescript": "^5.1.6",
+    "vite": "^4.4.9"
+  }
+}
