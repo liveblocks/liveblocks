@@ -9,8 +9,6 @@ import type {
 
 const portsByTabId: Map<number, Runtime.Port> = new Map();
 
-console.log("background running");
-
 /**
  * Handles messages being sent from the DevTools, intended for the browser tab
  * running the client.

@@ -170,14 +170,15 @@ export default class LiveblocksProvider<
     );
 
     this.unsubscribers.push(
-      this.room.events.ydoc.subscribe(({ update, stateVector, type }) => {
+      this.room.events.ydoc.subscribe((message) => {
+        const { type, update } = message;
         if (type === ClientMsgCode.UPDATE_YDOC) {
           // don't apply updates that came from the client
           return;
         }
         // apply update from the server
         Y.applyUpdate(this.doc, Base64.toUint8Array(update), "backend");
-
+        const { stateVector } = message;
         // if this update is the result of a fetch, the state vector is included
         if (stateVector) {
           // Use server state to calculate a diff and send it
