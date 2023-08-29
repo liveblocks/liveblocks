@@ -336,8 +336,8 @@
     "hidden": true
   },
   {
-    "title": "How to synchronize your Yjs Storage data to a PlanetScale database",
-    "path": "/how-to-synchronize-your-yjs-storage-data-to-a-planetscale-database",
+    "title": "How to synchronize your Yjs Storage data to a PlanetScale MySQL database",
+    "path": "/how-to-synchronize-your-yjs-storage-data-to-a-planetscale-mysql-database",
     "topics": [
       "tutorials",
       "webhooks",

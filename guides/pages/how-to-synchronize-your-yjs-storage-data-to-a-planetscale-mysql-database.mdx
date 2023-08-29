@@ -1,9 +1,9 @@
 ---
 meta:
   title:
-    "How to synchronize your Yjs Storage data to a Vercel Postgres database"
+    "How to synchronize your Yjs Storage data to a PlanetScale MySQL database"
   description:
-    "Learn how to automatically update your Vercel Postgres database with
+    "Learn how to automatically update your PlanetScale MySQL database with
     changes from your Yjs application."
 ---
 
@@ -15,9 +15,8 @@ it changes, and store it in your database.
 ## What we’re building
 
 In this guide we’ll be linking a Yjs application up to a
-[Vercel Postgres](https://vercel.com/docs/storage/vercel-postgres) database so
-that Yjs document data is automatically synchronized. This is enabled through
-the following:
+[PlanetScale](https://planetscale.com/) MySQL database so that Yjs document data
+is automatically synchronized. This is enabled through the following:
 
 - [YDocUpdated](/docs/platform/webhooks#YDocUpdatedEvent) Webhook event
 - [Get Yjs Document](/docs/api-reference/rest-api-endpoints#get-rooms-roomId-ydoc)
@@ -129,6 +128,9 @@ you with a function that verifies whether the current request is a real webhook
 request from your Liveblocks. You can set this up by setting up a
 [`WebhookHandler`](/docs/api-reference/liveblocks-node#WebhookHandler) and
 running [`verifyRequest`](/docs/api-reference/liveblocks-node#verifyRequest).
+
+Make sure to add your “Signing Secret” from the Liveblocks dashboard—in a real
+project we’d recommend using an environment variable for this.
 
 ```ts highlight="1,3-5,11-21"
 import { WebhookHandler } from "@liveblocks/node";
@@ -259,46 +261,148 @@ export async function POST(request: Request) {
 }
 ```
 
-## Create a Vercel Postgres database
+## Create a PlanetScale MySQL database
 
-We’re ready to set up our database! This is how to get started with Vercel
-Postgres:
-
-<Steps>
-  <StepCompact>
-    Navigate to the [Vercel Storage](https://vercel.com/dashboard/stores)
-    dashboard.
-  </StepCompact>
-
-  <StepCompact>
-    Click "Create Database", then select “Postgres”.
-  </StepCompact>
-  
-  <StepCompact>
-    Give the database a name and click “Create”.
-  </StepCompact>
-  
-  <StepCompact lastStep>
-    Follow the getting started guide to connect the database to
-    your Vercel project, link your environment variables, and install the packages.
-  </StepCompact>
-</Steps>
-
-## Add the Yjs data to your database
-
-And finally, we can add the Yjs JSON data to our database. Here we’re creating a
-simple `documents` table that contains the following fields:
+We’re ready to set up our PlanetScale database! We’ll be creating a simple
+`documents` table that contains the following fields:
 
 | Field      | Description                    | Type           | Key       |
 | ---------- | ------------------------------ | -------------- | --------- |
 | `roomId`   | The `roomId`.                  | `VARCHAR(255)` | `PRIMARY` |
 | `yDocData` | The stringified JSON Yjs data. | `TEXT`         |           |
 
-This is how to implement it in your endpoint:
+<Steps>
+  <Step>
+    <StepTitle>Create a database</StepTitle>
+    <StepContent>
+      Navigate to PlanetScale’s [new database page](https://app.planetscale.com/new),
+      give your database a name, and click “Create” at the bottom.
+      
+      <Figure>
+        <Image
+          src="/assets/tutorials/webhooks/planetscale-create-db.png"
+          alt="Create a PlanetScale database"
+          width={1486}
+          height={792}
+        />
+      </Figure>
+    </StepContent>
+  </Step>
+  
+  <Step>
+    <StepTitle>Create a new branch</StepTitle>
+    <StepContent>
+      After the database has been created, click “New branch” at the top right to create
+      a branch—this works like Git.
+      
+      <Figure>
+        <Image
+          src="/assets/tutorials/webhooks/planetscale-create-new-branch.png"
+          alt="Create a new branch"
+          width={866}
+          height={681}
+        />
+      </Figure>
+    </StepContent>
+  </Step>
+  
+  <Step>
+    <StepTitle>Set up your schema</StepTitle>
+    <StepContent>
+      Click “Console” at the top, select your branch, and enter the following to set up your table.
+      
+      ```sql
+      CREATE TABLE documents (
+         roomId VARCHAR(255) PRIMARY KEY,
+         yDocData TEXT NOT NULL
+      );
+      ```
+      
+      <Figure>
+        <Image
+          src="/assets/tutorials/webhooks/planetscale-create-schema.png"
+          alt="Create your table"
+          width={1114}
+          height={693}
+        />
+      </Figure>
+    </StepContent>
+  </Step>
+  
+  <Step>
+    <StepTitle>Click “Connect”</StepTitle>
+    <StepContent>
+      After the database has been created, click “Connect” at the top right to create
+      new credentials.
+      
+      <Figure>
+        <Image
+          src="/assets/tutorials/webhooks/planetscale-connect.png"
+          alt="Click connect"
+          width={864}
+          height={534}
+        />
+      </Figure>
+    </StepContent>
+  </Step>
 
-```ts highlight="2,46-65"
+  <Step>
+    <StepTitle>Create credentials</StepTitle>
+    <StepContent>
+      Give your new credentials a name, then click “Create Password”.
+      
+      <Figure>
+        <Image
+          src="/assets/tutorials/webhooks/planetscale-create-credentials.png"
+          alt="Create a PlanetScale password"
+          width={936}
+          height={655}
+        />
+      </Figure>
+    </StepContent>
+  </Step>
+  
+  <Step>
+    <StepTitle>Add the credentials to your project</StepTitle>
+    <StepContent>
+    Select “Node.js” in the dropdown and copy the database URL (or add it as an environment variable).
+    
+    <Figure>
+      <Image
+        src="/assets/tutorials/webhooks/planetscale-get-credentials.png"
+        alt="Get the database URL"
+        width={1473}
+        height={593}
+      />
+    </Figure>
+    </StepContent>
+  </Step>
+  
+  <Step lastStep>
+    <StepTitle>
+      Database ready!
+    </StepTitle>
+    
+    <StepContent>
+      Let’s take a look at the code.
+    </StepContent>
+  </Step>
+</Steps>
+
+## Add the Yjs data to your database
+
+And finally, we can add the Yjs JSON data to our database! First, we need to
+install `mysql2`:
+
+```bash
+npm i mysql2
+```
+
+Then implement the following to synchronize your data to PlanetScale:
+
+```ts highlight="2,11-12,49-69"
 import { WebhookHandler } from "@liveblocks/node";
-import { sql } from "@vercel/postgres";
+import mysql from "mysql2";
 
 // Add your signing key from a project's webhooks dashboard
 const WEBHOOK_SECRET = "YOUR_SIGNING_SECRET";
@@ -306,6 +410,9 @@ const webhookHandler = new WebhookHandler(WEBHOOK_SECRET);
 
 // Add your secret key from a project's API keys dashboard
 const API_SECRET = "{{SECRET_KEY}}";
+
+// Your PlanetScale database URL
+const DATABASE_URL = "YOUR_DATABASE_URL";
 
 export async function POST(request: Request) {
   const body = await request.json();
@@ -343,34 +450,42 @@ export async function POST(request: Request) {
     const yDocData = await response.text();
 
     // Update database
+    const connection = await mysql.createConnection(DATABASE_URL);
+
+    const sql = `
+      INSERT INTO documents (roomId, yDocData)
+      VALUES (?, ?)
+      ON DUPLICATE KEY UPDATE
+          yDocData = VALUES(yDocData);
+    `;
+
     try {
-      await sql`
-        CREATE TABLE IF NOT EXISTS documents (
-          roomId VARCHAR(255) PRIMARY KEY,
-          yDocData TEXT NOT NULL
-        );
-      `;
-      await sql`
-        INSERT INTO documents (roomId, yDocData)
-        VALUES (${roomId}, ${yDocData})
-        ON CONFLICT (roomId)
-        DO UPDATE SET
-          yDocData = EXCLUDED.yDocData
-      `;
+      await connection.query(sql, [roomId, yDocData]);
     } catch (err) {
+      console.log(err);
       return new Response("Problem inserting data into database", {
         status: 500,
       });
     }
+
+    await connection.end();
   }
 
   return new Response(null, { status: 200 });
 }
 ```
 
-When a user edits the Yjs data in your app, this function will be called, and
-your database will be updated—done! You can rely on this to stay up to date,
-within the throttle limit.
+To check if it worked, go back to the Console page on PlanetScale and enter the
+following to see all entries:
+
+```sql
+SELECT * FROM documents;
+```
+
+You should now see your Yjs document—we’ve successfully set up data
+synchronization! When a user edits Yjs data in your app, this function will be
+called, and your database will be updated. You can rely on this to stay up to
+date, within the throttle limit.
 
 ## Note when building
 
