@@ -49,7 +49,7 @@ export async function POST(request: Request) {
     }
 
     // The Yjs document data
-    const yjsDocData = await response.json();
+    const yjsDocData = await response.text();
 
     // Update your database with the Yjs data
     // ...
