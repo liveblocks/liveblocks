@@ -332,7 +332,22 @@
       "yjs",
       "nodejs"
     ],
-    "date": "2023-06-28",
+    "date": "2023-09-05",
+    "hidden": true
+  },
+  {
+    "title": "How to synchronize your Yjs Storage data to a PlanetScale database",
+    "path": "/how-to-synchronize-your-yjs-storage-data-to-a-planetscale-database",
+    "topics": [
+      "tutorials",
+      "webhooks",
+      "databases"
+    ],
+    "technologies": [
+      "yjs",
+      "nodejs"
+    ],
+    "date": "2023-09-05",
     "hidden": true
   }
 ]

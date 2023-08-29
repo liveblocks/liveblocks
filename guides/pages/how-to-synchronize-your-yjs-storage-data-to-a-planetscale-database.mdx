@@ -1,0 +1,395 @@
+---
+meta:
+  title:
+    "How to synchronize your Yjs Storage data to a Vercel Postgres database"
+  description:
+    "Learn how to automatically update your Vercel Postgres database with
+    changes from your Yjs application."
+---
+
+Liveblocks allows you to build collaborative applications with
+[Yjs](https://yjs.dev/), which is tightly integrated into our infrastructure.
+Using our Webhooks and REST API, you can then retrieve the Yjs document data as
+it changes, and store it in your database.
+
+## What we’re building
+
+In this guide we’ll be linking a Yjs application up to a
+[Vercel Postgres](https://vercel.com/docs/storage/vercel-postgres) database so
+that Yjs document data is automatically synchronized. This is enabled through
+the following:
+
+- [YDocUpdated](/docs/platform/webhooks#YDocUpdatedEvent) Webhook event
+- [Get Yjs Document](/docs/api-reference/rest-api-endpoints#get-rooms-roomId-ydoc)
+  REST API
+
+<Banner title="Have a project ready">
+
+This guide assumes you already have a Liveblocks Yjs project set up. If haven’t
+already got one, you can open our getting started page, select a
+[text editor](/docs/get-started/text-editor) or
+[code editor](/docs/get-started/code-editor), both of which use Yjs, and come
+back after you’re set up.
+
+</Banner>
+
+### This specific webhook is throttled
+
+Note that the [YDocUpdated](/docs/platform/webhooks#YDocUpdatedEvent) webhook
+event is throttled at a rate of _once every 5 minutes_. This is because Yjs can
+update up to _60 times per second_, and it would be impractical to run the
+webhook this frequently.
+
+## Create an endpoint in your project
+
+When a webhook event is triggered, it can send POST request to the back end in
+your project, and from within there we can update the database. In this guide,
+we’ll be using a Next.js route handler (API endpoint) as an example, but other
+frameworks work similarly.
+
+In order to use webhooks, we’ll need to retrieve the `headers` and `body` from
+the request. Here’s the basic endpoint we’ll be starting from:
+
+```ts
+export async function POST(request: Request) {
+  const body = await request.json();
+  const headers = request.headers;
+
+  // Handle webhooks and database
+  // ...
+
+  return new Response(null, { status: 200 });
+}
+```
+
+Create this endpoint in your project, and make it available on `localhost` at
+the following URL:
+
+```
+/api/liveblocks-database-sync
+```
+
+### Testing webhooks locally
+
+Running webhooks locally can be difficult, but one way to do this is to use a
+tool such as [`localtunnel`](https://www.npmjs.com/package/localtunnel) or
+[`ngrok`](https://www.npmjs.com/package/ngrok) which allow you to temporarily
+put your localhost server online.
+
+If your project is running on `localhost:3000`, you can run the following
+command to generate a temporary URL that’s available while your localhost server
+is running:
+
+```bash
+npx localtunnel --port 3000
+```
+
+If you correctly input your IP address, the URL `localtunnel` generates can be
+placed into the Liveblocks webhooks dashboard for quick testing.
+
+## Set up webhooks on the Liveblocks dashboard
+
+To use webhooks, you need to your endpoint URL to the webhooks dashboard inside
+our Liveblocks project, and tell the webhook to trigger when Yjs document data
+has changed.
+
+<Steps>
+  <StepCompact>
+    From the [Liveblocks dashboard](/dashboard), navigate to the project you’d
+    like to use with webhooks.
+  </StepCompact>
+
+  <StepCompact>
+    Click on the “Webhooks” tab on the menu at the left.
+  </StepCompact>
+  
+  <StepCompact>
+    Click the “Add Endpoint” button.
+  </StepCompact>
+  
+  <StepCompact>
+    Enter the URL of the endpoint. In a production app this will be the real
+    endpoint, but for now enter your `localtunnel` URL.
+  </StepCompact>
+  
+  <StepCompact lastStep>
+    Click “Create” at the bottom, then find your “Signing Secret” on the next
+    page, and copy it.
+  </StepCompact>
+</Steps>
+
+The dashboard’s now set up! Note that you filter specifically for `ydocUpdated`
+events, but we’re ignoring this for now so we can test more easily. Let’s go
+back to the endpoint.
+
+## Verify the webhook request
+
+The [`@liveblocks/node`](/docs/api-reference/liveblocks-node) package provides
+you with a function that verifies whether the current request is a real webhook
+request from your Liveblocks. You can set this up by setting up a
+[`WebhookHandler`](/docs/api-reference/liveblocks-node#WebhookHandler) and
+running [`verifyRequest`](/docs/api-reference/liveblocks-node#verifyRequest).
+
+```ts highlight="1,3-5,11-21"
+import { WebhookHandler } from "@liveblocks/node";
+
+// Add your signing key from a project's webhooks dashboard
+const WEBHOOK_SECRET = "YOUR_SIGNING_SECRET";
+const webhookHandler = new WebhookHandler(WEBHOOK_SECRET);
+
+export async function POST(request: Request) {
+  const body = await request.json();
+  const headers = request.headers;
+
+  // Verify if this is a real webhook request
+  let event;
+  try {
+    event = webhookHandler.verifyRequest({
+      headers: headers,
+      rawBody: JSON.stringify(body),
+    });
+  } catch (err) {
+    console.error(err);
+    return new Response("Could not verify webhook call", { status: 400 });
+  }
+
+  // Update database
+  // ...
+
+  return new Response(null, { status: 200 });
+}
+```
+
+We can then check we’re receiving the correct type of event, get the updated
+`roomId`, and handle updating the database inside there.
+
+```ts highlight="23-29"
+import { WebhookHandler } from "@liveblocks/node";
+
+// Add your signing key from a project's webhooks dashboard
+const WEBHOOK_SECRET = "YOUR_SIGNING_SECRET";
+const webhookHandler = new WebhookHandler(WEBHOOK_SECRET);
+
+export async function POST(request: Request) {
+  const body = await request.json();
+  const headers = request.headers;
+
+  // Verify if this is a real webhook request
+  let event;
+  try {
+    event = webhookHandler.verifyRequest({
+      headers: headers,
+      rawBody: JSON.stringify(body),
+    });
+  } catch (err) {
+    console.error(err);
+    return new Response("Could not verify webhook call", { status: 400 });
+  }
+
+  // When Yjs document data has been udpated
+  if (event.type === "ydocUpdated") {
+    const { roomId } = event.data;
+
+    // Update database
+    // ...
+  }
+
+  return new Response(null, { status: 200 });
+}
+```
+
+## Get the current room’s Yjs document data
+
+Before updating our database, we need to get the current room’s data. We can do
+this through the
+[Get Yjs Document](/docs/api-reference/rest-api-endpoints#get-rooms-roomId-ydoc)
+REST API. You use the REST API, you need to add your secret key from your
+project page.
+
+```ts highlight="7-8,30-43"
+import { WebhookHandler } from "@liveblocks/node";
+
+// Add your signing key from a project's webhooks dashboard
+const WEBHOOK_SECRET = "YOUR_SIGNING_SECRET";
+const webhookHandler = new WebhookHandler(WEBHOOK_SECRET);
+
+// Add your secret key from a project's API keys dashboard
+const API_SECRET = "{{SECRET_KEY}}";
+
+export async function POST(request: Request) {
+  const body = await request.json();
+  const headers = request.headers;
+
+  // Verify if this is a real webhook request
+  let event;
+  try {
+    event = webhookHandler.verifyRequest({
+      headers: headers,
+      rawBody: JSON.stringify(body),
+    });
+  } catch (err) {
+    console.error(err);
+    return new Response("Could not verify webhook call", { status: 400 });
+  }
+
+  // When Yjs document data has been udpated
+  if (event.type === "ydocUpdated") {
+    const { roomId } = event.data;
+
+    // Get Yjs data from Liveblocks REST API
+    const url = `https://api.liveblocks.io/v2/rooms/${roomId}/ydoc`;
+    const response = await fetch(url, {
+      headers: { Authorization: `Bearer ${API_SECRET}` },
+    });
+
+    if (!response.ok) {
+      return new Response("Problem accessing Liveblocks REST APIs", {
+        status: 500,
+      });
+    }
+
+    // Your JSON Yjs document data as a string
+    const yDocData = await response.text();
+
+    // Update database
+    // ...
+  }
+
+  return new Response(null, { status: 200 });
+}
+```
+
+## Create a Vercel Postgres database
+
+We’re ready to set up our database! This is how to get started with Vercel
+Postgres:
+
+<Steps>
+  <StepCompact>
+    Navigate to the [Vercel Storage](https://vercel.com/dashboard/stores)
+    dashboard.
+  </StepCompact>
+
+  <StepCompact>
+    Click "Create Database", then select “Postgres”.
+  </StepCompact>
+  
+  <StepCompact>
+    Give the database a name and click “Create”.
+  </StepCompact>
+  
+  <StepCompact lastStep>
+    Follow the getting started guide to connect the database to
+    your Vercel project, link your environment variables, and install the packages.
+  </StepCompact>
+</Steps>
+
+## Add the Yjs data to your database
+
+And finally, we can add the Yjs JSON data to our database. Here we’re creating a
+simple `documents` table that contains the following fields:
+
+| Field      | Description                    | Type           | Key       |
+| ---------- | ------------------------------ | -------------- | --------- |
+| `roomId`   | The `roomId`.                  | `VARCHAR(255)` | `PRIMARY` |
+| `yDocData` | The stringified JSON Yjs data. | `TEXT`         |           |
+
+This is how to implement it in your endpoint:
+
+```ts highlight="2,46-65"
+import { WebhookHandler } from "@liveblocks/node";
+import { sql } from "@vercel/postgres";
+
+// Add your signing key from a project's webhooks dashboard
+const WEBHOOK_SECRET = "YOUR_SIGNING_SECRET";
+const webhookHandler = new WebhookHandler(WEBHOOK_SECRET);
+
+// Add your secret key from a project's API keys dashboard
+const API_SECRET = "{{SECRET_KEY}}";
+
+export async function POST(request: Request) {
+  const body = await request.json();
+  const headers = request.headers;
+
+  // Verify if this is a real webhook request
+  let event;
+  try {
+    event = webhookHandler.verifyRequest({
+      headers: headers,
+      rawBody: JSON.stringify(body),
+    });
+  } catch (err) {
+    console.error(err);
+    return new Response("Could not verify webhook call", { status: 400 });
+  }
+
+  // When Yjs document data has been udpated
+  if (event.type === "ydocUpdated") {
+    const { roomId } = event.data;
+
+    // Get Yjs data from Liveblocks REST API
+    const url = `https://api.liveblocks.io/v2/rooms/${roomId}/ydoc`;
+    const response = await fetch(url, {
+      headers: { Authorization: `Bearer ${API_SECRET}` },
+    });
+
+    if (!response.ok) {
+      return new Response("Problem accessing Liveblocks REST APIs", {
+        status: 500,
+      });
+    }
+
+    // Your JSON Yjs document data as a string
+    const yDocData = await response.text();
+
+    // Update database
+    try {
+      await sql`
+        CREATE TABLE IF NOT EXISTS documents (
+          roomId VARCHAR(255) PRIMARY KEY,
+          yDocData TEXT NOT NULL
+        );
+      `;
+      await sql`
+        INSERT INTO documents (roomId, yDocData)
+        VALUES (${roomId}, ${yDocData})
+        ON CONFLICT (roomId)
+        DO UPDATE SET
+          yDocData = EXCLUDED.yDocData
+      `;
+    } catch (err) {
+      return new Response("Problem inserting data into database", {
+        status: 500,
+      });
+    }
+  }
+
+  return new Response(null, { status: 200 });
+}
+```
+
+When a user edits the Yjs data in your app, this function will be called, and
+your database will be updated—done! You can rely on this to stay up to date,
+within the throttle limit.
+
+## Note when building
+
+Note that the [`YDocUpdated`](/docs/platform/webhooks#YDocUpdatedEvent) event is
+throttled, and only runs once every 5 minutes. When building with webhooks, it
+can sometimes be helpful to temporarily listen for
+[`UserEntered`](/docs/platform/webhooks#UserEnteredEvent) instead, a
+non-throttled event, and then refresh the page to trigger it.
+
+```ts
+// Runs on Yjs data changes, but throttled every 5 mins
+if (event.type === "ydocUpdated") {
+  // ...
+}
+
+// Called every time a user enters a room
+if (event.type === "userEntered") {
+  // ...
+}
+```
+
+Make sure to change your code back to the correct event type when you’re done.
