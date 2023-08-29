@@ -145,10 +145,10 @@ export class Liveblocks {
     const groupIds =
       typeof identity === "string" ? undefined : identity.groupIds;
 
-    try {
-      assertNonEmpty(userId, "userId"); // TODO: Check if this is a legal userId value too
-      // assertStringArrayOrUndefined(groupsIds, "groupIds"); // TODO: Check if this is a legal userId value too
+    assertNonEmpty(userId, "userId"); // TODO: Check if this is a legal userId value too
+    // assertStringArrayOrUndefined(groupsIds, "groupIds"); // TODO: Check if this is a legal userId value too
 
+    try {
       const resp = await this.post(path, {
         userId,
         groupIds,
