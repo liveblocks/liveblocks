@@ -48,7 +48,7 @@ export async function POST(request: Request) {
       });
     }
 
-    // The Yjs document  data
+    // The Yjs document data
     const yjsDocData = await response.json();
 
     // Update your database with the Yjs data
