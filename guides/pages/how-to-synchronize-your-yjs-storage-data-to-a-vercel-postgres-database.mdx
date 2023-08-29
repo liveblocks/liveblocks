@@ -77,14 +77,14 @@ tool such as [`localtunnel`](https://www.npmjs.com/package/localtunnel) or
 put your localhost server online.
 
 If your project is running on `localhost:3000`, you can run the following
-command to generate a temporary URL that lasts while your localhost server is
-running:
+command to generate a temporary URL that’s available while your localhost server
+is running:
 
 ```bash
 npx localtunnel --port 3000
 ```
 
-If you correctly input your IP address, the URL `localtunnel` provides can be
+If you correctly input your IP address, the URL `localtunnel` generates can be
 placed into the Liveblocks webhooks dashboard for quick testing.
 
 ## Set up webhooks on the Liveblocks dashboard
@@ -248,8 +248,8 @@ export async function POST(request: Request) {
       });
     }
 
-    // Your Yjs document data
-    const yDocData = await response.json();
+    // Your JSON Yjs document data as a string
+    const yDocData = await response.text();
 
     // Update database
     // ...
@@ -261,20 +261,135 @@ export async function POST(request: Request) {
 
 ## Create a Vercel Postgres database
 
-The first step is to create your database. Navigate to the
-[Vercel Storage](https://vercel.com/dashboard/stores) dashboard and click
-"Create Database", select "Postgres", give it a name and create it.
-
-Follow the getting started guide on the next page to connect the database to
-your Vercel project, link your environment variables, and install the packages.
+We’re ready to set up our database! This is how to get started with Vercel
+Postgres:
 
 <Steps>
+  <StepCompact>
+    Navigate to the [Vercel Storage](https://vercel.com/dashboard/stores)
+    dashboard.
+  </StepCompact>
 
-<Step>
-<StepTitle>Create your</StepTitle>
-<StepContent>
-
-</StepContent>
-</Step>
-
+  <StepCompact>
+    Click "Create Database", then select “Postgres”.
+  </StepCompact>
+  
+  <StepCompact>
+    Give the database a name and click “Create”.
+  </StepCompact>
+  
+  <StepCompact lastStep>
+    Follow the getting started guide to connect the database to
+    your Vercel project, link your environment variables, and install the packages.
+  </StepCompact>
 </Steps>
+
+## Add the Yjs data to your database
+
+And finally, we can add the Yjs JSON data to our database. Here we’re creating a
+simple `documents` table that contains the following fields:
+
+| Field      | Description                    | Type           | Key       |
+| ---------- | ------------------------------ | -------------- | --------- |
+| `roomId`   | The `roomId`.                  | `VARCHAR(255)` | `PRIMARY` |
+| `yDocData` | The stringified JSON Yjs data. | `TEXT`         |           |
+
+This is how to implement it in your endpoint:
+
+```ts highlight="2,46-65"
+import { WebhookHandler } from "@liveblocks/node";
+import { sql } from "@vercel/postgres";
+
+// Add your signing key from a project's webhooks dashboard
+const WEBHOOK_SECRET = "YOUR_SIGNING_SECRET";
+const webhookHandler = new WebhookHandler(WEBHOOK_SECRET);
+
+// Add your secret key from a project's API keys dashboard
+const API_SECRET = "{{SECRET_KEY}}";
+
+export async function POST(request: Request) {
+  const body = await request.json();
+  const headers = request.headers;
+
+  // Verify if this is a real webhook request
+  let event;
+  try {
+    event = webhookHandler.verifyRequest({
+      headers: headers,
+      rawBody: JSON.stringify(body),
+    });
+  } catch (err) {
+    console.error(err);
+    return new Response("Could not verify webhook call", { status: 400 });
+  }
+
+  // When Yjs document data has been udpated
+  if (event.type === "ydocUpdated") {
+    const { roomId } = event.data;
+
+    // Get Yjs data from Liveblocks REST API
+    const url = `https://api.liveblocks.io/v2/rooms/${roomId}/ydoc`;
+    const response = await fetch(url, {
+      headers: { Authorization: `Bearer ${API_SECRET}` },
+    });
+
+    if (!response.ok) {
+      return new Response("Problem accessing Liveblocks REST APIs", {
+        status: 500,
+      });
+    }
+
+    // Your JSON Yjs document data as a string
+    const yDocData = await response.text();
+
+    // Update database
+    try {
+      await sql`
+        CREATE TABLE IF NOT EXISTS documents (
+          roomId VARCHAR(255) PRIMARY KEY,
+          yDocData TEXT NOT NULL
+        );
+      `;
+      await sql`
+        INSERT INTO documents (roomId, yDocData)
+        VALUES (${roomId}, ${yDocData})
+        ON CONFLICT (roomId)
+        DO UPDATE SET
+          yDocData = EXCLUDED.yDocData
+      `;
+    } catch (err) {
+      return new Response("Problem inserting data into database", {
+        status: 500,
+      });
+    }
+  }
+
+  return new Response(null, { status: 200 });
+}
+```
+
+When a user edits the Yjs data in your app, this function will be called, and
+your database will be updated—done! You can rely on this to stay up to date,
+within the throttle limit.
+
+## Note when building
+
+Note that the [`YDocUpdated`](/docs/platform/webhooks#YDocUpdatedEvent) event is
+throttled, and only runs once every 5 minutes. When building with webhooks, it
+can sometimes be helpful to temporarily listen for
+[`UserEntered`](/docs/platform/webhooks#UserEnteredEvent) instead, a
+non-throttled event, and then refresh the page to trigger it.
+
+```ts
+// Runs on Yjs data changes, but throttled every 5 mins
+if (event.type === "ydocUpdated") {
+  // ...
+}
+
+// Called every time a user enters a room
+if (event.type === "userEntered") {
+  // ...
+}
+```
+
+Make sure to change your code back to the correct event type when you’re done.
