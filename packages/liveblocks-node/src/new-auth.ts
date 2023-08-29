@@ -140,6 +140,7 @@ export class Liveblocks {
       // ....
     }
   ): Promise<AuthResponse> {
+    const path = "/v2/identify-user";
     const userId = typeof identity === "string" ? identity : identity.userId;
     const groupIds =
       typeof identity === "string" ? undefined : identity.groupIds;
@@ -148,7 +149,7 @@ export class Liveblocks {
       assertNonEmpty(userId, "userId"); // TODO: Check if this is a legal userId value too
       // assertStringArrayOrUndefined(groupsIds, "groupIds"); // TODO: Check if this is a legal userId value too
 
-      const resp = await this.post("/v2/identify-user", {
+      const resp = await this.post(path, {
         userId,
         groupIds,
 
@@ -165,7 +166,7 @@ export class Liveblocks {
         status: 503 /* Service Unavailable */,
         body: `Call to ${urljoin(
           this._baseUrl,
-          "/v2/identify"
+          path
         )} failed. See "error" for more information.`,
         error: er as Error | undefined,
       };
