@@ -77,7 +77,7 @@ Cleanup function. Destroys the [`LiveblocksProvider`][] instance and removes all
 resources.
 
 ```ts
-// Cleanup function
+// Clean up yProvider
 yProvider.destroy();
 ```
 
@@ -109,14 +109,14 @@ yProvider.on("synced", (sync: boolean) => /* ... */);
 ### LiveblocksProvider.off("sync") [#LiveblocksProvider.off.sync]
 
 Remove an event listener for the `sync` event. The `sync` event is triggered
-when the client has received content from the server. Used to cleanup
+when the client has received content from the server. Used to clean up
 [`LiveblocksProvider.on("sync")`][].
 
 ```ts
 const handleSync = (synced: boolean) => {};
 yProvider.on("sync", handleSync);
 
-// Cleanup sync event
+// Clean up sync event
 yProvider.off("sync", handleSync);
 ```
 
@@ -307,7 +307,7 @@ by [`LiveblocksProvider`][].
 awareness.destroy();
 ```
 
-### Awareness.on.("destroyed") [#Awareness.on.destroyed]
+### Awareness.on("destroyed") [#Awareness.on.destroyed]
 
 Provided for compatibility, but generally not necessary. Add an event listener
 for the `destroy` event. The `destroy` event is triggered when
@@ -323,13 +323,14 @@ awareness.on("destroyed", () => {
 
 Provided for compatibility, but generally not necessary. Remove an event
 listener for the `destroy` event. The `destroy` event is triggered when
-[`awareness.destroy`][] has been called.
+[`awareness.destroy`][] has been called. Used to clean up
+[`Awareness.on("destroyed")`.]
 
 ```ts
 const handleDestroy = () => {};
 awareness.on("destroyed", handleDestroy);
 
-// Cleanup destroy event
+// Clean up destroy event
 awareness.off("destroyed", handleDestroy);
 ```
 
