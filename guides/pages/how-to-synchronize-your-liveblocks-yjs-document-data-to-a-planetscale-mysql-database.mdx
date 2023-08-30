@@ -99,7 +99,6 @@ document data has changed.
     <StepContent>
       From the [Liveblocks dashboard](/dashboard), navigate to the project you’d
       like to use with webhooks, or create a new project.
-      
       <Figure>
         <Image
           src="/assets/tutorials/webhooks/liveblocks-create-project.png"
@@ -111,89 +110,78 @@ document data has changed.
     </StepContent>
   </Step>
 
-{" "}
-
-<Step>
-  <StepTitle>Go to the webhooks dashboard</StepTitle>
-  <StepContent>
-    Click on the “Webhooks” tab on the menu at the left.
-    <Figure>
-      <Image
-        src="/assets/tutorials/webhooks/liveblocks-click-webhooks.png"
-        alt="Click webhooks"
-        width={1150}
-        height={602}
-      />
-    </Figure>
-  </StepContent>
-</Step>
-
-{" "}
-
-<Step>
-  <StepTitle>Add an endpoint</StepTitle>
-  <StepContent>
-    Click the “Add Endpoint” button on the webhooks dashboard to start setting
-    up your webhook.
-    <Figure>
-      <Image
-        src="/assets/tutorials/webhooks/liveblocks-add-endpoint.png"
-        alt="Click add endpoint"
-        width={1781}
-        height={786}
-      />
-    </Figure>
-  </StepContent>
-</Step>
-
-{" "}
-
-<Step>
-  <StepTitle>Add your endpoint URL</StepTitle>
-  <StepContent>
-    Enter the URL of the endpoint. In a production app this will be the real
-    endpoint, but for now enter your `localtunnel` URL from earlier.
-    <Figure>
-      <Image
-        src="/assets/tutorials/webhooks/liveblocks-add-endpoint-url.png"
-        alt="Add endpoint URL"
-        width={1210}
-        height={607}
-      />
-    </Figure>
-  </StepContent>
-</Step>
-
-{" "}
-
-<Step>
-  <StepTitle>Get your signing secret</StepTitle>
-  <StepContent>
-    Click “Create” at the bottom, then find your “Signing Secret” on the next
-    page, and copy it.
-    <Figure>
-      <Image
-        src="/assets/tutorials/webhooks/liveblocks-get-signing-secret.png"
-        alt="Copy your signing secret"
-        width={1210}
-        height={607}
-      />
-    </Figure>
-  </StepContent>
-</Step>
-
-  <Step lastStep>
-    <StepTitle>
-      Webhooks dashboard is set up!
-    </StepTitle>
-    
+  <Step>
+    <StepTitle>Go to the webhooks dashboard</StepTitle>
     <StepContent>
-      Note that you filter specifically for `ydocUpdated`
-      events, but we’re ignoring this for now so we can test more easily. Let’s go
-      back to the code.
+      Click on the “Webhooks” tab on the menu at the left.
+      <Figure>
+        <Image
+          src="/assets/tutorials/webhooks/liveblocks-click-webhooks.png"
+          alt="Click webhooks"
+          width={1150}
+          height={602}
+        />
+      </Figure>
     </StepContent>
   </Step>
-  
+
+  <Step>
+    <StepTitle>Add an endpoint</StepTitle>
+    <StepContent>
+      Click the “Add Endpoint” button on the webhooks dashboard to start setting
+      up your webhook.
+      <Figure>
+        <Image
+          src="/assets/tutorials/webhooks/liveblocks-add-endpoint.png"
+          alt="Click add endpoint"
+          width={1781}
+          height={786}
+        />
+      </Figure>
+    </StepContent>
+  </Step>
+
+  <Step>
+    <StepTitle>Add your endpoint URL</StepTitle>
+    <StepContent>
+      Enter the URL of the endpoint. In a production app this will be the real
+      endpoint, but for now enter your `localtunnel` URL from earlier.
+      <Figure>
+        <Image
+          src="/assets/tutorials/webhooks/liveblocks-add-endpoint-url.png"
+          alt="Add endpoint URL"
+          width={1210}
+          height={607}
+        />
+      </Figure>
+    </StepContent>
+  </Step>
+
+  <Step>
+    <StepTitle>Get your signing secret</StepTitle>
+    <StepContent>
+      Click “Create” at the bottom, then find your “Signing Secret” on the next
+      page, and copy it.
+      <Figure>
+        <Image
+          src="/assets/tutorials/webhooks/liveblocks-get-signing-secret.png"
+          alt="Copy your signing secret"
+          width={1210}
+          height={607}
+        />
+      </Figure>
+    </StepContent>
+  </Step>
+
+  <Step lastStep>
+    <StepTitle>Webhooks dashboard is set up!</StepTitle>
+
+    <StepContent>
+      Note that you filter specifically for `ydocUpdated` events, but we’re
+      ignoring this for now so we can test more easily. Let’s go back to the
+      code.
+    </StepContent>
+  </Step>
 </Steps>
 
 ## Verify the webhook request
