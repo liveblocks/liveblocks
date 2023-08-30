@@ -448,15 +448,29 @@ export async function POST(request: Request) {
 }
 ```
 
-To check if it worked, go to the Data page on Vercel, find your able in the
-dropdown, and check the entries. You should now see your Yjs document—we’ve
+## Check if it worked
+
+To check if your database synchronization is working, you can replay a
+`yDocUpdated` event from the Liveblocks dashboard.
+
+<Figure>
+  <Image
+    src="/assets/tutorials/webhooks/liveblocks-replay-event.png"
+    alt="Create your table schema"
+    width={1563}
+    height={657}
+  />
+</Figure>
+
+Then go to the Data page on your Vercel Postgres dashboard, find your table in
+the dropdown, and check the entries. You should now see your Yjs document—we’ve
 successfully set up data synchronization!
 
 When a user edits Yjs data in your app, this function will be called, and your
 database will be updated. You can rely on this to stay up to date, within the
 throttle limit.
 
-## Note when building
+### Note when building
 
 Note that the [`YDocUpdated`](/docs/platform/webhooks#YDocUpdatedEvent) event is
 throttled, and only runs once every 5 minutes. When building with webhooks, it
@@ -477,3 +491,9 @@ if (event.type === "userEntered") {
 ```
 
 Make sure to change your code back to the correct event type when you’re done.
+
+## Learn more
+
+You can learn more about Liveblocks webhooks in our full
+[webhooks guide](/docs/platform/webhooks). We also have an API reference for the
+[Get Yjs Document API](/docs/api-reference/rest-api-endpoints#get-rooms-roomId-ydoc).
