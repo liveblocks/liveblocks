@@ -12,9 +12,13 @@ Read our [getting started](/docs/get-started) guides to learn more.
 
 ## LiveblocksProvider [#LiveblocksProvider]
 
-The `LiveblocksProvider` lets you connect a Yjs doc to Liveblocks Presence and
-Storage features. Any changes you make to the Yjs doc will be stored on
-Liveblocks servers and synced with other clients in the room.
+`LiveblocksProvider` is a [Yjs provider](https://github.com/yjs/yjs#providers)
+that allows you to connect a Yjs document to Liveblocks. Any changes you make to
+the document will be stored on Liveblocks servers and synchronized with other
+clients in the room.
+
+You can connect by creating a Yjs document, then passing it to
+`LiveblocksProvider` along with the currently connected Liveblocks room.
 
 ```ts highlight="11-13"
 import * as Y from "yjs";
@@ -216,7 +220,7 @@ const awareness = room.getPresence().__yjs;
 
 ### Awareness.doc [#Awareness.doc]
 
-The `Y.Doc` that the current awareness instance is attached to.
+The Yjs document that the current awareness instance is attached to.
 
 ```ts
 // The current Yjs document
@@ -225,8 +229,7 @@ const yDoc: Y.Doc = awareness.doc;
 
 ### Awareness.clientId [#Awareness.clientId]
 
-Number. A unique number identifying which client this awareness object is
-attached to.
+A unique number identifying which client this awareness object is attached to.
 
 ```ts
 // A unique number representing the current user
