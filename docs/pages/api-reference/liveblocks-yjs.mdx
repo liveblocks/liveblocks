@@ -67,9 +67,6 @@ function Component() {
 The [awareness](#Awareness) instance attached to the provider.
 
 ```ts
-const yDoc = new Y.Doc();
-const yProvider = new LiveblocksProvider(room, yDoc);
-
 // Yjs awareness
 const awareness = yProvider.awareness;
 ```
@@ -80,9 +77,6 @@ Cleanup function. Destroys the [`LiveblocksProvider`][] instance and removes all
 resources.
 
 ```ts
-const yDoc = new Y.Doc();
-const yProvider = new LiveblocksProvider(room, yDoc);
-
 // Cleanup function
 yProvider.destroy();
 ```
@@ -94,9 +88,6 @@ the client has received content from the server. Can be used to fire events when
 the document has loaded.
 
 ```ts
-const yDoc = new Y.Doc();
-const yProvider = new LiveblocksProvider(room, yDoc);
-
 // Listen for the sync event
 yProvider.on("sync", (isSynced: boolean) => {
   if (isSynced === true) {
@@ -122,9 +113,6 @@ when the client has received content from the server. Used to cleanup
 [`LiveblocksProvider.on("sync")`][].
 
 ```ts
-const yDoc = new Y.Doc();
-const yProvider = new LiveblocksProvider(room, yDoc);
-
 const handleSync = (synced: boolean) => {};
 yProvider.on("sync", handleSync);
 
@@ -147,9 +135,6 @@ triggered when the client has received content from the server. Can be used to
 fire events when the document has loaded.
 
 ```ts
-const yDoc = new Y.Doc();
-const yProvider = new LiveblocksProvider(room, yDoc);
-
 // Listen for the sync event only once
 yProvider.on("sync", (isSynced: boolean) => {
   if (isSynced === true) {
@@ -174,9 +159,6 @@ Synchronously call each listener for the `sync` event in the order they were
 registered, passing the supplied arguments to each.
 
 ```ts
-const yDoc = new Y.Doc();
-const yProvider = new LiveblocksProvider(room, yDoc);
-
 // Call each listener and pass `true` as an argument
 yProvider.emit("sync", true);
 ```
@@ -194,9 +176,6 @@ yProvider.emit("synced" /* , ... */);
 Boolean. Returns whether the client is synchronized with the back end.
 
 ```ts
-const yDoc = new Y.Doc();
-const yProvider = new LiveblocksProvider(room, yDoc);
-
 // Check if Yjs content is synchronized with the server
 const isSynced: boolean = yProvider.synced;
 ```
@@ -213,7 +192,8 @@ Does nothing, added for compatibility. Connections are handled by the
 
 ## Awareness [#Awareness]
 
-`LiveblocksProvider` instances have an `awareness` property, which is powered by
+[`LiveblocksProvider`][] instances have an `awareness` property, which is
+powered by
 [Liveblocks Presence](/docs/api-reference/liveblocks-client#Room.getPresence).
 You can pass it to various bindings which implement awareness, for example
 plugins that enable multiplayer cursors in text editors.
