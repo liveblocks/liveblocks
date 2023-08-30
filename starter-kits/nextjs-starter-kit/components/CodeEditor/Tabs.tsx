@@ -1,4 +1,5 @@
 import * as Y from "yjs";
+import { Tooltip } from "../../primitives/Tooltip";
 import styles from "./Tabs.module.css";
 
 type Props = {
@@ -9,18 +10,18 @@ type Props = {
 };
 
 export function Tabs({ currentFile, files, onFileChange }: Props) {
-  console.log(currentFile);
   return (
     <div className={styles.tabs}>
       {files.map(([name]) => (
-        <button
-          key={name}
-          className={styles.tab}
-          data-active={name === currentFile || undefined}
-          onClick={() => onFileChange(name)}
-        >
-          {name}
-        </button>
+        <Tooltip content={name} key={name}>
+          <button
+            className={styles.tab}
+            data-active={name === currentFile || undefined}
+            onClick={() => onFileChange(name)}
+          >
+            {name.split("/").slice(-1)}
+          </button>
+        </Tooltip>
       ))}
     </div>
   );

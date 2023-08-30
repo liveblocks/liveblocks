@@ -199,7 +199,7 @@ function CodeMirrorEditor({ yMap, yProvider, initialFile }: CodeMirrorProps) {
               currentFile={currentFile}
               files={files}
               onFileChange={changeFile}
-              onCreateFile={() => createFile("OK.js")}
+              onCreateFile={createFile}
               onDeleteFile={deleteFile}
             />
           ) : null}

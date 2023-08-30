@@ -1,6 +1,7 @@
+import { useMemo } from "react";
 import * as Y from "yjs";
-import { DeleteIcon, FileIcon } from "../../icons";
-import { SidePanelAvatars } from "./SidePanelOthers";
+import { SidePanelNode } from "./SidePanelNode";
+import { convertFilesToFileTree } from "./utils";
 import styles from "./SidePanel.module.css";
 
 type Props = {
@@ -19,33 +20,21 @@ export function SidePanel({
   onCreateFile,
   onDeleteFile,
 }: Props) {
+  const fileTree = useMemo(() => convertFilesToFileTree(files), [files]);
+
   return (
     <div className={styles.sidePanel}>
-      {files.map(([name]) => (
-        <div
-          key={name}
-          data-active={name === currentFile || undefined}
-          className={styles.sidePanelFile}
-        >
-          <div className={styles.sidePanelFileName}>
-            <FileIcon opacity={0.2} />
-            <button onClick={() => onFileChange(name)}>
-              <span>{name}</span>
-            </button>
-            <button
-              className={styles.sidePanelFileDelete}
-              onClick={() => onDeleteFile(name)}
-              aria-label="Delete file"
-            >
-              <DeleteIcon />
-            </button>
-          </div>
-          <div>
-            <SidePanelAvatars fileName={name} />
-          </div>
-        </div>
-      ))}
-      <button onClick={() => onCreateFile("")}>New file</button>
+      <SidePanelNode
+        path=""
+        fileTree={fileTree}
+        onFileChange={onFileChange}
+        onDeleteFile={onDeleteFile}
+        currentPath={currentFile}
+      />
+
+      <button onClick={() => onCreateFile("src/hello/world.ts")}>
+        New file
+      </button>
     </div>
   );
 }
