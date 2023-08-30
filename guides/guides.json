@@ -321,8 +321,8 @@
     "hidden": true
   },
   {
-    "title": "How to synchronize your Yjs Storage data to a Vercel Postgres database",
-    "path": "/how-to-synchronize-your-yjs-storage-data-to-a-vercel-postgres-database",
+    "title": "How to synchronize your Liveblocks Yjs document data to a Vercel Postgres database",
+    "path": "/how-to-synchronize-your-liveblocks-yjs-document-data-to-a-vercel-postgres-database",
     "topics": [
       "tutorials",
       "webhooks",
@@ -336,8 +336,8 @@
     "hidden": true
   },
   {
-    "title": "How to synchronize your Yjs Storage data to a PlanetScale MySQL database",
-    "path": "/how-to-synchronize-your-yjs-storage-data-to-a-planetscale-mysql-database",
+    "title": "How to synchronize your Liveblocks Yjs document data to a PlanetScale MySQL database",
+    "path": "/how-to-synchronize-your-liveblocks-yjs-document-data-to-a-planetscale-mysql-database",
     "topics": [
       "tutorials",
       "webhooks",
