@@ -1,0 +1,100 @@
+---
+meta:
+  title: "Storage"
+  parentTitle: "Document"
+  description:
+    "Liveblocks Storage is a real-time persisted data store designed for multiplayer
+creative tools such as Figma, Pitch, and Spline."
+---
+
+Liveblocks Storage is a real-time persisted data store designed for multiplayer
+creative tools such as Figma, Pitch, and Spline. `LiveList`, `LiveMap`, and
+`LiveObject` conflict-free data types can be used to build all sorts of
+multiplayer tools.
+
+### Storage API Reference
+
+<ListGrid columns={3}>
+  <DocsCard
+    type="technology"
+    title="JavaScript"
+    href="/docs/api-reference/liveblocks-client#Storage"
+    description="@liveblocks/client"
+    visual={<DocsJavascriptIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="React"
+    href="/docs/api-reference/liveblocks-react#Storage"
+    description="@liveblocks/react"
+    visual={<DocsReactIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="Redux"
+    href="/docs/api-reference/liveblocks-redux#enhancer-option-storage-mapping"
+    description="@liveblocks/redux"
+    visual={<DocsReduxIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="Zustand"
+    href="/docs/api-reference/liveblocks-zustand#middleware-option-storage-mapping"
+    description="@liveblocks/zustand"
+    visual={
+      <img
+        alt=""
+        src="/assets/zustand.png"
+        width={24}
+        height={24}
+        loading="lazy"
+      />
+    }
+  />
+</ListGrid>
+
+### Examples using Storage
+
+<ListGrid columns={2}>
+  <ExampleCard
+    example={{
+      title: "Collaborative Todo List",
+      slug: "collaborative-todo-list",
+      image: "/images/examples/thumbnails/live-cursors-chat.jpg",
+    }}
+    technologies={["nextjs", "redux", "zustand", "javascript", "react-native"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "Collaborative Block Text Editor",
+      slug: "block-text-editor-advanced",
+      image: "/images/examples/thumbnails/block-text-editor-advanced.jpg",
+      advanced: true,
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "Collaborative Spreadsheet",
+      slug: "collaborative-spreadsheet-advanced",
+      image:
+        "/images/examples/thumbnails/collaborative-spreadsheet-advanced.jpg",
+      advanced: true,
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "Collaborative Whiteboard",
+      slug: "collaborative-whiteboard-advanced",
+      image:
+        "/images/examples/thumbnails/collaborative-whiteboard-advanced.jpg",
+      advanced: true,
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+</ListGrid>
