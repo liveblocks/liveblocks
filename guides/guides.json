@@ -222,8 +222,7 @@
       "react",
       "lexical"
     ],
-    "date": "2023-09-05",
-    "hidden": true
+    "date": "2023-09-05"
   },
   {
     "title": "How to create a collaborative code editor with CodeMirror, Yjs, React, and Liveblocks",
@@ -237,8 +236,7 @@
       "react",
       "codemirror"
     ],
-    "date": "2023-09-05",
-    "hidden": true
+    "date": "2023-09-05"
   },
   {
     "title": "How to create a collaborative text editor with Slate, Yjs, Next.js, and Liveblocks",
@@ -253,8 +251,7 @@
       "nextjs",
       "slate"
     ],
-    "date": "2023-09-05",
-    "hidden": true
+    "date": "2023-09-05"
   },
   {
     "title": "How to create a collaborative text editor with Tiptap, Yjs, Next.js, and Liveblocks",
@@ -269,8 +266,7 @@
       "nextjs",
       "tiptap"
     ],
-    "date": "2023-09-05",
-    "hidden": true
+    "date": "2023-09-05"
   },
   {
     "title": "How to create a collaborative text editor with Quill, Yjs, Next.js, and Liveblocks",
@@ -285,8 +281,7 @@
       "nextjs",
       "quill"
     ],
-    "date": "2023-09-05",
-    "hidden": true
+    "date": "2023-09-05"
   },
   {
     "title": "How to create a collaborative code editor with Monaco, Yjs, Next.js, and Liveblocks",
@@ -301,8 +296,7 @@
       "nextjs",
       "monaco"
     ],
-    "date": "2023-09-05",
-    "hidden": true
+    "date": "2023-09-05"
   },
   {
     "title": "How to create a collaborative code editor with CodeMirror, Yjs, Next.js, and Liveblocks",
@@ -317,8 +311,7 @@
       "nextjs",
       "codemirror"
     ],
-    "date": "2023-09-05",
-    "hidden": true
+    "date": "2023-09-05"
   },
   {
     "title": "How to synchronize your Liveblocks Yjs document data to a Vercel Postgres database",
@@ -332,8 +325,7 @@
       "yjs",
       "nodejs"
     ],
-    "date": "2023-09-05",
-    "hidden": true
+    "date": "2023-09-05"
   },
   {
     "title": "How to synchronize your Liveblocks Yjs document data to a PlanetScale MySQL database",
@@ -347,8 +339,7 @@
       "yjs",
       "nodejs"
     ],
-    "date": "2023-09-05",
-    "hidden": true
+    "date": "2023-09-05"
   },
   {
     "title": "How to synchronize your Liveblocks Yjs document data to a Supabase Postgres database",
@@ -362,7 +353,6 @@
       "yjs",
       "nodejs"
     ],
-    "date": "2023-09-05",
-    "hidden": true
+    "date": "2023-09-05"
   }
 ]
