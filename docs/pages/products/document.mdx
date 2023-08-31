@@ -7,12 +7,17 @@ meta:
     it in real‑time."
 ---
 
-Store your document’s data with Storage to enable people to edit together it in
-real‑time. `LiveList`, `LiveMap`, and `LiveObject` conflict-free data types can
-be stored to build all sorts of multiplayer editors: forms, creative tools,
-text, and more.
+Liveblocks Document is a set of persisted data stores optimized for real-time
+collaborative documents: Liveblocks Storage and Liveblocks Yjs.
 
-## Storage API Reference
+## Liveblocks Storage
+
+Liveblocks Storage is a real-time persisted data store designed for multiplayer
+creative tools such as Figma, Pitch, and Spline. `LiveList`, `LiveMap`, and
+`LiveObject` conflict-free data types can be used to build all sorts of
+multiplayer tools.
+
+### Storage API Reference
 
 <ListGrid columns={3}>
   <DocsCard
@@ -53,7 +58,7 @@ text, and more.
   />
 </ListGrid>
 
-## Examples using Storage
+### Examples using Storage
 
 <ListGrid columns={2}>
   <ExampleCard
@@ -92,6 +97,57 @@ text, and more.
       slug: "collaborative-whiteboard-advanced",
       image:
         "/images/examples/thumbnails/collaborative-whiteboard-advanced.jpg",
+      advanced: true,
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+</ListGrid>
+
+## Liveblocks Yjs
+
+Liveblocks Yjs is a real-time persisted data store designed for collaborative
+text editors such as Notion and Google Docs.
+
+### Yjs API Reference
+
+<ListGrid columns={3}>
+  <DocsCard
+    type="technology"
+    title="JavaScript"
+    href="/docs/api-reference/liveblocks-yjs"
+    description="@liveblocks/yjs"
+    visual={<DocsYjsIcon />}
+  />
+</ListGrid>
+
+### Examples using Yjs
+
+<ListGrid columns={2}>
+  <ExampleCard
+    example={{
+      title: "Collaborative Text Editor",
+      slug: "collaborative-text-editor",
+      image: "/images/examples/thumbnails/text-editor.jpg",
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "Collaborative Text Editor",
+      slug: "collaborative-text-editor-advanced",
+      image: "/images/examples/thumbnails/text-editor-advanced.jpg",
+      advanced: true,
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "Collaborative Code Editor",
+      slug: "collaborative-code-editor",
+      image: "/images/examples/thumbnails/code-editor.jpg",
       advanced: true,
     }}
     technologies={["nextjs"]}

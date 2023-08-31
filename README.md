@@ -37,7 +37,7 @@ Liveblocks is a fully integrated solution built around core products, each
 enabling a different facet of collaborative experiences:
 [Presence](https://liveblocks.io/docs/products/presence),
 [Broadcast](https://liveblocks.io/docs/products/broadcast),
-[Storage](https://liveblocks.io/docs/products/storage), and Comments (private
+[Document](https://liveblocks.io/docs/products/document), and Comments (private
 beta). You can decide what products you want to use based on your requirements
 and collaborative experiences you’re looking to build.
 
@@ -60,6 +60,7 @@ forms, and more.
 - [`@liveblocks/react`](https://liveblocks.io/docs/api-reference/liveblocks-react)
 - [`@liveblocks/zustand`](https://liveblocks.io/docs/api-reference/liveblocks-zustand)
 - [`@liveblocks/redux`](https://liveblocks.io/docs/api-reference/liveblocks-redux)
+- [`@liveblocks/yjs`](https://liveblocks.io/docs/api-reference/liveblocks-yjs)
 
 ### Platform
 
