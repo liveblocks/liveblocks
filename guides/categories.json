@@ -31,6 +31,14 @@
       "hidden": true
     },
     {
+      "id": "webhooks",
+      "name": "Webhooks"
+    },
+    {
+      "id": "databases",
+      "name": "Databases"
+    },
+    {
       "id": "errors",
       "name": "Errors"
     }
