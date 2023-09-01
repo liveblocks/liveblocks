@@ -1,14 +1,15 @@
-import { authorize } from "@liveblocks/node";
+import { Liveblocks } from "@liveblocks/node";
 import { NextApiRequest, NextApiResponse } from "next";
 import { getServerSession } from "./auth/getServerSession";
 import { User } from "../../types";
 
-const API_KEY = process.env.LIVEBLOCKS_SECRET_KEY;
+const API_KEY = process.env.LIVEBLOCKS_SECRET_KEY!;
+
+const liveblocks = new Liveblocks({
+  secret: API_KEY,
+});
 
 export default async function auth(req: NextApiRequest, res: NextApiResponse) {
-  if (!API_KEY) {
-    return res.status(403).end();
-  }
   const session = await getServerSession(req, res);
 
   const anonymousUser: User = {
@@ -21,17 +22,16 @@ export default async function auth(req: NextApiRequest, res: NextApiResponse) {
   // We're generating users and avatars here based off of Google SSO metadata.
   //This is where you assign the
   // user based on their real identity from your auth provider.
-  // See https://liveblocks.io/docs/api-reference/liveblocks-node#authorize for more information
-  const response = await authorize({
-    room: req.body.room,
-    secret: API_KEY,
-    userId: `user-${email}`,
+  // See https://liveblocks.io/docs/rooms/authentication for more information
+  const liveblocksSession = liveblocks.prepareSession(`user-${email}`, {
     userInfo: {
       name: name,
       picture: image,
     },
   });
-  return res.status(response.status).end(response.body);
+
+  liveblocksSession.allow(req.body.room, liveblocksSession.FULL_ACCESS);
+
+  const { status, body } = await liveblocksSession.authorize();
+  return res.status(status).end(body);
 }
-
-

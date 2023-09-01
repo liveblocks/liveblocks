@@ -8,7 +8,7 @@
 </p>
 <p align="center">
   <a href="https://twitter.com/liveblocks">
-    <img src="https://img.shields.io/badge/liveblocks-message?style=flat&logo=twitter&color=555&logoColor=fff" alt="Twitter" />
+    <img src="https://img.shields.io/badge/liveblocks-message?style=flat&logo=x&color=555&logoColor=fff" alt="X" />
   </a>
   <a href="https://liveblocks.io/discord">
     <img src="https://img.shields.io/discord/913109211746009108?style=flat&label=discord&logo=discord&color=85f&logoColor=fff" alt="Discord" />
@@ -37,10 +37,10 @@ Liveblocks is a fully integrated solution built around core products, each
 enabling a different facet of collaborative experiences:
 [Presence](https://liveblocks.io/docs/products/presence),
 [Broadcast](https://liveblocks.io/docs/products/broadcast),
-[Storage](https://liveblocks.io/docs/products/storage), and
-[Comments (private beta)](https://liveblocks.io/docs/products/comments). You can
-decide which products you’d like to use based on the requirements of the
-collaborative experiences you’re building.
+[Document](https://liveblocks.io/docs/products/document), and
+[Comments](https://liveblocks.io/docs/products/comments) (private beta). You can
+decide what products you want to use based on your requirements and
+collaborative experiences you’re looking to build.
 
 ### Rooms
 
@@ -52,16 +52,21 @@ interact with rooms, and each room can have specific
 
 ### Integrations
 
-Liveblocks and its community provide integrations that developers can use to
-integrate with the Liveblocks products within the rooms. You can use existing
-integrations for specific libraries and frameworks, or create a custom one for
-your needs.
+Integrations for specific libraries and frameworks to add Liveblocks-powered
+collaborative experiences to your product. Integrations are designed to serve
+various collaboration use cases such as text editors, comments, creative tools,
+forms, and more.
 
 - [`@liveblocks/client`](https://liveblocks.io/docs/api-reference/liveblocks-client)
 - [`@liveblocks/react`](https://liveblocks.io/docs/api-reference/liveblocks-react)
+  <<<<<<< HEAD
 - [`@liveblocks/redux`](https://liveblocks.io/docs/api-reference/liveblocks-redux)
 - [`@liveblocks/zustand`](https://liveblocks.io/docs/api-reference/liveblocks-zustand)
-- `@liveblocks/react-comments` (private beta)
+- # `@liveblocks/react-comments` (private beta)
+- [`@liveblocks/zustand`](https://liveblocks.io/docs/api-reference/liveblocks-zustand)
+- [`@liveblocks/redux`](https://liveblocks.io/docs/api-reference/liveblocks-redux)
+- [`@liveblocks/yjs`](https://liveblocks.io/docs/api-reference/liveblocks-yjs)
+  > > > > > > > main
 
 ### Platform
 
@@ -92,8 +97,8 @@ You can read our release notes
   community, ask questions and share tips.
 - [Email](https://liveblocks.io/contact) to contact us directly for support and
   sales enquiries.
-- [Twitter](https://twitter.com/liveblocks) to receive updates, announcements,
-  blog posts, and general Liveblocks tips.
+- [X](https://x.com/liveblocks) to receive updates, announcements, blog posts,
+  and general Liveblocks tips.
 
 ## License
 

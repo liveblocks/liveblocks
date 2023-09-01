@@ -1,6 +1,6 @@
 import { GetServerSideProps, InferGetServerSidePropsType } from "next";
-import { Session } from "next-auth";
 import { useRouter } from "next/router";
+import { Session } from "next-auth";
 import { AuthenticatedLayout } from "../../../layouts/Authenticated";
 import { DashboardLayout } from "../../../layouts/Dashboard";
 import { DocumentsLayout } from "../../../layouts/Documents";

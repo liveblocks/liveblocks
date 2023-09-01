@@ -11,6 +11,15 @@ collaborative experiences. Follow the following steps to start adding
 collaboration to your React application using the APIs from the
 [`@liveblocks/yjs`](/docs/api-reference/liveblocks-yjs) package.
 
+<Banner title="Public beta">
+
+Yjs support is currently in beta. If you have any questions or feedback, please
+reach out to us via the dedicated Discord channel,
+[#yjs-beta](https://discord.com/channels/913109211746009108/1123560088997728328).
+We’d love to hear from you.
+
+</Banner>
+
 ## Quickstart
 
 <Steps>
@@ -115,7 +124,7 @@ collaboration to your React application using the APIs from the
         root.append(paragraph);
       }
 
-      export default function Editor() {
+      export default Editor() {
         const room = useRoom();
         const initialConfig = {
           // NOTE: This is critical for collaboration plugin to set editor state to null. It
@@ -202,14 +211,13 @@ collaboration to your React application using the APIs from the
   </Step>
 
   <Step lastStep>
-    <StepTitle>Bonus: set up authentication</StepTitle>
+    <StepTitle>Next: set up authentication</StepTitle>
     <StepContent>
-      By default, Liveblocks is configured to work without an authentication
-      endpoint. This approach is great for prototyping and marketing pages
-      where defining your own security isn’t always required. If you want to
-      implement your own security logic to define if certain users should
-      have access to a given room, you’ll need to implement an
-      authentication endpoint.
+      By default, Liveblocks is configured to work without an authentication endpoint
+      where everyone automatically has access to rooms. This approach is great for
+      prototyping and marketing pages where setting up your own security isn’t always
+      required. If you want to limit access to a room for certain users, you’ll need
+      to set up an authentication endpoint to enable permissions.
 
       <ButtonLink className="not-markdown" href="/docs/rooms/authentication">
         Set up authentication
@@ -220,10 +228,11 @@ collaboration to your React application using the APIs from the
 
 </Steps>
 
-## Next steps
+## What to read next
 
 Congratulations! You now have set up the foundation for your collaborative
 Lexical text editor inside your React application.
 
+- [How to create a collaborative text editor with Lexical, Yjs, Next.js, and Liveblocks ](/docs/guides/how-to-create-a-collaborative-text-editor-with-lexical-yjs-nextjs-and-liveblocks#Create-live-avatars-with-Liveblocks-hooks)
 - [@liveblocks/yjs API Reference](/docs/api-reference/liveblocks-yjs)
 - [Lexical website](https://lexical.dev/)

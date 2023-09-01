@@ -1,3 +1,51 @@
+# v1.2.4
+
+### `@liveblocks/node`
+
+- Fixes a bug where sending an empty (or non-string) user ID with `.identifyUser`
+  would confusingly get reported as an HTTP 503.
+
+# v1.2.3
+
+### `@liveblocks/client`
+
+- Improve configuration error messages to be more user friendly
+- Fix bug where entering a new room could potentially initialize the undo stack
+  incorrectly
+
+### `create-liveblocks-app`
+
+- Fix Suspense option when specifying a framework
+- Add comments by default
+
+# v1.2.2
+
+### `@liveblocks/node`
+
+- Add Yjs document change event (`YDocUpdatedEvent`) to `WebhookHandler`.
+- Allow `Header` object to be passed to `headers` in
+  `WebhookHandler.verifyRequest()`
+
+# v1.2.1
+
+### `@liveblocks/node`
+
+- Fix session.allow to support path up to 128 characters to meet room id length
+  requirement.
+
+# v1.2.0
+
+### `@liveblocks/*`
+
+- Support the new and improved Liveblocks authorization.
+- Change client logic to stop retrying if room is full. Instead, the client will
+  now disconnect. To retry, call `room.reconnect()` explicitly.
+
+### `@liveblocks/node`
+
+Add new APIs for authorization. See our migration guide for tips on how to adopt
+the new style of authorizing your Liveblocks clients.
+
 # v1.1.8
 
 Fix a small TypeScript issue introduced in 1.1.7.
@@ -395,17 +443,17 @@ To migrate, make the following code changes:
   create<WithLiveblocks<MyState, ...>>()(liveblocks(...))
   ```
   To be clear:
-  1. First, move the type annotation away from the `liveblocks` middleware call,
-     and onto the `create` call.
-  2. Next, wrap your `MyState` type in a `WithLiveblocks<...>` wrapper. This
-     will make sure the injected `liveblocks` property on your Zustand state
-     will be correctly typed.
-  3. Finally, make sure to add the extra call `()` wrapper, needed by Zustand v4
-     now:
-     ```ts
-     create<WithLiveblocks<MyState, ...>>()(liveblocks(...))
-     //                                  ^^ Not a typo
-     ```
+  1.  First, move the type annotation away from the `liveblocks` middleware
+      call, and onto the `create` call.
+  2.  Next, wrap your `MyState` type in a `WithLiveblocks<...>` wrapper. This
+      will make sure the injected `liveblocks` property on your Zustand state
+      will be correctly typed.
+  3.  Finally, make sure to add the extra call `()` wrapper, needed by Zustand
+      v4 now:
+      ```ts
+      create<WithLiveblocks<MyState, ...>>()(liveblocks(...))
+      //                                  ^^ Not a typo
+      ```
 - Remove the second argument to `state.liveblocks.enterRoom()`: it no longer
   takes an explicit initial state. Instead, it's automatically be populated from
   your Zustand state.

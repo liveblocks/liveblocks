@@ -54,6 +54,8 @@ export async function createLiveblocksApp() {
     process.exit(0);
   }
 
+  flags.comments = true;
+
   // If any --no-[FLAGNAME] is set, set --[FLAGNAME] to false
   // e.g. `--no-install === true` -> `--install === false`
   Object.entries(flags).forEach(([key, val]) => {

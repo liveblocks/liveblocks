@@ -1,0 +1,140 @@
+---
+meta:
+  title: "Set up access token permissions with Nuxt.js"
+  parentTitle: "Authentication"
+  description: "Learn how to setup access token permissions with Nuxt.js."
+---
+
+Follow the following steps to start configure your authentication endpoint and
+start building your own security logic.
+
+## Quickstart
+
+<Steps>
+  <Step>
+    <StepTitle>Install the `liveblocks/node` package</StepTitle>
+    <StepContent>
+
+      ```bash
+      npm install @liveblocks/node
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Set up authentication endpoint</StepTitle>
+    <StepContent>
+      Users can only interact with rooms they have access to. You can
+      configure permission access in an `api/liveblocks-auth` endpoint by
+      creating the `server/api/liveblocks-auth.ts` file with the
+      following code. This is where you will implement your security and
+      define if the current user has access to a specific room.
+
+      ```ts file="server/api/liveblocks-auth.ts"
+      import { Liveblocks } from "@liveblocks/node";
+
+      const liveblocks = new Liveblocks({
+        secret: "{{SECRET_KEY}}",
+      });
+
+      export default defineEventHandler(async (event) => {
+      // Get the current user from your database
+        const user = __getUserFromDB__(event);
+
+        // Start an auth session inside your endpoint
+        const session = liveblocks.prepareSession(
+          user.id,
+          { userInfo: user.metadata },  // Optional
+        );
+
+        // Implement your own security, and give the user access to the room
+        const { room } = await readBody(event);
+        if (room && __shouldUserHaveAccess__(user, room)) {
+          session.allow(room, session.FULL_ACCESS);
+        }
+
+        // Authorize the user and return the result
+        const { status, body } = await session.authorize();
+        return body;
+      })
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step lastStep>
+    <StepTitle>Set up the client</StepTitle>
+    <StepContent>
+      On the front end, you can now replace the `publicApiKey`
+      option with `authEndpoint` pointing to the endpoint you
+      just created.
+
+      ```ts file="liveblocks.config.ts"
+      import { createClient } from "@liveblocks/client";
+
+      const client = createClient({
+        authEndpoint: "/api/liveblocks-auth",
+      });
+      ```
+
+      If you need to pass custom headers or data to your endpoint, you can
+      use
+      [authEndpoint as a callback](/docs/api-reference/liveblocks-client#createClientCallback)
+      instead.
+
+      ```ts file="liveblocks.config.ts" isCollapsed isCollapsable
+      import { createClient } from "@liveblocks/client";
+
+      // Passing custom headers and body to your endpoint
+      const client = createClient({
+        authEndpoint: async (room) => {
+          const headers = {
+            // Custom headers
+            // ...
+
+            "Content-Type": "application/json",
+          };
+
+          const body = JSON.stringify({
+            // Custom body
+            // ...
+
+            room,
+          });
+
+          const response = await fetch("/api/liveblocks-auth", {
+            method: "POST",
+            headers,
+            body,
+          });
+
+          return await response.json();
+        },
+      });
+      ```
+      
+    </StepContent>
+
+  </Step>
+</Steps>
+
+## More information
+
+Both `userId` and `userInfo` can then be used in your Vue.js application as
+such:
+
+```ts
+const self = ref(room.getSelf());
+console.log(self.id);
+console.log(self.info);
+```
+
+<Figure>
+  <Image
+    src="/assets/access-token-auth-diagram.png"
+    alt="Auth diagram"
+    width={768}
+    height={576}
+  />
+</Figure>
