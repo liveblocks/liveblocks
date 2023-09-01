@@ -705,7 +705,7 @@
           "name": "key",
           "in": "query",
           "required": false,
-          "description": "Returns only a single key's value, ex: doc.get(key).toJSON()"
+          "description": "Returns only a single key’s value, ex: doc.get(key).toJSON()"
         },
         {
           "schema": {
