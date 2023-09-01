@@ -354,7 +354,6 @@
       },
       {
         "title": "@liveblocks/yjs",
-        "hidden": true,
         "path": "/api-reference/liveblocks-yjs"
       },
       {
