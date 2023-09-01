@@ -687,6 +687,35 @@
           "name": "roomId",
           "in": "path",
           "required": true
+        },
+        {
+          "schema": {
+            "type": "boolean"
+          },
+          "name": "formatting",
+          "in": "query",
+          "allowEmptyValue": true,
+          "required": false,
+          "description": "If present, YText will return formatting"
+        },
+        {
+          "schema": {
+            "type": "string"
+          },
+          "name": "key",
+          "in": "query",
+          "required": false,
+          "description": "Returns only a single key's value, ex: doc.get(key).toJSON()"
+        },
+        {
+          "schema": {
+            "type": "string",
+            "enum": ["ymap", "ytext", "yxmltext", "yxmlfragment", "yarray"]
+          },
+          "name": "type",
+          "in": "query",
+          "required": false,
+          "description": "Used with key to override the inferred type, i.e. 'ymap' will return doc.get(key, Y.Map)"
         }
       ],
       "get": {
@@ -722,6 +751,79 @@
         },
         "operationId": "get-rooms-roomId-ydoc",
         "description": "This endpoint returns a JSON representation of the room’s Yjs document."
+      },
+      "put": {
+        "summary": "Send a binary Yjs update to a room.",
+        "tags": ["Yjs"],
+        "responses": {
+          "200": {
+            "description": "Success. The given room's Yjs doc has been updated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          }
+        },
+        "operationId": "put-rooms-roomId-ydoc",
+        "description": "This endpoint is used to send a Yjs binary update to the room's Yjs document. You can use this endpoint to initialize Yjs data for the room or update room's doc. See [Yjs documentation](https://docs.yjs.dev/api/document-updates) for how to create a binary update.",
+        "requestBody": {
+          "content": {
+            "application/octet-stream": {
+              "schema": { "format": "binary", "type": "array" }
+            }
+          }
+        }
+      }
+    },
+    "/rooms/{roomId}/ydoc-binary": {
+      "get": {
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "roomId",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "summary": "Get Yjs document encoded as a bianry Yjs update",
+        "tags": ["Yjs"],
+        "responses": {
+          "200": {
+            "description": "Success. Returns the room’s Yjs document encoded as a bianry Yjs update.",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "array"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          }
+        },
+        "operationId": "get-rooms-roomId-ydoc-binary",
+        "description": "This endpoint returns the room's Yjs document encoded as a single binary update. This can be used by Y.applyUpdate(responseBody) to get a copy of the document in your backend. See [Yjs documentation](https://docs.yjs.dev/api/document-updates) for more information on working with updates."
       }
     },
     "/schemas": {
