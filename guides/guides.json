@@ -31,8 +31,7 @@
     "technologies": [
       "nextjs"
     ],
-    "date": "2023-06-02",
-    "featured": true
+    "date": "2023-06-02"
   },
   {
     "title": "Fixing Next.js server component errors",
@@ -252,7 +251,8 @@
       "nextjs",
       "tiptap"
     ],
-    "date": "2023-09-05"
+    "date": "2023-09-05",
+    "featured": true
   },
   {
     "title": "How to create a collaborative text editor with Quill, Yjs, Next.js, and Liveblocks",
@@ -297,7 +297,8 @@
       "nextjs",
       "codemirror"
     ],
-    "date": "2023-09-05"
+    "date": "2023-09-05",
+    "featured": true
   },
   {
     "title": "How to synchronize your Liveblocks Yjs document data to a Vercel Postgres database",
@@ -325,7 +326,8 @@
       "yjs",
       "nodejs"
     ],
-    "date": "2023-09-05"
+    "date": "2023-09-05",
+    "featured": true
   },
   {
     "title": "How to synchronize your Liveblocks Yjs document data to a Supabase Postgres database",
