@@ -59,14 +59,9 @@ forms, and more.
 
 - [`@liveblocks/client`](https://liveblocks.io/docs/api-reference/liveblocks-client)
 - [`@liveblocks/react`](https://liveblocks.io/docs/api-reference/liveblocks-react)
-  <<<<<<< HEAD
 - [`@liveblocks/redux`](https://liveblocks.io/docs/api-reference/liveblocks-redux)
 - [`@liveblocks/zustand`](https://liveblocks.io/docs/api-reference/liveblocks-zustand)
-- # `@liveblocks/react-comments` (private beta)
-- [`@liveblocks/zustand`](https://liveblocks.io/docs/api-reference/liveblocks-zustand)
-- [`@liveblocks/redux`](https://liveblocks.io/docs/api-reference/liveblocks-redux)
 - [`@liveblocks/yjs`](https://liveblocks.io/docs/api-reference/liveblocks-yjs)
-  > > > > > > > main
 
 ### Platform
 
