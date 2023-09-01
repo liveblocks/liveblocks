@@ -18,12 +18,7 @@ function Example() {
   return (
     <main>
       {threads.map((thread) => (
-        <Thread
-          key={thread.id}
-          thread={thread}
-          showComposer
-          className="thread"
-        />
+        <Thread key={thread.id} thread={thread} className="thread" />
       ))}
       <Composer className="composer" />
     </main>

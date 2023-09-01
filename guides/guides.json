@@ -31,8 +31,7 @@
     "technologies": [
       "nextjs"
     ],
-    "date": "2023-06-02",
-    "featured": true
+    "date": "2023-06-02"
   },
   {
     "title": "Fixing Next.js server component errors",
@@ -222,23 +221,7 @@
       "react",
       "lexical"
     ],
-    "date": "2023-09-05",
-    "hidden": true
-  },
-  {
-    "title": "How to create a collaborative code editor with CodeMirror, Yjs, React, and Liveblocks",
-    "path": "/how-to-create-a-collaborative-code-editor-with-codemirror-yjs-react-and-liveblocks",
-    "topics": [
-      "tutorials",
-      "code-editors"
-    ],
-    "technologies": [
-      "yjs",
-      "react",
-      "codemirror"
-    ],
-    "date": "2023-09-05",
-    "hidden": true
+    "date": "2023-09-05"
   },
   {
     "title": "How to create a collaborative text editor with Slate, Yjs, Next.js, and Liveblocks",
@@ -253,8 +236,7 @@
       "nextjs",
       "slate"
     ],
-    "date": "2023-09-05",
-    "hidden": true
+    "date": "2023-09-05"
   },
   {
     "title": "How to create a collaborative text editor with Tiptap, Yjs, Next.js, and Liveblocks",
@@ -270,7 +252,7 @@
       "tiptap"
     ],
     "date": "2023-09-05",
-    "hidden": true
+    "featured": true
   },
   {
     "title": "How to create a collaborative text editor with Quill, Yjs, Next.js, and Liveblocks",
@@ -285,8 +267,7 @@
       "nextjs",
       "quill"
     ],
-    "date": "2023-09-05",
-    "hidden": true
+    "date": "2023-09-05"
   },
   {
     "title": "How to create a collaborative code editor with Monaco, Yjs, Next.js, and Liveblocks",
@@ -301,8 +282,7 @@
       "nextjs",
       "monaco"
     ],
-    "date": "2023-09-05",
-    "hidden": true
+    "date": "2023-09-05"
   },
   {
     "title": "How to create a collaborative code editor with CodeMirror, Yjs, Next.js, and Liveblocks",
@@ -318,6 +298,49 @@
       "codemirror"
     ],
     "date": "2023-09-05",
-    "hidden": true
+    "featured": true
+  },
+  {
+    "title": "How to synchronize your Liveblocks Yjs document data to a Vercel Postgres database",
+    "path": "/how-to-synchronize-your-liveblocks-yjs-document-data-to-a-vercel-postgres-database",
+    "topics": [
+      "tutorials",
+      "webhooks",
+      "databases"
+    ],
+    "technologies": [
+      "yjs",
+      "nodejs"
+    ],
+    "date": "2023-09-05"
+  },
+  {
+    "title": "How to synchronize your Liveblocks Yjs document data to a PlanetScale MySQL database",
+    "path": "/how-to-synchronize-your-liveblocks-yjs-document-data-to-a-planetscale-mysql-database",
+    "topics": [
+      "tutorials",
+      "webhooks",
+      "databases"
+    ],
+    "technologies": [
+      "yjs",
+      "nodejs"
+    ],
+    "date": "2023-09-05",
+    "featured": true
+  },
+  {
+    "title": "How to synchronize your Liveblocks Yjs document data to a Supabase Postgres database",
+    "path": "/how-to-synchronize-your-liveblocks-yjs-document-data-to-a-supabase-postgres-database",
+    "topics": [
+      "tutorials",
+      "webhooks",
+      "databases"
+    ],
+    "technologies": [
+      "yjs",
+      "nodejs"
+    ],
+    "date": "2023-09-05"
   }
 ]

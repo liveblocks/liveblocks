@@ -175,8 +175,18 @@
         "path": "/products/broadcast"
       },
       {
-        "title": "Storage",
-        "path": "/products/storage"
+        "title": "Document",
+        "path": "/products/document",
+        "routes": [
+          {
+            "title": "Storage",
+            "path": "/products/document/storage"
+          },
+          {
+            "title": "Yjs",
+            "path": "/products/document/yjs"
+          }
+        ]
       },
       {
         "title": "Comments",
@@ -344,7 +354,6 @@
       },
       {
         "title": "@liveblocks/yjs",
-        "hidden": true,
         "path": "/api-reference/liveblocks-yjs"
       },
       {
