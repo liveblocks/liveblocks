@@ -225,20 +225,6 @@
     "date": "2023-09-05"
   },
   {
-    "title": "How to create a collaborative code editor with CodeMirror, Yjs, React, and Liveblocks",
-    "path": "/how-to-create-a-collaborative-code-editor-with-codemirror-yjs-react-and-liveblocks",
-    "topics": [
-      "tutorials",
-      "code-editors"
-    ],
-    "technologies": [
-      "yjs",
-      "react",
-      "codemirror"
-    ],
-    "date": "2023-09-05"
-  },
-  {
     "title": "How to create a collaborative text editor with Slate, Yjs, Next.js, and Liveblocks",
     "path": "/how-to-create-a-collaborative-text-editor-with-slate-yjs-nextjs-and-liveblocks",
     "topics": [
