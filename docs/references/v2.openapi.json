@@ -715,7 +715,7 @@
           "name": "type",
           "in": "query",
           "required": false,
-          "description": "Used with key to override the inferred type, i.e. 'ymap' will return doc.get(key, Y.Map)"
+          "description": "Used with key to override the inferred type, i.e. “ymap” will return doc.get(key, Y.Map)"
         }
       ],
       "get": {
@@ -757,7 +757,7 @@
         "tags": ["Yjs"],
         "responses": {
           "200": {
-            "description": "Success. The given room's Yjs doc has been updated.",
+            "description": "Success. The given room’s Yjs doc has been updated.",
             "content": {
               "application/json": {
                 "schema": {
@@ -777,7 +777,7 @@
           }
         },
         "operationId": "put-rooms-roomId-ydoc",
-        "description": "This endpoint is used to send a Yjs binary update to the room's Yjs document. You can use this endpoint to initialize Yjs data for the room or update room's doc. See [Yjs documentation](https://docs.yjs.dev/api/document-updates) for how to create a binary update.",
+        "description": "This endpoint is used to send a Yjs binary update to the room’s Yjs document. You can use this endpoint to initialize Yjs data for the room or update room’s doc. Read the [Yjs documentation](https://docs.yjs.dev/api/document-updates) to learn how to create a binary update.",
         "requestBody": {
           "content": {
             "application/octet-stream": {
@@ -799,7 +799,7 @@
             "required": true
           }
         ],
-        "summary": "Get Yjs document encoded as a bianry Yjs update",
+        "summary": "Get Yjs document encoded as a binary Yjs update",
         "tags": ["Yjs"],
         "responses": {
           "200": {
@@ -823,7 +823,7 @@
           }
         },
         "operationId": "get-rooms-roomId-ydoc-binary",
-        "description": "This endpoint returns the room's Yjs document encoded as a single binary update. This can be used by Y.applyUpdate(responseBody) to get a copy of the document in your backend. See [Yjs documentation](https://docs.yjs.dev/api/document-updates) for more information on working with updates."
+        "description": "This endpoint returns the room’s Yjs document encoded as a single binary update. This can be used by Y.applyUpdate(responseBody) to get a copy of the document in your backend. See [Yjs documentation](https://docs.yjs.dev/api/document-updates) for more information on working with updates."
       }
     },
     "/schemas": {
