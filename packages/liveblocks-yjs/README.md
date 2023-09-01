@@ -9,7 +9,7 @@
 
 # `@liveblocks/yjs`
 
-`@liveblocks/yjs` provides a provider to integrate
+`@liveblocks/yjs` is a Yjs provider to integrate
 [Yjs](https://github.com/yjs/yjs) applications with Liveblocks—a platform to
 build, host, and scale collaborative applications with zero configuration, no
 maintenance required.
