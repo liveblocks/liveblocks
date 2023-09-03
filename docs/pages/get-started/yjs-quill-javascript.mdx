@@ -30,10 +30,22 @@ We’d love to hear from you.
       ```bash
       npm install @liveblocks/client @liveblocks/yjs yjs quill quill-cursors y-quill
       ```
+    </StepContent>
+
+  </Step>
+  
+  <Step>
+    <StepTitle>Create an HTML element</StepTitle>
+    <StepContent>
+
+      ```html
+      <div id="editor"></div>
+      ```
 
     </StepContent>
 
   </Step>
+  
   <Step>
     <StepTitle>Set up your collaborative Quill text editor</StepTitle>
     <StepContent>
@@ -47,20 +59,20 @@ We’d love to hear from you.
       import QuillCursors from "quill-cursors";
 
       async function run() {
-        let PUBLIC_KEY =
-          "{{PUBLIC_KEY}}";
-        let roomId = "yjs-quill-javascript";
+        let PUBLIC_KEY = "{{PUBLIC_KEY}}";
+        let roomId = "my-room";
 
         const client = createClient({
           publicApiKey: PUBLIC_KEY,
         });
 
-        const room = client.enter<{}, never>(roomId, {
+        const room = client.enter(roomId, {
           initialPresence: {},
         });
 
         // A Yjs document holds the shared data
         const ydoc = new Y.Doc();
+
         // Define a shared text type on the document
         const ytext = ydoc.getText("quill");
 
@@ -94,11 +106,10 @@ We’d love to hear from you.
 
       run();
       ```
-
     </StepContent>
 
   </Step>
-
+  
   <Step lastStep>
     <StepTitle>Next: set up authentication</StepTitle>
     <StepContent>
@@ -122,4 +133,5 @@ Congratulations! You now have set up the foundation for your collaborative Quill
 text editor inside your JavaScript application.
 
 - [@liveblocks/yjs API Reference](/docs/api-reference/liveblocks-yjs)
+- [@liveblocks/client API Reference](/docs/api-reference/liveblocks-client)
 - [Quill website](https://quilljs.com)
