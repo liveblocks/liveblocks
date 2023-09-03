@@ -102,6 +102,11 @@
             "hidden": true
           },
           {
+            "title": "Yjs Tiptap Svelte",
+            "path": "/get-started/yjs-tiptap-svelte",
+            "hidden": true
+          },
+          {
             "title": "Yjs Tiptap JavaScript",
             "path": "/get-started/yjs-tiptap-javascript",
             "hidden": true

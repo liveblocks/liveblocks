@@ -1,0 +1,130 @@
+---
+meta:
+  title: "Get started with Liveblocks, Tiptap, Yjs, and Svelte"
+  parentTitle: "Get started"
+  description: "Learn how to get started Liveblocks, Tiptap, Yjs, and Svelte."
+---
+
+Liveblocks is a real-time collaboration infrastructure for building performant
+collaborative experiences. Follow the following steps to start adding
+collaboration to your Svelte application using the APIs from the
+[`@liveblocks/yjs`](/docs/api-reference/liveblocks-yjs) package.
+
+<Banner title="Public beta">
+
+Yjs support is currently in beta. If you have any questions or feedback, please
+reach out to us via the dedicated Discord channel,
+[#yjs-beta](https://discord.com/channels/913109211746009108/1123560088997728328).
+We’d love to hear from you.
+
+</Banner>
+
+## Quickstart
+
+<Steps>
+  <Step>
+    <StepTitle>Install Liveblocks, Yjs, and Tiptap</StepTitle>
+    <StepContent>
+
+      ```bash
+      npm install @liveblocks/client @liveblocks/yjs yjs @tiptap/core @tiptap/pm @tiptap/starter-kit  @tiptap/extension-collaboration @tiptap/extension-collaboration-cursor
+      ```
+    </StepContent>
+
+  </Step>
+  
+  <Step>
+    <StepTitle>Set up your collaborative Tiptap text editor</StepTitle>
+    <StepContent>
+
+      ```svelte file="Editor.svelte"
+      <script>
+      import { onMount, onDestroy } from "svelte";
+      import { createClient } from "@liveblocks/client";
+      import LiveblocksProvider from "@liveblocks/yjs";
+      import * as Y from "yjs";
+      import { Editor } from "@tiptap/core";
+      import StarterKit from "@tiptap/starter-kit";
+      import Collaboration from "@tiptap/extension-collaboration";
+      import CollaborationCursor from "@tiptap/extension-collaboration-cursor";
+
+      let element;
+      let editor;
+      let roomId = "my-room";
+
+      // Set up Liveblocks client
+      const client = createClient({
+        publicApiKey: "{{PUBLIC_KEY}}",
+      });
+
+      onMount(() => {
+        // Enter a multiplayer room
+        const room = client.enter(roomId, {
+          initialPresence: {},
+        });
+
+        // Set up Yjs document, shared text, and Liveblocks Yjs provider
+        const yDoc = new Y.Doc();
+        const yText = ydoc.getText("tiptap");
+        const yProvider = new LiveblocksProvider(room, yDoc);
+
+        // Set up the Tiptap editor
+        editor = new Editor({
+          element,
+          extensions: [
+            StarterKit.configure({
+              // The Collaboration extension comes with its own history handling
+              history: false,
+            }),
+            // Register the Yjs document with Tiptap
+            Collaboration.configure({
+              document: yDoc,
+            }),
+            CollaborationCursor.configure({
+              provider: yProvider,
+            }),
+          ],
+          onTransaction: () => {
+            // Force re-render so `editor.isActive` works as expected
+            editor = editor
+          },
+        });
+      });
+
+      onDestroy(() => {
+        editor?.destroy();
+        client.leave(roomId);
+      })
+      </script>
+
+      <div bind:this={element}></div>
+      ```
+    </StepContent>
+
+  </Step>
+  
+  <Step lastStep>
+    <StepTitle>Next: set up authentication</StepTitle>
+    <StepContent>
+      By default, Liveblocks is configured to work without an authentication endpoint
+      where everyone automatically has access to rooms. This approach is great for
+      prototyping and marketing pages where setting up your own security isn’t always
+      required. If you want to limit access to a room for certain users, you’ll need
+      to set up an authentication endpoint to enable permissions.
+
+      <ButtonLink className="not-markdown" href="/docs/rooms/authentication">
+        Set up authentication
+      </ButtonLink>
+    </StepContent>
+
+  </Step>
+</Steps>
+
+## What to read next
+
+Congratulations! You now have set up the foundation for your collaborative
+Tiptap text editor inside your Svelte application.
+
+- [@liveblocks/yjs API Reference](/docs/api-reference/liveblocks-yjs)
+- [@liveblocks/client API Reference](/docs/api-reference/liveblocks-client)
+- [Tiptap website](https://tiptap.dev)
