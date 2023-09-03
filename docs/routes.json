@@ -92,6 +92,11 @@
             "hidden": true
           },
           {
+            "title": "Yjs Quill Vue.js",
+            "path": "/get-started/yjs-quill-vuejs",
+            "hidden": true
+          },
+          {
             "title": "Yjs Quill JavaScript",
             "path": "/get-started/yjs-quill-javascript",
             "hidden": true
