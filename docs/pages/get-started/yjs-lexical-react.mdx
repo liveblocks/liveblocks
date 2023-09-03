@@ -125,15 +125,15 @@ We’d love to hear from you.
 
       export default Editor() {
         const room = useRoom();
+
+        // Lexical config
         const initialConfig = {
           // Don’t set default state, allow CollaborationPlugin to do it instead
           editorState: null,
           namespace: "Demo",
           nodes: [],
-          onError: (error: unknown) => {
-            throw error;
-          },
           theme: {},
+          onError: (error: unknown) => throw error,
         };
 
         return (
