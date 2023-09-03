@@ -70,7 +70,7 @@ We’d love to hear from you.
 
       // Set up Yjs document, shared text, and Liveblocks Yjs provider
       const yDoc = new Y.Doc();
-      const yText = ydoc.getText("quill");
+      const yText = yDoc.getText("quill");
       const yProvider = new LiveblocksProvider(room, yDoc);
 
       // Attach cursors plugin

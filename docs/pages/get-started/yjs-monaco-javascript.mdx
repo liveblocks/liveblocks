@@ -69,7 +69,7 @@ We’d love to hear from you.
 
       // Set up Yjs document, shared text, and Liveblocks Yjs provider
       const yDoc = new Y.Doc();
-      const yText = ydoc.getText("monaco");
+      const yText = yDoc.getText("monaco");
       const yProvider = new LiveblocksProvider(room, yDoc);
 
       // Set up the Monaco editor
