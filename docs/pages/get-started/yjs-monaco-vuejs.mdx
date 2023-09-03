@@ -61,14 +61,11 @@ We’d love to hear from you.
 
       // Set up Yjs document, shared text, and Liveblocks Yjs provider
       const yDoc = new Y.Doc();
-      const yText = yDoc.getText("quill");
+      const yText = yDoc.getText("monaco");
       const yProvider = new LiveblocksProvider(room, yDoc);
 
-      // Attach cursors plugin
-      Quill.register("modules/cursors", QuillCursors);
-
       const binding = ref(null);
-      const quill = ref(null);
+      const editor = ref(null);
 
       onMounted(() => {
         // Set up the Monaco editor
