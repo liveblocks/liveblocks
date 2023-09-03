@@ -147,11 +147,10 @@ We’d love to hear from you.
             />
             <CollaborationPlugin
               id="yjs-plugin"
-              providerFactory={(id, yjsDocMap) => {
-                const doc = new Y.Doc();
-                yjsDocMap.set(id, doc);
-                const provider = new LiveblocksProvider(room, doc) as Provider;
-                return provider;
+              providerFactory={(id, yDocMap) => {
+                const yDoc = new Y.Doc();
+                yDocMap.set(id, yDoc);
+                return new LiveblocksProvider(room, yDoc) as Provider;
               }}
               initialEditorState={initialEditorState}
               shouldBootstrap={true}
