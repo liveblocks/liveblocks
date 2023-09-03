@@ -77,6 +77,11 @@
             "hidden": true
           },
           {
+            "title": "Yjs Monaco Vue.js",
+            "path": "/get-started/yjs-monaco-vuejs",
+            "hidden": true
+          },
+          {
             "title": "Yjs Monaco JavaScript",
             "path": "/get-started/yjs-monaco-javascript",
             "hidden": true
