@@ -62,6 +62,11 @@
             "hidden": true
           },
           {
+            "title": "Yjs CodeMirror Svelte",
+            "path": "/get-started/yjs-codemirror-svelte",
+            "hidden": true
+          },
+          {
             "title": "Yjs CodeMirror JavaScript",
             "path": "/get-started/yjs-codemirror-javascript",
             "hidden": true
