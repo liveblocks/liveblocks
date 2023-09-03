@@ -72,6 +72,11 @@
             "hidden": true
           },
           {
+            "title": "Yjs Monaco Svelte",
+            "path": "/get-started/yjs-monaco-svelte",
+            "hidden": true
+          },
+          {
             "title": "Yjs Monaco JavaScript",
             "path": "/get-started/yjs-monaco-javascript",
             "hidden": true

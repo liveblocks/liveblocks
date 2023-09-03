@@ -93,9 +93,9 @@ We’d love to hear from you.
       });
 
       onDestroy(() => {
-        editor?.destroy();
+        binding?.destroy?.();
         client.leave(roomId);
-      })
+      });
       </script>
 
       <div bind:this={parent}></div>
