@@ -49,6 +49,7 @@ We’d love to hear from you.
 
       const roomId = "my-room";
       const element = ref(null);
+      const binding = ref(null);
 
       // Set up Liveblocks client
       const client = createClient({
@@ -67,8 +68,6 @@ We’d love to hear from you.
 
       // Attach cursors plugin
       Quill.register("modules/cursors", QuillCursors);
-
-      const binding = ref(null);
 
       onMounted(() => {
         // Set up Quill editor and modules

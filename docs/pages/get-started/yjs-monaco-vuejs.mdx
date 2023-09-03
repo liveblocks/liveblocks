@@ -48,6 +48,8 @@ We’d love to hear from you.
 
       const roomId = "my-room";
       const element = ref(null);
+      const editor = ref(null);
+      const binding = ref(null);
 
       // Set up Liveblocks client
       const client = createClient({
@@ -64,18 +66,15 @@ We’d love to hear from you.
       const yText = yDoc.getText("monaco");
       const yProvider = new LiveblocksProvider(room, yDoc);
 
-      const binding = ref(null);
-      const editor = ref(null);
-
       onMounted(() => {
         // Set up the Monaco editor
-        const editor = monaco.editor.create(element.value, {
+        editor.value = monaco.editor.create(element.value, {
           value: "",
           language: "javascript"
         })
 
         // Attach Yjs to Monaco
-        const binding = new MonacoBinding(
+        binding.value = new MonacoBinding(
           yText,
           editorRef.getModel(),
           new Set([editor]),
