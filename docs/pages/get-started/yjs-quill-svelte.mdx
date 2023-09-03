@@ -47,8 +47,7 @@ We’d love to hear from you.
       import { QuillBinding } from "y-quill";
       import QuillCursors from "quill-cursors";
 
-      let parent;
-      let editor;
+      let element;
       const roomId = "my-room";
 
       // Set up Liveblocks client
@@ -64,14 +63,14 @@ We’d love to hear from you.
 
         // Set up Yjs document, shared text, and Liveblocks Yjs provider
         const yDoc = new Y.Doc();
-        const yText = ydoc.getText("quill");
+        const yText = yDoc.getText("quill");
         const yProvider = new LiveblocksProvider(room, yDoc);
 
         // Attach cursors plugin
         Quill.register("modules/cursors", QuillCursors);
 
         // Set up Quill editor and modules
-        const quill = new Quill(parent, {
+        const quill = new Quill(element, {
           placeholder: "Start collaborating…",
           theme: "snow",
           modules: {
@@ -90,15 +89,18 @@ We’d love to hear from you.
 
         // Attach Yjs to Quill
         const binding = new QuillBinding(yText, quill, provider.awareness);
+
+        return () => {
+          binding.destroy();
+        };
       });
 
       onDestroy(() => {
-        binding?.destroy?.();
         client.leave(roomId);
       });
       </script>
 
-      <div bind:this={parent}></div>
+      <div bind:this={element}></div>
       ```
     </StepContent>
 

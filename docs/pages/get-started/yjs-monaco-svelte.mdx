@@ -43,13 +43,10 @@ We’d love to hear from you.
       import { createClient } from "@liveblocks/client";
       import LiveblocksProvider from "@liveblocks/yjs";
       import * as Y from "yjs";
-      import { Editor } from "@tiptap/core";
-      import StarterKit from "@tiptap/starter-kit";
-      import Collaboration from "@tiptap/extension-collaboration";
-      import CollaborationCursor from "@tiptap/extension-collaboration-cursor";
+      import * as monaco from "monaco-editor";
+      import { MonacoBinding } from "y-monaco";
 
       let element;
-      let editor;
       const roomId = "my-room";
 
       // Set up Liveblocks client
@@ -65,17 +62,17 @@ We’d love to hear from you.
 
         // Set up Yjs document, shared text, and Liveblocks Yjs provider
         const yDoc = new Y.Doc();
-        const yText = ydoc.getText("monaco");
+        const yText = yDoc.getText("monaco");
         const yProvider = new LiveblocksProvider(room, yDoc);
 
         // Set up the Monaco editor
-        editor = monaco.editor.create(element, {
+        const editor = monaco.editor.create(element, {
           value: "",
           language: "javascript"
         })
 
         // Attach Yjs to Monaco
-        binding = new MonacoBinding(
+        const binding = new MonacoBinding(
           yText,
           editorRef.getModel(),
           new Set([editor]),

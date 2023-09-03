@@ -49,7 +49,6 @@ We’d love to hear from you.
       import CollaborationCursor from "@tiptap/extension-collaboration-cursor";
 
       let element;
-      let editor;
       const roomId = "my-room";
 
       // Set up Liveblocks client
@@ -65,7 +64,7 @@ We’d love to hear from you.
 
         // Set up Yjs document, shared text, and Liveblocks Yjs provider
         const yDoc = new Y.Doc();
-        const yText = ydoc.getText("tiptap");
+        const yText = yDoc.getText("tiptap");
         const yProvider = new LiveblocksProvider(room, yDoc);
 
         // Set up the Tiptap editor
@@ -89,10 +88,13 @@ We’d love to hear from you.
             editor = editor
           },
         });
+
+        return () => {
+          editor.destroy();
+        };
       });
 
       onDestroy(() => {
-        editor?.destroy();
         client.leave(roomId);
       });
       </script>

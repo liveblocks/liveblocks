@@ -27,7 +27,7 @@ We’d love to hear from you.
     <StepContent>
 
       ```bash
-      npm install @liveblocks/client @liveblocks/yjs yjs  quill quill-cursors y-quill
+      npm install @liveblocks/client @liveblocks/yjs yjs quill quill-cursors y-quill
       ```
     </StepContent>
 
@@ -48,7 +48,7 @@ We’d love to hear from you.
       import QuillCursors from "quill-cursors";
 
       const roomId = "my-room";
-      const parent = ref(null);
+      const element = ref(null);
 
       // Set up Liveblocks client
       const client = createClient({
@@ -62,15 +62,17 @@ We’d love to hear from you.
 
       // Set up Yjs document, shared text, and Liveblocks Yjs provider
       const yDoc = new Y.Doc();
-      const yText = ydoc.getText("quill");
+      const yText = yDoc.getText("quill");
       const yProvider = new LiveblocksProvider(room, yDoc);
 
       // Attach cursors plugin
       Quill.register("modules/cursors", QuillCursors);
 
+      const binding = ref(null);
+
       onMounted(() => {
         // Set up Quill editor and modules
-        const quill = new Quill(parent.value, {
+        const quill = new Quill(element.value, {
           placeholder: "Start collaborating…",
           theme: "snow",
           modules: {
@@ -88,16 +90,17 @@ We’d love to hear from you.
         });
 
         // Attach Yjs to Quill
-        const binding = new QuillBinding(yText, quill, provider.awareness);
+        binding.value = new QuillBinding(yText, quill, provider.awareness);
       });
 
       onUnmounted(() => {
+        binding?.destroy?.();
         client.leave(roomId);
       });
       </script>
 
       <template>
-        <div ref="parent" />
+        <div ref="element" />
       </template>
       ```
     </StepContent>
