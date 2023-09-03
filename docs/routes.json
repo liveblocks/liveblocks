@@ -62,8 +62,18 @@
             "hidden": true
           },
           {
+            "title": "Yjs CodeMirror JavaScript",
+            "path": "/get-started/yjs-codemirror-javascript",
+            "hidden": true
+          },
+          {
             "title": "Yjs Monaco React",
             "path": "/get-started/yjs-monaco-react",
+            "hidden": true
+          },
+          {
+            "title": "Yjs Monaco JavaScript",
+            "path": "/get-started/yjs-monaco-javascript",
             "hidden": true
           },
           {
