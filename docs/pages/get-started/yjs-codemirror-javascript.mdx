@@ -47,7 +47,7 @@ We’d love to hear from you.
   </Step>
   
   <Step>
-    <StepTitle>Set up your collaborative CodeMirror text editor</StepTitle>
+    <StepTitle>Set up your collaborative CodeMirror code editor</StepTitle>
     <StepContent>
 
       ```js file="app.js"
@@ -59,43 +59,37 @@ We’d love to hear from you.
       import { EditorState } from "@codemirror/state";
       import { javascript } from "@codemirror/lang-javascript";
 
-      async function run() {
-        let PUBLIC_KEY = "{{PUBLIC_KEY}}";
-        let roomId = "my-room";
+      // Set up Liveblocks client
+      const client = createClient({
+        publicApiKey: "{{PUBLIC_KEY}}",
+      });
 
-        const client = createClient({
-          publicApiKey: PUBLIC_KEY,
-        });
+      // Enter a multiplayer room
+      const room = client.enter("my-room", {
+        initialPresence: {},
+      });
 
-        const room = client.enter(roomId, {
-          initialPresence: {},
-        });
+      // Set up Yjs document, shared text, and Liveblocks Yjs provider
+      const yDoc = new Y.Doc();
+      const yText = ydoc.getText("codemirror");
+      const yProvider = new LiveblocksProvider(room, yDoc);
 
-        // A Yjs document holds the shared data
-        const ydoc = new Y.Doc();
+      // Set up CodeMirror and extensions
+      const state = EditorState.create({
+        doc: yText.toString(),
+        extensions: [
+          basicSetup,
+          javascript(),
+          yCollab(ytext, yProvider.awareness, { undoManager }),
+        ],
+      });
 
-        // Define a shared text type on the document
-        const ytext = ydoc.getText("codemirror");
-
-        // Set up CodeMirror and extensions
-        const state = EditorState.create({
-          doc: ytext.toString(),
-          extensions: [
-            basicSetup,
-            javascript(),
-            yCollab(ytext, provider.awareness, { undoManager }),
-          ],
-        });
-
-        // Attach CodeMirror to element
-        const parent = document.querySelector("#editor");
-        view = new EditorView({
-          state,
-          parent,
-        });
-      }
-
-      run();
+      // Attach CodeMirror to element
+      const parent = document.querySelector("#editor");
+      view = new EditorView({
+        state,
+        parent,
+      });
       ```
     </StepContent>
 
@@ -120,8 +114,8 @@ We’d love to hear from you.
 
 ## What to read next
 
-Congratulations! You now have set up the foundation for your collaborative Quill
-text editor inside your JavaScript application.
+Congratulations! You now have set up the foundation for your collaborative
+CodeMirror code editor inside your JavaScript application.
 
 - [@liveblocks/yjs API Reference](/docs/api-reference/liveblocks-yjs)
 - [@liveblocks/client API Reference](/docs/api-reference/liveblocks-client)

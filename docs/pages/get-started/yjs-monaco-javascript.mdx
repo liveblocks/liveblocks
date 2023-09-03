@@ -1,9 +1,9 @@
 ---
 meta:
-  title: "Get started with Liveblocks, Quill, Yjs, and JavaScript"
+  title: "Get started with Liveblocks, Monaco, Yjs, and JavaScript"
   parentTitle: "Get started"
   description:
-    "Learn how to get started Liveblocks, Quill, Yjs, and JavaScript."
+    "Learn how to get started Liveblocks, Monaco Yjs, and JavaScript."
 ---
 
 Liveblocks is a real-time collaboration infrastructure for building performant
@@ -24,11 +24,11 @@ We’d love to hear from you.
 
 <Steps>
   <Step>
-    <StepTitle>Install Liveblocks, Yjs, and Quill</StepTitle>
+    <StepTitle>Install Liveblocks, Yjs, and Monaco</StepTitle>
     <StepContent>
 
       ```bash
-      npm install @liveblocks/client @liveblocks/yjs yjs quill quill-cursors y-quill
+      npm install @liveblocks/client @liveblocks/yjs yjs monaco-editor y-monaco
       ```
     </StepContent>
 
@@ -47,16 +47,15 @@ We’d love to hear from you.
   </Step>
   
   <Step>
-    <StepTitle>Set up your collaborative Quill text editor</StepTitle>
+    <StepTitle>Set up your collaborative Monaco code editor</StepTitle>
     <StepContent>
 
       ```js file="app.js"
       import { createClient } from "@liveblocks/client";
       import LiveblocksProvider from "@liveblocks/yjs";
       import * as Y from "yjs";
-      import Quill from "quill";
-      import { QuillBinding } from "y-quill";
-      import QuillCursors from "quill-cursors";
+      import * as monaco from "monaco-editor";
+      import { MonacoBinding } from "y-monaco";
 
       // Set up Liveblocks client
       const client = createClient({
@@ -70,33 +69,23 @@ We’d love to hear from you.
 
       // Set up Yjs document, shared text, and Liveblocks Yjs provider
       const yDoc = new Y.Doc();
-      const yText = ydoc.getText("quill");
+      const yText = ydoc.getText("monaco");
       const yProvider = new LiveblocksProvider(room, yDoc);
 
-      // Attach cursors plugin
-      Quill.register("modules/cursors", QuillCursors);
-
-      // Set up Quill editor and modules
+      // Set up the Monaco editor
       const parent = document.querySelector("#editor");
-      const quill = new Quill(parent, {
-        placeholder: "Start collaborating…",
-        theme: "snow",
-        modules: {
-          cursors: true,
-          toolbar: [
-            [{ header: [1, 2, false] }],
-            ["bold", "italic", "underline"],
-            ["code-block"],
-          ],
-          history: {
-            // Local undo shouldn’t undo changes made by other users
-            userOnly: true,
-          },
-        },
-      });
+      const editor = monaco.editor.create(parent, {
+        value: "",
+        language: "javascript"
+      })
 
-      // Attach Yjs to Quill
-      const binding = new QuillBinding(yText, quill, provider.awareness);
+      // Attach Yjs to Monaco
+      const monacoBinding = new MonacoBinding(
+        yText,
+        editorRef.getModel(),
+        new Set([editor]),
+        yProvider.awareness
+      );
       ```
     </StepContent>
 
@@ -121,9 +110,9 @@ We’d love to hear from you.
 
 ## What to read next
 
-Congratulations! You now have set up the foundation for your collaborative Quill
-text editor inside your JavaScript application.
+Congratulations! You now have set up the foundation for your collaborative
+Monaco code editor inside your JavaScript application.
 
 - [@liveblocks/yjs API Reference](/docs/api-reference/liveblocks-yjs)
 - [@liveblocks/client API Reference](/docs/api-reference/liveblocks-client)
-- [Quill website](https://quilljs.com)
+- [Monaco website](https://microsoft.github.io/monaco-editor/)
