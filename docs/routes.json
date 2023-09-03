@@ -67,6 +67,11 @@
             "hidden": true
           },
           {
+            "title": "Yjs CodeMirror Vue.js",
+            "path": "/get-started/yjs-codemirror-vuejs",
+            "hidden": true
+          },
+          {
             "title": "Yjs CodeMirror JavaScript",
             "path": "/get-started/yjs-codemirror-javascript",
             "hidden": true
