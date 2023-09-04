@@ -1,14 +1,13 @@
 ---
 meta:
-  title: "Get started with Liveblocks, Quill, Yjs, and JavaScript"
+  title: "Get started with Liveblocks, Quill, Yjs, and Vue.js"
   parentTitle: "Get started"
-  description:
-    "Learn how to get started Liveblocks, Quill, Yjs, and JavaScript."
+  description: "Learn how to get started Liveblocks, Quill, Yjs, and Vue.js."
 ---
 
 Liveblocks is a real-time collaboration infrastructure for building performant
 collaborative experiences. Follow the following steps to start adding
-collaboration to your JavaScript application using the APIs from the
+collaboration to your Vue.js application using the APIs from the
 [`@liveblocks/yjs`](/docs/api-reference/liveblocks-yjs) package.
 
 <Banner title="Public beta">
@@ -35,22 +34,12 @@ We’d love to hear from you.
   </Step>
   
   <Step>
-    <StepTitle>Create an HTML element</StepTitle>
-    <StepContent>
-
-      ```html
-      <div id="editor"></div>
-      ```
-
-    </StepContent>
-
-  </Step>
-  
-  <Step>
     <StepTitle>Set up your collaborative Quill text editor</StepTitle>
     <StepContent>
 
-      ```js file="app.js"
+      ```html file="Editor.vue"
+      <script setup>
+      import { ref, onMounted, onUnmounted } from "vue";
       import { createClient } from "@liveblocks/client";
       import LiveblocksProvider from "@liveblocks/yjs";
       import * as Y from "yjs";
@@ -58,13 +47,17 @@ We’d love to hear from you.
       import { QuillBinding } from "y-quill";
       import QuillCursors from "quill-cursors";
 
+      const roomId = "my-room";
+      const element = ref(null);
+      const binding = ref(null);
+
       // Set up Liveblocks client
       const client = createClient({
         publicApiKey: "{{PUBLIC_KEY}}",
       });
 
       // Enter a multiplayer room
-      const room = client.enter("my-room", {
+      const room = client.enter(roomId, {
         initialPresence: {},
       });
 
@@ -76,27 +69,38 @@ We’d love to hear from you.
       // Attach cursors plugin
       Quill.register("modules/cursors", QuillCursors);
 
-      // Set up Quill editor and modules
-      const parent = document.querySelector("#editor");
-      const quill = new Quill(parent, {
-        placeholder: "Start collaborating…",
-        theme: "snow",
-        modules: {
-          cursors: true,
-          toolbar: [
-            [{ header: [1, 2, false] }],
-            ["bold", "italic", "underline"],
-            ["code-block"],
-          ],
-          history: {
-            // Local undo shouldn’t undo changes made by other users
-            userOnly: true,
+      onMounted(() => {
+        // Set up Quill editor and modules
+        const quill = new Quill(element.value, {
+          placeholder: "Start collaborating…",
+          theme: "snow",
+          modules: {
+            cursors: true,
+            toolbar: [
+              [{ header: [1, 2, false] }],
+              ["bold", "italic", "underline"],
+              ["code-block"],
+            ],
+            history: {
+              // Local undo shouldn’t undo changes made by other users
+              userOnly: true,
+            },
           },
-        },
+        });
+
+        // Attach Yjs to Quill
+        binding.value = new QuillBinding(yText, quill, provider.awareness);
       });
 
-      // Attach Yjs to Quill
-      const binding = new QuillBinding(yText, quill, provider.awareness);
+      onUnmounted(() => {
+        binding?.destroy?.();
+        client.leave(roomId);
+      });
+      </script>
+
+      <template>
+        <div ref="element" />
+      </template>
       ```
     </StepContent>
 
@@ -121,9 +125,9 @@ We’d love to hear from you.
 
 ## What to read next
 
-Congratulations! You now have set up the foundation for your collaborative Quill
-text editor inside your JavaScript application.
+Congratulations! You now have set up the foundation for your collaborative
+Tiptap text editor inside your Vue.js application.
 
 - [@liveblocks/yjs API Reference](/docs/api-reference/liveblocks-yjs)
 - [@liveblocks/client API Reference](/docs/api-reference/liveblocks-client)
-- [Quill website](https://quilljs.com)
+- [Tiptap website](https://tiptap.dev)

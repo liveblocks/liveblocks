@@ -1,14 +1,13 @@
 ---
 meta:
-  title: "Get started with Liveblocks, Quill, Yjs, and JavaScript"
+  title: "Get started with Liveblocks, Monaco, Yjs, and Vue.js"
   parentTitle: "Get started"
-  description:
-    "Learn how to get started Liveblocks, Quill, Yjs, and JavaScript."
+  description: "Learn how to get started Liveblocks, Monaco, Yjs, and Vue.js."
 ---
 
 Liveblocks is a real-time collaboration infrastructure for building performant
 collaborative experiences. Follow the following steps to start adding
-collaboration to your JavaScript application using the APIs from the
+collaboration to your Vue.js application using the APIs from the
 [`@liveblocks/yjs`](/docs/api-reference/liveblocks-yjs) package.
 
 <Banner title="Public beta">
@@ -24,39 +23,33 @@ We’d love to hear from you.
 
 <Steps>
   <Step>
-    <StepTitle>Install Liveblocks, Yjs, and Quill</StepTitle>
+    <StepTitle>Install Liveblocks, Yjs, and Monaco</StepTitle>
     <StepContent>
 
       ```bash
-      npm install @liveblocks/client @liveblocks/yjs yjs quill quill-cursors y-quill
+      npm install @liveblocks/client @liveblocks/yjs yjs monaco-editor y-monaco
       ```
     </StepContent>
 
   </Step>
   
   <Step>
-    <StepTitle>Create an HTML element</StepTitle>
+    <StepTitle>Set up your collaborative Monaco code editor</StepTitle>
     <StepContent>
 
-      ```html
-      <div id="editor"></div>
-      ```
-
-    </StepContent>
-
-  </Step>
-  
-  <Step>
-    <StepTitle>Set up your collaborative Quill text editor</StepTitle>
-    <StepContent>
-
-      ```js file="app.js"
+      ```html file="Editor.vue"
+      <script setup>
+      import { ref, onMounted, onUnmounted } from "vue";
       import { createClient } from "@liveblocks/client";
       import LiveblocksProvider from "@liveblocks/yjs";
       import * as Y from "yjs";
-      import Quill from "quill";
-      import { QuillBinding } from "y-quill";
-      import QuillCursors from "quill-cursors";
+      import * as monaco from "monaco-editor";
+      import { MonacoBinding } from "y-monaco";
+
+      const roomId = "my-room";
+      const element = ref(null);
+      const editor = ref(null);
+      const binding = ref(null);
 
       // Set up Liveblocks client
       const client = createClient({
@@ -64,39 +57,41 @@ We’d love to hear from you.
       });
 
       // Enter a multiplayer room
-      const room = client.enter("my-room", {
+      const room = client.enter(roomId, {
         initialPresence: {},
       });
 
       // Set up Yjs document, shared text, and Liveblocks Yjs provider
       const yDoc = new Y.Doc();
-      const yText = yDoc.getText("quill");
+      const yText = yDoc.getText("monaco");
       const yProvider = new LiveblocksProvider(room, yDoc);
 
-      // Attach cursors plugin
-      Quill.register("modules/cursors", QuillCursors);
+      onMounted(() => {
+        // Set up the Monaco editor
+        editor.value = monaco.editor.create(element.value, {
+          value: "",
+          language: "javascript"
+        })
 
-      // Set up Quill editor and modules
-      const parent = document.querySelector("#editor");
-      const quill = new Quill(parent, {
-        placeholder: "Start collaborating…",
-        theme: "snow",
-        modules: {
-          cursors: true,
-          toolbar: [
-            [{ header: [1, 2, false] }],
-            ["bold", "italic", "underline"],
-            ["code-block"],
-          ],
-          history: {
-            // Local undo shouldn’t undo changes made by other users
-            userOnly: true,
-          },
-        },
+        // Attach Yjs to Monaco
+        binding.value = new MonacoBinding(
+          yText,
+          editorRef.getModel(),
+          new Set([editor]),
+          yProvider.awareness
+        );
       });
 
-      // Attach Yjs to Quill
-      const binding = new QuillBinding(yText, quill, provider.awareness);
+      onUnmounted(() => {
+        binding?.destroy();
+        editor?.dispose();
+        client.leave(roomId);
+      });
+      </script>
+
+      <template>
+        <div ref="element" />
+      </template>
       ```
     </StepContent>
 
@@ -121,9 +116,9 @@ We’d love to hear from you.
 
 ## What to read next
 
-Congratulations! You now have set up the foundation for your collaborative Quill
-text editor inside your JavaScript application.
+Congratulations! You now have set up the foundation for your collaborative
+Monaco code editor inside your Vue.js application.
 
 - [@liveblocks/yjs API Reference](/docs/api-reference/liveblocks-yjs)
 - [@liveblocks/client API Reference](/docs/api-reference/liveblocks-client)
-- [Quill website](https://quilljs.com)
+- [Monaco website](https://microsoft.github.io/monaco-editor/)
