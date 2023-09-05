@@ -415,7 +415,7 @@ describe("useCanUndo / useCanRedo", () => {
 });
 
 describe("useThreads", () => {
-  test("should return { isLoading: true } as initial state", async () => {
+  test("should return { isLoading: true } as initial state", () => {
     const { result } = renderHook(() => useThreads());
 
     expect(result.current).toEqual({ isLoading: true });

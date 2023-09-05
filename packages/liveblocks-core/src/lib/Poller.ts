@@ -29,7 +29,7 @@ type Context =
       remainingInterval: number;
     };
 
-export function makePoller(callback: () => void): Poller {
+export function makePoller(callback: () => Promise<void> | void): Poller {
   let context: Context = {
     state: "stopped",
     timeoutHandle: null,
@@ -38,12 +38,16 @@ export function makePoller(callback: () => void): Poller {
     remainingInterval: null,
   };
 
-  function poll() {
+  async function poll() {
+    await callback();
+
     if (context.state === "running") {
       schedule(context.interval);
     }
+  }
 
-    callback();
+  function triggerPoll() {
+    void poll();
   }
 
   function schedule(interval: number) {
@@ -51,7 +55,7 @@ export function makePoller(callback: () => void): Poller {
       state: "running",
       interval: context.state !== "stopped" ? context.interval : interval,
       lastScheduledAt: performance.now(),
-      timeoutHandle: setTimeout(poll, interval),
+      timeoutHandle: setTimeout(triggerPoll, interval),
       remainingInterval: null,
     };
   }
@@ -65,7 +69,7 @@ export function makePoller(callback: () => void): Poller {
       state: "running",
       interval: context.interval,
       lastScheduledAt: context.lastScheduledAt,
-      timeoutHandle: setTimeout(poll, remaining),
+      timeoutHandle: setTimeout(triggerPoll, remaining),
       remainingInterval: null,
     };
   }

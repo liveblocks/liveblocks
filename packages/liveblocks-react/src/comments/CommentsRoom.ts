@@ -105,7 +105,7 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
     isLoading: true,
   });
 
-  let fetchThreadsPromise: Promise<any> | null = null;
+  let fetchThreadsPromise: Promise<ThreadData<TThreadMetadata>[]> | null = null;
 
   // Temporary solution
   // The most basic conflict resolution
@@ -116,7 +116,7 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
   function endMutation() {
     numberOfMutations--;
     if (numberOfMutations === 0) {
-      revalidateThreads();
+      void revalidateThreads();
     }
   }
 
@@ -167,7 +167,7 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
     if (!unsubscribeRealtimeEvents) {
       unsubscribeRealtimeEvents = room.events.comments.subscribe(() => {
         pollingHub.threads.restart(getPollingInterval());
-        revalidateThreads();
+        void revalidateThreads();
       });
     }
 
