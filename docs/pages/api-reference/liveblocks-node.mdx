@@ -217,7 +217,7 @@ const { body, status } = await liveblocks.identifyUser(
 return new Response(body, { status });
 ```
 
-`userId` (required) is an identifier to uniquely identifies your user with
+`userId` (required) is a string identifier to uniquely identify your user with
 Liveblocks. This value will be used when counting unique MAUs in your Liveblocks
 dashboard. You can refer to these user IDs in the [Permissions REST API][] when
 assigning group permissions.

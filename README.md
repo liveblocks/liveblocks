@@ -37,9 +37,10 @@ Liveblocks is a fully integrated solution built around core products, each
 enabling a different facet of collaborative experiences:
 [Presence](https://liveblocks.io/docs/products/presence),
 [Broadcast](https://liveblocks.io/docs/products/broadcast),
-[Storage](https://liveblocks.io/docs/products/storage), and Comments (private
-beta). You can decide what products you want to use based on your requirements
-and collaborative experiences you’re looking to build.
+[Document](https://liveblocks.io/docs/products/document), and
+[Comments](https://liveblocks.io/docs/products/comments) (private beta). You can
+decide what products you want to use based on your requirements and
+collaborative experiences you’re looking to build.
 
 ### Rooms
 
@@ -58,17 +59,17 @@ forms, and more.
 
 - [`@liveblocks/client`](https://liveblocks.io/docs/api-reference/liveblocks-client)
 - [`@liveblocks/react`](https://liveblocks.io/docs/api-reference/liveblocks-react)
-- [`@liveblocks/zustand`](https://liveblocks.io/docs/api-reference/liveblocks-zustand)
 - [`@liveblocks/redux`](https://liveblocks.io/docs/api-reference/liveblocks-redux)
+- [`@liveblocks/zustand`](https://liveblocks.io/docs/api-reference/liveblocks-zustand)
+- [`@liveblocks/yjs`](https://liveblocks.io/docs/api-reference/liveblocks-yjs)
 
 ### Platform
 
 Liveblocks provides a fully-hosted platform built around a WebSocket edge
-infrastructure that scales to millions of users. With the platform, you get a
-lot of powerful tools such as
-[REST APIs](https://liveblocks.io/docs/api-reference/rest-api-endpoints),
+infrastructure that effortlessly scales to millions of users. The platform
+equips you with a set of powerful tools such as our
+[REST API](https://liveblocks.io/docs/api-reference/rest-api-endpoints),
 [webhooks](https://liveblocks.io/docs/platform/webhooks),
-[DevTools](https://liveblocks.io/docs/platform/devtools),
 [schema validation](https://liveblocks.io/docs/platform/schema-validation),
 analytics, and more.
 
