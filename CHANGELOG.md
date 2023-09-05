@@ -1,8 +1,17 @@
-# Unreleased
+# v1.2.4
+
+### `@liveblocks/node`
+
+- Fixes a bug where sending an empty (or non-string) user ID with `.identifyUser`
+  would confusingly get reported as an HTTP 503.
+
+# v1.2.3
 
 ### `@liveblocks/client`
 
 - Improve configuration error messages to be more user friendly
+- Fix bug where entering a new room could potentially initialize the undo stack
+  incorrectly
 
 ### `create-liveblocks-app`
 

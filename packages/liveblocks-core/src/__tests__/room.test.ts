@@ -92,15 +92,13 @@ function createTestableRoom<
   initialPresence: TPresence,
   authBehavior = AUTH_SUCCESS,
   socketBehavior = SOCKET_AUTOCONNECT_AND_ROOM_STATE(),
-  config?: Partial<RoomConfig>
+  config?: Partial<RoomConfig>,
+  initialStorage?: TStorage
 ) {
   const { wss, delegates } = defineBehavior(authBehavior, socketBehavior);
 
   const room = createRoom<TPresence, TStorage, TUserMeta, TRoomEvent>(
-    {
-      initialPresence,
-      initialStorage: undefined,
-    },
+    { initialPresence, initialStorage },
     makeRoomConfig(delegates, config)
   );
 
@@ -921,6 +919,33 @@ describe("room", () => {
         ],
       ]);
     });
+  });
+
+  test("missing storage keys should be properly initialized using initialStorage", async () => {
+    const initialPresence = {};
+    const initialStorage = { foo: 1234 };
+    const { room, wss } = createTestableRoom(
+      initialPresence,
+      undefined,
+      undefined,
+      undefined,
+      initialStorage
+    );
+
+    wss.onConnection((conn) => {
+      conn.server.send(
+        serverMessage({
+          type: ServerMsgCode.INITIAL_STORAGE_STATE,
+          items: [["root", { type: CrdtType.OBJECT, data: {} }]],
+        })
+      );
+    });
+
+    room.connect();
+    const storage = await room.getStorage();
+    expect(storage.root.toObject()).toEqual({ foo: 1234 });
+    //                                        ^^^ Added by the client, from initialStorage
+    expect(room.history.canUndo()).toBe(false);
   });
 
   test("storage should be initialized properly", async () => {

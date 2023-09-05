@@ -10,10 +10,10 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@liveblocks/client": "1.2.2-comments5",
-    "@liveblocks/node": "1.2.2-comments5",
-    "@liveblocks/react": "1.2.2-comments5",
-    "@liveblocks/react-comments": "1.2.2-comments5",
+    "@liveblocks/client": "1.2.2-comments6",
+    "@liveblocks/node": "1.2.2-comments6",
+    "@liveblocks/react": "1.2.2-comments6",
+    "@liveblocks/react-comments": "1.2.2-comments6",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },
