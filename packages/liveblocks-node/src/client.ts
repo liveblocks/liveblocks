@@ -42,6 +42,10 @@ type Identity = {
   groupIds: string[];
 };
 
+type ThreadParticipants = {
+  participantIds: string[];
+};
+
 /**
  * Interact with the Liveblocks API from your Node.js backend.
  */
@@ -195,7 +199,7 @@ export class Liveblocks {
 
     const resp = await this.get(`/v2/rooms/${roomId}/threads`);
 
-    const body = await resp.json();
+    const body = await (resp.json() as Promise<ThreadData[]>);
 
     if (resp.status !== 200) {
       throw {
@@ -222,7 +226,7 @@ export class Liveblocks {
 
     const resp = await this.get(`/v2/rooms/${roomId}/threads/${threadId}`);
 
-    const body = await resp.json();
+    const body = await (resp.json() as Promise<ThreadData>);
 
     if (resp.status !== 200) {
       throw {
@@ -247,16 +251,14 @@ export class Liveblocks {
   public async getThreadParticipants(params: {
     roomId: string;
     threadId: string;
-  }): Promise<{
-    participantIds: string[];
-  }> {
+  }): Promise<ThreadParticipants> {
     const { roomId, threadId } = params;
 
     const resp = await this.get(
       `/v2/rooms/${roomId}/threads/${threadId}/participants`
     );
 
-    const body = await resp.json();
+    const body = await (resp.json() as Promise<ThreadParticipants>);
 
     if (resp.status !== 200) {
       throw {
@@ -287,7 +289,7 @@ export class Liveblocks {
       `/v2/rooms/${roomId}/threads/${threadId}/comments/${commentId}`
     );
 
-    const body = await resp.json();
+    const body = await (resp.json() as Promise<CommentData>);
 
     if (resp.status !== 200) {
       throw {
