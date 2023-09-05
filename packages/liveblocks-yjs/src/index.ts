@@ -134,7 +134,7 @@ export default class LiveblocksProvider<
   P extends JsonObject,
   S extends LsonObject,
   U extends BaseUserMeta,
-  E extends Json
+  E extends Json,
 > extends Observable<unknown> {
   private room: Room<P, S, U, E>;
   private doc: Y.Doc;
@@ -179,7 +179,7 @@ export default class LiveblocksProvider<
           try {
             const localUpdate = Y.encodeStateAsUpdate(
               this.doc,
-              Base64.toUint8Array(stateVector as string)
+              Base64.toUint8Array(stateVector)
             );
             this.room.updateYDoc(Base64.fromUint8Array(localUpdate));
           } catch (e) {

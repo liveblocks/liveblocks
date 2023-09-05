@@ -1,6 +1,6 @@
+import type { CommentData, ThreadData } from "@liveblocks/core";
 import type { Response } from "node-fetch";
 import fetch from "node-fetch";
-import type { CommentData, ThreadData } from "@liveblocks/core"
 
 import { Session } from "./Session";
 import {
@@ -186,13 +186,11 @@ export class Liveblocks {
 
   /**
    * Gets all the threads in a room.
-   * 
+   *
    * @param params.roomId The room ID to get the threads from.
    * @returns A list of threads.
    */
-  public async getThreads(params: {
-    roomId: string;
-  }): Promise<ThreadData[]> {
+  public async getThreads(params: { roomId: string }): Promise<ThreadData[]> {
     const { roomId } = params;
 
     const resp = await this.get(`/v2/rooms/${roomId}/threads`);
@@ -211,12 +209,15 @@ export class Liveblocks {
 
   /**
    * Gets a thread.
-   * 
+   *
    * @param params.roomId The room ID to get the thread from.
    * @param params.threadId The thread ID.
    * @returns A thread.
    */
-  public async getThread(params: { roomId: string; threadId: string; }): Promise<ThreadData> {
+  public async getThread(params: {
+    roomId: string;
+    threadId: string;
+  }): Promise<ThreadData> {
     const { roomId, threadId } = params;
 
     const resp = await this.get(`/v2/rooms/${roomId}/threads/${threadId}`);
@@ -235,10 +236,10 @@ export class Liveblocks {
 
   /**
    * Gets a thread's participants.
-   * 
-   * Participants are users who have commented on the thread 
+   *
+   * Participants are users who have commented on the thread
    * or users and groups that have been mentioned in a comment.
-   * 
+   *
    * @param params.roomId The room ID to get the thread participants from.
    * @param params.threadId The thread ID to get the participants from.
    * @returns An object containing an array of participant IDs.
@@ -251,7 +252,9 @@ export class Liveblocks {
   }> {
     const { roomId, threadId } = params;
 
-    const resp = await this.get(`/v2/rooms/${roomId}/threads/${threadId}/participants`);
+    const resp = await this.get(
+      `/v2/rooms/${roomId}/threads/${threadId}/participants`
+    );
 
     const body = await resp.json();
 
@@ -267,18 +270,17 @@ export class Liveblocks {
 
   /**
    * Gets a thread's comment.
-   * 
+   *
    * @param params.roomId The room ID to get the comment from.
    * @param params.threadId The thread ID to get the comment from.
    * @param params.commentId The comment ID.
    * @returns A comment.
    */
-  public async getComment(params:
-    {
-      roomId: string;
-      threadId: string;
-      commentId: string;
-    }): Promise<CommentData> {
+  public async getComment(params: {
+    roomId: string;
+    threadId: string;
+    commentId: string;
+  }): Promise<CommentData> {
     const { roomId, threadId, commentId } = params;
 
     const resp = await this.get(

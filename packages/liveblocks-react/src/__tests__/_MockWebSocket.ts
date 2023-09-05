@@ -1,12 +1,12 @@
-import {
-  ServerMsgCode,
-  type RoomStateServerMsg,
+import type {
   BaseUserMeta,
-  CrdtType,
   Json,
   JsonObject,
+  type RoomStateServerMsg,
   ServerMsg,
 } from "@liveblocks/core";
+import { CrdtType, ServerMsgCode } from "@liveblocks/core";
+
 import { wait, waitFor } from "./_utils";
 
 /**

@@ -2,16 +2,16 @@ export { authorize } from "./authorize";
 export type { LiveblocksOptions } from "./client";
 export { Liveblocks } from "./client";
 export type {
-  StorageUpdatedEvent,
-  UserEnteredEvent,
-  UserLeftEvent,
-  RoomCreatedEvent,
-  RoomDeletedEvent,
   CommentCreatedEvent,
   CommentDeletedEvent,
   CommentEditedEvent,
+  RoomCreatedEvent,
+  RoomDeletedEvent,
+  StorageUpdatedEvent,
   ThreadCreatedEvent,
   ThreadMetadataUpdatedEvent,
+  UserEnteredEvent,
+  UserLeftEvent,
   WebhookEvent,
   WebhookRequest,
 } from "./webhooks";

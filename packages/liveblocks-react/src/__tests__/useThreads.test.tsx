@@ -1,10 +1,13 @@
-import { ThreadData, createClient } from "@liveblocks/core";
-import MockWebSocket from "./_MockWebSocket";
-import { createRoomContext } from "../factory";
-import { renderHook, waitFor, render, screen } from "@testing-library/react";
-import React, { Suspense } from "react";
+import type { ThreadData } from "@liveblocks/core";
+import { createClient } from "@liveblocks/core";
+import { render, renderHook, screen, waitFor } from "@testing-library/react";
+import type { ResponseComposition, RestContext, RestRequest } from "msw";
+import { rest } from "msw";
 import { setupServer } from "msw/node";
-import { ResponseComposition, RestContext, RestRequest, rest } from "msw";
+import React, { Suspense } from "react";
+
+import { createRoomContext } from "../factory";
+import MockWebSocket from "./_MockWebSocket";
 
 const THREADS_POLLING_INTERVAL_WITH_WS = 30000;
 

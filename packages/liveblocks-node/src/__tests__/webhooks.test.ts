@@ -143,7 +143,7 @@ describe("WebhookHandler", () => {
           createdAt: "2023-01-27T20:33:23.737Z",
         },
       ],
-    ])(`should verify a "%s" event`, (type, data) => {
+    ])('should verify a "%s" event', (type, data) => {
       const now = 1674851609000;
       jest.useFakeTimers({
         now,

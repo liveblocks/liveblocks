@@ -14,6 +14,7 @@ import type {
 } from "@liveblocks/core";
 import { makePoller } from "@liveblocks/core";
 import { nanoid } from "nanoid";
+import { useEffect } from "react";
 import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
 
 import type { CommentsApiError } from "./errors";
@@ -25,7 +26,6 @@ import {
   EditThreadMetadataError,
 } from "./errors";
 import { createStore } from "./lib/store";
-import { useEffect } from "react";
 
 const POLLING_INTERVAL_REALTIME = 30000;
 const POLLING_INTERVAL = 5000;

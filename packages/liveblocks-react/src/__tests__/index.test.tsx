@@ -1,10 +1,6 @@
 import { createClient, shallow } from "@liveblocks/client";
-import {
-  ClientMsgCode,
-  CrdtType,
-  ServerMsgCode,
-  ThreadData,
-} from "@liveblocks/core";
+import type { ThreadData } from "@liveblocks/core";
+import { ClientMsgCode, CrdtType, ServerMsgCode } from "@liveblocks/core";
 import { render } from "@testing-library/react";
 import { rest } from "msw";
 import { setupServer } from "msw/node";
@@ -23,8 +19,8 @@ import {
   useThreads,
   useUndo,
 } from "./_liveblocks.config";
-import { act, renderHook, wait } from "./_utils"; // Basically re-exports from @testing-library/react
 import MockWebSocket, { websocketSimulator } from "./_MockWebSocket";
+import { act, renderHook, wait } from "./_utils"; // Basically re-exports from @testing-library/react
 
 const server = setupServer(
   rest.post("/api/auth", (_, res, ctx) => {

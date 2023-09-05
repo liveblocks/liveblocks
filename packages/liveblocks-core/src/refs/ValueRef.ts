@@ -28,7 +28,7 @@ export class DerivedRef<
     [K in keyof Is]: Is[K] extends ImmutableRef<unknown>
       ? Is[K]["current"]
       : never;
-  }
+  },
 > extends ImmutableRef<T> {
   /** @internal */
   private _refs: Is;
