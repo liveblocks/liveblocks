@@ -9,39 +9,197 @@
       },
       {
         "title": "Get started",
-        "path": "/get-started",
+        "href": "/get-started",
         "routes": [
           {
             "title": "Next.js",
-            "path": "/get-started/nextjs"
+            "path": "/get-started/nextjs",
+            "hidden": true
           },
           {
             "title": "React",
-            "path": "/get-started/react"
+            "path": "/get-started/react",
+            "hidden": true
+          },
+          {
+            "title": "Comments",
+            "path": "/get-started/react-comments",
+            "hidden": true
           },
           {
             "title": "Redux",
-            "path": "/get-started/redux"
+            "path": "/get-started/redux",
+            "hidden": true
           },
           {
             "title": "Zustand",
-            "path": "/get-started/zustand"
+            "path": "/get-started/zustand",
+            "hidden": true
           },
           {
             "title": "Svelte",
-            "path": "/get-started/svelte"
+            "path": "/get-started/svelte",
+            "hidden": true
           },
           {
             "title": "Vue.js",
-            "path": "/get-started/vuejs"
+            "path": "/get-started/vuejs",
+            "hidden": true
           },
           {
             "title": "SolidJS",
-            "path": "/get-started/solidjs"
+            "path": "/get-started/solidjs",
+            "hidden": true
           },
           {
             "title": "JavaScript",
-            "path": "/get-started/javascript"
+            "path": "/get-started/javascript",
+            "hidden": true
+          },
+          {
+            "title": "Yjs CodeMirror React",
+            "path": "/get-started/yjs-codemirror-react",
+            "hidden": true
+          },
+          {
+            "title": "Yjs CodeMirror Svelte",
+            "path": "/get-started/yjs-codemirror-svelte",
+            "hidden": true
+          },
+          {
+            "title": "Yjs CodeMirror Vue.js",
+            "path": "/get-started/yjs-codemirror-vuejs",
+            "hidden": true
+          },
+          {
+            "title": "Yjs CodeMirror JavaScript",
+            "path": "/get-started/yjs-codemirror-javascript",
+            "hidden": true
+          },
+          {
+            "title": "Yjs Monaco React",
+            "path": "/get-started/yjs-monaco-react",
+            "hidden": true
+          },
+          {
+            "title": "Yjs Monaco Svelte",
+            "path": "/get-started/yjs-monaco-svelte",
+            "hidden": true
+          },
+          {
+            "title": "Yjs Monaco Vue.js",
+            "path": "/get-started/yjs-monaco-vuejs",
+            "hidden": true
+          },
+          {
+            "title": "Yjs Monaco JavaScript",
+            "path": "/get-started/yjs-monaco-javascript",
+            "hidden": true
+          },
+          {
+            "title": "Yjs Lexical React",
+            "path": "/get-started/yjs-lexical-react",
+            "hidden": true
+          },
+          {
+            "title": "Yjs Quill React",
+            "path": "/get-started/yjs-quill-react",
+            "hidden": true
+          },
+          {
+            "title": "Yjs Quill Svelte",
+            "path": "/get-started/yjs-quill-svelte",
+            "hidden": true
+          },
+          {
+            "title": "Yjs Quill Vue.js",
+            "path": "/get-started/yjs-quill-vuejs",
+            "hidden": true
+          },
+          {
+            "title": "Yjs Quill JavaScript",
+            "path": "/get-started/yjs-quill-javascript",
+            "hidden": true
+          },
+          {
+            "title": "Yjs Slate React",
+            "path": "/get-started/yjs-slate-react",
+            "hidden": true
+          },
+          {
+            "title": "Yjs Tiptap React",
+            "path": "/get-started/yjs-tiptap-react",
+            "hidden": true
+          },
+          {
+            "title": "Yjs Tiptap Svelte",
+            "path": "/get-started/yjs-tiptap-svelte",
+            "hidden": true
+          },
+          {
+            "title": "Yjs Tiptap Vue.js",
+            "path": "/get-started/yjs-tiptap-vuejs",
+            "hidden": true
+          },
+          {
+            "title": "Yjs Tiptap JavaScript",
+            "path": "/get-started/yjs-tiptap-javascript",
+            "hidden": true
+          },
+          {
+            "title": "Text editor",
+            "href": "/get-started/text-editor",
+            "hidden": true
+          },
+          {
+            "title": "Text editor / Lexical",
+            "href": "/get-started/text-editor/lexical",
+            "hidden": true
+          },
+          {
+            "title": "Text editor / Quill",
+            "href": "/get-started/text-editor/quill",
+            "hidden": true
+          },
+          {
+            "title": "Text editor / Slate",
+            "href": "/get-started/text-editor/slate",
+            "hidden": true
+          },
+          {
+            "title": "Text editor / Tiptap",
+            "href": "/get-started/text-editor/tiptap",
+            "hidden": true
+          },
+          {
+            "title": "Code editor",
+            "href": "/get-started/code-editor",
+            "hidden": true
+          },
+          {
+            "title": "Code editor / CodeMirror",
+            "href": "/get-started/code-editor/codemirror",
+            "hidden": true
+          },
+          {
+            "title": "Whiteboard",
+            "href": "/get-started/whiteboard",
+            "hidden": true
+          },
+          {
+            "title": "Form",
+            "href": "/get-started/form",
+            "hidden": true
+          },
+          {
+            "title": "Creative tool",
+            "href": "/get-started/creative-tool",
+            "hidden": true
+          },
+          {
+            "title": "Custom",
+            "href": "/get-started/custom",
+            "hidden": true
           }
         ]
       }
@@ -72,8 +230,18 @@
         "path": "/products/broadcast"
       },
       {
-        "title": "Storage",
-        "path": "/products/storage"
+        "title": "Document",
+        "path": "/products/document",
+        "routes": [
+          {
+            "title": "Storage",
+            "path": "/products/document/storage"
+          },
+          {
+            "title": "Yjs",
+            "path": "/products/document/yjs"
+          }
+        ]
       },
       {
         "title": "Comments",
@@ -86,31 +254,77 @@
     "routes": [
       {
         "title": "Authentication",
-        "path": "/rooms/authentication",
+        "href": "/rooms/authentication",
         "routes": [
           {
+            "title": "Access token permissions",
+            "href": "/rooms/authentication/access-token-permissions",
+            "hidden": true
+          },
+          {
+            "title": "ID token permissions",
+            "href": "/rooms/authentication/id-token-permissions",
+            "hidden": true
+          },
+          {
             "title": "Next.js",
-            "path": "/rooms/authentication/nextjs"
+            "path": "/rooms/authentication/id-token-permissions/nextjs",
+            "hidden": true
           },
           {
             "title": "Remix",
-            "path": "/rooms/authentication/remix"
+            "path": "/rooms/authentication/id-token-permissions/remix",
+            "hidden": true
           },
           {
             "title": "SvelteKit",
-            "path": "/rooms/authentication/sveltekit"
+            "path": "/rooms/authentication/id-token-permissions/sveltekit",
+            "hidden": true
           },
           {
             "title": "Nuxt.js",
-            "path": "/rooms/authentication/nuxtjs"
+            "path": "/rooms/authentication/id-token-permissions/nuxtjs",
+            "hidden": true
           },
           {
             "title": "Firebase",
-            "path": "/rooms/authentication/firebase"
+            "path": "/rooms/authentication/id-token-permissions/firebase",
+            "hidden": true
           },
           {
             "title": "Express",
-            "path": "/rooms/authentication/express"
+            "path": "/rooms/authentication/id-token-permissions/express",
+            "hidden": true
+          },
+          {
+            "title": "Next.js",
+            "path": "/rooms/authentication/access-token-permissions/nextjs",
+            "hidden": true
+          },
+          {
+            "title": "Remix",
+            "path": "/rooms/authentication/access-token-permissions/remix",
+            "hidden": true
+          },
+          {
+            "title": "SvelteKit",
+            "path": "/rooms/authentication/access-token-permissions/sveltekit",
+            "hidden": true
+          },
+          {
+            "title": "Nuxt.js",
+            "path": "/rooms/authentication/access-token-permissions/nuxtjs",
+            "hidden": true
+          },
+          {
+            "title": "Firebase",
+            "path": "/rooms/authentication/access-token-permissions/firebase",
+            "hidden": true
+          },
+          {
+            "title": "Express",
+            "path": "/rooms/authentication/access-token-permissions/express",
+            "hidden": true
           }
         ]
       },
@@ -120,7 +334,52 @@
       },
       {
         "title": "Permissions",
-        "path": "/rooms/permissions"
+        "path": "/rooms/permissions",
+        "routes": [
+          {
+            "title": "With access tokens",
+            "path": "/rooms/permissions/access-token"
+          },
+          {
+            "title": "With ID tokens",
+            "path": "/rooms/permissions/id-token"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "title": "Errors",
+    "hidden": true,
+    "routes": [
+      {
+        "title": "atob polyfill is missing",
+        "path": "/errors/liveblocks-client/atob-polyfill"
+      },
+      {
+        "title": "RoomProvider id property is required",
+        "path": "/errors/liveblocks-react/RoomProvider-id-property-is-required"
+      },
+      {
+        "title": "Cross-linked Liveblocks versions are found in your project",
+        "path": "/errors/cross-linked"
+      },
+      {
+        "title": "Multiple copies of Liveblocks are being loaded in your project",
+        "path": "/errors/dupes"
+      }
+    ]
+  },
+  {
+    "title": "Tools",
+    "routes": [
+      {
+        "title": "DevTools",
+        "path": "/tools/devtools"
+      },
+      {
+        "title": "Next.js Starter Kit",
+        "path": "/tools/nextjs-starter-kit"
       }
     ]
   },
@@ -136,12 +395,21 @@
         "path": "/api-reference/liveblocks-react"
       },
       {
+        "title": "@liveblocks/react-comments",
+        "path": "/api-reference/liveblocks-react-comments",
+        "hidden": true
+      },
+      {
         "title": "@liveblocks/redux",
         "path": "/api-reference/liveblocks-redux"
       },
       {
         "title": "@liveblocks/zustand",
         "path": "/api-reference/liveblocks-zustand"
+      },
+      {
+        "title": "@liveblocks/yjs",
+        "path": "/api-reference/liveblocks-yjs"
       },
       {
         "title": "@liveblocks/node",
@@ -159,33 +427,27 @@
     ]
   },
   {
-    "title": "Errors",
-    "hidden": true,
-    "routes": [
-      {
-        "title": "atob polyfill is missing",
-        "path": "/errors/liveblocks-client/atob-polyfill"
-      },
-      {
-        "title": "RoomProvider id property is required",
-        "path": "/errors/liveblocks-react/RoomProvider-id-property-is-required"
-      }
-    ]
-  },
-  {
     "title": "Platform",
     "routes": [
       {
-        "title": "Next.js Starter Kit",
-        "path": "/platform/nextjs-starter-kit"
+        "title": "WebSocket infrastructure",
+        "path": "/platform/websocket-infrastructure"
       },
       {
-        "title": "DevTools",
-        "path": "/platform/devtools"
+        "title": "Projects",
+        "path": "/platform/projects"
+      },
+      {
+        "title": "Analytics",
+        "path": "/platform/analytics"
       },
       {
         "title": "Webhooks",
         "path": "/platform/webhooks"
+      },
+      {
+        "title": "REST API",
+        "path": "/platform/rest-api"
       },
       {
         "title": "Schema validation",
@@ -198,8 +460,22 @@
         ]
       },
       {
-        "title": "Pricing",
-        "path": "/platform/pricing"
+        "title": "Account management",
+        "path": "/platform/account-management",
+        "routes": [
+          {
+            "title": "Create an account",
+            "path": "/platform/account-management/create-an-account"
+          },
+          {
+            "title": "Manage team members",
+            "path": "/platform/account-management/manage-team-members"
+          }
+        ]
+      },
+      {
+        "title": "Plans",
+        "path": "/platform/plans"
       },
       {
         "title": "Limits",
@@ -231,25 +507,16 @@
           {
             "title": "Upgrading to 1.0",
             "path": "/platform/upgrading/1.0"
+          },
+          {
+            "title": "Upgrading to 1.2",
+            "path": "/platform/upgrading/1.2"
           }
         ]
       },
       {
         "title": "Troubleshooting",
         "path": "/platform/troubleshooting"
-      }
-    ]
-  },
-  {
-    "title": "Updates",
-    "routes": [
-      {
-        "title": "System status",
-        "href": "https://liveblocks.statuspage.io/"
-      },
-      {
-        "title": "Release notes",
-        "href": "https://github.com/liveblocks/liveblocks/releases"
       }
     ]
   }

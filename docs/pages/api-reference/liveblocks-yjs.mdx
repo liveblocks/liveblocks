@@ -6,28 +6,393 @@ meta:
 alwaysShowAllNavigationLevels: false
 ---
 
-## LiveblocksProvider
+`@liveblocks/yjs` is a [Yjs](https://yjs.dev/) provider enabling you to use
+Liveblocks as the hosted back end of your real-time collaborative application.
+Read our [getting started](/docs/get-started) guides to learn more.
 
-The `LiveblocksProvider` lets you connect a Yjs doc to Liveblocks Presence and
-Storage features. Any changes you make to the Yjs doc will be stored on
-Liveblocks servers and synced with other clients in the room.
+<Banner title="Public beta">
 
-```js
+Yjs support is currently in beta. If you have any questions or feedback, please
+reach out to us via the dedicated Discord channel,
+[#yjs-beta](https://discord.com/channels/913109211746009108/1123560088997728328).
+We’d love to hear from you.
+
+</Banner>
+
+## LiveblocksProvider [#LiveblocksProvider]
+
+`LiveblocksProvider` is a [Yjs provider](https://github.com/yjs/yjs#providers)
+that allows you to connect a Yjs document to Liveblocks. Any changes you make to
+the document will be stored on Liveblocks servers and synchronized with other
+clients in the room.
+
+You can connect by creating a Yjs document, then passing it to
+`LiveblocksProvider` along with the currently connected Liveblocks room.
+
+```ts highlight="11-13"
+import * as Y from "yjs";
 import { createClient } from "@liveblocks/client";
 import LiveblocksProvider from "@liveblocks/yjs";
-import * as Y from "yjs";
 
 const client = createClient({
   publicApiKey: "{{PUBLIC_KEY}}",
 });
 
 const room = client.enter("your-room-id", { initialPresence: {} });
-const doc = new Y.Doc();
 
-const provider = new LiveblocksProvider(room, doc);
+// Create Yjs document and provider
+const yDoc = new Y.Doc();
+const yProvider = new LiveblocksProvider(room, yDoc);
 ```
 
-## Awareness
+When using [`@liveblocks/react`][] you can connect by using `LiveblocksProvider`
+within an effect, taking the room from [`useRoom`][], and cleaning up
+afterwards.
 
-A `LiveblocksProvider` has an `awareness` property, backed by Liveblocks
-presence. You can pass it to various bindings which implement awareness.
+```ts highlight="7,10-12"
+import { useEffect } from "react";
+import * as Y from "yjs";
+import LiveblocksProvider from "@liveblocks/yjs";
+import { useRoom } from "../liveblocks.config.ts";
+
+function Component() {
+  const room = useRoom();
+
+  useEffect(() => {
+    // Create Yjs document and provider
+    const yDoc = new Y.Doc();
+    const yProvider = new LiveblocksProvider(room, yDoc);
+
+    // ...
+
+    return () => {
+      yDoc.destroy();
+      yProvider.destroy();
+    };
+  }, [room]);
+
+  // ...
+}
+```
+
+### LiveblocksProvider.awareness [#LiveblocksProvider.awareness]
+
+The [awareness](#Awareness) instance attached to the provider.
+
+```ts
+// Yjs awareness
+const awareness = yProvider.awareness;
+```
+
+### LiveblocksProvider.destroy
+
+Cleanup function. Destroys the [`LiveblocksProvider`][] instance and removes all
+resources.
+
+```ts
+// Clean up yProvider
+yProvider.destroy();
+```
+
+### LiveblocksProvider.on("sync") [#LiveblocksProvider.on.sync]
+
+Add an event listener for the `sync` event. The `sync` event is triggered when
+the client has received content from the server. Can be used to fire events when
+the document has loaded.
+
+```ts
+// Listen for the sync event
+yProvider.on("sync", (isSynced: boolean) => {
+  if (isSynced === true) {
+    // Yjs content is synchronized and ready
+  } else {
+    // Yjs content is not synchronized
+  }
+});
+```
+
+Aliased by `LiveblocksProvider.on("synced")`.
+
+```ts
+// "sync" and "synced" both listen to the same event
+yProvider.on("sync", (sync: boolean) => /* ... */);
+yProvider.on("synced", (sync: boolean) => /* ... */);
+```
+
+### LiveblocksProvider.off("sync") [#LiveblocksProvider.off.sync]
+
+Remove an event listener for the `sync` event. The `sync` event is triggered
+when the client has received content from the server. Used to clean up
+[`LiveblocksProvider.on("sync")`][].
+
+```ts
+const handleSync = (synced: boolean) => {};
+yProvider.on("sync", handleSync);
+
+// Clean up sync event
+yProvider.off("sync", handleSync);
+```
+
+Aliased by `LiveblocksProvider.on("synced")`.
+
+```ts
+// "sync" and "synced" both listen to the same event
+yProvider.off("sync", (sync: boolean) => /* ... */);
+yProvider.off("synced", (sync: boolean) => /* ... */);
+```
+
+### LiveblocksProvider.once("sync") [#LiveblocksProvider.once.sync]
+
+Add a one-time event listener for the `sync` event. The `sync` event is
+triggered when the client has received content from the server. Can be used to
+fire events when the document has loaded.
+
+```ts
+// Listen for the sync event only once
+yProvider.on("sync", (isSynced: boolean) => {
+  if (isSynced === true) {
+    // Yjs content is synchronized and ready
+  } else {
+    // Yjs content is not synchronized
+  }
+});
+```
+
+Aliased by `LiveblocksProvider.once("synced")`.
+
+```ts
+// "sync" and "synced" both listen to the same event
+yProvider.once("sync", (sync: boolean) => /* ... */);
+yProvider.once("synced", (sync: boolean) => /* ... */);
+```
+
+### LiveblocksProvider.emit("sync") [#LiveblocksProvider.emit.sync]
+
+Synchronously call each listener for the `sync` event in the order they were
+registered, passing the supplied arguments to each.
+
+```ts
+// Call each listener and pass `true` as an argument
+yProvider.emit("sync", true);
+```
+
+Aliased by `LiveblocksProvider.emit("synced")`.
+
+```ts
+// "sync" and "synced" both listen to the same event
+yProvider.emit("sync" /* , ... */);
+yProvider.emit("synced" /* , ... */);
+```
+
+### LiveblocksProvider.synced [#LiveblocksProvider.synced]
+
+Boolean. Returns whether the client is synchronized with the back end.
+
+```ts
+// Check if Yjs content is synchronized with the server
+const isSynced: boolean = yProvider.synced;
+```
+
+### LiveblocksProvider.connect [#LiveblocksProvider.connect]
+
+Does nothing, added for compatibility. Connections are handled by the
+[Liveblocks client](https://liveblocks.io/docs/api-reference/liveblocks-client#createClient).
+
+### LiveblocksProvider.disconnect [#LiveblocksProvider.disconnect]
+
+Does nothing, added for compatibility. Connections are handled by the
+[Liveblocks client](https://liveblocks.io/docs/api-reference/liveblocks-client#createClient).
+
+## Awareness [#Awareness]
+
+[`LiveblocksProvider`][] instances have an `awareness` property, which is
+powered by
+[Liveblocks Presence](/docs/api-reference/liveblocks-client#Room.getPresence).
+You can pass it to various bindings which implement awareness, for example
+plugins that enable multiplayer cursors in text editors.
+
+```ts
+const yDoc = new Y.Doc();
+const yProvider = new LiveblocksProvider(room, yDoc);
+
+// Yjs awareness
+const awareness = yProvider.awareness;
+```
+
+Because awareness is part of presence, it’s also accessible with
+[`room.getPresence`][] and [`useMyPresence`][] under the `__yjs` property.
+
+```ts
+// Yjs awareness
+const awareness = room.getPresence().__yjs;
+```
+
+### Awareness.doc [#Awareness.doc]
+
+The Yjs document that the current awareness instance is attached to.
+
+```ts
+// The current Yjs document
+const yDoc: Y.Doc = awareness.doc;
+```
+
+### Awareness.clientId [#Awareness.clientId]
+
+A unique number identifying which client this awareness object is attached to.
+
+```ts
+// A unique number representing the current user
+const clientId: number = awareness.clientId;
+```
+
+### Awareness.getLocalState [#Awareness.getLocalState]
+
+Get the current user’s awareness state.
+
+```ts
+// The current user’s awareness
+const localState: unknown = awareness.getLocalState();
+```
+
+### Awareness.setLocalState [#Awareness.setLocalState]
+
+Set the current user’s awareness state. Accepts JSON-compatible objects.
+
+```ts
+// Set the current user’s awareness
+awareness.setLocalState({
+  user: {
+    name: "Jonathan",
+  },
+});
+```
+
+### Awareness.setLocalStateField [#Awareness.setLocalStateField]
+
+Set a single property in the current user’s awareness state. Accepts
+JSON-compatible objects, or `null` to remove a property.
+
+```ts
+// Set a single property on the current user’s awareness
+awareness.setLocalStateField("user", { name: "Jonathan" });
+```
+
+### Awareness.getStates [#Awareness.getStates]
+
+Returns a `Map` of states for each client, with each user’s unique `clientId` as
+the key.
+
+```ts
+// A Map of each user’s awareness state
+const states: Map<number, unknown> = awareness.getStates();
+```
+
+### Awareness.states [#Awareness.states]
+
+A `Map` of states for each client, with each user’s unique `clientId` as the
+key.
+
+```ts
+// A Map of each user’s awareness state
+const states: Map<number, unknown> = awareness.states;
+```
+
+### Awareness.meta [#Awareness.meta]
+
+Provided for compatibility, but generally not necessary. This would be used for
+handling user awareness timeouts, but internally awareness uses Liveblocks
+Presence, and this handles it for you.
+
+```ts
+const meta: Map<number, { click: number; lastUpdated: number }> =
+  awareness.meta;
+```
+
+### Awareness.destroy [#Awareness.destroy]
+
+Provided for compatibility, but generally not necessary. Cleanup function.
+Destroys the [`Awareness`][] instance and removes all resources. Used internally
+by [`LiveblocksProvider`][].
+
+```ts
+// Cleanup function
+awareness.destroy();
+```
+
+### Awareness.on("destroyed") [#Awareness.on.destroyed]
+
+Provided for compatibility, but generally not necessary. Add an event listener
+for the `destroy` event. The `destroy` event is triggered when
+[`awareness.destroy`][] has been called.
+
+```ts
+awareness.on("destroyed", () => {
+  // Awareness has been cleaned up
+});
+```
+
+### Awareness.off("destroyed") [#Awareness.off.destroyed]
+
+Provided for compatibility, but generally not necessary. Remove an event
+listener for the `destroy` event. The `destroy` event is triggered when
+[`awareness.destroy`][] has been called. Used to clean up
+[`Awareness.on("destroyed")`.]
+
+```ts
+const handleDestroy = () => {};
+awareness.on("destroyed", handleDestroy);
+
+// Clean up destroy event
+awareness.off("destroyed", handleDestroy);
+```
+
+### Awareness.once("destroyed") [#Awareness.once.destroyed]
+
+Provided for compatibility, but generally not necessary. Add a one-time event
+listener for the `destroy` event. The `destroy` event is triggered when
+[`awareness.destroy`][] has been called.
+
+```ts
+awareness.once("destroyed", () => {
+  // Awareness has been cleaned up
+});
+```
+
+### Awareness.emit("destroyed") [#Awareness.emit.destroyed]
+
+Synchronously call each listener for the `destroy` event in the order they were
+registered, passing the supplied arguments to each.
+
+```ts
+// Call each listener and pass `true` as an argument
+awareness.emit("destroy", true);
+```
+
+[`@liveblocks/react`]: /docs/api-reference/liveblocks-react
+[`useRoom`]: /docs/api-reference/liveblocks-react#useRoom
+[`room.getPresence`]: /docs/api-reference/liveblocks-client#Room.getPresence
+[`useMyPresence`]: /docs/api-reference/liveblocks-react#useMyPresence
+[`LiveblocksProvider`]: #LiveblocksProvider
+[`LiveblocksProvider.awareness]: #LiveblocksProvider.awareness
+[`LiveblocksProvider.destroy]: #LiveblocksProvider.destroy
+[`LiveblocksProvider.on("sync")`]: #LiveblocksProvider.on.sync
+[`LiveblocksProvider.off("sync")`]: #LiveblocksProvider.off.sync
+[`LiveblocksProvider.once("sync")`]: #LiveblocksProvider.once.sync
+[`LiveblocksProvider.emit("sync")`]: #LiveblocksProvider.emit.sync
+[`LiveblocksProvider.synced`]: #LiveblocksProvider.synced
+[`LiveblocksProvider.connect`]: #LiveblocksProvider.connect
+[`LiveblocksProvider.disconnect`]: #LiveblocksProvider.disconnect
+[`Awareness`]: #Awareness
+[`Awareness.doc`]: #Awareness.doc
+[`Awareness.clientId]: #Awareness.clientId
+[`Awareness.getLocalState`]: #Awareness.getLocalState
+[`Awareness.setLocalState`]: #Awareness.setLocalState
+[`Awareness.setLocalStateField`]: #Awareness.setLocalStateField
+[`Awareness.getStates`]: #Awareness.getStates
+[`Awareness.states`]: #Awareness.states
+[`Awareness.destroy`]: #Awareness.destroy
+[`Awareness.meta`]: #Awareness.meta
+[`Awareness.on("destroyed")`]: #Awareness.on.destroyed
+[`Awareness.off("destroyed")`]: #Awareness.off.destroyed
+[`Awareness.once("destroyed")`]: #Awareness.once.destroyed
+[`Awareness.emit("destroyed")`]: #Awareness.emit.destroyed

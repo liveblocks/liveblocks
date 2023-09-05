@@ -11,6 +11,7 @@ import type {
 } from "@liveblocks/client";
 import type { LegacyConnectionStatus } from "@liveblocks/core";
 import {
+  detectDupes,
   legacy_patchImmutableObject,
   lsonToJson,
   patchLiveObjectKey,
@@ -24,6 +25,9 @@ import {
   mappingValueShouldBeABoolean,
   missingClient,
 } from "./errors";
+import { PKG_FORMAT, PKG_NAME, PKG_VERSION } from "./version";
+
+detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
 
 export type Mapping<T> = {
   [K in keyof T]?: boolean;
@@ -41,7 +45,7 @@ const ACTION_TYPES = {
 
 type LiveblocksContext<
   TPresence extends JsonObject,
-  TUserMeta extends BaseUserMeta
+  TUserMeta extends BaseUserMeta,
 > = {
   /**
    * Other users in the room. Empty no room is currently synced
@@ -80,7 +84,7 @@ type LiveblocksContext<
 export type LiveblocksState<
   TState,
   TPresence extends JsonObject,
-  TUserMeta extends BaseUserMeta
+  TUserMeta extends BaseUserMeta,
 > = WithLiveblocks<TState, TPresence, TUserMeta>;
 
 /**
@@ -89,7 +93,7 @@ export type LiveblocksState<
 export type WithLiveblocks<
   TState,
   TPresence extends JsonObject,
-  TUserMeta extends BaseUserMeta
+  TUserMeta extends BaseUserMeta,
 > = TState & { readonly liveblocks: LiveblocksContext<TPresence, TUserMeta> };
 
 const internalEnhancer = <TState>(options: {
@@ -235,7 +239,7 @@ const internalEnhancer = <TState>(options: {
         );
 
         unsubscribeCallbacks.push(
-          room.events.me.subscribe(() => {
+          room.events.myPresence.subscribe(() => {
             if (isPatching === false) {
               store.dispatch({
                 type: ACTION_TYPES.PATCH_REDUX_STATE,

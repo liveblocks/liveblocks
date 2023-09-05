@@ -1,5 +1,5 @@
 {
-  "name": "@liveblocks/sveltekit-live-avatars",
+  "name": "@liveblocks-examples/sveltekit-live-avatars",
   "description": "This example shows how to build a live avatar stack with Liveblocks and SvelteKit.",
   "license": "Apache-2.0",
   "private": true,
@@ -21,7 +21,7 @@
     "vite": "^4.0.4"
   },
   "dependencies": {
-    "@liveblocks/client": "^1.1.1",
-    "@liveblocks/node": "^1.1.1"
+    "@liveblocks/client": "^1.2.3",
+    "@liveblocks/node": "^1.2.3"
   }
 }

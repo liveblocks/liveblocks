@@ -1,3 +1,8 @@
+import { detectDupes } from "./dupe-detection";
+import { PKG_FORMAT, PKG_NAME, PKG_VERSION } from "./version";
+
+detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
+
 /**
  * PRIVATE / INTERNAL APIS
  * -----------------------
@@ -35,7 +40,8 @@ export type {
   LiveObjectUpdate,
   StorageUpdate,
 } from "./crdts/StorageUpdates";
-export type { ToImmutable, toPlainLson } from "./crdts/utils";
+export type { ToImmutable } from "./crdts/utils";
+export { toPlainLson } from "./crdts/utils";
 export {
   legacy_patchImmutableObject,
   lsonToJson,
@@ -61,6 +67,7 @@ export {
   tryParseJson,
   withTimeout,
 } from "./lib/utils";
+export type { CustomAuthenticationResult } from "./protocol/Authentication";
 export type { BaseUserMeta } from "./protocol/BaseUserMeta";
 export type {
   BroadcastEventClientMsg,
@@ -138,6 +145,7 @@ export type {
   PlainLsonObject,
 } from "./types/PlainLson";
 export type { User } from "./types/User";
+export { detectDupes };
 
 /**
  * Helper type to help users adopt to Lson types from interface definitions.

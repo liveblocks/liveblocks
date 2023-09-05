@@ -3,7 +3,7 @@
   "extends": "../../shared/tsconfig.common.json",
 
   "compilerOptions": {
-    "target": "es2015",
+    "target": "es2020",
     "module": "es2020"
   },
   "include": ["src/**/*"]

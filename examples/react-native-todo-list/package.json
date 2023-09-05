@@ -1,17 +1,17 @@
 {
-  "name": "@liveblocks/react-native-todo-list",
+  "name": "@liveblocks-examples/react-native-todo-list",
   "description": "This example shows how to build a collaborative to-do list with Liveblocks and React Native.",
   "license": "Apache-2.0",
   "private": true,
   "scripts": {
     "android": "react-native run-android",
     "ios": "react-native run-ios",
-    "start": "react-native start",
+    "dev": "react-native start",
     "test": "jest"
   },
   "dependencies": {
-    "@liveblocks/client": "^1.1.1",
-    "@liveblocks/react": "^1.1.1",
+    "@liveblocks/client": "^1.2.3",
+    "@liveblocks/react": "^1.2.3",
     "base-64": "^1.0.0",
     "react": "^17.0.2",
     "react-native": "^0.68.2",

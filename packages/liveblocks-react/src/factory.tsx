@@ -21,7 +21,7 @@ import {
   errorIf,
 } from "@liveblocks/core";
 import * as React from "react";
-import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector";
+import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector.js";
 
 import { useInitial, useRerender } from "./hooks";
 import type {
@@ -73,7 +73,7 @@ function makeMutationContext<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
   TUserMeta extends BaseUserMeta,
-  TRoomEvent extends Json
+  TRoomEvent extends Json,
 >(
   room: Room<TPresence, TStorage, TUserMeta, TRoomEvent>
 ): MutationContext<TPresence, TStorage, TUserMeta> {
@@ -91,9 +91,6 @@ function makeMutationContext<
 
     get self() {
       const self = room.getSelf();
-      // NOTE: We could use room.isSelfAware() here to keep the check
-      // consistent with `others`, but we also want to refine the `null` case
-      // away here.
       if (self === null) {
         throw new Error(errmsg);
       }
@@ -102,7 +99,7 @@ function makeMutationContext<
 
     get others() {
       const others = room.getOthers();
-      if (!room.isSelfAware()) {
+      if (room.getSelf() === null) {
         throw new Error(errmsg);
       }
       return others;
@@ -116,7 +113,7 @@ export function createRoomContext<
   TPresence extends JsonObject,
   TStorage extends LsonObject = LsonObject,
   TUserMeta extends BaseUserMeta = BaseUserMeta,
-  TRoomEvent extends Json = never
+  TRoomEvent extends Json = never,
 >(
   client: Client
 ): RoomContextBundle<TPresence, TStorage, TUserMeta, TRoomEvent> {
@@ -225,10 +222,10 @@ export function createRoomContext<
 
   function useMyPresence(): [
     TPresence,
-    (patch: Partial<TPresence>, options?: { addToHistory: boolean }) => void
+    (patch: Partial<TPresence>, options?: { addToHistory: boolean }) => void,
   ] {
     const room = useRoom();
-    const subscribe = room.events.me.subscribe;
+    const subscribe = room.events.myPresence.subscribe;
     const getSnapshot = room.getPresence;
     const presence = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
     const setPresence = room.updatePresence;
@@ -427,24 +424,11 @@ export function createRoomContext<
     type Selection = T | null;
 
     const room = useRoom();
-
-    const subscribe = React.useCallback(
-      (onChange: () => void) => {
-        const unsub1 = room.events.me.subscribe(onChange);
-        const unsub2 = room.events.connection.subscribe(onChange);
-        return () => {
-          unsub1();
-          unsub2();
-        };
-      },
-      [room]
-    );
-
+    const subscribe = room.events.self.subscribe;
     const getSnapshot: () => Snapshot = room.getSelf;
 
     const selector =
       maybeSelector ?? (identity as (me: User<TPresence, TUserMeta>) => T);
-
     const wrappedSelector = React.useCallback(
       (me: Snapshot): Selection => (me !== null ? selector(me) : null),
       [selector]
@@ -628,7 +612,7 @@ export function createRoomContext<
 
   function useSuspendUntilPresenceLoaded(): void {
     const room = useRoom();
-    if (room.isSelfAware()) {
+    if (room.getSelf() !== null) {
       return;
     }
 
@@ -638,7 +622,7 @@ export function createRoomContext<
     // promise resolves (aka until storage has loaded). After that, it will
     // render this component tree again.
     throw new Promise<void>((res) => {
-      room.events.connection.subscribeOnce(() => res());
+      room.events.status.subscribeOnce(() => res());
     });
   }
 
@@ -646,7 +630,7 @@ export function createRoomContext<
     F extends (
       context: MutationContext<TPresence, TStorage, TUserMeta>,
       ...args: any[]
-    ) => any
+    ) => any,
   >(callback: F, deps: readonly unknown[]): OmitFirstArg<F> {
     const room = useRoom();
     return React.useMemo(

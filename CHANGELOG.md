@@ -1,8 +1,126 @@
-# v1.1.2-beta
+# v1.2.4
+
+### `@liveblocks/node`
+
+- Fixes a bug where sending an empty (or non-string) user ID with `.identifyUser`
+  would confusingly get reported as an HTTP 503.
+
+# v1.2.3
+
+### `@liveblocks/client`
+
+- Improve configuration error messages to be more user friendly
+- Fix bug where entering a new room could potentially initialize the undo stack
+  incorrectly
+
+### `create-liveblocks-app`
+
+- Fix Suspense option when specifying a framework
+- Add comments by default
+
+# v1.2.2
+
+### `@liveblocks/node`
+
+- Add Yjs document change event (`YDocUpdatedEvent`) to `WebhookHandler`.
+- Allow `Header` object to be passed to `headers` in
+  `WebhookHandler.verifyRequest()`
+
+# v1.2.1
+
+### `@liveblocks/node`
+
+- Fix session.allow to support path up to 128 characters to meet room id length
+  requirement.
+
+# v1.2.0
+
+### `@liveblocks/*`
+
+- Support the new and improved Liveblocks authorization.
+- Change client logic to stop retrying if room is full. Instead, the client will
+  now disconnect. To retry, call `room.reconnect()` explicitly.
+
+### `@liveblocks/node`
+
+Add new APIs for authorization. See our migration guide for tips on how to adopt
+the new style of authorizing your Liveblocks clients.
+
+# v1.1.8
+
+Fix a small TypeScript issue introduced in 1.1.7.
+
+# v1.1.7
+
+### `@liveblocks/client`
+
+When initializing the client with a
+[custom auth callback](https://liveblocks.io/docs/api-reference/liveblocks-client#createClientCallback),
+you can now return `{ error: "forbidden", reason: ... }` as the response, which
+the client will treat as a sign to stop retrying. The client will then
+disconnect from the room, instead of remaining in `"connecting"` status
+indefinitely.
+
+### `@liveblocks/react`
+
+Fix a bug with `useSelf()` where it would not correctly re-render after entering
+an empty room. It’s now consistent again with `useMyPresence()`.
+
+### DevTools
+
+Fix a bug in the Liveblocks [DevTools](https://liveblocks.io/devtools) panel
+where the "me" view would incorrectly stay empty after entering an empty room.
+
+# v1.1.6
+
+### `@liveblocks/*`
+
+Loosen duplicate import detection so it won't throw when used in test runners
+that deliberately run multiple instances of a module (like Jest or Playwright
+can do).
+
+# v1.1.5
+
+### `@liveblocks/*`
+
+- Ship all of our packages as both ESM and CJS modules again (restore the
+  changes that 1.1.3 originally introduced).
+- Auto-detect if multiple copies of Liveblocks are included in your production
+  bundle. If so, a help page is presented that will help you resolve this issue.
+- Fix a bug where the room internals could become non-functional when used in
+  combination with Immer due to Immer’s excessive auto-freezing, which would
+  break the room’s internals. (This became an issue since Liveblocks 1.1 was
+  released.)
+
+# v1.1.4
+
+Undo the changes made in 1.1.3. We’ve got some bug reports where Liveblocks
+could still be doubly-included in production bundles (in some bundler setups
+only), with storage data corruptions as a possible result. We’re investigating.
+
+# v1.1.3
+
+Ship all of our packages as both ESM and CJS modules. By upgrading, your
+project’s bundler can now perform (better) tree-shaking on the Liveblocks code.
+
+You can expect (at least) the following bundle size reductions:
+
+- `@liveblocks/client` from 80kB → 70kB
+- `@liveblocks/react` from 129kB → 80kB
+- `@liveblocks/redux` from 84kB → 38kB
+- `@liveblocks/zustand` from 83kB → 37kB
+- `@liveblocks/yjs` from 129kB → 74kB
+
+# v1.1.2
 
 ### `@liveblocks/yjs`
 
-Added yjs support to open beta through the new `@liveblocks/yjs` package.
+Added Yjs support to **open beta** through the new `@liveblocks/yjs` package
+(not stable yet).
+
+### Fixes
+
+Fixes a missing internal export.
 
 # v1.1.1
 
@@ -14,7 +132,7 @@ incorrectly throw a `Not started yet` error message.
 This release improves the client’s internals to ensure a more reliable
 connection with Liveblocks servers.
 
-### `@liveblocks/core`
+### `@liveblocks/client`
 
 - New APIs:
   - `room.getStatus()`: returns the current status of the WebSocket connection:
@@ -84,7 +202,7 @@ Recommended steps to upgrade:
 
 # v1.0.11
 
-### `@liveblocks/core`
+### `@liveblocks/client`
 
 - Fix a bug where undo/redo on `LiveObject` creates exponentially larger deltas
 
@@ -163,7 +281,7 @@ always work.
 Log stack traces of function calls that resulted in rejected storage mutations
 to the console in non-production builds to ease debugging.
 
-### `@liveblocks/core`
+### `@liveblocks/client`
 
 - Fixes bug where the state of `others` in a room was wrong when:
   - Client A disconnects improperly (ex: computer goes to sleep)
@@ -325,17 +443,17 @@ To migrate, make the following code changes:
   create<WithLiveblocks<MyState, ...>>()(liveblocks(...))
   ```
   To be clear:
-  1. First, move the type annotation away from the `liveblocks` middleware call,
-     and onto the `create` call.
-  2. Next, wrap your `MyState` type in a `WithLiveblocks<...>` wrapper. This
-     will make sure the injected `liveblocks` property on your Zustand state
-     will be correctly typed.
-  3. Finally, make sure to add the extra call `()` wrapper, needed by Zustand v4
-     now:
-     ```ts
-     create<WithLiveblocks<MyState, ...>>()(liveblocks(...))
-     //                                  ^^ Not a typo
-     ```
+  1.  First, move the type annotation away from the `liveblocks` middleware
+      call, and onto the `create` call.
+  2.  Next, wrap your `MyState` type in a `WithLiveblocks<...>` wrapper. This
+      will make sure the injected `liveblocks` property on your Zustand state
+      will be correctly typed.
+  3.  Finally, make sure to add the extra call `()` wrapper, needed by Zustand
+      v4 now:
+      ```ts
+      create<WithLiveblocks<MyState, ...>>()(liveblocks(...))
+      //                                  ^^ Not a typo
+      ```
 - Remove the second argument to `state.liveblocks.enterRoom()`: it no longer
   takes an explicit initial state. Instead, it's automatically be populated from
   your Zustand state.

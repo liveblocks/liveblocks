@@ -16,25 +16,11 @@ export function isPlainObject(
 }
 
 /**
- * Polyfill for Object.fromEntries() to be able to target ES2015 output without
- * including external polyfill dependencies.
- */
-export function fromEntries<K, V>(
-  iterable: Iterable<[K, V]>
-): { [key: string]: V } {
-  const obj: { [key: string]: V } = {};
-  for (const [key, val] of iterable) {
-    obj[key as unknown as string] = val;
-  }
-  return obj;
-}
-
-/**
  * Drop-in replacement for Object.entries() that retains better types.
  */
 export function entries<
   O extends { [key: string]: unknown },
-  K extends keyof O
+  K extends keyof O,
 >(obj: O): [K, O[K]][] {
   return Object.entries(obj) as [K, O[K]][];
 }
@@ -89,6 +75,19 @@ export function tryParseJson(rawMessage: string): Json | undefined {
   } catch (e) {
     return undefined;
   }
+}
+
+/**
+ * Deep-clones a JSON-serializable value.
+ *
+ * NOTE: We should be able to replace `deepClone` by `structuredClone` once
+ * we've upgraded to Node 18.
+ */
+export function deepClone<T extends Json>(items: T): T {
+  // NOTE: In this case, the combination of JSON.parse() and JSON.stringify
+  // won't lead to type unsafety, so this use case is okay.
+  // eslint-disable-next-line no-restricted-syntax
+  return JSON.parse(JSON.stringify(items)) as T;
 }
 
 /**

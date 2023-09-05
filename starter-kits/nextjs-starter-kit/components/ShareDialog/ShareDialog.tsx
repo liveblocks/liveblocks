@@ -1,37 +1,30 @@
 import * as Tabs from "@radix-ui/react-tabs";
 import { useRouter } from "next/router";
-import { ComponentProps, useCallback, useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
+import { ComponentProps, useCallback, useEffect, useState } from "react";
 import { UserIcon, UsersIcon } from "../../icons";
 import {
   getDocument,
+  getDocumentAccess,
   getDocumentGroups,
   getDocumentUsers,
   useDocumentsFunctionSWR,
-  getDocumentAccess,
+  useInitialDocument,
 } from "../../lib/client";
 import { useBroadcastEvent, useEventListener } from "../../liveblocks.config";
 import { Dialog } from "../../primitives/Dialog";
-import { DocumentAccess, DocumentAccesses } from "../../types";
+import { DocumentAccess } from "../../types";
 import { ShareDialogDefault } from "./ShareDialogDefault";
+import { ShareDialogGroups } from "./ShareDialogGroups";
 import { ShareDialogInviteGroup } from "./ShareDialogInviteGroup";
 import { ShareDialogInviteUser } from "./ShareDialogInviteUser";
 import { ShareDialogUsers } from "./ShareDialogUsers";
-import { ShareDialogGroups } from "./ShareDialogGroups";
 import styles from "./ShareDialog.module.css";
 
-interface Props
-  extends Omit<ComponentProps<typeof Dialog>, "content" | "title"> {
-  documentAccesses: DocumentAccesses;
-  documentId: string;
-}
+type Props = Omit<ComponentProps<typeof Dialog>, "content" | "title">;
 
-export function ShareDialog({
-  children,
-  documentId,
-  documentAccesses,
-  ...props
-}: Props) {
+export function ShareDialog({ children, ...props }: Props) {
+  const { id: documentId, accesses: documentAccesses } = useInitialDocument();
   const router = useRouter();
 
   const { data: session } = useSession();

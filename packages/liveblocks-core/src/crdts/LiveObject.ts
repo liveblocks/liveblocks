@@ -2,7 +2,6 @@ import type { LiveNode, Lson, LsonObject } from "../crdts/Lson";
 import { nn } from "../lib/assert";
 import type { JsonObject } from "../lib/Json";
 import { nanoid } from "../lib/nanoid";
-import { fromEntries } from "../lib/utils";
 import type {
   CreateChildOp,
   CreateObjectOp,
@@ -488,7 +487,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
    * Transform the LiveObject into a javascript object
    */
   toObject(): O {
-    return fromEntries(this._map) as O;
+    return Object.fromEntries(this._map) as O;
   }
 
   /**

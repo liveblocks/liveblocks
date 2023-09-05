@@ -13,7 +13,7 @@
     "/rooms": {
       "get": {
         "summary": "Get rooms",
-        "tags": [],
+        "tags": ["Room"],
         "responses": {
           "200": {
             "description": "Success. Returns the list of rooms and the next page URL.",
@@ -62,7 +62,7 @@
           }
         },
         "operationId": "get-rooms",
-        "description": "Returns a list of your rooms. The rooms are returned sorted by creation date, from newest to oldest. You can filter rooms by metadata, users accesses and groups accesses.\n\nThere is a pagination system where the next page URL is returned in the response as `nextPage`.\nYou can also limit the number of rooms by query.\n\nFiltering by metadata works by giving key values like `metadata.color=red`. Of course you can combine multiple metadata clauses to refine the response like `metadata.color=red&metadata.type=text`. Notice here the operator AND is applied between each clauses.\n\nFiltering by groups or userId works by giving a list of groups like `groupIds=marketing,GZo7tQ,product` or/and a userId like `userId=user1`.\nNotice here the operator OR is applied between each `groupIds` and the `userId`.\n",
+        "description": "This endpoint returns a list of your rooms. The rooms are returned sorted by creation date, from newest to oldest. You can filter rooms by metadata, users accesses and groups accesses.\n\nThere is a pagination system where the next page URL is returned in the response as `nextPage`.\nYou can also limit the number of rooms by query.\n\nFiltering by metadata works by giving key values like `metadata.color=red`. Of course you can combine multiple metadata clauses to refine the response like `metadata.color=red&metadata.type=text`. Notice here the operator AND is applied between each clauses.\n\nFiltering by groups or userId works by giving a list of groups like `groupIds=marketing,GZo7tQ,product` or/and a userId like `userId=user1`.\nNotice here the operator OR is applied between each `groupIds` and the `userId`.\n",
         "parameters": [
           {
             "schema": {
@@ -86,7 +86,7 @@
           {
             "schema": {
               "type": "string",
-              "example": "metadata.colors=blue"
+              "examples": ["metadata.colors=blue"]
             },
             "in": "query",
             "name": "metadata.KEY",
@@ -95,7 +95,7 @@
           {
             "schema": {
               "type": "string",
-              "example": "userId=user1"
+              "examples": ["userId=user1"]
             },
             "in": "query",
             "name": "userId",
@@ -104,7 +104,7 @@
           {
             "schema": {
               "type": "string",
-              "example": "groupsIds=group1,group2"
+              "examples": ["groupsIds=group1,group2"]
             },
             "in": "query",
             "name": "groupIds",
@@ -114,7 +114,7 @@
       },
       "post": {
         "summary": "Create room",
-        "tags": [],
+        "tags": ["Room"],
         "responses": {
           "200": {
             "description": "Success. Returns the created room.",
@@ -186,7 +186,7 @@
             }
           }
         },
-        "description": "Create a new room. `id` and `defaultAccesses` are required. \n- `defaultAccessess` could be `[]` or `[\"room:write\"]` (private or public). \n- `metadata` could be key/value as `string` or `string[]`. `metadata` supports maximum 50 entries. Key length has a limit of 40 characters maximum. Value length has a limit of 256 characters maximum. `metadata` is optional field.\n- `usersAccesses` could be `[]` or `[\"room:write\"]` for every records. `usersAccesses` can contain 100 ids maximum. Id length has a limit of 40 characters. `usersAccesses` is optional field.\n- `groupsAccesses` are optional fields.\n"
+        "description": "This endpoint creates a new room. `id` and `defaultAccesses` are required. \n- `defaultAccessess` could be `[]` or `[\"room:write\"]` (private or public). \n- `metadata` could be key/value as `string` or `string[]`. `metadata` supports maximum 50 entries. Key length has a limit of 40 characters maximum. Value length has a limit of 256 characters maximum. `metadata` is optional field.\n- `usersAccesses` could be `[]` or `[\"room:write\"]` for every records. `usersAccesses` can contain 100 ids maximum. Id length has a limit of 40 characters. `usersAccesses` is optional field.\n- `groupsAccesses` are optional fields.\n"
       },
       "parameters": []
     },
@@ -204,6 +204,7 @@
       ],
       "get": {
         "summary": "Get room",
+        "tags": ["Room"],
         "operationId": "get-rooms-roomId",
         "responses": {
           "200": {
@@ -214,7 +215,7 @@
                   "$ref": "#/components/schemas/Room"
                 },
                 "examples": {
-                  "example-1": {
+                  "example": {
                     "value": {
                       "type": "room",
                       "id": "react-todo-list",
@@ -249,12 +250,12 @@
             "$ref": "#/components/responses/404"
           }
         },
-        "description": "Get a room by its ID. ",
+        "description": "This endpoint returns a room by its ID.",
         "parameters": []
       },
       "post": {
         "summary": "Update room",
-        "tags": [],
+        "tags": ["Room"],
         "responses": {
           "200": {
             "description": "Success. Returns the updated room.",
@@ -264,7 +265,7 @@
                   "$ref": "#/components/schemas/Room"
                 },
                 "examples": {
-                  "example-1": {
+                  "example": {
                     "value": {
                       "type": "room",
                       "id": "react-todo-list",
@@ -303,7 +304,7 @@
           }
         },
         "operationId": "post-rooms-roomId",
-        "description": "Updates specific properties of a room. It's not necessary to provide the entire room's information. \nSetting a property to `null` means to delete this property. For example, if you want to remove access to a specific user without losing other users: \n``{\n    \"usersAccesses\": {\n        \"john\": null\n    }\n}``\n`defaultAccessess`, `metadata`, `usersAccesses`, `groupsAccesses` can be updated.\n\n- `defaultAccessess` could be `[]` or `[\"room:write\"]` (private or public). \n- `metadata` could be key/value as `string` or `string[]`. `metadata` supports maximum 50 entries. Key length has a limit of 40 characters maximum. Value length has a limit of 256 characters maximum. `metadata` is optional field.\n- `usersAccesses` could be `[]` or `[\"room:write\"]` for every records. `usersAccesses` can contain 100 ids maximum. Id length has a limit of 256 characters. `usersAccesses` is optional field.\n- `groupsAccesses` could be `[]` or `[\"room:write\"]` for every records. `groupsAccesses` can contain 100 ids maximum. Id length has a limit of 256 characters. `groupsAccesses` is optional field.\n\n",
+        "description": "This endpoint updates specific properties of a room. It’s not necessary to provide the entire room’s information. \nSetting a property to `null` means to delete this property. For example, if you want to remove access to a specific user without losing other users: \n``{\n    \"usersAccesses\": {\n        \"john\": null\n    }\n}``\n`defaultAccessess`, `metadata`, `usersAccesses`, `groupsAccesses` can be updated.\n\n- `defaultAccessess` could be `[]` or `[\"room:write\"]` (private or public). \n- `metadata` could be key/value as `string` or `string[]`. `metadata` supports maximum 50 entries. Key length has a limit of 40 characters maximum. Value length has a limit of 256 characters maximum. `metadata` is optional field.\n- `usersAccesses` could be `[]` or `[\"room:write\"]` for every records. `usersAccesses` can contain 100 ids maximum. Id length has a limit of 256 characters. `usersAccesses` is optional field.\n- `groupsAccesses` could be `[]` or `[\"room:write\"]` for every records. `groupsAccesses` can contain 100 ids maximum. Id length has a limit of 256 characters. `groupsAccesses` is optional field.\n\n",
         "requestBody": {
           "content": {
             "application/json": {
@@ -311,7 +312,7 @@
                 "$ref": "#/components/schemas/UpdateRoom"
               },
               "examples": {
-                "example-1": {
+                "example": {
                   "value": {
                     "defaultAccesses": ["room:write"],
                     "usersAccesses": {
@@ -340,13 +341,12 @@
                 "properties": {}
               }
             }
-          },
-          "description": ""
+          }
         }
       },
       "delete": {
         "summary": "Delete room",
-        "tags": [],
+        "tags": ["Room"],
         "responses": {
           "204": {
             "description": "Success. The room was deleted"
@@ -365,7 +365,7 @@
           }
         },
         "operationId": "delete-rooms-roomId",
-        "description": "Deletes a room. A deleted room is no longer accessible from the API or the dashboard and it cannot be restored. \n\n"
+        "description": "This endpoint deletes a room. A deleted room is no longer accessible from the API or the dashboard and it cannot be restored. \n\n"
       }
     },
     "/rooms/{roomId}/active_users": {
@@ -382,9 +382,9 @@
       ],
       "get": {
         "summary": "Get active users",
-        "tags": [],
+        "tags": ["Room"],
         "operationId": "get-rooms-roomId-active-users",
-        "description": "Returns a list of users currently present in the requested room. For better performance, we recommand to call this endpoint every 10 seconds maximum. \nDuplicates can happen if a user is in the requested room with multiple browser tabs opened.",
+        "description": "This endpoint returns a list of users currently present in the requested room. For better performance, we recommand to call this endpoint every 10 seconds maximum. \nDuplicates can happen if a user is in the requested room with multiple browser tabs opened.",
         "responses": {
           "200": {
             "description": "Success. Returns the list of active users for the specified room.",
@@ -428,6 +428,58 @@
         }
       }
     },
+    "/rooms/{roomId}/broadcast_event": {
+      "post": {
+        "summary": "Broadcast event to a room",
+        "tags": ["Room"],
+        "operationId": "post-broadcast-event",
+        "responses": {
+          "204": {
+            "description": "Success. An event was broadcasted to the room."
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          },
+          "422": {
+            "$ref": "#/components/responses/422"
+          }
+        },
+        "description": "This endpoint enables the broadcast of an event to a room without having to connect to it via the `client` from `@liveblocks/client`. It takes any valid JSON as a request body.",
+        "requestBody": {
+          "description": "Any valid JSON.",
+          "content": {
+            "schema": {},
+            "application/json": {
+              "examples": {
+                "example": {
+                  "value": {
+                    "type": "EMOJI",
+                    "emoji": "🔥"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "description": "ID of the room"
+          }
+        ]
+      }
+    },
     "/rooms/{roomId}/storage": {
       "parameters": [
         {
@@ -441,11 +493,11 @@
         }
       ],
       "get": {
-        "summary": "Get storage",
-        "tags": [],
+        "summary": "Get Storage document",
+        "tags": ["Storage"],
         "responses": {
           "200": {
-            "description": "Success. Returns the room storage as JSON.",
+            "description": "Success. Returns the room’s Storage as JSON.",
             "content": {
               "application/json": {
                 "schema": {
@@ -460,7 +512,7 @@
                   }
                 },
                 "examples": {
-                  "example-1": {
+                  "example": {
                     "value": {
                       "liveblocksType": "LiveObject",
                       "data": {
@@ -499,14 +551,15 @@
           }
         },
         "operationId": "get-rooms-roomId-storage",
-        "description": "Returns a room storage as JSON.\n\nSome implementation details:\nEach Liveblocks data structure is represented by a JSON element having two properties:\n`\"liveblocksType\": \"LiveObject\" | \"LiveList\" | \"LiveMap\"`\n`\"data\"` => contains the nested data structures (children) and data.\nThe root is always a `LiveObject`."
+        "description": "This endpoint returns a room’s Storage as JSON.\n\nSome implementation details:\nEach Liveblocks data structure is represented by a JSON element having two properties:\n`\"liveblocksType\": \"LiveObject\" | \"LiveList\" | \"LiveMap\"`\n`\"data\"` => contains the nested data structures (children) and data.\nThe root is always a `LiveObject`."
       },
       "post": {
-        "summary": "Initialize storage",
+        "summary": "Initialize Storage document",
+        "tags": ["Storage"],
         "operationId": "post-rooms-roomId-storage",
         "responses": {
           "200": {
-            "description": "Success. The storage is initialized. Returns the room storage as JSON.",
+            "description": "Success. The Storage is initialized. Returns the room’s Storage as JSON.",
             "content": {
               "application/json": {
                 "schema": {
@@ -521,7 +574,7 @@
                   }
                 },
                 "examples": {
-                  "example-1": {
+                  "example": {
                     "value": {
                       "liveblocksType": "LiveObject",
                       "data": {
@@ -559,7 +612,7 @@
             "$ref": "#/components/responses/404"
           }
         },
-        "description": "Initializes a room storage. The room must already exist and have an empty storage. Calling this endpoint will disconnect all users from the room if there are any.\n\nThe format of the request body is the same as what’s returned by the get storage endpoint.\n\nFor each Liveblocks data structure that you want to create, you need a JSON element having two properties:\n- `\"liveblocksType\"` => `\"LiveObject\" | \"LiveList\" | \"LiveMap\"`\n- `\"data\"` => contains the nested data structures (children) and data.\n\nThe root’s type can only be LiveObject.\n\nA utility function, `toPlainLson` is included in `@liveblocks/client` from `1.0.9` to help convert `LiveObject`, `LiveList`, and `LiveMap` to the structure expected by the endpoint.",
+        "description": "This endpoint initializes a room’s Storage. The room must already exist and have an empty Storage. Calling this endpoint will disconnect all users from the room if there are any.\n\nThe format of the request body is the same as what’s returned by the get Storage endpoint.\n\nFor each Liveblocks data structure that you want to create, you need a JSON element having two properties:\n- `\"liveblocksType\"` => `\"LiveObject\" | \"LiveList\" | \"LiveMap\"`\n- `\"data\"` => contains the nested data structures (children) and data.\n\nThe root’s type can only be LiveObject.\n\nA utility function, `toPlainLson` is included in `@liveblocks/client` from `1.0.9` to help convert `LiveObject`, `LiveList`, and `LiveMap` to the structure expected by the endpoint.",
         "requestBody": {
           "content": {
             "application/json": {
@@ -575,7 +628,7 @@
                 }
               },
               "examples": {
-                "example-1": {
+                "example": {
                   "value": {
                     "liveblocksType": "LiveObject",
                     "data": {
@@ -601,16 +654,16 @@
                 }
               }
             }
-          },
-          "description": ""
+          }
         }
       },
       "delete": {
-        "summary": "Delete storage",
+        "summary": "Delete Storage",
+        "tags": ["Storage"],
         "operationId": "delete-rooms-roomId-storage",
         "responses": {
           "200": {
-            "description": "Success. The room has no more storage."
+            "description": "Success. The room has no more Storage."
           },
           "401": {
             "$ref": "#/components/responses/401"
@@ -622,23 +675,901 @@
             "$ref": "#/components/responses/404"
           }
         },
-        "description": "Deletes all of the room’s storage data. Calling this endpoint will disconnect all users from the room if there are any.\n"
+        "description": "This endpoint deletes all of the room’s Storage data. Calling this endpoint will disconnect all users from the room if there are any.\n"
+      }
+    },
+    "/rooms/{roomId}/ydoc": {
+      "parameters": [
+        {
+          "schema": {
+            "type": "string"
+          },
+          "name": "roomId",
+          "in": "path",
+          "required": true
+        },
+        {
+          "schema": {
+            "type": "boolean"
+          },
+          "name": "formatting",
+          "in": "query",
+          "allowEmptyValue": true,
+          "required": false,
+          "description": "If present, YText will return formatting"
+        },
+        {
+          "schema": {
+            "type": "string"
+          },
+          "name": "key",
+          "in": "query",
+          "required": false,
+          "description": "Returns only a single key’s value, ex: doc.get(key).toJSON()"
+        },
+        {
+          "schema": {
+            "type": "string",
+            "enum": ["ymap", "ytext", "yxmltext", "yxmlfragment", "yarray"]
+          },
+          "name": "type",
+          "in": "query",
+          "required": false,
+          "description": "Used with key to override the inferred type, i.e. “ymap” will return doc.get(key, Y.Map)"
+        }
+      ],
+      "get": {
+        "summary": "Get Yjs document",
+        "tags": ["Yjs"],
+        "responses": {
+          "200": {
+            "description": "Success. Returns the room’s Yjs document as JSON.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "examples": {
+                  "example": {
+                    "value": {
+                      "someYText": "contents of ytext"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          }
+        },
+        "operationId": "get-rooms-roomId-ydoc",
+        "description": "This endpoint returns a JSON representation of the room’s Yjs document."
+      },
+      "put": {
+        "summary": "Send a binary Yjs update to a room.",
+        "tags": ["Yjs"],
+        "responses": {
+          "200": {
+            "description": "Success. The given room’s Yjs doc has been updated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          }
+        },
+        "operationId": "put-rooms-roomId-ydoc",
+        "description": "This endpoint is used to send a Yjs binary update to the room’s Yjs document. You can use this endpoint to initialize Yjs data for the room or update room’s doc. Read the [Yjs documentation](https://docs.yjs.dev/api/document-updates) to learn how to create a binary update.",
+        "requestBody": {
+          "content": {
+            "application/octet-stream": {
+              "schema": { "format": "binary", "type": "array" }
+            }
+          }
+        }
+      }
+    },
+    "/rooms/{roomId}/ydoc-binary": {
+      "get": {
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "roomId",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "summary": "Get Yjs document encoded as a binary Yjs update",
+        "tags": ["Yjs"],
+        "responses": {
+          "200": {
+            "description": "Success. Returns the room’s Yjs document encoded as a bianry Yjs update.",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "array"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          }
+        },
+        "operationId": "get-rooms-roomId-ydoc-binary",
+        "description": "This endpoint returns the room’s Yjs document encoded as a single binary update. This can be used by Y.applyUpdate(responseBody) to get a copy of the document in your backend. See [Yjs documentation](https://docs.yjs.dev/api/document-updates) for more information on working with updates."
+      }
+    },
+    "/schemas": {
+      "post": {
+        "summary": "Create schema",
+        "tags": ["Schema validation"],
+        "operationId": "post-create-new-schema",
+        "description": "This endpoint creates a new schema which can be referenced later to enforce a room’s Storage data structure. The schema consists of a name (for referencing it), and a body, which specifies the exact allowed shape of data in the room. This body is a multi-line string written in the Liveblocks [schema syntax](/docs/platform/schema-validation/syntax).",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SchemaRequest"
+              },
+              "examples": {
+                "example": {
+                  "value": {
+                    "name": "my-schema",
+                    "body": "type Logo {\nname: string\ntheme: string\n}\n\ntype Storage {\nlogo: LiveObject<Logo>\n"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success. Creates the new schema and returns it as JSON.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SchemaResponse"
+                },
+                "examples": {
+                  "example": {
+                    "value": {
+                      "id": "my-schema@1",
+                      "name": "my-schema",
+                      "version": 1,
+                      "createdAt": "2023-03-30T06:25:54.675Z",
+                      "updatedAt": "2023-03-30T06:25:54.675Z",
+                      "body": "type Logo {\nname: string\ntheme: string\n}\n\ntype Storage {\nlogo: LiveObject<Logo>\n"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "422": {
+            "$ref": "#/components/responses/422-schema-validation"
+          }
+        },
+        "parameters": []
+      }
+    },
+    "/schemas/{id}": {
+      "get": {
+        "summary": "Get schema",
+        "tags": ["Schema validation"],
+        "operationId": "get-create-new-schema",
+        "description": "This endpoint retrieves a schema by its id. The id is a combination of the schema name and version. For example, `my-schema@1`.",
+        "responses": {
+          "200": {
+            "description": "Success. Found the schema and returns it as JSON.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SchemaResponse"
+                },
+                "examples": {
+                  "example": {
+                    "value": {
+                      "id": "my-schema@1",
+                      "name": "my-schema",
+                      "version": 1,
+                      "createdAt": "2023-03-30T06:25:54.675Z",
+                      "updatedAt": "2023-03-30T06:25:54.675Z",
+                      "body": "type Logo {\nname: string\ntheme: string\n}\n\ntype Storage {\nlogo: LiveObject<Logo>\n"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "404": {
+            "$ref": "#/components/responses/404-schema-validation"
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "ID of the schema"
+          }
+        ]
+      },
+      "put": {
+        "summary": "Update schema",
+        "tags": ["Schema validation"],
+        "operationId": "put-update-new-schema",
+        "description": "This endpoint updates the body for the schema. A schema can only be updated if it is not used by any room.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateSchema"
+              },
+              "examples": {
+                "example": {
+                  "value": {
+                    "body": "type Logo {\nname: string\ntheme: string\n}\n\ntype Storage {\nlogo: LiveObject<Logo>\n"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success. Updates the new schema and increments the version. The schema `body` is returned as JSON.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Schema"
+                },
+                "examples": {
+                  "example": {
+                    "value": {
+                      "id": "my-schema@2",
+                      "name": "my-schema",
+                      "version": 2,
+                      "createdAt": "2023-03-30T07:25:54.675Z",
+                      "updatedAt": "2023-03-30T07:25:54.675Z",
+                      "body": "type Logo {\nname: string\ntheme: string\n}\n\ntype Storage {\nlogo: LiveObject<Logo>\n"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403-schema-validation"
+          },
+          "422": {
+            "$ref": "#/components/responses/422-schema-validation"
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "ID of the schema"
+          }
+        ]
+      },
+      "delete": {
+        "summary": "Delete schema",
+        "tags": ["Schema validation"],
+        "operationId": "delete-a-schema",
+        "description": "This endpoint deletes a schema by its ID. The ID is a combination of the schema name and version. For example, `my-schema@1`. A schema can only be deleted if it is not attached to a room.",
+        "responses": {
+          "200": {
+            "description": "Success. Schema was delated"
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403-schema-validation"
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "ID of the schema"
+          }
+        ]
+      }
+    },
+    "/rooms/{roomId}/schema": {
+      "get": {
+        "summary": "Get schema by room",
+        "tags": ["Schema validation"],
+        "operationId": "get-new-schema",
+        "description": "This endpoint retrieves the schema attached to a room.",
+        "responses": {
+          "200": {
+            "description": "Success. Found the schema attached to the room and returns it as JSON.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Schema"
+                },
+                "examples": {
+                  "example": {
+                    "value": {
+                      "id": "my-schema@1",
+                      "name": "my-schema",
+                      "version": 1,
+                      "createdAt": "2023-03-30T06:25:54.675Z",
+                      "updatedAt": "2023-03-30T06:25:54.675Z",
+                      "body": "type Logo {\nname: string\ntheme: string\n}\n\ntype Storage {\nlogo: LiveObject<Logo>\n"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403-schema-validation"
+          },
+          "404": {
+            "$ref": "#/components/responses/404-schema-validation"
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "description": "ID of the room"
+          }
+        ]
+      },
+      "post": {
+        "summary": "Attach schema to room",
+        "tags": ["Schema validation"],
+        "operationId": "post-attach-schema-to-room",
+        "description": "This endpoint attachs a schema to a room, and instantly enables runtime schema validation for the room. If the current contents of the room’s Storage do not match the schema, attaching will fail and the error message will give details on why the schema failed to attach.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AttachSchema"
+              },
+              "examples": {
+                "example": {
+                  "value": {
+                    "schema": "my-schema@1"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success. Found the schema attached to the room. Returns the schema id as JSON.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttachSchema"
+                },
+                "examples": {
+                  "example": {
+                    "value": {
+                      "schema": "my-schema@1"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "404": {
+            "$ref": "#/components/responses/404-schema-validation"
+          },
+          "409": {
+            "$ref": "#/components/responses/409-schema-validation"
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "description": "ID of the room"
+          }
+        ]
+      },
+      "delete": {
+        "summary": "Detach schema from room",
+        "tags": ["Schema validation"],
+        "operationId": "delete-detach-schema-to-room",
+        "description": "This endpoint detaches the schema from a room.",
+        "responses": {
+          "200": {
+            "description": "Success. Detached the schema from the room."
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "404": {
+            "$ref": "#/components/responses/404-schema-validation"
+          },
+          "409": {
+            "$ref": "#/components/responses/409-schema-validation"
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "description": "ID of the room"
+          }
+        ]
+      }
+    },
+    "/rooms/{roomId}/threads": {
+      "get": {
+        "summary": "Get room threads",
+        "tags": ["Comments"],
+        "description": "This endpoint returns the threads in the requested room.",
+        "operationId": "get-threads",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Returns list of threads in a room.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Thread"
+                      }
+                    }
+                  }
+                },
+                "examples": {
+                  "Success": {
+                    "value": {
+                      "data": [
+                        {
+                          "type": "thread",
+                          "id": "thread-id",
+                          "roomId": "room-id",
+                          "comments": [
+                            {
+                              "type": "comment",
+                              "threadId": "thread-id",
+                              "roomId": "room-id",
+                              "id": "comment-id",
+                              "userId": "string",
+                              "createdAt": "2019-08-24T14:15:22Z",
+                              "editedAt": "2019-08-24T14:15:22Z",
+                              "deletedAt": "2019-08-24T14:15:22Z",
+                              "body": {}
+                            }
+                          ],
+                          "createdAt": "2019-08-24T14:15:22Z",
+                          "metadata": {},
+                          "updatedAt": "2019-08-24T14:15:22Z"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          }
+        }
+      }
+    },
+    "/rooms/{roomId}/threads/{threadId}": {
+      "get": {
+        "summary": "Get thread",
+        "tags": ["Comments"],
+        "description": "This endpoint returns a thread by its ID.",
+        "operationId": "get-thread",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "threadId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Returns requested thread.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Thread"
+                },
+                "examples": {
+                  "Success": {
+                    "value": {
+                      "type": "thread",
+                      "id": "thread-id",
+                      "roomId": "room-id",
+                      "comments": [
+                        {
+                          "type": "comment",
+                          "threadId": "thread-id",
+                          "roomId": "room-id",
+                          "id": "comment-id",
+                          "userId": "string",
+                          "createdAt": "2019-08-24T14:15:22Z",
+                          "editedAt": "2019-08-24T14:15:22Z",
+                          "deletedAt": "2019-08-24T14:15:22Z",
+                          "body": {}
+                        }
+                      ],
+                      "createdAt": "2019-08-24T14:15:22Z",
+                      "metadata": {},
+                      "updatedAt": "2019-08-24T14:15:22Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          }
+        }
+      }
+    },
+    "/rooms/{roomId}/threads/{threadId}/comments/{commentId}": {
+      "get": {
+        "summary": "Get comment",
+        "tags": ["Comments"],
+        "description": "This endpoint returns a comment by its ID.",
+        "operationId": "get-comment",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "threadId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "commentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Returns the requested comment.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Comment"
+                },
+                "examples": {
+                  "Success": {
+                    "value": {
+                      "type": "comment",
+                      "threadId": "thread-id",
+                      "roomId": "room-id",
+                      "id": "comment-id",
+                      "userId": "string",
+                      "createdAt": "2019-08-24T14:15:22Z",
+                      "editedAt": "2019-08-24T14:15:22Z",
+                      "deletedAt": "2019-08-24T14:15:22Z",
+                      "body": {}
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          }
+        }
+      }
+    },
+    "/rooms/{roomId}/threads/{threadId}/participants": {
+      "get": {
+        "summary": "Get thread participants",
+        "tags": ["Comments"],
+        "description": "This endpoint returns the list of thread participants. It is a list of unique user IDs representing all the thread comment authors and mentioned users in comments.",
+        "operationId": "get-thread-participants",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "threadId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Returns the thread’s participants",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "participantIds": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                },
+                "examples": {
+                  "Success": {
+                    "value": {
+                      "participantIds": ["user-1", "user-2"]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          }
+        }
+      }
+    },
+    "/authorize-user": {
+      "post": {
+        "summary": "Get access token with secret key",
+        "tags": ["Authentication"],
+        "operationId": "post-authorize-user",
+        "responses": {
+          "200": {
+            "description": "Success. Returns an access token that can be used to enter one or more rooms.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenResponse"
+                },
+                "examples": {
+                  "example": {
+                    "value": {
+                      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIi..."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AuthorizeUserRequest"
+              },
+              "examples": {
+                "example": {
+                  "value": {
+                    "userId": "user-123",
+                    "userInfo": {
+                      "name": "bob",
+                      "avatar": "https://example.org/images/user123.jpg"
+                    },
+                    "permissions": {
+                      "my-room-1": ["room:write"],
+                      "my-room-2": ["room:write"],
+                      "my-room-*": ["room:read"]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": "This endpoint lets your application server (your backend) obtain a token that one of its clients (your frontend) can use to enter a Liveblocks room. You use this endpoint to implement your own application’s custom authentication endpoint. When making this request, you’ll have to use your secret key.\n\n**Important:** The difference with an [ID token](#post-identify-user) is that an access token holds all the permissions, and is the source of truth. With ID tokens, permissions are set in the Liveblocks backend (through REST API calls) and \"checked at the door\" every time they are used to enter a room.\n\n**Note:** When using the `@liveblocks/node` package, you can use [`Liveblocks.prepareSession`](/docs/api-reference/liveblocks-node#access-tokens) in your backend to build this request.\n\nYou can pass the property `userId` in the request’s body. This can be whatever internal identifier you use for your user accounts as long as it uniquely identifies an account. The property `userId` is used by Liveblocks to calculate your account’s Monthly Active Users. One unique `userId` corresponds to one MAU.\n\nAdditionally, you can set custom metadata to the token, which will be publicly accessible by other clients through the `user.info` property. This is useful for storing static data like avatar images or the user’s display name.\n\nLastly, you’ll specify the exact permissions to give to the user using the `permissions` field. This is done in an object where the keys are room names, or room name patterns (ending in a `*`), and a list of permissions to assign the user for any room that matches that name exactly (or starts with the pattern’s prefix). For tips, see [Manage permissions with access tokens](/docs/rooms/permissions/access-token)."
+      }
+    },
+    "/identify-user": {
+      "post": {
+        "summary": "Get ID token with secret key",
+        "tags": ["Authentication"],
+        "operationId": "post-identify-user",
+        "responses": {
+          "200": {
+            "description": "Success. Returns an ID token that can be used to enter one or more rooms.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenResponse"
+                },
+                "examples": {
+                  "example": {
+                    "value": {
+                      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIi..."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IdentifyUserRequest"
+              },
+              "examples": {
+                "example": {
+                  "value": {
+                    "userId": "user-123",
+                    "groupIds": ["marketing", "engineering"],
+                    "userInfo": {
+                      "name": "bob",
+                      "avatar": "https://example.org/images/user123.jpg"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": "This endpoint lets your application server (your backend) obtain a token that one of its clients (your frontend) can use to enter a Liveblocks room. You use this endpoint to implement your own application’s custom authentication endpoint. When using this endpoint to obtain ID tokens, you should manage your permissions by assigning user and/or group permissions to rooms explicitly, see our [Manage permissions with ID tokens](/docs/rooms/permissions/id-token) section.\n\n**Important:** The difference with an [access token](#post-authorize-user) is that an ID token doesn’t hold any permissions itself. With ID tokens, permissions are set in the Liveblocks backend (through REST API calls) and \"checked at the door\" every time they are used to enter a room. With access tokens, all permissions are set in the token itself, and thus controlled from your backend entirely.\n\n**Note:** When using the `@liveblocks/node` package, you can use [`Liveblocks.identifyUser`](/docs/api-reference/liveblocks-node) in your backend to build this request.\n\nYou can pass the property `userId` in the request’s body. This can be whatever internal identifier you use for your user accounts as long as it uniquely identifies an account. The property `userId` is used by Liveblocks to calculate your account’s Monthly Active Users. One unique `userId` corresponds to one MAU.\n\nIf you want to use group permissions, you can also declare which `groupIds` this user belongs to. The group ID values are yours, but they will have to match the group IDs you assign permissions to when assigning permissions to rooms, see [Manage permissions with ID tokens](/docs/rooms/permissions/id-token)).\n\nAdditionally, you can set custom metadata to the token, which will be publicly accessible by other clients through the `user.info` property. This is useful for storing static data like avatar images or the user’s display name."
       }
     },
     "/rooms/{roomId}/authorize": {
       "post": {
-        "summary": "Get an access token to enter a room",
+        "summary": "Get single-room token with secret key (deprecated)",
+        "tags": ["Deprecated"],
         "operationId": "post-authorize",
         "responses": {
           "200": {
-            "description": "Success. Returns the JWT token.",
+            "description": "Success. Returns an old-style single-room token.",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Authorization"
                 },
                 "examples": {
-                  "example-1": {
+                  "example": {
                     "value": {
                       "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
                     }
@@ -667,7 +1598,7 @@
                 "$ref": "#/components/schemas/CreateAuthorization"
               },
               "examples": {
-                "example-1": {
+                "example": {
                   "value": {
                     "userId": "b2c1c290-f2c9-45de-a74e-6b7aa0690f59",
                     "groupIds": ["g1", "g2"],
@@ -681,7 +1612,7 @@
             }
           }
         },
-        "description": "This endpoint lets your application server (= your backend) obtain a token that one of its clients (= your frontend) can use to enter a Liveblocks room. You use this endpoint to implement your own application’s custom authentication endpoint. When making this request, you’ll have to use your secret key.\n\nYou can pass the property `userId` in the request's body. This can be whatever internal identifier you use for your user accounts as long as it uniquely identifies an account. Setting the `userId` is optional if you want to use public rooms, but it is required to enter a private room (because permissions are assigned to specific user IDs). In case you want to use the group permission system, you can also declare which `groupIds` this user belongs to.\n\nThe property userId is used by Liveblocks to calculate your account’s Monthly Active Users. One unique userId corresponds to one MAU. If you don’t pass a userId, we will create for you a new anonymous userId on each connection, but your MAUs will be higher.\n\nAdditionally, you can set custom metadata to the token, which will be publicly accessible by other clients through the `user.info` property. This is useful for storing static data like avatar images or the user’s display name.",
+        "description": "**Deprecated.** Prefer using [access tokens](#post-authorize-user) or [ID tokens](#post-identify-user) instead. Read more in our [migration guide](/docs/platform/upgrading/1.2).\n\nThis endpoint lets your application server (your backend) obtain a token that one of its clients (your frontend) can use to enter a Liveblocks room. You use this endpoint to implement your own application’s custom authentication endpoint. When making this request, you’ll have to use your secret key.\n\nYou can pass the property `userId` in the request’s body. This can be whatever internal identifier you use for your user accounts as long as it uniquely identifies an account. Setting the `userId` is optional if you want to use public rooms, but it is required to enter a private room (because permissions are assigned to specific user IDs). In case you want to use the group permission system, you can also declare which `groupIds` this user belongs to.\n\nThe property userId is used by Liveblocks to calculate your account’s Monthly Active Users. One unique userId corresponds to one MAU. If you don’t pass a userId, we will create for you a new anonymous userId on each connection, but your MAUs will be higher.\n\nAdditionally, you can set custom metadata to the token, which will be publicly accessible by other clients through the `user.info` property. This is useful for storing static data like avatar images or the user’s display name.",
         "parameters": []
       },
       "parameters": [
@@ -696,59 +1627,10 @@
         }
       ]
     },
-    "/rooms/{roomId}/broadcast_event": {
-      "post": {
-        "summary": "Broadcast an event to a room",
-        "operationId": "post-broadcast-event",
-        "responses": {
-          "204": {
-            "description": "Success. An event was broadcasted to the room."
-          },
-          "401": {
-            "$ref": "#/components/responses/401"
-          },
-          "403": {
-            "$ref": "#/components/responses/403"
-          },
-          "404": {
-            "$ref": "#/components/responses/404"
-          },
-          "422": {
-            "$ref": "#/components/responses/422"
-          }
-        },
-        "description": "This endpoint enables the broadcast of an event to a room without having to connect to it via the `client` from `@liveblocks/client`. It takes any valid JSON as a request body.",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "examples": {
-                "example-1": {
-                  "value": {
-                    "type": "EMOJI",
-                    "emoji": "🔥"
-                  }
-                }
-              }
-            },
-            "description": "Any valid JSON."
-          }
-        },
-        "parameters": [
-          {
-            "schema": {
-              "type": "string"
-            },
-            "name": "roomId",
-            "in": "path",
-            "required": true,
-            "description": "ID of the room"
-          }
-        ]
-      }
-    },
     "/rooms/{roomId}/public/authorize": {
       "post": {
-        "summary": "Get JWT token for WebSocket with public key",
+        "summary": "Get single-room token with public key (deprecated)",
+        "tags": ["Deprecated"],
         "operationId": "post-public-authorize",
         "responses": {
           "200": {
@@ -769,7 +1651,7 @@
             }
           },
           "403": {
-            "$ref": "#/components/responses/403/content"
+            "$ref": "#/components/responses/403"
           },
           "404": {
             "$ref": "#/components/responses/404"
@@ -778,7 +1660,7 @@
             "$ref": "#/components/responses/422"
           }
         },
-        "description": "This endpoint works with the public key and can be used client side. That means you don't need to implement a dedicated authorization endpoint server side. \nThe generated JWT token works only with public room (`defaultAccesses: [\"room:write\"]`).",
+        "description": "**Deprecated.** When you update Liveblocks to 1.2, you no longer need to get a JWT token when using a public key.\n\nThis endpoint works with the public key and can be used client side. That means you don’t need to implement a dedicated authorization endpoint server side. \nThe generated JWT token works only with public room (`defaultAccesses: [\"room:write\"]`).",
         "requestBody": {
           "content": {
             "application/json": {
@@ -793,8 +1675,7 @@
                 }
               }
             }
-          },
-          "description": ""
+          }
         }
       },
       "parameters": [
@@ -808,342 +1689,6 @@
           "description": "ID of the room"
         }
       ]
-    },
-    "/schemas": {
-      "post": {
-        "summary": "Create schema",
-        "operationId": "post-create-new-schema",
-        "description": "Creates a new schema which can be referenced later to enforce a room's storage data structure. The schema consists of a name (for referencing it), and a body, which specifies the exact allowed shape of data in the room. This body is a multi-line string written in the Liveblocks [schema syntax](/docs/platform/schema-validation/syntax).",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SchemaRequest"
-              },
-              "examples": {
-                "example-1": {
-                  "value": {
-                    "name": "my-schema",
-                    "body": "type Logo {\nname: string\ntheme: string\n}\n\ntype Storage {\nlogo: LiveObject<Logo>\n"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Success. Creates the new schema and returns it as JSON.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SchemaResponse"
-                },
-                "examples": {
-                  "example-1": {
-                    "value": {
-                      "id": "my-schema@1",
-                      "name": "my-schema",
-                      "version": 1,
-                      "createdAt": "2023-03-30T06:25:54.675Z",
-                      "updatedAt": "2023-03-30T06:25:54.675Z",
-                      "body": "type Logo {\nname: string\ntheme: string\n}\n\ntype Storage {\nlogo: LiveObject<Logo>\n"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "$ref": "#/components/responses/401"
-          },
-          "422": {
-            "$ref": "#/components/responses/422schema"
-          }
-        },
-        "parameters": []
-      }
-    },
-    "/schemas/{id}": {
-      "get": {
-        "summary": "Get schema",
-        "operationId": "get-create-new-schema",
-        "description": "This endpoint retrieves a schema by its id. The id is a combination of the schema name and version. For example, `my-schema@1`.",
-        "responses": {
-          "200": {
-            "description": "Success. Found the schema and returns it as JSON.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SchemaResponse"
-                },
-                "examples": {
-                  "example-1": {
-                    "value": {
-                      "id": "my-schema@1",
-                      "name": "my-schema",
-                      "version": 1,
-                      "createdAt": "2023-03-30T06:25:54.675Z",
-                      "updatedAt": "2023-03-30T06:25:54.675Z",
-                      "body": "type Logo {\nname: string\ntheme: string\n}\n\ntype Storage {\nlogo: LiveObject<Logo>\n"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "$ref": "#/components/responses/401"
-          },
-          "404": {
-            "$ref": "#/components/responses/404schema"
-          }
-        },
-        "parameters": [
-          {
-            "schema": {
-              "type": "string"
-            },
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "description": "ID of the schema"
-          }
-        ]
-      },
-      "put": {
-        "summary": "Update schema",
-        "operationId": "put-update-new-schema",
-        "description": "Updates the body for the schema. A schema can only be updated if it is not used by any room.",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateSchema"
-              },
-              "examples": {
-                "example-1": {
-                  "value": {
-                    "body": "type Logo {\nname: string\ntheme: string\n}\n\ntype Storage {\nlogo: LiveObject<Logo>\n"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Success. Updates the new schema and increments the version. The schema `body` is returned as JSON.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Schema"
-                },
-                "examples": {
-                  "example-1": {
-                    "value": {
-                      "id": "my-schema@2",
-                      "name": "my-schema",
-                      "version": 2,
-                      "createdAt": "2023-03-30T07:25:54.675Z",
-                      "updatedAt": "2023-03-30T07:25:54.675Z",
-                      "body": "type Logo {\nname: string\ntheme: string\n}\n\ntype Storage {\nlogo: LiveObject<Logo>\n"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "$ref": "#/components/responses/401"
-          },
-          "403": {
-            "$ref": "#/components/responses/403schema"
-          },
-          "422": {
-            "$ref": "#/components/responses/422schema"
-          }
-        },
-        "parameters": [
-          {
-            "schema": {
-              "type": "string"
-            },
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "description": "ID of the schema"
-          }
-        ]
-      },
-      "delete": {
-        "summary": "Delete schema",
-        "operationId": "delete-a-schema",
-        "description": "This endpoint deletes a schema by its ID. The ID is a combination of the schema name and version. For example, `my-schema@1`. A schema can only be deleted if it is not attached to a room.",
-        "responses": {
-          "200": {
-            "description": "Success. Schema was delated"
-          },
-          "401": {
-            "$ref": "#/components/responses/401"
-          },
-          "403": {
-            "$ref": "#/components/responses/403schema"
-          }
-        },
-        "parameters": [
-          {
-            "schema": {
-              "type": "string"
-            },
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "description": "ID of the schema"
-          }
-        ]
-      }
-    },
-    "/rooms/{roomId}/schema": {
-      "get": {
-        "summary": "Get schema by room",
-        "operationId": "get-new-schema",
-        "description": "This endpoint retrieves the schema attached to a room.",
-        "responses": {
-          "200": {
-            "description": "Success. Found the schema attached to the room and returns it as JSON.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Schema"
-                },
-                "examples": {
-                  "example-1": {
-                    "value": {
-                      "id": "my-schema@1",
-                      "name": "my-schema",
-                      "version": 1,
-                      "createdAt": "2023-03-30T06:25:54.675Z",
-                      "updatedAt": "2023-03-30T06:25:54.675Z",
-                      "body": "type Logo {\nname: string\ntheme: string\n}\n\ntype Storage {\nlogo: LiveObject<Logo>\n"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "$ref": "#/components/responses/401"
-          },
-          "404": {
-            "$ref": "#/components/responses/404schema"
-          },
-          "403": {
-            "$ref": "#/components/responses/403schema"
-          }
-        },
-        "parameters": [
-          {
-            "schema": {
-              "type": "string"
-            },
-            "name": "roomId",
-            "in": "path",
-            "required": true,
-            "description": "ID of the room"
-          }
-        ]
-      },
-      "post": {
-        "summary": "Attach schema to room",
-        "operationId": "post-attach-schema-to-room",
-        "description": "This endpoint attachs a schema to a room, and instantly enables runtime schema validation for the room. If the current contents of the room's storage do not match the schema, attaching will fail and the error message will give details on why the schema failed to attach.",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/AttachSchema"
-              },
-              "examples": {
-                "example-1": {
-                  "value": {
-                    "schema": "my-schema@1"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Success. Found the schema attached to the room. Returns the schema id as JSON.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AttachSchema"
-                },
-                "examples": {
-                  "example-1": {
-                    "value": {
-                      "schema": "my-schema@1"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "$ref": "#/components/responses/401"
-          },
-          "404": {
-            "$ref": "#/components/responses/404schema"
-          },
-          "409": {
-            "$ref": "#/components/responses/409schema"
-          }
-        },
-        "parameters": [
-          {
-            "schema": {
-              "type": "string"
-            },
-            "name": "roomId",
-            "in": "path",
-            "required": true,
-            "description": "ID of the room"
-          }
-        ]
-      },
-      "delete": {
-        "summary": "Detach schema from room",
-        "operationId": "delete-detach-schema-to-room",
-        "description": "This endpoint detaches the schema from a room.",
-        "responses": {
-          "200": {
-            "description": "Success. Detached the schema from the room."
-          },
-          "401": {
-            "$ref": "#/components/responses/401"
-          },
-          "404": {
-            "$ref": "#/components/responses/404schema"
-          },
-          "409": {
-            "$ref": "#/components/responses/409schema"
-          }
-        },
-        "parameters": [
-          {
-            "schema": {
-              "type": "string"
-            },
-            "name": "roomId",
-            "in": "path",
-            "required": true,
-            "description": "ID of the room"
-          }
-        ]
-      }
     }
   },
   "components": {
@@ -1184,9 +1729,7 @@
           "groupsAccesses": {
             "type": "object"
           }
-        },
-        "examples": [],
-        "x-internal": false
+        }
       },
       "UpdateRoom": {
         "type": "object",
@@ -1194,27 +1737,18 @@
         "additionalProperties": false,
         "properties": {
           "defaultAccesses": {
-            "type": [
-              "null",
-              {
-                "type": "object",
-                "additionalProperties": {
-                  "type": "array"
-                }
-              },
-              "array"
-            ],
+            "type": ["array", "null"],
             "items": {
               "type": "string"
             }
           },
           "usersAccesses": {
             "type": ["object", "null"],
-            "description": "A map of user identifiers to permissions list. Setting the value as `null` will clear all users' accesses. Setting one user identifier as `null` will clear this user's accesses."
+            "description": "A map of user identifiers to permissions list. Setting the value as `null` will clear all users’ accesses. Setting one user identifier as `null` will clear this user’s accesses."
           },
           "groupsAccesses": {
             "type": ["object", "null"],
-            "description": "A map of group identifiers to permissions list. Setting the value as `null` will clear all groups' accesses. Setting one group identifier as `null` will clear this group's accesses."
+            "description": "A map of group identifiers to permissions list. Setting the value as `null` will clear all groups’ accesses. Setting one group identifier as `null` will clear this group’s accesses."
           },
           "metadata": {
             "type": ["object", "null"],
@@ -1275,6 +1809,54 @@
         "properties": {
           "token": {
             "type": "string"
+          }
+        }
+      },
+      "TokenResponse": {
+        "title": "An HTTP response body containing a token.",
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string"
+          }
+        }
+      },
+      "AuthorizeUserRequest": {
+        "title": "AuthorizeUserRequest",
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string"
+          },
+          "userInfo": {
+            "type": "object"
+          },
+          "permissions": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "IdentifyUserRequest": {
+        "title": "IdentifyUserRequest",
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string"
+          },
+          "groupIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "userInfo": {
+            "type": "object"
           }
         }
       },
@@ -1352,9 +1934,6 @@
                 },
                 "connectionId": {
                   "type": "number"
-                },
-                "": {
-                  "type": "string"
                 }
               }
             }
@@ -1394,23 +1973,27 @@
           "body": {
             "type": "string"
           }
-        },
-        "examples": [],
-        "x-internal": false
+        }
       },
       "SchemaRequest": {
         "title": "SchemaRequest",
         "type": "object",
         "properties": {
-          "name": "string",
-          "body": "string"
+          "name": {
+            "type": "string"
+          },
+          "body": {
+            "type": "string"
+          }
         }
       },
       "UpdateSchema": {
         "title": "UpdateSchema",
         "type": "object",
         "properties": {
-          "body": "string"
+          "body": {
+            "type": "string"
+          }
         }
       },
       "AttachSchema": {
@@ -1421,6 +2004,123 @@
             "type": "string"
           }
         }
+      },
+      "Thread": {
+        "type": "object",
+        "title": "Thread",
+        "properties": {
+          "type": {
+            "const": "thread"
+          },
+          "id": {
+            "type": "string"
+          },
+          "roomId": {
+            "type": "string"
+          },
+          "comments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Comment"
+            }
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "metadata": {
+            "type": "object"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "type",
+          "id",
+          "roomId",
+          "comments",
+          "createdAt",
+          "metadata"
+        ],
+        "examples": [
+          {
+            "type": "thread",
+            "id": "thread-id",
+            "roomId": "room-id",
+            "comments": [
+              {
+                "type": "comment",
+                "threadId": "thread-id",
+                "roomId": "room-id",
+                "id": "comment-id",
+                "userId": "string",
+                "createdAt": "2019-08-24T14:15:22Z",
+                "editedAt": "2019-08-24T14:15:22Z",
+                "deletedAt": "2019-08-24T14:15:22Z",
+                "body": {}
+              }
+            ],
+            "createdAt": "2019-08-24T14:15:22Z",
+            "metadata": {},
+            "updatedAt": "2019-08-24T14:15:22Z"
+          }
+        ],
+        "description": ""
+      },
+      "Comment": {
+        "type": "object",
+        "title": "Comment",
+        "properties": {
+          "type": {
+            "const": "comment",
+            "readOnly": true,
+            "default": "comment",
+            "examples": ["comment"]
+          },
+          "threadId": {
+            "type": "string"
+          },
+          "roomId": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "editedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "deletedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "body": {
+            "type": "object"
+          }
+        },
+        "required": ["type", "threadId", "roomId", "id", "userId", "createdAt"],
+        "examples": [
+          {
+            "type": "comment",
+            "threadId": "thread-id",
+            "roomId": "room-id",
+            "id": "comment-id",
+            "userId": "string",
+            "createdAt": "2019-08-24T14:15:22Z",
+            "editedAt": "2019-08-24T14:15:22Z",
+            "deletedAt": "2019-08-24T14:15:22Z",
+            "body": {}
+          }
+        ]
       }
     },
     "securitySchemes": {
@@ -1487,7 +2187,7 @@
                 "value": {
                   "error": "UNAUTHORIZED_ROOM_ACCESS",
                   "message": "The user does not have permission to access the room.",
-                  "suggestion": "Please add the user's ID or one of the user's group IDs to the room first.",
+                  "suggestion": "Please add the user’s ID or one of the user’s group IDs to the room first.",
                   "docs": ""
                 }
               }
@@ -1495,7 +2195,73 @@
           }
         }
       },
-      "403schema": {
+      "404": {
+        "description": "Room not found.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "examples": {
+              "ROOM_NOT_FOUND": {
+                "value": {
+                  "error": "ROOM_NOT_FOUND",
+                  "message": "Room not found.",
+                  "suggestion": "Please use a valid room ID, room IDs are available in the dashboard: https://liveblocks.io/dashboard/rooms.",
+                  "docs": ""
+                }
+              }
+            }
+          }
+        }
+      },
+      "409": {
+        "description": "Room already exists.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "examples": {
+              "ROOM_ALREADY_EXISTS": {
+                "value": {
+                  "error": "ROOM_ALREADY_EXISTS",
+                  "message": "The room already exists.",
+                  "suggestion": "Please use a different room id or update the existing room.",
+                  "doc": ""
+                }
+              }
+            }
+          },
+          "application/xml": {
+            "schema": {
+              "type": "object",
+              "properties": {}
+            }
+          }
+        }
+      },
+      "422": {
+        "description": "Unprocessable entity.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "examples": {
+              "UNPROCESSABLE_ENTITY": {
+                "value": {
+                  "error": "UNPROCESSABLE_ENTITY",
+                  "message": "Missing key: 'defaultAccesses'.",
+                  "suggestion": "Please ensure the data follows the correct format.",
+                  "docs": ""
+                }
+              }
+            }
+          }
+        }
+      },
+      "403-schema-validation": {
         "description": "Unauthorized access.",
         "content": {
           "application/json": {
@@ -1530,7 +2296,7 @@
                 "value": {
                   "error": "UNAUTHORIZED_ROOM_ACCESS",
                   "message": "The user does not have permission to access the room.",
-                  "suggestion": "Please add the user's ID or one of the user's group IDs to the room first.",
+                  "suggestion": "Please add the user’s ID or one of the user’s group IDs to the room first.",
                   "docs": ""
                 }
               }
@@ -1538,27 +2304,7 @@
           }
         }
       },
-      "404": {
-        "description": "Room not found.",
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/Error"
-            },
-            "examples": {
-              "ROOM_NOT_FOUND": {
-                "value": {
-                  "error": "ROOM_NOT_FOUND",
-                  "message": "Room not found.",
-                  "suggestion": "Please use a valid room ID, room IDs are available in the dashboard: https://liveblocks.io/dashboard/rooms.",
-                  "docs": ""
-                }
-              }
-            }
-          }
-        }
-      },
-      "404schema": {
+      "404-schema-validation": {
         "description": "Schema not found.",
         "content": {
           "application/json": {
@@ -1578,33 +2324,7 @@
           }
         }
       },
-      "409": {
-        "description": "Room already exists.",
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/Error"
-            },
-            "examples": {
-              "ROOM_ALREADY_EXISTS": {
-                "value": {
-                  "error": "ROOM_ALREADY_EXISTS",
-                  "message": "The room already exists.",
-                  "suggestion": "Please use a different room id or update the existing room.",
-                  "doc": ""
-                }
-              }
-            }
-          },
-          "application/xml": {
-            "schema": {
-              "type": "object",
-              "properties": {}
-            }
-          }
-        }
-      },
-      "409schema": {
+      "409-schema-validation": {
         "description": "Existing room data does not match this schema.",
         "content": {
           "application/json": {
@@ -1617,7 +2337,7 @@
                   "error": "SCHEMA_NOT_COMPATIBLE",
                   "message": "Existing room data does not match this schema.",
                   "suggestion": "Check the following error and make adjustments to your schema to be able to attach it to this room.",
-                  "doc": ""
+                  "docs": ""
                 }
               }
             }
@@ -1630,27 +2350,7 @@
           }
         }
       },
-      "422": {
-        "description": "Unprocessable entity.",
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/Error"
-            },
-            "examples": {
-              "UNPROCESSABLE_ENTITY": {
-                "value": {
-                  "error": "UNPROCESSABLE_ENTITY",
-                  "message": "Missing key: 'defaultAccesses'.",
-                  "suggestion": "Please ensure the data follows the correct format.",
-                  "docs": ""
-                }
-              }
-            }
-          }
-        }
-      },
-      "422schema": {
+      "422-schema-validation": {
         "description": "Unprocessable entity.",
         "content": {
           "application/json": {
@@ -1678,8 +2378,30 @@
           }
         }
       }
-    },
-    "requestBodies": {}
+    }
   },
+  "tags": [
+    {
+      "name": "Authentication"
+    },
+    {
+      "name": "Room"
+    },
+    {
+      "name": "Storage"
+    },
+    {
+      "name": "Yjs"
+    },
+    {
+      "name": "Schema validation"
+    },
+    {
+      "name": "Comments"
+    },
+    {
+      "name": "Deprecated"
+    }
+  ],
   "x-internal": true
 }

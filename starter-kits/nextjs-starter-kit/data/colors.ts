@@ -2,13 +2,13 @@
  * Random colors used in the app.
  */
 export const colors = [
-  "#07f",
-  "#0bf",
-  "#0c8",
-  "#8c1",
-  "#fb0",
-  "#f81",
-  "#e14",
-  "#e4b",
-  "#85f",
+  "#0077ff",
+  "#00bbff",
+  "#00cc88",
+  "#88cc11",
+  "#ffbb00",
+  "#ff8811",
+  "#ee1144",
+  "#ee44bb",
+  "#8855bf",
 ];

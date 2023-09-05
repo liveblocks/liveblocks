@@ -1,0 +1,212 @@
+---
+meta:
+  title: "Get started with Liveblocks, Yjs, Quill, and React"
+  parentTitle: "Get started"
+  description:
+    "Learn how to get started with Liveblocks, Yjs, Quill, and React."
+---
+
+Liveblocks is a real-time collaboration infrastructure for building performant
+collaborative experiences. Follow the following steps to start adding
+collaboration to your React application using the APIs from the
+[`@liveblocks/yjs`](/docs/api-reference/liveblocks-yjs) package.
+
+<Banner title="Public beta">
+
+Yjs support is currently in beta. If you have any questions or feedback, please
+reach out to us via the dedicated Discord channel,
+[#yjs-beta](https://discord.com/channels/913109211746009108/1123560088997728328).
+We’d love to hear from you.
+
+</Banner>
+
+## Quickstart
+
+<Steps>
+  <Step>
+    <StepTitle>Install Liveblocks, Yjs, and Quill</StepTitle>
+    <StepContent>
+
+      ```bash
+      npm install @liveblocks/client @liveblocks/react @liveblocks/yjs yjs quill quill-cursors react-quill y-quill
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Initialize the `liveblocks.config.ts` file</StepTitle>
+    <StepContent>
+
+      ```bash
+      npx create-liveblocks-app@latest --init --framework react
+      ```
+
+    </StepContent>
+
+  </Step>
+
+  <Step>
+    <StepTitle>Set up the Liveblocks client</StepTitle>
+    <StepContent>
+
+      The first step in connecting to Liveblocks is creating a client which
+      will be responsible for communicating with the back end. You can do
+      this by modifying `createClient` in your config file, and
+      passing your public API key.
+
+      ```ts file="liveblocks.config.ts"
+      const client = createClient({
+        publicApiKey: "{{PUBLIC_KEY}}",
+      });
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Join a Liveblocks room</StepTitle>
+    <StepContent>
+
+      Liveblocks uses the concept of rooms, separate virtual spaces where people
+      collaborate. To create a real-time experience, multiple users must be
+      connected to the same room.
+
+      ```tsx file="index.tsx" highlight="7-11"
+      import { RoomProvider } from "./liveblocks.config";
+      import { Editor } from "./Editor";
+      import { ClientSideSuspense } from "@liveblocks/react";
+
+      export default function Page() {
+        return (
+          <RoomProvider id="my-room" initialPresence={{}}>
+            <ClientSideSuspense fallback="Loading…">
+              {() => <Editor />}
+            </ClientSideSuspense>
+          </RoomProvider>
+        );
+      }
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Set up the collaborative Quill text editor</StepTitle>
+    <StepContent>
+
+      Now that we set up Liveblocks, we can start integrating Quill and Yjs in the `Editor.tsx` file.
+      To make the editor collaborative, we can rely on `QuillBinding` and `QuillCursors`
+      from `y-quill` and `quill-cursors`.
+
+      ```tsx file="Editor.tsx"
+      import Quill from "quill";
+      import ReactQuill from "react-quill";
+      import QuillCursors from "quill-cursors";
+      import { QuillBinding } from "y-quill";
+      import * as Y from "yjs";
+      import LiveblocksProvider from "@liveblocks/yjs";
+      import { useRoom } from "@/liveblocks.config";
+      import { useCallback, useEffect, useRef, useState } from "react";
+
+      Quill.register("modules/cursors", QuillCursors);
+
+      // Collaborative text editor with simple rich text, live cursors, and live avatars
+      export function CollaborativeEditor() {
+        const room = useRoom();
+        const [text, setText] = useState<Y.Text>();
+        const [provider, setProvider] = useState<any>();
+
+        // Set up Liveblocks Yjs provider
+        useEffect(() => {
+          const yDoc = new Y.Doc();
+          const yText = yDoc.getText("quill");
+          const yProvider = new LiveblocksProvider(room, yDoc);
+          setText(yText);
+          setProvider(yProvider);
+
+          return () => {
+            yDoc?.destroy();
+            yProvider?.destroy();
+          };
+        }, [room]);
+
+        if (!text || !provider) {
+          return null;
+        }
+
+        return <QuillEditor yText={text} provider={provider} />;
+      }
+
+      type EditorProps = {
+        yText: Y.Text;
+        provider: any;
+      };
+
+      function QuillEditor({ yText, provider }: EditorProps) {
+        const reactQuillRef = useRef<ReactQuill>(null);
+
+        // Set up Yjs and Quill
+        useEffect(() => {
+          let quill;
+          let binding: QuillBinding;
+
+          if (!reactQuillRef.current) {
+            return;
+          }
+
+          quill = reactQuillRef.current.getEditor();
+          binding = new QuillBinding(yText, quill, provider.awareness);
+          return () => {
+            binding?.destroy?.();
+          };
+        }, [yText, provider]);
+
+        return (
+          <ReactQuill
+            placeholder="Start typing here…"
+            ref={reactQuillRef}
+            theme="snow"
+            modules={{
+              cursors: true,
+              history: {
+                // Local undo shouldn't undo changes from remote users
+                userOnly: true,
+              },
+            }}
+          />
+        );
+      }
+      ```
+
+    </StepContent>
+
+  </Step>
+
+  <Step lastStep>
+    <StepTitle>Next: set up authentication</StepTitle>
+    <StepContent>
+      By default, Liveblocks is configured to work without an authentication endpoint
+      where everyone automatically has access to rooms. This approach is great for
+      prototyping and marketing pages where setting up your own security isn’t always
+      required. If you want to limit access to a room for certain users, you’ll need
+      to set up an authentication endpoint to enable permissions.
+
+      <ButtonLink className="not-markdown" href="/docs/rooms/authentication">
+        Set up authentication
+      </ButtonLink>
+    </StepContent>
+
+  </Step>
+
+</Steps>
+
+## What to read next
+
+Congratulations! You now have set up the foundation for your collaborative Quill
+text editor inside your React application.
+
+- [Yjs and Quill guides](/docs/guides?technologies=yjs%2Cquill)
+- [How to create a collaborative text editor with Quill, Yjs, Next.js, and Liveblocks](/docs/guides/how-to-create-a-collaborative-text-editor-with-quill-yjs-nextjs-and-liveblocks)
+- [@liveblocks/yjs API Reference](/docs/api-reference/liveblocks-yjs)
+- [Quill website](https://quilljs.com)

@@ -1,3 +1,9 @@
+import { detectDupes } from "@liveblocks/core";
+
+import { PKG_FORMAT, PKG_NAME, PKG_VERSION } from "./version";
+
+detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
+
 export { ClientSideSuspense } from "./ClientSideSuspense";
 export { createRoomContext } from "./factory";
 export type { MutationContext } from "./types";

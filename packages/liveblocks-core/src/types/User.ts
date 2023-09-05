@@ -6,7 +6,7 @@ import type { BaseUserMeta } from "../protocol/BaseUserMeta";
  */
 export type User<
   TPresence extends JsonObject,
-  TUserMeta extends BaseUserMeta
+  TUserMeta extends BaseUserMeta,
 > = {
   /**
    * The connection ID of the User. It is unique and increment at every new connection.
@@ -27,7 +27,15 @@ export type User<
   readonly presence: TPresence;
 
   /**
-   * False if the user can modify the room storage, true otherwise.
+   * @deprecated Use `!user.canWrite` instead.
+   * False if the user can mutate the Room’s Storage and/or YDoc, true if they
+   * can only read but not mutate it.
    */
   readonly isReadOnly: boolean;
+
+  /**
+   * True if the user can mutate the Room’s Storage and/or YDoc, false if they
+   * can only read but not mutate it.
+   */
+  readonly canWrite: boolean;
 };

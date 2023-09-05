@@ -9,9 +9,14 @@ import type {
   LsonObject,
   Room,
 } from "@liveblocks/client";
+import { detectDupes } from "@liveblocks/core";
 import { Base64 } from "js-base64";
 import { Observable } from "lib0/observable";
 import * as Y from "yjs";
+
+import { PKG_FORMAT, PKG_NAME, PKG_VERSION } from "./version";
+
+detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
 
 const Y_PRESENCE_KEY = "__yjs";
 
@@ -129,7 +134,7 @@ export default class LiveblocksProvider<
   P extends JsonObject,
   S extends LsonObject,
   U extends BaseUserMeta,
-  E extends Json
+  E extends Json,
 > extends Observable<unknown> {
   private room: Room<P, S, U, E>;
   private doc: Y.Doc;
@@ -157,14 +162,34 @@ export default class LiveblocksProvider<
       this.room.events.status.subscribe((status) => {
         if (status === "connected") {
           this.syncDoc();
+        } else {
+          this.synced = false;
         }
       })
     );
 
     this.unsubscribers.push(
-      this.room.events.ydoc.subscribe((update: string) => {
+      this.room.events.ydoc.subscribe(({ update, stateVector }) => {
+        // apply update from the server
         Y.applyUpdate(this.doc, Base64.toUint8Array(update), "backend");
-        this.synced = true;
+
+        // if this update is the result of a fetch, the state vector is included
+        if (stateVector) {
+          // Use server state to calculate a diff and send it
+          try {
+            const localUpdate = Y.encodeStateAsUpdate(
+              this.doc,
+              Base64.toUint8Array(stateVector as string)
+            );
+            this.room.updateYDoc(Base64.fromUint8Array(localUpdate));
+          } catch (e) {
+            // something went wrong encoding local state to send to the server
+            console.warn(e);
+          }
+          // now that we've sent our local  and received from server, we're in sync
+          // calling `syncDoc` again will sync up the documents
+          this.synced = true;
+        }
       })
     );
     this.syncDoc();

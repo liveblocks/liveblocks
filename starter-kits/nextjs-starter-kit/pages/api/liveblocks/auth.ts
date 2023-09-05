@@ -7,7 +7,7 @@ import {
 import { User } from "../../../types";
 
 /**
- * AUTH - Used in /liveblocks.config.ts
+ * PREVIOUS AUTH - Used in /liveblocks.config.ts
  *
  * Authorize your Liveblocks session. Get info about the current user
  * from NextAuth, pass it to Liveblocks, and connect to the room.

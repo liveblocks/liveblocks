@@ -1,5 +1,5 @@
 {
-  "name": "@liveblocks/nextjs-live-cursors-chat",
+  "name": "@liveblocks-examples/nextjs-live-cursors-chat",
   "description": "This example shows how to build live cursors along chat and reactions with Liveblocks and Next.js.",
   "license": "Apache-2.0",
   "private": true,
@@ -9,9 +9,9 @@
     "start": "next start"
   },
   "dependencies": {
-    "@liveblocks/client": "^1.1.1",
-    "@liveblocks/node": "^1.1.1",
-    "@liveblocks/react": "^1.1.1",
+    "@liveblocks/client": "^1.2.3",
+    "@liveblocks/node": "^1.2.3",
+    "@liveblocks/react": "^1.2.3",
     "next": "12.2.5",
     "react": "18.2.0",
     "react-dom": "18.2.0"

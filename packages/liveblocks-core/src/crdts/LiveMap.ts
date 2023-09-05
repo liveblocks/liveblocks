@@ -40,7 +40,7 @@ export type LiveMapUpdates<TKey extends string, TValue extends Lson> = {
  */
 export class LiveMap<
   TKey extends string,
-  TValue extends Lson
+  TValue extends Lson,
 > extends AbstractCrdt {
   /** @internal */
   private _map: Map<TKey, LiveNode>;

@@ -22,19 +22,33 @@
     },
     {
       "id": "text-editors",
-      "name": "Text editors",
-      "hidden": true
+      "name": "Text editors"
     },
     {
       "id": "code-editors",
-      "name": "Code editors",
-      "hidden": true
+      "name": "Code editors"
+    },
+    {
+      "id": "webhooks",
+      "name": "Webhooks"
+    },
+    {
+      "id": "databases",
+      "name": "Databases"
+    },
+    {
+      "id": "errors",
+      "name": "Errors"
     }
   ],
   "technologies": [
     {
       "id": "javascript",
       "name": "JavaScript"
+    },
+    {
+      "id": "nodejs",
+      "name": "Node.js"
     },
     {
       "id": "react",
@@ -74,18 +88,31 @@
     },
     {
       "id": "yjs",
-      "name": "Yjs",
-      "hidden": true
+      "name": "Yjs"
     },
     {
       "id": "lexical",
-      "name": "Lexical",
-      "hidden": true
+      "name": "Lexical"
+    },
+    {
+      "id": "slate",
+      "name": "Slate"
+    },
+    {
+      "id": "tiptap",
+      "name": "Tiptap"
+    },
+    {
+      "id": "quill",
+      "name": "Quill"
     },
     {
       "id": "codemirror",
-      "name": "CodeMirror",
-      "hidden": true
+      "name": "CodeMirror"
+    },
+    {
+      "id": "monaco",
+      "name": "Monaco"
     }
   ]
 }

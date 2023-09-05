@@ -1,4 +1,4 @@
-import { createClient, LiveMap, LiveObject } from "@liveblocks/client";
+import { LiveMap, LiveObject, createClient } from "@liveblocks/client";
 import { createRoomContext } from "@liveblocks/react";
 import Router from "next/router";
 import { User } from "./types";
@@ -18,7 +18,7 @@ const client = createClient({
     };
 
     // Call auth API route to get Liveblocks access token
-    const response = await fetch(ENDPOINT_BASE_URL + "/auth", {
+    const response = await fetch(ENDPOINT_BASE_URL + "/liveblocks-auth", {
       method: "POST",
       headers: {
         Authentication: "token",
@@ -94,6 +94,7 @@ export const {
     useCanRedo,
     useMutation,
     useOthers,
+    useRoom,
     useSelf,
     useStorage,
     useUpdateMyPresence,
