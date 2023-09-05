@@ -5,10 +5,7 @@
     "shared/*",
     "packages/*",
     "schema-lang/*",
-    "e2e/next-sandbox",
-    "examples/nextjs-comments",
-    "examples/nextjs-comments-primitives",
-    "examples/react-comments"
+    "e2e/next-sandbox"
   ],
   "scripts": {
     "build": "turbo run build",
