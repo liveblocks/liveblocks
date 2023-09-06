@@ -104,12 +104,14 @@ export function createCommentsApi<ThreadMetadata extends BaseMetadata>(
     const response = await fetchApi(roomId, "/threads");
 
     if (response.ok) {
-      const json = await response.json();
+      const json = await (response.json() as Promise<{
+        data: ThreadData<ThreadMetadata>[];
+      }>);
       return json.data;
     } else if (response.status === 404) {
       return [];
     } else {
-      throw new Error("FAIL");
+      throw new Error("There was an error while getting threads.");
     }
   }
 
