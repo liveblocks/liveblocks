@@ -1,7 +1,3 @@
-// TODO: apparently Yjs is full of anys or something, see if we can fix this
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import type {
   BaseUserMeta,
   Json,
@@ -241,6 +237,7 @@ export default class LiveblocksProvider<
     this.doc.off("update", this.updateHandler);
     this.unsubscribers.forEach((unsub) => unsub());
     this.awareness.destroy();
+    super.destroy();
   }
 
   // Some provider implementations expect to be able to call connect/disconnect, implement as noop

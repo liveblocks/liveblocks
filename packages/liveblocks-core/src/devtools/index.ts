@@ -1,6 +1,7 @@
 import type { LsonObject } from "../crdts/Lson";
 import type { Json, JsonObject } from "../lib/Json";
 import type { BaseUserMeta } from "../protocol/BaseUserMeta";
+import type { UpdateYDocClientMsg } from "../protocol/ClientMsg";
 import type { YDocUpdate } from "../protocol/ServerMsg";
 import type { Room } from "../room";
 import { PKG_VERSION } from "../version";
@@ -117,7 +118,7 @@ function startSyncStream(
 
 function syncYdocUpdate(
   room: Room<JsonObject, LsonObject, BaseUserMeta, Json>,
-  update: YDocUpdate
+  update: YDocUpdate | UpdateYDocClientMsg
 ) {
   sendToPanel({
     msg: "room::sync::ydoc",

@@ -1,4 +1,5 @@
 import type { Status } from "../connection";
+import type { UpdateYDocClientMsg } from "../protocol/ClientMsg";
 import type { YDocUpdate } from "../protocol/ServerMsg";
 import type * as DevTools from "../types/DevToolsTreeNode";
 
@@ -98,11 +99,10 @@ export type ClientToPanelMessage =
    * Sent whenever the ydoc is updated
    */
   | {
-    msg: "room::sync::ydoc";
-    roomId: string;
-    update: YDocUpdate;
-  }
-;
+      msg: "room::sync::ydoc";
+      roomId: string;
+      update: YDocUpdate | UpdateYDocClientMsg;
+    };
 // ----------------------------------------------------------------------------
 
 export type FullPanelToClientMessage = PanelToClientMessage & {
