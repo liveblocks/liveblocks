@@ -26,6 +26,11 @@ to build comments in your application with Liveblocks—a platform to build, hos
 and scale collaborative applications with zero configuration, no maintenance
 required.
 
+> [!IMPORTANT]  
+> Comments is currently in private beta and is only available to a select group
+> of users. If you want to participate in the beta,
+> [sign up for the waitlist](https://forms.gle/xgp54aTMsoH8hrjU9).
+
 ## Installation
 
 ```

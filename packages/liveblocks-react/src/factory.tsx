@@ -138,6 +138,8 @@ function makeMutationContext<
 
 type Options<TUserMeta extends BaseUserMeta> = {
   /**
+   * @beta
+   *
    * An asynchronous function that returns user info from a user ID.
    */
   resolveUser?: (
@@ -145,6 +147,8 @@ type Options<TUserMeta extends BaseUserMeta> = {
   ) => Promise<TUserMeta["info"] | undefined>;
 
   /**
+   * @beta
+   *
    * An asynchronous function that returns a list of user IDs matching a string.
    */
   resolveMentionSuggestions?: (
