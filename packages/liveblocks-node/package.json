@@ -38,7 +38,7 @@
     "svix": "^0.75.0"
   },
   "dependencies": {
-    "@liveblocks/core": "*",
+    "@liveblocks/core": "1.2.4",
     "node-fetch": "^2.6.1"
   },
   "bugs": {
