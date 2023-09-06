@@ -830,12 +830,8 @@ export function createRoomContext<
     return useLegacyKey(key) as TStorage[TKey];
   }
 
-  /*
-   * START COMMMENTS
-   */
-
-  const errorEventSource = makeEventSource<CommentsApiError<TThreadMetadata>>();
-
+  const commentsErrorEventSource =
+    makeEventSource<CommentsApiError<TThreadMetadata>>();
   const commentsRooms = new Map<string, CommentsRoom<TThreadMetadata>>();
 
   function getCommentsRoom(
@@ -843,7 +839,7 @@ export function createRoomContext<
   ) {
     let commentsRoom = commentsRooms.get(room.id);
     if (commentsRoom === undefined) {
-      commentsRoom = createCommentsRoom(room, errorEventSource);
+      commentsRoom = createCommentsRoom(room, commentsErrorEventSource);
       commentsRooms.set(room.id, commentsRoom);
     }
     return commentsRoom;
@@ -985,10 +981,6 @@ export function createRoomContext<
 
     return data;
   }
-
-  /*
-   * END COMMENTS
-   */
 
   const bundle: RoomContextBundle<
     TPresence,

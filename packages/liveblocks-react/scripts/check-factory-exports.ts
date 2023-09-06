@@ -39,13 +39,13 @@ const mainBundleNode = srcFile.statements.find(
 
 // Find the "suspense:" subkey
 const suspenseBundleNode = (
-  mainBundleNode.type as TypeLiteralNode
-).members.find((m) => m.name.getText() === "suspense") as PropertySignature;
+  mainBundleNode?.type as TypeLiteralNode
+).members.find((m) => m.name?.getText() === "suspense") as PropertySignature;
 
 // List all the members in the "main" bundle (without "suspense")
-const mainBundleMembers = (mainBundleNode.type as TypeLiteralNode).members
+const mainBundleMembers = (mainBundleNode?.type as TypeLiteralNode).members
   .filter((m) => isPropertySignature(m) || isMethodSignature(m))
-  .filter((m) => m.name.getText() !== "suspense");
+  .filter((m) => m.name?.getText() !== "suspense");
 
 // List all the members in the "suspense" bundle
 const suspenseMembers = (
@@ -57,11 +57,11 @@ const suspenseMembers = (
 //
 
 const mainBundleMemberNames = Array.from(
-  new Set(mainBundleMembers.map((m) => m.name.getText()))
+  new Set(mainBundleMembers.map((m) => m.name?.getText()))
 );
 
 const suspenseMemberNames = Array.from(
-  new Set(suspenseMembers.map((m) => m.name.getText()))
+  new Set(suspenseMembers.map((m) => m.name?.getText()))
 );
 
 let exitcode = 0;
@@ -95,9 +95,9 @@ function unify(s: string): string {
 }
 
 function getPairwise(name: string): [main: string[], suspense: string[]] {
-  const mainNodes = mainBundleMembers.filter((m) => m.name.getText() === name);
+  const mainNodes = mainBundleMembers.filter((m) => m.name?.getText() === name);
   const suspenseNodes = suspenseMembers.filter(
-    (m) => m.name.getText() === name
+    (m) => m.name?.getText() === name
   );
 
   if (mainNodes.length === 0 || suspenseNodes.length === 0) {
@@ -112,8 +112,8 @@ function getPairwise(name: string): [main: string[], suspense: string[]] {
       (suspenseNode as any).jsDoc as NodeArray<JSDoc> | undefined
   );
 
-  const comment1 = jsDocs1.map((jsDoc) => unify(String(jsDoc[0]?.comment)));
-  const comment2 = jsDocs2.map((jsDoc) => unify(String(jsDoc[0]?.comment)));
+  const comment1 = jsDocs1.map((jsDoc) => unify(String(jsDoc?.[0]?.comment)));
+  const comment2 = jsDocs2.map((jsDoc) => unify(String(jsDoc?.[0]?.comment)));
 
   return [comment1, comment2];
 }
@@ -123,7 +123,7 @@ function getPairwise(name: string): [main: string[], suspense: string[]] {
     mainBundleMemberNames,
     subtract(mainBundleMemberNames, suspenseMemberNames)
   )) {
-    const [comments1, comments2] = getPairwise(name);
+    const [comments1, comments2] = getPairwise(name!);
     if (!equalSets(comments1, comments2)) {
       console.log("---------------------------------------------------------");
       console.log("JSDoc differences found!");
