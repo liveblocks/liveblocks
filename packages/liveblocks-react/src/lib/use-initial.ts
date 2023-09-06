@@ -6,6 +6,6 @@ import { useRef } from "react";
  * custom hooks, much like how `useState(initialState)` or
  * `useRef(initialValue)` works.
  */
-export function useInitial<T>(value: T | (() => T)): T {
-  return useRef(value instanceof Function ? value() : value).current;
+export function useInitial<T>(value: T): T {
+  return useRef(value).current;
 }

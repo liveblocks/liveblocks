@@ -1,5 +1,9 @@
 import "@testing-library/jest-dom";
 
+import { TextDecoder, TextEncoder } from "util";
+global.TextEncoder = TextEncoder as typeof global.TextEncoder;
+global.TextDecoder = TextDecoder as typeof global.TextDecoder;
+
 import type { AsyncState } from "@liveblocks/core";
 import { createAsyncCache } from "@liveblocks/core";
 import type { RenderHookResult } from "@testing-library/react";
@@ -13,12 +17,6 @@ import type {
   UseAsyncCacheResponse,
 } from "../use-async-cache";
 import { useAsyncCache } from "../use-async-cache";
-
-// https://github.com/jsdom/jsdom/issues/2524#issuecomment-897707183
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const { TextEncoder, TextDecoder } = require("util");
-global.TextEncoder = TextEncoder;
-global.TextDecoder = TextDecoder;
 
 const REQUEST_DELAY = 20;
 const KEY_ABC = "abc";

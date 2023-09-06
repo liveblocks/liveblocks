@@ -41,10 +41,11 @@ import type {
 } from "./comments/CommentsRoom";
 import { createCommentsRoom } from "./comments/CommentsRoom";
 import type { CommentsApiError } from "./comments/errors";
-import { useAsyncCache } from "./comments/lib/use-async-cache";
 import { useDebounce } from "./comments/lib/use-debounce";
-import { useInitial, useRerender } from "./hooks";
 import { stableStringify } from "./lib/stable-stringify";
+import { useAsyncCache } from "./lib/use-async-cache";
+import { useInitial } from "./lib/use-initial";
+import { useRerender } from "./lib/use-rerender";
 import type {
   InternalRoomContextBundle,
   MutationContext,

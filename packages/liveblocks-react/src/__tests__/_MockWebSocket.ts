@@ -2,7 +2,7 @@ import type {
   BaseUserMeta,
   Json,
   JsonObject,
-  type RoomStateServerMsg,
+  RoomStateServerMsg,
   ServerMsg,
 } from "@liveblocks/core";
 import { CrdtType, ServerMsgCode } from "@liveblocks/core";

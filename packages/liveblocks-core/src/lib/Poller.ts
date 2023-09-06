@@ -38,16 +38,12 @@ export function makePoller(callback: () => Promise<void> | void): Poller {
     remainingInterval: null,
   };
 
-  async function poll() {
-    await callback();
-
+  function poll() {
     if (context.state === "running") {
       schedule(context.interval);
     }
-  }
 
-  function triggerPoll() {
-    void poll();
+    void callback();
   }
 
   function schedule(interval: number) {
@@ -55,7 +51,7 @@ export function makePoller(callback: () => Promise<void> | void): Poller {
       state: "running",
       interval: context.state !== "stopped" ? context.interval : interval,
       lastScheduledAt: performance.now(),
-      timeoutHandle: setTimeout(triggerPoll, interval),
+      timeoutHandle: setTimeout(poll, interval),
       remainingInterval: null,
     };
   }
@@ -69,7 +65,7 @@ export function makePoller(callback: () => Promise<void> | void): Poller {
       state: "running",
       interval: context.interval,
       lastScheduledAt: context.lastScheduledAt,
-      timeoutHandle: setTimeout(triggerPoll, remaining),
+      timeoutHandle: setTimeout(poll, remaining),
       remainingInterval: null,
     };
   }
