@@ -1,9 +1,28 @@
+# v1.3.0
+
+### `@liveblocks/client`
+
+- Add support for Comments.
+
+### `@liveblocks/react`
+
+- Add support for Comments.
+- `UserMeta["info"]` can no longer be a scalar value.
+
+### `@liveblocks/node`
+
+- Add Comments methods.
+
+### `@liveblocks/react-comments`
+
+- Initial release.
+
 # v1.2.4
 
 ### `@liveblocks/node`
 
-- Fixes a bug where sending an empty (or non-string) user ID with `.identifyUser`
-  would confusingly get reported as an HTTP 503.
+- Fixes a bug where sending an empty (or non-string) user ID with
+  `.identifyUser` would confusingly get reported as an HTTP 503.
 
 # v1.2.3
 
