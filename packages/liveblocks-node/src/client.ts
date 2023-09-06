@@ -1,3 +1,8 @@
+/**
+ * NOTE: only types should be imported from @liveblocks/core.
+ * This is because this package is made to be used in Node.js, and
+ * @liveblocks/core has browser-specific code.
+ */
 import type { CommentData, ThreadData } from "@liveblocks/core";
 import type { Response } from "node-fetch";
 import fetch from "node-fetch";
