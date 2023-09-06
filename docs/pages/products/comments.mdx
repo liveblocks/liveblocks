@@ -8,10 +8,10 @@ meta:
 ---
 
 Embed a customizable commenting experience into your product to enable people to
-collaborate. Liveblocks Comments is fully customizable, enabling you to create
-all kinds of commenting experiences that look and feel like your product. With
-comments, you can build things like mentions, thread resolution, text
-annotations, video annotations, and more.
+collaborate. Comments is fully customizable, enabling you to create all kinds of
+commenting experiences that look and feel like your product. With Comments, you
+can build things like mentions, thread resolution, text annotations, video
+annotations, and more.
 
 <Banner title="Private beta">
   
@@ -19,3 +19,175 @@ Comments is currently in private beta. [Sign up for the waitlist](https://forms.
 to get access in the near future.
 
 </Banner>
+
+## Comments API Reference
+
+<ListGrid columns={2}>
+  <DocsCard
+    type="technology"
+    title="React"
+    href="/docs/api-reference/liveblocks-react#Comments"
+    description="@liveblocks/react"
+    visual={<DocsReactIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="React (Components)"
+    href="/docs/api-reference/liveblocks-react-comments"
+    description="@liveblocks/react-comments"
+    visual={<DocsReactIcon />}
+  />
+</ListGrid>
+
+## Philosophy
+
+Learn more about the overall philosophy for Comments through a few opinions and
+design decisions. Comments is meant to be fully customizable, enabling you to
+create all kinds of commenting experiences that look and feel like your product.
+With Comments, you can build things like mentions, thread resolution, text
+annotations, video annotations, and more.
+
+### No need to synchronize your users’ info with Liveblocks
+
+When posting a comment, we do not store the author name or avatar. We only store
+the author ID. We believe that it’s easier for you to retrieve users metadata
+when needed instead of synchronizing your database of users with Liveblocks.
+
+```tsx
+createRoomContext(client, {
+  resolveUser: async ({ userId }) => {
+    // Fetch user metadata from a local cache or a backend endpoint
+
+    return {
+      name: "Marie Curie",
+      avatar: "/images/marie-curie.png",
+    };
+  },
+});
+```
+
+### Metadata
+
+With metadata available at the threads level, you can tailor your commenting
+experience to your specific needs by refining and shaping it.
+
+Some examples of custom requirements include:
+
+- Anchor threads to specific spots on your platform for contextual discussions
+  linked to any aspect of your product.
+- Label your threads based on your business logic, like status, priority and
+  category.
+
+```tsx
+// Example to annotate a video at a specific timestamp
+createThread({
+  body,
+  metadata: {
+    timestamp: 42,
+  },
+});
+
+// Example to start a thread on a specific element in your document
+createThread({
+  body,
+  metadata: {
+    elementId: "xxx",
+  },
+});
+```
+
+### Deletion
+
+Deleting a comment from the client only soft deletes it: `comment.body` is
+removed and `comment.deletedAt` is added. We keep a placeholder so that the
+missing comments can still be noticed, giving you the choice on how to display
+deleted comments: either through a clear “message deleted” indicator or by not
+displaying it. Note that a thread is fully deleted when all its comments have
+been deleted.
+
+### Components
+
+To build comments in your application, you have two primary design
+implementation pathways:
+
+#### Default components
+
+- The default components are designed to be easily integrated as plug-and-play.
+- They come with customizable but optional (and overridable) default styles,
+  including support for dark mode.
+- They are opinionated with a few options, you’ll benefit from our UX and UI
+  expertise incorporated into these components.
+
+```tsx file="App.tsx" highlight="2,9,11"
+import { useThreads } from "./liveblocks.config";
+import { Composer, Thread } from "@liveblocks/react-comments";
+
+export function App() {
+  const threads = useThreads();
+  return (
+    <div>
+      {threads.map((thread) => (
+        <Thread key={thread.id} thread={thread} />
+      ))}
+      <Composer />
+    </div>
+  );
+}
+```
+
+#### Primitives
+
+- Headless, unstyled components.
+- Accessible building blocks to fully customize the experience if CSS is not
+  enough.
+
+```tsx file="CustomComment.tsx" highlight="1,8,10"
+import { Comment, Timestamp } from "@liveblocks/react-comments/primitives";
+
+export function CustomComment({ comment }) {
+  return (
+    <div>
+      <div>
+        <span>{comment.userId}</span>
+        <Timestamp date={comment.createdAt} />
+      </div>
+      <Comment.Body body={comment.body} />
+    </div>
+  );
+}
+```
+
+##### Inspired by Radix
+
+Our admiration for [Radix](https://www.radix-ui.com/) runs deep. Their approach
+to low-level components has been a beacon of inspiration as we crafted the
+primitives.
+
+- We prioritize making the components usable for everyone.
+- The components are designed for complete stylistic customization without
+  default style constraints. They are also modular, allowing for easy
+  combination and extensibility.
+- We minimize dependencies to ensure the components remain efficient and
+  lightweight.
+
+#### Combining default components and primitives
+
+Note that these two options are not separate paths. Both approaches can be
+combined to suit your needs for both speed (default components) and
+customization (primitives). One could imagine building their own `<Comment />`
+component from scratch using the primitives and still use the default
+`<Composer />` component.
+
+### Webhooks
+
+Webhooks are the foundation for extending Liveblocks in any way you want. You
+can subscribe to any comments-related events, such as creation, edition and
+deletion.
+
+With Webhooks, you can leverage your own email marketing tool to send emails,
+apply your product’s branding, choose your notification strategy, or even
+synchronize threads in Slack.
+
+To use our Webhooks, please follow [our guide](/docs/platform/webhooks) and/or
+take a look at our
+[example specific to comments events](https://github.com/liveblocks/liveblocks/tree/comments/examples/nextjs-comments/src/app/api/webhooks/route.ts).
