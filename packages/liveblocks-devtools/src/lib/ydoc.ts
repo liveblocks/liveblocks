@@ -109,7 +109,7 @@ export function yDocToJsonTree(doc: Y.Doc): DevTools.JsonTreeNode[] {
       key,
       id: key,
       type: "Json",
-      payload: getYTypedValue(doc, value, key, true) as Json,
+      payload: getYTypedValue(doc, value, key, false) as Json,
     });
   }
   console.log("RESULT ", result);

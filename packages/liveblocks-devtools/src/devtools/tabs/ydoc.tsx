@@ -5,12 +5,14 @@ import type { DevTools } from "@liveblocks/core";
 import cx from "classnames";
 import { type ComponentProps, type MouseEvent, useEffect, useState } from "react";
 import { useEdgesState, useNodesState } from "reactflow";
+import * as Y from "yjs";
 
 import { Loading } from "../../components/Loading";
 import { getNodesAndEdges, yDocToJsonTree } from "../../lib/ydoc";
 import { EmptyState } from "../components/EmptyState";
 import { StorageTree } from "../components/Tree";
 import YFlow from "../components/yflow/YFlow";
+import { YUpdateLog } from "../components/YUpdateLog";
 import { useStatus, useYdoc } from "../contexts/CurrentRoom";
 
 interface Props extends ComponentProps<"div"> {
@@ -34,9 +36,13 @@ export function Ydoc({
   const ydoc = useYdoc();
   useEffect(() => {
     let selectedNode = "";
-    function onUpdate() {
-      console.log(ydoc);
+    function onUpdate(update?: Uint8Array) {
       const yjson = yDocToJsonTree(ydoc);
+      if (update && update.length) {
+        console.log("decoding update");
+        const decoded = Y.decodeUpdate(update);
+        console.log(decoded)
+      }
       setJsonData(yjson);
       const { docEdges, docNodes } = getNodesAndEdges(ydoc, onSetNode, selectedNode);
       setEdges(docEdges);
@@ -59,7 +65,10 @@ export function Ydoc({
     currentStatus === "reconnecting"
   ) {
     return <div className={cx(className, "absolute inset-0")} {...props}>
-      <StorageTree data={jsonData} search={search} />
+      {/*<StorageTree data={jsonData} search={search} />
+      <YFlow nodes={nodes} edges={edges} />
+      */}
+      <YUpdateLog />
     </div>
   }
   return <EmptyState visual={<Loading />} />;

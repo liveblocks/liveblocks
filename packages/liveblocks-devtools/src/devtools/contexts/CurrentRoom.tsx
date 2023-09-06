@@ -11,11 +11,11 @@ import {
   useSyncExternalStore,
 } from "react";
 import * as Y from "yjs";
+import type { DeleteSet, Skip } from "yjs/dist/src/internals";
 
 import { assertNever } from "../../lib/assert";
 import type { EventSource, Observable } from "../../lib/EventSource";
 import { makeEventSource } from "../../lib/EventSource";
-import { yDocToJson } from "../../lib/ydoc";
 import { onMessage, sendMessage } from "../port";
 import type { FullBackgroundToPanelMessage } from "../protocol";
 
@@ -31,6 +31,13 @@ type OldConnectionStatus =
   | "unavailable"
   | "failed";
 
+
+
+type YUpdateLog = {
+  ds: DeleteSet;
+  structs: (Y.Item | Y.GC | Skip)[];
+}
+
 type Room = {
   readonly roomId: string;
   status: Status | OldConnectionStatus | null;
@@ -38,6 +45,7 @@ type Room = {
   me: DevTools.UserTreeNode | null;
   others: readonly DevTools.UserTreeNode[];
   ydoc: Y.Doc;
+  yupdates: YUpdateLog[]
 };
 
 type EventHub = {
@@ -130,7 +138,8 @@ function makeRoom(roomId: string): Room {
     storage: null,
     me: null,
     others: [],
-    ydoc: new Y.Doc()
+    ydoc: new Y.Doc(),
+    yupdates: [],
   };
 
   roomsById.set(roomId, newRoom);
@@ -228,11 +237,15 @@ export function CurrentRoomProvider(props: Props) {
 
         case "room::sync::ydoc": {
           const currRoom = getOrCreateRoom(msg.roomId);
+          const update = Base64.toUint8Array(msg.update.update);
           Y.applyUpdate(
             currRoom.ydoc,
-            Base64.toUint8Array(msg.update.update),
+            update,
             "backend"
           );
+          const decodedUpdate = Y.decodeUpdate(update);
+          console.log(decodedUpdate);
+          currRoom.yupdates = [decodedUpdate, ...currRoom.yupdates];
           const hub = getRoomHub(msg.roomId);
           hub.onYdoc.notify();
           break;
@@ -385,6 +398,15 @@ export function useStorage(): readonly DevTools.LsonTreeNode[] {
     () => getRoom(currentRoomId)?.storage ?? emptyStorage
   );
 }
+
+export function useYUpdateLog(): YUpdateLog[] {
+  const currentRoomId = useCurrentRoomId();
+  return useSyncExternalStore(
+    getSubscribe(currentRoomId, "onYdoc") ?? nosub,
+    () => getRoom(currentRoomId)?.yupdates ?? []
+  );
+}
+
 
 export function useYdoc(): Y.Doc {
   const currentRoomId = useCurrentRoomId();
