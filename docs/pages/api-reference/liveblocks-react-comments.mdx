@@ -545,19 +545,6 @@ behavior and call the mutation methods (e.g. `createThread`) manually.
 
 <Table columns={["26%", "32%", "42%"]}>
 
-/\*\* _ Whether the composer is collapsed. Setting a value will make the
-composer controlled. _/ collapsed?: boolean;
-
-    /**
-     * The event handler called when the collapsed state of the composer changes.
-     */
-    onCollapsedChange?: (collapsed: boolean) => void;
-
-    /**
-     * Whether the composer is initially collapsed. Setting a value will make the composer uncontrolled.
-     */
-    defaultCollapsed?: boolean;
-
 | Prop                | Type                                                                                                                                 | Description                                                                                       |
 | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------- |
 | `threadId`          | `string \| undefined`                                                                                                                | The ID of the thread to reply to or to edit a comment in.                                         |
