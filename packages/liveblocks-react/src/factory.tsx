@@ -179,9 +179,8 @@ function warnIfNoResolveUser(usersCache?: AsyncCache<unknown, unknown>) {
 let hasWarnedAboutCommentsBeta = false;
 function warnIfBetaCommentsHook() {
   if (!hasWarnedAboutCommentsBeta && process.env.NODE_ENV !== "production") {
-    console.log(
-      `%cWarning: The comments API is still in beta and may change in the future. Please report any issues you encounter at https://github.com/liveblocks/liveblocks/issues/new/choose`,
-      "color: #FFA500; font-weight: bold;"
+    console.warn(
+      "The comments API is still in beta and may change in the future. Please report any issues you encounter at https://github.com/liveblocks/liveblocks/issues/new/choose"
     );
     hasWarnedAboutCommentsBeta = true;
   }
