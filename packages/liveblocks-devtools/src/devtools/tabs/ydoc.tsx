@@ -36,13 +36,8 @@ export function Ydoc({
   const ydoc = useYdoc();
   useEffect(() => {
     let selectedNode = "";
-    function onUpdate(update?: Uint8Array) {
+    function onUpdate() {
       const yjson = yDocToJsonTree(ydoc);
-      if (update && update.length) {
-        console.log("decoding update");
-        const decoded = Y.decodeUpdate(update);
-        console.log(decoded)
-      }
       setJsonData(yjson);
       const { docEdges, docNodes } = getNodesAndEdges(ydoc, onSetNode, selectedNode);
       setEdges(docEdges);
