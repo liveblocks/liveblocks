@@ -7,7 +7,7 @@
   </a>
 </p>
 
-# Comments (Primitives)
+# Comments Primitives
 
 <p>
   <a href="https://liveblocks.io/examples/comments/nextjs-comments-primitives/preview">
@@ -22,7 +22,7 @@
 
 This example shows how to build comments with [Liveblocks](https://liveblocks.io) and [Next.js](https://nextjs.org/), using the primitives instead of the default components.
 
-<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/comments-primitives.png" width="536" alt="Comments (Primitives)" />
+<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/comments-primitives.png" width="536" alt="Comments Primitives" />
 
 ## Getting started
 
