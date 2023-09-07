@@ -1,8 +1,11 @@
 # v1.3.0
 
+v1.3.0 marks the initial release of
+[Liveblocks Comments](https://liveblocks.io/comments), which is currently in
+private beta.
+
 ### `@liveblocks/client`
 
-- Add support for Comments.
 - Removed long deprecated methods:
   - `others.count` → Use `others.length` instead
   - `others.toArray()` → Use `others` instead (it’s already an array)
@@ -13,13 +16,14 @@
 - Add support for Comments.
 - `UserMeta["info"]` can no longer be a scalar value.
 
-### `@liveblocks/node`
-
-- Add Comments methods.
-
 ### `@liveblocks/react-comments`
 
 - Initial release.
+
+### `@liveblocks/node`
+
+- Add Comments helpers to Client
+- Add Comments webhook events
 
 # v1.2.4
 
