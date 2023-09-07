@@ -459,6 +459,8 @@ type RoomContextBundleShared<
   ): T;
 
   /**
+   * @beta
+   *
    * Returns a function that creates a thread with an initial comment, and optionally some metadata.
    *
    * @example
@@ -470,6 +472,8 @@ type RoomContextBundleShared<
   ) => ThreadData<TThreadMetadata>;
 
   /**
+   * @beta
+   *
    * Returns a function that edits a thread's metadata.
    *
    * @example
@@ -481,6 +485,8 @@ type RoomContextBundleShared<
   ) => void;
 
   /**
+   * @beta
+   *
    * Returns a function that adds a comment to a thread.
    *
    * @example
@@ -490,6 +496,8 @@ type RoomContextBundleShared<
   useCreateComment(): (options: CreateCommentOptions) => CommentData;
 
   /**
+   * @beta
+   *
    * Returns a function that edits a comment's body.
    *
    * @example
@@ -499,6 +507,8 @@ type RoomContextBundleShared<
   useEditComment(): (options: EditCommentOptions) => void;
 
   /**
+   * @beta
+   *
    * Returns a function that deletes a comment.
    * If it is the last non-deleted comment, the thread also gets deleted.
    *
@@ -585,6 +595,8 @@ export type RoomContextBundle<
     ): T | null;
 
     /**
+     * @beta
+     *
      * Returns the threads within the current room.
      *
      * @example
@@ -593,6 +605,8 @@ export type RoomContextBundle<
     useThreads(): RoomThreads<TThreadMetadata>;
 
     /**
+     * @beta
+     *
      * Returns user info from a given user ID.
      *
      * @example
@@ -719,6 +733,8 @@ export type RoomContextBundle<
         ): T;
 
         /**
+         * @beta
+         *
          * Returns the threads within the current room.
          *
          * @example
@@ -727,6 +743,8 @@ export type RoomContextBundle<
         useThreads(): ThreadData<TThreadMetadata>[];
 
         /**
+         * @beta
+         *
          * Returns user info from a given user ID.
          *
          * @example
