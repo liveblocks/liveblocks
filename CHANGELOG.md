@@ -3,6 +3,10 @@
 ### `@liveblocks/client`
 
 - Add support for Comments.
+- Removed long deprecated methods:
+  - `others.count` → Use `others.length` instead
+  - `others.toArray()` → Use `others` instead (it’s already an array)
+- Deprecated the `Others<P, U>` type → Use `readonly User<P, U>[]` instead
 
 ### `@liveblocks/react`
 
