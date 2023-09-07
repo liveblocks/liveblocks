@@ -1,6 +1,7 @@
 import { Json, createRoomContext, ClientSideSuspense } from "@liveblocks/react";
 import React from "react";
 import createLiveblocksClient from "../../utils/createClient";
+import { genRoomId } from "../../utils";
 
 const client = createLiveblocksClient();
 
@@ -28,7 +29,7 @@ const {
 export default function Home() {
   const [isVisible, setIsVisible] = React.useState(true);
 
-  let roomId = "e2e-presence-with-suspense";
+  let roomId = genRoomId("e2e-presence-with-suspense");
   if (typeof window !== "undefined") {
     const queryParam = window.location.search;
     if (queryParam.split("room=").length > 1) {
