@@ -1193,16 +1193,16 @@ describe("room", () => {
       a: number;
     }>([createSerializedObject("0:0", { a: 1 })], 1);
 
-    expect(room.history.canUndo()).toBeFalsy();
-    expect(room.history.canRedo()).toBeFalsy();
+    expect(room.history.canUndo()).toBe(false);
+    expect(room.history.canRedo()).toBe(false);
 
     storage.root.set("a", 2);
 
-    expect(room.history.canUndo()).toBeTruthy();
+    expect(room.history.canUndo()).toBe(true);
 
     room.history.undo();
 
-    expect(room.history.canRedo()).toBeTruthy();
+    expect(room.history.canRedo()).toBe(true);
   });
 
   describe("subscription", () => {
