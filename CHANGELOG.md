@@ -1,3 +1,10 @@
+# v1.3.1
+
+### `@liveblocks/client`
+
+- New history API: `room.history.clear()` allows you to explicitly clear the
+  history, which resets the ability to undo beyond the current state.
+
 # v1.3.0
 
 v1.3.0 marks the initial release of
