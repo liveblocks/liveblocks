@@ -10,7 +10,7 @@ export default function Avatars() {
       {others.reverse().map((id) => (
         <Avatar
           key={id}
-          picture={`https://liveblocks.io/avatars/avatar-${Math.floor(
+          avatar={`https://liveblocks.io/avatars/avatar-${Math.floor(
             id % 30
           )}.png`}
         />
@@ -19,7 +19,7 @@ export default function Avatars() {
       {currentUser ? (
         <Avatar
           key="you"
-          picture={`https://liveblocks.io/avatars/avatar-${Math.floor(
+          avatar={`https://liveblocks.io/avatars/avatar-${Math.floor(
             currentUser.connectionId % 30
           )}.png`}
         />

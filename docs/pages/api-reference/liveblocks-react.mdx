@@ -54,12 +54,112 @@ type Storage = {
 // room. Must be JSON-serializable.
 // type RoomEvent = {};
 
+// Optionally, ThreadMetadata represents metadata on each thread.
+// Must only contain scalar values.
+// type ThreadMetadata = {
+//   resolved?: boolean;
+// };
+
 export const {
   RoomProvider,
   useMyPresence,
   useObject,
   /* ...all the other hooks you’re using... */
-} = createRoomContext<Presence, Storage /* UserMeta, RoomEvent */>(client);
+} = createRoomContext<
+  Presence,
+  Storage
+  /* UserMeta, RoomEvent, ThreadMetadata */
+>(client);
+```
+
+#### resolveUser
+
+<Banner title="Private beta">
+  
+Comments is currently in private beta. [Sign up for the waitlist](https://forms.gle/xgp54aTMsoH8hrjU9)
+to get access in the near future.
+
+</Banner>
+
+When using [Comments](/docs/products/comments), anything that is linked to a
+user (comments, mentions, etc.) will reference their ID. To display user
+information based on IDs, you can provide a resolver function to the
+`resolveUser` option in [`createRoomContext`](#createRoomContext).
+
+This resolver function will receive a user ID and should return a user object
+asynchronously.
+
+```tsx file="liveblocks.config.ts"
+// ...
+
+export const {
+  /* ... */
+} = createRoomContext(client, {
+  resolveUser: async ({ userId }) => {
+    const userData = __getUserFromDB__(userId);
+
+    return {
+      name: userData.name,
+      avatar: userData.avatar.src,
+    };
+  },
+});
+```
+
+<Banner title="User object">
+  The user object returned by the resolver function takes the shape of
+  `UserMeta["info"]`, which contains `name` and `avatar` (both optional) by
+  default. If you provided your own `UserMeta` type to `createRoomContext`, your
+  own `UserMeta["info"]` will be required here as well. But keep in mind that
+  the [default
+  components](/docs/api-reference/liveblocks-react-comments#Components) will
+  look specifically for the `name` and `avatar` properties to display user names
+  and avatars. If you use the
+  [primitives](/docs/api-reference/liveblocks-react-comments#Primitives)
+  instead, you’ll be able to use [`useUser`](#useUser) and decide what
+  properties to use within your custom components.
+</Banner>
+
+Once that’s done, components will show user names and avatars accordingly.
+
+#### resolveMentionSuggestions
+
+<Banner title="Private beta">
+  
+Comments is currently in private beta. [Sign up for the waitlist](https://forms.gle/xgp54aTMsoH8hrjU9)
+to get access in the near future.
+
+</Banner>
+
+To enable creating mentions in [Comments](/docs/products/comments), you can
+provide a resolver function to the `resolveMentionSuggestions` option in
+[`createRoomContext`](#createRoomContext).
+
+This resolver function will receive the mention currently being written (e.g.
+when writing “@jane”, `text` will be `jane`) and should return a list of user
+IDs matching that text. This function will be called every time the text changes
+but with some debouncing.
+
+```tsx file="liveblocks.config.ts"
+// ...
+
+export const {
+  /* ... */
+} = createRoomContext(client, {
+  resolveMentionSuggestions: ({ text, roomId }) => {
+    const workspaceUsers = __getWorkspaceUsersFromDB__(roomId);
+
+    if (!text) {
+      // Show all workspace users by default
+
+      return __getUserIds__(workspaceUsers);
+    } else {
+      const matchingUsers = __findUsers__(workspaceUsers, text);
+
+      return __getUserIds__(matchingUsers);
+    }
+  },
+});
 ```
 
 ### RoomProvider
@@ -583,7 +683,7 @@ the last rendered value.
 This hook returns `null` while storage is still loading. To avoid that, use the
 [Suspense version][].
 
-<Banner type="success" title="Recommendation">
+<Banner type="success" title="Avoiding unnecessary rerenders">
 
 It’s recommended to select only the subset of Storage data that your component
 needs. This will avoid unnecessary rerenders that happen with overselection.
@@ -1003,6 +1103,94 @@ the dependency arrays of your `useMutation` calls:
     }]
   }
 }
+```
+
+## Comments
+
+<Banner title="Private beta">
+  
+Comments is currently in private beta. [Sign up for the waitlist](https://forms.gle/xgp54aTMsoH8hrjU9)
+to get access in the near future.
+
+</Banner>
+
+### useThreads
+
+Returns the threads within the current room.
+
+```tsx
+import { useThreads } from "./liveblocks.config";
+
+const { threads, error, isLoading } = useThreads();
+```
+
+### useUser
+
+Returns user info from a given user ID.
+
+```tsx
+import { useUser } from "./liveblocks.config";
+
+const { user, error, isLoading } = useUser("user-id");
+```
+
+<Banner title="Providing a resolver function">
+
+To use `useUser`, you should provide a resolver function to the
+[`resolveUser`](#resolveUser) option in
+[`createRoomContext`](#createRoomContext).
+
+</Banner>
+
+### useCreateThread
+
+Returns a function that creates a thread with an initial comment, and optionally
+some metadata.
+
+```tsx
+const createThread = useCreateThread();
+const thread = createThread({ body: {}, metadata: {} });
+```
+
+### useEditThread
+
+Returns a function that edits a thread’s metadata.
+
+```tsx
+const editThread = useEditThread();
+const thread = editThread({ threadId: "th_xxx", metadata: {} });
+```
+
+### useCreateComment
+
+Returns a function that adds a comment to a thread.
+
+```tsx
+const createComment = useCreateComment();
+const comment = createComment({ threadId: "th_xxx", body: {} });
+```
+
+### useEditComment
+
+Returns a function that edits a comment’s body.
+
+```tsx
+const editComment = useEditComment();
+const comment = editComment({
+  threadId: "th_xxx",
+  commentId: "cm_xxx",
+  body: {},
+});
+```
+
+### useDeleteComment
+
+Returns a function that deletes a comment. If it is the last non-deleted
+comment, the thread also gets deleted.
+
+```tsx
+const deleteComment = useDeleteComment();
+deleteComment({ threadId: "th_xxx", commentId: "cm_xxx" });
 ```
 
 ## Helpers

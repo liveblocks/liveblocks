@@ -17,7 +17,7 @@ type BothProps = {
 type PictureProps = BothProps & {
   variant?: "avatar";
   name?: string;
-  picture?: string;
+  src?: string;
   color: [string, string];
   statusColor?: string;
   count?: never;
@@ -26,7 +26,7 @@ type PictureProps = BothProps & {
 type MoreProps = BothProps & {
   variant: "more";
   count: number;
-  picture?: never;
+  src?: never;
   name?: never;
   statusColor?: never;
   color?: never;
@@ -40,7 +40,7 @@ type AvatarProps = PictureProps | MoreProps;
  */
 export function Avatar({
   variant = "avatar",
-  picture = "",
+  src = "",
   name = "",
   color = ["", ""],
   size = 52,
@@ -52,7 +52,7 @@ export function Avatar({
   style = {},
   count = 0,
 }: AvatarProps) {
-  const innerVariant = variant === "avatar" && !picture ? "letter" : variant;
+  const innerVariant = variant === "avatar" && !src ? "letter" : variant;
   const realSize = size - outlineWidth * 2;
 
   return (
@@ -75,7 +75,7 @@ export function Avatar({
       {innerVariant === "avatar" ? (
         <PictureCircle
           name={name}
-          picture={picture}
+          src={src}
           size={realSize}
           borderRadius={borderRadius}
         />
@@ -121,14 +121,14 @@ function LetterCircle({
 
 function PictureCircle({
   name,
-  picture = "",
+  src = "",
   size,
   borderRadius,
-}: Pick<PictureProps, "name" | "picture" | "size" | "borderRadius">) {
+}: Pick<PictureProps, "name" | "src" | "size" | "borderRadius">) {
   return (
     <Image
       alt={name}
-      src={picture}
+      src={src}
       height={size}
       width={size}
       style={{ borderRadius }}

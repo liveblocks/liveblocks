@@ -396,8 +396,7 @@
       },
       {
         "title": "@liveblocks/react-comments",
-        "path": "/api-reference/liveblocks-react-comments",
-        "hidden": true
+        "path": "/api-reference/liveblocks-react-comments"
       },
       {
         "title": "@liveblocks/redux",

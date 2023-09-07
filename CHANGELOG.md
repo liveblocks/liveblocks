@@ -1,9 +1,36 @@
+# v1.3.0
+
+v1.3.0 marks the initial release of
+[Liveblocks Comments](https://liveblocks.io/comments), which is currently in
+private beta.
+
+### `@liveblocks/client`
+
+- Removed long deprecated methods:
+  - `others.count` → Use `others.length` instead
+  - `others.toArray()` → Use `others` instead (it’s already an array)
+- Deprecated the `Others<P, U>` type → Use `readonly User<P, U>[]` instead
+
+### `@liveblocks/react`
+
+- Add support for Comments.
+- `UserMeta["info"]` can no longer be a scalar value.
+
+### `@liveblocks/react-comments`
+
+- Initial release.
+
+### `@liveblocks/node`
+
+- Add Comments helpers to Client
+- Add Comments webhook events
+
 # v1.2.4
 
 ### `@liveblocks/node`
 
-- Fixes a bug where sending an empty (or non-string) user ID with `.identifyUser`
-  would confusingly get reported as an HTTP 503.
+- Fixes a bug where sending an empty (or non-string) user ID with
+  `.identifyUser` would confusingly get reported as an HTTP 503.
 
 # v1.2.3
 

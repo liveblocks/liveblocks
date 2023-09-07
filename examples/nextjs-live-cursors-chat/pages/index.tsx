@@ -139,7 +139,7 @@ function Example() {
   return (
     <>
       <div
-        className="relative h-screen w-full flex items-center justify-center overflow-hidden touch-none"
+        className="relative flex h-screen w-full touch-none items-center justify-center overflow-hidden"
         style={{
           cursor:
             state.mode === CursorMode.Chat
@@ -209,7 +209,7 @@ function Example() {
                 <img src="cursor.svg" />
 
                 <div
-                  className="absolute top-5 left-2 px-4 py-2 bg-blue-500 text-white leading-relaxed text-sm"
+                  className="absolute top-5 left-2 bg-blue-500 px-4 py-2 text-sm leading-relaxed text-white"
                   onKeyUp={(e) => e.stopPropagation()}
                   style={{
                     borderRadius: 20,
@@ -217,7 +217,7 @@ function Example() {
                 >
                   {state.previousMessage && <div>{state.previousMessage}</div>}
                   <input
-                    className="bg-transparent border-none	outline-none text-white placeholder-blue-300 w-60"
+                    className="w-60 border-none	bg-transparent text-white placeholder-blue-300 outline-none"
                     autoFocus={true}
                     onChange={(e) => {
                       updateMyPresence({ message: e.target.value });
@@ -255,7 +255,7 @@ function Example() {
               />
             )}
             {state.mode === CursorMode.Reaction && (
-              <div className="absolute top-3.5 left-1 pointer-events-none select-none">
+              <div className="pointer-events-none absolute top-3.5 left-1 select-none">
                 {state.reaction}
               </div>
             )}
@@ -293,26 +293,26 @@ export default function Page() {
         message: "",
       })}
     >
-      <div className="fixed inset-0 flex justify-center items-center select-none bg-white">
-        <div className="text-center max-w-sm">
-          <ul className="flex items-center justify-center space-x-2 mt-4">
-            <li className="flex items-center space-x-2 text-sm bg-gray-100 rounded-md py-2 px-3">
+      <div className="fixed inset-0 flex select-none items-center justify-center bg-white">
+        <div className="max-w-sm text-center">
+          <ul className="mt-4 flex items-center justify-center space-x-2">
+            <li className="flex items-center space-x-2 rounded-md bg-gray-100 py-2 px-3 text-sm">
               <span>Reactions</span>
-              <span className="block uppercase font-medium text-xs text-gray-500 rounded border border-gray-300 px-1">
+              <span className="block rounded border border-gray-300 px-1 text-xs font-medium uppercase text-gray-500">
                 E
               </span>
             </li>
 
-            <li className="flex items-center space-x-2 text-sm bg-gray-100 rounded-md py-2 px-3">
+            <li className="flex items-center space-x-2 rounded-md bg-gray-100 py-2 px-3 text-sm">
               <span>Chat</span>
-              <span className="block uppercase font-medium text-xs text-gray-500 rounded border border-gray-300 px-1">
+              <span className="block rounded border border-gray-300 px-1 text-xs font-medium uppercase text-gray-500">
                 /
               </span>
             </li>
 
-            <li className="flex items-center space-x-2 text-sm bg-gray-100 rounded-md py-2 px-3">
+            <li className="flex items-center space-x-2 rounded-md bg-gray-100 py-2 px-3 text-sm">
               <span>Escape</span>
-              <span className="block uppercase font-medium text-xs text-gray-500 rounded border border-gray-300 px-1">
+              <span className="block rounded border border-gray-300 px-1 text-xs font-medium uppercase text-gray-500">
                 esc
               </span>
             </li>

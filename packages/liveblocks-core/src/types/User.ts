@@ -38,4 +38,9 @@ export type User<
    * can only read but not mutate it.
    */
   readonly canWrite: boolean;
+
+  /**
+   * True if the user can comment on a thread
+   */
+  readonly canComment: boolean;
 };

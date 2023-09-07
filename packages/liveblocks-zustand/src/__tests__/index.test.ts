@@ -351,6 +351,7 @@ describe("middleware", () => {
             name: "Testy McTester",
           },
           canWrite: true,
+          canComment: true,
           isReadOnly: false,
           presence: { x: 1 },
         },

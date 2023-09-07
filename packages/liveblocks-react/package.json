@@ -27,9 +27,8 @@
     "build": "tsup",
     "start": "tsup --watch",
     "format": "(eslint --fix src/ || true) && prettier --write src/",
-    "lint": "(eslint src/ || true) && npm run check:exports",
+    "lint": "eslint src/",
     "lint:package": "publint --strict && attw --pack",
-    "check:exports": "tsc scripts/check-factory-exports.ts && node scripts/check-factory-exports.js",
     "test": "jest --silent --verbose --color=always",
     "test:watch": "jest --silent --verbose --color=always --watch"
   },
@@ -48,8 +47,7 @@
     "@testing-library/react": "^13.1.1",
     "@types/use-sync-external-store": "^0.0.3",
     "eslint-plugin-react-hooks": "^4.6.0",
-    "msw": "^0.27.1",
-    "react-error-boundary": "^3.1.1"
+    "msw": "1.2.3"
   },
   "sideEffects": false,
   "bugs": {
