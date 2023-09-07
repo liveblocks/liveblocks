@@ -2,7 +2,10 @@ import { defineConfig } from "tsup";
 
 export default defineConfig({
   entry: ["src/index.ts"],
-  dts: true,
+  dts: {
+    resolve: ["@liveblocks/core"],
+  },
+  noExternal: ["@liveblocks/core"],
   splitting: true,
   clean: true,
   target: "es2020",

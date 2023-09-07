@@ -32,13 +32,13 @@
     "test:watch": "jest --silent --verbose --color=always --watch"
   },
   "devDependencies": {
+    "@liveblocks/core": "1.2.4",
     "@liveblocks/eslint-config": "*",
     "@liveblocks/jest-config": "*",
     "@types/node-fetch": "^2.5.8",
     "svix": "^0.75.0"
   },
   "dependencies": {
-    "@liveblocks/core": "1.2.4",
     "node-fetch": "^2.6.1"
   },
   "bugs": {
