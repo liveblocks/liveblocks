@@ -4,7 +4,6 @@ import type { User } from "./User";
 
 /**
  * @deprecated Use `readonly User<TPresence, TUserMeta>[]` instead of `Others<TPresence, TUserMeta>`.
- * Represents all the other users connected in the room. Treated as immutable.
  */
 export type Others<
   TPresence extends JsonObject,
