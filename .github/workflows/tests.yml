@@ -9,7 +9,15 @@ jobs:
     strategy:
       matrix:
         node-version: [18.x]
-        pkg: ["@liveblocks/react-comments"]
+        pkg:
+          [
+            "@liveblocks/core",
+            "@liveblocks/client",
+            "@liveblocks/react",
+            "@liveblocks/redux",
+            "@liveblocks/zustand",
+            "@liveblocks/node",
+          ]
 
     steps:
       - name: Checkout
