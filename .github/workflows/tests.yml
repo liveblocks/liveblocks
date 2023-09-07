@@ -14,7 +14,6 @@ jobs:
             "@liveblocks/core",
             "@liveblocks/client",
             "@liveblocks/react",
-            "@liveblocks/react-comments",
             "@liveblocks/redux",
             "@liveblocks/zustand",
             "@liveblocks/node",
@@ -25,9 +24,8 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Use Node ${{ matrix.node-version }}
-        uses: actions/setup-node@v3.6.0
+        uses: actions/setup-node@v3
         with:
-          registry-url: "https://registry.npmjs.org"
           node-version: ${{ matrix.node-version }}
           cache: npm
           cache-dependency-path: "**/package-lock.json"
