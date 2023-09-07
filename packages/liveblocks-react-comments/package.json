@@ -73,7 +73,7 @@
     "@types/use-sync-external-store": "^0.0.3",
     "browserslist": "^4.21.10",
     "eslint-plugin-react-hooks": "^4.6.0",
-    "lightningcss": "^1.21.7",
+    "lightningcss": "1.21.3",
     "msw": "^0.27.1",
     "rollup": "^3.28.0",
     "rollup-plugin-dts": "^5.3.1",
