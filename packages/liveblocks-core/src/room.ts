@@ -155,6 +155,11 @@ export interface History {
   canRedo: () => boolean;
 
   /**
+   * Clears the undo and redo stacks. This operation cannot be undone ;)
+   */
+  clear: () => void;
+
+  /**
    * All future modifications made on the Room will be merged together to create a single history item until resume is called.
    *
    * @example
@@ -2082,6 +2087,11 @@ export function createRoom<
     flushNowOrSoon();
   }
 
+  function clear() {
+    context.undoStack.length = 0;
+    context.redoStack.length = 0;
+  }
+
   function batch<T>(callback: () => T): T {
     if (context.activeBatch) {
       // If there already is an active batch, we don't have to handle this in
@@ -2239,6 +2249,7 @@ export function createRoom<
         redo,
         canUndo,
         canRedo,
+        clear,
         pause: pauseHistory,
         resume: resumeHistory,
       },
