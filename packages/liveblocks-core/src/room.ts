@@ -750,8 +750,8 @@ type RoomState<
   readonly nodes: Map<string, LiveNode>;
   root: LiveObject<TStorage> | undefined;
 
-  undoStack: HistoryOp<TPresence>[][];
-  redoStack: HistoryOp<TPresence>[][];
+  readonly undoStack: HistoryOp<TPresence>[][];
+  readonly redoStack: HistoryOp<TPresence>[][];
 
   /**
    * When history is paused, all operations will get queued up here. When
@@ -1090,7 +1090,7 @@ export function createRoom<
       } else {
         batchUpdates(() => {
           addToUndoStack(reverse, doNotBatchUpdates);
-          context.redoStack = [];
+          context.redoStack.length = 0;
           dispatchOps(ops);
           notify({ storageUpdates }, doNotBatchUpdates);
         });
@@ -2127,7 +2127,7 @@ export function createRoom<
         if (currentBatch.ops.length > 0) {
           // Only clear the redo stack if something has changed during a batch
           // Clear the redo stack because batch is always called from a local operation
-          context.redoStack = [];
+          context.redoStack.length = 0;
         }
 
         if (currentBatch.ops.length > 0) {
