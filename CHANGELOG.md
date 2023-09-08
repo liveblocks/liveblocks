@@ -2,8 +2,7 @@
 
 ### `@liveblocks/react`
 
-- Fix bug that would cause Node.js-specific imports to be present in the final
-  bundle
+- Fix missing dependency declaration
 
 # v1.3.0
 
