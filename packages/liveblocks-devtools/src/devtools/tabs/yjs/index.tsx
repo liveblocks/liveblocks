@@ -20,16 +20,69 @@ import { EmptyState } from "../../components/EmptyState";
 import { Search } from "../../components/Search";
 import { Tabs } from "../../components/Tabs";
 import { StorageTree } from "../../components/Tree";
-import { useMe, useStatus, useYdoc } from "../../contexts/CurrentRoom";
+import { useStatus, useYdoc } from "../../contexts/CurrentRoom";
 import YFlow from "./yflow/YFlow";
 import { YUpdateLog } from "./YUpdateLog";
 
-const DEFAULT_TAB = "tree";
+const DEFAULT_TAB = "diagram";
 
 interface YjsContentProps extends ComponentProps<"div"> {
   search?: RegExp;
   searchText?: string;
   onSearchClear: (event: MouseEvent<HTMLButtonElement>) => void;
+}
+
+function YjsContentDiagram({
+  search,
+  searchText,
+  onSearchClear,
+  className,
+  ...props
+}: YjsContentProps) {
+  const [nodes, setNodes] = useNodesState([]);
+  const [edges, setEdges] = useEdgesState([]);
+  const ydoc = useYdoc();
+  const currentStatus = useStatus();
+
+  useEffect(() => {
+    let selectedNode = "";
+
+    function onUpdate() {
+      const { docEdges, docNodes } = getNodesAndEdges(
+        ydoc,
+        onSetNode,
+        selectedNode
+      );
+      setEdges(docEdges);
+      setNodes(docNodes);
+    }
+
+    function onSetNode(node: string) {
+      selectedNode = node;
+      onUpdate();
+    }
+
+    onUpdate();
+    ydoc.on("update", onUpdate);
+
+    return () => {
+      ydoc.off("update", onUpdate);
+    };
+  }, [ydoc]);
+
+  if (
+    currentStatus === "connected" ||
+    currentStatus === "open" || // Same as "connected", but only sent by old clients (prior to 1.1)
+    currentStatus === "reconnecting"
+  ) {
+    return (
+      <div className={cx(className, "absolute inset-0")} {...props}>
+        <YFlow nodes={nodes} edges={edges} />
+      </div>
+    );
+  }
+
+  return <EmptyState visual={<Loading />} />;
 }
 
 function YjsContentTree({
@@ -101,7 +154,10 @@ export function Yjs({ className, ...props }: ComponentProps<"div">) {
     const trimmed = (searchText ?? "").trim();
     return trimmed ? buildSearchRegex(trimmed) : undefined;
   }, [searchText]);
-  const isSearchVisible = useMemo(() => activeTab === "tree", [activeTab]);
+  const isSearchVisible = useMemo(
+    () => activeTab === "tree" || activeTab === "diagram",
+    [activeTab]
+  );
 
   const handleSearchClear = useCallback(() => {
     setSearchText("");
@@ -114,6 +170,17 @@ export function Yjs({ className, ...props }: ComponentProps<"div">) {
         defaultTab={DEFAULT_TAB}
         onTabChange={setActiveTab}
         tabs={[
+          {
+            value: "diagram",
+            title: "Diagram",
+            content: (
+              <YjsContentDiagram
+                search={search}
+                searchText={searchText}
+                onSearchClear={handleSearchClear}
+              />
+            ),
+          },
           {
             value: "tree",
             title: "Tree",

@@ -7,7 +7,7 @@ type StringProps = {
 function ContentFormat({ content }: StringProps) {
   return (
     <div className="y-item-format">
-      <label>format</label> {content.value.toString()}
+      <label>format</label> {content.value?.toString()}
     </div>
   );
 }
