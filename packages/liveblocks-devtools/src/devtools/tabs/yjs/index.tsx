@@ -24,6 +24,8 @@ import { useMe, useStatus, useYdoc } from "../../contexts/CurrentRoom";
 import YFlow from "./yflow/YFlow";
 import { YUpdateLog } from "./YUpdateLog";
 
+const DEFAULT_TAB = "tree";
+
 interface YjsContentProps extends ComponentProps<"div"> {
   search?: RegExp;
   searchText?: string;
@@ -90,7 +92,7 @@ function YjsContentChanges({ className, ...props }: ComponentProps<"div">) {
 }
 
 export function Yjs({ className, ...props }: ComponentProps<"div">) {
-  const [activeTab, setActiveTab] = useState("tree");
+  const [activeTab, setActiveTab] = useState(DEFAULT_TAB);
   const [searchText, setSearchText] = useState("");
   const search = useMemo(() => {
     const trimmed = (searchText ?? "").trim();
@@ -106,8 +108,8 @@ export function Yjs({ className, ...props }: ComponentProps<"div">) {
     <div className={cx(className, "absolute inset-0 flex flex-col")} {...props}>
       <Tabs
         className="h-full"
-        value={activeTab}
-        onValueChange={setActiveTab}
+        defaultTab={DEFAULT_TAB}
+        onTabChange={setActiveTab}
         tabs={[
           {
             value: "tree",

@@ -64,7 +64,7 @@ function Panel() {
       content={
         <Tabs
           className="h-full"
-          defaultValue="presence"
+          defaultTab="presence"
           tabs={[
             {
               value: "presence",
@@ -89,7 +89,7 @@ function Panel() {
     >
       <Tabs
         className="h-full"
-        defaultValue="storage"
+        defaultTab="storage"
         tabs={[
           {
             value: "storage",
