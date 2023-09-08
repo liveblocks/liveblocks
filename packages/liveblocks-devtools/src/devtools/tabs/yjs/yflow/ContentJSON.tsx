@@ -1,4 +1,3 @@
-
 import type * as Y from "yjs";
 
 type StringProps = {
@@ -6,11 +5,11 @@ type StringProps = {
 };
 
 function ContentJSON({ content }: StringProps) {
-
-
-  return <div className="y-item-string">
-    <label>json</label> {content.arr.toString()}
-  </div>;
+  return (
+    <div className="y-item-string">
+      <label>json</label> {content.arr.toString()}
+    </div>
+  );
 }
 
 export default ContentJSON;

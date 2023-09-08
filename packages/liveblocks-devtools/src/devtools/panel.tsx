@@ -1,5 +1,5 @@
 import { TooltipProvider } from "@radix-ui/react-tooltip";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback } from "react";
 import { createRoot } from "react-dom/client";
 
 import { Loading } from "../components/Loading";
@@ -9,81 +9,18 @@ import { ReloadButton } from "./components/ReloadButton";
 import { ResizablePanel } from "./components/ResizablePanel";
 import { RoomSelector } from "./components/RoomSelector";
 import { RoomStatus } from "./components/RoomStatus";
-import { StorageSearch } from "./components/StorageSearch";
 import { Tabs } from "./components/Tabs";
 import { CurrentRoomProvider, useCurrentRoomId } from "./contexts/CurrentRoom";
 import { sendMessage } from "./port";
-import { Presence } from "./tabs/presence";
+import { Presence } from "./tabs/presence/presence";
 import { Storage } from "./tabs/storage";
-import { Ydoc } from "./tabs/ydoc";
-
-function buildRegex(searchText: string): RegExp {
-  // Interpret the search string as a regular expression if the search string
-  // starts and ends with "/".
-  if (
-    searchText.startsWith("/") &&
-    searchText.endsWith("/") &&
-    searchText.length >= 3
-  ) {
-    try {
-      return new RegExp(searchText.substring(1, searchText.length - 1), "i");
-    } catch {
-      // Fall through, interpret the invalid regex as a literal string match
-      // instead
-    }
-  }
-
-  // Still build a regex to use internally, but simply build one that will
-  // match the input literally
-  return new RegExp(searchText.replace(/[/\-\\^$*+?.()|[\]{}]/g, "\\$&"), "i");
-}
+import { Yjs } from "./tabs/yjs";
 
 function Panel() {
-  const searchRef = useRef<HTMLInputElement>(null);
-  const [searchText, setSearchText] = useState("");
-  const search = useMemo(() => {
-    const trimmed = (searchText ?? "").trim();
-    return trimmed ? buildRegex(trimmed) : undefined;
-  }, [searchText]);
-
   const currentRoomId = useCurrentRoomId();
-
-  const handleSearchClear = useCallback(() => {
-    setSearchText("");
-  }, []);
 
   const handleReload = useCallback(() => {
     sendMessage({ msg: "reload" });
-  }, []);
-
-  useEffect(() => {
-    handleSearchClear();
-  }, [currentRoomId, handleSearchClear]);
-
-  // Focus search on ⌘+F, ⌘+K, or /
-  useEffect(() => {
-    function handleKeyDown(event: KeyboardEvent) {
-      // Except if an input is currently focused
-      if (document.activeElement?.tagName === "INPUT") {
-        return;
-      }
-
-      if (
-        (event.metaKey && (event.key === "f" || event.key === "k")) ||
-        event.key === "/"
-      ) {
-        if (searchRef.current) {
-          searchRef.current.focus();
-          event.preventDefault();
-          event.stopPropagation();
-        }
-      }
-    }
-
-    document.addEventListener("keydown", handleKeyDown);
-    return () => {
-      document.removeEventListener("keydown", handleKeyDown);
-    };
   }, []);
 
   if (currentRoomId === null) {
@@ -157,26 +94,12 @@ function Panel() {
           {
             value: "storage",
             title: "Storage",
-            content: (
-              <Storage
-                key={`${currentRoomId}:storage`}
-                search={search}
-                searchText={searchText}
-                onSearchClear={handleSearchClear}
-              />
-            ),
+            content: <Storage key={`${currentRoomId}:storage`} />,
           },
           {
             value: "yjs",
             title: "Yjs",
-            content: (
-              <Ydoc
-                key={`${currentRoomId}:ydoc`}
-                search={search}
-                searchText={searchText}
-                onSearchClear={handleSearchClear}
-              />
-            ),
+            content: <Yjs key={`${currentRoomId}:yjs`} />,
           },
           {
             value: "settings",
@@ -190,15 +113,6 @@ function Panel() {
             <ReloadButton onClick={handleReload} className="flex-none" />
             <RoomStatus className="flex-none" />
             <RoomSelector />
-          </div>
-        }
-        trailing={
-          <div className="after:bg-light-300 after:dark:bg-dark-300 relative w-[30%] min-w-[140px] flex-none after:absolute after:-left-px after:top-[20%] after:h-[60%] after:w-px">
-            <StorageSearch
-              value={searchText}
-              setValue={setSearchText}
-              ref={searchRef}
-            />
           </div>
         }
       />

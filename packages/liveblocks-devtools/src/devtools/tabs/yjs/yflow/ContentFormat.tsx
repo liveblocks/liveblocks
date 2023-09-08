@@ -1,4 +1,3 @@
-
 import type * as Y from "yjs";
 
 type StringProps = {
@@ -6,11 +5,11 @@ type StringProps = {
 };
 
 function ContentFormat({ content }: StringProps) {
-
-
-  return <div className="y-item-format">
-    <label>format</label> {content.value.toString()}
-  </div>;
+  return (
+    <div className="y-item-format">
+      <label>format</label> {content.value.toString()}
+    </div>
+  );
 }
 
 export default ContentFormat;

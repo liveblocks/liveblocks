@@ -1,20 +1,28 @@
 import cx from "classnames";
-import type { ChangeEvent, ComponentProps, KeyboardEvent } from "react";
-import { forwardRef, useCallback, useRef } from "react";
+import type {
+  ChangeEvent,
+  ComponentProps,
+  KeyboardEvent as ReactKeyboardEvent,
+} from "react";
+import { forwardRef, useCallback, useEffect, useRef } from "react";
 
 import { mergeRefs } from "../../lib/mergeRefs";
 import { Tooltip } from "./Tooltip";
 
 interface Props extends ComponentProps<"div"> {
+  placeholder?: string;
   value: ComponentProps<"input">["value"];
   setValue: (search: string) => void;
 }
 
-export const StorageSearch = forwardRef<HTMLInputElement, Props>(
-  ({ value, setValue, className, ...props }, forwardRef) => {
+export const Search = forwardRef<HTMLInputElement, Props>(
+  (
+    { value, setValue, placeholder = "Search…", className, ...props },
+    forwardRef
+  ) => {
     const ref = useRef<HTMLInputElement>(null);
     const handleKeyDown = useCallback(
-      (event: KeyboardEvent<HTMLInputElement>) => {
+      (event: ReactKeyboardEvent<HTMLInputElement>) => {
         if (ref.current && event.key === "Escape") {
           setValue("");
           ref.current.blur();
@@ -29,6 +37,32 @@ export const StorageSearch = forwardRef<HTMLInputElement, Props>(
       (event: ChangeEvent<HTMLInputElement>) => setValue(event.target.value),
       []
     );
+
+    // Focus search on ⌘+F, ⌘+K, or /
+    useEffect(() => {
+      function handleKeyDown(event: KeyboardEvent) {
+        // Except if an input is currently focused
+        if (document.activeElement?.tagName === "INPUT") {
+          return;
+        }
+
+        if (
+          (event.metaKey && (event.key === "f" || event.key === "k")) ||
+          event.key === "/"
+        ) {
+          if (ref.current) {
+            ref.current.focus();
+            event.preventDefault();
+            event.stopPropagation();
+          }
+        }
+      }
+
+      document.addEventListener("keydown", handleKeyDown);
+      return () => {
+        document.removeEventListener("keydown", handleKeyDown);
+      };
+    }, []);
 
     return (
       <div
@@ -50,7 +84,7 @@ export const StorageSearch = forwardRef<HTMLInputElement, Props>(
             value={value}
             onChange={handleSearchChange}
             onKeyDown={handleKeyDown}
-            placeholder="Search storage…"
+            placeholder={placeholder}
             className="text-dark-0 dark:text-light-0 placeholder:text-dark-600 dark:placeholder:text-light-600 absolute inset-0 h-full w-full bg-transparent pl-7 pt-px pr-2.5 text-xs placeholder:opacity-50"
           />
         </Tooltip>

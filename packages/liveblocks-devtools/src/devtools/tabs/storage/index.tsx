@@ -4,25 +4,27 @@ import type { ComponentProps, MouseEvent } from "react";
 import { useCallback, useMemo, useRef, useState } from "react";
 import type { NodeApi, TreeApi } from "react-arborist";
 
-import { Loading } from "../../components/Loading";
-import { truncate } from "../../lib/truncate";
-import { EmptyState } from "../components/EmptyState";
-import { Breadcrumbs, filterNodes, StorageTree } from "../components/Tree";
-import { useStatus, useStorage } from "../contexts/CurrentRoom";
+import { Loading } from "../../../components/Loading";
+import { buildSearchRegex } from "../../../lib/buildSearchRegex";
+import { truncate } from "../../../lib/truncate";
+import { EmptyState } from "../../components/EmptyState";
+import { Search } from "../../components/Search";
+import { Breadcrumbs, filterNodes, StorageTree } from "../../components/Tree";
+import { useStatus, useStorage } from "../../contexts/CurrentRoom";
 
-interface Props extends ComponentProps<"div"> {
+interface StorageContentProps extends ComponentProps<"div"> {
   search?: RegExp;
   searchText?: string;
   onSearchClear: (event: MouseEvent<HTMLButtonElement>) => void;
 }
 
-export function Storage({
+function StorageContent({
   search,
   searchText,
   onSearchClear,
   className,
   ...props
-}: Props) {
+}: StorageContentProps) {
   const storage = useStorage();
   const currentStatus = useStatus();
   const filteredStorage = useMemo(() => {
@@ -103,4 +105,37 @@ export function Storage({
   } else {
     return <EmptyState visual={<Loading />} />;
   }
+}
+
+export function Storage({ className, ...props }: ComponentProps<"div">) {
+  const [searchText, setSearchText] = useState("");
+  const search = useMemo(() => {
+    const trimmed = (searchText ?? "").trim();
+    return trimmed ? buildSearchRegex(trimmed) : undefined;
+  }, [searchText]);
+
+  const handleSearchClear = useCallback(() => {
+    setSearchText("");
+  }, []);
+
+  return (
+    <div className={cx(className, "absolute inset-0 flex flex-col")} {...props}>
+      <div className="border-light-300 dark:border-dark-300 bg-light-0 dark:bg-dark-0 flex-none h-8 border-b flex">
+        <div className="ml-auto after:bg-light-300 after:dark:bg-dark-300 relative w-[30%] min-w-[140px] flex-none after:absolute after:-left-px after:top-[20%] after:h-[60%] after:w-px">
+          <Search
+            value={searchText}
+            setValue={setSearchText}
+            placeholder="Search document…"
+          />
+        </div>
+      </div>
+      <div className="flex-1 relative">
+        <StorageContent
+          search={search}
+          searchText={searchText}
+          onSearchClear={handleSearchClear}
+        />
+      </div>
+    </div>
+  );
 }

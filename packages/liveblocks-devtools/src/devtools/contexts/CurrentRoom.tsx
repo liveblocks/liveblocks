@@ -31,12 +31,10 @@ type OldConnectionStatus =
   | "unavailable"
   | "failed";
 
-
-
 type YUpdateLog = {
   ds: DeleteSet;
   structs: (Y.Item | Y.GC | Skip)[];
-}
+};
 
 type Room = {
   readonly roomId: string;
@@ -45,7 +43,7 @@ type Room = {
   me: DevTools.UserTreeNode | null;
   others: readonly DevTools.UserTreeNode[];
   ydoc: Y.Doc;
-  yupdates: YUpdateLog[]
+  yupdates: YUpdateLog[];
 };
 
 type EventHub = {
@@ -192,8 +190,8 @@ export function CurrentRoomProvider(props: Props) {
     (newRoomId: string | null): void =>
       _setCurrentRoomId((currentRoomId) =>
         currentRoomId === null ||
-          (!roomsById.has(currentRoomId) &&
-            (newRoomId === null || roomsById.has(newRoomId)))
+        (!roomsById.has(currentRoomId) &&
+          (newRoomId === null || roomsById.has(newRoomId)))
           ? newRoomId
           : currentRoomId
       ),
@@ -238,11 +236,7 @@ export function CurrentRoomProvider(props: Props) {
         case "room::sync::ydoc": {
           const currRoom = getOrCreateRoom(msg.roomId);
           const update = Base64.toUint8Array(msg.update.update);
-          Y.applyUpdate(
-            currRoom.ydoc,
-            update,
-            "backend"
-          );
+          Y.applyUpdate(currRoom.ydoc, update, "backend");
           const decodedUpdate = Y.decodeUpdate(update);
           console.log(decodedUpdate);
           currRoom.yupdates = [decodedUpdate, ...currRoom.yupdates];
@@ -357,7 +351,7 @@ export function useSetCurrentRoomId(): (roomId: string) => void {
 }
 
 // Helper "no-op" subscription
-const nosub: SubscribeFn = () => () => { };
+const nosub: SubscribeFn = () => () => {};
 
 export function useRoomIds(): string[] {
   return useSyncExternalStore(onRoomCountChanged.subscribe, () => allRoomIds);
@@ -406,7 +400,6 @@ export function useYUpdateLog(): YUpdateLog[] {
     () => getRoom(currentRoomId)?.yupdates ?? []
   );
 }
-
 
 export function useYdoc(): Y.Doc {
   const currentRoomId = useCurrentRoomId();

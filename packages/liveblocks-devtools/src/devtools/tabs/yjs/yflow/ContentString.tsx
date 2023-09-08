@@ -1,4 +1,3 @@
-
 import type * as Y from "yjs";
 
 type StringProps = {
@@ -6,11 +5,11 @@ type StringProps = {
 };
 
 function ContentString({ content }: StringProps) {
-
-
-  return <div className="y-item-string">
-    <label>string</label> {content.str}
-  </div>;
+  return (
+    <div className="y-item-string">
+      <label>string</label> {content.str}
+    </div>
+  );
 }
 
 export default ContentString;
