@@ -8,7 +8,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [18.x]
+        bun-version: [latest]
         pkg:
           [
             "@liveblocks/core",
@@ -23,15 +23,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Use Node ${{ matrix.node-version }}
-        uses: actions/setup-node@v3
+      - name: Use Bun ${{ matrix.bun-version }}
+        uses: oven-sh/setup-bun@v1
         with:
-          node-version: ${{ matrix.node-version }}
-          cache: npm
-          cache-dependency-path: "**/package-lock.json"
+          bun-version: ${{ matrix.bun-version }}
 
       - name: Install dependencies
-        run: npm install
+        run: bun install
 
       - name: Turbo Cache
         id: turbo-cache
@@ -43,29 +41,29 @@ jobs:
             turbo-cache-${{ matrix.node-version }}-${{ matrix.pkg }}-bust3
 
       - name: Build
-        run: npm run build -- --filter ${{ matrix.pkg }}
+        run: bun run build -- --filter ${{ matrix.pkg }}
 
       - name: Run unit tests
-        run: npm run test -- --filter ${{ matrix.pkg }} -- --coverage
+        run: bun run test -- --filter ${{ matrix.pkg }} -- --coverage
 
       - name: Run type tests
-        run: npm run test:types -- --filter ${{ matrix.pkg }}
+        run: bun run test:types -- --filter ${{ matrix.pkg }}
 
       - name: Run dependency tests
-        run: npm run test:deps -- --filter ${{ matrix.pkg }}
+        run: bun run test:deps -- --filter ${{ matrix.pkg }}
 
       - name: Run lint checks
-        run: npm run lint -- --filter ${{ matrix.pkg }}
+        run: bun run lint -- --filter ${{ matrix.pkg }}
 
-      - name: Run public NPM packaging lint checks
-        run: npm run lint:package -- --filter ${{ matrix.pkg }}
+      - name: Run public packaging lint checks
+        run: bun run lint:package -- --filter ${{ matrix.pkg }}
 
   e2e-tests:
     runs-on: ubuntu-latest
 
     strategy:
       matrix:
-        node-version: [18.x]
+        bun-version: [latest]
 
     timeout-minutes: 60
 
@@ -79,21 +77,19 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Use Node ${{ matrix.node-version }}
-        uses: actions/setup-node@v3
+      - name: Use Bun ${{ matrix.bun-version }}
+        uses: oven-sh/setup-bun@v1
         with:
-          node-version: ${{ matrix.node-version }}
-          cache: npm
-          cache-dependency-path: "**/package-lock.json"
+          bun-version: ${{ matrix.bun-version }}
 
       - name: Install dependencies
-        run: npm install
+        run: bun install
 
       - name: Install Playwright
         run: npx playwright install chromium
 
       - name: Run Playwright tests
-        run: npm run test -- --filter @liveblocks/next-sandbox
+        run: bun run test -- --filter @liveblocks/next-sandbox
 
       - uses: actions/upload-artifact@v2
         if: always()
@@ -107,7 +103,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [18.x]
+        node-version: [latest]
 
     timeout-minutes: 60
 
@@ -118,18 +114,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Use Node ${{ matrix.node-version }}
-        uses: actions/setup-node@v3
+      - name: Use Bun ${{ matrix.bun-version }}
+        uses: oven-sh/setup-bun@v1
         with:
-          node-version: ${{ matrix.node-version }}
-          cache: npm
-          cache-dependency-path: "**/package-lock.json"
+          bun-version: ${{ matrix.bun-version }}
 
-      - name: Run npm install
-        run: npm install
+      - name: Run bun install
+        run: bun install
 
       - name: Run e2e client specs tests
-        run: npm run test:e2e
+        run: bun run test:e2e
         working-directory: packages/liveblocks-core
 
   lang-tests:
@@ -137,22 +131,20 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [18.x]
+        node-version: [latest]
         pkg: ["@liveblocks/schema", "@liveblocks/infer-schema"]
 
     steps:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v3
+      - name: Use Bun ${{ matrix.bun-version }}
+        uses: oven-sh/setup-bun@v1
         with:
-          node-version: ${{ matrix.node-version }}
-          cache: npm
-          cache-dependency-path: "**/package-lock.json"
+          bun-version: ${{ matrix.bun-version }}
 
       - name: Install dependencies
-        run: npm install
+        run: bun install
 
       - name: Turbo Cache
         id: turbo-cache
@@ -164,7 +156,7 @@ jobs:
             turbo-cache-${{ matrix.node-version }}-${{ matrix.pkg }}-bust3
 
       - name: Build
-        run: npm run build -- --filter ${{ matrix.pkg }}
+        run: bun run build -- --filter ${{ matrix.pkg }}
 
       - name: Ensure no files are changed
         run: |
@@ -176,10 +168,10 @@ jobs:
           fi
 
       - name: Run unit tests
-        run: npm run test -- --filter ${{ matrix.pkg }}
+        run: bun run test -- --filter ${{ matrix.pkg }}
 
       - name: Run lint checks
-        run: npm run lint -- --filter ${{ matrix.pkg }}
+        run: bun run lint -- --filter ${{ matrix.pkg }}
 
-      - name: Run public NPM packaging lint checks
-        run: npm run lint:package -- --filter ${{ matrix.pkg }}
+      - name: Run public packaging lint checks
+        run: bun run lint:package -- --filter ${{ matrix.pkg }}
