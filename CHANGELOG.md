@@ -1,3 +1,10 @@
+# v1.3.1
+
+### `@liveblocks/react`
+
+- Fix bug that would cause Node.js-specific imports to be present in the final
+  bundle
+
 # v1.3.0
 
 v1.3.0 marks the initial release of
