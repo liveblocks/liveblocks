@@ -676,8 +676,8 @@ room.history.redo();
 
 ### Room.history.clear
 
-Clears the undo and redo stacks. Explicitly clearing history resets the ability
-to undo beyond the current document state.
+Clears the undo and redo stacks for the current client. Explicitly clearing history resets the ability
+to undo beyond the current document state. Other clients’ histories are unaffected.
 
 ```ts
 room.updatePresence({ selectedId: "xx" }, { addToHistory: true });
