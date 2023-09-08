@@ -155,6 +155,11 @@ export interface History {
   canRedo: () => boolean;
 
   /**
+   * Clears the undo and redo stacks. This operation cannot be undone ;)
+   */
+  clear: () => void;
+
+  /**
    * All future modifications made on the Room will be merged together to create a single history item until resume is called.
    *
    * @example
@@ -745,8 +750,8 @@ type RoomState<
   readonly nodes: Map<string, LiveNode>;
   root: LiveObject<TStorage> | undefined;
 
-  undoStack: HistoryOp<TPresence>[][];
-  redoStack: HistoryOp<TPresence>[][];
+  readonly undoStack: HistoryOp<TPresence>[][];
+  readonly redoStack: HistoryOp<TPresence>[][];
 
   /**
    * When history is paused, all operations will get queued up here. When
@@ -1085,7 +1090,7 @@ export function createRoom<
       } else {
         batchUpdates(() => {
           addToUndoStack(reverse, doNotBatchUpdates);
-          context.redoStack = [];
+          context.redoStack.length = 0;
           dispatchOps(ops);
           notify({ storageUpdates }, doNotBatchUpdates);
         });
@@ -2082,6 +2087,11 @@ export function createRoom<
     flushNowOrSoon();
   }
 
+  function clear() {
+    context.undoStack.length = 0;
+    context.redoStack.length = 0;
+  }
+
   function batch<T>(callback: () => T): T {
     if (context.activeBatch) {
       // If there already is an active batch, we don't have to handle this in
@@ -2117,7 +2127,7 @@ export function createRoom<
         if (currentBatch.ops.length > 0) {
           // Only clear the redo stack if something has changed during a batch
           // Clear the redo stack because batch is always called from a local operation
-          context.redoStack = [];
+          context.redoStack.length = 0;
         }
 
         if (currentBatch.ops.length > 0) {
@@ -2239,6 +2249,7 @@ export function createRoom<
         redo,
         canUndo,
         canRedo,
+        clear,
         pause: pauseHistory,
         resume: resumeHistory,
       },
