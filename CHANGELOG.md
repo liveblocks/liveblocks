@@ -4,6 +4,10 @@
 
 - Actually include the new Clear History API
 
+### `@liveblocks/react`
+
+- Fix missing dependency declaration
+
 # v1.3.0
 
 v1.3.0 marks the initial release of
