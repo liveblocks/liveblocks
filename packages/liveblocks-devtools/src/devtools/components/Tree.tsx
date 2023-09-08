@@ -645,6 +645,14 @@ function PresenceNodeRenderer(props: NodeRendererProps<PresenceTreeNode>) {
       );
 
     case "Json":
+      // Liveblocks Yjs' awareness is part of presence, but we don't want to have it appear here.
+      if (
+        props.node.data.key === "__yjs" &&
+        props.node.parent?.data.key === "presence"
+      ) {
+        return null;
+      }
+
       return (
         <JsonNodeRenderer
           {...(props as NodeRendererProps<DevTools.JsonTreeNode>)}

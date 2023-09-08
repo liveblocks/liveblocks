@@ -82,7 +82,10 @@ function YjsContentChanges({ className, ...props }: ComponentProps<"div">) {
     currentStatus === "reconnecting"
   ) {
     return (
-      <div className={cx(className, "absolute inset-0 overflow-y-auto")} {...props}>
+      <div
+        className={cx(className, "absolute inset-0 overflow-y-auto")}
+        {...props}
+      >
         <YUpdateLog />
       </div>
     );
