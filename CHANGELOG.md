@@ -1,5 +1,9 @@
 # v1.3.1
 
+### `@liveblocks/client`
+
+- Actually include the new Clear History API
+
 ### `@liveblocks/react`
 
 - Fix missing dependency declaration
@@ -12,6 +16,8 @@ private beta.
 
 ### `@liveblocks/client`
 
+- New history API: `room.history.clear()` allows you to explicitly clear the
+  history, which resets the ability to undo beyond the current state.
 - Removed long deprecated methods:
   - `others.count` → Use `others.length` instead
   - `others.toArray()` → Use `others` instead (it’s already an array)

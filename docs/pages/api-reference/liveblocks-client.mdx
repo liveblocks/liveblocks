@@ -674,6 +674,19 @@ room.history.redo();
 // room.history.canRedo() is false
 ```
 
+### Room.history.clear
+
+Clears the undo and redo stacks for the current client. Explicitly clearing
+history resets the ability to undo beyond the current document state. Other
+clients’ histories are unaffected.
+
+```ts
+room.updatePresence({ selectedId: "xx" }, { addToHistory: true });
+// room.history.canUndo() is true
+room.history.clear();
+// room.history.canUndo() is false
+```
+
 ### Room.history.pause
 
 All future modifications made on the Room will be merged together to create a
