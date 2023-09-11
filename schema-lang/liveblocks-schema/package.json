@@ -29,8 +29,8 @@
     "parser"
   ],
   "devDependencies": {
-    "@liveblocks/eslint-config": "*",
-    "@liveblocks/jest-config": "*",
+    "@liveblocks/eslint-config": "workspace:*",
+    "@liveblocks/jest-config": "workspace:*",
     "@types/didyoumean": "^1.2.0",
     "ast-generator": "^0.1.0",
     "peggy": "^2.0.1",

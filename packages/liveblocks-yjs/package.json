@@ -40,8 +40,8 @@
     "yjs": "^13.6.1"
   },
   "devDependencies": {
-    "@liveblocks/eslint-config": "*",
-    "@liveblocks/jest-config": "*",
+    "@liveblocks/eslint-config": "workspace:*",
+    "@liveblocks/jest-config": "workspace:*",
     "@testing-library/jest-dom": "^5.16.5"
   },
   "sideEffects": false,

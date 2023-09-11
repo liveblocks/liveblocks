@@ -46,8 +46,8 @@
   },
   "license": "Apache-2.0",
   "devDependencies": {
-    "@liveblocks/eslint-config": "*",
-    "@liveblocks/jest-config": "*",
+    "@liveblocks/eslint-config": "workspace:*",
+    "@liveblocks/jest-config": "workspace:*",
     "@types/ws": "^8.5.3",
     "dotenv": "^16.0.3",
     "eslint-plugin-rulesdir": "^0.2.1",

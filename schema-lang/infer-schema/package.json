@@ -33,8 +33,8 @@
     "pluralize": "^8.0.0"
   },
   "devDependencies": {
-    "@liveblocks/eslint-config": "*",
-    "@liveblocks/jest-config": "*",
+    "@liveblocks/eslint-config": "workspace:*",
+    "@liveblocks/jest-config": "workspace:*",
     "@types/pluralize": "^0.0.29"
   },
   "sideEffects": false

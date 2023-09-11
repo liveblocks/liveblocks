@@ -47,7 +47,7 @@
     ]
   },
   "dependencies": {
-    "@liveblocks/textmate-grammar": "*"
+    "@liveblocks/textmate-grammar": "workspace:*"
   },
   "devDependencies": {
     "esbuild": "^0.17.8",

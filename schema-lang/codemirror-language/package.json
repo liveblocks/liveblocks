@@ -46,8 +46,8 @@
   },
   "devDependencies": {
     "@lezer/generator": "^1.2.2",
-    "@liveblocks/eslint-config": "*",
-    "@liveblocks/jest-config": "*"
+    "@liveblocks/eslint-config": "workspace:*",
+    "@liveblocks/jest-config": "workspace:*"
   },
   "sideEffects": false
 }

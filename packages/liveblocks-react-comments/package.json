@@ -65,8 +65,8 @@
     "react": "^16.14.0 || ^17 || ^18"
   },
   "devDependencies": {
-    "@liveblocks/eslint-config": "*",
-    "@liveblocks/jest-config": "*",
+    "@liveblocks/eslint-config": "workspace:*",
+    "@liveblocks/jest-config": "workspace:*",
     "@rollup/plugin-typescript": "^11.1.2",
     "@testing-library/jest-dom": "^5.16.5",
     "@testing-library/react": "^13.1.1",

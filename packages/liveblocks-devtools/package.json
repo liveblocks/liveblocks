@@ -14,7 +14,7 @@
     "format": "(eslint --fix src/ || true) && prettier --write src/"
   },
   "dependencies": {
-    "@liveblocks/core": "*",
+    "@liveblocks/core": "workspace:*",
     "@plasmohq/storage": "^0.14.0",
     "@radix-ui/react-dialog": "^1.0.2",
     "@radix-ui/react-popover": "^1.0.3",
