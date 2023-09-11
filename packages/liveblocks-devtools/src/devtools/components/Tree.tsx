@@ -64,7 +64,7 @@ type PresenceTreeNode = DevTools.UserTreeNode | DevTools.JsonTreeNode;
 /**
  * Node types that can be used in the Yjs tree view.
  */
-type YjsTreeNode = DevTools.JsonTreeNode;
+type YjsTreeNode = DevTools.UserTreeNode | DevTools.JsonTreeNode;
 
 const HIGHLIGHT_ANIMATION_DURATION = 600;
 const HIGHLIGHT_ANIMATION_DELAY = 100;
@@ -650,14 +650,27 @@ function PresenceNodeRenderer(props: NodeRendererProps<PresenceTreeNode>) {
       );
 
     case "Json":
-      // Liveblocks Yjs' awareness is part of presence, but we don't want to have it appear here.
-      if (
-        props.node.data.key === "__yjs" &&
-        props.node.parent?.data.key === "presence"
-      ) {
-        return null;
-      }
+      return (
+        <JsonNodeRenderer
+          {...(props as NodeRendererProps<DevTools.JsonTreeNode>)}
+        />
+      );
 
+    default:
+      return null;
+  }
+}
+
+function YjsNodeRenderer(props: NodeRendererProps<YjsTreeNode>) {
+  switch (props.node.data.type) {
+    case "User":
+      return (
+        <UserNodeRenderer
+          {...(props as NodeRendererProps<DevTools.UserTreeNode>)}
+        />
+      );
+
+    case "Json":
       return (
         <JsonNodeRenderer
           {...(props as NodeRendererProps<DevTools.JsonTreeNode>)}
@@ -731,21 +744,25 @@ function presenceChildAccessor(
             )
           );
         } else if (node.payload !== null && typeof node.payload === "object") {
-          return Object.entries(node.payload).flatMap(([key, value]) =>
-            value === undefined
-              ? []
-              : [
-                  makeJsonNode(
-                    `${node.id.substring(SPECIAL_HACK_PREFIX.length)}`,
-                    //                   ^^^^^^^^^^^^^^^^^^^
-                    //                   Undo the "special behavior" for the
-                    //                   subnodes, making them "normal Json" nodes
-                    //                   that aren't expandable
-                    key,
-                    value
-                  ),
-                ]
-          );
+          // Liveblocks Yjs' awareness is part of presence, but we don't want to have it
+          // appear in the Presence panel since it has its own panel under the Yjs tab.
+          return Object.entries(node.payload)
+            .filter(([key]) => key !== "__yjs")
+            .flatMap(([key, value]) =>
+              value === undefined
+                ? []
+                : [
+                    makeJsonNode(
+                      `${node.id.substring(SPECIAL_HACK_PREFIX.length)}`,
+                      //                   ^^^^^^^^^^^^^^^^^^^
+                      //                   Undo the "special behavior" for the
+                      //                   subnodes, making them "normal Json" nodes
+                      //                   that aren't expandable
+                      key,
+                      value
+                    ),
+                  ]
+            );
         }
       }
 
@@ -774,16 +791,31 @@ function storageChildAccessor(node: StorageTreeNode): StorageTreeNode[] | null {
 }
 
 function yjsChildAccessor(node: YjsTreeNode): YjsTreeNode[] | null {
-  if (Array.isArray(node.payload)) {
-    return node.payload.map((item, index) =>
-      makeJsonNode(node.id, index.toString(), item)
-    );
-  } else if (node.payload !== null && typeof node.payload === "object") {
-    return Object.entries(node.payload).flatMap(([key, value]) =>
-      value === undefined ? [] : [makeJsonNode(node.id, key, value)]
-    );
-  } else {
-    return null;
+  switch (node.type) {
+    case "User": {
+      const awareness = node.payload.presence.__yjs;
+
+      if (!awareness) {
+        return null;
+      }
+
+      return Object.entries(awareness).map(([key, value]) =>
+        makeJsonNode(node.id, key, value as Json)
+      );
+    }
+    case "Json": {
+      if (Array.isArray(node.payload)) {
+        return node.payload.map((item, index) =>
+          makeJsonNode(node.id, index.toString(), item)
+        );
+      } else if (node.payload !== null && typeof node.payload === "object") {
+        return Object.entries(node.payload).flatMap(([key, value]) =>
+          value === undefined ? [] : [makeJsonNode(node.id, key, value)]
+        );
+      } else {
+        return null;
+      }
+    }
   }
 }
 
@@ -1031,7 +1063,7 @@ export const YjsTree = forwardRef<
               indent={ROW_INDENT}
               {...props}
             >
-              {JsonNodeRenderer}
+              {YjsNodeRenderer}
             </ArboristTree>
           )}
         </AutoSizer>

@@ -383,6 +383,14 @@ export function useOthers(): readonly DevTools.UserTreeNode[] {
   );
 }
 
+export function usePresence(): readonly DevTools.UserTreeNode[] {
+  const me = useMe();
+  const others = useOthers();
+  const presence = useMemo(() => (me ? [me, ...others] : others), [me, others]);
+
+  return presence;
+}
+
 const emptyStorage: readonly DevTools.LsonTreeNode[] = [];
 
 export function useStorage(): readonly DevTools.LsonTreeNode[] {

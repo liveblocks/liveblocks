@@ -16,7 +16,7 @@ import type { Tab } from "./components/Tabs";
 import { Tabs } from "./components/Tabs";
 import { CurrentRoomProvider, useCurrentRoomId } from "./contexts/CurrentRoom";
 import { sendMessage } from "./port";
-import { Presence } from "./tabs/presence/presence";
+import { Presence } from "./tabs/presence";
 import { Storage } from "./tabs/storage";
 import { Yjs, YJS_TABS, type YjsTab } from "./tabs/yjs";
 
@@ -212,7 +212,7 @@ function Panel() {
         }
         trailing={
           isSearchVisible && (
-            <div className="ml-auto after:bg-light-300 after:dark:bg-dark-300 relative w-[30%] min-w-[140px] flex-none after:absolute after:-left-px after:top-[20%] after:h-[60%] after:w-px">
+            <div className="ml-auto after:bg-light-300 after:dark:bg-dark-300 relative w-[35%] min-w-[140px] flex-none after:absolute after:-left-px after:top-[20%] after:h-[60%] after:w-px">
               <Search value={searchText} setValue={setSearchText} />
             </div>
           )
