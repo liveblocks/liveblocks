@@ -2,6 +2,7 @@ import "reactflow/dist/style.css";
 
 import { assertNever, type DevTools } from "@liveblocks/core";
 import { useStorage } from "@plasmohq/storage/hook";
+import * as RadixSelect from "@radix-ui/react-select";
 import cx from "classnames";
 import {
   type ComponentProps,
@@ -99,12 +100,7 @@ function YjsDocumentDiagram({
     if (edges.length > 0) {
       return (
         <div className={cx(className, "absolute inset-0")} {...props}>
-          <div className="absolute inset-0 flex flex-col">
-            <YFlow nodes={nodes} edges={edges} />
-            <div className="border-light-300 dark:border-dark-300 bg-light-0 dark:bg-dark-0 flex h-8 items-center border-t flex-none">
-              Controls
-            </div>
-          </div>
+          <YFlow nodes={nodes} edges={edges} />
         </div>
       );
     } else {
@@ -226,7 +222,7 @@ function YjsDocumentTree({
 function YjsDocument({ view, ...props }: YjsDocumentProps) {
   switch (view) {
     case "diagram":
-      return null;
+      return <YjsDocumentDiagram {...props} />;
     case "tree":
       return <YjsDocumentTree {...props} />;
     default:
@@ -351,6 +347,7 @@ export function Yjs({
   const documentViewsItems: SelectItem[] = useMemo(() => {
     return YDOC_VIEWS.map((view) => ({
       value: view,
+      content: `View as ${view}`,
     }));
   }, []);
 
@@ -370,13 +367,15 @@ export function Yjs({
         tabs={yjsTabs}
         trailing={
           activeTab === "document" && (
-            <div className="flex items-center ml-auto after:bg-light-300 after:dark:bg-dark-300 relative flex-none after:absolute after:-left-px after:top-[20%] after:h-[60%] after:w-px">
+            <div className="flex items-center ml-auto after:bg-light-300 after:dark:bg-dark-300 relative flex-none pl-1 after:absolute after:-left-px after:top-[20%] after:h-[60%] after:w-px">
               <Select
                 value={documentView}
                 onValueChange={handleDocumentViewChange}
                 description="Change view"
                 items={documentViewsItems}
-              />
+              >
+                <RadixSelect.Value>View as {documentView}</RadixSelect.Value>
+              </Select>
             </div>
           )
         }
