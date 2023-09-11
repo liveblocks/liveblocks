@@ -197,9 +197,10 @@ export type YDocUpdate = {
 export type BroadcastedEventServerMsg<TRoomEvent extends Json> = {
   readonly type: ServerMsgCode.BROADCASTED_EVENT;
   /**
-   * The User who broadcasted the Event.
+   * The User who broadcasted the Event. Absent when this event is broadcasted
+   * from the REST API in the backend.
    */
-  readonly actor: number;
+  readonly actor?: number;
   /**
    * The arbitrary payload of the Event. This can be any JSON value. Clients
    * will have to manually verify/decode this event.
