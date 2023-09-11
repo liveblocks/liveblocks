@@ -287,7 +287,7 @@ export function CurrentRoomProvider(props: Props) {
         }
       }
     },
-    []
+    [softSetCurrentRoomId]
   );
 
   useEffect(() => {
@@ -301,7 +301,7 @@ export function CurrentRoomProvider(props: Props) {
     return () => {
       onMessage.removeListener(handleMessage);
     };
-  }, []);
+  }, [handleMessage]);
 
   useEffect(() => {
     const roomId = currentRoomId;

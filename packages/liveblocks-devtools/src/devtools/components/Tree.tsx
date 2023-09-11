@@ -61,6 +61,11 @@ type StorageTreeNode = DevTools.LsonTreeNode;
  */
 type PresenceTreeNode = DevTools.UserTreeNode | DevTools.JsonTreeNode;
 
+/**
+ * Node types that can be used in the Yjs tree view.
+ */
+type YjsTreeNode = DevTools.JsonTreeNode;
+
 const HIGHLIGHT_ANIMATION_DURATION = 600;
 const HIGHLIGHT_ANIMATION_DELAY = 100;
 const ROW_HEIGHT = 28;
@@ -263,7 +268,7 @@ function useToggleNode<T>(node: NodeApi<T>) {
   return useCallback(
     (event: MouseEvent<HTMLDivElement>) =>
       toggleNode(node, { siblings: event.altKey }),
-    []
+    [node]
   );
 }
 
@@ -670,7 +675,7 @@ function presenceChildAccessor(
   switch (node.type) {
     case "User": {
       //
-      // This harcodes which keys are displayed as top-level properties of User
+      // This hardcodes which keys are displayed as top-level properties of User
       // nodes, most notably "presence" and "info". The special thing about
       // these properties is that we'll want to expand these "one level deep",
       // unlike other Json values we render elsewhere.
@@ -765,6 +770,20 @@ function storageChildAccessor(node: StorageTreeNode): StorageTreeNode[] | null {
     default:
       // e.g. future LiveXxx types
       return null;
+  }
+}
+
+function yjsChildAccessor(node: YjsTreeNode): YjsTreeNode[] | null {
+  if (Array.isArray(node.payload)) {
+    return node.payload.map((item, index) =>
+      makeJsonNode(node.id, index.toString(), item)
+    );
+  } else if (node.payload !== null && typeof node.payload === "object") {
+    return Object.entries(node.payload).flatMap(([key, value]) =>
+      value === undefined ? [] : [makeJsonNode(node.id, key, value)]
+    );
+  } else {
+    return null;
   }
 }
 
@@ -956,6 +975,7 @@ export const StorageTree = forwardRef<
     search?: RegExp;
   }
 >(({ search, className, style, ...props }, ref) => {
+  console.log(ref);
   return (
     <TreeSearchContext.Provider value={search}>
       <TooltipProvider skipDelayDuration={0}>
@@ -968,6 +988,7 @@ export const StorageTree = forwardRef<
               childrenAccessor={storageChildAccessor}
               disableDrag
               disableDrop
+              disableEdit
               disableMultiSelection
               className="!overflow-x-hidden"
               selectionFollowsFocus
@@ -976,6 +997,41 @@ export const StorageTree = forwardRef<
               {...props}
             >
               {LsonNodeRenderer}
+            </ArboristTree>
+          )}
+        </AutoSizer>
+      </TooltipProvider>
+    </TreeSearchContext.Provider>
+  );
+});
+
+export const YjsTree = forwardRef<
+  TreeApi<YjsTreeNode>,
+  TreeProps<YjsTreeNode> & {
+    search?: RegExp;
+  }
+>(({ search, className, style, ...props }, ref) => {
+  return (
+    <TreeSearchContext.Provider value={search}>
+      <TooltipProvider skipDelayDuration={0}>
+        <AutoSizer className={cx(className, "tree")} style={style}>
+          {({ width, height }) => (
+            <ArboristTree
+              ref={ref}
+              width={width}
+              height={height}
+              childrenAccessor={yjsChildAccessor}
+              disableDrag
+              disableDrop
+              disableEdit
+              disableMultiSelection
+              className="!overflow-x-hidden"
+              selectionFollowsFocus
+              rowHeight={ROW_HEIGHT}
+              indent={ROW_INDENT}
+              {...props}
+            >
+              {JsonNodeRenderer}
             </ArboristTree>
           )}
         </AutoSizer>
@@ -999,6 +1055,7 @@ export const PresenceTree = forwardRef<
             childrenAccessor={presenceChildAccessor}
             disableDrag
             disableDrop
+            disableEdit
             disableMultiSelection
             className="!overflow-x-hidden"
             selectionFollowsFocus

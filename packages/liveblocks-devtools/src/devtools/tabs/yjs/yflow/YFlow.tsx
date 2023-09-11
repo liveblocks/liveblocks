@@ -17,7 +17,7 @@ type YFlowProps = {
   edges: Edge<unknown>[];
 };
 
-function YFlow({ nodes, edges }: YFlowProps) {
+export function YFlow({ nodes, edges }: YFlowProps) {
   return (
     <ReactFlow nodes={nodes} edges={edges} nodeTypes={nodeTypes}>
       |<Controls />
@@ -26,5 +26,3 @@ function YFlow({ nodes, edges }: YFlowProps) {
     </ReactFlow>
   );
 }
-
-export default YFlow;

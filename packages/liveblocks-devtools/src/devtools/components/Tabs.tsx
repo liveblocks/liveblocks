@@ -1,64 +1,31 @@
-import { useStorage } from "@plasmohq/storage/hook";
 import * as RadixTabs from "@radix-ui/react-tabs";
 import cx from "classnames";
-import {
-  type ComponentProps,
-  type ReactNode,
-  useCallback,
-  useEffect,
-  useId,
-} from "react";
+import type { ComponentProps, ReactNode } from "react";
 
 import { Tooltip } from "./Tooltip";
 
-interface Tab extends ComponentProps<typeof RadixTabs.Trigger> {
+export interface Tab
+  extends Omit<ComponentProps<typeof RadixTabs.Trigger>, "content"> {
   value: string;
   title: string;
   content: ReactNode;
 }
 
-interface TabsProps
-  extends Omit<
-    RadixTabs.TabsProps,
-    "defaultValue" | "value" | "onValueChange"
-  > {
-  defaultTab: NonNullable<RadixTabs.TabsProps["defaultValue"]>;
-  onTabChange?: RadixTabs.TabsProps["onValueChange"];
+interface TabsProps extends RadixTabs.TabsProps {
   tabs: Tab[];
   leading?: ReactNode;
   trailing?: ReactNode;
 }
 
 export function Tabs({
-  defaultTab,
-  onTabChange,
   tabs,
   className,
   leading,
   trailing,
   ...props
 }: TabsProps) {
-  const id = useId();
-  const [activeTab, setActiveTab] = useStorage(
-    `tabs-active-tab-${id}`,
-    defaultTab
-  );
-
-  const handleTabChange = useCallback((value: string) => {
-    void setActiveTab(value);
-  }, []);
-
-  useEffect(() => {
-    onTabChange?.(activeTab);
-  }, [activeTab]);
-
   return (
-    <RadixTabs.Root
-      value={activeTab}
-      onValueChange={handleTabChange}
-      className={cx(className, "flex flex-col")}
-      {...props}
-    >
+    <RadixTabs.Root className={cx(className, "flex flex-col")} {...props}>
       <div className="border-light-300 dark:border-dark-300 bg-light-0 dark:bg-dark-0 flex h-8 border-b">
         {leading ?? null}
         <RadixTabs.List className="scrollbar-hidden flex h-full flex-1 overflow-x-auto px-1.5">

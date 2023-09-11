@@ -1,6 +1,7 @@
 import "reactflow/dist/style.css";
 
 import type { DevTools } from "@liveblocks/core";
+import { useStorage } from "@plasmohq/storage/hook";
 import cx from "classnames";
 import {
   type ComponentProps,
@@ -11,36 +12,52 @@ import {
   useState,
 } from "react";
 import { useEdgesState, useNodesState } from "reactflow";
-import * as Y from "yjs";
 
 import { Loading } from "../../../components/Loading";
-import { buildSearchRegex } from "../../../lib/buildSearchRegex";
 import { getNodesAndEdges, yDocToJsonTree } from "../../../lib/ydoc";
 import { EmptyState } from "../../components/EmptyState";
-import { Search } from "../../components/Search";
+import type { SelectItem } from "../../components/Select";
+import { Select } from "../../components/Select";
 import { Tabs } from "../../components/Tabs";
-import { StorageTree } from "../../components/Tree";
-import { useStatus, useYdoc } from "../../contexts/CurrentRoom";
-import YFlow from "./yflow/YFlow";
-import { YUpdateLog } from "./YUpdateLog";
+import { YjsTree } from "../../components/Tree";
+import {
+  useCurrentRoomId,
+  useStatus,
+  useYdoc,
+} from "../../contexts/CurrentRoom";
+import { YFlow } from "./yflow/YFlow";
 
-const DEFAULT_TAB = "diagram";
+export const YJS_TABS = ["document", "awareness"] as const;
+export const YDOC_VIEWS = ["diagram", "tree"] as const;
+export type YjsTab = (typeof YJS_TABS)[number];
+export type YdocView = (typeof YDOC_VIEWS)[number];
 
-interface YjsContentProps extends ComponentProps<"div"> {
+interface Props extends ComponentProps<"div"> {
+  activeTab: YjsTab;
+  setActiveTab: (value: string) => void;
   search?: RegExp;
   searchText?: string;
   onSearchClear: (event: MouseEvent<HTMLButtonElement>) => void;
 }
 
-function YjsContentDiagram({
+interface YjsDocumentProps extends ComponentProps<"div"> {
+  view: YdocView;
+  search?: RegExp;
+  searchText?: string;
+  onSearchClear: (event: MouseEvent<HTMLButtonElement>) => void;
+}
+
+function YjsDocument({
+  view,
   search,
   searchText,
   onSearchClear,
   className,
   ...props
-}: YjsContentProps) {
+}: YjsDocumentProps) {
   const [nodes, setNodes] = useNodesState([]);
   const [edges, setEdges] = useEdgesState([]);
+  const [jsonData, setJsonData] = useState<DevTools.JsonTreeNode[]>([]);
   const ydoc = useYdoc();
   const currentStatus = useStatus();
 
@@ -53,8 +70,11 @@ function YjsContentDiagram({
         onSetNode,
         selectedNode
       );
+      const yjson = yDocToJsonTree(ydoc);
+
       setEdges(docEdges);
       setNodes(docNodes);
+      setJsonData(yjson);
     }
 
     function onSetNode(node: string) {
@@ -68,7 +88,7 @@ function YjsContentDiagram({
     return () => {
       ydoc.off("update", onUpdate);
     };
-  }, [ydoc]);
+  }, [setEdges, setNodes, ydoc]);
 
   if (
     currentStatus === "connected" ||
@@ -77,7 +97,11 @@ function YjsContentDiagram({
   ) {
     return (
       <div className={cx(className, "absolute inset-0")} {...props}>
-        <YFlow nodes={nodes} edges={edges} />
+        {view === "tree" ? (
+          <YjsTree data={jsonData} search={search} />
+        ) : (
+          <YFlow nodes={nodes} edges={edges} />
+        )}
       </div>
     );
   }
@@ -85,129 +109,77 @@ function YjsContentDiagram({
   return <EmptyState visual={<Loading />} />;
 }
 
-function YjsContentTree({
+export function Yjs({
   search,
   searchText,
   onSearchClear,
+  activeTab,
+  setActiveTab,
   className,
   ...props
-}: YjsContentProps) {
-  const [jsonData, setJsonData] = useState<DevTools.JsonTreeNode[]>([]);
-  const ydoc = useYdoc();
-  const currentStatus = useStatus();
-
-  useEffect(() => {
-    function onUpdate() {
-      const yjson = yDocToJsonTree(ydoc);
-
-      setJsonData(yjson);
-    }
-
-    onUpdate();
-    ydoc.on("update", onUpdate);
-
-    return () => {
-      ydoc.off("update", onUpdate);
-    };
-  }, [ydoc]);
-
-  if (
-    currentStatus === "connected" ||
-    currentStatus === "open" || // Same as "connected", but only sent by old clients (prior to 1.1)
-    currentStatus === "reconnecting"
-  ) {
-    return (
-      <div className={cx(className, "absolute inset-0")} {...props}>
-        <StorageTree data={jsonData} search={search} />
-      </div>
-    );
-  }
-
-  return <EmptyState visual={<Loading />} />;
-}
-
-function YjsContentChanges({ className, ...props }: ComponentProps<"div">) {
-  const currentStatus = useStatus();
-
-  if (
-    currentStatus === "connected" ||
-    currentStatus === "open" || // Same as "connected", but only sent by old clients (prior to 1.1)
-    currentStatus === "reconnecting"
-  ) {
-    return (
-      <div
-        className={cx(className, "absolute inset-0 overflow-y-auto")}
-        {...props}
-      >
-        <YUpdateLog />
-      </div>
-    );
-  }
-
-  return <EmptyState visual={<Loading />} />;
-}
-
-export function Yjs({ className, ...props }: ComponentProps<"div">) {
-  const [activeTab, setActiveTab] = useState(DEFAULT_TAB);
-  const [searchText, setSearchText] = useState("");
-  const search = useMemo(() => {
-    const trimmed = (searchText ?? "").trim();
-    return trimmed ? buildSearchRegex(trimmed) : undefined;
-  }, [searchText]);
-  const isSearchVisible = useMemo(
-    () => activeTab === "tree" || activeTab === "diagram",
-    [activeTab]
+}: Props) {
+  const currentRoomId = useCurrentRoomId();
+  const [documentView, setDocumentView] = useStorage<YdocView>(
+    "yjs-ydoc-view",
+    YDOC_VIEWS[0]
   );
-
-  const handleSearchClear = useCallback(() => {
-    setSearchText("");
+  const yjsTabs = useMemo(() => {
+    return YJS_TABS.map((tab) => {
+      switch (tab) {
+        case "document":
+          return {
+            value: "document",
+            title: "Document",
+            content: (
+              <YjsDocument
+                key={`${currentRoomId}:ydoc`}
+                search={search}
+                searchText={searchText}
+                onSearchClear={onSearchClear}
+                view={documentView}
+              />
+            ),
+          };
+        case "awareness":
+          return {
+            value: "awareness",
+            title: "Awareness",
+            content: null,
+          };
+      }
+    });
+  }, [currentRoomId, documentView, onSearchClear, search, searchText]);
+  const documentViewsItems: SelectItem[] = useMemo(() => {
+    return YDOC_VIEWS.map((view) => ({
+      value: view,
+    }));
   }, []);
+
+  const handleDocumentViewChange = useCallback(
+    (value: string) => {
+      void setDocumentView(value as YdocView);
+    },
+    [setDocumentView]
+  );
 
   return (
     <div className={cx(className, "absolute inset-0 flex flex-col")} {...props}>
       <Tabs
         className="h-full"
-        defaultTab={DEFAULT_TAB}
-        onTabChange={setActiveTab}
-        tabs={[
-          {
-            value: "diagram",
-            title: "Diagram",
-            content: (
-              <YjsContentDiagram
-                search={search}
-                searchText={searchText}
-                onSearchClear={handleSearchClear}
-              />
-            ),
-          },
-          {
-            value: "tree",
-            title: "Tree",
-            content: (
-              <YjsContentTree
-                search={search}
-                searchText={searchText}
-                onSearchClear={handleSearchClear}
-              />
-            ),
-          },
-          {
-            value: "changes",
-            title: "Changes",
-            content: <YjsContentChanges />,
-          },
-        ]}
+        value={activeTab}
+        onValueChange={setActiveTab}
+        tabs={yjsTabs}
         trailing={
-          isSearchVisible ? (
-            <div className="ml-auto after:bg-light-300 after:dark:bg-dark-300 relative w-[30%] min-w-[140px] flex-none after:absolute after:-left-px after:top-[20%] after:h-[60%] after:w-px">
-              <Search
-                value={searchText}
-                setValue={setSearchText}
-                placeholder="Search document…"
+          activeTab === "document" && (
+            <div className="flex items-center ml-auto after:bg-light-300 after:dark:bg-dark-300 relative flex-none after:absolute after:-left-px after:top-[20%] after:h-[60%] after:w-px">
+              <Select
+                value={documentView}
+                onValueChange={handleDocumentViewChange}
+                description="Change view"
+                items={documentViewsItems}
               />
             </div>
-          ) : null
+          )
         }
       />
     </div>

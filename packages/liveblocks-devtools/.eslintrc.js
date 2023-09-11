@@ -3,6 +3,7 @@
 module.exports = {
   root: true,
   extends: ["@liveblocks/eslint-config"],
+  plugins: ["react-hooks"],
   rules: {
     // -------------------------------
     // Custom syntax we want to forbid
@@ -18,6 +19,9 @@ module.exports = {
     // ----------------------------------------------------------------------
     // Extra rules for this project specifically
     // ----------------------------------------------------------------------
-    /* None yet 😇 ! */
+
+    // Enforce React best practices
+    "react-hooks/rules-of-hooks": "error",
+    "react-hooks/exhaustive-deps": "error",
   },
 };

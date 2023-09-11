@@ -30,12 +30,12 @@ export const Search = forwardRef<HTMLInputElement, Props>(
           event.stopPropagation();
         }
       },
-      []
+      [setValue]
     );
 
     const handleSearchChange = useCallback(
       (event: ChangeEvent<HTMLInputElement>) => setValue(event.target.value),
-      []
+      [setValue]
     );
 
     // Focus search on ⌘+F, ⌘+K, or /
