@@ -435,7 +435,7 @@
         "operationId": "post-broadcast-event",
         "responses": {
           "204": {
-            "description": "Success. An event was broadcasted to the room."
+            "description": "Success. An event was broadcast to the room."
           },
           "401": {
             "$ref": "#/components/responses/401"
@@ -450,7 +450,7 @@
             "$ref": "#/components/responses/422"
           }
         },
-        "description": "This endpoint enables the broadcast of an event to a room without having to connect to it via the `client` from `@liveblocks/client`. It takes any valid JSON as a request body.",
+        "description": "This endpoint enables the broadcast of an event to a room without having to connect to it via the `client` from `@liveblocks/client`. It takes any valid JSON as a request body. The `connectionId` passed to event listeners is `-1` when using this API.",
         "requestBody": {
           "description": "Any valid JSON.",
           "content": {
