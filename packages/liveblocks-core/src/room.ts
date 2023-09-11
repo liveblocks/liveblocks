@@ -1746,7 +1746,7 @@ export function createRoom<
 
           case ServerMsgCode.BROADCASTED_EVENT: {
             eventHub.customEvent.notify({
-              connectionId: message.actor,
+              connectionId: message.actor ?? -1,
               event: message.event,
             });
             break;
