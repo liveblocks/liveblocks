@@ -200,7 +200,7 @@ export type BroadcastedEventServerMsg<TRoomEvent extends Json> = {
    * The User who broadcast the Event. Absent when this event is broadcast from
    * the REST API in the backend.
    */
-  readonly actor?: number;
+  readonly actor: number;
   /**
    * The arbitrary payload of the Event. This can be any JSON value. Clients
    * will have to manually verify/decode this event.

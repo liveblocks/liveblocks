@@ -1,11 +1,3 @@
-# v1.3.2
-
-### `@liveblocks/client`
-
-- Fix in broadcast event payload. When broadcasting events via the REST API,
-  clients will now receive a `connectionId` value of `-1` (instead of an
-  unexpected absent value).
-
 # v1.3.1
 
 ### `@liveblocks/client`
