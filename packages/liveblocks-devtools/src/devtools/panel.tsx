@@ -39,7 +39,7 @@ function Panel() {
     const trimmed = (searchText ?? "").trim();
     return trimmed ? buildSearchRegex(trimmed) : undefined;
   }, [searchText]);
-  const isSearchVisible = useMemo(() => {
+  const isSearchActive = useMemo(() => {
     return (
       mainTab === "storage" || (mainTab === "yjs" && yjsTab === "document")
     );
@@ -211,11 +211,13 @@ function Panel() {
           </div>
         }
         trailing={
-          isSearchVisible && (
-            <div className="ml-auto after:bg-light-300 after:dark:bg-dark-300 relative w-[35%] min-w-[140px] flex-none after:absolute after:-left-px after:top-[20%] after:h-[60%] after:w-px">
-              <Search value={searchText} setValue={setSearchText} />
-            </div>
-          )
+          <div className="ml-auto after:bg-light-300 after:dark:bg-dark-300 relative w-[35%] min-w-[140px] flex-none after:absolute after:-left-px after:top-[20%] after:h-[60%] after:w-px">
+            <Search
+              value={searchText}
+              setValue={setSearchText}
+              disabled={!isSearchActive}
+            />
+          </div>
         }
       />
     </ResizablePanel>

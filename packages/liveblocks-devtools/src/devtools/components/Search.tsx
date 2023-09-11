@@ -10,6 +10,7 @@ import { mergeRefs } from "../../lib/mergeRefs";
 import { Tooltip } from "./Tooltip";
 
 interface Props extends ComponentProps<"div"> {
+  disabled?: boolean;
   placeholder?: string;
   value: ComponentProps<"input">["value"];
   setValue: (search: string) => void;
@@ -17,7 +18,7 @@ interface Props extends ComponentProps<"div"> {
 
 export const Search = forwardRef<HTMLInputElement, Props>(
   (
-    { value, setValue, placeholder = "Search…", className, ...props },
+    { disabled, value, setValue, placeholder = "Search…", className, ...props },
     forwardRef
   ) => {
     const ref = useRef<HTMLInputElement>(null);
@@ -41,8 +42,8 @@ export const Search = forwardRef<HTMLInputElement, Props>(
     // Focus search on ⌘+F, ⌘+K, or /
     useEffect(() => {
       function handleKeyDown(event: KeyboardEvent) {
-        // Except if an input is currently focused
-        if (document.activeElement?.tagName === "INPUT") {
+        // Except if disabled or an input is currently focused
+        if (disabled || document.activeElement?.tagName === "INPUT") {
           return;
         }
 
@@ -62,11 +63,15 @@ export const Search = forwardRef<HTMLInputElement, Props>(
       return () => {
         document.removeEventListener("keydown", handleKeyDown);
       };
-    }, []);
+    }, [disabled]);
 
     return (
       <div
-        className={cx(className, "relative flex h-full items-center")}
+        className={cx(
+          className,
+          "relative flex h-full items-center",
+          disabled && "opacity-50"
+        )}
         {...props}
       >
         <Tooltip
@@ -80,6 +85,7 @@ export const Search = forwardRef<HTMLInputElement, Props>(
         >
           <input
             type="search"
+            disabled={disabled}
             ref={mergeRefs(ref, forwardRef)}
             value={value}
             onChange={handleSearchChange}

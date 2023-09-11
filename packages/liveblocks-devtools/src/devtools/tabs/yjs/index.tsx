@@ -22,13 +22,7 @@ import { EmptyState } from "../../components/EmptyState";
 import type { SelectItem } from "../../components/Select";
 import { Select } from "../../components/Select";
 import { Tabs } from "../../components/Tabs";
-import {
-  Breadcrumbs,
-  filterNodes,
-  makeJsonNode,
-  PresenceTree,
-  YjsTree,
-} from "../../components/Tree";
+import { Breadcrumbs, filterNodes, YjsTree } from "../../components/Tree";
 import {
   useCurrentRoomId,
   usePresence,
@@ -36,8 +30,9 @@ import {
   useYdoc,
 } from "../../contexts/CurrentRoom";
 import { YFlow } from "./yflow/YFlow";
+import { YUpdateLog } from "./YUpdateLog";
 
-export const YJS_TABS = ["document", "awareness"] as const;
+export const YJS_TABS = ["document", "awareness", "log"] as const;
 export const YDOC_VIEWS = ["diagram", "tree"] as const;
 export type YjsTab = (typeof YJS_TABS)[number];
 export type YdocView = (typeof YDOC_VIEWS)[number];
@@ -282,6 +277,31 @@ function YjsAwareness({ className, ...props }: ComponentProps<"div">) {
   }
 }
 
+// TODO: Implement empty state?
+function YjsLog({ className, ...props }: ComponentProps<"div">) {
+  const currentStatus = useStatus();
+
+  if (
+    currentStatus === "connected" ||
+    currentStatus === "open" || // Same as "connected", but only sent by old clients (prior to 1.1)
+    currentStatus === "reconnecting"
+  ) {
+    return (
+      <div
+        className={cx(
+          className,
+          "absolute inset-0 flex h-full overflow-y-auto"
+        )}
+        {...props}
+      >
+        <YUpdateLog />
+      </div>
+    );
+  } else {
+    return <EmptyState visual={<Loading />} />;
+  }
+}
+
 export function Yjs({
   search,
   searchText,
@@ -318,6 +338,12 @@ export function Yjs({
             value: "awareness",
             title: "Awareness",
             content: <YjsAwareness key={`${currentRoomId}:awareness`} />,
+          };
+        case "log":
+          return {
+            value: "log",
+            title: "Log",
+            content: <YjsLog key={`${currentRoomId}:log`} />,
           };
       }
     });
