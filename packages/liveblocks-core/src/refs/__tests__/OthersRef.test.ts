@@ -36,6 +36,7 @@ describe('Read-only "others" ref cache', () => {
           presence: { x: 1, y: 1 },
           isReadOnly: false,
           canWrite: true,
+          canComment: true,
         },
       ]);
     });
@@ -56,6 +57,7 @@ describe('Read-only "others" ref cache', () => {
           presence: { x: -2, y: -2 },
           isReadOnly: false,
           canWrite: true,
+          canComment: true,
         },
         {
           connectionId: 3,
@@ -63,6 +65,7 @@ describe('Read-only "others" ref cache', () => {
           presence: { x: 3, y: 3 },
           isReadOnly: false,
           canWrite: true,
+          canComment: true,
         },
       ]);
     });
@@ -82,6 +85,7 @@ describe('Read-only "others" ref cache', () => {
           presence: { x: 2, y: 2 },
           isReadOnly: true,
           canWrite: false,
+          canComment: false,
         },
         {
           connectionId: 3,
@@ -89,6 +93,7 @@ describe('Read-only "others" ref cache', () => {
           presence: { x: 3, y: 3 },
           isReadOnly: false,
           canWrite: true,
+          canComment: true,
         },
       ]);
     });
@@ -107,6 +112,7 @@ describe('Read-only "others" ref cache', () => {
           //          ^ 🔑 (no explicit undefined here)
           isReadOnly: false,
           canWrite: true,
+          canComment: true,
         },
       ]);
     });
@@ -130,6 +136,7 @@ describe('Read-only "others" ref cache', () => {
           presence: { x: 2, y: 2 },
           isReadOnly: false,
           canWrite: true,
+          canComment: true,
         },
       ]);
 
@@ -141,6 +148,7 @@ describe('Read-only "others" ref cache', () => {
           presence: { x: 2, y: -2, z: -2 },
           isReadOnly: false,
           canWrite: true,
+          canComment: true,
         },
       ]);
 
@@ -152,6 +160,7 @@ describe('Read-only "others" ref cache', () => {
           presence: { x: 2, y: -2 },
           isReadOnly: false,
           canWrite: true,
+          canComment: true,
         },
       ]);
     });
@@ -167,6 +176,7 @@ describe('Read-only "others" ref cache', () => {
         presence: { x: 2, y: 2 },
         isReadOnly: false,
         canWrite: true,
+        canComment: true,
       });
       others.removeConnection(2);
 

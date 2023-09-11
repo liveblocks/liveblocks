@@ -21,13 +21,9 @@ export default function ColorPicker({ onChange }: Props) {
   );
 }
 
-function ColorButton({
-  onClick,
-  color,
-}: {
-  onClick: (color: Color) => void;
-  color: Color;
-}) {
+function ColorButton(
+  { onClick, color }: { onClick: (color: Color) => void; color: Color }
+) {
   return (
     <button
       className={styles.color_swatch_button}

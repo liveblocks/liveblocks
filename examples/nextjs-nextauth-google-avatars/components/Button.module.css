@@ -1,6 +1,6 @@
 .button {
   border-radius: 6px;
-  border: 2px solid #EBEAEA;
+  border: 2px solid #ebeaea;
   padding: 0 0.5rem;
   display: flex;
   align-items: center;
@@ -11,7 +11,6 @@
   margin: 0;
   outline: none;
   font-weight: 500;
-  
 }
 
 .button_square {
@@ -31,7 +30,7 @@
 
 .button_secondary {
   color: rgba(var(--color-foreground), 0.9);
-  background: #F4F4F4
+  background: #f4f4f4;
 }
 
 .button_secondary:hover,

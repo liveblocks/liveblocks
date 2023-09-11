@@ -36,7 +36,7 @@ type UserMeta = {
   // Accessible through `user.info`
   info: {
     name: string;
-    picture: string;
+    avatar: string;
   };
 };
 

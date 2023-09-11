@@ -104,7 +104,7 @@ function Sandbox() {
 
       <h2>Others</h2>
       <div id="others" style={{ whiteSpace: "pre" }}>
-        {JSON.stringify(others.toArray(), null, 2)}
+        {JSON.stringify(others, null, 2)}
       </div>
     </div>
   );

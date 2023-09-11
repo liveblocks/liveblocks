@@ -234,5 +234,12 @@
     "topics": ["tutorials", "webhooks", "databases"],
     "technologies": ["yjs", "nodejs"],
     "date": "2023-09-05"
+  },
+  {
+    "title": "Modifying Yjs document data with the REST API",
+    "path": "/modifying-yjs-document-data-with-the-rest-api",
+    "topics": ["rest-api", "data-fetching"],
+    "technologies": ["yjs", "nodejs"],
+    "date": "2023-09-05"
   }
 ]

@@ -1,6 +1,8 @@
 .goUp0 {
   opacity: 0;
-  animation: goUpAnimation0 2s, fadeOut 2s;
+  animation:
+    goUpAnimation0 2s,
+    fadeOut 2s;
 }
 
 @keyframes goUpAnimation0 {
@@ -15,7 +17,9 @@
 
 .goUp1 {
   opacity: 0;
-  animation: goUpAnimation1 2s, fadeOut 2s;
+  animation:
+    goUpAnimation1 2s,
+    fadeOut 2s;
 }
 
 @keyframes goUpAnimation1 {
@@ -30,7 +34,9 @@
 
 .goUp2 {
   opacity: 0;
-  animation: goUpAnimation2 2s, fadeOut 2s;
+  animation:
+    goUpAnimation2 2s,
+    fadeOut 2s;
 }
 
 @keyframes goUpAnimation2 {

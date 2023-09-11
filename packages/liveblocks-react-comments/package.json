@@ -1,0 +1,115 @@
+{
+  "name": "@liveblocks/react-comments",
+  "version": "1.3.1",
+  "description": "A set of React components to add real time comments a la Notion, Figma, Google Docs in your product.",
+  "license": "Apache-2.0",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.mts",
+        "default": "./dist/index.mjs"
+      },
+      "require": {
+        "types": "./dist/index.d.ts",
+        "module": "./dist/index.mjs",
+        "default": "./dist/index.js"
+      }
+    },
+    "./primitives": {
+      "import": {
+        "types": "./dist/primitives/index.d.mts",
+        "default": "./dist/primitives/index.mjs"
+      },
+      "require": {
+        "types": "./dist/primitives/index.d.ts",
+        "module": "./dist/primitives/index.mjs",
+        "default": "./dist/primitives/index.js"
+      }
+    },
+    "./styles.css": "./styles.css",
+    "./styles/dark/media-query.css": "./styles/dark/media-query.css",
+    "./styles/dark/attributes.css": "./styles/dark/attributes.css"
+  },
+  "files": [
+    "dist/**",
+    "**/*.css",
+    "**/*.css.map",
+    "README.md"
+  ],
+  "scripts": {
+    "dev": "npm run build --watch",
+    "build": "rollup --config rollup.config.ts --configPlugin @rollup/plugin-typescript",
+    "start": "npm run dev",
+    "format": "eslint --fix src/; stylelint --fix src/styles/; prettier --write src/",
+    "lint": "eslint src/; stylelint src/styles/",
+    "test": "jest --silent --verbose --color=always",
+    "test:watch": "jest --silent --verbose --color=always --watch"
+  },
+  "dependencies": {
+    "@floating-ui/react-dom": "^2.0.1",
+    "@liveblocks/client": "1.3.1",
+    "@liveblocks/core": "1.3.1",
+    "@liveblocks/react": "1.3.1",
+    "@radix-ui/react-dropdown-menu": "^2.0.5",
+    "@radix-ui/react-slot": "^1.0.2",
+    "@radix-ui/react-toggle": "^1.0.3",
+    "@radix-ui/react-tooltip": "^1.0.6",
+    "slate": "^0.94.1",
+    "slate-history": "^0.93.0",
+    "slate-react": "^0.98.1",
+    "use-sync-external-store": "^1.2.0"
+  },
+  "peerDependencies": {
+    "react": "^16.14.0 || ^17 || ^18"
+  },
+  "devDependencies": {
+    "@liveblocks/eslint-config": "*",
+    "@liveblocks/jest-config": "*",
+    "@rollup/plugin-typescript": "^11.1.2",
+    "@testing-library/jest-dom": "^5.16.5",
+    "@testing-library/react": "^13.1.1",
+    "@types/use-sync-external-store": "^0.0.3",
+    "browserslist": "^4.21.10",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "lightningcss": "1.21.3",
+    "msw": "^0.27.1",
+    "rollup": "^3.28.0",
+    "rollup-plugin-dts": "^5.3.1",
+    "rollup-plugin-esbuild": "^5.0.0",
+    "rollup-plugin-preserve-directives": "^0.2.0",
+    "sass": "^1.65.1",
+    "stylelint": "^15.10.2",
+    "stylelint-config-standard-scss": "^10.0.0",
+    "stylelint-order": "^6.0.3"
+  },
+  "sideEffects": false,
+  "bugs": {
+    "url": "https://github.com/liveblocks/liveblocks/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/liveblocks/liveblocks.git",
+    "directory": "packages/liveblocks-react-comments"
+  },
+  "homepage": "https://liveblocks.io",
+  "keywords": [
+    "react",
+    "comments",
+    "threads",
+    "liveblocks",
+    "real-time",
+    "toolkit",
+    "multiplayer",
+    "websockets",
+    "collaboration",
+    "collaborative",
+    "presence",
+    "crdts",
+    "synchronize",
+    "rooms",
+    "documents",
+    "conflict resolution"
+  ]
+}

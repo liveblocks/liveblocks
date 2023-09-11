@@ -1,4 +1,6 @@
 import type { AuthManager, AuthValue } from "./auth-manager";
+import type { CommentsApi } from "./comments";
+import { createCommentsApi } from "./comments";
 import type {
   Delegates,
   LegacyConnectionStatus,
@@ -28,14 +30,15 @@ import { isJsonArray, isJsonObject } from "./lib/Json";
 import { asPos } from "./lib/position";
 import type { Resolve } from "./lib/Resolve";
 import { compact, deepClone, tryParseJson } from "./lib/utils";
-import { canWriteStorage, TokenKind } from "./protocol/AuthToken";
-import type { BaseUserMeta } from "./protocol/BaseUserMeta";
+import { canComment, canWriteStorage, TokenKind } from "./protocol/AuthToken";
+import type { BaseUserInfo, BaseUserMeta } from "./protocol/BaseUserMeta";
 import type { ClientMsg } from "./protocol/ClientMsg";
 import { ClientMsgCode } from "./protocol/ClientMsg";
 import type { Op } from "./protocol/Op";
 import { isAckOp, OpCode } from "./protocol/Op";
 import type { IdTuple, SerializedCrdt } from "./protocol/SerializedCrdt";
 import type {
+  CommentsEventServerMsg,
   InitialDocumentStateServerMsg,
   RoomStateServerMsg,
   ServerMsg,
@@ -57,7 +60,7 @@ import type {
   IWebSocketMessageEvent,
 } from "./types/IWebSocket";
 import type { NodeMap } from "./types/NodeMap";
-import type { Others, OthersEvent } from "./types/Others";
+import type { OthersEvent } from "./types/Others";
 import type { User } from "./types/User";
 import { PKG_VERSION } from "./version";
 
@@ -93,7 +96,7 @@ type RoomEventCallbackMap<
   // since this API historically has taken _two_ callback arguments instead of
   // just one.
   others: (
-    others: Others<TPresence, TUserMeta>,
+    others: readonly User<TPresence, TUserMeta>[],
     event: OthersEvent<TPresence, TUserMeta>
   ) => void;
   error: Callback<Error>;
@@ -150,6 +153,11 @@ export interface History {
    * // room.history.canRedo() is false
    */
   canRedo: () => boolean;
+
+  /**
+   * Clears the undo and redo stacks. This operation cannot be undone ;)
+   */
+  clear: () => void;
 
   /**
    * All future modifications made on the Room will be merged together to create a single history item until resume is called.
@@ -256,7 +264,7 @@ type SubscribeFn<
   (
     type: "others",
     listener: (
-      others: Others<TPresence, TUserMeta>,
+      others: readonly User<TPresence, TUserMeta>[],
       event: OthersEvent<TPresence, TUserMeta>
     ) => void
   ): () => void;
@@ -412,7 +420,7 @@ export type Room<
   TStorage extends LsonObject,
   TUserMeta extends BaseUserMeta,
   TRoomEvent extends Json,
-> = {
+> = CommentsApi<any /* TODO: Remove this any by adding a proper thread metadata on the Room type */> & {
   /**
    * @internal
    * Private methods to directly control the underlying state machine for this
@@ -480,7 +488,7 @@ export type Room<
    * @example
    * const others = room.getOthers();
    */
-  getOthers(): Others<TPresence, TUserMeta>;
+  getOthers(): readonly User<TPresence, TUserMeta>[];
 
   /**
    * Updates the presence of the current user. Only pass the properties you want to update. No need to send the full presence.
@@ -563,7 +571,7 @@ export type Room<
     readonly customEvent: Observable<{ connectionId: number; event: TRoomEvent; }>; // prettier-ignore
     readonly self: Observable<User<TPresence, TUserMeta>>;
     readonly myPresence: Observable<TPresence>;
-    readonly others: Observable<{ others: Others<TPresence, TUserMeta>; event: OthersEvent<TPresence, TUserMeta>; }>; // prettier-ignore
+    readonly others: Observable<{ others: readonly User<TPresence, TUserMeta>[]; event: OthersEvent<TPresence, TUserMeta>; }>; // prettier-ignore
     readonly error: Observable<Error>;
     readonly storage: Observable<StorageUpdate[]>;
     readonly history: Observable<HistoryEvent>;
@@ -577,6 +585,8 @@ export type Room<
 
     readonly storageStatus: Observable<StorageStatus>;
     readonly ydoc: Observable<YDocUpdate>;
+
+    readonly comments: Observable<CommentsEventServerMsg>;
   };
 
   /**
@@ -686,7 +696,7 @@ type IdFactory = () => string;
 
 type StaticSessionInfo = {
   readonly userId?: string;
-  readonly userInfo?: Json;
+  readonly userInfo?: BaseUserInfo;
 };
 
 type DynamicSessionInfo = {
@@ -740,8 +750,8 @@ type RoomState<
   readonly nodes: Map<string, LiveNode>;
   root: LiveObject<TStorage> | undefined;
 
-  undoStack: HistoryOp<TPresence>[][];
-  redoStack: HistoryOp<TPresence>[][];
+  readonly undoStack: HistoryOp<TPresence>[][];
+  readonly redoStack: HistoryOp<TPresence>[][];
 
   /**
    * When history is paused, all operations will get queued up here. When
@@ -1080,7 +1090,7 @@ export function createRoom<
       } else {
         batchUpdates(() => {
           addToUndoStack(reverse, doNotBatchUpdates);
-          context.redoStack = [];
+          context.redoStack.length = 0;
           dispatchOps(ops);
           notify({ storageUpdates }, doNotBatchUpdates);
         });
@@ -1112,7 +1122,7 @@ export function createRoom<
     self: makeEventSource<User<TPresence, TUserMeta>>(),
     myPresence: makeEventSource<TPresence>(),
     others: makeEventSource<{
-      others: Others<TPresence, TUserMeta>;
+      others: readonly User<TPresence, TUserMeta>[];
       event: OthersEvent<TPresence, TUserMeta>;
     }>(),
     error: makeEventSource<Error>(),
@@ -1121,6 +1131,8 @@ export function createRoom<
     storageDidLoad: makeEventSource<void>(),
     storageStatus: makeEventSource<StorageStatus>(),
     ydoc: makeEventSource<YDocUpdate>(),
+
+    comments: makeEventSource<CommentsEventServerMsg>(),
   };
 
   function sendMessages(
@@ -1177,6 +1189,7 @@ export function createRoom<
           info: staticSession.userInfo,
           presence: myPresence,
           canWrite,
+          canComment: canComment(dynamicSession.scopes),
           isReadOnly: !canWrite, // Deprecated, kept for backward-compatibility
         };
       }
@@ -1814,6 +1827,15 @@ export function createRoom<
 
             break;
           }
+
+          case ServerMsgCode.THREAD_CREATED:
+          case ServerMsgCode.THREAD_METADATA_UPDATED:
+          case ServerMsgCode.COMMENT_CREATED:
+          case ServerMsgCode.COMMENT_EDITED:
+          case ServerMsgCode.COMMENT_DELETED: {
+            eventHub.comments.notify(message);
+            break;
+          }
         }
       }
 
@@ -2065,6 +2087,11 @@ export function createRoom<
     flushNowOrSoon();
   }
 
+  function clear() {
+    context.undoStack.length = 0;
+    context.redoStack.length = 0;
+  }
+
   function batch<T>(callback: () => T): T {
     if (context.activeBatch) {
       // If there already is an active batch, we don't have to handle this in
@@ -2100,7 +2127,7 @@ export function createRoom<
         if (currentBatch.ops.length > 0) {
           // Only clear the redo stack if something has changed during a batch
           // Clear the redo stack because batch is always called from a local operation
-          context.redoStack = [];
+          context.redoStack.length = 0;
         }
 
         if (currentBatch.ops.length > 0) {
@@ -2173,7 +2200,13 @@ export function createRoom<
     storageDidLoad: eventHub.storageDidLoad.observable,
     storageStatus: eventHub.storageStatus.observable,
     ydoc: eventHub.ydoc.observable,
+
+    comments: eventHub.comments.observable,
   };
+
+  const commentsApi = createCommentsApi(config.roomId, delegates.authenticate, {
+    serverEndpoint: "https://api.liveblocks.io/v2",
+  });
 
   return Object.defineProperty(
     {
@@ -2216,6 +2249,7 @@ export function createRoom<
         redo,
         canUndo,
         canRedo,
+        clear,
         pause: pauseHistory,
         resume: resumeHistory,
       },
@@ -2235,6 +2269,8 @@ export function createRoom<
       // Presence
       getPresence: () => context.myPresence.current,
       getOthers: () => context.others.current,
+
+      ...commentsApi,
     },
 
     // Explictly make the __internal field non-enumerable, to avoid aggressive
@@ -2255,7 +2291,10 @@ function makeClassicSubscribeFn<
   TUserMeta extends BaseUserMeta,
   TRoomEvent extends Json,
 >(
-  events: Room<TPresence, TStorage, TUserMeta, TRoomEvent>["events"]
+  events: Omit<
+    Room<TPresence, TStorage, TUserMeta, TRoomEvent>["events"],
+    "comments" // comments is an internal events so we omit it from the subscribe method
+  >
 ): SubscribeFn<TPresence, TStorage, TUserMeta, TRoomEvent> {
   // Set up the "subscribe" wrapper API
   function subscribeToLiveStructureDeeply<L extends LiveStructure>(
@@ -2316,7 +2355,7 @@ function makeClassicSubscribeFn<
           // NOTE: Others have a different callback structure, where the API
           // exposed on the outside takes _two_ callback arguments!
           const cb = callback as (
-            others: Others<TPresence, TUserMeta>,
+            others: readonly User<TPresence, TUserMeta>[],
             event: OthersEvent<TPresence, TUserMeta>
           ) => void;
           return events.others.subscribe(({ others, event }) =>

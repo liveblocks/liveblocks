@@ -34,7 +34,7 @@ onUnmounted(() => {
         v-for="{ presence, connectionId } in others.slice(0, 3)"
         v-bind:key="connectionId"
         v-bind:name="presence.name"
-        v-bind:picture="presence.picture"
+        v-bind:avatar="presence.avatar"
       />
 
       <div v-if="others.length > 3" class="more">+{{ others.length - 3 }}</div>
@@ -43,7 +43,7 @@ onUnmounted(() => {
         <Avatar
           v-if="currentUser"
           name="You"
-          v-bind:picture="currentUser.picture"
+          v-bind:avatar="currentUser.avatar"
         />
       </div>
     </div>
