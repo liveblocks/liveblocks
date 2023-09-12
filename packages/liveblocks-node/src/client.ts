@@ -232,7 +232,9 @@ export class Liveblocks {
     const { roomId, threadId } = params;
 
     const resp = await this.get(
-      `/v2/rooms/${encodeURIComponent(roomId)}/threads/${threadId}`
+      `/v2/rooms/${encodeURIComponent(roomId)}/threads/${encodeURIComponent(
+        threadId
+      )}`
     );
 
     const body = await (resp.json() as Promise<ThreadData>);
@@ -264,7 +266,9 @@ export class Liveblocks {
     const { roomId, threadId } = params;
 
     const resp = await this.get(
-      `/v2/rooms/${encodeURIComponent(roomId)}/threads/${threadId}/participants`
+      `/v2/rooms/${encodeURIComponent(roomId)}/threads/${encodeURIComponent(
+        threadId
+      )}/participants`
     );
 
     const body = await (resp.json() as Promise<ThreadParticipants>);
@@ -295,9 +299,9 @@ export class Liveblocks {
     const { roomId, threadId, commentId } = params;
 
     const resp = await this.get(
-      `/v2/rooms/${encodeURIComponent(
-        roomId
-      )}/threads/${threadId}/comments/${commentId}`
+      `/v2/rooms/${encodeURIComponent(roomId)}/threads/${encodeURIComponent(
+        threadId
+      )}/comments/${encodeURIComponent(commentId)}`
     );
 
     const body = await (resp.json() as Promise<CommentData>);

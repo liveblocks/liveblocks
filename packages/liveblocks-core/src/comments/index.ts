@@ -154,7 +154,7 @@ export function createCommentsApi<ThreadMetadata extends BaseMetadata>(
     threadId: string;
   }) {
     return fetchJson<ThreadData<ThreadMetadata>>(
-      `/threads/${threadId}/metadata`,
+      `/threads/${encodeURIComponent(threadId)}/metadata`,
       {
         method: "POST",
         headers: {
@@ -174,16 +174,19 @@ export function createCommentsApi<ThreadMetadata extends BaseMetadata>(
     commentId: string;
     body: CommentBody;
   }) {
-    return fetchJson<CommentData>(`/threads/${threadId}/comments`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        id: commentId,
-        body,
-      }),
-    });
+    return fetchJson<CommentData>(
+      `/threads/${encodeURIComponent(threadId)}/comments`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          id: commentId,
+          body,
+        }),
+      }
+    );
   }
 
   function editComment({
@@ -196,7 +199,9 @@ export function createCommentsApi<ThreadMetadata extends BaseMetadata>(
     body: CommentBody;
   }) {
     return fetchJson<CommentData>(
-      `/threads/${threadId}/comments/${commentId}`,
+      `/threads/${encodeURIComponent(threadId)}/comments/${encodeURIComponent(
+        commentId
+      )}`,
       {
         method: "POST",
         headers: {
@@ -217,9 +222,14 @@ export function createCommentsApi<ThreadMetadata extends BaseMetadata>(
     threadId: string;
     commentId: string;
   }) {
-    await fetchJson(`/threads/${threadId}/comments/${commentId}`, {
-      method: "DELETE",
-    });
+    await fetchJson(
+      `/threads/${encodeURIComponent(threadId)}/comments/${encodeURIComponent(
+        commentId
+      )}`,
+      {
+        method: "DELETE",
+      }
+    );
   }
 
   return {
