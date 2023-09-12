@@ -33,7 +33,7 @@ const server = setupServer(
           // Append a unique counter in the (unchecked) signature part of the
           // JWT token at the end, to make each subsequent request return
           // a unique value
-          exampleToken + requestCount++,
+          `${exampleToken}${requestCount++}`,
       })
     );
   }),
