@@ -4,6 +4,10 @@ import { setupServer } from "msw/node";
 import { createAuthManager } from "../auth-manager";
 import type { ParsedAuthToken } from "../protocol/AuthToken";
 
+const SECONDS = 1 * 1000;
+const MINUTES = 60 * SECONDS;
+const HOURS = 60 * MINUTES;
+
 describe("auth-manager - public api key", () => {
   test("should return public api key", async () => {
     const authManager = createAuthManager({ publicApiKey: "pk_123" });
@@ -46,6 +50,10 @@ describe("auth-manager - secret auth", () => {
       return res(
         ctx.json({ token: legacyTokens[requestCount++ % legacyTokens.length] })
       );
+    }),
+    rest.post("/mocked-api/legacy-auth-that-caches", (_req, res, ctx) => {
+      requestCount++;
+      return res(ctx.json({ token: legacyTokens[0] }));
     }),
     rest.post("/mocked-api/access-auth", (_req, res, ctx) => {
       requestCount++;
@@ -139,6 +147,39 @@ describe("auth-manager - secret auth", () => {
     expect(requestCount).toBe(2);
   });
 
+  test("should throw if legacy token is expired but the next fetch from the backend returns the same (expired) token", async () => {
+    const authManager = createAuthManager({
+      authEndpoint: "/mocked-api/legacy-auth-that-caches",
+    });
+
+    const authValueReq1 = (await authManager.getAuthValue(
+      "room:read",
+      "room1"
+    )) as { type: "secret"; token: ParsedAuthToken };
+
+    expect(authValueReq1.token.raw).toEqual(legacyTokens[0]);
+    expect(requestCount).toBe(1);
+
+    // Five hours later, this token should be expired. For ID and Access tokens, that mweans
+    jest.useFakeTimers();
+    jest.setSystemTime(Date.now() + 5 * HOURS);
+    try {
+      const $promise = expect(
+        authManager.getAuthValue("room:read", "room1")
+      ).rejects.toThrow(
+        "The same Liveblocks auth token was issued from the backend before. Caching Liveblocks tokens is not supported."
+      );
+
+      jest.useRealTimers();
+      await $promise;
+
+      // This made a new HTTP request
+      expect(requestCount).toBe(2);
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
   test("should use cache when access token has correct permissions", async () => {
     const authManager = createAuthManager({
       authEndpoint: "/mocked-api/access-auth",
@@ -159,6 +200,47 @@ describe("auth-manager - secret auth", () => {
     expect(requestCount).toBe(1);
   });
 
+  test("should throw if access token is expired but the next fetch from the backend returns the same (expired) token", async () => {
+    const authManager = createAuthManager({
+      authEndpoint: "/mocked-api/access-auth",
+    });
+
+    const authValueReq1 = (await authManager.getAuthValue(
+      "room:read",
+      "org1.room1"
+    )) as { type: "secret"; token: ParsedAuthToken };
+
+    const authValueReq2 = (await authManager.getAuthValue(
+      "room:read",
+      "org1.room2"
+    )) as { type: "secret"; token: ParsedAuthToken };
+
+    expect(authValueReq1.token.raw).toEqual(accessToken);
+    expect(authValueReq2.token.raw).toEqual(accessToken);
+    expect(requestCount).toBe(1);
+
+    // Five hours later, this token should be expired and no longer be served
+    // from cache...
+    jest.useFakeTimers();
+    jest.setSystemTime(Date.now() + 5 * HOURS);
+    try {
+      // Should throw because this mock will return the exact same (expired) token
+      const $promise = expect(
+        authManager.getAuthValue("room:read", "org1.room1")
+      ).rejects.toThrow(
+        "The same Liveblocks auth token was issued from the backend before. Caching Liveblocks tokens is not supported."
+      );
+
+      jest.useRealTimers();
+      await $promise;
+
+      // This made a new HTTP request
+      expect(requestCount).toBe(2);
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
   test("should use cache when ID token", async () => {
     const authManager = createAuthManager({
       authEndpoint: "/mocked-api/id-auth",
@@ -177,6 +259,47 @@ describe("auth-manager - secret auth", () => {
     expect(authValueReq1.token.raw).toEqual(idToken);
     expect(authValueReq2.token.raw).toEqual(idToken);
     expect(requestCount).toBe(1);
+  });
+
+  test("should throw if ID token is expired but the next fetch from the backend returns the same (expired) token", async () => {
+    const authManager = createAuthManager({
+      authEndpoint: "/mocked-api/id-auth",
+    });
+
+    const authValueReq1 = (await authManager.getAuthValue(
+      "room:read",
+      "room1"
+    )) as { type: "secret"; token: ParsedAuthToken };
+
+    const authValueReq2 = (await authManager.getAuthValue(
+      "room:read",
+      "room2"
+    )) as { type: "secret"; token: ParsedAuthToken };
+
+    expect(authValueReq1.token.raw).toEqual(idToken);
+    expect(authValueReq2.token.raw).toEqual(idToken);
+    expect(requestCount).toBe(1);
+
+    // Five hours later, this token should be expired and no longer be served
+    // from cache...
+    jest.useFakeTimers();
+    jest.setSystemTime(Date.now() + 5 * HOURS);
+    try {
+      // Should throw because this mock will return the exact same (expired) token
+      const $promise = expect(
+        authManager.getAuthValue("room:read", "room1")
+      ).rejects.toThrow(
+        "The same Liveblocks auth token was issued from the backend before. Caching Liveblocks tokens is not supported."
+      );
+
+      jest.useRealTimers();
+      await $promise;
+
+      // This made a new HTTP request
+      expect(requestCount).toBe(2);
+    } finally {
+      jest.useRealTimers();
+    }
   });
 
   test.each([{ notAToken: "" }, undefined, null, ""])(
