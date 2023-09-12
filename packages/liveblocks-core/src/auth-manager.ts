@@ -38,6 +38,8 @@ export function createAuthManager(
 ): AuthManager {
   const authentication = prepareAuthentication(authOptions);
 
+  const seenTokens: Set<string> = new Set();
+
   const tokens: ParsedAuthToken[] = [];
   const expiryTimes: number[] = []; // Supposed to always contain the same number of elements as `tokens`
 
@@ -115,7 +117,15 @@ export function createAuthManager(
       const response = await fetchAuthEndpoint(fetcher, authentication.url, {
         room: roomId,
       });
-      return parseAuthToken(response.token);
+      const parsed = parseAuthToken(response.token);
+
+      if (seenTokens.has(parsed.raw)) {
+        throw new Error(
+          "The same Liveblocks auth token was issued from the backend before. Caching Liveblocks tokens is not supported."
+        );
+      }
+
+      return parsed;
     }
 
     if (authentication.type === "custom") {
@@ -179,6 +189,7 @@ export function createAuthManager(
 
       // Legacy tokens should not get cached
       if (token.parsed.k !== TokenKind.SECRET_LEGACY) {
+        seenTokens.add(token.raw);
         tokens.push(token);
         expiryTimes.push(expiresAt);
       }
