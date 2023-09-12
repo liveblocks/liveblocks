@@ -217,7 +217,7 @@ Leaves a room.
 
 ### Client.getRoom
 
-Gets a room by id. Returns `null` if [`client.enter`][] has not been called
+Gets a room by its ID. Returns `null` if [`client.enter`][] has not been called
 previously.
 
 ```ts
@@ -262,7 +262,7 @@ room.history.undo();
 
 ### Room.getOthers
 
-Gets all the other users in the Room.
+Gets all the other `User`s in the Room.
 
 ```ts
 const others = room.getOthers();
@@ -304,7 +304,7 @@ room.subscribe("event", ({ event }) => {
 
 ### Room.getSelf
 
-Gets the current user. Returns `null` if it is not yet connected to the room.
+Gets the current `User`. Returns `null` if it is not yet connected to the room.
 
 ```ts
 const { connectionId, presence, id, info, isReadOnly } = room.getSelf();
@@ -438,6 +438,7 @@ const unsubscribe = room.subscribe("others", (others, event) => {
 
   if (event.type === "reset") {
     // A disconnection has occurred and others has reset
+  }
 });
 ```
 
@@ -1318,7 +1319,7 @@ list.toImmutable();
 [`livelist`]: /docs/api-reference/liveblocks-client#LiveList
 [`livemap`]: /docs/api-reference/liveblocks-client#LiveMap
 [`liveobject`]: /docs/api-reference/liveblocks-client#LiveObject
-[`lostConnectionTimeout`]:
+[`lostconnectiontimeout`]:
   /docs/api-reference/liveblocks-client#createClientLostConnectionTimeout
 [`toimmutable`]: /docs/api-reference/liveblocks-client#LiveObject.toImmutable
 [`node-fetch`]: https://npmjs.com/package/node-fetch
