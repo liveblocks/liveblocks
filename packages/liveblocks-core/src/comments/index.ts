@@ -89,7 +89,9 @@ export function createCommentsApi<ThreadMetadata extends BaseMetadata>(
     // TODO: Use the right scope
     const authValue = await getAuthValue();
 
-    const url = `${serverEndpoint}/c/rooms/${roomId}${endpoint}`;
+    const url = `${serverEndpoint}/c/rooms/${encodeURIComponent(
+      roomId
+    )}${endpoint}`;
 
     return await fetch(url, {
       ...options,
