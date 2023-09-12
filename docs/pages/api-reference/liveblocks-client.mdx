@@ -376,9 +376,13 @@ const unsubscribe = room.subscribe(
 
 ### Room.subscribe("event") [#Room.subscribe.event]
 
-Subscribe to events broadcasted by [`Room.broadcastEvent`][].
+Subscribe to events broadcast by [`Room.broadcastEvent`][].
 
 Takes a callback that is called when a user calls [`Room.broadcastEvent`][].
+Provides the `event` along with the `connectionId` of the user that sent the
+message. If an event was sent from the
+[Broadcast to a room](/docs/api-reference/rest-api-endpoints#post-broadcast-event)
+REST API, `connectionId` will be `-1`.
 
 Returns an unsubscribe function.
 
@@ -673,6 +677,19 @@ room.history.undo();
 // room.history.canRedo() is true
 room.history.redo();
 // room.history.canRedo() is false
+```
+
+### Room.history.clear
+
+Clears the undo and redo stacks for the current client. Explicitly clearing
+history resets the ability to undo beyond the current document state. Other
+clients’ histories are unaffected.
+
+```ts
+room.updatePresence({ selectedId: "xx" }, { addToHistory: true });
+// room.history.canUndo() is true
+room.history.clear();
+// room.history.canUndo() is false
 ```
 
 ### Room.history.pause

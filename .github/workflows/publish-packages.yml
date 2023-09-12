@@ -65,7 +65,7 @@ jobs:
         uses: actions/setup-node@v3.6.0
         with:
           registry-url: "https://registry.npmjs.org"
-          node-version: 16.17.1
+          node-version: 18
 
       - name: Setup git config
         run: |

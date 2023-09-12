@@ -49,5 +49,7 @@ function customRenderHook<Result, Props>(
   return renderHook(render, { wrapper: AllTheProviders, ...options });
 }
 
+export const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
 export * from "@testing-library/react";
 export { customRender as render, customRenderHook as renderHook };

@@ -17,14 +17,9 @@ type Props = {
   canRedo: boolean;
 };
 
-export default function ToolsBar({
-  canvasState,
-  setCanvasState,
-  undo,
-  redo,
-  canUndo,
-  canRedo,
-}: Props) {
+export default function ToolsBar(
+  { canvasState, setCanvasState, undo, redo, canUndo, canRedo }: Props
+) {
   return (
     <div className={styles.tools_panel_container}>
       <div className={styles.tools_panel}>

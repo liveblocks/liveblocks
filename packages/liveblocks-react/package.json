@@ -1,6 +1,6 @@
 {
   "name": "@liveblocks/react",
-  "version": "1.2.4",
+  "version": "1.3.1",
   "description": "A set of React hooks and providers to use Liveblocks declaratively. Liveblocks is the all-in-one toolkit to build collaborative products like Figma, Notion, and more.",
   "license": "Apache-2.0",
   "main": "./dist/index.js",
@@ -27,15 +27,15 @@
     "build": "tsup",
     "start": "tsup --watch",
     "format": "(eslint --fix src/ || true) && prettier --write src/",
-    "lint": "(eslint src/ || true) && npm run check:exports",
+    "lint": "eslint src/",
     "lint:package": "publint --strict && attw --pack",
-    "check:exports": "tsc scripts/check-factory-exports.ts && node scripts/check-factory-exports.js",
     "test": "jest --silent --verbose --color=always",
     "test:watch": "jest --silent --verbose --color=always --watch"
   },
   "dependencies": {
-    "@liveblocks/client": "1.2.4",
-    "@liveblocks/core": "1.2.4",
+    "@liveblocks/client": "1.3.1",
+    "@liveblocks/core": "1.3.1",
+    "nanoid": "^3",
     "use-sync-external-store": "^1.2.0"
   },
   "peerDependencies": {
@@ -48,8 +48,7 @@
     "@testing-library/react": "^13.1.1",
     "@types/use-sync-external-store": "^0.0.3",
     "eslint-plugin-react-hooks": "^4.6.0",
-    "msw": "^0.27.1",
-    "react-error-boundary": "^3.1.1"
+    "msw": "1.2.3"
   },
   "sideEffects": false,
   "bugs": {

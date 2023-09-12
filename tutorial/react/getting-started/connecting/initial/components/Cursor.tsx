@@ -1,10 +1,10 @@
 type CursorProps = {
   x: number;
   y: number;
-  picture: string;
+  avatar: string;
 };
 
-export default function Cursor({ x, y, picture }: CursorProps) {
+export default function Cursor({ x, y, avatar }: CursorProps) {
   return (
     <div className="cursor" style={{ transform: `translate(${x}px, ${y}px` }}>
       <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
@@ -19,7 +19,7 @@ export default function Cursor({ x, y, picture }: CursorProps) {
             width="100"
             height="100"
           >
-            <image href={picture} x="0" y="0" width="100" height="100" />
+            <image href={avatar} x="0" y="0" width="100" height="100" />
           </pattern>
         </defs>
         <path

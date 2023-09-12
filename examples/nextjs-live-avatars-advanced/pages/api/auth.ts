@@ -17,7 +17,7 @@ export default async function auth(req: NextApiRequest, res: NextApiResponse) {
       color: COLORS[Math.floor(Math.random() * COLORS.length)],
 
       // Uncomment below and refresh to see with avatar graphics
-      // picture: `https://liveblocks.io/avatars/avatar-${Math.floor(Math.random() * 30)}.png`,
+      // avatar: `https://liveblocks.io/avatars/avatar-${Math.floor(Math.random() * 30)}.png`,
     },
   });
 

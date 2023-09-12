@@ -29,6 +29,10 @@
       "name": "Code editors"
     },
     {
+      "id": "rest-api",
+      "name": "REST API"
+    },
+    {
       "id": "webhooks",
       "name": "Webhooks"
     },

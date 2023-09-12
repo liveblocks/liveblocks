@@ -8,7 +8,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [16.x]
+        node-version: [18.x]
         pkg:
           [
             "@liveblocks/core",
@@ -37,10 +37,10 @@ jobs:
         id: turbo-cache
         uses: actions/cache@v3
         with:
-          key: turbo-cache-${{ matrix.node-version }}-${{ matrix.pkg }}-bust1
+          key: turbo-cache-${{ matrix.node-version }}-${{ matrix.pkg }}-bust3
           path: node_modules/.cache/turbo
           restore-keys:
-            turbo-cache-${{ matrix.node-version }}-${{ matrix.pkg }}-bust1
+            turbo-cache-${{ matrix.node-version }}-${{ matrix.pkg }}-bust3
 
       - name: Build
         run: npm run build -- --filter ${{ matrix.pkg }}
@@ -65,7 +65,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [16.x]
+        node-version: [18.x]
 
     timeout-minutes: 60
 
@@ -107,7 +107,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [16.x]
+        node-version: [18.x]
 
     timeout-minutes: 60
 
@@ -137,7 +137,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [16.x]
+        node-version: [18.x]
         pkg: ["@liveblocks/schema", "@liveblocks/infer-schema"]
 
     steps:
@@ -158,10 +158,10 @@ jobs:
         id: turbo-cache
         uses: actions/cache@v3
         with:
-          key: turbo-cache-${{ matrix.node-version }}-${{ matrix.pkg }}-bust1
+          key: turbo-cache-${{ matrix.node-version }}-${{ matrix.pkg }}-bust3
           path: node_modules/.cache/turbo
           restore-keys:
-            turbo-cache-${{ matrix.node-version }}-${{ matrix.pkg }}-bust1
+            turbo-cache-${{ matrix.node-version }}-${{ matrix.pkg }}-bust3
 
       - name: Build
         run: npm run build -- --filter ${{ matrix.pkg }}

@@ -17,7 +17,7 @@ import { ServerMsgCode } from "../protocol/ServerMsg";
 import type { RoomConfig, RoomDelegates } from "../room";
 import { createRoom } from "../room";
 import { WebsocketCloseCodes } from "../types/IWebSocket";
-import type { Others } from "../types/Others";
+import type { User } from "../types/User";
 import {
   AUTH_SUCCESS,
   defineBehavior,
@@ -630,6 +630,7 @@ describe("room", () => {
         presence: { x: 2 },
         isReadOnly: false,
         canWrite: true,
+        canComment: true,
       },
     ]);
   });
@@ -672,6 +673,7 @@ describe("room", () => {
         presence: { x: 2 },
         isReadOnly: true,
         canWrite: false,
+        canComment: false,
       },
     ]);
   });
@@ -715,6 +717,7 @@ describe("room", () => {
         presence: { x: 2 },
         isReadOnly: false,
         canWrite: true,
+        canComment: true,
       },
     ]);
 
@@ -734,6 +737,7 @@ describe("room", () => {
         presence: { x: 2 },
         isReadOnly: false,
         canWrite: true,
+        canComment: true,
       },
     ]);
 
@@ -802,12 +806,14 @@ describe("room", () => {
         presence: { x: 2 },
         isReadOnly: false,
         canWrite: true,
+        canComment: true,
       },
       {
         connectionId: 2,
         presence: { x: 2 },
         isReadOnly: false,
         canWrite: true,
+        canComment: true,
       },
     ]);
 
@@ -835,6 +841,7 @@ describe("room", () => {
         presence: { x: 2 },
         isReadOnly: false,
         canWrite: true,
+        canComment: true,
       },
     ]);
   });
@@ -1186,16 +1193,41 @@ describe("room", () => {
       a: number;
     }>([createSerializedObject("0:0", { a: 1 })], 1);
 
-    expect(room.history.canUndo()).toBeFalsy();
-    expect(room.history.canRedo()).toBeFalsy();
+    expect(room.history.canUndo()).toBe(false);
+    expect(room.history.canRedo()).toBe(false);
 
     storage.root.set("a", 2);
 
-    expect(room.history.canUndo()).toBeTruthy();
+    expect(room.history.canUndo()).toBe(true);
 
     room.history.undo();
 
-    expect(room.history.canRedo()).toBeTruthy();
+    expect(room.history.canRedo()).toBe(true);
+  });
+
+  test("clearing undo/redo stack", async () => {
+    const { room, storage } = await prepareStorageTest<{
+      a: number;
+    }>([createSerializedObject("0:0", { a: 1 })], 1);
+
+    expect(room.history.canUndo()).toBe(false);
+    expect(room.history.canRedo()).toBe(false);
+
+    storage.root.set("a", 2);
+    storage.root.set("a", 3);
+    storage.root.set("a", 4);
+    room.history.undo();
+
+    expect(room.history.canUndo()).toBe(true);
+    expect(room.history.canRedo()).toBe(true);
+
+    room.history.clear();
+    expect(room.history.canUndo()).toBe(false);
+    expect(room.history.canRedo()).toBe(false);
+
+    room.history.undo(); // won't do anything now
+
+    expect(storage.root.toObject()).toEqual({ a: 3 });
   });
 
   describe("subscription", () => {
@@ -1325,7 +1357,7 @@ describe("room", () => {
 
       const items = storage.root.get("items");
 
-      let refOthers: Others<P, M> | undefined;
+      let refOthers: readonly User<P, M>[] | undefined;
       refRoom.events.others.subscribe((ev) => (refOthers = ev.others));
 
       room.batch(() => {
@@ -1345,6 +1377,7 @@ describe("room", () => {
           connectionId: 1,
           isReadOnly: false,
           canWrite: true,
+          canComment: true,
           presence: { x: 1 },
         },
       ]);
@@ -1453,7 +1486,7 @@ describe("room", () => {
       );
       room.connect();
 
-      let others: Others<P, never> | undefined;
+      let others: readonly User<P, never>[] | undefined;
 
       const unsubscribe = room.events.others.subscribe(
         (ev) => (others = ev.others)
@@ -1495,6 +1528,7 @@ describe("room", () => {
           connectionId: 1,
           isReadOnly: false,
           canWrite: true,
+          canComment: true,
           presence: { x: 2 },
         },
       ]);
@@ -1697,6 +1731,7 @@ describe("room", () => {
           presence: { x: 1 },
           isReadOnly: false,
           canWrite: true,
+          canComment: true,
         }, // old user is not cleaned directly
         {
           connectionId: 2,
@@ -1705,6 +1740,7 @@ describe("room", () => {
           presence: { x: 1 },
           isReadOnly: false,
           canWrite: true,
+          canComment: true,
         },
       ]);
     });
@@ -2268,7 +2304,7 @@ describe("room", () => {
 
       room.connect();
 
-      let others: Others<P, M> | undefined;
+      let others: readonly User<P, M>[] | undefined;
 
       room.events.others.subscribe((ev) => (others = ev.others));
 
@@ -2294,6 +2330,7 @@ describe("room", () => {
           info: undefined,
           isReadOnly: false,
           canWrite: true,
+          canComment: true,
           presence: {
             x: 2,
           },

@@ -1,6 +1,6 @@
 <script lang="ts" setup>
-const { picture, name } = defineProps<{
-  picture: string;
+const { avatar, name } = defineProps<{
+  avatar: string;
   name: string;
 }>();
 
@@ -9,7 +9,7 @@ const IMAGE_SIZE = 48;
 
 <template>
   <div :data-tooltip="name">
-    <img :alt="name" :height="IMAGE_SIZE" :src="picture" :width="IMAGE_SIZE">
+    <img :alt="name" :height="IMAGE_SIZE" :src="avatar" :width="IMAGE_SIZE" />
   </div>
 </template>
 
