@@ -24,7 +24,9 @@ import {
 import type { ComposerSubmitComment } from "../primitives";
 import * as CommentPrimitive from "../primitives/Comment";
 import type {
+  CommentLinkProps,
   CommentMentionProps,
+  CommentRenderLinkProps,
   CommentRenderMentionProps,
 } from "../primitives/Comment/types";
 import * as ComposerPrimitive from "../primitives/Composer";
@@ -41,6 +43,7 @@ import {
   TooltipShortcutKey,
 } from "./internal/Tooltip";
 import { User } from "./internal/User";
+import { toAbsoluteURL } from "../slate/plugins/auto-links";
 
 export interface CommentProps extends ComponentPropsWithoutRef<"div"> {
   /**
@@ -116,6 +119,26 @@ function CommentMention({
       {MENTION_CHARACTER}
       <User userId={userId} />
     </CommentPrimitive.Mention>
+  );
+}
+
+function CommentLink({
+  url,
+  className,
+  ...props
+}: CommentRenderLinkProps & CommentLinkProps) {
+  const href = toAbsoluteURL(url);
+
+  return (
+    <CommentPrimitive.Link
+      className={classNames("lb-comment-link", className)}
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer nofollow"
+      {...props}
+    >
+      {url}
+    </CommentPrimitive.Link>
   );
 }
 
@@ -357,6 +380,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
                   onClick={(event) => onMentionClick?.(userId, event)}
                 />
               )}
+              renderLink={({ url }) => <CommentLink url={url} />}
             />
           ) : (
             <div className="lb-comment-body">

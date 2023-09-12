@@ -23,7 +23,7 @@ export type ComposerBodyParagraph = {
 
 export type ComposerBodyAutoLink = {
   type: "auto-link";
-  href: string;
+  url: string;
   children: ComposerBodyText[];
 };
 

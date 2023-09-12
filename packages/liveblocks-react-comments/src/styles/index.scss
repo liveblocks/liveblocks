@@ -504,6 +504,12 @@
     font-weight: 500;
   }
 
+  .lb-comment-link,
+  .lb-composer-link {
+    color: var(--lb-accent);
+    text-decoration: underline;
+  }
+
   .lb-comment-mention[data-self],
   .lb-composer-mention {
     padding: 0.1em 0.2em;

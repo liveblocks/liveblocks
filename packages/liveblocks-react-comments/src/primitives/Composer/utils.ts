@@ -1,11 +1,21 @@
 import type { Placement } from "@floating-ui/react-dom";
-import type { CommentBody, CommentBodyMention } from "@liveblocks/core";
+import type {
+  CommentBody,
+  CommentBodyLink,
+  CommentBodyMention,
+} from "@liveblocks/core";
 import { Text as SlateText } from "slate";
 
 import { isComposerBodyMention } from "../../slate/plugins/mentions";
-import type { ComposerBody, ComposerBodyMention, Direction } from "../../types";
-import { isCommentBodyMention } from "../Comment/utils";
+import type {
+  ComposerBody,
+  ComposerBodyAutoLink,
+  ComposerBodyMention,
+  Direction,
+} from "../../types";
+import { isCommentBodyLink, isCommentBodyMention } from "../Comment/utils";
 import type { SuggestionsPosition } from "./types";
+import { isComposerBodyAutoLink } from "../../slate/plugins/auto-links";
 
 export function composerBodyMentionToCommentBodyMention(
   mention: ComposerBodyMention
@@ -16,6 +26,15 @@ export function composerBodyMentionToCommentBodyMention(
   };
 }
 
+export function composerBodyAutoLinkToCommentBodyLink(
+  link: ComposerBodyAutoLink
+): any {
+  return {
+    type: "link",
+    url: link.url,
+  };
+}
+
 export function commentBodyMentionToComposerBodyMention(
   mention: CommentBodyMention
 ): ComposerBodyMention {
@@ -23,6 +42,20 @@ export function commentBodyMentionToComposerBodyMention(
     type: "mention",
     id: mention.id,
     children: [{ text: "" }],
+  };
+}
+
+export function commentBodyLinkToComposerBodyLink(
+  link: CommentBodyLink
+): ComposerBodyAutoLink {
+  return {
+    type: "auto-link",
+    url: link.url,
+    children: [
+      {
+        text: link.url,
+      },
+    ],
   };
 }
 
@@ -40,6 +73,10 @@ export function composerBodyToCommentBody(body: ComposerBody): CommentBody {
           return composerBodyMentionToCommentBodyMention(inline);
         }
 
+        if (isComposerBodyAutoLink(inline)) {
+          return composerBodyAutoLinkToCommentBodyLink(inline);
+        }
+
         return inline;
       }),
     })),
@@ -52,6 +89,10 @@ export function commentBodyToComposerBody(body: CommentBody): ComposerBody {
     children: block.children.map((inline) => {
       if (isCommentBodyMention(inline)) {
         return commentBodyMentionToComposerBodyMention(inline);
+      }
+
+      if (isCommentBodyLink(inline)) {
+        return commentBodyLinkToComposerBodyLink(inline);
       }
 
       return inline;

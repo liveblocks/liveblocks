@@ -189,6 +189,7 @@ export type {
   CommentBody,
   CommentBodyElement,
   CommentBodyMention,
+  CommentBodyLink,
   CommentBodyParagraph,
 } from "./comments/types/CommentBody";
 export type { CommentData } from "./comments/types/CommentData";

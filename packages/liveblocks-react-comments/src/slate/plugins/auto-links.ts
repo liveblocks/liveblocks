@@ -101,7 +101,9 @@ export function isComposerBodyAutoLink(
 const URL_REGEX =
   /((https?:\/\/(www\.)?)|(www\.))[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9().@:%_+~#?&//=]*)/;
 
-const PUNCTUATION_OR_SPACE = /[.,;\s]/;
+const PUNCTUATION_OR_SPACE = /[.,;!?\s]/;
+
+const PERIOD_OR_QUESTION_MARK_FOLLOWED_BY_ALPHANUMERIC = /^[.?][a-zA-Z0-9]+/;
 
 /**
  * Helper function to check if a character is a separator (punctuation or space)
@@ -131,12 +133,15 @@ function startsWithSeparator(textContent: string): boolean {
 }
 
 /**
- * Helper function to check if a text content ends with a period
+ * Helper function to check if a text content ends with a period or question mark
  * @param textContent The text content to check
  * @returns Whether the text content ends with a period or not
  */
-function endsWithPeriod(textContent: string): boolean {
-  return textContent[textContent.length - 1] === ".";
+function endsWithPeriodOrQuestionMark(textContent: string): boolean {
+  return (
+    textContent[textContent.length - 1] === "." ||
+    textContent[textContent.length - 1] === "?"
+  );
 }
 
 /**
@@ -217,17 +222,17 @@ const handleLinkEdit = (
   }
 
   // Step 3: Ensure that if the text content of the Link node ends with a period, we unwrap the Link node and wrap the text before the period in a new Link node
-  if (endsWithPeriod(text)) {
+  if (endsWithPeriodOrQuestionMark(text)) {
     Transforms.unwrapNodes(editor, { at: path });
 
     const textBeforePeriod = text.slice(0, text.length - 1);
 
     // Remove the last character from the link text and wrap the remaining text in a new link node
-    Transforms.wrapNodes(
+    Transforms.wrapNodes<ComposerBodyAutoLink>(
       editor,
       {
         type: "auto-link",
-        href: textBeforePeriod,
+        url: textBeforePeriod,
         children: [],
       },
       {
@@ -247,9 +252,9 @@ const handleLinkEdit = (
     return;
   }
 
-  // Step 5: Ensure that the href attribute of the Link node is identical to its text content
-  if (node.href !== text) {
-    Transforms.setNodes(editor, { href: match[0] }, { at: path });
+  // Step 5: Ensure that the url attribute of the Link node is identical to its text content
+  if (node.url !== text) {
+    Transforms.setNodes(editor, { url: match[0] }, { at: path });
     return;
   }
 };
@@ -271,7 +276,7 @@ const handleLinkCreate = (editor: Editor, entry: NodeEntry<Text>) => {
     editor,
     {
       type: "auto-link",
-      href: match[0],
+      url: match[0],
       children: [],
     },
     {
@@ -292,7 +297,7 @@ const handleNeighbours = (editor: Editor, entry: NodeEntry<Text>) => {
   const previousSibling = Editor.previous(editor, { at: path });
 
   if (previousSibling && isComposerBodyAutoLink(previousSibling[0])) {
-    if (/^\.[a-zA-Z0-9]+/.test(text)) {
+    if (PERIOD_OR_QUESTION_MARK_FOLLOWED_BY_ALPHANUMERIC.test(text)) {
       Transforms.unwrapNodes(editor, { at: previousSibling[1] });
       Transforms.mergeNodes(editor, { at: path });
       return;
@@ -314,3 +319,14 @@ const handleNeighbours = (editor: Editor, entry: NodeEntry<Text>) => {
     return;
   }
 };
+
+export function toAbsoluteURL(url: string): string | undefined {
+  // Check if the URL already contains a scheme
+  if (url.startsWith("http://") || url.startsWith("https://")) {
+    return url;
+  } else if (url.startsWith("www.")) {
+    // If the URL starts with "www.", prepend "https://"
+    return "https://" + url;
+  }
+  return;
+}

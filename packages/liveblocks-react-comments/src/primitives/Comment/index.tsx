@@ -6,11 +6,12 @@ import { MENTION_CHARACTER } from "../../slate/plugins/mentions";
 import type {
   CommentBodyProps,
   CommentMentionProps,
+  CommentRenderLinkProps,
   CommentRenderMentionProps,
 } from "./types";
-import { isCommentBodyMention } from "./utils";
-import { isComposerBodyAutoLink } from "../../slate/plugins/auto-links";
+import { isCommentBodyLink, isCommentBodyMention } from "./utils";
 import type { ComponentPropsWithSlot } from "../../types";
+import { toAbsoluteURL } from "../../slate/plugins/auto-links";
 
 const COMMENT_MENTION_NAME = "CommentMention";
 const COMMENT_BODY_NAME = "CommentBody";
@@ -46,7 +47,27 @@ const CommentMention = forwardRef<HTMLSpanElement, CommentMentionProps>(
   }
 );
 
-const AutoLink = forwardRef<HTMLAnchorElement, ComponentPropsWithSlot<"a">>(
+/**
+ * Displays mentions within `Comment.Body`.
+ *
+ * @example
+ * <Comment.Body
+ *   body={comment.body}
+ *   renderLink={({ url }) => <Comment.Link></Comment.Link>}
+ * />
+ */
+
+function CommentDefaultRenderLink({ url }: CommentRenderLinkProps) {
+  const href = toAbsoluteURL(url);
+
+  return (
+    <CommentLink href={href} target="_blank" rel="noopener noreferrer nofollow">
+      {url}
+    </CommentLink>
+  );
+}
+
+const CommentLink = forwardRef<HTMLAnchorElement, ComponentPropsWithSlot<"a">>(
   ({ children, asChild, ...props }, forwardedRef) => {
     const Component = asChild ? Slot : "a";
 
@@ -69,6 +90,7 @@ const CommentBody = forwardRef<HTMLDivElement, CommentBodyProps>(
     {
       body,
       renderMention: Mention = CommentDefaultRenderMention,
+      renderLink: Link = CommentDefaultRenderLink,
       asChild,
       ...props
     },
@@ -94,17 +116,8 @@ const CommentBody = forwardRef<HTMLDivElement, CommentBodyProps>(
                       ) : null;
                     }
 
-                    if (isComposerBodyAutoLink(inline)) {
-                      return (
-                        <AutoLink
-                          href={toAbsoluteURL(inline.href)}
-                          target="_blank"
-                          rel="noopener noreferrer nofollow"
-                          key={index}
-                        >
-                          {inline.href}
-                        </AutoLink>
-                      );
+                    if (isCommentBodyLink(inline)) {
+                      return <Link url={inline.url} key={index} />;
                     }
 
                     // <code><s><em><strong>text</strong></s></em></code>
@@ -144,16 +157,5 @@ if (process.env.NODE_ENV !== "production") {
   CommentMention.displayName = COMMENT_MENTION_NAME;
 }
 
-function toAbsoluteURL(url: string): string | undefined {
-  // Check if the URL already contains a scheme
-  if (url.startsWith("http://") || url.startsWith("https://")) {
-    return url;
-  } else if (url.startsWith("www.")) {
-    // If the URL starts with "www.", prepend "https://"
-    return "https://" + url;
-  }
-  return;
-}
-
 // NOTE: Every export from this file will be available publicly as Comment.*
-export { CommentBody as Body, CommentMention as Mention };
+export { CommentBody as Body, CommentMention as Mention, CommentLink as Link };

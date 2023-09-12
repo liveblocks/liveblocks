@@ -12,6 +12,16 @@ export type CommentRenderMentionProps = {
   userId: string;
 };
 
+export type CommentLinkProps = ComponentPropsWithSlot<"a">;
+
+export type CommentRenderLinkProps = {
+  /**
+   * The link's URL.
+   * @example "https://example.com", "www.example.com", etc.
+   */
+  url: string;
+};
+
 export interface CommentBodyProps
   extends Omit<ComponentPropsWithSlot<"div">, "children"> {
   /**
@@ -24,4 +34,9 @@ export interface CommentBodyProps
    * The component used to render mentions.
    */
   renderMention?: ComponentType<CommentRenderMentionProps>;
+
+  /**
+   * The component used to render links.
+   */
+  renderLink?: ComponentType<CommentRenderLinkProps>;
 }

@@ -18,6 +18,7 @@ import * as ComposerPrimitive from "../primitives/Composer";
 import { useComposer } from "../primitives/Composer/contexts";
 import type {
   ComposerEditorProps,
+  ComposerRenderLinkProps,
   ComposerRenderMentionProps,
   ComposerRenderMentionSuggestionsProps,
   ComposerSubmitComment,
@@ -34,6 +35,7 @@ import {
   TooltipShortcutKey,
 } from "./internal/Tooltip";
 import { User } from "./internal/User";
+import { toAbsoluteURL } from "../slate/plugins/auto-links";
 
 interface EditorActionProps extends ComponentPropsWithoutRef<"button"> {
   label: string;
@@ -203,6 +205,21 @@ function ComposerMentionSuggestions({
   ) : null;
 }
 
+function ComposerLink({ url, children }: ComposerRenderLinkProps) {
+  const href = toAbsoluteURL(url);
+
+  return (
+    <ComposerPrimitive.Link
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer nofollow"
+      className="lb-composer-link"
+    >
+      {children}
+    </ComposerPrimitive.Link>
+  );
+}
+
 const ComposerWithContext = forwardRef<
   HTMLFormElement,
   Omit<ComposerProps, "threadId" | "commentId" | "onComposerSubmit">
@@ -310,6 +327,7 @@ const ComposerWithContext = forwardRef<
           autoFocus={autoFocus}
           renderMention={ComposerMention}
           renderMentionSuggestions={ComposerMentionSuggestions}
+          renderLink={ComposerLink}
           dir={$.dir}
         />
         {!collapsed && (

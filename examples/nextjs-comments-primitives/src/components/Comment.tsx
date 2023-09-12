@@ -54,6 +54,22 @@ export function Comment({ comment, className, ...props }: CommentProps) {
             </CommentPrimitive.Mention>
           );
         }}
+        // A renderLink prop is also available to customize how links are rendered on a comment.
+        // Here's an example of how you can customize the link component:
+        //
+        // renderLink={({ url }) => {
+        //   const href = url.startsWith("http") ? url : `https://${url}`;
+        //   return (
+        //     <CommentPrimitive.Link
+        //       href={href}
+        //       target="_blank"
+        //       rel="noopener noreferrer nofollow"
+        //       className="text-blue-500 underline"
+        //     >
+        //       {url}
+        //     </CommentPrimitive.Link>
+        //   )
+        // }}
       />
     </div>
   );
