@@ -143,6 +143,14 @@ input[type="search"]::-webkit-search-cancel-button {
   @apply left-1/2 -translate-x-1/2;
 }
 
+.react-flow__background {
+  @apply pointer-events-none -z-10;
+}
+
+.react-flow__background pattern circle {
+  @apply fill-light-400 dark:fill-dark-300;
+}
+
 .react-flow__attribution {
   @apply hidden;
 }

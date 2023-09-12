@@ -118,9 +118,18 @@ export function YFlow({
   ...props
 }: ComponentProps<typeof ReactFlow>) {
   return (
-    <ReactFlow nodes={nodes} edges={edges} nodeTypes={nodeTypes} {...props}>
-      <MiniMap />
-      <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
+    <ReactFlow
+      nodes={nodes}
+      edges={edges}
+      nodeTypes={nodeTypes}
+      nodesDraggable={false}
+      nodesConnectable={false}
+      nodesFocusable={false}
+      elementsSelectable={false}
+      {...props}
+    >
+      <MiniMap zoomable pannable />
+      <Background variant={BackgroundVariant.Dots} gap={20} size={2} />
       <div className="absolute -bottom-0 left-0 w-full border-light-300 dark:border-dark-300 bg-light-0 dark:bg-dark-0 flex h-8 items-center border-t flex-none px-2.5">
         <Controls className="-ml-1.5" />
         <div className="ml-auto">
