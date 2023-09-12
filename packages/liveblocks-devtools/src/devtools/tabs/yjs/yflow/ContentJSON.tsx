@@ -7,7 +7,7 @@ type StringProps = {
 function ContentJSON({ content }: StringProps) {
   return (
     <div className="y-item-string">
-      <label>json</label> {content.arr.toString()}
+      <label>json</label> {content.arr?.toString()}
     </div>
   );
 }

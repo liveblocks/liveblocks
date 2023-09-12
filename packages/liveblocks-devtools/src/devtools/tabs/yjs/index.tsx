@@ -31,9 +31,9 @@ import {
   useYdoc,
 } from "../../contexts/CurrentRoom";
 import { YFlow } from "./yflow/YFlow";
-import { YUpdateLog } from "./YUpdateLog";
+import { YLogs } from "./YLogs";
 
-export const YJS_TABS = ["document", "awareness", "log"] as const;
+export const YJS_TABS = ["document", "awareness", "logs"] as const;
 export const YDOC_VIEWS = ["diagram", "tree"] as const;
 export type YjsTab = (typeof YJS_TABS)[number];
 export type YdocView = (typeof YDOC_VIEWS)[number];
@@ -274,7 +274,7 @@ function YjsAwareness({ className, ...props }: ComponentProps<"div">) {
 }
 
 // TODO: Implement empty state?
-function YjsLog({ className, ...props }: ComponentProps<"div">) {
+function YjsLogs({ className, ...props }: ComponentProps<"div">) {
   const currentStatus = useStatus();
 
   if (
@@ -290,7 +290,7 @@ function YjsLog({ className, ...props }: ComponentProps<"div">) {
         )}
         {...props}
       >
-        <YUpdateLog />
+        <YLogs />
       </div>
     );
   } else {
@@ -335,11 +335,11 @@ export function Yjs({
             title: "Awareness",
             content: <YjsAwareness key={`${currentRoomId}:awareness`} />,
           };
-        case "log":
+        case "logs":
           return {
-            value: "log",
-            title: "Log",
-            content: <YjsLog key={`${currentRoomId}:log`} />,
+            value: "logs",
+            title: "Logs",
+            content: <YjsLogs key={`${currentRoomId}:logs`} />,
           };
       }
     });

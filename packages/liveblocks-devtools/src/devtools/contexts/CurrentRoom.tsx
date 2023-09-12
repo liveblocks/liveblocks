@@ -31,7 +31,7 @@ type OldConnectionStatus =
   | "unavailable"
   | "failed";
 
-type YUpdateLog = {
+export type YUpdate = {
   ds: DeleteSet;
   structs: (Y.Item | Y.GC | Skip)[];
 };
@@ -43,7 +43,7 @@ type Room = {
   me: DevTools.UserTreeNode | null;
   others: readonly DevTools.UserTreeNode[];
   ydoc: Y.Doc;
-  yupdates: YUpdateLog[];
+  yupdates: YUpdate[];
 };
 
 type EventHub = {
@@ -238,7 +238,6 @@ export function CurrentRoomProvider(props: Props) {
           const update = Base64.toUint8Array(msg.update.update);
           Y.applyUpdate(currRoom.ydoc, update, "backend");
           const decodedUpdate = Y.decodeUpdate(update);
-          console.log(decodedUpdate);
           currRoom.yupdates = [decodedUpdate, ...currRoom.yupdates];
           const hub = getRoomHub(msg.roomId);
           hub.onYdoc.notify();
@@ -401,7 +400,7 @@ export function useStorage(): readonly DevTools.LsonTreeNode[] {
   );
 }
 
-export function useYUpdateLog(): YUpdateLog[] {
+export function useYUpdates(): YUpdate[] {
   const currentRoomId = useCurrentRoomId();
   return useSyncExternalStore(
     getSubscribe(currentRoomId, "onYdoc") ?? nosub,

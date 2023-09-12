@@ -189,3 +189,41 @@ export function QuestionIcon(props: ComponentProps<"svg">) {
     </svg>
   );
 }
+
+export function CrossIcon(props: ComponentProps<"svg">) {
+  return (
+    <svg
+      width="16"
+      height="16"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      {...props}
+    >
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M3.5 0A3.5 3.5 0 0 0 0 3.5v9A3.5 3.5 0 0 0 3.5 16h9a3.5 3.5 0 0 0 3.5-3.5v-9A3.5 3.5 0 0 0 12.5 0h-9Zm8.53 5.03a.75.75 0 0 0-1.06-1.06L8 6.94 5.03 3.97a.75.75 0 0 0-1.06 1.06L6.94 8l-2.97 2.97a.75.75 0 1 0 1.06 1.06L8 9.06l2.97 2.97a.75.75 0 1 0 1.06-1.06L9.06 8l2.97-2.97Z"
+        fill="currentColor"
+      />
+    </svg>
+  );
+}
+
+export function TrashIcon(props: ComponentProps<"svg">) {
+  return (
+    <svg
+      width="16"
+      height="16"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      {...props}
+    >
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M3.5 0A3.5 3.5 0 0 0 0 3.5v9A3.5 3.5 0 0 0 3.5 16h9a3.5 3.5 0 0 0 3.5-3.5v-9A3.5 3.5 0 0 0 12.5 0h-9Zm1.75 4.25c0-.966.784-1.75 1.75-1.75h2c.966 0 1.75.784 1.75 1.75v.5h1.75a.75.75 0 0 1 0 1.5H12v5A1.75 1.75 0 0 1 10.25 13h-4.5A1.75 1.75 0 0 1 4 11.25v-5h-.5a.75.75 0 0 1 0-1.5h1.75v-.5Zm4 0v.5h-2.5v-.5A.25.25 0 0 1 7 4h2a.25.25 0 0 1 .25.25Zm-3.75 2v5c0 .138.112.25.25.25h4.5a.25.25 0 0 0 .25-.25v-5h-5Z"
+        fill="currentColor"
+      />
+    </svg>
+  );
+}
