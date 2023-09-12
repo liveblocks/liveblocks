@@ -120,7 +120,7 @@ export function createAuthManager(
       const parsed = parseAuthToken(response.token);
 
       if (seenTokens.has(parsed.raw)) {
-        throw new Error(
+        throw new StopRetrying(
           "The same Liveblocks auth token was issued from the backend before. Caching Liveblocks tokens is not supported."
         );
       }
