@@ -84,9 +84,6 @@ export function createAuthManager(
       if (token.parsed.k === TokenKind.ID_TOKEN) {
         // When ID token method is used, only one token per user should be used and cached at the same time.
         return token;
-      } else if (token.parsed.k === TokenKind.SECRET_LEGACY) {
-        // Legacy tokens are not cached.
-        return undefined;
       } else if (token.parsed.k === TokenKind.ACCESS_TOKEN) {
         for (const [resource, scopes] of Object.entries(token.parsed.perms)) {
           if (
@@ -180,8 +177,11 @@ export function createAuthManager(
         (token.parsed.exp - token.parsed.iat) -
         BUFFER;
 
-      tokens.push(token);
-      expiryTimes.push(expiresAt);
+      // Legacy tokens should not get cached
+      if (token.parsed.k !== TokenKind.SECRET_LEGACY) {
+        tokens.push(token);
+        expiryTimes.push(expiresAt);
+      }
 
       return { type: "secret", token };
     } finally {
