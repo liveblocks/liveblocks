@@ -9,6 +9,8 @@ import type {
   CommentRenderMentionProps,
 } from "./types";
 import { isCommentBodyMention } from "./utils";
+import { isComposerBodyAutoLink } from "../../slate/plugins/auto-links";
+import type { ComponentPropsWithSlot } from "../../types";
 
 const COMMENT_MENTION_NAME = "CommentMention";
 const COMMENT_BODY_NAME = "CommentBody";
@@ -35,6 +37,18 @@ function CommentDefaultRenderMention({ userId }: CommentRenderMentionProps) {
 const CommentMention = forwardRef<HTMLSpanElement, CommentMentionProps>(
   ({ children, asChild, ...props }, forwardedRef) => {
     const Component = asChild ? Slot : "span";
+
+    return (
+      <Component {...props} ref={forwardedRef}>
+        {children}
+      </Component>
+    );
+  }
+);
+
+const AutoLink = forwardRef<HTMLAnchorElement, ComponentPropsWithSlot<"a">>(
+  ({ children, asChild, ...props }, forwardedRef) => {
+    const Component = asChild ? Slot : "a";
 
     return (
       <Component {...props} ref={forwardedRef}>
@@ -80,6 +94,19 @@ const CommentBody = forwardRef<HTMLDivElement, CommentBodyProps>(
                       ) : null;
                     }
 
+                    if (isComposerBodyAutoLink(inline)) {
+                      return (
+                        <AutoLink
+                          href={toAbsoluteURL(inline.href)}
+                          target="_blank"
+                          rel="noopener noreferrer nofollow"
+                          key={index}
+                        >
+                          {inline.href}
+                        </AutoLink>
+                      );
+                    }
+
                     // <code><s><em><strong>text</strong></s></em></code>
                     let children: ReactNode = inline.text;
 
@@ -115,6 +142,17 @@ const CommentBody = forwardRef<HTMLDivElement, CommentBodyProps>(
 if (process.env.NODE_ENV !== "production") {
   CommentBody.displayName = COMMENT_BODY_NAME;
   CommentMention.displayName = COMMENT_MENTION_NAME;
+}
+
+function toAbsoluteURL(url: string): string | undefined {
+  // Check if the URL already contains a scheme
+  if (url.startsWith("http://") || url.startsWith("https://")) {
+    return url;
+  } else if (url.startsWith("www.")) {
+    // If the URL starts with "www.", prepend "https://"
+    return "https://" + url;
+  }
+  return;
 }
 
 // NOTE: Every export from this file will be available publicly as Comment.*

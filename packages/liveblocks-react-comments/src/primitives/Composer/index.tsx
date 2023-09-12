@@ -111,6 +111,7 @@ import {
   getPlacementFromPosition,
   getSideAndAlignFromPlacement,
 } from "./utils";
+import { withAutoLinks } from "../../slate/plugins/auto-links";
 
 const MENTION_SUGGESTIONS_POSITION: SuggestionsPosition = "top";
 
@@ -129,8 +130,10 @@ const emptyCommentBody: CommentBody = {
 
 function createComposerEditor() {
   return withMentions(
-    withEmptyClearFormatting(
-      withAutoFormatting(withHistory(withReact(createEditor())))
+    withAutoLinks(
+      withEmptyClearFormatting(
+        withAutoFormatting(withHistory(withReact(createEditor())))
+      )
     )
   );
 }
