@@ -16,7 +16,7 @@ export function isCommentBodyLink(
   return "type" in element && element.type === "link";
 }
 
-export function toAbsoluteURL(url: string): string | undefined {
+export function toAbsoluteUrl(url: string): string | undefined {
   // Check if the URL already contains a scheme
   if (url.startsWith("http://") || url.startsWith("https://")) {
     return url;

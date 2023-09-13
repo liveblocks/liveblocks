@@ -69,15 +69,13 @@ export function Composer({
         }}
         // A renderLink prop is also available to customize how links are rendered in the composer.
         //
-        // renderLink={({ href, text }) => {
+        // renderLink={({ href, children }) => {
         //   return (
         //     <ComposerPrimitive.Link
         //       href={href}
-        //       target="_blank"
-        //       rel="noopener noreferrer nofollow"
         //       className="text-blue-500 underline"
         //     >
-        //       {text}
+        //       {children}
         //     </ComposerPrimitive.Link>
         //   );
         // }}

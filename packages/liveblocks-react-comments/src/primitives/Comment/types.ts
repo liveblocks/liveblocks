@@ -1,5 +1,5 @@
 import type { CommentBody } from "@liveblocks/core";
-import type { ComponentType } from "react";
+import type { ComponentType, ReactNode } from "react";
 
 import type { ComponentPropsWithSlot } from "../../types";
 
@@ -27,7 +27,7 @@ export interface CommentRenderLinkProps {
    *
    * @example "www.example.com", "a link", etc.
    */
-  children: string;
+  children: ReactNode;
 }
 
 export interface CommentBodyProps

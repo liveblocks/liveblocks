@@ -13,7 +13,7 @@ import type {
 import {
   isCommentBodyLink,
   isCommentBodyMention,
-  toAbsoluteURL,
+  toAbsoluteUrl,
 } from "./utils";
 
 const COMMENT_MENTION_NAME = "CommentMention";
@@ -50,11 +50,7 @@ const CommentMention = forwardRef<HTMLSpanElement, CommentMentionProps>(
 );
 
 function CommentDefaultRenderLink({ href, children }: CommentRenderLinkProps) {
-  return (
-    <CommentLink href={href} target="_blank" rel="noopener noreferrer nofollow">
-      {children}
-    </CommentLink>
-  );
+  return <CommentLink href={href}>{children}</CommentLink>;
 }
 
 /**
@@ -73,7 +69,12 @@ const CommentLink = forwardRef<HTMLAnchorElement, ComponentPropsWithSlot<"a">>(
     const Component = asChild ? Slot : "a";
 
     return (
-      <Component {...props} ref={forwardedRef}>
+      <Component
+        target="_blank"
+        rel="noopener noreferrer nofollow"
+        {...props}
+        ref={forwardedRef}
+      >
         {children}
       </Component>
     );
@@ -118,7 +119,7 @@ const CommentBody = forwardRef<HTMLDivElement, CommentBodyProps>(
                     }
 
                     if (isCommentBodyLink(inline)) {
-                      const href = toAbsoluteURL(inline.url) ?? inline.url;
+                      const href = toAbsoluteUrl(inline.url) ?? inline.url;
 
                       return (
                         <Link href={href} key={index}>

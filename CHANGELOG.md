@@ -1,3 +1,9 @@
+# v1.3.2
+
+### `@liveblocks/react`
+
+- Add support for auto-Linking in comments composer
+
 # v1.3.1
 
 ### `@liveblocks/client`

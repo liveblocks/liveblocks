@@ -131,8 +131,6 @@ function CommentLink({
     <CommentPrimitive.Link
       className={classNames("lb-comment-link", className)}
       href={href}
-      target="_blank"
-      rel="noopener noreferrer nofollow"
       {...props}
     >
       {children}

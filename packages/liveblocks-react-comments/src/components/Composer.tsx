@@ -206,12 +206,7 @@ function ComposerMentionSuggestions({
 
 function ComposerLink({ href, children }: ComposerRenderLinkProps) {
   return (
-    <ComposerPrimitive.Link
-      href={href}
-      target="_blank"
-      rel="noopener noreferrer nofollow"
-      className="lb-composer-link"
-    >
+    <ComposerPrimitive.Link href={href} className="lb-composer-link">
       {children}
     </ComposerPrimitive.Link>
   );

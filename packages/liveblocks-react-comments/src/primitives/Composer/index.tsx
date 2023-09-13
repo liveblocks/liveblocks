@@ -84,7 +84,7 @@ import { useInitial } from "../../utils/use-initial";
 import { useLayoutEffect } from "../../utils/use-layout-effect";
 import { useRefs } from "../../utils/use-refs";
 import { useRovingIndex } from "../../utils/use-roving-index";
-import { toAbsoluteURL } from "../Comment/utils";
+import { toAbsoluteUrl } from "../Comment/utils";
 import {
   ComposerContext,
   ComposerEditorContext,
@@ -200,7 +200,7 @@ function ComposerEditorRenderLinkWrapper({
   children,
 }: ComposerLinkWrapperProps) {
   const href = useMemo(
-    () => toAbsoluteURL(element.url) ?? element.url,
+    () => toAbsoluteUrl(element.url) ?? element.url,
     [element.url]
   );
 
@@ -428,7 +428,12 @@ const ComposerLink = forwardRef<HTMLAnchorElement, ComposerLinkProps>(
     const Component = asChild ? Slot : "a";
 
     return (
-      <Component {...props} ref={forwardedRef}>
+      <Component
+        target="_blank"
+        rel="noopener noreferrer nofollow"
+        {...props}
+        ref={forwardedRef}
+      >
         {children}
       </Component>
     );
