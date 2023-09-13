@@ -15,3 +15,14 @@ export function isCommentBodyLink(
 ): element is CommentBodyLink {
   return "type" in element && element.type === "link";
 }
+
+export function toAbsoluteURL(url: string): string | undefined {
+  // Check if the URL already contains a scheme
+  if (url.startsWith("http://") || url.startsWith("https://")) {
+    return url;
+  } else if (url.startsWith("www.")) {
+    // If the URL starts with "www.", prepend "https://"
+    return "https://" + url;
+  }
+  return;
+}

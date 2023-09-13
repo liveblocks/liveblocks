@@ -115,7 +115,8 @@ import {
   getPlacementFromPosition,
   getSideAndAlignFromPlacement,
 } from "./utils";
-import { toAbsoluteURL, withAutoLinks } from "../../slate/plugins/auto-links";
+import { withAutoLinks } from "../../slate/plugins/auto-links";
+import { toAbsoluteURL } from "../Comment/utils";
 
 const MENTION_SUGGESTIONS_POSITION: SuggestionsPosition = "top";
 

@@ -43,7 +43,7 @@ import {
   TooltipShortcutKey,
 } from "./internal/Tooltip";
 import { User } from "./internal/User";
-import { toAbsoluteURL } from "../slate/plugins/auto-links";
+import { toAbsoluteURL } from "../primitives/Comment/utils";
 
 export interface CommentProps extends ComponentPropsWithoutRef<"div"> {
   /**

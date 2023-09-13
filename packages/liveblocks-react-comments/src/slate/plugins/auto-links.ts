@@ -319,14 +319,3 @@ const handleNeighbours = (editor: Editor, entry: NodeEntry<Text>) => {
     return;
   }
 };
-
-export function toAbsoluteURL(url: string): string | undefined {
-  // Check if the URL already contains a scheme
-  if (url.startsWith("http://") || url.startsWith("https://")) {
-    return url;
-  } else if (url.startsWith("www.")) {
-    // If the URL starts with "www.", prepend "https://"
-    return "https://" + url;
-  }
-  return;
-}

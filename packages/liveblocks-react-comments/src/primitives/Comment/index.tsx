@@ -9,9 +9,12 @@ import type {
   CommentRenderLinkProps,
   CommentRenderMentionProps,
 } from "./types";
-import { isCommentBodyLink, isCommentBodyMention } from "./utils";
+import {
+  isCommentBodyLink,
+  isCommentBodyMention,
+  toAbsoluteURL,
+} from "./utils";
 import type { ComponentPropsWithSlot } from "../../types";
-import { toAbsoluteURL } from "../../slate/plugins/auto-links";
 
 const COMMENT_MENTION_NAME = "CommentMention";
 const COMMENT_BODY_NAME = "CommentBody";
