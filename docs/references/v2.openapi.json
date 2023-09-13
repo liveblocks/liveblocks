@@ -699,7 +699,7 @@
             "in": "query",
             "allowEmptyValue": true,
             "required": false,
-            "description": "If present, YText will return formatting"
+            "description": "If present, YText will return formatting."
           },
           {
             "schema": {
@@ -708,7 +708,7 @@
             "name": "key",
             "in": "query",
             "required": false,
-            "description": "Returns only a single key’s value, ex: doc.get(key).toJSON()"
+            "description": "Returns only a single key’s value, e.g. `doc.get(key).toJSON()`."
           },
           {
             "schema": {
@@ -718,7 +718,7 @@
             "name": "type",
             "in": "query",
             "required": false,
-            "description": "Used with key to override the inferred type, i.e. “ymap” will return doc.get(key, Y.Map)"
+            "description": "Used with key to override the inferred type, i.e. `\"ymap\"` will return `doc.get(key, Y.Map)`."
           }
         ],
         "responses": {
@@ -732,7 +732,7 @@
                 "examples": {
                   "example": {
                     "value": {
-                      "someYText": "contents of ytext"
+                      "someYText": "Contents of YText"
                     }
                   }
                 }
