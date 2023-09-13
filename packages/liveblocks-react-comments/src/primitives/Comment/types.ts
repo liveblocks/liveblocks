@@ -16,10 +16,18 @@ export type CommentLinkProps = ComponentPropsWithSlot<"a">;
 
 export type CommentRenderLinkProps = {
   /**
-   * The link's URL.
-   * @example "https://example.com", "www.example.com", etc.
+   * The link's absolute URL.
+   *
+   * @example "https://example.com"
    */
-  url: string;
+  href: string;
+
+  /**
+   * The link's text.
+   *
+   * @example "www.example.com", "a link", etc.
+   */
+  text: string;
 };
 
 export interface CommentBodyProps

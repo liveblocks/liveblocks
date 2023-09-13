@@ -14,7 +14,6 @@ import React, { forwardRef, useCallback } from "react";
 import { MentionIcon } from "../icons/mention";
 import { SendIcon } from "../icons/send";
 import { type ComposerOverrides, useOverrides } from "../overrides";
-import { toAbsoluteURL } from "../primitives/Comment/utils";
 import * as ComposerPrimitive from "../primitives/Composer";
 import { useComposer } from "../primitives/Composer/contexts";
 import type {
@@ -205,9 +204,7 @@ function ComposerMentionSuggestions({
   ) : null;
 }
 
-function ComposerLink({ url, children }: ComposerRenderLinkProps) {
-  const href = toAbsoluteURL(url);
-
+function ComposerLink({ href, text }: ComposerRenderLinkProps) {
   return (
     <ComposerPrimitive.Link
       href={href}
@@ -215,7 +212,7 @@ function ComposerLink({ url, children }: ComposerRenderLinkProps) {
       rel="noopener noreferrer nofollow"
       className="lb-composer-link"
     >
-      {children}
+      {text}
     </ComposerPrimitive.Link>
   );
 }

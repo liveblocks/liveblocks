@@ -19,16 +19,6 @@ import {
 const COMMENT_MENTION_NAME = "CommentMention";
 const COMMENT_BODY_NAME = "CommentBody";
 
-/**
- * Displays mentions within `Comment.Body`.
- *
- * @example
- * <Comment.Body
- *   body={comment.body}
- *   renderMention={({ userId }) => <Comment.Mention>@{userId}</Comment.Mention>}
- * />
- */
-
 function CommentDefaultRenderMention({ userId }: CommentRenderMentionProps) {
   return (
     <CommentMention>
@@ -38,6 +28,15 @@ function CommentDefaultRenderMention({ userId }: CommentRenderMentionProps) {
   );
 }
 
+/**
+ * Displays mentions within `Comment.Body`.
+ *
+ * @example
+ * <Comment.Body
+ *   body={comment.body}
+ *   renderMention={({ userId }) => <Comment.Mention>@{userId}</Comment.Mention>}
+ * />
+ */
 const CommentMention = forwardRef<HTMLSpanElement, CommentMentionProps>(
   ({ children, asChild, ...props }, forwardedRef) => {
     const Component = asChild ? Slot : "span";
@@ -50,26 +49,25 @@ const CommentMention = forwardRef<HTMLSpanElement, CommentMentionProps>(
   }
 );
 
-/**
- * Displays mentions within `Comment.Body`.
- *
- * @example
- * <Comment.Body
- *   body={comment.body}
- *   renderLink={({ url }) => <Comment.Link></Comment.Link>}
- * />
- */
-
-function CommentDefaultRenderLink({ url }: CommentRenderLinkProps) {
-  const href = toAbsoluteURL(url);
-
+function CommentDefaultRenderLink({ href, text }: CommentRenderLinkProps) {
   return (
     <CommentLink href={href} target="_blank" rel="noopener noreferrer nofollow">
-      {url}
+      {text}
     </CommentLink>
   );
 }
 
+/**
+ * Displays links within `Comment.Body`.
+ *
+ * @example
+ * <Comment.Body
+ *   body={comment.body}
+ *   renderLink={({ href, text }) => (
+ *     <Comment.Link href={href}>{text}</Comment.Link>
+ *   )}
+ * />
+ */
 const CommentLink = forwardRef<HTMLAnchorElement, ComponentPropsWithSlot<"a">>(
   ({ children, asChild, ...props }, forwardedRef) => {
     const Component = asChild ? Slot : "a";
@@ -120,7 +118,9 @@ const CommentBody = forwardRef<HTMLDivElement, CommentBodyProps>(
                     }
 
                     if (isCommentBodyLink(inline)) {
-                      return <Link url={inline.url} key={index} />;
+                      const href = toAbsoluteURL(inline.url) ?? inline.url;
+
+                      return <Link href={href} text={inline.url} key={index} />;
                     }
 
                     // <code><s><em><strong>text</strong></s></em></code>

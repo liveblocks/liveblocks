@@ -186,21 +186,25 @@ function ComposerDefaultRenderMentionSuggestions({
   ) : null;
 }
 
-function ComposerDefaultRenderLink({ url, children }: ComposerRenderLinkProps) {
-  const href = toAbsoluteURL(url);
-
-  return <ComposerLink href={href}>{children}</ComposerLink>;
+function ComposerDefaultRenderLink({ href, text }: ComposerRenderLinkProps) {
+  return <ComposerLink href={href}>{text}</ComposerLink>;
 }
 
-function ComposerEditorRenderAutoLinkWrapper({
+function ComposerEditorRenderLinkWrapper({
   renderLink: RenderLink = ComposerDefaultRenderLink,
   attributes,
   element,
   children,
 }: ComposerLinkWrapperProps) {
+  const href = useMemo(
+    () => toAbsoluteURL(element.url) ?? element.url,
+    [element.url]
+  );
+
   return (
     <span {...attributes}>
-      <RenderLink url={element.url}>{children}</RenderLink>
+      <RenderLink text={element.url} href={href} />
+      {children}
     </span>
   );
 }
@@ -337,7 +341,7 @@ function ComposerEditorElement({
       );
     case "auto-link":
       return (
-        <ComposerEditorRenderAutoLinkWrapper
+        <ComposerEditorRenderLinkWrapper
           renderLink={renderLink}
           {...(props as RenderElementSpecificProps<ComposerBodyAutoLink>)}
         />
@@ -408,11 +412,10 @@ const ComposerMention = forwardRef<HTMLSpanElement, ComposerMentionProps>(
  *
  * @example
  * <Composer.Editor
- *   renderLink={({ url, children }) => {
- *    const href = url.startsWith("http") ? url : `https://${url}`;
+ *   renderLink={({ href, text }) => {
  *    return (
  *      <Composer.Link href={href}>
- *        {children}
+ *        {text}
  *      </Composer.Link>
  *    )
  *   }}

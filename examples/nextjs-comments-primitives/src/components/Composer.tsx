@@ -67,11 +67,9 @@ export function Composer({
             </ComposerPrimitive.Suggestions>
           );
         }}
-        // A renderLink prop is also available to customize how links are rendered on the composer.
-        // Here's an example of how you can customize the link component:
+        // A renderLink prop is also available to customize how links are rendered in the composer.
         //
-        // renderLink={({ url, children }) => {
-        //   const href = url.startsWith("http") ? url : `https://${url}`;
+        // renderLink={({ href, text }) => {
         //   return (
         //     <ComposerPrimitive.Link
         //       href={href}
@@ -79,7 +77,7 @@ export function Composer({
         //       rel="noopener noreferrer nofollow"
         //       className="text-blue-500 underline"
         //     >
-        //       {children}
+        //       {text}
         //     </ComposerPrimitive.Link>
         //   );
         // }}
