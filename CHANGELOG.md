@@ -1,3 +1,13 @@
+# v1.3.2
+
+### `@liveblocks/client`
+
+- The client will disconnect with an error if your `/api/liveblocks-auth`
+  backend returns reused/cached tokens. It’s important that auth tokens are
+  always freshly generated, and never get cached or reused. (The client itself
+  will cache and reuse tokens already, so implementing additional caching in
+  your backend isn’t needed, and could even cause reconnection issues.)
+
 # v1.3.1
 
 ### `@liveblocks/client`

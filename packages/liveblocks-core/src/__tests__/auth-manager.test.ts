@@ -4,6 +4,10 @@ import { setupServer } from "msw/node";
 import { createAuthManager } from "../auth-manager";
 import type { ParsedAuthToken } from "../protocol/AuthToken";
 
+const SECONDS = 1 * 1000;
+const MINUTES = 60 * SECONDS;
+const HOURS = 60 * MINUTES;
+
 describe("auth-manager - public api key", () => {
   test("should return public api key", async () => {
     const authManager = createAuthManager({ publicApiKey: "pk_123" });
@@ -20,8 +24,11 @@ describe("auth-manager - public api key", () => {
 
 describe("auth-manager - secret auth", () => {
   let requestCount = 0;
-  const legacyToken =
-    "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2NjQ1NjY0MTAsImV4cCI6MTY2NDU3MDAxMCwicm9vbUlkIjoiS1hhNlVjbHZyYWVHWk5kWFZ6NjdaIiwiYXBwSWQiOiI2MDVhNGZkMzFhMzZkNWVhN2EyZTA4ZjEiLCJhY3RvciI6ODcsInNjb3BlcyI6WyJyb29tOndyaXRlIl0sImsiOiJzZWMtbGVnYWN5In0.2DhcT0qwAMdhD0LwA0RAuRXzyjRVQrP6afFL9GG6vwh2gTyx-THw0clFof5WIx9skDuq064IITXgdU9r_vE04Vq9zxdbb0M_mOzISop9iGcWMWIyT-nNdWf3ly1zumNivKjhXcyCXW7t6VsVvvvt78Q5vLAkZIZxNxyBlWebKr2NR9t-PP2C6qlu64EgRH6mhMA7upc1UkkNp65ndVvIinEN92KKkzEjoTq8gv1MM5vMFxNY-Cvx673KY6xfO6op01Z0LE1lT_9YRixErCJZ2fnk_iheARH_0MXT29N76kEX1UA3OXhU_cWHX54kS-hPY_bQqGbjC-cuISLjhF5rpQ";
+  const legacyTokens = [
+    "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2NjQ1NjY0MTAsImV4cCI6MTY2NDU3MDAxMCwicm9vbUlkIjoiS1hhNlVjbHZyYWVHWk5kWFZ6NjdaIiwiYXBwSWQiOiI2MDVhNGZkMzFhMzZkNWVhN2EyZTA4ZjEiLCJhY3RvciI6ODcsInNjb3BlcyI6WyJyb29tOndyaXRlIl0sImsiOiJzZWMtbGVnYWN5In0.2DhcT0qwAMdhD0LwA0RAuRXzyjRVQrP6afFL9GG6vwh2gTyx-THw0clFof5WIx9skDuq064IITXgdU9r_vE04Vq9zxdbb0M_mOzISop9iGcWMWIyT-nNdWf3ly1zumNivKjhXcyCXW7t6VsVvvvt78Q5vLAkZIZxNxyBlWebKr2NR9t-PP2C6qlu64EgRH6mhMA7upc1UkkNp65ndVvIinEN92KKkzEjoTq8gv1MM5vMFxNY-Cvx673KY6xfO6op01Z0LE1lT_9YRixErCJZ2fnk_iheARH_0MXT29N76kEX1UA3OXhU_cWHX54kS-hPY_bQqGbjC-cuISLjhF5rpQ",
+    "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2OTQ1MTkzNTMsImV4cCI6MTY5NDUzMzc1Mywicm9vbUlkIjoiS1hhNlVjbHZyYWVHWk5kWFZ6NjdaIiwiYXBwSWQiOiI2MDVhNGZkMzFhMzZkNWVhN2EyZTA4ZjEiLCJhY3RvciI6ODgsInNjb3BlcyI6WyJyb29tOndyaXRlIl0sImsiOiJzZWMtbGVnYWN5In0.pqIWR-KJknt3p26OeQnia6llYAcn7nF4MdseGecF4hLHq8xS1vb_lS16jexVSxvy2jmrfQU00oRF6ig6dfXdBzgovr3j2zqdLL72aQfwA56UR9zkQ4J5a6LqwMIRiy4K3IMT8_Tcj9opp-kotLhdeMcO6P3YLqUUsE-zpWaIQwYXsY1iyuBOKEqlM4woTwTAu_Z8J8ONXHO54EynMvPvAf4Blj-WteGPnTY8bvIkiXzOgFVAbunq5VEb6p0iqXqNSU0J4NzkNA9IVQDUj2qdCM065TOve4CWgL54klqoWeSpQHyDLfyRjOKeZssZ8jwU3ou3WnEbbE2oM8SMhcabEQ",
+    "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2OTQ1MzM4MDAsImV4cCI6MTY5NDU0ODIwMCwicm9vbUlkIjoiS1hhNlVjbHZyYWVHWk5kWFZ6NjdaIiwiYXBwSWQiOiI2MDVhNGZkMzFhMzZkNWVhN2EyZTA4ZjEiLCJhY3RvciI6OTAsInNjb3BlcyI6WyJyb29tOndyaXRlIl0sImsiOiJzZWMtbGVnYWN5In0.Hs6ZIO717YqIfPaNC0BLNJXJUG4pTOwH3L7-IDIQAf0aFy-h8Nxd8Erz9RCegs6sDrqAsHMvHrFsOk-0-ML0NZ9My1nBB7s05h8QPsiOZEh4n5w1wPacaAP9Z4FMAH5xU6pJS0bR3sFZPecwCq6VFMZnf6WJUd-O4pARRb8Ca_FGcVfrMZwjqBzRRWW4gBPG0zVAd2m-naOqT8QlAKC3EAShkFT89T42S3eRgYkMDDKdfccI4IvruXVv9lh2f0mQ8ILBX3CfsZwnljv_OqqUQzob1Qcs5pRPYw-hpP_QuWyXOifIPEPyJ8_45bFIJSHvpGaZXBAT76s0SeAVUoXJ6w",
+  ];
 
   /*
     Access token with those permissions:
@@ -40,8 +47,13 @@ describe("auth-manager - secret auth", () => {
 
   const server = setupServer(
     rest.post("/mocked-api/legacy-auth", (_req, res, ctx) => {
+      return res(
+        ctx.json({ token: legacyTokens[requestCount++ % legacyTokens.length] })
+      );
+    }),
+    rest.post("/mocked-api/legacy-auth-that-caches", (_req, res, ctx) => {
       requestCount++;
-      return res(ctx.json({ token: legacyToken }));
+      return res(ctx.json({ token: legacyTokens[0] }));
     }),
     rest.post("/mocked-api/access-auth", (_req, res, ctx) => {
       requestCount++;
@@ -81,7 +93,7 @@ describe("auth-manager - secret auth", () => {
     )) as { type: "secret"; token: ParsedAuthToken };
 
     expect(authValue.type).toEqual("secret");
-    expect(authValue.token.raw).toEqual(legacyToken);
+    expect(authValue.token.raw).toEqual(legacyTokens[0]);
     expect(requestCount).toBe(1);
   });
 
@@ -130,9 +142,42 @@ describe("auth-manager - secret auth", () => {
       "room1"
     )) as { type: "secret"; token: ParsedAuthToken };
 
-    expect(authValueReq1.token.raw).toEqual(legacyToken);
-    expect(authValueReq2.token.raw).toEqual(legacyToken);
+    expect(authValueReq1.token.raw).toEqual(legacyTokens[0]);
+    expect(authValueReq2.token.raw).toEqual(legacyTokens[1]);
     expect(requestCount).toBe(2);
+  });
+
+  test("should throw if legacy token is expired but the next fetch from the backend returns the same (expired) token", async () => {
+    const authManager = createAuthManager({
+      authEndpoint: "/mocked-api/legacy-auth-that-caches",
+    });
+
+    const authValueReq1 = (await authManager.getAuthValue(
+      "room:read",
+      "room1"
+    )) as { type: "secret"; token: ParsedAuthToken };
+
+    expect(authValueReq1.token.raw).toEqual(legacyTokens[0]);
+    expect(requestCount).toBe(1);
+
+    // Five hours later, this token should be expired. For ID and Access tokens, that mweans
+    jest.useFakeTimers();
+    jest.setSystemTime(Date.now() + 5 * HOURS);
+    try {
+      const $promise = expect(
+        authManager.getAuthValue("room:read", "room1")
+      ).rejects.toThrow(
+        "The same Liveblocks auth token was issued from the backend before. Caching Liveblocks tokens is not supported."
+      );
+
+      jest.useRealTimers();
+      await $promise;
+
+      // This made a new HTTP request
+      expect(requestCount).toBe(2);
+    } finally {
+      jest.useRealTimers();
+    }
   });
 
   test("should use cache when access token has correct permissions", async () => {
@@ -155,6 +200,47 @@ describe("auth-manager - secret auth", () => {
     expect(requestCount).toBe(1);
   });
 
+  test("should throw if access token is expired but the next fetch from the backend returns the same (expired) token", async () => {
+    const authManager = createAuthManager({
+      authEndpoint: "/mocked-api/access-auth",
+    });
+
+    const authValueReq1 = (await authManager.getAuthValue(
+      "room:read",
+      "org1.room1"
+    )) as { type: "secret"; token: ParsedAuthToken };
+
+    const authValueReq2 = (await authManager.getAuthValue(
+      "room:read",
+      "org1.room2"
+    )) as { type: "secret"; token: ParsedAuthToken };
+
+    expect(authValueReq1.token.raw).toEqual(accessToken);
+    expect(authValueReq2.token.raw).toEqual(accessToken);
+    expect(requestCount).toBe(1);
+
+    // Five hours later, this token should be expired and no longer be served
+    // from cache...
+    jest.useFakeTimers();
+    jest.setSystemTime(Date.now() + 5 * HOURS);
+    try {
+      // Should throw because this mock will return the exact same (expired) token
+      const $promise = expect(
+        authManager.getAuthValue("room:read", "org1.room1")
+      ).rejects.toThrow(
+        "The same Liveblocks auth token was issued from the backend before. Caching Liveblocks tokens is not supported."
+      );
+
+      jest.useRealTimers();
+      await $promise;
+
+      // This made a new HTTP request
+      expect(requestCount).toBe(2);
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
   test("should use cache when ID token", async () => {
     const authManager = createAuthManager({
       authEndpoint: "/mocked-api/id-auth",
@@ -173,6 +259,47 @@ describe("auth-manager - secret auth", () => {
     expect(authValueReq1.token.raw).toEqual(idToken);
     expect(authValueReq2.token.raw).toEqual(idToken);
     expect(requestCount).toBe(1);
+  });
+
+  test("should throw if ID token is expired but the next fetch from the backend returns the same (expired) token", async () => {
+    const authManager = createAuthManager({
+      authEndpoint: "/mocked-api/id-auth",
+    });
+
+    const authValueReq1 = (await authManager.getAuthValue(
+      "room:read",
+      "room1"
+    )) as { type: "secret"; token: ParsedAuthToken };
+
+    const authValueReq2 = (await authManager.getAuthValue(
+      "room:read",
+      "room2"
+    )) as { type: "secret"; token: ParsedAuthToken };
+
+    expect(authValueReq1.token.raw).toEqual(idToken);
+    expect(authValueReq2.token.raw).toEqual(idToken);
+    expect(requestCount).toBe(1);
+
+    // Five hours later, this token should be expired and no longer be served
+    // from cache...
+    jest.useFakeTimers();
+    jest.setSystemTime(Date.now() + 5 * HOURS);
+    try {
+      // Should throw because this mock will return the exact same (expired) token
+      const $promise = expect(
+        authManager.getAuthValue("room:read", "room1")
+      ).rejects.toThrow(
+        "The same Liveblocks auth token was issued from the backend before. Caching Liveblocks tokens is not supported."
+      );
+
+      jest.useRealTimers();
+      await $promise;
+
+      // This made a new HTTP request
+      expect(requestCount).toBe(2);
+    } finally {
+      jest.useRealTimers();
+    }
   });
 
   test.each([{ notAToken: "" }, undefined, null, ""])(
