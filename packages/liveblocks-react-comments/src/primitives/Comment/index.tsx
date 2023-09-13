@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import React, { forwardRef } from "react";
 
 import { MENTION_CHARACTER } from "../../slate/plugins/mentions";
+import type { ComponentPropsWithSlot } from "../../types";
 import type {
   CommentBodyProps,
   CommentMentionProps,
@@ -14,7 +15,6 @@ import {
   isCommentBodyMention,
   toAbsoluteURL,
 } from "./utils";
-import type { ComponentPropsWithSlot } from "../../types";
 
 const COMMENT_MENTION_NAME = "CommentMention";
 const COMMENT_BODY_NAME = "CommentBody";
@@ -161,4 +161,4 @@ if (process.env.NODE_ENV !== "production") {
 }
 
 // NOTE: Every export from this file will be available publicly as Comment.*
-export { CommentBody as Body, CommentMention as Mention, CommentLink as Link };
+export { CommentBody as Body, CommentLink as Link, CommentMention as Mention };

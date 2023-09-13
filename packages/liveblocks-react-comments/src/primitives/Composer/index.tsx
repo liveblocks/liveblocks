@@ -58,6 +58,7 @@ import {
 
 import { FLOATING_ELEMENT_COLLISION_PADDING } from "../../constants";
 import { withAutoFormatting } from "../../slate/plugins/auto-formatting";
+import { withAutoLinks } from "../../slate/plugins/auto-links";
 import { withEmptyClearFormatting } from "../../slate/plugins/empty-clear-formatting";
 import type { MentionDraft } from "../../slate/plugins/mentions";
 import {
@@ -71,8 +72,8 @@ import { getDOMRange } from "../../slate/utils/get-dom-range";
 import { isEmpty as isEditorEmpty } from "../../slate/utils/is-empty";
 import { leaveMarkEdge, toggleMark } from "../../slate/utils/marks";
 import type {
-  ComposerBodyAutoLink,
   ComposerBody as ComposerBodyData,
+  ComposerBodyAutoLink,
   ComposerBodyMention,
 } from "../../types";
 import { isKey } from "../../utils/is-key";
@@ -83,6 +84,7 @@ import { useInitial } from "../../utils/use-initial";
 import { useLayoutEffect } from "../../utils/use-layout-effect";
 import { useRefs } from "../../utils/use-refs";
 import { useRovingIndex } from "../../utils/use-roving-index";
+import { toAbsoluteURL } from "../Comment/utils";
 import {
   ComposerContext,
   ComposerEditorContext,
@@ -115,8 +117,6 @@ import {
   getPlacementFromPosition,
   getSideAndAlignFromPlacement,
 } from "./utils";
-import { withAutoLinks } from "../../slate/plugins/auto-links";
-import { toAbsoluteURL } from "../Comment/utils";
 
 const MENTION_SUGGESTIONS_POSITION: SuggestionsPosition = "top";
 
@@ -679,7 +679,7 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
           />
         );
       },
-      [renderMention]
+      [renderLink, renderMention]
     );
 
     const handleChange = useCallback(
@@ -1085,8 +1085,8 @@ if (process.env.NODE_ENV !== "production") {
 export {
   ComposerEditor as Editor,
   ComposerForm as Form,
-  ComposerMention as Mention,
   ComposerLink as Link,
+  ComposerMention as Mention,
   ComposerSubmit as Submit,
   ComposerSuggestions as Suggestions,
   ComposerSuggestionsList as SuggestionsList,

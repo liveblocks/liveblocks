@@ -14,6 +14,7 @@ import React, { forwardRef, useCallback } from "react";
 import { MentionIcon } from "../icons/mention";
 import { SendIcon } from "../icons/send";
 import { type ComposerOverrides, useOverrides } from "../overrides";
+import { toAbsoluteURL } from "../primitives/Comment/utils";
 import * as ComposerPrimitive from "../primitives/Composer";
 import { useComposer } from "../primitives/Composer/contexts";
 import type {
@@ -35,7 +36,6 @@ import {
   TooltipShortcutKey,
 } from "./internal/Tooltip";
 import { User } from "./internal/User";
-import { toAbsoluteURL } from "../primitives/Comment/utils";
 
 interface EditorActionProps extends ComponentPropsWithoutRef<"button"> {
   label: string;

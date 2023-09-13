@@ -1,13 +1,6 @@
-import {
-  Editor,
-  Node,
-  NodeEntry,
-  Text,
-  Transforms,
-  Element,
-  Path,
-  Range,
-} from "slate";
+import type { NodeEntry } from "slate";
+import { Editor, Element, Node, Path, Range, Text, Transforms } from "slate";
+
 import type { ComposerBodyAutoLink } from "../../types";
 
 /**

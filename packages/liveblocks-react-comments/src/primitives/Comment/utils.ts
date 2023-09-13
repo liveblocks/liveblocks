@@ -1,7 +1,7 @@
 import type {
   CommentBodyElement,
-  CommentBodyMention,
   CommentBodyLink,
+  CommentBodyMention,
 } from "@liveblocks/core";
 
 export function isCommentBodyMention(

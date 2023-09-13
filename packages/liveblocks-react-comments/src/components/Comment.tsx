@@ -29,6 +29,7 @@ import type {
   CommentRenderLinkProps,
   CommentRenderMentionProps,
 } from "../primitives/Comment/types";
+import { toAbsoluteURL } from "../primitives/Comment/utils";
 import * as ComposerPrimitive from "../primitives/Composer";
 import { Timestamp } from "../primitives/Timestamp";
 import { MENTION_CHARACTER } from "../slate/plugins/mentions";
@@ -43,7 +44,6 @@ import {
   TooltipShortcutKey,
 } from "./internal/Tooltip";
 import { User } from "./internal/User";
-import { toAbsoluteURL } from "../primitives/Comment/utils";
 
 export interface CommentProps extends ComponentPropsWithoutRef<"div"> {
   /**

@@ -6,6 +6,7 @@ import type {
 } from "@liveblocks/core";
 import { Text as SlateText } from "slate";
 
+import { isComposerBodyAutoLink } from "../../slate/plugins/auto-links";
 import { isComposerBodyMention } from "../../slate/plugins/mentions";
 import type {
   ComposerBody,
@@ -15,7 +16,6 @@ import type {
 } from "../../types";
 import { isCommentBodyLink, isCommentBodyMention } from "../Comment/utils";
 import type { SuggestionsPosition } from "./types";
-import { isComposerBodyAutoLink } from "../../slate/plugins/auto-links";
 
 export function composerBodyMentionToCommentBodyMention(
   mention: ComposerBodyMention
@@ -28,7 +28,7 @@ export function composerBodyMentionToCommentBodyMention(
 
 export function composerBodyAutoLinkToCommentBodyLink(
   link: ComposerBodyAutoLink
-): any {
+): CommentBodyLink {
   return {
     type: "link",
     url: link.url,
