@@ -205,9 +205,9 @@ function ComposerEditorRenderLinkWrapper({
   );
 
   return (
-    <RenderLink {...attributes} href={href}>
-      {children}
-    </RenderLink>
+    <span {...attributes}>
+      <RenderLink href={href}>{children}</RenderLink>
+    </span>
   );
 }
 
