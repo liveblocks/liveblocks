@@ -1193,16 +1193,41 @@ describe("room", () => {
       a: number;
     }>([createSerializedObject("0:0", { a: 1 })], 1);
 
-    expect(room.history.canUndo()).toBeFalsy();
-    expect(room.history.canRedo()).toBeFalsy();
+    expect(room.history.canUndo()).toBe(false);
+    expect(room.history.canRedo()).toBe(false);
 
     storage.root.set("a", 2);
 
-    expect(room.history.canUndo()).toBeTruthy();
+    expect(room.history.canUndo()).toBe(true);
 
     room.history.undo();
 
-    expect(room.history.canRedo()).toBeTruthy();
+    expect(room.history.canRedo()).toBe(true);
+  });
+
+  test("clearing undo/redo stack", async () => {
+    const { room, storage } = await prepareStorageTest<{
+      a: number;
+    }>([createSerializedObject("0:0", { a: 1 })], 1);
+
+    expect(room.history.canUndo()).toBe(false);
+    expect(room.history.canRedo()).toBe(false);
+
+    storage.root.set("a", 2);
+    storage.root.set("a", 3);
+    storage.root.set("a", 4);
+    room.history.undo();
+
+    expect(room.history.canUndo()).toBe(true);
+    expect(room.history.canRedo()).toBe(true);
+
+    room.history.clear();
+    expect(room.history.canUndo()).toBe(false);
+    expect(room.history.canRedo()).toBe(false);
+
+    room.history.undo(); // won't do anything now
+
+    expect(storage.root.toObject()).toEqual({ a: 3 });
   });
 
   describe("subscription", () => {
