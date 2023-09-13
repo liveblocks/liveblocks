@@ -1,10 +1,5 @@
 import type { CommentBody } from "@liveblocks/core";
-import type {
-  ComponentPropsWithoutRef,
-  ComponentType,
-  FormEvent,
-  PropsWithChildren,
-} from "react";
+import type { ComponentPropsWithoutRef, ComponentType, FormEvent } from "react";
 import type {
   RenderElementProps,
   RenderElementSpecificProps,
@@ -30,13 +25,20 @@ export interface ComposerRenderMentionProps {
   userId: string;
 }
 
-export interface ComposerRenderLinkProps extends PropsWithChildren {
+export interface ComposerRenderLinkProps {
   /**
    * The link's absolute URL.
    *
    * @example "https://example.com"
    */
   href: string;
+
+  /**
+   * The link's content.
+   *
+   * @example "www.example.com", "a link", etc.
+   */
+  children: string;
 }
 
 export type ComposerMentionProps = ComponentPropsWithSlot<"span">;

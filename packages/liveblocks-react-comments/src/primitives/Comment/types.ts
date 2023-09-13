@@ -1,5 +1,5 @@
 import type { CommentBody } from "@liveblocks/core";
-import type { ComponentType, PropsWithChildren } from "react";
+import type { ComponentType } from "react";
 
 import type { ComponentPropsWithSlot } from "../../types";
 
@@ -14,13 +14,20 @@ export type CommentRenderMentionProps = {
 
 export type CommentLinkProps = ComponentPropsWithSlot<"a">;
 
-export interface CommentRenderLinkProps extends PropsWithChildren {
+export interface CommentRenderLinkProps {
   /**
    * The link's absolute URL.
    *
    * @example "https://example.com"
    */
   href: string;
+
+  /**
+   * The link's content.
+   *
+   * @example "www.example.com", "a link", etc.
+   */
+  children: string;
 }
 
 export interface CommentBodyProps
