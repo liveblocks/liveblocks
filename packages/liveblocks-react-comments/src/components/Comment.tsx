@@ -123,7 +123,7 @@ function CommentMention({
 
 function CommentLink({
   href,
-  text,
+  children,
   className,
   ...props
 }: CommentRenderLinkProps & CommentLinkProps) {
@@ -135,7 +135,7 @@ function CommentLink({
       rel="noopener noreferrer nofollow"
       {...props}
     >
-      {text}
+      {children}
     </CommentPrimitive.Link>
   );
 }

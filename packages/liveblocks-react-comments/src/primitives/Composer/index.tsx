@@ -186,8 +186,11 @@ function ComposerDefaultRenderMentionSuggestions({
   ) : null;
 }
 
-function ComposerDefaultRenderLink({ href, text }: ComposerRenderLinkProps) {
-  return <ComposerLink href={href}>{text}</ComposerLink>;
+function ComposerDefaultRenderLink({
+  href,
+  children,
+}: ComposerRenderLinkProps) {
+  return <ComposerLink href={href}>{children}</ComposerLink>;
 }
 
 function ComposerEditorRenderLinkWrapper({
@@ -202,10 +205,9 @@ function ComposerEditorRenderLinkWrapper({
   );
 
   return (
-    <span {...attributes}>
-      <RenderLink text={element.url} href={href} />
+    <RenderLink {...attributes} href={href}>
       {children}
-    </span>
+    </RenderLink>
   );
 }
 
@@ -412,10 +414,10 @@ const ComposerMention = forwardRef<HTMLSpanElement, ComposerMentionProps>(
  *
  * @example
  * <Composer.Editor
- *   renderLink={({ href, text }) => {
+ *   renderLink={({ href, children }) => {
  *    return (
  *      <Composer.Link href={href}>
- *        {text}
+ *        {children}
  *      </Composer.Link>
  *    )
  *   }}

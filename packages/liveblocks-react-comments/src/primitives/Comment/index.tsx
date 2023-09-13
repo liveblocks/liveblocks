@@ -49,10 +49,10 @@ const CommentMention = forwardRef<HTMLSpanElement, CommentMentionProps>(
   }
 );
 
-function CommentDefaultRenderLink({ href, text }: CommentRenderLinkProps) {
+function CommentDefaultRenderLink({ href, children }: CommentRenderLinkProps) {
   return (
     <CommentLink href={href} target="_blank" rel="noopener noreferrer nofollow">
-      {text}
+      {children}
     </CommentLink>
   );
 }
@@ -63,8 +63,8 @@ function CommentDefaultRenderLink({ href, text }: CommentRenderLinkProps) {
  * @example
  * <Comment.Body
  *   body={comment.body}
- *   renderLink={({ href, text }) => (
- *     <Comment.Link href={href}>{text}</Comment.Link>
+ *   renderLink={({ href, children }) => (
+ *     <Comment.Link href={href}>{children}</Comment.Link>
  *   )}
  * />
  */
@@ -120,7 +120,11 @@ const CommentBody = forwardRef<HTMLDivElement, CommentBodyProps>(
                     if (isCommentBodyLink(inline)) {
                       const href = toAbsoluteURL(inline.url) ?? inline.url;
 
-                      return <Link href={href} text={inline.url} key={index} />;
+                      return (
+                        <Link href={href} key={index}>
+                          {inline.url}
+                        </Link>
+                      );
                     }
 
                     // <code><s><em><strong>text</strong></s></em></code>
