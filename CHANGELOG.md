@@ -1,3 +1,9 @@
+# Unpublished
+
+### `@liveblocks/*`
+
+- Fix unescaped room IDs when using Comments
+
 # v1.3.2
 
 ### `@liveblocks/client`
