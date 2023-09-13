@@ -490,6 +490,16 @@
           "in": "path",
           "required": true,
           "description": "ID of the room"
+        },
+        {
+          "schema": {
+            "type": "string",
+            "enum": ["plain-lson", "json"]
+          },
+          "name": "format",
+          "in": "query",
+          "required": false,
+          "description": "Use `?format=json` to output a simplified JSON representation of the Storage tree. In that format, each LiveObject and LiveMap will be formatted as a simple JSON object, and each LiveList will be formatted as a simple JSON array. This is a lossy format because information about the original data structures is not retained, but it may be easier to work with."
         }
       ],
       "get": {
@@ -551,7 +561,7 @@
           }
         },
         "operationId": "get-rooms-roomId-storage",
-        "description": "This endpoint returns a room’s Storage as JSON.\n\nSome implementation details:\nEach Liveblocks data structure is represented by a JSON element having two properties:\n`\"liveblocksType\": \"LiveObject\" | \"LiveList\" | \"LiveMap\"`\n`\"data\"` => contains the nested data structures (children) and data.\nThe root is always a `LiveObject`."
+        "description": "Returns the contents of the room’s Storage tree.\n\nThe default outputted format is called “plain LSON”, which includes information on the Live data structures in the tree. These nodes show up in the output as objects with two properties, for example:\n\n```json\n{\n  \"liveblocksType\": \"LiveObject\",\n  \"data\": ...\n}\n```\n\nIf you’re not interested in this information, you can use the simpler `?format=json` query param, see below."
       },
       "post": {
         "summary": "Initialize Storage document",
