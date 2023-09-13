@@ -67,6 +67,11 @@ import { PKG_VERSION } from "./version";
 type TimeoutID = ReturnType<typeof setTimeout>;
 
 type CustomEvent<TRoomEvent extends Json> = {
+  /**
+   * The connection ID of the client that sent the event.
+   * If this message was broadcast from the server (via the REST API), then
+   * this value will be -1.
+   */
   connectionId: number;
   event: TRoomEvent;
 };

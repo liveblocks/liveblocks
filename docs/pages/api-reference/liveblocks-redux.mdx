@@ -121,7 +121,7 @@ const store = configureStore({
 
 Dispatch `enterRoom` action to enter a room and start sync it with Redux state.
 
-- `roomId`: The `id` of the room.
+- `roomId`: The room’s ID.
 
 ```js
 import { actions } from "@liveblocks/redux";
@@ -136,7 +136,7 @@ dispatch(actions.enterRoom("roomId"));
 
 Dispatch `leaveRoom` action to leave a room and stop sync it with Redux state.
 
-- `roomId`: The `id` of the room.
+- `roomId`: The room’s ID.
 
 ```js
 import { actions } from "@liveblocks/redux";
