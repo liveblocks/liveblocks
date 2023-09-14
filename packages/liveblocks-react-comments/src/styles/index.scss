@@ -475,6 +475,10 @@
       }
     }
 
+    strong {
+      font-weight: 600;
+    }
+
     code {
       padding: 0.2em 0.4em;
       border-radius: calc(0.75 * var(--lb-radius));
