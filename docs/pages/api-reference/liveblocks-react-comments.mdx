@@ -71,7 +71,7 @@ They are built around a few customizable CSS variables:
 
 {/* TODO: Explain automatic color scales (with a palette-type visual) */}
 
-If these CSS variables aren't enough, every elements within the components have
+If these CSS variables aren’t enough, every elements within the components have
 clearly defined classes. Additionaly, some elements also have data attributes to
 provide contextual information (e.g. `data-variant="primary"` on `.lb-button`,
 `data-self` on `.lb-comment-mention`, `data-loading` on `.lb-avatar` and
@@ -342,7 +342,7 @@ Displays a comment body.
 | --------------- | ------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------- |
 | `body`          | `CommentBody \| undefined`                                               | The comment body to display. If not defined, the component will render `null`.                  |
 | `renderMention` | <code>ComponentType&lt;CommentRenderMentionProps&gt; \| undefined</code> | The component used to render mentions.<br/>Defaults to the mention’s `userId` prefixed by an @. |
-| `renderLink`    | <code>ComponentType&lt;CommentRenderLinkProps&gt; \| undefined</code>    | The component used to render links.<br/>Defaults to the link's children property.               |
+| `renderLink`    | <code>ComponentType&lt;CommentRenderLinkProps&gt; \| undefined</code>    | The component used to render links.<br/>Defaults to the link’s `children` property.             |
 | `asChild`       | `boolean \| undefined`                                                   | Replace the rendered element by the one passed as a child.<br/>Defaults to `false`.             |
 
 </Table>
@@ -381,8 +381,8 @@ A render prop that accepts a component used to render links.
 
 | Prop       | Type        | Description              |
 | ---------- | ----------- | ------------------------ |
-| `href`     | `string`    | The link's absolute URL. |
-| `children` | `ReactNode` | The link's content.      |
+| `href`     | `string`    | The link’s absolute URL. |
+| `children` | `ReactNode` | The link’s content.      |
 
 </Table>
 
@@ -477,7 +477,7 @@ Displays the composer’s editor.
 | `dir`                      | `"ltr" \| "rtl" \| undefined`                                                        | The reading direction of the editor and related elements.                                              |
 | `renderMention`            | <code>ComponentType&lt;ComposerRenderMentionProps&gt; \| undefined</code>            | The component used to render mentions.<br/>Defaults to the mention’s `userId` prefixed by an @.        |
 | `renderMentionSuggestions` | <code>ComponentType&lt;ComposerRenderMentionSuggestionsProps&gt; \| undefined</code> | The component used to render mention suggestions.<br/>Defaults to a list of the suggestions’ `userId`. |
-| `renderLink`               | <code>ComponentType&lt;ComposerRenderLinkProps&gt; \| undefined</code>               | The component used to render links.<br/>Defaults to the link's children property.                      |
+| `renderLink`               | <code>ComponentType&lt;ComposerRenderLinkProps&gt; \| undefined</code>               | The component used to render links.<br/>Defaults to the link’s `children` property.                    |
 
 </Table>
 
@@ -550,8 +550,8 @@ A render prop that accepts a component used to render links.
 
 | Prop       | Type        | Description              |
 | ---------- | ----------- | ------------------------ |
-| `href`     | `string`    | The link's absolute URL. |
-| `children` | `ReactNode` | The link's content.      |
+| `href`     | `string`    | The link’s absolute URL. |
+| `children` | `ReactNode` | The link’s content.      |
 
 </Table>
 
