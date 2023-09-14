@@ -323,7 +323,7 @@ import { Comment } from "@liveblocks/react-comments/primitives";
 () => (
   <Comment.Body
     renderMention={() => <Comment.Mention />}
-    renderLink={(props) => <Comment.Link {...props} />}
+    renderLink={() => <Comment.Link />}
   />
 );
 ```
@@ -434,7 +434,7 @@ import { Composer } from "@liveblocks/react-comments/primitives";
           </Composer.SuggestionsList>
         </Composer.Suggestions>
       )}
-      renderLink={(props) => <Composer.Link {...props} />}
+      renderLink={() => <Composer.Link />}
     />
     <Composer.Submit />
   </Composer.Form>

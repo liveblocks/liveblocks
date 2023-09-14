@@ -20,6 +20,7 @@ export type {
   ComposerSuggestionsListItemProps,
   ComposerSuggestionsListProps,
   ComposerLinkProps,
+  ComposerRenderLinkProps,
 } from "./Composer/types";
 export type { TimestampProps } from "./Timestamp";
 export { Timestamp } from "./Timestamp";
