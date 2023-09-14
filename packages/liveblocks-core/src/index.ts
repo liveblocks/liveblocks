@@ -188,6 +188,7 @@ export type { BaseMetadata } from "./comments/types/BaseMetadata";
 export type {
   CommentBody,
   CommentBodyElement,
+  CommentBodyLink,
   CommentBodyMention,
   CommentBodyParagraph,
 } from "./comments/types/CommentBody";

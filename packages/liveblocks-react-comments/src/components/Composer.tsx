@@ -18,6 +18,7 @@ import * as ComposerPrimitive from "../primitives/Composer";
 import { useComposer } from "../primitives/Composer/contexts";
 import type {
   ComposerEditorProps,
+  ComposerRenderLinkProps,
   ComposerRenderMentionProps,
   ComposerRenderMentionSuggestionsProps,
   ComposerSubmitComment,
@@ -203,6 +204,14 @@ function ComposerMentionSuggestions({
   ) : null;
 }
 
+function ComposerLink({ href, children }: ComposerRenderLinkProps) {
+  return (
+    <ComposerPrimitive.Link href={href} className="lb-composer-link">
+      {children}
+    </ComposerPrimitive.Link>
+  );
+}
+
 const ComposerWithContext = forwardRef<
   HTMLFormElement,
   Omit<ComposerProps, "threadId" | "commentId" | "onComposerSubmit">
@@ -310,6 +319,7 @@ const ComposerWithContext = forwardRef<
           autoFocus={autoFocus}
           renderMention={ComposerMention}
           renderMentionSuggestions={ComposerMentionSuggestions}
+          renderLink={ComposerLink}
           dir={$.dir}
         />
         {!collapsed && (

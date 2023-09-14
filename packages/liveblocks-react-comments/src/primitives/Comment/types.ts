@@ -1,5 +1,5 @@
 import type { CommentBody } from "@liveblocks/core";
-import type { ComponentType } from "react";
+import type { ComponentType, ReactNode } from "react";
 
 import type { ComponentPropsWithSlot } from "../../types";
 
@@ -11,6 +11,24 @@ export type CommentRenderMentionProps = {
    */
   userId: string;
 };
+
+export type CommentLinkProps = ComponentPropsWithSlot<"a">;
+
+export interface CommentRenderLinkProps {
+  /**
+   * The link's absolute URL.
+   *
+   * @example "https://example.com"
+   */
+  href: string;
+
+  /**
+   * The link's content.
+   *
+   * @example "www.example.com", "a link", etc.
+   */
+  children: ReactNode;
+}
 
 export interface CommentBodyProps
   extends Omit<ComponentPropsWithSlot<"div">, "children"> {
@@ -24,4 +42,9 @@ export interface CommentBodyProps
    * The component used to render mentions.
    */
   renderMention?: ComponentType<CommentRenderMentionProps>;
+
+  /**
+   * The component used to render links.
+   */
+  renderLink?: ComponentType<CommentRenderLinkProps>;
 }

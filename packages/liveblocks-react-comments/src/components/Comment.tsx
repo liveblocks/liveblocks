@@ -25,7 +25,9 @@ import {
 import type { ComposerSubmitComment } from "../primitives";
 import * as CommentPrimitive from "../primitives/Comment";
 import type {
+  CommentLinkProps,
   CommentMentionProps,
+  CommentRenderLinkProps,
   CommentRenderMentionProps,
 } from "../primitives/Comment/types";
 import * as ComposerPrimitive from "../primitives/Composer";
@@ -117,6 +119,23 @@ function CommentMention({
       {MENTION_CHARACTER}
       <User userId={userId} />
     </CommentPrimitive.Mention>
+  );
+}
+
+function CommentLink({
+  href,
+  children,
+  className,
+  ...props
+}: CommentRenderLinkProps & CommentLinkProps) {
+  return (
+    <CommentPrimitive.Link
+      className={classNames("lb-comment-link", className)}
+      href={href}
+      {...props}
+    >
+      {children}
+    </CommentPrimitive.Link>
   );
 }
 
@@ -367,6 +386,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
                   onClick={(event) => onMentionClick?.(userId, event)}
                 />
               )}
+              renderLink={CommentLink}
             />
           ) : (
             <div className="lb-comment-body">

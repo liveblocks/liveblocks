@@ -39,7 +39,7 @@
     "README.md"
   ],
   "scripts": {
-    "dev": "npm run build --watch",
+    "dev": "rollup --config rollup.config.ts --configPlugin @rollup/plugin-typescript --watch",
     "build": "rollup --config rollup.config.ts --configPlugin @rollup/plugin-typescript",
     "start": "npm run dev",
     "format": "eslint --fix src/; stylelint --fix src/styles/; prettier --write src/",

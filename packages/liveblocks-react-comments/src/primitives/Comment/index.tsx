@@ -3,25 +3,21 @@ import type { ReactNode } from "react";
 import React, { forwardRef } from "react";
 
 import { MENTION_CHARACTER } from "../../slate/plugins/mentions";
+import type { ComponentPropsWithSlot } from "../../types";
 import type {
   CommentBodyProps,
   CommentMentionProps,
+  CommentRenderLinkProps,
   CommentRenderMentionProps,
 } from "./types";
-import { isCommentBodyMention } from "./utils";
+import {
+  isCommentBodyLink,
+  isCommentBodyMention,
+  toAbsoluteUrl,
+} from "./utils";
 
 const COMMENT_MENTION_NAME = "CommentMention";
 const COMMENT_BODY_NAME = "CommentBody";
-
-/**
- * Displays mentions within `Comment.Body`.
- *
- * @example
- * <Comment.Body
- *   body={comment.body}
- *   renderMention={({ userId }) => <Comment.Mention>@{userId}</Comment.Mention>}
- * />
- */
 
 function CommentDefaultRenderMention({ userId }: CommentRenderMentionProps) {
   return (
@@ -32,12 +28,53 @@ function CommentDefaultRenderMention({ userId }: CommentRenderMentionProps) {
   );
 }
 
+/**
+ * Displays mentions within `Comment.Body`.
+ *
+ * @example
+ * <Comment.Body
+ *   body={comment.body}
+ *   renderMention={({ userId }) => <Comment.Mention>@{userId}</Comment.Mention>}
+ * />
+ */
 const CommentMention = forwardRef<HTMLSpanElement, CommentMentionProps>(
   ({ children, asChild, ...props }, forwardedRef) => {
     const Component = asChild ? Slot : "span";
 
     return (
       <Component {...props} ref={forwardedRef}>
+        {children}
+      </Component>
+    );
+  }
+);
+
+function CommentDefaultRenderLink({ href, children }: CommentRenderLinkProps) {
+  return <CommentLink href={href}>{children}</CommentLink>;
+}
+
+/**
+ * Displays links within `Comment.Body`.
+ *
+ * @example
+ * <Comment.Body
+ *   body={comment.body}
+ *   renderLink={({ href, children }) => (
+ *     <Comment.Link href={href}>{children}</Comment.Link>
+ *   )}
+ * />
+ */
+const CommentLink = forwardRef<HTMLAnchorElement, ComponentPropsWithSlot<"a">>(
+  ({ children, asChild, ...props }, forwardedRef) => {
+    const Component = asChild ? Slot : "a";
+
+    return (
+      <Component
+        target="_blank"
+        rel="noopener noreferrer nofollow"
+        {...props}
+        ref={forwardedRef}
+      >
         {children}
       </Component>
     );
@@ -55,6 +92,7 @@ const CommentBody = forwardRef<HTMLDivElement, CommentBodyProps>(
     {
       body,
       renderMention: Mention = CommentDefaultRenderMention,
+      renderLink: Link = CommentDefaultRenderLink,
       asChild,
       ...props
     },
@@ -78,6 +116,16 @@ const CommentBody = forwardRef<HTMLDivElement, CommentBodyProps>(
                       return inline.id ? (
                         <Mention userId={inline.id} key={index} />
                       ) : null;
+                    }
+
+                    if (isCommentBodyLink(inline)) {
+                      const href = toAbsoluteUrl(inline.url) ?? inline.url;
+
+                      return (
+                        <Link href={href} key={index}>
+                          {inline.url}
+                        </Link>
+                      );
                     }
 
                     // <code><s><em><strong>text</strong></s></em></code>
@@ -118,4 +166,4 @@ if (process.env.NODE_ENV !== "production") {
 }
 
 // NOTE: Every export from this file will be available publicly as Comment.*
-export { CommentBody as Body, CommentMention as Mention };
+export { CommentBody as Body, CommentLink as Link, CommentMention as Mention };

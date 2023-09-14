@@ -1,6 +1,9 @@
 export type CommentBodyBlockElement = CommentBodyParagraph;
 
-export type CommentBodyInlineElement = CommentBodyText | CommentBodyMention;
+export type CommentBodyInlineElement =
+  | CommentBodyText
+  | CommentBodyMention
+  | CommentBodyLink;
 
 export type CommentBodyElement =
   | CommentBodyBlockElement
@@ -14,6 +17,11 @@ export type CommentBodyParagraph = {
 export type CommentBodyMention = {
   type: "mention";
   id: string;
+};
+
+export type CommentBodyLink = {
+  type: "link";
+  url: string;
 };
 
 export type CommentBodyText = {
