@@ -4,11 +4,9 @@
 
 - Fix unescaped room IDs when using Comments.
 
-# v1.3.3
+### `@liveblocks/react-comments`
 
-### `@liveblocks/react`
-
-- Add support for auto-Linking in comments composer
+- Add support for auto-links. (e.g. `"www.liveblocks.io"`)
 
 # v1.3.2
 
