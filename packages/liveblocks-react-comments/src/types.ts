@@ -11,11 +11,20 @@ export type ComponentPropsWithSlot<TElement extends ElementType<any>> =
 
 export type ComposerBodyBlockElement = ComposerBodyParagraph;
 
-export type ComposerBodyInlineElement = ComposerBodyText | ComposerBodyMention;
+export type ComposerBodyInlineElement =
+  | ComposerBodyText
+  | ComposerBodyMention
+  | ComposerBodyAutoLink;
 
 export type ComposerBodyParagraph = {
   type: "paragraph";
   children: ComposerBodyInlineElement[];
+};
+
+export type ComposerBodyAutoLink = {
+  type: "auto-link";
+  url: string;
+  children: ComposerBodyText[];
 };
 
 export type ComposerBodyMention = {

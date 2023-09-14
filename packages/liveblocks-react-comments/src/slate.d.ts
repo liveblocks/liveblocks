@@ -3,6 +3,7 @@ import type { HistoryEditor } from "slate-history";
 import type { ReactEditor, RenderElementProps } from "slate-react";
 
 import type {
+  ComposerBodyAutoLink,
   ComposerBodyMention,
   ComposerBodyParagraph,
   ComposerBodyText,
@@ -11,7 +12,7 @@ import type {
 declare module "slate" {
   interface CustomTypes {
     Editor: BaseEditor & ReactEditor & HistoryEditor;
-    Element: ComposerBodyParagraph | ComposerBodyMention;
+    Element: ComposerBodyParagraph | ComposerBodyMention | ComposerBodyAutoLink;
     Text: ComposerBodyText;
   }
 }

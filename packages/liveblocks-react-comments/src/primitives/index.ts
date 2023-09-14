@@ -3,6 +3,8 @@ export type {
   CommentBodyProps,
   CommentMentionProps,
   CommentRenderMentionProps,
+  CommentLinkProps,
+  CommentRenderLinkProps,
 } from "./Comment/types";
 export * as Composer from "./Composer";
 export type { ComposerContext } from "./Composer/contexts";
@@ -17,6 +19,8 @@ export type {
   ComposerSubmitProps,
   ComposerSuggestionsListItemProps,
   ComposerSuggestionsListProps,
+  ComposerLinkProps,
+  ComposerRenderLinkProps,
 } from "./Composer/types";
 export type { TimestampProps } from "./Timestamp";
 export { Timestamp } from "./Timestamp";

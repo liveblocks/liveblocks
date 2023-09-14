@@ -71,7 +71,7 @@ They are built around a few customizable CSS variables:
 
 {/* TODO: Explain automatic color scales (with a palette-type visual) */}
 
-If these CSS variables aren't enough, every elements within the components have
+If these CSS variables aren’t enough, every elements within the components have
 clearly defined classes. Additionaly, some elements also have data attributes to
 provide contextual information (e.g. `data-variant="primary"` on `.lb-button`,
 `data-self` on `.lb-comment-mention`, `data-loading` on `.lb-avatar` and
@@ -320,7 +320,12 @@ import { Button } from "@/my-design-system";
 ```tsx title="Anatomy"
 import { Comment } from "@liveblocks/react-comments/primitives";
 
-() => <Comment.Body renderMention={() => <Comment.Mention />} />;
+() => (
+  <Comment.Body
+    renderMention={() => <Comment.Mention />}
+    renderLink={() => <Comment.Link />}
+  />
+);
 ```
 
 #### Comment.Body [#primitives-Comment.Body]
@@ -337,6 +342,7 @@ Displays a comment body.
 | --------------- | ------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------- |
 | `body`          | `CommentBody \| undefined`                                               | The comment body to display. If not defined, the component will render `null`.                  |
 | `renderMention` | <code>ComponentType&lt;CommentRenderMentionProps&gt; \| undefined</code> | The component used to render mentions.<br/>Defaults to the mention’s `userId` prefixed by an @. |
+| `renderLink`    | <code>ComponentType&lt;CommentRenderLinkProps&gt; \| undefined</code>    | The component used to render links.<br/>Defaults to the link’s `children` property.             |
 | `asChild`       | `boolean \| undefined`                                                   | Replace the rendered element by the one passed as a child.<br/>Defaults to `false`.             |
 
 </Table>
@@ -359,12 +365,49 @@ A render prop that accepts a component used to render mentions.
 
 </Table>
 
+##### renderLink [#primitives-Comment.Body-renderLink]
+
+A render prop that accepts a component used to render links.
+
+```tsx
+<Comment.Body
+  renderLink={({ href, children }) => (
+    <Comment.Link href={href}>{children}</Comment.Link>
+  )}
+/>
+```
+
+<Table columns={["26%", "32%", "42%"]}>
+
+| Prop       | Type        | Description              |
+| ---------- | ----------- | ------------------------ |
+| `href`     | `string`    | The link’s absolute URL. |
+| `children` | `ReactNode` | The link’s content.      |
+
+</Table>
+
 #### Comment.Mention [#primitives-Comment.Mention]
 
 Displays mentions within `Comment.Body`’s `renderMention` prop.
 
 ```tsx
 <Comment.Mention>@{userId}</Comment.Mention>
+```
+
+<Table columns={["26%", "32%", "42%"]}>
+
+| Prop      | Type                   | Description                                                                         |
+| --------- | ---------------------- | ----------------------------------------------------------------------------------- |
+| `asChild` | `boolean \| undefined` | Replace the rendered element by the one passed as a child.<br/>Defaults to `false`. |
+
+</Table>
+
+#### Comment.Link [#primitives-Comment.Link]
+
+Displays links within `Comment.Body`’s `renderLink` prop.
+
+```tsx
+<Comment.Link href={href}>{children}</Comment.Link>
 ```
 
 <Table columns={["26%", "32%", "42%"]}>
@@ -391,6 +434,7 @@ import { Composer } from "@liveblocks/react-comments/primitives";
           </Composer.SuggestionsList>
         </Composer.Suggestions>
       )}
+      renderLink={() => <Composer.Link />}
     />
     <Composer.Submit />
   </Composer.Form>
@@ -433,6 +477,7 @@ Displays the composer’s editor.
 | `dir`                      | `"ltr" \| "rtl" \| undefined`                                                        | The reading direction of the editor and related elements.                                              |
 | `renderMention`            | <code>ComponentType&lt;ComposerRenderMentionProps&gt; \| undefined</code>            | The component used to render mentions.<br/>Defaults to the mention’s `userId` prefixed by an @.        |
 | `renderMentionSuggestions` | <code>ComponentType&lt;ComposerRenderMentionSuggestionsProps&gt; \| undefined</code> | The component used to render mention suggestions.<br/>Defaults to a list of the suggestions’ `userId`. |
+| `renderLink`               | <code>ComponentType&lt;ComposerRenderLinkProps&gt; \| undefined</code>               | The component used to render links.<br/>Defaults to the link’s `children` property.                    |
 
 </Table>
 
@@ -490,6 +535,25 @@ A render prop that accepts a component used to render mention suggestions.
   )}
 />
 ```
+
+##### renderLink [#primitives-Composer.Editor-renderLink]
+
+A render prop that accepts a component used to render links.
+
+```tsx
+<Composer.Editor
+  renderLink={({ href, children }) => <Composer.Link>{children}</Composer.Link>}
+/>
+```
+
+<Table columns={["26%", "32%", "42%"]}>
+
+| Prop       | Type        | Description              |
+| ---------- | ----------- | ------------------------ |
+| `href`     | `string`    | The link’s absolute URL. |
+| `children` | `ReactNode` | The link’s content.      |
+
+</Table>
 
 #### Composer.Mention [#primitives-Composer.Mention]
 
@@ -575,6 +639,22 @@ Displays a suggestion within `Composer.SuggestionsList`.
 | Attribute       | Value                              |
 | --------------- | ---------------------------------- |
 | `data-selected` | Present when the item is selected. |
+
+</Table>
+
+#### Composer.Link [#primitives-Composer.Link]
+
+Displays links within `Composer.Editor`’s `renderLink` prop.
+
+```tsx
+<Composer.Link href={href}>{children}</Composer.Link>
+```
+
+<Table columns={["26%", "32%", "42%"]}>
+
+| Prop      | Type                   | Description                                                                         |
+| --------- | ---------------------- | ----------------------------------------------------------------------------------- |
+| `asChild` | `boolean \| undefined` | Replace the rendered element by the one passed as a child.<br/>Defaults to `false`. |
 
 </Table>
 
