@@ -191,6 +191,7 @@ export type {
   CommentBodyLink,
   CommentBodyMention,
   CommentBodyParagraph,
+  CommentBodyText,
 } from "./comments/types/CommentBody";
 export type { CommentData } from "./comments/types/CommentData";
 export type { ThreadData } from "./comments/types/ThreadData";
