@@ -617,18 +617,18 @@ export function createRoomContext<
     key: TKey
   ): TStorage[TKey] | null {
     const room = useRoom();
-    const root = useMutableStorageRoot();
+    const rootOrNull = useMutableStorageRoot();
     const rerender = useRerender();
 
     React.useEffect(() => {
-      if (root === null) {
+      if (rootOrNull === null) {
         return;
       }
 
-      let liveValue = root.get(key);
+      let liveValue = rootOrNull.get(key);
 
       function onRootChange() {
-        const newCrdt = root!.get(key);
+        const newCrdt = rootOrNull!.get(key);
         if (newCrdt !== liveValue) {
           unsubscribeCrdt();
           liveValue = newCrdt;
@@ -645,7 +645,7 @@ export function createRoomContext<
         rerender
       );
       const unsubscribeRoot = room.subscribe(
-        root as any /* AbstractCrdt */, // TODO: This is hiding a bug! If `liveValue` happens to be the string `"event"` this actually subscribes an event handler!
+        rootOrNull as any /* AbstractCrdt */, // TODO: This is hiding a bug! If `liveValue` happens to be the string `"event"` this actually subscribes an event handler!
         onRootChange
       );
 
@@ -655,12 +655,12 @@ export function createRoomContext<
         unsubscribeRoot();
         unsubscribeCrdt();
       };
-    }, [root, room, key, rerender]);
+    }, [rootOrNull, room, key, rerender]);
 
-    if (root === null) {
+    if (rootOrNull === null) {
       return null;
     } else {
-      return root.get(key);
+      return rootOrNull.get(key);
     }
   }
 
