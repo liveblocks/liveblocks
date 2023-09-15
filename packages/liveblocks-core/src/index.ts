@@ -24,6 +24,7 @@ export type {
   LostConnectionEvent,
   Status,
 } from "./connection";
+export { isLiveNode } from "./crdts/liveblocks-helpers";
 export { LiveList } from "./crdts/LiveList";
 export { LiveMap } from "./crdts/LiveMap";
 export { LiveObject } from "./crdts/LiveObject";
