@@ -23,6 +23,7 @@ import {
   createAsyncCache,
   deprecateIf,
   errorIf,
+  isLiveNode,
   makeEventSource,
 } from "@liveblocks/core";
 import * as React from "react";
@@ -617,50 +618,48 @@ export function createRoomContext<
     key: TKey
   ): TStorage[TKey] | null {
     const room = useRoom();
-    const root = useMutableStorageRoot();
+    const rootOrNull = useMutableStorageRoot();
     const rerender = useRerender();
 
     React.useEffect(() => {
-      if (root === null) {
+      if (rootOrNull === null) {
         return;
       }
+      const root = rootOrNull;
 
-      let liveValue = root.get(key);
+      let unsubCurr: (() => void) | undefined;
+      let curr = root.get(key);
+
+      function subscribeToCurr() {
+        unsubCurr = isLiveNode(curr)
+          ? room.subscribe(curr, rerender)
+          : undefined;
+      }
 
       function onRootChange() {
-        const newCrdt = root!.get(key);
-        if (newCrdt !== liveValue) {
-          unsubscribeCrdt();
-          liveValue = newCrdt;
-          unsubscribeCrdt = room.subscribe(
-            liveValue as any /* AbstractCrdt */, // TODO: This is hiding a bug! If `liveValue` happens to be the string `"event"` this actually subscribes an event handler!
-            rerender
-          );
+        const newValue = root.get(key);
+        if (newValue !== curr) {
+          unsubCurr?.();
+          curr = newValue;
+          subscribeToCurr();
           rerender();
         }
       }
 
-      let unsubscribeCrdt = room.subscribe(
-        liveValue as any /* AbstractCrdt */, // TODO: This is hiding a bug! If `liveValue` happens to be the string `"event"` this actually subscribes an event handler!
-        rerender
-      );
-      const unsubscribeRoot = room.subscribe(
-        root as any /* AbstractCrdt */, // TODO: This is hiding a bug! If `liveValue` happens to be the string `"event"` this actually subscribes an event handler!
-        onRootChange
-      );
-
+      subscribeToCurr();
       rerender();
 
+      const unsubscribeRoot = room.subscribe(root, onRootChange);
       return () => {
         unsubscribeRoot();
-        unsubscribeCrdt();
+        unsubCurr?.();
       };
-    }, [root, room, key, rerender]);
+    }, [rootOrNull, room, key, rerender]);
 
-    if (root === null) {
+    if (rootOrNull === null) {
       return null;
     } else {
-      return root.get(key);
+      return rootOrNull.get(key);
     }
   }
 
