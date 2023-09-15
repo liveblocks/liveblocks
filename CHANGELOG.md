@@ -1,3 +1,10 @@
+# v1.3.4
+
+### `@liveblocks/react`
+
+- Fix confusing `Error: "undefined" is not a valid event name` error when using
+  `useMap()`, `useObject`, or `useList()` on uninitialized storage values.
+
 # v1.3.3
 
 ### `@liveblocks/*`
