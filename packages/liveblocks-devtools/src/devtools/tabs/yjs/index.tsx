@@ -157,6 +157,7 @@ function YjsDocumentTree({
   useEffect(() => {
     function onUpdate() {
       const yjson = yDocToJsonTree(ydoc);
+      console.log(yjson);
       setJson(yjson);
     }
 

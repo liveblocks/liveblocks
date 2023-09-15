@@ -82,8 +82,7 @@ function getYTypedValue(
       // eslint-disable-next-line @typescript-eslint/no-unsafe-return
       return doc.getArray(key).toJSON();
     } else if (type === "xml") {
-      const rootXmlText = doc.get(key, Y.XmlHook);
-      console.log(rootXmlText);
+      const rootXmlText = doc.get(key, Y.XmlText);
       return rootXmlText.toJSON() as YJsonExport; //doc.getXmlFragment(key).toJSON();
     }
   }
@@ -104,6 +103,7 @@ export function yDocToJson(doc: Y.Doc): Record<string, YJsonExport> {
 export function yDocToJsonTree(doc: Y.Doc): DevTools.JsonTreeNode[] {
   const result: DevTools.JsonTreeNode[] = [];
   console.log(doc);
+  console.log("Calling get json");
   for (const [key, value] of doc.share) {
     result.push({
       key,
