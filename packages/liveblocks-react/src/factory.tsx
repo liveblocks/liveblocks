@@ -645,13 +645,12 @@ export function createRoomContext<
         curr as any /* AbstractCrdt */, // TODO: This is hiding a bug! If `liveValue` happens to be the string `"event"` this actually subscribes an event handler!
         rerender
       );
+      rerender();
+
       const unsubscribeRoot = room.subscribe(
         root as any /* AbstractCrdt */, // TODO: This is hiding a bug! If `liveValue` happens to be the string `"event"` this actually subscribes an event handler!
         onRootChange
       );
-
-      rerender();
-
       return () => {
         unsubscribeRoot();
         unsub();
