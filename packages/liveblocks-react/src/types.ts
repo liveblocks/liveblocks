@@ -623,8 +623,8 @@ export type RoomContextBundle<
      * a re-render if the LiveList is updated, however it does not triggers
      * a re-render if a nested CRDT is updated.
      *
-     * @param key The storage key associated with the LiveList
-     * @returns null while the storage is loading, otherwise, returns the LiveList associated to the storage
+     * @param key The top-level storage key associated with the LiveList
+     * @returns null while storage is still loading, otherwise, returns the LiveList instance at the storage key
      *
      * @example
      * const animals = useList("animals");  // e.g. [] or ["🦁", "🐍", "🦍"]  // ❌ No longer recommended
@@ -643,8 +643,8 @@ export type RoomContextBundle<
      * a re-render if the LiveMap is updated, however it does not triggers
      * a re-render if a nested CRDT is updated.
      *
-     * @param key The storage key associated with the LiveMap
-     * @returns null while the storage is loading, otherwise, returns the LiveMap associated to the storage
+     * @param key The top-level storage key associated with the LiveMap
+     * @returns null while storage is still loading, otherwise, returns the LiveMap instance at the storage key
      *
      * @example
      * const shapesById = useMap("shapes");                   // ❌ No longer recommended
@@ -661,8 +661,8 @@ export type RoomContextBundle<
      * Returns the LiveObject associated with the provided key.
      * The hook triggers a re-render if the LiveObject is updated, however it does not triggers a re-render if a nested CRDT is updated.
      *
-     * @param key The storage key associated with the LiveObject
-     * @returns null while the storage is loading, otherwise, returns the LveObject associated to the storage
+     * @param key The top-level storage key associated with the LiveObject
+     * @returns null while storage is still loading, otherwise, returns the LiveObject instance at the storage key
      *
      * @example
      * const object = useObject("obj");                // ❌ No longer recommended
@@ -773,8 +773,8 @@ export type RoomContextBundle<
          * a re-render if the LiveList is updated, however it does not triggers
          * a re-render if a nested CRDT is updated.
          *
-         * @param key The storage key associated with the LiveList
-         * @returns null while the storage is loading, otherwise, returns the LiveList associated to the storage
+         * @param key The top-level storage key associated with the LiveList
+         * @returns Returns the LiveList instance at the storage key
          *
          * @example
          * const animals = useList("animals");  // e.g. [] or ["🦁", "🐍", "🦍"]  // ❌ No longer recommended
@@ -793,8 +793,8 @@ export type RoomContextBundle<
          * a re-render if the LiveMap is updated, however it does not triggers
          * a re-render if a nested CRDT is updated.
          *
-         * @param key The storage key associated with the LiveMap
-         * @returns null while the storage is loading, otherwise, returns the LiveMap associated to the storage
+         * @param key The top-level storage key associated with the LiveMap
+         * @returns Returns the LiveMap instance at the storage key
          *
          * @example
          * const shapesById = useMap("shapes");                   // ❌ No longer recommended
@@ -811,8 +811,8 @@ export type RoomContextBundle<
          * Returns the LiveObject associated with the provided key.
          * The hook triggers a re-render if the LiveObject is updated, however it does not triggers a re-render if a nested CRDT is updated.
          *
-         * @param key The storage key associated with the LiveObject
-         * @returns null while the storage is loading, otherwise, returns the LveObject associated to the storage
+         * @param key The top-level storage key associated with the LiveObject
+         * @returns Returns the LiveObject instance at the storage key
          *
          * @example
          * const object = useObject("obj");                // ❌ No longer recommended
