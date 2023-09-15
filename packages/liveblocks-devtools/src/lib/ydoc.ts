@@ -1,6 +1,7 @@
 /* eslint-disable eqeqeq */
 import type { DevTools, Json } from "@liveblocks/core";
-import { Edge, MarkerType, Node } from "reactflow";
+import type { Edge, Node } from "reactflow";
+import { MarkerType } from "reactflow";
 import * as Y from "yjs";
 
 type YJsonExport =
@@ -52,7 +53,6 @@ function getFormattedText(value: Y.Item): (object | string)[] {
     }
     n = n.right;
   }
-  console.log(formatted);
   return formatted;
 }
 
@@ -115,11 +115,21 @@ export function yDocToJsonTree(doc: Y.Doc): DevTools.JsonTreeNode[] {
   return result;
 }
 
+export type YFlowNodeData = {
+  label: string;
+  type: string;
+  setSelectedNode?: (node: string) => void;
+  isNodeSelected?: boolean;
+};
+
 export const getNodesAndEdges = (
   ydoc: Y.Doc,
   setSelectedNode: (node: string) => void,
   selectedNode: string
-): { docEdges: Edge<object>[]; docNodes: Node<object>[] } => {
+): {
+  docEdges: Edge<object>[];
+  docNodes: Node<YFlowNodeData>[];
+} => {
   let x = 100;
   let y = 100;
   const docEdges = [];
@@ -127,7 +137,7 @@ export const getNodesAndEdges = (
     {
       id: ydoc.guid,
       position: { x, y },
-      data: { label: `Doc:${ydoc.clientID}` },
+      data: { type: "header", label: `Doc:${ydoc.clientID}` },
     },
   ];
 
@@ -136,7 +146,7 @@ export const getNodesAndEdges = (
     docNodes.push({
       id: `client-${key}`,
       position: { x, y },
-      data: { label: `Client:${key}` },
+      data: { type: "header", label: `Client:${key}` },
     });
     docEdges.push({
       id: `${ydoc.guid}-client-${key}`,
@@ -154,6 +164,7 @@ export const getNodesAndEdges = (
           id: `item-${item.id.client}-${item.id.clock}`,
           position: { x, y },
           data: {
+            type: "node",
             label: `Item:${item.id.client}:${item.id.clock}`,
             item,
             setSelectedNode,

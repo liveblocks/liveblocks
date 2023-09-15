@@ -100,8 +100,6 @@ function YItemNode({ data }: NodeProps<NodeData>) {
         style={{ bottom: 10, background: "green" }}
         id="left"
       />
-      <h2>{data.item.id.clock}</h2>
-      {data.item.info}
       {component}
     </div>
   );

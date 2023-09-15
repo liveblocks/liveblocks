@@ -20,6 +20,7 @@ import { useEdgesState, useNodesState } from "reactflow";
 
 import { Loading } from "../../../components/Loading";
 import { truncate } from "../../../lib/truncate";
+import type { YFlowNodeData } from "../../../lib/ydoc";
 import { getNodesAndEdges, yDocToJsonTree } from "../../../lib/ydoc";
 import { EmptyState } from "../../components/EmptyState";
 import type { SelectItem } from "../../components/Select";
@@ -42,11 +43,11 @@ export type YdocView = (typeof YDOC_VIEWS)[number];
 
 const g = new Dagre.graphlib.Graph().setDefaultEdgeLabel(() => ({}));
 
-const getLayoutedElements = (nodes: Node<object, string>[], edges: Edge<object>[]) => {
+const getLayoutedElements = (nodes: Node<YFlowNodeData, string>[], edges: Edge<object>[]) => {
   g.setGraph({ rankdir: "TB", nodesep: 10 });
 
   edges.forEach((edge) => g.setEdge(edge.source, edge.target));
-  nodes.forEach((node) => g.setNode(node.id, { ...node, width: 150, height: 100 }));
+  nodes.forEach((node) => g.setNode(node.id, { ...node, width: 150, height: node.data.type === "node" ? 100 : 20 }));
 
   Dagre.layout(g);
 
@@ -77,9 +78,6 @@ interface YjsDocumentProps extends ComponentProps<"div"> {
 
 // TODO: Implement search filtering
 function YjsDocumentDiagram({
-  search,
-  searchText,
-  onSearchClear,
   className,
   ...props
 }: Omit<YjsDocumentProps, "view">) {

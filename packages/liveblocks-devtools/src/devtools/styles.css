@@ -169,8 +169,8 @@ input[type="search"]::-webkit-search-cancel-button {
   border-style: solid;
   border-color: #1a192b;
   background-color: white;
-  max-width: 150;
-  max-height: 100;
+  width: 150;
+  height: 100;
   overflow: hidden;
 }
 
