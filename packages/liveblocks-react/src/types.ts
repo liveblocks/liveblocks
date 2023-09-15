@@ -627,7 +627,11 @@ export type RoomContextBundle<
      * @returns null while the storage is loading, otherwise, returns the LiveList associated to the storage
      *
      * @example
-     * const animals = useList("animals");  // e.g. [] or ["🦁", "🐍", "🦍"]
+     * const animals = useList("animals");  // e.g. [] or ["🦁", "🐍", "🦍"]  // ❌ No longer recommended
+     * const animals = useStorage((root) => root.animals);                    // ✅ Do this instead
+     *
+     * @deprecated We no longer recommend using `useList`. Prefer `useStorage`
+     * for reading and `useMutation` for writing.
      */
     useList<TKey extends Extract<keyof TStorage, string>>(
       key: TKey
@@ -643,7 +647,11 @@ export type RoomContextBundle<
      * @returns null while the storage is loading, otherwise, returns the LiveMap associated to the storage
      *
      * @example
-     * const shapesById = useMap("shapes");
+     * const shapesById = useMap("shapes");                   // ❌ No longer recommended
+     * const shapesById = useStorage((root) => root.shapes);  // ✅ Do this instead
+     *
+     * @deprecated We no longer recommend using `useMap`. Prefer `useStorage`
+     * for reading and `useMutation` for writing.
      */
     useMap<TKey extends Extract<keyof TStorage, string>>(
       key: TKey
@@ -657,7 +665,11 @@ export type RoomContextBundle<
      * @returns null while the storage is loading, otherwise, returns the LveObject associated to the storage
      *
      * @example
-     * const object = useObject("obj");
+     * const object = useObject("obj");                // ❌ No longer recommended
+     * const object = useStorage((root) => root.obj);  // ✅ Do this instead
+     *
+     * @deprecated We no longer recommend using `useObject`. Prefer `useStorage`
+     * for reading and `useMutation` for writing.
      */
     useObject<TKey extends Extract<keyof TStorage, string>>(
       key: TKey
@@ -765,7 +777,11 @@ export type RoomContextBundle<
          * @returns null while the storage is loading, otherwise, returns the LiveList associated to the storage
          *
          * @example
-         * const animals = useList("animals");  // e.g. [] or ["🦁", "🐍", "🦍"]
+         * const animals = useList("animals");  // e.g. [] or ["🦁", "🐍", "🦍"]  // ❌ No longer recommended
+         * const animals = useStorage((root) => root.animals);                    // ✅ Do this instead
+         *
+         * @deprecated We no longer recommend using `useList`. Prefer `useStorage`
+         * for reading and `useMutation` for writing.
          */
         useList<TKey extends Extract<keyof TStorage, string>>(
           key: TKey
@@ -781,7 +797,11 @@ export type RoomContextBundle<
          * @returns null while the storage is loading, otherwise, returns the LiveMap associated to the storage
          *
          * @example
-         * const shapesById = useMap("shapes");
+         * const shapesById = useMap("shapes");                   // ❌ No longer recommended
+         * const shapesById = useStorage((root) => root.shapes);  // ✅ Do this instead
+         *
+         * @deprecated We no longer recommend using `useMap`. Prefer `useStorage`
+         * for reading and `useMutation` for writing.
          */
         useMap<TKey extends Extract<keyof TStorage, string>>(
           key: TKey
@@ -795,7 +815,11 @@ export type RoomContextBundle<
          * @returns null while the storage is loading, otherwise, returns the LveObject associated to the storage
          *
          * @example
-         * const object = useObject("obj");
+         * const object = useObject("obj");                // ❌ No longer recommended
+         * const object = useStorage((root) => root.obj);  // ✅ Do this instead
+         *
+         * @deprecated We no longer recommend using `useObject`. Prefer `useStorage`
+         * for reading and `useMutation` for writing.
          */
         useObject<TKey extends Extract<keyof TStorage, string>>(
           key: TKey
