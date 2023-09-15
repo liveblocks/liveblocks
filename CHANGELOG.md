@@ -1,3 +1,10 @@
+# v1.3.5
+
+### `@liveblocks/react-comments`
+
+- Fix overflowing `Composer.Suggestions`.
+- Reduce the impact of icons on bundle size.
+
 # v1.3.4
 
 ### `@liveblocks/react`
