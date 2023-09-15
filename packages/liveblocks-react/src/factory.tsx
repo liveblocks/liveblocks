@@ -629,10 +629,10 @@ export function createRoomContext<
       let curr = root.get(key);
 
       function onRootChange() {
-        const newCrdt = root.get(key);
-        if (newCrdt !== curr) {
+        const newValue = root.get(key);
+        if (newValue !== curr) {
           unsubscribeCrdt();
-          curr = newCrdt;
+          curr = newValue;
           unsubscribeCrdt = room.subscribe(
             curr as any /* AbstractCrdt */, // TODO: This is hiding a bug! If `liveValue` happens to be the string `"event"` this actually subscribes an event handler!
             rerender
