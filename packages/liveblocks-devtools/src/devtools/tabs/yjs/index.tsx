@@ -1,5 +1,6 @@
 import "reactflow/dist/style.css";
 
+import Dagre from "@dagrejs/dagre";
 import { assertNever, type DevTools } from "@liveblocks/core";
 import { useStorage } from "@plasmohq/storage/hook";
 import * as RadixSelect from "@radix-ui/react-select";
@@ -14,6 +15,7 @@ import {
   useState,
 } from "react";
 import type { NodeApi, TreeApi } from "react-arborist";
+import type { Edge, Node } from "reactflow";
 import { useEdgesState, useNodesState } from "reactflow";
 
 import { Loading } from "../../../components/Loading";
@@ -37,6 +39,26 @@ export const YJS_TABS = ["document", "awareness", "logs"] as const;
 export const YDOC_VIEWS = ["diagram", "tree"] as const;
 export type YjsTab = (typeof YJS_TABS)[number];
 export type YdocView = (typeof YDOC_VIEWS)[number];
+
+const g = new Dagre.graphlib.Graph().setDefaultEdgeLabel(() => ({}));
+
+const getLayoutedElements = (nodes: Node<object, string>[], edges: Edge<object>[]) => {
+  g.setGraph({ rankdir: "TB", nodesep: 10 });
+
+  edges.forEach((edge) => g.setEdge(edge.source, edge.target));
+  nodes.forEach((node) => g.setNode(node.id, { ...node, width: 150, height: 100 }));
+
+  Dagre.layout(g);
+
+  return {
+    nodes: nodes.map((node) => {
+      const { x, y } = g.node(node.id);
+
+      return { ...node, position: { x, y } };
+    }),
+    edges,
+  };
+};
 
 interface Props extends ComponentProps<"div"> {
   activeTab: YjsTab;
@@ -75,8 +97,10 @@ function YjsDocumentDiagram({
         onSetNode,
         selectedNode
       );
-      setEdges(docEdges);
-      setNodes(docNodes);
+      const layouted = getLayoutedElements(docNodes, docEdges);
+
+      setEdges(layouted.edges);
+      setNodes(layouted.nodes);
     }
 
     function onSetNode(node: string) {

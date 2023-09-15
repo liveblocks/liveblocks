@@ -158,3 +158,34 @@ input[type="search"]::-webkit-search-cancel-button {
 .react-flow__minimap {
   @apply rounded-md overflow-hidden;
 }
+
+.y-item-node {
+  padding: 10px;
+  border-radius: 3px;
+  font-size: 12px;
+  color: #222;
+  text-align: center;
+  border-width: 1px;
+  border-style: solid;
+  border-color: #1a192b;
+  background-color: white;
+  max-width: 150;
+  max-height: 100;
+  overflow: hidden;
+}
+
+.y-item-node.selected {
+  border-color: rgb(89, 189, 255);
+  border-width: 3px;
+}
+
+.y-item-node .y-item-deleted label {
+  display: block;
+  font-weight: bold;
+  color: rgba(141, 34, 34, 1);
+}
+.y-item-node .y-item-string label {
+  display: block;
+  font-weight: bold;
+  color: rgb(0, 91, 114);
+}

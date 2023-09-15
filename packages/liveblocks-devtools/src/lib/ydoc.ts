@@ -1,6 +1,6 @@
 /* eslint-disable eqeqeq */
 import type { DevTools, Json } from "@liveblocks/core";
-import { MarkerType } from "reactflow";
+import { Edge, MarkerType, Node } from "reactflow";
 import * as Y from "yjs";
 
 type YJsonExport =
@@ -112,7 +112,6 @@ export function yDocToJsonTree(doc: Y.Doc): DevTools.JsonTreeNode[] {
       payload: getYTypedValue(doc, value, key, false) as Json,
     });
   }
-  console.log("RESULT ", result);
   return result;
 }
 
@@ -120,7 +119,7 @@ export const getNodesAndEdges = (
   ydoc: Y.Doc,
   setSelectedNode: (node: string) => void,
   selectedNode: string
-) => {
+): { docEdges: Edge<object>[]; docNodes: Node<object>[] } => {
   let x = 100;
   let y = 100;
   const docEdges = [];
