@@ -245,10 +245,24 @@ describe("useObject", () => {
     const sim = await websocketSimulator();
     act(() => sim.simulateStorageLoaded());
 
-    expect(result.current?.toImmutable()).toEqual({
+    expect(result.current!.toImmutable()).toEqual({
       a: 0,
       nested: ["foo", "bar"],
     });
+  });
+
+  test("initialization of non-existing fields does not crash (regression)", async () => {
+    const { result } = renderHook(() => useObject("non-existing-field" as any));
+
+    // On the initial render, this hook will return `null` (indicating storage hasn't loaded)
+    expect(result.current).toBeNull();
+
+    const sim = await websocketSimulator();
+    act(() => sim.simulateStorageLoaded());
+
+    // After loading storage, this value will be `undefined` (because missing)
+    // Previously this used to throw a confusing Error: `"undefined" is not a valid event name`
+    expect(result.current).toBeUndefined();
   });
 
   test("unmounting useObject while storage is loading should not cause a memory leak", async () => {

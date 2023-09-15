@@ -2394,7 +2394,10 @@ function makeClassicSubscribeFn<
 
         // istanbul ignore next
         default:
-          return assertNever(first, "Unknown event");
+          return assertNever(
+            first,
+            `"${String(first)}" is not a valid event name`
+          );
       }
     }
 
@@ -2419,7 +2422,9 @@ function makeClassicSubscribeFn<
       }
     }
 
-    throw new Error(`"${String(first)}" is not a valid event name`);
+    throw new Error(
+      `${String(first)} is not a value that can be subscribed to.`
+    );
   }
 
   return subscribe;
