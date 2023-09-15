@@ -23,6 +23,7 @@ import {
   createAsyncCache,
   deprecateIf,
   errorIf,
+  isLiveNode,
   makeEventSource,
 } from "@liveblocks/core";
 import * as React from "react";
@@ -629,29 +630,26 @@ export function createRoomContext<
       let unsubCurr: (() => void) | undefined;
       let curr = root.get(key);
 
+      function subscribeToCurr() {
+        unsubCurr = isLiveNode(curr)
+          ? room.subscribe(curr, rerender)
+          : undefined;
+      }
+
       function onRootChange() {
         const newValue = root.get(key);
         if (newValue !== curr) {
           unsubCurr?.();
           curr = newValue;
-          unsubCurr = room.subscribe(
-            curr as any /* AbstractCrdt */, // TODO: This is hiding a bug! If `liveValue` happens to be the string `"event"` this actually subscribes an event handler!
-            rerender
-          );
+          subscribeToCurr();
           rerender();
         }
       }
 
-      unsubCurr = room.subscribe(
-        curr as any /* AbstractCrdt */, // TODO: This is hiding a bug! If `liveValue` happens to be the string `"event"` this actually subscribes an event handler!
-        rerender
-      );
+      subscribeToCurr();
       rerender();
 
-      const unsubscribeRoot = room.subscribe(
-        root as any /* AbstractCrdt */, // TODO: This is hiding a bug! If `liveValue` happens to be the string `"event"` this actually subscribes an event handler!
-        onRootChange
-      );
+      const unsubscribeRoot = room.subscribe(root, onRootChange);
       return () => {
         unsubscribeRoot();
         unsubCurr?.();
