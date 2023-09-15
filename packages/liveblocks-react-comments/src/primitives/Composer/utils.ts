@@ -1,7 +1,6 @@
 import type { Placement } from "@floating-ui/react-dom";
 import type {
   CommentBody,
-  CommentBodyElement,
   CommentBodyLink,
   CommentBodyMention,
   CommentBodyText,
