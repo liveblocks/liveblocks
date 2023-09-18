@@ -74,6 +74,7 @@ jobs:
       LIVEBLOCKS_SERVER: ${{ secrets.E2E_TEST_LIVEBLOCKS_SERVER }}
       LIVEBLOCKS_AUTHORIZE_ENDPOINT:
         ${{ secrets.E2E_TEST_LIVEBLOCKS_AUTHORIZE_ENDPOINT }}
+      NEXT_PUBLIC_GITHUB_SHA: ${{ github.sha }}
 
     steps:
       - name: Checkout
