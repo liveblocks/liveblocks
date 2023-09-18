@@ -1,6 +1,7 @@
 import { createRoomContext } from "@liveblocks/react";
 import randomNumber from "../../utils/randomNumber";
 import React from "react";
+import { genRoomId } from "../../utils";
 import { LiveObject } from "@liveblocks/client";
 import { lsonToJson } from "@liveblocks/core";
 import createLiveblocksClient from "../../utils/createClient";
@@ -18,7 +19,7 @@ const { RoomProvider, useObject, useRedo, useSelf, useUndo } =
   >(client);
 
 export default function Home() {
-  let roomId = "e2e-storage-object";
+  let roomId = genRoomId("e2e-storage-object");
   if (typeof window !== "undefined") {
     const queryParam = window.location.search;
     if (queryParam.split("room=").length > 1) {

@@ -2,6 +2,7 @@ import { createRoomContext } from "@liveblocks/react";
 import { LiveList } from "@liveblocks/client";
 import React from "react";
 import createLiveblocksClient from "../../utils/createClient";
+import { genRoomId } from "../../utils";
 
 const client = createLiveblocksClient();
 
@@ -11,7 +12,7 @@ const { RoomProvider, useList, useRedo, useSelf, useUndo } = createRoomContext<
 >(client);
 
 export default function Home() {
-  let roomId = "e2e-storage-list";
+  let roomId = genRoomId("e2e-storage-list");
   if (typeof window !== "undefined") {
     const queryParam = window.location.search;
     if (queryParam.split("room=").length > 1) {
