@@ -40,10 +40,10 @@ import {
 } from "../../contexts/CurrentRoom";
 import { YFlow } from "./yflow/YFlow";
 
-export const YJS_TABS = ["document", "awareness", "logs"] as const;
-export const YDOC_VIEWS = ["diagram", "tree"] as const;
+export const YJS_TABS = ["changes", "document", "awareness"] as const;
+export const YJS_CHANGES_VIEWS = ["diagram", "list"] as const;
 export type YjsTab = (typeof YJS_TABS)[number];
-export type YdocView = (typeof YDOC_VIEWS)[number];
+export type YjsChangesView = (typeof YJS_CHANGES_VIEWS)[number];
 
 const g = new Dagre.graphlib.Graph().setDefaultEdgeLabel(() => ({}));
 
@@ -77,21 +77,58 @@ const getLayoutedElements = (
 interface Props extends ComponentProps<"div"> {
   activeTab: YjsTab;
   setActiveTab: (value: string) => void;
-  documentView: YdocView;
-  setDocumentView: (value: string) => void;
+  changesView: YjsChangesView;
+  setChangesView: (value: string) => void;
   search?: RegExp;
   searchText?: string;
   onSearchClear: (event: MouseEvent<HTMLButtonElement>) => void;
+}
+
+interface YjsChangesProps extends ComponentProps<"div"> {
+  view: YjsChangesView;
 }
 
 interface YjsDocumentProps extends ComponentProps<"div"> {
-  view: YdocView;
   search?: RegExp;
   searchText?: string;
   onSearchClear: (event: MouseEvent<HTMLButtonElement>) => void;
 }
 
-function YjsDocumentDiagram({ className, ...props }: ComponentProps<"div">) {
+function YjsChangesList({ className, ...props }: ComponentProps<"div">) {
+  const currentStatus = useStatus();
+  const updates = useYUpdates();
+  const tree = useMemo(() => createTreeFromYUpdates(updates), [updates]);
+
+  if (
+    currentStatus === "connected" ||
+    currentStatus === "open" || // Same as "connected", but only sent by old clients (prior to 1.1)
+    currentStatus === "reconnecting"
+  ) {
+    if (updates.length > 0) {
+      return (
+        <div
+          className={cx(
+            className,
+            "absolute inset-0 flex h-full overflow-y-auto"
+          )}
+          {...props}
+        >
+          <YLogsTree data={tree} />
+        </div>
+      );
+    } else {
+      return (
+        <EmptyState
+          description={<>There seems to be no logs for this&nbsp;room.</>}
+        />
+      );
+    }
+  } else {
+    return <EmptyState visual={<Loading />} />;
+  }
+}
+
+function YjsChangesDiagram({ className, ...props }: ComponentProps<"div">) {
   const [isTransitionPending, startTransition] = useTransition();
   const [nodes, setNodes] = useNodesState([]);
   const [edges, setEdges] = useEdgesState([]);
@@ -152,13 +189,24 @@ function YjsDocumentDiagram({ className, ...props }: ComponentProps<"div">) {
   }
 }
 
-function YjsDocumentTree({
+function YjsChanges({ view, ...props }: YjsChangesProps) {
+  switch (view) {
+    case "diagram":
+      return <YjsChangesDiagram {...props} />;
+    case "list":
+      return <YjsChangesList {...props} />;
+    default:
+      assertNever(view, "Unexpected view type");
+  }
+}
+
+function YjsDocument({
   search,
   searchText,
   onSearchClear,
   className,
   ...props
-}: Omit<YjsDocumentProps, "view">) {
+}: YjsDocumentProps) {
   const ydoc = useYdoc();
   const currentStatus = useStatus();
   const [json, setJson] = useState<DevTools.JsonTreeNode[]>([]);
@@ -257,30 +305,6 @@ function YjsDocumentTree({
   }
 }
 
-function YjsDocument({
-  view,
-  search,
-  searchText,
-  onSearchClear,
-  ...props
-}: YjsDocumentProps) {
-  switch (view) {
-    case "diagram":
-      return <YjsDocumentDiagram {...props} />;
-    case "tree":
-      return (
-        <YjsDocumentTree
-          search={search}
-          searchText={searchText}
-          onSearchClear={onSearchClear}
-          {...props}
-        />
-      );
-    default:
-      assertNever(view, "Unexpected view type");
-  }
-}
-
 function YjsAwareness({ className, ...props }: ComponentProps<"div">) {
   const currentStatus = useStatus();
   const presence = usePresence();
@@ -324,48 +348,14 @@ function YjsAwareness({ className, ...props }: ComponentProps<"div">) {
   }
 }
 
-function YjsLogs({ className, ...props }: ComponentProps<"div">) {
-  const currentStatus = useStatus();
-  const updates = useYUpdates();
-  const tree = useMemo(() => createTreeFromYUpdates(updates), [updates]);
-
-  if (
-    currentStatus === "connected" ||
-    currentStatus === "open" || // Same as "connected", but only sent by old clients (prior to 1.1)
-    currentStatus === "reconnecting"
-  ) {
-    if (updates.length > 0) {
-      return (
-        <div
-          className={cx(
-            className,
-            "absolute inset-0 flex h-full overflow-y-auto"
-          )}
-          {...props}
-        >
-          <YLogsTree data={tree} />
-        </div>
-      );
-    } else {
-      return (
-        <EmptyState
-          description={<>There seems to be no logs for this&nbsp;room.</>}
-        />
-      );
-    }
-  } else {
-    return <EmptyState visual={<Loading />} />;
-  }
-}
-
 export function Yjs({
   search,
   searchText,
   onSearchClear,
   activeTab,
   setActiveTab,
-  documentView,
-  setDocumentView,
+  changesView,
+  setChangesView,
   className,
   ...props
 }: Props) {
@@ -373,6 +363,14 @@ export function Yjs({
   const yjsTabs = useMemo(() => {
     return YJS_TABS.map((tab) => {
       switch (tab) {
+        case "changes":
+          return {
+            value: "changes",
+            title: "Changes",
+            content: (
+              <YjsChanges key={`${currentRoomId}:changes`} view={changesView} />
+            ),
+          };
         case "document":
           return {
             value: "document",
@@ -383,7 +381,6 @@ export function Yjs({
                 search={search}
                 searchText={searchText}
                 onSearchClear={onSearchClear}
-                view={documentView}
               />
             ),
           };
@@ -393,17 +390,11 @@ export function Yjs({
             title: "Awareness",
             content: <YjsAwareness key={`${currentRoomId}:awareness`} />,
           };
-        case "logs":
-          return {
-            value: "logs",
-            title: "Logs",
-            content: <YjsLogs key={`${currentRoomId}:logs`} />,
-          };
       }
     });
-  }, [currentRoomId, documentView, onSearchClear, search, searchText]);
+  }, [changesView, currentRoomId, onSearchClear, search, searchText]);
   const documentViewsItems: SelectItem[] = useMemo(() => {
-    return YDOC_VIEWS.map((view) => ({
+    return YJS_CHANGES_VIEWS.map((view) => ({
       value: view,
       content: `View as ${view}`,
     }));
@@ -417,15 +408,15 @@ export function Yjs({
         onValueChange={setActiveTab}
         tabs={yjsTabs}
         trailing={
-          activeTab === "document" && (
+          activeTab === "changes" && (
             <div className="flex items-center ml-auto after:bg-light-300 after:dark:bg-dark-300 relative flex-none pl-1 after:absolute after:-left-px after:top-[20%] after:h-[60%] after:w-px">
               <Select
-                value={documentView}
-                onValueChange={setDocumentView}
+                value={changesView}
+                onValueChange={setChangesView}
                 description="Change view"
                 items={documentViewsItems}
               >
-                <RadixSelect.Value>View as {documentView}</RadixSelect.Value>
+                <RadixSelect.Value>View as {changesView}</RadixSelect.Value>
               </Select>
             </div>
           )

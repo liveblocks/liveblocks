@@ -18,8 +18,8 @@ import { CurrentRoomProvider, useCurrentRoomId } from "./contexts/CurrentRoom";
 import { sendMessage } from "./port";
 import { Presence } from "./tabs/presence";
 import { Storage } from "./tabs/storage";
-import type { YdocView, YjsTab } from "./tabs/yjs";
-import { YDOC_VIEWS, Yjs, YJS_TABS } from "./tabs/yjs";
+import type { YjsChangesView, YjsTab } from "./tabs/yjs";
+import { Yjs, YJS_CHANGES_VIEWS, YJS_TABS } from "./tabs/yjs";
 
 const MAIN_TABS = ["storage", "yjs"] as const;
 const SECONDARY_TABS = ["presence", "history", "events"] as const;
@@ -34,9 +34,9 @@ function Panel() {
     SECONDARY_TABS[0]
   );
   const [yjsTab, setYjsTab] = useStorage<YjsTab>("tabs-main-yjs", YJS_TABS[0]);
-  const [yjsDocumentView, setYjsDocumentView] = useStorage<YdocView>(
-    "yjs-ydoc-view",
-    YDOC_VIEWS[0]
+  const [yjsChangesView, setYjsChangesView] = useStorage<YjsChangesView>(
+    "yjs-changes-view",
+    YJS_CHANGES_VIEWS[0]
   );
   const currentRoomId = useCurrentRoomId();
   const [searchText, setSearchText] = useState("");
@@ -46,10 +46,9 @@ function Panel() {
   }, [searchText]);
   const isSearchActive = useMemo(() => {
     return (
-      mainTab === "storage" ||
-      (mainTab === "yjs" && yjsTab === "document" && yjsDocumentView === "tree")
+      mainTab === "storage" || (mainTab === "yjs" && yjsTab === "document")
     );
-  }, [mainTab, yjsDocumentView, yjsTab]);
+  }, [mainTab, yjsTab]);
 
   const handleSearchClear = useCallback(() => {
     setSearchText("");
@@ -80,11 +79,11 @@ function Panel() {
     [setYjsTab]
   );
 
-  const handleYjsDocumentViewChange = useCallback(
+  const handleYjsChangesViewChange = useCallback(
     (value: string) => {
-      void setYjsDocumentView(value as YdocView);
+      void setYjsChangesView(value as YjsChangesView);
     },
-    [setYjsDocumentView]
+    [setYjsChangesView]
   );
 
   const mainTabs: Tab[] = useMemo(() => {
@@ -115,8 +114,8 @@ function Panel() {
                 search={search}
                 searchText={searchText}
                 onSearchClear={handleSearchClear}
-                documentView={yjsDocumentView}
-                setDocumentView={handleYjsDocumentViewChange}
+                changesView={yjsChangesView}
+                setChangesView={handleYjsChangesViewChange}
               />
             ),
           };
@@ -125,11 +124,11 @@ function Panel() {
   }, [
     currentRoomId,
     handleSearchClear,
-    handleYjsDocumentViewChange,
+    handleYjsChangesViewChange,
     handleYjsTabChange,
     search,
     searchText,
-    yjsDocumentView,
+    yjsChangesView,
     yjsTab,
   ]);
 
