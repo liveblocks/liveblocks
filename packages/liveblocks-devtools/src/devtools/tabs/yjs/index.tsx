@@ -119,7 +119,7 @@ function YjsChangesList({ className, ...props }: ComponentProps<"div">) {
     } else {
       return (
         <EmptyState
-          description={<>There seems to be no logs for this&nbsp;room.</>}
+          description={<>There seems to be no Yjs changes in this&nbsp;room.</>}
         />
       );
     }
@@ -180,7 +180,7 @@ function YjsChangesDiagram({ className, ...props }: ComponentProps<"div">) {
     } else {
       return (
         <EmptyState
-          description={<>This room’s Yjs document appears to be&nbsp;empty.</>}
+          description={<>There seems to be no Yjs changes in this&nbsp;room.</>}
         />
       );
     }
