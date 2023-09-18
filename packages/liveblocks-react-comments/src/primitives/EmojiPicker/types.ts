@@ -32,6 +32,8 @@ export type EmojiData = {
 
 export type EmojiPickerRootProps = PropsWithChildren;
 
-export type EmojiPickerListProps = ComponentPropsWithSlot<"div">;
+export interface EmojiPickerListProps extends ComponentPropsWithSlot<"div"> {
+  columns?: number;
+}
 
 export type EmojiPickerSearchProps = ComponentPropsWithSlot<"input">;
