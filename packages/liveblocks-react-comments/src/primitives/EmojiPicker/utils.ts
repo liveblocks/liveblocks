@@ -8,6 +8,8 @@ import type {
   EmojiData,
 } from "./types";
 
+const EMOJI_VERSION = 14;
+
 export async function getEmojiData(): Promise<EmojiData> {
   // TODO: Handle fetching/caching (using ETag, localStorage, etc) ourselves
   const emojibaseEmojis = await fetchEmojis("en");
@@ -17,7 +19,9 @@ export async function getEmojiData(): Promise<EmojiData> {
   const filteredGroups = emojibaseMessages.groups.filter(
     (group) => group.key !== "component"
   );
-  const filteredEmojis = emojibaseEmojis.filter((emoji) => "group" in emoji);
+  const filteredEmojis = emojibaseEmojis.filter(
+    (emoji) => "group" in emoji && emoji.version <= EMOJI_VERSION
+  );
 
   const categories = filteredGroups.map((group) => ({
     key: group.order,
