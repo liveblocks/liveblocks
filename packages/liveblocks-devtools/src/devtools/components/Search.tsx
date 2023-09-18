@@ -82,6 +82,7 @@ export const Search = forwardRef<HTMLInputElement, Props>(
             </span>
           }
           sideOffset={5}
+          open={disabled ? false : undefined}
         >
           <input
             type="search"
