@@ -16,6 +16,7 @@ import { CrossIcon } from "../icons/cross";
 import { DeleteIcon } from "../icons/delete";
 import { EditIcon } from "../icons/edit";
 import { EllipsisIcon } from "../icons/ellipsis";
+import { EmojiIcon } from "../icons/emoji";
 import {
   type CommentOverrides,
   type ComposerOverrides,
@@ -263,6 +264,15 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
                 )}
               >
                 {additionalActions ?? null}
+                <Tooltip content={$.COMMENT_ADD_REACTION}>
+                  <Button
+                    className="lb-comment-action"
+                    onClick={stopPropagation}
+                    aria-label={$.COMMENT_ADD_REACTION}
+                  >
+                    <EmojiIcon className="lb-button-icon" />
+                  </Button>
+                </Tooltip>
                 {comment.userId === self?.id && (
                   <Dropdown
                     open={isMoreOpen}

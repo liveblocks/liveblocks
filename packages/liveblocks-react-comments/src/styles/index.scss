@@ -584,7 +584,6 @@
   .lb-composer-actions,
   .lb-composer-editor-actions {
     display: flex;
-    gap: calc(0.25 * var(--lb-spacing));
     align-items: center;
   }
 
@@ -665,7 +664,6 @@
 
   .lb-comment-actions {
     display: flex;
-    gap: calc(0.25 * var(--lb-spacing));
     transition-timing-function: var(--lb-transition-easing);
     transition-duration: var(--lb-transition-duration);
     transition-property: opacity;
