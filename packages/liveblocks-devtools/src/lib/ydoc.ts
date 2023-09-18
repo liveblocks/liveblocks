@@ -35,7 +35,6 @@ function getType(item: Y.Item): YType {
 function getFormattedText(value: Y.Item): (object | string)[] {
   const formatted = [];
   let n: Y.Item | null = value;
-  console.log("get formatted text", value);
   while (n !== null) {
     if (!n.deleted) {
       if (n.content instanceof Y.ContentType) {
@@ -45,7 +44,6 @@ function getFormattedText(value: Y.Item): (object | string)[] {
         formatted.push(n.content.str);
       } else if (n.content instanceof Y.ContentFormat) {
         const { key, value } = n.content;
-        console.log(key, value);
         formatted.push({ key, value });
       } else if (n.content instanceof Y.ContentEmbed) {
         formatted.push(n.content.embed);
@@ -102,8 +100,6 @@ export function yDocToJson(doc: Y.Doc): Record<string, YJsonExport> {
 
 export function yDocToJsonTree(doc: Y.Doc): DevTools.JsonTreeNode[] {
   const result: DevTools.JsonTreeNode[] = [];
-  console.log(doc);
-  console.log("Calling get json");
   for (const [key, value] of doc.share) {
     result.push({
       key,
