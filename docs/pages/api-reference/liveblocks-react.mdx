@@ -1158,13 +1158,13 @@ const createThread = useCreateThread();
 const thread = createThread({ body: {}, metadata: {} });
 ```
 
-### useEditThread
+### useEditThreadMetadata
 
 Returns a function that edits a thread’s metadata.
 
 ```tsx
-const editThread = useEditThread();
-const thread = editThread({ threadId: "th_xxx", metadata: {} });
+const editThreadMetadata = useEditThreadMetadata();
+const thread = editThreadMetadata({ threadId: "th_xxx", metadata: {} });
 ```
 
 ### useCreateComment

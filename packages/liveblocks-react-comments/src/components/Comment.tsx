@@ -340,7 +340,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
               defaultValue={comment.body}
               placeholder={$.COMMENT_EDIT_COMPOSER_PLACEHOLDER}
               autoFocus
-              showLogo={false}
+              showAttribution={false}
               actions={
                 <>
                   <Tooltip

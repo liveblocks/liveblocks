@@ -5,6 +5,11 @@
 - Officially mark `useList()`, `useMap()`, and `useObject()` as deprecated in
   JSDoc comments (we stopped recommending them since the release of 0.18)
 
+### `@liveblocks/react-comments`
+
+- Fix overflowing `Composer.Suggestions`.
+- Reduce the impact of icons on bundle size.
+
 # v1.3.4
 
 ### `@liveblocks/react`

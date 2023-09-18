@@ -485,6 +485,7 @@ const ComposerSuggestions = forwardRef<
         display: "flex",
         flexDirection: "column",
         maxHeight: "var(--lb-composer-suggestions-available-height)",
+        overflowY: "auto",
         ...style,
       }}
       ref={mergedRefs}

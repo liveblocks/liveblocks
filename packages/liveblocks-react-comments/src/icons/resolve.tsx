@@ -1,26 +1,13 @@
 import type { ComponentProps } from "react";
 import React from "react";
 
-import { classNames } from "../utils/class-names";
+import { Icon } from "../components/internal/Icon";
 
-export function ResolveIcon({ className, ...props }: ComponentProps<"svg">) {
+export function ResolveIcon(props: ComponentProps<"svg">) {
   return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width={20}
-      height={20}
-      viewBox="0 0 20 20"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={1.5}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      role="presentation"
-      className={classNames("lb-icon", className)}
-      {...props}
-    >
+    <Icon {...props}>
       <circle cx={10} cy={10} r={7} />
       <path d="m13 8-4 4-2-2" />
-    </svg>
+    </Icon>
   );
 }

@@ -2,7 +2,14 @@ import type {
   CommentBodyElement,
   CommentBodyLink,
   CommentBodyMention,
+  CommentBodyText,
 } from "@liveblocks/core";
+
+export function isCommentBodyText(
+  element: CommentBodyElement
+): element is CommentBodyText {
+  return "text" in element && typeof element.text === "string";
+}
 
 export function isCommentBodyMention(
   element: CommentBodyElement
