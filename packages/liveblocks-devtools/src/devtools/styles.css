@@ -118,6 +118,14 @@ input[type="search"]::-webkit-search-cancel-button {
       var(--ease-in-out-expo);
 }
 
+/* Take into account the bottom bar */
+.react-flow__renderer,
+.react-flow__background {
+  @apply overflow-hidden;
+
+  height: calc(100% - theme(spacing.8)) !important;
+}
+
 .react-flow__panel {
   @apply absolute z-10 m-2.5;
 }
@@ -184,6 +192,7 @@ input[type="search"]::-webkit-search-cancel-button {
   font-weight: bold;
   color: rgba(141, 34, 34, 1);
 }
+
 .y-item-node .y-item-string label {
   display: block;
   font-weight: bold;
