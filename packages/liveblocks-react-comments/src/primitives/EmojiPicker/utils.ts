@@ -44,14 +44,18 @@ export async function getEmojiData(): Promise<EmojiData> {
   };
 }
 
-// TODO: Optimize and take emoji.tags into account
+// TODO: Improve performance
 export function filterEmojis(emojis: Emoji[], search?: string) {
   if (!search) {
     return emojis;
   }
 
-  return emojis.filter((emoji) =>
-    emoji.name.toLowerCase().includes(search.toLowerCase())
+  const searchText = search.toLowerCase().trim();
+
+  return emojis.filter(
+    (emoji) =>
+      emoji.name.toLowerCase().includes(searchText) ||
+      emoji.tags?.some((tag) => tag.toLowerCase().includes(searchText))
   );
 }
 
