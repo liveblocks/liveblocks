@@ -475,6 +475,10 @@
       }
     }
 
+    strong {
+      font-weight: 600;
+    }
+
     code {
       padding: 0.2em 0.4em;
       border-radius: calc(0.75 * var(--lb-radius));
@@ -502,6 +506,24 @@
   .lb-composer-mention {
     color: var(--lb-accent);
     font-weight: 500;
+  }
+
+  .lb-comment-link,
+  .lb-composer-link {
+    color: var(--lb-foreground);
+    outline: none;
+    font-weight: 500;
+    text-decoration: underline var(--lb-foreground-moderate);
+    transition-timing-function: var(--lb-transition-easing);
+    transition-duration: var(--lb-transition-duration);
+    transition-property: color, text-decoration;
+    text-underline-offset: 2px;
+
+    &:hover,
+    &:focus-visible {
+      color: var(--lb-accent);
+      text-decoration-color: var(--lb-accent-moderate);
+    }
   }
 
   .lb-comment-mention[data-self],
@@ -591,9 +613,21 @@
     margin-inline-end: auto;
   }
 
-  .lb-composer-logo {
-    height: calc(0.75 * #{$lb-button-size});
+  .lb-composer-attribution {
     color: var(--lb-foreground-moderate);
+    outline: none;
+    transition-timing-function: var(--lb-transition-easing);
+    transition-duration: var(--lb-transition-duration);
+    transition-property: color;
+
+    &:hover,
+    &:focus-visible {
+      color: var(--lb-foreground-tertiary);
+    }
+
+    svg {
+      height: calc(0.75 * #{$lb-button-size});
+    }
   }
 
   .lb-composer:not([data-collapsed]) {

@@ -1,5 +1,10 @@
 import type { CommentBody } from "@liveblocks/core";
-import type { ComponentPropsWithoutRef, ComponentType, FormEvent } from "react";
+import type {
+  ComponentPropsWithoutRef,
+  ComponentType,
+  FormEvent,
+  ReactNode,
+} from "react";
 import type {
   RenderElementProps,
   RenderElementSpecificProps,
@@ -8,6 +13,7 @@ import type {
 import type { MentionDraft } from "../../slate/plugins/mentions";
 import type {
   ComponentPropsWithSlot,
+  ComposerBodyAutoLink,
   ComposerBodyMention,
   Direction,
 } from "../../types";
@@ -24,7 +30,25 @@ export interface ComposerRenderMentionProps {
   userId: string;
 }
 
+export interface ComposerRenderLinkProps {
+  /**
+   * The link's absolute URL.
+   *
+   * @example "https://example.com"
+   */
+  href: string;
+
+  /**
+   * The link's content.
+   *
+   * @example "www.example.com", "a link", etc.
+   */
+  children: ReactNode;
+}
+
 export type ComposerMentionProps = ComponentPropsWithSlot<"span">;
+
+export type ComposerLinkProps = ComponentPropsWithSlot<"a">;
 
 export type ComposerRenderMentionSuggestionsProps = {
   /**
@@ -86,6 +110,11 @@ export interface ComposerEditorProps
    * The component used to render mention suggestions.
    */
   renderMentionSuggestions?: ComponentType<ComposerRenderMentionSuggestionsProps>;
+
+  /**
+   * The component used to render links.
+   */
+  renderLink?: ComponentType<ComposerRenderLinkProps>;
 }
 
 export interface ComposerFormProps extends ComponentPropsWithSlot<"form"> {
@@ -123,11 +152,17 @@ export interface ComposerMentionSuggestionsWrapperProps {
 
 export interface ComposerEditorElementProps extends RenderElementProps {
   renderMention: ComposerEditorProps["renderMention"];
+  renderLink: ComposerEditorProps["renderLink"];
 }
 
 export interface ComposerMentionWrapperProps
   extends RenderElementSpecificProps<ComposerBodyMention> {
   renderMention: ComposerEditorProps["renderMention"];
+}
+
+export interface ComposerLinkWrapperProps
+  extends RenderElementSpecificProps<ComposerBodyAutoLink /* | ComposerBodyLink */> {
+  renderLink: ComposerEditorProps["renderLink"];
 }
 
 export type SuggestionsPosition = "top" | "bottom";

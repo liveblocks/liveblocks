@@ -1,13 +1,14 @@
 import { Page, test, expect } from "@playwright/test";
 
 import {
-  delay,
   assertContainText,
-  pickRandomItem,
+  delay,
   pickNumberOfUnderRedo,
-  waitForContentToBeEquals,
+  pickRandomItem,
   preparePages,
+  waitForContentToBeEquals,
 } from "../utils";
+import { genRoomId } from "../../utils";
 
 function pickRandomAction() {
   return pickRandomItem(["#push", "#delete", "#move", "#set"]);
@@ -19,7 +20,7 @@ test.describe("Storage - LiveList", () => {
   let pages: Page[];
 
   test.beforeEach(async ({}, testInfo) => {
-    const roomName = `e2e-list-${testInfo.title.replaceAll(" ", "-")}`;
+    const roomName = genRoomId(testInfo.title);
     pages = await preparePages(`${TEST_URL}?room=${roomName}`);
   });
 

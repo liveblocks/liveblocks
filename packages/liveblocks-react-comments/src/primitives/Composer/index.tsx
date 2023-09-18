@@ -58,6 +58,7 @@ import {
 
 import { FLOATING_ELEMENT_COLLISION_PADDING } from "../../constants";
 import { withAutoFormatting } from "../../slate/plugins/auto-formatting";
+import { withAutoLinks } from "../../slate/plugins/auto-links";
 import { withEmptyClearFormatting } from "../../slate/plugins/empty-clear-formatting";
 import type { MentionDraft } from "../../slate/plugins/mentions";
 import {
@@ -72,6 +73,7 @@ import { isEmpty as isEditorEmpty } from "../../slate/utils/is-empty";
 import { leaveMarkEdge, toggleMark } from "../../slate/utils/marks";
 import type {
   ComposerBody as ComposerBodyData,
+  ComposerBodyAutoLink,
   ComposerBodyMention,
 } from "../../types";
 import { isKey } from "../../utils/is-key";
@@ -82,6 +84,7 @@ import { useInitial } from "../../utils/use-initial";
 import { useLayoutEffect } from "../../utils/use-layout-effect";
 import { useRefs } from "../../utils/use-refs";
 import { useRovingIndex } from "../../utils/use-roving-index";
+import { toAbsoluteUrl } from "../Comment/utils";
 import {
   ComposerContext,
   ComposerEditorContext,
@@ -94,9 +97,12 @@ import type {
   ComposerEditorElementProps,
   ComposerEditorProps,
   ComposerFormProps,
+  ComposerLinkProps,
+  ComposerLinkWrapperProps,
   ComposerMentionProps,
   ComposerMentionSuggestionsWrapperProps,
   ComposerMentionWrapperProps,
+  ComposerRenderLinkProps,
   ComposerRenderMentionProps,
   ComposerRenderMentionSuggestionsProps,
   ComposerSubmitProps,
@@ -128,9 +134,11 @@ const emptyCommentBody: CommentBody = {
 };
 
 function createComposerEditor() {
-  return withMentions(
-    withEmptyClearFormatting(
-      withAutoFormatting(withHistory(withReact(createEditor())))
+  return withAutoLinks(
+    withMentions(
+      withEmptyClearFormatting(
+        withAutoFormatting(withHistory(withReact(createEditor())))
+      )
     )
   );
 }
@@ -176,6 +184,31 @@ function ComposerDefaultRenderMentionSuggestions({
       </ComposerSuggestionsList>
     </ComposerSuggestions>
   ) : null;
+}
+
+function ComposerDefaultRenderLink({
+  href,
+  children,
+}: ComposerRenderLinkProps) {
+  return <ComposerLink href={href}>{children}</ComposerLink>;
+}
+
+function ComposerEditorRenderLinkWrapper({
+  renderLink: RenderLink = ComposerDefaultRenderLink,
+  attributes,
+  element,
+  children,
+}: ComposerLinkWrapperProps) {
+  const href = useMemo(
+    () => toAbsoluteUrl(element.url) ?? element.url,
+    [element.url]
+  );
+
+  return (
+    <span {...attributes}>
+      <RenderLink href={href}>{children}</RenderLink>
+    </span>
+  );
 }
 
 function ComposerMentionSuggestionsWrapper({
@@ -294,6 +327,7 @@ function ComposerMentionSuggestionsWrapper({
 
 function ComposerEditorElement({
   renderMention,
+  renderLink,
   ...props
 }: ComposerEditorElementProps) {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
@@ -305,6 +339,13 @@ function ComposerEditorElement({
         <ComposerEditorRenderMentionWrapper
           renderMention={renderMention}
           {...(props as RenderElementSpecificProps<ComposerBodyMention>)}
+        />
+      );
+    case "auto-link":
+      return (
+        <ComposerEditorRenderLinkWrapper
+          renderLink={renderLink}
+          {...(props as RenderElementSpecificProps<ComposerBodyAutoLink>)}
         />
       );
     case "paragraph":
@@ -369,6 +410,37 @@ const ComposerMention = forwardRef<HTMLSpanElement, ComposerMentionProps>(
 );
 
 /**
+ * Displays links within `Composer.Editor`.
+ *
+ * @example
+ * <Composer.Editor
+ *   renderLink={({ href, children }) => {
+ *    return (
+ *      <Composer.Link href={href}>
+ *        {children}
+ *      </Composer.Link>
+ *    )
+ *   }}
+ * />
+ */
+const ComposerLink = forwardRef<HTMLAnchorElement, ComposerLinkProps>(
+  ({ children, asChild, ...props }, forwardedRef) => {
+    const Component = asChild ? Slot : "a";
+
+    return (
+      <Component
+        target="_blank"
+        rel="noopener noreferrer nofollow"
+        {...props}
+        ref={forwardedRef}
+      >
+        {children}
+      </Component>
+    );
+  }
+);
+
+/**
  * Surrounds a list of suggestions within `Composer.Editor`.
  *
  * @example
@@ -413,6 +485,7 @@ const ComposerSuggestions = forwardRef<
         display: "flex",
         flexDirection: "column",
         maxHeight: "var(--lb-composer-suggestions-available-height)",
+        overflowY: "auto",
         ...style,
       }}
       ref={mergedRefs}
@@ -569,6 +642,7 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
       disabled,
       autoFocus,
       renderMention,
+      renderLink,
       renderMentionSuggestions,
       dir,
       ...props
@@ -609,10 +683,14 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
     const renderElement = useCallback(
       (props: RenderElementProps) => {
         return (
-          <ComposerEditorElement renderMention={renderMention} {...props} />
+          <ComposerEditorElement
+            renderMention={renderMention}
+            renderLink={renderLink}
+            {...props}
+          />
         );
       },
-      [renderMention]
+      [renderLink, renderMention]
     );
 
     const handleChange = useCallback(
@@ -1018,6 +1096,7 @@ if (process.env.NODE_ENV !== "production") {
 export {
   ComposerEditor as Editor,
   ComposerForm as Form,
+  ComposerLink as Link,
   ComposerMention as Mention,
   ComposerSubmit as Submit,
   ComposerSuggestions as Suggestions,

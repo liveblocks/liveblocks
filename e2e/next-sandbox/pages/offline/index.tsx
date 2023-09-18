@@ -3,6 +3,7 @@ import { LiveList } from "@liveblocks/client";
 import { createRoomContext } from "@liveblocks/react";
 import React, { useState } from "react";
 import createLiveblocksClient from "../../utils/createClient";
+import { genRoomId } from "../../utils";
 
 const client = createLiveblocksClient();
 
@@ -17,7 +18,7 @@ type Internal = {
 };
 
 export default function Home() {
-  let roomId = "e2e-offline";
+  let roomId = genRoomId("offline");
   if (typeof window !== "undefined") {
     const queryParam = window.location.search;
     if (queryParam.split("room=").length > 1) {
@@ -30,7 +31,7 @@ export default function Home() {
       initialPresence={{} as never}
       initialStorage={{ items: new LiveList() }}
     >
-      <Sandbox />
+      <Sandbox roomId={roomId} />
     </RoomProvider>
   );
 }
@@ -47,7 +48,7 @@ function generateRandomNumber(max: number, ignore?: number) {
   }
 }
 
-function Sandbox() {
+function Sandbox({ roomId }: { roomId: string }) {
   const [status, setStatus] = useState("connected");
   const room = useRoom();
   const internals = (room as Record<string, unknown>).__internal as Internal;
@@ -71,7 +72,7 @@ function Sandbox() {
 
   return (
     <div>
-      <h1>Storage sandbox- Offline</h1>
+      <h1>Storage sandbox - Offline</h1>
       <h2>
         Websocket status:{" "}
         <span style={{ color: status === "offline" ? "red" : "black" }}>

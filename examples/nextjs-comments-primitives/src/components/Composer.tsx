@@ -67,6 +67,18 @@ export function Composer({
             </ComposerPrimitive.Suggestions>
           );
         }}
+        // A renderLink prop is also available to customize how links are rendered in the composer.
+        //
+        // renderLink={({ href, children }) => {
+        //   return (
+        //     <ComposerPrimitive.Link
+        //       href={href}
+        //       className="text-blue-500 underline"
+        //     >
+        //       {children}
+        //     </ComposerPrimitive.Link>
+        //   );
+        // }}
       />
       <ComposerPrimitive.Submit className="self-end" asChild>
         <Button>{submit}</Button>

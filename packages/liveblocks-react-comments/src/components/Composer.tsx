@@ -18,6 +18,7 @@ import * as ComposerPrimitive from "../primitives/Composer";
 import { useComposer } from "../primitives/Composer/contexts";
 import type {
   ComposerEditorProps,
+  ComposerRenderLinkProps,
   ComposerRenderMentionProps,
   ComposerRenderMentionSuggestionsProps,
   ComposerSubmitComment,
@@ -25,9 +26,9 @@ import type {
 import { MENTION_CHARACTER } from "../slate/plugins/mentions";
 import { classNames } from "../utils/class-names";
 import { useControllableState } from "../utils/use-controllable-state";
+import { Attribution } from "./internal/Attribution";
 import { Avatar } from "./internal/Avatar";
 import { Button } from "./internal/Button";
-import { Logo } from "./internal/Logo";
 import {
   Tooltip,
   TooltipProvider,
@@ -124,7 +125,7 @@ export type ComposerProps = Omit<
     /**
      * @internal
      */
-    showLogo?: boolean;
+    showAttribution?: boolean;
   };
 
 function ComposerInsertMentionEditorAction({
@@ -203,6 +204,14 @@ function ComposerMentionSuggestions({
   ) : null;
 }
 
+function ComposerLink({ href, children }: ComposerRenderLinkProps) {
+  return (
+    <ComposerPrimitive.Link href={href} className="lb-composer-link">
+      {children}
+    </ComposerPrimitive.Link>
+  );
+}
+
 const ComposerWithContext = forwardRef<
   HTMLFormElement,
   Omit<ComposerProps, "threadId" | "commentId" | "onComposerSubmit">
@@ -217,7 +226,7 @@ const ComposerWithContext = forwardRef<
       onCollapsedChange: controlledOnCollapsedChange,
       actions,
       overrides,
-      showLogo,
+      showAttribution,
       onFocus,
       onBlur,
       className,
@@ -310,6 +319,7 @@ const ComposerWithContext = forwardRef<
           autoFocus={autoFocus}
           renderMention={ComposerMention}
           renderMentionSuggestions={ComposerMentionSuggestions}
+          renderLink={ComposerLink}
           dir={$.dir}
         />
         {!collapsed && (
@@ -321,7 +331,7 @@ const ComposerWithContext = forwardRef<
                 />
               )}
             </div>
-            {showLogo && <Logo className="lb-composer-logo" />}
+            {showAttribution && <Attribution />}
             <div className="lb-composer-actions">
               {actions ?? (
                 <>
