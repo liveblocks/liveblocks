@@ -26,7 +26,9 @@ export const Emoji = forwardRef<HTMLSpanElement, Props>(
         }}
         {...props}
         ref={forwardedRef}
-      />
+      >
+        {emoji}
+      </Component>
     );
   }
 );
