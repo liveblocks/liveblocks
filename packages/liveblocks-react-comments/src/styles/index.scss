@@ -614,9 +614,21 @@
     margin-inline-end: auto;
   }
 
-  .lb-composer-logo {
-    height: calc(0.75 * #{$lb-button-size});
+  .lb-composer-attribution {
     color: var(--lb-foreground-moderate);
+    outline: none;
+    transition-timing-function: var(--lb-transition-easing);
+    transition-duration: var(--lb-transition-duration);
+    transition-property: color;
+
+    &:hover,
+    &:focus-visible {
+      color: var(--lb-foreground-tertiary);
+    }
+
+    svg {
+      height: calc(0.75 * #{$lb-button-size});
+    }
   }
 
   .lb-composer:not([data-collapsed]) {
