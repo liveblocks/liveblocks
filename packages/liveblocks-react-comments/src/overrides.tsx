@@ -24,6 +24,7 @@ export interface CommentOverrides {
   COMMENT_EDIT_COMPOSER_CANCEL: string;
   COMMENT_EDIT_COMPOSER_SAVE: string;
   COMMENT_DELETE: string;
+  COMMENT_ADD_REACTION: string;
 }
 
 export interface ComposerOverrides {
@@ -64,6 +65,7 @@ export const defaultOverrides: Overrides = {
   COMMENT_EDIT_COMPOSER_CANCEL: "Cancel",
   COMMENT_EDIT_COMPOSER_SAVE: "Save",
   COMMENT_DELETE: "Delete comment",
+  COMMENT_ADD_REACTION: "Add reaction",
   THREAD_RESOLVE: "Resolve thread",
   THREAD_UNRESOLVE: "Re-open thread",
   THREAD_COMPOSER_PLACEHOLDER: "Reply to thread…",
