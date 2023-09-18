@@ -12,6 +12,7 @@ import React, {
 } from "react";
 
 import { chunk } from "../../utils/chunk";
+import { Emoji } from "../internal/Emoji";
 import { EmojiPickerContext, useEmojiPicker } from "./contexts";
 import type {
   EmojiCategoryWithEmojis,
@@ -21,9 +22,6 @@ import type {
   EmojiPickerSearchProps,
 } from "./types";
 import { filterEmojis, getEmojiData, groupEmojisByCategory } from "./utils";
-
-const EMOJI_FONT_FAMILY =
-  "'Twemoji Mozilla', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Segoe UI', 'Apple Color Emoji', 'Noto Color Emoji', 'Android Emoji', sans-serif";
 
 const EMOJIPICKER_ROOT_NAME = "EmojiPickerRoot";
 const EMOJIPICKER_LIST_NAME = "EmojiPickerList";
@@ -164,15 +162,7 @@ const EmojiPickerList = forwardRef<HTMLDivElement, EmojiPickerListProps>(
                   <div key={index}>
                     {row.map((emoji) => (
                       <button key={emoji.hexcode}>
-                        <span
-                          role="img"
-                          style={{
-                            fontFamily: EMOJI_FONT_FAMILY,
-                          }}
-                          aria-label={emoji.name}
-                        >
-                          {emoji.emoji}
-                        </span>
+                        <Emoji emoji={emoji.emoji} />
                       </button>
                     ))}
                   </div>
