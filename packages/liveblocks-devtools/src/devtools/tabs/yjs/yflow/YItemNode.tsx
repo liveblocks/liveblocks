@@ -38,19 +38,13 @@ function YItemNode({ data }: NodeProps<NodeData>) {
       );
       break;
     case data.item.content instanceof Y.ContentJSON:
-      component = (
-        <ContentJSON content={data.item.content as Y.ContentJSON} />
-      );
+      component = <ContentJSON content={data.item.content as Y.ContentJSON} />;
       break;
     case data.item.content instanceof Y.ContentAny:
-      component = (
-        <ContentAny content={data.item.content as Y.ContentAny} />
-      );
+      component = <ContentAny content={data.item.content as Y.ContentAny} />;
       break;
     case data.item.content instanceof Y.ContentType:
-      component = (
-        <ContentType content={data.item.content as Y.ContentType} />
-      );
+      component = <ContentType content={data.item.content as Y.ContentType} />;
       break;
     case data.item.content instanceof Y.ContentBinary:
       component = (
@@ -62,9 +56,9 @@ function YItemNode({ data }: NodeProps<NodeData>) {
         <ContentEmbed content={data.item.content as Y.ContentEmbed} />
       );
       break;
-    default:
-      { data.item.content.getContent.toString() }
-
+    default: {
+      data.item.content.getContent.toString();
+    }
   }
 
   const onSelect = () => {

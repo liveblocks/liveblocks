@@ -1,8 +1,5 @@
-import "reactflow/dist/style.css";
-
 import Dagre from "@dagrejs/dagre";
 import { assertNever, type DevTools } from "@liveblocks/core";
-import { useStorage } from "@plasmohq/storage/hook";
 import * as RadixSelect from "@radix-ui/react-select";
 import cx from "classnames";
 import {
@@ -13,6 +10,7 @@ import {
   useMemo,
   useRef,
   useState,
+  useTransition,
 } from "react";
 import type { NodeApi, TreeApi } from "react-arborist";
 import type { Edge, Node } from "reactflow";
@@ -26,15 +24,21 @@ import { EmptyState } from "../../components/EmptyState";
 import type { SelectItem } from "../../components/Select";
 import { Select } from "../../components/Select";
 import { Tabs } from "../../components/Tabs";
-import { Breadcrumbs, filterNodes, YjsTree } from "../../components/Tree";
+import {
+  Breadcrumbs,
+  createTreeFromYUpdates,
+  filterNodes,
+  YjsTree,
+  YLogsTree,
+} from "../../components/Tree";
 import {
   useCurrentRoomId,
   usePresence,
   useStatus,
   useYdoc,
+  useYUpdates,
 } from "../../contexts/CurrentRoom";
 import { YFlow } from "./yflow/YFlow";
-import { YLogs } from "./YLogs";
 
 export const YJS_TABS = ["document", "awareness", "logs"] as const;
 export const YDOC_VIEWS = ["diagram", "tree"] as const;
@@ -43,11 +47,20 @@ export type YdocView = (typeof YDOC_VIEWS)[number];
 
 const g = new Dagre.graphlib.Graph().setDefaultEdgeLabel(() => ({}));
 
-const getLayoutedElements = (nodes: Node<YFlowNodeData, string>[], edges: Edge<object>[]) => {
+const getLayoutedElements = (
+  nodes: Node<YFlowNodeData, string>[],
+  edges: Edge<object>[]
+) => {
   g.setGraph({ rankdir: "TB", nodesep: 10 });
 
   edges.forEach((edge) => g.setEdge(edge.source, edge.target));
-  nodes.forEach((node) => g.setNode(node.id, { ...node, width: 150, height: node.data.type === "node" ? 100 : 20 }));
+  nodes.forEach((node) =>
+    g.setNode(node.id, {
+      ...node,
+      width: 150,
+      height: node.data.type === "node" ? 100 : 20,
+    })
+  );
 
   Dagre.layout(g);
 
@@ -64,6 +77,8 @@ const getLayoutedElements = (nodes: Node<YFlowNodeData, string>[], edges: Edge<o
 interface Props extends ComponentProps<"div"> {
   activeTab: YjsTab;
   setActiveTab: (value: string) => void;
+  documentView: YdocView;
+  setDocumentView: (value: string) => void;
   search?: RegExp;
   searchText?: string;
   onSearchClear: (event: MouseEvent<HTMLButtonElement>) => void;
@@ -76,11 +91,8 @@ interface YjsDocumentProps extends ComponentProps<"div"> {
   onSearchClear: (event: MouseEvent<HTMLButtonElement>) => void;
 }
 
-// TODO: Implement search filtering
-function YjsDocumentDiagram({
-  className,
-  ...props
-}: Omit<YjsDocumentProps, "view">) {
+function YjsDocumentDiagram({ className, ...props }: ComponentProps<"div">) {
+  const [isTransitionPending, startTransition] = useTransition();
   const [nodes, setNodes] = useNodesState([]);
   const [edges, setEdges] = useEdgesState([]);
   const ydoc = useYdoc();
@@ -90,15 +102,17 @@ function YjsDocumentDiagram({
     let selectedNode = "";
 
     function onUpdate() {
-      const { docEdges, docNodes } = getNodesAndEdges(
-        ydoc,
-        onSetNode,
-        selectedNode
-      );
-      const layouted = getLayoutedElements(docNodes, docEdges);
+      startTransition(() => {
+        const { docEdges, docNodes } = getNodesAndEdges(
+          ydoc,
+          onSetNode,
+          selectedNode
+        );
+        const layouted = getLayoutedElements(docNodes, docEdges);
 
-      setEdges(layouted.edges);
-      setNodes(layouted.nodes);
+        setEdges(layouted.edges);
+        setNodes(layouted.nodes);
+      });
     }
 
     function onSetNode(node: string) {
@@ -115,9 +129,10 @@ function YjsDocumentDiagram({
   }, [setEdges, setNodes, ydoc]);
 
   if (
-    currentStatus === "connected" ||
-    currentStatus === "open" || // Same as "connected", but only sent by old clients (prior to 1.1)
-    currentStatus === "reconnecting"
+    !isTransitionPending &&
+    (currentStatus === "connected" ||
+      currentStatus === "open" || // Same as "connected", but only sent by old clients (prior to 1.1)
+      currentStatus === "reconnecting")
   ) {
     if (edges.length > 0) {
       return (
@@ -242,12 +257,25 @@ function YjsDocumentTree({
   }
 }
 
-function YjsDocument({ view, ...props }: YjsDocumentProps) {
+function YjsDocument({
+  view,
+  search,
+  searchText,
+  onSearchClear,
+  ...props
+}: YjsDocumentProps) {
   switch (view) {
     case "diagram":
       return <YjsDocumentDiagram {...props} />;
     case "tree":
-      return <YjsDocumentTree {...props} />;
+      return (
+        <YjsDocumentTree
+          search={search}
+          searchText={searchText}
+          onSearchClear={onSearchClear}
+          {...props}
+        />
+      );
     default:
       assertNever(view, "Unexpected view type");
   }
@@ -296,26 +324,35 @@ function YjsAwareness({ className, ...props }: ComponentProps<"div">) {
   }
 }
 
-// TODO: Implement empty state?
 function YjsLogs({ className, ...props }: ComponentProps<"div">) {
   const currentStatus = useStatus();
+  const updates = useYUpdates();
+  const tree = useMemo(() => createTreeFromYUpdates(updates), [updates]);
 
   if (
     currentStatus === "connected" ||
     currentStatus === "open" || // Same as "connected", but only sent by old clients (prior to 1.1)
     currentStatus === "reconnecting"
   ) {
-    return (
-      <div
-        className={cx(
-          className,
-          "absolute inset-0 flex h-full overflow-y-auto"
-        )}
-        {...props}
-      >
-        <YLogs />
-      </div>
-    );
+    if (updates.length > 0) {
+      return (
+        <div
+          className={cx(
+            className,
+            "absolute inset-0 flex h-full overflow-y-auto"
+          )}
+          {...props}
+        >
+          <YLogsTree data={tree} />
+        </div>
+      );
+    } else {
+      return (
+        <EmptyState
+          description={<>There seems to be no logs for this&nbsp;room.</>}
+        />
+      );
+    }
   } else {
     return <EmptyState visual={<Loading />} />;
   }
@@ -327,14 +364,12 @@ export function Yjs({
   onSearchClear,
   activeTab,
   setActiveTab,
+  documentView,
+  setDocumentView,
   className,
   ...props
 }: Props) {
   const currentRoomId = useCurrentRoomId();
-  const [documentView, setDocumentView] = useStorage<YdocView>(
-    "yjs-ydoc-view",
-    YDOC_VIEWS[0]
-  );
   const yjsTabs = useMemo(() => {
     return YJS_TABS.map((tab) => {
       switch (tab) {
@@ -374,13 +409,6 @@ export function Yjs({
     }));
   }, []);
 
-  const handleDocumentViewChange = useCallback(
-    (value: string) => {
-      void setDocumentView(value as YdocView);
-    },
-    [setDocumentView]
-  );
-
   return (
     <div className={cx(className, "absolute inset-0 flex flex-col")} {...props}>
       <Tabs
@@ -393,7 +421,7 @@ export function Yjs({
             <div className="flex items-center ml-auto after:bg-light-300 after:dark:bg-dark-300 relative flex-none pl-1 after:absolute after:-left-px after:top-[20%] after:h-[60%] after:w-px">
               <Select
                 value={documentView}
-                onValueChange={handleDocumentViewChange}
+                onValueChange={setDocumentView}
                 description="Change view"
                 items={documentViewsItems}
               >

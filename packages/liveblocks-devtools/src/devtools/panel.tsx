@@ -18,7 +18,8 @@ import { CurrentRoomProvider, useCurrentRoomId } from "./contexts/CurrentRoom";
 import { sendMessage } from "./port";
 import { Presence } from "./tabs/presence";
 import { Storage } from "./tabs/storage";
-import { Yjs, YJS_TABS, type YjsTab } from "./tabs/yjs";
+import type { YdocView, YjsTab } from "./tabs/yjs";
+import { YDOC_VIEWS, Yjs, YJS_TABS } from "./tabs/yjs";
 
 const MAIN_TABS = ["storage", "yjs"] as const;
 const SECONDARY_TABS = ["presence", "history", "events"] as const;
@@ -33,6 +34,10 @@ function Panel() {
     SECONDARY_TABS[0]
   );
   const [yjsTab, setYjsTab] = useStorage<YjsTab>("tabs-main-yjs", YJS_TABS[0]);
+  const [yjsDocumentView, setYjsDocumentView] = useStorage<YdocView>(
+    "yjs-ydoc-view",
+    YDOC_VIEWS[0]
+  );
   const currentRoomId = useCurrentRoomId();
   const [searchText, setSearchText] = useState("");
   const search = useMemo(() => {
@@ -41,9 +46,10 @@ function Panel() {
   }, [searchText]);
   const isSearchActive = useMemo(() => {
     return (
-      mainTab === "storage" || (mainTab === "yjs" && yjsTab === "document")
+      mainTab === "storage" ||
+      (mainTab === "yjs" && yjsTab === "document" && yjsDocumentView === "tree")
     );
-  }, [mainTab, yjsTab]);
+  }, [mainTab, yjsDocumentView, yjsTab]);
 
   const handleSearchClear = useCallback(() => {
     setSearchText("");
@@ -74,6 +80,13 @@ function Panel() {
     [setYjsTab]
   );
 
+  const handleYjsDocumentViewChange = useCallback(
+    (value: string) => {
+      void setYjsDocumentView(value as YdocView);
+    },
+    [setYjsDocumentView]
+  );
+
   const mainTabs: Tab[] = useMemo(() => {
     return MAIN_TABS.map((tab) => {
       switch (tab) {
@@ -102,6 +115,8 @@ function Panel() {
                 search={search}
                 searchText={searchText}
                 onSearchClear={handleSearchClear}
+                documentView={yjsDocumentView}
+                setDocumentView={handleYjsDocumentViewChange}
               />
             ),
           };
@@ -110,9 +125,11 @@ function Panel() {
   }, [
     currentRoomId,
     handleSearchClear,
+    handleYjsDocumentViewChange,
     handleYjsTabChange,
     search,
     searchText,
+    yjsDocumentView,
     yjsTab,
   ]);
 

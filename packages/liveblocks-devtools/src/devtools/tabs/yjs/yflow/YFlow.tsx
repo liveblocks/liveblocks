@@ -126,8 +126,6 @@ export function YFlow({
         nodeTypes={nodeTypes}
         nodesDraggable={false}
         nodesConnectable={false}
-        nodesFocusable={false}
-        elementsSelectable={false}
         {...props}
       >
         <MiniMap zoomable pannable />
@@ -146,6 +144,7 @@ export function YFlow({
             </a>
           </div>
         </div>
-      </ReactFlow></ReactFlowProvider>
+      </ReactFlow>
+    </ReactFlowProvider>
   );
 }
