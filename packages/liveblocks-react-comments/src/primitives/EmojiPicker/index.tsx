@@ -11,6 +11,7 @@ import React, {
   useTransition,
 } from "react";
 
+import { chunk } from "../../utils/chunk";
 import { EmojiPickerContext, useEmojiPicker } from "./contexts";
 import type {
   EmojiCategoryWithEmojis,
@@ -128,10 +129,10 @@ const EmojiPickerSearch = forwardRef<HTMLInputElement, EmojiPickerSearchProps>(
 // TODO: renderLoading
 // TODO: renderError
 // TODO: renderEmpty
-// TODO: renderCategory
+// TODO: renderCategoryHeader
 // TODO: renderEmoji
 const EmojiPickerList = forwardRef<HTMLDivElement, EmojiPickerListProps>(
-  ({ asChild, ...props }, forwardedRef) => {
+  ({ columns = 9, asChild, ...props }, forwardedRef) => {
     const Component = asChild ? Slot : "span";
     const { emojis, error, isLoading } = useEmojiPicker();
 
@@ -152,26 +153,34 @@ const EmojiPickerList = forwardRef<HTMLDivElement, EmojiPickerListProps>(
 
     return (
       <Component {...props} ref={forwardedRef}>
-        {emojis.map((category) => (
-          <div key={category.key}>
-            <div>{category.name}</div>
-            <div>
-              {category.emojis.map((emoji) => (
-                <button key={emoji.hexcode}>
-                  <span
-                    role="img"
-                    style={{
-                      fontFamily: EMOJI_FONT_FAMILY,
-                    }}
-                    aria-label={emoji.name}
-                  >
-                    {emoji.emoji}
-                  </span>
-                </button>
-              ))}
+        {emojis.map((category) => {
+          const rows = chunk(category.emojis, columns);
+
+          return (
+            <div key={category.key}>
+              <div>{category.name}</div>
+              <div>
+                {rows.map((row, index) => (
+                  <div key={index}>
+                    {row.map((emoji) => (
+                      <button key={emoji.hexcode}>
+                        <span
+                          role="img"
+                          style={{
+                            fontFamily: EMOJI_FONT_FAMILY,
+                          }}
+                          aria-label={emoji.name}
+                        >
+                          {emoji.emoji}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </Component>
     );
   }
