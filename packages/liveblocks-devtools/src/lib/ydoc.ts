@@ -137,7 +137,7 @@ export const getNodesAndEdges = (
     {
       id: ydoc.guid,
       position: { x, y },
-      data: { type: "header", label: `Doc:${ydoc.clientID}` },
+      data: { type: "header", label: `Document: ${ydoc.clientID}` },
     },
   ];
 
@@ -146,7 +146,7 @@ export const getNodesAndEdges = (
     docNodes.push({
       id: `client-${key}`,
       position: { x, y },
-      data: { type: "header", label: `Client:${key}` },
+      data: { type: "header", label: `Client: ${key}` },
     });
     docEdges.push({
       id: `${ydoc.guid}-client-${key}`,
@@ -189,13 +189,13 @@ export const getNodesAndEdges = (
               type: MarkerType.ArrowClosed,
               width: 20,
               height: 20,
-              color: "#FF0072",
-              opacity: isNodeSelected ? 1 : 0.1,
+              color: "#f43f5e",
+              opacity: isNodeSelected ? 1 : 0.2,
             },
             style: {
               strokeWidth: 2,
-              stroke: "#FF0072",
-              opacity: isNodeSelected ? 1 : 0.1,
+              stroke: "#f43f5e",
+              opacity: isNodeSelected ? 1 : 0.2,
             },
           };
           docEdges.push(edge);
@@ -211,13 +211,13 @@ export const getNodesAndEdges = (
               type: MarkerType.ArrowClosed,
               width: 20,
               height: 20,
-              color: "#00c94a",
-              opacity: isNodeSelected ? 1 : 0.1,
+              color: "#84cc16",
+              opacity: isNodeSelected ? 1 : 0.3,
             },
             style: {
               strokeWidth: 2,
-              stroke: "#00c94a",
-              opacity: isNodeSelected ? 1 : 0.1,
+              stroke: "#84cc16",
+              opacity: isNodeSelected ? 1 : 0.3,
             },
           };
           docEdges.push(edge);

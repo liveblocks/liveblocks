@@ -51,14 +51,14 @@ const getLayoutedElements = (
   nodes: Node<YFlowNodeData, string>[],
   edges: Edge<object>[]
 ) => {
-  g.setGraph({ rankdir: "TB", nodesep: 10 });
+  g.setGraph({ rankdir: "TB", nodesep: 50 });
 
   edges.forEach((edge) => g.setEdge(edge.source, edge.target));
   nodes.forEach((node) =>
     g.setNode(node.id, {
       ...node,
-      width: 150,
-      height: node.data.type === "node" ? 100 : 20,
+      width: 200,
+      height: node.data.type === "node" ? 64 : 40,
     })
   );
 

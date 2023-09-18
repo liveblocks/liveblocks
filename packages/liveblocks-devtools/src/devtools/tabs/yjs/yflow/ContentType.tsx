@@ -1,14 +1,23 @@
+import cx from "classnames";
+import type { ComponentProps } from "react";
 import type * as Y from "yjs";
 
-type ContentTypeProps = {
-  content: Y.ContentType;
-};
+import { EllipsisIcon } from "../../../icons/tree";
 
-function ContentType({ content }: ContentTypeProps) {
+interface Props extends Omit<ComponentProps<"div">, "content"> {
+  content: Y.ContentType;
+}
+
+function ContentType({ content, className, ...props }: Props) {
   return (
-    <div className="y-item-deleted">
-      <label>type</label>
-      {content.getContent().toString()}
+    <div className={cx(className, "flex flex-col gap-1.5")} {...props}>
+      <div className="flex items-center">
+        <EllipsisIcon className="text-blue-500 dark:text-blue-400 mr-1" />
+        <span className="truncate font-mono text-[95%]">ContentType</span>
+      </div>
+      <div className="truncate font-mono text-[95%] opacity-60">
+        {content.getContent().toString()}
+      </div>
     </div>
   );
 }

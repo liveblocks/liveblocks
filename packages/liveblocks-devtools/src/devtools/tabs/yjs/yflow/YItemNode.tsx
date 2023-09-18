@@ -10,6 +10,7 @@ import ContentFormat from "./ContentFormat";
 import ContentJSON from "./ContentJSON";
 import ContentString from "./ContentString";
 import ContentType from "./ContentType";
+import FallbackContent from "./FallbackContent";
 
 type NodeData = {
   label: string;
@@ -57,7 +58,8 @@ function YItemNode({ data }: NodeProps<NodeData>) {
       );
       break;
     default: {
-      data.item.content.getContent.toString();
+      component = <FallbackContent content={data.item.content} />;
+      break;
     }
   }
 
@@ -65,34 +67,38 @@ function YItemNode({ data }: NodeProps<NodeData>) {
     data.setSelectedNode(`item-${data.item.id.client}-${data.item.id.clock}`);
   };
 
-  const classnames = `y-item-node${data.isNodeSelected ? " selected" : ""}`;
-
   return (
-    <div className={classnames} onClick={onSelect}>
+    <div
+      className="absolute inset-0 p-3"
+      data-selected={data.isNodeSelected ? "" : undefined}
+      onClick={onSelect}
+    >
       <Handle type="target" id="top" position={Position.Top} />
       <Handle
         type="target"
         id="left"
         position={Position.Left}
-        style={{ top: 10, background: "#555" }}
+        style={{ top: 12, background: "#555" }}
       />
       <Handle
         type="target"
         id="right"
         position={Position.Right}
-        style={{ top: 10, background: "#555" }}
+        style={{ top: 12, background: "#555" }}
       />
       <Handle
         type="source"
         position={Position.Right}
         id="right"
-        style={{ bottom: 10, background: "pink" }}
+        style={{ top: 36, background: "pink" }}
+        data-type="color"
       />
       <Handle
         type="source"
         position={Position.Left}
-        style={{ bottom: 10, background: "green" }}
+        style={{ top: 36, background: "green" }}
         id="left"
+        data-type="color"
       />
       {component}
     </div>

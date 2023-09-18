@@ -1,14 +1,23 @@
+import cx from "classnames";
+import type { ComponentProps } from "react";
 import type * as Y from "yjs";
 
-type ContentBinaryProps = {
-  content: Y.ContentBinary;
-};
+import { EllipsisIcon } from "../../../icons/tree";
 
-function ContentBinary({ content }: ContentBinaryProps) {
+interface Props extends Omit<ComponentProps<"div">, "content"> {
+  content: Y.ContentBinary;
+}
+
+function ContentBinary({ content, className, ...props }: Props) {
   return (
-    <div className="y-item-deleted">
-      <label>binary</label>
-      Length: {content.getLength()}
+    <div className={cx(className, "flex flex-col gap-1.5")} {...props}>
+      <div className="flex items-center">
+        <EllipsisIcon className="text-blue-500 dark:text-blue-400 mr-1" />
+        <span className="truncate font-mono text-[95%]">ContentBinary</span>
+      </div>
+      <div className="truncate font-mono text-[95%] opacity-60">
+        Length: {content.getLength()}
+      </div>
     </div>
   );
 }
