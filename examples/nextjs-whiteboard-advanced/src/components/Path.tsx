@@ -10,14 +10,9 @@ type Props = {
   stroke?: string;
 };
 
-export default function Path({
-  x,
-  y,
-  onPointerDown,
-  stroke,
-  fill,
-  points,
-}: Props) {
+export default function Path(
+  { x, y, onPointerDown, stroke, fill, points }: Props
+) {
   return (
     <path
       onPointerDown={onPointerDown}

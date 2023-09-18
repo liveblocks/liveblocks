@@ -98,10 +98,10 @@ function PresenceSandbox() {
 
       <h2>Others</h2>
       <p id="othersCount">
-        {others.toArray().filter((o) => o.presence !== undefined).length}
+        {others.filter((o) => o.presence !== undefined).length}
       </p>
       <div id="others" style={{ whiteSpace: "pre" }}>
-        {JSON.stringify(others.toArray(), null, 2)}
+        {JSON.stringify(others, null, 2)}
       </div>
     </>
   );

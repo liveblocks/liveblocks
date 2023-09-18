@@ -1,22 +1,96 @@
+# v1.3.5
+
+### `@liveblocks/react`
+
+- Officially mark `useList()`, `useMap()`, and `useObject()` as deprecated in
+  JSDoc comments (we stopped recommending them since the release of 0.18)
+
+# v1.3.4
+
+### `@liveblocks/react`
+
+- Fix confusing `Error: "undefined" is not a valid event name` error when using
+  the (deprecated) `useMap()`, `useObject()`, or `useList()` hooks on
+  uninitialized storage values.
+
+# v1.3.3
+
+### `@liveblocks/*`
+
+- Fix unescaped room IDs when using Comments.
+
+### `@liveblocks/react-comments`
+
+- Add support for auto-links. (e.g. `"www.liveblocks.io"`)
+
+# v1.3.2
+
+### `@liveblocks/client`
+
+- The client will disconnect with an error if your `/api/liveblocks-auth`
+  backend returns reused/cached tokens. It’s important that auth tokens are
+  always freshly generated, and never get cached or reused. (The client itself
+  will cache and reuse tokens already, so implementing additional caching in
+  your backend isn’t needed, and could even cause reconnection issues.)
+
+# v1.3.1
+
+### `@liveblocks/client`
+
+- Actually include the new Clear History API.
+
+### `@liveblocks/react`
+
+- Fix missing dependency declaration.
+
+# v1.3.0
+
+This release marks the initial release of
+[Liveblocks Comments](https://liveblocks.io/comments), which is currently in
+private beta.
+
+### `@liveblocks/client`
+
+- New history API: `room.history.clear()` allows you to explicitly clear the
+  history, which resets the ability to undo beyond the current state.
+- Removed long deprecated methods:
+  - `others.count` → Use `others.length` instead
+  - `others.toArray()` → Use `others` instead (it’s already an array)
+- Deprecated the `Others<P, U>` type → Use `readonly User<P, U>[]` instead.
+
+### `@liveblocks/react`
+
+- Add support for Comments.
+- `UserMeta["info"]` can no longer be a scalar value.
+
+### `@liveblocks/react-comments`
+
+- Initial release.
+
+### `@liveblocks/node`
+
+- Add Comments helpers to Client.
+- Add Comments webhook events.
+
 # v1.2.4
 
 ### `@liveblocks/node`
 
-- Fixes a bug where sending an empty (or non-string) user ID with `.identifyUser`
-  would confusingly get reported as an HTTP 503.
+- Fixes a bug where sending an empty (or non-string) user ID with
+  `.identifyUser` would confusingly get reported as an HTTP 503.
 
 # v1.2.3
 
 ### `@liveblocks/client`
 
-- Improve configuration error messages to be more user friendly
+- Improve configuration error messages to be more user friendly.
 - Fix bug where entering a new room could potentially initialize the undo stack
-  incorrectly
+  incorrectly.
 
 ### `create-liveblocks-app`
 
-- Fix Suspense option when specifying a framework
-- Add comments by default
+- Fix Suspense option when specifying a framework.
+- Add helpful comments by default.
 
 # v1.2.2
 
@@ -43,41 +117,41 @@
 
 ### `@liveblocks/node`
 
-Add new APIs for authorization. See our migration guide for tips on how to adopt
-the new style of authorizing your Liveblocks clients.
+- Add new APIs for authorization. See our migration guide for tips on how to
+  adopt the new style of authorizing your Liveblocks clients.
 
 # v1.1.8
 
-Fix a small TypeScript issue introduced in 1.1.7.
+- Fix a small TypeScript issue introduced in 1.1.7.
 
 # v1.1.7
 
 ### `@liveblocks/client`
 
-When initializing the client with a
-[custom auth callback](https://liveblocks.io/docs/api-reference/liveblocks-client#createClientCallback),
-you can now return `{ error: "forbidden", reason: ... }` as the response, which
-the client will treat as a sign to stop retrying. The client will then
-disconnect from the room, instead of remaining in `"connecting"` status
-indefinitely.
+- When initializing the client with a
+  [custom auth callback](https://liveblocks.io/docs/api-reference/liveblocks-client#createClientCallback),
+  you can now return `{ error: "forbidden", reason: ... }` as the response,
+  which the client will treat as a sign to stop retrying. The client will then
+  disconnect from the room, instead of remaining in `"connecting"` status
+  indefinitely.
 
 ### `@liveblocks/react`
 
-Fix a bug with `useSelf()` where it would not correctly re-render after entering
-an empty room. It’s now consistent again with `useMyPresence()`.
+- Fix a bug with `useSelf()` where it would not correctly re-render after
+  entering an empty room. It’s now consistent again with `useMyPresence()`.
 
 ### DevTools
 
-Fix a bug in the Liveblocks [DevTools](https://liveblocks.io/devtools) panel
-where the "me" view would incorrectly stay empty after entering an empty room.
+- Fix a bug in the Liveblocks [DevTools](https://liveblocks.io/devtools) panel
+  where the "me" view would incorrectly stay empty after entering an empty room.
 
 # v1.1.6
 
 ### `@liveblocks/*`
 
-Loosen duplicate import detection so it won't throw when used in test runners
-that deliberately run multiple instances of a module (like Jest or Playwright
-can do).
+- Loosen duplicate import detection so it won't throw when used in test runners
+  that deliberately run multiple instances of a module (like Jest or Playwright
+  can do).
 
 # v1.1.5
 
@@ -94,9 +168,10 @@ can do).
 
 # v1.1.4
 
-Undo the changes made in 1.1.3. We’ve got some bug reports where Liveblocks
-could still be doubly-included in production bundles (in some bundler setups
-only), with storage data corruptions as a possible result. We’re investigating.
+- Undo the changes made in 1.1.3. We’ve got some bug reports where Liveblocks
+  could still be doubly-included in production bundles (in some bundler setups
+  only), with storage data corruptions as a possible result. We’re
+  investigating.
 
 # v1.1.3
 
@@ -120,12 +195,12 @@ Added Yjs support to **open beta** through the new `@liveblocks/yjs` package
 
 ### Fixes
 
-Fixes a missing internal export.
+- Fixes a missing internal export.
 
 # v1.1.1
 
-Fixes a bug where under certain circumstances the Liveblocks client could
-incorrectly throw a `Not started yet` error message.
+- Fixes a bug where under certain circumstances the Liveblocks client could
+  incorrectly throw a `Not started yet` error message.
 
 # v1.1.0
 
@@ -198,26 +273,27 @@ Recommended steps to upgrade:
 
 ### `create-liveblocks-app`
 
-- Added `export type TypedRoom = Room<...>` to init command for non-React apps
+- Added `export type TypedRoom = Room<...>` to init command for non-React apps.
 
 # v1.0.11
 
 ### `@liveblocks/client`
 
-- Fix a bug where undo/redo on `LiveObject` creates exponentially larger deltas
+- Fix a bug where undo/redo on `LiveObject` creates exponentially larger deltas.
 
 # v1.0.10
 
 ### `@liveblocks/client`
 
-- Fix a bug related to proactive token expiration detection
-- Internal refactorings
+- Fix a bug related to proactive token expiration detection.
+- Internal refactorings.
 - Add unstable_fallbackToHTTP option to the core client to support messages over
-  1MB
+  1MB.
 
 ### `@liveblocks/node`
 
-- Fix incorrect status code when Liveblocks server cannot be reached temporarily
+- Fix incorrect status code when Liveblocks server cannot be reached
+  temporarily.
 
 # v1.0.9
 
@@ -226,26 +302,26 @@ Recommended steps to upgrade:
 - Export `LiveListUpdate`, `LiveMapUpdate`, and `LiveObjectUpdate` types used by
   the storage update callback.
 - Export new utility, `toPlainLson`, to assist in calling the initialize storage
-  API
-- Internal refactorings
+  API.
+- Internal refactorings.
 
 # v1.0.8
 
 ### `@liveblocks/client`
 
-- Internal refactorings
+- Internal refactorings.
 
 ### `create-liveblocks-app`
 
 - Added
   [flags](https://github.com/liveblocks/liveblocks/tree/main/packages/create-liveblocks-app#flags-optional)
-  for creating config files with `--init` (e.g. `--framework react`)
-- Added an error if an incorrect flag is used
-- Slightly changed the format of the default config file
+  for creating config files with `--init`. (e.g. `--framework react`)
+- Added an error if an incorrect flag is used.
+- Slightly changed the format of the default config file.
 
 ### `@liveblocks/client`
 
-- Internal refactorings
+- Internal refactorings.
 
 # v1.0.7
 
@@ -273,13 +349,13 @@ Non-existent.
 
 # v1.0.2
 
-Fix bug where passing down `shouldInitiallyConnect` connection option would not
-always work.
+- Fix bug where passing down `shouldInitiallyConnect` connection option would
+  not always work.
 
 # v1.0.1
 
-Log stack traces of function calls that resulted in rejected storage mutations
-to the console in non-production builds to ease debugging.
+- Log stack traces of function calls that resulted in rejected storage mutations
+  to the console in non-production builds to ease debugging.
 
 ### `@liveblocks/client`
 
@@ -610,8 +686,6 @@ For information, please read our
 - Remove `new LiveMap(null)` support. (Just use `new LiveMap()` or
   `new LiveMap([])`.)
 
----
-
 # v0.17.11
 
 General:
@@ -622,8 +696,6 @@ In **@liveblocks/react**:
 
 - Deprecate an undocumented API
 
----
-
 # v0.17.9
 
 - Fix bug that could cause duplicate copies of @liveblocks/client to end up in
@@ -631,8 +703,6 @@ In **@liveblocks/react**:
 - Fix bug where in some conditions the initial presence for a new connection
   would not come through to all existing clients in the room
 - Various internal changes
-
----
 
 # v0.17.8
 
@@ -647,8 +717,6 @@ In **@liveblocks/react**:
 - In **@liveblocks/react**:
 
   - Add `useCanUndo()` and `useCanRedo()` hooks
-
----
 
 # v0.17.7
 
@@ -732,15 +800,11 @@ const useStore = create(
 useStore(state => state.liveblocks.others[0].presence?.isTyping)
 ```
 
----
-
 # v0.17.6
 
 - In **@liveblocks/react**:
 
   - Expose `RoomContext` in the return value of `createRoomContext()`
-
----
 
 # v0.17.5
 
@@ -751,19 +815,13 @@ useStore(state => state.liveblocks.others[0].presence?.isTyping)
   - Ignore changes to the `RoomProvider`'s initial presence/storage props on
     subsequent renders. This makes it behave closer to `useState(initialState)`
 
----
-
 # v0.17.4
 
 Fix missing documentation for hooks created via `createRoomContext()`.
 
----
-
 # v0.17.1
 
 Fix `@liveblocks/nodes` packaging.
-
----
 
 # v0.17.0
 
@@ -847,82 +905,56 @@ It's surprisingly simple!
   - The RoomProvider's `defaultPresence` is renamed to `initialPresence`
   - The RoomProvider's `defaultStorageRoot` is renamed to `initialStorage`
 
----
-
 # v0.16.17
 
 Fix bug in internal code where some legal authentication tokens would be
 considered invalid.
 
----
-
 # v0.16.16
 
 Internals only.
 
----
-
 # v0.16.15
 
 Internals only.
-
----
 
 # v0.16.14
 
 Fix an issue where the current user's info would not properly display accented
 characters.
 
----
-
 # v0.16.13
 
 (Unpublished.)
 
----
-
 # v0.16.12
 
 Internals only.
-
----
 
 # v0.16.11
 
 Expose helper type to help users adopt to using Live structures with interfaces
 they don't own.
 
----
-
 # v0.16.10
 
 Restructures a few more internals.
-
----
 
 # v0.16.9
 
 Restructures a few internals.
 
----
-
 # v0.16.8
 
 Fix bug in private/internal code.
-
----
 
 # v0.16.7
 
 Fix bug in private/internal code.
 
----
-
 # v0.16.6
 
 Fix bug in example code suggested in deprecation warning.
-
----
 
 # v0.16.5
 
@@ -937,8 +969,6 @@ Fix bug in example code suggested in deprecation warning.
   - If you're using `@liveblocks/client` in a ES2015 context, you no longer have
     to polyfill `Object.fromEntries()`.
 
----
-
 # v0.16.4
 
 ### All packages
@@ -947,8 +977,6 @@ Fix bug in example code suggested in deprecation warning.
   smaller!
 - Some APIs are being deprecation and will show warnings in the dev console when
   used
-
----
 
 # v0.16.3
 
@@ -967,8 +995,6 @@ Fix bug in example code suggested in deprecation warning.
     - Client A updates state : `{ list: [0] }`
     - Client B states is updated to : `{ list: [0, 0] }`
 
----
-
 # v0.16.2
 
 ### Bug fixes
@@ -978,8 +1004,6 @@ Fix bug in example code suggested in deprecation warning.
   - Fix small bug related to new `JsonObject` type, which would reject some
     values that were legal JSON objects.
 
----
-
 # v0.16.1
 
 ### Bug fixes
@@ -987,8 +1011,6 @@ Fix bug in example code suggested in deprecation warning.
 - In **@liveblocks/react**:
 
   - Fix issue with React 18 and StrictMode.
-
----
 
 # v0.16.0
 

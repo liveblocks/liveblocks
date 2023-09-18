@@ -26,7 +26,7 @@ export default async function auth(req: NextApiRequest, res: NextApiResponse) {
   const liveblocksSession = liveblocks.prepareSession(`user-${email}`, {
     userInfo: {
       name: name,
-      picture: image,
+      avatar: image,
     },
   });
 

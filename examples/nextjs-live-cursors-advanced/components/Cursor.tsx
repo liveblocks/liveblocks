@@ -14,20 +14,20 @@ type AllProps = {
 type BasicCursorProps = AllProps & {
   variant?: "basic";
   name?: never;
-  picture?: never;
+  avatar?: never;
   size?: never;
 };
 
 type NameCursorProps = AllProps & {
   variant: "name";
   name: string;
-  picture?: never;
+  avatar?: never;
   size?: never;
 };
 
 type AvatarCursorProps = AllProps & {
   variant: "avatar";
-  picture: string;
+  avatar: string;
   name?: never;
   size?: number;
 };
@@ -40,7 +40,7 @@ export default function Cursor({
   y,
   color = ["", ""],
   name = "",
-  picture = "",
+  avatar = "",
   size = 36,
 }: CursorProps) {
   return (
@@ -60,7 +60,7 @@ export default function Cursor({
       {variant === "basic" ? <BasicCursor color={color} /> : null}
       {variant === "name" ? <NameCursor color={color} name={name} /> : null}
       {variant === "avatar" ? (
-        <AvatarCursor color={color} picture={picture} size={size} />
+        <AvatarCursor color={color} avatar={avatar} size={size} />
       ) : null}
     </motion.div>
   );
@@ -123,9 +123,9 @@ function NameCursor({ color, name }: Pick<NameCursorProps, "color" | "name">) {
 
 function AvatarCursor({
   color,
-  picture,
+  avatar,
   size,
-}: Pick<AvatarCursorProps, "color" | "picture" | "size">) {
+}: Pick<AvatarCursorProps, "color" | "avatar" | "size">) {
   return (
     <div className={styles.avatarWrapper}>
       <svg
@@ -154,7 +154,7 @@ function AvatarCursor({
           height: size + "px",
         }}
       >
-        <Image src={picture} height={size} width={size} alt="" />
+        <Image src={avatar} height={size} width={size} alt="" />
       </div>
     </div>
   );

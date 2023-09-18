@@ -18,7 +18,7 @@ import { COLORS } from "../constants";
  * We use the presence block to show the currently focused input to everyone in the room.
  * We use the storage block to persist the state of the form even after everyone leaves the room.
  *
- * The users picture and name are not set via the `useMyPresence` hook like the cursors.
+ * The users avatar and name are not set via the `useMyPresence` hook like the cursors.
  * They are set from the authentication endpoint.
  *
  * See pages/api/auth.ts and https://liveblocks.io/docs/api-reference/liveblocks-node#authorize for more information
@@ -196,14 +196,14 @@ const Avatars = React.memo(function Avatars() {
         return (
           <Avatar
             key={connectionId}
-            picture={info.picture}
+            src={info.avatar}
             name={info.name}
             color={COLORS[connectionId % COLORS.length]}
           />
         );
       })}
 
-      {me && <Avatar picture={me.picture} name="You" />}
+      {me && <Avatar src={me.avatar} name="You" />}
     </div>
   );
 });
