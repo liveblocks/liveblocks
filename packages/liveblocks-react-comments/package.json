@@ -56,6 +56,7 @@
     "@radix-ui/react-slot": "^1.0.2",
     "@radix-ui/react-toggle": "^1.0.3",
     "@radix-ui/react-tooltip": "^1.0.6",
+    "emojibase": "^15.0.0",
     "slate": "^0.94.1",
     "slate-history": "^0.93.0",
     "slate-react": "^0.98.1",
