@@ -623,11 +623,15 @@ export type RoomContextBundle<
      * a re-render if the LiveList is updated, however it does not triggers
      * a re-render if a nested CRDT is updated.
      *
-     * @param key The storage key associated with the LiveList
-     * @returns null while the storage is loading, otherwise, returns the LiveList associated to the storage
+     * @param key The top-level storage key associated with the LiveList
+     * @returns null while storage is still loading, otherwise, returns the LiveList instance at the storage key
      *
      * @example
-     * const animals = useList("animals");  // e.g. [] or ["🦁", "🐍", "🦍"]
+     * const animals = useList("animals");  // e.g. [] or ["🦁", "🐍", "🦍"]  // ❌ No longer recommended
+     * const animals = useStorage((root) => root.animals);                    // ✅ Do this instead
+     *
+     * @deprecated We no longer recommend using `useList`. Prefer `useStorage`
+     * for reading and `useMutation` for writing.
      */
     useList<TKey extends Extract<keyof TStorage, string>>(
       key: TKey
@@ -639,11 +643,15 @@ export type RoomContextBundle<
      * a re-render if the LiveMap is updated, however it does not triggers
      * a re-render if a nested CRDT is updated.
      *
-     * @param key The storage key associated with the LiveMap
-     * @returns null while the storage is loading, otherwise, returns the LiveMap associated to the storage
+     * @param key The top-level storage key associated with the LiveMap
+     * @returns null while storage is still loading, otherwise, returns the LiveMap instance at the storage key
      *
      * @example
-     * const shapesById = useMap("shapes");
+     * const shapesById = useMap("shapes");                   // ❌ No longer recommended
+     * const shapesById = useStorage((root) => root.shapes);  // ✅ Do this instead
+     *
+     * @deprecated We no longer recommend using `useMap`. Prefer `useStorage`
+     * for reading and `useMutation` for writing.
      */
     useMap<TKey extends Extract<keyof TStorage, string>>(
       key: TKey
@@ -653,11 +661,15 @@ export type RoomContextBundle<
      * Returns the LiveObject associated with the provided key.
      * The hook triggers a re-render if the LiveObject is updated, however it does not triggers a re-render if a nested CRDT is updated.
      *
-     * @param key The storage key associated with the LiveObject
-     * @returns null while the storage is loading, otherwise, returns the LveObject associated to the storage
+     * @param key The top-level storage key associated with the LiveObject
+     * @returns null while storage is still loading, otherwise, returns the LiveObject instance at the storage key
      *
      * @example
-     * const object = useObject("obj");
+     * const object = useObject("obj");                // ❌ No longer recommended
+     * const object = useStorage((root) => root.obj);  // ✅ Do this instead
+     *
+     * @deprecated We no longer recommend using `useObject`. Prefer `useStorage`
+     * for reading and `useMutation` for writing.
      */
     useObject<TKey extends Extract<keyof TStorage, string>>(
       key: TKey
@@ -761,11 +773,15 @@ export type RoomContextBundle<
          * a re-render if the LiveList is updated, however it does not triggers
          * a re-render if a nested CRDT is updated.
          *
-         * @param key The storage key associated with the LiveList
-         * @returns null while the storage is loading, otherwise, returns the LiveList associated to the storage
+         * @param key The top-level storage key associated with the LiveList
+         * @returns Returns the LiveList instance at the storage key
          *
          * @example
-         * const animals = useList("animals");  // e.g. [] or ["🦁", "🐍", "🦍"]
+         * const animals = useList("animals");  // e.g. [] or ["🦁", "🐍", "🦍"]  // ❌ No longer recommended
+         * const animals = useStorage((root) => root.animals);                    // ✅ Do this instead
+         *
+         * @deprecated We no longer recommend using `useList`. Prefer `useStorage`
+         * for reading and `useMutation` for writing.
          */
         useList<TKey extends Extract<keyof TStorage, string>>(
           key: TKey
@@ -777,11 +793,15 @@ export type RoomContextBundle<
          * a re-render if the LiveMap is updated, however it does not triggers
          * a re-render if a nested CRDT is updated.
          *
-         * @param key The storage key associated with the LiveMap
-         * @returns null while the storage is loading, otherwise, returns the LiveMap associated to the storage
+         * @param key The top-level storage key associated with the LiveMap
+         * @returns Returns the LiveMap instance at the storage key
          *
          * @example
-         * const shapesById = useMap("shapes");
+         * const shapesById = useMap("shapes");                   // ❌ No longer recommended
+         * const shapesById = useStorage((root) => root.shapes);  // ✅ Do this instead
+         *
+         * @deprecated We no longer recommend using `useMap`. Prefer `useStorage`
+         * for reading and `useMutation` for writing.
          */
         useMap<TKey extends Extract<keyof TStorage, string>>(
           key: TKey
@@ -791,11 +811,15 @@ export type RoomContextBundle<
          * Returns the LiveObject associated with the provided key.
          * The hook triggers a re-render if the LiveObject is updated, however it does not triggers a re-render if a nested CRDT is updated.
          *
-         * @param key The storage key associated with the LiveObject
-         * @returns null while the storage is loading, otherwise, returns the LveObject associated to the storage
+         * @param key The top-level storage key associated with the LiveObject
+         * @returns Returns the LiveObject instance at the storage key
          *
          * @example
-         * const object = useObject("obj");
+         * const object = useObject("obj");                // ❌ No longer recommended
+         * const object = useStorage((root) => root.obj);  // ✅ Do this instead
+         *
+         * @deprecated We no longer recommend using `useObject`. Prefer `useStorage`
+         * for reading and `useMutation` for writing.
          */
         useObject<TKey extends Extract<keyof TStorage, string>>(
           key: TKey
