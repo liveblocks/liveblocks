@@ -1,4 +1,3 @@
-
 import { assertNever, type DevTools } from "@liveblocks/core";
 import * as RadixSelect from "@radix-ui/react-select";
 import cx from "classnames";
@@ -36,7 +35,7 @@ import {
 } from "../../contexts/CurrentRoom";
 import { YFlow } from "./yflow/YFlow";
 
-export const YJS_TABS = ["changes", "document", "awareness"] as const;
+export const YJS_TABS = ["document", "awareness", "changes"] as const;
 export const YJS_CHANGES_VIEWS = ["diagram", "list"] as const;
 export type YjsTab = (typeof YJS_TABS)[number];
 export type YjsChangesView = (typeof YJS_CHANGES_VIEWS)[number];
