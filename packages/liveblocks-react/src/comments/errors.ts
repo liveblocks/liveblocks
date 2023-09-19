@@ -86,7 +86,7 @@ export class CreateCommentReactionError extends Error {
       emoji: string;
     }
   ) {
-    super("Add comment reaction failed.");
+    super("Create comment reaction failed.");
     this.name = "CreateCommentReactionError";
   }
 }
@@ -101,7 +101,7 @@ export class DeleteCommentReactionError extends Error {
       emoji: string;
     }
   ) {
-    super("Remove comment reaction failed.");
+    super("Delete comment reaction failed.");
     this.name = "DeleteCommentReactionError";
   }
 }

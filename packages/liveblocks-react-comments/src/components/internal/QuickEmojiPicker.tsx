@@ -12,7 +12,7 @@ import { classNames } from "../../utils/class-names";
 interface Props extends ComponentPropsWithoutRef<"div"> {
   onOpenChange?: (open: boolean) => void;
   emojis?: string[];
-  onReactionSelect?: (reaction: string) => void;
+  onEmojiSelect?: (reaction: string) => void;
 }
 
 // TODO: This should be a dropdown but @radix-ui/react-dropdown-menu
@@ -22,7 +22,7 @@ export const QuickEmojiPicker = forwardRef<HTMLDivElement, Props>(
   (
     {
       emojis = ["👍️", "👎", "❤️", "👀", "✅"],
-      onReactionSelect,
+      onEmojiSelect,
       onOpenChange,
       children,
       className,
@@ -62,7 +62,7 @@ export const QuickEmojiPicker = forwardRef<HTMLDivElement, Props>(
                 className="lb-quick-emoji"
                 onClick={() => {
                   setOpen(false);
-                  onReactionSelect?.(emoji);
+                  onEmojiSelect?.(emoji);
                 }}
               >
                 <Emoji emoji={emoji} />

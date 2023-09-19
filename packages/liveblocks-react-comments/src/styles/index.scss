@@ -509,6 +509,7 @@
   .lb-composer-actions,
   .lb-composer-editor-actions {
     display: flex;
+    gap: calc(0.125 * var(--lb-spacing));
     align-items: center;
   }
 
@@ -599,6 +600,7 @@
 
   .lb-comment-actions {
     display: flex;
+    gap: calc(0.125 * var(--lb-spacing));
     transition-timing-function: var(--lb-transition-easing);
     transition-duration: var(--lb-transition-duration);
     transition-property: opacity;
@@ -629,6 +631,10 @@
       content: "\FEFF";
       user-select: none;
     }
+  }
+
+  .lb-comment-reaction-count {
+    font-variant-numeric: tabular-nums;
   }
 
   .lb-comment-deleted {

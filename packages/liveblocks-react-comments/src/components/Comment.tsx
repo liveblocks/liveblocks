@@ -189,8 +189,7 @@ const CommentReaction = forwardRef<HTMLButtonElement, CommentReactionProps>(
         onPressedChange={handlePressedChange}
         ref={forwardedRef}
       >
-        <Emoji className="lb-comment-reaction-emoji" emoji={emoji} />
-        {/* TODO: Make the <span> of reactions using tabular-nums in CSS */}
+        <Emoji emoji={emoji} />
         <span className="lb-comment-reaction-count">{reactions.length}</span>
       </TogglePrimitive.Root>
     );
@@ -291,13 +290,13 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
     );
 
     const handleReactionSelect = useCallback(
-      (reaction: string) => {
+      (emoji: string) => {
         if (
-          reactions?.[reaction].some((reaction) => reaction.userId === self?.id)
+          reactions?.[emoji].some((reaction) => reaction.userId === self?.id)
         ) {
-          console.log("Remove reaction", reaction);
+          console.log("Remove reaction", emoji);
         } else {
-          console.log("Add reaction", reaction);
+          console.log("Add reaction", emoji);
         }
       },
       [reactions, self?.id]
@@ -362,7 +361,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
               >
                 {additionalActions ?? null}
                 <QuickEmojiPicker
-                  onReactionSelect={handleReactionSelect}
+                  onEmojiSelect={handleReactionSelect}
                   onOpenChange={setReactionActionOpen}
                 >
                   <Tooltip content={$.COMMENT_ADD_REACTION}>
@@ -479,7 +478,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
                   {Object.entries(reactions).map(([emoji, reactions]) => (
                     <CommentReaction emoji={emoji} reactions={reactions} />
                   ))}
-                  <QuickEmojiPicker onReactionSelect={handleReactionSelect}>
+                  <QuickEmojiPicker onEmojiSelect={handleReactionSelect}>
                     <Tooltip content={$.COMMENT_ADD_REACTION}>
                       <QuickEmojiPickerTrigger asChild>
                         <Button
