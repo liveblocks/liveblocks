@@ -54,6 +54,18 @@ export function Comment({ comment, className, ...props }: CommentProps) {
             </CommentPrimitive.Mention>
           );
         }}
+        // A renderLink prop is also available to customize how links are rendered in a comment.
+        //
+        // renderLink={({ href, children }) => {
+        //   return (
+        //     <CommentPrimitive.Link
+        //       href={href}
+        //       className="text-blue-500 underline"
+        //     >
+        //       {children}
+        //     </CommentPrimitive.Link>
+        //   )
+        // }}
       />
     </div>
   );

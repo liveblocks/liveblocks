@@ -1,0 +1,14 @@
+@import "./index";
+
+$dark-attributes: '.dark, [data-theme="dark"], [data-dark]';
+
+@layer {
+  #{$dark-attributes} {
+    @include dark-variables;
+  }
+
+  .lb-root:is(#{$dark-attributes}),
+  :is(#{$dark-attributes}) .lb-root {
+    @include dark-root-styles;
+  }
+}

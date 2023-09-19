@@ -1,0 +1,22 @@
+{
+  // Use the same settings for all packages
+  "extends": "../../shared/tsconfig.common.json",
+
+  "compilerOptions": {
+    "target": "es2020",
+    "module": "es2020",
+    "lib": ["dom", "es2020"],
+
+    // Allow importing JSON files
+    "resolveJsonModule": true,
+
+    // Transform JSX syntax from input *.tsx files into React.createElement()
+    // calls in the *.js build output.
+    // NOTE: We can change this to `react-jsx` once we stop supporting React 16.
+    "jsx": "react",
+
+    // TODO: Try to get rid of these overrides
+    "noUncheckedIndexedAccess": false // OVERWRITTEN to relax a bit
+  },
+  "include": ["**/*.ts", "**/*.tsx"]
+}

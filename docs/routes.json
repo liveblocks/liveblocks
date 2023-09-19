@@ -62,8 +62,38 @@
             "hidden": true
           },
           {
+            "title": "Yjs CodeMirror Svelte",
+            "path": "/get-started/yjs-codemirror-svelte",
+            "hidden": true
+          },
+          {
+            "title": "Yjs CodeMirror Vue.js",
+            "path": "/get-started/yjs-codemirror-vuejs",
+            "hidden": true
+          },
+          {
+            "title": "Yjs CodeMirror JavaScript",
+            "path": "/get-started/yjs-codemirror-javascript",
+            "hidden": true
+          },
+          {
             "title": "Yjs Monaco React",
             "path": "/get-started/yjs-monaco-react",
+            "hidden": true
+          },
+          {
+            "title": "Yjs Monaco Svelte",
+            "path": "/get-started/yjs-monaco-svelte",
+            "hidden": true
+          },
+          {
+            "title": "Yjs Monaco Vue.js",
+            "path": "/get-started/yjs-monaco-vuejs",
+            "hidden": true
+          },
+          {
+            "title": "Yjs Monaco JavaScript",
+            "path": "/get-started/yjs-monaco-javascript",
             "hidden": true
           },
           {
@@ -74,6 +104,16 @@
           {
             "title": "Yjs Quill React",
             "path": "/get-started/yjs-quill-react",
+            "hidden": true
+          },
+          {
+            "title": "Yjs Quill Svelte",
+            "path": "/get-started/yjs-quill-svelte",
+            "hidden": true
+          },
+          {
+            "title": "Yjs Quill Vue.js",
+            "path": "/get-started/yjs-quill-vuejs",
             "hidden": true
           },
           {
@@ -89,6 +129,21 @@
           {
             "title": "Yjs Tiptap React",
             "path": "/get-started/yjs-tiptap-react",
+            "hidden": true
+          },
+          {
+            "title": "Yjs Tiptap Svelte",
+            "path": "/get-started/yjs-tiptap-svelte",
+            "hidden": true
+          },
+          {
+            "title": "Yjs Tiptap Vue.js",
+            "path": "/get-started/yjs-tiptap-vuejs",
+            "hidden": true
+          },
+          {
+            "title": "Yjs Tiptap JavaScript",
+            "path": "/get-started/yjs-tiptap-javascript",
             "hidden": true
           },
           {
@@ -341,8 +396,7 @@
       },
       {
         "title": "@liveblocks/react-comments",
-        "path": "/api-reference/liveblocks-react-comments",
-        "hidden": true
+        "path": "/api-reference/liveblocks-react-comments"
       },
       {
         "title": "@liveblocks/redux",

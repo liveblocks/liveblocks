@@ -2,7 +2,8 @@
 /packages/   @nvie
 /packages/liveblocks-devtools/   @nvie @marcbouchenoire
 /packages/create-liveblocks-app/   @CTNicholas
-/packages/liveblocks-node/   @nvie @ofoucherot @FlowFlorent 
+/packages/liveblocks-node/   @nvie @ofoucherot @FlowFlorent
+/packages/liveblocks-react-comments/   @marcbouchenoire
 /shared/   @nvie
 /e2e/   @nvie
 

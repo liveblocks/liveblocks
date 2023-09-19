@@ -7,12 +7,9 @@ type Props = {
   disabled?: boolean;
 };
 
-export default function IconButton({
-  onClick,
-  children,
-  isActive,
-  disabled,
-}: Props) {
+export default function IconButton(
+  { onClick, children, isActive, disabled }: Props
+) {
   return (
     <button
       className={`${styles.button} ${isActive ? styles.button_active : ""}`}

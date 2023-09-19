@@ -3,12 +3,12 @@ import styles from "./Avatar.module.css";
 import { AVATAR_SIZE } from "../constants";
 
 type Props = {
-  picture?: string;
+  src?: string;
   name?: string;
   color?: string;
 };
 
-export default function Avatar({ picture, name, color }: Props) {
+export default function Avatar({ src, name, color }: Props) {
   return (
     <div
       className={styles.avatar}
@@ -22,7 +22,7 @@ export default function Avatar({ picture, name, color }: Props) {
       data-tooltip={name}
     >
       <img
-        src={picture}
+        src={src}
         height={AVATAR_SIZE}
         width={AVATAR_SIZE}
         className={styles.avatar_image}

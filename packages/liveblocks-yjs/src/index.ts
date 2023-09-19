@@ -179,7 +179,7 @@ export default class LiveblocksProvider<
           try {
             const localUpdate = Y.encodeStateAsUpdate(
               this.doc,
-              Base64.toUint8Array(stateVector as string)
+              Base64.toUint8Array(stateVector)
             );
             this.room.updateYDoc(Base64.fromUint8Array(localUpdate));
           } catch (e) {

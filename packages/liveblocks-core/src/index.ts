@@ -24,6 +24,7 @@ export type {
   LostConnectionEvent,
   Status,
 } from "./connection";
+export { isLiveNode } from "./crdts/liveblocks-helpers";
 export { LiveList } from "./crdts/LiveList";
 export { LiveMap } from "./crdts/LiveMap";
 export { LiveObject } from "./crdts/LiveObject";
@@ -48,16 +49,29 @@ export {
   patchLiveObjectKey,
 } from "./immutable";
 export { assert, assertNever, nn } from "./lib/assert";
+export type {
+  AsyncCache,
+  AsyncState,
+  AsyncStateError,
+  AsyncStateInitial,
+  AsyncStateLoading,
+  AsyncStateResolved,
+  AsyncStateSuccess,
+} from "./lib/AsyncCache";
+export { createAsyncCache } from "./lib/AsyncCache";
 export {
   deprecate,
   deprecateIf,
   errorIf,
   throwUsageError,
 } from "./lib/deprecation";
+export type { EventSource, UnsubscribeCallback } from "./lib/EventSource";
+export { makeEventSource } from "./lib/EventSource";
+export * as console from "./lib/fancy-console";
 export { freeze } from "./lib/freeze";
 export type { Json, JsonArray, JsonObject, JsonScalar } from "./lib/Json";
 export { isJsonArray, isJsonObject, isJsonScalar } from "./lib/Json";
-export { asArrayWithLegacyMethods } from "./lib/LegacyArray";
+export { makePoller } from "./lib/Poller";
 export { asPos, makePosition } from "./lib/position";
 export type { Resolve } from "./lib/Resolve";
 export { shallow } from "./lib/shallow";
@@ -167,3 +181,18 @@ import type * as DevToolsMsg from "./devtools/protocol";
 export type { DevToolsMsg };
 import type * as DevTools from "./types/DevToolsTreeNode";
 export type { DevTools };
+
+// Comments
+export type { CommentsApi } from "./comments";
+export { createCommentsApi } from "./comments";
+export type { BaseMetadata } from "./comments/types/BaseMetadata";
+export type {
+  CommentBody,
+  CommentBodyElement,
+  CommentBodyLink,
+  CommentBodyMention,
+  CommentBodyParagraph,
+  CommentBodyText,
+} from "./comments/types/CommentBody";
+export type { CommentData } from "./comments/types/CommentData";
+export type { ThreadData } from "./comments/types/ThreadData";

@@ -8,6 +8,9 @@ export default defineConfig({
   target: "es2020",
   format: ["esm", "cjs"],
   sourcemap: true,
+  banner: {
+    js: '"use client";',
+  },
 
   esbuildOptions(options, _context) {
     // Replace __VERSION__ globals with concrete version

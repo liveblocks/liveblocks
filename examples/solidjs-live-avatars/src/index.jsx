@@ -33,7 +33,7 @@ const NAMES = [
 
 const initialPresence = {
   name: NAMES[Math.floor(Math.random() * NAMES.length)],
-  picture: `https://liveblocks.io/avatars/avatar-${Math.floor(
+  avatar: `https://liveblocks.io/avatars/avatar-${Math.floor(
     Math.random() * 30
   )}.png`,
 };

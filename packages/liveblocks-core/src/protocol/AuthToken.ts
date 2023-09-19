@@ -1,5 +1,6 @@
 import type { Json } from "../lib/Json";
 import { b64decode, isPlainObject, tryParseJson } from "../lib/utils";
+import type { BaseUserInfo } from "./BaseUserMeta";
 
 export enum Permission {
   Read = "room:read",
@@ -25,6 +26,13 @@ export function canWriteStorage(scopes: readonly string[]): boolean {
   return scopes.includes(Permission.Write);
 }
 
+export function canComment(scopes: readonly string[]): boolean {
+  return (
+    scopes.includes(Permission.CommentsWrite) ||
+    scopes.includes(Permission.Write)
+  );
+}
+
 type JwtMeta = {
   iat: number;
   exp: number;
@@ -40,7 +48,7 @@ export type LegacySecretToken = {
 
   // Extra payload as defined by the customer's own authorization
   id?: string;
-  info?: Json;
+  info?: BaseUserInfo;
 
   // IMPORTANT: All other fields on the JWT token are deliberately treated as
   // opaque, and not relied on by the client.
@@ -55,7 +63,7 @@ export type AccessToken = {
   pid: string; // project id
   uid: string; // user id
   perms: LiveblocksPermissions; // permissions
-  ui?: Json; // user info
+  ui?: BaseUserInfo; // user info
 } & JwtMeta;
 
 /**
@@ -66,7 +74,7 @@ export type IDToken = {
   pid: string; // project id
   uid: string; // user id
   gids?: string[]; // group ids
-  ui?: Json; // user info
+  ui?: BaseUserInfo; // user info
 } & JwtMeta;
 
 export type AuthToken = AccessToken | IDToken | LegacySecretToken;

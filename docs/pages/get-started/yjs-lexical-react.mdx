@@ -114,7 +114,6 @@ We’d love to hear from you.
       import { CollaborationPlugin } from "@lexical/react/LexicalCollaborationPlugin";
       import LexicalErrorBoundary from "@lexical/react/LexicalErrorBoundary";
       import { Provider } from "@lexical/yjs";
-      import styles from "./Editor.module.css";
 
       function initialEditorState(editor: LexicalEditor): void {
         const root = $getRoot();
@@ -126,84 +125,38 @@ We’d love to hear from you.
 
       export default Editor() {
         const room = useRoom();
+
+        // Lexical config
         const initialConfig = {
-          // NOTE: This is critical for collaboration plugin to set editor state to null. It
-          // would indicate that the editor should not try to set any default state
-          // (not even empty one), and let collaboration plugin do it instead
+          // Don’t set default state, allow CollaborationPlugin to do it instead
           editorState: null,
           namespace: "Demo",
           nodes: [],
-          onError: (error: unknown) => {
-            throw error;
-          },
           theme: {},
+          onError: (error: unknown) => throw error,
         };
 
         return (
-          <div className={styles.container}>
-            <LexicalComposer initialConfig={initialConfig}>
-              <RichTextPlugin
-                contentEditable={<ContentEditable className={styles.editor} />}
-                placeholder={
-                  <div className={styles.placeholder}>Start typing here…</div>
-                }
-                ErrorBoundary={LexicalErrorBoundary}
-              />
-              <CollaborationPlugin
-                id="yjs-plugin"
-                providerFactory={(id, yjsDocMap) => {
-                  const doc = new Y.Doc();
-                  yjsDocMap.set(id, doc);
-                  const provider = new LiveblocksProvider(room, doc) as Provider;
-                  return provider;
-                }}
-                initialEditorState={initialEditorState}
-                shouldBootstrap={true}
-              />
-            </LexicalComposer>
-          </div>
+          <LexicalComposer initialConfig={initialConfig}>
+            <RichTextPlugin
+              contentEditable={<ContentEditable />}
+              placeholder={
+                <div>Start typing here…</div>
+              }
+              ErrorBoundary={LexicalErrorBoundary}
+            />
+            <CollaborationPlugin
+              id="yjs-plugin"
+              providerFactory={(id, yDocMap) => {
+                const yDoc = new Y.Doc();
+                yDocMap.set(id, yDoc);
+                return new LiveblocksProvider(room, yDoc) as Provider;
+              }}
+              initialEditorState={initialEditorState}
+              shouldBootstrap={true}
+            />
+          </LexicalComposer>
         );
-      }
-      ```
-
-      And here is the `Editor.module.css` file to make sure your multiplayer text editor looks nice and tidy.
-
-      ```css file="Editor.module.css" isCollapsed isCollapsable
-      .container {
-        display: flex;
-        flex-direction: column;
-        position: relative;
-        border-radius: 12px;
-        background: #fff;
-        width: 100%;
-        height: 100%;
-        color: #111827;
-      }
-
-      .editor {
-        border-radius: inherit;
-        flex-grow: 1;
-      }
-
-      .editor:focus {
-        outline: none;
-      }
-
-      .editorContainer {
-        position: relative;
-        padding: 0 1em;
-      }
-
-      .placeholder {
-        pointer-events: none;
-        position: absolute;
-        inset: 0;
-        opacity: 0.3;
-        padding: 0 1em;
-      }
-
-      .editor p {
-        margin: 1em 0;
       }
       ```
     </StepContent>
@@ -233,6 +186,23 @@ We’d love to hear from you.
 Congratulations! You now have set up the foundation for your collaborative
 Lexical text editor inside your React application.
 
+- [Yjs and Lexical guides](/docs/guides?technologies=yjs%2Clexical)
 - [How to create a collaborative text editor with Lexical, Yjs, Next.js, and Liveblocks ](/docs/guides/how-to-create-a-collaborative-text-editor-with-lexical-yjs-nextjs-and-liveblocks#Create-live-avatars-with-Liveblocks-hooks)
 - [@liveblocks/yjs API Reference](/docs/api-reference/liveblocks-yjs)
 - [Lexical website](https://lexical.dev/)
+
+---
+
+## Examples using Lexical
+
+<ListGrid columns={2}>
+  <ExampleCard
+    example={{
+      title: "Collaborative Text Editor",
+      slug: "collaborative-text-editor/nextjs-yjs-lexical",
+      image: "/images/examples/thumbnails/text-editor.jpg",
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+</ListGrid>

@@ -408,6 +408,7 @@ describe("middleware", () => {
           },
           presence: { x: 1 },
           canWrite: true,
+          canComment: true,
           isReadOnly: false,
         },
       ]);

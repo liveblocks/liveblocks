@@ -29,8 +29,8 @@ describe("node e2e", () => {
     const roomA = clientA.enter("node-e2e", { initialPresence: { name: "A" } });
     const roomB = clientB.enter("node-e2e", { initialPresence: { name: "B" } });
 
-    roomA.subscribe("others", (others) => (roomAOthers = others.toArray()));
-    roomB.subscribe("others", (others) => (roomBOthers = others.toArray()));
+    roomA.subscribe("others", (others) => (roomAOthers = others));
+    roomB.subscribe("others", (others) => (roomBOthers = others));
 
     await waitFor(() =>
       roomAOthers.some((user) => user.presence?.name === "B")

@@ -2,9 +2,13 @@
 meta:
   title: "Comments"
   parentTitle: "API Reference"
-  description: "API Reference for Liveblocks Comments"
+  description: "API Reference for the @liveblocks/react-comments package"
 alwaysShowAllNavigationLevels: false
 ---
+
+`@liveblocks/react-comments` provides you with [React](https://react.dev/)
+components to build a commenting experience. Read our
+[getting started](/docs/get-started/react-comments) guide to learn more.
 
 <Banner title="Private beta">
 
@@ -16,286 +20,6 @@ feedback to improve the product. Your input is important and helps us shape the
 final version.
 
 </Banner>
-
-## Configuration
-
-### createRoomContext
-
-Creates a [`RoomProvider`](#RoomProvider) and a set of typed hooks. We recommend
-using it in `liveblocks.config.ts` and re-exporting your typed hooks like below.
-
-```tsx file="liveblocks.config.ts"
-import { createClient } from "@liveblocks/client";
-import { createRoomContext } from "@liveblocks/react";
-
-const client = createClient({
-  /* client options */
-});
-
-// Presence represents the properties that will exist on every User in the Room
-// and that will automatically be kept in sync. Accessible through the
-// `user.presence` property. Must be JSON-serializable.
-type Presence = {
-  // cursor: { x: number, y: number } | null,
-  // ...
-};
-
-// Optionally, Storage represents the shared document that persists in the
-// Room, even after all Users leave. Fields under Storage typically are
-// LiveList, LiveMap, LiveObject instances, for which updates are
-// automatically persisted and synced to all connected clients.
-type Storage = {
-  // animals: LiveList<string>,
-  // ...
-};
-
-// Optionally, UserMeta represents static/readonly metadata on each User, as
-// provided by your own custom auth backend (if used). Useful for data that
-// will not change during a session, like a User's name or avatar.
-type UserMeta = {
-  id?: string; // Accessible through `user.id`
-  info?: Json; // Accessible through `user.info`
-};
-
-// Optionally, the type of custom events broadcasted and listened for in this
-// room. Must be JSON-serializable.
-type RoomEvent = {};
-
-// Optionally, ThreadMetadata represents metadata on each thread.
-// Must only contain scalar values.
-type ThreadMetadata = {
-  resolved?: boolean;
-};
-
-export const {
-  RoomProvider,
-  useThreads,
-  /* ...all the other hooks you’re using... */
-} = createRoomContext<Presence, Storage, UserMeta, RoomEvent, ThreadMetadata>(
-  client
-);
-```
-
-#### Resolving users [#createRoomContext.resolveUser]
-
-Anything that is linked to a user (comments, mentions, etc.) will reference
-their ID. To display user information based on IDs, you can provide a resolver
-function to the `resolveUser` option in
-[`createRoomContext`](#createRoomContext).
-
-This resolver function will receive a user ID and should return a user object
-asynchronously.
-
-```tsx file="liveblocks.config.ts"
-// ...
-
-export const {
-  /* ... */
-} = createRoomContext(client, {
-  resolveUser: async ({ userId }) => {
-    const userData = __getUserFromDB__(userId);
-
-    return {
-      name: userData.name,
-      avatar: userData.avatar.src,
-    };
-  },
-});
-```
-
-<Banner title="User object">
-  The user object returned by the resolver function takes the shape of
-  `UserMeta["info"]`, which contains `name` and `avatar` (both optional) by
-  default. If you provided your own `UserMeta` type to `createRoomContext`, your
-  own `UserMeta["info"]` will be required here as well. But keep in mind that
-  the default components will look for the `name` and `avatar` properties to
-  display user names and avatars.
-</Banner>
-
-Once that’s done, components will show user names and avatars accordingly.
-
-#### Resolving mention suggestions [#createRoomContext.resolveMentionSuggestions]
-
-Liveblocks only knows users’ IDs, so to enable creating mentions in composer
-editors, you can provide a resolver function to the `resolveMentionSuggestions`
-option in [`createRoomContext`](#createRoomContext).
-
-This resolver function will receive the mention currently being written (e.g.
-when writing “@jane”, `text` will be `jane`) and should return a list of user
-IDs matching that text. This function will be called every time the text changes
-but with some debouncing.
-
-```tsx file="liveblocks.config.ts"
-// ...
-
-export const {
-  /* ... */
-} = createRoomContext(client, {
-  resolveMentionSuggestions: ({ text, roomId }) => {
-    const workspaceUsers = __getWorkspaceUsersFromDB__(roomId);
-
-    if (!text) {
-      // Show all workspace users by default
-
-      return __getUserIds__(workspaceUsers);
-    } else {
-      const matchingUsers = __findUsers__(workspaceUsers, text);
-
-      return __getUserIds__(matchingUsers);
-    }
-  },
-});
-```
-
-### RoomProvider
-
-Makes comments from a room available in the component hierarchy below.
-
-```tsx
-import { RoomProvider } from "./liveblocks.config";
-
-function Panel() {
-  return (
-    <RoomProvider id="my-room" initialPresence={{}}>
-      {/* children */}
-    </RoomProvider>
-  );
-}
-```
-
-## Types
-
-### ThreadData
-
-Represents a thread of comments.
-
-```tsx
-type ThreadData<ThreadMetadata> = {
-  type: "thread";
-  id: string;
-  roomId: string;
-  createdAt: string;
-  updatedAt?: string;
-  comments: CommentData[];
-  metadata: ThreadMetadata;
-};
-```
-
-A thread cannot be manually deleted yet. To delete a thread, you need to delete
-all the comments in the thread.
-
-### CommentData
-
-Represents a comment.
-
-```tsx
-type CommentData = {
-  type: "comment";
-  id: string;
-  threadId: string;
-  roomId: string;
-  userId: string;
-  body?: CommentBody;
-  createdAt: string;
-  editedAt?: string;
-  deletedAt?: string;
-};
-```
-
-Note that `body` can be `undefined` when the comment has been deleted. Read this
-[section](/docs/get-started/react-comments#deletion) for more information.
-
-## Hooks
-
-### useThreads
-
-Returns the threads within the current room.
-
-```tsx
-import { useThreads } from "./liveblocks.config";
-
-const { threads, error, isLoading } = useThreads();
-```
-
-### useUser
-
-Returns user info from a given user ID.
-
-```tsx
-import { useUser } from "./liveblocks.config";
-
-const { user, error, isLoading } = useUser("user-id");
-```
-
-<Banner title="Providing a resolver function">
-
-To use `useUser`, you should provide a resolver function to the
-[`resolveUser`](#createRoomContext.resolveUser) option in
-[`createRoomContext`](#createRoomContext).
-
-</Banner>
-
-### useCreateThread
-
-Returns a function that creates a thread with an initial comment, and optionally
-some metadata.
-
-```tsx
-const createThread = useCreateThread();
-const thread = createThread({ body: {}, metadata: {} });
-```
-
-### useEditThread
-
-Returns a function that edits a thread’s metadata.
-
-```tsx
-const editThread = useEditThread();
-const thread = editThread({ threadId: "th_xxx", metadata: {} });
-```
-
-### useCreateComment
-
-Returns a function that adds a comment to a thread.
-
-```tsx
-const createComment = useCreateComment();
-const comment = createComment({ threadId: "th_xxx", body: {} });
-```
-
-### useEditComment
-
-Returns a function that edits a comment’s body.
-
-```tsx
-const editComment = useEditComment();
-const comment = editComment({
-  threadId: "th_xxx",
-  commentId: "cm_xxx",
-  body: {},
-});
-```
-
-### useDeleteComment
-
-Returns a function that deletes a comment. If it is the last non-deleted
-comment, the thread also gets deleted.
-
-```tsx
-const deleteComment = useDeleteComment();
-deleteComment({ threadId: "th_xxx", commentId: "cm_xxx" });
-```
-
-### useComposer
-
-Returns states and methods related to the composer. Can only be used within
-`Composer.Form`.
-
-```tsx
-import { useComposer } from "@liveblocks/react-comments/primitives";
-
-const { isValid, submit } = useComposer();
-```
 
 ## Components
 
@@ -342,18 +66,18 @@ They are built around a few customizable CSS variables:
 --lb-accent-contrast: 8%;
 --lb-foreground-contrast: 6%;
 --lb-elevation-foreground-contrast: 6%;
---lb-tooltip-foreground-contrast: 18%;
+--lb-tooltip-foreground-contrast: 10%;
 ```
 
 {/* TODO: Explain automatic color scales (with a palette-type visual) */}
 
-If these CSS variables aren't enough, every elements within the components have
+If these CSS variables aren’t enough, every elements within the components have
 clearly defined classes. Additionaly, some elements also have data attributes to
 provide contextual information (e.g. `data-variant="primary"` on `.lb-button`,
 `data-self` on `.lb-comment-mention`, `data-loading` on `.lb-avatar` and
 `.lb-user`, etc.).
 
-<Banner title="Internal classes">
+<Banner title="Internal classes" type="warning">
 
 Classes containing `:` are internal and may change over time.
 
@@ -464,20 +188,20 @@ Displays a thread of comments, with a composer to reply to it.
 
 <Table columns={["26%", "32%", "42%"]}>
 
-| Prop                  | Type                                                                                              | Description                                                                   |
-| --------------------- | ------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
-| `thread`              | <code>ThreadData&lt;\{ resolved?: boolean \}&gt;</code>                                           | The thread to display.                                                        |
-| `showComposer`        | `boolean \| undefined`                                                                            | Whether to show the composer to reply to the thread.<br/>Defaults to `false`. |
-| `showActions`         | `boolean \| "hover" \| undefined`                                                                 | How to show or hide the actions.<br/>Defaults to `"hover"`.                   |
-| `showResolveAction`   | `boolean \| undefined`                                                                            | Whether to show the action to resolve the thread.<br/>Defaults to `true`.     |
-| `indentCommentBody`   | `boolean \| undefined`                                                                            | Whether to indent the comments’ bodies.<br/>Defaults to `true`.               |
-| `showDeletedComments` | `boolean \| undefined`                                                                            | Whether to show deleted comments.<br/>Defaults to `false`.                    |
-| `onResolveChange`     | `(resolved: boolean) => void`                                                                     | An event handler called when changing the resolved status.                    |
-| `onCommentEdit`       | `(comment: CommentData) => void`                                                                  | An event handler called when a comment is edited.                             |
-| `onCommentDelete`     | `(comment: CommentData) => void`                                                                  | An event handler called when a comment is deleted.                            |
-| `onAuthorClick`       | <code>(userId: string, event: MouseEvent&lt;HTMLElement&gt;) => void \| undefined</code>          | An event handler called when clicking on a comment’s author.                  |
-| `onMentionClick`      | <code>(userId: string, event: MouseEvent&lt;HTMLElement&gt;) => void \| undefined</code>          | An event handler called when clicking on a mention.                           |
-| `overrides`           | <code>Partial&lt;ThreadOverrides \& CommentOverrides \& ComposerOverrides&gt; \| undefined</code> | Override the component’s strings.                                             |
+| Prop                  | Type                                                                                              | Description                                                                             |
+| --------------------- | ------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| `thread`              | <code>ThreadData&lt;\{ resolved?: boolean \}&gt;</code>                                           | The thread to display.                                                                  |
+| `showComposer`        | `boolean \| "collapsed" \| undefined`                                                             | How to show or hide the composer to reply to the thread.<br/>Defaults to `"collapsed"`. |
+| `showActions`         | `boolean \| "hover" \| undefined`                                                                 | How to show or hide the actions.<br/>Defaults to `"hover"`.                             |
+| `showResolveAction`   | `boolean \| undefined`                                                                            | Whether to show the action to resolve the thread.<br/>Defaults to `true`.               |
+| `indentCommentBody`   | `boolean \| undefined`                                                                            | Whether to indent the comments’ bodies.<br/>Defaults to `true`.                         |
+| `showDeletedComments` | `boolean \| undefined`                                                                            | Whether to show deleted comments.<br/>Defaults to `false`.                              |
+| `onResolveChange`     | `(resolved: boolean) => void`                                                                     | The event handler called when changing the resolved status.                             |
+| `onCommentEdit`       | `(comment: CommentData) => void`                                                                  | The event handler called when a comment is edited.                                      |
+| `onCommentDelete`     | `(comment: CommentData) => void`                                                                  | The event handler called when a comment is deleted.                                     |
+| `onAuthorClick`       | <code>(userId: string, event: MouseEvent&lt;HTMLElement&gt;) => void \| undefined</code>          | The event handler called when clicking on a comment’s author.                           |
+| `onMentionClick`      | <code>(userId: string, event: MouseEvent&lt;HTMLElement&gt;) => void \| undefined</code>          | The event handler called when clicking on a mention.                                    |
+| `overrides`           | <code>Partial&lt;ThreadOverrides \& CommentOverrides \& ComposerOverrides&gt; \| undefined</code> | Override the component’s strings.                                                       |
 
 </Table>
 
@@ -503,10 +227,10 @@ Displays a single comment.
 | `showActions`    | `boolean \| "hover" \| undefined`                                                        | How to show or hide the actions.<br/>Defaults to `"hover"`.                                                                           |
 | `indentBody`     | `boolean \| undefined`                                                                   | Whether to indent the comment’s body.<br/>Defaults to `true`.                                                                         |
 | `showDeleted`    | `boolean \| undefined`                                                                   | Whether to show the comment if it was deleted. If set to `false`, it will render deleted comments as `null`.<br/>Defaults to `false`. |
-| `onEdit`         | `(comment: CommentData) => void`                                                         | An event handler called when the comment is edited.                                                                                   |
-| `onDelete`       | `(comment: CommentData) => void`                                                         | An event handler called when the comment is deleted.                                                                                  |
-| `onAuthorClick`  | <code>(userId: string, event: MouseEvent&lt;HTMLElement&gt;) => void \| undefined</code> | An event handler called when clicking on the author.                                                                                  |
-| `onMentionClick` | <code>(userId: string, event: MouseEvent&lt;HTMLElement&gt;) => void \| undefined</code> | An event handler called when clicking on a mention.                                                                                   |
+| `onEdit`         | `(comment: CommentData) => void`                                                         | The event handler called when the comment is edited.                                                                                  |
+| `onDelete`       | `(comment: CommentData) => void`                                                         | The event handler called when the comment is deleted.                                                                                 |
+| `onAuthorClick`  | <code>(userId: string, event: MouseEvent&lt;HTMLElement&gt;) => void \| undefined</code> | The event handler called when clicking on the author.                                                                                 |
+| `onMentionClick` | <code>(userId: string, event: MouseEvent&lt;HTMLElement&gt;) => void \| undefined</code> | The event handler called when clicking on a mention.                                                                                  |
 | `overrides`      | <code>Partial&lt;CommentOverrides \& ComposerOverrides&gt; \| undefined</code>           | Override the component’s strings.                                                                                                     |
 
 </Table>
@@ -545,15 +269,18 @@ behavior and call the mutation methods (e.g. `createThread`) manually.
 
 <Table columns={["26%", "32%", "42%"]}>
 
-| Prop               | Type                                                                                                                                 | Description                                               |
-| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------- |
-| `threadId`         | `string \| undefined`                                                                                                                | The ID of the thread to reply to or to edit a comment in. |
-| `commentId`        | `string \| undefined`                                                                                                                | The ID of the comment to edit.                            |
-| `onComposerSubmit` | <code>((comment: ComposerSubmitComment, event: FormEvent&lt;HTMLFormElement&gt;) => Promise&lt;void&gt; \| void) \| undefined</code> | The event handler called when the composer is submitted.  |
-| `initialValue`     | `CommentBody \| undefined`                                                                                                           | The composer’s initial value.                             |
-| `disabled`         | `boolean \| undefined`                                                                                                               | Whether the composer is disabled.                         |
-| `autoFocus`        | `boolean \| undefined`                                                                                                               | Whether to focus the composer on mount.                   |
-| `overrides`        | <code>Partial&lt;ComposerOverrides&gt; \| undefined</code>                                                                           | Override the component’s strings.                         |
+| Prop                | Type                                                                                                                                 | Description                                                                                       |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------- |
+| `threadId`          | `string \| undefined`                                                                                                                | The ID of the thread to reply to or to edit a comment in.                                         |
+| `commentId`         | `string \| undefined`                                                                                                                | The ID of the comment to edit.                                                                    |
+| `onComposerSubmit`  | <code>((comment: ComposerSubmitComment, event: FormEvent&lt;HTMLFormElement&gt;) => Promise&lt;void&gt; \| void) \| undefined</code> | The event handler called when the composer is submitted.                                          |
+| `defaultValue`      | `CommentBody \| undefined`                                                                                                           | The composer’s initial value.                                                                     |
+| `collapsed`         | `boolean \| undefined`                                                                                                               | Whether the composer is collapsed. Setting a value will make the composer controlled.             |
+| `onCollapsedChange` | `(collapsed: boolean) => void`                                                                                                       | The event handler called when the collapsed state of the composer changes.                        |
+| `defaultCollapsed`  | `boolean \| undefined`                                                                                                               | Whether the composer is initially collapsed. Setting a value will make the composer uncontrolled. |
+| `disabled`          | `boolean \| undefined`                                                                                                               | Whether the composer is disabled.                                                                 |
+| `autoFocus`         | `boolean \| undefined`                                                                                                               | Whether to focus the composer on mount.                                                           |
+| `overrides`         | <code>Partial&lt;ComposerOverrides&gt; \| undefined</code>                                                                           | Override the component’s strings.                                                                 |
 
 </Table>
 
@@ -593,7 +320,12 @@ import { Button } from "@/my-design-system";
 ```tsx title="Anatomy"
 import { Comment } from "@liveblocks/react-comments/primitives";
 
-() => <Comment.Body renderMention={() => <Comment.Mention />} />;
+() => (
+  <Comment.Body
+    renderMention={() => <Comment.Mention />}
+    renderLink={() => <Comment.Link />}
+  />
+);
 ```
 
 #### Comment.Body [#primitives-Comment.Body]
@@ -610,6 +342,7 @@ Displays a comment body.
 | --------------- | ------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------- |
 | `body`          | `CommentBody \| undefined`                                               | The comment body to display. If not defined, the component will render `null`.                  |
 | `renderMention` | <code>ComponentType&lt;CommentRenderMentionProps&gt; \| undefined</code> | The component used to render mentions.<br/>Defaults to the mention’s `userId` prefixed by an @. |
+| `renderLink`    | <code>ComponentType&lt;CommentRenderLinkProps&gt; \| undefined</code>    | The component used to render links.<br/>Defaults to the link’s `children` property.             |
 | `asChild`       | `boolean \| undefined`                                                   | Replace the rendered element by the one passed as a child.<br/>Defaults to `false`.             |
 
 </Table>
@@ -632,12 +365,49 @@ A render prop that accepts a component used to render mentions.
 
 </Table>
 
+##### renderLink [#primitives-Comment.Body-renderLink]
+
+A render prop that accepts a component used to render links.
+
+```tsx
+<Comment.Body
+  renderLink={({ href, children }) => (
+    <Comment.Link href={href}>{children}</Comment.Link>
+  )}
+/>
+```
+
+<Table columns={["26%", "32%", "42%"]}>
+
+| Prop       | Type        | Description              |
+| ---------- | ----------- | ------------------------ |
+| `href`     | `string`    | The link’s absolute URL. |
+| `children` | `ReactNode` | The link’s content.      |
+
+</Table>
+
 #### Comment.Mention [#primitives-Comment.Mention]
 
 Displays mentions within `Comment.Body`’s `renderMention` prop.
 
 ```tsx
 <Comment.Mention>@{userId}</Comment.Mention>
+```
+
+<Table columns={["26%", "32%", "42%"]}>
+
+| Prop      | Type                   | Description                                                                         |
+| --------- | ---------------------- | ----------------------------------------------------------------------------------- |
+| `asChild` | `boolean \| undefined` | Replace the rendered element by the one passed as a child.<br/>Defaults to `false`. |
+
+</Table>
+
+#### Comment.Link [#primitives-Comment.Link]
+
+Displays links within `Comment.Body`’s `renderLink` prop.
+
+```tsx
+<Comment.Link href={href}>{children}</Comment.Link>
 ```
 
 <Table columns={["26%", "32%", "42%"]}>
@@ -664,6 +434,7 @@ import { Composer } from "@liveblocks/react-comments/primitives";
           </Composer.SuggestionsList>
         </Composer.Suggestions>
       )}
+      renderLink={() => <Composer.Link />}
     />
     <Composer.Submit />
   </Composer.Form>
@@ -699,13 +470,14 @@ Displays the composer’s editor.
 
 | Prop                       | Type                                                                                 | Description                                                                                            |
 | -------------------------- | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ |
-| `initialValue`             | `CommentBody \| undefined`                                                           | The editor’s initial value.                                                                            |
+| `defaultValue`             | `CommentBody \| undefined`                                                           | The editor’s initial value.                                                                            |
 | `placeholder`              | `string \| undefined`                                                                | The text to display when the editor is empty.                                                          |
 | `disabled`                 | `boolean \| undefined`                                                               | Whether the editor is disabled.                                                                        |
 | `autoFocus`                | `boolean \| undefined`                                                               | Whether to focus the editor on mount.                                                                  |
 | `dir`                      | `"ltr" \| "rtl" \| undefined`                                                        | The reading direction of the editor and related elements.                                              |
 | `renderMention`            | <code>ComponentType&lt;ComposerRenderMentionProps&gt; \| undefined</code>            | The component used to render mentions.<br/>Defaults to the mention’s `userId` prefixed by an @.        |
 | `renderMentionSuggestions` | <code>ComponentType&lt;ComposerRenderMentionSuggestionsProps&gt; \| undefined</code> | The component used to render mention suggestions.<br/>Defaults to a list of the suggestions’ `userId`. |
+| `renderLink`               | <code>ComponentType&lt;ComposerRenderLinkProps&gt; \| undefined</code>               | The component used to render links.<br/>Defaults to the link’s `children` property.                    |
 
 </Table>
 
@@ -763,6 +535,25 @@ A render prop that accepts a component used to render mention suggestions.
   )}
 />
 ```
+
+##### renderLink [#primitives-Composer.Editor-renderLink]
+
+A render prop that accepts a component used to render links.
+
+```tsx
+<Composer.Editor
+  renderLink={({ href, children }) => <Composer.Link>{children}</Composer.Link>}
+/>
+```
+
+<Table columns={["26%", "32%", "42%"]}>
+
+| Prop       | Type        | Description              |
+| ---------- | ----------- | ------------------------ |
+| `href`     | `string`    | The link’s absolute URL. |
+| `children` | `ReactNode` | The link’s content.      |
+
+</Table>
 
 #### Composer.Mention [#primitives-Composer.Mention]
 
@@ -851,6 +642,22 @@ Displays a suggestion within `Composer.SuggestionsList`.
 
 </Table>
 
+#### Composer.Link [#primitives-Composer.Link]
+
+Displays links within `Composer.Editor`’s `renderLink` prop.
+
+```tsx
+<Composer.Link href={href}>{children}</Composer.Link>
+```
+
+<Table columns={["26%", "32%", "42%"]}>
+
+| Prop      | Type                   | Description                                                                         |
+| --------- | ---------------------- | ----------------------------------------------------------------------------------- |
+| `asChild` | `boolean \| undefined` | Replace the rendered element by the one passed as a child.<br/>Defaults to `false`. |
+
+</Table>
+
 #### Composer.Submit [#primitives-Composer.Submit]
 
 A button to submit the composer.
@@ -888,3 +695,16 @@ absolute formatting for older ones.
 | `asChild`  | `boolean \| undefined`                            | Replace the rendered element by the one passed as a child.<br/>Defaults to `false`.                                                         |
 
 </Table>
+
+## Hooks
+
+### useComposer
+
+Returns states and methods related to the composer. Can only be used within
+`Composer.Form`.
+
+```tsx
+import { useComposer } from "@liveblocks/react-comments/primitives";
+
+const { isEmpty, submit } = useComposer();
+```
