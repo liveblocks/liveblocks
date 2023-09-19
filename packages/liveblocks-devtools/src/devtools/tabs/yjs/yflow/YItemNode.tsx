@@ -15,11 +15,9 @@ import FallbackContent from "./FallbackContent";
 type NodeData = {
   label: string;
   item: Y.Item;
-  setSelectedNode: (node: string) => void;
-  isNodeSelected: boolean;
 };
 
-function YItemNode({ data }: NodeProps<NodeData>) {
+function YItemNode({ selected, data }: NodeProps<NodeData>) {
   let component = null;
 
   switch (true) {
@@ -62,16 +60,10 @@ function YItemNode({ data }: NodeProps<NodeData>) {
       break;
     }
   }
-
-  const onSelect = () => {
-    data.setSelectedNode(`item-${data.item.id.client}-${data.item.id.clock}`);
-  };
-
   return (
     <div
       className="absolute inset-0 p-3"
-      data-selected={data.isNodeSelected ? "" : undefined}
-      onClick={onSelect}
+      data-selected={selected ? "" : undefined}
     >
       <Handle type="target" id="top" position={Position.Top} />
       <Handle

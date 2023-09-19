@@ -244,8 +244,6 @@ input[type="search"]::-webkit-search-cancel-button {
 }
 
 .react-flow__node.selected,
-.react-flow__node:focus,
-.react-flow__node:focus-visible,
 .react-flow__node-yItemNode:has([data-selected]) {
   @apply border border-light-500 dark:border-dark-500;
 
@@ -256,8 +254,6 @@ input[type="search"]::-webkit-search-cancel-button {
 
 :is(
     .react-flow__node.selected,
-    .react-flow__node:focus,
-    .react-flow__node:focus-visible,
     .react-flow__node-yItemNode:has([data-selected])
   )
   .react-flow__handle[data-type="color"][data-handlepos="left"] {
@@ -266,8 +262,6 @@ input[type="search"]::-webkit-search-cancel-button {
 
 :is(
     .react-flow__node.selected,
-    .react-flow__node:focus,
-    .react-flow__node:focus-visible,
     .react-flow__node-yItemNode:has([data-selected])
   )
   .react-flow__handle[data-type="color"][data-handlepos="right"] {

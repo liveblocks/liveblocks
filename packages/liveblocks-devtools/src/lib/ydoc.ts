@@ -114,14 +114,10 @@ export function yDocToJsonTree(doc: Y.Doc): DevTools.JsonTreeNode[] {
 export type YFlowNodeData = {
   label: string;
   type: string;
-  setSelectedNode?: (node: string) => void;
-  isNodeSelected?: boolean;
 };
 
 export const getNodesAndEdges = (
-  ydoc: Y.Doc,
-  setSelectedNode: (node: string) => void,
-  selectedNode: string
+  ydoc: Y.Doc
 ): {
   docEdges: Edge<object>[];
   docNodes: Node<YFlowNodeData>[];
@@ -153,8 +149,6 @@ export const getNodesAndEdges = (
     x -= ((value.length - 1) * 150) / 2;
     value.forEach((item) => {
       if (item instanceof Y.Item) {
-        const isNodeSelected =
-          selectedNode === `item-${item.id.client}-${item.id.clock}`;
         const node = {
           type: "yItemNode",
           id: `item-${item.id.client}-${item.id.clock}`,
@@ -163,8 +157,6 @@ export const getNodesAndEdges = (
             type: "node",
             label: `Item:${item.id.client}:${item.id.clock}`,
             item,
-            setSelectedNode,
-            isNodeSelected,
           },
         };
         docNodes.push(node);
@@ -186,12 +178,12 @@ export const getNodesAndEdges = (
               width: 20,
               height: 20,
               color: "#f43f5e",
-              opacity: isNodeSelected ? 1 : 0.2,
+              opacity: 0.3,
             },
             style: {
               strokeWidth: 2,
               stroke: "#f43f5e",
-              opacity: isNodeSelected ? 1 : 0.2,
+              opacity: 0.3,
             },
           };
           docEdges.push(edge);
@@ -208,18 +200,17 @@ export const getNodesAndEdges = (
               width: 20,
               height: 20,
               color: "#84cc16",
-              opacity: isNodeSelected ? 1 : 0.3,
+              opacity: 0.3,
             },
             style: {
               strokeWidth: 2,
               stroke: "#84cc16",
-              opacity: isNodeSelected ? 1 : 0.3,
+              opacity: 0.3,
             },
           };
           docEdges.push(edge);
         }
         x += 150;
-        //y += 50;
       }
     });
 

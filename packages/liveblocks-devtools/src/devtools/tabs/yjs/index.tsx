@@ -1,4 +1,4 @@
-import Dagre from "@dagrejs/dagre";
+
 import { assertNever, type DevTools } from "@liveblocks/core";
 import * as RadixSelect from "@radix-ui/react-select";
 import cx from "classnames";
@@ -10,16 +10,12 @@ import {
   useMemo,
   useRef,
   useState,
-  useTransition,
 } from "react";
 import type { NodeApi, TreeApi } from "react-arborist";
-import type { Edge, Node } from "reactflow";
-import { useEdgesState, useNodesState } from "reactflow";
 
 import { Loading } from "../../../components/Loading";
 import { truncate } from "../../../lib/truncate";
-import type { YFlowNodeData } from "../../../lib/ydoc";
-import { getNodesAndEdges, yDocToJsonTree } from "../../../lib/ydoc";
+import { yDocToJsonTree } from "../../../lib/ydoc";
 import { EmptyState } from "../../components/EmptyState";
 import type { SelectItem } from "../../components/Select";
 import { Select } from "../../components/Select";
@@ -44,35 +40,6 @@ export const YJS_TABS = ["changes", "document", "awareness"] as const;
 export const YJS_CHANGES_VIEWS = ["diagram", "list"] as const;
 export type YjsTab = (typeof YJS_TABS)[number];
 export type YjsChangesView = (typeof YJS_CHANGES_VIEWS)[number];
-
-const g = new Dagre.graphlib.Graph().setDefaultEdgeLabel(() => ({}));
-
-const getLayoutedElements = (
-  nodes: Node<YFlowNodeData, string>[],
-  edges: Edge<object>[]
-) => {
-  g.setGraph({ rankdir: "TB", nodesep: 50 });
-
-  edges.forEach((edge) => g.setEdge(edge.source, edge.target));
-  nodes.forEach((node) =>
-    g.setNode(node.id, {
-      ...node,
-      width: 200,
-      height: node.data.type === "node" ? 64 : 40,
-    })
-  );
-
-  Dagre.layout(g);
-
-  return {
-    nodes: nodes.map((node) => {
-      const { x, y } = g.node(node.id);
-
-      return { ...node, position: { x, y } };
-    }),
-    edges,
-  };
-};
 
 interface Props extends ComponentProps<"div"> {
   activeTab: YjsTab;
@@ -128,71 +95,10 @@ function YjsChangesList({ className, ...props }: ComponentProps<"div">) {
   }
 }
 
-function YjsChangesDiagram({ className, ...props }: ComponentProps<"div">) {
-  const [isTransitionPending, startTransition] = useTransition();
-  const [nodes, setNodes] = useNodesState([]);
-  const [edges, setEdges] = useEdgesState([]);
-  const ydoc = useYdoc();
-  const currentStatus = useStatus();
-
-  useEffect(() => {
-    let selectedNode = "";
-
-    function onUpdate() {
-      startTransition(() => {
-        const { docEdges, docNodes } = getNodesAndEdges(
-          ydoc,
-          onSetNode,
-          selectedNode
-        );
-        const layouted = getLayoutedElements(docNodes, docEdges);
-
-        setEdges(layouted.edges);
-        setNodes(layouted.nodes);
-      });
-    }
-
-    function onSetNode(node: string) {
-      selectedNode = node;
-      onUpdate();
-    }
-
-    onUpdate();
-    ydoc.on("update", onUpdate);
-
-    return () => {
-      ydoc.off("update", onUpdate);
-    };
-  }, [setEdges, setNodes, ydoc]);
-
-  if (
-    !isTransitionPending &&
-    (currentStatus === "connected" ||
-      currentStatus === "open" || // Same as "connected", but only sent by old clients (prior to 1.1)
-      currentStatus === "reconnecting")
-  ) {
-    if (edges.length > 0) {
-      return (
-        <div className={cx(className, "absolute inset-0")} {...props}>
-          <YFlow nodes={nodes} edges={edges} />
-        </div>
-      );
-    } else {
-      return (
-        <EmptyState
-          description={<>There seems to be no Yjs changes in this&nbsp;room.</>}
-        />
-      );
-    }
-  } else {
-    return <EmptyState visual={<Loading />} />;
-  }
-}
-
 function YjsChanges({ view, ...props }: YjsChangesProps) {
   switch (view) {
     case "diagram":
-      return <YjsChangesDiagram {...props} />;
+      return <YFlow {...props} />;
     case "list":
       return <YjsChangesList {...props} />;
     default:
