@@ -20,8 +20,10 @@ import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
 import type { CommentsApiError } from "./errors";
 import {
   CreateCommentError,
+  CreateCommentReactionError,
   CreateThreadError,
   DeleteCommentError,
+  DeleteCommentReactionError,
   EditCommentError,
   EditThreadMetadataError,
 } from "./errors";
@@ -40,6 +42,8 @@ export type CommentsRoom<TThreadMetadata extends BaseMetadata> = {
   ): ThreadData<TThreadMetadata>;
   editThreadMetadata(options: EditThreadMetadataOptions<TThreadMetadata>): void;
   createComment(options: CreateCommentOptions): CommentData;
+  createCommentReaction(options: CommentReactionOptions): void;
+  deleteCommentReaction(options: CommentReactionOptions): void;
   editComment(options: EditCommentOptions): void;
   deleteComment(options: DeleteCommentOptions): void;
 };
@@ -74,6 +78,12 @@ export type EditCommentOptions = {
 export type DeleteCommentOptions = {
   threadId: string;
   commentId: string;
+};
+
+export type CommentReactionOptions = {
+  threadId: string;
+  commentId: string;
+  emoji: string;
 };
 
 function createOptimisticId(prefix: string) {
@@ -350,6 +360,7 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
       createdAt: now,
       userId: getCurrentUserId(),
       body,
+      reactions: [],
     };
 
     setThreads(
@@ -468,11 +479,112 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
       .finally(endMutation);
   }
 
+  function createCommentReaction({
+    threadId,
+    commentId,
+    emoji,
+  }: CommentReactionOptions): void {
+    const threads = ensureThreadsAreLoadedForMutations();
+    const now = new Date().toISOString();
+
+    setThreads(
+      threads.map((thread) =>
+        thread.id === threadId
+          ? {
+              ...thread,
+              comments: thread.comments.map((comment) =>
+                comment.id === commentId
+                  ? ({
+                      ...comment,
+                      reactions: [
+                        ...comment.reactions,
+                        { emoji, userId: getCurrentUserId(), createdAt: now },
+                      ],
+                    } as CommentData)
+                  : comment
+              ),
+            }
+          : thread
+      )
+    );
+
+    startMutation();
+    room
+      .createCommentReaction({ threadId, commentId, emoji })
+      .catch((er: Error) =>
+        errorEventSource.notify(
+          new CreateCommentReactionError(er, {
+            roomId: room.id,
+            threadId,
+            commentId,
+            emoji,
+          })
+        )
+      )
+      .finally(endMutation);
+  }
+
+  function deleteCommentReaction({
+    threadId,
+    commentId,
+    emoji,
+  }: CommentReactionOptions): void {
+    const threads = ensureThreadsAreLoadedForMutations();
+
+    setThreads(
+      threads.map((thread) =>
+        thread.id === threadId
+          ? {
+              ...thread,
+              comments: thread.comments.map((comment) => {
+                const reactionIndex = comment.reactions.findIndex(
+                  (reaction) =>
+                    reaction.emoji === emoji &&
+                    reaction.userId === getCurrentUserId()
+                );
+
+                return comment.id === commentId
+                  ? ({
+                      ...comment,
+                      reactions:
+                        reactionIndex < 0
+                          ? comment.reactions
+                          : comment.reactions
+                              .slice(0, reactionIndex)
+                              .concat(
+                                comment.reactions.slice(reactionIndex + 1)
+                              ),
+                    } as CommentData)
+                  : comment;
+              }),
+            }
+          : thread
+      )
+    );
+
+    startMutation();
+    room
+      .deleteCommentReaction({ threadId, commentId, emoji })
+      .catch((er: Error) =>
+        errorEventSource.notify(
+          new DeleteCommentReactionError(er, {
+            roomId: room.id,
+            threadId,
+            commentId,
+            emoji,
+          })
+        )
+      )
+      .finally(endMutation);
+  }
+
   return {
     useThreads,
     useThreadsSuspense,
     createThread,
     editThreadMetadata,
+    createCommentReaction,
+    deleteCommentReaction,
     createComment,
     editComment,
     deleteComment,
