@@ -249,14 +249,16 @@
     display: flex;
   }
 
-  .lb-quick-emoji {
+  .lb-quick-emoji-picker-emoji {
     all: unset;
     display: flex;
     justify-content: center;
     align-items: center;
+    overflow: hidden;
     aspect-ratio: 1;
     padding: calc(0.375 * var(--lb-spacing));
     font-size: 0.875em;
+    text-align: center;
   }
 
   // Tooltip
@@ -764,7 +766,7 @@
 
 .lb-dropdown-item,
 .lb-composer-suggestions-list-item,
-.lb-quick-emoji {
+.lb-quick-emoji-picker-emoji {
   border-radius: calc(var(--lb-radius) - 0.75 * #{$lb-elevation-list-padding});
   color: var(--lb-elevation-foreground-secondary);
   outline: none;
