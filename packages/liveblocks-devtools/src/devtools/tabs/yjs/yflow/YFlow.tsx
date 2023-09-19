@@ -168,7 +168,6 @@ export function YFlow({
           ydoc
         );
         const layouted = getLayoutedElements(docNodes, docEdges);
-        console.log("Is this getting called!?");
         setEdges(layouted.edges);
         setNodes(layouted.nodes);
       });
