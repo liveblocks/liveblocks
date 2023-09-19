@@ -780,13 +780,15 @@
 
 .lb-dropdown,
 .lb-composer-suggestions,
-.lb-tooltip {
+.lb-tooltip,
+.lb-quick-emoji-picker {
   animation-duration: var(--lb-transition-duration);
   animation-timing-function: var(--lb-transition-easing);
   will-change: transform, opacity;
 }
 
 .lb-dropdown,
+.lb-quick-emoji-picker,
 .lb-tooltip[data-state="delayed-open"] {
   &[data-side="top"] {
     animation-name: lb-animation-slide-up;
@@ -798,6 +800,7 @@
 }
 
 .lb-dropdown,
+.lb-quick-emoji-picker,
 .lb-tooltip {
   &[data-state="closed"] {
     animation-name: lb-animation-disappear;
@@ -817,6 +820,7 @@
 
 @media (prefers-reduced-motion) {
   .lb-dropdown:not([data-state="closed"]),
+  .lb-quick-emoji-picker:not([data-state="closed"]),
   .lb-tooltip[data-state="delayed-open"]:not([data-state="closed"]),
   .lb-composer-suggestions {
     animation-name: lb-animation-appear;
