@@ -30,6 +30,7 @@ import * as React from "react";
 import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector.js";
 
 import type {
+  CommentReactionOptions,
   CommentsRoom,
   CreateCommentOptions,
   CreateThreadOptions,
@@ -904,6 +905,34 @@ export function createRoomContext<
     );
   }
 
+  function useCreateCommentReaction() {
+    const room = useRoom();
+
+    React.useEffect(() => {
+      warnIfBetaCommentsHook();
+    }, []);
+
+    return React.useCallback(
+      (options: CommentReactionOptions) =>
+        getCommentsRoom(room).createCommentReaction(options),
+      [room]
+    );
+  }
+
+  function useDeleteCommentReaction() {
+    const room = useRoom();
+
+    React.useEffect(() => {
+      warnIfBetaCommentsHook();
+    }, []);
+
+    return React.useCallback(
+      (options: CommentReactionOptions) =>
+        getCommentsRoom(room).deleteCommentReaction(options),
+      [room]
+    );
+  }
+
   function useCreateComment(): (options: CreateCommentOptions) => CommentData {
     const room = useRoom();
 
@@ -1074,6 +1103,8 @@ export function createRoomContext<
     useCreateComment,
     useEditComment,
     useDeleteComment,
+    useCreateCommentReaction,
+    useDeleteCommentReaction,
 
     suspense: {
       RoomContext,
@@ -1120,6 +1151,8 @@ export function createRoomContext<
       useCreateComment,
       useEditComment,
       useDeleteComment,
+      useCreateCommentReaction,
+      useDeleteCommentReaction,
     },
   };
 

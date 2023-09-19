@@ -22,6 +22,7 @@ import type {
 } from "@liveblocks/core";
 
 import type {
+  CommentReactionOptions,
   CreateCommentOptions,
   CreateThreadOptions,
   DeleteCommentOptions,
@@ -517,6 +518,16 @@ type RoomContextBundleShared<
    * deleteComment({ threadId: "th_xxx", commentId: "cm_xxx" })
    */
   useDeleteComment(): (options: DeleteCommentOptions) => void;
+
+  /**
+   * TODO: JSDoc
+   */
+  useCreateCommentReaction(): (options: CommentReactionOptions) => void;
+
+  /**
+   * TODO: JSDoc
+   */
+  useDeleteCommentReaction(): (options: CommentReactionOptions) => void;
 };
 
 export type RoomContextBundle<

@@ -36,3 +36,9 @@ export type CommentBody = {
   version: 1;
   content: CommentBodyBlockElement[];
 };
+
+export type CommentReaction = {
+  emoji: string;
+  userId: string;
+  createdAt: string;
+};
