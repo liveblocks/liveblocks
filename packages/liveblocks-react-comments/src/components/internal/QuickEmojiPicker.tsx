@@ -59,7 +59,7 @@ export const QuickEmojiPicker = forwardRef<HTMLDivElement, Props>(
             {emojis.map((emoji, index) => (
               <button
                 key={index}
-                className="lb-quick-emoji"
+                className="lb-quick-emoji-picker-emoji"
                 onClick={() => {
                   setOpen(false);
                   onEmojiSelect?.(emoji);

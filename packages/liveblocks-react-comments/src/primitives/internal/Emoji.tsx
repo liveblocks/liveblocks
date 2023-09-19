@@ -4,7 +4,7 @@ import React, { forwardRef } from "react";
 import type { ComponentPropsWithSlot } from "../../types";
 
 const EMOJI_FONT_FAMILY =
-  "'Apple Color Emoji', 'Noto Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Android Emoji', EmojiSymbols";
+  "'Apple Color Emoji', 'Noto Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Android Emoji', EmojiSymbols, sans-serif";
 
 interface Props extends ComponentPropsWithSlot<"span"> {
   emoji: string;
@@ -22,6 +22,7 @@ export const Emoji = forwardRef<HTMLSpanElement, Props>(
           ...style,
           fontFamily: EMOJI_FONT_FAMILY,
           lineHeight: "1em",
+          width: "1ch",
           whiteSpace: "nowrap",
         }}
         {...props}
