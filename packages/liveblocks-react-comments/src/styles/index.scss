@@ -142,9 +142,7 @@
     }
   }
 
-  /**
-   * Icon
-   */
+  // Icon
 
   .lb-icon {
     --lb-icon-background: var(--lb-background);
@@ -154,9 +152,7 @@
     stroke-width: var(--lb-icon-weight);
   }
 
-  /**
-   * Button
-   */
+  // Button
 
   .lb-button {
     --lb-button-background: var(--lb-background);
@@ -214,109 +210,14 @@
     --lb-icon-background: var(--lb-button-background);
   }
 
-  /**
-   * Elevation
-   */
-
-  .lb-elevation {
-    background: var(--lb-elevation-background);
-    box-shadow: var(--lb-elevation-shadow);
-  }
-
-  /**
-   * Elevation lists
-   */
-
-  .lb-dropdown,
-  .lb-composer-suggestions {
-    padding: $lb-elevation-list-padding;
-    border-radius: var(--lb-radius);
-  }
-
-  .lb-dropdown-item,
-  .lb-composer-suggestions-list-item {
-    display: flex;
-    align-items: center;
-    padding: calc(0.25 * var(--lb-spacing)) calc(0.5 * var(--lb-spacing));
-    border-radius: calc(
-      var(--lb-radius) - 0.75 * #{$lb-elevation-list-padding}
-    );
-    color: var(--lb-elevation-foreground-secondary);
-    outline: none;
-    font-size: 0.875rem;
-    cursor: pointer;
-    transition-timing-function: var(--lb-transition-easing);
-    transition-duration: var(--lb-transition-duration);
-    transition-property: background, color, opacity;
-
-    &[data-highlighted],
-    &[data-selected] {
-      background: var(--lb-elevation-foreground-subtle);
-      transition-duration: calc(var(--lb-transition-duration) / 2);
-    }
-  }
-
-  /**
-   * Elevation lists and tooltip
-   */
-
-  .lb-dropdown,
-  .lb-composer-suggestions,
-  .lb-tooltip {
-    animation-duration: var(--lb-transition-duration);
-    animation-timing-function: var(--lb-transition-easing);
-    will-change: transform, opacity;
-  }
-
-  .lb-dropdown,
-  .lb-tooltip[data-state="delayed-open"] {
-    &[data-side="top"] {
-      animation-name: lb-animation-slide-up;
-    }
-
-    &[data-side="bottom"] {
-      animation-name: lb-animation-slide-down;
-    }
-  }
-
-  .lb-dropdown,
-  .lb-tooltip {
-    &[data-state="closed"] {
-      animation-name: lb-animation-disappear;
-    }
-  }
-
-  // TODO: Support exit animations like Radix' Dropdown and Tooltip with data-state="closed"
-  .lb-composer-suggestions {
-    &[data-side="top"] {
-      animation-name: lb-animation-slide-up;
-    }
-
-    &[data-side="bottom"] {
-      animation-name: lb-animation-slide-down;
-    }
-  }
-
-  @media (prefers-reduced-motion) {
-    .lb-dropdown:not([data-state="closed"]),
-    .lb-tooltip[data-state="delayed-open"]:not([data-state="closed"]),
-    .lb-composer-suggestions {
-      animation-name: lb-animation-appear;
-    }
-  }
-
-  /**
-   * Dropdown
-   */
+  // Dropdown
 
   .lb-dropdown-item-icon {
     margin-inline-start: calc(-0.125 * var(--lb-spacing));
     margin-inline-end: calc(0.375 * var(--lb-spacing));
   }
 
-  /**
-   * Composer suggestions
-   */
+  // Composer suggestions
 
   .lb-composer-suggestions-list {
     margin: 0;
@@ -324,9 +225,7 @@
     list-style: none;
   }
 
-  /**
-   * Composer mention suggestions
-   */
+  // Composer mention suggestions
 
   .lb-composer-mention-suggestions {
     --lb-composer-mention-suggestion-avatar-size: 1.25rem;
@@ -344,9 +243,23 @@
     margin-inline-end: calc(0.5 * var(--lb-spacing));
   }
 
-  /**
-   * Tooltip
-   */
+  // Quick emoji picker
+
+  .lb-quick-emoji-picker {
+    display: flex;
+  }
+
+  .lb-quick-emoji {
+    all: unset;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    aspect-ratio: 1;
+    padding: calc(0.375 * var(--lb-spacing));
+    font-size: 0.875em;
+  }
+
+  // Tooltip
 
   .lb-tooltip {
     display: flex;
@@ -388,9 +301,7 @@
     }
   }
 
-  /**
-   * Avatar
-   */
+  // Avatar
 
   .lb-avatar {
     position: relative;
@@ -429,9 +340,7 @@
     }
   }
 
-  /**
-   * User
-   */
+  // User
 
   .lb-user[data-loading]::before {
     content: "\FEFF";
@@ -445,18 +354,14 @@
     user-select: none;
   }
 
-  /**
-   * Loading
-   */
+  // Loading
 
   .lb-avatar[data-loading],
   .lb-user[data-loading] {
     animation: lb-animation-shimmer 8s linear infinite;
   }
 
-  /**
-   * Body 
-   */
+  // Body
 
   .lb-comment-body,
   .lb-composer-editor {
@@ -533,9 +438,7 @@
     background: var(--lb-accent-subtle);
   }
 
-  /**
-   * Composer
-   */
+  // Composer
 
   .lb-composer {
     background: var(--lb-background);
@@ -636,9 +539,7 @@
     }
   }
 
-  /**
-   * Comment
-   */
+  // Comment
 
   .lb-comment {
     --lb-comment-avatar-size: #{$lb-button-size};
@@ -712,7 +613,7 @@
 
       &:hover .lb-comment-actions,
       &:focus-within .lb-comment-actions,
-      &.lb-comment\:dropdown-open .lb-comment-actions {
+      &.lb-comment\:action-open .lb-comment-actions {
         opacity: 1;
       }
     }
@@ -763,9 +664,7 @@
     }
   }
 
-  /**
-   * Thread
-   */
+  // Thread
 
   .lb-thread {
     background: var(--lb-background);
@@ -833,9 +732,98 @@
   }
 }
 
-/**
- * Animations
- */
+// Elevation
+
+.lb-elevation {
+  background: var(--lb-elevation-background);
+  box-shadow: var(--lb-elevation-shadow);
+}
+
+// Elevation lists
+
+.lb-dropdown,
+.lb-composer-suggestions,
+.lb-quick-emoji-picker {
+  padding: $lb-elevation-list-padding;
+  border-radius: var(--lb-radius);
+}
+
+.lb-dropdown-item,
+.lb-composer-suggestions-list-item {
+  display: flex;
+  align-items: center;
+  padding: calc(0.25 * var(--lb-spacing)) calc(0.5 * var(--lb-spacing));
+  font-size: 0.875rem;
+}
+
+.lb-dropdown-item,
+.lb-composer-suggestions-list-item,
+.lb-quick-emoji {
+  border-radius: calc(var(--lb-radius) - 0.75 * #{$lb-elevation-list-padding});
+  color: var(--lb-elevation-foreground-secondary);
+  outline: none;
+  cursor: pointer;
+  transition-timing-function: var(--lb-transition-easing);
+  transition-duration: var(--lb-transition-duration);
+  transition-property: background, color, opacity;
+
+  &:hover,
+  &:focus-visible,
+  &[data-highlighted],
+  &[data-selected] {
+    background: var(--lb-elevation-foreground-subtle);
+    transition-duration: calc(var(--lb-transition-duration) / 2);
+  }
+}
+
+// Elevation lists and tooltip
+
+.lb-dropdown,
+.lb-composer-suggestions,
+.lb-tooltip {
+  animation-duration: var(--lb-transition-duration);
+  animation-timing-function: var(--lb-transition-easing);
+  will-change: transform, opacity;
+}
+
+.lb-dropdown,
+.lb-tooltip[data-state="delayed-open"] {
+  &[data-side="top"] {
+    animation-name: lb-animation-slide-up;
+  }
+
+  &[data-side="bottom"] {
+    animation-name: lb-animation-slide-down;
+  }
+}
+
+.lb-dropdown,
+.lb-tooltip {
+  &[data-state="closed"] {
+    animation-name: lb-animation-disappear;
+  }
+}
+
+// TODO: Support exit animations like Radix' Dropdown and Tooltip with data-state="closed"
+.lb-composer-suggestions {
+  &[data-side="top"] {
+    animation-name: lb-animation-slide-up;
+  }
+
+  &[data-side="bottom"] {
+    animation-name: lb-animation-slide-down;
+  }
+}
+
+@media (prefers-reduced-motion) {
+  .lb-dropdown:not([data-state="closed"]),
+  .lb-tooltip[data-state="delayed-open"]:not([data-state="closed"]),
+  .lb-composer-suggestions {
+    animation-name: lb-animation-appear;
+  }
+}
+
+// Animations
 
 @keyframes lb-animation-slide-down {
   from {
