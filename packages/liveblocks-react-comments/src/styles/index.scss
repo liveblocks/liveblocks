@@ -592,7 +592,7 @@
     @include truncate;
 
     color: var(--lb-foreground-tertiary);
-    font-size: 0.85em;
+    font-size: 0.875em;
   }
 
   .lb-comment-date-timestamp,
@@ -635,13 +635,49 @@
     }
   }
 
+  .lb-comment-reactions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: calc(0.375 * var(--lb-spacing));
+    margin-block-start: calc(0.75 * var(--lb-spacing));
+  }
+
+  // TODO: Add hover/focus styles
+  .lb-comment-reaction {
+    all: unset;
+    cursor: pointer;
+    display: flex;
+    gap: calc(0.375 * var(--lb-spacing));
+    align-items: center;
+    height: calc(1em + 2 * 0.375 * var(--lb-spacing));
+    padding-inline: calc(0.575 * var(--lb-spacing));
+    border-radius: $lb-radius-full;
+    background: var(--lb-foreground-subtle);
+    color: var(--lb-foreground-secondary);
+  }
+
+  .lb-comment-reaction[data-active] {
+    background: var(--lb-accent-subtle);
+    color: var(--lb-accent-secondary);
+  }
+
+  .lb-comment-reaction-emoji,
   .lb-comment-reaction-count {
+    font-size: 0.75em;
+  }
+
+  .lb-comment-reaction-emoji {
+    text-align: center;
+  }
+
+  .lb-comment-reaction-count {
+    font-weight: 500;
     font-variant-numeric: tabular-nums;
   }
 
   .lb-comment-deleted {
     color: var(--lb-foreground-tertiary);
-    font-size: 0.85em;
+    font-size: 0.875em;
   }
 
   .lb-comment\:indent-body {
