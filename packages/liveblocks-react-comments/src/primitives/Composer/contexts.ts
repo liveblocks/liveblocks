@@ -87,6 +87,6 @@ export function useComposerSuggestionsContext(
 
   return nn(
     composerSuggestionsContext,
-    `${source} can’t be used outside of renderMentionSuggestions.`
+    `${source} can’t be used outside of Composer.Editor.`
   );
 }

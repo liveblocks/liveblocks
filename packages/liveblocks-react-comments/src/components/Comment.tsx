@@ -24,10 +24,10 @@ import {
 import type { ComposerSubmitComment } from "../primitives";
 import * as CommentPrimitive from "../primitives/Comment";
 import type {
+  CommentBodyLinkProps,
+  CommentBodyMentionProps,
   CommentLinkProps,
   CommentMentionProps,
-  CommentRenderLinkProps,
-  CommentRenderMentionProps,
 } from "../primitives/Comment/types";
 import * as ComposerPrimitive from "../primitives/Composer";
 import { Timestamp } from "../primitives/Timestamp";
@@ -105,7 +105,7 @@ function CommentMention({
   userId,
   className,
   ...props
-}: CommentRenderMentionProps & CommentMentionProps) {
+}: CommentBodyMentionProps & CommentMentionProps) {
   const { useSelf } = useRoomContextBundle();
   const self = useSelf();
 
@@ -126,7 +126,7 @@ function CommentLink({
   children,
   className,
   ...props
-}: CommentRenderLinkProps & CommentLinkProps) {
+}: CommentBodyLinkProps & CommentLinkProps) {
   return (
     <CommentPrimitive.Link
       className={classNames("lb-comment-link", className)}
@@ -370,13 +370,15 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
             <CommentPrimitive.Body
               className="lb-comment-body"
               body={comment.body}
-              renderMention={({ userId }) => (
-                <CommentMention
-                  userId={userId}
-                  onClick={(event) => onMentionClick?.(userId, event)}
-                />
-              )}
-              renderLink={CommentLink}
+              components={{
+                Mention: ({ userId }) => (
+                  <CommentMention
+                    userId={userId}
+                    onClick={(event) => onMentionClick?.(userId, event)}
+                  />
+                ),
+                Link: CommentLink,
+              }}
             />
           ) : (
             <div className="lb-comment-body">

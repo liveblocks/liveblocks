@@ -322,8 +322,10 @@ import { Comment } from "@liveblocks/react-comments/primitives";
 
 () => (
   <Comment.Body
-    renderMention={() => <Comment.Mention />}
-    renderLink={() => <Comment.Link />}
+    components={{
+      Mention: <Comment.Mention />,
+      Link: <Comment.Link />,
+    }}
   />
 );
 ```
@@ -338,22 +340,36 @@ Displays a comment body.
 
 <Table columns={["26%", "32%", "42%"]}>
 
-| Prop            | Type                                                                     | Description                                                                                     |
-| --------------- | ------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------- |
-| `body`          | `CommentBody \| undefined`                                               | The comment body to display. If not defined, the component will render `null`.                  |
-| `renderMention` | <code>ComponentType&lt;CommentRenderMentionProps&gt; \| undefined</code> | The component used to render mentions.<br/>Defaults to the mention’s `userId` prefixed by an @. |
-| `renderLink`    | <code>ComponentType&lt;CommentRenderLinkProps&gt; \| undefined</code>    | The component used to render links.<br/>Defaults to the link’s `children` property.             |
-| `asChild`       | `boolean \| undefined`                                                   | Replace the rendered element by the one passed as a child.<br/>Defaults to `false`.             |
+| Prop         | Type                                                           | Description                                                                         |
+| ------------ | -------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| `body`       | `CommentBody \| undefined`                                     | The comment body to display. If not defined, the component will render `null`.      |
+| `components` | <code>Partial&lt;CommentBodyComponents&gt; \| undefined</code> | The components displayed within the comment body.                                   |
+| `asChild`    | `boolean \| undefined`                                         | Replace the rendered element by the one passed as a child.<br/>Defaults to `false`. |
 
 </Table>
 
-##### renderMention [#primitives-Comment.Body-renderMention]
+##### components [#primitives-Comment.Body-components]
 
-A render prop that accepts a component used to render mentions.
+The components displayed within the comment body.
+
+<Table columns={["26%", "32%", "42%"]}>
+
+| Component | Type                                                      | Description                                                                                      |
+| --------- | --------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| `Mention` | <code>ComponentType&lt;CommentBodyMentionProps&gt;</code> | The component used to display mentions.<br/>Defaults to the mention’s `userId` prefixed by an @. |
+| `Link`    | <code>ComponentType&lt;CommentBodyLinkProps&gt;</code>    | The component used to display links.<br/>Defaults to the link’s `children` property.             |
+
+</Table>
+
+###### Mention [#primitives-Comment.Body-Mention]
+
+The component used to display mentions.
 
 ```tsx
 <Comment.Body
-  renderMention={({ userId }) => <Comment.Mention>@{userId}</Comment.Mention>}
+  components={{
+    Mention: ({ userId }) => <Comment.Mention>@{userId}</Comment.Mention>,
+  }}
 />
 ```
 
@@ -365,15 +381,17 @@ A render prop that accepts a component used to render mentions.
 
 </Table>
 
-##### renderLink [#primitives-Comment.Body-renderLink]
+###### Link [#primitives-Comment.Body-Link]
 
-A render prop that accepts a component used to render links.
+The component used to display links.
 
 ```tsx
 <Comment.Body
-  renderLink={({ href, children }) => (
-    <Comment.Link href={href}>{children}</Comment.Link>
-  )}
+  components={{
+    Link: ({ href, children }) => (
+      <Comment.Link href={href}>{children}</Comment.Link>
+    ),
+  }}
 />
 ```
 
@@ -388,7 +406,7 @@ A render prop that accepts a component used to render links.
 
 #### Comment.Mention [#primitives-Comment.Mention]
 
-Displays mentions within `Comment.Body`’s `renderMention` prop.
+Displays mentions within `Comment.Body`.
 
 ```tsx
 <Comment.Mention>@{userId}</Comment.Mention>
@@ -404,7 +422,7 @@ Displays mentions within `Comment.Body`’s `renderMention` prop.
 
 #### Comment.Link [#primitives-Comment.Link]
 
-Displays links within `Comment.Body`’s `renderLink` prop.
+Displays links within `Comment.Body`.
 
 ```tsx
 <Comment.Link href={href}>{children}</Comment.Link>
@@ -426,15 +444,17 @@ import { Composer } from "@liveblocks/react-comments/primitives";
 () => (
   <Composer.Form>
     <Composer.Editor
-      renderMention={() => <Composer.Mention />}
-      renderMentionSuggestions={() => (
-        <Composer.Suggestions>
-          <Composer.SuggestionsList>
-            <Composer.SuggestionsListItem />
-          </Composer.SuggestionsList>
-        </Composer.Suggestions>
-      )}
-      renderLink={() => <Composer.Link />}
+      components={{
+        Mention: () => <Composer.Mention />,
+        MentionSuggestions: () => (
+          <Composer.Suggestions>
+            <Composer.SuggestionsList>
+              <Composer.SuggestionsListItem />
+            </Composer.SuggestionsList>
+          </Composer.Suggestions>
+        ),
+        Link: () => <Composer.Link />,
+      }}
     />
     <Composer.Submit />
   </Composer.Form>
@@ -468,16 +488,14 @@ Displays the composer’s editor.
 
 <Table columns={["26%", "32%", "42%"]}>
 
-| Prop                       | Type                                                                                 | Description                                                                                            |
-| -------------------------- | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ |
-| `defaultValue`             | `CommentBody \| undefined`                                                           | The editor’s initial value.                                                                            |
-| `placeholder`              | `string \| undefined`                                                                | The text to display when the editor is empty.                                                          |
-| `disabled`                 | `boolean \| undefined`                                                               | Whether the editor is disabled.                                                                        |
-| `autoFocus`                | `boolean \| undefined`                                                               | Whether to focus the editor on mount.                                                                  |
-| `dir`                      | `"ltr" \| "rtl" \| undefined`                                                        | The reading direction of the editor and related elements.                                              |
-| `renderMention`            | <code>ComponentType&lt;ComposerRenderMentionProps&gt; \| undefined</code>            | The component used to render mentions.<br/>Defaults to the mention’s `userId` prefixed by an @.        |
-| `renderMentionSuggestions` | <code>ComponentType&lt;ComposerRenderMentionSuggestionsProps&gt; \| undefined</code> | The component used to render mention suggestions.<br/>Defaults to a list of the suggestions’ `userId`. |
-| `renderLink`               | <code>ComponentType&lt;ComposerRenderLinkProps&gt; \| undefined</code>               | The component used to render links.<br/>Defaults to the link’s `children` property.                    |
+| Prop           | Type                                                              | Description                                               |
+| -------------- | ----------------------------------------------------------------- | --------------------------------------------------------- |
+| `defaultValue` | `CommentBody \| undefined`                                        | The editor’s initial value.                               |
+| `placeholder`  | `string \| undefined`                                             | The text to display when the editor is empty.             |
+| `disabled`     | `boolean \| undefined`                                            | Whether the editor is disabled.                           |
+| `autoFocus`    | `boolean \| undefined`                                            | Whether to focus the editor on mount.                     |
+| `dir`          | `"ltr" \| "rtl" \| undefined`                                     | The reading direction of the editor and related elements. |
+| `components`   | <code>Partial&lt;ComposerEditorComponents&gt; \| undefined</code> | The components displayed within the editor.               |
 
 </Table>
 
@@ -490,15 +508,31 @@ Displays the composer’s editor.
 
 </Table>
 
-##### renderMention [#primitives-Composer.Editor-renderMention]
+##### components [#primitives-Composer.Editor-components]
 
-A render prop that accepts a component used to render mentions.
+The components displayed within the editor.
+
+<Table columns={["26%", "32%", "42%"]}>
+
+| Component            | Type                                                                    | Description                                                                                             |
+| -------------------- | ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| `Mention`            | <code>ComponentType&lt;ComposerEditorMentionProps&gt;</code>            | The component used to display mentions.<br/>Defaults to the mention’s `userId` prefixed by an @.        |
+| `MentionSuggestions` | <code>ComponentType&lt;ComposerEditorMentionProps&gt;</code>            | The component used to display mention suggestions.<br/>Defaults to a list of the suggestions’ `userId`. |
+| `Link`               | <code>ComponentType&lt;ComposerEditorMentionSuggestionsProps&gt;</code> | The component used to display links.<br/>Defaults to the link’s `children` property.                    |
+
+</Table>
+
+###### Mention [#primitives-Composer.Editor-Mention]
+
+The component used to display mentions.
 
 ```tsx
 <Composer.Editor
-  renderMention={({ userId, isSelected }) => (
-    <Composer.Mention>@{userId}</Composer.Mention>
-  )}
+  components={{
+    Mention: ({ userId, isSelected }) => (
+      <Composer.Mention>@{userId}</Composer.Mention>
+    ),
+  }}
 />
 ```
 
@@ -511,9 +545,9 @@ A render prop that accepts a component used to render mentions.
 
 </Table>
 
-##### renderMentionSuggestions [#primitives-Composer.Editor-renderMentionSuggestions]
+###### MentionSuggestions [#primitives-Composer.Editor-MentionSuggestions]
 
-A render prop that accepts a component used to render mention suggestions.
+The component used to display mention suggestions.
 
 <Table columns={["26%", "32%", "42%"]}>
 
@@ -526,23 +560,27 @@ A render prop that accepts a component used to render mention suggestions.
 
 ```tsx
 <Composer.Editor
-  renderMentionSuggestions={() => (
-    <Composer.Suggestions>
-      <Composer.SuggestionsList>
-        <Composer.SuggestionsListItem />
-      </Composer.SuggestionsList>
-    </Composer.Suggestions>
-  )}
+  components={{
+    MentionSuggestions: () => (
+      <Composer.Suggestions>
+        <Composer.SuggestionsList>
+          <Composer.SuggestionsListItem />
+        </Composer.SuggestionsList>
+      </Composer.Suggestions>
+    ),
+  }}
 />
 ```
 
-##### renderLink [#primitives-Composer.Editor-renderLink]
+###### Link [#primitives-Composer.Editor-Link]
 
-A render prop that accepts a component used to render links.
+The component used to display links.
 
 ```tsx
 <Composer.Editor
-  renderLink={({ href, children }) => <Composer.Link>{children}</Composer.Link>}
+  components={{
+    Link: ({ href, children }) => <Composer.Link>{children}</Composer.Link>,
+  }}
 />
 ```
 
@@ -557,7 +595,7 @@ A render prop that accepts a component used to render links.
 
 #### Composer.Mention [#primitives-Composer.Mention]
 
-Displays mentions within `Composer.Editor`’s `renderMention` prop.
+Displays mentions within `Composer.Editor`.
 
 ```tsx
 <Composer.Mention>@{userId}</Composer.Mention>
@@ -581,7 +619,7 @@ Displays mentions within `Composer.Editor`’s `renderMention` prop.
 
 #### Composer.Suggestions [#primitives-Composer.Suggestions]
 
-Surrounds a list of suggestions within `Composer.Editor`.
+Contains suggestions within `Composer.Editor`.
 
 ```tsx
 <Composer.Suggestions>{/* … */}<Composer.Suggestions>
@@ -600,7 +638,13 @@ Surrounds a list of suggestions within `Composer.Editor`.
 Displays a list of suggestions within `Composer.Editor`.
 
 ```tsx
-<Composer.SuggestionsList>{/* … */}</Composer.SuggestionsList>
+<Composer.SuggestionsList>
+  {userIds.map((userId) => (
+    <Composer.SuggestionsListItem key={userId} value={userId}>
+      @{userId}
+    </Composer.SuggestionsListItem>
+  ))}
+</Composer.SuggestionsList>
 ```
 
 <Table columns={["26%", "32%", "42%"]}>
@@ -616,13 +660,9 @@ Displays a list of suggestions within `Composer.Editor`.
 Displays a suggestion within `Composer.SuggestionsList`.
 
 ```tsx
-<Composer.SuggestionsList>
-  {userIds.map((userId) => (
-    <Composer.SuggestionsListItem key={userId} value={userId}>
-      @{userId}
-    </Composer.SuggestionsListItem>
-  ))}
-</Composer.SuggestionsList>
+<Composer.SuggestionsListItem key={userId} value={userId}>
+  @{userId}
+</Composer.SuggestionsListItem>
 ```
 
 <Table columns={["26%", "32%", "42%"]}>
@@ -644,7 +684,7 @@ Displays a suggestion within `Composer.SuggestionsList`.
 
 #### Composer.Link [#primitives-Composer.Link]
 
-Displays links within `Composer.Editor`’s `renderLink` prop.
+Displays links within `Composer.Editor`.
 
 ```tsx
 <Composer.Link href={href}>{children}</Composer.Link>

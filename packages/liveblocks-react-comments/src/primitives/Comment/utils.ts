@@ -24,9 +24,10 @@ export function isCommentBodyLink(
 }
 
 /**
- * Helper function to convert a URL (relative or absolute) to an absolute URL
- * @param url The URL to convert to an absolute URL (relative or absolute)
- * @returns The absolute URL or undefined if the URL is invalid
+ * Helper function to convert a URL (relative or absolute) to an absolute URL.
+ *
+ * @param url The URL to convert to an absolute URL (relative or absolute).
+ * @returns The absolute URL or undefined if the URL is invalid.
  */
 export function toAbsoluteUrl(url: string): string | undefined {
   // Check if the URL already contains a scheme
