@@ -2,21 +2,21 @@ import type { Resolve } from "@liveblocks/core";
 import { nn } from "@liveblocks/core";
 import { createContext, useContext } from "react";
 
-import type { EmojiCategoryWithEmojis } from "./types";
+import type { EmojiPickerRow } from "./types";
 
 type EmojiPickerContextData =
   | {
-      emojis?: never;
+      rows?: never;
       error?: never;
       isLoading: true;
     }
   | {
-      emojis: EmojiCategoryWithEmojis[];
+      rows: EmojiPickerRow[];
       error?: never;
       isLoading: false;
     }
   | {
-      emojis?: never;
+      rows?: never;
       error: Error;
       isLoading: false;
     };

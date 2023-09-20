@@ -1,12 +1,8 @@
 import { fetchEmojis, fetchMessages } from "emojibase";
 
 import { capitalize } from "../../utils/capitalize";
-import type {
-  Emoji,
-  EmojiCategory,
-  EmojiCategoryWithEmojis,
-  EmojiData,
-} from "./types";
+import { chunk } from "../../utils/chunk";
+import type { Emoji, EmojiCategory, EmojiData, EmojiPickerRow } from "./types";
 
 const EMOJI_VERSION = 14;
 
@@ -15,7 +11,7 @@ export async function getEmojiData(): Promise<EmojiData> {
   const emojibaseEmojis = await fetchEmojis("en");
   const emojibaseMessages = await fetchMessages("en");
 
-  // Filter component/modifier category and emojis
+  // Filter out component/modifier category and emojis
   const filteredGroups = emojibaseMessages.groups.filter(
     (group) => group.key !== "component"
   );
@@ -63,14 +59,31 @@ export function filterEmojis(emojis: Emoji[], search?: string) {
   );
 }
 
-export function groupEmojisByCategory(
+export function generatePickerRows(
   emojis: Emoji[],
-  categories: EmojiCategory[]
-): EmojiCategoryWithEmojis[] {
-  return categories
+  categories: EmojiCategory[],
+  columns: number
+) {
+  const rows: EmojiPickerRow[] = [];
+  const categorizedEmojis = categories
     .map((category) => ({
       ...category,
       emojis: emojis.filter((emoji) => emoji.category === category.key),
     }))
     .filter((category) => category.emojis.length > 0);
+
+  for (const category of categorizedEmojis) {
+    rows.push({
+      type: "category",
+      category: category.name,
+    });
+
+    const emojisRows = chunk(category.emojis, columns);
+
+    rows.push(
+      ...emojisRows.map((emojis) => ({ type: "emojis", emojis }) as const)
+    );
+  }
+
+  return rows;
 }

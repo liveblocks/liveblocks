@@ -61,7 +61,8 @@
     "slate": "^0.94.1",
     "slate-history": "^0.93.0",
     "slate-react": "^0.98.1",
-    "use-sync-external-store": "^1.2.0"
+    "use-sync-external-store": "^1.2.0",
+    "virtua": "^0.8.4"
   },
   "peerDependencies": {
     "react": "^16.14.0 || ^17 || ^18"
