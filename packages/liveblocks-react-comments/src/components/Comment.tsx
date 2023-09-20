@@ -157,11 +157,11 @@ function CommentLink({
 // TODO: Add tooltip with list of users who reacted
 const CommentReaction = forwardRef<HTMLButtonElement, CommentReactionProps>(
   ({ emoji, reactions, className, ...props }, forwardedRef) => {
-    const { useCreateCommentReaction, useDeleteCommentReaction, useSelf } =
+    const { useAddCommentReaction, useRemoveCommentReaction, useSelf } =
       useRoomContextBundle();
     const self = useSelf();
-    const createCommentReaction = useCreateCommentReaction();
-    const deleteCommentReaction = useDeleteCommentReaction();
+    const addCommentReaction = useAddCommentReaction();
+    const removeCommentReaction = useRemoveCommentReaction();
     const isActive = useMemo(() => {
       return reactions.some((reaction) => reaction.userId === self?.id);
     }, [reactions, self?.id]);
@@ -170,13 +170,13 @@ const CommentReaction = forwardRef<HTMLButtonElement, CommentReactionProps>(
       (isPressed: boolean) => {
         if (isPressed) {
           // TODO: Add reaction
-          console.log("Add reaction", emoji, createCommentReaction);
+          console.log("Add reaction", emoji, addCommentReaction);
         } else {
           // TODO: Remove reaction
-          console.log("Remove reaction", emoji, deleteCommentReaction);
+          console.log("Remove reaction", emoji, removeCommentReaction);
         }
       },
-      [createCommentReaction, deleteCommentReaction, emoji]
+      [addCommentReaction, removeCommentReaction, emoji]
     );
 
     return (

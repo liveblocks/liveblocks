@@ -1,10 +1,10 @@
 export * as Comment from "./Comment";
 export type {
   CommentBodyProps,
-  CommentMentionProps,
-  CommentRenderMentionProps,
   CommentLinkProps,
+  CommentMentionProps,
   CommentRenderLinkProps,
+  CommentRenderMentionProps,
 } from "./Comment/types";
 export * as Composer from "./Composer";
 export type { ComposerContext } from "./Composer/contexts";
@@ -12,15 +12,15 @@ export { useComposer } from "./Composer/contexts";
 export type {
   ComposerEditorProps,
   ComposerFormProps,
+  ComposerLinkProps,
   ComposerMentionProps,
+  ComposerRenderLinkProps,
   ComposerRenderMentionProps,
   ComposerRenderMentionSuggestionsProps,
   ComposerSubmitComment,
   ComposerSubmitProps,
   ComposerSuggestionsListItemProps,
   ComposerSuggestionsListProps,
-  ComposerLinkProps,
-  ComposerRenderLinkProps,
 } from "./Composer/types";
 export * as EmojiPicker from "./EmojiPicker";
 export type {
