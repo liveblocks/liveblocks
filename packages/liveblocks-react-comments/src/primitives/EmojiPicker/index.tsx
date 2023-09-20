@@ -8,10 +8,10 @@ import React, {
   useEffect,
   useRef,
   useState,
-  useTransition,
 } from "react";
 import { VList } from "virtua";
 
+import { useTransition } from "../../utils/use-transition";
 import { Emoji } from "../internal/Emoji";
 import { EmojiPickerContext, useEmojiPicker } from "./contexts";
 import type {
@@ -33,7 +33,6 @@ function EmojiPickerRoot({
   columns = DEFAULT_COLUMNS,
   children,
 }: EmojiPickerRootProps) {
-  // TODO: Ponyfill/polyfill useTransition
   const data = useRef<EmojiData>();
   const search = useRef("");
   const [, startEmojisTransition] = useTransition();
