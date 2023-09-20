@@ -121,6 +121,7 @@ import {
 const MENTION_SUGGESTIONS_POSITION: SuggestionsPosition = "top";
 
 const COMPOSER_MENTION_NAME = "ComposerMention";
+const COMPOSER_LINK_NAME = "ComposerLink";
 const COMPOSER_SUGGESTIONS_NAME = "ComposerSuggestions";
 const COMPOSER_SUGGESTIONS_LIST_NAME = "ComposerSuggestionsList";
 const COMPOSER_SUGGESTIONS_LIST_ITEM_NAME = "ComposerSuggestionsListItem";
@@ -1086,6 +1087,7 @@ if (process.env.NODE_ENV !== "production") {
   ComposerEditor.displayName = COMPOSER_EDITOR_NAME;
   ComposerForm.displayName = COMPOSER_FORM_NAME;
   ComposerMention.displayName = COMPOSER_MENTION_NAME;
+  ComposerLink.displayName = COMPOSER_LINK_NAME;
   ComposerSubmit.displayName = COMPOSER_SUBMIT_NAME;
   ComposerSuggestions.displayName = COMPOSER_SUGGESTIONS_NAME;
   ComposerSuggestionsList.displayName = COMPOSER_SUGGESTIONS_LIST_NAME;
