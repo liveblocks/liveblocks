@@ -11,11 +11,11 @@ import type {
 } from "react";
 import React, { forwardRef, useCallback, useState } from "react";
 
-import { CheckIcon } from "../icons/check";
-import { CrossIcon } from "../icons/cross";
-import { DeleteIcon } from "../icons/delete";
-import { EditIcon } from "../icons/edit";
-import { EllipsisIcon } from "../icons/ellipsis";
+import { CheckIcon } from "../icons/Check";
+import { CrossIcon } from "../icons/Cross";
+import { DeleteIcon } from "../icons/Delete";
+import { EditIcon } from "../icons/Edit";
+import { EllipsisIcon } from "../icons/Ellipsis";
 import {
   type CommentOverrides,
   type ComposerOverrides,
