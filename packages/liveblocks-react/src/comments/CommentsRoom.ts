@@ -19,13 +19,13 @@ import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
 
 import type { CommentsApiError } from "./errors";
 import {
+  AddCommentReactionError,
   CreateCommentError,
-  CreateCommentReactionError,
   CreateThreadError,
   DeleteCommentError,
-  DeleteCommentReactionError,
   EditCommentError,
   EditThreadMetadataError,
+  RemoveCommentReactionError,
 } from "./errors";
 import { createStore } from "./lib/store";
 
@@ -42,8 +42,8 @@ export type CommentsRoom<TThreadMetadata extends BaseMetadata> = {
   ): ThreadData<TThreadMetadata>;
   editThreadMetadata(options: EditThreadMetadataOptions<TThreadMetadata>): void;
   createComment(options: CreateCommentOptions): CommentData;
-  createCommentReaction(options: CommentReactionOptions): void;
-  deleteCommentReaction(options: CommentReactionOptions): void;
+  addCommentReaction(options: CommentReactionOptions): void;
+  removeCommentReaction(options: CommentReactionOptions): void;
   editComment(options: EditCommentOptions): void;
   deleteComment(options: DeleteCommentOptions): void;
 };
@@ -479,7 +479,7 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
       .finally(endMutation);
   }
 
-  function createCommentReaction({
+  function addCommentReaction({
     threadId,
     commentId,
     emoji,
@@ -510,10 +510,10 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
 
     startMutation();
     room
-      .createCommentReaction({ threadId, commentId, emoji })
+      .addCommentReaction({ threadId, commentId, emoji })
       .catch((er: Error) =>
         errorEventSource.notify(
-          new CreateCommentReactionError(er, {
+          new AddCommentReactionError(er, {
             roomId: room.id,
             threadId,
             commentId,
@@ -524,7 +524,7 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
       .finally(endMutation);
   }
 
-  function deleteCommentReaction({
+  function removeCommentReaction({
     threadId,
     commentId,
     emoji,
@@ -564,10 +564,10 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
 
     startMutation();
     room
-      .deleteCommentReaction({ threadId, commentId, emoji })
+      .removeCommentReaction({ threadId, commentId, emoji })
       .catch((er: Error) =>
         errorEventSource.notify(
-          new DeleteCommentReactionError(er, {
+          new RemoveCommentReactionError(er, {
             roomId: room.id,
             threadId,
             commentId,
@@ -583,8 +583,8 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
     useThreadsSuspense,
     createThread,
     editThreadMetadata,
-    createCommentReaction,
-    deleteCommentReaction,
+    addCommentReaction,
+    removeCommentReaction,
     createComment,
     editComment,
     deleteComment,

@@ -905,7 +905,7 @@ export function createRoomContext<
     );
   }
 
-  function useCreateCommentReaction() {
+  function useAddCommentReaction() {
     const room = useRoom();
 
     React.useEffect(() => {
@@ -914,12 +914,12 @@ export function createRoomContext<
 
     return React.useCallback(
       (options: CommentReactionOptions) =>
-        getCommentsRoom(room).createCommentReaction(options),
+        getCommentsRoom(room).addCommentReaction(options),
       [room]
     );
   }
 
-  function useDeleteCommentReaction() {
+  function useRemoveCommentReaction() {
     const room = useRoom();
 
     React.useEffect(() => {
@@ -928,7 +928,7 @@ export function createRoomContext<
 
     return React.useCallback(
       (options: CommentReactionOptions) =>
-        getCommentsRoom(room).deleteCommentReaction(options),
+        getCommentsRoom(room).removeCommentReaction(options),
       [room]
     );
   }
@@ -1103,8 +1103,8 @@ export function createRoomContext<
     useCreateComment,
     useEditComment,
     useDeleteComment,
-    useCreateCommentReaction,
-    useDeleteCommentReaction,
+    useAddCommentReaction,
+    useRemoveCommentReaction,
 
     suspense: {
       RoomContext,
@@ -1151,8 +1151,8 @@ export function createRoomContext<
       useCreateComment,
       useEditComment,
       useDeleteComment,
-      useCreateCommentReaction,
-      useDeleteCommentReaction,
+      useAddCommentReaction,
+      useRemoveCommentReaction,
     },
   };
 

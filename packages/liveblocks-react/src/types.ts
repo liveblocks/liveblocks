@@ -522,12 +522,12 @@ type RoomContextBundleShared<
   /**
    * TODO: JSDoc
    */
-  useCreateCommentReaction(): (options: CommentReactionOptions) => void;
+  useAddCommentReaction(): (options: CommentReactionOptions) => void;
 
   /**
    * TODO: JSDoc
    */
-  useDeleteCommentReaction(): (options: CommentReactionOptions) => void;
+  useRemoveCommentReaction(): (options: CommentReactionOptions) => void;
 };
 
 export type RoomContextBundle<
