@@ -1,0 +1,28 @@
+.article {
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.articleHeader {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  margin: var(--space-16) 0 var(--space-12);
+}
+
+.articleTitle {
+  font-size: var(--size-3xl);
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.articleDescription {
+  margin: var(--space-3) 0;
+  font-size: var(--size-xl);
+  color: var(--color-text-lighter);
+  line-height: 1.6;
+}
+
+.articleContent {
+  line-height: 1.8;
+}

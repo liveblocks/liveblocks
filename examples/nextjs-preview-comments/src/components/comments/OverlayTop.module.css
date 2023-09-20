@@ -1,0 +1,24 @@
+.overlayThreadTop {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--color-border);
+  padding: 0 var(--space-1);
+  cursor: move;
+  background: var(--color-surface-elevated);
+  user-select: none;
+  border-top-left-radius: var(--radius);
+  border-top-right-radius: var(--radius);
+}
+
+.overlayDragHandle {
+  padding: var(--space-3);
+  transform: rotate(90deg);
+}
+
+.overlayMinimizeButton {
+  padding: var(--space-5) var(--space-3);
+  background: none;
+  color: inherit;
+}

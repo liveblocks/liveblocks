@@ -1,0 +1,7 @@
+.pointer {
+  position: absolute;
+  top: calc(1px - var(--space-8));
+  left: calc(1px - var(--space-6));
+  color: var(--color-text-light);
+  box-shadow: 1px solid var(--shadow-lg);
+}

@@ -1,0 +1,21 @@
+.home {
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.homeHeader {
+  margin: var(--space-16) 0 var(--space-18);
+  padding-bottom: var(--space-16);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.homeTitle {
+  font-size: var(--size-3xl);
+  font-weight: 700;
+}
+
+.homeDescription {
+  margin: var(--space-3) 0;
+  font-size: var(--size-lg);
+  color: var(--color-text-lighter);
+}

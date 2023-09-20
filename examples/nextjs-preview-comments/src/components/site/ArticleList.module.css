@@ -1,0 +1,27 @@
+.articleList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-18);
+}
+
+.articleInfo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.articleDate {
+  font-size: var(--size-xs);
+  color: var(--color-text-lighter);
+}
+
+.articleTitle {
+  font-size: var(--size-lg);
+  font-weight: 600;
+}
+
+.articleDescription {
+  font-size: var(--size-sm);
+  line-height: 1.8;
+  color: var(--color-text);
+}

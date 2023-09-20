@@ -1,0 +1,38 @@
+.avatar {
+  display: flex;
+  flex-shrink: 0;
+  place-content: center;
+  position: relative;
+  border: calc(1px * var(--border-size)) solid var(--color-surface);
+  border-radius: 9999px;
+  width: calc(1px * var(--avatar-size));
+  height: calc(1px * var(--avatar-size));
+  background-color: #9ca3af;
+  /* margin-left: -0.75rem; */
+  --border-size: 0;
+  --avatar-size: 36;
+}
+
+.avatar[data-tooltip]:before {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 100%;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  padding: 5px 10px;
+  color: var(--color-surface-elevated);
+  font-size: 0.75rem;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  z-index: 1;
+  background: var(--color-text);
+  white-space: nowrap;
+}
+
+.avatar[data-tooltip]:hover:before {
+  opacity: 1;
+}
+
+.avatar_picture {
+  border-radius: 9999px;
+}
