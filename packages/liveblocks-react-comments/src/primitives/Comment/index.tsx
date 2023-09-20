@@ -18,6 +18,7 @@ import {
 
 const COMMENT_MENTION_NAME = "CommentMention";
 const COMMENT_BODY_NAME = "CommentBody";
+const COMMENT_LINK_NAME = "CommentLink";
 
 function CommentDefaultRenderMention({ userId }: CommentRenderMentionProps) {
   return (
@@ -163,6 +164,7 @@ const CommentBody = forwardRef<HTMLDivElement, CommentBodyProps>(
 if (process.env.NODE_ENV !== "production") {
   CommentBody.displayName = COMMENT_BODY_NAME;
   CommentMention.displayName = COMMENT_MENTION_NAME;
+  CommentLink.displayName = COMMENT_LINK_NAME;
 }
 
 // NOTE: Every export from this file will be available publicly as Comment.*
