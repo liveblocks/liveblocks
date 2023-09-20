@@ -15,10 +15,6 @@ export type EmojiCategory = {
   name: string;
 };
 
-export type EmojiCategoryWithEmojis = EmojiCategory & {
-  emojis: Emoji[];
-};
-
 export type EmojiSkinTone = {
   key: string;
   name: string;
@@ -30,10 +26,24 @@ export type EmojiData = {
   skinTones: EmojiSkinTone[];
 };
 
-export type EmojiPickerRootProps = PropsWithChildren;
+export type EmojiPickerCategoryRow = {
+  type: "category";
+  category: string;
+};
+
+export type EmojiPickerGridRow = {
+  type: "emojis";
+  emojis: Emoji[];
+};
+
+export type EmojiPickerRow = EmojiPickerCategoryRow | EmojiPickerGridRow;
+
+export interface EmojiPickerRootProps extends PropsWithChildren {
+  columns?: number;
+}
 
 export interface EmojiPickerListProps extends ComponentPropsWithSlot<"div"> {
-  columns?: number;
+  onEmojiSelect?: (emoji: string) => void;
 }
 
 export type EmojiPickerSearchProps = ComponentPropsWithSlot<"input">;

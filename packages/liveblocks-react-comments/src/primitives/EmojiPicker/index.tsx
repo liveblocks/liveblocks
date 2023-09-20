@@ -10,29 +10,34 @@ import React, {
   useState,
   useTransition,
 } from "react";
+import { VList } from "virtua";
 
-import { chunk } from "../../utils/chunk";
 import { Emoji } from "../internal/Emoji";
 import { EmojiPickerContext, useEmojiPicker } from "./contexts";
 import type {
-  EmojiCategoryWithEmojis,
   EmojiData,
   EmojiPickerListProps,
   EmojiPickerRootProps,
+  EmojiPickerRow,
   EmojiPickerSearchProps,
 } from "./types";
-import { filterEmojis, getEmojiData, groupEmojisByCategory } from "./utils";
+import { filterEmojis, generatePickerRows, getEmojiData } from "./utils";
+
+const DEFAULT_COLUMNS = 10;
 
 const EMOJIPICKER_ROOT_NAME = "EmojiPickerRoot";
 const EMOJIPICKER_LIST_NAME = "EmojiPickerList";
 const EMOJIPICKER_SEARCH_NAME = "EmojiPickerSearch";
 
-function EmojiPickerRoot({ children }: EmojiPickerRootProps) {
+function EmojiPickerRoot({
+  columns = DEFAULT_COLUMNS,
+  children,
+}: EmojiPickerRootProps) {
   // TODO: Ponyfill/polyfill useTransition
   const data = useRef<EmojiData>();
   const search = useRef("");
   const [, startEmojisTransition] = useTransition();
-  const [emojis, setEmojis] = useState<EmojiCategoryWithEmojis[]>([]);
+  const [rows, setRows] = useState<EmojiPickerRow[]>([]);
   const [error, setError] = useState<Error>();
 
   const updateEmojis = useCallback(() => {
@@ -41,18 +46,24 @@ function EmojiPickerRoot({ children }: EmojiPickerRootProps) {
     }
 
     startEmojisTransition(() => {
-      setEmojis(() => {
+      setRows(() => {
         if (!data.current) {
           return [];
         }
 
-        return groupEmojisByCategory(
-          filterEmojis(data.current.emojis, search.current),
-          data.current.categories
+        const filteredEmojis = filterEmojis(
+          data.current.emojis,
+          search.current
+        );
+
+        return generatePickerRows(
+          filteredEmojis,
+          data.current.categories,
+          columns
         );
       });
     });
-  }, []);
+  }, [columns]);
 
   const initializeData = useCallback(async () => {
     try {
@@ -80,7 +91,7 @@ function EmojiPickerRoot({ children }: EmojiPickerRootProps) {
     <EmojiPickerContext.Provider
       value={
         {
-          emojis,
+          rows,
           error,
           isLoading: !data && !error,
           onSearch: handleSearch,
@@ -127,12 +138,13 @@ const EmojiPickerSearch = forwardRef<HTMLInputElement, EmojiPickerSearchProps>(
 // TODO: renderLoading
 // TODO: renderError
 // TODO: renderEmpty
+// TODO: renderRow
 // TODO: renderCategoryHeader
 // TODO: renderEmoji
 const EmojiPickerList = forwardRef<HTMLDivElement, EmojiPickerListProps>(
-  ({ columns = 9, asChild, ...props }, forwardedRef) => {
-    const Component = asChild ? Slot : "span";
-    const { emojis, error, isLoading } = useEmojiPicker();
+  ({ asChild, onEmojiSelect, ...props }, forwardedRef) => {
+    const Component = asChild ? Slot : "div";
+    const { rows, error, isLoading } = useEmojiPicker();
 
     // TODO: Handle loading
     if (isLoading) {
@@ -145,32 +157,33 @@ const EmojiPickerList = forwardRef<HTMLDivElement, EmojiPickerListProps>(
     }
 
     // TODO: Handle empty
-    if (emojis.length === 0) {
+    if (rows.length === 0) {
       return null;
     }
 
     return (
       <Component {...props} ref={forwardedRef}>
-        {emojis.map((category) => {
-          const rows = chunk(category.emojis, columns);
-
-          return (
-            <div key={category.key}>
-              <div>{category.name}</div>
-              <div>
-                {rows.map((row, index) => (
+        <VList>
+          {rows.map((row, index) => {
+            switch (row.type) {
+              case "category":
+                return <div key={index}>{row.category}</div>;
+              case "emojis":
+                return (
                   <div key={index}>
-                    {row.map((emoji) => (
-                      <button key={emoji.hexcode}>
+                    {row.emojis.map((emoji) => (
+                      <button
+                        key={emoji.hexcode}
+                        onClick={() => onEmojiSelect?.(emoji.emoji)}
+                      >
                         <Emoji emoji={emoji.emoji} />
                       </button>
                     ))}
                   </div>
-                ))}
-              </div>
-            </div>
-          );
-        })}
+                );
+            }
+          })}
+        </VList>
       </Component>
     );
   }
