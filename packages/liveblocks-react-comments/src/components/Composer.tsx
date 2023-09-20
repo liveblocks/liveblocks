@@ -11,8 +11,8 @@ import type {
 } from "react";
 import React, { forwardRef, useCallback } from "react";
 
-import { MentionIcon } from "../icons/mention";
-import { SendIcon } from "../icons/send";
+import { MentionIcon } from "../icons/Mention";
+import { SendIcon } from "../icons/Send";
 import { type ComposerOverrides, useOverrides } from "../overrides";
 import * as ComposerPrimitive from "../primitives/Composer";
 import { useComposer } from "../primitives/Composer/contexts";

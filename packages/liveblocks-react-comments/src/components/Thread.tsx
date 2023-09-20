@@ -6,8 +6,8 @@ import * as TogglePrimitive from "@radix-ui/react-toggle";
 import type { ComponentPropsWithoutRef, SyntheticEvent } from "react";
 import React, { forwardRef, useCallback, useMemo } from "react";
 
-import { ResolveIcon } from "../icons/resolve";
-import { ResolvedIcon } from "../icons/resolved";
+import { ResolveIcon } from "../icons/Resolve";
+import { ResolvedIcon } from "../icons/Resolved";
 import {
   type CommentOverrides,
   type ComposerOverrides,
