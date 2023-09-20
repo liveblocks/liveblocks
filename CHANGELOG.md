@@ -1,3 +1,10 @@
+# v1.3.6
+
+### `@liveblocks/react`
+
+- Implement request deduping and handle race conditions during mutations and
+  revalidations, inspired by SWR.
+
 # v1.3.5
 
 ### `@liveblocks/react`

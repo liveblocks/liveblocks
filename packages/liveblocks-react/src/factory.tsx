@@ -17,6 +17,8 @@ import type {
   AsyncCache,
   BaseMetadata,
   CommentData,
+  ThreadData,
+  // ThreadData,
   ToImmutable,
 } from "@liveblocks/core";
 import {
@@ -28,17 +30,6 @@ import {
 } from "@liveblocks/core";
 import * as React from "react";
 import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector.js";
-
-import type {
-  CommentsRoom,
-  CreateCommentOptions,
-  CreateThreadOptions,
-  DeleteCommentOptions,
-  EditCommentOptions,
-  EditThreadMetadataOptions,
-  RoomThreads,
-} from "./comments/CommentsRoom";
-import { createCommentsRoom } from "./comments/CommentsRoom";
 import type { CommentsApiError } from "./comments/errors";
 import { useDebounce } from "./comments/lib/use-debounce";
 import { stableStringify } from "./lib/stable-stringify";
@@ -56,6 +47,16 @@ import type {
   UserState,
   UserStateSuspense,
 } from "./types";
+import {
+  createCommentsRoom,
+  CommentsRoom,
+  CreateThreadOptions,
+  EditThreadMetadataOptions,
+  CreateCommentOptions,
+  EditCommentOptions,
+  DeleteCommentOptions,
+  State,
+} from "./comments/CommentsRoom";
 
 const noop = () => {};
 const identity: <T>(x: T) => T = (x) => x;
@@ -856,7 +857,7 @@ export function createRoomContext<
     return commentsRoom;
   }
 
-  function useThreads(): RoomThreads<TThreadMetadata> {
+  function useThreads(): State<ThreadData<TThreadMetadata>[]> {
     const room = useRoom();
 
     React.useEffect(() => {
