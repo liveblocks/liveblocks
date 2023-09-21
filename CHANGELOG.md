@@ -1,11 +1,9 @@
-# Unpublished
+# v1.3.5
 
 ### `@liveblocks/react`
 
 - Officially mark `useList()`, `useMap()`, and `useObject()` as deprecated in
   JSDoc comments (we stopped recommending them since the release of 0.18)
-
-# v1.3.5
 
 ### `@liveblocks/react`
 
