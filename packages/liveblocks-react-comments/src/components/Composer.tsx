@@ -156,7 +156,6 @@ function ComposerInsertMentionEditorAction({
   return (
     <Tooltip content={label}>
       <Button
-        type="button"
         className={classNames("lb-composer-editor-action", className)}
         onMouseDown={preventDefault}
         onClick={handleClick}

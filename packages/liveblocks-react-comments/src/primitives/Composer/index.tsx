@@ -559,7 +559,7 @@ const defaultEditorComponents: ComposerEditorComponents = {
       <ComposerSuggestions>
         <ComposerSuggestionsList>
           {userIds.map((userId) => (
-            <ComposerSuggestionsListItem value={userId}>
+            <ComposerSuggestionsListItem key={userId} value={userId}>
               {userId}
             </ComposerSuggestionsListItem>
           ))}
