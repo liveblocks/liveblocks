@@ -17,7 +17,6 @@ import type {
   AsyncCache,
   BaseMetadata,
   CommentData,
-  ThreadData,
   ToImmutable,
 } from "@liveblocks/core";
 import {
@@ -37,7 +36,7 @@ import type {
   DeleteCommentOptions,
   EditCommentOptions,
   EditThreadMetadataOptions,
-  State,
+  RoomThreads,
 } from "./comments/CommentsRoom";
 import { createCommentsRoom } from "./comments/CommentsRoom";
 import type { CommentsApiError } from "./comments/errors";
@@ -857,7 +856,7 @@ export function createRoomContext<
     return commentsRoom;
   }
 
-  function useThreads(): State<ThreadData<TThreadMetadata>[]> {
+  function useThreads(): RoomThreads<TThreadMetadata> {
     const room = useRoom();
 
     React.useEffect(() => {

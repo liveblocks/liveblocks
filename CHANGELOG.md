@@ -1,16 +1,16 @@
-# v1.3.6
-
-### `@liveblocks/react`
-
-- Implement request deduping and handle race conditions during mutations and
-  revalidation, inspired by SWR.
-
-# v1.3.5
+# Unpublished
 
 ### `@liveblocks/react`
 
 - Officially mark `useList()`, `useMap()`, and `useObject()` as deprecated in
   JSDoc comments (we stopped recommending them since the release of 0.18)
+
+# v1.3.5
+
+### `@liveblocks/react`
+
+- Deduplicate Comments requests and improve how race conditions are handled
+  during mutations.
 
 ### `@liveblocks/react-comments`
 

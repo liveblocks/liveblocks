@@ -1,41 +1,18 @@
-/**
-MIT License
-
-Copyright (c) 2023 Vercel, Inc.
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
- */
-
-import type {
-  BaseMetadata,
-  BaseUserMeta,
-  CommentBody,
-  CommentData,
-  EventSource,
-  Json,
-  JsonObject,
-  LsonObject,
-  Room,
-  ThreadData,
+import {
+  type BaseMetadata,
+  type BaseUserMeta,
+  type CommentBody,
+  type CommentData,
+  type EventSource,
+  type Json,
+  type JsonObject,
+  type LsonObject,
+  makeEventSource,
+  type Room,
+  type ThreadData,
 } from "@liveblocks/core";
 import { nanoid } from "nanoid";
-import { useCallback, useEffect } from "react";
+import { useEffect } from "react";
 import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
 
 import {
@@ -58,7 +35,7 @@ const COMMENT_ID_PREFIX = "cm";
 const DEDUPING_INTERVAL = 1000;
 
 export type CommentsRoom<TThreadMetadata extends BaseMetadata> = {
-  useThreads(): State<ThreadData<TThreadMetadata>[]>;
+  useThreads(): RoomThreads<TThreadMetadata>;
   useThreadsSuspense(): ThreadData<TThreadMetadata>[];
   createThread(
     options: CreateThreadOptions<TThreadMetadata>
@@ -105,7 +82,7 @@ function createOptimisticId(prefix: string) {
   return `${prefix}_${nanoid()}`;
 }
 
-export type State<Data = any> =
+export type RoomThreads<TThreadMetadata extends BaseMetadata> =
   | {
       isLoading: true;
       threads?: never;
@@ -118,12 +95,12 @@ export type State<Data = any> =
     }
   | {
       isLoading: false;
-      threads: Data;
+      threads: ThreadData<TThreadMetadata>[];
       error?: never;
     };
 
-type RequestInfo<Data = any> = {
-  fetcher: Promise<Data>;
+type ThreadsRequestInfo<TThreadMetadata extends BaseMetadata> = {
+  fetcher: Promise<ThreadData<TThreadMetadata>[]>;
   timestamp: number;
 };
 
@@ -132,58 +109,47 @@ type MutationInfo = {
   endTime: number;
 };
 
-class StateManager<Data = any> extends EventTarget {
-  private _cache: State<Data> | undefined; // Stores the current cache state (threads)
-  public request: RequestInfo<Data> | undefined; // Stores the currently active revalidation request
-  public mutation: MutationInfo | undefined; // Stores the start and end time of the currently active mutation
+function createThreadsManager<TThreadMetadata extends BaseMetadata>() {
+  let cache: RoomThreads<TThreadMetadata> | undefined; // Stores the current cache state (threads)
+  let request: ThreadsRequestInfo<TThreadMetadata> | undefined; // Stores the currently active revalidation request
+  let mutation: MutationInfo | undefined; // Stores the start and end time of the currently active mutation
 
-  constructor() {
-    super();
-  }
+  const eventSource = makeEventSource<
+    RoomThreads<TThreadMetadata> | undefined
+  >();
 
-  /* -------------------------------------------------------------------------------------------------
-   * Cache Getter/Setter
-   * -----------------------------------------------------------------------------------------------*/
-  get cache(): State<Data> | undefined {
-    return this._cache;
-  }
+  return {
+    get cache() {
+      return cache;
+    },
 
-  set cache(value: State<Data> | undefined) {
-    this._cache = value;
-    const event = new CustomEvent("cacheupdate");
-    this.dispatchEvent(event);
-  }
+    set cache(value: RoomThreads<TThreadMetadata> | undefined) {
+      cache = value;
+      eventSource.notify(cache);
+    },
 
-  /* -------------------------------------------------------------------------------------------------
-   * Event Listener
-   * -----------------------------------------------------------------------------------------------*/
-  addEventListener(
-    key: "cacheupdate",
-    callback: EventListenerOrEventListenerObject | null,
-    options?: boolean | AddEventListenerOptions | undefined
-  ): void;
+    get request() {
+      return request;
+    },
 
-  addEventListener(
-    key: string,
-    callback: EventListenerOrEventListenerObject | null,
-    options?: boolean | AddEventListenerOptions | undefined
-  ): void {
-    super.addEventListener(key, callback, options);
-  }
+    set request(value: ThreadsRequestInfo<TThreadMetadata> | undefined) {
+      request = value;
+    },
 
-  removeEventListener(
-    type: "cacheupdate",
-    callback: EventListenerOrEventListenerObject | null,
-    options?: boolean | EventListenerOptions | undefined
-  ): void;
+    get mutation() {
+      return mutation;
+    },
 
-  removeEventListener(
-    type: string,
-    callback: EventListenerOrEventListenerObject | null,
-    options?: boolean | EventListenerOptions | undefined
-  ): void {
-    super.removeEventListener(type, callback, options);
-  }
+    set mutation(value: MutationInfo | undefined) {
+      mutation = value;
+    },
+
+    subscribe(
+      callback: (state: RoomThreads<TThreadMetadata> | undefined) => void
+    ) {
+      return eventSource.subscribe(callback);
+    },
+  };
 }
 
 /**
@@ -196,12 +162,13 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
   room: Room<JsonObject, LsonObject, BaseUserMeta, Json>,
   errorEventSource: EventSource<CommentsApiError<TThreadMetadata>>
 ): CommentsRoom<TThreadMetadata> {
-  const manager = new StateManager<ThreadData<TThreadMetadata>[]>();
+  // const manager = new StateManager<ThreadData<TThreadMetadata>[]>();
+  const manager = createThreadsManager<TThreadMetadata>();
 
   let timestamp = 0;
 
-  let refCount = 0; // Reference count for the number of components with a subscription (via the `subscribe` function)
-  let disposer: (() => void) | undefined; // Disposer function for the `comments` event listener
+  let commentsEventRefCount = 0; // Reference count for the number of components with a subscription (via the `subscribe` function)
+  let commentsEventDisposer: (() => void) | undefined; // Disposer function for the `comments` event listener
 
   async function mutate(
     data: Promise<any>,
@@ -564,21 +531,21 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
    */
   function _subscribe(): () => void {
     // Only subscribe to the `comments` event if the reference count is 0 (meaning that there are no components with a subscription)
-    if (refCount === 0) {
-      disposer = room.events.comments.subscribe(() => {
+    if (commentsEventRefCount === 0) {
+      commentsEventDisposer = room.events.comments.subscribe(() => {
         void revalidateCache(true);
       });
     }
 
-    refCount = refCount + 1;
+    commentsEventRefCount = commentsEventRefCount + 1;
 
     return () => {
       // Only unsubscribe from the `comments` event if the reference count is 0 (meaning that there are no components with a subscription)
-      refCount = refCount - 1;
-      if (refCount > 0) return;
+      commentsEventRefCount = commentsEventRefCount - 1;
+      if (commentsEventRefCount > 0) return;
 
-      disposer?.();
-      disposer = undefined;
+      commentsEventDisposer?.();
+      commentsEventDisposer = undefined;
     };
   }
 
@@ -611,24 +578,16 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
     }, [status]);
   }
 
-  function useThreadsInternal(): State<ThreadData<TThreadMetadata>[]> {
+  function useThreadsInternal(): RoomThreads<TThreadMetadata> {
     useEffect(_subscribe, []);
 
     usePolling();
 
-    const subscribe = useCallback((onStoreChange: () => void) => {
-      manager.addEventListener("cacheupdate", onStoreChange);
-      return () => {
-        manager.removeEventListener("cacheupdate", onStoreChange);
-      };
-    }, []);
-
-    const getSnapshot = useCallback(() => {
-      const snapshot = manager.cache;
-      return snapshot;
-    }, []);
-
-    const cache = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+    const cache = useSyncExternalStore(
+      manager.subscribe,
+      () => manager.cache,
+      () => manager.cache
+    );
 
     return cache ?? { isLoading: true };
   }

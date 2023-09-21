@@ -27,7 +27,7 @@ import type {
   DeleteCommentOptions,
   EditCommentOptions,
   EditThreadMetadataOptions,
-  State,
+  RoomThreads,
 } from "./comments/CommentsRoom";
 
 export type ResolveUserOptions = {
@@ -602,7 +602,7 @@ export type RoomContextBundle<
      * @example
      * const { threads, error, isLoading } = useThreads();
      */
-    useThreads(): State<ThreadData<TThreadMetadata>[]>;
+    useThreads(): RoomThreads<TThreadMetadata>;
 
     /**
      * @beta
