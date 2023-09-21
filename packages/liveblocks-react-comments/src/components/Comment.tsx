@@ -194,16 +194,21 @@ const CommentReaction = forwardRef<HTMLButtonElement, CommentReactionProps>(
 
     return (
       <TogglePrimitive.Root
-        className={classNames("lb-comment-reaction", className)}
-        aria-label="TODO:"
-        data-active={isActive ? "" : undefined}
-        {...props}
+        asChild
         pressed={isActive}
         onPressedChange={handlePressedChange}
         ref={forwardedRef}
       >
-        <Emoji className="lb-comment-reaction-emoji" emoji={emoji} />
-        <span className="lb-comment-reaction-count">{reactions.length}</span>
+        <Button
+          className={classNames("lb-comment-reaction", className)}
+          variant="outline"
+          aria-label="TODO:"
+          data-active={isActive ? "" : undefined}
+          {...props}
+        >
+          <Emoji className="lb-comment-reaction-emoji" emoji={emoji} />
+          <span className="lb-comment-reaction-count">{reactions.length}</span>
+        </Button>
       </TogglePrimitive.Root>
     );
   }
@@ -529,13 +534,14 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
                   <QuickEmojiPicker onEmojiSelect={handleReactionSelect}>
                     <Tooltip content={$.COMMENT_ADD_REACTION}>
                       <QuickEmojiPickerTrigger asChild>
-                        <button
+                        <Button
                           className="lb-comment-reaction lb-comment-reaction-add"
+                          variant="outline"
                           onClick={stopPropagation}
                           aria-label={$.COMMENT_ADD_REACTION}
                         >
-                          <EmojiAddIcon className="lb-comment-reaction-add-icon" />
-                        </button>
+                          <EmojiAddIcon className="lb-button-icon" />
+                        </Button>
                       </QuickEmojiPickerTrigger>
                     </Tooltip>
                   </QuickEmojiPicker>
