@@ -25,7 +25,7 @@ const KEYS = {
 
 interface TooltipProps
   extends Pick<TooltipPrimitive.TooltipTriggerProps, "children">,
-    TooltipPrimitive.TooltipContentProps {
+    Omit<TooltipPrimitive.TooltipContentProps, "content"> {
   content: ReactNode;
   shortcut?: ReactNode;
 }
