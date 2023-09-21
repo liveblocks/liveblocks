@@ -6,7 +6,7 @@ import React, { forwardRef } from "react";
 import { classNames } from "../../utils/class-names";
 
 interface Props extends ComponentProps<"button"> {
-  variant?: "primary";
+  variant?: "default" | "outline" | "primary";
 }
 
 export const Button = forwardRef<HTMLButtonElement, Props>(
