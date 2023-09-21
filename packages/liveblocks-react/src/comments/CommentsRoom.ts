@@ -162,7 +162,6 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
   room: Room<JsonObject, LsonObject, BaseUserMeta, Json>,
   errorEventSource: EventSource<CommentsApiError<TThreadMetadata>>
 ): CommentsRoom<TThreadMetadata> {
-  // const manager = new StateManager<ThreadData<TThreadMetadata>[]>();
   const manager = createThreadsManager<TThreadMetadata>();
 
   let timestamp = 0;
