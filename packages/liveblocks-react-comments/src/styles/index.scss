@@ -155,7 +155,7 @@
   // Button
 
   .lb-button {
-    --lb-button-background: transparent;
+    --lb-button-background: var(--lb-background);
 
     all: unset;
     position: relative;
@@ -206,6 +206,14 @@
 
       color: var(--lb-foreground-tertiary);
     }
+  }
+
+  .lb-button[data-variant="default"]:not(
+      :enabled:hover,
+      :enabled:focus-visible,
+      [aria-expanded="true"]
+    ) {
+    background: transparent;
   }
 
   .lb-button[data-variant="primary"] {
@@ -667,7 +675,7 @@
     padding-inline: calc(0.575 * var(--lb-spacing));
     border-radius: $lb-radius-full;
 
-    &[data-active] {
+    &[data-self] {
       background: var(--lb-accent-subtle);
       color: var(--lb-accent-secondary);
       box-shadow: inset 0 0 0 1px var(--lb-accent-moderate);
