@@ -331,7 +331,7 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
     }
   }
 
-  async function editThreadMetadata(
+  function editThreadMetadata(
     options: EditThreadMetadataOptions<TThreadMetadata>
   ) {
     const threadId = options.threadId;
@@ -622,7 +622,7 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
 
     const getSnapshot = useCallback(() => {
       const snapshot = manager.cache;
-      return snapshot as State<ThreadData<TThreadMetadata>[]> | undefined;
+      return snapshot;
     }, []);
 
     const cache = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);

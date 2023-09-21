@@ -18,7 +18,6 @@ import type {
   BaseMetadata,
   CommentData,
   ThreadData,
-  // ThreadData,
   ToImmutable,
 } from "@liveblocks/core";
 import {
