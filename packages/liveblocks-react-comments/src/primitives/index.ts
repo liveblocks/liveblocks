@@ -24,10 +24,5 @@ export type {
   ComposerSuggestionsListItemProps,
   ComposerSuggestionsListProps,
 } from "./Composer/types";
-export * as EmojiPicker from "./EmojiPicker";
-export type {
-  EmojiPickerListProps,
-  EmojiPickerRootProps,
-} from "./EmojiPicker/types";
 export type { TimestampProps } from "./Timestamp";
 export { Timestamp } from "./Timestamp";

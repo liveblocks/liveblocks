@@ -31,6 +31,7 @@ const EMOJIPICKER_SEARCH_NAME = "EmojiPickerSearch";
 
 function EmojiPickerRoot({
   columns = DEFAULT_COLUMNS,
+  onEmojiSelect,
   children,
 }: EmojiPickerRootProps) {
   const data = useRef<EmojiData>();
@@ -94,6 +95,7 @@ function EmojiPickerRoot({
           error,
           isLoading: !data && !error,
           onSearch: handleSearch,
+          onEmojiSelect,
         } as EmojiPickerContext
       }
     >
@@ -141,9 +143,9 @@ const EmojiPickerSearch = forwardRef<HTMLInputElement, EmojiPickerSearchProps>(
 // TODO: renderCategoryHeader
 // TODO: renderEmoji
 const EmojiPickerList = forwardRef<HTMLDivElement, EmojiPickerListProps>(
-  ({ asChild, onEmojiSelect, ...props }, forwardedRef) => {
+  ({ asChild, ...props }, forwardedRef) => {
     const Component = asChild ? Slot : "div";
-    const { rows, error, isLoading } = useEmojiPicker();
+    const { rows, error, isLoading, onEmojiSelect } = useEmojiPicker();
 
     // TODO: Handle loading
     if (isLoading) {

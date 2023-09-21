@@ -271,6 +271,32 @@
     margin-inline-end: calc(0.5 * var(--lb-spacing));
   }
 
+  // Emoji picker
+
+  .lb-emoji-picker {
+    display: flex;
+    flex-direction: column;
+    width: 360px;
+    height: 400px;
+  }
+
+  .lb-emoji-picker-header {
+    flex: none;
+    border-block-end: 1px solid var(--lb-foreground-subtle);
+  }
+
+  .lb-emoji-picker-search {
+    all: unset;
+    width: 100%;
+    padding: $lb-elevation-list-padding;
+    background: transparent;
+    outline: none;
+  }
+
+  .lb-emoji-picker-list {
+    flex: 1;
+  }
+
   // Quick emoji picker
 
   .lb-quick-emoji-picker {
@@ -672,6 +698,7 @@
 
   .lb-comment-reaction {
     gap: calc(0.375 * var(--lb-spacing));
+    height: $lb-button-size;
     padding-inline: calc(0.575 * var(--lb-spacing));
     border-radius: $lb-radius-full;
 
@@ -803,6 +830,7 @@
 // Elevation
 
 .lb-elevation {
+  border-radius: var(--lb-radius);
   background: var(--lb-elevation-background);
   box-shadow: var(--lb-elevation-shadow);
 }
@@ -813,7 +841,6 @@
 .lb-composer-suggestions,
 .lb-quick-emoji-picker {
   padding: $lb-elevation-list-padding;
-  border-radius: var(--lb-radius);
 }
 
 .lb-dropdown-item,
@@ -849,6 +876,7 @@
 .lb-dropdown,
 .lb-composer-suggestions,
 .lb-tooltip,
+.lb-emoji-picker,
 .lb-quick-emoji-picker {
   animation-duration: var(--lb-transition-duration);
   animation-timing-function: var(--lb-transition-easing);
@@ -856,6 +884,7 @@
 }
 
 .lb-dropdown,
+.lb-emoji-picker,
 .lb-quick-emoji-picker,
 .lb-tooltip[data-state="delayed-open"] {
   &[data-side="top"] {
@@ -868,6 +897,7 @@
 }
 
 .lb-dropdown,
+.lb-emoji-picker,
 .lb-quick-emoji-picker,
 .lb-tooltip {
   &[data-state="closed"] {
@@ -888,6 +918,7 @@
 
 @media (prefers-reduced-motion) {
   .lb-dropdown:not([data-state="closed"]),
+  .lb-emoji-picker:not([data-state="closed"]),
   .lb-quick-emoji-picker:not([data-state="closed"]),
   .lb-tooltip[data-state="delayed-open"]:not([data-state="closed"]),
   .lb-composer-suggestions {

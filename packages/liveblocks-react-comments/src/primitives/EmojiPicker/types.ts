@@ -40,10 +40,9 @@ export type EmojiPickerRow = EmojiPickerCategoryRow | EmojiPickerGridRow;
 
 export interface EmojiPickerRootProps extends PropsWithChildren {
   columns?: number;
-}
-
-export interface EmojiPickerListProps extends ComponentPropsWithSlot<"div"> {
   onEmojiSelect?: (emoji: string) => void;
 }
+
+export type EmojiPickerListProps = ComponentPropsWithSlot<"div">;
 
 export type EmojiPickerSearchProps = ComponentPropsWithSlot<"input">;
