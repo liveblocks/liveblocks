@@ -17,7 +17,7 @@ export type YType = "unknown" | "text" | "array" | "xml";
 /*
 given an item in a ydoc, try and infer its type
 */
-function getType(item: Y.Item): YType {
+function guessType(item: Y.Item): YType {
   // only text has ContentFormat and ContentEmbed
   if (
     item.content instanceof Y.ContentFormat ||
@@ -71,7 +71,7 @@ function getYTypedValue(
   if (!value._first && value._map instanceof Map && value._map.size > 0) {
     return doc.getMap(key).toJSON();
   } else if (value._first != null) {
-    const type = getType(value._first);
+    const type = guessType(value._first);
     if (type === "text") {
       return includeFormatting
         ? getFormattedText(value._first)

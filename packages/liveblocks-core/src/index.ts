@@ -131,7 +131,7 @@ export type {
   UpdateStorageServerMsg,
   UserJoinServerMsg,
   UserLeftServerMsg,
-  YDocUpdate,
+  YDocUpdateServerMsg,
 } from "./protocol/ServerMsg";
 export { ServerMsgCode } from "./protocol/ServerMsg";
 export type {

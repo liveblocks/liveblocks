@@ -45,7 +45,7 @@ import type {
   UpdatePresenceServerMsg,
   UserJoinServerMsg,
   UserLeftServerMsg,
-  YDocUpdate,
+  YDocUpdateServerMsg,
 } from "./protocol/ServerMsg";
 import { ServerMsgCode } from "./protocol/ServerMsg";
 import type { ImmutableRef } from "./refs/ImmutableRef";
@@ -589,7 +589,7 @@ export type Room<
     readonly storageDidLoad: Observable<void>;
 
     readonly storageStatus: Observable<StorageStatus>;
-    readonly ydoc: Observable<YDocUpdate | UpdateYDocClientMsg>;
+    readonly ydoc: Observable<YDocUpdateServerMsg | UpdateYDocClientMsg>;
     readonly comments: Observable<CommentsEventServerMsg>;
   };
 
@@ -1134,7 +1134,7 @@ export function createRoom<
     history: makeEventSource<HistoryEvent>(),
     storageDidLoad: makeEventSource<void>(),
     storageStatus: makeEventSource<StorageStatus>(),
-    ydoc: makeEventSource<YDocUpdate | UpdateYDocClientMsg>(),
+    ydoc: makeEventSource<YDocUpdateServerMsg | UpdateYDocClientMsg>(),
 
     comments: makeEventSource<CommentsEventServerMsg>(),
   };

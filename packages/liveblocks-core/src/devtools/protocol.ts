@@ -1,6 +1,6 @@
 import type { Status } from "../connection";
 import type { UpdateYDocClientMsg } from "../protocol/ClientMsg";
-import type { YDocUpdate } from "../protocol/ServerMsg";
+import type { YDocUpdateServerMsg } from "../protocol/ServerMsg";
 import type * as DevTools from "../types/DevToolsTreeNode";
 
 /**
@@ -101,7 +101,7 @@ export type ClientToPanelMessage =
   | {
       msg: "room::sync::ydoc";
       roomId: string;
-      update: YDocUpdate | UpdateYDocClientMsg;
+      update: YDocUpdateServerMsg | UpdateYDocClientMsg;
     };
 // ----------------------------------------------------------------------------
 
