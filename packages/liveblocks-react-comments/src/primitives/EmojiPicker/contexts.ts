@@ -24,6 +24,7 @@ type EmojiPickerContextData =
 export type EmojiPickerContext = Resolve<
   EmojiPickerContextData & {
     onSearch: (search: string) => void;
+    onEmojiSelect?: (emoji: string) => void;
   }
 >;
 

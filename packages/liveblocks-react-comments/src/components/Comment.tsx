@@ -44,6 +44,7 @@ import { Composer } from "./Composer";
 import { Avatar } from "./internal/Avatar";
 import { Button } from "./internal/Button";
 import { Dropdown, DropdownItem, DropdownTrigger } from "./internal/Dropdown";
+import { EmojiPicker, EmojiPickerTrigger } from "./internal/EmojiPicker";
 import {
   QuickEmojiPicker,
   QuickEmojiPickerTrigger,
@@ -532,9 +533,9 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
                         reactions={reactions}
                       />
                     ))}
-                    <QuickEmojiPicker onEmojiSelect={handleReactionSelect}>
+                    <EmojiPicker onEmojiSelect={handleReactionSelect}>
                       <Tooltip content={$.COMMENT_ADD_REACTION}>
-                        <QuickEmojiPickerTrigger asChild>
+                        <EmojiPickerTrigger asChild>
                           <Button
                             className="lb-comment-reaction lb-comment-reaction-add"
                             variant="outline"
@@ -543,9 +544,9 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
                           >
                             <EmojiAddIcon className="lb-button-icon" />
                           </Button>
-                        </QuickEmojiPickerTrigger>
+                        </EmojiPickerTrigger>
                       </Tooltip>
-                    </QuickEmojiPicker>
+                    </EmojiPicker>
                   </div>
                 )}
               </>

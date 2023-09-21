@@ -13,6 +13,7 @@ export interface LocalizationOverrides {
 
 export interface GlobalOverrides {
   UNKNOWN_USER: string;
+  EMOJI_PICKER_SEARCH_PLACEHOLDER: string;
 }
 
 export interface CommentOverrides {
@@ -54,6 +55,7 @@ export const defaultOverrides: Overrides = {
   locale: "en",
   dir: "ltr",
   UNKNOWN_USER: "Anonymous",
+  EMOJI_PICKER_SEARCH_PLACEHOLDER: "Search emoji…",
   COMPOSER_INSERT_MENTION: "Mention someone",
   COMPOSER_PLACEHOLDER: "Write a comment…",
   COMPOSER_SEND: "Send",
