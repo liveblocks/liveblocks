@@ -256,7 +256,14 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
     const [isReactionActionOpen, setReactionActionOpen] = useState(false);
     const reactions = useMemo(() => {
       return comment.reactions?.length > 0
-        ? groupBy(comment.reactions, "emoji")
+        ? groupBy(
+            comment.reactions.sort(
+              (a, b) =>
+                new Date(a.createdAt).getTime() -
+                new Date(b.createdAt).getTime()
+            ),
+            "emoji"
+          )
         : undefined;
     }, [comment.reactions]);
 
