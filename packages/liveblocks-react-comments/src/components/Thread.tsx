@@ -43,9 +43,9 @@ export interface ThreadProps extends ComponentPropsWithoutRef<"div"> {
   showActions?: CommentProps["showActions"];
 
   /**
-   * Whether to indent the comments' bodies.
+   * Whether to indent the comments' content.
    */
-  indentCommentBody?: CommentProps["indentBody"];
+  indentCommentContent?: CommentProps["indentContent"];
 
   /**
    * Whether to show deleted comments.
@@ -98,7 +98,7 @@ export const Thread = forwardRef<HTMLDivElement, ThreadProps>(
   (
     {
       thread,
-      indentCommentBody = true,
+      indentCommentContent = true,
       showActions = "hover",
       showDeletedComments,
       showResolveAction = true,
@@ -158,7 +158,7 @@ export const Thread = forwardRef<HTMLDivElement, ThreadProps>(
                   key={comment.id}
                   className="lb-thread-comment"
                   comment={comment}
-                  indentBody={indentCommentBody}
+                  indentContent={indentCommentContent}
                   showDeleted={showDeletedComments}
                   showActions={showActions}
                   onEdit={onCommentEdit}
