@@ -1,14 +1,13 @@
 import { Slot } from "@radix-ui/react-slot";
 import type { ReactNode } from "react";
-import React, { forwardRef } from "react";
+import React, { forwardRef, useMemo } from "react";
 
 import { MENTION_CHARACTER } from "../../slate/plugins/mentions";
-import type { ComponentPropsWithSlot } from "../../types";
 import type {
+  CommentBodyComponents,
   CommentBodyProps,
+  CommentLinkProps,
   CommentMentionProps,
-  CommentRenderLinkProps,
-  CommentRenderMentionProps,
 } from "./types";
 import {
   isCommentBodyLink,
@@ -18,24 +17,13 @@ import {
 
 const COMMENT_MENTION_NAME = "CommentMention";
 const COMMENT_BODY_NAME = "CommentBody";
-
-function CommentDefaultRenderMention({ userId }: CommentRenderMentionProps) {
-  return (
-    <CommentMention>
-      {MENTION_CHARACTER}
-      {userId}
-    </CommentMention>
-  );
-}
+const COMMENT_LINK_NAME = "CommentLink";
 
 /**
  * Displays mentions within `Comment.Body`.
  *
  * @example
- * <Comment.Body
- *   body={comment.body}
- *   renderMention={({ userId }) => <Comment.Mention>@{userId}</Comment.Mention>}
- * />
+ * <Comment.Mention>@{userId}</Comment.Mention>
  */
 const CommentMention = forwardRef<HTMLSpanElement, CommentMentionProps>(
   ({ children, asChild, ...props }, forwardedRef) => {
@@ -49,22 +37,13 @@ const CommentMention = forwardRef<HTMLSpanElement, CommentMentionProps>(
   }
 );
 
-function CommentDefaultRenderLink({ href, children }: CommentRenderLinkProps) {
-  return <CommentLink href={href}>{children}</CommentLink>;
-}
-
 /**
  * Displays links within `Comment.Body`.
  *
  * @example
- * <Comment.Body
- *   body={comment.body}
- *   renderLink={({ href, children }) => (
- *     <Comment.Link href={href}>{children}</Comment.Link>
- *   )}
- * />
+ * <Comment.Link href={href}>{children}</Comment.Link>
  */
-const CommentLink = forwardRef<HTMLAnchorElement, ComponentPropsWithSlot<"a">>(
+const CommentLink = forwardRef<HTMLAnchorElement, CommentLinkProps>(
   ({ children, asChild, ...props }, forwardedRef) => {
     const Component = asChild ? Slot : "a";
 
@@ -81,6 +60,20 @@ const CommentLink = forwardRef<HTMLAnchorElement, ComponentPropsWithSlot<"a">>(
   }
 );
 
+const defaultBodyComponents: CommentBodyComponents = {
+  Mention: ({ userId }) => {
+    return (
+      <CommentMention>
+        {MENTION_CHARACTER}
+        {userId}
+      </CommentMention>
+    );
+  },
+  Link: ({ href, children }) => {
+    return <CommentLink href={href}>{children}</CommentLink>;
+  },
+};
+
 /**
  * Displays a comment body.
  *
@@ -88,17 +81,12 @@ const CommentLink = forwardRef<HTMLAnchorElement, ComponentPropsWithSlot<"a">>(
  * <Comment.Body body={comment.body} />
  */
 const CommentBody = forwardRef<HTMLDivElement, CommentBodyProps>(
-  (
-    {
-      body,
-      renderMention: Mention = CommentDefaultRenderMention,
-      renderLink: Link = CommentDefaultRenderLink,
-      asChild,
-      ...props
-    },
-    forwardedRef
-  ) => {
+  ({ body, components, asChild, ...props }, forwardedRef) => {
     const Component = asChild ? Slot : "div";
+    const { Mention, Link } = useMemo(
+      () => ({ ...defaultBodyComponents, ...components }),
+      [components]
+    );
 
     if (!body) {
       return null;
@@ -163,6 +151,7 @@ const CommentBody = forwardRef<HTMLDivElement, CommentBodyProps>(
 if (process.env.NODE_ENV !== "production") {
   CommentBody.displayName = COMMENT_BODY_NAME;
   CommentMention.displayName = COMMENT_MENTION_NAME;
+  CommentLink.displayName = COMMENT_LINK_NAME;
 }
 
 // NOTE: Every export from this file will be available publicly as Comment.*

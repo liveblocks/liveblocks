@@ -17,7 +17,7 @@ interface DropdownProps
       "defaultOpen" | "open" | "onOpenChange"
     >,
     Pick<DropdownMenuPrimitive.DropdownMenuTriggerProps, "children">,
-    DropdownMenuPrimitive.DropdownMenuContentProps {
+    Omit<DropdownMenuPrimitive.DropdownMenuContentProps, "content"> {
   content: ReactNode;
 }
 

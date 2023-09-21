@@ -3,7 +3,17 @@ const commonRestrictedSyntax = require("@liveblocks/eslint-config/restricted-syn
 module.exports = {
   root: true,
   extends: ["@liveblocks/eslint-config"],
-  plugins: ["react-hooks"],
+  plugins: ["react", "react-hooks"],
+  parserOptions: {
+    ecmaFeatures: {
+      jsx: true,
+    },
+  },
+  settings: {
+    react: {
+      version: "detect",
+    },
+  },
   rules: {
     // -------------------------------
     // Custom syntax we want to forbid
@@ -25,6 +35,9 @@ module.exports = {
     // Enforce React best practices
     "react-hooks/rules-of-hooks": "error",
     "react-hooks/exhaustive-deps": "error",
+    "react/jsx-key": ["error", { checkFragmentShorthand: true }],
+    "react/no-unescaped-entities": "error",
+    "react/no-unknown-property": "error",
 
     // Relax promise rules given how we use them in this project
     "@typescript-eslint/no-floating-promises": "off",

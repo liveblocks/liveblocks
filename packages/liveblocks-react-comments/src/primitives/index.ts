@@ -1,22 +1,24 @@
 export * as Comment from "./Comment";
 export type {
+  CommentBodyComponents,
+  CommentBodyLinkProps,
+  CommentBodyMentionProps,
   CommentBodyProps,
   CommentLinkProps,
   CommentMentionProps,
-  CommentRenderLinkProps,
-  CommentRenderMentionProps,
 } from "./Comment/types";
 export * as Composer from "./Composer";
 export type { ComposerContext } from "./Composer/contexts";
 export { useComposer } from "./Composer/contexts";
 export type {
+  ComposerEditorComponents,
+  ComposerEditorLinkProps,
+  ComposerEditorMentionProps,
+  ComposerEditorMentionSuggestionsProps,
   ComposerEditorProps,
   ComposerFormProps,
   ComposerLinkProps,
   ComposerMentionProps,
-  ComposerRenderLinkProps,
-  ComposerRenderMentionProps,
-  ComposerRenderMentionSuggestionsProps,
   ComposerSubmitComment,
   ComposerSubmitProps,
   ComposerSuggestionsListItemProps,

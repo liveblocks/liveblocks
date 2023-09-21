@@ -94,17 +94,15 @@ import {
   useComposerSuggestionsContext,
 } from "./contexts";
 import type {
+  ComposerEditorComponents,
   ComposerEditorElementProps,
+  ComposerEditorLinkWrapperProps,
+  ComposerEditorMentionSuggestionsWrapperProps,
+  ComposerEditorMentionWrapperProps,
   ComposerEditorProps,
   ComposerFormProps,
   ComposerLinkProps,
-  ComposerLinkWrapperProps,
   ComposerMentionProps,
-  ComposerMentionSuggestionsWrapperProps,
-  ComposerMentionWrapperProps,
-  ComposerRenderLinkProps,
-  ComposerRenderMentionProps,
-  ComposerRenderMentionSuggestionsProps,
   ComposerSubmitProps,
   ComposerSuggestionsListItemProps,
   ComposerSuggestionsListProps,
@@ -121,6 +119,7 @@ import {
 const MENTION_SUGGESTIONS_POSITION: SuggestionsPosition = "top";
 
 const COMPOSER_MENTION_NAME = "ComposerMention";
+const COMPOSER_LINK_NAME = "ComposerLink";
 const COMPOSER_SUGGESTIONS_NAME = "ComposerSuggestions";
 const COMPOSER_SUGGESTIONS_LIST_NAME = "ComposerSuggestionsList";
 const COMPOSER_SUGGESTIONS_LIST_ITEM_NAME = "ComposerSuggestionsListItem";
@@ -143,62 +142,30 @@ function createComposerEditor() {
   );
 }
 
-function ComposerDefaultRenderMention({ userId }: ComposerRenderMentionProps) {
-  return (
-    <ComposerMention>
-      {MENTION_CHARACTER}
-      {userId}
-    </ComposerMention>
-  );
-}
-
-function ComposerEditorRenderMentionWrapper({
-  renderMention: RenderMention = ComposerDefaultRenderMention,
+function ComposerEditorMentionWrapper({
+  Mention,
   attributes,
   children,
   element,
-}: ComposerMentionWrapperProps) {
+}: ComposerEditorMentionWrapperProps) {
   const isSelected = useSelected();
 
   return (
     <span {...attributes}>
       {element.id ? (
-        <RenderMention userId={element.id} isSelected={isSelected} />
+        <Mention userId={element.id} isSelected={isSelected} />
       ) : null}
       {children}
     </span>
   );
 }
 
-function ComposerDefaultRenderMentionSuggestions({
-  userIds,
-}: ComposerRenderMentionSuggestionsProps) {
-  return userIds.length > 0 ? (
-    <ComposerSuggestions>
-      <ComposerSuggestionsList>
-        {userIds.map((userId) => (
-          <ComposerSuggestionsListItem value={userId}>
-            {userId}
-          </ComposerSuggestionsListItem>
-        ))}
-      </ComposerSuggestionsList>
-    </ComposerSuggestions>
-  ) : null;
-}
-
-function ComposerDefaultRenderLink({
-  href,
-  children,
-}: ComposerRenderLinkProps) {
-  return <ComposerLink href={href}>{children}</ComposerLink>;
-}
-
-function ComposerEditorRenderLinkWrapper({
-  renderLink: RenderLink = ComposerDefaultRenderLink,
+function ComposerEditorLinkWrapper({
+  Link,
   attributes,
   element,
   children,
-}: ComposerLinkWrapperProps) {
+}: ComposerEditorLinkWrapperProps) {
   const href = useMemo(
     () => toAbsoluteUrl(element.url) ?? element.url,
     [element.url]
@@ -206,12 +173,12 @@ function ComposerEditorRenderLinkWrapper({
 
   return (
     <span {...attributes}>
-      <RenderLink href={href}>{children}</RenderLink>
+      <Link href={href}>{children}</Link>
     </span>
   );
 }
 
-function ComposerMentionSuggestionsWrapper({
+function ComposerEditorMentionSuggestionsWrapper({
   id,
   itemId,
   userIds,
@@ -221,8 +188,8 @@ function ComposerMentionSuggestionsWrapper({
   onItemSelect,
   position = MENTION_SUGGESTIONS_POSITION,
   dir,
-  children: RenderMentionSuggestions = ComposerDefaultRenderMentionSuggestions,
-}: ComposerMentionSuggestionsWrapperProps) {
+  MentionSuggestions,
+}: ComposerEditorMentionSuggestionsWrapperProps) {
   const editor = useSlateStatic();
   const { isFocused } = useComposer();
   const [content, setContent] = useState<HTMLDivElement | null>(null);
@@ -316,18 +283,15 @@ function ComposerMentionSuggestionsWrapper({
           zIndex: contentZIndex,
         }}
       >
-        <RenderMentionSuggestions
-          userIds={userIds}
-          selectedUserId={selectedUserId}
-        />
+        <MentionSuggestions userIds={userIds} selectedUserId={selectedUserId} />
       </Portal>
     </ComposerSuggestionsContext.Provider>
   ) : null;
 }
 
 function ComposerEditorElement({
-  renderMention,
-  renderLink,
+  Mention,
+  Link,
   ...props
 }: ComposerEditorElementProps) {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
@@ -336,15 +300,15 @@ function ComposerEditorElement({
   switch (element.type) {
     case "mention":
       return (
-        <ComposerEditorRenderMentionWrapper
-          renderMention={renderMention}
+        <ComposerEditorMentionWrapper
+          Mention={Mention}
           {...(props as RenderElementSpecificProps<ComposerBodyMention>)}
         />
       );
     case "auto-link":
       return (
-        <ComposerEditorRenderLinkWrapper
-          renderLink={renderLink}
+        <ComposerEditorLinkWrapper
+          Link={Link}
           {...(props as RenderElementSpecificProps<ComposerBodyAutoLink>)}
         />
       );
@@ -384,13 +348,7 @@ function ComposerEditorLeaf({ attributes, children, leaf }: RenderLeafProps) {
  * Displays mentions within `Composer.Editor`.
  *
  * @example
- * <Composer.Editor
- *   renderMention={({ userId, isSelected }) => (
- *     <Composer.Mention>
- *       @{userId}
- *     </Composer.Mention>
- *   )}
- * />
+ * <Composer.Mention>@{userId}</Composer.Mention>
  */
 const ComposerMention = forwardRef<HTMLSpanElement, ComposerMentionProps>(
   ({ children, asChild, ...props }, forwardedRef) => {
@@ -413,15 +371,7 @@ const ComposerMention = forwardRef<HTMLSpanElement, ComposerMentionProps>(
  * Displays links within `Composer.Editor`.
  *
  * @example
- * <Composer.Editor
- *   renderLink={({ href, children }) => {
- *    return (
- *      <Composer.Link href={href}>
- *        {children}
- *      </Composer.Link>
- *    )
- *   }}
- * />
+ * <Composer.Link href={href}>{children}</Composer.Link>
  */
 const ComposerLink = forwardRef<HTMLAnchorElement, ComposerLinkProps>(
   ({ children, asChild, ...props }, forwardedRef) => {
@@ -441,25 +391,7 @@ const ComposerLink = forwardRef<HTMLAnchorElement, ComposerLinkProps>(
 );
 
 /**
- * Surrounds a list of suggestions within `Composer.Editor`.
- *
- * @example
- * <Composer.Editor
- *   renderMention={({ userId, isSelected }) => (
- *     <Composer.Suggestions>
- *       <Composer.SuggestionsList>
- *         {userIds.map((userId) => (
- *           <Composer.SuggestionsListItem
- *             key={userId}
- *             value={userId}
- *           >
- *             @{userId}
- *           </Composer.SuggestionsListItem>
- *         ))}
- *       </Composer.SuggestionsList>
- *     </Composer.Suggestions>
- *   )}
- * />
+ * Contains suggestions within `Composer.Editor`.
  */
 const ComposerSuggestions = forwardRef<
   HTMLDivElement,
@@ -499,22 +431,13 @@ const ComposerSuggestions = forwardRef<
  * Displays a list of suggestions within `Composer.Editor`.
  *
  * @example
- * <Composer.Editor
- *   renderMention={({ userId, isSelected }) => (
- *     <Composer.Suggestions>
- *       <Composer.SuggestionsList>
- *         {userIds.map((userId) => (
- *           <Composer.SuggestionsListItem
- *             key={userId}
- *             value={userId}
- *           >
- *             @{userId}
- *           </Composer.SuggestionsListItem>
- *         ))}
- *       </Composer.SuggestionsList>
- *     </Composer.Suggestions>
- *   )}
- * />
+ * <Composer.SuggestionsList>
+ *   {userIds.map((userId) => (
+ *     <Composer.SuggestionsListItem key={userId} value={userId}>
+ *       @{userId}
+ *     </Composer.SuggestionsListItem>
+ *   ))}
+ * </Composer.SuggestionsList>
  */
 const ComposerSuggestionsList = forwardRef<
   HTMLUListElement,
@@ -540,16 +463,9 @@ const ComposerSuggestionsList = forwardRef<
  * Displays a suggestion within `Composer.SuggestionsList`.
  *
  * @example
- * <Composer.SuggestionsList>
- *   {userIds.map((userId) => (
- *     <Composer.SuggestionsListItem
- *       key={userId}
- *       value={userId}
- *     >
- *       @{userId}
- *     </Composer.SuggestionsListItem>
- *   ))}
- * </Composer.SuggestionsList>
+ * <Composer.SuggestionsListItem key={userId} value={userId}>
+ *   @{userId}
+ * </Composer.SuggestionsListItem>
  */
 const ComposerSuggestionsListItem = forwardRef<
   HTMLLIElement,
@@ -626,6 +542,33 @@ const ComposerSuggestionsListItem = forwardRef<
   }
 );
 
+const defaultEditorComponents: ComposerEditorComponents = {
+  Link: ({ href, children }) => {
+    return <ComposerLink href={href}>{children}</ComposerLink>;
+  },
+  Mention: ({ userId }) => {
+    return (
+      <ComposerMention>
+        {MENTION_CHARACTER}
+        {userId}
+      </ComposerMention>
+    );
+  },
+  MentionSuggestions: ({ userIds }) => {
+    return userIds.length > 0 ? (
+      <ComposerSuggestions>
+        <ComposerSuggestionsList>
+          {userIds.map((userId) => (
+            <ComposerSuggestionsListItem key={userId} value={userId}>
+              {userId}
+            </ComposerSuggestionsListItem>
+          ))}
+        </ComposerSuggestionsList>
+      </ComposerSuggestions>
+    ) : null;
+  },
+};
+
 /**
  * Displays the composer's editor.
  *
@@ -641,9 +584,7 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
       onBlur,
       disabled,
       autoFocus,
-      renderMention,
-      renderLink,
-      renderMentionSuggestions,
+      components,
       dir,
       ...props
     },
@@ -661,6 +602,10 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
     const initialEditorValue = useMemo(() => {
       return commentBodyToComposerBody(initialBody);
     }, [initialBody]);
+    const { Link, Mention, MentionSuggestions } = useMemo(
+      () => ({ ...defaultEditorComponents, ...components }),
+      [components]
+    );
 
     const [mentionDraft, setMentionDraft] = useState<MentionDraft>();
     const mentionSuggestions = useMentionSuggestions(mentionDraft?.text);
@@ -683,14 +628,10 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
     const renderElement = useCallback(
       (props: RenderElementProps) => {
         return (
-          <ComposerEditorElement
-            renderMention={renderMention}
-            renderLink={renderLink}
-            {...props}
-          />
+          <ComposerEditorElement Mention={Mention} Link={Link} {...props} />
         );
       },
-      [renderLink, renderMention]
+      [Link, Mention]
     );
 
     const handleChange = useCallback(
@@ -916,7 +857,7 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
           renderLeaf={ComposerEditorLeaf}
         />
         {mentionDraft && (
-          <ComposerMentionSuggestionsWrapper
+          <ComposerEditorMentionSuggestionsWrapper
             dir={dir}
             mentionDraft={mentionDraft}
             selectedUserId={selectedMentionSuggestionUserId}
@@ -925,9 +866,8 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
             id={suggestionsListId}
             itemId={suggestionsListItemId}
             onItemSelect={createMention}
-          >
-            {renderMentionSuggestions}
-          </ComposerMentionSuggestionsWrapper>
+            MentionSuggestions={MentionSuggestions}
+          />
         )}
       </Slate>
     );
@@ -1086,6 +1026,7 @@ if (process.env.NODE_ENV !== "production") {
   ComposerEditor.displayName = COMPOSER_EDITOR_NAME;
   ComposerForm.displayName = COMPOSER_FORM_NAME;
   ComposerMention.displayName = COMPOSER_MENTION_NAME;
+  ComposerLink.displayName = COMPOSER_LINK_NAME;
   ComposerSubmit.displayName = COMPOSER_SUBMIT_NAME;
   ComposerSuggestions.displayName = COMPOSER_SUGGESTIONS_NAME;
   ComposerSuggestionsList.displayName = COMPOSER_SUGGESTIONS_LIST_NAME;
