@@ -203,7 +203,7 @@ const CommentReaction = forwardRef<HTMLButtonElement, CommentReactionProps>(
           className={classNames("lb-comment-reaction", className)}
           variant="outline"
           aria-label="TODO:"
-          data-active={isActive ? "" : undefined}
+          data-self={isActive ? "" : undefined}
           {...props}
         >
           <Emoji className="lb-comment-reaction-emoji" emoji={emoji} />
