@@ -13,6 +13,7 @@ export const Button = forwardRef<HTMLButtonElement, Props>(
   ({ variant, className, ...props }, forwardedRef) => {
     return (
       <button
+        type="button"
         className={classNames("lb-button", className)}
         data-variant={variant}
         {...props}

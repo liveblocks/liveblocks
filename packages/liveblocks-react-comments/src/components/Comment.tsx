@@ -338,7 +338,6 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
                     aria-label={$.COMMENT_EDIT_COMPOSER_CANCEL}
                   >
                     <Button
-                      type="button"
                       className="lb-composer-action"
                       onClick={handleEditCancel}
                     >
