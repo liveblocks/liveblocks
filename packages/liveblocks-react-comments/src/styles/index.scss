@@ -705,7 +705,7 @@
     font-size: 0.875em;
   }
 
-  .lb-comment\:indent-body {
+  .lb-comment\:indent-content {
     min-height: calc(var(--lb-comment-avatar-size) + 2 * var(--lb-spacing));
 
     .lb-comment-header {
@@ -725,8 +725,7 @@
       );
     }
 
-    .lb-comment-body,
-    .lb-comment-composer {
+    .lb-comment-content {
       padding-inline-start: calc(
         var(--lb-comment-avatar-size) + 0.75 * var(--lb-spacing)
       );

@@ -72,9 +72,9 @@ export interface CommentProps extends ComponentPropsWithoutRef<"div"> {
   showDeleted?: boolean;
 
   /**
-   * Whether to indent the comment's body.
+   * Whether to indent the comment's content.
    */
-  indentBody?: boolean;
+  indentContent?: boolean;
 
   /**
    * The event handler called when the comment is edited.
@@ -228,7 +228,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
   (
     {
       comment,
-      indentBody = true,
+      indentContent = true,
       showDeleted,
       showActions = "hover",
       onAuthorClick,
@@ -358,7 +358,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
         <div
           className={classNames(
             "lb-root lb-comment",
-            indentBody && "lb-comment:indent-body",
+            indentContent && "lb-comment:indent-content",
             showActions === "hover" && "lb-comment:show-actions-hover",
             (isMoreActionOpen || isReactionActionOpen) &&
               "lb-comment:action-open",
@@ -464,95 +464,97 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
               </div>
             )}
           </div>
-          {isEditing ? (
-            <Composer
-              className="lb-comment-composer"
-              onComposerSubmit={handleEditSubmit}
-              defaultValue={comment.body}
-              placeholder={$.COMMENT_EDIT_COMPOSER_PLACEHOLDER}
-              autoFocus
-              showAttribution={false}
-              actions={
-                <>
-                  <Tooltip
-                    content={$.COMMENT_EDIT_COMPOSER_CANCEL}
-                    aria-label={$.COMMENT_EDIT_COMPOSER_CANCEL}
-                  >
-                    <Button
-                      className="lb-composer-action"
-                      onClick={handleEditCancel}
+          <div className="lb-comment-content">
+            {isEditing ? (
+              <Composer
+                className="lb-comment-composer"
+                onComposerSubmit={handleEditSubmit}
+                defaultValue={comment.body}
+                placeholder={$.COMMENT_EDIT_COMPOSER_PLACEHOLDER}
+                autoFocus
+                showAttribution={false}
+                actions={
+                  <>
+                    <Tooltip
+                      content={$.COMMENT_EDIT_COMPOSER_CANCEL}
+                      aria-label={$.COMMENT_EDIT_COMPOSER_CANCEL}
                     >
-                      <CrossIcon className="lb-button-icon" />
-                    </Button>
-                  </Tooltip>
-                  <Tooltip
-                    content={$.COMMENT_EDIT_COMPOSER_SAVE}
-                    shortcut={<TooltipShortcutKey name="enter" />}
-                  >
-                    <ComposerPrimitive.Submit asChild>
                       <Button
-                        variant="primary"
                         className="lb-composer-action"
-                        onClick={stopPropagation}
-                        aria-label={$.COMMENT_EDIT_COMPOSER_SAVE}
+                        onClick={handleEditCancel}
                       >
-                        <CheckIcon className="lb-button-icon" />
+                        <CrossIcon className="lb-button-icon" />
                       </Button>
-                    </ComposerPrimitive.Submit>
-                  </Tooltip>
-                </>
-              }
-              overrides={{
-                COMPOSER_PLACEHOLDER: $.COMMENT_EDIT_COMPOSER_PLACEHOLDER,
-              }}
-            />
-          ) : comment.body ? (
-            <>
-              <CommentPrimitive.Body
-                className="lb-comment-body"
-                body={comment.body}
-                components={{
-                  Mention: ({ userId }) => (
-                    <CommentMention
-                      userId={userId}
-                      onClick={(event) => onMentionClick?.(userId, event)}
-                    />
-                  ),
-                  Link: CommentLink,
+                    </Tooltip>
+                    <Tooltip
+                      content={$.COMMENT_EDIT_COMPOSER_SAVE}
+                      shortcut={<TooltipShortcutKey name="enter" />}
+                    >
+                      <ComposerPrimitive.Submit asChild>
+                        <Button
+                          variant="primary"
+                          className="lb-composer-action"
+                          onClick={stopPropagation}
+                          aria-label={$.COMMENT_EDIT_COMPOSER_SAVE}
+                        >
+                          <CheckIcon className="lb-button-icon" />
+                        </Button>
+                      </ComposerPrimitive.Submit>
+                    </Tooltip>
+                  </>
+                }
+                overrides={{
+                  COMPOSER_PLACEHOLDER: $.COMMENT_EDIT_COMPOSER_PLACEHOLDER,
                 }}
               />
-              {reactions && (
-                <div className="lb-comment-reactions">
-                  {Object.entries(reactions).map(([emoji, reactions]) => (
-                    <CommentReaction
-                      key={emoji}
-                      comment={comment}
-                      emoji={emoji}
-                      reactions={reactions}
-                    />
-                  ))}
-                  <QuickEmojiPicker onEmojiSelect={handleReactionSelect}>
-                    <Tooltip content={$.COMMENT_ADD_REACTION}>
-                      <QuickEmojiPickerTrigger asChild>
-                        <Button
-                          className="lb-comment-reaction lb-comment-reaction-add"
-                          variant="outline"
-                          onClick={stopPropagation}
-                          aria-label={$.COMMENT_ADD_REACTION}
-                        >
-                          <EmojiAddIcon className="lb-button-icon" />
-                        </Button>
-                      </QuickEmojiPickerTrigger>
-                    </Tooltip>
-                  </QuickEmojiPicker>
-                </div>
-              )}
-            </>
-          ) : (
-            <div className="lb-comment-body">
-              <p className="lb-comment-deleted">{$.COMMENT_DELETED}</p>
-            </div>
-          )}
+            ) : comment.body ? (
+              <>
+                <CommentPrimitive.Body
+                  className="lb-comment-body"
+                  body={comment.body}
+                  components={{
+                    Mention: ({ userId }) => (
+                      <CommentMention
+                        userId={userId}
+                        onClick={(event) => onMentionClick?.(userId, event)}
+                      />
+                    ),
+                    Link: CommentLink,
+                  }}
+                />
+                {reactions && (
+                  <div className="lb-comment-reactions">
+                    {Object.entries(reactions).map(([emoji, reactions]) => (
+                      <CommentReaction
+                        key={emoji}
+                        comment={comment}
+                        emoji={emoji}
+                        reactions={reactions}
+                      />
+                    ))}
+                    <QuickEmojiPicker onEmojiSelect={handleReactionSelect}>
+                      <Tooltip content={$.COMMENT_ADD_REACTION}>
+                        <QuickEmojiPickerTrigger asChild>
+                          <Button
+                            className="lb-comment-reaction lb-comment-reaction-add"
+                            variant="outline"
+                            onClick={stopPropagation}
+                            aria-label={$.COMMENT_ADD_REACTION}
+                          >
+                            <EmojiAddIcon className="lb-button-icon" />
+                          </Button>
+                        </QuickEmojiPickerTrigger>
+                      </Tooltip>
+                    </QuickEmojiPicker>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="lb-comment-body">
+                <p className="lb-comment-deleted">{$.COMMENT_DELETED}</p>
+              </div>
+            )}
+          </div>
         </div>
       </TooltipProvider>
     );

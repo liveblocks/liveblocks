@@ -188,20 +188,20 @@ Displays a thread of comments, with a composer to reply to it.
 
 <Table columns={["26%", "32%", "42%"]}>
 
-| Prop                  | Type                                                                                              | Description                                                                             |
-| --------------------- | ------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
-| `thread`              | <code>ThreadData&lt;\{ resolved?: boolean \}&gt;</code>                                           | The thread to display.                                                                  |
-| `showComposer`        | `boolean \| "collapsed" \| undefined`                                                             | How to show or hide the composer to reply to the thread.<br/>Defaults to `"collapsed"`. |
-| `showActions`         | `boolean \| "hover" \| undefined`                                                                 | How to show or hide the actions.<br/>Defaults to `"hover"`.                             |
-| `showResolveAction`   | `boolean \| undefined`                                                                            | Whether to show the action to resolve the thread.<br/>Defaults to `true`.               |
-| `indentCommentBody`   | `boolean \| undefined`                                                                            | Whether to indent the comments’ bodies.<br/>Defaults to `true`.                         |
-| `showDeletedComments` | `boolean \| undefined`                                                                            | Whether to show deleted comments.<br/>Defaults to `false`.                              |
-| `onResolveChange`     | `(resolved: boolean) => void`                                                                     | The event handler called when changing the resolved status.                             |
-| `onCommentEdit`       | `(comment: CommentData) => void`                                                                  | The event handler called when a comment is edited.                                      |
-| `onCommentDelete`     | `(comment: CommentData) => void`                                                                  | The event handler called when a comment is deleted.                                     |
-| `onAuthorClick`       | <code>(userId: string, event: MouseEvent&lt;HTMLElement&gt;) => void \| undefined</code>          | The event handler called when clicking on a comment’s author.                           |
-| `onMentionClick`      | <code>(userId: string, event: MouseEvent&lt;HTMLElement&gt;) => void \| undefined</code>          | The event handler called when clicking on a mention.                                    |
-| `overrides`           | <code>Partial&lt;ThreadOverrides \& CommentOverrides \& ComposerOverrides&gt; \| undefined</code> | Override the component’s strings.                                                       |
+| Prop                   | Type                                                                                              | Description                                                                             |
+| ---------------------- | ------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| `thread`               | <code>ThreadData&lt;\{ resolved?: boolean \}&gt;</code>                                           | The thread to display.                                                                  |
+| `showComposer`         | `boolean \| "collapsed" \| undefined`                                                             | How to show or hide the composer to reply to the thread.<br/>Defaults to `"collapsed"`. |
+| `showActions`          | `boolean \| "hover" \| undefined`                                                                 | How to show or hide the actions.<br/>Defaults to `"hover"`.                             |
+| `showResolveAction`    | `boolean \| undefined`                                                                            | Whether to show the action to resolve the thread.<br/>Defaults to `true`.               |
+| `indentCommentContent` | `boolean \| undefined`                                                                            | Whether to indent the comments’ content.<br/>Defaults to `true`.                        |
+| `showDeletedComments`  | `boolean \| undefined`                                                                            | Whether to show deleted comments.<br/>Defaults to `false`.                              |
+| `onResolveChange`      | `(resolved: boolean) => void`                                                                     | The event handler called when changing the resolved status.                             |
+| `onCommentEdit`        | `(comment: CommentData) => void`                                                                  | The event handler called when a comment is edited.                                      |
+| `onCommentDelete`      | `(comment: CommentData) => void`                                                                  | The event handler called when a comment is deleted.                                     |
+| `onAuthorClick`        | <code>(userId: string, event: MouseEvent&lt;HTMLElement&gt;) => void \| undefined</code>          | The event handler called when clicking on a comment’s author.                           |
+| `onMentionClick`       | <code>(userId: string, event: MouseEvent&lt;HTMLElement&gt;) => void \| undefined</code>          | The event handler called when clicking on a mention.                                    |
+| `overrides`            | <code>Partial&lt;ThreadOverrides \& CommentOverrides \& ComposerOverrides&gt; \| undefined</code> | Override the component’s strings.                                                       |
 
 </Table>
 
@@ -225,7 +225,7 @@ Displays a single comment.
 | ---------------- | ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
 | `comment`        | `CommentData`                                                                            | The thread to display.                                                                                                                |
 | `showActions`    | `boolean \| "hover" \| undefined`                                                        | How to show or hide the actions.<br/>Defaults to `"hover"`.                                                                           |
-| `indentBody`     | `boolean \| undefined`                                                                   | Whether to indent the comment’s body.<br/>Defaults to `true`.                                                                         |
+| `indentContent`  | `boolean \| undefined`                                                                   | Whether to indent the comment’s content.<br/>Defaults to `true`.                                                                      |
 | `showDeleted`    | `boolean \| undefined`                                                                   | Whether to show the comment if it was deleted. If set to `false`, it will render deleted comments as `null`.<br/>Defaults to `false`. |
 | `onEdit`         | `(comment: CommentData) => void`                                                         | The event handler called when the comment is edited.                                                                                  |
 | `onDelete`       | `(comment: CommentData) => void`                                                         | The event handler called when the comment is deleted.                                                                                 |
