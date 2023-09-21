@@ -27,23 +27,24 @@ import type {
   BaseUserMeta,
   CommentBody,
   CommentData,
+  EventSource,
   Json,
   JsonObject,
   LsonObject,
-  EventSource,
   Room,
   ThreadData,
 } from "@liveblocks/core";
 import { nanoid } from "nanoid";
 import { useCallback, useEffect } from "react";
 import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
+
 import {
-  EditThreadMetadataError,
   type CommentsApiError,
-  CreateThreadError,
   CreateCommentError,
+  CreateThreadError,
   DeleteCommentError,
   EditCommentError,
+  EditThreadMetadataError,
 } from "./errors";
 
 const POLLING_INTERVAL_REALTIME = 30000;
@@ -247,7 +248,7 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
 
     // Deleting the concurrent request markers so new requests will not be deduped.
     manager.request = undefined;
-    revalidateCache(false);
+    void revalidateCache(false);
   }
 
   /**
@@ -277,7 +278,9 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
 
       if (retryCount > MAX_ERROR_RETRY_COUNT) return;
 
-      setTimeout(revalidateCache, timeout, true, retryCount + 1);
+      setTimeout(() => {
+        void revalidateCache(true, retryCount + 1);
+      }, timeout);
     }
 
     try {
@@ -353,7 +356,7 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
 
     mutate(room.editThreadMetadata({ metadata, threadId }), {
       optimisticData,
-    }).catch((err) => {
+    }).catch((err: Error) => {
       errorEventSource.notify(
         new EditThreadMetadataError(err, {
           roomId: room.id,
@@ -563,7 +566,7 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
     // Only subscribe to the `comments` event if the reference count is 0 (meaning that there are no components with a subscription)
     if (refCount === 0) {
       disposer = room.events.comments.subscribe(() => {
-        revalidateCache(true);
+        void revalidateCache(true);
       });
     }
 
@@ -597,7 +600,7 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
 
       function executeRevalidation() {
         // Revalidate cache and then schedule the next revalidation
-        revalidateCache(true).then(scheduleRevalidation);
+        void revalidateCache(true).then(scheduleRevalidation);
       }
 
       scheduleRevalidation();
