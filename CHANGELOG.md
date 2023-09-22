@@ -4,6 +4,8 @@
 
 - Officially mark `useList()`, `useMap()`, and `useObject()` as deprecated in
   JSDoc comments (we stopped recommending them since the release of 0.18)
+- Deduplicate Comments requests and improve how race conditions are handled
+  during mutations.
 
 ### `@liveblocks/react-comments`
 

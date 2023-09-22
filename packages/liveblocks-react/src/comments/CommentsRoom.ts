@@ -1,38 +1,38 @@
-/// <reference types="react/experimental" />
-
-import type {
-  BaseMetadata,
-  BaseUserMeta,
-  CommentBody,
-  CommentData,
-  EventSource,
-  Json,
-  JsonObject,
-  LsonObject,
-  Room,
-  ThreadData,
+import {
+  type BaseMetadata,
+  type BaseUserMeta,
+  type CommentBody,
+  type CommentData,
+  type EventSource,
+  type Json,
+  type JsonObject,
+  type LsonObject,
+  makeEventSource,
+  type Room,
+  type ThreadData,
 } from "@liveblocks/core";
-import { makePoller } from "@liveblocks/core";
 import { nanoid } from "nanoid";
 import { useEffect } from "react";
 import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
 
-import type { CommentsApiError } from "./errors";
 import {
-  AddCommentReactionError,
+  type CommentsApiError,
   CreateCommentError,
   CreateThreadError,
   DeleteCommentError,
   EditCommentError,
   EditThreadMetadataError,
-  RemoveCommentReactionError,
 } from "./errors";
-import { createStore } from "./lib/store";
 
 const POLLING_INTERVAL_REALTIME = 30000;
 const POLLING_INTERVAL = 5000;
+
+const MAX_ERROR_RETRY_COUNT = 5;
+const ERROR_RETRY_INTERVAL = 5000;
+
 const THREAD_ID_PREFIX = "th";
 const COMMENT_ID_PREFIX = "cm";
+const DEDUPING_INTERVAL = 1000;
 
 export type CommentsRoom<TThreadMetadata extends BaseMetadata> = {
   useThreads(): RoomThreads<TThreadMetadata>;
@@ -42,8 +42,6 @@ export type CommentsRoom<TThreadMetadata extends BaseMetadata> = {
   ): ThreadData<TThreadMetadata>;
   editThreadMetadata(options: EditThreadMetadataOptions<TThreadMetadata>): void;
   createComment(options: CreateCommentOptions): CommentData;
-  addCommentReaction(options: CommentReactionOptions): void;
-  removeCommentReaction(options: CommentReactionOptions): void;
   editComment(options: EditCommentOptions): void;
   deleteComment(options: DeleteCommentOptions): void;
 };
@@ -80,12 +78,6 @@ export type DeleteCommentOptions = {
   commentId: string;
 };
 
-export type CommentReactionOptions = {
-  threadId: string;
-  commentId: string;
-  emoji: string;
-};
-
 function createOptimisticId(prefix: string) {
   return `${prefix}_${nanoid()}`;
 }
@@ -107,153 +99,238 @@ export type RoomThreads<TThreadMetadata extends BaseMetadata> =
       error?: never;
     };
 
+type ThreadsRequestInfo<TThreadMetadata extends BaseMetadata> = {
+  fetcher: Promise<ThreadData<TThreadMetadata>[]>;
+  timestamp: number;
+};
+
+type MutationInfo = {
+  startTime: number;
+  endTime: number;
+};
+
+function createThreadsManager<TThreadMetadata extends BaseMetadata>() {
+  let cache: RoomThreads<TThreadMetadata> | undefined; // Stores the current cache state (threads)
+  let request: ThreadsRequestInfo<TThreadMetadata> | undefined; // Stores the currently active revalidation request
+  let mutation: MutationInfo | undefined; // Stores the start and end time of the currently active mutation
+
+  const eventSource = makeEventSource<
+    RoomThreads<TThreadMetadata> | undefined
+  >();
+
+  return {
+    get cache() {
+      return cache;
+    },
+
+    set cache(value: RoomThreads<TThreadMetadata> | undefined) {
+      cache = value;
+      eventSource.notify(cache);
+    },
+
+    get request() {
+      return request;
+    },
+
+    set request(value: ThreadsRequestInfo<TThreadMetadata> | undefined) {
+      request = value;
+    },
+
+    get mutation() {
+      return mutation;
+    },
+
+    set mutation(value: MutationInfo | undefined) {
+      mutation = value;
+    },
+
+    subscribe(
+      callback: (state: RoomThreads<TThreadMetadata> | undefined) => void
+    ) {
+      return eventSource.subscribe(callback);
+    },
+  };
+}
+
+/**
+ * This implementation is inspired by the `swr` library.
+ * Additional modifications were made to adapt it to our specific needs.
+ *
+ * Original `swr` library can be found at [SWR GitHub repository](https://github.com/vercel/swr)
+ */
 export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
   room: Room<JsonObject, LsonObject, BaseUserMeta, Json>,
   errorEventSource: EventSource<CommentsApiError<TThreadMetadata>>
 ): CommentsRoom<TThreadMetadata> {
-  const store = createStore<RoomThreads<TThreadMetadata>>({
-    isLoading: true,
-  });
+  const manager = createThreadsManager<TThreadMetadata>();
 
-  let fetchThreadsPromise: Promise<ThreadData<TThreadMetadata>[]> | null = null;
+  let timestamp = 0;
 
-  // Temporary solution
-  // The most basic conflict resolution
-  // If there are any pending mutation, we simply ignore any threads coming from the server
-  // When all mutations are finished, we pull the source of truth from the backend
+  let commentsEventRefCount = 0; // Reference count for the number of components with a subscription (via the `subscribe` function)
+  let commentsEventDisposer: (() => void) | undefined; // Disposer function for the `comments` event listener
 
-  let numberOfMutations = 0;
-  function endMutation() {
-    numberOfMutations--;
-    if (numberOfMutations === 0) {
-      void revalidateThreads();
+  async function mutate(
+    data: Promise<any>,
+    options: {
+      optimisticData: ThreadData<TThreadMetadata>[];
     }
-  }
+  ) {
+    const beforeMutationTimestamp = ++timestamp;
+    manager.mutation = {
+      startTime: beforeMutationTimestamp,
+      endTime: 0,
+    };
 
-  function startMutation() {
-    pollingHub.threads.stop();
-    numberOfMutations++;
-  }
+    const currentCache = manager.cache;
 
-  const pollingHub = {
-    // TODO: If there's an error, it will currently infinitely retry at the current polling rate → add retry logic
-    threads: makePoller(revalidateThreads),
-  };
-  let unsubscribeRealtimeEvents: (() => void) | undefined;
-  let unsubscribeRealtimeConnection: (() => void) | undefined;
-  let realtimeClientConnected = false;
+    // Update the cache with the optimistic data
+    manager.cache = {
+      isLoading: false,
+      threads: options.optimisticData,
+    };
 
-  function getPollingInterval() {
-    return realtimeClientConnected
-      ? POLLING_INTERVAL_REALTIME
-      : POLLING_INTERVAL;
-  }
+    try {
+      await data;
 
-  function ensureThreadsAreLoadedForMutations() {
-    const state = store.get();
-    if (state.isLoading || state.error) {
-      throw new Error(
-        "Cannot update threads or comments before they are loaded"
-      );
-    }
-    return state.threads;
-  }
-
-  async function revalidateThreads() {
-    pollingHub.threads.pause();
-
-    if (numberOfMutations === 0) {
-      if (fetchThreadsPromise === null) {
-        fetchThreadsPromise = room.getThreads();
+      // If there was a newer mutation while this mutation was in flight, we return early and don't trigger a revalidation (since the mutation request is outdated)
+      const activeMutation = manager.mutation;
+      if (
+        activeMutation &&
+        beforeMutationTimestamp !== activeMutation.startTime
+      ) {
+        return;
       }
-      setThreads(await fetchThreadsPromise);
-      fetchThreadsPromise = null;
+    } catch (err) {
+      // If the mutation request fails, revert the optimistic update and throw the error
+      manager.cache = currentCache;
+      throw err;
     }
 
-    pollingHub.threads.resume();
+    // Mark the mutation as completed by setting the end time to the current timestamp
+    manager.mutation = {
+      startTime: beforeMutationTimestamp,
+      endTime: ++timestamp,
+    };
+
+    // Deleting the concurrent request markers so new requests will not be deduped.
+    manager.request = undefined;
+    void revalidateCache(false);
   }
 
-  function subscribe() {
-    if (!unsubscribeRealtimeEvents) {
-      unsubscribeRealtimeEvents = room.events.comments.subscribe(() => {
-        pollingHub.threads.restart(getPollingInterval());
-        void revalidateThreads();
-      });
+  /**
+   * Revalidates the cache (threads) and optionally dedupes the request.
+   * @param shouldDedupe - If true, the request will be deduped
+   * @param retryCount - The number of times the request has been retried (used for exponential backoff)
+   */
+  async function revalidateCache(shouldDedupe: boolean, retryCount = 0) {
+    let startAt: number;
+
+    // A new request should be started if there is no ongoing request OR if `shouldDedupe` is false
+    const shouldStartRequest = !manager.request || !shouldDedupe;
+
+    function deleteActiveRequest() {
+      const activeRequest = manager.request;
+      if (!activeRequest) return;
+      if (activeRequest.timestamp !== startAt) return;
+
+      manager.request = undefined;
     }
 
-    if (!unsubscribeRealtimeConnection) {
-      unsubscribeRealtimeConnection = room.events.status.subscribe((status) => {
-        const nextRealtimeClientConnected = status === "connected";
+    // Uses the exponential backoff algorithm to retry the request on error.
+    function handleError() {
+      const timeout =
+        ~~((Math.random() + 0.5) * (1 << (retryCount < 8 ? retryCount : 8))) *
+        ERROR_RETRY_INTERVAL;
 
-        if (nextRealtimeClientConnected !== realtimeClientConnected) {
-          realtimeClientConnected = nextRealtimeClientConnected;
-          pollingHub.threads.restart(getPollingInterval());
-        }
-      });
+      if (retryCount > MAX_ERROR_RETRY_COUNT) return;
+
+      setTimeout(() => {
+        void revalidateCache(true, retryCount + 1);
+      }, timeout);
     }
 
-    // Will only start if not already started
-    pollingHub.threads.start(getPollingInterval());
+    try {
+      if (shouldStartRequest) {
+        const currentCache = manager.cache;
+        if (!currentCache) manager.cache = { isLoading: true };
 
-    return () => {
-      if (store.subscribersCount() > 1) {
+        manager.request = {
+          fetcher: room.getThreads(),
+          timestamp: ++timestamp,
+        };
+      }
+
+      const activeRequest = manager.request;
+      if (!activeRequest) return;
+
+      const newData = await activeRequest.fetcher;
+      startAt = activeRequest.timestamp;
+
+      if (shouldStartRequest) {
+        setTimeout(deleteActiveRequest, DEDUPING_INTERVAL);
+      }
+
+      // If there was a newer revalidation request (or if the current request was removed due to a mutation), while this request was in flight, we return early and don't update the cache (since the revalidation request is outdated)
+      if (!manager.request || manager.request.timestamp !== startAt) return;
+
+      // If there is an active mutation, we ignore the revalidation result as it is outdated (and because the mutation will trigger a revalidation)
+      const activeMutation = manager.mutation;
+      if (
+        activeMutation &&
+        (activeMutation.startTime > startAt ||
+          activeMutation.endTime > startAt ||
+          activeMutation.endTime === 0)
+      ) {
         return;
       }
 
-      pollingHub.threads.stop();
-      unsubscribeRealtimeEvents?.();
-      unsubscribeRealtimeEvents = undefined;
-      unsubscribeRealtimeConnection?.();
-      unsubscribeRealtimeConnection = undefined;
-    };
+      manager.cache = {
+        isLoading: false,
+        threads: newData,
+      };
+    } catch (err) {
+      if (shouldStartRequest) handleError();
+
+      deleteActiveRequest();
+
+      manager.cache = {
+        isLoading: false,
+        error: err as Error,
+      };
+    }
   }
 
-  function setThreads(newThreads: ThreadData<TThreadMetadata>[]) {
-    store.set({
-      threads: newThreads,
-      isLoading: false,
-    });
-  }
+  function editThreadMetadata(
+    options: EditThreadMetadataOptions<TThreadMetadata>
+  ) {
+    const threadId = options.threadId;
+    const metadata: Partial<TThreadMetadata> =
+      "metadata" in options ? options.metadata : {};
+    const threads = getThreads();
 
-  function useThreadsInternal(): RoomThreads<TThreadMetadata> {
-    useEffect(subscribe, []);
-
-    return useSyncExternalStore<RoomThreads<TThreadMetadata>>(
-      store.subscribe,
-      store.get,
-      store.get
+    const optimisticData = threads.map((thread) =>
+      thread.id === threadId
+        ? {
+            ...thread,
+            metadata: {
+              ...thread.metadata,
+              ...metadata,
+            },
+          }
+        : thread
     );
-  }
 
-  function useThreads(): RoomThreads<TThreadMetadata> {
-    useEffect(() => {
-      void revalidateThreads();
-    }, []);
-
-    return useThreadsInternal();
-  }
-
-  function useThreadsSuspense() {
-    const result = useThreadsInternal();
-
-    if (result.isLoading) {
-      throw revalidateThreads();
-    }
-
-    if (result.error) {
-      throw result.error;
-    }
-
-    return result.threads;
-  }
-
-  function getCurrentUserId() {
-    const self = room.getSelf();
-    if (self === null || self.id === undefined) {
-      return "anonymous";
-    } else {
-      return self.id;
-    }
+    mutate(room.editThreadMetadata({ metadata, threadId }), {
+      optimisticData,
+    }).catch((err: Error) => {
+      errorEventSource.notify(
+        new EditThreadMetadataError(err, {
+          roomId: room.id,
+          threadId,
+          metadata,
+        })
+      );
+    });
   }
 
   function createThread(
@@ -262,7 +339,7 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
     const body = options.body;
     const metadata: TThreadMetadata =
       "metadata" in options ? options.metadata : ({} as TThreadMetadata);
-    const threads = ensureThreadsAreLoadedForMutations();
+    const threads = getThreads();
 
     const threadId = createOptimisticId(THREAD_ID_PREFIX);
     const commentId = createOptimisticId(COMMENT_ID_PREFIX);
@@ -285,69 +362,28 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
       ],
     } as ThreadData<TThreadMetadata>; // TODO: Figure out metadata typing
 
-    setThreads([...threads, newThread]);
-
-    startMutation();
-    room
-      .createThread({ threadId, commentId, body, metadata })
-      .catch((er: Error) =>
-        errorEventSource.notify(
-          new CreateThreadError(er, {
-            roomId: room.id,
-            threadId,
-            commentId,
-            body,
-            metadata,
-          })
-        )
-      )
-      .finally(endMutation);
-
-    return newThread;
-  }
-
-  function editThreadMetadata(
-    options: EditThreadMetadataOptions<TThreadMetadata>
-  ): void {
-    const threadId = options.threadId;
-    const metadata: Partial<TThreadMetadata> =
-      "metadata" in options ? options.metadata : {};
-    const threads = ensureThreadsAreLoadedForMutations();
-
-    setThreads(
-      threads.map((thread) =>
-        thread.id === threadId
-          ? {
-              ...thread,
-              metadata: {
-                ...thread.metadata,
-                ...metadata,
-              },
-            }
-          : thread
+    mutate(room.createThread({ threadId, commentId, body, metadata }), {
+      optimisticData: [...threads, newThread],
+    }).catch((er: Error) =>
+      errorEventSource.notify(
+        new CreateThreadError(er, {
+          roomId: room.id,
+          threadId,
+          commentId,
+          body,
+          metadata,
+        })
       )
     );
 
-    startMutation();
-    room
-      .editThreadMetadata({ metadata, threadId })
-      .catch((er: Error) =>
-        errorEventSource.notify(
-          new EditThreadMetadataError(er, {
-            roomId: room.id,
-            threadId,
-            metadata,
-          })
-        )
-      )
-      .finally(endMutation);
+    return newThread;
   }
 
   function createComment({
     threadId,
     body,
   }: CreateCommentOptions): CommentData {
-    const threads = ensureThreadsAreLoadedForMutations();
+    const threads = getThreads();
 
     const commentId = createOptimisticId(COMMENT_ID_PREFIX);
     const now = new Date().toISOString();
@@ -360,79 +396,70 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
       createdAt: now,
       userId: getCurrentUserId(),
       body,
-      reactions: [],
     };
 
-    setThreads(
-      threads.map((thread) =>
-        thread.id === threadId
-          ? {
-              ...thread,
-              comments: [...thread.comments, comment],
-            }
-          : thread
-      )
+    const optimisticData = threads.map((thread) =>
+      thread.id === threadId
+        ? {
+            ...thread,
+            comments: [...thread.comments, comment],
+          }
+        : thread
     );
 
-    startMutation();
-    room
-      .createComment({ threadId, commentId, body })
-      .catch((er: Error) =>
-        errorEventSource.notify(
-          new CreateCommentError(er, {
-            roomId: room.id,
-            threadId,
-            commentId,
-            body,
-          })
-        )
+    mutate(room.createComment({ threadId, commentId, body }), {
+      optimisticData,
+    }).catch((er: Error) =>
+      errorEventSource.notify(
+        new CreateCommentError(er, {
+          roomId: room.id,
+          threadId,
+          commentId,
+          body,
+        })
       )
-      .finally(endMutation);
+    );
 
     return comment;
   }
 
   function editComment({ threadId, commentId, body }: EditCommentOptions) {
-    const threads = ensureThreadsAreLoadedForMutations();
+    const threads = getThreads();
     const now = new Date().toISOString();
 
-    setThreads(
-      threads.map((thread) =>
-        thread.id === threadId
-          ? {
-              ...thread,
-              comments: thread.comments.map((comment) =>
-                comment.id === commentId
-                  ? ({
-                      ...comment,
-                      editedAt: now,
-                      body,
-                    } as CommentData)
-                  : comment
-              ),
-            }
-          : thread
-      )
+    const optimisticData = threads.map((thread) =>
+      thread.id === threadId
+        ? {
+            ...thread,
+            comments: thread.comments.map((comment) =>
+              comment.id === commentId
+                ? ({
+                    ...comment,
+                    editedAt: now,
+                    body,
+                  } as CommentData)
+                : comment
+            ),
+          }
+        : thread
     );
 
-    startMutation();
-    room
-      .editComment({ threadId, commentId, body })
-      .catch((er: Error) =>
-        errorEventSource.notify(
-          new EditCommentError(er, {
-            roomId: room.id,
-            threadId,
-            commentId,
-            body,
-          })
-        )
+    mutate(room.editComment({ threadId, commentId, body }), {
+      optimisticData,
+    }).catch((er: Error) =>
+      errorEventSource.notify(
+        new EditCommentError(er, {
+          roomId: room.id,
+          threadId,
+          commentId,
+          body,
+        })
       )
-      .finally(endMutation);
+    );
   }
 
   function deleteComment({ threadId, commentId }: DeleteCommentOptions): void {
-    const threads = ensureThreadsAreLoadedForMutations();
+    const threads = getThreads();
     const now = new Date().toISOString();
 
     const newThreads: ThreadData<TThreadMetadata>[] = [];
@@ -462,129 +489,135 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
       }
     }
 
-    setThreads(newThreads);
-
-    startMutation();
-    room
-      .deleteComment({ threadId, commentId })
-      .catch((er: Error) =>
-        errorEventSource.notify(
-          new DeleteCommentError(er, {
-            roomId: room.id,
-            threadId,
-            commentId,
-          })
-        )
-      )
-      .finally(endMutation);
-  }
-
-  function addCommentReaction({
-    threadId,
-    commentId,
-    emoji,
-  }: CommentReactionOptions): void {
-    const threads = ensureThreadsAreLoadedForMutations();
-    const now = new Date().toISOString();
-
-    setThreads(
-      threads.map((thread) =>
-        thread.id === threadId
-          ? {
-              ...thread,
-              comments: thread.comments.map((comment) =>
-                comment.id === commentId
-                  ? ({
-                      ...comment,
-                      reactions: [
-                        ...comment.reactions,
-                        { emoji, userId: getCurrentUserId(), createdAt: now },
-                      ],
-                    } as CommentData)
-                  : comment
-              ),
-            }
-          : thread
+    mutate(room.deleteComment({ threadId, commentId }), {
+      optimisticData: newThreads,
+    }).catch((er: Error) =>
+      errorEventSource.notify(
+        new DeleteCommentError(er, {
+          roomId: room.id,
+          threadId,
+          commentId,
+        })
       )
     );
-
-    startMutation();
-    room
-      .addCommentReaction({ threadId, commentId, emoji })
-      .catch((er: Error) =>
-        errorEventSource.notify(
-          new AddCommentReactionError(er, {
-            roomId: room.id,
-            threadId,
-            commentId,
-            emoji,
-          })
-        )
-      )
-      .finally(endMutation);
   }
 
-  function removeCommentReaction({
-    threadId,
-    commentId,
-    emoji,
-  }: CommentReactionOptions): void {
-    const threads = ensureThreadsAreLoadedForMutations();
+  function getCurrentUserId() {
+    const self = room.getSelf();
+    if (self === null || self.id === undefined) {
+      return "anonymous";
+    } else {
+      return self.id;
+    }
+  }
 
-    setThreads(
-      threads.map((thread) =>
-        thread.id === threadId
-          ? {
-              ...thread,
-              comments: thread.comments.map((comment) => {
-                const reactionIndex = comment.reactions.findIndex(
-                  (reaction) =>
-                    reaction.emoji === emoji &&
-                    reaction.userId === getCurrentUserId()
-                );
+  function getThreads(): ThreadData<TThreadMetadata>[] {
+    const threads = manager.cache;
+    if (!threads || threads.isLoading || threads.error) {
+      throw new Error(
+        "Cannot update threads or comments before they are loaded."
+      );
+    }
+    return threads.threads;
+  }
 
-                return comment.id === commentId
-                  ? ({
-                      ...comment,
-                      reactions:
-                        reactionIndex < 0
-                          ? comment.reactions
-                          : comment.reactions
-                              .slice(0, reactionIndex)
-                              .concat(
-                                comment.reactions.slice(reactionIndex + 1)
-                              ),
-                    } as CommentData)
-                  : comment;
-              }),
-            }
-          : thread
-      )
+  /**
+   * Subscribes to the `comments` event and returns a function that can be used to unsubscribe.
+   * Ensures that there is only one subscription to the `comments` event despite multiple calls to the `subscribe` function (via the `useThreads` hook).
+   * This is so that revalidation is only triggered once when the `comments` event is fired.
+   *
+   * @returns An unsubscribe function that can be used to unsubscribe from the `comments` event.
+   */
+  function _subscribe(): () => void {
+    // Only subscribe to the `comments` event if the reference count is 0 (meaning that there are no components with a subscription)
+    if (commentsEventRefCount === 0) {
+      commentsEventDisposer = room.events.comments.subscribe(() => {
+        void revalidateCache(true);
+      });
+    }
+
+    commentsEventRefCount = commentsEventRefCount + 1;
+
+    return () => {
+      // Only unsubscribe from the `comments` event if the reference count is 0 (meaning that there are no components with a subscription)
+      commentsEventRefCount = commentsEventRefCount - 1;
+      if (commentsEventRefCount > 0) return;
+
+      commentsEventDisposer?.();
+      commentsEventDisposer = undefined;
+    };
+  }
+
+  function usePolling() {
+    const status = useSyncExternalStore(
+      room.events.status.subscribe,
+      room.getStatus,
+      room.getStatus
     );
 
-    startMutation();
-    room
-      .removeCommentReaction({ threadId, commentId, emoji })
-      .catch((er: Error) =>
-        errorEventSource.notify(
-          new RemoveCommentReactionError(er, {
-            roomId: room.id,
-            threadId,
-            commentId,
-            emoji,
-          })
-        )
-      )
-      .finally(endMutation);
+    useEffect(() => {
+      const interval =
+        status === "connected" ? POLLING_INTERVAL_REALTIME : POLLING_INTERVAL;
+
+      let revalidationTimerId: number;
+      function scheduleRevalidation() {
+        revalidationTimerId = window.setTimeout(executeRevalidation, interval);
+      }
+
+      function executeRevalidation() {
+        // Revalidate cache and then schedule the next revalidation
+        void revalidateCache(true).then(scheduleRevalidation);
+      }
+
+      scheduleRevalidation();
+
+      return () => {
+        window.clearTimeout(revalidationTimerId);
+      };
+    }, [status]);
+  }
+
+  function useThreadsInternal(): RoomThreads<TThreadMetadata> {
+    useEffect(_subscribe, []);
+
+    usePolling();
+
+    const cache = useSyncExternalStore(
+      manager.subscribe,
+      () => manager.cache,
+      () => manager.cache
+    );
+
+    return cache ?? { isLoading: true };
+  }
+
+  function useThreads() {
+    useEffect(() => {
+      void revalidateCache(true);
+    }, []);
+
+    return useThreadsInternal();
+  }
+
+  function useThreadsSuspense() {
+    const cache = useThreadsInternal();
+
+    if (cache.isLoading) {
+      throw revalidateCache(true);
+    }
+
+    if (cache.error) {
+      throw cache.error;
+    }
+
+    return cache.threads;
   }
 
   return {
     useThreads,
     useThreadsSuspense,
-    createThread,
     editThreadMetadata,
-    addCommentReaction,
-    removeCommentReaction,
+    createThread,
     createComment,
     editComment,
     deleteComment,
