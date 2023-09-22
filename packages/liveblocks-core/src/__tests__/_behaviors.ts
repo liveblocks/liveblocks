@@ -182,6 +182,7 @@ export function SOCKET_AUTOCONNECT_AND_ROOM_STATE(
         serverMessage({
           type: ServerMsgCode.ROOM_STATE,
           actor,
+          nonce: "random-" + actor,
           scopes,
           users: {},
         })

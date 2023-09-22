@@ -296,6 +296,7 @@ export async function prepareStorageTest<
     serverMessage({
       type: ServerMsgCode.ROOM_STATE,
       actor: currentActor,
+      nonce: "random-" + currentActor,
       scopes,
       users: { [currentActor]: { scopes: ["room:write"] } },
     })
