@@ -11,16 +11,17 @@ import type {
 } from "react";
 import React, { forwardRef, useCallback } from "react";
 
-import { MentionIcon } from "../icons/mention";
-import { SendIcon } from "../icons/send";
+import { MentionIcon } from "../icons/Mention";
+import { SendIcon } from "../icons/Send";
 import { type ComposerOverrides, useOverrides } from "../overrides";
 import * as ComposerPrimitive from "../primitives/Composer";
 import { useComposer } from "../primitives/Composer/contexts";
 import type {
+  ComposerEditorComponents,
+  ComposerEditorLinkProps,
+  ComposerEditorMentionProps,
+  ComposerEditorMentionSuggestionsProps,
   ComposerEditorProps,
-  ComposerRenderLinkProps,
-  ComposerRenderMentionProps,
-  ComposerRenderMentionSuggestionsProps,
   ComposerSubmitComment,
 } from "../primitives/Composer/types";
 import { MENTION_CHARACTER } from "../slate/plugins/mentions";
@@ -155,7 +156,6 @@ function ComposerInsertMentionEditorAction({
   return (
     <Tooltip content={label}>
       <Button
-        type="button"
         className={classNames("lb-composer-editor-action", className)}
         onMouseDown={preventDefault}
         onClick={handleClick}
@@ -168,7 +168,7 @@ function ComposerInsertMentionEditorAction({
   );
 }
 
-function ComposerMention({ userId }: ComposerRenderMentionProps) {
+function ComposerMention({ userId }: ComposerEditorMentionProps) {
   return (
     <ComposerPrimitive.Mention className="lb-composer-mention">
       {MENTION_CHARACTER}
@@ -179,7 +179,7 @@ function ComposerMention({ userId }: ComposerRenderMentionProps) {
 
 function ComposerMentionSuggestions({
   userIds,
-}: ComposerRenderMentionSuggestionsProps) {
+}: ComposerEditorMentionSuggestionsProps) {
   return userIds.length > 0 ? (
     <ComposerPrimitive.Suggestions className="lb-root lb-elevation lb-composer-suggestions lb-composer-mention-suggestions">
       <ComposerPrimitive.SuggestionsList className="lb-composer-suggestions-list lb-composer-mention-suggestions-list">
@@ -204,13 +204,19 @@ function ComposerMentionSuggestions({
   ) : null;
 }
 
-function ComposerLink({ href, children }: ComposerRenderLinkProps) {
+function ComposerLink({ href, children }: ComposerEditorLinkProps) {
   return (
     <ComposerPrimitive.Link href={href} className="lb-composer-link">
       {children}
     </ComposerPrimitive.Link>
   );
 }
+
+const editorComponents: ComposerEditorComponents = {
+  Mention: ComposerMention,
+  MentionSuggestions: ComposerMentionSuggestions,
+  Link: ComposerLink,
+};
 
 const ComposerWithContext = forwardRef<
   HTMLFormElement,
@@ -317,9 +323,7 @@ const ComposerWithContext = forwardRef<
           defaultValue={defaultValue}
           disabled={disabled}
           autoFocus={autoFocus}
-          renderMention={ComposerMention}
-          renderMentionSuggestions={ComposerMentionSuggestions}
-          renderLink={ComposerLink}
+          components={editorComponents}
           dir={$.dir}
         />
         {!collapsed && (

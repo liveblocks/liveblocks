@@ -72,6 +72,7 @@
     "@testing-library/react": "^13.1.1",
     "@types/use-sync-external-store": "^0.0.3",
     "browserslist": "^4.21.10",
+    "eslint-plugin-react": "^7.33.2",
     "eslint-plugin-react-hooks": "^4.6.0",
     "lightningcss": "1.21.3",
     "msw": "^0.27.1",

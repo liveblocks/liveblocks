@@ -11,11 +11,11 @@ import type {
 } from "react";
 import React, { forwardRef, useCallback, useState } from "react";
 
-import { CheckIcon } from "../icons/check";
-import { CrossIcon } from "../icons/cross";
-import { DeleteIcon } from "../icons/delete";
-import { EditIcon } from "../icons/edit";
-import { EllipsisIcon } from "../icons/ellipsis";
+import { CheckIcon } from "../icons/Check";
+import { CrossIcon } from "../icons/Cross";
+import { DeleteIcon } from "../icons/Delete";
+import { EditIcon } from "../icons/Edit";
+import { EllipsisIcon } from "../icons/Ellipsis";
 import {
   type CommentOverrides,
   type ComposerOverrides,
@@ -24,10 +24,10 @@ import {
 import type { ComposerSubmitComment } from "../primitives";
 import * as CommentPrimitive from "../primitives/Comment";
 import type {
+  CommentBodyLinkProps,
+  CommentBodyMentionProps,
   CommentLinkProps,
   CommentMentionProps,
-  CommentRenderLinkProps,
-  CommentRenderMentionProps,
 } from "../primitives/Comment/types";
 import * as ComposerPrimitive from "../primitives/Composer";
 import { Timestamp } from "../primitives/Timestamp";
@@ -105,7 +105,7 @@ function CommentMention({
   userId,
   className,
   ...props
-}: CommentRenderMentionProps & CommentMentionProps) {
+}: CommentBodyMentionProps & CommentMentionProps) {
   const { useSelf } = useRoomContextBundle();
   const self = useSelf();
 
@@ -126,7 +126,7 @@ function CommentLink({
   children,
   className,
   ...props
-}: CommentRenderLinkProps & CommentLinkProps) {
+}: CommentBodyLinkProps & CommentLinkProps) {
   return (
     <CommentPrimitive.Link
       className={classNames("lb-comment-link", className)}
@@ -338,7 +338,6 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
                     aria-label={$.COMMENT_EDIT_COMPOSER_CANCEL}
                   >
                     <Button
-                      type="button"
                       className="lb-composer-action"
                       onClick={handleEditCancel}
                     >
@@ -370,13 +369,15 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
             <CommentPrimitive.Body
               className="lb-comment-body"
               body={comment.body}
-              renderMention={({ userId }) => (
-                <CommentMention
-                  userId={userId}
-                  onClick={(event) => onMentionClick?.(userId, event)}
-                />
-              )}
-              renderLink={CommentLink}
+              components={{
+                Mention: ({ userId }) => (
+                  <CommentMention
+                    userId={userId}
+                    onClick={(event) => onMentionClick?.(userId, event)}
+                  />
+                ),
+                Link: CommentLink,
+              }}
             />
           ) : (
             <div className="lb-comment-body">

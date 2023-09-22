@@ -9,6 +9,9 @@
 
 ### `@liveblocks/react-comments`
 
+- **Breaking (beta):** Replace the render prop API (e.g. `renderMention`,
+  `renderLink`, etc) by a single `components` prop. (e.g.
+  `components={{ Mention, Link }}`)
 - Fix overflowing `Composer.Suggestions`.
 - Reduce the impact of icons on bundle size.
 
