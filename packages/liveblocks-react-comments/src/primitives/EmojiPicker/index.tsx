@@ -6,22 +6,23 @@ import React, {
   forwardRef,
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
-import { VList } from "virtua";
+import { GroupedVirtuoso } from "react-virtuoso";
 
 import { useTransition } from "../../utils/use-transition";
 import { Emoji } from "../internal/Emoji";
 import { EmojiPickerContext, useEmojiPicker } from "./contexts";
 import type {
   EmojiData,
-  EmojiPickerListProps,
+  EmojiPickerContentProps,
+  EmojiPickerData,
   EmojiPickerRootProps,
-  EmojiPickerRow,
   EmojiPickerSearchProps,
 } from "./types";
-import { filterEmojis, generatePickerRows, getEmojiData } from "./utils";
+import { filterEmojis, generateEmojiPickerData, getEmojiData } from "./utils";
 
 const DEFAULT_COLUMNS = 10;
 
@@ -34,40 +35,40 @@ function EmojiPickerRoot({
   onEmojiSelect,
   children,
 }: EmojiPickerRootProps) {
-  const data = useRef<EmojiData>();
+  const emojiData = useRef<EmojiData>();
   const search = useRef("");
   const [, startEmojisTransition] = useTransition();
-  const [rows, setRows] = useState<EmojiPickerRow[]>([]);
+  const [data, setData] = useState<EmojiPickerData>();
   const [error, setError] = useState<Error>();
 
   const updateEmojis = useCallback(() => {
-    if (!data.current) {
+    if (!emojiData.current) {
       return;
     }
 
     startEmojisTransition(() => {
-      setRows(() => {
-        if (!data.current) {
-          return [];
+      setData(() => {
+        if (!emojiData.current) {
+          return;
         }
 
         const filteredEmojis = filterEmojis(
-          data.current.emojis,
+          emojiData.current.emojis,
           search.current
         );
 
-        return generatePickerRows(
+        return generateEmojiPickerData(
           filteredEmojis,
-          data.current.categories,
+          emojiData.current.categories,
           columns
         );
       });
     });
   }, [columns]);
 
-  const initializeData = useCallback(async () => {
+  const initializeEmojiData = useCallback(async () => {
     try {
-      data.current = await getEmojiData();
+      emojiData.current = await getEmojiData();
       updateEmojis();
     } catch (error) {
       setError(error as Error);
@@ -76,7 +77,7 @@ function EmojiPickerRoot({
 
   useEffect(() => {
     // TODO: Handle deduplication (subscribe if another initializeData is already running), etc.
-    initializeData();
+    initializeEmojiData();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSearch = useCallback(
@@ -91,9 +92,10 @@ function EmojiPickerRoot({
     <EmojiPickerContext.Provider
       value={
         {
-          rows,
+          data,
           error,
           isLoading: !data && !error,
+          columns,
           onSearch: handleSearch,
           onEmojiSelect,
         } as EmojiPickerContext
@@ -142,10 +144,14 @@ const EmojiPickerSearch = forwardRef<HTMLInputElement, EmojiPickerSearchProps>(
 // TODO: renderRow
 // TODO: renderCategoryHeader
 // TODO: renderEmoji
-const EmojiPickerList = forwardRef<HTMLDivElement, EmojiPickerListProps>(
+const EmojiPickerContent = forwardRef<HTMLDivElement, EmojiPickerContentProps>(
   ({ asChild, ...props }, forwardedRef) => {
     const Component = asChild ? Slot : "div";
-    const { rows, error, isLoading, onEmojiSelect } = useEmojiPicker();
+    const { data, error, isLoading, columns, onEmojiSelect } = useEmojiPicker();
+    const columnsPlaceholders = useMemo(
+      () => Array<string>(columns).fill("🌫️"),
+      [columns]
+    );
 
     // TODO: Handle loading
     if (isLoading) {
@@ -157,34 +163,61 @@ const EmojiPickerList = forwardRef<HTMLDivElement, EmojiPickerListProps>(
       return null;
     }
 
-    // TODO: Handle empty
-    if (rows.length === 0) {
-      return null;
-    }
+    // // TODO: Handle empty
+    // if (data.count === 0) {
+    //   return null;
+    // }
 
     return (
       <Component {...props} ref={forwardedRef}>
-        <VList>
-          {rows.map((row, index) => {
-            switch (row.type) {
-              case "category":
-                return <div key={index}>{row.category}</div>;
-              case "emojis":
-                return (
-                  <div key={index}>
-                    {row.emojis.map((emoji) => (
-                      <button
-                        key={emoji.hexcode}
-                        onClick={() => onEmojiSelect?.(emoji.emoji)}
-                      >
-                        <Emoji emoji={emoji.emoji} />
-                      </button>
-                    ))}
-                  </div>
-                );
-            }
-          })}
-        </VList>
+        {/* Virtualized rows are absolutely positioned so they won't make
+            the container automatically pick up their width. To achieve
+            an automatic width, we add a relative (but hidden) full row. */}
+        <div
+          style={{
+            visibility: "hidden",
+            height: 0,
+          }}
+        >
+          {columnsPlaceholders.map((placeholder, index) => (
+            <button key={index}>
+              <Emoji emoji={placeholder} />
+            </button>
+          ))}
+        </div>
+        <GroupedVirtuoso
+          // components={{
+          //   EmptyPlaceholder: () => <div>Empty</div>,
+          // }}
+          groupCounts={data.categoriesRowCounts}
+          groupContent={(index) => {
+            return (
+              <div
+                style={{
+                  backgroundColor: "white",
+                  paddingTop: "1rem",
+                  borderBottom: "1px solid #ccc",
+                }}
+              >
+                {data.categories[index].name}
+              </div>
+            );
+          }}
+          itemContent={(index) => {
+            return (
+              <div style={{ paddingRight: 8, paddingLeft: 8 }}>
+                {data.rows[index].emojis.map((emoji) => (
+                  <button
+                    key={emoji.hexcode}
+                    onClick={() => onEmojiSelect?.(emoji.emoji)}
+                  >
+                    <Emoji emoji={emoji.emoji} />
+                  </button>
+                ))}
+              </div>
+            );
+          }}
+        />
       </Component>
     );
   }
@@ -192,13 +225,13 @@ const EmojiPickerList = forwardRef<HTMLDivElement, EmojiPickerListProps>(
 
 if (process.env.NODE_ENV !== "production") {
   EmojiPickerRoot.displayName = EMOJIPICKER_ROOT_NAME;
-  EmojiPickerList.displayName = EMOJIPICKER_LIST_NAME;
+  EmojiPickerContent.displayName = EMOJIPICKER_LIST_NAME;
   EmojiPickerSearch.displayName = EMOJIPICKER_SEARCH_NAME;
 }
 
 // NOTE: Every export from this file will be available publicly as EmojiPicker.*
 export {
-  EmojiPickerList as List,
+  EmojiPickerContent as List,
   EmojiPickerRoot as Root,
   EmojiPickerSearch as Search,
 };

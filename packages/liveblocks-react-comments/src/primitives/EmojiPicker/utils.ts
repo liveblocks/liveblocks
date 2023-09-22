@@ -2,7 +2,13 @@ import { fetchEmojis, fetchMessages } from "emojibase";
 
 import { capitalize } from "../../utils/capitalize";
 import { chunk } from "../../utils/chunk";
-import type { Emoji, EmojiCategory, EmojiData, EmojiPickerRow } from "./types";
+import type {
+  Emoji,
+  EmojiCategory,
+  EmojiData,
+  EmojiPickerData,
+  EmojiPickerRow,
+} from "./types";
 
 const EMOJI_VERSION = 14;
 
@@ -59,12 +65,13 @@ export function filterEmojis(emojis: Emoji[], search?: string) {
   );
 }
 
-export function generatePickerRows(
+export function generateEmojiPickerData(
   emojis: Emoji[],
   categories: EmojiCategory[],
   columns: number
-) {
+): EmojiPickerData {
   const rows: EmojiPickerRow[] = [];
+  const categoriesRowCounts: number[] = [];
   const categorizedEmojis = categories
     .map((category) => ({
       ...category,
@@ -73,17 +80,18 @@ export function generatePickerRows(
     .filter((category) => category.emojis.length > 0);
 
   for (const category of categorizedEmojis) {
-    rows.push({
-      type: "category",
-      category: category.name,
-    });
-
-    const emojisRows = chunk(category.emojis, columns);
-
-    rows.push(
-      ...emojisRows.map((emojis) => ({ type: "emojis", emojis }) as const)
+    const categoryRows = chunk(category.emojis, columns).map(
+      (emojis) => ({ type: "emojis", emojis }) as const
     );
+
+    rows.push(...categoryRows);
+    categoriesRowCounts.push(categoryRows.length);
   }
 
-  return rows;
+  return {
+    count: emojis.length,
+    rows,
+    categories,
+    categoriesRowCounts,
+  };
 }

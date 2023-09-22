@@ -2,27 +2,28 @@ import type { Resolve } from "@liveblocks/core";
 import { nn } from "@liveblocks/core";
 import { createContext, useContext } from "react";
 
-import type { EmojiPickerRow } from "./types";
+import type { EmojiPickerData } from "./types";
 
 type EmojiPickerContextData =
   | {
-      rows?: never;
+      data?: never;
       error?: never;
       isLoading: true;
     }
   | {
-      rows: EmojiPickerRow[];
+      data: EmojiPickerData;
       error?: never;
       isLoading: false;
     }
   | {
-      rows?: never;
+      data?: never;
       error: Error;
       isLoading: false;
     };
 
 export type EmojiPickerContext = Resolve<
   EmojiPickerContextData & {
+    columns: number;
     onSearch: (search: string) => void;
     onEmojiSelect?: (emoji: string) => void;
   }
