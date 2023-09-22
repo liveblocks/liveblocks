@@ -296,9 +296,9 @@ export function createRoomContext<
       setRoom(room);
 
       return () => {
-        const commentsRoom = commentsRooms.get(roomId);
+        const commentsRoom = commentsRooms.get(room);
         if (commentsRoom) {
-          commentsRooms.delete(roomId);
+          commentsRooms.delete(room);
         }
         client.leave(roomId);
       };
@@ -843,15 +843,18 @@ export function createRoomContext<
 
   const commentsErrorEventSource =
     makeEventSource<CommentsApiError<TThreadMetadata>>();
-  const commentsRooms = new Map<string, CommentsRoom<TThreadMetadata>>();
+  const commentsRooms = new Map<
+    Room<TPresence, TStorage, TUserMeta, TRoomEvent>,
+    CommentsRoom<TThreadMetadata>
+  >();
 
   function getCommentsRoom(
     room: Room<TPresence, TStorage, TUserMeta, TRoomEvent>
   ) {
-    let commentsRoom = commentsRooms.get(room.id);
+    let commentsRoom = commentsRooms.get(room);
     if (commentsRoom === undefined) {
       commentsRoom = createCommentsRoom(room, commentsErrorEventSource);
-      commentsRooms.set(room.id, commentsRoom);
+      commentsRooms.set(room, commentsRoom);
     }
     return commentsRoom;
   }
