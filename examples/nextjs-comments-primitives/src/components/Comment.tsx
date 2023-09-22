@@ -44,28 +44,30 @@ export function Comment({ comment, className, ...props }: CommentProps) {
       <CommentPrimitive.Body
         body={comment.body}
         className="prose mt-3"
-        renderMention={({ userId }) => {
-          return (
-            <CommentPrimitive.Mention className="font-semibold text-blue-500">
-              @
-              <Suspense fallback={userId}>
-                <User userId={userId} />
-              </Suspense>
-            </CommentPrimitive.Mention>
-          );
+        components={{
+          Mention: ({ userId }) => {
+            return (
+              <CommentPrimitive.Mention className="font-semibold text-blue-500">
+                @
+                <Suspense fallback={userId}>
+                  <User userId={userId} />
+                </Suspense>
+              </CommentPrimitive.Mention>
+            );
+          },
+          // Other components can be provided:
+          //
+          // Link: ({ href, children }) => {
+          //   return (
+          //     <CommentPrimitive.Link
+          //       href={href}
+          //       className="text-blue-500 underline"
+          //     >
+          //       {children}
+          //     </CommentPrimitive.Link>
+          //   )
+          // }
         }}
-        // A renderLink prop is also available to customize how links are rendered in a comment.
-        //
-        // renderLink={({ href, children }) => {
-        //   return (
-        //     <CommentPrimitive.Link
-        //       href={href}
-        //       className="text-blue-500 underline"
-        //     >
-        //       {children}
-        //     </CommentPrimitive.Link>
-        //   )
-        // }}
       />
     </div>
   );
