@@ -6,6 +6,7 @@ import {
   FLOATING_ELEMENT_COLLISION_PADDING,
   FLOATING_ELEMENT_SIDE_OFFSET,
 } from "../../constants";
+import { SearchIcon } from "../../icons/Search";
 import { useOverrides } from "../../overrides";
 import * as EmojiPickerPrimitive from "../../primitives/EmojiPicker";
 import type {
@@ -120,11 +121,14 @@ export const EmojiPicker = forwardRef<HTMLDivElement, Props>(
           >
             <EmojiPickerPrimitive.Root onEmojiSelect={handleEmojiSelect}>
               <div className="lb-emoji-picker-header">
-                <EmojiPickerPrimitive.Search
-                  className="lb-emoji-picker-search"
-                  placeholder={$.EMOJI_PICKER_SEARCH_PLACEHOLDER}
-                  autoFocus
-                />
+                <div className="lb-emoji-picker-search-container">
+                  <EmojiPickerPrimitive.Search
+                    className="lb-emoji-picker-search"
+                    placeholder={$.EMOJI_PICKER_SEARCH_PLACEHOLDER}
+                    autoFocus
+                  />
+                  <SearchIcon className="lb-emoji-picker-search-icon" />
+                </div>
               </div>
               <EmojiPickerPrimitive.Content
                 className="lb-emoji-picker-content"
