@@ -1,6 +1,6 @@
 import * as PopoverPrimitive from "@radix-ui/react-popover";
 import type { ComponentPropsWithoutRef } from "react";
-import React, { forwardRef, useCallback, useState } from "react";
+import React, { forwardRef, useCallback, useMemo, useState } from "react";
 
 import {
   FLOATING_ELEMENT_COLLISION_PADDING,
@@ -8,11 +8,74 @@ import {
 } from "../../constants";
 import { useOverrides } from "../../overrides";
 import * as EmojiPickerPrimitive from "../../primitives/EmojiPicker";
+import type {
+  EmojiPickerContentCategoryHeaderProps,
+  EmojiPickerContentEmojiProps,
+  EmojiPickerContentEmojiRowProps,
+} from "../../primitives/EmojiPicker/types";
+import { Emoji } from "../../primitives/internal/Emoji";
 import { classNames } from "../../utils/class-names";
 
 interface Props extends ComponentPropsWithoutRef<"div"> {
   onOpenChange?: (open: boolean) => void;
   onEmojiSelect?: (reaction: string) => void;
+}
+
+function EmojiPickerCategoryHeader({
+  category,
+  className,
+  ...props
+}: EmojiPickerContentCategoryHeaderProps) {
+  return (
+    <div
+      className={classNames("lb-emoji-picker-category-header", className)}
+      {...props}
+    >
+      <span className="lb-emoji-picker-category-header-title">{category}</span>
+    </div>
+  );
+}
+
+function EmojiPickerEmojiRow({
+  context,
+  children,
+  className,
+  ...props
+}: EmojiPickerContentEmojiRowProps) {
+  const isFirstRow = useMemo(
+    () => context.categoryRowIndex === 0,
+    [context.categoryRowIndex]
+  );
+  const isLastRow = useMemo(
+    () => context.categoryRowIndex === context.categoryRowsCount - 1,
+    [context.categoryRowIndex, context.categoryRowsCount]
+  );
+
+  return (
+    <div
+      className={classNames("lb-emoji-picker-emoji-row", className)}
+      data-first={isFirstRow ? "" : undefined}
+      data-last={isLastRow ? "" : undefined}
+      {...props}
+    >
+      {children}
+    </div>
+  );
+}
+
+function EmojiPickerEmoji({
+  emoji,
+  className,
+  ...props
+}: EmojiPickerContentEmojiProps) {
+  return (
+    <button
+      className={classNames("lb-emoji-picker-emoji", className)}
+      {...props}
+    >
+      <Emoji emoji={emoji} />
+    </button>
+  );
 }
 
 export const EmojiPicker = forwardRef<HTMLDivElement, Props>(
@@ -52,9 +115,17 @@ export const EmojiPicker = forwardRef<HTMLDivElement, Props>(
                 <EmojiPickerPrimitive.Search
                   className="lb-emoji-picker-search"
                   placeholder={$.EMOJI_PICKER_SEARCH_PLACEHOLDER}
+                  autoFocus
                 />
               </div>
-              <EmojiPickerPrimitive.List className="lb-emoji-picker-list" />
+              <EmojiPickerPrimitive.Content
+                className="lb-emoji-picker-content"
+                components={{
+                  CategoryHeader: EmojiPickerCategoryHeader,
+                  EmojiRow: EmojiPickerEmojiRow,
+                  Emoji: EmojiPickerEmoji,
+                }}
+              />
             </EmojiPickerPrimitive.Root>
           </PopoverPrimitive.Content>
         </PopoverPrimitive.Portal>

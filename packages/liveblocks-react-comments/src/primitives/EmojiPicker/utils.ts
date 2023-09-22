@@ -65,13 +65,25 @@ export function filterEmojis(emojis: Emoji[], search?: string) {
   );
 }
 
+function generateRangeIndices(start: number, end: number) {
+  const range: number[] = [];
+
+  for (let i = start; i <= end; i++) {
+    range.push(i);
+  }
+
+  return range;
+}
+
 export function generateEmojiPickerData(
   emojis: Emoji[],
   categories: EmojiCategory[],
   columns: number
 ): EmojiPickerData {
+  let currentIndex = 0;
   const rows: EmojiPickerRow[] = [];
   const categoriesRowCounts: number[] = [];
+  const categoriesRowIndices: number[][] = [];
   const categorizedEmojis = categories
     .map((category) => ({
       ...category,
@@ -83,9 +95,14 @@ export function generateEmojiPickerData(
     const categoryRows = chunk(category.emojis, columns).map(
       (emojis) => ({ type: "emojis", emojis }) as const
     );
+    const nextIndex = currentIndex + categoryRows.length;
 
     rows.push(...categoryRows);
     categoriesRowCounts.push(categoryRows.length);
+    categoriesRowIndices.push(
+      generateRangeIndices(currentIndex, nextIndex - 1)
+    );
+    currentIndex = nextIndex;
   }
 
   return {
@@ -93,5 +110,6 @@ export function generateEmojiPickerData(
     rows,
     categories,
     categoriesRowCounts,
+    categoriesRowIndices,
   };
 }

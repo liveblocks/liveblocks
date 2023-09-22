@@ -13,10 +13,12 @@ import React, {
 import { GroupedVirtuoso } from "react-virtuoso";
 
 import { useTransition } from "../../utils/use-transition";
-import { Emoji } from "../internal/Emoji";
+import { Emoji as AccessibleEmoji } from "../internal/Emoji";
 import { EmojiPickerContext, useEmojiPicker } from "./contexts";
 import type {
   EmojiData,
+  EmojiPickerContentComponents,
+  EmojiPickerContentEmojiRowContext,
   EmojiPickerContentProps,
   EmojiPickerData,
   EmojiPickerRootProps,
@@ -27,7 +29,7 @@ import { filterEmojis, generateEmojiPickerData, getEmojiData } from "./utils";
 const DEFAULT_COLUMNS = 10;
 
 const EMOJIPICKER_ROOT_NAME = "EmojiPickerRoot";
-const EMOJIPICKER_LIST_NAME = "EmojiPickerList";
+const EMOJIPICKER_CONTENT_NAME = "EmojiPickerContent";
 const EMOJIPICKER_SEARCH_NAME = "EmojiPickerSearch";
 
 function EmojiPickerRoot({
@@ -138,17 +140,37 @@ const EmojiPickerSearch = forwardRef<HTMLInputElement, EmojiPickerSearchProps>(
   }
 );
 
-// TODO: renderLoading
-// TODO: renderError
-// TODO: renderEmpty
-// TODO: renderRow
-// TODO: renderCategoryHeader
-// TODO: renderEmoji
+const defaultContentComponents: EmojiPickerContentComponents = {
+  CategoryHeader: ({ category, ...props }) => <div {...props}>{category}</div>,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  EmojiRow: ({ children, context, ...props }) => (
+    <div {...props}>{children}</div>
+  ),
+  Emoji: ({ emoji, ...props }) => (
+    <button {...props}>
+      <AccessibleEmoji emoji={emoji} />
+    </button>
+  ),
+};
+
+const placeholderRowContext: EmojiPickerContentEmojiRowContext = {
+  rowIndex: -1,
+  categoryRowIndex: -1,
+  categoryRowsCount: 0,
+};
+
+// TODO: Loading
+// TODO: Error
+// TODO: Empty
 const EmojiPickerContent = forwardRef<HTMLDivElement, EmojiPickerContentProps>(
-  ({ asChild, ...props }, forwardedRef) => {
+  ({ components, asChild, ...props }, forwardedRef) => {
     const Component = asChild ? Slot : "div";
     const { data, error, isLoading, columns, onEmojiSelect } = useEmojiPicker();
-    const columnsPlaceholders = useMemo(
+    const { CategoryHeader, EmojiRow, Emoji } = useMemo(
+      () => ({ ...defaultContentComponents, ...components }),
+      [components]
+    );
+    const placeholderColumns = useMemo(
       () => Array<string>(columns).fill("🌫️"),
       [columns]
     );
@@ -179,11 +201,11 @@ const EmojiPickerContent = forwardRef<HTMLDivElement, EmojiPickerContentProps>(
             height: 0,
           }}
         >
-          {columnsPlaceholders.map((placeholder, index) => (
-            <button key={index}>
-              <Emoji emoji={placeholder} />
-            </button>
-          ))}
+          <EmojiRow context={placeholderRowContext}>
+            {placeholderColumns.map((placeholder, index) => (
+              <Emoji emoji={placeholder} key={index} />
+            ))}
+          </EmojiRow>
         </div>
         <GroupedVirtuoso
           // components={{
@@ -191,30 +213,26 @@ const EmojiPickerContent = forwardRef<HTMLDivElement, EmojiPickerContentProps>(
           // }}
           groupCounts={data.categoriesRowCounts}
           groupContent={(index) => {
+            return <CategoryHeader category={data.categories[index].name} />;
+          }}
+          itemContent={(index, groupIndex) => {
             return (
-              <div
-                style={{
-                  backgroundColor: "white",
-                  paddingTop: "1rem",
-                  borderBottom: "1px solid #ccc",
+              <EmojiRow
+                context={{
+                  rowIndex: index,
+                  categoryRowIndex:
+                    data.categoriesRowIndices[groupIndex].indexOf(index),
+                  categoryRowsCount: data.categoriesRowCounts[groupIndex],
                 }}
               >
-                {data.categories[index].name}
-              </div>
-            );
-          }}
-          itemContent={(index) => {
-            return (
-              <div style={{ paddingRight: 8, paddingLeft: 8 }}>
                 {data.rows[index].emojis.map((emoji) => (
-                  <button
+                  <Emoji
                     key={emoji.hexcode}
                     onClick={() => onEmojiSelect?.(emoji.emoji)}
-                  >
-                    <Emoji emoji={emoji.emoji} />
-                  </button>
+                    emoji={emoji.emoji}
+                  />
                 ))}
-              </div>
+              </EmojiRow>
             );
           }}
         />
@@ -225,13 +243,13 @@ const EmojiPickerContent = forwardRef<HTMLDivElement, EmojiPickerContentProps>(
 
 if (process.env.NODE_ENV !== "production") {
   EmojiPickerRoot.displayName = EMOJIPICKER_ROOT_NAME;
-  EmojiPickerContent.displayName = EMOJIPICKER_LIST_NAME;
+  EmojiPickerContent.displayName = EMOJIPICKER_CONTENT_NAME;
   EmojiPickerSearch.displayName = EMOJIPICKER_SEARCH_NAME;
 }
 
 // NOTE: Every export from this file will be available publicly as EmojiPicker.*
 export {
-  EmojiPickerContent as List,
+  EmojiPickerContent as Content,
   EmojiPickerRoot as Root,
   EmojiPickerSearch as Search,
 };
