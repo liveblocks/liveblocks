@@ -18,7 +18,7 @@ import { classNames } from "../../utils/class-names";
 
 interface Props extends ComponentPropsWithoutRef<"div"> {
   onOpenChange?: (open: boolean) => void;
-  onEmojiSelect?: (reaction: string) => void;
+  onEmojiSelect?: (emoji: string) => void;
 }
 
 function EmojiPickerCategoryHeader({
@@ -94,6 +94,14 @@ export const EmojiPicker = forwardRef<HTMLDivElement, Props>(
       [onOpenChange]
     );
 
+    const handleEmojiSelect = useCallback(
+      (emoji: string) => {
+        setOpen(false);
+        onEmojiSelect?.(emoji);
+      },
+      [onEmojiSelect]
+    );
+
     return (
       <PopoverPrimitive.Root open={isOpen} onOpenChange={handleOpenChange}>
         {children}
@@ -110,7 +118,7 @@ export const EmojiPicker = forwardRef<HTMLDivElement, Props>(
             {...props}
             ref={forwardedRef}
           >
-            <EmojiPickerPrimitive.Root onEmojiSelect={onEmojiSelect}>
+            <EmojiPickerPrimitive.Root onEmojiSelect={handleEmojiSelect}>
               <div className="lb-emoji-picker-header">
                 <EmojiPickerPrimitive.Search
                   className="lb-emoji-picker-search"
