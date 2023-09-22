@@ -706,6 +706,7 @@ type StaticSessionInfo = {
 
 type DynamicSessionInfo = {
   readonly actor: number;
+  readonly nonce: string;
   readonly scopes: string[];
 };
 
@@ -1598,6 +1599,7 @@ export function createRoom<
     // The server will inform the client about its assigned actor ID and scopes
     context.dynamicSessionInfo.set({
       actor: message.actor,
+      nonce: message.nonce,
       scopes: message.scopes,
     });
     context.idFactory = makeIdFactory(message.actor);
