@@ -289,6 +289,11 @@
   // Emoji picker
 
   .lb-emoji-picker {
+    --lb-emoji-picker-padding: #{$lb-emoji-picker-padding};
+    --lb-emoji-picker-offset-padding: calc(
+      #{$lb-emoji-picker-padding} + 0.375 * var(--lb-spacing)
+    );
+
     display: flex;
     flex-direction: column;
     height: 360px;
@@ -299,12 +304,22 @@
     border-block-end: 1px solid var(--lb-elevation-foreground-subtle);
   }
 
+  .lb-emoji-picker-search-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
   .lb-emoji-picker-search {
     all: unset;
     width: 100%;
-    padding: calc(#{$lb-emoji-picker-padding} + 0.375 * var(--lb-spacing));
+    padding: var(--lb-emoji-picker-offset-padding);
     background: transparent;
     outline: none;
+    padding-inline-start: calc(
+      var(--lb-icon-size) + var(--lb-emoji-picker-offset-padding) + 0.375 *
+        var(--lb-spacing)
+    );
 
     &::-webkit-search-cancel-button,
     &::-webkit-search-decoration,
@@ -314,13 +329,20 @@
     }
   }
 
+  .lb-emoji-picker-search-icon {
+    position: absolute;
+    pointer-events: none;
+    inset-inline-start: var(--lb-emoji-picker-offset-padding);
+    color: var(--lb-elevation-foreground-moderate);
+  }
+
   .lb-emoji-picker-content {
     flex: 1;
   }
 
   .lb-emoji-picker-category-header {
-    padding: $lb-emoji-picker-padding
-      calc(#{$lb-emoji-picker-padding} + 0.375 * var(--lb-spacing));
+    padding: var(--lb-emoji-picker-padding)
+      var(--lb-emoji-picker-offset-padding);
     background: var(--lb-elevation-background);
     border-block-end: 1px solid var(--lb-elevation-foreground-subtle);
   }
