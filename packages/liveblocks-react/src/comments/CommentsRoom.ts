@@ -555,30 +555,37 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
       room.getStatus
     );
 
-    useEffect(() => {
-      const interval =
-        status === "connected" ? POLLING_INTERVAL_REALTIME : POLLING_INTERVAL;
+    useEffect(
+      () => {
+        const interval =
+          status === "connected" ? POLLING_INTERVAL_REALTIME : POLLING_INTERVAL;
 
-      let revalidationTimerId: number;
-      function scheduleRevalidation() {
-        revalidationTimerId = window.setTimeout(executeRevalidation, interval);
-      }
+        let revalidationTimerId: number;
+        function scheduleRevalidation() {
+          revalidationTimerId = window.setTimeout(
+            executeRevalidation,
+            interval
+          );
+        }
 
-      function executeRevalidation() {
-        // Revalidate cache and then schedule the next revalidation
-        void revalidateCache(true).then(scheduleRevalidation);
-      }
+        function executeRevalidation() {
+          // Revalidate cache and then schedule the next revalidation
+          void revalidateCache(true).then(scheduleRevalidation);
+        }
 
-      scheduleRevalidation();
+        scheduleRevalidation();
 
-      return () => {
-        window.clearTimeout(revalidationTimerId);
-      };
-    }, [status]);
+        return () => {
+          window.clearTimeout(revalidationTimerId);
+        };
+      },
+      // eslint-disable-next-line react-hooks/exhaustive-deps -- ESLint recommends against adding `revalidateCache` as a dependency, but not doing so causes the code inside `useEffect` to reference an outdated version of `revalidateCache`
+      [status, revalidateCache]
+    );
   }
 
   function useThreadsInternal(): RoomThreads<TThreadMetadata> {
-    useEffect(_subscribe, []);
+    useEffect(_subscribe, [_subscribe]);
 
     usePolling();
 
@@ -592,9 +599,13 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
   }
 
   function useThreads() {
-    useEffect(() => {
-      void revalidateCache(true);
-    }, []);
+    useEffect(
+      () => {
+        void revalidateCache(true);
+      },
+      // eslint-disable-next-line react-hooks/exhaustive-deps -- ESLint recommends against adding `revalidateCache` as a dependency, but not doing so causes the code inside `useEffect` to reference an outdated version of `revalidateCache`
+      [revalidateCache]
+    );
 
     return useThreadsInternal();
   }
