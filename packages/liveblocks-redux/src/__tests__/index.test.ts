@@ -386,6 +386,7 @@ describe("middleware", () => {
             },
           },
           actor: 2,
+          nonce: "random-" + 2,
           scopes: ["room:write"],
         } as RoomStateServerMsg<BaseUserMeta>),
       } as MessageEvent);
