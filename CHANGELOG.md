@@ -6,6 +6,7 @@
   JSDoc comments (we stopped recommending them since the release of 0.18)
 - Deduplicate Comments requests and improve how race conditions are handled
   during mutations.
+- Fix non-Suspense Comments hooks not working properly in some situations.
 
 ### `@liveblocks/react-comments`
 
