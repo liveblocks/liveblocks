@@ -26,23 +26,22 @@ export type EmojiData = {
   skinTones: EmojiSkinTone[];
 };
 
-export type EmojiPickerCategoryRow = {
-  type: "category";
-  category: string;
-};
-
-export type EmojiPickerGridRow = {
-  type: "emojis";
+export type EmojiPickerRow = {
   emojis: Emoji[];
 };
 
-export type EmojiPickerRow = EmojiPickerCategoryRow | EmojiPickerGridRow;
+export type EmojiPickerData = {
+  count: number;
+  rows: EmojiPickerRow[];
+  categories: EmojiCategory[];
+  categoriesRowCounts: number[];
+};
 
 export interface EmojiPickerRootProps extends PropsWithChildren {
   columns?: number;
   onEmojiSelect?: (emoji: string) => void;
 }
 
-export type EmojiPickerListProps = ComponentPropsWithSlot<"div">;
+export type EmojiPickerContentProps = ComponentPropsWithSlot<"div">;
 
 export type EmojiPickerSearchProps = ComponentPropsWithSlot<"input">;
