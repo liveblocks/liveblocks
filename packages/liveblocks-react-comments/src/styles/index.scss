@@ -222,7 +222,8 @@
     color: var(--lb-accent-foreground);
 
     &:enabled:hover,
-    &:enabled:focus-visible {
+    &:enabled:focus-visible,
+    &[aria-expanded="true"] {
       --lb-button-background: var(--lb-accent-secondary);
 
       color: var(--lb-accent-foreground);
@@ -331,9 +332,9 @@
 
   .lb-emoji-picker-search-icon {
     position: absolute;
+    color: var(--lb-elevation-foreground-moderate);
     pointer-events: none;
     inset-inline-start: var(--lb-emoji-picker-offset-padding);
-    color: var(--lb-elevation-foreground-moderate);
   }
 
   .lb-emoji-picker-content {
@@ -528,6 +529,7 @@
   .lb-comment-mention,
   .lb-composer-mention {
     color: var(--lb-accent);
+    box-decoration-break: clone;
     font-weight: 500;
   }
 
