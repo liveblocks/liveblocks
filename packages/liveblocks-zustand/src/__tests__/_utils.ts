@@ -50,7 +50,7 @@ export class MockWebSocket {
         const msg: RoomStateServerMsg<never> = {
           type: ServerMsgCode.ROOM_STATE,
           actor,
-          nonce: "random-" + actor,
+          nonce: `nonce-for-actor-${actor}`,
           scopes: ["room:write"],
           users: {},
         };
