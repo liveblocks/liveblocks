@@ -681,9 +681,11 @@ type PrivateRoomAPI = {
   };
 };
 
-// The maximum message size on websockets is 1MB (1024*1024), a small amount of space is substracted so we're not right at the limit
+// The maximum message size on websockets is 1MB. We'll set the threshold
+// slightly lower (1kB) to trigger sending over HTTP, to account for messaging
+// overhead, so we're not right at the limit.
 // NOTE: this only works with the unstable_fallbackToHTTP option enabled
-const MAX_MESSAGE_SIZE = 1024 * 1024 - 128;
+const MAX_SOCKET_MESSAGE_SIZE = 1024 * 1024 - 1024;
 
 function makeIdFactory(connectionId: number): IdFactory {
   let count = 0;
@@ -826,7 +828,6 @@ export type RoomConfig = {
   lostConnectionTimeout: number;
 
   liveblocksServer: string;
-  httpSendEndpoint?: string;
   unstable_fallbackToHTTP?: boolean;
 
   polyfills?: Polyfills;
@@ -1141,27 +1142,49 @@ export function createRoom<
     comments: makeEventSource<CommentsEventServerMsg>(),
   };
 
-  function sendMessages(
-    messageOrMessages:
-      | ClientMsg<TPresence, TRoomEvent>
-      | ClientMsg<TPresence, TRoomEvent>[]
+  async function httpSend(
+    authTokenOrPublicApiKey: string,
+    roomId: string,
+    nonce: string,
+    messages: ClientMsg<TPresence, TRoomEvent>[]
   ) {
-    const message = JSON.stringify(messageOrMessages);
-    if (config.unstable_fallbackToHTTP) {
+    const baseUrl = new URL(config.liveblocksServer);
+    baseUrl.protocol = "https";
+    const url = new URL(
+      `/v2/c/rooms/${encodeURIComponent(roomId)}/send-message`,
+      baseUrl
+    );
+    const fetcher = config.polyfills?.fetch || /* istanbul ignore next */ fetch;
+    return fetcher(url.toString(), {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${authTokenOrPublicApiKey}`,
+      },
+      body: JSON.stringify({ nonce, messages }),
+    });
+  }
+
+  function sendMessages(messages: ClientMsg<TPresence, TRoomEvent>[]) {
+    const serializedPayload = JSON.stringify(messages);
+    if (
+      config.unstable_fallbackToHTTP &&
+      managedSocket.authValue &&
+      context.dynamicSessionInfo.current?.nonce
+    ) {
+      const nonce = context.dynamicSessionInfo.current.nonce;
+
       // if our message contains UTF-8, we can't simply use length. See: https://stackoverflow.com/questions/23318037/size-of-json-object-in-kbs-mbs
       // if this turns out to be expensive, we could just guess with a lower value.
-      const size = new TextEncoder().encode(message).length;
-      if (
-        size > MAX_MESSAGE_SIZE &&
-        // TODO: support public api key auth in REST API
-        managedSocket.authValue?.type === "secret" &&
-        config.httpSendEndpoint
-      ) {
+      const size = new TextEncoder().encode(serializedPayload).length;
+      if (size > MAX_SOCKET_MESSAGE_SIZE) {
         void httpSend(
-          message,
-          managedSocket.authValue.token.raw,
-          config.httpSendEndpoint,
-          config.polyfills?.fetch
+          managedSocket.authValue.type === "public"
+            ? managedSocket.authValue.publicApiKey
+            : managedSocket.authValue.token.raw,
+          config.roomId,
+          nonce,
+          messages
         ).then((resp) => {
           if (!resp.ok && resp.status === 403) {
             managedSocket.reconnect();
@@ -1173,7 +1196,7 @@ export function createRoom<
         return;
       }
     }
-    managedSocket.send(message);
+    managedSocket.send(serializedPayload);
   }
 
   const self = new DerivedRef(
@@ -2483,21 +2506,4 @@ export function makeCreateSocketDelegateForRoom(
     url.searchParams.set("version", PKG_VERSION || "dev");
     return new ws(url.toString());
   };
-}
-
-async function httpSend(
-  message: string,
-  token: string,
-  endpoint: string,
-  fetchPolyfill?: typeof window.fetch
-) {
-  const fetcher = fetchPolyfill || /* istanbul ignore next */ fetch;
-  return fetcher(endpoint, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: message,
-  });
 }
