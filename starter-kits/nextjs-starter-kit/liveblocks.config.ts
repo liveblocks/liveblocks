@@ -1,5 +1,6 @@
 import { LiveMap, LiveObject, createClient } from "@liveblocks/client";
 import { createRoomContext } from "@liveblocks/react";
+import LiveblocksProvider from "@liveblocks/yjs";
 import Router from "next/router";
 import { User } from "./types";
 
@@ -49,6 +50,7 @@ const client = createClient({
 // `user.presence` property. Must be JSON-serializable.
 export type Presence = {
   cursor: { x: number; y: number } | null;
+  currentFile?: string;
 };
 
 export type Note = LiveObject<{
@@ -101,3 +103,10 @@ export const {
   },
   /* ...all the other hooks you’re using... */
 } = createRoomContext<Presence, Storage, UserMeta, RoomEvent>(client);
+
+export type TypedLiveblocksProvider = LiveblocksProvider<
+  Presence,
+  Storage,
+  UserMeta,
+  RoomEvent
+>;

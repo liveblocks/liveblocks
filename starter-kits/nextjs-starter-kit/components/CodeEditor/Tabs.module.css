@@ -1,0 +1,16 @@
+.tabs {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  background: var(--color-surface);
+  padding-top: 2px;
+}
+
+.tab {
+  padding: var(--space-3) var(--space-8);
+  font-size: var(--size-sm);
+}
+
+.tab[data-active] {
+  background: var(--color-surface-elevated);
+}

@@ -1,0 +1,38 @@
+.container {
+  display: flex;
+  flex-direction: row;
+  background: var(--color-surface);
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+}
+
+.editorHeader {
+  top: 0;
+  left: 0;
+  right: 0;
+  flex: 0 0;
+  z-index: var(--z-above);
+}
+
+.editorMain {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
+.editorSidePanel {
+  flex: 0 0;
+  min-width: 300px;
+  max-width: 100%;
+}
+
+.editorContainer {
+  flex: 1 1;
+  background: var(--color-surface-elevated);
+  padding-top: var(--space-4)
+}
+
+

@@ -1,0 +1,52 @@
+/* Cursor name */
+.cm-editor .cm-ySelectionInfo {
+  position: absolute;
+  top: calc(0px - var(--space-9));
+  left: -1px;
+  padding: var(--space-1) var(--space-3);
+  opacity: 1;
+  color: #fff;
+  border: 0;
+  border-radius: var(--radius-xs);
+  border-bottom-left-radius: 0;
+  line-height: normal;
+  white-space: nowrap;
+  font-size: var(--size-sm);
+  font-family: sans-serif;
+  font-style: normal;
+  font-weight: 600;
+  pointer-events: none;
+  user-select: none;
+  z-index: 1000;
+}
+
+/* If cursor on first line, show cursor name below */
+.cm-editor .cm-content .cm-line:first-child .cm-ySelectionInfo {
+  top: var(--space-8);
+  border-top-left-radius: 0;
+  border-bottom-left-radius: var(--radius-xs);
+}
+
+.cm-editor .cm-ySelectionCaretDot {
+  display: none;
+}
+
+/* Other CodeMirror styles */
+.cm-editor {
+  height: 100%;
+  font-size: var(--size-sm);
+}
+
+.cm-editor.cm-focused {
+  outline: none;
+}
+
+.cm-editor .cm-gutters {
+  background: none;
+  border: 0;
+}
+
+.cm-editor .cm-lineNumbers .cm-gutterElement {
+  padding-left: var(--space-8);
+  padding-right: var(--space-3);
+}

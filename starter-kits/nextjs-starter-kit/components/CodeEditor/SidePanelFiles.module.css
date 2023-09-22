@@ -1,0 +1,53 @@
+.sidePanelFile {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: 0 var(--space-8) 0 var(--space-11);
+}
+
+.sidePanelFileName {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  opacity: 0.8;
+}
+
+.sidePanelFile[data-active] .sidePanelFileName {
+  opacity: 1;
+}
+
+.sidePanelFileDelete {
+  display: none;
+  color: var(--color-text-lighter);
+}
+
+.sidePanelFile:hover .sidePanelFileDelete {
+  display: block;
+}
+
+.sidePanelFolder {
+  margin-left: var(--space-10);
+  user-select: none;
+  cursor: pointer;
+}
+
+.sidePanelFolderSummary {
+  margin-left: calc(-1px - var(--space-7));
+  margin-bottom: var(--space-1);
+}
+
+.sidePanelFolderSummary * {
+  display: inline-block;
+}
+
+.sidePanelFolderName {
+  display: inline-block;
+  align-items: center;
+  opacity: 0.8;
+}
+
+.sidePanelFolderName svg {
+  margin: 0 var(--space-3);
+}

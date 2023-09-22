@@ -1,0 +1,4 @@
+.sidePanel {
+  padding: var(--space-4) 0;
+  font-size: var(--size-sm);
+}
