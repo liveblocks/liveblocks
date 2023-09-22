@@ -12,7 +12,7 @@ import { classNames } from "../../utils/class-names";
 interface Props extends ComponentPropsWithoutRef<"div"> {
   onOpenChange?: (open: boolean) => void;
   emojis?: string[];
-  onEmojiSelect?: (reaction: string) => void;
+  onEmojiSelect?: (emoji: string) => void;
 }
 
 // TODO: This should be a dropdown but @radix-ui/react-dropdown-menu
