@@ -223,6 +223,12 @@ export type RoomStateServerMsg<TUserMeta extends BaseUserMeta> = {
   readonly actor: number;
 
   /**
+   * Nonce for the current session.
+   * @since v1.2 (WS API v7)
+   */
+  readonly nonce: string;
+
+  /**
    * Informs the client what permissions the current User (self) has.
    * @since v1.2 (WS API v7)
    */
