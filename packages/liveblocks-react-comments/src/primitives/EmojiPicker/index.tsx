@@ -27,6 +27,7 @@ import type {
 import { filterEmojis, generateEmojiPickerData, getEmojiData } from "./utils";
 
 const DEFAULT_COLUMNS = 10;
+const DEFAULT_LOCALE = "en";
 
 const EMOJIPICKER_ROOT_NAME = "EmojiPickerRoot";
 const EMOJIPICKER_CONTENT_NAME = "EmojiPickerContent";
@@ -34,6 +35,7 @@ const EMOJIPICKER_SEARCH_NAME = "EmojiPickerSearch";
 
 function EmojiPickerRoot({
   columns = DEFAULT_COLUMNS,
+  locale = DEFAULT_LOCALE,
   onEmojiSelect,
   children,
 }: EmojiPickerRootProps) {
@@ -68,19 +70,21 @@ function EmojiPickerRoot({
     });
   }, [columns]);
 
-  const initializeEmojiData = useCallback(async () => {
-    try {
-      emojiData.current = await getEmojiData();
-      updateEmojis();
-    } catch (error) {
-      setError(error as Error);
-    }
-  }, [updateEmojis]);
+  const initializeEmojiData = useCallback(
+    async (locale: string) => {
+      try {
+        emojiData.current = await getEmojiData(locale);
+        updateEmojis();
+      } catch (error) {
+        setError(error as Error);
+      }
+    },
+    [updateEmojis]
+  );
 
   useEffect(() => {
-    // TODO: Handle deduplication (subscribe if another initializeData is already running), etc.
-    initializeEmojiData();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    initializeEmojiData(locale);
+  }, [locale]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSearch = useCallback(
     (value: string) => {
@@ -227,7 +231,7 @@ const EmojiPickerContent = forwardRef<HTMLDivElement, EmojiPickerContentProps>(
               >
                 {data.rows[index].emojis.map((emoji) => (
                   <Emoji
-                    key={emoji.hexcode}
+                    key={emoji.emoji}
                     onClick={() => onEmojiSelect?.(emoji.emoji)}
                     emoji={emoji.emoji}
                   />
