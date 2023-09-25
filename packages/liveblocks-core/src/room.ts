@@ -1167,13 +1167,8 @@ export function createRoom<
 
   function sendMessages(messages: ClientMsg<TPresence, TRoomEvent>[]) {
     const serializedPayload = JSON.stringify(messages);
-    if (
-      config.unstable_fallbackToHTTP &&
-      managedSocket.authValue &&
-      context.dynamicSessionInfo.current?.nonce
-    ) {
-      const nonce = context.dynamicSessionInfo.current.nonce;
-
+    const nonce = context.dynamicSessionInfo.current?.nonce;
+    if (config.unstable_fallbackToHTTP && managedSocket.authValue && nonce) {
       // if our message contains UTF-8, we can't simply use length. See: https://stackoverflow.com/questions/23318037/size-of-json-object-in-kbs-mbs
       // if this turns out to be expensive, we could just guess with a lower value.
       const size = new TextEncoder().encode(serializedPayload).length;
