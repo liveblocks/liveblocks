@@ -7,12 +7,15 @@ import {
   FLOATING_ELEMENT_SIDE_OFFSET,
 } from "../../constants";
 import { SearchIcon } from "../../icons/Search";
+import { SpinnerIcon } from "../../icons/Spinner";
 import { useOverrides } from "../../overrides";
 import * as EmojiPickerPrimitive from "../../primitives/EmojiPicker";
 import type {
   EmojiPickerContentCategoryHeaderProps,
   EmojiPickerContentEmojiProps,
   EmojiPickerContentEmojiRowProps,
+  EmojiPickerContentEmptyProps,
+  EmojiPickerContentLoadingProps,
 } from "../../primitives/EmojiPicker/types";
 import { Emoji } from "../../primitives/internal/Emoji";
 import { classNames } from "../../utils/class-names";
@@ -20,6 +23,33 @@ import { classNames } from "../../utils/class-names";
 interface Props extends ComponentPropsWithoutRef<"div"> {
   onOpenChange?: (open: boolean) => void;
   onEmojiSelect?: (emoji: string) => void;
+}
+
+function EmojiPickerEmpty({
+  className,
+  ...props
+}: EmojiPickerContentEmptyProps) {
+  const $ = useOverrides();
+
+  return (
+    <div className={classNames("lb-emoji-picker-empty", className)} {...props}>
+      {$.EMOJI_PICKER_NO_RESULTS}
+    </div>
+  );
+}
+
+function EmojiPickerLoading({
+  className,
+  ...props
+}: EmojiPickerContentLoadingProps) {
+  return (
+    <div
+      className={classNames("lb-emoji-picker-loading", className)}
+      {...props}
+    >
+      <SpinnerIcon />
+    </div>
+  );
 }
 
 function EmojiPickerCategoryHeader({
@@ -136,6 +166,8 @@ export const EmojiPicker = forwardRef<HTMLDivElement, Props>(
               <EmojiPickerPrimitive.Content
                 className="lb-emoji-picker-content"
                 components={{
+                  Loading: EmojiPickerLoading,
+                  Empty: EmojiPickerEmpty,
                   CategoryHeader: EmojiPickerCategoryHeader,
                   EmojiRow: EmojiPickerEmojiRow,
                   Emoji: EmojiPickerEmoji,
