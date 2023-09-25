@@ -21,7 +21,7 @@ interface Props extends ComponentPropsWithoutRef<"div"> {
 export const QuickEmojiPicker = forwardRef<HTMLDivElement, Props>(
   (
     {
-      emojis = ["👍️", "👎", "❤️", "👀", "✅"],
+      emojis = ["👍", "❤️", "👀", "✅", "💯"],
       onEmojiSelect,
       onOpenChange,
       children,
