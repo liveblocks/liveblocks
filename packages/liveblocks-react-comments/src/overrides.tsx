@@ -16,6 +16,7 @@ export interface GlobalOverrides {
   UNKNOWN_USER: string;
   LIST_REMAINING: (amount: number) => string;
   EMOJI_PICKER_SEARCH_PLACEHOLDER: string;
+  EMOJI_PICKER_NO_RESULTS: string;
 }
 
 export interface CommentOverrides {
@@ -61,6 +62,7 @@ export const defaultOverrides: Overrides = {
   UNKNOWN_USER: "Anonymous",
   LIST_REMAINING: (amount) => `${amount} more`,
   EMOJI_PICKER_SEARCH_PLACEHOLDER: "Search…",
+  EMOJI_PICKER_NO_RESULTS: "No emoji found.",
   COMPOSER_INSERT_MENTION: "Mention someone",
   COMPOSER_PLACEHOLDER: "Write a comment…",
   COMPOSER_SEND: "Send",

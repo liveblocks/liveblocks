@@ -165,6 +165,8 @@ const defaultContentComponents: EmojiPickerContentComponents = {
       <AccessibleEmoji emoji={emoji} />
     </button>
   ),
+  Loading: (props) => <div {...props} />,
+  Empty: (props) => <div {...props} />,
 };
 
 const placeholderRowContext: EmojiPickerContentEmojiRowContext = {
@@ -173,14 +175,11 @@ const placeholderRowContext: EmojiPickerContentEmojiRowContext = {
   categoryRowsCount: 0,
 };
 
-// TODO: Loading
-// TODO: Error
-// TODO: Empty
 const EmojiPickerContent = forwardRef<HTMLDivElement, EmojiPickerContentProps>(
   ({ components, asChild, ...props }, forwardedRef) => {
     const Component = asChild ? Slot : "div";
     const { data, error, isLoading, columns, onEmojiSelect } = useEmojiPicker();
-    const { CategoryHeader, EmojiRow, Emoji } = useMemo(
+    const { Loading, Empty, CategoryHeader, EmojiRow, Emoji } = useMemo(
       () => ({ ...defaultContentComponents, ...components }),
       [components]
     );
@@ -207,16 +206,13 @@ const EmojiPickerContent = forwardRef<HTMLDivElement, EmojiPickerContentProps>(
           </EmojiRow>
         </div>
         {isLoading ? (
-          <div>Loading...</div>
+          <Loading />
         ) : error ? (
           <div>Error</div>
         ) : data.count === 0 ? (
-          <div>Empty</div>
+          <Empty />
         ) : (
           <GroupedVirtuoso
-            // components={{
-            //   EmptyPlaceholder: () => <div>Empty</div>,
-            // }}
             groupCounts={data.categoriesRowCounts}
             groupContent={(index) => {
               return <CategoryHeader category={data.categories[index].name} />;

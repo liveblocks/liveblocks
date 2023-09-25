@@ -42,6 +42,10 @@ export type EmojiPickerData = {
   categoriesRowIndices: number[][];
 };
 
+export type EmojiPickerContentLoadingProps = ComponentPropsWithoutRef<"div">;
+
+export type EmojiPickerContentEmptyProps = ComponentPropsWithoutRef<"div">;
+
 export interface EmojiPickerContentCategoryHeaderProps
   extends ComponentPropsWithoutRef<"div"> {
   /**
@@ -101,6 +105,16 @@ export interface EmojiPickerRootProps extends PropsWithChildren {
 }
 
 export interface EmojiPickerContentComponents {
+  /**
+   * The component displayed when the emoji data is loading.
+   */
+  Loading: ComponentType<EmojiPickerContentLoadingProps>;
+
+  /**
+   * The component displayed when there are no results.
+   */
+  Empty: ComponentType<EmojiPickerContentEmptyProps>;
+
   /**
    * The component used to display category headers.
    */
