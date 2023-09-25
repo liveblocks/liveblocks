@@ -51,9 +51,10 @@ import {
   QuickEmojiPickerTrigger,
 } from "./internal/QuickEmojiPicker";
 import {
+  ShortcutTooltip,
+  ShortcutTooltipKey,
   Tooltip,
   TooltipProvider,
-  TooltipShortcutKey,
 } from "./internal/Tooltip";
 import { User } from "./internal/User";
 
@@ -209,7 +210,11 @@ const CommentReaction = forwardRef<HTMLButtonElement, CommentReactionProps>(
     );
 
     return (
-      <Tooltip content={tooltipContent}>
+      <Tooltip
+        content={tooltipContent}
+        multiline
+        className="lb-comment-reaction-tooltip"
+      >
         <TogglePrimitive.Root
           asChild
           pressed={isActive}
@@ -506,9 +511,9 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
                         <CrossIcon className="lb-button-icon" />
                       </Button>
                     </Tooltip>
-                    <Tooltip
+                    <ShortcutTooltip
                       content={$.COMMENT_EDIT_COMPOSER_SAVE}
-                      shortcut={<TooltipShortcutKey name="enter" />}
+                      shortcut={<ShortcutTooltipKey name="enter" />}
                     >
                       <ComposerPrimitive.Submit asChild>
                         <Button
@@ -520,7 +525,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
                           <CheckIcon className="lb-button-icon" />
                         </Button>
                       </ComposerPrimitive.Submit>
-                    </Tooltip>
+                    </ShortcutTooltip>
                   </>
                 }
                 overrides={{
