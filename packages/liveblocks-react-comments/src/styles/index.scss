@@ -345,7 +345,6 @@
     padding: var(--lb-emoji-picker-padding)
       var(--lb-emoji-picker-offset-padding);
     background: var(--lb-elevation-background);
-    border-block-end: 1px solid var(--lb-elevation-foreground-subtle);
   }
 
   .lb-emoji-picker-category-header-title {
@@ -358,10 +357,6 @@
   .lb-emoji-picker-emoji-row {
     display: flex;
     padding-inline: $lb-emoji-picker-padding;
-
-    &[data-first] {
-      padding-block-start: $lb-emoji-picker-padding;
-    }
 
     &[data-last] {
       padding-block-end: $lb-emoji-picker-padding;
@@ -894,10 +889,21 @@
 // Elevation
 
 .lb-elevation {
+  position: relative;
   overflow: hidden;
   border-radius: var(--lb-radius);
   background: var(--lb-elevation-background);
   box-shadow: var(--lb-elevation-shadow);
+
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    border-radius: inherit;
+    box-shadow: var(--lb-inset-shadow);
+    pointer-events: none;
+  }
 }
 
 // Elevation lists
