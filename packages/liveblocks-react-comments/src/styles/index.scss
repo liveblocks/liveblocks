@@ -378,10 +378,10 @@
   .lb-tooltip {
     display: flex;
     align-items: center;
-    height: calc(
+    min-height: calc(
       #{$lb-tooltip-shortcut-height} + 2 * #{$lb-tooltip-additional-padding}
     );
-    padding-inline: $lb-tooltip-padding;
+    padding-inline: $lb-tooltip-horizontal-padding;
     border-radius: var(--lb-radius);
     background: var(--lb-tooltip-background);
     color: var(--lb-tooltip-foreground);
@@ -389,6 +389,15 @@
     font-size: 0.75rem;
     line-height: 1;
     pointer-events: none;
+  }
+
+  .lb-tooltip\:multiline {
+    justify-content: center;
+    padding-block: calc(
+      #{$lb-tooltip-vertical-padding} * (1 / #{$lb-tooltip-line-height})
+    );
+    line-height: $lb-tooltip-line-height;
+    text-align: center;
   }
 
   .lb-tooltip-shortcut {
@@ -399,15 +408,16 @@
     height: $lb-tooltip-shortcut-height;
     padding-inline: calc(0.25 * var(--lb-spacing));
     border-radius: calc(
-      var(--lb-radius) - 0.75 * #{$lb-tooltip-additional-padding}
+      var(--lb-radius) - 0.625 * #{$lb-tooltip-additional-padding}
     );
     background: var(--lb-tooltip-foreground-subtle);
     color: var(--lb-tooltip-foreground-tertiary);
     font-family: inherit;
+    line-height: 1;
     text-transform: uppercase;
-    margin-inline-start: $lb-tooltip-padding;
+    margin-inline-start: $lb-tooltip-horizontal-padding;
     margin-inline-end: calc(
-      -1 * #{$lb-tooltip-padding} + #{$lb-tooltip-additional-padding}
+      -1 * #{$lb-tooltip-horizontal-padding} + #{$lb-tooltip-additional-padding}
     );
 
     abbr {
@@ -786,6 +796,10 @@
     font-variant-numeric: tabular-nums;
   }
 
+  .lb-comment-reaction-tooltip {
+    max-width: 200px;
+  }
+
   .lb-comment-deleted {
     color: var(--lb-foreground-tertiary);
     font-size: 0.875em;
@@ -842,14 +856,14 @@
   .lb-thread-comment {
     padding-block: calc(0.5 * var(--lb-spacing));
 
-    &.lb-comment\:indent-body {
+    &.lb-comment\:indent-content {
       min-height: calc(var(--lb-comment-avatar-size) + var(--lb-spacing));
     }
 
     &:first-of-type {
       padding-block-start: var(--lb-spacing);
 
-      &.lb-comment\:indent-body {
+      &.lb-comment\:indent-content {
         min-height: calc(
           var(--lb-comment-avatar-size) + 1.5 * var(--lb-spacing)
         );
@@ -863,7 +877,7 @@
         margin-block-end: calc(0.25 * var(--lb-spacing));
       }
 
-      &.lb-comment\:indent-body {
+      &.lb-comment\:indent-content {
         min-height: calc(
           var(--lb-comment-avatar-size) + 1.75 * var(--lb-spacing)
         );

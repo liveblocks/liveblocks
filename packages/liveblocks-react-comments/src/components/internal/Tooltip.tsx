@@ -27,15 +27,19 @@ interface TooltipProps
   extends Pick<TooltipPrimitive.TooltipTriggerProps, "children">,
     Omit<TooltipPrimitive.TooltipContentProps, "content"> {
   content: ReactNode;
+  multiline?: boolean;
+}
+
+interface ShortcutTooltipProps extends TooltipProps {
   shortcut?: ReactNode;
 }
 
-interface TooltipShortcutKeyProps extends ComponentProps<"abbr"> {
+interface ShortcutTooltipKeyProps extends ComponentProps<"abbr"> {
   name: keyof typeof KEYS;
 }
 
 export const Tooltip = forwardRef<HTMLButtonElement, TooltipProps>(
-  ({ children, content, shortcut, className, ...props }, forwardedRef) => {
+  ({ children, content, multiline, className, ...props }, forwardedRef) => {
     return (
       <TooltipPrimitive.Root disableHoverableContent>
         <TooltipPrimitive.Trigger asChild ref={forwardedRef}>
@@ -43,7 +47,11 @@ export const Tooltip = forwardRef<HTMLButtonElement, TooltipProps>(
         </TooltipPrimitive.Trigger>
         <TooltipPrimitive.Portal>
           <TooltipPrimitive.Content
-            className={classNames("lb-root lb-tooltip", className)}
+            className={classNames(
+              "lb-root lb-tooltip",
+              multiline && "lb-tooltip:multiline",
+              className
+            )}
             side="top"
             align="center"
             sideOffset={FLOATING_ELEMENT_SIDE_OFFSET}
@@ -51,7 +59,6 @@ export const Tooltip = forwardRef<HTMLButtonElement, TooltipProps>(
             {...props}
           >
             {content}
-            {shortcut && <kbd className="lb-tooltip-shortcut">{shortcut}</kbd>}
           </TooltipPrimitive.Content>
         </TooltipPrimitive.Portal>
       </TooltipPrimitive.Root>
@@ -59,10 +66,30 @@ export const Tooltip = forwardRef<HTMLButtonElement, TooltipProps>(
   }
 );
 
-export function TooltipShortcutKey({
+export const ShortcutTooltip = forwardRef<
+  HTMLButtonElement,
+  ShortcutTooltipProps
+>(({ children, content, shortcut, ...props }, forwardedRef) => {
+  return (
+    <Tooltip
+      content={
+        <>
+          {content}
+          {shortcut && <kbd className="lb-tooltip-shortcut">{shortcut}</kbd>}
+        </>
+      }
+      {...props}
+      ref={forwardedRef}
+    >
+      {children}
+    </Tooltip>
+  );
+});
+
+export function ShortcutTooltipKey({
   name,
   ...props
-}: TooltipShortcutKeyProps) {
+}: ShortcutTooltipKeyProps) {
   const { title, key } = useMemo(() => KEYS[name]?.(), [name]);
 
   return (
