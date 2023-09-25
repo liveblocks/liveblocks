@@ -12,6 +12,7 @@ export interface LocalizationOverrides {
 }
 
 export interface GlobalOverrides {
+  SELF: string;
   UNKNOWN_USER: string;
   LIST_REMAINING: (amount: number) => string;
   EMOJI_PICKER_SEARCH_PLACEHOLDER: string;
@@ -56,6 +57,7 @@ type OverridesProviderProps = PropsWithChildren<{
 export const defaultOverrides: Overrides = {
   locale: "en",
   dir: "ltr",
+  SELF: "you",
   UNKNOWN_USER: "Anonymous",
   LIST_REMAINING: (amount) => `${amount} more`,
   EMOJI_PICKER_SEARCH_PLACEHOLDER: "Search…",

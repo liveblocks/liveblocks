@@ -174,8 +174,13 @@ const CommentReaction = forwardRef<HTMLButtonElement, CommentReactionProps>(
     const tooltipContent = useMemo(
       () => (
         <List
-          values={reactions.map((reaction) => (
-            <User key={reaction.userId} userId={reaction.userId} />
+          values={reactions.map((reaction, index) => (
+            <User
+              key={reaction.userId}
+              userId={reaction.userId}
+              capitalize={index === 0}
+              replaceSelf
+            />
           ))}
           formatRemaining={$.COMMENT_REACTIONS_REMAINING}
           truncate={REACTIONS_TRUNCATE}
