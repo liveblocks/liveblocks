@@ -45,6 +45,7 @@ import { Avatar } from "./internal/Avatar";
 import { Button } from "./internal/Button";
 import { Dropdown, DropdownItem, DropdownTrigger } from "./internal/Dropdown";
 import { EmojiPicker, EmojiPickerTrigger } from "./internal/EmojiPicker";
+import { List } from "./internal/List";
 import {
   QuickEmojiPicker,
   QuickEmojiPickerTrigger,
@@ -55,6 +56,8 @@ import {
   TooltipShortcutKey,
 } from "./internal/Tooltip";
 import { User } from "./internal/User";
+
+const REACTIONS_TRUNCATE = 5;
 
 export interface CommentProps extends ComponentPropsWithoutRef<"div"> {
   /**
@@ -156,7 +159,6 @@ function CommentLink({
   );
 }
 
-// TODO: Add tooltip with list of users who reacted
 const CommentReaction = forwardRef<HTMLButtonElement, CommentReactionProps>(
   ({ comment, emoji, reactions, className, ...props }, forwardedRef) => {
     const { useAddCommentReaction, useRemoveCommentReaction, useSelf } =
@@ -167,6 +169,19 @@ const CommentReaction = forwardRef<HTMLButtonElement, CommentReactionProps>(
     const isActive = useMemo(() => {
       return reactions.some((reaction) => reaction.userId === self?.id);
     }, [reactions, self?.id]);
+    const $ = useOverrides();
+    const tooltipContent = useMemo(
+      () => (
+        <List
+          values={reactions.map((reaction) => (
+            <User key={reaction.userId} userId={reaction.userId} />
+          ))}
+          formatRemaining={$.COMMENT_REACTIONS_REMAINING}
+          truncate={REACTIONS_TRUNCATE}
+        />
+      ),
+      [$.COMMENT_REACTIONS_REMAINING, reactions]
+    );
 
     const handlePressedChange = useCallback(
       (isPressed: boolean) => {
@@ -194,23 +209,27 @@ const CommentReaction = forwardRef<HTMLButtonElement, CommentReactionProps>(
     );
 
     return (
-      <TogglePrimitive.Root
-        asChild
-        pressed={isActive}
-        onPressedChange={handlePressedChange}
-        ref={forwardedRef}
-      >
-        <Button
-          className={classNames("lb-comment-reaction", className)}
-          variant="outline"
-          aria-label="TODO:"
-          data-self={isActive ? "" : undefined}
-          {...props}
+      <Tooltip content={tooltipContent}>
+        <TogglePrimitive.Root
+          asChild
+          pressed={isActive}
+          onPressedChange={handlePressedChange}
+          ref={forwardedRef}
         >
-          <Emoji className="lb-comment-reaction-emoji" emoji={emoji} />
-          <span className="lb-comment-reaction-count">{reactions.length}</span>
-        </Button>
-      </TogglePrimitive.Root>
+          <Button
+            className={classNames("lb-comment-reaction", className)}
+            variant="outline"
+            aria-label="TODO:"
+            data-self={isActive ? "" : undefined}
+            {...props}
+          >
+            <Emoji className="lb-comment-reaction-emoji" emoji={emoji} />
+            <span className="lb-comment-reaction-count">
+              {reactions.length}
+            </span>
+          </Button>
+        </TogglePrimitive.Root>
+      </Tooltip>
     );
   }
 );

@@ -119,7 +119,10 @@ export const EmojiPicker = forwardRef<HTMLDivElement, Props>(
             {...props}
             ref={forwardedRef}
           >
-            <EmojiPickerPrimitive.Root onEmojiSelect={handleEmojiSelect}>
+            <EmojiPickerPrimitive.Root
+              onEmojiSelect={handleEmojiSelect}
+              locale={$.locale}
+            >
               <div className="lb-emoji-picker-header">
                 <div className="lb-emoji-picker-search-container">
                   <EmojiPickerPrimitive.Search
