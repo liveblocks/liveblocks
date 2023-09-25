@@ -13,6 +13,7 @@ export interface LocalizationOverrides {
 
 export interface GlobalOverrides {
   UNKNOWN_USER: string;
+  LIST_REMAINING: (amount: number) => string;
   EMOJI_PICKER_SEARCH_PLACEHOLDER: string;
 }
 
@@ -26,6 +27,7 @@ export interface CommentOverrides {
   COMMENT_EDIT_COMPOSER_SAVE: string;
   COMMENT_DELETE: string;
   COMMENT_ADD_REACTION: string;
+  COMMENT_REACTIONS_REMAINING: (others: number) => string;
 }
 
 export interface ComposerOverrides {
@@ -55,7 +57,8 @@ export const defaultOverrides: Overrides = {
   locale: "en",
   dir: "ltr",
   UNKNOWN_USER: "Anonymous",
-  EMOJI_PICKER_SEARCH_PLACEHOLDER: "Search emoji…",
+  LIST_REMAINING: (amount) => `${amount} more`,
+  EMOJI_PICKER_SEARCH_PLACEHOLDER: "Search…",
   COMPOSER_INSERT_MENTION: "Mention someone",
   COMPOSER_PLACEHOLDER: "Write a comment…",
   COMPOSER_SEND: "Send",
@@ -68,6 +71,8 @@ export const defaultOverrides: Overrides = {
   COMMENT_EDIT_COMPOSER_SAVE: "Save",
   COMMENT_DELETE: "Delete comment",
   COMMENT_ADD_REACTION: "Add reaction",
+  COMMENT_REACTIONS_REMAINING: (others) =>
+    `${others} other${others > 1 ? "s" : ""}`,
   THREAD_RESOLVE: "Resolve thread",
   THREAD_UNRESOLVE: "Re-open thread",
   THREAD_COMPOSER_PLACEHOLDER: "Reply to thread…",
