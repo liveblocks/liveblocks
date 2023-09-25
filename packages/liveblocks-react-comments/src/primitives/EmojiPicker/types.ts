@@ -8,9 +8,9 @@ import type { ComponentPropsWithSlot } from "../../types";
 
 export type Emoji = {
   emoji: string;
-  hexcode: string;
   category: number;
   name: string;
+  version: number;
   tags?: string[];
 };
 
@@ -93,6 +93,11 @@ export interface EmojiPickerRootProps extends PropsWithChildren {
    * TODO: JSDoc
    */
   onEmojiSelect?: (emoji: string) => void;
+
+  /**
+   * JSDoc
+   */
+  locale?: string;
 }
 
 export interface EmojiPickerContentComponents {
