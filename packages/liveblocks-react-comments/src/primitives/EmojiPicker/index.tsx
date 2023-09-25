@@ -12,7 +12,10 @@ import React, {
 } from "react";
 import { GroupedVirtuoso } from "react-virtuoso";
 
-import { requestIdleCallback } from "../../utils/request-idle-callback";
+import {
+  cancelIdleCallback,
+  requestIdleCallback,
+} from "../../utils/request-idle-callback";
 import { useTransition } from "../../utils/use-transition";
 import { Emoji as AccessibleEmoji } from "../internal/Emoji";
 import { EmojiPickerContext, useEmojiPicker } from "./contexts";
