@@ -186,21 +186,6 @@ const EmojiPickerContent = forwardRef<HTMLDivElement, EmojiPickerContentProps>(
       [columns]
     );
 
-    // TODO: Handle loading
-    if (isLoading) {
-      return null;
-    }
-
-    // TODO: Handle errors
-    if (error) {
-      return null;
-    }
-
-    // // TODO: Handle empty
-    // if (data.count === 0) {
-    //   return null;
-    // }
-
     return (
       <Component {...props} ref={forwardedRef}>
         {/* Virtualized rows are absolutely positioned so they won't make
@@ -218,35 +203,43 @@ const EmojiPickerContent = forwardRef<HTMLDivElement, EmojiPickerContentProps>(
             ))}
           </EmojiRow>
         </div>
-        <GroupedVirtuoso
-          // components={{
-          //   EmptyPlaceholder: () => <div>Empty</div>,
-          // }}
-          groupCounts={data.categoriesRowCounts}
-          groupContent={(index) => {
-            return <CategoryHeader category={data.categories[index].name} />;
-          }}
-          itemContent={(index, groupIndex) => {
-            return (
-              <EmojiRow
-                context={{
-                  rowIndex: index,
-                  categoryRowIndex:
-                    data.categoriesRowIndices[groupIndex].indexOf(index),
-                  categoryRowsCount: data.categoriesRowCounts[groupIndex],
-                }}
-              >
-                {data.rows[index].emojis.map((emoji) => (
-                  <Emoji
-                    key={emoji.emoji}
-                    onClick={() => onEmojiSelect?.(emoji.emoji)}
-                    emoji={emoji.emoji}
-                  />
-                ))}
-              </EmojiRow>
-            );
-          }}
-        />
+        {isLoading ? (
+          <div>Loading...</div>
+        ) : error ? (
+          <div>Error</div>
+        ) : data.count === 0 ? (
+          <div>Empty</div>
+        ) : (
+          <GroupedVirtuoso
+            // components={{
+            //   EmptyPlaceholder: () => <div>Empty</div>,
+            // }}
+            groupCounts={data.categoriesRowCounts}
+            groupContent={(index) => {
+              return <CategoryHeader category={data.categories[index].name} />;
+            }}
+            itemContent={(index, groupIndex) => {
+              return (
+                <EmojiRow
+                  context={{
+                    rowIndex: index,
+                    categoryRowIndex:
+                      data.categoriesRowIndices[groupIndex].indexOf(index),
+                    categoryRowsCount: data.categoriesRowCounts[groupIndex],
+                  }}
+                >
+                  {data.rows[index].emojis.map((emoji) => (
+                    <Emoji
+                      key={emoji.emoji}
+                      onClick={() => onEmojiSelect?.(emoji.emoji)}
+                      emoji={emoji.emoji}
+                    />
+                  ))}
+                </EmojiRow>
+              );
+            }}
+          />
+        )}
       </Component>
     );
   }
