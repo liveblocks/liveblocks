@@ -7,6 +7,9 @@
 ### `@liveblocks/react-comments`
 
 - Add support for reactions. (👍)
+- **Breaking (beta):** `Comment`’s `indentBody` and `Thread`’s
+  `indentCommentBody` were renamed to `indentContent` and `indentCommentContent`
+  respectively. `Thread`’s `onResolveChange` was renamed to `onResolvedChange`.
 
 # v1.3.6
 
