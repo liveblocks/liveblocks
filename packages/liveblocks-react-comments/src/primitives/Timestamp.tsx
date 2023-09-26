@@ -38,7 +38,7 @@ export interface TimestampProps
   interval?: number | false;
 
   /**
-   * Optionally provide a locale to the formatting functions.
+   * The locale used when formatting the date.
    */
   locale?: string;
 }
