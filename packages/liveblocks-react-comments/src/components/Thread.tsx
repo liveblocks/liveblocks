@@ -60,7 +60,7 @@ export interface ThreadProps extends ComponentPropsWithoutRef<"div"> {
   /**
    * The event handler called when changing the resolved status.
    */
-  onResolveChange?: (resolved: boolean) => void;
+  onResolvedChange?: (resolved: boolean) => void;
 
   /**
    * The event handler called when a comment is edited.
@@ -109,7 +109,7 @@ export const Thread = forwardRef<HTMLDivElement, ThreadProps>(
       showResolveAction = true,
       showReactions = true,
       showComposer = "collapsed",
-      onResolveChange,
+      onResolvedChange,
       onCommentEdit,
       onCommentDelete,
       onAuthorClick,
@@ -135,11 +135,11 @@ export const Thread = forwardRef<HTMLDivElement, ThreadProps>(
 
     const handleResolvedChange = useCallback(
       (resolved: boolean) => {
-        onResolveChange?.(resolved);
+        onResolvedChange?.(resolved);
 
         editThreadMetadata({ threadId: thread.id, metadata: { resolved } });
       },
-      [editThreadMetadata, onResolveChange, thread.id]
+      [editThreadMetadata, onResolvedChange, thread.id]
     );
 
     return (
