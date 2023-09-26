@@ -54,19 +54,19 @@ export interface EmojiPickerContentCategoryHeaderProps
   category: string;
 }
 
-export type EmojiPickerContentEmojiRowContext = {
+export type EmojiPickerContentEmojiRowAttributes = {
   /**
-   * TODO: JSDoc
+   * The current row's index.
    */
   rowIndex: number;
 
   /**
-   * TODO: JSDoc
+   * The current row's index within the current category.
    */
   categoryRowIndex: number;
 
   /**
-   * TODO: JSDoc
+   * The number of rows within the current category.
    */
   categoryRowsCount: number;
 };
@@ -74,32 +74,32 @@ export type EmojiPickerContentEmojiRowContext = {
 export interface EmojiPickerContentEmojiRowProps
   extends ComponentPropsWithoutRef<"div"> {
   /**
-   * TODO: JSDoc
+   * Attributes related to the current row.
    */
-  context: EmojiPickerContentEmojiRowContext;
+  attributes: EmojiPickerContentEmojiRowAttributes;
 }
 
 export interface EmojiPickerContentEmojiProps
   extends ComponentPropsWithoutRef<"button"> {
   /**
-   * TODO: JSDoc
+   * The emoji to be displayed.
    */
   emoji: string;
 }
 
 export interface EmojiPickerRootProps extends PropsWithChildren {
   /**
-   * TODO: JSDoc
+   * The number of emojis per row.
    */
   columns?: number;
 
   /**
-   * TODO: JSDoc
+   * The event handler called when an emoji is selected.
    */
   onEmojiSelect?: (emoji: string) => void;
 
   /**
-   * JSDoc
+   * The locale used when getting emoji data.
    */
   locale?: string;
 }

@@ -68,18 +68,18 @@ function EmojiPickerCategoryHeader({
 }
 
 function EmojiPickerEmojiRow({
-  context,
+  attributes,
   children,
   className,
   ...props
 }: EmojiPickerContentEmojiRowProps) {
   const isFirstRow = useMemo(
-    () => context.categoryRowIndex === 0,
-    [context.categoryRowIndex]
+    () => attributes.categoryRowIndex === 0,
+    [attributes.categoryRowIndex]
   );
   const isLastRow = useMemo(
-    () => context.categoryRowIndex === context.categoryRowsCount - 1,
-    [context.categoryRowIndex, context.categoryRowsCount]
+    () => attributes.categoryRowIndex === attributes.categoryRowsCount - 1,
+    [attributes.categoryRowIndex, attributes.categoryRowsCount]
   );
 
   return (

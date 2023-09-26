@@ -520,12 +520,24 @@ type RoomContextBundleShared<
   useDeleteComment(): (options: DeleteCommentOptions) => void;
 
   /**
-   * TODO: JSDoc
+   * @beta
+   *
+   * Returns a function that adds a reaction to a comment.
+   *
+   * @example
+   * const addCommentReaction = useAddCommentReaction();
+   * addCommentReaction({ threadId: "th_xxx", commentId: "cm_xxx", emoji: "👍" })
    */
   useAddCommentReaction(): (options: CommentReactionOptions) => void;
 
   /**
-   * TODO: JSDoc
+   * @beta
+   *
+   * Returns a function that removes a reaction to a comment.
+   *
+   * @example
+   * const removeCommentReaction = useRemoveCommentReaction();
+   * removeCommentReaction({ threadId: "th_xxx", commentId: "cm_xxx", emoji: "👍" })
    */
   useRemoveCommentReaction(): (options: CommentReactionOptions) => void;
 };

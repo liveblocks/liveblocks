@@ -370,7 +370,7 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
           body,
         },
       ],
-    } as ThreadData<TThreadMetadata>; // TODO: Figure out metadata typing
+    } as ThreadData<TThreadMetadata>;
 
     mutate(room.createThread({ threadId, commentId, body, metadata }), {
       optimisticData: [...threads, newThread],
