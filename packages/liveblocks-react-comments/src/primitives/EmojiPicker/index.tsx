@@ -22,7 +22,7 @@ import { EmojiPickerContext, useEmojiPicker } from "./contexts";
 import type {
   EmojiData,
   EmojiPickerContentComponents,
-  EmojiPickerContentEmojiRowContext,
+  EmojiPickerContentEmojiRowAttributes,
   EmojiPickerContentProps,
   EmojiPickerData,
   EmojiPickerRootProps,
@@ -157,7 +157,7 @@ const EmojiPickerSearch = forwardRef<HTMLInputElement, EmojiPickerSearchProps>(
 const defaultContentComponents: EmojiPickerContentComponents = {
   CategoryHeader: ({ category, ...props }) => <div {...props}>{category}</div>,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  EmojiRow: ({ children, context, ...props }) => (
+  EmojiRow: ({ children, attributes, ...props }) => (
     <div {...props}>{children}</div>
   ),
   Emoji: ({ emoji, ...props }) => (
@@ -169,7 +169,7 @@ const defaultContentComponents: EmojiPickerContentComponents = {
   Empty: (props) => <div {...props} />,
 };
 
-const placeholderRowContext: EmojiPickerContentEmojiRowContext = {
+const placeholderRowAttributes: EmojiPickerContentEmojiRowAttributes = {
   rowIndex: -1,
   categoryRowIndex: -1,
   categoryRowsCount: 0,
@@ -199,7 +199,7 @@ const EmojiPickerContent = forwardRef<HTMLDivElement, EmojiPickerContentProps>(
             height: 0,
           }}
         >
-          <EmojiRow context={placeholderRowContext}>
+          <EmojiRow attributes={placeholderRowAttributes}>
             {placeholderColumns.map((placeholder, index) => (
               <Emoji emoji={placeholder} key={index} />
             ))}
@@ -220,7 +220,7 @@ const EmojiPickerContent = forwardRef<HTMLDivElement, EmojiPickerContentProps>(
             itemContent={(index, groupIndex) => {
               return (
                 <EmojiRow
-                  context={{
+                  attributes={{
                     rowIndex: index,
                     categoryRowIndex:
                       data.categoriesRowIndices[groupIndex].indexOf(index),
