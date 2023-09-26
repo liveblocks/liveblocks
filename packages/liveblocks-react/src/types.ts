@@ -533,7 +533,7 @@ type RoomContextBundleShared<
   /**
    * @beta
    *
-   * Returns a function that removes a reaction to a comment.
+   * Returns a function that removes a reaction on a comment.
    *
    * @example
    * const removeCommentReaction = useRemoveCommentReaction();
