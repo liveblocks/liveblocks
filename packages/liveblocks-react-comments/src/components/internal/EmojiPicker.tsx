@@ -15,6 +15,7 @@ import type {
   EmojiPickerContentEmojiProps,
   EmojiPickerContentEmojiRowProps,
   EmojiPickerContentEmptyProps,
+  EmojiPickerContentErrorProps,
   EmojiPickerContentLoadingProps,
 } from "../../primitives/EmojiPicker/types";
 import { Emoji } from "../../primitives/internal/Emoji";
@@ -23,19 +24,6 @@ import { classNames } from "../../utils/class-names";
 interface Props extends ComponentPropsWithoutRef<"div"> {
   onOpenChange?: (open: boolean) => void;
   onEmojiSelect?: (emoji: string) => void;
-}
-
-function EmojiPickerEmpty({
-  className,
-  ...props
-}: EmojiPickerContentEmptyProps) {
-  const $ = useOverrides();
-
-  return (
-    <div className={classNames("lb-emoji-picker-empty", className)} {...props}>
-      {$.EMOJI_PICKER_NO_RESULTS}
-    </div>
-  );
 }
 
 function EmojiPickerLoading({
@@ -48,6 +36,33 @@ function EmojiPickerLoading({
       {...props}
     >
       <SpinnerIcon />
+    </div>
+  );
+}
+
+function EmojiPickerEmpty({
+  className,
+  ...props
+}: EmojiPickerContentEmptyProps) {
+  const $ = useOverrides();
+
+  return (
+    <div className={classNames("lb-emoji-picker-empty", className)} {...props}>
+      {$.EMOJI_PICKER_EMPTY}
+    </div>
+  );
+}
+
+function EmojiPickerError({
+  error,
+  className,
+  ...props
+}: EmojiPickerContentErrorProps) {
+  const $ = useOverrides();
+
+  return (
+    <div className={classNames("lb-emoji-picker-error", className)} {...props}>
+      {$.EMOJI_PICKER_ERROR(error)}
     </div>
   );
 }
@@ -168,6 +183,7 @@ export const EmojiPicker = forwardRef<HTMLDivElement, Props>(
                 components={{
                   Loading: EmojiPickerLoading,
                   Empty: EmojiPickerEmpty,
+                  Error: EmojiPickerError,
                   CategoryHeader: EmojiPickerCategoryHeader,
                   EmojiRow: EmojiPickerEmojiRow,
                   Emoji: EmojiPickerEmoji,

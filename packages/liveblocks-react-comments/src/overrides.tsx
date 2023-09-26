@@ -17,12 +17,13 @@ export interface GlobalOverrides {
   UNKNOWN_USER: string;
   LIST_REMAINING: (count: number) => string;
   EMOJI_PICKER_SEARCH_PLACEHOLDER: string;
-  EMOJI_PICKER_NO_RESULTS: string;
+  EMOJI_PICKER_EMPTY: ReactNode;
+  EMOJI_PICKER_ERROR: (error: Error) => ReactNode;
 }
 
 export interface CommentOverrides {
-  COMMENT_EDITED: string;
-  COMMENT_DELETED: string;
+  COMMENT_EDITED: ReactNode;
+  COMMENT_DELETED: ReactNode;
   COMMENT_MORE: string;
   COMMENT_EDIT: string;
   COMMENT_EDIT_COMPOSER_PLACEHOLDER: string;
@@ -69,7 +70,9 @@ export const defaultOverrides: Overrides = {
   UNKNOWN_USER: "Anonymous",
   LIST_REMAINING: (count) => `${count} more`,
   EMOJI_PICKER_SEARCH_PLACEHOLDER: "Search…",
-  EMOJI_PICKER_NO_RESULTS: "No emoji found.",
+  EMOJI_PICKER_EMPTY: "No emoji found.",
+  EMOJI_PICKER_ERROR: () =>
+    "There was an error while getting the list of emoji.",
   COMPOSER_INSERT_MENTION: "Mention someone",
   COMPOSER_PLACEHOLDER: "Write a comment…",
   COMPOSER_SEND: "Send",

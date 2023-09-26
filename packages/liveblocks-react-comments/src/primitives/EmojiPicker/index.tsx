@@ -167,6 +167,8 @@ const defaultContentComponents: EmojiPickerContentComponents = {
   ),
   Loading: (props) => <div {...props} />,
   Empty: (props) => <div {...props} />,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  Error: ({ error, ...props }) => <div {...props} />,
 };
 
 const placeholderRowAttributes: EmojiPickerContentEmojiRowAttributes = {
@@ -179,7 +181,7 @@ const EmojiPickerContent = forwardRef<HTMLDivElement, EmojiPickerContentProps>(
   ({ components, asChild, ...props }, forwardedRef) => {
     const Component = asChild ? Slot : "div";
     const { data, error, isLoading, columns, onEmojiSelect } = useEmojiPicker();
-    const { Loading, Empty, CategoryHeader, EmojiRow, Emoji } = useMemo(
+    const { Loading, Empty, Error, CategoryHeader, EmojiRow, Emoji } = useMemo(
       () => ({ ...defaultContentComponents, ...components }),
       [components]
     );
@@ -208,7 +210,7 @@ const EmojiPickerContent = forwardRef<HTMLDivElement, EmojiPickerContentProps>(
         {isLoading ? (
           <Loading />
         ) : error ? (
-          <div>Error</div>
+          <Error error={error} />
         ) : data.count === 0 ? (
           <Empty />
         ) : (
