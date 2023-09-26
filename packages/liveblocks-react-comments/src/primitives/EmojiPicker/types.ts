@@ -46,6 +46,14 @@ export type EmojiPickerContentLoadingProps = ComponentPropsWithoutRef<"div">;
 
 export type EmojiPickerContentEmptyProps = ComponentPropsWithoutRef<"div">;
 
+export interface EmojiPickerContentErrorProps
+  extends ComponentPropsWithoutRef<"div"> {
+  /**
+   * The error.
+   */
+  error: Error;
+}
+
 export interface EmojiPickerContentCategoryHeaderProps
   extends ComponentPropsWithoutRef<"div"> {
   /**
@@ -114,6 +122,11 @@ export interface EmojiPickerContentComponents {
    * The component displayed when there are no results.
    */
   Empty: ComponentType<EmojiPickerContentEmptyProps>;
+
+  /**
+   * The component displayed when there was an error while getting the emoji data.
+   */
+  Error: ComponentType<EmojiPickerContentErrorProps>;
 
   /**
    * The component used to display category headers.

@@ -343,7 +343,8 @@
   }
 
   .lb-emoji-picker-loading,
-  .lb-emoji-picker-empty {
+  .lb-emoji-picker-empty,
+  .lb-emoji-picker-error {
     position: absolute;
     inset: 0;
     display: flex;
@@ -355,9 +356,13 @@
     color: var(--lb-elevation-foreground-moderate);
   }
 
-  .lb-emoji-picker-empty {
+  .lb-emoji-picker-empty,
+  .lb-emoji-picker-error {
+    padding: var(--lb-spacing);
     color: var(--lb-elevation-foreground-tertiary);
     font-size: 0.875em;
+    text-align: center;
+    text-wrap: balance;
   }
 
   .lb-emoji-picker-category-header {
