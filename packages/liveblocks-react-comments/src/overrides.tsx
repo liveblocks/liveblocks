@@ -1,9 +1,10 @@
 "use client";
 
-import type { PropsWithChildren } from "react";
+import type { PropsWithChildren, ReactNode } from "react";
 import { createContext, useContext, useMemo } from "react";
 import * as React from "react";
 
+import { Emoji } from "./primitives/internal/Emoji";
 import type { Direction } from "./types";
 
 export interface LocalizationOverrides {
@@ -14,7 +15,7 @@ export interface LocalizationOverrides {
 export interface GlobalOverrides {
   SELF: string;
   UNKNOWN_USER: string;
-  LIST_REMAINING: (amount: number) => string;
+  LIST_REMAINING: (count: number) => string;
   EMOJI_PICKER_SEARCH_PLACEHOLDER: string;
   EMOJI_PICKER_NO_RESULTS: string;
 }
@@ -30,7 +31,12 @@ export interface CommentOverrides {
   COMMENT_DELETE: string;
   COMMENT_ADD_REACTION: string;
   COMMENT_REACTION_REMAINING: (others: number) => string;
-  COMMENT_REACTION_DESCRIPTION: (emoji: string, reactions: number) => string;
+  COMMENT_REACTION_TOOLTIP: (
+    emoji: string,
+    list: ReactNode,
+    count: number
+  ) => ReactNode;
+  COMMENT_REACTION_DESCRIPTION: (emoji: string, count: number) => string;
 }
 
 export interface ComposerOverrides {
@@ -61,7 +67,7 @@ export const defaultOverrides: Overrides = {
   dir: "ltr",
   SELF: "you",
   UNKNOWN_USER: "Anonymous",
-  LIST_REMAINING: (amount) => `${amount} more`,
+  LIST_REMAINING: (count) => `${count} more`,
   EMOJI_PICKER_SEARCH_PLACEHOLDER: "Search…",
   EMOJI_PICKER_NO_RESULTS: "No emoji found.",
   COMPOSER_INSERT_MENTION: "Mention someone",
@@ -76,10 +82,15 @@ export const defaultOverrides: Overrides = {
   COMMENT_EDIT_COMPOSER_SAVE: "Save",
   COMMENT_DELETE: "Delete comment",
   COMMENT_ADD_REACTION: "Add reaction",
+  COMMENT_REACTION_TOOLTIP: (emoji, list) => (
+    <>
+      {list} reacted with <Emoji emoji={emoji} />
+    </>
+  ),
   COMMENT_REACTION_REMAINING: (others) =>
     `${others} other${others > 1 ? "s" : ""}`,
-  COMMENT_REACTION_DESCRIPTION: (emoji, reactions) =>
-    `${reactions} reaction${reactions > 1 ? "s" : ""}, react with ${emoji}`,
+  COMMENT_REACTION_DESCRIPTION: (emoji, count) =>
+    `${count} reaction${count > 1 ? "s" : ""}, react with ${emoji}`,
   THREAD_RESOLVE: "Resolve thread",
   THREAD_UNRESOLVE: "Re-open thread",
   THREAD_COMPOSER_PLACEHOLDER: "Reply to thread…",
