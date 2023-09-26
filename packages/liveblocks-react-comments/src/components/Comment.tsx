@@ -182,11 +182,11 @@ const CommentReaction = forwardRef<HTMLButtonElement, CommentReactionProps>(
               replaceSelf
             />
           ))}
-          formatRemaining={$.COMMENT_REACTIONS_REMAINING}
+          formatRemaining={$.COMMENT_REACTION_REMAINING}
           truncate={REACTIONS_TRUNCATE}
         />
       ),
-      [$.COMMENT_REACTIONS_REMAINING, reactions]
+      [$.COMMENT_REACTION_REMAINING, reactions]
     );
 
     const handlePressedChange = useCallback(
@@ -229,7 +229,7 @@ const CommentReaction = forwardRef<HTMLButtonElement, CommentReactionProps>(
           <Button
             className={classNames("lb-comment-reaction", className)}
             variant="outline"
-            aria-label="TODO:"
+            aria-label={$.COMMENT_REACTION_DESCRIPTION(emoji, reactions.length)}
             data-self={isActive ? "" : undefined}
             {...props}
           >

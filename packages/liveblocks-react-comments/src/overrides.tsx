@@ -29,7 +29,8 @@ export interface CommentOverrides {
   COMMENT_EDIT_COMPOSER_SAVE: string;
   COMMENT_DELETE: string;
   COMMENT_ADD_REACTION: string;
-  COMMENT_REACTIONS_REMAINING: (others: number) => string;
+  COMMENT_REACTION_REMAINING: (others: number) => string;
+  COMMENT_REACTION_DESCRIPTION: (emoji: string, reactions: number) => string;
 }
 
 export interface ComposerOverrides {
@@ -75,8 +76,10 @@ export const defaultOverrides: Overrides = {
   COMMENT_EDIT_COMPOSER_SAVE: "Save",
   COMMENT_DELETE: "Delete comment",
   COMMENT_ADD_REACTION: "Add reaction",
-  COMMENT_REACTIONS_REMAINING: (others) =>
+  COMMENT_REACTION_REMAINING: (others) =>
     `${others} other${others > 1 ? "s" : ""}`,
+  COMMENT_REACTION_DESCRIPTION: (emoji, reactions) =>
+    `${reactions} reaction${reactions > 1 ? "s" : ""}, react with ${emoji}`,
   THREAD_RESOLVE: "Resolve thread",
   THREAD_UNRESOLVE: "Re-open thread",
   THREAD_COMPOSER_PLACEHOLDER: "Reply to thread…",
