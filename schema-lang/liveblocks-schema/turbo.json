@@ -10,11 +10,7 @@
     "build:parser": {
       "dependsOn": ["build:ast"],
       "outputs": ["src/parser/generated-parser.ts"],
-      "inputs": [
-        "bin/build-parser",
-        "pegconfig.json",
-        "src/parser/schema-lang.pegjs"
-      ]
+      "inputs": ["pegconfig.json", "src/parser/schema-lang.pegjs"]
     },
     "build": {
       "dependsOn": ["build:ast", "build:parser"],
