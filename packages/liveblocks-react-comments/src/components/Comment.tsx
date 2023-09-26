@@ -173,20 +173,26 @@ const CommentReaction = forwardRef<HTMLButtonElement, CommentReactionProps>(
     const $ = useOverrides();
     const tooltipContent = useMemo(
       () => (
-        <List
-          values={reactions.map((reaction, index) => (
-            <User
-              key={reaction.userId}
-              userId={reaction.userId}
-              capitalize={index === 0}
-              replaceSelf
-            />
-          ))}
-          formatRemaining={$.COMMENT_REACTION_REMAINING}
-          truncate={REACTIONS_TRUNCATE}
-        />
+        <span>
+          {$.COMMENT_REACTION_TOOLTIP(
+            emoji,
+            <List
+              values={reactions.map((reaction, index) => (
+                <User
+                  key={reaction.userId}
+                  userId={reaction.userId}
+                  capitalize={index === 0}
+                  replaceSelf
+                />
+              ))}
+              formatRemaining={$.COMMENT_REACTION_REMAINING}
+              truncate={REACTIONS_TRUNCATE}
+            />,
+            reactions.length
+          )}
+        </span>
       ),
-      [$.COMMENT_REACTION_REMAINING, reactions]
+      [$, emoji, reactions]
     );
 
     const handlePressedChange = useCallback(
