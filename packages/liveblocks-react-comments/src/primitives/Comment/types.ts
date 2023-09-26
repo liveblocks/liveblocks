@@ -5,7 +5,7 @@ import type { ComponentPropsWithSlot } from "../../types";
 
 export type CommentMentionProps = ComponentPropsWithSlot<"span">;
 
-export type CommentRenderMentionProps = {
+export type CommentBodyMentionProps = {
   /**
    * The mention's user ID.
    */
@@ -14,7 +14,7 @@ export type CommentRenderMentionProps = {
 
 export type CommentLinkProps = ComponentPropsWithSlot<"a">;
 
-export interface CommentRenderLinkProps {
+export interface CommentBodyLinkProps {
   /**
    * The link's absolute URL.
    *
@@ -30,6 +30,18 @@ export interface CommentRenderLinkProps {
   children: ReactNode;
 }
 
+export interface CommentBodyComponents {
+  /**
+   * The component used to display mentions.
+   */
+  Mention: ComponentType<CommentBodyMentionProps>;
+
+  /**
+   * The component used to display links.
+   */
+  Link: ComponentType<CommentBodyLinkProps>;
+}
+
 export interface CommentBodyProps
   extends Omit<ComponentPropsWithSlot<"div">, "children"> {
   /**
@@ -39,12 +51,7 @@ export interface CommentBodyProps
   body?: CommentBody;
 
   /**
-   * The component used to render mentions.
+   * The components displayed within the comment body.
    */
-  renderMention?: ComponentType<CommentRenderMentionProps>;
-
-  /**
-   * The component used to render links.
-   */
-  renderLink?: ComponentType<CommentRenderLinkProps>;
+  components?: Partial<CommentBodyComponents>;
 }

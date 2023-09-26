@@ -605,6 +605,7 @@ describe("room", () => {
         serverMessage({
           type: ServerMsgCode.ROOM_STATE,
           actor: 2,
+          nonce: "nonce-for-actor-2",
           scopes: ["room:write"],
           users: {
             "1": { scopes: ["room:write"] },
@@ -648,6 +649,7 @@ describe("room", () => {
         serverMessage({
           type: ServerMsgCode.ROOM_STATE,
           actor: 2,
+          nonce: "nonce-for-actor-2",
           scopes: ["room:write"],
           users: {
             "1": { scopes: ["room:read"] },
@@ -692,6 +694,7 @@ describe("room", () => {
         serverMessage({
           type: ServerMsgCode.ROOM_STATE,
           actor: 2,
+          nonce: "nonce-for-actor-2",
           scopes: ["room:write"],
           users: {
             "1": { scopes: ["room:write"] },
@@ -770,6 +773,7 @@ describe("room", () => {
         serverMessage({
           type: ServerMsgCode.ROOM_STATE,
           actor: 3,
+          nonce: "nonce-for-actor-3",
           scopes: ["room:write"],
           users: {
             "1": { scopes: ["room:write"] },
@@ -827,6 +831,7 @@ describe("room", () => {
       serverMessage({
         type: ServerMsgCode.ROOM_STATE,
         actor: 2,
+        nonce: "nonce-for-actor-2",
         scopes: ["room:write"],
         users: {
           "1": { scopes: ["room:write"] },
@@ -1498,6 +1503,7 @@ describe("room", () => {
         serverMessage({
           type: ServerMsgCode.ROOM_STATE,
           actor: 2,
+          nonce: "nonce-for-actor-2",
           scopes: ["room:write"],
           users: { 1: { scopes: ["room:write"] } },
         })
@@ -2228,6 +2234,7 @@ describe("room", () => {
           serverMessage({
             type: ServerMsgCode.ROOM_STATE,
             actor: 1,
+            nonce: "nonce-for-actor-1",
             scopes: ["room:write"],
             users: {},
           })
@@ -2252,6 +2259,7 @@ describe("room", () => {
           serverMessage({
             type: ServerMsgCode.ROOM_STATE,
             actor: 1,
+            nonce: "nonce-for-actor-1",
             scopes: ["room:write"],
             users: {},
           })
@@ -2287,6 +2295,7 @@ describe("room", () => {
           serverMessage({
             type: ServerMsgCode.ROOM_STATE,
             actor: 2,
+            nonce: "nonce-for-actor-2",
             scopes: ["room:write"],
             users: { "1": { id: undefined, scopes: ["room:write"] } },
           })

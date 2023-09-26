@@ -1,9 +1,9 @@
 import type { ComponentProps } from "react";
 import React from "react";
 
-import { classNames } from "../utils/class-names";
+import { classNames } from "../../utils/class-names";
 
-export function ResolveIcon({ className, ...props }: ComponentProps<"svg">) {
+export function Icon({ children, className, ...props }: ComponentProps<"svg">) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -19,8 +19,7 @@ export function ResolveIcon({ className, ...props }: ComponentProps<"svg">) {
       className={classNames("lb-icon", className)}
       {...props}
     >
-      <circle cx={10} cy={10} r={7} />
-      <path d="m13 8-4 4-2-2" />
+      {children}
     </svg>
   );
 }

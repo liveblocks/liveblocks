@@ -36,9 +36,9 @@
     "yjs": "^13.6.7"
   },
   "devDependencies": {
-    "@types/node": "20.6.0",
-    "@types/react": "18.2.21",
-    "@types/react-dom": "18.2.7",
+    "@types/node": "^18.11.13",
+    "@types/react": "^18.0.26",
+    "@types/react-dom": "^18.0.9",
     "@types/webextension-polyfill": "^0.10.0",
     "autoprefixer": "^10.4.13",
     "eslint-plugin-react-hooks": "^4.6.0",

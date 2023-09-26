@@ -478,7 +478,7 @@ type RoomContextBundleShared<
    *
    * @example
    * const editThreadMetadata = useEditThreadMetadata();
-   * editThreadMetadata({ threadId: "th_xxx", metadata: {} } })
+   * editThreadMetadata({ threadId: "th_xxx", metadata: {} })
    */
   useEditThreadMetadata(): (
     options: EditThreadMetadataOptions<TThreadMetadata>
@@ -491,7 +491,7 @@ type RoomContextBundleShared<
    *
    * @example
    * const createComment = useCreateComment();
-   * createComment({ threadId: "th_xxx", body: { {} } });
+   * createComment({ threadId: "th_xxx", body: {} });
    */
   useCreateComment(): (options: CreateCommentOptions) => CommentData;
 

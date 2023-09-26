@@ -330,6 +330,7 @@ describe("middleware", () => {
             },
           },
           actor: 2,
+          nonce: "nonce-for-actor-2",
           scopes: ["room:write"],
         } as RoomStateServerMsg<BaseUserMeta>),
       } as MessageEvent);

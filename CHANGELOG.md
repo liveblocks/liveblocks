@@ -4,6 +4,17 @@
 
 - Officially mark `useList()`, `useMap()`, and `useObject()` as deprecated in
   JSDoc comments (we stopped recommending them since the release of 0.18)
+- Deduplicate Comments requests and improve how race conditions are handled
+  during mutations.
+- Fix non-Suspense Comments hooks not working properly in some situations.
+
+### `@liveblocks/react-comments`
+
+- **Breaking (beta):** Replace the render prop API (e.g. `renderMention`,
+  `renderLink`, etc) by a single `components` prop. (e.g.
+  `components={{ Mention, Link }}`)
+- Fix overflowing `Composer.Suggestions`.
+- Reduce the impact of icons on bundle size.
 
 # v1.3.4
 

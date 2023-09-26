@@ -18,7 +18,7 @@ import type {
   Direction,
 } from "../../types";
 
-export interface ComposerRenderMentionProps {
+export interface ComposerEditorMentionProps {
   /**
    * Whether the mention is selected.
    */
@@ -30,7 +30,7 @@ export interface ComposerRenderMentionProps {
   userId: string;
 }
 
-export interface ComposerRenderLinkProps {
+export interface ComposerEditorLinkProps {
   /**
    * The link's absolute URL.
    *
@@ -46,11 +46,7 @@ export interface ComposerRenderLinkProps {
   children: ReactNode;
 }
 
-export type ComposerMentionProps = ComponentPropsWithSlot<"span">;
-
-export type ComposerLinkProps = ComponentPropsWithSlot<"a">;
-
-export type ComposerRenderMentionSuggestionsProps = {
+export type ComposerEditorMentionSuggestionsProps = {
   /**
    * The list of suggested user IDs.
    */
@@ -62,6 +58,10 @@ export type ComposerRenderMentionSuggestionsProps = {
   selectedUserId?: string;
 };
 
+export type ComposerMentionProps = ComponentPropsWithSlot<"span">;
+
+export type ComposerLinkProps = ComponentPropsWithSlot<"a">;
+
 export type ComposerSuggestionsProps = ComponentPropsWithSlot<"div">;
 
 export type ComposerSuggestionsListProps = ComponentPropsWithSlot<"ul">;
@@ -72,6 +72,23 @@ export interface ComposerSuggestionsListItemProps
    * The suggestion's value.
    */
   value: string;
+}
+
+export interface ComposerEditorComponents {
+  /**
+   * The component used to display mentions.
+   */
+  Mention: ComponentType<ComposerEditorMentionProps>;
+
+  /**
+   * The component used to display links.
+   */
+  Link: ComponentType<ComposerEditorLinkProps>;
+
+  /**
+   * The component used to display mention suggestions.
+   */
+  MentionSuggestions: ComponentType<ComposerEditorMentionSuggestionsProps>;
 }
 
 export interface ComposerEditorProps
@@ -102,19 +119,9 @@ export interface ComposerEditorProps
   autoFocus?: boolean;
 
   /**
-   * The component used to render mentions.
+   * The components displayed within the editor.
    */
-  renderMention?: ComponentType<ComposerRenderMentionProps>;
-
-  /**
-   * The component used to render mention suggestions.
-   */
-  renderMentionSuggestions?: ComponentType<ComposerRenderMentionSuggestionsProps>;
-
-  /**
-   * The component used to render links.
-   */
-  renderLink?: ComponentType<ComposerRenderLinkProps>;
+  components?: Partial<ComposerEditorComponents>;
 }
 
 export interface ComposerFormProps extends ComponentPropsWithSlot<"form"> {
@@ -136,7 +143,12 @@ export interface ComposerSubmitComment {
   body: CommentBody;
 }
 
-export interface ComposerMentionSuggestionsWrapperProps {
+export interface ComposerEditorElementProps extends RenderElementProps {
+  Mention: ComponentType<ComposerEditorMentionProps>;
+  Link: ComponentType<ComposerEditorLinkProps>;
+}
+
+export interface ComposerEditorMentionSuggestionsWrapperProps {
   dir?: ComposerEditorProps["dir"];
   id: string;
   itemId: (userId?: string) => string | undefined;
@@ -144,25 +156,20 @@ export interface ComposerMentionSuggestionsWrapperProps {
   userIds?: string[];
   selectedUserId?: string;
   setSelectedUserId: (userId: string) => void;
-  children?: ComposerEditorProps["renderMentionSuggestions"];
+  MentionSuggestions: ComponentType<ComposerEditorMentionSuggestionsProps>;
   onItemSelect: (userId: string) => void;
   position?: SuggestionsPosition;
   inset?: number;
 }
 
-export interface ComposerEditorElementProps extends RenderElementProps {
-  renderMention: ComposerEditorProps["renderMention"];
-  renderLink: ComposerEditorProps["renderLink"];
-}
-
-export interface ComposerMentionWrapperProps
+export interface ComposerEditorMentionWrapperProps
   extends RenderElementSpecificProps<ComposerBodyMention> {
-  renderMention: ComposerEditorProps["renderMention"];
+  Mention: ComponentType<ComposerEditorMentionProps>;
 }
 
-export interface ComposerLinkWrapperProps
+export interface ComposerEditorLinkWrapperProps
   extends RenderElementSpecificProps<ComposerBodyAutoLink /* | ComposerBodyLink */> {
-  renderLink: ComposerEditorProps["renderLink"];
+  Link: ComponentType<ComposerEditorLinkProps>;
 }
 
 export type SuggestionsPosition = "top" | "bottom";
