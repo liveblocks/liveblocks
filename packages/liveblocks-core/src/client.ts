@@ -223,10 +223,6 @@ export function createClient(options: ClientOptions): Client {
         enableDebugLogging: clientOptions.enableDebugLogging,
         unstable_batchedUpdates: options?.unstable_batchedUpdates,
         liveblocksServer: getServerFromClientOptions(clientOptions),
-        httpSendEndpoint: buildLiveblocksHttpSendEndpoint(
-          clientOptions,
-          roomId
-        ),
         unstable_fallbackToHTTP: !!clientOptions.unstable_fallbackToHTTP,
       }
     );
@@ -302,18 +298,4 @@ function getLostConnectionTimeout(value: number): number {
     MAX_LOST_CONNECTION_TIMEOUT,
     RECOMMENDED_MIN_LOST_CONNECTION_TIMEOUT
   );
-}
-
-function buildLiveblocksHttpSendEndpoint(
-  options: ClientOptions & { httpSendEndpoint?: string | undefined },
-  roomId: string
-): string {
-  // INTERNAL override for testing purpose.
-  if (options.httpSendEndpoint) {
-    return options.httpSendEndpoint.replace("{roomId}", roomId);
-  }
-
-  return `https://api.liveblocks.io/v2/rooms/${encodeURIComponent(
-    roomId
-  )}/send-message`;
 }
