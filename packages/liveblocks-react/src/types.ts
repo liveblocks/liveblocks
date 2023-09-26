@@ -522,7 +522,7 @@ type RoomContextBundleShared<
   /**
    * @beta
    *
-   * Returns a function that adds a reaction to a comment.
+   * Returns a function that adds a reaction from a comment.
    *
    * @example
    * const addCommentReaction = useAddCommentReaction();
