@@ -283,7 +283,6 @@
     overflow: hidden;
     aspect-ratio: 1;
     padding: calc(0.375 * var(--lb-spacing));
-    font-size: 0.875em;
     text-align: center;
   }
 
@@ -809,6 +808,7 @@
 
   .lb-comment-reaction-emoji {
     text-align: center;
+    transform: scale(1.125);
   }
 
   .lb-comment-reaction-count {
