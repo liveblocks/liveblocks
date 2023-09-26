@@ -1,3 +1,11 @@
+# v1.3.6
+
+### `@liveblocks/client`
+
+- Support `unstable_fallbackToHTTP` client option when using any auth token type
+  (previously it only worked when using single-room tokens, which we no longer
+  recommend since 1.2)
+
 # v1.3.5
 
 ### `@liveblocks/react`
