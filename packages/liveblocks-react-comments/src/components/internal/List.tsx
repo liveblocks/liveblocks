@@ -5,14 +5,14 @@ import React, { forwardRef, useMemo } from "react";
 import { useOverrides } from "../../overrides";
 import type { ComponentPropsWithSlot } from "../../types";
 
-interface Props extends ComponentPropsWithSlot<"span"> {
+export interface ListProps extends ComponentPropsWithSlot<"span"> {
   values: ReactNode[];
   formatRemaining?: (amount: number) => string;
   truncate?: number;
   locale?: string;
 }
 
-export const List = forwardRef<HTMLSpanElement, Props>(
+export const List = forwardRef<HTMLSpanElement, ListProps>(
   (
     { values, formatRemaining, truncate, locale, asChild, ...props },
     forwardedRef

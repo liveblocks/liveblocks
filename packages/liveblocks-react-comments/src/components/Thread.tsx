@@ -43,6 +43,11 @@ export interface ThreadProps extends ComponentPropsWithoutRef<"div"> {
   showActions?: CommentProps["showActions"];
 
   /**
+   * Whether to show reactions.
+   */
+  showReactions?: CommentProps["showReactions"];
+
+  /**
    * Whether to indent the comments' content.
    */
   indentCommentContent?: CommentProps["indentContent"];
@@ -102,6 +107,7 @@ export const Thread = forwardRef<HTMLDivElement, ThreadProps>(
       showActions = "hover",
       showDeletedComments,
       showResolveAction = true,
+      showReactions = true,
       showComposer = "collapsed",
       onResolveChange,
       onCommentEdit,
@@ -161,6 +167,7 @@ export const Thread = forwardRef<HTMLDivElement, ThreadProps>(
                   indentContent={indentCommentContent}
                   showDeleted={showDeletedComments}
                   showActions={showActions}
+                  showReactions={showReactions}
                   onEdit={onCommentEdit}
                   onDelete={onCommentDelete}
                   onAuthorClick={onAuthorClick}

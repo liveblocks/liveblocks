@@ -23,18 +23,18 @@ const KEYS = {
   },
 } as const;
 
-interface TooltipProps
+export interface TooltipProps
   extends Pick<TooltipPrimitive.TooltipTriggerProps, "children">,
     Omit<TooltipPrimitive.TooltipContentProps, "content"> {
   content: ReactNode;
   multiline?: boolean;
 }
 
-interface ShortcutTooltipProps extends TooltipProps {
+export interface ShortcutTooltipProps extends TooltipProps {
   shortcut?: ReactNode;
 }
 
-interface ShortcutTooltipKeyProps extends ComponentProps<"abbr"> {
+export interface ShortcutTooltipKeyProps extends ComponentProps<"abbr"> {
   name: keyof typeof KEYS;
 }
 

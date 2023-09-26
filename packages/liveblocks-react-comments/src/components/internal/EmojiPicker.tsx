@@ -21,7 +21,7 @@ import type {
 import { Emoji } from "../../primitives/internal/Emoji";
 import { classNames } from "../../utils/class-names";
 
-interface Props extends ComponentPropsWithoutRef<"div"> {
+export interface EmojiPickerProps extends ComponentPropsWithoutRef<"div"> {
   onOpenChange?: (open: boolean) => void;
   onEmojiSelect?: (emoji: string) => void;
 }
@@ -124,7 +124,7 @@ function EmojiPickerEmoji({
   );
 }
 
-export const EmojiPicker = forwardRef<HTMLDivElement, Props>(
+export const EmojiPicker = forwardRef<HTMLDivElement, EmojiPickerProps>(
   (
     { onEmojiSelect, onOpenChange, children, className, ...props },
     forwardedRef

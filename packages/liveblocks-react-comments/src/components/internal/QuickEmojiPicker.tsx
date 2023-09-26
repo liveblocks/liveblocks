@@ -9,25 +9,21 @@ import {
 import { Emoji } from "../../primitives/internal/Emoji";
 import { classNames } from "../../utils/class-names";
 
-interface Props extends ComponentPropsWithoutRef<"div"> {
+export interface QuickEmojiPickerProps extends ComponentPropsWithoutRef<"div"> {
   onOpenChange?: (open: boolean) => void;
-  emojis?: string[];
+  emojis: string[];
   onEmojiSelect?: (emoji: string) => void;
 }
 
 // TODO: This should be a dropdown but @radix-ui/react-dropdown-menu
 //       doesn't support using an horizontal orientation yet.
 //       See: https://github.com/radix-ui/primitives/issues/2001
-export const QuickEmojiPicker = forwardRef<HTMLDivElement, Props>(
+export const QuickEmojiPicker = forwardRef<
+  HTMLDivElement,
+  QuickEmojiPickerProps
+>(
   (
-    {
-      emojis = ["👍", "👎️", "❤️", "👀", "✅"],
-      onEmojiSelect,
-      onOpenChange,
-      children,
-      className,
-      ...props
-    },
+    { emojis, onEmojiSelect, onOpenChange, children, className, ...props },
     forwardedRef
   ) => {
     const [isOpen, setOpen] = useState(false);

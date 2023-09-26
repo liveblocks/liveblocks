@@ -11,7 +11,7 @@ import {
 import { useOverrides } from "../../overrides";
 import { classNames } from "../../utils/class-names";
 
-interface DropdownProps
+export interface DropdownProps
   extends Pick<
       DropdownMenuPrimitive.DropdownMenuProps,
       "defaultOpen" | "open" | "onOpenChange"

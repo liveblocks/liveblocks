@@ -47,10 +47,6 @@ import { Dropdown, DropdownItem, DropdownTrigger } from "./internal/Dropdown";
 import { EmojiPicker, EmojiPickerTrigger } from "./internal/EmojiPicker";
 import { List } from "./internal/List";
 import {
-  QuickEmojiPicker,
-  QuickEmojiPickerTrigger,
-} from "./internal/QuickEmojiPicker";
-import {
   ShortcutTooltip,
   ShortcutTooltipKey,
   Tooltip,
@@ -75,6 +71,11 @@ export interface CommentProps extends ComponentPropsWithoutRef<"div"> {
    * Whether to show the comment if it was deleted. If set to `false`, it will render deleted comments as `null`.
    */
   showDeleted?: boolean;
+
+  /**
+   * Whether to show reactions.
+   */
+  showReactions?: boolean;
 
   /**
    * Whether to indent the comment's content.
@@ -267,6 +268,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
       indentContent = true,
       showDeleted,
       showActions = "hover",
+      showReactions = true,
       onAuthorClick,
       onMentionClick,
       onEdit,
@@ -296,6 +298,10 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
     const [isMoreActionOpen, setMoreActionOpen] = useState(false);
     const [isReactionActionOpen, setReactionActionOpen] = useState(false);
     const reactions = useMemo(() => {
+      if (!showReactions) {
+        return;
+      }
+
       return comment.reactions?.length > 0
         ? groupBy(
             comment.reactions.sort(
@@ -306,7 +312,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
             "emoji"
           )
         : undefined;
-    }, [comment.reactions]);
+    }, [comment.reactions, showReactions]);
 
     const stopPropagation = useCallback((event: SyntheticEvent) => {
       event.stopPropagation();
@@ -443,22 +449,24 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
                 )}
               >
                 {additionalActions ?? null}
-                <QuickEmojiPicker
-                  onEmojiSelect={handleReactionSelect}
-                  onOpenChange={setReactionActionOpen}
-                >
-                  <Tooltip content={$.COMMENT_ADD_REACTION}>
-                    <QuickEmojiPickerTrigger asChild>
-                      <Button
-                        className="lb-comment-action"
-                        onClick={stopPropagation}
-                        aria-label={$.COMMENT_ADD_REACTION}
-                      >
-                        <EmojiAddIcon className="lb-button-icon" />
-                      </Button>
-                    </QuickEmojiPickerTrigger>
-                  </Tooltip>
-                </QuickEmojiPicker>
+                {showReactions && (
+                  <EmojiPicker
+                    onEmojiSelect={handleReactionSelect}
+                    onOpenChange={setReactionActionOpen}
+                  >
+                    <Tooltip content={$.COMMENT_ADD_REACTION}>
+                      <EmojiPickerTrigger asChild>
+                        <Button
+                          className="lb-comment-action"
+                          onClick={stopPropagation}
+                          aria-label={$.COMMENT_ADD_REACTION}
+                        >
+                          <EmojiAddIcon className="lb-button-icon" />
+                        </Button>
+                      </EmojiPickerTrigger>
+                    </Tooltip>
+                  </EmojiPicker>
+                )}
                 {comment.userId === self?.id && (
                   <Dropdown
                     open={isMoreActionOpen}
@@ -558,7 +566,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
                     Link: CommentLink,
                   }}
                 />
-                {reactions && (
+                {showReactions && reactions && (
                   <div className="lb-comment-reactions">
                     {Object.entries(reactions).map(([emoji, reactions]) => (
                       <CommentReaction
