@@ -323,6 +323,10 @@
         var(--lb-spacing)
     );
 
+    &::placeholder {
+      color: var(--lb-foreground-moderate);
+    }
+
     &::-webkit-search-cancel-button {
       display: none;
     }
@@ -631,6 +635,10 @@
   .lb-composer-editor {
     padding: var(--lb-spacing);
     outline: none;
+
+    [data-placeholder] {
+      color: var(--lb-foreground-moderate);
+    }
   }
 
   .lb-composer-mention {

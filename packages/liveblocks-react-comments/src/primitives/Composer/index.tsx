@@ -46,6 +46,7 @@ import type {
   RenderElementProps,
   RenderElementSpecificProps,
   RenderLeafProps,
+  RenderPlaceholderProps,
 } from "slate-react";
 import {
   Editable,
@@ -342,6 +343,19 @@ function ComposerEditorLeaf({ attributes, children, leaf }: RenderLeafProps) {
   }
 
   return <span {...attributes}>{children}</span>;
+}
+
+function ComposerEditorPlaceholder({
+  attributes,
+  children,
+}: RenderPlaceholderProps) {
+  const { opacity: _opacity, ...style } = attributes.style;
+
+  return (
+    <div {...attributes} style={style} data-placeholder="">
+      {children}
+    </div>
+  );
 }
 
 /**
@@ -855,6 +869,7 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
           onBlur={handleBlur}
           renderElement={renderElement}
           renderLeaf={ComposerEditorLeaf}
+          renderPlaceholder={ComposerEditorPlaceholder}
         />
         {mentionDraft && (
           <ComposerEditorMentionSuggestionsWrapper
