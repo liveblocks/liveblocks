@@ -145,8 +145,7 @@ scales. If you need to support browser versions that don’t support
 Overrides can be used to customize the components’ strings and
 localization-related properties like the locale and reading direction.
 
-They can be set globally once for all components using
-[`CommentsConfig`](#CommentsConfig):
+They can be set globally once for all components using `CommentsConfig`:
 
 ```tsx
 import { CommentsConfig } from "@liveblocks/react-comments";
@@ -288,31 +287,6 @@ behavior and call the mutation methods (e.g. `createThread`) manually.
 </Table>
 
 {/* TODO: Document classes and data attributes */}
-
-### CommentsConfig
-
-Set configuration options (e.g. [overrides](#Overrides)) for all Comments
-components.
-
-```tsx
-import { CommentsConfig } from "@liveblocks/react-comments";
-
-export function App() {
-  return (
-    <CommentsConfig
-      overrides={{ locale: "fr", UNKNOWN_USER: "Anonyme" /* ... */ }}
-    >
-      {/* ... */}
-    </CommentsConfig>
-  );
-}
-```
-
-| Prop        | Type                                                | Description              |
-| ----------- | --------------------------------------------------- | ------------------------ |
-| `overrides` | <code>Partial&lt;\Overrides&gt; \| undefined</code> | The overrides to be set. |
-
-</Table>
 
 ## Primitives
 

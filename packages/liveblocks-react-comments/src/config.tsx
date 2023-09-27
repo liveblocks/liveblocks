@@ -7,9 +7,6 @@ import type { Overrides } from "./overrides";
 import { OverridesProvider } from "./overrides";
 
 type CommentsConfigProps = PropsWithChildren<{
-  /**
-   * The overrides to be set.
-   */
   overrides?: Partial<Overrides>;
 }>;
 
