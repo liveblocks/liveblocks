@@ -51,6 +51,7 @@ import {
   BooleanOffIcon,
   BooleanOnIcon,
   CrossIcon,
+  CustomEventIcon,
   EllipsisIcon,
   MapIcon,
   NumberIcon,
@@ -232,6 +233,9 @@ function color(node: DevTools.TreeNode): string {
     case "Json":
       return "text-light-500 dark:text-dark-500";
 
+    case "CustomEvent":
+      return "text-orange-500 dark:text-orange-500";
+
     default:
       // e.g. future LiveXxx types
       return "text-light-500 dark:text-dark-500";
@@ -289,6 +293,9 @@ function icon(node: DevTools.TreeNode): ReactNode {
 
     case "User":
       return <UserIcon />;
+
+    case "CustomEvent":
+      return <CustomEventIcon />;
 
     default:
       // e.g. future LiveXxx types
@@ -424,6 +431,7 @@ function summarize(node: DevTools.TreeNode): string {
           .join(", ")
       );
 
+    case "CustomEvent":
     case "Json":
       return stringify(node.payload);
 
@@ -1052,6 +1060,23 @@ function YjsNodeRenderer(props: NodeRendererProps<YjsTreeNode>) {
   }
 }
 
+function CustomEventNodeRenderer({
+  node,
+  style,
+}: NodeRendererProps<DevTools.CustomEventTreeNode>) {
+  const toggle = useToggleNode(node);
+  return (
+    <Row node={node} style={style} onClick={toggle}>
+      <RowInfo>
+        <RowLabel>{node.data.key}</RowLabel>
+        {SHOW_INTERNAL_ID && <RowStaticLabel>{node.id}</RowStaticLabel>}
+        {/* <Badge className="flex-none opacity-60">#{node.data.id}</Badge> */}
+        {!node.isOpen && <RowPreview>{summarize(node.data)}</RowPreview>}
+      </RowInfo>
+    </Row>
+  );
+}
+
 function YLogsNodeRenderer(props: NodeRendererProps<YLogsTreeNode>) {
   switch (props.node.data.type) {
     case "YUpdate":
@@ -1172,6 +1197,30 @@ function presenceChildAccessor(
   }
 }
 
+function customEventChildAccessor(
+  node: DevTools.JsonTreeNode | DevTools.CustomEventTreeNode
+): DevTools.JsonTreeNode[] | null {
+  switch (node.type) {
+    case "Json":
+    case "CustomEvent": {
+      if (Array.isArray(node.payload)) {
+        return node.payload.map((item, index) =>
+          makeJsonNode(node.id, index.toString(), item)
+        );
+      } else if (node.payload !== null && typeof node.payload === "object") {
+        return Object.entries(node.payload).flatMap(([key, value]) =>
+          value === undefined ? [] : [makeJsonNode(node.id, key, value)]
+        );
+      }
+
+      return null;
+    }
+
+    default:
+      return assertNever(node, "Unexpected node type");
+  }
+}
+
 function storageChildAccessor(node: StorageTreeNode): StorageTreeNode[] | null {
   switch (node.type) {
     case "LiveList":
@@ -1214,6 +1263,9 @@ function yjsChildAccessor(node: YjsTreeNode): YjsTreeNode[] | null {
         return null;
       }
     }
+
+    default:
+      return null;
   }
 }
 
@@ -1538,6 +1590,37 @@ export const PresenceTree = forwardRef<
             {...props}
           >
             {PresenceNodeRenderer}
+          </ArboristTree>
+        )}
+      </AutoSizer>
+    </TooltipProvider>
+  );
+});
+
+export const CustomEventsTree = forwardRef<
+  TreeApi<DevTools.CustomEventTreeNode | DevTools.JsonTreeNode>,
+  TreeProps<DevTools.CustomEventTreeNode | DevTools.JsonTreeNode>
+>(({ className, style, ...props }, ref) => {
+  return (
+    <TooltipProvider skipDelayDuration={0}>
+      <AutoSizer className={cx(className, "tree")} style={style}>
+        {({ width, height }) => (
+          <ArboristTree
+            ref={ref}
+            width={width}
+            height={height}
+            childrenAccessor={customEventChildAccessor}
+            disableDrag
+            disableDrop
+            disableEdit
+            disableMultiSelection
+            className="!overflow-x-hidden"
+            selectionFollowsFocus
+            rowHeight={ROW_HEIGHT}
+            indent={ROW_INDENT}
+            {...props}
+          >
+            {CustomEventNodeRenderer}
           </ArboristTree>
         )}
       </AutoSizer>

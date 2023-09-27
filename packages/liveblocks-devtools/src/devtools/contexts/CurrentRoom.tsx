@@ -42,6 +42,7 @@ type Room = {
   storage: readonly DevTools.LsonTreeNode[] | null;
   me: DevTools.UserTreeNode | null;
   others: readonly DevTools.UserTreeNode[];
+  customEvents: DevTools.CustomEventTreeNode[];
   ydoc: Y.Doc;
   yupdates: YUpdate[];
 };
@@ -51,6 +52,7 @@ type EventHub = {
   readonly onMe: EventSource<void>;
   readonly onOthers: EventSource<void>;
   readonly onStorage: EventSource<void>;
+  readonly onCustomEvent: EventSource<void>;
   readonly onYdoc: EventSource<void>;
 };
 
@@ -71,6 +73,7 @@ function makeEventHub(roomId: string): EventHub {
     onMe: makeEventSource(),
     onOthers: makeEventSource(),
     onStorage: makeEventSource(),
+    onCustomEvent: makeEventSource(),
     onYdoc: makeEventSource(),
   };
   _eventHubsByRoomId.set(roomId, newEventHub);
@@ -136,6 +139,7 @@ function makeRoom(roomId: string): Room {
     storage: null,
     me: null,
     others: [],
+    customEvents: [],
     ydoc: new Y.Doc(),
     yupdates: [],
   };
@@ -241,6 +245,14 @@ export function CurrentRoomProvider(props: Props) {
           currRoom.yupdates = [decodedUpdate, ...currRoom.yupdates];
           const hub = getRoomHub(msg.roomId);
           hub.onYdoc.notify();
+          break;
+        }
+
+        case "room::events::custom-event": {
+          const currRoom = getOrCreateRoom(msg.roomId);
+          currRoom.customEvents = [msg.event, ...currRoom.customEvents];
+          const hub = getRoomHub(msg.roomId);
+          hub.onCustomEvent.notify();
           break;
         }
 
@@ -386,8 +398,23 @@ export function usePresence(): readonly DevTools.UserTreeNode[] {
   const me = useMe();
   const others = useOthers();
   const presence = useMemo(() => (me ? [me, ...others] : others), [me, others]);
-
   return presence;
+}
+
+export function useCustomEvents(): readonly DevTools.CustomEventTreeNode[] {
+  const currentRoomId = useCurrentRoomId();
+  return useSyncExternalStore(
+    getSubscribe(currentRoomId, "onCustomEvent") ?? nosub,
+    () => getRoom(currentRoomId)?.customEvents ?? []
+  );
+}
+
+export function useCustomEventCount(): number {
+  const currentRoomId = useCurrentRoomId();
+  return useSyncExternalStore(
+    getSubscribe(currentRoomId, "onCustomEvent") ?? nosub,
+    () => getRoom(currentRoomId)?.customEvents.length ?? 0
+  );
 }
 
 const emptyStorage: readonly DevTools.LsonTreeNode[] = [];

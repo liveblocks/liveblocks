@@ -17,6 +17,8 @@ import { Tabs } from "./components/Tabs";
 import { CurrentRoomProvider, useCurrentRoomId } from "./contexts/CurrentRoom";
 import { sendMessage } from "./port";
 import { Presence } from "./tabs/presence";
+import { EventTimeline } from "./tabs/event-timeline";
+import { useCustomEventCount } from "./contexts/CurrentRoom";
 import { Storage } from "./tabs/storage";
 import type { YjsChangesView, YjsTab } from "./tabs/yjs";
 import { Yjs, YJS_CHANGES_VIEWS, YJS_TABS } from "./tabs/yjs";
@@ -49,6 +51,8 @@ function Panel() {
       mainTab === "storage" || (mainTab === "yjs" && yjsTab === "document")
     );
   }, [mainTab, yjsTab]);
+
+  const numCustomEvents = useCustomEventCount();
 
   const handleSearchClear = useCallback(() => {
     setSearchText("");
@@ -155,9 +159,13 @@ function Panel() {
         case "events":
           return {
             value: "events",
-            title: "Events",
-            content: null,
-            disabled: true,
+            title:
+              // numCustomEvents > 0 ?       //
+              `Events (${numCustomEvents})`,
+
+            // :
+            // "Events",
+            content: <EventTimeline key={`${currentRoomId}:event-timeline`} />,
           };
       }
     });
