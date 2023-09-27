@@ -592,12 +592,20 @@ return `null`.
 Returns a callback that lets you broadcast custom events to other users in the
 room.
 
-```ts
+```ts highlight="3-5"
 import { useBroadcastEvent } from "./liveblocks.config";
 
+// On client A
 const broadcast = useBroadcastEvent();
-
 broadcast({ type: "EMOJI", emoji: "🔥" });
+
+// On client B
+useEventListener(({ event, user }) => {
+  //                       ^^^^ Will be Client A
+  if (event.type === "EMOJI") {
+    // Do something
+  }
+});
 ```
 
 ### useEventListener
@@ -608,15 +616,26 @@ the user that sent the message. If an event was sent from the
 [Broadcast to a room](/docs/api-reference/rest-api-endpoints#post-broadcast-event)
 REST API, `connectionId` will be `-1`.
 
-```ts
+```ts highlight="7-13"
 import { useEventListener } from "./liveblocks.config";
 
-useEventListener(({ connectionId, event }) => {
+// On client A
+const broadcast = useBroadcastEvent();
+broadcast({ type: "EMOJI", emoji: "🔥" });
+
+// On client B
+useEventListener(({ event, user }) => {
+  //                       ^^^^ Will be Client A
   if (event.type === "EMOJI") {
     // Do something
   }
 });
 ```
+
+The `user` property will indicate which User instance sent the message. This
+will typically be equal to one of the others in the room, but it can also be
+`null` in case this event was broadcasted from the server, using the
+[Broadcast Event API](https://liveblocks.io/docs/api-reference/rest-api-endpoints#post-broadcast-event).
 
 Automatically unsubscribes when the component is unmounted.
 

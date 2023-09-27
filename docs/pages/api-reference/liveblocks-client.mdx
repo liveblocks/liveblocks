@@ -290,7 +290,7 @@ so it may be deprecated and replaced with something else.
 
 </Banner>
 
-```ts
+```ts highlight="1-2"
 // On client A
 room.broadcastEvent({ type: "EMOJI", emoji: "🔥" });
 
@@ -385,16 +385,23 @@ const unsubscribe = room.subscribe(
 Subscribe to events broadcast by [`Room.broadcastEvent`][].
 
 Takes a callback that is called when a user calls [`Room.broadcastEvent`][].
-Provides the `event` along with the `connectionId` of the user that sent the
-message. If an event was sent from the
+Provides the `event` along with the `user` and their `connectionId` of the user
+that sent the message. If this event was sent via the
 [Broadcast to a room](/docs/api-reference/rest-api-endpoints#post-broadcast-event)
-REST API, `connectionId` will be `-1`.
+REST API, `user` will be `null` and `connectionId` will be `-1`.
 
 Returns an unsubscribe function.
 
-```ts
-const unsubscribe = room.subscribe("event", ({ event, connectionId }) => {
-  // Do something
+```ts highlight="4-10"
+// On client A
+room.broadcastEvent({ type: "EMOJI", emoji: "🔥" });
+
+// On client B
+const unsubscribe = room.subscribe("event", ({ event, user }) => {
+  //                                                  ^^^^ Will be Client A
+  if (event.type === "EMOJI") {
+    // Do something
+  }
 });
 ```
 
