@@ -66,7 +66,7 @@ import { PKG_VERSION } from "./version";
 
 type TimeoutID = ReturnType<typeof setTimeout>;
 
-type CustomEvent<
+type RoomEventMessage<
   TPresence extends JsonObject,
   TUserMeta extends BaseUserMeta,
   TRoomEvent extends Json,
@@ -104,7 +104,7 @@ type RoomEventCallbackMap<
   connection: Callback<LegacyConnectionStatus>; // Old/deprecated API
   status: Callback<Status>; // New/recommended API
   "lost-connection": Callback<LostConnectionEvent>;
-  event: Callback<CustomEvent<TPresence, TUserMeta, TRoomEvent>>;
+  event: Callback<RoomEventMessage<TPresence, TUserMeta, TRoomEvent>>;
   "my-presence": Callback<TPresence>;
   //
   // NOTE: OthersEventCallback is the only one not taking a Callback<T> shape,
@@ -299,7 +299,7 @@ type SubscribeFn<
    */
   (
     type: "event",
-    listener: Callback<CustomEvent<TPresence, TUserMeta, TRoomEvent>>
+    listener: Callback<RoomEventMessage<TPresence, TUserMeta, TRoomEvent>>
   ): () => void;
 
   /**
@@ -586,7 +586,7 @@ export type Room<
     readonly status: Observable<Status>; // New/recommended API
     readonly lostConnection: Observable<LostConnectionEvent>;
 
-    readonly customEvent: Observable<CustomEvent<TPresence, TUserMeta, TRoomEvent>>; // prettier-ignore
+    readonly customEvent: Observable<RoomEventMessage<TPresence, TUserMeta, TRoomEvent>>; // prettier-ignore
     readonly self: Observable<User<TPresence, TUserMeta>>;
     readonly myPresence: Observable<TPresence>;
     readonly others: Observable<{ others: readonly User<TPresence, TUserMeta>[]; event: OthersEvent<TPresence, TUserMeta>; }>; // prettier-ignore
@@ -1139,7 +1139,7 @@ export function createRoom<
     lostConnection: makeEventSource<LostConnectionEvent>(),
 
     customEvent:
-      makeEventSource<CustomEvent<TPresence, TUserMeta, TRoomEvent>>(),
+      makeEventSource<RoomEventMessage<TPresence, TUserMeta, TRoomEvent>>(),
     self: makeEventSource<User<TPresence, TUserMeta>>(),
     myPresence: makeEventSource<TPresence>(),
     others: makeEventSource<{
@@ -2390,7 +2390,9 @@ function makeClassicSubscribeFn<
       switch (first) {
         case "event":
           return events.customEvent.subscribe(
-            callback as Callback<CustomEvent<TPresence, TUserMeta, TRoomEvent>>
+            callback as Callback<
+              RoomEventMessage<TPresence, TUserMeta, TRoomEvent>
+            >
           );
 
         case "my-presence":
