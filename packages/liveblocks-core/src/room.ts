@@ -66,7 +66,7 @@ import { PKG_VERSION } from "./version";
 
 type TimeoutID = ReturnType<typeof setTimeout>;
 
-type RoomEventMessage<
+export type RoomEventMessage<
   TPresence extends JsonObject,
   TUserMeta extends BaseUserMeta,
   TRoomEvent extends Json,
