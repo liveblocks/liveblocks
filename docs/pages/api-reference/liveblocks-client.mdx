@@ -295,12 +295,18 @@ so it may be deprecated and replaced with something else.
 room.broadcastEvent({ type: "EMOJI", emoji: "🔥" });
 
 // On client B
-room.subscribe("event", ({ event }) => {
+room.subscribe("event", ({ event, user }) => {
+  //                              ^^^^ Will be Client A
   if (event.type === "EMOJI") {
     // Do something
   }
 });
 ```
+
+The `user` property will indicate which User instance sent the message. This
+will typically be equal to one of the others in the room, but it can also be
+`null` in case this event was broadcasted from the server, using the
+[Broadcast Event API](https://liveblocks.io/docs/api-reference/rest-api-endpoints#post-broadcast-event).
 
 ### Room.getSelf
 
