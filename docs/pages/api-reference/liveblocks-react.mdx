@@ -600,7 +600,7 @@ const broadcast = useBroadcastEvent();
 broadcast({ type: "EMOJI", emoji: "🔥" });
 
 // On client B
-useEventListener(({ event, user }) => {
+useEventListener(({ event, user, connectionId }) => {
   //                       ^^^^ Will be Client A
   if (event.type === "EMOJI") {
     // Do something
