@@ -1,17 +1,14 @@
 import cx from "classnames";
 import type { ComponentProps } from "react";
-import { useMemo } from "react";
 
-import { Loading } from "../../components/Loading";
-import { EmptyState } from "../components/EmptyState";
-import { PresenceTree } from "../components/Tree";
-import { useMe, useOthers, useStatus } from "../contexts/CurrentRoom";
+import { Loading } from "../../../components/Loading";
+import { EmptyState } from "../../components/EmptyState";
+import { PresenceTree } from "../../components/Tree";
+import { usePresence, useStatus } from "../../contexts/CurrentRoom";
 
 export function Presence({ className, ...props }: ComponentProps<"div">) {
   const currentStatus = useStatus();
-  const me = useMe();
-  const others = useOthers();
-  const presence = useMemo(() => (me ? [me, ...others] : others), [me, others]);
+  const presence = usePresence();
 
   if (
     currentStatus === "connected" ||

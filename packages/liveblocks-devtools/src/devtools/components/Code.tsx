@@ -1,6 +1,6 @@
 import cx from "classnames";
 import type { Language, PrismTheme } from "prism-react-renderer";
-import Highlight, { defaultProps } from "prism-react-renderer";
+import { Highlight } from "prism-react-renderer";
 import type { ComponentProps } from "react";
 
 export interface Props extends ComponentProps<"pre"> {
@@ -81,7 +81,7 @@ export function Code({
   ...props
 }: Props) {
   return (
-    <Highlight {...defaultProps} code={code} language={language} theme={theme}>
+    <Highlight code={code} language={language} theme={theme}>
       {({
         className: prismClassName,
         style: prismStyle,

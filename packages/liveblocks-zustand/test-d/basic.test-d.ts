@@ -79,7 +79,10 @@ const useStore = create<
           },
         }),
         { client, storageMapping: {}, presenceMapping: { value: true } }
-      )
+      ),
+      {
+        name: "liveblocks",
+      }
     )
   )
 );
@@ -139,7 +142,10 @@ expectError(
             setValue: (newValue: number) => set({ value: newValue }),
           }),
           { client, storageMapping: {}, presenceMapping: { unknownKey: true } }
-        )
+        ),
+        {
+          name: "liveblocks",
+        }
       )
     )
   )
