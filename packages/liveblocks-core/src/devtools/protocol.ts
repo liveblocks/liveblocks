@@ -1,4 +1,5 @@
 import type { Status } from "../connection";
+import type { Json } from "../lib/Json";
 import type { UpdateYDocClientMsg } from "../protocol/ClientMsg";
 import type { YDocUpdateServerMsg } from "../protocol/ServerMsg";
 import type * as DevTools from "../types/DevToolsTreeNode";
@@ -93,6 +94,17 @@ export type ClientToPanelMessage =
       storage?: readonly DevTools.LsonTreeNode[];
       me?: DevTools.UserTreeNode;
       others?: readonly DevTools.UserTreeNode[];
+    }
+
+  /**
+   * Sent whenever an user room event is emitted in the room.
+   */
+  | {
+      msg: "room::events::broadcast-event";
+      roomId: string;
+      connectionId: number;
+      user: readonly DevTools.UserTreeNode[] | null;
+      event: Json;
     }
 
   /**
