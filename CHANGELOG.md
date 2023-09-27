@@ -1,6 +1,6 @@
 # v1.3.7
 
-### `@liveblocks/*`
+### `@liveblocks/client`
 
 Broadcast event messages now include a `user` property to indicate the user that
 sent the event:
@@ -8,6 +8,17 @@ sent the event:
 ```tsx
 room.subscribe("event", ({ event, user }) => {
   //                              ^^^^ New!
+});
+```
+
+### `@liveblocks/react`
+
+Broadcast event messages now include a `user` property to indicate the user that
+sent the event:
+
+```tsx
+useEventListener(({ event, user }) => {
+  //                       ^^^^ New!
 });
 ```
 
