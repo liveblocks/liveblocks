@@ -1,16 +1,17 @@
-import {
-  type BaseMetadata,
-  type BaseUserMeta,
-  type CommentBody,
-  type CommentData,
-  type EventSource,
-  type Json,
-  type JsonObject,
-  type LsonObject,
-  makeEventSource,
-  type Room,
-  type ThreadData,
+import type {
+  BaseMetadata,
+  BaseUserMeta,
+  CommentBody,
+  CommentData,
+  EventSource,
+  Json,
+  JsonObject,
+  LsonObject,
+  Resolve,
+  Room,
+  ThreadData,
 } from "@liveblocks/core";
+import { makeEventSource } from "@liveblocks/core";
 import { nanoid } from "nanoid";
 import { useEffect } from "react";
 import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
@@ -36,7 +37,7 @@ const DEDUPING_INTERVAL = 1000;
 
 export type CommentsRoom<TThreadMetadata extends BaseMetadata> = {
   useThreads(): RoomThreads<TThreadMetadata>;
-  useThreadsSuspense(): ThreadData<TThreadMetadata>[];
+  useThreadsSuspense(): RoomThreadsSuspense<TThreadMetadata>;
   createThread(
     options: CreateThreadOptions<TThreadMetadata>
   ): ThreadData<TThreadMetadata>;
@@ -98,6 +99,10 @@ export type RoomThreads<TThreadMetadata extends BaseMetadata> =
       threads: ThreadData<TThreadMetadata>[];
       error?: never;
     };
+
+export type RoomThreadsSuspense<TThreadMetadata extends BaseMetadata> = Resolve<
+  Extract<RoomThreads<TThreadMetadata>, { isLoading: false; error?: never }>
+>;
 
 type ThreadsRequestInfo<TThreadMetadata extends BaseMetadata> = {
   fetcher: Promise<ThreadData<TThreadMetadata>[]>;
@@ -610,7 +615,7 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
     return useThreadsInternal();
   }
 
-  function useThreadsSuspense() {
+  function useThreadsSuspense(): RoomThreadsSuspense<TThreadMetadata> {
     const cache = useThreadsInternal();
 
     if (cache.isLoading) {
@@ -621,7 +626,10 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
       throw cache.error;
     }
 
-    return cache.threads;
+    return {
+      threads: cache.threads,
+      isLoading: false,
+    };
   }
 
   return {

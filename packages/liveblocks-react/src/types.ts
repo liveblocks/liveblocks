@@ -28,6 +28,7 @@ import type {
   EditCommentOptions,
   EditThreadMetadataOptions,
   RoomThreads,
+  RoomThreadsSuspense,
 } from "./comments/CommentsRoom";
 
 export type ResolveUserOptions = {
@@ -750,9 +751,9 @@ export type RoomContextBundle<
          * Returns the threads within the current room.
          *
          * @example
-         * const threads = useThreads();
+         * const { threads } = useThreads();
          */
-        useThreads(): ThreadData<TThreadMetadata>[];
+        useThreads(): RoomThreadsSuspense<TThreadMetadata>;
 
         /**
          * @beta
@@ -760,7 +761,7 @@ export type RoomContextBundle<
          * Returns user info from a given user ID.
          *
          * @example
-         * const { user, error, isLoading } = useUser("user-id");
+         * const { user } = useUser("user-id");
          */
         useUser(userId: string): UserStateSuspense<TUserMeta["info"]>;
 
