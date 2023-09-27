@@ -278,10 +278,10 @@ Broadcast an event to other users in the Room. Events broadcast to the room can
 be listened to with [`Room.subscribe("event")`][]. Takes a payload as first
 argument. Should be serializable to JSON.
 
-By default, broadcasting an event acts as a “fire and forget”. If the user is
-not currently in the room, the event is simply discarded. Passing the
-`shouldQueueEventIfNotReady` option will queue the event, before sending it once
-the connection is established.
+By default, broadcasting an event is a “fire and forget” action. If the sending
+client is not currently connected to a room, the event is simply discarded. When
+passing the `shouldQueueEventIfNotReady` option, the client will queue up the
+event, and only send it once the connection to the room is (re)established.
 
 <Banner title="Notice">
 
