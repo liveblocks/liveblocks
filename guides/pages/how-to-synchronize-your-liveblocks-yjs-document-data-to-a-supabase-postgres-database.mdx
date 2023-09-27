@@ -45,7 +45,7 @@ back after you’re set up.
 ### This specific webhook is throttled
 
 Note that the [YDocUpdated](/docs/platform/webhooks#YDocUpdatedEvent) webhook
-event is throttled at a rate of _once every 5 minutes_. This is because Yjs can
+event is throttled at a rate of _once every 5 seconds_. This is because Yjs can
 update up to _60 times per second_, and it would be impractical to run the
 webhook this frequently.
 
@@ -531,7 +531,7 @@ throttle limit.
 ### Note when building
 
 Note that the [`YDocUpdated`](/docs/platform/webhooks#YDocUpdatedEvent) event is
-throttled, and only runs once every 5 minutes. When building with webhooks, it
+throttled, and only runs once every 5 seconds. When building with webhooks, it
 can sometimes be helpful to temporarily listen for
 [`UserEntered`](/docs/platform/webhooks#UserEnteredEvent) instead, a
 non-throttled event, and then refresh the page to trigger it.
