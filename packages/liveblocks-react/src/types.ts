@@ -525,10 +525,10 @@ type RoomContextBundleShared<
    * Returns a function that adds a reaction from a comment.
    *
    * @example
-   * const addCommentReaction = useAddCommentReaction();
-   * addCommentReaction({ threadId: "th_xxx", commentId: "cm_xxx", emoji: "👍" })
+   * const addReaction = useAddReaction();
+   * addReaction({ threadId: "th_xxx", commentId: "cm_xxx", emoji: "👍" })
    */
-  useAddCommentReaction(): (options: CommentReactionOptions) => void;
+  useAddReaction(): (options: CommentReactionOptions) => void;
 
   /**
    * @beta
@@ -536,10 +536,10 @@ type RoomContextBundleShared<
    * Returns a function that removes a reaction on a comment.
    *
    * @example
-   * const removeCommentReaction = useRemoveCommentReaction();
-   * removeCommentReaction({ threadId: "th_xxx", commentId: "cm_xxx", emoji: "👍" })
+   * const removeReaction = useRemoveReaction();
+   * removeReaction({ threadId: "th_xxx", commentId: "cm_xxx", emoji: "👍" })
    */
-  useRemoveCommentReaction(): (options: CommentReactionOptions) => void;
+  useRemoveReaction(): (options: CommentReactionOptions) => void;
 };
 
 export type RoomContextBundle<

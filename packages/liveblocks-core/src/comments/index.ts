@@ -42,12 +42,12 @@ export type CommentsApi<ThreadMetadata extends BaseMetadata> = {
     threadId: string;
     commentId: string;
   }): Promise<void>;
-  addCommentReaction(options: {
+  addReaction(options: {
     threadId: string;
     commentId: string;
     emoji: string;
   }): Promise<CommentData>;
-  removeCommentReaction(options: {
+  removeReaction(options: {
     threadId: string;
     commentId: string;
     emoji: string;
@@ -242,7 +242,7 @@ export function createCommentsApi<ThreadMetadata extends BaseMetadata>(
     );
   }
 
-  function addCommentReaction({
+  function addReaction({
     threadId,
     commentId,
     emoji,
@@ -265,7 +265,7 @@ export function createCommentsApi<ThreadMetadata extends BaseMetadata>(
     );
   }
 
-  function removeCommentReaction({
+  function removeReaction({
     threadId,
     commentId,
     emoji,
@@ -291,7 +291,7 @@ export function createCommentsApi<ThreadMetadata extends BaseMetadata>(
     createComment,
     editComment,
     deleteComment,
-    addCommentReaction,
-    removeCommentReaction,
+    addReaction,
+    removeReaction,
   };
 }

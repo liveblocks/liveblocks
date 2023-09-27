@@ -1199,22 +1199,22 @@ const deleteComment = useDeleteComment();
 deleteComment({ threadId: "th_xxx", commentId: "cm_xxx" });
 ```
 
-### useAddCommentReaction
+### useAddReaction
 
 Returns a function that adds a reaction to a comment.
 
 ```tsx
-const addCommentReaction = useAddCommentReaction();
-addCommentReaction({ threadId: "th_xxx", commentId: "cm_xxx", emoji: "👍" });
+const addReaction = useAddReaction();
+addReaction({ threadId: "th_xxx", commentId: "cm_xxx", emoji: "👍" });
 ```
 
-### useRemoveCommentReaction
+### useRemoveReaction
 
 Returns a function that removes a reaction from a comment.
 
 ```tsx
-const removeCommentReaction = useRemoveCommentReaction();
-removeCommentReaction({ threadId: "th_xxx", commentId: "cm_xxx", emoji: "👍" });
+const removeReaction = useRemoveReaction();
+removeReaction({ threadId: "th_xxx", commentId: "cm_xxx", emoji: "👍" });
 ```
 
 ## Helpers

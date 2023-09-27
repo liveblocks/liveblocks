@@ -163,11 +163,11 @@ function CommentLink({
 
 const CommentReaction = forwardRef<HTMLButtonElement, CommentReactionProps>(
   ({ comment, emoji, reactions, className, ...props }, forwardedRef) => {
-    const { useAddCommentReaction, useRemoveCommentReaction, useSelf } =
+    const { useAddReaction, useRemoveReaction, useSelf } =
       useRoomContextBundle();
     const self = useSelf();
-    const addCommentReaction = useAddCommentReaction();
-    const removeCommentReaction = useRemoveCommentReaction();
+    const addReaction = useAddReaction();
+    const removeReaction = useRemoveReaction();
     const isActive = useMemo(() => {
       return reactions.some((reaction) => reaction.userId === self?.id);
     }, [reactions, self?.id]);
@@ -199,26 +199,20 @@ const CommentReaction = forwardRef<HTMLButtonElement, CommentReactionProps>(
     const handlePressedChange = useCallback(
       (isPressed: boolean) => {
         if (isPressed) {
-          addCommentReaction({
+          addReaction({
             threadId: comment.threadId,
             commentId: comment.id,
             emoji,
           });
         } else {
-          removeCommentReaction({
+          removeReaction({
             threadId: comment.threadId,
             commentId: comment.id,
             emoji,
           });
         }
       },
-      [
-        addCommentReaction,
-        comment.threadId,
-        comment.id,
-        emoji,
-        removeCommentReaction,
-      ]
+      [addReaction, comment.threadId, comment.id, emoji, removeReaction]
     );
 
     return (
@@ -284,15 +278,15 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
     const {
       useDeleteComment,
       useEditComment,
-      useAddCommentReaction,
-      useRemoveCommentReaction,
+      useAddReaction,
+      useRemoveReaction,
       useSelf,
     } = useRoomContextBundle();
     const self = useSelf();
     const deleteComment = useDeleteComment();
     const editComment = useEditComment();
-    const addCommentReaction = useAddCommentReaction();
-    const removeCommentReaction = useRemoveCommentReaction();
+    const addReaction = useAddReaction();
+    const removeReaction = useRemoveReaction();
     const $ = useOverrides(overrides);
     const [isEditing, setEditing] = useState(false);
     const [isMoreActionOpen, setMoreActionOpen] = useState(false);
@@ -368,13 +362,13 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
         if (
           reactions?.[emoji]?.some((reaction) => reaction.userId === self?.id)
         ) {
-          removeCommentReaction({
+          removeReaction({
             threadId: comment.threadId,
             commentId: comment.id,
             emoji,
           });
         } else {
-          addCommentReaction({
+          addReaction({
             threadId: comment.threadId,
             commentId: comment.id,
             emoji,
@@ -382,11 +376,11 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
         }
       },
       [
-        addCommentReaction,
+        addReaction,
         comment.id,
         comment.threadId,
         reactions,
-        removeCommentReaction,
+        removeReaction,
         self?.id,
       ]
     );

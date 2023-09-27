@@ -76,7 +76,7 @@ export class DeleteCommentError extends Error {
   }
 }
 
-export class AddCommentReactionError extends Error {
+export class AddReactionError extends Error {
   constructor(
     public cause: Error,
     public context: {
@@ -86,12 +86,12 @@ export class AddCommentReactionError extends Error {
       emoji: string;
     }
   ) {
-    super("Add comment reaction failed.");
-    this.name = "AddCommentReactionError";
+    super("Add reaction failed.");
+    this.name = "AddReactionError";
   }
 }
 
-export class RemoveCommentReactionError extends Error {
+export class RemoveReactionError extends Error {
   constructor(
     public cause: Error,
     public context: {
@@ -101,8 +101,8 @@ export class RemoveCommentReactionError extends Error {
       emoji: string;
     }
   ) {
-    super("Remove comment reaction failed.");
-    this.name = "RemoveCommentReactionError";
+    super("Remove reaction failed.");
+    this.name = "RemoveReactionError";
   }
 }
 

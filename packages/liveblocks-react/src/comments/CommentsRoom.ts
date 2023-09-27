@@ -16,14 +16,14 @@ import { useEffect } from "react";
 import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
 
 import {
-  AddCommentReactionError,
+  AddReactionError,
   type CommentsApiError,
   CreateCommentError,
   CreateThreadError,
   DeleteCommentError,
   EditCommentError,
   EditThreadMetadataError,
-  RemoveCommentReactionError,
+  RemoveReactionError,
 } from "./errors";
 
 const POLLING_INTERVAL_REALTIME = 30000;
@@ -44,8 +44,8 @@ export type CommentsRoom<TThreadMetadata extends BaseMetadata> = {
   ): ThreadData<TThreadMetadata>;
   editThreadMetadata(options: EditThreadMetadataOptions<TThreadMetadata>): void;
   createComment(options: CreateCommentOptions): CommentData;
-  addCommentReaction(options: CommentReactionOptions): void;
-  removeCommentReaction(options: CommentReactionOptions): void;
+  addReaction(options: CommentReactionOptions): void;
+  removeReaction(options: CommentReactionOptions): void;
   editComment(options: EditCommentOptions): void;
   deleteComment(options: DeleteCommentOptions): void;
 };
@@ -635,7 +635,7 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
     return cache.threads;
   }
 
-  function addCommentReaction({
+  function addReaction({
     threadId,
     commentId,
     emoji,
@@ -662,11 +662,11 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
         : thread
     );
 
-    mutate(room.addCommentReaction({ threadId, commentId, emoji }), {
+    mutate(room.addReaction({ threadId, commentId, emoji }), {
       optimisticData,
     }).catch((err: Error) => {
       errorEventSource.notify(
-        new AddCommentReactionError(err, {
+        new AddReactionError(err, {
           roomId: room.id,
           threadId,
           commentId,
@@ -676,7 +676,7 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
     });
   }
 
-  function removeCommentReaction({
+  function removeReaction({
     threadId,
     commentId,
     emoji,
@@ -710,11 +710,11 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
         : thread
     );
 
-    mutate(room.removeCommentReaction({ threadId, commentId, emoji }), {
+    mutate(room.removeReaction({ threadId, commentId, emoji }), {
       optimisticData,
     }).catch((err: Error) => {
       errorEventSource.notify(
-        new RemoveCommentReactionError(err, {
+        new RemoveReactionError(err, {
           roomId: room.id,
           threadId,
           commentId,
@@ -728,8 +728,8 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
     useThreads,
     useThreadsSuspense,
     editThreadMetadata,
-    addCommentReaction,
-    removeCommentReaction,
+    addReaction,
+    removeReaction,
     createThread,
     createComment,
     editComment,
