@@ -806,7 +806,9 @@
       color: var(--lb-accent-secondary);
       box-shadow: inset 0 0 0 1px var(--lb-accent-moderate);
 
-      &:focus-visible {
+      &:enabled:hover,
+      &:enabled:focus-visible,
+      &[aria-expanded="true"] {
         color: var(--lb-accent);
       }
     }
