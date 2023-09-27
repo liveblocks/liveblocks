@@ -295,7 +295,7 @@ so it may be deprecated and replaced with something else.
 room.broadcastEvent({ type: "EMOJI", emoji: "🔥" });
 
 // On client B
-room.subscribe("event", ({ event, user }) => {
+room.subscribe("event", ({ event, user, connectioId }) => {
   //                              ^^^^ Will be Client A
   if (event.type === "EMOJI") {
     // Do something
@@ -397,7 +397,7 @@ Returns an unsubscribe function.
 room.broadcastEvent({ type: "EMOJI", emoji: "🔥" });
 
 // On client B
-const unsubscribe = room.subscribe("event", ({ event, user }) => {
+const unsubscribe = room.subscribe("event", ({ event, user, connectionId }) => {
   //                                                  ^^^^ Will be Client A
   if (event.type === "EMOJI") {
     // Do something
