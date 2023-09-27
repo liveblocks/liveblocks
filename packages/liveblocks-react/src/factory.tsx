@@ -17,6 +17,7 @@ import type {
   AsyncCache,
   BaseMetadata,
   CommentData,
+  RoomEventMessage,
   ToImmutable,
 } from "@liveblocks/core";
 import {
@@ -515,7 +516,7 @@ export function createRoomContext<
   }
 
   function useEventListener(
-    callback: (eventData: { connectionId: number; event: TRoomEvent }) => void
+    callback: (data: RoomEventMessage<TPresence, TUserMeta, TRoomEvent>) => void
   ): void {
     const room = useRoom();
     const savedCallback = React.useRef(callback);
@@ -525,10 +526,9 @@ export function createRoomContext<
     });
 
     React.useEffect(() => {
-      const listener = (eventData: {
-        connectionId: number;
-        event: TRoomEvent;
-      }) => {
+      const listener = (
+        eventData: RoomEventMessage<TPresence, TUserMeta, TRoomEvent>
+      ) => {
         savedCallback.current(eventData);
       };
 
