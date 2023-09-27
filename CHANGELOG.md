@@ -1,3 +1,16 @@
+# v1.3.7
+
+### `@liveblocks/*`
+
+Broadcast event messages now include a `user` property to indicate the user that
+sent the event:
+
+```tsx
+room.subscribe("event", ({ event, user }) => {
+  //                              ^^^^ New!
+});
+```
+
 # v1.3.6
 
 ### `@liveblocks/client`
