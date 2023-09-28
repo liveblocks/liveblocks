@@ -1,15 +1,27 @@
-# v1.3.7
+# v1.4.0
+
+### DevTools
+
+- New Yjs tab: visualize Yjs documents as a diagram, a tree, or as a list of
+  operations, and inspect Awareness at the same time as Presence.
+
+### `@liveblocks/yjs`
+
+- Add support for the Liveblocks [DevTools](https://liveblocks.io/devtools).
 
 ### `@liveblocks/react`
 
+- **Breaking (beta):** Comments' hook `useThreads` now returns an object in its
+  Suspense version. (`const threads = useThreads()` becomes
+  `const { threads } = useThreads()`)
 - Add new Comments hooks to add/remove reactions.
 
 ### `@liveblocks/react-comments`
 
-- Add support for reactions. (👍)
 - **Breaking (beta):** `Comment`’s `indentBody` and `Thread`’s
   `indentCommentBody` were renamed to `indentContent` and `indentCommentContent`
   respectively. `Thread`’s `onResolveChange` was renamed to `onResolvedChange`.
+- Add support for reactions. (👍)
 
 # v1.3.6
 

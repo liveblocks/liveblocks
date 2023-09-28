@@ -1,16 +1,16 @@
-import {
-  type BaseMetadata,
-  type BaseUserMeta,
-  type CommentBody,
-  type CommentData,
-  type EventSource,
-  type Json,
-  type JsonObject,
-  type LsonObject,
-  makeEventSource,
-  type Room,
-  type ThreadData,
+import type {
+  BaseMetadata,
+  BaseUserMeta,
+  CommentBody,
+  CommentData,
+  EventSource,
+  Json,
+  JsonObject,
+  LsonObject,
+  Room,
+  ThreadData,
 } from "@liveblocks/core";
+import { makeEventSource } from "@liveblocks/core";
 import { nanoid } from "nanoid";
 import { useEffect } from "react";
 import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
@@ -37,8 +37,8 @@ const COMMENT_ID_PREFIX = "cm";
 const DEDUPING_INTERVAL = 1000;
 
 export type CommentsRoom<TThreadMetadata extends BaseMetadata> = {
-  useThreads(): RoomThreads<TThreadMetadata>;
-  useThreadsSuspense(): ThreadData<TThreadMetadata>[];
+  useThreads(): ThreadsState<TThreadMetadata>;
+  useThreadsSuspense(): ThreadsStateSuccess<TThreadMetadata>;
   createThread(
     options: CreateThreadOptions<TThreadMetadata>
   ): ThreadData<TThreadMetadata>;
@@ -88,26 +88,28 @@ export type CommentReactionOptions = {
   emoji: string;
 };
 
-function createOptimisticId(prefix: string) {
-  return `${prefix}_${nanoid()}`;
-}
+export type ThreadsStateLoading = {
+  isLoading: true;
+  threads?: never;
+  error?: never;
+};
 
-export type RoomThreads<TThreadMetadata extends BaseMetadata> =
-  | {
-      isLoading: true;
-      threads?: never;
-      error?: never;
-    }
-  | {
-      isLoading: false;
-      threads?: never;
-      error: Error;
-    }
-  | {
-      isLoading: false;
-      threads: ThreadData<TThreadMetadata>[];
-      error?: never;
-    };
+export type ThreadsStateError = {
+  isLoading: false;
+  threads?: never;
+  error: Error;
+};
+
+export type ThreadsStateSuccess<TThreadMetadata extends BaseMetadata> = {
+  isLoading: false;
+  threads: ThreadData<TThreadMetadata>[];
+  error?: never;
+};
+
+export type ThreadsState<TThreadMetadata extends BaseMetadata> =
+  | ThreadsStateLoading
+  | ThreadsStateError
+  | ThreadsStateSuccess<TThreadMetadata>;
 
 type ThreadsRequestInfo<TThreadMetadata extends BaseMetadata> = {
   fetcher: Promise<ThreadData<TThreadMetadata>[]>;
@@ -119,13 +121,17 @@ type MutationInfo = {
   endTime: number;
 };
 
+function createOptimisticId(prefix: string) {
+  return `${prefix}_${nanoid()}`;
+}
+
 function createThreadsManager<TThreadMetadata extends BaseMetadata>() {
-  let cache: RoomThreads<TThreadMetadata> | undefined; // Stores the current cache state (threads)
+  let cache: ThreadsState<TThreadMetadata> | undefined; // Stores the current cache state (threads)
   let request: ThreadsRequestInfo<TThreadMetadata> | undefined; // Stores the currently active revalidation request
   let mutation: MutationInfo | undefined; // Stores the start and end time of the currently active mutation
 
   const eventSource = makeEventSource<
-    RoomThreads<TThreadMetadata> | undefined
+    ThreadsState<TThreadMetadata> | undefined
   >();
 
   return {
@@ -133,7 +139,7 @@ function createThreadsManager<TThreadMetadata extends BaseMetadata>() {
       return cache;
     },
 
-    set cache(value: RoomThreads<TThreadMetadata> | undefined) {
+    set cache(value: ThreadsState<TThreadMetadata> | undefined) {
       cache = value;
       eventSource.notify(cache);
     },
@@ -155,7 +161,7 @@ function createThreadsManager<TThreadMetadata extends BaseMetadata>() {
     },
 
     subscribe(
-      callback: (state: RoomThreads<TThreadMetadata> | undefined) => void
+      callback: (state: ThreadsState<TThreadMetadata> | undefined) => void
     ) {
       return eventSource.subscribe(callback);
     },
@@ -595,7 +601,7 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
     );
   }
 
-  function useThreadsInternal(): RoomThreads<TThreadMetadata> {
+  function useThreadsInternal(): ThreadsState<TThreadMetadata> {
     useEffect(_subscribe, [_subscribe]);
 
     usePolling();
@@ -621,7 +627,7 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
     return useThreadsInternal();
   }
 
-  function useThreadsSuspense() {
+  function useThreadsSuspense(): ThreadsStateSuccess<TThreadMetadata> {
     const cache = useThreadsInternal();
 
     if (cache.isLoading) {
@@ -632,7 +638,10 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
       throw cache.error;
     }
 
-    return cache.threads;
+    return {
+      threads: cache.threads,
+      isLoading: false,
+    };
   }
 
   function addReaction({

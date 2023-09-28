@@ -1,51 +1,54 @@
+import { useStorage } from "@plasmohq/storage/hook";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
 
 import { Loading } from "../components/Loading";
 import { ThemeProvider } from "../contexts/Theme";
+import { buildSearchRegex } from "../lib/buildSearchRegex";
 import { EmptyState } from "./components/EmptyState";
 import { ReloadButton } from "./components/ReloadButton";
 import { ResizablePanel } from "./components/ResizablePanel";
 import { RoomSelector } from "./components/RoomSelector";
 import { RoomStatus } from "./components/RoomStatus";
-import { StorageSearch } from "./components/StorageSearch";
+import { Search } from "./components/Search";
+import type { Tab } from "./components/Tabs";
 import { Tabs } from "./components/Tabs";
 import { CurrentRoomProvider, useCurrentRoomId } from "./contexts/CurrentRoom";
 import { sendMessage } from "./port";
 import { Presence } from "./tabs/presence";
 import { Storage } from "./tabs/storage";
+import type { YjsChangesView, YjsTab } from "./tabs/yjs";
+import { Yjs, YJS_CHANGES_VIEWS, YJS_TABS } from "./tabs/yjs";
 
-function buildRegex(searchText: string): RegExp {
-  // Interpret the search string as a regular expression if the search string
-  // starts and ends with "/".
-  if (
-    searchText.startsWith("/") &&
-    searchText.endsWith("/") &&
-    searchText.length >= 3
-  ) {
-    try {
-      return new RegExp(searchText.substring(1, searchText.length - 1), "i");
-    } catch {
-      // Fall through, interpret the invalid regex as a literal string match
-      // instead
-    }
-  }
+const MAIN_TABS = ["storage", "yjs"] as const;
+const SECONDARY_TABS = ["presence", "history", "events"] as const;
 
-  // Still build a regex to use internally, but simply build one that will
-  // match the input literally
-  return new RegExp(searchText.replace(/[/\-\\^$*+?.()|[\]{}]/g, "\\$&"), "i");
-}
+type MainTab = (typeof MAIN_TABS)[number];
+type SecondaryTab = (typeof SECONDARY_TABS)[number];
 
 function Panel() {
-  const searchRef = useRef<HTMLInputElement>(null);
+  const [mainTab, setMainTab] = useStorage<MainTab>("tabs-main", MAIN_TABS[0]);
+  const [secondaryTab, setSecondaryTab] = useStorage<SecondaryTab>(
+    "tabs-secondary",
+    SECONDARY_TABS[0]
+  );
+  const [yjsTab, setYjsTab] = useStorage<YjsTab>("tabs-main-yjs", YJS_TABS[0]);
+  const [yjsChangesView, setYjsChangesView] = useStorage<YjsChangesView>(
+    "yjs-changes-view",
+    YJS_CHANGES_VIEWS[0]
+  );
+  const currentRoomId = useCurrentRoomId();
   const [searchText, setSearchText] = useState("");
   const search = useMemo(() => {
     const trimmed = (searchText ?? "").trim();
-    return trimmed ? buildRegex(trimmed) : undefined;
+    return trimmed ? buildSearchRegex(trimmed) : undefined;
   }, [searchText]);
-
-  const currentRoomId = useCurrentRoomId();
+  const isSearchActive = useMemo(() => {
+    return (
+      mainTab === "storage" || (mainTab === "yjs" && yjsTab === "document")
+    );
+  }, [mainTab, yjsTab]);
 
   const handleSearchClear = useCallback(() => {
     setSearchText("");
@@ -55,35 +58,114 @@ function Panel() {
     sendMessage({ msg: "reload" });
   }, []);
 
+  const handleMainTabChange = useCallback(
+    (value: string) => {
+      void setMainTab(value as MainTab);
+    },
+    [setMainTab]
+  );
+
+  const handleSecondaryTabChange = useCallback(
+    (value: string) => {
+      void setSecondaryTab(value as SecondaryTab);
+    },
+    [setSecondaryTab]
+  );
+
+  const handleYjsTabChange = useCallback(
+    (value: string) => {
+      void setYjsTab(value as YjsTab);
+    },
+    [setYjsTab]
+  );
+
+  const handleYjsChangesViewChange = useCallback(
+    (value: string) => {
+      void setYjsChangesView(value as YjsChangesView);
+    },
+    [setYjsChangesView]
+  );
+
+  const mainTabs: Tab[] = useMemo(() => {
+    return MAIN_TABS.map((tab) => {
+      switch (tab) {
+        case "storage":
+          return {
+            value: "storage",
+            title: "Storage",
+            content: (
+              <Storage
+                key={`${currentRoomId}:storage`}
+                search={search}
+                searchText={searchText}
+                onSearchClear={handleSearchClear}
+              />
+            ),
+          };
+        case "yjs":
+          return {
+            value: "yjs",
+            title: "Yjs",
+            content: (
+              <Yjs
+                key={`${currentRoomId}:yjs`}
+                activeTab={yjsTab}
+                setActiveTab={handleYjsTabChange}
+                search={search}
+                searchText={searchText}
+                onSearchClear={handleSearchClear}
+                changesView={yjsChangesView}
+                setChangesView={handleYjsChangesViewChange}
+              />
+            ),
+          };
+      }
+    });
+  }, [
+    currentRoomId,
+    handleSearchClear,
+    handleYjsChangesViewChange,
+    handleYjsTabChange,
+    search,
+    searchText,
+    yjsChangesView,
+    yjsTab,
+  ]);
+
+  const secondaryTabs: Tab[] = useMemo(() => {
+    if (!currentRoomId) {
+      return [] as Tab[];
+    }
+
+    return SECONDARY_TABS.map((tab) => {
+      switch (tab) {
+        case "presence":
+          return {
+            value: "presence",
+            title: "Presence",
+            content: <Presence key={`${currentRoomId}:presence`} />,
+          };
+        case "history":
+          return {
+            value: "history",
+            title: "History",
+            content: null,
+            disabled: true,
+          };
+        case "events":
+          return {
+            value: "events",
+            title: "Events",
+            content: null,
+            disabled: true,
+          };
+      }
+    });
+  }, [currentRoomId]);
+
   useEffect(() => {
     handleSearchClear();
   }, [currentRoomId, handleSearchClear]);
-
-  // Focus search on ⌘+F, ⌘+K, or /
-  useEffect(() => {
-    function handleKeyDown(event: KeyboardEvent) {
-      // Except if an input is currently focused
-      if (document.activeElement?.tagName === "INPUT") {
-        return;
-      }
-
-      if (
-        (event.metaKey && (event.key === "f" || event.key === "k")) ||
-        event.key === "/"
-      ) {
-        if (searchRef.current) {
-          searchRef.current.focus();
-          event.preventDefault();
-          event.stopPropagation();
-        }
-      }
-    }
-
-    document.addEventListener("keydown", handleKeyDown);
-    return () => {
-      document.removeEventListener("keydown", handleKeyDown);
-    };
-  }, []);
 
   if (currentRoomId === null) {
     return (
@@ -123,55 +205,20 @@ function Panel() {
   return (
     <ResizablePanel
       className="child:select-none select-none"
-      content={
+      panel={
         <Tabs
           className="h-full"
-          defaultValue="presence"
-          tabs={[
-            {
-              value: "presence",
-              title: "Presence",
-              content: <Presence />,
-            },
-            {
-              value: "history",
-              title: "History",
-              content: null,
-              disabled: true,
-            },
-            {
-              value: "events",
-              title: "Events",
-              content: null,
-              disabled: true,
-            },
-          ]}
+          value={secondaryTab}
+          onValueChange={handleSecondaryTabChange}
+          tabs={secondaryTabs}
         />
       }
     >
       <Tabs
         className="h-full"
-        defaultValue="storage"
-        tabs={[
-          {
-            value: "storage",
-            title: "Storage",
-            content: (
-              <Storage
-                key={currentRoomId}
-                search={search}
-                searchText={searchText}
-                onSearchClear={handleSearchClear}
-              />
-            ),
-          },
-          {
-            value: "settings",
-            title: "Settings",
-            content: null,
-            disabled: true,
-          },
-        ]}
+        value={mainTab}
+        onValueChange={handleMainTabChange}
+        tabs={mainTabs}
         leading={
           <div className="after:bg-light-300 after:dark:bg-dark-300 relative flex max-w-[40%] flex-none items-center pl-1.5 pr-1 after:absolute after:-right-px after:top-[20%] after:h-[60%] after:w-px">
             <ReloadButton onClick={handleReload} className="flex-none" />
@@ -180,11 +227,11 @@ function Panel() {
           </div>
         }
         trailing={
-          <div className="after:bg-light-300 after:dark:bg-dark-300 relative w-[30%] min-w-[140px] flex-none after:absolute after:-left-px after:top-[20%] after:h-[60%] after:w-px">
-            <StorageSearch
+          <div className="ml-auto after:bg-light-300 after:dark:bg-dark-300 relative w-[35%] min-w-[140px] flex-none after:absolute after:-left-px after:top-[20%] after:h-[60%] after:w-px">
+            <Search
               value={searchText}
               setValue={setSearchText}
-              ref={searchRef}
+              disabled={!isSearchActive}
             />
           </div>
         }

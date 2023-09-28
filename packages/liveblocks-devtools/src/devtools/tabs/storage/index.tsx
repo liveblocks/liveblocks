@@ -4,13 +4,13 @@ import type { ComponentProps, MouseEvent } from "react";
 import { useCallback, useMemo, useRef, useState } from "react";
 import type { NodeApi, TreeApi } from "react-arborist";
 
-import { Loading } from "../../components/Loading";
-import { truncate } from "../../lib/truncate";
-import { EmptyState } from "../components/EmptyState";
-import { Breadcrumbs, filterNodes, StorageTree } from "../components/Tree";
-import { useStatus, useStorage } from "../contexts/CurrentRoom";
+import { Loading } from "../../../components/Loading";
+import { truncate } from "../../../lib/truncate";
+import { EmptyState } from "../../components/EmptyState";
+import { Breadcrumbs, filterNodes, StorageTree } from "../../components/Tree";
+import { useStatus, useStorage } from "../../contexts/CurrentRoom";
 
-interface Props extends ComponentProps<"div"> {
+interface StorageProps extends ComponentProps<"div"> {
   search?: RegExp;
   searchText?: string;
   onSearchClear: (event: MouseEvent<HTMLButtonElement>) => void;
@@ -22,7 +22,7 @@ export function Storage({
   onSearchClear,
   className,
   ...props
-}: Props) {
+}: StorageProps) {
   const storage = useStorage();
   const currentStatus = useStatus();
   const filteredStorage = useMemo(() => {

@@ -58,7 +58,7 @@ export function RoomStatus({ className, ...props }: ComponentProps<"div">) {
         <span>{capitalize(currentStatus)}</span>
       </>
     ) : null;
-  }, [currentStatus]);
+  }, [currentStatus, statusContent]);
 
   const content = (
     <div

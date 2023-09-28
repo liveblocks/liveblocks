@@ -4,7 +4,7 @@ import { forwardRef, type ReactNode } from "react";
 
 export interface Props
   extends RadixTooltip.TooltipProps,
-    RadixTooltip.TooltipContentProps {
+    Omit<RadixTooltip.TooltipContentProps, "content"> {
   content: ReactNode;
 }
 

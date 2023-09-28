@@ -1,7 +1,3 @@
-// TODO: apparently Yjs is full of anys or something, see if we can fix this
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import type {
   BaseUserMeta,
   Json,
@@ -9,12 +5,13 @@ import type {
   LsonObject,
   Room,
 } from "@liveblocks/client";
-import { detectDupes } from "@liveblocks/core";
+import { ClientMsgCode, detectDupes } from "@liveblocks/core";
 import { Base64 } from "js-base64";
 import { Observable } from "lib0/observable";
 import * as Y from "yjs";
 
 import { PKG_FORMAT, PKG_NAME, PKG_VERSION } from "./version";
+2;
 
 detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
 
@@ -169,10 +166,15 @@ export default class LiveblocksProvider<
     );
 
     this.unsubscribers.push(
-      this.room.events.ydoc.subscribe(({ update, stateVector }) => {
+      this.room.events.ydoc.subscribe((message) => {
+        const { type, update } = message;
+        if (type === ClientMsgCode.UPDATE_YDOC) {
+          // don't apply updates that came from the client
+          return;
+        }
         // apply update from the server
         Y.applyUpdate(this.doc, Base64.toUint8Array(update), "backend");
-
+        const { stateVector } = message;
         // if this update is the result of a fetch, the state vector is included
         if (stateVector) {
           // Use server state to calculate a diff and send it
@@ -235,6 +237,7 @@ export default class LiveblocksProvider<
     this.doc.off("update", this.updateHandler);
     this.unsubscribers.forEach((unsub) => unsub());
     this.awareness.destroy();
+    super.destroy();
   }
 
   // Some provider implementations expect to be able to call connect/disconnect, implement as noop

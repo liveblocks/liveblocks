@@ -109,6 +109,10 @@ export function useAsyncCache<T, E, O extends UseAsyncCacheOptions<T>>(
     data = previousData.current.data;
   }
 
+  if (frozenOptions?.suspense && state.error) {
+    throw state.error;
+  }
+
   return {
     isLoading: state.isLoading,
     data,

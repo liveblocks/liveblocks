@@ -37,7 +37,7 @@ import type {
   DeleteCommentOptions,
   EditCommentOptions,
   EditThreadMetadataOptions,
-  RoomThreads,
+  ThreadsState,
 } from "./comments/CommentsRoom";
 import { createCommentsRoom } from "./comments/CommentsRoom";
 import type { CommentsApiError } from "./comments/errors";
@@ -55,7 +55,7 @@ import type {
   RoomContextBundle,
   RoomProviderProps,
   UserState,
-  UserStateSuspense,
+  UserStateSuccess,
 } from "./types";
 
 const noop = () => {};
@@ -860,7 +860,7 @@ export function createRoomContext<
     return commentsRoom;
   }
 
-  function useThreads(): RoomThreads<TThreadMetadata> {
+  function useThreads(): ThreadsState<TThreadMetadata> {
     const room = useRoom();
 
     React.useEffect(() => {
@@ -1023,9 +1023,8 @@ export function createRoomContext<
 
     return {
       user: state.data,
-      error: state.error,
       isLoading: false,
-    } as UserStateSuspense<TUserMeta["info"]>;
+    } as UserStateSuccess<TUserMeta["info"]>;
   }
 
   const mentionSuggestionsCache = createAsyncCache<string[], unknown>(
