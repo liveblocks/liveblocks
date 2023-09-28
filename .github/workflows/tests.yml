@@ -1,6 +1,12 @@
 name: Tests
 
-on: [pull_request]
+on:
+  pull_request:
+    paths-ignore:
+      - "**.md"
+      - "**.mdx"
+      - "docs/**"
+      - "guides/**"
 
 jobs:
   test:
