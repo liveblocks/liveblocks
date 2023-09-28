@@ -1541,9 +1541,40 @@ describe("room", () => {
     });
 
     test("event", async () => {
-      const { room, wss } = createTestableRoom({});
+      const { room, wss } = createTestableRoom(
+        {},
+        undefined,
+        SOCKET_AUTOCONNECT_BUT_NO_ROOM_STATE
+      );
+      room.connect();
 
       wss.onConnection((conn) => {
+        conn.server.send(
+          serverMessage({
+            type: ServerMsgCode.ROOM_STATE,
+            actor: 2,
+            nonce: "nonce-for-actor-2",
+            scopes: ["room:write"],
+            users: {
+              "1": {
+                id: "user-123",
+                info: { name: "Vincent" },
+                scopes: ["room:write"],
+              },
+            },
+          })
+        );
+
+        // User only becomes known as "other" locally after having received their presence
+        conn.server.send(
+          serverMessage({
+            type: ServerMsgCode.UPDATE_PRESENCE,
+            data: { x: 2 },
+            actor: 1,
+            targetActor: 0, // Setting targetActor means this is a full presence update
+          })
+        );
+
         conn.server.send(
           serverMessage({
             type: ServerMsgCode.BROADCASTED_EVENT,
@@ -1552,8 +1583,6 @@ describe("room", () => {
           })
         );
       });
-
-      room.connect();
 
       const callback = jest.fn();
       room.events.customEvent.subscribe(callback);
@@ -1565,6 +1594,57 @@ describe("room", () => {
         event: {
           type: "MY_EVENT",
         },
+        user: {
+          canComment: true,
+          canWrite: true,
+          connectionId: 1,
+          id: "user-123",
+          info: { name: "Vincent" },
+          isReadOnly: false,
+          presence: { x: 2 },
+        },
+      });
+    });
+
+    test("event (but no such user known locally)", async () => {
+      const { room, wss } = createTestableRoom(
+        {},
+        undefined,
+        SOCKET_AUTOCONNECT_BUT_NO_ROOM_STATE
+      );
+      room.connect();
+
+      wss.onConnection((conn) => {
+        conn.server.send(
+          serverMessage({
+            type: ServerMsgCode.ROOM_STATE,
+            actor: 2,
+            nonce: "nonce-for-actor-2",
+            scopes: ["room:write"],
+            users: {},
+          })
+        );
+
+        conn.server.send(
+          serverMessage({
+            type: ServerMsgCode.BROADCASTED_EVENT,
+            event: { type: "MY_EVENT" },
+            actor: 1,
+          })
+        );
+      });
+
+      const callback = jest.fn();
+      room.events.customEvent.subscribe(callback);
+
+      await waitUntilCustomEvent(room);
+
+      expect(callback).toHaveBeenCalledWith({
+        connectionId: 1,
+        event: {
+          type: "MY_EVENT",
+        },
+        user: null,
       });
     });
 

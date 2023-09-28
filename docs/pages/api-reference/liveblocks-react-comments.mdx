@@ -145,8 +145,7 @@ scales. If you need to support browser versions that don’t support
 Overrides can be used to customize the components’ strings and
 localization-related properties like the locale and reading direction.
 
-They can be set globally once for all components using
-[`CommentsConfig`](#CommentsConfig):
+They can be set globally once for all components using `CommentsConfig`:
 
 ```tsx
 import { CommentsConfig } from "@liveblocks/react-comments";
@@ -189,20 +188,21 @@ Displays a thread of comments, with a composer to reply to it.
 
 <Table columns={["26%", "32%", "42%"]}>
 
-| Prop                  | Type                                                                                              | Description                                                                             |
-| --------------------- | ------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
-| `thread`              | <code>ThreadData&lt;\{ resolved?: boolean \}&gt;</code>                                           | The thread to display.                                                                  |
-| `showComposer`        | `boolean \| "collapsed" \| undefined`                                                             | How to show or hide the composer to reply to the thread.<br/>Defaults to `"collapsed"`. |
-| `showActions`         | `boolean \| "hover" \| undefined`                                                                 | How to show or hide the actions.<br/>Defaults to `"hover"`.                             |
-| `showResolveAction`   | `boolean \| undefined`                                                                            | Whether to show the action to resolve the thread.<br/>Defaults to `true`.               |
-| `indentCommentBody`   | `boolean \| undefined`                                                                            | Whether to indent the comments’ bodies.<br/>Defaults to `true`.                         |
-| `showDeletedComments` | `boolean \| undefined`                                                                            | Whether to show deleted comments.<br/>Defaults to `false`.                              |
-| `onResolveChange`     | `(resolved: boolean) => void`                                                                     | The event handler called when changing the resolved status.                             |
-| `onCommentEdit`       | `(comment: CommentData) => void`                                                                  | The event handler called when a comment is edited.                                      |
-| `onCommentDelete`     | `(comment: CommentData) => void`                                                                  | The event handler called when a comment is deleted.                                     |
-| `onAuthorClick`       | <code>(userId: string, event: MouseEvent&lt;HTMLElement&gt;) => void \| undefined</code>          | The event handler called when clicking on a comment’s author.                           |
-| `onMentionClick`      | <code>(userId: string, event: MouseEvent&lt;HTMLElement&gt;) => void \| undefined</code>          | The event handler called when clicking on a mention.                                    |
-| `overrides`           | <code>Partial&lt;ThreadOverrides \& CommentOverrides \& ComposerOverrides&gt; \| undefined</code> | Override the component’s strings.                                                       |
+| Prop                   | Type                                                                                              | Description                                                                             |
+| ---------------------- | ------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| `thread`               | <code>ThreadData&lt;\{ resolved?: boolean \}&gt;</code>                                           | The thread to display.                                                                  |
+| `showComposer`         | `boolean \| "collapsed" \| undefined`                                                             | How to show or hide the composer to reply to the thread.<br/>Defaults to `"collapsed"`. |
+| `showActions`          | `boolean \| "hover" \| undefined`                                                                 | How to show or hide the actions.<br/>Defaults to `"hover"`.                             |
+| `showReactions`        | `boolean \| undefined`                                                                            | Whether to show reactions.<br/>Defaults to `true`.                                      |
+| `showResolveAction`    | `boolean \| undefined`                                                                            | Whether to show the action to resolve the thread.<br/>Defaults to `true`.               |
+| `indentCommentContent` | `boolean \| undefined`                                                                            | Whether to indent the comments’ content.<br/>Defaults to `true`.                        |
+| `showDeletedComments`  | `boolean \| undefined`                                                                            | Whether to show deleted comments.<br/>Defaults to `false`.                              |
+| `onResolvedChange`     | `(resolved: boolean) => void`                                                                     | The event handler called when changing the resolved status.                             |
+| `onCommentEdit`        | `(comment: CommentData) => void`                                                                  | The event handler called when a comment is edited.                                      |
+| `onCommentDelete`      | `(comment: CommentData) => void`                                                                  | The event handler called when a comment is deleted.                                     |
+| `onAuthorClick`        | <code>(userId: string, event: MouseEvent&lt;HTMLElement&gt;) => void \| undefined</code>          | The event handler called when clicking on a comment’s author.                           |
+| `onMentionClick`       | <code>(userId: string, event: MouseEvent&lt;HTMLElement&gt;) => void \| undefined</code>          | The event handler called when clicking on a mention.                                    |
+| `overrides`            | <code>Partial&lt;ThreadOverrides \& CommentOverrides \& ComposerOverrides&gt; \| undefined</code> | Override the component’s strings.                                                       |
 
 </Table>
 
@@ -226,7 +226,8 @@ Displays a single comment.
 | ---------------- | ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
 | `comment`        | `CommentData`                                                                            | The thread to display.                                                                                                                |
 | `showActions`    | `boolean \| "hover" \| undefined`                                                        | How to show or hide the actions.<br/>Defaults to `"hover"`.                                                                           |
-| `indentBody`     | `boolean \| undefined`                                                                   | Whether to indent the comment’s body.<br/>Defaults to `true`.                                                                         |
+| `showReactions`  | `boolean \| undefined`                                                                   | Whether to show reactions.<br/>Defaults to `true`.                                                                                    |
+| `indentContent`  | `boolean \| undefined`                                                                   | Whether to indent the comment’s content.<br/>Defaults to `true`.                                                                      |
 | `showDeleted`    | `boolean \| undefined`                                                                   | Whether to show the comment if it was deleted. If set to `false`, it will render deleted comments as `null`.<br/>Defaults to `false`. |
 | `onEdit`         | `(comment: CommentData) => void`                                                         | The event handler called when the comment is edited.                                                                                  |
 | `onDelete`       | `(comment: CommentData) => void`                                                         | The event handler called when the comment is deleted.                                                                                 |
@@ -286,31 +287,6 @@ behavior and call the mutation methods (e.g. `createThread`) manually.
 </Table>
 
 {/* TODO: Document classes and data attributes */}
-
-### CommentsConfig
-
-Set configuration options (e.g. [overrides](#Overrides)) for all Comments
-components.
-
-```tsx
-import { CommentsConfig } from "@liveblocks/react-comments";
-
-export function App() {
-  return (
-    <CommentsConfig
-      overrides={{ locale: "fr", UNKNOWN_USER: "Anonyme" /* ... */ }}
-    >
-      {/* ... */}
-    </CommentsConfig>
-  );
-}
-```
-
-| Prop        | Type                                                | Description              |
-| ----------- | --------------------------------------------------- | ------------------------ |
-| `overrides` | <code>Partial&lt;\Overrides&gt; \| undefined</code> | The overrides to be set. |
-
-</Table>
 
 ## Primitives
 
@@ -758,6 +734,7 @@ absolute formatting for older ones.
 | `children` | `((date: Date) => ReactNode) \| undefined`        | A function to format the displayed date.<br/>Defaults to a relative date formatting function.                                               |
 | `title`    | `string \| ((date: Date) => string) \| undefined` | The `title` attribute’s value or a function to format it.<br/>Defaults to an absolute date formatting function.                             |
 | `interval` | `number \| false \| undefined`                    | The interval in milliseconds at which the component will re-render. Can be set to `false` to disable re-rendering.<br/>Defaults to `30000`. |
+| `locale`   | `string \| undefined`                             | The locale used when formatting the date.<br/>Defaults to the browser’s locale.                                                             |
 | `asChild`  | `boolean \| undefined`                            | Replace the rendered element by the one passed as a child.<br/>Defaults to `false`.                                                         |
 
 </Table>

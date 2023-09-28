@@ -16,18 +16,21 @@ import type {
   BaseMetadata,
   CommentData,
   Resolve,
+  RoomEventMessage,
   RoomInitializers,
   ThreadData,
   ToImmutable,
 } from "@liveblocks/core";
 
 import type {
+  CommentReactionOptions,
   CreateCommentOptions,
   CreateThreadOptions,
   DeleteCommentOptions,
   EditCommentOptions,
   EditThreadMetadataOptions,
-  RoomThreads,
+  ThreadsState,
+  ThreadsStateSuccess,
 } from "./comments/CommentsRoom";
 
 export type ResolveUserOptions = {
@@ -39,26 +42,28 @@ export type ResolveMentionSuggestionsOptions = {
   text: string;
 };
 
-export type UserState<T> =
-  | {
-      user?: never;
-      isLoading: true;
-      error?: never;
-    }
-  | {
-      user?: T;
-      isLoading: false;
-      error?: never;
-    }
-  | {
-      user?: never;
-      isLoading: false;
-      error: Error;
-    };
+export type UserStateLoading = {
+  isLoading: true;
+  user?: never;
+  error?: never;
+};
 
-export type UserStateSuspense<T> = Resolve<
-  Extract<UserState<T>, { isLoading: false; error?: never }>
->;
+export type UserStateError = {
+  isLoading: false;
+  user?: never;
+  error: Error;
+};
+
+export type UserStateSuccess<T> = {
+  isLoading: false;
+  user: T;
+  error?: never;
+};
+
+export type UserState<T> =
+  | UserStateLoading
+  | UserStateError
+  | UserStateSuccess<T>;
 
 export type RoomProviderProps<
   TPresence extends JsonObject,
@@ -225,7 +230,7 @@ type RoomContextBundleShared<
    * });
    */
   useEventListener(
-    callback: (eventData: { connectionId: number; event: TRoomEvent }) => void
+    callback: (data: RoomEventMessage<TPresence, TUserMeta, TRoomEvent>) => void
   ): void;
 
   /**
@@ -517,6 +522,28 @@ type RoomContextBundleShared<
    * deleteComment({ threadId: "th_xxx", commentId: "cm_xxx" })
    */
   useDeleteComment(): (options: DeleteCommentOptions) => void;
+
+  /**
+   * @beta
+   *
+   * Returns a function that adds a reaction from a comment.
+   *
+   * @example
+   * const addReaction = useAddReaction();
+   * addReaction({ threadId: "th_xxx", commentId: "cm_xxx", emoji: "👍" })
+   */
+  useAddReaction(): (options: CommentReactionOptions) => void;
+
+  /**
+   * @beta
+   *
+   * Returns a function that removes a reaction on a comment.
+   *
+   * @example
+   * const removeReaction = useRemoveReaction();
+   * removeReaction({ threadId: "th_xxx", commentId: "cm_xxx", emoji: "👍" })
+   */
+  useRemoveReaction(): (options: CommentReactionOptions) => void;
 };
 
 export type RoomContextBundle<
@@ -602,7 +629,7 @@ export type RoomContextBundle<
      * @example
      * const { threads, error, isLoading } = useThreads();
      */
-    useThreads(): RoomThreads<TThreadMetadata>;
+    useThreads(): ThreadsState<TThreadMetadata>;
 
     /**
      * @beta
@@ -750,9 +777,9 @@ export type RoomContextBundle<
          * Returns the threads within the current room.
          *
          * @example
-         * const threads = useThreads();
+         * const { threads } = useThreads();
          */
-        useThreads(): ThreadData<TThreadMetadata>[];
+        useThreads(): ThreadsStateSuccess<TThreadMetadata>;
 
         /**
          * @beta
@@ -760,9 +787,9 @@ export type RoomContextBundle<
          * Returns user info from a given user ID.
          *
          * @example
-         * const { user, error, isLoading } = useUser("user-id");
+         * const { user } = useUser("user-id");
          */
-        useUser(userId: string): UserStateSuspense<TUserMeta["info"]>;
+        useUser(userId: string): UserStateSuccess<TUserMeta["info"]>;
 
         //
         // Legacy hooks
