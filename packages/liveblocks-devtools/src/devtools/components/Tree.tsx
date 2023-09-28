@@ -1616,6 +1616,7 @@ export const CustomEventsTree = forwardRef<
             disableEdit
             disableMultiSelection
             className="!overflow-x-hidden"
+            openByDefault={false}
             selectionFollowsFocus
             rowHeight={ROW_HEIGHT}
             indent={ROW_INDENT}
