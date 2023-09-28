@@ -1072,7 +1072,7 @@ function CustomEventNodeRenderer({
         {SHOW_INTERNAL_ID && <RowStaticLabel>{node.id}</RowStaticLabel>}
         {!node.isOpen ? (
           <RowPreview>{summarize(node.data)}</RowPreview>
-        ) : node.data.connectionId !== 88 ? (
+        ) : node.data.connectionId < 0 ? (
           <span>from server</span>
         ) : (
           <>
