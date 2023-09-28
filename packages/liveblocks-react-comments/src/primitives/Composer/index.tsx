@@ -39,6 +39,7 @@ import type {
 import {
   createEditor,
   Editor as SlateEditor,
+  insertText as insertSlateText,
   Transforms as SlateTransforms,
 } from "slate";
 import { withHistory } from "slate-history";
@@ -932,12 +933,20 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
       });
     }, [editor]);
 
-    const focus = useCallback(() => {
-      if (!ReactEditor.isFocused(editor)) {
-        SlateTransforms.select(editor, SlateEditor.end(editor, []));
-        ReactEditor.focus(editor);
-      }
-    }, [editor]);
+    const focus = useCallback(
+      (resetSelection = true) => {
+        if (!ReactEditor.isFocused(editor)) {
+          SlateTransforms.select(
+            editor,
+            resetSelection || !editor.selection
+              ? SlateEditor.end(editor, [])
+              : editor.selection
+          );
+          ReactEditor.focus(editor);
+        }
+      },
+      [editor]
+    );
 
     const blur = useCallback(() => {
       ReactEditor.blur(editor);
@@ -952,6 +961,14 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
       focus();
       insertMentionCharacter(editor);
     }, [editor, focus]);
+
+    const insertText = useCallback(
+      (text: string) => {
+        focus(false);
+        insertSlateText(editor, text);
+      },
+      [editor, focus]
+    );
 
     const handleSubmit = useCallback(
       (event: FormEvent<HTMLFormElement>) => {
@@ -996,6 +1013,7 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
             focus,
             blur,
             createMention,
+            insertText,
           }}
         >
           <Component {...props} onSubmit={handleSubmit} ref={mergedRefs}>
