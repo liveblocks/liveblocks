@@ -9,6 +9,16 @@
 
 - Add support for the Liveblocks [DevTools](https://liveblocks.io/devtools).
 
+### `@liveblocks/client`
+
+- Broadcast event messages now include a `user` property to indicate the user
+  that sent the event:
+  ```tsx
+  room.subscribe("event", ({ event, user }) => {
+    //                              ^^^^ New!
+  });
+  ```
+
 ### `@liveblocks/react`
 
 - **Breaking (beta):** Comments' hook `useThreads` now returns an object in its
@@ -22,6 +32,14 @@
   `indentCommentBody` were renamed to `indentContent` and `indentCommentContent`
   respectively. `Thread`’s `onResolveChange` was renamed to `onResolvedChange`.
 - Add support for reactions. (👍)
+
+- Broadcast event messages now include a `user` property to indicate the user
+  that sent the event:
+  ```tsx
+  useEventListener(({ event, user }) => {
+    //                       ^^^^ New!
+  });
+  ```
 
 # v1.3.6
 

@@ -797,7 +797,9 @@ describe.skip("LiveList conflicts", () => {
 });
 
 describe("LiveList single client", () => {
-  test(
+  // TODO: This test is flaky and occasionally fails in CI--make it more robust
+  // See https://github.com/liveblocks/liveblocks/actions/runs/6336685485/job/17210682821#step:5:52
+  test.skip(
     "fast consecutive sets on same index",
     prepareSingleClientTest(
       {

@@ -138,6 +138,7 @@ export type {
   BroadcastOptions,
   History,
   Room,
+  RoomEventMessage,
   RoomInitializers,
   StorageStatus,
 } from "./room";

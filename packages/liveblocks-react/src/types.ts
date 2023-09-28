@@ -16,6 +16,7 @@ import type {
   BaseMetadata,
   CommentData,
   Resolve,
+  RoomEventMessage,
   RoomInitializers,
   ThreadData,
   ToImmutable,
@@ -229,7 +230,7 @@ type RoomContextBundleShared<
    * });
    */
   useEventListener(
-    callback: (eventData: { connectionId: number; event: TRoomEvent }) => void
+    callback: (data: RoomEventMessage<TPresence, TUserMeta, TRoomEvent>) => void
   ): void;
 
   /**
