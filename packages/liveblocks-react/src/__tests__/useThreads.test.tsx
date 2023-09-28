@@ -232,7 +232,7 @@ describe("useThreads", () => {
 describe("useThreadsSuspense", () => {
   test("should poll threads", async () => {
     function Threads() {
-      const threads = useThreadsSuspense();
+      const { threads } = useThreadsSuspense();
 
       return <>{threads[0].id}</>;
     }

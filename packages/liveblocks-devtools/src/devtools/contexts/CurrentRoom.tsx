@@ -1,4 +1,5 @@
 import type { DevTools, DevToolsMsg, Status } from "@liveblocks/core";
+import { Base64 } from "js-base64";
 import type { ReactNode } from "react";
 import {
   createContext,
@@ -9,6 +10,8 @@ import {
   useState,
   useSyncExternalStore,
 } from "react";
+import * as Y from "yjs";
+import type { DeleteSet, Skip } from "yjs/dist/src/internals";
 
 import { assertNever } from "../../lib/assert";
 import type { EventSource, Observable } from "../../lib/EventSource";
@@ -28,12 +31,19 @@ type OldConnectionStatus =
   | "unavailable"
   | "failed";
 
+export type YUpdate = {
+  ds: DeleteSet;
+  structs: (Y.Item | Y.GC | Skip)[];
+};
+
 type Room = {
   readonly roomId: string;
   status: Status | OldConnectionStatus | null;
   storage: readonly DevTools.LsonTreeNode[] | null;
   me: DevTools.UserTreeNode | null;
   others: readonly DevTools.UserTreeNode[];
+  ydoc: Y.Doc;
+  yupdates: YUpdate[];
 };
 
 type EventHub = {
@@ -41,6 +51,7 @@ type EventHub = {
   readonly onMe: EventSource<void>;
   readonly onOthers: EventSource<void>;
   readonly onStorage: EventSource<void>;
+  readonly onYdoc: EventSource<void>;
 };
 
 /**
@@ -60,6 +71,7 @@ function makeEventHub(roomId: string): EventHub {
     onMe: makeEventSource(),
     onOthers: makeEventSource(),
     onStorage: makeEventSource(),
+    onYdoc: makeEventSource(),
   };
   _eventHubsByRoomId.set(roomId, newEventHub);
   return newEventHub;
@@ -124,6 +136,8 @@ function makeRoom(roomId: string): Room {
     storage: null,
     me: null,
     others: [],
+    ydoc: new Y.Doc(),
+    yupdates: [],
   };
 
   roomsById.set(roomId, newRoom);
@@ -219,6 +233,17 @@ export function CurrentRoomProvider(props: Props) {
           break;
         }
 
+        case "room::sync::ydoc": {
+          const currRoom = getOrCreateRoom(msg.roomId);
+          const update = Base64.toUint8Array(msg.update.update);
+          Y.applyUpdate(currRoom.ydoc, update, "backend");
+          const decodedUpdate = Y.decodeUpdate(update);
+          currRoom.yupdates = [decodedUpdate, ...currRoom.yupdates];
+          const hub = getRoomHub(msg.roomId);
+          hub.onYdoc.notify();
+          break;
+        }
+
         // Storage or presence got updated
         case "room::sync::full":
         case "room::sync::partial": {
@@ -261,7 +286,7 @@ export function CurrentRoomProvider(props: Props) {
         }
       }
     },
-    []
+    [softSetCurrentRoomId]
   );
 
   useEffect(() => {
@@ -275,7 +300,7 @@ export function CurrentRoomProvider(props: Props) {
     return () => {
       onMessage.removeListener(handleMessage);
     };
-  }, []);
+  }, [handleMessage]);
 
   useEffect(() => {
     const roomId = currentRoomId;
@@ -357,6 +382,14 @@ export function useOthers(): readonly DevTools.UserTreeNode[] {
   );
 }
 
+export function usePresence(): readonly DevTools.UserTreeNode[] {
+  const me = useMe();
+  const others = useOthers();
+  const presence = useMemo(() => (me ? [me, ...others] : others), [me, others]);
+
+  return presence;
+}
+
 const emptyStorage: readonly DevTools.LsonTreeNode[] = [];
 
 export function useStorage(): readonly DevTools.LsonTreeNode[] {
@@ -364,5 +397,21 @@ export function useStorage(): readonly DevTools.LsonTreeNode[] {
   return useSyncExternalStore(
     getSubscribe(currentRoomId, "onStorage") ?? nosub,
     () => getRoom(currentRoomId)?.storage ?? emptyStorage
+  );
+}
+
+export function useYUpdates(): YUpdate[] {
+  const currentRoomId = useCurrentRoomId();
+  return useSyncExternalStore(
+    getSubscribe(currentRoomId, "onYdoc") ?? nosub,
+    () => getRoom(currentRoomId)?.yupdates ?? []
+  );
+}
+
+export function useYdoc(): Y.Doc {
+  const currentRoomId = useCurrentRoomId();
+  return useSyncExternalStore(
+    getSubscribe(currentRoomId, "onYdoc") ?? nosub,
+    () => getRoom(currentRoomId)?.ydoc ?? new Y.Doc()
   );
 }

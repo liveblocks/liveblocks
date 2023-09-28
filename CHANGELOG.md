@@ -2,25 +2,30 @@
 
 ### `@liveblocks/client`
 
-Broadcast event messages now include a `user` property to indicate the user that
-sent the event:
+- Support Yjs datastructures in the Liveblocks
+  [DevTools](https://liveblocks.io/devtools) browser extension
 
-```tsx
-room.subscribe("event", ({ event, user }) => {
-  //                              ^^^^ New!
-});
-```
+- Broadcast event messages now include a `user` property to indicate the user
+  that sent the event:
+  ```tsx
+  room.subscribe("event", ({ event, user }) => {
+    //                              ^^^^ New!
+  });
+  ```
 
 ### `@liveblocks/react`
 
-Broadcast event messages now include a `user` property to indicate the user that
-sent the event:
+- **Breaking (beta):** Comments' hook `useThreads` now returns an object in its
+  Suspense version. (`const threads = useThreads()` becomes
+  `const { threads } = useThreads()`)
 
-```tsx
-useEventListener(({ event, user }) => {
-  //                       ^^^^ New!
-});
-```
+- Broadcast event messages now include a `user` property to indicate the user
+  that sent the event:
+  ```tsx
+  useEventListener(({ event, user }) => {
+    //                       ^^^^ New!
+  });
+  ```
 
 # v1.3.6
 

@@ -1,6 +1,8 @@
 import type { LsonObject } from "../crdts/Lson";
 import type { Json, JsonObject } from "../lib/Json";
 import type { BaseUserMeta } from "../protocol/BaseUserMeta";
+import type { UpdateYDocClientMsg } from "../protocol/ClientMsg";
+import type { YDocUpdateServerMsg } from "../protocol/ServerMsg";
 import type { Room } from "../room";
 import { PKG_VERSION } from "../version";
 import { activateBridge, onMessageFromPanel, sendToPanel } from "./bridge";
@@ -108,7 +110,21 @@ function startSyncStream(
     // Any time "me" or "others" updates, send the new values accordingly
     room.events.self.subscribe(() => partialSyncMe(room)),
     room.events.others.subscribe(() => partialSyncOthers(room)),
+
+    // Any time ydoc is updated, forward the update
+    room.events.ydoc.subscribe((update) => syncYdocUpdate(room, update)),
   ]);
+}
+
+function syncYdocUpdate(
+  room: Room<JsonObject, LsonObject, BaseUserMeta, Json>,
+  update: YDocUpdateServerMsg | UpdateYDocClientMsg
+) {
+  sendToPanel({
+    msg: "room::sync::ydoc",
+    roomId: room.id,
+    update,
+  });
 }
 
 function partialSyncConnection(
@@ -163,6 +179,9 @@ function fullSync(room: Room<JsonObject, LsonObject, BaseUserMeta, Json>) {
   const root = room.getStorageSnapshot();
   const me = room.__internal.getSelf_forDevTools();
   const others = room.__internal.getOthers_forDevTools();
+  // Because the room doesn't have access to the YJS doc, we must tell it to go get the full doc
+  // sending an empty vector will return the whole document and then devtools will be up to date
+  room.fetchYDoc("");
   sendToPanel({
     msg: "room::sync::full",
     roomId: room.id,
@@ -196,7 +215,6 @@ export function linkDevTools(
   if (process.env.NODE_ENV === "production" || typeof window === "undefined") {
     return;
   }
-
   sendToPanel({ msg: "room::available", roomId, clientVersion: VERSION });
 
   // Before adding a new listener, stop all active listeners, so there is only

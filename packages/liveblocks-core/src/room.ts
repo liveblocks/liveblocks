@@ -32,7 +32,7 @@ import type { Resolve } from "./lib/Resolve";
 import { compact, deepClone, tryParseJson } from "./lib/utils";
 import { canComment, canWriteStorage, TokenKind } from "./protocol/AuthToken";
 import type { BaseUserInfo, BaseUserMeta } from "./protocol/BaseUserMeta";
-import type { ClientMsg } from "./protocol/ClientMsg";
+import type { ClientMsg, UpdateYDocClientMsg } from "./protocol/ClientMsg";
 import { ClientMsgCode } from "./protocol/ClientMsg";
 import type { Op } from "./protocol/Op";
 import { isAckOp, OpCode } from "./protocol/Op";
@@ -45,7 +45,7 @@ import type {
   UpdatePresenceServerMsg,
   UserJoinServerMsg,
   UserLeftServerMsg,
-  YDocUpdate,
+  YDocUpdateServerMsg,
 } from "./protocol/ServerMsg";
 import { ServerMsgCode } from "./protocol/ServerMsg";
 import type { ImmutableRef } from "./refs/ImmutableRef";
@@ -602,8 +602,7 @@ export type Room<
     readonly storageDidLoad: Observable<void>;
 
     readonly storageStatus: Observable<StorageStatus>;
-    readonly ydoc: Observable<YDocUpdate>;
-
+    readonly ydoc: Observable<YDocUpdateServerMsg | UpdateYDocClientMsg>;
     readonly comments: Observable<CommentsEventServerMsg>;
   };
 
@@ -1151,7 +1150,7 @@ export function createRoom<
     history: makeEventSource<HistoryEvent>(),
     storageDidLoad: makeEventSource<void>(),
     storageStatus: makeEventSource<StorageStatus>(),
-    ydoc: makeEventSource<YDocUpdate>(),
+    ydoc: makeEventSource<YDocUpdateServerMsg | UpdateYDocClientMsg>(),
 
     comments: makeEventSource<CommentsEventServerMsg>(),
   };
@@ -1966,10 +1965,12 @@ export function createRoom<
   }
 
   function updateYDoc(update: string) {
-    context.buffer.messages.push({
+    const clientMsg: UpdateYDocClientMsg = {
       type: ClientMsgCode.UPDATE_YDOC,
       update,
-    });
+    };
+    context.buffer.messages.push(clientMsg);
+    eventHub.ydoc.notify(clientMsg);
     flushNowOrSoon();
   }
 

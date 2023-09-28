@@ -45,7 +45,7 @@ export type ServerMsg<
   | InitialDocumentStateServerMsg // For a single client
   | UpdateStorageServerMsg // Broadcasted
   | RejectedStorageOpServerMsg // For a single client
-  | YDocUpdate // For receiving doc from backend
+  | YDocUpdateServerMsg // For receiving doc from backend
 
   // Comments
   | CommentsEventServerMsg;
@@ -183,7 +183,7 @@ export type UserLeftServerMsg = {
  * Sent by the WebSocket server when the ydoc is updated or when requested based on stateVector passed.
  * Contains a base64 encoded update
  */
-export type YDocUpdate = {
+export type YDocUpdateServerMsg = {
   readonly type: ServerMsgCode.UPDATE_YDOC;
   readonly update: string;
   readonly isSync: boolean; // dropped after 1.2, we use presence of stateVector instead
