@@ -1,4 +1,3 @@
-import crypto from "crypto";
 import type { IncomingHttpHeaders } from "http";
 
 export class WebhookHandler {
@@ -92,7 +91,7 @@ export class WebhookHandler {
    * @returns `string`
    */
   private sign(content: string): string {
-    return crypto
+    return (crypto as any)
       .createHmac("sha256", this.secretBuffer)
       .update(content)
       .digest("base64");
