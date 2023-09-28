@@ -160,16 +160,12 @@ function Panel() {
           return {
             value: "events",
             title:
-              // numCustomEvents > 0 ?       //
-              `Events (${numCustomEvents})`,
-
-            // :
-            // "Events",
+              numCustomEvents > 0 ? `Events (${numCustomEvents})` : "Events",
             content: <EventTimeline key={`${currentRoomId}:event-timeline`} />,
           };
       }
     });
-  }, [currentRoomId]);
+  }, [currentRoomId, numCustomEvents]);
 
   useEffect(() => {
     handleSearchClear();
