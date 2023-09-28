@@ -592,12 +592,20 @@ return `null`.
 Returns a callback that lets you broadcast custom events to other users in the
 room.
 
-```ts
+```ts highlight="3-5"
 import { useBroadcastEvent } from "./liveblocks.config";
 
+// On client A
 const broadcast = useBroadcastEvent();
-
 broadcast({ type: "EMOJI", emoji: "🔥" });
+
+// On client B
+useEventListener(({ event, user, connectionId }) => {
+  //                       ^^^^ Will be Client A
+  if (event.type === "EMOJI") {
+    // Do something
+  }
+});
 ```
 
 ### useEventListener
@@ -608,15 +616,26 @@ the user that sent the message. If an event was sent from the
 [Broadcast to a room](/docs/api-reference/rest-api-endpoints#post-broadcast-event)
 REST API, `connectionId` will be `-1`.
 
-```ts
+```ts highlight="7-13"
 import { useEventListener } from "./liveblocks.config";
 
-useEventListener(({ connectionId, event }) => {
+// On client A
+const broadcast = useBroadcastEvent();
+broadcast({ type: "EMOJI", emoji: "🔥" });
+
+// On client B
+useEventListener(({ event, user, connectionId }) => {
+  //                       ^^^^ Will be Client A
   if (event.type === "EMOJI") {
     // Do something
   }
 });
 ```
+
+The `user` property will indicate which User instance sent the message. This
+will typically be equal to one of the others in the room, but it can also be
+`null` in case this event was broadcasted from the server, using the
+[Broadcast Event API](https://liveblocks.io/docs/api-reference/rest-api-endpoints#post-broadcast-event).
 
 Automatically unsubscribes when the component is unmounted.
 
@@ -1130,6 +1149,9 @@ import { useThreads } from "./liveblocks.config";
 const { threads, error, isLoading } = useThreads();
 ```
 
+👉 A [Suspense version][] of this hook is also available, which will never
+return a loading state and will throw when there's an error.
+
 ### useUser
 
 Returns user info from a given user ID.
@@ -1139,6 +1161,9 @@ import { useUser } from "./liveblocks.config";
 
 const { user, error, isLoading } = useUser("user-id");
 ```
+
+👉 A [Suspense version][] of this hook is also available, which will never
+return a loading state and will throw when there's an error.
 
 <Banner title="Providing a resolver function">
 
@@ -1197,6 +1222,24 @@ comment, the thread also gets deleted.
 ```tsx
 const deleteComment = useDeleteComment();
 deleteComment({ threadId: "th_xxx", commentId: "cm_xxx" });
+```
+
+### useAddReaction
+
+Returns a function that adds a reaction to a comment.
+
+```tsx
+const addReaction = useAddReaction();
+addReaction({ threadId: "th_xxx", commentId: "cm_xxx", emoji: "👍" });
+```
+
+### useRemoveReaction
+
+Returns a function that removes a reaction from a comment.
+
+```tsx
+const removeReaction = useRemoveReaction();
+removeReaction({ threadId: "th_xxx", commentId: "cm_xxx", emoji: "👍" });
 ```
 
 ## Helpers

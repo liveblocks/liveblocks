@@ -139,6 +139,7 @@ const comment: CommentData = {
   roomId: "room",
   userId: "user",
   createdAt: "2023-08-14T12:41:50.243Z",
+  reactions: [],
   body: {
     version: 1,
     content: [
@@ -197,6 +198,7 @@ const editedComment: CommentData = {
   userId: "user",
   createdAt: "2023-08-14T12:41:50.243Z",
   editedAt: "2023-08-14T12:41:50.243Z",
+  reactions: [],
   body: {
     version: 1,
     content: [
@@ -218,6 +220,7 @@ const deletedComment: CommentData = {
   threadId: "th_1",
   roomId: "room",
   userId: "user",
+  reactions: [],
   createdAt: "2023-08-14T12:41:50.243Z",
   editedAt: "2023-08-14T12:41:50.243Z",
   deletedAt: "2023-08-14T12:41:50.243Z",

@@ -24,6 +24,15 @@ import {
 import type { NodeApi, NodeRendererProps, TreeApi } from "react-arborist";
 import { Tree as ArboristTree } from "react-arborist";
 import useResizeObserver from "use-resize-observer";
+import {
+  ContentDeleted,
+  ContentFormat,
+  ContentJSON,
+  ContentString,
+  GC,
+  Item,
+} from "yjs";
+import type { DeleteSet } from "yjs/dist/src/internals";
 
 import { useDeepEffect } from "../../hooks/useDeepEffect";
 import { assertNever } from "../../lib/assert";
@@ -34,19 +43,23 @@ import {
   wrapObject,
   wrapProperty,
 } from "../../lib/stringify";
+import { truncate } from "../../lib/truncate";
+import type { YUpdate } from "../contexts/CurrentRoom";
 import { EyeIcon } from "../icons/actions";
 import {
   ArrayIcon,
   BooleanOffIcon,
   BooleanOnIcon,
+  CrossIcon,
   EllipsisIcon,
   MapIcon,
   NumberIcon,
   ObjectIcon,
   QuestionIcon,
   StringIcon,
+  TrashIcon,
   UserIcon,
-} from "../icons/types";
+} from "../icons/tree";
 import { Code } from "./Code";
 import { Dialog } from "./Dialog";
 import { Tooltip } from "./Tooltip";
@@ -61,6 +74,40 @@ type StorageTreeNode = DevTools.LsonTreeNode;
  */
 type PresenceTreeNode = DevTools.UserTreeNode | DevTools.JsonTreeNode;
 
+/**
+ * Node types that can be used in the Yjs tree view.
+ */
+type YjsTreeNode = DevTools.UserTreeNode | DevTools.JsonTreeNode;
+
+/**
+ * Node types that can be used in the Yjs logs tree view.
+ */
+type YLogsTreeNode =
+  | YUpdateTreeNode
+  | YUpdateStructTreeNode
+  | YUpdateDeleteSetTreeNode;
+
+type YUpdateTreeNode = {
+  readonly type: "YUpdate";
+  readonly id: string;
+  readonly key: string;
+  readonly payload: (YUpdateStructTreeNode | YUpdateDeleteSetTreeNode)[];
+};
+
+type YUpdateStructTreeNode = {
+  readonly type: "YUpdateStruct";
+  readonly id: string;
+  readonly key: string;
+  readonly payload: YUpdate["structs"][number];
+};
+
+type YUpdateDeleteSetTreeNode = {
+  readonly type: "YUpdateDeleteSet";
+  readonly id: string;
+  readonly key: string;
+  readonly payload: DeleteSet;
+};
+
 const HIGHLIGHT_ANIMATION_DURATION = 600;
 const HIGHLIGHT_ANIMATION_DELAY = 100;
 const ROW_HEIGHT = 28;
@@ -70,6 +117,52 @@ const USE_GRID_LAYOUT = false;
 const SHOW_INTERNAL_ID = false;
 
 const SPECIAL_HACK_PREFIX = "@@HACK@@ ^_^;";
+
+/**
+ * Used to convert a list of updates to tree nodes.
+ */
+export function createTreeFromYUpdates(updates: YUpdate[]): YUpdateTreeNode[] {
+  return updates.map((update, updateIndex) => {
+    const payload = [];
+
+    if (update.ds.clients.size > 0) {
+      payload.push({
+        type: "YUpdateDeleteSet",
+        id: `YUpdateDeleteSet:${updateIndex}`,
+        key: `${updateIndex}`,
+        payload: update.ds,
+      });
+    }
+
+    payload.push(
+      ...update.structs.map((item, itemIndex) => {
+        return {
+          type: "YUpdateStruct",
+          id: `YUpdateStruct:${updateIndex}:${itemIndex}`,
+          key: `${updateIndex}:${itemIndex}`,
+          payload: item,
+        };
+      })
+    );
+
+    return {
+      type: "YUpdate",
+      id: `YUpdate:${updateIndex}`,
+      key: `${updateIndex}`,
+      payload,
+    };
+  });
+}
+
+function getYUpdateStructType(struct: YUpdate["structs"][number]) {
+  if (struct instanceof GC) {
+    return "gc";
+  } else if (struct instanceof Item) {
+    return "item";
+  } else {
+    return "skip";
+  }
+}
 
 /**
  * Used to generate new Json subnodes on the fly.
@@ -84,7 +177,7 @@ function makeJsonNode(
 
 type ArboristTreeProps<T> = TreeApi<T>["props"];
 
-type TreeProps<TTreeNode extends DevTools.TreeNode> = Pick<
+type TreeProps<TTreeNode extends DevTools.TreeNode | YLogsTreeNode> = Pick<
   ComponentProps<"div">,
   "className" | "style"
 > &
@@ -92,6 +185,11 @@ type TreeProps<TTreeNode extends DevTools.TreeNode> = Pick<
   RefAttributes<TreeApi<TTreeNode> | undefined>;
 
 interface RowProps<TTreeNode extends DevTools.TreeNode>
+  extends ComponentProps<"div"> {
+  node: NodeApi<TTreeNode>;
+}
+
+interface YLogsRowProps<TTreeNode extends YLogsTreeNode>
   extends ComponentProps<"div"> {
   node: NodeApi<TTreeNode>;
 }
@@ -198,6 +296,98 @@ function icon(node: DevTools.TreeNode): ReactNode {
   }
 }
 
+function yLogsColor(node: YLogsTreeNode): string {
+  switch (node.type) {
+    case "YUpdateStruct":
+      switch (getYUpdateStructType(node.payload)) {
+        case "skip":
+          return "text-light-500 dark:text-dark-500";
+
+        case "gc":
+          return "text-orange-500 dark:text-orange-400";
+
+        case "item":
+          return "text-blue-500 dark:text-blue-400";
+
+        default:
+          // e.g. possible other types
+          return "text-light-500 dark:text-dark-500";
+      }
+    case "YUpdateDeleteSet":
+      return "text-red-500 dark:text-red-400";
+    default:
+      return "text-light-500 dark:text-dark-500";
+  }
+}
+
+function yLogsBackground(node: YLogsTreeNode): string {
+  switch (node.type) {
+    case "YUpdateStruct":
+      switch (getYUpdateStructType(node.payload)) {
+        case "skip":
+          return "tree-focus:bg-dark-800 dark:tree-focus:bg-dark-600";
+
+        case "gc":
+          return "tree-focus:bg-orange-500 dark:tree-focus:bg-orange-400";
+
+        case "item":
+          return "tree-focus:bg-blue-500 dark:tree-focus:bg-blue-400";
+
+        default:
+          // e.g. possible other types
+          return "tree-focus:bg-dark-800 dark:tree-focus:bg-dark-600";
+      }
+    case "YUpdateDeleteSet":
+      return "tree-focus:bg-red-500 dark:tree-focus:bg-red-400";
+    default:
+      return "tree-focus:bg-dark-800 dark:tree-focus:bg-dark-600";
+  }
+}
+
+function yLogsIcon(node: YLogsTreeNode): ReactNode {
+  switch (node.type) {
+    case "YUpdate":
+      return <EllipsisIcon />;
+
+    case "YUpdateDeleteSet":
+      return <CrossIcon />;
+
+    case "YUpdateStruct":
+      switch (getYUpdateStructType(node.payload)) {
+        case "skip":
+          return <EllipsisIcon />;
+
+        case "gc":
+          return <TrashIcon />;
+
+        case "item": {
+          const item = node.payload as Item;
+
+          if (item.content instanceof ContentString) {
+            return <StringIcon />;
+          }
+          if (item.content instanceof ContentDeleted) {
+            return <CrossIcon />;
+          }
+          if (item.content instanceof ContentJSON) {
+            return <ObjectIcon />;
+          }
+
+          // Any other content type
+          return <EllipsisIcon />;
+        }
+
+        default:
+          // e.g. possible other types
+          return <QuestionIcon />;
+      }
+
+    default:
+      // e.g. possible other types
+      return <QuestionIcon />;
+  }
+}
+
 /**
  * Function that helps construct a "preview" string for a collapsed node.
  */
@@ -263,7 +453,7 @@ function useToggleNode<T>(node: NodeApi<T>) {
   return useCallback(
     (event: MouseEvent<HTMLDivElement>) =>
       toggleNode(node, { siblings: event.altKey }),
-    []
+    [node]
   );
 }
 
@@ -399,6 +589,79 @@ function Row<TTreeNode extends DevTools.TreeNode>({
   );
 }
 
+function YLogsRow<TTreeNode extends YLogsTreeNode>({
+  node,
+  children,
+  className,
+  ...props
+}: YLogsRowProps<TTreeNode>) {
+  const isOpen = node.isOpen;
+  const isParent = node.isInternal;
+  const isSelected = node.isSelected;
+  const isWithinSelectedParent = !isSelected && hasSelectedParent(node);
+
+  return (
+    <div
+      className={cx(
+        className,
+        "row text-dark-400 dark:text-light-400 group flex h-full items-center gap-2 pr-2",
+        isSelected
+          ? [
+              yLogsBackground(node.data),
+              "tree-focus:text-light-0 bg-light-100 dark:bg-dark-100 hover:bg-light-200 dark:hover:bg-dark-200",
+            ]
+          : isWithinSelectedParent
+          ? "hover:bg-light-100 dark:hover:bg-dark-100 tree-focus:bg-light-100 dark:tree-focus:bg-dark-100 hover:tree-focus:bg-light-200 dark:tree-focus:hover:bg-dark-200"
+          : "hover:bg-light-100 dark:hover:bg-dark-100"
+      )}
+      data-selected={isSelected || undefined}
+      {...props}
+    >
+      <div className="ml-2 flex h-[8px] w-[8px] items-center justify-center">
+        {isParent && (
+          <svg
+            width="8"
+            height="8"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            className={cx(
+              "opacity-60 transition-transform",
+              isOpen && "rotate-90"
+            )}
+          >
+            <path
+              d="M2 6.117V1.883a.5.5 0 0 1 .757-.429l3.528 2.117a.5.5 0 0 1 0 .858L2.757 6.546A.5.5 0 0 1 2 6.116Z"
+              fill="currentColor"
+            />
+          </svg>
+        )}
+      </div>
+      <div
+        className={cx(
+          yLogsColor(node.data),
+          isSelected && "tree-focus:text-light-0"
+        )}
+      >
+        {yLogsIcon(node.data)}
+      </div>
+      <div
+        className={cx(
+          USE_GRID_LAYOUT
+            ? [
+                "grid min-w-0 flex-1 items-center gap-[inherit]",
+                isOpen
+                  ? "grid-cols-[1fr]"
+                  : "grid-cols-[minmax(0,1fr)_calc(var(--width)_*_0.4)]",
+              ]
+            : "flex min-w-0 flex-1 items-center gap-[inherit]"
+        )}
+      >
+        {children}
+      </div>
+    </div>
+  );
+}
+
 function RowLabel({ children: label, className, ...props }: RowLabelProps) {
   const search = useContext(TreeSearchContext);
   const highlightedLabel = useMemo(() => {
@@ -427,6 +690,18 @@ function RowLabel({ children: label, className, ...props }: RowLabelProps) {
   return (
     <span className={cx(className, "truncate font-mono text-[95%]")} {...props}>
       {highlightedLabel}
+    </span>
+  );
+}
+
+function RowStaticLabel({
+  children,
+  className,
+  ...props
+}: ComponentProps<"span">) {
+  return (
+    <span className={cx(className, "truncate font-mono text-[95%]")} {...props}>
+      {children}
     </span>
   );
 }
@@ -473,7 +748,7 @@ function UserNodeRenderer({
     <Row node={node} style={style} onClick={toggle}>
       <RowInfo>
         <RowLabel>{node.data.key}</RowLabel>
-        {SHOW_INTERNAL_ID && <RowLabel>{node.id}</RowLabel>}
+        {SHOW_INTERNAL_ID && <RowStaticLabel>{node.id}</RowStaticLabel>}
         <Badge className="flex-none opacity-60">#{node.data.id}</Badge>
         {node.data.payload.isReadOnly && (
           <Badge className="flex-none opacity-60">Read-only</Badge>
@@ -493,7 +768,7 @@ function LiveNodeRenderer({
     <Row node={node} style={style} onClick={toggle}>
       <RowInfo>
         <RowLabel>{node.data.key}</RowLabel>
-        {SHOW_INTERNAL_ID && <RowLabel>{node.id}</RowLabel>}
+        {SHOW_INTERNAL_ID && <RowStaticLabel>{node.id}</RowStaticLabel>}
         <Badge
           className={cx(
             "flex-none",
@@ -527,6 +802,106 @@ function LsonNodeRenderer(props: NodeRendererProps<DevTools.LsonTreeNode>) {
       // e.g. future LiveXxx types
       return <LiveNodeRenderer {...props} />;
   }
+}
+
+function YUpdateNodeRenderer({
+  node,
+  style,
+}: NodeRendererProps<YUpdateTreeNode>) {
+  const toggle = useToggleNode(node);
+  return (
+    <YLogsRow node={node} style={style} onClick={toggle}>
+      <RowInfo>
+        <RowStaticLabel>
+          {node.data.payload.length} change
+          {node.data.payload.length === 1 ? "" : "s"}
+        </RowStaticLabel>
+        {SHOW_INTERNAL_ID && <RowStaticLabel>{node.id}</RowStaticLabel>}
+      </RowInfo>
+    </YLogsRow>
+  );
+}
+
+function YUpdateStructNodeRenderer({
+  node,
+  style,
+}: NodeRendererProps<YUpdateStructTreeNode>) {
+  const toggle = useToggleNode(node);
+  const content = useMemo(() => {
+    switch (getYUpdateStructType(node.data.payload)) {
+      case "skip":
+        return <RowStaticLabel>Skip</RowStaticLabel>;
+      case "gc":
+        return <RowStaticLabel>Garbage collection</RowStaticLabel>;
+      case "item": {
+        const item = node.data.payload as Item;
+
+        if (item.content instanceof ContentString) {
+          return (
+            <>
+              <RowStaticLabel>ContentString</RowStaticLabel>
+              <RowPreview>{truncate(item.content.str)}</RowPreview>
+            </>
+          );
+        }
+        if (item.content instanceof ContentDeleted) {
+          return (
+            <>
+              <RowStaticLabel>ContentDeleted</RowStaticLabel>
+              <RowPreview>
+                {item.length} deletion{item.length === 1 ? "" : "s"}
+              </RowPreview>
+            </>
+          );
+        }
+        if (item.content instanceof ContentFormat) {
+          return (
+            <>
+              <RowStaticLabel>ContentFormat</RowStaticLabel>
+              <RowPreview>
+                {truncate(item.content.value?.toString())}
+              </RowPreview>
+            </>
+          );
+        }
+        if (item.content instanceof ContentJSON) {
+          return (
+            <>
+              <RowStaticLabel>ContentFormat</RowStaticLabel>
+              <RowPreview>{truncate(item.content.arr?.toString())}</RowPreview>
+            </>
+          );
+        }
+
+        // Fallback to just showing the type
+        return <RowStaticLabel>{item.content.constructor.name}</RowStaticLabel>;
+      }
+    }
+  }, [node]);
+
+  return (
+    <YLogsRow node={node} style={style} onClick={toggle}>
+      <RowInfo>
+        {content}
+        {SHOW_INTERNAL_ID && <RowStaticLabel>{node.id}</RowStaticLabel>}
+      </RowInfo>
+    </YLogsRow>
+  );
+}
+
+function YUpdateDeleteSetNodeRenderer({
+  node,
+  style,
+}: NodeRendererProps<YUpdateDeleteSetTreeNode>) {
+  const toggle = useToggleNode(node);
+  return (
+    <YLogsRow node={node} style={style} onClick={toggle}>
+      <RowInfo>
+        <RowStaticLabel>DeleteSet</RowStaticLabel>
+        {SHOW_INTERNAL_ID && <RowStaticLabel>{node.id}</RowStaticLabel>}
+      </RowInfo>
+    </YLogsRow>
+  );
 }
 
 function JsonValueDialog({ node }: JsonValueDialogProps) {
@@ -605,7 +980,7 @@ function JsonNodeRenderer({
     <Row node={node} style={style} onClick={toggle}>
       <RowInfo>
         <RowLabel>{node.data.key}</RowLabel>
-        {SHOW_INTERNAL_ID && <RowLabel>{node.id}</RowLabel>}
+        {SHOW_INTERNAL_ID && <RowStaticLabel>{node.id}</RowStaticLabel>}
       </RowInfo>
       {!node.isOpen && (
         <>
@@ -656,13 +1031,62 @@ function PresenceNodeRenderer(props: NodeRendererProps<PresenceTreeNode>) {
   }
 }
 
+function YjsNodeRenderer(props: NodeRendererProps<YjsTreeNode>) {
+  switch (props.node.data.type) {
+    case "User":
+      return (
+        <UserNodeRenderer
+          {...(props as NodeRendererProps<DevTools.UserTreeNode>)}
+        />
+      );
+
+    case "Json":
+      return (
+        <JsonNodeRenderer
+          {...(props as NodeRendererProps<DevTools.JsonTreeNode>)}
+        />
+      );
+
+    default:
+      return null;
+  }
+}
+
+function YLogsNodeRenderer(props: NodeRendererProps<YLogsTreeNode>) {
+  switch (props.node.data.type) {
+    case "YUpdate":
+      return (
+        <YUpdateNodeRenderer
+          {...(props as NodeRendererProps<YUpdateTreeNode>)}
+        />
+      );
+
+    case "YUpdateStruct":
+      return (
+        <YUpdateStructNodeRenderer
+          {...(props as NodeRendererProps<YUpdateStructTreeNode>)}
+        />
+      );
+
+    case "YUpdateDeleteSet":
+      return (
+        <YUpdateDeleteSetNodeRenderer
+          {...(props as NodeRendererProps<YUpdateDeleteSetTreeNode>)}
+        />
+      );
+
+    default:
+      return null;
+  }
+}
+
 function presenceChildAccessor(
   node: PresenceTreeNode
 ): PresenceTreeNode[] | null {
   switch (node.type) {
     case "User": {
       //
-      // This harcodes which keys are displayed as top-level properties of User
+      // This hardcodes which keys are displayed as top-level properties of User
       // nodes, most notably "presence" and "info". The special thing about
       // these properties is that we'll want to expand these "one level deep",
       // unlike other Json values we render elsewhere.
@@ -718,21 +1142,25 @@ function presenceChildAccessor(
             )
           );
         } else if (node.payload !== null && typeof node.payload === "object") {
-          return Object.entries(node.payload).flatMap(([key, value]) =>
-            value === undefined
-              ? []
-              : [
-                  makeJsonNode(
-                    `${node.id.substring(SPECIAL_HACK_PREFIX.length)}`,
-                    //                   ^^^^^^^^^^^^^^^^^^^
-                    //                   Undo the "special behavior" for the
-                    //                   subnodes, making them "normal Json" nodes
-                    //                   that aren't expandable
-                    key,
-                    value
-                  ),
-                ]
-          );
+          // Liveblocks Yjs' awareness is part of presence, but we don't want to have it
+          // appear in the Presence panel since it has its own panel under the Yjs tab.
+          return Object.entries(node.payload)
+            .filter(([key]) => key !== "__yjs")
+            .flatMap(([key, value]) =>
+              value === undefined
+                ? []
+                : [
+                    makeJsonNode(
+                      `${node.id.substring(SPECIAL_HACK_PREFIX.length)}`,
+                      //                   ^^^^^^^^^^^^^^^^^^^
+                      //                   Undo the "special behavior" for the
+                      //                   subnodes, making them "normal Json" nodes
+                      //                   that aren't expandable
+                      key,
+                      value
+                    ),
+                  ]
+            );
         }
       }
 
@@ -756,6 +1184,45 @@ function storageChildAccessor(node: StorageTreeNode): StorageTreeNode[] | null {
 
     default:
       // e.g. future LiveXxx types
+      return null;
+  }
+}
+
+function yjsChildAccessor(node: YjsTreeNode): YjsTreeNode[] | null {
+  switch (node.type) {
+    case "User": {
+      const awareness = node.payload.presence.__yjs;
+
+      if (!awareness) {
+        return null;
+      }
+
+      return Object.entries(awareness).map(([key, value]) =>
+        makeJsonNode(node.id, key, value as Json)
+      );
+    }
+    case "Json": {
+      if (Array.isArray(node.payload)) {
+        return node.payload.map((item, index) =>
+          makeJsonNode(node.id, index.toString(), item)
+        );
+      } else if (node.payload !== null && typeof node.payload === "object") {
+        return Object.entries(node.payload).flatMap(([key, value]) =>
+          value === undefined ? [] : [makeJsonNode(node.id, key, value)]
+        );
+      } else {
+        return null;
+      }
+    }
+  }
+}
+
+function yLogsChildAccessor(node: YLogsTreeNode): YLogsTreeNode[] | null {
+  switch (node.type) {
+    case "YUpdate":
+      return node.payload;
+    case "YUpdateStruct":
+    case "YUpdateDeleteSet":
       return null;
   }
 }
@@ -960,6 +1427,7 @@ export const StorageTree = forwardRef<
               childrenAccessor={storageChildAccessor}
               disableDrag
               disableDrop
+              disableEdit
               disableMultiSelection
               className="!overflow-x-hidden"
               selectionFollowsFocus
@@ -968,6 +1436,76 @@ export const StorageTree = forwardRef<
               {...props}
             >
               {LsonNodeRenderer}
+            </ArboristTree>
+          )}
+        </AutoSizer>
+      </TooltipProvider>
+    </TreeSearchContext.Provider>
+  );
+});
+
+export const YjsTree = forwardRef<
+  TreeApi<YjsTreeNode>,
+  TreeProps<YjsTreeNode> & {
+    search?: RegExp;
+  }
+>(({ search, className, style, ...props }, ref) => {
+  return (
+    <TreeSearchContext.Provider value={search}>
+      <TooltipProvider skipDelayDuration={0}>
+        <AutoSizer className={cx(className, "tree")} style={style}>
+          {({ width, height }) => (
+            <ArboristTree
+              ref={ref}
+              width={width}
+              height={height}
+              childrenAccessor={yjsChildAccessor}
+              disableDrag
+              disableDrop
+              disableEdit
+              disableMultiSelection
+              className="!overflow-x-hidden"
+              selectionFollowsFocus
+              rowHeight={ROW_HEIGHT}
+              indent={ROW_INDENT}
+              {...props}
+            >
+              {YjsNodeRenderer}
+            </ArboristTree>
+          )}
+        </AutoSizer>
+      </TooltipProvider>
+    </TreeSearchContext.Provider>
+  );
+});
+
+export const YLogsTree = forwardRef<
+  TreeApi<YLogsTreeNode>,
+  TreeProps<YLogsTreeNode> & {
+    search?: RegExp;
+  }
+>(({ search, className, style, ...props }, ref) => {
+  return (
+    <TreeSearchContext.Provider value={search}>
+      <TooltipProvider skipDelayDuration={0}>
+        <AutoSizer className={cx(className, "tree")} style={style}>
+          {({ width, height }) => (
+            <ArboristTree
+              ref={ref}
+              width={width}
+              height={height}
+              childrenAccessor={yLogsChildAccessor}
+              disableDrag
+              disableDrop
+              disableEdit
+              disableMultiSelection
+              className="!overflow-x-hidden"
+              selectionFollowsFocus
+              rowHeight={ROW_HEIGHT}
+              indent={ROW_INDENT}
+              {...props}
+            >
+              {YLogsNodeRenderer}
             </ArboristTree>
           )}
         </AutoSizer>
@@ -991,6 +1529,7 @@ export const PresenceTree = forwardRef<
             childrenAccessor={presenceChildAccessor}
             disableDrag
             disableDrop
+            disableEdit
             disableMultiSelection
             className="!overflow-x-hidden"
             selectionFollowsFocus

@@ -1,3 +1,47 @@
+# v1.4.0
+
+### DevTools
+
+- New Yjs tab: visualize Yjs documents as a diagram, a tree, or as a list of
+  operations, and inspect Awareness at the same time as Presence.
+
+### `@liveblocks/yjs`
+
+- Add support for the Liveblocks [DevTools](https://liveblocks.io/devtools).
+
+### `@liveblocks/client`
+
+- Broadcast event messages now include a `user` property to indicate the user
+  that sent the event:
+  ```tsx
+  room.subscribe("event", ({ event, user }) => {
+    //                              ^^^^ New!
+  });
+  ```
+
+### `@liveblocks/react`
+
+- **Breaking (beta):** Comments' hook `useThreads` now returns an object in its
+  Suspense version. (`const threads = useThreads()` becomes
+  `const { threads } = useThreads()`)
+- Add new Comments hooks to add/remove reactions.
+
+### `@liveblocks/react-comments`
+
+- **Breaking (beta):** `Comment`’s `indentBody` and `Thread`’s
+  `indentCommentBody` were renamed to `indentContent` and `indentCommentContent`
+  respectively. `Thread`’s `onResolveChange` was renamed to `onResolvedChange`.
+- Add support for reactions. (👍)
+- Add emoji button in `Composer`.
+
+- Broadcast event messages now include a `user` property to indicate the user
+  that sent the event:
+  ```tsx
+  useEventListener(({ event, user }) => {
+    //                       ^^^^ New!
+  });
+  ```
+
 # v1.3.6
 
 ### `@liveblocks/client`

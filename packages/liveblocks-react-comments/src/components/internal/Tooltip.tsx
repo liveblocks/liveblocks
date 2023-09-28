@@ -2,7 +2,7 @@
 
 import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 import type { ComponentProps, ReactNode } from "react";
-import React, { useMemo } from "react";
+import React, { forwardRef, useMemo } from "react";
 
 import {
   FLOATING_ELEMENT_COLLISION_PADDING,
@@ -23,48 +23,73 @@ const KEYS = {
   },
 } as const;
 
-interface TooltipProps
+export interface TooltipProps
   extends Pick<TooltipPrimitive.TooltipTriggerProps, "children">,
     Omit<TooltipPrimitive.TooltipContentProps, "content"> {
   content: ReactNode;
+  multiline?: boolean;
+}
+
+export interface ShortcutTooltipProps extends TooltipProps {
   shortcut?: ReactNode;
 }
 
-interface TooltipShortcutKeyProps extends ComponentProps<"abbr"> {
+export interface ShortcutTooltipKeyProps extends ComponentProps<"abbr"> {
   name: keyof typeof KEYS;
 }
 
-export function Tooltip({
-  children,
-  content,
-  shortcut,
-  className,
-  ...props
-}: TooltipProps) {
+export const Tooltip = forwardRef<HTMLButtonElement, TooltipProps>(
+  ({ children, content, multiline, className, ...props }, forwardedRef) => {
+    return (
+      <TooltipPrimitive.Root disableHoverableContent>
+        <TooltipPrimitive.Trigger asChild ref={forwardedRef}>
+          {children}
+        </TooltipPrimitive.Trigger>
+        <TooltipPrimitive.Portal>
+          <TooltipPrimitive.Content
+            className={classNames(
+              "lb-root lb-tooltip",
+              multiline && "lb-tooltip:multiline",
+              className
+            )}
+            side="top"
+            align="center"
+            sideOffset={FLOATING_ELEMENT_SIDE_OFFSET}
+            collisionPadding={FLOATING_ELEMENT_COLLISION_PADDING}
+            {...props}
+          >
+            {content}
+          </TooltipPrimitive.Content>
+        </TooltipPrimitive.Portal>
+      </TooltipPrimitive.Root>
+    );
+  }
+);
+
+export const ShortcutTooltip = forwardRef<
+  HTMLButtonElement,
+  ShortcutTooltipProps
+>(({ children, content, shortcut, ...props }, forwardedRef) => {
   return (
-    <TooltipPrimitive.Root disableHoverableContent>
-      <TooltipPrimitive.Trigger asChild>{children}</TooltipPrimitive.Trigger>
-      <TooltipPrimitive.Portal>
-        <TooltipPrimitive.Content
-          className={classNames("lb-root lb-tooltip", className)}
-          side="top"
-          align="center"
-          sideOffset={FLOATING_ELEMENT_SIDE_OFFSET}
-          collisionPadding={FLOATING_ELEMENT_COLLISION_PADDING}
-          {...props}
-        >
+    <Tooltip
+      content={
+        <>
           {content}
           {shortcut && <kbd className="lb-tooltip-shortcut">{shortcut}</kbd>}
-        </TooltipPrimitive.Content>
-      </TooltipPrimitive.Portal>
-    </TooltipPrimitive.Root>
+        </>
+      }
+      {...props}
+      ref={forwardedRef}
+    >
+      {children}
+    </Tooltip>
   );
-}
+});
 
-export function TooltipShortcutKey({
+export function ShortcutTooltipKey({
   name,
   ...props
-}: TooltipShortcutKeyProps) {
+}: ShortcutTooltipKeyProps) {
   const { title, key } = useMemo(() => KEYS[name]?.(), [name]);
 
   return (

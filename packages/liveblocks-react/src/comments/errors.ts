@@ -76,6 +76,36 @@ export class DeleteCommentError extends Error {
   }
 }
 
+export class AddReactionError extends Error {
+  constructor(
+    public cause: Error,
+    public context: {
+      roomId: string;
+      threadId: string;
+      commentId: string;
+      emoji: string;
+    }
+  ) {
+    super("Add reaction failed.");
+    this.name = "AddReactionError";
+  }
+}
+
+export class RemoveReactionError extends Error {
+  constructor(
+    public cause: Error,
+    public context: {
+      roomId: string;
+      threadId: string;
+      commentId: string;
+      emoji: string;
+    }
+  ) {
+    super("Remove reaction failed.");
+    this.name = "RemoveReactionError";
+  }
+}
+
 export type CommentsApiError<TThreadMetadata extends BaseMetadata> =
   | CreateThreadError<TThreadMetadata>
   | EditThreadMetadataError<TThreadMetadata>

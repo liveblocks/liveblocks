@@ -32,7 +32,7 @@ import type { Resolve } from "./lib/Resolve";
 import { compact, deepClone, tryParseJson } from "./lib/utils";
 import { canComment, canWriteStorage, TokenKind } from "./protocol/AuthToken";
 import type { BaseUserInfo, BaseUserMeta } from "./protocol/BaseUserMeta";
-import type { ClientMsg } from "./protocol/ClientMsg";
+import type { ClientMsg, UpdateYDocClientMsg } from "./protocol/ClientMsg";
 import { ClientMsgCode } from "./protocol/ClientMsg";
 import type { Op } from "./protocol/Op";
 import { isAckOp, OpCode } from "./protocol/Op";
@@ -45,7 +45,7 @@ import type {
   UpdatePresenceServerMsg,
   UserJoinServerMsg,
   UserLeftServerMsg,
-  YDocUpdate,
+  YDocUpdateServerMsg,
 } from "./protocol/ServerMsg";
 import { ServerMsgCode } from "./protocol/ServerMsg";
 import type { ImmutableRef } from "./refs/ImmutableRef";
@@ -66,13 +66,23 @@ import { PKG_VERSION } from "./version";
 
 type TimeoutID = ReturnType<typeof setTimeout>;
 
-type CustomEvent<TRoomEvent extends Json> = {
+export type RoomEventMessage<
+  TPresence extends JsonObject,
+  TUserMeta extends BaseUserMeta,
+  TRoomEvent extends Json,
+> = {
   /**
    * The connection ID of the client that sent the event.
    * If this message was broadcast from the server (via the REST API), then
    * this value will be -1.
    */
   connectionId: number;
+  /**
+   * The User (from the others list) that sent the event.
+   * If this message was broadcast from the server (via the REST API), then
+   * this value will be null.
+   */
+  user: User<TPresence, TUserMeta> | null;
   event: TRoomEvent;
 };
 
@@ -94,7 +104,7 @@ type RoomEventCallbackMap<
   connection: Callback<LegacyConnectionStatus>; // Old/deprecated API
   status: Callback<Status>; // New/recommended API
   "lost-connection": Callback<LostConnectionEvent>;
-  event: Callback<CustomEvent<TRoomEvent>>;
+  event: Callback<RoomEventMessage<TPresence, TUserMeta, TRoomEvent>>;
   "my-presence": Callback<TPresence>;
   //
   // NOTE: OthersEventCallback is the only one not taking a Callback<T> shape,
@@ -287,7 +297,10 @@ type SubscribeFn<
    * });
    *
    */
-  (type: "event", listener: Callback<CustomEvent<TRoomEvent>>): () => void;
+  (
+    type: "event",
+    listener: Callback<RoomEventMessage<TPresence, TUserMeta, TRoomEvent>>
+  ): () => void;
 
   /**
    * Subscribe to errors thrown in the room.
@@ -573,7 +586,7 @@ export type Room<
     readonly status: Observable<Status>; // New/recommended API
     readonly lostConnection: Observable<LostConnectionEvent>;
 
-    readonly customEvent: Observable<{ connectionId: number; event: TRoomEvent; }>; // prettier-ignore
+    readonly customEvent: Observable<RoomEventMessage<TPresence, TUserMeta, TRoomEvent>>; // prettier-ignore
     readonly self: Observable<User<TPresence, TUserMeta>>;
     readonly myPresence: Observable<TPresence>;
     readonly others: Observable<{ others: readonly User<TPresence, TUserMeta>[]; event: OthersEvent<TPresence, TUserMeta>; }>; // prettier-ignore
@@ -589,8 +602,7 @@ export type Room<
     readonly storageDidLoad: Observable<void>;
 
     readonly storageStatus: Observable<StorageStatus>;
-    readonly ydoc: Observable<YDocUpdate>;
-
+    readonly ydoc: Observable<YDocUpdateServerMsg | UpdateYDocClientMsg>;
     readonly comments: Observable<CommentsEventServerMsg>;
   };
 
@@ -1125,7 +1137,8 @@ export function createRoom<
     status: makeEventSource<Status>(), // New/recommended API
     lostConnection: makeEventSource<LostConnectionEvent>(),
 
-    customEvent: makeEventSource<CustomEvent<TRoomEvent>>(),
+    customEvent:
+      makeEventSource<RoomEventMessage<TPresence, TUserMeta, TRoomEvent>>(),
     self: makeEventSource<User<TPresence, TUserMeta>>(),
     myPresence: makeEventSource<TPresence>(),
     others: makeEventSource<{
@@ -1137,7 +1150,7 @@ export function createRoom<
     history: makeEventSource<HistoryEvent>(),
     storageDidLoad: makeEventSource<void>(),
     storageStatus: makeEventSource<StorageStatus>(),
-    ydoc: makeEventSource<YDocUpdate>(),
+    ydoc: makeEventSource<YDocUpdateServerMsg | UpdateYDocClientMsg>(),
 
     comments: makeEventSource<CommentsEventServerMsg>(),
   };
@@ -1770,8 +1783,14 @@ export function createRoom<
           }
 
           case ServerMsgCode.BROADCASTED_EVENT: {
+            const others = context.others.current;
             eventHub.customEvent.notify({
               connectionId: message.actor,
+              user:
+                message.actor < 0
+                  ? null
+                  : others.find((u) => u.connectionId === message.actor) ??
+                    null,
               event: message.event,
             });
             break;
@@ -1946,10 +1965,12 @@ export function createRoom<
   }
 
   function updateYDoc(update: string) {
-    context.buffer.messages.push({
+    const clientMsg: UpdateYDocClientMsg = {
       type: ClientMsgCode.UPDATE_YDOC,
       update,
-    });
+    };
+    context.buffer.messages.push(clientMsg);
+    eventHub.ydoc.notify(clientMsg);
     flushNowOrSoon();
   }
 
@@ -2370,7 +2391,9 @@ function makeClassicSubscribeFn<
       switch (first) {
         case "event":
           return events.customEvent.subscribe(
-            callback as Callback<CustomEvent<TRoomEvent>>
+            callback as Callback<
+              RoomEventMessage<TPresence, TUserMeta, TRoomEvent>
+            >
           );
 
         case "my-presence":

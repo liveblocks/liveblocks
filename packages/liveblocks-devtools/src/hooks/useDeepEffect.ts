@@ -15,5 +15,5 @@ export function useDeepEffect(
 
   previousDependencies.current = dependencies;
 
-  useEffect(callback, [signal.current]);
+  useEffect(callback, [callback, signal.current]);
 }

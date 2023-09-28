@@ -43,9 +43,14 @@ export interface ThreadProps extends ComponentPropsWithoutRef<"div"> {
   showActions?: CommentProps["showActions"];
 
   /**
-   * Whether to indent the comments' bodies.
+   * Whether to show reactions.
    */
-  indentCommentBody?: CommentProps["indentBody"];
+  showReactions?: CommentProps["showReactions"];
+
+  /**
+   * Whether to indent the comments' content.
+   */
+  indentCommentContent?: CommentProps["indentContent"];
 
   /**
    * Whether to show deleted comments.
@@ -55,7 +60,7 @@ export interface ThreadProps extends ComponentPropsWithoutRef<"div"> {
   /**
    * The event handler called when changing the resolved status.
    */
-  onResolveChange?: (resolved: boolean) => void;
+  onResolvedChange?: (resolved: boolean) => void;
 
   /**
    * The event handler called when a comment is edited.
@@ -98,12 +103,13 @@ export const Thread = forwardRef<HTMLDivElement, ThreadProps>(
   (
     {
       thread,
-      indentCommentBody = true,
+      indentCommentContent = true,
       showActions = "hover",
       showDeletedComments,
       showResolveAction = true,
+      showReactions = true,
       showComposer = "collapsed",
-      onResolveChange,
+      onResolvedChange,
       onCommentEdit,
       onCommentDelete,
       onAuthorClick,
@@ -129,11 +135,11 @@ export const Thread = forwardRef<HTMLDivElement, ThreadProps>(
 
     const handleResolvedChange = useCallback(
       (resolved: boolean) => {
-        onResolveChange?.(resolved);
+        onResolvedChange?.(resolved);
 
         editThreadMetadata({ threadId: thread.id, metadata: { resolved } });
       },
-      [editThreadMetadata, onResolveChange, thread.id]
+      [editThreadMetadata, onResolvedChange, thread.id]
     );
 
     return (
@@ -158,9 +164,10 @@ export const Thread = forwardRef<HTMLDivElement, ThreadProps>(
                   key={comment.id}
                   className="lb-thread-comment"
                   comment={comment}
-                  indentBody={indentCommentBody}
+                  indentContent={indentCommentContent}
                   showDeleted={showDeletedComments}
                   showActions={showActions}
+                  showReactions={showReactions}
                   onEdit={onCommentEdit}
                   onDelete={onCommentDelete}
                   onAuthorClick={onAuthorClick}

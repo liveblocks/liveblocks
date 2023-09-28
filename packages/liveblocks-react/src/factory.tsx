@@ -17,6 +17,7 @@ import type {
   AsyncCache,
   BaseMetadata,
   CommentData,
+  RoomEventMessage,
   ToImmutable,
 } from "@liveblocks/core";
 import {
@@ -30,13 +31,14 @@ import * as React from "react";
 import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector.js";
 
 import type {
+  CommentReactionOptions,
   CommentsRoom,
   CreateCommentOptions,
   CreateThreadOptions,
   DeleteCommentOptions,
   EditCommentOptions,
   EditThreadMetadataOptions,
-  RoomThreads,
+  ThreadsState,
 } from "./comments/CommentsRoom";
 import { createCommentsRoom } from "./comments/CommentsRoom";
 import type { CommentsApiError } from "./comments/errors";
@@ -54,7 +56,7 @@ import type {
   RoomContextBundle,
   RoomProviderProps,
   UserState,
-  UserStateSuspense,
+  UserStateSuccess,
 } from "./types";
 
 const noop = () => {};
@@ -515,7 +517,7 @@ export function createRoomContext<
   }
 
   function useEventListener(
-    callback: (eventData: { connectionId: number; event: TRoomEvent }) => void
+    callback: (data: RoomEventMessage<TPresence, TUserMeta, TRoomEvent>) => void
   ): void {
     const room = useRoom();
     const savedCallback = React.useRef(callback);
@@ -525,10 +527,9 @@ export function createRoomContext<
     });
 
     React.useEffect(() => {
-      const listener = (eventData: {
-        connectionId: number;
-        event: TRoomEvent;
-      }) => {
+      const listener = (
+        eventData: RoomEventMessage<TPresence, TUserMeta, TRoomEvent>
+      ) => {
         savedCallback.current(eventData);
       };
 
@@ -859,7 +860,7 @@ export function createRoomContext<
     return commentsRoom;
   }
 
-  function useThreads(): RoomThreads<TThreadMetadata> {
+  function useThreads(): ThreadsState<TThreadMetadata> {
     const room = useRoom();
 
     React.useEffect(() => {
@@ -903,6 +904,34 @@ export function createRoomContext<
     return React.useCallback(
       (options: EditThreadMetadataOptions<TThreadMetadata>) =>
         getCommentsRoom(room).editThreadMetadata(options),
+      [room]
+    );
+  }
+
+  function useAddReaction() {
+    const room = useRoom();
+
+    React.useEffect(() => {
+      warnIfBetaCommentsHook();
+    }, []);
+
+    return React.useCallback(
+      (options: CommentReactionOptions) =>
+        getCommentsRoom(room).addReaction(options),
+      [room]
+    );
+  }
+
+  function useRemoveReaction() {
+    const room = useRoom();
+
+    React.useEffect(() => {
+      warnIfBetaCommentsHook();
+    }, []);
+
+    return React.useCallback(
+      (options: CommentReactionOptions) =>
+        getCommentsRoom(room).removeReaction(options),
       [room]
     );
   }
@@ -994,9 +1023,8 @@ export function createRoomContext<
 
     return {
       user: state.data,
-      error: state.error,
       isLoading: false,
-    } as UserStateSuspense<TUserMeta["info"]>;
+    } as UserStateSuccess<TUserMeta["info"]>;
   }
 
   const mentionSuggestionsCache = createAsyncCache<string[], unknown>(
@@ -1077,6 +1105,8 @@ export function createRoomContext<
     useCreateComment,
     useEditComment,
     useDeleteComment,
+    useAddReaction,
+    useRemoveReaction,
 
     suspense: {
       RoomContext,
@@ -1123,6 +1153,8 @@ export function createRoomContext<
       useCreateComment,
       useEditComment,
       useDeleteComment,
+      useAddReaction,
+      useRemoveReaction,
     },
   };
 

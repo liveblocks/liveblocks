@@ -11,6 +11,7 @@ import type {
 } from "react";
 import React, { forwardRef, useCallback } from "react";
 
+import { EmojiIcon } from "../icons/Emoji";
 import { MentionIcon } from "../icons/Mention";
 import { SendIcon } from "../icons/Send";
 import { type ComposerOverrides, useOverrides } from "../overrides";
@@ -30,10 +31,12 @@ import { useControllableState } from "../utils/use-controllable-state";
 import { Attribution } from "./internal/Attribution";
 import { Avatar } from "./internal/Avatar";
 import { Button } from "./internal/Button";
+import { EmojiPicker, EmojiPickerTrigger } from "./internal/EmojiPicker";
 import {
+  ShortcutTooltip,
+  ShortcutTooltipKey,
   Tooltip,
   TooltipProvider,
-  TooltipShortcutKey,
 } from "./internal/Tooltip";
 import { User } from "./internal/User";
 
@@ -165,6 +168,35 @@ function ComposerInsertMentionEditorAction({
         <MentionIcon className="lb-button-icon" />
       </Button>
     </Tooltip>
+  );
+}
+
+function ComposerInsertEmojiEditorAction({
+  label,
+  className,
+  ...props
+}: EditorActionProps) {
+  const { insertText } = useComposer();
+
+  const preventDefault = useCallback((event: SyntheticEvent) => {
+    event.preventDefault();
+  }, []);
+
+  return (
+    <EmojiPicker onEmojiSelect={insertText}>
+      <Tooltip content={label}>
+        <EmojiPickerTrigger asChild>
+          <Button
+            className={classNames("lb-composer-editor-action", className)}
+            onMouseDown={preventDefault}
+            aria-label={label}
+            {...props}
+          >
+            <EmojiIcon className="lb-button-icon" />
+          </Button>
+        </EmojiPickerTrigger>
+      </Tooltip>
+    </EmojiPicker>
   );
 }
 
@@ -334,14 +366,17 @@ const ComposerWithContext = forwardRef<
                   label={$.COMPOSER_INSERT_MENTION}
                 />
               )}
+              <ComposerInsertEmojiEditorAction
+                label={$.COMPOSER_INSERT_EMOJI}
+              />
             </div>
             {showAttribution && <Attribution />}
             <div className="lb-composer-actions">
               {actions ?? (
                 <>
-                  <Tooltip
+                  <ShortcutTooltip
                     content={$.COMPOSER_SEND}
-                    shortcut={<TooltipShortcutKey name="enter" />}
+                    shortcut={<ShortcutTooltipKey name="enter" />}
                   >
                     <ComposerPrimitive.Submit disabled={disabled} asChild>
                       <Button
@@ -354,7 +389,7 @@ const ComposerWithContext = forwardRef<
                         <SendIcon />
                       </Button>
                     </ComposerPrimitive.Submit>
-                  </Tooltip>
+                  </ShortcutTooltip>
                 </>
               )}
             </div>
