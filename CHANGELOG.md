@@ -1,4 +1,13 @@
-# v1.3.7
+# v1.4.0
+
+### DevTools
+
+- New Yjs tab: visualize Yjs documents as a diagram, a tree, or as a list of
+  operations, and inspect Awareness at the same time as Presence.
+
+### `@liveblocks/yjs`
+
+- Add support for the Liveblocks [DevTools](https://liveblocks.io/devtools).
 
 ### `@liveblocks/react`
 
