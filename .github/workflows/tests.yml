@@ -5,7 +5,7 @@ on:
     paths-ignore:
       - "docs/**"
       - "guides/**"
-      - "**.yml"
+      - ".github/**"
 
 jobs:
   test:
