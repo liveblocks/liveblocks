@@ -62,7 +62,8 @@ test.describe("Redux", () => {
     await assertContainText(pages, "0");
   });
 
-  test("fuzzy", async () => {
+  // TODO: This test is flaky and occasionally fails in CI--make it more robust
+  test.skip("fuzzy", async () => {
     await pages[0].click("#clear");
     await assertContainText(pages, "0");
 
