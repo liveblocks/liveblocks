@@ -1,4 +1,4 @@
-# v1.3.7
+# v1.4.0
 
 ### `@liveblocks/client`
 
