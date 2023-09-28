@@ -1070,8 +1070,18 @@ function CustomEventNodeRenderer({
       <RowInfo>
         <RowLabel>{node.data.key}</RowLabel>
         {SHOW_INTERNAL_ID && <RowStaticLabel>{node.id}</RowStaticLabel>}
-        {/* <Badge className="flex-none opacity-60">#{node.data.id}</Badge> */}
-        {!node.isOpen && <RowPreview>{summarize(node.data)}</RowPreview>}
+        {!node.isOpen ? (
+          <RowPreview>{summarize(node.data)}</RowPreview>
+        ) : node.data.connectionId !== 88 ? (
+          <span>from server</span>
+        ) : (
+          <>
+            <span>from</span>{" "}
+            <Badge className="flex-none opacity-60">
+              client #{node.data.connectionId}
+            </Badge>
+          </>
+        )}
       </RowInfo>
     </Row>
   );
