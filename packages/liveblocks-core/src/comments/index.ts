@@ -42,6 +42,16 @@ export type CommentsApi<ThreadMetadata extends BaseMetadata> = {
     threadId: string;
     commentId: string;
   }): Promise<void>;
+  addReaction(options: {
+    threadId: string;
+    commentId: string;
+    emoji: string;
+  }): Promise<CommentData>;
+  removeReaction(options: {
+    threadId: string;
+    commentId: string;
+    emoji: string;
+  }): Promise<CommentData>;
 };
 
 export function createCommentsApi<ThreadMetadata extends BaseMetadata>(
@@ -232,6 +242,48 @@ export function createCommentsApi<ThreadMetadata extends BaseMetadata>(
     );
   }
 
+  function addReaction({
+    threadId,
+    commentId,
+    emoji,
+  }: {
+    threadId: string;
+    commentId: string;
+    emoji: string;
+  }) {
+    return fetchJson<CommentData>(
+      `/threads/${encodeURIComponent(threadId)}/comments/${encodeURIComponent(
+        commentId
+      )}/reactions`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ emoji }),
+      }
+    );
+  }
+
+  function removeReaction({
+    threadId,
+    commentId,
+    emoji,
+  }: {
+    threadId: string;
+    commentId: string;
+    emoji: string;
+  }) {
+    return fetchJson<CommentData>(
+      `/threads/${encodeURIComponent(threadId)}/comments/${encodeURIComponent(
+        commentId
+      )}/reactions/${encodeURIComponent(emoji)}`,
+      {
+        method: "DELETE",
+      }
+    );
+  }
+
   return {
     getThreads,
     createThread,
@@ -239,5 +291,7 @@ export function createCommentsApi<ThreadMetadata extends BaseMetadata>(
     createComment,
     editComment,
     deleteComment,
+    addReaction,
+    removeReaction,
   };
 }

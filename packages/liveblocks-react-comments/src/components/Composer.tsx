@@ -31,9 +31,10 @@ import { Attribution } from "./internal/Attribution";
 import { Avatar } from "./internal/Avatar";
 import { Button } from "./internal/Button";
 import {
+  ShortcutTooltip,
+  ShortcutTooltipKey,
   Tooltip,
   TooltipProvider,
-  TooltipShortcutKey,
 } from "./internal/Tooltip";
 import { User } from "./internal/User";
 
@@ -339,9 +340,9 @@ const ComposerWithContext = forwardRef<
             <div className="lb-composer-actions">
               {actions ?? (
                 <>
-                  <Tooltip
+                  <ShortcutTooltip
                     content={$.COMPOSER_SEND}
-                    shortcut={<TooltipShortcutKey name="enter" />}
+                    shortcut={<ShortcutTooltipKey name="enter" />}
                   >
                     <ComposerPrimitive.Submit disabled={disabled} asChild>
                       <Button
@@ -354,7 +355,7 @@ const ComposerWithContext = forwardRef<
                         <SendIcon />
                       </Button>
                     </ComposerPrimitive.Submit>
-                  </Tooltip>
+                  </ShortcutTooltip>
                 </>
               )}
             </div>

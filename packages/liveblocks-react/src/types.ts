@@ -22,6 +22,7 @@ import type {
 } from "@liveblocks/core";
 
 import type {
+  CommentReactionOptions,
   CreateCommentOptions,
   CreateThreadOptions,
   DeleteCommentOptions,
@@ -520,6 +521,28 @@ type RoomContextBundleShared<
    * deleteComment({ threadId: "th_xxx", commentId: "cm_xxx" })
    */
   useDeleteComment(): (options: DeleteCommentOptions) => void;
+
+  /**
+   * @beta
+   *
+   * Returns a function that adds a reaction from a comment.
+   *
+   * @example
+   * const addReaction = useAddReaction();
+   * addReaction({ threadId: "th_xxx", commentId: "cm_xxx", emoji: "👍" })
+   */
+  useAddReaction(): (options: CommentReactionOptions) => void;
+
+  /**
+   * @beta
+   *
+   * Returns a function that removes a reaction on a comment.
+   *
+   * @example
+   * const removeReaction = useRemoveReaction();
+   * removeReaction({ threadId: "th_xxx", commentId: "cm_xxx", emoji: "👍" })
+   */
+  useRemoveReaction(): (options: CommentReactionOptions) => void;
 };
 
 export type RoomContextBundle<

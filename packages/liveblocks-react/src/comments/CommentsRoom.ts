@@ -16,12 +16,14 @@ import { useEffect } from "react";
 import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
 
 import {
+  AddReactionError,
   type CommentsApiError,
   CreateCommentError,
   CreateThreadError,
   DeleteCommentError,
   EditCommentError,
   EditThreadMetadataError,
+  RemoveReactionError,
 } from "./errors";
 
 const POLLING_INTERVAL_REALTIME = 30000;
@@ -42,6 +44,8 @@ export type CommentsRoom<TThreadMetadata extends BaseMetadata> = {
   ): ThreadData<TThreadMetadata>;
   editThreadMetadata(options: EditThreadMetadataOptions<TThreadMetadata>): void;
   createComment(options: CreateCommentOptions): CommentData;
+  addReaction(options: CommentReactionOptions): void;
+  removeReaction(options: CommentReactionOptions): void;
   editComment(options: EditCommentOptions): void;
   deleteComment(options: DeleteCommentOptions): void;
 };
@@ -76,6 +80,12 @@ export type EditCommentOptions = {
 export type DeleteCommentOptions = {
   threadId: string;
   commentId: string;
+};
+
+export type CommentReactionOptions = {
+  threadId: string;
+  commentId: string;
+  emoji: string;
 };
 
 export type ThreadsStateLoading = {
@@ -366,7 +376,7 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
           body,
         },
       ],
-    } as ThreadData<TThreadMetadata>; // TODO: Figure out metadata typing
+    } as ThreadData<TThreadMetadata>;
 
     mutate(room.createThread({ threadId, commentId, body, metadata }), {
       optimisticData: [...threads, newThread],
@@ -402,6 +412,7 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
       createdAt: now,
       userId: getCurrentUserId(),
       body,
+      reactions: [],
     };
 
     const optimisticData = threads.map((thread) =>
@@ -633,10 +644,101 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
     };
   }
 
+  function addReaction({
+    threadId,
+    commentId,
+    emoji,
+  }: CommentReactionOptions): void {
+    const threads = getThreads();
+    const now = new Date().toISOString();
+
+    const optimisticData = threads.map((thread) =>
+      thread.id === threadId
+        ? {
+            ...thread,
+            comments: thread.comments.map((comment) =>
+              comment.id === commentId
+                ? ({
+                    ...comment,
+                    reactions: [
+                      ...comment.reactions,
+                      { emoji, userId: getCurrentUserId(), createdAt: now },
+                    ],
+                  } as CommentData)
+                : comment
+            ),
+          }
+        : thread
+    );
+
+    mutate(room.addReaction({ threadId, commentId, emoji }), {
+      optimisticData,
+    }).catch((err: Error) => {
+      errorEventSource.notify(
+        new AddReactionError(err, {
+          roomId: room.id,
+          threadId,
+          commentId,
+          emoji,
+        })
+      );
+    });
+  }
+
+  function removeReaction({
+    threadId,
+    commentId,
+    emoji,
+  }: CommentReactionOptions): void {
+    const threads = getThreads();
+
+    const optimisticData = threads.map((thread) =>
+      thread.id === threadId
+        ? {
+            ...thread,
+            comments: thread.comments.map((comment) => {
+              const reactionIndex = comment.reactions.findIndex(
+                (reaction) =>
+                  reaction.emoji === emoji &&
+                  reaction.userId === getCurrentUserId()
+              );
+
+              return comment.id === commentId
+                ? ({
+                    ...comment,
+                    reactions:
+                      reactionIndex < 0
+                        ? comment.reactions
+                        : comment.reactions
+                            .slice(0, reactionIndex)
+                            .concat(comment.reactions.slice(reactionIndex + 1)),
+                  } as CommentData)
+                : comment;
+            }),
+          }
+        : thread
+    );
+
+    mutate(room.removeReaction({ threadId, commentId, emoji }), {
+      optimisticData,
+    }).catch((err: Error) => {
+      errorEventSource.notify(
+        new RemoveReactionError(err, {
+          roomId: room.id,
+          threadId,
+          commentId,
+          emoji,
+        })
+      );
+    });
+  }
+
   return {
     useThreads,
     useThreadsSuspense,
     editThreadMetadata,
+    addReaction,
+    removeReaction,
     createThread,
     createComment,
     editComment,
