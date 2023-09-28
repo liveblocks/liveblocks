@@ -1,4 +1,4 @@
-import { assertNonEmpty, normalizeStatusCode } from "./utils";
+import { assertNonEmpty, fetchPolyfill, normalizeStatusCode } from "./utils";
 
 /**
  * TODO Officially mark as DEPRECATED, point to migration guide.
@@ -106,26 +106,19 @@ export async function authorize(
     assertNonEmpty(room, "room");
     assertNonEmpty(userId, "userId");
 
-    const fffetch =
-      typeof fetch !== "undefined"
-        ? fetch
-        : (await import("node-fetch")).default;
-
-    const resp = await fffetch(
-      buildLiveblocksAuthorizeEndpoint(options, room),
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${secret}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          userId,
-          userInfo,
-          groupIds,
-        }),
-      }
-    );
+    const fetch = await fetchPolyfill();
+    const resp = await fetch(buildLiveblocksAuthorizeEndpoint(options, room), {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${secret}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        userId,
+        userInfo,
+        groupIds,
+      }),
+    });
 
     return {
       status: normalizeStatusCode(resp.status),

@@ -9,6 +9,7 @@ import { Session } from "./Session";
 import {
   assertNonEmpty,
   assertSecretKey,
+  fetchPolyfill,
   normalizeStatusCode,
   urljoin,
 } from "./utils";
@@ -33,12 +34,6 @@ export type CreateSessionOptions = {
 };
 
 const DEFAULT_BASE_URL = "https://api.liveblocks.io";
-
-async function fetchPolyfill(): Promise<typeof fetch> {
-  return typeof globalThis.fetch !== "undefined"
-    ? globalThis.fetch
-    : ((await import("node-fetch")).default as unknown as typeof fetch);
-}
 
 export type AuthResponse = {
   status: number;
