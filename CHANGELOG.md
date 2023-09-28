@@ -1,3 +1,11 @@
+# v1.3.7
+
+### `@liveblocks/react`
+
+- **Breaking (beta):** Comments' hook `useThreads` now returns an object in its
+  Suspense version. (`const threads = useThreads()` becomes
+  `const { threads } = useThreads()`)
+
 # v1.3.6
 
 ### `@liveblocks/client`
