@@ -1378,7 +1378,8 @@ function pruneNode<TTreeNode extends DevTools.TreeNode>(
     // No sub filtering, keep the entire subtree!
     return node;
   } else if (indirectMatches.has(node.id)) {
-    if (node.type === "Json") {
+    if (node.type === "Json" || node.type === "CustomEvent") {
+      //                        🤔 Hmm. This might actually break on old DevTools versions
       throw new Error("Json nodes will never be indirect matches");
     }
 
