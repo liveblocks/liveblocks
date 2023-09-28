@@ -934,12 +934,14 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
     }, [editor]);
 
     const focus = useCallback(
-      (resetSelection = false) => {
+      (resetSelection = true) => {
         if (!ReactEditor.isFocused(editor)) {
-          if (resetSelection) {
-            SlateTransforms.select(editor, SlateEditor.end(editor, []));
-          }
-
+          SlateTransforms.select(
+            editor,
+            resetSelection || !editor.selection
+              ? SlateEditor.end(editor, [])
+              : editor.selection
+          );
           ReactEditor.focus(editor);
         }
       },
