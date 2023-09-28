@@ -5,6 +5,9 @@
 - New Yjs tab: visualize Yjs documents as a diagram, a tree, or as a list of
   operations, and inspect Awareness at the same time as Presence.
 
+- New Events tab: inspect all custom Events a client receives in an event
+  timeline, for easy testing/debugging.
+
 ### `@liveblocks/yjs`
 
 - Add support for the Liveblocks [DevTools](https://liveblocks.io/devtools).
