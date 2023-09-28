@@ -8,7 +8,7 @@ import { useCustomEvents, useStatus } from "../../contexts/CurrentRoom";
 
 export function EventTimeline({ className, ...props }: ComponentProps<"div">) {
   const currentStatus = useStatus();
-  const customEvents = useCustomEvents();
+  const [customEvents, clearCustomEvents] = useCustomEvents();
 
   if (
     currentStatus === "connected" ||
@@ -21,6 +21,9 @@ export function EventTimeline({ className, ...props }: ComponentProps<"div">) {
           className={cx(className, "absolute inset-0 flex h-full flex-col")}
           {...props}
         >
+          <div>
+            <button onClick={clearCustomEvents}>Clear</button>
+          </div>
           <CustomEventsTree data={customEvents} />
         </div>
       );

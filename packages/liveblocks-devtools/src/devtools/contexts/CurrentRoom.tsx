@@ -43,6 +43,7 @@ type Room = {
   me: DevTools.UserTreeNode | null;
   others: readonly DevTools.UserTreeNode[];
   customEvents: DevTools.CustomEventTreeNode[];
+  clearCustomEvents(): void;
   ydoc: Y.Doc;
   yupdates: YUpdate[];
 };
@@ -140,6 +141,9 @@ function makeRoom(roomId: string): Room {
     me: null,
     others: [],
     customEvents: [],
+    clearCustomEvents() {
+      this.customEvents = [];
+    },
     ydoc: new Y.Doc(),
     yupdates: [],
   };
@@ -401,12 +405,20 @@ export function usePresence(): readonly DevTools.UserTreeNode[] {
   return presence;
 }
 
-export function useCustomEvents(): readonly DevTools.CustomEventTreeNode[] {
+export function useCustomEvents(): [
+  customEvents: readonly DevTools.CustomEventTreeNode[],
+  clearCustomEvents: () => void,
+] {
   const currentRoomId = useCurrentRoomId();
-  return useSyncExternalStore(
+  const events = useSyncExternalStore(
     getSubscribe(currentRoomId, "onCustomEvent") ?? nosub,
     () => getRoom(currentRoomId)?.customEvents ?? []
   );
+  const clearEvents = useCallback(() => {
+    getRoom(currentRoomId)?.clearCustomEvents();
+    getRoomHub(currentRoomId)?.onCustomEvent.notify();
+  }, []);
+  return [events, clearEvents];
 }
 
 export function useCustomEventCount(): number {

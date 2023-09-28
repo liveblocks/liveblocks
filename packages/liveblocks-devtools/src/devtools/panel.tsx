@@ -52,8 +52,6 @@ function Panel() {
     );
   }, [mainTab, yjsTab]);
 
-  const numCustomEvents = useCustomEventCount();
-
   const handleSearchClear = useCallback(() => {
     setSearchText("");
   }, []);
@@ -135,6 +133,8 @@ function Panel() {
     yjsChangesView,
     yjsTab,
   ]);
+
+  const numCustomEvents = useCustomEventCount();
 
   const secondaryTabs: Tab[] = useMemo(() => {
     if (!currentRoomId) {
