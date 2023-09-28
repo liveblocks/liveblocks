@@ -4,8 +4,6 @@
  * @liveblocks/core has browser-specific code.
  */
 import type { CommentData, ThreadData } from "@liveblocks/core";
-import type { Response } from "node-fetch";
-import fetch from "node-fetch";
 
 import { Session } from "./Session";
 import {
@@ -35,6 +33,12 @@ export type CreateSessionOptions = {
 };
 
 const DEFAULT_BASE_URL = "https://api.liveblocks.io";
+
+async function fetchPolyfill(): Promise<typeof fetch> {
+  return typeof globalThis.fetch !== "undefined"
+    ? globalThis.fetch
+    : ((await import("node-fetch")).default as unknown as typeof fetch);
+}
 
 export type AuthResponse = {
   status: number;
@@ -85,7 +89,13 @@ export class Liveblocks {
       Authorization: `Bearer ${this._secret}`,
       "Content-Type": "application/json",
     };
-    return fetch(url, { method: "POST", headers, body: JSON.stringify(json) });
+
+    const fetch = await fetchPolyfill();
+    return fetch(url, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(json),
+    });
   }
 
   /** @internal */
@@ -95,6 +105,8 @@ export class Liveblocks {
       Authorization: `Bearer ${this._secret}`,
       "Content-Type": "application/json",
     };
+
+    const fetch = await fetchPolyfill();
     return fetch(url, { method: "GET", headers });
   }
 

@@ -25,4 +25,5 @@ export default defineConfig({
     resolve: ["@liveblocks/core"],
   },
   noExternal: ["@liveblocks/core"],
+  external: ["node-fetch"],
 });

@@ -1,5 +1,3 @@
-import fetch from "node-fetch";
-
 import { assertNonEmpty, normalizeStatusCode } from "./utils";
 
 /**
@@ -108,18 +106,26 @@ export async function authorize(
     assertNonEmpty(room, "room");
     assertNonEmpty(userId, "userId");
 
-    const resp = await fetch(buildLiveblocksAuthorizeEndpoint(options, room), {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${secret}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        userId,
-        userInfo,
-        groupIds,
-      }),
-    });
+    const fffetch =
+      typeof fetch !== "undefined"
+        ? fetch
+        : (await import("node-fetch")).default;
+
+    const resp = await fffetch(
+      buildLiveblocksAuthorizeEndpoint(options, room),
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${secret}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId,
+          userInfo,
+          groupIds,
+        }),
+      }
+    );
 
     return {
       status: normalizeStatusCode(resp.status),

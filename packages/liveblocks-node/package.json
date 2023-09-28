@@ -38,7 +38,7 @@
     "@types/node-fetch": "^2.5.8",
     "svix": "^0.75.0"
   },
-  "dependencies": {
+  "optionalDependencies": {
     "node-fetch": "^2.6.1"
   },
   "bugs": {
