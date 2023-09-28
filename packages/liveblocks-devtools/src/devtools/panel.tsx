@@ -14,17 +14,20 @@ import { RoomStatus } from "./components/RoomStatus";
 import { Search } from "./components/Search";
 import type { Tab } from "./components/Tabs";
 import { Tabs } from "./components/Tabs";
-import { CurrentRoomProvider, useCurrentRoomId } from "./contexts/CurrentRoom";
+import {
+  CurrentRoomProvider,
+  useCurrentRoomId,
+  useCustomEventCount,
+} from "./contexts/CurrentRoom";
 import { sendMessage } from "./port";
-import { Presence } from "./tabs/presence";
 import { EventTimeline } from "./tabs/event-timeline";
-import { useCustomEventCount } from "./contexts/CurrentRoom";
+import { Presence } from "./tabs/presence";
 import { Storage } from "./tabs/storage";
 import type { YjsChangesView, YjsTab } from "./tabs/yjs";
 import { Yjs, YJS_CHANGES_VIEWS, YJS_TABS } from "./tabs/yjs";
 
 const MAIN_TABS = ["storage", "yjs"] as const;
-const SECONDARY_TABS = ["presence", "history", "events"] as const;
+const SECONDARY_TABS = ["presence", "events"] as const;
 
 type MainTab = (typeof MAIN_TABS)[number];
 type SecondaryTab = (typeof SECONDARY_TABS)[number];
@@ -148,13 +151,6 @@ function Panel() {
             value: "presence",
             title: "Presence",
             content: <Presence key={`${currentRoomId}:presence`} />,
-          };
-        case "history":
-          return {
-            value: "history",
-            title: "History",
-            content: null,
-            disabled: true,
           };
         case "events":
           return {
