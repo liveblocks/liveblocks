@@ -7,6 +7,7 @@ import { Loading } from "../components/Loading";
 import { ThemeProvider } from "../contexts/Theme";
 import { buildSearchRegex } from "../lib/buildSearchRegex";
 import { EmptyState } from "./components/EmptyState";
+import { Ping } from "./components/Ping";
 import { ReloadButton } from "./components/ReloadButton";
 import { ResizablePanel } from "./components/ResizablePanel";
 import { RoomSelector } from "./components/RoomSelector";
@@ -155,8 +156,18 @@ function Panel() {
         case "events":
           return {
             value: "events",
-            title:
-              numCustomEvents > 0 ? `Events (${numCustomEvents})` : "Events",
+            title: "Events",
+            richTitle: (
+              <span className="flex items-center">
+                Events
+                {numCustomEvents > 0 && (
+                  <Ping
+                    className="text-blue-500 dark:text-blue-400 ml-1.5"
+                    animate={false}
+                  />
+                )}
+              </span>
+            ),
             content: <EventTimeline key={`${currentRoomId}:event-timeline`} />,
           };
       }
