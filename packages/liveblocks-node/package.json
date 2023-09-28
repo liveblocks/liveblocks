@@ -38,6 +38,7 @@
     "@liveblocks/core": "1.3.6",
     "@liveblocks/eslint-config": "*",
     "@liveblocks/jest-config": "*",
+    "@types/node": "^20.7.1",
     "svix": "^0.75.0"
   },
   "bugs": {
