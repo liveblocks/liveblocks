@@ -32,6 +32,7 @@
   `indentCommentBody` were renamed to `indentContent` and `indentCommentContent`
   respectively. `Thread`’s `onResolveChange` was renamed to `onResolvedChange`.
 - Add support for reactions. (👍)
+- Add emoji button in `Composer`.
 
 - Broadcast event messages now include a `user` property to indicate the user
   that sent the event:

@@ -1,7 +1,7 @@
 "use client";
 
 import { Slot } from "@radix-ui/react-slot";
-import type { ChangeEvent } from "react";
+import type { ChangeEvent, SyntheticEvent } from "react";
 import React, {
   forwardRef,
   useCallback,
@@ -190,6 +190,10 @@ const EmojiPickerContent = forwardRef<HTMLDivElement, EmojiPickerContentProps>(
       [columns]
     );
 
+    const preventDefault = useCallback((event: SyntheticEvent) => {
+      event.preventDefault();
+    }, []);
+
     return (
       <Component {...props} ref={forwardedRef}>
         {/* Virtualized rows are absolutely positioned so they won't make
@@ -232,7 +236,11 @@ const EmojiPickerContent = forwardRef<HTMLDivElement, EmojiPickerContentProps>(
                   {data.rows[index].emojis.map((emoji) => (
                     <Emoji
                       key={emoji.emoji}
-                      onClick={() => onEmojiSelect?.(emoji.emoji)}
+                      onMouseDown={preventDefault}
+                      onClick={(event) => {
+                        onEmojiSelect?.(emoji.emoji);
+                        event.stopPropagation();
+                      }}
                       emoji={emoji.emoji}
                     />
                   ))}
