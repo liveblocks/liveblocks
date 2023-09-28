@@ -24,15 +24,12 @@
 - **Breaking (beta):** Comments' hook `useThreads` now returns an object in its
   Suspense version. (`const threads = useThreads()` becomes
   `const { threads } = useThreads()`)
-- Add new Comments hooks to add/remove reactions.
 
 ### `@liveblocks/react-comments`
 
 - **Breaking (beta):** `Comment`’s `indentBody` and `Thread`’s
   `indentCommentBody` were renamed to `indentContent` and `indentCommentContent`
   respectively. `Thread`’s `onResolveChange` was renamed to `onResolvedChange`.
-- Add support for reactions. (👍)
-
 - Broadcast event messages now include a `user` property to indicate the user
   that sent the event:
   ```tsx
