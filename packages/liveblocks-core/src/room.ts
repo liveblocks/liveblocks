@@ -829,7 +829,7 @@ export type RoomInitializers<
   shouldInitiallyConnect?: boolean;
 }>;
 
-export type RoomDelegates = Delegates<AuthValue>;
+export type RoomDelegates = Omit<Delegates<AuthValue>, "canZombie">;
 
 /** @internal */
 export type RoomConfig = {
@@ -838,6 +838,7 @@ export type RoomConfig = {
   roomId: string;
   throttleDelay: number;
   lostConnectionTimeout: number;
+  backgroundKeepAliveTimeout?: number;
 
   liveblocksServer: string;
   unstable_fallbackToHTTP?: boolean;
@@ -893,8 +894,45 @@ export function createRoom<
       ? options.initialStorage(config.roomId)
       : options.initialStorage;
 
+  const doc = typeof document !== "undefined" ? document : undefined;
+  let inBackgroundSince: number | null = null;
+
+  function onVisibilityChange() {
+    if (doc?.visibilityState === "hidden") {
+      inBackgroundSince = inBackgroundSince ?? Date.now();
+    } else {
+      inBackgroundSince = null;
+    }
+  }
+
+  doc?.addEventListener("visibilitychange", onVisibilityChange);
+
   // Create a delegate pair for (a specific) Live Room socket connection(s)
-  const delegates: RoomDelegates = config.delegates;
+  const delegates = {
+    ...config.delegates,
+
+    canZombie() {
+      //
+      // A room's connection is allowed to "go zombie" if the following
+      // conditions apply:
+      //
+      // - The `backgroundKeepAliveTimeout` client option is configured
+      // - The browser window has been in the background for at least
+      //   `backgroundKeepAliveTimeout` milliseconds
+      // - There are no pending changes
+      //
+      return (
+        config.backgroundKeepAliveTimeout !== undefined &&
+        inBackgroundSince !== null &&
+        Date.now() > inBackgroundSince + config.backgroundKeepAliveTimeout &&
+        getStorageStatus() === "synchronized"
+      );
+
+      // const actor = context.dynamicSessionInfo.current?.actor;
+      // // Only allow even connection IDs to go zombie
+      // return actor !== undefined && actor % 2 === 0;
+    },
+  };
 
   const managedSocket: ManagedSocket<AuthValue> = new ManagedSocket(
     delegates,
@@ -2283,7 +2321,10 @@ export function createRoom<
       connect: () => managedSocket.connect(),
       reconnect: () => managedSocket.reconnect(),
       disconnect: () => managedSocket.disconnect(),
-      destroy: () => managedSocket.destroy(),
+      destroy: () => {
+        doc?.removeEventListener("visibilitychange", onVisibilityChange);
+        managedSocket.destroy();
+      },
 
       // Presence
       updatePresence,

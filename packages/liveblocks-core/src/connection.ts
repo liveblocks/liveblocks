@@ -107,6 +107,7 @@ function toNewConnectionStatus(machine: FSM<Context, Event, State>): Status {
     case "@auth.backoff":
     case "@connecting.busy":
     case "@connecting.backoff":
+    case "@idle.zombie":
       return machine.context.successCount > 0 ? "reconnecting" : "connecting";
 
     case "@idle.failed":
@@ -141,6 +142,7 @@ type Event =
 type State =
   | "@idle.initial"
   | "@idle.failed"
+  | "@idle.zombie"
   | "@auth.busy"
   | "@auth.backoff"
   | "@connecting.busy"
@@ -322,6 +324,7 @@ function isCloseEvent(
 export type Delegates<T extends BaseAuthResult> = {
   authenticate: () => Promise<T>;
   createSocket: (authValue: T) => IWebSocketInstance;
+  canZombie: () => boolean;
 };
 
 // istanbul ignore next
@@ -429,6 +432,7 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
   const machine = new FSM<Context, Event, State>(initialContext)
     .addState("@idle.initial")
     .addState("@idle.failed")
+    .addState("@idle.zombie")
     .addState("@auth.busy")
     .addState("@auth.backoff")
     .addState("@connecting.busy")
@@ -776,17 +780,30 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
 
   const sendHeartbeat: Target<Context, Event | BuiltinEvent, State> = {
     target: "@ok.awaiting-pong",
-    effect: (ctx: Context) => {
+    effect: (ctx) => {
       ctx.socket?.send("ping");
     },
   };
 
+  const maybeHeartbeat: Target<Context, Event | BuiltinEvent, State> = () => {
+    // If the browser tab isn't visible currently, ask the application if going
+    // zombie is fine
+    const doc = typeof document !== "undefined" ? document : undefined;
+    const canZombie =
+      doc?.visibilityState === "hidden" && delegates.canZombie();
+    return canZombie ? "@idle.zombie" : sendHeartbeat;
+  };
+
   machine
-    .addTimedTransition("@ok.connected", HEARTBEAT_INTERVAL, sendHeartbeat)
+    .addTimedTransition("@ok.connected", HEARTBEAT_INTERVAL, maybeHeartbeat)
     .addTransitions("@ok.connected", {
-      NAVIGATOR_OFFLINE: sendHeartbeat, // Don't take the browser's word for it when it says it's offline. Do a ping/pong to make sure.
+      NAVIGATOR_OFFLINE: maybeHeartbeat, // Don't take the browser's word for it when it says it's offline. Do a ping/pong to make sure.
       WINDOW_GOT_FOCUS: sendHeartbeat,
     });
+
+  machine.addTransitions("@idle.zombie", {
+    WINDOW_GOT_FOCUS: "@connecting.backoff", // When in zombie state, the client will try to wake up automatically when the window regains focus
+  });
 
   machine
     .onEnter("@ok.*", (ctx) => {
