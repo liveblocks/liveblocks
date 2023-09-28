@@ -31,14 +31,14 @@
     "test": "jest --silent --verbose --color=always",
     "test:watch": "jest --silent --verbose --color=always --watch"
   },
+  "dependencies": {
+    "node-fetch": "^2.6.1"
+  },
   "devDependencies": {
     "@liveblocks/core": "1.3.6",
     "@liveblocks/eslint-config": "*",
     "@liveblocks/jest-config": "*",
     "svix": "^0.75.0"
-  },
-  "optionalDependencies": {
-    "node-fetch": "^2.6.1"
   },
   "bugs": {
     "url": "https://github.com/liveblocks/liveblocks/issues"
