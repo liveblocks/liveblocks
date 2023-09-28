@@ -82,12 +82,12 @@ export default class LiveblocksProvider<
         }
         const { stateVector, update, guid } = message;
         // find the right doc and update
-        if (typeof guid === "undefined") {
-          this.rootDocHandler.handleServerUpdate({ update, stateVector });
-        } else if (this.subdocHandlers.has(guid)) {
+        if (guid !== undefined) {
           this.subdocHandlers
-            .get(guid)
+            .get(guid as string)
             ?.handleServerUpdate({ update, stateVector });
+        } else {
+          this.rootDocHandler.handleServerUpdate({ update, stateVector });
         }
       })
     );
