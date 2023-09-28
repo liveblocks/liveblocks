@@ -22,6 +22,7 @@
   `indentCommentBody` were renamed to `indentContent` and `indentCommentContent`
   respectively. `Thread`’s `onResolveChange` was renamed to `onResolvedChange`.
 - Add support for reactions. (👍)
+- Add emoji button in `Composer`.
 
 # v1.3.6
 
