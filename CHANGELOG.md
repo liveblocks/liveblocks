@@ -43,8 +43,6 @@
 
 ### `@liveblocks/node`
 
-- Use the platform-native `fetch` when it exists, optionally fall back to
-  `node-fetch` otherwise (if it is installed).
 - Support using `@liveblocks/node` in
   [Edge runtimes](https://vercel.com/docs/functions/edge-functions/edge-runtime).
 
