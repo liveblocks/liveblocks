@@ -18,6 +18,12 @@ export enum ServerMsgCode {
 
   // For Yjs Docs
   UPDATE_YDOC = 300,
+
+  THREAD_CREATED = 400,
+  THREAD_METADATA_UPDATED = 401,
+  COMMENT_CREATED = 402,
+  COMMENT_EDITED = 403,
+  COMMENT_DELETED = 404,
 }
 
 /**
@@ -39,7 +45,45 @@ export type ServerMsg<
   | InitialDocumentStateServerMsg // For a single client
   | UpdateStorageServerMsg // Broadcasted
   | RejectedStorageOpServerMsg // For a single client
-  | YDocUpdate; // For receiving doc from backend
+  | YDocUpdateServerMsg // For receiving doc from backend
+
+  // Comments
+  | CommentsEventServerMsg;
+
+export type CommentsEventServerMsg =
+  | ThreadCreatedEvent
+  | ThreadMetadataUpdatedEvent
+  | CommentCreatedEvent
+  | CommentEditedEvent
+  | CommentDeletedEvent;
+
+type ThreadCreatedEvent = {
+  type: ServerMsgCode.THREAD_CREATED;
+  threadId: string;
+};
+
+type ThreadMetadataUpdatedEvent = {
+  type: ServerMsgCode.THREAD_METADATA_UPDATED;
+  threadId: string;
+};
+
+type CommentCreatedEvent = {
+  type: ServerMsgCode.COMMENT_CREATED;
+  threadId: string;
+  commentId: string;
+};
+
+type CommentEditedEvent = {
+  type: ServerMsgCode.COMMENT_EDITED;
+  threadId: string;
+  commentId: string;
+};
+
+type CommentDeletedEvent = {
+  type: ServerMsgCode.COMMENT_DELETED;
+  threadId: string;
+  commentId: string;
+};
 
 /**
  * Sent by the WebSocket server and broadcasted to all clients to announce that
@@ -139,7 +183,7 @@ export type UserLeftServerMsg = {
  * Sent by the WebSocket server when the ydoc is updated or when requested based on stateVector passed.
  * Contains a base64 encoded update
  */
-export type YDocUpdate = {
+export type YDocUpdateServerMsg = {
   readonly type: ServerMsgCode.UPDATE_YDOC;
   readonly update: string;
   readonly isSync: boolean; // dropped after 1.2, we use presence of stateVector instead
@@ -154,7 +198,8 @@ export type YDocUpdate = {
 export type BroadcastedEventServerMsg<TRoomEvent extends Json> = {
   readonly type: ServerMsgCode.BROADCASTED_EVENT;
   /**
-   * The User who broadcasted the Event.
+   * The User who broadcast the Event. Absent when this event is broadcast from
+   * the REST API in the backend.
    */
   readonly actor: number;
   /**
@@ -177,6 +222,12 @@ export type RoomStateServerMsg<TUserMeta extends BaseUserMeta> = {
    * @since v1.2 (WS API v7)
    */
   readonly actor: number;
+
+  /**
+   * Secure nonce for the current session.
+   * @since v1.2 (WS API v7)
+   */
+  readonly nonce: string;
 
   /**
    * Informs the client what permissions the current User (self) has.

@@ -217,7 +217,7 @@ Leaves a room.
 
 ### Client.getRoom
 
-Gets a room by id. Returns `null` if [`client.enter`][] has not been called
+Gets a room by its ID. Returns `null` if [`client.enter`][] has not been called
 previously.
 
 ```ts
@@ -262,7 +262,7 @@ room.history.undo();
 
 ### Room.getOthers
 
-Gets all the other users in the Room.
+Gets all the other `User`s in the Room.
 
 ```ts
 const others = room.getOthers();
@@ -304,7 +304,7 @@ room.subscribe("event", ({ event }) => {
 
 ### Room.getSelf
 
-Gets the current user. Returns `null` if it is not yet connected to the room.
+Gets the current `User`. Returns `null` if it is not yet connected to the room.
 
 ```ts
 const { connectionId, presence, id, info, isReadOnly } = room.getSelf();
@@ -376,9 +376,13 @@ const unsubscribe = room.subscribe(
 
 ### Room.subscribe("event") [#Room.subscribe.event]
 
-Subscribe to events broadcasted by [`Room.broadcastEvent`][].
+Subscribe to events broadcast by [`Room.broadcastEvent`][].
 
 Takes a callback that is called when a user calls [`Room.broadcastEvent`][].
+Provides the `event` along with the `connectionId` of the user that sent the
+message. If an event was sent from the
+[Broadcast to a room](/docs/api-reference/rest-api-endpoints#post-broadcast-event)
+REST API, `connectionId` will be `-1`.
 
 Returns an unsubscribe function.
 
@@ -434,6 +438,7 @@ const unsubscribe = room.subscribe("others", (others, event) => {
 
   if (event.type === "reset") {
     // A disconnection has occurred and others has reset
+  }
 });
 ```
 
@@ -672,6 +677,19 @@ room.history.undo();
 // room.history.canRedo() is true
 room.history.redo();
 // room.history.canRedo() is false
+```
+
+### Room.history.clear
+
+Clears the undo and redo stacks for the current client. Explicitly clearing
+history resets the ability to undo beyond the current document state. Other
+clients’ histories are unaffected.
+
+```ts
+room.updatePresence({ selectedId: "xx" }, { addToHistory: true });
+// room.history.canUndo() is true
+room.history.clear();
+// room.history.canUndo() is false
 ```
 
 ### Room.history.pause
@@ -1301,10 +1319,10 @@ list.toImmutable();
 [`livelist`]: /docs/api-reference/liveblocks-client#LiveList
 [`livemap`]: /docs/api-reference/liveblocks-client#LiveMap
 [`liveobject`]: /docs/api-reference/liveblocks-client#LiveObject
-[`lostConnectionTimeout`]:
+[`lostconnectiontimeout`]:
   /docs/api-reference/liveblocks-client#createClientLostConnectionTimeout
 [`toimmutable`]: /docs/api-reference/liveblocks-client#LiveObject.toImmutable
-[`node-fetch`]: npmjs.com/package/node-fetch
+[`node-fetch`]: https://npmjs.com/package/node-fetch
 [`room.broadcastevent`]:
   /docs/api-reference/liveblocks-client#Room.broadcastEvent
 [`room.getstorage`]: /docs/api-reference/liveblocks-client#Room.getStorage

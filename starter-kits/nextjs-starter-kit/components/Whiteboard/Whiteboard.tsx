@@ -1,7 +1,8 @@
-import clsx from "clsx";
 import { LiveObject, shallow } from "@liveblocks/client";
 import { ClientSideSuspense } from "@liveblocks/react";
+import clsx from "clsx";
 import { nanoid } from "nanoid";
+import { useSession } from "next-auth/react";
 import {
   ChangeEvent,
   ComponentProps,
@@ -11,7 +12,6 @@ import {
   useState,
 } from "react";
 import { PlusIcon, RedoIcon, UndoIcon } from "../../icons";
-import { useSession } from "next-auth/react";
 import {
   UserMeta,
   useCanRedo,
@@ -22,7 +22,7 @@ import {
   useStorage,
 } from "../../liveblocks.config";
 import { Button } from "../../primitives/Button";
-import { Spinner } from "../../primitives/Spinner";
+import { DocumentSpinner } from "../../primitives/Spinner";
 import { Tooltip } from "../../primitives/Tooltip";
 import { useBoundingClientRectRef } from "../../utils";
 import { Cursors } from "../Cursors";
@@ -42,14 +42,8 @@ interface Props extends ComponentProps<"div"> {
 export function Whiteboard() {
   const { data: session } = useSession();
 
-  const loading = (
-    <div className={styles.loading}>
-      <Spinner size={24} />
-    </div>
-  );
-
   return (
-    <ClientSideSuspense fallback={loading}>
+    <ClientSideSuspense fallback={<DocumentSpinner />}>
       {() => <Canvas currentUser={session?.user.info ?? null} />}
     </ClientSideSuspense>
   );

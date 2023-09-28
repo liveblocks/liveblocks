@@ -4,6 +4,7 @@ import type { IncomingHttpHeaders } from "http";
 export class WebhookHandler {
   private secretBuffer: Buffer;
   private static secretPrefix = "whsec_";
+
   constructor(
     /**
      * The signing secret provided on the dashboard's webhooks page
@@ -58,10 +59,16 @@ export class WebhookHandler {
   /**
    * Verifies the headers and returns the webhookId, timestamp and rawSignatures
    */
-  private verifyHeaders(headers: IncomingHttpHeaders) {
+  private verifyHeaders(headers: IncomingHttpHeaders | Headers) {
+    const usingNativeHeaders =
+      typeof Headers !== "undefined" && headers instanceof Headers;
+    const normalizedHeaders = usingNativeHeaders
+      ? Object.fromEntries(headers)
+      : (headers as IncomingHttpHeaders);
+
     const sanitizedHeaders: IncomingHttpHeaders = {};
-    Object.keys(headers).forEach((key) => {
-      sanitizedHeaders[key.toLowerCase()] = headers[key];
+    Object.keys(normalizedHeaders).forEach((key) => {
+      sanitizedHeaders[key.toLowerCase()] = normalizedHeaders[key];
     });
 
     const webhookId = sanitizedHeaders["webhook-id"];
@@ -129,6 +136,12 @@ export class WebhookHandler {
         "userLeft",
         "roomCreated",
         "roomDeleted",
+        "commentCreated",
+        "commentEdited",
+        "commentDeleted",
+        "threadMetadataUpdated",
+        "threadCreated",
+        "ydocUpdated",
       ].includes(event.type)
     )
       return;
@@ -146,15 +159,21 @@ const isNotUndefined = <T>(value: T | undefined): value is T =>
 
 type WebhookRequest = {
   /**
-   * Headers of the request
+   * Headers of the request, can be a regular object or a Headers object
    * @example
    * {
    *  "webhook-id": "123",
    *  "webhook-timestamp": "1614588800000",
    *  "webhook-signature": "v1,bm9ldHUjKzFob2VudXRob2VodWUzMjRvdWVvdW9ldQo= v2,MzJsNDk4MzI0K2VvdSMjMTEjQEBAQDEyMzMzMzEyMwo="
    * }
+   *
+   * new Headers({
+   *  "webhook-id": "123",
+   *  "webhook-timestamp": "1614588800000",
+   *  "webhook-signature": "v1,bm9ldHUjKzFob2VudXRob2VodWUzMjRvdWVvdW9ldQo= v2,MzJsNDk4MzI0K2VvdSMjMTEjQEBAQDEyMzMzMzEyMwo="
+   * }}
    */
-  headers: IncomingHttpHeaders;
+  headers: IncomingHttpHeaders | Headers;
   /**
    * Raw body of the request, do not parse it
    * @example '{"type":"storageUpdated","data":{"roomId":"my-room-id","appId":"my-app-id","updatedAt":"2021-03-01T12:00:00.000Z"}}'
@@ -167,13 +186,19 @@ type WebhookEvent =
   | UserEnteredEvent
   | UserLeftEvent
   | RoomCreatedEvent
-  | RoomDeletedEvent;
+  | RoomDeletedEvent
+  | CommentCreatedEvent
+  | CommentEditedEvent
+  | CommentDeletedEvent
+  | ThreadMetadataUpdatedEvent
+  | ThreadCreatedEvent
+  | YDocUpdatedEvent;
 
 type StorageUpdatedEvent = {
   type: "storageUpdated";
   data: {
     roomId: string;
-    appId: string;
+    projectId: string;
     /**
      * ISO 8601 datestring
      * @example "2021-03-01T12:00:00.000Z"
@@ -185,7 +210,7 @@ type StorageUpdatedEvent = {
 type UserEnteredEvent = {
   type: "userEntered";
   data: {
-    appId: string;
+    projectId: string;
     roomId: string;
     connectionId: number;
     userId: string | null;
@@ -203,7 +228,7 @@ type UserEnteredEvent = {
 type UserLeftEvent = {
   type: "userLeft";
   data: {
-    appId: string;
+    projectId: string;
     roomId: string;
     connectionId: number;
     userId: string | null;
@@ -221,7 +246,7 @@ type UserLeftEvent = {
 type RoomCreatedEvent = {
   type: "roomCreated";
   data: {
-    appId: string;
+    projectId: string;
     roomId: string;
     /**
      * ISO 8601 datestring
@@ -234,7 +259,7 @@ type RoomCreatedEvent = {
 type RoomDeletedEvent = {
   type: "roomDeleted";
   data: {
-    appId: string;
+    projectId: string;
     roomId: string;
     /**
      * ISO 8601 datestring
@@ -244,12 +269,102 @@ type RoomDeletedEvent = {
   };
 };
 
+type CommentCreatedEvent = {
+  type: "commentCreated";
+  data: {
+    projectId: string;
+    roomId: string;
+    threadId: string;
+    commentId: string;
+    /**
+     * ISO 8601 datestring
+     * @example "2021-03-01T12:00:00.000Z"
+     */
+    createdAt: string;
+    createdBy: string;
+  };
+};
+
+type CommentEditedEvent = {
+  type: "commentEdited";
+  data: {
+    projectId: string;
+    roomId: string;
+    threadId: string;
+    commentId: string;
+    /**
+     * ISO 8601 datestring
+     * @example "2021-03-01T12:00:00.000Z"
+     */
+    editedAt: string;
+  };
+};
+
+type CommentDeletedEvent = {
+  type: "commentDeleted";
+  data: {
+    projectId: string;
+    roomId: string;
+    threadId: string;
+    commentId: string;
+    /**
+     * ISO 8601 datestring
+     * @example "2021-03-01T12:00:00.000Z"
+     */
+    deletedAt: string;
+  };
+};
+
+type YDocUpdatedEvent = {
+  type: "ydocUpdated";
+  data: {
+    projectId: string;
+    roomId: string;
+  };
+};
+
+type ThreadMetadataUpdatedEvent = {
+  type: "threadMetadataUpdated";
+  data: {
+    projectId: string;
+    roomId: string;
+    threadId: string;
+    updatedAt: string;
+    /**
+     * ISO 8601 datestring
+     * @example "2021-03-01T12:00:00.000Z"
+     */
+    updatedBy: string;
+  };
+};
+
+type ThreadCreatedEvent = {
+  type: "threadCreated";
+  data: {
+    projectId: string;
+    roomId: string;
+    threadId: string;
+    /**
+     * ISO 8601 datestring
+     * @example "2021-03-01T12:00:00.000Z"
+     */
+    createdAt: string;
+    createdBy: string;
+  };
+};
+
 export type {
+  CommentCreatedEvent,
+  CommentDeletedEvent,
+  CommentEditedEvent,
   RoomCreatedEvent,
   RoomDeletedEvent,
   StorageUpdatedEvent,
+  ThreadCreatedEvent,
+  ThreadMetadataUpdatedEvent,
   UserEnteredEvent,
   UserLeftEvent,
   WebhookEvent,
   WebhookRequest,
+  YDocUpdatedEvent,
 };

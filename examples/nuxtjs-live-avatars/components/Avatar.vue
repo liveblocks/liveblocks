@@ -1,6 +1,6 @@
 <template>
   <div class="avatar" v-bind:data-tooltip="name">
-    <img class="picture" :alt="name" :src="picture" height="48" width="48" />
+    <img class="picture" :alt="name" :src="src" height="48" width="48" />
   </div>
 </template>
 
@@ -44,6 +44,6 @@
 
 <script>
 export default {
-  props: ["name", "picture"],
+  props: ["name", "src"],
 };
 </script>

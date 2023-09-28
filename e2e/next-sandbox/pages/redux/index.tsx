@@ -2,6 +2,7 @@ import React, { useEffect } from "react";
 import { useAppDispatch, useAppSelector } from "./hooks";
 import { Provider } from "react-redux";
 import { actions } from "@liveblocks/redux";
+import { genRoomId } from "../../utils";
 
 import store, { client, addItem, deleteItem, clear } from "./store";
 
@@ -19,7 +20,7 @@ function List() {
   const items = useAppSelector((state) => state.items);
   const dispatch = useAppDispatch();
 
-  let roomId = "e2e-redux-basic";
+  let roomId = genRoomId("e2e-redux-basic");
   if (typeof window !== "undefined") {
     const queryParam = window.location.search;
     if (queryParam.split("room=").length > 1) {

@@ -21,8 +21,8 @@
   </a>
 </p>
 
-A server-side utility that lets you set up a [Liveblocks](https://liveblocks.io)
-authentication endpoint.
+`@liveblocks/node` provides server-side utilities to set up
+[Liveblocks](https://liveblocks.io) authentication endpoints.
 
 ## Installation
 
@@ -54,8 +54,8 @@ learn more about
 
 - [Discord](https://liveblocks.io/discord) - To get involved with the Liveblocks
   community, ask questions and share tips.
-- [Twitter](https://twitter.com/liveblocks) - To receive updates, announcements,
-  blog posts, and general Liveblocks tips.
+- [X](https://x.com/liveblocks) - To receive updates, announcements, blog posts,
+  and general Liveblocks tips.
 
 ## License
 

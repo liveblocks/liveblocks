@@ -4,10 +4,10 @@ import { NextRequest } from "next/server";
 // Authenticating your Liveblocks application
 // https://liveblocks.io/docs/rooms/authentication/access-token-permissions/nextjs
 
-const API_KEY = process.env.LIVEBLOCKS_SECRET_KEY;
+const SECRET_KEY = process.env.LIVEBLOCKS_SECRET_KEY;
 
 const liveblocks = new Liveblocks({
-  secret: API_KEY!,
+  secret: SECRET_KEY!,
 });
 
 export async function POST(request: NextRequest) {

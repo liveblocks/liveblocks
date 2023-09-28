@@ -386,6 +386,7 @@ describe("middleware", () => {
             },
           },
           actor: 2,
+          nonce: "nonce-for-actor-2",
           scopes: ["room:write"],
         } as RoomStateServerMsg<BaseUserMeta>),
       } as MessageEvent);
@@ -408,6 +409,7 @@ describe("middleware", () => {
           },
           presence: { x: 1 },
           canWrite: true,
+          canComment: true,
           isReadOnly: false,
         },
       ]);

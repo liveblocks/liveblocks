@@ -3,6 +3,7 @@ import { LiveMap } from "@liveblocks/client";
 import React from "react";
 import randomNumber from "../../utils/randomNumber";
 import createLiveblocksClient from "../../utils/createClient";
+import { genRoomId } from "../../utils";
 
 const client = createLiveblocksClient();
 
@@ -12,7 +13,7 @@ const { RoomProvider, useMap, useRedo, useUndo } = createRoomContext<
 >(client);
 
 export default function Home() {
-  let roomId = "e2e-storage-map";
+  let roomId = genRoomId("e2e-storage-map");
   if (typeof window !== "undefined") {
     const queryParam = window.location.search;
     if (queryParam.split("room=").length > 1) {

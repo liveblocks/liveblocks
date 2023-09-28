@@ -38,6 +38,8 @@ export function createAuthManager(
 ): AuthManager {
   const authentication = prepareAuthentication(authOptions);
 
+  const seenTokens: Set<string> = new Set();
+
   const tokens: ParsedAuthToken[] = [];
   const expiryTimes: number[] = []; // Supposed to always contain the same number of elements as `tokens`
 
@@ -84,9 +86,6 @@ export function createAuthManager(
       if (token.parsed.k === TokenKind.ID_TOKEN) {
         // When ID token method is used, only one token per user should be used and cached at the same time.
         return token;
-      } else if (token.parsed.k === TokenKind.SECRET_LEGACY) {
-        // Legacy tokens are not cached.
-        return undefined;
       } else if (token.parsed.k === TokenKind.ACCESS_TOKEN) {
         for (const [resource, scopes] of Object.entries(token.parsed.perms)) {
           if (
@@ -118,39 +117,47 @@ export function createAuthManager(
       const response = await fetchAuthEndpoint(fetcher, authentication.url, {
         room: roomId,
       });
-      return parseAuthToken(response.token);
+      const parsed = parseAuthToken(response.token);
+
+      if (seenTokens.has(parsed.raw)) {
+        throw new StopRetrying(
+          "The same Liveblocks auth token was issued from the backend before. Caching Liveblocks tokens is not supported."
+        );
+      }
+
+      return parsed;
     }
 
     if (authentication.type === "custom") {
       const response = await authentication.callback(roomId);
-      if (!response || typeof response !== "object") {
-        throw new Error(
-          'We expect the authentication callback to return a token, but it does not. Hint: the return value should look like: { token: "..." }'
-        );
-      }
+      if (response && typeof response === "object") {
+        if (typeof response.token === "string") {
+          return parseAuthToken(response.token);
+        } else if (typeof response.error === "string") {
+          const reason = `Authentication failed: ${
+            "reason" in response && typeof response.reason === "string"
+              ? response.reason
+              : "Forbidden"
+          }`;
 
-      if (typeof response.token === "string") {
-        return parseAuthToken(response.token);
-      } else if (typeof response.error === "string") {
-        const reason = `Authentication failed: ${
-          "reason" in response && typeof response.reason === "string"
-            ? response.reason
-            : "Forbidden"
-        }`;
-
-        if (response.error === "forbidden") {
-          throw new StopRetrying(reason);
-        } else {
-          throw new Error(reason);
+          // istanbul ignore else
+          if (response.error === "forbidden") {
+            throw new StopRetrying(reason);
+          } else {
+            throw new Error(reason);
+          }
         }
-      } else {
-        throw new Error(
-          'We expect the authentication callback to return a token, but it does not. Hint: the return value should look like: { token: "..." }'
-        );
       }
+
+      throw new Error(
+        'Your authentication callback function should return a token, but it did not. Hint: the return value should look like: { token: "..." }'
+      );
     }
 
-    throw new Error("Invalid Liveblocks client options");
+    // istanbul ignore next
+    throw new Error(
+      "Unexpected authentication type. Must be private or custom."
+    );
   }
 
   async function getAuthValue(
@@ -180,8 +187,13 @@ export function createAuthManager(
         (token.parsed.exp - token.parsed.iat) -
         BUFFER;
 
-      tokens.push(token);
-      expiryTimes.push(expiresAt);
+      seenTokens.add(token.raw);
+
+      // Legacy tokens should not get cached
+      if (token.parsed.k !== TokenKind.SECRET_LEGACY) {
+        tokens.push(token);
+        expiryTimes.push(expiresAt);
+      }
 
       return { type: "secret", token };
     } finally {
@@ -201,14 +213,14 @@ function prepareAuthentication(
 
   if (authEndpoint !== undefined && publicApiKey !== undefined) {
     throw new Error(
-      "You cannot use both publicApiKey and authEndpoint. Please use either publicApiKey or authEndpoint, but not both. For more information: https://liveblocks.io/docs/api-reference/liveblocks-client#createClient"
+      "You cannot simultaneously use `publicApiKey` and `authEndpoint` options. Please pick one and leave the other option unspecified. For more information: https://liveblocks.io/docs/api-reference/liveblocks-client#createClient"
     );
   }
 
   if (typeof publicApiKey === "string") {
     if (publicApiKey.startsWith("sk_")) {
       throw new Error(
-        "Invalid publicApiKey. You are using the secret key which is not supported. Please use the public key instead. For more information: https://liveblocks.io/docs/api-reference/liveblocks-client#createClientPublicKey"
+        "Invalid `publicApiKey` option. The value you passed is a secret key, which should not be used from the client. Please only ever pass a public key here. For more information: https://liveblocks.io/docs/api-reference/liveblocks-client#createClientPublicKey"
       );
     } else if (!publicApiKey.startsWith("pk_")) {
       throw new Error(
@@ -233,12 +245,12 @@ function prepareAuthentication(
     };
   } else if (authEndpoint !== undefined) {
     throw new Error(
-      "authEndpoint must be a string or a function. For more information: https://liveblocks.io/docs/api-reference/liveblocks-client#createClientAuthEndpoint"
+      "The `authEndpoint` option must be a string or a function. For more information: https://liveblocks.io/docs/api-reference/liveblocks-client#createClientAuthEndpoint"
     );
   }
 
   throw new Error(
-    "Invalid Liveblocks client options. For more information: https://liveblocks.io/docs/api-reference/liveblocks-client#createClient"
+    "Invalid Liveblocks client options. Please provide either a `publicApiKey` or `authEndpoint` option. They cannot both be empty. For more information: https://liveblocks.io/docs/api-reference/liveblocks-client#createClient"
   );
 }
 

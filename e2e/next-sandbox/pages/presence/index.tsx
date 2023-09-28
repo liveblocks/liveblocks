@@ -1,6 +1,7 @@
 import { Json, createRoomContext } from "@liveblocks/react";
 import React from "react";
 import createLiveblocksClient from "../../utils/createClient";
+import { genRoomId } from "../../utils";
 
 const client = createLiveblocksClient();
 
@@ -26,7 +27,7 @@ const {
 export default function Home() {
   const [isVisible, setIsVisible] = React.useState(true);
 
-  let roomId = "e2e-presence";
+  let roomId = genRoomId("e2e-presence");
   if (typeof window !== "undefined") {
     const queryParam = window.location.search;
     if (queryParam.split("room=").length > 1) {
@@ -88,10 +89,10 @@ function PresenceSandbox() {
 
       <h2>Others</h2>
       <p id="othersCount">
-        {others.toArray().filter((o) => o.presence !== undefined).length}
+        {others.filter((o) => o.presence !== undefined).length}
       </p>
       <div id="others" style={{ whiteSpace: "pre" }}>
-        {JSON.stringify(others.toArray(), null, 2)}
+        {JSON.stringify(others, null, 2)}
       </div>
     </div>
   );

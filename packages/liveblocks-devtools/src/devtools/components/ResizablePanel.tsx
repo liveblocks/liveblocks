@@ -20,7 +20,7 @@ const MIN_HEIGHT = 200;
 const MAX_HEIGHT = 500;
 
 interface Props extends ComponentProps<"div"> {
-  content?: ReactNode;
+  panel?: ReactNode;
 }
 
 interface HandleProps extends ComponentProps<"div"> {
@@ -58,7 +58,7 @@ function Handle({
         Math.round(clamp((startValue.current ?? 0) + delta, min, max))
       );
     },
-    [direction, min, max]
+    [direction, latestOnValueChange, min, max]
   );
 
   const handleDragEnd = useCallback(
@@ -83,7 +83,7 @@ function Handle({
       document.removeEventListener("pointerup", handleDragEnd);
       document.removeEventListener("pointermove", handleDrag);
     },
-    [direction, min, max, handleDrag]
+    [handleDrag, direction, latestOnValueApply, min, max]
   );
 
   const handleDragStart = useCallback(
@@ -127,7 +127,7 @@ function Handle({
 
 export function ResizablePanel({
   children,
-  content,
+  panel,
   className,
   style,
   ...props
@@ -135,12 +135,12 @@ export function ResizablePanel({
   const id = useId();
   const isVertical = useMediaQuery(`(max-width: ${BREAKPOINT}px)`);
   const [width, , { setRenderValue: setRenderWidth, setStoreValue: setWidth }] =
-    useStorage(`panel-width-${id}-0`, INITIAL_WIDTH);
+    useStorage(`panel-width-${id}`, INITIAL_WIDTH);
   const [
     height,
     ,
     { setRenderValue: setRenderHeight, setStoreValue: setHeight },
-  ] = useStorage(`panel-height-${id}-0`, INITIAL_HEIGHT);
+  ] = useStorage(`panel-height-${id}`, INITIAL_HEIGHT);
 
   return (
     <div
@@ -187,7 +187,7 @@ export function ResizablePanel({
             max={MAX_WIDTH}
           />
         )}
-        {content}
+        {panel}
       </div>
     </div>
   );

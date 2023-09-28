@@ -11,6 +11,15 @@ collaborative experiences. Follow the following steps to start adding
 collaboration to your JavaScript application using the APIs from the
 [`@liveblocks/yjs`](/docs/api-reference/liveblocks-yjs) package.
 
+<Banner title="Public beta">
+
+Yjs support is currently in beta. If you have any questions or feedback, please
+reach out to us via the dedicated Discord channel,
+[#yjs-beta](https://discord.com/channels/913109211746009108/1123560088997728328).
+We’d love to hear from you.
+
+</Banner>
+
 ## Quickstart
 
 <Steps>
@@ -21,10 +30,22 @@ collaboration to your JavaScript application using the APIs from the
       ```bash
       npm install @liveblocks/client @liveblocks/yjs yjs quill quill-cursors y-quill
       ```
+    </StepContent>
+
+  </Step>
+  
+  <Step>
+    <StepTitle>Create an HTML element</StepTitle>
+    <StepContent>
+
+      ```html
+      <div id="editor"></div>
+      ```
 
     </StepContent>
 
   </Step>
+  
   <Step>
     <StepTitle>Set up your collaborative Quill text editor</StepTitle>
     <StepContent>
@@ -37,59 +58,50 @@ collaboration to your JavaScript application using the APIs from the
       import { QuillBinding } from "y-quill";
       import QuillCursors from "quill-cursors";
 
-      async function run() {
-        let PUBLIC_KEY =
-          "{{PUBLIC_KEY}}";
-        let roomId = "yjs-quill-javascript";
+      // Set up Liveblocks client
+      const client = createClient({
+        publicApiKey: "{{PUBLIC_KEY}}",
+      });
 
-        const client = createClient({
-          publicApiKey: PUBLIC_KEY,
-        });
+      // Enter a multiplayer room
+      const room = client.enter("my-room", {
+        initialPresence: {},
+      });
 
-        const room = client.enter<{}, never>(roomId, {
-          initialPresence: {},
-        });
+      // Set up Yjs document, shared text, and Liveblocks Yjs provider
+      const yDoc = new Y.Doc();
+      const yText = yDoc.getText("quill");
+      const yProvider = new LiveblocksProvider(room, yDoc);
 
-        // A Yjs document holds the shared data
-        const ydoc = new Y.Doc();
-        // Define a shared text type on the document
-        const ytext = ydoc.getText("quill");
+      // Attach cursors plugin
+      Quill.register("modules/cursors", QuillCursors);
 
-        Quill.register("modules/cursors", QuillCursors);
-
-        const quill = new Quill(document.querySelector("#editor"), {
-          modules: {
-            cursors: true,
-            toolbar: [
-              // adding some basic Quill content features
-              [{ header: [1, 2, false] }],
-              ["bold", "italic", "underline"],
-              ["code-block"],
-            ],
-            history: {
-              // Local undo shouldn't undo changes
-              // from remote users
-              userOnly: true,
-            },
+      // Set up Quill editor and modules
+      const parent = document.querySelector("#editor");
+      const quill = new Quill(parent, {
+        placeholder: "Start collaborating…",
+        theme: "snow",
+        modules: {
+          cursors: true,
+          toolbar: [
+            [{ header: [1, 2, false] }],
+            ["bold", "italic", "underline"],
+            ["code-block"],
+          ],
+          history: {
+            // Local undo shouldn’t undo changes made by other users
+            userOnly: true,
           },
-          placeholder: "Start collaborating…",
-          theme: "snow", // 'bubble' is also great
-        });
+        },
+      });
 
-        const provider = new LiveblocksProvider(room, ydoc);
-
-        // Create an editor-binding which
-        // "binds" the quill editor to a Y.Text type.
-        const binding = new QuillBinding(ytext, quill, provider.awareness);
-      }
-
-      run();
+      // Attach Yjs to Quill
+      const binding = new QuillBinding(yText, quill, provider.awareness);
       ```
-
     </StepContent>
 
   </Step>
-
+  
   <Step lastStep>
     <StepTitle>Next: set up authentication</StepTitle>
     <StepContent>
@@ -112,5 +124,7 @@ collaboration to your JavaScript application using the APIs from the
 Congratulations! You now have set up the foundation for your collaborative Quill
 text editor inside your JavaScript application.
 
+- [Yjs and Quill guides](/docs/guides?technologies=yjs%2Cquill)
 - [@liveblocks/yjs API Reference](/docs/api-reference/liveblocks-yjs)
+- [@liveblocks/client API Reference](/docs/api-reference/liveblocks-client)
 - [Quill website](https://quilljs.com)

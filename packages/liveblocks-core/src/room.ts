@@ -1,4 +1,6 @@
 import type { AuthManager, AuthValue } from "./auth-manager";
+import type { CommentsApi } from "./comments";
+import { createCommentsApi } from "./comments";
 import type {
   Delegates,
   LegacyConnectionStatus,
@@ -28,21 +30,22 @@ import { isJsonArray, isJsonObject } from "./lib/Json";
 import { asPos } from "./lib/position";
 import type { Resolve } from "./lib/Resolve";
 import { compact, deepClone, tryParseJson } from "./lib/utils";
-import { canWriteStorage, TokenKind } from "./protocol/AuthToken";
-import type { BaseUserMeta } from "./protocol/BaseUserMeta";
-import type { ClientMsg } from "./protocol/ClientMsg";
+import { canComment, canWriteStorage, TokenKind } from "./protocol/AuthToken";
+import type { BaseUserInfo, BaseUserMeta } from "./protocol/BaseUserMeta";
+import type { ClientMsg, UpdateYDocClientMsg } from "./protocol/ClientMsg";
 import { ClientMsgCode } from "./protocol/ClientMsg";
 import type { Op } from "./protocol/Op";
 import { isAckOp, OpCode } from "./protocol/Op";
 import type { IdTuple, SerializedCrdt } from "./protocol/SerializedCrdt";
 import type {
+  CommentsEventServerMsg,
   InitialDocumentStateServerMsg,
   RoomStateServerMsg,
   ServerMsg,
   UpdatePresenceServerMsg,
   UserJoinServerMsg,
   UserLeftServerMsg,
-  YDocUpdate,
+  YDocUpdateServerMsg,
 } from "./protocol/ServerMsg";
 import { ServerMsgCode } from "./protocol/ServerMsg";
 import type { ImmutableRef } from "./refs/ImmutableRef";
@@ -57,13 +60,18 @@ import type {
   IWebSocketMessageEvent,
 } from "./types/IWebSocket";
 import type { NodeMap } from "./types/NodeMap";
-import type { Others, OthersEvent } from "./types/Others";
+import type { OthersEvent } from "./types/Others";
 import type { User } from "./types/User";
 import { PKG_VERSION } from "./version";
 
 type TimeoutID = ReturnType<typeof setTimeout>;
 
 type CustomEvent<TRoomEvent extends Json> = {
+  /**
+   * The connection ID of the client that sent the event.
+   * If this message was broadcast from the server (via the REST API), then
+   * this value will be -1.
+   */
   connectionId: number;
   event: TRoomEvent;
 };
@@ -93,7 +101,7 @@ type RoomEventCallbackMap<
   // since this API historically has taken _two_ callback arguments instead of
   // just one.
   others: (
-    others: Others<TPresence, TUserMeta>,
+    others: readonly User<TPresence, TUserMeta>[],
     event: OthersEvent<TPresence, TUserMeta>
   ) => void;
   error: Callback<Error>;
@@ -150,6 +158,11 @@ export interface History {
    * // room.history.canRedo() is false
    */
   canRedo: () => boolean;
+
+  /**
+   * Clears the undo and redo stacks. This operation cannot be undone ;)
+   */
+  clear: () => void;
 
   /**
    * All future modifications made on the Room will be merged together to create a single history item until resume is called.
@@ -256,7 +269,7 @@ type SubscribeFn<
   (
     type: "others",
     listener: (
-      others: Others<TPresence, TUserMeta>,
+      others: readonly User<TPresence, TUserMeta>[],
       event: OthersEvent<TPresence, TUserMeta>
     ) => void
   ): () => void;
@@ -412,7 +425,7 @@ export type Room<
   TStorage extends LsonObject,
   TUserMeta extends BaseUserMeta,
   TRoomEvent extends Json,
-> = {
+> = CommentsApi<any /* TODO: Remove this any by adding a proper thread metadata on the Room type */> & {
   /**
    * @internal
    * Private methods to directly control the underlying state machine for this
@@ -480,7 +493,7 @@ export type Room<
    * @example
    * const others = room.getOthers();
    */
-  getOthers(): Others<TPresence, TUserMeta>;
+  getOthers(): readonly User<TPresence, TUserMeta>[];
 
   /**
    * Updates the presence of the current user. Only pass the properties you want to update. No need to send the full presence.
@@ -563,7 +576,7 @@ export type Room<
     readonly customEvent: Observable<{ connectionId: number; event: TRoomEvent; }>; // prettier-ignore
     readonly self: Observable<User<TPresence, TUserMeta>>;
     readonly myPresence: Observable<TPresence>;
-    readonly others: Observable<{ others: Others<TPresence, TUserMeta>; event: OthersEvent<TPresence, TUserMeta>; }>; // prettier-ignore
+    readonly others: Observable<{ others: readonly User<TPresence, TUserMeta>[]; event: OthersEvent<TPresence, TUserMeta>; }>; // prettier-ignore
     readonly error: Observable<Error>;
     readonly storage: Observable<StorageUpdate[]>;
     readonly history: Observable<HistoryEvent>;
@@ -576,7 +589,8 @@ export type Room<
     readonly storageDidLoad: Observable<void>;
 
     readonly storageStatus: Observable<StorageStatus>;
-    readonly ydoc: Observable<YDocUpdate>;
+    readonly ydoc: Observable<YDocUpdateServerMsg | UpdateYDocClientMsg>;
+    readonly comments: Observable<CommentsEventServerMsg>;
   };
 
   /**
@@ -666,9 +680,11 @@ type PrivateRoomAPI = {
   };
 };
 
-// The maximum message size on websockets is 1MB (1024*1024), a small amount of space is substracted so we're not right at the limit
+// The maximum message size on websockets is 1MB. We'll set the threshold
+// slightly lower (1kB) to trigger sending over HTTP, to account for messaging
+// overhead, so we're not right at the limit.
 // NOTE: this only works with the unstable_fallbackToHTTP option enabled
-const MAX_MESSAGE_SIZE = 1024 * 1024 - 128;
+const MAX_SOCKET_MESSAGE_SIZE = 1024 * 1024 - 1024;
 
 function makeIdFactory(connectionId: number): IdFactory {
   let count = 0;
@@ -686,11 +702,12 @@ type IdFactory = () => string;
 
 type StaticSessionInfo = {
   readonly userId?: string;
-  readonly userInfo?: Json;
+  readonly userInfo?: BaseUserInfo;
 };
 
 type DynamicSessionInfo = {
   readonly actor: number;
+  readonly nonce: string;
   readonly scopes: string[];
 };
 
@@ -740,8 +757,8 @@ type RoomState<
   readonly nodes: Map<string, LiveNode>;
   root: LiveObject<TStorage> | undefined;
 
-  undoStack: HistoryOp<TPresence>[][];
-  redoStack: HistoryOp<TPresence>[][];
+  readonly undoStack: HistoryOp<TPresence>[][];
+  readonly redoStack: HistoryOp<TPresence>[][];
 
   /**
    * When history is paused, all operations will get queued up here. When
@@ -810,7 +827,6 @@ export type RoomConfig = {
   lostConnectionTimeout: number;
 
   liveblocksServer: string;
-  httpSendEndpoint?: string;
   unstable_fallbackToHTTP?: boolean;
 
   polyfills?: Polyfills;
@@ -1080,7 +1096,7 @@ export function createRoom<
       } else {
         batchUpdates(() => {
           addToUndoStack(reverse, doNotBatchUpdates);
-          context.redoStack = [];
+          context.redoStack.length = 0;
           dispatchOps(ops);
           notify({ storageUpdates }, doNotBatchUpdates);
         });
@@ -1112,7 +1128,7 @@ export function createRoom<
     self: makeEventSource<User<TPresence, TUserMeta>>(),
     myPresence: makeEventSource<TPresence>(),
     others: makeEventSource<{
-      others: Others<TPresence, TUserMeta>;
+      others: readonly User<TPresence, TUserMeta>[];
       event: OthersEvent<TPresence, TUserMeta>;
     }>(),
     error: makeEventSource<Error>(),
@@ -1120,30 +1136,49 @@ export function createRoom<
     history: makeEventSource<HistoryEvent>(),
     storageDidLoad: makeEventSource<void>(),
     storageStatus: makeEventSource<StorageStatus>(),
-    ydoc: makeEventSource<YDocUpdate>(),
+    ydoc: makeEventSource<YDocUpdateServerMsg | UpdateYDocClientMsg>(),
+
+    comments: makeEventSource<CommentsEventServerMsg>(),
   };
 
-  function sendMessages(
-    messageOrMessages:
-      | ClientMsg<TPresence, TRoomEvent>
-      | ClientMsg<TPresence, TRoomEvent>[]
+  async function httpSend(
+    authTokenOrPublicApiKey: string,
+    roomId: string,
+    nonce: string,
+    messages: ClientMsg<TPresence, TRoomEvent>[]
   ) {
-    const message = JSON.stringify(messageOrMessages);
-    if (config.unstable_fallbackToHTTP) {
+    const baseUrl = new URL(config.liveblocksServer);
+    baseUrl.protocol = "https";
+    const url = new URL(
+      `/v2/c/rooms/${encodeURIComponent(roomId)}/send-message`,
+      baseUrl
+    );
+    const fetcher = config.polyfills?.fetch || /* istanbul ignore next */ fetch;
+    return fetcher(url.toString(), {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${authTokenOrPublicApiKey}`,
+      },
+      body: JSON.stringify({ nonce, messages }),
+    });
+  }
+
+  function sendMessages(messages: ClientMsg<TPresence, TRoomEvent>[]) {
+    const serializedPayload = JSON.stringify(messages);
+    const nonce = context.dynamicSessionInfo.current?.nonce;
+    if (config.unstable_fallbackToHTTP && managedSocket.authValue && nonce) {
       // if our message contains UTF-8, we can't simply use length. See: https://stackoverflow.com/questions/23318037/size-of-json-object-in-kbs-mbs
       // if this turns out to be expensive, we could just guess with a lower value.
-      const size = new TextEncoder().encode(message).length;
-      if (
-        size > MAX_MESSAGE_SIZE &&
-        // TODO: support public api key auth in REST API
-        managedSocket.authValue?.type === "secret" &&
-        config.httpSendEndpoint
-      ) {
+      const size = new TextEncoder().encode(serializedPayload).length;
+      if (size > MAX_SOCKET_MESSAGE_SIZE) {
         void httpSend(
-          message,
-          managedSocket.authValue.token.raw,
-          config.httpSendEndpoint,
-          config.polyfills?.fetch
+          managedSocket.authValue.type === "public"
+            ? managedSocket.authValue.publicApiKey
+            : managedSocket.authValue.token.raw,
+          config.roomId,
+          nonce,
+          messages
         ).then((resp) => {
           if (!resp.ok && resp.status === 403) {
             managedSocket.reconnect();
@@ -1155,7 +1190,7 @@ export function createRoom<
         return;
       }
     }
-    managedSocket.send(message);
+    managedSocket.send(serializedPayload);
   }
 
   const self = new DerivedRef(
@@ -1177,6 +1212,7 @@ export function createRoom<
           info: staticSession.userInfo,
           presence: myPresence,
           canWrite,
+          canComment: canComment(dynamicSession.scopes),
           isReadOnly: !canWrite, // Deprecated, kept for backward-compatibility
         };
       }
@@ -1214,11 +1250,17 @@ export function createRoom<
       context.root = LiveObject._fromItems<TStorage>(message.items, pool);
     }
 
+    // Populate missing top-level keys using `initialStorage`
+    const stackSizeBefore = context.undoStack.length;
     for (const key in context.initialStorage) {
       if (context.root.get(key) === undefined) {
         context.root.set(key, context.initialStorage[key]);
       }
     }
+
+    // Initial storage is populated using normal "set" operations in the loop
+    // above, those updates can end up in the undo stack, so let's prune it.
+    context.undoStack.length = stackSizeBefore;
   }
 
   function updateRoot(
@@ -1574,6 +1616,7 @@ export function createRoom<
     // The server will inform the client about its assigned actor ID and scopes
     context.dynamicSessionInfo.set({
       actor: message.actor,
+      nonce: message.nonce,
       scopes: message.scopes,
     });
     context.idFactory = makeIdFactory(message.actor);
@@ -1808,6 +1851,15 @@ export function createRoom<
 
             break;
           }
+
+          case ServerMsgCode.THREAD_CREATED:
+          case ServerMsgCode.THREAD_METADATA_UPDATED:
+          case ServerMsgCode.COMMENT_CREATED:
+          case ServerMsgCode.COMMENT_EDITED:
+          case ServerMsgCode.COMMENT_DELETED: {
+            eventHub.comments.notify(message);
+            break;
+          }
         }
       }
 
@@ -1893,11 +1945,13 @@ export function createRoom<
   }
 
   function updateYDoc(update: string, guid?: string) {
-    context.buffer.messages.push({
+    const clientMsg: UpdateYDocClientMsg = {
       type: ClientMsgCode.UPDATE_YDOC,
       update,
       guid,
-    });
+    };
+    context.buffer.messages.push(clientMsg);
+    eventHub.ydoc.notify(clientMsg);
     flushNowOrSoon();
   }
 
@@ -2065,6 +2119,11 @@ export function createRoom<
     flushNowOrSoon();
   }
 
+  function clear() {
+    context.undoStack.length = 0;
+    context.redoStack.length = 0;
+  }
+
   function batch<T>(callback: () => T): T {
     if (context.activeBatch) {
       // If there already is an active batch, we don't have to handle this in
@@ -2100,7 +2159,7 @@ export function createRoom<
         if (currentBatch.ops.length > 0) {
           // Only clear the redo stack if something has changed during a batch
           // Clear the redo stack because batch is always called from a local operation
-          context.redoStack = [];
+          context.redoStack.length = 0;
         }
 
         if (currentBatch.ops.length > 0) {
@@ -2173,7 +2232,13 @@ export function createRoom<
     storageDidLoad: eventHub.storageDidLoad.observable,
     storageStatus: eventHub.storageStatus.observable,
     ydoc: eventHub.ydoc.observable,
+
+    comments: eventHub.comments.observable,
   };
+
+  const commentsApi = createCommentsApi(config.roomId, delegates.authenticate, {
+    serverEndpoint: "https://api.liveblocks.io/v2",
+  });
 
   return Object.defineProperty(
     {
@@ -2216,6 +2281,7 @@ export function createRoom<
         redo,
         canUndo,
         canRedo,
+        clear,
         pause: pauseHistory,
         resume: resumeHistory,
       },
@@ -2235,6 +2301,8 @@ export function createRoom<
       // Presence
       getPresence: () => context.myPresence.current,
       getOthers: () => context.others.current,
+
+      ...commentsApi,
     },
 
     // Explictly make the __internal field non-enumerable, to avoid aggressive
@@ -2255,7 +2323,10 @@ function makeClassicSubscribeFn<
   TUserMeta extends BaseUserMeta,
   TRoomEvent extends Json,
 >(
-  events: Room<TPresence, TStorage, TUserMeta, TRoomEvent>["events"]
+  events: Omit<
+    Room<TPresence, TStorage, TUserMeta, TRoomEvent>["events"],
+    "comments" // comments is an internal events so we omit it from the subscribe method
+  >
 ): SubscribeFn<TPresence, TStorage, TUserMeta, TRoomEvent> {
   // Set up the "subscribe" wrapper API
   function subscribeToLiveStructureDeeply<L extends LiveStructure>(
@@ -2316,7 +2387,7 @@ function makeClassicSubscribeFn<
           // NOTE: Others have a different callback structure, where the API
           // exposed on the outside takes _two_ callback arguments!
           const cb = callback as (
-            others: Others<TPresence, TUserMeta>,
+            others: readonly User<TPresence, TUserMeta>[],
             event: OthersEvent<TPresence, TUserMeta>
           ) => void;
           return events.others.subscribe(({ others, event }) =>
@@ -2350,7 +2421,10 @@ function makeClassicSubscribeFn<
 
         // istanbul ignore next
         default:
-          return assertNever(first, "Unknown event");
+          return assertNever(
+            first,
+            `"${String(first)}" is not a valid event name`
+          );
       }
     }
 
@@ -2375,7 +2449,9 @@ function makeClassicSubscribeFn<
       }
     }
 
-    throw new Error(`"${String(first)}" is not a valid event name`);
+    throw new Error(
+      `${String(first)} is not a value that can be subscribed to.`
+    );
   }
 
   return subscribe;
@@ -2432,21 +2508,4 @@ export function makeCreateSocketDelegateForRoom(
     url.searchParams.set("version", PKG_VERSION || "dev");
     return new ws(url.toString());
   };
-}
-
-async function httpSend(
-  message: string,
-  token: string,
-  endpoint: string,
-  fetchPolyfill?: typeof window.fetch
-) {
-  const fetcher = fetchPolyfill || /* istanbul ignore next */ fetch;
-  return fetcher(endpoint, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: message,
-  });
 }

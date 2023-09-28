@@ -22,13 +22,23 @@
     },
     {
       "id": "text-editors",
-      "name": "Text editors",
-      "hidden": true
+      "name": "Text editors"
     },
     {
       "id": "code-editors",
-      "name": "Code editors",
-      "hidden": true
+      "name": "Code editors"
+    },
+    {
+      "id": "rest-api",
+      "name": "REST API"
+    },
+    {
+      "id": "webhooks",
+      "name": "Webhooks"
+    },
+    {
+      "id": "databases",
+      "name": "Databases"
     },
     {
       "id": "errors",
@@ -82,18 +92,31 @@
     },
     {
       "id": "yjs",
-      "name": "Yjs",
-      "hidden": true
+      "name": "Yjs"
     },
     {
       "id": "lexical",
-      "name": "Lexical",
-      "hidden": true
+      "name": "Lexical"
+    },
+    {
+      "id": "slate",
+      "name": "Slate"
+    },
+    {
+      "id": "tiptap",
+      "name": "Tiptap"
+    },
+    {
+      "id": "quill",
+      "name": "Quill"
     },
     {
       "id": "codemirror",
-      "name": "CodeMirror",
-      "hidden": true
+      "name": "CodeMirror"
+    },
+    {
+      "id": "monaco",
+      "name": "Monaco"
     }
   ]
 }

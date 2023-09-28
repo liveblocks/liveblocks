@@ -124,6 +124,7 @@ from the [`@liveblocks/redux`](/docs/api-reference/liveblocks-redux) package.
   <Step lastStep>
     <StepTitle>Next: set up authentication</StepTitle>
     <StepContent>
+    
       By default, Liveblocks is configured to work without an authentication endpoint
       where everyone automatically has access to rooms. This approach is great for
       prototyping and marketing pages where setting up your own security isn’t always
@@ -144,6 +145,32 @@ Congratulations! You now have set up the foundation to start building
 collaborative experiences for your Redux store.
 
 - [@liveblocks/redux API Reference](/docs/api-reference/liveblocks-redux)
-- [How to use Liveblocks Presence with Redux](/docs/guides/how-to-use-liveblocks-presence-with-redux)
-- [How to use Liveblocks Storage with Redux](/docs/guides/how-to-use-liveblocks-stroage-with-redux)
-- [How to use Liveblocks multiplayer undo/redo with Redux](/docs/guides/how-to-use-liveblocks-multiplayer-undo-redo-with-redux)
+- [Redux guides](/docs/guides?technologies=redux)
+- [How to create a collaborative online whiteboard with Redux](/docs/guides/how-to-create-a-collaborative-online-whiteboard-with-react-redux-and-liveblocks)
+- [How to create a collaborative to-do list with Redux](/docs/guides/how-to-create-a-collaborative-to-do-list-with-react-redux-and-liveblocks)
+
+---
+
+## Examples using Redux
+
+<ListGrid columns={2}>
+  <ExampleCard
+    example={{
+      title: "Collaborative To-do List",
+      slug: "collaborative-todo-list/redux-todo-list",
+      image: "/images/examples/thumbnails/collaborative-todo-list.jpg",
+    }}
+    technologies={["nextjs", "vuejs", "sveltekit", "solidjs", "javascript"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "Collaborative Whiteboard",
+      slug: "collaborative-whiteboard/redux-whiteboard",
+      image: "/images/examples/thumbnails/collaborative-whiteboard.jpg",
+      advanced: true,
+    }}
+    technologies={["nextjs", "redux", "zustand"]}
+    openInNewWindow
+  />
+</ListGrid>

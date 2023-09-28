@@ -5,13 +5,14 @@ import type {
   LsonObject,
   Room,
 } from "@liveblocks/client";
-import { detectDupes } from "@liveblocks/core";
+import { ClientMsgCode, detectDupes } from "@liveblocks/core";
 import { Observable } from "lib0/observable";
 import type * as Y from "yjs";
 
 import { Awareness } from "./awareness";
 import yDocHandler from "./doc";
 import { PKG_FORMAT, PKG_NAME, PKG_VERSION } from "./version";
+2;
 
 detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
 
@@ -73,7 +74,13 @@ export default class LiveblocksProvider<
     );
 
     this.unsubscribers.push(
-      this.room.events.ydoc.subscribe(({ update, stateVector, guid }) => {
+      this.room.events.ydoc.subscribe((message) => {
+        const { type } = message;
+        if (type === ClientMsgCode.UPDATE_YDOC) {
+          // don't apply updates that came from the client
+          return;
+        }
+        const { stateVector, update, guid } = message;
         // find the right doc and update
         if (typeof guid === "undefined") {
           this.rootDocHandler.handleServerUpdate({ update, stateVector });
@@ -187,6 +194,7 @@ export default class LiveblocksProvider<
       handler.destroy();
     }
     this.subdocHandlers.clear();
+    super.destroy();
   }
 
   // Some provider implementations expect to be able to call connect/disconnect, implement as noop

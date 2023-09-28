@@ -117,3 +117,168 @@ input[type="search"]::-webkit-search-cancel-button {
     loading-offset-rotate var(--loading-duration) infinite
       var(--ease-in-out-expo);
 }
+
+/* Take into account the bottom bar */
+.react-flow__renderer,
+.react-flow__background {
+  @apply overflow-hidden;
+
+  height: calc(100% - theme(spacing.8)) !important;
+}
+
+.react-flow__panel {
+  @apply absolute z-10 m-2.5;
+}
+
+.react-flow__panel.top {
+  @apply top-0;
+}
+
+/* Take into account the bottom bar */
+.react-flow__panel.bottom {
+  @apply bottom-8;
+}
+
+.react-flow__panel.left {
+  @apply left-0;
+}
+
+.react-flow__panel.right {
+  @apply right-0;
+}
+
+.react-flow__panel.center {
+  @apply left-1/2 -translate-x-1/2;
+}
+
+.react-flow__background {
+  @apply pointer-events-none -z-10;
+}
+
+.react-flow__background pattern circle {
+  @apply fill-light-400 dark:fill-dark-300;
+}
+
+.react-flow__attribution {
+  @apply hidden;
+}
+
+.react-flow__minimap {
+  @apply rounded-md overflow-hidden bg-light-0 dark:bg-dark-0;
+}
+
+.react-flow__minimap-node {
+  @apply !fill-light-300 dark:!fill-dark-300;
+}
+
+.react-flow__minimap-mask {
+  @apply !fill-light-300/60 dark:!fill-dark-300/60;
+}
+
+.react-flow__handle {
+  @apply !pointer-events-none rounded-full w-1 h-1 !bg-light-400 dark:!bg-dark-400;
+
+  box-shadow:
+    0 0 0 2px theme("colors.light.0"),
+    0 0 0 4px theme("colors.light.300"),
+    0 0 0 6px theme("colors.light.0");
+}
+
+.dark .react-flow__handle {
+  box-shadow:
+    0 0 0 2px theme("colors.dark.0"),
+    0 0 0 4px theme("colors.dark.300"),
+    0 0 0 6px theme("colors.dark.0");
+}
+
+.react-flow__handle[data-type="color"][data-handlepos="left"] {
+  @apply !bg-green-500/30 dark:!bg-green-500/40;
+
+  box-shadow:
+    0 0 0 2px theme("colors.light.0"),
+    0 0 0 4px theme("colors.green.500 / 30%"),
+    0 0 0 6px theme("colors.light.0");
+}
+
+.dark .react-flow__handle[data-type="color"][data-handlepos="left"] {
+  box-shadow:
+    0 0 0 2px theme("colors.dark.0"),
+    0 0 0 4px theme("colors.green.500 / 40%"),
+    0 0 0 6px theme("colors.dark.0");
+}
+
+.react-flow__handle[data-type="color"][data-handlepos="right"] {
+  @apply !bg-red-500/20 dark:!bg-red-500/40;
+
+  box-shadow:
+    0 0 0 2px theme("colors.light.0"),
+    0 0 0 4px theme("colors.red.500 / 20%"),
+    0 0 0 6px theme("colors.light.0");
+}
+
+.dark .react-flow__handle[data-type="color"][data-handlepos="right"] {
+  box-shadow:
+    0 0 0 2px theme("colors.dark.0"),
+    0 0 0 4px theme("colors.red.500 / 40%"),
+    0 0 0 6px theme("colors.dark.0");
+}
+
+.react-flow__handle-bottom {
+  @apply !-bottom-3;
+}
+
+.react-flow__handle-top {
+  @apply !-top-3;
+}
+
+.react-flow__handle-left {
+  @apply !-left-3;
+}
+
+.react-flow__handle-right {
+  @apply !-right-3;
+}
+
+.react-flow__node {
+  @apply bg-light-0 dark:bg-dark-0 rounded-md border border-light-300 dark:border-dark-300 w-[200px] h-[40px] p-2.5 flex items-center;
+}
+
+.react-flow__node.selected,
+.react-flow__node-yItemNode:has([data-selected]) {
+  @apply border border-light-500 dark:border-dark-500;
+
+  box-shadow:
+    0px 8px 25px -4px rgba(0, 0, 0, 0.05),
+    0px 4px 10px -4px rgba(0, 0, 0, 0.1);
+}
+
+:is(
+    .react-flow__node.selected,
+    .react-flow__node-yItemNode:has([data-selected])
+  )
+  .react-flow__handle[data-type="color"][data-handlepos="left"] {
+  @apply !bg-green-500;
+}
+
+:is(
+    .react-flow__node.selected,
+    .react-flow__node-yItemNode:has([data-selected])
+  )
+  .react-flow__handle[data-type="color"][data-handlepos="right"] {
+  @apply !bg-red-500;
+}
+
+.react-flow__node-yItemNode {
+  @apply h-[64px];
+}
+
+.react-flow__edge-path,
+.react-flow__connection-path {
+  @apply stroke-light-400 dark:stroke-dark-400;
+}
+
+.react-flow__edge.selected .react-flow__edge-path,
+.react-flow__edge:focus .react-flow__edge-path,
+.react-flow__edge:focus-visible .react-flow__edge-path {
+  @apply stroke-light-700 dark:stroke-dark-600;
+}

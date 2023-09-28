@@ -1,8 +1,8 @@
 import clsx from "clsx";
 import Link from "next/link";
+import { signIn } from "next-auth/react";
 import { ComponentProps } from "react";
 import { SignInIcon } from "../../icons";
-import { signIn } from "next-auth/react";
 import { Button } from "../../primitives/Button";
 import { Container } from "../../primitives/Container";
 import { Logo } from "../Logo";

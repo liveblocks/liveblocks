@@ -1,5 +1,5 @@
 {
-  "name": "nextjs-yjs-slate",
+  "name": "@liveblocks-examples/nextjs-yjs-slate",
   "description": "This example shows how to build a collaborative text editor with Liveblocks, Yjs, Slate, and Next.js.",
   "license": "Apache-2.0",
   "private": true,
@@ -10,10 +10,10 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@liveblocks/client": "^1.2.0",
-    "@liveblocks/node": "^1.2.0",
-    "@liveblocks/react": "^1.2.0",
-    "@liveblocks/yjs": "^1.2.0",
+    "@liveblocks/client": "^1.3.5",
+    "@liveblocks/node": "^1.3.5",
+    "@liveblocks/react": "^1.3.5",
+    "@liveblocks/yjs": "^1.3.5",
     "@slate-yjs/core": "^1.0.2",
     "@slate-yjs/react": "^1.1.0",
     "@types/node": "18.11.18",
