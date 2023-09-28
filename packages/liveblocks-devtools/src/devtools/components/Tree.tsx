@@ -234,7 +234,7 @@ function color(node: DevTools.TreeNode): string {
       return "text-light-500 dark:text-dark-500";
 
     case "CustomEvent":
-      return "text-orange-500 dark:text-orange-500";
+      return "text-blue-500 dark:text-blue-400";
 
     default:
       // e.g. future LiveXxx types

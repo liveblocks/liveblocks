@@ -133,7 +133,6 @@ export function BooleanOffIcon(props: ComponentProps<"svg">) {
   );
 }
 
-// XXX Replace this icon to use for custom events
 export function CustomEventIcon(props: ComponentProps<"svg">) {
   return (
     <svg
@@ -146,7 +145,7 @@ export function CustomEventIcon(props: ComponentProps<"svg">) {
       <path
         fillRule="evenodd"
         clipRule="evenodd"
-        d="M3.5 0A3.5 3.5 0 0 0 0 3.5v9A3.5 3.5 0 0 0 3.5 16h9a3.5 3.5 0 0 0 3.5-3.5v-9A3.5 3.5 0 0 0 12.5 0h-9ZM3 8a3.5 3.5 0 0 1 3.5-3.5h3a3.5 3.5 0 1 1 0 7h-3A3.5 3.5 0 0 1 3 8Zm5.5 0a2 2 0 1 1-4 0 2 2 0 0 1 4 0Z"
+        d="M3.5 0A3.5 3.5 0 0 0 0 3.5v9A3.5 3.5 0 0 0 3.5 16h9a3.5 3.5 0 0 0 3.5-3.5v-9A3.5 3.5 0 0 0 12.5 0h-9Zm2.7 4.91a3.5 3.5 0 1 1 .49 5.97.75.75 0 0 0-.58-.04l-1.42.47.47-1.42a.75.75 0 0 0-.04-.58 3.5 3.5 0 0 1 1.08-4.4Zm2.45-2.14a5 5 0 0 0-5 6.92l-.86 2.57a.75.75 0 0 0 .95.95l2.57-.85a5 5 0 1 0 2.34-9.6Z"
         fill="currentColor"
       />
     </svg>
