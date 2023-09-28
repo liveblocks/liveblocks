@@ -352,9 +352,9 @@ function ComposerEditorPlaceholder({
   const { opacity: _opacity, ...style } = attributes.style;
 
   return (
-    <div {...attributes} style={style} data-placeholder="">
+    <span {...attributes} style={style} data-placeholder="">
       {children}
-    </div>
+    </span>
   );
 }
 
