@@ -1073,14 +1073,11 @@ function CustomEventNodeRenderer({
         {!node.isOpen ? (
           <RowPreview>{summarize(node.data)}</RowPreview>
         ) : node.data.connectionId < 0 ? (
-          <span>from server</span>
+          <Badge className="flex-none opacity-60">server</Badge>
         ) : (
-          <>
-            <span>from</span>{" "}
-            <Badge className="flex-none opacity-60">
-              client #{node.data.connectionId}
-            </Badge>
-          </>
+          <Badge className="flex-none opacity-60">
+            client #{node.data.connectionId}
+          </Badge>
         )}
       </RowInfo>
     </Row>
