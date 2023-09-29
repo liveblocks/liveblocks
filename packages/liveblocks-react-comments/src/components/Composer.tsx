@@ -9,7 +9,7 @@ import type {
   ReactNode,
   SyntheticEvent,
 } from "react";
-import React, { forwardRef, useCallback } from "react";
+import React, { forwardRef, useCallback, useState } from "react";
 
 import { EmojiIcon } from "../icons/Emoji";
 import { MentionIcon } from "../icons/Mention";
@@ -31,6 +31,7 @@ import { useControllableState } from "../utils/use-controllable-state";
 import { Attribution } from "./internal/Attribution";
 import { Avatar } from "./internal/Avatar";
 import { Button } from "./internal/Button";
+import type { EmojiPickerProps } from "./internal/EmojiPicker";
 import { EmojiPicker, EmojiPickerTrigger } from "./internal/EmojiPicker";
 import {
   ShortcutTooltip,
@@ -42,6 +43,10 @@ import { User } from "./internal/User";
 
 interface EditorActionProps extends ComponentPropsWithoutRef<"button"> {
   label: string;
+}
+
+interface EmojiEditorActionProps extends EditorActionProps {
+  onPickerOpenChange?: EmojiPickerProps["onOpenChange"];
 }
 
 type ComposerCreateThreadProps = {
@@ -173,9 +178,10 @@ function ComposerInsertMentionEditorAction({
 
 function ComposerInsertEmojiEditorAction({
   label,
+  onPickerOpenChange,
   className,
   ...props
-}: EditorActionProps) {
+}: EmojiEditorActionProps) {
   const { insertText } = useComposer();
 
   const preventDefault = useCallback((event: SyntheticEvent) => {
@@ -183,7 +189,7 @@ function ComposerInsertEmojiEditorAction({
   }, []);
 
   return (
-    <EmojiPicker onEmojiSelect={insertText}>
+    <EmojiPicker onEmojiSelect={insertText} onOpenChange={onPickerOpenChange}>
       <Tooltip content={label}>
         <EmojiPickerTrigger asChild>
           <Button
@@ -275,6 +281,7 @@ const ComposerWithContext = forwardRef<
     const { hasResolveMentionSuggestions } = useRoomContextBundle();
     const { isEmpty } = useComposer();
     const $ = useOverrides(overrides);
+    const [isEmojiPickerOpen, setEmojiPickerOpen] = useState(false);
     const [collapsed, onCollapsedChange] = useControllableState(
       // If the composer is neither controlled nor uncontrolled, it defaults to controlled as uncollapsed.
       controlledCollapsed === undefined && defaultCollapsed === undefined
@@ -328,11 +335,11 @@ const ComposerWithContext = forwardRef<
 
         const isOutside = !event.currentTarget.contains(event.relatedTarget);
 
-        if (isOutside && isEmpty) {
+        if (isOutside && isEmpty && !isEmojiPickerOpen) {
           onCollapsedChange?.(true);
         }
       },
-      [isEmpty, onBlur, onCollapsedChange]
+      [isEmojiPickerOpen, isEmpty, onBlur, onCollapsedChange]
     );
 
     return (
@@ -368,6 +375,7 @@ const ComposerWithContext = forwardRef<
               )}
               <ComposerInsertEmojiEditorAction
                 label={$.COMPOSER_INSERT_EMOJI}
+                onPickerOpenChange={setEmojiPickerOpen}
               />
             </div>
             {showAttribution && <Attribution />}
