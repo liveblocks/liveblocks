@@ -10,6 +10,7 @@ import React, {
   useRef,
   useState,
 } from "react";
+import type { ListProps as VirtuosoListProps } from "react-virtuoso";
 import { GroupedVirtuoso } from "react-virtuoso";
 
 import {
@@ -185,6 +186,24 @@ const EmojiPickerContent = forwardRef<HTMLDivElement, EmojiPickerContentProps>(
       () => ({ ...defaultContentComponents, ...components }),
       [components]
     );
+    const List = useMemo(
+      () =>
+        forwardRef<HTMLDivElement, VirtuosoListProps>(
+          ({ children, ...props }, forwardedRef) => {
+            return (
+              <div
+                role="grid"
+                aria-colcount={columns}
+                {...props}
+                ref={forwardedRef}
+              >
+                {children}
+              </div>
+            );
+          }
+        ),
+      [columns]
+    );
     const placeholderColumns = useMemo(
       () => Array<string>(columns).fill("🌫️"),
       [columns]
@@ -219,23 +238,31 @@ const EmojiPickerContent = forwardRef<HTMLDivElement, EmojiPickerContentProps>(
           <Empty />
         ) : (
           <GroupedVirtuoso
-            groupCounts={data.categoriesRowCounts}
-            groupContent={(index) => {
-              return <CategoryHeader category={data.categories[index]} />;
+            components={{
+              List,
             }}
-            itemContent={(index, groupIndex) => {
+            groupCounts={data.categoriesRowCounts}
+            groupContent={(groupIndex) => {
+              return <CategoryHeader category={data.categories[groupIndex]} />;
+            }}
+            itemContent={(rowIndex, groupIndex) => {
+              const categoryRowIndex =
+                data.categoriesRowIndices[groupIndex].indexOf(rowIndex);
+              const categoryRowsCount = data.categoriesRowCounts[groupIndex];
+
               return (
                 <EmojiRow
                   attributes={{
-                    rowIndex: index,
-                    categoryRowIndex:
-                      data.categoriesRowIndices[groupIndex].indexOf(index),
-                    categoryRowsCount: data.categoriesRowCounts[groupIndex],
+                    rowIndex,
+                    categoryRowIndex,
+                    categoryRowsCount,
                   }}
                 >
-                  {data.rows[index].emojis.map((emoji) => (
+                  {data.rows[rowIndex].emojis.map((emoji, columnIndex) => (
                     <Emoji
                       key={emoji.emoji}
+                      role="gridcell"
+                      aria-colindex={columnIndex}
                       onMouseDown={preventDefault}
                       onClick={(event) => {
                         onEmojiSelect?.(emoji.emoji);
