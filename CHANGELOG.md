@@ -1,15 +1,13 @@
 # v1.4.0
 
+Here’s everything that changed since 1.3.
+
 ### DevTools
 
 - New Yjs tab: visualize Yjs documents as a diagram, a tree, or as a list of
   operations, and inspect Awareness at the same time as Presence.
 - New Events tab: inspect all custom Events a client receives in an event
   timeline, for easy testing/debugging.
-
-### `@liveblocks/yjs`
-
-- Add support for the Liveblocks [DevTools](https://liveblocks.io/devtools).
 
 ### `@liveblocks/client`
 
@@ -20,6 +18,15 @@
     //                              ^^^^ New!
   });
   ```
+- The client will disconnect with an error if your `/api/liveblocks-auth`
+  backend returns reused/cached tokens. It’s important that auth tokens are
+  always freshly generated, and never get cached or reused. (The client itself
+  will cache and reuse tokens already, so implementing additional caching in
+  your backend isn’t needed, and could even cause reconnection issues.)
+- Support `unstable_fallbackToHTTP` client option when using any auth token type
+  (previously it only worked when using single-room tokens, which we no longer
+  recommend since 1.2)
+- Fix unescaped room IDs when using Comments.
 
 ### `@liveblocks/react`
 
@@ -33,13 +40,31 @@
 - **Breaking (beta):** Comments' hook `useThreads` now returns an object in its
   Suspense version. (`const threads = useThreads()` becomes
   `const { threads } = useThreads()`)
+- Officially mark `useList()`, `useMap()`, and `useObject()` as deprecated in
+  JSDoc comments (we stopped recommending them since the release of 0.18)
+- Deduplicate Comments requests and improve how race conditions are handled
+  during mutations.
+- Fix non-Suspense Comments hooks not working properly in some situations.
+- Fix confusing `Error: "undefined" is not a valid event name` error when using
+  the (deprecated) `useMap()`, `useObject()`, or `useList()` hooks on
+  uninitialized storage values.
 
 ### `@liveblocks/react-comments`
 
+- Add support for auto-links. (e.g. `"www.liveblocks.io"`)
 - **Breaking (beta):** `Comment`’s `indentBody` and `Thread`’s
   `indentCommentBody` were renamed to `indentContent` and `indentCommentContent`
   respectively. `Thread`’s `onResolveChange` was renamed to `onResolvedChange`.
+- **Breaking (beta):** Replace the render prop API (e.g. `renderMention`,
+  `renderLink`, etc) by a single `components` prop. (e.g.
+  `components={{ Mention, Link }}`)
+- Fix overflowing `Composer.Suggestions`.
+- Reduce the impact of icons on bundle size.
 - Add emoji button in `Composer`.
+
+### `@liveblocks/yjs`
+
+- Add support for the Liveblocks [DevTools](https://liveblocks.io/devtools).
 
 ### `@liveblocks/node`
 
