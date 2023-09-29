@@ -45,6 +45,11 @@
   });
   ```
 
+### `@liveblocks/node`
+
+- Support using `@liveblocks/node` in
+  [Edge runtimes](https://vercel.com/docs/functions/edge-functions/edge-runtime).
+
 # v1.3.6
 
 ### `@liveblocks/client`

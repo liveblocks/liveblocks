@@ -1,4 +1,5 @@
-import crypto from "crypto";
+import * as base64 from "@stablelib/base64";
+import * as sha256 from "fast-sha256";
 import type { IncomingHttpHeaders } from "http";
 
 export class WebhookHandler {
@@ -92,10 +93,9 @@ export class WebhookHandler {
    * @returns `string`
    */
   private sign(content: string): string {
-    return crypto
-      .createHmac("sha256", this.secretBuffer)
-      .update(content)
-      .digest("base64");
+    const encoder = new TextEncoder();
+    const toSign = encoder.encode(content);
+    return base64.encode(sha256.hmac(this.secretBuffer, toSign));
   }
 
   /**
