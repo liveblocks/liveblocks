@@ -1,3 +1,9 @@
+export async function fetchPolyfill(): Promise<typeof fetch> {
+  return typeof globalThis.fetch !== "undefined"
+    ? globalThis.fetch
+    : ((await import("node-fetch")).default as unknown as typeof fetch);
+}
+
 export function isNonEmpty(value: unknown): value is string {
   return typeof value === "string" && value.length > 0;
 }

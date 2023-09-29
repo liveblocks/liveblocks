@@ -370,6 +370,7 @@ export function generateEmojiPickerData(
   const rows: EmojiPickerRow[] = [];
   const categoriesRowCounts: number[] = [];
   const categoriesRowIndices: number[][] = [];
+  const categoriesNames: string[] = [];
   const categorizedEmojis = categories
     .map((category) => ({
       ...category,
@@ -384,6 +385,7 @@ export function generateEmojiPickerData(
     const nextIndex = currentIndex + categoryRows.length;
 
     rows.push(...categoryRows);
+    categoriesNames.push(category.name);
     categoriesRowCounts.push(categoryRows.length);
     categoriesRowIndices.push(
       generateRangeIndices(currentIndex, nextIndex - 1)
@@ -394,7 +396,7 @@ export function generateEmojiPickerData(
   return {
     count: emojis.length,
     rows,
-    categories,
+    categories: categoriesNames,
     categoriesRowCounts,
     categoriesRowIndices,
   };

@@ -4,6 +4,8 @@
 
 - New Yjs tab: visualize Yjs documents as a diagram, a tree, or as a list of
   operations, and inspect Awareness at the same time as Presence.
+- New Events tab: inspect all custom Events a client receives in an event
+  timeline, for easy testing/debugging.
 
 ### `@liveblocks/yjs`
 
@@ -21,19 +23,6 @@
 
 ### `@liveblocks/react`
 
-- **Breaking (beta):** Comments' hook `useThreads` now returns an object in its
-  Suspense version. (`const threads = useThreads()` becomes
-  `const { threads } = useThreads()`)
-- Add new Comments hooks to add/remove reactions.
-
-### `@liveblocks/react-comments`
-
-- **Breaking (beta):** `Comment`’s `indentBody` and `Thread`’s
-  `indentCommentBody` were renamed to `indentContent` and `indentCommentContent`
-  respectively. `Thread`’s `onResolveChange` was renamed to `onResolvedChange`.
-- Add support for reactions. (👍)
-- Add emoji button in `Composer`.
-
 - Broadcast event messages now include a `user` property to indicate the user
   that sent the event:
   ```tsx
@@ -41,6 +30,21 @@
     //                       ^^^^ New!
   });
   ```
+- **Breaking (beta):** Comments' hook `useThreads` now returns an object in its
+  Suspense version. (`const threads = useThreads()` becomes
+  `const { threads } = useThreads()`)
+
+### `@liveblocks/react-comments`
+
+- **Breaking (beta):** `Comment`’s `indentBody` and `Thread`’s
+  `indentCommentBody` were renamed to `indentContent` and `indentCommentContent`
+  respectively. `Thread`’s `onResolveChange` was renamed to `onResolvedChange`.
+- Add emoji button in `Composer`.
+
+### `@liveblocks/node`
+
+- Support using `@liveblocks/node` in
+  [Edge runtimes](https://vercel.com/docs/functions/edge-functions/edge-runtime).
 
 # v1.3.6
 

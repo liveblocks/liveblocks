@@ -40,4 +40,14 @@ export type UserTreeNode = {
   };
 };
 
-export type TreeNode = LsonTreeNode | UserTreeNode;
+// Almost a JsonTreeNode, but contains the connectionId (sender) as extra
+// metadata
+export type CustomEventTreeNode = {
+  readonly type: "CustomEvent";
+  readonly id: string;
+  readonly key: string;
+  readonly connectionId: number;
+  readonly payload: Json;
+};
+
+export type TreeNode = LsonTreeNode | UserTreeNode | CustomEventTreeNode;

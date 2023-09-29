@@ -96,6 +96,15 @@ export type ClientToPanelMessage =
     }
 
   /**
+   * Sent whenever an user room event is emitted in the room.
+   */
+  | {
+      msg: "room::events::custom-event";
+      roomId: string;
+      event: DevTools.CustomEventTreeNode;
+    }
+
+  /**
    * Sent whenever the ydoc is updated
    */
   | {

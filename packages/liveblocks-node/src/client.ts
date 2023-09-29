@@ -4,13 +4,12 @@
  * @liveblocks/core has browser-specific code.
  */
 import type { CommentData, ThreadData } from "@liveblocks/core";
-import type { Response } from "node-fetch";
-import fetch from "node-fetch";
 
 import { Session } from "./Session";
 import {
   assertNonEmpty,
   assertSecretKey,
+  fetchPolyfill,
   normalizeStatusCode,
   urljoin,
 } from "./utils";
@@ -85,7 +84,13 @@ export class Liveblocks {
       Authorization: `Bearer ${this._secret}`,
       "Content-Type": "application/json",
     };
-    return fetch(url, { method: "POST", headers, body: JSON.stringify(json) });
+
+    const fetch = await fetchPolyfill();
+    return fetch(url, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(json),
+    });
   }
 
   /** @internal */
@@ -95,6 +100,8 @@ export class Liveblocks {
       Authorization: `Bearer ${this._secret}`,
       "Content-Type": "application/json",
     };
+
+    const fetch = await fetchPolyfill();
     return fetch(url, { method: "GET", headers });
   }
 

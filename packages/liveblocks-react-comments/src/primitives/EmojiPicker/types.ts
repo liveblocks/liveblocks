@@ -37,7 +37,7 @@ export type EmojiPickerRow = {
 export type EmojiPickerData = {
   count: number;
   rows: EmojiPickerRow[];
-  categories: EmojiCategory[];
+  categories: string[];
   categoriesRowCounts: number[];
   categoriesRowIndices: number[][];
 };

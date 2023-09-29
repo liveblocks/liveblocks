@@ -13,7 +13,7 @@ import { ClientSideSuspense } from "@liveblocks/react";
  */
 
 function Example() {
-  const threads = useThreads();
+  const { threads } = useThreads();
 
   return (
     <main>

@@ -8,6 +8,7 @@ export interface Tab
   extends Omit<ComponentProps<typeof RadixTabs.Trigger>, "content"> {
   value: string;
   title: string;
+  richTitle?: ReactNode;
   content: ReactNode;
 }
 
@@ -49,7 +50,7 @@ export function Tabs({
                   )}
                   data-title={tab.title}
                 >
-                  {tab.title}
+                  {tab.richTitle ?? tab.title}
                 </span>
               </RadixTabs.Trigger>
             );

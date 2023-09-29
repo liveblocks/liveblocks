@@ -116,7 +116,7 @@ function Example() {
                 color={self.info.color}
                 key="you"
                 name="You"
-                src={self.info.url}
+                src={self.info.avatar}
                 tooltipOffset={6}
               />
             )}
@@ -127,7 +127,7 @@ function Example() {
                   color={info.color}
                   key={connectionId}
                   name={info.name}
-                  src={info.url}
+                  src={info.avatar}
                   tooltipOffset={6}
                 />
               );
