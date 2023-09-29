@@ -911,26 +911,21 @@ export function createRoom<
   const delegates = {
     ...config.delegates,
 
+    // A connection is allowed to go into "zombie state" only if all of the
+    // following conditions apply:
+    //
+    // - The `backgroundKeepAliveTimeout` client option is configured
+    // - The browser window has been in the background for at least
+    //   `backgroundKeepAliveTimeout` milliseconds
+    // - There are no pending changes
+    //
     canZombie() {
-      //
-      // A room's connection is allowed to "go zombie" if the following
-      // conditions apply:
-      //
-      // - The `backgroundKeepAliveTimeout` client option is configured
-      // - The browser window has been in the background for at least
-      //   `backgroundKeepAliveTimeout` milliseconds
-      // - There are no pending changes
-      //
       return (
         config.backgroundKeepAliveTimeout !== undefined &&
         inBackgroundSince !== null &&
         Date.now() > inBackgroundSince + config.backgroundKeepAliveTimeout &&
         getStorageStatus() === "synchronized"
       );
-
-      // const actor = context.dynamicSessionInfo.current?.actor;
-      // // Only allow even connection IDs to go zombie
-      // return actor !== undefined && actor % 2 === 0;
     },
   };
 
