@@ -26,7 +26,7 @@ type Storage = {
 // Optionally, UserMeta represents static/readonly metadata on each user, as
 // provided by your own custom auth back end (if used). Useful for data that
 // will not change during a session, like a user's name or avatar.
-type UserMeta = {
+export type UserMeta = {
   id: string; // Accessible through `user.id`
   info: {
     name: string;
@@ -70,4 +70,27 @@ export const {
     useStatus,
     useLostConnectionListener,
   },
-} = createRoomContext<Presence, Storage, UserMeta, RoomEvent>(client);
+} = createRoomContext<Presence, Storage, UserMeta, RoomEvent>(client, {
+  async resolveUser({ userId }) {
+    const response = await fetch(`/api/user/${encodeURIComponent(userId)}`);
+
+    if (!response.ok) {
+      throw new Error("Problem resolving user");
+    }
+
+    const user = await response.json();
+    return user.info;
+  },
+  async resolveMentionSuggestions({ text }) {
+    const response = await fetch(
+      `/api/users/search?text=${encodeURIComponent(text)}`
+    );
+
+    if (!response.ok) {
+      throw new Error("Problem resolving user");
+    }
+
+    const userIds = await response.json();
+    return userIds;
+  },
+});

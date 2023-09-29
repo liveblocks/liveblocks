@@ -24,6 +24,7 @@ import { SelectionMenu } from "./SelectionMenu";
 import { Toolbar } from "./Toolbar";
 import styles from "./TextEditor.module.css";
 import { Avatars } from "@/components/Avatars";
+import { LiveblocksCommentsHighlight } from "@/tiptap-comments-extension";
 
 export function TextEditor() {
   return (
@@ -77,6 +78,8 @@ function TiptapEditor({ doc, provider }: EditorProps) {
       },
     },
     extensions: [
+      // Custom Liveblocks comments extension
+      LiveblocksCommentsHighlight,
       StarterKit.configure({
         blockquote: {
           HTMLAttributes: {

@@ -8,6 +8,7 @@ export * from "./Check";
 export * from "./Checkbox";
 export * from "./Code";
 export * from "./CodeBlock";
+export * from "./Comment";
 export * from "./Cross";
 export * from "./Highlight";
 export * from "./Image";
