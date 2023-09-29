@@ -1,5 +1,3 @@
-import type { Response } from "node-fetch";
-
 import type { AuthResponse } from "./client";
 import { assertNonEmpty, normalizeStatusCode } from "./utils";
 

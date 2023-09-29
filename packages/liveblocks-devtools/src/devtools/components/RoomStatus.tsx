@@ -4,25 +4,8 @@ import { useMemo } from "react";
 
 import { capitalize } from "../../lib/capitalize";
 import { useStatus } from "../contexts/CurrentRoom";
+import { Ping } from "./Ping";
 import { Tooltip } from "./Tooltip";
-
-interface PingProps extends ComponentProps<"div"> {
-  animate?: boolean;
-}
-
-function Ping({ animate = true, className, ...props }: PingProps) {
-  return (
-    <div
-      className={cx(
-        className,
-        "relative flex h-2 w-2 rounded-full bg-current",
-        animate &&
-          "before:absolute before:inset-0 before:animate-ping before:rounded-full before:bg-current before:opacity-80"
-      )}
-      {...props}
-    />
-  );
-}
 
 export function RoomStatus({ className, ...props }: ComponentProps<"div">) {
   const currentStatus = useStatus();

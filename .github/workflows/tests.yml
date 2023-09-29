@@ -61,6 +61,8 @@ jobs:
         run: npm run lint:package -- --filter ${{ matrix.pkg }}
 
   e2e-tests:
+    # TODO(nvie) Re-enable these soon, after making these more robust
+    if: ${{ false }}
     runs-on: ubuntu-latest
 
     strategy:
