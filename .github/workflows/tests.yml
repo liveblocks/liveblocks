@@ -1,11 +1,6 @@
 name: Tests
 
-on:
-  pull_request:
-    paths-ignore:
-      - "docs/**"
-      - "guides/**"
-      - ".github/**"
+on: [pull_request]
 
 jobs:
   test:
