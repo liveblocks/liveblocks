@@ -221,7 +221,7 @@ const EmojiPickerContent = forwardRef<HTMLDivElement, EmojiPickerContentProps>(
           <GroupedVirtuoso
             groupCounts={data.categoriesRowCounts}
             groupContent={(index) => {
-              return <CategoryHeader category={data.categories[index].name} />;
+              return <CategoryHeader category={data.categories[index]} />;
             }}
             itemContent={(index, groupIndex) => {
               return (

@@ -524,6 +524,7 @@ type RoomContextBundleShared<
   useDeleteComment(): (options: DeleteCommentOptions) => void;
 
   /**
+   * @internal
    * @beta
    *
    * Returns a function that adds a reaction from a comment.
@@ -535,6 +536,7 @@ type RoomContextBundleShared<
   useAddReaction(): (options: CommentReactionOptions) => void;
 
   /**
+   * @internal
    * @beta
    *
    * Returns a function that removes a reaction on a comment.
