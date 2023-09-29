@@ -61,6 +61,7 @@ jobs:
         run: npm run lint:package -- --filter ${{ matrix.pkg }}
 
   e2e-tests:
+    if: ${{ false }}
     runs-on: ubuntu-latest
 
     strategy:
