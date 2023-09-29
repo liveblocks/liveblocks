@@ -19,10 +19,7 @@ Here’s everything that changed since 1.3.
   });
   ```
 - The client will disconnect with an error if your `/api/liveblocks-auth`
-  backend returns reused/cached tokens. It’s important that auth tokens are
-  always freshly generated, and never get cached or reused. (The client itself
-  will cache and reuse tokens already, so implementing additional caching in
-  your backend isn’t needed, and could even cause reconnection issues.)
+  backend returns reused/cached tokens.
 - Support `unstable_fallbackToHTTP` client option when using any auth token type
   (previously it only worked when using single-room tokens, which we no longer
   recommend since 1.2)
@@ -51,6 +48,7 @@ Here’s everything that changed since 1.3.
 
 ### `@liveblocks/react-comments`
 
+- Add emoji button in `Composer`.
 - Add support for auto-links. (e.g. `"www.liveblocks.io"`)
 - **Breaking (beta):** `Comment`’s `indentBody` and `Thread`’s
   `indentCommentBody` were renamed to `indentContent` and `indentCommentContent`
@@ -60,7 +58,6 @@ Here’s everything that changed since 1.3.
   `components={{ Mention, Link }}`)
 - Fix overflowing `Composer.Suggestions`.
 - Reduce the impact of icons on bundle size.
-- Add emoji button in `Composer`.
 
 ### `@liveblocks/yjs`
 
