@@ -139,6 +139,8 @@ export class WebhookHandler {
         "commentCreated",
         "commentEdited",
         "commentDeleted",
+        "commentReactionAdded",
+        "commentReactionRemoved",
         "threadMetadataUpdated",
         "threadCreated",
         "ydocUpdated",
@@ -315,6 +317,40 @@ type CommentDeletedEvent = {
   };
 };
 
+type CommentReactionAdded = {
+  type: "commentReactionAdded";
+  data: {
+    projectId: string;
+    roomId: string;
+    threadId: string;
+    commentId: string;
+    emoji: string;
+    /**
+     * ISO 8601 datestring
+     * @example "2021-03-01T12:00:00.000Z"
+    */
+    addedAt: string;
+    addedBy: string;
+  };
+};
+
+type CommentReactionRemoved = {
+  type: "commentReactionRemoved";
+  data: {
+    projectId: string;
+    roomId: string;
+    threadId: string;
+    commentId: string;
+    emoji: string;
+    /**
+     * ISO 8601 datestring
+     * @example "2021-03-01T12:00:00.000Z"
+    */
+    removedAt: string;
+    removedBy: string;
+  };
+};
+
 type YDocUpdatedEvent = {
   type: "ydocUpdated";
   data: {
@@ -357,6 +393,8 @@ export type {
   CommentCreatedEvent,
   CommentDeletedEvent,
   CommentEditedEvent,
+  CommentReactionAdded,
+  CommentReactionRemoved,
   RoomCreatedEvent,
   RoomDeletedEvent,
   StorageUpdatedEvent,
