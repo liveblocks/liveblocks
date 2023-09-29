@@ -1,6 +1,6 @@
 {
   "name": "@liveblocks/zustand",
-  "version": "1.3.6",
+  "version": "1.4.0",
   "description": "A middleware to integrate Liveblocks into Zustand stores. Liveblocks is the all-in-one toolkit to build collaborative products like Figma, Notion, and more.",
   "license": "Apache-2.0",
   "main": "./dist/index.js",
@@ -33,8 +33,8 @@
     "test:watch": "jest --silent --verbose --color=always --watch"
   },
   "dependencies": {
-    "@liveblocks/client": "1.3.6",
-    "@liveblocks/core": "1.3.6"
+    "@liveblocks/client": "1.4.0",
+    "@liveblocks/core": "1.4.0"
   },
   "peerDependencies": {
     "zustand": "^4.1.3"
