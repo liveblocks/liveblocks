@@ -1,3 +1,13 @@
+# v1.4.1
+
+### `@liveblocks/react`
+
+- Add new Comments hooks to add/remove reactions.
+
+### `@liveblocks/react-comments`
+
+- Add support for reactions. (👍)
+
 # v1.4.0
 
 ### DevTools

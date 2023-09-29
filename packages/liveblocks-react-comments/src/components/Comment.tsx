@@ -73,8 +73,6 @@ export interface CommentProps extends ComponentPropsWithoutRef<"div"> {
   showDeleted?: boolean;
 
   /**
-   * @internal
-   *
    * Whether to show reactions.
    */
   showReactions?: boolean;
@@ -264,7 +262,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
       indentContent = true,
       showDeleted,
       showActions = "hover",
-      showReactions = false,
+      showReactions = true,
       onAuthorClick,
       onMentionClick,
       onEdit,
