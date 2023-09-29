@@ -4,7 +4,6 @@
 
 - New Yjs tab: visualize Yjs documents as a diagram, a tree, or as a list of
   operations, and inspect Awareness at the same time as Presence.
-
 - New Events tab: inspect all custom Events a client receives in an event
   timeline, for easy testing/debugging.
 
@@ -24,6 +23,13 @@
 
 ### `@liveblocks/react`
 
+- Broadcast event messages now include a `user` property to indicate the user
+  that sent the event:
+  ```tsx
+  useEventListener(({ event, user }) => {
+    //                       ^^^^ New!
+  });
+  ```
 - **Breaking (beta):** Comments' hook `useThreads` now returns an object in its
   Suspense version. (`const threads = useThreads()` becomes
   `const { threads } = useThreads()`)
@@ -36,14 +42,6 @@
   respectively. `Thread`’s `onResolveChange` was renamed to `onResolvedChange`.
 - Add support for reactions. (👍)
 - Add emoji button in `Composer`.
-
-- Broadcast event messages now include a `user` property to indicate the user
-  that sent the event:
-  ```tsx
-  useEventListener(({ event, user }) => {
-    //                       ^^^^ New!
-  });
-  ```
 
 ### `@liveblocks/node`
 
