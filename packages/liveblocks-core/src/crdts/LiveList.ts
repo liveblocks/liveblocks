@@ -134,7 +134,16 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     ops.push(op);
 
     for (const item of this._items) {
-      ops.push(...item._toOps(this._id, item._getParentKeyOrThrow(), pool));
+      const parentKey = item._getParentKeyOrThrow();
+      const childOps = HACK_addIntentAndDeletedIdToOperation(
+        item._toOps(this._id, parentKey, pool),
+        undefined
+      );
+      const childOpId = childOps[0].opId;
+      if (childOpId !== undefined) {
+        this._unacknowledgedSets.set(parentKey, childOpId);
+      }
+      ops.push(...childOps);
     }
 
     return ops;
