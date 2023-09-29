@@ -924,7 +924,7 @@ export function createRoom<
         config.backgroundKeepAliveTimeout !== undefined &&
         inBackgroundSince !== null &&
         Date.now() > inBackgroundSince + config.backgroundKeepAliveTimeout &&
-        getStorageStatus() === "synchronized"
+        getStorageStatus() !== "synchronizing"
       );
     },
   };
