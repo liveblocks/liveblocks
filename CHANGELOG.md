@@ -2,8 +2,8 @@
 
 ### @liveblocks/\*
 
-- [PR:1177](https://github.com/liveblocks/liveblocks/pull/1177) Fix an issue
-  with internal LiveList serialization that could lead to a "ghosting" bug with
+- [#1177](https://github.com/liveblocks/liveblocks/pull/1177) Fix an issue with
+  internal LiveList serialization that could lead to a "ghosting" bug with
   `@liveblocks/zustand` / `@liveblocks/redux` when using tuples.
 
 # v1.4.0
