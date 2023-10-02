@@ -112,7 +112,15 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     return list;
   }
 
-  /** @internal */
+  /**
+   * @internal
+   * This function assumes that the resulting ops will be sent to the server if they have an 'opId'
+   * so we mutate _unacknowledgedSets to avoid potential flickering
+   * https://github.com/liveblocks/liveblocks/pull/1177
+   *
+   * This is quite unintuitive and should disappear as soon as
+   * we introduce an explicit LiveList.Set operation
+   */
   _toOps(
     parentId: string,
     parentKey: string,
