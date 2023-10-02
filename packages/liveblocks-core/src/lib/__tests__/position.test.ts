@@ -1,5 +1,6 @@
 import * as fc from "fast-check";
 
+import type { Pos } from "../position";
 import {
   __after as after,
   __before as before,
@@ -503,7 +504,15 @@ describe("comparePosition", () => {
           expect(mid > lo).toBe(true);
           expect(hi > mid).toBe(true);
         }
-      )
+      ),
+
+      {
+        examples: [
+          // Found these as counter examples once, adding them here to prevent regressions in the future
+          [["a", "a!"] as Pos[]],
+          [["a", "a                             !"] as Pos[]],
+        ],
+      }
     );
   });
 });
