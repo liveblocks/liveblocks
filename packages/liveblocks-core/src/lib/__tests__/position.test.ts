@@ -393,6 +393,9 @@ describe("makePosition", () => {
   test("before .1 lies .09", () =>
     expect(makePosition(undefined, ONE)).toBe(ZERO + NINE));
 
+  test("between .1 and .11 lies .105", () =>
+    expect(makePosition(ONE, asPos(ONE + ONE))).toBe(ONE + ZERO + MID));
+
   test("between .1 and .3 lies .2", () =>
     expect(makePosition(ONE, THREE)).toBe(TWO));
 
