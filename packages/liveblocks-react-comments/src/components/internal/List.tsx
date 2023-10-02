@@ -4,6 +4,7 @@ import React, { forwardRef, useMemo } from "react";
 
 import { useOverrides } from "../../overrides";
 import type { ComponentPropsWithSlot } from "../../types";
+import { listFormat } from "../../utils/intl";
 
 export interface ListProps extends ComponentPropsWithSlot<"span"> {
   values: ReactNode[];
@@ -29,7 +30,7 @@ export const List = forwardRef<HTMLSpanElement, ListProps>(
             ]
           : [...values];
       const placeholders = Array(elements.length).fill(".");
-      const parts = new Intl.ListFormat(locale).formatToParts(placeholders);
+      const parts = listFormat(locale).formatToParts(placeholders);
 
       return parts.map((part) =>
         part.type === "element" ? elements.shift() : part.value

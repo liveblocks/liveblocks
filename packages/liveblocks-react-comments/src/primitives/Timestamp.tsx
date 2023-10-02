@@ -6,6 +6,7 @@ import React, { forwardRef, useMemo } from "react";
 
 import type { ComponentPropsWithSlot } from "../types";
 import { capitalize } from "../utils/capitalize";
+import { dateTimeFormat, relativeTimeFormat } from "../utils/intl";
 import { useInterval } from "../utils/use-interval";
 import { useRerender } from "../utils/use-rerender";
 
@@ -56,7 +57,7 @@ const relativeUnits = {
  * Formats a date absolutely.
  */
 function formatVerboseDate(date: Date, locale?: string) {
-  const formatter = new Intl.DateTimeFormat(locale, {
+  const formatter = dateTimeFormat(locale, {
     year: "numeric",
     month: "numeric",
     day: "numeric",
@@ -71,7 +72,7 @@ function formatVerboseDate(date: Date, locale?: string) {
  * Formats a date absolutely with only the day and month.
  */
 function formatShortDate(date: Date, locale?: string) {
-  const formatter = new Intl.DateTimeFormat(locale, {
+  const formatter = dateTimeFormat(locale, {
     month: "short",
     day: "numeric",
   });
@@ -83,7 +84,7 @@ function formatShortDate(date: Date, locale?: string) {
  * Formats a date relatively.
  */
 function formatRelativeDate(date: Date, locale?: string) {
-  const formatter = new Intl.RelativeTimeFormat(locale, {
+  const formatter = relativeTimeFormat(locale, {
     numeric: "auto",
   });
 

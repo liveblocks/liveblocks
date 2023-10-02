@@ -26,6 +26,7 @@ import {
   errorIf,
   isLiveNode,
   makeEventSource,
+  stringify,
 } from "@liveblocks/core";
 import * as React from "react";
 import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector.js";
@@ -43,7 +44,6 @@ import type {
 import { createCommentsRoom } from "./comments/CommentsRoom";
 import type { CommentsApiError } from "./comments/errors";
 import { useDebounce } from "./comments/lib/use-debounce";
-import { stableStringify } from "./lib/stable-stringify";
 import { useAsyncCache } from "./lib/use-async-cache";
 import { useInitial } from "./lib/use-initial";
 import { useRerender } from "./lib/use-rerender";
@@ -989,10 +989,7 @@ export function createRoomContext<
     : undefined;
 
   function useUser(userId: string) {
-    const resolverKey = React.useMemo(
-      () => stableStringify({ userId }),
-      [userId]
-    );
+    const resolverKey = React.useMemo(() => stringify({ userId }), [userId]);
     const state = useAsyncCache(usersCache, resolverKey);
 
     React.useEffect(() => warnIfNoResolveUser(usersCache), []);
@@ -1011,10 +1008,7 @@ export function createRoomContext<
   }
 
   function useUserSuspense(userId: string) {
-    const resolverKey = React.useMemo(
-      () => stableStringify({ userId }),
-      [userId]
-    );
+    const resolverKey = React.useMemo(() => stringify({ userId }), [userId]);
     const state = useAsyncCache(usersCache, resolverKey, {
       suspense: true,
     });
@@ -1043,7 +1037,7 @@ export function createRoomContext<
     const resolverKey = React.useMemo(
       () =>
         debouncedSearch !== undefined
-          ? stableStringify({ text: debouncedSearch, roomId: room.id })
+          ? stringify({ text: debouncedSearch, roomId: room.id })
           : null,
       [debouncedSearch, room.id]
     );
