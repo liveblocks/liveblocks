@@ -14,6 +14,8 @@ export type Emoji = {
   tags?: string[];
 };
 
+export type IndexedEmoji = Emoji & { index: number };
+
 export type EmojiCategory = {
   key: number;
   name: string;
@@ -30,9 +32,7 @@ export type EmojiData = {
   skinTones: EmojiSkinTone[];
 };
 
-export type EmojiPickerRow = {
-  emojis: Emoji[];
-};
+export type EmojiPickerRow = IndexedEmoji[];
 
 export type EmojiPickerData = {
   count: number;
@@ -41,6 +41,10 @@ export type EmojiPickerData = {
   categoriesRowCounts: number[];
   categoriesRowIndices: number[][];
 };
+
+export type EmojiPickerSelectionDirection = "left" | "right" | "up" | "down";
+
+export type EmojiPickerInteraction = "keyboard" | "pointer" | "none";
 
 export type EmojiPickerContentLoadingProps = ComponentPropsWithoutRef<"div">;
 
