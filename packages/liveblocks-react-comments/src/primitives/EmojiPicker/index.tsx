@@ -92,7 +92,7 @@ function EmojiPickerRoot({
       direction: EmojiPickerSelectionDirection,
       event: KeyboardEvent<HTMLInputElement>
     ) => {
-      if (!data || interaction === "pointer") {
+      if (!data) {
         return;
       }
 
@@ -430,6 +430,12 @@ const EmojiPickerContent = forwardRef<HTMLDivElement, EmojiPickerContentProps>(
       event.preventDefault();
     }, []);
 
+    const handleEmojiPointerLeave = useCallback(() => {
+      if (interaction === "pointer") {
+        setInteraction("none");
+      }
+    }, [interaction, setInteraction]);
+
     useEffect(() => {
       if (interaction === "keyboard") {
         virtuosoRef.current?.scrollIntoView({
@@ -505,9 +511,7 @@ const EmojiPickerContent = forwardRef<HTMLDivElement, EmojiPickerContentProps>(
                         onPointerEnter={() => {
                           setPointerSelection(columnIndex, rowIndex);
                         }}
-                        onPointerLeave={() => {
-                          setInteraction("none");
-                        }}
+                        onPointerLeave={handleEmojiPointerLeave}
                         onClick={(event) => {
                           onEmojiSelect?.(emoji.emoji);
                           event.stopPropagation();
