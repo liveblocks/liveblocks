@@ -19,6 +19,7 @@ const MIN_THROTTLE = 16;
 const MAX_THROTTLE = 1_000;
 const DEFAULT_THROTTLE = 100;
 
+const MIN_BACKGROUND_KEEP_ALIVE_TIMEOUT = 60_000;
 const MIN_LOST_CONNECTION_TIMEOUT = 200;
 const RECOMMENDED_MIN_LOST_CONNECTION_TIMEOUT = 1_000;
 const MAX_LOST_CONNECTION_TIMEOUT = 30_000;
@@ -205,6 +206,9 @@ export function createClient(options: ClientOptions): Client {
   const lostConnectionTimeout = getLostConnectionTimeout(
     clientOptions.lostConnectionTimeout ?? DEFAULT_LOST_CONNECTION_TIMEOUT
   );
+  const backgroundKeepAliveTimeout = getBackgroundKeepAlive(
+    clientOptions.backgroundKeepAliveTimeout
+  );
 
   const authManager = createAuthManager(options);
 
@@ -286,7 +290,7 @@ export function createClient(options: ClientOptions): Client {
         roomId,
         throttleDelay,
         lostConnectionTimeout,
-        backgroundKeepAliveTimeout: clientOptions.backgroundKeepAliveTimeout,
+        backgroundKeepAliveTimeout,
         polyfills: clientOptions.polyfills,
         delegates: clientOptions.mockedDelegates ?? {
           createSocket: makeCreateSocketDelegateForRoom(
@@ -399,17 +403,39 @@ function checkBounds(
   option: string,
   value: unknown,
   min: number,
-  max: number,
+  max?: number,
   recommendedMin?: number
 ): number {
-  if (typeof value !== "number" || value < min || value > max) {
+  if (
+    typeof value !== "number" ||
+    value < min ||
+    max === undefined ||
+    value > max
+  ) {
     throw new Error(
-      `${option} should be a number between ${
-        recommendedMin ?? min
-      } and ${max}.`
+      max !== undefined
+        ? `${option} should be between ${recommendedMin ?? min} and ${max}.`
+        : `${option} should be at least ${recommendedMin ?? min}.`
     );
   }
   return value;
+}
+
+function getBackgroundKeepAlive(value: number | undefined): number | undefined {
+  if (value === undefined) return undefined;
+
+  if (typeof document === "undefined") {
+    console.warn(
+      "Setting backgroundKeepAliveTimeout won't have an effect in a non-DOM environment."
+    );
+    return undefined;
+  }
+
+  return checkBounds(
+    "backgroundKeepAliveTimeout",
+    value,
+    MIN_BACKGROUND_KEEP_ALIVE_TIMEOUT
+  );
 }
 
 function getThrottle(value: number): number {
