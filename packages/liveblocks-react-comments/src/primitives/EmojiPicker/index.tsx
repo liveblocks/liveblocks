@@ -13,6 +13,8 @@ import React, {
 import type {
   GroupedVirtuosoHandle,
   ListProps as VirtuosoListProps,
+  ScrollerProps,
+  TopItemListProps,
 } from "react-virtuoso";
 import { GroupedVirtuoso } from "react-virtuoso";
 
@@ -356,6 +358,26 @@ const placeholderRowAttributes: EmojiPickerContentEmojiRowAttributes = {
   categoryRowsCount: 0,
 };
 
+const VirtuosoScroller = forwardRef<HTMLDivElement, ScrollerProps>(
+  ({ children, ...props }, forwardedRef) => {
+    return (
+      <div {...props} tabIndex={-1} data-test-id={undefined} ref={forwardedRef}>
+        {children}
+      </div>
+    );
+  }
+);
+
+const VirtuosoTopList = forwardRef<HTMLDivElement, TopItemListProps>(
+  ({ children, ...props }, forwardedRef) => {
+    return (
+      <div {...props} data-test-id={undefined} ref={forwardedRef}>
+        {children}
+      </div>
+    );
+  }
+);
+
 const EmojiPickerContent = forwardRef<HTMLDivElement, EmojiPickerContentProps>(
   ({ components, asChild, ...props }, forwardedRef) => {
     const Component = asChild ? Slot : "div";
@@ -380,7 +402,7 @@ const EmojiPickerContent = forwardRef<HTMLDivElement, EmojiPickerContentProps>(
       () => ({ ...defaultContentComponents, ...components }),
       [components]
     );
-    const List = useMemo(
+    const VirtuosoList = useMemo(
       () =>
         forwardRef<HTMLDivElement, VirtuosoListProps>(
           ({ children, ...props }, forwardedRef) => {
@@ -389,6 +411,7 @@ const EmojiPickerContent = forwardRef<HTMLDivElement, EmojiPickerContentProps>(
                 role="grid"
                 aria-colcount={columns}
                 {...props}
+                data-test-id={undefined}
                 ref={forwardedRef}
               >
                 {children}
@@ -443,7 +466,9 @@ const EmojiPickerContent = forwardRef<HTMLDivElement, EmojiPickerContentProps>(
           <GroupedVirtuoso
             ref={virtuosoRef}
             components={{
-              List,
+              Scroller: VirtuosoScroller,
+              List: VirtuosoList,
+              TopItemList: VirtuosoTopList,
             }}
             groupCounts={data.categoriesRowCounts}
             groupContent={(groupIndex) => {
