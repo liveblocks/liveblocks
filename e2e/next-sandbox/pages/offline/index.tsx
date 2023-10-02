@@ -48,7 +48,7 @@ function generateRandomNumber(max: number, ignore?: number) {
   }
 }
 
-function Sandbox({ roomId }: { roomId: string }) {
+function Sandbox(_props: { roomId: string }) {
   const [status, setStatus] = useState("connected");
   const room = useRoom();
   const internals = (room as Record<string, unknown>).__internal as Internal;

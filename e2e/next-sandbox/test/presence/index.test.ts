@@ -18,13 +18,16 @@ function getEvents(page: Page): Promise<Json[]> {
   return getJsonContent(page, "events") as Promise<Json[]>;
 }
 
+const BG_COLOR_1 = "&bg=" + encodeURIComponent("#cafbca");
+const BG_COLOR_2 = "&bg=" + encodeURIComponent("#e9ddf9");
+
 const TEST_URL = "http://localhost:3007/presence";
 
 test.describe("Presence", () => {
   test("connect A => connect B => verify others on A and B", async () => {
     const testUrl = TEST_URL + "?room=e2e-presence-scenario1";
-    const firstPage = await preparePage(testUrl);
-    const secondPage = await preparePage(testUrl);
+    const firstPage = await preparePage(testUrl + BG_COLOR_1);
+    const secondPage = await preparePage(testUrl + BG_COLOR_2);
 
     await Promise.all([
       firstPage.waitForSelector("#others"),
@@ -47,12 +50,10 @@ test.describe("Presence", () => {
 
   test("connect A => update presence A => connect B => verify presence A on B", async () => {
     const testUrl = TEST_URL + "?room=e2e-presence-scenario2";
-    const firstPage = await preparePage(testUrl);
-
+    const firstPage = await preparePage(testUrl + BG_COLOR_1);
     await firstPage.click("#increment-button");
 
-    const secondPage = await preparePage(testUrl);
-
+    const secondPage = await preparePage(testUrl + BG_COLOR_2);
     await assertContainText([firstPage, secondPage], "1", "othersCount");
 
     const othersSecondPage = await getOthers(secondPage);
@@ -66,9 +67,8 @@ test.describe("Presence", () => {
 
   test("connect A => connect B => update presence A => verify presence A on B", async () => {
     const testUrl = TEST_URL + "?room=e2e-presence-scenario3";
-    const firstPage = await preparePage(testUrl);
-
-    const secondPage = await preparePage(testUrl);
+    const firstPage = await preparePage(testUrl + BG_COLOR_1);
+    const secondPage = await preparePage(testUrl + BG_COLOR_2);
 
     await Promise.all([
       firstPage.waitForSelector("#others"),
@@ -92,9 +92,8 @@ test.describe("Presence", () => {
 
   test("connect A => connect B => verify other on B => disconnect A => verify others is empty on B", async () => {
     const testUrl = TEST_URL + "?room=e2e-presence-scenario4";
-    const firstPage = await preparePage(testUrl);
-
-    const secondPage = await preparePage(testUrl);
+    const firstPage = await preparePage(testUrl + BG_COLOR_1);
+    const secondPage = await preparePage(testUrl + BG_COLOR_2);
 
     await Promise.all([
       firstPage.waitForSelector("#others"),
@@ -119,8 +118,8 @@ test.describe("Presence", () => {
 
   test("client B receives other update presence before initial presence", async () => {
     const testUrl = TEST_URL + "?room=e2e-presence-scenario5";
-    const firstPage = await preparePage(testUrl);
-    const secondPage = await preparePage(testUrl);
+    const firstPage = await preparePage(testUrl + BG_COLOR_1);
+    const secondPage = await preparePage(testUrl + BG_COLOR_2);
 
     await Promise.all([
       firstPage.waitForSelector("#others"),
@@ -160,8 +159,8 @@ test.describe("Presence", () => {
 test.describe("Broadcast", () => {
   test("connect A => connect B => broadcast from A => verify B got event", async () => {
     const testUrl = TEST_URL + "?room=e2e-broadcast-scenario1";
-    const firstPage = await preparePage(testUrl);
-    const secondPage = await preparePage(testUrl);
+    const firstPage = await preparePage(testUrl + BG_COLOR_1);
+    const secondPage = await preparePage(testUrl + BG_COLOR_2);
 
     await Promise.all([
       firstPage.waitForSelector("#events"),

@@ -27,9 +27,12 @@ export async function preparePage(url: string, windowPositionX: number = 0) {
 }
 
 export async function preparePages(url: string) {
-  const firstPage = await preparePage(url, 0);
-  const secondPage = await preparePage(url, WIDTH);
-
+  const firstUrl = new URL(url);
+  const secondUrl = new URL(url);
+  firstUrl.searchParams.set("bg", "#cafbca");
+  secondUrl.searchParams.set("bg", "#e9ddf9");
+  const firstPage = await preparePage(firstUrl.toString(), 0);
+  const secondPage = await preparePage(secondUrl.toString(), WIDTH);
   return [firstPage, secondPage];
 }
 
