@@ -50,6 +50,8 @@ export type EmojiPickerContentLoadingProps = ComponentPropsWithoutRef<"div">;
 
 export type EmojiPickerContentEmptyProps = ComponentPropsWithoutRef<"div">;
 
+export type EmojiPickerContentGridProps = ComponentPropsWithoutRef<"div">;
+
 export interface EmojiPickerContentErrorProps
   extends ComponentPropsWithoutRef<"div"> {
   /**
@@ -83,7 +85,7 @@ export type EmojiPickerContentEmojiRowAttributes = {
   categoryRowsCount: number;
 };
 
-export interface EmojiPickerContentEmojiRowProps
+export interface EmojiPickerContentRowProps
   extends ComponentPropsWithoutRef<"div"> {
   /**
    * Attributes related to the current row.
@@ -138,9 +140,14 @@ export interface EmojiPickerContentComponents {
   CategoryHeader: ComponentType<EmojiPickerContentCategoryHeaderProps>;
 
   /**
-   * The component used to display emoji rows.
+   * The component displayed when there are emojis to display.
    */
-  EmojiRow: ComponentType<EmojiPickerContentEmojiRowProps>;
+  Grid: ComponentType<EmojiPickerContentGridProps>;
+
+  /**
+   * The component used to display rows of emojis.
+   */
+  Row: ComponentType<EmojiPickerContentRowProps>;
 
   /**
    * The component used to display emojis.

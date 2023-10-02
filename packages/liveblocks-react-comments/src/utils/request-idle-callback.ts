@@ -2,9 +2,12 @@ const IDLE_CALLBACK_FALLBACK_TIMEOUT = 100;
 
 function requestIdleCallbackFallback(
   callback: IdleRequestCallback,
-  _options?: IdleRequestOptions
+  options?: IdleRequestOptions
 ) {
-  return setTimeout(callback, IDLE_CALLBACK_FALLBACK_TIMEOUT);
+  return setTimeout(
+    callback,
+    Math.min(options?.timeout ?? Infinity, IDLE_CALLBACK_FALLBACK_TIMEOUT)
+  );
 }
 
 /**

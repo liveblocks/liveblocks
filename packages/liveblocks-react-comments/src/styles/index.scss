@@ -388,7 +388,14 @@
     text-transform: uppercase;
   }
 
-  .lb-emoji-picker-emoji-row {
+  .lb-emoji-picker-grid {
+    position: absolute;
+    inset: 0;
+    animation: lb-animation-appear var(--lb-transition-duration)
+      var(--lb-transition-easing) both;
+  }
+
+  .lb-emoji-picker-row {
     display: flex;
     padding-inline: $lb-emoji-picker-padding;
     scroll-margin-block: $lb-emoji-picker-padding;

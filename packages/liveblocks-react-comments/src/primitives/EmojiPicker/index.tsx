@@ -41,6 +41,7 @@ import { filterEmojis, generateEmojiPickerData, getEmojiData } from "./utils";
 
 const DEFAULT_COLUMNS = 10;
 const DEFAULT_LOCALE = "en";
+const LOADING_MINIMUM_TIMEOUT = 100;
 
 const EMOJIPICKER_ROOT_NAME = "EmojiPickerRoot";
 const EMOJIPICKER_CONTENT_NAME = "EmojiPickerContent";
@@ -227,11 +228,15 @@ function EmojiPickerRoot({
   );
 
   useEffect(() => {
-    const idleCallbackId = requestIdleCallback(() => {
-      initializeEmojiData(locale);
-    });
+    let idleCallbackId: number;
+    const timeoutId = setTimeout(() => {
+      idleCallbackId = requestIdleCallback(() => {
+        initializeEmojiData(locale);
+      });
+    }, LOADING_MINIMUM_TIMEOUT);
 
     return () => {
+      clearTimeout(timeoutId);
       cancelIdleCallback(idleCallbackId);
     };
   }, [locale]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -338,9 +343,7 @@ const EmojiPickerSearch = forwardRef<HTMLInputElement, EmojiPickerSearchProps>(
 const defaultContentComponents: EmojiPickerContentComponents = {
   CategoryHeader: ({ category, ...props }) => <div {...props}>{category}</div>,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  EmojiRow: ({ children, attributes, ...props }) => (
-    <div {...props}>{children}</div>
-  ),
+  Row: ({ children, attributes, ...props }) => <div {...props}>{children}</div>,
   Emoji: ({ emoji, ...props }) => (
     <button {...props}>
       <AccessibleEmoji emoji={emoji} />
@@ -348,6 +351,7 @@ const defaultContentComponents: EmojiPickerContentComponents = {
   ),
   Loading: (props) => <div {...props} />,
   Empty: (props) => <div {...props} />,
+  Grid: (props) => <div {...props} />,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   Error: ({ error, ...props }) => <div {...props} />,
 };
@@ -398,7 +402,7 @@ const EmojiPickerContent = forwardRef<HTMLDivElement, EmojiPickerContentProps>(
       () => data?.rows[selectedRowIndex]?.[selectedColumnIndex],
       [data?.rows, selectedColumnIndex, selectedRowIndex]
     );
-    const { Loading, Empty, Error, CategoryHeader, EmojiRow, Emoji } = useMemo(
+    const { Loading, Empty, Error, CategoryHeader, Grid, Row, Emoji } = useMemo(
       () => ({ ...defaultContentComponents, ...components }),
       [components]
     );
@@ -456,11 +460,11 @@ const EmojiPickerContent = forwardRef<HTMLDivElement, EmojiPickerContentProps>(
             height: 0,
           }}
         >
-          <EmojiRow attributes={placeholderRowAttributes}>
+          <Row attributes={placeholderRowAttributes}>
             {placeholderColumns.map((placeholder, index) => (
               <Emoji emoji={placeholder} key={index} />
             ))}
-          </EmojiRow>
+          </Row>
         </div>
         {isLoading ? (
           <Loading />
@@ -469,61 +473,65 @@ const EmojiPickerContent = forwardRef<HTMLDivElement, EmojiPickerContentProps>(
         ) : data.count === 0 ? (
           <Empty />
         ) : (
-          <GroupedVirtuoso
-            ref={virtuosoRef}
-            components={{
-              Scroller: VirtuosoScroller,
-              List: VirtuosoList,
-              TopItemList: VirtuosoTopList,
-            }}
-            groupCounts={data.categoriesRowCounts}
-            groupContent={(groupIndex) => {
-              return <CategoryHeader category={data.categories[groupIndex]} />;
-            }}
-            itemContent={(rowIndex, groupIndex) => {
-              const categoryRowIndex =
-                data.categoriesRowIndices[groupIndex].indexOf(rowIndex);
-              const categoryRowsCount = data.categoriesRowCounts[groupIndex];
+          <Grid>
+            <GroupedVirtuoso
+              ref={virtuosoRef}
+              components={{
+                Scroller: VirtuosoScroller,
+                List: VirtuosoList,
+                TopItemList: VirtuosoTopList,
+              }}
+              groupCounts={data.categoriesRowCounts}
+              groupContent={(groupIndex) => {
+                return (
+                  <CategoryHeader category={data.categories[groupIndex]} />
+                );
+              }}
+              itemContent={(rowIndex, groupIndex) => {
+                const categoryRowIndex =
+                  data.categoriesRowIndices[groupIndex].indexOf(rowIndex);
+                const categoryRowsCount = data.categoriesRowCounts[groupIndex];
 
-              return (
-                <EmojiRow
-                  attributes={{
-                    rowIndex,
-                    categoryRowIndex,
-                    categoryRowsCount,
-                  }}
-                >
-                  {data.rows[rowIndex].map((emoji, columnIndex) => {
-                    const isSelected =
-                      interaction !== "none" &&
-                      selectedColumnIndex === columnIndex &&
-                      selectedRowIndex === rowIndex;
+                return (
+                  <Row
+                    attributes={{
+                      rowIndex,
+                      categoryRowIndex,
+                      categoryRowsCount,
+                    }}
+                  >
+                    {data.rows[rowIndex].map((emoji, columnIndex) => {
+                      const isSelected =
+                        interaction !== "none" &&
+                        selectedColumnIndex === columnIndex &&
+                        selectedRowIndex === rowIndex;
 
-                    return (
-                      <Emoji
-                        key={emoji.emoji}
-                        role="gridcell"
-                        aria-colindex={columnIndex}
-                        aria-selected={isSelected || undefined}
-                        data-selected={isSelected || undefined}
-                        onMouseDown={preventDefault}
-                        tabIndex={-1}
-                        onPointerEnter={() => {
-                          setPointerSelection(columnIndex, rowIndex);
-                        }}
-                        onPointerLeave={handleEmojiPointerLeave}
-                        onClick={(event) => {
-                          onEmojiSelect?.(emoji.emoji);
-                          event.stopPropagation();
-                        }}
-                        emoji={emoji.emoji}
-                      />
-                    );
-                  })}
-                </EmojiRow>
-              );
-            }}
-          />
+                      return (
+                        <Emoji
+                          key={emoji.emoji}
+                          role="gridcell"
+                          aria-colindex={columnIndex}
+                          aria-selected={isSelected || undefined}
+                          data-selected={isSelected || undefined}
+                          onMouseDown={preventDefault}
+                          tabIndex={-1}
+                          onPointerEnter={() => {
+                            setPointerSelection(columnIndex, rowIndex);
+                          }}
+                          onPointerLeave={handleEmojiPointerLeave}
+                          onClick={(event) => {
+                            onEmojiSelect?.(emoji.emoji);
+                            event.stopPropagation();
+                          }}
+                          emoji={emoji.emoji}
+                        />
+                      );
+                    })}
+                  </Row>
+                );
+              }}
+            />
+          </Grid>
         )}
         {selectedEmoji && interaction !== "none" && (
           <div aria-live="polite" style={visuallyHidden}>
