@@ -39,7 +39,6 @@ import { Emoji } from "../primitives/internal/Emoji";
 import { Timestamp } from "../primitives/Timestamp";
 import { MENTION_CHARACTER } from "../slate/plugins/mentions";
 import { classNames } from "../utils/class-names";
-import { groupBy } from "../utils/group-by";
 import { Composer } from "./Composer";
 import { Avatar } from "./internal/Avatar";
 import { Button } from "./internal/Button";
@@ -120,8 +119,7 @@ export interface CommentProps extends ComponentPropsWithoutRef<"div"> {
 
 interface CommentReactionProps extends ComponentPropsWithoutRef<"button"> {
   comment: CommentData;
-  emoji: string;
-  reactions: CommentReactionData[];
+  reaction: CommentReactionData;
 }
 
 function CommentMention({
@@ -162,26 +160,26 @@ function CommentLink({
 }
 
 const CommentReaction = forwardRef<HTMLButtonElement, CommentReactionProps>(
-  ({ comment, emoji, reactions, className, ...props }, forwardedRef) => {
+  ({ comment, reaction, className, ...props }, forwardedRef) => {
     const { useAddReaction, useRemoveReaction, useSelf } =
       useRoomContextBundle();
     const self = useSelf();
     const addReaction = useAddReaction();
     const removeReaction = useRemoveReaction();
     const isActive = useMemo(() => {
-      return reactions.some((reaction) => reaction.userId === self?.id);
-    }, [reactions, self?.id]);
+      return reaction.users.some((users) => users.id === self?.id);
+    }, [reaction, self?.id]);
     const $ = useOverrides();
     const tooltipContent = useMemo(
       () => (
         <span>
           {$.COMMENT_REACTION_TOOLTIP(
-            emoji,
+            reaction.emoji,
             <List
-              values={reactions.map((reaction, index) => (
+              values={reaction.users.map((users, index) => (
                 <User
-                  key={reaction.userId}
-                  userId={reaction.userId}
+                  key={users.id}
+                  userId={users.id}
                   capitalize={index === 0}
                   replaceSelf
                 />
@@ -189,11 +187,11 @@ const CommentReaction = forwardRef<HTMLButtonElement, CommentReactionProps>(
               formatRemaining={$.COMMENT_REACTION_REMAINING}
               truncate={REACTIONS_TRUNCATE}
             />,
-            reactions.length
+            reaction.users.length
           )}
         </span>
       ),
-      [$, emoji, reactions]
+      [$, reaction]
     );
 
     const handlePressedChange = useCallback(
@@ -202,17 +200,23 @@ const CommentReaction = forwardRef<HTMLButtonElement, CommentReactionProps>(
           addReaction({
             threadId: comment.threadId,
             commentId: comment.id,
-            emoji,
+            emoji: reaction.emoji,
           });
         } else {
           removeReaction({
             threadId: comment.threadId,
             commentId: comment.id,
-            emoji,
+            emoji: reaction.emoji,
           });
         }
       },
-      [addReaction, comment.threadId, comment.id, emoji, removeReaction]
+      [
+        addReaction,
+        comment.threadId,
+        comment.id,
+        reaction.emoji,
+        removeReaction,
+      ]
     );
 
     return (
@@ -230,13 +234,19 @@ const CommentReaction = forwardRef<HTMLButtonElement, CommentReactionProps>(
           <Button
             className={classNames("lb-comment-reaction", className)}
             variant="outline"
-            aria-label={$.COMMENT_REACTION_DESCRIPTION(emoji, reactions.length)}
+            aria-label={$.COMMENT_REACTION_DESCRIPTION(
+              reaction.emoji,
+              reaction.users.length
+            )}
             data-self={isActive ? "" : undefined}
             {...props}
           >
-            <Emoji className="lb-comment-reaction-emoji" emoji={emoji} />
+            <Emoji
+              className="lb-comment-reaction-emoji"
+              emoji={reaction.emoji}
+            />
             <span className="lb-comment-reaction-count">
-              {reactions.length}
+              {reaction.users.length}
             </span>
           </Button>
         </TogglePrimitive.Root>
@@ -291,22 +301,6 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
     const [isEditing, setEditing] = useState(false);
     const [isMoreActionOpen, setMoreActionOpen] = useState(false);
     const [isReactionActionOpen, setReactionActionOpen] = useState(false);
-    const reactions = useMemo(() => {
-      if (!showReactions) {
-        return;
-      }
-
-      return comment.reactions?.length > 0
-        ? groupBy(
-            comment.reactions.sort(
-              (a, b) =>
-                new Date(a.createdAt).getTime() -
-                new Date(b.createdAt).getTime()
-            ),
-            "emoji"
-          )
-        : undefined;
-    }, [comment.reactions, showReactions]);
 
     const stopPropagation = useCallback((event: SyntheticEvent) => {
       event.stopPropagation();
@@ -359,8 +353,16 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
 
     const handleReactionSelect = useCallback(
       (emoji: string) => {
+        const reactionIndex = comment.reactions.findIndex(
+          (reaction) => reaction.emoji === emoji
+        );
+
         if (
-          reactions?.[emoji]?.some((reaction) => reaction.userId === self?.id)
+          reactionIndex > 0 &&
+          self?.id &&
+          comment.reactions[reactionIndex].users.some(
+            (user) => user.id === self?.id
+          )
         ) {
           removeReaction({
             threadId: comment.threadId,
@@ -378,8 +380,8 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
       [
         addReaction,
         comment.id,
+        comment.reactions,
         comment.threadId,
-        reactions,
         removeReaction,
         self?.id,
       ]
@@ -560,14 +562,13 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
                     Link: CommentLink,
                   }}
                 />
-                {showReactions && reactions && (
+                {showReactions && comment.reactions && (
                   <div className="lb-comment-reactions">
-                    {Object.entries(reactions).map(([emoji, reactions]) => (
+                    {comment.reactions.map((reaction) => (
                       <CommentReaction
-                        key={emoji}
+                        key={reaction.emoji}
                         comment={comment}
-                        emoji={emoji}
-                        reactions={reactions}
+                        reaction={reaction}
                       />
                     ))}
                     <EmojiPicker onEmojiSelect={handleReactionSelect}>
