@@ -425,7 +425,11 @@ export function Cell({
     >
       {other && (
         <div aria-hidden className={styles.user}>
-          <img alt={other.url} className={styles.user_avatar} src={other.url} />
+          <img
+            alt={other.avatar}
+            className={styles.user_avatar}
+            src={other.avatar}
+          />
           <span className={styles.user_label}>{other.name}</span>
         </div>
       )}

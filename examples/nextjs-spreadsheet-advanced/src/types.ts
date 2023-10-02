@@ -34,7 +34,7 @@ export type Storage = {
 export type UserInfo = {
   color: string;
   name: string;
-  url: string;
+  avatar: string;
 };
 
 export type UserMeta = {
