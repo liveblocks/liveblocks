@@ -870,6 +870,38 @@ function userToTreeNode(
 }
 
 /**
+ * Returns a ref to access if, and if so, how long the current tab is in the
+ * background and an unsubscribe function.
+ *
+ * The `inBackgroundSince` value will either be a JS timestamp indicating the
+ * moment the tab was put into the background, or `null` in case the tab isn't
+ * currently in the background. In non-DOM environments, this will always
+ * return `null`.
+ */
+function installBackgroundTabSpy(): [
+  inBackgroundSince: { readonly current: number | null },
+  unsub: () => void,
+] {
+  const doc = typeof document !== "undefined" ? document : undefined;
+  const inBackgroundSince: { current: number | null } = { current: null };
+
+  function onVisibilityChange() {
+    if (doc?.visibilityState === "hidden") {
+      inBackgroundSince.current = inBackgroundSince.current ?? Date.now();
+    } else {
+      inBackgroundSince.current = null;
+    }
+  }
+
+  doc?.addEventListener("visibilitychange", onVisibilityChange);
+  const unsub = () => {
+    doc?.removeEventListener("visibilitychange", onVisibilityChange);
+  };
+
+  return [inBackgroundSince, unsub];
+}
+
+/**
  * @internal
  * Initializes a new Room, and returns its public API.
  */
@@ -894,18 +926,7 @@ export function createRoom<
       ? options.initialStorage(config.roomId)
       : options.initialStorage;
 
-  const doc = typeof document !== "undefined" ? document : undefined;
-  let inBackgroundSince: number | null = null;
-
-  function onVisibilityChange() {
-    if (doc?.visibilityState === "hidden") {
-      inBackgroundSince = inBackgroundSince ?? Date.now();
-    } else {
-      inBackgroundSince = null;
-    }
-  }
-
-  doc?.addEventListener("visibilitychange", onVisibilityChange);
+  const [inBackgroundSince, uninstallBgTabSpy] = installBackgroundTabSpy();
 
   // Create a delegate pair for (a specific) Live Room socket connection(s)
   const delegates = {
@@ -922,8 +943,9 @@ export function createRoom<
     canZombie() {
       return (
         config.backgroundKeepAliveTimeout !== undefined &&
-        inBackgroundSince !== null &&
-        Date.now() > inBackgroundSince + config.backgroundKeepAliveTimeout &&
+        inBackgroundSince.current !== null &&
+        Date.now() >
+          inBackgroundSince.current + config.backgroundKeepAliveTimeout &&
         getStorageStatus() !== "synchronizing"
       );
     },
@@ -2317,7 +2339,7 @@ export function createRoom<
       reconnect: () => managedSocket.reconnect(),
       disconnect: () => managedSocket.disconnect(),
       destroy: () => {
-        doc?.removeEventListener("visibilitychange", onVisibilityChange);
+        uninstallBgTabSpy();
         managedSocket.destroy();
       },
 
