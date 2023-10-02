@@ -4,7 +4,8 @@
   "scripts": {
     "dev": "next dev --port 3007",
     "start": "next start",
-    "test": "playwright test --max-failures=1"
+    "test": "playwright test --max-failures=1",
+    "test:ui": "playwright test --ui --workers=1 --max-failures=1"
   },
   "dependencies": {
     "@liveblocks/client": "*",
