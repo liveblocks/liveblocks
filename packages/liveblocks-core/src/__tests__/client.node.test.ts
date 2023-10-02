@@ -249,7 +249,7 @@ describe("createClient", () => {
       await waitUntilStatus(room, "disconnected");
 
       expect(spy).toHaveBeenCalledWith(
-        "To use Liveblocks client in a non-dom environment with a url as auth endpoint, you need to provide a fetch polyfill."
+        "To use Liveblocks client in a non-DOM environment with a url as auth endpoint, you need to provide a fetch polyfill."
       );
     } finally {
       // Clean things up
@@ -267,7 +267,7 @@ describe("createClient", () => {
       await waitUntilStatus(room, "disconnected");
 
       expect(spy).toHaveBeenCalledWith(
-        "To use Liveblocks client in a non-dom environment, you need to provide a WebSocket polyfill."
+        "To use Liveblocks client in a non-DOM environment, you need to provide a WebSocket polyfill."
       );
     } finally {
       // Clean things up

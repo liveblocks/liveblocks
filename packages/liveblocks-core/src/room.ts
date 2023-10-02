@@ -2568,7 +2568,7 @@ export function makeCreateSocketDelegateForRoom(
 
     if (ws === undefined) {
       throw new StopRetrying(
-        "To use Liveblocks client in a non-dom environment, you need to provide a WebSocket polyfill."
+        "To use Liveblocks client in a non-DOM environment, you need to provide a WebSocket polyfill."
       );
     }
 

@@ -118,7 +118,7 @@ export function createAuthManager(
     if (authentication.type === "private") {
       if (fetcher === undefined) {
         throw new StopRetrying(
-          "To use Liveblocks client in a non-dom environment with a url as auth endpoint, you need to provide a fetch polyfill."
+          "To use Liveblocks client in a non-DOM environment with a url as auth endpoint, you need to provide a fetch polyfill."
         );
       }
 
