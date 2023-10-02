@@ -14,3 +14,12 @@ export function genRoomId(testTitle: string) {
     .replaceAll(/[^\w_-]+/g, "-")
     .replaceAll(/--+/g, "-")}`;
 }
+
+export function getRoomFromUrl(): string | undefined {
+  if (typeof window === "undefined") {
+    return undefined;
+  }
+
+  const q = new URL(window.location.href).searchParams;
+  return q.get("room") ?? undefined;
+}

@@ -2,7 +2,7 @@ import { LiveMap } from "@liveblocks/client";
 import { createRoomContext } from "@liveblocks/react";
 import React from "react";
 import createLiveblocksClient from "../../utils/createClient";
-import { genRoomId } from "../../utils";
+import { genRoomId, getRoomFromUrl } from "../../utils";
 
 const client = createLiveblocksClient();
 
@@ -22,13 +22,7 @@ const {
 } = createRoomContext<Presence, { liveMap: LiveMap<string, number> }>(client);
 
 export default function Home() {
-  let roomId = genRoomId("e2e-batching-presence-storage");
-  if (typeof window !== "undefined") {
-    const queryParam = window.location.search;
-    if (queryParam.split("room=").length > 1) {
-      roomId = queryParam.split("room=")[1];
-    }
-  }
+  const roomId = getRoomFromUrl() ?? genRoomId("e2e-batching-presence-storage");
   return (
     <RoomProvider
       id={roomId}

@@ -4,7 +4,7 @@ import create from "zustand";
 import { liveblocks } from "@liveblocks/zustand";
 import type { WithLiveblocks } from "@liveblocks/zustand";
 import createLiveblocksClient from "../../utils/createClient";
-import { genRoomId } from "../../utils";
+import { genRoomId, getRoomFromUrl } from "../../utils";
 
 const client = createLiveblocksClient();
 
@@ -45,13 +45,7 @@ export default function Home() {
     liveblocks: { enterRoom, leaveRoom, isStorageLoading, room, others },
   } = useStore();
 
-  let roomId = genRoomId("e2e-zustand-basic");
-  if (typeof window !== "undefined") {
-    const queryParam = window.location.search;
-    if (queryParam.split("room=").length > 1) {
-      roomId = queryParam.split("room=")[1];
-    }
-  }
+  const roomId = getRoomFromUrl() ?? genRoomId("e2e-zustand-basic");
 
   useEffect(() => {
     enterRoom(roomId);

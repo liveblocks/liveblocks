@@ -3,7 +3,7 @@ import { LiveList } from "@liveblocks/client";
 import { createRoomContext } from "@liveblocks/react";
 import React, { useState } from "react";
 import createLiveblocksClient from "../../utils/createClient";
-import { genRoomId } from "../../utils";
+import { getRoomFromUrl, genRoomId } from "../../utils";
 
 const client = createLiveblocksClient();
 
@@ -18,13 +18,7 @@ type Internal = {
 };
 
 export default function Home() {
-  let roomId = genRoomId("offline");
-  if (typeof window !== "undefined") {
-    const queryParam = window.location.search;
-    if (queryParam.split("room=").length > 1) {
-      roomId = queryParam.split("room=")[1];
-    }
-  }
+  const roomId = getRoomFromUrl() ?? genRoomId("offline");
   return (
     <RoomProvider
       id={roomId}
