@@ -189,7 +189,7 @@ type Context = {
   backoffDelay: number;
 };
 
-const BACKOFF_DELAYS = [250, 500, 1000, 2000, 4000, 8000, 10000] as const;
+const BACKOFF_DELAYS = [250, 500, 1_000, 2_000, 4_000, 8_000, 10_000] as const;
 
 // Resetting the delay happens upon success. We could reset to 0, but that
 // would risk no delay, which generally isn't wise. Instead, we'll reset it to
@@ -201,27 +201,27 @@ const RESET_DELAY = BACKOFF_DELAYS[0] - 1;
  * Used to back off from WebSocket reconnection attempts after a known
  * Liveblocks issue, like "room full" or a "rate limit" error.
  */
-const BACKOFF_DELAYS_SLOW = [2000, 30000, 60000, 300000] as const;
+const BACKOFF_DELAYS_SLOW = [2_000, 30_000, 60_000, 300_000] as const;
 
 /**
  * The client will send a PING to the server every 30 seconds, after which it
  * must receive a PONG back within the next 2 seconds. If that doesn't happen,
  * this is interpreted as an implicit connection loss event.
  */
-const HEARTBEAT_INTERVAL = 30000;
-const PONG_TIMEOUT = 2000;
+const HEARTBEAT_INTERVAL = 30_000;
+const PONG_TIMEOUT = 2_000;
 
 /**
  * Maximum amount of time that the authentication delegate take to return an
  * auth authValue, or else we consider authentication timed out.
  */
-const AUTH_TIMEOUT = 10000;
+const AUTH_TIMEOUT = 10_000;
 
 /**
  * Maximum amount of time that the socket connect delegate may take to return
  * an opened WebSocket connection, or else we consider the attempt timed out.
  */
-const SOCKET_CONNECT_TIMEOUT = 10000;
+const SOCKET_CONNECT_TIMEOUT = 10_000;
 
 /**
  * Special error class that can be thrown during authentication to stop the
