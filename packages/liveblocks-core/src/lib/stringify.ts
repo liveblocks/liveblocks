@@ -10,7 +10,7 @@ export function stringify(
   object: Parameters<typeof JSON.stringify>[0],
   ...args: OmitFirstTupleElement<Parameters<typeof JSON.stringify>>
 ): string {
-  if (typeof object !== "object" || object === null) {
+  if (typeof object !== "object" || object === null || Array.isArray(object)) {
     return JSON.stringify(object, ...args);
   }
 
