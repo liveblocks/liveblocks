@@ -285,7 +285,7 @@ describe("createClient", () => {
           fetch: fetchMock,
         },
       })
-    ).toThrow("throttle should be a number between 16 and 1000.");
+    ).toThrow("throttle should be between 16 and 1000.");
   });
 
   test("should throw if throttle is less than 16", () => {
@@ -298,7 +298,7 @@ describe("createClient", () => {
           fetch: fetchMock,
         },
       })
-    ).toThrow("throttle should be a number between 16 and 1000.");
+    ).toThrow("throttle should be between 16 and 1000.");
   });
 
   test("should throw if throttle is more than 1000", () => {
@@ -311,7 +311,7 @@ describe("createClient", () => {
           fetch: fetchMock,
         },
       })
-    ).toThrow("throttle should be a number between 16 and 1000.");
+    ).toThrow("throttle should be between 16 and 1000.");
   });
 
   test("should throw if lostConnectionTimeout is not a number", () => {
@@ -324,9 +324,7 @@ describe("createClient", () => {
           fetch: fetchMock,
         },
       })
-    ).toThrow(
-      "lostConnectionTimeout should be a number between 1000 and 30000."
-    );
+    ).toThrow("lostConnectionTimeout should be between 1000 and 30000.");
   });
 
   test("should throw if lostConnectionTimeout is less than 1000", () => {
@@ -339,9 +337,7 @@ describe("createClient", () => {
           fetch: fetchMock,
         },
       })
-    ).toThrow(
-      "lostConnectionTimeout should be a number between 1000 and 30000."
-    );
+    ).toThrow("lostConnectionTimeout should be between 1000 and 30000.");
   });
 
   test("should throw if lostConnectionTimeout is more than 30000", () => {
@@ -354,9 +350,7 @@ describe("createClient", () => {
           fetch: fetchMock,
         },
       })
-    ).toThrow(
-      "lostConnectionTimeout should be a number between 1000 and 30000."
-    );
+    ).toThrow("lostConnectionTimeout should be between 1000 and 30000.");
   });
 });
 
