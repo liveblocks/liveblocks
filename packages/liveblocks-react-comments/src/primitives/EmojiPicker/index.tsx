@@ -4,6 +4,7 @@ import { Slot } from "@radix-ui/react-slot";
 import type { ChangeEvent, SyntheticEvent } from "react";
 import React, {
   forwardRef,
+  memo,
   useCallback,
   useEffect,
   useMemo,
@@ -37,90 +38,92 @@ const EMOJIPICKER_ROOT_NAME = "EmojiPickerRoot";
 const EMOJIPICKER_CONTENT_NAME = "EmojiPickerContent";
 const EMOJIPICKER_SEARCH_NAME = "EmojiPickerSearch";
 
-function EmojiPickerRoot({
-  columns = DEFAULT_COLUMNS,
-  locale = DEFAULT_LOCALE,
-  onEmojiSelect,
-  children,
-}: EmojiPickerRootProps) {
-  const emojiData = useRef<EmojiData>();
-  const search = useRef("");
-  const [, startEmojisTransition] = useTransition();
-  const [data, setData] = useState<EmojiPickerData>();
-  const [error, setError] = useState<Error>();
+const EmojiPickerRoot = memo(
+  ({
+    columns = DEFAULT_COLUMNS,
+    locale = DEFAULT_LOCALE,
+    onEmojiSelect,
+    children,
+  }: EmojiPickerRootProps) => {
+    const emojiData = useRef<EmojiData>();
+    const search = useRef("");
+    const [, startEmojisTransition] = useTransition();
+    const [data, setData] = useState<EmojiPickerData>();
+    const [error, setError] = useState<Error>();
 
-  const updateEmojis = useCallback(() => {
-    if (!emojiData.current) {
-      return;
-    }
+    const updateEmojis = useCallback(() => {
+      if (!emojiData.current) {
+        return;
+      }
 
-    startEmojisTransition(() => {
-      setData(() => {
-        if (!emojiData.current) {
-          return;
-        }
+      startEmojisTransition(() => {
+        setData(() => {
+          if (!emojiData.current) {
+            return;
+          }
 
-        const filteredEmojis = filterEmojis(
-          emojiData.current.emojis,
-          search.current
-        );
+          const filteredEmojis = filterEmojis(
+            emojiData.current.emojis,
+            search.current
+          );
 
-        return generateEmojiPickerData(
-          filteredEmojis,
-          emojiData.current.categories,
-          columns
-        );
+          return generateEmojiPickerData(
+            filteredEmojis,
+            emojiData.current.categories,
+            columns
+          );
+        });
       });
-    });
-  }, [columns]);
+    }, [columns]);
 
-  const initializeEmojiData = useCallback(
-    async (locale: string) => {
-      try {
-        emojiData.current = await getEmojiData(locale);
+    const initializeEmojiData = useCallback(
+      async (locale: string) => {
+        try {
+          emojiData.current = await getEmojiData(locale);
+          updateEmojis();
+        } catch (error) {
+          setError(error as Error);
+        }
+      },
+      [updateEmojis]
+    );
+
+    useEffect(() => {
+      const idleCallbackId = requestIdleCallback(() => {
+        initializeEmojiData(locale);
+      });
+
+      return () => {
+        cancelIdleCallback(idleCallbackId);
+      };
+    }, [locale]); // eslint-disable-line react-hooks/exhaustive-deps
+
+    const handleSearch = useCallback(
+      (value: string) => {
+        search.current = value;
         updateEmojis();
-      } catch (error) {
-        setError(error as Error);
-      }
-    },
-    [updateEmojis]
-  );
+      },
+      [updateEmojis]
+    );
 
-  useEffect(() => {
-    const idleCallbackId = requestIdleCallback(() => {
-      initializeEmojiData(locale);
-    });
-
-    return () => {
-      cancelIdleCallback(idleCallbackId);
-    };
-  }, [locale]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const handleSearch = useCallback(
-    (value: string) => {
-      search.current = value;
-      updateEmojis();
-    },
-    [updateEmojis]
-  );
-
-  return (
-    <EmojiPickerContext.Provider
-      value={
-        {
-          data,
-          error,
-          isLoading: !data && !error,
-          columns,
-          onSearch: handleSearch,
-          onEmojiSelect,
-        } as EmojiPickerContext
-      }
-    >
-      {children}
-    </EmojiPickerContext.Provider>
-  );
-}
+    return (
+      <EmojiPickerContext.Provider
+        value={
+          {
+            data,
+            error,
+            isLoading: !data && !error,
+            columns,
+            onSearch: handleSearch,
+            onEmojiSelect,
+          } as EmojiPickerContext
+        }
+      >
+        {children}
+      </EmojiPickerContext.Provider>
+    );
+  }
+);
 
 const EmojiPickerSearch = forwardRef<HTMLInputElement, EmojiPickerSearchProps>(
   ({ asChild, value, defaultValue, onChange, ...props }, forwardedRef) => {
