@@ -206,7 +206,7 @@ export function createClient(options: ClientOptions): Client {
   const lostConnectionTimeout = getLostConnectionTimeout(
     clientOptions.lostConnectionTimeout ?? DEFAULT_LOST_CONNECTION_TIMEOUT
   );
-  const backgroundKeepAliveTimeout = getBackgroundKeepAlive(
+  const backgroundKeepAliveTimeout = getBackgroundKeepAliveTimeout(
     clientOptions.backgroundKeepAliveTimeout
   );
 
@@ -421,10 +421,13 @@ function checkBounds(
   return value;
 }
 
-function getBackgroundKeepAlive(value: number | undefined): number | undefined {
+function getBackgroundKeepAliveTimeout(
+  value: number | undefined
+): number | undefined {
   if (value === undefined) return undefined;
 
   if (typeof document === "undefined") {
+    // eslint-disable-next-line rulesdir/console-must-be-fancy
     console.warn(
       "Setting backgroundKeepAliveTimeout won't have an effect in a non-DOM environment."
     );
