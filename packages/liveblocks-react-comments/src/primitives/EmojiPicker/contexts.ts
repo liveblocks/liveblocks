@@ -1,8 +1,13 @@
 import type { Resolve } from "@liveblocks/core";
 import { nn } from "@liveblocks/core";
+import type { Dispatch, KeyboardEvent, SetStateAction } from "react";
 import { createContext, useContext } from "react";
 
-import type { EmojiPickerData } from "./types";
+import type {
+  EmojiPickerData,
+  EmojiPickerInteraction,
+  EmojiPickerSelectionDirection,
+} from "./types";
 
 type EmojiPickerContextData =
   | {
@@ -25,7 +30,17 @@ export type EmojiPickerContext = Resolve<
   EmojiPickerContextData & {
     columns: number;
     onSearch: (search: string) => void;
+    selectCurrentEmoji: () => void;
     onEmojiSelect?: (emoji: string) => void;
+    selectedColumnIndex: number;
+    selectedRowIndex: number;
+    moveSelection: (
+      direction: EmojiPickerSelectionDirection,
+      event: KeyboardEvent<HTMLInputElement>
+    ) => void;
+    setPointerSelection: (columnIndex: number, rowIndex: number) => void;
+    interaction: EmojiPickerInteraction;
+    setInteraction: Dispatch<SetStateAction<EmojiPickerInteraction>>;
   }
 >;
 

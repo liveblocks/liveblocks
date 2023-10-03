@@ -368,20 +368,19 @@ export function generateEmojiPickerData(
 ): EmojiPickerData {
   let currentIndex = 0;
   const rows: EmojiPickerRow[] = [];
+  const indexedEmojis = emojis.map((emoji, index) => ({ ...emoji, index }));
   const categoriesRowCounts: number[] = [];
   const categoriesRowIndices: number[][] = [];
   const categoriesNames: string[] = [];
   const categorizedEmojis = categories
     .map((category) => ({
       ...category,
-      emojis: emojis.filter((emoji) => emoji.category === category.key),
+      emojis: indexedEmojis.filter((emoji) => emoji.category === category.key),
     }))
     .filter((category) => category.emojis.length > 0);
 
   for (const category of categorizedEmojis) {
-    const categoryRows = chunk(category.emojis, columns).map(
-      (emojis) => ({ type: "emojis", emojis }) as const
-    );
+    const categoryRows = chunk(category.emojis, columns);
     const nextIndex = currentIndex + categoryRows.length;
 
     rows.push(...categoryRows);
