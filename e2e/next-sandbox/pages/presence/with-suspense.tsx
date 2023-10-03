@@ -1,7 +1,7 @@
 import { Json, createRoomContext, ClientSideSuspense } from "@liveblocks/react";
 import React from "react";
 import createLiveblocksClient from "../../utils/createClient";
-import { genRoomId, getRoomFromUrl } from "../../utils";
+import { genRoomId, getRoomFromUrl, Row, styles } from "../../utils";
 
 const client = createLiveblocksClient();
 
@@ -84,20 +84,26 @@ function PresenceSandbox() {
         Set third prop
       </button>
 
-      <h2>Current user</h2>
-      <div>
-        Count: <span id="me-count">{me.count}</span>
-        Second prop: <span id="me-count">{me.secondProp}</span>
-        Third prop: <span id="me-count">{me.thirdProp}</span>
-      </div>
+      <h2>Me</h2>
+      <table style={styles.dataTable}>
+        <tbody>
+          <Row id="me-count" name="Count" value={me.count} />
+          <Row id="me-second-prop" name="Second prop" value={me.secondProp} />
+          <Row id="me-third-prop" name="Third prop" value={me.thirdProp} />
+        </tbody>
+      </table>
 
       <h2>Others</h2>
-      <p id="othersCount">
-        {others.filter((o) => o.presence !== undefined).length}
-      </p>
-      <div id="others" style={{ whiteSpace: "pre" }}>
-        {JSON.stringify(others, null, 2)}
-      </div>
+      <table style={styles.dataTable}>
+        <tbody>
+          <Row
+            id="othersCount"
+            name="Others count"
+            value={others.filter((o) => o.presence !== undefined).length}
+          />
+          <Row id="others" name="Others" value={others} />
+        </tbody>
+      </table>
     </>
   );
 }
@@ -123,7 +129,11 @@ function EventSandbox() {
         Broadcast 42
       </button>
 
-      <pre id="events">{JSON.stringify(received, null, 2)}</pre>
+      <table style={styles.dataTable}>
+        <tbody>
+          <Row id="events" name="Events received" value={received} />
+        </tbody>
+      </table>
     </div>
   );
 }

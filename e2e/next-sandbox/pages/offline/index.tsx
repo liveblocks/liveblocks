@@ -1,14 +1,16 @@
 import type { IWebSocketCloseEvent } from "@liveblocks/core";
 import { LiveList } from "@liveblocks/client";
 import { createRoomContext } from "@liveblocks/react";
-import React, { useState } from "react";
+import React from "react";
 import createLiveblocksClient from "../../utils/createClient";
-import { getRoomFromUrl, genRoomId } from "../../utils";
+import { getRoomFromUrl, genRoomId, styles } from "../../utils";
 
 const client = createLiveblocksClient();
 
-const { RoomProvider, useList, useRedo, useSelf, useUndo, useRoom } =
+const { RoomProvider, useList, useRedo, useSelf, useUndo, useRoom, useStatus } =
   createRoomContext<never, { items: LiveList<string> }>(client);
+
+const { mono, dataTable } = styles;
 
 type Internal = {
   send: {
@@ -43,134 +45,158 @@ function generateRandomNumber(max: number, ignore?: number) {
 }
 
 function Sandbox(_props: { roomId: string }) {
-  const [status, setStatus] = useState("connected");
+  const status = useStatus();
   const room = useRoom();
   const internals = (room as Record<string, unknown>).__internal as Internal;
-  const list = useList("items");
+  const items = useList("items");
   const me = useSelf();
   const undo = useUndo();
   const redo = useRedo();
 
-  if (list == null || me == null) {
-    return <div>Loading</div>;
+  if (items == null || me == null) {
+    return <div>Loading...</div>;
   }
   room.getStorage();
-
-  function onConnectionChange(status: any) {
-    if (status === "open") {
-      setStatus("connected");
-    }
-  }
-
-  room.subscribe("connection", onConnectionChange);
 
   return (
     <div>
       <h1>Storage sandbox - Offline</h1>
-      <h2>
-        Websocket status:{" "}
-        <span style={{ color: status === "offline" ? "red" : "black" }}>
-          {status}
-        </span>
-      </h2>
-      <button
-        id="closeWebsocket"
-        onClick={() => {
-          internals.send.implicitClose();
-          setStatus("offline");
-        }}
-      >
-        Close socket
-      </button>
-      <button
-        id="sendCloseEventConnectionError"
-        onClick={() =>
-          internals.send.explicitClose(
-            new CloseEvent("close", {
-              reason: "Fake connection error",
-              code: 1005,
-              wasClean: true,
-            })
-          )
-        }
-      >
-        Send close event (connection)
-      </button>
-      <button
-        id="sendCloseEventAppError"
-        onClick={() =>
-          internals.send.explicitClose(
-            new CloseEvent("close", {
-              reason: "App error",
-              code: 4002,
-              wasClean: true,
-            })
-          )
-        }
-      >
-        Send close event (app)
-      </button>
 
-      <button
-        id="push"
-        onClick={() => {
-          list.push(me.connectionId + ":" + item);
-          item = String.fromCharCode(item.charCodeAt(0) + 1);
-        }}
-      >
-        Push
-      </button>
-
-      <button
-        id="move"
-        onClick={() => {
-          const index = generateRandomNumber(list.length);
-          const target = generateRandomNumber(list.length, index);
-          list.move(index, target);
-        }}
-      >
-        Move
-      </button>
-
-      <button
-        id="delete"
-        onClick={() => {
-          const index = generateRandomNumber(list.length);
-          list.delete(index);
-        }}
-      >
-        Delete
-      </button>
-
-      <button
-        id="clear"
-        onClick={() => {
-          while (list.length > 0) {
-            list.delete(0);
+      <div>
+        <button
+          id="closeWebsocket"
+          onClick={() => {
+            internals.send.implicitClose();
+          }}
+        >
+          Close socket
+        </button>
+        <button
+          id="sendCloseEventConnectionError"
+          onClick={() =>
+            internals.send.explicitClose(
+              new CloseEvent("close", {
+                reason: "Fake connection error",
+                code: 1005,
+                wasClean: true,
+              })
+            )
           }
-        }}
-      >
-        Clear
-      </button>
-
-      <button id="undo" onClick={undo}>
-        Undo
-      </button>
-
-      <button id="redo" onClick={redo}>
-        Redo
-      </button>
-
-      <h2>Connection Id</h2>
-      <div id="connectionId">{me.connectionId}</div>
-
-      <h2>Items</h2>
-      <p id="itemsCount" style={{ visibility: "hidden" }}>
-        {list.length}
-      </p>
-      <div id="items" style={{ whiteSpace: "pre" }}>
-        {JSON.stringify(list.toArray(), null, 2)}
+        >
+          Send close event (connection)
+        </button>
+        <button
+          id="sendCloseEventAppError"
+          onClick={() =>
+            internals.send.explicitClose(
+              new CloseEvent("close", {
+                reason: "App error",
+                code: 4002,
+                wasClean: true,
+              })
+            )
+          }
+        >
+          Send close event (app)
+        </button>
       </div>
+
+      <div style={{ margin: "8px 0" }}>
+        <button
+          id="push"
+          onClick={() => {
+            items.push(me.connectionId + ":" + item);
+            item = String.fromCharCode(item.charCodeAt(0) + 1);
+          }}
+        >
+          Push
+        </button>
+
+        <button
+          id="move"
+          // disabled={items.length <= 1}
+          onClick={() => {
+            const index = generateRandomNumber(items.length);
+            const target = generateRandomNumber(items.length, index);
+            items.move(index, target);
+          }}
+        >
+          Move
+        </button>
+
+        <button
+          id="delete"
+          onClick={() => {
+            const index = generateRandomNumber(items.length);
+            items.delete(index);
+          }}
+        >
+          Delete
+        </button>
+
+        <button
+          id="clear"
+          onClick={() => {
+            while (items.length > 0) {
+              items.delete(0);
+            }
+          }}
+        >
+          Clear
+        </button>
+
+        <button id="undo" onClick={undo}>
+          Undo
+        </button>
+
+        <button id="redo" onClick={redo}>
+          Redo
+        </button>
+      </div>
+
+      <table style={dataTable}>
+        <tbody>
+          <tr>
+            <td width="150">WebSocket status</td>
+            <td
+              id="socketStatus"
+              style={{
+                ...mono,
+                color: status !== "connected" ? "red" : "green",
+              }}
+            >
+              {status}
+            </td>
+          </tr>
+          <tr>
+            <td>Connection ID</td>
+            <td
+              id="connectionId"
+              style={{ fontFamily: "monospace", whiteSpace: "pre" }}
+            >
+              {me.connectionId}
+            </td>
+          </tr>
+          <tr>
+            <td>Items count</td>
+            <td
+              id="itemsCount"
+              style={{ fontFamily: "monospace", whiteSpace: "pre" }}
+            >
+              {items.length}
+            </td>
+          </tr>
+          <tr>
+            <td valign="top">Items</td>
+            <td
+              id="items"
+              style={{ fontFamily: "monospace", whiteSpace: "pre" }}
+            >
+              {JSON.stringify(items.toArray(), null, 2)}
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
   );
 }
