@@ -13,7 +13,7 @@ export function genRoomId(testTitle: string) {
     ? `${process.env.NEXT_PUBLIC_GITHUB_SHA.slice(0, 2)}`
     : "local";
   return `e2e-${prefix.toLowerCase()}-${testTitle
-    .replaceAll(/[^\w_-]+/g, "-")
+    .replaceAll(/[^\w\d_-]+/g, "-")
     .replaceAll(/--+/g, "-")}`;
 }
 

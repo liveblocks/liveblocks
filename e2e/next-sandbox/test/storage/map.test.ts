@@ -2,12 +2,11 @@ import { Page, test } from "@playwright/test";
 
 import {
   assertJsonContentAreEquals,
-  expectJson,
   pickNumberOfUndoRedo,
   pickRandomItem,
   preparePages,
-  sleep,
   waitForContentToBeEquals,
+  waitForJson,
 } from "../utils";
 
 function pickRandomAction() {
@@ -20,8 +19,10 @@ test.describe("Storage - LiveMap", () => {
   let pages: [Page, Page];
 
   test.beforeEach(async ({}, testInfo) => {
-    const roomName = `e2e-map-${testInfo.title.replaceAll(" ", "-")}`;
-    pages = await preparePages(`${TEST_URL}?room=${roomName}`);
+    const roomName = `e2e-map-${testInfo.title.replaceAll(/[^\w\d]+/g, "-")}`;
+    pages = await preparePages(
+      `${TEST_URL}?room=${encodeURIComponent(roomName)}`
+    );
   });
 
   test.afterEach(() =>
@@ -32,52 +33,48 @@ test.describe("Storage - LiveMap", () => {
   test("fuzzy", async () => {
     const [page1, page2] = pages;
     await page1.click("#clear");
-    // XXX Make JSON check
-    // XXX Rename to mapSize
-    await expectJson(pages, "#itemsCount", 0);
 
+    // XXX Rename to mapSize
+    await waitForJson(pages, "#itemsCount", 0);
+
+    const clicks = [];
     for (let i = 0; i < 50; i++) {
       // no await to create randomness
-      page1.click(pickRandomAction());
-      page2.click(pickRandomAction());
-      await sleep(50);
+      clicks.push(page1.click(pickRandomAction()));
+      clicks.push(page2.click(pickRandomAction()));
     }
 
+    await Promise.all(clicks);
     await waitForContentToBeEquals(pages, "#items");
   });
 
-  // TODO: This test is flaky and occasionally fails in CI--make it more robust
-  // See https://github.com/liveblocks/liveblocks/runs/8032018966?check_suite_focus=true#step:6:46
-  test.skip("fuzzy with full undo/redo", async () => {
-    const [page1, _page2] = pages;
+  test("fuzzy with full undo-redo", async () => {
+    const [page1] = pages;
     await page1.click("#clear");
-    // XXX Make JSON check
+
     // XXX Rename to mapSize
-    await expectJson(pages, "#itemsCount", 0);
+    await waitForJson(pages, "#itemsCount", 0);
 
     await assertJsonContentAreEquals(pages, "#items");
 
+    const clicks: unknown[] = [];
     for (let i = 0; i < 50; i++) {
-      // no await to create randomness
-
       pages.forEach((page) => {
         const nbofUndoRedo = pickNumberOfUndoRedo();
-
         if (nbofUndoRedo > 0) {
           for (let y = 0; y < nbofUndoRedo; y++) {
-            page.click("#undo");
+            clicks.push(page.click("#undo"));
           }
           for (let y = 0; y < nbofUndoRedo; y++) {
-            page.click("#redo");
+            clicks.push(page.click("#redo"));
           }
         } else {
-          page.click(pickRandomAction());
+          clicks.push(page.click(pickRandomAction()));
         }
       });
-
-      await sleep(50);
     }
 
+    await Promise.all(clicks);
     await waitForContentToBeEquals(pages, "#items");
   });
 });

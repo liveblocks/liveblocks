@@ -2,7 +2,6 @@ import { Page, test } from "@playwright/test";
 
 import {
   expectJson,
-  nanoSleep,
   pickNumberOfUndoRedo,
   pickRandomItem,
   preparePages,
@@ -22,7 +21,9 @@ test.describe("Storage - LiveList", () => {
 
   test.beforeEach(async ({}, testInfo) => {
     const roomName = genRoomId(testInfo.title);
-    pages = await preparePages(`${TEST_URL}?room=${roomName}`);
+    pages = await preparePages(
+      `${TEST_URL}?room=${encodeURIComponent(roomName)}`
+    );
   });
 
   test.afterEach(() =>
@@ -76,10 +77,8 @@ test.describe("Storage - LiveList", () => {
 
     const clicks = [];
     for (let i = 0; i < 10; i++) {
-      // no await to create randomness
       clicks.push(page1.click("#push"));
       clicks.push(page2.click("#push"));
-      await nanoSleep();
     }
 
     await Promise.all(clicks);
@@ -99,7 +98,6 @@ test.describe("Storage - LiveList", () => {
       // no await to create randomness
       clicks.push(page1.click("#set"));
       clicks.push(page2.click("#set"));
-      await nanoSleep();
     }
 
     await Promise.all(clicks);
@@ -108,8 +106,6 @@ test.describe("Storage - LiveList", () => {
     await waitForContentToBeEquals(pages, "#items");
   });
 
-  // TODO: This test is flaky and occasionally fails in CI--make it more robust
-  // See https://github.com/liveblocks/liveblocks/runs/8032018966?check_suite_focus=true#step:6:45
   test("fuzzy with undo/redo push delete and move", async () => {
     const [page1] = pages;
     await page1.click("#clear");
@@ -141,7 +137,6 @@ test.describe("Storage - LiveList", () => {
           clicks.push(page.click(pickRandomAction()));
         }
       });
-      await nanoSleep();
     }
 
     await Promise.all(clicks);
