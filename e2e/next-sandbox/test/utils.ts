@@ -33,9 +33,10 @@ export async function preparePages(url: string) {
   const secondUrl = new URL(url);
   firstUrl.searchParams.set("bg", "#cafbca");
   secondUrl.searchParams.set("bg", "#e9ddf9");
-  const firstPage = await preparePage(firstUrl.toString(), 0);
-  const secondPage = await preparePage(secondUrl.toString(), WIDTH);
-  return [firstPage, secondPage];
+  return Promise.all([
+    preparePage(firstUrl.toString(), 0),
+    preparePage(secondUrl.toString(), WIDTH),
+  ] as const);
 }
 
 /** @deprecated */
@@ -45,12 +46,12 @@ export async function assertContainText(
   selector: IDSelector,
   value: string
 ) {
-  for (let i = 0; i < pages.length; i++) {
-    await expect(pages[i].locator(selector)).toContainText(value);
+  for (const page of pages) {
+    await expect(page.locator(selector)).toContainText(value);
   }
 }
 
-export async function expectJson(
+export async function waitForJson(
   oneOrMorePages: Page | Page[],
   selector: IDSelector,
   expectedValue: Json
@@ -58,8 +59,30 @@ export async function expectJson(
   const pages = Array.isArray(oneOrMorePages)
     ? oneOrMorePages
     : [oneOrMorePages];
+
+  const expectedText = JSON.stringify(expectedValue, null, 2);
+  return Promise.all(
+    pages.map((page) =>
+      expect(page.locator(selector)).toHaveText(expectedText, { timeout: 2000 })
+    )
+  );
+}
+
+export async function expectJson(
+  oneOrMorePages: Page | Page[],
+  selector: IDSelector,
+  expectedValue: Json | undefined
+) {
+  const pages = Array.isArray(oneOrMorePages)
+    ? oneOrMorePages
+    : [oneOrMorePages];
   for (const page of pages) {
-    await expect(getJson(page, selector)).resolves.toEqual(expectedValue);
+    if (expectedValue !== undefined) {
+      await expect(getJson(page, selector)).resolves.toEqual(expectedValue);
+    } else {
+      const text = page.locator(selector).innerText();
+      await expect(text).toEqual("undefined");
+    }
   }
 }
 
@@ -91,53 +114,7 @@ export function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-type TimeoutOptions = {
-  timeout?: number;
-  step?: number;
-};
-
-const DEFAULT_TIMEOUT = 1500;
-const DEFAULT_STEP = 60;
-
-export async function waitForTextContent(
-  page: Page,
-  selector: IDSelector,
-  expectedText: string,
-  options?: TimeoutOptions
-) {
-  const start = Date.now();
-  const timeoutAt = start + (options?.timeout ?? DEFAULT_TIMEOUT);
-  const attempts = [];
-
-  do {
-    const foundText = await page.locator(selector).innerText();
-    const ms = Date.now() - start;
-    if (!foundText) {
-      attempts.push(
-        `(after ${ms}ms) Element with id ${selector} not found yet`
-      );
-    } else if (foundText !== expectedText) {
-      attempts.push(
-        `(after ${ms}ms) Element did not contain expected text yet: ${JSON.stringify(
-          foundText
-        )}`
-      );
-    } else {
-      // Done!
-      return;
-    }
-    await sleep(options?.step ?? DEFAULT_STEP);
-  } while (Date.now() < timeoutAt);
-
-  const ms = Date.now() - start;
-  attempts.push(`(after ${ms}ms) Timed out`);
-  throw new Error(
-    `Expected text content was never found\n\nid: ${selector}\nI tried looking for: ${JSON.stringify(
-      expectedText
-    )}\n\nHere were my attempts:\n${attempts.join("\n")}`
-  );
-}
-
+// XXX Deprecate?
 export async function waitForContentToBeEquals(
   pages: Page[],
   selector: IDSelector
@@ -146,9 +123,8 @@ export async function waitForContentToBeEquals(
     const firstPageContent = await getJson(pages[0], selector);
 
     let allEquals = true;
-
-    for (let pI = 1; pI < pages.length; pI++) {
-      const otherPageContent = await getJson(pages[pI], selector);
+    for (let j = 1; j < pages.length; j++) {
+      const otherPageContent = await getJson(pages[j], selector);
 
       if (!_.isEqual(firstPageContent, otherPageContent)) {
         allEquals = false;
