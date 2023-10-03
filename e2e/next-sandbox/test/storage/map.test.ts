@@ -1,13 +1,13 @@
 import { Page, test } from "@playwright/test";
 
 import {
-  delay,
   assertJsonContentAreEquals,
-  pickRandomItem,
+  expectJson,
   pickNumberOfUnderRedo,
+  pickRandomItem,
   preparePages,
+  sleep,
   waitForContentToBeEquals,
-  assertContainText,
 } from "../utils";
 
 function pickRandomAction() {
@@ -34,13 +34,13 @@ test.describe("Storage - LiveMap", () => {
     await pages[0].click("#clear");
     // XXX Make JSON check
     // XXX Rename to mapSize
-    await assertContainText(pages, "#itemsCount", "0");
+    await expectJson(pages, "#itemsCount", 0);
 
     for (let i = 0; i < 50; i++) {
       // no await to create randomness
       pages[0].click(pickRandomAction());
       pages[1].click(pickRandomAction());
-      await delay(50);
+      await sleep(50);
     }
 
     await waitForContentToBeEquals(pages, "#items");
@@ -52,7 +52,7 @@ test.describe("Storage - LiveMap", () => {
     await pages[0].click("#clear");
     // XXX Make JSON check
     // XXX Rename to mapSize
-    await assertContainText(pages, "#itemsCount", "0");
+    await expectJson(pages, "#itemsCount", 0);
 
     await assertJsonContentAreEquals(pages, "#items");
 
@@ -74,7 +74,7 @@ test.describe("Storage - LiveMap", () => {
         }
       });
 
-      await delay(50);
+      await sleep(50);
     }
 
     await waitForContentToBeEquals(pages, "#items");

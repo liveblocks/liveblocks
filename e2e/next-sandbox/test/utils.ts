@@ -3,6 +3,8 @@ import _ from "lodash";
 import randomNumber from "../utils/randomNumber";
 import type { Json } from "@liveblocks/client";
 
+type IDSelector = `#${string}`;
+
 const WIDTH = 640;
 const HEIGHT = 800;
 
@@ -36,60 +38,56 @@ export async function preparePages(url: string) {
   return [firstPage, secondPage];
 }
 
+/** @deprecated */
+// XXX Remove helper eventually!
 export async function assertContainText(
   pages: Page[],
-  id: `#${string}`,
+  selector: IDSelector,
   value: string
 ) {
   for (let i = 0; i < pages.length; i++) {
-    await expect(pages[i].locator(id)).toContainText(value);
+    await expect(pages[i].locator(selector)).toContainText(value);
   }
 }
 
-export async function getTextContentOrEmpty(
-  page: Page,
-  id: `#${string}`
-): Promise<string> {
-  const selector = id.startsWith(".") || id.startsWith("#") ? id : `#${id}`;
-  return page.locator(selector).innerText();
+export async function expectJson(
+  oneOrMorePages: Page | Page[],
+  selector: IDSelector,
+  expectedValue: Json
+) {
+  const pages = Array.isArray(oneOrMorePages)
+    ? oneOrMorePages
+    : [oneOrMorePages];
+  for (const page of pages) {
+    await expect(getJson(page, selector)).resolves.toEqual(expectedValue);
+  }
 }
 
-export async function getTextContent(
-  page: Page,
-  id: `#${string}`
-): Promise<string> {
-  const text = await getTextContentOrEmpty(page, id);
+export async function getJson(page: Page, selector: IDSelector): Promise<Json> {
+  const text = await page.locator(selector).innerText();
   if (!text) {
-    throw new Error(`Could not find HTML element #${id}`);
+    throw new Error(`Could not find HTML element #${selector}`);
   }
-  return text;
-}
-
-export async function getJsonContent(
-  page: Page,
-  id: `#${string}`
-): Promise<Json> {
-  const text = await getTextContent(page, id);
   return JSON.parse(text);
 }
 
 export async function assertJsonContentAreEquals(
   pages: Page[],
-  id: `#${string}`
+  selector: IDSelector
 ) {
-  const firstPageContent = await getJsonContent(pages[0], id);
+  const firstPageContent = await getJson(pages[0], selector);
 
   for (const page of pages.slice(1)) {
-    const otherPageContent = await getJsonContent(page, id);
+    const otherPageContent = await getJson(page, selector);
     expect(firstPageContent).toEqual(otherPageContent);
   }
 
   pages.forEach(async (page) => {
-    expect(firstPageContent).toEqual(await getJsonContent(page, id));
+    expect(firstPageContent).toEqual(await getJson(page, selector));
   });
 }
 
-export function delay(ms: number) {
+export function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
@@ -103,7 +101,7 @@ const DEFAULT_STEP = 60;
 
 export async function waitForTextContent(
   page: Page,
-  id: `#${string}`,
+  selector: IDSelector,
   expectedText: string,
   options?: TimeoutOptions
 ) {
@@ -112,10 +110,12 @@ export async function waitForTextContent(
   const attempts = [];
 
   do {
-    const foundText = await getTextContentOrEmpty(page, id);
+    const foundText = await page.locator(selector).innerText();
     const ms = Date.now() - start;
     if (!foundText) {
-      attempts.push(`(after ${ms}ms) Element with id ${id} not found yet`);
+      attempts.push(
+        `(after ${ms}ms) Element with id ${selector} not found yet`
+      );
     } else if (foundText !== expectedText) {
       attempts.push(
         `(after ${ms}ms) Element did not contain expected text yet: ${JSON.stringify(
@@ -126,13 +126,13 @@ export async function waitForTextContent(
       // Done!
       return;
     }
-    await delay(options?.step ?? DEFAULT_STEP);
+    await sleep(options?.step ?? DEFAULT_STEP);
   } while (Date.now() < timeoutAt);
 
   const ms = Date.now() - start;
   attempts.push(`(after ${ms}ms) Timed out`);
   throw new Error(
-    `Expected text content was never found\n\nid: ${id}\nI tried looking for: ${JSON.stringify(
+    `Expected text content was never found\n\nid: ${selector}\nI tried looking for: ${JSON.stringify(
       expectedText
     )}\n\nHere were my attempts:\n${attempts.join("\n")}`
   );
@@ -140,15 +140,15 @@ export async function waitForTextContent(
 
 export async function waitForContentToBeEquals(
   pages: Page[],
-  id: `#${string}`
+  selector: IDSelector
 ) {
   for (let i = 0; i < 20; i++) {
-    const firstPageContent = await getJsonContent(pages[0], id);
+    const firstPageContent = await getJson(pages[0], selector);
 
     let allEquals = true;
 
     for (let pI = 1; pI < pages.length; pI++) {
-      const otherPageContent = await getJsonContent(pages[pI], id);
+      const otherPageContent = await getJson(pages[pI], selector);
 
       if (!_.isEqual(firstPageContent, otherPageContent)) {
         allEquals = false;
@@ -159,10 +159,10 @@ export async function waitForContentToBeEquals(
       return;
     }
 
-    await delay(100);
+    await sleep(100);
   }
 
-  await assertJsonContentAreEquals(pages, id);
+  await assertJsonContentAreEquals(pages, selector);
 }
 
 export function pickRandomItem<T>(array: T[]) {

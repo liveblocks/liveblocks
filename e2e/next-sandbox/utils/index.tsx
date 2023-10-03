@@ -1,4 +1,4 @@
-import type { Json } from "@liveblocks/core";
+import type { Json } from "@liveblocks/client";
 
 /**
  * Generates a stable yet unique key to use for this test run, so it won't

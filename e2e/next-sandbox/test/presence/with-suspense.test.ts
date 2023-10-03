@@ -3,7 +3,7 @@ import { Page, test, expect } from "@playwright/test";
 import {
   preparePage,
   delay,
-  getJsonContent,
+  getJson,
   waitForTextContent,
   // getTextContent,
   // preparePages,
@@ -11,11 +11,11 @@ import {
 } from "../utils";
 
 function getOthers(page: Page): Promise<JsonObject[]> {
-  return getJsonContent(page, "#others") as Promise<JsonObject[]>;
+  return getJson(page, "#others") as Promise<JsonObject[]>;
 }
 
 function getEvents(page: Page): Promise<Json[]> {
-  return getJsonContent(page, "#events") as Promise<Json[]>;
+  return getJson(page, "#events") as Promise<Json[]>;
 }
 
 const WIDTH = 640;

@@ -1,14 +1,14 @@
 import { Page, test, expect } from "@playwright/test";
 
 import {
-  delay,
+  expectJson,
+  getJson,
   pickRandomItem,
-  getJsonContent,
-  waitForContentToBeEquals,
   preparePages,
-  assertContainText,
+  sleep,
+  waitForContentToBeEquals,
 } from "../utils";
-import type { Json } from "@liveblocks/core";
+import type { Json } from "@liveblocks/client";
 
 function pickRandomAction() {
   return pickRandomItem(["#push", "#delete", "#move", "#undo", "#redo"]);
@@ -32,106 +32,98 @@ test.describe("Offline", () => {
 
   test.skip("one client offline with offline changes - connection issue (code 1005)", async () => {
     await pages[0].click("#clear");
-    await assertContainText(pages, "#itemsCount", "0");
+    await expectJson(pages, "#itemsCount", 0);
 
     await pages[0].click("#push");
-    await assertContainText(pages, "#itemsCount", "1");
+    await expectJson(pages, "#itemsCount", 1);
 
     await pages[0].click("#closeWebsocket");
-    await delay(50);
+    await sleep(50);
     await pages[0].click("#push");
     await pages[1].click("#push");
-    await assertContainText([pages[0]], "#itemsCount", "2");
+    await expectJson(pages[0], "#itemsCount", 2);
 
-    const firstPageItems = (await getJsonContent(pages[0], "#items")) as Json[];
-    const secondPageItems = (await getJsonContent(
-      pages[1],
-      "#items"
-    )) as Json[];
+    // XXX Really needed?
+    const firstPageItems = (await getJson(pages[0], "#items")) as Json[];
+    const secondPageItems = (await getJson(pages[1], "#items")) as Json[];
 
     expect(firstPageItems.length).toEqual(2);
     expect(secondPageItems.length).toEqual(2);
 
     await pages[0].click("#sendCloseEventConnectionError");
-    await delay(3000);
+    await sleep(3000);
 
     await waitForContentToBeEquals(pages, "#items");
 
     await pages[0].click("#clear");
-    await assertContainText(pages, "#itemsCount", "0");
+    await expectJson(pages, "#itemsCount", 0);
   });
 
   test.skip("one client offline with offline changes - app server issue (code 4002)", async () => {
     await pages[0].click("#clear");
-    await assertContainText(pages, "#itemsCount", "0");
+    await expectJson(pages, "#itemsCount", 0);
 
     await pages[0].click("#push");
-    await assertContainText(pages, "#itemsCount", "1");
+    await expectJson(pages, "#itemsCount", 1);
 
-    const firstConnectionId = await getJsonContent(pages[0], "#connectionId");
+    const firstConnectionId = await getJson(pages[0], "#connectionId");
 
     await pages[0].click("#closeWebsocket");
-    await delay(50);
+    await sleep(50);
     await pages[0].click("#push");
     await pages[1].click("#push");
-    await assertContainText([pages[0]], "#itemsCount", "2");
+    await expectJson(pages[0], "#itemsCount", 2);
 
-    const firstPageItems = (await getJsonContent(pages[0], "#items")) as Json[];
-    const secondPageItems = (await getJsonContent(
-      pages[1],
-      "#items"
-    )) as Json[];
+    const firstPageItems = (await getJson(pages[0], "#items")) as Json[];
+    const secondPageItems = (await getJson(pages[1], "#items")) as Json[];
 
     expect(firstPageItems.length).toEqual(2);
     expect(secondPageItems.length).toEqual(2);
 
     await pages[0].click("#sendCloseEventAppError");
-    await delay(5000);
+    await sleep(5000);
 
     await waitForContentToBeEquals(pages, "#items");
 
-    const connectionIdAfterReconnect = await getJsonContent(
-      pages[0],
-      "#connectionId"
-    );
+    const connectionIdAfterReconnect = await getJson(pages[0], "#connectionId");
     expect(connectionIdAfterReconnect).toEqual(firstConnectionId);
 
     await pages[0].click("#clear");
-    await assertContainText(pages, "#itemsCount", "0");
+    await expectJson(pages, "#itemsCount", 0);
   });
 
   test.skip("fuzzy", async () => {
     await pages[0].click("#clear");
-    await assertContainText(pages, "#itemsCount", "0");
+    await expectJson(pages, "#itemsCount", 0);
 
     for (let i = 0; i < 10; i++) {
       // no await to create randomness
       pages[0].click("#push");
       pages[1].click("#push");
-      await delay(50);
+      await sleep(50);
     }
 
     await waitForContentToBeEquals(pages, "#items");
 
     await pages[0].click("#closeWebsocket");
-    await delay(50);
+    await sleep(50);
 
     for (let i = 0; i < 50; i++) {
       // no await to create randomness
       pages[0].click(pickRandomAction());
       pages[1].click(pickRandomAction());
-      await delay(50);
+      await sleep(50);
     }
 
-    await delay(2000);
+    await sleep(2000);
 
     await pages[0].click("#sendCloseEventConnectionError");
 
-    await delay(3000);
+    await sleep(3000);
 
     await waitForContentToBeEquals(pages, "#items");
 
     await pages[0].click("#clear");
-    await assertContainText(pages, "#itemsCount", "0");
+    await expectJson(pages, "#itemsCount", 0);
   });
 });

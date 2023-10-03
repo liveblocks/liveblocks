@@ -1,14 +1,14 @@
 import { Page, test, expect } from "@playwright/test";
 
 import {
-  delay,
+  expectJson,
+  getJson,
   pickRandomItem,
-  getJsonContent,
   preparePages,
-  assertContainText,
+  sleep,
   waitForContentToBeEquals,
 } from "../utils";
-import type { JsonObject } from "@liveblocks/core";
+import type { JsonObject } from "@liveblocks/client";
 
 const TEST_URL = "http://localhost:3007/zustand";
 
@@ -32,14 +32,14 @@ test.describe("Zustand", () => {
 
   test("array push basic + presence", async () => {
     await pages[0].click("#clear");
-    await assertContainText(pages, "#itemsCount", "0");
+    await expectJson(pages, "#itemsCount", 0);
 
-    await delay(3000);
-    const othersFirstPage = (await getJsonContent(
+    await sleep(3000);
+    const othersFirstPage = (await getJson(
       pages[0],
       "#others"
     )) as JsonObject[];
-    const othersSecondPage = (await getJsonContent(
+    const othersSecondPage = (await getJson(
       pages[1],
       "#others"
     )) as JsonObject[];
@@ -59,39 +59,39 @@ test.describe("Zustand", () => {
     await waitForContentToBeEquals(pages, "#items");
 
     await pages[0].click("#clear");
-    await assertContainText(pages, "#itemsCount", "0");
+    await expectJson(pages, "#itemsCount", 0);
   });
 
   test("with enter and leave room", async () => {
     await pages[0].click("#clear");
-    await assertContainText(pages, "#itemsCount", "0");
+    await expectJson(pages, "#itemsCount", 0);
 
     await pages[0].click("#push");
-    await delay(50);
+    await sleep(50);
     await pages[0].click("#push");
     await waitForContentToBeEquals(pages, "#items");
 
     await pages[1].click("#leave"); // Leave
-    await delay(500);
+    await sleep(500);
 
     await pages[0].click("#push");
-    await delay(1000);
+    await sleep(1000);
 
     await pages[1].click("#enter"); // Enter
     await waitForContentToBeEquals(pages, "#items");
 
     await pages[0].click("#clear");
-    await assertContainText(pages, "#itemsCount", "0");
+    await expectJson(pages, "#itemsCount", 0);
   });
 
   test.skip("fuzzy", async () => {
     await pages[0].click("#clear");
-    await assertContainText(pages, "#itemsCount", "0");
+    await expectJson(pages, "#itemsCount", 0);
     for (let i = 0; i < 10; i++) {
       // no await to create randomness
       pages[0].click("#push");
       pages[1].click("#push");
-      await delay(50);
+      await sleep(50);
     }
 
     await waitForContentToBeEquals(pages, "#items");
@@ -100,12 +100,12 @@ test.describe("Zustand", () => {
       // no await to create randomness
       pages[0].click(pickRandomActionWithUndoRedo());
       pages[1].click(pickRandomActionWithUndoRedo());
-      await delay(50);
+      await sleep(50);
     }
 
     await waitForContentToBeEquals(pages, "#items");
 
     await pages[0].click("#clear");
-    await assertContainText(pages, "#itemsCount", "0");
+    await expectJson(pages, "#itemsCount", 0);
   });
 });

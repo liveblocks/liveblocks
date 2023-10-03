@@ -1,13 +1,13 @@
 import { Page, test } from "@playwright/test";
 
 import {
-  delay,
-  assertJsonContentAreEquals,
-  pickRandomItem,
-  waitForContentToBeEquals,
-  pickNumberOfUnderRedo,
-  preparePages,
   assertContainText,
+  assertJsonContentAreEquals,
+  pickNumberOfUnderRedo,
+  pickRandomItem,
+  preparePages,
+  sleep,
+  waitForContentToBeEquals,
 } from "../utils";
 
 function pickRandomAction() {
@@ -40,7 +40,7 @@ test.describe("Storage - LiveObject", () => {
 
     for (let i = 0; i < 20; i++) {
       pages[0].click("#set");
-      await delay(50);
+      await sleep(50);
     }
 
     await waitForContentToBeEquals(pages, "#items");
@@ -49,7 +49,7 @@ test.describe("Storage - LiveObject", () => {
       // no await to create randomness
       pages[0].click(pickRandomAction());
       pages[1].click(pickRandomAction());
-      await delay(50);
+      await sleep(50);
     }
 
     await waitForContentToBeEquals(pages, "#items");
@@ -63,7 +63,7 @@ test.describe("Storage - LiveObject", () => {
 
     for (let i = 0; i < 20; i++) {
       pages[0].click("#set-nested");
-      await delay(50);
+      await sleep(50);
     }
 
     await waitForContentToBeEquals(pages, "#items");
@@ -72,7 +72,7 @@ test.describe("Storage - LiveObject", () => {
       // no await to create randomness
       pages[0].click(pickRandomActionNested());
       pages[1].click(pickRandomActionNested());
-      await delay(50);
+      await sleep(50);
     }
 
     await waitForContentToBeEquals(pages, "#items");
@@ -88,7 +88,7 @@ test.describe("Storage - LiveObject", () => {
 
     for (let i = 0; i < 20; i++) {
       pages[0].click("#set-nested");
-      await delay(50);
+      await sleep(50);
     }
 
     await waitForContentToBeEquals(pages, "#items");
@@ -108,7 +108,7 @@ test.describe("Storage - LiveObject", () => {
         pages[1].click(pickRandomActionNested());
       }
 
-      await delay(50);
+      await sleep(50);
     }
 
     await waitForContentToBeEquals(pages, "#items");

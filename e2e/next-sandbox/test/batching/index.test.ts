@@ -1,11 +1,11 @@
 import { test, expect, Page } from "@playwright/test";
 import {
-  waitForContentToBeEquals,
+  expectJson,
+  getJson,
   preparePages,
-  assertContainText,
-  getJsonContent,
+  waitForContentToBeEquals,
 } from "../utils";
-import type { JsonObject } from "@liveblocks/core";
+import type { JsonObject } from "@liveblocks/client";
 
 const TEST_URL = "http://localhost:3007/batching";
 
@@ -25,27 +25,24 @@ test.describe("Storage - Batching", () => {
 
   test("update storage and presence", async () => {
     await pages[0].click("#clear");
-    await assertContainText(pages, "#itemsCount", "0");
+    await expectJson(pages, "#itemsCount", 0);
 
     await pages[0].click("#update-storage-presence-batch");
-    await assertContainText(pages, "#itemsCount", "1");
+    await expectJson(pages, "#itemsCount", 1);
 
     await waitForContentToBeEquals(pages, "#items");
-    const othersFirstPage = (await getJsonContent(
+    const othersFirstPage = (await getJson(
       pages[0],
       "#others"
     )) as JsonObject[];
     expect(othersFirstPage.length).toEqual(1);
     expect(othersFirstPage[0].presence).toEqual({});
 
-    const othersSecondPage = (await getJsonContent(
-      pages[1],
-      "#others"
-    )) as any[];
+    const othersSecondPage = (await getJson(pages[1], "#others")) as any[];
     expect(othersSecondPage.length).toEqual(1);
     expect(othersSecondPage[0].presence.count).toEqual(1);
 
     await pages[0].click("#clear");
-    await assertContainText(pages, "#itemsCount", "0");
+    await expectJson(pages, "#itemsCount", 0);
   });
 });
