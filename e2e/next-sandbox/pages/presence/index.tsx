@@ -79,27 +79,6 @@ function PresenceSandbox() {
         Set third prop
       </button>
 
-      {/* <h2>Me</h2> */}
-      {/* <table style={styles.dataTable}> */}
-      {/*   <tbody> */}
-      {/*     <Row id="meCount" name="Count" value={me.count} /> */}
-      {/*     <Row id="meSecondProp" name="Second prop" value={me.secondProp} /> */}
-      {/*     <Row id="meThirdProp" name="Third prop" value={me.thirdProp} /> */}
-      {/*   </tbody> */}
-      {/* </table> */}
-
-      {/* <h2>Others</h2> */}
-      {/* <table style={styles.dataTable}> */}
-      {/*   <tbody> */}
-      {/*     <Row */}
-      {/*       id="othersCount" */}
-      {/*       name="Others count" */}
-      {/*       value={others.filter((o) => o.presence !== undefined).length} */}
-      {/*     /> */}
-      {/*     <Row id="others" name="Others" value={others} /> */}
-      {/*   </tbody> */}
-      {/* </table> */}
-
       <h2>Presence</h2>
       <table style={styles.dataTable}>
         <tbody>
