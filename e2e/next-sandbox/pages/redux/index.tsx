@@ -37,7 +37,7 @@ function List() {
   }, [actions.enterRoom, actions.leaveRoom]);
 
   if (items == null) {
-    return <div>Loading</div>;
+    return <div>Loading...</div>;
   }
 
   return (

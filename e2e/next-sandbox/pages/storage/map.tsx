@@ -37,7 +37,7 @@ function Sandbox() {
   const map = useMap("map");
 
   if (map == null) {
-    return <div>Loading</div>;
+    return <div>Loading...</div>;
   }
 
   return (

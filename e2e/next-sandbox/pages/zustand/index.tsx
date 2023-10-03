@@ -61,7 +61,7 @@ export default function Home() {
   }, [enterRoom, leaveRoom]);
 
   if (isStorageLoading) {
-    return <div>Loading</div>;
+    return <div>Loading...</div>;
   }
 
   return (

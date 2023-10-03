@@ -49,7 +49,7 @@ function Sandbox() {
   const me = useSelf();
 
   if (list == null || me == null) {
-    return <div>Loading</div>;
+    return <div>Loading...</div>;
   }
 
   return (
