@@ -21,25 +21,25 @@ function pickRandomActionNested() {
 const TEST_URL = "http://localhost:3007/storage/object";
 
 test.describe("Storage - LiveObject", () => {
-  let pages: Page[];
+  let pages: [Page, Page];
 
   test.beforeEach(async ({}, testInfo) => {
     const roomName = `e2e-object-${testInfo.title.replaceAll(" ", "-")}`;
     pages = await preparePages(`${TEST_URL}?room=${roomName}`);
   });
 
-  test.afterEach(async () => {
-    pages.forEach(async (page) => {
-      await page.close();
-    });
-  });
+  test.afterEach(() =>
+    // Close all pages
+    Promise.all(pages.map((page) => page.close()))
+  );
 
   test("fuzzy", async () => {
-    await pages[0].click("#clear");
+    const [page1, page2] = pages;
+    await page1.click("#clear");
     await assertContainText(pages, "#items", "{}");
 
     for (let i = 0; i < 20; i++) {
-      pages[0].click("#set");
+      page1.click("#set");
       await sleep(50);
     }
 
@@ -47,8 +47,8 @@ test.describe("Storage - LiveObject", () => {
 
     for (let i = 0; i < 100; i++) {
       // no await to create randomness
-      pages[0].click(pickRandomAction());
-      pages[1].click(pickRandomAction());
+      page1.click(pickRandomAction());
+      page2.click(pickRandomAction());
       await sleep(50);
     }
 
@@ -56,13 +56,14 @@ test.describe("Storage - LiveObject", () => {
   });
 
   test("fuzzy with nested objects", async () => {
-    await pages[0].click("#clear");
+    const [page1, page2] = pages;
+    await page1.click("#clear");
     await assertContainText(pages, "#items", "{}");
 
     await assertJsonContentAreEquals(pages, "#items");
 
     for (let i = 0; i < 20; i++) {
-      pages[0].click("#set-nested");
+      page1.click("#set-nested");
       await sleep(50);
     }
 
@@ -70,8 +71,8 @@ test.describe("Storage - LiveObject", () => {
 
     for (let i = 0; i < 50; i++) {
       // no await to create randomness
-      pages[0].click(pickRandomActionNested());
-      pages[1].click(pickRandomActionNested());
+      page1.click(pickRandomActionNested());
+      page2.click(pickRandomActionNested());
       await sleep(50);
     }
 
@@ -81,13 +82,14 @@ test.describe("Storage - LiveObject", () => {
   // TODO: This test is flaky and occasionally fails in CI--make it more robust
   // See https://github.com/liveblocks/liveblocks/runs/8032018966?check_suite_focus=true#step:6:47
   test.skip("fuzzy with nested objects and undo/redo", async () => {
-    await pages[0].click("#clear");
+    const [page1, page2] = pages;
+    await page1.click("#clear");
     await assertContainText(pages, "#items", "{}");
 
     await assertJsonContentAreEquals(pages, "#items");
 
     for (let i = 0; i < 20; i++) {
-      pages[0].click("#set-nested");
+      page1.click("#set-nested");
       await sleep(50);
     }
 
@@ -98,14 +100,14 @@ test.describe("Storage - LiveObject", () => {
 
       if (nbofUndoRedo > 0) {
         for (let y = 0; y < nbofUndoRedo; y++) {
-          pages[0].click("#undo");
+          page1.click("#undo");
         }
         for (let y = 0; y < nbofUndoRedo; y++) {
-          pages[0].click("#redo");
+          page1.click("#redo");
         }
       } else {
-        pages[0].click(pickRandomActionNested());
-        pages[1].click(pickRandomActionNested());
+        page1.click(pickRandomActionNested());
+        page2.click(pickRandomActionNested());
       }
 
       await sleep(50);

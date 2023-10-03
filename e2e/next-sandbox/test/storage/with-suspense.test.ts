@@ -16,7 +16,7 @@ function pickRandomAction() {
 const TEST_URL = "http://localhost:3007/storage/with-suspense";
 
 test.describe("Storage w/ Suspense", () => {
-  let pages: Page[];
+  let pages: [Page, Page];
 
   test.beforeEach(async ({}, testInfo) => {
     const roomName = `e2e-storage-with-suspense-${testInfo.title.replaceAll(
@@ -26,43 +26,44 @@ test.describe("Storage w/ Suspense", () => {
     pages = await preparePages(`${TEST_URL}?room=${roomName}`);
   });
 
-  test.afterEach(async () => {
-    pages.forEach(async (page) => {
-      await page.close();
-    });
-  });
+  test.afterEach(() =>
+    // Close all pages
+    Promise.all(pages.map((page) => page.close()))
+  );
 
   test("list push basic", async () => {
-    await pages[0].click("#clear");
+    const [page1, _page2] = pages;
+    await page1.click("#clear");
     await expectJson(pages, "#itemsCount", 0);
 
-    await pages[0].click("#push");
+    await page1.click("#push");
     await expectJson(pages, "#itemsCount", 1);
 
     await waitForContentToBeEquals(pages, "#items");
 
-    await pages[0].click("#push");
+    await page1.click("#push");
     await expectJson(pages, "#itemsCount", 2);
     await waitForContentToBeEquals(pages, "#items");
 
-    await pages[0].click("#push");
+    await page1.click("#push");
     await expectJson(pages, "#itemsCount", 3);
     await waitForContentToBeEquals(pages, "#items");
   });
 
   test("list move", async () => {
-    await pages[0].click("#clear");
+    const [page1, _page2] = pages;
+    await page1.click("#clear");
     await expectJson(pages, "#itemsCount", 0);
 
     for (let i = 0; i < 5; i++) {
-      await pages[0].click("#push");
+      await page1.click("#push");
       await sleep(50);
     }
 
     await waitForContentToBeEquals(pages, "#items");
 
     for (let i = 0; i < 10; i++) {
-      await pages[0].click("#move");
+      await page1.click("#move");
       await sleep(50);
     }
 
@@ -70,13 +71,14 @@ test.describe("Storage w/ Suspense", () => {
   });
 
   test("push conflicts", async () => {
-    await pages[0].click("#clear");
+    const [page1, page2] = pages;
+    await page1.click("#clear");
     await expectJson(pages, "#itemsCount", 0);
 
     for (let i = 0; i < 10; i++) {
       // no await to create randomness
-      pages[0].click("#push");
-      pages[1].click("#push");
+      page1.click("#push");
+      page2.click("#push");
       await sleep(50);
     }
 
@@ -85,18 +87,19 @@ test.describe("Storage w/ Suspense", () => {
   });
 
   test("set conflicts", async () => {
-    await pages[0].click("#clear");
+    const [page1, page2] = pages;
+    await page1.click("#clear");
     await expectJson(pages, "#itemsCount", 0);
 
     for (let i = 0; i < 1; i++) {
-      await pages[0].click("#push");
+      await page1.click("#push");
       await sleep(50);
     }
 
     for (let i = 0; i < 10; i++) {
       // no await to create randomness
-      pages[0].click("#set");
-      pages[1].click("#set");
+      page1.click("#set");
+      page2.click("#set");
       await sleep(50);
     }
 
@@ -107,17 +110,18 @@ test.describe("Storage w/ Suspense", () => {
   // TODO: This test is flaky and occasionally fails in CI--make it more robust
   // See https://github.com/liveblocks/liveblocks/runs/8032018966?check_suite_focus=true#step:6:45
   test.skip("fuzzy with undo/redo push delete and move", async () => {
-    await pages[0].click("#clear");
+    const [page1, _page2] = pages;
+    await page1.click("#clear");
     await expectJson(pages, "#itemsCount", 0);
 
     const numberOfItemsAtStart = 5;
     for (let i = 0; i < numberOfItemsAtStart; i++) {
       // no await to create randomness
-      pages[0].click("#push");
+      page1.click("#push");
       await sleep(50);
     }
 
-    await expect(pages[0].locator("#itemsCount")).toContainText(
+    await expect(page1.locator("#itemsCount")).toContainText(
       numberOfItemsAtStart.toString()
     );
 

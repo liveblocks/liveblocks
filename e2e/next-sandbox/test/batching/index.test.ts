@@ -16,11 +16,10 @@ test.describe("Storage - Batching", () => {
     pages = await preparePages(`${TEST_URL}?room=${roomName}`);
   });
 
-  test.afterEach(async () => {
-    pages.forEach(async (page) => {
-      await page.close();
-    });
-  });
+  test.afterEach(() =>
+    // Close all pages
+    Promise.all(pages.map((page) => page.close()))
+  );
 
   test("update storage and presence", async () => {
     const [page1, page2] = pages;

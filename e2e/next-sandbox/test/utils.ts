@@ -42,7 +42,7 @@ export async function preparePages(url: string) {
 /** @deprecated */
 // XXX Remove helper eventually!
 export async function assertContainText(
-  pages: Page[],
+  pages: [Page, Page],
   selector: IDSelector,
   value: string
 ) {
@@ -95,10 +95,11 @@ export async function getJson(page: Page, selector: IDSelector): Promise<Json> {
 }
 
 export async function assertJsonContentAreEquals(
-  pages: Page[],
+  pages: [Page, Page],
   selector: IDSelector
 ) {
-  const firstPageContent = await getJson(pages[0], selector);
+  const [page1] = pages;
+  const firstPageContent = await getJson(page1, selector);
 
   for (const page of pages.slice(1)) {
     const otherPageContent = await getJson(page, selector);
@@ -116,11 +117,12 @@ export function sleep(ms: number) {
 
 // XXX Deprecate?
 export async function waitForContentToBeEquals(
-  pages: Page[],
+  pages: [Page, Page],
   selector: IDSelector
 ) {
+  const [page1] = pages;
   for (let i = 0; i < 20; i++) {
-    const firstPageContent = await getJson(pages[0], selector);
+    const firstPageContent = await getJson(page1, selector);
 
     let allEquals = true;
     for (let j = 1; j < pages.length; j++) {

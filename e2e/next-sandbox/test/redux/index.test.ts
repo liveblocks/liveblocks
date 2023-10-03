@@ -25,9 +25,10 @@ test.describe("Redux", () => {
     pages = await preparePages(`${TEST_URL}?room=${roomName}`);
   });
 
-  test.afterEach(() => {
-    return Promise.all(pages.map((page) => page.close()));
-  });
+  test.afterEach(() =>
+    // Close all pages
+    Promise.all(pages.map((page) => page.close()))
+  );
 
   test("array push basic + presence", async () => {
     const [page1, page2] = pages;
