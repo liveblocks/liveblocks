@@ -14,11 +14,17 @@ declare module "@tiptap/core" {
       /**
        * Set a highlight mark
        */
-      setCommentHighlight: (attributes?: { color: string }) => ReturnType;
+      setCommentHighlight: (attributes?: {
+        color: string;
+        threadId: string | null;
+      }) => ReturnType;
       /**
        * Toggle a highlight mark
        */
-      toggleCommentHighlight: (attributes?: { color: string }) => ReturnType;
+      toggleCommentHighlight: (attributes?: {
+        color: string;
+        threadId: string | null;
+      }) => ReturnType;
       /**
        * Unset a highlight mark
        */
@@ -63,6 +69,21 @@ export const LiveblocksCommentsHighlight = Mark.create<CommentHighlightOptions>(
 
     addAttributes() {
       return {
+        threadId: {
+          default: null,
+          parseHTML: (element) => element.getAttribute("data-thread-id"),
+          renderHTML: (attributes) => {
+            // Don't render attribute if no threadId defined
+            if (!attributes.threadId) {
+              return;
+            }
+
+            return {
+              "data-thread-id": attributes.threadId,
+            };
+          },
+        },
+
         // Color of highlighted text
         color: {
           default: null,
@@ -79,15 +100,15 @@ export const LiveblocksCommentsHighlight = Mark.create<CommentHighlightOptions>(
           },
         },
 
-        // If highlight currently active
-        selected: {
-          default: false,
-          parseHTML: (element) =>
-            element.getAttribute("data-selected") === "true",
-          renderHTML: (attributes) => ({
-            "data-selected": attributes.dataSelected,
-          }),
-        },
+        // // If highlight currently active
+        // selected: {
+        //   default: false,
+        //   parseHTML: (element) =>
+        //     element.getAttribute("data-selected") === "true",
+        //   renderHTML: (attributes) => ({
+        //     "data-selected": attributes.dataSelected,
+        //   }),
+        // },
       };
     },
 
@@ -106,24 +127,25 @@ export const LiveblocksCommentsHighlight = Mark.create<CommentHighlightOptions>(
       // Merge attributes
       Object.entries(
         mergeAttributes(this.options.HTMLAttributes, HTMLAttributes, {
-          "data-selected": "false",
+          // "data-selected": "false",
         })
       ).forEach(([attr, val]) => elem.setAttribute(attr, val));
+      console.log(this.options.HTMLAttributes, HTMLAttributes);
 
       // Set data-selected when last click occurs inside mark
       // TODO send custom event so comments know they're selected
       window.addEventListener("click", (event: MouseEvent) => {
         if (!event.target || !(event.target instanceof HTMLElement)) {
-          elem.dataset.selected = "false";
+          // elem.dataset.selected = "false";
           return;
         }
 
         if (event.target?.contains(elem) && event.target !== elem) {
-          elem.dataset.selected = "false";
+          // elem.dataset.selected = "false";
           return;
         }
 
-        elem.dataset.selected = "true";
+        // elem.dataset.selected = "true";
       });
 
       return elem;

@@ -50,6 +50,13 @@
   background: var(--color-surface-elevated);
 }
 
+.threadListContainer {
+  position: absolute;
+  top: 0;
+  left: 100%;
+  margin-left: var(--space-8);
+}
+
 .placeholder {
   pointer-events: none;
   position: absolute;

@@ -24,7 +24,12 @@ import { SelectionMenu } from "./SelectionMenu";
 import { Toolbar } from "./Toolbar";
 import styles from "./TextEditor.module.css";
 import { Avatars } from "@/components/Avatars";
+import { CommentsHighlight } from "@/components/CommentHighlight";
 import { LiveblocksCommentsHighlight } from "@/tiptap-comments-extension";
+import { ThreadList } from "@/components/ThreadList";
+import { ErrorBoundary } from "react-error-boundary";
+import localFont from "next/dist/compiled/@next/font/dist/local";
+// import { LiveblocksCommentsHighlight } from "@/tiptap-comments-extension";
 
 export function TextEditor() {
   return (
@@ -80,6 +85,7 @@ function TiptapEditor({ doc, provider }: EditorProps) {
     extensions: [
       // Custom Liveblocks comments extension
       LiveblocksCommentsHighlight,
+      // CommentsHighlight,
       StarterKit.configure({
         blockquote: {
           HTMLAttributes: {
@@ -181,12 +187,18 @@ function TiptapEditor({ doc, provider }: EditorProps) {
   return (
     <div className={styles.container}>
       <div className={styles.editorHeader}>
-        {editor && <Toolbar editor={editor} />}
+        {/*{editor && <Toolbar editor={editor} />}*/}
+        <div />
         <Avatars />
       </div>
       <div className={styles.editorPanel}>
         {editor && <SelectionMenu editor={editor} />}
-        <EditorContent editor={editor} className={styles.editorContainer} />
+        <div className={styles.editorContainer}>
+          <EditorContent editor={editor} />
+          <div className={styles.threadListContainer}>
+            <ThreadList />
+          </div>
+        </div>
       </div>
     </div>
   );

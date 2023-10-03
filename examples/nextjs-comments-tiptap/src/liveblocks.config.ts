@@ -42,10 +42,14 @@ type RoomEvent = {
   // ...
 };
 
+type ThreadMetadata = {};
+
 export const {
   suspense: {
     RoomProvider,
     useRoom,
+    useThreads,
+    useCreateThread,
     useMyPresence,
     useUpdateMyPresence,
     useSelf,
@@ -70,27 +74,30 @@ export const {
     useStatus,
     useLostConnectionListener,
   },
-} = createRoomContext<Presence, Storage, UserMeta, RoomEvent>(client, {
-  async resolveUser({ userId }) {
-    const response = await fetch(`/api/user/${encodeURIComponent(userId)}`);
+} = createRoomContext<Presence, Storage, UserMeta, RoomEvent, ThreadMetadata>(
+  client,
+  {
+    async resolveUser({ userId }) {
+      const response = await fetch(`/api/user/${encodeURIComponent(userId)}`);
 
-    if (!response.ok) {
-      throw new Error("Problem resolving user");
-    }
+      if (!response.ok) {
+        throw new Error("Problem resolving user");
+      }
 
-    const user = await response.json();
-    return user.info;
-  },
-  async resolveMentionSuggestions({ text }) {
-    const response = await fetch(
-      `/api/users/search?text=${encodeURIComponent(text)}`
-    );
+      const user = await response.json();
+      return user.info;
+    },
+    async resolveMentionSuggestions({ text }) {
+      const response = await fetch(
+        `/api/users/search?text=${encodeURIComponent(text)}`
+      );
 
-    if (!response.ok) {
-      throw new Error("Problem resolving user");
-    }
+      if (!response.ok) {
+        throw new Error("Problem resolving user");
+      }
 
-    const userIds = await response.json();
-    return userIds;
-  },
-});
+      const userIds = await response.json();
+      return userIds;
+    },
+  }
+);

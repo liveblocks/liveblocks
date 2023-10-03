@@ -7,7 +7,8 @@ import { ClientSideSuspense } from "@liveblocks/react";
 import { DocumentSpinner } from "@/primitives/Spinner";
 
 export function Room({ children }: { children: ReactNode }) {
-  const roomId = useOverrideRoomId("nextjs-yjs-tiptap-advanced");
+  // TODO revert room name
+  const roomId = useOverrideRoomId("nextjs-yjs-tiptap-advanced-3");
 
   return (
     <RoomProvider
