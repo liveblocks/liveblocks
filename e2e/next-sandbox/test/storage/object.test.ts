@@ -85,7 +85,7 @@ test.describe("Storage - LiveObject", () => {
   test.skip("fuzzy with nested objects and undo/redo", async () => {
     const [page1, page2] = pages;
     await page1.click("#clear");
-    await assertContainText(pages, "#items", "{}");
+    await waitForJson(pages, "#items", {});
 
     await assertJsonContentAreEquals(pages, "#items");
 

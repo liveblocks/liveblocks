@@ -8,6 +8,7 @@ import {
   preparePages,
   sleep,
   waitForContentToBeEquals,
+  waitForJson,
 } from "./utils";
 import type { Json } from "@liveblocks/client";
 
@@ -29,10 +30,10 @@ test.describe("Offline", () => {
   test.skip("one client offline with offline changes - connection issue (code 1005)", async () => {
     const [page1, page2] = pages;
     await page1.click("#clear");
-    await expectJson(pages, "#itemsCount", 0);
+    await waitForJson(pages, "#itemsCount", 0);
 
     await page1.click("#push");
-    await expectJson(pages, "#itemsCount", 1);
+    await waitForJson(pages, "#itemsCount", 1);
 
     await page1.click("#closeWebsocket");
     await sleep(50); // XXX Remove
@@ -53,16 +54,16 @@ test.describe("Offline", () => {
     await waitForContentToBeEquals(pages, "#items");
 
     await page1.click("#clear");
-    await expectJson(pages, "#itemsCount", 0);
+    await waitForJson(pages, "#itemsCount", 0);
   });
 
   test.skip("one client offline with offline changes - app server issue (code 4002)", async () => {
     const [page1, page2] = pages;
     await page1.click("#clear");
-    await expectJson(pages, "#itemsCount", 0);
+    await waitForJson(pages, "#itemsCount", 0);
 
     await page1.click("#push");
-    await expectJson(pages, "#itemsCount", 1);
+    await waitForJson(pages, "#itemsCount", 1);
 
     const firstConnectionId = await getJson(page1, "#connectionId");
 
@@ -87,13 +88,13 @@ test.describe("Offline", () => {
     expect(connectionIdAfterReconnect).toEqual(firstConnectionId);
 
     await page1.click("#clear");
-    await expectJson(pages, "#itemsCount", 0);
+    await waitForJson(pages, "#itemsCount", 0);
   });
 
-  test.skip("fuzzy", async () => {
+  test("fuzzy", async () => {
     const [page1, page2] = pages;
     await page1.click("#clear");
-    await expectJson(pages, "#itemsCount", 0);
+    await waitForJson(pages, "#itemsCount", 0);
 
     const clicks = [];
     for (let i = 0; i < 10; i++) {
@@ -126,6 +127,6 @@ test.describe("Offline", () => {
     await waitForContentToBeEquals(pages, "#items");
 
     await page1.click("#clear");
-    await expectJson(pages, "#itemsCount", 0);
+    await waitForJson(pages, "#itemsCount", 0);
   });
 });

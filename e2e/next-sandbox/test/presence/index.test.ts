@@ -19,8 +19,7 @@ test.describe("Presence", () => {
     const [page1, page2] = pages;
 
     await waitForJson(pages, "#othersCount", 1);
-
-    await expectJson(pages, "#theirPresence", {});
+    await waitForJson(pages, "#theirPresence", {});
 
     await page1.close();
     await page2.close();
