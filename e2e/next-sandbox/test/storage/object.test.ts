@@ -3,7 +3,7 @@ import { Page, test } from "@playwright/test";
 import {
   assertContainText,
   assertJsonContentAreEquals,
-  pickNumberOfUnderRedo,
+  pickNumberOfUndoRedo,
   pickRandomItem,
   preparePages,
   sleep,
@@ -96,7 +96,7 @@ test.describe("Storage - LiveObject", () => {
     await waitForContentToBeEquals(pages, "#items");
 
     for (let i = 0; i < 50; i++) {
-      const nbofUndoRedo = pickNumberOfUnderRedo();
+      const nbofUndoRedo = pickNumberOfUndoRedo();
 
       if (nbofUndoRedo > 0) {
         for (let y = 0; y < nbofUndoRedo; y++) {

@@ -115,6 +115,13 @@ export function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+/**
+ * Sleep anywhere between 0 and 15 milliseconds.
+ */
+export function nanoSleep() {
+  return sleep(randomNumber(15));
+}
+
 // XXX Deprecate?
 export async function waitForContentToBeEquals(
   pages: [Page, Page],
@@ -147,7 +154,7 @@ export function pickRandomItem<T>(array: T[]) {
   return array[randomNumber(array.length)];
 }
 
-export function pickNumberOfUnderRedo() {
+export function pickNumberOfUndoRedo() {
   const undoRedoProb = randomNumber(100);
 
   if (undoRedoProb > 75) {

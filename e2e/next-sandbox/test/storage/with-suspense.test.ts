@@ -2,7 +2,7 @@ import { Page, test, expect } from "@playwright/test";
 
 import {
   expectJson,
-  pickNumberOfUnderRedo,
+  pickNumberOfUndoRedo,
   pickRandomItem,
   preparePages,
   sleep,
@@ -130,7 +130,7 @@ test.describe("Storage w/ Suspense", () => {
     for (let i = 0; i < 50; i++) {
       // no await to create randomness
       pages.forEach((page) => {
-        const nbofUndoRedo = pickNumberOfUnderRedo();
+        const nbofUndoRedo = pickNumberOfUndoRedo();
 
         if (nbofUndoRedo > 0) {
           for (let y = 0; y < nbofUndoRedo; y++) {

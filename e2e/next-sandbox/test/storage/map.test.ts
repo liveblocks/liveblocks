@@ -3,7 +3,7 @@ import { Page, test } from "@playwright/test";
 import {
   assertJsonContentAreEquals,
   expectJson,
-  pickNumberOfUnderRedo,
+  pickNumberOfUndoRedo,
   pickRandomItem,
   preparePages,
   sleep,
@@ -61,7 +61,7 @@ test.describe("Storage - LiveMap", () => {
       // no await to create randomness
 
       pages.forEach((page) => {
-        const nbofUndoRedo = pickNumberOfUnderRedo();
+        const nbofUndoRedo = pickNumberOfUndoRedo();
 
         if (nbofUndoRedo > 0) {
           for (let y = 0; y < nbofUndoRedo; y++) {

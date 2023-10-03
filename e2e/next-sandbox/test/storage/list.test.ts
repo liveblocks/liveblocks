@@ -1,12 +1,13 @@
-import { Page, test, expect } from "@playwright/test";
+import { Page, test } from "@playwright/test";
 
 import {
   expectJson,
-  pickNumberOfUnderRedo,
+  nanoSleep,
+  pickNumberOfUndoRedo,
   pickRandomItem,
   preparePages,
-  sleep,
   waitForContentToBeEquals,
+  waitForJson,
 } from "../utils";
 import { genRoomId } from "../../utils";
 
@@ -30,122 +31,120 @@ test.describe("Storage - LiveList", () => {
   );
 
   test("list push basic", async () => {
-    const [page1, _page2] = pages;
+    const [page1] = pages;
     await page1.click("#clear");
-    await expectJson(pages, "#itemsCount", 0);
+    await waitForJson(pages, "#itemsCount", 0);
 
     await page1.click("#push");
-    await expectJson(pages, "#itemsCount", 1);
+    await waitForJson(pages, "#itemsCount", 1);
 
     await waitForContentToBeEquals(pages, "#items");
 
     await page1.click("#push");
-    await expectJson(pages, "#itemsCount", 2);
+    await waitForJson(pages, "#itemsCount", 2);
     await waitForContentToBeEquals(pages, "#items");
 
     await page1.click("#push");
-    await expectJson(pages, "#itemsCount", 3);
+    await waitForJson(pages, "#itemsCount", 3);
     await waitForContentToBeEquals(pages, "#items");
   });
 
   test("list move", async () => {
     const [page1, _page2] = pages;
     await page1.click("#clear");
-    await expectJson(pages, "#itemsCount", 0);
+    await waitForJson(pages, "#itemsCount", 0);
 
     for (let i = 0; i < 5; i++) {
       await page1.click("#push");
-      await sleep(50);
     }
 
+    await expectJson(page1, "#itemsCount", 5);
     await waitForContentToBeEquals(pages, "#items");
 
     for (let i = 0; i < 10; i++) {
       await page1.click("#move");
-      await sleep(50);
     }
 
+    await expectJson(page1, "#itemsCount", 5);
     await waitForContentToBeEquals(pages, "#items");
   });
 
   test("push conflicts", async () => {
     const [page1, page2] = pages;
     await page1.click("#clear");
-    await expectJson(pages, "#itemsCount", 0);
+    await waitForJson(pages, "#itemsCount", 0);
 
+    const clicks = [];
     for (let i = 0; i < 10; i++) {
       // no await to create randomness
-      page1.click("#push");
-      page2.click("#push");
-      await sleep(50);
+      clicks.push(page1.click("#push"));
+      clicks.push(page2.click("#push"));
+      await nanoSleep();
     }
 
-    await expectJson(pages, "#itemsCount", 20);
+    await Promise.all(clicks);
+    // await expectJson(pages, "#itemsCount", n => n >= 10 && n <= 20);
+    await waitForJson(pages, "#itemsCount", 20);
     await waitForContentToBeEquals(pages, "#items");
   });
 
-  // TODO: Fix ghosting bug
-  test.skip("set conflicts", async () => {
+  test("set conflicts", async () => {
     const [page1, page2] = pages;
     await page1.click("#clear");
-    await expectJson(pages, "#itemsCount", 0);
+    await page1.click("#push");
+    await waitForJson(pages, "#itemsCount", 1);
 
-    for (let i = 0; i < 1; i++) {
-      await page1.click("#push");
-      await sleep(50);
-    }
-
+    const clicks = [];
     for (let i = 0; i < 10; i++) {
       // no await to create randomness
-      page1.click("#set");
-      page2.click("#set");
-      await sleep(50);
+      clicks.push(page1.click("#set"));
+      clicks.push(page2.click("#set"));
+      await nanoSleep();
     }
 
-    await expectJson(pages, "#itemsCount", 1);
+    await Promise.all(clicks);
+
+    await waitForJson(pages, "#itemsCount", 1);
     await waitForContentToBeEquals(pages, "#items");
   });
 
   // TODO: This test is flaky and occasionally fails in CI--make it more robust
   // See https://github.com/liveblocks/liveblocks/runs/8032018966?check_suite_focus=true#step:6:45
-  test.skip("fuzzy with undo/redo push delete and move", async () => {
-    const [page1, _page2] = pages;
+  test("fuzzy with undo/redo push delete and move", async () => {
+    const [page1] = pages;
     await page1.click("#clear");
-    await expectJson(pages, "#itemsCount", 0);
+    await waitForJson(pages, "#itemsCount", 0);
 
     const numberOfItemsAtStart = 5;
+    const clicks = [];
     for (let i = 0; i < numberOfItemsAtStart; i++) {
-      // no await to create randomness
-      page1.click("#push");
-      await sleep(50);
+      clicks.push(page1.click("#push"));
     }
 
-    await expect(page1.locator("#itemsCount")).toContainText(
-      numberOfItemsAtStart.toString()
-    );
+    await Promise.all(clicks);
+    await expectJson(page1, "#itemsCount", numberOfItemsAtStart);
 
     await waitForContentToBeEquals(pages, "#items");
 
+    clicks.length = 0;
     for (let i = 0; i < 50; i++) {
-      // no await to create randomness
       pages.forEach((page) => {
-        const nbofUndoRedo = pickNumberOfUnderRedo();
-
+        const nbofUndoRedo = pickNumberOfUndoRedo();
         if (nbofUndoRedo > 0) {
           for (let y = 0; y < nbofUndoRedo; y++) {
-            page.click("#undo");
+            clicks.push(page.click("#undo"));
           }
           for (let y = 0; y < nbofUndoRedo; y++) {
-            page.click("#redo");
+            clicks.push(page.click("#redo"));
           }
         } else {
-          page.click(pickRandomAction());
+          clicks.push(page.click(pickRandomAction()));
         }
       });
-
-      await sleep(50);
+      await nanoSleep();
     }
 
+    await Promise.all(clicks);
     await waitForContentToBeEquals(pages, "#items");
   });
 });
