@@ -4,5 +4,6 @@ export default function createLiveblocksClient() {
   return createClient({
     authEndpoint: "/api/auth/legacy-token",
     liveblocksServer: process.env.NEXT_PUBLIC_LIVEBLOCKS_SERVER,
+    enableDebugLogging: true,
   } as any);
 }
