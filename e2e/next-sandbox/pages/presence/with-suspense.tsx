@@ -59,13 +59,18 @@ export default function Home() {
 
 function PresenceSandbox() {
   const others = useOthers();
-  const [me, updateMyPresence] = useMyPresence();
+  const [myPresence, updateMyPresence] = useMyPresence();
+  const theirPresence = others[0]?.presence;
 
   return (
     <>
       <button
         id="increment-button"
-        onClick={() => updateMyPresence({ count: me.count ? me.count + 1 : 1 })}
+        onClick={() =>
+          updateMyPresence({
+            count: myPresence.count ? myPresence.count + 1 : 1,
+          })
+        }
       >
         Increment
       </button>
@@ -84,12 +89,11 @@ function PresenceSandbox() {
         Set third prop
       </button>
 
-      <h2>Me</h2>
+      <h2>Presence</h2>
       <table style={styles.dataTable}>
         <tbody>
-          <Row id="me-count" name="Count" value={me.count} />
-          <Row id="me-second-prop" name="Second prop" value={me.secondProp} />
-          <Row id="me-third-prop" name="Third prop" value={me.thirdProp} />
+          <Row id="myPresence" name="My presence" value={myPresence} />
+          <Row id="theirPresence" name="Their presence" value={theirPresence} />
         </tbody>
       </table>
 

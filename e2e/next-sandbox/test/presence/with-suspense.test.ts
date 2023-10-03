@@ -1,22 +1,5 @@
-import type { Json, JsonObject } from "@liveblocks/client";
-import { Page, test, expect } from "@playwright/test";
-import {
-  preparePage,
-  delay,
-  getJson,
-  waitForTextContent,
-  // getTextContent,
-  // preparePages,
-  assertContainText,
-} from "../utils";
-
-function getOthers(page: Page): Promise<JsonObject[]> {
-  return getJson(page, "#others") as Promise<JsonObject[]>;
-}
-
-function getEvents(page: Page): Promise<Json[]> {
-  return getJson(page, "#events") as Promise<Json[]>;
-}
+import { test } from "@playwright/test";
+import { expectJson, preparePage, waitForJson } from "../utils";
 
 const WIDTH = 640;
 const BG_COLOR_1 = "&bg=" + encodeURIComponent("#cafbca");
@@ -24,176 +7,150 @@ const BG_COLOR_2 = "&bg=" + encodeURIComponent("#e9ddf9");
 
 const TEST_URL = "http://localhost:3007/presence/with-suspense";
 
+// XXX DRY up page prep + close in a before/after test
+
 test.describe("Presence w/ Suspense", () => {
   test("connect A => connect B => verify others on A and B", async () => {
     const testUrl = TEST_URL + "?room=e2e-presence-with-suspense-scenario1";
-    const firstPage = await preparePage(testUrl + BG_COLOR_1);
-    const secondPage = await preparePage(testUrl + BG_COLOR_2, WIDTH);
-
-    await Promise.all([
-      firstPage.waitForSelector("#others"),
-      secondPage.waitForSelector("#others"),
+    const pages = await Promise.all([
+      preparePage(testUrl + BG_COLOR_1),
+      preparePage(testUrl + BG_COLOR_2, WIDTH),
     ]);
+    const [page1, page2] = pages;
 
-    await assertContainText([firstPage, secondPage], "#othersCount", "1");
+    await waitForJson(pages, "#othersCount", 1);
 
-    const othersFirstPage = await getOthers(firstPage);
-    const othersSecondPage = await getOthers(secondPage);
+    await expectJson(pages, "#theirPresence", {});
 
-    expect(othersFirstPage.length).toEqual(1);
-    expect(othersFirstPage[0].presence).toEqual({});
-    expect(othersSecondPage.length).toEqual(1);
-    expect(othersSecondPage[0].presence).toEqual({});
-
-    await firstPage.close();
-    await secondPage.close();
+    await page1.close();
+    await page2.close();
   });
 
   test("connect A => update presence A => connect B => verify presence A on B", async () => {
     const testUrl = TEST_URL + "?room=e2e-presence-with-suspense-scenario2";
-    const firstPage = await preparePage(testUrl + BG_COLOR_1);
-    await firstPage.click("#increment-button");
+    const page1 = await preparePage(testUrl + BG_COLOR_1);
+    await page1.click("#increment-button");
 
-    const secondPage = await preparePage(testUrl + BG_COLOR_2, WIDTH);
+    const page2 = await preparePage(testUrl + BG_COLOR_2, WIDTH);
+    await waitForJson([page1, page2], "#othersCount", 1);
 
-    await assertContainText([firstPage, secondPage], "#othersCount", "1");
+    await expectJson(page2, "#theirPresence", { count: 1 });
 
-    const othersSecondPage = await getOthers(secondPage);
-
-    expect(othersSecondPage.length).toEqual(1);
-    expect(othersSecondPage[0].presence).toEqual({ count: 1 });
-
-    await firstPage.close();
-    await secondPage.close();
+    await page1.close();
+    await page2.close();
   });
 
-  // TODO: This test is flaky and occasionally fails in CI--make it more robust
-  test.skip("connect A => connect B => update presence A => verify presence A on B", async () => {
+  test("connect A => connect B => update presence A => verify presence A on B", async () => {
     const testUrl = TEST_URL + "?room=e2e-presence-with-suspense-scenario3";
-    const firstPage = await preparePage(testUrl + BG_COLOR_1);
-    const secondPage = await preparePage(testUrl + BG_COLOR_2, WIDTH);
-
-    await Promise.all([
-      firstPage.waitForSelector("#others"),
-      secondPage.waitForSelector("#others"),
+    const [page1, page2] = await Promise.all([
+      preparePage(testUrl + BG_COLOR_1),
+      preparePage(testUrl + BG_COLOR_2, WIDTH),
     ]);
 
-    await assertContainText([firstPage, secondPage], "#othersCount", "1");
+    await waitForJson([page1, page2], "#othersCount", 1);
 
-    await firstPage.click("#increment-button");
+    await page1.click("#increment-button");
+    await expectJson(page1, "#myPresence", { count: 1 });
+    await waitForJson(page2, "#theirPresence", { count: 1 });
 
-    await delay(100);
+    await page1.close();
+    await page2.close();
+  });
 
-    const othersSecondPage = await getOthers(secondPage);
+  test("connect A => connect B => update presence B => verify presence A on B", async () => {
+    const testUrl = TEST_URL + "?room=e2e-presence-with-suspense-scenario3";
+    const [page1, page2] = await Promise.all([
+      preparePage(testUrl + BG_COLOR_1),
+      preparePage(testUrl + BG_COLOR_2, WIDTH),
+    ]);
 
-    expect(othersSecondPage.length).toEqual(1);
-    expect(othersSecondPage[0].presence).toEqual({ count: 1 }); // This line regularly fails when running tests -- figure out what's up here
+    await waitForJson([page1, page2], "#othersCount", 1);
 
-    await firstPage.close();
-    await secondPage.close();
+    await page2.click("#increment-button");
+    await expectJson(page2, "#myPresence", { count: 1 });
+    await waitForJson(page1, "#theirPresence", { count: 1 });
+
+    await page1.close();
+    await page2.close();
   });
 
   test("connect A => connect B => verify other on B => disconnect A => verify others is empty on B", async () => {
     const testUrl = TEST_URL + "?room=e2e-presence-with-suspense-scenario4";
-    const firstPage = await preparePage(testUrl + BG_COLOR_1);
-    const secondPage = await preparePage(testUrl + BG_COLOR_2, WIDTH);
-
-    await Promise.all([
-      firstPage.waitForSelector("#others"),
-      secondPage.waitForSelector("#others"),
+    const [page1, page2] = await Promise.all([
+      preparePage(testUrl + BG_COLOR_1),
+      preparePage(testUrl + BG_COLOR_2, WIDTH),
     ]);
 
-    await assertContainText([firstPage, secondPage], "#othersCount", "1");
+    await waitForJson([page1, page2], "#othersCount", 1);
 
-    let othersSecondPage = await getOthers(secondPage);
-    expect(othersSecondPage.length).toEqual(1);
-    expect(othersSecondPage[0].presence).toEqual({});
+    await waitForJson(page2, "#theirPresence", {});
 
-    await firstPage.close();
+    await page1.close();
 
-    await delay(300);
+    await waitForJson(page2, "#othersCount", 0);
 
-    othersSecondPage = await getOthers(secondPage);
-    expect(othersSecondPage.length).toEqual(0);
-
-    await secondPage.close();
+    await page2.close();
   });
 
   test("client B receives other update presence before initial presence", async () => {
     const testUrl = TEST_URL + "?room=e2e-presence-with-suspense-scenario5";
-    const firstPage = await preparePage(testUrl + BG_COLOR_1);
-    const secondPage = await preparePage(testUrl + BG_COLOR_2, WIDTH);
-
-    await Promise.all([
-      firstPage.waitForSelector("#others"),
-      secondPage.waitForSelector("#others"),
+    const [page1, page2] = await Promise.all([
+      preparePage(testUrl + BG_COLOR_1),
+      preparePage(testUrl + BG_COLOR_2, WIDTH),
     ]);
 
-    await assertContainText([firstPage, secondPage], "#othersCount", "1");
+    await waitForJson([page1, page2], "#othersCount", 1);
 
-    await firstPage.click("#set-second-prop");
-    await firstPage.click("#set-third-prop");
-
-    await delay(1000);
+    await page1.click("#set-second-prop");
+    await page1.click("#set-third-prop");
 
     for (let i = 0; i < 5; i++) {
-      await secondPage.click("#leave-room");
+      await page2.click("#leave-room");
+      await page2.click("#enter-room");
 
-      await secondPage.click("#enter-room");
-      await delay(500);
-      await firstPage.click("#set-second-prop");
+      await page1.click("#set-second-prop");
 
-      await assertContainText([secondPage], "#othersCount", "1");
-
-      let othersSecondPage = await getOthers(secondPage);
-      expect(othersSecondPage[0].presence).toEqual({
+      await waitForJson(page2, "#othersCount", 1);
+      await expectJson(page2, "#theirPresence", {
         secondProp: 1,
         thirdProp: 1,
       });
-
-      await delay(1000);
     }
 
-    await firstPage.close();
-    await secondPage.close();
+    await page1.close();
+    await page2.close();
   });
 });
 
 test.describe("Broadcast w/ Suspense", () => {
   test("connect A => connect B => broadcast from A => verify B got event", async () => {
     const testUrl = TEST_URL + "?room=e2e-broadcast-with-suspense-scenario1";
-    const firstPage = await preparePage(testUrl + BG_COLOR_1);
-    const secondPage = await preparePage(testUrl + BG_COLOR_2, WIDTH);
-
-    await Promise.all([
-      firstPage.waitForSelector("#events"),
-      secondPage.waitForSelector("#events"),
+    const [page1, page2] = await Promise.all([
+      preparePage(testUrl + BG_COLOR_1),
+      preparePage(testUrl + BG_COLOR_2, WIDTH),
     ]);
 
-    // Wait until the other client is connected
-    await waitForTextContent(firstPage, "#othersCount", "1");
+    await waitForJson(page1, "#othersCount", 1);
 
-    await firstPage.click("#broadcast-emoji");
-    await delay(500);
+    await page1.click("#broadcast-emoji");
 
     // Now check contents of page
-    let eventsFirstPage = await getEvents(firstPage);
-    let eventsSecondPage = await getEvents(secondPage);
-    expect(eventsFirstPage).toEqual([]);
-    expect(eventsSecondPage).toEqual([{ type: "EMOJI", emoji: "🔥" }]);
+    await expectJson(page1, "#events", []);
+    await waitForJson(page2, "#events", [{ type: "EMOJI", emoji: "🔥" }]);
 
-    await secondPage.click("#broadcast-number");
-    await secondPage.click("#broadcast-emoji");
-    await secondPage.click("#broadcast-number");
-    await delay(500);
+    await page2.click("#broadcast-number");
+    await page2.click("#broadcast-emoji");
+    await page2.click("#broadcast-number");
 
     // Check again
-    eventsFirstPage = await getEvents(firstPage);
-    eventsSecondPage = await getEvents(secondPage);
-    expect(eventsFirstPage).toEqual([42, { type: "EMOJI", emoji: "🔥" }, 42]);
-    expect(eventsSecondPage).toEqual([{ type: "EMOJI", emoji: "🔥" }]);
+    await waitForJson(page1, "#events", [
+      42,
+      { type: "EMOJI", emoji: "🔥" },
+      42,
+    ]);
+    await waitForJson(page2, "#events", [{ type: "EMOJI", emoji: "🔥" }]);
 
-    await firstPage.close();
-    await secondPage.close();
+    await page1.close();
+    await page2.close();
   });
 });
