@@ -192,6 +192,8 @@ type WebhookEvent =
   | CommentCreatedEvent
   | CommentEditedEvent
   | CommentDeletedEvent
+  | CommentReactionAdded
+  | CommentReactionRemoved
   | ThreadMetadataUpdatedEvent
   | ThreadCreatedEvent
   | YDocUpdatedEvent;
