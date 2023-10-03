@@ -8,7 +8,7 @@ import {
   nanoSleep,
   waitForContentToBeEquals,
   waitForJson,
-} from "../utils";
+} from "./utils";
 import type { JsonObject } from "@liveblocks/client";
 
 const TEST_URL = "http://localhost:3007/zustand";

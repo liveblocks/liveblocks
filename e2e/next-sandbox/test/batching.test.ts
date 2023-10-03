@@ -4,7 +4,7 @@ import {
   preparePages,
   waitForContentToBeEquals,
   waitForJson,
-} from "../utils";
+} from "./utils";
 
 const TEST_URL = "http://localhost:3007/batching";
 

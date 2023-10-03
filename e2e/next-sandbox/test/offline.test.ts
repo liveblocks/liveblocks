@@ -8,7 +8,7 @@ import {
   preparePages,
   sleep,
   waitForContentToBeEquals,
-} from "../utils";
+} from "./utils";
 import type { Json } from "@liveblocks/client";
 
 function pickRandomAction() {
