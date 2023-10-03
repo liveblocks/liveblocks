@@ -25,27 +25,27 @@ test.describe("Storage - Batching", () => {
 
   test("update storage and presence", async () => {
     await pages[0].click("#clear");
-    await assertContainText(pages, "itemsCount", "0");
+    await assertContainText(pages, "#itemsCount", "0");
 
     await pages[0].click("#update-storage-presence-batch");
-    await assertContainText(pages, "itemsCount", "1");
+    await assertContainText(pages, "#itemsCount", "1");
 
-    await waitForContentToBeEquals(pages);
+    await waitForContentToBeEquals(pages, "#items");
     const othersFirstPage = (await getJsonContent(
       pages[0],
-      "others"
+      "#others"
     )) as JsonObject[];
     expect(othersFirstPage.length).toEqual(1);
     expect(othersFirstPage[0].presence).toEqual({});
 
     const othersSecondPage = (await getJsonContent(
       pages[1],
-      "others"
+      "#others"
     )) as any[];
     expect(othersSecondPage.length).toEqual(1);
     expect(othersSecondPage[0].presence.count).toEqual(1);
 
     await pages[0].click("#clear");
-    await assertContainText(pages, "itemsCount", "0");
+    await assertContainText(pages, "#itemsCount", "0");
   });
 });

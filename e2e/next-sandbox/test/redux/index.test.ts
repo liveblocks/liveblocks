@@ -32,16 +32,16 @@ test.describe("Redux", () => {
 
   test("array push basic + presence", async () => {
     await pages[0].click("#clear");
-    await assertContainText(pages, "itemsCount", "0");
+    await assertContainText(pages, "#itemsCount", "0");
 
     await delay(3000);
     const othersFirstPage = (await getJsonContent(
       pages[0],
-      "others"
+      "#others"
     )) as JsonObject[];
     const othersSecondPage = (await getJsonContent(
       pages[1],
-      "others"
+      "#others"
     )) as JsonObject[];
 
     expect(othersFirstPage.length).toEqual(1);
@@ -50,22 +50,22 @@ test.describe("Redux", () => {
     expect(othersSecondPage[0].presence).toEqual({});
 
     await pages[0].click("#push");
-    await waitForContentToBeEquals(pages);
+    await waitForContentToBeEquals(pages, "#items");
 
     await pages[0].click("#push");
-    await waitForContentToBeEquals(pages);
+    await waitForContentToBeEquals(pages, "#items");
 
     await pages[0].click("#push");
-    await waitForContentToBeEquals(pages);
+    await waitForContentToBeEquals(pages, "#items");
 
     await pages[0].click("#clear");
-    await assertContainText(pages, "itemsCount", "0");
+    await assertContainText(pages, "#itemsCount", "0");
   });
 
   // TODO: This test is flaky and occasionally fails in CI--make it more robust
   test.skip("fuzzy", async () => {
     await pages[0].click("#clear");
-    await assertContainText(pages, "itemsCount", "0");
+    await assertContainText(pages, "#itemsCount", "0");
 
     const clicks = [];
 
@@ -76,7 +76,7 @@ test.describe("Redux", () => {
       await delay(50);
     }
 
-    await waitForContentToBeEquals(pages);
+    await waitForContentToBeEquals(pages, "#items");
 
     for (let i = 0; i < 30; i++) {
       // no await to create randomness
@@ -86,9 +86,9 @@ test.describe("Redux", () => {
     }
 
     await Promise.all(clicks);
-    await waitForContentToBeEquals(pages);
+    await waitForContentToBeEquals(pages, "#items");
 
     await pages[0].click("#clear");
-    await assertContainText(pages, "itemsCount", "0");
+    await assertContainText(pages, "#itemsCount", "0");
   });
 });

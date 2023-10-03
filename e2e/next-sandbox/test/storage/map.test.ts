@@ -34,7 +34,7 @@ test.describe("Storage - LiveMap", () => {
     await pages[0].click("#clear");
     // XXX Make JSON check
     // XXX Rename to mapSize
-    await assertContainText(pages, "itemsCount", "0");
+    await assertContainText(pages, "#itemsCount", "0");
 
     for (let i = 0; i < 50; i++) {
       // no await to create randomness
@@ -43,7 +43,7 @@ test.describe("Storage - LiveMap", () => {
       await delay(50);
     }
 
-    await waitForContentToBeEquals(pages);
+    await waitForContentToBeEquals(pages, "#items");
   });
 
   // TODO: This test is flaky and occasionally fails in CI--make it more robust
@@ -52,9 +52,9 @@ test.describe("Storage - LiveMap", () => {
     await pages[0].click("#clear");
     // XXX Make JSON check
     // XXX Rename to mapSize
-    await assertContainText(pages, "itemsCount", "0");
+    await assertContainText(pages, "#itemsCount", "0");
 
-    await assertJsonContentAreEquals(pages);
+    await assertJsonContentAreEquals(pages, "#items");
 
     for (let i = 0; i < 50; i++) {
       // no await to create randomness
@@ -77,6 +77,6 @@ test.describe("Storage - LiveMap", () => {
       await delay(50);
     }
 
-    await waitForContentToBeEquals(pages);
+    await waitForContentToBeEquals(pages, "#items");
   });
 });

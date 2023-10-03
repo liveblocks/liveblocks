@@ -11,11 +11,11 @@ import {
 } from "../utils";
 
 function getOthers(page: Page): Promise<JsonObject[]> {
-  return getJsonContent(page, "others") as Promise<JsonObject[]>;
+  return getJsonContent(page, "#others") as Promise<JsonObject[]>;
 }
 
 function getEvents(page: Page): Promise<Json[]> {
-  return getJsonContent(page, "events") as Promise<Json[]>;
+  return getJsonContent(page, "#events") as Promise<Json[]>;
 }
 
 const WIDTH = 640;
@@ -35,7 +35,7 @@ test.describe("Presence", () => {
       secondPage.waitForSelector("#others"),
     ]);
 
-    await assertContainText([firstPage, secondPage], "othersCount", "1");
+    await assertContainText([firstPage, secondPage], "#othersCount", "1");
 
     const othersFirstPage = await getOthers(firstPage);
     const othersSecondPage = await getOthers(secondPage);
@@ -55,7 +55,7 @@ test.describe("Presence", () => {
     await firstPage.click("#increment-button");
 
     const secondPage = await preparePage(testUrl + BG_COLOR_2, WIDTH);
-    await assertContainText([firstPage, secondPage], "othersCount", "1");
+    await assertContainText([firstPage, secondPage], "#othersCount", "1");
 
     const othersSecondPage = await getOthers(secondPage);
 
@@ -76,7 +76,7 @@ test.describe("Presence", () => {
       secondPage.waitForSelector("#others"),
     ]);
 
-    await assertContainText([firstPage, secondPage], "othersCount", "1");
+    await assertContainText([firstPage, secondPage], "#othersCount", "1");
 
     await firstPage.click("#increment-button");
 
@@ -101,7 +101,7 @@ test.describe("Presence", () => {
       secondPage.waitForSelector("#others"),
     ]);
 
-    await assertContainText([firstPage, secondPage], "othersCount", "1");
+    await assertContainText([firstPage, secondPage], "#othersCount", "1");
 
     let othersSecondPage = await getOthers(secondPage);
     expect(othersSecondPage.length).toEqual(1);
@@ -127,7 +127,7 @@ test.describe("Presence", () => {
       secondPage.waitForSelector("#others"),
     ]);
 
-    await assertContainText([firstPage, secondPage], "othersCount", "1");
+    await assertContainText([firstPage, secondPage], "#othersCount", "1");
 
     await firstPage.click("#set-second-prop");
     await firstPage.click("#set-third-prop");
@@ -141,7 +141,7 @@ test.describe("Presence", () => {
       await delay(500);
       await firstPage.click("#set-second-prop");
 
-      await assertContainText([secondPage], "othersCount", "1");
+      await assertContainText([secondPage], "#othersCount", "1");
 
       let othersSecondPage = await getOthers(secondPage);
       expect(othersSecondPage[0].presence).toEqual({

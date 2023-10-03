@@ -38,23 +38,26 @@ export async function preparePages(url: string) {
 
 export async function assertContainText(
   pages: Page[],
-  id: string,
+  id: `#${string}`,
   value: string
 ) {
   for (let i = 0; i < pages.length; i++) {
-    await expect(pages[i].locator(`#${id}`)).toContainText(value);
+    await expect(pages[i].locator(id)).toContainText(value);
   }
 }
 
 export async function getTextContentOrEmpty(
   page: Page,
-  id: string
+  id: `#${string}`
 ): Promise<string> {
   const selector = id.startsWith(".") || id.startsWith("#") ? id : `#${id}`;
   return page.locator(selector).innerText();
 }
 
-export async function getTextContent(page: Page, id: string): Promise<string> {
+export async function getTextContent(
+  page: Page,
+  id: `#${string}`
+): Promise<string> {
   const text = await getTextContentOrEmpty(page, id);
   if (!text) {
     throw new Error(`Could not find HTML element #${id}`);
@@ -62,14 +65,17 @@ export async function getTextContent(page: Page, id: string): Promise<string> {
   return text;
 }
 
-export async function getJsonContent(page: Page, id: string): Promise<Json> {
+export async function getJsonContent(
+  page: Page,
+  id: `#${string}`
+): Promise<Json> {
   const text = await getTextContent(page, id);
   return JSON.parse(text);
 }
 
 export async function assertJsonContentAreEquals(
   pages: Page[],
-  id: string = "items"
+  id: `#${string}`
 ) {
   const firstPageContent = await getJsonContent(pages[0], id);
 
@@ -97,7 +103,7 @@ const DEFAULT_STEP = 60;
 
 export async function waitForTextContent(
   page: Page,
-  id: string,
+  id: `#${string}`,
   expectedText: string,
   options?: TimeoutOptions
 ) {
@@ -134,7 +140,7 @@ export async function waitForTextContent(
 
 export async function waitForContentToBeEquals(
   pages: Page[],
-  id: string = "items"
+  id: `#${string}`
 ) {
   for (let i = 0; i < 20; i++) {
     const firstPageContent = await getJsonContent(pages[0], id);
@@ -161,8 +167,8 @@ export async function waitForContentToBeEquals(
 
 export async function assertItems(
   pages: Page[],
-  json: any,
-  id: string = "items"
+  json: Json, // XXX Flip arguments
+  id: `#${string}`
 ) {
   for (const page of pages) {
     await expect(getJsonContent(page, id)).toEqual(json);

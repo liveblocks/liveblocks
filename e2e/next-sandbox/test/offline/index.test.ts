@@ -32,19 +32,22 @@ test.describe("Offline", () => {
 
   test.skip("one client offline with offline changes - connection issue (code 1005)", async () => {
     await pages[0].click("#clear");
-    await assertContainText(pages, "itemsCount", "0");
+    await assertContainText(pages, "#itemsCount", "0");
 
     await pages[0].click("#push");
-    await assertContainText(pages, "itemsCount", "1");
+    await assertContainText(pages, "#itemsCount", "1");
 
     await pages[0].click("#closeWebsocket");
     await delay(50);
     await pages[0].click("#push");
     await pages[1].click("#push");
-    await assertContainText([pages[0]], "itemsCount", "2");
+    await assertContainText([pages[0]], "#itemsCount", "2");
 
-    const firstPageItems = (await getJsonContent(pages[0], "items")) as Json[];
-    const secondPageItems = (await getJsonContent(pages[1], "items")) as Json[];
+    const firstPageItems = (await getJsonContent(pages[0], "#items")) as Json[];
+    const secondPageItems = (await getJsonContent(
+      pages[1],
+      "#items"
+    )) as Json[];
 
     expect(firstPageItems.length).toEqual(2);
     expect(secondPageItems.length).toEqual(2);
@@ -52,29 +55,32 @@ test.describe("Offline", () => {
     await pages[0].click("#sendCloseEventConnectionError");
     await delay(3000);
 
-    await waitForContentToBeEquals(pages);
+    await waitForContentToBeEquals(pages, "#items");
 
     await pages[0].click("#clear");
-    await assertContainText(pages, "itemsCount", "0");
+    await assertContainText(pages, "#itemsCount", "0");
   });
 
   test.skip("one client offline with offline changes - app server issue (code 4002)", async () => {
     await pages[0].click("#clear");
-    await assertContainText(pages, "itemsCount", "0");
+    await assertContainText(pages, "#itemsCount", "0");
 
     await pages[0].click("#push");
-    await assertContainText(pages, "itemsCount", "1");
+    await assertContainText(pages, "#itemsCount", "1");
 
-    const firstConnectionId = await getJsonContent(pages[0], "connectionId");
+    const firstConnectionId = await getJsonContent(pages[0], "#connectionId");
 
     await pages[0].click("#closeWebsocket");
     await delay(50);
     await pages[0].click("#push");
     await pages[1].click("#push");
-    await assertContainText([pages[0]], "itemsCount", "2");
+    await assertContainText([pages[0]], "#itemsCount", "2");
 
-    const firstPageItems = (await getJsonContent(pages[0], "items")) as Json[];
-    const secondPageItems = (await getJsonContent(pages[1], "items")) as Json[];
+    const firstPageItems = (await getJsonContent(pages[0], "#items")) as Json[];
+    const secondPageItems = (await getJsonContent(
+      pages[1],
+      "#items"
+    )) as Json[];
 
     expect(firstPageItems.length).toEqual(2);
     expect(secondPageItems.length).toEqual(2);
@@ -82,21 +88,21 @@ test.describe("Offline", () => {
     await pages[0].click("#sendCloseEventAppError");
     await delay(5000);
 
-    await waitForContentToBeEquals(pages);
+    await waitForContentToBeEquals(pages, "#items");
 
     const connectionIdAfterReconnect = await getJsonContent(
       pages[0],
-      "connectionId"
+      "#connectionId"
     );
     expect(connectionIdAfterReconnect).toEqual(firstConnectionId);
 
     await pages[0].click("#clear");
-    await assertContainText(pages, "itemsCount", "0");
+    await assertContainText(pages, "#itemsCount", "0");
   });
 
   test.skip("fuzzy", async () => {
     await pages[0].click("#clear");
-    await assertContainText(pages, "itemsCount", "0");
+    await assertContainText(pages, "#itemsCount", "0");
 
     for (let i = 0; i < 10; i++) {
       // no await to create randomness
@@ -105,7 +111,7 @@ test.describe("Offline", () => {
       await delay(50);
     }
 
-    await waitForContentToBeEquals(pages);
+    await waitForContentToBeEquals(pages, "#items");
 
     await pages[0].click("#closeWebsocket");
     await delay(50);
@@ -123,9 +129,9 @@ test.describe("Offline", () => {
 
     await delay(3000);
 
-    await waitForContentToBeEquals(pages);
+    await waitForContentToBeEquals(pages, "#items");
 
     await pages[0].click("#clear");
-    await assertContainText(pages, "itemsCount", "0");
+    await assertContainText(pages, "#itemsCount", "0");
   });
 });

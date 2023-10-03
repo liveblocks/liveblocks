@@ -32,16 +32,16 @@ test.describe("Zustand", () => {
 
   test("array push basic + presence", async () => {
     await pages[0].click("#clear");
-    await assertContainText(pages, "itemsCount", "0");
+    await assertContainText(pages, "#itemsCount", "0");
 
     await delay(3000);
     const othersFirstPage = (await getJsonContent(
       pages[0],
-      "others"
+      "#others"
     )) as JsonObject[];
     const othersSecondPage = (await getJsonContent(
       pages[1],
-      "others"
+      "#others"
     )) as JsonObject[];
 
     expect(othersFirstPage.length).toEqual(1);
@@ -50,26 +50,26 @@ test.describe("Zustand", () => {
     expect(othersSecondPage[0].presence).toEqual({});
 
     await pages[0].click("#push");
-    await waitForContentToBeEquals(pages);
+    await waitForContentToBeEquals(pages, "#items");
 
     await pages[0].click("#push");
-    await waitForContentToBeEquals(pages);
+    await waitForContentToBeEquals(pages, "#items");
 
     await pages[0].click("#push");
-    await waitForContentToBeEquals(pages);
+    await waitForContentToBeEquals(pages, "#items");
 
     await pages[0].click("#clear");
-    await assertContainText(pages, "itemsCount", "0");
+    await assertContainText(pages, "#itemsCount", "0");
   });
 
   test("with enter and leave room", async () => {
     await pages[0].click("#clear");
-    await assertContainText(pages, "itemsCount", "0");
+    await assertContainText(pages, "#itemsCount", "0");
 
     await pages[0].click("#push");
     await delay(50);
     await pages[0].click("#push");
-    await waitForContentToBeEquals(pages);
+    await waitForContentToBeEquals(pages, "#items");
 
     await pages[1].click("#leave"); // Leave
     await delay(500);
@@ -78,15 +78,15 @@ test.describe("Zustand", () => {
     await delay(1000);
 
     await pages[1].click("#enter"); // Enter
-    await waitForContentToBeEquals(pages);
+    await waitForContentToBeEquals(pages, "#items");
 
     await pages[0].click("#clear");
-    await assertContainText(pages, "itemsCount", "0");
+    await assertContainText(pages, "#itemsCount", "0");
   });
 
   test.skip("fuzzy", async () => {
     await pages[0].click("#clear");
-    await assertContainText(pages, "itemsCount", "0");
+    await assertContainText(pages, "#itemsCount", "0");
     for (let i = 0; i < 10; i++) {
       // no await to create randomness
       pages[0].click("#push");
@@ -94,7 +94,7 @@ test.describe("Zustand", () => {
       await delay(50);
     }
 
-    await waitForContentToBeEquals(pages);
+    await waitForContentToBeEquals(pages, "#items");
 
     for (let i = 0; i < 50; i++) {
       // no await to create randomness
@@ -103,9 +103,9 @@ test.describe("Zustand", () => {
       await delay(50);
     }
 
-    await waitForContentToBeEquals(pages);
+    await waitForContentToBeEquals(pages, "#items");
 
     await pages[0].click("#clear");
-    await assertContainText(pages, "itemsCount", "0");
+    await assertContainText(pages, "#itemsCount", "0");
   });
 });

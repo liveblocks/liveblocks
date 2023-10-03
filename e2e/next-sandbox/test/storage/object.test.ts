@@ -36,14 +36,14 @@ test.describe("Storage - LiveObject", () => {
 
   test("fuzzy", async () => {
     await pages[0].click("#clear");
-    await assertContainText(pages, "items", "{}");
+    await assertContainText(pages, "#items", "{}");
 
     for (let i = 0; i < 20; i++) {
       pages[0].click("#set");
       await delay(50);
     }
 
-    await waitForContentToBeEquals(pages);
+    await waitForContentToBeEquals(pages, "#items");
 
     for (let i = 0; i < 100; i++) {
       // no await to create randomness
@@ -52,21 +52,21 @@ test.describe("Storage - LiveObject", () => {
       await delay(50);
     }
 
-    await waitForContentToBeEquals(pages);
+    await waitForContentToBeEquals(pages, "#items");
   });
 
   test("fuzzy with nested objects", async () => {
     await pages[0].click("#clear");
-    await assertContainText(pages, "items", "{}");
+    await assertContainText(pages, "#items", "{}");
 
-    await assertJsonContentAreEquals(pages);
+    await assertJsonContentAreEquals(pages, "#items");
 
     for (let i = 0; i < 20; i++) {
       pages[0].click("#set-nested");
       await delay(50);
     }
 
-    await waitForContentToBeEquals(pages);
+    await waitForContentToBeEquals(pages, "#items");
 
     for (let i = 0; i < 50; i++) {
       // no await to create randomness
@@ -75,23 +75,23 @@ test.describe("Storage - LiveObject", () => {
       await delay(50);
     }
 
-    await waitForContentToBeEquals(pages);
+    await waitForContentToBeEquals(pages, "#items");
   });
 
   // TODO: This test is flaky and occasionally fails in CI--make it more robust
   // See https://github.com/liveblocks/liveblocks/runs/8032018966?check_suite_focus=true#step:6:47
   test.skip("fuzzy with nested objects and undo/redo", async () => {
     await pages[0].click("#clear");
-    await assertContainText(pages, "items", "{}");
+    await assertContainText(pages, "#items", "{}");
 
-    await assertJsonContentAreEquals(pages);
+    await assertJsonContentAreEquals(pages, "#items");
 
     for (let i = 0; i < 20; i++) {
       pages[0].click("#set-nested");
       await delay(50);
     }
 
-    await waitForContentToBeEquals(pages);
+    await waitForContentToBeEquals(pages, "#items");
 
     for (let i = 0; i < 50; i++) {
       const nbofUndoRedo = pickNumberOfUnderRedo();
@@ -111,6 +111,6 @@ test.describe("Storage - LiveObject", () => {
       await delay(50);
     }
 
-    await waitForContentToBeEquals(pages);
+    await waitForContentToBeEquals(pages, "#items");
   });
 });
