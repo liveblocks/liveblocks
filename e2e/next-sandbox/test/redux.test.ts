@@ -3,7 +3,7 @@ import { Page, test, expect } from "@playwright/test";
 import {
   getJson,
   nanoSleep,
-  pickRandomItem,
+  pickFrom,
   preparePages,
   sleep,
   waitForContentToBeEquals,
@@ -12,10 +12,6 @@ import {
 import type { JsonObject } from "@liveblocks/client";
 
 const TEST_URL = "http://localhost:3007/redux";
-
-function pickRandomAction() {
-  return pickRandomItem(["#push", "#delete"]);
-}
 
 test.describe("Redux", () => {
   let pages: [Page, Page];
@@ -72,9 +68,10 @@ test.describe("Redux", () => {
 
     await waitForContentToBeEquals(pages, "#items");
 
+    const actions = ["#push", "#delete"];
     for (let i = 0; i < 30; i++) {
-      clicks.push(page1.click(pickRandomAction()));
-      clicks.push(page2.click(pickRandomAction()));
+      clicks.push(page1.click(pickFrom(actions)));
+      clicks.push(page2.click(pickFrom(actions)));
       await nanoSleep();
     }
 
@@ -102,9 +99,10 @@ test.describe("Redux", () => {
 
     await waitForContentToBeEquals(pages, "#items");
 
+    const actions = ["#push", "#delete"];
     for (let i = 0; i < 30; i++) {
-      clicks.push(page1.click(pickRandomAction()));
-      clicks.push(page2.click(pickRandomAction()));
+      clicks.push(page1.click(pickFrom(actions)));
+      clicks.push(page2.click(pickFrom(actions)));
       await nanoSleep();
     }
 

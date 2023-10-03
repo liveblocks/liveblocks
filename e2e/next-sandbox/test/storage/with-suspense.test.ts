@@ -4,15 +4,11 @@ import {
   expectJson,
   nanoSleep,
   pickNumberOfUndoRedo,
-  pickRandomItem,
+  pickFrom,
   preparePages,
   waitForContentToBeEquals,
   waitForJson,
 } from "../utils";
-
-function pickRandomAction() {
-  return pickRandomItem(["#push", "#delete", "#move", "#set"]);
-}
 
 const TEST_URL = "http://localhost:3007/storage/with-suspense";
 
@@ -125,6 +121,7 @@ test.describe("Storage w/ Suspense", () => {
 
     await waitForContentToBeEquals(pages, "#items");
 
+    const actions = ["#push", "#delete", "#move", "#set"];
     for (let i = 0; i < 50; i++) {
       pages.forEach((page) => {
         const nbofUndoRedo = pickNumberOfUndoRedo();
@@ -136,7 +133,7 @@ test.describe("Storage w/ Suspense", () => {
             clicks.push(page.click("#redo"));
           }
         } else {
-          clicks.push(page.click(pickRandomAction()));
+          clicks.push(page.click(pickFrom(actions)));
         }
       });
       await nanoSleep();

@@ -4,16 +4,12 @@ import {
   expectJson,
   getJson,
   nanoSleep,
-  pickRandomItem,
+  pickFrom,
   preparePages,
   sleep,
   waitForContentToBeEquals,
 } from "./utils";
 import type { Json } from "@liveblocks/client";
-
-function pickRandomAction() {
-  return pickRandomItem(["#push", "#delete", "#move", "#undo", "#redo"]);
-}
 
 const TEST_URL = "http://localhost:3007/offline/";
 
@@ -112,10 +108,11 @@ test.describe("Offline", () => {
     await page1.click("#closeWebsocket");
     await sleep(50); // XXX Remove
 
+    const actions = ["#push", "#delete", "#move", "#undo", "#redo"];
+
     for (let i = 0; i < 50; i++) {
-      // no await to create randomness
-      clicks.push(page1.click(pickRandomAction()));
-      clicks.push(page2.click(pickRandomAction()));
+      clicks.push(page1.click(pickFrom(actions)));
+      clicks.push(page2.click(pickFrom(actions)));
       await nanoSleep();
     }
 

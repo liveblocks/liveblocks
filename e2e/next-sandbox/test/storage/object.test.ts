@@ -5,18 +5,11 @@ import {
   assertJsonContentAreEquals,
   nanoSleep,
   pickNumberOfUndoRedo,
-  pickRandomItem,
+  pickFrom,
   preparePages,
   waitForContentToBeEquals,
+  waitForJson,
 } from "../utils";
-
-function pickRandomAction() {
-  return pickRandomItem(["#set", "#delete"]);
-}
-
-function pickRandomActionNested() {
-  return pickRandomItem(["#set-nested", "#delete"]);
-}
 
 const TEST_URL = "http://localhost:3007/storage/object";
 
@@ -52,9 +45,8 @@ test.describe("Storage - LiveObject", () => {
     await waitForContentToBeEquals(pages, "#items");
 
     for (let i = 0; i < 100; i++) {
-      // no await to create randomness
-      clicks.push(page1.click(pickRandomAction()));
-      clicks.push(page2.click(pickRandomAction()));
+      clicks.push(page1.click(pickFrom(["#set", "#delete"])));
+      clicks.push(page2.click(pickFrom(["#set", "#delete"])));
       await nanoSleep();
     }
 
@@ -77,10 +69,10 @@ test.describe("Storage - LiveObject", () => {
     await Promise.all(clicks);
     await waitForContentToBeEquals(pages, "#items");
 
+    const actions = ["#set-nested", "#delete"];
     for (let i = 0; i < 50; i++) {
-      // no await to create randomness
-      clicks.push(page1.click(pickRandomActionNested()));
-      clicks.push(page2.click(pickRandomActionNested()));
+      clicks.push(page1.click(pickFrom(actions)));
+      clicks.push(page2.click(pickFrom(actions)));
       await nanoSleep();
     }
 
@@ -106,6 +98,7 @@ test.describe("Storage - LiveObject", () => {
     await Promise.all(clicks);
     await waitForContentToBeEquals(pages, "#items");
 
+    const actions = ["#set-nested", "#delete"];
     for (let i = 0; i < 50; i++) {
       const nbofUndoRedo = pickNumberOfUndoRedo();
       if (nbofUndoRedo > 0) {
@@ -116,8 +109,8 @@ test.describe("Storage - LiveObject", () => {
           clicks.push(page1.click("#redo"));
         }
       } else {
-        clicks.push(page1.click(pickRandomActionNested()));
-        clicks.push(page2.click(pickRandomActionNested()));
+        clicks.push(page1.click(pickFrom(actions)));
+        clicks.push(page2.click(pickFrom(actions)));
       }
       await nanoSleep();
     }

@@ -3,7 +3,7 @@ import { Page, test, expect } from "@playwright/test";
 import {
   expectJson,
   getJson,
-  pickRandomItem,
+  pickFrom,
   preparePages,
   nanoSleep,
   waitForContentToBeEquals,
@@ -12,10 +12,6 @@ import {
 import type { JsonObject } from "@liveblocks/client";
 
 const TEST_URL = "http://localhost:3007/zustand";
-
-function pickRandomActionWithUndoRedo() {
-  return pickRandomItem(["#push", "#delete", "#undo", "#redo"]);
-}
 
 test.describe("Zustand", () => {
   let pages: [Page, Page];
@@ -95,9 +91,10 @@ test.describe("Zustand", () => {
     await waitForJson(pages, "#itemsCount", 20);
     await waitForContentToBeEquals(pages, "#items");
 
+    const actions = ["#push", "#delete", "#undo", "#redo"];
     for (let i = 0; i < 50; i++) {
-      clicks.push(page1.click(pickRandomActionWithUndoRedo()));
-      clicks.push(page2.click(pickRandomActionWithUndoRedo()));
+      clicks.push(page1.click(pickFrom(actions)));
+      clicks.push(page2.click(pickFrom(actions)));
       await nanoSleep();
     }
 

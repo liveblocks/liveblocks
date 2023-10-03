@@ -4,15 +4,11 @@ import {
   assertJsonContentAreEquals,
   nanoSleep,
   pickNumberOfUndoRedo,
-  pickRandomItem,
+  pickFrom,
   preparePages,
   waitForContentToBeEquals,
   waitForJson,
 } from "../utils";
-
-function pickRandomAction() {
-  return pickRandomItem(["#set", "#delete"]);
-}
 
 const TEST_URL = "http://localhost:3007/storage/map";
 
@@ -38,10 +34,11 @@ test.describe("Storage - LiveMap", () => {
     // XXX Rename to mapSize
     await waitForJson(pages, "#itemsCount", 0);
 
+    const actions = ["#set", "#delete"];
     const clicks = [];
     for (let i = 0; i < 50; i++) {
-      clicks.push(page1.click(pickRandomAction()));
-      clicks.push(page2.click(pickRandomAction()));
+      clicks.push(page1.click(pickFrom(actions)));
+      clicks.push(page2.click(pickFrom(actions)));
       await nanoSleep();
     }
 
@@ -58,6 +55,7 @@ test.describe("Storage - LiveMap", () => {
 
     await assertJsonContentAreEquals(pages, "#items");
 
+    const actions = ["#set", "#delete"];
     const clicks: unknown[] = [];
     for (let i = 0; i < 50; i++) {
       pages.forEach((page) => {
@@ -70,7 +68,7 @@ test.describe("Storage - LiveMap", () => {
             clicks.push(page.click("#redo"));
           }
         } else {
-          clicks.push(page.click(pickRandomAction()));
+          clicks.push(page.click(pickFrom(actions)));
         }
       });
       await nanoSleep();

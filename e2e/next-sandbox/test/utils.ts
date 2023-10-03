@@ -150,7 +150,10 @@ export async function waitForContentToBeEquals(
   await assertJsonContentAreEquals(pages, selector);
 }
 
-export function pickRandomItem<T>(array: T[]) {
+export function pickFrom<T>(array: T[]): T {
+  if (array.length <= 0) {
+    throw new Error("Cannot pick from an empty list");
+  }
   return array[randomNumber(array.length)];
 }
 
