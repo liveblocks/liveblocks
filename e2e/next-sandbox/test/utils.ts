@@ -165,16 +165,6 @@ export async function waitForContentToBeEquals(
   await assertJsonContentAreEquals(pages, id);
 }
 
-export async function assertItems(
-  pages: Page[],
-  json: Json, // XXX Flip arguments
-  id: `#${string}`
-) {
-  for (const page of pages) {
-    await expect(getJsonContent(page, id)).toEqual(json);
-  }
-}
-
 export function pickRandomItem<T>(array: T[]) {
   return array[randomNumber(array.length)];
 }
