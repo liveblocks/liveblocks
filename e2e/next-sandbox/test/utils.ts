@@ -116,10 +116,10 @@ export function sleep(ms: number) {
 }
 
 /**
- * Sleep anywhere between 0 and 15 milliseconds.
+ * Sleep anywhere between 0 and 50 milliseconds.
  */
 export function nanoSleep() {
-  return sleep(randomNumber(15));
+  return sleep(randomNumber(50));
 }
 
 // XXX Deprecate?

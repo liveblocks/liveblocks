@@ -5,7 +5,7 @@ import {
   getJson,
   pickRandomItem,
   preparePages,
-  sleep,
+  nanoSleep,
   waitForContentToBeEquals,
   waitForJson,
 } from "../utils";
@@ -30,7 +30,7 @@ test.describe("Zustand", () => {
     Promise.all(pages.map((page) => page.close()))
   );
 
-  test.only("array push basic + presence", async () => {
+  test("array push basic + presence", async () => {
     const [page1, page2] = pages;
     await page1.click("#clear");
     await expectJson(page1, "#itemsCount", 0);
@@ -61,49 +61,50 @@ test.describe("Zustand", () => {
   test("with enter and leave room", async () => {
     const [page1, page2] = pages;
     await page1.click("#clear");
-    await expectJson(pages, "#itemsCount", 0);
+    await waitForJson(pages, "#itemsCount", 0);
 
     await page1.click("#push");
-    await sleep(50);
     await page1.click("#push");
+    await expectJson(page1, "#itemsCount", 2);
     await waitForContentToBeEquals(pages, "#items");
 
-    await page2.click("#leave"); // Leave
-    await sleep(500);
+    await page2.click("#leave");
 
     await page1.click("#push");
-    await sleep(1000);
 
     await page2.click("#enter"); // Enter
+    await waitForJson(page1, "#itemsCount", 3);
     await waitForContentToBeEquals(pages, "#items");
 
     await page1.click("#clear");
-    await expectJson(pages, "#itemsCount", 0);
+    await waitForJson(pages, "#itemsCount", 0);
   });
 
   test("fuzzy", async () => {
     const [page1, page2] = pages;
     await page1.click("#clear");
-    await expectJson(pages, "#itemsCount", 0);
+    await waitForJson(pages, "#itemsCount", 0);
+
+    const clicks = [];
     for (let i = 0; i < 10; i++) {
-      // no await to create randomness
-      page1.click("#push");
-      page2.click("#push");
-      await sleep(50);
+      clicks.push(page1.click("#push"));
+      clicks.push(page2.click("#push"));
     }
 
+    await Promise.all(clicks);
+    await waitForJson(pages, "#itemsCount", 20);
     await waitForContentToBeEquals(pages, "#items");
 
     for (let i = 0; i < 50; i++) {
-      // no await to create randomness
-      page1.click(pickRandomActionWithUndoRedo());
-      page2.click(pickRandomActionWithUndoRedo());
-      await sleep(50);
+      clicks.push(page1.click(pickRandomActionWithUndoRedo()));
+      clicks.push(page2.click(pickRandomActionWithUndoRedo()));
+      await nanoSleep();
     }
 
+    await Promise.all(clicks);
     await waitForContentToBeEquals(pages, "#items");
 
     await page1.click("#clear");
-    await expectJson(pages, "#itemsCount", 0);
+    await waitForJson(pages, "#itemsCount", 0);
   });
 });

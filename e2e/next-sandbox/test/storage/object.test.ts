@@ -3,10 +3,10 @@ import { Page, test } from "@playwright/test";
 import {
   assertContainText,
   assertJsonContentAreEquals,
+  nanoSleep,
   pickNumberOfUndoRedo,
   pickRandomItem,
   preparePages,
-  sleep,
   waitForContentToBeEquals,
 } from "../utils";
 
@@ -45,7 +45,7 @@ test.describe("Storage - LiveObject", () => {
 
     for (let i = 0; i < 20; i++) {
       page1.click("#set");
-      await sleep(50);
+      await nanoSleep();
     }
 
     await waitForContentToBeEquals(pages, "#items");
@@ -54,7 +54,7 @@ test.describe("Storage - LiveObject", () => {
       // no await to create randomness
       page1.click(pickRandomAction());
       page2.click(pickRandomAction());
-      await sleep(50);
+      await nanoSleep();
     }
 
     await waitForContentToBeEquals(pages, "#items");
@@ -69,7 +69,8 @@ test.describe("Storage - LiveObject", () => {
 
     for (let i = 0; i < 20; i++) {
       page1.click("#set-nested");
-      await sleep(50);
+      await nanoSleep();
+    }
     }
 
     await waitForContentToBeEquals(pages, "#items");
@@ -78,7 +79,7 @@ test.describe("Storage - LiveObject", () => {
       // no await to create randomness
       page1.click(pickRandomActionNested());
       page2.click(pickRandomActionNested());
-      await sleep(50);
+      await nanoSleep();
     }
 
     await waitForContentToBeEquals(pages, "#items");
@@ -95,7 +96,7 @@ test.describe("Storage - LiveObject", () => {
 
     for (let i = 0; i < 20; i++) {
       page1.click("#set-nested");
-      await sleep(50);
+      await nanoSleep();
     }
 
     await waitForContentToBeEquals(pages, "#items");
@@ -115,7 +116,7 @@ test.describe("Storage - LiveObject", () => {
         page2.click(pickRandomActionNested());
       }
 
-      await sleep(50);
+      await nanoSleep();
     }
 
     await waitForContentToBeEquals(pages, "#items");

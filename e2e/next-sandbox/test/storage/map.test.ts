@@ -2,6 +2,7 @@ import { Page, test } from "@playwright/test";
 
 import {
   assertJsonContentAreEquals,
+  nanoSleep,
   pickNumberOfUndoRedo,
   pickRandomItem,
   preparePages,
@@ -39,9 +40,9 @@ test.describe("Storage - LiveMap", () => {
 
     const clicks = [];
     for (let i = 0; i < 50; i++) {
-      // no await to create randomness
       clicks.push(page1.click(pickRandomAction()));
       clicks.push(page2.click(pickRandomAction()));
+      await nanoSleep();
     }
 
     await Promise.all(clicks);
@@ -72,6 +73,7 @@ test.describe("Storage - LiveMap", () => {
           clicks.push(page.click(pickRandomAction()));
         }
       });
+      await nanoSleep();
     }
 
     await Promise.all(clicks);

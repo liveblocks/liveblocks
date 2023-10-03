@@ -2,6 +2,7 @@ import { Page, test } from "@playwright/test";
 
 import {
   expectJson,
+  nanoSleep,
   pickNumberOfUndoRedo,
   pickRandomItem,
   preparePages,
@@ -139,6 +140,7 @@ test.describe("Storage w/ Suspense", () => {
           clicks.push(page.click(pickRandomAction()));
         }
       });
+      await nanoSleep();
     }
 
     await Promise.all(clicks);
