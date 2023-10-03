@@ -46,7 +46,7 @@ back after you’re set up.
 ### This specific webhook is throttled
 
 Note that the [YDocUpdated](/docs/platform/webhooks#YDocUpdatedEvent) webhook
-event is throttled at a rate of _once every 5 minutes_. This is because Yjs can
+event is throttled at a rate of _once every 5 seconds_. This is because Yjs can
 update up to _60 times per second_, and it would be impractical to run the
 webhook this frequently.
 
@@ -476,30 +476,8 @@ the dropdown, and check the entries. You should now see your Yjs document—we�
 successfully set up data synchronization!
 
 When a user edits Yjs data in your app, this function will be called, and your
-database will be updated. You can rely on this to stay up to date, within the
-throttle limit.
-
-### Note when building
-
-Note that the [`YDocUpdated`](/docs/platform/webhooks#YDocUpdatedEvent) event is
-throttled, and only runs once every 5 minutes. When building with webhooks, it
-can sometimes be helpful to temporarily listen for
-[`UserEntered`](/docs/platform/webhooks#UserEnteredEvent) instead, a
-non-throttled event, and then refresh the page to trigger it.
-
-```ts
-// Runs on Yjs data changes, but throttled every 5 mins
-if (event.type === "ydocUpdated") {
-  // ...
-}
-
-// Called every time a user enters a room
-if (event.type === "userEntered") {
-  // ...
-}
-```
-
-Make sure to change your code back to the correct event type when you’re done.
+database will be updated. You can rely on this to stay up to date, within the 5
+second throttle limit.
 
 ## Learn more
 

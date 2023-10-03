@@ -327,12 +327,13 @@ const userLeftEvent = {
 #### StorageUpdatedEvent
 
 Storage is updated when a user writes to storage. This event is throttled at
-five minutes and, as such, may not be triggered for every write.
+five seconds and, as such, may not be triggered for every write.
 
-For example, if a user writes to storage at 1:00 pm, the `StorageUpdatedEvent`
-event will be triggered shortly after. If the user writes to storage again at
-1:01 pm, the `StorageUpdatedEvent` event will be triggered 5 minutes after the
-first event was sent, around 1:05 pm.
+For example, if a user writes to storage at 1:00 pm sharp, the
+`StorageUpdatedEvent` event will be triggered shortly after. If the user writes
+to storage again at 1:00 pm and 2 seconds, the `StorageUpdatedEvent` event will
+be triggered five seconds after the first event was sent, around 1:00 pm and 5
+seconds.
 
 ```ts
 // Schema
@@ -416,13 +417,14 @@ const roomDeletedEvent = {
 #### YDocUpdatedEvent
 
 Yjs document is updated when a user makes a change to a Yjs doc connected to a
-room. This event is throttled at five minutes and, as such, may not be triggered
+room. This event is throttled at five seconds and, as such, may not be triggered
 for every write.
 
-For example, if a user updates a yjs document at 1:00 pm, the `YDocUpdatedEvent`
-event will be triggered shortly after. If the user writes to storage again at
-1:01 pm, the `YDocUpdatedEvent` event will be triggered 5 minutes after the
-first event was sent, around 1:05 pm.
+For example, if a user updates a Yjs document at 1:00 pm sharp, the
+`YDocUpdatedEvent` event will be triggered shortly after. If the user writes to
+the Yjs document again at 1:00 pm and 2 seconds, the `YDocUpdatedEvent` event
+will be triggered 5 seconds after the first event was sent, around 1:00 pm
+and 5 seconds.
 
 ```ts
 // Schema
