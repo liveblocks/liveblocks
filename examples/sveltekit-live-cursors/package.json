@@ -21,7 +21,7 @@
     "vite": "^4.0.4"
   },
   "dependencies": {
-    "@liveblocks/client": "^1.4.0",
-    "@liveblocks/node": "^1.4.0"
+    "@liveblocks/client": "^1.4.2",
+    "@liveblocks/node": "^1.4.2"
   }
 }

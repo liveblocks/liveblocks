@@ -328,7 +328,7 @@ type CommentReactionAdded = {
     /**
      * ISO 8601 datestring
      * @example "2021-03-01T12:00:00.000Z"
-    */
+     */
     addedAt: string;
     addedBy: string;
   };
@@ -345,7 +345,7 @@ type CommentReactionRemoved = {
     /**
      * ISO 8601 datestring
      * @example "2021-03-01T12:00:00.000Z"
-    */
+     */
     removedAt: string;
     removedBy: string;
   };

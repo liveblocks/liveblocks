@@ -2,7 +2,8 @@
 
 ### `@liveblocks/client`
 
-- Fix a bug where calculating the insertion position between two existing elements could happen incorrectly in a small edge case
+- Fix a bug where calculating the insertion position between two existing
+  elements could happen incorrectly in a small edge case
 
 # v1.4.1
 
