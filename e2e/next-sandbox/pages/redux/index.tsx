@@ -2,7 +2,7 @@ import React, { useEffect } from "react";
 import { useAppDispatch, useAppSelector } from "./hooks";
 import { Provider } from "react-redux";
 import { actions } from "@liveblocks/redux";
-import { getRoomFromUrl, genRoomId } from "../../utils";
+import { getRoomFromUrl, genRoomId, styles, Row } from "../../utils";
 
 import store, { client, addItem, deleteItem, clear } from "./store";
 
@@ -35,7 +35,7 @@ function List() {
 
   return (
     <div>
-      <h1>Redux - Storage list sandbox</h1>
+      <h1>Redux sandbox</h1>
       <button
         id="push"
         onClick={() => {
@@ -60,7 +60,7 @@ function List() {
           }
         }}
       >
-        Delete
+        Delete multiple
       </button>
 
       <button
@@ -73,17 +73,20 @@ function List() {
       </button>
 
       <h2>Items</h2>
-      <p id="itemsCount" style={{ visibility: "hidden" }}>
-        {items.length}
-      </p>
-      <div id="items" style={{ whiteSpace: "pre" }}>
-        {JSON.stringify(items, null, 2)}
-      </div>
+      <table style={styles.dataTable}>
+        <tbody>
+          <Row id="itemsCount" name="Items count" value={items.length} />
+          <Row id="items" name="Items" value={items} />
+        </tbody>
+      </table>
 
       <h2>Others</h2>
-      <div id="others" style={{ whiteSpace: "pre" }}>
-        {JSON.stringify(others, null, 2)}
-      </div>
+      <table style={styles.dataTable}>
+        <tbody>
+          <Row id="othersCount" name="Others count" value={others.length} />
+          <Row id="others" name="Others" value={others} />
+        </tbody>
+      </table>
     </div>
   );
 }

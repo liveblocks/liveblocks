@@ -36,7 +36,7 @@ test.describe("Storage - LiveObject", () => {
 
   test("fuzzy", async () => {
     await pages[0].click("#clear");
-    await assertContainText(pages, "{}", "items");
+    await assertContainText(pages, "items", "{}");
 
     for (let i = 0; i < 20; i++) {
       pages[0].click("#set");
@@ -57,7 +57,7 @@ test.describe("Storage - LiveObject", () => {
 
   test("fuzzy with nested objects", async () => {
     await pages[0].click("#clear");
-    await assertContainText(pages, "{}", "items");
+    await assertContainText(pages, "items", "{}");
 
     await assertJsonContentAreEquals(pages);
 
@@ -82,7 +82,7 @@ test.describe("Storage - LiveObject", () => {
   // See https://github.com/liveblocks/liveblocks/runs/8032018966?check_suite_focus=true#step:6:47
   test.skip("fuzzy with nested objects and undo/redo", async () => {
     await pages[0].click("#clear");
-    await assertContainText(pages, "{}", "items");
+    await assertContainText(pages, "items", "{}");
 
     await assertJsonContentAreEquals(pages);
 

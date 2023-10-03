@@ -34,25 +34,25 @@ test.describe("Storage w/ Suspense", () => {
 
   test("list push basic", async () => {
     await pages[0].click("#clear");
-    await assertContainText(pages, "0");
+    await assertContainText(pages, "itemsCount", "0");
 
     await pages[0].click("#push");
-    await assertContainText(pages, "1");
+    await assertContainText(pages, "itemsCount", "1");
 
     await waitForContentToBeEquals(pages);
 
     await pages[0].click("#push");
-    await assertContainText(pages, "2");
+    await assertContainText(pages, "itemsCount", "2");
     await waitForContentToBeEquals(pages);
 
     await pages[0].click("#push");
-    await assertContainText(pages, "3");
+    await assertContainText(pages, "itemsCount", "3");
     await waitForContentToBeEquals(pages);
   });
 
   test("list move", async () => {
     await pages[0].click("#clear");
-    await assertContainText(pages, "0");
+    await assertContainText(pages, "itemsCount", "0");
 
     for (let i = 0; i < 5; i++) {
       await pages[0].click("#push");
@@ -71,7 +71,7 @@ test.describe("Storage w/ Suspense", () => {
 
   test("push conflicts", async () => {
     await pages[0].click("#clear");
-    await assertContainText(pages, "0");
+    await assertContainText(pages, "itemsCount", "0");
 
     for (let i = 0; i < 10; i++) {
       // no await to create randomness
@@ -80,13 +80,13 @@ test.describe("Storage w/ Suspense", () => {
       await delay(50);
     }
 
-    await assertContainText(pages, "20");
+    await assertContainText(pages, "itemsCount", "20");
     await waitForContentToBeEquals(pages);
   });
 
   test("set conflicts", async () => {
     await pages[0].click("#clear");
-    await assertContainText(pages, "0");
+    await assertContainText(pages, "itemsCount", "0");
 
     for (let i = 0; i < 1; i++) {
       await pages[0].click("#push");
@@ -100,7 +100,7 @@ test.describe("Storage w/ Suspense", () => {
       await delay(50);
     }
 
-    await assertContainText(pages, "1");
+    await assertContainText(pages, "itemsCount", "1");
     await waitForContentToBeEquals(pages);
   });
 
@@ -108,7 +108,7 @@ test.describe("Storage w/ Suspense", () => {
   // See https://github.com/liveblocks/liveblocks/runs/8032018966?check_suite_focus=true#step:6:45
   test.skip("fuzzy with undo/redo push delete and move", async () => {
     await pages[0].click("#clear");
-    await assertContainText(pages, "0");
+    await assertContainText(pages, "itemsCount", "0");
 
     const numberOfItemsAtStart = 5;
     for (let i = 0; i < numberOfItemsAtStart; i++) {

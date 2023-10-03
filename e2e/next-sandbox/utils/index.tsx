@@ -35,7 +35,8 @@ export const styles = {
 export type RowProps = {
   readonly id: string;
   readonly name: string;
-  readonly value?: Readonly<Json>;
+  readonly value: Readonly<Json> | undefined;
+  readonly style?: Record<string, unknown>;
 };
 
 export function Row(props: RowProps) {
@@ -44,7 +45,12 @@ export function Row(props: RowProps) {
       <td width={150} valign="top">
         {props.name}:
       </td>
-      <td id={props.id} valign="top" style={styles.mono} title={`#${props.id}`}>
+      <td
+        id={props.id}
+        valign="top"
+        style={{ ...styles.mono, ...props.style }}
+        title={`#${props.id}`}
+      >
         {props.value !== undefined ? (
           JSON.stringify(props.value, null, 2)
         ) : (

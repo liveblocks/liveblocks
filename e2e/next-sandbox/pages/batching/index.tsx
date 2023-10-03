@@ -2,7 +2,7 @@ import { LiveMap } from "@liveblocks/client";
 import { createRoomContext } from "@liveblocks/react";
 import React from "react";
 import createLiveblocksClient from "../../utils/createClient";
-import { genRoomId, getRoomFromUrl } from "../../utils";
+import { genRoomId, getRoomFromUrl, styles, Row } from "../../utils";
 
 const client = createLiveblocksClient();
 
@@ -50,7 +50,7 @@ function Sandbox() {
 
   return (
     <div>
-      <h1>Storage list sandbox</h1>
+      <h1>Batching sandbox</h1>
       <button
         id="update-storage-presence-batch"
         onClick={() => {
@@ -85,22 +85,26 @@ function Sandbox() {
       </button>
 
       <h2>Element</h2>
-      <p id="itemsCount" style={{ visibility: "hidden" }}>
-        {liveMap.size}
-      </p>
-      <div id="items" style={{ whiteSpace: "pre" }}>
-        {JSON.stringify(Array.from(liveMap.entries()), null, 2)}
-      </div>
+      <table style={styles.dataTable}>
+        <tbody>
+          <Row id="itemsCount" name="Items count" value={liveMap.size} />
+          <Row id="items" name="Items" value={Array.from(liveMap.entries())} />
+        </tbody>
+      </table>
 
-      <h2>Current user</h2>
-      <div>
-        Count: <span id="me-count">{myPresence.count}</span>
-      </div>
+      <h2>Me</h2>
+      <table style={styles.dataTable}>
+        <tbody>
+          <Row id="me-count" name="Count" value={myPresence.count} />
+        </tbody>
+      </table>
 
       <h2>Others</h2>
-      <div id="others" style={{ whiteSpace: "pre" }}>
-        {JSON.stringify(others, null, 2)}
-      </div>
+      <table style={styles.dataTable}>
+        <tbody>
+          <Row id="others" name="Others" value={others} />
+        </tbody>
+      </table>
     </div>
   );
 }

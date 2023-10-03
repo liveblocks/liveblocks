@@ -32,7 +32,9 @@ test.describe("Storage - LiveMap", () => {
 
   test("fuzzy", async () => {
     await pages[0].click("#clear");
-    await assertContainText(pages, "0");
+    // XXX Make JSON check
+    // XXX Rename to mapSize
+    await assertContainText(pages, "itemsCount", "0");
 
     for (let i = 0; i < 50; i++) {
       // no await to create randomness
@@ -48,7 +50,9 @@ test.describe("Storage - LiveMap", () => {
   // See https://github.com/liveblocks/liveblocks/runs/8032018966?check_suite_focus=true#step:6:46
   test.skip("fuzzy with full undo/redo", async () => {
     await pages[0].click("#clear");
-    await assertContainText(pages, "0");
+    // XXX Make JSON check
+    // XXX Rename to mapSize
+    await assertContainText(pages, "itemsCount", "0");
 
     await assertJsonContentAreEquals(pages);
 

@@ -3,7 +3,7 @@ import { LiveMap } from "@liveblocks/client";
 import React from "react";
 import randomNumber from "../../utils/randomNumber";
 import createLiveblocksClient from "../../utils/createClient";
-import { genRoomId, getRoomFromUrl } from "../../utils";
+import { genRoomId, getRoomFromUrl, styles, Row } from "../../utils";
 
 const client = createLiveblocksClient();
 
@@ -36,7 +36,7 @@ function Sandbox() {
 
   return (
     <div>
-      <h1>useMap sandbox</h1>
+      <h1>LiveMap sandbox</h1>
       <button
         id="set"
         onClick={() => {
@@ -77,13 +77,14 @@ function Sandbox() {
         Redo
       </button>
 
-      <h2>Items</h2>
-      <p id="itemsCount" style={{ visibility: "hidden" }}>
-        {map.size}
-      </p>
-      <div id="items" style={{ whiteSpace: "pre" }}>
-        {JSON.stringify(Object.fromEntries(map), null, 2)}
-      </div>
+      <table style={styles.dataTable}>
+        <tbody>
+          {/* XXX Rename ID to map-size! */}
+          <Row id="itemsCount" name="Map size" value={map.size} />
+          {/* XXX Rename ID to map! */}
+          <Row id="items" name="Serialized" value={Object.fromEntries(map)} />
+        </tbody>
+      </table>
     </div>
   );
 }

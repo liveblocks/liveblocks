@@ -4,7 +4,7 @@ import create from "zustand";
 import { liveblocks } from "@liveblocks/zustand";
 import type { WithLiveblocks } from "@liveblocks/zustand";
 import createLiveblocksClient from "../../utils/createClient";
-import { genRoomId, getRoomFromUrl } from "../../utils";
+import { genRoomId, getRoomFromUrl, styles, Row } from "../../utils";
 
 const client = createLiveblocksClient();
 
@@ -60,7 +60,7 @@ export default function Home() {
 
   return (
     <div>
-      <h1>Storage list sandbox</h1>
+      <h1>Zustand sandbox</h1>
       <button
         id="push"
         onClick={() => {
@@ -109,17 +109,20 @@ export default function Home() {
       </button>
 
       <h2>Items</h2>
-      <p id="itemsCount" style={{ visibility: "hidden" }}>
-        {items.length}
-      </p>
-      <div id="items" style={{ whiteSpace: "pre" }}>
-        {JSON.stringify(items, null, 2)}
-      </div>
+      <table style={styles.dataTable}>
+        <tbody>
+          <Row id="itemsCount" name="Items count" value={items.length} />
+          <Row id="items" name="Items" value={items} />
+        </tbody>
+      </table>
 
       <h2>Others</h2>
-      <div id="others" style={{ whiteSpace: "pre" }}>
-        {JSON.stringify(others, null, 2)}
-      </div>
+      <table style={styles.dataTable}>
+        <tbody>
+          <Row id="othersCount" name="Others count" value={others.length} />
+          <Row id="others" name="Others" value={others} />
+        </tbody>
+      </table>
     </div>
   );
 }

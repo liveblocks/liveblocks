@@ -32,7 +32,7 @@ test.describe("Redux", () => {
 
   test("array push basic + presence", async () => {
     await pages[0].click("#clear");
-    await assertContainText(pages, "0");
+    await assertContainText(pages, "itemsCount", "0");
 
     await delay(3000);
     const othersFirstPage = (await getJsonContent(
@@ -59,13 +59,13 @@ test.describe("Redux", () => {
     await waitForContentToBeEquals(pages);
 
     await pages[0].click("#clear");
-    await assertContainText(pages, "0");
+    await assertContainText(pages, "itemsCount", "0");
   });
 
   // TODO: This test is flaky and occasionally fails in CI--make it more robust
   test.skip("fuzzy", async () => {
     await pages[0].click("#clear");
-    await assertContainText(pages, "0");
+    await assertContainText(pages, "itemsCount", "0");
 
     const clicks = [];
 
@@ -89,6 +89,6 @@ test.describe("Redux", () => {
     await waitForContentToBeEquals(pages);
 
     await pages[0].click("#clear");
-    await assertContainText(pages, "0");
+    await assertContainText(pages, "itemsCount", "0");
   });
 });

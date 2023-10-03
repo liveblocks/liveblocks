@@ -3,14 +3,12 @@ import { LiveList } from "@liveblocks/client";
 import { createRoomContext } from "@liveblocks/react";
 import React from "react";
 import createLiveblocksClient from "../../utils/createClient";
-import { getRoomFromUrl, genRoomId, styles } from "../../utils";
+import { getRoomFromUrl, genRoomId, styles, Row } from "../../utils";
 
 const client = createLiveblocksClient();
 
 const { RoomProvider, useList, useRedo, useSelf, useUndo, useRoom, useStatus } =
   createRoomContext<never, { items: LiveList<string> }>(client);
-
-const { mono, dataTable } = styles;
 
 type Internal = {
   send: {
@@ -60,7 +58,7 @@ function Sandbox(_props: { roomId: string }) {
 
   return (
     <div>
-      <h1>Storage sandbox - Offline</h1>
+      <h1>Offline sandbox</h1>
 
       <div>
         <button
@@ -154,47 +152,17 @@ function Sandbox(_props: { roomId: string }) {
         </button>
       </div>
 
-      <table style={dataTable}>
+      <table style={styles.dataTable}>
         <tbody>
-          <tr>
-            <td width="150">WebSocket status</td>
-            <td
-              id="socketStatus"
-              style={{
-                ...mono,
-                color: status !== "connected" ? "red" : "green",
-              }}
-            >
-              {status}
-            </td>
-          </tr>
-          <tr>
-            <td>Connection ID</td>
-            <td
-              id="connectionId"
-              style={{ fontFamily: "monospace", whiteSpace: "pre" }}
-            >
-              {me.connectionId}
-            </td>
-          </tr>
-          <tr>
-            <td>Items count</td>
-            <td
-              id="itemsCount"
-              style={{ fontFamily: "monospace", whiteSpace: "pre" }}
-            >
-              {items.length}
-            </td>
-          </tr>
-          <tr>
-            <td valign="top">Items</td>
-            <td
-              id="items"
-              style={{ fontFamily: "monospace", whiteSpace: "pre" }}
-            >
-              {JSON.stringify(items.toArray(), null, 2)}
-            </td>
-          </tr>
+          <Row
+            id="socketStatus"
+            name="WebSocket status"
+            value={status}
+            style={{ color: status !== "connected" ? "red" : "green" }}
+          />
+          <Row id="connectionId" name="Connection ID" value={me.connectionId} />
+          <Row id="itemsCount" name="Items count" value={items.length} />
+          <Row id="items" name="Items" value={items.toArray()} />
         </tbody>
       </table>
     </div>

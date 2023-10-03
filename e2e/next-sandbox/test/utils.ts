@@ -38,8 +38,8 @@ export async function preparePages(url: string) {
 
 export async function assertContainText(
   pages: Page[],
-  value: string,
-  id: string = "itemsCount"
+  id: string,
+  value: string
 ) {
   for (let i = 0; i < pages.length; i++) {
     await expect(pages[i].locator(`#${id}`)).toContainText(value);

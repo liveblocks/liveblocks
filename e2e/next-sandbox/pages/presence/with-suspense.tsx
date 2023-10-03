@@ -41,7 +41,7 @@ export default function Home() {
       {isVisible && (
         <RoomProvider id={roomId} initialPresence={{}}>
           <div>
-            <h1>Presence sandbox (with suspense hooks)</h1>
+            <h1>Presence sandbox (with suspense)</h1>
           </div>
           <ClientSideSuspense fallback="Loading...">
             {() => (

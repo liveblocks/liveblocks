@@ -1,7 +1,7 @@
 import { createRoomContext } from "@liveblocks/react";
 import randomNumber from "../../utils/randomNumber";
 import React from "react";
-import { genRoomId, getRoomFromUrl } from "../../utils";
+import { genRoomId, getRoomFromUrl, styles, Row } from "../../utils";
 import { LiveObject } from "@liveblocks/client";
 import { lsonToJson } from "@liveblocks/core";
 import createLiveblocksClient from "../../utils/createClient";
@@ -38,20 +38,20 @@ export default function Home() {
 function Sandbox() {
   const undo = useUndo();
   const redo = useRedo();
-  const object = useObject("object");
+  const obj = useObject("object");
   const me = useSelf();
 
-  if (object == null || me == null) {
+  if (obj == null || me == null) {
     return <div>Loading...</div>;
   }
 
   return (
     <div>
-      <h1>Storage object sandbox</h1>
+      <h1>LiveObject sandbox</h1>
       <button
         id="set"
         onClick={() => {
-          object.set(randomNumber(10).toString(), randomNumber(10));
+          obj.set(randomNumber(10).toString(), randomNumber(10));
         }}
       >
         Set
@@ -61,7 +61,7 @@ function Sandbox() {
         id="set-nested"
         onClick={() => {
           const nestedLiveObj = new LiveObject({ a: randomNumber(10) });
-          object.set(randomNumber(10).toString(), nestedLiveObj);
+          obj.set(randomNumber(10).toString(), nestedLiveObj);
         }}
       >
         Set nested
@@ -70,10 +70,10 @@ function Sandbox() {
       <button
         id="delete"
         onClick={() => {
-          const keys = Object.keys(object.toObject());
+          const keys = Object.keys(obj.toObject());
           if (keys.length > 0) {
             const index = randomNumber(keys.length);
-            object.delete(keys[index]);
+            obj.delete(keys[index]);
           }
         }}
       >
@@ -83,8 +83,8 @@ function Sandbox() {
       <button
         id="clear"
         onClick={() => {
-          while (Object.keys(object.toObject()).length > 0) {
-            object.delete(Array.from(Object.keys(object.toObject()))[0]);
+          while (Object.keys(obj.toObject()).length > 0) {
+            obj.delete(Array.from(Object.keys(obj.toObject()))[0]);
           }
         }}
       >
@@ -99,10 +99,12 @@ function Sandbox() {
         Redo
       </button>
 
-      <h2>Items</h2>
-      <div id="items" style={{ whiteSpace: "pre" }}>
-        {JSON.stringify(lsonToJson(object), null, 2)}
-      </div>
+      <table style={styles.dataTable}>
+        <tbody>
+          {/* XXX Rename ID to obj! */}
+          <Row id="items" name="Serialized" value={lsonToJson(obj)} />
+        </tbody>
+      </table>
     </div>
   );
 }

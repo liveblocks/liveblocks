@@ -32,7 +32,7 @@ test.describe("Zustand", () => {
 
   test("array push basic + presence", async () => {
     await pages[0].click("#clear");
-    await assertContainText(pages, "0");
+    await assertContainText(pages, "itemsCount", "0");
 
     await delay(3000);
     const othersFirstPage = (await getJsonContent(
@@ -59,12 +59,12 @@ test.describe("Zustand", () => {
     await waitForContentToBeEquals(pages);
 
     await pages[0].click("#clear");
-    await assertContainText(pages, "0");
+    await assertContainText(pages, "itemsCount", "0");
   });
 
   test("with enter and leave room", async () => {
     await pages[0].click("#clear");
-    await assertContainText(pages, "0");
+    await assertContainText(pages, "itemsCount", "0");
 
     await pages[0].click("#push");
     await delay(50);
@@ -81,12 +81,12 @@ test.describe("Zustand", () => {
     await waitForContentToBeEquals(pages);
 
     await pages[0].click("#clear");
-    await assertContainText(pages, "0");
+    await assertContainText(pages, "itemsCount", "0");
   });
 
   test.skip("fuzzy", async () => {
     await pages[0].click("#clear");
-    await assertContainText(pages, "0");
+    await assertContainText(pages, "itemsCount", "0");
     for (let i = 0; i < 10; i++) {
       // no await to create randomness
       pages[0].click("#push");
@@ -106,6 +106,6 @@ test.describe("Zustand", () => {
     await waitForContentToBeEquals(pages);
 
     await pages[0].click("#clear");
-    await assertContainText(pages, "0");
+    await assertContainText(pages, "itemsCount", "0");
   });
 });

@@ -2,7 +2,7 @@ import { createRoomContext } from "@liveblocks/react";
 import { LiveList } from "@liveblocks/client";
 import React from "react";
 import createLiveblocksClient from "../../utils/createClient";
-import { genRoomId, getRoomFromUrl } from "../../utils";
+import { genRoomId, getRoomFromUrl, styles, Row } from "../../utils";
 
 const client = createLiveblocksClient();
 
@@ -39,20 +39,20 @@ function generateRandomNumber(max: number, ignore?: number) {
 function Sandbox() {
   const undo = useUndo();
   const redo = useRedo();
-  const list = useList("items");
+  const items = useList("items");
   const me = useSelf();
 
-  if (list == null || me == null) {
+  if (items == null || me == null) {
     return <div>Loading...</div>;
   }
 
   return (
     <div>
-      <h1>Storage list sandbox</h1>
+      <h1>LiveList sandbox</h1>
       <button
         id="push"
         onClick={() => {
-          list.push(me.connectionId + ":" + item);
+          items.push(me.connectionId + ":" + item);
           item = String.fromCharCode(item.charCodeAt(0) + 1);
         }}
       >
@@ -62,7 +62,7 @@ function Sandbox() {
       <button
         id="insert"
         onClick={() => {
-          list.insert(me.connectionId + ":" + item, 0);
+          items.insert(me.connectionId + ":" + item, 0);
           item = String.fromCharCode(item.charCodeAt(0) + 1);
         }}
       >
@@ -72,13 +72,13 @@ function Sandbox() {
       <button
         id="move"
         onClick={() => {
-          if (list.length < 2) {
+          if (items.length < 2) {
             return;
           }
 
-          const index = generateRandomNumber(list.length);
-          const target = generateRandomNumber(list.length, index);
-          list.move(index, target);
+          const index = generateRandomNumber(items.length);
+          const target = generateRandomNumber(items.length, index);
+          items.move(index, target);
         }}
       >
         Move
@@ -87,12 +87,12 @@ function Sandbox() {
       <button
         id="set"
         onClick={() => {
-          if (list.length === 0) {
+          if (items.length === 0) {
             return;
           }
 
-          const index = generateRandomNumber(list.length - 1);
-          list.set(index, me.connectionId + ":" + item);
+          const index = generateRandomNumber(items.length - 1);
+          items.set(index, me.connectionId + ":" + item);
           item = String.fromCharCode(item.charCodeAt(0) + 1);
         }}
       >
@@ -102,16 +102,16 @@ function Sandbox() {
       <button
         id="delete"
         onClick={() => {
-          if (list.length > 0) {
-            const index = generateRandomNumber(list.length);
-            list.delete(index);
+          if (items.length > 0) {
+            const index = generateRandomNumber(items.length);
+            items.delete(index);
           }
         }}
       >
         Delete
       </button>
 
-      <button id="clear" onClick={() => list.clear()}>
+      <button id="clear" onClick={() => items.clear()}>
         Clear
       </button>
 
@@ -123,13 +123,12 @@ function Sandbox() {
         Redo
       </button>
 
-      <h2>Items</h2>
-      <p id="itemsCount" style={{ visibility: "hidden" }}>
-        {list.length}
-      </p>
-      <div id="items" style={{ whiteSpace: "pre" }}>
-        {JSON.stringify(list.toArray(), null, 2)}
-      </div>
+      <table style={styles.dataTable}>
+        <tbody>
+          <Row id="itemsCount" name="List size" value={items.length} />
+          <Row id="items" name="Serialized" value={items.toArray()} />
+        </tbody>
+      </table>
     </div>
   );
 }

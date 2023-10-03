@@ -10,6 +10,11 @@ function MyApp({ Component, pageProps }: AppProps) {
     body.style.backgroundColor = url.searchParams.get("bg") ?? "lime";
   }, []);
 
-  return <Component {...pageProps} />;
+  return (
+    <>
+      <a href="/">Home</a>
+      <Component {...pageProps} />
+    </>
+  );
 }
 export default MyApp;
