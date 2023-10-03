@@ -247,8 +247,12 @@ function _between(lo: Pos, hi: Pos | ""): Pos {
 
     // Difference of only 1 means we'll have to settle this in the next digit
     if (hiCode - loCode === 1) {
-      const prefix = lo.substring(0, index + 1);
-      const suffix = lo.substring(index + 1) as Pos;
+      const size = index + 1;
+      let prefix = lo.substring(0, size);
+      if (prefix.length < size) {
+        prefix += ZERO.repeat(size - prefix.length);
+      }
+      const suffix = lo.substring(size) as Pos;
       const nines = ""; // Will get interpreted like .999999…
       return (prefix + _between(suffix, nines)) as Pos;
     } else {

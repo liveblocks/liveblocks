@@ -82,10 +82,10 @@ import { isKey } from "../../utils/is-key";
 import { Portal } from "../../utils/Portal";
 import { requestSubmit } from "../../utils/request-submit";
 import { useId } from "../../utils/use-id";
+import { useIndex } from "../../utils/use-index";
 import { useInitial } from "../../utils/use-initial";
 import { useLayoutEffect } from "../../utils/use-layout-effect";
 import { useRefs } from "../../utils/use-refs";
-import { useRovingIndex } from "../../utils/use-roving-index";
 import { toAbsoluteUrl } from "../Comment/utils";
 import {
   ComposerContext,
@@ -629,7 +629,7 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
       setPreviousSelectedMentionSuggestionIndex,
       setNextSelectedMentionSuggestionIndex,
       setSelectedMentionSuggestionIndex,
-    ] = useRovingIndex(0, mentionSuggestions?.length ?? 0);
+    ] = useIndex(0, mentionSuggestions?.length ?? 0);
     const id = useId();
     const suggestionsListId = useMemo(
       () => `liveblocks-suggestions-list-${id}`,

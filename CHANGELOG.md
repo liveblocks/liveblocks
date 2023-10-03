@@ -1,4 +1,4 @@
-# v1.4.1
+# v1.4.3
 
 ### `@liveblocks/react`
 
@@ -7,6 +7,27 @@
 ### `@liveblocks/react-comments`
 
 - Add support for reactions. (👍)
+- Add keyboard navigation to emoji picker.
+
+# v1.4.2
+
+### `@liveblocks/client`
+
+- Fix a bug where calculating the insertion position between two existing
+  elements could happen incorrectly in a small edge case
+
+# v1.4.1
+
+### `@liveblocks/*`
+
+- [#1177](https://github.com/liveblocks/liveblocks/pull/1177) Fix an issue with
+  internal LiveList serialization that could lead to a "ghosting" bug with
+  `@liveblocks/zustand` / `@liveblocks/redux` when using tuples.
+
+### `@liveblocks/node`
+
+- Add comment reaction webhook events `CommentReactionAdded` and
+  `CommentReactionRemoved`
 
 # v1.4.0
 

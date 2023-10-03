@@ -112,7 +112,15 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     return list;
   }
 
-  /** @internal */
+  /**
+   * @internal
+   * This function assumes that the resulting ops will be sent to the server if they have an 'opId'
+   * so we mutate _unacknowledgedSets to avoid potential flickering
+   * https://github.com/liveblocks/liveblocks/pull/1177
+   *
+   * This is quite unintuitive and should disappear as soon as
+   * we introduce an explicit LiveList.Set operation
+   */
   _toOps(
     parentId: string,
     parentKey: string,
@@ -134,7 +142,16 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     ops.push(op);
 
     for (const item of this._items) {
-      ops.push(...item._toOps(this._id, item._getParentKeyOrThrow(), pool));
+      const parentKey = item._getParentKeyOrThrow();
+      const childOps = HACK_addIntentAndDeletedIdToOperation(
+        item._toOps(this._id, parentKey, pool),
+        undefined
+      );
+      const childOpId = childOps[0].opId;
+      if (childOpId !== undefined) {
+        this._unacknowledgedSets.set(parentKey, childOpId);
+      }
+      ops.push(...childOps);
     }
 
     return ops;
