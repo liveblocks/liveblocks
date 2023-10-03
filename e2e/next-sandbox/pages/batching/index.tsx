@@ -42,6 +42,7 @@ function Sandbox() {
 
   const others = useOthers();
   const [myPresence, updateMyPresence] = useMyPresence();
+  const theirPresence = others[0]?.presence;
   const me = useSelf();
 
   if (liveMap == null || me == null) {
@@ -84,25 +85,19 @@ function Sandbox() {
         Clear
       </button>
 
-      <h2>Element</h2>
+      <h2>Presence</h2>
+      <table style={styles.dataTable}>
+        <tbody>
+          <Row id="myPresence" name="My presence" value={myPresence} />
+          <Row id="theirPresence" name="Their presence" value={theirPresence} />
+        </tbody>
+      </table>
+
+      <h2>Storage</h2>
       <table style={styles.dataTable}>
         <tbody>
           <Row id="itemsCount" name="Items count" value={liveMap.size} />
           <Row id="items" name="Items" value={Array.from(liveMap.entries())} />
-        </tbody>
-      </table>
-
-      <h2>Me</h2>
-      <table style={styles.dataTable}>
-        <tbody>
-          <Row id="me-count" name="Count" value={myPresence.count} />
-        </tbody>
-      </table>
-
-      <h2>Others</h2>
-      <table style={styles.dataTable}>
-        <tbody>
-          <Row id="others" name="Others" value={others} />
         </tbody>
       </table>
     </div>
