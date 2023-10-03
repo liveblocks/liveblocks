@@ -123,7 +123,6 @@ test.describe("Storage - LiveList", () => {
 
     await waitForContentToBeEquals(pages, "#items");
 
-    clicks.length = 0;
     for (let i = 0; i < 50; i++) {
       pages.forEach((page) => {
         const nbofUndoRedo = pickNumberOfUndoRedo();

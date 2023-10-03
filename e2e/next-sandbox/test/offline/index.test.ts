@@ -99,13 +99,14 @@ test.describe("Offline", () => {
     await page1.click("#clear");
     await expectJson(pages, "#itemsCount", 0);
 
+    const clicks = [];
     for (let i = 0; i < 10; i++) {
-      // no await to create randomness
-      page1.click("#push");
-      page2.click("#push");
+      clicks.push(page1.click("#push"));
+      clicks.push(page2.click("#push"));
       await nanoSleep();
     }
 
+    await Promise.all(clicks);
     await waitForContentToBeEquals(pages, "#items");
 
     await page1.click("#closeWebsocket");
@@ -113,13 +114,14 @@ test.describe("Offline", () => {
 
     for (let i = 0; i < 50; i++) {
       // no await to create randomness
-      page1.click(pickRandomAction());
-      page2.click(pickRandomAction());
+      clicks.push(page1.click(pickRandomAction()));
+      clicks.push(page2.click(pickRandomAction()));
       await nanoSleep();
     }
 
     await sleep(2000); // XXX Remove
 
+    await Promise.all(clicks);
     await page1.click("#sendCloseEventConnectionError");
 
     await sleep(3000); // XXX Remove
