@@ -1,15 +1,13 @@
-import { Page, test, expect } from "@playwright/test";
+import { Page, test } from "@playwright/test";
 
 import {
-  getJson,
+  expectJson,
   nanoSleep,
   pickFrom,
   preparePages,
-  sleep,
   waitForContentToBeEquals,
   waitForJson,
 } from "./utils";
-import type { JsonObject } from "@liveblocks/client";
 
 const TEST_URL = "http://localhost:3007/redux";
 
@@ -26,31 +24,58 @@ test.describe("Redux", () => {
     Promise.all(pages.map((page) => page.close()))
   );
 
+  test("array push basic", async () => {
+    const [page1] = pages;
+    await page1.click("#clear");
+    await expectJson(page1, "#itemsCount", 0);
+    await waitForJson(pages, "#othersCount", 1);
+
+    await page1.click("#push");
+    await page1.click("#push");
+    await waitForContentToBeEquals(pages, "#items");
+
+    await page1.click("#push");
+    await page1.click("#push");
+    await waitForContentToBeEquals(pages, "#items");
+
+    await page1.click("#push");
+    await page1.click("#push");
+    await page1.click("#push");
+    await waitForJson(pages, "#itemsCount", 7);
+    await waitForContentToBeEquals(pages, "#items");
+
+    await page1.click("#clear");
+    await waitForJson(pages, "#itemsCount", 0);
+  });
+
   test("array push basic + presence", async () => {
     const [page1, page2] = pages;
     await page1.click("#clear");
-    await waitForJson(pages, "#itemsCount", 0);
+    await expectJson(page1, "#itemsCount", 0);
+    await waitForJson(pages, "#othersCount", 1);
 
-    await sleep(3000); // XXX Remove
-    const othersFirstPage = (await getJson(page1, "#others")) as JsonObject[];
-    const othersSecondPage = (await getJson(page2, "#others")) as JsonObject[];
+    await waitForJson(page2, "#theirPresence", { counter: 0 });
 
-    expect(othersFirstPage.length).toEqual(1);
-    expect(othersFirstPage[0].presence).toEqual({});
-    expect(othersSecondPage.length).toEqual(1);
-    expect(othersSecondPage[0].presence).toEqual({});
+    await page1.click("#push");
+    await page1.click("#push");
+    await page1.click("#set-name");
+    await page1.click("#inc-counter");
+    await page1.click("#inc-counter");
+    await waitForContentToBeEquals(pages, "#items");
 
+    await page1.click("#push");
     await page1.click("#push");
     await waitForContentToBeEquals(pages, "#items");
 
     await page1.click("#push");
-    await waitForContentToBeEquals(pages, "#items");
-
-    await page1.click("#push");
+    await page1.click("#set-name");
+    await page1.click("#inc-counter");
+    await waitForJson(pages, "#itemsCount", 5);
     await waitForContentToBeEquals(pages, "#items");
 
     await page1.click("#clear");
     await waitForJson(pages, "#itemsCount", 0);
+    await waitForJson(page2, "#theirPresence", { name: "Vincent", counter: 1 });
   });
 
   test("fuzzy (before others are visible)", async () => {

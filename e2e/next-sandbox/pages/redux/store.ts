@@ -5,10 +5,17 @@ import createLiveblocksClient from "../../utils/createClient";
 export const client = createLiveblocksClient();
 
 export type State = {
+  // Presence
+  name?: string;
+  counter: number;
+
+  // Storage
   items: string[];
 };
 
 const initialState: State = {
+  // name: undefined,
+  counter: 0,
   items: [],
 };
 
@@ -16,6 +23,12 @@ const slice = createSlice({
   name: "state",
   initialState,
   reducers: {
+    setName: (state, action: PayloadAction<string>) => {
+      state.name = action.payload;
+    },
+    incCounter: (state) => {
+      state.counter++;
+    },
     addItem: (state, action: PayloadAction<string>) => {
       state.items.push(action.payload);
     },
@@ -28,7 +41,8 @@ const slice = createSlice({
   },
 });
 
-export const { addItem, deleteItem, clear } = slice.actions;
+export const { setName, incCounter, addItem, deleteItem, clear } =
+  slice.actions;
 
 export function makeStore() {
   return configureStore({
@@ -37,6 +51,7 @@ export function makeStore() {
       liveblocksEnhancer<State>({
         client,
         storageMapping: { items: true },
+        presenceMapping: { name: true, counter: true },
       }),
     ],
   });

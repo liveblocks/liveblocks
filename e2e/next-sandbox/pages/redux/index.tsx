@@ -12,7 +12,14 @@ import {
   useRenderCount,
 } from "../../utils";
 
-import store, { client, addItem, deleteItem, clear } from "./store";
+import store, {
+  client,
+  setName,
+  incCounter,
+  addItem,
+  deleteItem,
+  clear,
+} from "./store";
 
 export default function Home() {
   return (
@@ -42,12 +49,22 @@ function List() {
     return <div>Loading...</div>;
   }
 
+  const theirPresence = others[0]?.presence;
+
   const canDelete = items.length > 0;
   const nextIndexToDelete = canDelete ? randomInt(items.length) : -1;
 
   return (
     <div>
       <h1>Redux sandbox</h1>
+      <button id="set-name" onClick={() => dispatch(setName("Vincent"))}>
+        Set name
+      </button>
+
+      <button id="inc-counter" onClick={() => dispatch(incCounter())}>
+        Inc counter
+      </button>
+
       <button
         id="push"
         onClick={() => {
@@ -101,6 +118,7 @@ function List() {
       <h2>Others</h2>
       <table style={styles.dataTable}>
         <tbody>
+          <Row id="theirPresence" name="Their presence" value={theirPresence} />
           <Row id="othersCount" name="Others count" value={others.length} />
           <Row id="others" name="Others" value={others} />
         </tbody>
