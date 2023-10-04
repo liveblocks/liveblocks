@@ -1,7 +1,6 @@
 import { Page, test } from "@playwright/test";
 
 import {
-  assertContainText,
   assertJsonContentAreEquals,
   nanoSleep,
   pickNumberOfUndoRedo,
@@ -34,8 +33,7 @@ test.describe("Storage - LiveObject", () => {
   test("fuzzy", async () => {
     const [page1, page2] = pages;
     await page1.click("#clear");
-    // XXX Make json
-    await assertContainText(pages, "#items", "{}");
+    await waitForJson(pages, "#items", {});
 
     const clicks = [];
     for (let i = 0; i < 20; i++) {
@@ -58,8 +56,7 @@ test.describe("Storage - LiveObject", () => {
   test("fuzzy with nested objects", async () => {
     const [page1, page2] = pages;
     await page1.click("#clear");
-    // XXX Make json
-    await assertContainText(pages, "#items", "{}");
+    await waitForJson(pages, "#items", {});
 
     await assertJsonContentAreEquals(pages, "#items");
 

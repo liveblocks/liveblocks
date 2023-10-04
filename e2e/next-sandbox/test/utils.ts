@@ -39,18 +39,6 @@ export async function preparePages(url: string) {
   ] as const);
 }
 
-/** @deprecated */
-// XXX Remove helper eventually!
-export async function assertContainText(
-  pages: [Page, Page],
-  selector: IDSelector,
-  value: string
-) {
-  for (const page of pages) {
-    await expect(page.locator(selector)).toContainText(value);
-  }
-}
-
 export async function waitForJson(
   oneOrMorePages: Page | Page[],
   selector: IDSelector,
