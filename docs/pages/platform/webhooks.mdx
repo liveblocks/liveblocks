@@ -423,8 +423,8 @@ for every write.
 For example, if a user updates a Yjs document at 1:00 pm sharp, the
 `YDocUpdatedEvent` event will be triggered shortly after. If the user writes to
 the Yjs document again at 1:00 pm and 2 seconds, the `YDocUpdatedEvent` event
-will be triggered 5 seconds after the first event was sent, around 1:00 pm
-and 5 seconds.
+will be triggered 5 seconds after the first event was sent, around 1:00 pm and 5
+seconds.
 
 ```ts
 // Schema
@@ -536,6 +536,76 @@ const commentDeletedEvent = {
     threadId: "my-thread-id",
     commentId: "my-comment-id",
     deletedAt: "2021-10-06T01:45:56.558Z",
+  },
+};
+```
+
+#### CommentReactionAddedEvent
+
+An event is triggered when a reaction is added to a comment. This event is not
+throttled.
+
+```ts
+// Schema
+type CommentReactionAddedEvent = {
+  type: "commentReactionAdded";
+  data: {
+    projectId: string;
+    roomId: string;
+    threadId: string;
+    commentId: string;
+    emoji: string;
+    addedAt: string;
+    addedBy: string;
+  };
+};
+
+// Example
+const commentReactionAddedEvent = {
+  type: "commentReactionAdded",
+  data: {
+    projectId: "my-project-id",
+    roomId: "my-room-id",
+    threadId: "my-thread-id",
+    commentId: "my-comment-id",
+    emoji: "👍",
+    addedAt: "2021-10-06T01:45:56.558Z",
+    addedBy: "my-user-id",
+  },
+};
+```
+
+#### CommentReactionRemovedEvent
+
+An event is triggered when a reaction is removed from a comment. This event is
+not throttled.
+
+```ts
+// Schema
+type CommentReactionRemovedEvent = {
+  type: "commentReactionRemoved";
+  data: {
+    projectId: string;
+    roomId: string;
+    threadId: string;
+    commentId: string;
+    emoji: string;
+    removedAt: string;
+    removedBy: string;
+  };
+};
+
+// Example
+const commentReactionRemovedEvent = {
+  type: "commentReactionRemoved",
+  data: {
+    projectId: "my-project-id",
+    roomId: "my-room-id",
+    threadId: "my-thread-id",
+    commentId: "my-comment-id",
+    emoji: "👍",
+    removedAt: "2021-10-06T01:45:56.558Z",
+    removedBy: "my-user-id",
   },
 };
 ```
