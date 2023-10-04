@@ -31,6 +31,7 @@ export default function Home() {
 
 function List() {
   const renderCount = useRenderCount();
+  const status = useAppSelector((state) => state.liveblocks.status);
   const others = useAppSelector((state) => state.liveblocks.others);
 
   const items = useAppSelector((state) => state.items);
@@ -110,6 +111,7 @@ function List() {
       <h2>Items</h2>
       <table style={styles.dataTable}>
         <tbody>
+          <Row id="socketStatus" name="WebSocket status" value={status} />
           <Row id="itemsCount" name="Items count" value={items.length} />
           <Row id="items" name="Items" value={items} />
         </tbody>

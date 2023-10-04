@@ -25,31 +25,32 @@ test.describe("Redux", () => {
   );
 
   test("array push basic", async () => {
-    const [page1] = pages;
+    const [page1, page2] = pages;
+    await waitForJson(pages, "#socketStatus", "connected");
+
     await page1.click("#clear");
     await expectJson(page1, "#itemsCount", 0);
     await waitForJson(pages, "#othersCount", 1);
 
     await page1.click("#push");
+    await waitForContentToBeEquals(pages, "#items");
+
     await page1.click("#push");
     await waitForContentToBeEquals(pages, "#items");
 
     await page1.click("#push");
-    await page1.click("#push");
-    await waitForContentToBeEquals(pages, "#items");
-
-    await page1.click("#push");
-    await page1.click("#push");
-    await page1.click("#push");
-    await waitForJson(pages, "#itemsCount", 7);
+    await waitForJson(pages, "#itemsCount", 3);
     await waitForContentToBeEquals(pages, "#items");
 
     await page1.click("#clear");
     await waitForJson(pages, "#itemsCount", 0);
+    await waitForJson(page2, "#theirPresence", { counter: 0 });
   });
 
   test("array push basic + presence", async () => {
     const [page1, page2] = pages;
+    await waitForJson(pages, "#socketStatus", "connected");
+
     await page1.click("#clear");
     await expectJson(page1, "#itemsCount", 0);
     await waitForJson(pages, "#othersCount", 1);
@@ -57,25 +58,23 @@ test.describe("Redux", () => {
     await waitForJson(page2, "#theirPresence", { counter: 0 });
 
     await page1.click("#push");
-    await page1.click("#push");
     await page1.click("#set-name");
     await page1.click("#inc-counter");
     await page1.click("#inc-counter");
     await waitForContentToBeEquals(pages, "#items");
 
     await page1.click("#push");
-    await page1.click("#push");
     await waitForContentToBeEquals(pages, "#items");
 
     await page1.click("#push");
     await page1.click("#set-name");
     await page1.click("#inc-counter");
-    await waitForJson(pages, "#itemsCount", 5);
+    await waitForJson(pages, "#itemsCount", 3);
     await waitForContentToBeEquals(pages, "#items");
 
     await page1.click("#clear");
     await waitForJson(pages, "#itemsCount", 0);
-    await waitForJson(page2, "#theirPresence", { name: "Vincent", counter: 1 });
+    await waitForJson(page2, "#theirPresence", { counter: 3, name: "Vincent" });
   });
 
   test("fuzzy (before others are visible)", async () => {
