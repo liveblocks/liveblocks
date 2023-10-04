@@ -82,11 +82,9 @@ test.describe("Redux", () => {
     await page1.click("#clear");
     await waitForJson(pages, "#itemsCount", 0);
 
-    const clicks = [];
-
     for (let i = 0; i < 10; i++) {
-      clicks.push(page1.click("#push"));
-      clicks.push(page2.click("#push"));
+      await page1.click("#push");
+      await page2.click("#push");
       await nanoSleep();
     }
 
@@ -94,12 +92,11 @@ test.describe("Redux", () => {
 
     const actions = ["#push", "#delete"];
     for (let i = 0; i < 30; i++) {
-      clicks.push(page1.click(pickFrom(actions)));
-      clicks.push(page2.click(pickFrom(actions)));
+      await page1.click(pickFrom(actions));
+      await page2.click(pickFrom(actions));
       await nanoSleep();
     }
 
-    await Promise.all(clicks);
     await waitForContentToBeEquals(pages, "#items");
 
     await page1.click("#clear");
@@ -113,11 +110,9 @@ test.describe("Redux", () => {
     await page1.click("#clear");
     await waitForJson(pages, "#itemsCount", 0);
 
-    const clicks = [];
-
     for (let i = 0; i < 10; i++) {
-      clicks.push(page1.click("#push"));
-      clicks.push(page2.click("#push"));
+      await page1.click("#push");
+      await page2.click("#push");
       await nanoSleep();
     }
 
@@ -125,12 +120,11 @@ test.describe("Redux", () => {
 
     const actions = ["#push", "#delete"];
     for (let i = 0; i < 30; i++) {
-      clicks.push(page1.click(pickFrom(actions)));
-      clicks.push(page2.click(pickFrom(actions)));
+      await page1.click(pickFrom(actions));
+      await page2.click(pickFrom(actions));
       await nanoSleep();
     }
 
-    await Promise.all(clicks);
     await waitForContentToBeEquals(pages, "#items");
 
     await page1.click("#clear");

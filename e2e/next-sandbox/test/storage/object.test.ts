@@ -35,21 +35,19 @@ test.describe("Storage - LiveObject", () => {
     await page1.click("#clear");
     await waitForJson(pages, "#obj", {});
 
-    const clicks = [];
     for (let i = 0; i < 20; i++) {
-      clicks.push(page1.click("#set"));
+      await page1.click("#set");
       await nanoSleep();
     }
 
     await waitForContentToBeEquals(pages, "#obj");
 
     for (let i = 0; i < 100; i++) {
-      clicks.push(page1.click(pickFrom(["#set", "#delete"])));
-      clicks.push(page2.click(pickFrom(["#set", "#delete"])));
+      await page1.click(pickFrom(["#set", "#delete"]));
+      await page2.click(pickFrom(["#set", "#delete"]));
       await nanoSleep();
     }
 
-    await Promise.all(clicks);
     await waitForContentToBeEquals(pages, "#obj");
   });
 
@@ -60,22 +58,19 @@ test.describe("Storage - LiveObject", () => {
 
     await assertJsonContentAreEquals(pages, "#obj");
 
-    const clicks = [];
     for (let i = 0; i < 20; i++) {
-      clicks.push(page1.click("#set-nested"));
+      await page1.click("#set-nested");
     }
 
-    await Promise.all(clicks);
     await waitForContentToBeEquals(pages, "#obj");
 
     const actions = ["#set-nested", "#delete"];
     for (let i = 0; i < 50; i++) {
-      clicks.push(page1.click(pickFrom(actions)));
-      clicks.push(page2.click(pickFrom(actions)));
+      await page1.click(pickFrom(actions));
+      await page2.click(pickFrom(actions));
       await nanoSleep();
     }
 
-    await Promise.all(clicks);
     await waitForContentToBeEquals(pages, "#obj");
   });
 
@@ -86,13 +81,11 @@ test.describe("Storage - LiveObject", () => {
 
     await assertJsonContentAreEquals(pages, "#obj");
 
-    const clicks = [];
     for (let i = 0; i < 20; i++) {
-      clicks.push(page1.click("#set-nested"));
+      await page1.click("#set-nested");
       await nanoSleep();
     }
 
-    await Promise.all(clicks);
     await waitForContentToBeEquals(pages, "#obj");
 
     const actions = ["#set-nested", "#delete"];
@@ -100,19 +93,18 @@ test.describe("Storage - LiveObject", () => {
       const nbofUndoRedo = pickNumberOfUndoRedo();
       if (nbofUndoRedo > 0) {
         for (let y = 0; y < nbofUndoRedo; y++) {
-          clicks.push(page1.click("#undo"));
+          await page1.click("#undo");
         }
         for (let y = 0; y < nbofUndoRedo; y++) {
-          clicks.push(page1.click("#redo"));
+          await page1.click("#redo");
         }
       } else {
-        clicks.push(page1.click(pickFrom(actions)));
-        clicks.push(page2.click(pickFrom(actions)));
+        await page1.click(pickFrom(actions));
+        await page2.click(pickFrom(actions));
       }
       await nanoSleep();
     }
 
-    await Promise.all(clicks);
     await waitForContentToBeEquals(pages, "#obj");
   });
 });

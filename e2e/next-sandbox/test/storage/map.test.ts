@@ -34,14 +34,12 @@ test.describe("Storage - LiveMap", () => {
     await waitForJson(pages, "#mapSize", 0);
 
     const actions = ["#set", "#delete"];
-    const clicks = [];
     for (let i = 0; i < 50; i++) {
-      clicks.push(page1.click(pickFrom(actions)));
-      clicks.push(page2.click(pickFrom(actions)));
+      await page1.click(pickFrom(actions));
+      await page2.click(pickFrom(actions));
       await nanoSleep();
     }
 
-    await Promise.all(clicks);
     await waitForContentToBeEquals(pages, "#map");
   });
 
@@ -50,25 +48,23 @@ test.describe("Storage - LiveMap", () => {
     await page1.click("#clear");
 
     await waitForJson(pages, "#mapSize", 0);
-
     await assertJsonContentAreEquals(pages, "#map");
 
     const actions = ["#set", "#delete"];
-    const clicks: unknown[] = [];
     for (let i = 0; i < 50; i++) {
-      pages.forEach((page) => {
+      for (const page of pages) {
         const nbofUndoRedo = pickNumberOfUndoRedo();
         if (nbofUndoRedo > 0) {
           for (let y = 0; y < nbofUndoRedo; y++) {
-            clicks.push(page.click("#undo"));
+            await page.click("#undo");
           }
           for (let y = 0; y < nbofUndoRedo; y++) {
-            clicks.push(page.click("#redo"));
+            await page.click("#redo");
           }
         } else {
-          clicks.push(page.click(pickFrom(actions)));
+          await page.click(pickFrom(actions));
         }
-      });
+      }
       await nanoSleep();
     }
 

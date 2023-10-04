@@ -72,13 +72,11 @@ test.describe("Storage - LiveList", () => {
     await page1.click("#clear");
     await waitForJson(pages, "#itemsCount", 0);
 
-    const clicks = [];
     for (let i = 0; i < 10; i++) {
-      clicks.push(page1.click("#push"));
-      clicks.push(page2.click("#push"));
+      await page1.click("#push");
+      await page2.click("#push");
     }
 
-    await Promise.all(clicks);
     // await expectJson(pages, "#itemsCount", n => n >= 10 && n <= 20);
     await waitForJson(pages, "#itemsCount", 20);
     await waitForContentToBeEquals(pages, "#items");
