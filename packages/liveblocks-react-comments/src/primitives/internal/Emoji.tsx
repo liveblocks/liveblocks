@@ -19,8 +19,10 @@ export const Emoji = forwardRef<HTMLSpanElement, Props>(
         style={{
           ...style,
           fontFamily: EMOJI_FONT_FAMILY,
-          lineHeight: "1em",
-          width: "1ch",
+          display: "inline-flex",
+          alignItems: "center",
+          justifyContent: "center",
+          width: "1em",
           whiteSpace: "nowrap",
         }}
         {...props}
