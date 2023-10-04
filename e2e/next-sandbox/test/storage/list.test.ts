@@ -88,14 +88,10 @@ test.describe("Storage - LiveList", () => {
     await page1.click("#push");
     await waitForJson(pages, "#itemsCount", 1);
 
-    const clicks = [];
     for (let i = 0; i < 10; i++) {
-      // no await to create randomness
-      clicks.push(page1.click("#set"));
-      clicks.push(page2.click("#set"));
+      await page1.click("#set");
+      await page2.click("#set");
     }
-
-    await Promise.all(clicks);
 
     await waitForJson(pages, "#itemsCount", 1);
     await waitUntilEqualOnAllPages(pages, "#items");
@@ -107,35 +103,32 @@ test.describe("Storage - LiveList", () => {
     await waitForJson(pages, "#itemsCount", 0);
 
     const numberOfItemsAtStart = 5;
-    const clicks = [];
     for (let i = 0; i < numberOfItemsAtStart; i++) {
-      clicks.push(page1.click("#push"));
+      await page1.click("#push");
     }
 
-    await Promise.all(clicks);
     await expectJson(page1, "#itemsCount", numberOfItemsAtStart);
 
     await waitUntilEqualOnAllPages(pages, "#items");
 
     const actions = ["#push", "#delete", "#move", "#set"];
     for (let i = 0; i < 50; i++) {
-      pages.forEach((page) => {
+      for (const page of pages) {
         const nbofUndoRedo = pickNumberOfUndoRedo();
         if (nbofUndoRedo > 0) {
           for (let y = 0; y < nbofUndoRedo; y++) {
-            clicks.push(page.click("#undo"));
+            await page.click("#undo");
           }
           for (let y = 0; y < nbofUndoRedo; y++) {
-            clicks.push(page.click("#redo"));
+            await page.click("#redo");
           }
         } else {
-          clicks.push(page.click(pickFrom(actions)));
+          await page.click(pickFrom(actions));
         }
-      });
+      }
       await nanoSleep();
     }
 
-    await Promise.all(clicks);
     await waitUntilEqualOnAllPages(pages, "#items");
   });
 });
