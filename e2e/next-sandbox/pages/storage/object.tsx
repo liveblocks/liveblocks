@@ -15,15 +15,22 @@ import createLiveblocksClient from "../../utils/createClient";
 
 const client = createLiveblocksClient();
 
-const { RoomProvider, useObject, useRedo, useSelf, useUndo } =
-  createRoomContext<
-    never,
-    {
-      object: LiveObject<{
-        [key: string]: number | LiveObject<{ a: number }>;
-      }>;
-    }
-  >(client);
+const {
+  RoomProvider,
+  useCanRedo,
+  useCanUndo,
+  useObject,
+  useRedo,
+  useSelf,
+  useUndo,
+} = createRoomContext<
+  never,
+  {
+    object: LiveObject<{
+      [key: string]: number | LiveObject<{ a: number }>;
+    }>;
+  }
+>(client);
 
 export default function Home() {
   const roomId = getRoomFromUrl() ?? genRoomId("e2e-storage-object");
@@ -46,6 +53,8 @@ function Sandbox() {
   const renderCount = useRenderCount();
   const undo = useUndo();
   const redo = useRedo();
+  const canUndo = useCanUndo();
+  const canRedo = useCanRedo();
   const obj = useObject("object");
   const me = useSelf();
 
@@ -104,11 +113,11 @@ function Sandbox() {
         Clear
       </button>
 
-      <button id="undo" onClick={undo}>
+      <button id="undo" style={opaqueIf(canUndo)} onClick={undo}>
         Undo
       </button>
 
-      <button id="redo" onClick={redo}>
+      <button id="redo" style={opaqueIf(canRedo)} onClick={redo}>
         Redo
       </button>
 

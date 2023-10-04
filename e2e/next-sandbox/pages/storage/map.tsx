@@ -14,10 +14,8 @@ import {
 
 const client = createLiveblocksClient();
 
-const { RoomProvider, useMap, useRedo, useUndo } = createRoomContext<
-  never,
-  { map: LiveMap<string, string> }
->(client);
+const { RoomProvider, useCanRedo, useCanUndo, useMap, useRedo, useUndo } =
+  createRoomContext<never, { map: LiveMap<string, string> }>(client);
 
 export default function Home() {
   const roomId = getRoomFromUrl() ?? genRoomId("e2e-storage-map");
@@ -36,6 +34,8 @@ function Sandbox() {
   const renderCount = useRenderCount();
   const undo = useUndo();
   const redo = useRedo();
+  const canUndo = useCanUndo();
+  const canRedo = useCanRedo();
   const map = useMap("map");
 
   if (map == null) {
@@ -77,21 +77,19 @@ function Sandbox() {
         Clear
       </button>
 
-      <button id="undo" onClick={undo}>
+      <button id="undo" style={opaqueIf(canUndo)} onClick={undo}>
         Undo
       </button>
 
-      <button id="redo" onClick={redo}>
+      <button id="redo" style={opaqueIf(canRedo)} onClick={redo}>
         Redo
       </button>
 
       <table style={styles.dataTable}>
         <tbody>
           <Row id="renderCount" name="Render count" value={renderCount} />
-          {/* XXX Rename ID to map-size! */}
-          <Row id="itemsCount" name="Map size" value={map.size} />
-          {/* XXX Rename ID to map! */}
-          <Row id="items" name="Serialized" value={Object.fromEntries(map)} />
+          <Row id="mapSize" name="Map size" value={map.size} />
+          <Row id="map" name="Serialized" value={Object.fromEntries(map)} />
         </tbody>
       </table>
     </div>

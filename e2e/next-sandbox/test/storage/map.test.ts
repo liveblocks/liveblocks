@@ -31,8 +31,7 @@ test.describe("Storage - LiveMap", () => {
     const [page1, page2] = pages;
     await page1.click("#clear");
 
-    // XXX Rename to mapSize
-    await waitForJson(pages, "#itemsCount", 0);
+    await waitForJson(pages, "#mapSize", 0);
 
     const actions = ["#set", "#delete"];
     const clicks = [];
@@ -43,17 +42,16 @@ test.describe("Storage - LiveMap", () => {
     }
 
     await Promise.all(clicks);
-    await waitForContentToBeEquals(pages, "#items");
+    await waitForContentToBeEquals(pages, "#map");
   });
 
   test("fuzzy with full undo-redo", async () => {
     const [page1] = pages;
     await page1.click("#clear");
 
-    // XXX Rename to mapSize
-    await waitForJson(pages, "#itemsCount", 0);
+    await waitForJson(pages, "#mapSize", 0);
 
-    await assertJsonContentAreEquals(pages, "#items");
+    await assertJsonContentAreEquals(pages, "#map");
 
     const actions = ["#set", "#delete"];
     const clicks: unknown[] = [];
@@ -75,6 +73,6 @@ test.describe("Storage - LiveMap", () => {
     }
 
     await Promise.all(clicks);
-    await waitForContentToBeEquals(pages, "#items");
+    await waitForContentToBeEquals(pages, "#map");
   });
 });
