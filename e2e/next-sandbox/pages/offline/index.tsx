@@ -33,13 +33,18 @@ export default function Home() {
 let item = "A";
 
 function generateRandomNumber(max: number, ignore?: number) {
-  let result = 0;
-  while (true) {
-    result = Math.floor(Math.random() * max);
-    if (result !== ignore) {
-      return result;
+  if (max <= 0) {
+    throw new Error("max should be more than 0");
+  }
+
+  for (let i = 0; i < 300; i++) {
+    const n = Math.floor(Math.random() * max);
+    if (n !== ignore) {
+      return n;
     }
   }
+
+  throw new Error("could not generate a random number after 300 tries");
 }
 
 function Sandbox(_props: { roomId: string }) {
@@ -112,7 +117,7 @@ function Sandbox(_props: { roomId: string }) {
 
         <button
           id="move"
-          // disabled={items.length <= 1}
+          disabled={items.length <= 1}
           onClick={() => {
             const index = generateRandomNumber(items.length);
             const target = generateRandomNumber(items.length, index);
