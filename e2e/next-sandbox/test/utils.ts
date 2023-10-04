@@ -77,21 +77,17 @@ export async function getJson(page: Page, selector: IDSelector): Promise<Json> {
   return JSON.parse(text);
 }
 
-export async function assertJsonContentAreEquals(
+export async function expectJsonEqualOnAllPages(
   pages: [Page, Page],
   selector: IDSelector
 ) {
-  const [page1] = pages;
-  const firstPageContent = await getJson(page1, selector);
+  const [page1, ...otherPages] = pages;
+  const value1 = await getJson(page1, selector);
 
-  for (const page of pages.slice(1)) {
-    const otherPageContent = await getJson(page, selector);
-    expect(firstPageContent).toEqual(otherPageContent);
+  for (const page of otherPages) {
+    const valueN = await getJson(page, selector);
+    expect(value1).toEqual(valueN);
   }
-
-  pages.forEach(async (page) => {
-    expect(firstPageContent).toEqual(await getJson(page, selector));
-  });
 }
 
 export function sleep(ms: number) {
@@ -109,27 +105,18 @@ export async function waitUntilEqualOnAllPages(
   pages: [Page, Page],
   selector: IDSelector
 ) {
-  const [page1] = pages;
-
   for (let i = 0; i < 20; i++) {
-    const firstPageContent = await getJson(page1, selector);
-
-    let allEquals = true;
-    for (let j = 1; j < pages.length; j++) {
-      const otherPageContent = await getJson(pages[j], selector);
-      if (!_.isEqual(firstPageContent, otherPageContent)) {
-        allEquals = false;
-      }
+    try {
+      await expectJsonEqualOnAllPages(pages, selector);
+      return; // Great, we're done!
+    } catch {
+      await sleep(100);
     }
-
-    if (allEquals) {
-      return;
-    }
-
-    await sleep(100);
   }
 
-  await assertJsonContentAreEquals(pages, selector);
+  // Call it one last time expectJsonEqualOnAllPages(), but if it fails now,
+  // we'll fail the wait too
+  await expectJsonEqualOnAllPages(pages, selector);
 }
 
 export function pickFrom<T>(array: T[]): T {

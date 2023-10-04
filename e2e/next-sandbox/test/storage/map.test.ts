@@ -1,7 +1,7 @@
 import { Page, test } from "@playwright/test";
 
 import {
-  assertJsonContentAreEquals,
+  expectJsonEqualOnAllPages,
   nanoSleep,
   pickNumberOfUndoRedo,
   pickFrom,
@@ -48,7 +48,7 @@ test.describe("Storage - LiveMap", () => {
     await page1.click("#clear");
 
     await waitForJson(pages, "#mapSize", 0);
-    await assertJsonContentAreEquals(pages, "#map");
+    await expectJsonEqualOnAllPages(pages, "#map");
 
     const actions = ["#set", "#delete"];
     for (let i = 0; i < 50; i++) {

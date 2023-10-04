@@ -1,7 +1,7 @@
 import { Page, test } from "@playwright/test";
 
 import {
-  assertJsonContentAreEquals,
+  expectJsonEqualOnAllPages,
   nanoSleep,
   pickNumberOfUndoRedo,
   pickFrom,
@@ -56,7 +56,7 @@ test.describe("Storage - LiveObject", () => {
     await page1.click("#clear");
     await waitForJson(pages, "#obj", {});
 
-    await assertJsonContentAreEquals(pages, "#obj");
+    await expectJsonEqualOnAllPages(pages, "#obj");
 
     for (let i = 0; i < 20; i++) {
       await page1.click("#set-nested");
@@ -79,7 +79,7 @@ test.describe("Storage - LiveObject", () => {
     await page1.click("#clear");
     await waitForJson(pages, "#obj", {});
 
-    await assertJsonContentAreEquals(pages, "#obj");
+    await expectJsonEqualOnAllPages(pages, "#obj");
 
     for (let i = 0; i < 20; i++) {
       await page1.click("#set-nested");
