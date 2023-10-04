@@ -77,20 +77,40 @@ export async function getJson(page: Page, selector: IDSelector): Promise<Json> {
   return JSON.parse(text);
 }
 
+async function getBoth(pages: [Page, Page], selector: IDSelector) {
+  const [page1, page2] = pages;
+  const value1 = await getJson(page1, selector);
+  const value2 = await getJson(page2, selector);
+  return [value1, value2];
+}
+
 export async function expectJsonEqualOnAllPages(
   pages: [Page, Page],
   selector: IDSelector
 ) {
-  const [page1, ...otherPages] = pages;
-  const value1 = await getJson(page1, selector);
-
-  for (const page of otherPages) {
-    const valueN = await getJson(page, selector);
-    expect(value1).toEqual(valueN);
-  }
+  const [value1, value2] = await getBoth(pages, selector);
+  expect(value1).toEqual(value2);
 }
 
-export function sleep(ms: number) {
+export async function waitUntilEqualOnAllPages(
+  pages: [Page, Page],
+  selector: IDSelector
+) {
+  for (let i = 0; i < 20; i++) {
+    const [value1, value2] = await getBoth(pages, selector);
+    if (_.isEqual(value1, value2)) {
+      return; // Great, we're done!
+    } else {
+      await sleep(100);
+    }
+  }
+
+  // We didn't find the values in sync, so call expectJsonEqualOnAllPages() so
+  // it will fail the wait
+  await expectJsonEqualOnAllPages(pages, selector);
+}
+
+function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
@@ -99,24 +119,6 @@ export function sleep(ms: number) {
  */
 export function nanoSleep() {
   return sleep(randomInt(50));
-}
-
-export async function waitUntilEqualOnAllPages(
-  pages: [Page, Page],
-  selector: IDSelector
-) {
-  for (let i = 0; i < 20; i++) {
-    try {
-      await expectJsonEqualOnAllPages(pages, selector);
-      return; // Great, we're done!
-    } catch {
-      await sleep(100);
-    }
-  }
-
-  // Call it one last time expectJsonEqualOnAllPages(), but if it fails now,
-  // we'll fail the wait too
-  await expectJsonEqualOnAllPages(pages, selector);
 }
 
 export function pickFrom<T>(array: T[]): T {
