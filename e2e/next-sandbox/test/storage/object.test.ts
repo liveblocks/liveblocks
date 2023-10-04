@@ -34,6 +34,7 @@ test.describe("Storage - LiveObject", () => {
   test("fuzzy", async () => {
     const [page1, page2] = pages;
     await page1.click("#clear");
+    // XXX Make json
     await assertContainText(pages, "#items", "{}");
 
     const clicks = [];
@@ -57,6 +58,7 @@ test.describe("Storage - LiveObject", () => {
   test("fuzzy with nested objects", async () => {
     const [page1, page2] = pages;
     await page1.click("#clear");
+    // XXX Make json
     await assertContainText(pages, "#items", "{}");
 
     await assertJsonContentAreEquals(pages, "#items");
@@ -80,9 +82,7 @@ test.describe("Storage - LiveObject", () => {
     await waitForContentToBeEquals(pages, "#items");
   });
 
-  // TODO: This test is flaky and occasionally fails in CI--make it more robust
-  // See https://github.com/liveblocks/liveblocks/runs/8032018966?check_suite_focus=true#step:6:47
-  test.skip("fuzzy with nested objects and undo/redo", async () => {
+  test("fuzzy with nested objects and undo/redo", async () => {
     const [page1, page2] = pages;
     await page1.click("#clear");
     await waitForJson(pages, "#items", {});

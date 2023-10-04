@@ -27,6 +27,7 @@ test.describe("Offline", () => {
     Promise.all(pages.map((page) => page.close()))
   );
 
+  // XXX Re-express this test!
   test.skip("one client offline with offline changes - connection issue (code 1005)", async () => {
     const [page1, page2] = pages;
     await page1.click("#clear");
@@ -57,6 +58,7 @@ test.describe("Offline", () => {
     await waitForJson(pages, "#itemsCount", 0);
   });
 
+  // XXX Re-express this test!
   test.skip("one client offline with offline changes - app server issue (code 4002)", async () => {
     const [page1, page2] = pages;
     await page1.click("#clear");
@@ -91,6 +93,7 @@ test.describe("Offline", () => {
     await waitForJson(pages, "#itemsCount", 0);
   });
 
+  // XXX Re-express this test!
   test("fuzzy", async () => {
     const [page1, page2] = pages;
     await page1.click("#clear");
