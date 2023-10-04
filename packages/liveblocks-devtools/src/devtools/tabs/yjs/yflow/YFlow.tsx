@@ -1,7 +1,18 @@
 import Dagre from "@dagrejs/dagre";
 import cx from "classnames";
-import { type ComponentProps, useCallback, useEffect, useTransition } from "react";
-import type { Edge, Node, NodeTypes, OnSelectionChangeParams, ReactFlowState } from "reactflow";
+import {
+  type ComponentProps,
+  useCallback,
+  useEffect,
+  useTransition,
+} from "react";
+import type {
+  Edge,
+  Node,
+  NodeTypes,
+  OnSelectionChangeParams,
+  ReactFlowState,
+} from "reactflow";
 import ReactFlow, {
   Background,
   BackgroundVariant,
@@ -150,10 +161,7 @@ const getLayoutedElements = (
   };
 };
 
-export function YFlow({
-  className,
-  ...props
-}: ComponentProps<"div">) {
+export function YFlow({ className, ...props }: ComponentProps<"div">) {
   const [isTransitionPending, startTransition] = useTransition();
   const [nodes, setNodes] = useNodesState([]);
   const [edges, setEdges] = useEdgesState([]);
@@ -161,12 +169,9 @@ export function YFlow({
   const currentStatus = useStatus();
 
   useEffect(() => {
-
     function onUpdate() {
       startTransition(() => {
-        const { docEdges, docNodes } = getNodesAndEdges(
-          ydoc
-        );
+        const { docEdges, docNodes } = getNodesAndEdges(ydoc);
         const layouted = getLayoutedElements(docNodes, docEdges);
         setEdges(layouted.edges);
         setNodes(layouted.nodes);
@@ -181,23 +186,27 @@ export function YFlow({
     };
   }, [setEdges, setNodes, ydoc]);
 
-  const handleSelectionChange = useCallback((change: OnSelectionChangeParams) => {
-    if (!change.nodes.length) { return }
-    const nodeId = change.nodes[0].id;
-    const newEdges = edges.map((edge) => {
-      const isSelected = (nodeId === edge.source || nodeId === edge.target);
-      const opacity = isSelected ? 1 : 0.3;
-      return {
-        ...edge,
-        style: {
-          ...edge.style,
-          opacity
-        }
+  const handleSelectionChange = useCallback(
+    (change: OnSelectionChangeParams) => {
+      if (!change.nodes.length) {
+        return;
       }
-
-    });
-    setEdges(newEdges);
-  }, [setEdges, edges]);
+      const nodeId = change.nodes[0].id;
+      const newEdges = edges.map((edge) => {
+        const isSelected = nodeId === edge.source || nodeId === edge.target;
+        const opacity = isSelected ? 1 : 0.3;
+        return {
+          ...edge,
+          style: {
+            ...edge.style,
+            opacity,
+          },
+        };
+      });
+      setEdges(newEdges);
+    },
+    [setEdges, edges]
+  );
 
   if (
     !isTransitionPending &&

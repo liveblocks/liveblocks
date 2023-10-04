@@ -45,6 +45,7 @@
 
     client = createClient({
       authEndpoint: "/api/auth",
+      throttle: 16,
     });
 
     room = client.enter<Presence, Storage /* UserMeta, RoomEvent */>(roomId, {

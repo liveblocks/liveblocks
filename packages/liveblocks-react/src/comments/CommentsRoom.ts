@@ -3,6 +3,7 @@ import type {
   BaseUserMeta,
   CommentBody,
   CommentData,
+  CommentReaction,
   EventSource,
   Json,
   JsonObject,
@@ -651,22 +652,46 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
   }: CommentReactionOptions): void {
     const threads = getThreads();
     const now = new Date().toISOString();
+    const userId = getCurrentUserId();
 
     const optimisticData = threads.map((thread) =>
       thread.id === threadId
         ? {
             ...thread,
-            comments: thread.comments.map((comment) =>
-              comment.id === commentId
-                ? ({
-                    ...comment,
-                    reactions: [
-                      ...comment.reactions,
-                      { emoji, userId: getCurrentUserId(), createdAt: now },
-                    ],
-                  } as CommentData)
-                : comment
-            ),
+            comments: thread.comments.map((comment) => {
+              if (comment.id !== commentId) {
+                return comment;
+              }
+
+              let reactions: CommentReaction[];
+
+              if (
+                comment.reactions.some((reaction) => reaction.emoji === emoji)
+              ) {
+                reactions = comment.reactions.map((reaction) =>
+                  reaction.emoji === emoji
+                    ? {
+                        ...reaction,
+                        users: [...reaction.users, { id: userId }],
+                      }
+                    : reaction
+                );
+              } else {
+                reactions = [
+                  ...comment.reactions,
+                  {
+                    emoji,
+                    createdAt: now,
+                    users: [{ id: userId }],
+                  },
+                ];
+              }
+
+              return {
+                ...comment,
+                reactions,
+              };
+            }),
           }
         : thread
     );
@@ -691,29 +716,40 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
     emoji,
   }: CommentReactionOptions): void {
     const threads = getThreads();
+    const userId = getCurrentUserId();
 
     const optimisticData = threads.map((thread) =>
       thread.id === threadId
         ? {
             ...thread,
             comments: thread.comments.map((comment) => {
-              const reactionIndex = comment.reactions.findIndex(
-                (reaction) =>
-                  reaction.emoji === emoji &&
-                  reaction.userId === getCurrentUserId()
-              );
+              if (comment.id !== commentId) {
+                return comment;
+              }
 
-              return comment.id === commentId
-                ? ({
-                    ...comment,
-                    reactions:
-                      reactionIndex < 0
-                        ? comment.reactions
-                        : comment.reactions
-                            .slice(0, reactionIndex)
-                            .concat(comment.reactions.slice(reactionIndex + 1)),
-                  } as CommentData)
-                : comment;
+              const reactionIndex = comment.reactions.findIndex(
+                (reaction) => reaction.emoji === emoji
+              );
+              const reactions: CommentReaction[] = comment.reactions;
+
+              if (
+                reactionIndex > 0 &&
+                comment.reactions[reactionIndex].users.some(
+                  (user) => user.id === userId
+                )
+              ) {
+                reactions[reactionIndex] = {
+                  ...reactions[reactionIndex],
+                  users: reactions[reactionIndex].users.filter(
+                    (user) => user.id !== userId
+                  ),
+                };
+              }
+
+              return {
+                ...comment,
+                reactions,
+              };
             }),
           }
         : thread
