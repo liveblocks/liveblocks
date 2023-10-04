@@ -730,7 +730,7 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
               const reactionIndex = comment.reactions.findIndex(
                 (reaction) => reaction.emoji === emoji
               );
-              const reactions: CommentReaction[] = comment.reactions;
+              let reactions: CommentReaction[] = comment.reactions;
 
               if (
                 reactionIndex > 0 &&
@@ -738,12 +738,17 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
                   (user) => user.id === userId
                 )
               ) {
-                reactions[reactionIndex] = {
-                  ...reactions[reactionIndex],
-                  users: reactions[reactionIndex].users.filter(
-                    (user) => user.id !== userId
-                  ),
-                };
+                if (comment.reactions[reactionIndex].users.length <= 1) {
+                  reactions = [...comment.reactions];
+                  reactions.splice(reactionIndex, 1);
+                } else {
+                  reactions[reactionIndex] = {
+                    ...reactions[reactionIndex],
+                    users: reactions[reactionIndex].users.filter(
+                      (user) => user.id !== userId
+                    ),
+                  };
+                }
               }
 
               return {
