@@ -60,6 +60,7 @@ function Sandbox() {
   const canSet = items.length > 0;
 
   const nextIndexToSet = canSet ? randomInt(items.length) : -1;
+  const nextValueToSet = me.connectionId + ":" + item;
   const nextIndexToDelete = canDelete ? randomInt(items.length) : -1;
   const nextIndicesToMove = canMove ? randomIndices(items) : [-1, -1];
 
@@ -105,11 +106,12 @@ function Sandbox() {
         style={opaqueIf(canSet)}
         onClick={() => {
           if (!canSet) return;
-          items.set(nextIndexToSet, me.connectionId + ":" + item);
+          items.set(nextIndexToSet, nextValueToSet);
           item = String.fromCharCode(item.charCodeAt(0) + 1);
         }}
       >
-        Set {canSet && ` (${nextIndexToSet})`}
+        Set{" "}
+        {canSet && ` (${nextIndexToSet} → ${JSON.stringify(nextValueToSet)})`}
       </button>
 
       <button

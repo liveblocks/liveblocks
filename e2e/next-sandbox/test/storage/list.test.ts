@@ -126,6 +126,7 @@ test.describe("Storage - LiveList", () => {
           await page.click(pickFrom(actions));
         }
       }
+
       await nanoSleep();
     }
 
