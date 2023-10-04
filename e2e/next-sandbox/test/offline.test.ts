@@ -6,7 +6,7 @@ import {
   pickFrom,
   preparePages,
   sleep,
-  waitForContentToBeEquals,
+  waitUntilEqualOnAllPages,
   waitForJson,
 } from "./utils";
 import type { Json } from "@liveblocks/client";
@@ -45,7 +45,7 @@ test.describe("Offline", () => {
     await page1.click("#sendCloseEventConnectionError");
     await sleep(3000); // XXX Remove
 
-    await waitForContentToBeEquals(pages, "#items");
+    await waitUntilEqualOnAllPages(pages, "#items");
 
     await page1.click("#clear");
     await waitForJson(pages, "#itemsCount", 0);
@@ -77,7 +77,7 @@ test.describe("Offline", () => {
     await page1.click("#sendCloseEventAppError");
     await sleep(5000); // XXX Remove
 
-    await waitForContentToBeEquals(pages, "#items");
+    await waitUntilEqualOnAllPages(pages, "#items");
 
     const connectionIdAfterReconnect = await getJson(page1, "#connectionId");
     expect(connectionIdAfterReconnect).toEqual(firstConnectionId);
@@ -98,7 +98,7 @@ test.describe("Offline", () => {
       await nanoSleep();
     }
 
-    await waitForContentToBeEquals(pages, "#items");
+    await waitUntilEqualOnAllPages(pages, "#items");
 
     await page1.click("#closeWebsocket");
     await sleep(50); // XXX Remove
@@ -117,7 +117,7 @@ test.describe("Offline", () => {
 
     await sleep(3000); // XXX Remove
 
-    await waitForContentToBeEquals(pages, "#items");
+    await waitUntilEqualOnAllPages(pages, "#items");
 
     await page1.click("#clear");
     await waitForJson(pages, "#itemsCount", 0);

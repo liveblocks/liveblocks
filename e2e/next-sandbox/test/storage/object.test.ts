@@ -6,7 +6,7 @@ import {
   pickNumberOfUndoRedo,
   pickFrom,
   preparePages,
-  waitForContentToBeEquals,
+  waitUntilEqualOnAllPages,
   waitForJson,
 } from "../utils";
 
@@ -40,7 +40,7 @@ test.describe("Storage - LiveObject", () => {
       await nanoSleep();
     }
 
-    await waitForContentToBeEquals(pages, "#obj");
+    await waitUntilEqualOnAllPages(pages, "#obj");
 
     for (let i = 0; i < 100; i++) {
       await page1.click(pickFrom(["#set", "#delete"]));
@@ -48,7 +48,7 @@ test.describe("Storage - LiveObject", () => {
       await nanoSleep();
     }
 
-    await waitForContentToBeEquals(pages, "#obj");
+    await waitUntilEqualOnAllPages(pages, "#obj");
   });
 
   test("fuzzy with nested objects", async () => {
@@ -62,7 +62,7 @@ test.describe("Storage - LiveObject", () => {
       await page1.click("#set-nested");
     }
 
-    await waitForContentToBeEquals(pages, "#obj");
+    await waitUntilEqualOnAllPages(pages, "#obj");
 
     const actions = ["#set-nested", "#delete"];
     for (let i = 0; i < 50; i++) {
@@ -71,7 +71,7 @@ test.describe("Storage - LiveObject", () => {
       await nanoSleep();
     }
 
-    await waitForContentToBeEquals(pages, "#obj");
+    await waitUntilEqualOnAllPages(pages, "#obj");
   });
 
   test("fuzzy with nested objects and undo/redo", async () => {
@@ -86,7 +86,7 @@ test.describe("Storage - LiveObject", () => {
       await nanoSleep();
     }
 
-    await waitForContentToBeEquals(pages, "#obj");
+    await waitUntilEqualOnAllPages(pages, "#obj");
 
     const actions = ["#set-nested", "#delete"];
     for (let i = 0; i < 50; i++) {
@@ -105,6 +105,6 @@ test.describe("Storage - LiveObject", () => {
       await nanoSleep();
     }
 
-    await waitForContentToBeEquals(pages, "#obj");
+    await waitUntilEqualOnAllPages(pages, "#obj");
   });
 });

@@ -5,7 +5,7 @@ import {
   nanoSleep,
   pickFrom,
   preparePages,
-  waitForContentToBeEquals,
+  waitUntilEqualOnAllPages,
   waitForJson,
 } from "./utils";
 
@@ -33,14 +33,14 @@ test.describe("Redux", () => {
     await waitForJson(pages, "#othersCount", 1);
 
     await page1.click("#push");
-    await waitForContentToBeEquals(pages, "#items");
+    await waitUntilEqualOnAllPages(pages, "#items");
 
     await page1.click("#push");
-    await waitForContentToBeEquals(pages, "#items");
+    await waitUntilEqualOnAllPages(pages, "#items");
 
     await page1.click("#push");
     await waitForJson(pages, "#itemsCount", 3);
-    await waitForContentToBeEquals(pages, "#items");
+    await waitUntilEqualOnAllPages(pages, "#items");
 
     await page1.click("#clear");
     await waitForJson(pages, "#itemsCount", 0);
@@ -61,16 +61,16 @@ test.describe("Redux", () => {
     await page1.click("#set-name");
     await page1.click("#inc-counter");
     await page1.click("#inc-counter");
-    await waitForContentToBeEquals(pages, "#items");
+    await waitUntilEqualOnAllPages(pages, "#items");
 
     await page1.click("#push");
-    await waitForContentToBeEquals(pages, "#items");
+    await waitUntilEqualOnAllPages(pages, "#items");
 
     await page1.click("#push");
     await page1.click("#set-name");
     await page1.click("#inc-counter");
     await waitForJson(pages, "#itemsCount", 3);
-    await waitForContentToBeEquals(pages, "#items");
+    await waitUntilEqualOnAllPages(pages, "#items");
 
     await page1.click("#clear");
     await waitForJson(pages, "#itemsCount", 0);
@@ -88,7 +88,7 @@ test.describe("Redux", () => {
       await nanoSleep();
     }
 
-    await waitForContentToBeEquals(pages, "#items");
+    await waitUntilEqualOnAllPages(pages, "#items");
 
     const actions = ["#push", "#delete"];
     for (let i = 0; i < 30; i++) {
@@ -97,7 +97,7 @@ test.describe("Redux", () => {
       await nanoSleep();
     }
 
-    await waitForContentToBeEquals(pages, "#items");
+    await waitUntilEqualOnAllPages(pages, "#items");
 
     await page1.click("#clear");
     await waitForJson(pages, "#itemsCount", 0);
@@ -116,7 +116,7 @@ test.describe("Redux", () => {
       await nanoSleep();
     }
 
-    await waitForContentToBeEquals(pages, "#items");
+    await waitUntilEqualOnAllPages(pages, "#items");
 
     const actions = ["#push", "#delete"];
     for (let i = 0; i < 30; i++) {
@@ -125,7 +125,7 @@ test.describe("Redux", () => {
       await nanoSleep();
     }
 
-    await waitForContentToBeEquals(pages, "#items");
+    await waitUntilEqualOnAllPages(pages, "#items");
 
     await page1.click("#clear");
     await waitForJson(pages, "#itemsCount", 0);

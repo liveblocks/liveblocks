@@ -6,7 +6,7 @@ import {
   pickNumberOfUndoRedo,
   pickFrom,
   preparePages,
-  waitForContentToBeEquals,
+  waitUntilEqualOnAllPages,
   waitForJson,
 } from "../utils";
 
@@ -40,7 +40,7 @@ test.describe("Storage - LiveMap", () => {
       await nanoSleep();
     }
 
-    await waitForContentToBeEquals(pages, "#map");
+    await waitUntilEqualOnAllPages(pages, "#map");
   });
 
   test.skip("fuzzy with full undo-redo", async () => {
@@ -69,6 +69,6 @@ test.describe("Storage - LiveMap", () => {
     }
 
     // TODO Investigate: sometimes these don't converge to the same value
-    await waitForContentToBeEquals(pages, "#map");
+    await waitUntilEqualOnAllPages(pages, "#map");
   });
 });

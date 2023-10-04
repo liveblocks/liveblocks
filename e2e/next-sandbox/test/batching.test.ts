@@ -2,7 +2,7 @@ import { test, Page } from "@playwright/test";
 import {
   expectJson,
   preparePages,
-  waitForContentToBeEquals,
+  waitUntilEqualOnAllPages,
   waitForJson,
 } from "./utils";
 
@@ -30,7 +30,7 @@ test.describe("Storage - Batching", () => {
     await page1.click("#update-storage-presence-batch");
     await expectJson(page1, "#itemsCount", 1);
 
-    await waitForContentToBeEquals(pages, "#items");
+    await waitUntilEqualOnAllPages(pages, "#items");
 
     await expectJson(page1, "#theirPresence", {});
     await expectJson(page2, "#theirPresence", { count: 1 });

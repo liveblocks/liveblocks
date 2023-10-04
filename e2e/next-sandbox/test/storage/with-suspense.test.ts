@@ -6,7 +6,7 @@ import {
   pickNumberOfUndoRedo,
   pickFrom,
   preparePages,
-  waitForContentToBeEquals,
+  waitUntilEqualOnAllPages,
   waitForJson,
 } from "../utils";
 
@@ -38,15 +38,15 @@ test.describe("Storage w/ Suspense", () => {
     await page1.click("#push");
     await waitForJson(pages, "#itemsCount", 1);
 
-    await waitForContentToBeEquals(pages, "#items");
+    await waitUntilEqualOnAllPages(pages, "#items");
 
     await page1.click("#push");
     await waitForJson(pages, "#itemsCount", 2);
-    await waitForContentToBeEquals(pages, "#items");
+    await waitUntilEqualOnAllPages(pages, "#items");
 
     await page1.click("#push");
     await waitForJson(pages, "#itemsCount", 3);
-    await waitForContentToBeEquals(pages, "#items");
+    await waitUntilEqualOnAllPages(pages, "#items");
   });
 
   test("list move", async () => {
@@ -59,14 +59,14 @@ test.describe("Storage w/ Suspense", () => {
     }
 
     await expectJson(page1, "#itemsCount", 5);
-    await waitForContentToBeEquals(pages, "#items");
+    await waitUntilEqualOnAllPages(pages, "#items");
 
     for (let i = 0; i < 10; i++) {
       await page1.click("#move");
     }
 
     await expectJson(page1, "#itemsCount", 5);
-    await waitForContentToBeEquals(pages, "#items");
+    await waitUntilEqualOnAllPages(pages, "#items");
   });
 
   test("push conflicts", async () => {
@@ -81,7 +81,7 @@ test.describe("Storage w/ Suspense", () => {
 
     // await expectJson(pages, "#itemsCount", n => n >= 10 && n <= 20);
     await waitForJson(pages, "#itemsCount", 20);
-    await waitForContentToBeEquals(pages, "#items");
+    await waitUntilEqualOnAllPages(pages, "#items");
   });
 
   test("set conflicts", async () => {
@@ -97,7 +97,7 @@ test.describe("Storage w/ Suspense", () => {
     }
 
     await waitForJson(pages, "#itemsCount", 1);
-    await waitForContentToBeEquals(pages, "#items");
+    await waitUntilEqualOnAllPages(pages, "#items");
   });
 
   test("fuzzy with undo/redo push delete and move", async () => {
@@ -112,7 +112,7 @@ test.describe("Storage w/ Suspense", () => {
 
     await expectJson(page1, "#itemsCount", numberOfItemsAtStart);
 
-    await waitForContentToBeEquals(pages, "#items");
+    await waitUntilEqualOnAllPages(pages, "#items");
 
     const actions = ["#push", "#delete", "#move", "#set"];
     for (let i = 0; i < 50; i++) {
@@ -132,6 +132,6 @@ test.describe("Storage w/ Suspense", () => {
       await nanoSleep();
     }
 
-    await waitForContentToBeEquals(pages, "#items");
+    await waitUntilEqualOnAllPages(pages, "#items");
   });
 });

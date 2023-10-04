@@ -5,7 +5,7 @@ import {
   pickFrom,
   preparePages,
   nanoSleep,
-  waitForContentToBeEquals,
+  waitUntilEqualOnAllPages,
   waitForJson,
 } from "./utils";
 
@@ -33,16 +33,16 @@ test.describe("Zustand", () => {
 
     await page1.click("#push");
     await page1.click("#push");
-    await waitForContentToBeEquals(pages, "#items");
+    await waitUntilEqualOnAllPages(pages, "#items");
 
     await page1.click("#push");
     await page1.click("#push");
-    await waitForContentToBeEquals(pages, "#items");
+    await waitUntilEqualOnAllPages(pages, "#items");
 
     await page1.click("#push");
     await page1.click("#push");
     await page1.click("#push");
-    await waitForContentToBeEquals(pages, "#items");
+    await waitUntilEqualOnAllPages(pages, "#items");
     await expectJson(page2, "#itemsCount", 7);
 
     await page1.click("#clear");
@@ -57,7 +57,7 @@ test.describe("Zustand", () => {
     await waitForJson(pages, "#othersCount", 1);
 
     await page1.click("#push");
-    await waitForContentToBeEquals(pages, "#items");
+    await waitUntilEqualOnAllPages(pages, "#items");
 
     await page1.click("#set-name");
     await page1.click("#inc-counter");
@@ -66,12 +66,12 @@ test.describe("Zustand", () => {
     await page1.click("#push");
     await page1.click("#push");
     await page1.click("#inc-counter");
-    await waitForContentToBeEquals(pages, "#items");
+    await waitUntilEqualOnAllPages(pages, "#items");
 
     await page1.click("#push");
     await page1.click("#push");
     await page1.click("#inc-counter");
-    await waitForContentToBeEquals(pages, "#items");
+    await waitUntilEqualOnAllPages(pages, "#items");
     await expectJson(page2, "#itemsCount", 5);
 
     await page1.click("#clear");
@@ -87,7 +87,7 @@ test.describe("Zustand", () => {
     await page1.click("#push");
     await page1.click("#push");
     await expectJson(page1, "#itemsCount", 2);
-    await waitForContentToBeEquals(pages, "#items");
+    await waitUntilEqualOnAllPages(pages, "#items");
 
     await page2.click("#leave");
 
@@ -95,7 +95,7 @@ test.describe("Zustand", () => {
 
     await page2.click("#enter"); // Enter
     await waitForJson(page1, "#itemsCount", 3);
-    await waitForContentToBeEquals(pages, "#items");
+    await waitUntilEqualOnAllPages(pages, "#items");
 
     await page1.click("#clear");
     await waitForJson(pages, "#itemsCount", 0);
@@ -112,7 +112,7 @@ test.describe("Zustand", () => {
     }
 
     await waitForJson(pages, "#itemsCount", 20);
-    await waitForContentToBeEquals(pages, "#items");
+    await waitUntilEqualOnAllPages(pages, "#items");
 
     const actions = ["#push", "#delete", "#undo", "#redo"];
     for (let i = 0; i < 50; i++) {
@@ -121,7 +121,7 @@ test.describe("Zustand", () => {
       await nanoSleep();
     }
 
-    await waitForContentToBeEquals(pages, "#items");
+    await waitUntilEqualOnAllPages(pages, "#items");
 
     await page1.click("#clear");
     await waitForJson(pages, "#itemsCount", 0);

@@ -105,19 +105,18 @@ export function nanoSleep() {
   return sleep(randomInt(50));
 }
 
-// XXX Deprecate?
-export async function waitForContentToBeEquals(
+export async function waitUntilEqualOnAllPages(
   pages: [Page, Page],
   selector: IDSelector
 ) {
   const [page1] = pages;
+
   for (let i = 0; i < 20; i++) {
     const firstPageContent = await getJson(page1, selector);
 
     let allEquals = true;
     for (let j = 1; j < pages.length; j++) {
       const otherPageContent = await getJson(pages[j], selector);
-
       if (!_.isEqual(firstPageContent, otherPageContent)) {
         allEquals = false;
       }
