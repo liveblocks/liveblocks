@@ -3,6 +3,8 @@
 ### `@liveblocks/react`
 
 - Add new Comments hooks to add/remove reactions.
+- Fix a bug in `useOthers()` that could lead to the warning "The result of
+  getServerSnapshot should be cached to avoid an infinite loop"
 
 ### `@liveblocks/react-comments`
 
