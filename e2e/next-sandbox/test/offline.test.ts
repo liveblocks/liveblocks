@@ -2,12 +2,12 @@ import { Page, test, expect } from "@playwright/test";
 
 import {
   expectJson,
+  getJson,
   nanoSleep,
   pickFrom,
   preparePages,
-  sleep,
-  waitUntilEqualOnAllPages,
   waitForJson,
+  waitUntilEqualOnAllPages,
 } from "./utils";
 import type { Json } from "@liveblocks/client";
 
@@ -36,14 +36,15 @@ test.describe("Offline", () => {
     await waitForJson(pages, "#itemsCount", 1);
 
     await page1.click("#closeWebsocket");
-    await sleep(50); // XXX Remove
+    await nanoSleep(); // XXX Remove, wait on status change or similar, not a random amount of time
+
     await page1.click("#push");
     await page2.click("#push");
 
     await waitForJson(pages, "#itemsCount", 2);
 
     await page1.click("#sendCloseEventConnectionError");
-    await sleep(3000); // XXX Remove
+    await nanoSleep(); // XXX Remove, wait on status change or similar, not a random amount of time
 
     await waitUntilEqualOnAllPages(pages, "#items");
 
@@ -63,7 +64,7 @@ test.describe("Offline", () => {
     const firstConnectionId = await getJson(page1, "#connectionId");
 
     await page1.click("#closeWebsocket");
-    await sleep(50); // XXX Remove
+    await nanoSleep(); // XXX Remove, wait on status change or similar, not a random amount of time
     await page1.click("#push");
     await page2.click("#push");
     await expectJson(page1, "#itemsCount", 2);
@@ -75,7 +76,7 @@ test.describe("Offline", () => {
     expect(secondPageItems.length).toEqual(2);
 
     await page1.click("#sendCloseEventAppError");
-    await sleep(5000); // XXX Remove
+    await nanoSleep(); // XXX Remove, wait on status change or similar, not a random amount of time
 
     await waitUntilEqualOnAllPages(pages, "#items");
 
@@ -101,7 +102,7 @@ test.describe("Offline", () => {
     await waitUntilEqualOnAllPages(pages, "#items");
 
     await page1.click("#closeWebsocket");
-    await sleep(50); // XXX Remove
+    await nanoSleep(); // XXX Remove, wait on status change or similar, not a random amount of time
 
     const actions = ["#push", "#delete", "#move", "#undo", "#redo"];
 
@@ -111,11 +112,8 @@ test.describe("Offline", () => {
       await nanoSleep();
     }
 
-    await sleep(2000); // XXX Remove
-
     await page1.click("#sendCloseEventConnectionError");
-
-    await sleep(3000); // XXX Remove
+    await nanoSleep(); // XXX Remove, wait on status change or similar, not a random amount of time
 
     await waitUntilEqualOnAllPages(pages, "#items");
 
