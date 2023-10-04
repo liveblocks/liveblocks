@@ -89,9 +89,18 @@ function useSyncExternalStore<Snapshot>(
   return useSyncExternalStoreWithSelector(s, gs, gss, identity);
 }
 
-// Don't try to inline this. This function itself must be a stable reference.
-function getEmptyOthers() {
-  return [];
+const STABLE_EMPTY_LIST = Object.freeze([]);
+
+// Don't try to inline this. This function is intended to be a stable
+// reference, to avoid a React.useCallback() wrapper.
+function alwaysEmptyList() {
+  return STABLE_EMPTY_LIST;
+}
+
+// Don't try to inline this. This function is intended to be a stable
+// reference, to avoid a React.useCallback() wrapper.
+function alwaysNull() {
+  return null;
 }
 
 function makeMutationContext<
@@ -377,7 +386,7 @@ export function createRoomContext<
     const room = useRoom();
     const subscribe = room.events.others.subscribe;
     const getSnapshot = room.getOthers;
-    const getServerSnapshot = getEmptyOthers;
+    const getServerSnapshot = alwaysEmptyList;
     return useSyncExternalStoreWithSelector(
       subscribe,
       getSnapshot,
@@ -560,7 +569,7 @@ export function createRoomContext<
       [selector]
     );
 
-    const getServerSnapshot = React.useCallback((): Snapshot => null, []);
+    const getServerSnapshot = alwaysNull;
 
     return useSyncExternalStoreWithSelector(
       subscribe,
@@ -572,11 +581,10 @@ export function createRoomContext<
   }
 
   function useMutableStorageRoot(): LiveObject<TStorage> | null {
-    type Snapshot = LiveObject<TStorage> | null;
     const room = useRoom();
     const subscribe = room.events.storageDidLoad.subscribeOnce;
     const getSnapshot = room.getStorageSnapshot;
-    const getServerSnapshot = React.useCallback((): Snapshot => null, []);
+    const getServerSnapshot = alwaysNull;
     return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
   }
 
@@ -698,7 +706,7 @@ export function createRoomContext<
       }
     }, [rootOrNull]);
 
-    const getServerSnapshot = React.useCallback((): Snapshot => null, []);
+    const getServerSnapshot = alwaysNull;
 
     return useSyncExternalStoreWithSelector(
       subscribe,
