@@ -22,6 +22,7 @@ const {
   useList,
   useRedo,
   useSelf,
+  useStatus,
   useUndo,
 } = createRoomContext<never, { items: LiveList<string> }>(client);
 
@@ -48,6 +49,7 @@ function Sandbox() {
   const canRedo = useCanRedo();
   const items = useList("items");
   const me = useSelf();
+  const status = useStatus();
 
   if (items == null || me == null) {
     return <div>Loading...</div>;
@@ -136,6 +138,7 @@ function Sandbox() {
       <table style={styles.dataTable}>
         <tbody>
           <Row id="renderCount" name="Render count" value={renderCount} />
+          <Row id="socketStatus" name="WebSocket count" value={status} />
           <Row id="itemsCount" name="List size" value={items.length} />
           <Row id="items" name="Serialized" value={items.toArray()} />
         </tbody>
