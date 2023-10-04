@@ -96,7 +96,13 @@ export function composerBodyToCommentBody(body: ComposerBody): CommentBody {
   };
 }
 
+const emptyComposerBody: ComposerBody = [];
+
 export function commentBodyToComposerBody(body: CommentBody): ComposerBody {
+  if (!body || !body?.content) {
+    return emptyComposerBody;
+  }
+
   return body.content.map((block) => {
     const children = block.children
       .map((inline) => {

@@ -88,7 +88,7 @@ const CommentBody = forwardRef<HTMLDivElement, CommentBodyProps>(
       [components]
     );
 
-    if (!body) {
+    if (!body || !body?.content) {
       return null;
     }
 
