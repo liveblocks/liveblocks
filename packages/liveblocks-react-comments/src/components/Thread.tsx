@@ -43,8 +43,6 @@ export interface ThreadProps extends ComponentPropsWithoutRef<"div"> {
   showActions?: CommentProps["showActions"];
 
   /**
-   * @internal
-   *
    * Whether to show reactions.
    */
   showReactions?: CommentProps["showReactions"];
@@ -109,7 +107,7 @@ export const Thread = forwardRef<HTMLDivElement, ThreadProps>(
       showActions = "hover",
       showDeletedComments,
       showResolveAction = true,
-      showReactions = false,
+      showReactions = true,
       showComposer = "collapsed",
       onResolvedChange,
       onCommentEdit,

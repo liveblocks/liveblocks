@@ -1,3 +1,14 @@
+# v1.4.3
+
+### `@liveblocks/react`
+
+- Add new Comments hooks to add/remove reactions.
+
+### `@liveblocks/react-comments`
+
+- Add support for reactions. (👍)
+- Add keyboard navigation to emoji picker.
+
 # v1.4.2
 
 ### `@liveblocks/client`
