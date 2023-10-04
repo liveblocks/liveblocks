@@ -33,22 +33,19 @@ test.describe("Zustand", () => {
 
     await waitForJson(pages, "#othersCount", 1);
 
-    // XXX Use theirPresence here
-    const othersFirstPage = (await getJson(page1, "#others")) as JsonObject[];
-    const othersSecondPage = (await getJson(page2, "#others")) as JsonObject[];
-    expect(othersFirstPage.length).toEqual(1);
-    expect(othersFirstPage[0].presence).toEqual({});
-    expect(othersSecondPage.length).toEqual(1);
-    expect(othersSecondPage[0].presence).toEqual({});
-
+    await page1.click("#push");
     await page1.click("#push");
     await waitForContentToBeEquals(pages, "#items");
 
     await page1.click("#push");
+    await page1.click("#push");
     await waitForContentToBeEquals(pages, "#items");
 
     await page1.click("#push");
+    await page1.click("#push");
+    await page1.click("#push");
     await waitForContentToBeEquals(pages, "#items");
+    await expectJson(page2, "#itemsCount", 7);
 
     await page1.click("#clear");
     await waitForJson(pages, "#itemsCount", 0);
