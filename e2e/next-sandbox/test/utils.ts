@@ -69,20 +69,15 @@ export async function waitForJson(
 }
 
 export async function expectJson(
-  oneOrMorePages: Page | Page[],
+  page: Page,
   selector: IDSelector,
   expectedValue: Json | undefined
 ) {
-  const pages = Array.isArray(oneOrMorePages)
-    ? oneOrMorePages
-    : [oneOrMorePages];
-  for (const page of pages) {
-    if (expectedValue !== undefined) {
-      await expect(getJson(page, selector)).resolves.toEqual(expectedValue);
-    } else {
-      const text = page.locator(selector).innerText();
-      await expect(text).toEqual("undefined");
-    }
+  if (expectedValue !== undefined) {
+    await expect(getJson(page, selector)).resolves.toEqual(expectedValue);
+  } else {
+    const text = page.locator(selector).innerText();
+    await expect(text).toEqual("undefined");
   }
 }
 
