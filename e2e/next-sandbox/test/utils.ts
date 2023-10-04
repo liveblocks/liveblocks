@@ -1,6 +1,6 @@
 import { chromium, expect, Page } from "@playwright/test";
 import _ from "lodash";
-import randomNumber from "../utils/randomNumber";
+import { randomInt } from "../utils";
 import type { Json } from "@liveblocks/client";
 
 type IDSelector = `#${string}`;
@@ -114,7 +114,7 @@ export function sleep(ms: number) {
  * Sleep anywhere between 0 and 50 milliseconds.
  */
 export function nanoSleep() {
-  return sleep(randomNumber(50));
+  return sleep(randomInt(50));
 }
 
 // XXX Deprecate?
@@ -149,14 +149,14 @@ export function pickFrom<T>(array: T[]): T {
   if (array.length <= 0) {
     throw new Error("Cannot pick from an empty list");
   }
-  return array[randomNumber(array.length)];
+  return array[randomInt(array.length)];
 }
 
 export function pickNumberOfUndoRedo() {
-  const undoRedoProb = randomNumber(100);
+  const undoRedoProb = randomInt(100);
 
   if (undoRedoProb > 75) {
-    return randomNumber(5);
+    return randomInt(5);
   }
 
   return 0;

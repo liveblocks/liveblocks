@@ -4,7 +4,7 @@ import { create } from "zustand";
 import { liveblocks } from "@liveblocks/zustand";
 import type { WithLiveblocks } from "@liveblocks/zustand";
 import createLiveblocksClient from "../../utils/createClient";
-import { genRoomId, getRoomFromUrl, styles, Row } from "../../utils";
+import { genRoomId, getRoomFromUrl, randomInt, Row, styles } from "../../utils";
 
 const client = createLiveblocksClient();
 
@@ -75,7 +75,7 @@ export default function Home() {
         id="delete"
         onClick={() => {
           if (items.length > 0) {
-            const index = generateRandomNumber(items.length);
+            const index = randomInt(items.length);
             deleteItem(index);
           }
         }}
@@ -128,13 +128,3 @@ export default function Home() {
 }
 
 let item = "A";
-
-function generateRandomNumber(max: number, ignore?: number) {
-  let result = 0;
-  while (true) {
-    result = Math.floor(Math.random() * max);
-    if (result !== ignore) {
-      return result;
-    }
-  }
-}

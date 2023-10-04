@@ -26,6 +26,28 @@ export function getRoomFromUrl(): string | undefined {
   return q.get("room") ?? undefined;
 }
 
+export function randomInt(max: number) {
+  if (max <= 0) {
+    throw new Error("max should be more than 0");
+  }
+  return Math.floor(Math.random() * max);
+}
+
+export function randomIndices(array: { length: number }): [number, number] {
+  if (array.length < 2) {
+    throw new Error(
+      `cannot sample two random indexes from an array of only ${array.length} items`
+    );
+  }
+
+  const ri1 = randomInt(array.length);
+  let ri2 = randomInt(array.length - 1);
+  if (ri2 >= ri1) {
+    ri2++;
+  }
+  return [ri1, ri2];
+}
+
 // A predefined mono style
 export const styles = {
   mono: { fontFamily: "monospace", whiteSpace: "pre" },

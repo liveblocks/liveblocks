@@ -1,9 +1,8 @@
 import { createRoomContext } from "@liveblocks/react";
 import { LiveMap } from "@liveblocks/client";
 import React from "react";
-import randomNumber from "../../utils/randomNumber";
 import createLiveblocksClient from "../../utils/createClient";
-import { genRoomId, getRoomFromUrl, styles, Row } from "../../utils";
+import { genRoomId, getRoomFromUrl, randomInt, Row, styles } from "../../utils";
 
 const client = createLiveblocksClient();
 
@@ -40,7 +39,7 @@ function Sandbox() {
       <button
         id="set"
         onClick={() => {
-          map.set(`key:${randomNumber(10)}`, `value:${randomNumber(10)}`);
+          map.set(`key:${randomInt(10)}`, `value:${randomInt(10)}`);
         }}
       >
         Set
@@ -50,7 +49,7 @@ function Sandbox() {
         id="delete"
         onClick={() => {
           if (map.size > 0) {
-            const index = randomNumber(map.size);
+            const index = randomInt(map.size);
             map.delete(Array.from(map.keys())[index]);
           }
         }}

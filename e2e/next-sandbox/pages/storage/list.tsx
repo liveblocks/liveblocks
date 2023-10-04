@@ -2,7 +2,14 @@ import { createRoomContext } from "@liveblocks/react";
 import { LiveList } from "@liveblocks/client";
 import React from "react";
 import createLiveblocksClient from "../../utils/createClient";
-import { genRoomId, getRoomFromUrl, styles, Row } from "../../utils";
+import {
+  genRoomId,
+  getRoomFromUrl,
+  randomIndices,
+  randomInt,
+  Row,
+  styles,
+} from "../../utils";
 
 const client = createLiveblocksClient();
 
@@ -25,16 +32,6 @@ export default function Home() {
 }
 
 let item = "A";
-
-function generateRandomNumber(max: number, ignore?: number) {
-  let result = 0;
-  while (true) {
-    result = Math.floor(Math.random() * max);
-    if (result !== ignore) {
-      return result;
-    }
-  }
-}
 
 function Sandbox() {
   const undo = useUndo();
@@ -71,14 +68,10 @@ function Sandbox() {
 
       <button
         id="move"
+        disabled={items.length < 2}
         onClick={() => {
-          if (items.length < 2) {
-            return;
-          }
-
-          const index = generateRandomNumber(items.length);
-          const target = generateRandomNumber(items.length, index);
-          items.move(index, target);
+          const [fromIndex, toIndex] = randomIndices(items);
+          items.move(fromIndex, toIndex);
         }}
       >
         Move
@@ -86,12 +79,9 @@ function Sandbox() {
 
       <button
         id="set"
+        disabled={items.length === 0}
         onClick={() => {
-          if (items.length === 0) {
-            return;
-          }
-
-          const index = generateRandomNumber(items.length - 1);
+          const index = randomInt(items.length - 1);
           items.set(index, me.connectionId + ":" + item);
           item = String.fromCharCode(item.charCodeAt(0) + 1);
         }}
@@ -101,11 +91,10 @@ function Sandbox() {
 
       <button
         id="delete"
+        disabled={items.length === 0}
         onClick={() => {
-          if (items.length > 0) {
-            const index = generateRandomNumber(items.length);
-            items.delete(index);
-          }
+          const index = randomInt(items.length);
+          items.delete(index);
         }}
       >
         Delete

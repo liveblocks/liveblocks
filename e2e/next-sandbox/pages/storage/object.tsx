@@ -1,7 +1,6 @@
 import { createRoomContext } from "@liveblocks/react";
-import randomNumber from "../../utils/randomNumber";
 import React from "react";
-import { genRoomId, getRoomFromUrl, styles, Row } from "../../utils";
+import { genRoomId, getRoomFromUrl, randomInt, styles, Row } from "../../utils";
 import { LiveObject } from "@liveblocks/client";
 import { lsonToJson } from "@liveblocks/core";
 import createLiveblocksClient from "../../utils/createClient";
@@ -51,7 +50,7 @@ function Sandbox() {
       <button
         id="set"
         onClick={() => {
-          obj.set(randomNumber(10).toString(), randomNumber(10));
+          obj.set(randomInt(10).toString(), randomInt(10));
         }}
       >
         Set
@@ -60,8 +59,8 @@ function Sandbox() {
       <button
         id="set-nested"
         onClick={() => {
-          const nestedLiveObj = new LiveObject({ a: randomNumber(10) });
-          obj.set(randomNumber(10).toString(), nestedLiveObj);
+          const nestedLiveObj = new LiveObject({ a: randomInt(10) });
+          obj.set(randomInt(10).toString(), nestedLiveObj);
         }}
       >
         Set nested
@@ -72,7 +71,7 @@ function Sandbox() {
         onClick={() => {
           const keys = Object.keys(obj.toObject());
           if (keys.length > 0) {
-            const index = randomNumber(keys.length);
+            const index = randomInt(keys.length);
             obj.delete(keys[index]);
           }
         }}

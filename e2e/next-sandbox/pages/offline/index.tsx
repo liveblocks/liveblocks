@@ -3,7 +3,14 @@ import { LiveList } from "@liveblocks/client";
 import { createRoomContext } from "@liveblocks/react";
 import React from "react";
 import createLiveblocksClient from "../../utils/createClient";
-import { getRoomFromUrl, genRoomId, styles, Row } from "../../utils";
+import {
+  genRoomId,
+  getRoomFromUrl,
+  randomIndices,
+  randomInt,
+  Row,
+  styles,
+} from "../../utils";
 
 const client = createLiveblocksClient();
 
@@ -31,21 +38,6 @@ export default function Home() {
 }
 
 let item = "A";
-
-function generateRandomNumber(max: number, ignore?: number) {
-  if (max <= 0) {
-    throw new Error("max should be more than 0");
-  }
-
-  for (let i = 0; i < 300; i++) {
-    const n = Math.floor(Math.random() * max);
-    if (n !== ignore) {
-      return n;
-    }
-  }
-
-  throw new Error("could not generate a random number after 300 tries");
-}
 
 function Sandbox(_props: { roomId: string }) {
   const status = useStatus();
@@ -119,9 +111,8 @@ function Sandbox(_props: { roomId: string }) {
           id="move"
           disabled={items.length <= 1}
           onClick={() => {
-            const index = generateRandomNumber(items.length);
-            const target = generateRandomNumber(items.length, index);
-            items.move(index, target);
+            const [fromIndex, toIndex] = randomIndices(items);
+            items.move(fromIndex, toIndex);
           }}
         >
           Move
@@ -130,7 +121,7 @@ function Sandbox(_props: { roomId: string }) {
         <button
           id="delete"
           onClick={() => {
-            const index = generateRandomNumber(items.length);
+            const index = randomInt(items.length);
             items.delete(index);
           }}
         >
