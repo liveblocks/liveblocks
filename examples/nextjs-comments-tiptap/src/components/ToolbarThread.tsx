@@ -27,10 +27,12 @@ export function ToolbarThread({ editor }: Props) {
     }
 
     function hideComposer(event: MouseEvent) {
+      console.log("HIDE?", editor.getAttributes("commentHighlight").threadId);
       if (
         event.target instanceof Node &&
         wrapper.current?.contains(event.target)
       ) {
+        console.log("NO");
         return;
       }
 
@@ -39,6 +41,7 @@ export function ToolbarThread({ editor }: Props) {
         editor.isActive("commentHighlight") &&
         !editor.getAttributes("commentHighlight").threadId
       ) {
+        console.log("REMOVE?");
         editor.chain().focus().unsetCommentHighlight().run();
       }
 

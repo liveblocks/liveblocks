@@ -12,7 +12,7 @@ export function SelectionMenu({ editor }: Props) {
   return (
     <BubbleMenu
       editor={editor}
-      tippyOptions={{ zIndex: 99, placement: "bottom" }}
+      tippyOptions={{ zIndex: 99, placement: "bottom-start" }}
     >
       {shouldShowBubbleMenu(editor) ? (
         <div className={styles.bubbleMenuWrapper}>
