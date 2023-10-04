@@ -72,16 +72,16 @@ export function composerBodyToCommentBody(body: ComposerBody): CommentBody {
     content: body.map((block) => {
       const children = block.children
         .map((inline) => {
-          if (SlateText.isText(inline)) {
-            return inline as CommentBodyText;
-          }
-
           if (isComposerBodyMention(inline)) {
             return composerBodyMentionToCommentBodyMention(inline);
           }
 
           if (isComposerBodyAutoLink(inline)) {
             return composerBodyAutoLinkToCommentBodyLink(inline);
+          }
+
+          if (SlateText.isText(inline)) {
+            return inline as CommentBodyText;
           }
 
           return null;
@@ -100,16 +100,16 @@ export function commentBodyToComposerBody(body: CommentBody): ComposerBody {
   return body.content.map((block) => {
     const children = block.children
       .map((inline) => {
-        if (isCommentBodyText(inline)) {
-          return inline as ComposerBodyText;
-        }
-
         if (isCommentBodyMention(inline)) {
           return commentBodyMentionToComposerBodyMention(inline);
         }
 
         if (isCommentBodyLink(inline)) {
           return commentBodyLinkToComposerBodyLink(inline);
+        }
+
+        if (isCommentBodyText(inline)) {
+          return inline as ComposerBodyText;
         }
 
         return null;
