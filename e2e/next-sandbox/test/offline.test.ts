@@ -2,7 +2,6 @@ import { Page, test, expect } from "@playwright/test";
 
 import {
   expectJson,
-  getJson,
   nanoSleep,
   pickFrom,
   preparePages,
@@ -40,14 +39,8 @@ test.describe("Offline", () => {
     await sleep(50); // XXX Remove
     await page1.click("#push");
     await page2.click("#push");
-    await expectJson(page1, "#itemsCount", 2);
 
-    // XXX Really needed?
-    const firstPageItems = (await getJson(page1, "#items")) as Json[];
-    const secondPageItems = (await getJson(page2, "#items")) as Json[];
-
-    expect(firstPageItems.length).toEqual(2);
-    expect(secondPageItems.length).toEqual(2);
+    await waitForJson(pages, "#itemsCount", 2);
 
     await page1.click("#sendCloseEventConnectionError");
     await sleep(3000); // XXX Remove
