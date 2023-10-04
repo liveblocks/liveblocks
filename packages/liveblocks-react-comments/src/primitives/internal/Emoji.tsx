@@ -16,6 +16,7 @@ export const Emoji = forwardRef<HTMLSpanElement, Props>(
       <Component
         role="img"
         aria-label={emoji}
+        data-emoji={emoji}
         style={{
           ...style,
           fontFamily: EMOJI_FONT_FAMILY,
