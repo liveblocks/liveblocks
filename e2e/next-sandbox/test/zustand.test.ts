@@ -1,15 +1,13 @@
-import { Page, test, expect } from "@playwright/test";
+import { Page, test } from "@playwright/test";
 
 import {
   expectJson,
-  getJson,
   pickFrom,
   preparePages,
   nanoSleep,
   waitForContentToBeEquals,
   waitForJson,
 } from "./utils";
-import type { JsonObject } from "@liveblocks/client";
 
 const TEST_URL = "http://localhost:3007/zustand";
 
@@ -26,7 +24,7 @@ test.describe("Zustand", () => {
     Promise.all(pages.map((page) => page.close()))
   );
 
-  test("array push basic + presence", async () => {
+  test("array push basic", async () => {
     const [page1, page2] = pages;
     await page1.click("#clear");
     await expectJson(page1, "#itemsCount", 0);
@@ -49,6 +47,36 @@ test.describe("Zustand", () => {
 
     await page1.click("#clear");
     await waitForJson(pages, "#itemsCount", 0);
+  });
+
+  test("array push basic + presence", async () => {
+    const [page1, page2] = pages;
+    await page1.click("#clear");
+    await expectJson(page1, "#itemsCount", 0);
+
+    await waitForJson(pages, "#othersCount", 1);
+
+    await page1.click("#push");
+    await waitForContentToBeEquals(pages, "#items");
+
+    await page1.click("#set-name");
+    await page1.click("#inc-counter");
+    await waitForJson(page2, "#theirPresence", { name: "Vincent", counter: 1 });
+
+    await page1.click("#push");
+    await page1.click("#push");
+    await page1.click("#inc-counter");
+    await waitForContentToBeEquals(pages, "#items");
+
+    await page1.click("#push");
+    await page1.click("#push");
+    await page1.click("#inc-counter");
+    await waitForContentToBeEquals(pages, "#items");
+    await expectJson(page2, "#itemsCount", 5);
+
+    await page1.click("#clear");
+    await waitForJson(pages, "#itemsCount", 0);
+    await waitForJson(page2, "#theirPresence", { name: "Vincent", counter: 3 });
   });
 
   test("with enter and leave room", async () => {

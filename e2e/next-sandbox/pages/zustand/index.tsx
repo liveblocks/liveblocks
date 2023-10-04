@@ -17,7 +17,16 @@ import {
 const client = createLiveblocksClient();
 
 type State = {
+  // Presence
+  name: string;
+  counter: number;
+
+  // Storage
   items: string[];
+
+  // Mutations
+  setName: (newName: string) => void;
+  incCounter: () => void;
   addItem: (newTodo: string) => void;
   deleteItem: (index: number) => void;
   clear: () => void;
@@ -26,21 +35,26 @@ type State = {
 const useStore = create<WithLiveblocks<State, never, never, never, never>>()(
   liveblocks(
     (set) => ({
+      // Presence
+      name: "",
+      counter: 0,
+
+      // Storage
       items: [],
+
+      setName: (newName: string) => set(() => ({ name: newName })),
+      incCounter: () => set((state) => ({ counter: state.counter + 1 })),
       addItem: (newItem: string) =>
-        set((state) => ({
-          items: state.items.concat(newItem),
-        })),
+        set((state) => ({ items: state.items.concat(newItem) })),
       deleteItem: (index: number) =>
-        set((state) => ({
-          items: state.items.filter((_, i) => index != i),
-        })),
-      clear: () =>
-        set(() => ({
-          items: [],
-        })),
+        set((state) => ({ items: state.items.filter((_, i) => index != i) })),
+      clear: () => set(() => ({ items: [] })),
     }),
-    { client, storageMapping: { items: true } }
+    {
+      client,
+      storageMapping: { items: true },
+      presenceMapping: { name: true, counter: true },
+    }
   )
 );
 
@@ -48,6 +62,8 @@ export default function Home() {
   const renderCount = useRenderCount();
   const {
     items,
+    setName,
+    incCounter,
     addItem,
     deleteItem,
     clear,
@@ -67,12 +83,22 @@ export default function Home() {
     return <div>Loading...</div>;
   }
 
+  const theirPresence = others[0]?.presence;
+
   const canDelete = items.length > 0;
   const nextIndexToDelete = canDelete ? randomInt(items.length) : -1;
 
   return (
     <div>
       <h1>Zustand sandbox</h1>
+      <button id="set-name" onClick={() => setName("Vincent")}>
+        Set name
+      </button>
+
+      <button id="inc-counter" onClick={() => incCounter()}>
+        Inc counter
+      </button>
+
       <button
         id="push"
         onClick={() => {
@@ -144,9 +170,10 @@ export default function Home() {
         </tbody>
       </table>
 
-      <h2>Others</h2>
+      <h2>Presence</h2>
       <table style={styles.dataTable}>
         <tbody>
+          <Row id="theirPresence" name="Their presence" value={theirPresence} />
           <Row id="othersCount" name="Others count" value={others.length} />
           <Row id="others" name="Others" value={others} />
         </tbody>
