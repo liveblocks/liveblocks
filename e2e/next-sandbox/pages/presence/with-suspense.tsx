@@ -6,9 +6,9 @@ import { genRoomId, getRoomFromUrl, Row, styles } from "../../utils";
 const client = createLiveblocksClient();
 
 type Presence = {
-  count?: number;
-  secondProp?: number;
-  thirdProp?: number;
+  foo?: number;
+  bar?: string;
+  qux?: number;
 };
 
 const {
@@ -65,28 +65,18 @@ function PresenceSandbox() {
   return (
     <>
       <button
-        id="increment-button"
-        onClick={() =>
-          updateMyPresence({
-            count: myPresence.count ? myPresence.count + 1 : 1,
-          })
-        }
+        id="inc-foo"
+        onClick={() => updateMyPresence({ foo: (myPresence.foo ?? 0) + 1 })}
       >
         Increment
       </button>
 
-      <button
-        id="set-second-prop"
-        onClick={() => updateMyPresence({ secondProp: 1 })}
-      >
-        Set second prop
+      <button id="set-bar" onClick={() => updateMyPresence({ bar: "hey" })}>
+        Set bar
       </button>
 
-      <button
-        id="set-third-prop"
-        onClick={() => updateMyPresence({ thirdProp: 1 })}
-      >
-        Set third prop
+      <button id="set-qux" onClick={() => updateMyPresence({ qux: 1337 })}>
+        Set qux
       </button>
 
       <h2>Presence</h2>
