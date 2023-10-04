@@ -94,9 +94,15 @@ test.describe("Storage w/ Suspense", () => {
       // no await to create randomness
       await page1.click("#set");
       await page2.click("#set");
+
+      // In this test, we should never see a list of less than or more than
+      // 1 element. When this happens, we'll want to immediately fail here.
+      await expectJson(page1, "#itemsCount", 1);
+      await expectJson(page2, "#itemsCount", 1);
     }
 
-    await waitForJson(pages, "#itemsCount", 1);
+    await expectJson(page1, "#itemsCount", 1);
+    await expectJson(page2, "#itemsCount", 1);
     await waitUntilEqualOnAllPages(pages, "#items");
   });
 
@@ -104,6 +110,7 @@ test.describe("Storage w/ Suspense", () => {
     const [page1] = pages;
     await page1.click("#clear");
     await waitForJson(pages, "#itemsCount", 0);
+    await waitUntilEqualOnAllPages(pages, "#items");
 
     const numberOfItemsAtStart = 5;
     for (let i = 0; i < numberOfItemsAtStart; i++) {
@@ -128,6 +135,10 @@ test.describe("Storage w/ Suspense", () => {
         } else {
           await page.click(pickFrom(actions));
         }
+
+        // In this test, we should never see a list of more than 1 element. When
+        // it happens, we'll want to immediately fail here.
+        await expectJson(page, "#itemsCount", 1);
       }
       await nanoSleep();
     }
