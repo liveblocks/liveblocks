@@ -1,5 +1,5 @@
-import { Page, test } from "@playwright/test";
-
+import type { Page } from "@playwright/test";
+import { test } from "@playwright/test";
 import {
   expectJson,
   nanoSleep,
