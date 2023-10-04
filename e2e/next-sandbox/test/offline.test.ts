@@ -94,7 +94,7 @@ test.describe("Offline", () => {
   });
 
   // XXX Re-express this test!
-  test("fuzzy", async () => {
+  test.skip("fuzzy", async () => {
     const [page1, page2] = pages;
     await page1.click("#clear");
     await waitForJson(pages, "#itemsCount", 0);

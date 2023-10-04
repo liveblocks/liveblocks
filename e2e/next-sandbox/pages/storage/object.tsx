@@ -1,6 +1,14 @@
 import { createRoomContext } from "@liveblocks/react";
 import React from "react";
-import { genRoomId, getRoomFromUrl, randomInt, styles, Row } from "../../utils";
+import {
+  genRoomId,
+  getRoomFromUrl,
+  opaqueIf,
+  randomInt,
+  Row,
+  styles,
+  useRenderCount,
+} from "../../utils";
 import { LiveObject } from "@liveblocks/client";
 import { lsonToJson } from "@liveblocks/core";
 import createLiveblocksClient from "../../utils/createClient";
@@ -35,6 +43,7 @@ export default function Home() {
 }
 
 function Sandbox() {
+  const renderCount = useRenderCount();
   const undo = useUndo();
   const redo = useRedo();
   const obj = useObject("object");
@@ -44,39 +53,44 @@ function Sandbox() {
     return <div>Loading...</div>;
   }
 
+  const numKeys = Object.keys(obj.toObject()).length;
+  const canDelete = numKeys > 0;
+
+  const nextKey = randomInt(10).toString();
+  const nextValue = randomInt(10);
+  const nextNestedKey = randomInt(10).toString();
+  const nextNestedValue = { a: randomInt(10) };
+  const nextIndexToDelete = canDelete ? randomInt(numKeys) : -1;
+
   return (
     <div>
       <h1>LiveObject sandbox</h1>
-      <button
-        id="set"
-        onClick={() => {
-          obj.set(randomInt(10).toString(), randomInt(10));
-        }}
-      >
-        Set
+      <button id="set" onClick={() => obj.set(nextKey, nextValue)}>
+        Set ({JSON.stringify(nextKey)} → {JSON.stringify(nextValue)})
       </button>
 
       <button
         id="set-nested"
         onClick={() => {
-          const nestedLiveObj = new LiveObject({ a: randomInt(10) });
-          obj.set(randomInt(10).toString(), nestedLiveObj);
+          const nestedLiveObj = new LiveObject(nextNestedValue);
+          obj.set(nextNestedKey, nestedLiveObj);
         }}
       >
-        Set nested
+        Set nested ({JSON.stringify(nextNestedKey)} →{" "}
+        {JSON.stringify(nextNestedValue)})
       </button>
 
       <button
         id="delete"
+        style={opaqueIf(canDelete)}
         onClick={() => {
           const keys = Object.keys(obj.toObject());
           if (keys.length > 0) {
-            const index = randomInt(keys.length);
-            obj.delete(keys[index]);
+            obj.delete(keys[nextIndexToDelete]);
           }
         }}
       >
-        Delete
+        Delete {canDelete && `(${nextIndexToDelete})`}
       </button>
 
       <button
@@ -100,6 +114,7 @@ function Sandbox() {
 
       <table style={styles.dataTable}>
         <tbody>
+          <Row id="renderCount" name="Render count" value={renderCount} />
           {/* XXX Rename ID to obj! */}
           <Row id="items" name="Serialized" value={lsonToJson(obj)} />
         </tbody>

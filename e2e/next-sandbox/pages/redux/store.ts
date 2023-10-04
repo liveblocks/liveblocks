@@ -20,7 +20,7 @@ const slice = createSlice({
       state.items.push(action.payload);
     },
     deleteItem: (state, action: PayloadAction<number>) => {
-      state.items.splice(action.payload);
+      state.items.splice(action.payload, 1);
     },
     clear: (state) => {
       state.items = [];

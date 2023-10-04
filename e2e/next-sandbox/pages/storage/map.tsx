@@ -2,7 +2,15 @@ import { createRoomContext } from "@liveblocks/react";
 import { LiveMap } from "@liveblocks/client";
 import React from "react";
 import createLiveblocksClient from "../../utils/createClient";
-import { genRoomId, getRoomFromUrl, randomInt, Row, styles } from "../../utils";
+import {
+  genRoomId,
+  getRoomFromUrl,
+  opaqueIf,
+  randomInt,
+  Row,
+  styles,
+  useRenderCount,
+} from "../../utils";
 
 const client = createLiveblocksClient();
 
@@ -25,6 +33,7 @@ export default function Home() {
 }
 
 function Sandbox() {
+  const renderCount = useRenderCount();
   const undo = useUndo();
   const redo = useRedo();
   const map = useMap("map");
@@ -33,28 +42,28 @@ function Sandbox() {
     return <div>Loading...</div>;
   }
 
+  const canDelete = map.size > 0;
+
+  const nextKey = `key:${randomInt(10)}`;
+  const nextValue = `value:${randomInt(10)}`;
+  const nextIndexToDelete = canDelete ? randomInt(map.size) : -1;
+
   return (
     <div>
       <h1>LiveMap sandbox</h1>
-      <button
-        id="set"
-        onClick={() => {
-          map.set(`key:${randomInt(10)}`, `value:${randomInt(10)}`);
-        }}
-      >
-        Set
+      <button id="set" onClick={() => map.set(nextKey, nextValue)}>
+        Set ({JSON.stringify(nextKey)} → {JSON.stringify(nextValue)})
       </button>
 
       <button
         id="delete"
+        style={opaqueIf(canDelete)}
         onClick={() => {
-          if (map.size > 0) {
-            const index = randomInt(map.size);
-            map.delete(Array.from(map.keys())[index]);
-          }
+          if (!canDelete) return;
+          map.delete(Array.from(map.keys())[nextIndexToDelete]);
         }}
       >
-        Delete
+        Delete {canDelete && `(${nextIndexToDelete})`}
       </button>
 
       <button
@@ -78,6 +87,7 @@ function Sandbox() {
 
       <table style={styles.dataTable}>
         <tbody>
+          <Row id="renderCount" name="Render count" value={renderCount} />
           {/* XXX Rename ID to map-size! */}
           <Row id="itemsCount" name="Map size" value={map.size} />
           {/* XXX Rename ID to map! */}

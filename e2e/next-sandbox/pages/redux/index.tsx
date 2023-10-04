@@ -2,7 +2,15 @@ import React, { useEffect } from "react";
 import { useAppDispatch, useAppSelector } from "./hooks";
 import { Provider } from "react-redux";
 import { actions } from "@liveblocks/redux";
-import { genRoomId, getRoomFromUrl, randomInt, Row, styles } from "../../utils";
+import {
+  genRoomId,
+  getRoomFromUrl,
+  opaqueIf,
+  randomInt,
+  Row,
+  styles,
+  useRenderCount,
+} from "../../utils";
 
 import store, { client, addItem, deleteItem, clear } from "./store";
 
@@ -15,6 +23,7 @@ export default function Home() {
 }
 
 function List() {
+  const renderCount = useRenderCount();
   const others = useAppSelector((state) => state.liveblocks.others);
 
   const items = useAppSelector((state) => state.items);
@@ -33,6 +42,9 @@ function List() {
     return <div>Loading...</div>;
   }
 
+  const canDelete = items.length > 0;
+  const nextIndexToDelete = canDelete ? randomInt(items.length) : -1;
+
   return (
     <div>
       <h1>Redux sandbox</h1>
@@ -44,23 +56,21 @@ function List() {
               client.getRoom(roomId)?.getSelf()?.connectionId + ":" + item
             )
           );
-
           item = String.fromCharCode(item.charCodeAt(0) + 1);
         }}
       >
-        Push
+        Push ({item})
       </button>
 
       <button
         id="delete"
+        style={opaqueIf(canDelete)}
         onClick={() => {
-          if (items.length > 0) {
-            const index = randomInt(items.length);
-            dispatch(deleteItem(index));
-          }
+          if (!canDelete) return;
+          dispatch(deleteItem(nextIndexToDelete));
         }}
       >
-        Delete multiple
+        Delete {canDelete && `(${nextIndexToDelete})`}
       </button>
 
       <button
@@ -71,6 +81,14 @@ function List() {
       >
         Clear
       </button>
+
+      {/* XXX Add undo/redo buttons to this app + test them? */}
+
+      <table style={styles.dataTable}>
+        <tbody>
+          <Row id="renderCount" name="Render count" value={renderCount} />
+        </tbody>
+      </table>
 
       <h2>Items</h2>
       <table style={styles.dataTable}>

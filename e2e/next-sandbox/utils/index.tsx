@@ -1,3 +1,4 @@
+import React from "react";
 import type { Json } from "@liveblocks/client";
 
 /**
@@ -46,6 +47,15 @@ export function randomIndices(array: { length: number }): [number, number] {
     ri2++;
   }
   return [ri1, ri2];
+}
+
+export function useRenderCount() {
+  const ref = React.useRef(0);
+  return ++ref.current;
+}
+
+export function opaqueIf(condition: boolean): { opacity?: number } {
+  return { opacity: condition ? undefined : 0.7 };
 }
 
 // A predefined mono style

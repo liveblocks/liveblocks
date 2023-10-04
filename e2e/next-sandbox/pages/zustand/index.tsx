@@ -4,7 +4,15 @@ import { create } from "zustand";
 import { liveblocks } from "@liveblocks/zustand";
 import type { WithLiveblocks } from "@liveblocks/zustand";
 import createLiveblocksClient from "../../utils/createClient";
-import { genRoomId, getRoomFromUrl, randomInt, Row, styles } from "../../utils";
+import {
+  genRoomId,
+  getRoomFromUrl,
+  opaqueIf,
+  randomInt,
+  Row,
+  styles,
+  useRenderCount,
+} from "../../utils";
 
 const client = createLiveblocksClient();
 
@@ -37,6 +45,7 @@ const useStore = create<WithLiveblocks<State, never, never, never, never>>()(
 );
 
 export default function Home() {
+  const renderCount = useRenderCount();
   const {
     items,
     addItem,
@@ -58,6 +67,9 @@ export default function Home() {
     return <div>Loading...</div>;
   }
 
+  const canDelete = items.length > 0;
+  const nextIndexToDelete = canDelete ? randomInt(items.length) : -1;
+
   return (
     <div>
       <h1>Zustand sandbox</h1>
@@ -68,45 +80,61 @@ export default function Home() {
           item = String.fromCharCode(item.charCodeAt(0) + 1);
         }}
       >
-        Push
+        Push ({item})
       </button>
 
       <button
         id="delete"
+        style={opaqueIf(canDelete)}
         onClick={() => {
-          if (items.length > 0) {
-            const index = randomInt(items.length);
-            deleteItem(index);
-          }
+          if (!canDelete) return;
+          deleteItem(nextIndexToDelete);
         }}
       >
-        Delete
+        Delete {canDelete && `(${nextIndexToDelete})`}
       </button>
 
-      <button
-        id="clear"
-        onClick={() => {
-          clear();
-        }}
-      >
+      <button id="clear" onClick={() => clear()}>
         Clear
       </button>
 
-      <button id="undo" onClick={room?.history.undo}>
+      <button
+        id="undo"
+        style={opaqueIf(room?.history.canUndo() ?? false)}
+        onClick={room?.history.undo}
+      >
         Undo
       </button>
 
-      <button id="redo" onClick={room?.history.redo}>
+      <button
+        id="redo"
+        style={opaqueIf(room?.history.canRedo() ?? false)}
+        onClick={room?.history.redo}
+      >
         Redo
       </button>
 
-      <button id="enter" onClick={() => enterRoom(roomId)}>
+      <button
+        id="enter"
+        style={opaqueIf(room === null)}
+        onClick={() => enterRoom(roomId)}
+      >
         Enter room
       </button>
 
-      <button id="leave" onClick={() => leaveRoom(roomId)}>
+      <button
+        id="leave"
+        style={opaqueIf(room !== null)}
+        onClick={() => leaveRoom(roomId)}
+      >
         Leave room
       </button>
+
+      <table style={styles.dataTable}>
+        <tbody>
+          <Row id="renderCount" name="Render count" value={renderCount} />
+        </tbody>
+      </table>
 
       <h2>Items</h2>
       <table style={styles.dataTable}>

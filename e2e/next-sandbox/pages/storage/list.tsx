@@ -5,18 +5,25 @@ import createLiveblocksClient from "../../utils/createClient";
 import {
   genRoomId,
   getRoomFromUrl,
+  opaqueIf,
   randomIndices,
   randomInt,
   Row,
   styles,
+  useRenderCount,
 } from "../../utils";
 
 const client = createLiveblocksClient();
 
-const { RoomProvider, useList, useRedo, useSelf, useUndo } = createRoomContext<
-  never,
-  { items: LiveList<string> }
->(client);
+const {
+  RoomProvider,
+  useCanRedo,
+  useCanUndo,
+  useList,
+  useRedo,
+  useSelf,
+  useUndo,
+} = createRoomContext<never, { items: LiveList<string> }>(client);
 
 export default function Home() {
   const roomId = getRoomFromUrl() ?? genRoomId("e2e-storage-list");
@@ -34,8 +41,11 @@ export default function Home() {
 let item = "A";
 
 function Sandbox() {
+  const renderCount = useRenderCount();
   const undo = useUndo();
   const redo = useRedo();
+  const canUndo = useCanUndo();
+  const canRedo = useCanRedo();
   const items = useList("items");
   const me = useSelf();
 
@@ -43,9 +53,18 @@ function Sandbox() {
     return <div>Loading...</div>;
   }
 
+  const canDelete = items.length > 0;
+  const canMove = items.length >= 2;
+  const canSet = items.length > 0;
+
+  const nextIndexToSet = canSet ? randomInt(items.length) : -1;
+  const nextIndexToDelete = canDelete ? randomInt(items.length) : -1;
+  const nextIndicesToMove = canMove ? randomIndices(items) : [-1, -1];
+
   return (
     <div>
       <h1>LiveList sandbox</h1>
+
       <button
         id="push"
         onClick={() => {
@@ -53,7 +72,7 @@ function Sandbox() {
           item = String.fromCharCode(item.charCodeAt(0) + 1);
         }}
       >
-        Push
+        Push ({item})
       </button>
 
       <button
@@ -63,57 +82,61 @@ function Sandbox() {
           item = String.fromCharCode(item.charCodeAt(0) + 1);
         }}
       >
-        Insert
+        Insert ({item}, 0)
       </button>
 
+      {/* XXX Maybe factor this into a <Button> class, requiring an ID, an `enabled` condition, and handling the onClick in those cases automatically. */}
       <button
         id="move"
-        disabled={items.length < 2}
+        style={opaqueIf(canMove)}
         onClick={() => {
-          const [fromIndex, toIndex] = randomIndices(items);
+          if (!canMove) return;
+          const [fromIndex, toIndex] = nextIndicesToMove;
           items.move(fromIndex, toIndex);
         }}
       >
-        Move
+        Move{" "}
+        {canMove && ` (${nextIndicesToMove[0]} to ${nextIndicesToMove[1]})`}
       </button>
 
       <button
         id="set"
-        disabled={items.length === 0}
+        style={opaqueIf(canSet)}
         onClick={() => {
-          const index = randomInt(items.length - 1);
-          items.set(index, me.connectionId + ":" + item);
+          if (!canSet) return;
+          items.set(nextIndexToSet, me.connectionId + ":" + item);
           item = String.fromCharCode(item.charCodeAt(0) + 1);
         }}
       >
-        Set
+        Set {canSet && ` (${nextIndexToSet})`}
       </button>
 
       <button
         id="delete"
-        disabled={items.length === 0}
+        style={opaqueIf(canDelete)}
         onClick={() => {
-          const index = randomInt(items.length);
-          items.delete(index);
+          if (!canDelete) return;
+          items.delete(nextIndexToDelete);
         }}
       >
-        Delete
+        Delete {canDelete && ` (${nextIndexToDelete})`}
       </button>
 
       <button id="clear" onClick={() => items.clear()}>
         Clear
       </button>
 
-      <button id="undo" onClick={undo}>
+      <button id="undo" style={opaqueIf(canUndo)} onClick={undo}>
         Undo
       </button>
 
-      <button id="redo" onClick={redo}>
+      <button id="redo" style={opaqueIf(canRedo)} onClick={redo}>
         Redo
       </button>
 
       <table style={styles.dataTable}>
         <tbody>
+          <Row id="renderCount" name="Render count" value={renderCount} />
           <Row id="itemsCount" name="List size" value={items.length} />
           <Row id="items" name="Serialized" value={items.toArray()} />
         </tbody>

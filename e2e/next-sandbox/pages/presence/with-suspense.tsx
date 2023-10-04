@@ -1,7 +1,14 @@
 import { Json, createRoomContext, ClientSideSuspense } from "@liveblocks/react";
 import React from "react";
 import createLiveblocksClient from "../../utils/createClient";
-import { genRoomId, getRoomFromUrl, Row, styles } from "../../utils";
+import {
+  genRoomId,
+  getRoomFromUrl,
+  opaqueIf,
+  Row,
+  styles,
+  useRenderCount,
+} from "../../utils";
 
 const client = createLiveblocksClient();
 
@@ -32,10 +39,18 @@ export default function Home() {
   const roomId = getRoomFromUrl() ?? genRoomId("e2e-presence-with-suspense");
   return (
     <>
-      <button id="leave-room" onClick={() => setIsVisible(false)}>
+      <button
+        id="leave-room"
+        style={opaqueIf(isVisible)}
+        onClick={() => setIsVisible(false)}
+      >
         Leave
       </button>
-      <button id="enter-room" onClick={() => setIsVisible(true)}>
+      <button
+        id="enter-room"
+        style={opaqueIf(!isVisible)}
+        onClick={() => setIsVisible(true)}
+      >
         Enter
       </button>
       {isVisible && (
@@ -58,6 +73,7 @@ export default function Home() {
 }
 
 function PresenceSandbox() {
+  const renderCount = useRenderCount();
   const others = useOthers();
   const [myPresence, updateMyPresence] = useMyPresence();
   const theirPresence = others[0]?.presence;
@@ -78,6 +94,12 @@ function PresenceSandbox() {
       <button id="set-qux" onClick={() => updateMyPresence({ qux: 1337 })}>
         Set qux
       </button>
+
+      <table style={styles.dataTable}>
+        <tbody>
+          <Row id="renderCount" name="Render count" value={renderCount} />
+        </tbody>
+      </table>
 
       <h2>Presence</h2>
       <table style={styles.dataTable}>

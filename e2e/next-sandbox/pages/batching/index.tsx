@@ -2,7 +2,14 @@ import { LiveMap } from "@liveblocks/client";
 import { createRoomContext } from "@liveblocks/react";
 import React from "react";
 import createLiveblocksClient from "../../utils/createClient";
-import { genRoomId, getRoomFromUrl, styles, Row } from "../../utils";
+import {
+  genRoomId,
+  getRoomFromUrl,
+  opaqueIf,
+  Row,
+  styles,
+  useRenderCount,
+} from "../../utils";
 
 const client = createLiveblocksClient();
 
@@ -13,12 +20,14 @@ type Presence = {
 const {
   RoomProvider,
   useBatch,
+  useCanRedo,
+  useCanUndo,
   useMap,
+  useMyPresence,
+  useOthers,
   useRedo,
   useSelf,
   useUndo,
-  useOthers,
-  useMyPresence,
 } = createRoomContext<Presence, { liveMap: LiveMap<string, number> }>(client);
 
 export default function Home() {
@@ -35,8 +44,11 @@ export default function Home() {
 }
 
 function Sandbox() {
+  const renderCount = useRenderCount();
   const undo = useUndo();
   const redo = useRedo();
+  const canUndo = useCanUndo();
+  const canRedo = useCanRedo();
   const batch = useBatch();
   const liveMap = useMap("liveMap");
 
@@ -58,20 +70,12 @@ function Sandbox() {
           batch(() => {
             liveMap.set(`user-${me.connectionId}`, 0);
             updateMyPresence({
-              count: myPresence.count ? myPresence.count + 1 : 1,
+              count: (myPresence.count ?? 0) + 1,
             });
           });
         }}
       >
-        Update batch
-      </button>
-
-      <button id="undo" onClick={undo}>
-        Undo
-      </button>
-
-      <button id="redo" onClick={redo}>
-        Redo
+        Batch update (P&amp;S)
       </button>
 
       <button
@@ -82,8 +86,22 @@ function Sandbox() {
           });
         }}
       >
-        Clear
+        Clear storage
       </button>
+
+      <button id="undo" style={opaqueIf(canUndo)} onClick={undo}>
+        Undo
+      </button>
+
+      <button id="redo" style={opaqueIf(canRedo)} onClick={redo}>
+        Redo
+      </button>
+
+      <table style={styles.dataTable}>
+        <tbody>
+          <Row id="renderCount" name="Render count" value={renderCount} />
+        </tbody>
+      </table>
 
       <h2>Presence</h2>
       <table style={styles.dataTable}>
