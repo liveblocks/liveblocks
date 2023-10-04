@@ -70,6 +70,10 @@ export default function Home() {
     liveblocks: { enterRoom, leaveRoom, isStorageLoading, room, others },
   } = useStore();
 
+  const connectionId = room?.getSelf()?.connectionId ?? 0;
+  const sep = [":", "/"];
+  const prefix = `${connectionId} ${sep[connectionId % sep.length]} `;
+
   const roomId = getRoomFromUrl() ?? genRoomId("e2e-zustand-basic");
 
   useEffect(() => {
@@ -102,11 +106,11 @@ export default function Home() {
       <button
         id="push"
         onClick={() => {
-          addItem(room?.getSelf()?.connectionId + ":" + item);
+          addItem(prefix + item);
           item = String.fromCharCode(item.charCodeAt(0) + 1);
         }}
       >
-        Push ({item})
+        Push ({prefix + item})
       </button>
 
       <button
@@ -117,7 +121,11 @@ export default function Home() {
           deleteItem(nextIndexToDelete);
         }}
       >
-        Delete {canDelete && `(${nextIndexToDelete})`}
+        Delete{" "}
+        {canDelete &&
+          `(${nextIndexToDelete}) (${JSON.stringify(
+            items[nextIndexToDelete]
+          )})`}
       </button>
 
       <button id="clear" onClick={() => clear()}>
@@ -173,6 +181,7 @@ export default function Home() {
       <h2>Presence</h2>
       <table style={styles.dataTable}>
         <tbody>
+          <Row id="connectionId" name="Connection ID" value={connectionId} />
           <Row id="theirPresence" name="Their presence" value={theirPresence} />
           <Row id="othersCount" name="Others count" value={others.length} />
           <Row id="others" name="Others" value={others} />
