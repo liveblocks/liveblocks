@@ -85,7 +85,6 @@ function Sandbox() {
         Insert ({item}, 0)
       </button>
 
-      {/* XXX Maybe factor this into a <Button> class, requiring an ID, an `enabled` condition, and handling the onClick in those cases automatically. */}
       <button
         id="move"
         style={opaqueIf(canMove)}

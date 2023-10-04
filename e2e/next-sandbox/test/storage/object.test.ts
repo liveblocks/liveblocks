@@ -33,7 +33,7 @@ test.describe("Storage - LiveObject", () => {
   test("fuzzy", async () => {
     const [page1, page2] = pages;
     await page1.click("#clear");
-    await waitForJson(pages, "#items", {});
+    await waitForJson(pages, "#obj", {});
 
     const clicks = [];
     for (let i = 0; i < 20; i++) {
@@ -41,7 +41,7 @@ test.describe("Storage - LiveObject", () => {
       await nanoSleep();
     }
 
-    await waitForContentToBeEquals(pages, "#items");
+    await waitForContentToBeEquals(pages, "#obj");
 
     for (let i = 0; i < 100; i++) {
       clicks.push(page1.click(pickFrom(["#set", "#delete"])));
@@ -50,15 +50,15 @@ test.describe("Storage - LiveObject", () => {
     }
 
     await Promise.all(clicks);
-    await waitForContentToBeEquals(pages, "#items");
+    await waitForContentToBeEquals(pages, "#obj");
   });
 
   test("fuzzy with nested objects", async () => {
     const [page1, page2] = pages;
     await page1.click("#clear");
-    await waitForJson(pages, "#items", {});
+    await waitForJson(pages, "#obj", {});
 
-    await assertJsonContentAreEquals(pages, "#items");
+    await assertJsonContentAreEquals(pages, "#obj");
 
     const clicks = [];
     for (let i = 0; i < 20; i++) {
@@ -66,7 +66,7 @@ test.describe("Storage - LiveObject", () => {
     }
 
     await Promise.all(clicks);
-    await waitForContentToBeEquals(pages, "#items");
+    await waitForContentToBeEquals(pages, "#obj");
 
     const actions = ["#set-nested", "#delete"];
     for (let i = 0; i < 50; i++) {
@@ -76,15 +76,15 @@ test.describe("Storage - LiveObject", () => {
     }
 
     await Promise.all(clicks);
-    await waitForContentToBeEquals(pages, "#items");
+    await waitForContentToBeEquals(pages, "#obj");
   });
 
   test("fuzzy with nested objects and undo/redo", async () => {
     const [page1, page2] = pages;
     await page1.click("#clear");
-    await waitForJson(pages, "#items", {});
+    await waitForJson(pages, "#obj", {});
 
-    await assertJsonContentAreEquals(pages, "#items");
+    await assertJsonContentAreEquals(pages, "#obj");
 
     const clicks = [];
     for (let i = 0; i < 20; i++) {
@@ -93,7 +93,7 @@ test.describe("Storage - LiveObject", () => {
     }
 
     await Promise.all(clicks);
-    await waitForContentToBeEquals(pages, "#items");
+    await waitForContentToBeEquals(pages, "#obj");
 
     const actions = ["#set-nested", "#delete"];
     for (let i = 0; i < 50; i++) {
@@ -113,6 +113,6 @@ test.describe("Storage - LiveObject", () => {
     }
 
     await Promise.all(clicks);
-    await waitForContentToBeEquals(pages, "#items");
+    await waitForContentToBeEquals(pages, "#obj");
   });
 });

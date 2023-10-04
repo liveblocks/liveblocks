@@ -58,7 +58,7 @@ test.describe("Presence", () => {
   });
 
   test("connect A => connect B => update presence B => verify presence A on B", async () => {
-    const testUrl = TEST_URL + "?room=e2e-presence-with-suspense-scenario3";
+    const testUrl = TEST_URL + "?room=e2e-presence-scenario3b";
     const [page1, page2] = await Promise.all([
       preparePage(testUrl + BG_COLOR_1),
       preparePage(testUrl + BG_COLOR_2, WIDTH),

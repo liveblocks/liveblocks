@@ -124,8 +124,7 @@ function Sandbox() {
       <table style={styles.dataTable}>
         <tbody>
           <Row id="renderCount" name="Render count" value={renderCount} />
-          {/* XXX Rename ID to obj! */}
-          <Row id="items" name="Serialized" value={lsonToJson(obj)} />
+          <Row id="obj" name="Serialized" value={lsonToJson(obj)} />
         </tbody>
       </table>
     </div>

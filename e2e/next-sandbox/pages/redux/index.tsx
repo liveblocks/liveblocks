@@ -100,7 +100,7 @@ function List() {
         Clear
       </button>
 
-      {/* XXX Add undo/redo buttons to this app + test them? */}
+      {/* TODO Add undo/redo buttons to this app + test them? */}
 
       <table style={styles.dataTable}>
         <tbody>
