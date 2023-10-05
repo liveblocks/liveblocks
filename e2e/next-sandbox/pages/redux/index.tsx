@@ -4,13 +4,13 @@ import { Provider } from "react-redux";
 import { actions } from "@liveblocks/redux";
 import {
   getRoomFromUrl,
-  opaqueIf,
   padItem,
   randomInt,
   Row,
   styles,
   useRenderCount,
 } from "../../utils";
+import Button from "../../utils/Button";
 
 import store, {
   client,
@@ -61,48 +61,59 @@ function ReduxSandbox() {
 
   return (
     <div>
-      <h1>Redux sandbox</h1>
-      <button id="set-name" onClick={() => dispatch(setName("Vincent"))}>
-        Set name
-      </button>
+      <h3>
+        <a href="/">Home</a> › Redux
+      </h3>
 
-      <button id="inc-counter" onClick={() => dispatch(incCounter())}>
-        Inc counter
-      </button>
+      <div style={{ display: "flex", margin: "8px 0" }}>
+        <Button id="set-name" onClick={() => dispatch(setName("Vincent"))}>
+          Set name
+        </Button>
 
-      <button
-        id="push"
-        onClick={() => {
-          dispatch(addItem(nextValueToPush));
-          item = String.fromCharCode(item.charCodeAt(0) + 1);
-        }}
-      >
-        Push ({nextValueToPush.trim()})
-      </button>
+        <Button id="inc-counter" onClick={() => dispatch(incCounter())}>
+          Inc counter
+        </Button>
 
-      <button
-        id="delete"
-        style={opaqueIf(canDelete)}
-        onClick={() => {
-          if (!canDelete) return;
-          dispatch(deleteItem(nextIndexToDelete));
-        }}
-      >
-        Delete{" "}
-        {canDelete &&
-          `(${nextIndexToDelete}) (${items[nextIndexToDelete].trim()})`}
-      </button>
+        <Button
+          id="push"
+          onClick={() => {
+            dispatch(addItem(nextValueToPush));
+            item = String.fromCharCode(item.charCodeAt(0) + 1);
+          }}
+          subtitle={nextValueToPush}
+        >
+          Push
+        </Button>
 
-      <button
-        id="clear"
-        onClick={() => {
-          dispatch(clear());
-        }}
-      >
-        Clear
-      </button>
+        <Button
+          id="delete"
+          enabled={canDelete}
+          onClick={() => {
+            if (!canDelete) return;
+            dispatch(deleteItem(nextIndexToDelete));
+          }}
+          subtitle={
+            canDelete
+              ? `index ${nextIndexToDelete} (${items[
+                  nextIndexToDelete
+                ].trim()})`
+              : null
+          }
+        >
+          Delete
+        </Button>
 
-      {/* TODO Add undo/redo buttons to this app + test them? */}
+        <Button
+          id="clear"
+          onClick={() => {
+            dispatch(clear());
+          }}
+        >
+          Clear
+        </Button>
+
+        {/* TODO Add undo/redo buttons to this app + test them? */}
+      </div>
 
       <table style={styles.dataTable}>
         <tbody>

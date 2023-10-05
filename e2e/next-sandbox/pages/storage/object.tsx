@@ -2,12 +2,12 @@ import { createRoomContext } from "@liveblocks/react";
 import React from "react";
 import {
   getRoomFromUrl,
-  opaqueIf,
   randomInt,
   Row,
   styles,
   useRenderCount,
 } from "../../utils";
+import Button from "../../utils/Button";
 import { LiveObject } from "@liveblocks/client";
 import { lsonToJson } from "@liveblocks/core";
 import createLiveblocksClient from "../../utils/createClient";
@@ -61,64 +61,73 @@ function Sandbox() {
     return <div>Loading...</div>;
   }
 
-  const numKeys = Object.keys(obj.toObject()).length;
-  const canDelete = numKeys > 0;
+  const keys = Object.keys(obj.toObject());
+  const canDelete = keys.length > 0;
 
   const nextKey = randomInt(10).toString();
   const nextValue = randomInt(10);
   const nextNestedKey = randomInt(10).toString();
   const nextNestedValue = { a: randomInt(10) };
-  const nextIndexToDelete = canDelete ? randomInt(numKeys) : -1;
+  const nextKeyToDelete = canDelete ? keys[randomInt(keys.length)] : -1;
 
   return (
     <div>
-      <h1>LiveObject sandbox</h1>
-      <button id="set" onClick={() => obj.set(nextKey, nextValue)}>
-        Set ({JSON.stringify(nextKey)} → {JSON.stringify(nextValue)})
-      </button>
+      <h3>
+        <a href="/">Home</a> › Storage › LiveObject
+      </h3>
+      <div style={{ display: "flex", margin: "8px 0" }}>
+        <Button
+          id="set"
+          onClick={() => obj.set(nextKey, nextValue)}
+          subtitle={`${JSON.stringify(nextKey)} → ${JSON.stringify(nextValue)}`}
+        >
+          Set
+        </Button>
 
-      <button
-        id="set-nested"
-        onClick={() => {
-          const nestedLiveObj = new LiveObject(nextNestedValue);
-          obj.set(nextNestedKey, nestedLiveObj);
-        }}
-      >
-        Set nested ({JSON.stringify(nextNestedKey)} →{" "}
-        {JSON.stringify(nextNestedValue)})
-      </button>
+        <Button
+          id="set-nested"
+          onClick={() => {
+            const nestedLiveObj = new LiveObject(nextNestedValue);
+            obj.set(nextNestedKey, nestedLiveObj);
+          }}
+          subtitle={`${JSON.stringify(nextNestedKey)} → ${JSON.stringify(
+            nextNestedValue
+          )}`}
+        >
+          Set nested
+        </Button>
 
-      <button
-        id="delete"
-        style={opaqueIf(canDelete)}
-        onClick={() => {
-          const keys = Object.keys(obj.toObject());
-          if (keys.length > 0) {
-            obj.delete(keys[nextIndexToDelete]);
-          }
-        }}
-      >
-        Delete {canDelete && `(${nextIndexToDelete})`}
-      </button>
+        <Button
+          id="delete"
+          enabled={canDelete}
+          onClick={() => {
+            if (!canDelete) return;
+            obj.delete(nextKeyToDelete);
+          }}
+          subtitle={canDelete ? `key ${JSON.stringify(nextKeyToDelete)}` : null}
+        >
+          Delete
+        </Button>
 
-      <button
-        id="clear"
-        onClick={() => {
-          while (Object.keys(obj.toObject()).length > 0) {
-            obj.delete(Array.from(Object.keys(obj.toObject()))[0]);
-          }
-        }}
-      >
-        Clear
-      </button>
+        <Button
+          id="clear"
+          onClick={() => {
+            while (Object.keys(obj.toObject()).length > 0) {
+              obj.delete(Array.from(Object.keys(obj.toObject()))[0]);
+            }
+          }}
+        >
+          Clear
+        </Button>
 
-      <button id="undo" style={opaqueIf(canUndo)} onClick={undo}>
-        Undo
-      </button>
+        <Button id="undo" enabled={canUndo} onClick={undo}>
+          Undo
+        </Button>
 
-      <button id="redo" style={opaqueIf(canRedo)} onClick={redo}>
-        Redo
-      </button>
+        <Button id="redo" enabled={canRedo} onClick={redo}>
+          Redo
+        </Button>
+      </div>
 
       <table style={styles.dataTable}>
         <tbody>

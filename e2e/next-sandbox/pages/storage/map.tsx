@@ -4,12 +4,12 @@ import React from "react";
 import createLiveblocksClient from "../../utils/createClient";
 import {
   getRoomFromUrl,
-  opaqueIf,
   randomInt,
   Row,
   styles,
   useRenderCount,
 } from "../../utils";
+import Button from "../../utils/Button";
 
 const client = createLiveblocksClient();
 
@@ -45,44 +45,55 @@ function Sandbox() {
 
   const nextKey = `key:${randomInt(10)}`;
   const nextValue = `value:${randomInt(10)}`;
-  const nextIndexToDelete = canDelete ? randomInt(map.size) : -1;
+
+  const keys = Array.from(map.keys());
+  const nextKeyToDelete = canDelete ? keys[randomInt(keys.length)] : "";
 
   return (
     <div>
-      <h1>LiveMap sandbox</h1>
-      <button id="set" onClick={() => map.set(nextKey, nextValue)}>
-        Set ({JSON.stringify(nextKey)} → {JSON.stringify(nextValue)})
-      </button>
+      <h3>
+        <a href="/">Home</a> › Storage › LiveMap
+      </h3>
+      <div style={{ display: "flex", margin: "8px 0" }}>
+        <Button
+          id="set"
+          onClick={() => map.set(nextKey, nextValue)}
+          subtitle={`${JSON.stringify(nextKey)} → ${JSON.stringify(nextValue)}`}
+        >
+          Set
+        </Button>
 
-      <button
-        id="delete"
-        style={opaqueIf(canDelete)}
-        onClick={() => {
-          if (!canDelete) return;
-          map.delete(Array.from(map.keys())[nextIndexToDelete]);
-        }}
-      >
-        Delete {canDelete && `(${nextIndexToDelete})`}
-      </button>
+        <Button
+          id="delete"
+          enabled={canDelete}
+          onClick={() => {
+            if (!canDelete) return;
+            map.delete(nextKeyToDelete);
+          }}
+          subtitle={canDelete ? JSON.stringify(nextKeyToDelete) : null}
+        >
+          Delete
+        </Button>
 
-      <button
-        id="clear"
-        onClick={() => {
-          while (map.size > 0) {
-            map.delete(Array.from(map.keys())[0]);
-          }
-        }}
-      >
-        Clear
-      </button>
+        <Button
+          id="clear"
+          onClick={() => {
+            while (map.size > 0) {
+              map.delete(Array.from(map.keys())[0]);
+            }
+          }}
+        >
+          Clear
+        </Button>
 
-      <button id="undo" style={opaqueIf(canUndo)} onClick={undo}>
-        Undo
-      </button>
+        <Button id="undo" enabled={canUndo} onClick={undo}>
+          Undo
+        </Button>
 
-      <button id="redo" style={opaqueIf(canRedo)} onClick={redo}>
-        Redo
-      </button>
+        <Button id="redo" enabled={canRedo} onClick={redo}>
+          Redo
+        </Button>
+      </div>
 
       <table style={styles.dataTable}>
         <tbody>

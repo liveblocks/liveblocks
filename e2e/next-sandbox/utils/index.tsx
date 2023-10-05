@@ -54,10 +54,6 @@ export function useRenderCount() {
   return ++ref.current;
 }
 
-export function opaqueIf(condition: boolean): { opacity?: number } {
-  return { opacity: condition ? undefined : 0.7 };
-}
-
 // A predefined mono style
 export const styles = {
   mono: { fontFamily: "monospace", whiteSpace: "pre" },

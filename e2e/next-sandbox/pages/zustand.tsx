@@ -6,13 +6,13 @@ import type { WithLiveblocks } from "@liveblocks/zustand";
 import createLiveblocksClient from "../utils/createClient";
 import {
   getRoomFromUrl,
-  opaqueIf,
   padItem,
   randomInt,
   Row,
   styles,
   useRenderCount,
 } from "../utils";
+import Button from "../utils/Button";
 
 const client = createLiveblocksClient();
 
@@ -93,73 +93,86 @@ export default function ZustandApp() {
 
   return (
     <div>
-      <h1>Zustand sandbox</h1>
-      <button id="set-name" onClick={() => setName("Vincent")}>
-        Set name
-      </button>
+      <h3>
+        <a href="/">Home</a> › Zustand
+      </h3>
 
-      <button id="inc-counter" onClick={() => incCounter()}>
-        Inc counter
-      </button>
+      <div style={{ display: "flex" }}>
+        <Button id="set-name" onClick={() => setName("Vincent")}>
+          Set name
+        </Button>
 
-      <button
-        id="push"
-        onClick={() => {
-          addItem(nextValueToPush);
-          item = String.fromCharCode(item.charCodeAt(0) + 1);
-        }}
-      >
-        Push ({nextValueToPush.trim()})
-      </button>
+        <Button id="inc-counter" onClick={() => incCounter()}>
+          Inc counter
+        </Button>
 
-      <button
-        id="delete"
-        style={opaqueIf(canDelete)}
-        onClick={() => {
-          if (!canDelete) return;
-          deleteItem(nextIndexToDelete);
-        }}
-      >
-        Delete{" "}
-        {canDelete &&
-          `(${nextIndexToDelete}) (${items[nextIndexToDelete].trim()})`}
-      </button>
+        <Button
+          id="enter"
+          enabled={room === null}
+          onClick={() => enterRoom(roomId)}
+        >
+          Enter room
+        </Button>
 
-      <button id="clear" onClick={() => clear()}>
-        Clear
-      </button>
+        <Button
+          id="leave"
+          enabled={room !== null}
+          onClick={() => leaveRoom(roomId)}
+        >
+          Leave room
+        </Button>
+      </div>
 
-      <button
-        id="undo"
-        style={opaqueIf(room?.history.canUndo() ?? false)}
-        onClick={room?.history.undo}
-      >
-        Undo
-      </button>
+      <div style={{ display: "flex", margin: "8px 0" }}>
+        <Button
+          id="push"
+          onClick={() => {
+            addItem(nextValueToPush);
+            item = String.fromCharCode(item.charCodeAt(0) + 1);
+          }}
+          subtitle={nextValueToPush}
+        >
+          Push
+        </Button>
 
-      <button
-        id="redo"
-        style={opaqueIf(room?.history.canRedo() ?? false)}
-        onClick={room?.history.redo}
-      >
-        Redo
-      </button>
+        <Button
+          id="delete"
+          enabled={canDelete}
+          onClick={() => {
+            if (!canDelete) return;
+            deleteItem(nextIndexToDelete);
+          }}
+          subtitle={
+            canDelete
+              ? `index ${nextIndexToDelete} (${items[
+                  nextIndexToDelete
+                ].trim()})`
+              : null
+          }
+        >
+          Delete{" "}
+        </Button>
 
-      <button
-        id="enter"
-        style={opaqueIf(room === null)}
-        onClick={() => enterRoom(roomId)}
-      >
-        Enter room
-      </button>
+        <Button id="clear" onClick={() => clear()}>
+          Clear
+        </Button>
 
-      <button
-        id="leave"
-        style={opaqueIf(room !== null)}
-        onClick={() => leaveRoom(roomId)}
-      >
-        Leave room
-      </button>
+        <Button
+          id="undo"
+          enabled={room?.history.canUndo() ?? false}
+          onClick={room?.history.undo}
+        >
+          Undo
+        </Button>
+
+        <Button
+          id="redo"
+          enabled={room?.history.canRedo() ?? false}
+          onClick={room?.history.redo}
+        >
+          Redo
+        </Button>
+      </div>
 
       <table style={styles.dataTable}>
         <tbody>

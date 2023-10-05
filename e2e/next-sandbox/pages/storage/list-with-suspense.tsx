@@ -3,7 +3,6 @@ import { LiveList } from "@liveblocks/client";
 import React from "react";
 import {
   getRoomFromUrl,
-  opaqueIf,
   padItem,
   randomIndices,
   randomInt,
@@ -11,6 +10,7 @@ import {
   styles,
   useRenderCount,
 } from "../../utils";
+import Button from "../../utils/Button";
 import createLiveblocksClient from "../../utils/createClient";
 
 const client = createLiveblocksClient();
@@ -66,76 +66,90 @@ function Sandbox() {
 
   return (
     <div>
-      <h1>LiveList sandbox (with suspense)</h1>
-      <button
-        id="push"
-        onClick={() => {
-          items.push(nextValueToPush);
-          item = String.fromCharCode(item.charCodeAt(0) + 1);
-        }}
-      >
-        Push ({nextValueToPush.trim()})
-      </button>
+      <h3>
+        <a href="/">Home</a> › Storage › LiveList (with Suspense)
+      </h3>
+      <div style={{ display: "flex", margin: "8px 0" }}>
+        <Button
+          id="push"
+          onClick={() => {
+            items.push(nextValueToPush);
+            item = String.fromCharCode(item.charCodeAt(0) + 1);
+          }}
+          subtitle={nextValueToPush}
+        >
+          Push
+        </Button>
 
-      <button
-        id="insert"
-        onClick={() => {
-          items.insert(nextValueToInsert, 0);
-          item = String.fromCharCode(item.charCodeAt(0) + 1);
-        }}
-      >
-        Insert ({nextValueToInsert.trim()})
-      </button>
+        <Button
+          id="insert"
+          onClick={() => {
+            items.insert(nextValueToInsert, 0);
+            item = String.fromCharCode(item.charCodeAt(0) + 1);
+          }}
+          subtitle={nextValueToInsert}
+        >
+          Insert
+        </Button>
 
-      <button
-        id="move"
-        style={opaqueIf(canMove)}
-        onClick={() => {
-          if (!canMove) return;
-          const [fromIndex, toIndex] = nextIndicesToMove;
-          items.move(fromIndex, toIndex);
-        }}
-      >
-        Move{" "}
-        {canMove && ` (${nextIndicesToMove[0]} to ${nextIndicesToMove[1]})`}
-      </button>
+        <Button
+          id="move"
+          enabled={canMove}
+          onClick={() => {
+            if (!canMove) return;
+            const [fromIndex, toIndex] = nextIndicesToMove;
+            items.move(fromIndex, toIndex);
+          }}
+          subtitle={
+            canMove ? `${nextIndicesToMove[0]} → ${nextIndicesToMove[1]}` : null
+          }
+        >
+          Move
+        </Button>
 
-      <button
-        id="set"
-        style={opaqueIf(canSet)}
-        onClick={() => {
-          if (!canSet) return;
-          items.set(nextIndexToSet, nextValueToSet);
-          item = String.fromCharCode(item.charCodeAt(0) + 1);
-        }}
-      >
-        Set {canSet && ` (${nextIndexToSet} → ${nextValueToSet.trim()})`}
-      </button>
+        <Button
+          id="set"
+          enabled={canSet}
+          onClick={() => {
+            if (!canSet) return;
+            items.set(nextIndexToSet, nextValueToSet);
+            item = String.fromCharCode(item.charCodeAt(0) + 1);
+          }}
+          subtitle={canSet ? `${nextIndexToSet} → ${nextValueToSet}` : null}
+        >
+          Set
+        </Button>
 
-      <button
-        id="delete"
-        style={opaqueIf(canDelete)}
-        onClick={() => {
-          if (!canDelete) return;
-          items.delete(nextIndexToDelete);
-        }}
-      >
-        Delete{" "}
-        {canDelete &&
-          ` (${nextIndexToDelete}) (${items.get(nextIndexToDelete)?.trim()})`}
-      </button>
+        <Button
+          id="delete"
+          enabled={canDelete}
+          onClick={() => {
+            if (!canDelete) return;
+            items.delete(nextIndexToDelete);
+          }}
+          subtitle={
+            canDelete
+              ? `index ${nextIndexToDelete} (${items
+                  .get(nextIndexToDelete)
+                  ?.trim()})`
+              : null
+          }
+        >
+          Delete
+        </Button>
 
-      <button id="clear" onClick={() => items.clear()}>
-        Clear
-      </button>
+        <Button id="clear" onClick={() => items.clear()}>
+          Clear
+        </Button>
 
-      <button id="undo" style={opaqueIf(canUndo)} onClick={undo}>
-        Undo
-      </button>
+        <Button id="undo" enabled={canUndo} onClick={undo}>
+          Undo
+        </Button>
 
-      <button id="redo" style={opaqueIf(canRedo)} onClick={redo}>
-        Redo
-      </button>
+        <Button id="redo" enabled={canRedo} onClick={redo}>
+          Redo
+        </Button>
+      </div>
 
       <table style={styles.dataTable}>
         <tbody>

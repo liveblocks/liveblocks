@@ -5,7 +5,6 @@ import React from "react";
 import createLiveblocksClient from "../utils/createClient";
 import {
   getRoomFromUrl,
-  opaqueIf,
   padItem,
   randomIndices,
   randomInt,
@@ -13,6 +12,7 @@ import {
   styles,
   useRenderCount,
 } from "../utils";
+import Button from "../utils/Button";
 
 const client = createLiveblocksClient();
 
@@ -76,18 +76,20 @@ function Sandbox(_props: { roomId: string }) {
 
   return (
     <div>
-      <h1>Offline sandbox</h1>
+      <h3>
+        <a href="/">Home</a> › Offline
+      </h3>
 
-      <div>
-        <button
+      <div style={{ display: "flex", margin: "8px 0" }}>
+        <Button
           id="closeWebsocket"
           onClick={() => {
             internals.send.implicitClose();
           }}
         >
           Close socket
-        </button>
-        <button
+        </Button>
+        <Button
           id="sendCloseEventConnectionError"
           onClick={() =>
             internals.send.explicitClose(
@@ -100,8 +102,8 @@ function Sandbox(_props: { roomId: string }) {
           }
         >
           Send close event (connection)
-        </button>
-        <button
+        </Button>
+        <Button
           id="sendCloseEventAppError"
           onClick={() =>
             internals.send.explicitClose(
@@ -114,52 +116,55 @@ function Sandbox(_props: { roomId: string }) {
           }
         >
           Send close event (app)
-        </button>
+        </Button>
       </div>
 
-      <div style={{ margin: "8px 0" }}>
-        <button
+      <div style={{ display: "flex", margin: "8px 0" }}>
+        <Button
           id="push"
           onClick={() => {
             items.push(nextValueToPush);
             item = String.fromCharCode(item.charCodeAt(0) + 1);
           }}
+          subtitle={nextValueToPush}
         >
-          Push ({nextValueToPush.trim()})
-        </button>
+          Push
+        </Button>
 
-        <button
+        <Button
           id="move"
-          style={opaqueIf(canMove)}
+          enabled={canMove}
           onClick={() => {
             if (!canMove) return;
             const [fromIndex, toIndex] = nextIndicesToMove;
             items.move(fromIndex, toIndex);
           }}
+          subtitle={
+            canMove ? `${nextIndicesToMove[0]} → ${nextIndicesToMove[1]}` : null
+          }
         >
           Move
-          {canMove
-            ? ` (${nextIndicesToMove[0]} to ${nextIndicesToMove[1]})`
-            : ""}
-        </button>
+        </Button>
 
-        <button
+        <Button
           id="delete"
-          style={opaqueIf(canDelete)}
+          enabled={canDelete}
           onClick={() => {
             if (!canDelete) return;
             items.delete(nextIndexToDelete);
           }}
+          subtitle={
+            canDelete
+              ? `index ${nextIndexToDelete} (${items
+                  .get(nextIndexToDelete)
+                  ?.trim()})`
+              : null
+          }
         >
           Delete
-          {canDelete
-            ? ` (${nextIndexToDelete}) (${items
-                .get(nextIndexToDelete)
-                ?.trim()})`
-            : ""}
-        </button>
+        </Button>
 
-        <button
+        <Button
           id="clear"
           onClick={() => {
             while (items.length > 0) {
@@ -168,15 +173,15 @@ function Sandbox(_props: { roomId: string }) {
           }}
         >
           Clear
-        </button>
+        </Button>
 
-        <button id="undo" style={opaqueIf(canUndo)} onClick={undo}>
+        <Button id="undo" enabled={canUndo} onClick={undo}>
           Undo
-        </button>
+        </Button>
 
-        <button id="redo" style={opaqueIf(canRedo)} onClick={redo}>
+        <Button id="redo" enabled={canRedo} onClick={redo}>
           Redo
-        </button>
+        </Button>
       </div>
 
       <table style={styles.dataTable}>

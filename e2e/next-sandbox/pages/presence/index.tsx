@@ -1,13 +1,8 @@
 import { Json, createRoomContext } from "@liveblocks/react";
 import React from "react";
 import createLiveblocksClient from "../../utils/createClient";
-import {
-  getRoomFromUrl,
-  opaqueIf,
-  Row,
-  styles,
-  useRenderCount,
-} from "../../utils";
+import { getRoomFromUrl, Row, styles, useRenderCount } from "../../utils";
+import Button from "../../utils/Button";
 
 const client = createLiveblocksClient();
 
@@ -36,20 +31,27 @@ export default function Home() {
   const roomId = getRoomFromUrl();
   return (
     <>
-      <button
-        id="leave-room"
-        style={opaqueIf(isVisible)}
-        onClick={() => setIsVisible(false)}
-      >
-        Leave
-      </button>
-      <button
-        id="enter-room"
-        style={opaqueIf(!isVisible)}
-        onClick={() => setIsVisible(true)}
-      >
-        Enter
-      </button>
+      <h3>
+        <a href="/">Home</a> › Presence (with Suspense)
+      </h3>
+
+      <div style={{ display: "flex", margin: "8px 0" }}>
+        <Button
+          id="leave-room"
+          enabled={isVisible}
+          onClick={() => setIsVisible(false)}
+        >
+          Leave
+        </Button>
+        <Button
+          id="enter-room"
+          enabled={!isVisible}
+          onClick={() => setIsVisible(true)}
+        >
+          Enter
+        </Button>
+      </div>
+
       {isVisible && (
         <RoomProvider id={roomId} initialPresence={{}}>
           <PresenceSandbox />
@@ -68,21 +70,29 @@ function PresenceSandbox() {
 
   return (
     <div>
-      <h1>Presence sandbox</h1>
-      <button
+      <Button
         id="inc-foo"
         onClick={() => updateMyPresence({ foo: (myPresence.foo ?? 0) + 1 })}
+        subtitle={'"foo"'}
       >
-        Increment foo
-      </button>
+        Inc
+      </Button>
 
-      <button id="set-bar" onClick={() => updateMyPresence({ bar: "hey" })}>
-        Set bar
-      </button>
+      <Button
+        id="set-bar"
+        onClick={() => updateMyPresence({ bar: "hey" })}
+        subtitle={'"bar"'}
+      >
+        Set
+      </Button>
 
-      <button id="set-qux" onClick={() => updateMyPresence({ qux: 1337 })}>
-        Set qux
-      </button>
+      <Button
+        id="set-qux"
+        onClick={() => updateMyPresence({ qux: 1337 })}
+        subtitle={'"qux"'}
+      >
+        Set
+      </Button>
 
       <table style={styles.dataTable}>
         <tbody>
@@ -123,16 +133,17 @@ function EventSandbox() {
 
   return (
     <div>
-      <h1>Event sandbox</h1>
-      <button
+      <h2>Event sandbox</h2>
+      <Button
         id="broadcast-emoji"
         onClick={() => broadcast({ type: "EMOJI", emoji: "🔥" })}
+        subtitle="🔥 emoji"
       >
-        Broadcast 🔥
-      </button>
-      <button id="broadcast-number" onClick={() => broadcast(42)}>
-        Broadcast 42
-      </button>
+        Broadcast
+      </Button>
+      <Button id="broadcast-number" onClick={() => broadcast(42)} subtitle="42">
+        Broadcast
+      </Button>
 
       <table style={styles.dataTable}>
         <tbody>

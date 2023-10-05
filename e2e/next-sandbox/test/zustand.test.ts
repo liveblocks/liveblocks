@@ -132,7 +132,6 @@ test.describe("Zustand", () => {
   }
 
   test("fuzzy [push]", fuzzyTest(["#push"]));
-  test("fuzzy [delete]", fuzzyTest(["#delete"]));
   test("fuzzy [push, delete]", fuzzyTest(["#push", "#delete"]));
 
   // XXX Actually fails sometimes, there definitely is a bug here

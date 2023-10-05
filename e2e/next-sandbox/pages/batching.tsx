@@ -2,13 +2,8 @@ import { LiveMap } from "@liveblocks/client";
 import { createRoomContext } from "@liveblocks/react";
 import React from "react";
 import createLiveblocksClient from "../utils/createClient";
-import {
-  getRoomFromUrl,
-  opaqueIf,
-  Row,
-  styles,
-  useRenderCount,
-} from "../utils";
+import { getRoomFromUrl, Row, styles, useRenderCount } from "../utils";
+import Button from "../utils/Button";
 
 const client = createLiveblocksClient();
 
@@ -62,39 +57,45 @@ function Sandbox() {
 
   return (
     <div>
-      <h1>Batching sandbox</h1>
-      <button
-        id="update-storage-presence-batch"
-        onClick={() => {
-          batch(() => {
-            liveMap.set(`user-${me.connectionId}`, 0);
-            updateMyPresence({
-              count: (myPresence.count ?? 0) + 1,
+      <h3>
+        <a href="/">Home</a> › Batching
+      </h3>
+      <div style={{ display: "flex" }}>
+        <Button
+          id="update-storage-presence-batch"
+          onClick={() => {
+            batch(() => {
+              liveMap.set(`user-${me.connectionId}`, 0);
+              updateMyPresence({
+                count: (myPresence.count ?? 0) + 1,
+              });
             });
-          });
-        }}
-      >
-        Batch update (P&amp;S)
-      </button>
+          }}
+          subtitle="Presence & Storage"
+        >
+          Batch update
+        </Button>
 
-      <button
-        id="clear"
-        onClick={() => {
-          liveMap.forEach((_, key) => {
-            liveMap.delete(key);
-          });
-        }}
-      >
-        Clear storage
-      </button>
+        <Button
+          id="clear"
+          onClick={() => {
+            liveMap.forEach((_, key) => {
+              liveMap.delete(key);
+            });
+          }}
+          subtitle="Storage only"
+        >
+          Clear
+        </Button>
 
-      <button id="undo" style={opaqueIf(canUndo)} onClick={undo}>
-        Undo
-      </button>
+        <Button id="undo" enabled={canUndo} onClick={undo}>
+          Undo
+        </Button>
 
-      <button id="redo" style={opaqueIf(canRedo)} onClick={redo}>
-        Redo
-      </button>
+        <Button id="redo" enabled={canRedo} onClick={redo}>
+          Redo
+        </Button>
+      </div>
 
       <table style={styles.dataTable}>
         <tbody>
