@@ -7,6 +7,7 @@ import createLiveblocksClient from "../utils/createClient";
 import {
   getRoomFromUrl,
   opaqueIf,
+  padItem,
   randomInt,
   Row,
   styles,
@@ -70,8 +71,6 @@ export default function ZustandApp() {
   } = useStore();
 
   const connectionId = room?.getSelf()?.connectionId ?? 0;
-  const sep = [":", "/"];
-  const prefix = `${connectionId} ${sep[connectionId % sep.length]} `;
 
   const roomId = getRoomFromUrl();
 
@@ -89,6 +88,7 @@ export default function ZustandApp() {
   const theirPresence = others[0]?.presence;
 
   const canDelete = items.length > 0;
+  const nextValueToPush = padItem(connectionId, item);
   const nextIndexToDelete = canDelete ? randomInt(items.length) : -1;
 
   return (
@@ -105,11 +105,11 @@ export default function ZustandApp() {
       <button
         id="push"
         onClick={() => {
-          addItem(prefix + item);
+          addItem(nextValueToPush);
           item = String.fromCharCode(item.charCodeAt(0) + 1);
         }}
       >
-        Push ({prefix + item})
+        Push ({nextValueToPush.trim()})
       </button>
 
       <button
@@ -122,9 +122,7 @@ export default function ZustandApp() {
       >
         Delete{" "}
         {canDelete &&
-          `(${nextIndexToDelete}) (${JSON.stringify(
-            items[nextIndexToDelete]
-          )})`}
+          `(${nextIndexToDelete}) (${items[nextIndexToDelete].trim()})`}
       </button>
 
       <button id="clear" onClick={() => clear()}>
@@ -166,10 +164,11 @@ export default function ZustandApp() {
       <table style={styles.dataTable}>
         <tbody>
           <Row id="renderCount" name="Render count" value={renderCount} />
+          <Row id="connectionId" name="Connection ID" value={connectionId} />
         </tbody>
       </table>
 
-      <h2>Items</h2>
+      <h2>Storage</h2>
       <table style={styles.dataTable}>
         <tbody>
           <Row id="itemsCount" name="Items count" value={items.length} />
@@ -180,7 +179,6 @@ export default function ZustandApp() {
       <h2>Presence</h2>
       <table style={styles.dataTable}>
         <tbody>
-          <Row id="connectionId" name="Connection ID" value={connectionId} />
           <Row id="theirPresence" name="Their presence" value={theirPresence} />
           <Row id="numOthers" name="Others count" value={others.length} />
           <Row id="others" name="Others" value={others} />

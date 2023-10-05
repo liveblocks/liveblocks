@@ -5,6 +5,7 @@ import createLiveblocksClient from "../../utils/createClient";
 import {
   getRoomFromUrl,
   opaqueIf,
+  padItem,
   randomIndices,
   randomInt,
   Row,
@@ -58,8 +59,10 @@ function Sandbox() {
   const canMove = items.length >= 2;
   const canSet = items.length > 0;
 
+  const nextValueToPush = padItem(me.connectionId, item);
+  const nextValueToInsert = padItem(me.connectionId, item);
   const nextIndexToSet = canSet ? randomInt(items.length) : -1;
-  const nextValueToSet = me.connectionId + ":" + item;
+  const nextValueToSet = padItem(me.connectionId, item);
   const nextIndexToDelete = canDelete ? randomInt(items.length) : -1;
   const nextIndicesToMove = canMove ? randomIndices(items) : [-1, -1];
 
@@ -70,21 +73,21 @@ function Sandbox() {
       <button
         id="push"
         onClick={() => {
-          items.push(me.connectionId + ":" + item);
+          items.push(nextValueToPush);
           item = String.fromCharCode(item.charCodeAt(0) + 1);
         }}
       >
-        Push ({item})
+        Push ({nextValueToPush.trim()})
       </button>
 
       <button
         id="insert"
         onClick={() => {
-          items.insert(me.connectionId + ":" + item, 0);
+          items.insert(nextValueToInsert, 0);
           item = String.fromCharCode(item.charCodeAt(0) + 1);
         }}
       >
-        Insert ({item}, 0)
+        Insert ({nextValueToInsert.trim()})
       </button>
 
       <button
@@ -109,8 +112,7 @@ function Sandbox() {
           item = String.fromCharCode(item.charCodeAt(0) + 1);
         }}
       >
-        Set{" "}
-        {canSet && ` (${nextIndexToSet} → ${JSON.stringify(nextValueToSet)})`}
+        Set {canSet && ` (${nextIndexToSet} → ${nextValueToSet.trim()})`}
       </button>
 
       <button
@@ -121,7 +123,9 @@ function Sandbox() {
           items.delete(nextIndexToDelete);
         }}
       >
-        Delete {canDelete && ` (${nextIndexToDelete})`}
+        Delete{" "}
+        {canDelete &&
+          ` (${nextIndexToDelete}) (${items.get(nextIndexToDelete)?.trim()})`}
       </button>
 
       <button id="clear" onClick={() => items.clear()}>

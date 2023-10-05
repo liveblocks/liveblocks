@@ -14,6 +14,19 @@ export function getRoomFromUrl(): string {
   return room;
 }
 
+/**
+ * Pads a string to the left or right, depending on whether the connection is
+ * even or odd.
+ *
+ * While this may look strange, it's a very lo-fi way of seeing
+ * instantly/visually which of the two clients an item is coming from.
+ */
+export function padItem(connectionId: number, value: string) {
+  return connectionId % 2 === 0
+    ? `${connectionId}:${value}       `
+    : `       ${connectionId}:${value}`;
+}
+
 export function randomInt(max: number) {
   if (max <= 0) {
     throw new Error("max should be more than 0");

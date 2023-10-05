@@ -5,6 +5,7 @@ import { actions } from "@liveblocks/redux";
 import {
   getRoomFromUrl,
   opaqueIf,
+  padItem,
   randomInt,
   Row,
   styles,
@@ -38,6 +39,9 @@ function ReduxSandbox() {
 
   const roomId = getRoomFromUrl();
 
+  const room = client.getRoom(roomId);
+  const connectionId = room?.getSelf()?.connectionId ?? 0;
+
   useEffect(() => {
     dispatch(actions.enterRoom(roomId));
     return () => {
@@ -51,6 +55,7 @@ function ReduxSandbox() {
 
   const theirPresence = others[0]?.presence;
 
+  const nextValueToPush = padItem(connectionId, item);
   const canDelete = items.length > 0;
   const nextIndexToDelete = canDelete ? randomInt(items.length) : -1;
 
@@ -68,15 +73,11 @@ function ReduxSandbox() {
       <button
         id="push"
         onClick={() => {
-          dispatch(
-            addItem(
-              client.getRoom(roomId)?.getSelf()?.connectionId + ":" + item
-            )
-          );
+          dispatch(addItem(nextValueToPush));
           item = String.fromCharCode(item.charCodeAt(0) + 1);
         }}
       >
-        Push ({item})
+        Push ({nextValueToPush.trim()})
       </button>
 
       <button
@@ -87,7 +88,9 @@ function ReduxSandbox() {
           dispatch(deleteItem(nextIndexToDelete));
         }}
       >
-        Delete {canDelete && `(${nextIndexToDelete})`}
+        Delete{" "}
+        {canDelete &&
+          `(${nextIndexToDelete}) (${items[nextIndexToDelete].trim()})`}
       </button>
 
       <button
@@ -104,19 +107,20 @@ function ReduxSandbox() {
       <table style={styles.dataTable}>
         <tbody>
           <Row id="renderCount" name="Render count" value={renderCount} />
+          <Row id="connectionId" name="Connection ID" value={connectionId} />
+          <Row id="socketStatus" name="WebSocket status" value={status} />
         </tbody>
       </table>
 
-      <h2>Items</h2>
+      <h2>Storage</h2>
       <table style={styles.dataTable}>
         <tbody>
-          <Row id="socketStatus" name="WebSocket status" value={status} />
           <Row id="itemsCount" name="Items count" value={items.length} />
           <Row id="items" name="Items" value={items} />
         </tbody>
       </table>
 
-      <h2>Others</h2>
+      <h2>Presence</h2>
       <table style={styles.dataTable}>
         <tbody>
           <Row id="theirPresence" name="Their presence" value={theirPresence} />

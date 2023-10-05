@@ -6,6 +6,7 @@ import createLiveblocksClient from "../utils/createClient";
 import {
   getRoomFromUrl,
   opaqueIf,
+  padItem,
   randomIndices,
   randomInt,
   Row,
@@ -69,6 +70,7 @@ function Sandbox(_props: { roomId: string }) {
   const canMove = items.length >= 2;
   const canDelete = items.length > 0;
 
+  const nextValueToPush = padItem(me.connectionId, item);
   const nextIndicesToMove = canMove ? randomIndices(items) : [-1, -1];
   const nextIndexToDelete = canDelete ? randomInt(items.length) : -1;
 
@@ -119,11 +121,11 @@ function Sandbox(_props: { roomId: string }) {
         <button
           id="push"
           onClick={() => {
-            items.push(me.connectionId + ":" + item);
+            items.push(nextValueToPush);
             item = String.fromCharCode(item.charCodeAt(0) + 1);
           }}
         >
-          Push ({item})
+          Push ({nextValueToPush.trim()})
         </button>
 
         <button
@@ -150,7 +152,11 @@ function Sandbox(_props: { roomId: string }) {
           }}
         >
           Delete
-          {canDelete ? ` (${nextIndexToDelete})` : ""}
+          {canDelete
+            ? ` (${nextIndexToDelete}) (${items
+                .get(nextIndexToDelete)
+                ?.trim()})`
+            : ""}
         </button>
 
         <button
