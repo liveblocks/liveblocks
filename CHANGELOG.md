@@ -9,6 +9,7 @@
 
 - Fix reactions list (and its add button) showing on all comments.
 - Improve emoji rendering on Windows.
+- Hide country flag emojis when unsupported. (e.g. on Windows)
 
 # v1.4.3
 
