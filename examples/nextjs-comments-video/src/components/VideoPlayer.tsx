@@ -1,6 +1,6 @@
 "use client";
 
-import { ChangeEvent, MouseEvent, useCallback, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import ReactPlayer from "react-player";
 import { OnProgressProps } from "react-player/base";
 import * as Slider from "@radix-ui/react-slider";
@@ -9,6 +9,8 @@ import { PlayIcon } from "@/icons/Play";
 import { PauseIcon } from "@/icons/Pause";
 import { FullscreenIcon } from "@/icons/Fullscreen";
 import Duration from "@/components/Duration";
+import { ClientSideSuspense } from "@liveblocks/react";
+import { Loading } from "@/components/Loading";
 
 export function VideoPlayer() {
   const player = useRef<ReactPlayer>(null);
@@ -61,16 +63,21 @@ export function VideoPlayer() {
           onClick={() => setPlaying(!playing)}
           onDoubleClick={handleFullscreen}
         >
-          <ReactPlayer
-            ref={player}
-            width="100%"
-            height="auto"
-            playing={playing}
-            onDuration={setDuration}
-            onProgress={handleProgress}
-            onEnded={handleEnded}
-            url="mountain-balloons.mp4"
-          />
+          <ClientSideSuspense fallback={null}>
+            {() => (
+              <ReactPlayer
+                ref={player}
+                width="100%"
+                height="auto"
+                playing={playing}
+                onDuration={setDuration}
+                onProgress={handleProgress}
+                onEnded={handleEnded}
+                url="mountain-balloons.mp4"
+                className={styles.reactPlayer}
+              />
+            )}
+          </ClientSideSuspense>
         </div>
         <Slider.Root
           className={styles.sliderRoot}

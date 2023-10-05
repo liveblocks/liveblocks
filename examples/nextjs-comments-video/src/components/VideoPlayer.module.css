@@ -1,9 +1,28 @@
 .videoPlayer {
-  margin: 20px 40px;
+  margin: 20px auto;
+  max-width: 1000px;
+  padding: 0 40px;
 }
 
 .playerWrapper {
   position: relative;
+  aspect-ratio: 16 / 9;
+  background: #fff;
+}
+
+.reactPlayer {
+  animation: fadeIn ease 0.3s;
+  animation-iteration-count: 1;
+  animation-fill-mode: forwards;
+}
+
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
 }
 
 .sliderRoot {
