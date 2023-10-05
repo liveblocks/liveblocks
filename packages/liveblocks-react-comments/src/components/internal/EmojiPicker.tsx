@@ -19,8 +19,8 @@ import type {
   EmojiPickerContentLoadingProps,
   EmojiPickerContentRowProps,
 } from "../../primitives/EmojiPicker/types";
-import { Emoji } from "../../primitives/internal/Emoji";
 import { classNames } from "../../utils/class-names";
+import { Emoji } from "../internal/Emoji";
 
 export interface EmojiPickerProps extends ComponentPropsWithoutRef<"div"> {
   onOpenChange?: (open: boolean) => void;

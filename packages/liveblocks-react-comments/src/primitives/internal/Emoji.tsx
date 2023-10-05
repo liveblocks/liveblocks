@@ -4,11 +4,11 @@ import React, { forwardRef } from "react";
 import { EMOJI_FONT_FAMILY } from "../../constants";
 import type { ComponentPropsWithSlot } from "../../types";
 
-interface Props extends ComponentPropsWithSlot<"span"> {
+export interface EmojiProps extends ComponentPropsWithSlot<"span"> {
   emoji: string;
 }
 
-export const Emoji = forwardRef<HTMLSpanElement, Props>(
+export const Emoji = forwardRef<HTMLSpanElement, EmojiProps>(
   ({ emoji, style, asChild, ...props }, forwardedRef) => {
     const Component = asChild ? Slot : "span";
 
