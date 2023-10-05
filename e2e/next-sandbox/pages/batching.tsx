@@ -1,14 +1,14 @@
 import { LiveMap } from "@liveblocks/client";
 import { createRoomContext } from "@liveblocks/react";
 import React from "react";
-import createLiveblocksClient from "../../utils/createClient";
+import createLiveblocksClient from "../utils/createClient";
 import {
   getRoomFromUrl,
   opaqueIf,
   Row,
   styles,
   useRenderCount,
-} from "../../utils";
+} from "../utils";
 
 const client = createLiveblocksClient();
 

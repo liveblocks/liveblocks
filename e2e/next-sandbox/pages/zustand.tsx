@@ -3,7 +3,7 @@ import { create } from "zustand";
 
 import { liveblocks } from "@liveblocks/zustand";
 import type { WithLiveblocks } from "@liveblocks/zustand";
-import createLiveblocksClient from "../../utils/createClient";
+import createLiveblocksClient from "../utils/createClient";
 import {
   getRoomFromUrl,
   opaqueIf,
@@ -11,7 +11,7 @@ import {
   Row,
   styles,
   useRenderCount,
-} from "../../utils";
+} from "../utils";
 
 const client = createLiveblocksClient();
 
