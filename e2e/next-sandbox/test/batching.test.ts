@@ -1,9 +1,11 @@
-import { test, Page } from "@playwright/test";
+import type { Page } from "@playwright/test";
+import { test } from "@playwright/test";
 import {
   expectJson,
+  genRoomId,
   preparePages,
-  waitUntilEqualOnAllPages,
   waitForJson,
+  waitUntilEqualOnAllPages,
 } from "./utils";
 
 const TEST_URL = "http://localhost:3007/batching";
@@ -12,8 +14,8 @@ test.describe("Storage - Batching", () => {
   let pages: [Page, Page];
 
   test.beforeEach(async ({}, testInfo) => {
-    const roomName = `e2e-batching-${testInfo.title.replaceAll(" ", "-")}`;
-    pages = await preparePages(`${TEST_URL}?room=${roomName}`);
+    const room = genRoomId(testInfo);
+    pages = await preparePages(`${TEST_URL}?room=${encodeURIComponent(room)}`);
   });
 
   test.afterEach(() =>

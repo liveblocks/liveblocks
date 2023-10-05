@@ -1,12 +1,42 @@
-import { chromium, expect, Page } from "@playwright/test";
+import type { Json } from "@liveblocks/client";
+import type { Page, TestInfo } from "@playwright/test";
+import { chromium, expect } from "@playwright/test";
 import _ from "lodash";
 import { randomInt } from "../utils";
-import type { Json } from "@liveblocks/client";
 
 export type IDSelector = `#${string}`;
 
 const WIDTH = 640;
 const HEIGHT = 800;
+
+function getTestFilename(fullPath: string): string {
+  const parts = fullPath.split("/");
+  const index = parts.findIndex((part) => part === "test");
+  if (index < 0) {
+    throw new Error("Cannot find the test file name reliably");
+  }
+  return parts.splice(index + 1).join("/");
+}
+
+/**
+ * Generates a unique room ID for this specific test, based on the test's
+ * filename and the full test name. Additionally, will prepend the Git SHA if
+ * available (e.g. when running in CI).
+ */
+export function genRoomId(testInfo: TestInfo) {
+  const prefix = process.env.NEXT_PUBLIC_GITHUB_SHA
+    ? process.env.NEXT_PUBLIC_GITHUB_SHA.slice(0, 2)
+    : null;
+  const title = [prefix, getTestFilename(testInfo.file), testInfo.title]
+    .filter(Boolean)
+    .join(":")
+    .toLowerCase()
+    .replace(/[^\w\d:.\/]+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-+/, "")
+    .replace(/-+$/, "");
+  return `e2e:${title}`;
+}
 
 export async function preparePage(url: string, windowPositionX: number = 0) {
   let page: Page;

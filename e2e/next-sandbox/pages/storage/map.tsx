@@ -3,7 +3,6 @@ import { LiveMap } from "@liveblocks/client";
 import React from "react";
 import createLiveblocksClient from "../../utils/createClient";
 import {
-  genRoomId,
   getRoomFromUrl,
   opaqueIf,
   randomInt,
@@ -18,7 +17,7 @@ const { RoomProvider, useCanRedo, useCanUndo, useMap, useRedo, useUndo } =
   createRoomContext<never, { map: LiveMap<string, string> }>(client);
 
 export default function Home() {
-  const roomId = getRoomFromUrl() ?? genRoomId("e2e-storage-map");
+  const roomId = getRoomFromUrl();
   return (
     <RoomProvider
       id={roomId}

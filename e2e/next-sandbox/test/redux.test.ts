@@ -2,11 +2,12 @@ import { Page, test } from "@playwright/test";
 
 import {
   expectJson,
+  genRoomId,
   nanoSleep,
   pickFrom,
   preparePages,
-  waitUntilEqualOnAllPages,
   waitForJson,
+  waitUntilEqualOnAllPages,
 } from "./utils";
 
 const TEST_URL = "http://localhost:3007/redux";
@@ -15,8 +16,8 @@ test.describe("Redux", () => {
   let pages: [Page, Page];
 
   test.beforeEach(async ({}, testInfo) => {
-    const roomName = `e2e-redux-${testInfo.title.replaceAll(" ", "-")}`;
-    pages = await preparePages(`${TEST_URL}?room=${roomName}`);
+    const room = genRoomId(testInfo);
+    pages = await preparePages(`${TEST_URL}?room=${encodeURIComponent(room)}`);
   });
 
   test.afterEach(() =>

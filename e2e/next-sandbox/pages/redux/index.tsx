@@ -3,7 +3,6 @@ import { useAppDispatch, useAppSelector } from "./hooks";
 import { Provider } from "react-redux";
 import { actions } from "@liveblocks/redux";
 import {
-  genRoomId,
   getRoomFromUrl,
   opaqueIf,
   randomInt,
@@ -21,15 +20,15 @@ import store, {
   clear,
 } from "./store";
 
-export default function Home() {
+export default function ReduxApp() {
   return (
     <Provider store={store}>
-      <List />
+      <ReduxSandbox />
     </Provider>
   );
 }
 
-function List() {
+function ReduxSandbox() {
   const renderCount = useRenderCount();
   const status = useAppSelector((state) => state.liveblocks.status);
   const others = useAppSelector((state) => state.liveblocks.others);
@@ -37,7 +36,7 @@ function List() {
   const items = useAppSelector((state) => state.items);
   const dispatch = useAppDispatch();
 
-  const roomId = getRoomFromUrl() ?? genRoomId("e2e-redux-basic");
+  const roomId = getRoomFromUrl();
 
   useEffect(() => {
     dispatch(actions.enterRoom(roomId));

@@ -2,27 +2,23 @@ import { Page, test } from "@playwright/test";
 
 import {
   expectJson,
+  genRoomId,
   nanoSleep,
-  pickNumberOfUndoRedo,
   pickFrom,
+  pickNumberOfUndoRedo,
   preparePages,
   waitUntilEqualOnAllPages,
   waitForJson,
 } from "../utils";
 
-const TEST_URL = "http://localhost:3007/storage/with-suspense";
+const TEST_URL = "http://localhost:3007/storage/list-with-suspense";
 
 test.describe("Storage w/ Suspense", () => {
   let pages: [Page, Page];
 
   test.beforeEach(async ({}, testInfo) => {
-    const roomName = `e2e-storage-with-suspense-${testInfo.title.replaceAll(
-      /[^\w\d_-]+/g,
-      "-"
-    )}`;
-    pages = await preparePages(
-      `${TEST_URL}?room=${encodeURIComponent(roomName)}`
-    );
+    const room = genRoomId(testInfo);
+    pages = await preparePages(`${TEST_URL}?room=${encodeURIComponent(room)}`);
   });
 
   test.afterEach(() =>

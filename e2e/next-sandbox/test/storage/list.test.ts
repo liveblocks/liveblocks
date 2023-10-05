@@ -2,14 +2,14 @@ import type { Page } from "@playwright/test";
 import { test } from "@playwright/test";
 import {
   expectJson,
+  genRoomId,
   nanoSleep,
-  pickNumberOfUndoRedo,
   pickFrom,
+  pickNumberOfUndoRedo,
   preparePages,
   waitUntilEqualOnAllPages,
   waitForJson,
 } from "../utils";
-import { genRoomId } from "../../utils";
 
 const TEST_URL = "http://localhost:3007/storage/list";
 
@@ -17,10 +17,8 @@ test.describe("Storage - LiveList", () => {
   let pages: [Page, Page];
 
   test.beforeEach(async ({}, testInfo) => {
-    const roomName = genRoomId(testInfo.title);
-    pages = await preparePages(
-      `${TEST_URL}?room=${encodeURIComponent(roomName)}`
-    );
+    const room = genRoomId(testInfo);
+    pages = await preparePages(`${TEST_URL}?room=${encodeURIComponent(room)}`);
   });
 
   test.afterEach(() =>

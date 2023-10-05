@@ -2,7 +2,6 @@ import { createRoomContext, ClientSideSuspense } from "@liveblocks/react";
 import { LiveList } from "@liveblocks/client";
 import React from "react";
 import {
-  genRoomId,
   getRoomFromUrl,
   opaqueIf,
   randomIndices,
@@ -28,7 +27,7 @@ const {
 } = createRoomContext<never, { items: LiveList<string> }>(client);
 
 export default function Home() {
-  const roomId = getRoomFromUrl() ?? genRoomId("e2e-storage-with-suspense");
+  const roomId = getRoomFromUrl();
   return (
     <RoomProvider
       id={roomId}

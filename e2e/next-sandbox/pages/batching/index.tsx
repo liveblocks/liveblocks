@@ -3,7 +3,6 @@ import { createRoomContext } from "@liveblocks/react";
 import React from "react";
 import createLiveblocksClient from "../../utils/createClient";
 import {
-  genRoomId,
   getRoomFromUrl,
   opaqueIf,
   Row,
@@ -31,7 +30,7 @@ const {
 } = createRoomContext<Presence, { liveMap: LiveMap<string, number> }>(client);
 
 export default function Home() {
-  const roomId = getRoomFromUrl() ?? genRoomId("e2e-batching-presence-storage");
+  const roomId = getRoomFromUrl();
   return (
     <RoomProvider
       id={roomId}

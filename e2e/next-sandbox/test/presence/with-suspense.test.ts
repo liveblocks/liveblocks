@@ -1,7 +1,12 @@
 import type { Page } from "@playwright/test";
 import { test } from "@playwright/test";
-import { expectJson, preparePage, preparePages, waitForJson } from "../utils";
-import { genRoomId } from "../../utils";
+import {
+  expectJson,
+  genRoomId,
+  preparePage,
+  preparePages,
+  waitForJson,
+} from "../utils";
 
 const WIDTH = 640;
 const BG_COLOR_1 = "&bg=" + encodeURIComponent("#cafbca");
@@ -13,10 +18,8 @@ test.describe("Presence w/ Suspense", () => {
   let pages: [Page, Page];
 
   test.beforeEach(async ({}, testInfo) => {
-    const roomName = genRoomId(testInfo.title);
-    pages = await preparePages(
-      `${TEST_URL}?room=${encodeURIComponent(roomName)}-with-suspense`
-    );
+    const room = genRoomId(testInfo);
+    pages = await preparePages(`${TEST_URL}?room=${encodeURIComponent(room)}`);
   });
 
   test.afterEach(() =>

@@ -4,7 +4,6 @@ import { createRoomContext } from "@liveblocks/react";
 import React from "react";
 import createLiveblocksClient from "../../utils/createClient";
 import {
-  genRoomId,
   getRoomFromUrl,
   opaqueIf,
   randomIndices,
@@ -36,7 +35,7 @@ type Internal = {
 };
 
 export default function Home() {
-  const roomId = getRoomFromUrl() ?? genRoomId("offline");
+  const roomId = getRoomFromUrl();
   return (
     <RoomProvider
       id={roomId}

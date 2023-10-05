@@ -1,7 +1,8 @@
-import { Page, test } from "@playwright/test";
-
+import type { Page } from "@playwright/test";
+import { test } from "@playwright/test";
 import {
   expectJsonEqualOnAllPages,
+  genRoomId,
   nanoSleep,
   pickNumberOfUndoRedo,
   pickFrom,
@@ -17,13 +18,8 @@ test.describe("Storage - LiveObject", () => {
   let pages: [Page, Page];
 
   test.beforeEach(async ({}, testInfo) => {
-    const roomName = `e2e-object-${testInfo.title.replaceAll(
-      /[^\w\d_-]+/g,
-      "-"
-    )}`;
-    pages = await preparePages(
-      `${TEST_URL}?room=${encodeURIComponent(roomName)}`
-    );
+    const room = genRoomId(testInfo);
+    pages = await preparePages(`${TEST_URL}?room=${encodeURIComponent(room)}`);
   });
 
   test.afterEach(() =>

@@ -3,7 +3,6 @@ import { LiveList } from "@liveblocks/client";
 import React from "react";
 import createLiveblocksClient from "../../utils/createClient";
 import {
-  genRoomId,
   getRoomFromUrl,
   opaqueIf,
   randomIndices,
@@ -27,7 +26,7 @@ const {
 } = createRoomContext<never, { items: LiveList<string> }>(client);
 
 export default function Home() {
-  const roomId = getRoomFromUrl() ?? genRoomId("e2e-storage-list");
+  const roomId = getRoomFromUrl();
   return (
     <RoomProvider
       id={roomId}

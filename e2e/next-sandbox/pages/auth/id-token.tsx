@@ -13,7 +13,7 @@ const { RoomProvider, useMyPresence, useSelf, useOthers, useStatus } =
 
 export default function Home() {
   React.useEffect(() => {
-    setText(getRoomFromUrl() ?? "e2e-modern-auth");
+    setText(getRoomFromUrl());
   }, []);
 
   const [text, setText] = React.useState("");

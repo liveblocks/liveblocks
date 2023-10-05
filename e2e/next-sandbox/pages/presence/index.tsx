@@ -2,7 +2,6 @@ import { Json, createRoomContext } from "@liveblocks/react";
 import React from "react";
 import createLiveblocksClient from "../../utils/createClient";
 import {
-  genRoomId,
   getRoomFromUrl,
   opaqueIf,
   Row,
@@ -34,7 +33,7 @@ const {
 export default function Home() {
   const [isVisible, setIsVisible] = React.useState(true);
 
-  const roomId = getRoomFromUrl() ?? genRoomId("e2e-presence");
+  const roomId = getRoomFromUrl();
   return (
     <>
       <button

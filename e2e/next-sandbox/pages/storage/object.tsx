@@ -1,7 +1,6 @@
 import { createRoomContext } from "@liveblocks/react";
 import React from "react";
 import {
-  genRoomId,
   getRoomFromUrl,
   opaqueIf,
   randomInt,
@@ -33,7 +32,7 @@ const {
 >(client);
 
 export default function Home() {
-  const roomId = getRoomFromUrl() ?? genRoomId("e2e-storage-object");
+  const roomId = getRoomFromUrl();
   return (
     <RoomProvider
       id={roomId}

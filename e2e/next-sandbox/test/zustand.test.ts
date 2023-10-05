@@ -2,11 +2,12 @@ import type { Page } from "@playwright/test";
 import { test } from "@playwright/test";
 import {
   expectJson,
+  genRoomId,
+  nanoSleep,
   pickFrom,
   preparePages,
-  nanoSleep,
-  waitUntilEqualOnAllPages,
   waitForJson,
+  waitUntilEqualOnAllPages,
 } from "./utils";
 import type { IDSelector } from "./utils";
 
@@ -16,8 +17,8 @@ test.describe("Zustand", () => {
   let pages: [Page, Page];
 
   test.beforeEach(async ({}, testInfo) => {
-    const roomName = `e2e-zustand-${testInfo.title.replaceAll(" ", "-")}`;
-    pages = await preparePages(`${TEST_URL}?room=${roomName}`);
+    const room = genRoomId(testInfo);
+    pages = await preparePages(`${TEST_URL}?room=${encodeURIComponent(room)}`);
   });
 
   test.afterEach(() =>

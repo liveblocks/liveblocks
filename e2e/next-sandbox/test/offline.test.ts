@@ -1,7 +1,8 @@
-import { Page, test, expect } from "@playwright/test";
-
+import type { Page } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 import {
   expectJson,
+  genRoomId,
   getJson,
   nanoSleep,
   pickFrom,
@@ -17,8 +18,8 @@ test.describe("Offline", () => {
   let pages: [Page, Page];
 
   test.beforeEach(async ({}, testInfo) => {
-    const roomName = `e2e-offline-${testInfo.title.replaceAll(" ", "-")}`;
-    pages = await preparePages(`${TEST_URL}?room=${roomName}`);
+    const room = genRoomId(testInfo);
+    pages = await preparePages(`${TEST_URL}?room=${encodeURIComponent(room)}`);
   });
 
   test.afterEach(() =>

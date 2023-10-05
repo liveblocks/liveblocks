@@ -5,7 +5,6 @@ import { liveblocks } from "@liveblocks/zustand";
 import type { WithLiveblocks } from "@liveblocks/zustand";
 import createLiveblocksClient from "../../utils/createClient";
 import {
-  genRoomId,
   getRoomFromUrl,
   opaqueIf,
   randomInt,
@@ -58,7 +57,7 @@ const useStore = create<WithLiveblocks<State, never, never, never, never>>()(
   )
 );
 
-export default function Home() {
+export default function ZustandApp() {
   const renderCount = useRenderCount();
   const {
     items,
@@ -74,7 +73,7 @@ export default function Home() {
   const sep = [":", "/"];
   const prefix = `${connectionId} ${sep[connectionId % sep.length]} `;
 
-  const roomId = getRoomFromUrl() ?? genRoomId("e2e-zustand-basic");
+  const roomId = getRoomFromUrl();
 
   useEffect(() => {
     enterRoom(roomId);
