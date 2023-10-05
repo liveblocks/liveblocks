@@ -102,7 +102,7 @@ function PresenceSandbox() {
       <table style={styles.dataTable}>
         <tbody>
           <Row
-            id="othersCount"
+            id="numOthers"
             name="Others count"
             value={others.filter((o) => o.presence !== undefined).length}
           />

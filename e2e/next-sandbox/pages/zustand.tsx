@@ -182,7 +182,7 @@ export default function ZustandApp() {
         <tbody>
           <Row id="connectionId" name="Connection ID" value={connectionId} />
           <Row id="theirPresence" name="Their presence" value={theirPresence} />
-          <Row id="othersCount" name="Others count" value={others.length} />
+          <Row id="numOthers" name="Others count" value={others.length} />
           <Row id="others" name="Others" value={others} />
         </tbody>
       </table>

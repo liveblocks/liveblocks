@@ -29,7 +29,7 @@ test.describe("Presence", () => {
 
   test("connect A => connect B => verify others on A and B", async () => {
     const [page1, page2] = pages;
-    await waitForJson(pages, "#othersCount", 1);
+    await waitForJson(pages, "#numOthers", 1);
     await waitForJson(pages, "#theirPresence", {});
 
     await page1.close();
@@ -38,7 +38,7 @@ test.describe("Presence", () => {
 
   test("connect A => connect B => update presence A => verify presence A on B", async () => {
     const [page1, page2] = pages;
-    await waitForJson([page1, page2], "#othersCount", 1);
+    await waitForJson([page1, page2], "#numOthers", 1);
 
     await page1.click("#inc-foo");
     await page1.click("#inc-foo");
@@ -51,7 +51,7 @@ test.describe("Presence", () => {
 
   test("connect A => connect B => update presence B => verify presence A on B", async () => {
     const [page1, page2] = pages;
-    await waitForJson([page1, page2], "#othersCount", 1);
+    await waitForJson([page1, page2], "#numOthers", 1);
 
     await page2.click("#inc-foo");
     await page2.click("#inc-foo");
@@ -65,20 +65,20 @@ test.describe("Presence", () => {
 
   test("connect A => connect B => verify other on B => disconnect A => verify others is empty on B", async () => {
     const [page1, page2] = pages;
-    await waitForJson([page1, page2], "#othersCount", 1);
+    await waitForJson([page1, page2], "#numOthers", 1);
 
     await waitForJson(page2, "#theirPresence", {});
 
     await page1.close();
 
-    await waitForJson(page2, "#othersCount", 0);
+    await waitForJson(page2, "#numOthers", 0);
 
     await page2.close();
   });
 
   test("client B receives other update presence before initial presence", async () => {
     const [page1, page2] = pages;
-    await waitForJson([page1, page2], "#othersCount", 1);
+    await waitForJson([page1, page2], "#numOthers", 1);
 
     await page1.click("#set-bar");
     await page1.click("#set-qux");
@@ -89,7 +89,7 @@ test.describe("Presence", () => {
 
       await page1.click("#set-bar");
 
-      await waitForJson(page2, "#othersCount", 1);
+      await waitForJson(page2, "#numOthers", 1);
       await expectJson(page2, "#theirPresence", {
         bar: "hey",
         qux: 1337,
@@ -102,7 +102,7 @@ test.describe("Presence", () => {
 
   test("connect A => connect B => broadcast from A => verify B got event", async () => {
     const [page1, page2] = pages;
-    await waitForJson(page1, "#othersCount", 1);
+    await waitForJson(page1, "#numOthers", 1);
 
     await page1.click("#broadcast-emoji");
 
@@ -134,7 +134,7 @@ test.describe("Presence (w/ specific window timing)", () => {
     await page1.click("#inc-foo");
 
     const page2 = await preparePage(testUrl + BG_COLOR_2, WIDTH);
-    await waitForJson([page1, page2], "#othersCount", 1);
+    await waitForJson([page1, page2], "#numOthers", 1);
 
     await expectJson(page2, "#theirPresence", { foo: 1 });
 

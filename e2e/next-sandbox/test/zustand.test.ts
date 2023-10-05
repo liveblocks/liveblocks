@@ -31,7 +31,7 @@ test.describe("Zustand", () => {
     await page1.click("#clear");
     await expectJson(page1, "#itemsCount", 0);
 
-    await waitForJson(pages, "#othersCount", 1);
+    await waitForJson(pages, "#numOthers", 1);
 
     await page1.click("#push");
     await page1.click("#push");
@@ -56,7 +56,7 @@ test.describe("Zustand", () => {
     await page1.click("#clear");
     await expectJson(page1, "#itemsCount", 0);
 
-    await waitForJson(pages, "#othersCount", 1);
+    await waitForJson(pages, "#numOthers", 1);
 
     await page1.click("#push");
     await waitUntilEqualOnAllPages(pages, "#items");
@@ -107,7 +107,7 @@ test.describe("Zustand", () => {
     return async () => {
       const [page1, page2] = pages;
       await page1.click("#clear");
-      await waitForJson(pages, "#othersCount", 1);
+      await waitForJson(pages, "#numOthers", 1);
       await waitForJson(pages, "#itemsCount", 0);
 
       for (let i = 0; i < 10; i++) {

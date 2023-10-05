@@ -31,7 +31,7 @@ test.describe("Redux", () => {
 
     await page1.click("#clear");
     await expectJson(page1, "#itemsCount", 0);
-    await waitForJson(pages, "#othersCount", 1);
+    await waitForJson(pages, "#numOthers", 1);
 
     await page1.click("#push");
     await waitUntilEqualOnAllPages(pages, "#items");
@@ -54,7 +54,7 @@ test.describe("Redux", () => {
 
     await page1.click("#clear");
     await expectJson(page1, "#itemsCount", 0);
-    await waitForJson(pages, "#othersCount", 1);
+    await waitForJson(pages, "#numOthers", 1);
 
     await waitForJson(page2, "#theirPresence", { counter: 0 });
 
@@ -106,7 +106,7 @@ test.describe("Redux", () => {
 
   test("fuzzy (after others are visible)", async () => {
     const [page1, page2] = pages;
-    await waitForJson(pages, "#othersCount", 1);
+    await waitForJson(pages, "#numOthers", 1);
 
     await page1.click("#clear");
     await waitForJson(pages, "#itemsCount", 0);
