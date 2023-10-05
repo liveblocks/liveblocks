@@ -9,6 +9,7 @@ import {
   waitUntilEqualOnAllPages,
   waitForJson,
 } from "../utils";
+import type { IDSelector } from "../utils";
 
 const TEST_URL = "http://localhost:3007/storage/map";
 
@@ -27,24 +28,33 @@ test.describe("Storage - LiveMap", () => {
     Promise.all(pages.map((page) => page.close()))
   );
 
-  // XXX Actually fails sometimes, there definitely is a bug here
-  test.skip("fuzzy", async () => {
-    const [page1, page2] = pages;
-    await page1.click("#clear");
+  function fuzzyTest(actions: readonly IDSelector[]) {
+    return async () => {
+      const [page1, page2] = pages;
+      await page1.click("#clear");
 
-    await waitForJson(pages, "#mapSize", 0);
+      await waitForJson(pages, "#mapSize", 0);
 
-    const actions = ["#set", "#delete"];
-    for (let i = 0; i < 50; i++) {
-      await page1.click(pickFrom(actions));
-      await page2.click(pickFrom(actions));
-      await nanoSleep();
-    }
+      for (let i = 0; i < 50; i++) {
+        await page1.click(pickFrom(actions));
+        await page2.click(pickFrom(actions));
+        await nanoSleep();
+      }
 
-    await waitUntilEqualOnAllPages(pages, "#map");
-  });
+      await waitUntilEqualOnAllPages(pages, "#map");
 
-  test.skip("fuzzy with full undo-redo", async () => {
+      // Clean up the room after the test
+      await page1.click("#clear");
+      await waitForJson(pages, "#map", {});
+    };
+  }
+
+  test("fuzzy [set]", fuzzyTest(["#set"]));
+
+  test("fuzzy [set, delete]", fuzzyTest(["#set", "#delete"]));
+
+  // TODO Definitely a bug here!
+  test.skip("fuzzy full w/ undo/redo", async () => {
     const [page1] = pages;
     await page1.click("#clear");
 
@@ -71,5 +81,9 @@ test.describe("Storage - LiveMap", () => {
 
     // TODO Investigate: sometimes these don't converge to the same value
     await waitUntilEqualOnAllPages(pages, "#map");
+
+    // Clean up the room after the test
+    await page1.click("#clear");
+    await waitForJson(pages, "#map", {});
   });
 });

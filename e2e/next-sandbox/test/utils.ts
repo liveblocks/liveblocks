@@ -3,7 +3,7 @@ import _ from "lodash";
 import { randomInt } from "../utils";
 import type { Json } from "@liveblocks/client";
 
-type IDSelector = `#${string}`;
+export type IDSelector = `#${string}`;
 
 const WIDTH = 640;
 const HEIGHT = 800;
@@ -121,7 +121,7 @@ export function nanoSleep() {
   return sleep(randomInt(50));
 }
 
-export function pickFrom<T>(array: T[]): T {
+export function pickFrom<T>(array: readonly T[]): T {
   if (array.length <= 0) {
     throw new Error("Cannot pick from an empty list");
   }

@@ -1,5 +1,5 @@
-import { Page, test } from "@playwright/test";
-
+import type { Page } from "@playwright/test";
+import { test } from "@playwright/test";
 import {
   expectJson,
   pickFrom,
@@ -8,6 +8,7 @@ import {
   waitUntilEqualOnAllPages,
   waitForJson,
 } from "./utils";
+import type { IDSelector } from "./utils";
 
 const TEST_URL = "http://localhost:3007/zustand";
 
@@ -101,30 +102,53 @@ test.describe("Zustand", () => {
     await waitForJson(pages, "#itemsCount", 0);
   });
 
+  function fuzzyTest(actions: readonly IDSelector[]) {
+    return async () => {
+      const [page1, page2] = pages;
+      await page1.click("#clear");
+      await waitForJson(pages, "#othersCount", 1);
+      await waitForJson(pages, "#itemsCount", 0);
+
+      for (let i = 0; i < 10; i++) {
+        await page1.click("#push");
+        await page2.click("#push");
+      }
+
+      await waitForJson(pages, "#itemsCount", 20);
+      await waitUntilEqualOnAllPages(pages, "#items");
+
+      for (let i = 0; i < 50; i++) {
+        await page1.click(pickFrom(actions));
+        await page2.click(pickFrom(actions));
+        await nanoSleep();
+      }
+
+      await waitUntilEqualOnAllPages(pages, "#items");
+
+      await page1.click("#clear");
+      await waitForJson(pages, "#itemsCount", 0);
+    };
+  }
+
+  test("fuzzy [push]", fuzzyTest(["#push"]));
+  test("fuzzy [delete]", fuzzyTest(["#delete"]));
+  test("fuzzy [push, delete]", fuzzyTest(["#push", "#delete"]));
+
   // XXX Actually fails sometimes, there definitely is a bug here
-  test.skip("fuzzy", async () => {
-    const [page1, page2] = pages;
-    await page1.click("#clear");
-    await waitForJson(pages, "#itemsCount", 0);
+  test.skip("fuzzy [push, undo]", fuzzyTest(["#push", "#undo"]));
+  // XXX Actually fails sometimes, there definitely is a bug here
+  test.skip("fuzzy [delete, undo]", fuzzyTest(["#delete", "#undo"]));
+  // XXX Actually fails sometimes, there definitely is a bug here
+  test.skip("fuzzy [push, undo, redo]", fuzzyTest(["#push", "#undo", "#redo"]));
+  // XXX Actually fails sometimes, there definitely is a bug here
+  test.skip(
+    "fuzzy [delete, undo, redo]",
+    fuzzyTest(["#delete", "#undo", "#redo"])
+  );
 
-    for (let i = 0; i < 10; i++) {
-      await page1.click("#push");
-      await page2.click("#push");
-    }
-
-    await waitForJson(pages, "#itemsCount", 20);
-    await waitUntilEqualOnAllPages(pages, "#items");
-
-    const actions = ["#push", "#delete", "#undo", "#redo"];
-    for (let i = 0; i < 50; i++) {
-      await page1.click(pickFrom(actions));
-      await page2.click(pickFrom(actions));
-      await nanoSleep();
-    }
-
-    await waitUntilEqualOnAllPages(pages, "#items");
-
-    await page1.click("#clear");
-    await waitForJson(pages, "#itemsCount", 0);
-  });
+  // XXX Actually fails sometimes, there definitely is a bug here
+  test.skip(
+    "fuzzy [push, delete, undo, redo]",
+    fuzzyTest(["#push", "#delete", "#undo", "#redo"])
+  );
 });
