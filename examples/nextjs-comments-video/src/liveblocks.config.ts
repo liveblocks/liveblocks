@@ -46,6 +46,8 @@ type RoomEvent = {
 export const {
   suspense: {
     RoomProvider,
+    useThreads,
+    useCreateThread,
     useRoom,
     useMyPresence,
     useUpdateMyPresence,
