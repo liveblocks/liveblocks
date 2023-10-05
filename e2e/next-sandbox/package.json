@@ -12,7 +12,7 @@
     "@liveblocks/core": "*",
     "@liveblocks/node": "*",
     "@liveblocks/react": "*",
-    "@liveblocks/redux": "^1.4.4",
+    "@liveblocks/redux": "*",
     "@liveblocks/zustand": "*",
     "@reduxjs/toolkit": "^1.9.7",
     "encoding": "^0.1.13",
