@@ -262,6 +262,24 @@ function detectEmojiSupport(
   return true;
 }
 
+function getEmojiFontFamily() {
+  try {
+    const element = document.createElement("span");
+    element.style.display = "none";
+    element.dataset.emoji = "";
+
+    document.body.appendChild(element);
+
+    const computedFontFamily = window.getComputedStyle(element).fontFamily;
+
+    document.body.removeChild(element);
+
+    return computedFontFamily;
+  } catch {
+    return EMOJI_FONT_FAMILY;
+  }
+}
+
 function getEmojiSessionMetadata(emojis: Emoji[]): EmojiSessionMetadata {
   const versions = new Map<number, string>();
 
@@ -281,9 +299,11 @@ function getEmojiSessionMetadata(emojis: Emoji[]): EmojiSessionMetadata {
     return { emojiVersion: descendingVersions[0], countryFlags: true };
   }
 
+  console.log(getEmojiFontFamily());
+
   canvasContext.font = `${Math.floor(
     EMOJI_DETECTION_CANVAS_HEIGHT / 2
-  )}px ${EMOJI_FONT_FAMILY}`;
+  )}px ${getEmojiFontFamily()}`;
   canvasContext.textBaseline = "top";
   canvasContext.canvas.width = EMOJI_DETECTION_CANVAS_WIDTH * 2;
   canvasContext.canvas.height = EMOJI_DETECTION_CANVAS_HEIGHT;
