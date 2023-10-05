@@ -831,18 +831,9 @@
     }
   }
 
-  .lb-comment-reaction-emoji,
-  .lb-comment-reaction-count {
-    font-size: 0.75em;
-  }
-
-  .lb-comment-reaction-emoji {
-    text-align: center;
-    transform: scale(1.125);
-  }
-
   .lb-comment-reaction-count {
     font-weight: 500;
+    font-size: 0.75em;
     font-variant-numeric: tabular-nums;
   }
 

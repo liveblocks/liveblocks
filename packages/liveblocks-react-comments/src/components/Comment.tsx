@@ -35,7 +35,6 @@ import type {
   CommentMentionProps,
 } from "../primitives/Comment/types";
 import * as ComposerPrimitive from "../primitives/Composer";
-import { Emoji } from "../primitives/internal/Emoji";
 import { Timestamp } from "../primitives/Timestamp";
 import { MENTION_CHARACTER } from "../slate/plugins/mentions";
 import { classNames } from "../utils/class-names";
@@ -43,6 +42,7 @@ import { Composer } from "./Composer";
 import { Avatar } from "./internal/Avatar";
 import { Button } from "./internal/Button";
 import { Dropdown, DropdownItem, DropdownTrigger } from "./internal/Dropdown";
+import { Emoji } from "./internal/Emoji";
 import { EmojiPicker, EmojiPickerTrigger } from "./internal/EmojiPicker";
 import { List } from "./internal/List";
 import {
@@ -562,7 +562,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
                     Link: CommentLink,
                   }}
                 />
-                {showReactions && comment.reactions && (
+                {showReactions && comment.reactions.length > 0 && (
                   <div className="lb-comment-reactions">
                     {comment.reactions.map((reaction) => (
                       <CommentReaction

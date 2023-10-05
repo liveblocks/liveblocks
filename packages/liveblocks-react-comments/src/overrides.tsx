@@ -4,7 +4,7 @@ import type { PropsWithChildren, ReactNode } from "react";
 import { createContext, useContext, useMemo } from "react";
 import * as React from "react";
 
-import { Emoji } from "./primitives/internal/Emoji";
+import { Emoji } from "./components/internal/Emoji";
 import type { Direction } from "./types";
 
 export interface LocalizationOverrides {
