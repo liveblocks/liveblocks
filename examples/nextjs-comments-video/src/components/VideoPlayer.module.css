@@ -98,7 +98,11 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: #fff;
+  background: #000;
+}
+
+.controls > * {
+  color: #fff;
 }
 
 @media (pointer: fine) {
@@ -146,10 +150,6 @@
 
   .playerWrapper:hover .sliderThumb {
     display: block;
-  }
-
-  .controls > * {
-    color: #fff;
   }
 }
 
