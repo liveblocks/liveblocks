@@ -127,7 +127,7 @@ export function VideoPlayer() {
             className={styles.sliderRoot}
             min={0}
             max={0.999999}
-            step={0.0001}
+            step={0.001}
             value={[played]}
             onValueChange={handleSliderChange}
             onValueCommit={handleSliderCommit}

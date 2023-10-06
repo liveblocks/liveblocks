@@ -26,6 +26,7 @@ export default function RootLayout({
           type="image/png"
         />
       </head>
+
       <body>{children}</body>
     </html>
   );

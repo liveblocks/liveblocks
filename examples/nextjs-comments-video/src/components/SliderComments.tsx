@@ -2,8 +2,10 @@ import { ThreadMetadata, useThreads, useUser } from "@/liveblocks.config";
 import { ClientSideSuspense } from "@liveblocks/react";
 import { ErrorBoundary } from "react-error-boundary";
 import styles from "./SliderComments.module.css";
-import { Avatar } from "@/components/Avatars";
 import { ThreadData } from "@liveblocks/core";
+import * as Tooltip from "@radix-ui/react-tooltip";
+import { Comment } from "@liveblocks/react-comments/primitives";
+import { useCallback } from "react";
 
 export function SliderComments() {
   return (
@@ -31,6 +33,8 @@ function PinnedThread({ thread }: { thread: ThreadData<ThreadMetadata> }) {
   // TODO check types correct when all comments deleted from thread
   const { user } = useUser(thread.comments?.[0].userId || "");
 
+  const handleClick = useCallback(() => {}, []);
+
   // All comments deleted
   if (!thread.comments.length) {
     return null;
@@ -40,11 +44,23 @@ function PinnedThread({ thread }: { thread: ThreadData<ThreadMetadata> }) {
     <div
       key={thread.id}
       className={styles.pinnedThread}
+      onClick={}
       style={{ left: `${thread.metadata.timePercentage}%` }}
     >
-      <div className={styles.avatarPin}>
-        <img src={user.avatar} alt={user.name} />
-      </div>
+      <Tooltip.Root>
+        <Tooltip.Trigger>
+          <div className={styles.avatarPin}>
+            <img src={user.avatar} alt={user.name} />
+          </div>
+        </Tooltip.Trigger>
+        <Tooltip.Content className={styles.tooltip}>
+          <div className={styles.tooltipName}>{user.name}</div>
+          <Comment.Body
+            body={thread.comments[0].body}
+            className={styles.tooltipBody}
+          />
+        </Tooltip.Content>
+      </Tooltip.Root>
     </div>
   );
 }

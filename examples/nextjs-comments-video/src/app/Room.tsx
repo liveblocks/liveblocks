@@ -3,22 +3,23 @@
 import { ReactNode, useMemo } from "react";
 import { RoomProvider } from "@/liveblocks.config";
 import { useSearchParams } from "next/navigation";
-import { ClientSideSuspense } from "@liveblocks/react";
-import { Loading } from "@/components/Loading";
+import * as Tooltip from "@radix-ui/react-tooltip";
 
 export function Room({ children }: { children: ReactNode }) {
   const roomId = useOverrideRoomId("nextjs-comments-video-5");
 
   return (
-    <RoomProvider
-      id={roomId}
-      initialPresence={{
-        state: "stopped",
-        time: 0,
-      }}
-    >
-      {children}
-    </RoomProvider>
+    <Tooltip.Provider delayDuration={0}>
+      <RoomProvider
+        id={roomId}
+        initialPresence={{
+          state: "stopped",
+          time: 0,
+        }}
+      >
+        {children}
+      </RoomProvider>
+    </Tooltip.Provider>
   );
 }
 

@@ -8,6 +8,7 @@
   position: relative;
   aspect-ratio: 16 / 9;
   background: #fff;
+  margin-bottom: 44px;
 }
 
 .reactPlayer {
@@ -44,6 +45,8 @@
 }
 
 .sliderRoot {
+  position: relative;
+  bottom: -8px;
   flex: 1 1;
   display: flex;
   align-items: center;
@@ -99,6 +102,10 @@
 }
 
 @media (pointer: fine) {
+  .playerWrapper {
+    margin-bottom: 0;
+  }
+
   .controls {
     position: absolute;
     top: auto;
@@ -126,6 +133,7 @@
 
   .sliderRoot {
     height: var(--track-height);
+    bottom: 0;
   }
 
   .playerWrapper:hover .sliderRoot {

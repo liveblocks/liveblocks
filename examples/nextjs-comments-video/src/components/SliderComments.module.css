@@ -6,9 +6,11 @@
 .pinnedThread {
   position: absolute;
   bottom: 100%;
+  cursor: pointer;
 }
 
 .avatarPin {
+  cursor: pointer;
   user-select: none;
   width: 32px;
   height: 32px;
@@ -29,4 +31,26 @@
   border-radius: 9999px;
   width: 24px;
   height: 24px;
+}
+
+.tooltip {
+  user-select: none;
+  background: black;
+  color: #fff;
+  padding: 4px 8px;
+  border-radius: 4px;
+  margin-bottom: 4px;
+  white-space: nowrap;
+  max-width: 200px;
+  font-size: 14px;
+}
+
+.tooltipName {
+  font-weight: 600;
+}
+
+.tooltipBody > p {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin: 0;
 }
