@@ -1,5 +1,5 @@
 import { Composer } from "@liveblocks/react-comments";
-import { ComposerSubmitComment } from "@liveblocks/react-comments/dist/primitives";
+import { ComposerSubmitComment } from "@liveblocks/react-comments/primitives";
 import { FormEvent, useCallback } from "react";
 import { useCreateThread } from "@/liveblocks.config";
 

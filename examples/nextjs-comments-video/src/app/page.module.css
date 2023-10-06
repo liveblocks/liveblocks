@@ -1,5 +1,8 @@
 .header {
-  padding: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 16px;
   background: #fff;
   font-size: 24px;
   border-bottom: 1px solid gray;

@@ -28,6 +28,10 @@ a {
   box-sizing: border-box;
 }
 
+h1 {
+  all: unset;
+}
+
 button {
   appearance: none;
   background: none;

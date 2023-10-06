@@ -58,7 +58,7 @@
 }
 
 .sliderTrack {
-  background-color: red;
+  background-color: gray;
   position: relative;
   flex-grow: 1;
   height: var(--track-height);
@@ -67,7 +67,7 @@
 
 .sliderRange {
   position: absolute;
-  background-color: gray;
+  background-color: red;
   height: 100%;
 }
 
@@ -82,9 +82,11 @@
   border-radius: 10px;
   cursor: pointer;
 }
+
 .sliderThumb:hover {
   background-color: rgb(255, 100, 100);
 }
+
 .sliderThumb:focus {
   outline: none;
   box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.2);
