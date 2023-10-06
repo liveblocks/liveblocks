@@ -15,7 +15,7 @@ To set up webhooks for your project, you’ll need to create an endpoint,
 subscribe to events, and secure your endpoint.
 
 - [Creating an endpoint](#creating-an-endpoint)
-- [Subscribing to events](#subscribing-to-events)
+- [Edit endpoint events](#edit-endpoint-events)
 - [Security verification](#security-verification)
 - [Replaying events](#replaying-events)
 
@@ -27,10 +27,13 @@ so from within the webhooks dashboard for your project.
 1. From the <a href="/dashboard" target="_blank">dashboard</a> overview,
    navigate to the project you would like to add webhooks to
 2. Click on the webhooks tab from the lefthand menu
-3. Click the “Add Endpoint” button
-4. Enter the URL of the endpoint you would like to use and a description of it
-5. Select the events you would like to subscribe to (if you make no selections,
-   all events will be sent to the endpoint)
+3. Click the **“Create endpoint…”** button
+4. Enter the URL of the endpoint you would like to use. Configure with your own
+   endpoint or generate a
+   <a href="https://www.svix.com/play/" target="_blank">Svix playground</a> link
+   by clicking on **"use Svix play"**.
+5. Select the events you would like to subscribe to
+6. Click **“Create endpoint”**
 
 <Figure>
   <video autoPlay loop muted playsInline>
@@ -38,24 +41,15 @@ so from within the webhooks dashboard for your project.
   </video>
 </Figure>
 
-<Banner title="CSRF Protection">
+### Edit endpoint events [#edit-endpoint-events]
 
-Before sending events, disable CSRF protection for the endpoint if it is enabled
-by default. Additionally, follow the steps outlined in the security verification
-section before sending any events.
-
-</Banner>
-
-### Subscribing to events [#subscribing-to-events]
-
-By default, each endpoint provided in the webhooks dashboard listens to all
-events. However, you can easily configure it to only listen to a subset of
-events by updating the "Subscribed events" section after creating the endpoint
+You can easily edit the events you want to subscribe to after creating an
+endpoint.
 
 1. Select the endpoint you would like to edit from the list of webhooks in the
    dashboard
-2. Click the “Edit” button next to the “Subscribed events” section
-3. Update event selections and click “Save”
+2. Select **“Edit endpoint…”** from the top right dropdown
+3. Update event selections and click **“Save changes”**
 
 <Figure>
   <video autoPlay loop muted playsInline>
@@ -69,7 +63,7 @@ If your service is unreachable, message retries are automatically re-attempted.
 If your service incurs considerable downtime (over 8 hours), you can replay
 individual messages from the Endpoints portion of the dashboard by clicking the
 kebab menu on an individual message, or you can opt to bulk replay events by
-clicking the main menu and selecting “Replay Failed Messages.”
+clicking the top right dropdown and selecting **“Recover failed messages…”**.
 
 <Figure>
   <video autoPlay loop muted playsInline>
