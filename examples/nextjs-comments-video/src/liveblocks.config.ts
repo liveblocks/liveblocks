@@ -41,9 +41,9 @@ type RoomEvent = {
   // ...
 };
 
-type ThreadMetadata = {
+export type ThreadMetadata = {
   resolved: boolean;
-  time: number;
+  timePercentage: number;
 };
 
 export const {
@@ -51,6 +51,7 @@ export const {
     RoomProvider,
     useThreads,
     useCreateThread,
+    useUser,
     useRoom,
     useMyPresence,
     useUpdateMyPresence,

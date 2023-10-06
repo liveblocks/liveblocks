@@ -1,0 +1,32 @@
+.pinnedThreads {
+  width: 100%;
+  margin-bottom: 10px;
+}
+
+.pinnedThread {
+  position: absolute;
+  bottom: 100%;
+}
+
+.avatarPin {
+  user-select: none;
+  width: 32px;
+  height: 32px;
+  box-shadow: var(--shadow);
+  border-top-left-radius: 50%;
+  border-top-right-radius: 50%;
+  border-bottom-right-radius: 50%;
+  border-bottom-left-radius: 4px;
+  transform: rotate(-45deg);
+  background: #fff;
+}
+
+.avatarPin > img {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%) rotate(45deg);
+  border-radius: 9999px;
+  width: 24px;
+  height: 24px;
+}

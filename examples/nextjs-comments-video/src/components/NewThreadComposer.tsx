@@ -18,7 +18,7 @@ export function NewThreadComposer({ getCurrentPercentage }: Props) {
         body,
         metadata: {
           resolved: false,
-          time: getCurrentPercentage(),
+          timePercentage: getCurrentPercentage(),
         },
       });
     },

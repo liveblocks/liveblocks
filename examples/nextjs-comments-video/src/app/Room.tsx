@@ -7,7 +7,7 @@ import { ClientSideSuspense } from "@liveblocks/react";
 import { Loading } from "@/components/Loading";
 
 export function Room({ children }: { children: ReactNode }) {
-  const roomId = useOverrideRoomId("nextjs-comments-video-4");
+  const roomId = useOverrideRoomId("nextjs-comments-video-5");
 
   return (
     <RoomProvider
