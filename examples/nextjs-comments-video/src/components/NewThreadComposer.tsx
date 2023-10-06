@@ -14,12 +14,12 @@ export function NewThreadComposer({ getCurrentPercentage }: Props) {
     ({ body }: ComposerSubmitComment, event: FormEvent<HTMLFormElement>) => {
       event.preventDefault();
 
-      console.log("here", getCurrentPercentage());
-      return;
-
       createThread({
         body,
-        metadata: { time: getCurrentPercentage() },
+        metadata: {
+          resolved: false,
+          time: getCurrentPercentage(),
+        },
       });
     },
     [getCurrentPercentage]
