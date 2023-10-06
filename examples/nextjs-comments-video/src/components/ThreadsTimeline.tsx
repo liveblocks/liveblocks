@@ -1,13 +1,18 @@
-import { ThreadMetadata, useThreads, useUser } from "@/liveblocks.config";
+import {
+  ThreadHighlightEvent,
+  ThreadMetadata,
+  useThreads,
+  useUser,
+} from "@/liveblocks.config";
 import { ClientSideSuspense } from "@liveblocks/react";
 import { ErrorBoundary } from "react-error-boundary";
-import styles from "./SliderComments.module.css";
+import styles from "./ThreadsTimeline.module.css";
 import { ThreadData } from "@liveblocks/core";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { Comment } from "@liveblocks/react-comments/primitives";
 import { useCallback } from "react";
 
-export function SliderComments() {
+export function ThreadsTimeline() {
   return (
     <ErrorBoundary fallback={<div>error</div>}>
       <ClientSideSuspense fallback={null}>
@@ -33,7 +38,13 @@ function PinnedThread({ thread }: { thread: ThreadData<ThreadMetadata> }) {
   // TODO check types correct when all comments deleted from thread
   const { user } = useUser(thread.comments?.[0].userId || "");
 
-  const handleClick = useCallback(() => {}, []);
+  const handleClick = useCallback(() => {
+    const event: ThreadHighlightEvent = new CustomEvent("threadHighlight", {
+      detail: { threadId: thread.id },
+    });
+
+    window.dispatchEvent(event);
+  }, []);
 
   // All comments deleted
   if (!thread.comments.length) {

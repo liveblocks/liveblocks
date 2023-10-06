@@ -10,7 +10,7 @@ import { PauseIcon } from "@/icons/Pause";
 import { FullscreenIcon } from "@/icons/Fullscreen";
 import Duration from "@/components/Duration";
 import { ClientSideSuspense } from "@liveblocks/react";
-import { SliderComments } from "@/components/SliderComments";
+import { ThreadsTimeline } from "@/components/ThreadsTimeline";
 import { NewThreadComposer } from "@/components/NewThreadComposer";
 import { Simulate } from "react-dom/test-utils";
 import play = Simulate.play;
@@ -129,7 +129,7 @@ export function VideoPlayer() {
 
         <div className={styles.sliderAndComments}>
           <div className={styles.sliderComments}>
-            <SliderComments />
+            <ThreadsTimeline />
           </div>
 
           <Slider.Root

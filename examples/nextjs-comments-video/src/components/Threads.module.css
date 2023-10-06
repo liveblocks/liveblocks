@@ -1,0 +1,28 @@
+.thread {
+  position: relative;
+}
+
+.thread[data-highlight]::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  animation: highlight 2.5s linear forwards;
+  background: #ffffd8;
+  mix-blend-mode: darken;
+  opacity: 1;
+}
+
+@keyframes highlight {
+  0% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}

@@ -46,6 +46,8 @@ export type ThreadMetadata = {
   timePercentage: number;
 };
 
+export type ThreadHighlightEvent = CustomEvent<{ threadId: string }>;
+
 export const {
   suspense: {
     RoomProvider,
