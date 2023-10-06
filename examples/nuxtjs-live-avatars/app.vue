@@ -65,7 +65,7 @@
 import { createClient } from "@liveblocks/client";
 
 const client = createClient({
-  authEndpoint: "/api/auth",
+  authEndpoint: "/api/liveblocks-auth",
 });
 
 // Presence not used in this example
