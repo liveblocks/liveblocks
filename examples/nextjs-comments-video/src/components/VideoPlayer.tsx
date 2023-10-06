@@ -14,14 +14,18 @@ import { SliderComments } from "@/components/SliderComments";
 import { NewThreadComposer } from "@/components/NewThreadComposer";
 import { Simulate } from "react-dom/test-utils";
 import play = Simulate.play;
+import { ExitFullscreenIcon } from "@/icons/ExitFullscreen";
 
 export function VideoPlayer() {
   const player = useRef<ReactPlayer>(null);
+  const playerWrapper = useRef(null);
   const playerClickWrapper = useRef<HTMLDivElement>(null);
+
   const [playing, setPlaying] = useState(false);
   const [played, setPlayed] = useState(0);
   const [seeking, setSeeking] = useState(false);
   const [duration, setDuration] = useState(0);
+  const [fullscreen, setFullscreen] = useState(false);
 
   const handleProgress = useCallback(
     (progress: OnProgressProps) => {
@@ -37,13 +41,18 @@ export function VideoPlayer() {
   }, []);
 
   const handleFullscreen = useCallback(() => {
-    if (!playerClickWrapper.current) {
+    if (!playerWrapper.current) {
       return;
     }
 
-    const video = playerClickWrapper.current.querySelector("video");
-    requestFullscreen(video);
-  }, []);
+    if (fullscreen) {
+      document.exitFullscreen();
+      setFullscreen(false);
+      return;
+    }
+
+    setFullscreen(requestFullscreen(playerWrapper.current));
+  }, [fullscreen]);
 
   const handleSliderChange = useCallback(([value]: [number]) => {
     setSeeking(true);
@@ -74,7 +83,7 @@ export function VideoPlayer() {
 
   return (
     <div className={styles.videoPlayer}>
-      <div className={styles.playerWrapper}>
+      <div className={styles.playerWrapper} ref={playerWrapper}>
         <div
           ref={playerClickWrapper}
           onClick={() => setPlaying(!playing)}
@@ -114,7 +123,7 @@ export function VideoPlayer() {
             className={styles.fullscreenButton}
             onClick={handleFullscreen}
           >
-            <FullscreenIcon />
+            {fullscreen ? <ExitFullscreenIcon /> : <FullscreenIcon />}
           </button>
         </div>
 
@@ -145,17 +154,17 @@ export function VideoPlayer() {
   );
 }
 
-function requestFullscreen(video: Element | null) {
-  if (!(video instanceof HTMLVideoElement)) {
+function requestFullscreen(element: HTMLElement | null) {
+  if (!(element instanceof HTMLElement)) {
     return false;
   }
 
   const rfs =
-    video.requestFullscreen ||
-    (video as any).webkitRequestFullScreen ||
-    (video as any).mozRequestFullScreen ||
-    (video as any).msRequestFullscreen;
-  rfs.call(video);
+    element.requestFullscreen ||
+    (element as any).webkitRequestFullScreen ||
+    (element as any).mozRequestFullScreen ||
+    (element as any).msRequestFullscreen;
+  rfs.call(element);
 
   return true;
 }

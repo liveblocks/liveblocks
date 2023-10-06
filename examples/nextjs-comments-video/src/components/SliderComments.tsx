@@ -44,7 +44,7 @@ function PinnedThread({ thread }: { thread: ThreadData<ThreadMetadata> }) {
     <div
       key={thread.id}
       className={styles.pinnedThread}
-      onClick={}
+      onClick={handleClick}
       style={{ left: `${thread.metadata.timePercentage}%` }}
     >
       <Tooltip.Root>
