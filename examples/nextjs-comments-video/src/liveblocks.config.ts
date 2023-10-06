@@ -1,8 +1,6 @@
 import { createClient } from "@liveblocks/client";
 import { createRoomContext } from "@liveblocks/react";
 
-// Try changing the lostConnectionTimeout value to increase
-// or reduct the time it takes to reconnect
 const client = createClient({
   authEndpoint: "/api/liveblocks-auth",
 });
@@ -43,6 +41,10 @@ type RoomEvent = {
   // ...
 };
 
+type ThreadMetadata = {
+  time: number;
+};
+
 export const {
   suspense: {
     RoomProvider,
@@ -73,4 +75,30 @@ export const {
     useStatus,
     useLostConnectionListener,
   },
-} = createRoomContext<Presence, Storage, UserMeta, RoomEvent>(client);
+} = createRoomContext<Presence, Storage, UserMeta, RoomEvent, ThreadMetadata>(
+  client,
+  {
+    async resolveUser({ userId }) {
+      const response = await fetch(`/api/user/${encodeURIComponent(userId)}`);
+
+      if (!response.ok) {
+        throw new Error("Problem resolving user");
+      }
+
+      const user = await response.json();
+      return user.info;
+    },
+    async resolveMentionSuggestions({ text }) {
+      const response = await fetch(
+        `/api/users/search?text=${encodeURIComponent(text)}`
+      );
+
+      if (!response.ok) {
+        throw new Error("Problem resolving user");
+      }
+
+      const userIds = await response.json();
+      return userIds;
+    },
+  }
+);
