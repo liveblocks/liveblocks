@@ -1,3 +1,9 @@
+# v1.4.5
+
+### `@liveblocks/node`
+
+- Fix URL encoding bug
+
 # v1.4.4
 
 ### `@liveblocks/react`
