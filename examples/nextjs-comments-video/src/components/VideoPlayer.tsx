@@ -10,7 +10,6 @@ import { PauseIcon } from "@/icons/Pause";
 import { FullscreenIcon } from "@/icons/Fullscreen";
 import Duration from "@/components/Duration";
 import { ClientSideSuspense } from "@liveblocks/react";
-import { Loading } from "@/components/Loading";
 
 export function VideoPlayer() {
   const player = useRef<ReactPlayer>(null);
@@ -79,37 +78,44 @@ export function VideoPlayer() {
             )}
           </ClientSideSuspense>
         </div>
-        <Slider.Root
-          className={styles.sliderRoot}
-          min={0}
-          max={0.999999}
-          step={0.0001}
-          value={[played]}
-          onValueChange={handleSliderChange}
-          onValueCommit={handleSliderCommit}
-        >
-          <Slider.Track className={styles.sliderTrack}>
-            <Slider.Range className={styles.sliderRange} />
-          </Slider.Track>
-          <Slider.Thumb className={styles.sliderThumb} />
-        </Slider.Root>
-      </div>
-      <div className={styles.controls}>
-        <button
-          className={styles.playButton}
-          onClick={() => setPlaying(!playing)}
-        >
-          {playing ? <PauseIcon /> : <PlayIcon />}
-        </button>
-        {player.current ? (
-          <div className={styles.time}>
-            <Duration seconds={duration * played} /> /{" "}
-            <Duration seconds={duration} />
-          </div>
-        ) : null}
-        <button className={styles.fullscreenButton} onClick={handleFullscreen}>
-          <FullscreenIcon />
-        </button>
+
+        <div className={styles.controls}>
+          <button
+            className={styles.playButton}
+            onClick={() => setPlaying(!playing)}
+          >
+            {playing ? <PauseIcon /> : <PlayIcon />}
+          </button>
+          {player.current ? (
+            <div className={styles.time}>
+              <Duration seconds={duration * played} /> /{" "}
+              <Duration seconds={duration} />
+            </div>
+          ) : null}
+          <button
+            className={styles.fullscreenButton}
+            onClick={handleFullscreen}
+          >
+            <FullscreenIcon />
+          </button>
+        </div>
+
+        <div className={styles.sliderAndComments}>
+          <Slider.Root
+            className={styles.sliderRoot}
+            min={0}
+            max={0.999999}
+            step={0.0001}
+            value={[played]}
+            onValueChange={handleSliderChange}
+            onValueCommit={handleSliderCommit}
+          >
+            <Slider.Track className={styles.sliderTrack}>
+              <Slider.Range className={styles.sliderRange} />
+            </Slider.Track>
+            <Slider.Thumb className={styles.sliderThumb} />
+          </Slider.Root>
+        </div>
       </div>
     </div>
   );

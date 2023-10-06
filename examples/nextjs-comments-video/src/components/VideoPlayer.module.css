@@ -11,7 +11,7 @@
 }
 
 .reactPlayer {
-  animation: fadeIn ease 0.3s;
+  animation: fadeIn ease-out 0.3s;
   animation-iteration-count: 1;
   animation-fill-mode: forwards;
 }
@@ -25,9 +25,18 @@
   }
 }
 
-.sliderRoot {
+.videoBottom {
+  position: absolute;
+}
+
+.sliderAndComments {
   position: absolute;
   bottom: -8px;
+  left: 0;
+  right: 0;
+}
+
+.sliderRoot {
   flex: 1 1;
   display: flex;
   align-items: center;
@@ -35,13 +44,14 @@
   touch-action: none;
   width: 100%;
   height: 20px;
+  --track-height: 4px;
 }
 
 .sliderTrack {
   background-color: red;
   position: relative;
   flex-grow: 1;
-  height: 4px;
+  height: var(--track-height);
   cursor: pointer;
 }
 
@@ -71,10 +81,61 @@
 }
 
 .controls {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
   display: flex;
   justify-content: space-between;
   align-items: center;
   background: #fff;
+}
+
+@media (pointer: fine) {
+  .controls {
+    position: absolute;
+    top: auto;
+    bottom: 0;
+    background: linear-gradient(
+      180deg,
+      rgba(0, 0, 0, 0.6) 0%,
+      rgba(0, 0, 0, 0.6) 100%
+    );
+    opacity: 0;
+    transition: opacity ease-out 0.1s;
+  }
+
+  .playerWrapper:hover .controls {
+    opacity: 1;
+  }
+
+  .sliderAndComments {
+    bottom: 0;
+  }
+
+  .playerWrapper:hover .sliderAndComments {
+    bottom: 44px;
+  }
+
+  .sliderRoot {
+    height: var(--track-height);
+  }
+
+  .playerWrapper:hover .sliderRoot {
+    height: auto;
+  }
+
+  .sliderThumb {
+    display: none;
+  }
+
+  .playerWrapper:hover .sliderThumb {
+    display: block;
+  }
+
+  .controls > * {
+    color: #fff;
+  }
 }
 
 .playButton,
@@ -89,6 +150,6 @@
 .time {
   font-size: 14px;
   font-weight: 500;
-  opacity: 0.7;
   user-select: none;
+  opacity: 0.9;
 }
