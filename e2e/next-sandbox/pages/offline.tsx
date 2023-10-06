@@ -194,7 +194,7 @@ function Sandbox(_props: { roomId: string }) {
             style={{ color: status !== "connected" ? "red" : "green" }}
           />
           <Row id="connectionId" name="Connection ID" value={me.connectionId} />
-          <Row id="itemsCount" name="Items count" value={items.length} />
+          <Row id="numItems" name="Items count" value={items.length} />
           <Row id="items" name="Items" value={items.toArray()} />
         </tbody>
       </table>

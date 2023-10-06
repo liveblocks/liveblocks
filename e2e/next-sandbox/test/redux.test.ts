@@ -30,7 +30,7 @@ test.describe("Redux", () => {
     await waitForJson(pages, "#socketStatus", "connected");
 
     await page1.click("#clear");
-    await expectJson(page1, "#itemsCount", 0);
+    await expectJson(page1, "#numItems", 0);
     await waitForJson(pages, "#numOthers", 1);
 
     await page1.click("#push");
@@ -40,11 +40,11 @@ test.describe("Redux", () => {
     await waitUntilEqualOnAllPages(pages, "#items");
 
     await page1.click("#push");
-    await waitForJson(pages, "#itemsCount", 3);
+    await waitForJson(pages, "#numItems", 3);
     await waitUntilEqualOnAllPages(pages, "#items");
 
     await page1.click("#clear");
-    await waitForJson(pages, "#itemsCount", 0);
+    await waitForJson(pages, "#numItems", 0);
     await waitForJson(page2, "#theirPresence", { counter: 0 });
   });
 
@@ -53,7 +53,7 @@ test.describe("Redux", () => {
     await waitForJson(pages, "#socketStatus", "connected");
 
     await page1.click("#clear");
-    await expectJson(page1, "#itemsCount", 0);
+    await expectJson(page1, "#numItems", 0);
     await waitForJson(pages, "#numOthers", 1);
 
     await waitForJson(page2, "#theirPresence", { counter: 0 });
@@ -70,18 +70,18 @@ test.describe("Redux", () => {
     await page1.click("#push");
     await page1.click("#set-name");
     await page1.click("#inc-counter");
-    await waitForJson(pages, "#itemsCount", 3);
+    await waitForJson(pages, "#numItems", 3);
     await waitUntilEqualOnAllPages(pages, "#items");
 
     await page1.click("#clear");
-    await waitForJson(pages, "#itemsCount", 0);
+    await waitForJson(pages, "#numItems", 0);
     await waitForJson(page2, "#theirPresence", { counter: 3, name: "Vincent" });
   });
 
   test("fuzzy (before others are visible)", async () => {
     const [page1, page2] = pages;
     await page1.click("#clear");
-    await waitForJson(pages, "#itemsCount", 0);
+    await waitForJson(pages, "#numItems", 0);
 
     for (let i = 0; i < 10; i++) {
       await page1.click("#push");
@@ -101,7 +101,7 @@ test.describe("Redux", () => {
     await waitUntilEqualOnAllPages(pages, "#items");
 
     await page1.click("#clear");
-    await waitForJson(pages, "#itemsCount", 0);
+    await waitForJson(pages, "#numItems", 0);
   });
 
   test("fuzzy (after others are visible)", async () => {
@@ -109,7 +109,7 @@ test.describe("Redux", () => {
     await waitForJson(pages, "#numOthers", 1);
 
     await page1.click("#clear");
-    await waitForJson(pages, "#itemsCount", 0);
+    await waitForJson(pages, "#numItems", 0);
 
     for (let i = 0; i < 10; i++) {
       await page1.click("#push");
@@ -129,6 +129,6 @@ test.describe("Redux", () => {
     await waitUntilEqualOnAllPages(pages, "#items");
 
     await page1.click("#clear");
-    await waitForJson(pages, "#itemsCount", 0);
+    await waitForJson(pages, "#numItems", 0);
   });
 });

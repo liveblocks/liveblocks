@@ -27,10 +27,10 @@ test.describe("Storage - Batching", () => {
     const [page1, page2] = pages;
 
     await page1.click("#clear");
-    await expectJson(page1, "#itemsCount", 0);
+    await expectJson(page1, "#numItems", 0);
 
     await page1.click("#update-storage-presence-batch");
-    await expectJson(page1, "#itemsCount", 1);
+    await expectJson(page1, "#numItems", 1);
 
     await waitUntilEqualOnAllPages(pages, "#items");
 
@@ -38,7 +38,7 @@ test.describe("Storage - Batching", () => {
     await expectJson(page2, "#theirPresence", { count: 1 });
 
     await page1.click("#clear");
-    await waitForJson(pages, "#itemsCount", 0);
+    await waitForJson(pages, "#numItems", 0);
   });
 
   // TODO Add tests using the undo/redo buttons

@@ -154,7 +154,7 @@ function Sandbox() {
       <table style={styles.dataTable}>
         <tbody>
           <Row id="renderCount" name="Render count" value={renderCount} />
-          <Row id="itemsCount" name="List size" value={items.length} />
+          <Row id="numItems" name="List size" value={items.length} />
           <Row id="items" name="Serialized" value={items.toArray()} />
         </tbody>
       </table>

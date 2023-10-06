@@ -29,54 +29,54 @@ test.describe("Storage - LiveList", () => {
   test("list push basic", async () => {
     const [page1] = pages;
     await page1.click("#clear");
-    await waitForJson(pages, "#itemsCount", 0);
+    await waitForJson(pages, "#numItems", 0);
 
     await page1.click("#push");
-    await waitForJson(pages, "#itemsCount", 1);
+    await waitForJson(pages, "#numItems", 1);
 
     await waitUntilEqualOnAllPages(pages, "#items");
 
     await page1.click("#push");
-    await waitForJson(pages, "#itemsCount", 2);
+    await waitForJson(pages, "#numItems", 2);
     await waitUntilEqualOnAllPages(pages, "#items");
 
     await page1.click("#push");
-    await waitForJson(pages, "#itemsCount", 3);
+    await waitForJson(pages, "#numItems", 3);
     await waitUntilEqualOnAllPages(pages, "#items");
   });
 
   test("list move", async () => {
     const [page1, _page2] = pages;
     await page1.click("#clear");
-    await waitForJson(pages, "#itemsCount", 0);
+    await waitForJson(pages, "#numItems", 0);
 
     for (let i = 0; i < 5; i++) {
       await page1.click("#push");
     }
 
-    await expectJson(page1, "#itemsCount", 5);
+    await expectJson(page1, "#numItems", 5);
     await waitUntilEqualOnAllPages(pages, "#items");
 
     for (let i = 0; i < 10; i++) {
       await page1.click("#move");
     }
 
-    await expectJson(page1, "#itemsCount", 5);
+    await expectJson(page1, "#numItems", 5);
     await waitUntilEqualOnAllPages(pages, "#items");
   });
 
   test("push conflicts", async () => {
     const [page1, page2] = pages;
     await page1.click("#clear");
-    await waitForJson(pages, "#itemsCount", 0);
+    await waitForJson(pages, "#numItems", 0);
 
     for (let i = 0; i < 10; i++) {
       await page1.click("#push");
       await page2.click("#push");
     }
 
-    // await expectJson(pages, "#itemsCount", n => n >= 10 && n <= 20);
-    await waitForJson(pages, "#itemsCount", 20);
+    // await expectJson(pages, "#numItems", n => n >= 10 && n <= 20);
+    await waitForJson(pages, "#numItems", 20);
     await waitUntilEqualOnAllPages(pages, "#items");
   });
 
@@ -85,7 +85,7 @@ test.describe("Storage - LiveList", () => {
     const [page1, page2] = pages;
     await page1.click("#clear");
     await page1.click("#push");
-    await waitForJson(pages, "#itemsCount", 1);
+    await waitForJson(pages, "#numItems", 1);
     await waitUntilEqualOnAllPages(pages, "#items");
 
     for (let i = 0; i < 30; i++) {
@@ -94,12 +94,12 @@ test.describe("Storage - LiveList", () => {
 
       // In this test, we should never see a list of less than or more than
       // 1 element. When this happens, we'll want to immediately fail here.
-      await expectJson(page1, "#itemsCount", 1);
-      await expectJson(page2, "#itemsCount", 1);
+      await expectJson(page1, "#numItems", 1);
+      await expectJson(page2, "#numItems", 1);
     }
 
-    await expectJson(page1, "#itemsCount", 1);
-    await expectJson(page2, "#itemsCount", 1);
+    await expectJson(page1, "#numItems", 1);
+    await expectJson(page2, "#numItems", 1);
     await waitUntilEqualOnAllPages(pages, "#items");
   });
 
@@ -107,7 +107,7 @@ test.describe("Storage - LiveList", () => {
   test.skip("fuzzy with undo/redo push delete and move", async () => {
     const [page1] = pages;
     await page1.click("#clear");
-    await waitForJson(pages, "#itemsCount", 0);
+    await waitForJson(pages, "#numItems", 0);
     await waitUntilEqualOnAllPages(pages, "#items");
 
     const numberOfItemsAtStart = 5;
@@ -115,7 +115,7 @@ test.describe("Storage - LiveList", () => {
       await page1.click("#push");
     }
 
-    await expectJson(page1, "#itemsCount", numberOfItemsAtStart);
+    await expectJson(page1, "#numItems", numberOfItemsAtStart);
 
     await waitUntilEqualOnAllPages(pages, "#items");
 
@@ -136,7 +136,7 @@ test.describe("Storage - LiveList", () => {
 
         // In this test, we should never see a list of more than 1 element. When
         // it happens, we'll want to immediately fail here.
-        await expectJson(page, "#itemsCount", 1);
+        await expectJson(page, "#numItems", 1);
       }
       await nanoSleep();
     }

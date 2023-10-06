@@ -126,7 +126,7 @@ function ReduxSandbox() {
       <h2>Storage</h2>
       <table style={styles.dataTable}>
         <tbody>
-          <Row id="itemsCount" name="Items count" value={items.length} />
+          <Row id="numItems" name="Items count" value={items.length} />
           <Row id="items" name="Items" value={items} />
         </tbody>
       </table>

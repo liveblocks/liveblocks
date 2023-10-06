@@ -31,10 +31,10 @@ test.describe("Offline", () => {
   test.skip("one client offline with offline changes - connection issue (code 1005)", async () => {
     const [page1, page2] = pages;
     await page1.click("#clear");
-    await waitForJson(pages, "#itemsCount", 0);
+    await waitForJson(pages, "#numItems", 0);
 
     await page1.click("#push");
-    await waitForJson(pages, "#itemsCount", 1);
+    await waitForJson(pages, "#numItems", 1);
 
     await page1.click("#closeWebsocket");
     await nanoSleep(); // XXX Remove, wait on status change or similar, not a random amount of time
@@ -42,7 +42,7 @@ test.describe("Offline", () => {
     await page1.click("#push");
     await page2.click("#push");
 
-    await waitForJson(pages, "#itemsCount", 2);
+    await waitForJson(pages, "#numItems", 2);
 
     await page1.click("#sendCloseEventConnectionError");
     await nanoSleep(); // XXX Remove, wait on status change or similar, not a random amount of time
@@ -50,17 +50,17 @@ test.describe("Offline", () => {
     await waitUntilEqualOnAllPages(pages, "#items");
 
     await page1.click("#clear");
-    await waitForJson(pages, "#itemsCount", 0);
+    await waitForJson(pages, "#numItems", 0);
   });
 
   // XXX Re-express this test!
   test.skip("one client offline with offline changes - app server issue (code 4002)", async () => {
     const [page1, page2] = pages;
     await page1.click("#clear");
-    await waitForJson(pages, "#itemsCount", 0);
+    await waitForJson(pages, "#numItems", 0);
 
     await page1.click("#push");
-    await waitForJson(pages, "#itemsCount", 1);
+    await waitForJson(pages, "#numItems", 1);
 
     const firstConnectionId = await getJson(page1, "#connectionId");
 
@@ -68,7 +68,7 @@ test.describe("Offline", () => {
     await nanoSleep(); // XXX Remove, wait on status change or similar, not a random amount of time
     await page1.click("#push");
     await page2.click("#push");
-    await expectJson(page1, "#itemsCount", 2);
+    await expectJson(page1, "#numItems", 2);
 
     const firstPageItems = (await getJson(page1, "#items")) as Json[];
     const secondPageItems = (await getJson(page2, "#items")) as Json[];
@@ -85,14 +85,14 @@ test.describe("Offline", () => {
     expect(connectionIdAfterReconnect).toEqual(firstConnectionId);
 
     await page1.click("#clear");
-    await waitForJson(pages, "#itemsCount", 0);
+    await waitForJson(pages, "#numItems", 0);
   });
 
   // XXX Re-express this test!
   test.skip("fuzzy", async () => {
     const [page1, page2] = pages;
     await page1.click("#clear");
-    await waitForJson(pages, "#itemsCount", 0);
+    await waitForJson(pages, "#numItems", 0);
 
     for (let i = 0; i < 10; i++) {
       await page1.click("#push");
@@ -119,6 +119,6 @@ test.describe("Offline", () => {
     await waitUntilEqualOnAllPages(pages, "#items");
 
     await page1.click("#clear");
-    await waitForJson(pages, "#itemsCount", 0);
+    await waitForJson(pages, "#numItems", 0);
   });
 });

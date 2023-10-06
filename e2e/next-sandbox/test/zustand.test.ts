@@ -29,7 +29,7 @@ test.describe("Zustand", () => {
   test("array push basic", async () => {
     const [page1, page2] = pages;
     await page1.click("#clear");
-    await expectJson(page1, "#itemsCount", 0);
+    await expectJson(page1, "#numItems", 0);
 
     await waitForJson(pages, "#numOthers", 1);
 
@@ -45,16 +45,16 @@ test.describe("Zustand", () => {
     await page1.click("#push");
     await page1.click("#push");
     await waitUntilEqualOnAllPages(pages, "#items");
-    await expectJson(page2, "#itemsCount", 7);
+    await expectJson(page2, "#numItems", 7);
 
     await page1.click("#clear");
-    await waitForJson(pages, "#itemsCount", 0);
+    await waitForJson(pages, "#numItems", 0);
   });
 
   test("array push basic + presence", async () => {
     const [page1, page2] = pages;
     await page1.click("#clear");
-    await expectJson(page1, "#itemsCount", 0);
+    await expectJson(page1, "#numItems", 0);
 
     await waitForJson(pages, "#numOthers", 1);
 
@@ -74,21 +74,21 @@ test.describe("Zustand", () => {
     await page1.click("#push");
     await page1.click("#inc-counter");
     await waitUntilEqualOnAllPages(pages, "#items");
-    await expectJson(page2, "#itemsCount", 5);
+    await expectJson(page2, "#numItems", 5);
 
     await page1.click("#clear");
-    await waitForJson(pages, "#itemsCount", 0);
+    await waitForJson(pages, "#numItems", 0);
     await waitForJson(page2, "#theirPresence", { name: "Vincent", counter: 3 });
   });
 
   test("with enter and leave room", async () => {
     const [page1, page2] = pages;
     await page1.click("#clear");
-    await waitForJson(pages, "#itemsCount", 0);
+    await waitForJson(pages, "#numItems", 0);
 
     await page1.click("#push");
     await page1.click("#push");
-    await expectJson(page1, "#itemsCount", 2);
+    await expectJson(page1, "#numItems", 2);
     await waitUntilEqualOnAllPages(pages, "#items");
 
     await page2.click("#leave");
@@ -96,11 +96,11 @@ test.describe("Zustand", () => {
     await page1.click("#push");
 
     await page2.click("#enter"); // Enter
-    await waitForJson(page1, "#itemsCount", 3);
+    await waitForJson(page1, "#numItems", 3);
     await waitUntilEqualOnAllPages(pages, "#items");
 
     await page1.click("#clear");
-    await waitForJson(pages, "#itemsCount", 0);
+    await waitForJson(pages, "#numItems", 0);
   });
 
   function fuzzyTest(actions: readonly IDSelector[]) {
@@ -108,14 +108,14 @@ test.describe("Zustand", () => {
       const [page1, page2] = pages;
       await page1.click("#clear");
       await waitForJson(pages, "#numOthers", 1);
-      await waitForJson(pages, "#itemsCount", 0);
+      await waitForJson(pages, "#numItems", 0);
 
       for (let i = 0; i < 10; i++) {
         await page1.click("#push");
         await page2.click("#push");
       }
 
-      await waitForJson(pages, "#itemsCount", 20);
+      await waitForJson(pages, "#numItems", 20);
       await waitUntilEqualOnAllPages(pages, "#items");
 
       for (let i = 0; i < 50; i++) {
@@ -127,7 +127,7 @@ test.describe("Zustand", () => {
       await waitUntilEqualOnAllPages(pages, "#items");
 
       await page1.click("#clear");
-      await waitForJson(pages, "#itemsCount", 0);
+      await waitForJson(pages, "#numItems", 0);
     };
   }
 

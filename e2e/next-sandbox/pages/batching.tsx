@@ -114,7 +114,7 @@ function Sandbox() {
       <h2>Storage</h2>
       <table style={styles.dataTable}>
         <tbody>
-          <Row id="itemsCount" name="Items count" value={liveMap.size} />
+          <Row id="numItems" name="Items count" value={liveMap.size} />
           <Row id="items" name="Items" value={Array.from(liveMap.entries())} />
         </tbody>
       </table>
