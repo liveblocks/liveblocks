@@ -91,6 +91,10 @@
       "name": "Zustand"
     },
     {
+      "id": "storage",
+      "name": "Storage"
+    },
+    {
       "id": "yjs",
       "name": "Yjs"
     },
