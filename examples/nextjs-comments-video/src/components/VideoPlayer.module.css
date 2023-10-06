@@ -31,9 +31,16 @@
 
 .sliderAndComments {
   position: absolute;
+  right: 0;
   bottom: 0;
   left: 0;
+}
+
+.sliderComments {
+  position: absolute;
   right: 0;
+  bottom: 0;
+  left: 0;
 }
 
 .sliderRoot {
@@ -73,7 +80,7 @@
   cursor: pointer;
 }
 .sliderThumb:hover {
-  background-color: orange;
+  background-color: rgb(255, 100, 100);
 }
 .sliderThumb:focus {
   outline: none;

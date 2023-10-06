@@ -1,4 +1,5 @@
 import "../globals.css";
+import "@liveblocks/react-comments/styles.css";
 
 export const metadata = {
   title: "Liveblocks",

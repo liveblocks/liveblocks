@@ -10,6 +10,10 @@ import { PauseIcon } from "@/icons/Pause";
 import { FullscreenIcon } from "@/icons/Fullscreen";
 import Duration from "@/components/Duration";
 import { ClientSideSuspense } from "@liveblocks/react";
+import { SliderComments } from "@/components/SliderComments";
+import { NewThreadComposer } from "@/components/NewThreadComposer";
+import { Simulate } from "react-dom/test-utils";
+import play = Simulate.play;
 
 export function VideoPlayer() {
   const player = useRef<ReactPlayer>(null);
@@ -53,6 +57,20 @@ export function VideoPlayer() {
     }
     setSeeking(false);
   }, []);
+
+  const getCurrentPercentage = useCallback(() => {
+    const time = player?.current?.getCurrentTime();
+
+    if (time === 0) {
+      return 0;
+    }
+
+    if (!time || !player.current) {
+      return -1;
+    }
+
+    return (player.current.getCurrentTime() / duration) * 100;
+  }, [duration]);
 
   return (
     <div className={styles.videoPlayer}>
@@ -101,6 +119,10 @@ export function VideoPlayer() {
         </div>
 
         <div className={styles.sliderAndComments}>
+          <div className={styles.sliderComments}>
+            <SliderComments />
+          </div>
+
           <Slider.Root
             className={styles.sliderRoot}
             min={0}
@@ -117,6 +139,8 @@ export function VideoPlayer() {
           </Slider.Root>
         </div>
       </div>
+
+      <NewThreadComposer getCurrentPercentage={getCurrentPercentage} />
     </div>
   );
 }
