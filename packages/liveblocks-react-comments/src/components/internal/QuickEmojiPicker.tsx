@@ -39,7 +39,10 @@ export const QuickEmojiPicker = forwardRef<
     return (
       <PopoverPrimitive.Root open={isOpen} onOpenChange={handleOpenChange}>
         {children}
-        <PopoverPrimitive.Portal>
+        <PopoverPrimitive.Portal
+          data-liveblocks-portal=""
+          className="lb-portal"
+        >
           <PopoverPrimitive.Content
             side="top"
             align="center"
