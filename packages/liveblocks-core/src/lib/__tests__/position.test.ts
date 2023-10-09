@@ -1,5 +1,6 @@
 import * as fc from "fast-check";
 
+import type { Pos } from "../position";
 import {
   __after as after,
   __before as before,
@@ -392,6 +393,9 @@ describe("makePosition", () => {
   test("before .1 lies .09", () =>
     expect(makePosition(undefined, ONE)).toBe(ZERO + NINE));
 
+  test("between .1 and .11 lies .105", () =>
+    expect(makePosition(ONE, asPos(ONE + ONE))).toBe(ONE + ZERO + MID));
+
   test("between .1 and .3 lies .2", () =>
     expect(makePosition(ONE, THREE)).toBe(TWO));
 
@@ -503,7 +507,15 @@ describe("comparePosition", () => {
           expect(mid > lo).toBe(true);
           expect(hi > mid).toBe(true);
         }
-      )
+      ),
+
+      {
+        examples: [
+          // Found these as counter examples once, adding them here to prevent regressions in the future
+          [["a", "a!"] as Pos[]],
+          [["a", "a                             !"] as Pos[]],
+        ],
+      }
     );
   });
 });

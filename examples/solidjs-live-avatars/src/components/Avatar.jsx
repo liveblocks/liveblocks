@@ -7,7 +7,7 @@ import styles from "./Avatar.module.css";
  * The users avatar and name are not set via the `useMyPresence` hook like the cursors.
  * They are set from the authentication endpoint.
  *
- * See pages/api/auth.ts and https://liveblocks.io/docs/api-reference/liveblocks-node#authorize for more information
+ * See pages/api/liveblocks-auth.ts and https://liveblocks.io/docs/api-reference/liveblocks-node#authorize for more information
  */
 
 const IMAGE_SIZE = 48;

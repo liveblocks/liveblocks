@@ -820,4 +820,28 @@ describe("LiveList single client", () => {
       }
     )
   );
+
+  test(
+    "create list with item + set",
+    prepareSingleClientTest(
+      {
+        list: null,
+      } as { list: LiveList<string> | null },
+      async ({ root, flushSocketMessages, room }) => {
+        const states: Json[] = [];
+        room.subscribe(root, () => states.push(lsonToJson(root)), {
+          isDeep: true,
+        });
+
+        const liveList = new LiveList<string>(["A"]);
+        root.set("list", liveList);
+
+        liveList.set(0, "B");
+
+        await flushSocketMessages();
+
+        expect(states).toEqual([{ list: ["A"] }, { list: ["B"] }]);
+      }
+    )
+  );
 });

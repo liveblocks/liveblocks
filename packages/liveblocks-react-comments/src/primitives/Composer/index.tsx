@@ -25,7 +25,6 @@ import type {
 } from "react";
 import React, {
   forwardRef,
-  memo,
   useCallback,
   useEffect,
   useImperativeHandle,
@@ -83,10 +82,10 @@ import { isKey } from "../../utils/is-key";
 import { Portal } from "../../utils/Portal";
 import { requestSubmit } from "../../utils/request-submit";
 import { useId } from "../../utils/use-id";
+import { useIndex } from "../../utils/use-index";
 import { useInitial } from "../../utils/use-initial";
 import { useLayoutEffect } from "../../utils/use-layout-effect";
 import { useRefs } from "../../utils/use-refs";
-import { useRovingIndex } from "../../utils/use-roving-index";
 import { toAbsoluteUrl } from "../Comment/utils";
 import {
   ComposerContext,
@@ -591,309 +590,304 @@ const defaultEditorComponents: ComposerEditorComponents = {
  * @example
  * <Composer.Editor placeholder="Write a comment…" />
  */
-const ComposerEditor = memo(
-  forwardRef<HTMLDivElement, ComposerEditorProps>(
-    (
-      {
-        defaultValue,
-        onKeyDown,
-        onFocus,
-        onBlur,
-        disabled,
-        autoFocus,
-        components,
-        dir,
-        ...props
+const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
+  (
+    {
+      defaultValue,
+      onKeyDown,
+      onFocus,
+      onBlur,
+      disabled,
+      autoFocus,
+      components,
+      dir,
+      ...props
+    },
+    forwardedRef
+  ) => {
+    const { useMentionSuggestions, useSelf } = useRoomContextBundle();
+    const self = useSelf();
+    const isDisabled = useMemo(
+      () => disabled || !self?.canComment,
+      [disabled, self?.canComment]
+    );
+    const { editor, validate, setFocused } = useComposerEditorContext();
+    const { submit, focus, isEmpty, isFocused } = useComposer();
+    const initialBody = useInitial(defaultValue ?? emptyCommentBody);
+    const initialEditorValue = useMemo(() => {
+      return commentBodyToComposerBody(initialBody);
+    }, [initialBody]);
+    const { Link, Mention, MentionSuggestions } = useMemo(
+      () => ({ ...defaultEditorComponents, ...components }),
+      [components]
+    );
+
+    const [mentionDraft, setMentionDraft] = useState<MentionDraft>();
+    const mentionSuggestions = useMentionSuggestions(mentionDraft?.text);
+    const [
+      selectedMentionSuggestionIndex,
+      setPreviousSelectedMentionSuggestionIndex,
+      setNextSelectedMentionSuggestionIndex,
+      setSelectedMentionSuggestionIndex,
+    ] = useIndex(0, mentionSuggestions?.length ?? 0);
+    const id = useId();
+    const suggestionsListId = useMemo(
+      () => `liveblocks-suggestions-list-${id}`,
+      [id]
+    );
+    const suggestionsListItemId = useCallback(
+      (userId?: string) =>
+        userId ? `liveblocks-suggestions-list-item-${id}-${userId}` : undefined,
+      [id]
+    );
+    const renderElement = useCallback(
+      (props: RenderElementProps) => {
+        return (
+          <ComposerEditorElement Mention={Mention} Link={Link} {...props} />
+        );
       },
-      forwardedRef
-    ) => {
-      const { useMentionSuggestions, useSelf } = useRoomContextBundle();
-      const self = useSelf();
-      const isDisabled = useMemo(
-        () => disabled || !self?.canComment,
-        [disabled, self?.canComment]
-      );
-      const { editor, validate, setFocused } = useComposerEditorContext();
-      const { submit, focus, isEmpty, isFocused } = useComposer();
-      const initialBody = useInitial(defaultValue ?? emptyCommentBody);
-      const initialEditorValue = useMemo(() => {
-        return commentBodyToComposerBody(initialBody);
-      }, [initialBody]);
-      const { Link, Mention, MentionSuggestions } = useMemo(
-        () => ({ ...defaultEditorComponents, ...components }),
-        [components]
-      );
+      [Link, Mention]
+    );
 
-      const [mentionDraft, setMentionDraft] = useState<MentionDraft>();
-      const mentionSuggestions = useMentionSuggestions(mentionDraft?.text);
-      const [
-        selectedMentionSuggestionIndex,
-        setPreviousSelectedMentionSuggestionIndex,
-        setNextSelectedMentionSuggestionIndex,
-        setSelectedMentionSuggestionIndex,
-      ] = useRovingIndex(0, mentionSuggestions?.length ?? 0);
-      const id = useId();
-      const suggestionsListId = useMemo(
-        () => `liveblocks-suggestions-list-${id}`,
-        [id]
-      );
-      const suggestionsListItemId = useCallback(
-        (userId?: string) =>
-          userId
-            ? `liveblocks-suggestions-list-item-${id}-${userId}`
-            : undefined,
-        [id]
-      );
-      const renderElement = useCallback(
-        (props: RenderElementProps) => {
-          return (
-            <ComposerEditorElement Mention={Mention} Link={Link} {...props} />
-          );
-        },
-        [Link, Mention]
-      );
+    const handleChange = useCallback(
+      (value: SlateDescendant[]) => {
+        validate(value as SlateElement[]);
 
-      const handleChange = useCallback(
-        (value: SlateDescendant[]) => {
-          validate(value as SlateElement[]);
+        setMentionDraft(getMentionDraftAtSelection(editor));
+      },
+      [editor, validate]
+    );
 
-          setMentionDraft(getMentionDraftAtSelection(editor));
-        },
-        [editor, validate]
-      );
-
-      const createMention = useCallback(
-        (userId?: string) => {
-          if (!mentionDraft || !userId) {
-            return;
-          }
-
-          SlateTransforms.select(editor, mentionDraft.range);
-          insertMention(editor, userId);
-          setMentionDraft(undefined);
-          setSelectedMentionSuggestionIndex(0);
-        },
-        [editor, mentionDraft, setSelectedMentionSuggestionIndex]
-      );
-
-      const handleKeyDown = useCallback(
-        (event: KeyboardEvent<HTMLDivElement>) => {
-          onKeyDown?.(event);
-
-          if (event.isDefaultPrevented()) {
-            return;
-          }
-
-          // Allow leaving marks with ArrowLeft
-          if (isKey(event, "ArrowLeft")) {
-            leaveMarkEdge(editor, "start");
-          }
-
-          // Allow leaving marks with ArrowRight
-          if (isKey(event, "ArrowRight")) {
-            leaveMarkEdge(editor, "end");
-          }
-
-          if (mentionDraft && mentionSuggestions?.length) {
-            // Select the next mention suggestion on ArrowDown
-            if (isKey(event, "ArrowDown")) {
-              event.preventDefault();
-              setNextSelectedMentionSuggestionIndex();
-            }
-
-            // Select the previous mention suggestion on ArrowUp
-            if (isKey(event, "ArrowUp")) {
-              event.preventDefault();
-              setPreviousSelectedMentionSuggestionIndex();
-            }
-
-            // Create a mention on Enter/Tab
-            if (isKey(event, "Enter") || isKey(event, "Tab")) {
-              event.preventDefault();
-
-              const userId =
-                mentionSuggestions?.[selectedMentionSuggestionIndex];
-              createMention(userId);
-            }
-
-            // Close the suggestions on Escape
-            if (isKey(event, "Escape")) {
-              event.preventDefault();
-              setMentionDraft(undefined);
-              setSelectedMentionSuggestionIndex(0);
-            }
-          } else {
-            // Blur the editor on Escape
-            if (isKey(event, "Escape")) {
-              event.preventDefault();
-              ReactEditor.blur(editor);
-            }
-
-            // Submit the editor on Enter
-            if (isKey(event, "Enter", { shift: false }) && !isEmpty) {
-              event.preventDefault();
-              submit();
-            }
-
-            // Create a new line on Shift + Enter
-            if (isKey(event, "Enter", { shift: true })) {
-              event.preventDefault();
-              editor.insertBreak();
-            }
-
-            // Toggle bold on Command/Control + B
-            if (isKey(event, "b", { mod: true })) {
-              event.preventDefault();
-              toggleMark(editor, "bold");
-            }
-
-            // Toggle italic on Command/Control + I
-            if (isKey(event, "i", { mod: true })) {
-              event.preventDefault();
-              toggleMark(editor, "italic");
-            }
-
-            // Toggle strikethrough on Command/Control + Shift + S
-            if (isKey(event, "s", { mod: true, shift: true })) {
-              event.preventDefault();
-              toggleMark(editor, "strikethrough");
-            }
-
-            // Toggle code on Command/Control + E
-            if (isKey(event, "e", { mod: true })) {
-              event.preventDefault();
-              toggleMark(editor, "code");
-            }
-          }
-        },
-        [
-          createMention,
-          editor,
-          isEmpty,
-          mentionDraft,
-          mentionSuggestions,
-          selectedMentionSuggestionIndex,
-          onKeyDown,
-          setNextSelectedMentionSuggestionIndex,
-          setPreviousSelectedMentionSuggestionIndex,
-          setSelectedMentionSuggestionIndex,
-          submit,
-        ]
-      );
-
-      const handleFocus = useCallback(
-        (event: FocusEvent<HTMLDivElement>) => {
-          onFocus?.(event);
-
-          if (!event.isDefaultPrevented()) {
-            setFocused(true);
-          }
-        },
-        [onFocus, setFocused]
-      );
-
-      const handleBlur = useCallback(
-        (event: FocusEvent<HTMLDivElement>) => {
-          onBlur?.(event);
-
-          if (!event.isDefaultPrevented()) {
-            setFocused(false);
-          }
-        },
-        [onBlur, setFocused]
-      );
-
-      const selectedMentionSuggestionUserId = useMemo(
-        () => mentionSuggestions?.[selectedMentionSuggestionIndex],
-        [selectedMentionSuggestionIndex, mentionSuggestions]
-      );
-      const setSelectedMentionSuggestionUserId = useCallback(
-        (userId: string) => {
-          const index = mentionSuggestions?.indexOf(userId);
-
-          if (index !== undefined && index >= 0) {
-            setSelectedMentionSuggestionIndex(index);
-          }
-        },
-        [setSelectedMentionSuggestionIndex, mentionSuggestions]
-      );
-
-      const propsWhileSuggesting: AriaAttributes = useMemo(
-        () =>
-          mentionDraft
-            ? {
-                role: "combobox",
-                "aria-autocomplete": "list",
-                "aria-expanded": true,
-                "aria-controls": suggestionsListId,
-                "aria-activedescendant": suggestionsListItemId(
-                  selectedMentionSuggestionUserId
-                ),
-              }
-            : {},
-        [
-          mentionDraft,
-          suggestionsListId,
-          suggestionsListItemId,
-          selectedMentionSuggestionUserId,
-        ]
-      );
-
-      useImperativeHandle(
-        forwardedRef,
-        () => {
-          return ReactEditor.toDOMNode(editor, editor) as HTMLDivElement;
-        },
-        [editor]
-      );
-
-      useEffect(() => {
-        if (autoFocus) {
-          focus();
+    const createMention = useCallback(
+      (userId?: string) => {
+        if (!mentionDraft || !userId) {
+          return;
         }
-      }, [autoFocus, editor, focus]);
 
-      return (
-        <Slate
-          editor={editor}
-          initialValue={initialEditorValue}
-          onChange={handleChange}
-        >
-          <Editable
+        SlateTransforms.select(editor, mentionDraft.range);
+        insertMention(editor, userId);
+        setMentionDraft(undefined);
+        setSelectedMentionSuggestionIndex(0);
+      },
+      [editor, mentionDraft, setSelectedMentionSuggestionIndex]
+    );
+
+    const handleKeyDown = useCallback(
+      (event: KeyboardEvent<HTMLDivElement>) => {
+        onKeyDown?.(event);
+
+        if (event.isDefaultPrevented()) {
+          return;
+        }
+
+        // Allow leaving marks with ArrowLeft
+        if (isKey(event, "ArrowLeft")) {
+          leaveMarkEdge(editor, "start");
+        }
+
+        // Allow leaving marks with ArrowRight
+        if (isKey(event, "ArrowRight")) {
+          leaveMarkEdge(editor, "end");
+        }
+
+        if (mentionDraft && mentionSuggestions?.length) {
+          // Select the next mention suggestion on ArrowDown
+          if (isKey(event, "ArrowDown")) {
+            event.preventDefault();
+            setNextSelectedMentionSuggestionIndex();
+          }
+
+          // Select the previous mention suggestion on ArrowUp
+          if (isKey(event, "ArrowUp")) {
+            event.preventDefault();
+            setPreviousSelectedMentionSuggestionIndex();
+          }
+
+          // Create a mention on Enter/Tab
+          if (isKey(event, "Enter") || isKey(event, "Tab")) {
+            event.preventDefault();
+
+            const userId = mentionSuggestions?.[selectedMentionSuggestionIndex];
+            createMention(userId);
+          }
+
+          // Close the suggestions on Escape
+          if (isKey(event, "Escape")) {
+            event.preventDefault();
+            setMentionDraft(undefined);
+            setSelectedMentionSuggestionIndex(0);
+          }
+        } else {
+          // Blur the editor on Escape
+          if (isKey(event, "Escape")) {
+            event.preventDefault();
+            ReactEditor.blur(editor);
+          }
+
+          // Submit the editor on Enter
+          if (isKey(event, "Enter", { shift: false }) && !isEmpty) {
+            event.preventDefault();
+            submit();
+          }
+
+          // Create a new line on Shift + Enter
+          if (isKey(event, "Enter", { shift: true })) {
+            event.preventDefault();
+            editor.insertBreak();
+          }
+
+          // Toggle bold on Command/Control + B
+          if (isKey(event, "b", { mod: true })) {
+            event.preventDefault();
+            toggleMark(editor, "bold");
+          }
+
+          // Toggle italic on Command/Control + I
+          if (isKey(event, "i", { mod: true })) {
+            event.preventDefault();
+            toggleMark(editor, "italic");
+          }
+
+          // Toggle strikethrough on Command/Control + Shift + S
+          if (isKey(event, "s", { mod: true, shift: true })) {
+            event.preventDefault();
+            toggleMark(editor, "strikethrough");
+          }
+
+          // Toggle code on Command/Control + E
+          if (isKey(event, "e", { mod: true })) {
+            event.preventDefault();
+            toggleMark(editor, "code");
+          }
+        }
+      },
+      [
+        createMention,
+        editor,
+        isEmpty,
+        mentionDraft,
+        mentionSuggestions,
+        selectedMentionSuggestionIndex,
+        onKeyDown,
+        setNextSelectedMentionSuggestionIndex,
+        setPreviousSelectedMentionSuggestionIndex,
+        setSelectedMentionSuggestionIndex,
+        submit,
+      ]
+    );
+
+    const handleFocus = useCallback(
+      (event: FocusEvent<HTMLDivElement>) => {
+        onFocus?.(event);
+
+        if (!event.isDefaultPrevented()) {
+          setFocused(true);
+        }
+      },
+      [onFocus, setFocused]
+    );
+
+    const handleBlur = useCallback(
+      (event: FocusEvent<HTMLDivElement>) => {
+        onBlur?.(event);
+
+        if (!event.isDefaultPrevented()) {
+          setFocused(false);
+        }
+      },
+      [onBlur, setFocused]
+    );
+
+    const selectedMentionSuggestionUserId = useMemo(
+      () => mentionSuggestions?.[selectedMentionSuggestionIndex],
+      [selectedMentionSuggestionIndex, mentionSuggestions]
+    );
+    const setSelectedMentionSuggestionUserId = useCallback(
+      (userId: string) => {
+        const index = mentionSuggestions?.indexOf(userId);
+
+        if (index !== undefined && index >= 0) {
+          setSelectedMentionSuggestionIndex(index);
+        }
+      },
+      [setSelectedMentionSuggestionIndex, mentionSuggestions]
+    );
+
+    const propsWhileSuggesting: AriaAttributes = useMemo(
+      () =>
+        mentionDraft
+          ? {
+              role: "combobox",
+              "aria-autocomplete": "list",
+              "aria-expanded": true,
+              "aria-controls": suggestionsListId,
+              "aria-activedescendant": suggestionsListItemId(
+                selectedMentionSuggestionUserId
+              ),
+            }
+          : {},
+      [
+        mentionDraft,
+        suggestionsListId,
+        suggestionsListItemId,
+        selectedMentionSuggestionUserId,
+      ]
+    );
+
+    useImperativeHandle(
+      forwardedRef,
+      () => {
+        return ReactEditor.toDOMNode(editor, editor) as HTMLDivElement;
+      },
+      [editor]
+    );
+
+    useEffect(() => {
+      if (autoFocus) {
+        focus();
+      }
+    }, [autoFocus, editor, focus]);
+
+    return (
+      <Slate
+        editor={editor}
+        initialValue={initialEditorValue}
+        onChange={handleChange}
+      >
+        <Editable
+          dir={dir}
+          enterKeyHint={mentionDraft ? "enter" : "send"}
+          autoCapitalize="sentences"
+          aria-label="Composer editor"
+          data-focused={isFocused || undefined}
+          data-disabled={isDisabled || undefined}
+          {...propsWhileSuggesting}
+          {...props}
+          readOnly={isDisabled}
+          disabled={isDisabled}
+          onKeyDown={handleKeyDown}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
+          renderElement={renderElement}
+          renderLeaf={ComposerEditorLeaf}
+          renderPlaceholder={ComposerEditorPlaceholder}
+        />
+        {mentionDraft && (
+          <ComposerEditorMentionSuggestionsWrapper
             dir={dir}
-            enterKeyHint={mentionDraft ? "enter" : "send"}
-            autoCapitalize="sentences"
-            aria-label="Composer editor"
-            data-focused={isFocused || undefined}
-            data-disabled={isDisabled || undefined}
-            {...propsWhileSuggesting}
-            {...props}
-            readOnly={isDisabled}
-            disabled={isDisabled}
-            onKeyDown={handleKeyDown}
-            onFocus={handleFocus}
-            onBlur={handleBlur}
-            renderElement={renderElement}
-            renderLeaf={ComposerEditorLeaf}
-            renderPlaceholder={ComposerEditorPlaceholder}
+            mentionDraft={mentionDraft}
+            selectedUserId={selectedMentionSuggestionUserId}
+            setSelectedUserId={setSelectedMentionSuggestionUserId}
+            userIds={mentionSuggestions}
+            id={suggestionsListId}
+            itemId={suggestionsListItemId}
+            onItemSelect={createMention}
+            MentionSuggestions={MentionSuggestions}
           />
-          {mentionDraft && (
-            <ComposerEditorMentionSuggestionsWrapper
-              dir={dir}
-              mentionDraft={mentionDraft}
-              selectedUserId={selectedMentionSuggestionUserId}
-              setSelectedUserId={setSelectedMentionSuggestionUserId}
-              userIds={mentionSuggestions}
-              id={suggestionsListId}
-              itemId={suggestionsListItemId}
-              onItemSelect={createMention}
-              MentionSuggestions={MentionSuggestions}
-            />
-          )}
-        </Slate>
-      );
-    }
-  )
+        )}
+      </Slate>
+    );
+  }
 );
 
 /**
@@ -905,132 +899,130 @@ const ComposerEditor = memo(
  *   <Composer.Submit />
  * </Composer.Form>
  */
-const ComposerForm = memo(
-  forwardRef<HTMLFormElement, ComposerFormProps>(
-    (
-      { children, onSubmit, onComposerSubmit, asChild, ...props },
-      forwardedRef
-    ) => {
-      const Component = asChild ? Slot : "form";
-      const editor = useInitial(createComposerEditor);
-      const [isEmpty, setEmpty] = useState(true);
-      const [isFocused, setFocused] = useState(false);
-      const ref = useRef<HTMLFormElement>(null);
-      const mergedRefs = useRefs(forwardedRef, ref);
+const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
+  (
+    { children, onSubmit, onComposerSubmit, asChild, ...props },
+    forwardedRef
+  ) => {
+    const Component = asChild ? Slot : "form";
+    const editor = useInitial(createComposerEditor);
+    const [isEmpty, setEmpty] = useState(true);
+    const [isFocused, setFocused] = useState(false);
+    const ref = useRef<HTMLFormElement>(null);
+    const mergedRefs = useRefs(forwardedRef, ref);
 
-      const validate = useCallback(
-        (value: SlateElement[]) => {
-          setEmpty(isEditorEmpty(editor, value));
+    const validate = useCallback(
+      (value: SlateElement[]) => {
+        setEmpty(isEditorEmpty(editor, value));
+      },
+      [editor]
+    );
+
+    const submit = useCallback(() => {
+      if (ref.current) {
+        requestSubmit(ref.current);
+      }
+    }, []);
+
+    const clear = useCallback(() => {
+      SlateTransforms.delete(editor, {
+        at: {
+          anchor: SlateEditor.start(editor, []),
+          focus: SlateEditor.end(editor, []),
         },
-        [editor]
-      );
+      });
+    }, [editor]);
 
-      const submit = useCallback(() => {
-        if (ref.current) {
-          requestSubmit(ref.current);
-        }
-      }, []);
-
-      const clear = useCallback(() => {
-        SlateTransforms.delete(editor, {
-          at: {
-            anchor: SlateEditor.start(editor, []),
-            focus: SlateEditor.end(editor, []),
-          },
-        });
-      }, [editor]);
-
-      const focus = useCallback(
-        (resetSelection = true) => {
-          if (!ReactEditor.isFocused(editor)) {
-            SlateTransforms.select(
-              editor,
-              resetSelection || !editor.selection
-                ? SlateEditor.end(editor, [])
-                : editor.selection
-            );
-            ReactEditor.focus(editor);
-          }
-        },
-        [editor]
-      );
-
-      const blur = useCallback(() => {
-        ReactEditor.blur(editor);
-      }, [editor]);
-
-      const onSubmitEnd = useCallback(() => {
-        clear();
-        blur();
-      }, [blur, clear]);
-
-      const createMention = useCallback(() => {
-        focus();
-        insertMentionCharacter(editor);
-      }, [editor, focus]);
-
-      const insertText = useCallback(
-        (text: string) => {
-          focus(false);
-          insertSlateText(editor, text);
-        },
-        [editor, focus]
-      );
-
-      const handleSubmit = useCallback(
-        (event: FormEvent<HTMLFormElement>) => {
-          onSubmit?.(event);
-
-          if (event.isDefaultPrevented()) {
-            return;
-          }
-
-          const body = composerBodyToCommentBody(
-            editor.children as ComposerBodyData
-          );
-          const comment = { body };
-
-          const promise = onComposerSubmit?.(comment, event);
-
-          event.preventDefault();
-
-          if (promise) {
-            promise.then(onSubmitEnd);
-          } else {
-            onSubmitEnd();
-          }
-        },
-        [editor.children, onComposerSubmit, onSubmit, onSubmitEnd]
-      );
-
-      return (
-        <ComposerEditorContext.Provider
-          value={{
+    const focus = useCallback(
+      (resetSelection = true) => {
+        if (!ReactEditor.isFocused(editor)) {
+          SlateTransforms.select(
             editor,
-            validate,
-            setFocused,
+            resetSelection || !editor.selection
+              ? SlateEditor.end(editor, [])
+              : editor.selection
+          );
+          ReactEditor.focus(editor);
+        }
+      },
+      [editor]
+    );
+
+    const blur = useCallback(() => {
+      ReactEditor.blur(editor);
+    }, [editor]);
+
+    const onSubmitEnd = useCallback(() => {
+      clear();
+      blur();
+    }, [blur, clear]);
+
+    const createMention = useCallback(() => {
+      focus();
+      insertMentionCharacter(editor);
+    }, [editor, focus]);
+
+    const insertText = useCallback(
+      (text: string) => {
+        focus(false);
+        insertSlateText(editor, text);
+      },
+      [editor, focus]
+    );
+
+    const handleSubmit = useCallback(
+      (event: FormEvent<HTMLFormElement>) => {
+        onSubmit?.(event);
+
+        if (event.isDefaultPrevented()) {
+          return;
+        }
+
+        const body = composerBodyToCommentBody(
+          editor.children as ComposerBodyData
+        );
+        const comment = { body };
+
+        const promise = onComposerSubmit?.(comment, event);
+
+        event.preventDefault();
+
+        if (promise) {
+          promise.then(onSubmitEnd);
+        } else {
+          onSubmitEnd();
+        }
+      },
+      [editor.children, onComposerSubmit, onSubmit, onSubmitEnd]
+    );
+
+    return (
+      <ComposerEditorContext.Provider
+        value={{
+          editor,
+          validate,
+          setFocused,
+        }}
+      >
+        <ComposerContext.Provider
+          value={{
+            isFocused,
+            isEmpty,
+            submit,
+            clear,
+            focus,
+            blur,
+            createMention,
+            insertText,
           }}
         >
-          <ComposerContext.Provider
-            value={{
-              isFocused,
-              isEmpty,
-              submit,
-              clear,
-              focus,
-              blur,
-              createMention,
-              insertText,
-            }}
-          >
-            <Component {...props} onSubmit={handleSubmit} ref={mergedRefs}>
-              {children}
-            </Component>
-          </ComposerContext.Provider>
-        </ComposerEditorContext.Provider>
-      );
-    }
-  )
+          <Component {...props} onSubmit={handleSubmit} ref={mergedRefs}>
+            {children}
+          </Component>
+        </ComposerContext.Provider>
+      </ComposerEditorContext.Provider>
+    );
+  }
 );
 
 /**

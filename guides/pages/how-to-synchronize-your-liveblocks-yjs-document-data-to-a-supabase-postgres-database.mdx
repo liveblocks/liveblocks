@@ -265,7 +265,7 @@ export async function POST(request: Request) {
     return new Response("Could not verify webhook call", { status: 400 });
   }
 
-  // When Yjs document data has been udpated
+  // When Yjs document data has been updated
   if (event.type === "ydocUpdated") {
     const { roomId } = event.data;
 
@@ -311,7 +311,7 @@ export async function POST(request: Request) {
     return new Response("Could not verify webhook call", { status: 400 });
   }
 
-  // When Yjs document data has been udpated
+  // When Yjs document data has been updated
   if (event.type === "ydocUpdated") {
     const { roomId } = event.data;
 
@@ -470,7 +470,7 @@ export async function POST(request: Request) {
     return new Response("Could not verify webhook call", { status: 400 });
   }
 
-  // When Yjs document data has been udpated
+  // When Yjs document data has been updated
   if (event.type === "ydocUpdated") {
     const { roomId } = event.data;
 

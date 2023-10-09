@@ -6,8 +6,8 @@ import {
   FLOATING_ELEMENT_COLLISION_PADDING,
   FLOATING_ELEMENT_SIDE_OFFSET,
 } from "../../constants";
-import { Emoji } from "../../primitives/internal/Emoji";
 import { classNames } from "../../utils/class-names";
+import { Emoji } from "../internal/Emoji";
 
 export interface QuickEmojiPickerProps extends ComponentPropsWithoutRef<"div"> {
   onOpenChange?: (open: boolean) => void;

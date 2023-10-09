@@ -1,3 +1,59 @@
+# v1.4.5
+
+### `@liveblocks/react`
+
+- Fix `createThread` not creating valid comment.
+
+### `@liveblocks/node`
+
+- Fix URL encoding bug
+
+# v1.4.4
+
+### `@liveblocks/react`
+
+- Fix `removeReaction` not removing reactions which led to reactions displaying
+  a count of 0.
+
+### `@liveblocks/react-comments`
+
+- Fix reactions list (and its add button) showing on all comments.
+- Improve emoji rendering on Windows.
+- Hide country flag emojis when unsupported. (e.g. on Windows)
+
+# v1.4.3
+
+### `@liveblocks/react`
+
+- Add new Comments hooks to add/remove reactions.
+- Fix a bug in `useOthers()` that could lead to the warning "The result of
+  getServerSnapshot should be cached to avoid an infinite loop"
+
+### `@liveblocks/react-comments`
+
+- Add support for reactions. (👍)
+- Add keyboard navigation to emoji picker.
+
+# v1.4.2
+
+### `@liveblocks/client`
+
+- Fix a bug where calculating the insertion position between two existing
+  elements could happen incorrectly in a small edge case
+
+# v1.4.1
+
+### `@liveblocks/*`
+
+- [#1177](https://github.com/liveblocks/liveblocks/pull/1177) Fix an issue with
+  internal LiveList serialization that could lead to a "ghosting" bug with
+  `@liveblocks/zustand` / `@liveblocks/redux` when using tuples.
+
+### `@liveblocks/node`
+
+- Add comment reaction webhook events `CommentReactionAdded` and
+  `CommentReactionRemoved`
+
 # v1.4.0
 
 ### DevTools

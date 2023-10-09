@@ -1,9 +1,13 @@
 import type { CommentBody } from "./CommentBody";
 
+type CommentReactionUser = {
+  id: string;
+};
+
 export type CommentReaction = {
   emoji: string;
-  userId: string;
   createdAt: string;
+  users: CommentReactionUser[];
 };
 
 /**

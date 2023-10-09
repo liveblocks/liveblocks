@@ -1,10 +1,42 @@
-import { chromium, expect, Page } from "@playwright/test";
-import _ from "lodash";
-import randomNumber from "../utils/randomNumber";
 import type { Json } from "@liveblocks/client";
+import type { Page, TestInfo } from "@playwright/test";
+import { chromium, expect } from "@playwright/test";
+import _ from "lodash";
+import { randomInt } from "../utils";
+
+export type IDSelector = `#${string}`;
 
 const WIDTH = 640;
 const HEIGHT = 800;
+
+function getTestFilename(fullPath: string): string {
+  const parts = fullPath.split("/");
+  const index = parts.findIndex((part) => part === "test");
+  if (index < 0) {
+    throw new Error("Cannot find the test file name reliably");
+  }
+  return parts.splice(index + 1).join("/");
+}
+
+/**
+ * Generates a unique room ID for this specific test, based on the test's
+ * filename and the full test name. Additionally, will prepend the Git SHA if
+ * available (e.g. when running in CI).
+ */
+export function genRoomId(testInfo: TestInfo) {
+  const prefix = process.env.NEXT_PUBLIC_GITHUB_SHA
+    ? process.env.NEXT_PUBLIC_GITHUB_SHA.slice(0, 2)
+    : null;
+  const title = [prefix, getTestFilename(testInfo.file), testInfo.title]
+    .filter(Boolean)
+    .join(":")
+    .toLowerCase()
+    .replace(/[^\w\d:.\/]+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-+/, "")
+    .replace(/-+$/, "");
+  return `e2e:${title}`;
+}
 
 export async function preparePage(url: string, windowPositionX: number = 0) {
   let page: Page;
@@ -27,154 +59,110 @@ export async function preparePage(url: string, windowPositionX: number = 0) {
 }
 
 export async function preparePages(url: string) {
-  const firstPage = await preparePage(url, 0);
-  const secondPage = await preparePage(url, WIDTH);
-
-  return [firstPage, secondPage];
+  const firstUrl = new URL(url);
+  const secondUrl = new URL(url);
+  firstUrl.searchParams.set("bg", "#cafbca");
+  secondUrl.searchParams.set("bg", "#e9ddf9");
+  return Promise.all([
+    preparePage(firstUrl.toString(), 0),
+    preparePage(secondUrl.toString(), WIDTH),
+  ] as const);
 }
 
-export async function assertContainText(
-  pages: Page[],
-  value: string,
-  id: string = "itemsCount"
+export async function waitForJson(
+  oneOrMorePages: Page | Page[],
+  selector: IDSelector,
+  expectedValue: Json
 ) {
-  for (let i = 0; i < pages.length; i++) {
-    await expect(pages[i].locator(`#${id}`)).toContainText(value);
-  }
-}
+  const pages = Array.isArray(oneOrMorePages)
+    ? oneOrMorePages
+    : [oneOrMorePages];
 
-export async function getTextContentOrEmpty(
-  page: Page,
-  id: string
-): Promise<string> {
-  const selector = id.startsWith(".") || id.startsWith("#") ? id : `#${id}`;
-  return page.locator(selector).innerText();
-}
-
-export async function getTextContent(page: Page, id: string): Promise<string> {
-  const text = await getTextContentOrEmpty(page, id);
-  if (!text) {
-    throw new Error(`Could not find HTML element #${id}`);
-  }
-  return text;
-}
-
-export async function getJsonContent(page: Page, id: string): Promise<Json> {
-  const text = await getTextContent(page, id);
-  return JSON.parse(text);
-}
-
-export async function assertJsonContentAreEquals(
-  pages: Page[],
-  id: string = "items"
-) {
-  const firstPageContent = await getJsonContent(pages[0], id);
-
-  for (const page of pages.slice(1)) {
-    const otherPageContent = await getJsonContent(page, id);
-    expect(firstPageContent).toEqual(otherPageContent);
-  }
-
-  pages.forEach(async (page) => {
-    expect(firstPageContent).toEqual(await getJsonContent(page, id));
-  });
-}
-
-export function delay(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-type TimeoutOptions = {
-  timeout?: number;
-  step?: number;
-};
-
-const DEFAULT_TIMEOUT = 1500;
-const DEFAULT_STEP = 60;
-
-export async function waitForTextContent(
-  page: Page,
-  id: string,
-  expectedText: string,
-  options?: TimeoutOptions
-) {
-  const start = Date.now();
-  const timeoutAt = start + (options?.timeout ?? DEFAULT_TIMEOUT);
-  const attempts = [];
-
-  do {
-    const foundText = await getTextContentOrEmpty(page, id);
-    const ms = Date.now() - start;
-    if (!foundText) {
-      attempts.push(`(after ${ms}ms) Element with id ${id} not found yet`);
-    } else if (foundText !== expectedText) {
-      attempts.push(
-        `(after ${ms}ms) Element did not contain expected text yet: ${JSON.stringify(
-          foundText
-        )}`
-      );
-    } else {
-      // Done!
-      return;
-    }
-    await delay(options?.step ?? DEFAULT_STEP);
-  } while (Date.now() < timeoutAt);
-
-  const ms = Date.now() - start;
-  attempts.push(`(after ${ms}ms) Timed out`);
-  throw new Error(
-    `Expected text content was never found\n\nid: ${id}\nI tried looking for: ${JSON.stringify(
-      expectedText
-    )}\n\nHere were my attempts:\n${attempts.join("\n")}`
+  const expectedText = JSON.stringify(expectedValue, null, 2);
+  return Promise.all(
+    pages.map((page) =>
+      expect(page.locator(selector)).toHaveText(expectedText, { timeout: 5000 })
+    )
   );
 }
 
-export async function waitForContentToBeEquals(
-  pages: Page[],
-  id: string = "items"
+export async function expectJson(
+  page: Page,
+  selector: IDSelector,
+  expectedValue: Json | undefined
+) {
+  if (expectedValue !== undefined) {
+    await expect(getJson(page, selector)).resolves.toEqual(expectedValue);
+  } else {
+    const text = page.locator(selector).innerText();
+    await expect(text).toEqual("undefined");
+  }
+}
+
+export async function getJson(page: Page, selector: IDSelector): Promise<Json> {
+  const text = await page.locator(selector).innerText();
+  if (!text) {
+    throw new Error(`Could not find HTML element #${selector}`);
+  }
+  return JSON.parse(text);
+}
+
+async function getBoth(pages: [Page, Page], selector: IDSelector) {
+  const [page1, page2] = pages;
+  const value1 = await getJson(page1, selector);
+  const value2 = await getJson(page2, selector);
+  return [value1, value2];
+}
+
+export async function expectJsonEqualOnAllPages(
+  pages: [Page, Page],
+  selector: IDSelector
+) {
+  const [value1, value2] = await getBoth(pages, selector);
+  expect(value1).toEqual(value2);
+}
+
+export async function waitUntilEqualOnAllPages(
+  pages: [Page, Page],
+  selector: IDSelector
 ) {
   for (let i = 0; i < 20; i++) {
-    const firstPageContent = await getJsonContent(pages[0], id);
-
-    let allEquals = true;
-
-    for (let pI = 1; pI < pages.length; pI++) {
-      const otherPageContent = await getJsonContent(pages[pI], id);
-
-      if (!_.isEqual(firstPageContent, otherPageContent)) {
-        allEquals = false;
-      }
+    const [value1, value2] = await getBoth(pages, selector);
+    if (_.isEqual(value1, value2)) {
+      return; // Great, we're done!
+    } else {
+      await sleep(100);
     }
-
-    if (allEquals) {
-      return;
-    }
-
-    await delay(100);
   }
 
-  await assertJsonContentAreEquals(pages, id);
+  // We didn't find the values in sync, so call expectJsonEqualOnAllPages() so
+  // it will fail the wait
+  await expectJsonEqualOnAllPages(pages, selector);
 }
 
-export async function assertItems(
-  pages: Page[],
-  json: any,
-  id: string = "items"
-) {
-  for (const page of pages) {
-    await expect(getJsonContent(page, id)).toEqual(json);
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * Sleep anywhere between 0 and 50 milliseconds.
+ */
+export function nanoSleep() {
+  return sleep(randomInt(50));
+}
+
+export function pickFrom<T>(array: readonly T[]): T {
+  if (array.length <= 0) {
+    throw new Error("Cannot pick from an empty list");
   }
+  return array[randomInt(array.length)];
 }
 
-export function pickRandomItem<T>(array: T[]) {
-  return array[randomNumber(array.length)];
-}
-
-export function pickNumberOfUnderRedo() {
-  const undoRedoProb = randomNumber(100);
+export function pickNumberOfUndoRedo() {
+  const undoRedoProb = randomInt(100);
 
   if (undoRedoProb > 75) {
-    return randomNumber(5);
+    return randomInt(5);
   }
 
   return 0;
