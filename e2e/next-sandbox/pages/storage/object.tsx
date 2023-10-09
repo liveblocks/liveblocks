@@ -19,9 +19,10 @@ const {
   RoomProvider,
   useCanRedo,
   useCanUndo,
-  useObject,
+  useMutation,
   useRedo,
   useSelf,
+  useStorage,
   useUndo,
 } = createRoomContext<
   never,
@@ -55,21 +56,43 @@ function Sandbox() {
   const redo = useRedo();
   const canUndo = useCanUndo();
   const canRedo = useCanRedo();
-  const obj = useObject("object");
+  const obj = useStorage((root) => root.object);
   const me = useSelf();
+
+  const set_ = useMutation(
+    ({ storage }, key: string, value: number | LiveObject<{ a: number }>) => {
+      const obj = storage.get("object");
+      obj.set(key, value);
+    },
+    []
+  );
+
+  const delete_ = useMutation(({ storage }, key: string) => {
+    const obj = storage.get("object");
+    obj.delete(key);
+  }, []);
+
+  const clear = useMutation(({ storage }) => {
+    const obj = storage.get("object");
+    const keys = Object.keys(obj.toObject());
+    let key;
+    while ((key = keys.pop()) !== undefined) {
+      obj.delete(key);
+    }
+  }, []);
 
   if (obj === null || me === null) {
     return <div>Loading...</div>;
   }
 
-  const keys = Object.keys(obj.toObject());
+  const keys = Object.keys(obj);
   const canDelete = keys.length > 0;
 
   const nextKey = randomInt(10).toString();
   const nextValue = randomInt(10);
   const nextNestedKey = randomInt(10).toString();
   const nextNestedValue = { a: randomInt(10) };
-  const nextKeyToDelete = canDelete ? keys[randomInt(keys.length)] : -1;
+  const nextKeyToDelete = canDelete ? keys[randomInt(keys.length)] : "";
 
   return (
     <div>
@@ -79,7 +102,7 @@ function Sandbox() {
       <div style={{ display: "flex", margin: "8px 0" }}>
         <Button
           id="set"
-          onClick={() => obj.set(nextKey, nextValue)}
+          onClick={() => set_(nextKey, nextValue)}
           subtitle={`${JSON.stringify(nextKey)} → ${JSON.stringify(nextValue)}`}
         >
           Set
@@ -89,7 +112,7 @@ function Sandbox() {
           id="set-nested"
           onClick={() => {
             const nestedLiveObj = new LiveObject(nextNestedValue);
-            obj.set(nextNestedKey, nestedLiveObj);
+            set_(nextNestedKey, nestedLiveObj);
           }}
           subtitle={`${JSON.stringify(nextNestedKey)} → ${JSON.stringify(
             nextNestedValue
@@ -103,21 +126,14 @@ function Sandbox() {
           enabled={canDelete}
           onClick={() => {
             if (!canDelete) return;
-            obj.delete(nextKeyToDelete);
+            delete_(nextKeyToDelete);
           }}
           subtitle={canDelete ? `key ${JSON.stringify(nextKeyToDelete)}` : null}
         >
           Delete
         </Button>
 
-        <Button
-          id="clear"
-          onClick={() => {
-            while (Object.keys(obj.toObject()).length > 0) {
-              obj.delete(Array.from(Object.keys(obj.toObject()))[0]);
-            }
-          }}
-        >
+        <Button id="clear" onClick={clear}>
           Clear
         </Button>
 

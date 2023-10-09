@@ -14,8 +14,15 @@ import createLiveblocksClient from "../../utils/createClient";
 
 const client = createLiveblocksClient();
 
-const { RoomProvider, useCanRedo, useCanUndo, useMap, useRedo, useUndo } =
-  createRoomContext<never, { map: LiveMap<string, string> }>(client);
+const {
+  RoomProvider,
+  useCanRedo,
+  useCanUndo,
+  useStorage,
+  useMutation,
+  useRedo,
+  useUndo,
+} = createRoomContext<never, { map: LiveMap<string, string> }>(client);
 
 export default function Home() {
   const roomId = getRoomFromUrl();
@@ -36,7 +43,27 @@ function Sandbox() {
   const redo = useRedo();
   const canUndo = useCanUndo();
   const canRedo = useCanRedo();
-  const map = useMap("map");
+  const map = useStorage((root) => root.map);
+
+  const set_ = useMutation(({ storage }, key: string, value: string) => {
+    const map = storage.get("map");
+    map.set(key, value);
+  }, []);
+
+  const delete_ = useMutation(({ storage }, key: string) => {
+    const map = storage.get("map");
+    map.delete(key);
+  }, []);
+
+  const clear = useMutation(({ storage }) => {
+    const map = storage.get("map");
+    while (map.size > 0) {
+      const { done, value: key } = map.keys().next();
+      if (!done) {
+        map.delete(key);
+      }
+    }
+  }, []);
 
   if (map === null) {
     return <div>Loading...</div>;
@@ -58,7 +85,7 @@ function Sandbox() {
       <div style={{ display: "flex", margin: "8px 0" }}>
         <Button
           id="set"
-          onClick={() => map.set(nextKey, nextValue)}
+          onClick={() => set_(nextKey, nextValue)}
           subtitle={`${JSON.stringify(nextKey)} → ${JSON.stringify(nextValue)}`}
         >
           Set
@@ -69,21 +96,14 @@ function Sandbox() {
           enabled={canDelete}
           onClick={() => {
             if (!canDelete) return;
-            map.delete(nextKeyToDelete);
+            delete_(nextKeyToDelete);
           }}
           subtitle={canDelete ? JSON.stringify(nextKeyToDelete) : null}
         >
           Delete
         </Button>
 
-        <Button
-          id="clear"
-          onClick={() => {
-            while (map.size > 0) {
-              map.delete(Array.from(map.keys())[0]);
-            }
-          }}
-        >
+        <Button id="clear" onClick={clear}>
           Clear
         </Button>
 

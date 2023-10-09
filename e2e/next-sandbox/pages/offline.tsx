@@ -82,6 +82,24 @@ function Sandbox(_props: { roomId: string }) {
     [item]
   );
 
+  const move = useMutation(
+    ({ storage }, fromIndex: number, toIndex: number) => {
+      const items = storage.get("items");
+      items.move(fromIndex, toIndex);
+    },
+    []
+  );
+
+  const delete_ = useMutation(({ storage }, index: number) => {
+    const items = storage.get("items");
+    items.delete(index);
+  }, []);
+
+  const clear = useMutation(({ storage }) => {
+    const items = storage.get("items");
+    items.clear();
+  }, []);
+
   const canPush = items !== null;
   const canClear = items !== null;
   const canMove = items !== null && items.length >= 2;
@@ -256,7 +274,7 @@ function Sandbox(_props: { roomId: string }) {
           onClick={() => {
             if (!canMove) return;
             const [fromIndex, toIndex] = nextIndicesToMove;
-            items.move(fromIndex, toIndex);
+            move(fromIndex, toIndex);
           }}
           subtitle={
             canMove ? `${nextIndicesToMove[0]} → ${nextIndicesToMove[1]}` : null
@@ -270,29 +288,20 @@ function Sandbox(_props: { roomId: string }) {
           enabled={canDelete}
           onClick={() => {
             if (!canDelete) return;
-            items.delete(nextIndexToDelete);
+            delete_(nextIndexToDelete);
           }}
           subtitle={
             canDelete
-              ? `index ${nextIndexToDelete} (${items
-                  .get(nextIndexToDelete)!
-                  .trim()})`
+              ? `index ${nextIndexToDelete} (${items[
+                  nextIndexToDelete
+                ].trim()})`
               : null
           }
         >
           Delete
         </Button>
 
-        <Button
-          id="clear"
-          enabled={canClear}
-          onClick={() => {
-            if (!canClear) return;
-            while (items.length > 0) {
-              items.delete(0);
-            }
-          }}
-        >
+        <Button id="clear" enabled={canClear} onClick={clear}>
           Clear
         </Button>
 
@@ -321,7 +330,7 @@ function Sandbox(_props: { roomId: string }) {
           />
           <Row id="numOthers" name="Others count" value={numOthers} />
           <Row id="numItems" name="Items count" value={items?.length} />
-          <Row id="items" name="Items" value={items?.toArray()} />
+          <Row id="items" name="Items" value={items} />
         </tbody>
       </table>
     </div>
