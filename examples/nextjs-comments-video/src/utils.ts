@@ -58,3 +58,14 @@ export function useSkipToListener(callback: (timePercentage: number) => void) {
     };
   }, [callback]);
 }
+
+export function useKeyDownListener(
+  callback: (keyboardEvent: KeyboardEvent) => void
+) {
+  useEffect(() => {
+    window.addEventListener("keydown", callback);
+    return () => {
+      window.removeEventListener("keydown", callback);
+    };
+  }, [callback]);
+}
