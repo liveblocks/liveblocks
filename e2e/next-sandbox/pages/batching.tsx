@@ -14,14 +14,13 @@ type Presence = {
 
 const {
   RoomProvider,
-  useBatch,
   useCanRedo,
   useCanUndo,
-  useMap,
-  useMyPresence,
+  useMutation,
   useOthers,
   useRedo,
   useSelf,
+  useStorage,
   useUndo,
 } = createRoomContext<Presence, { liveMap: LiveMap<string, number> }>(client);
 
@@ -44,13 +43,25 @@ function Sandbox() {
   const redo = useRedo();
   const canUndo = useCanUndo();
   const canRedo = useCanRedo();
-  const batch = useBatch();
-  const liveMap = useMap("liveMap");
+  const liveMap = useStorage((root) => root.liveMap);
 
   const others = useOthers();
-  const [myPresence, updateMyPresence] = useMyPresence();
   const theirPresence = others[0]?.presence;
   const me = useSelf();
+
+  const batchUpdate = useMutation(({ storage, self, setMyPresence }) => {
+    storage.get("liveMap").set(`user-${self.connectionId}`, 0);
+    setMyPresence({
+      count: (self.presence.count ?? 0) + 1,
+    });
+  }, []);
+
+  const clear = useMutation(({ storage }) => {
+    const liveMap = storage.get("liveMap");
+    liveMap.forEach((_, key) => {
+      liveMap.delete(key);
+    });
+  }, []);
 
   if (liveMap === null || me === null) {
     return <div>Loading...</div>;
@@ -64,28 +75,13 @@ function Sandbox() {
       <div style={{ display: "flex" }}>
         <Button
           id="update-storage-presence-batch"
-          onClick={() => {
-            batch(() => {
-              liveMap.set(`user-${me.connectionId}`, 0);
-              updateMyPresence({
-                count: (myPresence.count ?? 0) + 1,
-              });
-            });
-          }}
+          onClick={batchUpdate}
           subtitle="Presence & Storage"
         >
           Batch update
         </Button>
 
-        <Button
-          id="clear"
-          onClick={() => {
-            liveMap.forEach((_, key) => {
-              liveMap.delete(key);
-            });
-          }}
-          subtitle="Storage only"
-        >
+        <Button id="clear" onClick={clear} subtitle="Storage only">
           Clear
         </Button>
 
@@ -107,7 +103,7 @@ function Sandbox() {
       <h2>Presence</h2>
       <table style={styles.dataTable}>
         <tbody>
-          <Row id="myPresence" name="My presence" value={myPresence} />
+          <Row id="myPresence" name="My presence" value={me.presence} />
           <Row id="theirPresence" name="Their presence" value={theirPresence} />
         </tbody>
       </table>
