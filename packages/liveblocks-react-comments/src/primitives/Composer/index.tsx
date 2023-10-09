@@ -79,11 +79,12 @@ import type {
   ComposerBodyMention,
 } from "../../types";
 import { isKey } from "../../utils/is-key";
-import { Portal as PortalPrimitive } from "../../utils/Portal";
+import { Portal } from "../../utils/Portal";
 import { requestSubmit } from "../../utils/request-submit";
 import { useId } from "../../utils/use-id";
 import { useIndex } from "../../utils/use-index";
 import { useInitial } from "../../utils/use-initial";
+import { useLayoutEffect } from "../../utils/use-layout-effect";
 import { useRefs } from "../../utils/use-refs";
 import { toAbsoluteUrl } from "../Comment/utils";
 import {
@@ -100,12 +101,10 @@ import type {
   ComposerEditorLinkWrapperProps,
   ComposerEditorMentionSuggestionsWrapperProps,
   ComposerEditorMentionWrapperProps,
-  ComposerEditorPortalProps,
   ComposerEditorProps,
   ComposerFormProps,
   ComposerLinkProps,
   ComposerMentionProps,
-  ComposerPortalProps,
   ComposerSubmitProps,
   ComposerSuggestionsListItemProps,
   ComposerSuggestionsListProps,
@@ -123,7 +122,6 @@ const MENTION_SUGGESTIONS_POSITION: SuggestionsPosition = "top";
 
 const COMPOSER_MENTION_NAME = "ComposerMention";
 const COMPOSER_LINK_NAME = "ComposerLink";
-const COMPOSER_PORTAL_NAME = "ComposerPortal";
 const COMPOSER_SUGGESTIONS_NAME = "ComposerSuggestions";
 const COMPOSER_SUGGESTIONS_LIST_NAME = "ComposerSuggestionsList";
 const COMPOSER_SUGGESTIONS_LIST_ITEM_NAME = "ComposerSuggestionsListItem";
@@ -193,10 +191,12 @@ function ComposerEditorMentionSuggestionsWrapper({
   position = MENTION_SUGGESTIONS_POSITION,
   dir,
   MentionSuggestions,
-  Portal,
 }: ComposerEditorMentionSuggestionsWrapperProps) {
   const editor = useSlateStatic();
   const { isFocused } = useComposer();
+  const [content, setContent] = useState<HTMLDivElement | null>(null);
+  const [contentZIndex, setContentZIndex] = useState<string>();
+  const contentRef = useCallback(setContent, [setContent]);
   const floatingMiddlewares: UseFloatingOptions["middleware"] = useMemo(() => {
     const detectOverflowOptions: DetectOverflowOptions = {
       padding: FLOATING_ELEMENT_COLLISION_PADDING,
@@ -242,6 +242,14 @@ function ComposerEditorMentionSuggestionsWrapper({
     y,
   } = useFloating(floatingOptions);
 
+  // Copy `z-index` from content to wrapper.
+  // Inspired by https://github.com/radix-ui/primitives/blob/main/packages/react/popper/src/Popper.tsx
+  useLayoutEffect(() => {
+    if (content) {
+      setContentZIndex(window.getComputedStyle(content).zIndex);
+    }
+  }, [content]);
+
   useEffect(() => {
     const domRange = getDOMRange(editor, mentionDraft?.range);
 
@@ -263,26 +271,24 @@ function ComposerEditorMentionSuggestionsWrapper({
         onItemSelect,
         placement,
         dir,
+        ref: contentRef,
       }}
     >
-      <PortalPrimitive ref={setFloating} asChild>
-        <Portal
-          style={{
-            position: strategy,
-            top: 0,
-            left: 0,
-            transform: isPositioned
-              ? `translate3d(${Math.round(x)}px, ${Math.round(y)}px, 0)`
-              : "translate3d(0, -200%, 0)",
-            minWidth: "max-content",
-          }}
-        >
-          <MentionSuggestions
-            userIds={userIds}
-            selectedUserId={selectedUserId}
-          />
-        </Portal>
-      </PortalPrimitive>
+      <Portal
+        ref={setFloating}
+        style={{
+          position: strategy,
+          top: 0,
+          left: 0,
+          transform: isPositioned
+            ? `translate3d(${Math.round(x)}px, ${Math.round(y)}px, 0)`
+            : "translate3d(0, -200%, 0)",
+          minWidth: "max-content",
+          zIndex: contentZIndex,
+        }}
+      >
+        <MentionSuggestions userIds={userIds} selectedUserId={selectedUserId} />
+      </Portal>
     </ComposerSuggestionsContext.Provider>
   ) : null;
 }
@@ -402,33 +408,16 @@ const ComposerLink = forwardRef<HTMLAnchorElement, ComposerLinkProps>(
 );
 
 /**
- * Displays portaled elements within `Composer.Editor`.
- *
- * @example
- * <Composer.Portal>{children}</Composer.Portal>
- */
-const ComposerPortal = forwardRef<HTMLDivElement, ComposerPortalProps>(
-  ({ children, asChild, ...props }, forwardedRef) => {
-    const Component = asChild ? Slot : "div";
-
-    return (
-      <Component data-liveblocks-portal="" {...props} ref={forwardedRef}>
-        {children}
-      </Component>
-    );
-  }
-);
-
-/**
  * Contains suggestions within `Composer.Editor`.
  */
 const ComposerSuggestions = forwardRef<
   HTMLDivElement,
   ComposerSuggestionsProps
 >(({ children, style, asChild, ...props }, forwardedRef) => {
-  const { placement, dir } = useComposerSuggestionsContext(
+  const { ref, placement, dir } = useComposerSuggestionsContext(
     COMPOSER_SUGGESTIONS_NAME
   );
+  const mergedRefs = useRefs(forwardedRef, ref);
   const [side, align] = useMemo(
     () => getSideAndAlignFromPlacement(placement),
     [placement]
@@ -448,7 +437,7 @@ const ComposerSuggestions = forwardRef<
         overflowY: "auto",
         ...style,
       }}
-      ref={forwardedRef}
+      ref={mergedRefs}
     >
       {children}
     </Component>
@@ -595,15 +584,6 @@ const defaultEditorComponents: ComposerEditorComponents = {
       </ComposerSuggestions>
     ) : null;
   },
-  Portal: forwardRef<HTMLDivElement, ComposerEditorPortalProps>(
-    ({ children, ...props }, forwardedRef) => {
-      return (
-        <ComposerPortal {...props} ref={forwardedRef}>
-          {children}
-        </ComposerPortal>
-      );
-    }
-  ),
 };
 
 /**
@@ -639,7 +619,7 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
     const initialEditorValue = useMemo(() => {
       return commentBodyToComposerBody(initialBody);
     }, [initialBody]);
-    const { Link, Mention, MentionSuggestions, Portal } = useMemo(
+    const { Link, Mention, MentionSuggestions } = useMemo(
       () => ({ ...defaultEditorComponents, ...components }),
       [components]
     );
@@ -905,7 +885,6 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
             itemId={suggestionsListItemId}
             onItemSelect={createMention}
             MentionSuggestions={MentionSuggestions}
-            Portal={Portal}
           />
         )}
       </Slate>
@@ -1083,7 +1062,6 @@ if (process.env.NODE_ENV !== "production") {
   ComposerForm.displayName = COMPOSER_FORM_NAME;
   ComposerMention.displayName = COMPOSER_MENTION_NAME;
   ComposerLink.displayName = COMPOSER_LINK_NAME;
-  ComposerPortal.displayName = COMPOSER_PORTAL_NAME;
   ComposerSubmit.displayName = COMPOSER_SUBMIT_NAME;
   ComposerSuggestions.displayName = COMPOSER_SUGGESTIONS_NAME;
   ComposerSuggestionsList.displayName = COMPOSER_SUGGESTIONS_LIST_NAME;
@@ -1096,7 +1074,6 @@ export {
   ComposerForm as Form,
   ComposerLink as Link,
   ComposerMention as Mention,
-  ComposerPortal as Portal,
   ComposerSubmit as Submit,
   ComposerSuggestions as Suggestions,
   ComposerSuggestionsList as SuggestionsList,

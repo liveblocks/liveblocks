@@ -465,7 +465,6 @@ import { Composer } from "@liveblocks/react-comments/primitives";
             </Composer.SuggestionsList>
           </Composer.Suggestions>
         ),
-        Portal: forwardRef(() => <Composer.Portal />),
         Link: () => <Composer.Link />,
       }}
     />
@@ -527,12 +526,11 @@ The components displayed within the editor.
 
 <Table columns={["26%", "32%", "42%"]}>
 
-| Component            | Type                                                         | Description                                                                                                                   |
-| -------------------- | ------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------- |
-| `Mention`            | <code>ComponentType&lt;ComposerEditorMentionProps&gt;</code> | The component used to display mentions.<br/>Defaults to the mention’s `userId` prefixed by an @.                              |
-| `MentionSuggestions` | <code>ComponentType&lt;ComposerEditorMentionProps&gt;</code> | The component used to display mention suggestions.<br/>Defaults to a list of the suggestions’ `userId`.                       |
-| `Portal`             | <code>ComponentType&lt;ComposerEditorPortalProps&gt;</code>  | The component used to display portaled elements. It must apply its ref using `forwardRef`.<br/>Defaults to `Composer.Portal`. |
-| `Link`               | <code>ComponentType&lt;ComposerEditorLinkProps&gt;</code>    | The component used to display links.<br/>Defaults to the link’s `children` property.                                          |
+| Component            | Type                                                         | Description                                                                                             |
+| -------------------- | ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------- |
+| `Mention`            | <code>ComponentType&lt;ComposerEditorMentionProps&gt;</code> | The component used to display mentions.<br/>Defaults to the mention’s `userId` prefixed by an @.        |
+| `MentionSuggestions` | <code>ComponentType&lt;ComposerEditorMentionProps&gt;</code> | The component used to display mention suggestions.<br/>Defaults to a list of the suggestions’ `userId`. |
+| `Link`               | <code>ComponentType&lt;ComposerEditorLinkProps&gt;</code>    | The component used to display links.<br/>Defaults to the link’s `children` property.                    |
 
 </Table>
 
@@ -585,38 +583,6 @@ The component used to display mention suggestions.
   }}
 />
 ```
-
-###### Portal [#primitives-Composer.Editor-Portal]
-
-The component used to display portaled elements.
-
-<Banner title="Applying its ref" type="warning">
-
-In order to work, the provided component must apply its ref using
-[`forwardRef`](https://react.dev/reference/react/forwardRef).
-
-</Banner>
-
-```tsx
-<Composer.Editor
-  components={{
-    Portal: forwardRef(({ children, ...props }, ref) => (
-      <Composer.Portal {...props} ref={ref}>
-        {children}
-      </Composer.Portal>
-    )),
-  }}
-/>
-```
-
-<Table columns={["26%", "32%", "42%"]}>
-
-| Prop       | Type            | Description            |
-| ---------- | --------------- | ---------------------- |
-| `style`    | `CSSProperties` | The portal’s style.    |
-| `children` | `ReactNode`     | The portaled elements. |
-
-</Table>
 
 ###### Link [#primitives-Composer.Editor-Link]
 
@@ -725,22 +691,6 @@ Displays a suggestion within `Composer.SuggestionsList`.
 | Attribute       | Value                              |
 | --------------- | ---------------------------------- |
 | `data-selected` | Present when the item is selected. |
-
-</Table>
-
-#### Composer.Portal [#primitives-Composer.Portal]
-
-Displays portaled elements within `Composer.Editor`.
-
-```tsx
-<Composer.Portal {...props}>{children}</Composer.Portal>
-```
-
-<Table columns={["26%", "32%", "42%"]}>
-
-| Prop      | Type                   | Description                                                                         |
-| --------- | ---------------------- | ----------------------------------------------------------------------------------- |
-| `asChild` | `boolean \| undefined` | Replace the rendered element by the one passed as a child.<br/>Defaults to `false`. |
 
 </Table>
 

@@ -164,10 +164,7 @@ export const EmojiPicker = forwardRef<HTMLDivElement, EmojiPickerProps>(
     return (
       <PopoverPrimitive.Root open={isOpen} onOpenChange={handleOpenChange}>
         {children}
-        <PopoverPrimitive.Portal
-          data-liveblocks-portal=""
-          className="lb-portal"
-        >
+        <PopoverPrimitive.Portal>
           <PopoverPrimitive.Content
             side="top"
             align="center"

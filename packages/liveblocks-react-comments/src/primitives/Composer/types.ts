@@ -59,23 +59,9 @@ export type ComposerEditorMentionSuggestionsProps = {
   selectedUserId?: string;
 };
 
-export type ComposerEditorPortalProps = {
-  /**
-   * The portal's style.
-   */
-  style: CSSProperties;
-
-  /**
-   * The portaled elements.
-   */
-  children: ReactNode;
-};
-
 export type ComposerMentionProps = ComponentPropsWithSlot<"span">;
 
 export type ComposerLinkProps = ComponentPropsWithSlot<"a">;
-
-export type ComposerPortalProps = ComponentPropsWithSlot<"div">;
 
 export type ComposerSuggestionsProps = ComponentPropsWithSlot<"div">;
 
@@ -99,12 +85,6 @@ export interface ComposerEditorComponents {
    * The component used to display mention suggestions.
    */
   MentionSuggestions: ComponentType<ComposerEditorMentionSuggestionsProps>;
-
-  /**
-   * The component used to display portaled elements.
-   * It must apply its ref using `forwardRef`.
-   */
-  Portal: ComponentType<ComposerEditorPortalProps>;
 
   /**
    * The component used to display links.
@@ -178,7 +158,6 @@ export interface ComposerEditorMentionSuggestionsWrapperProps {
   selectedUserId?: string;
   setSelectedUserId: (userId: string) => void;
   MentionSuggestions: ComponentType<ComposerEditorMentionSuggestionsProps>;
-  Portal: ComponentType<ComposerEditorPortalProps>;
   onItemSelect: (userId: string) => void;
   position?: SuggestionsPosition;
   inset?: number;

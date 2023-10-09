@@ -22,7 +22,6 @@ import type {
   ComposerEditorLinkProps,
   ComposerEditorMentionProps,
   ComposerEditorMentionSuggestionsProps,
-  ComposerEditorPortalProps,
   ComposerEditorProps,
   ComposerSubmitComment,
 } from "../primitives/Composer/types";
@@ -251,25 +250,10 @@ function ComposerLink({ href, children }: ComposerEditorLinkProps) {
   );
 }
 
-const ComposerPortal = forwardRef<HTMLDivElement, ComposerEditorPortalProps>(
-  ({ children, ...props }, forwardedRef) => {
-    return (
-      <ComposerPrimitive.Portal
-        className="lb-portal"
-        {...props}
-        ref={forwardedRef}
-      >
-        {children}
-      </ComposerPrimitive.Portal>
-    );
-  }
-);
-
 const editorComponents: ComposerEditorComponents = {
   Mention: ComposerMention,
   MentionSuggestions: ComposerMentionSuggestions,
   Link: ComposerLink,
-  Portal: ComposerPortal,
 };
 
 const ComposerWithContext = forwardRef<

@@ -1,7 +1,7 @@
 import type { Placement } from "@floating-ui/react-dom";
 import { nn } from "@liveblocks/core";
 import type { Direction } from "@radix-ui/react-dropdown-menu";
-import type { Dispatch, SetStateAction } from "react";
+import type { Dispatch, Ref, SetStateAction } from "react";
 import { createContext, useContext } from "react";
 import type { Editor as SlateEditor, Element as SlateElement } from "slate";
 
@@ -61,6 +61,7 @@ export type ComposerSuggestionsContext = {
   selectedValue?: string;
   setSelectedValue: (value: string) => void;
   onItemSelect: (value: string) => void;
+  ref: Ref<HTMLDivElement>;
 };
 
 export const ComposerContext = createContext<ComposerContext | null>(null);

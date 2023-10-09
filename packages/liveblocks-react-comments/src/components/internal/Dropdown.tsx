@@ -40,10 +40,7 @@ export function Dropdown({
       dir={$.dir}
     >
       {children}
-      <DropdownMenuPrimitive.Portal
-        data-liveblocks-portal=""
-        className="lb-portal"
-      >
+      <DropdownMenuPrimitive.Portal>
         <DropdownMenuPrimitive.Content
           className={classNames("lb-root lb-elevation lb-dropdown", className)}
           sideOffset={FLOATING_ELEMENT_SIDE_OFFSET}

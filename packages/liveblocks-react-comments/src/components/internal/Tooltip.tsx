@@ -45,10 +45,7 @@ export const Tooltip = forwardRef<HTMLButtonElement, TooltipProps>(
         <TooltipPrimitive.Trigger asChild ref={forwardedRef}>
           {children}
         </TooltipPrimitive.Trigger>
-        <TooltipPrimitive.Portal
-          data-liveblocks-portal=""
-          className="lb-portal"
-        >
+        <TooltipPrimitive.Portal>
           <TooltipPrimitive.Content
             className={classNames(
               "lb-root lb-tooltip",
