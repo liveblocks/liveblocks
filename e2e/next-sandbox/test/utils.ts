@@ -60,7 +60,6 @@ export async function preparePage(url: string, windowPositionX: number = 0) {
   });
   page = await context.newPage();
   await page.goto(url);
-
   return page;
 }
 
