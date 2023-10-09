@@ -6,14 +6,13 @@ const SECRET_KEY = process.env.LIVEBLOCKS_SECRET_KEY;
 if (!SECRET_KEY) {
   throw new Error("Please specify LIVEBLOCKS_SECRET_KEY in env");
 }
-const LIVEBLOCKS_AUTHORIZE_ENDPOINT = process.env.LIVEBLOCKS_AUTHORIZE_ENDPOINT;
-const secret = SECRET_KEY;
+const LIVEBLOCKS_BASE_URL = process.env.LIVEBLOCKS_BASE_URL;
 
 const liveblocks = new Liveblocks({
-  secret,
+  secret: SECRET_KEY,
 
   // @ts-expect-error - Hidden setting
-  liveblocksAuthorizeEndpoint: LIVEBLOCKS_AUTHORIZE_ENDPOINT,
+  liveblocksBaseUrl: LIVEBLOCKS_BASE_URL,
 });
 
 export default async function idTokenBasedAuth(
