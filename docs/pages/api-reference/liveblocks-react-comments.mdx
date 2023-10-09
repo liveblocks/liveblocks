@@ -293,6 +293,16 @@ behavior and call the mutation methods (e.g. `createThread`) manually.
 Primitives are headless/unstyled components that can be used to create custom
 experiences with full control.
 
+<Banner title="Using primitives with TypeScript">
+
+If you run into the
+`Cannot find module '@liveblocks/react-comments/primitives' or its corresponding type declarations`
+error, you should update your `tsconfig.json`’s `moduleResolution`
+[property](https://www.typescriptlang.org/tsconfig#moduleResolution) to
+`"node16"` or `"nodenext"` (or `"bundler"` if you’re on TS >=5).
+
+</Banner>
+
 ### Composition
 
 All primitives are composable: they forward their props and refs, merge their
