@@ -86,6 +86,7 @@ export function VideoPlayer() {
       <div className={styles.playerWrapper} ref={playerWrapper}>
         <div
           ref={playerClickWrapper}
+          className={styles.playerClickWrapper}
           onClick={() => setPlaying(!playing)}
           onDoubleClick={handleFullscreen}
         >
