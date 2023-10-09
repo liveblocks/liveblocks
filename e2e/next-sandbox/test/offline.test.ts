@@ -3,7 +3,6 @@ import { test } from "@playwright/test";
 import {
   expectJson,
   genRoomId,
-  expectJsonEqualOnAllPages,
   nanoSleep,
   pickFrom,
   preparePages,
