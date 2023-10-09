@@ -1,0 +1,7 @@
+.mentionSuggestion {
+  background: #fff;
+}
+
+.mentionSuggestion[data-selected] {
+  background: red;
+}

@@ -22,4 +22,5 @@
   min-width: 350px;
   max-width: 100%;
   background: #fff;
+  overflow-y: auto;
 }

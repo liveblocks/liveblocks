@@ -7,6 +7,9 @@ import * as Tooltip from "@radix-ui/react-tooltip";
 import { Comment } from "@liveblocks/react-comments/primitives";
 import { useHighlightThread } from "@/utils";
 import { formatTime } from "@/components/Duration";
+import { Mention } from "@/components/Mention";
+import { MentionSuggestions } from "@/components/MentionSuggestions";
+import { Link } from "@/components/Link";
 
 export function ThreadsTimeline() {
   return (
@@ -61,6 +64,10 @@ function PinnedThread({ thread }: { thread: ThreadData<ThreadMetadata> }) {
           <Comment.Body
             body={thread.comments[0].body}
             className={styles.tooltipBody}
+            components={{
+              Mention,
+              Link,
+            }}
           />
         </Tooltip.Content>
       </Tooltip.Root>
