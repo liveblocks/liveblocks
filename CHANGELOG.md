@@ -4,6 +4,11 @@
 
 - Fix `useStatus` return value on SSR responses.
 
+### `@liveblocks/react-comments`
+
+- Export `ComposerSubmitComment` type from root too, in addition to
+  `/primitives`.
+
 # v1.4.5
 
 ### `@liveblocks/react`
