@@ -38,7 +38,7 @@ function PinnedThread({ thread }: { thread: ThreadData<ThreadMetadata> }) {
   // TODO check types correct when all comments deleted from thread
   const { user } = useUser(thread.comments?.[0].userId || "");
 
-  const handleClick = useCallback(() => {
+  const handleHighlight = useCallback(() => {
     const event: ThreadHighlightEvent = new CustomEvent("threadHighlight", {
       detail: { threadId: thread.id },
     });
@@ -55,7 +55,8 @@ function PinnedThread({ thread }: { thread: ThreadData<ThreadMetadata> }) {
     <div
       key={thread.id}
       className={styles.pinnedThread}
-      onClick={handleClick}
+      onClick={handleHighlight}
+      onMouseOver={handleHighlight}
       style={{ left: `${thread.metadata.timePercentage}%` }}
     >
       <Tooltip.Root>
