@@ -21,12 +21,13 @@ const {
   RoomProvider,
   useCanRedo,
   useCanUndo,
-  useList,
+  useMutation,
   useOthers,
   useRedo,
   useRoom,
   useSelf,
   useStatus,
+  useStorage,
   useUndo,
 } = createRoomContext<never, { items: LiveList<string> }>(client);
 
@@ -64,13 +65,22 @@ function Sandbox(_props: { roomId: string }) {
   const status = useStatus();
   const room = useRoom() as PrivateRoom;
   const internals = room.__internal;
-  const items = useList("items");
+  const items = useStorage((root) => root.items);
   const me = useSelf();
   const others = useOthers();
   const undo = useUndo();
   const redo = useRedo();
   const canUndo = useCanUndo();
   const canRedo = useCanRedo();
+
+  const push = useMutation(
+    ({ storage }, value: string) => {
+      const items = storage.get("items");
+      items.push(value);
+      item = String.fromCharCode(item.charCodeAt(0) + 1);
+    },
+    [item]
+  );
 
   const canPush = items !== null;
   const canClear = items !== null;
@@ -231,11 +241,9 @@ function Sandbox(_props: { roomId: string }) {
       <div style={{ display: "flex", margin: "8px 0" }}>
         <Button
           id="push"
-          enabled={canPush}
           onClick={() => {
             if (!canPush) return;
-            items.push(nextValueToPush);
-            item = String.fromCharCode(item.charCodeAt(0) + 1);
+            push(nextValueToPush);
           }}
           subtitle={nextValueToPush}
         >
