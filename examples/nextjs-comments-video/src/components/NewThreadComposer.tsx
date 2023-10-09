@@ -1,5 +1,8 @@
-import { Composer } from "@liveblocks/react-comments";
-import { ComposerSubmitComment } from "@liveblocks/react-comments/primitives";
+import { Composer as DefaultComposer } from "@liveblocks/react-comments";
+import {
+  Composer,
+  ComposerSubmitComment,
+} from "@liveblocks/react-comments/primitives";
 import { FormEvent, useCallback } from "react";
 import { useCreateThread } from "@/liveblocks.config";
 import { formatTime } from "@/components/Duration";
@@ -24,8 +27,6 @@ export function NewThreadComposer({
     ({ body }: ComposerSubmitComment, event: FormEvent<HTMLFormElement>) => {
       event.preventDefault();
 
-      console.log(body);
-
       createThread({
         body,
         metadata: {
@@ -42,12 +43,42 @@ export function NewThreadComposer({
   }, []);
 
   return (
-    <Composer
-      onFocus={handleFocus}
-      onComposerSubmit={handleSubmit}
-      overrides={{
-        COMPOSER_PLACEHOLDER: `Create comment at ${formatTime(time)}`,
-      }}
-    />
+    <>
+      <Composer.Form onComposerSubmit={handleSubmit}>
+        <Composer.Editor
+          components={{
+            // Mention: () => <Composer.Mention />,
+            // MentionSuggestions: ({ userIds, selectedUserId }) => (
+            //   <Composer.Suggestions>
+            //     <Composer.SuggestionsList>
+            //       <Composer.SuggestionsListItem value="" />
+            //     </Composer.SuggestionsList>
+            //   </Composer.Suggestions>
+            // ),
+            Link: ({ href, children }) => (
+              <Composer.Link>{children}</Composer.Link>
+            ),
+          }}
+        />
+        <Composer.Submit>Create comment at {formatTime(time)}</Composer.Submit>
+      </Composer.Form>
+      <DefaultComposer
+        onFocus={handleFocus}
+        onComposerSubmit={handleSubmit}
+        overrides={{
+          COMPOSER_PLACEHOLDER: `Create comment at ${formatTime(time)}`,
+        }}
+      />
+    </>
   );
+
+  // return (
+  //   <Composer
+  //     onFocus={handleFocus}
+  //     onComposerSubmit={handleSubmit}
+  //     overrides={{
+  //       COMPOSER_PLACEHOLDER: `Create comment at ${formatTime(time)}`,
+  //     }}
+  //   />
+  // );
 }

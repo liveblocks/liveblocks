@@ -1,16 +1,11 @@
-import {
-  ThreadHighlightEvent,
-  ThreadMetadata,
-  useThreads,
-  useUser,
-} from "@/liveblocks.config";
+import { ThreadMetadata, useThreads, useUser } from "@/liveblocks.config";
 import { ClientSideSuspense } from "@liveblocks/react";
 import { ErrorBoundary } from "react-error-boundary";
 import styles from "./ThreadsTimeline.module.css";
 import { ThreadData } from "@liveblocks/core";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { Comment } from "@liveblocks/react-comments/primitives";
-import { useCallback } from "react";
+import { useHighlightThread } from "@/utils";
 
 export function ThreadsTimeline() {
   return (
@@ -28,7 +23,7 @@ function PinnedThreads() {
   return (
     <div className={styles.pinnedThreads}>
       {threads.map((thread) => (
-        <PinnedThread thread={thread} />
+        <PinnedThread key={thread.id} thread={thread} />
       ))}
     </div>
   );
@@ -37,14 +32,7 @@ function PinnedThreads() {
 function PinnedThread({ thread }: { thread: ThreadData<ThreadMetadata> }) {
   // TODO check types correct when all comments deleted from thread
   const { user } = useUser(thread.comments?.[0].userId || "");
-
-  const handleHighlight = useCallback(() => {
-    const event: ThreadHighlightEvent = new CustomEvent("threadHighlight", {
-      detail: { threadId: thread.id },
-    });
-
-    window.dispatchEvent(event);
-  }, []);
+  const highlightThread = useHighlightThread(thread.id);
 
   // All comments deleted
   if (!thread.comments.length) {
@@ -53,10 +41,9 @@ function PinnedThread({ thread }: { thread: ThreadData<ThreadMetadata> }) {
 
   return (
     <div
-      key={thread.id}
       className={styles.pinnedThread}
-      onClick={handleHighlight}
-      onMouseOver={handleHighlight}
+      onClick={highlightThread}
+      onMouseOver={highlightThread}
       style={{ left: `${thread.metadata.timePercentage}%` }}
     >
       <Tooltip.Root>

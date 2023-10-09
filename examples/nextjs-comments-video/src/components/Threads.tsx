@@ -1,10 +1,11 @@
 "use client";
 
-import { ThreadHighlightEvent, useThreads } from "@/liveblocks.config";
+import { useThreads } from "@/liveblocks.config";
 import { ClientSideSuspense } from "@liveblocks/react";
 import { Thread } from "@liveblocks/react-comments";
 import { useEffect, useState } from "react";
 import styles from "./Threads.module.css";
+import { useHighlightThreadListener, useSkipTo } from "@/utils";
 
 export function Threads() {
   return (
@@ -19,22 +20,13 @@ function ThreadList() {
   const { threads } = useThreads();
   const [highlightedId, setHighlightedId] = useState("");
 
-  useEffect(() => {
-    function handleHighlight(event: ThreadHighlightEvent) {
-      if (!event.detail?.threadId) {
-        return;
-      }
+  // TODO skip to time when click `0:05`: skipTo(thread.metadata.timePercentage)
+  const skipTo = useSkipTo();
 
-      setHighlightedId("");
-      setTimeout(() => setHighlightedId(event.detail.threadId));
-    }
-
-    window.addEventListener("threadHighlight", handleHighlight as any);
-
-    return () => {
-      window.removeEventListener("threadHighlight", handleHighlight as any);
-    };
-  }, []);
+  useHighlightThreadListener((threadId) => {
+    setHighlightedId("");
+    setTimeout(() => setHighlightedId(threadId));
+  });
 
   if (threads.length === 0) {
     return <div>No comments yet!</div>;

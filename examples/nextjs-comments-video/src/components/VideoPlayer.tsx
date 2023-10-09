@@ -14,6 +14,7 @@ import { ThreadsTimeline } from "@/components/ThreadsTimeline";
 import { NewThreadComposer } from "@/components/NewThreadComposer";
 import { ExitFullscreenIcon } from "@/icons/ExitFullscreen";
 import { useUpdateMyPresence } from "@/liveblocks.config";
+import { useSkipToListener } from "@/utils";
 
 export function VideoPlayer() {
   const player = useRef<ReactPlayer>(null);
@@ -97,6 +98,16 @@ export function VideoPlayer() {
 
     return (player.current.getCurrentTime() / duration) * 100;
   }, [duration]);
+
+  // Listen to skip events from other parts of app
+  useSkipToListener((timePercentage) => {
+    if (!player.current) {
+      return;
+    }
+
+    setSeeking(false);
+    setTime(timePercentage / 100);
+  });
 
   return (
     <div className={styles.videoPlayer}>
