@@ -128,16 +128,17 @@ test.describe("Offline", () => {
 
   test("permanent network loss", async () => {
     const [page1, page2] = pages;
+    await waitForJson(pages, "#socketStatus", "connected");
 
     await page1.context().setOffline(true);
     await page2.context().setOffline(true);
 
-    await waitForJson(pages, "#socketStatus", "connecting");
+    await waitForJson(pages, "#socketStatus", "reconnecting");
 
     await page1.context().setOffline(false);
 
     await waitForJson(page1, "#socketStatus", "connected");
-    await waitForJson(page2, "#socketStatus", "connecting"); // Page 2 never connects
+    await waitForJson(page2, "#socketStatus", "reconnecting"); // Page 2 never connects
   });
 
   test("reconnect automatically (via unexpected condition)", async () => {
