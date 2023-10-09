@@ -285,6 +285,7 @@
 
   .lb-composer-mention-suggestion-avatar {
     width: var(--lb-composer-mention-suggestion-avatar-size);
+    margin-block: calc(0.125 * var(--lb-spacing));
     background: var(--lb-elevation-foreground-subtle);
     color: var(--lb-elevation-foreground-moderate);
     margin-inline-start: calc(-0.125 * var(--lb-spacing));
