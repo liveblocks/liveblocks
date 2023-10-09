@@ -1,6 +1,6 @@
 {
   "name": "@liveblocks/yjs",
-  "version": "1.4.4",
+  "version": "1.4.5",
   "description": "An integration with . Liveblocks is the all-in-one toolkit to build collaborative products like Figma, Notion, and more.",
   "license": "Apache-2.0",
   "main": "./dist/index.js",
@@ -32,8 +32,8 @@
     "test:watch": "jest --silent --verbose --color=always --watch"
   },
   "dependencies": {
-    "@liveblocks/client": "1.4.4",
-    "@liveblocks/core": "1.4.4",
+    "@liveblocks/client": "1.4.5",
+    "@liveblocks/core": "1.4.5",
     "js-base64": "^3.7.5"
   },
   "peerDependencies": {
