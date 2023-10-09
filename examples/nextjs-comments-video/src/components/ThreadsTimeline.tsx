@@ -8,7 +8,6 @@ import { Comment } from "@liveblocks/react-comments/primitives";
 import { useHighlightThread } from "@/utils";
 import { formatTime } from "@/components/Duration";
 import { Mention } from "@/components/Mention";
-import { MentionSuggestions } from "@/components/MentionSuggestions";
 import { Link } from "@/components/Link";
 
 export function ThreadsTimeline() {

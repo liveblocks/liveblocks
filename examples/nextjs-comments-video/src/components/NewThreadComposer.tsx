@@ -1,4 +1,3 @@
-import { Composer as DefaultComposer } from "@liveblocks/react-comments";
 import {
   Composer,
   ComposerSubmitComment,

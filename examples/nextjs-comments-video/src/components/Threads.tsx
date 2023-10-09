@@ -7,6 +7,7 @@ import { useCallback, useEffect, useState } from "react";
 import styles from "./Threads.module.css";
 import { useHighlightThreadListener, useSkipTo } from "@/utils";
 import { ThreadData } from "@liveblocks/core";
+import { formatTime } from "@/components/Duration";
 
 export function Threads() {
   return (
@@ -62,9 +63,11 @@ function CustomThread({
   }, [skipTo]);
 
   return (
-    <div>
+    <div className={styles.threadWrapper}>
       {threadHasTime ? (
-        <button onClick={handleButtonClick}>Skip to comment time</button>
+        <button onClick={handleButtonClick}>
+          Skip to {formatTime(thread.metadata.time)}
+        </button>
       ) : null}
       <Thread
         className={styles.thread}
