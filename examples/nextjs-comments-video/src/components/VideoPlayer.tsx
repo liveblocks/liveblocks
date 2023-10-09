@@ -12,8 +12,6 @@ import Duration from "@/components/Duration";
 import { ClientSideSuspense } from "@liveblocks/react";
 import { ThreadsTimeline } from "@/components/ThreadsTimeline";
 import { NewThreadComposer } from "@/components/NewThreadComposer";
-import { Simulate } from "react-dom/test-utils";
-import play = Simulate.play;
 import { ExitFullscreenIcon } from "@/icons/ExitFullscreen";
 
 export function VideoPlayer() {
@@ -21,25 +19,28 @@ export function VideoPlayer() {
   const playerWrapper = useRef(null);
   const playerClickWrapper = useRef<HTMLDivElement>(null);
 
+  const [time, setTime] = useState(0);
   const [playing, setPlaying] = useState(false);
-  const [played, setPlayed] = useState(0);
   const [seeking, setSeeking] = useState(false);
   const [duration, setDuration] = useState(0);
   const [fullscreen, setFullscreen] = useState(false);
 
+  // When playing, but not seeking, update UI time value for slider
   const handleProgress = useCallback(
     (progress: OnProgressProps) => {
       if (!seeking) {
-        setPlayed(progress.played);
+        setTime(progress.played);
       }
     },
     [seeking]
   );
 
+  // Stop playing on video end
   const handleEnded = useCallback(() => {
     setPlaying(false);
   }, []);
 
+  // Toggle fullscreen
   const handleFullscreen = useCallback(() => {
     if (!playerWrapper.current) {
       return;
@@ -54,19 +55,22 @@ export function VideoPlayer() {
     setFullscreen(requestFullscreen(playerWrapper.current));
   }, [fullscreen]);
 
+  // On seek, update UI time
   const handleSliderChange = useCallback(([value]: [number]) => {
     setSeeking(true);
-    setPlayed(value);
+    setTime(value);
   }, []);
 
+  // On end seeking, update UI time and update video time
   const handleSliderCommit = useCallback(([value]: [number]) => {
-    setPlayed(value);
+    setTime(value);
     if (player.current) {
       player.current.seekTo(value);
     }
     setSeeking(false);
   }, []);
 
+  // Get current percentage through video, for thread metadata
   const getCurrentPercentage = useCallback(() => {
     const time = player?.current?.getCurrentTime();
 
@@ -84,6 +88,7 @@ export function VideoPlayer() {
   return (
     <div className={styles.videoPlayer}>
       <div className={styles.playerWrapper} ref={playerWrapper}>
+        {/* Video player */}
         <div
           ref={playerClickWrapper}
           className={styles.playerClickWrapper}
@@ -107,6 +112,7 @@ export function VideoPlayer() {
           </ClientSideSuspense>
         </div>
 
+        {/* Video controls */}
         <div className={styles.controls}>
           <button
             className={styles.playButton}
@@ -116,7 +122,7 @@ export function VideoPlayer() {
           </button>
           {player.current ? (
             <div className={styles.time}>
-              <Duration seconds={duration * played} /> /{" "}
+              <Duration seconds={duration * time} /> /{" "}
               <Duration seconds={duration} />
             </div>
           ) : null}
@@ -129,16 +135,18 @@ export function VideoPlayer() {
         </div>
 
         <div className={styles.sliderAndComments}>
+          {/* Comments on video timeline */}
           <div className={styles.sliderComments}>
             <ThreadsTimeline />
           </div>
 
+          {/* Range slider for video time */}
           <Slider.Root
             className={styles.sliderRoot}
             min={0}
             max={0.999999}
             step={0.001}
-            value={[played]}
+            value={[time]}
             onValueChange={handleSliderChange}
             onValueCommit={handleSliderCommit}
           >
@@ -150,6 +158,7 @@ export function VideoPlayer() {
         </div>
       </div>
 
+      {/* Add comment component */}
       <NewThreadComposer getCurrentPercentage={getCurrentPercentage} />
     </div>
   );
