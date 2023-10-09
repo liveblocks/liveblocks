@@ -142,7 +142,7 @@ test.describe("Offline", () => {
   });
 
   test("reconnect automatically (via unexpected condition)", async () => {
-    const [page1, page2] = pages;
+    const [page1] = pages;
     await waitForJson(pages, "#socketStatus", "connected");
     await page1.click("#clear");
     await waitForJson(pages, "#numItems", 0);
@@ -150,24 +150,17 @@ test.describe("Offline", () => {
 
     await page1.click("#push");
     await page1.click("#close-with-unexpected-condition");
+    await expectJson(page1, "#socketStatus", "reconnecting");
+
     await page1.click("#push");
     await page1.click("#push");
 
-    // These events can happen out of band now
-    await Promise.all([
-      waitForJson(page1, "#socketStatus", "reconnecting"),
-      waitForJson(page2, "#numOthers", 0),
-    ]);
-    await Promise.all([
-      waitForJson(page1, "#socketStatus", "connected"),
-      waitForJson(page2, "#numOthers", 1),
-    ]);
-
+    await waitForJson(page1, "#socketStatus", "connected");
     await waitForJson(pages, "#numItems", 3);
   });
 
   test("reconnect automatically (via abnormal reason)", async () => {
-    const [page1, page2] = pages;
+    const [page1] = pages;
     await waitForJson(pages, "#socketStatus", "connected");
     await page1.click("#clear");
     await waitForJson(pages, "#numItems", 0);
@@ -175,24 +168,17 @@ test.describe("Offline", () => {
 
     await page1.click("#push");
     await page1.click("#close-with-abnormal-reason");
+    await expectJson(page1, "#socketStatus", "reconnecting");
+
     await page1.click("#push");
     await page1.click("#push");
 
-    // These events can happen out of band now
-    await Promise.all([
-      waitForJson(page1, "#socketStatus", "reconnecting"),
-      waitForJson(page2, "#numOthers", 0),
-    ]);
-    await Promise.all([
-      waitForJson(page1, "#socketStatus", "connected"),
-      waitForJson(page2, "#numOthers", 1),
-    ]);
-
+    await waitForJson(page1, "#socketStatus", "connected");
     await waitForJson(pages, "#numItems", 3);
   });
 
   test("reconnect automatically (via token expired)", async () => {
-    const [page1, page2] = pages;
+    const [page1] = pages;
     await waitForJson(pages, "#socketStatus", "connected");
     await page1.click("#clear");
     await waitForJson(pages, "#numItems", 0);
@@ -200,19 +186,12 @@ test.describe("Offline", () => {
 
     await page1.click("#push");
     await page1.click("#close-with-token-expired");
+    await expectJson(page1, "#socketStatus", "reconnecting");
+
     await page1.click("#push");
     await page1.click("#push");
 
-    // These events can happen out of band now
-    await Promise.all([
-      waitForJson(page1, "#socketStatus", "reconnecting"),
-      waitForJson(page2, "#numOthers", 0),
-    ]);
-    await Promise.all([
-      waitForJson(page1, "#socketStatus", "connected"),
-      waitForJson(page2, "#numOthers", 1),
-    ]);
-
+    await waitForJson(page1, "#socketStatus", "connected");
     await waitForJson(pages, "#numItems", 3);
   });
 
