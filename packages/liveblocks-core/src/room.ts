@@ -687,7 +687,7 @@ type PrivateRoomAPI = {
   getSelf_forDevTools(): DevTools.UserTreeNode | null;
   getOthers_forDevTools(): readonly DevTools.UserTreeNode[];
 
-  send: {
+  simulate: {
     explicitClose(event: IWebSocketCloseEvent): void; // NOTE: Also used in e2e test app!
     implicitClose(): void; // NOTE: Also used in e2e test app!
   };
@@ -2270,7 +2270,7 @@ export function createRoom<
           others_forDevTools.current,
 
         // prettier-ignore
-        send: {
+        simulate: {
           // These exist only for our E2E testing app
           explicitClose: (event) => managedSocket._privateSendMachineEvent({ type: "EXPLICIT_SOCKET_CLOSE", event }),
           implicitClose: () => managedSocket._privateSendMachineEvent({ type: "NAVIGATOR_OFFLINE" }),
