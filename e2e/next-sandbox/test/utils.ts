@@ -63,15 +63,54 @@ export async function preparePage(url: string, windowPositionX: number = 0) {
   return page;
 }
 
-export async function preparePages(url: string) {
-  const firstUrl = new URL(url);
-  const secondUrl = new URL(url);
-  firstUrl.searchParams.set("bg", "#cafbca");
-  secondUrl.searchParams.set("bg", "#e9ddf9");
-  return Promise.all([
-    preparePage(firstUrl.toString(), 0),
-    preparePage(secondUrl.toString(), WIDTH),
-  ] as const);
+const BG_COLORS = [
+  "#cafbca",
+  "#e9ddf9",
+
+  "#e6f5ff",
+  "#fff3e6",
+  "#f2f2f2",
+  "#fedddd",
+  "#ffffcc",
+  "#e8f8f5",
+  "#f3e5f5",
+  "#fff0d6",
+  "#f0f9ff",
+  "#fcf1de",
+  "#e6ffd9",
+  "#ffeee6",
+  "#f8f8f8",
+  "#fff5f5",
+  "#e9e9e9",
+  "#f7e9ff",
+  "#f4fff0",
+  "#fff1f1",
+  "#fdf5e6",
+  "#f1f9ff",
+
+  "#fffaed",
+  "#e0f9ff",
+  "#fff9e6",
+  "#f2fff9",
+  "#faf9ff",
+];
+
+export async function preparePages(url: string): Promise<[Page, Page]>;
+export async function preparePages(url: string, n: number): Promise<Page[]>;
+export async function preparePages(
+  url: string,
+  n: number = 2
+): Promise<Page[]> {
+  return Promise.all(
+    Array.from({ length: n }).map((_, index) => {
+      const pageUrl = new URL(url);
+      pageUrl.searchParams.set("bg", BG_COLORS[index % BG_COLORS.length]);
+
+      // If n=2, open the windows side-by-side, otherwise open them as a fan
+      const xPos = n <= 2 && index === 1 ? WIDTH : index * 50;
+      return preparePage(pageUrl.toString(), xPos);
+    })
+  );
 }
 
 export async function waitForJson(
