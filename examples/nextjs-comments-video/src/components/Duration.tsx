@@ -7,12 +7,12 @@ interface Props extends ComponentProps<"time"> {
 export default function Duration({ seconds, ...props }: Props) {
   return (
     <time dateTime={`P${Math.round(seconds)}S`} {...props}>
-      {format(seconds)}
+      {formatTime(seconds)}
     </time>
   );
 }
 
-function format(seconds: number) {
+export function formatTime(seconds: number) {
   const date = new Date(seconds * 1000);
   const hh = date.getUTCHours();
   const mm = date.getUTCMinutes();

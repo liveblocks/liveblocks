@@ -14,6 +14,7 @@ export function Threads() {
   );
 }
 
+// TODO separate threads with a gap
 function ThreadList() {
   const { threads } = useThreads();
   const [highlightedId, setHighlightedId] = useState("");

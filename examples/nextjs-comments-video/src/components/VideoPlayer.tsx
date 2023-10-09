@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import ReactPlayer from "react-player";
 import { OnProgressProps } from "react-player/base";
 import * as Slider from "@radix-ui/react-slider";
@@ -13,6 +13,7 @@ import { ClientSideSuspense } from "@liveblocks/react";
 import { ThreadsTimeline } from "@/components/ThreadsTimeline";
 import { NewThreadComposer } from "@/components/NewThreadComposer";
 import { ExitFullscreenIcon } from "@/icons/ExitFullscreen";
+import { useUpdateMyPresence } from "@/liveblocks.config";
 
 export function VideoPlayer() {
   const player = useRef<ReactPlayer>(null);
@@ -24,6 +25,18 @@ export function VideoPlayer() {
   const [seeking, setSeeking] = useState(false);
   const [duration, setDuration] = useState(0);
   const [fullscreen, setFullscreen] = useState(false);
+
+  const updateMyPresence = useUpdateMyPresence();
+
+  // Update multiplayer presence to show current state
+  useEffect(() => {
+    if (seeking) {
+      updateMyPresence({ state: "seeking" });
+      return;
+    }
+
+    updateMyPresence({ state: playing ? "playing" : "paused" });
+  }, [playing, seeking]);
 
   // When playing, but not seeking, update UI time value for slider
   const handleProgress = useCallback(
@@ -159,7 +172,11 @@ export function VideoPlayer() {
       </div>
 
       {/* Add comment component */}
-      <NewThreadComposer getCurrentPercentage={getCurrentPercentage} />
+      <NewThreadComposer
+        getCurrentPercentage={getCurrentPercentage}
+        setPlaying={setPlaying}
+        time={duration * time}
+      />
     </div>
   );
 }

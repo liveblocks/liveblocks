@@ -13,7 +13,7 @@ export function Room({ children }: { children: ReactNode }) {
       <RoomProvider
         id={roomId}
         initialPresence={{
-          state: "stopped",
+          state: "paused",
           time: 0,
         }}
       >

@@ -1,6 +1,6 @@
 "use client";
 
-import { useOthers, useSelf } from "@/liveblocks.config";
+import { PresenceStates, useOthers, useSelf } from "@/liveblocks.config";
 import styles from "./Avatars.module.css";
 
 export function Avatars() {
@@ -9,20 +9,34 @@ export function Avatars() {
 
   return (
     <div className={styles.avatars}>
-      {users.map(({ connectionId, info }) => {
-        return <Avatar key={connectionId} src={info.avatar} name={info.name} />;
+      {users.map(({ connectionId, info, presence }) => {
+        return (
+          <Avatar
+            key={connectionId}
+            src={info.avatar}
+            name={info.name}
+            state={presence.state}
+          />
+        );
       })}
 
       {currentUser && (
         <div className="relative ml-8 first:ml-0">
-          <Avatar src={currentUser.info.avatar} name={currentUser.info.name} />
+          <Avatar
+            src={currentUser.info.avatar}
+            name={currentUser.info.name}
+            state={currentUser.presence.state}
+          />
         </div>
       )}
     </div>
   );
 }
 
-export function Avatar({ src, name }: { src: string; name: string }) {
+type AvatarProps = { src: string; name: string; state: PresenceStates };
+
+export function Avatar({ src, name, state }: AvatarProps) {
+  // TODO use `state` to show a `playing | paused | seeking` indicator
   return (
     <div className={styles.avatar} data-tooltip={name}>
       <img src={src} className={styles.avatar_picture} data-tooltip={name} />
