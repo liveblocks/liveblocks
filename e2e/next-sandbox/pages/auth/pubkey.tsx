@@ -3,6 +3,7 @@ import Link from "next/link";
 import { nn } from "@liveblocks/core";
 import { createClient } from "@liveblocks/client";
 import { createRoomContext } from "@liveblocks/react";
+import { getRoomFromUrl } from "../../utils";
 
 const client = createClient({
   publicApiKey: nn(
@@ -19,13 +20,7 @@ const { RoomProvider, useMyPresence, useSelf, useOthers, useStatus } =
 
 export default function Home() {
   React.useEffect(() => {
-    setText("e2e-modern-auth");
-    if (typeof window !== "undefined") {
-      const queryParam = window.location.search;
-      if (queryParam.split("room=").length > 1) {
-        setText(queryParam.split("room=")[1]);
-      }
-    }
+    setText(getRoomFromUrl());
   }, []);
 
   const [text, setText] = React.useState("");

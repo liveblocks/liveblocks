@@ -1,25 +1,23 @@
 import { createRoomContext } from "@liveblocks/react";
 import { LiveMap } from "@liveblocks/client";
 import React from "react";
-import randomNumber from "../../utils/randomNumber";
 import createLiveblocksClient from "../../utils/createClient";
-import { genRoomId } from "../../utils";
+import {
+  getRoomFromUrl,
+  randomInt,
+  Row,
+  styles,
+  useRenderCount,
+} from "../../utils";
+import Button from "../../utils/Button";
 
 const client = createLiveblocksClient();
 
-const { RoomProvider, useMap, useRedo, useUndo } = createRoomContext<
-  never,
-  { map: LiveMap<string, string> }
->(client);
+const { RoomProvider, useCanRedo, useCanUndo, useMap, useRedo, useUndo } =
+  createRoomContext<never, { map: LiveMap<string, string> }>(client);
 
 export default function Home() {
-  let roomId = genRoomId("e2e-storage-map");
-  if (typeof window !== "undefined") {
-    const queryParam = window.location.search;
-    if (queryParam.split("room=").length > 1) {
-      roomId = queryParam.split("room=")[1];
-    }
-  }
+  const roomId = getRoomFromUrl();
   return (
     <RoomProvider
       id={roomId}
@@ -32,64 +30,78 @@ export default function Home() {
 }
 
 function Sandbox() {
+  const renderCount = useRenderCount();
   const undo = useUndo();
   const redo = useRedo();
+  const canUndo = useCanUndo();
+  const canRedo = useCanRedo();
   const map = useMap("map");
 
   if (map == null) {
-    return <div>Loading</div>;
+    return <div>Loading...</div>;
   }
+
+  const canDelete = map.size > 0;
+
+  const nextKey = `key:${randomInt(10)}`;
+  const nextValue = `value:${randomInt(10)}`;
+
+  const keys = Array.from(map.keys());
+  const nextKeyToDelete = canDelete ? keys[randomInt(keys.length)] : "";
 
   return (
     <div>
-      <h1>useMap sandbox</h1>
-      <button
-        id="set"
-        onClick={() => {
-          map.set(`key:${randomNumber(10)}`, `value:${randomNumber(10)}`);
-        }}
-      >
-        Set
-      </button>
+      <h3>
+        <a href="/">Home</a> › Storage › LiveMap
+      </h3>
+      <div style={{ display: "flex", margin: "8px 0" }}>
+        <Button
+          id="set"
+          onClick={() => map.set(nextKey, nextValue)}
+          subtitle={`${JSON.stringify(nextKey)} → ${JSON.stringify(nextValue)}`}
+        >
+          Set
+        </Button>
 
-      <button
-        id="delete"
-        onClick={() => {
-          if (map.size > 0) {
-            const index = randomNumber(map.size);
-            map.delete(Array.from(map.keys())[index]);
-          }
-        }}
-      >
-        Delete
-      </button>
+        <Button
+          id="delete"
+          enabled={canDelete}
+          onClick={() => {
+            if (!canDelete) return;
+            map.delete(nextKeyToDelete);
+          }}
+          subtitle={canDelete ? JSON.stringify(nextKeyToDelete) : null}
+        >
+          Delete
+        </Button>
 
-      <button
-        id="clear"
-        onClick={() => {
-          while (map.size > 0) {
-            map.delete(Array.from(map.keys())[0]);
-          }
-        }}
-      >
-        Clear
-      </button>
+        <Button
+          id="clear"
+          onClick={() => {
+            while (map.size > 0) {
+              map.delete(Array.from(map.keys())[0]);
+            }
+          }}
+        >
+          Clear
+        </Button>
 
-      <button id="undo" onClick={undo}>
-        Undo
-      </button>
+        <Button id="undo" enabled={canUndo} onClick={undo}>
+          Undo
+        </Button>
 
-      <button id="redo" onClick={redo}>
-        Redo
-      </button>
-
-      <h2>Items</h2>
-      <p id="itemsCount" style={{ visibility: "hidden" }}>
-        {map.size}
-      </p>
-      <div id="items" style={{ whiteSpace: "pre" }}>
-        {JSON.stringify(Object.fromEntries(map), null, 2)}
+        <Button id="redo" enabled={canRedo} onClick={redo}>
+          Redo
+        </Button>
       </div>
+
+      <table style={styles.dataTable}>
+        <tbody>
+          <Row id="renderCount" name="Render count" value={renderCount} />
+          <Row id="mapSize" name="Map size" value={map.size} />
+          <Row id="map" name="Serialized" value={Object.fromEntries(map)} />
+        </tbody>
+      </table>
     </div>
   );
 }

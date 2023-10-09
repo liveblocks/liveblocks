@@ -1,7 +1,6 @@
-import { createRoomContext } from "@liveblocks/react";
+import { createRoomContext, ClientSideSuspense } from "@liveblocks/react";
 import { LiveList } from "@liveblocks/client";
 import React from "react";
-import createLiveblocksClient from "../../utils/createClient";
 import {
   getRoomFromUrl,
   padItem,
@@ -12,18 +11,20 @@ import {
   useRenderCount,
 } from "../../utils";
 import Button from "../../utils/Button";
+import createLiveblocksClient from "../../utils/createClient";
 
 const client = createLiveblocksClient();
 
 const {
-  RoomProvider,
-  useCanRedo,
-  useCanUndo,
-  useList,
-  useRedo,
-  useSelf,
-  useStatus,
-  useUndo,
+  suspense: {
+    RoomProvider,
+    useCanRedo,
+    useCanUndo,
+    useList,
+    useRedo,
+    useSelf,
+    useUndo,
+  },
 } = createRoomContext<never, { items: LiveList<string> }>(client);
 
 export default function Home() {
@@ -34,7 +35,9 @@ export default function Home() {
       initialPresence={{} as never}
       initialStorage={{ items: new LiveList() }}
     >
-      <Sandbox />
+      <ClientSideSuspense fallback={<div>Loading...</div>}>
+        {() => <Sandbox />}
+      </ClientSideSuspense>
     </RoomProvider>
   );
 }
@@ -49,15 +52,10 @@ function Sandbox() {
   const canRedo = useCanRedo();
   const items = useList("items");
   const me = useSelf();
-  const status = useStatus();
-
-  if (items == null || me == null) {
-    return <div>Loading...</div>;
-  }
 
   const canDelete = items.length > 0;
-  const canMove = items.length >= 2;
   const canSet = items.length > 0;
+  const canMove = items.length > 2;
 
   const nextValueToPush = padItem(me.connectionId, item);
   const nextValueToInsert = padItem(me.connectionId, item);
@@ -69,9 +67,8 @@ function Sandbox() {
   return (
     <div>
       <h3>
-        <a href="/">Home</a> › Storage › LiveList
+        <a href="/">Home</a> › Storage › LiveList (with Suspense)
       </h3>
-
       <div style={{ display: "flex", margin: "8px 0" }}>
         <Button
           id="push"
@@ -153,10 +150,10 @@ function Sandbox() {
           Redo
         </Button>
       </div>
+
       <table style={styles.dataTable}>
         <tbody>
           <Row id="renderCount" name="Render count" value={renderCount} />
-          <Row id="socketStatus" name="WebSocket count" value={status} />
           <Row id="numItems" name="List size" value={items.length} />
           <Row id="items" name="Serialized" value={items.toArray()} />
         </tbody>
