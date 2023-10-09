@@ -45,6 +45,7 @@ type RoomEvent = {
 
 export type ThreadMetadata = {
   resolved: boolean;
+  time: number | null;
   timePercentage: number | null;
 };
 

@@ -61,7 +61,7 @@ export function VideoPlayer() {
     }
 
     if (fullscreen) {
-      document.exitFullscreen();
+      exitFullscreen();
       setFullscreen(false);
       return;
     }
@@ -96,7 +96,7 @@ export function VideoPlayer() {
       return -1;
     }
 
-    return (player.current.getCurrentTime() / duration) * 100;
+    return /* player.current.getCurrentTime() */ (time / duration) * 100;
   }, [duration]);
 
   // Listen to skip events from other parts of app
@@ -105,8 +105,11 @@ export function VideoPlayer() {
       return;
     }
 
+    const newTime = timePercentage / 100;
     setSeeking(false);
-    setTime(timePercentage / 100);
+    setPlaying(false);
+    setTime(newTime);
+    player.current.seekTo(newTime);
   });
 
   // Listen for keyboard events
@@ -218,4 +221,12 @@ function requestFullscreen(element: HTMLElement | null) {
   rfs.call(element);
 
   return true;
+}
+
+function exitFullscreen() {
+  if (document.fullscreenElement === null) {
+    return;
+  }
+
+  document.exitFullscreen();
 }

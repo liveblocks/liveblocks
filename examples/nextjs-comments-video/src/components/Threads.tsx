@@ -1,11 +1,12 @@
 "use client";
 
-import { useThreads } from "@/liveblocks.config";
+import { ThreadMetadata, useThreads } from "@/liveblocks.config";
 import { ClientSideSuspense } from "@liveblocks/react";
 import { Thread } from "@liveblocks/react-comments";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import styles from "./Threads.module.css";
 import { useHighlightThreadListener, useSkipTo } from "@/utils";
+import { ThreadData } from "@liveblocks/core";
 
 export function Threads() {
   return (
@@ -20,9 +21,6 @@ function ThreadList() {
   const { threads } = useThreads();
   const [highlightedId, setHighlightedId] = useState("");
 
-  // TODO skip to time when click `0:05`: skipTo(thread.metadata.timePercentage)
-  const skipTo = useSkipTo();
-
   useHighlightThreadListener((threadId) => {
     setHighlightedId("");
     setTimeout(() => setHighlightedId(threadId));
@@ -35,13 +33,44 @@ function ThreadList() {
   return (
     <div>
       {threads.map((thread) => (
-        <Thread
+        <CustomThread
           key={thread.id}
-          className={styles.thread}
           thread={thread}
-          data-highlight={thread.id === highlightedId || undefined}
+          highlighted={thread.id === highlightedId}
         />
       ))}
+    </div>
+  );
+}
+
+function CustomThread({
+  thread,
+  highlighted,
+}: {
+  thread: ThreadData<ThreadMetadata>;
+  highlighted: boolean;
+}) {
+  const threadHasTime = thread.metadata.timePercentage !== null;
+  const skipTo = useSkipTo();
+
+  const handleButtonClick = useCallback(() => {
+    if (!thread.metadata.timePercentage) {
+      return;
+    }
+
+    skipTo(thread.metadata.timePercentage);
+  }, [skipTo]);
+
+  return (
+    <div>
+      {threadHasTime ? (
+        <button onClick={handleButtonClick}>Skip to comment time</button>
+      ) : null}
+      <Thread
+        className={styles.thread}
+        thread={thread}
+        data-highlight={highlighted || undefined}
+      />
     </div>
   );
 }

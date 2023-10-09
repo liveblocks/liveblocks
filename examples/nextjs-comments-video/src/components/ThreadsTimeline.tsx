@@ -6,6 +6,7 @@ import { ThreadData } from "@liveblocks/core";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { Comment } from "@liveblocks/react-comments/primitives";
 import { useHighlightThread } from "@/utils";
+import { formatTime } from "@/components/Duration";
 
 export function ThreadsTimeline() {
   return (
@@ -54,6 +55,9 @@ function PinnedThread({ thread }: { thread: ThreadData<ThreadMetadata> }) {
         </Tooltip.Trigger>
         <Tooltip.Content className={styles.tooltip}>
           <div className={styles.tooltipName}>{user.name}</div>
+          {thread.metadata.time !== null
+            ? formatTime(thread.metadata.time) + ": "
+            : null}
           <Comment.Body
             body={thread.comments[0].body}
             className={styles.tooltipBody}

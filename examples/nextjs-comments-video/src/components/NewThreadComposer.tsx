@@ -25,9 +25,9 @@ export function NewThreadComposer({
   time,
 }: Props) {
   const createThread = useCreateThread();
-  const [attachTime, setAttachTime] = useState(false);
+  const [attachTime, setAttachTime] = useState(true);
 
-  // Submit thread with current time percentage
+  // Submit thread with current time
   const handleSubmit = useCallback(
     ({ body }: ComposerSubmitComment, event: FormEvent<HTMLFormElement>) => {
       event.preventDefault();
@@ -36,11 +36,12 @@ export function NewThreadComposer({
         body,
         metadata: {
           resolved: false,
+          time: attachTime ? time : null,
           timePercentage: attachTime ? getCurrentPercentage() : null,
         },
       });
     },
-    [attachTime, getCurrentPercentage]
+    [attachTime, getCurrentPercentage, time]
   );
 
   // Pause video on focus
@@ -48,7 +49,7 @@ export function NewThreadComposer({
     setPlaying(false);
   }, []);
 
-  // Stop keyboard events firing on window
+  // Stop keyboard events firing on window when typing
   const handleKeyDown = useCallback((event: FormEvent<HTMLDivElement>) => {
     event.stopPropagation();
   }, []);
@@ -64,6 +65,7 @@ export function NewThreadComposer({
     <>
       <Composer.Form onComposerSubmit={handleSubmit}>
         <Composer.Editor
+          placeholder="Add comment"
           onFocus={handleFocus}
           onKeyDown={handleKeyDown}
           components={{
@@ -75,6 +77,7 @@ export function NewThreadComposer({
         />
         <div>
           <label htmlFor="attach-time">Attach time</label>
+          {/* TODO this must be checked while Comments team look at my feedback */}
           <input
             id="attach-time"
             type="checkbox"
