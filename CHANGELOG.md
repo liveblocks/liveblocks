@@ -2,6 +2,8 @@
 
 ### `@liveblocks/react`
 
+- Fix a race condition that could cause a Liveblocks client to hang during
+  loading when using Suspense.
 - Fix `useStatus` return value on SSR responses.
 
 # v1.4.5
