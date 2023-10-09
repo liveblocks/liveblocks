@@ -35,7 +35,13 @@ export function genRoomId(testInfo: TestInfo) {
     .replace(/-+/g, "-")
     .replace(/^-+/, "")
     .replace(/-+$/, "");
-  return `e2e:${title}`;
+  const roomId = `e2e:${title}`;
+  if (roomId.length > 128) {
+    throw new Error(
+      `The generated room ID is too long (${roomId.length} > 128 characters) and will not work. Please use a shorter test name`
+    );
+  }
+  return roomId;
 }
 
 export async function preparePage(url: string, windowPositionX: number = 0) {
