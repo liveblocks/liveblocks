@@ -1,3 +1,9 @@
+# v1.4.6
+
+### `@liveblocks/react`
+
+- Fix `useStatus` return value on SSR responses.
+
 # v1.4.5
 
 ### `@liveblocks/react`
