@@ -362,21 +362,23 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
     const commentId = createOptimisticId(COMMENT_ID_PREFIX);
     const now = new Date().toISOString();
 
+    const newComment: CommentData = {
+      id: commentId,
+      threadId,
+      roomId: room.id,
+      createdAt: now,
+      type: "comment",
+      userId: getCurrentUserId(),
+      body,
+      reactions: [],
+    };
     const newThread = {
       id: threadId,
       type: "thread",
       createdAt: now,
       roomId: room.id,
       metadata,
-      comments: [
-        {
-          id: commentId,
-          createdAt: now,
-          type: "comment",
-          userId: getCurrentUserId(),
-          body,
-        },
-      ],
+      comments: [newComment],
     } as ThreadData<TThreadMetadata>;
 
     mutate(room.createThread({ threadId, commentId, body, metadata }), {
