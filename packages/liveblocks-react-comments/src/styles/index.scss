@@ -246,8 +246,19 @@
   // Dropdown
 
   .lb-dropdown-item-icon {
-    margin-inline-start: calc(-0.125 * var(--lb-spacing));
+    color: var(--lb-elevation-foreground-moderate);
+    transition-timing-function: var(--lb-transition-easing);
+    transition-duration: var(--lb-transition-duration);
+    transition-property: color;
     margin-inline-end: calc(0.375 * var(--lb-spacing));
+    margin-inline-start: calc(-0.125 * var(--lb-spacing));
+  }
+
+  .lb-dropdown-item[data-highlighted],
+  .lb-dropdown-item[data-selected] {
+    .lb-dropdown-item-icon {
+      color: var(--lb-elevation-foreground-tertiary);
+    }
   }
 
   // Composer suggestions
