@@ -1,3 +1,9 @@
+# v1.4.6
+
+### `@liveblocks/react`
+
+- Fix `createThread` not creating valid comment.
+
 # v1.4.5
 
 ### `@liveblocks/node`
