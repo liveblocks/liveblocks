@@ -5,7 +5,12 @@ import { ClientSideSuspense } from "@liveblocks/react";
 import { Thread } from "@liveblocks/react-comments";
 import { useCallback, useEffect, useState } from "react";
 import styles from "./Threads.module.css";
-import { useHighlightThreadListener, useSkipTo } from "@/utils";
+import {
+  resetAllHighlights,
+  useHighlightPin,
+  useHighlightThreadListener,
+  useSkipTo,
+} from "@/utils";
 import { ThreadData } from "@liveblocks/core";
 import { formatTime } from "@/components/Duration";
 
@@ -20,12 +25,6 @@ export function Threads() {
 // TODO separate threads with a gap
 function ThreadList() {
   const { threads } = useThreads();
-  const [highlightedId, setHighlightedId] = useState("");
-
-  useHighlightThreadListener((threadId) => {
-    setHighlightedId("");
-    setTimeout(() => setHighlightedId(threadId));
-  });
 
   if (threads.length === 0) {
     return <div>No comments yet!</div>;
@@ -34,25 +33,28 @@ function ThreadList() {
   return (
     <div>
       {threads.map((thread) => (
-        <CustomThread
-          key={thread.id}
-          thread={thread}
-          highlighted={thread.id === highlightedId}
-        />
+        <CustomThread key={thread.id} thread={thread} />
       ))}
     </div>
   );
 }
 
-function CustomThread({
-  thread,
-  highlighted,
-}: {
-  thread: ThreadData<ThreadMetadata>;
-  highlighted: boolean;
-}) {
+function CustomThread({ thread }: { thread: ThreadData<ThreadMetadata> }) {
   const threadHasTime = thread.metadata.timePercentage !== null;
   const skipTo = useSkipTo();
+  const highlightPin = useHighlightPin(thread.id);
+
+  const [highlightedThread, setHighlightedThread] = useState(false);
+
+  useHighlightThreadListener((threadId) => {
+    if (thread.id !== threadId) {
+      setHighlightedThread(false);
+      return;
+    }
+
+    setHighlightedThread(false);
+    setTimeout(() => setHighlightedThread(true));
+  });
 
   const handleButtonClick = useCallback(() => {
     if (!thread.metadata.timePercentage) {
@@ -63,7 +65,11 @@ function CustomThread({
   }, [skipTo]);
 
   return (
-    <div className={styles.threadWrapper}>
+    <div
+      className={styles.threadWrapper}
+      onPointerEnter={highlightPin}
+      onPointerLeave={resetAllHighlights}
+    >
       {threadHasTime ? (
         <button onClick={handleButtonClick}>
           Skip to {formatTime(thread.metadata.time)}
@@ -72,7 +78,7 @@ function CustomThread({
       <Thread
         className={styles.thread}
         thread={thread}
-        data-highlight={highlighted || undefined}
+        data-highlight={highlightedThread || undefined}
       />
     </div>
   );

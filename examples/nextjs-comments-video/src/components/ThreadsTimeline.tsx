@@ -5,10 +5,15 @@ import styles from "./ThreadsTimeline.module.css";
 import { ThreadData } from "@liveblocks/core";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { Comment } from "@liveblocks/react-comments/primitives";
-import { useHighlightThread } from "@/utils";
+import {
+  resetAllHighlights,
+  useHighlightPinListener,
+  useHighlightThread,
+} from "@/utils";
 import { formatTime } from "@/components/Duration";
 import { Mention } from "@/components/Mention";
 import { Link } from "@/components/Link";
+import { useState } from "react";
 
 export function ThreadsTimeline() {
   return (
@@ -36,6 +41,17 @@ function PinnedThread({ thread }: { thread: ThreadData<ThreadMetadata> }) {
   // TODO check types correct when all comments deleted from thread
   const { user } = useUser(thread.comments?.[0].userId || "");
   const highlightThread = useHighlightThread(thread.id);
+  const [highlightedPin, setHighlightedPin] = useState(false);
+
+  useHighlightPinListener((threadId) => {
+    if (thread.id !== threadId) {
+      setHighlightedPin(false);
+      return;
+    }
+
+    setHighlightedPin(false);
+    setTimeout(() => setHighlightedPin(true));
+  });
 
   // All comments deleted
   if (!thread.comments.length) {
@@ -46,8 +62,10 @@ function PinnedThread({ thread }: { thread: ThreadData<ThreadMetadata> }) {
     <div
       className={styles.pinnedThread}
       onClick={highlightThread}
-      onMouseOver={highlightThread}
+      onPointerEnter={highlightThread}
+      onPointerLeave={resetAllHighlights}
       style={{ left: `${thread.metadata.timePercentage}%` }}
+      data-highlight={highlightedPin || undefined}
     >
       <Tooltip.Root>
         <Tooltip.Trigger>

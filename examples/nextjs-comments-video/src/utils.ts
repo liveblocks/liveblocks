@@ -32,6 +32,49 @@ export function useHighlightThreadListener(
   }, [callback]);
 }
 
+type PinHighlightEvent = CustomEvent<{ threadId: string }>;
+const PIN_HIGHLIGHT_EVENT_NAME = "pinHighlight";
+
+export function useHighlightPin(threadId: string) {
+  return useCallback(() => {
+    const event: PinHighlightEvent = new CustomEvent(PIN_HIGHLIGHT_EVENT_NAME, {
+      detail: { threadId },
+    });
+
+    window.dispatchEvent(event);
+  }, [threadId]);
+}
+
+export function useHighlightPinListener(callback: (threadId: string) => void) {
+  useEffect(() => {
+    function handler(event: PinHighlightEvent) {
+      callback(event.detail.threadId);
+    }
+
+    window.addEventListener(PIN_HIGHLIGHT_EVENT_NAME, handler as any);
+
+    return () => {
+      window.removeEventListener(PIN_HIGHLIGHT_EVENT_NAME, handler as any);
+    };
+  }, [callback]);
+}
+
+export function resetAllHighlights() {
+  const event1: ThreadHighlightEvent = new CustomEvent(
+    THREAD_HIGHLIGHT_EVENT_NAME,
+    {
+      detail: { threadId: "" },
+    }
+  );
+
+  const event2: PinHighlightEvent = new CustomEvent(PIN_HIGHLIGHT_EVENT_NAME, {
+    detail: { threadId: "" },
+  });
+
+  window.dispatchEvent(event1);
+  window.dispatchEvent(event2);
+}
+
 type SkipToEvent = CustomEvent<{ timePercentage: number }>;
 const SKIP_TO_EVENT_NAME = "skipTo";
 

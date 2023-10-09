@@ -8,6 +8,12 @@
   bottom: 100%;
   cursor: pointer;
   transform: translateX(-50%);
+  transform-origin: center bottom;
+  transition: transform 0.1s ease-out;
+}
+
+.pinnedThread[data-highlight] {
+  transform: translateX(-50%) scale(1.2);
 }
 
 .avatarPin {
