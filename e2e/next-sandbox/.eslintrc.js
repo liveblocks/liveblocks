@@ -25,10 +25,6 @@ module.exports = {
     // ----------------------------------------------------------------------
     "@typescript-eslint/explicit-module-boundary-types": "off", // Not really needed as we're not working on a library here
 
-    // ---- These are good rules! Re-enable them soon! ----------------------------------
-    "no-warning-comments": "off",
-    // ----------------------------------------------------------------------------------
-
     // ----------------------------------------------------------------------
     // Extra rules for this project specifically
     // ----------------------------------------------------------------------

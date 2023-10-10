@@ -83,7 +83,7 @@ test.describe("Storage - LiveList", () => {
     await waitUntilEqualOnAllPages(pages, "#items");
   });
 
-  // XXX Actually fails sometimes, there definitely is a bug here
+  // TODO FIXME Actually fails sometimes, there definitely is a bug here
   test.skip("set conflicts", async () => {
     const [page1, page2] = pages;
     await page1.click("#clear");
@@ -106,7 +106,7 @@ test.describe("Storage - LiveList", () => {
     await waitUntilEqualOnAllPages(pages, "#items");
   });
 
-  // XXX Actually fails sometimes, there definitely is a bug here
+  // TODO FIXME Actually fails sometimes, there definitely is a bug here
   test.skip("fuzzy with undo/redo push delete and move", async () => {
     const [page1] = pages;
     await page1.click("#clear");
