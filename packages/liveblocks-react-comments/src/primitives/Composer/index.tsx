@@ -242,6 +242,14 @@ function ComposerEditorMentionSuggestionsWrapper({
     y,
   } = useFloating(floatingOptions);
 
+  // Copy `z-index` from content to wrapper.
+  // Inspired by https://github.com/radix-ui/primitives/blob/main/packages/react/popper/src/Popper.tsx
+  useLayoutEffect(() => {
+    if (content) {
+      setContentZIndex(window.getComputedStyle(content).zIndex);
+    }
+  }, [content]);
+
   useEffect(() => {
     const domRange = getDOMRange(editor, mentionDraft?.range);
 
@@ -252,12 +260,6 @@ function ComposerEditorMentionSuggestionsWrapper({
       });
     }
   }, [setReference, editor, mentionDraft?.range]);
-
-  useLayoutEffect(() => {
-    if (content) {
-      setContentZIndex(window.getComputedStyle(content).zIndex);
-    }
-  }, [content]);
 
   return isFocused && userIds ? (
     <ComposerSuggestionsContext.Provider
@@ -415,11 +417,11 @@ const ComposerSuggestions = forwardRef<
   const { ref, placement, dir } = useComposerSuggestionsContext(
     COMPOSER_SUGGESTIONS_NAME
   );
+  const mergedRefs = useRefs(forwardedRef, ref);
   const [side, align] = useMemo(
     () => getSideAndAlignFromPlacement(placement),
     [placement]
   );
-  const mergedRefs = useRefs(forwardedRef, ref);
   const Component = asChild ? Slot : "div";
 
   return (

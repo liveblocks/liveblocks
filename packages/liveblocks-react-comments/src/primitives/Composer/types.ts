@@ -2,6 +2,7 @@ import type { CommentBody } from "@liveblocks/core";
 import type {
   ComponentPropsWithoutRef,
   ComponentType,
+  CSSProperties,
   FormEvent,
   ReactNode,
 } from "react";
@@ -81,14 +82,14 @@ export interface ComposerEditorComponents {
   Mention: ComponentType<ComposerEditorMentionProps>;
 
   /**
-   * The component used to display links.
-   */
-  Link: ComponentType<ComposerEditorLinkProps>;
-
-  /**
    * The component used to display mention suggestions.
    */
   MentionSuggestions: ComponentType<ComposerEditorMentionSuggestionsProps>;
+
+  /**
+   * The component used to display links.
+   */
+  Link: ComponentType<ComposerEditorLinkProps>;
 }
 
 export interface ComposerEditorProps
