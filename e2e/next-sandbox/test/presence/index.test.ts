@@ -128,12 +128,13 @@ test.describe("Presence", () => {
 });
 
 test.describe("Presence (w/ specific window timing)", () => {
-  test("connect A => update presence A => connect B => verify presence A on B", async () => {
-    const testUrl = TEST_URL + "?room=e2e-presence-scenario2";
-    const page1 = await preparePage(testUrl + BG_COLOR_1);
+  test("connect A => update presence A => connect B => verify presence A on B", async ({}, testInfo) => {
+    const room = genRoomId(testInfo);
+    const url = `${TEST_URL}?room=${encodeURIComponent(room)}`;
+    const page1 = await preparePage(url + BG_COLOR_1);
     await page1.click("#inc-foo");
 
-    const page2 = await preparePage(testUrl + BG_COLOR_2, WIDTH);
+    const page2 = await preparePage(url + BG_COLOR_2, WIDTH);
     await waitForJson([page1, page2], "#numOthers", 1);
 
     await expectJson(page2, "#theirPresence", { foo: 1 });
