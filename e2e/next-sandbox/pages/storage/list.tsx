@@ -134,8 +134,8 @@ function Sandbox() {
           subtitle={
             canDelete
               ? `index ${nextIndexToDelete} (${items
-                  .get(nextIndexToDelete)
-                  ?.trim()})`
+                  .get(nextIndexToDelete)!
+                  .trim()})`
               : null
           }
         >
