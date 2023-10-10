@@ -46,7 +46,6 @@ export function genRoomId(testInfo: TestInfo) {
 }
 
 export async function preparePage(url: string, windowPositionX: number = 0) {
-  let page: Page;
   const browser = await chromium.launch({
     args: [
       "--no-sandbox",
@@ -59,7 +58,7 @@ export async function preparePage(url: string, windowPositionX: number = 0) {
   const context = await browser.newContext({
     viewport: { width: 640, height: 800 },
   });
-  page = await context.newPage();
+  const page = await context.newPage();
   await page.goto(url);
   return page;
 }

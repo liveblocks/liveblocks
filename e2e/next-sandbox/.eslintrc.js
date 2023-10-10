@@ -35,7 +35,6 @@ module.exports = {
     "@typescript-eslint/restrict-template-expressions": "off",
     "no-useless-escape": "off",
     "no-warning-comments": "off",
-    "prefer-const": "off",
     // ----------------------------------------------------------------------------------
 
     // ----------------------------------------------------------------------
