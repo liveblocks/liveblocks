@@ -37,6 +37,13 @@ type Internal = {
   };
 };
 
+type PrivateRoom = ReturnType<typeof useRoom> & {
+  // Private APIs that aren't officially published (yet)
+  connect(): void;
+  disconnect(): void;
+  __internal: Internal;
+};
+
 export default function Home() {
   const roomId = getRoomFromUrl();
   return (
@@ -55,8 +62,8 @@ let item = "A";
 function Sandbox(_props: { roomId: string }) {
   const renderCount = useRenderCount();
   const status = useStatus();
-  const room = useRoom();
-  const internals = (room as Record<string, unknown>).__internal as Internal;
+  const room = useRoom() as PrivateRoom;
+  const internals = room.__internal;
   const items = useList("items");
   const me = useSelf();
   const others = useOthers();
@@ -64,10 +71,6 @@ function Sandbox(_props: { roomId: string }) {
   const redo = useRedo();
   const canUndo = useCanUndo();
   const canRedo = useCanRedo();
-
-  if (room === null) {
-    return <div>Loading...</div>;
-  }
 
   const canPush = items !== null;
   const canClear = items !== null;
@@ -90,17 +93,17 @@ function Sandbox(_props: { roomId: string }) {
         <Button
           id="disconnect"
           enabled={status !== "initial"}
-          onClick={() => (room as any)?.disconnect()}
+          onClick={() => room?.disconnect()}
         >
           Disconnect
         </Button>
-        <Button id="reconnect" onClick={() => (room as any)?.reconnect()}>
+        <Button id="reconnect" onClick={() => room?.reconnect()}>
           Reconnect
         </Button>
         <Button
           id="connect"
           enabled={status !== "connected"}
-          onClick={() => (room as any)?.connect()}
+          onClick={() => room?.connect()}
         >
           Connect
         </Button>
