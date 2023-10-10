@@ -842,6 +842,7 @@ export type RoomConfig = {
 
   liveblocksServer: string;
   unstable_fallbackToHTTP?: boolean;
+  unstable_streamData?: boolean;
 
   polyfills?: Polyfills;
   enableDebugLogging?: boolean;
@@ -1155,6 +1156,23 @@ export function createRoom<
 
     comments: makeEventSource<CommentsEventServerMsg>(),
   };
+
+  async function streamFetch(authTokenOrPublicApiKey: string, roomId: string) {
+    const baseUrl = new URL(config.liveblocksServer);
+    baseUrl.protocol = "https";
+    const url = new URL(
+      `/v2/rooms/${encodeURIComponent(roomId)}/stream-storage`,
+      baseUrl
+    );
+    const fetcher = config.polyfills?.fetch || /* istanbul ignore next */ fetch;
+    return fetcher(url.toString(), {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${authTokenOrPublicApiKey}`,
+      },
+    });
+  }
 
   async function httpSend(
     authTokenOrPublicApiKey: string,
@@ -1818,12 +1836,7 @@ export function createRoom<
           case ServerMsgCode.INITIAL_STORAGE_STATE: {
             // createOrUpdateRootFromMessage function could add ops to offlineOperations.
             // Client shouldn't resend these ops as part of the offline ops sending after reconnect.
-            const unacknowledgedOps = new Map(context.unacknowledgedOps);
-            createOrUpdateRootFromMessage(message, doNotBatchUpdates);
-            applyAndSendOps(unacknowledgedOps, doNotBatchUpdates);
-            _resolveStoragePromise?.();
-            notifyStorageStatus();
-            eventHub.storageDidLoad.notify();
+            processInitialStorage(message);
             break;
           }
           // Write event
@@ -2005,11 +2018,38 @@ export function createRoom<
   let _getStorage$: Promise<void> | null = null;
   let _resolveStoragePromise: (() => void) | null = null;
 
+  function processInitialStorage(message: InitialDocumentStateServerMsg) {
+    const unacknowledgedOps = new Map(context.unacknowledgedOps);
+    createOrUpdateRootFromMessage(message, doNotBatchUpdates);
+    applyAndSendOps(unacknowledgedOps, doNotBatchUpdates);
+    _resolveStoragePromise?.();
+    notifyStorageStatus();
+    eventHub.storageDidLoad.notify();
+  }
+
+  async function streamStorage() {
+    if (!managedSocket.authValue) {
+      return;
+    }
+    const result = await streamFetch(
+      managedSocket.authValue.type === "public"
+        ? managedSocket.authValue.publicApiKey
+        : managedSocket.authValue.token.raw,
+      config.roomId
+    );
+    const items = (await result.json()) as IdTuple<SerializedCrdt>[];
+    processInitialStorage({ type: ServerMsgCode.INITIAL_STORAGE_STATE, items });
+  }
+
   function refreshStorage(options: { flush: boolean }) {
     // Only add the fetch message to the outgoing message queue if it isn't
     // already there
     const messages = context.buffer.messages;
-    if (!messages.some((msg) => msg.type === ClientMsgCode.FETCH_STORAGE)) {
+    if (config.unstable_streamData) {
+      void streamStorage();
+    } else if (
+      !messages.some((msg) => msg.type === ClientMsgCode.FETCH_STORAGE)
+    ) {
       messages.push({ type: ClientMsgCode.FETCH_STORAGE });
     }
 

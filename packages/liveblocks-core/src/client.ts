@@ -90,6 +90,7 @@ export type ClientOptions = {
   lostConnectionTimeout?: number; // in milliseconds
   polyfills?: Polyfills;
   unstable_fallbackToHTTP?: boolean;
+  unstable_streamData?: boolean;
 
   /**
    * @deprecated Use `polyfills: { fetch: ... }` instead.
@@ -224,6 +225,7 @@ export function createClient(options: ClientOptions): Client {
         unstable_batchedUpdates: options?.unstable_batchedUpdates,
         liveblocksServer: getServerFromClientOptions(clientOptions),
         unstable_fallbackToHTTP: !!clientOptions.unstable_fallbackToHTTP,
+        unstable_streamData: !!clientOptions.unstable_streamData,
       }
     );
 
