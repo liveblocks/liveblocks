@@ -1,9 +1,8 @@
+import type { WithLiveblocks } from "@liveblocks/zustand";
+import { liveblocks } from "@liveblocks/zustand";
 import React, { useEffect } from "react";
 import { create } from "zustand";
 
-import { liveblocks } from "@liveblocks/zustand";
-import type { WithLiveblocks } from "@liveblocks/zustand";
-import createLiveblocksClient from "../utils/createClient";
 import {
   getRoomFromUrl,
   padItem,
@@ -13,6 +12,7 @@ import {
   useRenderCount,
 } from "../utils";
 import Button from "../utils/Button";
+import createLiveblocksClient from "../utils/createClient";
 
 const client = createLiveblocksClient();
 

@@ -1,5 +1,6 @@
-import type { NextApiRequest, NextApiResponse } from "next";
 import { authorize } from "@liveblocks/node";
+import type { NextApiRequest, NextApiResponse } from "next";
+
 import { randomUser } from "../_utils";
 
 const API_KEY = process.env.LIVEBLOCKS_SECRET_KEY;

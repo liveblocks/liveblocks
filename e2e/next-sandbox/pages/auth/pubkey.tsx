@@ -1,8 +1,9 @@
-import React from "react";
-import Link from "next/link";
-import { nn } from "@liveblocks/core";
 import { createClient } from "@liveblocks/client";
+import { nn } from "@liveblocks/core";
 import { createRoomContext } from "@liveblocks/react";
+import Link from "next/link";
+import React from "react";
+
 import { getRoomFromUrl } from "../../utils";
 
 const client = createClient({

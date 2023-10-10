@@ -1,8 +1,10 @@
-import { Json, createRoomContext } from "@liveblocks/react";
+import type { Json } from "@liveblocks/react";
+import { createRoomContext } from "@liveblocks/react";
 import React from "react";
-import createLiveblocksClient from "../../utils/createClient";
+
 import { getRoomFromUrl, Row, styles, useRenderCount } from "../../utils";
 import Button from "../../utils/Button";
+import createLiveblocksClient from "../../utils/createClient";
 
 const client = createLiveblocksClient();
 

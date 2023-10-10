@@ -1,8 +1,8 @@
-import type { IWebSocketCloseEvent } from "@liveblocks/core";
 import { LiveList } from "@liveblocks/client";
+import type { IWebSocketCloseEvent } from "@liveblocks/core";
 import { createRoomContext } from "@liveblocks/react";
 import React from "react";
-import createLiveblocksClient from "../utils/createClient";
+
 import {
   getRoomFromUrl,
   padItem,
@@ -13,6 +13,7 @@ import {
   useRenderCount,
 } from "../utils";
 import Button from "../utils/Button";
+import createLiveblocksClient from "../utils/createClient";
 
 const client = createLiveblocksClient();
 

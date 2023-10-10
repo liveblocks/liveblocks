@@ -1,5 +1,6 @@
 import type { Page } from "@playwright/test";
 import { test } from "@playwright/test";
+
 import {
   expectJson,
   genRoomId,
@@ -7,8 +8,8 @@ import {
   pickFrom,
   pickNumberOfUndoRedo,
   preparePages,
-  waitUntilEqualOnAllPages,
   waitForJson,
+  waitUntilEqualOnAllPages,
 } from "../utils";
 
 const TEST_URL = "http://localhost:3007/storage/list";

@@ -1,5 +1,7 @@
 import type { Page } from "@playwright/test";
 import { test } from "@playwright/test";
+
+import type { IDSelector } from "../utils";
 import {
   expectJsonEqualOnAllPages,
   genRoomId,
@@ -10,7 +12,6 @@ import {
   waitForJson,
   waitUntilEqualOnAllPages,
 } from "../utils";
-import type { IDSelector } from "../utils";
 
 const TEST_URL = "http://localhost:3007/storage/map";
 

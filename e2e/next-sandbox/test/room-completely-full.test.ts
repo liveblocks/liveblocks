@@ -1,7 +1,8 @@
 import type { Page } from "@playwright/test";
 import { test } from "@playwright/test";
-import { genRoomId, preparePages, waitForJson } from "./utils";
+
 import { randomInt } from "../utils";
+import { genRoomId, preparePages, waitForJson } from "./utils";
 
 const TEST_URL = "http://localhost:3007/offline/";
 

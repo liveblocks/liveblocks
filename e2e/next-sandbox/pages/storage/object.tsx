@@ -1,5 +1,8 @@
+import { LiveObject } from "@liveblocks/client";
+import { lsonToJson } from "@liveblocks/core";
 import { createRoomContext } from "@liveblocks/react";
 import React from "react";
+
 import {
   getRoomFromUrl,
   randomInt,
@@ -8,8 +11,6 @@ import {
   useRenderCount,
 } from "../../utils";
 import Button from "../../utils/Button";
-import { LiveObject } from "@liveblocks/client";
-import { lsonToJson } from "@liveblocks/core";
 import createLiveblocksClient from "../../utils/createClient";
 
 const client = createLiveblocksClient();

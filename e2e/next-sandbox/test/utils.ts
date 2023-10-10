@@ -2,6 +2,7 @@ import type { Json } from "@liveblocks/client";
 import type { Page, TestInfo } from "@playwright/test";
 import { chromium, expect } from "@playwright/test";
 import _ from "lodash";
+
 import { randomInt } from "../utils";
 
 export type IDSelector = `#${string}`;
@@ -48,8 +49,8 @@ export async function preparePage(url: string, windowPositionX: number = 0) {
   let page: Page;
   const browser = await chromium.launch({
     args: [
-      `--no-sandbox`,
-      `--disable-setuid-sandbox`,
+      "--no-sandbox",
+      "--disable-setuid-sandbox",
       `--window-size=${WIDTH},${HEIGHT}`,
       `--window-position=${windowPositionX},0`,
       "--disable-dev-shm-usage",
