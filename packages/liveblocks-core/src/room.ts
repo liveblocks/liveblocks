@@ -1161,12 +1161,12 @@ export function createRoom<
     const baseUrl = new URL(config.liveblocksServer);
     baseUrl.protocol = "https";
     const url = new URL(
-      `/v2/rooms/${encodeURIComponent(roomId)}/stream-storage`,
+      `/v2/rooms/${encodeURIComponent(roomId)}/storage-stream/`,
       baseUrl
     );
     const fetcher = config.polyfills?.fetch || /* istanbul ignore next */ fetch;
     return fetcher(url.toString(), {
-      method: "POST",
+      method: "GET",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${authTokenOrPublicApiKey}`,
