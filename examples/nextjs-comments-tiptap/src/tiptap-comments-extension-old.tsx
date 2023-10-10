@@ -14,18 +14,16 @@ declare module "@tiptap/core" {
       /**
        * Set a highlight mark
        */
-      setCommentHighlight: (attributes: {
-        color?: string;
-        highlightId: string | null;
-        state: "composing" | "complete";
+      setCommentHighlight: (attributes?: {
+        color: string;
+        threadId: string | null;
       }) => ReturnType;
       /**
        * Toggle a highlight mark
        */
-      toggleCommentHighlight: (attributes: {
-        color?: string;
-        highlightId: string | null;
-        state: "composing" | "complete";
+      toggleCommentHighlight: (attributes?: {
+        color: string;
+        threadId: string | null;
       }) => ReturnType;
       /**
        * Unset a highlight mark
@@ -41,8 +39,7 @@ export interface CommentHighlightOptions {
 
 export interface CommentHighlightStorage {
   showComposer: boolean;
-  currentHighlightId: string | null;
-  previousHighlightSelection: { from: number; to: number } | null;
+  currentThread: null | string;
 }
 
 export const LiveblocksCommentsHighlight = Mark.create<
@@ -60,8 +57,7 @@ export const LiveblocksCommentsHighlight = Mark.create<
   addStorage() {
     return {
       showComposer: false,
-      currentHighlightId: null,
-      previousHighlightSelection: null,
+      currentThread: null,
     };
   },
 
@@ -70,14 +66,6 @@ export const LiveblocksCommentsHighlight = Mark.create<
       setCommentHighlight:
         (attributes) =>
         ({ commands }) => {
-          this.storage.currentHighlightId = attributes.highlightId;
-          this.storage.showComposer = true;
-          const { from, to } = this.editor.view.state.selection;
-          this.storage.previousHighlightSelection = {
-            from,
-            to,
-          };
-          console.log(this.editor.view.state.selection);
           return commands.setMark(this.name, attributes);
         },
       toggleCommentHighlight:
@@ -95,32 +83,17 @@ export const LiveblocksCommentsHighlight = Mark.create<
 
   addAttributes() {
     return {
-      highlightId: {
+      threadId: {
         default: null,
-        parseHTML: (element) => element.getAttribute("data-highlight-id"),
+        parseHTML: (element) => element.getAttribute("data-thread-id"),
         renderHTML: (attributes) => {
-          // Don't render attribute if no highlightId defined
-          if (!attributes.highlightId) {
+          // Don't render attribute if no threadId defined
+          if (!attributes.threadId) {
             return;
           }
 
           return {
-            "data-highlight-id": attributes.highlightId,
-          };
-        },
-      },
-
-      // Color of highlighted text
-      state: {
-        default: null,
-        parseHTML: (element) => element.getAttribute("data-state"),
-        renderHTML: (attributes) => {
-          if (!attributes.state) {
-            return {};
-          }
-
-          return {
-            "data-state": attributes.state,
+            "data-thread-id": attributes.threadId,
           };
         },
       },
@@ -171,7 +144,7 @@ export const LiveblocksCommentsHighlight = Mark.create<
         // "data-selected": "false",
       })
     ).forEach(([attr, val]) => elem.setAttribute(attr, val));
-    // console.log(this.options.HTMLAttributes, HTMLAttributes);
+    console.log(this.options.HTMLAttributes, HTMLAttributes);
 
     // Set data-selected when last click occurs inside mark
     // TODO send custom event so comments know they're selected

@@ -42,7 +42,10 @@ type RoomEvent = {
   // ...
 };
 
-type ThreadMetadata = {};
+type ThreadMetadata = {
+  resolved: boolean;
+  highlightId: string;
+};
 
 export const {
   suspense: {

@@ -21,15 +21,10 @@ import { useRoom, useSelf } from "@/liveblocks.config";
 import { DocumentSpinner } from "@/primitives/Spinner";
 import { CustomTaskItem } from "./CustomTaskItem";
 import { SelectionMenu } from "./SelectionMenu";
-import { Toolbar } from "./Toolbar";
 import styles from "./TextEditor.module.css";
 import { Avatars } from "@/components/Avatars";
-import { CommentsHighlight } from "@/components/CommentHighlight";
 import { LiveblocksCommentsHighlight } from "@/tiptap-comments-extension";
 import { ThreadList } from "@/components/ThreadList";
-import { ErrorBoundary } from "react-error-boundary";
-import localFont from "next/dist/compiled/@next/font/dist/local";
-// import { LiveblocksCommentsHighlight } from "@/tiptap-comments-extension";
 
 export function TextEditor() {
   return (
@@ -196,7 +191,7 @@ function TiptapEditor({ doc, provider }: EditorProps) {
         <div className={styles.editorContainer}>
           <EditorContent editor={editor} />
           <div className={styles.threadListContainer}>
-            <ThreadList />
+            {editor ? <ThreadList editor={editor} /> : null}
           </div>
         </div>
       </div>

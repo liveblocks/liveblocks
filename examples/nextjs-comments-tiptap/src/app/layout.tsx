@@ -1,6 +1,7 @@
 import "../styles/globals.css";
 import "../styles/text-editor.css";
 import "@liveblocks/react-comments/styles.css";
+import "@liveblocks/react-comments/styles/dark/attributes.css";
 
 export const metadata = {
   title: "Liveblocks",
@@ -12,7 +13,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="en" data-theme="light">
       <head>
         <link
           href="https://liveblocks.io/favicon-32x32.png"
