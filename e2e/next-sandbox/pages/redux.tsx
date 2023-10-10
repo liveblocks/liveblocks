@@ -9,9 +9,9 @@ import {
   Row,
   styles,
   useRenderCount,
-} from "../../utils";
-import Button from "../../utils/Button";
-import { useAppDispatch, useAppSelector } from "./hooks";
+} from "../utils";
+import Button from "../utils/Button";
+import { useAppDispatch, useAppSelector } from "../utils/for-redux/hooks";
 import store, {
   addItem,
   clear,
@@ -19,7 +19,7 @@ import store, {
   deleteItem,
   incCounter,
   setName,
-} from "./store";
+} from "../utils/for-redux/store";
 
 export default function ReduxApp() {
   return (
