@@ -33,7 +33,6 @@ module.exports = {
     "@typescript-eslint/no-unsafe-member-access": "off",
     "@typescript-eslint/no-unsafe-return": "off",
     "@typescript-eslint/restrict-template-expressions": "off",
-    "no-empty-pattern": "off",
     "no-useless-escape": "off",
     "no-warning-comments": "off",
     "prefer-const": "off",
@@ -50,6 +49,9 @@ module.exports = {
 
       // Special config for test files
       rules: {
+        // Disabling nags about {} unpacking, which is apparently needed for Playwright
+        "no-empty-pattern": "off",
+
         // "no-restricted-syntax": "off",
         // "@typescript-eslint/explicit-module-boundary-types": "off",
         // Ideally, we should remove these overrides, since they are still
