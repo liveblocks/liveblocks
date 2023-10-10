@@ -51,6 +51,7 @@ import type {
   InternalRoomContextBundle,
   MutationContext,
   OmitFirstArg,
+  PromiseOrNot,
   ResolveMentionSuggestionsOptions,
   ResolveUserOptions,
   RoomContextBundle,
@@ -153,20 +154,20 @@ type Options<TUserMeta extends BaseUserMeta> = {
   /**
    * @beta
    *
-   * An asynchronous function that returns user info from a user ID.
+   * A function that returns user info from a user ID.
    */
   resolveUser?: (
     options: ResolveUserOptions
-  ) => Promise<TUserMeta["info"] | undefined>;
+  ) => PromiseOrNot<TUserMeta["info"] | undefined>;
 
   /**
    * @beta
    *
-   * An asynchronous function that returns a list of user IDs matching a string.
+   * A function that returns a list of user IDs matching a string.
    */
   resolveMentionSuggestions?: (
     options: ResolveMentionSuggestionsOptions
-  ) => Promise<string[]>;
+  ) => PromiseOrNot<string[]>;
 
   /**
    * @internal Internal endpoint

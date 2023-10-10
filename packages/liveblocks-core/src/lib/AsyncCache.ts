@@ -2,9 +2,11 @@ import type { Callback, Observable, UnsubscribeCallback } from "./EventSource";
 import { makeEventSource } from "./EventSource";
 import { shallow } from "./shallow";
 
+type PromiseOrNot<T> = T | Promise<T>;
+
 type AsyncCacheFunction<T, A extends any[] = any[]> = (
   ...args: A
-) => T | Promise<T>;
+) => PromiseOrNot<T>;
 
 type AsyncCacheOptions<T, E> = {
   isStateEqual?: (a: AsyncState<T, E>, b: AsyncState<T, E>) => boolean;

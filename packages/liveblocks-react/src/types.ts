@@ -33,6 +33,8 @@ import type {
   ThreadsStateSuccess,
 } from "./comments/CommentsRoom";
 
+export type PromiseOrNot<T> = T | Promise<T>;
+
 export type ResolveUserOptions = {
   userId: string;
 };

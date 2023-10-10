@@ -87,8 +87,7 @@ user (comments, mentions, etc.) will reference their ID. To display user
 information based on IDs, you can provide a resolver function to the
 `resolveUser` option in [`createRoomContext`](#createRoomContext).
 
-This resolver function will receive a user ID and should return a user object
-asynchronously.
+This resolver function will receive a user ID and should return a user object.
 
 ```tsx file="liveblocks.config.ts"
 // ...
@@ -97,7 +96,7 @@ export const {
   /* ... */
 } = createRoomContext(client, {
   resolveUser: async ({ userId }) => {
-    const userData = __getUserFromDB__(userId);
+    const userData = await __getUserFromDB__(userId);
 
     return {
       name: userData.name,
@@ -148,8 +147,8 @@ but with some debouncing.
 export const {
   /* ... */
 } = createRoomContext(client, {
-  resolveMentionSuggestions: ({ text, roomId }) => {
-    const workspaceUsers = __getWorkspaceUsersFromDB__(roomId);
+  resolveMentionSuggestions: async ({ text, roomId }) => {
+    const workspaceUsers = await __getWorkspaceUsersFromDB__(roomId);
 
     if (!text) {
       // Show all workspace users by default
