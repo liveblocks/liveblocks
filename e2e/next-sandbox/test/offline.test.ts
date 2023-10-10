@@ -1,5 +1,6 @@
 import type { Page } from "@playwright/test";
 import { test } from "@playwright/test";
+
 import {
   expectJson,
   genRoomId,
@@ -9,6 +10,8 @@ import {
   waitForJson,
   waitUntilEqualOnAllPages,
 } from "./utils";
+
+test.describe.configure({ mode: "parallel" });
 
 const TEST_URL = "http://localhost:3007/offline/";
 

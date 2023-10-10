@@ -1,5 +1,6 @@
 import type { Page } from "@playwright/test";
 import { test } from "@playwright/test";
+
 import {
   expectJson,
   genRoomId,
@@ -7,6 +8,8 @@ import {
   preparePages,
   waitForJson,
 } from "../utils";
+
+test.describe.configure({ mode: "parallel" });
 
 const WIDTH = 640;
 const BG_COLOR_1 = "&bg=" + encodeURIComponent("#cafbca");

@@ -1,6 +1,7 @@
-import { createRoomContext, ClientSideSuspense } from "@liveblocks/react";
 import { LiveList } from "@liveblocks/client";
+import { ClientSideSuspense, createRoomContext } from "@liveblocks/react";
 import React from "react";
+
 import {
   getRoomFromUrl,
   padItem,
@@ -130,8 +131,8 @@ function Sandbox() {
           subtitle={
             canDelete
               ? `index ${nextIndexToDelete} (${items
-                  .get(nextIndexToDelete)
-                  ?.trim()})`
+                  .get(nextIndexToDelete)!
+                  .trim()})`
               : null
           }
         >

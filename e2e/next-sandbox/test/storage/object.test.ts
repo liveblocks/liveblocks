@@ -1,15 +1,18 @@
 import type { Page } from "@playwright/test";
 import { test } from "@playwright/test";
+
+import type { IDSelector } from "../utils";
 import {
   genRoomId,
   nanoSleep,
-  pickNumberOfUndoRedo,
   pickFrom,
+  pickNumberOfUndoRedo,
   preparePages,
-  waitUntilEqualOnAllPages,
   waitForJson,
+  waitUntilEqualOnAllPages,
 } from "../utils";
-import type { IDSelector } from "../utils";
+
+test.describe.configure({ mode: "parallel" });
 
 const TEST_URL = "http://localhost:3007/storage/object";
 

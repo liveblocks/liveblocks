@@ -1,7 +1,11 @@
 import type { Page } from "@playwright/test";
 import { test } from "@playwright/test";
-import { genRoomId, preparePages, waitForJson } from "./utils";
+
 import { randomInt } from "../utils";
+import { genRoomId, preparePages, waitForJson } from "./utils";
+
+// Don't run these in parallel, to not maximize load on servers
+// test.describe.configure({ mode: "parallel" });
 
 const TEST_URL = "http://localhost:3007/offline/";
 
@@ -9,6 +13,7 @@ const TEST_URL = "http://localhost:3007/offline/";
 // resource-intensive for the limited GitHub Actions runners (too many tabs
 // open, or too slow, hitting the timeout limit). So for now, we'll just skip
 // them on CI, but still keep running them locally.
+// eslint-disable-next-line @typescript-eslint/unbound-method
 const skipOnCI = process.env.CI ? test.skip : test;
 
 test.describe("Room completely full", () => {

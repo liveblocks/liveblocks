@@ -1,5 +1,5 @@
-import React from "react";
 import type { Json } from "@liveblocks/client";
+import React from "react";
 
 export function getRoomFromUrl(): string {
   if (typeof window === "undefined") {

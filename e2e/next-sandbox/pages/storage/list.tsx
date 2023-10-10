@@ -1,7 +1,7 @@
-import { createRoomContext } from "@liveblocks/react";
 import { LiveList } from "@liveblocks/client";
+import { createRoomContext } from "@liveblocks/react";
 import React from "react";
-import createLiveblocksClient from "../../utils/createClient";
+
 import {
   getRoomFromUrl,
   padItem,
@@ -12,6 +12,7 @@ import {
   useRenderCount,
 } from "../../utils";
 import Button from "../../utils/Button";
+import createLiveblocksClient from "../../utils/createClient";
 
 const client = createLiveblocksClient();
 
@@ -51,7 +52,7 @@ function Sandbox() {
   const me = useSelf();
   const status = useStatus();
 
-  if (items == null || me == null) {
+  if (items === null || me === null) {
     return <div>Loading...</div>;
   }
 
@@ -133,8 +134,8 @@ function Sandbox() {
           subtitle={
             canDelete
               ? `index ${nextIndexToDelete} (${items
-                  .get(nextIndexToDelete)
-                  ?.trim()})`
+                  .get(nextIndexToDelete)!
+                  .trim()})`
               : null
           }
         >

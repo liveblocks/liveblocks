@@ -1,7 +1,7 @@
-import { createRoomContext } from "@liveblocks/react";
 import { LiveMap } from "@liveblocks/client";
+import { createRoomContext } from "@liveblocks/react";
 import React from "react";
-import createLiveblocksClient from "../../utils/createClient";
+
 import {
   getRoomFromUrl,
   randomInt,
@@ -10,6 +10,7 @@ import {
   useRenderCount,
 } from "../../utils";
 import Button from "../../utils/Button";
+import createLiveblocksClient from "../../utils/createClient";
 
 const client = createLiveblocksClient();
 
@@ -37,7 +38,7 @@ function Sandbox() {
   const canRedo = useCanRedo();
   const map = useMap("map");
 
-  if (map == null) {
+  if (map === null) {
     return <div>Loading...</div>;
   }
 

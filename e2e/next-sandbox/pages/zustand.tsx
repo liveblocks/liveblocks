@@ -1,9 +1,8 @@
+import type { WithLiveblocks } from "@liveblocks/zustand";
+import { liveblocks } from "@liveblocks/zustand";
 import React, { useEffect } from "react";
 import { create } from "zustand";
 
-import { liveblocks } from "@liveblocks/zustand";
-import type { WithLiveblocks } from "@liveblocks/zustand";
-import createLiveblocksClient from "../utils/createClient";
 import {
   getRoomFromUrl,
   padItem,
@@ -13,6 +12,7 @@ import {
   useRenderCount,
 } from "../utils";
 import Button from "../utils/Button";
+import createLiveblocksClient from "../utils/createClient";
 
 const client = createLiveblocksClient();
 
@@ -47,7 +47,7 @@ const useStore = create<WithLiveblocks<State, never, never, never, never>>()(
       addItem: (newItem: string) =>
         set((state) => ({ items: state.items.concat(newItem) })),
       deleteItem: (index: number) =>
-        set((state) => ({ items: state.items.filter((_, i) => index != i) })),
+        set((state) => ({ items: state.items.filter((_, i) => index !== i) })),
       clear: () => set(() => ({ items: [] })),
     }),
     {

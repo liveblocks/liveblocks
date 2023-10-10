@@ -16,10 +16,11 @@ export type Props = Omit<
   };
 
 export default function Button(props: Props) {
-  const opacity = props.enabled ?? true ? undefined : 0.7;
+  const { enabled, ...rest } = props;
+  const opacity = enabled ?? true ? undefined : 0.7;
   return (
     <button
-      {...props}
+      {...rest}
       style={{
         fontSize: "0.75rem",
         minWidth: 70,

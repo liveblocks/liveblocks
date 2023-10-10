@@ -1,7 +1,7 @@
-import React, { useEffect } from "react";
-import { useAppDispatch, useAppSelector } from "./hooks";
-import { Provider } from "react-redux";
 import { actions } from "@liveblocks/redux";
+import React, { useEffect } from "react";
+import { Provider } from "react-redux";
+
 import {
   getRoomFromUrl,
   padItem,
@@ -11,14 +11,14 @@ import {
   useRenderCount,
 } from "../../utils";
 import Button from "../../utils/Button";
-
+import { useAppDispatch, useAppSelector } from "./hooks";
 import store, {
-  client,
-  setName,
-  incCounter,
   addItem,
-  deleteItem,
   clear,
+  client,
+  deleteItem,
+  incCounter,
+  setName,
 } from "./store";
 
 export default function ReduxApp() {
@@ -49,7 +49,7 @@ function ReduxSandbox() {
     };
   }, [actions.enterRoom, actions.leaveRoom]);
 
-  if (items == null) {
+  if (items === null) {
     return <div>Loading...</div>;
   }
 

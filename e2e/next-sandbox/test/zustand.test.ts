@@ -1,5 +1,7 @@
 import type { Page } from "@playwright/test";
 import { test } from "@playwright/test";
+
+import type { IDSelector } from "./utils";
 import {
   expectJson,
   genRoomId,
@@ -9,7 +11,8 @@ import {
   waitForJson,
   waitUntilEqualOnAllPages,
 } from "./utils";
-import type { IDSelector } from "./utils";
+
+test.describe.configure({ mode: "parallel" });
 
 const TEST_URL = "http://localhost:3007/zustand";
 
@@ -134,19 +137,19 @@ test.describe("Zustand", () => {
   test("fuzzy [push]", fuzzyTest(["#push"]));
   test("fuzzy [push, delete]", fuzzyTest(["#push", "#delete"]));
 
-  // XXX Actually fails sometimes, there definitely is a bug here
+  // TODO FIXME Actually fails sometimes, there definitely is a bug here
   test.skip("fuzzy [push, undo]", fuzzyTest(["#push", "#undo"]));
-  // XXX Actually fails sometimes, there definitely is a bug here
+  // TODO FIXME Actually fails sometimes, there definitely is a bug here
   test.skip("fuzzy [delete, undo]", fuzzyTest(["#delete", "#undo"]));
-  // XXX Actually fails sometimes, there definitely is a bug here
+  // TODO FIXME Actually fails sometimes, there definitely is a bug here
   test.skip("fuzzy [push, undo, redo]", fuzzyTest(["#push", "#undo", "#redo"]));
-  // XXX Actually fails sometimes, there definitely is a bug here
+  // TODO FIXME Actually fails sometimes, there definitely is a bug here
   test.skip(
     "fuzzy [delete, undo, redo]",
     fuzzyTest(["#delete", "#undo", "#redo"])
   );
 
-  // XXX Actually fails sometimes, there definitely is a bug here
+  // TODO FIXME Actually fails sometimes, there definitely is a bug here
   test.skip(
     "fuzzy [push, delete, undo, redo]",
     fuzzyTest(["#push", "#delete", "#undo", "#redo"])

@@ -2,6 +2,7 @@ import type { Json } from "@liveblocks/client";
 import type { Page, TestInfo } from "@playwright/test";
 import { chromium, expect } from "@playwright/test";
 import _ from "lodash";
+
 import { randomInt } from "../utils";
 
 export type IDSelector = `#${string}`;
@@ -31,7 +32,7 @@ export function genRoomId(testInfo: TestInfo) {
     .filter(Boolean)
     .join(":")
     .toLowerCase()
-    .replace(/[^\w\d:.\/]+/g, "-")
+    .replace(/[^/:.\w\d]+/g, "-")
     .replace(/-+/g, "-")
     .replace(/^-+/, "")
     .replace(/-+$/, "");
@@ -45,11 +46,10 @@ export function genRoomId(testInfo: TestInfo) {
 }
 
 export async function preparePage(url: string, windowPositionX: number = 0) {
-  let page: Page;
   const browser = await chromium.launch({
     args: [
-      `--no-sandbox`,
-      `--disable-setuid-sandbox`,
+      "--no-sandbox",
+      "--disable-setuid-sandbox",
       `--window-size=${WIDTH},${HEIGHT}`,
       `--window-position=${windowPositionX},0`,
       "--disable-dev-shm-usage",
@@ -58,7 +58,7 @@ export async function preparePage(url: string, windowPositionX: number = 0) {
   const context = await browser.newContext({
     viewport: { width: 640, height: 800 },
   });
-  page = await context.newPage();
+  const page = await context.newPage();
   await page.goto(url);
   return page;
 }
@@ -138,8 +138,8 @@ export async function expectJson(
   if (expectedValue !== undefined) {
     await expect(getJson(page, selector)).resolves.toEqual(expectedValue);
   } else {
-    const text = page.locator(selector).innerText();
-    await expect(text).toEqual("undefined");
+    const text = await page.locator(selector).innerText();
+    expect(text).toEqual("undefined");
   }
 }
 
@@ -148,7 +148,7 @@ export async function getJson(page: Page, selector: IDSelector): Promise<Json> {
   if (!text) {
     throw new Error(`Could not find HTML element #${selector}`);
   }
-  return JSON.parse(text);
+  return JSON.parse(text) as Json;
 }
 
 async function getBoth(pages: [Page, Page], selector: IDSelector) {

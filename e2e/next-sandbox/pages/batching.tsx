@@ -1,9 +1,10 @@
 import { LiveMap } from "@liveblocks/client";
 import { createRoomContext } from "@liveblocks/react";
 import React from "react";
-import createLiveblocksClient from "../utils/createClient";
+
 import { getRoomFromUrl, Row, styles, useRenderCount } from "../utils";
 import Button from "../utils/Button";
+import createLiveblocksClient from "../utils/createClient";
 
 const client = createLiveblocksClient();
 
@@ -51,7 +52,7 @@ function Sandbox() {
   const theirPresence = others[0]?.presence;
   const me = useSelf();
 
-  if (liveMap == null || me == null) {
+  if (liveMap === null || me === null) {
     return <div>Loading...</div>;
   }
 
