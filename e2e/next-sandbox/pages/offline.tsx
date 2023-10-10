@@ -68,7 +68,6 @@ function Sandbox(_props: { roomId: string }) {
   if (room == null) {
     return <div>Loading...</div>;
   }
-  room.getStorage();
 
   const canPush = items !== null;
   const canClear = items !== null;
