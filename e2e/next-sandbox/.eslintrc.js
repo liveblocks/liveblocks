@@ -23,9 +23,9 @@ module.exports = {
     // ----------------------------------------------------------------------
     // Overrides from default rule config used in all other projects!
     // ----------------------------------------------------------------------
+    "@typescript-eslint/explicit-module-boundary-types": "off", // Not really needed as we're not working on a library here
 
     // ---- These are good rules! Re-enable them soon! ----------------------------------
-    "@typescript-eslint/explicit-module-boundary-types": "off",
     "no-warning-comments": "off",
     // ----------------------------------------------------------------------------------
 
