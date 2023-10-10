@@ -42,7 +42,7 @@ type RoomEvent = {
   // ...
 };
 
-type ThreadMetadata = {
+export type ThreadMetadata = {
   resolved: boolean;
   highlightId: string;
 };

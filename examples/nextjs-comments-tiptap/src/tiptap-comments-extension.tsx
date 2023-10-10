@@ -1,12 +1,4 @@
 import { Mark, mergeAttributes } from "@tiptap/core";
-import {
-  NodeViewContent,
-  NodeViewProps,
-  NodeViewWrapper,
-  ReactNodeViewRenderer,
-} from "@tiptap/react";
-import styles from "@/components/CustomTaskItem.module.css";
-import { Checkbox } from "@/primitives/Checkbox";
 
 declare module "@tiptap/core" {
   interface Commands<ReturnType> {
@@ -42,7 +34,6 @@ export interface CommentHighlightOptions {
 export interface CommentHighlightStorage {
   showComposer: boolean;
   currentHighlightId: string | null;
-  previousHighlightSelection: { from: number; to: number } | null;
 }
 
 export const LiveblocksCommentsHighlight = Mark.create<
@@ -61,7 +52,6 @@ export const LiveblocksCommentsHighlight = Mark.create<
     return {
       showComposer: false,
       currentHighlightId: null,
-      previousHighlightSelection: null,
     };
   },
 
@@ -72,12 +62,6 @@ export const LiveblocksCommentsHighlight = Mark.create<
         ({ commands }) => {
           this.storage.currentHighlightId = attributes.highlightId;
           this.storage.showComposer = true;
-          const { from, to } = this.editor.view.state.selection;
-          this.storage.previousHighlightSelection = {
-            from,
-            to,
-          };
-          console.log(this.editor.view.state.selection);
           return commands.setMark(this.name, attributes);
         },
       toggleCommentHighlight:

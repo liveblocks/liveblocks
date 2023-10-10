@@ -1,12 +1,17 @@
 "use client";
 
-import { useCreateThread, useThreads } from "@/liveblocks.config";
+import {
+  ThreadMetadata,
+  useCreateThread,
+  useThreads,
+} from "@/liveblocks.config";
 import { Composer, Thread } from "@liveblocks/react-comments";
 import { ThreadData } from "@liveblocks/client";
 import styles from "./ThreadList.module.css";
-import { FormEvent, useCallback, useEffect, useRef } from "react";
+import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { Editor } from "@tiptap/react";
 import { ComposerSubmitComment } from "@liveblocks/react-comments/dist/primitives/index";
+import { removeCommentHighlight } from "@/utils";
 
 type Props = {
   editor: Editor;
@@ -21,10 +26,58 @@ export function ThreadList({ editor }: Props) {
         <ThreadComposer editor={editor} />
       ) : null}
       {threads.sort(sort as any).map((thread) => (
-        <Thread key={thread.id} thread={thread} />
+        <CustomThread key={thread.id} thread={thread} editor={editor} />
       ))}
     </aside>
   );
+}
+
+function CustomThread({
+  editor,
+  thread,
+}: Props & { thread: ThreadData<ThreadMetadata> }) {
+  // TODO find a way to check for 0 comments in thread
+
+  // const allDeleted = thread.comments.every((comment) => comment.deletedAt);
+  // console.log(thread.comments);
+  //
+  // useEffect(() => {
+  //   if (allDeleted) {
+  //     console.log("DELETING");
+  //     const success = removeCommentHighlight(
+  //       editor,
+  //       thread.metadata.highlightId
+  //     );
+  //     console.log(success);
+  //   }
+  // }, [thread, editor, allDeleted]);
+
+  // const handleCommentDelete = useCallback(
+  //   (/* comment: CommentData */) => {
+  //     triggerRender();
+  //
+  //     const allDeleted = thread.comments.every((comment) => comment.deletedAt);
+  //
+  //     setTimeout(() => {
+  //       const allDeleted2 = thread.comments.every(
+  //         (comment) => comment.deletedAt
+  //       );
+  //       console.log("DEL2", thread.comments, allDeleted2);
+  //     }, 200);
+  //
+  //     console.log("DEL1", thread.comments, allDeleted);
+  //     if (allDeleted) {
+  //       const success = removeCommentHighlight(
+  //         editor,
+  //         thread.metadata.highlightId
+  //       );
+  //       console.log(success);
+  //     }
+  //   },
+  //   [editor, thread]
+  // );
+
+  return <Thread thread={thread} />;
 }
 
 function ThreadComposer({ editor }: Props) {
@@ -57,13 +110,11 @@ function ThreadComposer({ editor }: Props) {
       editor.storage.commentHighlight.currentHighlightId = null;
       editor.storage.commentHighlight.showComposer = false;
       editor.storage.commentHighlight.previousHighlightSelection = null;
-
-      console.log("NEW THREAD", thread);
     },
     []
   );
 
-  // If clicking outside the composer
+  // If clicking outside the composer, hide it and remove highlight
   useEffect(() => {
     if (!composer.current) {
       return;
@@ -72,19 +123,12 @@ function ThreadComposer({ editor }: Props) {
     const element = composer.current;
 
     function handleFocusOut() {
-      const selection =
-        editor?.storage.commentHighlight.previousHighlightSelection;
-
-      if (!selection) {
-        return;
-      }
-
-      const { from, to } = selection;
-      editor.commands.setTextSelection({ from, to });
-      editor.commands.unsetCommentHighlight();
+      removeCommentHighlight(
+        editor,
+        editor.storage.commentHighlight.currentHighlightId
+      );
       editor.storage.commentHighlight.currentHighlightId = null;
       editor.storage.commentHighlight.showComposer = false;
-      console.log("REMOVE");
     }
 
     element.addEventListener("focusout", handleFocusOut);
