@@ -23,8 +23,24 @@ module.exports = {
     // ----------------------------------------------------------------------
     // Overrides from default rule config used in all other projects!
     // ----------------------------------------------------------------------
-    "@typescript-eslint/explicit-module-boundary-types": "off", // Would be nice to remove this line and enable it again!
-    // "@typescript-eslint/unbound-method": "off",
+
+    // ---- These are good rules! Re-enable them soon! ----------------------------------
+    "@typescript-eslint/await-thenable": "off",
+    "@typescript-eslint/explicit-module-boundary-types": "off",
+    "@typescript-eslint/no-explicit-any": "off",
+    "@typescript-eslint/no-floating-promises": "off",
+    "@typescript-eslint/no-unsafe-argument": "off",
+    "@typescript-eslint/no-unsafe-assignment": "off",
+    "@typescript-eslint/no-unsafe-call": "off",
+    "@typescript-eslint/no-unsafe-member-access": "off",
+    "@typescript-eslint/no-unsafe-return": "off",
+    "@typescript-eslint/restrict-template-expressions": "off",
+    eqeqeq: "off",
+    "no-empty-pattern": "off",
+    "no-useless-escape": "off",
+    "no-warning-comments": "off",
+    "prefer-const": "off",
+    // ----------------------------------------------------------------------------------
 
     // ----------------------------------------------------------------------
     // Extra rules for this project specifically
