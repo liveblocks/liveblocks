@@ -14,7 +14,7 @@ export default async function legacyAuth(
     return res.status(403).end();
   }
 
-  const room = req.body.room;
+  const room = (req.body as { room: string }).room;
   const user = randomUser();
 
   const response = await authorize({

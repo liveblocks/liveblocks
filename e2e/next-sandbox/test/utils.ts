@@ -148,7 +148,7 @@ export async function getJson(page: Page, selector: IDSelector): Promise<Json> {
   if (!text) {
     throw new Error(`Could not find HTML element #${selector}`);
   }
-  return JSON.parse(text);
+  return JSON.parse(text) as Json;
 }
 
 async function getBoth(pages: [Page, Page], selector: IDSelector) {
