@@ -53,7 +53,7 @@ export async function preparePage(url: string, windowPositionX: number = 0) {
     ],
   });
   const context = await browser.newContext({
-    viewport: { width: 640, height: 800 },
+    viewport: { width: WIDTH, height: HEIGHT },
   });
   const page = await context.newPage();
   await page.goto(url);
