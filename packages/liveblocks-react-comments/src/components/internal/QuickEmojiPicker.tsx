@@ -46,7 +46,7 @@ export const QuickEmojiPicker = forwardRef<
             sideOffset={FLOATING_ELEMENT_SIDE_OFFSET}
             collisionPadding={FLOATING_ELEMENT_COLLISION_PADDING}
             className={classNames(
-              "lb-root lb-elevation lb-quick-emoji-picker",
+              "lb-root lb-portal lb-elevation lb-quick-emoji-picker",
               className
             )}
             {...props}

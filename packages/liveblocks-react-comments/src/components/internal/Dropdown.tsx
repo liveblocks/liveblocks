@@ -42,7 +42,10 @@ export function Dropdown({
       {children}
       <DropdownMenuPrimitive.Portal>
         <DropdownMenuPrimitive.Content
-          className={classNames("lb-root lb-elevation lb-dropdown", className)}
+          className={classNames(
+            "lb-root lb-portal lb-elevation lb-dropdown",
+            className
+          )}
           sideOffset={FLOATING_ELEMENT_SIDE_OFFSET}
           collisionPadding={FLOATING_ELEMENT_COLLISION_PADDING}
           {...props}

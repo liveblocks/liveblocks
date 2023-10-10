@@ -2,7 +2,14 @@
 
 ### `@liveblocks/react`
 
+- Fix a race condition that could cause a Liveblocks client to hang during
+  loading when using Suspense.
 - Fix `useStatus` return value on SSR responses.
+
+### `@liveblocks/react-comments`
+
+- Export `ComposerSubmitComment` type from root too, in addition to
+  `/primitives`.
 
 # v1.4.5
 

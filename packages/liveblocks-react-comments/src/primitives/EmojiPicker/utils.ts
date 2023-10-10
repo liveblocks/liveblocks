@@ -299,8 +299,6 @@ function getEmojiSessionMetadata(emojis: Emoji[]): EmojiSessionMetadata {
     return { emojiVersion: descendingVersions[0], countryFlags: true };
   }
 
-  console.log(getEmojiFontFamily());
-
   canvasContext.font = `${Math.floor(
     EMOJI_DETECTION_CANVAS_HEIGHT / 2
   )}px ${getEmojiFontFamily()}`;

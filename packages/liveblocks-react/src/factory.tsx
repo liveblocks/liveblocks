@@ -757,10 +757,13 @@ export function createRoomContext<
 
     ensureNotServerSide();
 
-    // Throw a _promise_. Suspense will suspend the component tree until this
-    // promise resolves (aka until storage has loaded). After that, it will
-    // render this component tree again.
+    // Throw a _promise_. Suspense will suspend the component tree until either
+    // until either a presence update event, or a connection status change has
+    // happened. After that, it will render this component tree again and
+    // re-evaluate the .getSelf() condition above, or re-suspend again until
+    // such event happens.
     throw new Promise<void>((res) => {
+      room.events.self.subscribeOnce(() => res());
       room.events.status.subscribeOnce(() => res());
     });
   }
