@@ -58,10 +58,8 @@ function Sandbox() {
   const clear = useMutation(({ storage }) => {
     const map = storage.get("map");
     while (map.size > 0) {
-      const { done, value: key } = map.keys().next();
-      if (!done) {
-        map.delete(key);
-      }
+      const key = Array.from(map.keys())[0];
+      map.delete(key);
     }
   }, []);
 
