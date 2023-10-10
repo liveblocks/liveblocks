@@ -36,11 +36,26 @@ import type {
 export type PromiseOrNot<T> = T | Promise<T>;
 
 export type ResolveUserOptions = {
+  /**
+   * The ID of the current room.
+   */
+  roomId: string;
+
+  /**
+   * The ID of the user to resolve.
+   */
   userId: string;
 };
 
 export type ResolveMentionSuggestionsOptions = {
+  /**
+   * The ID of the current room.
+   */
   roomId: string;
+
+  /**
+   * The text to search for.
+   */
   text: string;
 };
 

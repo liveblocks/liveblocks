@@ -1005,7 +1005,11 @@ export function createRoomContext<
     : undefined;
 
   function useUser(userId: string) {
-    const resolverKey = React.useMemo(() => stringify({ userId }), [userId]);
+    const room = useRoom();
+    const resolverKey = React.useMemo(
+      () => stringify({ userId, roomId: room.id }),
+      [userId, room.id]
+    );
     const state = useAsyncCache(usersCache, resolverKey);
 
     React.useEffect(() => warnIfNoResolveUser(usersCache), []);
@@ -1024,7 +1028,11 @@ export function createRoomContext<
   }
 
   function useUserSuspense(userId: string) {
-    const resolverKey = React.useMemo(() => stringify({ userId }), [userId]);
+    const room = useRoom();
+    const resolverKey = React.useMemo(
+      () => stringify({ userId, roomId: room.id }),
+      [userId, room.id]
+    );
     const state = useAsyncCache(usersCache, resolverKey, {
       suspense: true,
     });
