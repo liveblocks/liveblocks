@@ -139,8 +139,8 @@ export async function expectJson(
   if (expectedValue !== undefined) {
     await expect(getJson(page, selector)).resolves.toEqual(expectedValue);
   } else {
-    const text = page.locator(selector).innerText();
-    await expect(text).toEqual("undefined");
+    const text = await page.locator(selector).innerText();
+    expect(text).toEqual("undefined");
   }
 }
 

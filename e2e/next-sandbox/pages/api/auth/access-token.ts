@@ -22,7 +22,7 @@ export default async function accessTokenAuth(
 ) {
   const user = randomUser();
 
-  const session = await liveblocks.prepareSession(
+  const session = liveblocks.prepareSession(
     // Unique user ID
     `user-${user.id}`,
     {

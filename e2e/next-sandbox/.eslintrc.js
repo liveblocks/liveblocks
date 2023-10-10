@@ -25,7 +25,6 @@ module.exports = {
     // ----------------------------------------------------------------------
 
     // ---- These are good rules! Re-enable them soon! ----------------------------------
-    "@typescript-eslint/await-thenable": "off",
     "@typescript-eslint/explicit-module-boundary-types": "off",
     "@typescript-eslint/no-explicit-any": "off",
     "@typescript-eslint/no-floating-promises": "off",
