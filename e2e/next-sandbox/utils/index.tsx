@@ -70,8 +70,11 @@ export type RowProps = {
 export function Row(props: RowProps) {
   return (
     <tr>
-      <td width={150} valign="top">
-        {props.name}:
+      <td width={150} valign="top" style={{ ...styles.mono }}>
+        #{props.id}
+      </td>
+      <td width={30} valign="top" style={{ fontSize: ".8rem" }}>
+        →
       </td>
       <td
         id={props.id}

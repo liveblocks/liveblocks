@@ -21,6 +21,7 @@ const {
   useCanRedo,
   useCanUndo,
   useList,
+  useOthers,
   useRedo,
   useRoom,
   useSelf,
@@ -29,9 +30,9 @@ const {
 } = createRoomContext<never, { items: LiveList<string> }>(client);
 
 type Internal = {
-  send: {
+  simulate: {
     explicitClose(event: IWebSocketCloseEvent): void;
-    implicitClose(): void;
+    rawSend(data: string): void;
   };
 };
 
@@ -57,22 +58,27 @@ function Sandbox(_props: { roomId: string }) {
   const internals = (room as Record<string, unknown>).__internal as Internal;
   const items = useList("items");
   const me = useSelf();
+  const others = useOthers();
   const undo = useUndo();
   const redo = useRedo();
   const canUndo = useCanUndo();
   const canRedo = useCanRedo();
 
-  if (items == null || me == null) {
+  if (room == null) {
     return <div>Loading...</div>;
   }
   room.getStorage();
 
-  const canMove = items.length >= 2;
-  const canDelete = items.length > 0;
+  const canPush = items !== null;
+  const canClear = items !== null;
+  const canMove = items !== null && items.length >= 2;
+  const canDelete = items !== null && items.length > 0;
 
-  const nextValueToPush = padItem(me.connectionId, item);
+  const nextValueToPush = padItem(me?.connectionId ?? -1337, item);
   const nextIndicesToMove = canMove ? randomIndices(items) : [-1, -1];
   const nextIndexToDelete = canDelete ? randomInt(items.length) : -1;
+
+  const numOthers = others.length;
 
   return (
     <div>
@@ -82,47 +88,149 @@ function Sandbox(_props: { roomId: string }) {
 
       <div style={{ display: "flex", margin: "8px 0" }}>
         <Button
-          id="closeWebsocket"
-          onClick={() => {
-            internals.send.implicitClose();
-          }}
+          id="disconnect"
+          enabled={status !== "initial"}
+          onClick={() => (room as any)?.disconnect()}
         >
-          Close socket
+          Disconnect
+        </Button>
+        <Button id="reconnect" onClick={() => (room as any)?.reconnect()}>
+          Reconnect
         </Button>
         <Button
-          id="sendCloseEventConnectionError"
-          onClick={() =>
-            internals.send.explicitClose(
-              new CloseEvent("close", {
-                reason: "Fake connection error",
-                code: 1005,
-                wasClean: true,
-              })
-            )
-          }
+          id="connect"
+          enabled={status !== "connected"}
+          onClick={() => (room as any)?.connect()}
         >
-          Send close event (connection)
-        </Button>
-        <Button
-          id="sendCloseEventAppError"
-          onClick={() =>
-            internals.send.explicitClose(
-              new CloseEvent("close", {
-                reason: "App error",
-                code: 4002,
-                wasClean: true,
-              })
-            )
-          }
-        >
-          Send close event (app)
+          Connect
         </Button>
       </div>
+
+      <div style={{ margin: "8px 0" }}>
+        <div>These should remain connected:</div>
+
+        <div style={{ display: "flex" }}>
+          <Button
+            id="simulate-navigator-offline"
+            onClick={() => window.dispatchEvent(new Event("offline"))}
+            title="Simulates a navigator offline event"
+          >
+            Simulate "navigator offline"
+          </Button>
+        </div>
+      </div>
+
+      <div style={{ margin: "8px 0" }}>
+        <div>These should auto-reconnect when they happen:</div>
+
+        <div style={{ display: "flex" }}>
+          <Button
+            id="close-with-unexpected-condition"
+            onClick={() =>
+              internals.simulate.explicitClose(
+                new CloseEvent("close", { code: 1011, reason: "Abnormal" })
+              )
+            }
+            subtitle="1011 Unexpected condition"
+          >
+            Close socket
+          </Button>
+
+          <Button
+            id="close-with-abnormal-reason"
+            onClick={() =>
+              internals.simulate.explicitClose(
+                new CloseEvent("close", {
+                  code: 1006,
+                  reason: "Abnormal reason",
+                })
+              )
+            }
+            subtitle="1006 Abnormal reason"
+          >
+            Close socket
+          </Button>
+
+          <Button
+            id="close-with-token-expired"
+            onClick={() =>
+              internals.simulate.explicitClose(
+                new CloseEvent("close", {
+                  code: 4109,
+                  reason: "Get a new token please",
+                })
+              )
+            }
+            subtitle="4109 Token expired"
+          >
+            Close socket
+          </Button>
+        </div>
+      </div>
+
+      <div style={{ margin: "8px 0" }}>
+        <div>These should disconnect permanently when they happen:</div>
+
+        <div style={{ display: "flex" }}>
+          <Button
+            id="send-invalid-data"
+            onClick={() =>
+              // Sending an invalid message to the server will
+              // force-terminate the connection immediately
+              internals.simulate.rawSend("this is not a valid socket message")
+            }
+          >
+            Send invalid data
+          </Button>
+
+          <Button
+            id="close-with-not-allowed"
+            onClick={() =>
+              internals.simulate.explicitClose(
+                new CloseEvent("close", { code: 4001, reason: "Not allowed" })
+              )
+            }
+            subtitle="4001 Not allowed"
+          >
+            Close socket
+          </Button>
+
+          <Button
+            id="close-with-room-full"
+            onClick={() =>
+              internals.simulate.explicitClose(
+                new CloseEvent("close", {
+                  code: 4005,
+                  reason: "Room is full",
+                })
+              )
+            }
+            subtitle="4005 Room full"
+          >
+            Close socket
+          </Button>
+
+          <Button
+            id="close-with-dont-retry"
+            onClick={() =>
+              internals.simulate.explicitClose(
+                new CloseEvent("close", { code: 4999, reason: "Stop retrying" })
+              )
+            }
+            subtitle="4999 Don't retry"
+          >
+            Close socket
+          </Button>
+        </div>
+      </div>
+      <hr />
 
       <div style={{ display: "flex", margin: "8px 0" }}>
         <Button
           id="push"
+          enabled={canPush}
           onClick={() => {
+            if (!canPush) return;
             items.push(nextValueToPush);
             item = String.fromCharCode(item.charCodeAt(0) + 1);
           }}
@@ -166,7 +274,9 @@ function Sandbox(_props: { roomId: string }) {
 
         <Button
           id="clear"
+          enabled={canClear}
           onClick={() => {
+            if (!canClear) return;
             while (items.length > 0) {
               items.delete(0);
             }
@@ -193,9 +303,14 @@ function Sandbox(_props: { roomId: string }) {
             value={status}
             style={{ color: status !== "connected" ? "red" : "green" }}
           />
-          <Row id="connectionId" name="Connection ID" value={me.connectionId} />
-          <Row id="numItems" name="Items count" value={items.length} />
-          <Row id="items" name="Items" value={items.toArray()} />
+          <Row
+            id="connectionId"
+            name="Connection ID"
+            value={me?.connectionId}
+          />
+          <Row id="numOthers" name="Others count" value={numOthers} />
+          <Row id="numItems" name="Items count" value={items?.length} />
+          <Row id="items" name="Items" value={items?.toArray()} />
         </tbody>
       </table>
     </div>
