@@ -9,6 +9,8 @@ import {
   waitForJson,
 } from "../utils";
 
+test.describe.configure({ mode: "parallel" });
+
 const WIDTH = 640;
 const BG_COLOR_1 = "&bg=" + encodeURIComponent("#cafbca");
 const BG_COLOR_2 = "&bg=" + encodeURIComponent("#e9ddf9");

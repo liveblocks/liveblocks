@@ -4,6 +4,9 @@ import { test } from "@playwright/test";
 import { randomInt } from "../utils";
 import { genRoomId, preparePages, waitForJson } from "./utils";
 
+// Don't run these in parallel, to not maximize load on servers
+// test.describe.configure({ mode: "parallel" });
+
 const TEST_URL = "http://localhost:3007/offline/";
 
 // These load tests sometimes fail on CI, possibly because they're too

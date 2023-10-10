@@ -12,6 +12,8 @@ import {
   waitUntilEqualOnAllPages,
 } from "./utils";
 
+test.describe.configure({ mode: "parallel" });
+
 const TEST_URL = "http://localhost:3007/zustand";
 
 test.describe("Zustand", () => {

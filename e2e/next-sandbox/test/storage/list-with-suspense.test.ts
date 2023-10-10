@@ -12,6 +12,8 @@ import {
   waitUntilEqualOnAllPages,
 } from "../utils";
 
+test.describe.configure({ mode: "parallel" });
+
 const TEST_URL = "http://localhost:3007/storage/list-with-suspense";
 
 test.describe("Storage w/ Suspense", () => {
