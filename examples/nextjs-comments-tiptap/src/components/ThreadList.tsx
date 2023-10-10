@@ -31,7 +31,7 @@ function ThreadComposer({ editor }: Props) {
   const composer = useRef<HTMLFormElement>(null);
   const createThread = useCreateThread();
 
-  // Submit a new thread and update the comment highlight to show a compeleted highlight
+  // Submit a new thread and update the comment highlight to show a completed highlight
   const handleComposerSubmit = useCallback(
     ({ body }: ComposerSubmitComment, event: FormEvent<HTMLFormElement>) => {
       event.preventDefault();

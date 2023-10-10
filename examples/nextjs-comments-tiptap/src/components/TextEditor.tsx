@@ -4,14 +4,6 @@ import { ClientSideSuspense } from "@liveblocks/react";
 import LiveblocksProvider from "@liveblocks/yjs";
 import Collaboration from "@tiptap/extension-collaboration";
 import CollaborationCursor from "@tiptap/extension-collaboration-cursor";
-import Highlight from "@tiptap/extension-highlight";
-import { Image } from "@tiptap/extension-image";
-import Link from "@tiptap/extension-link";
-import Placeholder from "@tiptap/extension-placeholder";
-import TaskList from "@tiptap/extension-task-list";
-import { TextAlign } from "@tiptap/extension-text-align";
-import { Typography } from "@tiptap/extension-typography";
-import Youtube from "@tiptap/extension-youtube";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { EditorView } from "prosemirror-view";
@@ -19,12 +11,12 @@ import { useEffect, useState } from "react";
 import * as Y from "yjs";
 import { useRoom, useSelf } from "@/liveblocks.config";
 import { DocumentSpinner } from "@/primitives/Spinner";
-import { CustomTaskItem } from "./CustomTaskItem";
 import { SelectionMenu } from "./SelectionMenu";
 import styles from "./TextEditor.module.css";
 import { Avatars } from "@/components/Avatars";
 import { LiveblocksCommentsHighlight } from "@/tiptap-comments-extension";
 import { ThreadList } from "@/components/ThreadList";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export function TextEditor() {
   return (
@@ -80,7 +72,6 @@ function TiptapEditor({ doc, provider }: EditorProps) {
     extensions: [
       // Custom Liveblocks comments extension
       LiveblocksCommentsHighlight,
-      // CommentsHighlight,
       StarterKit.configure({
         blockquote: {
           HTMLAttributes: {
@@ -128,41 +119,6 @@ function TiptapEditor({ doc, provider }: EditorProps) {
           },
         },
       }),
-      Highlight.configure({
-        HTMLAttributes: {
-          class: "tiptap-highlight",
-        },
-      }),
-      Image.configure({
-        HTMLAttributes: {
-          class: "tiptap-image",
-        },
-      }),
-      Link.configure({
-        HTMLAttributes: {
-          class: "tiptap-link",
-        },
-      }),
-      Placeholder.configure({
-        placeholder: "Start writing…",
-        emptyEditorClass: "tiptap-empty",
-      }),
-      CustomTaskItem,
-      TaskList.configure({
-        HTMLAttributes: {
-          class: "tiptap-task-list",
-        },
-      }),
-      TextAlign.configure({
-        types: ["heading", "paragraph"],
-      }),
-      Typography,
-      Youtube.configure({
-        modestBranding: true,
-        HTMLAttributes: {
-          class: "tiptap-youtube",
-        },
-      }),
       // Register the document with Tiptap
       Collaboration.configure({
         document: doc,
@@ -182,8 +138,7 @@ function TiptapEditor({ doc, provider }: EditorProps) {
   return (
     <div className={styles.container}>
       <div className={styles.editorHeader}>
-        {/*{editor && <Toolbar editor={editor} />}*/}
-        <div />
+        <ThemeToggle />
         <Avatars />
       </div>
       <div className={styles.editorPanel}>

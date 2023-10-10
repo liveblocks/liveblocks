@@ -13,7 +13,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" data-theme="light">
+    <html lang="en">
       <head>
         <link
           href="https://liveblocks.io/favicon-32x32.png"
