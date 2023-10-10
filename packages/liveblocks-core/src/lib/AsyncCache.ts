@@ -2,7 +2,9 @@ import type { Callback, Observable, UnsubscribeCallback } from "./EventSource";
 import { makeEventSource } from "./EventSource";
 import { shallow } from "./shallow";
 
-type AsyncFunction<T, A extends any[] = any[]> = (...args: A) => Promise<T>;
+type AsyncCacheFunction<T, A extends any[] = any[]> = (
+  ...args: A
+) => T | Promise<T>;
 
 type AsyncCacheOptions<T, E> = {
   isStateEqual?: (a: AsyncState<T, E>, b: AsyncState<T, E>) => boolean;
@@ -48,7 +50,6 @@ type AsyncCacheItemContext<T> = {
 };
 
 export type AsyncCacheItem<T, E> = Observable<AsyncState<T, E>> & {
-  setAsyncFunction(asyncFunction: AsyncFunction<T, [string]>): void;
   get(): Promise<AsyncStateResolved<T, E>>;
   getState(): AsyncState<T, E>;
   revalidate(): Promise<AsyncStateResolved<T, E>>;
@@ -65,7 +66,7 @@ export type AsyncCache<T, E> = {
    */
   create(
     key: string,
-    asyncFunction?: AsyncFunction<T, [string]>
+    asyncFunction?: AsyncCacheFunction<T, [string]>
   ): AsyncCacheItem<T, E>;
 
   /**
@@ -143,10 +144,10 @@ export function isShallowEqual(
 
 function createCacheItem<T, E>(
   key: string,
-  defaultAsyncFunction: AsyncFunction<T, [string]>,
+  asyncFunction: AsyncCacheFunction<T, [string]>,
   options?: AsyncCacheOptions<T, E>
 ): AsyncCacheItem<T, E> {
-  let asyncFunction = defaultAsyncFunction;
+  const $asyncFunction = async () => asyncFunction(key);
   const context: AsyncCacheItemContext<T> = {
     isInvalid: true,
   };
@@ -212,7 +213,7 @@ function createCacheItem<T, E>(
       // We only invoke the provided function if there's not a promise pending already.
       if (!context.promise) {
         context.isInvalid = true;
-        context.promise = asyncFunction(key);
+        context.promise = $asyncFunction();
 
         state = { isLoading: true, data: state.data };
 
@@ -230,13 +231,8 @@ function createCacheItem<T, E>(
     return state;
   }
 
-  function setAsyncFunction(overrideAsyncFunction: AsyncFunction<T, [string]>) {
-    asyncFunction = overrideAsyncFunction;
-  }
-
   return {
     ...eventSource.observable,
-    setAsyncFunction,
     get,
     getState,
     revalidate,
@@ -244,30 +240,19 @@ function createCacheItem<T, E>(
 }
 
 export function createAsyncCache<T, E>(
-  asyncFunction: AsyncFunction<T, [string]>,
+  asyncFunction: AsyncCacheFunction<T, [string]>,
   options?: AsyncCacheOptions<T, E>
 ): AsyncCache<T, E> {
   const cache = new Map<string, AsyncCacheItem<T, E>>();
 
-  function create(
-    key: string,
-    overrideAsyncFunction?: AsyncFunction<T, [string]>
-  ) {
+  function create(key: string) {
     let cacheItem = cache.get(key);
 
     if (cacheItem) {
-      if (overrideAsyncFunction) {
-        cacheItem.setAsyncFunction(overrideAsyncFunction);
-      }
-
       return cacheItem;
     }
 
-    cacheItem = createCacheItem(
-      key,
-      overrideAsyncFunction ?? asyncFunction,
-      options
-    );
+    cacheItem = createCacheItem(key, asyncFunction, options);
     cache.set(key, cacheItem);
 
     return cacheItem;
