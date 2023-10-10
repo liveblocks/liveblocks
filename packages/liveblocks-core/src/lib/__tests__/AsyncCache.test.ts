@@ -516,6 +516,34 @@ describe("AsyncCache", () => {
     expect(cache.getState(KEY_ABC)).toBeUndefined();
   });
 
+  test("using a synchronous function", async () => {
+    const mock = jest.fn((key: string) => {
+      return key;
+    });
+    const cache = createAsyncCache(mock);
+
+    // 🚀 Called
+    expect(await cache.get(KEY_ABC)).toMatchObject<AsyncState<string, Error>>({
+      isLoading: false,
+      data: KEY_ABC,
+    });
+
+    // ✨ Cached
+    expect(await cache.get(KEY_ABC)).toMatchObject<AsyncState<string, Error>>({
+      isLoading: false,
+      data: KEY_ABC,
+    });
+
+    // ✨ Cached
+    expect(await cache.get(KEY_ABC)).toMatchObject<AsyncState<string, Error>>({
+      isLoading: false,
+      data: KEY_ABC,
+    });
+
+    expect(mock).toHaveBeenCalledTimes(1);
+    expect(mock).toHaveBeenCalledWith(KEY_ABC);
+  });
+
   test("subscribing to a key", async () => {
     const mock = createAsyncMock({
       error: (index) => index === 0,
