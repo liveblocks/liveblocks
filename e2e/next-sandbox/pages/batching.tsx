@@ -52,7 +52,7 @@ function Sandbox() {
   const theirPresence = others[0]?.presence;
   const me = useSelf();
 
-  if (liveMap == null || me == null) {
+  if (liveMap === null || me === null) {
     return <div>Loading...</div>;
   }
 

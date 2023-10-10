@@ -38,7 +38,7 @@ function Sandbox() {
   const canRedo = useCanRedo();
   const map = useMap("map");
 
-  if (map == null) {
+  if (map === null) {
     return <div>Loading...</div>;
   }
 

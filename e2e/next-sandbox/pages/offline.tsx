@@ -65,7 +65,7 @@ function Sandbox(_props: { roomId: string }) {
   const canUndo = useCanUndo();
   const canRedo = useCanRedo();
 
-  if (room == null) {
+  if (room === null) {
     return <div>Loading...</div>;
   }
 

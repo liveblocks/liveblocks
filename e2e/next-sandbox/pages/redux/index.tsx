@@ -49,7 +49,7 @@ function ReduxSandbox() {
     };
   }, [actions.enterRoom, actions.leaveRoom]);
 
-  if (items == null) {
+  if (items === null) {
     return <div>Loading...</div>;
   }
 

@@ -58,7 +58,7 @@ function Sandbox() {
   const obj = useObject("object");
   const me = useSelf();
 
-  if (obj == null || me == null) {
+  if (obj === null || me === null) {
     return <div>Loading...</div>;
   }
 

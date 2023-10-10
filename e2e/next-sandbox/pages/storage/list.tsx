@@ -52,7 +52,7 @@ function Sandbox() {
   const me = useSelf();
   const status = useStatus();
 
-  if (items == null || me == null) {
+  if (items === null || me === null) {
     return <div>Loading...</div>;
   }
 

@@ -47,7 +47,7 @@ const useStore = create<WithLiveblocks<State, never, never, never, never>>()(
       addItem: (newItem: string) =>
         set((state) => ({ items: state.items.concat(newItem) })),
       deleteItem: (index: number) =>
-        set((state) => ({ items: state.items.filter((_, i) => index != i) })),
+        set((state) => ({ items: state.items.filter((_, i) => index !== i) })),
       clear: () => set(() => ({ items: [] })),
     }),
     {
