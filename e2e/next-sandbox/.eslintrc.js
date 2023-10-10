@@ -33,7 +33,6 @@ module.exports = {
     "@typescript-eslint/no-unsafe-member-access": "off",
     "@typescript-eslint/no-unsafe-return": "off",
     "@typescript-eslint/restrict-template-expressions": "off",
-    "no-useless-escape": "off",
     "no-warning-comments": "off",
     // ----------------------------------------------------------------------------------
 

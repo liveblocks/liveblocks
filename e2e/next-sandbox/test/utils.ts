@@ -32,7 +32,7 @@ export function genRoomId(testInfo: TestInfo) {
     .filter(Boolean)
     .join(":")
     .toLowerCase()
-    .replace(/[^\w\d:.\/]+/g, "-")
+    .replace(/[^/:.\w\d]+/g, "-")
     .replace(/-+/g, "-")
     .replace(/^-+/, "")
     .replace(/-+$/, "");
