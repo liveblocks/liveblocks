@@ -35,7 +35,7 @@ import type {
 
 export type PromiseOrNot<T> = T | Promise<T>;
 
-export type ResolveUserOptions = {
+export type ResolveUserArgs = {
   /**
    * The ID of the current room.
    */
@@ -47,7 +47,7 @@ export type ResolveUserOptions = {
   userId: string;
 };
 
-export type ResolveMentionSuggestionsOptions = {
+export type ResolveMentionSuggestionsArgs = {
   /**
    * The ID of the current room.
    */

@@ -52,8 +52,8 @@ import type {
   MutationContext,
   OmitFirstArg,
   PromiseOrNot,
-  ResolveMentionSuggestionsOptions,
-  ResolveUserOptions,
+  ResolveMentionSuggestionsArgs,
+  ResolveUserArgs,
   RoomContextBundle,
   RoomProviderProps,
   UserState,
@@ -157,7 +157,7 @@ type Options<TUserMeta extends BaseUserMeta> = {
    * A function that returns user info from a user ID.
    */
   resolveUser?: (
-    options: ResolveUserOptions
+    args: ResolveUserArgs
   ) => PromiseOrNot<TUserMeta["info"] | undefined>;
 
   /**
@@ -166,7 +166,7 @@ type Options<TUserMeta extends BaseUserMeta> = {
    * A function that returns a list of user IDs matching a string.
    */
   resolveMentionSuggestions?: (
-    options: ResolveMentionSuggestionsOptions
+    args: ResolveMentionSuggestionsArgs
   ) => PromiseOrNot<string[]>;
 
   /**
@@ -998,9 +998,7 @@ export function createRoomContext<
 
   const usersCache = resolveUser
     ? createAsyncCache((stringifiedOptions: string) => {
-        return resolveUser(
-          JSON.parse(stringifiedOptions) as ResolveUserOptions
-        );
+        return resolveUser(JSON.parse(stringifiedOptions) as ResolveUserArgs);
       })
     : undefined;
 
@@ -1049,7 +1047,7 @@ export function createRoomContext<
     resolveMentionSuggestions
       ? (stringifiedOptions: string) => {
           return resolveMentionSuggestions(
-            JSON.parse(stringifiedOptions) as ResolveMentionSuggestionsOptions
+            JSON.parse(stringifiedOptions) as ResolveMentionSuggestionsArgs
           );
         }
       : () => Promise.resolve([])
