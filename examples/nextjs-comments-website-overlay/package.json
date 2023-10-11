@@ -1,0 +1,41 @@
+{
+  "name": "nextjs-blog",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@liveblocks/client": "^1.4.5",
+    "@liveblocks/node": "^1.4.5",
+    "@liveblocks/react": "^1.4.5",
+    "@liveblocks/react-comments": "^1.4.5",
+    "@radix-ui/react-collapsible": "^1.0.3",
+    "@radix-ui/react-context-menu": "^2.1.5",
+    "@radix-ui/react-portal": "^1.0.3",
+    "@radix-ui/react-slot": "^1.0.2",
+    "@strapi/icons": "^1.11.0",
+    "@types/node": "20.4.5",
+    "@types/react": "18.2.17",
+    "@types/react-dom": "18.2.7",
+    "clsx": "^2.0.0",
+    "eslint": "8.45.0",
+    "eslint-config-next": "13.4.12",
+    "framer-motion": "^10.16.4",
+    "nanoid": "^4.0.2",
+    "next": "^13.4.19",
+    "react": "18.2.0",
+    "react-contenteditable": "^3.3.7",
+    "react-dom": "18.2.0",
+    "sanitize-html": "^2.11.0",
+    "typescript": "5.1.6"
+  },
+  "devDependencies": {
+    "@types/sanitize-html": "^2.9.0",
+    "eslint-config-prettier": "^8.9.0",
+    "prettier": "^3.0.0"
+  }
+}

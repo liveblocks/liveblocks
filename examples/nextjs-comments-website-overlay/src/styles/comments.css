@@ -1,0 +1,24 @@
+:root {
+  --lb-accent: #4945ff;
+}
+
+.lb-thread,
+.lb-composer {
+  border-radius: var(--radius);
+}
+
+.lb-composer {
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+
+.lb-tooltip,
+.lb-dropdown-item,
+.lb-composer-suggestions {
+  z-index: var(--z-above-comments-sidemenu);
+}
+
+/* Temporary, until we update comments */
+[data-radix-popper-content-wrapper] {
+  z-index: var(--z-above-comments-sidemenu) !important;
+}
