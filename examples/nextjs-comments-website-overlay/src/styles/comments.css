@@ -1,5 +1,5 @@
 :root {
-  --lb-accent: #4945ff;
+  --lb-accent: rgb(var(--color-brand));
 }
 
 .lb-thread,
