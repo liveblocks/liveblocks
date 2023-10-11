@@ -1,6 +1,7 @@
 import { createAuthManager } from "./auth-manager";
 import type { LsonObject } from "./crdts/Lson";
 import { linkDevTools, setupDevTools, unlinkDevTools } from "./devtools";
+import { nn } from "./lib/assert";
 import { deprecateIf } from "./lib/deprecation";
 import type { Json, JsonObject } from "./lib/Json";
 import type { Resolve } from "./lib/Resolve";
@@ -56,6 +57,27 @@ export type Client = {
   ): Room<TPresence, TStorage, TUserMeta, TRoomEvent> | null;
 
   /**
+   * Enter a room.
+   * @param roomId The id of the room
+   * @param options Optional. You can provide initializers for the Presence or Storage when entering the Room.
+   * @returns The room and a leave function. Call the returned leave() function when you no longer need the room.
+   */
+  enterRoom<
+    TPresence extends JsonObject,
+    TStorage extends LsonObject = LsonObject,
+    TUserMeta extends BaseUserMeta = BaseUserMeta,
+    TRoomEvent extends Json = never,
+  >(
+    roomId: string,
+    options: EnterOptions<TPresence, TStorage>
+  ): {
+    room: Room<TPresence, TStorage, TUserMeta, TRoomEvent>;
+    leave: () => void;
+  };
+
+  /**
+   * @deprecated - Prefer using {@link Client.enterRoom} instead.
+   *
    * Enters a room and returns it.
    * @param roomId The id of the room
    * @param options Optional. You can provide initializers for the Presence or Storage when entering the Room.
@@ -71,7 +93,15 @@ export type Client = {
   ): Room<TPresence, TStorage, TUserMeta, TRoomEvent>;
 
   /**
-   * Leaves a room.
+   * @deprecated - Prefer using {@link Client.enterRoom} and calling the returned leave function instead, which is safer.
+   *
+   * Forcefully leaves a room.
+   *
+   * Only call this if you know for sure there are no other "instances" of this
+   * room used elsewhere in your application. Force-leaving can trigger
+   * unexpected conditions in other parts of your application that may not
+   * expect this.
+   *
    * @param roomId The id of the room
    */
   leave(roomId: string): void;
@@ -132,6 +162,8 @@ function getServerFromClientOptions(clientOptions: ClientOptions) {
     : "wss://api.liveblocks.io/v7";
 }
 
+declare const brand: unique symbol;
+
 /**
  * Create a client that will be responsible to communicate with liveblocks servers.
  *
@@ -158,6 +190,10 @@ function getServerFromClientOptions(clientOptions: ClientOptions) {
  * });
  */
 export function createClient(options: ClientOptions): Client {
+  type Brand<T, TBrand extends string> = T & { [brand]: TBrand };
+  type Ticket = Brand<symbol, "Ticket">;
+  type RRRoom = Room<JsonObject, LsonObject, BaseUserMeta, Json>;
+
   const clientOptions = options;
   const throttleDelay = getThrottle(clientOptions.throttle ?? DEFAULT_THROTTLE);
   const lostConnectionTimeout = getLostConnectionTimeout(
@@ -166,35 +202,21 @@ export function createClient(options: ClientOptions): Client {
 
   const authManager = createAuthManager(options);
 
-  const rooms = new Map<
-    string,
-    Room<JsonObject, LsonObject, BaseUserMeta, Json>
-  >();
+  const roomsById = new Map<string, RRRoom>();
+  const roomIdsByTicket = new Map<Ticket, string>();
 
-  function getRoom<
+  function createTicketForRoom<
     TPresence extends JsonObject,
     TStorage extends LsonObject = LsonObject,
     TUserMeta extends BaseUserMeta = BaseUserMeta,
     TRoomEvent extends Json = never,
-  >(roomId: string): Room<TPresence, TStorage, TUserMeta, TRoomEvent> | null {
-    const room = rooms.get(roomId);
-    return room
-      ? (room as Room<TPresence, TStorage, TUserMeta, TRoomEvent>)
-      : null;
-  }
+  >(roomId: string, options: EnterOptions<TPresence, TStorage>): Ticket {
+    const ticket = Symbol() as Ticket;
 
-  function enter<
-    TPresence extends JsonObject,
-    TStorage extends LsonObject = LsonObject,
-    TUserMeta extends BaseUserMeta = BaseUserMeta,
-    TRoomEvent extends Json = never,
-  >(
-    roomId: string,
-    options: EnterOptions<TPresence, TStorage>
-  ): Room<TPresence, TStorage, TUserMeta, TRoomEvent> {
-    const existingRoom = rooms.get(roomId);
+    const existingRoom = roomsById.get(roomId);
     if (existingRoom !== undefined) {
-      return existingRoom as Room<TPresence, TStorage, TUserMeta, TRoomEvent>;
+      roomIdsByTicket.set(ticket, roomId);
+      return ticket;
     }
 
     deprecateIf(
@@ -227,9 +249,9 @@ export function createClient(options: ClientOptions): Client {
       }
     );
 
-    rooms.set(roomId, newRoom);
+    roomsById.set(roomId, newRoom);
 
-    setupDevTools(() => Array.from(rooms.keys()));
+    setupDevTools(() => Array.from(roomsById.keys()));
     linkDevTools(roomId, newRoom);
 
     const shouldConnect = options.shouldInitiallyConnect ?? true;
@@ -248,24 +270,97 @@ export function createClient(options: ClientOptions): Client {
       newRoom.connect();
     }
 
-    return newRoom;
+    roomIdsByTicket.set(ticket, roomId);
+    return ticket;
   }
 
-  function leave(roomId: string) {
-    // console.trace("leave");
-    unlinkDevTools(roomId);
+  function enterRoom<
+    TPresence extends JsonObject,
+    TStorage extends LsonObject = LsonObject,
+    TUserMeta extends BaseUserMeta = BaseUserMeta,
+    TRoomEvent extends Json = never,
+  >(
+    roomId: string,
+    options: EnterOptions<TPresence, TStorage>
+  ): {
+    room: Room<TPresence, TStorage, TUserMeta, TRoomEvent>;
+    leave: () => void;
+  } {
+    const ticket = createTicketForRoom(roomId, options);
+    const room = nn(
+      roomsById.get(roomId),
+      "Did not find a Room for this room ID. Was the room already destroyed?"
+    ) as Room<TPresence, TStorage, TUserMeta, TRoomEvent>;
+    const leave = () => leaveWithTicket(ticket);
+    return { room, leave };
+  }
 
-    const room = rooms.get(roomId);
-    if (room !== undefined) {
-      room.destroy();
-      rooms.delete(roomId);
+  function leaveWithTicket(ticket: Ticket) {
+    const roomId = roomIdsByTicket.get(ticket);
+    if (roomId === undefined) {
+      // Room was already left, maybe by a forceLeave() call that preceded this?
+      // XXX Don't throw in production
+      throw new Error("Unknown ticket");
+    }
+
+    roomIdsByTicket.delete(ticket);
+
+    // Is this the last room instance to be left?
+    if (!Array.from(roomIdsByTicket.values()).includes(roomId)) {
+      const room = nn(roomsById.get(roomId), "Internal inconsistnecy");
+
+      unlinkDevTools(roomId);
+      roomsById.delete(roomId);
+      room?.destroy();
+    }
+  }
+
+  function enter<
+    TPresence extends JsonObject,
+    TStorage extends LsonObject = LsonObject,
+    TUserMeta extends BaseUserMeta = BaseUserMeta,
+    TRoomEvent extends Json = never,
+  >(
+    roomId: string,
+    options: EnterOptions<TPresence, TStorage>
+  ): Room<TPresence, TStorage, TUserMeta, TRoomEvent> {
+    const { room, leave: _ } = enterRoom<
+      TPresence,
+      TStorage,
+      TUserMeta,
+      TRoomEvent
+    >(roomId, options);
+    return room;
+  }
+
+  function getRoom<
+    TPresence extends JsonObject,
+    TStorage extends LsonObject = LsonObject,
+    TUserMeta extends BaseUserMeta = BaseUserMeta,
+    TRoomEvent extends Json = never,
+  >(roomId: string): Room<TPresence, TStorage, TUserMeta, TRoomEvent> | null {
+    const room = roomsById.get(roomId);
+    return room
+      ? (room as Room<TPresence, TStorage, TUserMeta, TRoomEvent>)
+      : null;
+  }
+
+  function teardownRoom(roomId: string) {
+    for (const [ticket, rId] of roomIdsByTicket) {
+      if (roomId === rId) {
+        leaveWithTicket(ticket);
+      }
     }
   }
 
   return {
-    getRoom,
+    // Old, deprecated APIs
     enter,
-    leave,
+    getRoom,
+    leave: teardownRoom,
+
+    // New, preferred API
+    enterRoom,
   };
 }
 
