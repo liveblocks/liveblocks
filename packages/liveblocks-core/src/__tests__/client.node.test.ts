@@ -29,12 +29,12 @@ function atobPolyfillMock(data: string): string {
 
 function enterAndLeave(options: ClientOptions) {
   const client = createClient(options);
-  client.enter("room", { initialPresence: {} });
+  const { room: _, leave } = client.enterRoom("room", { initialPresence: {} });
 
   // Entering starts asynchronous jobs in the background (timers, promises,
   // etc). Not leaving the room would leave those open handles dangling which
   // doesn't make Jest happy.
-  client.leave("room");
+  leave();
 }
 
 describe("createClient", () => {
@@ -99,12 +99,15 @@ describe("createClient", () => {
       },
     });
 
-    client.enter("room", {
+    const { room: _, leave } = client.enterRoom("room", {
       initialPresence: {},
       shouldInitiallyConnect: false,
     });
-
-    expect(authMock).not.toHaveBeenCalled();
+    try {
+      expect(authMock).not.toHaveBeenCalled();
+    } finally {
+      leave();
+    }
   });
 
   test("should not throw if authEndpoint is string and fetch polyfill is defined", () => {
@@ -155,34 +158,37 @@ describe("createClient", () => {
         atob: atobPolyfillMock,
       },
     });
-    const room = client.enter("room", { initialPresence: {} });
 
-    // Room will fail to connect, and move to "closed" state, basically giving up reconnecting
-    await waitUntilStatus(room, "disconnected");
+    const { room, leave } = client.enterRoom("room", { initialPresence: {} });
+    try {
+      // Room will fail to connect, and move to "closed" state, basically giving up reconnecting
+      await waitUntilStatus(room, "disconnected");
 
-    expect(spy).toHaveBeenCalledWith(
-      "To use Liveblocks client in a non-dom environment with a url as auth endpoint, you need to provide a fetch polyfill."
-    );
-
-    // Clean things up
-    client.leave("room");
+      expect(spy).toHaveBeenCalledWith(
+        "To use Liveblocks client in a non-dom environment with a url as auth endpoint, you need to provide a fetch polyfill."
+      );
+    } finally {
+      // Clean things up
+      leave();
+    }
   });
 
   test("should fail to connect and stop retrying if WebSocketPolyfill is not set", async () => {
     const spy = jest.spyOn(console, "error");
 
     const client = createClient({ authEndpoint: authEndpointCallback });
-    const room = client.enter("room", { initialPresence: {} });
+    const { room, leave } = client.enterRoom("room", { initialPresence: {} });
+    try {
+      // Room will fail to connect, and move to "closed" state, basically giving up reconnecting
+      await waitUntilStatus(room, "disconnected");
 
-    // Room will fail to connect, and move to "closed" state, basically giving up reconnecting
-    await waitUntilStatus(room, "disconnected");
-
-    expect(spy).toHaveBeenCalledWith(
-      "To use Liveblocks client in a non-dom environment, you need to provide a WebSocket polyfill."
-    );
-
-    // Clean things up
-    client.leave("room");
+      expect(spy).toHaveBeenCalledWith(
+        "To use Liveblocks client in a non-dom environment, you need to provide a WebSocket polyfill."
+      );
+    } finally {
+      // Clean things up
+      leave();
+    }
   });
 
   test("should throw if throttle is not a number", () => {
