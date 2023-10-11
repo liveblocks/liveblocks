@@ -2,12 +2,24 @@
   "$schema": "https://turborepo.org/schema.json",
   "extends": ["//"],
   "pipeline": {
-    "test": {
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": [".next/**", "!.next/cache/**"]
+    },
+    "dev": {
       "dependsOn": ["^build"],
       "cache": false
     },
+    "start": {
+      "dependsOn": ["build"],
+      "cache": false
+    },
+    "test": {
+      "dependsOn": ["build"],
+      "cache": false
+    },
     "test:ui": {
-      "dependsOn": ["^build"],
+      "dependsOn": ["build"],
       "cache": false
     }
   }

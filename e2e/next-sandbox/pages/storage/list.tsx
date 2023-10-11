@@ -20,10 +20,11 @@ const {
   RoomProvider,
   useCanRedo,
   useCanUndo,
-  useList,
+  useMutation,
   useRedo,
   useSelf,
   useStatus,
+  useStorage,
   useUndo,
 } = createRoomContext<never, { items: LiveList<string> }>(client);
 
@@ -48,9 +49,54 @@ function Sandbox() {
   const redo = useRedo();
   const canUndo = useCanUndo();
   const canRedo = useCanRedo();
-  const items = useList("items");
+  const items = useStorage((root) => root.items);
   const me = useSelf();
   const status = useStatus();
+
+  const push = useMutation(
+    ({ storage }, value: string) => {
+      const items = storage.get("items");
+      items.push(value);
+      item = String.fromCharCode(item.charCodeAt(0) + 1);
+    },
+    [item]
+  );
+
+  const insert = useMutation(
+    ({ storage }, index: number, value: string) => {
+      const items = storage.get("items");
+      items.insert(value, index);
+      item = String.fromCharCode(item.charCodeAt(0) + 1);
+    },
+    [item]
+  );
+
+  const move = useMutation(
+    ({ storage }, fromIndex: number, toIndex: number) => {
+      const items = storage.get("items");
+      items.move(fromIndex, toIndex);
+    },
+    []
+  );
+
+  const set_ = useMutation(
+    ({ storage }, index: number, value: string) => {
+      const items = storage.get("items");
+      items.set(index, value);
+      item = String.fromCharCode(item.charCodeAt(0) + 1);
+    },
+    [item]
+  );
+
+  const delete_ = useMutation(({ storage }, index: number) => {
+    const items = storage.get("items");
+    items.delete(index);
+  }, []);
+
+  const clear = useMutation(({ storage }) => {
+    const items = storage.get("items");
+    items.clear();
+  }, []);
 
   if (items === null || me === null) {
     return <div>Loading...</div>;
@@ -76,10 +122,7 @@ function Sandbox() {
       <div style={{ display: "flex", margin: "8px 0" }}>
         <Button
           id="push"
-          onClick={() => {
-            items.push(nextValueToPush);
-            item = String.fromCharCode(item.charCodeAt(0) + 1);
-          }}
+          onClick={() => push(nextValueToPush)}
           subtitle={nextValueToPush}
         >
           Push
@@ -87,10 +130,7 @@ function Sandbox() {
 
         <Button
           id="insert"
-          onClick={() => {
-            items.insert(nextValueToInsert, 0);
-            item = String.fromCharCode(item.charCodeAt(0) + 1);
-          }}
+          onClick={() => insert(0, nextValueToInsert)}
           subtitle={nextValueToInsert}
         >
           Insert
@@ -102,7 +142,7 @@ function Sandbox() {
           onClick={() => {
             if (!canMove) return;
             const [fromIndex, toIndex] = nextIndicesToMove;
-            items.move(fromIndex, toIndex);
+            move(fromIndex, toIndex);
           }}
           subtitle={
             canMove ? `${nextIndicesToMove[0]} → ${nextIndicesToMove[1]}` : null
@@ -116,8 +156,7 @@ function Sandbox() {
           enabled={canSet}
           onClick={() => {
             if (!canSet) return;
-            items.set(nextIndexToSet, nextValueToSet);
-            item = String.fromCharCode(item.charCodeAt(0) + 1);
+            set_(nextIndexToSet, nextValueToSet);
           }}
           subtitle={canSet ? `${nextIndexToSet} → ${nextValueToSet}` : null}
         >
@@ -129,20 +168,20 @@ function Sandbox() {
           enabled={canDelete}
           onClick={() => {
             if (!canDelete) return;
-            items.delete(nextIndexToDelete);
+            delete_(nextIndexToDelete);
           }}
           subtitle={
             canDelete
-              ? `index ${nextIndexToDelete} (${items
-                  .get(nextIndexToDelete)!
-                  .trim()})`
+              ? `index ${nextIndexToDelete} (${items[
+                  nextIndexToDelete
+                ].trim()})`
               : null
           }
         >
           Delete
         </Button>
 
-        <Button id="clear" onClick={() => items.clear()}>
+        <Button id="clear" onClick={clear}>
           Clear
         </Button>
 
@@ -159,7 +198,7 @@ function Sandbox() {
           <Row id="renderCount" name="Render count" value={renderCount} />
           <Row id="socketStatus" name="WebSocket count" value={status} />
           <Row id="numItems" name="List size" value={items.length} />
-          <Row id="items" name="Serialized" value={items.toArray()} />
+          <Row id="items" name="Serialized" value={items} />
         </tbody>
       </table>
     </div>
