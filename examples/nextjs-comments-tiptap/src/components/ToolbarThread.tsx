@@ -9,8 +9,6 @@ type Props = {
   editor: Editor;
 };
 
-const color = "coral";
-
 export function ToolbarThread({ editor }: Props) {
   const wrapper = useRef<HTMLDivElement>(null);
 
@@ -18,7 +16,10 @@ export function ToolbarThread({ editor }: Props) {
     editor
       .chain()
       .focus()
-      .setCommentHighlight({ color, highlightId: nanoid(), state: "composing" })
+      .setCommentHighlight({
+        highlightId: nanoid(),
+        state: "composing",
+      })
       .run();
   }, [editor]);
 

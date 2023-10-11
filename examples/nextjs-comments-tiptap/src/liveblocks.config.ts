@@ -31,7 +31,7 @@ export type UserMeta = {
   info: {
     name: string;
     color: string;
-    picture: string;
+    avatar: string;
   }; // Accessible through `user.info`
 };
 

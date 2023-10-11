@@ -71,7 +71,11 @@ function TiptapEditor({ doc, provider }: EditorProps) {
     },
     extensions: [
       // Custom Liveblocks comments extension
-      LiveblocksCommentsHighlight,
+      LiveblocksCommentsHighlight.configure({
+        HTMLAttributes: {
+          class: "comment-highlight",
+        },
+      }),
       StarterKit.configure({
         blockquote: {
           HTMLAttributes: {

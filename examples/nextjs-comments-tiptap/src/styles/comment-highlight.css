@@ -1,0 +1,15 @@
+.comment-highlight {
+
+}
+
+.comment-highlight[data-state="composing"] {
+  background: yellow;
+}
+
+.comment-highlight[data-state="complete"] {
+  background: #ffff9f;
+}
+
+.comment-highlight[data-selected="true"] {
+  background: orangered !important;
+}
