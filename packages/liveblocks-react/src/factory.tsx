@@ -245,6 +245,10 @@ export function createRoomContext<
     TRoomEvent
   > | null>(null);
 
+  // XXX Maintain registry here, at the Room context closure level, outside of
+  // React, where we cache the various calls to `enterRoom()` that StrictMode is
+  // making.
+
   function RoomProvider(props: RoomProviderProps<TPresence, TStorage>) {
     const {
       id: roomId,
@@ -289,38 +293,34 @@ export function createRoomContext<
           : shouldInitiallyConnect,
     });
 
-    const [room, setRoom] = React.useState<
-      Room<TPresence, TStorage, TUserMeta, TRoomEvent>
-    >(() =>
-      client.enter(roomId, {
-        initialPresence: frozen.initialPresence,
-        initialStorage: frozen.initialStorage,
-        shouldInitiallyConnect: frozen.shouldInitiallyConnect,
-        unstable_batchedUpdates: frozen.unstable_batchedUpdates,
-      })
+    // XXX Change useMemo to useState!
+    const { room, leave } = React.useMemo(
+      () =>
+        client.enterRoom<TPresence, TStorage, TUserMeta, TRoomEvent>(roomId, {
+          initialPresence: frozen.initialPresence,
+          initialStorage: frozen.initialStorage,
+          // XXX Maybe rename this option to `autoConnect`?
+          // XXX Maybe we should model this as an effect? Does the client need
+          // to provide assistence there if we do?
+          // i.e. always *don't connect* on initial render in React, and
+          // instead connect in an effect? That would also solve the issue of
+          // SSR showing "initial" in useStatus()
+          shouldInitiallyConnect: frozen.shouldInitiallyConnect,
+          unstable_batchedUpdates: frozen.unstable_batchedUpdates,
+        }),
+      [roomId, frozen]
     );
 
     React.useEffect(() => {
-      const room = client.enter<TPresence, TStorage, TUserMeta, TRoomEvent>(
-        roomId,
-        {
-          initialPresence: frozen.initialPresence,
-          initialStorage: frozen.initialStorage,
-          shouldInitiallyConnect: frozen.shouldInitiallyConnect,
-          unstable_batchedUpdates: frozen.unstable_batchedUpdates,
-        }
-      );
-
-      setRoom(room);
-
       return () => {
-        const commentsRoom = commentsRooms.get(room);
-        if (commentsRoom) {
-          commentsRooms.delete(room);
-        }
-        client.leave(roomId);
+        // XXX Put back Comments(tm) stuff here
+        // const commentsRoom = commentsRooms.get(room);
+        // if (commentsRoom) {
+        //   commentsRooms.delete(room);
+        // }
+        leave();
       };
-    }, [roomId, frozen]);
+    }, [leave]);
 
     return (
       <RoomContext.Provider value={room}>
@@ -864,7 +864,7 @@ export function createRoomContext<
   const commentsErrorEventSource =
     makeEventSource<CommentsApiError<TThreadMetadata>>();
   const commentsRooms = new Map<
-    Room<TPresence, TStorage, TUserMeta, TRoomEvent>,
+    Room<JsonObject, LsonObject, BaseUserMeta, Json>,
     CommentsRoom<TThreadMetadata>
   >();
 
