@@ -81,7 +81,8 @@ export interface ThreadProps<
   onCommentDelete?: CommentProps["onCommentDelete"];
 
   /**
-   * The event handler called when a comment is deleted.
+   * The event handler called when the thread is deleted.
+   * A thread is deleted when all its comments are deleted.
    */
   onThreadDelete?: (thread: ThreadData<TThreadMetadata>) => void;
 
