@@ -23,7 +23,7 @@ const liveblocks = new Liveblocks({
   secret: SECRET_KEY,
 
   // @ts-expect-error - Hidden setting
-  liveblocksBaseUrl,
+  liveblocksBaseUrl: liveblocksBaseUrl.toString(),
 });
 
 export default async function idTokenBasedAuth(
