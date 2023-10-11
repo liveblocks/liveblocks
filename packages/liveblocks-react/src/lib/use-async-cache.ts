@@ -88,12 +88,32 @@ export function useAsyncCache<T, E, O extends UseAsyncCacheOptions>(
 
   useEffect(() => {
     previousData.current = { key, data: state.data };
-  }, [key, state]);
+  }, [key, state.data]);
 
-  if (frozenOptions?.suspense && state.isLoading && cacheItem) {
-    throw new Promise<void>((resolve) => {
-      cacheItem.subscribeOnce(() => resolve());
-    });
+  if (!cacheItem) {
+    return {
+      isLoading: false,
+      data: undefined,
+      error: undefined,
+      getState,
+      revalidate,
+    } as UseAsyncCacheResponse<T, E, O>;
+  }
+
+  if (frozenOptions?.suspense) {
+    const error = getState().error;
+
+    if (error) {
+      throw error;
+    } else if (getState().isLoading) {
+      throw new Promise<void>((resolve) => {
+        cacheItem.subscribeOnce((state) => {
+          if (!state.isLoading) {
+            resolve();
+          }
+        });
+      });
+    }
   }
 
   if (
@@ -104,10 +124,6 @@ export function useAsyncCache<T, E, O extends UseAsyncCacheOptions>(
     typeof previousData.current?.data !== "undefined"
   ) {
     data = previousData.current.data;
-  }
-
-  if (frozenOptions?.suspense && state.error) {
-    throw state.error;
   }
 
   return {
