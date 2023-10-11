@@ -76,7 +76,7 @@ jobs:
       NEXT_PUBLIC_GITHUB_SHA: ${{ github.sha }}
       NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY:
         ${{ secrets.E2E_TEST_LIVEBLOCKS_PUBLIC_KEY }}
-      NEXT_PUBLIC_LIVEBLOCKS_SERVER: ${{ secrets.E2E_TEST_LIVEBLOCKS_SERVER }}
+      NEXT_PUBLIC_LIVEBLOCKS_SERVER: wss://api.liveblocks.io/v7
 
     steps:
       - name: Checkout
