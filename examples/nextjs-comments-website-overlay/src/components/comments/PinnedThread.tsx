@@ -3,6 +3,7 @@ import {
   PointerEvent,
   PointerEventHandler,
   useCallback,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -28,7 +29,12 @@ export function PinnedThread({
   onFocus,
   ...props
 }: Props) {
-  const [minimized, setMinimized] = useState(true);
+  // Open pinned threads that have just been created
+  const startMinimized = useMemo(() => {
+    return Number(new Date()) - Number(new Date(thread.createdAt)) > 100;
+  }, [thread]);
+
+  const [minimized, setMinimized] = useState(startMinimized);
   const dragStart = useRef({ x: 0, y: 0 });
 
   // Record starting click position
