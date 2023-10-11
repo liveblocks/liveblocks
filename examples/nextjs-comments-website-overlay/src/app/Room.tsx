@@ -2,14 +2,12 @@
 
 import { ReactNode, useMemo } from "react";
 import { RoomProvider } from "@/liveblocks.config";
-import { usePathname, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 
 type Props = { children: ReactNode };
 
 export function Room({ children }: Props) {
-  // Using the current URL as a unique room id
-  const url = "http://localhost:3000" + usePathname();
-  const roomId = useOverrideRoomId(url);
+  const roomId = useOverrideRoomId("nextjs-comments-website-overlay");
 
   return (
     <RoomProvider
