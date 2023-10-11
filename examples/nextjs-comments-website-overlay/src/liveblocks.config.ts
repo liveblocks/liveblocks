@@ -48,14 +48,7 @@ export type UserMeta = {
 
 // Optionally, the type of custom events broadcast and listened to in this
 // room. Use a union for multiple events. Must be JSON-serializable.
-type EditableTextUpdate = {
-  type: "editableTextUpdate";
-  strapiApiId: string;
-  attribute: string;
-  newText: string;
-};
-
-type RoomEvent = EditableTextUpdate;
+type RoomEvent = {};
 
 // Metadata attached to comments
 export type ThreadMetadata = {

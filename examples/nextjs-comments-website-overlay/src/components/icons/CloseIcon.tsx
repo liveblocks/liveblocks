@@ -3,14 +3,30 @@ import { ComponentProps } from "react";
 export function CloseIcon(props: ComponentProps<"svg">) {
   return (
     <svg
-      width="20"
-      height="20"
-      viewBox="0 0 20 20"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
       fill="currentColor"
       xmlns="http://www.w3.org/2000/svg"
       {...props}
     >
-      <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+      <path
+        fill="#212134"
+        d="M24 2.417 21.583 0 12 9.583 2.417 0 0 2.417 9.583 12 0 21.583 2.417 24 12 14.417 21.583 24 24 21.583 14.417 12 24 2.417Z"
+      />
     </svg>
   );
 }
+
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  width="12"
+  height="12"
+  fill="none"
+  viewBox="0 0 24 24"
+>
+  <path
+    fill="#212134"
+    d="M24 2.417 21.583 0 12 9.583 2.417 0 0 2.417 9.583 12 0 21.583 2.417 24 12 14.417 21.583 24 24 21.583 14.417 12 24 2.417Z"
+  ></path>
+</svg>;

@@ -137,11 +137,9 @@ function generateSelectors(pathArray: Element[]): string[] | null {
   const nthChildPathFromLowestId =
     nthChildFromLowestIdSelectors.reverse().join(">") || "";
 
-  // If last element has id or data-strapi-editable
+  // If last element has id
   const lastElement = pathArray[pathArray.length - 1];
   const id = lastElement?.id || "";
-  const strapiData =
-    (lastElement as HTMLElement)?.dataset?.["strapi-editable"] || "";
 
   return [id, nthChildPathFromLowestId, nthChildPath, classNamePath].filter(
     (selector) => selector

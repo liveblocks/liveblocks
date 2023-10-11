@@ -1,4 +1,4 @@
-import { getUser } from "@/lib/user";
+import { getUser } from "@/database";
 
 export async function GET(
   request: Request,

@@ -1,5 +1,5 @@
 {
-  "name": "nextjs-blog",
+  "name": "nextjs-comments-website-overlay",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -17,7 +17,6 @@
     "@radix-ui/react-context-menu": "^2.1.5",
     "@radix-ui/react-portal": "^1.0.3",
     "@radix-ui/react-slot": "^1.0.2",
-    "@strapi/icons": "^1.11.0",
     "@types/node": "20.4.5",
     "@types/react": "18.2.17",
     "@types/react-dom": "18.2.7",

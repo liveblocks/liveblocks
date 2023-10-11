@@ -5,7 +5,7 @@
 :root {
   --color-black: 50 50 77;
   --color-white: 255 255 255;
-  --color-strapi: 73 69 255;
+  --color-brand: 50 50 77;
   --color-gray-50: 250 250 250;
   --color-gray-100: 244 244 245;
   --color-gray-150: 236 236 238;
@@ -97,7 +97,7 @@
 [data-theme="dark"] [data-reverse-theme] [data-reverse-theme] {
   --color-red: 248 113 113;
   --color-green: 162 230 53;
-  --color-accent: rgb(var(--color-strapi));
+  --color-accent: rgb(var(--color-brand));
   --color-surface: #f6f6f9;
   --color-surface-hover: white;
   --color-surface-elevated: white;

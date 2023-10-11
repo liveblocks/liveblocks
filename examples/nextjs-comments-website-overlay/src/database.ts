@@ -1,58 +1,68 @@
-const USER_INFO = [
+import { UserMeta } from "@/liveblocks.config";
+
+const USER_INFO: UserMeta[] = [
   {
     id: "charlie-layne@example.com",
     info: {
-      name: "Jim Laurie",
+      name: "Charlie Layne",
       color: "#D583F0",
-      avatar: "/people/jim.png",
+      avatar: "https://liveblocks.io/avatars/avatar-1.png",
     },
   },
   {
     id: "mislav-abha@example.com",
     info: {
-      name: "Steven Fabre",
+      name: "Mislav Abha",
       color: "#F08385",
-      avatar: "/people/steven.png",
+      avatar: "https://liveblocks.io/avatars/avatar-2.png",
+    },
+  },
+  {
+    id: "tatum-paolo@example.com",
+    info: {
+      name: "Tatum Paolo",
+      color: "#F0D885",
+      avatar: "https://liveblocks.io/avatars/avatar-3.png",
     },
   },
   {
     id: "anjali-wanda@example.com",
     info: {
-      name: "Chris Nicholas",
+      name: "Anjali Wanda",
       color: "#85EED6",
-      avatar: "/people/chris.png",
+      avatar: "https://liveblocks.io/avatars/avatar-4.png",
     },
   },
   {
     id: "jody-hekla@example.com",
     info: {
-      name: "Alexandre Bodin",
+      name: "Jody Hekla",
       color: "#85BBF0",
-      avatar: "/people/alexandre.png",
+      avatar: "https://liveblocks.io/avatars/avatar-5.png",
     },
   },
   {
     id: "emil-joyce@example.com",
     info: {
-      name: "Pierre Burgy",
+      name: "Emil Joyce",
       color: "#8594F0",
-      avatar: "/people/pierre.png",
+      avatar: "https://liveblocks.io/avatars/avatar-6.png",
     },
   },
   {
     id: "jory-quispe@example.com",
     info: {
-      name: "Aurélien Georget",
+      name: "Jory Quispe",
       color: "#85DBF0",
-      avatar: "/people/aurelien.png",
+      avatar: "https://liveblocks.io/avatars/avatar-7.png",
     },
   },
   {
     id: "quinn-elton@example.com",
     info: {
-      name: "Adrien Gaudon",
+      name: "Quinn Elton",
       color: "#87EE85",
-      avatar: "/people/adrien.png",
+      avatar: "https://liveblocks.io/avatars/avatar-8.png",
     },
   },
 ];

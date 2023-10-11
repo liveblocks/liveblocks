@@ -67,7 +67,11 @@ export function PinnedThread({
       </div>
       {!minimized ? (
         <div className={styles.pinnedContent}>
-          <Thread thread={thread} indentCommentBody={false} onFocus={onFocus} />
+          <Thread
+            thread={thread}
+            indentCommentContent={false}
+            onFocus={onFocus}
+          />
         </div>
       ) : null}
     </div>

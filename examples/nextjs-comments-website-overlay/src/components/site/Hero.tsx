@@ -1,29 +1,17 @@
-import { Star } from "@strapi/icons";
-import { EditableText } from "../editable/EditableText";
 import styles from "./Hero.module.css";
+import { StarIcon } from "@/components/icons/StarIcon";
 
 export default function Hero() {
   return (
     <div className={styles.Hero}>
       <div className={styles.HeroWrapper}>
         <div className={styles.HeroSubtitle}>
-          <Star width={12} height={12} />
-          <EditableText
-            strapiApiId={"marketing-text"}
-            attribute={"HeroSubtitle"}
-          />
+          <StarIcon width={12} height={12} />
+          New: Our AI integration just landed
         </div>
-        <h1 className={styles.HeroTitle}>
-          <EditableText
-            strapiApiId={"marketing-text"}
-            attribute={"HeroTitle"}
-          />
-        </h1>
+        <h1 className={styles.HeroTitle}>Think better with Acme</h1>
         <p className={styles.HeroDescription}>
-          <EditableText
-            strapiApiId={"marketing-text"}
-            attribute={"HeroDescription"}
-          />
+          Never miss a note, idea, or connection.
         </p>
         <div className={styles.HeroButtons}>
           <button className="button">Get Started</button>
