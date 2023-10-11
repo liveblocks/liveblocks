@@ -1,3 +1,4 @@
+import { nn } from "@liveblocks/core";
 import { Liveblocks } from "@liveblocks/node";
 import type { NextApiRequest, NextApiResponse } from "next";
 
@@ -7,13 +8,22 @@ const SECRET_KEY = process.env.LIVEBLOCKS_SECRET_KEY;
 if (!SECRET_KEY) {
   throw new Error("Please specify LIVEBLOCKS_SECRET_KEY in env");
 }
-const LIVEBLOCKS_BASE_URL = process.env.LIVEBLOCKS_BASE_URL;
+
+// Derive Liveblocks base URL value from the existing NEXT_PUBLIC_LIVEBLOCKS_SERVER envvar
+const liveblocksBaseUrl = new URL(
+  nn(
+    process.env.NEXT_PUBLIC_LIVEBLOCKS_SERVER,
+    "Missing env var: NEXT_PUBLIC_LIVEBLOCKS_SERVER"
+  )
+);
+liveblocksBaseUrl.protocol = "https";
+liveblocksBaseUrl.pathname = "/";
 
 const liveblocks = new Liveblocks({
   secret: SECRET_KEY,
 
   // @ts-expect-error - Hidden setting
-  liveblocksBaseUrl: LIVEBLOCKS_BASE_URL,
+  liveblocksBaseUrl,
 });
 
 export default async function accessTokenAuth(
