@@ -87,7 +87,7 @@ user (comments, mentions, etc.) will reference their ID. To display user
 information based on IDs, you can provide a resolver function to the
 `resolveUsers` option in [`createRoomContext`](#createRoomContext).
 
-This resolver function will receive a user ID and should return a user object.
+This resolver function will receive a list of user IDs and should return a list of user objects of the same size and in the same order.
 
 ```tsx file="liveblocks.config.ts"
 // ...
