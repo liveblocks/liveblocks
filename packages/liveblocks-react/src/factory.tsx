@@ -53,7 +53,7 @@ import type {
   OmitFirstArg,
   PromiseOrNot,
   ResolveMentionSuggestionsArgs,
-  ResolveUserArgs,
+  ResolveUsersArgs,
   RoomContextBundle,
   RoomProviderProps,
   UserState,
@@ -154,10 +154,10 @@ type Options<TUserMeta extends BaseUserMeta> = {
   /**
    * @beta
    *
-   * A function that returns user info from a user ID.
+   * A function that returns user info from user IDs.
    */
-  resolveUser?: (
-    args: ResolveUserArgs
+  resolveUsers?: (
+    args: ResolveUsersArgs
   ) => PromiseOrNot<TUserMeta["info"] | undefined>;
 
   /**
@@ -175,18 +175,18 @@ type Options<TUserMeta extends BaseUserMeta> = {
   serverEndpoint?: string;
 };
 
-let hasWarnedIfNoResolveUser = false;
+let hasWarnedIfNoResolveUsers = false;
 
-function warnIfNoResolveUser(usersCache?: AsyncCache<unknown, unknown>) {
+function warnIfNoResolveUsers(usersCache?: AsyncCache<unknown, unknown>) {
   if (
-    !hasWarnedIfNoResolveUser &&
+    !hasWarnedIfNoResolveUsers &&
     !usersCache &&
     process.env.NODE_ENV !== "production"
   ) {
     console.warn(
-      "Set the resolveUser option in createRoomContext to specify user info."
+      "Set the resolveUsers option in createRoomContext to specify user info."
     );
-    hasWarnedIfNoResolveUser = true;
+    hasWarnedIfNoResolveUsers = true;
   }
 }
 
@@ -994,23 +994,27 @@ export function createRoomContext<
     );
   }
 
-  const { resolveUser, resolveMentionSuggestions } = options ?? {};
+  const { resolveUsers, resolveMentionSuggestions } = options ?? {};
 
-  const usersCache = resolveUser
-    ? createAsyncCache((stringifiedOptions: string) => {
-        return resolveUser(JSON.parse(stringifiedOptions) as ResolveUserArgs);
+  const usersCache = resolveUsers
+    ? createAsyncCache(async (stringifiedOptions: string) => {
+        const users = await resolveUsers(
+          JSON.parse(stringifiedOptions) as ResolveUsersArgs
+        );
+
+        return users?.[0];
       })
     : undefined;
 
   function useUser(userId: string) {
     const room = useRoom();
     const resolverKey = React.useMemo(
-      () => stringify({ userId, roomId: room.id }),
+      () => stringify({ userIds: [userId], roomId: room.id }),
       [userId, room.id]
     );
     const state = useAsyncCache(usersCache, resolverKey);
 
-    React.useEffect(() => warnIfNoResolveUser(usersCache), []);
+    React.useEffect(() => warnIfNoResolveUsers(usersCache), []);
 
     if (state.isLoading) {
       return {
@@ -1028,14 +1032,14 @@ export function createRoomContext<
   function useUserSuspense(userId: string) {
     const room = useRoom();
     const resolverKey = React.useMemo(
-      () => stringify({ userId, roomId: room.id }),
+      () => stringify({ userIds: [userId], roomId: room.id }),
       [userId, room.id]
     );
     const state = useAsyncCache(usersCache, resolverKey, {
       suspense: true,
     });
 
-    React.useEffect(() => warnIfNoResolveUser(usersCache), []);
+    React.useEffect(() => warnIfNoResolveUsers(usersCache), []);
 
     return {
       user: state.data,

@@ -35,16 +35,16 @@ import type {
 
 export type PromiseOrNot<T> = T | Promise<T>;
 
-export type ResolveUserArgs = {
+export type ResolveUsersArgs = {
   /**
    * The ID of the current room.
    */
   roomId: string;
 
   /**
-   * The ID of the user to resolve.
+   * The ID of the users to resolve.
    */
-  userId: string;
+  userIds: string;
 };
 
 export type ResolveMentionSuggestionsArgs = {

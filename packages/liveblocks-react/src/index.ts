@@ -9,7 +9,7 @@ export { createRoomContext, useRoomContextBundle } from "./factory";
 export type {
   MutationContext,
   ResolveMentionSuggestionsArgs,
-  ResolveUserArgs,
+  ResolveUsersArgs,
 } from "./types";
 
 // Re-exports from @liveblocks/client, for convenience
