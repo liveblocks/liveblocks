@@ -2,7 +2,6 @@ import type { CommentBody } from "@liveblocks/core";
 import type {
   ComponentPropsWithoutRef,
   ComponentType,
-  CSSProperties,
   FormEvent,
   ReactNode,
 } from "react";

@@ -16,18 +16,18 @@ function getAuthBearerHeaderFromAuthValue(authValue: AuthValue) {
   }
 }
 
-export type CommentsApi<ThreadMetadata extends BaseMetadata> = {
-  getThreads(): Promise<ThreadData<ThreadMetadata>[]>;
+export type CommentsApi<TThreadMetadata extends BaseMetadata> = {
+  getThreads(): Promise<ThreadData<TThreadMetadata>[]>;
   createThread(options: {
     threadId: string;
     commentId: string;
-    metadata: ThreadMetadata | undefined;
+    metadata: TThreadMetadata | undefined;
     body: CommentBody;
-  }): Promise<ThreadData<ThreadMetadata>>;
+  }): Promise<ThreadData<TThreadMetadata>>;
   editThreadMetadata(options: {
-    metadata: Partial<ThreadMetadata>;
+    metadata: Partial<TThreadMetadata>;
     threadId: string;
-  }): Promise<ThreadData<ThreadMetadata>>;
+  }): Promise<ThreadData<TThreadMetadata>>;
   createComment(options: {
     threadId: string;
     commentId: string;
@@ -54,11 +54,11 @@ export type CommentsApi<ThreadMetadata extends BaseMetadata> = {
   }): Promise<CommentData>;
 };
 
-export function createCommentsApi<ThreadMetadata extends BaseMetadata>(
+export function createCommentsApi<TThreadMetadata extends BaseMetadata>(
   roomId: string,
   getAuthValue: () => Promise<AuthValue>,
   { serverEndpoint }: Options
-): CommentsApi<ThreadMetadata> {
+): CommentsApi<TThreadMetadata> {
   async function fetchJson<T>(
     endpoint: string,
     options?: RequestInit
@@ -112,12 +112,12 @@ export function createCommentsApi<ThreadMetadata extends BaseMetadata>(
     });
   }
 
-  async function getThreads(): Promise<ThreadData<ThreadMetadata>[]> {
+  async function getThreads(): Promise<ThreadData<TThreadMetadata>[]> {
     const response = await fetchApi(roomId, "/threads");
 
     if (response.ok) {
       const json = await (response.json() as Promise<{
-        data: ThreadData<ThreadMetadata>[];
+        data: ThreadData<TThreadMetadata>[];
       }>);
       return json.data;
     } else if (response.status === 404) {
@@ -136,10 +136,10 @@ export function createCommentsApi<ThreadMetadata extends BaseMetadata>(
     roomId: string;
     threadId: string;
     commentId: string;
-    metadata: ThreadMetadata | undefined;
+    metadata: TThreadMetadata | undefined;
     body: CommentBody;
   }) {
-    return fetchJson<ThreadData<ThreadMetadata>>("/threads", {
+    return fetchJson<ThreadData<TThreadMetadata>>("/threads", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -160,10 +160,10 @@ export function createCommentsApi<ThreadMetadata extends BaseMetadata>(
     threadId,
   }: {
     roomId: string;
-    metadata: Partial<ThreadMetadata>;
+    metadata: Partial<TThreadMetadata>;
     threadId: string;
   }) {
-    return fetchJson<ThreadData<ThreadMetadata>>(
+    return fetchJson<ThreadData<TThreadMetadata>>(
       `/threads/${encodeURIComponent(threadId)}/metadata`,
       {
         method: "POST",
