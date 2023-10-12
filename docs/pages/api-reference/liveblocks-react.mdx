@@ -1186,6 +1186,12 @@ const thread = createThread({ body: {}, metadata: {} });
 
 Returns a function that edits a thread’s metadata.
 
+<Banner title="Deleting properties">
+
+To delete an existing metadata property, set its value to `null`.
+
+</Banner>
+
 ```tsx
 const editThreadMetadata = useEditThreadMetadata();
 const thread = editThreadMetadata({ threadId: "th_xxx", metadata: {} });
