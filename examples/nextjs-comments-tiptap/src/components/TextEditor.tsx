@@ -5,7 +5,7 @@ import LiveblocksProvider from "@liveblocks/yjs";
 import Collaboration from "@tiptap/extension-collaboration";
 import CollaborationCursor from "@tiptap/extension-collaboration-cursor";
 import { EditorContent, useEditor } from "@tiptap/react";
-import StarterKit from "@tiptap/starter-kit";
+import StarterKit, { StarterKitOptions } from "@tiptap/starter-kit";
 import { EditorView } from "prosemirror-view";
 import { useEffect, useState } from "react";
 import * as Y from "yjs";
@@ -77,51 +77,9 @@ function TiptapEditor({ doc, provider }: EditorProps) {
         },
       }),
       StarterKit.configure({
-        blockquote: {
-          HTMLAttributes: {
-            class: "tiptap-blockquote",
-          },
-        },
-        code: {
-          HTMLAttributes: {
-            class: "tiptap-code",
-          },
-        },
-        codeBlock: {
-          languageClassPrefix: "language-",
-          HTMLAttributes: {
-            class: "tiptap-code-block",
-            spellcheck: false,
-          },
-        },
-        heading: {
-          levels: [1, 2, 3],
-          HTMLAttributes: {
-            class: "tiptap-heading",
-          },
-        },
         // The Collaboration extension comes with its own history handling
         history: false,
-        horizontalRule: {
-          HTMLAttributes: {
-            class: "tiptap-hr",
-          },
-        },
-        listItem: {
-          HTMLAttributes: {
-            class: "tiptap-list-item",
-          },
-        },
-        orderedList: {
-          HTMLAttributes: {
-            class: "tiptap-ordered-list",
-          },
-        },
-        paragraph: {
-          HTMLAttributes: {
-            class: "tiptap-paragraph",
-          },
-        },
+        ...starterKitOptions,
       }),
       // Register the document with Tiptap
       Collaboration.configure({
@@ -157,6 +115,52 @@ function TiptapEditor({ doc, provider }: EditorProps) {
     </div>
   );
 }
+
+const starterKitOptions: Partial<StarterKitOptions> = {
+  blockquote: {
+    HTMLAttributes: {
+      class: "tiptap-blockquote",
+    },
+  },
+  code: {
+    HTMLAttributes: {
+      class: "tiptap-code",
+    },
+  },
+  codeBlock: {
+    languageClassPrefix: "language-",
+    HTMLAttributes: {
+      class: "tiptap-code-block",
+      spellcheck: false,
+    },
+  },
+  heading: {
+    levels: [1, 2, 3],
+    HTMLAttributes: {
+      class: "tiptap-heading",
+    },
+  },
+  horizontalRule: {
+    HTMLAttributes: {
+      class: "tiptap-hr",
+    },
+  },
+  listItem: {
+    HTMLAttributes: {
+      class: "tiptap-list-item",
+    },
+  },
+  orderedList: {
+    HTMLAttributes: {
+      class: "tiptap-ordered-list",
+    },
+  },
+  paragraph: {
+    HTMLAttributes: {
+      class: "tiptap-paragraph",
+    },
+  },
+};
 
 // Prevents a matchesNode error on hot reloading
 EditorView.prototype.updateState = function updateState(state) {
