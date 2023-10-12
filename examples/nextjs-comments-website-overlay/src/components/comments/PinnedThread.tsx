@@ -1,3 +1,5 @@
+"use client";
+
 import styles from "./Pinned.module.css";
 import {
   PointerEvent,

@@ -20,19 +20,19 @@ export function Header() {
             />
           </svg>
           <ul>
-            <li id="link-product">
+            <li>
               <a href="#">Product</a>
             </li>
-            <li id="link-solutions">
+            <li>
               <a href="#">Solutions</a>
             </li>
-            <li id="link-community">
+            <li>
               <a href="#">Community</a>
             </li>
-            <li id="link-docs">
+            <li>
               <a href="#">Docs</a>
             </li>
-            <li id="link-pricing">
+            <li>
               <a href="#">Pricing</a>
             </li>
           </ul>

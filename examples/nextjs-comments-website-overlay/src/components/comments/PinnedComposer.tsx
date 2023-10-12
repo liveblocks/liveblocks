@@ -1,3 +1,5 @@
+"use client";
+
 import styles from "./Pinned.module.css";
 import { PointerEventHandler } from "react";
 import { UserMeta } from "@/liveblocks.config";

@@ -1,3 +1,5 @@
+"use client";
+
 import { Button } from "./Button";
 import { useState } from "react";
 import * as Collapsible from "@radix-ui/react-collapsible";
