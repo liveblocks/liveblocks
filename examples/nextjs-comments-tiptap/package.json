@@ -1,5 +1,5 @@
 {
-  "name": "@liveblocks-examples/nextjs-yjs-tiptap-advanced-comments",
+  "name": "@liveblocks-examples/nextjs-comments-tiptap",
   "description": "This example shows how to build a collaborative text editor with Liveblocks, Yjs, Tiptap, and Next.js.",
   "license": "Apache-2.0",
   "private": true,
@@ -10,11 +10,11 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@liveblocks/client": "^1.4.5",
-    "@liveblocks/node": "^1.4.5",
-    "@liveblocks/react": "^1.4.5",
-    "@liveblocks/react-comments": "^1.4.5",
-    "@liveblocks/yjs": "^1.4.5",
+    "@liveblocks/client": "^1.4.6",
+    "@liveblocks/node": "^1.4.6",
+    "@liveblocks/react": "^1.4.6",
+    "@liveblocks/react-comments": "^1.4.6",
+    "@liveblocks/yjs": "^1.4.6",
     "@radix-ui/react-dialog": "^1.0.2",
     "@radix-ui/react-popover": "^1.0.2",
     "@radix-ui/react-select": "^1.1.1",
