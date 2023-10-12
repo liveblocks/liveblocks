@@ -113,7 +113,7 @@ export interface ThreadProps<
  *   ))}
  * </>
  */
-export const Thread = forwardRef<HTMLDivElement, ThreadProps>(
+export const Thread = forwardRef(
   <TThreadMetadata extends BaseMetadata = ThreadMetadata>(
     {
       thread,

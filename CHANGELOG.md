@@ -11,7 +11,9 @@
 - Export `ComposerSubmitComment` type from root too, in addition to
   `/primitives`.
 - Add `onThreadDelete` to `Thread`.
-- Add support for specifying a custom `ThreadMetadata` type on `Thread`.
+- Add `metadata` to `Composer` to attach custom metadata to new threads.
+- Add support for specifying a custom `ThreadMetadata` type on `Thread` and
+  `Composer`.
 - **Breaking (beta):** `Comment`’s `onEdit` and `onDelete` were renamed to
   `onEditComment` and `onDeleteComment` respectively.
 
