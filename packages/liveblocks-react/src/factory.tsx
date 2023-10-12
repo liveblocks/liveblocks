@@ -51,8 +51,9 @@ import type {
   InternalRoomContextBundle,
   MutationContext,
   OmitFirstArg,
-  ResolveMentionSuggestionsOptions,
-  ResolveUserOptions,
+  PromiseOrNot,
+  ResolveMentionSuggestionsArgs,
+  ResolveUsersArgs,
   RoomContextBundle,
   RoomProviderProps,
   UserState,
@@ -153,20 +154,20 @@ type Options<TUserMeta extends BaseUserMeta> = {
   /**
    * @beta
    *
-   * An asynchronous function that returns user info from a user ID.
+   * A function that returns user info from user IDs.
    */
-  resolveUser?: (
-    options: ResolveUserOptions
-  ) => Promise<TUserMeta["info"] | undefined>;
+  resolveUsers?: (
+    args: ResolveUsersArgs
+  ) => PromiseOrNot<TUserMeta["info"] | undefined>;
 
   /**
    * @beta
    *
-   * An asynchronous function that returns a list of user IDs matching a string.
+   * A function that returns a list of user IDs matching a string.
    */
   resolveMentionSuggestions?: (
-    options: ResolveMentionSuggestionsOptions
-  ) => Promise<string[]>;
+    args: ResolveMentionSuggestionsArgs
+  ) => PromiseOrNot<string[]>;
 
   /**
    * @internal Internal endpoint
@@ -174,18 +175,18 @@ type Options<TUserMeta extends BaseUserMeta> = {
   serverEndpoint?: string;
 };
 
-let hasWarnedIfNoResolveUser = false;
+let hasWarnedIfNoResolveUsers = false;
 
-function warnIfNoResolveUser(usersCache?: AsyncCache<unknown, unknown>) {
+function warnIfNoResolveUsers(usersCache?: AsyncCache<unknown, unknown>) {
   if (
-    !hasWarnedIfNoResolveUser &&
+    !hasWarnedIfNoResolveUsers &&
     !usersCache &&
     process.env.NODE_ENV !== "production"
   ) {
     console.warn(
-      "Set the resolveUser option in createRoomContext to specify user info."
+      "Set the resolveUsers option in createRoomContext to specify user info."
     );
-    hasWarnedIfNoResolveUser = true;
+    hasWarnedIfNoResolveUsers = true;
   }
 }
 
@@ -996,21 +997,27 @@ export function createRoomContext<
     );
   }
 
-  const { resolveUser, resolveMentionSuggestions } = options ?? {};
+  const { resolveUsers, resolveMentionSuggestions } = options ?? {};
 
-  const usersCache = resolveUser
-    ? createAsyncCache((stringifiedOptions: string) => {
-        return resolveUser(
-          JSON.parse(stringifiedOptions) as ResolveUserOptions
+  const usersCache = resolveUsers
+    ? createAsyncCache(async (stringifiedOptions: string) => {
+        const users = await resolveUsers(
+          JSON.parse(stringifiedOptions) as ResolveUsersArgs
         );
+
+        return users?.[0];
       })
     : undefined;
 
   function useUser(userId: string) {
-    const resolverKey = React.useMemo(() => stringify({ userId }), [userId]);
+    const room = useRoom();
+    const resolverKey = React.useMemo(
+      () => stringify({ userIds: [userId], roomId: room.id }),
+      [userId, room.id]
+    );
     const state = useAsyncCache(usersCache, resolverKey);
 
-    React.useEffect(() => warnIfNoResolveUser(usersCache), []);
+    React.useEffect(() => warnIfNoResolveUsers(usersCache), []);
 
     if (state.isLoading) {
       return {
@@ -1026,12 +1033,16 @@ export function createRoomContext<
   }
 
   function useUserSuspense(userId: string) {
-    const resolverKey = React.useMemo(() => stringify({ userId }), [userId]);
+    const room = useRoom();
+    const resolverKey = React.useMemo(
+      () => stringify({ userIds: [userId], roomId: room.id }),
+      [userId, room.id]
+    );
     const state = useAsyncCache(usersCache, resolverKey, {
       suspense: true,
     });
 
-    React.useEffect(() => warnIfNoResolveUser(usersCache), []);
+    React.useEffect(() => warnIfNoResolveUsers(usersCache), []);
 
     return {
       user: state.data,
@@ -1043,7 +1054,7 @@ export function createRoomContext<
     resolveMentionSuggestions
       ? (stringifiedOptions: string) => {
           return resolveMentionSuggestions(
-            JSON.parse(stringifiedOptions) as ResolveMentionSuggestionsOptions
+            JSON.parse(stringifiedOptions) as ResolveMentionSuggestionsArgs
           );
         }
       : () => Promise.resolve([])
