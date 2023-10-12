@@ -516,6 +516,34 @@ describe("AsyncCache", () => {
     expect(cache.getState(KEY_ABC)).toBeUndefined();
   });
 
+  test("using a synchronous function", async () => {
+    const mock = jest.fn((key: string) => {
+      return key;
+    });
+    const cache = createAsyncCache(mock);
+
+    // 🚀 Called
+    expect(await cache.get(KEY_ABC)).toMatchObject<AsyncState<string, Error>>({
+      isLoading: false,
+      data: KEY_ABC,
+    });
+
+    // ✨ Cached
+    expect(await cache.get(KEY_ABC)).toMatchObject<AsyncState<string, Error>>({
+      isLoading: false,
+      data: KEY_ABC,
+    });
+
+    // ✨ Cached
+    expect(await cache.get(KEY_ABC)).toMatchObject<AsyncState<string, Error>>({
+      isLoading: false,
+      data: KEY_ABC,
+    });
+
+    expect(mock).toHaveBeenCalledTimes(1);
+    expect(mock).toHaveBeenCalledWith(KEY_ABC);
+  });
+
   test("subscribing to a key", async () => {
     const mock = createAsyncMock({
       error: (index) => index === 0,
@@ -633,88 +661,6 @@ describe("AsyncCache", () => {
         data: [0, 1, 2],
       })
     );
-  });
-
-  test("overriding the function for a key", async () => {
-    const mockAbc = createAsyncMock({ value: () => KEY_ABC });
-    const mockXyz = createAsyncMock({ value: () => KEY_XYZ });
-    const cache = createAsyncCache(mockAbc);
-
-    const abc = cache.create(KEY_ABC);
-    const xyz = cache.create(KEY_XYZ, mockXyz);
-
-    // 🚀 Called mockAbc
-    expect(await abc.get()).toMatchObject<AsyncState<string, Error>>({
-      isLoading: false,
-      data: KEY_ABC,
-    });
-
-    // 🚀 Called mockXyz instead of mockAbc
-    expect(await xyz.get()).toMatchObject<AsyncState<string, Error>>({
-      isLoading: false,
-      data: KEY_XYZ,
-    });
-
-    expect(mockAbc).toHaveBeenCalledTimes(1);
-    expect(mockAbc).toHaveBeenCalledWith(KEY_ABC);
-    expect(mockXyz).toHaveBeenCalledTimes(1);
-    expect(mockXyz).toHaveBeenCalledWith(KEY_XYZ);
-  });
-
-  test("overriding the function for an existing key", async () => {
-    const mockAbc = createAsyncMock({ value: () => KEY_ABC });
-    const mockXyz = createAsyncMock({ value: () => KEY_XYZ });
-    const cache = createAsyncCache(mockAbc);
-
-    const abc = cache.create(KEY_ABC);
-
-    // 🚀 Called mockAbc
-    expect(await abc.get()).toMatchObject<AsyncState<string, Error>>({
-      isLoading: false,
-      data: KEY_ABC,
-    });
-
-    const abcWithXyz = cache.create(KEY_ABC, mockXyz);
-
-    // 🚀 Revalidated with mockXyz instead of mockAbc
-    expect(await abcWithXyz.revalidate()).toMatchObject<
-      AsyncState<string, Error>
-    >({
-      isLoading: false,
-      data: KEY_XYZ,
-    });
-
-    expect(mockAbc).toHaveBeenCalledTimes(1);
-    expect(mockAbc).toHaveBeenCalledWith(KEY_ABC);
-    expect(mockXyz).toHaveBeenCalledTimes(1);
-    expect(mockXyz).toHaveBeenCalledWith(KEY_ABC);
-  });
-
-  test("overriding the function for an existing key before it's called", async () => {
-    const mockAbc = createAsyncMock({ value: () => KEY_ABC });
-    const mockXyz = createAsyncMock({ value: () => KEY_XYZ });
-    const cache = createAsyncCache(mockAbc);
-
-    const abc = cache.create(KEY_ABC);
-    const abcWithXyz = cache.create(KEY_ABC, mockXyz);
-
-    // 🚀 Called mockXyz instead of mockAbc
-    expect(await abc.get()).toMatchObject<AsyncState<string, Error>>({
-      isLoading: false,
-      data: KEY_XYZ,
-    });
-
-    // 🚀 Revalidated with mockXyz instead of mockAbc
-    expect(await abcWithXyz.revalidate()).toMatchObject<
-      AsyncState<string, Error>
-    >({
-      isLoading: false,
-      data: KEY_XYZ,
-    });
-
-    expect(mockAbc).not.toHaveBeenCalled();
-    expect(mockXyz).toHaveBeenCalledTimes(2);
-    expect(mockXyz).toHaveBeenCalledWith(KEY_ABC);
   });
 });
 

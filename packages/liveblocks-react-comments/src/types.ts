@@ -6,6 +6,10 @@ export type SlotProp = {
   asChild?: boolean;
 };
 
+export type ThreadMetadata = {
+  resolved?: boolean;
+};
+
 export type ComponentPropsWithSlot<TElement extends ElementType<any>> =
   ComponentPropsWithoutRef<TElement> & SlotProp;
 

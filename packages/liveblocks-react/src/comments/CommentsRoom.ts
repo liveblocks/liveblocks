@@ -8,6 +8,7 @@ import type {
   Json,
   JsonObject,
   LsonObject,
+  Resolve,
   Room,
   ThreadData,
 } from "@liveblocks/core";
@@ -37,6 +38,10 @@ const THREAD_ID_PREFIX = "th";
 const COMMENT_ID_PREFIX = "cm";
 const DEDUPING_INTERVAL = 1000;
 
+type PartialNullable<T> = {
+  [P in keyof T]?: T[P] | null | undefined;
+};
+
 export type CommentsRoom<TThreadMetadata extends BaseMetadata> = {
   useThreads(): ThreadsState<TThreadMetadata>;
   useThreadsSuspense(): ThreadsStateSuccess<TThreadMetadata>;
@@ -65,7 +70,7 @@ export type EditThreadMetadataOptions<TMetadata extends BaseMetadata> = [
   ? {
       threadId: string;
     }
-  : { threadId: string; metadata: Partial<TMetadata> };
+  : { threadId: string; metadata: Resolve<PartialNullable<TMetadata>> };
 
 export type CreateCommentOptions = {
   threadId: string;
@@ -321,7 +326,7 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
     options: EditThreadMetadataOptions<TThreadMetadata>
   ) {
     const threadId = options.threadId;
-    const metadata: Partial<TThreadMetadata> =
+    const metadata: PartialNullable<TThreadMetadata> =
       "metadata" in options ? options.metadata : {};
     const threads = getThreads();
 

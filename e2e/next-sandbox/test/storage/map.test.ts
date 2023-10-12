@@ -53,7 +53,23 @@ test.describe("Storage - LiveMap", () => {
 
   test("fuzzy [set]", fuzzyTest(["#set"]));
 
-  test("fuzzy [set, delete]", fuzzyTest(["#set", "#delete"]));
+  test("fuzzy [set, delete]", fuzzyTest(["#set", "#set", "#set", "#delete"]));
+
+  test(
+    "fuzzy [set, delete, clear]",
+    fuzzyTest([
+      "#clear",
+      "#delete",
+      "#delete",
+      "#delete",
+      "#set",
+      "#set",
+      "#set",
+      "#set",
+      "#set",
+      "#set",
+    ])
+  );
 
   // TODO Definitely a bug here!
   test.skip("fuzzy full w/ undo/redo", async () => {

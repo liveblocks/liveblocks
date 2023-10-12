@@ -1,6 +1,6 @@
 ---
 meta:
-  title: "Comments"
+  title: "@liveblocks/react-comments"
   parentTitle: "API Reference"
   description: "API Reference for the @liveblocks/react-comments package"
 alwaysShowAllNavigationLevels: false
@@ -188,21 +188,22 @@ Displays a thread of comments, with a composer to reply to it.
 
 <Table columns={["26%", "32%", "42%"]}>
 
-| Prop                   | Type                                                                                              | Description                                                                             |
-| ---------------------- | ------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
-| `thread`               | <code>ThreadData&lt;\{ resolved?: boolean \}&gt;</code>                                           | The thread to display.                                                                  |
-| `showComposer`         | `boolean \| "collapsed" \| undefined`                                                             | How to show or hide the composer to reply to the thread.<br/>Defaults to `"collapsed"`. |
-| `showActions`          | `boolean \| "hover" \| undefined`                                                                 | How to show or hide the actions.<br/>Defaults to `"hover"`.                             |
-| `showReactions`        | `boolean \| undefined`                                                                            | Whether to show reactions.<br/>Defaults to `true`.                                      |
-| `showResolveAction`    | `boolean \| undefined`                                                                            | Whether to show the action to resolve the thread.<br/>Defaults to `true`.               |
-| `indentCommentContent` | `boolean \| undefined`                                                                            | Whether to indent the comments’ content.<br/>Defaults to `true`.                        |
-| `showDeletedComments`  | `boolean \| undefined`                                                                            | Whether to show deleted comments.<br/>Defaults to `false`.                              |
-| `onResolvedChange`     | `(resolved: boolean) => void`                                                                     | The event handler called when changing the resolved status.                             |
-| `onCommentEdit`        | `(comment: CommentData) => void`                                                                  | The event handler called when a comment is edited.                                      |
-| `onCommentDelete`      | `(comment: CommentData) => void`                                                                  | The event handler called when a comment is deleted.                                     |
-| `onAuthorClick`        | <code>(userId: string, event: MouseEvent&lt;HTMLElement&gt;) => void \| undefined</code>          | The event handler called when clicking on a comment’s author.                           |
-| `onMentionClick`       | <code>(userId: string, event: MouseEvent&lt;HTMLElement&gt;) => void \| undefined</code>          | The event handler called when clicking on a mention.                                    |
-| `overrides`            | <code>Partial&lt;ThreadOverrides \& CommentOverrides \& ComposerOverrides&gt; \| undefined</code> | Override the component’s strings.                                                       |
+| Prop                   | Type                                                                                              | Description                                                                                                 |
+| ---------------------- | ------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `thread`               | <code>ThreadData&lt;\{ resolved?: boolean \}&gt;</code>                                           | The thread to display.                                                                                      |
+| `showComposer`         | `boolean \| "collapsed" \| undefined`                                                             | How to show or hide the composer to reply to the thread.<br/>Defaults to `"collapsed"`.                     |
+| `showActions`          | `boolean \| "hover" \| undefined`                                                                 | How to show or hide the actions.<br/>Defaults to `"hover"`.                                                 |
+| `showReactions`        | `boolean \| undefined`                                                                            | Whether to show reactions.<br/>Defaults to `true`.                                                          |
+| `showResolveAction`    | `boolean \| undefined`                                                                            | Whether to show the action to resolve the thread.<br/>Defaults to `true`.                                   |
+| `indentCommentContent` | `boolean \| undefined`                                                                            | Whether to indent the comments’ content.<br/>Defaults to `true`.                                            |
+| `showDeletedComments`  | `boolean \| undefined`                                                                            | Whether to show deleted comments.<br/>Defaults to `false`.                                                  |
+| `onResolvedChange`     | `(resolved: boolean) => void`                                                                     | The event handler called when changing the resolved status.                                                 |
+| `onThreadDelete`       | `(thread: ThreadData) => void`                                                                    | The event handler called when the thread is deleted. A thread is deleted when all its comments are deleted. |
+| `onCommentEdit`        | `(comment: CommentData) => void`                                                                  | The event handler called when a comment is edited.                                                          |
+| `onCommentDelete`      | `(comment: CommentData) => void`                                                                  | The event handler called when a comment is deleted.                                                         |
+| `onAuthorClick`        | <code>(userId: string, event: MouseEvent&lt;HTMLElement&gt;) => void \| undefined</code>          | The event handler called when clicking on a comment’s author.                                               |
+| `onMentionClick`       | <code>(userId: string, event: MouseEvent&lt;HTMLElement&gt;) => void \| undefined</code>          | The event handler called when clicking on a mention.                                                        |
+| `overrides`            | <code>Partial&lt;ThreadOverrides \& CommentOverrides \& ComposerOverrides&gt; \| undefined</code> | Override the component’s strings.                                                                           |
 
 </Table>
 
@@ -222,18 +223,18 @@ Displays a single comment.
 
 <Table columns={["26%", "32%", "42%"]}>
 
-| Prop             | Type                                                                                     | Description                                                                                                                           |
-| ---------------- | ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| `comment`        | `CommentData`                                                                            | The thread to display.                                                                                                                |
-| `showActions`    | `boolean \| "hover" \| undefined`                                                        | How to show or hide the actions.<br/>Defaults to `"hover"`.                                                                           |
-| `showReactions`  | `boolean \| undefined`                                                                   | Whether to show reactions.<br/>Defaults to `true`.                                                                                    |
-| `indentContent`  | `boolean \| undefined`                                                                   | Whether to indent the comment’s content.<br/>Defaults to `true`.                                                                      |
-| `showDeleted`    | `boolean \| undefined`                                                                   | Whether to show the comment if it was deleted. If set to `false`, it will render deleted comments as `null`.<br/>Defaults to `false`. |
-| `onEdit`         | `(comment: CommentData) => void`                                                         | The event handler called when the comment is edited.                                                                                  |
-| `onDelete`       | `(comment: CommentData) => void`                                                         | The event handler called when the comment is deleted.                                                                                 |
-| `onAuthorClick`  | <code>(userId: string, event: MouseEvent&lt;HTMLElement&gt;) => void \| undefined</code> | The event handler called when clicking on the author.                                                                                 |
-| `onMentionClick` | <code>(userId: string, event: MouseEvent&lt;HTMLElement&gt;) => void \| undefined</code> | The event handler called when clicking on a mention.                                                                                  |
-| `overrides`      | <code>Partial&lt;CommentOverrides \& ComposerOverrides&gt; \| undefined</code>           | Override the component’s strings.                                                                                                     |
+| Prop              | Type                                                                                     | Description                                                                                                                           |
+| ----------------- | ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `comment`         | `CommentData`                                                                            | The thread to display.                                                                                                                |
+| `showActions`     | `boolean \| "hover" \| undefined`                                                        | How to show or hide the actions.<br/>Defaults to `"hover"`.                                                                           |
+| `showReactions`   | `boolean \| undefined`                                                                   | Whether to show reactions.<br/>Defaults to `true`.                                                                                    |
+| `indentContent`   | `boolean \| undefined`                                                                   | Whether to indent the comment’s content.<br/>Defaults to `true`.                                                                      |
+| `showDeleted`     | `boolean \| undefined`                                                                   | Whether to show the comment if it was deleted. If set to `false`, it will render deleted comments as `null`.<br/>Defaults to `false`. |
+| `onCommentEdit`   | `(comment: CommentData) => void`                                                         | The event handler called when the comment is edited.                                                                                  |
+| `onCommentDelete` | `(comment: CommentData) => void`                                                         | The event handler called when the comment is deleted.                                                                                 |
+| `onAuthorClick`   | <code>(userId: string, event: MouseEvent&lt;HTMLElement&gt;) => void \| undefined</code> | The event handler called when clicking on the author.                                                                                 |
+| `onMentionClick`  | <code>(userId: string, event: MouseEvent&lt;HTMLElement&gt;) => void \| undefined</code> | The event handler called when clicking on a mention.                                                                                  |
+| `overrides`       | <code>Partial&lt;CommentOverrides \& ComposerOverrides&gt; \| undefined</code>           | Override the component’s strings.                                                                                                     |
 
 </Table>
 
@@ -526,11 +527,11 @@ The components displayed within the editor.
 
 <Table columns={["26%", "32%", "42%"]}>
 
-| Component            | Type                                                         | Description                                                                                             |
-| -------------------- | ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------- |
-| `Mention`            | <code>ComponentType&lt;ComposerEditorMentionProps&gt;</code> | The component used to display mentions.<br/>Defaults to the mention’s `userId` prefixed by an @.        |
+| Component            | Type                                                                   | Description                                                                                             |
+| -------------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| `Mention`            | <code>ComponentType&lt;ComposerEditorMentionProps&gt;</code>           | The component used to display mentions.<br/>Defaults to the mention’s `userId` prefixed by an @.        |
 | `MentionSuggestions` | <code>ComponentType&lt;ComposerEditorMentionSuggestionProps&gt;</code> | The component used to display mention suggestions.<br/>Defaults to a list of the suggestions’ `userId`. |
-| `Link`               | <code>ComponentType&lt;ComposerEditorLinkProps&gt;</code>    | The component used to display links.<br/>Defaults to the link’s `children` property.                    |
+| `Link`               | <code>ComponentType&lt;ComposerEditorLinkProps&gt;</code>              | The component used to display links.<br/>Defaults to the link’s `children` property.                    |
 
 </Table>
 
