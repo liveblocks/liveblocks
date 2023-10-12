@@ -95,7 +95,6 @@ export const LiveblocksCommentsHighlight = Mark.create<
         default: null,
         parseHTML: (element) => element.getAttribute("data-state"),
         renderHTML: (attributes) => {
-          console.log("STATE?", attributes);
           if (!attributes.state) {
             return {};
           }

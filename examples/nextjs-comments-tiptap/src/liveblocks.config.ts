@@ -80,15 +80,16 @@ export const {
 } = createRoomContext<Presence, Storage, UserMeta, RoomEvent, ThreadMetadata>(
   client,
   {
-    async resolveUser({ userId }) {
-      const response = await fetch(`/api/user/${encodeURIComponent(userId)}`);
+    async resolveUsers({ userIds }) {
+      const searchParams = new URLSearchParams({ userIds });
+      const response = await fetch(`/api/users?${searchParams}`);
 
       if (!response.ok) {
         throw new Error("Problem resolving user");
       }
 
-      const user = await response.json();
-      return user.info;
+      const users = await response.json();
+      return users;
     },
     async resolveMentionSuggestions({ text }) {
       const response = await fetch(
