@@ -28,8 +28,14 @@ export interface CommentHighlightOptions {
 }
 
 export interface CommentHighlightStorage {
+  // Should show new thread composer?
   showComposer: boolean;
+
+  // The id of the current highlight being created
   currentHighlightId: string | null;
+
+  // The highlight on the page that is being hovered or is active
+  activeHighlightId: string | null;
 }
 
 export const LiveblocksCommentsHighlight = Mark.create<
@@ -48,6 +54,7 @@ export const LiveblocksCommentsHighlight = Mark.create<
     return {
       showComposer: false,
       currentHighlightId: null,
+      activeHighlightId: null,
     };
   },
 
@@ -145,10 +152,14 @@ export const LiveblocksCommentsHighlight = Mark.create<
   renderHTML({ HTMLAttributes }) {
     const elem = document.createElement("mark");
 
+    const currentlyActive =
+      this.editor?.storage.activeHighlightId ===
+      this.options.HTMLAttributes.highlightId;
+
     // Merge attributes
     Object.entries(
       mergeAttributes(this.options.HTMLAttributes, HTMLAttributes, {
-        "data-selected": "false",
+        "data-selected": currentlyActive ? "true" : "false",
       })
     ).forEach(([attr, val]) => elem.setAttribute(attr, val));
 
@@ -157,14 +168,25 @@ export const LiveblocksCommentsHighlight = Mark.create<
     const handleClick = (event: MouseEvent) => {
       if (!event.target || !(event.target instanceof HTMLElement)) {
         elem.dataset.selected = "false";
+        if (this.editor) {
+          this.editor.storage.commentHighlight.activeHighlightId = null;
+        }
         return;
       }
 
       if (event.target === elem || elem.contains(event.target)) {
         elem.dataset.selected = "true";
+        if (this.editor) {
+          console.log("NOW?");
+          this.editor.storage.commentHighlight.activeHighlightId =
+            HTMLAttributes["data-highlight-id"];
+        }
         return;
       }
 
+      if (this.editor) {
+        this.editor.storage.commentHighlight.activeHighlightId = null;
+      }
       elem.dataset.selected = "false";
     };
 

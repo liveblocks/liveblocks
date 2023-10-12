@@ -36,28 +36,27 @@ function CustomThread({
   editor,
   thread,
 }: Props & { thread: ThreadData<ThreadMetadata> }) {
-  const [hover, setHover] = useState(false);
+  const [active, setActive] = useState(false);
 
   const handleThreadDelete = useCallback(
     (thread: ThreadData<ThreadMetadata>) => {
       removeCommentHighlight(editor, thread.metadata.highlightId);
     },
-    []
+    [editor, thread]
   );
 
-  useEffect(() => {
-    console.log(hover);
-  }, [hover]);
-
   return (
-    <Thread
-      onPointerEnter={() => setHover(true)}
-      onPointerLeave={() => setHover(false)}
-      className={styles.thread}
-      thread={thread}
-      onThreadDelete={handleThreadDelete}
-      data-hover={hover}
-    />
+    <div
+      onPointerEnter={() => setActive(true)}
+      onPointerLeave={() => setActive(false)}
+    >
+      <Thread
+        className={styles.thread}
+        thread={thread}
+        onThreadDelete={handleThreadDelete}
+        data-active={active}
+      />
+    </div>
   );
 }
 

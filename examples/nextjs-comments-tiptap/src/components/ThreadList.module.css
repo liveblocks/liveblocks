@@ -7,13 +7,13 @@
 .thread {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  transition: all 0.3s ease;
+  transition: transform 0.3s ease;
   box-shadow: var(--shadow-sm);
   border-radius: var(--radius-sm);
   overflow: hidden;
 }
 
-.thread[data-hover="true"] {
+.thread[data-active="true"] {
   box-shadow: var(--shadow-sm), var(--shadow-lg);
   transform: translateX(-30px);
 }

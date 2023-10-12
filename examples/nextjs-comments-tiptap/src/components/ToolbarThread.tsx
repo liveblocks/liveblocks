@@ -1,3 +1,5 @@
+"use client";
+
 import { Editor } from "@tiptap/react";
 import { Button } from "@/primitives/Button";
 import styles from "./Toolbar.module.css";

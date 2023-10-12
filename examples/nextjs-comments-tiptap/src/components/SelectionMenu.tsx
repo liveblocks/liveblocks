@@ -1,3 +1,5 @@
+"use client";
+
 import { BubbleMenu, Editor } from "@tiptap/react";
 import styles from "./TextEditor.module.css";
 import { ToolbarThread } from "@/components/ToolbarThread";

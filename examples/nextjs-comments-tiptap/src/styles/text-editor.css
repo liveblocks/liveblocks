@@ -166,6 +166,7 @@ h1 .tiptap-code, h2 .tiptap-code, h3 .tiptap-code {
 
 /* Give a remote user a caret */
 .collaboration-cursor__caret {
+  z-index: 1;
   border-left: 1px solid #0d0d0d;
   border-right: 1px solid #0d0d0d;
   margin-left: -1px;

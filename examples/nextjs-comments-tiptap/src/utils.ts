@@ -51,3 +51,6 @@ export function getCommentHighlight(
 
   return result;
 }
+
+// Trigger highlight active
+function highlightActive() {}
