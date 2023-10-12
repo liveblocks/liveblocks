@@ -122,9 +122,7 @@ export async function waitForJson(
   const expectedText = JSON.stringify(expectedValue, null, 2);
   return Promise.all(
     pages.map((page) =>
-      expect(page.locator(selector)).toHaveText(expectedText, {
-        timeout: 10000,
-      })
+      expect(page.locator(selector)).toHaveText(expectedText, { timeout: 5000 })
     )
   );
 }
