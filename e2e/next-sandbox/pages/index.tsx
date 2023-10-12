@@ -42,6 +42,11 @@ export default function Home() {
           </ul>
         </li>
         <li>
+          <Link href="/comments?room=e2e-comments">
+            <a>Comments</a>
+          </Link>
+        </li>
+        <li>
           <Link href="/offline?room=e2e-offline">
             <a>Offline</a>
           </Link>
