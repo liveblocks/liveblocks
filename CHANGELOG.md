@@ -1,4 +1,4 @@
-# v1.4.6 (not released yet)
+# v1.4.6
 
 ### `@liveblocks/react`
 
@@ -23,6 +23,12 @@
 
 - Export `ComposerSubmitComment` type from root too, in addition to
   `/primitives`.
+- Add `onThreadDelete` to `Thread`.
+- Add `metadata` to `Composer` to attach custom metadata to new threads.
+- Add support for specifying a custom `ThreadMetadata` type on `Thread` and
+  `Composer`.
+- **Breaking (beta):** `Comment`’s `onEdit` and `onDelete` were renamed to
+  `onEditComment` and `onDeleteComment` respectively.
 
 # v1.4.5
 

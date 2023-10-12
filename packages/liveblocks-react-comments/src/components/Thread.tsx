@@ -1,9 +1,14 @@
 "use client";
 
-import type { ThreadData } from "@liveblocks/core";
+import type { BaseMetadata, CommentData, ThreadData } from "@liveblocks/core";
 import { useRoomContextBundle } from "@liveblocks/react";
 import * as TogglePrimitive from "@radix-ui/react-toggle";
-import type { ComponentPropsWithoutRef, SyntheticEvent } from "react";
+import type {
+  ComponentPropsWithoutRef,
+  ForwardedRef,
+  RefAttributes,
+  SyntheticEvent,
+} from "react";
 import React, { forwardRef, useCallback, useMemo } from "react";
 
 import { ResolveIcon } from "../icons/Resolve";
@@ -14,6 +19,7 @@ import {
   type ThreadOverrides,
   useOverrides,
 } from "../overrides";
+import type { ThreadMetadata } from "../types";
 import { classNames } from "../utils/class-names";
 import type { CommentProps } from "./Comment";
 import { Comment } from "./Comment";
@@ -21,11 +27,13 @@ import { Composer } from "./Composer";
 import { Button } from "./internal/Button";
 import { Tooltip, TooltipProvider } from "./internal/Tooltip";
 
-export interface ThreadProps extends ComponentPropsWithoutRef<"div"> {
+export interface ThreadProps<
+  TThreadMetadata extends BaseMetadata = ThreadMetadata,
+> extends ComponentPropsWithoutRef<"div"> {
   /**
    * The thread to display.
    */
-  thread: ThreadData<{ resolved?: boolean }>;
+  thread: ThreadData<TThreadMetadata>;
 
   /**
    * How to show or hide the composer to reply to the thread.
@@ -65,12 +73,18 @@ export interface ThreadProps extends ComponentPropsWithoutRef<"div"> {
   /**
    * The event handler called when a comment is edited.
    */
-  onCommentEdit?: CommentProps["onEdit"];
+  onCommentEdit?: CommentProps["onCommentEdit"];
 
   /**
    * The event handler called when a comment is deleted.
    */
-  onCommentDelete?: CommentProps["onDelete"];
+  onCommentDelete?: CommentProps["onCommentDelete"];
+
+  /**
+   * The event handler called when the thread is deleted.
+   * A thread is deleted when all its comments are deleted.
+   */
+  onThreadDelete?: (thread: ThreadData<TThreadMetadata>) => void;
 
   /**
    * The event handler called when clicking on a comment's author.
@@ -99,8 +113,8 @@ export interface ThreadProps extends ComponentPropsWithoutRef<"div"> {
  *   ))}
  * </>
  */
-export const Thread = forwardRef<HTMLDivElement, ThreadProps>(
-  (
+export const Thread = forwardRef(
+  <TThreadMetadata extends BaseMetadata = ThreadMetadata>(
     {
       thread,
       indentCommentContent = true,
@@ -112,13 +126,14 @@ export const Thread = forwardRef<HTMLDivElement, ThreadProps>(
       onResolvedChange,
       onCommentEdit,
       onCommentDelete,
+      onThreadDelete,
       onAuthorClick,
       onMentionClick,
       overrides,
       className,
       ...props
-    },
-    forwardedRef
+    }: ThreadProps<TThreadMetadata>,
+    forwardedRef: ForwardedRef<HTMLDivElement>
   ) => {
     const { useEditThreadMetadata } = useRoomContextBundle();
     const editThreadMetadata = useEditThreadMetadata();
@@ -142,6 +157,21 @@ export const Thread = forwardRef<HTMLDivElement, ThreadProps>(
       [editThreadMetadata, onResolvedChange, thread.id]
     );
 
+    const handleCommentDelete = useCallback(
+      (comment: CommentData) => {
+        onCommentDelete?.(comment);
+
+        const filteredComments = thread.comments.filter(
+          (comment) => comment.body
+        );
+
+        if (filteredComments.length <= 1) {
+          onThreadDelete?.(thread);
+        }
+      },
+      [onCommentDelete, onThreadDelete, thread]
+    );
+
     return (
       <TooltipProvider>
         <div
@@ -150,7 +180,9 @@ export const Thread = forwardRef<HTMLDivElement, ThreadProps>(
             showActions === "hover" && "lb-thread:show-actions-hover",
             className
           )}
-          data-resolved={thread.metadata.resolved ? "" : undefined}
+          data-resolved={
+            (thread.metadata as ThreadMetadata).resolved ? "" : undefined
+          }
           dir={$.dir}
           {...props}
           ref={forwardedRef}
@@ -168,8 +200,8 @@ export const Thread = forwardRef<HTMLDivElement, ThreadProps>(
                   showDeleted={showDeletedComments}
                   showActions={showActions}
                   showReactions={showReactions}
-                  onEdit={onCommentEdit}
-                  onDelete={onCommentDelete}
+                  onCommentEdit={onCommentEdit}
+                  onCommentDelete={handleCommentDelete}
                   onAuthorClick={onAuthorClick}
                   onMentionClick={onMentionClick}
                   additionalActionsClassName={
@@ -179,13 +211,13 @@ export const Thread = forwardRef<HTMLDivElement, ThreadProps>(
                     isFirstComment && showResolveAction ? (
                       <Tooltip
                         content={
-                          thread.metadata.resolved
+                          (thread.metadata as ThreadMetadata).resolved
                             ? $.THREAD_UNRESOLVE
                             : $.THREAD_RESOLVE
                         }
                       >
                         <TogglePrimitive.Root
-                          pressed={thread.metadata?.resolved}
+                          pressed={(thread.metadata as ThreadMetadata).resolved}
                           onPressedChange={handleResolvedChange}
                           asChild
                         >
@@ -193,12 +225,12 @@ export const Thread = forwardRef<HTMLDivElement, ThreadProps>(
                             className="lb-comment-action"
                             onClick={stopPropagation}
                             aria-label={
-                              thread.metadata.resolved
+                              (thread.metadata as ThreadMetadata).resolved
                                 ? $.THREAD_UNRESOLVE
                                 : $.THREAD_RESOLVE
                             }
                           >
-                            {thread.metadata.resolved ? (
+                            {(thread.metadata as ThreadMetadata).resolved ? (
                               <ResolvedIcon className="lb-button-icon" />
                             ) : (
                               <ResolveIcon className="lb-button-icon" />
@@ -227,4 +259,6 @@ export const Thread = forwardRef<HTMLDivElement, ThreadProps>(
       </TooltipProvider>
     );
   }
-);
+) as <TThreadMetadata extends BaseMetadata = ThreadMetadata>(
+  props: ThreadProps<TThreadMetadata> & RefAttributes<HTMLDivElement>
+) => JSX.Element;

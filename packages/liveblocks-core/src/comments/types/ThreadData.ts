@@ -4,14 +4,14 @@ import type { CommentData } from "./CommentData";
 /**
  * Represents a thread of comments.
  */
-export type ThreadData<ThreadMetadata extends BaseMetadata = never> = {
+export type ThreadData<TThreadMetadata extends BaseMetadata = never> = {
   type: "thread";
   id: string;
   roomId: string;
   createdAt: string;
   updatedAt?: string;
   comments: CommentData[];
-  metadata: [ThreadMetadata] extends [never]
+  metadata: [TThreadMetadata] extends [never]
     ? Record<string, never>
-    : ThreadMetadata;
+    : TThreadMetadata;
 };
