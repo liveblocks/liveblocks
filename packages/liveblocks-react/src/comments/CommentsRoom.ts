@@ -8,6 +8,7 @@ import type {
   Json,
   JsonObject,
   LsonObject,
+  Resolve,
   Room,
   ThreadData,
 } from "@liveblocks/core";
@@ -69,7 +70,7 @@ export type EditThreadMetadataOptions<TMetadata extends BaseMetadata> = [
   ? {
       threadId: string;
     }
-  : { threadId: string; metadata: PartialNullable<TMetadata> };
+  : { threadId: string; metadata: Resolve<PartialNullable<TMetadata>> };
 
 export type CreateCommentOptions = {
   threadId: string;
