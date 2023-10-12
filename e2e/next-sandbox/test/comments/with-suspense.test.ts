@@ -11,7 +11,7 @@ import {
 
 const TEST_URL = "http://localhost:3007/comments/with-suspense";
 
-test.describe.skip("Comments", () => {
+test.describe("Comments", () => {
   let pages: [Page, Page];
 
   test.beforeEach(async ({}, testInfo) => {
