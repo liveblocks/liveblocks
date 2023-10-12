@@ -16,6 +16,10 @@ function getAuthBearerHeaderFromAuthValue(authValue: AuthValue) {
   }
 }
 
+type PartialNullable<T> = {
+  [P in keyof T]?: T[P] | null | undefined;
+};
+
 export type CommentsApi<TThreadMetadata extends BaseMetadata> = {
   getThreads(): Promise<ThreadData<TThreadMetadata>[]>;
   createThread(options: {
@@ -25,7 +29,7 @@ export type CommentsApi<TThreadMetadata extends BaseMetadata> = {
     body: CommentBody;
   }): Promise<ThreadData<TThreadMetadata>>;
   editThreadMetadata(options: {
-    metadata: Partial<TThreadMetadata>;
+    metadata: PartialNullable<TThreadMetadata>;
     threadId: string;
   }): Promise<ThreadData<TThreadMetadata>>;
   createComment(options: {
@@ -160,7 +164,7 @@ export function createCommentsApi<TThreadMetadata extends BaseMetadata>(
     threadId,
   }: {
     roomId: string;
-    metadata: Partial<TThreadMetadata>;
+    metadata: PartialNullable<TThreadMetadata>;
     threadId: string;
   }) {
     return fetchJson<ThreadData<TThreadMetadata>>(

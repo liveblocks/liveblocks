@@ -33,12 +33,29 @@ import type {
   ThreadsStateSuccess,
 } from "./comments/CommentsRoom";
 
-export type ResolveUserOptions = {
-  userId: string;
+export type PromiseOrNot<T> = T | Promise<T>;
+
+export type ResolveUsersArgs = {
+  /**
+   * The ID of the current room.
+   */
+  roomId: string;
+
+  /**
+   * The ID of the users to resolve.
+   */
+  userIds: string;
 };
 
-export type ResolveMentionSuggestionsOptions = {
+export type ResolveMentionSuggestionsArgs = {
+  /**
+   * The ID of the current room.
+   */
   roomId: string;
+
+  /**
+   * The text to search for.
+   */
   text: string;
 };
 
@@ -480,6 +497,7 @@ type RoomContextBundleShared<
    * @beta
    *
    * Returns a function that edits a thread's metadata.
+   * To delete an existing metadata property, set its value to `null`.
    *
    * @example
    * const editThreadMetadata = useEditThreadMetadata();

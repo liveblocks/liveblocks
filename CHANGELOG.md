@@ -5,6 +5,19 @@
 - Fix a race condition that could cause a Liveblocks client to hang during
   loading when using Suspense.
 - Fix `useStatus` return value on SSR responses.
+- **Breaking (beta):** The `resolveUser` option in `createRoomContext` is now
+  called `resolveUsers` and it receives a list of user IDs (via the `userIds`
+  property, replacing `userId`) instead of a single one. Instead of returning
+  user info of a single user ID, this function will now expect a list of users'
+  info matching the provided list of user IDs.
+- **Breaking (beta):** The `ResolveUserOptions` and
+  `ResolveMentionSuggestionsOptions` types were renamed to `ResolveUserArgs` and
+  `ResolveMentionSuggestionsArgs` respectively.
+- `resolveUsers` and `resolveMentionSuggestions` now accept synchronous
+  functions.
+- `resolveUsers` now also provides the current room ID.
+- `editThreadMetadata` now correctly allows `null` to be set on a property.
+  Doing so deletes existing metadata properties.
 
 ### `@liveblocks/react-comments`
 
