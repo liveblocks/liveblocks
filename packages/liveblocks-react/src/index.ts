@@ -8,8 +8,8 @@ export { ClientSideSuspense } from "./ClientSideSuspense";
 export { createRoomContext, useRoomContextBundle } from "./factory";
 export type {
   MutationContext,
-  ResolveMentionSuggestionsOptions,
-  ResolveUserOptions,
+  ResolveMentionSuggestionsArgs,
+  ResolveUsersArgs,
 } from "./types";
 
 // Re-exports from @liveblocks/client, for convenience
