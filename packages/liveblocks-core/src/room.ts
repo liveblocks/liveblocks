@@ -1161,7 +1161,7 @@ export function createRoom<
     const baseUrl = new URL(config.liveblocksServer);
     baseUrl.protocol = "https";
     const url = new URL(
-      `/v2/c/rooms/${encodeURIComponent(roomId)}/storage-stream`,
+      `/v2/c/rooms/${encodeURIComponent(roomId)}/storage`,
       baseUrl
     );
     const fetcher = config.polyfills?.fetch || /* istanbul ignore next */ fetch;
@@ -2031,6 +2031,7 @@ export function createRoom<
     if (!managedSocket.authValue) {
       return;
     }
+    // TODO: Handle potential race conditions where the room get disconnected while the request is pending
     const result = await streamFetch(
       managedSocket.authValue.type === "public"
         ? managedSocket.authValue.publicApiKey
