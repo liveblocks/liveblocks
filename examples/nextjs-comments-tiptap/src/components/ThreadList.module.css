@@ -3,3 +3,17 @@
   flex-direction: column;
   gap: var(--space-8);
 }
+
+.thread {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  transition: all 0.3s ease;
+  box-shadow: var(--shadow-sm);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.thread[data-hover="true"] {
+  box-shadow: var(--shadow-sm), var(--shadow-lg);
+  transform: translateX(-30px);
+}

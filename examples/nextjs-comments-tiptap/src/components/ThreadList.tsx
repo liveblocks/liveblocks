@@ -36,6 +36,8 @@ function CustomThread({
   editor,
   thread,
 }: Props & { thread: ThreadData<ThreadMetadata> }) {
+  const [hover, setHover] = useState(false);
+
   const handleThreadDelete = useCallback(
     (thread: ThreadData<ThreadMetadata>) => {
       removeCommentHighlight(editor, thread.metadata.highlightId);
@@ -43,7 +45,20 @@ function CustomThread({
     []
   );
 
-  return <Thread thread={thread} onThreadDelete={handleThreadDelete} />;
+  useEffect(() => {
+    console.log(hover);
+  }, [hover]);
+
+  return (
+    <Thread
+      onPointerEnter={() => setHover(true)}
+      onPointerLeave={() => setHover(false)}
+      className={styles.thread}
+      thread={thread}
+      onThreadDelete={handleThreadDelete}
+      data-hover={hover}
+    />
+  );
 }
 
 function ThreadComposer({ editor }: Props) {
@@ -60,7 +75,7 @@ function ThreadComposer({ editor }: Props) {
         return;
       }
 
-      const thread = createThread({
+      createThread({
         body,
         metadata: { resolved: false, highlightId },
       });
