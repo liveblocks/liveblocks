@@ -16,6 +16,8 @@
 - `resolveUsers` and `resolveMentionSuggestions` now accept synchronous
   functions.
 - `resolveUsers` now also provides the current room ID.
+- `editThreadMetadata` now correctly allows `null` to be set on a property.
+  Doing so deletes existing metadata properties.
 
 ### `@liveblocks/react-comments`
 
