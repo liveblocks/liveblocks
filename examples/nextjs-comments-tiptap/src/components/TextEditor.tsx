@@ -97,6 +97,9 @@ function TiptapEditor({ doc, provider }: EditorProps) {
     ],
   });
 
+  // Using this to keep track of which mark has been clicked on
+  // useCommentHighlights(editor);
+
   return (
     <div className={styles.container}>
       <div className={styles.editorHeader}>

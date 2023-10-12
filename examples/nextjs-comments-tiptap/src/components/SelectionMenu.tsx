@@ -1,6 +1,4 @@
 import { BubbleMenu, Editor } from "@tiptap/react";
-import { ToolbarInlineAdvanced } from "./TextInlineAdvanced";
-import { ToolbarInline } from "./ToolbarInline";
 import styles from "./TextEditor.module.css";
 import { ToolbarThread } from "@/components/ToolbarThread";
 

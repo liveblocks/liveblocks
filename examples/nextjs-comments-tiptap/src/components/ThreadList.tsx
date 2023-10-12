@@ -36,14 +36,9 @@ function CustomThread({
   editor,
   thread,
 }: Props & { thread: ThreadData<ThreadMetadata> }) {
-  // TODO add this to `onThreadDelete` when/if it gets added
   const handleThreadDelete = useCallback(
     (thread: ThreadData<ThreadMetadata>) => {
-      console.log("thread delete!", thread);
-      const success = removeCommentHighlight(
-        editor,
-        thread.metadata.highlightId
-      );
+      removeCommentHighlight(editor, thread.metadata.highlightId);
     },
     []
   );

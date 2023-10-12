@@ -56,7 +56,6 @@ export const LiveblocksCommentsHighlight = Mark.create<
       setCommentHighlight:
         (attributes) =>
         ({ commands }) => {
-          console.log(attributes.state);
           this.storage.currentHighlightId = attributes.highlightId;
           this.storage.showComposer = true;
           return commands.setMark(this.name, attributes);
@@ -96,6 +95,7 @@ export const LiveblocksCommentsHighlight = Mark.create<
         default: null,
         parseHTML: (element) => element.getAttribute("data-state"),
         renderHTML: (attributes) => {
+          console.log("STATE?", attributes);
           if (!attributes.state) {
             return {};
           }
@@ -144,19 +144,17 @@ export const LiveblocksCommentsHighlight = Mark.create<
   },
 
   renderHTML({ HTMLAttributes }) {
-    console.log("render");
     const elem = document.createElement("mark");
 
     // Merge attributes
     Object.entries(
       mergeAttributes(this.options.HTMLAttributes, HTMLAttributes, {
-        // "data-selected": "false",
+        "data-selected": "false",
       })
     ).forEach(([attr, val]) => elem.setAttribute(attr, val));
-    // console.log(elem.attributes);
-    //
-    // // Set data-selected when last click occurs inside mark
-    // // TODO send custom event so comments know they're selected
+
+    // Set data-selected when last click occurs inside mark
+    // TODO send custom event so comments know they're selected
     const handleClick = (event: MouseEvent) => {
       if (!event.target || !(event.target instanceof HTMLElement)) {
         elem.dataset.selected = "false";
@@ -170,9 +168,9 @@ export const LiveblocksCommentsHighlight = Mark.create<
 
       elem.dataset.selected = "false";
     };
-    window.removeEventListener("click", handleClick);
-    window.addEventListener("click", handleClick);
-    //window.addEventListener("click", () => {});
+
+    document.documentElement.removeEventListener("click", handleClick);
+    document.documentElement.addEventListener("click", handleClick);
 
     return elem;
   },

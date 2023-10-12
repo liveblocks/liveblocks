@@ -1,15 +1,52 @@
 .comment-highlight {
+  display: inline-block;
+  position: relative;
+  background: transparent;
+  isolation: isolate;
+}
 
+.comment-highlight::before {
+  content: "";
+  position: absolute;
+  top: -1px;
+  right: 0;
+  bottom: -1px;
+  left: 0;
+  z-index: -1;
+  background: var(--comment-highlight-color);
+  border-bottom: 2px solid var(--comment-border-color);
 }
 
 .comment-highlight[data-state="composing"] {
-  background: yellow;
+  --comment-highlight-color: #ffff00;
+  --comment-border-color: #ffff00;
 }
 
 .comment-highlight[data-state="complete"] {
-  background: #ffff9f;
+  --comment-highlight-color: #ffffcd;
+  --comment-border-color: #f4d037;
 }
 
-.comment-highlight[data-selected="true"] {
-  background: orangered !important;
+.comment-highlight[data-selected="true"]{
+  --comment-highlight-color: #ffff00;
+  --comment-border-color: #f4d037;
+}
+
+[data-theme="dark"] .comment-highlight{
+  color: var(--color-text);
+}
+
+[data-theme="dark"] .comment-highlight[data-state="composing"] {
+  --comment-highlight-color: #0079a2;
+  --comment-border-color: #0079a2;
+}
+
+[data-theme="dark"] .comment-highlight[data-state="complete"] {
+  --comment-highlight-color: #2d414b;
+  --comment-border-color: #00748d;
+}
+
+[data-theme="dark"] .comment-highlight[data-selected="true"]{
+  --comment-highlight-color: #0079a2;
+  --comment-border-color: #009cd3;
 }
