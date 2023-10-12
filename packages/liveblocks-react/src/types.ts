@@ -497,6 +497,7 @@ type RoomContextBundleShared<
    * @beta
    *
    * Returns a function that edits a thread's metadata.
+   * To delete an existing metadata property, set its value to `null`.
    *
    * @example
    * const editThreadMetadata = useEditThreadMetadata();
