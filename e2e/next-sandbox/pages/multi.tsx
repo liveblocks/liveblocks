@@ -92,22 +92,22 @@ function RoomProviderBlock({ index }: RoomProviderBlockProps) {
   return (
     <div>
       <input
-        id={`input:${index}`}
+        id={`input_${index}`}
         value={roomId}
         onChange={(e) => setRoomId(e.currentTarget.value)}
-        title={`#input:${index}`}
+        title={`#input_${index}`}
       />
       <div style={{ display: "flex", margin: "8px 0", gap: 16 }}>
         <div style={{ display: "flex", gap: 2 }}>
           <Button
-            id={`mount:${index}`}
+            id={`mount_${index}`}
             enabled={!mounted}
             onClick={() => setMounted(true)}
           >
             Mount
           </Button>
           <Button
-            id={`unmount:${index}`}
+            id={`unmount_${index}`}
             enabled={mounted}
             onClick={() => setMounted(false)}
           >
@@ -147,11 +147,11 @@ type PickerProps = {
 function Picker({ index }: PickerProps) {
   const [nest, setNest] = React.useState(false);
   return nest ? (
-    <RoomProviderBlock index={`${index}.1`} />
+    <RoomProviderBlock index={`${index}_1`} />
   ) : (
     <div>
       <div>
-        <Button id={`nest:${index}`} onClick={() => setNest(true)}>
+        <Button id={`nest_${index}`} onClick={() => setNest(true)}>
           Nest another RoomProvider here
         </Button>
       </div>
@@ -177,7 +177,7 @@ function Sandbox({ index }: SandboxProps) {
     <div>
       <div>
         <Button
-          id={`disconnect:${index}`}
+          id={`disconnect_${index}`}
           enabled={
             socketStatus !== "initial" && socketStatus !== "disconnected"
           }
@@ -186,12 +186,12 @@ function Sandbox({ index }: SandboxProps) {
           Disconnect
         </Button>
 
-        <Button id={`reconnect:${index}`} onClick={() => room.reconnect()}>
+        <Button id={`reconnect_${index}`} onClick={() => room.reconnect()}>
           Reconnect
         </Button>
 
         <Button
-          id={`connect:${index}`}
+          id={`connect_${index}`}
           enabled={socketStatus !== "connected"}
           onClick={() => room.connect()}
         >
@@ -201,7 +201,7 @@ function Sandbox({ index }: SandboxProps) {
 
       <div>
         <Button
-          id={`inc:${index}`}
+          id={`inc_${index}`}
           onClick={() => {
             updateMyPresence({ foo: (myPresence.foo ?? 0) + 1 });
           }}
@@ -210,7 +210,7 @@ function Sandbox({ index }: SandboxProps) {
         </Button>
 
         <Button
-          id={`push:${index}`}
+          id={`push_${index}`}
           onClick={() => {
             items?.push("ha");
           }}
@@ -219,7 +219,7 @@ function Sandbox({ index }: SandboxProps) {
         </Button>
 
         <Button
-          id={`clear:${index}`}
+          id={`clear_${index}`}
           onClick={() => {
             items?.clear();
           }}
@@ -231,7 +231,7 @@ function Sandbox({ index }: SandboxProps) {
       <table style={styles.dataTable}>
         <tbody>
           <Row
-            id={`renderCount:${index}`}
+            id={`renderCount_${index}`}
             name="Render count"
             value={renderCount}
           />
@@ -242,22 +242,22 @@ function Sandbox({ index }: SandboxProps) {
       <table style={styles.dataTable}>
         <tbody>
           <Row
-            id={`connectionId:${index}`}
+            id={`connectionId_${index}`}
             name="Connection ID"
             value={me?.connectionId}
           />
           <Row
-            id={`socketStatus:${index}`}
+            id={`socketStatus_${index}`}
             name="WebSocket status"
             value={socketStatus}
           />
           <Row
-            id={`myPresence:${index}`}
+            id={`myPresence_${index}`}
             name="My presence"
             value={myPresence}
           />
           <Row
-            id={`theirPresence:${index}`}
+            id={`theirPresence_${index}`}
             name="Their presence"
             value={theirPresence}
           />
@@ -267,7 +267,7 @@ function Sandbox({ index }: SandboxProps) {
       <h2>Storage</h2>
       <table style={styles.dataTable}>
         <tbody>
-          <Row id={`items:${index}`} name="Items" value={items?.toArray()} />
+          <Row id={`items_${index}`} name="Items" value={items?.toArray()} />
         </tbody>
       </table>
 
@@ -275,11 +275,11 @@ function Sandbox({ index }: SandboxProps) {
       <table style={styles.dataTable}>
         <tbody>
           <Row
-            id={`numOthers:${index}`}
+            id={`numOthers_${index}`}
             name="Others count"
             value={others.filter((o) => o.presence !== undefined).length}
           />
-          <Row id={`others:${index}`} name="Others" value={others} />
+          <Row id={`others_${index}`} name="Others" value={others} />
         </tbody>
       </table>
     </div>
