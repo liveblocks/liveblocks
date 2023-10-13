@@ -14,7 +14,7 @@ import { DocumentSpinner } from "@/primitives/Spinner";
 import { SelectionMenu } from "./SelectionMenu";
 import styles from "./TextEditor.module.css";
 import { Avatars } from "@/components/Avatars";
-import { LiveblocksCommentsHighlight } from "@/tiptap-comments-extension";
+import { LiveblocksCommentsHighlight } from "@/comment-highlight";
 import { ThreadList } from "@/components/ThreadList";
 import { ThemeToggle } from "@/components/ThemeToggle";
 

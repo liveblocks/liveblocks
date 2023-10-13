@@ -11,7 +11,11 @@ import styles from "./ThreadList.module.css";
 import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { Editor } from "@tiptap/react";
 import { ComposerSubmitComment } from "@liveblocks/react-comments/dist/primitives/index";
-import { removeCommentHighlight } from "@/utils";
+import {
+  removeCommentHighlight,
+  useHighlightEvent,
+  useHighlightEventListener,
+} from "@/utils";
 
 type Props = {
   editor: Editor;
@@ -36,7 +40,26 @@ function CustomThread({
   editor,
   thread,
 }: Props & { thread: ThreadData<ThreadMetadata> }) {
+  const highlightEvent = useHighlightEvent();
   const [active, setActive] = useState(false);
+
+  useHighlightEventListener((highlightId) => {
+    console.log(
+      thread.metadata.highlightId,
+      highlightId === thread.metadata.highlightId
+    );
+    setActive(highlightId === thread.metadata.highlightId);
+  });
+
+  const handlePointerEnter = useCallback(() => {
+    setActive(true);
+    highlightEvent(thread.metadata.highlightId);
+  }, [highlightEvent, thread]);
+
+  const handlePointerLeave = useCallback(() => {
+    setActive(false);
+    highlightEvent(null);
+  }, [highlightEvent]);
 
   const handleThreadDelete = useCallback(
     (thread: ThreadData<ThreadMetadata>) => {
@@ -47,8 +70,8 @@ function CustomThread({
 
   return (
     <div
-      onPointerEnter={() => setActive(true)}
-      onPointerLeave={() => setActive(false)}
+      onPointerEnter={handlePointerEnter}
+      onPointerLeave={handlePointerLeave}
     >
       <Thread
         className={styles.thread}
@@ -118,6 +141,7 @@ function ThreadComposer({ editor }: Props) {
   return (
     <Composer
       ref={composer}
+      className={styles.composer}
       onComposerSubmit={handleComposerSubmit}
       autoFocus={true}
     />

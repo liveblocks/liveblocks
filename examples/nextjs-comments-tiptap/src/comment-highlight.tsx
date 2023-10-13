@@ -1,4 +1,6 @@
 import { Mark, mergeAttributes } from "@tiptap/core";
+import { highlightEvent } from "@/utils";
+import { Editor } from "@tiptap/react";
 
 declare module "@tiptap/core" {
   interface Commands<ReturnType> {
@@ -99,7 +101,7 @@ export const LiveblocksCommentsHighlight = Mark.create<
 
       // Color of highlighted text
       state: {
-        default: null,
+        default: "complete",
         parseHTML: (element) => element.getAttribute("data-state"),
         renderHTML: (attributes) => {
           if (!attributes.state) {
@@ -128,15 +130,15 @@ export const LiveblocksCommentsHighlight = Mark.create<
         },
       },
 
-      // // If highlight currently active
-      selected: {
-        default: false,
-        parseHTML: (element) =>
-          element.getAttribute("data-selected") === "true",
-        renderHTML: (attributes) => ({
-          "data-selected": attributes.dataSelected,
-        }),
-      },
+      // If highlight currently active
+      // selected: {
+      //   default: "false",
+      //   parseHTML: (element) =>
+      //     element.getAttribute("data-selected") === "true",
+      //   renderHTML: (attributes) => ({
+      //     "data-selected": attributes.dataSelected,
+      //   }),
+      // },
     };
   },
 
@@ -159,40 +161,117 @@ export const LiveblocksCommentsHighlight = Mark.create<
     // Merge attributes
     Object.entries(
       mergeAttributes(this.options.HTMLAttributes, HTMLAttributes, {
-        "data-selected": currentlyActive ? "true" : "false",
+        "data-selected": "false",
       })
     ).forEach(([attr, val]) => elem.setAttribute(attr, val));
 
     // Set data-selected when last click occurs inside mark
     // TODO send custom event so comments know they're selected
     const handleClick = (event: MouseEvent) => {
-      if (!event.target || !(event.target instanceof HTMLElement)) {
-        elem.dataset.selected = "false";
-        if (this.editor) {
-          this.editor.storage.commentHighlight.activeHighlightId = null;
-        }
+      console.log("here");
+      const highlightId = HTMLAttributes?.["data-highlight-id"] || null;
+
+      const targetIsCurrentMark =
+        event.target instanceof HTMLElement
+          ? event.target === elem || elem.contains(event.target)
+          : false;
+      elem.dataset.selected = targetIsCurrentMark ? "true" : "false";
+
+      if (!this.editor) {
         return;
       }
 
-      if (event.target === elem || elem.contains(event.target)) {
-        elem.dataset.selected = "true";
-        if (this.editor) {
-          console.log("NOW?");
-          this.editor.storage.commentHighlight.activeHighlightId =
-            HTMLAttributes["data-highlight-id"];
-        }
+      if (targetIsCurrentMark) {
+        highlightEvent(highlightId);
+        this.editor.storage.commentHighlight.activeHighlightId = highlightId;
         return;
       }
 
-      if (this.editor) {
+      if (
+        this.editor.storage.commentHighlight.activeHighlightId === highlightId
+      ) {
+        highlightEvent(null);
         this.editor.storage.commentHighlight.activeHighlightId = null;
       }
-      elem.dataset.selected = "false";
     };
 
     document.documentElement.removeEventListener("click", handleClick);
     document.documentElement.addEventListener("click", handleClick);
 
+    // const observer = new MutationObserver(function (mutations_list) {
+    //   mutations_list.forEach(function (mutation) {
+    //     mutation.removedNodes.forEach(function (removed_node) {
+    //       if (removed_node.id == "child") {
+    //         console.log("#child has been removed");
+    //         observer.disconnect();
+    //       }
+    //     });
+    //   });
+    // });
+    //
+    // observer.observe(elem, { subtree: false, childList: true });
+
     return elem;
   },
+
+  onTransaction(...p) {
+    console.log(p[0].transaction);
+  },
+
+  onDestroy() {
+    console.log("GONE");
+  },
+
+  onHandleClickNew({ event, editor, elem, HTMLAttributes }: Props) {
+    const highlightId = HTMLAttributes["data-highlight-id"];
+
+    const targetIsCurrentMark =
+      event.target instanceof HTMLElement
+        ? event.target === elem || elem.contains(event.target)
+        : false;
+
+    if (targetIsCurrentMark) {
+      elem.dataset.selected = "true";
+      if (editor) {
+        highlightEvent(highlightId);
+        editor.storage.commentHighlight.activeHighlightId = highlightId;
+      }
+      return;
+    }
+
+    elem.dataset.selected = "false";
+    if (editor) {
+      editor.storage.commentHighlight.activeHighlightId = null;
+    }
+  },
 });
+
+type Props = {
+  event: MouseEvent;
+  editor: Editor;
+  elem: HTMLElement;
+  HTMLAttributes: Record<string, any>;
+};
+
+function handleClickNew({ event, editor, elem, HTMLAttributes }: Props) {
+  const highlightId = HTMLAttributes["data-highlight-id"];
+
+  const targetIsCurrentMark =
+    event.target instanceof HTMLElement
+      ? event.target === elem || elem.contains(event.target)
+      : false;
+
+  if (targetIsCurrentMark) {
+    elem.dataset.selected = "true";
+    if (editor) {
+      highlightEvent(highlightId);
+      editor.storage.commentHighlight.activeHighlightId = highlightId;
+    }
+    return;
+  }
+
+  elem.dataset.selected = "false";
+  if (editor) {
+    editor.storage.commentHighlight.activeHighlightId = null;
+  }
+}

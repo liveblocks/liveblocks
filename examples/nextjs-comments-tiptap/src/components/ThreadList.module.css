@@ -4,16 +4,16 @@
   gap: var(--space-8);
 }
 
-.thread {
-  background: var(--color-surface);
+.thread, .composer {
+  background: var(--color-surface-elevated);
   border: 1px solid var(--color-border);
-  transition: transform 0.3s ease;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
   box-shadow: var(--shadow-sm);
   border-radius: var(--radius-sm);
   overflow: hidden;
 }
 
-.thread[data-active="true"] {
+.thread[data-active="true"], .composer {
   box-shadow: var(--shadow-sm), var(--shadow-lg);
   transform: translateX(-30px);
 }

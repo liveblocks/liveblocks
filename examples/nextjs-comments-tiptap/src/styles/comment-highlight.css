@@ -19,7 +19,7 @@
 
 .comment-highlight[data-state="composing"] {
   --comment-highlight-color: #ffff00;
-  --comment-border-color: #ffff00;
+  --comment-border-color: #ffff00 !important;
 }
 
 .comment-highlight[data-state="complete"] {
