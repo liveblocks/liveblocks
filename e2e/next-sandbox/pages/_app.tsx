@@ -10,6 +10,10 @@ function MyApp({ Component, pageProps }: AppProps) {
     body.style.backgroundColor = url.searchParams.get("bg") ?? "lime";
   }, []);
 
-  return <Component {...pageProps} />;
+  return (
+    <React.StrictMode>
+      <Component {...pageProps} />
+    </React.StrictMode>
+  );
 }
 export default MyApp;
