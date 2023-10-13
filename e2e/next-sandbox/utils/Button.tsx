@@ -27,6 +27,7 @@ export default function Button(props: Props) {
         padding: "2px 4px",
         opacity,
       }}
+      title={`#${props.id}`}
     >
       <strong>{props.children}</strong>
       <br />
