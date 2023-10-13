@@ -74,18 +74,24 @@ function PinnedThread({ thread }: { thread: ThreadData<ThreadMetadata> }) {
           </div>
         </Tooltip.Trigger>
         <Tooltip.Content className={styles.tooltip}>
-          <div className={styles.tooltipName}>{user.name}</div>
-          {thread.metadata.time !== null
-            ? formatTime(thread.metadata.time) + ": "
-            : null}
-          <Comment.Body
-            body={thread.comments[0].body}
-            className={styles.tooltipBody}
-            components={{
-              Mention,
-              Link,
-            }}
-          />
+          <div className={styles.tooltipHeader}>
+            <img src={user.avatar} alt="" />
+            {user.name}
+          </div>
+          <div className={styles.tooltipBody}>
+            <span>
+              {thread.metadata.time !== null
+                ? formatTime(thread.metadata.time) + " "
+                : null}
+            </span>
+            <Comment.Body
+              body={thread.comments[0].body}
+              components={{
+                Mention,
+                Link,
+              }}
+            />
+          </div>
         </Tooltip.Content>
       </Tooltip.Root>
     </div>

@@ -10,7 +10,7 @@ export function MentionSuggestions({
   userIds,
 }: ComposerEditorMentionSuggestionsProps) {
   return (
-    <Composer.Suggestions>
+    <Composer.Suggestions className={styles.suggestions}>
       <Composer.SuggestionsList>
         {userIds.map((userId) => (
           <MentionSuggestion key={userId} userId={userId} />
@@ -28,7 +28,7 @@ function MentionSuggestion({ userId }: { userId: string }) {
       value={userId}
       className={styles.mentionSuggestion}
     >
-      <img src={user.avatar} height="20" alt="" />
+      <img src={user.avatar} width={20} height="20" alt="" />
       {user.name}
     </Composer.SuggestionsListItem>
   );

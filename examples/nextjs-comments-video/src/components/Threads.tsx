@@ -13,6 +13,7 @@ import {
 } from "@/utils";
 import { ThreadData } from "@liveblocks/core";
 import { formatTime } from "@/components/Duration";
+import { TimeIcon } from "@/icons/Time";
 
 export function Threads() {
   return (
@@ -31,11 +32,11 @@ function ThreadList() {
   }
 
   return (
-    <div>
+    <>
       {threads.map((thread) => (
         <CustomThread key={thread.id} thread={thread} />
       ))}
-    </div>
+    </>
   );
 }
 
@@ -71,8 +72,9 @@ function CustomThread({ thread }: { thread: ThreadData<ThreadMetadata> }) {
       onPointerLeave={resetAllHighlights}
     >
       {threadHasTime ? (
-        <button onClick={handleButtonClick}>
-          Skip to {formatTime(thread.metadata.time)}
+        <button className={styles.threadTime} onClick={handleButtonClick}>
+          <TimeIcon />
+          {formatTime(thread.metadata.time)}
         </button>
       ) : null}
       <Thread

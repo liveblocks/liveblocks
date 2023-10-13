@@ -1,0 +1,58 @@
+.wrapper {
+  width: 100%;
+  margin: 32px auto;
+  max-width: 680px;
+  background-color: var(--gray0);
+  padding: 16px;
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
+}
+
+.composer {
+  display: flex;
+  gap: 16px;
+  align-items: start;
+}
+
+.composerAvatar {
+  flex-shrink: 0;
+  border-radius: 99999px;
+}
+
+.composerEditor {
+  width: 100%;
+  padding-top: 2px;
+}
+
+.composerEditor [data-slate-placeholder="true"] {
+  color: var(--gray9);
+}
+
+.options {
+  margin-top: 20px;
+  padding-left: 40px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.optionsTime {
+  height: 28px;
+  background-color: var(--accent-bg);
+  color: var(--accent);
+  display: inline-flex;
+  gap: 4px;
+  padding: 0 6px;
+  align-items: center;
+  font-size: 13px;
+  border-radius: 4px;
+  font-variant-numeric: tabular-nums;
+}
+
+.optionsTime > label {
+  display: inline-flex;
+  cursor: pointer;
+  gap: 4px;
+  align-items: center;
+}

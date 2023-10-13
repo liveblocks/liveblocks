@@ -3,20 +3,14 @@ import { ComponentProps } from "react";
 export function ExitFullscreenIcon(props: ComponentProps<"svg">) {
   return (
     <svg
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      strokeWidth={1.5}
-      stroke="currentColor"
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="currentColor"
       xmlns="http://www.w3.org/2000/svg"
       {...props}
     >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M9 9V4.5M9 9H4.5M9 9L3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5m0-4.5l5.25 5.25"
-      />
+      <path d="M2 9v1h3.293L1 14.291l.707.709L6 10.707V14h1V9H2ZM15 1.708 14.296 1 10 5.293V2H9v5h5V6h-3.293L15 1.708Z" />
     </svg>
   );
 }

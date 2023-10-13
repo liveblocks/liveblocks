@@ -3,20 +3,14 @@ import { ComponentProps } from "react";
 export function FullscreenIcon(props: ComponentProps<"svg">) {
   return (
     <svg
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      strokeWidth={1.5}
-      stroke="currentColor"
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="currentColor"
       xmlns="http://www.w3.org/2000/svg"
       {...props}
     >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15"
-      />
+      <path d="M10 1v1h3.293L9 6.291 9.707 7 14 2.707V6h1V1h-5ZM7 9.708 6.296 9 2 13.293V10H1v5h5v-1H2.707L7 9.708Z" />
     </svg>
   );
 }

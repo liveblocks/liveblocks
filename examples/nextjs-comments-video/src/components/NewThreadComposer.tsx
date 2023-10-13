@@ -3,11 +3,14 @@ import {
   ComposerSubmitComment,
 } from "@liveblocks/react-comments/primitives";
 import { ChangeEvent, FormEvent, useCallback, useState } from "react";
-import { useCreateThread } from "@/liveblocks.config";
+import { useCreateThread, useSelf } from "@/liveblocks.config";
 import { formatTime } from "@/components/Duration";
 import { Mention } from "@/components/Mention";
 import { MentionSuggestions } from "@/components/MentionSuggestions";
 import { Link } from "@/components/Link";
+import styles from "./NewThreadComposer.module.css";
+import { Avatar } from "./Avatars";
+import { TimeIcon } from "@/icons/Time";
 
 type Props = {
   getCurrentPercentage: () => number;
@@ -23,6 +26,7 @@ export function NewThreadComposer({
   setPlaying,
   time,
 }: Props) {
+  const currentUser = useSelf();
   const createThread = useCreateThread();
   const [attachTime, setAttachTime] = useState(true);
 
@@ -62,29 +66,48 @@ export function NewThreadComposer({
 
   return (
     <>
-      <Composer.Form onComposerSubmit={handleSubmit}>
-        <Composer.Editor
-          placeholder="Add comment"
-          onFocus={handleFocus}
-          onKeyDown={handleKeyDown}
-          components={{
-            // TODO add styles to three components below
-            Mention,
-            MentionSuggestions,
-            Link,
-          }}
-        />
-        <div>
-          <label htmlFor="attach-time">Attach time</label>
-          {/* TODO this must be checked while Comments team look at my feedback */}
-          <input
-            id="attach-time"
-            type="checkbox"
-            checked={attachTime}
-            onChange={handleCheckboxChecked}
+      <Composer.Form onComposerSubmit={handleSubmit} className={styles.wrapper}>
+        <div className={styles.composer}>
+          {currentUser && (
+            <img
+              className={styles.composerAvatar}
+              width={24}
+              height={24}
+              src={currentUser.info.avatar}
+              alt={currentUser.info.name}
+            />
+          )}
+          <Composer.Editor
+            className={styles.composerEditor}
+            placeholder="Add comment…"
+            onFocus={handleFocus}
+            onKeyDown={handleKeyDown}
+            components={{
+              // TODO add styles to three components below
+              Mention,
+              MentionSuggestions,
+              Link,
+            }}
           />
         </div>
-        <Composer.Submit>Create comment at {formatTime(time)}</Composer.Submit>
+        <div className={styles.options}>
+          <div className={styles.optionsTime}>
+            <label htmlFor="attach-time">
+              <TimeIcon />
+              {formatTime(time)}
+            </label>
+            {/* TODO this must be checked while Comments team look at my feedback */}
+            <input
+              id="attach-time"
+              type="checkbox"
+              checked={attachTime}
+              onChange={handleCheckboxChecked}
+            />
+          </div>
+          <Composer.Submit className="button" disabled>
+            Comment
+          </Composer.Submit>
+        </div>
       </Composer.Form>
     </>
   );

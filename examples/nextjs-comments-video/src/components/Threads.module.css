@@ -1,5 +1,6 @@
 .threadWrapper {
   position: relative;
+  border-bottom: 1px solid var(--gray4);
 }
 
 .thread {
@@ -14,7 +15,7 @@
   bottom: 0;
   left: 0;
   animation: highlight 2.5s linear forwards;
-  background: #ffffd8;
+  background: var(--gray3);
   mix-blend-mode: darken;
   opacity: 1;
 }
@@ -29,4 +30,20 @@
   100% {
     opacity: 0;
   }
+}
+
+.threadTime {
+  height: 28px;
+  background-color: var(--accent-bg);
+  color: var(--accent);
+  display: inline-flex;
+  gap: 6px;
+  margin: var(--lb-spacing) 0 0 var(--lb-spacing);
+  padding: 0 6px;
+  align-items: center;
+  font-size: 13px;
+  border-radius: 4px;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition: background-color 0.2s ease-out;
 }

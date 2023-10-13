@@ -1,14 +1,14 @@
 .videoPlayer {
-  margin: 20px auto;
-  max-width: 1000px;
-  padding: 0 40px;
+  margin: 16px auto;
+  width: 100%;
+  max-width: 1280px;
+  padding: 0 20px;
 }
 
 .playerWrapper {
   position: relative;
   aspect-ratio: 16 / 9;
-  background: #fff;
-  margin-bottom: 44px;
+  background: var(--gray0);
 }
 
 .playerClickWrapper {
@@ -17,7 +17,7 @@
   width: 100%;
   justify-content: center;
   align-items: center;
-  background: #000;
+  background: var(--gray12);
 }
 
 .reactPlayer {
@@ -41,9 +41,9 @@
 
 .sliderAndComments {
   position: absolute;
-  right: 0;
+  right: 16px;
   bottom: 0;
-  left: 0;
+  left: 16px;
 }
 
 .sliderComments {
@@ -67,7 +67,7 @@
 }
 
 .sliderTrack {
-  background-color: gray;
+  background-color: var(--gray11);
   position: relative;
   flex-grow: 1;
   height: var(--track-height);
@@ -76,24 +76,26 @@
 
 .sliderRange {
   position: absolute;
-  background-color: red;
+  background-color: var(--gray0);
   height: 100%;
 }
 
 .sliderThumb {
   display: block;
-  width: 20px;
-  height: 20px;
-  background-color: red;
+  width: 16px;
+  height: 16px;
+  background-color: var(--gray0);
   box-shadow:
     0 1px 5px rgba(0, 0, 0, 0.1),
     0 2px 10px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease-out;
   border-radius: 10px;
   cursor: pointer;
 }
 
 .sliderThumb:hover {
-  background-color: rgb(255, 100, 100);
+  background-color: var(--gray1);
+  transform: scale(1.1);
 }
 
 .sliderThumb:focus {
@@ -103,17 +105,19 @@
 
 .controls {
   position: absolute;
+  height: 40px;
+  padding: 0 var(--spacing);
   top: 100%;
   left: 0;
   right: 0;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: #000;
+  background: var(--gray12);
 }
 
 .controls > * {
-  color: #fff;
+  color: var(--gray0);
 }
 
 @media (pointer: fine) {
@@ -143,7 +147,7 @@
   }
 
   .playerWrapper:hover .sliderAndComments {
-    bottom: 44px;
+    bottom: 40px;
   }
 
   .sliderRoot {
@@ -175,7 +179,10 @@
 
 .time {
   font-size: 14px;
-  font-weight: 500;
   user-select: none;
-  opacity: 0.9;
+  font-variant-numeric: tabular-nums;
+}
+
+.time > time:nth-child(2) {
+  color: var(--gray8);
 }

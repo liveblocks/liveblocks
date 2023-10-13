@@ -3,9 +3,15 @@
   justify-content: space-between;
   align-items: center;
   padding: 8px 16px;
-  background: #fff;
+  background-color: var(--gray0);
   font-size: 24px;
-  border-bottom: 1px solid gray;
+  border-bottom: 1px solid var(--gray4);
+  height: 56px;
+}
+
+.header > h1 {
+  font-size: 16px;
+  font-weight: 500;
 }
 
 .main {
@@ -15,12 +21,14 @@
 
 .videoPanel {
   flex: 1 1;
+  overflow-y: auto;
 }
 
 .threadsPanel {
   flex: 0 0;
   min-width: 350px;
   max-width: 100%;
-  background: #fff;
+  background-color: var(--gray0);
+  border-left: 1px solid var(--gray4);
   overflow-y: auto;
 }

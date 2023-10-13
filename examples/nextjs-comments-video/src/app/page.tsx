@@ -8,7 +8,7 @@ export default function Home() {
   return (
     <Room>
       <header className={styles.header}>
-        <h1>Video title</h1>
+        <h1>film-composite.mp4</h1>
         <Avatars />
       </header>
       <main className={styles.main}>

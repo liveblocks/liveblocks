@@ -145,7 +145,7 @@ export function VideoPlayer() {
                 onDuration={setDuration}
                 onProgress={handleProgress}
                 onEnded={handleEnded}
-                url="mountain-balloons.mp4"
+                url="film-composite.mp4"
                 className={styles.reactPlayer}
               />
             )}

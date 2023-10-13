@@ -19,41 +19,50 @@
 .avatarPin {
   cursor: pointer;
   user-select: none;
-  width: 32px;
-  height: 32px;
-  box-shadow: var(--shadow);
-  border-top-left-radius: 50%;
-  border-top-right-radius: 50%;
-  border-bottom-right-radius: 50%;
-  border-bottom-left-radius: 4px;
-  transform: rotate(-45deg);
-  background: #fff;
 }
 
 .avatarPin > img {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%) rotate(45deg);
+  width: 20px;
+  height: 20px;
   border-radius: 9999px;
-  width: 24px;
-  height: 24px;
 }
 
 .tooltip {
   user-select: none;
-  background: black;
-  color: #fff;
-  padding: 4px 8px;
-  border-radius: 4px;
-  margin-bottom: 4px;
+  background: var(--gray12);
+  color: var(--gray0);
+  padding: 8px 12px 12px 8px;
+  border-radius: var(--border-radius);
+  margin-bottom: 8px;
   white-space: nowrap;
   max-width: 200px;
-  font-size: 14px;
+  font-size: 13px;
+  box-shadow: var(--shadow-over);
 }
 
-.tooltipName {
-  font-weight: 600;
+.tooltipHeader {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  font-weight: 500;
+}
+
+.tooltipHeader > img {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+}
+
+.tooltipBody {
+  margin-top: 8px;
+}
+
+.tooltipBody > span {
+  color: var(--accent);
+}
+
+.tooltipBody > div {
+  display: inline-block;
 }
 
 .tooltipBody > p {
