@@ -86,6 +86,11 @@ export default function Home() {
             </li>
           </ul>
         </li>
+        <li>
+          <Link href="/multi?room=e2e-multi">
+            <a>Multiple rooms</a>
+          </Link>
+        </li>
       </ul>
     </div>
   );

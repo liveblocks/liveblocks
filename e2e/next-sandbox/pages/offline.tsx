@@ -146,7 +146,7 @@ function Sandbox(_props: { roomId: string }) {
             onClick={() => window.dispatchEvent(new Event("offline"))}
             title="Simulates a navigator offline event"
           >
-            Simulate "navigator offline"
+            Simulate “navigator offline”
           </Button>
         </div>
       </div>

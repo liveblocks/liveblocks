@@ -59,7 +59,9 @@ const config: PlaywrightTestConfig = {
 
   /* Run your local dev server before starting the tests */
   webServer: {
-    command: "npm run start",
+    command: process.env.CI
+      ? "npm run start" // Test production builds on CI
+      : "npm run dev", // Test dev builds on CI (with React StrictMode enabled)
     port: 3007,
   },
 };
