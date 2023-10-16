@@ -1,7 +1,7 @@
 @import "./utils";
 @import "./constants";
 
-:root {
+.lb-root {
   /** 
    * Basic
    */
@@ -13,8 +13,8 @@
   --lb-foreground: #111;
 
   /** 
-   * Advanced
-   */
+    * Advanced
+    */
   --lb-icon-size: 20px;
   --lb-icon-weight: 1.5px;
   --lb-avatar-radius: 50%;
@@ -33,8 +33,8 @@
   --lb-tooltip-foreground-contrast: 10%;
 
   /** 
-   * Colors
-   */
+    * Colors
+    */
   --lb-accent-subtle: color-mix-scale(
     var(--lb-background),
     var(--lb-accent),
@@ -131,9 +131,7 @@
     var(--lb-tooltip-foreground-contrast),
     800
   );
-}
 
-.lb-root {
   overflow-wrap: break-word;
   accent-color: var(--lb-accent);
   text-size-adjust: none;

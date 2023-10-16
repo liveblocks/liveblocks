@@ -2,11 +2,7 @@
 
 @import "./index";
 
-:is(.dark, [data-theme="dark"], [data-dark]) {
-  @include dark-variables;
-}
-
 .lb-root:where(:is(.dark, [data-theme="dark"], [data-dark])),
 :is(.dark, [data-theme="dark"], [data-dark]) :where(.lb-root) {
-  @include dark-root-styles;
+  @include dark-styles;
 }

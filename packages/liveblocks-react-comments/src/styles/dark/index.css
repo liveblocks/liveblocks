@@ -1,6 +1,6 @@
 @import "../constants";
 
-@mixin dark-variables {
+@mixin dark-styles {
   /**
    * Colors
    */
@@ -20,8 +20,6 @@
   --lb-inset-shadow: inset 0 0 0 1px rgb(255 255 255 / 6%);
   --lb-elevation-shadow: $lb-elevation-shadow;
   --lb-tooltip-shadow: $lb-tooltip-shadow;
-}
 
-@mixin dark-root-styles {
   color-scheme: dark;
 }
