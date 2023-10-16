@@ -239,7 +239,7 @@ export function createRoomContext<
 
   const RoomContext = React.createContext<TRoom | null>(null);
 
-  const roomCache = new Map<string, { room: TRoom; leave(): void }>();
+  const roomCache = new Map<string, { room: TRoom; leave: () => void }>();
 
   /**
    * A stable version of .enterRoom(), where we cache the result on
@@ -249,7 +249,7 @@ export function createRoomContext<
     instanceId: string,
     roomId: string,
     options: EnterOptions<TPresence, TStorage>
-  ): { room: TRoom; leave(): void } {
+  ): { room: TRoom; leave: () => void } {
     const key = `${instanceId}:${roomId}`;
     const cached = roomCache.get(key);
     if (cached) return cached;
