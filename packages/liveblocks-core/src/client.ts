@@ -25,7 +25,7 @@ const DEFAULT_LOST_CONNECTION_TIMEOUT = 5000;
 
 let lastTicketId = 0;
 
-type EnterOptions<
+export type EnterOptions<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
 > = Resolve<

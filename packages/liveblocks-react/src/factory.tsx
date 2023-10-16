@@ -17,6 +17,7 @@ import type {
   AsyncCache,
   BaseMetadata,
   CommentData,
+  EnterOptions,
   RoomEventMessage,
   ToImmutable,
 } from "@liveblocks/core";
@@ -59,6 +60,8 @@ import type {
   UserState,
   UserStateSuccess,
 } from "./types";
+
+let lastInstanceId = 0;
 
 const noop = () => {};
 const identity: <T>(x: T) => T = (x) => x;
@@ -238,25 +241,68 @@ export function createRoomContext<
   TRoomEvent,
   TThreadMetadata
 > {
-  const RoomContext = React.createContext<Room<
-    TPresence,
-    TStorage,
-    TUserMeta,
-    TRoomEvent
-  > | null>(null);
+  type TRoom = Room<TPresence, TStorage, TUserMeta, TRoomEvent>;
 
-  // XXX Maintain registry here, at the Room context closure level, outside of
-  // React, where we cache the various calls to `enterRoom()` that StrictMode is
-  // making.
+  const RoomContext = React.createContext<TRoom | null>(null);
 
-  function RoomProvider(props: RoomProviderProps<TPresence, TStorage>) {
+  type TRoomTup = { room: TRoom; leave: () => void; ticket: symbol };
+
+  // const registry = new Map<string, Map<string, TRoomTup>>();
+  // //                         /            \
+  // //                  providerUuid       roomId
+
+  const roomCache = new Map<string, TRoomTup>();
+
+  /**
+   * A stable version of .enterRoom(), where we cache the result on
+   * a per-RoomProvider instance.
+   */
+  function stableEnterRoom(
+    instanceId: string,
+    roomId: string,
+    options: EnterOptions<TPresence, TStorage>
+  ): TRoomTup {
+    const key = `${instanceId}:${roomId}`;
+    const cached = roomCache.get(key);
+    if (cached) return cached;
+
+    const rv = client.enterRoom<TPresence, TStorage, TUserMeta, TRoomEvent>(
+      roomId,
+      options
+    );
+
+    // Wrap the leave function
+    const leave = rv.leave;
+    rv.leave = () => {
+      leave();
+      roomCache.delete(key);
+      console.log(`==> ${JSON.stringify(Array.from(roomCache.keys()))}`);
+    };
+
+    roomCache.set(key, rv);
+    console.log(`==> ${JSON.stringify(Array.from(roomCache.keys()))}`);
+    return rv;
+  }
+
+  function RoomProviderOuter(props: RoomProviderProps<TPresence, TStorage>) {
+    // This "Outer" hack mostly exists to make ID generation work well in
+    // StrictMode. See this issue https://github.com/facebook/react/issues/27103#issuecomment-1763359077
+    const instanceId = React.useRef(`p${++lastInstanceId}`).current; // Like useId(), but will also work in React<18
+    return <RoomProviderInner instanceId={instanceId} {...props} />;
+  }
+
+  function RoomProviderInner(
+    props: RoomProviderProps<TPresence, TStorage> & { instanceId: string }
+  ) {
     const {
+      instanceId,
       id: roomId,
       initialPresence,
       initialStorage,
       unstable_batchedUpdates,
       shouldInitiallyConnect,
     } = props;
+    console.log(`RoomProvider for ${roomId} rendered!`);
 
     if (process.env.NODE_ENV !== "production") {
       if (!roomId) {
@@ -293,37 +339,54 @@ export function createRoomContext<
           : shouldInitiallyConnect,
     });
 
-    // XXX Change useMemo to useState!
-    const { room, leave } = React.useMemo(
-      () =>
-        client.enterRoom<TPresence, TStorage, TUserMeta, TRoomEvent>(roomId, {
-          initialPresence: frozen.initialPresence,
-          initialStorage: frozen.initialStorage,
-          // XXX Maybe rename this option to `autoConnect`?
-          // XXX Maybe we should model this as an effect? Does the client need
-          // to provide assistence there if we do?
-          // i.e. always *don't connect* on initial render in React, and
-          // instead connect in an effect? That would also solve the issue of
-          // SSR showing "initial" in useStatus()
-          shouldInitiallyConnect: frozen.shouldInitiallyConnect,
-          unstable_batchedUpdates: frozen.unstable_batchedUpdates,
-        }),
-      [roomId, frozen]
-    );
+    const [tup, setTup] = React.useState(() => {
+      const rv = stableEnterRoom(instanceId, roomId, {
+        initialPresence: frozen.initialPresence,
+        initialStorage: frozen.initialStorage,
+        // XXX Maybe rename this option to `autoConnect`?
+        // XXX Maybe we should model this as an effect? Does the client need
+        // to provide assistence there if we do?
+        // i.e. always *don't connect* on initial render in React, and
+        // instead connect in an effect? That would also solve the issue of
+        // SSR showing "initial" in useStatus()
+        shouldInitiallyConnect: frozen.shouldInitiallyConnect,
+        unstable_batchedUpdates: frozen.unstable_batchedUpdates,
+      });
+      console.log("Ran useState initializer:", rv);
+      return rv;
+    }); // , [roomId, frozen]);
 
     React.useEffect(() => {
+      console.log("Effect!", tup.ticket);
+
+      const rv = stableEnterRoom(instanceId, roomId, {
+        initialPresence: frozen.initialPresence,
+        initialStorage: frozen.initialStorage,
+        // XXX Maybe rename this option to `autoConnect`?
+        // XXX Maybe we should model this as an effect? Does the client need
+        // to provide assistence there if we do?
+        // i.e. always *don't connect* on initial render in React, and
+        // instead connect in an effect? That would also solve the issue of
+        // SSR showing "initial" in useStatus()
+        shouldInitiallyConnect: frozen.shouldInitiallyConnect,
+        unstable_batchedUpdates: frozen.unstable_batchedUpdates,
+      });
+
+      setTup(rv);
+
       return () => {
+        console.log("Uneffect!", rv.ticket);
         // XXX Put back Comments(tm) stuff here
         // const commentsRoom = commentsRooms.get(room);
         // if (commentsRoom) {
         //   commentsRooms.delete(room);
         // }
-        leave();
+        rv.leave();
       };
-    }, [leave]);
+    }, [instanceId, roomId, frozen]);
 
     return (
-      <RoomContext.Provider value={room}>
+      <RoomContext.Provider value={tup.room}>
         <ContextBundle.Provider
           value={
             internalBundle as unknown as InternalRoomContextBundle<
@@ -347,7 +410,7 @@ export function createRoomContext<
     return others.map((user) => user.connectionId);
   }
 
-  function useRoom(): Room<TPresence, TStorage, TUserMeta, TRoomEvent> {
+  function useRoom(): TRoom {
     const room = React.useContext(RoomContext);
     if (room === null) {
       throw new Error("RoomProvider is missing from the React tree.");
@@ -1085,7 +1148,7 @@ export function createRoomContext<
     TThreadMetadata
   > = {
     RoomContext,
-    RoomProvider,
+    RoomProvider: RoomProviderOuter,
 
     useRoom,
     useStatus,
@@ -1133,7 +1196,7 @@ export function createRoomContext<
 
     suspense: {
       RoomContext,
-      RoomProvider,
+      RoomProvider: RoomProviderOuter,
 
       useRoom,
       useStatus,
