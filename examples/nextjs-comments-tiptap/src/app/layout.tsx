@@ -1,6 +1,6 @@
 import "../styles/globals.css";
 import "../styles/text-editor.css";
-import "../styles/comment-highlight.css";
+import "../styles/comment-styles.css";
 import "@liveblocks/react-comments/styles.css";
 import "@liveblocks/react-comments/styles/dark/attributes.css";
 

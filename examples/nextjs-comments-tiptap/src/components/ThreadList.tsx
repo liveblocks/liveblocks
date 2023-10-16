@@ -15,7 +15,7 @@ import {
   removeCommentHighlight,
   useHighlightEvent,
   useHighlightEventListener,
-} from "@/utils";
+} from "@/comment-utils";
 
 type Props = {
   editor: Editor;

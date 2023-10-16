@@ -1,6 +1,5 @@
 import { Mark, mergeAttributes } from "@tiptap/core";
-import { HIGHLIGHT_EVENT_NAME, HighlightEvent, highlightEvent } from "@/utils";
-import { Editor } from "@tiptap/react";
+import { highlightEvent } from "@/comment-utils";
 
 declare module "@tiptap/core" {
   interface Commands<ReturnType> {
@@ -145,10 +144,6 @@ export const LiveblocksCommentsHighlight = Mark.create<
     const highlightId = HTMLAttributes?.["data-highlight-id"] || null;
     const elem = document.createElement("mark");
 
-    const currentlyActive =
-      this.editor?.storage.activeHighlightId ===
-      this.options.HTMLAttributes.highlightId;
-
     // Merge attributes
     Object.entries(
       mergeAttributes(this.options.HTMLAttributes, HTMLAttributes, {
@@ -156,6 +151,7 @@ export const LiveblocksCommentsHighlight = Mark.create<
       })
     ).forEach(([attr, val]) => elem.setAttribute(attr, val));
 
+    // On hover, highlight the sidebar comment
     const handlePointerEnter = (event: MouseEvent) => {
       const targetIsCurrentMark =
         event.target instanceof HTMLElement
@@ -172,15 +168,9 @@ export const LiveblocksCommentsHighlight = Mark.create<
         this.editor.storage.commentHighlight.activeHighlightId = highlightId;
         return;
       }
-
-      if (
-        this.editor.storage.commentHighlight.activeHighlightId === highlightId
-      ) {
-        highlightEvent(null);
-        this.editor.storage.commentHighlight.activeHighlightId = null;
-      }
     };
 
+    // On hover end, stop highlighting sidebar comment
     const handlePointerLeave = (event: MouseEvent) => {
       elem.dataset.selected = "false";
 
@@ -192,6 +182,7 @@ export const LiveblocksCommentsHighlight = Mark.create<
       this.editor.storage.commentHighlight.activeHighlightId = null;
     };
 
+    // Avoid memory leak by using `.onpointer...`
     elem.onpointerenter = handlePointerEnter;
     elem.onpointerleave = handlePointerLeave;
 
