@@ -141,7 +141,9 @@
   }
 }
 
-// Icon
+//  ┌──────────────────────────────────────┐
+//  │                 Icon                 │
+//  └──────────────────────────────────────┘
 
 .lb-icon {
   --lb-icon-background: var(--lb-background);
@@ -151,7 +153,9 @@
   stroke-width: var(--lb-icon-weight);
 }
 
-// Button
+//  ┌──────────────────────────────────────┐
+//  │                Button                │
+//  └──────────────────────────────────────┘
 
 .lb-button {
   --lb-button-background: var(--lb-background);
@@ -250,7 +254,9 @@
   --lb-icon-background: var(--lb-button-background);
 }
 
-// Dropdown
+//  ┌──────────────────────────────────────┐
+//  │               Dropdown               │
+//  └──────────────────────────────────────┘
 
 .lb-dropdown-item-icon {
   color: var(--lb-elevation-foreground-moderate);
@@ -267,7 +273,9 @@
   }
 }
 
-// Composer suggestions
+//  ┌──────────────────────────────────────┐
+//  │         Composer suggestions         │
+//  └──────────────────────────────────────┘
 
 .lb-composer-suggestions-list {
   margin: 0;
@@ -279,7 +287,9 @@
   scroll-margin-block: $lb-elevation-list-padding;
 }
 
-// Composer mention suggestions
+//  ┌──────────────────────────────────────┐
+//  │     Composer mention suggestions     │
+//  └──────────────────────────────────────┘
 
 .lb-composer-mention-suggestions {
   --lb-composer-mention-suggestion-avatar-size: 1.25rem;
@@ -298,7 +308,9 @@
   margin-inline-end: calc(0.5 * var(--lb-spacing));
 }
 
-// Emoji pickers
+//  ┌──────────────────────────────────────┐
+//  │            Emoji pickers             │
+//  └──────────────────────────────────────┘
 
 .lb-emoji-picker-emoji,
 .lb-quick-emoji-picker-emoji {
@@ -312,7 +324,9 @@
   text-align: center;
 }
 
-// Emoji picker
+//  ┌──────────────────────────────────────┐
+//  │             Emoji picker             │
+//  └──────────────────────────────────────┘
 
 .lb-emoji-picker {
   --lb-emoji-picker-padding: #{$lb-emoji-picker-padding};
@@ -426,13 +440,17 @@
   border-radius: calc(var(--lb-radius) - 0.75 * #{$lb-emoji-picker-padding});
 }
 
-// Quick emoji picker
+//  ┌──────────────────────────────────────┐
+//  │          Quick emoji picker          │
+//  └──────────────────────────────────────┘
 
 .lb-quick-emoji-picker {
   display: flex;
 }
 
-// Tooltip
+//  ┌──────────────────────────────────────┐
+//  │               Tooltip                │
+//  └──────────────────────────────────────┘
 
 .lb-tooltip {
   display: flex;
@@ -484,7 +502,9 @@
   }
 }
 
-// Avatar
+//  ┌──────────────────────────────────────┐
+//  │                Avatar                │
+//  └──────────────────────────────────────┘
 
 .lb-avatar {
   position: relative;
@@ -523,7 +543,9 @@
   }
 }
 
-// User
+//  ┌──────────────────────────────────────┐
+//  │                 User                 │
+//  └──────────────────────────────────────┘
 
 .lb-user:where([data-loading]) {
   &::before {
@@ -539,13 +561,17 @@
   }
 }
 
-// Loading
+//  ┌──────────────────────────────────────┐
+//  │               Loading                │
+//  └──────────────────────────────────────┘
 
 :is(.lb-avatar, .lb-user):where([data-loading]) {
   animation: lb-animation-shimmer 8s linear infinite;
 }
 
-// Body
+//  ┌──────────────────────────────────────┐
+//  │                 Body                 │
+//  └──────────────────────────────────────┘
 
 :is(.lb-comment-body, .lb-composer-editor) {
   color: var(--lb-foreground-secondary);
@@ -620,7 +646,9 @@
   background: var(--lb-accent-subtle);
 }
 
-// Composer
+//  ┌──────────────────────────────────────┐
+//  │               Composer               │
+//  └──────────────────────────────────────┘
 
 .lb-composer {
   background: var(--lb-background);
@@ -726,7 +754,9 @@
   }
 }
 
-// Comment
+//  ┌──────────────────────────────────────┐
+//  │               Comment                │
+//  └──────────────────────────────────────┘
 
 .lb-comment {
   --lb-comment-avatar-size: #{$lb-button-size};
@@ -894,7 +924,9 @@
   }
 }
 
-// Thread
+//  ┌──────────────────────────────────────┐
+//  │                Thread                │
+//  └──────────────────────────────────────┘
 
 .lb-thread {
   background: var(--lb-background);
@@ -958,7 +990,9 @@
   }
 }
 
-// Elevation
+//  ┌──────────────────────────────────────┐
+//  │              Elevation               │
+//  └──────────────────────────────────────┘
 
 .lb-elevation {
   position: relative;
@@ -978,7 +1012,9 @@
   }
 }
 
-// Elevation lists
+//  ┌──────────────────────────────────────┐
+//  │           Elevation lists            │
+//  └──────────────────────────────────────┘
 
 .lb-dropdown,
 .lb-composer-suggestions,
@@ -1027,7 +1063,9 @@
   }
 }
 
-// Elevation lists and tooltip
+//  ┌──────────────────────────────────────┐
+//  │               Floating               │
+//  └──────────────────────────────────────┘
 
 .lb-dropdown,
 .lb-composer-suggestions,
@@ -1081,7 +1119,9 @@
   }
 }
 
-// Animations
+//  ┌──────────────────────────────────────┐
+//  │              Animations              │
+//  └──────────────────────────────────────┘
 
 @keyframes lb-animation-slide-down {
   from {
