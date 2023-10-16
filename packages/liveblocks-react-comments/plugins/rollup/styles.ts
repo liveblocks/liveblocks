@@ -29,17 +29,24 @@ export function styles({ files }: Options): Plugin {
     name: "styles",
     buildStart: async () => {
       const processor = postcss([
+        require("stylelint"),
+        require("postcss-import"),
         require("postcss-advanced-variables"),
         require("postcss-functions")({
           functions: {
             "color-mix-scale": colorMixScale,
           },
         }),
-        require("postcss-import"),
         require("postcss-nesting"),
         require("postcss-combine-duplicated-selectors"),
         require("postcss-sort-media-queries"),
         require("postcss-lightningcss"),
+        require("postcss-reporter")({
+          clearReportedMessages: true,
+          plugins: ["stylelint"],
+          noPlugin: true,
+          throwError: true,
+        }),
       ]);
 
       for (const file of files) {

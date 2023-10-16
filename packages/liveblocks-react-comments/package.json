@@ -84,6 +84,7 @@
     "postcss-import": "^15.1.0",
     "postcss-lightningcss": "^1.0.0",
     "postcss-nesting": "^12.0.1",
+    "postcss-reporter": "^7.0.5",
     "postcss-sort-media-queries": "^5.2.0",
     "rollup": "^3.28.0",
     "rollup-plugin-dts": "^5.3.1",
