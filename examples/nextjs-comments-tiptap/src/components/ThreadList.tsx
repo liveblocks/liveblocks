@@ -12,6 +12,9 @@ import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { Editor } from "@tiptap/react";
 import { ComposerSubmitComment } from "@liveblocks/react-comments/dist/primitives/index";
 import {
+  getCommentHighlight,
+  getCommentHighlightContent,
+  getCommentHighlightText,
   removeCommentHighlight,
   useHighlightEvent,
   useHighlightEventListener,
@@ -44,10 +47,10 @@ function CustomThread({
   const [active, setActive] = useState(false);
 
   useHighlightEventListener((highlightId) => {
-    console.log(
-      thread.metadata.highlightId,
-      highlightId === thread.metadata.highlightId
-    );
+    // console.log(
+    //   thread.metadata.highlightId,
+    //   highlightId === thread.metadata.highlightId
+    // );
     setActive(highlightId === thread.metadata.highlightId);
   });
 
@@ -68,17 +71,31 @@ function CustomThread({
     [editor, thread]
   );
 
+  const quoteHtml = getCommentHighlightContent(thread.metadata.highlightId);
+
   return (
     <div
+      className="hide-collaboration-cursor"
       onPointerEnter={handlePointerEnter}
       onPointerLeave={handlePointerLeave}
     >
-      <Thread
-        className={styles.thread}
-        thread={thread}
-        onThreadDelete={handleThreadDelete}
-        data-active={active}
-      />
+      <div className={styles.thread} data-active={active}>
+        {quoteHtml ? (
+          <div
+            className={styles.threadQuote}
+            dangerouslySetInnerHTML={{
+              __html: getCommentHighlightContent(
+                thread.metadata.highlightId
+              ) as string,
+            }}
+          />
+        ) : null}
+        <Thread
+          thread={thread}
+          onThreadDelete={handleThreadDelete}
+          indentCommentContent={false}
+        />
+      </div>
     </div>
   );
 }
@@ -111,7 +128,7 @@ function ThreadComposer({ editor }: Props) {
       editor.storage.commentHighlight.showComposer = false;
       editor.storage.commentHighlight.previousHighlightSelection = null;
     },
-    []
+    [editor]
   );
 
   // If clicking outside the composer, hide it and remove highlight
@@ -161,3 +178,49 @@ function sort(a: ThreadData, b: ThreadData) {
 }
 
 // export const ThreadList = memo(ThreadListComponent);
+function getNodeText(node: any): string {
+  if (node.isText) {
+    return node.text;
+  }
+
+  let text = "";
+  node.forEach((child: any) => {
+    text += getNodeText(child);
+  });
+  return text;
+}
+
+function getMarkText(mark: any): string {
+  if (mark.type.name === "yourMarkName" && mark.isText) {
+    return mark.text;
+  }
+  return "";
+}
+
+function getContentText(item: any): string {
+  // Base case: if it's a text node, return the text
+  if (item.isText) {
+    return item.text;
+  }
+
+  let text = "";
+
+  // If it's a node with content, iterate over its content
+  if (item.content) {
+    item.content.forEach((child: any) => {
+      text += getContentText(child);
+    });
+  }
+
+  // If it's a mark, you'll want to get the text content from its inner node or mark
+  if (item.marks && item.marks.length > 0) {
+    item.marks.forEach((mark: any) => {
+      // This assumes marks are applied to text nodes, adjust if needed
+      if (mark.isText) {
+        text += mark.text;
+      }
+    });
+  }
+
+  return text;
+}

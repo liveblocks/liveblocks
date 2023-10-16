@@ -1,5 +1,5 @@
 import { Mark, mergeAttributes } from "@tiptap/core";
-import { highlightEvent } from "@/utils";
+import { HIGHLIGHT_EVENT_NAME, HighlightEvent, highlightEvent } from "@/utils";
 import { Editor } from "@tiptap/react";
 
 declare module "@tiptap/core" {
@@ -152,6 +152,7 @@ export const LiveblocksCommentsHighlight = Mark.create<
   },
 
   renderHTML({ HTMLAttributes }) {
+    const highlightId = HTMLAttributes?.["data-highlight-id"] || null;
     const elem = document.createElement("mark");
 
     const currentlyActive =
@@ -165,12 +166,7 @@ export const LiveblocksCommentsHighlight = Mark.create<
       })
     ).forEach(([attr, val]) => elem.setAttribute(attr, val));
 
-    // Set data-selected when last click occurs inside mark
-    // TODO send custom event so comments know they're selected
-    const handleClick = (event: MouseEvent) => {
-      console.log("here");
-      const highlightId = HTMLAttributes?.["data-highlight-id"] || null;
-
+    const handlePointerEnter = (event: MouseEvent) => {
       const targetIsCurrentMark =
         event.target instanceof HTMLElement
           ? event.target === elem || elem.contains(event.target)
@@ -195,54 +191,62 @@ export const LiveblocksCommentsHighlight = Mark.create<
       }
     };
 
-    document.documentElement.removeEventListener("click", handleClick);
-    document.documentElement.addEventListener("click", handleClick);
+    const handlePointerLeave = (event: MouseEvent) => {
+      elem.dataset.selected = "false";
 
-    // const observer = new MutationObserver(function (mutations_list) {
-    //   mutations_list.forEach(function (mutation) {
-    //     mutation.removedNodes.forEach(function (removed_node) {
-    //       if (removed_node.id == "child") {
-    //         console.log("#child has been removed");
-    //         observer.disconnect();
-    //       }
-    //     });
-    //   });
-    // });
+      if (!this.editor) {
+        return;
+      }
+
+      highlightEvent(null);
+      this.editor.storage.commentHighlight.activeHighlightId = null;
+    };
+
+    const handleHighlightEvent = (event: HighlightEvent) => {
+      console.log(event.detail.highlightId === highlightId);
+      elem.dataset.selected =
+        event.detail.highlightId === highlightId ? "true" : "false";
+    };
+
+    elem.addEventListener("pointerenter", handlePointerEnter);
+    elem.addEventListener("pointerleave", handlePointerLeave);
+    // document.documentElement.addEventListener(
+    //   HIGHLIGHT_EVENT_NAME,
+    //   handleHighlightEvent as any
+    // );
+
+    // Set data-selected when last click occurs inside mark
+    // TODO send custom event so comments know they're selected
+    // const handleClick = (event: MouseEvent) => {
+    //   const highlightId = HTMLAttributes?.["data-highlight-id"] || null;
     //
-    // observer.observe(elem, { subtree: false, childList: true });
+    //   const targetIsCurrentMark =
+    //     event.target instanceof HTMLElement
+    //       ? event.target === elem || elem.contains(event.target)
+    //       : false;
+    //   elem.dataset.selected = targetIsCurrentMark ? "true" : "false";
+    //
+    //   if (!this.editor) {
+    //     return;
+    //   }
+    //
+    //   if (targetIsCurrentMark) {
+    //     highlightEvent(highlightId);
+    //     this.editor.storage.commentHighlight.activeHighlightId = highlightId;
+    //     return;
+    //   }
+    //
+    //   if (
+    //     this.editor.storage.commentHighlight.activeHighlightId === highlightId
+    //   ) {
+    //     highlightEvent(null);
+    //     this.editor.storage.commentHighlight.activeHighlightId = null;
+    //   }
+    // };
+    //
+    // document.documentElement.addEventListener("click", handleClick);
 
     return elem;
-  },
-
-  onTransaction(...p) {
-    console.log(p[0].transaction);
-  },
-
-  onDestroy() {
-    console.log("GONE");
-  },
-
-  onHandleClickNew({ event, editor, elem, HTMLAttributes }: Props) {
-    const highlightId = HTMLAttributes["data-highlight-id"];
-
-    const targetIsCurrentMark =
-      event.target instanceof HTMLElement
-        ? event.target === elem || elem.contains(event.target)
-        : false;
-
-    if (targetIsCurrentMark) {
-      elem.dataset.selected = "true";
-      if (editor) {
-        highlightEvent(highlightId);
-        editor.storage.commentHighlight.activeHighlightId = highlightId;
-      }
-      return;
-    }
-
-    elem.dataset.selected = "false";
-    if (editor) {
-      editor.storage.commentHighlight.activeHighlightId = null;
-    }
   },
 });
 

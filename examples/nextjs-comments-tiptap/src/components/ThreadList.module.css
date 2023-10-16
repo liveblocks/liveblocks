@@ -17,3 +17,11 @@
   box-shadow: var(--shadow-sm), var(--shadow-lg);
   transform: translateX(-30px);
 }
+
+.threadQuote {
+  display: inline-block;
+  margin: var(--space-8) var(--space-8) var(--space-1);
+  background: var(--comment-highlight-complete);
+  border-left: 2px solid var(--comment-highlight-complete-border);
+  padding: var(--space-1) var(--space-4);
+}

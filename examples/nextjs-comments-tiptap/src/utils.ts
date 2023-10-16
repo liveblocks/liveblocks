@@ -37,7 +37,7 @@ export function getCommentHighlight(
 ): null | { mark: Mark; node: Node } {
   let result = null;
 
-  // Iterate over each mark in the text node and find a matching marl
+  // Iterate over each mark in the text node and find a matching mark
   editor.state.doc.descendants((node, pos: number) => {
     if (node.isText) {
       node.marks.forEach((mark) => {
@@ -53,8 +53,18 @@ export function getCommentHighlight(
   return result;
 }
 
-type HighlightEvent = CustomEvent<{ highlightId: string | null }>;
-const HIGHLIGHT_EVENT_NAME = "commentHighlight";
+export function getCommentHighlightContent(highlightId: string) {
+  const elem = document.querySelector(`mark[data-highlight-id=${highlightId}]`);
+
+  if (!elem) {
+    return null;
+  }
+
+  return elem.innerHTML;
+}
+
+export type HighlightEvent = CustomEvent<{ highlightId: string | null }>;
+export const HIGHLIGHT_EVENT_NAME = "commentHighlight";
 
 // Trigger highlight active
 export function highlightEvent(highlightId: string | null) {
@@ -64,7 +74,7 @@ export function highlightEvent(highlightId: string | null) {
 
   console.log("sending", highlightId);
 
-  window.dispatchEvent(event);
+  document.documentElement.dispatchEvent(event);
 }
 
 export function useHighlightEvent() {
@@ -73,7 +83,7 @@ export function useHighlightEvent() {
       detail: { highlightId },
     });
 
-    window.dispatchEvent(event);
+    document.documentElement.dispatchEvent(event);
   }, []);
 }
 
@@ -85,10 +95,16 @@ export function useHighlightEventListener(
       callback(event.detail.highlightId);
     }
 
-    window.addEventListener(HIGHLIGHT_EVENT_NAME, handler as any);
+    document.documentElement.addEventListener(
+      HIGHLIGHT_EVENT_NAME,
+      handler as any
+    );
 
     return () => {
-      window.removeEventListener(HIGHLIGHT_EVENT_NAME, handler as any);
+      document.documentElement.removeEventListener(
+        HIGHLIGHT_EVENT_NAME,
+        handler as any
+      );
     };
   }, [callback]);
 }

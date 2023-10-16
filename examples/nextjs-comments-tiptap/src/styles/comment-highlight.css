@@ -1,3 +1,7 @@
+.lb-thread {
+  --lb-background: none;
+}
+
 .comment-highlight {
   display: inline-block;
   position: relative;
@@ -18,35 +22,20 @@
 }
 
 .comment-highlight[data-state="composing"] {
-  --comment-highlight-color: #ffff00;
-  --comment-border-color: #ffff00 !important;
+  --comment-highlight-color: var(--comment-highlight-composing);
+  --comment-border-color: var(--comment-highlight-composing-border) !important;
 }
 
 .comment-highlight[data-state="complete"] {
-  --comment-highlight-color: #ffffcd;
-  --comment-border-color: #f4d037;
+  --comment-highlight-color: var(--comment-highlight-complete);
+  --comment-border-color: var(--comment-highlight-complete-border);
 }
 
 .comment-highlight[data-selected="true"]{
-  --comment-highlight-color: #ffff00;
-  --comment-border-color: #f4d037;
+  --comment-highlight-color: var(--comment-highlight-selected);
+  --comment-border-color: var(--comment-highlight-selected-border);
 }
 
 [data-theme="dark"] .comment-highlight{
   color: var(--color-text);
-}
-
-[data-theme="dark"] .comment-highlight[data-state="composing"] {
-  --comment-highlight-color: #0079a2;
-  --comment-border-color: #0079a2;
-}
-
-[data-theme="dark"] .comment-highlight[data-state="complete"] {
-  --comment-highlight-color: #2d414b;
-  --comment-border-color: #00748d;
-}
-
-[data-theme="dark"] .comment-highlight[data-selected="true"]{
-  --comment-highlight-color: #0079a2;
-  --comment-border-color: #009cd3;
 }
