@@ -105,10 +105,12 @@ function TiptapEditor({ doc, provider }: EditorProps) {
       </div>
       <div className={styles.editorPanel}>
         {editor && <SelectionMenu editor={editor} />}
-        <div className={styles.editorContainer}>
-          <EditorContent editor={editor} />
-          <div className={styles.threadListContainer}>
-            {editor ? <ThreadList editor={editor} /> : null}
+        <div className={styles.editorContainerOffset}>
+          <div className={styles.editorContainer}>
+            <EditorContent editor={editor} />
+            <div className={styles.threadListContainer}>
+              {editor ? <ThreadList editor={editor} /> : null}
+            </div>
           </div>
         </div>
       </div>

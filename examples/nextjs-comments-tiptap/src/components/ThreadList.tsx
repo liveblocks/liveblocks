@@ -29,11 +29,21 @@ export function ThreadList({ editor }: Props) {
       {editor?.storage.commentHighlight.showComposer ? (
         <ThreadComposer editor={editor} />
       ) : null}
-      {threads.sort(sortThreads).map((thread) => (
-        <CustomThread key={thread.id} thread={thread} editor={editor} />
-      ))}
+      {threads.length ? (
+        threads
+          .sort(sortThreads)
+          .map((thread) => (
+            <CustomThread key={thread.id} thread={thread} editor={editor} />
+          ))
+      ) : (
+        <NoComments />
+      )}
     </aside>
   );
+}
+
+function NoComments() {
+  return <div>No comments yet</div>;
 }
 
 function CustomThread({
