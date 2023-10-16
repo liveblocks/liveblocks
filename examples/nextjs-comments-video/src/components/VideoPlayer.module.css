@@ -1,4 +1,6 @@
 .videoPlayer {
+  --controls-height: 48px;
+
   margin: 16px auto;
   width: 100%;
   max-width: 1280px;
@@ -105,7 +107,7 @@
 
 .controls {
   position: absolute;
-  height: 40px;
+  height: var(--controls-height);
   padding: 0 var(--spacing);
   top: 100%;
   left: 0;
@@ -131,8 +133,8 @@
     bottom: 0;
     background: linear-gradient(
       180deg,
-      rgba(0, 0, 0, 0.6) 0%,
-      rgba(0, 0, 0, 0.6) 100%
+      rgba(0, 0, 0, 0) 0%,
+      rgba(0, 0, 0, 0.8) 100%
     );
     opacity: 0;
     transition: opacity ease-out 0.1s;
@@ -147,7 +149,7 @@
   }
 
   .playerWrapper:hover .sliderAndComments {
-    bottom: 40px;
+    bottom: var(--controls-height);
   }
 
   .sliderRoot {
