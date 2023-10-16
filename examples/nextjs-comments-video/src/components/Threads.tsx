@@ -32,7 +32,7 @@ function ThreadList() {
 
   return (
     <>
-      {threads.map((thread) => (
+      {threads.sort(sortThreads).map((thread) => (
         <CustomThread key={thread.id} thread={thread} />
       ))}
     </>
@@ -79,8 +79,24 @@ function CustomThread({ thread }: { thread: ThreadData<ThreadMetadata> }) {
       <Thread
         className={styles.thread}
         thread={thread}
+        indentCommentContent={true}
         data-highlight={highlightedThread || undefined}
       />
     </div>
   );
+}
+
+function sortThreads(
+  a: ThreadData<ThreadMetadata>,
+  b: ThreadData<ThreadMetadata>
+) {
+  if (a.metadata.timePercentage > b.metadata.timePercentage) {
+    return 1;
+  }
+
+  if (a.metadata.timePercentage < b.metadata.timePercentage) {
+    return -1;
+  }
+
+  return 0;
 }
