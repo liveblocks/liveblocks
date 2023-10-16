@@ -23,6 +23,8 @@ const RECOMMENDED_MIN_LOST_CONNECTION_TIMEOUT = 1000;
 const MAX_LOST_CONNECTION_TIMEOUT = 30000;
 const DEFAULT_LOST_CONNECTION_TIMEOUT = 5000;
 
+let lastTicketId = 0;
+
 type EnterOptions<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
@@ -73,6 +75,7 @@ export type Client = {
   ): {
     room: Room<TPresence, TStorage, TUserMeta, TRoomEvent>;
     leave: () => void;
+    ticket: Ticket;
   };
 
   /**
@@ -163,6 +166,8 @@ function getServerFromClientOptions(clientOptions: ClientOptions) {
 }
 
 declare const brand: unique symbol;
+type Brand<T, TBrand extends string> = T & { [brand]: TBrand };
+type Ticket = Brand<symbol, "Ticket">;
 
 /**
  * Create a client that will be responsible to communicate with liveblocks servers.
@@ -190,8 +195,6 @@ declare const brand: unique symbol;
  * });
  */
 export function createClient(options: ClientOptions): Client {
-  type Brand<T, TBrand extends string> = T & { [brand]: TBrand };
-  type Ticket = Brand<symbol, "Ticket">;
   type RRRoom = Room<JsonObject, LsonObject, BaseUserMeta, Json>;
 
   const clientOptions = options;
@@ -211,7 +214,7 @@ export function createClient(options: ClientOptions): Client {
     TUserMeta extends BaseUserMeta = BaseUserMeta,
     TRoomEvent extends Json = never,
   >(roomId: string, options: EnterOptions<TPresence, TStorage>): Ticket {
-    const ticket = Symbol() as Ticket;
+    const ticket = Symbol(`ticket ${++lastTicketId} for ${roomId}`) as Ticket;
 
     const existingRoom = roomsById.get(roomId);
     if (existingRoom !== undefined) {
@@ -285,6 +288,7 @@ export function createClient(options: ClientOptions): Client {
   ): {
     room: Room<TPresence, TStorage, TUserMeta, TRoomEvent>;
     leave: () => void;
+    ticket: Ticket; // XXX Remove -- added to debug!
   } {
     const ticket = createTicketForRoom(roomId, options);
     const room = nn(
@@ -292,7 +296,7 @@ export function createClient(options: ClientOptions): Client {
       "Did not find a Room for this room ID. Was the room already destroyed?"
     ) as Room<TPresence, TStorage, TUserMeta, TRoomEvent>;
     const leave = () => leaveWithTicket(ticket);
-    return { room, leave };
+    return { room, leave, ticket };
   }
 
   function leaveWithTicket(ticket: Ticket) {
