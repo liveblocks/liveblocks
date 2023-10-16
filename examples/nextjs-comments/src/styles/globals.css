@@ -1,7 +1,5 @@
 html,
 body {
-  --lb-accent: #44f;
-
   background: #f3f3f3;
   padding: 0;
   margin: 0;
@@ -21,6 +19,10 @@ body {
 
 * {
   box-sizing: border-box;
+}
+
+.lb-root {
+  --lb-accent: #44f;
 }
 
 main {
@@ -61,9 +63,11 @@ main {
 @media (prefers-color-scheme: dark) {
   html,
   body {
-    --lb-accent: #77f;
-
     background: #111;
+  }
+
+  .lb-root {
+    --lb-accent: #77f;
   }
 
   .loading img {
