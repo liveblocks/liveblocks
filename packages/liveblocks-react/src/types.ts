@@ -7,7 +7,6 @@ import type {
   LiveObject,
   LostConnectionEvent,
   LsonObject,
-  Others,
   Room,
   Status,
   User,
@@ -139,7 +138,7 @@ export type MutationContext<
 > = {
   storage: LiveObject<TStorage>;
   self: User<TPresence, TUserMeta>;
-  others: Others<TPresence, TUserMeta>;
+  others: readonly User<TPresence, TUserMeta>[];
   setMyPresence: (
     patch: Partial<TPresence>,
     options?: { addToHistory: boolean }
@@ -392,7 +391,7 @@ type RoomContextBundleShared<
    *   </>
    * )
    */
-  useOthers(): Others<TPresence, TUserMeta>;
+  useOthers(): readonly User<TPresence, TUserMeta>[];
 
   /**
    * Extract arbitrary data based on all the users currently connected in the
@@ -416,7 +415,7 @@ type RoomContextBundleShared<
    *
    */
   useOthers<T>(
-    selector: (others: Others<TPresence, TUserMeta>) => T,
+    selector: (others: readonly User<TPresence, TUserMeta>[]) => T,
     isEqual?: (prev: T, curr: T) => boolean
   ): T;
 
