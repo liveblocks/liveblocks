@@ -59,7 +59,7 @@ We’d love to hear from you.
       });
 
       // Enter a multiplayer room
-      const room = client.enter(roomId, {
+      const { room, leave } = client.enterRoom(roomId, {
         initialPresence: {},
       });
 
@@ -88,7 +88,7 @@ We’d love to hear from you.
 
       onUnmounted(() => {
         view?.destroy();
-        client.leave(roomId);
+        leave();
       });
       </script>
 
