@@ -13,6 +13,7 @@ import {
   makeAuthDelegateForRoom,
   makeCreateSocketDelegateForRoom,
 } from "./room";
+import type { Brand } from "./types/Brand";
 
 const MIN_THROTTLE = 16;
 const MAX_THROTTLE = 1000;
@@ -75,7 +76,6 @@ export type Client = {
   ): {
     room: Room<TPresence, TStorage, TUserMeta, TRoomEvent>;
     leave: () => void;
-    ticket: Ticket;
   };
 
   /**
@@ -165,10 +165,6 @@ function getServerFromClientOptions(clientOptions: ClientOptions) {
     : "wss://api.liveblocks.io/v7";
 }
 
-declare const brand: unique symbol;
-type Brand<T, TBrand extends string> = T & { [brand]: TBrand };
-type Ticket = Brand<symbol, "Ticket">;
-
 /**
  * Create a client that will be responsible to communicate with liveblocks servers.
  *
@@ -195,7 +191,8 @@ type Ticket = Brand<symbol, "Ticket">;
  * });
  */
 export function createClient(options: ClientOptions): Client {
-  type RRRoom = Room<JsonObject, LsonObject, BaseUserMeta, Json>;
+  type Ticket = Brand<symbol, "Ticket">;
+  type OpaqueRoom = Room<JsonObject, LsonObject, BaseUserMeta, Json>;
 
   const clientOptions = options;
   const throttleDelay = getThrottle(clientOptions.throttle ?? DEFAULT_THROTTLE);
@@ -205,7 +202,7 @@ export function createClient(options: ClientOptions): Client {
 
   const authManager = createAuthManager(options);
 
-  const roomsById = new Map<string, RRRoom>();
+  const roomsById = new Map<string, OpaqueRoom>();
   const roomIdsByTicket = new Map<Ticket, string>();
 
   function createTicketForRoom<
@@ -214,7 +211,11 @@ export function createClient(options: ClientOptions): Client {
     TUserMeta extends BaseUserMeta = BaseUserMeta,
     TRoomEvent extends Json = never,
   >(roomId: string, options: EnterOptions<TPresence, TStorage>): Ticket {
-    const ticket = Symbol(`ticket ${++lastTicketId} for ${roomId}`) as Ticket;
+    const ticket = Symbol(
+      process.env.NODE_ENV !== "production"
+        ? `Ticket ${++lastTicketId} for ${roomId}`
+        : undefined
+    ) as Ticket;
 
     const existingRoom = roomsById.get(roomId);
     if (existingRoom !== undefined) {
@@ -288,23 +289,25 @@ export function createClient(options: ClientOptions): Client {
   ): {
     room: Room<TPresence, TStorage, TUserMeta, TRoomEvent>;
     leave: () => void;
-    ticket: Ticket; // XXX Remove -- added to debug!
   } {
     const ticket = createTicketForRoom(roomId, options);
     const room = nn(
       roomsById.get(roomId),
       "Did not find a Room for this room ID. Was the room already destroyed?"
     ) as Room<TPresence, TStorage, TUserMeta, TRoomEvent>;
-    const leave = () => leaveWithTicket(ticket);
-    return { room, leave, ticket };
+    const leave = () => releaseTicket(ticket);
+    return { room, leave };
   }
 
-  function leaveWithTicket(ticket: Ticket) {
+  function releaseTicket(ticket: Ticket) {
     const roomId = roomIdsByTicket.get(ticket);
     if (roomId === undefined) {
       // Room was already left, maybe by a forceLeave() call that preceded this?
-      // XXX Don't throw in production
-      throw new Error("Unknown ticket");
+      if (process.env.NODE_ENV === "production") {
+        return;
+      } else {
+        throw new Error(`Unknown ticket: ${String(ticket)}`);
+      }
     }
 
     roomIdsByTicket.delete(ticket);
@@ -352,7 +355,7 @@ export function createClient(options: ClientOptions): Client {
   function teardownRoom(roomId: string) {
     for (const [ticket, rId] of roomIdsByTicket) {
       if (roomId === rId) {
-        leaveWithTicket(ticket);
+        releaseTicket(ticket);
       }
     }
   }
