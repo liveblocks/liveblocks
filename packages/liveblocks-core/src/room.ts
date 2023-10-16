@@ -632,8 +632,6 @@ export type Room<
   getStorageStatus(): StorageStatus;
 
   /**
-   * @internal (for now)
-   *
    * Start an attempt to connect the room (aka "enter" it). Calling
    * `.connect()` only has an effect if the room is still in its idle initial
    * state, or the room was explicitly disconnected, or reconnection attempts
@@ -643,8 +641,6 @@ export type Room<
   connect(): void;
 
   /**
-   * @internal (for now)
-   *
    * Disconnect the room's connection to the Liveblocks server, if any. Puts
    * the room back into an idle state. It will not do anything until either
    * `.connect()` or `.reconnect()` is called.
