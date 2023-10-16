@@ -1,7 +1,20 @@
 .threadList {
+  width: 100%;
   display: flex;
   flex-direction: column;
   gap: var(--space-8);
+}
+
+.threadListPopover {
+  max-width: 310px;
+  margin-right: var(--space-12);
+}
+
+.threadListPopoverTrigger {
+  position: fixed;
+  top: var(--space-18);
+  right: var(--space-10);
+  padding: var(--space-4);
 }
 
 .thread, .composer {
@@ -11,6 +24,10 @@
   box-shadow: var(--shadow-sm);
   border-radius: var(--radius-sm);
   overflow: hidden;
+}
+
+.composer {
+  margin-bottom: var(--space-8);
 }
 
 .thread[data-active="true"], .composer {
@@ -53,4 +70,25 @@
 
 .noCommentsButton svg {
   opacity: 0.8;
+}
+
+@media (max-width: 1279px) {
+  .threadList {
+    margin-top: var(--space-14);
+  }
+
+  .composer {
+    position: fixed;
+    right: 0;
+    top: var(--space-22);
+    width: 310px;
+  }
+
+  .noComments {
+    background: var(--color-surface-elevated);
+    border: 1px solid var(--color-border);
+    box-shadow: var(--shadow-sm);
+    border-radius: var(--radius-sm);
+    padding: var(--space-8);
+  }
 }

@@ -6,17 +6,26 @@ import {
   useThreads,
 } from "@/liveblocks.config";
 import { Composer, Thread } from "@liveblocks/react-comments";
-import styles from "./ThreadList.module.css";
-import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
+import {
+  FormEvent,
+  ReactNode,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { Editor } from "@tiptap/react";
-import { ComposerSubmitComment } from "@liveblocks/react-comments/dist/primitives/index";
+import { ComposerSubmitComment } from "@liveblocks/react-comments";
+import * as Popover from "@radix-ui/react-popover";
 import {
   getCommentHighlightContent,
   removeCommentHighlight,
   useHighlightEvent,
   useHighlightEventListener,
 } from "@/comment-utils";
-import { CommentIcon } from "@/icons";
+import { CommentIcon, MenuIcon } from "@/icons";
+import { Button } from "@/components/Button";
+import styles from "./ThreadList.module.css";
 
 type Props = {
   editor: Editor;
@@ -24,22 +33,51 @@ type Props = {
 
 export function ThreadList({ editor }: Props) {
   const { threads } = useThreads();
+  const isDesktop = useMediaQuery("(min-width: 1280px)");
+  const [showMobileMenu, setShowMobileMenu] = useState(isDesktop);
+  const showComposer = editor?.storage.commentHighlight.showComposer;
+
+  const Wrapper = ({ children }: { children: ReactNode }) =>
+    isDesktop ? (
+      <>{children}</>
+    ) : (
+      <Popover.Root open={showMobileMenu} onOpenChange={setShowMobileMenu}>
+        <Popover.Trigger>
+          <Button
+            className={styles.threadListPopoverTrigger}
+            variant="secondary"
+            aria-label="Toggle comments"
+          >
+            <MenuIcon />
+          </Button>
+        </Popover.Trigger>
+        <Popover.Content className={styles.threadListPopover}>
+          {children}
+        </Popover.Content>
+      </Popover.Root>
+    );
 
   return (
-    <aside aria-label="Comments" className={styles.threadList}>
-      {editor?.storage.commentHighlight.showComposer ? (
-        <ThreadComposer editor={editor} />
-      ) : null}
-      {threads.length ? (
-        threads
-          .sort(sortThreads)
-          .map((thread) => (
-            <CustomThread key={thread.id} thread={thread} editor={editor} />
-          ))
-      ) : (
-        <NoComments />
-      )}
-    </aside>
+    <>
+      {showComposer ? <ThreadComposer editor={editor} /> : null}
+      <Wrapper>
+        <aside
+          aria-label="Comments"
+          className={styles.threadList}
+          data-mobile-menu={showMobileMenu || undefined}
+        >
+          {threads.length ? (
+            threads
+              .sort(sortThreads)
+              .map((thread) => (
+                <CustomThread key={thread.id} thread={thread} editor={editor} />
+              ))
+          ) : (
+            <NoComments />
+          )}
+        </aside>
+      </Wrapper>
+    </>
   );
 }
 
@@ -187,4 +225,45 @@ function sortThreads(a: CustomThreadData, b: CustomThreadData) {
   }
 
   return 0;
+}
+
+export function useMediaQuery(query: string): boolean {
+  const getMatches = (query: string): boolean => {
+    // Prevents SSR issues
+    if (typeof window !== "undefined") {
+      return window.matchMedia(query).matches;
+    }
+    return false;
+  };
+
+  const [matches, setMatches] = useState<boolean>(getMatches(query));
+
+  function handleChange() {
+    setMatches(getMatches(query));
+  }
+
+  useEffect(() => {
+    const matchMedia = window.matchMedia(query);
+
+    // Triggered at the first client-side load and if query changes
+    handleChange();
+
+    // Listen matchMedia
+    if (matchMedia.addListener) {
+      matchMedia.addListener(handleChange);
+    } else {
+      matchMedia.addEventListener("change", handleChange);
+    }
+
+    return () => {
+      if (matchMedia.removeListener) {
+        matchMedia.removeListener(handleChange);
+      } else {
+        matchMedia.removeEventListener("change", handleChange);
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query]);
+
+  return matches;
 }
