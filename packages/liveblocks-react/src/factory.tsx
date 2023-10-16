@@ -348,7 +348,7 @@ export function createRoomContext<
 
       if (frozen.autoConnect) {
         // Connect as an effect!
-        (room as any).connect();
+        room.connect();
       }
 
       return () => {

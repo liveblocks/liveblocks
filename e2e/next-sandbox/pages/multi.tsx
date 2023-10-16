@@ -16,12 +16,6 @@ type Storage = {
   items?: LiveList<string>;
 };
 
-type PrivateRoom = ReturnType<typeof useRoom> & {
-  // Private APIs that aren't officially published (yet)
-  connect(): void;
-  disconnect(): void;
-};
-
 const {
   RoomProvider,
   useList,
@@ -172,7 +166,7 @@ function Sandbox({ index }: SandboxProps) {
   const [myPresence, updateMyPresence] = useMyPresence();
   const me = useSelf();
   const theirPresence = others[0]?.presence;
-  const room = useRoom() as PrivateRoom;
+  const room = useRoom();
   return (
     <div>
       <div>
