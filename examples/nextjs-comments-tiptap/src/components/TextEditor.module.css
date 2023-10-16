@@ -51,7 +51,7 @@
   position: relative;
   min-height: 1000px;
   width: 100%;
-  max-width: 800px;
+  max-width: 850px;
   margin: var(--space-8) auto;
   border: 1px solid var(--color-border);
   background: var(--color-surface-elevated);
