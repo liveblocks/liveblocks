@@ -182,7 +182,7 @@ export const LiveblocksCommentsHighlight = Mark.create<
       this.editor.storage.commentHighlight.activeHighlightId = null;
     };
 
-    // Avoid memory leak by using `.onpointer...`
+    // Avoid memory leak with `.on...`
     elem.onpointerenter = handlePointerEnter;
     elem.onpointerleave = handlePointerLeave;
 
