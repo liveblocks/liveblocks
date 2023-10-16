@@ -3,7 +3,7 @@
 import { ThreadMetadata, useThreads } from "@/liveblocks.config";
 import { ClientSideSuspense } from "@liveblocks/react";
 import { Thread } from "@liveblocks/react-comments";
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import styles from "./Threads.module.css";
 import {
   resetAllHighlights,
@@ -40,6 +40,7 @@ function ThreadList() {
 }
 
 function CustomThread({ thread }: { thread: ThreadData<ThreadMetadata> }) {
+  const ref = useRef<HTMLDivElement>(null);
   const threadHasTime = thread.metadata.timePercentage !== -1;
   const skipTo = useSkipTo();
   const highlightPin = useHighlightPin(thread.id);
@@ -52,6 +53,11 @@ function CustomThread({ thread }: { thread: ThreadData<ThreadMetadata> }) {
       return;
     }
 
+    ref.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+      inline: "nearest",
+    });
     setHighlightedThread(false);
     setTimeout(() => setHighlightedThread(true));
   });
@@ -66,6 +72,7 @@ function CustomThread({ thread }: { thread: ThreadData<ThreadMetadata> }) {
 
   return (
     <div
+      ref={ref}
       className={styles.threadWrapper}
       onPointerEnter={highlightPin}
       onPointerLeave={resetAllHighlights}
