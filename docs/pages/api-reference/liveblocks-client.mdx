@@ -182,10 +182,11 @@ example][].
 
 Client returned by [`createClient`][].
 
-### Client.enter
+### Client.enterRoom
 
-Enters a room and returns it. The authentication endpoint is called as soon as
-you call this function.
+Enters a room and returns both the local `Room` instance, and an “leave”
+function (unsubscribe function). The authentication endpoint is called as soon
+as you call this function.
 
 The second argument is a configuration for the presence and storage.
 
@@ -205,28 +206,79 @@ The second argument is a configuration for the presence and storage.
   WebSocket.
 
 ```ts
+const { room, leave } = client.enterRoom("my-room", {
+  initialPresence: { cursor: null },
+  initialStorage: { todos: new LiveList() },
+});
+
+// Don’t forget to call `leave()` when you’re done with the room
+leave();
+```
+
+### Client.enter
+
+Enters a room and returns its local `Room` instance.
+
+<Banner title="Deprecated since 1.5" type="warning">
+
+We no longer recommend using this API, because it will cause issues if you have
+multiple component trees in your application that connect to the same room.
+Prefer the new and improved [`client.enterRoom`][] API.
+
+</Banner>
+
+```ts
+// ❌ This API was recommended before 1.5
 const room = client.enter("my-room", {
   initialPresence: { cursor: null },
   initialStorage: { todos: new LiveList() },
 });
+client.leave(roomId);
+
+// ✅ Prefer this instead
+const { room, leave } = client.enterRoom("my-room", {
+  initialPresence: { cursor: null },
+  initialStorage: { todos: new LiveList() },
+});
+leave();
 ```
 
 ### Client.leave
 
 Leaves a room.
 
+<Banner title="Deprecated since 1.5" type="warning">
+
+We no longer recommend using this API, because it will cause issues if you have
+multiple component trees in your application that connect to the same room.
+Prefer the new and improved [`client.enterRoom`][] API.
+
+</Banner>
+
+```ts
+// ❌ This API was recommended before 1.5
+client.leave("my-room");
+
+// ✅ Prefer this instead
+const { room, leave } = client.enterRoom("my-room" /* options */);
+leave();
+```
+
 ### Client.getRoom
 
-Gets a room by its ID. Returns `null` if [`client.enter`][] has not been called
-previously.
+Gets a room by its ID. Returns `null` if [`client.enterRoom`][] has not been
+called previously.
 
 ```ts
 const room = client.getRoom("my-room");
 ```
 
+You’ll likely not need this API if you’re using the new [`client.enterRoom`][]
+API.
+
 ## Room
 
-Room returned by [`client.enter`][] or [`client.getRoom`][].
+Room returned by [`client.enterRoom`][] (or [`client.getRoom`][]).
 
 ### Room.getPresence
 
@@ -1351,7 +1403,7 @@ list.toImmutable();
 
 [`atob`]: https://developer.mozilla.org/en-US/docs/Web/API/atob
 [`base-64`]: https://www.npmjs.com/package/base-64
-[`client.enter`]: /docs/api-reference/liveblocks-client#Client.enter
+[`client.enterRoom`]: /docs/api-reference/liveblocks-client#Client.enterRoom
 [`client.getroom`]: /docs/api-reference/liveblocks-client#Client.getRoom
 [`createclient`]: /docs/api-reference/liveblocks-client#createClient
 [`fetch`]: https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API
