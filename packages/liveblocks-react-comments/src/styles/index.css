@@ -867,7 +867,6 @@
 
 .lb-comment-reaction {
   gap: calc(0.375 * var(--lb-spacing));
-  height: $lb-button-size;
   padding-inline: calc(0.575 * var(--lb-spacing));
   border-radius: $lb-radius-full;
 
@@ -885,10 +884,6 @@
       color: var(--lb-accent);
     }
   }
-}
-
-.lb-comment-reaction-emoji {
-  transform: scale(0.825);
 }
 
 .lb-comment-reaction-count {
