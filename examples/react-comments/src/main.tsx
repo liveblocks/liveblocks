@@ -1,8 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
-import "@liveblocks/react-comments/styles.css";
-import "@liveblocks/react-comments/styles/dark/media-query.css";
 import "./styles/globals.css";
 
 let roomId = "react-comments";

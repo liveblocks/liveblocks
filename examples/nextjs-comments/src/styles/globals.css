@@ -1,3 +1,6 @@
+@import "@liveblocks/react-comments/styles.css";
+@import "@liveblocks/react-comments/styles/dark/media-query.css";
+
 html,
 body {
   background: #f3f3f3;
