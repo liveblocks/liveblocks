@@ -174,13 +174,15 @@ const middlewareImpl: InnerLiveblocksMiddleware = (config, options) => {
     let isPatching: boolean = false;
     let storageRoot: LiveObject<TStorage> | null = null;
     let unsubscribeCallbacks: Array<() => void> = [];
+    let lastRoomId: string | null = null;
     let lastLeaveFn: (() => void) | null = null;
 
-    function enterRoom(roomId: string) {
-      if (storageRoot) {
-        return;
+    function enterRoom(newRoomId: string): () => void {
+      if (lastRoomId === newRoomId) {
+        return lastLeaveFn!;
       }
 
+      lastRoomId = newRoomId;
       if (lastLeaveFn !== null) {
         // First leave the old room before entering a potential new one
         lastLeaveFn();
@@ -191,9 +193,9 @@ const middlewareImpl: InnerLiveblocksMiddleware = (config, options) => {
         presenceMapping
       ) as unknown as TPresence;
 
-      const { room, leave } = client.enterRoom(roomId, {
+      const { room, leave } = client.enterRoom(newRoomId, {
         initialPresence,
-      }) as unknown as { room: TRoom; leave(): void };
+      }) as unknown as { room: TRoom; leave: () => void };
       maybeRoom = room;
 
       updateLiveblocksContext(set, { isStorageLoading: true, room });
@@ -274,6 +276,7 @@ const middlewareImpl: InnerLiveblocksMiddleware = (config, options) => {
         maybeRoom = null;
         isPatching = false;
 
+        lastRoomId = null;
         lastLeaveFn = null;
         leave();
 
