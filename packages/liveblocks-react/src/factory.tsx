@@ -330,6 +330,7 @@ export function createRoomContext<
     // Note: We'll hold on to the initial value given here, and ignore any
     // changes to this argument in subsequent renders
     const frozen = useInitial({
+      instanceId,
       initialPresence,
       initialStorage,
       unstable_batchedUpdates,
@@ -340,7 +341,7 @@ export function createRoomContext<
     });
 
     const [tup, setTup] = React.useState(() => {
-      const rv = stableEnterRoom(instanceId, roomId, {
+      const rv = stableEnterRoom(frozen.instanceId, roomId, {
         initialPresence: frozen.initialPresence,
         initialStorage: frozen.initialStorage,
         // XXX Maybe rename this option to `autoConnect`?
@@ -359,7 +360,7 @@ export function createRoomContext<
     React.useEffect(() => {
       console.log("Effect!", tup.ticket);
 
-      const rv = stableEnterRoom(instanceId, roomId, {
+      const tup = stableEnterRoom(frozen.instanceId, roomId, {
         initialPresence: frozen.initialPresence,
         initialStorage: frozen.initialStorage,
         // XXX Maybe rename this option to `autoConnect`?
@@ -383,7 +384,7 @@ export function createRoomContext<
         // }
         rv.leave();
       };
-    }, [instanceId, roomId, frozen]);
+    }, [roomId, frozen]);
 
     return (
       <RoomContext.Provider value={tup.room}>
