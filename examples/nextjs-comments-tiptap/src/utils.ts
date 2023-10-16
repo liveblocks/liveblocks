@@ -54,7 +54,9 @@ export function getCommentHighlight(
 }
 
 export function getCommentHighlightContent(highlightId: string) {
-  const elem = document.querySelector(`mark[data-highlight-id=${highlightId}]`);
+  const elem = document.querySelector(
+    `mark[data-highlight-id="${highlightId}"]`
+  );
 
   if (!elem) {
     return null;
