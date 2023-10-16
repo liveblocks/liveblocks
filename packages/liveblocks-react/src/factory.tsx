@@ -107,12 +107,6 @@ function alwaysNull() {
   return null;
 }
 
-// Don't try to inline this. This function is intended to be a stable
-// reference, to avoid a React.useCallback() wrapper.
-function alwaysConnecting() {
-  return "connecting" as const;
-}
-
 function makeMutationContext<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
@@ -409,7 +403,7 @@ export function createRoomContext<
     const room = useRoom();
     const subscribe = room.events.status.subscribe;
     const getSnapshot = room.getStatus;
-    const getServerSnapshot = alwaysConnecting;
+    const getServerSnapshot = room.getStatus;
     return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
   }
 
