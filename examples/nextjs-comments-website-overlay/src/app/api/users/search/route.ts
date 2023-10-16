@@ -6,11 +6,6 @@ import { getUsers } from "@/database";
  * For `resolveMentionSuggestions` in liveblocks.config.ts
  */
 
-interface User {
-  id: string;
-  name: string;
-}
-
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const text = searchParams.get("text") as string;
