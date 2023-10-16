@@ -516,7 +516,7 @@
   );
 
   :where(abbr) {
-    text-decoration: none;
+    all: unset;
   }
 }
 
@@ -649,10 +649,11 @@
   color: var(--lb-foreground);
   outline: none;
   font-weight: 500;
-  text-decoration: underline var(--lb-foreground-moderate);
   transition-timing-function: var(--lb-transition-easing);
   transition-duration: var(--lb-transition-duration);
-  transition-property: color, text-decoration;
+  transition-property: color, text-decoration-color;
+  text-decoration-line: underline;
+  text-decoration-color: var(--lb-foreground-moderate);
   text-underline-offset: 2px;
 
   &:where(:hover, :focus-visible) {

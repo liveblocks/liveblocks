@@ -17,8 +17,20 @@
   }
 }
 
+@mixin not-firefox {
+  @supports not (-moz-appearance: none) {
+    @content;
+  }
+}
+
 @mixin safari-only {
   @supports (background: -webkit-named-image(i)) {
+    @content;
+  }
+}
+
+@mixin not-safari {
+  @supports not (background: -webkit-named-image(i)) {
     @content;
   }
 }
