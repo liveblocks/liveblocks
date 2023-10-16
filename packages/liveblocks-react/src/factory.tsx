@@ -286,8 +286,12 @@ export function createRoomContext<
       initialPresence,
       initialStorage,
       unstable_batchedUpdates,
-      shouldInitiallyConnect,
     } = props;
+
+    const autoConnect =
+      props.autoConnect ??
+      props.shouldInitiallyConnect ??
+      typeof window !== "undefined";
 
     if (process.env.NODE_ENV !== "production") {
       if (!roomId) {
@@ -319,23 +323,14 @@ export function createRoomContext<
       initialPresence,
       initialStorage,
       unstable_batchedUpdates,
-      shouldInitiallyConnect:
-        shouldInitiallyConnect === undefined
-          ? typeof window !== "undefined"
-          : shouldInitiallyConnect,
+      autoConnect,
     });
 
     const [{ room }, setRoomLeavePair] = React.useState(() =>
       stableEnterRoom(frozen.instanceId, roomId, {
         initialPresence: frozen.initialPresence,
         initialStorage: frozen.initialStorage,
-        // XXX Maybe rename this option to `autoConnect`?
-        // XXX Maybe we should model this as an effect? Does the client need
-        // to provide assistence there if we do?
-        // i.e. always *don't connect* on initial render in React, and
-        // instead connect in an effect? That would also solve the issue of
-        // SSR showing "initial" in useStatus()
-        shouldInitiallyConnect: frozen.shouldInitiallyConnect,
+        autoConnect: false,
         unstable_batchedUpdates: frozen.unstable_batchedUpdates,
       })
     );
@@ -344,18 +339,17 @@ export function createRoomContext<
       const pair = stableEnterRoom(frozen.instanceId, roomId, {
         initialPresence: frozen.initialPresence,
         initialStorage: frozen.initialStorage,
-        // XXX Maybe rename this option to `autoConnect`?
-        // XXX Maybe we should model this as an effect? Does the client need
-        // to provide assistence there if we do?
-        // i.e. always *don't connect* on initial render in React, and
-        // instead connect in an effect? That would also solve the issue of
-        // SSR showing "initial" in useStatus()
-        shouldInitiallyConnect: frozen.shouldInitiallyConnect,
+        autoConnect: false,
         unstable_batchedUpdates: frozen.unstable_batchedUpdates,
       });
 
       setRoomLeavePair(pair);
       const { room, leave } = pair;
+
+      if (frozen.autoConnect) {
+        // Connect as an effect!
+        (room as any).connect();
+      }
 
       return () => {
         const commentsRoom = commentsRooms.get(room);
