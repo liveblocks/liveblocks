@@ -315,7 +315,7 @@ export function createClient(options: ClientOptions): Client {
 
     // Is this the last room instance to be left?
     if (!Array.from(roomIdsByTicket.values()).includes(roomId)) {
-      const room = nn(roomsById.get(roomId), "Internal inconsistnecy");
+      const room = nn(roomsById.get(roomId), "Internal inconsistency");
 
       unlinkDevTools(roomId);
       roomsById.delete(roomId);
