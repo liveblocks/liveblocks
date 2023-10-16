@@ -714,10 +714,7 @@
 }
 
 .lb-composer-mention {
-  &::selection,
-  *::selection {
-    background: transparent;
-  }
+  @include invisible-selection;
 
   &:where([data-selected]) {
     background: var(--lb-accent);
@@ -1080,7 +1077,7 @@
 }
 
 /*************************************
- *             Floating              *
+ *        Floating animations        *
  *************************************/
 
 .lb-dropdown,

@@ -3,3 +3,10 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+@mixin invisible-selection() {
+  &::selection,
+  *::selection {
+    background: transparent;
+  }
+}
