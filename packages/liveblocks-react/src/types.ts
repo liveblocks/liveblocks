@@ -100,6 +100,8 @@ export type RoomProviderProps<
      * meaning the RoomProvider tries to connect to Liveblocks servers
      * only on the client side.
      */
+    autoConnect?: boolean;
+    /** @deprecated Renamed to `autoConnect` */
     shouldInitiallyConnect?: boolean;
 
     /**

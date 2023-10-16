@@ -101,7 +101,7 @@ describe("createClient", () => {
 
     const { room: _, leave } = client.enterRoom("room", {
       initialPresence: {},
-      shouldInitiallyConnect: false,
+      autoConnect: false,
     });
     try {
       expect(authMock).not.toHaveBeenCalled();

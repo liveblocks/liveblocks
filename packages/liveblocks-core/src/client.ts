@@ -258,7 +258,8 @@ export function createClient(options: ClientOptions): Client {
     setupDevTools(() => Array.from(roomsById.keys()));
     linkDevTools(roomId, newRoom);
 
-    const shouldConnect = options.shouldInitiallyConnect ?? true;
+    const shouldConnect =
+      options.autoConnect ?? options.shouldInitiallyConnect ?? true;
     if (shouldConnect) {
       // we need to check here because nextjs would fail earlier with Node < 16
       if (typeof atob === "undefined") {
