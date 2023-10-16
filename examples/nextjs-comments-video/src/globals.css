@@ -29,7 +29,7 @@
   --lb-radius: var(--border-radius);
   --lb-spacing: var(--spacing);
   --lb-accent: var(--accent);
-  --lb-accent-foreground: var(--accent-background);
+  --lb-accent-foreground: var(--accent);
   --lb-background: var(--gray1);
   --lb-foreground: var(--gray12);
   --lb-icon-size: 20px;
