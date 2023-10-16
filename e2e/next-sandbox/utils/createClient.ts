@@ -5,6 +5,6 @@ export default function createLiveblocksClient() {
     authEndpoint: "/api/auth/access-token",
     // @ts-expect-error - internal/hidden options
     liveblocksServer: process.env.NEXT_PUBLIC_LIVEBLOCKS_SERVER,
-    enableDebugLogging: true,
+    // enableDebugLogging: true,
   });
 }
