@@ -3,10 +3,12 @@ import type {
   BaseUserMeta,
   CommentBody,
   CommentData,
+  CommentReaction,
   EventSource,
   Json,
   JsonObject,
   LsonObject,
+  Resolve,
   Room,
   ThreadData,
 } from "@liveblocks/core";
@@ -36,6 +38,10 @@ const THREAD_ID_PREFIX = "th";
 const COMMENT_ID_PREFIX = "cm";
 const DEDUPING_INTERVAL = 1000;
 
+type PartialNullable<T> = {
+  [P in keyof T]?: T[P] | null | undefined;
+};
+
 export type CommentsRoom<TThreadMetadata extends BaseMetadata> = {
   useThreads(): ThreadsState<TThreadMetadata>;
   useThreadsSuspense(): ThreadsStateSuccess<TThreadMetadata>;
@@ -64,7 +70,7 @@ export type EditThreadMetadataOptions<TMetadata extends BaseMetadata> = [
   ? {
       threadId: string;
     }
-  : { threadId: string; metadata: Partial<TMetadata> };
+  : { threadId: string; metadata: Resolve<PartialNullable<TMetadata>> };
 
 export type CreateCommentOptions = {
   threadId: string;
@@ -320,7 +326,7 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
     options: EditThreadMetadataOptions<TThreadMetadata>
   ) {
     const threadId = options.threadId;
-    const metadata: Partial<TThreadMetadata> =
+    const metadata: PartialNullable<TThreadMetadata> =
       "metadata" in options ? options.metadata : {};
     const threads = getThreads();
 
@@ -361,21 +367,23 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
     const commentId = createOptimisticId(COMMENT_ID_PREFIX);
     const now = new Date().toISOString();
 
+    const newComment: CommentData = {
+      id: commentId,
+      threadId,
+      roomId: room.id,
+      createdAt: now,
+      type: "comment",
+      userId: getCurrentUserId(),
+      body,
+      reactions: [],
+    };
     const newThread = {
       id: threadId,
       type: "thread",
       createdAt: now,
       roomId: room.id,
       metadata,
-      comments: [
-        {
-          id: commentId,
-          createdAt: now,
-          type: "comment",
-          userId: getCurrentUserId(),
-          body,
-        },
-      ],
+      comments: [newComment],
     } as ThreadData<TThreadMetadata>;
 
     mutate(room.createThread({ threadId, commentId, body, metadata }), {
@@ -651,22 +659,46 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
   }: CommentReactionOptions): void {
     const threads = getThreads();
     const now = new Date().toISOString();
+    const userId = getCurrentUserId();
 
     const optimisticData = threads.map((thread) =>
       thread.id === threadId
         ? {
             ...thread,
-            comments: thread.comments.map((comment) =>
-              comment.id === commentId
-                ? ({
-                    ...comment,
-                    reactions: [
-                      ...comment.reactions,
-                      { emoji, userId: getCurrentUserId(), createdAt: now },
-                    ],
-                  } as CommentData)
-                : comment
-            ),
+            comments: thread.comments.map((comment) => {
+              if (comment.id !== commentId) {
+                return comment;
+              }
+
+              let reactions: CommentReaction[];
+
+              if (
+                comment.reactions.some((reaction) => reaction.emoji === emoji)
+              ) {
+                reactions = comment.reactions.map((reaction) =>
+                  reaction.emoji === emoji
+                    ? {
+                        ...reaction,
+                        users: [...reaction.users, { id: userId }],
+                      }
+                    : reaction
+                );
+              } else {
+                reactions = [
+                  ...comment.reactions,
+                  {
+                    emoji,
+                    createdAt: now,
+                    users: [{ id: userId }],
+                  },
+                ];
+              }
+
+              return {
+                ...comment,
+                reactions,
+              };
+            }),
           }
         : thread
     );
@@ -691,29 +723,45 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
     emoji,
   }: CommentReactionOptions): void {
     const threads = getThreads();
+    const userId = getCurrentUserId();
 
     const optimisticData = threads.map((thread) =>
       thread.id === threadId
         ? {
             ...thread,
             comments: thread.comments.map((comment) => {
-              const reactionIndex = comment.reactions.findIndex(
-                (reaction) =>
-                  reaction.emoji === emoji &&
-                  reaction.userId === getCurrentUserId()
-              );
+              if (comment.id !== commentId) {
+                return comment;
+              }
 
-              return comment.id === commentId
-                ? ({
-                    ...comment,
-                    reactions:
-                      reactionIndex < 0
-                        ? comment.reactions
-                        : comment.reactions
-                            .slice(0, reactionIndex)
-                            .concat(comment.reactions.slice(reactionIndex + 1)),
-                  } as CommentData)
-                : comment;
+              const reactionIndex = comment.reactions.findIndex(
+                (reaction) => reaction.emoji === emoji
+              );
+              let reactions: CommentReaction[] = comment.reactions;
+
+              if (
+                reactionIndex > 0 &&
+                comment.reactions[reactionIndex].users.some(
+                  (user) => user.id === userId
+                )
+              ) {
+                if (comment.reactions[reactionIndex].users.length <= 1) {
+                  reactions = [...comment.reactions];
+                  reactions.splice(reactionIndex, 1);
+                } else {
+                  reactions[reactionIndex] = {
+                    ...reactions[reactionIndex],
+                    users: reactions[reactionIndex].users.filter(
+                      (user) => user.id !== userId
+                    ),
+                  };
+                }
+              }
+
+              return {
+                ...comment,
+                reactions,
+              };
             }),
           }
         : thread

@@ -13,13 +13,14 @@ import * as EmojiPickerPrimitive from "../../primitives/EmojiPicker";
 import type {
   EmojiPickerContentCategoryHeaderProps,
   EmojiPickerContentEmojiProps,
-  EmojiPickerContentEmojiRowProps,
   EmojiPickerContentEmptyProps,
   EmojiPickerContentErrorProps,
+  EmojiPickerContentGridProps,
   EmojiPickerContentLoadingProps,
+  EmojiPickerContentRowProps,
 } from "../../primitives/EmojiPicker/types";
-import { Emoji } from "../../primitives/internal/Emoji";
 import { classNames } from "../../utils/class-names";
+import { Emoji } from "../internal/Emoji";
 
 export interface EmojiPickerProps extends ComponentPropsWithoutRef<"div"> {
   onOpenChange?: (open: boolean) => void;
@@ -82,12 +83,24 @@ function EmojiPickerCategoryHeader({
   );
 }
 
-function EmojiPickerEmojiRow({
+function EmojiPickerGrid({
+  children,
+  className,
+  ...props
+}: EmojiPickerContentGridProps) {
+  return (
+    <div className={classNames("lb-emoji-picker-grid", className)} {...props}>
+      {children}
+    </div>
+  );
+}
+
+function EmojiPickerRow({
   attributes,
   children,
   className,
   ...props
-}: EmojiPickerContentEmojiRowProps) {
+}: EmojiPickerContentRowProps) {
   const isFirstRow = useMemo(
     () => attributes.categoryRowIndex === 0,
     [attributes.categoryRowIndex]
@@ -99,7 +112,7 @@ function EmojiPickerEmojiRow({
 
   return (
     <div
-      className={classNames("lb-emoji-picker-emoji-row", className)}
+      className={classNames("lb-emoji-picker-row", className)}
       data-first={isFirstRow ? "" : undefined}
       data-last={isLastRow ? "" : undefined}
       {...props}
@@ -158,7 +171,7 @@ export const EmojiPicker = forwardRef<HTMLDivElement, EmojiPickerProps>(
             sideOffset={FLOATING_ELEMENT_SIDE_OFFSET}
             collisionPadding={FLOATING_ELEMENT_COLLISION_PADDING}
             className={classNames(
-              "lb-root lb-elevation lb-emoji-picker",
+              "lb-root lb-portal lb-elevation lb-emoji-picker",
               className
             )}
             {...props}
@@ -185,7 +198,8 @@ export const EmojiPicker = forwardRef<HTMLDivElement, EmojiPickerProps>(
                   Empty: EmojiPickerEmpty,
                   Error: EmojiPickerError,
                   CategoryHeader: EmojiPickerCategoryHeader,
-                  EmojiRow: EmojiPickerEmojiRow,
+                  Grid: EmojiPickerGrid,
+                  Row: EmojiPickerRow,
                   Emoji: EmojiPickerEmoji,
                 }}
               />

@@ -1,28 +1,35 @@
 <script>
-  import { spring } from "svelte/motion";
-
   export let color = "";
   export let x = 0;
   export let y = 0;
 
-  // Spring animation for cursor
-  const coords = spring(
-    { x, y },
-    {
-      stiffness: 0.07,
-      damping: 0.35,
-    }
-  );
+  /*
+   * It's easily possible to smooth the animation with springs, for example:
+     import { spring } from "svelte/motion";
 
-  // Update spring when x and y change
-  $: coords.set({ x, y });
+     // Spring animation for cursor
+     const coords = spring(
+       { x, y },
+       {
+         stiffness: 0.07,
+         damping: 0.35,
+       }
+     );
+
+     // Update spring when x and y change
+     $: coords.set({ x, y });
+
+     // Use $coords in the template
+     style={`transform: translateX(${$coords.x}px) translateY(${$coords.y}px)`}
+   */
+
 </script>
 
 <svg
   class="cursor"
   fill="none"
   height="36"
-  style={`transform: translateX(${$coords.x}px) translateY(${$coords.y}px)`}
+  style={`transform: translateX(${x}px) translateY(${y}px)`}
   viewBox="0 0 24 36"
   width="24"
   xmlns="http://www.w3.org/2000/svg"

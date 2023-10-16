@@ -168,6 +168,7 @@
     color: var(--lb-foreground-moderate);
     outline: none;
     cursor: pointer;
+    user-select: none;
     transition-timing-function: var(--lb-transition-easing);
     transition-duration: var(--lb-transition-duration);
     transition-property: background, color, opacity;
@@ -201,7 +202,8 @@
 
     &:enabled:hover,
     &:enabled:focus-visible,
-    &[aria-expanded="true"] {
+    &[aria-expanded="true"],
+    &[aria-selected="true"] {
       --lb-button-background: var(--lb-foreground-subtle);
 
       color: var(--lb-foreground-tertiary);
@@ -211,7 +213,8 @@
   .lb-button[data-variant="default"]:not(
       :enabled:hover,
       :enabled:focus-visible,
-      [aria-expanded="true"]
+      [aria-expanded="true"],
+      [aria-selected="true"]
     ) {
     background: transparent;
   }
@@ -223,7 +226,8 @@
 
     &:enabled:hover,
     &:enabled:focus-visible,
-    &[aria-expanded="true"] {
+    &[aria-expanded="true"],
+    &[aria-selected="true"] {
       --lb-button-background: var(--lb-accent-secondary);
 
       color: var(--lb-accent-foreground);
@@ -242,8 +246,19 @@
   // Dropdown
 
   .lb-dropdown-item-icon {
-    margin-inline-start: calc(-0.125 * var(--lb-spacing));
+    color: var(--lb-elevation-foreground-moderate);
+    transition-timing-function: var(--lb-transition-easing);
+    transition-duration: var(--lb-transition-duration);
+    transition-property: color;
     margin-inline-end: calc(0.375 * var(--lb-spacing));
+    margin-inline-start: calc(-0.125 * var(--lb-spacing));
+  }
+
+  .lb-dropdown-item[data-highlighted],
+  .lb-dropdown-item[data-selected] {
+    .lb-dropdown-item-icon {
+      color: var(--lb-elevation-foreground-tertiary);
+    }
   }
 
   // Composer suggestions
@@ -252,6 +267,10 @@
     margin: 0;
     padding: 0;
     list-style: none;
+  }
+
+  .lb-composer-suggestions-list-item {
+    scroll-margin-block: $lb-elevation-list-padding;
   }
 
   // Composer mention suggestions
@@ -266,6 +285,7 @@
 
   .lb-composer-mention-suggestion-avatar {
     width: var(--lb-composer-mention-suggestion-avatar-size);
+    margin-block: calc(0.125 * var(--lb-spacing));
     background: var(--lb-elevation-foreground-subtle);
     color: var(--lb-elevation-foreground-moderate);
     margin-inline-start: calc(-0.125 * var(--lb-spacing));
@@ -296,7 +316,7 @@
 
     display: flex;
     flex-direction: column;
-    height: 360px;
+    height: 350px;
     color: var(--lb-elevation-foreground);
   }
 
@@ -380,9 +400,17 @@
     text-transform: uppercase;
   }
 
-  .lb-emoji-picker-emoji-row {
+  .lb-emoji-picker-grid {
+    position: absolute;
+    inset: 0;
+    animation: lb-animation-appear var(--lb-transition-duration)
+      var(--lb-transition-easing) both;
+  }
+
+  .lb-emoji-picker-row {
     display: flex;
     padding-inline: $lb-emoji-picker-padding;
+    scroll-margin-block: $lb-emoji-picker-padding;
 
     &[data-last] {
       padding-block-end: $lb-emoji-picker-padding;
@@ -808,24 +836,20 @@
 
       &:enabled:hover,
       &:enabled:focus-visible,
-      &[aria-expanded="true"] {
+      &[aria-expanded="true"],
+      &[aria-selected="true"] {
         color: var(--lb-accent);
       }
     }
   }
 
-  .lb-comment-reaction-emoji,
-  .lb-comment-reaction-count {
-    font-size: 0.75em;
-  }
-
   .lb-comment-reaction-emoji {
-    text-align: center;
-    transform: scale(1.125);
+    transform: scale(0.825);
   }
 
   .lb-comment-reaction-count {
     font-weight: 500;
+    font-size: 0.75em;
     font-variant-numeric: tabular-nums;
   }
 
@@ -978,14 +1002,26 @@
     color: var(--lb-elevation-foreground-secondary);
     outline: none;
     cursor: pointer;
+    user-select: none;
     transition-timing-function: var(--lb-transition-easing);
     transition-duration: var(--lb-transition-duration);
     transition-property: background, color, opacity;
+  }
 
-    &:hover,
-    &:focus-visible,
+  .lb-dropdown-item,
+  .lb-composer-suggestions-list-item,
+  .lb-emoji-picker-emoji {
     &[data-highlighted],
     &[data-selected] {
+      background: var(--lb-elevation-foreground-subtle);
+      transition-duration: calc(var(--lb-transition-duration) / 2);
+    }
+  }
+
+  // TODO: Unify with above when QuickEmojiPicker uses @radix-ui/react-dropdown-menu
+  .lb-quick-emoji-picker-emoji {
+    &:hover,
+    &:focus-visible {
       background: var(--lb-elevation-foreground-subtle);
       transition-duration: calc(var(--lb-transition-duration) / 2);
     }

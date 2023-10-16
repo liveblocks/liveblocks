@@ -124,6 +124,26 @@ describe("WebhookHandler", () => {
         },
       ],
       [
+        "commentReactionAdded",
+        {
+          projectId: "605a50b01a36d5ea7a2e9104",
+          threadId: "605a50b01a36d5ea7a2e9104",
+          commentId: "605a50b01a36d5ea7a2e9104",
+          emoji: "👍",
+          roomId: "examples-hero-21-07-2022",
+        },
+      ],
+      [
+        "commentReactionRemoved",
+        {
+          projectId: "605a50b01a36d5ea7a2e9104",
+          threadId: "605a50b01a36d5ea7a2e9104",
+          commentId: "605a50b01a36d5ea7a2e9104",
+          emoji: "👍",
+          roomId: "examples-hero-21-07-2022",
+        },
+      ],
+      [
         "threadMetadataUpdated",
         {
           projectId: "605a50b01a36d5ea7a2e9104",

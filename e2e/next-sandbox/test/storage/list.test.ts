@@ -1,147 +1,149 @@
-import { Page, test, expect } from "@playwright/test";
+import type { Page } from "@playwright/test";
+import { test } from "@playwright/test";
 
 import {
-  assertContainText,
-  delay,
-  pickNumberOfUnderRedo,
-  pickRandomItem,
+  expectJson,
+  genRoomId,
+  nanoSleep,
+  pickFrom,
+  pickNumberOfUndoRedo,
   preparePages,
-  waitForContentToBeEquals,
+  waitForJson,
+  waitUntilEqualOnAllPages,
 } from "../utils";
-import { genRoomId } from "../../utils";
 
-function pickRandomAction() {
-  return pickRandomItem(["#push", "#delete", "#move", "#set"]);
-}
+test.describe.configure({ mode: "parallel" });
 
 const TEST_URL = "http://localhost:3007/storage/list";
 
 test.describe("Storage - LiveList", () => {
-  let pages: Page[];
+  let pages: [Page, Page];
 
   test.beforeEach(async ({}, testInfo) => {
-    const roomName = genRoomId(testInfo.title);
-    pages = await preparePages(`${TEST_URL}?room=${roomName}`);
+    const room = genRoomId(testInfo);
+    pages = await preparePages(`${TEST_URL}?room=${encodeURIComponent(room)}`);
   });
 
-  test.afterEach(async () => {
-    pages.forEach(async (page) => {
-      await page.close();
-    });
-  });
+  test.afterEach(() =>
+    // Close all pages
+    Promise.all(pages.map((page) => page.close()))
+  );
 
   test("list push basic", async () => {
-    await pages[0].click("#clear");
-    await assertContainText(pages, "0");
+    const [page1] = pages;
+    await page1.click("#clear");
+    await waitForJson(pages, "#numItems", 0);
 
-    await pages[0].click("#push");
-    await assertContainText(pages, "1");
+    await page1.click("#push");
+    await waitForJson(pages, "#numItems", 1);
 
-    await waitForContentToBeEquals(pages);
+    await waitUntilEqualOnAllPages(pages, "#items");
 
-    await pages[0].click("#push");
-    await assertContainText(pages, "2");
-    await waitForContentToBeEquals(pages);
+    await page1.click("#push");
+    await waitForJson(pages, "#numItems", 2);
+    await waitUntilEqualOnAllPages(pages, "#items");
 
-    await pages[0].click("#push");
-    await assertContainText(pages, "3");
-    await waitForContentToBeEquals(pages);
+    await page1.click("#push");
+    await waitForJson(pages, "#numItems", 3);
+    await waitUntilEqualOnAllPages(pages, "#items");
   });
 
   test("list move", async () => {
-    await pages[0].click("#clear");
-    await assertContainText(pages, "0");
+    const [page1, _page2] = pages;
+    await page1.click("#clear");
+    await waitForJson(pages, "#numItems", 0);
 
     for (let i = 0; i < 5; i++) {
-      await pages[0].click("#push");
-      await delay(50);
+      await page1.click("#push");
     }
 
-    await waitForContentToBeEquals(pages);
+    await expectJson(page1, "#numItems", 5);
+    await waitUntilEqualOnAllPages(pages, "#items");
 
     for (let i = 0; i < 10; i++) {
-      await pages[0].click("#move");
-      await delay(50);
+      await page1.click("#move");
     }
 
-    await waitForContentToBeEquals(pages);
+    await expectJson(page1, "#numItems", 5);
+    await waitUntilEqualOnAllPages(pages, "#items");
   });
 
   test("push conflicts", async () => {
-    await pages[0].click("#clear");
-    await assertContainText(pages, "0");
+    const [page1, page2] = pages;
+    await page1.click("#clear");
+    await waitForJson(pages, "#numItems", 0);
 
     for (let i = 0; i < 10; i++) {
-      // no await to create randomness
-      pages[0].click("#push");
-      pages[1].click("#push");
-      await delay(50);
+      await page1.click("#push");
+      await page2.click("#push");
     }
 
-    await assertContainText(pages, "20");
-    await waitForContentToBeEquals(pages);
+    // await expectJson(pages, "#numItems", n => n >= 10 && n <= 20);
+    await waitForJson(pages, "#numItems", 20);
+    await waitUntilEqualOnAllPages(pages, "#items");
   });
 
-  // TODO: Fix ghosting bug
+  // TODO FIXME Actually fails sometimes, there definitely is a bug here
   test.skip("set conflicts", async () => {
-    await pages[0].click("#clear");
-    await assertContainText(pages, "0");
+    const [page1, page2] = pages;
+    await page1.click("#clear");
+    await page1.click("#push");
+    await waitForJson(pages, "#numItems", 1);
+    await waitUntilEqualOnAllPages(pages, "#items");
 
-    for (let i = 0; i < 1; i++) {
-      await pages[0].click("#push");
-      await delay(50);
+    for (let i = 0; i < 30; i++) {
+      await page1.click("#set");
+      await page2.click("#set");
+
+      // In this test, we should never see a list of less than or more than
+      // 1 element. When this happens, we'll want to immediately fail here.
+      await expectJson(page1, "#numItems", 1);
+      await expectJson(page2, "#numItems", 1);
     }
 
-    for (let i = 0; i < 10; i++) {
-      // no await to create randomness
-      pages[0].click("#set");
-      pages[1].click("#set");
-      await delay(50);
-    }
-
-    await assertContainText(pages, "1");
-    await waitForContentToBeEquals(pages);
+    await expectJson(page1, "#numItems", 1);
+    await expectJson(page2, "#numItems", 1);
+    await waitUntilEqualOnAllPages(pages, "#items");
   });
 
-  // TODO: This test is flaky and occasionally fails in CI--make it more robust
-  // See https://github.com/liveblocks/liveblocks/runs/8032018966?check_suite_focus=true#step:6:45
+  // TODO FIXME Actually fails sometimes, there definitely is a bug here
   test.skip("fuzzy with undo/redo push delete and move", async () => {
-    await pages[0].click("#clear");
-    await assertContainText(pages, "0");
+    const [page1] = pages;
+    await page1.click("#clear");
+    await waitForJson(pages, "#numItems", 0);
+    await waitUntilEqualOnAllPages(pages, "#items");
 
     const numberOfItemsAtStart = 5;
     for (let i = 0; i < numberOfItemsAtStart; i++) {
-      // no await to create randomness
-      pages[0].click("#push");
-      await delay(50);
+      await page1.click("#push");
     }
 
-    await expect(pages[0].locator("#itemsCount")).toContainText(
-      numberOfItemsAtStart.toString()
-    );
+    await expectJson(page1, "#numItems", numberOfItemsAtStart);
 
-    await waitForContentToBeEquals(pages);
+    await waitUntilEqualOnAllPages(pages, "#items");
 
+    const actions = ["#push", "#delete", "#move", "#set"];
     for (let i = 0; i < 50; i++) {
-      // no await to create randomness
-      pages.forEach((page) => {
-        const nbofUndoRedo = pickNumberOfUnderRedo();
-
+      for (const page of pages) {
+        const nbofUndoRedo = pickNumberOfUndoRedo();
         if (nbofUndoRedo > 0) {
           for (let y = 0; y < nbofUndoRedo; y++) {
-            page.click("#undo");
+            await page.click("#undo");
           }
           for (let y = 0; y < nbofUndoRedo; y++) {
-            page.click("#redo");
+            await page.click("#redo");
           }
         } else {
-          page.click(pickRandomAction());
+          await page.click(pickFrom(actions));
         }
-      });
 
-      await delay(50);
+        // In this test, we should never see a list of more than 1 element. When
+        // it happens, we'll want to immediately fail here.
+        await expectJson(page, "#numItems", 1);
+      }
+      await nanoSleep();
     }
 
-    await waitForContentToBeEquals(pages);
+    await waitUntilEqualOnAllPages(pages, "#items");
   });
 });

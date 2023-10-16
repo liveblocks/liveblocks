@@ -6,8 +6,8 @@ import {
   FLOATING_ELEMENT_COLLISION_PADDING,
   FLOATING_ELEMENT_SIDE_OFFSET,
 } from "../../constants";
-import { Emoji } from "../../primitives/internal/Emoji";
 import { classNames } from "../../utils/class-names";
+import { Emoji } from "../internal/Emoji";
 
 export interface QuickEmojiPickerProps extends ComponentPropsWithoutRef<"div"> {
   onOpenChange?: (open: boolean) => void;
@@ -46,7 +46,7 @@ export const QuickEmojiPicker = forwardRef<
             sideOffset={FLOATING_ELEMENT_SIDE_OFFSET}
             collisionPadding={FLOATING_ELEMENT_COLLISION_PADDING}
             className={classNames(
-              "lb-root lb-elevation lb-quick-emoji-picker",
+              "lb-root lb-portal lb-elevation lb-quick-emoji-picker",
               className
             )}
             {...props}

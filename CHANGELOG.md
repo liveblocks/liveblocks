@@ -1,3 +1,91 @@
+# v1.4.6
+
+### `@liveblocks/react`
+
+- Fix a race condition that could cause a Liveblocks client to hang during
+  loading when using Suspense.
+- Fix `useStatus` return value on SSR responses.
+- **Breaking (beta):** The `resolveUser` option in `createRoomContext` is now
+  called `resolveUsers` and it receives a list of user IDs (via the `userIds`
+  property, replacing `userId`) instead of a single one. Instead of returning
+  user info of a single user ID, this function will now expect a list of users'
+  info matching the provided list of user IDs.
+- **Breaking (beta):** The `ResolveUserOptions` and
+  `ResolveMentionSuggestionsOptions` types were renamed to `ResolveUserArgs` and
+  `ResolveMentionSuggestionsArgs` respectively.
+- `resolveUsers` and `resolveMentionSuggestions` now accept synchronous
+  functions.
+- `resolveUsers` now also provides the current room ID.
+- `editThreadMetadata` now correctly allows `null` to be set on a property.
+  Doing so deletes existing metadata properties.
+
+### `@liveblocks/react-comments`
+
+- Export `ComposerSubmitComment` type from root too, in addition to
+  `/primitives`.
+- Add `onThreadDelete` to `Thread`.
+- Add `metadata` to `Composer` to attach custom metadata to new threads.
+- Add support for specifying a custom `ThreadMetadata` type on `Thread` and
+  `Composer`.
+- **Breaking (beta):** `Comment`’s `onEdit` and `onDelete` were renamed to
+  `onEditComment` and `onDeleteComment` respectively.
+
+# v1.4.5
+
+### `@liveblocks/react`
+
+- Fix `createThread` not creating valid comment.
+
+### `@liveblocks/node`
+
+- Fix URL encoding bug
+
+# v1.4.4
+
+### `@liveblocks/react`
+
+- Fix `removeReaction` not removing reactions which led to reactions displaying
+  a count of 0.
+
+### `@liveblocks/react-comments`
+
+- Fix reactions list (and its add button) showing on all comments.
+- Improve emoji rendering on Windows.
+- Hide country flag emojis when unsupported. (e.g. on Windows)
+
+# v1.4.3
+
+### `@liveblocks/react`
+
+- Add new Comments hooks to add/remove reactions.
+- Fix a bug in `useOthers()` that could lead to the warning "The result of
+  getServerSnapshot should be cached to avoid an infinite loop"
+
+### `@liveblocks/react-comments`
+
+- Add support for reactions. (👍)
+- Add keyboard navigation to emoji picker.
+
+# v1.4.2
+
+### `@liveblocks/client`
+
+- Fix a bug where calculating the insertion position between two existing
+  elements could happen incorrectly in a small edge case
+
+# v1.4.1
+
+### `@liveblocks/*`
+
+- [#1177](https://github.com/liveblocks/liveblocks/pull/1177) Fix an issue with
+  internal LiveList serialization that could lead to a "ghosting" bug with
+  `@liveblocks/zustand` / `@liveblocks/redux` when using tuples.
+
+### `@liveblocks/node`
+
+- Add comment reaction webhook events `CommentReactionAdded` and
+  `CommentReactionRemoved`
+
 # v1.4.0
 
 ### DevTools

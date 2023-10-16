@@ -138,7 +138,10 @@ function buildLiveblocksAuthorizeEndpoint(
   roomId: string
 ): string {
   if (options.liveblocksAuthorizeEndpoint) {
-    return options.liveblocksAuthorizeEndpoint.replace("{roomId}", roomId);
+    return options.liveblocksAuthorizeEndpoint.replace(
+      "{roomId}",
+      encodeURIComponent(roomId)
+    );
   }
 
   return `https://api.liveblocks.io/v2/rooms/${encodeURIComponent(

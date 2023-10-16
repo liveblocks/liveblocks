@@ -15,10 +15,7 @@ const INITIAL_ASYNC_STATE: AsyncStateInitial = {
   error: undefined,
 };
 
-type AsyncFunction<T, A extends any[] = any[]> = (...args: A) => Promise<T>;
-
-export type UseAsyncCacheOptions<T> = {
-  overrideFunction?: AsyncFunction<T, [string]>;
+export type UseAsyncCacheOptions = {
   keepPreviousDataWhileLoading?: boolean;
   suspense?: boolean;
 };
@@ -26,7 +23,7 @@ export type UseAsyncCacheOptions<T> = {
 type UseAsyncCacheState<
   T,
   E,
-  O extends UseAsyncCacheOptions<T> = UseAsyncCacheOptions<T>,
+  O extends UseAsyncCacheOptions = UseAsyncCacheOptions,
 > = O extends {
   suspense: true;
 }
@@ -36,7 +33,7 @@ type UseAsyncCacheState<
 export type UseAsyncCacheResponse<
   T,
   E,
-  O extends UseAsyncCacheOptions<T> = UseAsyncCacheOptions<T>,
+  O extends UseAsyncCacheOptions = UseAsyncCacheOptions,
 > = UseAsyncCacheState<T, E, O> & {
   /**
    * Returns the current state of the key synchronously.
@@ -56,7 +53,7 @@ type PreviousData<T> = {
 
 const noop = () => {};
 
-export function useAsyncCache<T, E, O extends UseAsyncCacheOptions<T>>(
+export function useAsyncCache<T, E, O extends UseAsyncCacheOptions>(
   cache: AsyncCache<T, E> | undefined,
   key: string | null,
   options?: O
@@ -67,11 +64,11 @@ export function useAsyncCache<T, E, O extends UseAsyncCacheOptions<T>>(
       return null;
     }
 
-    const cacheItem = cache.create(key, frozenOptions?.overrideFunction);
+    const cacheItem = cache.create(key);
     void cacheItem.get();
 
     return cacheItem;
-  }, [cache, frozenOptions, key]);
+  }, [cache, key]);
 
   const subscribe = useCallback(
     (callback: () => void) => cacheItem?.subscribe(callback) ?? noop,
@@ -91,12 +88,32 @@ export function useAsyncCache<T, E, O extends UseAsyncCacheOptions<T>>(
 
   useEffect(() => {
     previousData.current = { key, data: state.data };
-  }, [key, state]);
+  }, [key, state.data]);
 
-  if (frozenOptions?.suspense && state.isLoading && cacheItem) {
-    throw new Promise<void>((resolve) => {
-      cacheItem.subscribeOnce(() => resolve());
-    });
+  if (!cacheItem) {
+    return {
+      isLoading: false,
+      data: undefined,
+      error: undefined,
+      getState,
+      revalidate,
+    } as UseAsyncCacheResponse<T, E, O>;
+  }
+
+  if (frozenOptions?.suspense) {
+    const error = getState().error;
+
+    if (error) {
+      throw error;
+    } else if (getState().isLoading) {
+      throw new Promise<void>((resolve) => {
+        cacheItem.subscribeOnce((state) => {
+          if (!state.isLoading) {
+            resolve();
+          }
+        });
+      });
+    }
   }
 
   if (
@@ -107,10 +124,6 @@ export function useAsyncCache<T, E, O extends UseAsyncCacheOptions<T>>(
     typeof previousData.current?.data !== "undefined"
   ) {
     data = previousData.current.data;
-  }
-
-  if (frozenOptions?.suspense && state.error) {
-    throw state.error;
   }
 
   return {

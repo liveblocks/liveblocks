@@ -48,7 +48,7 @@ export const Tooltip = forwardRef<HTMLButtonElement, TooltipProps>(
         <TooltipPrimitive.Portal>
           <TooltipPrimitive.Content
             className={classNames(
-              "lb-root lb-tooltip",
+              "lb-root lb-portal lb-tooltip",
               multiline && "lb-tooltip:multiline",
               className
             )}

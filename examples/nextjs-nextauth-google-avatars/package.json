@@ -9,12 +9,12 @@
     "start": "next start"
   },
   "dependencies": {
-    "@liveblocks/client": "^1.4.0",
-    "@liveblocks/node": "^1.4.0",
-    "@liveblocks/react": "^1.4.0",
+    "@liveblocks/client": "^1.4.6",
+    "@liveblocks/node": "^1.4.6",
+    "@liveblocks/react": "^1.4.6",
     "classnames": "^2.3.2",
-    "next": "^12.1.6",
-    "next-auth": "^4.20.1",
+    "next": "^13.5.4",
+    "next-auth": "^4.23.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },
@@ -27,6 +27,6 @@
     "prettier": "^3.0.0",
     "prettier-plugin-tailwindcss": "^0.5.1",
     "tailwindcss": "^3.1.4",
-    "typescript": "^4.6.4"
+    "typescript": "^5.2.2"
   }
 }

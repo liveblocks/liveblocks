@@ -2,7 +2,7 @@ import { createClient, LiveObject } from "@liveblocks/client";
 import { createRoomContext } from "@liveblocks/react";
 
 const client = createClient({
-  authEndpoint: "/api/auth",
+  authEndpoint: "/api/liveblocks-auth",
 });
 
 // Presence represents the properties that will exist on every User in the Room

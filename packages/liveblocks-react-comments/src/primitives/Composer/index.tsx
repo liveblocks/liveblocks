@@ -82,10 +82,10 @@ import { isKey } from "../../utils/is-key";
 import { Portal } from "../../utils/Portal";
 import { requestSubmit } from "../../utils/request-submit";
 import { useId } from "../../utils/use-id";
+import { useIndex } from "../../utils/use-index";
 import { useInitial } from "../../utils/use-initial";
 import { useLayoutEffect } from "../../utils/use-layout-effect";
 import { useRefs } from "../../utils/use-refs";
-import { useRovingIndex } from "../../utils/use-roving-index";
 import { toAbsoluteUrl } from "../Comment/utils";
 import {
   ComposerContext,
@@ -242,6 +242,14 @@ function ComposerEditorMentionSuggestionsWrapper({
     y,
   } = useFloating(floatingOptions);
 
+  // Copy `z-index` from content to wrapper.
+  // Inspired by https://github.com/radix-ui/primitives/blob/main/packages/react/popper/src/Popper.tsx
+  useLayoutEffect(() => {
+    if (content) {
+      setContentZIndex(window.getComputedStyle(content).zIndex);
+    }
+  }, [content]);
+
   useEffect(() => {
     const domRange = getDOMRange(editor, mentionDraft?.range);
 
@@ -252,12 +260,6 @@ function ComposerEditorMentionSuggestionsWrapper({
       });
     }
   }, [setReference, editor, mentionDraft?.range]);
-
-  useLayoutEffect(() => {
-    if (content) {
-      setContentZIndex(window.getComputedStyle(content).zIndex);
-    }
-  }, [content]);
 
   return isFocused && userIds ? (
     <ComposerSuggestionsContext.Provider
@@ -415,11 +417,11 @@ const ComposerSuggestions = forwardRef<
   const { ref, placement, dir } = useComposerSuggestionsContext(
     COMPOSER_SUGGESTIONS_NAME
   );
+  const mergedRefs = useRefs(forwardedRef, ref);
   const [side, align] = useMemo(
     () => getSideAndAlignFromPlacement(placement),
     [placement]
   );
-  const mergedRefs = useRefs(forwardedRef, ref);
   const Component = asChild ? Slot : "div";
 
   return (
@@ -629,7 +631,7 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
       setPreviousSelectedMentionSuggestionIndex,
       setNextSelectedMentionSuggestionIndex,
       setSelectedMentionSuggestionIndex,
-    ] = useRovingIndex(0, mentionSuggestions?.length ?? 0);
+    ] = useIndex(0, mentionSuggestions?.length ?? 0);
     const id = useId();
     const suggestionsListId = useMemo(
       () => `liveblocks-suggestions-list-${id}`,

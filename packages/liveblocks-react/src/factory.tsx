@@ -26,6 +26,7 @@ import {
   errorIf,
   isLiveNode,
   makeEventSource,
+  stringify,
 } from "@liveblocks/core";
 import * as React from "react";
 import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector.js";
@@ -43,7 +44,6 @@ import type {
 import { createCommentsRoom } from "./comments/CommentsRoom";
 import type { CommentsApiError } from "./comments/errors";
 import { useDebounce } from "./comments/lib/use-debounce";
-import { stableStringify } from "./lib/stable-stringify";
 import { useAsyncCache } from "./lib/use-async-cache";
 import { useInitial } from "./lib/use-initial";
 import { useRerender } from "./lib/use-rerender";
@@ -51,8 +51,9 @@ import type {
   InternalRoomContextBundle,
   MutationContext,
   OmitFirstArg,
-  ResolveMentionSuggestionsOptions,
-  ResolveUserOptions,
+  PromiseOrNot,
+  ResolveMentionSuggestionsArgs,
+  ResolveUsersArgs,
   RoomContextBundle,
   RoomProviderProps,
   UserState,
@@ -89,9 +90,24 @@ function useSyncExternalStore<Snapshot>(
   return useSyncExternalStoreWithSelector(s, gs, gss, identity);
 }
 
-// Don't try to inline this. This function itself must be a stable reference.
-function getEmptyOthers() {
-  return [];
+const STABLE_EMPTY_LIST = Object.freeze([]);
+
+// Don't try to inline this. This function is intended to be a stable
+// reference, to avoid a React.useCallback() wrapper.
+function alwaysEmptyList() {
+  return STABLE_EMPTY_LIST;
+}
+
+// Don't try to inline this. This function is intended to be a stable
+// reference, to avoid a React.useCallback() wrapper.
+function alwaysNull() {
+  return null;
+}
+
+// Don't try to inline this. This function is intended to be a stable
+// reference, to avoid a React.useCallback() wrapper.
+function alwaysConnecting() {
+  return "connecting" as const;
 }
 
 function makeMutationContext<
@@ -138,20 +154,20 @@ type Options<TUserMeta extends BaseUserMeta> = {
   /**
    * @beta
    *
-   * An asynchronous function that returns user info from a user ID.
+   * A function that returns user info from user IDs.
    */
-  resolveUser?: (
-    options: ResolveUserOptions
-  ) => Promise<TUserMeta["info"] | undefined>;
+  resolveUsers?: (
+    args: ResolveUsersArgs
+  ) => PromiseOrNot<TUserMeta["info"] | undefined>;
 
   /**
    * @beta
    *
-   * An asynchronous function that returns a list of user IDs matching a string.
+   * A function that returns a list of user IDs matching a string.
    */
   resolveMentionSuggestions?: (
-    options: ResolveMentionSuggestionsOptions
-  ) => Promise<string[]>;
+    args: ResolveMentionSuggestionsArgs
+  ) => PromiseOrNot<string[]>;
 
   /**
    * @internal Internal endpoint
@@ -159,18 +175,18 @@ type Options<TUserMeta extends BaseUserMeta> = {
   serverEndpoint?: string;
 };
 
-let hasWarnedIfNoResolveUser = false;
+let hasWarnedIfNoResolveUsers = false;
 
-function warnIfNoResolveUser(usersCache?: AsyncCache<unknown, unknown>) {
+function warnIfNoResolveUsers(usersCache?: AsyncCache<unknown, unknown>) {
   if (
-    !hasWarnedIfNoResolveUser &&
+    !hasWarnedIfNoResolveUsers &&
     !usersCache &&
     process.env.NODE_ENV !== "production"
   ) {
     console.warn(
-      "Set the resolveUser option in createRoomContext to specify user info."
+      "Set the resolveUsers option in createRoomContext to specify user info."
     );
-    hasWarnedIfNoResolveUser = true;
+    hasWarnedIfNoResolveUsers = true;
   }
 }
 
@@ -343,7 +359,8 @@ export function createRoomContext<
     const room = useRoom();
     const subscribe = room.events.status.subscribe;
     const getSnapshot = room.getStatus;
-    return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+    const getServerSnapshot = alwaysConnecting;
+    return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
   }
 
   function useMyPresence(): [
@@ -377,7 +394,7 @@ export function createRoomContext<
     const room = useRoom();
     const subscribe = room.events.others.subscribe;
     const getSnapshot = room.getOthers;
-    const getServerSnapshot = getEmptyOthers;
+    const getServerSnapshot = alwaysEmptyList;
     return useSyncExternalStoreWithSelector(
       subscribe,
       getSnapshot,
@@ -560,7 +577,7 @@ export function createRoomContext<
       [selector]
     );
 
-    const getServerSnapshot = React.useCallback((): Snapshot => null, []);
+    const getServerSnapshot = alwaysNull;
 
     return useSyncExternalStoreWithSelector(
       subscribe,
@@ -572,11 +589,10 @@ export function createRoomContext<
   }
 
   function useMutableStorageRoot(): LiveObject<TStorage> | null {
-    type Snapshot = LiveObject<TStorage> | null;
     const room = useRoom();
     const subscribe = room.events.storageDidLoad.subscribeOnce;
     const getSnapshot = room.getStorageSnapshot;
-    const getServerSnapshot = React.useCallback((): Snapshot => null, []);
+    const getServerSnapshot = alwaysNull;
     return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
   }
 
@@ -698,7 +714,7 @@ export function createRoomContext<
       }
     }, [rootOrNull]);
 
-    const getServerSnapshot = React.useCallback((): Snapshot => null, []);
+    const getServerSnapshot = alwaysNull;
 
     return useSyncExternalStoreWithSelector(
       subscribe,
@@ -742,10 +758,13 @@ export function createRoomContext<
 
     ensureNotServerSide();
 
-    // Throw a _promise_. Suspense will suspend the component tree until this
-    // promise resolves (aka until storage has loaded). After that, it will
-    // render this component tree again.
+    // Throw a _promise_. Suspense will suspend the component tree until either
+    // until either a presence update event, or a connection status change has
+    // happened. After that, it will render this component tree again and
+    // re-evaluate the .getSelf() condition above, or re-suspend again until
+    // such event happens.
     throw new Promise<void>((res) => {
+      room.events.self.subscribeOnce(() => res());
       room.events.status.subscribeOnce(() => res());
     });
   }
@@ -978,24 +997,27 @@ export function createRoomContext<
     );
   }
 
-  const { resolveUser, resolveMentionSuggestions } = options ?? {};
+  const { resolveUsers, resolveMentionSuggestions } = options ?? {};
 
-  const usersCache = resolveUser
-    ? createAsyncCache((stringifiedOptions: string) => {
-        return resolveUser(
-          JSON.parse(stringifiedOptions) as ResolveUserOptions
+  const usersCache = resolveUsers
+    ? createAsyncCache(async (stringifiedOptions: string) => {
+        const users = await resolveUsers(
+          JSON.parse(stringifiedOptions) as ResolveUsersArgs
         );
+
+        return users?.[0];
       })
     : undefined;
 
   function useUser(userId: string) {
+    const room = useRoom();
     const resolverKey = React.useMemo(
-      () => stableStringify({ userId }),
-      [userId]
+      () => stringify({ userIds: [userId], roomId: room.id }),
+      [userId, room.id]
     );
     const state = useAsyncCache(usersCache, resolverKey);
 
-    React.useEffect(() => warnIfNoResolveUser(usersCache), []);
+    React.useEffect(() => warnIfNoResolveUsers(usersCache), []);
 
     if (state.isLoading) {
       return {
@@ -1011,15 +1033,16 @@ export function createRoomContext<
   }
 
   function useUserSuspense(userId: string) {
+    const room = useRoom();
     const resolverKey = React.useMemo(
-      () => stableStringify({ userId }),
-      [userId]
+      () => stringify({ userIds: [userId], roomId: room.id }),
+      [userId, room.id]
     );
     const state = useAsyncCache(usersCache, resolverKey, {
       suspense: true,
     });
 
-    React.useEffect(() => warnIfNoResolveUser(usersCache), []);
+    React.useEffect(() => warnIfNoResolveUsers(usersCache), []);
 
     return {
       user: state.data,
@@ -1031,7 +1054,7 @@ export function createRoomContext<
     resolveMentionSuggestions
       ? (stringifiedOptions: string) => {
           return resolveMentionSuggestions(
-            JSON.parse(stringifiedOptions) as ResolveMentionSuggestionsOptions
+            JSON.parse(stringifiedOptions) as ResolveMentionSuggestionsArgs
           );
         }
       : () => Promise.resolve([])
@@ -1043,7 +1066,7 @@ export function createRoomContext<
     const resolverKey = React.useMemo(
       () =>
         debouncedSearch !== undefined
-          ? stableStringify({ text: debouncedSearch, roomId: room.id })
+          ? stringify({ text: debouncedSearch, roomId: room.id })
           : null,
       [debouncedSearch, room.id]
     );
