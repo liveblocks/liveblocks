@@ -25,7 +25,7 @@
     "@tiptap/extension-highlight": "^2.0.4",
     "@tiptap/extension-image": "^2.0.4",
     "@tiptap/extension-link": "^2.0.4",
-    "@tiptap/extension-placeholder": "^2.0.4",
+    "@tiptap/extension-placeholder": "^2.1.12",
     "@tiptap/extension-task-item": "^2.0.4",
     "@tiptap/extension-task-list": "^2.0.4",
     "@tiptap/extension-text-align": "^2.0.4",

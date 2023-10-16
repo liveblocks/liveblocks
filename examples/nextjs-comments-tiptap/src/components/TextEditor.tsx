@@ -17,6 +17,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { useRoom, useSelf } from "@/liveblocks.config";
 import { LiveblocksCommentsHighlight } from "@/comment-highlight";
 import styles from "./TextEditor.module.css";
+import { Placeholder } from "@tiptap/extension-placeholder";
 
 export function TextEditor() {
   return (
@@ -93,6 +94,10 @@ function TiptapEditor({ doc, provider }: EditorProps) {
           color,
           picture,
         },
+      }),
+      Placeholder.configure({
+        placeholder: "Start writing…",
+        emptyEditorClass: "tiptap-empty",
       }),
     ],
   });
