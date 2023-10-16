@@ -79,7 +79,7 @@ export default function ZustandApp() {
     return () => {
       leaveRoom(roomId);
     };
-  }, [enterRoom, leaveRoom]);
+  }, [roomId, enterRoom, leaveRoom]);
 
   if (isStorageLoading) {
     return <div>Loading...</div>;

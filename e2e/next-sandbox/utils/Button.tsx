@@ -1,3 +1,5 @@
+import * as React from "react";
+
 export type Props = Omit<
   JSX.IntrinsicElements["button"],
   // Forbidden props

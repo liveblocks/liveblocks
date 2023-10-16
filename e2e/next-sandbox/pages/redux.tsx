@@ -47,7 +47,7 @@ function ReduxSandbox() {
     return () => {
       dispatch(actions.leaveRoom(roomId));
     };
-  }, [actions.enterRoom, actions.leaveRoom]);
+  }, [dispatch, roomId]);
 
   if (items === null) {
     return <div>Loading...</div>;
