@@ -210,8 +210,8 @@
     color: var(--lb-foreground-tertiary);
   }
 
-  &:where(
-      [data-variant="default"]:not(
+  &:where([data-variant="default"]):not(
+      :where(
           :enabled:hover,
           :enabled:focus-visible,
           [aria-expanded="true"],
@@ -539,15 +539,13 @@
 
 // Loading
 
-.lb-avatar:where([data-loading]),
-.lb-user:where([data-loading]) {
+:is(.lb-avatar, .lb-user):where([data-loading]) {
   animation: lb-animation-shimmer 8s linear infinite;
 }
 
 // Body
 
-.lb-comment-body,
-.lb-composer-editor {
+:is(.lb-comment-body, .lb-composer-editor) {
   color: var(--lb-foreground-secondary);
 
   p {
@@ -608,8 +606,7 @@
   transition-property: color, text-decoration;
   text-underline-offset: 2px;
 
-  &:where(:hover),
-  &:where(:focus-visible) {
+  &:where(:hover, :focus-visible) {
     color: var(--lb-accent);
     text-decoration-color: var(--lb-accent-moderate);
   }
@@ -641,8 +638,7 @@
 
       color: var(--lb-foreground-tertiary);
 
-      &:where(:enabled:hover),
-      &:where(:enabled:focus-visible) {
+      &:where(:enabled:hover, :enabled:focus-visible) {
         --lb-button-background: var(--lb-accent);
 
         color: var(--lb-accent-foreground);
@@ -658,8 +654,7 @@
 
       color: var(--lb-foreground-tertiary);
 
-      &:where(:enabled:hover),
-      &:where(:enabled:focus-visible) {
+      &:where(:enabled:hover, :enabled:focus-visible) {
         --lb-button-background: var(--lb-accent);
 
         color: var(--lb-accent-foreground);
@@ -715,8 +710,7 @@
   transition-duration: var(--lb-transition-duration);
   transition-property: color;
 
-  &:where(:hover),
-  &:where(:focus-visible) {
+  &:where(:hover, :focus-visible) {
     color: var(--lb-foreground-tertiary);
   }
 
@@ -1013,11 +1007,12 @@
   transition-property: background, color, opacity;
 }
 
-.lb-dropdown-item,
-.lb-composer-suggestions-list-item,
-.lb-emoji-picker-emoji {
-  &:where([data-highlighted]),
-  &:where([data-selected]) {
+:is(
+    .lb-dropdown-item,
+    .lb-composer-suggestions-list-item,
+    .lb-emoji-picker-emoji
+  ) {
+  &:where([data-highlighted], [data-selected]) {
     background: var(--lb-elevation-foreground-subtle);
     transition-duration: calc(var(--lb-transition-duration) / 2);
   }
@@ -1025,8 +1020,7 @@
 
 // TODO: Unify with above when QuickEmojiPicker uses @radix-ui/react-dropdown-menu
 .lb-quick-emoji-picker-emoji {
-  &:where(:enabled:hover),
-  &:where(:enabled:focus-visible) {
+  &:where(:enabled:hover, :enabled:focus-visible) {
     background: var(--lb-elevation-foreground-subtle);
     transition-duration: calc(var(--lb-transition-duration) / 2);
   }
@@ -1044,10 +1038,12 @@
   will-change: transform, opacity;
 }
 
-.lb-dropdown,
-.lb-emoji-picker,
-.lb-quick-emoji-picker,
-.lb-tooltip:where([data-state="delayed-open"]) {
+:is(
+    .lb-dropdown,
+    .lb-emoji-picker,
+    .lb-quick-emoji-picker,
+    .lb-tooltip:where([data-state="delayed-open"])
+  ) {
   &:where([data-side="top"]) {
     animation-name: lb-animation-slide-up;
   }
@@ -1057,10 +1053,7 @@
   }
 }
 
-.lb-dropdown,
-.lb-emoji-picker,
-.lb-quick-emoji-picker,
-.lb-tooltip {
+:is(.lb-dropdown, .lb-emoji-picker, .lb-quick-emoji-picker, .lb-tooltip) {
   &:where([data-state="closed"]) {
     animation-name: lb-animation-disappear;
   }
