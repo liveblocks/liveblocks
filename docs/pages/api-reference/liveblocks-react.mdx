@@ -166,9 +166,9 @@ export const {
 
 ### RoomProvider
 
-Makes a [`Room`] available in the component hierarchy below. When this component
-is unmounted, the current user leaves the room. That means that you can’t use
-two RoomProviders with the same room ID in your React tree.
+Makes a [`Room`] available in the component hierarchy below. Joins the room when
+the component is mounted, and automatically leaves the room when the component
+is unmounted.
 
 - `initialPresence` - The initial Presence to use for the User currently
   entering the Room. Presence data belongs to the current User and is readable
