@@ -210,12 +210,14 @@
     color: var(--lb-foreground-tertiary);
   }
 
-  &:where([data-variant="default"]):not(
-      :where(
-          :enabled:hover,
-          :enabled:focus-visible,
-          [aria-expanded="true"],
-          [aria-selected="true"]
+  &:where(
+      [data-variant="default"]:not(
+          :is(
+              :enabled:hover,
+              :enabled:focus-visible,
+              [aria-expanded="true"],
+              [aria-selected="true"]
+            )
         )
     ) {
     background: transparent;
@@ -575,13 +577,13 @@
   }
 
   // Progressive enhancement: Merge adjacent inline code elements
-  span:where(:has(code)) + :where(span) :where(code) {
+  span:where(:has(code) + span code) {
     border-start-start-radius: 0;
     border-end-start-radius: 0;
     padding-inline-start: 0;
   }
 
-  span:where(:has(code):has(+ span code)) :where(code) {
+  span:where(:has(code):has(+ span code) code) {
     border-start-end-radius: 0;
     border-end-end-radius: 0;
     padding-inline-end: 0;
@@ -595,8 +597,7 @@
   font-weight: 500;
 }
 
-.lb-comment-link,
-.lb-composer-link {
+:is(.lb-comment-link, .lb-composer-link) {
   color: var(--lb-foreground);
   outline: none;
   font-weight: 500;
@@ -648,7 +649,7 @@
 }
 
 @supports not selector(:has(*)) {
-  .lb-composer:not(:where(:focus-within)) {
+  .lb-composer:where(:not(:focus-within)) {
     :where(.lb-button[data-variant="primary"]) {
       --lb-button-background: var(--lb-foreground-subtle);
 
@@ -719,7 +720,7 @@
   }
 }
 
-.lb-composer:not(:where([data-collapsed])) {
+.lb-composer:where(:not([data-collapsed])) {
   :where(.lb-composer-editor) {
     padding-block-end: calc(0.875 * var(--lb-spacing));
   }
@@ -900,7 +901,7 @@
   color: var(--lb-foreground);
 
   @media (hover: hover) {
-    &:where(.lb-thread\:show-actions-hover) :where(:is(:hover, :focus-within)) {
+    &:where(.lb-thread\:show-actions-hover :is(:hover, :focus-within)) {
       :where(.lb-thread-actions) {
         opacity: 1;
       }
@@ -1071,12 +1072,10 @@
 }
 
 @media (prefers-reduced-motion) {
-  .lb-dropdown:not(:where([data-state="closed"])),
-  .lb-emoji-picker:not(:where([data-state="closed"])),
-  .lb-quick-emoji-picker:not(:where([data-state="closed"])),
-  .lb-tooltip:where([data-state="delayed-open"]):not(
-      :where([data-state="closed"])
-    ),
+  .lb-dropdown:where(:not([data-state="closed"])),
+  .lb-emoji-picker:where(:not([data-state="closed"])),
+  .lb-quick-emoji-picker:where(:not([data-state="closed"])),
+  .lb-tooltip:where([data-state="delayed-open"]:not([data-state="closed"])),
   .lb-composer-suggestions {
     animation-name: lb-animation-appear;
   }
