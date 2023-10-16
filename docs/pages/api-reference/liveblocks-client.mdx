@@ -749,13 +749,39 @@ Get the storage status.
 const status = room.getStorageStatus();
 ```
 
+### Room.connect
+
+Connect the local room instance to the Liveblocks server. Does nothing if the
+room is already connecting, reconnecting or connected.
+
+```ts
+room.connect();
+```
+
+We don’t recommend using this API directly.
+
 ### Room.reconnect
 
-Close the room connection and try to reconnect.
+Reconnect the local room instance to the Liveblocks server, using a new
+WebSocket connection.
 
 ```ts
 room.reconnect();
 ```
+
+### Room.disconnect
+
+Disconnect the local room instance from the Liveblocks server. The room instance
+will remain functional (for example, it will still allow local presence or
+storage mutations), but since there is no connectivity any longer, those changed
+will not be persisted or synchronized until the room instance is reconnected to
+the server again.
+
+```ts
+room.disconnect();
+```
+
+We don’t recommend using this API directly.
 
 ## Storage
 
