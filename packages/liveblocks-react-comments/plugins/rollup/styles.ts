@@ -1,11 +1,12 @@
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+
 import fs from "fs";
+import { createRequire } from "module";
 import path from "path";
 import postcss from "postcss";
-import combineDuplicatedSelectors from "postcss-combine-duplicated-selectors";
-import lightningcss from "postcss-lightningcss";
-import sortMediaQueries from "postcss-sort-media-queries";
 import type { Plugin } from "rollup";
-import * as sass from "sass";
+
+import { colorMixScale } from "../../src/styles/color-mix-scale";
 
 interface File {
   entry: string;
@@ -16,6 +17,8 @@ interface Options {
   files: File[];
 }
 
+const require = createRequire(import.meta.url);
+
 function createFile(file: string, data: string | NodeJS.ArrayBufferView) {
   fs.mkdirSync(path.dirname(file), { recursive: true });
   fs.writeFileSync(file, data);
@@ -24,32 +27,37 @@ function createFile(file: string, data: string | NodeJS.ArrayBufferView) {
 export function styles({ files }: Options): Plugin {
   return {
     name: "styles",
-    buildStart() {
+    buildStart: async () => {
       const processor = postcss([
-        sortMediaQueries(),
-        combineDuplicatedSelectors(),
-        lightningcss({ browsers: "last 2 versions and not dead" }),
+        require("postcss-advanced-variables"),
+        require("postcss-functions")({
+          functions: {
+            "color-mix-scale": colorMixScale,
+          },
+        }),
+        require("postcss-import"),
+        require("postcss-nesting"),
+        require("postcss-combine-duplicated-selectors"),
+        require("postcss-sort-media-queries"),
+        require("postcss-lightningcss"),
       ]);
+
       for (const file of files) {
         console.log(`🎨 Building ${file.entry}…`);
 
         const entry = path.resolve(file.entry);
         const destination = path.resolve(file.destination);
 
-        // Compiling Sass to CSS
-        const { css: sassCss, sourceMap: sassSourceMap } = sass.compile(entry, {
-          sourceMap: true,
-        });
-
-        // Optimizing CSS
-        const { css, map } = processor.process(sassCss, {
-          from: entry,
-          to: destination,
-          map: {
-            prev: JSON.stringify(sassSourceMap),
-            inline: false,
-          },
-        });
+        const { css, map } = await processor.process(
+          fs.readFileSync(entry, "utf8"),
+          {
+            from: entry,
+            to: destination,
+            map: {
+              inline: false,
+            },
+          }
+        );
 
         createFile(destination, css);
         createFile(`${destination}.map`, map.toString());

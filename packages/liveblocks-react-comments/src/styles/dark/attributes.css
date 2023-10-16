@@ -1,6 +1,6 @@
-@import "./index";
-
 /* stylelint-disable selector-class-pattern */
+
+@import "./index";
 
 :is(.dark, [data-theme="dark"], [data-dark]) {
   @include dark-variables;

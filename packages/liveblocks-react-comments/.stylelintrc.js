@@ -1,14 +1,37 @@
 module.exports = {
   defaultSeverity: "warning",
-  extends: ["stylelint-config-standard-scss"],
+  extends: ["stylelint-config-standard"],
   plugins: ["stylelint-order"],
   rules: {
     "selector-class-pattern": /^lb-[a-z-:]+$/,
     "keyframes-name-pattern": /^lb-[a-z-:]+$/,
     "selector-max-specificity": "0,1,1",
     "keyframe-block-no-duplicate-selectors": null,
-    "scss/operator-no-newline-after": null,
-    "scss/dollar-variable-colon-space-after": null,
+    "import-notation": "string",
+    "at-rule-no-unknown": [
+      true,
+      {
+        ignoreAtRules: [
+          // Custom at-rules from postcss-advanced-variables
+          "mixin",
+          "include",
+          "content",
+          "if",
+          "else",
+          "for",
+          "each",
+        ],
+      },
+    ],
+    "function-no-unknown": [
+      true,
+      {
+        ignoreFunctions: [
+          // Custom functions added via postcss-functions
+          "color-mix-scale",
+        ],
+      },
+    ],
     "order/order": [
       ["dollar-variables", "custom-properties", "declarations", "rules"],
     ],

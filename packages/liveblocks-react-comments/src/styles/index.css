@@ -2,7 +2,9 @@
 @import "./constants";
 
 :root {
-  // Basic
+  /** 
+   * Basic
+   */
   --lb-radius: 0.5em;
   --lb-spacing: 1em;
   --lb-accent: #17f;
@@ -10,15 +12,17 @@
   --lb-background: #fff;
   --lb-foreground: #111;
 
-  // Advanced
+  /** 
+   * Advanced
+   */
   --lb-icon-size: 20px;
   --lb-icon-weight: 1.5px;
   --lb-avatar-radius: 50%;
   --lb-button-radius: calc(0.75 * var(--lb-radius));
   --lb-transition-duration: 0.1s;
   --lb-transition-easing: cubic-bezier(0.4, 0, 0.2, 1);
-  --lb-elevation-shadow: #{$lb-elevation-shadow};
-  --lb-tooltip-shadow: #{$lb-tooltip-shadow};
+  --lb-elevation-shadow: $lb-elevation-shadow;
+  --lb-tooltip-shadow: $lb-tooltip-shadow;
   --lb-elevation-background: var(--lb-background);
   --lb-elevation-foreground: var(--lb-foreground);
   --lb-tooltip-background: #222;
@@ -28,103 +32,105 @@
   --lb-elevation-foreground-contrast: 8%;
   --lb-tooltip-foreground-contrast: 10%;
 
-  // Colors
-  --lb-accent-subtle: #{color-scale(
-      var(--lb-background),
-      var(--lb-accent),
-      var(--lb-accent-contrast),
-      100
-    )};
-  --lb-accent-moderate: #{color-scale(
-      var(--lb-background),
-      var(--lb-accent),
-      var(--lb-accent-contrast),
-      400
-    )};
-  --lb-accent-tertiary: #{color-scale(
-      var(--lb-background),
-      var(--lb-accent),
-      var(--lb-accent-contrast),
-      600
-    )};
-  --lb-accent-secondary: #{color-scale(
-      var(--lb-background),
-      var(--lb-accent),
-      var(--lb-accent-contrast),
-      800
-    )};
-  --lb-foreground-subtle: #{color-scale(
-      var(--lb-background),
-      var(--lb-foreground),
-      var(--lb-foreground-contrast),
-      100
-    )};
-  --lb-foreground-moderate: #{color-scale(
-      var(--lb-background),
-      var(--lb-foreground),
-      var(--lb-foreground-contrast),
-      400
-    )};
-  --lb-foreground-tertiary: #{color-scale(
-      var(--lb-background),
-      var(--lb-foreground),
-      var(--lb-foreground-contrast),
-      600
-    )};
-  --lb-foreground-secondary: #{color-scale(
-      var(--lb-background),
-      var(--lb-foreground),
-      var(--lb-foreground-contrast),
-      800
-    )};
-  --lb-elevation-foreground-subtle: #{color-scale(
-      var(--lb-elevation-background),
-      var(--lb-elevation-foreground),
-      var(--lb-elevation-foreground-contrast),
-      100
-    )};
-  --lb-elevation-foreground-moderate: #{color-scale(
-      var(--lb-elevation-background),
-      var(--lb-elevation-foreground),
-      var(--lb-elevation-foreground-contrast),
-      400
-    )};
-  --lb-elevation-foreground-tertiary: #{color-scale(
-      var(--lb-elevation-background),
-      var(--lb-elevation-foreground),
-      var(--lb-elevation-foreground-contrast),
-      600
-    )};
-  --lb-elevation-foreground-secondary: #{color-scale(
-      var(--lb-elevation-background),
-      var(--lb-elevation-foreground),
-      var(--lb-elevation-foreground-contrast),
-      800
-    )};
-  --lb-tooltip-foreground-subtle: #{color-scale(
-      var(--lb-tooltip-background),
-      var(--lb-tooltip-foreground),
-      var(--lb-tooltip-foreground-contrast),
-      100
-    )};
-  --lb-tooltip-foreground-moderate: #{color-scale(
-      var(--lb-tooltip-background),
-      var(--lb-tooltip-foreground),
-      var(--lb-tooltip-foreground-contrast),
-      400
-    )};
-  --lb-tooltip-foreground-tertiary: #{color-scale(
-      var(--lb-tooltip-background),
-      var(--lb-tooltip-foreground),
-      var(--lb-tooltip-foreground-contrast),
-      600
-    )};
-  --lb-tooltip-foreground-secondary: #{color-scale(
-      var(--lb-tooltip-background),
-      var(--lb-tooltip-foreground),
-      var(--lb-tooltip-foreground-contrast),
-      800
-    )};
+  /** 
+   * Colors
+   */
+  --lb-accent-subtle: color-mix-scale(
+    var(--lb-background),
+    var(--lb-accent),
+    var(--lb-accent-contrast),
+    100
+  );
+  --lb-accent-moderate: color-mix-scale(
+    var(--lb-background),
+    var(--lb-accent),
+    var(--lb-accent-contrast),
+    400
+  );
+  --lb-accent-tertiary: color-mix-scale(
+    var(--lb-background),
+    var(--lb-accent),
+    var(--lb-accent-contrast),
+    600
+  );
+  --lb-accent-secondary: color-mix-scale(
+    var(--lb-background),
+    var(--lb-accent),
+    var(--lb-accent-contrast),
+    800
+  );
+  --lb-foreground-subtle: color-mix-scale(
+    var(--lb-background),
+    var(--lb-foreground),
+    var(--lb-foreground-contrast),
+    100
+  );
+  --lb-foreground-moderate: color-mix-scale(
+    var(--lb-background),
+    var(--lb-foreground),
+    var(--lb-foreground-contrast),
+    400
+  );
+  --lb-foreground-tertiary: color-mix-scale(
+    var(--lb-background),
+    var(--lb-foreground),
+    var(--lb-foreground-contrast),
+    600
+  );
+  --lb-foreground-secondary: color-mix-scale(
+    var(--lb-background),
+    var(--lb-foreground),
+    var(--lb-foreground-contrast),
+    800
+  );
+  --lb-elevation-foreground-subtle: color-mix-scale(
+    var(--lb-elevation-background),
+    var(--lb-elevation-foreground),
+    var(--lb-elevation-foreground-contrast),
+    100
+  );
+  --lb-elevation-foreground-moderate: color-mix-scale(
+    var(--lb-elevation-background),
+    var(--lb-elevation-foreground),
+    var(--lb-elevation-foreground-contrast),
+    400
+  );
+  --lb-elevation-foreground-tertiary: color-mix-scale(
+    var(--lb-elevation-background),
+    var(--lb-elevation-foreground),
+    var(--lb-elevation-foreground-contrast),
+    600
+  );
+  --lb-elevation-foreground-secondary: color-mix-scale(
+    var(--lb-elevation-background),
+    var(--lb-elevation-foreground),
+    var(--lb-elevation-foreground-contrast),
+    800
+  );
+  --lb-tooltip-foreground-subtle: color-mix-scale(
+    var(--lb-tooltip-background),
+    var(--lb-tooltip-foreground),
+    var(--lb-tooltip-foreground-contrast),
+    100
+  );
+  --lb-tooltip-foreground-moderate: color-mix-scale(
+    var(--lb-tooltip-background),
+    var(--lb-tooltip-foreground),
+    var(--lb-tooltip-foreground-contrast),
+    400
+  );
+  --lb-tooltip-foreground-tertiary: color-mix-scale(
+    var(--lb-tooltip-background),
+    var(--lb-tooltip-foreground),
+    var(--lb-tooltip-foreground-contrast),
+    600
+  );
+  --lb-tooltip-foreground-secondary: color-mix-scale(
+    var(--lb-tooltip-background),
+    var(--lb-tooltip-foreground),
+    var(--lb-tooltip-foreground-contrast),
+    800
+  );
 }
 
 .lb-root {
@@ -141,9 +147,9 @@
   }
 }
 
-//  ┌──────────────────────────────────────┐
-//  │                 Icon                 │
-//  └──────────────────────────────────────┘
+/*************************************
+ *               Icon                *
+ *************************************/
 
 .lb-icon {
   --lb-icon-background: var(--lb-background);
@@ -153,9 +159,9 @@
   stroke-width: var(--lb-icon-weight);
 }
 
-//  ┌──────────────────────────────────────┐
-//  │                Button                │
-//  └──────────────────────────────────────┘
+/*************************************
+ *              Button               *
+ *************************************/
 
 .lb-button {
   --lb-button-background: var(--lb-background);
@@ -254,9 +260,9 @@
   --lb-icon-background: var(--lb-button-background);
 }
 
-//  ┌──────────────────────────────────────┐
-//  │               Dropdown               │
-//  └──────────────────────────────────────┘
+/*************************************
+ *             Dropdown              *
+ *************************************/
 
 .lb-dropdown-item-icon {
   color: var(--lb-elevation-foreground-moderate);
@@ -273,9 +279,9 @@
   }
 }
 
-//  ┌──────────────────────────────────────┐
-//  │         Composer suggestions         │
-//  └──────────────────────────────────────┘
+/*************************************
+ *       Composer suggestions        *
+ *************************************/
 
 .lb-composer-suggestions-list {
   margin: 0;
@@ -287,9 +293,9 @@
   scroll-margin-block: $lb-elevation-list-padding;
 }
 
-//  ┌──────────────────────────────────────┐
-//  │     Composer mention suggestions     │
-//  └──────────────────────────────────────┘
+/*************************************
+ *   Composer mention suggestions    *
+ *************************************/
 
 .lb-composer-mention-suggestions {
   --lb-composer-mention-suggestion-avatar-size: 1.25rem;
@@ -308,9 +314,9 @@
   margin-inline-end: calc(0.5 * var(--lb-spacing));
 }
 
-//  ┌──────────────────────────────────────┐
-//  │            Emoji pickers             │
-//  └──────────────────────────────────────┘
+/*************************************
+ *           Emoji pickers           *
+ *************************************/
 
 .lb-emoji-picker-emoji,
 .lb-quick-emoji-picker-emoji {
@@ -324,14 +330,14 @@
   text-align: center;
 }
 
-//  ┌──────────────────────────────────────┐
-//  │             Emoji picker             │
-//  └──────────────────────────────────────┘
+/*************************************
+ *           Emoji picker            *
+ *************************************/
 
 .lb-emoji-picker {
-  --lb-emoji-picker-padding: #{$lb-emoji-picker-padding};
+  --lb-emoji-picker-padding: $lb-emoji-picker-padding;
   --lb-emoji-picker-offset-padding: calc(
-    #{$lb-emoji-picker-padding} + 0.375 * var(--lb-spacing)
+    $lb-emoji-picker-padding + 0.375 * var(--lb-spacing)
   );
 
   display: flex;
@@ -437,26 +443,26 @@
 }
 
 .lb-emoji-picker-emoji {
-  border-radius: calc(var(--lb-radius) - 0.75 * #{$lb-emoji-picker-padding});
+  border-radius: calc(var(--lb-radius) - 0.75 * $lb-emoji-picker-padding);
 }
 
-//  ┌──────────────────────────────────────┐
-//  │          Quick emoji picker          │
-//  └──────────────────────────────────────┘
+/*************************************
+ *        Quick emoji picker         *
+ *************************************/
 
 .lb-quick-emoji-picker {
   display: flex;
 }
 
-//  ┌──────────────────────────────────────┐
-//  │               Tooltip                │
-//  └──────────────────────────────────────┘
+/*************************************
+ *             Tooltip               *
+ *************************************/
 
 .lb-tooltip {
   display: flex;
   align-items: center;
   min-height: calc(
-    #{$lb-tooltip-shortcut-height} + 2 * #{$lb-tooltip-additional-padding}
+    $lb-tooltip-shortcut-height + 2 * $lb-tooltip-additional-padding
   );
   padding-inline: $lb-tooltip-horizontal-padding;
   border-radius: var(--lb-radius);
@@ -471,7 +477,7 @@
 .lb-tooltip\:multiline {
   justify-content: center;
   padding-block: calc(
-    #{$lb-tooltip-vertical-padding} * (1 / #{$lb-tooltip-line-height})
+    $lb-tooltip-vertical-padding * (1 / $lb-tooltip-line-height)
   );
   line-height: $lb-tooltip-line-height;
   text-align: center;
@@ -485,7 +491,7 @@
   height: $lb-tooltip-shortcut-height;
   padding-inline: calc(0.25 * var(--lb-spacing));
   border-radius: calc(
-    var(--lb-radius) - 0.625 * #{$lb-tooltip-additional-padding}
+    var(--lb-radius) - 0.625 * $lb-tooltip-additional-padding
   );
   background: var(--lb-tooltip-foreground-subtle);
   color: var(--lb-tooltip-foreground-tertiary);
@@ -494,7 +500,7 @@
   text-transform: uppercase;
   margin-inline-start: $lb-tooltip-horizontal-padding;
   margin-inline-end: calc(
-    -1 * #{$lb-tooltip-horizontal-padding} + #{$lb-tooltip-additional-padding}
+    -1 * $lb-tooltip-horizontal-padding + $lb-tooltip-additional-padding
   );
 
   :where(abbr) {
@@ -502,9 +508,9 @@
   }
 }
 
-//  ┌──────────────────────────────────────┐
-//  │                Avatar                │
-//  └──────────────────────────────────────┘
+/*************************************
+ *              Avatar               *
+ *************************************/
 
 .lb-avatar {
   position: relative;
@@ -537,15 +543,17 @@
   font-size: 35cqw;
   white-space: nowrap;
 
-  // Progressive enhancement: Only show the fallback when container queries are supported
+  /**
+   * Progressive enhancement: Only show the fallback when container queries are supported
+   */
   @supports not (container-type: inline-size) {
     display: none;
   }
 }
 
-//  ┌──────────────────────────────────────┐
-//  │                 User                 │
-//  └──────────────────────────────────────┘
+/*************************************
+ *               User                *
+ *************************************/
 
 .lb-user:where([data-loading]) {
   &::before {
@@ -561,17 +569,17 @@
   }
 }
 
-//  ┌──────────────────────────────────────┐
-//  │               Loading                │
-//  └──────────────────────────────────────┘
+/*************************************
+ *              Loading              *
+ *************************************/
 
 :is(.lb-avatar, .lb-user):where([data-loading]) {
   animation: lb-animation-shimmer 8s linear infinite;
 }
 
-//  ┌──────────────────────────────────────┐
-//  │                 Body                 │
-//  └──────────────────────────────────────┘
+/*************************************
+ *               Body                *
+ *************************************/
 
 :is(.lb-comment-body, .lb-composer-editor) {
   color: var(--lb-foreground-secondary);
@@ -602,7 +610,9 @@
     line-height: 1;
   }
 
-  // Progressive enhancement: Merge adjacent inline code elements
+  /**
+   * Progressive enhancement: Merge adjacent inline code elements
+   */
   :where(span:has(code) + span code) {
     border-start-start-radius: 0;
     border-end-start-radius: 0;
@@ -646,9 +656,9 @@
   background: var(--lb-accent-subtle);
 }
 
-//  ┌──────────────────────────────────────┐
-//  │               Composer               │
-//  └──────────────────────────────────────┘
+/*************************************
+ *             Composer              *
+ *************************************/
 
 .lb-composer {
   background: var(--lb-background);
@@ -659,7 +669,9 @@
   margin: 0;
 }
 
-// Progressive enhancement: Use :has instead of :focus-within to target the editor specifically
+/**
+ * Progressive enhancement: Use :has instead of :focus-within to target the editor specifically
+ */
 @supports selector(:has(*)) {
   .lb-composer:where(:has(.lb-composer-editor:not(:focus-visible))) {
     :where(.lb-button[data-variant="primary"]) {
@@ -717,7 +729,7 @@
   display: flex;
   gap: calc(0.75 * var(--lb-spacing));
   align-items: center;
-  height: calc(#{$lb-button-size} + var(--lb-spacing));
+  height: calc($lb-button-size + var(--lb-spacing));
   padding: 0 var(--lb-spacing) var(--lb-spacing);
 }
 
@@ -744,7 +756,7 @@
   }
 
   :where(svg) {
-    height: calc(0.75 * #{$lb-button-size});
+    height: calc(0.75 * $lb-button-size);
   }
 }
 
@@ -754,12 +766,12 @@
   }
 }
 
-//  ┌──────────────────────────────────────┐
-//  │               Comment                │
-//  └──────────────────────────────────────┘
+/*************************************
+ *              Comment              *
+ *************************************/
 
 .lb-comment {
-  --lb-comment-avatar-size: #{$lb-button-size};
+  --lb-comment-avatar-size: $lb-button-size;
 
   position: relative;
   padding: var(--lb-spacing);
@@ -842,7 +854,9 @@
 }
 
 .lb-comment-body {
-  // Prevent empty lines from collapsing
+  /**
+   * Prevent empty lines from collapsing
+   */
   :where(p span:only-child:empty::before) {
     content: "\FEFF";
     user-select: none;
@@ -924,9 +938,9 @@
   }
 }
 
-//  ┌──────────────────────────────────────┐
-//  │                Thread                │
-//  └──────────────────────────────────────┘
+/*************************************
+ *              Thread               *
+ *************************************/
 
 .lb-thread {
   background: var(--lb-background);
@@ -990,9 +1004,9 @@
   }
 }
 
-//  ┌──────────────────────────────────────┐
-//  │              Elevation               │
-//  └──────────────────────────────────────┘
+/*************************************
+ *             Elevation             *
+ *************************************/
 
 .lb-elevation {
   position: relative;
@@ -1012,9 +1026,9 @@
   }
 }
 
-//  ┌──────────────────────────────────────┐
-//  │           Elevation lists            │
-//  └──────────────────────────────────────┘
+/*************************************
+ *          Elevation lists          *
+ *************************************/
 
 .lb-dropdown,
 .lb-composer-suggestions,
@@ -1034,7 +1048,7 @@
 .lb-composer-suggestions-list-item,
 .lb-emoji-picker-emoji,
 .lb-quick-emoji-picker-emoji {
-  border-radius: calc(var(--lb-radius) - 0.75 * #{$lb-elevation-list-padding});
+  border-radius: calc(var(--lb-radius) - 0.75 * $lb-elevation-list-padding);
   color: var(--lb-elevation-foreground-secondary);
   outline: none;
   cursor: pointer;
@@ -1055,7 +1069,9 @@
   }
 }
 
-// TODO: Unify with above when QuickEmojiPicker uses @radix-ui/react-dropdown-menu
+/**
+ * TODO: Unify with above when QuickEmojiPicker uses @radix-ui/react-dropdown-menu
+ */
 .lb-quick-emoji-picker-emoji {
   &:where(:enabled:hover, :enabled:focus-visible) {
     background: var(--lb-elevation-foreground-subtle);
@@ -1063,9 +1079,9 @@
   }
 }
 
-//  ┌──────────────────────────────────────┐
-//  │               Floating               │
-//  └──────────────────────────────────────┘
+/*************************************
+ *             Floating              *
+ *************************************/
 
 .lb-dropdown,
 .lb-composer-suggestions,
@@ -1098,7 +1114,9 @@
   }
 }
 
-// TODO: Support exit animations like Radix' Dropdown and Tooltip with data-state="closed"
+/**
+ * TODO: Support exit animations like Radix' Dropdown and Tooltip with data-state="closed"
+ */
 .lb-composer-suggestions {
   &:where([data-side="top"]) {
     animation-name: lb-animation-slide-up;
@@ -1119,9 +1137,9 @@
   }
 }
 
-//  ┌──────────────────────────────────────┐
-//  │              Animations              │
-//  └──────────────────────────────────────┘
+/*************************************
+ *            Animations             *
+ *************************************/
 
 @keyframes lb-animation-slide-down {
   from {

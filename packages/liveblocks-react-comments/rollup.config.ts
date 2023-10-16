@@ -57,15 +57,15 @@ const configs: RollupOptions[] = [
       styles({
         files: [
           {
-            entry: `${SRC_DIR}/styles/index.scss`,
+            entry: `${SRC_DIR}/styles/index.css`,
             destination: "styles.css",
           },
           {
-            entry: `${SRC_DIR}/styles/dark/media-query.scss`,
+            entry: `${SRC_DIR}/styles/dark/media-query.css`,
             destination: "styles/dark/media-query.css",
           },
           {
-            entry: `${SRC_DIR}/styles/dark/attributes.scss`,
+            entry: `${SRC_DIR}/styles/dark/attributes.css`,
             destination: "styles/dark/attributes.css",
           },
         ],
