@@ -138,6 +138,7 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 
+  &,
   *,
   ::before,
   ::after {
@@ -169,6 +170,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  box-sizing: inherit;
   padding: calc(0.25 * var(--lb-spacing));
   border-radius: var(--lb-button-radius);
   background: var(--lb-button-background);
@@ -323,6 +325,7 @@
   justify-content: center;
   align-items: center;
   overflow: hidden;
+  box-sizing: inherit;
   aspect-ratio: 1;
   padding: calc(0.375 * var(--lb-spacing));
   text-align: center;
@@ -357,6 +360,7 @@
 
 .lb-emoji-picker-search {
   all: unset;
+  box-sizing: inherit;
   width: 100%;
   padding: var(--lb-emoji-picker-offset-padding);
   background: transparent;
@@ -867,6 +871,7 @@
 
 .lb-comment-reaction {
   gap: calc(0.375 * var(--lb-spacing));
+  height: $lb-button-size;
   padding-inline: calc(0.575 * var(--lb-spacing));
   border-radius: $lb-radius-full;
 
