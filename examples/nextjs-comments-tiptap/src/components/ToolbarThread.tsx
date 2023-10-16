@@ -1,11 +1,11 @@
 "use client";
 
+import { useCallback, useRef } from "react";
 import { Editor } from "@tiptap/react";
-import { Button } from "@/primitives/Button";
-import styles from "./Toolbar.module.css";
-import { CommentIcon } from "@/icons";
-import { useCallback, useEffect, useRef } from "react";
 import { nanoid } from "nanoid";
+import { Button } from "@/components/Button";
+import { CommentIcon } from "@/icons";
+import styles from "./Toolbar.module.css";
 
 type Props = {
   editor: Editor;

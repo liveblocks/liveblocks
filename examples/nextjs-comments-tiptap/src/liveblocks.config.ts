@@ -1,4 +1,4 @@
-import { createClient } from "@liveblocks/client";
+import { createClient, ThreadData } from "@liveblocks/client";
 import { createRoomContext } from "@liveblocks/react";
 
 const client = createClient({
@@ -42,10 +42,12 @@ type RoomEvent = {
   // ...
 };
 
-export type ThreadMetadata = {
+type ThreadMetadata = {
   resolved: boolean;
   highlightId: string;
 };
+
+export type CustomThreadData = ThreadData<ThreadMetadata>;
 
 export const {
   suspense: {

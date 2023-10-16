@@ -9,14 +9,14 @@ import StarterKit, { StarterKitOptions } from "@tiptap/starter-kit";
 import { EditorView } from "prosemirror-view";
 import { useEffect, useState } from "react";
 import * as Y from "yjs";
-import { useRoom, useSelf } from "@/liveblocks.config";
-import { DocumentSpinner } from "@/primitives/Spinner";
-import { SelectionMenu } from "./SelectionMenu";
-import styles from "./TextEditor.module.css";
 import { Avatars } from "@/components/Avatars";
-import { LiveblocksCommentsHighlight } from "@/comment-highlight";
+import { SelectionMenu } from "@/components/SelectionMenu";
+import { DocumentSpinner } from "@/components/Spinner";
 import { ThreadList } from "@/components/ThreadList";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { useRoom, useSelf } from "@/liveblocks.config";
+import { LiveblocksCommentsHighlight } from "@/comment-highlight";
+import styles from "./TextEditor.module.css";
 
 export function TextEditor() {
   return (
@@ -96,9 +96,6 @@ function TiptapEditor({ doc, provider }: EditorProps) {
       }),
     ],
   });
-
-  // Using this to keep track of which mark has been clicked on
-  // useCommentHighlights(editor);
 
   return (
     <div className={styles.container}>

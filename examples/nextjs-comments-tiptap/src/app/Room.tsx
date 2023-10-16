@@ -4,7 +4,7 @@ import { ReactNode, useMemo } from "react";
 import { RoomProvider } from "@/liveblocks.config";
 import { useSearchParams } from "next/navigation";
 import { ClientSideSuspense } from "@liveblocks/react";
-import { DocumentSpinner } from "@/primitives/Spinner";
+import { DocumentSpinner } from "@/components/Spinner";
 
 export function Room({ children }: { children: ReactNode }) {
   const roomId = useOverrideRoomId("nextjs-comments-tiptap");

@@ -129,16 +129,6 @@ export const LiveblocksCommentsHighlight = Mark.create<
           };
         },
       },
-
-      // If highlight currently active
-      // selected: {
-      //   default: "false",
-      //   parseHTML: (element) =>
-      //     element.getAttribute("data-selected") === "true",
-      //   renderHTML: (attributes) => ({
-      //     "data-selected": attributes.dataSelected,
-      //   }),
-      // },
     };
   },
 
@@ -202,80 +192,9 @@ export const LiveblocksCommentsHighlight = Mark.create<
       this.editor.storage.commentHighlight.activeHighlightId = null;
     };
 
-    const handleHighlightEvent = (event: HighlightEvent) => {
-      console.log(event.detail.highlightId === highlightId);
-      elem.dataset.selected =
-        event.detail.highlightId === highlightId ? "true" : "false";
-    };
-
-    elem.addEventListener("pointerenter", handlePointerEnter);
-    elem.addEventListener("pointerleave", handlePointerLeave);
-    // document.documentElement.addEventListener(
-    //   HIGHLIGHT_EVENT_NAME,
-    //   handleHighlightEvent as any
-    // );
-
-    // Set data-selected when last click occurs inside mark
-    // TODO send custom event so comments know they're selected
-    // const handleClick = (event: MouseEvent) => {
-    //   const highlightId = HTMLAttributes?.["data-highlight-id"] || null;
-    //
-    //   const targetIsCurrentMark =
-    //     event.target instanceof HTMLElement
-    //       ? event.target === elem || elem.contains(event.target)
-    //       : false;
-    //   elem.dataset.selected = targetIsCurrentMark ? "true" : "false";
-    //
-    //   if (!this.editor) {
-    //     return;
-    //   }
-    //
-    //   if (targetIsCurrentMark) {
-    //     highlightEvent(highlightId);
-    //     this.editor.storage.commentHighlight.activeHighlightId = highlightId;
-    //     return;
-    //   }
-    //
-    //   if (
-    //     this.editor.storage.commentHighlight.activeHighlightId === highlightId
-    //   ) {
-    //     highlightEvent(null);
-    //     this.editor.storage.commentHighlight.activeHighlightId = null;
-    //   }
-    // };
-    //
-    // document.documentElement.addEventListener("click", handleClick);
+    elem.onpointerenter = handlePointerEnter;
+    elem.onpointerleave = handlePointerLeave;
 
     return elem;
   },
 });
-
-type Props = {
-  event: MouseEvent;
-  editor: Editor;
-  elem: HTMLElement;
-  HTMLAttributes: Record<string, any>;
-};
-
-function handleClickNew({ event, editor, elem, HTMLAttributes }: Props) {
-  const highlightId = HTMLAttributes["data-highlight-id"];
-
-  const targetIsCurrentMark =
-    event.target instanceof HTMLElement
-      ? event.target === elem || elem.contains(event.target)
-      : false;
-
-  if (targetIsCurrentMark) {
-    elem.dataset.selected = "true";
-    if (editor) {
-      highlightEvent(highlightId);
-      editor.storage.commentHighlight.activeHighlightId = highlightId;
-    }
-    return;
-  }
-
-  elem.dataset.selected = "false";
-  if (editor) {
-    editor.storage.commentHighlight.activeHighlightId = null;
-  }
-}

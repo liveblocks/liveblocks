@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/primitives/Button";
+import { Button } from "@/components/Button";
 import { MoonIcon, SunIcon } from "@/icons";
 import styles from "./Toolbar.module.css";
 

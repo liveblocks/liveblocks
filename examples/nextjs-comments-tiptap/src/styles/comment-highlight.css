@@ -7,6 +7,7 @@
   position: relative;
   background: transparent;
   isolation: isolate;
+  color: var(--color-text);
 }
 
 .comment-highlight::before {
@@ -34,8 +35,4 @@
 .comment-highlight[data-selected="true"]{
   --comment-highlight-color: var(--comment-highlight-selected);
   --comment-border-color: var(--comment-highlight-selected-border);
-}
-
-[data-theme="dark"] .comment-highlight{
-  color: var(--color-text);
 }
