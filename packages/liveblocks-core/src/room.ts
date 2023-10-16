@@ -66,13 +66,23 @@ import { PKG_VERSION } from "./version";
 
 type TimeoutID = ReturnType<typeof setTimeout>;
 
-type CustomEvent<TRoomEvent extends Json> = {
+export type RoomEventMessage<
+  TPresence extends JsonObject,
+  TUserMeta extends BaseUserMeta,
+  TRoomEvent extends Json,
+> = {
   /**
    * The connection ID of the client that sent the event.
    * If this message was broadcast from the server (via the REST API), then
    * this value will be -1.
    */
   connectionId: number;
+  /**
+   * The User (from the others list) that sent the event.
+   * If this message was broadcast from the server (via the REST API), then
+   * this value will be null.
+   */
+  user: User<TPresence, TUserMeta> | null;
   event: TRoomEvent;
 };
 
@@ -94,7 +104,7 @@ type RoomEventCallbackMap<
   connection: Callback<LegacyConnectionStatus>; // Old/deprecated API
   status: Callback<Status>; // New/recommended API
   "lost-connection": Callback<LostConnectionEvent>;
-  event: Callback<CustomEvent<TRoomEvent>>;
+  event: Callback<RoomEventMessage<TPresence, TUserMeta, TRoomEvent>>;
   "my-presence": Callback<TPresence>;
   //
   // NOTE: OthersEventCallback is the only one not taking a Callback<T> shape,
@@ -287,7 +297,10 @@ type SubscribeFn<
    * });
    *
    */
-  (type: "event", listener: Callback<CustomEvent<TRoomEvent>>): () => void;
+  (
+    type: "event",
+    listener: Callback<RoomEventMessage<TPresence, TUserMeta, TRoomEvent>>
+  ): () => void;
 
   /**
    * Subscribe to errors thrown in the room.
@@ -573,7 +586,7 @@ export type Room<
     readonly status: Observable<Status>; // New/recommended API
     readonly lostConnection: Observable<LostConnectionEvent>;
 
-    readonly customEvent: Observable<{ connectionId: number; event: TRoomEvent; }>; // prettier-ignore
+    readonly customEvent: Observable<RoomEventMessage<TPresence, TUserMeta, TRoomEvent>>; // prettier-ignore
     readonly self: Observable<User<TPresence, TUserMeta>>;
     readonly myPresence: Observable<TPresence>;
     readonly others: Observable<{ others: readonly User<TPresence, TUserMeta>[]; event: OthersEvent<TPresence, TUserMeta>; }>; // prettier-ignore
@@ -674,9 +687,10 @@ type PrivateRoomAPI = {
   getSelf_forDevTools(): DevTools.UserTreeNode | null;
   getOthers_forDevTools(): readonly DevTools.UserTreeNode[];
 
-  send: {
-    explicitClose(event: IWebSocketCloseEvent): void; // NOTE: Also used in e2e test app!
-    implicitClose(): void; // NOTE: Also used in e2e test app!
+  // NOTE: These are only used in our e2e test app!
+  simulate: {
+    explicitClose(event: IWebSocketCloseEvent): void;
+    rawSend(data: string): void;
   };
 };
 
@@ -1124,7 +1138,8 @@ export function createRoom<
     status: makeEventSource<Status>(), // New/recommended API
     lostConnection: makeEventSource<LostConnectionEvent>(),
 
-    customEvent: makeEventSource<CustomEvent<TRoomEvent>>(),
+    customEvent:
+      makeEventSource<RoomEventMessage<TPresence, TUserMeta, TRoomEvent>>(),
     self: makeEventSource<User<TPresence, TUserMeta>>(),
     myPresence: makeEventSource<TPresence>(),
     others: makeEventSource<{
@@ -1769,8 +1784,14 @@ export function createRoom<
           }
 
           case ServerMsgCode.BROADCASTED_EVENT: {
+            const others = context.others.current;
             eventHub.customEvent.notify({
               connectionId: message.actor,
+              user:
+                message.actor < 0
+                  ? null
+                  : others.find((u) => u.connectionId === message.actor) ??
+                    null,
               event: message.event,
             });
             break;
@@ -1854,6 +1875,8 @@ export function createRoom<
 
           case ServerMsgCode.THREAD_CREATED:
           case ServerMsgCode.THREAD_METADATA_UPDATED:
+          case ServerMsgCode.COMMENT_REACTION_ADDED:
+          case ServerMsgCode.COMMENT_REACTION_REMOVED:
           case ServerMsgCode.COMMENT_CREATED:
           case ServerMsgCode.COMMENT_EDITED:
           case ServerMsgCode.COMMENT_DELETED: {
@@ -2254,10 +2277,10 @@ export function createRoom<
           others_forDevTools.current,
 
         // prettier-ignore
-        send: {
+        simulate: {
           // These exist only for our E2E testing app
           explicitClose: (event) => managedSocket._privateSendMachineEvent({ type: "EXPLICIT_SOCKET_CLOSE", event }),
-          implicitClose: () => managedSocket._privateSendMachineEvent({ type: "NAVIGATOR_OFFLINE" }),
+          rawSend: (data) => managedSocket.send(data),
         },
       },
 
@@ -2377,7 +2400,9 @@ function makeClassicSubscribeFn<
       switch (first) {
         case "event":
           return events.customEvent.subscribe(
-            callback as Callback<CustomEvent<TRoomEvent>>
+            callback as Callback<
+              RoomEventMessage<TPresence, TUserMeta, TRoomEvent>
+            >
           );
 
         case "my-presence":

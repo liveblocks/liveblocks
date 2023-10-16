@@ -14,7 +14,10 @@ const Portal = forwardRef<HTMLDivElement, ComponentPropsWithSlot<"div">>(
     const container = document?.body;
 
     return container
-      ? createPortal(<Component {...props} ref={forwardedRef} />, container)
+      ? createPortal(
+          <Component data-liveblocks-portal="" {...props} ref={forwardedRef} />,
+          container
+        )
       : null;
   }
 );

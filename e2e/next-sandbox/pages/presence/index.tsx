@@ -1,14 +1,17 @@
-import { Json, createRoomContext } from "@liveblocks/react";
+import type { Json } from "@liveblocks/react";
+import { createRoomContext } from "@liveblocks/react";
 import React from "react";
+
+import { getRoomFromUrl, Row, styles, useRenderCount } from "../../utils";
+import Button from "../../utils/Button";
 import createLiveblocksClient from "../../utils/createClient";
-import { genRoomId } from "../../utils";
 
 const client = createLiveblocksClient();
 
 type Presence = {
-  count?: number;
-  secondProp?: number;
-  thirdProp?: number;
+  foo?: number;
+  bar?: string;
+  qux?: number;
 };
 
 const {
@@ -27,21 +30,30 @@ const {
 export default function Home() {
   const [isVisible, setIsVisible] = React.useState(true);
 
-  let roomId = genRoomId("e2e-presence");
-  if (typeof window !== "undefined") {
-    const queryParam = window.location.search;
-    if (queryParam.split("room=").length > 1) {
-      roomId = queryParam.split("room=")[1];
-    }
-  }
+  const roomId = getRoomFromUrl();
   return (
     <>
-      <button id="leave-room" onClick={() => setIsVisible(false)}>
-        Leave
-      </button>
-      <button id="enter-room" onClick={() => setIsVisible(true)}>
-        Enter
-      </button>
+      <h3>
+        <a href="/">Home</a> › Presence (with Suspense)
+      </h3>
+
+      <div style={{ display: "flex", margin: "8px 0" }}>
+        <Button
+          id="leave-room"
+          enabled={isVisible}
+          onClick={() => setIsVisible(false)}
+        >
+          Leave
+        </Button>
+        <Button
+          id="enter-room"
+          enabled={!isVisible}
+          onClick={() => setIsVisible(true)}
+        >
+          Enter
+        </Button>
+      </div>
+
       {isVisible && (
         <RoomProvider id={roomId} initialPresence={{}}>
           <PresenceSandbox />
@@ -53,47 +65,62 @@ export default function Home() {
 }
 
 function PresenceSandbox() {
+  const renderCount = useRenderCount();
   const others = useOthers();
-  const [me, updateMyPresence] = useMyPresence();
+  const [myPresence, updateMyPresence] = useMyPresence();
+  const theirPresence = others[0]?.presence;
 
   return (
     <div>
-      <h1>Presence sandbox</h1>
-      <button
-        id="increment-button"
-        onClick={() => updateMyPresence({ count: me.count ? me.count + 1 : 1 })}
+      <Button
+        id="inc-foo"
+        onClick={() => updateMyPresence({ foo: (myPresence.foo ?? 0) + 1 })}
+        subtitle={'"foo"'}
       >
-        Increment
-      </button>
+        Inc
+      </Button>
 
-      <button
-        id="set-second-prop"
-        onClick={() => updateMyPresence({ secondProp: 1 })}
+      <Button
+        id="set-bar"
+        onClick={() => updateMyPresence({ bar: "hey" })}
+        subtitle={'"bar"'}
       >
-        Set second prop
-      </button>
+        Set
+      </Button>
 
-      <button
-        id="set-third-prop"
-        onClick={() => updateMyPresence({ thirdProp: 1 })}
+      <Button
+        id="set-qux"
+        onClick={() => updateMyPresence({ qux: 1337 })}
+        subtitle={'"qux"'}
       >
-        Set third prop
-      </button>
+        Set
+      </Button>
 
-      <h2>Current user</h2>
-      <div>
-        Count: <span id="me-count">{me.count}</span>
-        Second prop: <span id="me-count">{me.secondProp}</span>
-        Third prop: <span id="me-count">{me.thirdProp}</span>
-      </div>
+      <table style={styles.dataTable}>
+        <tbody>
+          <Row id="renderCount" name="Render count" value={renderCount} />
+        </tbody>
+      </table>
+
+      <h2>Presence</h2>
+      <table style={styles.dataTable}>
+        <tbody>
+          <Row id="myPresence" name="My presence" value={myPresence} />
+          <Row id="theirPresence" name="Their presence" value={theirPresence} />
+        </tbody>
+      </table>
 
       <h2>Others</h2>
-      <p id="othersCount">
-        {others.filter((o) => o.presence !== undefined).length}
-      </p>
-      <div id="others" style={{ whiteSpace: "pre" }}>
-        {JSON.stringify(others, null, 2)}
-      </div>
+      <table style={styles.dataTable}>
+        <tbody>
+          <Row
+            id="numOthers"
+            name="Others count"
+            value={others.filter((o) => o.presence !== undefined).length}
+          />
+          <Row id="others" name="Others" value={others} />
+        </tbody>
+      </table>
     </div>
   );
 }
@@ -108,18 +135,23 @@ function EventSandbox() {
 
   return (
     <div>
-      <h1>Event sandbox</h1>
-      <button
+      <h2>Event sandbox</h2>
+      <Button
         id="broadcast-emoji"
         onClick={() => broadcast({ type: "EMOJI", emoji: "🔥" })}
+        subtitle="🔥 emoji"
       >
-        Broadcast 🔥
-      </button>
-      <button id="broadcast-number" onClick={() => broadcast(42)}>
-        Broadcast 42
-      </button>
+        Broadcast
+      </Button>
+      <Button id="broadcast-number" onClick={() => broadcast(42)} subtitle="42">
+        Broadcast
+      </Button>
 
-      <pre id="events">{JSON.stringify(received, null, 2)}</pre>
+      <table style={styles.dataTable}>
+        <tbody>
+          <Row id="events" name="Events received" value={received} />
+        </tbody>
+      </table>
     </div>
   );
 }

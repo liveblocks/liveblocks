@@ -75,6 +75,7 @@ export { makePoller } from "./lib/Poller";
 export { asPos, makePosition } from "./lib/position";
 export type { Resolve } from "./lib/Resolve";
 export { shallow } from "./lib/shallow";
+export { stringify } from "./lib/stringify";
 export {
   b64decode,
   isPlainObject,
@@ -138,6 +139,7 @@ export type {
   BroadcastOptions,
   History,
   Room,
+  RoomEventMessage,
   RoomInitializers,
   StorageStatus,
 } from "./room";
@@ -195,5 +197,8 @@ export type {
   CommentBodyParagraph,
   CommentBodyText,
 } from "./comments/types/CommentBody";
-export type { CommentData } from "./comments/types/CommentData";
+export type {
+  CommentData,
+  CommentReaction,
+} from "./comments/types/CommentData";
 export type { ThreadData } from "./comments/types/ThreadData";

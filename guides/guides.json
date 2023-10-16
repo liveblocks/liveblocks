@@ -241,5 +241,27 @@
     "topics": ["rest-api", "data-fetching"],
     "technologies": ["yjs", "nodejs"],
     "date": "2023-09-05"
+  },
+  {
+    "title": "How to synchronize your Liveblocks Storage document data to a Vercel Postgres database",
+    "path": "/how-to-synchronize-your-liveblocks-storage-document-data-to-a-vercel-postgres-database",
+    "topics": ["tutorials", "webhooks", "databases"],
+    "technologies": ["storage", "nodejs"],
+    "date": "2023-10-06"
+  },
+  {
+    "title": "How to synchronize your Liveblocks Storage document data to a PlanetScale MySQL database",
+    "path": "/how-to-synchronize-your-liveblocks-storage-document-data-to-a-planetscale-mysql-database",
+    "topics": ["tutorials", "webhooks", "databases"],
+    "technologies": ["storage", "nodejs"],
+    "date": "2023-10-06"
+  },
+  {
+    "title": "How to synchronize your Liveblocks Storage document data to a Supabase Postgres database",
+    "path": "/how-to-synchronize-your-liveblocks-storage-document-data-to-a-supabase-postgres-database",
+    "topics": ["tutorials", "webhooks", "databases"],
+    "technologies": ["storage", "nodejs"],
+    "date": "2023-10-06",
+    "featured": true
   }
 ]

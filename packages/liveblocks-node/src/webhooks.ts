@@ -1,4 +1,5 @@
-import crypto from "crypto";
+import * as base64 from "@stablelib/base64";
+import * as sha256 from "fast-sha256";
 import type { IncomingHttpHeaders } from "http";
 
 export class WebhookHandler {
@@ -92,10 +93,9 @@ export class WebhookHandler {
    * @returns `string`
    */
   private sign(content: string): string {
-    return crypto
-      .createHmac("sha256", this.secretBuffer)
-      .update(content)
-      .digest("base64");
+    const encoder = new TextEncoder();
+    const toSign = encoder.encode(content);
+    return base64.encode(sha256.hmac(this.secretBuffer, toSign));
   }
 
   /**
@@ -139,6 +139,8 @@ export class WebhookHandler {
         "commentCreated",
         "commentEdited",
         "commentDeleted",
+        "commentReactionAdded",
+        "commentReactionRemoved",
         "threadMetadataUpdated",
         "threadCreated",
         "ydocUpdated",
@@ -190,6 +192,8 @@ type WebhookEvent =
   | CommentCreatedEvent
   | CommentEditedEvent
   | CommentDeletedEvent
+  | CommentReactionAdded
+  | CommentReactionRemoved
   | ThreadMetadataUpdatedEvent
   | ThreadCreatedEvent
   | YDocUpdatedEvent;
@@ -315,6 +319,40 @@ type CommentDeletedEvent = {
   };
 };
 
+type CommentReactionAdded = {
+  type: "commentReactionAdded";
+  data: {
+    projectId: string;
+    roomId: string;
+    threadId: string;
+    commentId: string;
+    emoji: string;
+    /**
+     * ISO 8601 datestring
+     * @example "2021-03-01T12:00:00.000Z"
+     */
+    addedAt: string;
+    addedBy: string;
+  };
+};
+
+type CommentReactionRemoved = {
+  type: "commentReactionRemoved";
+  data: {
+    projectId: string;
+    roomId: string;
+    threadId: string;
+    commentId: string;
+    emoji: string;
+    /**
+     * ISO 8601 datestring
+     * @example "2021-03-01T12:00:00.000Z"
+     */
+    removedAt: string;
+    removedBy: string;
+  };
+};
+
 type YDocUpdatedEvent = {
   type: "ydocUpdated";
   data: {
@@ -357,6 +395,8 @@ export type {
   CommentCreatedEvent,
   CommentDeletedEvent,
   CommentEditedEvent,
+  CommentReactionAdded,
+  CommentReactionRemoved,
   RoomCreatedEvent,
   RoomDeletedEvent,
   StorageUpdatedEvent,

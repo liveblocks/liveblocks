@@ -40,6 +40,11 @@ export type ComposerContext = {
    * Start creating a mention at the current selection.
    */
   createMention: () => void;
+
+  /**
+   * Insert text at the current selection.
+   */
+  insertText: (text: string) => void;
 };
 
 export type ComposerEditorContext = {

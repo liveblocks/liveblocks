@@ -118,7 +118,7 @@ final version.
       import { Composer, Thread } from "@liveblocks/react-comments";
 
       export function Room() {
-        const threads = useThreads();
+        const { threads } = useThreads();
         return (
           <div>
             {threads.map((thread) => (

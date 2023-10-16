@@ -1,5 +1,15 @@
 import type { CommentBody } from "./CommentBody";
 
+type CommentReactionUser = {
+  id: string;
+};
+
+export type CommentReaction = {
+  emoji: string;
+  createdAt: string;
+  users: CommentReactionUser[];
+};
+
 /**
  * Represents a comment.
  */
@@ -11,6 +21,7 @@ export type CommentData = {
   userId: string;
   createdAt: string;
   editedAt?: string;
+  reactions: CommentReaction[];
 } & (
   | { body: CommentBody; deletedAt?: never }
   | { body?: never; deletedAt: string }

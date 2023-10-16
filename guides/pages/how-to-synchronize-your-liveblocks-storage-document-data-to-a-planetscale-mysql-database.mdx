@@ -1,0 +1,580 @@
+---
+meta:
+  title:
+    "How to synchronize your Liveblocks Storage document data to a PlanetScale
+    MySQL database"
+  description:
+    "Learn how to automatically update your PlanetScale MySQL database with
+    changes from your Storage-based application."
+---
+
+Liveblocks allows you to build collaborative applications with
+[Storage](/storage), a persisted conflict-free data store. Using our Webhooks
+and REST API, you can then retrieve the Storage document data as it changes, and
+store it in your database.
+
+## What we’re building
+
+In this guide we’ll be linking a Storage application up to a
+[PlanetScale](https://planetscale.com/) MySQL database so that Storage document
+data is automatically synchronized. This is enabled through the following:
+
+- [StorageUpdated](/docs/platform/webhooks#StorageUpdatedEvent) Webhook event
+- [Get Storage Document](/docs/api-reference/rest-api-endpoints#get-rooms-roomId-storage)
+  REST API
+
+<Banner title="Have a project ready">
+
+This guide assumes you already have a Liveblocks Storage project set up. If
+haven’t already got one, you can select _Custom_ on our
+[getting started page](https://liveblocks.io/docs/get-started/custom), choose a
+framework, and come back after you’re set up. You could also use an example such
+as our [collaborative
+spreadsheet)(/examples/collaborative-spreadsheet-advanced/nextjs-spreadsheet-advanced).
+
+</Banner>
+
+### This specific webhook is throttled
+
+Note that the [StorageUpdated](/docs/platform/webhooks#StorageUpdatedEvent)
+webhook event is throttled at a rate of _once every 5 seconds_. This is because
+Storage can update up to _60 times per second_, and it would be impractical to
+run the webhook this frequently.
+
+## Create an endpoint in your project
+
+When a webhook event is triggered, it can send POST request to the back end in
+your project, and from within there we can update the database. In this guide,
+we’ll be using a Next.js route handler (API endpoint) as an example, but other
+frameworks work similarly.
+
+In order to use webhooks, we’ll need to retrieve the `headers` and `body` from
+the request. Here’s the basic endpoint we’ll be starting from:
+
+```ts
+export async function POST(request: Request) {
+  const body = await request.json();
+  const headers = request.headers;
+
+  // Handle webhooks and database
+  // ...
+
+  return new Response(null, { status: 200 });
+}
+```
+
+Create this endpoint in your project, and make it available on `localhost` at
+the following URL:
+
+```
+/api/liveblocks-database-sync
+```
+
+### Testing webhooks locally
+
+Running webhooks locally can be difficult, but one way to do this is to use a
+tool such as [`localtunnel`](https://www.npmjs.com/package/localtunnel) or
+[`ngrok`](https://www.npmjs.com/package/ngrok) which allow you to temporarily
+put your localhost server online.
+
+If your project is running on `localhost:3000`, you can run the following
+command to generate a temporary URL that’s available while your localhost server
+is running:
+
+```bash
+npx localtunnel --port 3000
+```
+
+If you correctly input your IP address, the URL `localtunnel` generates can be
+placed into the Liveblocks webhooks dashboard for quick testing.
+
+## Set up webhooks on the Liveblocks dashboard
+
+To use webhooks, you need to add your endpoint URL to the webhooks dashboard
+inside your Liveblocks project, and tell the webhook to trigger when Storage
+document data has changed.
+
+<Steps>
+  <Step>
+    <StepTitle>Select your project</StepTitle>
+    <StepContent>
+      From the [Liveblocks dashboard](/dashboard), navigate to the project you’d
+      like to use with webhooks, or create a new project.
+      <Figure>
+        <Image
+          src="/assets/tutorials/webhooks/liveblocks-create-project.png"
+          alt="Create a Liveblocks project"
+          width={969}
+          height={647}
+        />
+      </Figure>
+    </StepContent>
+  </Step>
+
+{" "}
+
+<Step>
+  <StepTitle>Go to the webhooks dashboard</StepTitle>
+  <StepContent>
+    Click on the “Webhooks” tab on the menu at the left.
+    <Figure>
+      <Image
+        src="/assets/tutorials/webhooks/liveblocks-click-webhooks.png"
+        alt="Click webhooks"
+        width={1150}
+        height={602}
+      />
+    </Figure>
+  </StepContent>
+</Step>
+
+{" "}
+
+<Step>
+  <StepTitle>Add an endpoint</StepTitle>
+  <StepContent>
+    Click the “Add Endpoint” button on the webhooks dashboard to start setting
+    up your webhook.
+    <Figure>
+      <Image
+        src="/assets/tutorials/webhooks/liveblocks-add-endpoint.png"
+        alt="Click add endpoint"
+        width={1781}
+        height={786}
+      />
+    </Figure>
+  </StepContent>
+</Step>
+
+{" "}
+
+<Step>
+  <StepTitle>Add your endpoint URL</StepTitle>
+  <StepContent>
+    Enter the URL of the endpoint. In a production app this will be the real
+    endpoint, but for now enter your `localtunnel` URL from earlier.
+    <Figure>
+      <Image
+        src="/assets/tutorials/webhooks/liveblocks-add-endpoint-url.png"
+        alt="Add endpoint URL"
+        width={1210}
+        height={607}
+      />
+    </Figure>
+  </StepContent>
+</Step>
+
+{" "}
+
+<Step>
+  <StepTitle>Get your signing secret</StepTitle>
+  <StepContent>
+    Click “Create” at the bottom, then find your “Signing Secret” on the next
+    page, and copy it.
+    <Figure>
+      <Image
+        src="/assets/tutorials/webhooks/liveblocks-get-signing-secret.png"
+        alt="Copy your signing secret"
+        width={1210}
+        height={607}
+      />
+    </Figure>
+  </StepContent>
+</Step>
+
+  <Step lastStep>
+    <StepTitle>Webhooks dashboard is set up!</StepTitle>
+
+    <StepContent>
+      Note that you filter specifically for `storageUpdated` events, but we’re
+      ignoring this for now so we can test more easily. Let’s go back to the
+      code.
+    </StepContent>
+
+  </Step>
+</Steps>
+
+## Verify the webhook request
+
+The [`@liveblocks/node`](/docs/api-reference/liveblocks-node) package provides
+you with a function that verifies whether the current request is a real webhook
+request from your Liveblocks. You can set this up by setting up a
+[`WebhookHandler`](/docs/api-reference/liveblocks-node#WebhookHandler) and
+running [`verifyRequest`](/docs/api-reference/liveblocks-node#verifyRequest).
+
+Make sure to add your “Signing Secret” from the Liveblocks dashboard—in a real
+project we’d recommend using an environment variable for this.
+
+```ts highlight="1,3-5,11-21"
+import { WebhookHandler } from "@liveblocks/node";
+
+// Add your signing key from a project's webhooks dashboard
+const WEBHOOK_SECRET = "YOUR_SIGNING_SECRET";
+const webhookHandler = new WebhookHandler(WEBHOOK_SECRET);
+
+export async function POST(request: Request) {
+  const body = await request.json();
+  const headers = request.headers;
+
+  // Verify if this is a real webhook request
+  let event;
+  try {
+    event = webhookHandler.verifyRequest({
+      headers: headers,
+      rawBody: JSON.stringify(body),
+    });
+  } catch (err) {
+    console.error(err);
+    return new Response("Could not verify webhook call", { status: 400 });
+  }
+
+  // Update database
+  // ...
+
+  return new Response(null, { status: 200 });
+}
+```
+
+We can then check we’re receiving the correct type of event, get the updated
+`roomId`, and handle updating the database inside there.
+
+```ts highlight="23-29"
+import { WebhookHandler } from "@liveblocks/node";
+
+// Add your signing key from a project's webhooks dashboard
+const WEBHOOK_SECRET = "YOUR_SIGNING_SECRET";
+const webhookHandler = new WebhookHandler(WEBHOOK_SECRET);
+
+export async function POST(request: Request) {
+  const body = await request.json();
+  const headers = request.headers;
+
+  // Verify if this is a real webhook request
+  let event;
+  try {
+    event = webhookHandler.verifyRequest({
+      headers: headers,
+      rawBody: JSON.stringify(body),
+    });
+  } catch (err) {
+    console.error(err);
+    return new Response("Could not verify webhook call", { status: 400 });
+  }
+
+  // When Storage document data has been updated
+  if (event.type === "storageUpdated") {
+    const { roomId } = event.data;
+
+    // Update database
+    // ...
+  }
+
+  return new Response(null, { status: 200 });
+}
+```
+
+## Get the current room’s Storage document data
+
+Before updating our database, we need to get the current room’s data. We can do
+this through the
+[Get Storage Document](/docs/api-reference/rest-api-endpoints#get-rooms-roomId-storage)
+REST API. You use the REST API, you need to add your secret key from your
+project page.
+
+```ts highlight="7-8,30-43"
+import { WebhookHandler } from "@liveblocks/node";
+
+// Add your signing key from a project's webhooks dashboard
+const WEBHOOK_SECRET = "YOUR_SIGNING_SECRET";
+const webhookHandler = new WebhookHandler(WEBHOOK_SECRET);
+
+// Add your secret key from a project's API keys dashboard
+const API_SECRET = "{{SECRET_KEY}}";
+
+export async function POST(request: Request) {
+  const body = await request.json();
+  const headers = request.headers;
+
+  // Verify if this is a real webhook request
+  let event;
+  try {
+    event = webhookHandler.verifyRequest({
+      headers: headers,
+      rawBody: JSON.stringify(body),
+    });
+  } catch (err) {
+    console.error(err);
+    return new Response("Could not verify webhook call", { status: 400 });
+  }
+
+  // When Storage document data has been udpated
+  if (event.type === "storageUpdated") {
+    const { roomId } = event.data;
+
+    // Get Storage data from Liveblocks REST API
+    const url = `https://api.liveblocks.io/v2/rooms/${roomId}/storage`;
+    const response = await fetch(url, {
+      headers: { Authorization: `Bearer ${API_SECRET}` },
+    });
+
+    if (!response.ok) {
+      return new Response("Problem accessing Liveblocks REST APIs", {
+        status: 500,
+      });
+    }
+
+    // Your JSON Storage document data as a string
+    const storageData = await response.text();
+
+    // Update database
+    // ...
+  }
+
+  return new Response(null, { status: 200 });
+}
+```
+
+## Create a PlanetScale MySQL database
+
+We’re ready to set up our PlanetScale database! We’ll be creating a simple
+`documents` table that contains the following fields:
+
+| Field         | Description                        | Type           | Key       |
+| ------------- | ---------------------------------- | -------------- | --------- |
+| `roomId`      | The `roomId`.                      | `VARCHAR(255)` | `PRIMARY` |
+| `storageData` | The stringified JSON Storage data. | `TEXT`         |           |
+
+<Steps>
+  <Step>
+    <StepTitle>Create a database</StepTitle>
+    <StepContent>
+      Navigate to PlanetScale’s [new database page](https://app.planetscale.com/new),
+      give your database a name, and click “Create” at the bottom.
+      
+      <Figure>
+        <Image
+          src="/assets/tutorials/webhooks/planetscale-create-db.png"
+          alt="Create a PlanetScale database"
+          width={1486}
+          height={792}
+        />
+      </Figure>
+    </StepContent>
+  </Step>
+  
+  <Step>
+    <StepTitle>Create a new branch</StepTitle>
+    <StepContent>
+      After the database has been created, click “New branch” at the top right to create
+      a branch—this works like Git.
+      
+      <Figure>
+        <Image
+          src="/assets/tutorials/webhooks/planetscale-create-new-branch.png"
+          alt="Create a new branch"
+          width={866}
+          height={681}
+        />
+      </Figure>
+    </StepContent>
+  </Step>
+  
+  <Step>
+    <StepTitle>Set up your schema</StepTitle>
+    <StepContent>
+      Click “Console” at the top, select your branch, and enter the following to set up your table.
+      
+      ```sql
+      CREATE TABLE documents (
+         roomId VARCHAR(255) PRIMARY KEY,
+         storageData TEXT NOT NULL
+      );
+      ```
+      
+      <Figure>
+        <Image
+          src="/assets/tutorials/webhooks/planetscale-create-schema.png"
+          alt="Create your table"
+          width={1531}
+          height={745}
+        />
+      </Figure>
+    </StepContent>
+  </Step>
+  
+  <Step>
+    <StepTitle>Click “Connect”</StepTitle>
+    <StepContent>
+      After the database has been created, click “Connect” at the top right to create
+      new credentials.
+      
+      <Figure>
+        <Image
+          src="/assets/tutorials/webhooks/planetscale-connect.png"
+          alt="Click connect"
+          width={864}
+          height={534}
+        />
+      </Figure>
+    </StepContent>
+  </Step>
+
+  <Step>
+    <StepTitle>Create credentials</StepTitle>
+    <StepContent>
+      Give your new credentials a name, then click “Create Password”.
+      
+      <Figure>
+        <Image
+          src="/assets/tutorials/webhooks/planetscale-create-credentials.png"
+          alt="Create a PlanetScale password"
+          width={936}
+          height={655}
+        />
+      </Figure>
+    </StepContent>
+  </Step>
+  
+  <Step>
+    <StepTitle>Add the credentials to your project</StepTitle>
+    <StepContent>
+    Select “Node.js” in the dropdown and copy the database URL (or add it as an environment variable).
+    
+    <Figure>
+      <Image
+        src="/assets/tutorials/webhooks/planetscale-get-credentials.png"
+        alt="Get the database URL"
+        width={1473}
+        height={593}
+      />
+    </Figure>
+    </StepContent>
+  </Step>
+  
+  <Step lastStep>
+    <StepTitle>
+      Database ready!
+    </StepTitle>
+    
+    <StepContent>
+      Let’s take a look at the code.
+    </StepContent>
+  </Step>
+</Steps>
+
+## Add the Storage data to your database
+
+And finally, we can add the Storage JSON data to our database! First, we need to
+install `mysql2`:
+
+```bash
+npm i mysql2
+```
+
+Then implement the following to synchronize your data to PlanetScale:
+
+```ts highlight="2,11-12,49-67"
+import { WebhookHandler } from "@liveblocks/node";
+import mysql from "mysql2";
+
+// Add your signing key from a project's webhooks dashboard
+const WEBHOOK_SECRET = "YOUR_SIGNING_SECRET";
+const webhookHandler = new WebhookHandler(WEBHOOK_SECRET);
+
+// Add your secret key from a project's API keys dashboard
+const API_SECRET = "{{SECRET_KEY}}";
+
+// Your PlanetScale database URL
+const DATABASE_URL = "YOUR_DATABASE_URL";
+
+export async function POST(request: Request) {
+  const body = await request.json();
+  const headers = request.headers;
+
+  // Verify if this is a real webhook request
+  let event;
+  try {
+    event = webhookHandler.verifyRequest({
+      headers: headers,
+      rawBody: JSON.stringify(body),
+    });
+  } catch (err) {
+    console.error(err);
+    return new Response("Could not verify webhook call", { status: 400 });
+  }
+
+  // When Storage document data has been updated
+  if (event.type === "storageUpdated") {
+    const { roomId } = event.data;
+
+    // Get Storage data from Liveblocks REST API
+    const url = `https://api.liveblocks.io/v2/rooms/${roomId}/storage`;
+    const response = await fetch(url, {
+      headers: { Authorization: `Bearer ${API_SECRET}` },
+    });
+
+    if (!response.ok) {
+      return new Response("Problem accessing Liveblocks REST APIs", {
+        status: 500,
+      });
+    }
+
+    // Your JSON Storage document data as a string
+    const storageData = await response.text();
+
+    // Update database
+    const connection = await mysql.createConnection(DATABASE_URL);
+
+    const sql = `
+      INSERT INTO documents (roomId, storageData)
+      VALUES (?, ?)
+      ON DUPLICATE KEY UPDATE
+          storageData = VALUES(storageData);
+    `;
+
+    try {
+      await connection.query(sql, [roomId, storageData]);
+    } catch (err) {
+      return new Response("Problem inserting data into database", {
+        status: 500,
+      });
+    }
+
+    await connection.end();
+  }
+
+  return new Response(null, { status: 200 });
+}
+```
+
+## Check if it worked
+
+To check if your database synchronization is working, you can replay a
+`storageUpdated` event from the Liveblocks dashboard.
+
+<Figure>
+  <Image
+    src="/assets/tutorials/webhooks/liveblocks-replay-event.png"
+    alt="Create your table schema"
+    width={1563}
+    height={657}
+  />
+</Figure>
+
+Then go back to the Console page on PlanetScale and enter the following to see
+all entries:
+
+```sql
+SELECT * FROM documents;
+```
+
+You should now see your Storage document—we’ve successfully set up data
+synchronization! When a user edits Storage data in your app, this function will
+be called, and your database will be updated. You can rely on this to stay up to
+date, within the 5 second throttle limit.
+
+## Learn more
+
+You can learn more about Liveblocks webhooks in our full
+[webhooks guide](/docs/platform/webhooks). We also have an API reference for the
+[Get Storage Document API](/docs/api-reference/rest-api-endpoints#get-rooms-roomId-storage).

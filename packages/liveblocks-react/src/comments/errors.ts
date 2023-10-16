@@ -1,5 +1,9 @@
 import type { BaseMetadata, CommentBody } from "@liveblocks/core";
 
+type PartialNullable<T> = {
+  [P in keyof T]?: T[P] | null | undefined;
+};
+
 export class CreateThreadError<TMetadata extends BaseMetadata> extends Error {
   constructor(
     public cause: Error,
@@ -24,7 +28,7 @@ export class EditThreadMetadataError<
     public context: {
       roomId: string;
       threadId: string;
-      metadata: Partial<TMetadata>;
+      metadata: PartialNullable<TMetadata>;
     }
   ) {
     super("Edit thread metadata failed.");
@@ -73,6 +77,36 @@ export class DeleteCommentError extends Error {
   ) {
     super("Delete comment failed.");
     this.name = "DeleteCommentError";
+  }
+}
+
+export class AddReactionError extends Error {
+  constructor(
+    public cause: Error,
+    public context: {
+      roomId: string;
+      threadId: string;
+      commentId: string;
+      emoji: string;
+    }
+  ) {
+    super("Add reaction failed.");
+    this.name = "AddReactionError";
+  }
+}
+
+export class RemoveReactionError extends Error {
+  constructor(
+    public cause: Error,
+    public context: {
+      roomId: string;
+      threadId: string;
+      commentId: string;
+      emoji: string;
+    }
+  ) {
+    super("Remove reaction failed.");
+    this.name = "RemoveReactionError";
   }
 }
 

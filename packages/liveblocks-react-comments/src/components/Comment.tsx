@@ -1,7 +1,11 @@
 "use client";
 
-import type { CommentData } from "@liveblocks/core";
+import type {
+  CommentData,
+  CommentReaction as CommentReactionData,
+} from "@liveblocks/core";
 import { useRoomContextBundle } from "@liveblocks/react";
+import * as TogglePrimitive from "@radix-ui/react-toggle";
 import type {
   ComponentPropsWithoutRef,
   FormEvent,
@@ -9,13 +13,14 @@ import type {
   ReactNode,
   SyntheticEvent,
 } from "react";
-import React, { forwardRef, useCallback, useState } from "react";
+import React, { forwardRef, useCallback, useMemo, useState } from "react";
 
 import { CheckIcon } from "../icons/Check";
 import { CrossIcon } from "../icons/Cross";
 import { DeleteIcon } from "../icons/Delete";
 import { EditIcon } from "../icons/Edit";
 import { EllipsisIcon } from "../icons/Ellipsis";
+import { EmojiAddIcon } from "../icons/EmojiAdd";
 import {
   type CommentOverrides,
   type ComposerOverrides,
@@ -37,12 +42,18 @@ import { Composer } from "./Composer";
 import { Avatar } from "./internal/Avatar";
 import { Button } from "./internal/Button";
 import { Dropdown, DropdownItem, DropdownTrigger } from "./internal/Dropdown";
+import { Emoji } from "./internal/Emoji";
+import { EmojiPicker, EmojiPickerTrigger } from "./internal/EmojiPicker";
+import { List } from "./internal/List";
 import {
+  ShortcutTooltip,
+  ShortcutTooltipKey,
   Tooltip,
   TooltipProvider,
-  TooltipShortcutKey,
 } from "./internal/Tooltip";
 import { User } from "./internal/User";
+
+const REACTIONS_TRUNCATE = 5;
 
 export interface CommentProps extends ComponentPropsWithoutRef<"div"> {
   /**
@@ -61,19 +72,24 @@ export interface CommentProps extends ComponentPropsWithoutRef<"div"> {
   showDeleted?: boolean;
 
   /**
-   * Whether to indent the comment's body.
+   * Whether to show reactions.
    */
-  indentBody?: boolean;
+  showReactions?: boolean;
+
+  /**
+   * Whether to indent the comment's content.
+   */
+  indentContent?: boolean;
 
   /**
    * The event handler called when the comment is edited.
    */
-  onEdit?: (comment: CommentData) => void;
+  onCommentEdit?: (comment: CommentData) => void;
 
   /**
    * The event handler called when the comment is deleted.
    */
-  onDelete?: (comment: CommentData) => void;
+  onCommentDelete?: (comment: CommentData) => void;
 
   /**
    * The event handler called when clicking on the author.
@@ -99,6 +115,11 @@ export interface CommentProps extends ComponentPropsWithoutRef<"div"> {
    * @internal
    */
   additionalActionsClassName?: string;
+}
+
+interface CommentReactionProps extends ComponentPropsWithoutRef<"button"> {
+  comment: CommentData;
+  reaction: CommentReactionData;
 }
 
 function CommentMention({
@@ -138,6 +159,102 @@ function CommentLink({
   );
 }
 
+const CommentReaction = forwardRef<HTMLButtonElement, CommentReactionProps>(
+  ({ comment, reaction, className, ...props }, forwardedRef) => {
+    const { useAddReaction, useRemoveReaction, useSelf } =
+      useRoomContextBundle();
+    const self = useSelf();
+    const addReaction = useAddReaction();
+    const removeReaction = useRemoveReaction();
+    const isActive = useMemo(() => {
+      return reaction.users.some((users) => users.id === self?.id);
+    }, [reaction, self?.id]);
+    const $ = useOverrides();
+    const tooltipContent = useMemo(
+      () => (
+        <span>
+          {$.COMMENT_REACTION_TOOLTIP(
+            reaction.emoji,
+            <List
+              values={reaction.users.map((users, index) => (
+                <User
+                  key={users.id}
+                  userId={users.id}
+                  capitalize={index === 0}
+                  replaceSelf
+                />
+              ))}
+              formatRemaining={$.COMMENT_REACTION_REMAINING}
+              truncate={REACTIONS_TRUNCATE}
+            />,
+            reaction.users.length
+          )}
+        </span>
+      ),
+      [$, reaction]
+    );
+
+    const handlePressedChange = useCallback(
+      (isPressed: boolean) => {
+        if (isPressed) {
+          addReaction({
+            threadId: comment.threadId,
+            commentId: comment.id,
+            emoji: reaction.emoji,
+          });
+        } else {
+          removeReaction({
+            threadId: comment.threadId,
+            commentId: comment.id,
+            emoji: reaction.emoji,
+          });
+        }
+      },
+      [
+        addReaction,
+        comment.threadId,
+        comment.id,
+        reaction.emoji,
+        removeReaction,
+      ]
+    );
+
+    return (
+      <Tooltip
+        content={tooltipContent}
+        multiline
+        className="lb-comment-reaction-tooltip"
+      >
+        <TogglePrimitive.Root
+          asChild
+          pressed={isActive}
+          onPressedChange={handlePressedChange}
+          ref={forwardedRef}
+        >
+          <Button
+            className={classNames("lb-comment-reaction", className)}
+            variant="outline"
+            aria-label={$.COMMENT_REACTION_DESCRIPTION(
+              reaction.emoji,
+              reaction.users.length
+            )}
+            data-self={isActive ? "" : undefined}
+            {...props}
+          >
+            <Emoji
+              className="lb-comment-reaction-emoji"
+              emoji={reaction.emoji}
+            />
+            <span className="lb-comment-reaction-count">
+              {reaction.users.length}
+            </span>
+          </Button>
+        </TogglePrimitive.Root>
+      </Tooltip>
+    );
+  }
+);
+
 /**
  * Displays a single comment.
  *
@@ -152,13 +269,14 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
   (
     {
       comment,
-      indentBody = true,
+      indentContent = true,
       showDeleted,
       showActions = "hover",
+      showReactions = true,
       onAuthorClick,
       onMentionClick,
-      onEdit,
-      onDelete,
+      onCommentEdit,
+      onCommentDelete,
       overrides,
       additionalActions,
       additionalActionsClassName,
@@ -167,14 +285,22 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
     },
     forwardedRef
   ) => {
-    const { useDeleteComment, useEditComment, useSelf } =
-      useRoomContextBundle();
+    const {
+      useDeleteComment,
+      useEditComment,
+      useAddReaction,
+      useRemoveReaction,
+      useSelf,
+    } = useRoomContextBundle();
     const self = useSelf();
     const deleteComment = useDeleteComment();
     const editComment = useEditComment();
+    const addReaction = useAddReaction();
+    const removeReaction = useRemoveReaction();
     const $ = useOverrides(overrides);
     const [isEditing, setEditing] = useState(false);
-    const [isMoreOpen, setMoreOpen] = useState(false);
+    const [isMoreActionOpen, setMoreActionOpen] = useState(false);
+    const [isReactionActionOpen, setReactionActionOpen] = useState(false);
 
     const stopPropagation = useCallback((event: SyntheticEvent) => {
       event.stopPropagation();
@@ -195,7 +321,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
     const handleEditSubmit = useCallback(
       ({ body }: ComposerSubmitComment, event: FormEvent<HTMLFormElement>) => {
         // TODO: Add a way to preventDefault from within this callback, to override the default behavior (e.g. showing a confirmation dialog)
-        onEdit?.(comment);
+        onCommentEdit?.(comment);
 
         event.preventDefault();
         setEditing(false);
@@ -205,24 +331,60 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
           body,
         });
       },
-      [comment, editComment, onEdit]
+      [comment, editComment, onCommentEdit]
     );
 
     const handleDelete = useCallback(() => {
       // TODO: Add a way to preventDefault from within this callback, to override the default behavior (e.g. showing a confirmation dialog)
-      onDelete?.(comment);
+      onCommentDelete?.(comment);
 
       deleteComment({
         commentId: comment.id,
         threadId: comment.threadId,
       });
-    }, [comment, deleteComment, onDelete]);
+    }, [comment, deleteComment, onCommentDelete]);
 
     const handleAuthorClick = useCallback(
       (event: MouseEvent<HTMLElement>) => {
         onAuthorClick?.(comment.userId, event);
       },
       [comment.userId, onAuthorClick]
+    );
+
+    const handleReactionSelect = useCallback(
+      (emoji: string) => {
+        const reactionIndex = comment.reactions.findIndex(
+          (reaction) => reaction.emoji === emoji
+        );
+
+        if (
+          reactionIndex > 0 &&
+          self?.id &&
+          comment.reactions[reactionIndex].users.some(
+            (user) => user.id === self?.id
+          )
+        ) {
+          removeReaction({
+            threadId: comment.threadId,
+            commentId: comment.id,
+            emoji,
+          });
+        } else {
+          addReaction({
+            threadId: comment.threadId,
+            commentId: comment.id,
+            emoji,
+          });
+        }
+      },
+      [
+        addReaction,
+        comment.id,
+        comment.reactions,
+        comment.threadId,
+        removeReaction,
+        self?.id,
+      ]
     );
 
     if (!showDeleted && !comment.body) {
@@ -234,9 +396,10 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
         <div
           className={classNames(
             "lb-root lb-comment",
-            indentBody && "lb-comment:indent-body",
+            indentContent && "lb-comment:indent-content",
             showActions === "hover" && "lb-comment:show-actions-hover",
-            isMoreOpen && "lb-comment:dropdown-open",
+            (isMoreActionOpen || isReactionActionOpen) &&
+              "lb-comment:action-open",
             className
           )}
           data-deleted={!comment.body ? "" : undefined}
@@ -282,10 +445,28 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
                 )}
               >
                 {additionalActions ?? null}
+                {showReactions && (
+                  <EmojiPicker
+                    onEmojiSelect={handleReactionSelect}
+                    onOpenChange={setReactionActionOpen}
+                  >
+                    <Tooltip content={$.COMMENT_ADD_REACTION}>
+                      <EmojiPickerTrigger asChild>
+                        <Button
+                          className="lb-comment-action"
+                          onClick={stopPropagation}
+                          aria-label={$.COMMENT_ADD_REACTION}
+                        >
+                          <EmojiAddIcon className="lb-button-icon" />
+                        </Button>
+                      </EmojiPickerTrigger>
+                    </Tooltip>
+                  </EmojiPicker>
+                )}
                 {comment.userId === self?.id && (
                   <Dropdown
-                    open={isMoreOpen}
-                    onOpenChange={setMoreOpen}
+                    open={isMoreActionOpen}
+                    onOpenChange={setMoreActionOpen}
                     align="end"
                     content={
                       <>
@@ -323,67 +504,96 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
               </div>
             )}
           </div>
-          {isEditing ? (
-            <Composer
-              className="lb-comment-composer"
-              onComposerSubmit={handleEditSubmit}
-              defaultValue={comment.body}
-              placeholder={$.COMMENT_EDIT_COMPOSER_PLACEHOLDER}
-              autoFocus
-              showAttribution={false}
-              actions={
-                <>
-                  <Tooltip
-                    content={$.COMMENT_EDIT_COMPOSER_CANCEL}
-                    aria-label={$.COMMENT_EDIT_COMPOSER_CANCEL}
-                  >
-                    <Button
-                      className="lb-composer-action"
-                      onClick={handleEditCancel}
+          <div className="lb-comment-content">
+            {isEditing ? (
+              <Composer
+                className="lb-comment-composer"
+                onComposerSubmit={handleEditSubmit}
+                defaultValue={comment.body}
+                placeholder={$.COMMENT_EDIT_COMPOSER_PLACEHOLDER}
+                autoFocus
+                showAttribution={false}
+                actions={
+                  <>
+                    <Tooltip
+                      content={$.COMMENT_EDIT_COMPOSER_CANCEL}
+                      aria-label={$.COMMENT_EDIT_COMPOSER_CANCEL}
                     >
-                      <CrossIcon className="lb-button-icon" />
-                    </Button>
-                  </Tooltip>
-                  <Tooltip
-                    content={$.COMMENT_EDIT_COMPOSER_SAVE}
-                    shortcut={<TooltipShortcutKey name="enter" />}
-                  >
-                    <ComposerPrimitive.Submit asChild>
                       <Button
-                        variant="primary"
                         className="lb-composer-action"
-                        onClick={stopPropagation}
-                        aria-label={$.COMMENT_EDIT_COMPOSER_SAVE}
+                        onClick={handleEditCancel}
                       >
-                        <CheckIcon className="lb-button-icon" />
+                        <CrossIcon className="lb-button-icon" />
                       </Button>
-                    </ComposerPrimitive.Submit>
-                  </Tooltip>
-                </>
-              }
-              overrides={{
-                COMPOSER_PLACEHOLDER: $.COMMENT_EDIT_COMPOSER_PLACEHOLDER,
-              }}
-            />
-          ) : comment.body ? (
-            <CommentPrimitive.Body
-              className="lb-comment-body"
-              body={comment.body}
-              components={{
-                Mention: ({ userId }) => (
-                  <CommentMention
-                    userId={userId}
-                    onClick={(event) => onMentionClick?.(userId, event)}
-                  />
-                ),
-                Link: CommentLink,
-              }}
-            />
-          ) : (
-            <div className="lb-comment-body">
-              <p className="lb-comment-deleted">{$.COMMENT_DELETED}</p>
-            </div>
-          )}
+                    </Tooltip>
+                    <ShortcutTooltip
+                      content={$.COMMENT_EDIT_COMPOSER_SAVE}
+                      shortcut={<ShortcutTooltipKey name="enter" />}
+                    >
+                      <ComposerPrimitive.Submit asChild>
+                        <Button
+                          variant="primary"
+                          className="lb-composer-action"
+                          onClick={stopPropagation}
+                          aria-label={$.COMMENT_EDIT_COMPOSER_SAVE}
+                        >
+                          <CheckIcon className="lb-button-icon" />
+                        </Button>
+                      </ComposerPrimitive.Submit>
+                    </ShortcutTooltip>
+                  </>
+                }
+                overrides={{
+                  COMPOSER_PLACEHOLDER: $.COMMENT_EDIT_COMPOSER_PLACEHOLDER,
+                }}
+              />
+            ) : comment.body ? (
+              <>
+                <CommentPrimitive.Body
+                  className="lb-comment-body"
+                  body={comment.body}
+                  components={{
+                    Mention: ({ userId }) => (
+                      <CommentMention
+                        userId={userId}
+                        onClick={(event) => onMentionClick?.(userId, event)}
+                      />
+                    ),
+                    Link: CommentLink,
+                  }}
+                />
+                {showReactions && comment.reactions.length > 0 && (
+                  <div className="lb-comment-reactions">
+                    {comment.reactions.map((reaction) => (
+                      <CommentReaction
+                        key={reaction.emoji}
+                        comment={comment}
+                        reaction={reaction}
+                      />
+                    ))}
+                    <EmojiPicker onEmojiSelect={handleReactionSelect}>
+                      <Tooltip content={$.COMMENT_ADD_REACTION}>
+                        <EmojiPickerTrigger asChild>
+                          <Button
+                            className="lb-comment-reaction lb-comment-reaction-add"
+                            variant="outline"
+                            onClick={stopPropagation}
+                            aria-label={$.COMMENT_ADD_REACTION}
+                          >
+                            <EmojiAddIcon className="lb-button-icon" />
+                          </Button>
+                        </EmojiPickerTrigger>
+                      </Tooltip>
+                    </EmojiPicker>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="lb-comment-body">
+                <p className="lb-comment-deleted">{$.COMMENT_DELETED}</p>
+              </div>
+            )}
+          </div>
         </div>
       </TooltipProvider>
     );

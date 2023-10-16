@@ -3,7 +3,7 @@ import type { Json, JsonObject } from "../lib/Json";
 import type { BaseUserMeta } from "../protocol/BaseUserMeta";
 import type { UpdateYDocClientMsg } from "../protocol/ClientMsg";
 import type { YDocUpdateServerMsg } from "../protocol/ServerMsg";
-import type { Room } from "../room";
+import type { Room, RoomEventMessage } from "../room";
 import { PKG_VERSION } from "../version";
 import { activateBridge, onMessageFromPanel, sendToPanel } from "./bridge";
 
@@ -113,6 +113,11 @@ function startSyncStream(
 
     // Any time ydoc is updated, forward the update
     room.events.ydoc.subscribe((update) => syncYdocUpdate(room, update)),
+
+    // Any time a custom room event is received, forward it
+    room.events.customEvent.subscribe((eventData) =>
+      forwardEvent(room, eventData)
+    ),
   ]);
 }
 
@@ -124,6 +129,30 @@ function syncYdocUpdate(
     msg: "room::sync::ydoc",
     roomId: room.id,
     update,
+  });
+}
+
+const loadedAt = Date.now();
+let eventCounter = 0;
+
+function nextEventId() {
+  return `event-${loadedAt}-${eventCounter++}`;
+}
+
+function forwardEvent(
+  room: Room<JsonObject, LsonObject, BaseUserMeta, Json>,
+  eventData: RoomEventMessage<JsonObject, BaseUserMeta, Json>
+) {
+  sendToPanel({
+    msg: "room::events::custom-event",
+    roomId: room.id,
+    event: {
+      type: "CustomEvent",
+      id: nextEventId(),
+      key: "Event",
+      connectionId: eventData.connectionId,
+      payload: eventData.event,
+    },
   });
 }
 

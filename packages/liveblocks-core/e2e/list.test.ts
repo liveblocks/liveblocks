@@ -797,7 +797,9 @@ describe.skip("LiveList conflicts", () => {
 });
 
 describe("LiveList single client", () => {
-  test(
+  // TODO: This test is flaky and occasionally fails in CI--make it more robust
+  // See https://github.com/liveblocks/liveblocks/actions/runs/6336685485/job/17210682821#step:5:52
+  test.skip(
     "fast consecutive sets on same index",
     prepareSingleClientTest(
       {
@@ -815,6 +817,30 @@ describe("LiveList single client", () => {
         await flushSocketMessages();
 
         expect(states).toEqual([{ list: ["B"] }, { list: ["C"] }]);
+      }
+    )
+  );
+
+  test(
+    "create list with item + set",
+    prepareSingleClientTest(
+      {
+        list: null,
+      } as { list: LiveList<string> | null },
+      async ({ root, flushSocketMessages, room }) => {
+        const states: Json[] = [];
+        room.subscribe(root, () => states.push(lsonToJson(root)), {
+          isDeep: true,
+        });
+
+        const liveList = new LiveList<string>(["A"]);
+        root.set("list", liveList);
+
+        liveList.set(0, "B");
+
+        await flushSocketMessages();
+
+        expect(states).toEqual([{ list: ["A"] }, { list: ["B"] }]);
       }
     )
   );

@@ -31,9 +31,9 @@ type AsyncMockOptions<T> = {
   value: (index: number, key: string) => T;
 };
 
-type RenderHookProps<T> = {
+type RenderHookProps = {
   key: string | null;
-  options?: UseAsyncCacheOptions<T>;
+  options?: UseAsyncCacheOptions;
 };
 
 type RenderHookOptions<Props> = {
@@ -408,7 +408,7 @@ describe("useAsyncCache", () => {
     // 🚀 Called with "abc"
     const { result, rerender } = renderHook<
       UseAsyncCacheResponse<string, unknown>,
-      RenderHookProps<string>
+      RenderHookProps
     >(({ key }) => useAsyncCache(cache, key), {
       initialProps: { key: KEY_ABC },
     });
@@ -451,7 +451,7 @@ describe("useAsyncCache", () => {
     // 🚀 Called with "abc"
     const { result, rerender } = renderHook<
       UseAsyncCacheResponse<string, unknown>,
-      RenderHookProps<string>
+      RenderHookProps
     >(({ key }) => useAsyncCache(cache, key), {
       initialProps: { key: KEY_ABC },
     });
@@ -485,7 +485,7 @@ describe("useAsyncCache", () => {
     // 🚀 Called with "abc"
     const { result, rerender } = renderHook<
       UseAsyncCacheResponse<string, unknown>,
-      RenderHookProps<string>
+      RenderHookProps
     >(
       ({ key }) =>
         useAsyncCache(cache, key, { keepPreviousDataWhileLoading: true }),
@@ -712,35 +712,6 @@ describe("useAsyncCache", () => {
     expect(result.current).toMatchObject<AsyncState<string, Error>>({
       isLoading: false,
       data: undefined,
-      error: undefined,
-    });
-  });
-
-  test("overriding the function", async () => {
-    const mockAbc = createAsyncMock({ value: () => KEY_ABC });
-    const mockXyz = createAsyncMock({ value: () => KEY_XYZ });
-    const cache = createAsyncCache(mockAbc);
-
-    // 🚀 Called
-    const { result } = renderHook(() =>
-      useAsyncCache(cache, KEY_ABC, { overrideFunction: mockXyz })
-    );
-
-    // 🔜 Returns a loading state
-    expect(result.current).toMatchObject<AsyncState<string, Error>>({
-      isLoading: true,
-      data: undefined,
-      error: undefined,
-    });
-
-    await waitFor(() => {
-      expect(result.current.isLoading).toBe(false);
-    });
-
-    // ✅ Returns a success state
-    expect(result.current).toMatchObject<AsyncState<string, Error>>({
-      isLoading: false,
-      data: KEY_XYZ,
       error: undefined,
     });
   });

@@ -17,6 +17,22 @@ describe("authorize (legacy API)", () => {
     }
   );
 
+  test.each([
+    "foo",
+    "slashes/are/fine",
+    "so/is-punctuation, and whitespace!@#$%^&()_ ",
+    "emojis, too! 🐯🤘",
+  ])("works with various room IDs", async (room) => {
+    await authorize({
+      room,
+      userId: "user1",
+      secret: "sk_xxx",
+    }).then((response) => {
+      expect(response.status).toBe(403);
+      expect(response.body).toMatch(/Invalid secret key/);
+    });
+  });
+
   test.each([null, "", undefined, {}])(
     "should check that userId is a non-empty string",
     async (userId) => {

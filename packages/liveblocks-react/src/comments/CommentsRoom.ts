@@ -1,27 +1,31 @@
-import {
-  type BaseMetadata,
-  type BaseUserMeta,
-  type CommentBody,
-  type CommentData,
-  type EventSource,
-  type Json,
-  type JsonObject,
-  type LsonObject,
-  makeEventSource,
-  type Room,
-  type ThreadData,
+import type {
+  BaseMetadata,
+  BaseUserMeta,
+  CommentBody,
+  CommentData,
+  CommentReaction,
+  EventSource,
+  Json,
+  JsonObject,
+  LsonObject,
+  Resolve,
+  Room,
+  ThreadData,
 } from "@liveblocks/core";
+import { makeEventSource } from "@liveblocks/core";
 import { nanoid } from "nanoid";
 import { useEffect } from "react";
 import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
 
 import {
+  AddReactionError,
   type CommentsApiError,
   CreateCommentError,
   CreateThreadError,
   DeleteCommentError,
   EditCommentError,
   EditThreadMetadataError,
+  RemoveReactionError,
 } from "./errors";
 
 const POLLING_INTERVAL_REALTIME = 30000;
@@ -34,14 +38,20 @@ const THREAD_ID_PREFIX = "th";
 const COMMENT_ID_PREFIX = "cm";
 const DEDUPING_INTERVAL = 1000;
 
+type PartialNullable<T> = {
+  [P in keyof T]?: T[P] | null | undefined;
+};
+
 export type CommentsRoom<TThreadMetadata extends BaseMetadata> = {
-  useThreads(): RoomThreads<TThreadMetadata>;
-  useThreadsSuspense(): ThreadData<TThreadMetadata>[];
+  useThreads(): ThreadsState<TThreadMetadata>;
+  useThreadsSuspense(): ThreadsStateSuccess<TThreadMetadata>;
   createThread(
     options: CreateThreadOptions<TThreadMetadata>
   ): ThreadData<TThreadMetadata>;
   editThreadMetadata(options: EditThreadMetadataOptions<TThreadMetadata>): void;
   createComment(options: CreateCommentOptions): CommentData;
+  addReaction(options: CommentReactionOptions): void;
+  removeReaction(options: CommentReactionOptions): void;
   editComment(options: EditCommentOptions): void;
   deleteComment(options: DeleteCommentOptions): void;
 };
@@ -60,7 +70,7 @@ export type EditThreadMetadataOptions<TMetadata extends BaseMetadata> = [
   ? {
       threadId: string;
     }
-  : { threadId: string; metadata: Partial<TMetadata> };
+  : { threadId: string; metadata: Resolve<PartialNullable<TMetadata>> };
 
 export type CreateCommentOptions = {
   threadId: string;
@@ -78,26 +88,34 @@ export type DeleteCommentOptions = {
   commentId: string;
 };
 
-function createOptimisticId(prefix: string) {
-  return `${prefix}_${nanoid()}`;
-}
+export type CommentReactionOptions = {
+  threadId: string;
+  commentId: string;
+  emoji: string;
+};
 
-export type RoomThreads<TThreadMetadata extends BaseMetadata> =
-  | {
-      isLoading: true;
-      threads?: never;
-      error?: never;
-    }
-  | {
-      isLoading: false;
-      threads?: never;
-      error: Error;
-    }
-  | {
-      isLoading: false;
-      threads: ThreadData<TThreadMetadata>[];
-      error?: never;
-    };
+export type ThreadsStateLoading = {
+  isLoading: true;
+  threads?: never;
+  error?: never;
+};
+
+export type ThreadsStateError = {
+  isLoading: false;
+  threads?: never;
+  error: Error;
+};
+
+export type ThreadsStateSuccess<TThreadMetadata extends BaseMetadata> = {
+  isLoading: false;
+  threads: ThreadData<TThreadMetadata>[];
+  error?: never;
+};
+
+export type ThreadsState<TThreadMetadata extends BaseMetadata> =
+  | ThreadsStateLoading
+  | ThreadsStateError
+  | ThreadsStateSuccess<TThreadMetadata>;
 
 type ThreadsRequestInfo<TThreadMetadata extends BaseMetadata> = {
   fetcher: Promise<ThreadData<TThreadMetadata>[]>;
@@ -109,13 +127,17 @@ type MutationInfo = {
   endTime: number;
 };
 
+function createOptimisticId(prefix: string) {
+  return `${prefix}_${nanoid()}`;
+}
+
 function createThreadsManager<TThreadMetadata extends BaseMetadata>() {
-  let cache: RoomThreads<TThreadMetadata> | undefined; // Stores the current cache state (threads)
+  let cache: ThreadsState<TThreadMetadata> | undefined; // Stores the current cache state (threads)
   let request: ThreadsRequestInfo<TThreadMetadata> | undefined; // Stores the currently active revalidation request
   let mutation: MutationInfo | undefined; // Stores the start and end time of the currently active mutation
 
   const eventSource = makeEventSource<
-    RoomThreads<TThreadMetadata> | undefined
+    ThreadsState<TThreadMetadata> | undefined
   >();
 
   return {
@@ -123,7 +145,7 @@ function createThreadsManager<TThreadMetadata extends BaseMetadata>() {
       return cache;
     },
 
-    set cache(value: RoomThreads<TThreadMetadata> | undefined) {
+    set cache(value: ThreadsState<TThreadMetadata> | undefined) {
       cache = value;
       eventSource.notify(cache);
     },
@@ -145,7 +167,7 @@ function createThreadsManager<TThreadMetadata extends BaseMetadata>() {
     },
 
     subscribe(
-      callback: (state: RoomThreads<TThreadMetadata> | undefined) => void
+      callback: (state: ThreadsState<TThreadMetadata> | undefined) => void
     ) {
       return eventSource.subscribe(callback);
     },
@@ -304,7 +326,7 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
     options: EditThreadMetadataOptions<TThreadMetadata>
   ) {
     const threadId = options.threadId;
-    const metadata: Partial<TThreadMetadata> =
+    const metadata: PartialNullable<TThreadMetadata> =
       "metadata" in options ? options.metadata : {};
     const threads = getThreads();
 
@@ -345,22 +367,24 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
     const commentId = createOptimisticId(COMMENT_ID_PREFIX);
     const now = new Date().toISOString();
 
+    const newComment: CommentData = {
+      id: commentId,
+      threadId,
+      roomId: room.id,
+      createdAt: now,
+      type: "comment",
+      userId: getCurrentUserId(),
+      body,
+      reactions: [],
+    };
     const newThread = {
       id: threadId,
       type: "thread",
       createdAt: now,
       roomId: room.id,
       metadata,
-      comments: [
-        {
-          id: commentId,
-          createdAt: now,
-          type: "comment",
-          userId: getCurrentUserId(),
-          body,
-        },
-      ],
-    } as ThreadData<TThreadMetadata>; // TODO: Figure out metadata typing
+      comments: [newComment],
+    } as ThreadData<TThreadMetadata>;
 
     mutate(room.createThread({ threadId, commentId, body, metadata }), {
       optimisticData: [...threads, newThread],
@@ -396,6 +420,7 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
       createdAt: now,
       userId: getCurrentUserId(),
       body,
+      reactions: [],
     };
 
     const optimisticData = threads.map((thread) =>
@@ -584,7 +609,7 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
     );
   }
 
-  function useThreadsInternal(): RoomThreads<TThreadMetadata> {
+  function useThreadsInternal(): ThreadsState<TThreadMetadata> {
     useEffect(_subscribe, [_subscribe]);
 
     usePolling();
@@ -610,7 +635,7 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
     return useThreadsInternal();
   }
 
-  function useThreadsSuspense() {
+  function useThreadsSuspense(): ThreadsStateSuccess<TThreadMetadata> {
     const cache = useThreadsInternal();
 
     if (cache.isLoading) {
@@ -621,13 +646,147 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
       throw cache.error;
     }
 
-    return cache.threads;
+    return {
+      threads: cache.threads,
+      isLoading: false,
+    };
+  }
+
+  function addReaction({
+    threadId,
+    commentId,
+    emoji,
+  }: CommentReactionOptions): void {
+    const threads = getThreads();
+    const now = new Date().toISOString();
+    const userId = getCurrentUserId();
+
+    const optimisticData = threads.map((thread) =>
+      thread.id === threadId
+        ? {
+            ...thread,
+            comments: thread.comments.map((comment) => {
+              if (comment.id !== commentId) {
+                return comment;
+              }
+
+              let reactions: CommentReaction[];
+
+              if (
+                comment.reactions.some((reaction) => reaction.emoji === emoji)
+              ) {
+                reactions = comment.reactions.map((reaction) =>
+                  reaction.emoji === emoji
+                    ? {
+                        ...reaction,
+                        users: [...reaction.users, { id: userId }],
+                      }
+                    : reaction
+                );
+              } else {
+                reactions = [
+                  ...comment.reactions,
+                  {
+                    emoji,
+                    createdAt: now,
+                    users: [{ id: userId }],
+                  },
+                ];
+              }
+
+              return {
+                ...comment,
+                reactions,
+              };
+            }),
+          }
+        : thread
+    );
+
+    mutate(room.addReaction({ threadId, commentId, emoji }), {
+      optimisticData,
+    }).catch((err: Error) => {
+      errorEventSource.notify(
+        new AddReactionError(err, {
+          roomId: room.id,
+          threadId,
+          commentId,
+          emoji,
+        })
+      );
+    });
+  }
+
+  function removeReaction({
+    threadId,
+    commentId,
+    emoji,
+  }: CommentReactionOptions): void {
+    const threads = getThreads();
+    const userId = getCurrentUserId();
+
+    const optimisticData = threads.map((thread) =>
+      thread.id === threadId
+        ? {
+            ...thread,
+            comments: thread.comments.map((comment) => {
+              if (comment.id !== commentId) {
+                return comment;
+              }
+
+              const reactionIndex = comment.reactions.findIndex(
+                (reaction) => reaction.emoji === emoji
+              );
+              let reactions: CommentReaction[] = comment.reactions;
+
+              if (
+                reactionIndex > 0 &&
+                comment.reactions[reactionIndex].users.some(
+                  (user) => user.id === userId
+                )
+              ) {
+                if (comment.reactions[reactionIndex].users.length <= 1) {
+                  reactions = [...comment.reactions];
+                  reactions.splice(reactionIndex, 1);
+                } else {
+                  reactions[reactionIndex] = {
+                    ...reactions[reactionIndex],
+                    users: reactions[reactionIndex].users.filter(
+                      (user) => user.id !== userId
+                    ),
+                  };
+                }
+              }
+
+              return {
+                ...comment,
+                reactions,
+              };
+            }),
+          }
+        : thread
+    );
+
+    mutate(room.removeReaction({ threadId, commentId, emoji }), {
+      optimisticData,
+    }).catch((err: Error) => {
+      errorEventSource.notify(
+        new RemoveReactionError(err, {
+          roomId: room.id,
+          threadId,
+          commentId,
+          emoji,
+        })
+      );
+    });
   }
 
   return {
     useThreads,
     useThreadsSuspense,
     editThreadMetadata,
+    addReaction,
+    removeReaction,
     createThread,
     createComment,
     editComment,

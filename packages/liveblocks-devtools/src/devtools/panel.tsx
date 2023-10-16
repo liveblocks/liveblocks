@@ -7,6 +7,7 @@ import { Loading } from "../components/Loading";
 import { ThemeProvider } from "../contexts/Theme";
 import { buildSearchRegex } from "../lib/buildSearchRegex";
 import { EmptyState } from "./components/EmptyState";
+import { Ping } from "./components/Ping";
 import { ReloadButton } from "./components/ReloadButton";
 import { ResizablePanel } from "./components/ResizablePanel";
 import { RoomSelector } from "./components/RoomSelector";
@@ -14,15 +15,20 @@ import { RoomStatus } from "./components/RoomStatus";
 import { Search } from "./components/Search";
 import type { Tab } from "./components/Tabs";
 import { Tabs } from "./components/Tabs";
-import { CurrentRoomProvider, useCurrentRoomId } from "./contexts/CurrentRoom";
+import {
+  CurrentRoomProvider,
+  useCurrentRoomId,
+  useCustomEventCount,
+} from "./contexts/CurrentRoom";
 import { sendMessage } from "./port";
+import { EventTimeline } from "./tabs/event-timeline";
 import { Presence } from "./tabs/presence";
 import { Storage } from "./tabs/storage";
 import type { YjsChangesView, YjsTab } from "./tabs/yjs";
 import { Yjs, YJS_CHANGES_VIEWS, YJS_TABS } from "./tabs/yjs";
 
 const MAIN_TABS = ["storage", "yjs"] as const;
-const SECONDARY_TABS = ["presence", "history", "events"] as const;
+const SECONDARY_TABS = ["presence", "events"] as const;
 
 type MainTab = (typeof MAIN_TABS)[number];
 type SecondaryTab = (typeof SECONDARY_TABS)[number];
@@ -132,6 +138,8 @@ function Panel() {
     yjsTab,
   ]);
 
+  const numCustomEvents = useCustomEventCount();
+
   const secondaryTabs: Tab[] = useMemo(() => {
     if (!currentRoomId) {
       return [] as Tab[];
@@ -145,23 +153,26 @@ function Panel() {
             title: "Presence",
             content: <Presence key={`${currentRoomId}:presence`} />,
           };
-        case "history":
-          return {
-            value: "history",
-            title: "History",
-            content: null,
-            disabled: true,
-          };
         case "events":
           return {
             value: "events",
             title: "Events",
-            content: null,
-            disabled: true,
+            richTitle: (
+              <span className="flex items-center">
+                Events
+                {numCustomEvents > 0 && (
+                  <Ping
+                    className="text-blue-500 dark:text-blue-400 ml-1.5"
+                    animate={false}
+                  />
+                )}
+              </span>
+            ),
+            content: <EventTimeline key={`${currentRoomId}:event-timeline`} />,
           };
       }
     });
-  }, [currentRoomId]);
+  }, [currentRoomId, numCustomEvents]);
 
   useEffect(() => {
     handleSearchClear();

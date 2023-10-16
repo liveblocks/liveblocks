@@ -5,6 +5,8 @@ export type {
   CommentCreatedEvent,
   CommentDeletedEvent,
   CommentEditedEvent,
+  CommentReactionAdded,
+  CommentReactionRemoved,
   RoomCreatedEvent,
   RoomDeletedEvent,
   StorageUpdatedEvent,

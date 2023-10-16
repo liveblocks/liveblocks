@@ -11,7 +11,7 @@ import "@liveblocks/react-comments/styles/dark/media-query.css";
  */
 
 function Example() {
-  const threads = useThreads();
+  const { threads } = useThreads();
 
   return (
     <main>

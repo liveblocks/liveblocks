@@ -37,12 +37,12 @@
   // type RoomEvent = {};
 
   // Set up the client on load
-  // Check inside src/routes/api/auth.ts for the serverless function
+  // Check inside src/routes/api/liveblocks-auth.ts for the serverless function
   onMount(() => {
     overrideRoomId();
 
     client = createClient({
-      authEndpoint: "/api/auth",
+      authEndpoint: "/api/liveblocks-auth",
     });
 
     room = client.enter<Presence, Storage /* UserMeta, RoomEvent */>(roomId, {

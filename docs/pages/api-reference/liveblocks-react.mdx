@@ -72,7 +72,7 @@ export const {
 >(client);
 ```
 
-#### resolveUser
+#### resolveUsers
 
 <Banner title="Private beta">
 
@@ -85,10 +85,9 @@ the near future.
 When using [Comments](/docs/products/comments), anything that is linked to a
 user (comments, mentions, etc.) will reference their ID. To display user
 information based on IDs, you can provide a resolver function to the
-`resolveUser` option in [`createRoomContext`](#createRoomContext).
+`resolveUsers` option in [`createRoomContext`](#createRoomContext).
 
-This resolver function will receive a user ID and should return a user object
-asynchronously.
+This resolver function will receive a list of user IDs and should return a list of user objects of the same size and in the same order.
 
 ```tsx file="liveblocks.config.ts"
 // ...
@@ -96,13 +95,13 @@ asynchronously.
 export const {
   /* ... */
 } = createRoomContext(client, {
-  resolveUser: async ({ userId }) => {
-    const userData = __getUserFromDB__(userId);
+  resolveUsers: async ({ userIds }) => {
+    const usersData = await __getUsersFromDB__(userIds);
 
-    return {
+    return usersData.map((userData) => ({
       name: userData.name,
       avatar: userData.avatar.src,
-    };
+    }));
   },
 });
 ```
@@ -148,8 +147,8 @@ but with some debouncing.
 export const {
   /* ... */
 } = createRoomContext(client, {
-  resolveMentionSuggestions: ({ text, roomId }) => {
-    const workspaceUsers = __getWorkspaceUsersFromDB__(roomId);
+  resolveMentionSuggestions: async ({ text, roomId }) => {
+    const workspaceUsers = await __getWorkspaceUsersFromDB__(roomId);
 
     if (!text) {
       // Show all workspace users by default
@@ -592,12 +591,20 @@ return `null`.
 Returns a callback that lets you broadcast custom events to other users in the
 room.
 
-```ts
+```ts highlight="3-5"
 import { useBroadcastEvent } from "./liveblocks.config";
 
+// On client A
 const broadcast = useBroadcastEvent();
-
 broadcast({ type: "EMOJI", emoji: "🔥" });
+
+// On client B
+useEventListener(({ event, user, connectionId }) => {
+  //                       ^^^^ Will be Client A
+  if (event.type === "EMOJI") {
+    // Do something
+  }
+});
 ```
 
 ### useEventListener
@@ -608,15 +615,26 @@ the user that sent the message. If an event was sent from the
 [Broadcast to a room](/docs/api-reference/rest-api-endpoints#post-broadcast-event)
 REST API, `connectionId` will be `-1`.
 
-```ts
+```ts highlight="7-13"
 import { useEventListener } from "./liveblocks.config";
 
-useEventListener(({ connectionId, event }) => {
+// On client A
+const broadcast = useBroadcastEvent();
+broadcast({ type: "EMOJI", emoji: "🔥" });
+
+// On client B
+useEventListener(({ event, user, connectionId }) => {
+  //                       ^^^^ Will be Client A
   if (event.type === "EMOJI") {
     // Do something
   }
 });
 ```
+
+The `user` property will indicate which User instance sent the message. This
+will typically be equal to one of the others in the room, but it can also be
+`null` in case this event was broadcasted from the server, using the
+[Broadcast Event API](https://liveblocks.io/docs/api-reference/rest-api-endpoints#post-broadcast-event).
 
 Automatically unsubscribes when the component is unmounted.
 
@@ -1130,6 +1148,9 @@ import { useThreads } from "./liveblocks.config";
 const { threads, error, isLoading } = useThreads();
 ```
 
+👉 A [Suspense version][] of this hook is also available, which will never
+return a loading state and will throw when there's an error.
+
 ### useUser
 
 Returns user info from a given user ID.
@@ -1140,10 +1161,13 @@ import { useUser } from "./liveblocks.config";
 const { user, error, isLoading } = useUser("user-id");
 ```
 
+👉 A [Suspense version][] of this hook is also available, which will never
+return a loading state and will throw when there's an error.
+
 <Banner title="Providing a resolver function">
 
 To use `useUser`, you should provide a resolver function to the
-[`resolveUser`](#resolveUser) option in
+[`resolveUsers`](#resolveUsers) option in
 [`createRoomContext`](#createRoomContext).
 
 </Banner>
@@ -1161,6 +1185,12 @@ const thread = createThread({ body: {}, metadata: {} });
 ### useEditThreadMetadata
 
 Returns a function that edits a thread’s metadata.
+
+<Banner title="Deleting properties">
+
+To delete an existing metadata property, set its value to `null`.
+
+</Banner>
 
 ```tsx
 const editThreadMetadata = useEditThreadMetadata();
@@ -1197,6 +1227,24 @@ comment, the thread also gets deleted.
 ```tsx
 const deleteComment = useDeleteComment();
 deleteComment({ threadId: "th_xxx", commentId: "cm_xxx" });
+```
+
+### useAddReaction
+
+Returns a function that adds a reaction to a comment.
+
+```tsx
+const addReaction = useAddReaction();
+addReaction({ threadId: "th_xxx", commentId: "cm_xxx", emoji: "👍" });
+```
+
+### useRemoveReaction
+
+Returns a function that removes a reaction from a comment.
+
+```tsx
+const removeReaction = useRemoveReaction();
+removeReaction({ threadId: "th_xxx", commentId: "cm_xxx", emoji: "👍" });
 ```
 
 ## Helpers

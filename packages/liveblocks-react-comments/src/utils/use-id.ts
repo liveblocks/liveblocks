@@ -9,7 +9,7 @@ function getId() {
   return ++id;
 }
 
-// Prevent bundlers from importing `useId` directly
+// Prevent bundlers from importing `useId` directly.
 // See https://github.com/radix-ui/primitives/pull/1028
 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
 const useReactId: typeof React.useId = (React as any)["useId".toString()];
@@ -32,4 +32,5 @@ function useIncrementalId() {
   return String(id) ?? undefined;
 }
 
+// React's `useId` is only available in React >=18.
 export const useId: typeof React.useId = useReactId ?? useIncrementalId;

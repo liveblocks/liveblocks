@@ -55,13 +55,13 @@ when needed instead of synchronizing your database of users with Liveblocks.
 
 ```tsx
 createRoomContext(client, {
-  resolveUser: async ({ userId }) => {
+  resolveUsers: async ({ userIds }) => {
     // Fetch user metadata from a local cache or a backend endpoint
 
-    return {
+    return userIds.map((userId) => ({
       name: "Marie Curie",
       avatar: "/images/marie-curie.png",
-    };
+    }));
   },
 });
 ```
@@ -123,7 +123,7 @@ import { useThreads } from "./liveblocks.config";
 import { Composer, Thread } from "@liveblocks/react-comments";
 
 export function App() {
-  const threads = useThreads();
+  const { threads } = useThreads();
   return (
     <div>
       {threads.map((thread) => (

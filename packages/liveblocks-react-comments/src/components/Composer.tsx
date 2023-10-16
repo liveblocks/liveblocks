@@ -1,16 +1,20 @@
 "use client";
 
+import type { BaseMetadata } from "@liveblocks/core";
 import { useRoomContextBundle } from "@liveblocks/react";
 import type {
   ComponentPropsWithoutRef,
   FocusEvent,
   FormEvent,
+  ForwardedRef,
   MouseEvent,
   ReactNode,
+  RefAttributes,
   SyntheticEvent,
 } from "react";
-import React, { forwardRef, useCallback } from "react";
+import React, { forwardRef, useCallback, useState } from "react";
 
+import { EmojiIcon } from "../icons/Emoji";
 import { MentionIcon } from "../icons/Mention";
 import { SendIcon } from "../icons/Send";
 import { type ComposerOverrides, useOverrides } from "../overrides";
@@ -25,15 +29,19 @@ import type {
   ComposerSubmitComment,
 } from "../primitives/Composer/types";
 import { MENTION_CHARACTER } from "../slate/plugins/mentions";
+import type { ThreadMetadata } from "../types";
 import { classNames } from "../utils/class-names";
 import { useControllableState } from "../utils/use-controllable-state";
 import { Attribution } from "./internal/Attribution";
 import { Avatar } from "./internal/Avatar";
 import { Button } from "./internal/Button";
+import type { EmojiPickerProps } from "./internal/EmojiPicker";
+import { EmojiPicker, EmojiPickerTrigger } from "./internal/EmojiPicker";
 import {
+  ShortcutTooltip,
+  ShortcutTooltipKey,
   Tooltip,
   TooltipProvider,
-  TooltipShortcutKey,
 } from "./internal/Tooltip";
 import { User } from "./internal/User";
 
@@ -41,9 +49,18 @@ interface EditorActionProps extends ComponentPropsWithoutRef<"button"> {
   label: string;
 }
 
-type ComposerCreateThreadProps = {
+interface EmojiEditorActionProps extends EditorActionProps {
+  onPickerOpenChange?: EmojiPickerProps["onOpenChange"];
+}
+
+type ComposerCreateThreadProps<TThreadMetadata extends BaseMetadata> = {
   threadId?: never;
   commentId?: never;
+
+  /**
+   * The metadata of the thread to create.
+   */
+  metadata?: TThreadMetadata;
 };
 
 type ComposerCreateCommentProps = {
@@ -52,6 +69,7 @@ type ComposerCreateCommentProps = {
    */
   threadId: string;
   commentId?: never;
+  metadata?: never;
 };
 
 type ComposerEditCommentProps = {
@@ -64,14 +82,14 @@ type ComposerEditCommentProps = {
    * The ID of the comment to edit.
    */
   commentId: string;
+  metadata?: never;
 };
 
-export type ComposerProps = Omit<
-  ComponentPropsWithoutRef<"form">,
-  "defaultValue"
-> &
+export type ComposerProps<
+  TThreadMetadata extends BaseMetadata = ThreadMetadata,
+> = Omit<ComponentPropsWithoutRef<"form">, "defaultValue"> &
   (
-    | ComposerCreateThreadProps
+    | ComposerCreateThreadProps<TThreadMetadata>
     | ComposerCreateCommentProps
     | ComposerEditCommentProps
   ) & {
@@ -168,6 +186,36 @@ function ComposerInsertMentionEditorAction({
   );
 }
 
+function ComposerInsertEmojiEditorAction({
+  label,
+  onPickerOpenChange,
+  className,
+  ...props
+}: EmojiEditorActionProps) {
+  const { insertText } = useComposer();
+
+  const preventDefault = useCallback((event: SyntheticEvent) => {
+    event.preventDefault();
+  }, []);
+
+  return (
+    <EmojiPicker onEmojiSelect={insertText} onOpenChange={onPickerOpenChange}>
+      <Tooltip content={label}>
+        <EmojiPickerTrigger asChild>
+          <Button
+            className={classNames("lb-composer-editor-action", className)}
+            onMouseDown={preventDefault}
+            aria-label={label}
+            {...props}
+          >
+            <EmojiIcon className="lb-button-icon" />
+          </Button>
+        </EmojiPickerTrigger>
+      </Tooltip>
+    </EmojiPicker>
+  );
+}
+
 function ComposerMention({ userId }: ComposerEditorMentionProps) {
   return (
     <ComposerPrimitive.Mention className="lb-composer-mention">
@@ -181,7 +229,7 @@ function ComposerMentionSuggestions({
   userIds,
 }: ComposerEditorMentionSuggestionsProps) {
   return userIds.length > 0 ? (
-    <ComposerPrimitive.Suggestions className="lb-root lb-elevation lb-composer-suggestions lb-composer-mention-suggestions">
+    <ComposerPrimitive.Suggestions className="lb-root lb-portal lb-elevation lb-composer-suggestions lb-composer-mention-suggestions">
       <ComposerPrimitive.SuggestionsList className="lb-composer-suggestions-list lb-composer-mention-suggestions-list">
         {userIds.map((userId) => (
           <ComposerPrimitive.SuggestionsListItem
@@ -243,6 +291,7 @@ const ComposerWithContext = forwardRef<
     const { hasResolveMentionSuggestions } = useRoomContextBundle();
     const { isEmpty } = useComposer();
     const $ = useOverrides(overrides);
+    const [isEmojiPickerOpen, setEmojiPickerOpen] = useState(false);
     const [collapsed, onCollapsedChange] = useControllableState(
       // If the composer is neither controlled nor uncontrolled, it defaults to controlled as uncollapsed.
       controlledCollapsed === undefined && defaultCollapsed === undefined
@@ -296,11 +345,11 @@ const ComposerWithContext = forwardRef<
 
         const isOutside = !event.currentTarget.contains(event.relatedTarget);
 
-        if (isOutside && isEmpty) {
+        if (isOutside && isEmpty && !isEmojiPickerOpen) {
           onCollapsedChange?.(true);
         }
       },
-      [isEmpty, onBlur, onCollapsedChange]
+      [isEmojiPickerOpen, isEmpty, onBlur, onCollapsedChange]
     );
 
     return (
@@ -334,14 +383,18 @@ const ComposerWithContext = forwardRef<
                   label={$.COMPOSER_INSERT_MENTION}
                 />
               )}
+              <ComposerInsertEmojiEditorAction
+                label={$.COMPOSER_INSERT_EMOJI}
+                onPickerOpenChange={setEmojiPickerOpen}
+              />
             </div>
             {showAttribution && <Attribution />}
             <div className="lb-composer-actions">
               {actions ?? (
                 <>
-                  <Tooltip
+                  <ShortcutTooltip
                     content={$.COMPOSER_SEND}
-                    shortcut={<TooltipShortcutKey name="enter" />}
+                    shortcut={<ShortcutTooltipKey name="enter" />}
                   >
                     <ComposerPrimitive.Submit disabled={disabled} asChild>
                       <Button
@@ -354,7 +407,7 @@ const ComposerWithContext = forwardRef<
                         <SendIcon />
                       </Button>
                     </ComposerPrimitive.Submit>
-                  </Tooltip>
+                  </ShortcutTooltip>
                 </>
               )}
             </div>
@@ -371,8 +424,17 @@ const ComposerWithContext = forwardRef<
  * @example
  * <Composer />
  */
-export const Composer = forwardRef<HTMLFormElement, ComposerProps>(
-  ({ threadId, commentId, onComposerSubmit, ...props }, forwardedRef) => {
+export const Composer = forwardRef(
+  <TThreadMetadata extends BaseMetadata = ThreadMetadata>(
+    {
+      threadId,
+      commentId,
+      metadata,
+      onComposerSubmit,
+      ...props
+    }: ComposerProps<TThreadMetadata>,
+    forwardedRef: ForwardedRef<HTMLFormElement>
+  ) => {
     const { useCreateThread, useCreateComment, useEditComment } =
       useRoomContextBundle();
     const createThread = useCreateThread();
@@ -401,7 +463,7 @@ export const Composer = forwardRef<HTMLFormElement, ComposerProps>(
         } else {
           createThread({
             body: comment.body,
-            metadata: {},
+            metadata: metadata ?? {},
           });
         }
       },
@@ -410,6 +472,7 @@ export const Composer = forwardRef<HTMLFormElement, ComposerProps>(
         createComment,
         createThread,
         editComment,
+        metadata,
         onComposerSubmit,
         threadId,
       ]
@@ -423,4 +486,6 @@ export const Composer = forwardRef<HTMLFormElement, ComposerProps>(
       </TooltipProvider>
     );
   }
-);
+) as <TThreadMetadata extends BaseMetadata = ThreadMetadata>(
+  props: ComposerProps<TThreadMetadata> & RefAttributes<HTMLFormElement>
+) => JSX.Element;
