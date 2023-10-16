@@ -29,15 +29,14 @@
 
 .tooltip {
   user-select: none;
-  background: var(--gray12);
-  color: var(--gray0);
+  background: var(--gray2);
+  color: var(--gray12);
   padding: 8px 12px 12px 8px;
   border-radius: var(--border-radius);
   margin-bottom: 8px;
   white-space: nowrap;
   max-width: 200px;
   font-size: 13px;
-  box-shadow: var(--shadow-over);
 }
 
 .tooltipHeader {

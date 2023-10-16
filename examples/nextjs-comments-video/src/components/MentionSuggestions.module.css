@@ -1,13 +1,13 @@
 .suggestions {
   --padding: 4px;
-  background-color: var(--gray0);
-  box-shadow: var(--shadow-over);
+  background-color: var(--gray1);
+  box-shadow: var(--shadow);
   border-radius: var(--border-radius);
   padding: var(--padding);
 }
 
 .mentionSuggestion {
-  background-color: var(--gray0);
+  background-color: var(--gray1);
   display: flex;
   align-items: center;
   gap: 6px;

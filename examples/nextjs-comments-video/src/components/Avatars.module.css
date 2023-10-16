@@ -6,7 +6,7 @@
   display: flex;
   place-content: center;
   position: relative;
-  border: 2px solid var(--gray0);
+  border: 2px solid var(--gray2);
   border-radius: 9999px;
   width: 32px;
   height: 32px;
@@ -20,12 +20,12 @@
   opacity: 0;
   transition: opacity 0.15s ease-out;
   padding: 4px 8px;
-  color: var(--gray0);
+  color: var(--gray12);
   font-size: 12px;
   border-radius: 4px;
   margin-top: 10px;
   z-index: 1;
-  background: var(--gray12);
+  background: var(--gray1);
   white-space: nowrap;
 }
 

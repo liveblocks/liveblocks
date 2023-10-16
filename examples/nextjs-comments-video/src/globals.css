@@ -1,20 +1,21 @@
 :root {
-  --accent: #5b5bd6;
-  --accent-bg: #edf2fe;
-  --gray0: #fff;
-  --gray1: hsl(0, 0%, 99%);
-  --gray2: hsl(0, 0%, 97.3%);
-  --gray3: hsl(0, 0%, 95.1%);
-  --gray4: hsl(0, 0%, 93%);
-  --gray5: hsl(0, 0%, 90.9%);
-  --gray6: hsl(0, 0%, 88.7%);
-  --gray7: hsl(0, 0%, 85.8%);
-  --gray8: hsl(0, 0%, 78%);
-  --gray9: hsl(0, 0%, 56.1%);
-  --gray10: hsl(0, 0%, 52.3%);
-  --gray11: hsl(0, 0%, 43.5%);
-  --gray12: hsl(0, 0%, 9%);
-  --hover: rgb(40, 40, 40);
+  --accent: #bdee63;
+  --accent-hover: #d4ff70;
+  --accent-background: #96ff3b1a;
+  --accent-background-hover: #a5ff5329;
+  --accent-contrast: #1d211c;
+  --gray1: #111210;
+  --gray2: #181917;
+  --gray3: #212220;
+  --gray4: #282a27;
+  --gray5: #2f312e;
+  --gray6: #383a36;
+  --gray7: #454843;
+  --gray8: #5c625b;
+  --gray9: #687066;
+  --gray10: #767d74;
+  --gray11: #afb5ad;
+  --gray12: #eceeec;
   --spacing: 1em;
   --border-radius: 0.375em;
   --font-sans: var(--font-inter), system-ui, -apple-system, BlinkMacSystemFont,
@@ -22,17 +23,14 @@
     Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol, Noto Color Emoji;
   --shadow: 0 0 0 1px rgba(0, 0, 0, 0.06), 0 1px 0 0 rgba(0, 0, 0, 0.08),
     0 2px 2px 0 rgba(0, 0, 0, 0.04), 0 3px 3px 0 rgba(0, 0, 0, 0.02),
-    0 4px 4px 0 rgba(0, 0, 0, 0.01);
-  --shadow-over: 0 0 0 1px rgba(0, 0, 0, 0.06), 0 1px 0 0 rgba(0, 0, 0, 0.08),
-    0 2px 2px 0 rgba(0, 0, 0, 0.04), 0 3px 3px 0 rgba(0, 0, 0, 0.02),
     0 8px 10px -6px rgba(0, 0, 0, 0.1);
 
   /* Liveblocks Comments */
   --lb-radius: var(--border-radius);
   --lb-spacing: var(--spacing);
   --lb-accent: var(--accent);
-  --lb-accent-foreground: var(--gray0);
-  --lb-background: var(--gray0);
+  --lb-accent-foreground: var(--accent-background);
+  --lb-background: var(--gray1);
   --lb-foreground: var(--gray12);
   --lb-icon-size: 20px;
   --lb-icon-weight: 1px;
@@ -40,12 +38,12 @@
   --lb-button-radius: calc(0.75 * var(--lb-radius));
   --lb-transition-duration: 0.1s;
   --lb-transition-easing: cubic-bezier(0.4, 0, 0.2, 1);
-  --lb-elevation-shadow: var(--shadow-over);
+  --lb-elevation-shadow: var(--shadow);
   --lb-tooltip-shadow: 0 2px 4px rgb(0 0 0 / 8%), 0 4px 12px rgb(0 0 0 / 12%);
   --lb-elevation-background: var(--lb-background);
   --lb-elevation-foreground: var(--lb-foreground);
-  --lb-tooltip-background: var(--gray12);
-  --lb-tooltip-foreground: var(--gray0);
+  --lb-tooltip-background: var(--gray1);
+  --lb-tooltip-foreground: var(--gray12);
   --lb-accent-contrast: 8%;
   --lb-foreground-contrast: 6%;
   --lb-elevation-foreground-contrast: 6%;
@@ -63,7 +61,9 @@ body {
   padding: 0;
   margin: 0;
   font-family: var(--font-sans);
-  background: var(--gray2);
+  font-size: 14px;
+  background: var(--gray1);
+  color: var(--gray12);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -114,40 +114,27 @@ button {
 .button {
   padding: 8px 12px;
   margin: 0;
-  background: var(--gray1);
-  box-shadow: var(--shadow);
+  background-color: var(--accent);
   white-space: nowrap;
   border-radius: 6px;
   font-size: 13px;
   font-weight: 500;
   font-family: var(--font-sans);
   cursor: pointer;
-  color: var(--gray12);
+  color: var(--accent-contrast);
   transition:
-    border-color 200ms,
-    background 200ms,
-    box-shadow 200ms;
+    background 150ms ease-out,
+    color 150ms ease-out;
 }
 
 .button:not(:disabled):hover {
-  background: var(--gray2);
-  border-color: var(--gray4);
+  background: var(--accent-hover);
 }
 
 .button:disabled {
-  opacity: 0.7;
+  background-color: var(--gray3);
+  color: var(--gray8);
   cursor: not-allowed;
-}
-
-.button:focus-visible {
-  outline: none;
-  box-shadow:
-    0px 0px 0px 1px rgba(0, 0, 0, 0.06),
-    0px 1px 0px 0px rgba(0, 0, 0, 0.08),
-    0px 2px 2px 0px rgba(0, 0, 0, 0.04),
-    0px 3px 3px 0px rgba(0, 0, 0, 0.02),
-    0px 4px 4px 0px rgba(0, 0, 0, 0.01),
-    0 0 0 2px rgba(0, 0, 0, 0.15);
 }
 
 img,

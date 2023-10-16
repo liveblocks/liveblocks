@@ -27,7 +27,7 @@
 
 .threadTime {
   height: 28px;
-  background-color: var(--accent-bg);
+  background-color: var(--accent-background);
   color: var(--accent);
   display: inline-flex;
   gap: 6px;
@@ -38,5 +38,10 @@
   border-radius: 4px;
   font-variant-numeric: tabular-nums;
   cursor: pointer;
-  transition: background-color 0.2s ease-out;
+  transition: background-color 150ms ease-out;
+}
+
+.threadTime:hover,
+.threadTime:focus {
+  background-color: var(--accent-background-hover);
 }

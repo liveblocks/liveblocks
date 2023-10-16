@@ -145,7 +145,7 @@ export function VideoPlayer() {
                 onDuration={setDuration}
                 onProgress={handleProgress}
                 onEnded={handleEnded}
-                url="film-composite.mp4"
+                url="michael-james-16296843-720p.mp4"
                 className={styles.reactPlayer}
               />
             )}
