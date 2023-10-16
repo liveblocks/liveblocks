@@ -245,13 +245,7 @@ export function createRoomContext<
 
   const RoomContext = React.createContext<TRoom | null>(null);
 
-  type TRoomTup = { room: TRoom; leave: () => void; ticket: symbol };
-
-  // const registry = new Map<string, Map<string, TRoomTup>>();
-  // //                         /            \
-  // //                  providerUuid       roomId
-
-  const roomCache = new Map<string, TRoomTup>();
+  const roomCache = new Map<string, { room: TRoom; leave(): void }>();
 
   /**
    * A stable version of .enterRoom(), where we cache the result on
@@ -261,7 +255,7 @@ export function createRoomContext<
     instanceId: string,
     roomId: string,
     options: EnterOptions<TPresence, TStorage>
-  ): TRoomTup {
+  ): { room: TRoom; leave(): void } {
     const key = `${instanceId}:${roomId}`;
     const cached = roomCache.get(key);
     if (cached) return cached;
@@ -271,16 +265,14 @@ export function createRoomContext<
       options
     );
 
-    // Wrap the leave function
-    const leave = rv.leave;
+    // Wrap the leave function to also delete the cached value
+    const origLeave = rv.leave;
     rv.leave = () => {
-      leave();
+      origLeave();
       roomCache.delete(key);
-      console.log(`==> ${JSON.stringify(Array.from(roomCache.keys()))}`);
     };
 
     roomCache.set(key, rv);
-    console.log(`==> ${JSON.stringify(Array.from(roomCache.keys()))}`);
     return rv;
   }
 
@@ -302,7 +294,6 @@ export function createRoomContext<
       unstable_batchedUpdates,
       shouldInitiallyConnect,
     } = props;
-    console.log(`RoomProvider for ${roomId} rendered!`);
 
     if (process.env.NODE_ENV !== "production") {
       if (!roomId) {
@@ -340,8 +331,8 @@ export function createRoomContext<
           : shouldInitiallyConnect,
     });
 
-    const [tup, setTup] = React.useState(() => {
-      const rv = stableEnterRoom(frozen.instanceId, roomId, {
+    const [{ room }, setRoomLeavePair] = React.useState(() =>
+      stableEnterRoom(frozen.instanceId, roomId, {
         initialPresence: frozen.initialPresence,
         initialStorage: frozen.initialStorage,
         // XXX Maybe rename this option to `autoConnect`?
@@ -352,15 +343,11 @@ export function createRoomContext<
         // SSR showing "initial" in useStatus()
         shouldInitiallyConnect: frozen.shouldInitiallyConnect,
         unstable_batchedUpdates: frozen.unstable_batchedUpdates,
-      });
-      console.log("Ran useState initializer:", rv);
-      return rv;
-    }); // , [roomId, frozen]);
+      })
+    );
 
     React.useEffect(() => {
-      console.log("Effect!", tup.ticket);
-
-      const tup = stableEnterRoom(frozen.instanceId, roomId, {
+      const pair = stableEnterRoom(frozen.instanceId, roomId, {
         initialPresence: frozen.initialPresence,
         initialStorage: frozen.initialStorage,
         // XXX Maybe rename this option to `autoConnect`?
@@ -373,21 +360,20 @@ export function createRoomContext<
         unstable_batchedUpdates: frozen.unstable_batchedUpdates,
       });
 
-      setTup(rv);
+      setRoomLeavePair(pair);
+      const { room, leave } = pair;
 
       return () => {
-        console.log("Uneffect!", rv.ticket);
-        // XXX Put back Comments(tm) stuff here
-        // const commentsRoom = commentsRooms.get(room);
-        // if (commentsRoom) {
-        //   commentsRooms.delete(room);
-        // }
-        rv.leave();
+        const commentsRoom = commentsRooms.get(room);
+        if (commentsRoom) {
+          commentsRooms.delete(room);
+        }
+        leave();
       };
     }, [roomId, frozen]);
 
     return (
-      <RoomContext.Provider value={tup.room}>
+      <RoomContext.Provider value={room}>
         <ContextBundle.Provider
           value={
             internalBundle as unknown as InternalRoomContextBundle<
