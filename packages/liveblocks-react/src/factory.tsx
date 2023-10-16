@@ -61,8 +61,6 @@ import type {
   UserStateSuccess,
 } from "./types";
 
-let lastInstanceId = 0;
-
 const noop = () => {};
 const identity: <T>(x: T) => T = (x) => x;
 
@@ -218,6 +216,8 @@ export function useRoomContextBundle() {
   }
   return bundle;
 }
+
+let lastInstanceId = 0;
 
 export function createRoomContext<
   TPresence extends JsonObject,
