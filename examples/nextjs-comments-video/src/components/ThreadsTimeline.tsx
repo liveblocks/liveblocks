@@ -38,7 +38,6 @@ function PinnedThreads() {
 }
 
 function PinnedThread({ thread }: { thread: ThreadData<ThreadMetadata> }) {
-  // TODO check types correct when all comments deleted from thread
   const { user } = useUser(thread.comments?.[0].userId || "");
   const highlightThread = useHighlightThread(thread.id);
   const [highlightedPin, setHighlightedPin] = useState(false);
@@ -53,8 +52,8 @@ function PinnedThread({ thread }: { thread: ThreadData<ThreadMetadata> }) {
     setTimeout(() => setHighlightedPin(true));
   });
 
-  // All comments deleted
-  if (!thread.comments.length) {
+  // Not intended to be on the timeline, or all comments deleted
+  if (thread.metadata.time === -1 || !thread.comments.length) {
     return null;
   }
 
@@ -79,11 +78,7 @@ function PinnedThread({ thread }: { thread: ThreadData<ThreadMetadata> }) {
             {user.name}
           </div>
           <div className={styles.tooltipBody}>
-            <span>
-              {thread.metadata.time !== null
-                ? formatTime(thread.metadata.time) + " "
-                : null}
-            </span>
+            <span>{formatTime(thread.metadata.time) + " "}</span>
             <Comment.Body
               body={thread.comments[0].body}
               components={{

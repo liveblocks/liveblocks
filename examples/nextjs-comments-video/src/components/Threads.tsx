@@ -3,7 +3,7 @@
 import { ThreadMetadata, useThreads } from "@/liveblocks.config";
 import { ClientSideSuspense } from "@liveblocks/react";
 import { Thread } from "@liveblocks/react-comments";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import styles from "./Threads.module.css";
 import {
   resetAllHighlights,
@@ -23,7 +23,6 @@ export function Threads() {
   );
 }
 
-// TODO separate threads with a gap
 function ThreadList() {
   const { threads } = useThreads();
 
@@ -41,7 +40,7 @@ function ThreadList() {
 }
 
 function CustomThread({ thread }: { thread: ThreadData<ThreadMetadata> }) {
-  const threadHasTime = thread.metadata.timePercentage !== null;
+  const threadHasTime = thread.metadata.timePercentage !== -1;
   const skipTo = useSkipTo();
   const highlightPin = useHighlightPin(thread.id);
 

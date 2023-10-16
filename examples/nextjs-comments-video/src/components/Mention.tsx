@@ -6,7 +6,6 @@ import {
 import { useUser } from "@/liveblocks.config";
 import styles from "./Mention.module.css";
 
-// TODO add styles
 export function Mention({
   userId,
 }: ComposerEditorMentionProps | CommentBodyMentionProps) {

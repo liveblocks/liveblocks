@@ -5,7 +5,6 @@ import {
 import { useUser } from "@/liveblocks.config";
 import styles from "./MentionSuggestions.module.css";
 
-// TODO add styles
 export function MentionSuggestions({
   userIds,
 }: ComposerEditorMentionSuggestionsProps) {

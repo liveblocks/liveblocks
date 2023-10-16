@@ -108,6 +108,7 @@ button {
   appearance: none;
   background: none;
   border: none;
+  font: inherit;
 }
 
 .button {

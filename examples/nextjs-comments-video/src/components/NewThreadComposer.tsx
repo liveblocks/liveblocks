@@ -9,7 +9,6 @@ import { Mention } from "@/components/Mention";
 import { MentionSuggestions } from "@/components/MentionSuggestions";
 import { Link } from "@/components/Link";
 import styles from "./NewThreadComposer.module.css";
-import { Avatar } from "./Avatars";
 import { TimeIcon } from "@/icons/Time";
 
 type Props = {
@@ -17,9 +16,6 @@ type Props = {
   setPlaying: (vale: boolean) => void;
   time: number;
 };
-
-// TODO show an overlay over the video when writing a comment?
-// TODO place the composer over the video?
 
 export function NewThreadComposer({
   getCurrentPercentage,
@@ -39,8 +35,8 @@ export function NewThreadComposer({
         body,
         metadata: {
           resolved: false,
-          time: attachTime ? time : null,
-          timePercentage: attachTime ? getCurrentPercentage() : null,
+          time: attachTime ? time : -1,
+          timePercentage: attachTime ? getCurrentPercentage() : -1,
         },
       });
     },
@@ -83,7 +79,6 @@ export function NewThreadComposer({
             onFocus={handleFocus}
             onKeyDown={handleKeyDown}
             components={{
-              // TODO add styles to three components below
               Mention,
               MentionSuggestions,
               Link,
@@ -96,7 +91,6 @@ export function NewThreadComposer({
               <TimeIcon />
               {formatTime(time)}
             </label>
-            {/* TODO this must be checked while Comments team look at my feedback */}
             <input
               id="attach-time"
               type="checkbox"
@@ -104,9 +98,7 @@ export function NewThreadComposer({
               onChange={handleCheckboxChecked}
             />
           </div>
-          <Composer.Submit className="button" disabled>
-            Comment
-          </Composer.Submit>
+          <Composer.Submit className="button">Comment</Composer.Submit>
         </div>
       </Composer.Form>
     </>
