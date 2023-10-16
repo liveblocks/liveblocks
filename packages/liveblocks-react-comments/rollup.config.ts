@@ -5,7 +5,7 @@ import esbuild from "rollup-plugin-esbuild";
 import preserveDirectives from "rollup-plugin-preserve-directives";
 
 import { clean } from "./plugins/rollup/clean";
-import { scss } from "./plugins/rollup/scss";
+import { styles } from "./plugins/rollup/styles";
 
 const SRC_DIR = "src";
 const DIST_DIR = "dist";
@@ -54,7 +54,7 @@ const configs: RollupOptions[] = [
       preserveDirectives(),
 
       // Build .css files
-      scss({
+      styles({
         files: [
           {
             entry: `${SRC_DIR}/styles/index.scss`,
