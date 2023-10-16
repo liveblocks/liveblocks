@@ -39,7 +39,7 @@ export function Avatar({ src, name, state }: AvatarProps) {
   // TODO use `state` to show a `playing | paused | seeking` indicator
   return (
     <div className={styles.avatar} data-tooltip={name}>
-      <img src={src} className={styles.avatar_picture} data-tooltip={name} />
+      <img src={src} className={styles.avatar_picture} alt={name} />
     </div>
   );
 }

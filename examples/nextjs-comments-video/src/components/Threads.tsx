@@ -69,6 +69,7 @@ function CustomThread({ thread }: { thread: ThreadData<ThreadMetadata> }) {
       className={styles.threadWrapper}
       onPointerEnter={highlightPin}
       onPointerLeave={resetAllHighlights}
+      data-highlight={highlightedThread || undefined}
     >
       {threadHasTime ? (
         <button className={styles.threadTime} onClick={handleButtonClick}>
@@ -80,7 +81,6 @@ function CustomThread({ thread }: { thread: ThreadData<ThreadMetadata> }) {
         className={styles.thread}
         thread={thread}
         indentCommentContent={true}
-        data-highlight={highlightedThread || undefined}
       />
     </div>
   );

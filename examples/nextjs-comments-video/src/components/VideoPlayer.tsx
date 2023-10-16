@@ -96,7 +96,7 @@ export function VideoPlayer() {
       return -1;
     }
 
-    return /* player.current.getCurrentTime() */ (time / duration) * 100;
+    return (time / duration) * 100;
   }, [duration]);
 
   // Listen to skip events from other parts of app
