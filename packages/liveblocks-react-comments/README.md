@@ -27,9 +27,10 @@ and scale collaborative applications with zero configuration, no maintenance
 required.
 
 > [!IMPORTANT]  
-> Comments is currently in private beta and is only available to a select group
-> of users. If you want to participate in the beta,
-> [sign up for the waitlist](https://forms.gle/xgp54aTMsoH8hrjU9).
+> Comments is currently in beta.If you have any questions or feedback, please
+> reach out to us via the dedicated Discord channel,
+> [#comments-beta](https://discord.com/channels/913109211746009108/1126614905160749097).
+> We’d love to hear from you.
 
 ## Installation
 
