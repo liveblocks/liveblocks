@@ -1,3 +1,9 @@
+# v1.4.7
+
+### `@liveblocks/react`
+
+- Fix `userIds` type in `ResolveUsersArgs`.
+
 # v1.4.6
 
 ### `@liveblocks/react`
@@ -11,8 +17,8 @@
   user info of a single user ID, this function will now expect a list of users'
   info matching the provided list of user IDs.
 - **Breaking (beta):** The `ResolveUserOptions` and
-  `ResolveMentionSuggestionsOptions` types were renamed to `ResolveUserArgs` and
-  `ResolveMentionSuggestionsArgs` respectively.
+  `ResolveMentionSuggestionsOptions` types were renamed to `ResolveUsersArgs`
+  and `ResolveMentionSuggestionsArgs` respectively.
 - `resolveUsers` and `resolveMentionSuggestions` now accept synchronous
   functions.
 - `resolveUsers` now also provides the current room ID.
