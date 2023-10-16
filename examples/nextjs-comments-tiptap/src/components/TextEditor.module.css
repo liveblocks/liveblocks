@@ -65,6 +65,17 @@
   min-width: var(--comments-width);
 }
 
+@media (max-width: 1300px) {
+  .threadListContainer {
+    display: none;
+  }
+
+
+  .editorContainerOffset {
+    margin-left: 0;
+  }
+}
+
 .placeholder {
   pointer-events: none;
   position: absolute;

@@ -51,7 +51,7 @@ function NoComments() {
         <span className={styles.noCommentsButton}>
           <CommentIcon />
         </span>
-        Create a comment by selecting text and pressing the button.
+        Create a comment by selecting text and pressing the comment button.
       </p>
     </div>
   );
