@@ -16,6 +16,7 @@ import {
   useHighlightEvent,
   useHighlightEventListener,
 } from "@/comment-utils";
+import { CommentIcon } from "@/icons";
 
 type Props = {
   editor: Editor;
@@ -43,7 +44,17 @@ export function ThreadList({ editor }: Props) {
 }
 
 function NoComments() {
-  return <div>No comments yet</div>;
+  return (
+    <div className={styles.noComments}>
+      <div className={styles.noCommentsHeader}>No comments yet</div>
+      <p>
+        <span className={styles.noCommentsButton}>
+          <CommentIcon />
+        </span>
+        Create a comment by selecting text and pressing the button.
+      </p>
+    </div>
+  );
 }
 
 function CustomThread({

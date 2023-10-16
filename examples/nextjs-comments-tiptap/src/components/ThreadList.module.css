@@ -25,3 +25,28 @@
   border-left: 2px solid var(--comment-highlight-complete-border);
   padding: var(--space-1) var(--space-4);
 }
+
+.noComments {
+  padding-top: var(--space-8);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.noCommentsHeader {
+  font-weight: 600;
+  font-size: var(--size-lg);
+}
+
+.noCommentsButton {
+  float: left;
+  border: 1px solid var(--color-border-contrasted);
+  padding: var(--space-4);
+  margin-top: 4px;
+  margin-right: var(--space-6);
+  border-radius: var(--radius-sm);
+}
+
+.noCommentsButton svg {
+  opacity: 0.6;
+}

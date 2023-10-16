@@ -49,7 +49,7 @@
 
 .editorContainer {
   position: relative;
-  min-height: 1000px;
+  min-height: 1180px;
   width: 100%;
   max-width: 850px;
   margin: var(--space-8) auto;
