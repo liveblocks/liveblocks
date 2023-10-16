@@ -41,12 +41,12 @@ export type LiveblocksContext<
    * Enters a room and starts sync it with zustand state
    * @param roomId The id of the room
    */
-  readonly enterRoom: (roomId: string) => void;
+  readonly enterRoom: (roomId: string) => () => void;
   /**
-   * Leaves a room and stops sync it with zustand state.
-   * @param roomId The id of the room
+   * Leaves the currently entered room and stops sync it with zustand state, if
+   * any. If enterRoom was not called before, this is a no-op.
    */
-  readonly leaveRoom: (roomId: string) => void;
+  readonly leaveRoom: () => void;
   /**
    * The room currently synced to your zustand state.
    */
@@ -174,10 +174,16 @@ const middlewareImpl: InnerLiveblocksMiddleware = (config, options) => {
     let isPatching: boolean = false;
     let storageRoot: LiveObject<TStorage> | null = null;
     let unsubscribeCallbacks: Array<() => void> = [];
+    let lastLeaveFn: (() => void) | null = null;
 
     function enterRoom(roomId: string) {
       if (storageRoot) {
         return;
+      }
+
+      if (lastLeaveFn !== null) {
+        // First leave the old room before entering a potential new one
+        lastLeaveFn();
       }
 
       const initialPresence = selectFields(
@@ -185,9 +191,9 @@ const middlewareImpl: InnerLiveblocksMiddleware = (config, options) => {
         presenceMapping
       ) as unknown as TPresence;
 
-      const room = client.enter(roomId, {
+      const { room, leave } = client.enterRoom(roomId, {
         initialPresence,
-      }) as unknown as TRoom;
+      }) as unknown as { room: TRoom; leave(): void };
       maybeRoom = room;
 
       updateLiveblocksContext(set, { isStorageLoading: true, room });
@@ -257,23 +263,33 @@ const middlewareImpl: InnerLiveblocksMiddleware = (config, options) => {
           isStorageLoading: false,
         });
       });
+
+      lastLeaveFn = () => {
+        for (const unsubscribe of unsubscribeCallbacks) {
+          unsubscribe();
+        }
+        unsubscribeCallbacks = [];
+
+        storageRoot = null;
+        maybeRoom = null;
+        isPatching = false;
+
+        lastLeaveFn = null;
+        leave();
+
+        updateLiveblocksContext(set, {
+          others: [],
+          connection: "closed",
+          isStorageLoading: false,
+          room: null,
+        });
+      };
+
+      return lastLeaveFn;
     }
 
-    function leaveRoom(roomId: string) {
-      for (const unsubscribe of unsubscribeCallbacks) {
-        unsubscribe();
-      }
-      storageRoot = null;
-      maybeRoom = null;
-      isPatching = false;
-      unsubscribeCallbacks = [];
-      client.leave(roomId);
-      updateLiveblocksContext(set, {
-        others: [],
-        connection: "closed",
-        isStorageLoading: false,
-        room: null,
-      });
+    function leaveRoom() {
+      lastLeaveFn?.();
     }
 
     const store = config(
