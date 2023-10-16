@@ -3,8 +3,9 @@ module.exports = {
   extends: ["stylelint-config-standard-scss"],
   plugins: ["stylelint-order"],
   rules: {
-    "selector-class-pattern": null,
-    "keyframes-name-pattern": null,
+    "selector-class-pattern": /^lb-[a-z-:]+$/,
+    "keyframes-name-pattern": /^lb-[a-z-:]+$/,
+    "selector-max-specificity": "0,1,1",
     "keyframe-block-no-duplicate-selectors": null,
     "scss/operator-no-newline-after": null,
     "scss/dollar-variable-colon-space-after": null,
