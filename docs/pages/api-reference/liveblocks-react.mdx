@@ -180,7 +180,7 @@ is unmounted.
   mutable by every client. Must either contain Live structures (e.g.
   `new LiveList()`, `new LiveObject({ a: 1 })`, etc.) or be serializable to
   JSON.
-- `autoConnect` (optional) - Whether or not the room should immediately connect
+- `autoConnect` (optional) - Whether or not the room should automatically connect
   to Liveblocks servers when the RoomProvider is mounted. By default equals to
   `typeof window !== "undefined"`, meaning the RoomProvider tries to connect to
   Liveblocks servers only on the client side.
