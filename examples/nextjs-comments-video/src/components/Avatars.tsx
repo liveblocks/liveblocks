@@ -2,6 +2,8 @@
 
 import { PresenceStates, useOthers, useSelf } from "@/liveblocks.config";
 import styles from "./Avatars.module.css";
+import { PauseIcon } from "@/icons/Pause";
+import { PlayIcon } from "@/icons/Play";
 
 export function Avatars() {
   const users = useOthers();
@@ -40,6 +42,9 @@ export function Avatar({ src, name, state }: AvatarProps) {
   return (
     <div className={styles.avatar} data-tooltip={name}>
       <img src={src} className={styles.avatar_picture} alt={name} />
+      <span className={styles.avatar_icon}>
+        {state === "playing" ? <PlayIcon /> : <PauseIcon />}
+      </span>
     </div>
   );
 }
