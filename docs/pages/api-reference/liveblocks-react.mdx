@@ -180,10 +180,10 @@ is unmounted.
   mutable by every client. Must either contain Live structures (e.g.
   `new LiveList()`, `new LiveObject({ a: 1 })`, etc.) or be serializable to
   JSON.
-- `autoConnect` (optional) - Whether or not the room should automatically connect
-  to Liveblocks servers when the RoomProvider is mounted. By default equals to
-  `typeof window !== "undefined"`, meaning the RoomProvider tries to connect to
-  Liveblocks servers only on the client side.
+- `autoConnect` (optional) - Whether or not the room should automatically
+  connect to Liveblocks servers when the RoomProvider is mounted. By default
+  equals to `typeof window !== "undefined"`, meaning the RoomProvider tries to
+  connect to Liveblocks servers only on the client side.
 
 The `initialPresence`, `initialStorage` and `autoConnect` props are ignored
 after the first render, so changes to the initial value argument won’t have an
