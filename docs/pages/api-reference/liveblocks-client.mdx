@@ -184,9 +184,9 @@ Client returned by [`createClient`][].
 
 ### Client.enterRoom
 
-Enters a room and returns both the local `Room` instance, and a “leave”
-function (unsubscribe function). The authentication endpoint is called as soon
-as you call this function.
+Enters a room and returns both the local `Room` instance, and a “leave” function
+(unsubscribe function). The authentication endpoint is called as soon as you
+call this function.
 
 The second argument is a configuration for the presence and storage.
 
@@ -221,9 +221,9 @@ Enters a room and returns its local `Room` instance.
 
 <Banner title="Deprecated since 1.5" type="warning">
 
-We no longer recommend this API, because issues will occur if you 
-simultaneously connect to the same room with multiple instances.
-We recommend using [`client.enterRoom`][] instead.
+We no longer recommend this API, because issues will occur if you simultaneously
+connect to the same room with multiple instances. We recommend using
+[`client.enterRoom`][] instead.
 
 </Banner>
 
@@ -249,9 +249,9 @@ Leaves a room.
 
 <Banner title="Deprecated since 1.5" type="warning">
 
-We no longer recommend using this API, because it will cause issues if you have
-multiple component trees in your application that connect to the same room.
-Prefer the new and improved [`client.enterRoom`][] API.
+We no longer recommend this API, because issues will occur if you simultaneously
+connect to the same room with multiple instances. We recommend using
+[`client.enterRoom`][] instead.
 
 </Banner>
 
@@ -825,8 +825,8 @@ room.reconnect();
 
 Disconnect the local room instance from the Liveblocks server. The room instance
 will remain functional (for example, it will still allow local presence or
-storage mutations), but since it’s no longer connected, changes
-will not be persisted or synchronized until the room instance is reconnected again.
+storage mutations), but since it’s no longer connected, changes will not be
+persisted or synchronized until the room instance is reconnected again.
 
 ```ts
 room.disconnect();
