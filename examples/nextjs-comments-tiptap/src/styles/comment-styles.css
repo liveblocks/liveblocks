@@ -1,10 +1,7 @@
 .lb-root {
   --lb-accent: var(--color-accent);
   --lb-accent-foreground: var(--color-surface);
-}
-
-.lb-thread {
-  --lb-background: none;
+  --lb-background: var(--color-surface-elevated);
 }
 
 .comment-highlight {
