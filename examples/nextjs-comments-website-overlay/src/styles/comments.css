@@ -18,7 +18,6 @@
   z-index: var(--z-above-comments-sidemenu);
 }
 
-/* Temporary, until we update comments */
-[data-radix-popper-content-wrapper] {
+.lb-portal {
   z-index: var(--z-above-comments-sidemenu) !important;
 }
