@@ -1,5 +1,5 @@
 {
-  "name": "@liveblocks-examples/nextjs-comments-website-overlay",
+  "name": "@liveblocks-examples/nextjs-comments-overlay",
   "description": "This example shows how to display comments overlaid on any website with Liveblocks and Next.js.",
   "licence": "Apache-2.0",
   "version": "0.1.0",
