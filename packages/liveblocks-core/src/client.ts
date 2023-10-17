@@ -1,8 +1,8 @@
 import { createAuthManager } from "./auth-manager";
 import type { LsonObject } from "./crdts/Lson";
 import { linkDevTools, setupDevTools, unlinkDevTools } from "./devtools";
-import { nn } from "./lib/assert";
 import { deprecateIf } from "./lib/deprecation";
+import * as console from "./lib/fancy-console";
 import type { Json, JsonObject } from "./lib/Json";
 import type { Resolve } from "./lib/Resolve";
 import type { CustomAuthenticationResult } from "./protocol/Authentication";
@@ -13,7 +13,6 @@ import {
   makeAuthDelegateForRoom,
   makeCreateSocketDelegateForRoom,
 } from "./room";
-import type { Brand } from "./types/Brand";
 
 const MIN_THROTTLE = 16;
 const MAX_THROTTLE = 1000;
@@ -23,8 +22,6 @@ const MIN_LOST_CONNECTION_TIMEOUT = 200;
 const RECOMMENDED_MIN_LOST_CONNECTION_TIMEOUT = 1000;
 const MAX_LOST_CONNECTION_TIMEOUT = 30000;
 const DEFAULT_LOST_CONNECTION_TIMEOUT = 5000;
-
-let lastTicketId = 0;
 
 export type EnterOptions<
   TPresence extends JsonObject,
@@ -191,7 +188,6 @@ function getServerFromClientOptions(clientOptions: ClientOptions) {
  * });
  */
 export function createClient(options: ClientOptions): Client {
-  type Ticket = Brand<symbol, "Ticket">;
   type OpaqueRoom = Room<JsonObject, LsonObject, BaseUserMeta, Json>;
 
   const clientOptions = options;
@@ -202,25 +198,68 @@ export function createClient(options: ClientOptions): Client {
 
   const authManager = createAuthManager(options);
 
-  const roomsById = new Map<string, OpaqueRoom>();
-  const roomIdsByTicket = new Map<Ticket, string>();
+  type RoomInfo = {
+    room: OpaqueRoom;
+    unsubs: Set<() => void>;
+  };
 
-  function createTicketForRoom<
+  const roomsById = new Map<string, RoomInfo>();
+
+  function teardownRoom(room: OpaqueRoom) {
+    unlinkDevTools(room.id);
+    roomsById.delete(room.id);
+    room.destroy();
+  }
+
+  function leaseRoom<
+    TPresence extends JsonObject,
+    TStorage extends LsonObject,
+    TUserMeta extends BaseUserMeta,
+    TRoomEvent extends Json,
+  >(
+    info: RoomInfo
+  ): {
+    room: Room<TPresence, TStorage, TUserMeta, TRoomEvent>;
+    leave: () => void;
+  } {
+    // Create a new self-destructing leave function
+    const leave = () => {
+      const self = leave; // A reference to the currently executing function itself
+
+      if (!info.unsubs.delete(self)) {
+        console.warn(
+          "This leave function was already called. Calling it more than once has no effect."
+        );
+      } else {
+        // Was this the last room lease? If so, tear down the room
+        if (info.unsubs.size === 0) {
+          teardownRoom(info.room);
+        }
+      }
+    };
+
+    info.unsubs.add(leave);
+    return {
+      room: info.room as Room<TPresence, TStorage, TUserMeta, TRoomEvent>,
+      leave,
+    };
+  }
+
+  function enterRoom<
     TPresence extends JsonObject,
     TStorage extends LsonObject = LsonObject,
     TUserMeta extends BaseUserMeta = BaseUserMeta,
     TRoomEvent extends Json = never,
-  >(roomId: string, options: EnterOptions<TPresence, TStorage>): Ticket {
-    const ticket = Symbol(
-      process.env.NODE_ENV !== "production"
-        ? `Ticket ${++lastTicketId} for ${roomId}`
-        : undefined
-    ) as Ticket;
-
-    const existingRoom = roomsById.get(roomId);
-    if (existingRoom !== undefined) {
-      roomIdsByTicket.set(ticket, roomId);
-      return ticket;
+  >(
+    roomId: string,
+    options: EnterOptions<TPresence, TStorage>
+  ): {
+    room: Room<TPresence, TStorage, TUserMeta, TRoomEvent>;
+    leave: () => void;
+  } {
+    const existing = roomsById.get(roomId);
+    if (existing !== undefined) {
+      return leaseRoom(existing);
     }
 
     deprecateIf(
@@ -253,7 +292,11 @@ export function createClient(options: ClientOptions): Client {
       }
     );
 
-    roomsById.set(roomId, newRoom);
+    const newRoomInfo: RoomInfo = {
+      room: newRoom,
+      unsubs: new Set(),
+    };
+    roomsById.set(roomId, newRoomInfo);
 
     setupDevTools(() => Array.from(roomsById.keys()));
     linkDevTools(roomId, newRoom);
@@ -275,52 +318,7 @@ export function createClient(options: ClientOptions): Client {
       newRoom.connect();
     }
 
-    roomIdsByTicket.set(ticket, roomId);
-    return ticket;
-  }
-
-  function enterRoom<
-    TPresence extends JsonObject,
-    TStorage extends LsonObject = LsonObject,
-    TUserMeta extends BaseUserMeta = BaseUserMeta,
-    TRoomEvent extends Json = never,
-  >(
-    roomId: string,
-    options: EnterOptions<TPresence, TStorage>
-  ): {
-    room: Room<TPresence, TStorage, TUserMeta, TRoomEvent>;
-    leave: () => void;
-  } {
-    const ticket = createTicketForRoom(roomId, options);
-    const room = nn(
-      roomsById.get(roomId),
-      "Did not find a Room for this room ID. Was the room already destroyed?"
-    ) as Room<TPresence, TStorage, TUserMeta, TRoomEvent>;
-    const leave = () => releaseTicket(ticket);
-    return { room, leave };
-  }
-
-  function releaseTicket(ticket: Ticket) {
-    const roomId = roomIdsByTicket.get(ticket);
-    if (roomId === undefined) {
-      // Room was already left, maybe by a forceLeave() call that preceded this?
-      if (process.env.NODE_ENV === "production") {
-        return;
-      } else {
-        throw new Error(`Unknown ticket: ${String(ticket)}`);
-      }
-    }
-
-    roomIdsByTicket.delete(ticket);
-
-    // Is this the last room instance to be left?
-    if (!Array.from(roomIdsByTicket.values()).includes(roomId)) {
-      const room = nn(roomsById.get(roomId), "Internal inconsistency");
-
-      unlinkDevTools(roomId);
-      roomsById.delete(roomId);
-      room?.destroy();
-    }
+    return leaseRoom(newRoomInfo);
   }
 
   function enter<
@@ -347,17 +345,16 @@ export function createClient(options: ClientOptions): Client {
     TUserMeta extends BaseUserMeta = BaseUserMeta,
     TRoomEvent extends Json = never,
   >(roomId: string): Room<TPresence, TStorage, TUserMeta, TRoomEvent> | null {
-    const room = roomsById.get(roomId);
+    const room = roomsById.get(roomId)?.room;
     return room
       ? (room as Room<TPresence, TStorage, TUserMeta, TRoomEvent>)
       : null;
   }
 
-  function teardownRoom(roomId: string) {
-    for (const [ticket, rId] of roomIdsByTicket) {
-      if (roomId === rId) {
-        releaseTicket(ticket);
-      }
+  function forceLeave(roomId: string) {
+    const unsubs = roomsById.get(roomId)?.unsubs ?? new Set();
+    for (const unsub of unsubs) {
+      unsub();
     }
   }
 
@@ -365,7 +362,7 @@ export function createClient(options: ClientOptions): Client {
     // Old, deprecated APIs
     enter,
     getRoom,
-    leave: teardownRoom,
+    leave: forceLeave,
 
     // New, preferred API
     enterRoom,
