@@ -1,7 +1,9 @@
 @import "../constants";
 
-@mixin dark-variables {
-  // Colors
+@mixin dark-styles {
+  /**
+   * Colors
+   */
   --lb-accent: #4af;
   --lb-background: #222;
   --lb-foreground: #fff;
@@ -12,12 +14,12 @@
   --lb-elevation-foreground-contrast: 10%;
   --lb-tooltip-foreground-contrast: 10%;
 
-  // Shadows
+  /**
+   * Shadows
+   */
   --lb-inset-shadow: inset 0 0 0 1px rgb(255 255 255 / 6%);
-  --lb-elevation-shadow: #{$lb-elevation-shadow};
-  --lb-tooltip-shadow: #{$lb-tooltip-shadow};
-}
+  --lb-elevation-shadow: $lb-elevation-shadow;
+  --lb-tooltip-shadow: $lb-tooltip-shadow;
 
-@mixin dark-root-styles {
   color-scheme: dark;
 }
