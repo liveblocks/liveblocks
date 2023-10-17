@@ -65,7 +65,7 @@ function PopoverWrapper({ children }: { children: ReactNode }) {
 
   return (
     <Popover.Root open={showMobileMenu} onOpenChange={setShowMobileMenu}>
-      <Popover.Trigger>
+      <Popover.Trigger asChild>
         <Button
           className={styles.threadListPopoverTrigger}
           variant="secondary"
@@ -74,11 +74,10 @@ function PopoverWrapper({ children }: { children: ReactNode }) {
           <MenuIcon />
         </Button>
       </Popover.Trigger>
-      <Popover.Content
-        className={styles.threadListPopover}
-        onOpenAutoFocus={(e) => e.preventDefault()}
-      >
-        {children}
+      <Popover.Content onOpenAutoFocus={(e) => e.preventDefault()} asChild>
+        <Popover.Portal>
+          <div className={styles.threadListPopover}>{children}</div>
+        </Popover.Portal>
       </Popover.Content>
     </Popover.Root>
   );

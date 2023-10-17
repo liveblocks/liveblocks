@@ -49,9 +49,9 @@
 
 .editorContainer {
   position: relative;
-  min-height: 1200px;
+  min-height: 1100px;
   width: 100%;
-  max-width: 850px;
+  max-width: 800px;
   margin: var(--space-8) auto;
   border: 1px solid var(--color-border);
   background: var(--color-surface-elevated);

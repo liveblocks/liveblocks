@@ -6,8 +6,12 @@
 }
 
 .threadListPopover {
+  position: fixed;
+  top: var(--space-22);
+  right: var(--space-12);
+  bottom: var(--space-8);
   max-width: 310px;
-  margin-right: var(--space-12);
+  overflow-y: auto;
 }
 
 .threadListPopoverTrigger {
@@ -77,7 +81,7 @@
 
 @media (max-width: 1279px) {
   .threadList {
-    margin-top: var(--space-15);
+    margin-top: var(--space-6);
   }
 
   .composer {
