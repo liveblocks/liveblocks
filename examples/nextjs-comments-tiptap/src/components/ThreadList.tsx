@@ -99,20 +99,11 @@ function CustomThread({
   editor,
   thread,
 }: Props & { thread: CustomThreadData }) {
-  const highlightEvent = useHighlightEvent();
   const [active, setActive] = useState(false);
 
   useHighlightEventListener((highlightId) => {
     setActive(highlightId === thread.metadata.highlightId);
   });
-
-  const handlePointerEnter = useCallback(() => {
-    setActive(true);
-  }, [highlightEvent, thread]);
-
-  const handlePointerLeave = useCallback(() => {
-    setActive(false);
-  }, [highlightEvent]);
 
   const handleThreadDelete = useCallback(
     (thread: CustomThreadData) => {
@@ -124,11 +115,7 @@ function CustomThread({
   const quoteHtml = getCommentHighlightContent(thread.metadata.highlightId);
 
   return (
-    <div
-      className="hide-collaboration-cursor"
-      onPointerEnter={handlePointerEnter}
-      onPointerLeave={handlePointerLeave}
-    >
+    <div className="hide-collaboration-cursor">
       <div className={styles.thread} data-active={active}>
         {quoteHtml ? (
           <div
