@@ -41,9 +41,9 @@ test.describe("Client logout", () => {
     // Connect to two different rooms
     await page.click("#add-column");
     await page.click("#add-column");
-    await page.fill("#input_1", "e2e:multi-A");
-    await page.fill("#input_2", "e2e:multi-B");
-    await page.fill("#input_3", "e2e:multi-B"); // Same room as instance 2
+    await page.fill("#input_1", "e2e:logout-A");
+    await page.fill("#input_2", "e2e:logout-B");
+    await page.fill("#input_3", "e2e:logout-B"); // Same room as instance 2
     await page.click("#mount_1");
     await page.click("#mount_2");
     await page.click("#mount_3");
@@ -72,9 +72,9 @@ test.describe("Client logout", () => {
     // Connect to two different rooms
     await page.click("#add-column");
     await page.click("#add-column");
-    await page.fill("#input_1", "e2e:multi-A");
-    await page.fill("#input_2", "e2e:multi-B");
-    await page.fill("#input_3", "e2e:multi-C");
+    await page.fill("#input_1", "e2e:logout-P");
+    await page.fill("#input_2", "e2e:logout-Q");
+    await page.fill("#input_3", "e2e:logout-R");
     await page.click("#mount_1");
     await page.click("#mount_2");
     await page.click("#disconnect_2"); // Immediately disconnect 2nd room
