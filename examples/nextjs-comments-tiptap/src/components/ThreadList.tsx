@@ -33,39 +33,13 @@ type Props = {
 
 export function ThreadList({ editor }: Props) {
   const { threads } = useThreads();
-  const isDesktop = useMediaQuery("(min-width: 1280px)");
-  const [showMobileMenu, setShowMobileMenu] = useState(isDesktop);
   const showComposer = editor?.storage.commentHighlight.showComposer;
-
-  const Wrapper = ({ children }: { children: ReactNode }) =>
-    isDesktop ? (
-      <>{children}</>
-    ) : (
-      <Popover.Root open={showMobileMenu} onOpenChange={setShowMobileMenu}>
-        <Popover.Trigger>
-          <Button
-            className={styles.threadListPopoverTrigger}
-            variant="secondary"
-            aria-label="Toggle comments"
-          >
-            <MenuIcon />
-          </Button>
-        </Popover.Trigger>
-        <Popover.Content className={styles.threadListPopover}>
-          {children}
-        </Popover.Content>
-      </Popover.Root>
-    );
 
   return (
     <>
       {showComposer ? <ThreadComposer editor={editor} /> : null}
-      <Wrapper>
-        <aside
-          aria-label="Comments"
-          className={styles.threadList}
-          data-mobile-menu={showMobileMenu || undefined}
-        >
+      <PopoverWrapper>
+        <aside aria-label="Comments" className={styles.threadList}>
           {threads.length ? (
             threads
               .sort(sortThreads)
@@ -76,8 +50,34 @@ export function ThreadList({ editor }: Props) {
             <NoComments />
           )}
         </aside>
-      </Wrapper>
+      </PopoverWrapper>
     </>
+  );
+}
+
+function PopoverWrapper({ children }: { children: ReactNode }) {
+  const isDesktop = useMediaQuery("(min-width: 1280px)");
+  const [showMobileMenu, setShowMobileMenu] = useState(isDesktop);
+
+  if (isDesktop) {
+    return children;
+  }
+
+  return (
+    <Popover.Root open={showMobileMenu} onOpenChange={setShowMobileMenu}>
+      <Popover.Trigger>
+        <Button
+          className={styles.threadListPopoverTrigger}
+          variant="secondary"
+          aria-label="Toggle comments"
+        >
+          <MenuIcon />
+        </Button>
+      </Popover.Trigger>
+      <Popover.Content className={styles.threadListPopover}>
+        {children}
+      </Popover.Content>
+    </Popover.Root>
   );
 }
 

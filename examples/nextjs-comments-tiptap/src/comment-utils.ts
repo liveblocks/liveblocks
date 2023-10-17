@@ -74,8 +74,6 @@ export function highlightEvent(highlightId: string | null) {
     detail: { highlightId },
   });
 
-  console.log("sending", highlightId);
-
   document.documentElement.dispatchEvent(event);
 }
 
