@@ -11,7 +11,6 @@ import {
 
 test.describe.configure({ mode: "parallel" });
 
-const WIDTH = 640;
 const BG_COLOR_1 = "&bg=" + encodeURIComponent("#cafbca");
 const BG_COLOR_2 = "&bg=" + encodeURIComponent("#e9ddf9");
 
@@ -137,7 +136,7 @@ test.describe("Presence (w/ specific window timing)", () => {
     const page1 = await preparePage(url + BG_COLOR_1);
     await page1.click("#inc-foo");
 
-    const page2 = await preparePage(url + BG_COLOR_2, WIDTH);
+    const page2 = await preparePage(url + BG_COLOR_2);
     await waitForJson([page1, page2], "#numOthers", 1);
 
     await expectJson(page2, "#theirPresence", { foo: 1 });
