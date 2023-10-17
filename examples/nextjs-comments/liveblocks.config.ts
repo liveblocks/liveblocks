@@ -12,7 +12,9 @@ const {
 } = createRoomContext(client, {
   // Get users' info from their ID
   resolveUsers: async ({ userIds }) => {
-    const searchParams = new URLSearchParams({ userIds });
+    const searchParams = new URLSearchParams(
+      userIds.map((userId) => ["userIds", userId])
+    );
 
     try {
       const response = await fetch(`/api/users?${searchParams}`);
