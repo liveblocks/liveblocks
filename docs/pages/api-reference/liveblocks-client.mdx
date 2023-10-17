@@ -825,9 +825,8 @@ room.reconnect();
 
 Disconnect the local room instance from the Liveblocks server. The room instance
 will remain functional (for example, it will still allow local presence or
-storage mutations), but since there is no connectivity any longer, those changed
-will not be persisted or synchronized until the room instance is reconnected to
-the server again.
+storage mutations), but since it’s no longer connected, changes
+will not be persisted or synchronized until the room instance is reconnected again.
 
 ```ts
 room.disconnect();
