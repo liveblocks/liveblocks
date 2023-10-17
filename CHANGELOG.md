@@ -1,3 +1,14 @@
+# v1.4.8
+
+### `@liveblocks/react-comments`
+
+- Improve default styles:
+  - Cap CSS selector specificity to improve overridability.
+  - Set tokens on `.lb-root` instead of `:root` to improve cascading tokens
+    (overriding `--lb-accent` on `body` for example, didn't create the expected
+    results), and to work within shadow DOMs.
+- Fix reactions and links styles on Safari.
+
 # v1.4.7
 
 ### `@liveblocks/react`
