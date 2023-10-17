@@ -1,0 +1,36 @@
+@mixin truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@mixin invisible-selection {
+  &::selection,
+  *::selection {
+    background: transparent;
+  }
+}
+
+@mixin firefox-only {
+  @supports (-moz-appearance: none) {
+    @content;
+  }
+}
+
+@mixin not-firefox {
+  @supports not (-moz-appearance: none) {
+    @content;
+  }
+}
+
+@mixin safari-only {
+  @supports (background: -webkit-named-image(i)) {
+    @content;
+  }
+}
+
+@mixin not-safari {
+  @supports not (background: -webkit-named-image(i)) {
+    @content;
+  }
+}

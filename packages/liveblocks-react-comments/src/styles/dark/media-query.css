@@ -1,0 +1,7 @@
+@import "./index";
+
+@media (prefers-color-scheme: dark) {
+  .lb-root {
+    @include dark-styles;
+  }
+}

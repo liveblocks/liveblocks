@@ -1,7 +1,8 @@
+@import "@liveblocks/react-comments/styles.css";
+@import "@liveblocks/react-comments/styles/dark/media-query.css";
+
 html,
 body {
-  --lb-accent: #44f;
-
   background: #f3f3f3;
   padding: 0;
   margin: 0;
@@ -17,6 +18,10 @@ body {
     Droid Sans,
     Helvetica Neue,
     sans-serif;
+}
+
+.lb-root {
+  --lb-accent: #44f;
 }
 
 a {
@@ -66,9 +71,11 @@ main {
 @media (prefers-color-scheme: dark) {
   html,
   body {
-    --lb-accent: #77f;
-
     background: #111;
+  }
+
+  .lb-root {
+    --lb-accent: #77f;
   }
 
   .loading img {
