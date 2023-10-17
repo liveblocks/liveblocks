@@ -35,7 +35,11 @@ export function Toolbar({ ...props }) {
         <div className={styles.toolbarActions}>
           <Collapsible.Trigger asChild>
             <Button variant="ghost" square>
-              <SidebarIcon width={12} height={12} />
+              <SidebarIcon
+                style={{ opacity: open ? "0.7" : "1" }}
+                width={12}
+                height={12}
+              />
             </Button>
           </Collapsible.Trigger>
         </div>

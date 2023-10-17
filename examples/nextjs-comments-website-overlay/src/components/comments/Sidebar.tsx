@@ -8,6 +8,7 @@ import { DocumentMagnifyingIcon } from "@/components/icons/DocumentMagnifyingIco
 import { DocumentCompleteIcon } from "@/components/icons/DocumentCompleteIcon";
 import { ThreadData } from "@liveblocks/client";
 import { CloseIcon } from "@/components/icons/CloseIcon";
+import { PlusIcon } from "@/components/icons/PlusIcon";
 
 type Props = {
   onClose: () => void;
@@ -38,17 +39,35 @@ export function Sidebar({ onClose }: Props) {
           </button>
         </div>
         <div className={styles.sidebarThreadList}>
-          {threads.sort(sortResolved).map((thread) => (
-            <div
-              key={thread.id}
-              className={styles.sidebarThread}
-              data-thread-resolved={thread.metadata.resolved || undefined}
-            >
-              <Thread thread={thread} indentCommentContent={false} />
-            </div>
-          ))}
+          {threads.length ? (
+            threads.sort(sortResolved).map((thread) => (
+              <div
+                key={thread.id}
+                className={styles.sidebarThread}
+                data-thread-resolved={thread.metadata.resolved || undefined}
+              >
+                <Thread thread={thread} indentCommentContent={false} />
+              </div>
+            ))
+          ) : (
+            <CreateThreadMessage />
+          )}
         </div>
       </div>
+    </div>
+  );
+}
+
+function CreateThreadMessage() {
+  return (
+    <div>
+      Create a thread with the{" "}
+      <PlusIcon
+        style={{ display: "inline", marginTop: "-2px" }}
+        height={9}
+        width={9}
+      />{" "}
+      plus icon in the toolbar.
     </div>
   );
 }

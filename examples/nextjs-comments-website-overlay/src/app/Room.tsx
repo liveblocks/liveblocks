@@ -1,12 +1,10 @@
 "use client";
 
-import { ReactNode, useMemo } from "react";
+import { PropsWithChildren, useMemo } from "react";
 import { RoomProvider } from "@/liveblocks.config";
 import { useSearchParams } from "next/navigation";
 
-type Props = { children: ReactNode };
-
-export function Room({ children }: Props) {
+export function Room({ children }: PropsWithChildren) {
   const roomId = useOverrideRoomId("nextjs-comments-website-overlay");
 
   return (
