@@ -203,6 +203,14 @@ function ThreadComposer({ editor }: Props) {
 }
 
 function sortThreads(a: CustomThreadData, b: CustomThreadData) {
+  if (a.metadata.resolved) {
+    return 1;
+  }
+
+  if (b.metadata.resolved) {
+    return -1;
+  }
+
   if (a.createdAt > b.createdAt) {
     return -1;
   }

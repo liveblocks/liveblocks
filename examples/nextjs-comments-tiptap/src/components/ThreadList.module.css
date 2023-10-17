@@ -15,6 +15,8 @@
   top: var(--space-18);
   right: var(--space-10);
   padding: var(--space-4);
+  box-shadow: var(--shadow-xs), var(--shadow);
+  background: var(--color-surface-elevated);
 }
 
 .thread, .composer {
