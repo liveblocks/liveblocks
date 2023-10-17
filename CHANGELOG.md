@@ -22,9 +22,14 @@ leave();
 
 ### `@liveblocks/client`
 
-- Support entering/leaving the same room multiple times. The client manages the
-  room instance and will only close the connection to the Liveblocks server for
-  this room when there are no more usage of it.
+- New APIs:
+  - `client.enterRoom(roomId, options)` – enters the room and return both the
+    room and an "unsubscribe function" to leave that room again. This newer API
+    supports entering/leaving the same room multiple times, making it possible
+    to connect to the same room from different parts of your application.
+- Deprecated APIs:
+  - `client.enter(roomId, options)`
+  - `client.leave(roomId)`
 - Renamed enter option: `shouldInitiallyConnect` → `autoConnect`. Its meaning or
   working did not change.
 
