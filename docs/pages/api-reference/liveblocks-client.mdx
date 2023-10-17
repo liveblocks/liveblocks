@@ -221,9 +221,9 @@ Enters a room and returns its local `Room` instance.
 
 <Banner title="Deprecated since 1.5" type="warning">
 
-We no longer recommend using this API, because it will cause issues if you have
-multiple component trees in your application that connect to the same room.
-Prefer the new and improved [`client.enterRoom`][] API.
+We no longer recommend this API, because issues will occur if you 
+simultaneously connect to the same room with multiple instances.
+We recommend using [`client.enterRoom`][] instead.
 
 </Banner>
 
