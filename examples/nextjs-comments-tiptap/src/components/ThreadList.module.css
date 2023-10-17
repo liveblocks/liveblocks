@@ -12,11 +12,12 @@
 
 .threadListPopoverTrigger {
   position: fixed;
-  top: var(--space-18);
-  right: var(--space-10);
+  top: var(--space-19);
+  right: var(--space-12);
   padding: var(--space-4);
   box-shadow: var(--shadow-xs), var(--shadow);
   background: var(--color-surface-elevated);
+  z-index: 1;
 }
 
 .thread, .composer {
@@ -76,7 +77,7 @@
 
 @media (max-width: 1279px) {
   .threadList {
-    margin-top: var(--space-14);
+    margin-top: var(--space-15);
   }
 
   .composer {

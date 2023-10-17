@@ -74,7 +74,10 @@ function PopoverWrapper({ children }: { children: ReactNode }) {
           <MenuIcon />
         </Button>
       </Popover.Trigger>
-      <Popover.Content className={styles.threadListPopover}>
+      <Popover.Content
+        className={styles.threadListPopover}
+        onOpenAutoFocus={(e) => e.preventDefault()}
+      >
         {children}
       </Popover.Content>
     </Popover.Root>
@@ -128,6 +131,7 @@ function CustomThread({
           />
         ) : null}
         <Thread
+          autoFocus={true}
           thread={thread}
           onThreadDelete={handleThreadDelete}
           indentCommentContent={false}
