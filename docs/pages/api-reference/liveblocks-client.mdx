@@ -276,6 +276,18 @@ const room = client.getRoom("my-room");
 You’ll likely not need this API if you’re using the newer [`client.enterRoom`][]
 API.
 
+### Client.logout
+
+Purges any auth tokens from the client’s memory. If there are any rooms that are
+still connected, they will be forced to reauthorize.
+
+```ts
+client.logout();
+```
+
+Call this API if you have a single page application (SPA) and you want to log
+your user from your application.
+
 ## Room
 
 Room returned by [`client.enterRoom`][] (or [`client.getRoom`][]).
