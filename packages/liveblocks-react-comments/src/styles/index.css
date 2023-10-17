@@ -321,6 +321,7 @@
 @include safari-only {
   .lb-emoji {
     transform: scale(0.825);
+    will-change: transform;
   }
 }
 
