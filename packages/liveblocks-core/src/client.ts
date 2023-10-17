@@ -142,8 +142,15 @@ export type ClientOptions = {
    */
   WebSocketPolyfill?: Polyfills["WebSocket"];
 
+  /**
+   * @internal To point the client to a different Liveblocks server. Only
+   * useful for Liveblocks developers. Not for end users.
+   */
+  baseUrl?: string;
+
   /** @internal */
   mockedDelegates?: RoomDelegates;
+
   /** @internal */
   enableDebugLogging?: boolean;
 } & (
@@ -164,11 +171,18 @@ export type ClientOptions = {
 //     | ((room: string) => Promise<{ token: string }>);
 //
 
-function getServerFromClientOptions(clientOptions: ClientOptions) {
-  const rawOptions = clientOptions as Record<string, unknown>;
-  return typeof rawOptions.liveblocksServer === "string"
-    ? rawOptions.liveblocksServer
-    : "wss://api.liveblocks.io/v7";
+function getBaseUrlFromClientOptions(clientOptions: ClientOptions) {
+  if ("liveblocksServer" in clientOptions) {
+    throw new Error("Client option no longer supported");
+  }
+  if (
+    typeof clientOptions.baseUrl === "string" &&
+    clientOptions.baseUrl.startsWith("http") // Must be http or https URL
+  ) {
+    return clientOptions.baseUrl;
+  } else {
+    return "https://api.liveblocks.io";
+  }
 }
 
 /**
@@ -276,6 +290,7 @@ export function createClient(options: ClientOptions): Client {
       "Please provide an initial presence value for the current user when entering the room."
     );
 
+    const baseUrl = getBaseUrlFromClientOptions(clientOptions);
     const newRoom = createRoom<TPresence, TStorage, TUserMeta, TRoomEvent>(
       {
         initialPresence: options.initialPresence ?? {},
@@ -289,14 +304,14 @@ export function createClient(options: ClientOptions): Client {
         delegates: clientOptions.mockedDelegates ?? {
           createSocket: makeCreateSocketDelegateForRoom(
             roomId,
-            getServerFromClientOptions(clientOptions),
+            baseUrl,
             clientOptions.polyfills?.WebSocket
           ),
           authenticate: makeAuthDelegateForRoom(roomId, authManager),
         },
         enableDebugLogging: clientOptions.enableDebugLogging,
         unstable_batchedUpdates: options?.unstable_batchedUpdates,
-        liveblocksServer: getServerFromClientOptions(clientOptions),
+        baseUrl,
         unstable_fallbackToHTTP: !!clientOptions.unstable_fallbackToHTTP,
       }
     );

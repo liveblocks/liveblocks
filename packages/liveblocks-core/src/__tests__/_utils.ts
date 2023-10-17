@@ -99,11 +99,11 @@ export const FIFTH_POSITION = makePosition(FOURTH_POSITION);
 
 function makeRoomConfig(mockedDelegates: RoomDelegates) {
   return {
+    liveblocksServer: "wss://api.liveblocks.io/v7",
     delegates: mockedDelegates,
     roomId: "room-id",
     throttleDelay: -1, // No throttle for standard storage test
     lostConnectionTimeout: 99999, // Don't trigger connection loss events in tests
-    liveblocksServer: "wss://live.liveblocks.io/v7",
     authentication: {
       type: "private",
       url: "/api/auth",
