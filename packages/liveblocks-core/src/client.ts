@@ -374,7 +374,7 @@ export function createClient(options: ClientOptions): Client {
     // rooms will get reauthorized now that the auth cache is reset. If that
     // fails, they might disconnect.
     const IDLE_STATES: Status[] = ["initial", "disconnected"];
-    for (const room of roomsById.values()) {
+    for (const { room } of roomsById.values()) {
       if (!IDLE_STATES.includes(room.getStatus())) {
         room.reconnect();
       }
