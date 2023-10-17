@@ -84,7 +84,3 @@
 .sidebarThread[data-thread-resolved] {
   opacity: 0.65;
 }
-
-/*.sidebarThread[data-thread-resolved]:hover {*/
-/*  opacity: 0.8;*/
-/*}*/
