@@ -1,3 +1,73 @@
+# v1.5.0 (not yet released)
+
+Support multiple RoomProviders, or mixing and matching our React package in the
+same app with a Redux and/or Zustand instance.
+
+At the client level, there is a new API for entering/leaving rooms, which we’re
+now recommending over the old APIs. (The old APIs remain working exactly how
+they are today, however.)
+
+```ts
+// Old APIs we'll no longer be recommending (but that will remain working)
+const room = client.enter("my-room", options);
+client.getRoom("my-room");
+client.leave("my-room");
+```
+
+```ts
+// New API we'll be recommending instead
+const { room, leave } = client.enterRoom("my-room", options);
+leave();
+```
+
+### `@liveblocks/client`
+
+- New APIs:
+  - `client.enterRoom(roomId, options)` – enters the room and return both the
+    room and an "unsubscribe function" to leave that room again. This newer API
+    supports entering/leaving the same room multiple times, making it possible
+    to connect to the same room from different parts of your application.
+- Deprecated APIs:
+  - `client.enter(roomId, options)`
+  - `client.leave(roomId)`
+- Renamed enter option: `shouldInitiallyConnect` → `autoConnect`. Its meaning or
+  working did not change.
+
+### `@liveblocks/react`
+
+- Support using multiple `RoomProvider` components in your component tree for
+  the same room ID.
+- Renamed `RoomProvider` prop: `shouldInitiallyConnect` → `autoConnect`. Its
+  meaning or working did not change.
+
+### `@liveblocks/redux`
+
+- The `roomId` argument to the `leaveRoom()` action is no longer needed. It will
+  simply leave the currently joined room.
+
+### `@liveblocks/zustand`
+
+- The `enterRoom()` function will now return a leave callback function.
+- The `roomId` argument to the `leaveRoom()` action is no longer needed. It will
+  simply leave the currently joined room.
+
+# v1.4.8
+
+### `@liveblocks/react-comments`
+
+- Improve default styles:
+  - Cap CSS selector specificity to improve overridability.
+  - Set tokens on `.lb-root` instead of `:root` to improve cascading tokens
+    (overriding `--lb-accent` on `body` for example, didn't create the expected
+    results), and to work within shadow DOMs.
+- Fix reactions and links styles on Safari.
+
+# v1.4.7
+
+### `@liveblocks/react`
+
+- Fix `userIds` type in `ResolveUsersArgs`.
+
 # v1.4.6
 
 ### `@liveblocks/react`
@@ -11,8 +81,8 @@
   user info of a single user ID, this function will now expect a list of users'
   info matching the provided list of user IDs.
 - **Breaking (beta):** The `ResolveUserOptions` and
-  `ResolveMentionSuggestionsOptions` types were renamed to `ResolveUserArgs` and
-  `ResolveMentionSuggestionsArgs` respectively.
+  `ResolveMentionSuggestionsOptions` types were renamed to `ResolveUsersArgs`
+  and `ResolveMentionSuggestionsArgs` respectively.
 - `resolveUsers` and `resolveMentionSuggestions` now accept synchronous
   functions.
 - `resolveUsers` now also provides the current room ID.

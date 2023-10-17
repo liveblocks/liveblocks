@@ -38,7 +38,9 @@ const client = createClient({
   publicApiKey: "{{PUBLIC_KEY}}",
 });
 
-const room = client.enter("your-room-id", { initialPresence: {} });
+const { room, leave } = client.enterRoom("your-room-id", {
+  initialPresence: {},
+});
 
 // Create Yjs document and provider
 const yDoc = new Y.Doc();

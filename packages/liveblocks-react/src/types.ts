@@ -41,9 +41,9 @@ export type ResolveUsersArgs = {
   roomId: string;
 
   /**
-   * The ID of the users to resolve.
+   * The IDs of the users to resolve.
    */
-  userIds: string;
+  userIds: string[];
 };
 
 export type ResolveMentionSuggestionsArgs = {

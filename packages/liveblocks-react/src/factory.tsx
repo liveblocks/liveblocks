@@ -61,8 +61,6 @@ import type {
   UserStateSuccess,
 } from "./types";
 
-let lastInstanceId = 0;
-
 const noop = () => {};
 const identity: <T>(x: T) => T = (x) => x;
 
@@ -219,6 +217,8 @@ export function useRoomContextBundle() {
   return bundle;
 }
 
+let lastInstanceId = 0;
+
 export function createRoomContext<
   TPresence extends JsonObject,
   TStorage extends LsonObject = LsonObject,
@@ -242,8 +242,8 @@ export function createRoomContext<
   const roomCache = new Map<string, { room: TRoom; leave: () => void }>();
 
   /**
-   * A stable version of .enterRoom(), where we cache the result on
-   * a per-RoomProvider instance.
+   * A cached version of .enterRoom(), where we cache each room/leave pair on
+   * a per-RoomProvider instance basis.
    */
   function stableEnterRoom(
     instanceId: string,

@@ -376,10 +376,22 @@ function enterRoom(roomId: string): {
   };
 }
 
-function leaveRoom(): {
-  type: string;
+/**
+ * @deprecated The room ID argument is no longer needed here and will be
+ * ignored. This overload will be removed in a future version.
+ */
+function leaveRoom(roomId: string): {
+  type: typeof ACTION_TYPES.LEAVE;
+  roomId: string;
+};
+function leaveRoom(): { type: typeof ACTION_TYPES.LEAVE };
+function leaveRoom(backwardCompatRoomId?: string): {
+  type: typeof ACTION_TYPES.LEAVE;
+  roomId?: string;
 } {
-  return { type: ACTION_TYPES.LEAVE };
+  return backwardCompatRoomId !== undefined
+    ? { type: ACTION_TYPES.LEAVE, roomId: backwardCompatRoomId }
+    : { type: ACTION_TYPES.LEAVE };
 }
 
 /**
