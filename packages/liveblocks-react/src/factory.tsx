@@ -242,8 +242,8 @@ export function createRoomContext<
   const roomCache = new Map<string, { room: TRoom; leave: () => void }>();
 
   /**
-   * A stable version of .enterRoom(), where we cache the result on
-   * a per-RoomProvider instance.
+   * A cached version of .enterRoom(), where we cache each room/leave pair on
+   * a per-RoomProvider instance basis.
    */
   function stableEnterRoom(
     instanceId: string,
