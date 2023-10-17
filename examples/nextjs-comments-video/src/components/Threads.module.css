@@ -1,3 +1,12 @@
+.emptyState {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--gray9);
+  padding: var(--spacing);
+}
+
 .threadWrapper {
   position: relative;
   border-bottom: 1px solid var(--gray4);
