@@ -1,3 +1,5 @@
+# v1.5.0 (not released yet)
+
 # v1.4.8
 
 ### `@liveblocks/react-comments`
