@@ -1,4 +1,5 @@
 import { createAuthManager } from "./auth-manager";
+import type { Status } from "./connection";
 import type { LsonObject } from "./crdts/Lson";
 import { linkDevTools, setupDevTools, unlinkDevTools } from "./devtools";
 import { deprecateIf } from "./lib/deprecation";
@@ -105,6 +106,14 @@ export type Client = {
    * @param roomId The id of the room
    */
   leave(roomId: string): void;
+
+  /**
+   * Purges all cached auth tokens and reconnects all rooms that are still
+   * connected, if any.
+   *
+   * Call this whenever you log out a user in your application.
+   */
+  logout(): void;
 };
 
 export type AuthEndpoint =
@@ -358,7 +367,23 @@ export function createClient(options: ClientOptions): Client {
     }
   }
 
+  function logout() {
+    authManager.reset();
+
+    // Reconnect all rooms that aren't idle, if any. This ensures that those
+    // rooms will get reauthorized now that the auth cache is reset. If that
+    // fails, they might disconnect.
+    const IDLE_STATES: Status[] = ["initial", "disconnected"];
+    for (const room of roomsById.values()) {
+      if (!IDLE_STATES.includes(room.getStatus())) {
+        room.reconnect();
+      }
+    }
+  }
+
   return {
+    logout,
+
     // Old, deprecated APIs
     enter,
     getRoom,

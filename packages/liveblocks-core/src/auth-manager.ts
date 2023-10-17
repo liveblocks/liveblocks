@@ -16,6 +16,7 @@ export type AuthValue =
 export type RequestedScope = "room:read" | "comments:read";
 
 export type AuthManager = {
+  reset(): void;
   getAuthValue(
     requestedScope: RequestedScope,
     roomId: string
@@ -44,6 +45,13 @@ export function createAuthManager(
   const expiryTimes: number[] = []; // Supposed to always contain the same number of elements as `tokens`
 
   const requestPromises = new Map<string, Promise<ParsedAuthToken>>();
+
+  function reset() {
+    seenTokens.clear();
+    tokens.length = 0;
+    expiryTimes.length = 0;
+    requestPromises.clear();
+  }
 
   function hasCorrespondingScopes(
     requestedScope: RequestedScope,
@@ -202,6 +210,7 @@ export function createAuthManager(
   }
 
   return {
+    reset,
     getAuthValue,
   };
 }
