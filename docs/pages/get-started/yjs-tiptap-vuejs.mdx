@@ -48,7 +48,7 @@ We’d love to hear from you.
       import Collaboration from "@tiptap/extension-collaboration";
       import CollaborationCursor from "@tiptap/extension-collaboration-cursor";
 
-      const roomId = "my-room";
+      const leave = ref(null);
 
       // Set up Liveblocks client
       const client = createClient({
@@ -56,9 +56,11 @@ We’d love to hear from you.
       });
 
       // Enter a multiplayer room
-      const room = client.enter(roomId, {
+      const info = client.enterRoom("my-room", {
         initialPresence: {},
       });
+      const room = info.room;
+      leave.value = info.leave;
 
       // Set up Yjs document, shared text, and Liveblocks Yjs provider
       const yDoc = new Y.Doc();
@@ -84,7 +86,7 @@ We’d love to hear from you.
       });
 
       onUnmounted(() => {
-        client.leave(roomId);
+        leave?.();
       });
       </script>
 

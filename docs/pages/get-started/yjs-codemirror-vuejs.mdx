@@ -49,8 +49,8 @@ We’d love to hear from you.
       import { EditorState } from "@codemirror/state";
       import { javascript } from "@codemirror/lang-javascript";
 
-      const roomId = "my-room";
       const parent = ref(null);
+      const leave = ref(null);
       const view = ref(null);
 
       // Set up Liveblocks client
@@ -59,9 +59,11 @@ We’d love to hear from you.
       });
 
       // Enter a multiplayer room
-      const { room, leave } = client.enterRoom(roomId, {
+      const info = client.enterRoom("my-room", {
         initialPresence: {},
       });
+      const room = info.room;
+      leave.value = info.leave;
 
       // Set up Yjs document, shared text, and Liveblocks Yjs provider
       const yDoc = new Y.Doc();
@@ -88,7 +90,7 @@ We’d love to hear from you.
 
       onUnmounted(() => {
         view?.destroy();
-        leave();
+        leave.value?.();
       });
       </script>
 
