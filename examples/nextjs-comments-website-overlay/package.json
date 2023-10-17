@@ -22,8 +22,6 @@
     "@types/react": "18.2.17",
     "@types/react-dom": "18.2.7",
     "clsx": "^2.0.0",
-    "eslint": "8.45.0",
-    "eslint-config-next": "13.4.12",
     "framer-motion": "^10.16.4",
     "next": "^13.5.4",
     "react": "18.2.0",
@@ -31,7 +29,6 @@
     "typescript": "5.1.6"
   },
   "devDependencies": {
-    "eslint-config-prettier": "^8.9.0",
     "prettier": "^3.0.0"
   }
 }
