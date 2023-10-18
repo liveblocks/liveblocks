@@ -11,6 +11,7 @@ import { Loading } from "../components/Loading";
 import { Composer } from "../components/Composer";
 import { Thread } from "../components/Thread";
 import { ClientSideSuspense } from "@liveblocks/react";
+import { ErrorBoundary } from "react-error-boundary";
 
 /**
  * Displays a list of threads, each allowing comment replies, along
@@ -45,9 +46,17 @@ export default function Page() {
 
   return (
     <RoomProvider id={roomId} initialPresence={{}}>
-      <ClientSideSuspense fallback={<Loading />}>
-        {() => <Example />}
-      </ClientSideSuspense>
+      <ErrorBoundary
+        fallback={
+          <div className="absolute flex h-screen w-screen place-content-center items-center">
+            There was an error while getting threads.
+          </div>
+        }
+      >
+        <ClientSideSuspense fallback={<Loading />}>
+          {() => <Example />}
+        </ClientSideSuspense>
+      </ErrorBoundary>
     </RoomProvider>
   );
 }

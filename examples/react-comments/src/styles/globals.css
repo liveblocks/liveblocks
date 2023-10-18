@@ -42,7 +42,8 @@ main {
   max-width: 680px;
 }
 
-.loading {
+.loading,
+.error {
   position: absolute;
   width: 100vw;
   height: 100vh;
@@ -80,6 +81,10 @@ main {
 
   .loading img {
     filter: invert(1);
+  }
+
+  .error {
+    color: #fff;
   }
 
   .thread::after,
