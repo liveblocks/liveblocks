@@ -5,33 +5,6 @@
   gap: var(--space-8);
 }
 
-.threadListPopover {
-  position: fixed;
-  top: var(--space-22);
-  right: var(--space-12);
-  bottom: var(--space-8);
-  max-width: 400px;
-  overflow-y: auto;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  padding: 0 var(--space-6) var(--space-6);
-  box-shadow: var(--shadow-xl);
-  border-radius: var(--radius);
-  scrollbar-width: thin;
-
-}
-
-.threadListPopoverTrigger {
-  position: fixed;
-  top: var(--space-19);
-  right: var(--space-12);
-  padding: var(--space-4);
-  box-shadow: var(--shadow-xs), var(--shadow);
-  background: var(--color-surface-elevated);
-  border-radius: var(--radius-sm);
-  z-index: 1;
-}
-
 .thread, .composer {
   background: var(--color-surface-elevated);
   border: 1px solid var(--color-border);
@@ -88,13 +61,13 @@
 }
 
 @media (max-width: 1279px) {
-  .threadList {
-    margin-top: var(--space-6);
-  }
-
   .thread {
     border: 0;
     border-bottom: 1px solid var(--color-border);
+  }
+
+  .thread[data-active="true"] {
+    transform: none;
   }
 
   .composer {

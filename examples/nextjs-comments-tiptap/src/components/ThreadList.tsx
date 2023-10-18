@@ -6,25 +6,15 @@ import {
   useThreads,
 } from "@/liveblocks.config";
 import { Composer, Thread } from "@liveblocks/react-comments";
-import {
-  FormEvent,
-  ReactNode,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { Editor } from "@tiptap/react";
 import { ComposerSubmitComment } from "@liveblocks/react-comments";
-import * as Popover from "@radix-ui/react-popover";
 import {
   getCommentHighlightContent,
   removeCommentHighlight,
-  useHighlightEvent,
   useHighlightEventListener,
 } from "@/comment-utils";
-import { CommentIcon, MenuIcon } from "@/icons";
-import { Button } from "@/components/Button";
+import { CommentIcon } from "@/icons";
 import styles from "./ThreadList.module.css";
 
 type Props = {
@@ -38,48 +28,18 @@ export function ThreadList({ editor }: Props) {
   return (
     <>
       {showComposer ? <ThreadComposer editor={editor} /> : null}
-      <PopoverWrapper>
-        <aside aria-label="Comments" className={styles.threadList}>
-          {threads.length ? (
-            threads
-              .sort(sortThreads)
-              .map((thread) => (
-                <CustomThread key={thread.id} thread={thread} editor={editor} />
-              ))
-          ) : (
-            <NoComments />
-          )}
-        </aside>
-      </PopoverWrapper>
+      <aside aria-label="Comments" className={styles.threadList}>
+        {threads.length ? (
+          threads
+            .sort(sortThreads)
+            .map((thread) => (
+              <CustomThread key={thread.id} thread={thread} editor={editor} />
+            ))
+        ) : (
+          <NoComments />
+        )}
+      </aside>
     </>
-  );
-}
-
-function PopoverWrapper({ children }: { children: ReactNode }) {
-  const isDesktop = useMediaQuery("(min-width: 1280px)");
-  const [showMobileMenu, setShowMobileMenu] = useState(isDesktop);
-
-  if (isDesktop) {
-    return children;
-  }
-
-  return (
-    <Popover.Root open={showMobileMenu} onOpenChange={setShowMobileMenu}>
-      <Popover.Trigger asChild>
-        <Button
-          className={styles.threadListPopoverTrigger}
-          variant="secondary"
-          aria-label="Toggle comments"
-        >
-          <MenuIcon />
-        </Button>
-      </Popover.Trigger>
-      <Popover.Content onOpenAutoFocus={(e) => e.preventDefault()} asChild>
-        <Popover.Portal>
-          <div className={styles.threadListPopover}>{children}</div>
-        </Popover.Portal>
-      </Popover.Content>
-    </Popover.Root>
   );
 }
 

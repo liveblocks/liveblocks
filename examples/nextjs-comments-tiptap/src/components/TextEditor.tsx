@@ -117,6 +117,9 @@ function TiptapEditor({ doc, provider }: EditorProps) {
               {editor ? <ThreadList editor={editor} /> : null}
             </div>
           </div>
+          <div className={styles.mobileThreadListContainer}>
+            {editor ? <ThreadList editor={editor} /> : null}
+          </div>
         </div>
       </div>
     </div>
