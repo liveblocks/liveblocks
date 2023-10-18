@@ -168,6 +168,7 @@ type Options<TUserMeta extends BaseUserMeta> = {
   /**
    * @internal Internal endpoint
    */
+  // XXX Replace by deriving from baseUrl
   serverEndpoint?: string;
 };
 

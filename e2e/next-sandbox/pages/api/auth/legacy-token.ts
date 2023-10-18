@@ -4,6 +4,8 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import { randomUser } from "../_utils";
 
 const API_KEY = process.env.LIVEBLOCKS_SECRET_KEY;
+
+// XXX Replace by reading from different envvar
 const LIVEBLOCKS_AUTHORIZE_ENDPOINT = process.env.LIVEBLOCKS_AUTHORIZE_ENDPOINT;
 
 export default async function legacyAuth(
@@ -26,6 +28,7 @@ export default async function legacyAuth(
     },
     secret: API_KEY,
 
+    // XXX Replace by baseUrl
     // @ts-expect-error - Hidden setting
     liveblocksAuthorizeEndpoint: LIVEBLOCKS_AUTHORIZE_ENDPOINT,
   });

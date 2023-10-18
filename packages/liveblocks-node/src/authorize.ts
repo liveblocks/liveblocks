@@ -53,6 +53,7 @@ type AuthorizeOptions = {
    * @internal
    * Can be overriden for testing purposes only.
    */
+  // XXX Replace by baseUrl
   liveblocksAuthorizeEndpoint?: string;
 };
 
@@ -137,6 +138,7 @@ function buildLiveblocksAuthorizeEndpoint(
   options: AuthorizeOptions,
   roomId: string
 ): string {
+  // XXX Replace by baseUrl
   if (options.liveblocksAuthorizeEndpoint) {
     return options.liveblocksAuthorizeEndpoint.replace(
       "{roomId}",

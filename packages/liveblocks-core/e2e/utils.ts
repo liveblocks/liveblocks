@@ -65,6 +65,7 @@ async function initializeRoomForTest<
       fetch,
       WebSocket: PausableWebSocket,
     },
+    // XXX Where is LIVEBLOCKS_SERVER configured?
     liveblocksServer: process.env.LIVEBLOCKS_SERVER,
   });
 

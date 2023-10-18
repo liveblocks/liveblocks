@@ -26,6 +26,7 @@ export type LiveblocksOptions = {
    * Allow overriding the base URL for testing purposes only.
    * Default value is https://api.liveblocks.io
    */
+  // XXX Replace by deriving from baseUrl
   liveblocksBaseUrl?: string;
 };
 
@@ -67,6 +68,7 @@ export class Liveblocks {
     const secret = options_.secret;
     assertSecretKey(secret, "secret");
     this._secret = secret;
+    // XXX Replace by deriving from baseUrl
     this._baseUrl = new URL(
       typeof options_.liveblocksBaseUrl === "string"
         ? options_.liveblocksBaseUrl

@@ -2252,6 +2252,7 @@ export function createRoom<
   };
 
   const commentsApi = createCommentsApi(config.roomId, delegates.authenticate, {
+    // XXX Replace by deriving from baseUrl
     serverEndpoint: "https://api.liveblocks.io/v2",
   });
 

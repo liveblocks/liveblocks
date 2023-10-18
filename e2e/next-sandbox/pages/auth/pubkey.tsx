@@ -13,6 +13,7 @@ const client = createClient({
   ),
 
   // @ts-expect-error - Hidden setting
+  // XXX Replace this!
   liveblocksServer: process.env.NEXT_PUBLIC_LIVEBLOCKS_SERVER,
 });
 

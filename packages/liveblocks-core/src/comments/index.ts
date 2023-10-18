@@ -5,6 +5,7 @@ import type { CommentData } from "./types/CommentData";
 import type { ThreadData } from "./types/ThreadData";
 
 type Options = {
+  // XXX Replace by deriving from baseUrl
   serverEndpoint: string;
 };
 
@@ -61,6 +62,7 @@ export type CommentsApi<TThreadMetadata extends BaseMetadata> = {
 export function createCommentsApi<TThreadMetadata extends BaseMetadata>(
   roomId: string,
   getAuthValue: () => Promise<AuthValue>,
+  // XXX Replace by deriving from baseUrl
   { serverEndpoint }: Options
 ): CommentsApi<TThreadMetadata> {
   async function fetchJson<T>(
@@ -103,6 +105,7 @@ export function createCommentsApi<TThreadMetadata extends BaseMetadata>(
     // TODO: Use the right scope
     const authValue = await getAuthValue();
 
+    // XXX Replace by deriving from baseUrl
     const url = `${serverEndpoint}/c/rooms/${encodeURIComponent(
       roomId
     )}${endpoint}`;
