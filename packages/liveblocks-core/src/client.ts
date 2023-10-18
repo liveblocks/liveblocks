@@ -2,6 +2,7 @@ import { createAuthManager } from "./auth-manager";
 import type { LsonObject } from "./crdts/Lson";
 import { linkDevTools, setupDevTools, unlinkDevTools } from "./devtools";
 import { deprecateIf } from "./lib/deprecation";
+import * as console from "./lib/fancy-console";
 import type { Json, JsonObject } from "./lib/Json";
 import type { Resolve } from "./lib/Resolve";
 import type { CustomAuthenticationResult } from "./protocol/Authentication";
@@ -22,7 +23,7 @@ const RECOMMENDED_MIN_LOST_CONNECTION_TIMEOUT = 1000;
 const MAX_LOST_CONNECTION_TIMEOUT = 30000;
 const DEFAULT_LOST_CONNECTION_TIMEOUT = 5000;
 
-type EnterOptions<
+export type EnterOptions<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
 > = Resolve<
@@ -56,6 +57,27 @@ export type Client = {
   ): Room<TPresence, TStorage, TUserMeta, TRoomEvent> | null;
 
   /**
+   * Enter a room.
+   * @param roomId The id of the room
+   * @param options Optional. You can provide initializers for the Presence or Storage when entering the Room.
+   * @returns The room and a leave function. Call the returned leave() function when you no longer need the room.
+   */
+  enterRoom<
+    TPresence extends JsonObject,
+    TStorage extends LsonObject = LsonObject,
+    TUserMeta extends BaseUserMeta = BaseUserMeta,
+    TRoomEvent extends Json = never,
+  >(
+    roomId: string,
+    options: EnterOptions<TPresence, TStorage>
+  ): {
+    room: Room<TPresence, TStorage, TUserMeta, TRoomEvent>;
+    leave: () => void;
+  };
+
+  /**
+   * @deprecated - Prefer using {@link Client.enterRoom} instead.
+   *
    * Enters a room and returns it.
    * @param roomId The id of the room
    * @param options Optional. You can provide initializers for the Presence or Storage when entering the Room.
@@ -71,7 +93,15 @@ export type Client = {
   ): Room<TPresence, TStorage, TUserMeta, TRoomEvent>;
 
   /**
-   * Leaves a room.
+   * @deprecated - Prefer using {@link Client.enterRoom} and calling the returned leave function instead, which is safer.
+   *
+   * Forcefully leaves a room.
+   *
+   * Only call this if you know for sure there are no other "instances" of this
+   * room used elsewhere in your application. Force-leaving can trigger
+   * unexpected conditions in other parts of your application that may not
+   * expect this.
+   *
    * @param roomId The id of the room
    */
   leave(roomId: string): void;
@@ -158,6 +188,8 @@ function getServerFromClientOptions(clientOptions: ClientOptions) {
  * });
  */
 export function createClient(options: ClientOptions): Client {
+  type OpaqueRoom = Room<JsonObject, LsonObject, BaseUserMeta, Json>;
+
   const clientOptions = options;
   const throttleDelay = getThrottle(clientOptions.throttle ?? DEFAULT_THROTTLE);
   const lostConnectionTimeout = getLostConnectionTimeout(
@@ -166,24 +198,54 @@ export function createClient(options: ClientOptions): Client {
 
   const authManager = createAuthManager(options);
 
-  const rooms = new Map<
-    string,
-    Room<JsonObject, LsonObject, BaseUserMeta, Json>
-  >();
+  type RoomInfo = {
+    room: OpaqueRoom;
+    unsubs: Set<() => void>;
+  };
 
-  function getRoom<
-    TPresence extends JsonObject,
-    TStorage extends LsonObject = LsonObject,
-    TUserMeta extends BaseUserMeta = BaseUserMeta,
-    TRoomEvent extends Json = never,
-  >(roomId: string): Room<TPresence, TStorage, TUserMeta, TRoomEvent> | null {
-    const room = rooms.get(roomId);
-    return room
-      ? (room as Room<TPresence, TStorage, TUserMeta, TRoomEvent>)
-      : null;
+  const roomsById = new Map<string, RoomInfo>();
+
+  function teardownRoom(room: OpaqueRoom) {
+    unlinkDevTools(room.id);
+    roomsById.delete(room.id);
+    room.destroy();
   }
 
-  function enter<
+  function leaseRoom<
+    TPresence extends JsonObject,
+    TStorage extends LsonObject,
+    TUserMeta extends BaseUserMeta,
+    TRoomEvent extends Json,
+  >(
+    info: RoomInfo
+  ): {
+    room: Room<TPresence, TStorage, TUserMeta, TRoomEvent>;
+    leave: () => void;
+  } {
+    // Create a new self-destructing leave function
+    const leave = () => {
+      const self = leave; // A reference to the currently executing function itself
+
+      if (!info.unsubs.delete(self)) {
+        console.warn(
+          "This leave function was already called. Calling it more than once has no effect."
+        );
+      } else {
+        // Was this the last room lease? If so, tear down the room
+        if (info.unsubs.size === 0) {
+          teardownRoom(info.room);
+        }
+      }
+    };
+
+    info.unsubs.add(leave);
+    return {
+      room: info.room as Room<TPresence, TStorage, TUserMeta, TRoomEvent>,
+      leave,
+    };
+  }
+
+  function enterRoom<
     TPresence extends JsonObject,
     TStorage extends LsonObject = LsonObject,
     TUserMeta extends BaseUserMeta = BaseUserMeta,
@@ -191,10 +253,13 @@ export function createClient(options: ClientOptions): Client {
   >(
     roomId: string,
     options: EnterOptions<TPresence, TStorage>
-  ): Room<TPresence, TStorage, TUserMeta, TRoomEvent> {
-    const existingRoom = rooms.get(roomId);
-    if (existingRoom !== undefined) {
-      return existingRoom as Room<TPresence, TStorage, TUserMeta, TRoomEvent>;
+  ): {
+    room: Room<TPresence, TStorage, TUserMeta, TRoomEvent>;
+    leave: () => void;
+  } {
+    const existing = roomsById.get(roomId);
+    if (existing !== undefined) {
+      return leaseRoom(existing);
     }
 
     deprecateIf(
@@ -227,12 +292,17 @@ export function createClient(options: ClientOptions): Client {
       }
     );
 
-    rooms.set(roomId, newRoom);
+    const newRoomInfo: RoomInfo = {
+      room: newRoom,
+      unsubs: new Set(),
+    };
+    roomsById.set(roomId, newRoomInfo);
 
-    setupDevTools(() => Array.from(rooms.keys()));
+    setupDevTools(() => Array.from(roomsById.keys()));
     linkDevTools(roomId, newRoom);
 
-    const shouldConnect = options.shouldInitiallyConnect ?? true;
+    const shouldConnect =
+      options.autoConnect ?? options.shouldInitiallyConnect ?? true;
     if (shouldConnect) {
       // we need to check here because nextjs would fail earlier with Node < 16
       if (typeof atob === "undefined") {
@@ -248,24 +318,54 @@ export function createClient(options: ClientOptions): Client {
       newRoom.connect();
     }
 
-    return newRoom;
+    return leaseRoom(newRoomInfo);
   }
 
-  function leave(roomId: string) {
-    // console.trace("leave");
-    unlinkDevTools(roomId);
+  function enter<
+    TPresence extends JsonObject,
+    TStorage extends LsonObject = LsonObject,
+    TUserMeta extends BaseUserMeta = BaseUserMeta,
+    TRoomEvent extends Json = never,
+  >(
+    roomId: string,
+    options: EnterOptions<TPresence, TStorage>
+  ): Room<TPresence, TStorage, TUserMeta, TRoomEvent> {
+    const { room, leave: _ } = enterRoom<
+      TPresence,
+      TStorage,
+      TUserMeta,
+      TRoomEvent
+    >(roomId, options);
+    return room;
+  }
 
-    const room = rooms.get(roomId);
-    if (room !== undefined) {
-      room.destroy();
-      rooms.delete(roomId);
+  function getRoom<
+    TPresence extends JsonObject,
+    TStorage extends LsonObject = LsonObject,
+    TUserMeta extends BaseUserMeta = BaseUserMeta,
+    TRoomEvent extends Json = never,
+  >(roomId: string): Room<TPresence, TStorage, TUserMeta, TRoomEvent> | null {
+    const room = roomsById.get(roomId)?.room;
+    return room
+      ? (room as Room<TPresence, TStorage, TUserMeta, TRoomEvent>)
+      : null;
+  }
+
+  function forceLeave(roomId: string) {
+    const unsubs = roomsById.get(roomId)?.unsubs ?? new Set();
+    for (const unsub of unsubs) {
+      unsub();
     }
   }
 
   return {
-    getRoom,
+    // Old, deprecated APIs
     enter,
-    leave,
+    getRoom,
+    leave: forceLeave,
+
+    // New, preferred API
+    enterRoom,
   };
 }
 

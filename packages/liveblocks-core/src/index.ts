@@ -16,7 +16,7 @@ detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
  * https://join.team/liveblocks ;)
  */
 
-export type { Client } from "./client";
+export type { Client, EnterOptions } from "./client";
 export { createClient } from "./client";
 export type { BaseAuthResult, Delegates } from "./connection";
 export type {

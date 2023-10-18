@@ -1,4 +1,55 @@
-# v1.5.0 (not released yet)
+# v1.5.0 (not yet released)
+
+Support multiple RoomProviders, or mixing and matching our React package in the
+same app with a Redux and/or Zustand instance.
+
+At the client level, there is a new API for entering/leaving rooms, which we’re
+now recommending over the old APIs. (The old APIs remain working exactly how
+they are today, however.)
+
+```ts
+// Old APIs we'll no longer be recommending (but that will remain working)
+const room = client.enter("my-room", options);
+client.getRoom("my-room");
+client.leave("my-room");
+```
+
+```ts
+// New API we'll be recommending instead
+const { room, leave } = client.enterRoom("my-room", options);
+leave();
+```
+
+### `@liveblocks/client`
+
+- New APIs:
+  - `client.enterRoom(roomId, options)` – enters the room and return both the
+    room and an "unsubscribe function" to leave that room again. This newer API
+    supports entering/leaving the same room multiple times, making it possible
+    to connect to the same room from different parts of your application.
+- Deprecated APIs:
+  - `client.enter(roomId, options)`
+  - `client.leave(roomId)`
+- Renamed enter option: `shouldInitiallyConnect` → `autoConnect`. Its meaning or
+  working did not change.
+
+### `@liveblocks/react`
+
+- Support using multiple `RoomProvider` components in your component tree for
+  the same room ID.
+- Renamed `RoomProvider` prop: `shouldInitiallyConnect` → `autoConnect`. Its
+  meaning or working did not change.
+
+### `@liveblocks/redux`
+
+- **Breaking:** The `leaveRoom()` function no longer accepts a `roomId`. It will
+  always leave the currently joined room.
+
+### `@liveblocks/zustand`
+
+- The `enterRoom()` function will now return a leave callback function.
+- **Breaking:** The `leaveRoom()` function no longer accepts a `roomId`. It will
+  always leave the currently joined room.
 
 # v1.4.8
 
