@@ -177,9 +177,9 @@ const middlewareImpl: InnerLiveblocksMiddleware = (config, options) => {
     let lastRoomId: string | null = null;
     let lastLeaveFn: (() => void) | null = null;
 
-    function enterRoom(newRoomId: string): () => void {
+    function enterRoom(newRoomId: string): void {
       if (lastRoomId === newRoomId) {
-        return lastLeaveFn!;
+        return;
       }
 
       lastRoomId = newRoomId;
@@ -287,8 +287,6 @@ const middlewareImpl: InnerLiveblocksMiddleware = (config, options) => {
           room: null,
         });
       };
-
-      return lastLeaveFn;
     }
 
     function leaveRoom() {

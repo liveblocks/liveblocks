@@ -214,9 +214,9 @@ const internalEnhancer = <TState>(options: {
 
       const store = createStore(newReducer, initialState, enhancer);
 
-      function enterRoom(newRoomId: string): () => void {
+      function enterRoom(newRoomId: string): void {
         if (lastRoomId === newRoomId) {
-          return lastLeaveFn!;
+          return;
         }
 
         lastRoomId = newRoomId;
@@ -325,8 +325,6 @@ const internalEnhancer = <TState>(options: {
           lastLeaveFn = null;
           leave();
         };
-
-        return lastLeaveFn;
       }
 
       function leaveRoom() {
