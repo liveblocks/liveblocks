@@ -32,7 +32,14 @@ export function PinnedComposer({
         <img src={user.avatar} alt={user.name} width="28px" height="28px" />
       </div>
       <div className={styles.pinnedContent}>
-        <Composer onComposerSubmit={onComposerSubmit} />
+        <Composer
+          onComposerSubmit={onComposerSubmit}
+          onClick={(e) => {
+            // Don't send up a click event from emoji popout and close the composer
+            e.stopPropagation();
+          }}
+          autoFocus={true}
+        />
       </div>
     </div>
   );

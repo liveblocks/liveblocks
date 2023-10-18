@@ -19,5 +19,5 @@
 }
 
 .lb-portal {
-  z-index: var(--z-above-comments-sidemenu) !important;
+  z-index: var(--z-above-comments-sidemenu);
 }
