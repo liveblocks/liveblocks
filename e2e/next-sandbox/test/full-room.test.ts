@@ -33,7 +33,7 @@ test.describe("Room completely full", () => {
 
     // Open 4 batches...
     for (let i = 0; i < 4; i++) {
-      const batch = await preparePages(url, 5); // ...of 5 windows each
+      const batch = await preparePages(url, { n: 5 }); // ...of 5 windows each
       batches.push(batch);
       pagesToClose.push(...batch);
       await waitForJson(batch, "#socketStatus", "connected");
@@ -57,7 +57,7 @@ test.describe("Room completely full", () => {
 
       // Open 4 batches...
       for (let i = 0; i < 4; i++) {
-        const batch = await preparePages(url, 5); // ...of 5 windows each
+        const batch = await preparePages(url, { n: 5 }); // ...of 5 windows each
         batches.push(batch);
         pagesToClose.push(...batch);
         await waitForJson(batch, "#socketStatus", "connected");
@@ -65,7 +65,7 @@ test.describe("Room completely full", () => {
       }
 
       // Try to open one more... this will FAIL, because the room can hold max 20 connections
-      const [lastPage] = await preparePages(url, 1);
+      const [lastPage] = await preparePages(url, { n: 1 });
       pagesToClose.push(lastPage);
 
       // The last client won't be able to join, because the room is full

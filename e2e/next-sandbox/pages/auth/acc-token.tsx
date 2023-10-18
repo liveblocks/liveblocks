@@ -25,8 +25,9 @@ export default function Home() {
       <h1>Auth sandbox</h1>
       <p>
         This page connects to a room using an <strong>access token</strong> with
-        permissions <code>session.allow("e2e-*", session.FULL_ACCESS)</code>{" "}
-        (see <code>/api/auth/acc-token</code> backend implementation).
+        permissions{" "}
+        <code>session.allow(&quot;e2e-*&quot;, session.FULL_ACCESS)</code> (see{" "}
+        <code>/api/auth/acc-token</code> backend implementation).
       </p>
       <hr />
       <div>
