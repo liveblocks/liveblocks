@@ -47,6 +47,7 @@ import type { CommentsApiError } from "./comments/errors";
 import { useDebounce } from "./comments/lib/use-debounce";
 import { useAsyncCache } from "./lib/use-async-cache";
 import { useInitial } from "./lib/use-initial";
+import { useLatest } from "./lib/use-latest";
 import { useRerender } from "./lib/use-rerender";
 import type {
   InternalRoomContextBundle,
@@ -563,32 +564,24 @@ export function createRoomContext<
     callback: (event: LostConnectionEvent) => void
   ): void {
     const room = useRoom();
-    const savedCallback = React.useRef(callback);
-
-    React.useEffect(() => {
-      savedCallback.current = callback;
-    });
+    const savedCallback = useLatest(callback);
 
     React.useEffect(
       () =>
         room.events.lostConnection.subscribe((event: LostConnectionEvent) =>
           savedCallback.current(event)
         ),
-      [room]
+      [room, savedCallback]
     );
   }
 
   function useErrorListener(callback: (err: Error) => void): void {
     const room = useRoom();
-    const savedCallback = React.useRef(callback);
-
-    React.useEffect(() => {
-      savedCallback.current = callback;
-    });
+    const savedCallback = useLatest(callback);
 
     React.useEffect(
       () => room.events.error.subscribe((e: Error) => savedCallback.current(e)),
-      [room]
+      [room, savedCallback]
     );
   }
 
@@ -596,11 +589,7 @@ export function createRoomContext<
     callback: (data: RoomEventMessage<TPresence, TUserMeta, TRoomEvent>) => void
   ): void {
     const room = useRoom();
-    const savedCallback = React.useRef(callback);
-
-    React.useEffect(() => {
-      savedCallback.current = callback;
-    });
+    const savedCallback = useLatest(callback);
 
     React.useEffect(() => {
       const listener = (
@@ -610,7 +599,7 @@ export function createRoomContext<
       };
 
       return room.events.customEvent.subscribe(listener);
-    }, [room]);
+    }, [room, savedCallback]);
   }
 
   function useSelf(): User<TPresence, TUserMeta> | null;
