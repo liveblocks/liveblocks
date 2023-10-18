@@ -9,6 +9,7 @@ import { Session } from "./Session";
 import {
   assertNonEmpty,
   assertSecretKey,
+  DEFAULT_BASE_URL,
   fetchPolyfill,
   normalizeStatusCode,
   urljoin,
@@ -22,19 +23,15 @@ export type LiveblocksOptions = {
   secret: string;
 
   /**
-   * @internal
-   * Allow overriding the base URL for testing purposes only.
-   * Default value is https://api.liveblocks.io
+   * @internal To point the client to a different Liveblocks server. Only
+   * useful for Liveblocks developers. Not for end users.
    */
-  // XXX Replace by deriving from baseUrl
-  liveblocksBaseUrl?: string;
+  baseUrl?: string;
 };
 
 export type CreateSessionOptions = {
   userInfo: unknown;
 };
-
-const DEFAULT_BASE_URL = "https://api.liveblocks.io";
 
 export type AuthResponse = {
   status: number;
@@ -68,12 +65,7 @@ export class Liveblocks {
     const secret = options_.secret;
     assertSecretKey(secret, "secret");
     this._secret = secret;
-    // XXX Replace by deriving from baseUrl
-    this._baseUrl = new URL(
-      typeof options_.liveblocksBaseUrl === "string"
-        ? options_.liveblocksBaseUrl
-        : DEFAULT_BASE_URL
-    );
+    this._baseUrl = new URL(options.baseUrl ?? DEFAULT_BASE_URL);
   }
 
   /** @internal */

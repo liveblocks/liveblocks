@@ -9,23 +9,14 @@ if (!SECRET_KEY) {
   throw new Error("Please specify LIVEBLOCKS_SECRET_KEY in env");
 }
 
-// XXX Replace by reading instead of deriving!
-// Derive Liveblocks base URL value from the existing NEXT_PUBLIC_LIVEBLOCKS_SERVER envvar
-const liveblocksBaseUrl = new URL(
-  nn(
-    process.env.NEXT_PUBLIC_LIVEBLOCKS_SERVER,
-    "Missing env var: NEXT_PUBLIC_LIVEBLOCKS_SERVER"
-  )
-);
-liveblocksBaseUrl.protocol = "https";
-liveblocksBaseUrl.pathname = "/";
-
 const liveblocks = new Liveblocks({
   secret: SECRET_KEY,
 
-  // XXX Replace by baseUrl
   // @ts-expect-error - Hidden setting
-  liveblocksBaseUrl: liveblocksBaseUrl.toString(),
+  baseUrl: nn(
+    process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL,
+    "Missing env var: NEXT_PUBLIC_LIVEBLOCKS_BASE_URL"
+  ),
 });
 
 export default async function idTokenBasedAuth(
