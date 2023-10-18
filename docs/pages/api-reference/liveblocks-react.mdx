@@ -182,8 +182,8 @@ is unmounted.
   JSON.
 - `autoConnect` (optional) - Whether or not the room should automatically
   connect to Liveblocks servers when the RoomProvider is mounted. By default
-  equals to `typeof window !== "undefined"`, meaning the RoomProvider tries to
-  connect to Liveblocks servers only on the client side.
+  it’s set to `typeof window !== "undefined"`, meaning the RoomProvider attempts
+  to connect to Liveblocks servers only on the client side.
 
 The `initialPresence`, `initialStorage` and `autoConnect` props are ignored
 after the first render, so changes to the initial value argument won’t have an
