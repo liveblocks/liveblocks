@@ -27,6 +27,9 @@ leave();
     room and an "unsubscribe function" to leave that room again. This newer API
     supports entering/leaving the same room multiple times, making it possible
     to connect to the same room from different parts of your application.
+  - `client.logout()` – Call this on the Liveblocks client when you log out a
+    user in your application. It will purge all auth tokens and force-leave any
+    rooms, if any are still connected.
 - Deprecated APIs:
   - `client.enter(roomId, options)`
   - `client.leave(roomId)`

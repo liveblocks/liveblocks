@@ -33,8 +33,15 @@ export default function Home() {
   const [numColumns, setNumColumns] = React.useState(1);
   return (
     <>
-      <h3>
-        <a href="/">Home</a> › Multiple rooms
+      <h3 style={{ display: "flex", gap: 12, alignItems: "center" }}>
+        <span>
+          <a href="/">Home</a> › Multiple rooms
+        </span>
+        <span>
+          <Button id="logout" onClick={() => client.logout()}>
+            Logout
+          </Button>
+        </span>
       </h3>
 
       <div style={{ display: "flex", gap: 8 }}>

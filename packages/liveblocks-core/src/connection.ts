@@ -45,6 +45,15 @@ export type Status =
   | "disconnected";
 
 /**
+ * Whether or not the status is an "idle" state. Here, idle means that nothing
+ * will happen until some action is taken. Unsurprisingly, these statuses match
+ * the start and end states of the state machine.
+ */
+export function isIdle(status: Status): status is "initial" | "disconnected" {
+  return status === "initial" || status === "disconnected";
+}
+
+/**
  * Used to report about app-level reconnection issues.
  *
  * Normal (quick) reconnects won't be reported as a "lost connection". Instead,
