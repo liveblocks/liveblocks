@@ -16,13 +16,14 @@ import {
 } from "./room";
 
 const MIN_THROTTLE = 16;
-const MAX_THROTTLE = 1000;
+const MAX_THROTTLE = 1_000;
 const DEFAULT_THROTTLE = 100;
 
+const MIN_BACKGROUND_KEEP_ALIVE_TIMEOUT = 60_000;
 const MIN_LOST_CONNECTION_TIMEOUT = 200;
-const RECOMMENDED_MIN_LOST_CONNECTION_TIMEOUT = 1000;
-const MAX_LOST_CONNECTION_TIMEOUT = 30000;
-const DEFAULT_LOST_CONNECTION_TIMEOUT = 5000;
+const RECOMMENDED_MIN_LOST_CONNECTION_TIMEOUT = 1_000;
+const MAX_LOST_CONNECTION_TIMEOUT = 30_000;
+const DEFAULT_LOST_CONNECTION_TIMEOUT = 5_000;
 
 export type EnterOptions<
   TPresence extends JsonObject,
@@ -127,6 +128,7 @@ export type AuthEndpoint =
 export type ClientOptions = {
   throttle?: number; // in milliseconds
   lostConnectionTimeout?: number; // in milliseconds
+  backgroundKeepAliveTimeout?: number; // in milliseconds
   polyfills?: Polyfills;
   unstable_fallbackToHTTP?: boolean;
 
@@ -203,6 +205,9 @@ export function createClient(options: ClientOptions): Client {
   const throttleDelay = getThrottle(clientOptions.throttle ?? DEFAULT_THROTTLE);
   const lostConnectionTimeout = getLostConnectionTimeout(
     clientOptions.lostConnectionTimeout ?? DEFAULT_LOST_CONNECTION_TIMEOUT
+  );
+  const backgroundKeepAliveTimeout = getBackgroundKeepAliveTimeout(
+    clientOptions.backgroundKeepAliveTimeout
   );
 
   const authManager = createAuthManager(options);
@@ -285,6 +290,7 @@ export function createClient(options: ClientOptions): Client {
         roomId,
         throttleDelay,
         lostConnectionTimeout,
+        backgroundKeepAliveTimeout,
         polyfills: clientOptions.polyfills,
         delegates: clientOptions.mockedDelegates ?? {
           createSocket: makeCreateSocketDelegateForRoom(
@@ -397,17 +403,42 @@ function checkBounds(
   option: string,
   value: unknown,
   min: number,
-  max: number,
+  max?: number,
   recommendedMin?: number
 ): number {
-  if (typeof value !== "number" || value < min || value > max) {
+  if (
+    typeof value !== "number" ||
+    value < min ||
+    max === undefined ||
+    value > max
+  ) {
     throw new Error(
-      `${option} should be a number between ${
-        recommendedMin ?? min
-      } and ${max}.`
+      max !== undefined
+        ? `${option} should be between ${recommendedMin ?? min} and ${max}.`
+        : `${option} should be at least ${recommendedMin ?? min}.`
     );
   }
   return value;
+}
+
+function getBackgroundKeepAliveTimeout(
+  value: number | undefined
+): number | undefined {
+  if (value === undefined) return undefined;
+
+  if (typeof document === "undefined") {
+    // eslint-disable-next-line rulesdir/console-must-be-fancy
+    console.warn(
+      "Setting backgroundKeepAliveTimeout won't have an effect in a non-DOM environment."
+    );
+    return undefined;
+  }
+
+  return checkBounds(
+    "backgroundKeepAliveTimeout",
+    value,
+    MIN_BACKGROUND_KEEP_ALIVE_TIMEOUT
+  );
 }
 
 function getThrottle(value: number): number {

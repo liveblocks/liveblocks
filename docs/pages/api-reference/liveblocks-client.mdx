@@ -178,6 +178,30 @@ that this also affects when `others` are reset to an empty array after a
 disconnection. For a demonstration of this behavior, see our [connection status
 example][].
 
+### Background keep-alive timeout [#createClientBackgroundKeepAliveTimeout]
+
+By default, Liveblocks applications will maintain an active WebSocket connection
+to the Liveblocks servers, even when running in a browser tab that’s in the
+background. However, if you’d prefer for background tabs to disconnect after a
+period of inactivity, then you can use `backgroundKeepAliveTimeout`.
+
+When `backgroundKeepAliveTimeout` is specified, the client will automatically
+disconnect applications that have been in an unfocused background tab for _at
+least_ the specified time. When the browser tab is refocused, the client will
+immediately reconnect to the room and synchronize the document.
+
+```ts
+import { createClient } from "@liveblocks/client";
+
+const client = createClient({
+  /* ... other options ... */
+  backgroundKeepAliveTimeout: 15 * 60 * 1000 /* 15 minutes */,
+});
+```
+
+`backgroundKeepAliveTimeout` accepts a numeric value in milliseconds—we advise
+using a value of at least a few minutes, to avoid unnecessary disconnections.
+
 ## Client
 
 Client returned by [`createClient`][].

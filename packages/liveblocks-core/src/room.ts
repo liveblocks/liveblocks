@@ -829,7 +829,7 @@ export type RoomInitializers<
   shouldInitiallyConnect?: boolean;
 }>;
 
-export type RoomDelegates = Delegates<AuthValue>;
+export type RoomDelegates = Omit<Delegates<AuthValue>, "canZombie">;
 
 /** @internal */
 export type RoomConfig = {
@@ -838,6 +838,7 @@ export type RoomConfig = {
   roomId: string;
   throttleDelay: number;
   lostConnectionTimeout: number;
+  backgroundKeepAliveTimeout?: number;
 
   liveblocksServer: string;
   unstable_fallbackToHTTP?: boolean;
@@ -869,6 +870,38 @@ function userToTreeNode(
 }
 
 /**
+ * Returns a ref to access if, and if so, how long the current tab is in the
+ * background and an unsubscribe function.
+ *
+ * The `inBackgroundSince` value will either be a JS timestamp indicating the
+ * moment the tab was put into the background, or `null` in case the tab isn't
+ * currently in the background. In non-DOM environments, this will always
+ * return `null`.
+ */
+function installBackgroundTabSpy(): [
+  inBackgroundSince: { readonly current: number | null },
+  unsub: () => void,
+] {
+  const doc = typeof document !== "undefined" ? document : undefined;
+  const inBackgroundSince: { current: number | null } = { current: null };
+
+  function onVisibilityChange() {
+    if (doc?.visibilityState === "hidden") {
+      inBackgroundSince.current = inBackgroundSince.current ?? Date.now();
+    } else {
+      inBackgroundSince.current = null;
+    }
+  }
+
+  doc?.addEventListener("visibilitychange", onVisibilityChange);
+  const unsub = () => {
+    doc?.removeEventListener("visibilitychange", onVisibilityChange);
+  };
+
+  return [inBackgroundSince, unsub];
+}
+
+/**
  * @internal
  * Initializes a new Room, and returns its public API.
  */
@@ -893,8 +926,30 @@ export function createRoom<
       ? options.initialStorage(config.roomId)
       : options.initialStorage;
 
+  const [inBackgroundSince, uninstallBgTabSpy] = installBackgroundTabSpy();
+
   // Create a delegate pair for (a specific) Live Room socket connection(s)
-  const delegates: RoomDelegates = config.delegates;
+  const delegates = {
+    ...config.delegates,
+
+    // A connection is allowed to go into "zombie state" only if all of the
+    // following conditions apply:
+    //
+    // - The `backgroundKeepAliveTimeout` client option is configured
+    // - The browser window has been in the background for at least
+    //   `backgroundKeepAliveTimeout` milliseconds
+    // - There are no pending changes
+    //
+    canZombie() {
+      return (
+        config.backgroundKeepAliveTimeout !== undefined &&
+        inBackgroundSince.current !== null &&
+        Date.now() >
+          inBackgroundSince.current + config.backgroundKeepAliveTimeout &&
+        getStorageStatus() !== "synchronizing"
+      );
+    },
+  };
 
   const managedSocket: ManagedSocket<AuthValue> = new ManagedSocket(
     delegates,
@@ -2283,7 +2338,10 @@ export function createRoom<
       connect: () => managedSocket.connect(),
       reconnect: () => managedSocket.reconnect(),
       disconnect: () => managedSocket.disconnect(),
-      destroy: () => managedSocket.destroy(),
+      destroy: () => {
+        uninstallBgTabSpy();
+        managedSocket.destroy();
+      },
 
       // Presence
       updatePresence,
@@ -2510,7 +2568,7 @@ export function makeCreateSocketDelegateForRoom(
 
     if (ws === undefined) {
       throw new StopRetrying(
-        "To use Liveblocks client in a non-dom environment, you need to provide a WebSocket polyfill."
+        "To use Liveblocks client in a non-DOM environment, you need to provide a WebSocket polyfill."
       );
     }
 
