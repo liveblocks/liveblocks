@@ -20,8 +20,10 @@ import { useEffect, useState } from "react";
 import * as Y from "yjs";
 import { useRoom, useSelf } from "../../liveblocks.config";
 import { DocumentSpinner } from "../../primitives/Spinner";
+import { LiveblocksCommentsHighlight } from "./comment-highlight";
 import { CustomTaskItem } from "./CustomTaskItem";
 import { SelectionMenu } from "./SelectionMenu";
+import { ThreadList } from "./ThreadList";
 import { Toolbar } from "./Toolbar";
 import { WordCount } from "./WordCount";
 import styles from "./TextEditor.module.css";
@@ -82,6 +84,12 @@ function TiptapEditor({ doc, provider }: EditorProps) {
       },
     },
     extensions: [
+      // Custom Liveblocks comments extension
+      LiveblocksCommentsHighlight.configure({
+        HTMLAttributes: {
+          class: "comment-highlight",
+        },
+      }),
       StarterKit.configure({
         blockquote: {
           HTMLAttributes: {
@@ -190,7 +198,17 @@ function TiptapEditor({ doc, provider }: EditorProps) {
       ) : null}
       <div className={styles.editorPanel}>
         {editor ? <SelectionMenu editor={editor} /> : null}
-        <EditorContent editor={editor} className={styles.editorContainer} />
+        <div className={styles.editorContainerOffset}>
+          <div className={styles.editorContainer}>
+            <EditorContent editor={editor} />
+            <div className={styles.threadListContainer}>
+              {editor ? <ThreadList editor={editor} /> : null}
+            </div>
+          </div>
+          <div className={styles.mobileThreadListContainer}>
+            {editor ? <ThreadList editor={editor} /> : null}
+          </div>
+        </div>
       </div>
       {editor ? <WordCount editor={editor} /> : null}
     </div>
