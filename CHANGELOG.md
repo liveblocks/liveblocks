@@ -42,14 +42,14 @@ leave();
 
 ### `@liveblocks/redux`
 
-- The `roomId` argument to the `leaveRoom()` action is no longer needed. It will
-  simply leave the currently joined room.
+- The `leaveRoom()` function no longer accepts a `roomId`. It will always leave
+  the currently joined room.
 
 ### `@liveblocks/zustand`
 
 - The `enterRoom()` function will now return a leave callback function.
-- The `roomId` argument to the `leaveRoom()` action is no longer needed. It will
-  simply leave the currently joined room.
+- The `leaveRoom()` function no longer accepts a `roomId`. It will always leave
+  the currently joined room.
 
 # v1.4.8
 
