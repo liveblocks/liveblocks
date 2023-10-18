@@ -1,5 +1,5 @@
 import { createAuthManager } from "./auth-manager";
-import type { Status } from "./connection";
+import { isIdle } from "./connection";
 import type { LsonObject } from "./crdts/Lson";
 import { linkDevTools, setupDevTools, unlinkDevTools } from "./devtools";
 import { deprecateIf } from "./lib/deprecation";
@@ -373,9 +373,8 @@ export function createClient(options: ClientOptions): Client {
     // Reconnect all rooms that aren't idle, if any. This ensures that those
     // rooms will get reauthorized now that the auth cache is reset. If that
     // fails, they might disconnect.
-    const IDLE_STATES: Status[] = ["initial", "disconnected"];
     for (const { room } of roomsById.values()) {
-      if (!IDLE_STATES.includes(room.getStatus())) {
+      if (!isIdle(room.getStatus())) {
         room.reconnect();
       }
     }
