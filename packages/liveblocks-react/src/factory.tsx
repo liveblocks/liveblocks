@@ -303,18 +303,7 @@ export function createRoomContext<
       ) => TRoomLeavePair;
     }
   ) {
-    const {
-      id: roomId,
-      initialPresence,
-      initialStorage,
-      unstable_batchedUpdates,
-      stableEnterRoom,
-    } = props;
-
-    const autoConnect =
-      props.autoConnect ??
-      props.shouldInitiallyConnect ??
-      typeof window !== "undefined";
+    const { id: roomId, stableEnterRoom } = props;
 
     if (process.env.NODE_ENV !== "production") {
       if (!roomId) {
@@ -341,35 +330,36 @@ export function createRoomContext<
 
     // Note: We'll hold on to the initial value given here, and ignore any
     // changes to this argument in subsequent renders
-    const frozen = useInitial({
-      initialPresence,
-      initialStorage,
-      unstable_batchedUpdates,
-      autoConnect,
+    const frozenProps = useInitial({
+      initialPresence: props.initialPresence,
+      initialStorage: props.initialStorage,
+      unstable_batchedUpdates: props.unstable_batchedUpdates,
+      autoConnect:
+        props.autoConnect ??
+        props.shouldInitiallyConnect ??
+        typeof window !== "undefined",
     });
 
     const [{ room }, setRoomLeavePair] = React.useState(() =>
       stableEnterRoom(roomId, {
-        initialPresence: frozen.initialPresence,
-        initialStorage: frozen.initialStorage,
-        autoConnect: false,
-        unstable_batchedUpdates: frozen.unstable_batchedUpdates,
+        ...frozenProps,
+        autoConnect: false, // Deliberately using false here on the first render, see below
       })
     );
 
     React.useEffect(() => {
-      const pair = stableEnterRoom(roomId, {
-        initialPresence: frozen.initialPresence,
-        initialStorage: frozen.initialStorage,
-        autoConnect: false,
-        unstable_batchedUpdates: frozen.unstable_batchedUpdates,
-      });
+      const pair = stableEnterRoom(roomId, frozenProps);
 
       setRoomLeavePair(pair);
       const { room, leave } = pair;
 
-      if (frozen.autoConnect) {
-        // Connect as an effect!
+      // In React, it's important to start connecting to the room as an effect,
+      // rather than doing this during the initial render. This means that
+      // during the initial render (both on the server-side, and on the first
+      // hydration on the client-side), the value of the `useStatus()` hook
+      // will correctly be "initial", and transition to "connecting" as an
+      // effect.
+      if (frozenProps.autoConnect) {
         room.connect();
       }
 
@@ -380,7 +370,7 @@ export function createRoomContext<
         }
         leave();
       };
-    }, [roomId, frozen, stableEnterRoom]);
+    }, [roomId, frozenProps, stableEnterRoom]);
 
     return (
       <RoomContext.Provider value={room}>
