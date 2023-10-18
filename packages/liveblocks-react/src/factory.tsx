@@ -166,10 +166,10 @@ type Options<TUserMeta extends BaseUserMeta> = {
   ) => PromiseOrNot<string[]>;
 
   /**
-   * @internal Internal endpoint
+   * @internal To point the client to a different Liveblocks server. Only
+   * useful for Liveblocks developers. Not for end users.
    */
-  // XXX Replace by deriving from baseUrl
-  serverEndpoint?: string;
+  baseUrl?: string;
 };
 
 let hasWarnedIfNoResolveUsers = false;

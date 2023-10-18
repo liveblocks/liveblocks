@@ -1,4 +1,5 @@
 import type { LiveObject } from "..";
+import { DEFAULT_BASE_URL } from "../constants";
 import type { LsonObject } from "../crdts/Lson";
 import type { ToImmutable } from "../crdts/utils";
 import type { Json, JsonObject } from "../lib/Json";
@@ -99,7 +100,6 @@ export const FIFTH_POSITION = makePosition(FOURTH_POSITION);
 
 function makeRoomConfig(mockedDelegates: RoomDelegates) {
   return {
-    // baseUrl: "https://api.liveblocks.io",
     delegates: mockedDelegates,
     roomId: "room-id",
     throttleDelay: -1, // No throttle for standard storage test
@@ -111,6 +111,7 @@ function makeRoomConfig(mockedDelegates: RoomDelegates) {
     polyfills: {
       WebSocket: MockWebSocket,
     },
+    baseUrl: DEFAULT_BASE_URL,
     enableDebugLogging: false,
   };
 }

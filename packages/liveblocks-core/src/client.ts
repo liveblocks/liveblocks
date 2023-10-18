@@ -1,5 +1,6 @@
 import { createAuthManager } from "./auth-manager";
 import { isIdle } from "./connection";
+import { DEFAULT_BASE_URL } from "./constants";
 import type { LsonObject } from "./crdts/Lson";
 import { linkDevTools, setupDevTools, unlinkDevTools } from "./devtools";
 import { deprecateIf } from "./lib/deprecation";
@@ -181,7 +182,7 @@ function getBaseUrlFromClientOptions(clientOptions: ClientOptions) {
   ) {
     return clientOptions.baseUrl;
   } else {
-    return "https://api.liveblocks.io";
+    return DEFAULT_BASE_URL;
   }
 }
 

@@ -1161,10 +1161,9 @@ export function createRoom<
     nonce: string,
     messages: ClientMsg<TPresence, TRoomEvent>[]
   ) {
-    const baseUrl = new URL(config.baseUrl);
     const url = new URL(
       `/v2/c/rooms/${encodeURIComponent(roomId)}/send-message`,
-      baseUrl
+      config.baseUrl
     );
     const fetcher = config.polyfills?.fetch || /* istanbul ignore next */ fetch;
     return fetcher(url.toString(), {
@@ -2252,8 +2251,7 @@ export function createRoom<
   };
 
   const commentsApi = createCommentsApi(config.roomId, delegates.authenticate, {
-    // XXX Replace by deriving from baseUrl
-    serverEndpoint: "https://api.liveblocks.io/v2",
+    baseUrl: config.baseUrl,
   });
 
   return Object.defineProperty(
