@@ -46,14 +46,7 @@ export type LiveblocksContext<
    * Leaves the currently entered room and stops sync it with zustand state, if
    * any. If enterRoom was not called before, this is a no-op.
    */
-  readonly leaveRoom: {
-    /**
-     * @deprecated The `roomId` argument is no longer needed. This overload
-     * will be removed in a future version.
-     */
-    (roomId: string): void;
-    (): void;
-  };
+  readonly leaveRoom: () => void;
   /**
    * The room currently synced to your zustand state.
    */
