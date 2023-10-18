@@ -22,6 +22,9 @@ leave();
 
 ### `@liveblocks/client`
 
+- New client config option: `backgroundKeepAliveTimeout` (a numeric value in
+  milliseconds). See
+  [docs](https://liveblocks.io/docs/api-reference/liveblocks-client#createClientBackgroundKeepAliveTimeout).
 - New APIs:
   - `client.enterRoom(roomId, options)` – enters the room and return both the
     room and an "unsubscribe function" to leave that room again. This newer API
