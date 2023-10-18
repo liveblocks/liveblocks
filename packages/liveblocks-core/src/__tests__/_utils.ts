@@ -99,7 +99,7 @@ export const FIFTH_POSITION = makePosition(FOURTH_POSITION);
 
 function makeRoomConfig(mockedDelegates: RoomDelegates) {
   return {
-    liveblocksServer: "wss://api.liveblocks.io/v7",
+    // baseUrl: "https://api.liveblocks.io",
     delegates: mockedDelegates,
     roomId: "room-id",
     throttleDelay: -1, // No throttle for standard storage test
