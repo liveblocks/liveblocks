@@ -103,7 +103,7 @@ export function createCommentsApi<TThreadMetadata extends BaseMetadata>(
     // TODO: Use the right scope
     const authValue = await getAuthValue();
     const url = new URL(
-      `/c/rooms/${encodeURIComponent(roomId)}${endpoint}`,
+      `/v2/c/rooms/${encodeURIComponent(roomId)}${endpoint}`,
       config.baseUrl
     ).toString();
     return await fetch(url, {

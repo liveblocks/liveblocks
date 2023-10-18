@@ -839,11 +839,9 @@ export type RoomConfig = {
   throttleDelay: number;
   lostConnectionTimeout: number;
 
-  baseUrl: string;
   unstable_fallbackToHTTP?: boolean;
 
   polyfills?: Polyfills;
-  enableDebugLogging?: boolean;
 
   /**
    * Only necessary when you’re using Liveblocks with React v17 or lower.
@@ -854,6 +852,9 @@ export type RoomConfig = {
    * https://liveblocks.io/docs/guides/troubleshooting#stale-props-zombie-child
    */
   unstable_batchedUpdates?: (cb: () => void) => void;
+
+  baseUrl: string;
+  enableDebugLogging?: boolean;
 };
 
 function userToTreeNode(
@@ -1164,9 +1165,9 @@ export function createRoom<
     const url = new URL(
       `/v2/c/rooms/${encodeURIComponent(roomId)}/send-message`,
       config.baseUrl
-    );
+    ).toString();
     const fetcher = config.polyfills?.fetch || /* istanbul ignore next */ fetch;
-    return fetcher(url.toString(), {
+    return fetcher(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
