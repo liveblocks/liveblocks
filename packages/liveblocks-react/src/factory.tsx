@@ -217,8 +217,6 @@ export function useRoomContextBundle() {
   return bundle;
 }
 
-let lastInstanceId = 0;
-
 export function createRoomContext<
   TPresence extends JsonObject,
   TStorage extends LsonObject = LsonObject,
@@ -236,56 +234,80 @@ export function createRoomContext<
   TThreadMetadata
 > {
   type TRoom = Room<TPresence, TStorage, TUserMeta, TRoomEvent>;
+  type TRoomLeavePair = { room: TRoom; leave: () => void };
 
   const RoomContext = React.createContext<TRoom | null>(null);
 
-  const roomCache = new Map<string, { room: TRoom; leave: () => void }>();
-
   /**
-   * A cached version of .enterRoom(), where we cache each room/leave pair on
-   * a per-RoomProvider instance basis.
+   * RATIONALE:
+   * At the "Outer" RoomProvider level, we keep a cache and produce
+   * a stableEnterRoom function, which we pass down to the real "Inner"
+   * RoomProvider level.
+   *
+   * The purpose is to ensure that if `stableEnterRoom("my-room")` is called
+   * multiple times for the same room ID, it will always return the exact same
+   * (cached) value, so that in total only a single "leave" function gets
+   * produced and registered in the client.
+   *
+   * If we didn't use this cache, then in React StrictMode
+   * stableEnterRoom("my-room") might get called multiple (at least 4) times,
+   * causing more leave functions to be produced in the client, some of which
+   * we cannot get a hold on (because StrictMode would discard those results by
+   * design). This would make it appear to the Client that the Room is still in
+   * use by some party that hasn't called `leave()` on it yet, thus causing the
+   * Room to not be freed and destroyed when the component unmounts later.
    */
-  function stableEnterRoom(
-    instanceId: string,
-    roomId: string,
-    options: EnterOptions<TPresence, TStorage>
-  ): { room: TRoom; leave: () => void } {
-    const key = `${instanceId}:${roomId}`;
-    const cached = roomCache.get(key);
-    if (cached) return cached;
-
-    const rv = client.enterRoom<TPresence, TStorage, TUserMeta, TRoomEvent>(
-      roomId,
-      options
+  function RoomProviderOuter(props: RoomProviderProps<TPresence, TStorage>) {
+    const [cache] = React.useState<Map<string, TRoomLeavePair>>(
+      () => new Map()
     );
 
-    // Wrap the leave function to also delete the cached value
-    const origLeave = rv.leave;
-    rv.leave = () => {
-      origLeave();
-      roomCache.delete(key);
-    };
+    // Produce a version of client.enterRoom() that when called for the same
+    // room ID multiple times, will not keep producing multiple leave
+    // functions, but instead return the cached one.
+    const stableEnterRoom = React.useCallback(
+      (
+        roomId: string,
+        options: EnterOptions<TPresence, TStorage>
+      ): TRoomLeavePair => {
+        const cached = cache.get(roomId);
+        if (cached) return cached;
 
-    roomCache.set(key, rv);
-    return rv;
-  }
+        const rv = client.enterRoom<TPresence, TStorage, TUserMeta, TRoomEvent>(
+          roomId,
+          options
+        );
 
-  function RoomProviderOuter(props: RoomProviderProps<TPresence, TStorage>) {
-    // This "Outer" hack mostly exists to make ID generation work well in
-    // StrictMode. See this issue https://github.com/facebook/react/issues/27103#issuecomment-1763359077
-    const instanceId = React.useRef(`p${++lastInstanceId}`).current; // Like useId(), but will also work in React<18
-    return <RoomProviderInner instanceId={instanceId} {...props} />;
+        // Wrap the leave function to also delete the cached value
+        const origLeave = rv.leave;
+        rv.leave = () => {
+          origLeave();
+          cache.delete(roomId);
+        };
+
+        cache.set(roomId, rv);
+        return rv;
+      },
+      [cache]
+    );
+
+    return <RoomProviderInner {...props} stableEnterRoom={stableEnterRoom} />;
   }
 
   function RoomProviderInner(
-    props: RoomProviderProps<TPresence, TStorage> & { instanceId: string }
+    props: RoomProviderProps<TPresence, TStorage> & {
+      stableEnterRoom: (
+        roomId: string,
+        options: EnterOptions<TPresence, TStorage>
+      ) => TRoomLeavePair;
+    }
   ) {
     const {
-      instanceId,
       id: roomId,
       initialPresence,
       initialStorage,
       unstable_batchedUpdates,
+      stableEnterRoom,
     } = props;
 
     const autoConnect =
@@ -319,7 +341,6 @@ export function createRoomContext<
     // Note: We'll hold on to the initial value given here, and ignore any
     // changes to this argument in subsequent renders
     const frozen = useInitial({
-      instanceId,
       initialPresence,
       initialStorage,
       unstable_batchedUpdates,
@@ -327,7 +348,7 @@ export function createRoomContext<
     });
 
     const [{ room }, setRoomLeavePair] = React.useState(() =>
-      stableEnterRoom(frozen.instanceId, roomId, {
+      stableEnterRoom(roomId, {
         initialPresence: frozen.initialPresence,
         initialStorage: frozen.initialStorage,
         autoConnect: false,
@@ -336,7 +357,7 @@ export function createRoomContext<
     );
 
     React.useEffect(() => {
-      const pair = stableEnterRoom(frozen.instanceId, roomId, {
+      const pair = stableEnterRoom(roomId, {
         initialPresence: frozen.initialPresence,
         initialStorage: frozen.initialStorage,
         autoConnect: false,
@@ -358,7 +379,7 @@ export function createRoomContext<
         }
         leave();
       };
-    }, [roomId, frozen]);
+    }, [roomId, frozen, stableEnterRoom]);
 
     return (
       <RoomContext.Provider value={room}>
