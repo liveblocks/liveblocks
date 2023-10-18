@@ -89,7 +89,7 @@ describe("createClient", () => {
     }
   );
 
-  test("should not try to connect if withoutInitiallyConnecting is false", () => {
+  test("should not try to connect if autoConnect is false (new style)", () => {
     const authMock = jest.fn();
 
     const client = createClient({
@@ -108,6 +108,90 @@ describe("createClient", () => {
     } finally {
       leave();
     }
+  });
+
+  test("should not try to connect if autoConnect is false (old style)", () => {
+    const authMock = jest.fn();
+
+    const client = createClient({
+      authEndpoint: authMock,
+      polyfills: {
+        atob: atobPolyfillMock,
+      },
+    });
+
+    client.enter("room", {
+      initialPresence: {},
+      autoConnect: false,
+    });
+    try {
+      expect(authMock).not.toHaveBeenCalled();
+    } finally {
+      client.leave("room");
+    }
+  });
+
+  test("entering twice returns the same room (new style)", () => {
+    const authMock = jest.fn();
+
+    const client = createClient({
+      authEndpoint: authMock,
+      polyfills: {
+        atob: atobPolyfillMock,
+      },
+    });
+    const options = { initialPresence: {}, autoConnect: false };
+
+    const view1 = client.enterRoom("room", options);
+    const view2 = client.enterRoom("room", options);
+
+    // The returned room instance is the same one...
+    expect(view1.room).toBe(view2.room);
+
+    // Leaving once is not enough to tear down the room instance!
+    view1.leave();
+
+    // So entering it again will return the same room instance!
+    const view3 = client.enterRoom("room", options);
+    expect(view1.room).toBe(view3.room);
+
+    // Only once all the leave functions are called, the room is released
+    view1.leave();
+    view2.leave();
+    view3.leave();
+    view3.leave(); // Can be called multiple times, and is a no-op
+
+    // Meaning entering it again will create a new room instance
+    const view4 = client.enterRoom("room", options);
+    expect(view1.room).not.toBe(view4.room);
+
+    // Clean things up nicely before ending the test
+    view4.leave();
+  });
+
+  test("entering twice returns the same room (old style)", () => {
+    const authMock = jest.fn();
+
+    const client = createClient({
+      authEndpoint: authMock,
+      polyfills: {
+        atob: atobPolyfillMock,
+      },
+    });
+    const options = { initialPresence: {}, autoConnect: false };
+
+    const room1 = client.enter("room", options);
+    const room2 = client.enter("room", options);
+
+    expect(room1).toBe(room2);
+
+    // In the old style API, leaving once destroys the room instance
+    client.leave("room");
+
+    const room3 = client.enter("room", options);
+    expect(room1).not.toBe(room3);
+
+    client.leave("room");
   });
 
   test("should not throw if authEndpoint is string and fetch polyfill is defined", () => {
