@@ -193,13 +193,17 @@ function ThreadComposer({ editor }: Props) {
     return () => {
       element.removeEventListener("focusout", handleFocusOut);
     };
-  }, [editor, composer.current]);
+  }, [editor, composer]);
 
   return (
     <Composer
       ref={composer}
       className={styles.composer}
       onComposerSubmit={handleComposerSubmit}
+      onClick={(e) => {
+        // Don't send up a click event from emoji popout and close the composer
+        e.stopPropagation();
+      }}
       autoFocus={true}
     />
   );
