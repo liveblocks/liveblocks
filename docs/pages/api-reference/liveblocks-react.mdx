@@ -72,7 +72,7 @@ export const {
 >(client);
 ```
 
-#### resolveUser
+#### resolveUsers
 
 <Banner title="Private beta">
 
@@ -85,10 +85,9 @@ the near future.
 When using [Comments](/docs/products/comments), anything that is linked to a
 user (comments, mentions, etc.) will reference their ID. To display user
 information based on IDs, you can provide a resolver function to the
-`resolveUser` option in [`createRoomContext`](#createRoomContext).
+`resolveUsers` option in [`createRoomContext`](#createRoomContext).
 
-This resolver function will receive a user ID and should return a user object
-asynchronously.
+This resolver function will receive a list of user IDs and should return a list of user objects of the same size and in the same order.
 
 ```tsx file="liveblocks.config.ts"
 // ...
@@ -96,13 +95,13 @@ asynchronously.
 export const {
   /* ... */
 } = createRoomContext(client, {
-  resolveUser: async ({ userId }) => {
-    const userData = __getUserFromDB__(userId);
+  resolveUsers: async ({ userIds }) => {
+    const usersData = await __getUsersFromDB__(userIds);
 
-    return {
+    return usersData.map((userData) => ({
       name: userData.name,
       avatar: userData.avatar.src,
-    };
+    }));
   },
 });
 ```
@@ -148,8 +147,8 @@ but with some debouncing.
 export const {
   /* ... */
 } = createRoomContext(client, {
-  resolveMentionSuggestions: ({ text, roomId }) => {
-    const workspaceUsers = __getWorkspaceUsersFromDB__(roomId);
+  resolveMentionSuggestions: async ({ text, roomId }) => {
+    const workspaceUsers = await __getWorkspaceUsersFromDB__(roomId);
 
     if (!text) {
       // Show all workspace users by default
@@ -1168,7 +1167,7 @@ return a loading state and will throw when there's an error.
 <Banner title="Providing a resolver function">
 
 To use `useUser`, you should provide a resolver function to the
-[`resolveUser`](#resolveUser) option in
+[`resolveUsers`](#resolveUsers) option in
 [`createRoomContext`](#createRoomContext).
 
 </Banner>
@@ -1186,6 +1185,12 @@ const thread = createThread({ body: {}, metadata: {} });
 ### useEditThreadMetadata
 
 Returns a function that edits a thread’s metadata.
+
+<Banner title="Deleting properties">
+
+To delete an existing metadata property, set its value to `null`.
+
+</Banner>
 
 ```tsx
 const editThreadMetadata = useEditThreadMetadata();

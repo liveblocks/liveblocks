@@ -35,7 +35,6 @@ import type {
   CommentMentionProps,
 } from "../primitives/Comment/types";
 import * as ComposerPrimitive from "../primitives/Composer";
-import { Emoji } from "../primitives/internal/Emoji";
 import { Timestamp } from "../primitives/Timestamp";
 import { MENTION_CHARACTER } from "../slate/plugins/mentions";
 import { classNames } from "../utils/class-names";
@@ -43,6 +42,7 @@ import { Composer } from "./Composer";
 import { Avatar } from "./internal/Avatar";
 import { Button } from "./internal/Button";
 import { Dropdown, DropdownItem, DropdownTrigger } from "./internal/Dropdown";
+import { Emoji } from "./internal/Emoji";
 import { EmojiPicker, EmojiPickerTrigger } from "./internal/EmojiPicker";
 import { List } from "./internal/List";
 import {
@@ -84,12 +84,12 @@ export interface CommentProps extends ComponentPropsWithoutRef<"div"> {
   /**
    * The event handler called when the comment is edited.
    */
-  onEdit?: (comment: CommentData) => void;
+  onCommentEdit?: (comment: CommentData) => void;
 
   /**
    * The event handler called when the comment is deleted.
    */
-  onDelete?: (comment: CommentData) => void;
+  onCommentDelete?: (comment: CommentData) => void;
 
   /**
    * The event handler called when clicking on the author.
@@ -275,8 +275,8 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
       showReactions = true,
       onAuthorClick,
       onMentionClick,
-      onEdit,
-      onDelete,
+      onCommentEdit,
+      onCommentDelete,
       overrides,
       additionalActions,
       additionalActionsClassName,
@@ -321,7 +321,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
     const handleEditSubmit = useCallback(
       ({ body }: ComposerSubmitComment, event: FormEvent<HTMLFormElement>) => {
         // TODO: Add a way to preventDefault from within this callback, to override the default behavior (e.g. showing a confirmation dialog)
-        onEdit?.(comment);
+        onCommentEdit?.(comment);
 
         event.preventDefault();
         setEditing(false);
@@ -331,18 +331,18 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
           body,
         });
       },
-      [comment, editComment, onEdit]
+      [comment, editComment, onCommentEdit]
     );
 
     const handleDelete = useCallback(() => {
       // TODO: Add a way to preventDefault from within this callback, to override the default behavior (e.g. showing a confirmation dialog)
-      onDelete?.(comment);
+      onCommentDelete?.(comment);
 
       deleteComment({
         commentId: comment.id,
         threadId: comment.threadId,
       });
-    }, [comment, deleteComment, onDelete]);
+    }, [comment, deleteComment, onCommentDelete]);
 
     const handleAuthorClick = useCallback(
       (event: MouseEvent<HTMLElement>) => {
@@ -562,7 +562,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
                     Link: CommentLink,
                   }}
                 />
-                {showReactions && comment.reactions && (
+                {showReactions && comment.reactions.length > 0 && (
                   <div className="lb-comment-reactions">
                     {comment.reactions.map((reaction) => (
                       <CommentReaction

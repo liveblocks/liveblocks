@@ -1,3 +1,75 @@
+# v1.4.8
+
+### `@liveblocks/react-comments`
+
+- Improve default styles:
+  - Cap CSS selector specificity to improve overridability.
+  - Set tokens on `.lb-root` instead of `:root` to improve cascading tokens
+    (overriding `--lb-accent` on `body` for example, didn't create the expected
+    results), and to work within shadow DOMs.
+- Fix reactions and links styles on Safari.
+
+# v1.4.7
+
+### `@liveblocks/react`
+
+- Fix `userIds` type in `ResolveUsersArgs`.
+
+# v1.4.6
+
+### `@liveblocks/react`
+
+- Fix a race condition that could cause a Liveblocks client to hang during
+  loading when using Suspense.
+- Fix `useStatus` return value on SSR responses.
+- **Breaking (beta):** The `resolveUser` option in `createRoomContext` is now
+  called `resolveUsers` and it receives a list of user IDs (via the `userIds`
+  property, replacing `userId`) instead of a single one. Instead of returning
+  user info of a single user ID, this function will now expect a list of users'
+  info matching the provided list of user IDs.
+- **Breaking (beta):** The `ResolveUserOptions` and
+  `ResolveMentionSuggestionsOptions` types were renamed to `ResolveUsersArgs`
+  and `ResolveMentionSuggestionsArgs` respectively.
+- `resolveUsers` and `resolveMentionSuggestions` now accept synchronous
+  functions.
+- `resolveUsers` now also provides the current room ID.
+- `editThreadMetadata` now correctly allows `null` to be set on a property.
+  Doing so deletes existing metadata properties.
+
+### `@liveblocks/react-comments`
+
+- Export `ComposerSubmitComment` type from root too, in addition to
+  `/primitives`.
+- Add `onThreadDelete` to `Thread`.
+- Add `metadata` to `Composer` to attach custom metadata to new threads.
+- Add support for specifying a custom `ThreadMetadata` type on `Thread` and
+  `Composer`.
+- **Breaking (beta):** `Comment`’s `onEdit` and `onDelete` were renamed to
+  `onEditComment` and `onDeleteComment` respectively.
+
+# v1.4.5
+
+### `@liveblocks/react`
+
+- Fix `createThread` not creating valid comment.
+
+### `@liveblocks/node`
+
+- Fix URL encoding bug
+
+# v1.4.4
+
+### `@liveblocks/react`
+
+- Fix `removeReaction` not removing reactions which led to reactions displaying
+  a count of 0.
+
+### `@liveblocks/react-comments`
+
+- Fix reactions list (and its add button) showing on all comments.
+- Improve emoji rendering on Windows.
+- Hide country flag emojis when unsupported. (e.g. on Windows)
+
 # v1.4.3
 
 ### `@liveblocks/react`

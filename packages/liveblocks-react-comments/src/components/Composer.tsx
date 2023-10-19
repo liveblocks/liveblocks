@@ -1,12 +1,15 @@
 "use client";
 
+import type { BaseMetadata } from "@liveblocks/core";
 import { useRoomContextBundle } from "@liveblocks/react";
 import type {
   ComponentPropsWithoutRef,
   FocusEvent,
   FormEvent,
+  ForwardedRef,
   MouseEvent,
   ReactNode,
+  RefAttributes,
   SyntheticEvent,
 } from "react";
 import React, { forwardRef, useCallback, useState } from "react";
@@ -26,6 +29,7 @@ import type {
   ComposerSubmitComment,
 } from "../primitives/Composer/types";
 import { MENTION_CHARACTER } from "../slate/plugins/mentions";
+import type { ThreadMetadata } from "../types";
 import { classNames } from "../utils/class-names";
 import { useControllableState } from "../utils/use-controllable-state";
 import { Attribution } from "./internal/Attribution";
@@ -49,9 +53,14 @@ interface EmojiEditorActionProps extends EditorActionProps {
   onPickerOpenChange?: EmojiPickerProps["onOpenChange"];
 }
 
-type ComposerCreateThreadProps = {
+type ComposerCreateThreadProps<TThreadMetadata extends BaseMetadata> = {
   threadId?: never;
   commentId?: never;
+
+  /**
+   * The metadata of the thread to create.
+   */
+  metadata?: TThreadMetadata;
 };
 
 type ComposerCreateCommentProps = {
@@ -60,6 +69,7 @@ type ComposerCreateCommentProps = {
    */
   threadId: string;
   commentId?: never;
+  metadata?: never;
 };
 
 type ComposerEditCommentProps = {
@@ -72,14 +82,14 @@ type ComposerEditCommentProps = {
    * The ID of the comment to edit.
    */
   commentId: string;
+  metadata?: never;
 };
 
-export type ComposerProps = Omit<
-  ComponentPropsWithoutRef<"form">,
-  "defaultValue"
-> &
+export type ComposerProps<
+  TThreadMetadata extends BaseMetadata = ThreadMetadata,
+> = Omit<ComponentPropsWithoutRef<"form">, "defaultValue"> &
   (
-    | ComposerCreateThreadProps
+    | ComposerCreateThreadProps<TThreadMetadata>
     | ComposerCreateCommentProps
     | ComposerEditCommentProps
   ) & {
@@ -219,7 +229,7 @@ function ComposerMentionSuggestions({
   userIds,
 }: ComposerEditorMentionSuggestionsProps) {
   return userIds.length > 0 ? (
-    <ComposerPrimitive.Suggestions className="lb-root lb-elevation lb-composer-suggestions lb-composer-mention-suggestions">
+    <ComposerPrimitive.Suggestions className="lb-root lb-portal lb-elevation lb-composer-suggestions lb-composer-mention-suggestions">
       <ComposerPrimitive.SuggestionsList className="lb-composer-suggestions-list lb-composer-mention-suggestions-list">
         {userIds.map((userId) => (
           <ComposerPrimitive.SuggestionsListItem
@@ -414,8 +424,17 @@ const ComposerWithContext = forwardRef<
  * @example
  * <Composer />
  */
-export const Composer = forwardRef<HTMLFormElement, ComposerProps>(
-  ({ threadId, commentId, onComposerSubmit, ...props }, forwardedRef) => {
+export const Composer = forwardRef(
+  <TThreadMetadata extends BaseMetadata = ThreadMetadata>(
+    {
+      threadId,
+      commentId,
+      metadata,
+      onComposerSubmit,
+      ...props
+    }: ComposerProps<TThreadMetadata>,
+    forwardedRef: ForwardedRef<HTMLFormElement>
+  ) => {
     const { useCreateThread, useCreateComment, useEditComment } =
       useRoomContextBundle();
     const createThread = useCreateThread();
@@ -444,7 +463,7 @@ export const Composer = forwardRef<HTMLFormElement, ComposerProps>(
         } else {
           createThread({
             body: comment.body,
-            metadata: {},
+            metadata: metadata ?? {},
           });
         }
       },
@@ -453,6 +472,7 @@ export const Composer = forwardRef<HTMLFormElement, ComposerProps>(
         createComment,
         createThread,
         editComment,
+        metadata,
         onComposerSubmit,
         threadId,
       ]
@@ -466,4 +486,6 @@ export const Composer = forwardRef<HTMLFormElement, ComposerProps>(
       </TooltipProvider>
     );
   }
-);
+) as <TThreadMetadata extends BaseMetadata = ThreadMetadata>(
+  props: ComposerProps<TThreadMetadata> & RefAttributes<HTMLFormElement>
+) => JSX.Element;

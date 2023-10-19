@@ -2,22 +2,30 @@ import { NextRequest, NextResponse } from "next/server";
 import { NAMES } from "../../../database";
 
 /**
- * Get a user's info from their ID
- * For `resolveUser` in liveblocks.config.ts
+ * Get users' info from their ID
+ * For `resolveUsers` in liveblocks.config.ts
  */
 
-export async function GET(request: NextRequest) {
-  const { searchParams } = new URL(request.url);
-  const userId = searchParams.get("userId");
-
-  if (!userId || !userId.startsWith("user-")) {
-    return new NextResponse("Missing or invalid userId", { status: 400 });
+function getUser(userId: string) {
+  if (!userId.startsWith("user-")) {
+    return;
   }
 
   const userIndex = Number(userId.replace(/^\D+/g, "")) ?? 0;
 
-  return NextResponse.json({
+  return {
     name: NAMES[userIndex],
     avatar: `https://liveblocks.io/avatars/avatar-${userIndex}.png`,
-  });
+  };
+}
+
+export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url);
+  const userIds = searchParams.getAll("userIds");
+
+  if (!userIds || !Array.isArray(userIds)) {
+    return new NextResponse("Missing or invalid userIds", { status: 400 });
+  }
+
+  return NextResponse.json(userIds.map((userId) => getUser(userId)));
 }

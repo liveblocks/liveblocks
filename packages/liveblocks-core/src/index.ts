@@ -75,6 +75,7 @@ export { makePoller } from "./lib/Poller";
 export { asPos, makePosition } from "./lib/position";
 export type { Resolve } from "./lib/Resolve";
 export { shallow } from "./lib/shallow";
+export { stringify } from "./lib/stringify";
 export {
   b64decode,
   isPlainObject,

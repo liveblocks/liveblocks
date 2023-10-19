@@ -8,6 +8,7 @@ import type {
   Json,
   JsonObject,
   LsonObject,
+  Resolve,
   Room,
   ThreadData,
 } from "@liveblocks/core";
@@ -37,6 +38,10 @@ const THREAD_ID_PREFIX = "th";
 const COMMENT_ID_PREFIX = "cm";
 const DEDUPING_INTERVAL = 1000;
 
+type PartialNullable<T> = {
+  [P in keyof T]?: T[P] | null | undefined;
+};
+
 export type CommentsRoom<TThreadMetadata extends BaseMetadata> = {
   useThreads(): ThreadsState<TThreadMetadata>;
   useThreadsSuspense(): ThreadsStateSuccess<TThreadMetadata>;
@@ -65,7 +70,7 @@ export type EditThreadMetadataOptions<TMetadata extends BaseMetadata> = [
   ? {
       threadId: string;
     }
-  : { threadId: string; metadata: Partial<TMetadata> };
+  : { threadId: string; metadata: Resolve<PartialNullable<TMetadata>> };
 
 export type CreateCommentOptions = {
   threadId: string;
@@ -321,7 +326,7 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
     options: EditThreadMetadataOptions<TThreadMetadata>
   ) {
     const threadId = options.threadId;
-    const metadata: Partial<TThreadMetadata> =
+    const metadata: PartialNullable<TThreadMetadata> =
       "metadata" in options ? options.metadata : {};
     const threads = getThreads();
 
@@ -362,21 +367,23 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
     const commentId = createOptimisticId(COMMENT_ID_PREFIX);
     const now = new Date().toISOString();
 
+    const newComment: CommentData = {
+      id: commentId,
+      threadId,
+      roomId: room.id,
+      createdAt: now,
+      type: "comment",
+      userId: getCurrentUserId(),
+      body,
+      reactions: [],
+    };
     const newThread = {
       id: threadId,
       type: "thread",
       createdAt: now,
       roomId: room.id,
       metadata,
-      comments: [
-        {
-          id: commentId,
-          createdAt: now,
-          type: "comment",
-          userId: getCurrentUserId(),
-          body,
-        },
-      ],
+      comments: [newComment],
     } as ThreadData<TThreadMetadata>;
 
     mutate(room.createThread({ threadId, commentId, body, metadata }), {
@@ -730,7 +737,7 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
               const reactionIndex = comment.reactions.findIndex(
                 (reaction) => reaction.emoji === emoji
               );
-              const reactions: CommentReaction[] = comment.reactions;
+              let reactions: CommentReaction[] = comment.reactions;
 
               if (
                 reactionIndex > 0 &&
@@ -738,12 +745,17 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
                   (user) => user.id === userId
                 )
               ) {
-                reactions[reactionIndex] = {
-                  ...reactions[reactionIndex],
-                  users: reactions[reactionIndex].users.filter(
-                    (user) => user.id !== userId
-                  ),
-                };
+                if (comment.reactions[reactionIndex].users.length <= 1) {
+                  reactions = [...comment.reactions];
+                  reactions.splice(reactionIndex, 1);
+                } else {
+                  reactions[reactionIndex] = {
+                    ...reactions[reactionIndex],
+                    users: reactions[reactionIndex].users.filter(
+                      (user) => user.id !== userId
+                    ),
+                  };
+                }
               }
 
               return {
