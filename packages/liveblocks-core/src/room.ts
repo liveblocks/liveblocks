@@ -66,6 +66,14 @@ import { PKG_VERSION } from "./version";
 
 type TimeoutID = ReturnType<typeof setTimeout>;
 
+type LegacyOthersEventCallback<
+  TPresence extends JsonObject,
+  TUserMeta extends BaseUserMeta,
+> = (
+  others: readonly User<TPresence, TUserMeta>[],
+  event: LegacyOthersEvent<TPresence, TUserMeta>
+) => void;
+
 export type RoomEventMessage<
   TPresence extends JsonObject,
   TUserMeta extends BaseUserMeta,
@@ -107,13 +115,10 @@ type RoomEventCallbackMap<
   event: Callback<RoomEventMessage<TPresence, TUserMeta, TRoomEvent>>;
   "my-presence": Callback<TPresence>;
   //
-  // NOTE: OthersEventCallback is the only one not taking a Callback<T> shape,
-  // since this API historically has taken _two_ callback arguments instead of
-  // just one.
-  others: (
-    others: readonly User<TPresence, TUserMeta>[],
-    event: LegacyOthersEvent<TPresence, TUserMeta>
-  ) => void;
+  // NOTE: LegacyOthersEventCallback  is the only one not taking a Callback<T>
+  // shape, since this API historically has taken _two_ callback arguments
+  // instead of just one.
+  others: LegacyOthersEventCallback<TPresence, TUserMeta>;
   error: Callback<Error>;
   history: Callback<HistoryEvent>;
   "storage-status": Callback<StorageStatus>;
@@ -278,10 +283,7 @@ type SubscribeFn<
    */
   (
     type: "others",
-    listener: (
-      others: readonly User<TPresence, TUserMeta>[],
-      event: LegacyOthersEvent<TPresence, TUserMeta>
-    ) => void
+    listener: LegacyOthersEventCallback<TPresence, TUserMeta>
   ): () => void;
 
   /**
@@ -2463,10 +2465,10 @@ function makeClassicSubscribeFn<
         case "others": {
           // NOTE: Others have a different callback structure, where the API
           // exposed on the outside takes _two_ callback arguments!
-          const cb = callback as (
-            others: readonly User<TPresence, TUserMeta>[],
-            event: LegacyOthersEvent<TPresence, TUserMeta>
-          ) => void;
+          const cb = callback as LegacyOthersEventCallback<
+            TPresence,
+            TUserMeta
+          >;
           return events.others.subscribe(
             // XXX Udpate unpacking here
             ({ others, event }) => cb(others, event)
