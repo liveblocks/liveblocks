@@ -27,7 +27,7 @@ function MentionSuggestion({ userId }: { userId: string }) {
       value={userId}
       className={styles.mentionSuggestion}
     >
-      <img src={user.avatar} width={20} height="20" alt="" />
+      <img src={user.avatar} width={20} height="20" alt={user.name} />
       {user.name}
     </Composer.SuggestionsListItem>
   );

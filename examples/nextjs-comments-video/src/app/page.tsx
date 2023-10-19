@@ -9,7 +9,7 @@ export default function Home() {
     <Room>
       <div className={styles.wrapper}>
         <header className={styles.header}>
-          <h1>film-composite.mp4</h1>
+          <h1>michael-james-16296843-720p.mp4</h1>
           <Avatars />
         </header>
         <main className={styles.main}>

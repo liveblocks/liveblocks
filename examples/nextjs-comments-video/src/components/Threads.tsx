@@ -27,7 +27,7 @@ function ThreadList() {
   const { threads } = useThreads();
 
   if (threads.length === 0) {
-    return <div>No comments yet!</div>;
+    return <div className={styles.emptyState}>No comments yet!</div>;
   }
 
   return (

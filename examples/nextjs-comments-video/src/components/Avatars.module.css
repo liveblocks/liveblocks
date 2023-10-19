@@ -6,11 +6,11 @@
   display: flex;
   place-content: center;
   position: relative;
-  border: 2px solid var(--gray0);
+  border: 2px solid var(--gray2);
   border-radius: 9999px;
   width: 32px;
   height: 32px;
-  margin-left: -0.75rem;
+  margin-left: -0.5rem;
 }
 
 .avatar:before {
@@ -20,12 +20,12 @@
   opacity: 0;
   transition: opacity 0.15s ease-out;
   padding: 4px 8px;
-  color: var(--gray0);
+  color: var(--gray12);
   font-size: 12px;
   border-radius: 4px;
   margin-top: 10px;
   z-index: 1;
-  background: var(--gray12);
+  background: var(--gray1);
   white-space: nowrap;
 }
 
@@ -35,4 +35,24 @@
 
 .avatar_picture {
   border-radius: 9999px;
+}
+
+.avatar_icon {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translate(-50%, 50%);
+  width: 16px;
+  height: 16px;
+  background-color: var(--gray2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.avatar_icon > svg {
+  width: 8px;
+  height: 8px;
+  fill: var(--gray11);
 }

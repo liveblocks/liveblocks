@@ -60,19 +60,22 @@ export function useHighlightPinListener(callback: (threadId: string) => void) {
 }
 
 export function resetAllHighlights() {
-  const event1: ThreadHighlightEvent = new CustomEvent(
+  const threadHighlightEvent: ThreadHighlightEvent = new CustomEvent(
     THREAD_HIGHLIGHT_EVENT_NAME,
     {
       detail: { threadId: "" },
     }
   );
 
-  const event2: PinHighlightEvent = new CustomEvent(PIN_HIGHLIGHT_EVENT_NAME, {
-    detail: { threadId: "" },
-  });
+  const pinHighlightEvent: PinHighlightEvent = new CustomEvent(
+    PIN_HIGHLIGHT_EVENT_NAME,
+    {
+      detail: { threadId: "" },
+    }
+  );
 
-  window.dispatchEvent(event1);
-  window.dispatchEvent(event2);
+  window.dispatchEvent(threadHighlightEvent);
+  window.dispatchEvent(pinHighlightEvent);
 }
 
 type SkipToEvent = CustomEvent<{ timePercentage: number }>;
