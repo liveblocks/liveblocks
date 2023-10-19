@@ -558,7 +558,7 @@ export function createRoomContext<
 
     React.useEffect(
       () =>
-        room.events.lostConnection.subscribe((event: LostConnectionEvent) =>
+        room.events.lostConnection.subscribe((event) =>
           savedCallback.current(event)
         ),
       [room, savedCallback]
@@ -570,7 +570,7 @@ export function createRoomContext<
     const savedCallback = useLatest(callback);
 
     React.useEffect(
-      () => room.events.error.subscribe((e: Error) => savedCallback.current(e)),
+      () => room.events.error.subscribe((e) => savedCallback.current(e)),
       [room, savedCallback]
     );
   }
