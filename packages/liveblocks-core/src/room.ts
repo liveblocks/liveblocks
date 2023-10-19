@@ -60,15 +60,33 @@ import type {
   IWebSocketMessageEvent,
 } from "./types/IWebSocket";
 import type { NodeMap } from "./types/NodeMap";
-import type {
-  InternalOthersEvent,
-  LegacyOthersEvent,
-  NewStyleOthersEvent,
-} from "./types/Others";
+import type { InternalOthersEvent, NewStyleOthersEvent } from "./types/Others";
 import type { User } from "./types/User";
 import { PKG_VERSION } from "./version";
 
 type TimeoutID = ReturnType<typeof setTimeout>;
+
+//
+// NOTE:
+// This type looks an awful lot like InternalOthersEvent, but don't change this
+// type definition or DRY this up!
+// The type LegacyOthersEvent is used in the signature of some public APIs, and
+// as such should remain backward compatible.
+//
+// XXX Probably better to codify this knowledge as a tsd test instead!
+//
+type LegacyOthersEvent<
+  TPresence extends JsonObject,
+  TUserMeta extends BaseUserMeta,
+> =
+  | { type: "leave"; user: User<TPresence, TUserMeta> }
+  | { type: "enter"; user: User<TPresence, TUserMeta> }
+  | {
+      type: "update";
+      user: User<TPresence, TUserMeta>;
+      updates: Partial<TPresence>;
+    }
+  | { type: "reset" };
 
 type LegacyOthersEventCallback<
   TPresence extends JsonObject,
@@ -119,7 +137,7 @@ type RoomEventCallbackMap<
   event: Callback<RoomEventMessage<TPresence, TUserMeta, TRoomEvent>>;
   "my-presence": Callback<TPresence>;
   //
-  // NOTE: LegacyOthersEventCallback  is the only one not taking a Callback<T>
+  // NOTE: LegacyOthersEventCallback is the only one not taking a Callback<T>
   // shape, since this API historically has taken _two_ callback arguments
   // instead of just one.
   others: LegacyOthersEventCallback<TPresence, TUserMeta>;
