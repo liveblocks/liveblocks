@@ -60,7 +60,7 @@ import type {
   IWebSocketMessageEvent,
 } from "./types/IWebSocket";
 import type { NodeMap } from "./types/NodeMap";
-import type { OthersEvent } from "./types/Others";
+import type { LegacyOthersEvent } from "./types/Others";
 import type { User } from "./types/User";
 import { PKG_VERSION } from "./version";
 
@@ -112,7 +112,7 @@ type RoomEventCallbackMap<
   // just one.
   others: (
     others: readonly User<TPresence, TUserMeta>[],
-    event: OthersEvent<TPresence, TUserMeta>
+    event: LegacyOthersEvent<TPresence, TUserMeta>
   ) => void;
   error: Callback<Error>;
   history: Callback<HistoryEvent>;
@@ -280,7 +280,7 @@ type SubscribeFn<
     type: "others",
     listener: (
       others: readonly User<TPresence, TUserMeta>[],
-      event: OthersEvent<TPresence, TUserMeta>
+      event: LegacyOthersEvent<TPresence, TUserMeta>
     ) => void
   ): () => void;
 
@@ -590,7 +590,7 @@ export type Room<
     readonly self: Observable<User<TPresence, TUserMeta>>;
     readonly myPresence: Observable<TPresence>;
     // XXX Udpate
-    readonly others: Observable<{ others: readonly User<TPresence, TUserMeta>[]; event: OthersEvent<TPresence, TUserMeta>; }>; // prettier-ignore
+    readonly others: Observable<{ others: readonly User<TPresence, TUserMeta>[]; event: LegacyOthersEvent<TPresence, TUserMeta>; }>; // prettier-ignore
     readonly error: Observable<Error>;
     readonly storage: Observable<StorageUpdate[]>;
     readonly history: Observable<HistoryEvent>;
@@ -1199,7 +1199,7 @@ export function createRoom<
     myPresence: makeEventSource<TPresence>(),
     others: makeEventSource<{
       others: readonly User<TPresence, TUserMeta>[];
-      event: OthersEvent<TPresence, TUserMeta>;
+      event: LegacyOthersEvent<TPresence, TUserMeta>;
     }>(),
     error: makeEventSource<Error>(),
     storage: makeEventSource<StorageUpdate[]>(),
@@ -1386,7 +1386,7 @@ export function createRoom<
     }: {
       storageUpdates?: Map<string, StorageUpdate>;
       presence?: boolean;
-      others?: OthersEvent<TPresence, TUserMeta>[];
+      others?: LegacyOthersEvent<TPresence, TUserMeta>[];
     },
     batchedUpdatesWrapper: (cb: () => void) => void
   ) {
@@ -1636,7 +1636,7 @@ export function createRoom<
 
   function onUpdatePresenceMessage(
     message: UpdatePresenceServerMsg<TPresence>
-  ): OthersEvent<TPresence, TUserMeta> | undefined {
+  ): LegacyOthersEvent<TPresence, TUserMeta> | undefined {
     if (message.targetActor !== undefined) {
       // The incoming message is a full presence update. We are obliged to
       // handle it if `targetActor` matches our own connection ID, but we can
@@ -1670,7 +1670,7 @@ export function createRoom<
 
   function onUserLeftMessage(
     message: UserLeftServerMsg
-  ): OthersEvent<TPresence, TUserMeta> | null {
+  ): LegacyOthersEvent<TPresence, TUserMeta> | null {
     const user = context.others.getUser(message.actor);
     if (user) {
       context.others.removeConnection(message.actor);
@@ -1682,7 +1682,7 @@ export function createRoom<
   function onRoomStateMessage(
     message: RoomStateServerMsg<TUserMeta>,
     batchedUpdatesWrapper: (cb: () => void) => void
-  ): OthersEvent<TPresence, TUserMeta> {
+  ): LegacyOthersEvent<TPresence, TUserMeta> {
     // The server will inform the client about its assigned actor ID and scopes
     context.dynamicSessionInfo.set({
       actor: message.actor,
@@ -1728,7 +1728,7 @@ export function createRoom<
 
   function onUserJoinedMessage(
     message: UserJoinServerMsg<TUserMeta>
-  ): OthersEvent<TPresence, TUserMeta> | undefined {
+  ): LegacyOthersEvent<TPresence, TUserMeta> | undefined {
     context.others.setConnection(
       message.actor,
       message.id,
@@ -1816,7 +1816,7 @@ export function createRoom<
 
     const updates = {
       storageUpdates: new Map<string, StorageUpdate>(),
-      others: [] as OthersEvent<TPresence, TUserMeta>[],
+      others: [] as LegacyOthersEvent<TPresence, TUserMeta>[],
     };
 
     batchUpdates(() => {
@@ -2465,7 +2465,7 @@ function makeClassicSubscribeFn<
           // exposed on the outside takes _two_ callback arguments!
           const cb = callback as (
             others: readonly User<TPresence, TUserMeta>[],
-            event: OthersEvent<TPresence, TUserMeta>
+            event: LegacyOthersEvent<TPresence, TUserMeta>
           ) => void;
           return events.others.subscribe(
             // XXX Udpate unpacking here
