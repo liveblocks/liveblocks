@@ -1415,7 +1415,7 @@ export function createRoom<
       if (othersUpdates !== undefined && othersUpdates.length > 0) {
         const others = context.others.current;
         for (const event of othersUpdates) {
-          eventHub.others.notify({ others, event });
+          eventHub.others.notify({ ...event, others });
         }
       }
 
@@ -2488,10 +2488,10 @@ function makeClassicSubscribeFn<
             TPresence,
             TUserMeta
           >;
-          return events.others.subscribe(
-            // XXX Udpate unpacking here
-            ({ others, event }) => cb(others, event)
-          );
+          return events.others.subscribe((event) => {
+            const { others, ...internalEvent } = event;
+            return cb(others, internalEvent);
+          });
         }
 
         case "error":
