@@ -1383,29 +1383,30 @@ export function createRoom<
     }
   }
 
+  type NotifyBatch = {
+    storageUpdates?: Map<string, StorageUpdate>;
+    presence?: boolean;
+    // XXX Likely make modern? If 100% private.
+    others?: LegacyOthersEvent<TPresence, TUserMeta>[];
+  };
+
   function notify(
-    // XXX Don't do unpacking inline! Make more readable
-    {
-      storageUpdates = new Map<string, StorageUpdate>(),
-      presence = false,
-      others: otherEvents = [],
-    }: {
-      storageUpdates?: Map<string, StorageUpdate>;
-      presence?: boolean;
-      // XXX Likely make modern? If 100% private.
-      others?: LegacyOthersEvent<TPresence, TUserMeta>[];
-    },
+    updates: NotifyBatch,
     batchedUpdatesWrapper: (cb: () => void) => void
   ) {
+    const storageUpdates: Map<string, StorageUpdate> =
+      updates.storageUpdates ?? new Map();
+    const othersEvents = updates.others ?? [];
+
     batchedUpdatesWrapper(() => {
-      if (otherEvents.length > 0) {
+      if (othersEvents.length > 0) {
         const others = context.others.current;
-        for (const event of otherEvents) {
+        for (const event of othersEvents) {
           eventHub.others.notify({ others, event });
         }
       }
 
-      if (presence) {
+      if (updates.presence ?? false) {
         notifySelfChanged(doNotBatchUpdates);
         eventHub.myPresence.notify(context.myPresence.current);
       }
