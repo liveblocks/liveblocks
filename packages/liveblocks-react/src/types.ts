@@ -228,7 +228,8 @@ type RoomContextBundleShared<
   ): void;
 
   /**
-   * useErrorListener is a react hook that lets you react to potential room connection errors.
+   * useErrorListener is a React hook that lets you react to potential room
+   * connection errors.
    *
    * @example
    * useErrorListener(er => {
@@ -238,7 +239,8 @@ type RoomContextBundleShared<
   useErrorListener(callback: (err: Error) => void): void;
 
   /**
-   * useEventListener is a react hook that lets you react to event broadcasted by other users in the room.
+   * useEventListener is a React hook that lets you react to event broadcasted
+   * by other users in the room.
    *
    * @example
    * useEventListener(({ connectionId, event }) => {
