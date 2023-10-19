@@ -94,7 +94,6 @@ export const {
       }
 
       const users = await response.json();
-      console.log(67, users);
       return users;
     },
     async resolveMentionSuggestions({ text }) {

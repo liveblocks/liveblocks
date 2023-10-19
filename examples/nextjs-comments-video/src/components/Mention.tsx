@@ -1,6 +1,5 @@
 import {
   CommentBodyMentionProps,
-  Composer,
   ComposerEditorMentionProps,
 } from "@liveblocks/react-comments/primitives";
 import { useUser } from "@/liveblocks.config";
@@ -11,7 +10,5 @@ export function Mention({
 }: ComposerEditorMentionProps | CommentBodyMentionProps) {
   const { user } = useUser(userId);
 
-  return (
-    <Composer.Mention className={styles.mention}>@{user.name}</Composer.Mention>
-  );
+  return <span className={styles.mention}>@{user.name}</span>;
 }
