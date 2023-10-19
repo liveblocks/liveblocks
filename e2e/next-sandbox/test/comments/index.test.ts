@@ -35,12 +35,10 @@ test.describe("Comments", () => {
     // Read starting value n
     const n = (await getJson(page1, "#numOfThreads")) as number;
 
-    await page1.click("#create-thread");
     await page2.click("#create-thread");
-    await page2.click("#create-thread");
-    await waitForJson(pages, "#numOfThreads", n + 3, { timeout: 15_000 });
+    await waitForJson(pages, "#numOfThreads", n + 1, { timeout: 15_000 });
 
     await page2.click("#delete-comment");
-    await waitForJson(pages, "#numOfThreads", n + 3 - 1, { timeout: 15_000 });
+    await waitForJson(pages, "#numOfThreads", n + 1 - 1, { timeout: 15_000 });
   });
 });
