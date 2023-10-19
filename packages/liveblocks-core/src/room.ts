@@ -840,11 +840,9 @@ export type RoomConfig = {
   lostConnectionTimeout: number;
   backgroundKeepAliveTimeout?: number;
 
-  liveblocksServer: string;
   unstable_fallbackToHTTP?: boolean;
 
   polyfills?: Polyfills;
-  enableDebugLogging?: boolean;
 
   /**
    * Only necessary when you’re using Liveblocks with React v17 or lower.
@@ -855,6 +853,9 @@ export type RoomConfig = {
    * https://liveblocks.io/docs/guides/troubleshooting#stale-props-zombie-child
    */
   unstable_batchedUpdates?: (cb: () => void) => void;
+
+  baseUrl: string;
+  enableDebugLogging?: boolean;
 };
 
 function userToTreeNode(
@@ -1216,14 +1217,12 @@ export function createRoom<
     nonce: string,
     messages: ClientMsg<TPresence, TRoomEvent>[]
   ) {
-    const baseUrl = new URL(config.liveblocksServer);
-    baseUrl.protocol = "https";
     const url = new URL(
       `/v2/c/rooms/${encodeURIComponent(roomId)}/send-message`,
-      baseUrl
-    );
+      config.baseUrl
+    ).toString();
     const fetcher = config.polyfills?.fetch || /* istanbul ignore next */ fetch;
-    return fetcher(url.toString(), {
+    return fetcher(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -2308,7 +2307,7 @@ export function createRoom<
   };
 
   const commentsApi = createCommentsApi(config.roomId, delegates.authenticate, {
-    serverEndpoint: "https://api.liveblocks.io/v2",
+    baseUrl: config.baseUrl,
   });
 
   return Object.defineProperty(
@@ -2558,7 +2557,7 @@ export function makeAuthDelegateForRoom(
 
 export function makeCreateSocketDelegateForRoom(
   roomId: string,
-  liveblocksServer: string,
+  baseUrl: string,
   WebSocketPolyfill?: IWebSocket
 ) {
   return (authValue: AuthValue): IWebSocketInstance => {
@@ -2572,7 +2571,9 @@ export function makeCreateSocketDelegateForRoom(
       );
     }
 
-    const url = new URL(liveblocksServer);
+    const url = new URL(baseUrl);
+    url.protocol = url.protocol === "http:" ? "ws" : "wss";
+    url.pathname = "/v7";
     url.searchParams.set("roomId", roomId);
     if (authValue.type === "secret") {
       url.searchParams.set("tok", authValue.token.raw);

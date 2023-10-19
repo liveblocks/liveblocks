@@ -65,7 +65,7 @@ async function initializeRoomForTest<
       fetch,
       WebSocket: PausableWebSocket,
     },
-    liveblocksServer: process.env.LIVEBLOCKS_SERVER,
+    baseUrl: process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL,
   });
 
   const { room, leave } = client.enterRoom<

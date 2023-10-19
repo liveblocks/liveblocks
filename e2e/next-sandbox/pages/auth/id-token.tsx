@@ -7,6 +7,9 @@ import { getRoomFromUrl } from "../../utils";
 
 const client = createClient({
   authEndpoint: "/api/auth/id-token",
+
+  // @ts-expect-error - Hidden setting
+  baseUrl: process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL,
 });
 
 const { RoomProvider, useMyPresence, useSelf, useOthers, useStatus } =

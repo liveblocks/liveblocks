@@ -13,7 +13,7 @@ const client = createClient({
   ),
 
   // @ts-expect-error - Hidden setting
-  liveblocksServer: process.env.NEXT_PUBLIC_LIVEBLOCKS_SERVER,
+  baseUrl: process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL,
 });
 
 const { RoomProvider, useMyPresence, useSelf, useOthers, useStatus } =

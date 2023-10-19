@@ -1,4 +1,10 @@
-import { assertNonEmpty, fetchPolyfill, normalizeStatusCode } from "./utils";
+import {
+  assertNonEmpty,
+  DEFAULT_BASE_URL,
+  fetchPolyfill,
+  normalizeStatusCode,
+  urljoin,
+} from "./utils";
 
 /**
  * TODO Officially mark as DEPRECATED, point to migration guide.
@@ -9,11 +15,13 @@ type AuthorizeOptions = {
    * https://liveblocks.io/dashboard/apikeys
    */
   secret: string;
+
   /**
    * The room ID for which to authorize the user. This will authorize the user
    * to enter the Liveblocks room.
    */
   room: string;
+
   /**
    * Associates a user ID to the session that is being authorized. The user ID
    * is typically set to the user ID from your own database.
@@ -25,6 +33,7 @@ type AuthorizeOptions = {
    * Liveblocks account's Monthly Active Users.
    */
   userId: string;
+
   /**
    * Arbitrary metadata associated to this user session.
    *
@@ -39,6 +48,7 @@ type AuthorizeOptions = {
    * Can't exceed 1KB when serialized as JSON.
    */
   userInfo?: unknown;
+
   /**
    * Tell Liveblocks which group IDs this user belongs to. This will authorize
    * the user session to access private rooms that have at least one of these
@@ -50,10 +60,10 @@ type AuthorizeOptions = {
   groupIds?: string[];
 
   /**
-   * @internal
-   * Can be overriden for testing purposes only.
+   * @internal To point the client to a different Liveblocks server. Only
+   * useful for Liveblocks developers. Not for end users.
    */
-  liveblocksAuthorizeEndpoint?: string;
+  baseUrl?: string;
 };
 
 /**
@@ -97,6 +107,7 @@ type AuthorizeResponse = {
 export async function authorize(
   options: AuthorizeOptions
 ): Promise<AuthorizeResponse> {
+  let url = null;
   try {
     const { room, secret, userId, userInfo, groupIds } =
       // Ensure we'll validate inputs at runtime
@@ -105,6 +116,8 @@ export async function authorize(
     assertNonEmpty(secret, "secret");
     assertNonEmpty(room, "room");
     assertNonEmpty(userId, "userId");
+
+    url = buildLiveblocksAuthorizeEndpoint(options, room);
 
     const fetch = await fetchPolyfill();
     const resp = await fetch(buildLiveblocksAuthorizeEndpoint(options, room), {
@@ -127,7 +140,9 @@ export async function authorize(
   } catch (er) {
     return {
       status: 503 /* Service Unavailable */,
-      body: 'Call to "https://api.liveblocks.io/v2/rooms/:roomId/authorize" failed. See "error" for more information.',
+      body:
+        (url ? `Call to "${url}" failed.` : "Invalid authorize request.") +
+        ' See "error" for more information.',
       error: er as Error | undefined,
     };
   }
@@ -137,14 +152,6 @@ function buildLiveblocksAuthorizeEndpoint(
   options: AuthorizeOptions,
   roomId: string
 ): string {
-  if (options.liveblocksAuthorizeEndpoint) {
-    return options.liveblocksAuthorizeEndpoint.replace(
-      "{roomId}",
-      encodeURIComponent(roomId)
-    );
-  }
-
-  return `https://api.liveblocks.io/v2/rooms/${encodeURIComponent(
-    roomId
-  )}/authorize`;
+  const path = `/v2/rooms/${encodeURIComponent(roomId)}/authorize`;
+  return urljoin(options.baseUrl || DEFAULT_BASE_URL, path);
 }
