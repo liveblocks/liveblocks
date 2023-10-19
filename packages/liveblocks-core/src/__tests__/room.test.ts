@@ -1,6 +1,7 @@
 import { nn } from "..";
 import type { AuthValue } from "../auth-manager";
 import { StopRetrying } from "../connection";
+import { DEFAULT_BASE_URL } from "../constants";
 import { LiveList } from "../crdts/LiveList";
 import { LiveObject } from "../crdts/LiveObject";
 import type { LsonObject } from "../crdts/Lson";
@@ -58,7 +59,7 @@ const defaultRoomConfig: RoomConfig = {
   roomId: "room-id",
   throttleDelay: THROTTLE_DELAY,
   lostConnectionTimeout: 99999,
-  baseUrl: "https://api.liveblocks.io",
+  baseUrl: DEFAULT_BASE_URL,
   delegates: {
     authenticate: () => {
       return Promise.resolve({ publicApiKey: "pk_123", type: "public" });
