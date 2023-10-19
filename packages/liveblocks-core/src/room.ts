@@ -1383,7 +1383,7 @@ export function createRoom<
     }
   }
 
-  type NotifyBatch = {
+  type NotifyUpdates = {
     storageUpdates?: Map<string, StorageUpdate>;
     presence?: boolean;
     // XXX Likely make modern? If 100% private.
@@ -1391,17 +1391,16 @@ export function createRoom<
   };
 
   function notify(
-    updates: NotifyBatch,
+    updates: NotifyUpdates,
     batchedUpdatesWrapper: (cb: () => void) => void
   ) {
-    const storageUpdates: Map<string, StorageUpdate> =
-      updates.storageUpdates ?? new Map();
-    const othersEvents = updates.others ?? [];
+    const storageUpdates = updates.storageUpdates;
+    const othersUpdates = updates.others;
 
     batchedUpdatesWrapper(() => {
-      if (othersEvents.length > 0) {
+      if (othersUpdates !== undefined && othersUpdates.length > 0) {
         const others = context.others.current;
-        for (const event of othersEvents) {
+        for (const event of othersUpdates) {
           eventHub.others.notify({ others, event });
         }
       }
@@ -1411,7 +1410,7 @@ export function createRoom<
         eventHub.myPresence.notify(context.myPresence.current);
       }
 
-      if (storageUpdates.size > 0) {
+      if (storageUpdates !== undefined && storageUpdates.size > 0) {
         const updates = Array.from(storageUpdates.values());
         eventHub.storage.notify(updates);
       }
@@ -1824,7 +1823,6 @@ export function createRoom<
 
     const updates = {
       storageUpdates: new Map<string, StorageUpdate>(),
-      // XXX Rename to othersUpdates?
       others: [] as LegacyOthersEvent<TPresence, TUserMeta>[],
     };
 
