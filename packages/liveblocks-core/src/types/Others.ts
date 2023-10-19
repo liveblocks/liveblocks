@@ -24,8 +24,7 @@ export type InternalOthersEvent<
     }
   | { type: "reset" };
 
-// XXX Rename this to OthersEvent eventually again
-export type NewStyleOthersEvent<
+export type OthersEvent<
   TPresence extends JsonObject,
   TUserMeta extends BaseUserMeta,
 > = Resolve<

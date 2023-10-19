@@ -60,7 +60,7 @@ import type {
   IWebSocketMessageEvent,
 } from "./types/IWebSocket";
 import type { NodeMap } from "./types/NodeMap";
-import type { InternalOthersEvent, NewStyleOthersEvent } from "./types/Others";
+import type { InternalOthersEvent, OthersEvent } from "./types/Others";
 import type { User } from "./types/User";
 import { PKG_VERSION } from "./version";
 
@@ -613,7 +613,7 @@ export type Room<
     readonly customEvent: Observable<RoomEventMessage<TPresence, TUserMeta, TRoomEvent>>; // prettier-ignore
     readonly self: Observable<User<TPresence, TUserMeta>>;
     readonly myPresence: Observable<TPresence>;
-    readonly others: Observable<NewStyleOthersEvent<TPresence, TUserMeta>>;
+    readonly others: Observable<OthersEvent<TPresence, TUserMeta>>;
     readonly error: Observable<Error>;
     readonly storage: Observable<StorageUpdate[]>;
     readonly history: Observable<HistoryEvent>;
@@ -1220,7 +1220,7 @@ export function createRoom<
       makeEventSource<RoomEventMessage<TPresence, TUserMeta, TRoomEvent>>(),
     self: makeEventSource<User<TPresence, TUserMeta>>(),
     myPresence: makeEventSource<TPresence>(),
-    others: makeEventSource<NewStyleOthersEvent<TPresence, TUserMeta>>(),
+    others: makeEventSource<OthersEvent<TPresence, TUserMeta>>(),
     error: makeEventSource<Error>(),
     storage: makeEventSource<StorageUpdate[]>(),
     history: makeEventSource<HistoryEvent>(),
