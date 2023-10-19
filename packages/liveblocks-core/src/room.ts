@@ -592,7 +592,9 @@ export type Room<
     readonly self: Observable<User<TPresence, TUserMeta>>;
     readonly myPresence: Observable<TPresence>;
     // XXX Udpate
-    readonly others: Observable<{ others: readonly User<TPresence, TUserMeta>[]; event: LegacyOthersEvent<TPresence, TUserMeta>; }>; // prettier-ignore
+    readonly others: Observable<{ others: readonly User<TPresence, TUserMeta>[]; event: 
+      // XXX Make modern!
+      LegacyOthersEvent<TPresence, TUserMeta>; }>; // prettier-ignore
     readonly error: Observable<Error>;
     readonly storage: Observable<StorageUpdate[]>;
     readonly history: Observable<HistoryEvent>;
@@ -1201,6 +1203,7 @@ export function createRoom<
     myPresence: makeEventSource<TPresence>(),
     others: makeEventSource<{
       others: readonly User<TPresence, TUserMeta>[];
+      // XXX Make modern!
       event: LegacyOthersEvent<TPresence, TUserMeta>;
     }>(),
     error: makeEventSource<Error>(),
@@ -1381,6 +1384,7 @@ export function createRoom<
   }
 
   function notify(
+    // XXX Don't do unpacking inline! Make more readable
     {
       storageUpdates = new Map<string, StorageUpdate>(),
       presence = false,
@@ -1388,6 +1392,7 @@ export function createRoom<
     }: {
       storageUpdates?: Map<string, StorageUpdate>;
       presence?: boolean;
+      // XXX Likely make modern? If 100% private.
       others?: LegacyOthersEvent<TPresence, TUserMeta>[];
     },
     batchedUpdatesWrapper: (cb: () => void) => void
@@ -1818,6 +1823,7 @@ export function createRoom<
 
     const updates = {
       storageUpdates: new Map<string, StorageUpdate>(),
+      // XXX Rename to othersUpdates?
       others: [] as LegacyOthersEvent<TPresence, TUserMeta>[],
     };
 
