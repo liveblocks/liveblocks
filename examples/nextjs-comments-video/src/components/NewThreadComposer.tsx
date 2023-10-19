@@ -93,6 +93,7 @@ export function NewThreadComposer({
             </label>
             <input
               id="attach-time"
+              className={styles.checkbox}
               type="checkbox"
               checked={attachTime}
               onChange={handleCheckboxChecked}

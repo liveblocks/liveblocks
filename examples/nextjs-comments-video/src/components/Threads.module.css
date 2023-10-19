@@ -50,6 +50,7 @@
   font-variant-numeric: tabular-nums;
   cursor: pointer;
   transition: background-color 150ms ease-out;
+  outline: none;
 }
 
 .threadTime:hover,

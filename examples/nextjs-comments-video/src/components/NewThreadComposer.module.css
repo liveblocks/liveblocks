@@ -28,6 +28,10 @@
   color: var(--gray9);
 }
 
+.composerEditor {
+  outline: none;
+}
+
 .options {
   margin-top: 20px;
   display: flex;
@@ -59,4 +63,8 @@
   cursor: pointer;
   gap: 6px;
   align-items: center;
+}
+
+.checkbox {
+  accent-color: var(--accent);
 }
