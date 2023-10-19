@@ -30,3 +30,28 @@ export type LegacyOthersEvent<
   | {
       type: "reset";
     };
+
+export type ModernOthersEvent<
+  TPresence extends JsonObject,
+  TUserMeta extends BaseUserMeta,
+> =
+  | {
+      type: "leave";
+      user: User<TPresence, TUserMeta>;
+      others: readonly User<TPresence, TUserMeta>[];
+    }
+  | {
+      type: "enter";
+      user: User<TPresence, TUserMeta>;
+      others: readonly User<TPresence, TUserMeta>[];
+    }
+  | {
+      type: "update";
+      user: User<TPresence, TUserMeta>;
+      updates: Partial<TPresence>;
+      others: readonly User<TPresence, TUserMeta>[];
+    }
+  | {
+      type: "reset";
+      others: readonly User<TPresence, TUserMeta>[];
+    };
