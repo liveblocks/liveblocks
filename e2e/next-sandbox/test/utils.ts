@@ -45,15 +45,24 @@ export function genRoomId(testInfo: TestInfo) {
   return roomId;
 }
 
-export async function preparePage(url: string, windowPositionX: number = 0) {
+type WindowOptions = {
+  x?: number;
+  y?: number;
+  width?: number;
+  height?: number;
+};
+
+export async function preparePage(url: string, options?: WindowOptions) {
+  const width = options?.width ?? WIDTH;
+  const height = options?.height ?? HEIGHT;
   const browser = await chromium.launch({
     args: [
-      `--window-size=${WIDTH},${HEIGHT}`,
-      `--window-position=${windowPositionX},0`,
+      `--window-size=${width},${height}`,
+      `--window-position=${options?.x ?? 0},${options?.y ?? 0}`,
     ],
   });
   const context = await browser.newContext({
-    viewport: { width: WIDTH, height: HEIGHT },
+    viewport: { width, height },
   });
   const page = await context.newPage();
   await page.goto(url);
@@ -92,12 +101,21 @@ const BG_COLORS = [
   "#faf9ff",
 ];
 
+type PreparePagesOptions = WindowOptions & {
+  /** How many windows to open */
+  n?: number;
+};
+
 export async function preparePages(url: string): Promise<[Page, Page]>;
-export async function preparePages(url: string, n: number): Promise<Page[]>;
 export async function preparePages(
   url: string,
-  n: number = 2
+  options?: PreparePagesOptions
+): Promise<Page[]>;
+export async function preparePages(
+  url: string,
+  options?: PreparePagesOptions
 ): Promise<Page[]> {
+  const n = options?.n ?? 2;
   return Promise.all(
     Array.from({ length: n }).map((_, index) => {
       const pageUrl = new URL(url);
@@ -105,7 +123,10 @@ export async function preparePages(
 
       // If n=2, open the windows side-by-side, otherwise open them as a fan
       const xPos = n <= 2 && index === 1 ? WIDTH : index * 50;
-      return preparePage(pageUrl.toString(), xPos);
+      return preparePage(pageUrl.toString(), {
+        ...options,
+        x: options?.x ?? xPos,
+      });
     })
   );
 }

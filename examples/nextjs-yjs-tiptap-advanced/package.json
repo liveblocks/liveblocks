@@ -10,10 +10,10 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@liveblocks/client": "^1.4.6",
-    "@liveblocks/node": "^1.4.6",
-    "@liveblocks/react": "^1.4.6",
-    "@liveblocks/yjs": "^1.4.6",
+    "@liveblocks/client": "^1.4.7",
+    "@liveblocks/node": "^1.4.7",
+    "@liveblocks/react": "^1.4.7",
+    "@liveblocks/yjs": "^1.4.7",
     "@radix-ui/react-dialog": "^1.0.2",
     "@radix-ui/react-popover": "^1.0.2",
     "@radix-ui/react-select": "^1.1.1",

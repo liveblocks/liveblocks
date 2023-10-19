@@ -1,0 +1,8 @@
+/* stylelint-disable selector-class-pattern */
+
+@import "./index";
+
+.lb-root:where(:is(.dark, [data-theme="dark"], [data-dark])),
+:is(.dark, [data-theme="dark"], [data-dark]) :where(.lb-root) {
+  @include dark-styles;
+}
