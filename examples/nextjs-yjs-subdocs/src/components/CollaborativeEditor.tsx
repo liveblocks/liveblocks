@@ -16,17 +16,48 @@ export type QuillEditorType = ReturnType<ReactQuill["getEditor"]>;
 Quill.register("modules/cursors", QuillCursors);
 
 // Collaborative text editor with simple rich text, live cursors, and live avatars
+
+/**
+ * can probably simplify this example by not having text in the root doc
+ */
 export function CollaborativeEditor() {
   const room = useRoom();
-  const [text, setText] = useState<Y.Text>();
+  const [rootDocText, setRootDocText] = useState<Y.Text>();
   const [provider, setProvider] = useState<any>();
+  const [doc, setDoc] = useState<Y.Doc>();
+  const [blocks, setBlocks] = useState<Y.Doc[]>([]);
 
+  const addBlock = () => {
+    if (!doc) {
+      return;
+    }
+    const subdoc = new Y.Doc();
+    const subText = subdoc.getText("quill");
+    doc.getMap().set(subdoc.guid, subdoc);
+  }
+  // listen for subdoc changes
+  useEffect(() => {
+    const subdocHandler = ({ added, loaded }: { added: Set<Y.Doc>, loaded: Set<Y.Doc> }) => {
+      console.log(added, loaded);
+      if (added.size) {
+        added.forEach(doc => doc.load());
+        setBlocks([...blocks, ...added]);
+      }
+    };
+    if (doc) {
+      doc.on('subdocs', subdocHandler);
+    }
+    return () => {
+      doc?.off('subdocs', subdocHandler);
+    }
+  }, [blocks, doc]);
   // Set up Liveblocks Yjs provider
   useEffect(() => {
     const yDoc = new Y.Doc();
     const yText = yDoc.getText("quill");
     const yProvider = new LiveblocksProvider(room, yDoc);
-    setText(yText);
+    setDoc(yDoc);
+    setRootDocText(yText);
     setProvider(yProvider);
 
     return () => {
@@ -35,11 +66,20 @@ export function CollaborativeEditor() {
     };
   }, [room]);
 
-  if (!text || !provider) {
+  if (!rootDocText || !provider) {
     return null;
   }
 
-  return <QuillEditor yText={text} provider={provider} />;
+  const renderedBlocks = blocks.map((block) => {
+    const text = block.getText('quill');
+    return (<QuillEditor key={block.guid} yText={text} provider={provider} />);
+  });
+
+  return <>
+    <QuillEditor yText={rootDocText} provider={provider} />
+    <>{renderedBlocks}</>
+    <button onClick={addBlock}>Add Block</button>
+  </>;
 }
 
 type EditorProps = {

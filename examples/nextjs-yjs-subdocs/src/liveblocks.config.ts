@@ -5,6 +5,8 @@ import { createRoomContext } from "@liveblocks/react";
 // or reduct the time it takes to reconnect
 const client = createClient({
   authEndpoint: "/api/liveblocks-auth",
+  // @ts-ignore: for local testing
+  liveblocksServer: "ws://127.0.0.1:8787/v7",
 });
 
 // Presence represents the properties that exist on every user in the Room

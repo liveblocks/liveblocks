@@ -8,6 +8,8 @@ const API_KEY = process.env.LIVEBLOCKS_SECRET_KEY;
 
 const liveblocks = new Liveblocks({
   secret: API_KEY!,
+  // @ts-ignore: for local testing
+  liveblocksBaseUrl: "http://127.0.0.1:8787/",
 });
 
 export async function POST(request: NextRequest) {
