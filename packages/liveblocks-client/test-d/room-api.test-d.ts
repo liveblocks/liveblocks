@@ -50,8 +50,8 @@ room.subscribe("others", (others, event) => {
 });
 
 // "Others" events through event hub API
-room.events.others.subscribe(({ others, event }) => {
-  expectType<readonly User<P, U>[]>(others);
+room.events.others.subscribe((event) => {
+  expectType<readonly User<P, U>[]>(event.others);
   switch (event.type) {
     case "enter":
       expectType<User<P, U>>(event.user);
