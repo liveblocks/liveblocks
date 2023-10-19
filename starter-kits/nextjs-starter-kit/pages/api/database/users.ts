@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import { getUsers } from "../../../lib/server/database/getUsers";
+import { getUsers } from "../../../lib/server";
 
 /**
  * GET Users
@@ -8,26 +8,23 @@ import { getUsers } from "../../../lib/server/database/getUsers";
  *
  * @param req
  * @param req.query.userId - The users ids
+ * @param req.query.search - The search term
  * @param res
  */
 async function GET(req: NextApiRequest, res: NextApiResponse) {
   const userParam = req.query.userId;
+  const searchParam = req.query.search;
 
-  if (!userParam) {
-    return res.status(400).json({
-      error: {
-        code: 400,
-        message: "Not Users Passed",
-        suggestion: `Check that you passed users to getUser(s)`,
-      },
-    });
-  }
+  const userIds: string[] | undefined = Array.isArray(userParam)
+    ? userParam
+    : userParam
+    ? [userParam]
+    : undefined;
+  const search: string | undefined = Array.isArray(searchParam)
+    ? searchParam[0]
+    : searchParam;
 
-  const userIds: string[] = Array.isArray(userParam)
-    ? (userParam as string[])
-    : [userParam as string];
-
-  const users = await getUsers(userIds);
+  const users = await getUsers({ userIds, search });
   return res.status(200).json(users);
 }
 

@@ -119,9 +119,12 @@ export const {
   client,
   {
     async resolveUsers({ userIds }) {
-      const users = await getUsers(userIds);
+      const users = await getUsers({ userIds });
       return users;
     },
-    // resolveMentionSuggestions({}) {},
+    async resolveMentionSuggestions({ text }) {
+      const users = await getUsers({ search: text });
+      return users.map((user) => user.id);
+    },
   }
 );

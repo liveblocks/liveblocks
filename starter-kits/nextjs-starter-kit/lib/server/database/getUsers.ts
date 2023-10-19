@@ -1,4 +1,5 @@
-import { User } from "../../../types";
+import { users } from "../../../data/users";
+import { GetUsersProps, User } from "../../../types";
 import { getUser } from "./getUser";
 
 /**
@@ -6,14 +7,44 @@ import { getUser } from "./getUser";
  *
  * Simulates calling your database and returning a list of user with seeded random colours
  *
- * @param userIds - The user's ids
+ * @param userIds - The user's ids to get
+ * @param searchTerm - The term to filter your users by, checks users' ids and names
  */
-export async function getUsers(userIds: string[]): Promise<(User | null)[]> {
+export async function getUsers({
+  userIds,
+  search,
+}: GetUsersProps): Promise<(User | null)[]> {
   const usersPromises: Promise<User | null>[] = [];
 
-  for (const userId of userIds) {
-    usersPromises.push(getUser(userId));
+  // Filter by userIds or get all users
+  if (userIds) {
+    for (const userId of userIds) {
+      usersPromises.push(getUser(userId));
+    }
+  } else {
+    const allUserIds = users.map((user) => user.id);
+    for (const userId of allUserIds) {
+      usersPromises.push(getUser(userId));
+    }
   }
 
-  return Promise.all(usersPromises);
+  const userList = await Promise.all(usersPromises);
+
+  // If search term, check if term is included in name or id, and filter
+  if (search) {
+    const term = search.toLowerCase();
+
+    return userList.filter((user) => {
+      if (!user) {
+        return false;
+      }
+
+      return (
+        user.name.toLowerCase().includes(term) ||
+        user.id.toLowerCase().includes(term)
+      );
+    });
+  }
+
+  return userList;
 }

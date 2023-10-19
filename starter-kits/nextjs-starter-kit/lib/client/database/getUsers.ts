@@ -1,4 +1,4 @@
-import { DocumentUser, User } from "../../../types";
+import { GetUsersProps, User } from "../../../types";
 
 /**
  * Get Users
@@ -6,16 +6,27 @@ import { DocumentUser, User } from "../../../types";
  * Fetch a list of users from your database API
  * Uses custom API endpoint
  *
- * @param userIds - The users' ids
+ * @param userIds - The users' ids, or `null` to get all
+ * @param searchTerm - The term to filter users by
  */
-export async function getUsers(userIds: DocumentUser["id"][]): Promise<User[]> {
-  const parameters = userIds.map(
-    (userId) => `userId=${encodeURIComponent(userId)}`
-  );
+export async function getUsers({
+  userIds,
+  search,
+}: GetUsersProps): Promise<User[]> {
   let url = `/api/database/users?`;
 
-  if (parameters.length) {
-    url += `${parameters.join("&")}`;
+  if (userIds) {
+    const parameters = userIds.map(
+      (userId) => `userId=${encodeURIComponent(userId)}`
+    );
+
+    if (parameters.length) {
+      url += `${parameters.join("&")}`;
+    }
+  }
+
+  if (search) {
+    url += `&search=${search}`;
   }
 
   const response = await fetch(url);
