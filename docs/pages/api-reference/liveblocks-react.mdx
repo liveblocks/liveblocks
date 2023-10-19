@@ -287,22 +287,23 @@ are:
 - `update` – Presence data of one of the Users was updated.
 
 ```ts
-import { toast } from "my-preferred-toast-library";
-
 function App() {
   useOthersListener(({ type, user, others }) => {
     switch (type) {
       case "enter":
-        toast.info(`${user.info.name} has joined the room`);
+        // `user` has entered the room
         break;
 
       case "leave":
-        toast.info(`${user.info.name} has left the room`);
+        // `user` has left the room
+        break;
+
+      case "update":
+        // Presence for `user` was updated
         break;
 
       case "reset":
-      case "update":
-        /* Do nothing */
+        // Others list was emptied
         break;
     }
   });
