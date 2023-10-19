@@ -476,4 +476,10 @@ export class LiveMap<
     }
     return freeze(result);
   }
+
+  clone(): LiveMap<TKey, TValue> {
+    return new LiveMap(
+      Array.from(this._map).map(([key, node]) => [key, node.clone() as TValue])
+    );
+  }
 }

@@ -1281,6 +1281,10 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       process.env.NODE_ENV === "production" ? result : Object.freeze(result)
     ) as readonly ToImmutable<TItem>[];
   }
+
+  clone(): LiveList<TItem> {
+    return new LiveList(this._items.map((item) => item.clone() as TItem));
+  }
 }
 
 class LiveListIterator<T extends Lson> implements IterableIterator<T> {
