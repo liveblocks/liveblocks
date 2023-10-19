@@ -589,6 +589,7 @@ export type Room<
     readonly customEvent: Observable<RoomEventMessage<TPresence, TUserMeta, TRoomEvent>>; // prettier-ignore
     readonly self: Observable<User<TPresence, TUserMeta>>;
     readonly myPresence: Observable<TPresence>;
+    // XXX Udpate
     readonly others: Observable<{ others: readonly User<TPresence, TUserMeta>[]; event: OthersEvent<TPresence, TUserMeta>; }>; // prettier-ignore
     readonly error: Observable<Error>;
     readonly storage: Observable<StorageUpdate[]>;
@@ -2466,8 +2467,9 @@ function makeClassicSubscribeFn<
             others: readonly User<TPresence, TUserMeta>[],
             event: OthersEvent<TPresence, TUserMeta>
           ) => void;
-          return events.others.subscribe(({ others, event }) =>
-            cb(others, event)
+          return events.others.subscribe(
+            // XXX Udpate unpacking here
+            ({ others, event }) => cb(others, event)
           );
         }
 

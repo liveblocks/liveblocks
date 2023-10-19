@@ -10,6 +10,7 @@ export type Others<
   TUserMeta extends BaseUserMeta,
 > = readonly User<TPresence, TUserMeta>[];
 
+// XXX Rename to LegacyOthersEvent
 export type OthersEvent<
   TPresence extends JsonObject,
   TUserMeta extends BaseUserMeta,
