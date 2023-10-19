@@ -28,11 +28,16 @@ export type InternalOthersEvent<
 export type NewStyleOthersEvent<
   TPresence extends JsonObject,
   TUserMeta extends BaseUserMeta,
-> = Resolve<
-  InternalOthersEvent<TPresence, TUserMeta> & {
-    others: readonly User<TPresence, TUserMeta>[];
-  }
->;
+> = {
+  event: InternalOthersEvent<TPresence, TUserMeta>;
+  others: readonly User<TPresence, TUserMeta>[];
+};
+// XXX Eventually change to this type definition instead, and fix all call sites!
+// Resolve<
+//   InternalOthersEvent<TPresence, TUserMeta> & {
+//     others: readonly User<TPresence, TUserMeta>[];
+//   }
+// >;
 
 //
 // NOTE:

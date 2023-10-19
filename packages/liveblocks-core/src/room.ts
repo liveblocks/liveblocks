@@ -60,7 +60,11 @@ import type {
   IWebSocketMessageEvent,
 } from "./types/IWebSocket";
 import type { NodeMap } from "./types/NodeMap";
-import type { LegacyOthersEvent, NewStyleOthersEvent } from "./types/Others";
+import type {
+  InternalOthersEvent,
+  LegacyOthersEvent,
+  NewStyleOthersEvent,
+} from "./types/Others";
 import type { User } from "./types/User";
 import { PKG_VERSION } from "./version";
 
@@ -1198,11 +1202,7 @@ export function createRoom<
       makeEventSource<RoomEventMessage<TPresence, TUserMeta, TRoomEvent>>(),
     self: makeEventSource<User<TPresence, TUserMeta>>(),
     myPresence: makeEventSource<TPresence>(),
-    others: makeEventSource<{
-      others: readonly User<TPresence, TUserMeta>[];
-      // XXX Make modern!
-      event: LegacyOthersEvent<TPresence, TUserMeta>;
-    }>(),
+    others: makeEventSource<NewStyleOthersEvent<TPresence, TUserMeta>>(),
     error: makeEventSource<Error>(),
     storage: makeEventSource<StorageUpdate[]>(),
     history: makeEventSource<HistoryEvent>(),
@@ -1383,8 +1383,7 @@ export function createRoom<
   type NotifyUpdates = {
     storageUpdates?: Map<string, StorageUpdate>;
     presence?: boolean;
-    // XXX Likely make modern? If 100% private.
-    others?: LegacyOthersEvent<TPresence, TUserMeta>[];
+    others?: InternalOthersEvent<TPresence, TUserMeta>[];
   };
 
   function notify(
@@ -1640,7 +1639,7 @@ export function createRoom<
 
   function onUpdatePresenceMessage(
     message: UpdatePresenceServerMsg<TPresence>
-  ): LegacyOthersEvent<TPresence, TUserMeta> | undefined {
+  ): InternalOthersEvent<TPresence, TUserMeta> | undefined {
     if (message.targetActor !== undefined) {
       // The incoming message is a full presence update. We are obliged to
       // handle it if `targetActor` matches our own connection ID, but we can
@@ -1674,7 +1673,7 @@ export function createRoom<
 
   function onUserLeftMessage(
     message: UserLeftServerMsg
-  ): LegacyOthersEvent<TPresence, TUserMeta> | null {
+  ): InternalOthersEvent<TPresence, TUserMeta> | null {
     const user = context.others.getUser(message.actor);
     if (user) {
       context.others.removeConnection(message.actor);
@@ -1686,7 +1685,7 @@ export function createRoom<
   function onRoomStateMessage(
     message: RoomStateServerMsg<TUserMeta>,
     batchedUpdatesWrapper: (cb: () => void) => void
-  ): LegacyOthersEvent<TPresence, TUserMeta> {
+  ): InternalOthersEvent<TPresence, TUserMeta> {
     // The server will inform the client about its assigned actor ID and scopes
     context.dynamicSessionInfo.set({
       actor: message.actor,
@@ -1732,7 +1731,7 @@ export function createRoom<
 
   function onUserJoinedMessage(
     message: UserJoinServerMsg<TUserMeta>
-  ): LegacyOthersEvent<TPresence, TUserMeta> | undefined {
+  ): InternalOthersEvent<TPresence, TUserMeta> | undefined {
     context.others.setConnection(
       message.actor,
       message.id,
@@ -1820,7 +1819,7 @@ export function createRoom<
 
     const updates = {
       storageUpdates: new Map<string, StorageUpdate>(),
-      others: [] as LegacyOthersEvent<TPresence, TUserMeta>[],
+      others: [] as InternalOthersEvent<TPresence, TUserMeta>[],
     };
 
     batchUpdates(() => {
