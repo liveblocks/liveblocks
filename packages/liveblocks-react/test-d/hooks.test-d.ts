@@ -33,3 +33,25 @@ expectType<Room<P, S, U, E>>(ctx.useRoom());
 
 // The useOthers() hook
 expectType<readonly User<P, U>[]>(ctx.useOthers());
+
+// The useOthersListener() hook
+ctx.useOthersListener((event) => {
+  expectType<readonly User<P, U>[]>(event.others);
+  switch (event.type) {
+    case "enter":
+      expectType<User<P, U>>(event.user);
+      return;
+    case "leave":
+      expectType<User<P, U>>(event.user);
+      return;
+    case "update":
+      expectType<User<P, U>>(event.user);
+      expectType<Partial<P>>(event.updates);
+      return;
+    case "reset":
+      // No extra fields on reset
+      return;
+    default:
+      expectType<never>(event);
+  }
+});

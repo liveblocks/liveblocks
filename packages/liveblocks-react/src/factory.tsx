@@ -8,6 +8,7 @@ import type {
   LiveObject,
   LostConnectionEvent,
   LsonObject,
+  OthersEvent,
   Room,
   Status,
   User,
@@ -547,6 +548,19 @@ export function createRoomContext<
         room.broadcastEvent(event, options);
       },
       [room]
+    );
+  }
+
+  function useOthersListener(
+    callback: (event: OthersEvent<TPresence, TUserMeta>) => void
+  ) {
+    const room = useRoom();
+    const savedCallback = useLatest(callback);
+
+    React.useEffect(
+      () =>
+        room.events.others.subscribe((event) => savedCallback.current(event)),
+      [room, savedCallback]
     );
   }
 
@@ -1130,6 +1144,7 @@ export function createRoomContext<
 
     useBatch,
     useBroadcastEvent,
+    useOthersListener,
     useLostConnectionListener,
     useErrorListener,
     useEventListener,
@@ -1178,6 +1193,7 @@ export function createRoomContext<
 
       useBatch,
       useBroadcastEvent,
+      useOthersListener,
       useLostConnectionListener,
       useErrorListener,
       useEventListener,

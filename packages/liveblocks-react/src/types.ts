@@ -7,6 +7,7 @@ import type {
   LiveObject,
   LostConnectionEvent,
   LsonObject,
+  OthersEvent,
   Room,
   Status,
   User,
@@ -202,6 +203,22 @@ type RoomContextBundleShared<
    * broadcast({ type: "CUSTOM_EVENT", data: { x: 0, y: 0 } });
    */
   useBroadcastEvent(): (event: TRoomEvent, options?: BroadcastOptions) => void;
+
+  /**
+   * Get informed when users enter or leave the room, as an event.
+   *
+   * @example
+   * useOthersListener({ type, user, others }) => {
+   *   if (type === 'enter') {
+   *     // `user` has joined the room
+   *   } else if (type === 'leave') {
+   *     // `user` has left the room
+   *   }
+   * })
+   */
+  useOthersListener(
+    callback: (event: OthersEvent<TPresence, TUserMeta>) => void
+  ): void;
 
   /**
    * Get informed when reconnecting to the Liveblocks servers is taking
