@@ -24,7 +24,7 @@
   padding-top: 4px;
 }
 
-.composerEditor [data-slate-placeholder="true"] {
+.composerEditor [data-placeholder] {
   color: var(--gray9);
 }
 

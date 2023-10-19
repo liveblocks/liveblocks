@@ -29,25 +29,14 @@
   --lb-radius: var(--border-radius);
   --lb-spacing: var(--spacing);
   --lb-accent: var(--accent);
-  --lb-accent-foreground: var(--accent);
   --lb-background: var(--gray1);
   --lb-foreground: var(--gray12);
-  --lb-icon-size: 20px;
   --lb-icon-weight: 1px;
-  --lb-avatar-radius: 50%;
-  --lb-button-radius: calc(0.75 * var(--lb-radius));
-  --lb-transition-duration: 0.1s;
-  --lb-transition-easing: cubic-bezier(0.4, 0, 0.2, 1);
   --lb-elevation-shadow: var(--shadow);
-  --lb-tooltip-shadow: 0 2px 4px rgb(0 0 0 / 8%), 0 4px 12px rgb(0 0 0 / 12%);
-  --lb-elevation-background: var(--lb-background);
-  --lb-elevation-foreground: var(--lb-foreground);
   --lb-tooltip-background: var(--gray1);
   --lb-tooltip-foreground: var(--gray12);
-  --lb-accent-contrast: 8%;
   --lb-foreground-contrast: 6%;
   --lb-elevation-foreground-contrast: 6%;
-  --lb-tooltip-foreground-contrast: 10%;
 }
 
 * {
