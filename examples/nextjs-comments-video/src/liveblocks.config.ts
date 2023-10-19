@@ -83,7 +83,7 @@ export const {
 } = createRoomContext<Presence, Storage, UserMeta, RoomEvent, ThreadMetadata>(
   client,
   {
-    async resolveUser({ userIds }) {
+    async resolveUsers({ userIds }) {
       const searchParams = new URLSearchParams(
         userIds.map((userId) => ["userIds", userId])
       );
@@ -94,6 +94,7 @@ export const {
       }
 
       const users = await response.json();
+      console.log(67, users);
       return users;
     },
     async resolveMentionSuggestions({ text }) {
