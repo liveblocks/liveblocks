@@ -73,8 +73,6 @@ type TimeoutID = ReturnType<typeof setTimeout>;
 // The type LegacyOthersEvent is used in the signature of some public APIs, and
 // as such should remain backward compatible.
 //
-// XXX Probably better to codify this knowledge as a tsd test instead!
-//
 type LegacyOthersEvent<
   TPresence extends JsonObject,
   TUserMeta extends BaseUserMeta,
