@@ -1,4 +1,5 @@
 import { nn } from "..";
+import { LiveMap } from "../crdts/LiveMap";
 import type { AuthValue } from "../auth-manager";
 import { StopRetrying } from "../connection";
 import { DEFAULT_BASE_URL } from "../constants";
@@ -952,6 +953,45 @@ describe("room", () => {
     expect(storage.root.toObject()).toEqual({ foo: 1234 });
     //                                        ^^^ Added by the client, from initialStorage
     expect(room.history.canUndo()).toBe(false);
+  });
+
+  test("missing storage keys are properly initialized using initialStorage, even when they are already part of the storage tree", async () => {
+    const initialPresence = {};
+    const initialStorage = {
+      list: new LiveList([13, 42]),
+      map: new LiveMap([["a", 1]]),
+      obj: new LiveObject({ x: 0 }),
+    };
+
+    // Create the same room instance twice (using the same, global,
+    // initialStorage instance)
+    for (let i = 0; i < 2; i++) {
+      const { room, wss } = createTestableRoom(
+        initialPresence,
+        undefined,
+        undefined,
+        undefined,
+        initialStorage
+      );
+      wss.onConnection((conn) => {
+        conn.server.send(
+          serverMessage({
+            type: ServerMsgCode.INITIAL_STORAGE_STATE,
+            items: [["root", { type: CrdtType.OBJECT, data: {} }]],
+            //                                              ^^
+            //                                   NOTE: Storage is initially
+            //                                   empty, so initialStorage keys
+            //                                   will get added
+          })
+        );
+      });
+      room.connect();
+      try {
+        await room.getStorage();
+      } finally {
+        room.destroy();
+      }
+    }
   });
 
   test("storage should be initialized properly", async () => {
