@@ -1,9 +1,9 @@
 import { nn } from "..";
-import { LiveMap } from "../crdts/LiveMap";
 import type { AuthValue } from "../auth-manager";
 import { StopRetrying } from "../connection";
 import { DEFAULT_BASE_URL } from "../constants";
 import { LiveList } from "../crdts/LiveList";
+import { LiveMap } from "../crdts/LiveMap";
 import { LiveObject } from "../crdts/LiveObject";
 import type { LsonObject } from "../crdts/Lson";
 import type { StorageUpdate } from "../crdts/StorageUpdates";
