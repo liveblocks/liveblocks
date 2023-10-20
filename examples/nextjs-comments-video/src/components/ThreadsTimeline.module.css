@@ -1,0 +1,71 @@
+.pinnedThreads {
+  width: 100%;
+  margin-bottom: 10px;
+}
+
+.pinnedThread {
+  position: absolute;
+  bottom: 100%;
+  cursor: pointer;
+  transform: translateX(-50%);
+  transform-origin: center bottom;
+  transition: transform 0.1s ease-out;
+}
+
+.pinnedThread[data-highlight] {
+  transform: translateX(-50%) scale(1.2);
+}
+
+.avatarPin {
+  cursor: pointer;
+  user-select: none;
+}
+
+.avatarPin > img {
+  width: 20px;
+  height: 20px;
+  border-radius: 9999px;
+}
+
+.tooltip {
+  user-select: none;
+  background: var(--gray2);
+  color: var(--gray12);
+  padding: 8px 12px 12px 8px;
+  border-radius: var(--border-radius);
+  margin-bottom: 8px;
+  white-space: nowrap;
+  max-width: 200px;
+  font-size: 13px;
+}
+
+.tooltipHeader {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  font-weight: 500;
+}
+
+.tooltipHeader > img {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+}
+
+.tooltipBody {
+  margin-top: 8px;
+}
+
+.tooltipBody > span {
+  color: var(--accent);
+}
+
+.tooltipBody > div {
+  display: inline-block;
+}
+
+.tooltipBody > p {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin: 0;
+}
