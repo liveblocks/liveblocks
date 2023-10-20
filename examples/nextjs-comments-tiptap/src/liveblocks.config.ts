@@ -99,7 +99,7 @@ export const {
       );
 
       if (!response.ok) {
-        throw new Error("Problem resolving user");
+        throw new Error("Problem resolving mention suggestions");
       }
 
       const userIds = await response.json();
