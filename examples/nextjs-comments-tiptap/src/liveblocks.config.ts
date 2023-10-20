@@ -83,7 +83,9 @@ export const {
   client,
   {
     async resolveUsers({ userIds }) {
-      const searchParams = new URLSearchParams({ userIds });
+      const searchParams = new URLSearchParams(
+        userIds.map((userId) => ["userIds", userId])
+      );
       const response = await fetch(`/api/users?${searchParams}`);
 
       if (!response.ok) {
