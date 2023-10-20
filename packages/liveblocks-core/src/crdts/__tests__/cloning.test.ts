@@ -10,8 +10,9 @@ import {
   createSerializedObject,
   prepareStorageUpdateTest,
 } from "../../__tests__/_utils";
+import { cloneLson } from "../../crdts/liveblocks-helpers";
 import type { LiveList } from "../LiveList";
-import { liveStructure } from "./_arbitraries";
+import { liveStructure, lson } from "./_arbitraries";
 
 describe("cloning LiveStructures", () => {
   it("basic cloning logic", async () => {
@@ -97,6 +98,29 @@ describe("cloning LiveStructures", () => {
           root.set("a", data);
           root.set("b", data.clone().clone());
           //                        ^^^^^^^^ Deliberately cloning twice in this test
+
+          const imm = root.toImmutable();
+          expect(imm.a).toEqual(imm.b);
+        }
+      )
+    ));
+
+  it("deep cloning of LSON data (= LiveStructures or JSON)", () =>
+    fc.assert(
+      fc.asyncProperty(
+        lson,
+
+        async (data) => {
+          const { root } = await prepareStorageUpdateTest([
+            createSerializedObject("0:0", {}),
+          ]);
+
+          // Clone "a" to "b"
+          root.set("a", data);
+          root.set("b", cloneLson(data));
+          //            ^^^^^^^^^ Much like data.clone(), but generalized to
+          //                      work on _any_ LSON value, even if data is
+          //                      a JSON value
 
           const imm = root.toImmutable();
           expect(imm.a).toEqual(imm.b);
