@@ -9,8 +9,6 @@
 
 # Comments Video
 
-TODO IMAGES BELOW
-
 <p>
   <a href="https://liveblocks.io/examples/collaborative-text-editor/nextjs-comments-video/preview">
     <img src="https://img.shields.io/badge/live%20preview-message?style=flat&logo=data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgMjQgMjQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTE2Ljg0OSA0Ljc1SDBsNC44NDggNS4wNzV2Ny4wMDhsMTItMTIuMDgzWk03LjE1IDE5LjI1SDI0bC00Ljg0OS01LjA3NVY3LjE2N2wtMTIgMTIuMDgzWiIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==&color=333" alt="Live Preview" /> 
@@ -30,7 +28,7 @@ This example shows how to build a video editor with comments using
 Users can place comments at certain times on the video, and also see a summary
 of each thread.
 
-<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/text-editor.png" width="536" alt="Collaborative Text Editor" />
+<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/comments-video.png" width="536" alt="Comments on video" />
 
 ## Getting started
 
