@@ -8,8 +8,7 @@
   bottom: 0;
   left: 0;
 
-  --editor-max-width: 800px;
-  --editor-min-height: 1100px;
+  --editor-width: 800px;
   --comments-width: 310px;
 }
 
@@ -20,11 +19,10 @@
   flex: 0 0;
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: start;
   background: var(--color-surface-elevated);
   border-bottom: 1px solid var(--color-border);
-  padding: var(--space-3) var(--space-8);
-  z-index: var(--z-above);
+  padding: var(--space-3);
 }
 
 .editorPanel {
@@ -44,10 +42,6 @@
   outline: none;
 }
 
-.editor[contenteditable="false"] {
-  cursor: default;
-}
-
 .editorContainerOffset {
   margin-left: calc(0px - var(--comments-width));
   min-height: 0;
@@ -56,9 +50,9 @@
 
 .editorContainer {
   position: relative;
-  min-height: var(--editor-min-height);
+  min-height: 1100px;
   width: 100%;
-  max-width: var(--editor-max-width);
+  max-width: var(--editor-width);
   margin: var(--space-8) auto;
   border: 1px solid var(--color-border);
   background: var(--color-surface-elevated);
@@ -89,7 +83,7 @@
   .mobileThreadListContainer {
     display: block;
     max-width: 100%;
-    width: var(--editor-max-width);
+    width: var(--editor-width);
     margin: var(--space-8) auto;
   }
 }

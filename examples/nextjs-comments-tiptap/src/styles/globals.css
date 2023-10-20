@@ -111,33 +111,31 @@
 }
 
 /* Dark theme */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-red: 248 113 113;
-    --color-green: 162 230 53;
-    --color-accent: rgb(var(--color-white));
-    --color-surface: rgb(var(--color-gray-850));
-    --color-surface-hover: rgb(var(--color-gray-800));
-    --color-surface-elevated: rgb(var(--color-gray-950));
-    --color-border: rgb(var(--color-gray-750));
-    --color-border-contrasted: rgb(var(--color-gray-650));
-    --color-border-transparent: rgb(var(--color-white) / 10%);
-    --color-skeleton: rgb(var(--color-gray-750));
-    --color-skeleton-shine: rgb(var(--color-gray-850));
-    --color-text: rgb(var(--color-white));
-    --color-text-light: rgb(var(--color-gray-300));
-    --color-text-lighter: rgb(var(--color-gray-400));
-    --color-text-lightest: rgb(var(--color-gray-500));
+[data-theme="dark"] {
+  --color-red: 248 113 113;
+  --color-green: 162 230 53;
+  --color-accent: rgb(var(--color-white));
+  --color-surface: rgb(var(--color-gray-850));
+  --color-surface-hover: rgb(var(--color-gray-800));
+  --color-surface-elevated: rgb(var(--color-gray-950));
+  --color-border: rgb(var(--color-gray-750));
+  --color-border-contrasted: rgb(var(--color-gray-650));
+  --color-border-transparent: rgb(var(--color-white) / 10%);
+  --color-skeleton: rgb(var(--color-gray-750));
+  --color-skeleton-shine: rgb(var(--color-gray-850));
+  --color-text: rgb(var(--color-white));
+  --color-text-light: rgb(var(--color-gray-300));
+  --color-text-lighter: rgb(var(--color-gray-400));
+  --color-text-lightest: rgb(var(--color-gray-500));
 
-    --comment-highlight-composing: #0079a2;
-    --comment-highlight-composing-border: #0079a2;
-    --comment-highlight-complete: #2d414b;
-    --comment-highlight-complete-border: #00748d;
-    --comment-highlight-selected: #0079a2;
-    --comment-highlight-selected-border: #009cd3;
+  --comment-highlight-composing: #0079a2;
+  --comment-highlight-composing-border: #0079a2;
+  --comment-highlight-complete: #2d414b;
+  --comment-highlight-complete-border: #00748d;
+  --comment-highlight-selected: #0079a2;
+  --comment-highlight-selected-border: #009cd3;
 
-    color-scheme: dark;
-  }
+  color-scheme: dark;
 }
 
 html,
@@ -153,6 +151,7 @@ body,
 #__next {
   max-width: 100%;
   min-height: 100vh;
+  overflow: hidden;
 }
 
 html.grabbing {
