@@ -142,7 +142,16 @@ function allHooks() {
   useCanRedo,
   useMutation,
   useStatus,
-  useLostConnectionListener,`;
+  useLostConnectionListener,
+  useThreads,
+  useUser,
+  useCreateThread,
+  useEditThreadMetadata,
+  useCreateComment,
+  useEditComment,
+  useDeleteComment,
+  useAddReaction,
+  useRemoveReaction,`;
 }
 
 function indentString(str: string) {
