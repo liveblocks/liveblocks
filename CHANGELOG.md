@@ -45,6 +45,9 @@ leave();
   the same room ID.
 - Renamed `RoomProvider` prop: `shouldInitiallyConnect` → `autoConnect`. Its
   meaning or working did not change.
+- New hook:
+  - `useOthersListener({ type, user, others })`, see
+    [docs](https://liveblocks.io/docs/api-reference/liveblocks-react#useOthersListener)
 
 ### `@liveblocks/redux`
 

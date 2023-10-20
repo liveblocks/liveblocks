@@ -274,6 +274,42 @@ const status = useStatus();
 The possible value are: `initial`, `connecting`, `connected`, `reconnecting`, or
 `disconnected`.
 
+### useOthersListener
+
+Calls the given callback when an “others” event occurs. Possible event types
+are:
+
+- `enter` – A user has entered the room.
+- `leave` – A user has left the room.
+- `reset` – The others list has been emptied. This is the first event that
+  occurs when the room is entered. It also occurs when you’ve lost connection to
+  the room.
+- `update` – A user’s presence data has been updated.
+
+```ts
+function App() {
+  useOthersListener(({ type, user, others }) => {
+    switch (type) {
+      case "enter":
+        // `user` has entered the room
+        break;
+
+      case "leave":
+        // `user` has left the room
+        break;
+
+      case "update":
+        // Presence for `user` has updated
+        break;
+
+      case "reset":
+        // Others list has been emptied
+        break;
+    }
+  });
+}
+```
+
 ### useLostConnectionListener
 
 Calls the given callback in the exceptional situation that a connection is lost

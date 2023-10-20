@@ -153,7 +153,7 @@ export type {
 } from "./types/IWebSocket";
 export { WebsocketCloseCodes } from "./types/IWebSocket";
 export type { NodeMap, ParentToChildNodeMap } from "./types/NodeMap";
-export type { Others } from "./types/Others";
+export type { Others, OthersEvent } from "./types/Others";
 export type {
   PlainLson,
   PlainLsonFields,

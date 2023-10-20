@@ -7,6 +7,7 @@ import type {
   LiveObject,
   LostConnectionEvent,
   LsonObject,
+  OthersEvent,
   Room,
   Status,
   User,
@@ -204,6 +205,22 @@ type RoomContextBundleShared<
   useBroadcastEvent(): (event: TRoomEvent, options?: BroadcastOptions) => void;
 
   /**
+   * Get informed when users enter or leave the room, as an event.
+   *
+   * @example
+   * useOthersListener({ type, user, others }) => {
+   *   if (type === 'enter') {
+   *     // `user` has joined the room
+   *   } else if (type === 'leave') {
+   *     // `user` has left the room
+   *   }
+   * })
+   */
+  useOthersListener(
+    callback: (event: OthersEvent<TPresence, TUserMeta>) => void
+  ): void;
+
+  /**
    * Get informed when reconnecting to the Liveblocks servers is taking
    * longer than usual. This typically is a sign of a client that has lost
    * internet connectivity.
@@ -228,7 +245,8 @@ type RoomContextBundleShared<
   ): void;
 
   /**
-   * useErrorListener is a react hook that lets you react to potential room connection errors.
+   * useErrorListener is a React hook that allows you to respond to potential room
+   * connection errors.
    *
    * @example
    * useErrorListener(er => {
@@ -238,7 +256,8 @@ type RoomContextBundleShared<
   useErrorListener(callback: (err: Error) => void): void;
 
   /**
-   * useEventListener is a react hook that lets you react to event broadcasted by other users in the room.
+   * useEventListener is a React hook that allows you to respond to events broadcast
+   * by other users in the room.
    *
    * @example
    * useEventListener(({ connectionId, event }) => {
