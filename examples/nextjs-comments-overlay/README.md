@@ -22,7 +22,7 @@
 
 This example shows how to display comments overlaid on any website with [Liveblocks](https://liveblocks.io) and [Next.js](https://nextjs.org/).
 
-<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/comments.png" width="536" alt="Comments" />
+<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/comments-website-overlay.png" width="536" alt="Overlay comments on a website" />
 
 ## Getting started
 
