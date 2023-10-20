@@ -7,7 +7,7 @@
   </a>
 </p>
 
-# Comments Video
+# Video Comments
 
 <p>
   <a href="https://liveblocks.io/examples/collaborative-text-editor/nextjs-comments-video/preview">
@@ -28,7 +28,7 @@ This example shows how to build a video editor with comments using
 Users can place comments at certain times on the video, and also see a summary
 of each thread.
 
-<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/comments-video.png" width="536" alt="Comments on video" />
+<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/comments-video.png" width="536" alt="Video Comments" />
 
 ## Getting started
 
