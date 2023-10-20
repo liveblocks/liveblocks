@@ -26,18 +26,27 @@ leave();
   milliseconds). See
   [docs](https://liveblocks.io/docs/api-reference/liveblocks-client#createClientBackgroundKeepAliveTimeout).
 - New APIs:
-  - `client.enterRoom(roomId, options)` – enters the room and return both the
+  - `Client.enterRoom(roomId, options)` – enters the room and return both the
     room and an "unsubscribe function" to leave that room again. This newer API
     supports entering/leaving the same room multiple times, making it possible
     to connect to the same room from different parts of your application.
-  - `client.logout()` – Call this on the Liveblocks client when you log out a
+  - `Client.logout()` – Call this on the Liveblocks client when you log out a
     user in your application. It will purge all auth tokens and force-leave any
     rooms, if any are still connected.
+  - `LiveList.clone()` – see
+    [docs](https://liveblocks.io/docs/api-reference/liveblocks-client#LiveList.clone).
+  - `LiveMap.clone()` – see
+    [docs](https://liveblocks.io/docs/api-reference/liveblocks-client#LiveMap.clone).
+  - `LiveObject.clone()` – see
+    [docs](https://liveblocks.io/docs/api-reference/liveblocks-client#LiveObject.clone).
 - Deprecated APIs:
   - `client.enter(roomId, options)`
   - `client.leave(roomId)`
 - Renamed enter option: `shouldInitiallyConnect` → `autoConnect`. Its meaning or
   working did not change.
+- Fixes a potential `Cannot set parent: node already has a parent` error when
+  initializing storage with Live datastructures that are already tied to a
+  Storage tree.
 
 ### `@liveblocks/react`
 
