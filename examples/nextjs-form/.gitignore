@@ -7,3 +7,4 @@ node_modules
 .vercel
 .next
 out
+next-env.d.ts
