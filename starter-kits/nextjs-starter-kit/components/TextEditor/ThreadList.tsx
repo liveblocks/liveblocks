@@ -1,20 +1,23 @@
 "use client";
 
 import {
+  Composer,
+  ComposerSubmitComment,
+  Thread,
+} from "@liveblocks/react-comments";
+import { Editor } from "@tiptap/react";
+import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
+import { CommentIcon } from "../../icons";
+import {
   CustomThreadData,
   useCreateThread,
   useThreads,
 } from "../../liveblocks.config";
-import { Composer, Thread } from "@liveblocks/react-comments";
-import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
-import { Editor } from "@tiptap/react";
-import { ComposerSubmitComment } from "@liveblocks/react-comments";
 import {
   getCommentHighlightContent,
   removeCommentHighlight,
   useHighlightEventListener,
 } from "./comment-utils";
-import { CommentIcon } from "../../icons";
 import styles from "./ThreadList.module.css";
 
 type Props = {
@@ -90,7 +93,6 @@ function CustomThread({
           />
         ) : null}
         <Thread
-          autoFocus={true}
           thread={thread}
           onThreadDelete={handleThreadDelete}
           indentCommentContent={false}
