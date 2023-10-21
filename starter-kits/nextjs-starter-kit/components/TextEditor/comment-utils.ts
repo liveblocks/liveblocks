@@ -1,4 +1,4 @@
-import { Editor, Node, Mark } from "@tiptap/react";
+import { Editor, Mark, Node } from "@tiptap/react";
 import { useCallback, useEffect } from "react";
 
 // Remove a comment highlight from `data-highlight-id`
