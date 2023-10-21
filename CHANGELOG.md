@@ -1,5 +1,9 @@
 # v1.4.8
 
+### `create-liveblocks-app`
+
+- Add Comments hooks and options to `--init` command.
+
 ### `@liveblocks/react-comments`
 
 - Improve default styles:

@@ -1,0 +1,24 @@
+.toolbar {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 40px;
+  box-shadow: var(--shadow);
+  background: #fff;
+  padding: 12px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+}
+
+.toolbarSeparator {
+  height: 1rem;
+  margin: 0 16px;
+  width: 1px;
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+.toolbarActions {
+  display: flex;
+  gap: 4px;
+}
