@@ -120,7 +120,11 @@ export const {
   {
     async resolveUsers({ userIds }) {
       const users = await getUsers({ userIds });
-      return users;
+      return users.map((user) => ({
+        name: user.name,
+        color: user.color,
+        avatar: user.avatar || "",
+      }));
     },
     async resolveMentionSuggestions({ text }) {
       const users = await getUsers({ search: text });

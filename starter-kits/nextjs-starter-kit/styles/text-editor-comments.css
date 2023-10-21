@@ -1,4 +1,4 @@
-.lb-root {
+body .lb-root {
   --lb-accent: var(--color-accent);
   --lb-accent-foreground: var(--color-surface);
   --lb-background: var(--color-surface-elevated);
