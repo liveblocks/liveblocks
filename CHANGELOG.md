@@ -4,6 +4,10 @@
 
 - Add Comments hooks and options to `--init` command.
 
+### `@liveblocks/client`
+
+- Export all `CommentBody`-related types.
+
 ### `@liveblocks/react-comments`
 
 - Improve default styles:
