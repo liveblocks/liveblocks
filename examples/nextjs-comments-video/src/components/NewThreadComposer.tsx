@@ -48,7 +48,7 @@ export function NewThreadComposer({
     setPlaying(false);
   }, []);
 
-  // Stop keyboard events firing on window when typing
+  // Stop keyboard events firing on window when typing (i.e. prevent fullscreen with `f`)
   const handleKeyDown = useCallback((event: FormEvent<HTMLDivElement>) => {
     event.stopPropagation();
   }, []);
