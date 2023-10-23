@@ -142,3 +142,9 @@ video {
   max-width: 100%;
   height: auto;
 }
+
+/* Show outline on selected emoji in picker */
+.lb-emoji-picker-emoji[data-selected] {
+  outline: 2px solid var(--lb-accent);
+  z-index: 1;
+}
