@@ -134,14 +134,17 @@ export async function preparePages(
 export async function waitForJson(
   oneOrMorePages: Page | Page[],
   selector: IDSelector,
-  expectedValue: Json,
+  expectedValue: Json | undefined,
   options?: { timeout?: number }
 ) {
   const pages = Array.isArray(oneOrMorePages)
     ? oneOrMorePages
     : [oneOrMorePages];
 
-  const expectedText = JSON.stringify(expectedValue, null, 2);
+  const expectedText =
+    expectedValue === undefined
+      ? "undefined"
+      : JSON.stringify(expectedValue, null, 2);
   return Promise.all(
     pages.map((page) =>
       expect(page.locator(selector)).toHaveText(expectedText, {
@@ -164,12 +167,15 @@ export async function expectJson(
   }
 }
 
-export async function getJson(page: Page, selector: IDSelector): Promise<Json> {
+export async function getJson(
+  page: Page,
+  selector: IDSelector
+): Promise<Json | undefined> {
   const text = await page.locator(selector).innerText();
   if (!text) {
     throw new Error(`Could not find HTML element #${selector}`);
   }
-  return JSON.parse(text) as Json;
+  return text === "undefined" ? undefined : (JSON.parse(text) as Json);
 }
 
 async function getBoth(pages: [Page, Page], selector: IDSelector) {

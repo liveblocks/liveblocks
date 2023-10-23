@@ -6,7 +6,7 @@ import { OpCode } from "../protocol/Op";
 import type { SerializedCrdt } from "../protocol/SerializedCrdt";
 import type * as DevTools from "../types/DevToolsTreeNode";
 import type { Immutable } from "../types/Immutable";
-import type { LiveNode } from "./Lson";
+import type { LiveNode, Lson } from "./Lson";
 import type { StorageUpdate } from "./StorageUpdates";
 
 export type ApplyResult =
@@ -368,4 +368,10 @@ export abstract class AbstractCrdt {
     // Return cached version
     return this._cachedImmutable;
   }
+
+  /**
+   * Returns a deep clone of the current LiveStructure, suitable for insertion
+   * in the tree elsewhere.
+   */
+  abstract clone(): Lson;
 }

@@ -75,11 +75,8 @@ export default function ZustandApp() {
   const roomId = getRoomFromUrl();
 
   useEffect(() => {
-    enterRoom(roomId);
-    return () => {
-      leaveRoom(roomId);
-    };
-  }, [roomId, enterRoom, leaveRoom]);
+    return enterRoom(roomId);
+  }, [roomId, enterRoom]);
 
   if (isStorageLoading) {
     return <div>Loading...</div>;
@@ -114,11 +111,7 @@ export default function ZustandApp() {
           Enter room
         </Button>
 
-        <Button
-          id="leave"
-          enabled={room !== null}
-          onClick={() => leaveRoom(roomId)}
-        >
+        <Button id="leave" enabled={room !== null} onClick={() => leaveRoom()}>
           Leave room
         </Button>
       </div>

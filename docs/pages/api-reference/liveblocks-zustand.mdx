@@ -110,16 +110,14 @@ configuration).
 
 ### leaveRoom [#liveblocks-state-leave-room]
 
-Leaves a room and stops sync it with Zustand state.
-
-- `roomId`: The room’s ID.
+Leaves the current room and stops syncing it with Zustand state.
 
 ```js
 const {
   liveblocks: { leaveRoom },
 } = useStore();
 
-leaveRoom("roomId");
+leaveRoom();
 ```
 
 ### room [#liveblocks-state-room]

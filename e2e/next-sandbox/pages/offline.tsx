@@ -40,8 +40,6 @@ type Internal = {
 
 type PrivateRoom = ReturnType<typeof useRoom> & {
   // Private APIs that aren't officially published (yet)
-  connect(): void;
-  disconnect(): void;
   __internal: Internal;
 };
 

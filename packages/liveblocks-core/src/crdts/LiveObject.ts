@@ -2,6 +2,7 @@ import type { LiveNode, Lson, LsonObject } from "../crdts/Lson";
 import { nn } from "../lib/assert";
 import type { JsonObject } from "../lib/Json";
 import { nanoid } from "../lib/nanoid";
+import { deepClone } from "../lib/utils";
 import type {
   CreateChildOp,
   CreateObjectOp,
@@ -716,5 +717,16 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
     return (
       process.env.NODE_ENV === "production" ? result : Object.freeze(result)
     ) as ToImmutable<O>;
+  }
+
+  clone(): LiveObject<O> {
+    return new LiveObject(
+      Object.fromEntries(
+        Array.from(this._map).map(([key, value]) => [
+          key,
+          isLiveStructure(value) ? value.clone() : deepClone(value),
+        ])
+      ) as O
+    );
   }
 }

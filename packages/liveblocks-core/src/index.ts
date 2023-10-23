@@ -16,7 +16,7 @@ detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
  * https://join.team/liveblocks ;)
  */
 
-export type { Client } from "./client";
+export type { Client, EnterOptions } from "./client";
 export { createClient } from "./client";
 export type { BaseAuthResult, Delegates } from "./connection";
 export type {
@@ -24,7 +24,7 @@ export type {
   LostConnectionEvent,
   Status,
 } from "./connection";
-export { isLiveNode } from "./crdts/liveblocks-helpers";
+export { cloneLson, isLiveNode } from "./crdts/liveblocks-helpers";
 export { LiveList } from "./crdts/LiveList";
 export { LiveMap } from "./crdts/LiveMap";
 export { LiveObject } from "./crdts/LiveObject";
@@ -153,7 +153,7 @@ export type {
 } from "./types/IWebSocket";
 export { WebsocketCloseCodes } from "./types/IWebSocket";
 export type { NodeMap, ParentToChildNodeMap } from "./types/NodeMap";
-export type { Others } from "./types/Others";
+export type { Others, OthersEvent } from "./types/Others";
 export type {
   PlainLson,
   PlainLsonFields,
