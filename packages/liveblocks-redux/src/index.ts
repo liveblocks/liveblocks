@@ -236,11 +236,11 @@ const internalEnhancer = <TState>(options: {
         maybeRoom = room as OpaqueRoom;
 
         unsubscribeCallbacks.push(
-          room.events.status.subscribe(() => {
+          room.events.status.subscribe((status) => {
             store.dispatch({
               type: ACTION_TYPES.UPDATE_CONNECTION,
-              connection: room.getConnectionState(),
-              status: room.getStatus(),
+              status,
+              connection: room.getConnectionState(), // For backward-compatibility
             });
           })
         );
