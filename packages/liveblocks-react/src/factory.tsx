@@ -80,7 +80,7 @@ const missing_unstable_batchedUpdates = (
       ...
     </RoomProvider>
 
-Why? Please see https://liveblocks.io/docs/guides/troubleshooting#stale-props-zombie-child for more information`;
+Why? Please see https://liveblocks.io/docs/platform/troubleshooting#stale-props-zombie-child for more information`;
 
 const superfluous_unstable_batchedUpdates =
   "You don’t need to pass unstable_batchedUpdates to RoomProvider anymore, since you’re on React 18+ already.";
