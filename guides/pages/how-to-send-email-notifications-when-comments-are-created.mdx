@@ -223,8 +223,8 @@ export async function POST(request: Request) {
 }
 ```
 
-We can then check we’re receiving the correct type of event, get the updated
-`roomId`, and handle updating the database inside there.
+We can then check we’re receiving the correct type of event, get the data from
+the webhook, and handle sending the notification inside there.
 
 ```ts highlight="23-29"
 import { WebhookHandler } from "@liveblocks/node";
@@ -258,6 +258,35 @@ export async function POST(request: Request) {
   }
 
   return new Response(null, { status: 200 });
+}
+```
+
+## Get comment and thread data
+
+```ts file="utils.ts"
+// Add your secret key from your project's API keys dashboard
+const API_SECRET = "{{SECRET_KEY}}";
+
+type GetCommentData = {
+  roomId: string;
+  threadId: string;
+  commentId: string;
+};
+
+// Get comment data from Liveblocks REST API
+async function getCommentData({ roomId, threadId, commentId }: GetCommentData) {
+  const url = `https://api.liveblocks.io/v2/rooms/${roomId}/threads/${threadId}/comments/${commentId}`;
+  const response = await fetch(url, {
+    headers: { Authorization: `Bearer ${API_SECRET}` },
+  });
+
+  if (!response.ok) {
+    return new Error("Problem accessing Liveblocks Comment APIs");
+  }
+
+  // Your comment data
+  const commentData = await response.json();
+  return commentData;
 }
 ```
 
