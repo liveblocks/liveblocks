@@ -959,7 +959,7 @@ describe("room", () => {
     const initialPresence = {};
     const initialStorage = {
       list: new LiveList([13, 42]),
-      map: new LiveMap([["a", 1]]),
+      map: new LiveMap([["a" as string, 1 as number]]),
       obj: new LiveObject({ x: 0 }),
     };
 
@@ -987,7 +987,18 @@ describe("room", () => {
       });
       room.connect();
       try {
-        await room.getStorage();
+        const { root } = await room.getStorage();
+        expect(root.toImmutable()).toEqual({
+          list: [13, 42],
+          map: new Map([["a", 1]]),
+          obj: { x: 0 },
+        });
+
+        // Now start mutating these Live structures (the point being that those
+        // mutations should not be observable in the second loop)
+        root.get("list").push(13);
+        root.get("map").set("b", 2);
+        root.get("obj").set("x", 42);
       } finally {
         room.destroy();
       }
