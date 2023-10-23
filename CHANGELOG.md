@@ -1,4 +1,4 @@
-# v1.5.0 (not yet released)
+# v1.5.0
 
 Support multiple RoomProviders, or mixing and matching our React package in the
 same app with a Redux and/or Zustand instance.
