@@ -13,19 +13,18 @@ comments.
 
 ## What we’re building
 
-In this guide we’ll be learning how to send comments notifications. We’ll be
-looking at how to:
+In this guide we’ll be learning how to send comments notifications., and more
+specifically, we’ll be looking at how to:
 
-- Trigger events when comment have been created
-- Get the users that have been mentioned in the thread
-- Send notification emails containing the comment’s text
-
-This is enabled through the following:
-
-- [CommentCreated](/docs/platform/webhooks#CommentCreatedEvent) Webhook event
-- [Get Comment](/docs/api-reference/rest-api-endpoints#get-comment) REST API
-- [Get Thread Participants](/docs/api-reference/rest-api-endpoints#get-thread-participants)
-  REST API
+- Trigger events when comments are created using the
+  [CommentCreated](/docs/platform/webhooks#CommentCreatedEvent) Webhook event.
+- Fetch a comment’s data with the
+  [Get Comment](/docs/api-reference/rest-api-endpoints#get-comment) REST API.
+- Retrieve users that have been mentioned with the
+  [Get Thread Participants](/docs/api-reference/rest-api-endpoints#get-thread-participants)
+  REST API.
+- Send notifications containing the comment’s
+  [formatted text](/docs/guides/how-to-send-email-notifications-when-comments-are-created#Formatting-a-comment's-body).
 
 <Banner title="Have a project ready">
 
@@ -262,14 +261,21 @@ export async function POST(request: Request) {
 ```
 
 We now have the `roomId`, `threadId`, and `commentId` of the created comment,
-along with some [other basic data](/docs/platform/webhooks#CommentCreatedEvent).
+along with some
+[other information](/docs/platform/webhooks#CommentCreatedEvent).
 
 ## Get comment and thread data
 
+<Banner title="Threads vs comments">
+  Note that a thread is different to a comment—each thread contains a list of
+  comments. When you create a thread, you also create the first comment in the
+  thread.
+</Banner>
+
 The next step is to use the
 [Get Comment API](/docs/api-reference/rest-api-endpoints#get-comment) to
-retrieve the full comment data. To do this, we’ll create a utilities file with a
-helper function that takes the IDs from the webhook.
+retrieve the entire comment’s data. To do this, we’ll create a utilities file
+containing a helper function that takes the IDs returned from the webhook.
 
 ```ts file="utils.ts"
 import { CommentData } from "@liveblocks/client";
@@ -306,13 +312,7 @@ export async function getComment({
 We’ll also need to use the
 [Get Thread Participants API](/docs/api-reference/rest-api-endpoints#get-thread-participants),
 which returns a list of every user that has been mentioned in the current
-thread—we’ll be sending a notification to each of these.
-
-<Banner title="Threads vs comments">
-  Note that a thread is different to a comment—each thread contains a list of
-  comments. When you create a thread, you also create the first comment in a
-  thread.
-</Banner>
+thread—we’ll be sending a notification to each of these users.
 
 ```ts file="utils.ts" highlight="9-30"
 import { CommentData } from "@liveblocks/client";
@@ -347,8 +347,7 @@ export async function getParticipants({
 }
 ```
 
-Now we’ve created these functions, we can import them into our endpoint to
-retrieve the necessary data.
+Let’s import these functions into our endpoint to fetch the necessary data.
 
 ```ts highlight="28-40"
 import { WebhookHandler } from "@liveblocks/node";
@@ -399,11 +398,11 @@ export async function POST(request: Request) {
 
 ## Formatting a comment’s body
 
-Now that we have the comment data and a list of participants, we have one step
-left before sending notifications—formatting the comment’s text found inside
-`comment.body`. The content of the comment is stored as an array of paragraphs
-each containing an array of elements. For example, here’s a single-paragraph
-comment, and its corresponding content:
+Now that we have the comment data and a list of participants, we have one more
+step before sending the notifications—formatting the comment’s text, found
+inside `comment.body`. The content of the comment is stored as an array of
+paragraphs each containing an array of elements. For example, here’s a
+single-paragraph comment, and its corresponding content:
 
 Hello **world**
 
@@ -427,9 +426,10 @@ simple string of text.
 
 ### Simple formatting
 
-Here’s a function to get us started with formatting. You can see we’re also
-handling mentions and links here. These elements return the user’s ID, and the
-URL of the link:
+Here’s a function to get us started with formatting. This transforms a comment’s
+body into a simple string of text. If you look closely, you can see we’re also
+handling mentions and links here. These elements correspondingly return the
+user’s ID, and the URL of the link:
 
 ```tsx file="convert.ts"
 import {
@@ -539,7 +539,7 @@ export async function POST(request: Request) {
 
 Bear in mind that you can modify the conversion functions as you like, for
 example here’s how you can transform a comment’s body into HTML, allowing you to
-add more styles, links to user profiles etc.
+add more styles, links to user profiles, and more.
 
 ```ts file="convert.ts" highlight="23,29,36,37,41,48,52,56,60" isCollapsable isCollapsed
 import {
@@ -611,16 +611,23 @@ function getHtmlFromInlineElement(element: CommentBodyInlineElement) {
 }
 ```
 
-In the rest of this guide, we’ll be using the simple formatting functions.
+In the rest of this guide, we’ll be using the simple string formatting from
+before.
 
 ## Send notifications
 
-Now we have the comment’s body in our preferred format, we can send our
+Now that the comment’s body is in our preferred format, we can send the
 notifications. Earlier we retrieved `participants`, a list of `userIds` that
 have been mentioned in the thread. You most likely have user information in your
 database, which you can retrieve from these `userIds`.
 
-After getting each users email, simply loop through and send the formatted
+<Banner title="userIds">
+  These are the same `userIds` that are passed to
+  [`resolveUsers`](/docs/api-reference/liveblocks-react#resolveUsers) in your
+  `liveblocks.config.ts` file.
+</Banner>
+
+After getting each user’s email, simply loop through and send the formatted
 comment.
 
 ```ts highlight="41-50"
@@ -685,9 +692,9 @@ export async function POST(request: Request) {
 ```
 
 Here’s a real-world example that uses [Resend](https://resend.com) to send the
-email notifications.
+notifications.
 
-```ts highlight="3,5-6"
+```ts highlight="3,5-6,45-55" file="route.ts" isCollapsable isCollapsed
 import { WebhookHandler } from "@liveblocks/node";
 import { getComment, getParticipants } from "./utils";
 import { Resend } from "resend";
@@ -756,7 +763,7 @@ export async function POST(request: Request) {
 ## Recap
 
 Great, we’re successfully sending email notifications after new comments are
-created! In this guide we’ve learn:
+created! In this guide we’ve learned:
 
 - How to use [webhooks](/docs/platform/webhooks) and the
   [`CommentCreatedEvent`](/docs/platform/webhooks#CommentCreatedEvent).
