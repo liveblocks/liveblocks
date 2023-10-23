@@ -3,7 +3,7 @@
 import { ThreadMetadata, useThreads } from "@/liveblocks.config";
 import { ClientSideSuspense } from "@liveblocks/react";
 import { Thread } from "@liveblocks/react-comments";
-import { useCallback, useRef, useState } from "react";
+import { FormEvent, useCallback, useRef, useState } from "react";
 import styles from "./Threads.module.css";
 import {
   resetAllHighlights,
@@ -47,6 +47,7 @@ function CustomThread({ thread }: { thread: ThreadData<ThreadMetadata> }) {
 
   const [highlightedThread, setHighlightedThread] = useState(false);
 
+  // Send highlight event to thread timeline
   useHighlightThreadListener((threadId) => {
     if (thread.id !== threadId) {
       setHighlightedThread(false);
@@ -62,6 +63,7 @@ function CustomThread({ thread }: { thread: ThreadData<ThreadMetadata> }) {
     setTimeout(() => setHighlightedThread(true));
   });
 
+  // Skip to metadata time
   const handleButtonClick = useCallback(() => {
     if (!thread.metadata.timePercentage) {
       return;
@@ -69,6 +71,11 @@ function CustomThread({ thread }: { thread: ThreadData<ThreadMetadata> }) {
 
     skipTo(thread.metadata.timePercentage);
   }, [skipTo]);
+
+  // Stop keyboard events firing on window when typing (i.e. prevent fullscreen with `f`)
+  const handleKeyDown = useCallback((event: FormEvent<HTMLDivElement>) => {
+    event.stopPropagation();
+  }, []);
 
   return (
     <div
@@ -88,6 +95,7 @@ function CustomThread({ thread }: { thread: ThreadData<ThreadMetadata> }) {
         className={styles.thread}
         thread={thread}
         indentCommentContent={true}
+        onKeyDown={handleKeyDown}
       />
     </div>
   );

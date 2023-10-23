@@ -52,19 +52,21 @@
   border-radius: 4px;
   font-variant-numeric: tabular-nums;
   transition: background-color 150ms ease-out;
+  cursor: pointer;
+  user-select: none;
 }
 
 .optionsTime:hover {
   background-color: var(--accent-background-hover);
 }
 
-.optionsTime > label {
+.optionsTime > span {
   display: inline-flex;
-  cursor: pointer;
   gap: 6px;
   align-items: center;
 }
 
 .checkbox {
   accent-color: var(--accent);
+  cursor: pointer;
 }

@@ -48,7 +48,7 @@ export function NewThreadComposer({
     setPlaying(false);
   }, []);
 
-  // Stop keyboard events firing on window when typing
+  // Stop keyboard events firing on window when typing (i.e. prevent fullscreen with `f`)
   const handleKeyDown = useCallback((event: FormEvent<HTMLDivElement>) => {
     event.stopPropagation();
   }, []);
@@ -86,11 +86,11 @@ export function NewThreadComposer({
           />
         </div>
         <div className={styles.options}>
-          <div className={styles.optionsTime}>
-            <label htmlFor="attach-time">
+          <label htmlFor="attach-time" className={styles.optionsTime}>
+            <span>
               <TimeIcon />
               {formatTime(time)}
-            </label>
+            </span>
             <input
               id="attach-time"
               className={styles.checkbox}
@@ -98,7 +98,7 @@ export function NewThreadComposer({
               checked={attachTime}
               onChange={handleCheckboxChecked}
             />
-          </div>
+          </label>
           <Composer.Submit className="button">Comment</Composer.Submit>
         </div>
       </Composer.Form>
