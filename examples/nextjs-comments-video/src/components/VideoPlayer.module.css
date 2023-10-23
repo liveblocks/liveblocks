@@ -1,0 +1,190 @@
+.videoPlayer {
+  --controls-height: 48px;
+
+  margin: 16px auto;
+  width: 100%;
+  max-width: 1280px;
+  padding: 0 20px;
+}
+
+.playerWrapper {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  margin-bottom: 60px;
+  background-color: black;
+}
+
+.playerClickWrapper {
+  display: flex;
+  height: 100%;
+  width: 100%;
+  justify-content: center;
+  align-items: center;
+}
+
+.reactPlayer {
+  animation: fadeIn ease-out 0.3s;
+  animation-iteration-count: 1;
+  animation-fill-mode: forwards;
+}
+
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.videoBottom {
+  position: absolute;
+}
+
+.sliderAndComments {
+  position: absolute;
+  right: 16px;
+  bottom: 0;
+  left: 16px;
+}
+
+.sliderComments {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+}
+
+.sliderRoot {
+  position: relative;
+  bottom: -8px;
+  flex: 1 1;
+  display: flex;
+  align-items: center;
+  user-select: none;
+  touch-action: none;
+  width: 100%;
+  height: 20px;
+  --track-height: 4px;
+}
+
+.sliderTrack {
+  background-color: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  position: relative;
+  flex-grow: 1;
+  height: var(--track-height);
+  cursor: pointer;
+}
+
+.sliderRange {
+  position: absolute;
+  background-color: var(--accent);
+  height: 100%;
+}
+
+.sliderThumb {
+  display: block;
+  width: 16px;
+  height: 16px;
+  background-color: var(--accent);
+  box-shadow:
+    0 1px 5px rgba(0, 0, 0, 0.1),
+    0 2px 10px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease-out;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.sliderThumb:hover {
+  transform: scale(1.1);
+}
+
+.sliderThumb:focus {
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.2);
+}
+
+.controls {
+  position: absolute;
+  height: var(--controls-height);
+  padding: 0 var(--spacing);
+  top: 100%;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--gray12);
+}
+
+.controls > * {
+  color: var(--gray12);
+}
+
+@media (pointer: fine) {
+  .playerWrapper {
+    margin-bottom: 0;
+  }
+
+  .controls {
+    position: absolute;
+    top: auto;
+    bottom: 0;
+    background: linear-gradient(
+      180deg,
+      rgba(0, 0, 0, 0) 0%,
+      rgba(0, 0, 0, 0.8) 100%
+    );
+    opacity: 0;
+    transition: opacity ease-out 0.1s;
+  }
+
+  .playerWrapper:hover .controls {
+    opacity: 1;
+  }
+
+  .sliderAndComments {
+    bottom: 0;
+  }
+
+  .playerWrapper:hover .sliderAndComments {
+    bottom: var(--controls-height);
+  }
+
+  .sliderRoot {
+    height: var(--track-height);
+    bottom: 0;
+  }
+
+  .playerWrapper:hover .sliderRoot {
+    height: auto;
+  }
+
+  .sliderThumb {
+    display: none;
+  }
+
+  .playerWrapper:hover .sliderThumb {
+    display: block;
+  }
+}
+
+.playButton,
+.fullscreenButton {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 10px;
+  cursor: pointer;
+}
+
+.time {
+  font-size: 14px;
+  user-select: none;
+  font-variant-numeric: tabular-nums;
+}
+
+.time > time:nth-child(2) {
+  color: var(--gray10);
+}

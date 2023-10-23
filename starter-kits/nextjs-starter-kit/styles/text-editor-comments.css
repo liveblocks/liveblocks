@@ -1,0 +1,40 @@
+.lb-root {
+  --lb-accent: var(--color-accent);
+  --lb-accent-foreground: var(--color-surface);
+  --lb-background: var(--color-surface-elevated);
+}
+
+.comment-highlight {
+  display: inline-block;
+  position: relative;
+  background: transparent;
+  isolation: isolate;
+  color: var(--color-text);
+}
+
+.comment-highlight::before {
+  content: "";
+  position: absolute;
+  top: -1px;
+  right: 0;
+  bottom: -1px;
+  left: 0;
+  z-index: -1;
+  background: var(--comment-highlight-color);
+  border-bottom: 2px solid var(--comment-border-color);
+}
+
+.comment-highlight[data-state="composing"] {
+  --comment-highlight-color: var(--comment-highlight-composing);
+  --comment-border-color: var(--comment-highlight-composing-border) !important;
+}
+
+.comment-highlight[data-state="complete"] {
+  --comment-highlight-color: var(--comment-highlight-complete);
+  --comment-border-color: var(--comment-highlight-complete-border);
+}
+
+.comment-highlight[data-selected="true"]{
+  --comment-highlight-color: var(--comment-highlight-selected);
+  --comment-border-color: var(--comment-highlight-selected-border);
+}
