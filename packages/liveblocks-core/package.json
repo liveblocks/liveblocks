@@ -1,6 +1,6 @@
 {
   "name": "@liveblocks/core",
-  "version": "1.4.8-test1",
+  "version": "1.5.0-test2",
   "description": "Private internals for Liveblocks. DO NOT import directly from this package!",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
