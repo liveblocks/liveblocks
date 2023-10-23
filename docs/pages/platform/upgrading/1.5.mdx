@@ -1,0 +1,85 @@
+---
+meta:
+  title: "Upgrading to 1.5"
+  parentTitle: "Upgrading"
+  description: "Guide to upgrade to Liveblocks version 1.5"
+---
+
+There are hardly any breaking changes in this update, however we are introducing
+a better API to enter/leave a room. If you’re currently calling `client.enter()`
+or `client.leave()` manually, we recommend you read on.
+
+## How to upgrade? [#how]
+
+You can upgrade to 1.5 by downloading the latest version of each Liveblocks
+package you’re using, for example in a React app:
+
+```bash
+npm install @liveblocks/client@latest @liveblocks/node@latest @liveblocks/react@latest
+```
+
+<Banner title="Update every Liveblocks package">
+
+If you’re using any other Liveblocks packages make sure to update those too.
+
+</Banner>
+
+## Recommended: new enter/leave API
+
+Until now, the API to manually enter a Room using the client looked like:
+
+```tsx
+// ❌ We recommend to stop using this API
+const room = client.enter("my-room", options);
+
+// Then later, when unmounting
+client.leave("my-room");
+```
+
+These APIs will remain supported and functional unchanged, but starting with
+Liveblocks 1.5, there is a new preferred API:
+
+```tsx
+// ✅ Prefer this API instead
+const { room, leave } = client.enterRoom("my-room", options);
+
+// Then later, when unmounting
+leave();
+```
+
+We’ve changed this API to return a new “leave” function every time a room
+reference is requested. This allows sharing the same room connection with two or
+more parts of your application, without those parts fighting over who controls
+the room connection. Only once the last leave function is called, the room
+connection will get terminated.
+
+This enables more advanced use cases like supporting multiple `RoomProvider`
+instances for the same room ID in different parts of your application, or using
+our React package for one part of your application, while using a Zustand store
+for another part.
+
+## Upgrading for Zustand users
+
+If you're using our Zustand package, there is a tiny breaking change, which is
+easy to fix:
+
+```tsx
+const {
+  liveblocks: { leaveRoom },
+} = useStore();
+
+leaveRoom("roomId"); // ❌ No longer takes an argument
+leaveRoom(); // ✅ Leaves the current room
+```
+
+## Upgrading for Redux users
+
+If you're using our Redux package, there is a tiny breaking change, which is
+easy to fix:
+
+```tsx
+const dispatch = useDispatch();
+
+dispatch(actions.leaveRoom("roomId")); // ❌ No longer takes an argument
+dispatch(actions.leaveRoom()); // ✅ Leaves the current room
+```
