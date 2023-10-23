@@ -191,7 +191,9 @@ export { createCommentsApi } from "./comments";
 export type { BaseMetadata } from "./comments/types/BaseMetadata";
 export type {
   CommentBody,
+  CommentBodyBlockElement,
   CommentBodyElement,
+  CommentBodyInlineElement,
   CommentBodyLink,
   CommentBodyMention,
   CommentBodyParagraph,
