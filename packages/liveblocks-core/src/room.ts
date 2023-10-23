@@ -604,9 +604,7 @@ export type Room<
   getStorageSnapshot(): LiveObject<TStorage> | null;
 
   readonly events: {
-    /** @deprecated Prefer `status` instead. */
-    readonly connection: Observable<LegacyConnectionStatus>; // Old/legacy API
-    readonly status: Observable<Status>; // New/recommended API
+    readonly status: Observable<Status>;
     readonly lostConnection: Observable<LostConnectionEvent>;
 
     readonly customEvent: Observable<RoomEventMessage<TPresence, TUserMeta, TRoomEvent>>; // prettier-ignore
@@ -1057,7 +1055,6 @@ export function createRoom<
     // Forward to the outside world
     batchUpdates(() => {
       eventHub.status.notify(newStatus);
-      eventHub.connection.notify(newToLegacyStatus(newStatus));
       notifySelfChanged(doNotBatchUpdates);
     });
   }
@@ -2309,8 +2306,7 @@ export function createRoom<
   );
 
   const events = {
-    connection: eventHub.connection.observable, // Old/deprecated API
-    status: eventHub.status.observable, // New/recommended API
+    status: eventHub.status.observable,
     lostConnection: eventHub.lostConnection.observable,
 
     customEvent: eventHub.customEvent.observable,
@@ -2495,10 +2491,12 @@ function makeClassicSubscribeFn<
         case "error":
           return events.error.subscribe(callback as Callback<Error>);
 
-        case "connection":
-          return events.connection.subscribe(
-            callback as Callback<LegacyConnectionStatus>
+        case "connection": {
+          const cb = callback as Callback<LegacyConnectionStatus>;
+          return events.status.subscribe((status) =>
+            cb(newToLegacyStatus(status))
           );
+        }
 
         case "status":
           return events.status.subscribe(callback as Callback<Status>);

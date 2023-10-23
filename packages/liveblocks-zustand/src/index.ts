@@ -207,7 +207,7 @@ const middlewareImpl: InnerLiveblocksMiddleware = (config, options) => {
       );
 
       unsubscribeCallbacks.push(
-        room.events.connection.subscribe(() => {
+        room.events.status.subscribe(() => {
           updateLiveblocksContext(set, {
             connection: room.getConnectionState(),
             status: room.getStatus(),
