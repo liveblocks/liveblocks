@@ -52,13 +52,12 @@ export class LiveMap<
     this.unacknowledgedSet = new Map<TKey, string>();
 
     if (entries) {
-      const mappedEntries: Array<[TKey, LiveNode]> = [];
-      for (const entry of entries) {
-        const value = lsonToLiveNode(entry[1]);
-        value._setParentLink(this, entry[0]);
-        mappedEntries.push([entry[0], value]);
+      const mappedEntries: [TKey, LiveNode][] = [];
+      for (const [key, value] of entries) {
+        const node = lsonToLiveNode(value);
+        node._setParentLink(this, key);
+        mappedEntries.push([key, node]);
       }
-
       this._map = new Map(mappedEntries);
     } else {
       this._map = new Map();
@@ -476,5 +475,11 @@ export class LiveMap<
       result.set(key, value.toImmutable() as ToImmutable<TValue>);
     }
     return freeze(result);
+  }
+
+  clone(): LiveMap<TKey, TValue> {
+    return new LiveMap(
+      Array.from(this._map).map(([key, node]) => [key, node.clone() as TValue])
+    );
   }
 }

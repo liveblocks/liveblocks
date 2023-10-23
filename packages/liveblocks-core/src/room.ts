@@ -11,6 +11,7 @@ import { ManagedSocket, newToLegacyStatus, StopRetrying } from "./connection";
 import type { ApplyResult, ManagedPool } from "./crdts/AbstractCrdt";
 import { OpSource } from "./crdts/AbstractCrdt";
 import {
+  cloneLson,
   getTreesDiffOperations,
   isLiveList,
   isLiveNode,
@@ -1341,7 +1342,7 @@ export function createRoom<
     const stackSizeBefore = context.undoStack.length;
     for (const key in context.initialStorage) {
       if (context.root.get(key) === undefined) {
-        context.root.set(key, context.initialStorage[key]);
+        context.root.set(key, cloneLson(context.initialStorage[key]));
       }
     }
 

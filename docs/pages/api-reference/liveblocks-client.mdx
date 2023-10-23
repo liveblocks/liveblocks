@@ -1021,6 +1021,17 @@ liveObject.toImmutable();
 // }
 ```
 
+### clone [#LiveObject.clone]
+
+Returns a deep copy of the `LiveObject` that can be inserted elsewhere in the
+Storage tree.
+
+```ts
+const obj = new LiveObject(/* ... */);
+root.set("a", obj);
+root.set("b", obj.clone());
+```
+
 ## LiveMap
 
 The `LiveMap` class is similar to a
@@ -1200,6 +1211,17 @@ map.toImmutable();
 //   'abc' => { firstName: 'Grace', lastName: 'Hopper' },
 //   'pqr' => { firstName: 'Ada', lastName: 'Lovelace' }
 // }
+```
+
+### clone [#LiveMap.clone]
+
+Returns a deep copy of the `LiveMap` that can be inserted elsewhere in the
+Storage tree.
+
+```ts
+const map = new LiveMap(/* ... */);
+root.set("a", map);
+root.set("b", map.clone());
 ```
 
 ## LiveList
@@ -1434,6 +1456,17 @@ const list = new LiveList([
 ]);
 list.toImmutable();
 // [ { firstName: "Grace", lastName: "Hopper" } ]
+```
+
+### clone [#LiveList.clone]
+
+Returns a deep copy of the `LiveList` that can be inserted elsewhere in the
+Storage tree.
+
+```ts
+const list = new LiveList(/* ... */);
+root.set("a", list);
+root.set("b", list.clone());
 ```
 
 [`atob`]: https://developer.mozilla.org/en-US/docs/Web/API/atob
