@@ -216,7 +216,7 @@ export async function POST(request: Request) {
     return new Response("Could not verify webhook call", { status: 400 });
   }
 
-  // Send notification
+  // Send notifications
   // ...
 
   return new Response(null, { status: 200 });
@@ -253,7 +253,7 @@ export async function POST(request: Request) {
   if (event.type === "commentCreated") {
     const { roomId, threadId, commentId } = event.data;
 
-    // Send notification
+    // Send notifications
     // ...
   }
 
@@ -261,38 +261,148 @@ export async function POST(request: Request) {
 }
 ```
 
+We now have the `roomId`, `threadId`, and `commentId` of the created comment,
+along with some [other basic data](/docs/platform/webhooks#CommentCreatedEvent).
+
 ## Get comment and thread data
 
+The next step is to use the
+[Get Comment API](/docs/api-reference/rest-api-endpoints#get-comment) to
+retrieve the full comment data. To do this, we’ll create a utils file with a
+helper function that takes the IDs from the webhook.
+
 ```ts file="utils.ts"
+import { CommentData } from "@liveblocks/client";
+
 // Add your secret key from your project's API keys dashboard
 const API_SECRET = "{{SECRET_KEY}}";
 
-type GetCommentData = {
+type GetComment = {
   roomId: string;
   threadId: string;
   commentId: string;
 };
 
 // Get comment data from Liveblocks REST API
-async function getCommentData({ roomId, threadId, commentId }: GetCommentData) {
+export async function getComment({
+  roomId,
+  threadId,
+  commentId,
+}: GetComment): Promise<CommentData> {
   const url = `https://api.liveblocks.io/v2/rooms/${roomId}/threads/${threadId}/comments/${commentId}`;
   const response = await fetch(url, {
     headers: { Authorization: `Bearer ${API_SECRET}` },
   });
 
   if (!response.ok) {
-    return new Error("Problem accessing Liveblocks Comment APIs");
+    throw new Error("Problem accessing Liveblocks Comment APIs");
   }
 
   // Your comment data
-  const commentData = await response.json();
-  return commentData;
+  return (await response.json()) as CommentData;
 }
 ```
 
-[get a comment]
+We’ll also need to use the
+[Get Thread Participants API](/docs/api-reference/rest-api-endpoints#get-thread-participants),
+which returns a list of every user that has been mentioned in the current
+thread—we’ll be sending a notification to each of these.
 
-[get participants]
+<Banner title="Threads vs comments">
+  Note that a thread is different to a comment—each thread contains a list of
+  comments. When you create a thread, you also create the first comment in a
+  thread.
+</Banner>
+
+```ts file="utils.ts" highlight="9-30"
+import { CommentData } from "@liveblocks/client";
+
+// Add your secret key from your project's API keys dashboard
+const API_SECRET = "sk_prod_xxxxxxxxxxxxxxxxxxxxxxxx";
+
+// getCommentData function
+// ...
+
+type GetParticipants = {
+  roomId: string;
+  threadId: string;
+};
+
+// Get thread participants from Liveblocks REST API
+export async function getParticipants({
+  roomId,
+  threadId,
+}: GetParticipants): Promise<string[]> {
+  const url = `https://api.liveblocks.io/v2/rooms/${roomId}/threads/${threadId}/participants`;
+  const response = await fetch(url, {
+    headers: { Authorization: `Bearer ${API_SECRET}` },
+  });
+
+  if (!response.ok) {
+    throw new Error("Problem accessing Liveblocks Comment APIs");
+  }
+
+  // Your thread participants
+  return (await response.json()).participantIds as string[];
+}
+```
+
+Now we’ve created these functions, we can import them into our endpoint to
+retrieve the necessary data.
+
+```ts highlight="28-40"
+import { WebhookHandler } from "@liveblocks/node";
+import { getComment, getParticipants } from "./utils";
+
+// Add your signing key from a project's webhooks dashboard
+const WEBHOOK_SECRET = "YOUR_SIGNING_SECRET";
+const webhookHandler = new WebhookHandler(WEBHOOK_SECRET);
+
+export async function POST(request: Request) {
+  const body = await request.json();
+  const headers = request.headers;
+
+  // Verify if this is a real webhook request
+  let event;
+  try {
+    event = webhookHandler.verifyRequest({
+      headers: headers,
+      rawBody: JSON.stringify(body),
+    });
+  } catch (err) {
+    console.error(err);
+    return new Response("Could not verify webhook call", { status: 400 });
+  }
+
+  // When a comment has been created
+  if (event.type === "commentCreated") {
+    const { roomId, threadId, commentId } = event.data;
+
+    try {
+      // Get comment data and participants
+      const [comment, participants] = await Promise.all([
+        getComment({ roomId, threadId, commentId }),
+        getParticipants({ roomId, threadId }),
+      ]);
+
+      // Send notifications
+      // ...
+    } catch (err) {
+      console.log(err);
+      return new Response("Could not fetch comment data", { status: 500 });
+    }
+  }
+
+  return new Response(null, { status: 200 });
+}
+```
+
+## Send notifications
+
+## Formatting a comment’s body
+
+The text of the comment is stored as an array of paragraphs, inside
+`comment.body`, each containing an array of elements. If we’d
 
 [get users from database]
 
