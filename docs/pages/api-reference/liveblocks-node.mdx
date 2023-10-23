@@ -26,7 +26,7 @@ const liveblocks = new Liveblocks({
 To authorize your users with Liveblocks, you have the choice between two
 different APIs.
 
-- [`Liveblocks.prepareSession`](#access-tokens) is recommend for most
+- [`Liveblocks.prepareSession`](#access-tokens) is recommended for most
   applications.
 - [`Liveblocks.identifyUser`](#id-tokens) is best if you’re using fine-grained
   permissions with our REST API.
@@ -272,6 +272,62 @@ export default async function auth(req, res) {
   return new Response(body, { status });
 }
 ```
+
+### Liveblocks.getThreads [#get-threads]
+
+Returns a list of threads in a room.
+
+```ts
+const threads = await liveblocks.getThreads({
+  roomId: "my-room",
+});
+```
+
+See the
+[REST API reference](/docs/api-reference/rest-api-endpoints#get-threads).
+
+### Liveblocks.getThread [#get-thread]
+
+Returns a thread in a room.
+
+```ts
+const thread = await liveblocks.getThread({
+  roomId: "my-room",
+  threadId: "my-thread",
+});
+```
+
+See the [REST API reference](/docs/api-reference/rest-api-endpoints#get-thread).
+
+### Liveblocks.getThreadParticipants [#get-thread-participants]
+
+Returns a list of participants in a thread. Participants are users who have
+either commented or have been mentioned in the thread.
+
+```ts
+const { participantIds } = await liveblocks.getThreadParticipants({
+  roomId: "my-room",
+  threadId: "my-thread",
+});
+```
+
+See the
+[REST API reference](/docs/api-reference/rest-api-endpoints#get-thread-participants).
+
+### Liveblocks.getComment [#get-comment]
+
+Returns a comment in a thread.
+
+```ts
+const comment = await liveblocks.getComment({
+  roomId: "my-room",
+  threadId: "my-thread",
+  commentId: "my-comment",
+});
+```
+
+See the
+[REST API reference](/docs/api-reference/rest-api-endpoints#get-comment).
 
 ---
 
