@@ -46,7 +46,7 @@ export class Awareness extends Observable<unknown> {
     this.doc = doc;
     this.room = room;
     this.clientID = doc.clientID;
-    this.othersUnsub = this.room.events.others.subscribe(({ event }) => {
+    this.othersUnsub = this.room.events.others.subscribe((event) => {
       // When others are changed, we emit an event that contains arrays added/updated/removed.
       if (event.type === "leave") {
         // REMOVED
