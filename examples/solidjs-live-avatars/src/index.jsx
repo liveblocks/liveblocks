@@ -38,7 +38,9 @@ const initialPresence = {
   )}.png`,
 };
 
-const room = client.enter(roomId, { initialPresence });
+// If you no longer need the room (for example when you unmount your
+// component), make sure to call leave()
+const { room, leave } = client.enterRoom(roomId, { initialPresence });
 
 render(() => <App room={room} />, document.getElementById("root"));
 
