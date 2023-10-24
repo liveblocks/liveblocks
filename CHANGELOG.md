@@ -1,4 +1,4 @@
-# v1.5.0 (not yet released)
+# v1.5.0
 
 Support multiple RoomProviders, or mixing and matching our React package in the
 same app with a Redux and/or Zustand instance.
@@ -29,10 +29,12 @@ leave();
   - `Client.enterRoom(roomId, options)` – enters the room and return both the
     room and an "unsubscribe function" to leave that room again. This newer API
     supports entering/leaving the same room multiple times, making it possible
-    to connect to the same room from different parts of your application.
+    to connect to the same room from different parts of your application. See
+    [docs](https://liveblocks.io/docs/api-reference/liveblocks-client#Client.enterRoom).
   - `Client.logout()` – Call this on the Liveblocks client when you log out a
     user in your application. It will purge all auth tokens and force-leave any
-    rooms, if any are still connected.
+    rooms, if any are still connected. See
+    [docs](https://liveblocks.io/docs/api-reference/liveblocks-client#Client.logout).
   - `LiveList.clone()` – see
     [docs](https://liveblocks.io/docs/api-reference/liveblocks-client#LiveList.clone).
   - `LiveMap.clone()` – see
