@@ -39,6 +39,7 @@ function Sandbox() {
   const renderCount = useRenderCount();
   const room = useRoom();
   const [text, setText] = useState<string>("");
+  const [synced, setSynced] = useState(false);
   const doc = useMemo(() => new Y.Doc(), []);
   useEffect(() => {
     if (!room) {
@@ -46,13 +47,29 @@ function Sandbox() {
     }
     const handler = () => { setText(doc.getText("test").toString()) };
     const provider = new LiveblocksProvider(room, doc);
+    provider.on("sync", () => { setSynced(true) });
     doc.on("update", handler);
     return () => {
-      doc.off("update", handler)
+      setSynced(false);
+      doc.off("update", handler);
       provider.destroy();
     }
   }, [doc, room])
 
+  const clearText = () => {
+    const l = doc.getText("test").toString().length;
+    if (l) {
+      doc.getText("test").delete(0, l);
+    }
+  };
+
+  const insertText = () => {
+    doc.getText("test").insert(0, "test text");
+  };
+
+  const insertLargeString = () => {
+    doc.getText("test").insert(0, "yjs ".repeat(50_000)); // insert 50k * 4 chars = 200k update
+  };
 
   return (
     <div>
@@ -61,18 +78,25 @@ function Sandbox() {
       </h3>
       <div style={{ display: "flex", margin: "8px 0" }}>
         <Button
-          id="set"
-          onClick={() => { doc.getText("test").insert(0, "test text") }}
-          subtitle={"set text"}
+          id="insert"
+          onClick={insertText}
+          subtitle={"insert text"}
         >
-          Set
+          Insert Text
+        </Button>
+        <Button
+          id="largeText"
+          onClick={insertLargeString}
+          subtitle={"insert large text, 200k"}
+        >
+          Insert Large Text (200k)
         </Button>
         <Button
           id="clear"
-          onClick={() => { doc.getText("test").delete(0, doc.getText("test").toString().length) }}
+          onClick={clearText}
           subtitle={"clear"}
         >
-          clear
+          Clear
         </Button>
 
       </div>
@@ -81,6 +105,7 @@ function Sandbox() {
         <tbody>
           <Row id="renderCount" name="Render count" value={renderCount} />
           <Row id="text" name="YDoc Text" value={text} />
+          <Row id="sync" name="Synced" value={synced} />
         </tbody>
       </table>
     </div>
