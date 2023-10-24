@@ -4,10 +4,10 @@ import type { NextApiRequest, NextApiResponse } from "next";
 
 import { randomUser } from "../_utils";
 
-const SECRET_KEY = process.env.LIVEBLOCKS_SECRET_KEY;
-if (!SECRET_KEY) {
-  throw new Error("Please specify LIVEBLOCKS_SECRET_KEY in env");
-}
+const SECRET_KEY = nn(
+  process.env.LIVEBLOCKS_SECRET_KEY,
+  "Please specify LIVEBLOCKS_SECRET_KEY env var"
+);
 
 const liveblocks = new Liveblocks({
   secret: SECRET_KEY,
@@ -15,7 +15,7 @@ const liveblocks = new Liveblocks({
   // @ts-expect-error - Hidden setting
   baseUrl: nn(
     process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL,
-    "Missing env var: NEXT_PUBLIC_LIVEBLOCKS_BASE_URL"
+    "Please specify NEXT_PUBLIC_LIVEBLOCKS_BASE_URL env var"
   ),
 });
 

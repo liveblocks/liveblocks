@@ -29,7 +29,9 @@ async function run() {
     todos: LiveList<Todo>;
   };
 
-  const room = client.enter<Presence, Storage>(roomId, {
+  // If you no longer need the room (for example when you unmount your
+  // component), make sure to call leave()
+  const { room, leave } = client.enterRoom<Presence, Storage>(roomId, {
     initialPresence: { isTyping: false },
     initialStorage: { todos: new LiveList() },
   });
