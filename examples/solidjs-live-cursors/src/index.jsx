@@ -12,7 +12,7 @@ overrideApiKeyAndRoomId();
 if (!/^pk_(live|test)/.test(PUBLIC_KEY)) {
   console.warn(
     `Replace "${PUBLIC_KEY}" by your public key from https://liveblocks.io/dashboard/apikeys.\n` +
-    `Learn more: https://github.com/liveblocks/liveblocks/tree/main/examples/solidjs-live-cursors#getting-started.`,
+      `Learn more: https://github.com/liveblocks/liveblocks/tree/main/examples/solidjs-live-cursors#getting-started.`
   );
 }
 
@@ -24,7 +24,9 @@ const initialPresence = {
   cursor: null,
 };
 
-const room = client.enter(roomId, { initialPresence });
+// If you no longer need the room (for example when you unmount your
+// component), make sure to call leave()
+const { room, leave } = client.enterRoom(roomId, { initialPresence });
 
 render(() => <App room={room} />, document.getElementById("root"));
 
@@ -45,4 +47,3 @@ function overrideApiKeyAndRoomId() {
     roomId = `${roomId}-${roomIdSuffix}`;
   }
 }
-

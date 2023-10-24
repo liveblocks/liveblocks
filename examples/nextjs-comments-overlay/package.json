@@ -11,10 +11,10 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@liveblocks/client": "^1.4.7",
-    "@liveblocks/node": "^1.4.7",
-    "@liveblocks/react": "^1.4.7",
-    "@liveblocks/react-comments": "^1.4.7",
+    "@liveblocks/client": "^1.5.0",
+    "@liveblocks/node": "^1.5.0",
+    "@liveblocks/react": "^1.5.0",
+    "@liveblocks/react-comments": "^1.5.0",
     "@radix-ui/react-collapsible": "^1.0.3",
     "@radix-ui/react-portal": "^1.0.3",
     "@radix-ui/react-slot": "^1.0.2",
