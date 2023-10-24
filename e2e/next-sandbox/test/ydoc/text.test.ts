@@ -34,20 +34,6 @@ test.describe("Yjs - Text", () => {
     await page2.click("#insert");
     await waitForJson(pages, "#text", "test text");
   });
-});
-
-test.describe("Yjs - Large Update", () => {
-  let pages: [Page, Page];
-
-  test.beforeEach(async ({}, testInfo) => {
-    const room = genRoomId(testInfo);
-    pages = await preparePages(`${TEST_URL}?room=${encodeURIComponent(room)}`);
-  });
-
-  test.afterEach(() =>
-    // Close all pages
-    Promise.all(pages.map((page) => page.close()))
-  );
 
   test("support text greather than 128k", async () => {
     const [page1, page2] = pages;
