@@ -83,3 +83,8 @@ export type GetNextDocumentsProps = {
 export type DeleteDocumentProps = {
   documentId: Document["id"];
 };
+
+export type GetUsersProps = {
+  userIds?: Document["id"][];
+  search?: string;
+};

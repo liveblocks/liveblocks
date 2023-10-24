@@ -190,7 +190,11 @@ function TiptapEditor({ doc, provider }: EditorProps) {
       ) : null}
       <div className={styles.editorPanel}>
         {editor ? <SelectionMenu editor={editor} /> : null}
-        <EditorContent editor={editor} className={styles.editorContainer} />
+        <div className={styles.editorContainerOffset}>
+          <div className={styles.editorContainer}>
+            <EditorContent editor={editor} />
+          </div>
+        </div>
       </div>
       {editor ? <WordCount editor={editor} /> : null}
     </div>

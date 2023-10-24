@@ -11,6 +11,7 @@ import { ManagedSocket, newToLegacyStatus, StopRetrying } from "./connection";
 import type { ApplyResult, ManagedPool } from "./crdts/AbstractCrdt";
 import { OpSource } from "./crdts/AbstractCrdt";
 import {
+  cloneLson,
   getTreesDiffOperations,
   isLiveList,
   isLiveNode,
@@ -60,11 +61,39 @@ import type {
   IWebSocketMessageEvent,
 } from "./types/IWebSocket";
 import type { NodeMap } from "./types/NodeMap";
-import type { OthersEvent } from "./types/Others";
+import type { InternalOthersEvent, OthersEvent } from "./types/Others";
 import type { User } from "./types/User";
 import { PKG_VERSION } from "./version";
 
 type TimeoutID = ReturnType<typeof setTimeout>;
+
+//
+// NOTE:
+// This type looks an awful lot like InternalOthersEvent, but don't change this
+// type definition or DRY this up!
+// The type LegacyOthersEvent is used in the signature of some public APIs, and
+// as such should remain backward compatible.
+//
+type LegacyOthersEvent<
+  TPresence extends JsonObject,
+  TUserMeta extends BaseUserMeta,
+> =
+  | { type: "leave"; user: User<TPresence, TUserMeta> }
+  | { type: "enter"; user: User<TPresence, TUserMeta> }
+  | {
+      type: "update";
+      user: User<TPresence, TUserMeta>;
+      updates: Partial<TPresence>;
+    }
+  | { type: "reset" };
+
+type LegacyOthersEventCallback<
+  TPresence extends JsonObject,
+  TUserMeta extends BaseUserMeta,
+> = (
+  others: readonly User<TPresence, TUserMeta>[],
+  event: LegacyOthersEvent<TPresence, TUserMeta>
+) => void;
 
 export type RoomEventMessage<
   TPresence extends JsonObject,
@@ -107,13 +136,10 @@ type RoomEventCallbackMap<
   event: Callback<RoomEventMessage<TPresence, TUserMeta, TRoomEvent>>;
   "my-presence": Callback<TPresence>;
   //
-  // NOTE: OthersEventCallback is the only one not taking a Callback<T> shape,
-  // since this API historically has taken _two_ callback arguments instead of
-  // just one.
-  others: (
-    others: readonly User<TPresence, TUserMeta>[],
-    event: OthersEvent<TPresence, TUserMeta>
-  ) => void;
+  // NOTE: LegacyOthersEventCallback is the only one not taking a Callback<T>
+  // shape, since this API historically has taken _two_ callback arguments
+  // instead of just one.
+  others: LegacyOthersEventCallback<TPresence, TUserMeta>;
   error: Callback<Error>;
   history: Callback<HistoryEvent>;
   "storage-status": Callback<StorageStatus>;
@@ -278,10 +304,7 @@ type SubscribeFn<
    */
   (
     type: "others",
-    listener: (
-      others: readonly User<TPresence, TUserMeta>[],
-      event: OthersEvent<TPresence, TUserMeta>
-    ) => void
+    listener: LegacyOthersEventCallback<TPresence, TUserMeta>
   ): () => void;
 
   /**
@@ -581,15 +604,13 @@ export type Room<
   getStorageSnapshot(): LiveObject<TStorage> | null;
 
   readonly events: {
-    /** @deprecated Prefer `status` instead. */
-    readonly connection: Observable<LegacyConnectionStatus>; // Old/legacy API
-    readonly status: Observable<Status>; // New/recommended API
+    readonly status: Observable<Status>;
     readonly lostConnection: Observable<LostConnectionEvent>;
 
     readonly customEvent: Observable<RoomEventMessage<TPresence, TUserMeta, TRoomEvent>>; // prettier-ignore
     readonly self: Observable<User<TPresence, TUserMeta>>;
     readonly myPresence: Observable<TPresence>;
-    readonly others: Observable<{ others: readonly User<TPresence, TUserMeta>[]; event: OthersEvent<TPresence, TUserMeta>; }>; // prettier-ignore
+    readonly others: Observable<OthersEvent<TPresence, TUserMeta>>;
     readonly error: Observable<Error>;
     readonly storage: Observable<StorageUpdate[]>;
     readonly history: Observable<HistoryEvent>;
@@ -632,8 +653,6 @@ export type Room<
   getStorageStatus(): StorageStatus;
 
   /**
-   * @internal (for now)
-   *
    * Start an attempt to connect the room (aka "enter" it). Calling
    * `.connect()` only has an effect if the room is still in its idle initial
    * state, or the room was explicitly disconnected, or reconnection attempts
@@ -643,8 +662,6 @@ export type Room<
   connect(): void;
 
   /**
-   * @internal (for now)
-   *
    * Disconnect the room's connection to the Liveblocks server, if any. Puts
    * the room back into an idle state. It will not do anything until either
    * `.connect()` or `.reconnect()` is called.
@@ -822,15 +839,18 @@ export type RoomInitializers<
    */
   initialStorage?: TStorage | ((roomId: string) => TStorage);
   /**
-   * Whether or not the room connects to Liveblock servers. Default is true.
+   * Whether or not the room automatically connects to Liveblock servers.
+   * Default is true.
    *
    * Usually set to false when the client is used from the server to not call
    * the authentication endpoint or connect via WebSocket.
    */
+  autoConnect?: boolean;
+  /** @deprecated Renamed to `autoConnect` */
   shouldInitiallyConnect?: boolean;
 }>;
 
-export type RoomDelegates = Delegates<AuthValue>;
+export type RoomDelegates = Omit<Delegates<AuthValue>, "canZombie">;
 
 /** @internal */
 export type RoomConfig = {
@@ -839,12 +859,11 @@ export type RoomConfig = {
   roomId: string;
   throttleDelay: number;
   lostConnectionTimeout: number;
+  backgroundKeepAliveTimeout?: number;
 
-  liveblocksServer: string;
   unstable_fallbackToHTTP?: boolean;
 
   polyfills?: Polyfills;
-  enableDebugLogging?: boolean;
 
   /**
    * Only necessary when you’re using Liveblocks with React v17 or lower.
@@ -855,6 +874,9 @@ export type RoomConfig = {
    * https://liveblocks.io/docs/guides/troubleshooting#stale-props-zombie-child
    */
   unstable_batchedUpdates?: (cb: () => void) => void;
+
+  baseUrl: string;
+  enableDebugLogging?: boolean;
 };
 
 function userToTreeNode(
@@ -870,6 +892,38 @@ function userToTreeNode(
 }
 
 /**
+ * Returns a ref to access if, and if so, how long the current tab is in the
+ * background and an unsubscribe function.
+ *
+ * The `inBackgroundSince` value will either be a JS timestamp indicating the
+ * moment the tab was put into the background, or `null` in case the tab isn't
+ * currently in the background. In non-DOM environments, this will always
+ * return `null`.
+ */
+function installBackgroundTabSpy(): [
+  inBackgroundSince: { readonly current: number | null },
+  unsub: () => void,
+] {
+  const doc = typeof document !== "undefined" ? document : undefined;
+  const inBackgroundSince: { current: number | null } = { current: null };
+
+  function onVisibilityChange() {
+    if (doc?.visibilityState === "hidden") {
+      inBackgroundSince.current = inBackgroundSince.current ?? Date.now();
+    } else {
+      inBackgroundSince.current = null;
+    }
+  }
+
+  doc?.addEventListener("visibilitychange", onVisibilityChange);
+  const unsub = () => {
+    doc?.removeEventListener("visibilitychange", onVisibilityChange);
+  };
+
+  return [inBackgroundSince, unsub];
+}
+
+/**
  * @internal
  * Initializes a new Room, and returns its public API.
  */
@@ -881,7 +935,7 @@ export function createRoom<
 >(
   options: Omit<
     RoomInitializers<TPresence, TStorage>,
-    "shouldInitiallyConnect"
+    "autoConnect" | "shouldInitiallyConnect"
   >,
   config: RoomConfig
 ): Room<TPresence, TStorage, TUserMeta, TRoomEvent> {
@@ -894,8 +948,30 @@ export function createRoom<
       ? options.initialStorage(config.roomId)
       : options.initialStorage;
 
+  const [inBackgroundSince, uninstallBgTabSpy] = installBackgroundTabSpy();
+
   // Create a delegate pair for (a specific) Live Room socket connection(s)
-  const delegates: RoomDelegates = config.delegates;
+  const delegates = {
+    ...config.delegates,
+
+    // A connection is allowed to go into "zombie state" only if all of the
+    // following conditions apply:
+    //
+    // - The `backgroundKeepAliveTimeout` client option is configured
+    // - The browser window has been in the background for at least
+    //   `backgroundKeepAliveTimeout` milliseconds
+    // - There are no pending changes
+    //
+    canZombie() {
+      return (
+        config.backgroundKeepAliveTimeout !== undefined &&
+        inBackgroundSince.current !== null &&
+        Date.now() >
+          inBackgroundSince.current + config.backgroundKeepAliveTimeout &&
+        getStorageStatus() !== "synchronizing"
+      );
+    },
+  };
 
   const managedSocket: ManagedSocket<AuthValue> = new ManagedSocket(
     delegates,
@@ -979,7 +1055,6 @@ export function createRoom<
     // Forward to the outside world
     batchUpdates(() => {
       eventHub.status.notify(newStatus);
-      eventHub.connection.notify(newToLegacyStatus(newStatus));
       notifySelfChanged(doNotBatchUpdates);
     });
   }
@@ -1142,10 +1217,7 @@ export function createRoom<
       makeEventSource<RoomEventMessage<TPresence, TUserMeta, TRoomEvent>>(),
     self: makeEventSource<User<TPresence, TUserMeta>>(),
     myPresence: makeEventSource<TPresence>(),
-    others: makeEventSource<{
-      others: readonly User<TPresence, TUserMeta>[];
-      event: OthersEvent<TPresence, TUserMeta>;
-    }>(),
+    others: makeEventSource<OthersEvent<TPresence, TUserMeta>>(),
     error: makeEventSource<Error>(),
     storage: makeEventSource<StorageUpdate[]>(),
     history: makeEventSource<HistoryEvent>(),
@@ -1162,14 +1234,12 @@ export function createRoom<
     nonce: string,
     messages: ClientMsg<TPresence, TRoomEvent>[]
   ) {
-    const baseUrl = new URL(config.liveblocksServer);
-    baseUrl.protocol = "https";
     const url = new URL(
       `/v2/c/rooms/${encodeURIComponent(roomId)}/send-message`,
-      baseUrl
-    );
+      config.baseUrl
+    ).toString();
     const fetcher = config.polyfills?.fetch || /* istanbul ignore next */ fetch;
-    return fetcher(url.toString(), {
+    return fetcher(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -1269,7 +1339,7 @@ export function createRoom<
     const stackSizeBefore = context.undoStack.length;
     for (const key in context.initialStorage) {
       if (context.root.get(key) === undefined) {
-        context.root.set(key, context.initialStorage[key]);
+        context.root.set(key, cloneLson(context.initialStorage[key]));
       }
     }
 
@@ -1323,32 +1393,33 @@ export function createRoom<
     }
   }
 
+  type NotifyUpdates = {
+    storageUpdates?: Map<string, StorageUpdate>;
+    presence?: boolean;
+    others?: InternalOthersEvent<TPresence, TUserMeta>[];
+  };
+
   function notify(
-    {
-      storageUpdates = new Map<string, StorageUpdate>(),
-      presence = false,
-      others: otherEvents = [],
-    }: {
-      storageUpdates?: Map<string, StorageUpdate>;
-      presence?: boolean;
-      others?: OthersEvent<TPresence, TUserMeta>[];
-    },
+    updates: NotifyUpdates,
     batchedUpdatesWrapper: (cb: () => void) => void
   ) {
+    const storageUpdates = updates.storageUpdates;
+    const othersUpdates = updates.others;
+
     batchedUpdatesWrapper(() => {
-      if (otherEvents.length > 0) {
+      if (othersUpdates !== undefined && othersUpdates.length > 0) {
         const others = context.others.current;
-        for (const event of otherEvents) {
-          eventHub.others.notify({ others, event });
+        for (const event of othersUpdates) {
+          eventHub.others.notify({ ...event, others });
         }
       }
 
-      if (presence) {
+      if (updates.presence ?? false) {
         notifySelfChanged(doNotBatchUpdates);
         eventHub.myPresence.notify(context.myPresence.current);
       }
 
-      if (storageUpdates.size > 0) {
+      if (storageUpdates !== undefined && storageUpdates.size > 0) {
         const updates = Array.from(storageUpdates.values());
         eventHub.storage.notify(updates);
       }
@@ -1581,7 +1652,7 @@ export function createRoom<
 
   function onUpdatePresenceMessage(
     message: UpdatePresenceServerMsg<TPresence>
-  ): OthersEvent<TPresence, TUserMeta> | undefined {
+  ): InternalOthersEvent<TPresence, TUserMeta> | undefined {
     if (message.targetActor !== undefined) {
       // The incoming message is a full presence update. We are obliged to
       // handle it if `targetActor` matches our own connection ID, but we can
@@ -1615,7 +1686,7 @@ export function createRoom<
 
   function onUserLeftMessage(
     message: UserLeftServerMsg
-  ): OthersEvent<TPresence, TUserMeta> | null {
+  ): InternalOthersEvent<TPresence, TUserMeta> | null {
     const user = context.others.getUser(message.actor);
     if (user) {
       context.others.removeConnection(message.actor);
@@ -1627,7 +1698,7 @@ export function createRoom<
   function onRoomStateMessage(
     message: RoomStateServerMsg<TUserMeta>,
     batchedUpdatesWrapper: (cb: () => void) => void
-  ): OthersEvent<TPresence, TUserMeta> {
+  ): InternalOthersEvent<TPresence, TUserMeta> {
     // The server will inform the client about its assigned actor ID and scopes
     context.dynamicSessionInfo.set({
       actor: message.actor,
@@ -1673,7 +1744,7 @@ export function createRoom<
 
   function onUserJoinedMessage(
     message: UserJoinServerMsg<TUserMeta>
-  ): OthersEvent<TPresence, TUserMeta> | undefined {
+  ): InternalOthersEvent<TPresence, TUserMeta> | undefined {
     context.others.setConnection(
       message.actor,
       message.id,
@@ -1761,7 +1832,7 @@ export function createRoom<
 
     const updates = {
       storageUpdates: new Map<string, StorageUpdate>(),
-      others: [] as OthersEvent<TPresence, TUserMeta>[],
+      others: [] as InternalOthersEvent<TPresence, TUserMeta>[],
     };
 
     batchUpdates(() => {
@@ -2241,8 +2312,7 @@ export function createRoom<
   );
 
   const events = {
-    connection: eventHub.connection.observable, // Old/deprecated API
-    status: eventHub.status.observable, // New/recommended API
+    status: eventHub.status.observable,
     lostConnection: eventHub.lostConnection.observable,
 
     customEvent: eventHub.customEvent.observable,
@@ -2260,7 +2330,7 @@ export function createRoom<
   };
 
   const commentsApi = createCommentsApi(config.roomId, delegates.authenticate, {
-    serverEndpoint: "https://api.liveblocks.io/v2",
+    baseUrl: config.baseUrl,
   });
 
   return Object.defineProperty(
@@ -2290,7 +2360,10 @@ export function createRoom<
       connect: () => managedSocket.connect(),
       reconnect: () => managedSocket.reconnect(),
       disconnect: () => managedSocket.disconnect(),
-      destroy: () => managedSocket.destroy(),
+      destroy: () => {
+        uninstallBgTabSpy();
+        managedSocket.destroy();
+      },
 
       // Presence
       updatePresence,
@@ -2411,22 +2484,25 @@ function makeClassicSubscribeFn<
         case "others": {
           // NOTE: Others have a different callback structure, where the API
           // exposed on the outside takes _two_ callback arguments!
-          const cb = callback as (
-            others: readonly User<TPresence, TUserMeta>[],
-            event: OthersEvent<TPresence, TUserMeta>
-          ) => void;
-          return events.others.subscribe(({ others, event }) =>
-            cb(others, event)
-          );
+          const cb = callback as LegacyOthersEventCallback<
+            TPresence,
+            TUserMeta
+          >;
+          return events.others.subscribe((event) => {
+            const { others, ...internalEvent } = event;
+            return cb(others, internalEvent);
+          });
         }
 
         case "error":
           return events.error.subscribe(callback as Callback<Error>);
 
-        case "connection":
-          return events.connection.subscribe(
-            callback as Callback<LegacyConnectionStatus>
+        case "connection": {
+          const cb = callback as Callback<LegacyConnectionStatus>;
+          return events.status.subscribe((status) =>
+            cb(newToLegacyStatus(status))
           );
+        }
 
         case "status":
           return events.status.subscribe(callback as Callback<Status>);
@@ -2507,7 +2583,7 @@ export function makeAuthDelegateForRoom(
 
 export function makeCreateSocketDelegateForRoom(
   roomId: string,
-  liveblocksServer: string,
+  baseUrl: string,
   WebSocketPolyfill?: IWebSocket
 ) {
   return (authValue: AuthValue): IWebSocketInstance => {
@@ -2517,11 +2593,13 @@ export function makeCreateSocketDelegateForRoom(
 
     if (ws === undefined) {
       throw new StopRetrying(
-        "To use Liveblocks client in a non-dom environment, you need to provide a WebSocket polyfill."
+        "To use Liveblocks client in a non-DOM environment, you need to provide a WebSocket polyfill."
       );
     }
 
-    const url = new URL(liveblocksServer);
+    const url = new URL(baseUrl);
+    url.protocol = url.protocol === "http:" ? "ws" : "wss";
+    url.pathname = "/v7";
     url.searchParams.set("roomId", roomId);
     if (authValue.type === "secret") {
       url.searchParams.set("tok", authValue.token.raw);
