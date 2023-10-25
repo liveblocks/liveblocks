@@ -275,9 +275,10 @@ export default async function auth(req, res) {
 
 ### Liveblocks.getThreads [#get-threads]
 
-Returns a list of threads inside a room. Throws an error if the room isn’t
-found. The return value matches results from the
-[Get Room Threads API](/docs/api-reference/rest-api-endpoints#get-threads).
+Returns a list of threads found inside a room. Throws an error if the room isn’t
+found. This is a wrapper around the
+[Get Room Threads API](/docs/api-reference/rest-api-endpoints#get-threads) and
+returns the same response.
 
 ```ts
 const threads = await liveblocks.getThreads({
@@ -287,9 +288,10 @@ const threads = await liveblocks.getThreads({
 
 ### Liveblocks.getThread [#get-thread]
 
-Returns a thread inside a room. Throws an error if the room isn’t found. The
-return value matches results from the
-[Get Thread API](/docs/api-reference/rest-api-endpoints#get-thread).
+Returns a thread. Throws an error if the room or thread isn’t found. This is a
+wrapper around the
+[Get Thread API](/docs/api-reference/rest-api-endpoints#get-thread) and returns
+the same response.
 
 ```ts
 const thread = await liveblocks.getThread({
@@ -300,10 +302,11 @@ const thread = await liveblocks.getThread({
 
 ### Liveblocks.getThreadParticipants [#get-thread-participants]
 
-Returns a list of participants in a thread. A participant is a user who has
-commented or been mentioned in the thread. Throws an error if the thread isn’t
-found. The return value matches results from the
-[Get Thread Participants API](/docs/api-reference/rest-api-endpoints#get-thread-participants).
+Returns a list of participants found inside a thread. A participant is a user
+who has commented or been mentioned in the thread. Throws an error if the room
+or thread isn’t found. This is a wrapper around the
+[Get Thread Participants API](/docs/api-reference/rest-api-endpoints#get-thread-participants)
+and returns the same response.
 
 ```ts
 const { participantIds } = await liveblocks.getThreadParticipants({
@@ -314,9 +317,10 @@ const { participantIds } = await liveblocks.getThreadParticipants({
 
 ### Liveblocks.getComment [#get-comment]
 
-Returns a comment in a thread. Throws an error if the comment isn’t found. The
-return value matches results from the
-[Get Comment API](/docs/api-reference/rest-api-endpoints#get-comment).
+Returns a comment. Throws an error if the room, thread, or comment isn’t found.
+This is a wrapper around the
+[Get Comment API](/docs/api-reference/rest-api-endpoints#get-comment) and
+returns the same response.
 
 ```ts
 const comment = await liveblocks.getComment({
