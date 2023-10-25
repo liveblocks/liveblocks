@@ -15,9 +15,9 @@ components to build a commenting experience. Read our
 Comments is currently in private beta and is only available to a select group of
 users. If you want to participate in the beta,
 [sign up for the waitlist](https://forms.gle/xgp54aTMsoH8hrjU9). During this
-beta period, breaking changes may occur, but no data loss. We use beta testers’
-feedback to improve the product. Your input is important and helps us shape the
-final version.
+beta period, breaking changes may occur, but data loss will not. We use beta
+testers’ feedback to improve the product. Your input is important and helps us
+shape the final version.
 
 </Banner>
 
@@ -74,7 +74,7 @@ Displays a single comment.
 
 | Prop              | Type                                                                                     | Description                                                                                                                           |
 | ----------------- | ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| `comment`         | `CommentData`                                                                            | The thread to display.                                                                                                                |
+| `comment`         | `CommentData`                                                                            | The comment to display.                                                                                                               |
 | `showActions`     | `boolean \| "hover" \| undefined`                                                        | How to show or hide the actions.<br/>Defaults to `"hover"`.                                                                           |
 | `showReactions`   | `boolean \| undefined`                                                                   | Whether to show reactions.<br/>Defaults to `true`.                                                                                    |
 | `indentContent`   | `boolean \| undefined`                                                                   | Whether to indent the comment’s content.<br/>Defaults to `true`.                                                                      |
@@ -187,10 +187,10 @@ They are built around a few customizable CSS variables:
 {/* TODO: Explain automatic color scales (with a palette-type visual) */}
 
 If these CSS variables aren’t enough, every elements within the components have
-clearly defined classes. Additionaly, some elements also have data attributes to
-provide contextual information (e.g. `data-variant="primary"` on `.lb-button`,
-`data-self` on `.lb-comment-mention`, `data-loading` on `.lb-avatar` and
-`.lb-user`, etc.).
+clearly defined classes. Additionally, some elements also have data attributes
+to provide contextual information (e.g. `data-variant="primary"` on
+`.lb-button`, `data-self` on `.lb-comment-mention`, `data-loading` on
+`.lb-avatar` and `.lb-user`, etc.).
 
 <Banner title="Internal classes" type="warning">
 
