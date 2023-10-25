@@ -74,7 +74,7 @@ function Sandbox() {
   return (
     <div>
       <h3>
-        <a href="/">Home</a> › Storage › LiveMap
+        <a href="/">Home</a> › Yjs › Text
       </h3>
       <div style={{ display: "flex", margin: "8px 0" }}>
         <Button
