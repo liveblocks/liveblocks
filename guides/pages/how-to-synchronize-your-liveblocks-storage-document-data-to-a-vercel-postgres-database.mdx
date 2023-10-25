@@ -9,7 +9,7 @@ meta:
 ---
 
 Liveblocks allows you to build collaborative applications with
-[Storage](/storage), a persisted conflict-free data store. Using our Webhooks
+[Storage](/storage), a persisted conflict-free data store. Using our webhooks
 and REST API, you can then retrieve the Storage document data as it changes, and
 store it in your database.
 
@@ -20,13 +20,13 @@ In this guide we’ll be linking a Storage application up to a
 that Storage document data is automatically synchronized. This is enabled
 through the following:
 
-- [StorageUpdated](/docs/platform/webhooks#StorageUpdatedEvent) Webhook event
+- [StorageUpdated](/docs/platform/webhooks#StorageUpdatedEvent) webhook event
 - [Get Storage Document](/docs/api-reference/rest-api-endpoints#get-rooms-roomId-storage)
   REST API
 
 <Banner title="Have a project ready">
 
-This guide assumes you already have a Liveblocks Storage project set up. If
+This guide assumes you already have a Liveblocks Storage project set up. If you
 haven’t already got one, you can select _Custom_ on our
 [getting started page](https://liveblocks.io/docs/get-started/custom), choose a
 framework, and come back after you’re set up. You could also use an example such
@@ -44,7 +44,7 @@ run the webhook this frequently.
 
 ## Create an endpoint in your project
 
-When a webhook event is triggered, it can send POST request to the back end in
+When a webhook event is triggered, it can send a POST request to the back end in
 your project, and from within there we can update the database. In this guide,
 we’ll be using a Next.js route handler (API endpoint) as an example, but other
 frameworks work similarly.
@@ -91,9 +91,9 @@ placed into the Liveblocks webhooks dashboard for quick testing.
 
 ## Set up webhooks on the Liveblocks dashboard
 
-To use webhooks, you need to your endpoint URL to the webhooks dashboard inside
-our Liveblocks project, and tell the webhook to trigger when Storage document
-data has changed.
+To use webhooks, you need to pass your endpoint URL to the webhooks dashboard
+inside your Liveblocks project, and tell the webhook to trigger when Storage
+document data has changed.
 
 <Steps>
   <Step>
@@ -188,7 +188,7 @@ data has changed.
     </StepTitle>
     
     <StepContent>
-      Note that you filter specifically for `storageUpdated`
+      Note that you can filter specifically for `storageUpdated`
       events, but we’re ignoring this for now so we can test more easily. Let’s go
       back to the code.
     </StepContent>
@@ -196,15 +196,11 @@ data has changed.
   
 </Steps>
 
-The dashboard’s now set up! Note that you filter specifically for
-`storageUpdated` events, but we’re ignoring this for now so we can test more
-easily. Let’s go back to the endpoint.
-
 ## Verify the webhook request
 
 The [`@liveblocks/node`](/docs/api-reference/liveblocks-node) package provides
 you with a function that verifies whether the current request is a real webhook
-request from your Liveblocks. You can set this up by setting up a
+request from Liveblocks. You can set this up by setting up a
 [`WebhookHandler`](/docs/api-reference/liveblocks-node#WebhookHandler) and
 running [`verifyRequest`](/docs/api-reference/liveblocks-node#verifyRequest).
 
