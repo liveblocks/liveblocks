@@ -36,7 +36,7 @@ render a list of the room’s threads and comments.
 
 ```tsx highlight="10"
 import { Thread } from "@liveblocks/react-comments";
-import { useThreads } from "../liveblocks.config.ts";
+import { useThreads } from "../liveblocks.config";
 
 function Component() {
   const { threads } = useThreads();
@@ -76,55 +76,6 @@ function Component() {
 
 {/* TODO: Document classes and data attributes */}
 
-### Comment
-
-Displays a single comment.
-
-```tsx
-<Comment comment={comment} />
-```
-
-Combine with [`useThreads`](/docs/api-reference/liveblocks-react#useThreads) to
-render a thread’s comments.
-
-```tsx highlight="10"
-import { Comment } from "@liveblocks/react-comments";
-import { useThreads } from "../liveblocks.config.ts";
-
-function Component() {
-  const { threads } = useThreads();
-
-  return (
-    <>
-      {threads[0].comments.map((comment) => (
-        <Comment key={comment.id} comment={comment} />
-      ))}
-    </>
-  );
-}
-```
-
-#### Comment props
-
-<Table columns={["26%", "32%", "42%"]}>
-
-| Prop              | Type                                                                                     | Description                                                                                                                           |
-| ----------------- | ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| `comment`         | `CommentData`                                                                            | The comment to display.                                                                                                               |
-| `showActions`     | `boolean \| "hover" \| undefined`                                                        | How to show or hide the actions.<br/>Defaults to `"hover"`.                                                                           |
-| `showReactions`   | `boolean \| undefined`                                                                   | Whether to show reactions.<br/>Defaults to `true`.                                                                                    |
-| `indentContent`   | `boolean \| undefined`                                                                   | Whether to indent the comment’s content.<br/>Defaults to `true`.                                                                      |
-| `showDeleted`     | `boolean \| undefined`                                                                   | Whether to show the comment if it was deleted. If set to `false`, it will render deleted comments as `null`.<br/>Defaults to `false`. |
-| `onCommentEdit`   | `(comment: CommentData) => void`                                                         | The event handler called when the comment is edited.                                                                                  |
-| `onCommentDelete` | `(comment: CommentData) => void`                                                         | The event handler called when the comment is deleted.                                                                                 |
-| `onAuthorClick`   | <code>(userId: string, event: MouseEvent&lt;HTMLElement&gt;) => void \| undefined</code> | The event handler called when clicking on the author.                                                                                 |
-| `onMentionClick`  | <code>(userId: string, event: MouseEvent&lt;HTMLElement&gt;) => void \| undefined</code> | The event handler called when clicking on a mention.                                                                                  |
-| `overrides`       | <code>Partial&lt;CommentOverrides \& ComposerOverrides&gt; \| undefined</code>           | Override the component’s strings.                                                                                                     |
-
-</Table>
-
-{/* TODO: Document classes and data attributes */}
-
 ### Composer
 
 Displays a composer for creating threads or comments.
@@ -141,6 +92,30 @@ import { Composer } from "@liveblocks/react-comments";
 // Creates a new thread
 function Component() {
   return <Composer />;
+}
+```
+
+#### Adding thread metadata
+
+If you’d like to attach custom metadata to the new thread, you can add a
+`metadata` prop.
+
+```tsx
+import { Composer } from "@liveblocks/react-comments";
+import { ThreadMetadata } from "../liveblocks.config";
+
+// Creates a new thread with custom metadata
+function Component() {
+  return (
+    <Composer<ThreadMetadata>
+      metadata={{
+        // Custom metadata here, e.g. colors, coordinates
+        color: "purple",
+        x: 80,
+        y: 120,
+      }}
+    />
+  );
 }
 ```
 
@@ -182,7 +157,7 @@ manually create the thread.
 
 ```tsx
 import { Composer } from "@liveblocks/react-comments";
-import { useCreateThread } from "../liveblocks.config.ts";
+import { useCreateThread } from "../liveblocks.config";
 
 // Creates a new thread with custom metadata
 function Component() {
@@ -216,7 +191,7 @@ and call comment or thread mutation methods manually.
 
 ```tsx
 import { Composer } from "@liveblocks/react-comments";
-import { useEditComment, useAddReaction } from "../liveblocks.config.ts";
+import { useEditComment, useAddReaction } from "../liveblocks.config";
 
 // Custom submission behavior (edits a comment and adds a reaction)
 function Component({ threadId, commentId }) {
@@ -251,6 +226,7 @@ Learn more about mutation hooks under
 | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------- |
 | `threadId`          | `string \| undefined`                                                                                                                | The ID of the thread to reply to or to edit a comment in.                                         |
 | `commentId`         | `string \| undefined`                                                                                                                | The ID of the comment to edit.                                                                    |
+| `metadata`          | <code>ThreadMetadata&lt;T&gt; \| undefined</code>                                                                                    | The metadata of the thread to create.                                                             |
 | `onComposerSubmit`  | <code>((comment: ComposerSubmitComment, event: FormEvent&lt;HTMLFormElement&gt;) => Promise&lt;void&gt; \| void) \| undefined</code> | The event handler called when the composer is submitted.                                          |
 | `defaultValue`      | `CommentBody \| undefined`                                                                                                           | The composer’s initial value.                                                                     |
 | `collapsed`         | `boolean \| undefined`                                                                                                               | Whether the composer is collapsed. Setting a value will make the composer controlled.             |
@@ -264,51 +240,98 @@ Learn more about mutation hooks under
 
 {/* TODO: Document classes and data attributes */}
 
+### Comment
+
+Displays a single comment.
+
+```tsx
+<Comment comment={comment} />
+```
+
+Combine with [`useThreads`](/docs/api-reference/liveblocks-react#useThreads) to
+render a thread’s comments.
+
+```tsx highlight="8"
+import { Comment } from "@liveblocks/react-comments";
+import { ThreadData } from "@liveblocks/client";
+
+function Component({ thread }: { thread: ThreadData }) {
+  return (
+    <>
+      {thread.comments.map((comment) => (
+        <Comment key={comment.id} comment={comment} />
+      ))}
+    </>
+  );
+}
+```
+
+#### Comment props
+
+<Table columns={["26%", "32%", "42%"]}>
+
+| Prop              | Type                                                                                     | Description                                                                                                                           |
+| ----------------- | ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `comment`         | `CommentData`                                                                            | The comment to display.                                                                                                               |
+| `showActions`     | `boolean \| "hover" \| undefined`                                                        | How to show or hide the actions.<br/>Defaults to `"hover"`.                                                                           |
+| `showReactions`   | `boolean \| undefined`                                                                   | Whether to show reactions.<br/>Defaults to `true`.                                                                                    |
+| `indentContent`   | `boolean \| undefined`                                                                   | Whether to indent the comment’s content.<br/>Defaults to `true`.                                                                      |
+| `showDeleted`     | `boolean \| undefined`                                                                   | Whether to show the comment if it was deleted. If set to `false`, it will render deleted comments as `null`.<br/>Defaults to `false`. |
+| `onCommentEdit`   | `(comment: CommentData) => void`                                                         | The event handler called when the comment is edited.                                                                                  |
+| `onCommentDelete` | `(comment: CommentData) => void`                                                         | The event handler called when the comment is deleted.                                                                                 |
+| `onAuthorClick`   | <code>(userId: string, event: MouseEvent&lt;HTMLElement&gt;) => void \| undefined</code> | The event handler called when clicking on the author.                                                                                 |
+| `onMentionClick`  | <code>(userId: string, event: MouseEvent&lt;HTMLElement&gt;) => void \| undefined</code> | The event handler called when clicking on a mention.                                                                                  |
+| `overrides`       | <code>Partial&lt;CommentOverrides \& ComposerOverrides&gt; \| undefined</code>           | Override the component’s strings.                                                                                                     |
+
+</Table>
+
+{/* TODO: Document classes and data attributes */}
+
 ### Customization
 
 #### Styling
 
-The default components come with default styles, you can import them into the
-root of your app or directly into a CSS file with `@import`.
+The default components come with default styles. These styles can be imported
+into the root of your app or directly into a CSS file with `@import`.
 
 ```tsx
 import "@liveblocks/react-comments/styles.css";
 ```
 
-They are built around a few customizable CSS variables:
+They are built around a few customizable CSS variables.
 
-```css
-/* Basic */
---lb-radius: 0.5em;
---lb-spacing: 1em;
---lb-accent: #17f;
---lb-accent-foreground: #fff;
---lb-background: #fff;
---lb-foreground: #111;
+<Table columns={["30%", "28%", "42%"]}>
 
-/* Advanced */
---lb-icon-size: 20px;
---lb-icon-weight: 1.5px;
---lb-avatar-radius: 50%;
---lb-button-radius: calc(0.75 * var(--lb-radius));
---lb-transition-duration: 0.1s;
---lb-transition-easing: cubic-bezier(0.4, 0, 0.2, 1);
---lb-elevation-shadow: 0 0 0 1px rgb(0 0 0 / 4%), 0 2px 6px rgb(0 0 0 / 8%),
-  0 8px 26px rgb(0 0 0 / 12%);
---lb-tooltip-shadow: 0 2px 4px rgb(0 0 0 / 8%), 0 4px 12px rgb(0 0 0 / 12%);
---lb-elevation-background: var(--lb-background);
---lb-elevation-foreground: var(--lb-foreground);
---lb-tooltip-background: #222;
---lb-tooltip-foreground: #fff;
---lb-accent-contrast: 8%;
---lb-foreground-contrast: 6%;
---lb-elevation-foreground-contrast: 6%;
---lb-tooltip-foreground-contrast: 10%;
-```
+| CSS variable                         | Default value                                                                        | Description                                                                          |
+| ------------------------------------ | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------ |
+| `--lb-radius`                        | `0.5em`                                                                              | The border radius scale. `em` values recommended.                                    |
+| `--lb-spacing`                       | `1em`                                                                                | The spacing scale. `em` values recommended.                                          |
+| `--lb-accent`                        | `#0000ff`                                                                            | The accent color.                                                                    |
+| `--lb-accent-foreground`             | `#ffffff`                                                                            | The foreground color used over the accent color.                                     |
+| `--lb-background`                    | `#ffffff`                                                                            | The main background color.                                                           |
+| `--lb-foreground`                    | `#111111`                                                                            | The main foreground color.                                                           |
+| `--lb-icon-size`                     | `20px`                                                                               | The size of icons.                                                                   |
+| `--lb-icon-weight`                   | `1.5px`                                                                              | The stroke weight of icons.                                                          |
+| `--lb-avatar-radius`                 | `50%`                                                                                | The border radius used for avatars.                                                  |
+| `--lb-button-radius`                 | `calc(0.75 * var(--lb-radius))`                                                      | The border radius used for buttons.                                                  |
+| `--lb-transition-duration`           | `0.1s`                                                                               | The duration used for transitioned elements.                                         |
+| `--lb-transition-easing`             | `cubic-bezier(0.4, 0, 0.2, 1)`                                                       | The easing function used for transitioned elements.                                  |
+| `--lb-elevation-shadow`              | `0 0 0 1px rgb(0 0 0 / 4%), 0 2px 6px rgb(0 0 0 / 8%),  0 8px 26px rgb(0 0 0 / 12%)` | The box shadow added to elevated elements.                                           |
+| `--lb-tooltip-shadow`                | `0 2px 4px rgb(0 0 0 / 8%), 0 4px 12px rgb(0 0 0 / 12%)`                             | The box shadow added to tooltips.                                                    |
+| `--lb-elevation-background`          | `var(--lb-background)`                                                               | The background color used for elevated elements.                                     |
+| `--lb-elevation-foreground`          | `var(--lb-foreground)`                                                               | The foreground color used for elevated elements.                                     |
+| `--lb-tooltip-background`            | `#222222`                                                                            | The background color used for tooltips.                                              |
+| `--lb-tooltip-foreground`            | `#ffffff`                                                                            | The foreground color used for tooltips.                                              |
+| `--lb-accent-contrast`               | `8%`                                                                                 | Affects the lightness of accent colors. `%` value required.                          |
+| `--lb-foreground-contrast`           | `6%`                                                                                 | Affects the lightness of foreground colors. `%` value required.                      |
+| `--lb-elevation-foreground-contrast` | `6%`                                                                                 | Affects the lightness of foreground colors in elevated elements. `%` value required. |
+| `--lb-tooltip-foreground-contrast`   | `10%`                                                                                | Affects the lightness of foreground colors in tooltips. `%` value required.          |
+
+</Table>
 
 {/* TODO: Explain automatic color scales (with a palette-type visual) */}
 
-If these CSS variables aren’t enough, every elements within the components have
+If these CSS variables aren’t enough, every element within the components have
 clearly defined classes. Additionally, some elements also have data attributes
 to provide contextual information (e.g. `data-variant="primary"` on
 `.lb-button`, `data-self` on `.lb-comment-mention`, `data-loading` on
@@ -338,6 +361,8 @@ import "@liveblocks/react-comments/styles.css";
 import "@liveblocks/react-comments/styles/dark/media-query.css";
 import "@liveblocks/react-comments/styles/dark/attributes.css";
 ```
+
+{/* TODO: Mention --elevation-background, --elevation-foreground here */}
 
 ##### Browser support
 
