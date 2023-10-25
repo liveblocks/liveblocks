@@ -10,7 +10,7 @@
 
   --editor-max-width: 800px;
   --editor-min-height: 1100px;
-  --comments-width: 310px;
+  --comments-width: 0px;
 }
 
 .editorHeader {

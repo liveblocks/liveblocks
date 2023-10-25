@@ -1,4 +1,5 @@
 import type { JsonObject } from "../lib/Json";
+import type { Resolve } from "../lib/Resolve";
 import type { BaseUserMeta } from "../protocol/BaseUserMeta";
 import type { User } from "./User";
 
@@ -10,23 +11,24 @@ export type Others<
   TUserMeta extends BaseUserMeta,
 > = readonly User<TPresence, TUserMeta>[];
 
-export type OthersEvent<
+export type InternalOthersEvent<
   TPresence extends JsonObject,
   TUserMeta extends BaseUserMeta,
 > =
-  | {
-      type: "leave";
-      user: User<TPresence, TUserMeta>;
-    }
-  | {
-      type: "enter";
-      user: User<TPresence, TUserMeta>;
-    }
+  | { type: "leave"; user: User<TPresence, TUserMeta> }
+  | { type: "enter"; user: User<TPresence, TUserMeta> }
   | {
       type: "update";
       user: User<TPresence, TUserMeta>;
       updates: Partial<TPresence>;
     }
-  | {
-      type: "reset";
-    };
+  | { type: "reset" };
+
+export type OthersEvent<
+  TPresence extends JsonObject,
+  TUserMeta extends BaseUserMeta,
+> = Resolve<
+  InternalOthersEvent<TPresence, TUserMeta> & {
+    others: readonly User<TPresence, TUserMeta>[];
+  }
+>;

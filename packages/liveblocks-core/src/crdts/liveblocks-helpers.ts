@@ -1,6 +1,6 @@
 import { assertNever, nn } from "../lib/assert";
 import type { Json } from "../lib/Json";
-import { entries, isPlainObject } from "../lib/utils";
+import { deepClone, entries, isPlainObject } from "../lib/utils";
 import type { CreateOp, Op } from "../protocol/Op";
 import { OpCode } from "../protocol/Op";
 import type { IdTuple, SerializedCrdt } from "../protocol/SerializedCrdt";
@@ -113,6 +113,14 @@ export function isLiveObject(value: unknown): value is LiveObject<LsonObject> {
 
 export function isLiveRegister(value: unknown): value is LiveRegister<Json> {
   return value instanceof LiveRegister;
+}
+
+export function cloneLson<L extends Lson | undefined>(value: L): L {
+  return value === undefined
+    ? (undefined as L)
+    : isLiveStructure(value)
+    ? (value.clone() as L)
+    : (deepClone(value) as L);
 }
 
 export function liveNodeToLson(obj: LiveNode): Lson {

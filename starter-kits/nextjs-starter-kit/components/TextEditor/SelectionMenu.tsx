@@ -1,7 +1,6 @@
 import { BubbleMenu, Editor } from "@tiptap/react";
 import { ToolbarInlineAdvanced } from "./TextInlineAdvanced";
 import { ToolbarInline } from "./ToolbarInline";
-import { ToolbarThread } from "./ToolbarThread";
 import styles from "./TextEditor.module.css";
 
 type Props = {
@@ -15,7 +14,6 @@ export function SelectionMenu({ editor }: Props) {
         <div className={styles.bubbleMenuWrapper}>
           <ToolbarInline editor={editor} />
           <ToolbarInlineAdvanced editor={editor} />
-          <ToolbarThread editor={editor} />
         </div>
       ) : null}
     </BubbleMenu>

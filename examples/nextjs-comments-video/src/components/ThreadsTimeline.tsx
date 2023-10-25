@@ -17,6 +17,7 @@ import { useState } from "react";
 
 export function ThreadsTimeline() {
   return (
+    // @ts-ignore
     <ErrorBoundary fallback={<div>error</div>}>
       <ClientSideSuspense fallback={null}>
         {() => <PinnedThreads />}
@@ -42,6 +43,7 @@ function PinnedThread({ thread }: { thread: ThreadData<ThreadMetadata> }) {
   const highlightThread = useHighlightThread(thread.id);
   const [highlightedPin, setHighlightedPin] = useState(false);
 
+  // On highlight event, highlight this pin
   useHighlightPinListener((threadId) => {
     if (thread.id !== threadId) {
       setHighlightedPin(false);

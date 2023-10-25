@@ -21,26 +21,10 @@ import type { LiveNode, Lson } from "./Lson";
 import type { ToImmutable } from "./utils";
 
 export type LiveListUpdateDelta =
-  | {
-      index: number;
-      item: Lson;
-      type: "insert";
-    }
-  | {
-      index: number;
-      type: "delete";
-    }
-  | {
-      index: number;
-      previousIndex: number;
-      item: Lson;
-      type: "move";
-    }
-  | {
-      index: number;
-      item: Lson;
-      type: "set";
-    };
+  | { type: "insert"; index: number; item: Lson }
+  | { type: "delete"; index: number }
+  | { type: "move"; index: number; previousIndex: number; item: Lson }
+  | { type: "set"; index: number; item: Lson };
 
 /**
  * A LiveList notification that is sent in-client to any subscribers whenever
@@ -1296,6 +1280,10 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     return (
       process.env.NODE_ENV === "production" ? result : Object.freeze(result)
     ) as readonly ToImmutable<TItem>[];
+  }
+
+  clone(): LiveList<TItem> {
+    return new LiveList(this._items.map((item) => item.clone() as TItem));
   }
 }
 

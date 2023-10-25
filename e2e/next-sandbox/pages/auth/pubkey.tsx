@@ -9,11 +9,14 @@ import { getRoomFromUrl } from "../../utils";
 const client = createClient({
   publicApiKey: nn(
     process.env.NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY,
-    "Please set NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY in the env"
+    "Please specify NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY env var"
   ),
 
   // @ts-expect-error - Hidden setting
-  liveblocksServer: process.env.NEXT_PUBLIC_LIVEBLOCKS_SERVER,
+  baseUrl: nn(
+    process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL,
+    "Please specify NEXT_PUBLIC_LIVEBLOCKS_BASE_URL env var"
+  ),
 });
 
 const { RoomProvider, useMyPresence, useSelf, useOthers, useStatus } =
