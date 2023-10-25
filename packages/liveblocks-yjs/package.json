@@ -27,7 +27,7 @@
     "build": "tsup && cp dist/index.d.ts dist/index.d.mts",
     "format": "eslint --fix src/; prettier --write src/",
     "lint": "eslint src/",
-    "lint:package": "publint --strict && attw --pack",
+    "lint:package": "publint --strict && attw --pack --ignore-rules cjs-only-exports-default",
     "test": "jest --silent --verbose --color=always",
     "test:watch": "jest --silent --verbose --color=always --watch"
   },
