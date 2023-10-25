@@ -268,15 +268,11 @@ Learn more about mutation hooks under
 
 #### Styling
 
-The default components come with default styles, import them either at the root
-of your app or directly in CSS depending on your setup.
+The default components come with default styles, you can import them into the
+root of your app or directly into a CSS file with `@import`.
 
-```tsx file="layout.tsx"
+```tsx
 import "@liveblocks/react-comments/styles.css";
-```
-
-```tsx file="globals.css"
-@import "@liveblocks/react-comments/styles.css";
 ```
 
 They are built around a few customizable CSS variables:
@@ -335,20 +331,12 @@ and we provide styles that do so out-of-the-box. They exist in two versions:
 - `attributes` targets either the `dark` class, the `data-theme` attribute if
   it’s set to `"dark"`, or the `data-dark` attribute.
 
-```tsx file="layout.tsx"
+```tsx
 import "@liveblocks/react-comments/styles.css";
 
 // Choose one depending on your setup
 import "@liveblocks/react-comments/styles/dark/media-query.css";
 import "@liveblocks/react-comments/styles/dark/attributes.css";
-```
-
-```tsx file="globals.css"
-@import "@liveblocks/react-comments/styles.css";
-
-/* Choose one depending on your setup */
-@import "@liveblocks/react-comments/styles/dark/media-query.css";
-@import "@liveblocks/react-comments/styles/dark/attributes.css";
 ```
 
 ##### Browser support
