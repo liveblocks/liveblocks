@@ -25,15 +25,33 @@ shape the final version.
 
 ### Thread
 
-Displays a thread of comments, with a composer to reply to it.
+Displays a thread of comments. Each comment has a composer for creating replies.
 
 ```tsx
-<>
-  {threads.map((thread) => (
-    <Thread key={thread.id} thread={thread} />
-  ))}
-</>
+<Thread thread={thread} />
 ```
+
+Combine with [`useThreads`](/docs/api-reference/liveblocks-react#useThreads) to
+render a list of the room’s threads and comments.
+
+```tsx highlight="10"
+import { Thread } from "@liveblocks/react-comments";
+import { useThreads } from "../liveblocks.config.ts";
+
+function Component() {
+  const { threads } = useThreads();
+
+  return (
+    <>
+      {threads.map((thread) => (
+        <Thread key={thread.id} thread={thread} />
+      ))}
+    </>
+  );
+}
+```
+
+#### Thread props
 
 <Table columns={["26%", "32%", "42%"]}>
 
@@ -63,12 +81,30 @@ Displays a thread of comments, with a composer to reply to it.
 Displays a single comment.
 
 ```tsx
-<>
-  {thread.comments.map((comment) => (
-    <Comment key={comment.id} comment={comment} />
-  ))}
-</>
+<Comment comment={comment} />
 ```
+
+Combine with [`useThreads`](/docs/api-reference/liveblocks-react#useThreads) to
+render a thread’s comments.
+
+```tsx highlight="10"
+import { Comment } from "@liveblocks/react-comments";
+import { useThreads } from "../liveblocks.config.ts";
+
+function Component() {
+  const { threads } = useThreads();
+
+  return (
+    <>
+      {threads[0].comments.map((comment) => (
+        <Comment key={comment.id} comment={comment} />
+      ))}
+    </>
+  );
+}
+```
+
+#### Comment props
 
 <Table columns={["26%", "32%", "42%"]}>
 
@@ -91,33 +127,123 @@ Displays a single comment.
 
 ### Composer
 
-Displays a composer to create comments.
+Displays a composer for creating threads or comments.
 
 ```tsx
 <Composer />
 ```
 
-By default, submitting the composer will create a new thread. If you provide a
-`threadId` prop, it will reply to that thread, and if you also provide a
-`commentId` prop, it will edit that comment. If you want to customize this, you
-can use `event.preventDefault()` in `onComposerSubmit` to disable the default
-behavior and call the mutation methods (e.g. `createThread`) manually.
+By default, submitting the composer will create a new thread.
 
 ```tsx
-<Composer
-  onComposerSubmit={({ body }, event) => {
-    event.preventDefault();
+import { Composer } from "@liveblocks/react-comments";
 
-    createThread({
-      body,
-      metadata: {
-        x: 80,
-        y: 120,
-      },
-    });
-  }}
-/>
+// Creates a new thread
+function Component() {
+  return <Composer />;
+}
 ```
+
+#### Replying to a thread
+
+If you provide a `threadId`, then submitting the composer will add a new reply
+to the thread.
+
+```tsx
+import { Composer } from "@liveblocks/react-comments";
+
+// Adds a new comment to a thread
+function Component({ threadId }) {
+  return <Composer threadId={threadId} />;
+}
+```
+
+#### Modifying a comment
+
+If you provide both a `threadId` and a `commentId`, then submitting the composer
+will edit the comment.
+
+```tsx
+import { Composer } from "@liveblocks/react-comments";
+
+// Edits an existing comment
+function Component({ threadId, commentId }) {
+  return <Composer threadId={threadId} commentId={commentId} />;
+}
+```
+
+#### Adding thread metadata
+
+If you’d like to submit metadata to a thread, you can use
+`event.preventDefault()` in `onComposerSubmit` to disable the default behavior
+in combination with
+[`useCreateThread`](/docs/api-reference/liveblocks-react#useCreateThread) to
+manually create the thread.
+
+```tsx
+import { Composer } from "@liveblocks/react-comments";
+import { useCreateThread } from "../liveblocks.config.ts";
+
+// Creates a new thread with custom metadata
+function Component() {
+  const createThread = useCreateThread();
+
+  return (
+    <Composer
+      onComposerSubmit={({ body }, event) => {
+        event.preventDefault();
+
+        createThread({
+          body,
+          metadata: {
+            // Custom metadata here, e.g. colors, coordinates
+            color: "purple",
+            x: 80,
+            y: 120,
+          },
+        });
+      }}
+    />
+  );
+}
+```
+
+#### Custom behavior
+
+If you’d like to customize submission behavior, you can use
+`event.preventDefault()` in `onComposerSubmit` to disable the default behavior
+and call comment or thread mutation methods manually.
+
+```tsx
+import { Composer } from "@liveblocks/react-comments";
+import { useEditComment, useAddReaction } from "../liveblocks.config.ts";
+
+// Custom submission behavior (edits a comment and adds a reaction)
+function Component({ threadId, commentId }) {
+  const editComment = useEditComment();
+  const addReaction = useAddReaction();
+
+  return (
+    <Composer
+      onComposerSubmit={({ body }, event) => {
+        event.preventDefault();
+
+        // Custom behavior
+        // ...
+
+        // Example mutations
+        editComment({ threadId, commentId, body });
+        addReaction({ threadId, commentId, emoji: "✅" });
+      }}
+    />
+  );
+}
+```
+
+Learn more about mutation hooks under
+[`@liveblocks/react`](/docs/api-reference/liveblocks-react#Comments).
+
+#### Composer props
 
 <Table columns={["26%", "32%", "42%"]}>
 
