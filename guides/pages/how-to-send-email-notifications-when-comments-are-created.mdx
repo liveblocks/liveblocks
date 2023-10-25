@@ -13,7 +13,7 @@ comments.
 
 ## What we’re building
 
-In this guide we’ll be learning how to send comments notifications., and more
+In this guide we’ll be learning how to send comments notifications, and more
 specifically, we’ll be looking at how to:
 
 - Trigger events when comments are created using the
@@ -28,7 +28,7 @@ specifically, we’ll be looking at how to:
 
 <Banner title="Have a project ready">
 
-This guide assumes you already have a Liveblocks Comments project set up. If
+This guide assumes you already have a Liveblocks Comments project set up. If you
 haven’t already got one, you can
 [get started with Comments](/docs/get-started/react-comments), and come back
 after you’re set up. You could also use our
@@ -38,7 +38,7 @@ after you’re set up. You could also use our
 
 ## Create an endpoint in your project
 
-When a webhook event is triggered, it can send POST request to the back end in
+When a webhook event is triggered, it can send a POST request to the back end in
 your project, and from within there we can update the database. In this guide,
 we’ll be using a Next.js route handler (API endpoint) as an example, but other
 frameworks work similarly.
@@ -85,9 +85,9 @@ placed into the Liveblocks webhooks dashboard for quick testing.
 
 ## Set up webhooks on the Liveblocks dashboard
 
-To use webhooks, you need to your endpoint URL to the webhooks dashboard inside
-our Liveblocks project, and tell the webhook to trigger when Storage document
-data has changed.
+To use webhooks, you need to pass your endpoint URL to the webhooks dashboard
+inside your Liveblocks project, and tell the webhook to trigger when a comment
+has been created.
 
 <Steps>
   <Step>
@@ -173,7 +173,7 @@ data has changed.
     <StepTitle>Webhooks dashboard is set up!</StepTitle>
 
     <StepContent>
-      Note that you can filter specifically for `storageUpdated` events, but we’re
+      Note that you can filter specifically for `commentCreated` events, but we’re
       ignoring this for now so we can test more easily. Let’s go back to the
       code.
     </StepContent>
@@ -185,7 +185,7 @@ data has changed.
 
 The [`@liveblocks/node`](/docs/api-reference/liveblocks-node) package provides
 you with a function that verifies whether the current request is a real webhook
-request from your Liveblocks. You can set this up by setting up a
+request from Liveblocks. You can set this up by setting up a
 [`WebhookHandler`](/docs/api-reference/liveblocks-node#WebhookHandler) and
 running [`verifyRequest`](/docs/api-reference/liveblocks-node#verifyRequest).
 

@@ -43,7 +43,7 @@ run the webhook this frequently.
 
 ## Create an endpoint in your project
 
-When a webhook event is triggered, it can send POST request to the back end in
+When a webhook event is triggered, it can send a POST request to the back end in
 your project, and from within there we can update the database. In this guide,
 we’ll be using a Next.js route handler (API endpoint) as an example, but other
 frameworks work similarly.
@@ -90,7 +90,7 @@ placed into the Liveblocks webhooks dashboard for quick testing.
 
 ## Set up webhooks on the Liveblocks dashboard
 
-To use webhooks, you need to add your endpoint URL to the webhooks dashboard
+To use webhooks, you need to pass your endpoint URL to the webhooks dashboard
 inside your Liveblocks project, and tell the webhook to trigger when Storage
 document data has changed.
 
@@ -198,7 +198,7 @@ document data has changed.
 
 The [`@liveblocks/node`](/docs/api-reference/liveblocks-node) package provides
 you with a function that verifies whether the current request is a real webhook
-request from your Liveblocks. You can set this up by setting up a
+request from Liveblocks. You can set this up by setting up a
 [`WebhookHandler`](/docs/api-reference/liveblocks-node#WebhookHandler) and
 running [`verifyRequest`](/docs/api-reference/liveblocks-node#verifyRequest).
 
