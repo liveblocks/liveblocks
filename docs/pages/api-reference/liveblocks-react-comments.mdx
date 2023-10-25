@@ -23,6 +23,121 @@ final version.
 
 ## Components
 
+### Thread
+
+Displays a thread of comments, with a composer to reply to it.
+
+```tsx
+<>
+  {threads.map((thread) => (
+    <Thread key={thread.id} thread={thread} />
+  ))}
+</>
+```
+
+<Table columns={["26%", "32%", "42%"]}>
+
+| Prop                   | Type                                                                                              | Description                                                                                                 |
+| ---------------------- | ------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `thread`               | <code>ThreadData&lt;\{ resolved?: boolean \}&gt;</code>                                           | The thread to display.                                                                                      |
+| `showComposer`         | `boolean \| "collapsed" \| undefined`                                                             | How to show or hide the composer to reply to the thread.<br/>Defaults to `"collapsed"`.                     |
+| `showActions`          | `boolean \| "hover" \| undefined`                                                                 | How to show or hide the actions.<br/>Defaults to `"hover"`.                                                 |
+| `showReactions`        | `boolean \| undefined`                                                                            | Whether to show reactions.<br/>Defaults to `true`.                                                          |
+| `showResolveAction`    | `boolean \| undefined`                                                                            | Whether to show the action to resolve the thread.<br/>Defaults to `true`.                                   |
+| `indentCommentContent` | `boolean \| undefined`                                                                            | Whether to indent the comments’ content.<br/>Defaults to `true`.                                            |
+| `showDeletedComments`  | `boolean \| undefined`                                                                            | Whether to show deleted comments.<br/>Defaults to `false`.                                                  |
+| `onResolvedChange`     | `(resolved: boolean) => void`                                                                     | The event handler called when changing the resolved status.                                                 |
+| `onThreadDelete`       | `(thread: ThreadData) => void`                                                                    | The event handler called when the thread is deleted. A thread is deleted when all its comments are deleted. |
+| `onCommentEdit`        | `(comment: CommentData) => void`                                                                  | The event handler called when a comment is edited.                                                          |
+| `onCommentDelete`      | `(comment: CommentData) => void`                                                                  | The event handler called when a comment is deleted.                                                         |
+| `onAuthorClick`        | <code>(userId: string, event: MouseEvent&lt;HTMLElement&gt;) => void \| undefined</code>          | The event handler called when clicking on a comment’s author.                                               |
+| `onMentionClick`       | <code>(userId: string, event: MouseEvent&lt;HTMLElement&gt;) => void \| undefined</code>          | The event handler called when clicking on a mention.                                                        |
+| `overrides`            | <code>Partial&lt;ThreadOverrides \& CommentOverrides \& ComposerOverrides&gt; \| undefined</code> | Override the component’s strings.                                                                           |
+
+</Table>
+
+{/* TODO: Document classes and data attributes */}
+
+### Comment
+
+Displays a single comment.
+
+```tsx
+<>
+  {thread.comments.map((comment) => (
+    <Comment key={comment.id} comment={comment} />
+  ))}
+</>
+```
+
+<Table columns={["26%", "32%", "42%"]}>
+
+| Prop              | Type                                                                                     | Description                                                                                                                           |
+| ----------------- | ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `comment`         | `CommentData`                                                                            | The thread to display.                                                                                                                |
+| `showActions`     | `boolean \| "hover" \| undefined`                                                        | How to show or hide the actions.<br/>Defaults to `"hover"`.                                                                           |
+| `showReactions`   | `boolean \| undefined`                                                                   | Whether to show reactions.<br/>Defaults to `true`.                                                                                    |
+| `indentContent`   | `boolean \| undefined`                                                                   | Whether to indent the comment’s content.<br/>Defaults to `true`.                                                                      |
+| `showDeleted`     | `boolean \| undefined`                                                                   | Whether to show the comment if it was deleted. If set to `false`, it will render deleted comments as `null`.<br/>Defaults to `false`. |
+| `onCommentEdit`   | `(comment: CommentData) => void`                                                         | The event handler called when the comment is edited.                                                                                  |
+| `onCommentDelete` | `(comment: CommentData) => void`                                                         | The event handler called when the comment is deleted.                                                                                 |
+| `onAuthorClick`   | <code>(userId: string, event: MouseEvent&lt;HTMLElement&gt;) => void \| undefined</code> | The event handler called when clicking on the author.                                                                                 |
+| `onMentionClick`  | <code>(userId: string, event: MouseEvent&lt;HTMLElement&gt;) => void \| undefined</code> | The event handler called when clicking on a mention.                                                                                  |
+| `overrides`       | <code>Partial&lt;CommentOverrides \& ComposerOverrides&gt; \| undefined</code>           | Override the component’s strings.                                                                                                     |
+
+</Table>
+
+{/* TODO: Document classes and data attributes */}
+
+### Composer
+
+Displays a composer to create comments.
+
+```tsx
+<Composer />
+```
+
+By default, submitting the composer will create a new thread. If you provide a
+`threadId` prop, it will reply to that thread, and if you also provide a
+`commentId` prop, it will edit that comment. If you want to customize this, you
+can use `event.preventDefault()` in `onComposerSubmit` to disable the default
+behavior and call the mutation methods (e.g. `createThread`) manually.
+
+```tsx
+<Composer
+  onComposerSubmit={({ body }, event) => {
+    event.preventDefault();
+
+    createThread({
+      body,
+      metadata: {
+        x: 80,
+        y: 120,
+      },
+    });
+  }}
+/>
+```
+
+<Table columns={["26%", "32%", "42%"]}>
+
+| Prop                | Type                                                                                                                                 | Description                                                                                       |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------- |
+| `threadId`          | `string \| undefined`                                                                                                                | The ID of the thread to reply to or to edit a comment in.                                         |
+| `commentId`         | `string \| undefined`                                                                                                                | The ID of the comment to edit.                                                                    |
+| `onComposerSubmit`  | <code>((comment: ComposerSubmitComment, event: FormEvent&lt;HTMLFormElement&gt;) => Promise&lt;void&gt; \| void) \| undefined</code> | The event handler called when the composer is submitted.                                          |
+| `defaultValue`      | `CommentBody \| undefined`                                                                                                           | The composer’s initial value.                                                                     |
+| `collapsed`         | `boolean \| undefined`                                                                                                               | Whether the composer is collapsed. Setting a value will make the composer controlled.             |
+| `onCollapsedChange` | `(collapsed: boolean) => void`                                                                                                       | The event handler called when the collapsed state of the composer changes.                        |
+| `defaultCollapsed`  | `boolean \| undefined`                                                                                                               | Whether the composer is initially collapsed. Setting a value will make the composer uncontrolled. |
+| `disabled`          | `boolean \| undefined`                                                                                                               | Whether the composer is disabled.                                                                 |
+| `autoFocus`         | `boolean \| undefined`                                                                                                               | Whether to focus the composer on mount.                                                           |
+| `overrides`         | <code>Partial&lt;ComposerOverrides&gt; \| undefined</code>                                                                           | Override the component’s strings.                                                                 |
+
+</Table>
+
+{/* TODO: Document classes and data attributes */}
+
 ### Customization
 
 #### Styling
@@ -173,121 +288,6 @@ example:
   }}
 />
 ```
-
-### Thread
-
-Displays a thread of comments, with a composer to reply to it.
-
-```tsx
-<>
-  {threads.map((thread) => (
-    <Thread key={thread.id} thread={thread} />
-  ))}
-</>
-```
-
-<Table columns={["26%", "32%", "42%"]}>
-
-| Prop                   | Type                                                                                              | Description                                                                                                 |
-| ---------------------- | ------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| `thread`               | <code>ThreadData&lt;\{ resolved?: boolean \}&gt;</code>                                           | The thread to display.                                                                                      |
-| `showComposer`         | `boolean \| "collapsed" \| undefined`                                                             | How to show or hide the composer to reply to the thread.<br/>Defaults to `"collapsed"`.                     |
-| `showActions`          | `boolean \| "hover" \| undefined`                                                                 | How to show or hide the actions.<br/>Defaults to `"hover"`.                                                 |
-| `showReactions`        | `boolean \| undefined`                                                                            | Whether to show reactions.<br/>Defaults to `true`.                                                          |
-| `showResolveAction`    | `boolean \| undefined`                                                                            | Whether to show the action to resolve the thread.<br/>Defaults to `true`.                                   |
-| `indentCommentContent` | `boolean \| undefined`                                                                            | Whether to indent the comments’ content.<br/>Defaults to `true`.                                            |
-| `showDeletedComments`  | `boolean \| undefined`                                                                            | Whether to show deleted comments.<br/>Defaults to `false`.                                                  |
-| `onResolvedChange`     | `(resolved: boolean) => void`                                                                     | The event handler called when changing the resolved status.                                                 |
-| `onThreadDelete`       | `(thread: ThreadData) => void`                                                                    | The event handler called when the thread is deleted. A thread is deleted when all its comments are deleted. |
-| `onCommentEdit`        | `(comment: CommentData) => void`                                                                  | The event handler called when a comment is edited.                                                          |
-| `onCommentDelete`      | `(comment: CommentData) => void`                                                                  | The event handler called when a comment is deleted.                                                         |
-| `onAuthorClick`        | <code>(userId: string, event: MouseEvent&lt;HTMLElement&gt;) => void \| undefined</code>          | The event handler called when clicking on a comment’s author.                                               |
-| `onMentionClick`       | <code>(userId: string, event: MouseEvent&lt;HTMLElement&gt;) => void \| undefined</code>          | The event handler called when clicking on a mention.                                                        |
-| `overrides`            | <code>Partial&lt;ThreadOverrides \& CommentOverrides \& ComposerOverrides&gt; \| undefined</code> | Override the component’s strings.                                                                           |
-
-</Table>
-
-{/* TODO: Document classes and data attributes */}
-
-### Comment
-
-Displays a single comment.
-
-```tsx
-<>
-  {thread.comments.map((comment) => (
-    <Comment key={comment.id} comment={comment} />
-  ))}
-</>
-```
-
-<Table columns={["26%", "32%", "42%"]}>
-
-| Prop              | Type                                                                                     | Description                                                                                                                           |
-| ----------------- | ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| `comment`         | `CommentData`                                                                            | The thread to display.                                                                                                                |
-| `showActions`     | `boolean \| "hover" \| undefined`                                                        | How to show or hide the actions.<br/>Defaults to `"hover"`.                                                                           |
-| `showReactions`   | `boolean \| undefined`                                                                   | Whether to show reactions.<br/>Defaults to `true`.                                                                                    |
-| `indentContent`   | `boolean \| undefined`                                                                   | Whether to indent the comment’s content.<br/>Defaults to `true`.                                                                      |
-| `showDeleted`     | `boolean \| undefined`                                                                   | Whether to show the comment if it was deleted. If set to `false`, it will render deleted comments as `null`.<br/>Defaults to `false`. |
-| `onCommentEdit`   | `(comment: CommentData) => void`                                                         | The event handler called when the comment is edited.                                                                                  |
-| `onCommentDelete` | `(comment: CommentData) => void`                                                         | The event handler called when the comment is deleted.                                                                                 |
-| `onAuthorClick`   | <code>(userId: string, event: MouseEvent&lt;HTMLElement&gt;) => void \| undefined</code> | The event handler called when clicking on the author.                                                                                 |
-| `onMentionClick`  | <code>(userId: string, event: MouseEvent&lt;HTMLElement&gt;) => void \| undefined</code> | The event handler called when clicking on a mention.                                                                                  |
-| `overrides`       | <code>Partial&lt;CommentOverrides \& ComposerOverrides&gt; \| undefined</code>           | Override the component’s strings.                                                                                                     |
-
-</Table>
-
-{/* TODO: Document classes and data attributes */}
-
-### Composer
-
-Displays a composer to create comments.
-
-```tsx
-<Composer />
-```
-
-By default, submitting the composer will create a new thread. If you provide a
-`threadId` prop, it will reply to that thread, and if you also provide a
-`commentId` prop, it will edit that comment. If you want to customize this, you
-can use `event.preventDefault()` in `onComposerSubmit` to disable the default
-behavior and call the mutation methods (e.g. `createThread`) manually.
-
-```tsx
-<Composer
-  onComposerSubmit={({ body }, event) => {
-    event.preventDefault();
-
-    createThread({
-      body,
-      metadata: {
-        x: 80,
-        y: 120,
-      },
-    });
-  }}
-/>
-```
-
-<Table columns={["26%", "32%", "42%"]}>
-
-| Prop                | Type                                                                                                                                 | Description                                                                                       |
-| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------- |
-| `threadId`          | `string \| undefined`                                                                                                                | The ID of the thread to reply to or to edit a comment in.                                         |
-| `commentId`         | `string \| undefined`                                                                                                                | The ID of the comment to edit.                                                                    |
-| `onComposerSubmit`  | <code>((comment: ComposerSubmitComment, event: FormEvent&lt;HTMLFormElement&gt;) => Promise&lt;void&gt; \| void) \| undefined</code> | The event handler called when the composer is submitted.                                          |
-| `defaultValue`      | `CommentBody \| undefined`                                                                                                           | The composer’s initial value.                                                                     |
-| `collapsed`         | `boolean \| undefined`                                                                                                               | Whether the composer is collapsed. Setting a value will make the composer controlled.             |
-| `onCollapsedChange` | `(collapsed: boolean) => void`                                                                                                       | The event handler called when the collapsed state of the composer changes.                        |
-| `defaultCollapsed`  | `boolean \| undefined`                                                                                                               | Whether the composer is initially collapsed. Setting a value will make the composer uncontrolled. |
-| `disabled`          | `boolean \| undefined`                                                                                                               | Whether the composer is disabled.                                                                 |
-| `autoFocus`         | `boolean \| undefined`                                                                                                               | Whether to focus the composer on mount.                                                           |
-| `overrides`         | <code>Partial&lt;ComposerOverrides&gt; \| undefined</code>                                                                           | Override the component’s strings.                                                                 |
-
-</Table>
-
-{/* TODO: Document classes and data attributes */}
 
 ## Primitives
 
