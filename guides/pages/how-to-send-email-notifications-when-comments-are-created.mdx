@@ -267,95 +267,34 @@ along with some
 ## Get comment and thread data
 
 <Banner title="Threads vs comments">
-  Note that a thread is different to a comment—each thread contains a list of
-  comments. When you create a thread, you also create the first comment in the
-  thread.
+  Note that a thread is different to a comment—a thread is “top-level”, and each
+  thread contains a list of comments. When you create a thread with
+  [`useCreateThread`](/docs/api-reference/liveblocks-react#useCreateThread), you
+  also create the first comment in the thread.
 </Banner>
 
 The next step is to use the
-[Get Comment API](/docs/api-reference/rest-api-endpoints#get-comment) to
-retrieve the entire comment’s data. To do this, we’ll create a utilities file
-containing a helper function that takes the IDs returned from the webhook.
+[Liveblocks client](/docs/api-reference/liveblocks-node#Liveblocks-client) from
+`@liveblocks/node` to retrieve the entire comment’s data, along with the thread
+participants. In Liveblocks Comments, a participant refers to a user that has
+commented or been mentioned in a thread—we’ll be sending a notification to each
+of these users.
 
-```ts file="utils.ts"
-import { CommentData } from "@liveblocks/client";
+To do this we’ll need to add our project’s secret key to the Liveblocks client,
+before awaiting the following functions:
+[`getComment`](/docs/api-reference/liveblocks-node#get-comment) and
+[`getThreadParticipants`](/docs/api-reference/liveblocks-node#get-thread-participants).
 
-// Add your secret key from your project's API keys dashboard
-const API_SECRET = "{{SECRET_KEY}}";
-
-type GetComment = {
-  roomId: string;
-  threadId: string;
-  commentId: string;
-};
-
-// Get comment data from Liveblocks REST API
-export async function getComment({
-  roomId,
-  threadId,
-  commentId,
-}: GetComment): Promise<CommentData> {
-  const url = `https://api.liveblocks.io/v2/rooms/${roomId}/threads/${threadId}/comments/${commentId}`;
-  const response = await fetch(url, {
-    headers: { Authorization: `Bearer ${API_SECRET}` },
-  });
-
-  if (!response.ok) {
-    throw new Error("Problem accessing Liveblocks Comment APIs");
-  }
-
-  // Your comment data
-  return (await response.json()) as CommentData;
-}
-```
-
-We’ll also need to use the
-[Get Thread Participants API](/docs/api-reference/rest-api-endpoints#get-thread-participants),
-which returns a list of every user that has been mentioned in the current
-thread—we’ll be sending a notification to each of these users.
-
-```ts file="utils.ts" highlight="9-30"
-import { CommentData } from "@liveblocks/client";
-
-// Add your secret key from your project's API keys dashboard
-const API_SECRET = "sk_prod_xxxxxxxxxxxxxxxxxxxxxxxx";
-
-// getCommentData function
-// ...
-
-type GetParticipants = {
-  roomId: string;
-  threadId: string;
-};
-
-// Get thread participants from Liveblocks REST API
-export async function getParticipants({
-  roomId,
-  threadId,
-}: GetParticipants): Promise<string[]> {
-  const url = `https://api.liveblocks.io/v2/rooms/${roomId}/threads/${threadId}/participants`;
-  const response = await fetch(url, {
-    headers: { Authorization: `Bearer ${API_SECRET}` },
-  });
-
-  if (!response.ok) {
-    throw new Error("Problem accessing Liveblocks Comment APIs");
-  }
-
-  // Your thread participants
-  return (await response.json()).participantIds as string[];
-}
-```
-
-Let’s import these functions into our endpoint to fetch the necessary data.
-
-```ts highlight="28-40"
-import { WebhookHandler } from "@liveblocks/node";
-import { getComment, getParticipants } from "./utils";
+```ts highlight="1,7-9,31-43"
+import { Liveblocks, WebhookHandler } from "@liveblocks/node";
 
 // Add your signing key from a project's webhooks dashboard
 const WEBHOOK_SECRET = "YOUR_SIGNING_SECRET";
 const webhookHandler = new WebhookHandler(WEBHOOK_SECRET);
+
+// Add your secret key from a project's API keys dashboard
+const API_SECRET = "{{SECRET_KEY}}";
+const liveblocks = new Liveblocks({ secret: API_SECRET });
 
 export async function POST(request: Request) {
   const body = await request.json();
@@ -379,9 +318,9 @@ export async function POST(request: Request) {
 
     try {
       // Get comment data and participants
-      const [comment, participants] = await Promise.all([
-        getComment({ roomId, threadId, commentId }),
-        getParticipants({ roomId, threadId }),
+      const [comment, { participantIds }] = await Promise.all([
+        liveblocks.getComment({ roomId, threadId, commentId }),
+        liveblocks.getThreadParticipants({ roomId, threadId }),
       ]);
 
       // Send notifications
@@ -484,14 +423,17 @@ function getTextFromInlineElement(element: CommentBodyInlineElement) {
 
 We can then add this to our endpoint to get the formatted comment text.
 
-```ts highlight="3,36-37"
-import { WebhookHandler } from "@liveblocks/node";
-import { getComment, getParticipants } from "./utils";
+```ts highlight="2,39-40"
+import { Liveblocks, WebhookHandler } from "@liveblocks/node";
 import { getTextFromCommentBody } from "./convert";
 
 // Add your signing key from a project's webhooks dashboard
 const WEBHOOK_SECRET = "YOUR_SIGNING_SECRET";
 const webhookHandler = new WebhookHandler(WEBHOOK_SECRET);
+
+// Add your secret key from a project's API keys dashboard
+const API_SECRET = "{{SECRET_KEY}}";
+const liveblocks = new Liveblocks({ secret: API_SECRET });
 
 export async function POST(request: Request) {
   const body = await request.json();
@@ -515,9 +457,9 @@ export async function POST(request: Request) {
 
     try {
       // Get comment data and participants
-      const [comment, participants] = await Promise.all([
-        getComment({ roomId, threadId, commentId }),
-        getParticipants({ roomId, threadId }),
+      const [comment, { participantIds }] = await Promise.all([
+        liveblocks.getComment({ roomId, threadId, commentId }),
+        liveblocks.getThreadParticipants({ roomId, threadId }),
       ]);
 
       // Formatted comment body
@@ -630,13 +572,17 @@ database, which you can retrieve from these `userIds`.
 After getting each user’s email, simply loop through and send the formatted
 comment.
 
-```ts highlight="41-50"
-import { WebhookHandler } from "@liveblocks/node";
-import { getComment, getParticipants } from "./utils";
+```ts highlight="42-54"
+import { Liveblocks, WebhookHandler } from "@liveblocks/node";
+import { getTextFromCommentBody } from "./convert";
 
 // Add your signing key from a project's webhooks dashboard
 const WEBHOOK_SECRET = "YOUR_SIGNING_SECRET";
 const webhookHandler = new WebhookHandler(WEBHOOK_SECRET);
+
+// Add your secret key from a project's API keys dashboard
+const API_SECRET = "{{SECRET_KEY}}";
+const liveblocks = new Liveblocks({ secret: API_SECRET });
 
 export async function POST(request: Request) {
   const body = await request.json();
@@ -660,16 +606,16 @@ export async function POST(request: Request) {
 
     try {
       // Get comment data and participants
-      const [comment, participants] = await Promise.all([
-        getComment({ roomId, threadId, commentId }),
-        getParticipants({ roomId, threadId }),
+      const [comment, { participantIds }] = await Promise.all([
+        liveblocks.getComment({ roomId, threadId, commentId }),
+        liveblocks.getThreadParticipants({ roomId, threadId }),
       ]);
 
       // Formatted comment body
       const commentText = getTextFromCommentBody(comment.body);
 
       // Get users from your database
-      const users = await __getUsers__(partipants);
+      const users = await __getUsers__(participantIds);
 
       // Send notifications
       for (const user of users) {
@@ -694,9 +640,9 @@ export async function POST(request: Request) {
 Here’s a real-world example that uses [Resend](https://resend.com) to send the
 notifications.
 
-```ts highlight="3,5-6,45-55" file="route.ts" isCollapsable isCollapsed
-import { WebhookHandler } from "@liveblocks/node";
-import { getComment, getParticipants } from "./utils";
+```ts highlight="3,5-6,49-59" file="route.ts" isCollapsable isCollapsed
+import { Liveblocks, WebhookHandler } from "@liveblocks/node";
+import { getTextFromCommentBody } from "./convert";
 import { Resend } from "resend";
 
 // Create Resend client
@@ -705,6 +651,10 @@ const resend = new Resend("re_123456789");
 // Add your signing key from a project's webhooks dashboard
 const WEBHOOK_SECRET = "YOUR_SIGNING_SECRET";
 const webhookHandler = new WebhookHandler(WEBHOOK_SECRET);
+
+// Add your secret key from a project's API keys dashboard
+const API_SECRET = "{{SECRET_KEY}}";
+const liveblocks = new Liveblocks({ secret: API_SECRET });
 
 export async function POST(request: Request) {
   const body = await request.json();
@@ -728,16 +678,16 @@ export async function POST(request: Request) {
 
     try {
       // Get comment data and participants
-      const [comment, participants] = await Promise.all([
-        getComment({ roomId, threadId, commentId }),
-        getParticipants({ roomId, threadId }),
+      const [comment, { participantIds }] = await Promise.all([
+        liveblocks.getComment({ roomId, threadId, commentId }),
+        liveblocks.getThreadParticipants({ roomId, threadId }),
       ]);
 
       // Formatted comment body
       const commentText = getTextFromCommentBody(comment.body);
 
       // Get users from your database
-      const users = await __getUsers__(partipants);
+      const users = await __getUsers__(participantIds);
 
       // Send email to the users' email addresses
       try {
