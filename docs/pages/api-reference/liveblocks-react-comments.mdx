@@ -278,9 +278,7 @@ function Component({ thread }: { thread: ThreadData }) {
 
 {/* TODO: Document classes and data attributes */}
 
-### Customization
-
-#### Styling
+### Styling and customization
 
 The default components come with default styles. These styles can be imported
 into the root of your app or directly into a CSS file with `@import`.
@@ -289,7 +287,27 @@ into the root of your app or directly into a CSS file with `@import`.
 import "@liveblocks/react-comments/styles.css";
 ```
 
-##### CSS variables
+#### Dark mode
+
+You can also import default dark mode styling. There are two versions to choose
+from, the first uses the
+[system theme](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-color-scheme).
+
+```tsx
+// Dark mode using the system theme with `prefers-color-scheme`
+import "@liveblocks/react-comments/styles/dark/media-query.css";
+```
+
+The second uses the `dark` class name, and two commonly used data attributes.
+
+```tsx
+// Dark mode using `className="dark"`, `data-theme="dark"`, or `data-dark="true"`
+import "@liveblocks/react-comments/styles/dark/attributes.css";
+```
+
+{/* TODO: Mention --elevation-background, --elevation-foreground here */}
+
+#### CSS variables
 
 The default components are built around a set of customizable CSS variables. Set
 these variables within `.lb-root` to globally style your components.
@@ -334,7 +352,7 @@ these variables within `.lb-root` to globally style your components.
 
 {/* TODO: Explain automatic color scales (with a palette-type visual) */}
 
-##### Class names
+#### Class names
 
 Each default component has a set of predefined class names, which can be helpful
 for custom styling, for example.
@@ -367,27 +385,6 @@ information, for example:
 Classes containing colons `:` are internal and may change over time.
 
 </Banner>
-
-##### Dark mode
-
-Dark mode can be implemented by customizing some of the default CSS variables,
-and we provide styles that do so out-of-the-box. They exist in two versions:
-
-- `media-query` uses the
-  [`prefers-color-scheme`](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-color-scheme)
-  media query.
-- `attributes` targets either the `dark` class, the `data-theme` attribute if
-  it’s set to `"dark"`, or the `data-dark` attribute.
-
-```tsx
-import "@liveblocks/react-comments/styles.css";
-
-// Choose one depending on your setup
-import "@liveblocks/react-comments/styles/dark/media-query.css";
-import "@liveblocks/react-comments/styles/dark/attributes.css";
-```
-
-{/* TODO: Mention --elevation-background, --elevation-foreground here */}
 
 {/* TODO: Think about adding back the browser support section */}
 
