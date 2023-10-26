@@ -441,15 +441,6 @@ function getBackgroundKeepAliveTimeout(
   value: number | undefined
 ): number | undefined {
   if (value === undefined) return undefined;
-
-  if (typeof document === "undefined") {
-    // eslint-disable-next-line rulesdir/console-must-be-fancy
-    console.warn(
-      "Setting backgroundKeepAliveTimeout won't have an effect in a non-DOM environment."
-    );
-    return undefined;
-  }
-
   return checkBounds(
     "backgroundKeepAliveTimeout",
     value,
