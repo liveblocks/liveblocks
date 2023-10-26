@@ -274,104 +274,105 @@ describe("createClient", () => {
       leave();
     }
   });
+});
+
+describe("createClient bounds checks", () => {
+  const defaults = {
+    authEndpoint: "api/auth",
+    polyfills: { WebSocket: MockWebSocket, fetch: fetchMock },
+  };
 
   test("should throw if throttle is not a number", () => {
     expect(() =>
       enterAndLeave({
+        ...defaults,
         throttle: "invalid" as unknown as number, // Deliberately use wrong type at runtime
-        authEndpoint: "api/auth",
-        polyfills: {
-          WebSocket: MockWebSocket,
-          fetch: fetchMock,
-        },
       })
     ).toThrow("throttle should be between 16 and 1000.");
   });
 
-  test("should throw if throttle is less than 16", () => {
-    expect(() =>
-      enterAndLeave({
-        throttle: 15,
-        authEndpoint: "api/auth",
-        polyfills: {
-          WebSocket: MockWebSocket,
-          fetch: fetchMock,
-        },
-      })
-    ).toThrow("throttle should be between 16 and 1000.");
-  });
+  test("should check bounds correctly for throttle option", () => {
+    expect(() => enterAndLeave({ ...defaults, throttle: -5_000 })).toThrow(
+      "throttle should be between 16 and 1000."
+    );
 
-  test("should throw if throttle is more than 1000", () => {
-    expect(() =>
-      enterAndLeave({
-        throttle: 1001,
-        authEndpoint: "api/auth",
-        polyfills: {
-          WebSocket: MockWebSocket,
-          fetch: fetchMock,
-        },
-      })
-    ).toThrow("throttle should be between 16 and 1000.");
+    expect(() => enterAndLeave({ ...defaults, throttle: 0 })).toThrow(
+      "throttle should be between 16 and 1000."
+    );
+
+    expect(() => enterAndLeave({ ...defaults, throttle: Math.PI })).toThrow(
+      "throttle should be between 16 and 1000."
+    );
+
+    expect(() => enterAndLeave({ ...defaults, throttle: 15 })).toThrow(
+      "throttle should be between 16 and 1000."
+    );
+
+    expect(() => enterAndLeave({ ...defaults, throttle: 16 })).not.toThrow();
+
+    expect(() => enterAndLeave({ ...defaults, throttle: 1_000 })).not.toThrow();
+
+    expect(() => enterAndLeave({ ...defaults, throttle: 1_001 })).toThrow(
+      "throttle should be between 16 and 1000."
+    );
   });
 
   test("should throw if lostConnectionTimeout is not a number", () => {
     expect(() =>
       enterAndLeave({
+        ...defaults,
         lostConnectionTimeout: "invalid" as unknown as number, // Deliberately use wrong type at runtime
-        authEndpoint: "api/auth",
-        polyfills: {
-          WebSocket: MockWebSocket,
-          fetch: fetchMock,
-        },
       })
     ).toThrow("lostConnectionTimeout should be between 1000 and 30000.");
   });
 
-  test("should throw if lostConnectionTimeout is less than 1000", () => {
+  test("should check bounds correctly for lostConnectionTimeout option", () => {
     expect(() =>
-      enterAndLeave({
-        lostConnectionTimeout: 15,
-        authEndpoint: "api/auth",
-        polyfills: {
-          WebSocket: MockWebSocket,
-          fetch: fetchMock,
-        },
-      })
+      enterAndLeave({ ...defaults, lostConnectionTimeout: -5_000 })
     ).toThrow("lostConnectionTimeout should be between 1000 and 30000.");
-  });
 
-  test("should throw if lostConnectionTimeout is more than 30000", () => {
     expect(() =>
-      enterAndLeave({
-        lostConnectionTimeout: 30001,
-        authEndpoint: "api/auth",
-        polyfills: {
-          WebSocket: MockWebSocket,
-          fetch: fetchMock,
-        },
-      })
+      enterAndLeave({ ...defaults, lostConnectionTimeout: 0 })
+    ).toThrow("lostConnectionTimeout should be between 1000 and 30000.");
+
+    expect(() =>
+      enterAndLeave({ ...defaults, lostConnectionTimeout: Math.PI })
+    ).toThrow("lostConnectionTimeout should be between 1000 and 30000.");
+
+    expect(() =>
+      enterAndLeave({ ...defaults, lostConnectionTimeout: 199 })
+    ).toThrow("lostConnectionTimeout should be between 1000 and 30000.");
+
+    // There is a soft cap on the lower bound of lostConnectionTimeout. We
+    // recommend setting a 1_000 minimum, but the real 200 minimum only exists
+    // for unit testing purposes.
+    expect(() =>
+      enterAndLeave({ ...defaults, lostConnectionTimeout: 200 })
+    ).not.toThrow();
+
+    expect(() =>
+      enterAndLeave({ ...defaults, lostConnectionTimeout: 1_000 })
+    ).not.toThrow();
+
+    expect(() =>
+      enterAndLeave({ ...defaults, lostConnectionTimeout: 30_000 })
+    ).not.toThrow();
+
+    expect(() =>
+      enterAndLeave({ ...defaults, lostConnectionTimeout: 30_001 })
     ).toThrow("lostConnectionTimeout should be between 1000 and 30000.");
   });
 
   test("should throw if backgroundKeepAliveTimeout is not a number", () => {
     expect(() =>
       enterAndLeave({
+        ...defaults,
         backgroundKeepAliveTimeout: "invalid" as unknown as number, // Deliberately use wrong type at runtime
-        authEndpoint: "api/auth",
-        polyfills: {
-          WebSocket: MockWebSocket,
-          fetch: fetchMock,
-        },
       })
     ).toThrow("backgroundKeepAliveTimeout should be at least 15000.");
   });
 
-  test("should check bounds correctly for backgroundKeepAliveTimeout value", () => {
-    const defaults = {
-      authEndpoint: "api/auth",
-      polyfills: { WebSocket: MockWebSocket, fetch: fetchMock },
-    };
-
+  test("should check bounds correctly for backgroundKeepAliveTimeout option", () => {
     expect(() =>
       enterAndLeave({ ...defaults, backgroundKeepAliveTimeout: -5_000 })
     ).toThrow("backgroundKeepAliveTimeout should be at least 15000.");
