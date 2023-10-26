@@ -425,8 +425,7 @@ function checkBounds(
   if (
     typeof value !== "number" ||
     value < min ||
-    max === undefined ||
-    value > max
+    (max !== undefined && value > max)
   ) {
     throw new Error(
       max !== undefined
