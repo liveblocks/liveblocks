@@ -102,12 +102,11 @@ a `metadata` prop.
 
 ```tsx
 import { Composer } from "@liveblocks/react-comments";
-import { ThreadMetadata } from "../liveblocks.config";
 
 // Creates a new thread with custom metadata
 function Component() {
   return (
-    <Composer<ThreadMetadata>
+    <Composer
       metadata={{
         // Custom metadata here, e.g. colors, coordinates
         color: "purple",
@@ -117,6 +116,34 @@ function Component() {
     />
   );
 }
+```
+
+##### Typed metadata
+
+Optionally, you can type `metadata` by importing your custom `ThreadMetadata`
+type from your config file.
+
+```tsx highlight="2,7"
+import { Composer } from "@liveblocks/react-comments";
+import { ThreadMetadata } from "../liveblocks.config";
+
+// Creates a new thread with custom metadata
+function Component() {
+  return (
+    <Composer<ThreadMetadata>
+      metadata={{
+        // Custom metadata with typing
+        color: "purple",
+      }}
+    />
+  );
+}
+```
+
+```tsx file="liveblocks.config.ts"
+export type ThreadMetadata = {
+  color: string;
+};
 ```
 
 #### Replying to a thread
