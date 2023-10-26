@@ -97,8 +97,8 @@ function Component() {
 
 #### Adding thread metadata
 
-If you’d like to attach custom metadata to the new thread, you can add a
-`metadata` prop.
+If you’d like to attach custom metadata to the newly created thread, you can add
+a `metadata` prop.
 
 ```tsx
 import { Composer } from "@liveblocks/react-comments";
@@ -147,47 +147,11 @@ function Component({ threadId, commentId }) {
 }
 ```
 
-#### Adding thread metadata
-
-If you’d like to submit metadata to a thread, you can use
-`event.preventDefault()` in `onComposerSubmit` to disable the default behavior
-in combination with
-[`useCreateThread`](/docs/api-reference/liveblocks-react#useCreateThread) to
-manually create the thread.
-
-```tsx
-import { Composer } from "@liveblocks/react-comments";
-import { useCreateThread } from "../liveblocks.config";
-
-// Creates a new thread with custom metadata
-function Component() {
-  const createThread = useCreateThread();
-
-  return (
-    <Composer
-      onComposerSubmit={({ body }, event) => {
-        event.preventDefault();
-
-        createThread({
-          body,
-          metadata: {
-            // Custom metadata here, e.g. colors, coordinates
-            color: "purple",
-            x: 80,
-            y: 120,
-          },
-        });
-      }}
-    />
-  );
-}
-```
-
 #### Custom behavior
 
 If you’d like to customize submission behavior, you can use
 `event.preventDefault()` in `onComposerSubmit` to disable the default behavior
-and call comment or thread mutation methods manually.
+and call comment and thread mutation methods manually.
 
 ```tsx
 import { Composer } from "@liveblocks/react-comments";
@@ -203,12 +167,12 @@ function Component({ threadId, commentId }) {
       onComposerSubmit={({ body }, event) => {
         event.preventDefault();
 
-        // Custom behavior
-        // ...
-
         // Example mutations
         editComment({ threadId, commentId, body });
         addReaction({ threadId, commentId, emoji: "✅" });
+
+        // Other custom behavior
+        // ...
       }}
     />
   );
