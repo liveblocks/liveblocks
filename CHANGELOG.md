@@ -1,3 +1,7 @@
+# v1.5.1
+
+- Fixes a bug in the bounds check of the `backgroundKeepAliveTimeout` option.
+
 # v1.5.0
 
 Support multiple RoomProviders, or mixing and matching our React package in the
