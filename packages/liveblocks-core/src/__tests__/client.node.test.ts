@@ -352,6 +352,54 @@ describe("createClient", () => {
       })
     ).toThrow("lostConnectionTimeout should be between 1000 and 30000.");
   });
+
+  test("should throw if backgroundKeepAliveTimeout is not a number", () => {
+    expect(() =>
+      enterAndLeave({
+        backgroundKeepAliveTimeout: "invalid" as unknown as number, // Deliberately use wrong type at runtime
+        authEndpoint: "api/auth",
+        polyfills: {
+          WebSocket: MockWebSocket,
+          fetch: fetchMock,
+        },
+      })
+    ).toThrow("backgroundKeepAliveTimeout should be at least 15000.");
+  });
+
+  test("should check bounds correctly for backgroundKeepAliveTimeout value", () => {
+    const defaults = {
+      authEndpoint: "api/auth",
+      polyfills: { WebSocket: MockWebSocket, fetch: fetchMock },
+    };
+
+    expect(() =>
+      enterAndLeave({ ...defaults, backgroundKeepAliveTimeout: -5_000 })
+    ).toThrow("backgroundKeepAliveTimeout should be at least 15000.");
+
+    expect(() =>
+      enterAndLeave({ ...defaults, backgroundKeepAliveTimeout: 0 })
+    ).toThrow("backgroundKeepAliveTimeout should be at least 15000.");
+
+    expect(() =>
+      enterAndLeave({ ...defaults, backgroundKeepAliveTimeout: Math.PI })
+    ).toThrow("backgroundKeepAliveTimeout should be at least 15000.");
+
+    expect(() =>
+      enterAndLeave({ ...defaults, backgroundKeepAliveTimeout: 14_999 })
+    ).toThrow("backgroundKeepAliveTimeout should be at least 15000.");
+
+    expect(() =>
+      enterAndLeave({ ...defaults, backgroundKeepAliveTimeout: 15_000 })
+    ).not.toThrow();
+
+    expect(() =>
+      enterAndLeave({ ...defaults, backgroundKeepAliveTimeout: 15_001 })
+    ).not.toThrow();
+
+    expect(() =>
+      enterAndLeave({ ...defaults, backgroundKeepAliveTimeout: 60_000 })
+    ).not.toThrow();
+  });
 });
 
 describe("when env atob does not exist (atob polyfill handling)", () => {
