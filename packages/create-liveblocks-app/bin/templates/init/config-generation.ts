@@ -46,6 +46,10 @@ type Presence = {};
 type Storage = {};
 type UserMeta = {};
 type RoomEvent = {};
+
+export type ThreadMetadata = {
+  resolved: boolean;
+};
 `;
   }
 
@@ -81,13 +85,20 @@ type RoomEvent = {
   // type: "NOTIFICATION",
   // ...
 };
+
+// Optionally, when using Comments, ThreadMetadata represents metadata on
+// each thread. Can only contain booleans, strings, and numbers. The default
+// Comments components require \`resolved: boolean\`.
+export type ThreadMetadata = {
+  resolved: boolean;
+};
 `;
 }
 
 function reactExports({ framework, suspense, typescript }: InitQuestions) {
   if (framework !== "react") {
     if (typescript) {
-      return `export type TypedRoom = Room<Presence, Storage, UserMeta, RoomEvent>;`;
+      return `export type TypedRoom = Room<Presence, Storage, UserMeta, RoomEvent, ThreadMetadata>;`;
     }
     return "";
   }
@@ -109,7 +120,7 @@ function reactExports({ framework, suspense, typescript }: InitQuestions) {
   let end;
 
   if (typescript) {
-    end = `createRoomContext<Presence, Storage, UserMeta, RoomEvent>(client, ${reactExportsOptions()});`;
+    end = `createRoomContext<Presence, Storage, UserMeta, RoomEvent, ThreadMetadata>(client, ${reactExportsOptions()});`;
   } else {
     end = `createRoomContext(client, ${reactExportsOptions()});`;
   }
