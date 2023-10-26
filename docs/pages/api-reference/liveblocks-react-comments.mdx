@@ -289,7 +289,19 @@ into the root of your app or directly into a CSS file with `@import`.
 import "@liveblocks/react-comments/styles.css";
 ```
 
-They are built around a few customizable CSS variables.
+##### CSS variables
+
+The default components are built around a set of customizable CSS variables. Set
+these variables within `.lb-root` to globally style your components.
+
+```css
+/* Styles all default Comments components */
+.lb-root {
+  --lb-accent: purple;
+  --lb-spacing: 1em;
+  --lb-radius: 0;
+}
+```
 
 <Table columns={["30%", "28%", "42%"]}>
 
@@ -297,7 +309,7 @@ They are built around a few customizable CSS variables.
 | ------------------------------------ | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------ |
 | `--lb-radius`                        | `0.5em`                                                                              | The border radius scale. `em` values recommended.                                    |
 | `--lb-spacing`                       | `1em`                                                                                | The spacing scale. `em` values recommended.                                          |
-| `--lb-accent`                        | `#0000ff`                                                                            | The accent color.                                                                    |
+| `--lb-accent`                        | `#1177ff`                                                                            | The accent color.                                                                    |
 | `--lb-accent-foreground`             | `#ffffff`                                                                            | The foreground color used over the accent color.                                     |
 | `--lb-background`                    | `#ffffff`                                                                            | The main background color.                                                           |
 | `--lb-foreground`                    | `#111111`                                                                            | The main foreground color.                                                           |
@@ -322,15 +334,37 @@ They are built around a few customizable CSS variables.
 
 {/* TODO: Explain automatic color scales (with a palette-type visual) */}
 
-If these CSS variables aren’t enough, every element within the components have
-clearly defined classes. Additionally, some elements also have data attributes
-to provide contextual information (e.g. `data-variant="primary"` on
-`.lb-button`, `data-self` on `.lb-comment-mention`, `data-loading` on
-`.lb-avatar` and `.lb-user`, etc.).
+##### Class names
+
+Each default component has a set of predefined class names, which can be helpful
+for custom styling, for example.
+
+```css
+.lb-thread {
+  /* Customise thread */
+}
+
+.lb-composer {
+  /* Customise composer */
+}
+```
+
+Additionally, some elements also have data attributes to provide contextual
+information, for example:
+
+```css
+.lb-button[data-variant="primary"] {
+  /* Customise primary buttons */
+}
+
+.lb-avatar[data-loading] {
+  /* Customise avatar loading state */
+}
+```
 
 <Banner title="Internal classes" type="warning">
 
-Classes containing `:` are internal and may change over time.
+Classes containing colons `:` are internal and may change over time.
 
 </Banner>
 
