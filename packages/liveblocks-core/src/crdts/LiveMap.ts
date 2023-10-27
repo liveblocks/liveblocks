@@ -1,7 +1,7 @@
 import { nn } from "../lib/assert";
 import { freeze } from "../lib/freeze";
 import { nanoid } from "../lib/nanoid";
-import type { CreateOp, CreateMapOp, Op } from "../protocol/Op";
+import type { CreateMapOp, CreateOp, Op } from "../protocol/Op";
 import { OpCode } from "../protocol/Op";
 import type { IdTuple, SerializedMap } from "../protocol/SerializedCrdt";
 import { CrdtType } from "../protocol/SerializedCrdt";
