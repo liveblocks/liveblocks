@@ -22,6 +22,7 @@ export default function App({
       </Head>
       <TooltipProvider>
         <SessionProvider session={pageProps.session}>
+          {/* @ts-expect-error */}
           <Component {...pageProps} />
           <Badge />
         </SessionProvider>
