@@ -24,7 +24,7 @@ export default function App() {
   useEffect(() => {
     enterRoom(roomId);
     return () => {
-      leaveRoom(roomId);
+      leaveRoom();
     };
   }, [enterRoom, leaveRoom]);
 
