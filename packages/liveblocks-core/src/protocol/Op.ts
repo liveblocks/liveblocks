@@ -24,9 +24,7 @@ export type Op =
   | SetParentKeyOp // Only for lists!
   | DeleteObjectKeyOp;
 
-export type CreateOp = CreateChildOp;
-
-export type CreateChildOp =
+export type CreateOp =
   | CreateObjectOp
   | CreateRegisterOp
   | CreateMapOp

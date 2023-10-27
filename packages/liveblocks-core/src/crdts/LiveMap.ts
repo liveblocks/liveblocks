@@ -1,7 +1,7 @@
 import { nn } from "../lib/assert";
 import { freeze } from "../lib/freeze";
 import { nanoid } from "../lib/nanoid";
-import type { CreateChildOp, CreateMapOp, Op } from "../protocol/Op";
+import type { CreateOp, CreateMapOp, Op } from "../protocol/Op";
 import { OpCode } from "../protocol/Op";
 import type { IdTuple, SerializedMap } from "../protocol/SerializedCrdt";
 import { CrdtType } from "../protocol/SerializedCrdt";
@@ -67,16 +67,12 @@ export class LiveMap<
   /**
    * @internal
    */
-  _toOps(
-    parentId: string,
-    parentKey: string,
-    pool?: ManagedPool
-  ): CreateChildOp[] {
+  _toOps(parentId: string, parentKey: string, pool?: ManagedPool): CreateOp[] {
     if (this._id === undefined) {
       throw new Error("Cannot serialize item is not attached");
     }
 
-    const ops: CreateChildOp[] = [];
+    const ops: CreateOp[] = [];
     const op: CreateMapOp = {
       id: this._id,
       opId: pool?.generateOpId(),
@@ -136,7 +132,7 @@ export class LiveMap<
   /**
    * @internal
    */
-  _attachChild(op: CreateChildOp, source: OpSource): ApplyResult {
+  _attachChild(op: CreateOp, source: OpSource): ApplyResult {
     if (this._pool === undefined) {
       throw new Error("Can't attach child if managed pool is not present");
     }

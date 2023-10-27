@@ -96,7 +96,6 @@ export type {
 export { ClientMsgCode } from "./protocol/ClientMsg";
 export type {
   AckOp,
-  CreateChildOp,
   CreateListOp,
   CreateMapOp,
   CreateObjectOp,
