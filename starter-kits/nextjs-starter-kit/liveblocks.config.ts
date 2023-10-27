@@ -6,6 +6,7 @@ import {
 } from "@liveblocks/client";
 import { createRoomContext } from "@liveblocks/react";
 import Router from "next/router";
+import { getUsers } from "./lib/client";
 import { User } from "./types";
 
 // The location of the liveblocks custom API endpoints
@@ -115,5 +116,15 @@ export const {
   },
   /* ...all the other hooks you’re using... */
 } = createRoomContext<Presence, Storage, UserMeta, RoomEvent, ThreadMetadata>(
-  client
+  client,
+  {
+    async resolveUsers({ userIds }) {
+      const users = await getUsers({ userIds });
+      return users;
+    },
+    async resolveMentionSuggestions({ text }) {
+      const users = await getUsers({ search: text });
+      return users.map((user) => user.id);
+    },
+  }
 );
