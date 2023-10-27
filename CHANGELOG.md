@@ -1,3 +1,9 @@
+# v1.5.2
+
+### `@liveblocks/react`
+
+- Fix return type of `resolveUsers`.
+
 # v1.5.1
 
 - Fixes a bug in the bounds check of the `backgroundKeepAliveTimeout` option.
