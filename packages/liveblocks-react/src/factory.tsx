@@ -155,7 +155,7 @@ type Options<TUserMeta extends BaseUserMeta> = {
    */
   resolveUsers?: (
     args: ResolveUsersArgs
-  ) => PromiseOrNot<(TUserMeta["info"] | undefined)[]>;
+  ) => PromiseOrNot<(TUserMeta["info"] | undefined)[] | undefined>;
 
   /**
    * @beta
