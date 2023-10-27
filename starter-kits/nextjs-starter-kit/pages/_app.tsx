@@ -6,9 +6,9 @@ import { SessionProvider } from "next-auth/react";
 import { Badge } from "../components/Badge";
 import "../styles/globals.css";
 import "../styles/text-editor.css";
-import "../styles/text-editor-comments.css";
 import "@liveblocks/react-comments/styles.css";
 import "@liveblocks/react-comments/styles/dark/media-query.css";
+import "../styles/text-editor-comments.css";
 
 export default function App({
   Component,
