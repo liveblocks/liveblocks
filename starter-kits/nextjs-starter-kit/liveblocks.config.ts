@@ -118,7 +118,6 @@ export const {
 } = createRoomContext<Presence, Storage, UserMeta, RoomEvent, ThreadMetadata>(
   client,
   {
-    // @ts-expect-error
     async resolveUsers({ userIds }) {
       const users = await getUsers({ userIds });
       return users;

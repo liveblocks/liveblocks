@@ -93,7 +93,6 @@ function CustomThread({
           />
         ) : null}
         <Thread
-          // autoFocus={true}
           thread={thread}
           onThreadDelete={handleThreadDelete}
           indentCommentContent={false}

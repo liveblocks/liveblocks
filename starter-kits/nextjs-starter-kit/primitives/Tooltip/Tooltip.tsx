@@ -4,8 +4,10 @@ import { ReactNode, forwardRef } from "react";
 import styles from "./Tooltip.module.css";
 
 export interface Props
-  extends RadixTooltip.TooltipProps,
-    RadixTooltip.TooltipContentProps {
+  extends Omit<
+    RadixTooltip.TooltipProps & RadixTooltip.TooltipContentProps,
+    "content"
+  > {
   content: ReactNode;
 }
 
