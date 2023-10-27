@@ -7,7 +7,6 @@ import type {
   CreateChildOp,
   CreateObjectOp,
   CreateOp,
-  CreateRootObjectOp,
   DeleteObjectKeyOp,
   Op,
   UpdateObjectOp,
@@ -124,19 +123,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
     parentId: string,
     parentKey: string,
     pool?: ManagedPool
-  ): CreateChildOp[];
-  /** @internal */
-  _toOps(
-    parentId?: undefined,
-    parentKey?: undefined,
-    pool?: ManagedPool
-  ): CreateOp[];
-  /** @internal */
-  _toOps(
-    parentId?: string,
-    parentKey?: string,
-    pool?: ManagedPool
-  ): CreateOp[] {
+  ): CreateChildOp[] {
     if (this._id === undefined) {
       throw new Error("Cannot serialize item is not attached");
     }
@@ -144,18 +131,14 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
     const opId = pool?.generateOpId();
 
     const ops: CreateOp[] = [];
-    const op: CreateObjectOp | CreateRootObjectOp =
-      parentId !== undefined && parentKey !== undefined
-        ? {
-            type: OpCode.CREATE_OBJECT,
-            id: this._id,
-            opId,
-            parentId,
-            parentKey,
-            data: {},
-          }
-        : // Root object
-          { type: OpCode.CREATE_OBJECT, id: this._id, opId, data: {} };
+    const op: CreateObjectOp = {
+      type: OpCode.CREATE_OBJECT,
+      id: this._id,
+      opId,
+      parentId,
+      parentKey,
+      data: {},
+    };
 
     ops.push(op);
 

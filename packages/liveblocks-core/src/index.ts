@@ -102,7 +102,6 @@ export type {
   CreateObjectOp,
   CreateOp,
   CreateRegisterOp,
-  CreateRootObjectOp,
   DeleteCrdtOp,
   DeleteObjectKeyOp,
   Op,

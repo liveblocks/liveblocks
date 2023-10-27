@@ -24,7 +24,7 @@ export type Op =
   | SetParentKeyOp // Only for lists!
   | DeleteObjectKeyOp;
 
-export type CreateOp = CreateRootObjectOp | CreateChildOp;
+export type CreateOp = CreateChildOp;
 
 export type CreateChildOp =
   | CreateObjectOp
@@ -48,15 +48,6 @@ export type CreateObjectOp = {
   readonly parentId: string;
   readonly parentKey: string;
   readonly data: JsonObject;
-};
-
-export type CreateRootObjectOp = {
-  readonly opId?: string;
-  readonly id: string;
-  readonly type: OpCode.CREATE_OBJECT;
-  readonly data: JsonObject;
-  readonly parentId?: never;
-  readonly parentKey?: never;
 };
 
 export type CreateListOp = {
