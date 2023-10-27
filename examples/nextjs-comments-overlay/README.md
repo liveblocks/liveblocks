@@ -7,7 +7,7 @@
   </a>
 </p>
 
-# Overlay comments
+# Overlay Comments
 
 <p>
   <a href="https://liveblocks.io/examples/comments/nextjs-comments-overlay/preview">
