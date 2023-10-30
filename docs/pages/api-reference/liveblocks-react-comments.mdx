@@ -467,27 +467,89 @@ Learn more about this concept on
 
 ### Composer [#primitives-Composer]
 
-```tsx title="Anatomy"
-import { Composer } from "@liveblocks/react-comments/primitives";
+Used to render a composer for creating threads or comments.
 
-() => (
-  <Composer.Form>
-    <Composer.Editor
-      components={{
-        Mention: () => <Composer.Mention />,
-        MentionSuggestions: () => (
-          <Composer.Suggestions>
-            <Composer.SuggestionsList>
-              <Composer.SuggestionsListItem />
-            </Composer.SuggestionsList>
-          </Composer.Suggestions>
-        ),
-        Link: () => <Composer.Link />,
-      }}
-    />
-    <Composer.Submit />
-  </Composer.Form>
-);
+```tsx
+<Composer.Form>
+  <Composer.Editor
+    components={{
+      Mention: () => <Composer.Mention />,
+      MentionSuggestions: () => (
+        <Composer.Suggestions>
+          <Composer.SuggestionsList>
+            <Composer.SuggestionsListItem />
+          </Composer.SuggestionsList>
+        </Composer.Suggestions>
+      ),
+      Link: () => <Composer.Link />,
+    }}
+  />
+  <Composer.Submit />
+</Composer.Form>
+```
+
+```tsx highlight="12-21"
+import {
+  Composer,
+  CommentBodyLinkProps,
+  CommentBodyMentionProps,
+  ComposerEditorMentionSuggestionsProps,
+} from "@liveblocks/react-comments/primitives";
+import { useUser } from "../liveblocks.config.ts";
+
+// Render a custom composer with custom mentions and more
+function MyComposer() {
+  return (
+    <Composer.Form>
+      <Composer.Editor
+        components={{
+          Mention,
+          MentionSuggestions,
+          Link,
+        }}
+      />
+      <Composer.Submit />
+    </Composer.Form>
+  );
+}
+
+// Render a mention in the composer's editor, e.g. "@Emil Joyce"
+function Mention({ userId }: CommentBodyMentionProps) {
+  return <Comment.Mention>@{userId}</Comment.Mention>;
+}
+
+// Render a list of mention suggestions, used after typing "@" in the editor
+function MentionSuggestions({
+  userIds,
+  selectedUserId,
+}: ComposerEditorMentionSuggestionsProps) {
+  return (
+    <Composer.Suggestions>
+      <Composer.SuggestionsList>
+        {userIds.map((userId) => (
+          <MentionSuggestion key={userId} userId={userId} />
+        ))}
+      </Composer.SuggestionsList>
+    </Composer.Suggestions>
+  );
+}
+
+// Render a single mention suggestion from a `userId`
+function MentionSuggestion({ userId }: { userId: string }) {
+  const { user } = useUser(userId);
+
+  return (
+    <Composer.SuggestionsListItem value={user.id}>
+      <img src={user.avatar} alt={user.name} />
+      {user.name}
+    </Composer.SuggestionsListItem>
+  );
+}
+
+// Render a link in the composer's editor, e.g. "https://liveblocks.io"
+function Link({ href, children }: CommentBodyLinkProps) {
+  return <Comment.Link href={href}>{children}</Comment.Link>;
+}
 ```
 
 #### Composer.Form [#primitives-Composer.Form]
