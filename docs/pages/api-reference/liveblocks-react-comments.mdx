@@ -392,10 +392,10 @@ Classes containing colons `:` are internal and may change over time.
 
 #### Overrides
 
-Overrides can be used to customize the components’ strings and
-localization-related properties like the locale and reading direction.
+Overrides can be used to customize components’ strings and localization-related
+properties, such as locale and reading direction.
 
-They can be set globally once for all components using `CommentsConfig`:
+They can be set globally for all components using `CommentsConfig`:
 
 ```tsx
 import { CommentsConfig } from "@liveblocks/react-comments";
@@ -411,9 +411,10 @@ export function App() {
 }
 ```
 
-Or they can be set per-component (which will take precedence over the global
-ones) for contextual cases like a `<Composer />` used specifically to reply for
-example:
+Overrides can also be set per-component, and these settings will take precedence
+over global settings. This is particularly useful in certain contexts, for
+example when you’re using a `<Composer />` component for creating replies to
+threads:
 
 ```tsx
 <Composer
