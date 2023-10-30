@@ -1,3 +1,5 @@
+export const DEFAULT_BASE_URL = "https://api.liveblocks.io";
+
 export async function fetchPolyfill(): Promise<typeof fetch> {
   return typeof globalThis.fetch !== "undefined"
     ? globalThis.fetch

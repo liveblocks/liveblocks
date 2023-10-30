@@ -3,8 +3,8 @@
   import { onDestroy, onMount } from "svelte";
   import App from "../components/App.svelte";
 
-  let client: Client;
   let room: Room;
+  let leave: () => void;
   let roomId = "sveltekit-live-cursors";
 
   // Presence represents the properties that will exist on every User in the
@@ -43,21 +43,22 @@
   onMount(() => {
     overrideRoomId();
 
-    client = createClient({
+    const client = createClient({
       authEndpoint: "/api/liveblocks-auth",
       throttle: 16,
     });
 
-    room = client.enter<Presence, Storage /* UserMeta, RoomEvent */>(roomId, {
+    const info = client.enterRoom<Presence, Storage /* UserMeta, RoomEvent */>(roomId, {
       initialPresence: { cursor: null },
       initialStorage: {},
     });
+
+    room = info.room;
+    leave = info.leave;
   });
 
   onDestroy(() => {
-    if (client && room) {
-      client.leave(roomId);
-    }
+    leave?.();
   });
 
   /**

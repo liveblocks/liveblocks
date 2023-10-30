@@ -5,7 +5,7 @@ import type { CommentData } from "./types/CommentData";
 import type { ThreadData } from "./types/ThreadData";
 
 type Options = {
-  serverEndpoint: string;
+  baseUrl: string;
 };
 
 function getAuthBearerHeaderFromAuthValue(authValue: AuthValue) {
@@ -61,7 +61,7 @@ export type CommentsApi<TThreadMetadata extends BaseMetadata> = {
 export function createCommentsApi<TThreadMetadata extends BaseMetadata>(
   roomId: string,
   getAuthValue: () => Promise<AuthValue>,
-  { serverEndpoint }: Options
+  config: Options
 ): CommentsApi<TThreadMetadata> {
   async function fetchJson<T>(
     endpoint: string,
@@ -102,11 +102,10 @@ export function createCommentsApi<TThreadMetadata extends BaseMetadata>(
   ): Promise<Response> {
     // TODO: Use the right scope
     const authValue = await getAuthValue();
-
-    const url = `${serverEndpoint}/c/rooms/${encodeURIComponent(
-      roomId
-    )}${endpoint}`;
-
+    const url = new URL(
+      `/v2/c/rooms/${encodeURIComponent(roomId)}${endpoint}`,
+      config.baseUrl
+    ).toString();
     return await fetch(url, {
       ...options,
       headers: {

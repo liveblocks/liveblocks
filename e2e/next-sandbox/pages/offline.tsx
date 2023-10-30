@@ -40,8 +40,6 @@ type Internal = {
 
 type PrivateRoom = ReturnType<typeof useRoom> & {
   // Private APIs that aren't officially published (yet)
-  connect(): void;
-  disconnect(): void;
   __internal: Internal;
 };
 
@@ -146,7 +144,7 @@ function Sandbox(_props: { roomId: string }) {
             onClick={() => window.dispatchEvent(new Event("offline"))}
             title="Simulates a navigator offline event"
           >
-            Simulate "navigator offline"
+            Simulate “navigator offline”
           </Button>
         </div>
       </div>

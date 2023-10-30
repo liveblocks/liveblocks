@@ -7,9 +7,13 @@ function MyApp({ Component, pageProps }: AppProps) {
     body.style.padding = "10px 20px";
 
     const url = new URL(document.location.href);
-    body.style.backgroundColor = url.searchParams.get("bg") ?? "lime";
+    body.style.backgroundColor = url.searchParams.get("bg") ?? "white";
   }, []);
 
-  return <Component {...pageProps} />;
+  return (
+    <React.StrictMode>
+      <Component {...pageProps} />
+    </React.StrictMode>
+  );
 }
 export default MyApp;

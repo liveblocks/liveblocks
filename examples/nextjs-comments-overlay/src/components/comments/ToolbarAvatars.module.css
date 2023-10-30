@@ -1,0 +1,15 @@
+.toolbarAvatars {
+  display: flex;
+}
+
+.toolbarAvatar {
+  border-radius: 9999px;
+  border: 2px solid white;
+  width: 2rem;
+  height: 2rem;
+  margin-left: -4px;
+}
+
+.toolbarAvatar:first-child {
+  margin-left: 0;
+}

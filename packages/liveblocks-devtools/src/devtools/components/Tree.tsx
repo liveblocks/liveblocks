@@ -867,7 +867,10 @@ function YUpdateStructNodeRenderer({
             <>
               <RowStaticLabel>ContentFormat</RowStaticLabel>
               <RowPreview>
-                {truncate(item.content.value?.toString())}
+                {
+                  // eslint-disable-next-line @typescript-eslint/no-base-to-string
+                  truncate(item.content.value?.toString())
+                }
               </RowPreview>
             </>
           );

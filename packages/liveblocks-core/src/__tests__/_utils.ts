@@ -1,4 +1,5 @@
 import type { LiveObject } from "..";
+import { DEFAULT_BASE_URL } from "../constants";
 import type { LsonObject } from "../crdts/Lson";
 import type { ToImmutable } from "../crdts/utils";
 import type { Json, JsonObject } from "../lib/Json";
@@ -103,7 +104,6 @@ function makeRoomConfig(mockedDelegates: RoomDelegates) {
     roomId: "room-id",
     throttleDelay: -1, // No throttle for standard storage test
     lostConnectionTimeout: 99999, // Don't trigger connection loss events in tests
-    liveblocksServer: "wss://live.liveblocks.io/v7",
     authentication: {
       type: "private",
       url: "/api/auth",
@@ -111,6 +111,7 @@ function makeRoomConfig(mockedDelegates: RoomDelegates) {
     polyfills: {
       WebSocket: MockWebSocket,
     },
+    baseUrl: DEFAULT_BASE_URL,
     enableDebugLogging: false,
   };
 }

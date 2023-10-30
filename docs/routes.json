@@ -491,26 +491,12 @@
         "path": "/platform/upgrading",
         "sort": "descending",
         "routes": [
-          {
-            "title": "Upgrading to 0.17",
-            "path": "/platform/upgrading/0.17"
-          },
-          {
-            "title": "Upgrading to 0.18",
-            "path": "/platform/upgrading/0.18"
-          },
-          {
-            "title": "Upgrading to 0.19",
-            "path": "/platform/upgrading/0.19"
-          },
-          {
-            "title": "Upgrading to 1.0",
-            "path": "/platform/upgrading/1.0"
-          },
-          {
-            "title": "Upgrading to 1.2",
-            "path": "/platform/upgrading/1.2"
-          }
+          { "title": "Upgrading to 0.17", "path": "/platform/upgrading/0.17" },
+          { "title": "Upgrading to 0.18", "path": "/platform/upgrading/0.18" },
+          { "title": "Upgrading to 0.19", "path": "/platform/upgrading/0.19" },
+          { "title": "Upgrading to 1.0", "path": "/platform/upgrading/1.0" },
+          { "title": "Upgrading to 1.2", "path": "/platform/upgrading/1.2" },
+          { "title": "Upgrading to 1.5", "path": "/platform/upgrading/1.5" }
         ]
       },
       {

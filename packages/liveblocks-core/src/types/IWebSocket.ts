@@ -3,7 +3,7 @@ export interface IWebSocketEvent {
 }
 
 export interface IWebSocketCloseEvent extends IWebSocketEvent {
-  readonly code: number;
+  readonly code: WebsocketCloseCodes;
   readonly wasClean: boolean;
   readonly reason: string;
 }
@@ -81,17 +81,17 @@ export enum WebsocketCloseCodes {
 export function shouldDisconnect(code: WebsocketCloseCodes): boolean {
   return (
     code === WebsocketCloseCodes.CLOSE_WITHOUT_RETRY ||
-    (code >= 4000 && code < 4100)
+    ((code as number) >= 4000 && (code as number) < 4100)
   );
 }
 
 export function shouldReauth(code: WebsocketCloseCodes): boolean {
-  return code >= 4100 && code < 4200;
+  return (code as number) >= 4100 && (code as number) < 4200;
 }
 
 export function shouldRetryWithoutReauth(code: WebsocketCloseCodes): boolean {
   return (
     code === WebsocketCloseCodes.TRY_AGAIN_LATER ||
-    (code >= 4200 && code < 4300)
+    ((code as number) >= 4200 && (code as number) < 4300)
   );
 }

@@ -134,9 +134,8 @@ dispatch(actions.enterRoom("roomId"));
 
 ### LEAVE [#actions-leave]
 
-Dispatch `leaveRoom` action to leave a room and stop sync it with Redux state.
-
-- `roomId`: The room’s ID.
+Dispatch `leaveRoom` action to leave the current room and stop syncing it with
+Redux state.
 
 ```js
 import { actions } from "@liveblocks/redux";
@@ -144,7 +143,7 @@ import { useDispatch, useSelector } from "react-redux";
 
 const dispatch = useDispatch();
 
-dispatch(actions.leaveRoom("roomId"));
+dispatch(actions.leaveRoom());
 ```
 
 ## state.liveblocks [#liveblocks-state]

@@ -7,7 +7,7 @@ import type {
   LiveObject,
   LostConnectionEvent,
   LsonObject,
-  Others,
+  OthersEvent,
   Room,
   Status,
   User,
@@ -42,9 +42,9 @@ export type ResolveUsersArgs = {
   roomId: string;
 
   /**
-   * The ID of the users to resolve.
+   * The IDs of the users to resolve.
    */
-  userIds: string;
+  userIds: string[];
 };
 
 export type ResolveMentionSuggestionsArgs = {
@@ -101,6 +101,8 @@ export type RoomProviderProps<
      * meaning the RoomProvider tries to connect to Liveblocks servers
      * only on the client side.
      */
+    autoConnect?: boolean;
+    /** @deprecated Renamed to `autoConnect` */
     shouldInitiallyConnect?: boolean;
 
     /**
@@ -139,7 +141,7 @@ export type MutationContext<
 > = {
   storage: LiveObject<TStorage>;
   self: User<TPresence, TUserMeta>;
-  others: Others<TPresence, TUserMeta>;
+  others: readonly User<TPresence, TUserMeta>[];
   setMyPresence: (
     patch: Partial<TPresence>,
     options?: { addToHistory: boolean }
@@ -203,6 +205,22 @@ type RoomContextBundleShared<
   useBroadcastEvent(): (event: TRoomEvent, options?: BroadcastOptions) => void;
 
   /**
+   * Get informed when users enter or leave the room, as an event.
+   *
+   * @example
+   * useOthersListener({ type, user, others }) => {
+   *   if (type === 'enter') {
+   *     // `user` has joined the room
+   *   } else if (type === 'leave') {
+   *     // `user` has left the room
+   *   }
+   * })
+   */
+  useOthersListener(
+    callback: (event: OthersEvent<TPresence, TUserMeta>) => void
+  ): void;
+
+  /**
    * Get informed when reconnecting to the Liveblocks servers is taking
    * longer than usual. This typically is a sign of a client that has lost
    * internet connectivity.
@@ -227,7 +245,8 @@ type RoomContextBundleShared<
   ): void;
 
   /**
-   * useErrorListener is a react hook that lets you react to potential room connection errors.
+   * useErrorListener is a React hook that allows you to respond to potential room
+   * connection errors.
    *
    * @example
    * useErrorListener(er => {
@@ -237,7 +256,8 @@ type RoomContextBundleShared<
   useErrorListener(callback: (err: Error) => void): void;
 
   /**
-   * useEventListener is a react hook that lets you react to event broadcasted by other users in the room.
+   * useEventListener is a React hook that allows you to respond to events broadcast
+   * by other users in the room.
    *
    * @example
    * useEventListener(({ connectionId, event }) => {
@@ -392,7 +412,7 @@ type RoomContextBundleShared<
    *   </>
    * )
    */
-  useOthers(): Others<TPresence, TUserMeta>;
+  useOthers(): readonly User<TPresence, TUserMeta>[];
 
   /**
    * Extract arbitrary data based on all the users currently connected in the
@@ -416,7 +436,7 @@ type RoomContextBundleShared<
    *
    */
   useOthers<T>(
-    selector: (others: Others<TPresence, TUserMeta>) => T,
+    selector: (others: readonly User<TPresence, TUserMeta>[]) => T,
     isEqual?: (prev: T, curr: T) => boolean
   ): T;
 

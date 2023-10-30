@@ -1,0 +1,14 @@
+.composerWrapper {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: var(--z-comments-sidemenu);
+}
+
+.composer {
+  width: 300px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+  font-size: var(--size-sm);
+}

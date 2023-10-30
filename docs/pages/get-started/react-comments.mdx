@@ -44,17 +44,6 @@ We’d love to hear from you.
       npx create-liveblocks-app@latest --init --framework react
       ```
 
-      To get started with Comments, you’ll need to export `useThreads`.
-
-      ```tsx file="liveblocks.config.ts" highlight="4"
-      export const {
-        suspense: {
-          RoomProvider,
-          useThreads
-        },
-      } = createRoomContext(client);
-      ```
-
     </StepContent>
 
   </Step>
@@ -135,15 +124,11 @@ We’d love to hear from you.
     <StepTitle>Import default styles</StepTitle>
     <StepContent>
 
-    The default components come with default styles, import them either at
-    the root of your app or directly in CSS depending on your setup.
+    The default components come with default styles, you can import them into the
+    root of your app or directly into a CSS file with `@import`.
 
-    ```tsx file="layout.tsx"
+    ```tsx
     import "@liveblocks/react-comments/styles.css";
-    ```
-
-    ```tsx file="globals.css"
-    @import "@liveblocks/react-comments/styles.css";
     ```
 
     </StepContent>

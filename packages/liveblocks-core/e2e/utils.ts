@@ -18,7 +18,7 @@ async function initializeRoomForTest<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
   TUserMeta extends BaseUserMeta,
-  TRoomEvent extends Json
+  TRoomEvent extends Json,
 >(roomId: string, initialPresence: TPresence, initialStorage?: TStorage) {
   const publicApiKey = process.env.LIVEBLOCKS_PUBLIC_KEY;
 
@@ -65,18 +65,20 @@ async function initializeRoomForTest<
       fetch,
       WebSocket: PausableWebSocket,
     },
-    liveblocksServer: process.env.LIVEBLOCKS_SERVER,
+    baseUrl: process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL,
   });
 
-  const room = client.enter<TPresence, TStorage, TUserMeta, TRoomEvent>(
-    roomId,
-    { initialPresence, initialStorage }
-  );
+  const { room, leave } = client.enterRoom<
+    TPresence,
+    TStorage,
+    TUserMeta,
+    TRoomEvent
+  >(roomId, { initialPresence, initialStorage });
   await waitUntilStatus(room, "connected");
 
   return {
-    client,
     room,
+    leave,
     get ws() {
       if (ws == null) {
         throw new Error("Websocket should be initialized at this point");
@@ -192,11 +194,11 @@ export function prepareTestsConflicts<TStorage extends LsonObject>(
         wsUtils,
         assert,
       });
-      actor1.client.leave(roomName);
-      actor2.client.leave(roomName);
+      actor1.leave();
+      actor2.leave();
     } catch (er) {
-      actor1.client.leave(roomName);
-      actor2.client.leave(roomName);
+      actor1.leave();
+      actor2.leave();
       throw er;
     }
   };
@@ -245,9 +247,9 @@ export function prepareSingleClientTest<TStorage extends LsonObject>(
           await wait(1000);
         },
       });
-      actor.client.leave(roomName);
+      actor.leave();
     } catch (er) {
-      actor.client.leave(roomName);
+      actor.leave();
       throw er;
     }
   };

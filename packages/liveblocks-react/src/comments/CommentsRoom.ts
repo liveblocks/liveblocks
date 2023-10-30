@@ -740,7 +740,7 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
               let reactions: CommentReaction[] = comment.reactions;
 
               if (
-                reactionIndex > 0 &&
+                reactionIndex >= 0 &&
                 comment.reactions[reactionIndex].users.some(
                   (user) => user.id === userId
                 )

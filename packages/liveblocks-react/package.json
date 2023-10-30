@@ -1,6 +1,6 @@
 {
   "name": "@liveblocks/react",
-  "version": "1.4.6",
+  "version": "1.5.3",
   "description": "A set of React hooks and providers to use Liveblocks declaratively. Liveblocks is the all-in-one toolkit to build collaborative products like Figma, Notion, and more.",
   "license": "Apache-2.0",
   "main": "./dist/index.js",
@@ -30,11 +30,12 @@
     "lint": "eslint src/",
     "lint:package": "publint --strict && attw --pack",
     "test": "jest --silent --verbose --color=always",
+    "test:types": "tsd",
     "test:watch": "jest --silent --verbose --color=always --watch"
   },
   "dependencies": {
-    "@liveblocks/client": "1.4.6",
-    "@liveblocks/core": "1.4.6",
+    "@liveblocks/client": "1.5.3",
+    "@liveblocks/core": "1.5.3",
     "nanoid": "^3",
     "use-sync-external-store": "^1.2.0"
   },
