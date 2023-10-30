@@ -1,3 +1,9 @@
+# v1.5.3 (not yet released)
+
+### `create-liveblocks-app`
+
+- Add `ThreadMetadata` `--init` command.
+
 # v1.5.2
 
 ### `@liveblocks/react`
