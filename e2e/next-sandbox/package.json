@@ -16,6 +16,7 @@
     "@liveblocks/node": "*",
     "@liveblocks/react": "*",
     "@liveblocks/redux": "*",
+    "@liveblocks/yjs": "*",
     "@liveblocks/zustand": "*",
     "@reduxjs/toolkit": "^1.9.7",
     "encoding": "^0.1.13",
