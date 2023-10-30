@@ -76,9 +76,11 @@ export { asPos, makePosition } from "./lib/position";
 export type { Resolve } from "./lib/Resolve";
 export { shallow } from "./lib/shallow";
 export { stringify } from "./lib/stringify";
+export type { Brand } from "./lib/utils";
 export {
   b64decode,
   isPlainObject,
+  raise,
   tryParseJson,
   withTimeout,
 } from "./lib/utils";
