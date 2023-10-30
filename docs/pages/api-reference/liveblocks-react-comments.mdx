@@ -55,22 +55,22 @@ function Component() {
 
 <Table columns={["26%", "32%", "42%"]}>
 
-| Prop                   | Type                                                                                              | Description                                                                                                 |
-| ---------------------- | ------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| `thread`               | <code>ThreadData&lt;\{ resolved?: boolean \}&gt;</code>                                           | The thread to display.                                                                                      |
-| `showComposer`         | `boolean \| "collapsed" \| undefined`                                                             | How to show or hide the composer to reply to the thread.<br/>Defaults to `"collapsed"`.                     |
-| `showActions`          | `boolean \| "hover" \| undefined`                                                                 | How to show or hide the actions.<br/>Defaults to `"hover"`.                                                 |
-| `showReactions`        | `boolean \| undefined`                                                                            | Whether to show reactions.<br/>Defaults to `true`.                                                          |
-| `showResolveAction`    | `boolean \| undefined`                                                                            | Whether to show the action to resolve the thread.<br/>Defaults to `true`.                                   |
-| `indentCommentContent` | `boolean \| undefined`                                                                            | Whether to indent the comments’ content.<br/>Defaults to `true`.                                            |
-| `showDeletedComments`  | `boolean \| undefined`                                                                            | Whether to show deleted comments.<br/>Defaults to `false`.                                                  |
-| `onResolvedChange`     | `(resolved: boolean) => void`                                                                     | The event handler called when changing the resolved status.                                                 |
-| `onThreadDelete`       | `(thread: ThreadData) => void`                                                                    | The event handler called when the thread is deleted. A thread is deleted when all its comments are deleted. |
-| `onCommentEdit`        | `(comment: CommentData) => void`                                                                  | The event handler called when a comment is edited.                                                          |
-| `onCommentDelete`      | `(comment: CommentData) => void`                                                                  | The event handler called when a comment is deleted.                                                         |
-| `onAuthorClick`        | <code>(userId: string, event: MouseEvent&lt;HTMLElement&gt;) => void \| undefined</code>          | The event handler called when clicking on a comment’s author.                                               |
-| `onMentionClick`       | <code>(userId: string, event: MouseEvent&lt;HTMLElement&gt;) => void \| undefined</code>          | The event handler called when clicking on a mention.                                                        |
-| `overrides`            | <code>Partial&lt;ThreadOverrides \& CommentOverrides \& ComposerOverrides&gt; \| undefined</code> | Override the component’s strings.                                                                           |
+| Prop                      | Type                                                                                 | Description                                                                                                 |
+| ------------------------- | ------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------- |
+| `thread` <DocsRequired /> | <code>ThreadData&lt;\{ resolved?: boolean \}&gt;</code>                              | The thread to display.                                                                                      |
+| `showComposer`            | `boolean \| "collapsed"`                                                             | How to show or hide the composer to reply to the thread.<br/>Defaults to `"collapsed"`.                     |
+| `showActions`             | `boolean \| "hover"`                                                                 | How to show or hide the actions.<br/>Defaults to `"hover"`.                                                 |
+| `showReactions`           | `boolean`                                                                            | Whether to show reactions.<br/>Defaults to `true`.                                                          |
+| `showResolveAction`       | `boolean`                                                                            | Whether to show the action to resolve the thread.<br/>Defaults to `true`.                                   |
+| `indentCommentContent`    | `boolean`                                                                            | Whether to indent the comments’ content.<br/>Defaults to `true`.                                            |
+| `showDeletedComments`     | `boolean`                                                                            | Whether to show deleted comments.<br/>Defaults to `false`.                                                  |
+| `onResolvedChange`        | `(resolved: boolean) => void`                                                        | The event handler called when changing the resolved status.                                                 |
+| `onThreadDelete`          | `(thread: ThreadData) => void`                                                       | The event handler called when the thread is deleted. A thread is deleted when all its comments are deleted. |
+| `onCommentEdit`           | `(comment: CommentData) => void`                                                     | The event handler called when a comment is edited.                                                          |
+| `onCommentDelete`         | `(comment: CommentData) => void`                                                     | The event handler called when a comment is deleted.                                                         |
+| `onAuthorClick`           | <code>(userId: string, event: MouseEvent&lt;HTMLElement&gt;) => void</code>          | The event handler called when clicking on a comment’s author.                                               |
+| `onMentionClick`          | <code>(userId: string, event: MouseEvent&lt;HTMLElement&gt;) => void</code>          | The event handler called when clicking on a mention.                                                        |
+| `overrides`               | <code>Partial&lt;ThreadOverrides \& CommentOverrides \& ComposerOverrides&gt;</code> | Override the component’s strings.                                                                           |
 
 </Table>
 
@@ -213,19 +213,19 @@ Learn more about mutation hooks under
 
 <Table columns={["26%", "32%", "42%"]}>
 
-| Prop                | Type                                                                                                                                 | Description                                                                                       |
-| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------- |
-| `threadId`          | `string \| undefined`                                                                                                                | The ID of the thread to reply to or to edit a comment in.                                         |
-| `commentId`         | `string \| undefined`                                                                                                                | The ID of the comment to edit.                                                                    |
-| `metadata`          | <code>ThreadMetadata&lt;T&gt; \| undefined</code>                                                                                    | The metadata of the thread to create.                                                             |
-| `onComposerSubmit`  | <code>((comment: ComposerSubmitComment, event: FormEvent&lt;HTMLFormElement&gt;) => Promise&lt;void&gt; \| void) \| undefined</code> | The event handler called when the composer is submitted.                                          |
-| `defaultValue`      | `CommentBody \| undefined`                                                                                                           | The composer’s initial value.                                                                     |
-| `collapsed`         | `boolean \| undefined`                                                                                                               | Whether the composer is collapsed. Setting a value will make the composer controlled.             |
-| `onCollapsedChange` | `(collapsed: boolean) => void`                                                                                                       | The event handler called when the collapsed state of the composer changes.                        |
-| `defaultCollapsed`  | `boolean \| undefined`                                                                                                               | Whether the composer is initially collapsed. Setting a value will make the composer uncontrolled. |
-| `disabled`          | `boolean \| undefined`                                                                                                               | Whether the composer is disabled.                                                                 |
-| `autoFocus`         | `boolean \| undefined`                                                                                                               | Whether to focus the composer on mount.                                                           |
-| `overrides`         | <code>Partial&lt;ComposerOverrides&gt; \| undefined</code>                                                                           | Override the component’s strings.                                                                 |
+| Prop                | Type                                                                                                                  | Description                                                                                       |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `threadId`          | `string`                                                                                                              | The ID of the thread to reply to or to edit a comment in.                                         |
+| `commentId`         | `string`                                                                                                              | The ID of the comment to edit.                                                                    |
+| `metadata`          | <code>ThreadMetadata&lt;T&gt;</code>                                                                                  | The metadata of the thread to create.                                                             |
+| `onComposerSubmit`  | <code>(comment: ComposerSubmitComment, event: FormEvent&lt;HTMLFormElement&gt;) => Promise&lt;void&gt; \| void</code> | The event handler called when the composer is submitted.                                          |
+| `defaultValue`      | `CommentBody`                                                                                                         | The composer’s initial value.                                                                     |
+| `collapsed`         | `boolean`                                                                                                             | Whether the composer is collapsed. Setting a value will make the composer controlled.             |
+| `onCollapsedChange` | `(collapsed: boolean) => void`                                                                                        | The event handler called when the collapsed state of the composer changes.                        |
+| `defaultCollapsed`  | `boolean`                                                                                                             | Whether the composer is initially collapsed. Setting a value will make the composer uncontrolled. |
+| `disabled`          | `boolean`                                                                                                             | Whether the composer is disabled.                                                                 |
+| `autoFocus`         | `boolean`                                                                                                             | Whether to focus the composer on mount.                                                           |
+| `overrides`         | <code>Partial&lt;ComposerOverrides&gt;</code>                                                                         | Override the component’s strings.                                                                 |
 
 </Table>
 
@@ -261,18 +261,18 @@ function Component({ thread }: { thread: ThreadData }) {
 
 <Table columns={["26%", "32%", "42%"]}>
 
-| Prop              | Type                                                                                     | Description                                                                                                                           |
-| ----------------- | ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| `comment`         | `CommentData`                                                                            | The comment to display.                                                                                                               |
-| `showActions`     | `boolean \| "hover" \| undefined`                                                        | How to show or hide the actions.<br/>Defaults to `"hover"`.                                                                           |
-| `showReactions`   | `boolean \| undefined`                                                                   | Whether to show reactions.<br/>Defaults to `true`.                                                                                    |
-| `indentContent`   | `boolean \| undefined`                                                                   | Whether to indent the comment’s content.<br/>Defaults to `true`.                                                                      |
-| `showDeleted`     | `boolean \| undefined`                                                                   | Whether to show the comment if it was deleted. If set to `false`, it will render deleted comments as `null`.<br/>Defaults to `false`. |
-| `onCommentEdit`   | `(comment: CommentData) => void`                                                         | The event handler called when the comment is edited.                                                                                  |
-| `onCommentDelete` | `(comment: CommentData) => void`                                                         | The event handler called when the comment is deleted.                                                                                 |
-| `onAuthorClick`   | <code>(userId: string, event: MouseEvent&lt;HTMLElement&gt;) => void \| undefined</code> | The event handler called when clicking on the author.                                                                                 |
-| `onMentionClick`  | <code>(userId: string, event: MouseEvent&lt;HTMLElement&gt;) => void \| undefined</code> | The event handler called when clicking on a mention.                                                                                  |
-| `overrides`       | <code>Partial&lt;CommentOverrides \& ComposerOverrides&gt; \| undefined</code>           | Override the component’s strings.                                                                                                     |
+| Prop                       | Type                                                                        | Description                                                                                                                           |
+| -------------------------- | --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `comment` <DocsRequired /> | `CommentData`                                                               | The comment to display.                                                                                                               |
+| `showActions`              | `boolean \| "hover"`                                                        | How to show or hide the actions.<br/>Defaults to `"hover"`.                                                                           |
+| `showReactions`            | `boolean`                                                                   | Whether to show reactions.<br/>Defaults to `true`.                                                                                    |
+| `indentContent`            | `boolean`                                                                   | Whether to indent the comment’s content.<br/>Defaults to `true`.                                                                      |
+| `showDeleted`              | `boolean`                                                                   | Whether to show the comment if it was deleted. If set to `false`, it will render deleted comments as `null`.<br/>Defaults to `false`. |
+| `onCommentEdit`            | `(comment: CommentData) => void`                                            | The event handler called when the comment is edited.                                                                                  |
+| `onCommentDelete`          | `(comment: CommentData) => void`                                            | The event handler called when the comment is deleted.                                                                                 |
+| `onAuthorClick`            | <code>(userId: string, event: MouseEvent&lt;HTMLElement&gt;) => void</code> | The event handler called when clicking on the author.                                                                                 |
+| `onMentionClick`           | <code>(userId: string, event: MouseEvent&lt;HTMLElement&gt;) => void</code> | The event handler called when clicking on a mention.                                                                                  |
+| `overrides`                | <code>Partial&lt;CommentOverrides \& ComposerOverrides&gt;</code>           | Override the component’s strings.                                                                                                     |
 
 </Table>
 
@@ -588,10 +588,10 @@ occurs when the composer is submitted. You must create your own mutations within
 
 <Table columns={["26%", "32%", "42%"]}>
 
-| Prop               | Type                                                                                                                                 | Description                                                                         |
-| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------- |
-| `onComposerSubmit` | <code>((comment: ComposerSubmitComment, event: FormEvent&lt;HTMLFormElement&gt;) => Promise&lt;void&gt; \| void) \| undefined</code> | The event handler called when the form is submitted.                                |
-| `asChild`          | `boolean \| undefined`                                                                                                               | Replace the rendered element by the one passed as a child.<br/>Defaults to `false`. |
+| Prop               | Type                                                                                                                    | Description                                                                         |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| `onComposerSubmit` | <code>((comment: ComposerSubmitComment, event: FormEvent&lt;HTMLFormElement&gt;) => Promise&lt;void&gt; \| void)</code> | The event handler called when the form is submitted.                                |
+| `asChild`          | `boolean`                                                                                                               | Replace the rendered element by the one passed as a child.<br/>Defaults to `false`. |
 
 </Table>
 
@@ -605,14 +605,14 @@ Displays the composer’s editor.
 
 <Table columns={["26%", "32%", "42%"]}>
 
-| Prop           | Type                                                              | Description                                               |
-| -------------- | ----------------------------------------------------------------- | --------------------------------------------------------- |
-| `defaultValue` | `CommentBody \| undefined`                                        | The editor’s initial value.                               |
-| `placeholder`  | `string \| undefined`                                             | The text to display when the editor is empty.             |
-| `disabled`     | `boolean \| undefined`                                            | Whether the editor is disabled.                           |
-| `autoFocus`    | `boolean \| undefined`                                            | Whether to focus the editor on mount.                     |
-| `dir`          | `"ltr" \| "rtl" \| undefined`                                     | The reading direction of the editor and related elements. |
-| `components`   | <code>Partial&lt;ComposerEditorComponents&gt; \| undefined</code> | The components displayed within the editor.               |
+| Prop           | Type                                                 | Description                                               |
+| -------------- | ---------------------------------------------------- | --------------------------------------------------------- |
+| `defaultValue` | `CommentBody`                                        | The editor’s initial value.                               |
+| `placeholder`  | `string`                                             | The text to display when the editor is empty.             |
+| `disabled`     | `boolean`                                            | Whether the editor is disabled.                           |
+| `autoFocus`    | `boolean`                                            | Whether to focus the editor on mount.                     |
+| `dir`          | `"ltr" \| "rtl"`                                     | The reading direction of the editor and related elements. |
+| `components`   | <code>Partial&lt;ComposerEditorComponents&gt;</code> | The components displayed within the editor.               |
 
 </Table>
 
@@ -668,10 +668,10 @@ The component used to display mention suggestions.
 
 <Table columns={["26%", "32%", "42%"]}>
 
-| Prop             | Type                  | Description                     |
-| ---------------- | --------------------- | ------------------------------- |
-| `userIds`        | `string[]`            | The list of suggested user IDs. |
-| `selectedUserId` | `string \| undefined` | The currently selected user ID. |
+| Prop             | Type       | Description                     |
+| ---------------- | ---------- | ------------------------------- |
+| `userIds`        | `string[]` | The list of suggested user IDs. |
+| `selectedUserId` | `string`   | The currently selected user ID. |
 
 </Table>
 
@@ -720,9 +720,9 @@ Displays mentions within `Composer.Editor`.
 
 <Table columns={["26%", "32%", "42%"]}>
 
-| Prop      | Type                   | Description                                                                         |
-| --------- | ---------------------- | ----------------------------------------------------------------------------------- |
-| `asChild` | `boolean \| undefined` | Replace the rendered element by the one passed as a child.<br/>Defaults to `false`. |
+| Prop      | Type      | Description                                                                         |
+| --------- | --------- | ----------------------------------------------------------------------------------- |
+| `asChild` | `boolean` | Replace the rendered element by the one passed as a child.<br/>Defaults to `false`. |
 
 </Table>
 
@@ -744,9 +744,9 @@ Contains suggestions within `Composer.Editor`.
 
 <Table columns={["26%", "32%", "42%"]}>
 
-| Prop      | Type                   | Description                                                                         |
-| --------- | ---------------------- | ----------------------------------------------------------------------------------- |
-| `asChild` | `boolean \| undefined` | Replace the rendered element by the one passed as a child.<br/>Defaults to `false`. |
+| Prop      | Type      | Description                                                                         |
+| --------- | --------- | ----------------------------------------------------------------------------------- |
+| `asChild` | `boolean` | Replace the rendered element by the one passed as a child.<br/>Defaults to `false`. |
 
 </Table>
 
@@ -766,9 +766,9 @@ Displays a list of suggestions within `Composer.Editor`.
 
 <Table columns={["26%", "32%", "42%"]}>
 
-| Prop      | Type                   | Description                                                                         |
-| --------- | ---------------------- | ----------------------------------------------------------------------------------- |
-| `asChild` | `boolean \| undefined` | Replace the rendered element by the one passed as a child.<br/>Defaults to `false`. |
+| Prop      | Type      | Description                                                                         |
+| --------- | --------- | ----------------------------------------------------------------------------------- |
+| `asChild` | `boolean` | Replace the rendered element by the one passed as a child.<br/>Defaults to `false`. |
 
 </Table>
 
@@ -784,10 +784,10 @@ Displays a suggestion within `Composer.SuggestionsList`.
 
 <Table columns={["26%", "32%", "42%"]}>
 
-| Prop      | Type                   | Description                                                                         |
-| --------- | ---------------------- | ----------------------------------------------------------------------------------- |
-| `value`   | `string`               | The suggestion’s value.                                                             |
-| `asChild` | `boolean \| undefined` | Replace the rendered element by the one passed as a child.<br/>Defaults to `false`. |
+| Prop                     | Type      | Description                                                                         |
+| ------------------------ | --------- | ----------------------------------------------------------------------------------- |
+| `value` <DocsRequired /> | `string`  | The suggestion’s value.                                                             |
+| `asChild`                | `boolean` | Replace the rendered element by the one passed as a child.<br/>Defaults to `false`. |
 
 </Table>
 
@@ -809,9 +809,9 @@ Displays links within `Composer.Editor`.
 
 <Table columns={["26%", "32%", "42%"]}>
 
-| Prop      | Type                   | Description                                                                         |
-| --------- | ---------------------- | ----------------------------------------------------------------------------------- |
-| `asChild` | `boolean \| undefined` | Replace the rendered element by the one passed as a child.<br/>Defaults to `false`. |
+| Prop      | Type      | Description                                                                         |
+| --------- | --------- | ----------------------------------------------------------------------------------- |
+| `asChild` | `boolean` | Replace the rendered element by the one passed as a child.<br/>Defaults to `false`. |
 
 </Table>
 
@@ -825,9 +825,9 @@ A button to submit the composer.
 
 <Table columns={["26%", "32%", "42%"]}>
 
-| Prop      | Type                   | Description                                                                         |
-| --------- | ---------------------- | ----------------------------------------------------------------------------------- |
-| `asChild` | `boolean \| undefined` | Replace the rendered element by the one passed as a child.<br/>Defaults to `false`. |
+| Prop      | Type      | Description                                                                         |
+| --------- | --------- | ----------------------------------------------------------------------------------- |
+| `asChild` | `boolean` | Replace the rendered element by the one passed as a child.<br/>Defaults to `false`. |
 
 </Table>
 
@@ -894,11 +894,11 @@ Displays a comment body.
 
 <Table columns={["26%", "32%", "42%"]}>
 
-| Prop         | Type                                                           | Description                                                                         |
-| ------------ | -------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
-| `body`       | `CommentBody \| undefined`                                     | The comment body to display. If not defined, the component will render `null`.      |
-| `components` | <code>Partial&lt;CommentBodyComponents&gt; \| undefined</code> | The components displayed within the comment body.                                   |
-| `asChild`    | `boolean \| undefined`                                         | Replace the rendered element by the one passed as a child.<br/>Defaults to `false`. |
+| Prop         | Type                                              | Description                                                                         |
+| ------------ | ------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| `body`       | `CommentBody`                                     | The comment body to display. If not defined, the component will render `null`.      |
+| `components` | <code>Partial&lt;CommentBodyComponents&gt;</code> | The components displayed within the comment body.                                   |
+| `asChild`    | `boolean`                                         | Replace the rendered element by the one passed as a child.<br/>Defaults to `false`. |
 
 </Table>
 
@@ -968,9 +968,9 @@ Displays mentions within `Comment.Body`.
 
 <Table columns={["26%", "32%", "42%"]}>
 
-| Prop      | Type                   | Description                                                                         |
-| --------- | ---------------------- | ----------------------------------------------------------------------------------- |
-| `asChild` | `boolean \| undefined` | Replace the rendered element by the one passed as a child.<br/>Defaults to `false`. |
+| Prop      | Type      | Description                                                                         |
+| --------- | --------- | ----------------------------------------------------------------------------------- |
+| `asChild` | `boolean` | Replace the rendered element by the one passed as a child.<br/>Defaults to `false`. |
 
 </Table>
 
@@ -984,9 +984,9 @@ Displays links within `Comment.Body`.
 
 <Table columns={["26%", "32%", "42%"]}>
 
-| Prop      | Type                   | Description                                                                         |
-| --------- | ---------------------- | ----------------------------------------------------------------------------------- |
-| `asChild` | `boolean \| undefined` | Replace the rendered element by the one passed as a child.<br/>Defaults to `false`. |
+| Prop      | Type      | Description                                                                         |
+| --------- | --------- | ----------------------------------------------------------------------------------- |
+| `asChild` | `boolean` | Replace the rendered element by the one passed as a child.<br/>Defaults to `false`. |
 
 </Table>
 
@@ -1022,14 +1022,14 @@ function MyComments({ thread }: { thread: ThreadData }) {
 
 <Table columns={["26%", "32%", "42%"]}>
 
-| Prop       | Type                                              | Description                                                                                                                                 |
-| ---------- | ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| `date`     | `Date \| string \| number`                        | The date to display.                                                                                                                        |
-| `children` | `((date: Date) => ReactNode) \| undefined`        | A function to format the displayed date.<br/>Defaults to a relative date formatting function.                                               |
-| `title`    | `string \| ((date: Date) => string) \| undefined` | The `title` attribute’s value or a function to format it.<br/>Defaults to an absolute date formatting function.                             |
-| `interval` | `number \| false \| undefined`                    | The interval in milliseconds at which the component will re-render. Can be set to `false` to disable re-rendering.<br/>Defaults to `30000`. |
-| `locale`   | `string \| undefined`                             | The locale used when formatting the date.<br/>Defaults to the browser’s locale.                                                             |
-| `asChild`  | `boolean \| undefined`                            | Replace the rendered element by the one passed as a child.<br/>Defaults to `false`.                                                         |
+| Prop                    | Type                                 | Description                                                                                                                                 |
+| ----------------------- | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| `date` <DocsRequired /> | `Date \| string \| number`           | The date to display.                                                                                                                        |
+| `children`              | `(date: Date) => ReactNode`          | A function to format the displayed date.<br/>Defaults to a relative date formatting function.                                               |
+| `title`                 | `string \| ((date: Date) => string)` | The `title` attribute’s value or a function to format it.<br/>Defaults to an absolute date formatting function.                             |
+| `interval`              | `number \| false`                    | The interval in milliseconds at which the component will re-render. Can be set to `false` to disable re-rendering.<br/>Defaults to `30000`. |
+| `locale`                | `string`                             | The locale used when formatting the date.<br/>Defaults to the browser’s locale.                                                             |
+| `asChild`               | `boolean`                            | Replace the rendered element by the one passed as a child.<br/>Defaults to `false`.                                                         |
 
 </Table>
 
