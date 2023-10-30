@@ -43,19 +43,31 @@ function Sandbox() {
   const [synced, setSynced] = useState(false);
   const [provider, setProvider] = useState<LiveblocksProvider<never, never, BaseUserMeta, never>>();
   const doc = useMemo(() => new Y.Doc(), []);
+
+  const updateSubdocContent = useCallback(() => {
+    const docContent: Record<string, string> = {};
+    for (const subdoc of doc.getSubdocs()) {
+      const guid = subdoc.guid;
+      docContent[guid] = subdoc.getText("test").toString();
+    }
+    setSubdocContent(docContent);
+  }, [doc]);
+
+
   useEffect(() => {
     if (!room) {
       return;
     }
     const provider = new LiveblocksProvider(room, doc, { autoloadSubdocs: false });
-    
+    doc.on("subdocs", updateSubdocContent);
     setProvider(provider);
     provider.on("sync", () => { setSynced(true) });
     return () => {
       setSynced(false);
+      doc.off("subdocs", updateSubdocContent);
       provider.destroy();
     }
-  }, [doc, room])
+  }, [doc, room, updateSubdocContent])
 
   const clear = () => {
     for (const subdoc of doc.getSubdocs()) {
@@ -68,14 +80,6 @@ function Sandbox() {
     setSubdocContent({});
   };
 
-  const updateSubdocContent = useCallback(() => {
-    const docContent: Record<string, string> = {};
-    for (const subdoc of doc.getSubdocs()) {
-      const guid = subdoc.guid;
-      docContent[guid] = subdoc.getText("test").toString();
-    }
-    setSubdocContent(docContent);
-  }, [doc]);
 
   const createSubdoc = () => {
     const newDoc = new Y.Doc();
@@ -107,9 +111,9 @@ function Sandbox() {
           Create Subdoc with Text
         </Button>
         <Button
-          id="insert"
+          id="load"
           onClick={loadSubdocs}
-          subtitle={"insert text"}
+          subtitle={"load subdocs"}
         >
           Load Subdoc with Text
         </Button>
