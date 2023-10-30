@@ -467,7 +467,7 @@ Learn more about this concept on
 
 ### Composer [#primitives-Composer]
 
-Used to render a composer for creating or editing threads and comments.
+Used to render a composer for creating, or editing, threads and comments.
 
 ```tsx
 <Composer.Form>
@@ -576,8 +576,8 @@ function Link({ href, children }: CommentBodyLinkProps) {
 #### Composer.Form [#primitives-Composer.Form]
 
 Surrounds the composer’s content and handles submissions. By default, no action
-occurs when the composer is submitted, and you must create your own mutations
-within `onComposerSubmit` for
+occurs when the composer is submitted. You must create your own mutations within
+`onComposerSubmit` for
 [creating threads](/docs/api-reference/liveblocks-react#useCreateThread),
 [creating comments](/docs/api-reference/liveblocks-react#useCreateComment),
 [editing comments](/docs/api-reference/liveblocks-react#useEditComment), etc.
@@ -1003,7 +1003,7 @@ ago”) and a short absolute formatting for older ones (e.g. “25 Aug”).
 Combine with `comment.createdAt`, `comment.editedAt`, or `comment.deletedAt` to
 display a human-readable time.
 
-```tsx highlight="9"
+```tsx highlight="8"
 import { ThreadData, Timestamp } from "@liveblocks/react-comments";
 
 function MyComments({ thread }: { thread: ThreadData }) {
@@ -1011,7 +1011,6 @@ function MyComments({ thread }: { thread: ThreadData }) {
     <>
       {thread.comments.map((comment) => (
         <div key={comment.id}>
-          {/* e.g. "5 minutes ago" */}
           <Timestamp date={comment.createdAt} />
           <Comment.Body body={comment.body} components={/* ... */} />
         </div>
