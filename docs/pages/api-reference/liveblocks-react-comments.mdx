@@ -427,8 +427,8 @@ threads:
 
 ## Primitives
 
-Primitives are headless/unstyled components that can be used to create custom
-experiences with full control.
+Primitives are unstyled, headless components that can be used to create fully
+custom commenting experiences.
 
 <Banner title="Using primitives with TypeScript">
 
@@ -442,27 +442,28 @@ error, you should update your `tsconfig.json`’s `moduleResolution`
 
 ### Composition
 
-All primitives are composable: they forward their props and refs, merge their
+All primitives are composable; they forward their props and refs, merge their
 classes and styles, and chain their event handlers.
 
 Inspired by [Radix](https://www.radix-ui.com/) (and powered by its
 [`Slot`](https://www.radix-ui.com/primitives/docs/utilities/slot) utility), most
 of the primitives also support an `asChild` prop to replace the rendered element
-by any provided child, and both set of props will be merged. Learn more about
-this concept on
-[Radix’s composition guide](https://www.radix-ui.com/primitives/docs/guides/composition).
+by any provided child, and both set of props will be merged.
 
 ```tsx
 import { Button } from "@/my-design-system";
 
-// A default <button> element
+// Use the default <button> element
 <Composer.Submit disabled>Send</Composer.Submit>;
 
-// An existing custom <Button> component
+// Use an existing custom <Button> component
 <Composer.Submit disabled asChild>
   <Button variant="primary">Send</Button>
 </Composer.Submit>;
 ```
+
+Learn more about this concept on
+[Radix’s composition guide](https://www.radix-ui.com/primitives/docs/guides/composition).
 
 ### Comment [#primitives-Comment]
 
