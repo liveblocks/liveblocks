@@ -48,6 +48,7 @@ function Sandbox() {
       return;
     }
     const provider = new LiveblocksProvider(room, doc, { autoloadSubdocs: false });
+    
     setProvider(provider);
     provider.on("sync", () => { setSynced(true) });
     return () => {
@@ -58,11 +59,11 @@ function Sandbox() {
 
   const clear = () => {
     for (const subdoc of doc.getSubdocs()) {
-      const guid = (subdoc as Y.Doc).guid;
+      const guid = subdoc.guid;
       if (doc.getMap().has(guid)) {
         doc.getMap().delete(guid);
       }
-      (subdoc as Y.Doc).destroy();
+      subdoc.destroy();
     }
     setSubdocContent({});
   };
@@ -70,8 +71,8 @@ function Sandbox() {
   const updateSubdocContent = useCallback(() => {
     const docContent: Record<string, string> = {};
     for (const subdoc of doc.getSubdocs()) {
-      const guid = (subdoc as Y.Doc).guid;
-      docContent[guid] = (subdoc as Y.Doc).getText("test").toString();
+      const guid = subdoc.guid;
+      docContent[guid] = subdoc.getText("test").toString();
     }
     setSubdocContent(docContent);
   }, [doc]);
@@ -85,8 +86,8 @@ function Sandbox() {
 
   const loadSubdocs = useCallback(() => {
     for (const subdoc of doc.getSubdocs()) {
-      (subdoc as Y.Doc).load();
-      const guid = (subdoc as Y.Doc).guid;
+      subdoc.load();
+      const guid = subdoc.guid;
       const handler = provider?.subdocHandlers.get(guid);
       handler?.once("synced", updateSubdocContent);
     }
