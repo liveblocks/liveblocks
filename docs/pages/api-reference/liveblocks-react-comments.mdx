@@ -488,19 +488,40 @@ Used to render a composer for creating threads or comments.
 </Composer.Form>
 ```
 
-```tsx highlight="12-21"
+Combine with
+[`useCreateThread`](/docs/api-reference/liveblocks-react#useCreateThread) to
+render a composer that creates threads.
+
+```tsx highlight="21-25,29-38"
 import {
   Composer,
   CommentBodyLinkProps,
   CommentBodyMentionProps,
   ComposerEditorMentionSuggestionsProps,
+  ComposerSubmitComment,
 } from "@liveblocks/react-comments/primitives";
-import { useUser } from "../liveblocks.config.ts";
+import { useCreateThread, useUser } from "../liveblocks.config.ts";
+import { FormEvent } from "react";
 
-// Render a custom composer with custom mentions and more
+// Render a custom composer that creates a thread on submit
 function MyComposer() {
+  const createThread = useCreateThread();
+
+  function handleComposerSubmit(
+    { body }: ComposerSubmitComment,
+    event: FormEvent<HTMLFormElement>
+  ) {
+    event.preventdefault();
+
+    // Create a new thread
+    const thread = createThread({
+      body,
+      metadata: {},
+    });
+  }
+
   return (
-    <Composer.Form>
+    <Composer.Form onComposerSubmit={handleComposerSubmit}>
       <Composer.Editor
         components={{
           Mention,
@@ -508,7 +529,7 @@ function MyComposer() {
           Link,
         }}
       />
-      <Composer.Submit />
+      <Composer.Submit>Create thread</Composer.Submit>
     </Composer.Form>
   );
 }
