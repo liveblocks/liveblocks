@@ -26,12 +26,6 @@ to build comments in your application with Liveblocks—a platform to build, hos
 and scale collaborative applications with zero configuration, no maintenance
 required.
 
-> [!IMPORTANT]  
-> Comments is currently in beta.If you have any questions or feedback, please
-> reach out to us via the dedicated Discord channel,
-> [#comments-beta](https://discord.com/channels/913109211746009108/1126614905160749097).
-> We’d love to hear from you.
-
 ## Installation
 
 ```
