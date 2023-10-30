@@ -467,17 +467,55 @@ Learn more about this concept on
 
 ### Comment [#primitives-Comment]
 
-```tsx title="Anatomy"
-import { Comment } from "@liveblocks/react-comments/primitives";
+Used to render a single comment.
 
-() => (
-  <Comment.Body
-    components={{
-      Mention: <Comment.Mention />,
-      Link: <Comment.Link />,
-    }}
-  />
-);
+```tsx
+<Comment.Body
+  components={{
+    Mention: <Comment.Mention />,
+    Link: <Comment.Link />,
+  }}
+/>
+```
+
+Combine with [`useThreads`](/docs/api-reference/liveblocks-react#useThreads) to
+render a thread’s comments.
+
+```tsx highlight="13-20"
+import {
+  Comment,
+  CommentBodyLinkProps,
+  CommentBodyMentionProps,
+} from "@liveblocks/react-comments/primitives";
+import { ThreadData } from "@liveblocks/client";
+
+// Render custom comments in a thread. Pass a thread from `useThreads`.
+function MyComments({ thread }: { thread: ThreadData }) {
+  return (
+    <>
+      {thread.comments.map((comment) => (
+        <Comment.Body
+          key={comment.id}
+          body={comment.body}
+          components={{
+            Mention,
+            Link,
+          }}
+        />
+      ))}
+    </>
+  );
+}
+
+// Render a mention in the comment, e.g. "@Emil Joyce"
+function Mention({ userId }: CommentBodyMentionProps) {
+  return <Comment.Mention>@{userId}</Comment.Mention>;
+}
+
+// Render a link in the comment, e.g. "https://liveblocks.io"
+function Link({ href, children }: CommentBodyLinkProps) {
+  return <Comment.Link href={href}>{children}</Comment.Link>;
+}
 ```
 
 #### Comment.Body [#primitives-Comment.Body]
