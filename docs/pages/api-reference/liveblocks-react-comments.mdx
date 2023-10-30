@@ -465,165 +465,6 @@ import { Button } from "@/my-design-system";
 Learn more about this concept on
 [Radix’s composition guide](https://www.radix-ui.com/primitives/docs/guides/composition).
 
-### Comment [#primitives-Comment]
-
-Used to render a single comment.
-
-```tsx
-<Comment.Body
-  components={{
-    Mention: <Comment.Mention />,
-    Link: <Comment.Link />,
-  }}
-/>
-```
-
-Combine with [`useThreads`](/docs/api-reference/liveblocks-react#useThreads) to
-render a thread’s comments.
-
-```tsx highlight="13-20"
-import {
-  Comment,
-  CommentBodyLinkProps,
-  CommentBodyMentionProps,
-} from "@liveblocks/react-comments/primitives";
-import { ThreadData } from "@liveblocks/client";
-
-// Render custom comments in a thread. Pass a thread from `useThreads`.
-function MyComments({ thread }: { thread: ThreadData }) {
-  return (
-    <>
-      {thread.comments.map((comment) => (
-        <Comment.Body
-          key={comment.id}
-          body={comment.body}
-          components={{
-            Mention,
-            Link,
-          }}
-        />
-      ))}
-    </>
-  );
-}
-
-// Render a mention in the comment, e.g. "@Emil Joyce"
-function Mention({ userId }: CommentBodyMentionProps) {
-  return <Comment.Mention>@{userId}</Comment.Mention>;
-}
-
-// Render a link in the comment, e.g. "https://liveblocks.io"
-function Link({ href, children }: CommentBodyLinkProps) {
-  return <Comment.Link href={href}>{children}</Comment.Link>;
-}
-```
-
-#### Comment.Body [#primitives-Comment.Body]
-
-Displays a comment body.
-
-```tsx
-<Comment.Body body={comment.body} />
-```
-
-<Table columns={["26%", "32%", "42%"]}>
-
-| Prop         | Type                                                           | Description                                                                         |
-| ------------ | -------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
-| `body`       | `CommentBody \| undefined`                                     | The comment body to display. If not defined, the component will render `null`.      |
-| `components` | <code>Partial&lt;CommentBodyComponents&gt; \| undefined</code> | The components displayed within the comment body.                                   |
-| `asChild`    | `boolean \| undefined`                                         | Replace the rendered element by the one passed as a child.<br/>Defaults to `false`. |
-
-</Table>
-
-##### components [#primitives-Comment.Body-components]
-
-The components displayed within the comment body.
-
-<Table columns={["26%", "32%", "42%"]}>
-
-| Component | Type                                                      | Description                                                                                      |
-| --------- | --------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| `Mention` | <code>ComponentType&lt;CommentBodyMentionProps&gt;</code> | The component used to display mentions.<br/>Defaults to the mention’s `userId` prefixed by an @. |
-| `Link`    | <code>ComponentType&lt;CommentBodyLinkProps&gt;</code>    | The component used to display links.<br/>Defaults to the link’s `children` property.             |
-
-</Table>
-
-###### Mention [#primitives-Comment.Body-Mention]
-
-The component used to display mentions.
-
-```tsx
-<Comment.Body
-  components={{
-    Mention: ({ userId }) => <Comment.Mention>@{userId}</Comment.Mention>,
-  }}
-/>
-```
-
-<Table columns={["26%", "32%", "42%"]}>
-
-| Prop     | Type     | Description            |
-| -------- | -------- | ---------------------- |
-| `userId` | `string` | The mention’s user ID. |
-
-</Table>
-
-###### Link [#primitives-Comment.Body-Link]
-
-The component used to display links.
-
-```tsx
-<Comment.Body
-  components={{
-    Link: ({ href, children }) => (
-      <Comment.Link href={href}>{children}</Comment.Link>
-    ),
-  }}
-/>
-```
-
-<Table columns={["26%", "32%", "42%"]}>
-
-| Prop       | Type        | Description              |
-| ---------- | ----------- | ------------------------ |
-| `href`     | `string`    | The link’s absolute URL. |
-| `children` | `ReactNode` | The link’s content.      |
-
-</Table>
-
-#### Comment.Mention [#primitives-Comment.Mention]
-
-Displays mentions within `Comment.Body`.
-
-```tsx
-<Comment.Mention>@{userId}</Comment.Mention>
-```
-
-<Table columns={["26%", "32%", "42%"]}>
-
-| Prop      | Type                   | Description                                                                         |
-| --------- | ---------------------- | ----------------------------------------------------------------------------------- |
-| `asChild` | `boolean \| undefined` | Replace the rendered element by the one passed as a child.<br/>Defaults to `false`. |
-
-</Table>
-
-#### Comment.Link [#primitives-Comment.Link]
-
-Displays links within `Comment.Body`.
-
-```tsx
-<Comment.Link href={href}>{children}</Comment.Link>
-```
-
-<Table columns={["26%", "32%", "42%"]}>
-
-| Prop      | Type                   | Description                                                                         |
-| --------- | ---------------------- | ----------------------------------------------------------------------------------- |
-| `asChild` | `boolean \| undefined` | Replace the rendered element by the one passed as a child.<br/>Defaults to `false`. |
-
-</Table>
-
 ### Composer [#primitives-Composer]
 
 ```tsx title="Anatomy"
@@ -892,6 +733,165 @@ A button to submit the composer.
 
 ```tsx
 <Composer.Submit>Send</Composer.Submit>
+```
+
+<Table columns={["26%", "32%", "42%"]}>
+
+| Prop      | Type                   | Description                                                                         |
+| --------- | ---------------------- | ----------------------------------------------------------------------------------- |
+| `asChild` | `boolean \| undefined` | Replace the rendered element by the one passed as a child.<br/>Defaults to `false`. |
+
+</Table>
+
+### Comment [#primitives-Comment]
+
+Used to render a single comment.
+
+```tsx
+<Comment.Body
+  components={{
+    Mention: <Comment.Mention />,
+    Link: <Comment.Link />,
+  }}
+/>
+```
+
+Combine with [`useThreads`](/docs/api-reference/liveblocks-react#useThreads) to
+render a thread’s comments.
+
+```tsx highlight="13-20"
+import {
+  Comment,
+  CommentBodyLinkProps,
+  CommentBodyMentionProps,
+} from "@liveblocks/react-comments/primitives";
+import { ThreadData } from "@liveblocks/client";
+
+// Render custom comments in a thread. Pass a thread from `useThreads`.
+function MyComments({ thread }: { thread: ThreadData }) {
+  return (
+    <>
+      {thread.comments.map((comment) => (
+        <Comment.Body
+          key={comment.id}
+          body={comment.body}
+          components={{
+            Mention,
+            Link,
+          }}
+        />
+      ))}
+    </>
+  );
+}
+
+// Render a mention in the comment, e.g. "@Emil Joyce"
+function Mention({ userId }: CommentBodyMentionProps) {
+  return <Comment.Mention>@{userId}</Comment.Mention>;
+}
+
+// Render a link in the comment, e.g. "https://liveblocks.io"
+function Link({ href, children }: CommentBodyLinkProps) {
+  return <Comment.Link href={href}>{children}</Comment.Link>;
+}
+```
+
+#### Comment.Body [#primitives-Comment.Body]
+
+Displays a comment body.
+
+```tsx
+<Comment.Body body={comment.body} />
+```
+
+<Table columns={["26%", "32%", "42%"]}>
+
+| Prop         | Type                                                           | Description                                                                         |
+| ------------ | -------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| `body`       | `CommentBody \| undefined`                                     | The comment body to display. If not defined, the component will render `null`.      |
+| `components` | <code>Partial&lt;CommentBodyComponents&gt; \| undefined</code> | The components displayed within the comment body.                                   |
+| `asChild`    | `boolean \| undefined`                                         | Replace the rendered element by the one passed as a child.<br/>Defaults to `false`. |
+
+</Table>
+
+##### components [#primitives-Comment.Body-components]
+
+The components displayed within the comment body.
+
+<Table columns={["26%", "32%", "42%"]}>
+
+| Component | Type                                                      | Description                                                                                      |
+| --------- | --------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| `Mention` | <code>ComponentType&lt;CommentBodyMentionProps&gt;</code> | The component used to display mentions.<br/>Defaults to the mention’s `userId` prefixed by an @. |
+| `Link`    | <code>ComponentType&lt;CommentBodyLinkProps&gt;</code>    | The component used to display links.<br/>Defaults to the link’s `children` property.             |
+
+</Table>
+
+###### Mention [#primitives-Comment.Body-Mention]
+
+The component used to display mentions.
+
+```tsx
+<Comment.Body
+  components={{
+    Mention: ({ userId }) => <Comment.Mention>@{userId}</Comment.Mention>,
+  }}
+/>
+```
+
+<Table columns={["26%", "32%", "42%"]}>
+
+| Prop     | Type     | Description            |
+| -------- | -------- | ---------------------- |
+| `userId` | `string` | The mention’s user ID. |
+
+</Table>
+
+###### Link [#primitives-Comment.Body-Link]
+
+The component used to display links.
+
+```tsx
+<Comment.Body
+  components={{
+    Link: ({ href, children }) => (
+      <Comment.Link href={href}>{children}</Comment.Link>
+    ),
+  }}
+/>
+```
+
+<Table columns={["26%", "32%", "42%"]}>
+
+| Prop       | Type        | Description              |
+| ---------- | ----------- | ------------------------ |
+| `href`     | `string`    | The link’s absolute URL. |
+| `children` | `ReactNode` | The link’s content.      |
+
+</Table>
+
+#### Comment.Mention [#primitives-Comment.Mention]
+
+Displays mentions within `Comment.Body`.
+
+```tsx
+<Comment.Mention>@{userId}</Comment.Mention>
+```
+
+<Table columns={["26%", "32%", "42%"]}>
+
+| Prop      | Type                   | Description                                                                         |
+| --------- | ---------------------- | ----------------------------------------------------------------------------------- |
+| `asChild` | `boolean \| undefined` | Replace the rendered element by the one passed as a child.<br/>Defaults to `false`. |
+
+</Table>
+
+#### Comment.Link [#primitives-Comment.Link]
+
+Displays links within `Comment.Body`.
+
+```tsx
+<Comment.Link href={href}>{children}</Comment.Link>
 ```
 
 <Table columns={["26%", "32%", "42%"]}>
