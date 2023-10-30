@@ -2,7 +2,7 @@ import { nn } from "../lib/assert";
 import { nanoid } from "../lib/nanoid";
 import type { Pos } from "../lib/position";
 import { asPos, makePosition } from "../lib/position";
-import type { CreateChildOp, CreateListOp, CreateOp, Op } from "../protocol/Op";
+import type { CreateListOp, CreateOp, Op } from "../protocol/Op";
 import { OpCode } from "../protocol/Op";
 import type { IdTuple, SerializedList } from "../protocol/SerializedCrdt";
 import { CrdtType } from "../protocol/SerializedCrdt";
@@ -105,16 +105,12 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
    * This is quite unintuitive and should disappear as soon as
    * we introduce an explicit LiveList.Set operation
    */
-  _toOps(
-    parentId: string,
-    parentKey: string,
-    pool?: ManagedPool
-  ): CreateChildOp[] {
+  _toOps(parentId: string, parentKey: string, pool?: ManagedPool): CreateOp[] {
     if (this._id === undefined) {
       throw new Error("Cannot serialize item is not attached");
     }
 
-    const ops: CreateChildOp[] = [];
+    const ops: CreateOp[] = [];
     const op: CreateListOp = {
       id: this._id,
       opId: pool?.generateOpId(),
@@ -183,7 +179,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
   }
 
   /** @internal */
-  private _applySetRemote(op: CreateChildOp): ApplyResult {
+  private _applySetRemote(op: CreateOp): ApplyResult {
     if (this._pool === undefined) {
       throw new Error("Can't attach child if managed pool is not present");
     }
@@ -264,7 +260,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
   }
 
   /** @internal */
-  private _applySetAck(op: CreateChildOp): ApplyResult {
+  private _applySetAck(op: CreateOp): ApplyResult {
     if (this._pool === undefined) {
       throw new Error("Can't attach child if managed pool is not present");
     }
@@ -400,7 +396,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
   }
 
   /** @internal */
-  private _applyRemoteInsert(op: CreateChildOp): ApplyResult {
+  private _applyRemoteInsert(op: CreateOp): ApplyResult {
     if (this._pool === undefined) {
       throw new Error("Can't attach child if managed pool is not present");
     }
@@ -424,7 +420,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
   }
 
   /** @internal */
-  private _applyInsertAck(op: CreateChildOp): ApplyResult {
+  private _applyInsertAck(op: CreateOp): ApplyResult {
     const existingItem = this._items.find((item) => item._id === op.id);
     const key = asPos(op.parentKey);
 
@@ -489,7 +485,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
   }
 
   /** @internal */
-  private _applyInsertUndoRedo(op: CreateChildOp): ApplyResult {
+  private _applyInsertUndoRedo(op: CreateOp): ApplyResult {
     const { id, parentKey: key } = op;
     const child = creationOpToLiveNode(op);
 
@@ -523,7 +519,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
   }
 
   /** @internal */
-  private _applySetUndoRedo(op: CreateChildOp): ApplyResult {
+  private _applySetUndoRedo(op: CreateOp): ApplyResult {
     const { id, parentKey: key } = op;
     const child = creationOpToLiveNode(op);
 
@@ -581,7 +577,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
   }
 
   /** @internal */
-  _attachChild(op: CreateChildOp, source: OpSource): ApplyResult {
+  _attachChild(op: CreateOp, source: OpSource): ApplyResult {
     if (this._pool === undefined) {
       throw new Error("Can't attach child if managed pool is not present");
     }
@@ -1368,9 +1364,9 @@ function moveDelta(
  * serializing a LiveStructure should not know anything about intent
  */
 function HACK_addIntentAndDeletedIdToOperation(
-  ops: CreateChildOp[],
+  ops: CreateOp[],
   deletedId: string | undefined
-): CreateChildOp[] {
+): CreateOp[] {
   return ops.map((op, index) => {
     if (index === 0) {
       // NOTE: Only patch the first Op here

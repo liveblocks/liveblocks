@@ -10,7 +10,7 @@ meta:
 
 Liveblocks allows you to build collaborative applications with
 [Yjs](https://yjs.dev/), which is tightly integrated into our infrastructure.
-Using our Webhooks and REST API, you can then retrieve the Yjs document data as
+Using our webhooks and REST API, you can then retrieve the Yjs document data as
 it changes, and store it in your database.
 
 <Banner title="Public beta">
@@ -28,14 +28,14 @@ In this guide we’ll be linking a Yjs application up to a
 [Supabase Postgres](https://supabase.com/database) database so that Yjs document
 data is automatically synchronized. This is enabled through the following:
 
-- [YDocUpdated](/docs/platform/webhooks#YDocUpdatedEvent) Webhook event
+- [YDocUpdated](/docs/platform/webhooks#YDocUpdatedEvent) webhook event
 - [Get Yjs Document](/docs/api-reference/rest-api-endpoints#get-rooms-roomId-ydoc)
   REST API
 
 <Banner title="Have a project ready">
 
-This guide assumes you already have a Liveblocks Yjs project set up. If haven’t
-already got one, you can open our getting started page, select a
+This guide assumes you already have a Liveblocks Yjs project set up. If you
+haven’t already got one, you can open our getting started page, select a
 [text editor](/docs/get-started/text-editor) or
 [code editor](/docs/get-started/code-editor), both of which use Yjs, and come
 back after you’re set up.
@@ -51,7 +51,7 @@ webhook this frequently.
 
 ## Create an endpoint in your project
 
-When a webhook event is triggered, it can send POST request to the back end in
+When a webhook event is triggered, it can send a POST request to the back end in
 your project, and from within there we can update the database. In this guide,
 we’ll be using a Next.js route handler (API endpoint) as an example, but other
 frameworks work similarly.
@@ -98,9 +98,9 @@ placed into the Liveblocks webhooks dashboard for quick testing.
 
 ## Set up webhooks on the Liveblocks dashboard
 
-To use webhooks, you need to your endpoint URL to the webhooks dashboard inside
-our Liveblocks project, and tell the webhook to trigger when Yjs document data
-has changed.
+To use webhooks, you need to pass your endpoint URL to the webhooks dashboard
+inside your Liveblocks project, and tell the webhook to trigger when Yjs
+document data has changed.
 
 <Steps>
   <Step>
@@ -112,8 +112,8 @@ has changed.
         <Image
           src="/assets/tutorials/webhooks/liveblocks-create-project.png"
           alt="Create a Liveblocks project"
-          width={969}
-          height={647}
+          width={712}
+          height={445}
         />
       </Figure>
     </StepContent>
@@ -122,29 +122,28 @@ has changed.
   <Step>
     <StepTitle>Go to the webhooks dashboard</StepTitle>
     <StepContent>
-      Click on the “Webhooks” tab on the menu at the left.
+      Click on the **“Webhooks”** tab on the menu at the left.
       <Figure>
         <Image
           src="/assets/tutorials/webhooks/liveblocks-click-webhooks.png"
           alt="Click webhooks"
-          width={1150}
-          height={602}
+          width={712}
+          height={445}
         />
       </Figure>
     </StepContent>
   </Step>
   
   <Step>
-    <StepTitle>Add an endpoint</StepTitle>
+    <StepTitle>Create an endpoint</StepTitle>
     <StepContent>
-      Click the “Add Endpoint” button on the webhooks dashboard to start setting
-      up your webhook.
+      Click the **“Create endpoint…”** button on the webhooks dashboard to start setting up your webhook.
       <Figure>
         <Image
           src="/assets/tutorials/webhooks/liveblocks-add-endpoint.png"
           alt="Click add endpoint"
-          width={1781}
-          height={786}
+          width={712}
+          height={445}
         />
       </Figure>
     </StepContent>
@@ -159,24 +158,24 @@ has changed.
         <Image
           src="/assets/tutorials/webhooks/liveblocks-add-endpoint-url.png"
           alt="Add endpoint URL"
-          width={1210}
-          height={607}
+          width={712}
+          height={445}
         />
       </Figure>
     </StepContent>
   </Step>
   
   <Step>
-    <StepTitle>Get your signing secret</StepTitle>
+    <StepTitle>Get your webhook secret key</StepTitle>>
     <StepContent>
-      Click “Create” at the bottom, then find your “Signing Secret” on the next
+      Click **“Create endpoint”** at the bottom, then find your **“Webhook secret key”** on the next
       page, and copy it.
       <Figure>
         <Image
-          src="/assets/tutorials/webhooks/liveblocks-get-signing-secret.png"
-          alt="Copy your signing secret"
-          width={1210}
-          height={607}
+          src="/assets/tutorials/webhooks/liveblocks-get-secret-key.png"
+          alt="Copy your webhook secret key"
+          width={712}
+          height={445}
         />
       </Figure>
     </StepContent>
@@ -186,7 +185,7 @@ has changed.
     <StepTitle>Webhooks dashboard is set up!</StepTitle>
 
     <StepContent>
-      Note that you filter specifically for `ydocUpdated` events, but we’re
+      Note that you can filter specifically for `ydocUpdated` events, but we’re
       ignoring this for now so we can test more easily. Let’s go back to the
       code.
     </StepContent>
@@ -194,15 +193,11 @@ has changed.
   </Step>
 </Steps>
 
-The dashboard’s now set up! Note that you filter specifically for `ydocUpdated`
-events, but we’re ignoring this for now so we can test more easily. Let’s go
-back to the endpoint.
-
 ## Verify the webhook request
 
 The [`@liveblocks/node`](/docs/api-reference/liveblocks-node) package provides
 you with a function that verifies whether the current request is a real webhook
-request from your Liveblocks. You can set this up by setting up a
+request from Liveblocks. You can set this up by setting up a
 [`WebhookHandler`](/docs/api-reference/liveblocks-node#WebhookHandler) and
 running [`verifyRequest`](/docs/api-reference/liveblocks-node#verifyRequest).
 

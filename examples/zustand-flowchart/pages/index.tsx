@@ -24,7 +24,7 @@ export default function Index() {
   // Enter the Liveblocks room on load
   useEffect(() => {
     enterRoom(roomId);
-    return () => leaveRoom(roomId);
+    return () => leaveRoom();
   }, [enterRoom, leaveRoom, roomId]);
 
   if (isStorageLoading) {

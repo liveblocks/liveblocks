@@ -17,13 +17,13 @@
     "format": "turbo run format"
   },
   "devDependencies": {
-    "@arethetypeswrong/cli": "^0.6.0",
-    "dependency-cruiser": "^13.1.0",
-    "prettier": "^3.0.0",
-    "publint": "^0.1.16",
-    "tsd": "^0.28.1",
-    "tsup": "^7.1.0",
-    "turbo": "^1.10.13",
+    "@arethetypeswrong/cli": "^0.12.2",
+    "dependency-cruiser": "^15.0.0",
+    "prettier": "^3.0.3",
+    "publint": "^0.2.5",
+    "tsd": "^0.29.0",
+    "tsup": "^7.2.0",
+    "turbo": "^1.10.16",
     "typescript": "<4.8"
   }
 }

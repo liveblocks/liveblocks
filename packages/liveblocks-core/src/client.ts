@@ -20,7 +20,7 @@ const MIN_THROTTLE = 16;
 const MAX_THROTTLE = 1_000;
 const DEFAULT_THROTTLE = 100;
 
-const MIN_BACKGROUND_KEEP_ALIVE_TIMEOUT = 60_000;
+const MIN_BACKGROUND_KEEP_ALIVE_TIMEOUT = 15_000;
 const MIN_LOST_CONNECTION_TIMEOUT = 200;
 const RECOMMENDED_MIN_LOST_CONNECTION_TIMEOUT = 1_000;
 const MAX_LOST_CONNECTION_TIMEOUT = 30_000;
@@ -425,8 +425,7 @@ function checkBounds(
   if (
     typeof value !== "number" ||
     value < min ||
-    max === undefined ||
-    value > max
+    (max !== undefined && value > max)
   ) {
     throw new Error(
       max !== undefined
@@ -441,15 +440,6 @@ function getBackgroundKeepAliveTimeout(
   value: number | undefined
 ): number | undefined {
   if (value === undefined) return undefined;
-
-  if (typeof document === "undefined") {
-    // eslint-disable-next-line rulesdir/console-must-be-fancy
-    console.warn(
-      "Setting backgroundKeepAliveTimeout won't have an effect in a non-DOM environment."
-    );
-    return undefined;
-  }
-
   return checkBounds(
     "backgroundKeepAliveTimeout",
     value,

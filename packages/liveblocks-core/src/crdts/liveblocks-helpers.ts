@@ -208,18 +208,18 @@ export function getTreesDiffOperations(
           });
           break;
         case CrdtType.OBJECT:
-          ops.push(
-            crdt.parentId
-              ? {
-                  type: OpCode.CREATE_OBJECT,
-                  id,
-                  parentId: crdt.parentId,
-                  parentKey: crdt.parentKey,
-                  data: crdt.data,
-                }
-              : // Root object
-                { type: OpCode.CREATE_OBJECT, id, data: crdt.data }
-          );
+          if (crdt.parentId === undefined || crdt.parentKey === undefined) {
+            throw new Error(
+              "Internal error. Cannot serialize storage root into an operation"
+            );
+          }
+          ops.push({
+            type: OpCode.CREATE_OBJECT,
+            id,
+            parentId: crdt.parentId,
+            parentKey: crdt.parentKey,
+            data: crdt.data,
+          });
           break;
         case CrdtType.MAP:
           ops.push({
