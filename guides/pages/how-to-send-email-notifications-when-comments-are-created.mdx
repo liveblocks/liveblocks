@@ -18,13 +18,11 @@ specifically, we’ll be looking at how to:
 
 - Trigger events when comments are created using the
   [CommentCreated](/docs/platform/webhooks#CommentCreatedEvent) webhook event.
-- Fetch a comment’s data with the
-  [Get Comment](/docs/api-reference/rest-api-endpoints#get-comment) REST API.
-- Retrieve users that have been mentioned with the
-  [Get Thread Participants](/docs/api-reference/rest-api-endpoints#get-thread-participants)
-  REST API.
-- Send notifications containing the comment’s
+- Fetch a comment’s data using the
+  [@liveblocks/node](/docs/api-reference/liveblocks-node) package.
+- Create notifications containing the comment’s
   [formatted text](/docs/guides/how-to-send-email-notifications-when-comments-are-created#Formatting-a-comment's-body).
+- Sending an email notification with [Resend](https://resend.com/).
 
 <Banner title="Have a project ready">
 
@@ -637,15 +635,19 @@ export async function POST(request: Request) {
 }
 ```
 
-Here’s a real-world example that uses [Resend](https://resend.com) to send the
-notifications.
+## Sending emails with Resend
 
-```ts highlight="3,5-6,49-59" file="route.ts" isCollapsable isCollapsed
+[Resend](https://resend.com) is a great tool for easily sending emails, and in
+this code example, we’re using it to send the notifications to each user. Make
+sure to add your API key from the
+[Resend dashboard](https://resend.com/overview) before running the code.
+
+```ts highlight="3,5-6,49-59" file="route.ts"
 import { Liveblocks, WebhookHandler } from "@liveblocks/node";
 import { getTextFromCommentBody } from "./convert";
 import { Resend } from "resend";
 
-// Create Resend client
+// Create Resend client (add your API key)
 const resend = new Resend("re_123456789");
 
 // Add your signing key from a project's webhooks dashboard
@@ -721,3 +723,4 @@ created! In this guide we’ve learned:
   [comment data](/docs/api-reference/liveblocks-node#get-comment) and
   [thread participants](/docs/api-reference/liveblocks-node#get-thread-participants).
 - How to shape a comment’s body into your custom format.
+- How to send email notifications with [Resend](https://resend.com).
