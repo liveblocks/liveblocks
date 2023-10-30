@@ -467,7 +467,7 @@ Learn more about this concept on
 
 ### Composer [#primitives-Composer]
 
-Used to render a composer for creating threads or comments.
+Used to render a composer for creating or editing threads and comments.
 
 ```tsx
 <Composer.Form>
@@ -492,7 +492,7 @@ Combine with
 [`useCreateThread`](/docs/api-reference/liveblocks-react#useCreateThread) to
 render a composer that creates threads.
 
-```tsx highlight="21-25,29-38"
+```tsx highlight="13,21-25,29-38"
 import {
   Composer,
   CommentBodyLinkProps,
@@ -575,7 +575,12 @@ function Link({ href, children }: CommentBodyLinkProps) {
 
 #### Composer.Form [#primitives-Composer.Form]
 
-Surrounds the composer’s content and handles submissions.
+Surrounds the composer’s content and handles submissions. By default, no action
+occurs when the composer is submitted, and you must create your own mutations
+within `onComposerSubmit` for
+[creating threads](/docs/api-reference/liveblocks-react#useCreateThread),
+[creating comments](/docs/api-reference/liveblocks-react#useCreateComment),
+[editing comments](/docs/api-reference/liveblocks-react#useEditComment), etc.
 
 ```tsx
 <Composer.Form onComposerSubmit={({ body }) => {}}>{/* ... */}</Composer.Form>
