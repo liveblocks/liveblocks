@@ -2,7 +2,7 @@
 
 ### `create-liveblocks-app`
 
-- Add `ThreadMetadata` `--init` command.
+- Add `ThreadMetadata` type to `--init` command.
 
 # v1.5.2
 
