@@ -27,7 +27,7 @@ showTitle: false
 
 ## API Reference
 
-<ListGrid columns={3}>
+<ListGrid columns={2}>
   <DocsCard
     type="technology"
     title="JavaScript"
@@ -40,6 +40,13 @@ showTitle: false
     title="React"
     href="/docs/api-reference/liveblocks-react"
     description="@liveblocks/react"
+    visual={<DocsReactIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="React Comments"
+    href="/docs/api-reference/liveblocks-react-comments"
+    description="@liveblocks/react-comments"
     visual={<DocsReactIcon />}
   />
   <DocsCard
@@ -63,6 +70,13 @@ showTitle: false
         loading="lazy"
       />
     }
+  />
+  <DocsCard
+    type="technology"
+    title="Yjs"
+    href="/docs/api-reference/liveblocks-yjs"
+    description="@liveblocks/yjs"
+    visual={<DocsYjsIcon width={24} height={24} />}
   />
   <DocsCard
     type="technology"
