@@ -1,3 +1,9 @@
+# v1.6.0
+
+### `@liveblocks/yjs`
+
+- Add support for subdocs
+
 # v1.5.2
 
 ### `@liveblocks/react`
