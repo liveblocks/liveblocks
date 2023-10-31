@@ -87,10 +87,11 @@ type RoomEvent = {
 };
 
 // Optionally, when using Comments, ThreadMetadata represents metadata on
-// each thread. Can only contain booleans, strings, and numbers. The default
-// Comments components require \`resolved: boolean\`.
+// each thread. Can only contain booleans, strings, and numbers.
 export type ThreadMetadata = {
-  resolved: boolean;
+  // resolved: boolean;
+  // quote: string;
+  // time: number;
 };
 `;
 }
