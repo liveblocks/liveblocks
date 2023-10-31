@@ -1,0 +1,170 @@
+---
+meta:
+  title: "How to add users to Liveblocks Comments"
+  description:
+    "Learn how to add your user’s avatars and names to Liveblocks Comments using
+    the resolver functions."
+---
+
+After following the get started guide for Comments, you’ll notice that each user
+is currently “Anonymous”, and that there’s no way to mention or tag other users.
+To fix this, we need to pass a way to resolve your users’ information to
+[`createRoomContext`](/docs/api-reference/liveblocks-react#createRoomContext).
+
+## What we’re learning
+
+In this guide we’ll be learning how to:
+
+- Add names and avatars to threads and comments with
+  [`resolveUsers`](/docs/api-reference/liveblocks-react#resolveUsers).
+- Create user mention suggestions in the composer using
+  [`resolveMentionSuggestions`](/docs/api-reference/liveblocks-react#resolveMentionSuggestions).
+
+## Authenticate your application
+
+The first step is making sure you’re
+[authenticating your application](/docs/rooms/authentication). Make sure to
+follow the metadata step and attach the name of your user, along with the URL of
+their avatar, as these properties will both be used in the
+[default components](/docs/products/comments#Components).
+
+```ts
+userInfo: {
+  name: "Marc",
+  avatar: "https://exampmle.com/marc.png",
+
+  // Your custom metadata
+  // ...
+}
+```
+
+## Resolving users
+
+The first step in adding user’s names and avatar is to add a `resolveUser`
+function to
+[`createRoomContext`](/docs/api-reference/liveblocks-react#createRoomContext) at
+the bottom of your `liveblocks.config.ts` file.
+
+```ts highlight="7-9" file="liveblocks.config.ts"
+// ...
+
+const {
+  RoomProvider,
+  // ...
+} = createRoomContext(client, {
+  async resolveUsers({ userIds }) {
+    // Resolve users
+  },
+});
+```
+
+<Steps>
+  <Step>
+    <StepTitle>Set up the client</StepTitle>
+    <StepContent>
+      On the front end, you can now replace the `publicApiKey`
+      option with `authEndpoint` pointing to the endpoint you
+      just created.
+
+      ```ts file="liveblocks.config.ts"
+      import { createClient } from "@liveblocks/client";
+
+      const client = createClient({
+        authEndpoint: "/api/liveblocks-auth",
+      });
+      ```
+
+      If you need to pass custom headers or data to your endpoint, you can
+      use
+      [authEndpoint as a callback](/docs/api-reference/liveblocks-client#createClientCallback)
+      instead.
+
+      ```ts file="liveblocks.config.ts" isCollapsed isCollapsable
+      import { createClient } from "@liveblocks/client";
+
+      // Passing custom headers and body to your endpoint
+      const client = createClient({
+        authEndpoint: async (room) => {
+          const headers = {
+            // Custom headers
+            // ...
+
+            "Content-Type": "application/json",
+          };
+
+          const body = JSON.stringify({
+            // Custom body
+            // ...
+
+            room,
+          });
+
+          const response = await fetch("/api/liveblocks-auth", {
+            method: "POST",
+            headers,
+            body,
+          });
+
+          return await response.json();
+        },
+      });
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step lastStep>
+    <StepTitle>Set up the client</StepTitle>
+    <StepContent>
+      On the front end, you can now replace the `publicApiKey`
+      option with `authEndpoint` pointing to the endpoint you
+      just created.
+
+      ```ts file="liveblocks.config.ts"
+      import { createClient } from "@liveblocks/client";
+
+      const client = createClient({
+        authEndpoint: "/api/liveblocks-auth",
+      });
+      ```
+
+      If you need to pass custom headers or data to your endpoint, you can
+      use
+      [authEndpoint as a callback](/docs/api-reference/liveblocks-client#createClientCallback)
+      instead.
+
+      ```ts file="liveblocks.config.ts" isCollapsed isCollapsable
+      import { createClient } from "@liveblocks/client";
+
+      // Passing custom headers and body to your endpoint
+      const client = createClient({
+        authEndpoint: async (room) => {
+          const headers = {
+            // Custom headers
+            // ...
+
+            "Content-Type": "application/json",
+          };
+
+          const body = JSON.stringify({
+            // Custom body
+            // ...
+
+            room,
+          });
+
+          const response = await fetch("/api/liveblocks-auth", {
+            method: "POST",
+            headers,
+            body,
+          });
+
+          return await response.json();
+        },
+      });
+      ```
+
+    </StepContent>
+
+  </Step>
+</Steps>

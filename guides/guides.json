@@ -271,5 +271,13 @@
     "technologies": ["react-comments", "nodejs"],
     "date": "2023-11-01",
     "featured": true
+  },
+  {
+    "title": "How to add users to Liveblocks Comments",
+    "path": "/how-to-add-users-to-liveblocks-comments",
+    "topics": ["tutorials", "data-fetching"],
+    "technologies": ["react-comments", "react"],
+    "date": "2023-11-02",
+    "featured": true
   }
 ]
