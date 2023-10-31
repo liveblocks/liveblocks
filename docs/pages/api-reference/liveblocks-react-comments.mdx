@@ -29,8 +29,9 @@ Displays a thread of comments. Each comment has a composer for creating replies.
 <Thread thread={thread} />
 ```
 
-Combine with [`useThreads`](/docs/api-reference/liveblocks-react#useThreads) to
-render a list of the room’s threads and comments.
+Map through `threads` to render a list of the room’s threads and comments.
+Threads can be retrieved with
+[`useThreads`](/docs/api-reference/liveblocks-react#useThreads).
 
 ```tsx highlight="10"
 import { Thread } from "@liveblocks/react-comments";
@@ -237,13 +238,14 @@ Displays a single comment.
 <Comment comment={comment} />
 ```
 
-Combine with [`useThreads`](/docs/api-reference/liveblocks-react#useThreads) to
-render a thread’s comments.
+Map through `thread.comments` to render each comment in a thread. Threads can be
+retrieved with [`useThreads`](/docs/api-reference/liveblocks-react#useThreads).
 
-```tsx highlight="8"
+```tsx highlight="9"
 import { Comment } from "@liveblocks/react-comments";
 import { ThreadData } from "@liveblocks/client";
 
+// Renders a list of comments attach to the specified `thread`
 function Component({ thread }: { thread: ThreadData }) {
   return (
     <>
@@ -842,8 +844,8 @@ Used to render a single comment.
 />
 ```
 
-Combine with [`useThreads`](/docs/api-reference/liveblocks-react#useThreads) to
-render a thread’s comments.
+Map through `thread.comments` to render each comment in a thread. Threads can be
+retrieved with [`useThreads`](/docs/api-reference/liveblocks-react#useThreads).
 
 ```tsx highlight="13-20"
 import {
@@ -998,7 +1000,7 @@ ago”) and a short absolute formatting for older ones (e.g. “25 Aug”).
 <Timestamp date={new Date()} />
 ```
 
-Combine with `comment.createdAt`, `comment.editedAt`, or `comment.deletedAt` to
+Use with `comment.createdAt`, `comment.editedAt`, or `comment.deletedAt` to
 display a human-readable time.
 
 ```tsx highlight="8"
