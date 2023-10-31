@@ -57,6 +57,8 @@ fi
 
 ( cd ../../ && npm i > /dev/null )
 
+npm i
+
 err "All good! Current example is now a local NPM workspace."
 
 # Step 5: Capture these changes in a Git commit, so you can easily undo this
