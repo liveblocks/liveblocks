@@ -50,6 +50,32 @@ function Component() {
 }
 ```
 
+#### Resolved thread metadata
+
+A thread allows you to attach custom metadata to it when using the
+[mutation hooks](/docs/api-reference/liveblocks-react#Comments), and when
+creating a thread [with the composer](#Adding-thread-metadata). The `Thread`
+component automatically adds the `resolved` property to `metadata`, and this
+property is used to display a checkbox which denotes whether the thread has been
+resolved or not.
+
+```ts
+// true | false
+const resolved = thread.metadata.resolved;
+```
+
+If you’d like to use this, make sure to add the `resolved` property to
+`ThreadMetadata` in your config file for valid type-checking.
+
+```tsx file="liveblocks.config.ts"
+export type ThreadMetadata = {
+  resolved: boolean;
+
+  // Custom metadata
+  // ...
+};
+```
+
 #### Props [#thread-props]
 
 <Table columns={["26%", "32%", "42%"]}>
