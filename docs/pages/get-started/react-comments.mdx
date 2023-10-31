@@ -100,12 +100,13 @@ We’d love to hear from you.
       We’ll add `useThreads` to get the threads in the room, then we’ll use the `Thread` component
       to render them. Finally, we’ll add a way to create threads by adding a `Composer`.
 
-      ```tsx file="Room.tsx" highlight="5,9,11"
+      ```tsx file="Room.tsx" highlight="5,9-12"
       import { useThreads } from "./liveblocks.config";
       import { Composer, Thread } from "@liveblocks/react-comments";
 
       export function Room() {
         const { threads } = useThreads();
+
         return (
           <div>
             {threads.map((thread) => (
@@ -154,8 +155,8 @@ We’d love to hear from you.
 
 ## What to read next
 
-Congratulations! You now have set up the foundation to start building a
-commenting experience for your React application.
+Congratulations! You’ve set up the foundation to start building a commenting
+experience for your React application.
 
 - [API Reference](/docs/api-reference/liveblocks-react-comments)
 - [API Reference](/docs/api-reference/liveblocks-react-comments)

@@ -128,7 +128,7 @@ We’d love to hear from you.
       We’ll add `useThreads` to get the threads in the room, then we’ll use the `Thread` component
       to render them. Finally, we’ll add a way to create threads by adding a `Composer`.
 
-      ```tsx file="app/CollaborativeApp.tsx" highlight="7,11,13"
+      ```tsx file="app/CollaborativeApp.tsx" highlight="7,11-14"
       "use client";
 
       import { useThreads } from "./liveblocks.config";
@@ -136,6 +136,7 @@ We’d love to hear from you.
 
       export function CollaborativeApp() {
         const { threads } = useThreads();
+
         return (
           <div>
             {threads.map((thread) => (
@@ -185,7 +186,7 @@ We’d love to hear from you.
 ## What to read next
 
 Congratulations! You now have set up the foundation to start building a
-commenting experience for your React application.
+commenting experience for your Next.js application.
 
 - [API Reference](/docs/api-reference/liveblocks-react-comments)
 - [How to send email notifications when comments are created](/docs/guides/how-to-send-email-notifications-when-comments-are-created)
