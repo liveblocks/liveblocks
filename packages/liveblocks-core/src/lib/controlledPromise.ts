@@ -16,5 +16,8 @@ export function controlledPromise<T>(): [
   const promise = new Promise<T>((res) => {
     flagger = res;
   });
-  return [promise, flagger!];
+  if (!flagger) {
+    throw new Error("Should never happen");
+  }
+  return [promise, flagger];
 }
