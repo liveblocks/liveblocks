@@ -1,11 +1,6 @@
-import { detectDupes } from "@liveblocks/core";
 import { Base64 } from "js-base64";
 import { Observable } from "lib0/observable";
 import * as Y from "yjs";
-
-import { PKG_FORMAT, PKG_NAME, PKG_VERSION } from "./version";
-
-detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
 
 export default class yDocHandler extends Observable<unknown> {
   private unsubscribers: Array<() => void> = [];
