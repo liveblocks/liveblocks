@@ -5,24 +5,13 @@ import LiveblocksProvider from "@liveblocks/yjs";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import * as Y from "yjs";
 
-import {
-  getRoomFromUrl,
-  Row,
-  styles,
-  useRenderCount,
-} from "../../utils";
+import { getRoomFromUrl, Row, styles, useRenderCount } from "../../utils";
 import Button from "../../utils/Button";
 import createLiveblocksClient from "../../utils/createClient";
 
 const client = createLiveblocksClient();
 
-const {
-  RoomProvider,
-  useRoom,
-} = createRoomContext<never, never>(client);
-
-
-
+const { RoomProvider, useRoom } = createRoomContext<never, never>(client);
 
 export default function Home() {
   const roomId = getRoomFromUrl();
@@ -40,9 +29,12 @@ export default function Home() {
 function Sandbox() {
   const renderCount = useRenderCount();
   const room = useRoom();
-  const [subdocContent, setSubdocContent] = useState<Record<string, string>>({});
+  const [subdocContent, setSubdocContent] = useState<Record<string, string>>(
+    {}
+  );
   const [synced, setSynced] = useState(false);
-  const [provider, setProvider] = useState<LiveblocksProvider<never, never, BaseUserMeta, never>>();
+  const [provider, setProvider] =
+    useState<LiveblocksProvider<never, never, BaseUserMeta, never>>();
   const doc = useMemo(() => new Y.Doc(), []);
 
   const updateSubdocContent = useCallback(() => {
@@ -54,21 +46,24 @@ function Sandbox() {
     setSubdocContent(docContent);
   }, [doc]);
 
-
   useEffect(() => {
     if (!room) {
       return;
     }
-    const provider = new LiveblocksProvider(room, doc, { autoloadSubdocs: false });
+    const provider = new LiveblocksProvider(room, doc, {
+      autoloadSubdocs: false,
+    });
     doc.on("subdocs", updateSubdocContent);
     setProvider(provider);
-    provider.on("sync", () => { setSynced(true) });
+    provider.on("sync", () => {
+      setSynced(true);
+    });
     return () => {
       setSynced(false);
       doc.off("subdocs", updateSubdocContent);
       provider.destroy();
-    }
-  }, [doc, room, updateSubdocContent])
+    };
+  }, [doc, room, updateSubdocContent]);
 
   const clear = () => {
     for (const subdoc of doc.getSubdocs()) {
@@ -80,7 +75,6 @@ function Sandbox() {
     }
     setSubdocContent({});
   };
-
 
   const createSubdoc = () => {
     const newDoc = new Y.Doc();
@@ -104,34 +98,25 @@ function Sandbox() {
         <a href="/">Home</a> › Yjs › Subdocs
       </h3>
       <div style={{ display: "flex", margin: "8px 0" }}>
-        <Button
-          id="insert"
-          onClick={createSubdoc}
-          subtitle={"insert text"}
-        >
+        <Button id="insert" onClick={createSubdoc} subtitle={"insert text"}>
           Create Subdoc with Text
         </Button>
-        <Button
-          id="load"
-          onClick={loadSubdocs}
-          subtitle={"load subdocs"}
-        >
+        <Button id="load" onClick={loadSubdocs} subtitle={"load subdocs"}>
           Load Subdoc with Text
         </Button>
-        <Button
-          id="clear"
-          onClick={clear}
-          subtitle={"clear"}
-        >
+        <Button id="clear" onClick={clear} subtitle={"clear"}>
           Clear
         </Button>
-
       </div>
 
       <table style={styles.dataTable}>
         <tbody>
           <Row id="renderCount" name="Render count" value={renderCount} />
-          <Row id="text" name="Subdoc Content" value={JSON.stringify(subdocContent)} />
+          <Row
+            id="text"
+            name="Subdoc Content"
+            value={JSON.stringify(subdocContent)}
+          />
           <Row id="sync" name="Root Doc Synced" value={synced} />
         </tbody>
       </table>

@@ -4,24 +4,13 @@ import LiveblocksProvider from "@liveblocks/yjs";
 import React, { useEffect, useMemo, useState } from "react";
 import * as Y from "yjs";
 
-import {
-  getRoomFromUrl,
-  Row,
-  styles,
-  useRenderCount,
-} from "../../utils";
+import { getRoomFromUrl, Row, styles, useRenderCount } from "../../utils";
 import Button from "../../utils/Button";
 import createLiveblocksClient from "../../utils/createClient";
 
 const client = createLiveblocksClient();
 
-const {
-  RoomProvider,
-  useRoom,
-} = createRoomContext<never, never>(client);
-
-
-
+const { RoomProvider, useRoom } = createRoomContext<never, never>(client);
 
 export default function Home() {
   const roomId = getRoomFromUrl();
@@ -46,16 +35,20 @@ function Sandbox() {
     if (!room) {
       return;
     }
-    const handler = () => { setText(doc.getText("test").toString()) };
+    const handler = () => {
+      setText(doc.getText("test").toString());
+    };
     const provider = new LiveblocksProvider(room, doc);
-    provider.on("sync", () => { setSynced(true) });
+    provider.on("sync", () => {
+      setSynced(true);
+    });
     doc.on("update", handler);
     return () => {
       setSynced(false);
       doc.off("update", handler);
       provider.destroy();
-    }
-  }, [doc, room])
+    };
+  }, [doc, room]);
 
   const clearText = () => {
     const l = doc.getText("test").toString().length;
@@ -78,11 +71,7 @@ function Sandbox() {
         <a href="/">Home</a> › Yjs › Text
       </h3>
       <div style={{ display: "flex", margin: "8px 0" }}>
-        <Button
-          id="insert"
-          onClick={insertText}
-          subtitle={"insert text"}
-        >
+        <Button id="insert" onClick={insertText} subtitle={"insert text"}>
           Insert Text
         </Button>
         <Button
@@ -92,14 +81,9 @@ function Sandbox() {
         >
           Insert Large Text (200k)
         </Button>
-        <Button
-          id="clear"
-          onClick={clearText}
-          subtitle={"clear"}
-        >
+        <Button id="clear" onClick={clearText} subtitle={"clear"}>
           Clear
         </Button>
-
       </div>
 
       <table style={styles.dataTable}>

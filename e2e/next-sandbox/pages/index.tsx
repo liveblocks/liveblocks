@@ -101,7 +101,8 @@ export default function Home() {
             <a>Multiple rooms</a>
           </Link>
         </li>
-        <li>  <div>Yjs</div>
+        <li>
+          <div>Yjs</div>
           <ul>
             <li>
               <Link href="/ydoc/text?room=e2e-yjs-text">
