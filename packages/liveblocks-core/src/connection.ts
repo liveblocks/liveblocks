@@ -602,8 +602,8 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
 
             const [actor$, didReceiveActor] = controlledPromise<void>();
             if (!options.waitForActorId) {
-              // Just mark the promise as "resolved" immediately, so it won't
-              // be a blocker.
+              // Mark the promise as "resolved" immediately, so we won't wait
+              // for a ROOM_STATE message to happen.
               didReceiveActor();
             }
 
