@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-base-to-string */
 import { createRoomContext } from "@liveblocks/react";
 import LiveblocksProvider from "@liveblocks/yjs";
 import React, { useEffect, useMemo, useState } from "react";
