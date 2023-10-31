@@ -1,3 +1,9 @@
+# v1.6.1
+
+### `@liveblocks/client`
+
+- Improve some internal logging
+
 # v1.6.0
 
 ### `@liveblocks/yjs`
