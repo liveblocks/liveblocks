@@ -6,126 +6,23 @@ import type {
   Room,
 } from "@liveblocks/client";
 import { ClientMsgCode, detectDupes } from "@liveblocks/core";
-import { Base64 } from "js-base64";
 import { Observable } from "lib0/observable";
-import * as Y from "yjs";
+import type * as Y from "yjs";
 
+import { Awareness } from "./awareness";
+import yDocHandler from "./doc";
 import { PKG_FORMAT, PKG_NAME, PKG_VERSION } from "./version";
 2;
 
 detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
 
-const Y_PRESENCE_KEY = "__yjs";
-
-type MetaClientState = {
-  clock: number;
-  lastUpdated: number;
+type ProviderOptions = {
+  autoloadSubdocs: boolean;
 };
 
-/**
- * This class will store Yjs awareness in Liveblock's presence under the __yjs key
- * IMPORTANT: The Yjs awareness protocol uses ydoc.clientId to reference users
- * to their respective documents. To avoid mapping Yjs clientIds to liveblock's connectionId,
- * we simply set the clientId of the doc to the connectionId. Then no further mapping is required
- */
-export class Awareness extends Observable<unknown> {
-  private room: Room<JsonObject, LsonObject, BaseUserMeta, Json>;
-  public doc: Y.Doc;
-  public clientID: number;
-  public states: Map<number, unknown> = new Map();
-  // Meta is used to keep track and timeout users who disconnect. Liveblocks provides this for us, so we don't need to
-  // manage it here. Unfortunately, it's expected to exist by various integrations, so it's an empty map.
-  public meta: Map<number, MetaClientState> = new Map();
-  // _checkInterval this would hold a timer to remove users, but Liveblock's presence already handles this
-  // unfortunately it's typed by various integrations
-  public _checkInterval: number = 0;
-
-  private othersUnsub: () => void;
-  constructor(
-    doc: Y.Doc,
-    room: Room<JsonObject, LsonObject, BaseUserMeta, Json>
-  ) {
-    super();
-    this.doc = doc;
-    this.room = room;
-    this.clientID = doc.clientID;
-    this.othersUnsub = this.room.events.others.subscribe((event) => {
-      // When others are changed, we emit an event that contains arrays added/updated/removed.
-      if (event.type === "leave") {
-        // REMOVED
-        this.emit("change", [
-          { added: [], updated: [], removed: [event.user.connectionId] },
-          "local",
-        ]);
-      }
-
-      if (event.type === "enter") {
-        // ADDED
-        this.emit("change", [
-          { added: [event.user.connectionId], updated: [], removed: [] },
-          "local",
-        ]);
-      }
-
-      if (event.type === "update") {
-        // UPDATED
-        this.emit("change", [
-          { added: [], updated: [event.user.connectionId], removed: [] },
-          "local",
-        ]);
-      }
-    });
-  }
-
-  destroy(): void {
-    this.emit("destroy", [this]);
-    this.othersUnsub();
-    this.setLocalState(null);
-    super.destroy();
-  }
-
-  getLocalState(): JsonObject | null {
-    const presence = this.room.getPresence();
-    if (
-      Object.keys(presence).length === 0 ||
-      typeof presence[Y_PRESENCE_KEY] === "undefined"
-    ) {
-      return null;
-    }
-    return presence[Y_PRESENCE_KEY] as JsonObject | null;
-  }
-
-  setLocalState(state: Partial<JsonObject> | null): void {
-    const presence = this.room.getSelf()?.presence[Y_PRESENCE_KEY];
-    this.room.updatePresence({
-      __yjs: { ...((presence as JsonObject) || {}), ...(state || {}) },
-    });
-  }
-
-  setLocalStateField(field: string, value: JsonObject | null): void {
-    const presence = this.room.getSelf()?.presence[Y_PRESENCE_KEY];
-    const update = { [field]: value } as Partial<JsonObject>;
-    this.room.updatePresence({
-      __yjs: { ...((presence as JsonObject) || {}), ...update },
-    });
-  }
-
-  // Translate liveblocks presence to yjs awareness
-  getStates(): Map<number, unknown> {
-    const others = this.room.getOthers();
-    const states = others.reduce((acc: Map<number, unknown>, currentValue) => {
-      if (currentValue.connectionId) {
-        // connectionId == actorId == yjs.clientId
-        acc.set(
-          currentValue.connectionId,
-          currentValue.presence[Y_PRESENCE_KEY] || {}
-        );
-      }
-      return acc;
-    }, new Map());
-    return states;
-  }
-}
+const DefaultOptions: ProviderOptions = {
+  autoloadSubdocs: false,
+};
 
 export default class LiveblocksProvider<
   P extends JsonObject,
@@ -134,109 +31,169 @@ export default class LiveblocksProvider<
   E extends Json,
 > extends Observable<unknown> {
   private room: Room<P, S, U, E>;
-  private doc: Y.Doc;
+  private rootDoc: Y.Doc;
+  private options: ProviderOptions;
 
   private unsubscribers: Array<() => void> = [];
 
   public awareness: Awareness;
 
-  private _synced = false;
+  public rootDocHandler: yDocHandler;
+  public subdocHandlers: Map<string, yDocHandler> = new Map();
 
-  constructor(room: Room<P, S, U, E>, doc: Y.Doc) {
+  constructor(
+    room: Room<P, S, U, E>,
+    doc: Y.Doc,
+    options: ProviderOptions | undefined = DefaultOptions
+  ) {
     super();
-    this.doc = doc;
+    this.rootDoc = doc;
     this.room = room;
-
+    this.options = options;
+    this.rootDocHandler = new yDocHandler({
+      doc,
+      isRoot: true,
+      updateDoc: this.updateDoc,
+      fetchDoc: this.fetchDoc,
+    });
     // if we have a connectionId already during construction, use that
     const connectionId = this.room.getSelf()?.connectionId;
     if (connectionId) {
-      this.doc.clientID = connectionId;
+      this.rootDoc.clientID = connectionId;
     }
-    this.awareness = new Awareness(this.doc, this.room);
-    this.doc.on("update", this.updateHandler);
+    this.awareness = new Awareness(this.rootDoc, this.room);
 
     this.unsubscribers.push(
       this.room.events.status.subscribe((status) => {
         if (status === "connected") {
-          this.syncDoc();
+          this.rootDocHandler.syncDoc();
         } else {
-          this.synced = false;
+          this.rootDocHandler.synced = false;
         }
       })
     );
 
     this.unsubscribers.push(
       this.room.events.ydoc.subscribe((message) => {
-        const { type, update } = message;
+        const { type } = message;
         if (type === ClientMsgCode.UPDATE_YDOC) {
           // don't apply updates that came from the client
           return;
         }
-        // apply update from the server
-        Y.applyUpdate(this.doc, Base64.toUint8Array(update), "backend");
-        const { stateVector } = message;
-        // if this update is the result of a fetch, the state vector is included
-        if (stateVector) {
-          // Use server state to calculate a diff and send it
-          try {
-            const localUpdate = Y.encodeStateAsUpdate(
-              this.doc,
-              Base64.toUint8Array(stateVector)
-            );
-            this.room.updateYDoc(Base64.fromUint8Array(localUpdate));
-          } catch (e) {
-            // something went wrong encoding local state to send to the server
-            console.warn(e);
-          }
-          // now that we've sent our local  and received from server, we're in sync
-          // calling `syncDoc` again will sync up the documents
-          this.synced = true;
+        const { stateVector, update, guid } = message;
+        // find the right doc and update
+        if (guid !== undefined) {
+          this.subdocHandlers
+            .get(guid)
+            ?.handleServerUpdate({ update, stateVector });
+        } else {
+          this.rootDocHandler.handleServerUpdate({ update, stateVector });
         }
       })
     );
+
+    this.rootDocHandler.on("synced", () => {
+      const state = this.rootDocHandler.synced;
+      for (const [_, handler] of this.subdocHandlers) {
+        handler.syncDoc();
+      }
+      this.emit("synced", [state]);
+      this.emit("sync", [state]);
+    });
+    this.rootDoc.on("subdocs", this.handleSubdocs);
     this.syncDoc();
   }
 
+  private handleSubdocs = ({
+    loaded,
+    removed,
+    added,
+  }: {
+    loaded: Y.Doc[];
+    removed: Y.Doc[];
+    added: Y.Doc[];
+  }) => {
+    loaded.forEach(this.createSubdocHandler);
+    if (this.options.autoloadSubdocs) {
+      for (const subdoc of added) {
+        if (!this.subdocHandlers.has(subdoc.guid)) {
+          subdoc.load();
+        }
+      }
+    }
+    for (const subdoc of removed) {
+      if (this.subdocHandlers.has(subdoc.guid)) {
+        this.subdocHandlers.get(subdoc.guid)?.destroy();
+        this.subdocHandlers.delete(subdoc.guid);
+      }
+    }
+  };
+
+  private updateDoc = (update: string, guid?: string) => {
+    this.room.updateYDoc(update, guid);
+  };
+
+  private fetchDoc = (vector: string, guid?: string) => {
+    this.room.fetchYDoc(vector, guid);
+  };
+
+  private createSubdocHandler = (subdoc: Y.Doc): void => {
+    if (this.subdocHandlers.has(subdoc.guid)) {
+      // if we already handle this subdoc, just fetch it again
+      this.subdocHandlers.get(subdoc.guid)?.syncDoc();
+      return;
+    }
+    const handler = new yDocHandler({
+      doc: subdoc,
+      isRoot: false,
+      updateDoc: this.updateDoc,
+      fetchDoc: this.fetchDoc,
+    });
+    this.subdocHandlers.set(subdoc.guid, handler);
+  };
+
+  // attempt to load a subdoc of a given guid
+  public loadSubdoc = (guid: string): boolean => {
+    for (const subdoc of this.rootDoc.subdocs) {
+      if (subdoc.guid === guid) {
+        subdoc.load();
+        return true;
+      }
+    }
+    // should we throw instead?
+    return false;
+  };
+
   private syncDoc = () => {
-    this.synced = false;
     /**
      * If the connection changes, set the new id, this is used by awareness.
      * yjs' only requirement for clientID is that it's truly unique and a number.
      * Liveblock's connectionID satisfies those constraints
      *  */
-    this.doc.clientID = this.room.getSelf()?.connectionId || this.doc.clientID;
-    this.awareness.clientID = this.doc.clientID; // tell our awareness provider the new ID
+    this.rootDoc.clientID =
+      this.room.getSelf()?.connectionId || this.rootDoc.clientID;
+    this.awareness.clientID = this.rootDoc.clientID; // tell our awareness provider the new ID
 
-    // The state vector is sent to the server so it knows what to send back
-    // if you don't send it, it returns everything
-    const encodedVector = Base64.fromUint8Array(Y.encodeStateVector(this.doc));
-    this.room.fetchYDoc(encodedVector);
+    this.rootDocHandler.syncDoc();
+    for (const [_, handler] of this.subdocHandlers) {
+      handler.syncDoc();
+    }
   };
 
   // The sync'd property is required by some provider implementations
   get synced(): boolean {
-    return this._synced;
+    return this.rootDocHandler.synced;
   }
-
-  set synced(state: boolean) {
-    if (this._synced !== state) {
-      this._synced = state;
-      this.emit("synced", [state]);
-      this.emit("sync", [state]);
-    }
-  }
-
-  private updateHandler = (update: Uint8Array, origin: string) => {
-    if (origin !== "backend") {
-      const encodedUpdate = Base64.fromUint8Array(update);
-      this.room.updateYDoc(encodedUpdate);
-    }
-  };
 
   destroy(): void {
-    this.doc.off("update", this.updateHandler);
     this.unsubscribers.forEach((unsub) => unsub());
     this.awareness.destroy();
+    this.rootDocHandler.destroy();
+    this._observers = new Map();
+    for (const [_, handler] of this.subdocHandlers) {
+      handler.destroy();
+    }
+    this.subdocHandlers.clear();
     super.destroy();
   }
 
