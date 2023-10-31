@@ -487,7 +487,12 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
     .onEnterAsync(
       "@auth.busy",
 
-      () => withTimeout(delegates.authenticate(), AUTH_TIMEOUT),
+      () =>
+        withTimeout(
+          delegates.authenticate(),
+          AUTH_TIMEOUT,
+          "Timed out during auth"
+        ),
 
       // On successful authentication
       (okEvent) => ({
@@ -673,7 +678,11 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
           }
         );
 
-        return withTimeout(connect$, SOCKET_CONNECT_TIMEOUT).then(
+        return withTimeout(
+          connect$,
+          SOCKET_CONNECT_TIMEOUT,
+          "Timed out during websocket connection"
+        ).then(
           //
           // Part 3:
           // By now, our "open" event has fired, and the promise has been

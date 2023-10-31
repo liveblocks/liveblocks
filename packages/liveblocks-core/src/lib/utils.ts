@@ -164,7 +164,7 @@ export function compactObject<O extends Record<string, unknown>>(obj: O): O {
 export async function withTimeout<T>(
   promise: Promise<T>,
   millis: number,
-  errmsg = "Timed out"
+  errmsg: string
 ): Promise<T> {
   let timerID: ReturnType<typeof setTimeout> | undefined;
   const timer$ = new Promise<never>((_, reject) => {
