@@ -188,17 +188,6 @@ function warnIfNoResolveUsers(usersCache?: AsyncCache<unknown, unknown>) {
   }
 }
 
-// TODO: Remove after beta
-let hasWarnedAboutCommentsBeta = false;
-function warnIfBetaCommentsHook() {
-  if (!hasWarnedAboutCommentsBeta && process.env.NODE_ENV !== "production") {
-    console.warn(
-      "Comments is currently in private beta. Learn more at https://liveblocks.io/docs/products/comments."
-    );
-    hasWarnedAboutCommentsBeta = true;
-  }
-}
-
 const ContextBundle = React.createContext<InternalRoomContextBundle<
   JsonObject,
   LsonObject,
@@ -935,29 +924,17 @@ export function createRoomContext<
   function useThreads(): ThreadsState<TThreadMetadata> {
     const room = useRoom();
 
-    React.useEffect(() => {
-      warnIfBetaCommentsHook();
-    }, []);
-
     return getCommentsRoom(room).useThreads();
   }
 
   function useThreadsSuspense() {
     const room = useRoom();
 
-    React.useEffect(() => {
-      warnIfBetaCommentsHook();
-    }, []);
-
     return getCommentsRoom(room).useThreadsSuspense();
   }
 
   function useCreateThread() {
     const room = useRoom();
-
-    React.useEffect(() => {
-      warnIfBetaCommentsHook();
-    }, []);
 
     return React.useCallback(
       (options: CreateThreadOptions<TThreadMetadata>) =>
@@ -969,10 +946,6 @@ export function createRoomContext<
   function useEditThreadMetadata() {
     const room = useRoom();
 
-    React.useEffect(() => {
-      warnIfBetaCommentsHook();
-    }, []);
-
     return React.useCallback(
       (options: EditThreadMetadataOptions<TThreadMetadata>) =>
         getCommentsRoom(room).editThreadMetadata(options),
@@ -982,10 +955,6 @@ export function createRoomContext<
 
   function useAddReaction() {
     const room = useRoom();
-
-    React.useEffect(() => {
-      warnIfBetaCommentsHook();
-    }, []);
 
     return React.useCallback(
       (options: CommentReactionOptions) =>
@@ -997,10 +966,6 @@ export function createRoomContext<
   function useRemoveReaction() {
     const room = useRoom();
 
-    React.useEffect(() => {
-      warnIfBetaCommentsHook();
-    }, []);
-
     return React.useCallback(
       (options: CommentReactionOptions) =>
         getCommentsRoom(room).removeReaction(options),
@@ -1010,10 +975,6 @@ export function createRoomContext<
 
   function useCreateComment(): (options: CreateCommentOptions) => CommentData {
     const room = useRoom();
-
-    React.useEffect(() => {
-      warnIfBetaCommentsHook();
-    }, []);
 
     return React.useCallback(
       (options: CreateCommentOptions) =>
@@ -1025,10 +986,6 @@ export function createRoomContext<
   function useEditComment(): (options: EditCommentOptions) => void {
     const room = useRoom();
 
-    React.useEffect(() => {
-      warnIfBetaCommentsHook();
-    }, []);
-
     return React.useCallback(
       (options: EditCommentOptions) =>
         getCommentsRoom(room).editComment(options),
@@ -1038,10 +995,6 @@ export function createRoomContext<
 
   function useDeleteComment() {
     const room = useRoom();
-
-    React.useEffect(() => {
-      warnIfBetaCommentsHook();
-    }, []);
 
     return React.useCallback(
       (options: DeleteCommentOptions) =>
