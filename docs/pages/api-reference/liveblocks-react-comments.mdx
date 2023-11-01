@@ -8,7 +8,7 @@ alwaysShowAllNavigationLevels: false
 
 `@liveblocks/react-comments` provides you with [React](https://react.dev/)
 components to build a commenting experience. Read our
-[getting started](/docs/get-started/react-comments) guide to learn more.
+[getting started](/docs/get-started/comments) guide to learn more.
 
 <Banner title="Public beta">
 
@@ -82,7 +82,7 @@ export type ThreadMetadata = {
 
 | Prop                      | Type                                                                                 | Description                                                                                                 |
 | ------------------------- | ------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------- |
-| `thread` <DocsRequired /> | <code>ThreadData&lt;\{ resolved?: boolean \}&gt;</code>                              | The thread to display.                                                                                      |
+| `thread` <DocsRequired /> | `ThreadData`                                                                         | The thread to display.                                                                                      |
 | `showComposer`            | `boolean \| "collapsed"`                                                             | How to show or hide the composer to reply to the thread.<br/>Defaults to `"collapsed"`.                     |
 | `showActions`             | `boolean \| "hover"`                                                                 | How to show or hide the actions.<br/>Defaults to `"hover"`.                                                 |
 | `showReactions`           | `boolean`                                                                            | Whether to show reactions.<br/>Defaults to `true`.                                                          |
@@ -242,7 +242,7 @@ Learn more about mutation hooks under
 | ------------------- | --------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
 | `threadId`          | `string`                                                                                                              | The ID of the thread to reply to or to edit a comment in.                                         |
 | `commentId`         | `string`                                                                                                              | The ID of the comment to edit.                                                                    |
-| `metadata`          | <code>ThreadMetadata&lt;T&gt;</code>                                                                                  | The metadata of the thread to create.                                                             |
+| `metadata`          | `ThreadMetadata`                                                                                                      | The metadata of the thread to create.                                                             |
 | `onComposerSubmit`  | <code>(comment: ComposerSubmitComment, event: FormEvent&lt;HTMLFormElement&gt;) => Promise&lt;void&gt; \| void</code> | The event handler called when the composer is submitted.                                          |
 | `defaultValue`      | `CommentBody`                                                                                                         | The composer’s initial value.                                                                     |
 | `collapsed`         | `boolean`                                                                                                             | Whether the composer is collapsed. Setting a value will make the composer controlled.             |
