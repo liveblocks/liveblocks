@@ -24,6 +24,13 @@
   --lb-background: var(--gray3)
 }
 
+.thread button.lb-composer-action {
+  --lb-foreground-contrast: 20%;
+  color: red;
+  --lb-background: yellow;
+  --lb-foreground: orange;
+}
+
 @keyframes highlight {
   0% {
     opacity: 1;
@@ -42,7 +49,7 @@
   color: var(--accent);
   display: inline-flex;
   gap: 6px;
-  margin: var(--lb-spacing) 0 0 var(--lb-spacing);
+  margin: var(--spacing) 0 0 var(--spacing);
   padding: 0 6px;
   align-items: center;
   font-size: 13px;

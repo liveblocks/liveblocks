@@ -81,9 +81,17 @@ export function NewThreadComposer({
             onFocus={handleFocus}
             onKeyDown={handleKeyDown}
             components={{
-              Mention,
+              Mention: (props) => (
+                <Composer.Mention asChild>
+                  <Mention {...props} />
+                </Composer.Mention>
+              ),
               MentionSuggestions,
-              Link,
+              Link: (props) => (
+                <Composer.Link asChild>
+                  <Link {...props}>{props.children}</Link>
+                </Composer.Link>
+              ),
             }}
           />
         </div>

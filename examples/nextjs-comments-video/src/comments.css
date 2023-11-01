@@ -1,0 +1,14 @@
+.lb-root {
+  /* Liveblocks Comments */
+  --lb-radius: var(--border-radius);
+  --lb-spacing: var(--spacing);
+  --lb-accent: var(--accent);
+  --lb-background: var(--gray1);
+  --lb-foreground: var(--gray12);
+  --lb-icon-weight: 1px;
+  --lb-elevation-shadow: var(--shadow);
+  --lb-tooltip-background: var(--gray1);
+  --lb-tooltip-foreground: var(--gray12);
+  --lb-foreground-contrast: 6%;
+  --lb-elevation-foreground-contrast: 6%;
+}
