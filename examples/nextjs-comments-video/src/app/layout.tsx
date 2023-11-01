@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "../globals.css";
 import "@liveblocks/react-comments/styles.css";
 import "@liveblocks/react-comments/styles/dark/attributes.css";
+import "../comments.css";
 
 const inter = Inter({
   subsets: ["latin"],
