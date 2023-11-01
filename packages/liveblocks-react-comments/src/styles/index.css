@@ -665,7 +665,7 @@
 
 .lb-comment-mention:where([data-self]),
 .lb-composer-mention {
-  padding: 0.1em 0.2em;
+  padding: 0.1em 0.3em;
   border-radius: calc(0.675 * var(--lb-radius));
   background: var(--lb-accent-subtle);
 }
