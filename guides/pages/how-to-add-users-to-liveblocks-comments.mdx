@@ -8,14 +8,23 @@ meta:
 
 After following the get started guide for Comments, you’ll notice that each user
 is currently “Anonymous”, and that there’s no way to mention or tag other users.
-To fix this, we need to pass a way to resolve your users’ information to
-[`createRoomContext`](/docs/api-reference/liveblocks-react#createRoomContext).
+To enable these features, we need to tell Comments where to find your users’
+information.
 
-[anonymous image]
+<Figure>
+  <Image
+    src="/assets/tutorials/comments/thread.png"
+    alt="Thread with resolved users"
+    width={1291}
+    height={892}
+  />
+</Figure>
 
 ## What we’re learning
 
-In this guide we’ll be learning how to:
+In this guide we’ll be modifying
+[`createRoomContext`](/docs/api-reference/liveblocks-react#createRoomContext) in
+our config file, learning how to:
 
 - Add names and avatars to threads and comments with
   [`resolveUsers`](/docs/api-reference/liveblocks-react#resolveUsers).
@@ -28,10 +37,10 @@ The first step is to find an
 [authentication guide for your framework](/docs/rooms/authentication) and
 authenticate your app, as this is necessary for Comments.
 
-Make sure to follow the metadata step and attach the name of your user, along
-with the URL of their avatar, as these properties will both be used in the
-[default components](/docs/products/comments#Components). Here’s an example
-using access token authentication, with an email address as a user’s ID.
+Make sure to follow the metadata step in the guide, and attach the name of your
+user, along with the URL of their avatar, as these properties will both be used
+in the [default components](/docs/products/comments#Components). Here’s an
+example using access token authentication, with an email address as a user’s ID.
 
 ```ts title="Metadata in access tokens"
 const session = liveblocks.prepareSession("marc@example.com", {
@@ -90,7 +99,14 @@ Any metadata you add is made saved and accessible in your Comments app with the
 To show each user’s name and avatar in threads and comments, we need to use
 [`resolveUsers`](https://liveblocks.io/docs/api-reference/liveblocks-react#resolveUsers).
 
-[resolved image]
+<Figure>
+  <Image
+    src="/assets/tutorials/comments/thread.png"
+    alt="Thread with resolved users"
+    width={1291}
+    height={892}
+  />
+</Figure>
 
 <Steps>
   <Step>
@@ -157,7 +173,7 @@ To show each user’s name and avatar in threads and comments, we need to use
       ```
       
       We’re only returning one user here, but make sure to return an
-      array with each user, in the same order you received the IDs.
+      array containing  each user, in the same order you received the IDs.
 
     </StepContent>
 
@@ -169,7 +185,7 @@ To show each user’s name and avatar in threads and comments, we need to use
       API endpoint and database via `fetch`. This is how we’d recommend
       building out this function.
 
-      ```ts file="liveblocks.config.ts"
+      ```ts highlight="8-13" file="liveblocks.config.ts"
       // ...
 
       const {
@@ -194,7 +210,14 @@ To show each user’s name and avatar in threads and comments, we need to use
     <StepContent>
       After adding this, you should now be able to see your users in threads!
       
-      [resolved image]
+      <Figure>
+        <Image
+          src="/assets/tutorials/comments/thread.png"
+          alt="Thread with resolved users"
+          width={1291}
+          height={892}
+        />
+      </Figure>
 
     </StepContent>
 
@@ -208,7 +231,14 @@ users to mention, for example after typing the `@` character. We can create a
 simple search that resolves this data with
 [`resolveMentionSuggestions`](/docs/api-reference/liveblocks-react#resolveMentionSuggestions).
 
-[suggestions image]
+<Figure>
+  <Image
+    src="/assets/tutorials/comments/mentions.png"
+    alt="Working Comments mentions"
+    width={1297}
+    height={781}
+  />
+</Figure>
 
 <Steps>
   <Step>
@@ -282,9 +312,17 @@ simple search that resolves this data with
     <StepTitle>Mention suggestions now appear</StepTitle>
     <StepContent>
     
-      Now we’ve found and returned the correct users, Comments can display a list of mention suggestions!
+      Now we’ve found and returned the correct users, Comments can display
+      a list of mention suggestions!
       
-      [suggestions image]
+      <Figure>
+        <Image
+          src="/assets/tutorials/comments/mentions.png"
+          alt="Working Comments mentions"
+          width={1297}
+          height={781}
+        />
+      </Figure>
 
     </StepContent>
 
