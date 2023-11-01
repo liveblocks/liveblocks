@@ -112,7 +112,7 @@ To show each user’s name and avatar in threads and comments, we need to use
       The `resolveUsers` function is passed as an option to
       [`createRoomContext`](/docs/api-reference/liveblocks-react#createRoomContext)
       at the bottom of your `liveblocks.config.ts` file—let’s add it. This function
-      provides you with `userIds`, an array of user IDs that have created a thread or comment.
+      provides you with `userIds`, an array of user IDs that have interacted with Comments.
       These `userIds` match the IDs set when authenticating users in your app.
       
       ```ts highlight="7-13" file="liveblocks.config.ts"
