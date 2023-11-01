@@ -24,13 +24,6 @@
   --lb-background: var(--gray3)
 }
 
-.thread button.lb-composer-action {
-  --lb-foreground-contrast: 20%;
-  color: red;
-  --lb-background: yellow;
-  --lb-foreground: orange;
-}
-
 @keyframes highlight {
   0% {
     opacity: 1;

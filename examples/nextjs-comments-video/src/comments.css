@@ -1,5 +1,5 @@
+/* Liveblocks Comments */
 .lb-root {
-  /* Liveblocks Comments */
   --lb-radius: var(--border-radius);
   --lb-spacing: var(--spacing);
   --lb-accent: var(--accent);
@@ -11,4 +11,13 @@
   --lb-tooltip-foreground: var(--gray12);
   --lb-foreground-contrast: 6%;
   --lb-elevation-foreground-contrast: 6%;
+}
+
+.lb-composer-action {
+  background: var(--lb-accent-secondary);
+  color: var(--accent-contrast)
+}
+
+.lb-composer-action:hover {
+  background: var(--lb-accent);
 }
