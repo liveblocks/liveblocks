@@ -1,5 +1,5 @@
 /* Liveblocks Comments */
-.lb-root {
+.lb-root, [data-theme="dark"] .lb-root {
   --lb-radius: var(--border-radius);
   --lb-spacing: var(--spacing);
   --lb-accent: var(--accent);
