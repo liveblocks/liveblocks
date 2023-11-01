@@ -74,11 +74,11 @@ const { status, body } = await liveblocks.identifyUser(
 );
 ```
 
-Don’t forget to modify your `UserMetadata` type in `liveblocks.config.ts` to
-match the metadata format, adding type hints to your editor.
+Don’t forget to modify your `UserMeta` type in `liveblocks.config.ts` to match
+the metadata format, adding type hints to your editor.
 
 ```ts file="liveblocks.config.ts"
-type UserMetadata = {
+type UserMeta = {
   id: string;
 
   info: {
@@ -142,7 +142,7 @@ To show each user’s name and avatar in threads and comments, we need to use
     <StepTitle>Return your users</StepTitle>
     <StepContent>
       `resolveUsers` requires you to return a list of users in
-      the `ThreadMetadata["info"]` format we set earlier. Remember
+      the `UserMeta["info"]` format we set earlier. Remember
       that _name_ and _avatar_ are required for the default components,
       but you can also use any other metadata in your app.
       

@@ -156,10 +156,10 @@ start building your own security logic in Next.js’ `/app` directory.
       <StepContent>
         Optionally, you can attach static metadata to each user, which will
         be accessible in your app. First you need to define the types in
-        your config file, under `UserMetadata["info"]`.
+        your config file, under `UserMeta["info"]`.
   
         ```ts file="liveblocks.config.ts" highlight="5-9"
-        type UserMetadata = {
+        type User = {
           id: string;
           
           // Example, use any JSON-compatible data in your metadata
