@@ -1,8 +1,16 @@
-# 1.7 (not yet released)
+# 1.7.0 (not yet released)
+
+[Liveblocks Comments](https://liveblocks.io/comments) is now available for
+everyone as a public beta, learn more about this
+[in the announcement](https://liveblocks.io/blog/liveblocks-comments-is-available-for-everyone).
 
 ### `@liveblocks/react-comments`
 
 - Improve default relative date formatting. (e.g. “2 hours ago” → “2h ago”)
+
+### `create-liveblocks-app`
+
+- Add `ThreadMetadata` type to `--init` command.
 
 # v1.6.1
 
