@@ -1,3 +1,9 @@
+# 1.7 (not yet released)
+
+### `@liveblocks/react-comments`
+
+- Improve default relative date formatting. (e.g. “2 hours ago” → “2h ago”)
+
 # v1.6.1
 
 ### `@liveblocks/client`
