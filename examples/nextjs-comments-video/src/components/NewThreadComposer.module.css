@@ -11,7 +11,7 @@
 .composer {
   display: flex;
   gap: 16px;
-  align-items: start;
+  align-items: flex-start;
 }
 
 .composerAvatar {

@@ -85,6 +85,7 @@ function formatShortDate(date: Date, locale?: string) {
  */
 function formatRelativeDate(date: Date, locale?: string) {
   const formatter = relativeTimeFormat(locale, {
+    style: "narrow",
     numeric: "auto",
   });
 

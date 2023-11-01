@@ -3,6 +3,13 @@ import type { Json } from "./Json";
 declare const brand: unique symbol;
 export type Brand<T, TBrand extends string> = T & { [brand]: TBrand };
 
+/**
+ * Throw an error, but as an expression instead of a statement.
+ */
+export function raise(msg: string): never {
+  throw new Error(msg);
+}
+
 export function isPlainObject(
   blob: unknown
 ): blob is { [key: string]: unknown } {
@@ -157,7 +164,7 @@ export function compactObject<O extends Record<string, unknown>>(obj: O): O {
 export async function withTimeout<T>(
   promise: Promise<T>,
   millis: number,
-  errmsg = "Timed out"
+  errmsg: string
 ): Promise<T> {
   let timerID: ReturnType<typeof setTimeout> | undefined;
   const timer$ = new Promise<never>((_, reject) => {

@@ -154,6 +154,25 @@ export async function waitForJson(
   );
 }
 
+export async function waitForTextContains(
+  oneOrMorePages: Page | Page[],
+  selector: IDSelector,
+  expectedValue: string,
+  options?: { timeout?: number }
+) {
+  const pages = Array.isArray(oneOrMorePages)
+    ? oneOrMorePages
+    : [oneOrMorePages];
+
+  return Promise.all(
+    pages.map((page) =>
+      expect(page.locator(selector)).toContainText(expectedValue, {
+        timeout: options?.timeout ?? 5000,
+      })
+    )
+  );
+}
+
 export async function expectJson(
   page: Page,
   selector: IDSelector,

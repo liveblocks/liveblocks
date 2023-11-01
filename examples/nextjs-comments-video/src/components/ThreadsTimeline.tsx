@@ -1,3 +1,5 @@
+"use client";
+
 import { ThreadMetadata, useThreads, useUser } from "@/liveblocks.config";
 import { ClientSideSuspense } from "@liveblocks/react";
 import { ErrorBoundary } from "react-error-boundary";
@@ -84,8 +86,16 @@ function PinnedThread({ thread }: { thread: ThreadData<ThreadMetadata> }) {
             <Comment.Body
               body={thread.comments[0].body}
               components={{
-                Mention,
-                Link,
+                Mention: (props) => (
+                  <Comment.Mention asChild>
+                    <Mention {...props} />
+                  </Comment.Mention>
+                ),
+                Link: (props) => (
+                  <Comment.Link asChild>
+                    <Link {...props}>{props.children}</Link>
+                  </Comment.Link>
+                ),
               }}
             />
           </div>

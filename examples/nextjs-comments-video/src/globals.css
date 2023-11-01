@@ -24,19 +24,6 @@
   --shadow: 0 0 0 1px rgba(0, 0, 0, 0.06), 0 1px 0 0 rgba(0, 0, 0, 0.08),
     0 2px 2px 0 rgba(0, 0, 0, 0.04), 0 3px 3px 0 rgba(0, 0, 0, 0.02),
     0 8px 10px -6px rgba(0, 0, 0, 0.1);
-
-  /* Liveblocks Comments */
-  --lb-radius: var(--border-radius);
-  --lb-spacing: var(--spacing);
-  --lb-accent: var(--accent);
-  --lb-background: var(--gray1);
-  --lb-foreground: var(--gray12);
-  --lb-icon-weight: 1px;
-  --lb-elevation-shadow: var(--shadow);
-  --lb-tooltip-background: var(--gray1);
-  --lb-tooltip-foreground: var(--gray12);
-  --lb-foreground-contrast: 6%;
-  --lb-elevation-foreground-contrast: 6%;
 }
 
 * {
@@ -94,8 +81,8 @@ h1 {
 }
 
 button {
-  appearance: none;
   background: none;
+  appearance: none;
   border: none;
   font: inherit;
 }

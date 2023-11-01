@@ -29,6 +29,7 @@ module.exports = {
     "@typescript-eslint/no-inferrable-types": "off",
     "no-constant-condition": "off",
     "@typescript-eslint/no-non-null-assertion": "off", // Because we have a custom no-restricted-syntax rule for this
+    "@typescript-eslint/no-base-to-string": "off", // Too many false positives for Yjs objects
 
     // -----------------------------
     // Enable auto-fixes for imports

@@ -3,7 +3,7 @@ import { nn } from "../lib/assert";
 import type { Json } from "../lib/Json";
 import { nanoid } from "../lib/nanoid";
 import { deepClone } from "../lib/utils";
-import type { CreateChildOp, CreateRegisterOp, Op } from "../protocol/Op";
+import type { CreateOp, CreateRegisterOp, Op } from "../protocol/Op";
 import { OpCode } from "../protocol/Op";
 import type { IdTuple, SerializedRegister } from "../protocol/SerializedCrdt";
 import { CrdtType } from "../protocol/SerializedCrdt";
@@ -79,7 +79,7 @@ export class LiveRegister<TValue extends Json> extends AbstractCrdt {
   }
 
   /** @internal */
-  _attachChild(_op: CreateChildOp): ApplyResult {
+  _attachChild(_op: CreateOp): ApplyResult {
     throw new Error("Method not implemented.");
   }
 

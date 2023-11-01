@@ -559,12 +559,12 @@ export type Room<
    *
    * @param {string} data the doc update to send to the server, base64 encoded uint8array
    */
-  updateYDoc(data: string): void;
+  updateYDoc(data: string, guid?: string): void;
 
   /**
    * Sends a request for the current document from liveblocks server
    */
-  fetchYDoc(stateVector: string): void;
+  fetchYDoc(stateVector: string, guid?: string): void;
 
   /**
    * Broadcasts an event to other users in the room. Event broadcasted to the room can be listened with {@link Room.subscribe}("event").
@@ -2038,10 +2038,11 @@ export function createRoom<
     return messages;
   }
 
-  function updateYDoc(update: string) {
+  function updateYDoc(update: string, guid?: string) {
     const clientMsg: UpdateYDocClientMsg = {
       type: ClientMsgCode.UPDATE_YDOC,
       update,
+      guid,
     };
     context.buffer.messages.push(clientMsg);
     eventHub.ydoc.notify(clientMsg);
@@ -2136,18 +2137,23 @@ export function createRoom<
     };
   }
 
-  function fetchYDoc(vector: string): void {
+  function fetchYDoc(vector: string, guid?: string): void {
     // don't allow multiple fetches in the same buffer with the same vector
     // dev tools may also call with a different vector (if its opened later), and that's okay
     // because the updates will be ignored by the provider
     if (
       !context.buffer.messages.find((m) => {
-        return m.type === ClientMsgCode.FETCH_YDOC && m.vector === vector;
+        return (
+          m.type === ClientMsgCode.FETCH_YDOC &&
+          m.vector === vector &&
+          m.guid === guid
+        );
       })
     ) {
       context.buffer.messages.push({
         type: ClientMsgCode.FETCH_YDOC,
         vector,
+        guid,
       });
     }
 

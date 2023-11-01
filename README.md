@@ -38,7 +38,7 @@ enabling a different facet of collaborative experiences:
 [Presence](https://liveblocks.io/docs/products/presence),
 [Broadcast](https://liveblocks.io/docs/products/broadcast),
 [Document](https://liveblocks.io/docs/products/document), and
-[Comments](https://liveblocks.io/docs/products/comments) (private beta). You can
+[Comments](https://liveblocks.io/docs/products/comments) (public beta). You can
 decide what products you want to use based on your requirements and
 collaborative experiences you’re looking to build.
 
