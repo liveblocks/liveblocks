@@ -5,19 +5,11 @@
   --lb-accent: var(--accent);
   --lb-background: var(--gray1);
   --lb-foreground: var(--gray12);
+  --lb-accent-foreground: var(--accent-contrast);
   --lb-icon-weight: 1px;
   --lb-elevation-shadow: var(--shadow);
   --lb-tooltip-background: var(--gray1);
   --lb-tooltip-foreground: var(--gray12);
   --lb-foreground-contrast: 6%;
   --lb-elevation-foreground-contrast: 6%;
-}
-
-.lb-composer-action {
-  background: var(--lb-accent-secondary);
-  color: var(--accent-contrast)
-}
-
-.lb-composer-action:hover {
-  background: var(--lb-accent);
 }
