@@ -1,8 +1,12 @@
-# 1.7.0 (not yet released)
+# 1.7.0
 
 [Liveblocks Comments](https://liveblocks.io/comments) is now available for
 everyone as a public beta, learn more about this
 [in the announcement](https://liveblocks.io/blog/liveblocks-comments-is-available-for-everyone).
+
+### `@liveblocks/react`
+
+- Improve Comments-specific error logging.
 
 ### `@liveblocks/react-comments`
 
