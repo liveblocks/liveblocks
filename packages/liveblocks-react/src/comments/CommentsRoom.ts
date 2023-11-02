@@ -4,7 +4,6 @@ import type {
   CommentBody,
   CommentData,
   CommentReaction,
-  CommentsApiError,
   EventSource,
   Json,
   JsonObject,
@@ -13,7 +12,7 @@ import type {
   Room,
   ThreadData,
 } from "@liveblocks/core";
-import { console, makeEventSource } from "@liveblocks/core";
+import { CommentsApiError, console, makeEventSource } from "@liveblocks/core";
 import { nanoid } from "nanoid";
 import { useEffect } from "react";
 import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
@@ -360,7 +359,11 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
 
     mutate(room.editThreadMetadata({ metadata, threadId }), {
       optimisticData,
-    }).catch((err: CommentsApiError) => {
+    }).catch((err: unknown) => {
+      if (!(err instanceof CommentsApiError)) {
+        throw err;
+      }
+
       const error = handleCommentsApiError(err);
       errorEventSource.notify(
         new EditThreadMetadataError(error, {
@@ -405,7 +408,11 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
 
     mutate(room.createThread({ threadId, commentId, body, metadata }), {
       optimisticData: [...threads, newThread],
-    }).catch((err: CommentsApiError) => {
+    }).catch((err: unknown) => {
+      if (!(err instanceof CommentsApiError)) {
+        throw err;
+      }
+
       const error = handleCommentsApiError(err);
       errorEventSource.notify(
         new CreateThreadError(error, {
@@ -452,7 +459,11 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
 
     mutate(room.createComment({ threadId, commentId, body }), {
       optimisticData,
-    }).catch((err: CommentsApiError) => {
+    }).catch((err: unknown) => {
+      if (!(err instanceof CommentsApiError)) {
+        throw err;
+      }
+
       const error = handleCommentsApiError(err);
       errorEventSource.notify(
         new CreateCommentError(error, {
@@ -490,7 +501,11 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
 
     mutate(room.editComment({ threadId, commentId, body }), {
       optimisticData,
-    }).catch((err: CommentsApiError) => {
+    }).catch((err: unknown) => {
+      if (!(err instanceof CommentsApiError)) {
+        throw err;
+      }
+
       const error = handleCommentsApiError(err);
       errorEventSource.notify(
         new EditCommentError(error, {
@@ -536,7 +551,11 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
 
     mutate(room.deleteComment({ threadId, commentId }), {
       optimisticData: newThreads,
-    }).catch((err: CommentsApiError) => {
+    }).catch((err: unknown) => {
+      if (!(err instanceof CommentsApiError)) {
+        throw err;
+      }
+
       const error = handleCommentsApiError(err);
       errorEventSource.notify(
         new DeleteCommentError(error, {
@@ -726,7 +745,11 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
 
     mutate(room.addReaction({ threadId, commentId, emoji }), {
       optimisticData,
-    }).catch((err: CommentsApiError) => {
+    }).catch((err: unknown) => {
+      if (!(err instanceof CommentsApiError)) {
+        throw err;
+      }
+
       const error = handleCommentsApiError(err);
       errorEventSource.notify(
         new AddReactionError(error, {
@@ -791,7 +814,11 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
 
     mutate(room.removeReaction({ threadId, commentId, emoji }), {
       optimisticData,
-    }).catch((err: CommentsApiError) => {
+    }).catch((err: unknown) => {
+      if (!(err instanceof CommentsApiError)) {
+        throw err;
+      }
+
       const error = handleCommentsApiError(err);
       errorEventSource.notify(
         new RemoveReactionError(error, {
