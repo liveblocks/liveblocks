@@ -3,7 +3,13 @@
  * This is because this package is made to be used in Node.js, and
  * @liveblocks/core has browser-specific code.
  */
-import type { CommentData, ThreadData } from "@liveblocks/core";
+import type {
+  CommentData,
+  JsonObject,
+  PlainLson,
+  PlainLsonObject,
+  ThreadData,
+} from "@liveblocks/core";
 
 import { Session } from "./Session";
 import {
@@ -48,6 +54,29 @@ type ThreadParticipants = {
   participantIds: string[];
 };
 
+type Permission = "room:write" | "room:read" | "room:presence:write";
+type RoomAccesses = Record<string, Permission[]>;
+type RoomMetadata = Record<string, string | string[]>;
+
+type RoomInfo = {
+  type: "room";
+  id: string;
+  lastConnectionAt?: string;
+  createdAt?: string;
+  metadata: RoomMetadata;
+  groupsAccesses: RoomAccesses;
+  usersAccesses: RoomAccesses;
+  defaultAccesses: Permission[];
+  schema?: string;
+};
+
+type RoomUser<Info> = {
+  type: "user";
+  id: string | null;
+  connectionId: number;
+  info: Info;
+};
+
 /**
  * Interact with the Liveblocks API from your Node.js backend.
  */
@@ -88,6 +117,17 @@ export class Liveblocks {
   }
 
   /** @internal */
+  private async delete(path: `/${string}`): Promise<Response> {
+    const url = urljoin(this._baseUrl, path);
+    const headers = {
+      Authorization: `Bearer ${this._secret}`,
+    };
+
+    const fetch = await fetchPolyfill();
+    return fetch(url, { method: "DELETE", headers });
+  }
+
+  /** @internal */
   private async get(path: `/${string}`): Promise<Response> {
     const url = urljoin(this._baseUrl, path);
     const headers = {
@@ -98,6 +138,10 @@ export class Liveblocks {
     const fetch = await fetchPolyfill();
     return fetch(url, { method: "GET", headers });
   }
+
+  /* -------------------------------------------------------------------------------------------------
+   * Authentication
+   * -----------------------------------------------------------------------------------------------*/
 
   /**
    * Prepares a new session to authorize a user to access Liveblocks.
@@ -180,7 +224,7 @@ export class Liveblocks {
 
       return {
         status: normalizeStatusCode(resp.status),
-        body: await resp.text(),
+        body: await resp.json(),
       };
     } catch (er) {
       return {
@@ -193,6 +237,295 @@ export class Liveblocks {
       };
     }
   }
+
+  /* -------------------------------------------------------------------------------------------------
+   * Room
+   * -----------------------------------------------------------------------------------------------*/
+
+  /**
+   * Returns a list of your rooms. The rooms are returned sorted by creation date, from newest to oldest. You can filter rooms by metadata, users accesses and groups accesses.
+   * @param params.limit (optional) A limit on the number of rooms to be returned. The limit can range between 1 and 100, and defaults to 20.
+   * @param params.startingAfter (optional) A cursor used for pagination. You get the value from the response of the previous page.
+   * @param params.userId A filter on users accesses.
+   * @param params.metadata A filter on metadata. Multiple metadata keys can be used to filter rooms.
+   * @param params.groupIds A filter on groups accesses. Multiple groups can be used.
+   * @returns A list of rooms.
+   */
+  public async getRooms(params: {
+    limit?: number;
+    startingAfter?: number;
+    metadata: RoomMetadata;
+    userId: string;
+    groupIds: string;
+  }): Promise<{
+    nextPage: string | null;
+    data: RoomInfo[];
+  }> {
+    let path = "v2/rooms?";
+    if (params.limit) {
+      path += `&limit=${params.limit}`;
+    }
+
+    if (params.startingAfter) {
+      path += `&startingAfter=${params.startingAfter}`;
+    }
+
+    if (params.userId) {
+      path += `&userId=${params.userId}`;
+    }
+
+    if (params.groupIds) {
+      path += `&groupIds=${params.groupIds}`;
+    }
+
+    if (params.metadata) {
+      Object.entries(params.metadata).forEach(([key, val]) => {
+        path += `&metadata.${key}=${val}`;
+      });
+    }
+
+    const res = await this.get(`/${path}`);
+    const body = await res.json();
+
+    if (res.status !== 200) {
+      throw {
+        status: res.status,
+        ...body,
+      };
+    }
+
+    return body;
+  }
+
+  /**
+   * Creates a new room with the given id.
+   * @param roomId The id of the room to create.
+   * @param params.defaultAccesses The default accesses for the room.
+   * @param params.groupAccesses (optional) The group accesses for the room. Can contain a maximum of 100 entries. Key length has a limit of 40 characters.
+   * @param params.userAccesses (optional) The user accesses for the room. Can contain a maximum of 100 entries. Key length has a limit of 40 characters.
+   * @param params.metadata (optional) The metadata for the room. Supports upto a maximum of 50 entries. Key length has a limit of 40 characters. Value length has a limit of 256 characters.
+   * @returns The created room.
+   */
+  public async createRoom(
+    roomId: string,
+    params: {
+      defaultAccesses: Permission[];
+      groupAccesses?: RoomAccesses;
+      userAccesses?: RoomAccesses;
+      metadata?: RoomMetadata;
+    }
+  ): Promise<RoomInfo> {
+    const { defaultAccesses, groupAccesses, userAccesses, metadata } = params;
+
+    const path = "/v2/rooms";
+
+    const res = await this.post(path, {
+      roomId,
+      defaultAccesses,
+      groupAccesses,
+      userAccesses,
+      metadata,
+    });
+    const body = await res.json();
+
+    if (res.status !== 200) {
+      throw {
+        status: res.status,
+        ...body,
+      };
+    }
+
+    return body;
+  }
+
+  /**
+   * Returns a room with the given id.
+   * @param roomId The id of the room to return.
+   * @returns The room with the given id.
+   */
+  public async getRoom(roomId: string): Promise<RoomInfo> {
+    const res = await this.get(`/v2/rooms/${roomId}`);
+    const body = await res.json();
+
+    if (res.status !== 200) {
+      throw {
+        status: res.status,
+        ...body,
+      };
+    }
+
+    return body;
+  }
+
+  /**
+   * Updates specific properties of a room. It’s not necessary to provide the entire room’s information.
+   * Setting a property to `null` means to delete this property.
+   * @param roomId The id of the room to update.
+   * @param params.defaultAccesses (optional) The default accesses for the room.
+   * @param params.groupAccesses (optional) The group accesses for the room. Can contain a maximum of 100 entries. Key length has a limit of 40 characters.
+   * @param params.userAccesses (optional) The user accesses for the room. Can contain a maximum of 100 entries. Key length has a limit of 40 characters.
+   * @param params.metadata (optional) The metadata for the room. Supports upto a maximum of 50 entries. Key length has a limit of 40 characters. Value length has a limit of 256 characters.
+   * @returns The updated room.
+   */
+  public async updateRoom(
+    roomId: string,
+    params: {
+      defaultAccesses?: Permission[] | null;
+      groupAccesses?: Record<string, Permission[] | null>;
+      userAccesses?: Record<string, Permission[] | null>;
+      metadata?: Record<string, string | string[] | null>;
+    }
+  ): Promise<RoomInfo> {
+    const { defaultAccesses, groupAccesses, userAccesses, metadata } = params;
+
+    const res = await this.post(`/v2/rooms/${roomId}`, {
+      defaultAccesses,
+      groupAccesses,
+      userAccesses,
+      metadata,
+    });
+    const body = await res.json();
+
+    if (res.status !== 200) {
+      throw {
+        status: res.status,
+        ...body,
+      };
+    }
+
+    return body;
+  }
+
+  /**
+   * Deletes a room with the given id. A deleted room is no longer accessible from the API or the dashboard and it cannot be restored.
+   * @param roomId The id of the room to delete.
+   */
+  public async deleteRoom(roomId: string) {
+    return await this.delete(`/v2/rooms/${roomId}`);
+  }
+
+  /**
+   * Returns a list of users currently present in the requested room. For better performance, we recommand to call this endpoint every 10 seconds maximum. Duplicates can happen if a user is in the requested room with multiple browser tabs opened.
+   * @param roomId The id of the room to get the users from.
+   * @returns A list of users currently present in the requested room.
+   */
+  public async getActiveUsers<T = unknown>(
+    roomId: string
+  ): Promise<RoomUser<T>[]> {
+    const res = await this.get(`/v2/rooms/${roomId}/active_users`);
+    const body = await res.json();
+
+    if (res.status !== 200) {
+      throw {
+        status: res.status,
+        ...body,
+      };
+    }
+
+    return body;
+  }
+
+  /**
+   * Boadcasts an event to a room without having to connect to it via the client from @liveblocks/client.
+   * @param roomId The id of the room to broadcast the event to.
+   */
+  public async broadcastMessage(
+    roomId: string,
+    message: Record<string, unknown>
+  ) {
+    return await this.post(`/v2/rooms/${roomId}/broadcast_event`, message);
+  }
+
+  /* -------------------------------------------------------------------------------------------------
+   * Storage
+   * -----------------------------------------------------------------------------------------------*/
+
+  /**
+   * Returns the contents of the room’s Storage tree.
+   * The default outputted format is called “plain LSON”, which includes information on the Live data structures in the tree.
+   * These nodes show up in the output as objects with two properties:
+   *
+   * ```json
+   * {
+   *   "liveblocksType": "LiveObject",
+   *   "data": ...
+   * }
+   * ```
+   *
+   * If you’re not interested in this information, you can use the `format` parameter to get a more compact output.
+   *
+   * @param roomId The id of the room to get the storage from.
+   * @param format (optional) Set to return `plan-lson` representation by default. If set to `json`, the output will be formatted as a simplified JSON representation of the Storage tree.
+   * In that format, each LiveObject and LiveMap will be formatted as a simple JSON object, and each LiveList will be formatted as a simple JSON array. This is a lossy format because information about the original data structures is not retained, but it may be easier to work with.
+   */
+  public getStorageDocument(
+    roomId: string,
+    format: "plain-lson"
+  ): Promise<PlainLsonObject>;
+
+  public getStorageDocument(roomId: string): Promise<PlainLsonObject>; // Default to 'plain-lson' when no format is provided
+
+  public getStorageDocument(
+    roomId: string,
+    format: "json"
+  ): Promise<JsonObject>;
+
+  public async getStorageDocument(
+    roomId: string,
+    format: "plain-lson" | "json" = "plain-lson"
+  ): Promise<PlainLsonObject | JsonObject> {
+    let path = `v2/rooms/${roomId}/storage`;
+    if (format === "json") {
+      path += "?format=json";
+    }
+    const res = await this.get(`/${path}`);
+    const body = await res.json();
+
+    if (res.status !== 200) {
+      throw {
+        status: res.status,
+        ...body,
+      };
+    }
+
+    return body;
+  }
+
+  /**
+   * Initializes a room’s Storage. The room must already exist and have an empty Storage.
+   * Calling this endpoint will disconnect all users from the room if there are any.
+   *
+   * @param roomId The id of the room to initialize the storage from.
+   * @param document The document to initialize the storage with.
+   * @returns The initialized storage document. It is of the same format as the one passed in.
+   */
+  public async initializeStorageDocument(
+    roomId: string,
+    document: PlainLsonObject
+  ): Promise<PlainLsonObject> {
+    const res = await this.post(`/v2/rooms/${roomId}/storage`, document);
+    const body = await res.json();
+
+    if (res.status !== 200) {
+      throw {
+        status: res.status,
+        ...body,
+      };
+    }
+
+    return body;
+  }
+  /**
+   * Deletes all of the room’s Storage data and disconnect all users from the room if there are any.
+   * @param roomId The id of the room to delete the storage from.
+   */
+  public async deleteStorage(roomId: string) {
+    return await this.delete(`/v2/rooms/${roomId}/storage`);
+  }
+
+  /* -------------------------------------------------------------------------------------------------
+   * Comments
+   * -----------------------------------------------------------------------------------------------*/
 
   /**
    * Gets all the threads in a room.
