@@ -1,4 +1,4 @@
-# 1.7.0 (not yet released)
+# 1.7.0
 
 [Liveblocks Comments](https://liveblocks.io/comments) is now available for
 everyone as a public beta, learn more about this
