@@ -144,7 +144,6 @@ export function NewThread({ children }: Props) {
 
     // Right click to cancel placing
     function handleContextMenu(e: Event) {
-      console.log(creatingCommentState);
       if (creatingCommentState === "placing") {
         e.preventDefault();
         setCreatingCommentState("complete");
