@@ -44,7 +44,7 @@ import type {
   ThreadsState,
 } from "./comments/CommentsRoom";
 import { createCommentsRoom } from "./comments/CommentsRoom";
-import type { CommentsApiError } from "./comments/errors";
+import type { CommentsError } from "./comments/errors";
 import { useDebounce } from "./comments/lib/use-debounce";
 import { useAsyncCache } from "./lib/use-async-cache";
 import { useInitial } from "./lib/use-initial";
@@ -904,7 +904,7 @@ export function createRoomContext<
   }
 
   const commentsErrorEventSource =
-    makeEventSource<CommentsApiError<TThreadMetadata>>();
+    makeEventSource<CommentsError<TThreadMetadata>>();
   const commentsRooms = new Map<
     Room<JsonObject, LsonObject, BaseUserMeta, Json>,
     CommentsRoom<TThreadMetadata>

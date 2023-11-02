@@ -12,14 +12,14 @@ import type {
   Room,
   ThreadData,
 } from "@liveblocks/core";
-import { makeEventSource } from "@liveblocks/core";
+import { CommentsApiError, console, makeEventSource } from "@liveblocks/core";
 import { nanoid } from "nanoid";
 import { useEffect } from "react";
 import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
 
 import {
   AddReactionError,
-  type CommentsApiError,
+  type CommentsError,
   CreateCommentError,
   CreateThreadError,
   DeleteCommentError,
@@ -174,6 +174,21 @@ function createThreadsManager<TThreadMetadata extends BaseMetadata>() {
   };
 }
 
+function handleCommentsApiError(err: CommentsApiError): Error {
+  const message = `Request failed with status ${err.status}: ${err.message}`;
+
+  // Log details about FORBIDDEN errors
+  if (err.details?.error === "FORBIDDEN") {
+    const detailedMessage = [message, err.details.suggestion, err.details.docs]
+      .filter(Boolean)
+      .join("\n");
+
+    console.error(detailedMessage);
+  }
+
+  return new Error(message);
+}
+
 /**
  * This implementation is inspired by the `swr` library.
  * Additional modifications were made to adapt it to our specific needs.
@@ -182,7 +197,7 @@ function createThreadsManager<TThreadMetadata extends BaseMetadata>() {
  */
 export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
   room: Room<JsonObject, LsonObject, BaseUserMeta, Json>,
-  errorEventSource: EventSource<CommentsApiError<TThreadMetadata>>
+  errorEventSource: EventSource<CommentsError<TThreadMetadata>>
 ): CommentsRoom<TThreadMetadata> {
   const manager = createThreadsManager<TThreadMetadata>();
 
@@ -344,9 +359,14 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
 
     mutate(room.editThreadMetadata({ metadata, threadId }), {
       optimisticData,
-    }).catch((err: Error) => {
+    }).catch((err: unknown) => {
+      if (!(err instanceof CommentsApiError)) {
+        throw err;
+      }
+
+      const error = handleCommentsApiError(err);
       errorEventSource.notify(
-        new EditThreadMetadataError(err, {
+        new EditThreadMetadataError(error, {
           roomId: room.id,
           threadId,
           metadata,
@@ -388,17 +408,22 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
 
     mutate(room.createThread({ threadId, commentId, body, metadata }), {
       optimisticData: [...threads, newThread],
-    }).catch((er: Error) =>
+    }).catch((err: unknown) => {
+      if (!(err instanceof CommentsApiError)) {
+        throw err;
+      }
+
+      const error = handleCommentsApiError(err);
       errorEventSource.notify(
-        new CreateThreadError(er, {
+        new CreateThreadError(error, {
           roomId: room.id,
           threadId,
           commentId,
           body,
           metadata,
         })
-      )
-    );
+      );
+    });
 
     return newThread;
   }
@@ -434,16 +459,21 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
 
     mutate(room.createComment({ threadId, commentId, body }), {
       optimisticData,
-    }).catch((er: Error) =>
+    }).catch((err: unknown) => {
+      if (!(err instanceof CommentsApiError)) {
+        throw err;
+      }
+
+      const error = handleCommentsApiError(err);
       errorEventSource.notify(
-        new CreateCommentError(er, {
+        new CreateCommentError(error, {
           roomId: room.id,
           threadId,
           commentId,
           body,
         })
-      )
-    );
+      );
+    });
 
     return comment;
   }
@@ -471,16 +501,21 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
 
     mutate(room.editComment({ threadId, commentId, body }), {
       optimisticData,
-    }).catch((er: Error) =>
+    }).catch((err: unknown) => {
+      if (!(err instanceof CommentsApiError)) {
+        throw err;
+      }
+
+      const error = handleCommentsApiError(err);
       errorEventSource.notify(
-        new EditCommentError(er, {
+        new EditCommentError(error, {
           roomId: room.id,
           threadId,
           commentId,
           body,
         })
-      )
-    );
+      );
+    });
   }
 
   function deleteComment({ threadId, commentId }: DeleteCommentOptions): void {
@@ -516,15 +551,20 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
 
     mutate(room.deleteComment({ threadId, commentId }), {
       optimisticData: newThreads,
-    }).catch((er: Error) =>
+    }).catch((err: unknown) => {
+      if (!(err instanceof CommentsApiError)) {
+        throw err;
+      }
+
+      const error = handleCommentsApiError(err);
       errorEventSource.notify(
-        new DeleteCommentError(er, {
+        new DeleteCommentError(error, {
           roomId: room.id,
           threadId,
           commentId,
         })
-      )
-    );
+      );
+    });
   }
 
   function getCurrentUserId() {
@@ -705,9 +745,14 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
 
     mutate(room.addReaction({ threadId, commentId, emoji }), {
       optimisticData,
-    }).catch((err: Error) => {
+    }).catch((err: unknown) => {
+      if (!(err instanceof CommentsApiError)) {
+        throw err;
+      }
+
+      const error = handleCommentsApiError(err);
       errorEventSource.notify(
-        new AddReactionError(err, {
+        new AddReactionError(error, {
           roomId: room.id,
           threadId,
           commentId,
@@ -769,9 +814,14 @@ export function createCommentsRoom<TThreadMetadata extends BaseMetadata>(
 
     mutate(room.removeReaction({ threadId, commentId, emoji }), {
       optimisticData,
-    }).catch((err: Error) => {
+    }).catch((err: unknown) => {
+      if (!(err instanceof CommentsApiError)) {
+        throw err;
+      }
+
+      const error = handleCommentsApiError(err);
       errorEventSource.notify(
-        new RemoveReactionError(err, {
+        new RemoveReactionError(error, {
           roomId: room.id,
           threadId,
           commentId,

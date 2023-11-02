@@ -1,4 +1,5 @@
 import type { AuthValue } from "../auth-manager";
+import type { JsonObject } from "../lib/Json";
 import type { BaseMetadata } from "./types/BaseMetadata";
 import type { CommentBody } from "./types/CommentBody";
 import type { CommentData } from "./types/CommentData";
@@ -58,6 +59,16 @@ export type CommentsApi<TThreadMetadata extends BaseMetadata> = {
   }): Promise<CommentData>;
 };
 
+export class CommentsApiError extends Error {
+  constructor(
+    public message: string,
+    public status: number,
+    public details?: JsonObject
+  ) {
+    super(message);
+  }
+}
+
 export function createCommentsApi<TThreadMetadata extends BaseMetadata>(
   roomId: string,
   getAuthValue: () => Promise<AuthValue>,
@@ -71,16 +82,21 @@ export function createCommentsApi<TThreadMetadata extends BaseMetadata>(
 
     if (!response.ok) {
       if (response.status >= 400 && response.status < 600) {
-        let errorMessage = "";
+        let error: CommentsApiError;
+
         try {
           const errorBody = (await response.json()) as { message: string };
-          errorMessage = errorBody.message;
-        } catch (error) {
-          errorMessage = response.statusText;
+
+          error = new CommentsApiError(
+            errorBody.message,
+            response.status,
+            errorBody
+          );
+        } catch {
+          error = new CommentsApiError(response.statusText, response.status);
         }
-        throw new Error(
-          `Request failed with status ${response.status}: ${errorMessage}`
-        );
+
+        throw error;
       }
     }
 
