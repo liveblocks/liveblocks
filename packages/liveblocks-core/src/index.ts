@@ -187,7 +187,7 @@ export type { DevTools };
 
 // Comments
 export type { CommentsApi } from "./comments";
-export { createCommentsApi } from "./comments";
+export { CommentsApiError, createCommentsApi } from "./comments";
 export type { BaseMetadata } from "./comments/types/BaseMetadata";
 export type {
   CommentBody,
