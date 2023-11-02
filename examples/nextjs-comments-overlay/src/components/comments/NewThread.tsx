@@ -142,7 +142,16 @@ export function NewThread({ children }: Props) {
       setAllowUseComposer(true);
     }
 
+    // Right click to cancel placing
+    function handleContextMenu(e: Event) {
+      if (creatingCommentState === "placing") {
+        e.preventDefault();
+        setCreatingCommentState("complete");
+      }
+    }
+
     document.documentElement.addEventListener("pointerdown", handlePointerDown);
+    document.documentElement.addEventListener("contextmenu", handleContextMenu);
 
     return () => {
       document.documentElement.removeEventListener(
