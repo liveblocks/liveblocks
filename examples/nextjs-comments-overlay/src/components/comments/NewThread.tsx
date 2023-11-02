@@ -144,6 +144,7 @@ export function NewThread({ children }: Props) {
 
     // Right click to cancel placing
     function handleContextMenu(e: Event) {
+      console.log(creatingCommentState);
       if (creatingCommentState === "placing") {
         e.preventDefault();
         setCreatingCommentState("complete");
@@ -157,6 +158,10 @@ export function NewThread({ children }: Props) {
       document.documentElement.removeEventListener(
         "pointerdown",
         handlePointerDown
+      );
+      document.documentElement.removeEventListener(
+        "contextmenu",
+        handleContextMenu
       );
     };
   }, [creatingCommentState]);
