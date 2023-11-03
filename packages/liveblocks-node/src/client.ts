@@ -115,10 +115,10 @@ export class Liveblocks {
 
   /** @internal */
   private async post(
-    path: `/${string}`,
+    relativeURL: string,
     json: Record<string, unknown>
   ): Promise<Response> {
-    const url = urljoin(this._baseUrl, path);
+    const url = new URL(relativeURL, this._baseUrl);
     const headers = {
       Authorization: `Bearer ${this._secret}`,
       "Content-Type": "application/json",
@@ -134,10 +134,10 @@ export class Liveblocks {
 
   /** @internal */
   private async put(
-    path: `/${string}`,
+    relativeURL: string,
     json: Record<string, unknown>
   ): Promise<Response> {
-    const url = urljoin(this._baseUrl, path);
+    const url = new URL(relativeURL, this._baseUrl);
     const headers = {
       Authorization: `Bearer ${this._secret}`,
       "Content-Type": "application/json",
@@ -152,8 +152,8 @@ export class Liveblocks {
   }
 
   /** @internal */
-  private async delete(path: `/${string}`): Promise<Response> {
-    const url = urljoin(this._baseUrl, path);
+  private async delete(relativeURL: string): Promise<Response> {
+    const url = new URL(relativeURL, this._baseUrl);
     const headers = {
       Authorization: `Bearer ${this._secret}`,
     };
@@ -163,8 +163,8 @@ export class Liveblocks {
   }
 
   /** @internal */
-  private async get(path: `/${string}`): Promise<Response> {
-    const url = urljoin(this._baseUrl, path);
+  async get(relativeURL: string): Promise<Response> {
+    const url = new URL(relativeURL, this._baseUrl);
     const headers = {
       Authorization: `Bearer ${this._secret}`,
       "Content-Type": "application/json",
@@ -259,7 +259,7 @@ export class Liveblocks {
 
       return {
         status: normalizeStatusCode(resp.status),
-        body: await resp.json(),
+        body: await resp.text(),
       };
     } catch (er) {
       return {
@@ -281,18 +281,20 @@ export class Liveblocks {
    * Returns a list of your rooms. The rooms are returned sorted by creation date, from newest to oldest. You can filter rooms by metadata, users accesses and groups accesses.
    * @param params.limit (optional) A limit on the number of rooms to be returned. The limit can range between 1 and 100, and defaults to 20.
    * @param params.startingAfter (optional) A cursor used for pagination. You get the value from the response of the previous page.
-   * @param params.userId A filter on users accesses.
-   * @param params.metadata A filter on metadata. Multiple metadata keys can be used to filter rooms.
-   * @param params.groupIds A filter on groups accesses. Multiple groups can be used.
+   * @param params.userId (optional) A filter on users accesses.
+   * @param params.metadata (optional) A filter on metadata. Multiple metadata keys can be used to filter rooms.
+   * @param params.groupIds (optional) A filter on groups accesses. Multiple groups can be used.
    * @returns A list of rooms.
    */
-  public async getRooms(params: {
-    limit?: number;
-    startingAfter?: number;
-    metadata: RoomMetadata;
-    userId: string;
-    groupIds: string;
-  }): Promise<{
+  public async getRooms(
+    params: {
+      limit?: number;
+      startingAfter?: number;
+      metadata?: RoomMetadata;
+      userId?: string;
+      groupIds?: string;
+    } = {}
+  ): Promise<{
     nextPage: string | null;
     data: RoomInfo[];
   }> {
@@ -319,7 +321,7 @@ export class Liveblocks {
       });
     }
 
-    const res = await this.get(`/${path}`);
+    const res = await this.get(path);
 
     if (!res.ok) {
       const text = await res.text();
@@ -512,7 +514,7 @@ export class Liveblocks {
     if (format === "json") {
       path += "?format=json";
     }
-    const res = await this.get(`/${path}`);
+    const res = await this.get(path);
 
     if (!res.ok) {
       const text = await res.text();
@@ -593,7 +595,7 @@ export class Liveblocks {
       path += `&type=${type}`;
     }
 
-    const res = await this.get(`/${path}`);
+    const res = await this.get(path);
 
     if (!res.ok) {
       const text = await res.text();
