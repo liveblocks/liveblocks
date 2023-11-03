@@ -1,6 +1,6 @@
 import type { Json } from "../lib/Json";
 import { b64decode, isPlainObject, tryParseJson } from "../lib/utils";
-import type { BaseUserInfo } from "./BaseUserMeta";
+import type { IUserInfo } from "./BaseUserMeta";
 
 export enum Permission {
   Read = "room:read",
@@ -48,7 +48,7 @@ export type LegacySecretToken = {
 
   // Extra payload as defined by the customer's own authorization
   id?: string;
-  info?: BaseUserInfo;
+  info?: IUserInfo;
 
   // IMPORTANT: All other fields on the JWT token are deliberately treated as
   // opaque, and not relied on by the client.
@@ -63,7 +63,7 @@ export type AccessToken = {
   pid: string; // project id
   uid: string; // user id
   perms: LiveblocksPermissions; // permissions
-  ui?: BaseUserInfo; // user info
+  ui?: IUserInfo; // user info
 } & JwtMeta;
 
 /**
@@ -74,7 +74,7 @@ export type IDToken = {
   pid: string; // project id
   uid: string; // user id
   gids?: string[]; // group ids
-  ui?: BaseUserInfo; // user info
+  ui?: IUserInfo; // user info
 } & JwtMeta;
 
 export type AuthToken = AccessToken | IDToken | LegacySecretToken;
