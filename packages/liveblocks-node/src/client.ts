@@ -294,7 +294,10 @@ export class Liveblocks {
       userId?: string;
       groupIds?: string;
     } = {}
-  ) {
+  ): Promise<{
+    nextPage: string | null;
+    data: RoomInfo[];
+  }> {
     let path = "v2/rooms?";
     if (params.limit) {
       path += `&limit=${params.limit}`;
@@ -348,7 +351,7 @@ export class Liveblocks {
       userAccesses?: RoomAccesses;
       metadata?: RoomMetadata;
     }
-  ) {
+  ): Promise<RoomInfo> {
     const { defaultAccesses, groupAccesses, userAccesses, metadata } = params;
 
     const path = "/v2/rooms";
@@ -374,7 +377,7 @@ export class Liveblocks {
    * @param roomId The id of the room to return.
    * @returns The room with the given id.
    */
-  public async getRoom(roomId: string) {
+  public async getRoom(roomId: string): Promise<RoomInfo> {
     const res = await this.get(`/v2/rooms/${roomId}`);
 
     if (!res.ok) {
@@ -403,7 +406,7 @@ export class Liveblocks {
       userAccesses?: Record<string, Permission[] | null>;
       metadata?: Record<string, string | string[] | null>;
     }
-  ) {
+  ): Promise<RoomInfo> {
     const { defaultAccesses, groupAccesses, userAccesses, metadata } = params;
 
     const res = await this.post(`/v2/rooms/${roomId}`, {
@@ -425,7 +428,7 @@ export class Liveblocks {
    * Deletes a room with the given id. A deleted room is no longer accessible from the API or the dashboard and it cannot be restored.
    * @param roomId The id of the room to delete.
    */
-  public async deleteRoom(roomId: string) {
+  public async deleteRoom(roomId: string): Promise<void> {
     const res = await this.delete(`/v2/rooms/${roomId}`);
 
     if (!res.ok) {
@@ -441,7 +444,9 @@ export class Liveblocks {
    * @param roomId The id of the room to get the users from.
    * @returns A list of users currently present in the requested room.
    */
-  public async getActiveUsers<T = unknown>(roomId: string) {
+  public async getActiveUsers<T = unknown>(
+    roomId: string
+  ): Promise<RoomUser<T>[]> {
     const res = await this.get(`/v2/rooms/${roomId}/active_users`);
 
     if (!res.ok) {
@@ -459,7 +464,7 @@ export class Liveblocks {
   public async broadcastMessage(
     roomId: string,
     message: Record<string, unknown>
-  ) {
+  ): Promise<void> {
     const res = await this.post(`/v2/rooms/${roomId}/broadcast_event`, message);
 
     if (!res.ok) {
@@ -533,7 +538,7 @@ export class Liveblocks {
   public async initializeStorageDocument(
     roomId: string,
     document: PlainLsonObject
-  ) {
+  ): Promise<PlainLsonObject> {
     const res = await this.post(`/v2/rooms/${roomId}/storage`, document);
 
     if (!res.ok) {
@@ -547,7 +552,7 @@ export class Liveblocks {
    * Deletes all of the room’s Storage data and disconnect all users from the room if there are any.
    * @param roomId The id of the room to delete the storage from.
    */
-  public async deleteStorage(roomId: string) {
+  public async deleteStorage(roomId: string): Promise<void> {
     const res = await this.delete(`/v2/rooms/${roomId}/storage`);
 
     if (!res.ok) {
@@ -577,7 +582,7 @@ export class Liveblocks {
       key?: string;
       type?: string;
     } = {}
-  ) {
+  ): Promise<Record<string, YJson>> {
     const { format, key, type } = params;
 
     let path = `v2/rooms/${roomId}/ydoc?`;
@@ -613,7 +618,7 @@ export class Liveblocks {
     params: {
       update: string;
     }
-  ) {
+  ): Promise<void> {
     const { update } = params;
 
     const res = await this.put(`/v2/rooms/${roomId}/ydoc`, {
@@ -634,7 +639,9 @@ export class Liveblocks {
    * @param roomId The id of the room to get the Yjs document from.
    * @returns The room’s Yjs document encoded as a single binary update.
    */
-  public async getYjsDocumentAsBinaryUpdate(roomId: string) {
+  public async getYjsDocumentAsBinaryUpdate(
+    roomId: string
+  ): Promise<ArrayBuffer> {
     const res = await this.get(`/v2/rooms/${roomId}/ydoc-binary`);
 
     if (!res.ok) {
@@ -655,7 +662,7 @@ export class Liveblocks {
    * @param body The exact allowed shape of data in the room. It is a multi-line string written in the [Liveblocks schema syntax](https://liveblocks.io/docs/platform/schema-validation/syntax).
    * @returns The created schema.
    */
-  public async createSchema(name: string, body: string) {
+  public async createSchema(name: string, body: string): Promise<Schema> {
     const res = await this.post("/v2/schemas", {
       name,
       body,
@@ -674,7 +681,7 @@ export class Liveblocks {
    * @param schemaId Id of the schema - this is the combination of the schema name and version of the schema to update. For example, `my-schema@1`.
    * @returns The schema with the given id.
    */
-  public async getSchema(schemaId: string) {
+  public async getSchema(schemaId: string): Promise<Schema> {
     const res = await this.get(`/v2/schemas/${schemaId}`);
 
     if (!res.ok) {
@@ -691,7 +698,7 @@ export class Liveblocks {
    * @param body The exact allowed shape of data in the room. It is a multi-line string written in the [Liveblocks schema syntax](https://liveblocks.io/docs/platform/schema-validation/syntax).
    * @returns The updated schema. The version of the schema will be incremented.
    */
-  public async updateSchema(schemaId: string, body: string) {
+  public async updateSchema(schemaId: string, body: string): Promise<Schema> {
     const res = await this.put(`/v2/schemas/${schemaId}`, {
       body,
     });
@@ -708,7 +715,7 @@ export class Liveblocks {
    * Deletes a schema by its id. A schema can only be deleted if it is not used by any room.
    * @param schemaId Id of the schema - this is the combination of the schema name and version of the schema to update. For example, `my-schema@1`.
    */
-  public async deleteSchema(schemaId: string) {
+  public async deleteSchema(schemaId: string): Promise<void> {
     const res = await this.delete(`/v2/schemas/${schemaId}`);
 
     if (!res.ok) {
@@ -724,7 +731,7 @@ export class Liveblocks {
    * @param roomId The id of the room to get the schema from.
    * @returns
    */
-  public async getSchemaByRoomId(roomId: string) {
+  public async getSchemaByRoomId(roomId: string): Promise<Schema> {
     const res = await this.get(`/v2/rooms/${roomId}/schema`);
 
     if (!res.ok) {
@@ -742,7 +749,10 @@ export class Liveblocks {
    * @param schemaId Id of the schema - this is the combination of the schema name and version of the schema to update. For example, `my-schema@1`.
    * @returns The schema id as JSON.
    */
-  public async attachSchemaToRoom(roomId: string, schemaId: string) {
+  public async attachSchemaToRoom(
+    roomId: string,
+    schemaId: string
+  ): Promise<{ schema: string }> {
     const res = await this.post(`/v2/rooms/${roomId}/schema`, {
       schema: schemaId,
     });
@@ -759,7 +769,7 @@ export class Liveblocks {
    * Detaches a schema from a room, and disables runtime schema validation for the room.
    * @param roomId The id of the room to detach the schema from.
    */
-  public async detachSchemaFromRoom(roomId: string) {
+  public async detachSchemaFromRoom(roomId: string): Promise<void> {
     const res = await this.delete(`/v2/rooms/${roomId}/schema`);
 
     if (!res.ok) {
@@ -780,7 +790,7 @@ export class Liveblocks {
    * @param params.roomId The room ID to get the threads from.
    * @returns A list of threads.
    */
-  public async getThreads(params: { roomId: string }) {
+  public async getThreads(params: { roomId: string }): Promise<ThreadData[]> {
     const { roomId } = params;
 
     const res = await this.get(
@@ -802,7 +812,10 @@ export class Liveblocks {
    * @param params.threadId The thread ID.
    * @returns A thread.
    */
-  public async getThread(params: { roomId: string; threadId: string }) {
+  public async getThread(params: {
+    roomId: string;
+    threadId: string;
+  }): Promise<ThreadData> {
     const { roomId, threadId } = params;
 
     const res = await this.get(
@@ -832,7 +845,7 @@ export class Liveblocks {
   public async getThreadParticipants(params: {
     roomId: string;
     threadId: string;
-  }) {
+  }): Promise<ThreadParticipants> {
     const { roomId, threadId } = params;
 
     const res = await this.get(
@@ -861,7 +874,7 @@ export class Liveblocks {
     roomId: string;
     threadId: string;
     commentId: string;
-  }) {
+  }): Promise<CommentData> {
     const { roomId, threadId, commentId } = params;
 
     const res = await this.get(
