@@ -84,6 +84,15 @@ type YJson =
   | undefined
   | unknown[];
 
+type Schema = {
+  id: string;
+  name: string;
+  version: number;
+  createdAt: string;
+  updatedAt: string;
+  body: string;
+};
+
 /**
  * Interact with the Liveblocks API from your Node.js backend.
  */
@@ -313,8 +322,8 @@ export class Liveblocks {
     const res = await this.get(`/${path}`);
 
     if (!res.ok) {
-      const errorText = await res.text();
-      throw new Error(`Server responded with ${res.status}: ${errorText}`);
+      const text = await res.text();
+      throw new ApiError(res.status, text);
     }
 
     return res.json();
@@ -351,8 +360,8 @@ export class Liveblocks {
     });
 
     if (!res.ok) {
-      const errorText = await res.text();
-      throw new Error(`Server responded with ${res.status}: ${errorText}`);
+      const text = await res.text();
+      throw new ApiError(res.status, text);
     }
 
     return res.json();
@@ -365,9 +374,10 @@ export class Liveblocks {
    */
   public async getRoom(roomId: string): Promise<RoomInfo> {
     const res = await this.get(`/v2/rooms/${roomId}`);
+
     if (!res.ok) {
-      const errorText = await res.text();
-      throw new Error(`Server responded with ${res.status}: ${errorText}`);
+      const text = await res.text();
+      throw new ApiError(res.status, text);
     }
 
     return res.json();
@@ -402,8 +412,8 @@ export class Liveblocks {
     });
 
     if (!res.ok) {
-      const errorText = await res.text();
-      throw new Error(`Server responded with ${res.status}: ${errorText}`);
+      const text = await res.text();
+      throw new ApiError(res.status, text);
     }
 
     return res.json();
@@ -413,12 +423,15 @@ export class Liveblocks {
    * Deletes a room with the given id. A deleted room is no longer accessible from the API or the dashboard and it cannot be restored.
    * @param roomId The id of the room to delete.
    */
-  public async deleteRoom(roomId: string) {
+  public async deleteRoom(roomId: string): Promise<void> {
     const res = await this.delete(`/v2/rooms/${roomId}`);
-    if (res.ok) return;
 
-    const errorText = await res.text();
-    throw new Error(`Server responded with ${res.status}: ${errorText}`);
+    if (!res.ok) {
+      const text = await res.text();
+      throw new ApiError(res.status, text);
+    }
+
+    return;
   }
 
   /**
@@ -432,8 +445,8 @@ export class Liveblocks {
     const res = await this.get(`/v2/rooms/${roomId}/active_users`);
 
     if (!res.ok) {
-      const errorText = await res.text();
-      throw new Error(`Server responded with ${res.status}: ${errorText}`);
+      const text = await res.text();
+      throw new ApiError(res.status, text);
     }
 
     return res.json();
@@ -448,10 +461,13 @@ export class Liveblocks {
     message: Record<string, unknown>
   ): Promise<void> {
     const res = await this.post(`/v2/rooms/${roomId}/broadcast_event`, message);
-    if (res.ok) return;
 
-    const errorText = await res.text();
-    throw new Error(`Server responded with ${res.status}: ${errorText}`);
+    if (!res.ok) {
+      const text = await res.text();
+      throw new ApiError(res.status, text);
+    }
+
+    return;
   }
 
   /* -------------------------------------------------------------------------------------------------
@@ -499,8 +515,8 @@ export class Liveblocks {
     const res = await this.get(`/${path}`);
 
     if (!res.ok) {
-      const errorText = await res.text();
-      throw new Error(`Server responded with ${res.status}: ${errorText}`);
+      const text = await res.text();
+      throw new ApiError(res.status, text);
     }
 
     return res.json();
@@ -521,8 +537,8 @@ export class Liveblocks {
     const res = await this.post(`/v2/rooms/${roomId}/storage`, document);
 
     if (!res.ok) {
-      const errorText = await res.text();
-      throw new Error(`Server responded with ${res.status}: ${errorText}`);
+      const text = await res.text();
+      throw new ApiError(res.status, text);
     }
 
     return res.json();
@@ -533,10 +549,13 @@ export class Liveblocks {
    */
   public async deleteStorage(roomId: string): Promise<void> {
     const res = await this.delete(`/v2/rooms/${roomId}/storage`);
-    if (res.ok) return;
 
-    const errorText = await res.text();
-    throw new Error(`Server responded with ${res.status}: ${errorText}`);
+    if (!res.ok) {
+      const text = await res.text();
+      throw new ApiError(res.status, text);
+    }
+
+    return;
   }
 
   /* -------------------------------------------------------------------------------------------------
@@ -575,16 +594,13 @@ export class Liveblocks {
     }
 
     const res = await this.get(`/${path}`);
-    const body = await res.json();
 
-    if (res.status !== 200) {
-      throw {
-        status: res.status,
-        ...body,
-      };
+    if (!res.ok) {
+      const text = await res.text();
+      throw new ApiError(res.status, text);
     }
 
-    return body;
+    return res.json();
   }
 
   /**
@@ -604,10 +620,12 @@ export class Liveblocks {
       update,
     });
 
-    if (res.ok) return;
+    if (!res.ok) {
+      const text = await res.text();
+      throw new ApiError(res.status, text);
+    }
 
-    const errorText = await res.text();
-    throw new Error(`Server responded with ${res.status}: ${errorText}`);
+    return;
   }
 
   /**
@@ -622,11 +640,139 @@ export class Liveblocks {
     const res = await this.get(`/v2/rooms/${roomId}/ydoc-binary`);
 
     if (!res.ok) {
-      const errorText = await res.text();
-      throw new Error(`Server responded with ${res.status}: ${errorText}`);
+      const text = await res.text();
+      throw new ApiError(res.status, text);
     }
 
     return res.arrayBuffer();
+  }
+
+  /* -------------------------------------------------------------------------------------------------
+   * Schema Validation
+   * -----------------------------------------------------------------------------------------------*/
+
+  /**
+   * Creates a new schema which can be referenced later to enforce a room’s Storage data structure.
+   * @param name The name used to reference the schema. Must be a non-empty string with less than 65 characters and only contain lowercase letters, numbers and dashes
+   * @param body The exact allowed shape of data in the room. It is a multi-line string written in the [Liveblocks schema syntax](https://liveblocks.io/docs/platform/schema-validation/syntax).
+   * @returns The created schema.
+   */
+  public async createSchema(name: string, body: string): Promise<Schema> {
+    const res = await this.post("/v2/schemas", {
+      name,
+      body,
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new ApiError(res.status, text);
+    }
+
+    return res.json();
+  }
+
+  /**
+   * Returns a schema by its id.
+   * @param schemaId Id of the schema - this is the combination of the schema name and version of the schema to update. For example, `my-schema@1`.
+   * @returns The schema with the given id.
+   */
+  public async getSchema(schemaId: string): Promise<Schema> {
+    const res = await this.get(`/v2/schemas/${schemaId}`);
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new ApiError(res.status, text);
+    }
+
+    return res.json();
+  }
+
+  /**
+   * Updates the body for the schema. A schema can only be updated if it is not used by any room.
+   * @param schemaId Id of the schema - this is the combination of the schema name and version of the schema to update. For example, `my-schema@1`.
+   * @param body The exact allowed shape of data in the room. It is a multi-line string written in the [Liveblocks schema syntax](https://liveblocks.io/docs/platform/schema-validation/syntax).
+   * @returns The updated schema. The version of the schema will be incremented.
+   */
+  public async updateSchema(schemaId: string, body: string): Promise<Schema> {
+    const res = await this.put(`/v2/schemas/${schemaId}`, {
+      body,
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new ApiError(res.status, text);
+    }
+
+    return res.json();
+  }
+
+  /**
+   * Deletes a schema by its id. A schema can only be deleted if it is not used by any room.
+   * @param schemaId Id of the schema - this is the combination of the schema name and version of the schema to update. For example, `my-schema@1`.
+   */
+  public async deleteSchema(schemaId: string): Promise<void> {
+    const res = await this.delete(`/v2/schemas/${schemaId}`);
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new ApiError(res.status, text);
+    }
+
+    return;
+  }
+
+  /**
+   * Returns the schema attached to a room.
+   * @param roomId The id of the room to get the schema from.
+   * @returns
+   */
+  public async getSchemaByRoomId(roomId: string): Promise<Schema> {
+    const res = await this.get(`/v2/rooms/${roomId}/schema`);
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new ApiError(res.status, text);
+    }
+
+    return res.json();
+  }
+
+  /**
+   * Attaches a schema to a room, and instantly enables runtime schema validation for the room.
+   * If the current contents of the room’s Storage do not match the schema, attaching will fail and the error message will give details on why the schema failed to attach.
+   * @param roomId The id of the room to attach the schema to.
+   * @param schemaId Id of the schema - this is the combination of the schema name and version of the schema to update. For example, `my-schema@1`.
+   * @returns The schema id as JSON.
+   */
+  public async attachSchemaToRoom(
+    roomId: string,
+    schemaId: string
+  ): Promise<{ schema: string }> {
+    const res = await this.post(`/v2/rooms/${roomId}/schema`, {
+      schema: schemaId,
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new ApiError(res.status, text);
+    }
+
+    return res.json();
+  }
+
+  /**
+   * Detaches a schema from a room, and disables runtime schema validation for the room.
+   * @param roomId The id of the room to detach the schema from.
+   */
+  public async detachSchemaFromRoom(roomId: string): Promise<void> {
+    const res = await this.delete(`/v2/rooms/${roomId}/schema`);
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new ApiError(res.status, text);
+    }
+
+    return;
   }
 
   /* -------------------------------------------------------------------------------------------------
@@ -642,20 +788,16 @@ export class Liveblocks {
   public async getThreads(params: { roomId: string }): Promise<ThreadData[]> {
     const { roomId } = params;
 
-    const resp = await this.get(
+    const res = await this.get(
       `/v2/rooms/${encodeURIComponent(roomId)}/threads`
     );
 
-    const body = await (resp.json() as Promise<ThreadData[]>);
-
-    if (resp.status !== 200) {
-      throw {
-        status: resp.status,
-        ...body,
-      };
+    if (!res.ok) {
+      const text = await res.text();
+      throw new ApiError(res.status, text);
     }
 
-    return body;
+    return res.json();
   }
 
   /**
@@ -671,22 +813,18 @@ export class Liveblocks {
   }): Promise<ThreadData> {
     const { roomId, threadId } = params;
 
-    const resp = await this.get(
+    const res = await this.get(
       `/v2/rooms/${encodeURIComponent(roomId)}/threads/${encodeURIComponent(
         threadId
       )}`
     );
 
-    const body = await (resp.json() as Promise<ThreadData>);
-
-    if (resp.status !== 200) {
-      throw {
-        status: resp.status,
-        ...body,
-      };
+    if (!res.ok) {
+      const text = await res.text();
+      throw new ApiError(res.status, text);
     }
 
-    return body;
+    return res.json();
   }
 
   /**
@@ -705,22 +843,18 @@ export class Liveblocks {
   }): Promise<ThreadParticipants> {
     const { roomId, threadId } = params;
 
-    const resp = await this.get(
+    const res = await this.get(
       `/v2/rooms/${encodeURIComponent(roomId)}/threads/${encodeURIComponent(
         threadId
       )}/participants`
     );
 
-    const body = await (resp.json() as Promise<ThreadParticipants>);
-
-    if (resp.status !== 200) {
-      throw {
-        status: resp.status,
-        ...body,
-      };
+    if (!res.ok) {
+      const text = await res.text();
+      throw new ApiError(res.status, text);
     }
 
-    return body;
+    return res.json();
   }
 
   /**
@@ -738,21 +872,26 @@ export class Liveblocks {
   }): Promise<CommentData> {
     const { roomId, threadId, commentId } = params;
 
-    const resp = await this.get(
+    const res = await this.get(
       `/v2/rooms/${encodeURIComponent(roomId)}/threads/${encodeURIComponent(
         threadId
       )}/comments/${encodeURIComponent(commentId)}`
     );
 
-    const body = await (resp.json() as Promise<CommentData>);
-
-    if (resp.status !== 200) {
-      throw {
-        status: resp.status,
-        ...body,
-      };
+    if (!res.ok) {
+      const text = await res.text();
+      throw new ApiError(res.status, text);
     }
 
-    return body;
+    return res.json();
+  }
+}
+
+export class ApiError extends Error {
+  status: number;
+
+  constructor(status: number, message = "") {
+    super(message);
+    this.status = status;
   }
 }
