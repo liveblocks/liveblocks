@@ -6,7 +6,6 @@
 import type {
   CommentData,
   JsonObject,
-  PlainLson,
   PlainLsonObject,
   ThreadData,
 } from "@liveblocks/core";
@@ -77,6 +76,14 @@ type RoomUser<Info> = {
   info: Info;
 };
 
+type YJson =
+  | {
+      [x: string]: unknown;
+    }
+  | string
+  | undefined
+  | unknown[];
+
 /**
  * Interact with the Liveblocks API from your Node.js backend.
  */
@@ -111,6 +118,25 @@ export class Liveblocks {
     const fetch = await fetchPolyfill();
     return fetch(url, {
       method: "POST",
+      headers,
+      body: JSON.stringify(json),
+    });
+  }
+
+  /** @internal */
+  private async put(
+    path: `/${string}`,
+    json: Record<string, unknown>
+  ): Promise<Response> {
+    const url = urljoin(this._baseUrl, path);
+    const headers = {
+      Authorization: `Bearer ${this._secret}`,
+      "Content-Type": "application/json",
+    };
+
+    const fetch = await fetchPolyfill();
+    return fetch(url, {
+      method: "PUT",
       headers,
       body: JSON.stringify(json),
     });
@@ -285,16 +311,13 @@ export class Liveblocks {
     }
 
     const res = await this.get(`/${path}`);
-    const body = await res.json();
 
-    if (res.status !== 200) {
-      throw {
-        status: res.status,
-        ...body,
-      };
+    if (!res.ok) {
+      const errorText = await res.text();
+      throw new Error(`Server responded with ${res.status}: ${errorText}`);
     }
 
-    return body;
+    return res.json();
   }
 
   /**
@@ -326,16 +349,13 @@ export class Liveblocks {
       userAccesses,
       metadata,
     });
-    const body = await res.json();
 
-    if (res.status !== 200) {
-      throw {
-        status: res.status,
-        ...body,
-      };
+    if (!res.ok) {
+      const errorText = await res.text();
+      throw new Error(`Server responded with ${res.status}: ${errorText}`);
     }
 
-    return body;
+    return res.json();
   }
 
   /**
@@ -345,16 +365,12 @@ export class Liveblocks {
    */
   public async getRoom(roomId: string): Promise<RoomInfo> {
     const res = await this.get(`/v2/rooms/${roomId}`);
-    const body = await res.json();
-
-    if (res.status !== 200) {
-      throw {
-        status: res.status,
-        ...body,
-      };
+    if (!res.ok) {
+      const errorText = await res.text();
+      throw new Error(`Server responded with ${res.status}: ${errorText}`);
     }
 
-    return body;
+    return res.json();
   }
 
   /**
@@ -384,16 +400,13 @@ export class Liveblocks {
       userAccesses,
       metadata,
     });
-    const body = await res.json();
 
-    if (res.status !== 200) {
-      throw {
-        status: res.status,
-        ...body,
-      };
+    if (!res.ok) {
+      const errorText = await res.text();
+      throw new Error(`Server responded with ${res.status}: ${errorText}`);
     }
 
-    return body;
+    return res.json();
   }
 
   /**
@@ -401,7 +414,11 @@ export class Liveblocks {
    * @param roomId The id of the room to delete.
    */
   public async deleteRoom(roomId: string) {
-    return await this.delete(`/v2/rooms/${roomId}`);
+    const res = await this.delete(`/v2/rooms/${roomId}`);
+    if (res.ok) return;
+
+    const errorText = await res.text();
+    throw new Error(`Server responded with ${res.status}: ${errorText}`);
   }
 
   /**
@@ -413,16 +430,13 @@ export class Liveblocks {
     roomId: string
   ): Promise<RoomUser<T>[]> {
     const res = await this.get(`/v2/rooms/${roomId}/active_users`);
-    const body = await res.json();
 
-    if (res.status !== 200) {
-      throw {
-        status: res.status,
-        ...body,
-      };
+    if (!res.ok) {
+      const errorText = await res.text();
+      throw new Error(`Server responded with ${res.status}: ${errorText}`);
     }
 
-    return body;
+    return res.json();
   }
 
   /**
@@ -432,8 +446,12 @@ export class Liveblocks {
   public async broadcastMessage(
     roomId: string,
     message: Record<string, unknown>
-  ) {
-    return await this.post(`/v2/rooms/${roomId}/broadcast_event`, message);
+  ): Promise<void> {
+    const res = await this.post(`/v2/rooms/${roomId}/broadcast_event`, message);
+    if (res.ok) return;
+
+    const errorText = await res.text();
+    throw new Error(`Server responded with ${res.status}: ${errorText}`);
   }
 
   /* -------------------------------------------------------------------------------------------------
@@ -479,16 +497,13 @@ export class Liveblocks {
       path += "?format=json";
     }
     const res = await this.get(`/${path}`);
-    const body = await res.json();
 
-    if (res.status !== 200) {
-      throw {
-        status: res.status,
-        ...body,
-      };
+    if (!res.ok) {
+      const errorText = await res.text();
+      throw new Error(`Server responded with ${res.status}: ${errorText}`);
     }
 
-    return body;
+    return res.json();
   }
 
   /**
@@ -504,6 +519,62 @@ export class Liveblocks {
     document: PlainLsonObject
   ): Promise<PlainLsonObject> {
     const res = await this.post(`/v2/rooms/${roomId}/storage`, document);
+
+    if (!res.ok) {
+      const errorText = await res.text();
+      throw new Error(`Server responded with ${res.status}: ${errorText}`);
+    }
+
+    return res.json();
+  }
+  /**
+   * Deletes all of the room’s Storage data and disconnect all users from the room if there are any.
+   * @param roomId The id of the room to delete the storage from.
+   */
+  public async deleteStorage(roomId: string): Promise<void> {
+    const res = await this.delete(`/v2/rooms/${roomId}/storage`);
+    if (res.ok) return;
+
+    const errorText = await res.text();
+    throw new Error(`Server responded with ${res.status}: ${errorText}`);
+  }
+
+  /* -------------------------------------------------------------------------------------------------
+   * Yjs
+   * -----------------------------------------------------------------------------------------------*/
+
+  /**
+   * Returns a JSON representation of the room’s Yjs document.
+   * @param roomId The id of the room to get the Yjs document from.
+   * @param params.format (optional) If true, YText will return formatting.
+   * @param params.key (optional) If provided, returns only a single key’s value, e.g. doc.get(key).toJSON().
+   * @param params.type (optional) Used with key to override the inferred type, i.e. "ymap" will return doc.get(key, Y.Map).
+   * @returns A JSON representation of the room’s Yjs document.
+   */
+  public async getYjsDocument(
+    roomId: string,
+    params: {
+      format?: boolean;
+      key?: string;
+      type?: string;
+    } = {}
+  ): Promise<Record<string, YJson>> {
+    const { format, key, type } = params;
+
+    let path = `v2/rooms/${roomId}/ydoc?`;
+    if (format) {
+      path += "&formatting=true";
+    }
+
+    if (key) {
+      path += `&key=${key}`;
+    }
+
+    if (type) {
+      path += `&type=${type}`;
+    }
+
+    const res = await this.get(`/${path}`);
     const body = await res.json();
 
     if (res.status !== 200) {
@@ -515,12 +586,47 @@ export class Liveblocks {
 
     return body;
   }
+
   /**
-   * Deletes all of the room’s Storage data and disconnect all users from the room if there are any.
-   * @param roomId The id of the room to delete the storage from.
+   * Ssend a Yjs binary update to the room’s Yjs document. You can use this endpoint to initialize Yjs data for the room or to update the room’s Yjs document.
+   * @param roomId The id of the room to send the Yjs binary update to.
+   * @param params The Yjs binary update to send. Read the [Yjs documentation](https://docs.yjs.dev/api/document-updates) to learn how to create a binary update.
    */
-  public async deleteStorage(roomId: string) {
-    return await this.delete(`/v2/rooms/${roomId}/storage`);
+  public async sendYjsBinaryUpdate(
+    roomId: string,
+    params: {
+      update: string;
+    }
+  ): Promise<void> {
+    const { update } = params;
+
+    const res = await this.put(`/v2/rooms/${roomId}/ydoc`, {
+      update,
+    });
+
+    if (res.ok) return;
+
+    const errorText = await res.text();
+    throw new Error(`Server responded with ${res.status}: ${errorText}`);
+  }
+
+  /**
+   * Returns the room’s Yjs document encoded as a single binary update. This can be used by Y.applyUpdate(responseBody) to get a copy of the document in your backend.
+   * See [Yjs documentation](https://docs.yjs.dev/api/document-updates) for more information on working with updates.
+   * @param roomId The id of the room to get the Yjs document from.
+   * @returns The room’s Yjs document encoded as a single binary update.
+   */
+  public async getYjsDocumentAsBinaryUpdate(
+    roomId: string
+  ): Promise<ArrayBuffer> {
+    const res = await this.get(`/v2/rooms/${roomId}/ydoc-binary`);
+
+    if (!res.ok) {
+      const errorText = await res.text();
+      throw new Error(`Server responded with ${res.status}: ${errorText}`);
+    }
+
+    return res.arrayBuffer();
   }
 
   /* -------------------------------------------------------------------------------------------------
