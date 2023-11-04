@@ -317,7 +317,8 @@ export class Liveblocks {
 
     if (params.metadata) {
       Object.entries(params.metadata).forEach(([key, val]) => {
-        path += `&metadata.${key}=${val}`;
+        const value = Array.isArray(val) ? val.join(",") : val;
+        path += `&metadata.${key}=${value}`;
       });
     }
 
