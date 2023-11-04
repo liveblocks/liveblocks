@@ -610,7 +610,7 @@ export class Liveblocks {
   }
 
   /**
-   * Ssend a Yjs binary update to the room’s Yjs document. You can use this endpoint to initialize Yjs data for the room or to update the room’s Yjs document.
+   * Send a Yjs binary update to the room’s Yjs document. You can use this endpoint to initialize Yjs data for the room or to update the room’s Yjs document.
    * @param roomId The id of the room to send the Yjs binary update to.
    * @param params The Yjs binary update to send. Read the [Yjs documentation](https://docs.yjs.dev/api/document-updates) to learn how to create a binary update.
    */
