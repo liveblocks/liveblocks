@@ -639,6 +639,12 @@
   }
 }
 
+/* 0,0,0 specificity to inherit any styles applied to `code` elements */
+:where(:is(.lb-comment-body, .lb-composer-editor) code) {
+  font-family: ui-monospace, Menlo, Monaco, "Roboto Mono", "Cascadia Code",
+    "Source Code Pro", Consolas, "DejaVu Sans Mono", monospace;
+}
+
 .lb-comment-mention,
 .lb-composer-mention {
   color: var(--lb-accent);
