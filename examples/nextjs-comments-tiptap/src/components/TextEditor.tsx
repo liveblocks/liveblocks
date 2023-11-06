@@ -109,15 +109,18 @@ function TiptapEditor({ doc, provider }: EditorProps) {
         <Avatars />
       </div>
       <div className={styles.editorPanel}>
-        {editor && <SelectionMenu editor={editor} />}
+        {editor ? <SelectionMenu editor={editor} /> : null}
         <div className={styles.editorContainerOffset}>
           <div className={styles.editorContainer}>
             <EditorContent editor={editor} />
-            <div className={styles.threadListContainer}>
+            <div className={styles.threadListContainer} data-threads="desktop">
               {editor ? <ThreadList editor={editor} /> : null}
             </div>
           </div>
-          <div className={styles.mobileThreadListContainer}>
+          <div
+            className={styles.mobileThreadListContainer}
+            data-threads="mobile"
+          >
             {editor ? <ThreadList editor={editor} /> : null}
           </div>
         </div>
