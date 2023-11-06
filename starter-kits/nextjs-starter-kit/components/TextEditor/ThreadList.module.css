@@ -83,5 +83,15 @@
     box-shadow: var(--shadow-sm);
     border-radius: var(--radius-sm);
     padding: var(--space-8);
+    margin-left: 0;
+  }
+
+  .noComments p {
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .noCommentsButton {
+    margin-top: 0;
   }
 }
