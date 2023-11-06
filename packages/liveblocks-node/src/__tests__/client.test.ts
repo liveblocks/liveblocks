@@ -1,7 +1,7 @@
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 
-import { ApiError, Liveblocks } from "../client";
+import { Liveblocks } from "../client";
 import { DEFAULT_BASE_URL } from "../utils";
 
 describe("client", () => {
@@ -151,12 +151,20 @@ describe("client", () => {
     );
 
     const client = new Liveblocks({ secret: "sk_xxx" });
-    await expect(client.getRoom("123")).rejects.toThrow(ApiError);
-    await expect(client.getRoom("123")).rejects.toHaveProperty(
-      "message",
-      JSON.stringify(error)
-    );
-    await expect(client.getRoom("123")).rejects.toHaveProperty("status", 404);
+
+    // This should throw an HttpError
+    try {
+      // Attempt to get, which should fail and throw an error.
+      await client.getRoom("123");
+      // If it doesn't throw, fail the test.
+      expect(true).toBe(false);
+    } catch (err) {
+      expect(client.isHttpError(err)).toBe(true);
+      if (client.isHttpError(err)) {
+        expect(err.status).toBe(404);
+        expect(err.message).toBe(JSON.stringify(error));
+      }
+    }
   });
 
   test("should throw an error when getRoom fails due to network error", async () => {
@@ -169,7 +177,14 @@ describe("client", () => {
 
     const client = new Liveblocks({ secret: "sk_xxx" });
 
-    // Expect the function to throw an error due to the network issue
-    await expect(client.getRoom("123")).rejects.toThrowError();
+    // Expect the function to throw an error due to the network issue. However, it should not be an HttpError.
+    try {
+      // Attempt to get, which should fail and throw an error.
+      await client.getRoom("123");
+      // If it doesn't throw, fail the test.
+      expect(true).toBe(false);
+    } catch (err) {
+      expect(client.isHttpError(err)).toBe(false);
+    }
   });
 });

@@ -10,14 +10,17 @@ import type {
   ThreadData,
 } from "@liveblocks/core";
 
-import { Session } from "./Session";
+import { Permission, Session } from "./Session";
 import {
   assertNonEmpty,
   assertSecretKey,
   DEFAULT_BASE_URL,
   fetchPolyfill,
   normalizeStatusCode,
+  QueryParams,
+  url,
   urljoin,
+  URLSafeString,
 } from "./utils";
 
 export type LiveblocksOptions = {
@@ -53,11 +56,10 @@ type ThreadParticipants = {
   participantIds: string[];
 };
 
-type Permission = "room:write" | "room:read" | "room:presence:write";
-type RoomAccesses = Record<string, Permission[]>;
-type RoomMetadata = Record<string, string | string[]>;
+export type RoomAccesses = Record<string, Permission[]>;
+export type RoomMetadata = Record<string, string | string[]>;
 
-type RoomInfo = {
+export type RoomInfo = {
   type: "room";
   id: string;
   lastConnectionAt?: string;
@@ -69,14 +71,14 @@ type RoomInfo = {
   schema?: string;
 };
 
-type RoomUser<Info> = {
+export type RoomUser<Info> = {
   type: "user";
   id: string | null;
   connectionId: number;
   info: Info;
 };
 
-type YJson =
+export type YJson =
   | {
       [x: string]: unknown;
     }
@@ -84,7 +86,7 @@ type YJson =
   | undefined
   | unknown[];
 
-type Schema = {
+export type Schema = {
   id: string;
   name: string;
   version: number;
@@ -115,63 +117,83 @@ export class Liveblocks {
 
   /** @internal */
   private async post(
-    relativeURL: string,
+    path: URLSafeString,
     json: Record<string, unknown>
   ): Promise<Response> {
-    const url = new URL(relativeURL, this._baseUrl);
+    const url = urljoin(this._baseUrl, path);
     const headers = {
       Authorization: `Bearer ${this._secret}`,
       "Content-Type": "application/json",
     };
 
     const fetch = await fetchPolyfill();
-    return fetch(url, {
+    const res = await fetch(url, {
       method: "POST",
       headers,
       body: JSON.stringify(json),
     });
+    if (!res.ok) {
+      const text = await res.text();
+      throw new HttpError(res.status, text);
+    }
+    return res;
   }
 
   /** @internal */
   private async put(
-    relativeURL: string,
+    path: URLSafeString,
     json: Record<string, unknown>
   ): Promise<Response> {
-    const url = new URL(relativeURL, this._baseUrl);
+    const url = urljoin(this._baseUrl, path);
     const headers = {
       Authorization: `Bearer ${this._secret}`,
       "Content-Type": "application/json",
     };
 
     const fetch = await fetchPolyfill();
-    return fetch(url, {
+    const res = await fetch(url, {
       method: "PUT",
       headers,
       body: JSON.stringify(json),
     });
+    if (!res.ok) {
+      const text = await res.text();
+      throw new HttpError(res.status, text);
+    }
+    return res;
   }
 
   /** @internal */
-  private async delete(relativeURL: string): Promise<Response> {
-    const url = new URL(relativeURL, this._baseUrl);
+  private async delete(path: URLSafeString): Promise<Response> {
+    const url = urljoin(this._baseUrl, path);
     const headers = {
       Authorization: `Bearer ${this._secret}`,
     };
 
     const fetch = await fetchPolyfill();
-    return fetch(url, { method: "DELETE", headers });
+    const res = await fetch(url, { method: "DELETE", headers });
+    if (!res.ok) {
+      const text = await res.text();
+      throw new HttpError(res.status, text);
+    }
+    return res;
   }
 
   /** @internal */
-  async get(relativeURL: string): Promise<Response> {
-    const url = new URL(relativeURL, this._baseUrl);
+  async get(path: URLSafeString, params?: QueryParams): Promise<Response> {
+    const url = urljoin(this._baseUrl, path, params);
     const headers = {
       Authorization: `Bearer ${this._secret}`,
       "Content-Type": "application/json",
     };
 
     const fetch = await fetchPolyfill();
-    return fetch(url, { method: "GET", headers });
+    const res = await fetch(url, { method: "GET", headers });
+    if (!res.ok) {
+      const text = await res.text();
+      throw new HttpError(res.status, text);
+    }
+    return res;
   }
 
   /* -------------------------------------------------------------------------------------------------
@@ -240,7 +262,7 @@ export class Liveblocks {
       // ....
     }
   ): Promise<AuthResponse> {
-    const path = "/v2/identify-user";
+    const path = url`/v2/identify-user`;
     const userId = typeof identity === "string" ? identity : identity.userId;
     const groupIds =
       typeof identity === "string" ? undefined : identity.groupIds;
@@ -298,38 +320,30 @@ export class Liveblocks {
     nextPage: string | null;
     data: RoomInfo[];
   }> {
-    let path = "v2/rooms?";
+    let path = url`v2/rooms`;
+
+    const queryParams = new URLSearchParams();
     if (params.limit) {
-      path += `&limit=${params.limit}`;
+      queryParams.set("limit", params.limit.toString());
     }
-
     if (params.startingAfter) {
-      path += `&startingAfter=${params.startingAfter}`;
+      queryParams.set("startingAfter", params.startingAfter.toString());
     }
-
     if (params.userId) {
-      path += `&userId=${params.userId}`;
+      queryParams.set("userId", params.userId);
     }
-
     if (params.groupIds) {
-      path += `&groupIds=${params.groupIds}`;
+      queryParams.set("groupIds", params.groupIds);
     }
-
     if (params.metadata) {
       Object.entries(params.metadata).forEach(([key, val]) => {
         const value = Array.isArray(val) ? val.join(",") : val;
-        path += `&metadata.${key}=${value}`;
+        queryParams.set(`metadata.${key}`, value);
       });
     }
 
-    const res = await this.get(path);
-
-    if (!res.ok) {
-      const text = await res.text();
-      throw new ApiError(res.status, text);
-    }
-
-    return res.json() as Promise<{
+    const res = await this.get(path, queryParams);
+    return (await res.json()) as Promise<{
       nextPage: string | null;
       data: RoomInfo[];
     }>;
@@ -355,7 +369,7 @@ export class Liveblocks {
   ): Promise<RoomInfo> {
     const { defaultAccesses, groupAccesses, userAccesses, metadata } = params;
 
-    const path = "/v2/rooms";
+    const path = url`/v2/rooms`;
 
     const res = await this.post(path, {
       roomId,
@@ -364,12 +378,6 @@ export class Liveblocks {
       userAccesses,
       metadata,
     });
-
-    if (!res.ok) {
-      const text = await res.text();
-      throw new ApiError(res.status, text);
-    }
-
     return res.json() as Promise<RoomInfo>;
   }
 
@@ -379,14 +387,8 @@ export class Liveblocks {
    * @returns The room with the given id.
    */
   public async getRoom(roomId: string): Promise<RoomInfo> {
-    const res = await this.get(`/v2/rooms/${roomId}`);
-
-    if (!res.ok) {
-      const text = await res.text();
-      throw new ApiError(res.status, text);
-    }
-
-    return res.json() as Promise<RoomInfo>;
+    const res = await this.get(url`/v2/rooms/${roomId}`);
+    return (await res.json()) as Promise<RoomInfo>;
   }
 
   /**
@@ -410,19 +412,13 @@ export class Liveblocks {
   ): Promise<RoomInfo> {
     const { defaultAccesses, groupAccesses, userAccesses, metadata } = params;
 
-    const res = await this.post(`/v2/rooms/${roomId}`, {
+    const res = await this.post(url`/v2/rooms/${roomId}`, {
       defaultAccesses,
       groupAccesses,
       userAccesses,
       metadata,
     });
-
-    if (!res.ok) {
-      const text = await res.text();
-      throw new ApiError(res.status, text);
-    }
-
-    return res.json() as Promise<RoomInfo>;
+    return (await res.json()) as Promise<RoomInfo>;
   }
 
   /**
@@ -430,14 +426,7 @@ export class Liveblocks {
    * @param roomId The id of the room to delete.
    */
   public async deleteRoom(roomId: string): Promise<void> {
-    const res = await this.delete(`/v2/rooms/${roomId}`);
-
-    if (!res.ok) {
-      const text = await res.text();
-      throw new ApiError(res.status, text);
-    }
-
-    return;
+    await this.delete(url`/v2/rooms/${roomId}`);
   }
 
   /**
@@ -448,32 +437,19 @@ export class Liveblocks {
   public async getActiveUsers<T = unknown>(
     roomId: string
   ): Promise<RoomUser<T>[]> {
-    const res = await this.get(`/v2/rooms/${roomId}/active_users`);
-
-    if (!res.ok) {
-      const text = await res.text();
-      throw new ApiError(res.status, text);
-    }
-
-    return res.json() as Promise<RoomUser<T>[]>;
+    const res = await this.get(url`/v2/rooms/${roomId}/active_users`);
+    return (await res.json()) as Promise<RoomUser<T>[]>;
   }
 
   /**
    * Boadcasts an event to a room without having to connect to it via the client from @liveblocks/client.
    * @param roomId The id of the room to broadcast the event to.
    */
-  public async broadcastMessage(
+  public async broadcastEvent(
     roomId: string,
     message: Record<string, unknown>
   ): Promise<void> {
-    const res = await this.post(`/v2/rooms/${roomId}/broadcast_event`, message);
-
-    if (!res.ok) {
-      const text = await res.text();
-      throw new ApiError(res.status, text);
-    }
-
-    return;
+    await this.post(url`/v2/rooms/${roomId}/broadcast_event`, message);
   }
 
   /* -------------------------------------------------------------------------------------------------
@@ -514,18 +490,9 @@ export class Liveblocks {
     roomId: string,
     format: "plain-lson" | "json" = "plain-lson"
   ): Promise<PlainLsonObject | JsonObject> {
-    let path = `v2/rooms/${roomId}/storage`;
-    if (format === "json") {
-      path += "?format=json";
-    }
-    const res = await this.get(path);
-
-    if (!res.ok) {
-      const text = await res.text();
-      throw new ApiError(res.status, text);
-    }
-
-    return res.json() as Promise<PlainLsonObject | JsonObject>;
+    let path = url`v2/rooms/${roomId}/storage`;
+    const res = await this.get(path, { format: format });
+    return (await res.json()) as Promise<PlainLsonObject | JsonObject>;
   }
 
   /**
@@ -540,28 +507,15 @@ export class Liveblocks {
     roomId: string,
     document: PlainLsonObject
   ): Promise<PlainLsonObject> {
-    const res = await this.post(`/v2/rooms/${roomId}/storage`, document);
-
-    if (!res.ok) {
-      const text = await res.text();
-      throw new ApiError(res.status, text);
-    }
-
-    return res.json() as Promise<PlainLsonObject>;
+    const res = await this.post(url`/v2/rooms/${roomId}/storage`, document);
+    return (await res.json()) as Promise<PlainLsonObject>;
   }
   /**
    * Deletes all of the room’s Storage data and disconnect all users from the room if there are any.
    * @param roomId The id of the room to delete the storage from.
    */
   public async deleteStorage(roomId: string): Promise<void> {
-    const res = await this.delete(`/v2/rooms/${roomId}/storage`);
-
-    if (!res.ok) {
-      const text = await res.text();
-      throw new ApiError(res.status, text);
-    }
-
-    return;
+    await this.delete(url`/v2/rooms/${roomId}/storage`);
   }
 
   /* -------------------------------------------------------------------------------------------------
@@ -586,27 +540,15 @@ export class Liveblocks {
   ): Promise<Record<string, YJson>> {
     const { format, key, type } = params;
 
-    let path = `v2/rooms/${roomId}/ydoc?`;
-    if (format) {
-      path += "&formatting=true";
-    }
+    let path = url`v2/rooms/${roomId}/ydoc`;
 
-    if (key) {
-      path += `&key=${key}`;
-    }
+    const res = await this.get(path, {
+      formatting: format ? "true" : undefined,
+      key: key,
+      type: type,
+    });
 
-    if (type) {
-      path += `&type=${type}`;
-    }
-
-    const res = await this.get(path);
-
-    if (!res.ok) {
-      const text = await res.text();
-      throw new ApiError(res.status, text);
-    }
-
-    return res.json() as Promise<Record<string, YJson>>;
+    return (await res.json()) as Promise<Record<string, YJson>>;
   }
 
   /**
@@ -621,17 +563,9 @@ export class Liveblocks {
     }
   ): Promise<void> {
     const { update } = params;
-
-    const res = await this.put(`/v2/rooms/${roomId}/ydoc`, {
-      update,
+    await this.put(url`/v2/rooms/${roomId}/ydoc`, {
+      update: update,
     });
-
-    if (!res.ok) {
-      const text = await res.text();
-      throw new ApiError(res.status, text);
-    }
-
-    return;
   }
 
   /**
@@ -643,13 +577,7 @@ export class Liveblocks {
   public async getYjsDocumentAsBinaryUpdate(
     roomId: string
   ): Promise<ArrayBuffer> {
-    const res = await this.get(`/v2/rooms/${roomId}/ydoc-binary`);
-
-    if (!res.ok) {
-      const text = await res.text();
-      throw new ApiError(res.status, text);
-    }
-
+    const res = await this.get(url`/v2/rooms/${roomId}/ydoc-binary`);
     return res.arrayBuffer();
   }
 
@@ -664,17 +592,11 @@ export class Liveblocks {
    * @returns The created schema.
    */
   public async createSchema(name: string, body: string): Promise<Schema> {
-    const res = await this.post("/v2/schemas", {
+    const res = await this.post(url`/v2/schemas`, {
       name,
       body,
     });
-
-    if (!res.ok) {
-      const text = await res.text();
-      throw new ApiError(res.status, text);
-    }
-
-    return res.json() as Promise<Schema>;
+    return (await res.json()) as Promise<Schema>;
   }
 
   /**
@@ -683,14 +605,8 @@ export class Liveblocks {
    * @returns The schema with the given id.
    */
   public async getSchema(schemaId: string): Promise<Schema> {
-    const res = await this.get(`/v2/schemas/${schemaId}`);
-
-    if (!res.ok) {
-      const text = await res.text();
-      throw new ApiError(res.status, text);
-    }
-
-    return res.json() as Promise<Schema>;
+    const res = await this.get(url`/v2/schemas/${schemaId}`);
+    return (await res.json()) as Promise<Schema>;
   }
 
   /**
@@ -700,16 +616,10 @@ export class Liveblocks {
    * @returns The updated schema. The version of the schema will be incremented.
    */
   public async updateSchema(schemaId: string, body: string): Promise<Schema> {
-    const res = await this.put(`/v2/schemas/${schemaId}`, {
+    const res = await this.put(url`/v2/schemas/${schemaId}`, {
       body,
     });
-
-    if (!res.ok) {
-      const text = await res.text();
-      throw new ApiError(res.status, text);
-    }
-
-    return res.json() as Promise<Schema>;
+    return (await res.json()) as Promise<Schema>;
   }
 
   /**
@@ -717,14 +627,7 @@ export class Liveblocks {
    * @param schemaId Id of the schema - this is the combination of the schema name and version of the schema to update. For example, `my-schema@1`.
    */
   public async deleteSchema(schemaId: string): Promise<void> {
-    const res = await this.delete(`/v2/schemas/${schemaId}`);
-
-    if (!res.ok) {
-      const text = await res.text();
-      throw new ApiError(res.status, text);
-    }
-
-    return;
+    await this.delete(url`/v2/schemas/${schemaId}`);
   }
 
   /**
@@ -733,14 +636,8 @@ export class Liveblocks {
    * @returns
    */
   public async getSchemaByRoomId(roomId: string): Promise<Schema> {
-    const res = await this.get(`/v2/rooms/${roomId}/schema`);
-
-    if (!res.ok) {
-      const text = await res.text();
-      throw new ApiError(res.status, text);
-    }
-
-    return res.json() as Promise<Schema>;
+    const res = await this.get(url`/v2/rooms/${roomId}/schema`);
+    return (await res.json()) as Promise<Schema>;
   }
 
   /**
@@ -754,16 +651,10 @@ export class Liveblocks {
     roomId: string,
     schemaId: string
   ): Promise<{ schema: string }> {
-    const res = await this.post(`/v2/rooms/${roomId}/schema`, {
+    const res = await this.post(url`/v2/rooms/${roomId}/schema`, {
       schema: schemaId,
     });
-
-    if (!res.ok) {
-      const text = await res.text();
-      throw new ApiError(res.status, text);
-    }
-
-    return res.json() as Promise<{ schema: string }>;
+    return (await res.json()) as Promise<{ schema: string }>;
   }
 
   /**
@@ -771,14 +662,7 @@ export class Liveblocks {
    * @param roomId The id of the room to detach the schema from.
    */
   public async detachSchemaFromRoom(roomId: string): Promise<void> {
-    const res = await this.delete(`/v2/rooms/${roomId}/schema`);
-
-    if (!res.ok) {
-      const text = await res.text();
-      throw new ApiError(res.status, text);
-    }
-
-    return;
+    await this.delete(url`/v2/rooms/${roomId}/schema`);
   }
 
   /* -------------------------------------------------------------------------------------------------
@@ -794,16 +678,8 @@ export class Liveblocks {
   public async getThreads(params: { roomId: string }): Promise<ThreadData[]> {
     const { roomId } = params;
 
-    const res = await this.get(
-      `/v2/rooms/${encodeURIComponent(roomId)}/threads`
-    );
-
-    if (!res.ok) {
-      const text = await res.text();
-      throw new ApiError(res.status, text);
-    }
-
-    return res.json() as Promise<ThreadData[]>;
+    const res = await this.get(url`/v2/rooms/${roomId}/threads`);
+    return (await res.json()) as Promise<ThreadData[]>;
   }
 
   /**
@@ -819,18 +695,8 @@ export class Liveblocks {
   }): Promise<ThreadData> {
     const { roomId, threadId } = params;
 
-    const res = await this.get(
-      `/v2/rooms/${encodeURIComponent(roomId)}/threads/${encodeURIComponent(
-        threadId
-      )}`
-    );
-
-    if (!res.ok) {
-      const text = await res.text();
-      throw new ApiError(res.status, text);
-    }
-
-    return res.json() as Promise<ThreadData>;
+    const res = await this.get(url`/v2/rooms/${roomId}/threads/${threadId}`);
+    return (await res.json()) as Promise<ThreadData>;
   }
 
   /**
@@ -850,17 +716,9 @@ export class Liveblocks {
     const { roomId, threadId } = params;
 
     const res = await this.get(
-      `/v2/rooms/${encodeURIComponent(roomId)}/threads/${encodeURIComponent(
-        threadId
-      )}/participants`
+      url`/v2/rooms/${roomId}/threads/${threadId}/participants`
     );
-
-    if (!res.ok) {
-      const text = await res.text();
-      throw new ApiError(res.status, text);
-    }
-
-    return res.json() as Promise<ThreadParticipants>;
+    return (await res.json()) as Promise<ThreadParticipants>;
   }
 
   /**
@@ -879,21 +737,22 @@ export class Liveblocks {
     const { roomId, threadId, commentId } = params;
 
     const res = await this.get(
-      `/v2/rooms/${encodeURIComponent(roomId)}/threads/${encodeURIComponent(
-        threadId
-      )}/comments/${encodeURIComponent(commentId)}`
+      url`/v2/rooms/${roomId}/threads/${threadId}/comments/${commentId}`
     );
+    return (await res.json()) as Promise<CommentData>;
+  }
 
-    if (!res.ok) {
-      const text = await res.text();
-      throw new ApiError(res.status, text);
-    }
-
-    return res.json() as Promise<CommentData>;
+  /**
+   * Checks whether the error is an HttpError.
+   * @param error The error to check.
+   * @returns Whether the error is an HttpError.
+   */
+  public isHttpError(error: unknown): error is HttpError {
+    return error instanceof HttpError;
   }
 }
 
-export class ApiError extends Error {
+class HttpError extends Error {
   status: number;
 
   constructor(status: number, message = "") {
