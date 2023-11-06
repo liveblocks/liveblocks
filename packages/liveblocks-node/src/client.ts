@@ -39,7 +39,7 @@ export type LiveblocksOptions = {
 };
 
 export type CreateSessionOptions = {
-  userInfo: unknown;
+  userInfo: Json;
 };
 
 export type AuthResponse = {
