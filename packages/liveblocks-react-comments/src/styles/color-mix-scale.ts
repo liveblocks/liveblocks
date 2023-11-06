@@ -28,7 +28,9 @@ export function colorMixScale(
   increment: string
 ) {
   const index = Math.max(Math.floor(Number(increment) / 100) - 1, 0);
-  const percentage = `calc(100% - (${contrast} + ${index} * ((100% - ${contrast}) / 9)))`;
+  const percentage = index
+    ? `calc(100% - (${contrast} + ${index} * ((100% - ${contrast}) / 9)))`
+    : `calc(100% - ${contrast})`;
 
   return `color-mix(in srgb, ${to}, ${from} ${percentage})`;
 }
