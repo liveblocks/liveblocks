@@ -80,12 +80,38 @@ function formatShortDate(date: Date, locale?: string) {
   return capitalize(formatter.format(date));
 }
 
+// Some locales' relative formatting can be broken (e.g. "-1h") when using the narrow style.
+const localesWithBrokenNarrowRelativeFormatting = [
+  "br",
+  "fr",
+  "nb",
+  "nn",
+  "no",
+  "ro",
+  "sv",
+];
+
 /**
  * Formats a date relatively.
  */
 function formatRelativeDate(date: Date, locale?: string) {
-  const formatter = relativeTimeFormat(locale, {
-    style: "narrow",
+  let resolvedLocale: string;
+
+  if (locale) {
+    resolvedLocale = locale;
+  } else {
+    const formatter = relativeTimeFormat();
+
+    resolvedLocale = formatter.resolvedOptions().locale;
+  }
+
+  const isBrokenWhenNarrow = localesWithBrokenNarrowRelativeFormatting.some(
+    (locale) =>
+      resolvedLocale === locale || resolvedLocale.startsWith(`${locale}-`)
+  );
+
+  const formatter = relativeTimeFormat(resolvedLocale, {
+    style: isBrokenWhenNarrow ? "short" : "narrow",
     numeric: "auto",
   });
 
