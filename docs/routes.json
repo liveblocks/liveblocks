@@ -250,7 +250,33 @@
       },
       {
         "title": "Comments",
-        "path": "/products/comments"
+        "path": "/products/comments",
+        "routes": [
+          {
+            "title": "Adding users",
+            "path": "/products/comments/adding-users"
+          },
+          {
+            "title": "Default components",
+            "path": "/products/comments/default-components"
+          },
+          {
+            "title": "Hooks",
+            "path": "/products/comments/hooks"
+          },
+          {
+            "title": "Metadata",
+            "path": "/products/comments/metadata"
+          },
+          {
+            "title": "Primitives",
+            "path": "/products/comments/primitives"
+          },
+          {
+            "title": "Styling",
+            "path": "/products/comments/styling"
+          }
+        ]
       }
     ]
   },
