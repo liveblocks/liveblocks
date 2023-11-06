@@ -70,7 +70,7 @@ function toURLSearchParams(
 ): URLSearchParams {
   const result = new URLSearchParams();
   for (const [key, value] of Object.entries(params)) {
-    if (value != null) {
+    if (value !== undefined && value !== null) {
       result.set(key, value.toString());
     }
   }
