@@ -30,6 +30,12 @@
   overflow-y: scroll;
 }
 
+@media (prefers-reduced-motion: no-preference) {
+  .editorPanel {
+    scroll-behavior: smooth;
+  }
+}
+
 .editor {
   border-radius: inherit;
   flex-grow: 1;

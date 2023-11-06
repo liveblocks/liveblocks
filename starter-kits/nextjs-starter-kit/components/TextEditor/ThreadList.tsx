@@ -139,7 +139,7 @@ function ThreadComposer({ editor }: Props) {
         const newThreadElement = document.querySelector(
           `[data-threads="mobile"] [data-highlight-id="${highlightId}"]`
         );
-        newThreadElement?.scrollIntoView({ behavior: "smooth" });
+        newThreadElement?.scrollIntoView();
       });
     },
     [editor, createThread]
