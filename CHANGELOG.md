@@ -1,3 +1,11 @@
+# 1.7.1 (not yet released)
+
+### `@liveblocks/react-comments`
+
+- Improve relative date formatting for some locales. (e.g. the `"fr"`` locale
+  formatted “1h ago” as “-1 h” instead of “il y a 1 h”)
+- Improve default monospace font for inline code blocks.
+
 # 1.7.0
 
 [Liveblocks Comments](https://liveblocks.io/comments) is now available for
