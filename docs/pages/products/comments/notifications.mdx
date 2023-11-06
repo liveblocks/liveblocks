@@ -1,0 +1,42 @@
+---
+meta:
+  title: "Notifications"
+  parentTitle: "Comments"
+  description: "..."
+---
+
+Notifications
+
+<Banner title="Step-by-step tutorial">
+
+This page is an overview of creating notifications with Comments. If you’d
+prefer a full step-by-step tutorial, make sure to read
+[how to send email notifications when comments are created](/docs/guides/how-to-send-email-notifications-when-comments-are-created).
+
+</Banner>
+
+## Listening for Comments events
+
+- [`CommentCreatedEvent`](/docs/platform/webhooks#CommentCreatedEvent)
+- [`CommentEditedEvent`](/docs/platform/webhooks#CommentEditedEvent)
+- [`CommentDeletedEvent`](/docs/platform/webhooks#CommentDeletedEvent)
+- [`CommentReactionAddedEvent`](/docs/platform/webhooks#CommentReactionAddedEvent)
+- [`CommentReactionRemovedEvent`](/docs/platform/webhooks#CommentReactionRemovedEvent)
+- [`ThreadCreatedEvent`](/docs/platform/webhooks#ThreadCreatedEvent)
+- [`ThreadMetadataUpdatedEvent`](/docs/platform/webhooks#ThreadMetadataUpdatedEvent)
+
+## Retrieving Comments data
+
+- [`getThreads`](/docs/api-reference/liveblocks-node#get-threads)
+- [`getThread`](/docs/api-reference/liveblocks-node#get-thread)
+- [`getThreadParticipants`](/docs/api-reference/liveblocks-node#get-thread-participants)
+- [`getComment`](/docs/api-reference/liveblocks-node#get-comment)
+
+### Using the REST API
+
+[you can also use the REST API directly]
+
+- [Get room threads API](/docs/api-reference/rest-api-endpoints#get-threads)
+- [Get thread API](/docs/api-reference/rest-api-endpoints#get-thread)
+- [Get thread participants API](/docs/api-reference/rest-api-endpoints#get-thread-participants)
+- [Get comment API](/docs/api-reference/rest-api-endpoints#get-comment)

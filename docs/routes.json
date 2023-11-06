@@ -253,8 +253,8 @@
         "path": "/products/comments",
         "routes": [
           {
-            "title": "Adding users",
-            "path": "/products/comments/adding-users"
+            "title": "Users and mentions",
+            "path": "/products/comments/users-and-mentions"
           },
           {
             "title": "Default components",
@@ -275,6 +275,10 @@
           {
             "title": "Styling",
             "path": "/products/comments/styling"
+          },
+          {
+            "title": "Notifications",
+            "path": "/products/comments/notifications"
           }
         ]
       }
