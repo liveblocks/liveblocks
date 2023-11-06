@@ -2,7 +2,7 @@ import { Liveblocks } from "../client";
 
 const P1 = "room:read";
 const P2 = "room:write";
-const P3 = "comments:read";
+// const P3 = "comments:read";
 // const P4 = "comments:write";
 
 function makeSession(options?: { secret?: string }) {
@@ -50,7 +50,7 @@ describe("authorization (new API)", () => {
     expect(
       session.allow("xyz", session.FULL_ACCESS).serializePermissions()
     ).toEqual({
-      xyz: ["room:write", "comments:write"],
+      xyz: ["room:write"],
     });
   });
 
@@ -59,7 +59,7 @@ describe("authorization (new API)", () => {
     expect(
       session.allow("xyz", session.READ_ACCESS).serializePermissions()
     ).toEqual({
-      xyz: ["room:read", "room:presence:write", "comments:read"],
+      xyz: ["room:read", "room:presence:write"],
     });
   });
 
@@ -109,13 +109,9 @@ describe("authorization (new API)", () => {
 
   test("permissions are additive", () => {
     expect(
-      makeSession()
-        .allow("foo", [P1])
-        .allow("bar", [P2])
-        .allow("foo", [P3])
-        .serializePermissions()
+      makeSession().allow("foo", [P1]).allow("bar", [P2]).serializePermissions()
     ).toEqual({
-      foo: [P1, P3],
+      foo: [P1],
       bar: [P2],
     });
   });
@@ -124,15 +120,11 @@ describe("authorization (new API)", () => {
     expect(
       makeSession()
         .allow("r", [P1])
-        .allow("r", [P2, P3])
-        .allow("r", [P1, P3])
-        .allow("r", [P3])
-        .allow("r", [P3])
-        .allow("r", [P3])
-        .allow("r", [P3])
+        .allow("r", [P2])
+        .allow("r", [P1])
         .serializePermissions()
     ).toEqual({
-      r: [P1, P2, P3],
+      r: [P1, P2],
     });
   });
 
@@ -172,7 +164,7 @@ describe("authorization (new API)", () => {
   });
 
   test("sealing", () => {
-    const p = makeSession().allow("r", [P1]).allow("r", [P2, P3]);
+    const p = makeSession().allow("r", [P1]).allow("r", [P2]);
 
     p.seal();
 
