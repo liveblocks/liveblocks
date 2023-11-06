@@ -1,9 +1,11 @@
+import type { Json } from "@liveblocks/core";
+
 import type { AuthResponse } from "./client";
 import {
   assertNonEmpty,
   normalizeStatusCode,
   url,
-  URLSafeString,
+  type URLSafeString,
 } from "./utils";
 
 // As defined in the source of truth in ApiScope in
@@ -49,10 +51,7 @@ const FULL_ACCESS = Object.freeze([
 
 const roomPatternRegex = /^[^*]{1,128}[*]?$/;
 
-type PostFn = (
-  path: URLSafeString,
-  json: Record<string, unknown>
-) => Promise<Response>;
+type PostFn = (path: URLSafeString, json: Json) => Promise<Response>;
 
 /**
  * Class to help you construct the exact permission set to grant a user, used

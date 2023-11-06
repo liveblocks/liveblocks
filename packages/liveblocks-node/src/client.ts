@@ -5,22 +5,23 @@
  */
 import type {
   CommentData,
+  Json,
   JsonObject,
   PlainLsonObject,
   ThreadData,
 } from "@liveblocks/core";
 
-import { Permission, Session } from "./Session";
+import { type Permission, Session } from "./Session";
 import {
   assertNonEmpty,
   assertSecretKey,
   DEFAULT_BASE_URL,
   fetchPolyfill,
   normalizeStatusCode,
-  QueryParams,
+  type QueryParams,
   url,
   urljoin,
-  URLSafeString,
+  type URLSafeString,
 } from "./utils";
 
 export type LiveblocksOptions = {
@@ -116,10 +117,7 @@ export class Liveblocks {
   }
 
   /** @internal */
-  private async post(
-    path: URLSafeString,
-    json: Record<string, unknown>
-  ): Promise<Response> {
+  private async post(path: URLSafeString, json: Json): Promise<Response> {
     const url = urljoin(this._baseUrl, path);
     const headers = {
       Authorization: `Bearer ${this._secret}`,
@@ -140,10 +138,7 @@ export class Liveblocks {
   }
 
   /** @internal */
-  private async put(
-    path: URLSafeString,
-    json: Record<string, unknown>
-  ): Promise<Response> {
+  private async put(path: URLSafeString, json: Json): Promise<Response> {
     const url = urljoin(this._baseUrl, path);
     const headers = {
       Authorization: `Bearer ${this._secret}`,
@@ -258,7 +253,7 @@ export class Liveblocks {
       | string // Shorthand for userId
       | Identity,
     options?: {
-      userInfo: unknown;
+      userInfo: Json;
       // ....
     }
   ): Promise<AuthResponse> {
@@ -320,7 +315,7 @@ export class Liveblocks {
     nextPage: string | null;
     data: RoomInfo[];
   }> {
-    let path = url`v2/rooms`;
+    const path = url`v2/rooms`;
 
     const queryParams = new URLSearchParams();
     if (params.limit) {
@@ -445,10 +440,7 @@ export class Liveblocks {
    * Boadcasts an event to a room without having to connect to it via the client from @liveblocks/client.
    * @param roomId The id of the room to broadcast the event to.
    */
-  public async broadcastEvent(
-    roomId: string,
-    message: Record<string, unknown>
-  ): Promise<void> {
+  public async broadcastEvent(roomId: string, message: Json): Promise<void> {
     await this.post(url`/v2/rooms/${roomId}/broadcast_event`, message);
   }
 
@@ -490,8 +482,8 @@ export class Liveblocks {
     roomId: string,
     format: "plain-lson" | "json" = "plain-lson"
   ): Promise<PlainLsonObject | JsonObject> {
-    let path = url`v2/rooms/${roomId}/storage`;
-    const res = await this.get(path, { format: format });
+    const path = url`v2/rooms/${roomId}/storage`;
+    const res = await this.get(path, { format });
     return (await res.json()) as Promise<PlainLsonObject | JsonObject>;
   }
 
@@ -540,12 +532,12 @@ export class Liveblocks {
   ): Promise<Record<string, YJson>> {
     const { format, key, type } = params;
 
-    let path = url`v2/rooms/${roomId}/ydoc`;
+    const path = url`v2/rooms/${roomId}/ydoc`;
 
     const res = await this.get(path, {
       formatting: format ? "true" : undefined,
-      key: key,
-      type: type,
+      key,
+      type,
     });
 
     return (await res.json()) as Promise<Record<string, YJson>>;
@@ -564,7 +556,7 @@ export class Liveblocks {
   ): Promise<void> {
     const { update } = params;
     await this.put(url`/v2/rooms/${roomId}/ydoc`, {
-      update: update,
+      update,
     });
   }
 
