@@ -396,6 +396,13 @@ const myPresence = useSelf((me) => me.presence);
 const updateMyPresence = useUpdateMyPresence();
 ```
 
+`updateMyPresence` accepts an optional argument to add a new item to the
+undo/redo stack. See [`room.history`][] for more information.
+
+```ts
+updateMyPresence({ selectedId: "xxx" }, { addToHistory: true });
+```
+
 ### useUpdateMyPresence
 
 Returns a setter function to update the current user’s presence.
@@ -416,6 +423,13 @@ import { useUpdateMyPresence } from "./liveblocks.config";
 const updateMyPresence = useUpdateMyPresence();
 
 updateMyPresence({ y: 0 });
+```
+
+`updateMyPresence` accepts an optional argument to add a new item to the
+undo/redo stack. See [`room.history`][] for more information.
+
+```ts
+updateMyPresence({ selectedId: "xxx" }, { addToHistory: true });
 ```
 
 ### useSelf
