@@ -1,6 +1,10 @@
 {
   "topics": [
     {
+      "id": "comments",
+      "name": "Comments"
+    },
+    {
       "id": "data-fetching",
       "name": "Data fetching"
     },
