@@ -1,4 +1,4 @@
-import type { Json } from "@liveblocks/core";
+import type { Json, JsonObject } from "@liveblocks/core";
 
 import type { AuthResponse } from "./client";
 import {
@@ -97,14 +97,14 @@ export class Session {
   /** @internal */
   private _userId: string;
   /** @internal */
-  private _userInfo?: unknown;
+  private _userInfo?: Json;
   /** @internal */
   private _sealed = false;
   /** @internal */
   private readonly _permissions: Map<string, Set<Permission>> = new Map();
 
   /** @internal */
-  constructor(postFn: PostFn, userId: string, userInfo?: unknown) {
+  constructor(postFn: PostFn, userId: string, userInfo?: Json) {
     assertNonEmpty(userId, "userId"); // TODO: Check if this is a legal userId value too
 
     this._postFn = postFn;
@@ -169,7 +169,7 @@ export class Session {
   }
 
   /** @internal - For unit tests only */
-  public serializePermissions(): Record<string, unknown> {
+  public serializePermissions(): JsonObject {
     return Object.fromEntries(
       Array.from(this._permissions.entries()).map(([pat, perms]) => [
         pat,
