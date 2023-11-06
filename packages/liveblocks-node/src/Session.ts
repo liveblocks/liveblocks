@@ -14,9 +14,8 @@ const ALL_PERMISSIONS = Object.freeze([
   "room:write",
   "room:read",
   "room:presence:write",
-  // TODO: Add these permissions back once the backend is set up to handle them
-  // "comments:write",
-  // "comments:read",
+  "comments:write",
+  "comments:read",
 ] as const);
 
 export type Permission = (typeof ALL_PERMISSIONS)[number];
@@ -35,19 +34,14 @@ const MAX_PERMS_PER_SET = 10;
 const READ_ACCESS = Object.freeze([
   "room:read",
   "room:presence:write",
-  // TODO: Add these permissions back once the backend is set up to handle them
-  // "comments:read",
+  "comments:read",
 ] as const);
 
 /**
  * Assign this to a room (or wildcard pattern) if you want to grant the user
  * permissions to read and write to the room's storage and comments.
  */
-const FULL_ACCESS = Object.freeze([
-  "room:write",
-  // TODO: Add these permissions back once the backend is set up to handle them
-  // "comments:write"
-] as const);
+const FULL_ACCESS = Object.freeze(["room:write", "comments:write"] as const);
 
 const roomPatternRegex = /^[^*]{1,128}[*]?$/;
 

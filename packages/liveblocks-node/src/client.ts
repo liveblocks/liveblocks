@@ -11,7 +11,7 @@ import type {
   ThreadData,
 } from "@liveblocks/core";
 
-import { type Permission, Session } from "./Session";
+import { Session } from "./Session";
 import {
   assertNonEmpty,
   assertSecretKey,
@@ -57,7 +57,10 @@ type ThreadParticipants = {
   participantIds: string[];
 };
 
-export type RoomAccesses = Record<string, Permission[]>;
+export type RoomPermission =
+  | ["room:write"]
+  | ["room:read", "room:presence:write"];
+export type RoomAccesses = Record<string, RoomPermission>;
 export type RoomMetadata = Record<string, string | string[]>;
 
 export type RoomInfo = {
@@ -68,7 +71,7 @@ export type RoomInfo = {
   metadata: RoomMetadata;
   groupsAccesses: RoomAccesses;
   usersAccesses: RoomAccesses;
-  defaultAccesses: Permission[];
+  defaultAccesses: RoomPermission;
   schema?: string;
 };
 
@@ -356,21 +359,21 @@ export class Liveblocks {
   public async createRoom(
     roomId: string,
     params: {
-      defaultAccesses: Permission[];
-      groupAccesses?: RoomAccesses;
-      userAccesses?: RoomAccesses;
+      defaultAccesses: RoomPermission;
+      groupsAccesses?: RoomAccesses;
+      usersAccesses?: RoomAccesses;
       metadata?: RoomMetadata;
     }
   ): Promise<RoomInfo> {
-    const { defaultAccesses, groupAccesses, userAccesses, metadata } = params;
+    const { defaultAccesses, groupsAccesses, usersAccesses, metadata } = params;
 
     const path = url`/v2/rooms`;
 
     const res = await this.post(path, {
-      roomId,
+      id: roomId,
       defaultAccesses,
-      groupAccesses,
-      userAccesses,
+      groupsAccesses,
+      usersAccesses,
       metadata,
     });
     return res.json() as Promise<RoomInfo>;
@@ -399,18 +402,18 @@ export class Liveblocks {
   public async updateRoom(
     roomId: string,
     params: {
-      defaultAccesses?: Permission[] | null;
-      groupAccesses?: Record<string, Permission[] | null>;
-      userAccesses?: Record<string, Permission[] | null>;
+      defaultAccesses?: RoomPermission | null;
+      groupsAccesses?: Record<string, RoomPermission | null>;
+      usersAccesses?: Record<string, RoomPermission | null>;
       metadata?: Record<string, string | string[] | null>;
     }
   ): Promise<RoomInfo> {
-    const { defaultAccesses, groupAccesses, userAccesses, metadata } = params;
+    const { defaultAccesses, groupsAccesses, usersAccesses, metadata } = params;
 
     const res = await this.post(url`/v2/rooms/${roomId}`, {
       defaultAccesses,
-      groupAccesses,
-      userAccesses,
+      groupsAccesses,
+      usersAccesses,
       metadata,
     });
     return (await res.json()) as Promise<RoomInfo>;
