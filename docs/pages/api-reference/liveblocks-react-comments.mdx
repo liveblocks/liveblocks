@@ -23,6 +23,12 @@ We’d love to hear from you.
 
 ### Thread
 
+Displays a thread of comments. Each comment has a composer for creating replies.
+
+```tsx
+<Thread thread={thread} />
+```
+
 <Figure>
   <Image
     src="/assets/comments/thread.png"
@@ -31,12 +37,6 @@ We’d love to hear from you.
     height={446}
   />
 </Figure>
-
-Displays a thread of comments. Each comment has a composer for creating replies.
-
-```tsx
-<Thread thread={thread} />
-```
 
 Map through `threads` to render a list of the room’s threads and comments.
 Threads can be retrieved with
@@ -111,6 +111,12 @@ export type ThreadMetadata = {
 
 ### Composer
 
+Displays a composer for creating threads or comments.
+
+```tsx
+<Composer />
+```
+
 <Figure>
   <Image
     src="/assets/comments/composer.png"
@@ -119,12 +125,6 @@ export type ThreadMetadata = {
     height={446}
   />
 </Figure>
-
-Displays a composer for creating threads or comments.
-
-```tsx
-<Composer />
-```
 
 By default, submitting the composer will create a new thread.
 
@@ -275,6 +275,12 @@ Learn more about mutation hooks under
 
 ### Comment
 
+Displays a single comment.
+
+```tsx
+<Comment comment={comment} />
+```
+
 <Figure>
   <Image
     src="/assets/comments/comment.png"
@@ -283,12 +289,6 @@ Learn more about mutation hooks under
     height={446}
   />
 </Figure>
-
-Displays a single comment.
-
-```tsx
-<Comment comment={comment} />
-```
 
 Map through `thread.comments` to render each comment in a thread. Threads can be
 retrieved with [`useThreads`](/docs/api-reference/liveblocks-react#useThreads).
