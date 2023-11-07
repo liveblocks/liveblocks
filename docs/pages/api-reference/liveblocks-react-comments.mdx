@@ -309,6 +309,43 @@ function Component({ thread }: { thread: ThreadData }) {
 }
 ```
 
+#### Custom thread components
+
+[`Comment`](#Comment) can be used in combination with [`Composer`](#Composer) to
+create a custom thread component. The composer in this example is used to
+[reply to the existing thread](/docs/api-reference/liveblocks-react-comments#Replying-to-a-thread).
+
+```tsx highlight="10"
+import { Comment, Composer } from "@liveblocks/react-comments";
+import { ThreadData } from "@liveblocks/client";
+import { useThreads } from "../liveblocks.config";
+
+// Renders a list of comments and a composer for adding new comments
+function CustomThread({ thread }: { thread: ThreadData }) {
+  return (
+    <>
+      {thread.comments.map((comment) => (
+        <Comment key={comment.id} comment={comment} />
+      ))}
+      <Composer threadId={thread.id} />
+    </>
+  );
+}
+
+// Renders a list of custom thread components
+function Component() {
+  const { threads } = useThreads();
+
+  return (
+    <>
+      {threads.map((thread) => (
+        <CustomThread key={thread.id} />
+      ))}
+    </>
+  );
+}
+```
+
 #### Props [#comment-props]
 
 <Table columns={["26%", "32%", "42%"]}>
