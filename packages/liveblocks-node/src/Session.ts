@@ -1,4 +1,4 @@
-import type { Json, JsonObject } from "@liveblocks/core";
+import type { IUserInfo, Json, JsonObject } from "@liveblocks/core";
 
 import type { AuthResponse } from "./client";
 import {
@@ -91,14 +91,14 @@ export class Session {
   /** @internal */
   private _userId: string;
   /** @internal */
-  private _userInfo?: Json;
+  private _userInfo?: IUserInfo;
   /** @internal */
   private _sealed = false;
   /** @internal */
   private readonly _permissions: Map<string, Set<Permission>> = new Map();
 
   /** @internal */
-  constructor(postFn: PostFn, userId: string, userInfo?: Json) {
+  constructor(postFn: PostFn, userId: string, userInfo?: IUserInfo) {
     assertNonEmpty(userId, "userId"); // TODO: Check if this is a legal userId value too
 
     this._postFn = postFn;

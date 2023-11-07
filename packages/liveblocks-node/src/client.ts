@@ -5,6 +5,7 @@
  */
 import type {
   CommentData,
+  IUserInfo,
   Json,
   JsonObject,
   PlainLsonObject,
@@ -39,7 +40,7 @@ export type LiveblocksOptions = {
 };
 
 export type CreateSessionOptions = {
-  userInfo: Json;
+  userInfo: IUserInfo;
 };
 
 export type AuthResponse = {
